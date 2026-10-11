@@ -19,10 +19,10 @@ This page records what was found when the documentation of this repository was a
 
 | | Count |
 | --- | --- |
-| Findings in the table below | 79 |
-| High (a reader is blocked, misled, or a status statement is false) | 13 |
-| Medium | 29 |
-| Low | 37 |
+| Findings in the table below | 74 |
+| High (a reader is blocked, misled, or a status statement is false) | 12 |
+| Medium | 27 |
+| Low | 35 |
 | Terms a newcomer meets without an explanation | 163 (94 never explained, 69 explained late, partly, or in two senses) |
 
 How it was done:
@@ -70,9 +70,9 @@ Paths: bare names such as `INSTALL.md` are in `harness/docs/`; `README.md` alone
 | V3 | `compliance/DEVIATIONS.md:3,39` | Header says "No waiver has been granted by anyone"; T-18 to T-31 are waivers granted by the owner. Line 39 says "Fourteen granted … without a stated reason" but lists 13 and 12 of them do state a circumstance. | high | Correct the header and the counting sentence. Nothing else in the file is changed. | fixed |
 | V4 | `compliance/docs/SRelD.md:9,10,16` | 5.1 points at the *Unreleased* changelog section, which is not in 0.1.0. The list of known problems says derating, EMC and approved parts were "supplied by the owner (D-11, D-12)"; they were not. Line 16 says the UX improvements are "planned after this audit"; they are done. | high | Point 5.1 at the `0.1.0` section; say the values were not supplied; link to `SIGNOFF.md` and `DEVIATIONS.md`. | fixed |
 | V5 | `AUDIT.md:3,31,40` | "six independent reviewers" (no independent review exists: `README.md:5`, T-20, `SIGNOFF.md:22`). Still treats Ubuntu 22.04 as a target and lists waived items as "still needed". | high | Add a banner marking it a historical record of 2026-10-07; correct "independent". | fixed |
-| V6 | `README.md:5`, front page `:19` | The "created mainly by an AI, not independently reviewed" notice exists as two prose copies with different wording; the evidence files are named in code spans, not links. | medium | One text in `harness/README.md#status`; the root README links to it; real links to the evidence. | fixed |
+| V6 | `README.md:5`, front page `:19` | The "created mainly by an AI, not independently reviewed" notice exists as two prose copies with different wording; the evidence files are named in code spans, not links. | medium | One text in `harness/README.md#status`; the root README links to it; real links to the evidence. | partly (the root README has a short statement and real links; the long notice stays in `harness/README.md`) |
 | V7 | `CLAUDE.md:6` | The status paragraph repeats the release and open-decision text three times. | medium | Left as is. `CLAUDE.md` is the coding assistant's instruction file; the owner maintains it. Listed for the owner. | deferred |
-| V8 | `compliance/SUMMARY.md:56`, `compliance/docs/SRS.md:3`, `SECURITY.md:23` | Counts out of date: 89 modules / 74 reached (CSV: 94 / 79), 65 requirements (78), 9 packages (10 scanned, 11 in the SBOM report). | medium | Correct to the recomputed numbers, or remove the number and cite the report that owns it. | fixed |
+| V8 | `compliance/SUMMARY.md:56`, `compliance/docs/SRS.md:3`, `SECURITY.md:23` | Counts out of date: 89 modules / 74 reached (CSV: 94 / 79), 65 requirements (78), 9 packages (10 scanned, 11 in the SBOM report). | medium | Correct to the recomputed numbers, or remove the number and cite the report that owns it. | fixed (also `SPAMR.md`, `SVR.md`, `SDD.md`) |
 | V9 | `compliance/SUMMARY.md:26` vs `:38` | 347 versus 344 rows for ECSS-Q-ST-80C, unexplained (3 rows were deleted from the standard's table). | low | Add a footnote. | fixed |
 | V10 | `compliance/RISK_REGISTER.md:11,12,17,18,19,23` | Six table rows have 9 cells in a 10-column table; the waiver text lands in the "owner" column and Status is empty. | medium | Add the missing cell separator. | fixed |
 | V11 | `compliance/docs/SECURITY_DOCS.md:9` | Says dependency vulnerabilities are checked by a person at each release; D-134 and `RELEASE.md` 8a say the scan is automatic. | low | Align with D-134. | fixed |
@@ -103,7 +103,7 @@ Paths: bare names such as `INSTALL.md` are in `harness/docs/`; `README.md` alone
 | A18 | `CONCEPTS.md:101`, `HOWTO.md:138` | "SVG and PDF, A3 and A4": only the A3 sheets are exported as SVG. | low | Correct. | fixed |
 | A19 | `FILE_FORMAT.md:7` | Config list omits `generation.json` (seven files exist). | low | Add. | fixed |
 | A20 | `CONFIG.md:3,48-49` | "Every file has `placeholder: true`": `naming.json` ships `false`. The seven `naming` keys are not named. | low | Correct; list the keys. | fixed |
-| A21 | `PLACEHOLDERS.md:5-11`, `OUTPUTS.md:1`, `FILE_FORMAT.md:49-155` | `generation.json` has no row in the first table. Headings use milestone names ("M3", "M5") that a newcomer cannot decode. | low | Add the row; replace milestone labels by what they cover. | partly |
+| A21 | `PLACEHOLDERS.md:5-11`, `OUTPUTS.md:1`, `FILE_FORMAT.md:49-155` | `generation.json` has no row in the first table. Headings use milestone names ("M3", "M5") that a newcomer cannot decode. | low | Add the row; replace milestone labels by what they cover. | fixed |
 | A22 | `KICAD.md:11-17` | "Try it" uses a bare path; never says to run `harness templates` first nor to rerun without `--dry-run`. | low | Show the full steps. | fixed |
 | A23 | `LEARNING_PATH.md:40,50,94-95` | "power control unit" (the unit is `PCDU1`, "Power distribution unit 1"); `harness diff … --from A --to B` fails until B is released. | low | Correct both. | fixed |
 | A24 | `FLATSAT_EXAMPLE.md:77` | `per_connector_pair` "gives one harness for every interface": it gives one per pair of unit connectors (here 44). | low | Correct. | fixed |
@@ -123,18 +123,19 @@ Paths: bare names such as `INSTALL.md` are in `harness/docs/`; `README.md` alone
 | S5 | `guide/USER_GUIDE.md` | Menu items that exist and are described nowhere: Add zone, Open the sample project, Save as, Dark theme, minimap, Replay the tour, Glossary, Delete harness. | medium | A menu table. | fixed |
 | S6 | `guide/USER_GUIDE.md:163,167` | The in-app guide (the only document installed with the tool) points to files that are not installed (`docs/PLACEHOLDERS.md`, `ci/build.sh`). | low | Name the in-app route (`harness config DIR`, `harness templates`) as well. | fixed |
 | S7 | `UX.md`, `UX_GUIDELINES_REVIEW.md:34` | Design records not marked as superseded: letter chips (replaced by pictograms, D-140), "wire colours never used as drawing colours" (D-141), "no auto layout / no minimap" listed as open (both exist), test counts that are wrong. | medium | Add a banner; correct the three rows. | fixed |
-| S8 | `docs/ux/qt/01–07, 12, 13`, `docs/ux/screens/*` | Nine editor screenshots predate D-140 (3–5.6 % of pixels differ); 14 prototype screenshots are history with the same file numbers in a second folder. | medium | Re-render the nine with `tools/gui_screenshots.py`; add a README to `ux/screens/`. | fixed (screens/: kept, labelled) |
+| S8 | `docs/ux/qt/01–07, 12, 13`, `docs/ux/screens/*` | Nine editor screenshots predate D-140 (3–5.6 % of pixels differ); 14 prototype screenshots are history with the same file numbers in a second folder. | medium | Re-render the nine with `tools/gui_screenshots.py`; add a README to `ux/screens/`. | fixed (`screens/` kept and labelled as history) |
 | S9 | `compliance/` | 21 process documents, `DEVIATIONS.md`, `SIGNOFF.md`, `OPEN_ACTIONS.md`, `RISK_REGISTER.md` have no inbound link; only `SUMMARY.md` is linked. | high | `harness/compliance/README.md` as an index; link from the status section and the docs index. | fixed |
 | S10 | `CHANGELOG.md` | Zero inbound links. | medium | Link from the root README, the tool README and the index ("What's new"). | fixed |
 | S11 | `docs/README.md` (front page), repo root | No root `README.md`; GitHub showed the upstream README. A newcomer clicking `examples` or `tutorial` at the root gets WireViz material, and the tool's example projects are linked from nowhere. | high | New root `README.md` (see [section 6](#6-changes-made-to-the-upstream-readme)); examples page. | fixed |
 | S12 | `harness/docs/README.md` | Mixes user documents and internal records on one page; the five examples are not listed there. | medium | Rebuild as the tool's index, grouped, with a separate "Project records" group. | fixed |
 | S13 | `INSTALL.md`, `README.md`, `USER_GUIDE.md`, `HOWTO.md`, `FAQ.md`, `CLAUDE.md` | Install steps, the PATH fix, the Qt library line and four troubleshooting tables are copied across files. | medium | `INSTALL.md` owns installation, `FAQ.md` and the new `TROUBLESHOOTING.md` own runtime problems; the others link. | partly |
 | S14 | `CLI.md` vs `USER_GUIDE.md`, `CHEATSHEET.md`, `CLAUDE.md` | Four hand-copied command lists. | low | `CLI.md` is the single source; no copy was found to be wrong, so the copies stay and the cheatsheet links. | kept |
-| S15 | `CLI.md:285` | Generated row with an unescaped `\|`: renders as a broken table row. The cause is in `tools/gen_cli_docs.py`. | medium | Code change; deferred. | deferred |
+| S15 | `CLI.md:285` | Generated row with an unescaped vertical bar in the text of one option: it renders as a broken table row. The cause is in `tools/gen_cli_docs.py`. | medium | Code change; deferred. | deferred |
 | S16 | `PLAN.md`, `OPEN_DECISIONS.md` | Plan and open decisions are written as of the audit; they plan Windows CI and a PDF guide that were never built. | low | Banner "historical" at the top. | fixed |
 | S17 | `HOWTO.md`, `docs/…` | Cross references by number ("section 15", "Part 7") and `docs/…` code spans instead of links. | low | Replace by anchors in the pages touched. | partly |
 | S18 | `docs/demos/`, `docs/usability/` | Linked as bare folders; no index sentence. | low | Short README in `demos/`. | fixed |
 | S19 | `tools/` | No README; `CLAUDE.md` names about 20 of 30 scripts. | low | A table in `developer/`. | fixed |
+| S20 | `DECISIONS.md:147` | A blank line inside the table split it: the rows D-138 to D-141 rendered as plain text (found by the render check). | low | Remove the blank line. | fixed |
 
 ### 3.4 Missing pages (completeness)
 
@@ -209,8 +210,8 @@ The upstream README is kept in two places and is not reworded.
 
 | Change | Reason |
 | --- | --- |
-| Every heading goes down one level (`# WireViz` becomes `## WireViz`, …) | The root README has one `#` heading of its own and the upstream part sits under `# Original WireViz README`. |
-| `](../examples/…` becomes `](examples/…` (5 links: `demo01.yml`, `demo01.png`, `demo01.bom.tsv`, `demo02.png`, `demo02.yml`/`demo02.bom.tsv`) | Path changes because the file moves from `docs/` to the root. |
+| Every heading goes down one level (`# WireViz` becomes `## WireViz`, …); 13 relative links change in all (the rows below) | The root README has one `#` heading of its own and the upstream part sits under `# Original WireViz README`. |
+| `](../examples/…` becomes `](examples/…` (6 links: `demo01.yml`, `demo01.png`, `demo01.bom.tsv`, `demo02.png`, `demo02.yml`, `demo02.bom.tsv`) | Path changes because the file moves from `docs/` to the root. |
 | `](syntax.md)` becomes `](docs/syntax.md)` | Same. |
 | `](../tutorial/readme.md)` becomes `](tutorial/readme.md)`; `](../examples/readme.md)` becomes `](examples/readme.md)` | Same. |
 | `](CONTRIBUTING.md)` becomes `](docs/CONTRIBUTING.md)` | Same; the root now has its own `CONTRIBUTING.md` for this tool, so the link has to be explicit. |
@@ -238,21 +239,24 @@ The old `docs/README.md` (the WireViz README plus the preface) became the docume
 
 | Item | Where |
 | --- | --- |
-| Unescaped `\|` in a generated table row | `tools/gen_cli_docs.py` (S15) |
+| An unescaped vertical bar in a generated table row | `tools/gen_cli_docs.py` (S15) |
 | "choose a larger gauge" wording | rule texts in code (A28) |
 | `SHA256SUMS` not produced in the CI artifact | `.github/workflows/harness-ci.yml` (A6) |
 | A test for table shape and for the quoted output lines of the tutorial | `tests/` |
 | A test that fails when the editor screenshots are stale | `tools/release_check.py` |
 | Renumbering the release checklist | `RELEASE.md`, `tools/release_check.py`, the evidence reports |
 | `design-worksheet.md` row IDs | a template file shipped in the package (A26) |
-| `CLAUDE.md` status paragraph | the assistant's instruction file (V7) |
+| `CLAUDE.md` status paragraph, and the missing note that ruff formats Markdown code blocks | the assistant's instruction file (V7) |
 
 **Link checks**
 
 | Check | Result |
 | --- | --- |
-| Offline (`lychee --offline --include-fragments`) over every Markdown file | see the final status in the pull request |
-| External links, online | see the pull request |
-| Tool's own `test_docs_links.py` and `test_docs.py` | see the pull request |
+| Offline (`lychee --offline --include-fragments --exclude-path compliance/requirements --exclude-path docs/upstream '**/*.md'`) over every Markdown file | 1,630 links, 0 errors |
+| Own checker for tables and fences, and a render with a Markdown parser | no broken tables or fences in the changed pages (one existing table in `DECISIONS.md` was repaired, S20) |
+| `test_docs.py` and `test_docs_links.py` | 48 passed |
+| Whole test suite (`pytest`, from `harness/`) | 1025 passed, 1 skipped |
+| `ruff format --check`, `ruff check`, `mypy` | clean. Note: ruff also formats the Python code blocks inside Markdown files, so a code block in a document can fail the lint step of CI; the developer pages say so. |
+| External links, online | **Not completed.** The sandbox this work was done in blocks most outside hosts (4 of 227 links answered). The pages written for this audit contain 8 external URLs: the upstream repository, its commit `e4fe099`, the lychee releases page, the repository's own CI page and badge, `kicad.org`, and the repository's clone URL. The repository, the commit and the lychee release were reached with `git` and a download; the badge, the Actions page and `kicad.org` were not. Run `lychee --no-progress '**/*.md'` from a normal machine to check them (the upstream part of the root README has about 180 more, which are WireViz's own). |
 
 Next: the [documentation index](README.md).
