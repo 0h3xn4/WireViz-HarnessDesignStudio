@@ -1,6 +1,6 @@
 # Software design document (SDD)
 
-DRD: ECSS-E-ST-40C Annex F. Status: draft, not reviewed. The design is described in `../../docs/ARCHITECTURE.md` (written as a proposal and since built as described, with the changes listed at its top) and `../../docs/DECISIONS.md` (one decision per row, D-01 to D-131). This SDD gives the DRD structure and points to them.
+DRD: ECSS-E-ST-40C Annex F. Status: draft, not reviewed. The design is described in `../../docs/ARCHITECTURE.md` (written as a proposal; section 2 now lists the real modules, the rest is the original proposal with the changes listed at its top) and `../../docs/DECISIONS.md` (one decision per row, D-01 onwards). This SDD gives the DRD structure and points to them.
 
 ## 1 to 3. Introduction, references, terms
 See `SDP.md`.
