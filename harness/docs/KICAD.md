@@ -10,11 +10,18 @@ A KiCad netlist, in either format: the S-expression `.net` that KiCad's schemati
 
 ## Try it
 
-The templates (`harness templates FOLDER`) contain `wheel-connectors.net`, a small netlist for the connectors `RW1-J01` (power) and `RW1-J02` (RS-422) of the `first-steps` example, and `signal-map.csv`. On a copy of that example:
+The templates (`harness templates FOLDER`) contain `wheel-connectors.net`, a small netlist for the connectors `RW1-J01` (power) and `RW1-J02` (RS-422) of the `first-steps` example, and `signal-map.csv`. Run these in an empty folder. The first command makes a copy of the example, the second copies the templates (the folder `my-templates` must not exist yet), and the third shows what the import would do without changing anything:
 
     harness new wheel-link --template first-steps
-    harness import-netlist wheel-link wheel-connectors.net --unit RW1 --prefix J \
+    harness templates my-templates
+    harness import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J \
         --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run
+
+It prints one line per connector (`J1: OK updated RW1-J01 (2 signal pin(s))`, `J2: OK updated RW1-J02 (4 signal pin(s))`) and `Dry run: nothing was changed.` When the rows look right, run the same command again **without** `--dry-run`. It ends with `Imported 2 connector(s). Generate harnesses again to connect interfaces to the fixed pins.` Then connect the interfaces to those pins:
+
+    harness generate wheel-link
+
+The result is `2 added, 0 changed, ...` and `2 interfaces and 6 wires checked: 0 error(s)`. The path `my-templates/wheel-connectors.net` is relative to the folder you run the commands in; with your own netlist, give its path.
 
 ## Command
 
@@ -40,3 +47,5 @@ Generation connects each interface signal to the fixed pin with the same name an
 1. How KiCad connector references map to the unit connectors in this tool (today: by prefix, `--connector`, or the symbol field).
 2. The signal-name mapping (today: optional `--signal-map`).
 3. Hierarchical sheets and multi-unit symbols have not been tried on a real project.
+
+Next: [import KiCad pinouts (user manual)](user-manual/import-kicad-pinouts.md), [`IMPORTS.md`](IMPORTS.md).

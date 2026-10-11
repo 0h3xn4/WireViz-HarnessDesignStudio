@@ -8,6 +8,8 @@ A flatsat is the electronics of a spacecraft laid out on a bench, connected with
 harness new flatsat-bench --template flatsat
 ```
 
+**This example is on `master` and is not in the released 0.1.0 packages** (see [`CHANGELOG.md`](../CHANGELOG.md#unreleased-after-010)). `harness new --list` shows five examples on a build that has it and three on the 0.1.0 packages; on those, the command above fails with `error: Unknown template 'flatsat'`. The pictures below show the newer diagram.
+
 Open it in the app (**File > Open project...**) or read on first. Everything in this page is what the project really contains; a test checks the numbers.
 
 > **Not engineering data.** The units, parts, currents, lengths and the derating, ampacity and mass numbers are invented for learning. The configuration files stay marked as placeholders and the parts are the tool's example parts (`EX-...`), so the results say so, and a release of this project would need written reasons (`docs/RELEASE.md`). Do not copy the numbers into a real design.
@@ -63,7 +65,7 @@ The totals in `outputs/system/mass_length.csv` after `harness export`: 329.6 m o
 
 `harness drc` reports no errors. It reports warnings and notes, and they are worth reading, because they show what the tool is for:
 
-- **Connector look-alikes.** Many units have several identical connectors (a power distribution unit has ten Micro-D 9 connectors). The rule warns that two cables could be plugged into the wrong place. On a real flatsat you would key the connectors differently or label them.
+- **Connector look-alikes.** Many units have several identical connectors (a power distribution unit has eleven identical Micro-D 9 connectors). The rule warns that two cables could be plugged into the wrong place. On a real flatsat you would key the connectors differently or label them.
 - **Unapproved parts.** Every part is an example part that nobody has approved, so each is listed. This is the example being honest.
 - **Not checked.** Rules that need numbers nobody entered (EMC classes, spare pins, shield grounding) say that they did not run. Silence would look like a pass.
 
@@ -74,7 +76,7 @@ The totals in `outputs/system/mass_length.csv` after `harness export`: 329.6 m o
 3. **Change a number and watch.** In the app, select the interface *Feed of the AOCS distribution unit* and set its Max current to 8 A, then generate again. The generation reports wire sizing errors that name the wires: no listed gauge carries 8 A after derating. Set it back to 5 A.
 4. **Use the spare connectors.** The computer has one free data connector and `PCDU1` has one spare power connector. Add a unit from the *sensor* template, an RS-422 interface from `OBC1` to it and a power interface from `PCDU1` to it, then generate. The new wires appear in the harness between the lanes of the two units. Undo restores everything.
 5. **Run out of connectors.** Now add one more unit that needs power and data. The tool tells you that no free connector is left and offers Expert mode, where you add connectors by hand. That is the moment a real design asks for another distribution unit.
-6. **Try a different segmentation.** Edit `config/segmentation.json` and set `"mode": "per_unit_pair"`, then regenerate. Compare the number of harnesses. The mode `per_connector_pair` gives one harness for every interface.
+6. **Try a different segmentation.** Edit `config/segmentation.json` and set `"mode": "per_unit_pair"`, then regenerate. Compare the number of harnesses. The shipped mode `per_zone_pair` gives 8 harnesses; `per_unit_pair` gives 43; `per_connector_pair` gives one harness for each pair of unit connectors (here 44, one for every interface, because no two interfaces share a pair of connectors). Put the mode back to `per_zone_pair` afterwards.
 7. **Practise a release.** Part 9 of [`GETTING_STARTED.md`](GETTING_STARTED.md) shows it on a practice project; this example needs the written reasons for the placeholder configuration and for the unapproved parts. Do it on a copy.
 
 ## Where it came from

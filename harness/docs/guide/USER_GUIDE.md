@@ -38,13 +38,13 @@ Other interface types and older connector parts stay in the library for projects
 1. Install the package: `sudo apt install ./harness-design-studio_<version>_amd64.deb`. Or unpack the `.tar.gz` anywhere and run `./harness-design-studio/install.sh` (no administrator rights needed; it installs for your user).
 2. Check it: `harness --version` prints the version. If the command is not found after `install.sh`, add `~/.local/bin` to your PATH (the installer prints how).
 3. Start **Harness Design Studio** from the application menu, or run `harness-design-studio`.
-4. The command line tool is `harness` (see section 9).
+4. The command line tool is `harness` (see section 10, Command line).
 
 No network access is needed or used. On a minimal Ubuntu the app may need a few system libraries; the installer lists them.
 
 ## 3. Start from an example
 
-The tool ships three practice projects. List them and create one in a new folder:
+The tool ships five practice projects (examples). List them and create one in a new folder:
 
 ```
 harness new --list
@@ -52,6 +52,8 @@ harness new wheel-link --template first-steps
 ```
 
 Then **File > Open project…** and pick the folder. You cannot break anything: it is your own copy.
+
+The five examples are in the newer builds of the tool. If `harness new --list` shows only `blank`, `first-steps` and `small-satellite`, you have the 0.1.0 packages, which have those three; `minimal-satellite`, `flatsat` and the wire colours of section 7 need a newer build.
 
 | Example | What it is |
 | --- | --- |
@@ -66,7 +68,7 @@ Then **File > Open project…** and pick the folder. You cannot break anything: 
 ## 4. Your first project in ten steps
 
 1. Start the app. The sample project opens with a short tour; skip it or follow it.
-2. **File > New project…**, choose an empty folder, give it a name. Or **File > New project from an example…** and pick `blank`, `first-steps` (three units, start here) or `small-satellite` (14 units); these are the same examples as `harness new` (section 3).
+2. **File > New project…**, choose an empty folder, give it a name. Or **File > New project from an example…** and pick one of the examples of section 3 (`first-steps` has three units, start there); the list is the same as `harness new --list`.
 3. In the palette on the left press **Add a unit** and pick *Computer*. Add a *Power unit* and an *Actuator (wheel)*.
 4. Pick an interface type (for example *RS-422*), then click the first unit and the second unit. Units that cannot take this interface are greyed out, with the reason written next to them.
 5. Look at **Problems** (bottom). Each card says what is wrong, why it matters and how to fix it. Many have a one-click **Fix**.
@@ -114,11 +116,11 @@ The quick checks run on every edit. The design rules (33 of them) run in the bac
 - By default one harness is made for each pair of unit connectors. Nominal and redundant chains, and pyro lines, never share a harness.
 - Pins are chosen by rules (power first, pairs side by side, locked pins never moved). **Why is it like this?** shows the reason for each choice.
 - Generating again keeps IDs, locked wires and locked pins, never touches released harnesses, and shows a report of what was added, changed and removed.
-- A wire gauge stays **pending** until the derating values exist and the lengths are known (section 10). The tool never guesses an engineering value.
+- A wire gauge stays **pending** until the derating values exist and the lengths are known (section 11, What an engineer must fill in). The tool never guesses an engineering value.
 
 ## 8. Outputs
 
-`outputs/` contains, for every harness: drawing (SVG and PDF, A3 and A4), wire list, pinouts, BOM, mass and length, continuity and isolation tests, labels, a WireViz-style YAML file and an Excel workbook. For the whole system: block diagram, harness overview, BOM, mating and traceability matrices, DRC report, change log, revision report, and one JSON file with the whole model. Every file carries the tool version and a model hash. The Harness plans tab shows whether the outputs are up to date. Details: `docs/OUTPUTS.md`.
+`outputs/` contains, for every harness: drawing (SVG and PDF, A3 and A4), wire list, pinouts, BOM, mass and length, continuity and isolation tests, labels, a WireViz-style YAML file and an Excel workbook. For the whole system: block diagram, harness overview, BOM, mating and traceability matrices, DRC report, change log, revision report, and one JSON file with the whole model. Every file carries the tool version and a model hash. The Harness plans tab shows whether the outputs are up to date. Details are in `docs/OUTPUTS.md` in the repository (it is not installed with the app).
 
 Outputs are checked independently before they are written. If that check fails, nothing is written. The `outputs` folder is always safe to delete and make again.
 
@@ -160,13 +162,13 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness import-lengths DIR FILE [--unit mm]` | import routing segment lengths from a table |
 | `harness import-netlist DIR FILE --unit U [--prefix J] [--connector J1=ID] [--part J1=PART] [--signal-map NAME=SIGNAL\|FILE]` | read connector pinouts of a unit from a KiCad netlist (.net or .xml); the pins become fixed |
 
-A script that builds everything: `harness check DIR`, `harness generate DIR`, `harness verify DIR`, `harness drc DIR`, `harness export DIR`. The templates folder contains it as `ci/build.sh`.
+A script that builds everything: `harness check DIR`, `harness generate DIR`, `harness verify DIR`, `harness drc DIR`, `harness export DIR`. `harness templates FOLDER` copies the templates, and `ci/build.sh` in that folder is this script.
 
 ## 11. What an engineer must fill in
 
-Some values must come from your program's standards. Until they are filled in, results say so and the affected checks say *not checked*. The list is in `docs/PLACEHOLDERS.md`: derating factors and ampacity table (`config/derating.json`), resistivity, service loop, pin gap, mass margin, shield grounding concept and test limits (`config/generation.json`), separation rules (`config/segregation.json`), EMC rules (`config/emc.json`), title block fields (`config/titleblock.json`), part masses and ratings in the library.
+Some values must come from your program's standards. Until they are filled in, results say so and the affected checks say *not checked*. The list: derating factors and ampacity table (`config/derating.json`), resistivity, service loop, pin gap, mass margin, shield grounding concept and test limits (`config/generation.json`), separation rules (`config/segregation.json`), EMC rules (`config/emc.json`), title block fields (`config/titleblock.json`), part masses and ratings in the library. `harness config DIR` prints this list for your project, with what depends on each value; the same list is in `docs/PLACEHOLDERS.md` in the repository (not installed with the app).
 
-Run `harness config DIR` to see what is missing and what depends on it, load a current-by-gauge table from a CSV with `--ampacity-csv`, edit the rest in the JSON file, and set `"placeholder": false` once reviewed. If you work to ECSS-Q-ST-30-11C or ECSS-E-ST-20-07C you can start from the values of those standards with `--apply-profile ecss-q-st-30-11c` or `ecss-e-st-20-07c`: only unset values are filled, each is printed with the requirement it comes from, and the files stay placeholders until you review them (`CONFIG.md` lists the keys and the part ratings the new rules need).
+Run `harness config DIR` to see what is missing and what depends on it, load a current-by-gauge table from a CSV with `--ampacity-csv`, edit the rest in the JSON file (the keys go inside its `values` object), and set `"placeholder": false` once reviewed. If you work to ECSS-Q-ST-30-11C or ECSS-E-ST-20-07C you can start from the values of those standards with `--apply-profile ecss-q-st-30-11c` or `ecss-e-st-20-07c`: only unset values are filled, each is printed with the requirement it comes from, and the files stay placeholders until you review them (`harness config DIR` lists the keys; `docs/CONFIG.md` in the repository describes them and the part ratings the new rules need).
 
 To see the machinery work before you have real values, copy the demo values from the templates (`config-demo-values/`) over a practice project. They are not engineering data, and the files stay marked as placeholders so every result built on them says so. Never release a real design with them.
 
@@ -198,18 +200,57 @@ Example files for every one of these are in the templates folder (`harness templ
 | A wire gauge says *pending* | A value is missing: `harness config DIR` says which. A gauge also needs the interface's Max current and the segment lengths. |
 | `harness` is not found | `~/.local/bin` is not on your PATH. Add it, or log out and in. |
 
-## 14. Keyboard
+## 14. Keyboard and menus
 
 | Keys | Action |
 | --- | --- |
+| Ctrl+N, Ctrl+O | new project, open project |
+| Ctrl+S, Ctrl+Shift+S | save, save as |
+| Ctrl+Shift+I | import interfaces from a table |
+| Ctrl+Q | quit |
 | Ctrl+K | command palette: type a command or an ID |
-| Ctrl+Z, Ctrl+Y | undo, redo |
-| Ctrl+S | save |
+| Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | undo, redo |
 | Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, out, fit |
-| Tab, Enter | move between units and links, select |
+| C, Esc | start the Connect tool, back to Select (Esc also clears the selection) |
+| Tab, Enter or Space | move between units and links, select |
 | Shift+arrows | move the selected unit |
 | Delete | delete the selected item (after showing what it affects) |
 | F1 | this guide |
+
+Every command is in a menu. The keys above are shown next to the items.
+
+| Menu | Item | What it does |
+| --- | --- | --- |
+| File | New project… (Ctrl+N) | makes an empty project in an empty folder you choose |
+| File | New project from an example… | makes a project from one of the examples of section 3 |
+| File | Open project… (Ctrl+O) | opens a project folder |
+| File | Open the sample project | opens the built-in sample (example data); **Save as…** keeps your changes |
+| File | Save (Ctrl+S), Save as… (Ctrl+Shift+S) | saves the project; save as writes a copy to a new folder |
+| File | Import interfaces… (Ctrl+Shift+I) | imports interfaces from a CSV or XLSX table (section 12) |
+| File | Quit (Ctrl+Q) | closes the app |
+| Edit | Undo, Redo | steps back and forward through your changes |
+| Edit | Delete | deletes the selected unit or link, after showing what else goes with it |
+| Edit | Create redundant copy | builds a redundant (backup) copy of the selected unit and its chain |
+| Edit | Add zone… | adds a lane to the diagram; asks for its name |
+| Edit | Wire colours... | chooses the wire colour of each signal (section 7) |
+| Edit | Add unit | one item for each kind of unit (computer, power unit, wheel ...); the same as the palette |
+| Edit | Connect with | one item for each interface type; then click two units |
+| View | Guided, Expert | the two modes of section 5 |
+| View | Dark theme | switches the colours between light and dark |
+| View | Show overview map | shows or hides the small map of the whole diagram |
+| View | Show all link labels | shows the values (such as `28 V · 5 A`) on every link, not only on the selected one |
+| View | UI scale | makes text and controls larger: 100, 125, 150 or 200 % |
+| View | Zoom in, Zoom out, Fit | zooms the diagram (Ctrl+=, Ctrl+-, Ctrl+0) |
+| View | Arrange diagram | tidies the units inside their lanes; Undo restores them |
+| View | Palette, Properties, Problems and status | shows or hides each panel |
+| Help | User guide (F1) | opens this guide |
+| Help | Search and commands (Ctrl+K) | the command palette |
+| Help | Replay the tour | shows the short first-run tour again |
+| Help | Glossary | the list of words the tool uses |
+| Help | Show project problems | lists what could not be loaded, for a project with problems |
+| Help | About | the version and a short note about the tool |
+
+One action has no menu item: **Delete harness** is a button in the **Harness plans** tab (not possible once the harness is released; a generated harness comes back the next time you generate).
 
 The **Show** lists in the toolbar fade everything except one signal class (power, data, analog, RF ...), one connector or one bundle (harness), so a large diagram can be read one piece at a time; choose *All interfaces* to see everything again. It changes nothing in the project. The **Interface table** and **Outline** tabs list every interface and unit; they are the screen-reader friendly views of the diagram. **Arrange diagram** (View menu) tidies the units: they stay in their lanes and are ordered to shorten links; Undo restores the old positions.
 

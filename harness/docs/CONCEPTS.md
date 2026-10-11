@@ -2,6 +2,21 @@
 
 Read this once, in ten minutes, and the rest of the documentation will make sense. No spacecraft or harness knowledge is needed beyond what the words mean.
 
+## Contents
+
+- [The idea in one picture](#the-idea-in-one-picture)
+- [The things in a design](#the-things-in-a-design)
+- [The standards the tool starts from](#the-standards-the-tool-starts-from)
+- [Guided and Expert](#guided-and-expert)
+- [From design to harness: generation](#from-design-to-harness-generation)
+- [Problems, rules and waivers](#problems-rules-and-waivers)
+- [Placeholders: what the tool does not know](#placeholders-what-the-tool-does-not-know)
+- [Review, release, revision](#review-release-revision)
+- [Outputs](#outputs)
+- [What is on disk](#what-is-on-disk)
+- [What the tool does not do](#what-the-tool-does-not-do)
+- [Words you will meet](#words-you-will-meet)
+
 ## The idea in one picture
 
 ```
@@ -98,7 +113,7 @@ The release check looks at the harness itself and at the placeholder mark of the
 
 ## Outputs
 
-**Export outputs** writes a folder `outputs/` into the project: per harness a drawing (SVG and PDF, A3 and A4), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
+**Export outputs** writes a folder `outputs/` into the project: per harness a drawing (SVG for the A3 sheets, PDF for A3 and A4), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
 
 Outputs are checked independently before they are written. `outputs/` is always safe to delete and regenerate.
 

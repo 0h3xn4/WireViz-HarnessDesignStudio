@@ -1,5 +1,7 @@
 # Milestone plan (proposal for owner review)
 
+> **Historical.** This is the plan as it was proposed to the owner in October 2026, before the first release. Milestones M0 to M9 were done (a note for each is in [`demos/`](demos/README.md)) and 0.1.0 is released; this page was not kept up to date. For the current state read [`../CHANGELOG.md`](../CHANGELOG.md) and the [documentation index](README.md). Two items below were never built, and are marked *(not built)*: multi-drop interfaces and hierarchy, and a PDF user guide.
+
 Each milestone: tests first, ends with working tested software, a demo note in `docs/demos/` (M0 to M7 have one), and a UX self-review where a GUI exists. A milestone is done only when all its acceptance criteria pass in CI.
 
 ## M0 Foundation
@@ -24,7 +26,7 @@ Each milestone: tests first, ends with working tested software, a demo note in `
 
 ## M2 Block diagram (DONE: see docs/demos/M2-gate.md and M2.md)
 - Gate 1: `docs/UX.md` (personas, 10 journeys, IA, wireframes, design system) and a clickable prototype; **owner review before continuing**.
-- Canvas editor (units, connectors, interfaces, zones, nominal/redundant styles, multi-drop, hierarchy), palette, properties panel, status/to-do panel, table (ICD) view in sync, undo/redo, autosave and crash recovery, command palette, search.
+- Canvas editor (units, connectors, interfaces, zones, nominal/redundant styles, multi-drop *(not built: multi-drop interfaces are skipped with a warning, D-116)*, hierarchy *(not built: the model has none)*), palette, properties panel, status/to-do panel, table (ICD) view in sync, undo/redo, autosave and crash recovery, command palette, search.
 - Interface-type library and compatibility highlighting with tooltips.
 - CSV/XLSX import with column mapping, preview, per-row errors, single undo step.
 - pytest-qt tests for journeys J1 to J4; screenshots via offscreen; UX issue list.
@@ -55,7 +57,7 @@ Each milestone: tests first, ends with working tested software, a demo note in `
 **Acceptance:** diff of two baselines lists added/removed/changed objects exactly; released items cannot be edited without a new revision.
 
 ## M7 Polish (done except the items that need people; see demos/M7.md)
-- Guided and expert modes, themes, scaling to 200%, accessibility audit, performance tuning, soak test, user guide (Markdown + offline HTML/PDF), developer docs (file format, rule config), release checklist, final installers, SBOM.
+- Guided and expert modes, themes, scaling to 200%, accessibility audit, performance tuning, soak test, user guide (Markdown + offline HTML; the PDF was not built), developer docs (file format, rule config), release checklist, final installers, SBOM.
 **Acceptance:** performance targets met on the stress project; soak test passes N thousand steps; release checklist completed; usability test results triaged.
 
 ## Items needing owner input (from DECISIONS.md)

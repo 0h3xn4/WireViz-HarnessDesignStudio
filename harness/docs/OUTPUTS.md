@@ -1,4 +1,4 @@
-# Outputs (M5)
+# Outputs
 
 `harness export DIR` (or **Export outputs** in the Harness plans tab) writes everything below into `DIR/outputs/`. The files are produced from the model only: the same model gives the same bytes. Nothing in them is typed in by hand; edit the model and export again.
 
@@ -18,6 +18,7 @@ outputs/
     changelog.csv  revision_report.md   change log and per-harness history with differences between revisions
     drc_findings.csv  drc_report.md
     export.json                    the whole model in one documented JSON file
+    provenance.json                which tool version, library and configuration made the outputs (see Provenance)
     system.xlsx                    BOM, mass and length, matrices, box pinouts, DRC findings
 ```
 
@@ -72,3 +73,5 @@ When at least one interface type has an EMC class, the wire list gets a last col
 ## Requirement IDs on findings
 
 `system/drc_findings.csv` ends with a column `Requirement`: the IDs of the standard requirements the rule serves (empty when the rule serves none). The Problems panel shows the same IDs under the explanation of a finding, and the design rule report prints them after it. The IDs are those of `compliance/requirements` in the tool's repository (`docs/RULES.md` lists them per rule).
+
+Next: [export the outputs (user manual)](user-manual/export-the-outputs.md), [`FILE_FORMAT.md`](FILE_FORMAT.md).

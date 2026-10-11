@@ -6,7 +6,7 @@ ECSS-E-ST-40C 5.11 and Table A-1 (SSMP, SSAR, SRTP); ECSS-Q-ST-80C 6.2.9. The st
 - Security is part of `SPAP.md` section 6.4.
 - Sensitivity: project files may be export-controlled; the tool never writes design data to logs or sends anything over a network (`../../docs/SPEC.md` hard constraint 4 and 1).
 - Measures: `../../docs/SECURITY.md`; tests `tests/test_security.py`, `tests/test_offline.py`, `tests/test_fuzz.py`.
-- Operations and maintenance: dependency versions are pinned and recorded; no automatic update; vulnerabilities in dependencies must be checked by a person with network access at each release (action A-08).
+- Operations and maintenance: dependency versions are pinned and recorded; no automatic update; known vulnerabilities in the shipped dependencies are scanned automatically at each release (`python -m tools.check_vulnerabilities`, step 8a of `../../docs/RELEASE.md`, D-134; the build host needs network access, and a scan that cannot run fails the release check); the output is kept in the release evidence (action A-08).
 
 ## Security analysis report
 Threat list and measures: `../../docs/SECURITY.md` (hostile project files, spreadsheets, injection into outputs, symlinks, oversized files, concurrent writers, supply chain). Method: review of each place the tool reads or writes data, plus fuzzing. Results: five defects found and fixed in M9 and one in the audit; none known open. The analysis has not been reviewed by a security specialist, and no agreed method exists (6.2.9.3 b): action A-08.

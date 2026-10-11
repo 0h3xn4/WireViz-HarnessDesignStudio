@@ -5,10 +5,10 @@ Files to copy and adapt. Get them with `harness templates FOLDER`.
 | File | Use it for | How |
 | --- | --- | --- |
 | `interfaces.csv` | importing interfaces between units | app: **File > Import interfaces** |
-| `approved-parts.csv` | importing your approved parts list (the rows name example Micro-D and RJ45 parts of the starter library) | `harness import-parts DIR approved-parts.csv --approved Approved --pending Review --rejected Rejected` |
+| `approved-parts.csv` | importing your approved parts list (five example rows: Micro-D and RJ45 parts of the starter library and one D-sub part; three are Approved, one is Review, one is Rejected) | `harness import-parts DIR approved-parts.csv --approved Approved --pending Review --rejected Rejected` |
 | `segment-lengths.csv` | importing harness segment lengths (millimetres) | `harness import-lengths DIR segment-lengths.csv --unit mm` |
 | `wheel-connectors.net` | a KiCad netlist for the unit connectors of `RW1` in the `first-steps` project | `harness import-netlist DIR wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run` |
-| `signal-map.csv` | renaming KiCad net names to interface signal names | add `--signal-map signal-map.csv` to `import-netlist` |
+| `signal-map.csv` | renaming KiCad net names to interface signal names, for netlists whose net names differ (`CAN_H` to `CANH`, `TXP` to `TX+`); not needed for `wheel-connectors.net`, whose net names already match | add `--signal-map signal-map.csv` to `import-netlist` |
 | `config-demo-values/` | **learning only**: example engineering values so that wire sizing, voltage drop and test limits show up | copy the four files over `DIR/config/` of a practice project |
 | `ampacity-DEMO-ONLY.csv` | **learning only**: a current-by-gauge table in the format `harness config --ampacity-csv` reads | `harness config DIR --ampacity-csv ampacity-DEMO-ONLY.csv` |
 | `ci/build.sh` | a script that validates, generates, checks and exports a project, with the exit codes | `sh ci/build.sh DIR` |

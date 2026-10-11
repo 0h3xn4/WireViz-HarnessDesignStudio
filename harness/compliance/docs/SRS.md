@@ -1,6 +1,6 @@
 # Software requirements specification (SRS)
 
-DRD: ECSS-E-ST-40C Annex D. Status: draft, not reviewed. The requirements themselves live in `../../docs/REQUIREMENTS.md` (65 numbered requirements, each with its source and verifying tests) and `../../docs/SPEC.md`; this document organises them by the DRD sections and does not repeat them.
+DRD: ECSS-E-ST-40C Annex D. Status: draft, not reviewed. The requirements themselves live in `../../docs/REQUIREMENTS.md` (78 numbered requirements, each with its source and verifying tests) and `../../docs/SPEC.md`; this document organises them by the DRD sections and does not repeat them.
 
 ## 1 to 3. Introduction, references, terms
 `../../docs/SPEC.md` is the owner's statement of needs; `SPAP.md` for the rest.

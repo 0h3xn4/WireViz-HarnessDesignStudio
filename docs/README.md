@@ -1,196 +1,132 @@
-# This repository: WireViz and Harness Design Studio
+# Documentation index
 
-This repository is a fork of **[WireViz](https://github.com/wireviz/WireViz)**. The original WireViz documentation is unchanged and starts [below](#wireviz). In addition, the repository contains a second tool, **Harness Design Studio**, in the folder [`harness/`](../harness/README.md).
+This page lists every guide in the repository, grouped by what you want to do, with one line on each. This repository holds two tools: **Harness Design Studio** (documented in `harness/`) and its upstream, **WireViz** (documented in `docs/`, `tutorial/` and `examples/`).
 
-## Harness Design Studio
+- Not sure where to start? Read the [repository README](../README.md), then [Install](../harness/docs/INSTALL.md) and [Getting started](../harness/docs/GETTING_STARTED.md).
+- Looking for something that was in the old `docs/README.md`? That file was the WireViz README. It is now part of the [repository README](../README.md#original-wireviz-readme), and an untouched copy is in [`upstream/README.upstream.md`](upstream/README.upstream.md).
 
-An offline desktop tool for designing the electrical harnesses of a spacecraft. You describe the units (computer, power unit, reaction wheel, ...) and the interfaces between them; the tool generates the harnesses (connectors, pins, wires, each with a reason), checks them against design rules, writes the drawings and lists, and keeps a change-controlled record of every release. It works offline, produces byte-identical files for the same design, and never invents engineering values: until you supply them, results say *pending* or *not checked*. It runs on Ubuntu 24.04 or newer (x86-64). Version 0.1.0.
+## Contents
 
-| You want to | Go to |
+- [Getting started](#getting-started)
+- [User guides](#user-guides)
+- [Reference](#reference)
+- [Examples](#examples)
+- [Troubleshooting and help](#troubleshooting-and-help)
+- [Developer docs](#developer-docs)
+- [Project records](#project-records)
+- [Upstream WireViz documentation](#upstream-wireviz-documentation)
+- [This audit](#this-audit)
+
+## Getting started
+
+| Page | What it gives you |
 | --- | --- |
-| try it in five minutes | [`harness/README.md`](../harness/README.md#try-it-in-five-minutes) |
-| install it | [`harness/docs/INSTALL.md`](../harness/docs/INSTALL.md) |
-| learn it, step by step | [`harness/docs/LEARNING_PATH.md`](../harness/docs/LEARNING_PATH.md) |
-| see all its documents | [`harness/docs/README.md`](../harness/docs/README.md) |
-| get the newest release | the [Releases page](../../../releases) of this repository |
+| [Repository README](../README.md) | What the tool is, a quick start of eight commands, and the way to every other page |
+| [Tool README](../harness/README.md) | The same for the `harness/` folder, with the status of the tool |
+| [Install](../harness/docs/INSTALL.md) | Check your system, install the `.deb`, the `.tar.gz` or run from source, check that it works |
+| [Getting started](../harness/docs/GETTING_STARTED.md) | A guided tour in 45 minutes with the real output of every command: example project, generate, read problems, export, fill in values, release |
+| [Learning path](../harness/docs/LEARNING_PATH.md) | The whole route in nine steps, each with an example and a "done when" |
+| [Concepts](../harness/docs/CONCEPTS.md) | The words and the mental model, in ten minutes |
+| [Glossary](../harness/docs/GLOSSARY.md) | Every term and abbreviation used in these pages |
 
-### Created mainly by an AI
+## User guides
 
-**Harness Design Studio was written mainly by an AI**: Claude, Anthropic's AI assistant, used through Claude Code. Nearly all of its code, tests and documentation were produced by the AI. The repository owner set the requirements, answered the design questions, approved the decisions and the releases, and is named as the person who did so in the records (`harness/compliance/SIGNOFF.md`). No other person has reviewed it independently: that review was waived by the owner and is recorded as a deviation (`harness/compliance/DEVIATIONS.md`). It makes no claim of compliance with any standard. Treat it as an AI-built tool and check its results before relying on them. The limits are listed in the [status section of the tool's README](../harness/README.md#status).
+| Page | What it gives you |
+| --- | --- |
+| [User manual](../harness/docs/user-manual/README.md) | One page per task: draw the design, generate harnesses, read and fix problems, fill in engineering values, import data, import KiCad pinouts, export outputs, set wire colours, release a harness, use Git and CI |
+| [How-to index](../harness/docs/HOWTO.md) | The old list of recipes, now pointing at the user manual |
+| [User guide](../harness/docs/guide/USER_GUIDE.md) | The guide that opens with **F1** in the app: screen, modes, menus, shortcuts |
+| [Tips](../harness/docs/TIPS.md) | Shortcuts, power-user workflows, and what can and cannot be exchanged with other tools |
+| [Cheat sheet](../harness/docs/CHEATSHEET.md) | One page: the loop, the data imports, release, shortcuts, the folder layout |
 
-### How it relates to WireViz
+## Reference
 
-- It lives in this fork of WireViz and has the same goal at its core: describing wiring harnesses as text files kept in version control, and turning them into drawings and bills of materials.
-- It is a **separate codebase**. It was written clean-room: no WireViz source code is copied into it or imported by it (decision D-01 in [`harness/docs/DECISIONS.md`](../harness/docs/DECISIONS.md)), because WireViz is released under the GPL-3.0. The upstream WireViz code, documentation, examples and tutorial in this repository are untouched by it.
-- WireViz is an **export target**: Harness Design Studio can write each harness as WireViz-style YAML (best effort; not validated against the WireViz program, see [`harness/docs/OUTPUTS.md`](../harness/docs/OUTPUTS.md)).
-
----
-
-# WireViz
-
-
-[![PyPI - Version](https://img.shields.io/pypi/v/wireviz.svg?colorB=blue)](https://pypi.org/project/wireviz/)
-[![PyPI - Python Version](https://img.shields.io/pypi/pyversions/wireviz.svg?)](https://pypi.org/project/wireviz/)
-[![PyPI - Downloads](https://img.shields.io/pypi/dm/wireviz)](https://pypi.org/project/wireviz/)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-
-## Summary
-
-WireViz is a tool for easily documenting cables, wiring harnesses and connector pinouts. It takes plain text, YAML-formatted files as input and produces beautiful graphical output (SVG, PNG, ...) thanks to [GraphViz](https://www.graphviz.org/). It handles automatic BOM (Bill of Materials) creation and has a lot of extra features.
-
-
-## Features
-
-* WireViz input files are fully text based
-  * No special editor required
-  * Human readable
-  * Easy version control
-  * YAML syntax
-  * UTF-8 input and output files for special character support
-* Understands and uses color abbreviations as per [IEC 60757](https://en.wikipedia.org/wiki/Electronic_color_code#Color_band_system) (black=BK, red=RD, ...)
-  <!-- * Optionally outputs colors as abbreviation (e.g. 'YE'), full name (e.g. 'yellow') or hex value (e.g. '#ffff00'), with choice of UPPER or lower case (#158) -->
-* Auto-generates standard wire color schemes and allows custom ones if needed
-  * [DIN 47100](https://en.wikipedia.org/wiki/DIN_47100) (WT/BN/GN/YE/GY/PK/BU/RD/BK/VT/...)
-  * [IEC 60757](https://en.wikipedia.org/wiki/Electronic_color_code#Color_band_system)   (BN/RD/OR/YE/GN/BU/VT/GY/WT/BK/...)
-  * [25 Pair Color Code](https://en.wikipedia.org/wiki/25-pair_color_code#Color_coding) (BUWH/WHBU/OGWH/WHOG/GNWH/WHGN/BNWH/...)
-  * [TIA/EIA 568 A/B](https://en.wikipedia.org/wiki/TIA/EIA-568#Wiring)  (Subset of 25-Pair, used in CAT-5/6/...)
-* Understands wire gauge in mm² or AWG
-  * Optionally auto-calculates equivalent gauge between mm² and AWG
-* Is suitable for both very simple cables, and more complex harnesses.
-* Allows for easy-autorouting for 1-to-1 wiring
-* Generates BOM (Bill of Materials)
-
-_Note_: WireViz is not designed to represent the complete wiring of a system. Its main aim is to document the construction of individual wires and harnesses.
-
+| Page | What it says |
+| --- | --- |
+| [Command line](../harness/docs/CLI.md) | Every `harness` command and option (generated from the program) |
+| [Design rules](../harness/docs/RULES.md) | Every rule: what, why, how to fix, severity (generated) |
+| [Configuration](../harness/docs/CONFIG.md) | Every key of `config/*.json` |
+| [Placeholders](../harness/docs/PLACEHOLDERS.md) | Which engineering values are still placeholders and who owns them |
+| [Imports](../harness/docs/IMPORTS.md) | Importing interfaces, parts, lengths and engineering values |
+| [KiCad](../harness/docs/KICAD.md) | Taking unit connector pinouts from a KiCad netlist |
+| [Outputs](../harness/docs/OUTPUTS.md) | Every output file and its limits |
+| [File format](../harness/docs/FILE_FORMAT.md) | The project folder format |
+| [Templates](../harness/src/harness_design_studio/resources/examples/templates/README.md) | What each template file shipped with the tool is for |
+| [Changelog (tool)](../harness/CHANGELOG.md) | What changed, release by release; the [root changelog](../CHANGELOG.md) explains how it relates to WireViz's |
 
 ## Examples
 
-### Demo 01
+| Page | What it gives you |
+| --- | --- |
+| [Examples](../harness/docs/examples/README.md) | All five example projects: what each shows, how to create and run it, what you should see |
+| [The flatsat tour](../harness/docs/FLATSAT_EXAMPLE.md) | A walk through the biggest example: a bench with ground equipment |
+| [WireViz examples](../examples/readme.md) and [tutorial](../tutorial/readme.md) | These belong to WireViz, not to Harness Design Studio |
 
-[WireViz input file](../examples/demo01.yml):
+## Troubleshooting and help
 
-```yaml
-connectors:
-  X1:
-    type: D-Sub
-    subtype: female
-    pinlabels: [DCD, RX, TX, DTR, GND, DSR, RTS, CTS, RI]
-  X2:
-    type: Molex KK 254
-    subtype: female
-    pinlabels: [GND, RX, TX]
+| Page | What it gives you |
+| --- | --- |
+| [Troubleshooting](../harness/docs/TROUBLESHOOTING.md) | Real error messages, why they happen and how to fix them, grouped by when they happen |
+| [FAQ](../harness/docs/FAQ.md) | Questions that are not errors |
+| [Problem reporting](../harness/compliance/docs/PROBLEM_REPORTING.md) | How to report a problem with the tool |
 
-cables:
-  W1:
-    gauge: 0.25 mm2
-    length: 0.2
-    color_code: DIN
-    wirecount: 3
-    shield: true
+## Developer docs
 
-connections:
-  -
-    - X1: [5,2,3]
-    - W1: [1,2,3]
-    - X2: [1,3,2]
-  -
-    - X1: 5
-    - W1: s
-```
+| Page | What it gives you |
+| --- | --- |
+| [Contributing](../CONTRIBUTING.md) | How to propose a change; the rule never to copy WireViz code into the tool |
+| [Developer docs](../harness/docs/developer/README.md) | Setup and tests, architecture overview, keeping the documents correct, releasing, the tool scripts, refreshing the upstream README |
+| [Architecture](../harness/docs/ARCHITECTURE.md) | Layers and the real source layout |
+| [Decisions](../harness/docs/DECISIONS.md) | Every decision and why |
+| [Security](../harness/docs/SECURITY.md) | The security review and what the tool does to protect files |
+| [Release procedure](../harness/docs/RELEASE.md) | The checklist for releasing the tool (not the same as releasing a harness) |
+| [Assistant instructions](../harness/CLAUDE.md) | Commands, layout and conventions, written for the AI assistant that builds the tool |
 
-Output file:
+## Project records
 
-![Sample output diagram](../examples/demo01.png)
+These explain how the tool was specified and checked. You do not need them to use it.
 
-[Bill of Materials](../examples/demo01.bom.tsv) (auto-generated)
+| Page | What it is |
+| --- | --- |
+| [Specification](../harness/docs/SPEC.md), [Requirements](../harness/docs/REQUIREMENTS.md) | What the tool must do |
+| [UX design record](../harness/docs/UX.md), [UX guidelines review](../harness/docs/UX_GUIDELINES_REVIEW.md) | How it should feel, and the owner's guidelines point by point |
+| [Plan](../harness/docs/PLAN.md), [Milestone notes](../harness/docs/demos/README.md) | The milestone plan and the note from each milestone |
+| [Open decisions](../harness/docs/OPEN_DECISIONS.md) | What still needs the owner |
+| [October audit](../harness/docs/AUDIT.md) | The audit of 2026-10-07 |
+| [Usability kit](../harness/docs/usability/README.md) | Test material for usability sessions (waived by the owner) |
+| [Compliance records](../harness/compliance/README.md) | The ECSS/ESCC self-assessment, deviations and waivers, sign-off, risk register. It makes no claim of compliance. |
 
-### Demo 02
+## Upstream WireViz documentation
 
-![](../examples/demo02.png)
+These belong to [WireViz](https://github.com/wireviz/WireViz) and are kept as upstream wrote them.
 
-[Source](../examples/demo02.yml) - [Bill of Materials](../examples/demo02.bom.tsv)
+| Page | What it is |
+| --- | --- |
+| [Original README](upstream/README.upstream.md) | Untouched copy (also embedded in the [repository README](../README.md#original-wireviz-readme)) |
+| [Syntax](syntax.md) | The WireViz input file syntax |
+| [Advanced image usage](advanced_image_usage.md) | Images in connectors and cables |
+| [Build script](buildscript.md) | Rebuilding the examples and the tutorial |
+| [Contributing](CONTRIBUTING.md) | How to contribute to WireViz |
+| [Changelog](CHANGELOG.md) | WireViz's changelog |
+| [Tutorial](../tutorial/readme.md), [Examples](../examples/readme.md) | Sample files and the example gallery |
 
-### Syntax, tutorial and example gallery
+## This audit
 
-Read the [syntax description](syntax.md) to learn about WireViz' features and how to use them.
+[DOCS_AUDIT.md](DOCS_AUDIT.md) records what was wrong with the documentation, what was changed, and what was left for the owner.
 
-See the [tutorial page](../tutorial/readme.md) for sample code, as well as the [example gallery](../examples/readme.md) to see more of what WireViz can do.
+### Where is the page for …?
 
+| You looked for | It is |
+| --- | --- |
+| `getting-started.md` | [`harness/docs/GETTING_STARTED.md`](../harness/docs/GETTING_STARTED.md) |
+| `faq.md` | [`harness/docs/FAQ.md`](../harness/docs/FAQ.md) |
+| `troubleshooting.md` | [`harness/docs/TROUBLESHOOTING.md`](../harness/docs/TROUBLESHOOTING.md) |
+| `glossary.md` | [`harness/docs/GLOSSARY.md`](../harness/docs/GLOSSARY.md) |
+| `tips.md` | [`harness/docs/TIPS.md`](../harness/docs/TIPS.md) |
+| `user-manual/` | [`harness/docs/user-manual/`](../harness/docs/user-manual/README.md) |
+| `examples/` | [`harness/docs/examples/`](../harness/docs/examples/README.md) |
+| `developer/` | [`harness/docs/developer/`](../harness/docs/developer/README.md) |
 
-## Usage
+The tool's pages use upper-case names (`FAQ.md`) in `harness/docs/` because that is the style they already had and because tests check those names.
 
-### Installation
-
-#### Requirements
-
-WireViz requires Python 3.7 or later.
-
-WireWiz requires GraphViz to be installed in order to work. See the [GraphViz download page](https://graphviz.org/download/) for OS-specific instructions.
-
-_Note_: Ubuntu 18.04 LTS users in particular may need to separately install Python 3.7 or above, as that comes with Python 3.6 as the included system Python install.
-
-#### Installing the latest release
-
-The latest WireViz release can be downloaded from [PyPI](https://pypi.org/project/wireviz/) with the following command:
-```
-pip3 install wireviz
-```
-
-#### Installing the development version
-
-Access to the current state of the development branch can be gained by cloning the repo and installing manually:
-
-```
-git clone <repo url>
-cd <working copy>
-git checkout dev
-pip3 install -e .
-```
-
-If you would like to contribute to this project, make sure you read the [contribution guidelines](CONTRIBUTING.md)!
-
-### How to run
-
-```
-$ wireviz ~/path/to/file/mywire.yml
-```
-
-Depending on the options specified, this will output some or all of the following files:
-
-```
-mywire.gv         GraphViz output
-mywire.svg        Wiring diagram as vector image
-mywire.png        Wiring diagram as raster image
-mywire.bom.tsv    BOM (bill of materials) as tab-separated text file
-mywire.html       HTML page with wiring diagram and BOM embedded
-```
-
-Wildcards in the file path are also supported to process multiple files at once, e.g.:
-```
-$ wireviz ~/path/to/files/*.yml
-```
-
-To see how to specify the output formats, as well as additional options, run:
-
-```
-$ wireviz --help
-```
-
-
-### (Re-)Building the example projects
-
-Please see the [documentation](buildscript.md) of the `build_examples.py` script for info on building the demos, examples and tutorial.
-
-## Changelog
-
-See [CHANGELOG.md](CHANGELOG.md)
-
-
-## Status
-
-This is very much a work in progress. Source code, API, syntax and functionality may change wildly at any time.
-
-
-## License
-
-[GPL-3.0](../LICENSE)
+Next: [Install](../harness/docs/INSTALL.md).

@@ -20,7 +20,7 @@ The tool runs offline on an engineer's workstation, reads project folders (which
 | Markup injection in SVG, PDF, YAML, Markdown | SVG text is XML-escaped (tested well-formed with `<script>` in names); PDF strings are escaped; YAML scalars are JSON-quoted. Markdown reports contain user text as written (a reader may see backticks or link syntax; nothing is executed). |
 | A manifest or journal that lists paths outside the output folder, or is damaged | Only files listed in the previous manifest are deleted, and only if the path is relative, contains no `..` and lies behind no link. Damaged manifests, journals and outputs are findings (`out_unreadable`, ignored journal), not crashes (fuzzed). |
 | Two instances overwriting each other, or an interrupted save | Project lock, atomic writes with backups, autosave journal inside the project folder (existing since M1). |
-| Supply chain | Pinned dependencies, CycloneDX SBOM and licence report with every release and release candidate (9 runtime packages and their licence texts, none rejected), reproducible wheel check. |
+| Supply chain | Pinned dependencies, CycloneDX SBOM and licence report with every release and release candidate (the runtime packages and their licence texts, none rejected; the packages and their number are in the release report, [`release_0.1.0_report.md`](../compliance/evidence/release_0.1.0_report.md)), reproducible wheel check. |
 | Design data in logs or messages | Validation messages name fields, not values (export-controlled data); the tool writes no log of design content. |
 
 ## Accepted risks and limits
