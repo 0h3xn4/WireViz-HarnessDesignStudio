@@ -17,7 +17,7 @@ This page shows how to supply the numbers the tool does not invent (derating fac
 
 ## Before you start
 
-- The tool contains **no engineering numbers from any standard**. Your programme decides them. Until you enter them they are **placeholders**: wire gauges stay *pending*, and checks that need a number say *not checked* instead of passing silently ([glossary](../GLOSSARY.md)).
+- Out of the box the tool holds **no engineering numbers**. Your programme decides them. (Optional profiles can fill in values from a standard; see [the end of this page](#values-from-a-standard-profiles). They still need an engineer's review.) Until you enter them they are **placeholders**: wire gauges stay *pending*, and checks that need a number say *not checked* instead of passing silently ([glossary](../GLOSSARY.md)).
 - Who supplies the numbers: an engineer on your programme, for example from your programme's derating standard (*derating* means using a wire or contact below its maximum for safety; see the [glossary](../GLOSSARY.md)). This page does not tell you which numbers to use.
 - You have a generated project, for example `harness new wheel-link --template first-steps` then `harness generate wheel-link`.
 
@@ -60,12 +60,14 @@ Every file in the project's `config/` folder has the same three keys: `name`, `p
 }
 ```
 
-`null` means "not decided". If you write a key at the top level, outside `values`, the file is refused. This is what you see:
+`null` means "not decided". If you write a key at the top level, outside `values`, the file is refused. This is what `harness validate` prints when `"bundle_derating": 0.8` stands next to `values`:
 
 ```
-ERROR   quarantined: A configuration could not be loaded and was set aside: name: Field required; placeholder: Field required; values: Field required (+1 more) [config/derating.json]
+ERROR   quarantined: A configuration could not be loaded and was set aside: bundle_derating: Extra inputs are not permitted [config/derating.json]
 INFO    config_defaulted: Configuration 'derating' is missing or unreadable; the built-in placeholder is used. [config/derating.json]
 ```
+
+If the file holds only `{"bundle_derating": 0.8}`, the first line reads `... name: Field required; placeholder: Field required; values: Field required (+1 more) [config/derating.json]` instead.
 
 The built-in placeholder replaces your file, so your values do not count. Put them inside `values`.
 
@@ -139,7 +141,7 @@ harness export wheel-link
 38 files written to wheel-link/outputs (model 57f544aa1797).
 ```
 
-(The model hash depends on the project; yours may differ.) The first rows of `outputs/harnesses/W002/wirelist.csv` then read:
+(The model hash depends on the project; yours may differ.) After two header lines, the first two wires in `outputs/harnesses/W002/wirelist.csv` read:
 
 ```
 W002-001,PWR,IF-001,W002-P1,1,W002-P2,1,22,EX-WIRE-SINGLE,,1,W002-S1,

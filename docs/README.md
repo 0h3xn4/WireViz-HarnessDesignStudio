@@ -21,7 +21,7 @@ This page lists every guide in the repository, grouped by what you want to do, w
 
 | Page | What it gives you |
 | --- | --- |
-| [Repository README](../README.md) | What the tool is, a quick start of seven commands, and the way to every other page |
+| [Repository README](../README.md) | What the tool is, a quick start of eight commands, and the way to every other page |
 | [Tool README](../harness/README.md) | The same for the `harness/` folder, with the status of the tool |
 | [Install](../harness/docs/INSTALL.md) | Check your system, install the `.deb`, the `.tar.gz` or run from source, check that it works |
 | [Getting started](../harness/docs/GETTING_STARTED.md) | A guided tour in 45 minutes with the real output of every command: example project, generate, read problems, export, fill in values, release |

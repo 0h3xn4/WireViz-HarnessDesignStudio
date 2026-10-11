@@ -20,7 +20,7 @@ This page shows how to turn your units and links into harnesses (connectors, pin
 
 ## 1. Generate
 
-**In the app**
+**In the app** (GUI, not run)
 
 1. Press **Generate harnesses** in the toolbar.
 2. A window shows a **preview** of what would be added, changed and removed. Nothing changes until you press **Apply**. (**Cancel** leaves the project as it was.)
@@ -98,7 +98,7 @@ By default one harness is made for each pair of unit connectors. The setting is 
 | `per_unit_pair` | pair of units |
 | `per_zone_pair` | pair of zones (links between the same two lanes) |
 
-With the `minimal-satellite` example (11 links), the default makes 11 harnesses. After changing `mode` to `per_unit_pair` and running `harness generate` again, the report is `10 added, 0 changed, 0 unchanged, 11 removed`: ten harnesses replace the eleven. (`minimal-satellite` is newer than the 0.1.0 packages; see the [changelog](../../CHANGELOG.md#unreleased-after-010).)
+With the `minimal-satellite` example (11 links), the default makes 11 harnesses. After changing `mode` to `per_unit_pair` and running `harness generate` again, the report is `10 added, 0 changed, 0 unchanged, 11 removed`: ten harnesses replace the eleven. The new ones get new IDs (`W012` to `W021`), and the files of the old ones stay in `physical/harnesses/` with the ending `.json.bak`. (`minimal-satellite` is newer than the 0.1.0 packages; see the [changelog](../../CHANGELOG.md#unreleased-after-010).)
 
 Whatever the mode:
 
@@ -116,7 +116,7 @@ Generation may change a wire or a pin you edited. To keep a value, mark it as lo
 - In a pin's entry, `"locked": true` keeps the pin where it is. The report counts them: "0 locked pin(s) kept".
 - The app does not have a button to lock a wire or a pin. Its wire list only shows a **Locked** column.
 
-This was checked on the command line: a wire set to gauge 20 with `"locked": true` kept 20 after `harness generate`, and one without the lock went back to 22. Edit the file while the project is not open in the app. If it is open, the app reports "Project changed on disk" and offers to reload.
+This was checked on the command line with `first-steps`: a wire set to gauge 20 and colour `red` with `"locked": true` kept both after `harness generate`, and a wire set to gauge 20 without the lock went back to the tool's own value (here no gauge, because the derating values are still placeholders). Edit the file while the project is not open in the app. If it is open, the app reports "Project changed on disk" and offers to reload.
 
 ## Common mistakes
 

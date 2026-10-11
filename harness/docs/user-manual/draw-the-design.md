@@ -20,7 +20,7 @@ This page shows how to start a project and draw its units and the interfaces bet
 - You know what a **unit** (a box with connectors on it, such as the on-board computer) and an **interface** (one connection between two units, such as a data link) are. If not, read [`CONCEPTS.md`](../CONCEPTS.md) first (ten minutes) or look the word up in the [glossary](../GLOSSARY.md).
 - You do **not** draw wires, pins or connectors. The tool makes them from your units and interfaces ([generate harnesses](generate-harnesses.md)).
 
-Steps in the app are described from the program's own texts and were driven in a test run without a screen. They have not been checked on screen.
+Steps in the app are described from the program's own texts and code. They have not been run on a screen (GUI, not run).
 
 ## 1. Start a project
 
@@ -57,7 +57,7 @@ The app also has **File > Open the sample project**. That is example data. Save 
 
 ## 2. Add units
 
-1. In the palette on the left, under **Add a unit**, press one of the buttons: **＋ Computer**, **＋ Power unit**, **＋ Actuator (wheel)**, **＋ Sensor (star tracker)**, **＋ Payload**, **＋ Transceiver**, **＋ Pyro unit**, **＋ Computer (many interfaces)**, **＋ Power distribution unit**, **＋ Battery**, **＋ Solar array**, **＋ Sun sensor**, **＋ Magnetorquer** or **＋ Heater panel**. **Edit > Add unit** has the same list.
+1. In the palette on the left, under **Add a unit**, press one of the buttons: **＋ Computer**, **＋ Power unit**, **＋ Actuator (wheel)**, **＋ Sensor (star tracker)**, **＋ Payload**, **＋ Transceiver**, **＋ Pyro unit**, **＋ Computer (many interfaces)**, **＋ Power distribution unit**, **＋ Battery**, **＋ Solar array**, **＋ Sun sensor**, **＋ Magnetorquer** or **＋ Heater panel**. Long names are shortened on the button; the tooltip has the full name. **Edit > Add unit** has the same list.
 2. The unit appears at once. No window opens. The ID and the name are given automatically, for example `PCDU1` and "Power unit 1", `OBC1` and "Computer 1", `RW1` and "Actuator (wheel) 1".
 3. To change the ID or the name, select the unit and edit **ID** or **Name** in **Properties** on the right.
 4. Drag the unit to move it. The lane it sits in is its **zone** (a panel or compartment of the spacecraft). A blank project has two lanes, `panel-A` and `panel-B`. **Edit > Add zone…** adds a lane: type a zone name.
@@ -69,7 +69,7 @@ Each unit comes with connectors. You do not need to look at them in Guided mode.
 1. Under **Connect with** in the palette, press an interface type, for example **RS-422** or **Primary power**. (**Edit > Connect with** has the same list; the key **C** switches the connect tool on.)
 2. Click the first unit, then the second unit. Units that cannot take that type are greyed out, with the reason next to them.
 3. A link is drawn. It gets an ID (`IF-001`) and a name such as "Primary power PCDU1 to RW1". The tool picks the connectors and marks them **auto-filled** until you confirm them (see [read and fix problems](read-and-fix-problems.md)).
-4. The connect tool stays on, so you can draw more links. Press **Esc**, or the **Select** button in the toolbar, to stop.
+4. The connect tool stays on, so you can draw more links. Press **Esc**, or the **Select** button above the diagram, to stop.
 
 To make a backup chain, select a unit and press **Create redundant copy** (in **Properties** or in the **Edit** menu). The tool adds the twin unit (`PCDU1-R`) and copies its links to it. See [redundancy and zones](redundancy-and-zones.md).
 

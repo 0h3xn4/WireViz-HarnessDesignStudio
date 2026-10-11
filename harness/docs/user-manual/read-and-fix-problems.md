@@ -28,11 +28,11 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 ## 2. In the app
 
 1. Open the **Problems** tab at the bottom. The tab title shows how many open errors and warnings there are, for example "Problems (10)". While the design rules run, the status line says "Design rules: checking…" and then "Design rules: all 33 rules checked."
-2. Each finding is a card. It says what is wrong and why it matters. Many cards have a button that fixes it in one click. The cards have these buttons:
+2. Each finding is a card. (GUI, not run: described from the program's texts and code.) It says what is wrong and why it matters. Many cards have a button that fixes it in one click. The cards have these buttons:
    - **Show** jumps to the unit, link or harness it is about.
    - A fix button, named after the fix, for example **Choose connectors automatically**, **Confirm connectors** or **Connect to a redundant copy of OBC1**.
    - **Waive…** (warnings only).
-3. Three or more findings of the same kind are shown as one card with a list.
+3. Three or more errors or notes of the same rule about the same object are shown as one card with a list. (Warnings always get a card each, because each one can be waived on its own.)
 4. The **To-do** tab lists what is left to do, for example "2 auto-filled connector assignments to review". It is not the same list as the problems.
 5. The Properties panel of a link has **Confirm auto-filled connectors**. Press it once you have looked at the connectors the tool chose.
 
@@ -53,7 +53,7 @@ Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.
 ```
 
-After that line come the lists "Warnings", "Not checked / note" and, if there are any, "Errors". Each item has a short title, the rule name in brackets, why it matters, and how to fix it. Items that serve a requirement of a standard name it ("Requirement: ESCC3901-4.4").
+After that line come the lists "Errors" (only if there are any), "Warnings" and "Not checked / note". Each item has a short title, the rule name in brackets, why it matters, and how to fix it. Items that serve a requirement of a standard name it ("Requirement: ESCC3901-4.4").
 
 The exit code is 0 when there are no unwaived errors and 1 when there is at least one. Warnings and notes do not change it.
 
@@ -111,7 +111,7 @@ The real way to clear a part warning is to import the approved parts list ([impo
 
 ## What the notes mean
 
-A note like "Current and derating limits were not checked: the derating values are still placeholders" means the rule could not run because a number nobody has entered is missing. The tool says so instead of passing silently. Clear these notes by filling in the values ([fill in the engineering values](fill-in-engineering-values.md)). Do not waive them.
+A note like "Current and derating limits were not checked: the derating values are still placeholders" means the rule could not run because a number nobody has entered is missing. The tool says so instead of passing silently. Clear these notes by filling in the values ([fill in the engineering values](fill-in-engineering-values.md)). A note cannot be waived.
 
 ## Common mistakes
 

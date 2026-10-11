@@ -18,7 +18,7 @@ This page shows how to give each signal (power, return, CAN high, ...) a wire co
 5. Press **Generate harnesses** and **Apply**. The wires take the colours now, and the **Colour** column of the wire list in the **Harness plans** tab shows them.
 6. Press **Export outputs** to get the drawings with the colours ([export the outputs](export-the-outputs.md)).
 
-This was driven in a test run without a screen for the menu name and the texts above. The dialog has not been looked at on screen.
+GUI, not run: the menu name and the texts above are taken from the program's code. The dialog has not been looked at on screen.
 
 ## 2. In the project file (also for scripts)
 

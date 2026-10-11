@@ -32,7 +32,15 @@ git commit -m "Start from first-steps"
 
 The tool wrote a `.gitignore` inside the project (`design/.gitignore`). It ignores backup files (`*.bak`), lock files, temporary files and the recovery folders. It does not ignore `outputs/`. Decide for yourself whether the exports belong in the repository; the folder can always be made again. To leave them out, add `outputs/` to your own `.gitignore`.
 
-Work as usual, then commit. A second generation changes nothing:
+Work as usual, then commit. Generate once and commit the result:
+
+```
+harness generate design
+git add -A
+git commit -m "Generate harnesses"
+```
+
+A second generation changes nothing:
 
 ```
 harness generate design
@@ -55,7 +63,7 @@ git diff
 +    "service_loop_m": 0.1,
 ```
 
-Running `harness generate design` then also changes `design/generated/generation.json`, because the model changed.
+Running `harness generate design` then also changes `design/generated/generation.json`, because the model changed. Commit both before you go on.
 
 ## 2. After a merge
 
@@ -107,14 +115,16 @@ sh my-templates/ci/build.sh design
 
 ```
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 2 interfaces, 9 connectors, 0 harnesses: 0 error(s), 0 warning(s).
-2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
+3 units, 2 interfaces, 13 connectors, 2 harnesses: 0 error(s), 0 warning(s).
+0 added, 0 changed, 2 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
-38 files written to design/outputs (model 91531b45fd2c).
+38 files written to design/outputs (model 3b3dfd15d7e6).
 2 interfaces and 6 wires checked: 0 error(s)
 build ok: design/outputs
 ```
+
+(This is the output for the project above, which was generated before. On a project that was never generated, the connectors line reads `9 connectors, 0 harnesses` and the next line reads `2 added`. The model hash differs from project to project.)
 
 The script runs `check`, `generate`, `verify`, `drc` (it stops if there are unwaived errors), `export` and `verify --outputs`. It ends with `build ok`.
 
@@ -122,7 +132,7 @@ Importing interfaces is not part of a script: it works in the app only ([import 
 
 ## 5. Run it on a build server
 
-`my-templates/ci/github-actions.yml` is a GitHub Actions workflow that does the same on every push. Copy it to `.github/workflows/` in your design repository. It expects the `.deb` package of the tool in the repository (under `tools/`), installs it, runs the checks and keeps `design/outputs` as a download. Change the folder name `design` and the package path to match your repository. The build server needs no network access to the tool itself, because the tool never uses the network.
+`my-templates/ci/github-actions.yml` is a GitHub Actions workflow that does the same on every push, except that it leaves out the `harness drc` step. Copy it to `.github/workflows/` in your design repository. It expects the `.deb` package of the tool in the repository (under `tools/`), installs it, runs the checks and keeps `design/outputs` as a download. Change the folder name `design` and the package path to match your repository. The build server needs no network access to the tool itself, because the tool never uses the network.
 
 This file was not run on a build server for this page. The `ci/build.sh` script was run (above).
 

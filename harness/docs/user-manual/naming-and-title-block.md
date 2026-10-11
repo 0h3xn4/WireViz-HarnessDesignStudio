@@ -40,7 +40,7 @@ Add `shield`, `branch` or `segment` to the file if you want to change them. The 
 Example. Set `"harness": "HN-{n:02d}"` and generate:
 
 ```
-harness generate design
+harness generate wheel-link
 ```
 
 The harnesses are now `HN-01` and `HN-02` (folders `outputs/harnesses/HN-01/` and so on), and their wires `HN-01-001`.

@@ -30,7 +30,7 @@ harness templates my-templates
 
 ## Interfaces from a table (app only)
 
-Importing interfaces works in the app. There is no command for it.
+Importing interfaces works in the app. There is no command for it. (GUI, not run: the steps are described from the program's code. The column names and messages are the program's.)
 
 1. Open the project. Choose **File > Import interfaces…** (Ctrl+Shift+I), or press **Import interfaces from CSV / XLSX…** under **Bring in data** in the palette.
 2. Press **Open file…** and pick a `.csv` or `.xlsx` file. You can also paste CSV text into the box. Try `my-templates/interfaces.csv`:
@@ -74,6 +74,8 @@ harness import-parts wheel-link my-templates/approved-parts.csv --approved Appro
 ```
 Imported 5 part(s). Project parts library (version 0), source: approved-parts.csv (sha256 b3e2067afea8), date: not recorded.
 ```
+
+(That is the last line. The five `row ...: OK` lines come before it.)
 
 - Columns are matched by heading: part number, manufacturer, description, category, specification, approval status, pin count, mass, mass per metre, mating part.
 - Every row needs a category: a `category` column, or `--category connector` for the whole file.

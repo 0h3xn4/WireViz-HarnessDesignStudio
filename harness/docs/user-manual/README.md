@@ -50,7 +50,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 ## How to read the pages
 
 - **Commands** use a practice project called `wheel-link`, made with `harness new wheel-link --template first-steps`. Put your own folder where you see `wheel-link` or `DIR`. Output blocks are real output of the tool. Numbers such as the model hash (`8a25f0c99a86`) depend on the project and the tool version; yours can differ.
-- **App steps** (menus, buttons, tabs) use the names that the program shows. The app cannot be run in the place where this manual was written. Its screens were driven in a test without a screen and the texts were taken from the program. Each page says so; nothing was looked at on a real screen.
+- **App steps** (menus, buttons, tabs) use the names that the program shows. The app was not run on a screen when this manual was written. The labels and the behaviour were taken from the program's code, not from looking at it. Pages with app steps say "GUI, not run" where it matters.
 - **Newer than the 0.1.0 packages.** Some things are on the `master` branch only: the examples `minimal-satellite` and `flatsat`, the wiring-diagram drawing with wire colours, *Edit > Wire colours...* and `design-worksheet.md`. They are not in the 0.1.0 `.deb` and `.tar.gz`. `harness --version` prints `0.1.0` on both. `harness new --list` shows three examples on the packages and five on a build from `master`. The [changelog](../../CHANGELOG.md#unreleased-after-010) lists what is new. Pages that use these say so.
 - **No claim of compliance.** The tool was created mainly by an AI and has not been reviewed independently. Results rest on placeholders and example parts until you supply your own values. See [the status](../../README.md#status).
 

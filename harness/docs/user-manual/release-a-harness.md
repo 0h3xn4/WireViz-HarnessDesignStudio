@@ -87,7 +87,7 @@ Outputs re-exported with the released status (38 files).
 5. Press **Release**. The button stays greyed out until nothing blocks the release and the fields are complete.
 6. The app says "W002 released. Export the outputs again so the drawings show the released status."
 
-The app steps were driven in a test run without a screen (the window and its fields exist as described, and the button stays off while a wire has no gauge). They have not been looked at on screen.
+GUI, not run: the app steps are described from the program's texts and code. They have not been looked at on screen.
 
 ## 4. After the release
 

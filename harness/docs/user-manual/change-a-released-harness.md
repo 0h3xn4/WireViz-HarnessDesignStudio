@@ -31,13 +31,13 @@ harness revise wheel-link W002 --by "A. Engineer" --comment "Add wire colours fo
 New revision B of W002: done.
 ```
 
-**In the app**: select `W002` in **Harness plans**, press **New revision…**, type your name and a comment (at least 10 characters), and press **Start new revision**. The app says "New revision of W002 started; it can be edited again."
+**In the app** (GUI, not run): select `W002` in **Harness plans**, press **New revision…**, type your name and a comment (at least 10 characters), and press **Start new revision**. The app says "New revision of W002 started; it can be edited again."
 
 Revision B is a `draft` that you can edit. Revision A and its baseline are kept.
 
 ## 2. Make the change
 
-Edit the design as usual. As an example, give the two power signals colours in `config/generation.json` (or use **Edit > Wire colours...**; see [set wire colours](set-wire-colours.md)), then generate:
+Edit the design as usual. As an example, give the two power signals colours in `config/generation.json` (or use **Edit > Wire colours...**; see [set wire colours](set-wire-colours.md)), then generate. (Wire colours are **newer than the 0.1.0 packages**; they are on the `master` branch only. With a 0.1.0 package, make a different change; the output below then differs.)
 
 ```
 harness generate wheel-link

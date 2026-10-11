@@ -19,7 +19,7 @@ This page shows how to write the drawings and lists of a design (wire lists, pin
 
 ## 1. Export
 
-**In the app**: open the **Harness plans** tab and press **Export outputs**. The project must be saved to a folder first. When it is done the app says "38 files written to the outputs folder (design 8a25f0c99a86)." (your numbers will differ).
+**In the app** (GUI, not run): open the **Harness plans** tab and press **Export outputs**. The project must be saved to a folder first. When it is done the app says "38 files written to the outputs folder (design 8a25f0c99a86)." (your numbers will differ).
 
 **On the command line**:
 
@@ -35,7 +35,7 @@ The files are checked independently before they are written. If that check fails
 
 ## 2. What you get
 
-This is the list for the practice project (main files; 38 in all):
+This is the list for the practice project. The export counts 38 files; with `manifest.json` there are 39:
 
 ```
 wheel-link/outputs/

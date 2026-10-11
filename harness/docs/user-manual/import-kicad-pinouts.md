@@ -6,7 +6,7 @@ This page shows how to read the connector pinout of a unit (which signal is on w
 
 - **KiCad** is a program for drawing electronics. Here it is used only for the electronics inside each unit. It knows which signal is on which pin of the unit's connectors ([glossary: pinout](../GLOSSARY.md)).
 - You need a **netlist** from KiCad, in one of two forms:
-  - the S-expression `.net` file that the schematic editor writes by default (**File > Export > Netlist**), or
+  - the S-expression `.net` file that the schematic editor writes by default (in KiCad's schematic editor, the netlist export; the menu name depends on the KiCad version and was not checked here), or
   - the XML file: `kicad-cli sch export netlist --format kicadxml -o unit.net.xml unit.kicad_sch` (the input file goes last).
 - A `.kicad_sch` schematic file is **not** accepted. The tool reads KiCad's own computed connections, not the drawing.
 - KiCad is not needed to follow this page. The templates contain a small netlist to practice with. The KiCad commands above were not run for this page; the netlist import was checked with the template file.
@@ -74,8 +74,12 @@ Imported pins are **fixed**: generation connects an interface signal to the pin 
 
 ```
 error: [pin_allocation] IF-002: RW1-J02 has a fixed pinout and no free pin named RX-.
+1 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
+2 interfaces and 2 wires checked: 4 error(s)
 Not saved: fix the errors above first.
 ```
+
+(The numbers depend on the project. Here the netlist had no `RX-` net.) The command exits with 1.
 
 Fix the netlist (or the signal map), import again, generate again.
 
