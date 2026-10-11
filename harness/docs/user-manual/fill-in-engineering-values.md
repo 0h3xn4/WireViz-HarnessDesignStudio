@@ -107,7 +107,7 @@ harness validate wheel-link
 
 A thinner wire must not carry more than a thicker one; a factor must be above 0 and at most 1. The check says so if you break such a rule. The same problems appear as errors in the app (rule `config-invalid`).
 
-For the test limits (`test_continuity_max_ohm`, `test_isolation_min_mohm`, `test_isolation_voltage_v`) and the other keys of `generation.json`, see [`CONFIG.md`](../CONFIG.md). The wire colours are set in a different way: [set wire colours](set-wire-colours.md).
+For the test limits (`test_continuity_max_ohm`, `test_isolation_min_mohm`, `test_isolation_voltage_v`) and the other keys of `generation.json`, see [`CONFIG.md`](../CONFIG.md). The wire colours are set in a different way: [set wire colours](set-wire-colours.md) (newer than the 0.1.0 packages).
 
 ## 4. Generate again
 

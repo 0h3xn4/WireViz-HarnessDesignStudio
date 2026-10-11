@@ -13,7 +13,7 @@ This page shows which documents are generated and how to regenerate each one, ho
 
 ## Which documents are generated
 
-Never edit a generated file by hand. Change its source (or the program) and run the command. A test fails while the file is stale. All commands run from the `harness/` folder with the development environment active ([`setup-and-tests.md`](setup-and-tests.md)). The first seven commands below were run on a clean checkout: each printed nothing and left `git status` clean.
+Never edit a generated file by hand. Change its source (or the program) and run the command. A test fails while the file is stale. All commands run from the `harness/` folder with the development environment active ([`setup-and-tests.md`](setup-and-tests.md)). The first seven commands below were run on a clean checkout: each printed a line about what it wrote (the last three also print a summary) and left `git status` clean.
 
 | File | Source | Regenerate | Test that fails if stale |
 | --- | --- | --- | --- |
@@ -36,8 +36,8 @@ The tutorial `docs/GETTING_STARTED.md` is not generated, but `test_docs.py` runs
 
 | Pictures | Made by | Notes |
 | --- | --- | --- |
-| `docs/ux/qt/*.png` (the editor) | `QT_QPA_PLATFORM=offscreen python -m tools.gui_screenshots` | Takes about three seconds. On the machine used, two of the thirteen files (06 and 07) came out slightly different from the committed ones, so look at `git diff --stat` and keep only meaningful changes. |
-| `docs/img/flatsat-overview.png`, `flatsat-focus.png` | `QT_QPA_PLATFORM=offscreen python -m tools.flatsat_screenshots` | Came out identical to the committed files. |
+| `docs/ux/qt/*.png` (the editor) | `QT_QPA_PLATFORM=offscreen python -m tools.gui_screenshots` | Takes about three seconds. A run is not repeatable to the pixel: in four runs on the machine used, none to two of the thirteen files (05, 06, 07 and 12 were seen) came out slightly different from the committed ones, so look at `git diff --stat` and keep only meaningful changes. |
+| `docs/img/flatsat-overview.png`, `flatsat-focus.png` | `QT_QPA_PLATFORM=offscreen python -m tools.flatsat_screenshots` | Came out identical to the committed files (one run). |
 | `docs/img/w001-drawing.png`, `docs/img/block-diagram.png` (the tutorial) | no script in the repository | They are the exported SVG sheets of the tutorial project, rendered to PNG with Qt's SVG renderer and cropped. They carry the model hash of the tutorial, so redo them when the hash changes. |
 | `docs/ux/screens/*.png` (the HTML prototype, history) | `python -m tools.ux_screenshots` (needs Playwright) | Kept as history. Do not refresh. |
 
@@ -85,6 +85,7 @@ For every page written for readers (not for the records in `compliance/`):
 - Mark steps that need the app, which cannot be run in an automatic test, so a reader knows what was driven and what was only read from the program text.
 - Say "newer than the 0.1.0 packages" for anything that is only on `master`.
 - GitHub Markdown only: no HTML, no extensions that GitHub does not render.
+- A fenced `python` block is checked by `ruff format --check .` (CI and the release check run it). Write it in ruff's layout or run `ruff format .` on the page.
 
 ## Documents that are not ours
 

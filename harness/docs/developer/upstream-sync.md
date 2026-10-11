@@ -43,13 +43,14 @@ git show refs/upstream-tmp/master:src/wireviz/__init__.py | grep -n __version__
 ```
 
 ```
+From https://github.com/wireviz/WireViz
  * [new branch]      master     -> refs/upstream-tmp/master
 e4fe099f8c7b86736aee7b4227cc794b6e8b36f0
 e4fe099f8c7b86736aee7b4227cc794b6e8b36f0 2025-01-16
 4:__version__ = "0.4.1"
 ```
 
-The first line of output is Git's; the next lines are the full commit, its date and the WireViz version. Write them down for step 5. (`--no-tags` keeps the upstream tags out of your repository.)
+The first two lines of output are Git's; the next lines are the full commit, its date and the WireViz version. Write them down for step 5. (`--no-tags` keeps the upstream tags out of your repository.)
 
 If you prefer a named remote: `git remote add upstream https://github.com/wireviz/WireViz.git` and `git fetch --no-tags upstream master`, then use `upstream/master` instead of `refs/upstream-tmp/master` below.
 
@@ -91,7 +92,9 @@ Save this script as `mk_upstream_part.py` in any folder (it is not part of the r
 ```python
 """Turn docs/upstream/README.upstream.md into the block embedded in the root README.md:
 fix relative links for the new location (docs/ -> repository root) and demote headings one level."""
+
 import re, sys
+
 src = open(sys.argv[1], encoding="utf-8").read().splitlines()
 out, fence = [], False
 for line in src:
@@ -100,7 +103,9 @@ for line in src:
     if not fence:
         line = re.sub(r"\]\(\.\./(examples|tutorial)/", r"](\1/", line)
         line = re.sub(r"\]\(\.\./LICENSE\)", "](LICENSE)", line)
-        line = re.sub(r"\]\((syntax|CONTRIBUTING|buildscript|CHANGELOG)\.md\)", r"](docs/\1.md)", line)
+        line = re.sub(
+            r"\]\((syntax|CONTRIBUTING|buildscript|CHANGELOG)\.md\)", r"](docs/\1.md)", line
+        )
         if re.match(r"#{1,5} ", line):
             line = "#" + line
     out.append(line)
@@ -111,6 +116,7 @@ Save this second script as `splice_upstream.py`. It puts a block between the two
 
 ```python
 """Replace the text between the upstream markers of a README with a block read from a file."""
+
 import sys
 
 readme, block = sys.argv[1], sys.argv[2]
@@ -140,7 +146,7 @@ Open `README.md` and find the sentence above `<!-- BEGIN UPSTREAM README -->`:
 The text below is the README of [wireviz/WireViz](https://github.com/wireviz/WireViz), taken from `docs/README.md` at commit [`e4fe099`](https://github.com/wireviz/WireViz/commit/e4fe099f8c7b86736aee7b4227cc794b6e8b36f0) (2025-01-16, WireViz 0.4.1).
 ```
 
-Change the short commit (twice), the full commit in the URL, the date and the version to the values from step 1. Search the repository for the old short commit to catch every mention: `grep -rn e4fe099 --include=*.md .`. The audit page [`docs/DOCS_AUDIT.md`](../../../docs/DOCS_AUDIT.md) records the first sync as history; leave it.
+Change the short commit, the full commit in the URL, the date and the version to the values from step 1. Search the repository for the old short commit to catch every mention: `grep -rn e4fe099 --include=*.md .`. The audit page [`docs/DOCS_AUDIT.md`](../../../docs/DOCS_AUDIT.md) records the first sync as history; leave it.
 
 ## 6. Check and commit
 
@@ -160,7 +166,7 @@ Change the short commit (twice), the full commit in the URL, the date and the ve
 3. The two files, and only these, changed: `git status --short` lists `README.md` and `docs/upstream/README.upstream.md`.
 4. Commit both in one commit, with the upstream commit in the message.
 
-I tested steps 1 to 4 and the check in step 6 in a scratch clone of this repository, once with the real upstream file (no difference) and once with an edited copy (a changed heading, a new section, a new `../examples/` link and a new link to another upstream document). The heading was lowered, the new `../examples/` link was rewritten, and `lychee` reported the link to the missing example file, as it should.
+Steps 1 to 4 and the check in step 6 were tested in a scratch clone of this repository, once with the real upstream file (no difference, `README.md` byte-identical) and once with an edited copy (a changed heading, a new section, a new `../examples/` link and a new link to another upstream document). The heading was lowered, the new `../examples/` link was rewritten, and `lychee` reported the link to the missing example file, as it should.
 
 ## Clean up
 

@@ -58,15 +58,15 @@ The prototype tests drive a Chromium browser. `playwright` is installed by `dev`
 pytest
 ```
 
-The whole suite has about 1,000 tests and took about 11 minutes on the machine used (1,018 passed, 1 skipped). Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
+The whole suite has about 1,000 tests (1,026 when this page was checked) and took about 11 minutes with coverage on the machine used: 1,024 passed and 1 was skipped (the test that needs a normal user; the run was as root). One speed test failed because `HARNESS_TIME_FACTOR` was not set (see the table). Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
 
 | Command | What it does |
 | --- | --- |
 | `pytest -q tests/test_docs.py tests/test_docs_links.py` | Only the tests that read the documents (a minute or less). |
 | `pytest tests/test_gui_journeys.py` | The editor journeys, driven like a user. |
-| `pytest --cov` | The tests with coverage. The gate is 90 % on `harness_design_studio.core`; the run prints `Required test coverage of 90.0% reached`. The last full run had 95.7 %. The GUI is outside the measure. |
+| `pytest --cov` | The tests with coverage. The gate is 90 % on `harness_design_studio.core`; the run prints `Required test coverage of 90.0% reached`. The same run had 95.7 %. The GUI is outside the measure. |
 | `pytest -k wire_colours` | Only tests whose name matches. |
-| `HARNESS_TIME_FACTOR=3 pytest tests/test_gui_perf.py` | The speed tests with limits three times as generous. On a slow or shared machine two of them can fail without the factor. CI sets 3. |
+| `HARNESS_TIME_FACTOR=3 pytest tests/test_gui_perf.py` | The speed tests with limits three times as generous. On a slow or shared machine one or two of them can fail without the factor. CI sets 3. |
 | `HARNESS_FUZZ_EXAMPLES=5000 pytest tests/test_fuzz.py` | The long fuzzing run (the default is 40 examples). |
 | `HARNESS_REQUIRE_BROWSER=1 pytest tests/test_prototype.py` | Fail instead of skipping when no Chromium is found. CI sets it. |
 
@@ -85,12 +85,12 @@ mypy
 ```
 
 ```
-303 files already formatted
+331 files already formatted
 All checks passed!
 Success: no issues found in 202 source files
 ```
 
-(The file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
+(The file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `harness/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
 
 ## 4. The tests that read the documents
 
@@ -122,7 +122,7 @@ A golden file is a stored, reviewed result that a test compares with a fresh one
 
 ## 6. What CI runs
 
-`.github/workflows/harness-ci.yml` runs on Ubuntu 24.04 with Python 3.12. After the Qt libraries and `pip install -e ".[gui,dev]"` and Chromium, it runs `ruff check .`, `ruff format --check .`, `mypy`, `pytest --cov`, `python -m tools.check_reproducible`, `python -m tools.build_installer`, `python -m tools.build_deb`, the self-test of the frozen program (`dist/harness-design-studio/harness-design-studio --selftest`) and `python -m tools.gen_sbom`. It uploads the packages and the SBOM as an artifact. A second job (`package-on-24-04`) installs the packages on a fresh machine without the source tree. Run `python -m tools.release_check --quick` locally to get most of this ([`release.md`](release.md)).
+`.github/workflows/harness-ci.yml` runs on Ubuntu 24.04 with Python 3.12. After the Qt libraries and `pip install -e ".[gui,dev]"` and Chromium, it runs `ruff check .`, `ruff format --check .`, `mypy`, `pytest --cov`, `python -m tools.check_reproducible`, `python -m tools.build_installer`, `python -m tools.build_deb`, the self-test of the frozen program (`dist/harness-design-studio/harness-design-studio --selftest`) and `python -m tools.gen_sbom`. It uploads the packages and the SBOM as an artifact. A second job (`package-on-24-04`) installs the packages on a fresh machine without the source tree. `python -m tools.release_check --quick` runs only the first three checks locally (versions, lint and types, the verifiers); it is not a release check ([`release.md`](release.md)).
 
 ## When something fails
 

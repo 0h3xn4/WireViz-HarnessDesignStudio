@@ -25,6 +25,8 @@ harness templates my-templates
 15 files written to my-templates. Start with my-templates/README.md.
 ```
 
+(On a 0.1.0 package there is one file fewer: `design-worksheet.md` is newer than the 0.1.0 packages.)
+
 - Every import shows what it would do. On the command line add `--dry-run`: the rows are listed and nothing changes. Run the command again without it to apply.
 - Files can be CSV (commas, semicolons or tabs between columns; UTF-8) or Excel (`.xlsx`, first sheet). A number with a decimal comma needs quotes (`"1,5"`) when commas separate the columns. At most 20,000 rows and 8 MB. Details: [`IMPORTS.md`](../IMPORTS.md).
 

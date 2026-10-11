@@ -54,6 +54,8 @@ It runs steps 1 to 11 in order and writes `dist/release-docs/release-report.md`.
 python -m tools.release_check --quick
 ```
 
+The quick run does only steps 1 to 3 (versions, lint and types, the verifiers). It skips the rest, writes `release-report-quick.md` and says it is not a release check.
+
 The full run builds the installer and the `.deb`, so it takes a long time and needs the Qt libraries (see [`../INSTALL.md`](../INSTALL.md)). With Docker, use the build container in `packaging/ubuntu/container/`.
 
 Read `release-report.md`. It lists each step with its result and keeps the numbers (tests passed, packages scanned). Those numbers belong in the report, not in other documents.
@@ -67,7 +69,7 @@ Read `release-report.md`. It lists each step with its result and keeps the numbe
 
 ## 4. After the release
 
-- Copy the release report and the checksum list into `compliance/evidence/` as `release_X.Y.Z_report.md` and `release_X.Y.Z_SHA256SUMS`, as for earlier releases.
+- Copy the release report, the checksum list and the vulnerability report into `compliance/evidence/` as `release_X.Y.Z_report.md`, `release_X.Y.Z_SHA256SUMS` and `release_X.Y.Z_vulnerability_report.txt`, as for earlier releases.
 - Start a new *Unreleased* section in `CHANGELOG.md`.
 - Check that the install page ([`../INSTALL.md`](../INSTALL.md)) still names the right place to get the packages.
 

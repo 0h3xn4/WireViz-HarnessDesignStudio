@@ -72,7 +72,7 @@ Exit code 0 means no errors. 1 means the project has errors. 2 means a usage err
 
 In the app, open the **Harness plans** tab (bottom) and select a harness, for example `W002`:
 
-- The wire list shows each wire with its signal, ends, **AWG** (gauge), **Length (m)** and **Colour**.
+- The wire list shows each wire with its signal, ends, **AWG** (gauge), **Length (m)** and **Colour** (the **Colour** column in the app is newer than the 0.1.0 packages).
 - The **Why** tab (right of the list) names the rule behind every wire, pin, gauge and length. This is the tool's answer to "why is it like this?".
 - The **Drawing** tab previews the sheet that [export](export-the-outputs.md) writes. **Previous sheet** and **Next sheet** page through it.
 
