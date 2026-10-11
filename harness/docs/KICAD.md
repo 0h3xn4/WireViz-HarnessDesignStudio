@@ -47,3 +47,5 @@ Generation connects each interface signal to the fixed pin with the same name an
 1. How KiCad connector references map to the unit connectors in this tool (today: by prefix, `--connector`, or the symbol field).
 2. The signal-name mapping (today: optional `--signal-map`).
 3. Hierarchical sheets and multi-unit symbols have not been tried on a real project.
+
+Next: [import KiCad pinouts (user manual)](user-manual/import-kicad-pinouts.md), [`IMPORTS.md`](IMPORTS.md).

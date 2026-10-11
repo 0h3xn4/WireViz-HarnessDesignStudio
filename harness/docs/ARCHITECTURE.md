@@ -2,6 +2,15 @@
 
 > **Status.** Sections 1, 4, 5 and 6 are the original proposal, written before the tool was built. Since then the platform has been narrowed to Ubuntu 24.04 and newer only (D-110, D-127), so the Windows and RHEL remarks below are historical, and the design rule check runs in a helper process (D-128). **Section 2 was rewritten from the source tree** (folders and module docstrings) and is the current layout; the project folder format is in [`FILE_FORMAT.md`](FILE_FORMAT.md). A few statements in sections 4 and 5 were corrected where the code differs; the rest was not re-checked line by line.
 
+## Contents
+
+- [1. Stack comparison (the original proposal)](#1-stack-comparison-the-original-proposal)
+- [2. Layering](#2-layering)
+- [3. Project folder format](#3-project-folder-format)
+- [4. Key mechanisms](#4-key-mechanisms)
+- [5. Testing architecture](#5-testing-architecture)
+- [6. Risks](#6-risks)
+
 ## 1. Stack comparison (the original proposal)
 
 This table and the choice below are the proposal as it was written. The choice was A and the tool was built that way.
@@ -107,3 +116,5 @@ pytest + hypothesis (property tests, fuzzing loaders/importers/generator), pytes
 3. Installer size and PyInstaller: build on the supported OS (Ubuntu 24.04) in CI.
 4. Locked-down hosts may block unsigned executables; code signing is configurable (D-19).
 5. UX sign-off is a gate: no full editor before the prototype review (spec UX process step 2).
+
+Next: [`DECISIONS.md`](DECISIONS.md), [`SECURITY.md`](SECURITY.md), [`developer/README.md`](developer/README.md).

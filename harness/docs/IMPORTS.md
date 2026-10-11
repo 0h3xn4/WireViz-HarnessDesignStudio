@@ -35,3 +35,5 @@ KiCad: it is used for the electronics inside each unit, so it is where each unit
 ## Where the library data come from
 
 `harness import-parts` records the file name and its SHA-256 as the library's **source**. Say more with `--library-source`, `--library-version`, `--library-name` and `--library-date YYYY-MM-DD` (the date of the data, which you enter; the tool does not read the clock). `harness library DIR` shows what is recorded and `harness library DIR --library-source "..." --library-date 2026-09-30` sets it without an import. The editor shows the same line under the part picker and every export carries it in `system/provenance.json`.
+
+Next: [import data (user manual)](user-manual/import-data.md), [`KICAD.md`](KICAD.md).

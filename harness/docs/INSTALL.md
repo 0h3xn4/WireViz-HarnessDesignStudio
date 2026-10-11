@@ -2,6 +2,18 @@
 
 The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package).
 
+## Contents
+
+- [Before you start (two minutes)](#before-you-start-two-minutes)
+- [Get the package](#get-the-package)
+- [A. The `.deb` package (recommended)](#a-the-deb-package-recommended)
+- [B. The `.tar.gz` without administrator rights](#b-the-targz-without-administrator-rights)
+- [Check that it works](#check-that-it-works)
+- [Your first five minutes after installing](#your-first-five-minutes-after-installing)
+- [If the app does not start](#if-the-app-does-not-start)
+- [C. Run from source (developers)](#c-run-from-source-developers)
+- [Where things are stored](#where-things-are-stored)
+
 Pick **one** of the three ways. If you are unsure, use A.
 
 **Which version do you have?** The five examples (`minimal-satellite` and `flatsat` among them), the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are on `master` and are **not** in the released 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md#unreleased-after-010)). `harness --version` prints `0.1.0` for both. To tell them apart run `harness new --list`: a newer build lists five examples, the 0.1.0 packages list three (`blank`, `first-steps`, `small-satellite`). Way C has them when you clone `master`. The other pages of this manual describe the newer build.

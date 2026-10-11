@@ -2,6 +2,21 @@
 
 You will start from a small example, look at what the tool makes of it, fix a finding, export the drawings and lists, and (optionally) see what a release looks like. Every step shows what you should see, and what to do if you do not.
 
+## Contents
+
+- [Part 1: create a practice project](#part-1-create-a-practice-project)
+- [Part 2: look around](#part-2-look-around)
+- [Part 3: generate the harnesses](#part-3-generate-the-harnesses)
+- [Part 4: read what the tool made](#part-4-read-what-the-tool-made)
+- [Part 5: read and answer the Problems](#part-5-read-and-answer-the-problems)
+- [Part 6: export drawings and lists](#part-6-export-drawings-and-lists)
+- [Part 7: fill in values, and see wires get sized](#part-7-fill-in-values-and-see-wires-get-sized)
+- [Part 8: bring in your own data](#part-8-bring-in-your-own-data)
+- [Optional: give the wires a colour](#optional-give-the-wires-a-colour)
+- [Part 9 (optional, practice only): release a harness](#part-9-optional-practice-only-release-a-harness)
+- [Part 10: build your own from blank](#part-10-build-your-own-from-blank)
+- [Where to go next](#where-to-go-next)
+
 **Looking for the whole route?** [`LEARNING_PATH.md`](LEARNING_PATH.md) puts this tutorial in context: before it, a ten-minute read; after it, a realistic small spacecraft, a worksheet for your own design, real data, release and automation.
 
 **You need:** the tool installed ([`INSTALL.md`](INSTALL.md), five minutes) and nothing else. No spacecraft data, no network.
@@ -361,3 +376,5 @@ You have now done everything the tool does, once. Add a **Create redundant copy*
 | to plan a design on paper first | `design-worksheet.md` in the templates (`harness templates my-templates`) |
 | something went wrong | [`FAQ.md`](FAQ.md) |
 | what the examples and templates contain | [`../src/harness_design_studio/resources/examples/templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) |
+
+Next: [user manual](user-manual/README.md), [`CONCEPTS.md`](CONCEPTS.md), [`LEARNING_PATH.md`](LEARNING_PATH.md).

@@ -73,3 +73,5 @@ When at least one interface type has an EMC class, the wire list gets a last col
 ## Requirement IDs on findings
 
 `system/drc_findings.csv` ends with a column `Requirement`: the IDs of the standard requirements the rule serves (empty when the rule serves none). The Problems panel shows the same IDs under the explanation of a finding, and the design rule report prints them after it. The IDs are those of `compliance/requirements` in the tool's repository (`docs/RULES.md` lists them per rule).
+
+Next: [export the outputs (user manual)](user-manual/export-the-outputs.md), [`FILE_FORMAT.md`](FILE_FORMAT.md).

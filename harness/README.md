@@ -93,3 +93,5 @@ pytest --cov      # tests; the 90% core coverage gate applies with --cov
 ruff format . && ruff check . && mypy
 python -m tools.release_check --quick
 ```
+
+Next: [`docs/INSTALL.md`](docs/INSTALL.md), [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md).

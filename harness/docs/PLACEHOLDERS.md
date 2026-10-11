@@ -48,3 +48,5 @@ Part ratings: `ratings.contact_current_a` on connector parts (key name set by `d
 | `generation.json` | `test_continuity_max_ohm`, `test_isolation_min_mohm`, `test_isolation_voltage_v` | test tables show "TBD (placeholder)" |
 | `titleblock.json` | `fields` (order and choice of title block fields; D-15) | default field list; date, author, checker, approver show "-" until a release records them |
 | library | `mass_g`, `mass_per_m_g` on parts | mass tables say which data is missing |
+
+Next: [`CONFIG.md`](CONFIG.md), [fill in engineering values](user-manual/fill-in-engineering-values.md).

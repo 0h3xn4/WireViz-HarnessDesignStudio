@@ -93,3 +93,5 @@ Put the folder in Git. Everything except `outputs/` is meant to be reviewed as t
 | baseline | the frozen copy stored at release |
 
 More: [`CONCEPTS.md`](CONCEPTS.md) and the glossary in the user guide.
+
+Next: [user manual](user-manual/README.md), [`CLI.md`](CLI.md), [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).

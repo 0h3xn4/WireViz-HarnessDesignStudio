@@ -2,6 +2,17 @@
 
 This page shows how to change a harness after it was released, by starting a new revision, and how to see what changed and who changed it.
 
+## Contents
+
+- [Before you start](#before-you-start)
+- [1. Start a new revision](#1-start-a-new-revision)
+- [2. Make the change](#2-make-the-change)
+- [3. See what changed](#3-see-what-changed)
+- [4. Release revision B](#4-release-revision-b)
+- [5. Read the history](#5-read-the-history)
+- [Compare two copies of a project](#compare-two-copies-of-a-project)
+- [Common mistakes](#common-mistakes)
+
 ## Before you start
 
 - A harness is released and locked ([release a harness](release-a-harness.md)). This page continues with the practice project of that page: the harness `W002`, revision A, released.

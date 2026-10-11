@@ -62,3 +62,5 @@ Short answers. If yours is not here, check the **Problems** tab (it says what is
 ## Still stuck
 
 Run `harness validate DIR` and `harness drc DIR` and read the messages: each says what is wrong and how to fix it. Include their output when you ask for help, and check it first if the project is confidential: the messages name units, interfaces and parts.
+
+Next: [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md), [`GLOSSARY.md`](GLOSSARY.md), [user manual](user-manual/README.md).

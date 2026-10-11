@@ -2,6 +2,21 @@
 
 > **Design record of M2, partly superseded.** This is the specification that the editor was built from. Two later decisions changed what the diagram looks like: **D-140** replaced the one-letter chips on links by pictures (and added routing, focus and connector pictures), and **D-141** made the harness drawing a wiring diagram in which wires are drawn in their wire colour (the old rule "wire colours are text only, never drawing colours" no longer holds). The wireframes below show the earlier look. For the current behaviour read the [user guide](guide/USER_GUIDE.md); the pictures of the real editor are in [`ux/qt/`](ux/qt/02-guided-main.png); the screenshots in `ux/screens/` are of the prototype (see [`ux/screens/README.md`](ux/screens/README.md)). See [`DECISIONS.md`](DECISIONS.md) for D-140 and D-141.
 
+## Contents
+
+- [1. Targets (from the spec) and how they are checked](#1-targets-from-the-spec-and-how-they-are-checked)
+- [2. Personas](#2-personas)
+- [3. The ten journeys](#3-the-ten-journeys)
+- [4. Information architecture](#4-information-architecture)
+- [5. Wireframes](#5-wireframes)
+- [6. Interaction rules ("prevent, then explain")](#6-interaction-rules-prevent-then-explain)
+- [7. Design system](#7-design-system)
+- [8. Mapping to the M2 implementation (Qt)](#8-mapping-to-the-m2-implementation-qt)
+- [9. Usability test plan (you run it; findings become priority bugs)](#9-usability-test-plan-you-run-it-findings-become-priority-bugs)
+- [10. UX review log (my own walkthrough, as the process requires)](#10-ux-review-log-my-own-walkthrough-as-the-process-requires)
+- [11. Questions for you (please answer or mark "you decide")](#11-questions-for-you-please-answer-or-mark-you-decide)
+- [12. Qt editor review log (M2 implementation)](#12-qt-editor-review-log-m2-implementation)
+
 Status: **approved by the owner; the Qt editor is implemented (section 12).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
 
 This document is the contract for the editor in M2. Where the prototype and this text disagree, this text wins; tell me which is wrong.

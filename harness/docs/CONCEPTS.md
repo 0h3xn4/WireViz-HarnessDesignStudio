@@ -2,6 +2,21 @@
 
 Read this once, in ten minutes, and the rest of the documentation will make sense. No spacecraft or harness knowledge is needed beyond what the words mean.
 
+## Contents
+
+- [The idea in one picture](#the-idea-in-one-picture)
+- [The things in a design](#the-things-in-a-design)
+- [The standards the tool starts from](#the-standards-the-tool-starts-from)
+- [Guided and Expert](#guided-and-expert)
+- [From design to harness: generation](#from-design-to-harness-generation)
+- [Problems, rules and waivers](#problems-rules-and-waivers)
+- [Placeholders: what the tool does not know](#placeholders-what-the-tool-does-not-know)
+- [Review, release, revision](#review-release-revision)
+- [Outputs](#outputs)
+- [What is on disk](#what-is-on-disk)
+- [What the tool does not do](#what-the-tool-does-not-do)
+- [Words you will meet](#words-you-will-meet)
+
 ## The idea in one picture
 
 ```

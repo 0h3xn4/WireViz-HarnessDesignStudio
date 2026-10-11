@@ -2,6 +2,19 @@
 
 A route from "I have just installed it" to "I can use it on my own spacecraft". Each step says what you do, how long it takes, which example or template you use, and **how you know you are done**. Do the steps in order; skip a step only if you already know it.
 
+## Contents
+
+- [1. Look around (10 minutes)](#1-look-around-10-minutes)
+- [2. Your first harness (45 minutes)](#2-your-first-harness-45-minutes)
+- [3. A realistic small system (30 minutes)](#3-a-realistic-small-system-30-minutes)
+- [4. Plan your own design (30 minutes)](#4-plan-your-own-design-30-minutes)
+- [5. Enter your design (1 to 2 hours)](#5-enter-your-design-1-to-2-hours)
+- [6. Bring in real data (as needed)](#6-bring-in-real-data-as-needed)
+- [7. Check and review (30 minutes)](#7-check-and-review-30-minutes)
+- [8. Release and change (30 minutes)](#8-release-and-change-30-minutes)
+- [9. Automate](#9-automate)
+- [If you get stuck](#if-you-get-stuck)
+
 If you have not installed the tool yet, start with [`INSTALL.md`](INSTALL.md).
 
 **Which build do you have?** Steps 3 and 4 use the example `minimal-satellite` and the template `design-worksheet.md`, and the `flatsat` example is mentioned too. These, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are on `master` and are **not** in the released 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md#unreleased-after-010)). `harness new --list` shows five examples on a newer build and three (`blank`, `first-steps`, `small-satellite`) on the 0.1.0 packages. With the packages, do step 3 with `small-satellite` and plan on paper in step 4.
@@ -105,3 +118,5 @@ Run the same steps in a script or in CI so that every change to the design is ch
 ## If you get stuck
 
 [`FAQ.md`](FAQ.md) lists the usual problems. [`CHEATSHEET.md`](CHEATSHEET.md) fits on one page.
+
+Next: [`GETTING_STARTED.md`](GETTING_STARTED.md), [user manual](user-manual/README.md).

@@ -85,3 +85,5 @@ All optional with defaults; projects saved before them load unchanged.
 `harness schema my-design/schemas` writes one JSON Schema per kind of file, made from the same strict models the loader uses (so they cannot drift), and `editor-settings.json` with the `json.schemas` entries that map the project's files to them for VS Code. With them an editor completes keys, shows the allowed values and underlines mistakes before the tool ever sees the file. Nothing is downloaded. The tool itself does not need the schemas.
 
 `library/manifest.json` holds `name`, `version`, `source` and `date` of the parts library (the last two may be `null`).
+
+Next: [`CONFIG.md`](CONFIG.md), [`OUTPUTS.md`](OUTPUTS.md).
