@@ -172,7 +172,7 @@ def test_links_inside_a_lane_run_on_a_spine_outside_it_nearer_when_shorter() -> 
     )
     spine = {i: max(p[0] for p in routes[i]) for i in routes}
     assert all(x > GEO.edges[1][1] for x in spine.values())
-    assert spine["S3"] < spine["S1"] < spine["S2"] or spine["S3"] <= spine["S1"] <= spine["S2"]
+    assert spine["S3"] < spine["S1"] <= spine["S2"]  # S1 and S2 share a group and a spine
     left = route_links([link("S", "H", "U", 1, 1, 100, 300, side="left")], GEO)["S"]
     assert min(p[0] for p in left) < GEO.edges[1][0]
 
