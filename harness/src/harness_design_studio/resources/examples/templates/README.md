@@ -12,7 +12,7 @@ Files to copy and adapt. Get them with `harness templates FOLDER`.
 | `config-demo-values/` | **learning only**: example engineering values so that wire sizing, voltage drop and test limits show up | copy the four files over `DIR/config/` of a practice project |
 | `ampacity-DEMO-ONLY.csv` | **learning only**: a current-by-gauge table in the format `harness config --ampacity-csv` reads | `harness config DIR --ampacity-csv ampacity-DEMO-ONLY.csv` |
 | `ci/build.sh` | a script that validates, generates, checks and exports a project, with the exit codes | `sh ci/build.sh DIR` |
-| `ci/github-actions.yml` | the same as a GitHub Actions workflow for a design repository | copy to `.github/workflows/` |
+| `ci/github-actions.yml` | the same steps as `build.sh` (including `harness drc`) as a GitHub Actions workflow for a design repository | copy to `.github/workflows/` |
 | `design-worksheet.md` | planning a design on paper before using the tool: units, interfaces, and the data you do not have yet | print it or copy it next to your design and fill it in |
 | `design-review-checklist.md` | a list of things to look at before a harness is released | copy next to your design |
 
