@@ -61,12 +61,13 @@ def timeout() -> Iterator[None]:
     def alarm(*_a: object) -> None:
         raise AssertionError("generation did not finish")
 
-    signal.signal(signal.SIGALRM, alarm)
+    previous = signal.signal(signal.SIGALRM, alarm)
     signal.alarm(20)
     try:
         yield
     finally:
         signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous)
 
 
 def codes(plan: GenerationPlan, severity: str | None = None) -> set[str]:

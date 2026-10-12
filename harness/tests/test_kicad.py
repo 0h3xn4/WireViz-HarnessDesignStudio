@@ -10,6 +10,7 @@ from harness_design_studio.cli.main import main as cli_main
 from harness_design_studio.core import edit
 from harness_design_studio.core.commands import Delete, History, apply_ops
 from harness_design_studio.core.generate.engine import generate_project, plan_generation
+from harness_design_studio.core.integrity import check_integrity
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
@@ -360,7 +361,13 @@ def test_random_damage_to_a_real_netlist_never_raises_anything_but_netlist_error
             n = parse_netlist(data)
         except NetlistError:
             continue
-        plan_netlist_import(mini3(), n, "OBC", parts={"J1": "EX-DSUB-9-F", "J2": "EX-DSUB-9-F"})
+        base = mini3()
+        plan = plan_netlist_import(base, n, "OBC", parts={"J1": "EX-DSUB-9-F", "J2": "EX-DSUB-9-F"})
+        assert plan.ok_count <= len(plan.rows)
+        if plan.ops:  # whatever the damaged file said, the accepted part never breaks the model
+            assert not [
+                i for i in check_integrity(edit.clone_with(base, plan.ops)) if i.severity == "error"
+            ]
 
 
 SEXPR = FIXTURE.with_name("unit.net")  # KiCad's default netlist format, as the editor writes it

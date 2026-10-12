@@ -50,8 +50,11 @@ def test_corrupt_journal_is_ignored(tmp_path: Path) -> None:
     for garbage in ("not json", "[]", '{"files": 3}', '{"files": {"project.json": "{"}}'):
         journal_path(root).parent.mkdir(exist_ok=True)
         journal_path(root).write_text(garbage)
-        assert read_journal(root) is None or read_journal(root) is not None  # never raises
-        assert journal_differs_from_disk(root) in (True, False)
+        assert read_journal(root) is None, garbage  # unusable: ignored, never raises
+        if "project.json" not in garbage:
+            # (a journal whose files parse as text but not as JSON still counts as "differs"; that
+            # is reported in the audit notes, so it is not pinned here)
+            assert journal_differs_from_disk(root) is False, garbage
 
 
 def test_journal_never_leaves_the_project_folder(tmp_path: Path) -> None:

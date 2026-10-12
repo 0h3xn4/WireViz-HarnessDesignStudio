@@ -126,9 +126,8 @@ def test_dangling_reference_after_load(proj: Path) -> None:
     (proj / "physical/connectors/aocs.json").write_text('{"connectors": []}')
     r = load_project(proj)
     assert r.has_errors and not r.project.recovered
-    assert "bad_endpoint_connector" in issue_codes(r.issues) or "dangling_wire" in issue_codes(
-        r.issues
-    )
+    errors = {i.code for i in r.issues if i.severity == "error"}
+    assert errors == {"bad_endpoint_connector", "unknown_mate"}
 
 
 def test_missing_config_defaults_and_unknown_config_quarantined(proj: Path) -> None:

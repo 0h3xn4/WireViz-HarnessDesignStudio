@@ -103,10 +103,7 @@ def test_full_cycle_release_lock_new_revision_changes_and_log(win, qtbot) -> Non
     h = win.ctl.project.harnesses[hid]
     assert (h.status, h.approver, h.checker) == ("released", "Ada", "Bob")
     win.harness_panel.refresh()
-    assert (
-        "locked" in win.harness_panel.harnesses.item(0, 4).text()
-        or "released" in win.harness_panel.harnesses.item(0, 4).text()
-    )
+    assert win.harness_panel.harnesses.item(0, 4).text().endswith("released (locked)")
     # locked: editing is refused with a plain message
     assert not win.ctl.run("edit", [Put("harnesses", evolve(h, name="Nope"))])
     assert "released" in win.toasts.messages[-1]
