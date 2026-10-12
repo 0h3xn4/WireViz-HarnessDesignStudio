@@ -267,6 +267,7 @@ class ProjectLock:
                 or (root / "project.json").exists()
                 or self.path.exists()
                 or self.path.is_symlink()
+                or self.path.with_name(self.path.name + ".takeover").exists()  # someone locks now
                 or not any(root.iterdir())
             )
         except OSError:
