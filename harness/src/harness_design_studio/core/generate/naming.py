@@ -79,7 +79,11 @@ def _distinct(kind: str, template: str) -> bool:
         names = {template.format(**kw) for kw in samples}
     except Exception:
         return False
-    return len(names) == len(samples) and all(_valid_id(x) for x in names)
+    if not (len(names) == len(samples) and all(_valid_id(x) for x in names)):
+        return False
+    if kind == "harness":  # the default names built on a harness ID (the fallback) must fit too
+        return all(_valid_id(f"{x}-S9999") for x in names)
+    return True
 
 
 def namer_for(project: Project) -> Namer:

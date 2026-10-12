@@ -96,9 +96,26 @@ def segment(project: Project) -> Segmentation:
         if i.type_id not in project.interface_types:
             result.skipped.append(Skipped(i.id, "its interface type does not exist", "error"))
             continue
-        if len(i.endpoints) != 2:
+        if len(i.endpoints) > 2:
             result.skipped.append(
                 Skipped(i.id, "multi-drop interfaces (more than two units) are not generated yet")
+            )
+            continue
+        if len(i.endpoints) != 2:
+            n = len(i.endpoints)
+            result.skipped.append(
+                Skipped(i.id, f"it has {n} {'end' if n == 1 else 'ends'} and needs two")
+            )
+            continue
+        names = [s.name for s in project.interface_types[i.type_id].signals]
+        dup = sorted({n for n in names if names.count(n) > 1})
+        if dup:
+            result.skipped.append(
+                Skipped(
+                    i.id,
+                    f"its interface type {i.type_id} lists the signal name {', '.join(dup)} more than once",
+                    "error",
+                )
             )
             continue
         a, b = i.endpoints
@@ -110,6 +127,11 @@ def segment(project: Project) -> Segmentation:
             continue
         if a.connector_id not in project.connectors or b.connector_id not in project.connectors:
             result.skipped.append(Skipped(i.id, "a connector of this interface does not exist"))
+            continue
+        if a.connector_id == b.connector_id:
+            result.skipped.append(
+                Skipped(i.id, f"both ends are on the same connector ({a.connector_id})", "error")
+            )
             continue
         chain = i.redundancy
         cls = _class_of(project, i, seg_cfg, sep_cfg)

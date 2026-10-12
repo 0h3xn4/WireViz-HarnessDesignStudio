@@ -145,9 +145,7 @@ def sat15() -> Project:
         ("thermistor", obc, sa),
     ]  # fmt: skip
     for type_id, a, b in wiring:
-        ops, iid = edit.ops_add_interface(p, type_id, a, b)
-        if type_id.startswith("power") or type_id == "heater":
-            ops = [o for o in ops]
+        ops, _iid = edit.ops_add_interface(p, type_id, a, b)
         _run(p, ops)
     for unit in (pcdu, obc):  # redundant chains for the two critical units
         result = edit.ops_redundant_copy(p, unit)
