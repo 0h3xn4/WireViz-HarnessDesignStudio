@@ -190,7 +190,7 @@ def _with_lengths(*lengths: float):  # type: ignore[no-untyped-def]
     return p
 
 
-@pytest.mark.parametrize("length", [1.234567, 12.34567, 123.4567, 1234.567, 100000.5])
+@pytest.mark.parametrize("length", [1.234567, 12.34567, 123.4567, 1234.567, 9999.875])
 def test_a_length_with_many_digits_exports_and_verifies(length: float) -> None:
     files = _exports_cleanly(_with_lengths(length, 1.0))
     rows = files["harnesses/W001/wirelist.csv"].decode().splitlines()

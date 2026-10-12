@@ -9,7 +9,14 @@ from harness_design_studio.core import drc, edit
 from harness_design_studio.core.checks import Finding, finding_id, waive_op
 from harness_design_studio.core.commands import History
 from harness_design_studio.core.generate.mass import harness_mass
-from harness_design_studio.core.model import Connector, Harness, Project, Segment, evolve
+from harness_design_studio.core.model import (
+    Connector,
+    Harness,
+    Project,
+    Segment,
+    Wire,
+    evolve,
+)
 from harness_design_studio.core.outputs.build import build_outputs, write_outputs
 from harness_design_studio.core.outputs.canvas import Line, Rect, Sheet
 from harness_design_studio.core.outputs.drawing import _draw_sketch
@@ -131,7 +138,10 @@ def test_a_gauge_outside_the_wire_sizes_is_a_finding_not_a_crash() -> None:
     w = h.wires[0]
     iid = w.interface_id or ""
     p.interfaces[iid] = evolve(p.interfaces[iid], max_current_a=1.0)
-    p.harnesses[hid] = evolve(h, wires=[evolve(w, gauge_awg=50), *h.wires[1:]])
+    # the model refuses this value now; the rule must still cope if one gets through (a bug elsewhere)
+    odd = Wire.model_construct(**{**w.model_dump(), "gauge_awg": 50})
+    fields = {name: getattr(h, name) for name in Harness.model_fields}
+    p.harnesses[hid] = Harness.model_construct(**{**fields, "wires": [odd, *h.wires[1:]]})
     findings = drc.run(p)
     assert any("not a wire size" in f.title for f in findings)
 
