@@ -62,7 +62,7 @@ def undeclared_files(internal: Path) -> list[str]:
 
 def undeclared_in_build(app: Path) -> list[str]:
     """Everything in the built package, the PYZ archives included, that the allow-list does not cover."""
-    from PyInstaller.archive.readers import ZlibArchiveReader
+    from PyInstaller.archive.readers import ZlibArchiveReader  # type: ignore[import-untyped]
 
     found: set[str] = set()
     for name in ("harness-design-studio", "harness"):

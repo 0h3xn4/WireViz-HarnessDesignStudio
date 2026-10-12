@@ -6,7 +6,7 @@ from collections.abc import Callable
 import pytest
 
 from harness_design_studio.core import drc, edit
-from harness_design_studio.core.commands import Put, apply_ops
+from harness_design_studio.core.commands import Op, Put, apply_ops
 from harness_design_studio.core.generate.engine import generate_project
 from harness_design_studio.core.model import Harness, Project, Wire, evolve
 from harness_design_studio.core.samples import sat15
@@ -42,7 +42,7 @@ def with_spare_pin(p: Project, h: Harness, from_signal: str, to_signal: str) -> 
     """A third wire on the spare pin 3 of both unit connectors, carrying the given signals."""
     iface = h.wires[0].interface_id
     label = from_signal if from_signal == to_signal else f"{from_signal}/{to_signal}"
-    ops = []
+    ops: list[Op] = []
     for cable, sig in zip(h.connectors, (from_signal, to_signal), strict=True):
         box = p.connectors[cable.mates_with or ""]
         pins = [evolve(q, signal=sig, interface_id=iface) if q.id == "3" else q for q in box.pins]

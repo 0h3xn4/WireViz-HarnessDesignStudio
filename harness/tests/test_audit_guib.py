@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -26,6 +27,7 @@ from harness_design_studio.core.model import (  # noqa: E402
     Endpoint,
     InterfaceInstance,
     Pin,
+    Project,
     Unit,
     evolve,
 )
@@ -33,7 +35,7 @@ from harness_design_studio.core.model.config import ConfigFile  # noqa: E402
 from harness_design_studio.core.recovery import journal_path  # noqa: E402
 from harness_design_studio.core.samples import mini3, new_project, sat15  # noqa: E402
 from harness_design_studio.gui import drc_process, strings  # noqa: E402
-from harness_design_studio.gui.controller import EditorController  # noqa: E402
+from harness_design_studio.gui.controller import Delta, EditorController  # noqa: E402
 from harness_design_studio.gui.drc_process import DrcProcess, run_check  # noqa: E402
 from harness_design_studio.gui.main_window import MainWindow  # noqa: E402
 from harness_design_studio.gui.theme import ThemeManager  # noqa: E402
@@ -42,7 +44,7 @@ from tests.gui_helpers import DialogScript, make_window  # noqa: E402
 # ---- the design rule check must say so when it fails ------------------------------------------
 
 
-def _failing_window(qtbot, tmp_path, monkeypatch):  # type: ignore[no-untyped-def]
+def _failing_window(qtbot: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> Any:
     """A window on sat15 whose rule check raises (patched before the check can start)."""
     monkeypatch.setenv(drc_process.DISABLE_ENV, "1")
     monkeypatch.setattr(drc, "run", _boom)
@@ -58,8 +60,8 @@ def _boom(project):  # type: ignore[no-untyped-def]
 
 
 def test_a_failing_rule_check_is_reported_not_shown_as_all_clear(
-    qtbot, tmp_path, monkeypatch
-) -> None:  # type: ignore[no-untyped-def]
+    qtbot: Any, tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
     win = _failing_window(qtbot, tmp_path, monkeypatch)
     qtbot.waitUntil(lambda: win.ctl.drc_error is not None, timeout=10000)
     qtbot.waitUntil(lambda: win.ctl._drc_worker is None, timeout=10000)
@@ -228,8 +230,8 @@ def test_reload_keeps_a_read_only_session_read_only(qtbot, tmp_path) -> None:  #
 
 
 def test_discarding_in_a_read_only_session_leaves_the_other_windows_journal(
-    qtbot, tmp_path
-) -> None:  # type: ignore[no-untyped-def]
+    qtbot: Any, tmp_path: Path
+) -> None:
     folder, _a, b = _pair(tmp_path, qtbot)
     answers = iter([0, 1])  # read-only, then Discard
     b.ask_choice = lambda t, x, btns: next(answers)  # type: ignore[assignment]
@@ -343,7 +345,7 @@ def test_bad_settings_fall_back_to_defaults(text, qtbot, tmp_path) -> None:  # t
 # ---- generation that fails is not "up to date" ------------------------------------------------
 
 
-def _full_connectors_project():  # type: ignore[no-untyped-def]
+def _full_connectors_project() -> Project:
     p = new_project("t")
     for uid, zone in (("A", "panel-A"), ("B", "panel-B")):
         p.units[uid] = Unit(id=uid, name=uid, subsystem="x", zone=zone, side="nominal")
@@ -386,7 +388,8 @@ def test_generation_errors_are_never_reported_as_up_to_date(qtbot, tmp_path) -> 
     assert len(script.seen) == 1  # the preview dialog, with the errors, is shown
     assert strings.GEN_UP_TO_DATE not in w.toasts.messages
     shown = " ".join(
-        script.seen[0].findings.item(i).text() for i in range(script.seen[0].findings.count())
+        script.seen[0].findings.item(i).text()  # type: ignore[attr-defined]
+        for i in range(script.seen[0].findings.count())  # type: ignore[attr-defined]
     )
     assert "IF-2" in shown
 
@@ -483,7 +486,7 @@ def test_deleting_an_interface_reports_the_units_at_its_ends() -> None:
     assert a and b
     assert ctl.add_interface_between("rs422", a, b)
     iid = next(iter(ctl.project.interfaces))
-    deltas = []
+    deltas: list[Delta] = []
     ctl.changed.connect(deltas.append)
     ctl.select("interface", iid)
     ctl.delete_selected()
