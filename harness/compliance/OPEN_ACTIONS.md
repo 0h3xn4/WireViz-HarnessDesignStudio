@@ -4,6 +4,8 @@ Things the tool and its documents cannot do for themselves. None of them was don
 
 **Note of 2026-10-09:** the owner has said that no further feedback from people will come and has **waived** the actions that need a person (`DEVIATIONS.md` T-20 to T-30). A waived action is not done: it records that the owner accepts the deviation. The owner signed off release candidate 0.1.0rc8 and released 0.1.0 on 2026-10-09 (`SIGNOFF.md`, T-31); that does not close anything in this list. What is not waived and not done: the real values and parts (D-10, D-11, D-12, D-15), and the review of the profile values in each project's config files (A-17). Only a recorded decision with a name and a date changes a status.
 
+**As of 1.0.0 (2026-10-12):** version 1.0.0 was released on the owner's instruction (`SIGNOFF.md`, T-32). Nothing in this list was closed by it. The engineering decisions D-10, D-11, D-12 and D-15 were recorded as defaults (D-142 to D-145): the tool ships no standard or part data, so the real values and the approved parts list are still to be supplied by each project, and the review of the profile values (A-17) is still open.
+
 | ID | Action | Who | Blocks (gap, clauses) | Status |
 | --- | --- | --- | --- | --- |
 | A-01 | Appoint an independent verifier and validator (a person who did not write the design, code or tests) and let them review the verification and validation evidence | owner | G-10; ECSS-E-ST-40C 5.6.2, 5.8.2; ECSS-Q-ST-80C 6.3.5.19 | waived by the owner (2026-10-09), `DEVIATIONS.md` T-20; the earlier status was: prepared (2026-10-08): brief for the reviewer `templates/independent_review_brief.md`; a person must be named |

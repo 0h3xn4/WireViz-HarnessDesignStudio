@@ -4,6 +4,9 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Documentation
+
+- Documents brought in line with 1.0.0: what a release freezes (parts, interface types, configuration) and the messages you see, the number ranges and what happens when a value is set aside, 34 design rules, the exit codes (damaged project 2, Ctrl-C 130), the import rules, `harness compare` and its "Not compared" line, the PDF character warning, the lock and read-only behaviour, the installer's marker file and refusals, and the release page route for a tag that cannot be pushed. The root README lists the known problems of the bundled upstream WireViz code. These changes are on `master` after the `v1.0.0` tag, so the 1.0.0 packages (including the in-app guide) do not contain them.
 ## 1.0.0 (2026-10-12; released on the owner's instruction, see compliance/SIGNOFF.md; not a statement of compliance)
 
 Version 1.0.0 is 0.1.0 plus the changes listed below: the fixes of the October 2026 pre-release audit (the findings and what was done about each are in `AUDIT.md` at the root of the repository), the release freeze of parts, interface types and configuration, two more examples (`minimal-satellite`, `flatsat`), a design worksheet template and the wiring-diagram drawing. The open engineering decisions were recorded as defaults on 2026-10-12 (`docs/DECISIONS.md` D-142 to D-145); the tool still ships no standard or part data. **What is still true**: the configuration files are placeholders and the parts are example parts, so results rest on placeholders; no compliance with any standard is claimed; the packages are not signed; the upstream WireViz code under `src/wireviz/` is unchanged.

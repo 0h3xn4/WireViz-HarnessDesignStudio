@@ -67,3 +67,15 @@ Recorded by the assistant from the owner's statements in the working session of 
 - **The waivers stand.** The packages are unsigned (T-19), no clean-machine installation test was done (T-30), no usability sessions or screen-reader pass were held (T-27), and no independent review took place (T-20 to T-30). T-32 records the release decision for 1.0.0.
 - **The choice of the licence, the copyright holder's name and the engineering values stay with the owner.** No personal name was invented.
 - **No tag, release page or publication was made by the assistant that prepared this record.** The checksums of the 1.0.0 packages did not exist when this section was written; they are in the `SHA256SUMS` on the release page and, when the owner or a developer adds them, in `evidence/release_1.0.0_SHA256SUMS`.
+
+## Publication of 1.0.0 (2026-10-12)
+
+Recorded after the fact from the repository owner's publication. Pull request 45 was merged as commit `0c6a96a` (version 1.0.0 with all audit fixes). The assistant could not push the tag from its working session (HTTP 403 on tag pushes). The owner published the GitHub release instead (Releases, Draft a new release, tag `v1.0.0` created on publish, target `master`) on 2026-10-12 at 20:37 UTC, so the tag `v1.0.0` points to `0c6a96a`. The tag push started `.github/workflows/release.yml`; the run finished green and attached `harness-design-studio-1.0.0-linux-x86_64.tar.gz`, `harness-design-studio_1.0.0_amd64.deb` and `SHA256SUMS` to the release.
+
+| File | SHA-256 |
+| --- | --- |
+| `harness-design-studio-1.0.0-linux-x86_64.tar.gz` | `f75c2747babbb66502fa3ccf82480067e81230ef06542097eaf5db69e2436692` |
+| `harness-design-studio_1.0.0_amd64.deb` | `0fec64f63ca95c4c69d4a2eb6e57895802a9a63f3f33648a9b29696cd5af2248` |
+
+The checksums are also in `evidence/release_1.0.0_SHA256SUMS`. The packages were built from `0c6a96a`: documents changed on `master` after that commit (for example the in-app user guide, which is part of the package) are not in the 1.0.0 packages. The waivers and open items listed in the previous section are unchanged by the publication, and nothing here is a statement of compliance.
+
