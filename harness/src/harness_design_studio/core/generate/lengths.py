@@ -33,6 +33,9 @@ def path_length(h: Harness, start: str, end: str) -> float | None:
 
 
 _PATHS: dict[tuple[int, str, str], tuple[Harness, float | None]] = {}
+_PATHS_LIMIT = (
+    512  # the cache keeps its harnesses alive: bounded, so a long editing session cannot grow it
+)
 
 
 def clear_length_cache() -> None:
@@ -49,6 +52,8 @@ def wire_length(h: Harness, w: Wire) -> float | None:
     key = (id(h), w.from_connector, w.to_connector)
     hit = _PATHS.get(key)
     if hit is None or hit[0] is not h:  # the identity check guards against reused object ids
+        if len(_PATHS) >= _PATHS_LIMIT:
+            _PATHS.clear()
         hit = _PATHS[key] = (h, path_length(h, w.from_connector, w.to_connector))
     return hit[1]
 

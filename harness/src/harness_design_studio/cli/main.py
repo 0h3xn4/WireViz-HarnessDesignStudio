@@ -15,7 +15,7 @@ from harness_design_studio.core.errors import HarnessError, ProjectLockedError, 
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, load_project, non_canonical_files
 from harness_design_studio.core.io.saver import migrate_project
-from harness_design_studio.core.issues import Issue
+from harness_design_studio.core.issues import Issue, errors
 
 NOT_CANONICAL = (
     "File differs from the tool's own formatting (hand-edited or merged). "
@@ -278,7 +278,16 @@ def _dispatch(args: argparse.Namespace) -> int:
     if args.command in start.COMMANDS:
         return start.run(args)
     if args.command in ("migrate", "export"):
-        probe = load_project(args.project).project
+        loaded = load_project(args.project)
+        probe = loaded.project
+        if loaded.has_errors or probe.recovered:
+            print(
+                f"error: the project has damaged files (first: {errors(loaded.issues)[0].render() if loaded.has_errors else 'parts set aside'}); "
+                f"nothing was {'migrated' if args.command == 'migrate' else 'exported'}. "
+                "Run `harness validate` to see them.",
+                file=sys.stderr,
+            )
+            return 2
         if probe.read_only:
             print(
                 "error: this project is read-only (saved by a newer tool version).", file=sys.stderr

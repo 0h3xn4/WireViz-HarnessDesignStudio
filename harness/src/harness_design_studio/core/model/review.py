@@ -2,15 +2,17 @@
 
 from typing import Annotated, Literal
 
-from pydantic import StringConstraints
+from pydantic import AfterValidator, StringConstraints
 
 from harness_design_studio.core.ids import Id
 
-from .base import Entity, Name, Text
+from .base import Entity, Name, Text, _no_control_chars
 from .logical import InterfaceInstance, Unit
 from .physical import Connector, Harness
 
-Justification = Annotated[str, StringConstraints(min_length=10, max_length=2000)]
+Justification = Annotated[
+    str, StringConstraints(min_length=10, max_length=2000), AfterValidator(_no_control_chars)
+]
 
 
 class Placement(Entity):

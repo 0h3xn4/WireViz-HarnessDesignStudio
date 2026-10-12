@@ -222,3 +222,163 @@ def test_the_process_exceptions_stay_narrow() -> None:
         "gui/drc_process.py": {"subprocess"},
         "core/drc/worker.py": {"pickle"},
     }
+
+
+# ---- links never lead a write or a delete out of the project ----------------------------------
+
+
+def _victim(tmp_path: Path) -> Path:
+    victim = tmp_path / "victim"
+    victim.mkdir()
+    (victim / "precious.txt").write_text("precious")
+    return victim
+
+
+def test_export_never_deletes_through_a_linked_subfolder(tmp_path: Path) -> None:
+    import json
+    import os
+
+    from harness_design_studio.core.errors import SaveError
+    from harness_design_studio.core.outputs.build import build_outputs, write_outputs
+    from harness_design_studio.core.samples import mini3
+
+    victim = _victim(tmp_path)
+    p = mini3()
+    out = tmp_path / "outputs"
+    write_outputs(p, out)
+    manifest = json.loads((out / "manifest.json").read_text())
+    manifest["files"].append({"bytes": 1, "path": "system/ln/precious.txt", "sha256": "x"})
+    (out / "manifest.json").write_text(json.dumps(manifest))
+    os.symlink(victim, out / "system" / "ln")
+    with pytest.raises(SaveError):
+        write_outputs(p, out, build_outputs(p))
+    assert (victim / "precious.txt").read_text() == "precious"
+
+
+def test_export_and_save_never_write_through_a_planted_temp_or_backup_link(tmp_path: Path) -> None:
+    import os
+
+    from harness_design_studio.core.io.fs import atomic_write_bytes
+
+    victim = _victim(tmp_path)
+    target = tmp_path / "project.json"
+    target.write_text("old")
+    os.symlink(victim / "precious.txt", tmp_path / "project.json.bak")
+    atomic_write_bytes(target, b"new")
+    assert (
+        victim / "precious.txt"
+    ).read_text() == "precious"  # the link was replaced, not followed
+    assert target.read_bytes() == b"new"
+    assert (tmp_path / "project.json.bak").read_bytes() == b"old"
+    assert not (tmp_path / "project.json.bak").is_symlink()
+    # a file with a predictable temp name next to the target is not touched either
+    os.symlink(victim / "precious.txt", tmp_path / f".project.json.{os.getpid()}.tmp")
+    atomic_write_bytes(target, b"newer")
+    assert (victim / "precious.txt").read_text() == "precious"
+
+
+def test_save_refuses_to_write_behind_a_linked_subfolder(tmp_path: Path) -> None:
+    import os
+
+    from harness_design_studio.core.errors import SaveError
+    from harness_design_studio.core.generate.engine import generate_project
+    from harness_design_studio.core.io.saver import save_project
+    from harness_design_studio.core.samples import mini3
+
+    p = mini3()
+    generate_project(p)
+    folder = tmp_path / "proj"
+    save_project(p, folder)
+    outside = tmp_path / "outside"
+    outside.mkdir()
+    import shutil
+
+    shutil.rmtree(folder / "physical" / "harnesses")
+    os.symlink(outside, folder / "physical" / "harnesses")
+    with pytest.raises(SaveError):
+        save_project(p, folder, allow_inconsistent=True)
+    assert not list(outside.iterdir())
+
+
+# ---- damaged input never crashes or silently passes the export --------------------------------
+
+
+def test_a_control_character_in_a_waiver_text_is_refused_and_one_in_a_cell_is_dropped() -> None:
+    import pytest as _pytest
+    from pydantic import ValidationError
+
+    from harness_design_studio.core.model.review import Waiver
+    from harness_design_studio.core.outputs.exports import xlsx_bytes
+    from harness_design_studio.core.outputs.stamp import Stamp
+
+    with _pytest.raises(ValidationError):
+        Waiver(
+            id="r.o", rule="r", object_id="o", justification="long enough\x0bwith a control char"
+        )
+    data = xlsx_bytes({"T": [["a\x0bb", "\x00c"]]}, Stamp("t", "t"))
+    assert data.startswith(b"PK")  # a workbook, not an IllegalCharacterError
+
+
+def test_an_invalid_titleblock_config_does_not_crash_the_drawing() -> None:
+    from harness_design_studio.core.model.config import ConfigFile
+    from harness_design_studio.core.outputs.drawing import harness_sheets
+    from harness_design_studio.core.outputs.stamp import Stamp
+    from harness_design_studio.core.samples import sat15_full
+
+    p = sat15_full()
+    old = p.config["titleblock"]
+    for bad in (True, "abc", 5, {"a": 1}):
+        p.config["titleblock"] = ConfigFile(
+            name="titleblock", placeholder=old.placeholder, values={**old.values, "fields": bad}
+        )
+        assert harness_sheets(p, p.harnesses["W010"], Stamp("t", "t"), "A3")
+
+
+def test_export_and_migrate_refuse_a_project_with_damaged_files(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from harness_design_studio.cli.main import main as cli_main
+    from harness_design_studio.core.generate.engine import generate_project
+    from harness_design_studio.core.io.saver import save_project
+    from harness_design_studio.core.samples import mini3
+
+    p = mini3()
+    generate_project(p)
+    folder = tmp_path / "proj"
+    save_project(p, folder)
+    harness_file = next((folder / "physical" / "harnesses").glob("*.json"))
+    harness_file.write_text(harness_file.read_text()[:40])  # truncated
+    for command in ("export", "migrate"):
+        assert cli_main([command, str(folder)]) == 2
+        assert "damaged" in capsys.readouterr().err
+    assert not (folder / "outputs").exists()
+
+
+def test_the_netlist_reader_wants_a_regular_file(tmp_path: Path) -> None:
+    from harness_design_studio.core.kicad import NetlistError, read_netlist
+
+    with pytest.raises(NetlistError):
+        read_netlist("/dev/zero")
+    with pytest.raises(NetlistError):
+        read_netlist(tmp_path)
+
+
+def test_the_drc_worker_is_started_without_the_current_folder_on_its_path() -> None:
+    from harness_design_studio.gui.drc_process import worker_command
+
+    assert "-P" in worker_command()
+
+
+def test_the_length_cache_is_bounded() -> None:
+    from harness_design_studio.core.generate import lengths
+    from harness_design_studio.core.model import Segment, evolve
+    from harness_design_studio.core.samples import sat15_full
+
+    h = sat15_full().harnesses["W010"]
+    a, b = h.connectors[0].id, h.connectors[1].id
+    wire = evolve(h.wires[0], length_m=None, from_connector=a, to_connector=b)
+    base = evolve(h, segments=[Segment(id="S1", from_node=a, to_node=b, length_m=1.0)])
+    lengths.clear_length_cache()
+    for k in range(lengths._PATHS_LIMIT * 3):
+        assert lengths.wire_length(evolve(base, name=f"copy {k}"), wire) == 1.0
+    assert len(lengths._PATHS) <= lengths._PATHS_LIMIT

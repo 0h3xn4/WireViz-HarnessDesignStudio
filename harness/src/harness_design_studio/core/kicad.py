@@ -237,6 +237,8 @@ def _parse_xml(data: bytes) -> Netlist:
 def read_netlist(path: Path | str) -> Netlist:
     p = Path(path)
     try:
+        if not p.is_file():
+            raise NetlistError("The netlist must be a regular file.")
         if p.stat().st_size > MAX_BYTES:
             raise NetlistError("The netlist is too large (limit 32 MB).")
         return parse_netlist(p.read_bytes())

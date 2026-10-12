@@ -9,6 +9,7 @@ import platform
 import re
 import shutil
 import sys
+import tempfile
 import time
 import unicodedata
 from pathlib import Path
@@ -52,23 +53,55 @@ def _explain(exc: OSError, path: Path) -> str:
     return f"'{path.name}' could not be saved ({exc.strerror or 'file system error'})."
 
 
-def atomic_write_bytes(path: Path, data: bytes, *, backup: bool = True) -> None:
-    """Write via temp file, flush, fsync and rename. A crash never leaves a half-written file."""
+def _temp_beside(target: Path) -> tuple[int, Path]:
+    """A new, empty temp file next to `target`: unique name, created exclusively and without
+    following a link, so a planted file or link of that name can never be written through."""
+    fd, name = tempfile.mkstemp(dir=target.parent, prefix=f".{target.name}.", suffix=".tmp")
+    return fd, Path(name)
+
+
+def atomic_write_bytes(
+    path: Path, data: bytes, *, backup: bool = True, root: Path | None = None, durable: bool = True
+) -> None:
+    """Write via temp file, flush, fsync and rename. A crash never leaves a half-written file.
+    With `root`, the file must stay inside it (no folder on the way may be a link out of it).
+    `durable=False` skips the fsyncs (for files that are rebuilt on demand, such as outputs)."""
     target = long_path(path)
-    tmp = target.with_name(f".{target.name}.{os.getpid()}.tmp")
+    tmp: Path | None = None
+    bak_tmp: Path | None = None
     try:
         target.parent.mkdir(parents=True, exist_ok=True)
-        with open(tmp, "wb") as fh:
+        if root is not None and escapes_root(long_path(root), target.parent):
+            raise SaveError(
+                f"'{path.name}' would be written outside the project folder (a link leads out "
+                "of it), so nothing was written."
+            )
+        mode = (target.stat().st_mode & 0o777) if target.exists() else 0o644
+        fd, tmp = _temp_beside(target)
+        with os.fdopen(fd, "wb") as fh:
             fh.write(data)
             fh.flush()
-            os.fsync(fh.fileno())
+            if durable:
+                os.fsync(fh.fileno())
+        os.chmod(tmp, mode)
         if backup and target.exists():
-            shutil.copyfile(target, target.with_name(target.name + ".bak"))
+            # copy to a temp file and rename it over the backup, so a link named ".bak" is
+            # replaced and never followed
+            fd, bak_tmp = _temp_beside(target)
+            os.close(fd)
+            shutil.copyfile(target, bak_tmp)
+            os.replace(bak_tmp, target.with_name(target.name + ".bak"))
+            bak_tmp = None
         os.replace(tmp, target)
-        _fsync_dir(target.parent)
+        tmp = None
+        if durable:
+            _fsync_dir(target.parent)
     except OSError as exc:
-        tmp.unlink(missing_ok=True)
         raise SaveError(_explain(exc, path)) from exc
+    finally:
+        for leftover in (tmp, bak_tmp):
+            if leftover is not None:
+                leftover.unlink(missing_ok=True)
 
 
 def escapes_root(root: Path, path: Path) -> bool:
@@ -119,7 +152,7 @@ class ProjectLock:
         info = {"pid": os.getpid(), "host": platform.node(), "since": int(time.time())}
         guard = self.path.with_name(self.path.name + ".takeover")
         try:
-            fd = os.open(guard, os.O_RDWR | os.O_CREAT, 0o600)
+            fd = os.open(guard, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
         except OSError as exc:
             raise SaveError(_explain(exc, guard)) from exc
         try:
@@ -144,9 +177,10 @@ class ProjectLock:
     def _create_atomically(self, info: dict[str, object]) -> None:
         """Create the lock file with its content already in it. Creating it empty and filling it in
         afterwards lets another process read it half written, call it stale and delete it."""
-        tmp = self.path.with_name(f"{self.path.name}.{os.getpid()}.tmp")
+        tmp = self.path.with_name(f"{self.path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
         try:
-            with open(tmp, "w", encoding="utf-8") as fh:
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            with os.fdopen(fd, "w", encoding="utf-8") as fh:
                 json.dump(info, fh)
                 fh.flush()
                 os.fsync(fh.fileno())

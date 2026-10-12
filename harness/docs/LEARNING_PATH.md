@@ -2,7 +2,22 @@
 
 A route from "I have just installed it" to "I can use it on my own spacecraft". Each step says what you do, how long it takes, which example or template you use, and **how you know you are done**. Do the steps in order; skip a step only if you already know it.
 
+## Contents
+
+- [1. Look around (10 minutes)](#1-look-around-10-minutes)
+- [2. Your first harness (45 minutes)](#2-your-first-harness-45-minutes)
+- [3. A realistic small system (30 minutes)](#3-a-realistic-small-system-30-minutes)
+- [4. Plan your own design (30 minutes)](#4-plan-your-own-design-30-minutes)
+- [5. Enter your design (1 to 2 hours)](#5-enter-your-design-1-to-2-hours)
+- [6. Bring in real data (as needed)](#6-bring-in-real-data-as-needed)
+- [7. Check and review (30 minutes)](#7-check-and-review-30-minutes)
+- [8. Release and change (30 minutes)](#8-release-and-change-30-minutes)
+- [9. Automate](#9-automate)
+- [If you get stuck](#if-you-get-stuck)
+
 If you have not installed the tool yet, start with [`INSTALL.md`](INSTALL.md).
+
+**Which build do you have?** Steps 3 and 4 use the example `minimal-satellite` and the template `design-worksheet.md`, and the `flatsat` example is mentioned too. These, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are on `master` and are **not** in the released 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md#unreleased-after-010)). `harness new --list` shows five examples on a newer build and three (`blank`, `first-steps`, `small-satellite`) on the 0.1.0 packages. With the packages, do step 3 with `small-satellite` and plan on paper in step 4.
 
 | Step | You learn | Time | Uses |
 | --- | --- | --- | --- |
@@ -37,7 +52,7 @@ harness export wheel-link
 
 ## 3. A realistic small system (30 minutes)
 
-`minimal-satellite` has seven units without redundancy: solar array, battery, power control unit, on-board computer, transceiver, one reaction wheel and a sun sensor. It is the smallest example that looks like a real spacecraft.
+`minimal-satellite` has seven units without redundancy: solar array, battery, power distribution unit (`PCDU1`), on-board computer, transceiver, one reaction wheel and a sun sensor. It is the smallest example that looks like a real spacecraft.
 
 ```
 harness new mini --template minimal-satellite
@@ -47,7 +62,7 @@ harness drc mini
 
 Open it in the app (**File > Open project...**). Try these four things, in this order:
 
-1. Click a wire of the power link from the power control unit to the computer. Read **Why is it like this?**
+1. Click a wire of the power link from the power distribution unit (`PCDU1`) to the computer. Read **Why is it like this?**
 2. Open the **Problems** tab. Most entries say that a value is *pending* or *not checked*. That is the tool being honest: nobody has supplied the derating values yet.
 3. Use the **Show** list in the toolbar to look at the power interfaces only, then at the data interfaces.
 4. Delete a unit, then press **Ctrl+Z**, to see that nothing is lost.
@@ -67,7 +82,7 @@ Before you open the tool, fill in `design-worksheet.md` (get it with `harness te
 Two ways, and you can mix them:
 
 - **In the app.** Start a project from `blank` (`harness new my-design`), add units from the palette, then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10.
-- **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import interfaces**. Add the units first.
+- **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import interfaces**. Add the units first. Importing interfaces is app only: there is no command line command for it.
 
 **Done when:** `harness generate my-design` finishes and `harness check my-design` reports no errors.
 
@@ -92,7 +107,7 @@ Read every entry of the **Problems** tab or of `harness drc`. For each one, deci
 
 A released harness is locked. To change it, you start a new revision, so the old one stays reproducible. The steps, with the exact commands, are in [`HOWTO.md`](HOWTO.md) and in Part 9 of [`GETTING_STARTED.md`](GETTING_STARTED.md). Practise on a copy of your project, not on the real one.
 
-**Done when:** you can show, with `harness diff` and `harness log`, what changed between revision A and revision B.
+**Done when:** you can show, with `harness diff` and `harness log`, what changed since revision A. After `harness revise`, `harness diff DIR W002` compares revision A with the working design; revision B has a baseline of its own only after you release it, and then `--from A --to B` compares the two.
 
 ## 9. Automate
 
@@ -103,3 +118,5 @@ Run the same steps in a script or in CI so that every change to the design is ch
 ## If you get stuck
 
 [`FAQ.md`](FAQ.md) lists the usual problems. [`CHEATSHEET.md`](CHEATSHEET.md) fits on one page.
+
+Next: [`GETTING_STARTED.md`](GETTING_STARTED.md), [user manual](user-manual/README.md).

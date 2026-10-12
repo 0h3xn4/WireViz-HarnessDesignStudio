@@ -3,7 +3,6 @@ bytes. `outputs_status` compares a folder with the current model (stale detectio
 
 import hashlib
 import json
-import os
 from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -11,6 +10,7 @@ from pathlib import Path
 from harness_design_studio.core import checks, drc
 from harness_design_studio.core.drc.report import render_markdown
 from harness_design_studio.core.errors import HarnessError, SaveError
+from harness_design_studio.core.io.fs import atomic_write_bytes, escapes_root
 from harness_design_studio.core.model import Harness, Project
 from harness_design_studio.core.vcs.hashing import content_hash
 from harness_design_studio.core.vcs.report import changelog_rows, revision_report
@@ -196,23 +196,28 @@ def write_outputs(
         root.mkdir(parents=True, exist_ok=True)
     except OSError as exc:
         raise SaveError(f"The outputs folder cannot be created ({exc.strerror}).") from exc
+    # no file may be written or deleted behind a link at any depth: check them all first
+    stale = [r for r in sorted(old.files if old else {}) if r not in result.files and _safe_rel(r)]
+    for rel in (*result.files, *stale):
+        target = root / rel
+        if target.is_symlink() or escapes_root(root, target.parent):
+            raise SaveError(
+                f"'{rel}' lies behind a link that leads out of the outputs folder, so nothing "
+                "was written."
+            )
     try:
         for rel, data in sorted(result.files.items()):
-            _atomic(root / rel, data)
-        for rel in sorted(old.files if old else {}):
-            if rel not in result.files and _safe_rel(rel):
-                (root / rel).unlink(missing_ok=True)
-        _atomic(root / MANIFEST, result.manifest(project))
+            _atomic(root / rel, data, root)
+        for rel in stale:
+            (root / rel).unlink(missing_ok=True)
+        _atomic(root / MANIFEST, result.manifest(project), root)
     except OSError as exc:
         raise SaveError(f"The outputs could not be written ({exc.strerror}).") from exc
     return result
 
 
-def _atomic(path: Path, data: bytes) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    tmp = path.with_name(path.name + ".tmp")
-    tmp.write_bytes(data)
-    os.replace(tmp, path)
+def _atomic(path: Path, data: bytes, root: Path) -> None:
+    atomic_write_bytes(path, data, backup=False, root=root, durable=False)
 
 
 @dataclass(frozen=True)

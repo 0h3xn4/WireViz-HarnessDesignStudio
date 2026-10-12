@@ -1,6 +1,40 @@
 # Configuration reference
 
-Rules live in `config/*.json` inside the project, not in code. Every file has `"placeholder": true` until an engineer has reviewed it; set it to `false` afterwards. Values shown as `null` are placeholders: results say so and the affected checks say *not checked*. Which standard to take values from is for you to decide; the tool ships none. `harness config DIR` lists what is missing and checks what is set (ranges, table order); see IMPORTS.md.
+Rules live in `config/*.json` inside the project, not in code. There are seven files. Every file except `naming.json` has `"placeholder": true` until an engineer has reviewed it; set it to `false` afterwards. (`naming.json` ships with `"placeholder": false`, because name patterns are a style choice, not an engineering value.) Values shown as `null` are placeholders: results say so and the affected checks say *not checked*. Which standard to take values from is for you to decide; the tool ships none. `harness config DIR` lists what is missing and checks what is set (ranges, table order); see IMPORTS.md.
+
+## Contents
+
+- [The shape of a file](#the-shape-of-a-file)
+- [`segmentation.json`](#segmentationjson)
+- [`segregation.json`](#segregationjson)
+- [`derating.json`](#deratingjson)
+- [`generation.json`](#generationjson)
+- [`emc.json`](#emcjson)
+- [`naming.json`](#namingjson)
+- [`titleblock.json`](#titleblockjson)
+- [Optional values from the supplied standards (D-131)](#optional-values-from-the-supplied-standards-d-131)
+
+## The shape of a file
+
+Every file is a wrapper with three fields: `name` (the file's name without `.json`), `placeholder` and `values`. **The keys of the tables below go inside `values`**, never at the top level. A complete `config/derating.json` with four keys set (the numbers are the demo values of the templates, for learning only, not engineering data):
+
+```json
+{
+  "name": "derating",
+  "placeholder": true,
+  "values": {
+    "ampacity_a_by_awg": {
+      "20": 5.0,
+      "22": 3.0
+    },
+    "bundle_derating": 0.8,
+    "max_voltage_drop_v": 0.5,
+    "temperature_derating": 0.9
+  }
+}
+```
+
+Keys that are left out stay unset (`null`). `harness validate` accepts this file, and `harness config DIR` counts the four keys as set. Put a key outside `values` and the file is rejected: `harness validate` prints `ERROR quarantined: ... bundle_derating: Extra inputs are not permitted`, sets the file aside and falls back to the built-in placeholder for that file. A new project already contains all seven files with every key; edit those instead of writing one from scratch.
 
 ## `segmentation.json`
 | Key | Meaning |
@@ -46,7 +80,17 @@ Rules live in `config/*.json` inside the project, not in code. Every file has `"
 | `conflicting_class_pairs` | pairs of EMC classes that must not share a harness, for example `[["A", "B"]]` |
 
 ## `naming.json`
-Name patterns for harnesses, connectors, wires, shields, branch points and segments, for example `W{n:03d}`. IDs are stable once released.
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `harness` | `W{n:03d}` | name of a harness (`W001`) |
+| `box_connector` | `{unit}-J{n:02d}` | in the shipped file, but the generator does not read it: a unit's connectors are always named `<unit>-Jnn` (`RW1-J01`) |
+| `cable_connector` | `{harness}-P{n}` | cable connector of a harness (`W001-P1`) |
+| `wire` | `{harness}-{n:03d}` | wire (`W001-001`) |
+| `shield` | `{harness}-S{n}` | shield (`W001-S1`) |
+| `branch` | `{harness}-B{n}` | branch point |
+| `segment` | `{harness}-L{n}` | routing segment |
+
+The shipped file lists only the first four keys; `shield`, `branch` and `segment` use the defaults above until you add them. A pattern that does not give a different valid ID for every number is reported and the default is used. IDs are stable once released.
 
 ## `titleblock.json`
 | Key | Meaning |
@@ -81,3 +125,5 @@ None of these is set by default. `harness config DIR --apply-profile ecss-q-st-3
 
 ### Part ratings used by the rules (keys of `ratings` in the parts library)
 `rated_voltage_v`, `dielectric_withstand_v`, `max_temp_c`, `mating_cycles` (connectors and wires as stated above). A part without the rating the rule needs is listed under *not checked*. The part fields `manufacturer` and `specification` are used by the rules `connector-manufacturer` and `wire-specification`.
+
+Next: [`PLACEHOLDERS.md`](PLACEHOLDERS.md), [fill in engineering values](user-manual/fill-in-engineering-values.md).

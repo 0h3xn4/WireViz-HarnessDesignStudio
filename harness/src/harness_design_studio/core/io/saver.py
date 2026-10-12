@@ -98,21 +98,25 @@ def save_project(
         path = base / rel
         if path.is_file() and path.read_bytes() == data:
             continue
-        atomic_write_bytes(path, data)
+        atomic_write_bytes(path, data, root=base)
         result.written.append(rel)
     if project.recovered:
-        atomic_write_bytes(base / "quarantine.json", canonical.dumps(_quarantine_payload(project)))
+        atomic_write_bytes(
+            base / "quarantine.json", canonical.dumps(_quarantine_payload(project)), root=base
+        )
         for rel, raw in project.quarantine_files.items():
-            atomic_write_bytes(base / "quarantine" / "files" / rel, raw, backup=False)
+            atomic_write_bytes(base / "quarantine" / "files" / rel, raw, backup=False, root=base)
     for rel in sorted(set(_managed_on_disk(base)) - set(files)):
         if project.quarantine_files and rel in project.quarantine_files:
             continue
         stale = base / rel
+        if escapes_root(base, stale.parent):
+            raise SaveError(f"'{rel}' lies behind a link that leads outside the project.")
         stale.replace(stale.with_name(stale.name + ".bak"))  # removed objects stay recoverable
         result.removed.append(rel)
     gitignore = base / ".gitignore"
     if not gitignore.exists():
-        atomic_write_bytes(gitignore, GITIGNORE, backup=False)
+        atomic_write_bytes(gitignore, GITIGNORE, backup=False, root=base)
     project.meta = evolve(project.meta, tool_version=__version__, schema_version=SCHEMA_VERSION)
     project.migrated_from = None
     return result

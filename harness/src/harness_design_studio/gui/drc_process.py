@@ -27,7 +27,8 @@ DISABLE_ENV = "HARNESS_DRC_INPROCESS"  # set to 1 to run the check in a thread (
 def worker_command() -> list[str]:
     if getattr(sys, "frozen", False):
         return [sys.executable, FLAG]
-    return [sys.executable, "-m", "harness_design_studio.core.drc.worker"]
+    # -P: do not put the current folder on the module path (a planted module there would run)
+    return [sys.executable, "-P", "-m", "harness_design_studio.core.drc.worker"]
 
 
 class DrcProcess:

@@ -10,6 +10,7 @@ from typing import Any
 
 from openpyxl import Workbook
 from openpyxl.cell import WriteOnlyCell
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
 
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Harness, Project
@@ -92,6 +93,7 @@ def xlsx_bytes(sheets: dict[str, Table], stamp: Stamp) -> bytes:
     def cells(ws: Any, row: list[str]) -> list[Any]:
         out: list[Any] = []
         for v in row:
+            v = ILLEGAL_CHARACTERS_RE.sub("", v)  # a control character would abort the workbook
             c = WriteOnlyCell(ws, value=v)
             if v[:1] in ("=", "+", "-", "@"):
                 c.data_type = "s"

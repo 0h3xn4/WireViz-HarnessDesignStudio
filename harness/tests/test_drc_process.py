@@ -62,7 +62,7 @@ def test_the_check_can_be_kept_in_this_process(project, monkeypatch) -> None:  #
 
 
 def test_a_packaged_program_is_started_with_the_worker_flag(monkeypatch) -> None:  # type: ignore[no-untyped-def]
-    assert drc_process.worker_command()[1:] == ["-m", "harness_design_studio.core.drc.worker"]
+    assert drc_process.worker_command()[1:] == ["-P", "-m", "harness_design_studio.core.drc.worker"]
     monkeypatch.setattr(sys, "frozen", True, raising=False)
     assert drc_process.worker_command() == [sys.executable, "--drc-worker"]
 

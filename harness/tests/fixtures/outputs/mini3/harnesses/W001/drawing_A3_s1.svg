@@ -45,8 +45,8 @@
 <line x1="162" y1="45.85" x2="258" y2="45.85" stroke="#808080" stroke-width="0.8"/>
 <path d="M 258 45.85 C 280.5 45.85 280.5 40 303 40" fill="none" stroke="#808080" stroke-width="0.8"/>
 <text x="210" y="44.85" font-size="2.5" font-weight="bold" text-anchor="middle" fill="#000000">W001-002</text>
-<text x="9" y="54.85" font-size="2.6" text-anchor="start" fill="#000000">Spare pins W001-P1: 3</text>
-<text x="9" y="59.25" font-size="2.6" text-anchor="start" fill="#000000">Spare pins W001-P2: 3</text>
+<text x="9" y="58.35" font-size="2.6" text-anchor="start" fill="#000000">Spare pins W001-P1: 3</text>
+<text x="9" y="62.75" font-size="2.6" text-anchor="start" fill="#000000">Spare pins W001-P2: 3</text>
 <rect x="222" y="247" width="190" height="42" fill="none" stroke="#000000" stroke-width="0.5"/>
 <line x1="222" y1="247" x2="317" y2="247" stroke="#000000" stroke-width="0.2"/>
 <text x="223" y="249.2" font-size="1.8" text-anchor="start" fill="#555555">PROJECT</text>
