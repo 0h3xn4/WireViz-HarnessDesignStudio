@@ -39,7 +39,7 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 | Script | What it does |
 | --- | --- |
 | `release_check` | Runs the release checklist and writes `dist/release-docs/release-report.md` ([`release.md`](release.md)) |
-| `build_installer` | Builds a self-contained, offline package with PyInstaller (one folder) and archives it |
+| `build_installer` | Builds a self-contained, offline package with PyInstaller (one folder) and archives it; fails when the package holds code other than the standard library and the declared runtime dependencies |
 | `build_deb` | Builds the `.deb` from `dist/harness-design-studio` (run `build_installer` first) |
 | `check_reproducible` | Builds the wheel twice with a fixed `SOURCE_DATE_EPOCH` and requires identical hashes |
 | `vendor` | Downloads every pinned wheel into a local folder for offline installs (run on a connected host) |

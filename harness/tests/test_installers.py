@@ -265,3 +265,88 @@ def test_the_licence_collector_finds_the_runtime_packages_and_the_lgpl_text(tmp_
     rows = collect(tmp_path / "LICENSES")
     assert any("pydantic" in r for r in rows)
     assert (tmp_path / "LICENSES" / "LGPL-3.txt").is_file()
+
+
+def test_the_package_check_names_modules_that_are_not_declared_dependencies() -> None:
+    from tools.build_installer import undeclared_modules
+
+    toc = [
+        "harness_design_studio.core.model", "pydantic._internal._core_utils", "openpyxl.styles",
+        "json.decoder", "xml.etree.ElementTree", "PySide6", "_pyi_rth_utils.qt", "typing_extensions",
+        "_sysconfigdata__x86_64-linux-gnu",
+        "rich.console", "pygments.lexers", "markdown_it.main", "chardet",
+    ]  # fmt: skip
+    assert undeclared_modules(toc) == ["chardet", "markdown_it", "pygments", "rich"]
+    assert undeclared_modules(toc[:9]) == []
+
+
+def test_the_package_check_covers_files_next_to_the_archive(tmp_path: Path) -> None:
+    from tools.build_installer import undeclared_files
+
+    internal = tmp_path / "_internal"
+    for name in ("libQt6Core.so.6", "base_library.zip", "pydantic_core", "PySide6", "python3.13",
+                 "pydantic-2.13.5.dist-info", "harness_design_studio"):  # fmt: skip
+        (internal / name).mkdir(parents=True)
+    assert undeclared_files(internal) == []
+    for name in ("chardet", "7cf47097c39cf1afcee8__mypyc.cpython-313-x86_64-linux-gnu.so",
+                 "rich-15.0.0.dist-info"):  # fmt: skip
+        (internal / name).mkdir()
+    assert undeclared_files(internal) == [
+        "7cf47097c39cf1afcee8__mypyc", "chardet", "rich",
+    ]  # fmt: skip
+
+
+def test_the_known_runtime_packages_are_all_allowed_in_the_package() -> None:
+    from importlib import metadata
+
+    from tools.build_installer import ALLOWED_PACKAGES, EXCLUDES
+    from tools.collect_licences import runtime_distributions
+
+    owners = metadata.packages_distributions()
+    runtime = {
+        d.metadata["Name"].lower().replace("_", "-") for d in runtime_distributions().values()
+    }
+    top = {
+        m for m, dists in owners.items() if runtime & {x.lower().replace("_", "-") for x in dists}
+    }
+    top -= {"__pycache__", "Shiboken"}  # not imported by the app (Shiboken is a build-time alias)
+    assert top and top <= ALLOWED_PACKAGES, sorted(top - ALLOWED_PACKAGES)
+    # rich and the like come in only through pydantic's optional pretty printing: keep them out
+    assert {"rich", "pygments", "markdown_it", "mdurl", "chardet", "toml"} <= set(EXCLUDES)
+    assert not {"rich", "pygments", "chardet"} & ALLOWED_PACKAGES
+
+
+def test_the_root_setup_describes_the_package_with_the_upstream_readme() -> None:
+    """The fork's root setup.py (the WireViz package) reads its description as UTF-8 whatever the locale."""
+    import json
+    import sys
+
+    root = ROOT.parent
+    if not (root / "setup.py").is_file():
+        pytest.skip("the repository root is not here")
+    driver = (
+        "import json, runpy, setuptools\n"
+        "seen = {}\n"
+        "setuptools.setup = lambda **kw: seen.update(kw)\n"
+        "runpy.run_path('setup.py')\n"
+        "keys = ('long_description', 'long_description_content_type', 'python_requires', 'name')\n"
+        "print(json.dumps({k: seen.get(k) for k in keys}))\n"
+    )
+    env = {**os.environ, "LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONIOENCODING": "utf-8"}
+    env.pop("LANG", None)
+    r = subprocess.run(
+        [sys.executable, "-c", driver],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    assert r.returncode == 0, r.stderr[-600:]
+    meta = json.loads(r.stdout)
+    upstream = (root / "docs" / "upstream" / "README.upstream.md").read_text(encoding="utf-8")
+    assert meta["long_description"] == upstream and upstream.startswith("# WireViz")
+    assert meta["long_description_content_type"] == "text/markdown"
+    assert meta["python_requires"] == ">=3.7"
+    # a wheel built from the source distribution needs the file too
+    assert "docs/upstream/README.upstream.md" in (root / "MANIFEST.in").read_text(encoding="utf-8")
