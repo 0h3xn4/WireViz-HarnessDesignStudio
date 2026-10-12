@@ -5,6 +5,7 @@ from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 
+from pydantic import ValidationError
 from PySide6.QtCore import (
     QByteArray,
     QEvent,
@@ -65,7 +66,14 @@ from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, 
 from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.canvas import DiagramView
-from harness_design_studio.gui.controller import LIST_DELAY_MS, Delta, EditorController, NeedSaveAs
+from harness_design_studio.gui.controller import (
+    LIST_DELAY_MS,
+    Delta,
+    EditorController,
+    NeedSaveAs,
+    _plain,
+    reason_of,
+)
 from harness_design_studio.gui.dialogs import (
     Banner,
     ChangeDialog,
@@ -110,8 +118,9 @@ def _no_file() -> str | None:
 
 
 class PlanWorker(QThread):
-    """Computes a generation plan off the UI thread. It only reads the project; the UI is blocked
-    by a modal progress dialog meanwhile, so nothing can change under it."""
+    """Computes a generation plan off the UI thread. It works on a private copy of the project, so
+    edits made meanwhile cannot change what it reads (the window refuses a plan made for an
+    earlier state)."""
 
     progressed = Signal(float, str)
 
@@ -132,6 +141,9 @@ class PlanWorker(QThread):
             )
         except GenerationCancelled:
             self.plan = None
+        except Exception as exc:  # shown as the reason, never as "cancelled"
+            self.plan = None
+            self.error = reason_of(exc)
 
 
 class OutputsWorker(QThread):
@@ -145,6 +157,7 @@ class OutputsWorker(QThread):
         self._cancelled = False
         self.result: OutputSet | None = None
         self.report: VerifyReport | None = None
+        self.error: str | None = None
 
     def cancel(self) -> None:
         self._cancelled = True
@@ -160,6 +173,9 @@ class OutputsWorker(QThread):
             self.report = verify_outputs(self._project, self.result.files)
         except OutputsCancelled:
             self.result = None
+        except Exception as exc:  # shown as the reason, never as "cancelled"
+            self.result = self.report = None
+            self.error = reason_of(exc)
 
 
 class ToastHost(QWidget):
@@ -185,8 +201,8 @@ class ToastHost(QWidget):
     ) -> None:
         self.messages.append(text)
         self._frames = [f for f in self._frames if self._alive(f[0])]
-        if any(t == text and u == (undo is not None) for _f, t, u in self._frames):
-            return  # the same message is already showing
+        if undo is None and any(t == text for _f, t, _u in self._frames):
+            return  # the same message is already showing (one with a new Undo replaces the old)
         if undo is not None:  # an older Undo would now undo the wrong thing
             for frame, _t, has_undo in list(self._frames):
                 if has_undo:
@@ -289,6 +305,7 @@ class MainWindow(QMainWindow):
             self._compute_outputs
         )
         self.palette_entries_extra: list[PaletteEntry] = []
+        self.job_error: str | None = None  # why the last generation or export run failed
 
         self._build_center()
         self._build_docks()
@@ -420,6 +437,7 @@ class MainWindow(QMainWindow):
         self.harness_panel.changeRequested.connect(self.change_flow)
         self.tabs = QTabWidget()
         self.tabs.setObjectName("bottom-tabs")
+        self.tabs.setAccessibleName(strings.BOTTOM_TABS)
         self.tabs.addTab(self.problems, strings.PROBLEMS)
         self.tabs.addTab(self.todo, strings.TODO)
         self.tabs.addTab(self.table, strings.INTERFACE_TABLE)
@@ -559,7 +577,7 @@ class MainWindow(QMainWindow):
         if not ops:
             self.toasts.show_message(strings.ARRANGE_NOTHING, None)
             return
-        self.ctl.run("Arrange diagram", ops, message=strings.ARRANGE_DONE)
+        self.ctl.run(strings.ARRANGE_LABEL, ops, message=strings.ARRANGE_DONE)
 
     def guide_flow(self) -> None:
         path = guide_path()
@@ -708,6 +726,14 @@ class MainWindow(QMainWindow):
     def _refresh_filter_values(self) -> None:
         kind = self.filter_combo.currentData()
         keep = self.filter_value.currentData()
+        if kind:
+            wanted = self._filter_options(kind)
+            have = [
+                (self.filter_value.itemText(k), self.filter_value.itemData(k))
+                for k in range(self.filter_value.count())
+            ]
+            if wanted == have:
+                return  # nothing to rebuild (edits are frequent)
         self.filter_value.blockSignals(True)
         self.filter_value.clear()
         if kind:
@@ -727,6 +753,9 @@ class MainWindow(QMainWindow):
         self.view.dscene.set_filter(kind, self.filter_value.currentData() if kind else None)
 
     def _rebuild_connect_menu(self) -> None:
+        for old in self.menu_connect.actions():  # `_act` also registered them on the window
+            self.removeAction(old)
+            old.deleteLater()
         self.menu_connect.clear()
         for tid, t in sorted(self.ctl.project.interface_types.items()):
             act = self._act(t.name, partial(self._toggle_connect, tid), name=f"menu-connect-{tid}")
@@ -766,7 +795,10 @@ class MainWindow(QMainWindow):
         self.act_save.setEnabled(not ro)
         self.act_import.setEnabled(not ro)
         self.act_wire_colours.setEnabled(not ro)
-        self.status_saved.setText(strings.UNSAVED if c.dirty else strings.ALL_SAVED)
+        unsaved = strings.UNSAVED if c.autosaves else strings.UNSAVED_NO_JOURNAL
+        self.status_saved.setText(unsaved if c.dirty else strings.ALL_SAVED)
+        blocked = c.history.undo_blocked  # a disabled Undo must say why
+        self.act_undo.setToolTip(blocked or strings.UNDO)
         self._update_banner()
         self._update_selection_actions()
         self._hash_timer.start()
@@ -823,12 +855,15 @@ class MainWindow(QMainWindow):
         )
 
     def _on_changed(self, delta: Delta) -> None:
-        if delta.full and self.filter_combo.currentData():
-            self._refresh_filter_values()  # a new project: its connectors and harnesses
-            self._filter_changed(0)
-        self._rebuild_connect_menu() if set(self.ctl.project.interface_types) != {
+        if self.filter_combo.currentData():  # connectors and harnesses come and go (generate, undo)
+            before = self.filter_value.currentData()
+            self._refresh_filter_values()
+            if delta.full or self.filter_value.currentData() != before:
+                self._filter_changed(0)
+        if set(self.ctl.project.interface_types) != {
             a.objectName().removeprefix("menu-connect-") for a in self.menu_connect.actions()
-        } else None
+        }:
+            self._rebuild_connect_menu()
         self._update_tab_badges()
         self._update_selection_actions()
         p = self.ctl.project  # the counts follow every edit at once; only the hash waits
@@ -884,8 +919,7 @@ class MainWindow(QMainWindow):
         c = self.ctl
         self.tool_select.setChecked(c.tool == "select")
         self.tool_connect.setChecked(c.tool == "connect")
-        hint = c.connect_hint()
-        warn = hint.startswith("No other unit")
+        hint, warn = c.connect_hint_and_warning()
         self.hint.setText(hint)
         # reserve two lines so a long hint never makes the toolbar jump
         self.hint.setMinimumHeight(self.hint.fontMetrics().lineSpacing() * 2 + 4)
@@ -913,6 +947,9 @@ class MainWindow(QMainWindow):
             self.view.focus_unit(uid)
 
     def _toggle_connect(self, type_id: str) -> None:
+        if type_id not in self.ctl.project.interface_types:  # for example a stale palette entry
+            self.toasts.show_message(strings.UNKNOWN_INTERFACE_TYPE.format(type_id), None)
+            return
         if self.ctl.tool == "connect" and self.ctl.connect_type == type_id:
             self.ctl.end_connect()
         else:
@@ -947,15 +984,22 @@ class MainWindow(QMainWindow):
     def generate_flow(self) -> None:
         if self.ctl.read_only:
             return
+        self.job_error = None
+        token = self.ctl.state_token
         plan = self.compute_plan()
         if plan is None:
-            self.toasts.show_message(strings.GEN_CANCELLED, None)
+            self.toasts.show_message(
+                strings.GEN_FAILED.format(self.job_error)
+                if self.job_error
+                else strings.GEN_CANCELLED,
+                None,
+            )
             return
         if plan.empty and not self.ctl.plan_problems(plan):
-            self.ctl.apply_generation(plan)
+            self.ctl.apply_generation(plan, token)
             return
         accepted = self.run_dialog(GeneratePreviewDialog(self, plan)) == QDialog.DialogCode.Accepted
-        if accepted and self.ctl.apply_generation(plan):
+        if accepted and self.ctl.apply_generation(plan, token):
             self.tabs.setCurrentWidget(self.harness_panel)
             self._give_room_to(self.dock_bottom, 420)
 
@@ -966,8 +1010,9 @@ class MainWindow(QMainWindow):
 
     def _compute_plan(self) -> GenerationPlan | None:
         """Plan in a worker thread behind a cancellable progress dialog; None if cancelled."""
-        worker = PlanWorker(self.ctl.project)
+        worker = PlanWorker(edit.clone_with(self.ctl.project, []))
         self._run_worker(worker, strings.GEN_RUNNING, "generate-progress")
+        self.job_error = worker.error
         return worker.plan
 
     def _run_worker(self, worker: "PlanWorker | OutputsWorker", label: str, name: str) -> None:
@@ -1059,7 +1104,7 @@ class MainWindow(QMainWindow):
         self.settings.setValue("ui/user", by)
         if action == "review":
             plan = plan_submit_review(project, hid, by=by, when=today)
-            msg = f"{hid} submitted for review."
+            msg = strings.REVIEW_SUBMITTED.format(hid)
         elif action == "release":
             plan = plan_release(
                 project,
@@ -1075,7 +1120,7 @@ class MainWindow(QMainWindow):
             msg = strings.RELEASE_DONE.format(hid)
         else:
             plan = plan_new_revision(project, hid, by=by, comment=comment, when=today)
-            msg = f"New revision of {hid} started; it can be edited again."
+            msg = strings.NEW_REV_STARTED.format(hid)
         if self.ctl.apply_change(plan, msg):
             self.harness_panel.refresh()
 
@@ -1133,9 +1178,19 @@ class MainWindow(QMainWindow):
         if not self.ctl.project.harnesses:
             self.toasts.show_message(strings.EXPORT_NO_HARNESSES, None)
             return
+        self.job_error = None
+        token = self.ctl.state_token
         result = self.compute_outputs()
         if result is None:
-            self.toasts.show_message(strings.EXPORT_CANCELLED, None)
+            self.toasts.show_message(
+                strings.EXPORT_ERROR.format(self.job_error)
+                if self.job_error
+                else strings.EXPORT_CANCELLED,
+                None,
+            )
+            return
+        if token != self.ctl.state_token:  # edited while it was being built: it describes old data
+            self.toasts.show_message(strings.CHANGES_DURING_JOB, None)
             return
         built, report = result
         if not report.ok:
@@ -1154,8 +1209,9 @@ class MainWindow(QMainWindow):
         )
 
     def _compute_outputs(self) -> "tuple[OutputSet, VerifyReport] | None":
-        worker = OutputsWorker(self.ctl.project)
+        worker = OutputsWorker(edit.clone_with(self.ctl.project, []))
         self._run_worker(worker, strings.EXPORT_RUNNING, "export-progress")
+        self.job_error = worker.error
         return (
             None
             if worker.result is None or worker.report is None
@@ -1180,7 +1236,7 @@ class MainWindow(QMainWindow):
         if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
             return
         ops = edit.ops_set_wire_colours(self.ctl.project, dlg.colours())
-        if ops and self.ctl.run("wire colours", ops):
+        if ops and self.ctl.run(strings.WIRE_COLOURS_LABEL, ops):
             self.toasts.show_message(strings.WIRE_COLOURS_SET, None)
 
     def add_zone_flow(self) -> None:
@@ -1295,7 +1351,10 @@ class MainWindow(QMainWindow):
         )
         if choice == 0:
             return self.save_flow()
-        return choice == 1
+        if choice == 1:  # an explicit "discard": the recovery journal must not offer it again
+            self.ctl.discard_journal()
+            return True
+        return False
 
     def new_project_flow(self) -> None:
         if not self._confirm_discard():
@@ -1308,7 +1367,7 @@ class MainWindow(QMainWindow):
             return
         try:
             self.ctl.new_project(Path(folder), name)
-        except (HarnessError, OSError) as exc:
+        except (HarnessError, OSError, ValidationError) as exc:
             self._error(self._explain(exc, folder))
             return
         self._last_issues = []
@@ -1335,7 +1394,7 @@ class MainWindow(QMainWindow):
             return
         try:
             templates.create_project(Path(folder), examples[choice].name, name)
-        except (HarnessError, OSError) as exc:
+        except (HarnessError, OSError, ValidationError) as exc:
             self._error(self._explain(exc, folder))
             return
         if self.open_project(Path(folder)):
@@ -1343,13 +1402,26 @@ class MainWindow(QMainWindow):
             self.settings.setValue("project/last", folder)
 
     def open_flow(self) -> None:
-        if not self._confirm_discard():
-            return
         folder = self.ask_folder(strings.OPEN_FOLDER)
-        if folder:
+        if not folder:
+            return
+        if self._is_open_here(Path(folder)):  # nothing to replace, so nothing to discard
+            self.toasts.show_message(strings.ALREADY_OPEN, None)
+            return
+        if self._confirm_discard():
             self.open_project(Path(folder))
 
+    def _is_open_here(self, folder: Path) -> bool:
+        root = self.ctl.root
+        try:
+            return root is not None and folder.exists() and root.samefile(folder)
+        except OSError:
+            return False
+
     def open_project(self, folder: Path) -> bool:
+        if self._is_open_here(folder):
+            self.toasts.show_message(strings.ALREADY_OPEN, None)
+            return True
         try:
             result = self.ctl.open_path(folder)
         except OSError as exc:
@@ -1371,10 +1443,14 @@ class MainWindow(QMainWindow):
             return False
         self._last_issues = result.issues
         self.settings.setValue("project/last", str(folder))
+        if self.ctl.open_note:
+            self.toasts.show_message(self.ctl.open_note, None, 10000)
         if self.ctl.journal_available():
             choice = self.ask_choice(
                 strings.RESTORE_TITLE,
-                strings.RESTORE_BODY,
+                strings.RESTORE_BODY_CHANGED
+                if self.ctl.journal_base_changed()
+                else strings.RESTORE_BODY,
                 [strings.RESTORE, strings.DISCARD_CHANGES],
             )
             if choice == 0:
@@ -1418,6 +1494,8 @@ class MainWindow(QMainWindow):
         """An error as a sentence a person can act on (never a Python message)."""
         if isinstance(exc, HarnessError):
             return str(exc)
+        if isinstance(exc, ValidationError):  # for example a project name that is too long
+            return _plain(exc)
         if isinstance(exc, ValueError):  # for example a lone surrogate that cannot be encoded
             return strings.SAVE_BAD_TEXT
         where = f" in {folder}" if folder else ""
@@ -1435,10 +1513,16 @@ class MainWindow(QMainWindow):
             strings.CHANGED_TITLE, strings.CHANGED_BODY, [strings.RELOAD, strings.KEEP_MINE]
         )
         if choice == 0:
-            result = self.ctl.reload()
+            try:
+                result = self.ctl.reload()
+            except (HarnessError, OSError) as exc:  # for example the folder was deleted
+                self.ctl.keep_mine()  # do not ask again about these files
+                self._error(strings.RELOAD_FAILED.format(self._explain(exc, self.ctl.root)))
+                return
             if result is not None:
                 self._last_issues = result.issues
         else:
+            self.ctl.keep_mine()  # the box closing re-activates the window: do not ask again
             self.toasts.show_message(strings.KEEP_MINE_NOTE, None, 8000)
 
     def event(self, event: QEvent) -> bool:

@@ -102,7 +102,7 @@ Switching never changes your data.
 ## 7. Change your mind: delete, undo, save
 
 - **Delete** removes the selected unit or link. A window first lists what else it removes (the links and connectors of the unit). **Undo** (Ctrl+Z) brings it back; **Redo** is Ctrl+Y.
-- **Ctrl+S** saves. The status bar says "All changes saved" or "Unsaved changes (autosaved to the recovery journal)". If the app closes before you save, it offers to **Restore** your last edits at the next start.
+- **Ctrl+S** saves. The status bar says "All changes saved" or "Unsaved changes (autosaved to the recovery journal)". For the sample, or a project that has no folder yet, nothing is autosaved, and it says "Unsaved changes (not kept anywhere until you save)". If the app closes before you save, it offers to **Restore** your last edits at the next start.
 - **File > Save as…** (Ctrl+Shift+S) saves a copy in another empty folder.
 
 ## Common mistakes
