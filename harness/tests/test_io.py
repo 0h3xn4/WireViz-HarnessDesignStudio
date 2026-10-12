@@ -1,7 +1,10 @@
 """REQ-IO-01: canonical, deterministic, lossless project files."""
 
 import json
+import sys
 from pathlib import Path
+
+import pytest
 
 from harness_design_studio.core.io.layout import model_hash, serialize
 from harness_design_studio.core.io.loader import disk_fingerprint, load_project, non_canonical_files
@@ -101,8 +104,22 @@ def test_subsystem_names_with_odd_characters(tmp_path: Path) -> None:
 def test_unicode_survives(tmp_path: Path) -> None:
     p = mini3()
     p.units["OBC"] = evolve(p.units["OBC"], notes="Bordcomputer – Überspannungsschutz ✓ 日本語")
-    save_project(p, tmp_path / "ü ñ p")
-    assert load_project(tmp_path / "ü ñ p").project.units["OBC"].notes.endswith("日本語")
+    save_project(p, tmp_path / "p")
+    assert load_project(tmp_path / "p").project.units["OBC"].notes.endswith("日本語")
+
+
+def _can_name_files(name: str) -> bool:
+    try:
+        name.encode(sys.getfilesystemencoding(), "strict")
+    except UnicodeEncodeError:
+        return False
+    return True
+
+
+@pytest.mark.skipif(not _can_name_files("ü ñ p"), reason="the file system encoding is not Unicode")
+def test_unicode_in_the_project_folder_name(tmp_path: Path) -> None:
+    save_project(mini3(), tmp_path / "ü ñ p")
+    assert load_project(tmp_path / "ü ñ p").project.units["OBC"]
 
 
 def test_gitignore_written_once(tmp_path: Path) -> None:
@@ -135,7 +152,9 @@ def test_non_canonical_detection(tmp_path: Path) -> None:
     root = tmp_path / "p"
     save_project(mini3(), root)
     f = root / "logical/units/power.json"
-    f.write_text(json.dumps(json.loads(f.read_text())))  # same data, different formatting
+    f.write_text(
+        json.dumps(json.loads(f.read_text(encoding="utf-8"))), encoding="utf-8"
+    )  # same data, different formatting
     assert non_canonical_files(root, load_project(root).project) == ["logical/units/power.json"]
 
 
