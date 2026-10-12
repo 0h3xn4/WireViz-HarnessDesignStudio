@@ -21,6 +21,7 @@ An offline desktop tool for designing the electrical harnesses of a spacecraft: 
 - [Licence and status](#licence-and-status)
 - [What this repository adds to WireViz](#what-this-repository-adds-to-wireviz)
 - [Related tools](#related-tools)
+- [Known problems in the bundled upstream WireViz code](#known-problems-in-the-bundled-upstream-wireviz-code-not-changed-in-this-repository)
 
 ## What is this?
 
@@ -68,9 +69,9 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 - **Your design is the source of truth.** Harnesses, drawings and lists are generated from it and can be regenerated at any time.
 - **Generates the harnesses** — connectors, pins, wires, shields, with a *Why is it like this?* explanation for every choice.
-- **Checks them** against 33 design rules and says clearly which checks could not run because a number is missing.
+- **Checks them** against 34 design rules and says clearly which checks could not run because a number is missing.
 - **Writes the documents** — a wiring-diagram drawing per harness (SVG and PDF), wire lists, pinouts, bill of materials, test tables, labels, a block diagram and a change log.
-- **Change control** — review, release and revise a harness; a released harness is locked and every change is recorded.
+- **Change control** — review, release and revise a harness; a released harness, and the parts, interface types and configuration it uses, are locked, and every change is recorded.
 - **Starts from the usual links** — RS-422, RS-485 and CAN for communication, Micro-D (9 to 31 pins) for power and data, Ethernet for high data rates, SMA for RF. Other types and connectors can be added.
 - **Imports** interface tables (CSV or XLSX), approved parts, segment lengths, engineering values and KiCad netlists.
 - **Offline and reproducible** — it never uses the network (a test enforces this), and the same design gives byte-identical files.
@@ -87,7 +88,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 ## Licence and status
 
-- **Version `1.0.0`**, released on the repository owner's instruction on 2026-10-12. The open engineering decisions were recorded as defaults on that day: the tool ships no standard or part data, so the real derating and EMC values and the approved parts list have not been supplied and results rest on placeholders and example parts. [`harness/README.md#status`](harness/README.md#status) has the details.
+- **Version `1.0.0`**, released on the repository owner's instruction on 2026-10-12 (tag `v1.0.0` on commit `0c6a96a`; the packages and `SHA256SUMS` are on the GitHub release page). The open engineering decisions were recorded as defaults on that day: the tool ships no standard or part data, so the real derating and EMC values and the approved parts list have not been supplied and results rest on placeholders and example parts. [`harness/README.md#status`](harness/README.md#status) has the details.
 - **Created mainly by an AI.** Harness Design Studio was written mainly by Claude (Anthropic's AI assistant, used through Claude Code); the owner set the requirements and approved the decisions and releases. No other person has reviewed it independently, and it makes no claim of compliance with any standard. Check its results before relying on them. The records are in [`harness/compliance/`](harness/compliance/README.md).
 - **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](harness/CHANGELOG.md) lists what is new.
 - **Licence.** The [`LICENSE`](LICENSE) file in this repository is the GPL-3.0 licence of WireViz. The licence of the code in `harness/` has not been decided (decision D-02 in [`harness/docs/DECISIONS.md`](harness/docs/DECISIONS.md), kept open for 1.0.0 in D-143; the package metadata says `LicenseRef-Proprietary`; the copyright holder is the repository owner, GitHub account `0h3xn4`). No licence has been granted for it yet.
@@ -111,11 +112,27 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 Next: [install it](harness/docs/INSTALL.md), then [getting started](harness/docs/GETTING_STARTED.md).
 
+## Known problems in the bundled upstream WireViz code (not changed in this repository)
+
+The pre-release audit ([`AUDIT.md`](AUDIT.md), area H) read the WireViz code in `src/wireviz`. The owner decided that this code is never changed here, so these problems of upstream WireViz 0.4.1 remain. Each was reproduced by the audit; the workaround is given where there is an obvious one. They do not affect Harness Design Studio, which does not use WireViz code.
+
+- **PNG output can delete your input file (H-1).** If the input file has no extension (for example `harness`) and you write PNG (`-f p`), the input is gone afterwards (only `harness.png` and `harness.orig` remain). Give input files a `.yml` extension.
+- **One connector at both ends of a cable, addressed by pin labels, is wired wrongly (H-2).** `X1: A, W1: 1, X1: B` becomes a wire from pin 2 to pin 2. Numeric pins work; use pin numbers for such a connection.
+- **Connector `loops` need pin numbers in order (H-3).** `loops` use the pin ID as the Graphviz port, so pin labels (`A`, `B`) or numbers that are not 1, 2, 3 ... (`5`, `6`) fail with `port ... unrecognized`; by reading the code, pins in another order are drawn between the wrong positions. Number the pins 1, 2, 3 in order.
+- **`&`, `<` and `>` in text fields stop the rendering (H-4).** Pin labels, wire labels, types, manufacturers, notes and image captions fail with a "not well-formed" error. Write `&amp;` instead of `&`; it then appears as `&amp;` in the BOM `.tsv`.
+- **YAML turns some labels into truth values or numbers (H-5).** Unquoted `NO`, `ON`, `OFF` and `Yes` become booleans, `007` becomes `7`, `1:30` becomes `90`. Quote such labels: `"NO"`, `"ON"`, `"007"`.
+- **The TELALT colour code has a typo (H-6).** Its first five pairs have a one-colour ring (`BU` where the TEL code has `BUWH`).
+- **`parse(output_formats="png")` does nothing or crashes (H-7).** A single string is documented as allowed, but only a tuple works. Pass `("png",)`.
+- **`parse()` keeps state between calls (H-8).** `image_paths` is a mutable default that fills up, a dict given as input is changed (a second parse of it fails), and a `Path` or `str` for `image_paths` is rejected. Pass a fresh list of `Path` objects and a fresh dict each time.
+- **Cable wire numbers are not checked (H-9).** Wire `0` silently takes the colour of the last wire, a wire number above the wire count fails late with an `IndexError` that names no cable, `s` on a cable without a shield is accepted, and the same wire may be used twice. Check the numbers yourself.
+
+Smaller upstream findings (H-10 to H-23: unescaped text in HTML and SVG output, `--prepend` losing sections that share a name, templates searched next to the output, the AWG/mm2 table, a non-UTF-8 locale, and others) are listed in [`AUDIT.md`](AUDIT.md). Packaging of this fork (H-18) was fixed: `setup.py` now reads `docs/upstream/README.upstream.md` as UTF-8 and requires Python 3.7 or newer; the distribution name `wireviz` and the version `0.4.1` are unchanged.
+
 ---
 
 # Original WireViz README
 
-The text below is the README of [wireviz/WireViz](https://github.com/wireviz/WireViz), taken from `docs/README.md` at commit [`e4fe099`](https://github.com/wireviz/WireViz/commit/e4fe099f8c7b86736aee7b4227cc794b6e8b36f0) (2025-01-16, WireViz 0.4.1). It is not reworded. Its headings are one level lower and its relative links point to the right place in this repository. An untouched copy and the steps to refresh it: [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md), [`upstream-sync.md`](harness/docs/developer/upstream-sync.md).
+The text below is the README of [wireviz/WireViz](https://github.com/wireviz/WireViz), taken from `docs/README.md` at commit [`e4fe099`](https://github.com/wireviz/WireViz/commit/e4fe099f8c7b86736aee7b4227cc794b6e8b36f0) (2025-01-16, WireViz 0.4.1). It is not reworded. Its headings are one level lower and its relative links point to the right place in this repository. The known problems of that code, which this repository does not change, are listed under [Known problems](#known-problems-in-the-bundled-upstream-wireviz-code-not-changed-in-this-repository). An untouched copy and the steps to refresh it: [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md), [`upstream-sync.md`](harness/docs/developer/upstream-sync.md).
 
 <!-- BEGIN UPSTREAM README -->
 
