@@ -48,7 +48,7 @@ M0 to M9 done (`docs/demos/`), then the October audit (`docs/AUDIT.md`); version
 `core/generate/` (`segmentation`, `wiring`, `pins`, `sizing`, `lengths`, `mass`, `naming`, `explain`, `engine`), `core/verify.py` (independent verifier), `core/model/generation.py` (record with provenance). `plan_generation(project)` is pure and returns ops + `RegenReport` + record; the GUI previews it (`GeneratePreviewDialog`), runs it in `PlanWorker` and applies it through `History`.
 - Never put timestamps or history wording into provenance: a second plan must be empty and byte-identical.
 - Verifier must stay independent of the generator: do not import wiring/pin logic into `core/verify.py`.
-- Goldens: `tests/fixtures/projects/mini3` (hand-made, not generated) and `sat15` (generated). Regenerate sat15 on purpose: `python -c "from harness_design_studio.core.samples import sat15; from harness_design_studio.core.generate.engine import generate_project; from harness_design_studio.core.io.saver import save_project; p=sat15(); generate_project(p); save_project(p,'tests/fixtures/projects/sat15')"` (delete the folder first) and review the diff.
+- Goldens: `tests/fixtures/projects/mini3` (written by `save_project(mini3())`, see the M1 section) and `sat15` (generated). Regenerate sat15 on purpose: `python -c "from harness_design_studio.core.samples import sat15; from harness_design_studio.core.generate.engine import generate_project; from harness_design_studio.core.io.saver import save_project; p=sat15(); generate_project(p); save_project(p,'tests/fixtures/projects/sat15')"` (delete the folder first) and review the diff.
 - Text-replace patches fail silently after `ruff format`; grep to confirm they applied.
 
 ## Design rule check layout (M4)

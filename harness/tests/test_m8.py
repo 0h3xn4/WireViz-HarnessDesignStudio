@@ -140,11 +140,10 @@ def test_arrange_is_deterministic() -> None:
 
 # ---- GUI -------------------------------------------------------------------------------------------
 
-gui = pytest.importorskip("PySide6")
-
 
 @pytest.fixture
 def win(qtbot, tmp_path):  # type: ignore[no-untyped-def]
+    pytest.importorskip("PySide6")  # only the editor tests need Qt: the headless ones above run
     from tests.gui_helpers import make_window
 
     w = make_window(tmp_path)

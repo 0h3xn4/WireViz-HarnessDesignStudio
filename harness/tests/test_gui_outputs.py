@@ -2,9 +2,10 @@
 a stale indicator."""
 
 import pytest
-from PySide6.QtWidgets import QPushButton
 
 pytest.importorskip("PySide6")
+from PySide6.QtWidgets import QPushButton  # noqa: E402
+
 pytestmark = pytest.mark.gui
 
 from harness_design_studio.core.commands import Put  # noqa: E402
@@ -103,11 +104,10 @@ def test_a_toast_that_expires_after_the_window_is_gone_does_not_raise(qtbot, tmp
 
     w = make_window(tmp_path)
     host = w.toasts
-    frame_count = {"n": 0}
     host.show_message("hello", None, ms=10)
     w.close()
     w.deleteLater()
     QApplication.processEvents()
-    qtbot.wait(60)  # the expiry timer fires after the window was deleted
-    frame_count["n"] += 1
-    assert frame_count["n"] == 1
+    # the expiry timer fires after the window was deleted; pytest-qt fails the test if the event
+    # loop raised, so reaching the next line is the check
+    qtbot.wait(60)

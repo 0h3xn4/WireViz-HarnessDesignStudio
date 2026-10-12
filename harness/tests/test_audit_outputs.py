@@ -57,7 +57,7 @@ def test_the_outputs_gate_checks_the_files_not_just_the_manifest(tmp_path: Path)
 
     assert "outputs_modified" not in blockers() and "outputs_missing" not in blockers()
     victim = next(f for f in sorted(folder.rglob("wirelist.csv")))
-    victim.write_text(victim.read_text() + "tampered\n")
+    victim.write_text(victim.read_text(encoding="utf-8") + "tampered\n", encoding="utf-8")
     assert "outputs_modified" in blockers()
     write_outputs(p, folder)
     for f in list(folder.rglob("*")):

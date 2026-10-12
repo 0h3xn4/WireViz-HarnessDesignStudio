@@ -72,6 +72,6 @@ def test_derating_arithmetic_is_exact_to_float_precision() -> None:
         "temperature_derating": 0.9,
     }
     s = size_wire(der, {}, current_a=2.7, length_m=None, path_conductors=1)
-    assert any("2.7 A derated (factor 0.54)" in x or "carries 2.7 A" in x for x in s.notes)
+    assert "ampacity: AWG 20 carries 2.7 A derated (factor 0.54) for 2.7 A" in s.notes
     # 5.0 * 0.6 * 0.9 = 2.7 within rounding: the limit case passes, the next current fails
     assert size_wire(der, {}, current_a=2.7000001, length_m=None, path_conductors=1).error

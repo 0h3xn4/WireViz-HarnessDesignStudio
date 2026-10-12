@@ -6,10 +6,11 @@ puts its links in focus while everything else fades."""
 from pathlib import Path
 
 import pytest
-from PySide6.QtCore import QPointF, Qt
-from PySide6.QtTest import QTest
 
 pytest.importorskip("PySide6")
+from PySide6.QtCore import QPointF, Qt  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
+
 pytestmark = pytest.mark.gui
 
 from harness_design_studio.core import routing, templates  # noqa: E402

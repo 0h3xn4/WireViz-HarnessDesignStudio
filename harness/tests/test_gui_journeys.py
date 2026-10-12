@@ -1,11 +1,12 @@
 """REQ-GUI-01: the Qt editor supports the ten journeys of docs/UX.md (offscreen, driven like a user)."""
 
 import pytest
-from PySide6.QtCore import Qt
-from PySide6.QtTest import QTest
-from PySide6.QtWidgets import QLineEdit, QPushButton
 
 pytest.importorskip("PySide6")
+from PySide6.QtCore import Qt  # noqa: E402
+from PySide6.QtTest import QTest  # noqa: E402
+from PySide6.QtWidgets import QLineEdit, QPushButton  # noqa: E402
+
 pytestmark = pytest.mark.gui
 
 from harness_design_studio.core import edit  # noqa: E402
@@ -808,15 +809,16 @@ def test_new_project_from_an_example(win, tmp_path) -> None:  # type: ignore[no-
     win.new_from_example_flow()
     assert seen[:4] == ["blank", "first-steps", "minimal-satellite", "small-satellite"]
     assert (folder / "project.json").exists() and win.ctl.root == folder
-    assert {"OBC", "PCDU"} <= set(win.ctl.project.units) or len(win.ctl.project.units) >= 3
+    assert set(win.ctl.project.units) == {"PCDU1", "OBC1", "RW1"}  # the first-steps example
     assert win.windowTitle().startswith("Wheel link")
     win.ctl.release()
 
 
 def test_choosing_cancel_in_the_example_dialog_changes_nothing(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
     win.ask_choice = lambda title, text, buttons: len(buttons) - 1  # type: ignore[assignment]
+    root_before = win.ctl.root
     win.new_from_example_flow()
-    assert win.ctl.root is None or win.ctl.root != tmp_path / "x"
+    assert win.ctl.root == root_before and not (tmp_path / "x").exists()
 
 
 def test_the_part_picker_says_what_each_part_is(win) -> None:  # type: ignore[no-untyped-def]

@@ -100,16 +100,27 @@ def test_a_command_that_writes_refuses_while_another_instance_holds_the_project(
         lock.release()
 
 
+def _contents(folder: Path) -> dict[str, bytes]:
+    return {
+        str(x.relative_to(folder)): x.read_bytes() for x in sorted(folder.rglob("*")) if x.is_file()
+    }
+
+
+@pytest.mark.parametrize(("row", "rc"), [("W010,W010-L1,1500", 0), ("W010,NOPE,1500", 1)])
 def test_dry_runs_do_not_take_the_lock_or_write(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], row: str, rc: int
 ) -> None:
-    p = _project(tmp_path)
+    from tests.test_data_import import project_with_segments
+
+    p = tmp_path / "p"
+    save_project(project_with_segments(), p)
     f = tmp_path / "l.csv"
-    f.write_text("harness,segment,length\nW001,W001-L1,1.5\n")
-    before = sorted(x.name for x in p.rglob("*"))
-    rc, _ = _run(capsys, "import-lengths", str(p), str(f), "--dry-run")
-    assert sorted(x.name for x in p.rglob("*")) == before and not (p / ".harness.lock").exists()
-    assert rc in (0, 1)
+    f.write_text(f"harness,segment,length\n{row}\n")
+    before = _contents(p)
+    code, text = _run(capsys, "import-lengths", str(p), str(f), "--dry-run")
+    assert code == rc, text
+    assert _contents(p) == before  # not one byte changed, no lock file, no backup, no journal
+    assert not list(p.rglob(".harness.lock*"))
 
 
 # ---- tables -------------------------------------------------------------------------------------
@@ -260,7 +271,7 @@ def test_a_read_only_project_is_not_exported_or_migrated(
     assert not (p / "outputs").exists()
 
 
-def test_an_inconsistent_import_is_a_blocked_step(
+def test_overlapping_approval_lists_are_a_usage_error(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     shutil.rmtree(tmp_path / "x", ignore_errors=True)

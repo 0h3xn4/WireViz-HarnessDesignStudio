@@ -4,7 +4,6 @@ accept data (and then every later stage copes with it) or set it aside with a cl
 
 import contextlib
 import copy
-import io
 import json
 import os
 import zipfile
@@ -16,6 +15,7 @@ from hypothesis import HealthCheck, given, settings
 from hypothesis import strategies as st
 
 from harness_design_studio.core import checks, drc
+from harness_design_studio.core.errors import SaveError
 from harness_design_studio.core.generate.engine import generate_project, plan_generation
 from harness_design_studio.core.imports import (
     ImportError_,
@@ -160,7 +160,7 @@ def test_byte_level_damage_on_disk_never_crashes_the_loader(data: st.DataObject)
         read_tree(root)
         check_integrity(result.project)
         if result.project.recovered:  # a damaged project must refuse to overwrite its own folder
-            with pytest.raises(Exception, match="could not be loaded|protect"):
+            with pytest.raises(SaveError, match="could not be loaded|protect"):
                 save_project(result.project, root)
 
 
@@ -171,9 +171,11 @@ def test_csv_import_survives_any_text(text: str, cols: list[int]) -> None:
         table = parse_csv(text)
     except ImportError_:
         return
-    plan_interface_import(
+    plan = plan_interface_import(
         _PROJECT, table, dict(zip(("id", "type", "from", "to", "redundancy"), cols, strict=True))
     )
+    assert len(plan.rows) == max(len(table) - 1, 0)  # one verdict per data row, whatever the text
+    assert plan.ok_count + plan.error_count == len(plan.rows)
 
 
 @FUZZ
@@ -239,10 +241,6 @@ def test_any_manifest_content_is_handled(doc: Any) -> None:
         (Path(tmp) / "manifest.json").write_text(json.dumps(doc))
         outputs_status(_PROJECT, tmp, deep=True)
         verify_outputs(_PROJECT, {"manifest.json": json.dumps(doc).encode()})
-
-
-def test_documents_the_long_run() -> None:
-    assert EXAMPLES >= 1 and io.StringIO is not None
 
 
 def test_regression_bare_carriage_returns_are_read_as_line_breaks() -> None:

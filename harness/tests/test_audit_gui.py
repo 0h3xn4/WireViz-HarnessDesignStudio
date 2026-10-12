@@ -3,9 +3,10 @@
 import contextlib
 
 import pytest
-from PySide6.QtWidgets import QLabel, QPushButton
 
 pytest.importorskip("PySide6")
+from PySide6.QtWidgets import QLabel, QPushButton  # noqa: E402
+
 pytestmark = pytest.mark.gui
 
 from harness_design_studio.core import edit  # noqa: E402

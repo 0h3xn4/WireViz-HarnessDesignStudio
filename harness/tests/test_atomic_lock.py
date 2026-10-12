@@ -1,6 +1,7 @@
 """REQ-ATOMIC-01 / REQ-LOCK-01: crash-safe writes, clear disk errors, single-instance lock."""
 
 import errno
+import json
 import os
 import platform
 import sys
@@ -129,13 +130,17 @@ def test_lock_held_by_other_host_blocks(tmp_path: Path) -> None:
 def test_stale_lock_is_taken_over(tmp_path: Path) -> None:
     _write_lock(tmp_path, 999999999, platform.node())
     with ProjectLock(tmp_path):
-        pass
+        info = json.loads((tmp_path / ".harness.lock").read_text())
+        assert info["pid"] == os.getpid() and info["host"] == platform.node()  # the new owner
+    assert not (tmp_path / ".harness.lock").exists()  # released like any lock
 
 
 def test_corrupt_lock_is_stale(tmp_path: Path) -> None:
     (tmp_path / ".harness.lock").write_text("garbage")
     with ProjectLock(tmp_path):
-        pass
+        info = json.loads((tmp_path / ".harness.lock").read_text())
+        assert info["pid"] == os.getpid() and info["host"] == platform.node()
+    assert not (tmp_path / ".harness.lock").exists()
 
 
 def test_live_local_lock_blocks(tmp_path: Path) -> None:

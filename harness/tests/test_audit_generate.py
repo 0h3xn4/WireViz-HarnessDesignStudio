@@ -96,7 +96,7 @@ def test_a_harness_template_without_a_number_does_not_hang_and_is_reported() -> 
     def alarm(*_a: object) -> None:
         raise AssertionError("generation did not finish")
 
-    signal.signal(signal.SIGALRM, alarm)
+    previous = signal.signal(signal.SIGALRM, alarm)
     signal.alarm(20)
     try:
         p = sat15()
@@ -104,6 +104,7 @@ def test_a_harness_template_without_a_number_does_not_hang_and_is_reported() -> 
         plan = plan_generation(p)
     finally:
         signal.alarm(0)
+        signal.signal(signal.SIGALRM, previous)
     assert any(f.code == "naming" for f in plan.report.findings)
     assert len(plan.harnesses) > 1
 

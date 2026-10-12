@@ -20,6 +20,7 @@ from harness_design_studio.core.outputs.build import MANIFEST, build_outputs, wr
 from harness_design_studio.core.outputs.stamp import parse_csv
 from harness_design_studio.core.outputs.verify import verify_outputs
 from harness_design_studio.core.samples import mini3, sat15_full
+from tests.static_scan import imported_names, process_or_browser_uses
 
 SRC = Path(__file__).resolve().parents[1] / "src" / "harness_design_studio"
 
@@ -37,16 +38,17 @@ def test_ids_cannot_contain_path_characters() -> None:
     assert ID_RE.fullmatch("W001") and ID_RE.fullmatch("OBC1-J01")
 
 
-@pytest.mark.parametrize("name", HOSTILE)
-def test_hostile_text_in_names_is_harmless_in_every_output(name: str) -> None:
-    from harness_design_studio.core.model.base import Name  # noqa: F401
+@pytest.mark.parametrize("name", ["bell\x07", "nul\x00", "esc\x1b[31m", "bom\ufffe", "del\x7f"])
+def test_control_characters_in_names_never_reach_the_model(name: str) -> None:
+    unit = next(iter(sat15_full().units.values()))
+    with pytest.raises(ValueError, match="control characters"):
+        evolve(unit, name=name)
 
+
+@pytest.mark.parametrize("name", HOSTILE)  # every entry is valid text: the model accepts it
+def test_hostile_text_in_names_is_harmless_in_every_output(name: str) -> None:
     p = sat15_full()
     unit = next(iter(p.units.values()))
-    try:
-        evolve(unit, name=name)
-    except ValueError:
-        pytest.skip("rejected by validation (control character): the model never holds it")
     h = p.harnesses["W010"]
     apply_ops(
         p,
@@ -96,11 +98,9 @@ def test_oversized_project_file_is_refused_unread(
     save_project(mini3(), tmp_path / "p")
     monkeypatch.setattr(loader, "MAX_FILE_BYTES", 100)
     result = load_project(tmp_path / "p")
-    assert (
-        "file_too_large" in {i.code for i in result.issues}
-        or "invalid_json" in {i.code for i in result.issues}
-        or result.has_errors
-    )
+    codes = {i.code for i in result.issues}
+    assert "file_too_large" in codes and "invalid_json" not in codes  # refused unread
+    assert result.has_errors
 
 
 def test_output_folder_manifest_cannot_make_the_tool_delete_other_files(tmp_path: Path) -> None:
@@ -110,7 +110,7 @@ def test_output_folder_manifest_cannot_make_the_tool_delete_other_files(tmp_path
     write_outputs(p, folder)
     victim = tmp_path / "victim.txt"
     victim.write_text("keep")
-    doc = json.loads((folder / MANIFEST).read_text())
+    doc = json.loads((folder / MANIFEST).read_text(encoding="utf-8"))
     doc["files"].append({"path": "../victim.txt", "sha256": "0" * 64, "bytes": 1})
     doc["files"].append({"path": "/etc/hostname", "sha256": "0" * 64, "bytes": 1})
     (folder / MANIFEST).write_text(json.dumps(doc))
@@ -179,12 +179,59 @@ def test_the_code_never_evaluates_data_or_starts_programs() -> None:
                 pytest.fail(f"{path.name}: os.{node.attr}")
 
 
+def test_the_code_never_replaces_the_process_or_opens_a_browser() -> None:
+    """No os.exec*/os.spawn*/os.system/os.popen, no webbrowser; the only QDesktopServices use is
+    the Help menu opening the local guide (it passes QUrl.fromLocalFile, see main_window)."""
+    allowed = {"gui/main_window.py": {"QDesktopServices"}}
+    found = {}
+    for path in SRC.rglob("*.py"):
+        rel = path.relative_to(SRC).as_posix()
+        uses = set(process_or_browser_uses(ast.parse(path.read_text(encoding="utf-8"))))
+        names = imported_names(path, SRC.parent)
+        uses |= {n for n in names if n.split(".")[0] == "webbrowser"}
+        uses -= allowed.get(rel, set())
+        if uses:
+            found[rel] = sorted(uses)
+    assert not found, found
+    main_window = (SRC / "gui" / "main_window.py").read_text(encoding="utf-8")
+    assert "QUrl.fromLocalFile" in main_window  # the guide is a local file, never a web address
+
+
+def test_the_process_and_browser_scan_sees_the_usual_ways_in() -> None:
+    bad = [
+        "import os\nos.execv('/bin/sh', [])\n",
+        "import os\nos.spawnl(0, 'x')\n",
+        "from os import execvp\n",
+        "import os\nos.system('x')\n",
+        "import os\nos.popen('x')\n",
+        "import webbrowser\nwebbrowser.open('x')\n",
+        "from PySide6.QtGui import QDesktopServices\nQDesktopServices.openUrl(u)\n",
+    ]
+    for text in bad:
+        assert process_or_browser_uses(ast.parse(text)), text
+    assert not process_or_browser_uses(
+        ast.parse("import os\nos.path.join('a', 'b')\nos.getcwd()\n")
+    )
+
+
+def test_banned_modules_cannot_be_reached_by_importlib_or_relative_imports(tmp_path: Path) -> None:
+    pkg = tmp_path / "harness_design_studio" / "core"
+    pkg.mkdir(parents=True)
+    (pkg / "x.py").write_text("import importlib\nimportlib.import_module('subprocess')\n")
+    (pkg / "y.py").write_text("__import__('pickle')\n")
+    for name, module in (("x.py", "subprocess"), ("y.py", "pickle")):
+        assert module in imported_names(pkg / name, tmp_path)
+
+
 def test_save_never_writes_outside_the_project_folder(tmp_path: Path) -> None:
     p = sat15_full()
     root = tmp_path / "deep" / "p"
     save_project(p, root)
-    for f in tmp_path.rglob("*"):
-        assert str(f).startswith(str(tmp_path))
+    stray = [
+        f for f in tmp_path.rglob("*") if f != root.parent and f != root and root not in f.parents
+    ]
+    assert not stray, stray  # everything the save created sits inside the project folder
+    assert (root / "project.json").is_file()
     names = {f.relative_to(root).parts[0] for f in root.iterdir()}
     assert names <= {
         "project.json",
