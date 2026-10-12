@@ -1,5 +1,7 @@
 """Regression tests for the editor findings of the October audit (offscreen Qt)."""
 
+import contextlib
+
 import pytest
 from PySide6.QtWidgets import QLabel, QPushButton
 
@@ -165,3 +167,105 @@ def test_findings_of_one_kind_about_one_interface_share_a_card(win) -> None:  # 
 
     names = [f.objectName() for f in win.problems.findChildren(QFrame)]
     assert any(n.startswith("finding-group-") for n in names), names
+
+
+# ---- audit fixes: canvas heights, stale forms, table filter, number fields ------------------------
+
+
+def test_every_unit_item_follows_its_height_after_a_link_is_deleted(win) -> None:  # type: ignore[no-untyped-def]
+    scene = win.view.dscene
+    project = win.ctl.project
+    iid = max(project.interfaces)
+    win.ctl.select("interface", iid)
+    assert win.ctl.delete_selected()
+    for uid, item in scene.unit_items.items():
+        links = sum(
+            1 for i in project.interfaces.values() if uid in {e.unit_id for e in i.endpoints}
+        )
+        assert item.height() == edit.guided_height(links), uid
+
+
+def _confirm_buttons(win) -> list[QPushButton]:  # type: ignore[no-untyped-def]
+    return [b for b in win.props.findChildren(QPushButton) if b.objectName().startswith("confirm-")]
+
+
+def test_the_form_of_a_unit_drops_the_confirm_button_when_its_link_is_undone(win) -> None:  # type: ignore[no-untyped-def]
+    win.ctl._install(mini3(), None, None)
+    win.act_expert.trigger()
+    assert win.ctl.add_interface_between("rs422", "OBC", "PCDU")
+    win.ctl.select("unit", "OBC")
+    stale = _confirm_buttons(win)
+    assert stale
+    new_id = next(i for i in win.ctl.project.interfaces if i not in {"IF-PWR-RW1", "IF-TM-RW1"})
+    win.ctl.undo()
+    assert new_id not in win.ctl.project.interfaces
+    assert _confirm_buttons(win) == []
+    for b in stale:  # a click that still reaches an old button is answered, not raised
+        with contextlib.suppress(RuntimeError):  # (the old button may already be gone)
+            b.click()
+    assert not win.ctl.project.interfaces.get(new_id)
+
+
+def test_confirming_a_missing_interface_is_a_plain_edit_error(win) -> None:  # type: ignore[no-untyped-def]
+    with pytest.raises(edit.EditError):
+        edit.ops_confirm_interface(win.ctl.project, "IF-NOPE")
+    messages: list[tuple[str, bool]] = []
+    win.ctl.message.connect(lambda text, ok: messages.append((text, ok)))
+    win.ctl.confirm_interface("IF-NOPE")
+    assert messages and not messages[-1][1]
+
+
+def test_the_interface_filter_finds_ids_and_two_words(win) -> None:  # type: ignore[no-untyped-def]
+    win.ctl._install(mini3(), None, None)
+    t = win.table
+    t.refresh()
+    ids = sorted(win.ctl.project.interfaces)
+    assert len(ids) == 2
+    for text, want in (
+        ("rs422", 1),
+        ("IF-PWR", 1),
+        ("if-pwr-rw1", 1),
+        ("power rw1", 1),
+        ("RW1 OBC", 1),
+        ("rw1", 2),
+        ("no such thing", 0),
+        ("", 2),
+    ):
+        t.filter.setText(text)
+        assert t.proxy.rowCount() == want, text
+
+
+def test_leaving_a_number_field_unchanged_changes_nothing(win) -> None:  # type: ignore[no-untyped-def]
+    win.ctl._install(mini3(), None, None)
+    win.ctl.update_interface("IF-PWR-RW1", max_current_a=12.3456789, voltage_v=28.123456789)
+    win.ctl.select("interface", "IF-PWR-RW1")
+    amps, volts = win.props.fields["max_current_a"], win.props.fields["voltage_v"]
+    assert (amps.text(), volts.text()) == ("12.3456789", "28.123456789")
+    revision = win.ctl.history.revision
+    amps.editingFinished.emit()
+    volts.editingFinished.emit()
+    i = win.ctl.project.interfaces["IF-PWR-RW1"]
+    assert (i.max_current_a, i.voltage_v) == (12.3456789, 28.123456789)
+    assert win.ctl.history.revision == revision
+    win.table.refresh()
+    model = win.table.model
+    assert model.data(model.index(0, 6)) == "12.3456789"
+    assert model.setData(model.index(0, 6), "12.3456789")  # an unchanged cell is not an edit
+    assert win.ctl.history.revision == revision
+
+
+def test_numbers_are_shown_so_they_read_back_exactly() -> None:
+    from harness_design_studio.gui.panels import format_number
+
+    for value, text in (
+        (None, ""),
+        (3.0, "3"),
+        (0.5, "0.5"),
+        (1234567.0, "1234567"),
+        (1e-05, "0.00001"),
+        (1e22, "10000000000000000000000"),
+        (0.1 + 0.2, "0.30000000000000004"),
+    ):
+        assert format_number(value) == text
+        if value is not None:
+            assert float(text) == value
