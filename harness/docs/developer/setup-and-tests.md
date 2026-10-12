@@ -45,7 +45,7 @@ harness --version
 ```
 
 ```
-harness 0.1.0
+harness 1.0.0
 ```
 
 Start the editor with `harness-gui`.

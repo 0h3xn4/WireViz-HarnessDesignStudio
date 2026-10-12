@@ -2,7 +2,7 @@
 
 This page shows how to give each signal (power, return, CAN high, ...) a wire colour, so that the wire list shows it and the harness drawings draw it.
 
-> **Newer than the 0.1.0 packages.** *Edit > Wire colours...*, the *Colour* column set from signals and the coloured wiring-diagram drawing are on the `master` branch only. They are not in the 0.1.0 `.deb` and `.tar.gz`. See the [changelog](../../CHANGELOG.md#unreleased-after-010). `harness new --list` shows five examples on a build from `master` and three on the packages.
+> **Not in the 0.1.0 packages.** *Edit > Wire colours...*, the *Colour* column set from signals and the coloured wiring-diagram drawing are new in 1.0.0. They are not in the 0.1.0 `.deb` and `.tar.gz`. See the [changelog](../../CHANGELOG.md). `harness new --list` shows five examples on 1.0.0 and three on 0.1.0.
 
 ## Before you start
 
@@ -66,7 +66,7 @@ W002-002,RTN,IF-001,W002-P1,2,W002-P2,2,22,EX-WIRE-SINGLE,black,1,W002-S1,
 - **Colours do not appear after saving the dialog.** Saving only records the choice. Generate the harnesses, then export.
 - **A top-level `wire_colour_by_signal` key.** It must be inside `values`, or the file is refused ([fill in the engineering values](fill-in-engineering-values.md#the-shape-of-a-config-file)).
 - **Expecting the tool to know the right colours.** It does not. The wiring practice of your programme decides them.
-- **The 0.1.0 package has no such menu.** See the box at the top.
+- **The 0.1.0 packages have no such menu.** See the box at the top.
 
 More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md), [`CONFIG.md`](../CONFIG.md).
 

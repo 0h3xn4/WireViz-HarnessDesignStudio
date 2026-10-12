@@ -423,11 +423,11 @@ def test_a_removed_box_pinout_row_is_caught() -> None:
 
 
 def test_a_wrong_wire_order_in_a_pinout_cell_is_caught() -> None:
-    p, files = project_and_files("sat15")
+    p = _two_harnesses_on_the_same_box_pins("W001", "W000")
+    files = build_outputs(p).files
+    assert "out_box_pinouts" not in codes(p, files)
     rows = parse_csv(files["system/box_pinouts.csv"])
-    multi = next((r for r in rows[1:] if ";" in r[7]), None)
-    if multi is None:
-        pytest.skip("no box pin carries two wires in this sample")
+    multi = next(r for r in rows[1:] if ";" in r[7])  # a box pin that carries two wires
     ids = multi[7].split(";")
     multi[7] = ";".join(reversed(ids))
     files["system/box_pinouts.csv"] = csv_bytes(rows, stamp_of(p))

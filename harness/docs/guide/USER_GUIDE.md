@@ -53,7 +53,7 @@ harness new wheel-link --template first-steps
 
 Then **File > Open project…** and pick the folder. You cannot break anything: it is your own copy.
 
-The five examples are in the newer builds of the tool. If `harness new --list` shows only `blank`, `first-steps` and `small-satellite`, you have the 0.1.0 packages, which have those three; `minimal-satellite`, `flatsat` and the wire colours of section 7 need a newer build.
+Version 1.0.0 has five examples. If `harness new --list` shows only `blank`, `first-steps` and `small-satellite`, you have the 0.1.0 packages, which have those three; `minimal-satellite`, `flatsat` and the wire colours of section 7 are new in 1.0.0.
 
 | Example | What it is |
 | --- | --- |

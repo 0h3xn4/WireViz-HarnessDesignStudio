@@ -8,7 +8,7 @@ A flatsat is the electronics of a spacecraft laid out on a bench, connected with
 harness new flatsat-bench --template flatsat
 ```
 
-**This example is on `master` and is not in the released 0.1.0 packages** (see [`CHANGELOG.md`](../CHANGELOG.md#unreleased-after-010)). `harness new --list` shows five examples on a build that has it and three on the 0.1.0 packages; on those, the command above fails with `error: Unknown template 'flatsat'`. The pictures below show the newer diagram.
+**This example is not in the 0.1.0 packages** (see [`CHANGELOG.md`](../CHANGELOG.md)). `harness new --list` shows five examples on 1.0.0 and three on 0.1.0; on a 0.1.0 package the command above fails with `error: Unknown template 'flatsat'`.
 
 Open it in the app (**File > Open project...**) or read on first. Everything in this page is what the project really contains; a test checks the numbers.
 

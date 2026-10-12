@@ -37,7 +37,7 @@ Revision B is a `draft` that you can edit. Revision A and its baseline are kept.
 
 ## 2. Make the change
 
-Edit the design as usual. As an example, give the two power signals colours in `config/generation.json` (or use **Edit > Wire colours...**; see [set wire colours](set-wire-colours.md)), then generate. (Wire colours are **newer than the 0.1.0 packages**; they are on the `master` branch only. With a 0.1.0 package, make a different change; the output below then differs.)
+Edit the design as usual. As an example, give the two power signals colours in `config/generation.json` (or use **Edit > Wire colours...**; see [set wire colours](set-wire-colours.md)), then generate. (Wire colours are **not in the 0.1.0 packages**. With a 0.1.0 package, make a different change; the output below then differs.)
 
 ```
 harness generate wheel-link

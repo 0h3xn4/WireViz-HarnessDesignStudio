@@ -15,7 +15,7 @@ This page describes the five example projects and the 15 template files that shi
 - [The 15 template files](#the-15-template-files)
 - [WireViz examples in this repository](#wireviz-examples-in-this-repository)
 
-Every command below was run with the tool (version `0.1.0`, built from `master`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
+Every command below was run with the tool (version `1.0.0`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
 
 ## At a glance
 
@@ -23,21 +23,21 @@ Every command below was run with the tool (version `0.1.0`, built from `master`)
 | --- | --- | --- | --- | --- | --- |
 | [`blank`](#blank) | 0 | 0 | no | your own design from nothing | yes |
 | [`first-steps`](#first-steps) | 3 | 2 | no | the tutorial; a first harness in minutes | yes |
-| [`minimal-satellite`](#minimal-satellite) | 7 | 11 | no | a small, realistic spacecraft to copy and adapt | **no, newer builds only** |
+| [`minimal-satellite`](#minimal-satellite) | 7 | 11 | no | a small, realistic spacecraft to copy and adapt | **no, new in 1.0.0** |
 | [`small-satellite`](#small-satellite) | 14 | 24 | no | redundancy (main and backup chains) and a larger diagram | yes |
-| [`flatsat`](#flatsat) | 23 | 44 | yes (8 harnesses) | a whole bench setup with ground equipment | **no, newer builds only** |
+| [`flatsat`](#flatsat) | 23 | 44 | yes (8 harnesses) | a whole bench setup with ground equipment | **no, new in 1.0.0** |
 
 If a word here is new to you, see [`GLOSSARY.md`](../GLOSSARY.md). Every example uses the tool's **example parts** (their part numbers start with `EX-`), and every configuration file except `naming.json` is still marked `"placeholder": true`. None of the examples is engineering data, and none is a statement that anything complies with a standard.
 
 ## Which build do you have?
 
-`harness --version` prints `0.1.0` for the released packages **and** for the current development source, so the version number cannot tell them apart. Ask the tool which examples it has:
+`harness --version` prints `harness 1.0.0` for this version. If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
 
 ```
 harness new --list
 ```
 
-A **newer build** (from `master`) lists five:
+Version **1.0.0** lists five:
 
 ```
 blank              An empty project: starter parts and interface types, no units.
@@ -55,7 +55,7 @@ first-steps      Three units, a power link and an RS-422 link. Nothing is genera
 small-satellite  14 units with nominal and redundant chains. Generate it to see a realistic system.
 ```
 
-`minimal-satellite`, `flatsat` and the template `design-worksheet.md` are on `master` but not in the 0.1.0 packages ([`CHANGELOG.md`](../../CHANGELOG.md) of the tool, section *Unreleased*). Asking for them from a 0.1.0 package gives `error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.` ([`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md#creating-a-project)). The counts quoted on this page are the same on both builds for `blank`, `first-steps` and `small-satellite`; the *model hash* of `first-steps` and `small-satellite` differs between the builds (the example files were rebuilt), so a hash quoted here will not match a 0.1.0 package. The drawings also differ: the wiring-diagram drawing with wire colours is newer than 0.1.0. To get a newer build, see way C in [`INSTALL.md`](../INSTALL.md).
+`minimal-satellite`, `flatsat` and the template `design-worksheet.md` are new in 1.0.0 and not in the 0.1.0 packages ([`CHANGELOG.md`](../../CHANGELOG.md) of the tool). Asking for them from a 0.1.0 package gives `error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.` ([`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md#creating-a-project)). The counts quoted on this page are the same on both versions for `blank`, `first-steps` and `small-satellite`; the *model hash* differs (the tool version is part of the design it covers), so a hash quoted here will not match a 0.1.0 package. The drawings also differ: the wiring-diagram drawing with wire colours is not in 0.1.0. To get 1.0.0, see [`INSTALL.md`](../INSTALL.md).
 
 The same five commands work on every example: `new`, `validate`, `generate`, `drc`, `export`, and `verify --outputs`. The project's model hash and the Open line of `drc` below are printed **after** `generate`; before that the hash differs (it covers the generated harnesses too). A project created with `--name` has a different hash for the same design, because the name is part of the design.
 
@@ -82,7 +82,7 @@ harness drc my-blank
 0 interfaces and 0 wires checked: 0 error(s)
 # Design rule check: My project
 
-Model hash: `83e9a4b5c394`. Rules run: 34.
+Model hash: `569e2969fb60`. Rules run: 34.
 Open: 0 error(s), 0 warning(s), 0 note(s). Waived: 0.
 ```
 
@@ -114,7 +114,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 interfaces and 6 wires checked: 0 error(s)
 # Design rule check: First steps: reaction wheel link
 
-Model hash: `91531b45fd2c`. Rules run: 34.
+Model hash: `da1379ad567b`. Rules run: 34.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 ```
 
@@ -123,14 +123,14 @@ harness export my-first-steps
 ```
 
 ```
-38 files written to my-first-steps/outputs (model 91531b45fd2c).
+38 files written to my-first-steps/outputs (model da1379ad567b).
 ```
 
 All ten warnings say that an example part is used and nobody has approved it. The notes say which checks did not run because their numbers are missing, and which choices nobody has confirmed yet. That is the tool being honest, not a failure. **Next:** the walk-through in [`GETTING_STARTED.md`](../GETTING_STARTED.md) (about 45 minutes) or the nine steps of [`LEARNING_PATH.md`](../LEARNING_PATH.md). The tutorial quotes a different hash because it creates the project with `--name "Wheel link"`.
 
 ## minimal-satellite
 
-**What it shows:** a small spacecraft with no redundancy, between `first-steps` and `small-satellite`: seven units (`SA1` solar array, `BAT1` battery, `PCDU1` power distribution unit, `OBC1` computer, `TRX1` transceiver, `RW1` reaction wheel, `SS1` sun sensor) and 11 interfaces, in two lanes `panel-A` and `panel-B`. A good starting point to copy, then rename, add and remove units to describe your own spacecraft. **Newer builds only; not in the 0.1.0 packages.**
+**What it shows:** a small spacecraft with no redundancy, between `first-steps` and `small-satellite`: seven units (`SA1` solar array, `BAT1` battery, `PCDU1` power distribution unit, `OBC1` computer, `TRX1` transceiver, `RW1` reaction wheel, `SS1` sun sensor) and 11 interfaces, in two lanes `panel-A` and `panel-B`. A good starting point to copy, then rename, add and remove units to describe your own spacecraft. **New in 1.0.0; not in the 0.1.0 packages.**
 
 ```
 harness new my-minimal-satellite --template minimal-satellite
@@ -151,11 +151,11 @@ harness drc my-minimal-satellite
 11 interfaces and 24 wires checked: 0 error(s)
 # Design rule check: Minimal satellite
 
-Model hash: `b236e927941b`. Rules run: 34.
+Model hash: `b000cd53786a`. Rules run: 34.
 Open: 0 error(s), 15 warning(s), 17 note(s). Waived: 0.
 ```
 
-`harness validate` first reports `7 units, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness export` then writes `137 files written to my-minimal-satellite/outputs (model b236e927941b).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also newer builds only) helps you plan the units and interfaces of your own on paper first.
+`harness validate` first reports `7 units, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness export` then writes `137 files written to my-minimal-satellite/outputs (model b000cd53786a).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the units and interfaces of your own on paper first.
 
 ## small-satellite
 
@@ -180,15 +180,15 @@ harness drc my-small-satellite
 24 interfaces and 54 wires checked: 0 error(s)
 # Design rule check: Small satellite (reference)
 
-Model hash: `02ebf01ed3a9`. Rules run: 34.
+Model hash: `d897215c313a`. Rules run: 34.
 Open: 0 error(s), 20 warning(s), 28 note(s). Waived: 0.
 ```
 
-`harness validate` first reports `14 units, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness export` writes `280 files written to my-small-satellite/outputs (model 02ebf01ed3a9).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a unit and use **Create redundant copy** on it, or read the Problems tab.
+`harness validate` first reports `14 units, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness export` writes `280 files written to my-small-satellite/outputs (model d897215c313a).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a unit and use **Create redundant copy** on it, or read the Problems tab.
 
 ## flatsat
 
-**What it shows:** a complete bench setup, the biggest example. 23 units (flight units and the ground equipment that drives them: a checkout system, a ground power supply and RF test equipment), 44 interfaces, four lanes (`egse`, `bus`, `aocs`, `payload`), eight harnesses and 103 wires, grouped by pair of lanes (`per_zone_pair`). Unlike the others it **ships already generated**, with example numbers filled in, so that every output has content from the first minute; the numbers and parts are for learning only. **Newer builds only; not in the 0.1.0 packages.** A guided tour with exercises is in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md).
+**What it shows:** a complete bench setup, the biggest example. 23 units (flight units and the ground equipment that drives them: a checkout system, a ground power supply and RF test equipment), 44 interfaces, four lanes (`egse`, `bus`, `aocs`, `payload`), eight harnesses and 103 wires, grouped by pair of lanes (`per_zone_pair`). Unlike the others it **ships already generated**, with example numbers filled in, so that every output has content from the first minute; the numbers and parts are for learning only. **New in 1.0.0; not in the 0.1.0 packages.** A guided tour with exercises is in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md).
 
 ```
 harness new my-flatsat --template flatsat
@@ -212,15 +212,15 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 44 interfaces and 103 wires checked: 0 error(s)
 # Design rule check: Flatsat (EXAMPLE numbers, not engineering data)
 
-Model hash: `25294117de0d`. Rules run: 34.
+Model hash: `005b1d0df347`. Rules run: 34.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
-`harness export my-flatsat` writes `112 files written to my-flatsat/outputs (model 25294117de0d).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
+`harness export my-flatsat` writes `112 files written to my-flatsat/outputs (model 005b1d0df347).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
 
 ## Does every example run?
 
-Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with the tool as built from `master`. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (counts as above; the hashes of the last two differ).
+Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.0.0. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (counts as above; the hashes differ).
 
 | Example | `validate` | `generate` | `drc` | `export` | `verify --outputs` |
 | --- | --- | --- | --- | --- | --- |
@@ -260,7 +260,7 @@ The files are written for the `first-steps` example, so you can try each one bef
 | 12 | `ci/build.sh` | checks, generates, verifies and exports a project; stops at the first problem | `sh ci/build.sh DIR` | yes |
 | 13 | `ci/github-actions.yml` | the same as a GitHub Actions workflow | copy to `.github/workflows/` | yes |
 | 14 | `design-review-checklist.md` | things to look at before a harness is released | copy next to your design | yes |
-| 15 | `design-worksheet.md` | plan units, interfaces and missing data on paper | print or copy it | **no, newer builds only** |
+| 15 | `design-worksheet.md` | plan units, interfaces and missing data on paper | print or copy it | **no, new in 1.0.0** |
 
 On the 0.1.0 packages the command writes 14 files (no `design-worksheet.md`). The demo values and `ampacity-DEMO-ONLY.csv` are **not from any standard and not engineering data**; the files stay marked as placeholders. See [`PLACEHOLDERS.md`](../PLACEHOLDERS.md).
 

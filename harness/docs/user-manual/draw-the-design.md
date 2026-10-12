@@ -51,7 +51,7 @@ Then open the `wheel-link` folder with **File > Open project…**. You cannot br
 | `blank` | A real design. Starter parts and 17 interface types, no units. |
 | `first-steps` | Learning. Three units, a power link and an RS-422 link (a data link between two units). |
 | `small-satellite` | Seeing a realistic system with redundancy. 14 units. |
-| `minimal-satellite`, `flatsat` | A small spacecraft and a complete test bench. **Newer than the 0.1.0 packages:** they are on the `master` branch only (see the [changelog](../../CHANGELOG.md#unreleased-after-010)). `harness new --list` shows five examples on a build from `master` and three on the packages. |
+| `minimal-satellite`, `flatsat` | A small spacecraft and a complete test bench. **Not in the 0.1.0 packages** (see the [changelog](../../CHANGELOG.md)). `harness new --list` shows five examples on 1.0.0 and three on 0.1.0. |
 
 The app also has **File > Open the sample project**. That is example data. Save a copy (**Save a copy…** in the banner) before you change anything.
 

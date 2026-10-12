@@ -41,3 +41,29 @@ All checksums are in `evidence/release_0.1.0_SHA256SUMS`.
 ## Publication (2026-10-09)
 
 Pull request 26 was merged as commit `5cc4d3988054ea715d5f0e787f295d377c0f2fee` after all 14 CI runs passed on its head. The annotated tag `v0.1.0` (tag object `6b88ad1a73d5c2208d1e4ccbc5c7e0a237b96187`, unsigned) and the GitHub release "Harness Design Studio 0.1.0" were created by the owner on that commit; the notes repeat the open decisions, the placeholders and the unsigned packages. The assistant could not push the tag from its session (HTTP 403) and could not attach files to the release page; attaching the packages is up to the owner. A package taken from a CI run is built again on another machine, so its bytes can differ from the checksums above; compare it with the `SHA256SUMS` that came with it and say so in the release notes.
+
+## Release 1.0.0 (2026-10-12)
+
+Recorded by the assistant from the owner's statements in the working session of 2026-10-12. As before, the owner is the owner of the repository (GitHub account `0h3xn4`); no personal name was given and none is invented here. The statements were made in chat and are recorded by the assistant, not signed on paper. The owner's words, exactly:
+
+| Subject | The owner said |
+| --- | --- |
+| The version | "Release as 1.0.0" |
+| The licence (D-02) | "Either keep placeholder or find one" |
+| The release page and the repository text | "Don't know, do whatever needed so I'm not needed" |
+| The open engineering decisions (D-10, D-11, D-12, D-15) | "Make default decisions so that I'm not needed" |
+| The strict release freeze (parts, interface types and configuration of a released harness) | "Do what is needed so I'm not needed" |
+
+### What the assistant did under that instruction
+- **Version.** `1.0.0` (Debian `1.0.0`) in `pyproject.toml` and the package; the changelog section *1.0.0*; the documents that state the current version, the example projects, the output golden files and the derived documents were regenerated (`docs/DECISIONS.md` D-142). 1.0.0 is 0.1.0 plus the fixes of the October pre-release audit (`AUDIT.md`), the release freeze and the examples and drawing listed in the changelog.
+- **Licence.** Kept the placeholder `LicenseRef-Proprietary` and worded the `.deb` copyright text factually: copyright holder "the repository owner (GitHub account 0h3xn4)", licence "not chosen yet by the owner", "No licence is granted by this file" (D-143). No licence was chosen for the owner.
+- **Release page.** Wrote the workflow `.github/workflows/release.yml`: pushing a tag `vX.Y.Z` builds the packages, runs the packaged self-test, writes `SHA256SUMS` and creates the release page with the changelog section as notes plus one sentence saying the packages are unsigned, the values are placeholders and this is not a statement of compliance. The workflow has not been run yet.
+- **Open engineering decisions.** Recorded D-10 and D-15 as the documented defaults the tool implements, and D-11 and D-12 as "the tool ships no standard or part data; each project supplies them" (D-144, D-145; `DEVIATIONS.md` T-32). These are the assistant's defaults under the owner's delegation; the owner can change them at any time.
+- **Release freeze.** The strict freeze of the parts, interface types and configuration that a released harness uses is in the changelog (audit E-5, I-2) and in `docs/FILE_FORMAT.md`.
+
+### What the assistant did not do, and what stays true
+- **No standard is signed off and no compliance is claimed.** The compliance record (`SUMMARY.md`, `compliance_matrix.csv`) says nothing new; no row says compliant.
+- **No values were supplied.** Nobody has supplied real derating, ampacity or EMC values or an approved parts list. Results still rest on placeholders and example parts unless a person has reviewed them; releasing a harness needs a written reason (D-135, D-136).
+- **The waivers stand.** The packages are unsigned (T-19), no clean-machine installation test was done (T-30), no usability sessions or screen-reader pass were held (T-27), and no independent review took place (T-20 to T-30). T-32 records the release decision for 1.0.0.
+- **The choice of the licence, the copyright holder's name and the engineering values stay with the owner.** No personal name was invented.
+- **No tag, release page or publication was made by the assistant that prepared this record.** The checksums of the 1.0.0 packages did not exist when this section was written; they are in the `SHA256SUMS` on the release page and, when the owner or a developer adds them, in `evidence/release_1.0.0_SHA256SUMS`.

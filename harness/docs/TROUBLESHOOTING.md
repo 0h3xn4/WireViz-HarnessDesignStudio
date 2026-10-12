@@ -18,7 +18,7 @@ This page lists the error messages you are most likely to meet, with the exact t
 
 ## How this page was made
 
-Every message below was produced on purpose with the tool (version `0.1.0`, installed into a clean Python virtual environment on Ubuntu 24.04) and pasted as the tool printed it. Project folder names such as `demo` are the ones used in the commands. Some things were **not** run, and the page says so where they appear: the `.deb` and `.tar.gz` installs and the packaged `--selftest` (text quoted from [`INSTALL.md`](INSTALL.md)), and anything that needs the app window (text quoted from the program's own message list). Messages about the examples of the released 0.1.0 packages were produced from the source of the `v0.1.0` tag.
+Every message below was produced on purpose with the tool (version `0.1.0`, installed into a clean Python virtual environment on Ubuntu 24.04) and pasted as the tool printed it; some messages were reworded in 1.0.0 (the [changelog](../CHANGELOG.md) names the changes), so yours may differ in wording. Project folder names such as `demo` are the ones used in the commands. Some things were **not** run, and the page says so where they appear: the `.deb` and `.tar.gz` installs and the packaged `--selftest` (text quoted from [`INSTALL.md`](INSTALL.md)), and anything that needs the app window (text quoted from the program's own message list). Messages about the examples of the released 0.1.0 packages were produced from the source of the `v0.1.0` tag.
 
 Questions that are not errors ("which example should I start with?", "does it use the internet?") are answered in [`FAQ.md`](FAQ.md). Words you do not know are explained in [`GLOSSARY.md`](GLOSSARY.md).
 
@@ -59,7 +59,7 @@ bash: line 1: harness: command not found
 - **Run from source or pip into a virtual environment (way C):** the environment is not active in this terminal. Run `. .venv/bin/activate` in the folder where you made it.
 - **Nothing installed yet:** start at [`INSTALL.md`](INSTALL.md).
 
-Check with `harness --version`; it prints `harness 0.1.0` (or a newer number).
+Check with `harness --version`; it prints `harness 1.0.0` (or a newer number).
 
 ### I am on Windows or macOS
 
@@ -208,9 +208,9 @@ error: Unknown template 'satellite'. Choose one of: blank, first-steps, minimal-
 
 Exit code 2. The name after `--template` must be exactly one of the five names. `harness new --list` prints them with a one-line description. See [`examples/README.md`](examples/README.md).
 
-### The same error for `minimal-satellite` or `flatsat`, on the released 0.1.0 packages
+### The same error for `minimal-satellite` or `flatsat`, on the 0.1.0 packages
 
-The examples `minimal-satellite` and `flatsat`, and the template `design-worksheet.md`, were added **after** the 0.1.0 release (see [`../CHANGELOG.md`](../CHANGELOG.md), section *Unreleased*). A tool installed from the 0.1.0 `.deb` or `.tar.gz` has only three examples. This is what the source of the `v0.1.0` tag prints:
+The examples `minimal-satellite` and `flatsat`, and the template `design-worksheet.md`, are new in 1.0.0 (see [`../CHANGELOG.md`](../CHANGELOG.md)). A tool installed from the 0.1.0 `.deb` or `.tar.gz` has only three examples. This is what the source of the `v0.1.0` tag prints:
 
 ```
 harness new --list
@@ -230,7 +230,7 @@ harness new old1 --template minimal-satellite
 error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.
 ```
 
-**Fix:** use `first-steps` or `small-satellite`, or install a newer build (way C of [`INSTALL.md`](INSTALL.md) builds the latest source). `harness templates DIR` also writes 14 files instead of 15 on 0.1.0 (no `design-worksheet.md`).
+**Fix:** use `first-steps` or `small-satellite`, or install 1.0.0 (see [`INSTALL.md`](INSTALL.md)). `harness templates DIR` also writes 14 files instead of 15 on 0.1.0 (no `design-worksheet.md`).
 
 ### `error: demo already exists and is not an empty folder; choose a new one.`
 
@@ -520,7 +520,7 @@ Exit code 1. `--outputs` checks the files in `demo/outputs`; there are none yet.
 
 ### Which file is what?
 
-See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `38 files written to demo-first-steps/outputs (model 91531b45fd2c).`
+See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `38 files written to demo-first-steps/outputs (model da1379ad567b).`
 
 ## Releasing
 

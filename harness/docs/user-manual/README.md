@@ -41,7 +41,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 6. [Import data](import-data.md): interfaces (app only), approved parts, segment lengths.
 7. [Import KiCad pinouts](import-kicad-pinouts.md): `harness import-netlist` and fixed pins.
 8. [Export the outputs](export-the-outputs.md): what each file is for; checking that it is current.
-9. [Set wire colours](set-wire-colours.md): *Edit > Wire colours...* and the file setting. **Newer than the 0.1.0 packages.**
+9. [Set wire colours](set-wire-colours.md): *Edit > Wire colours...* and the file setting. **New in 1.0.0 (not in the 0.1.0 packages).**
 10. [Naming and title block](naming-and-title-block.md): name patterns and title block fields.
 11. [Release a harness](release-a-harness.md): review, release, the gates, the change log.
 12. [Change a released harness](change-a-released-harness.md): new revision, `diff`, `log`, `compare`.
@@ -49,9 +49,9 @@ This manual has one page for each job you do with Harness Design Studio, written
 
 ## How to read the pages
 
-- **Commands** use a practice project called `wheel-link`, made with `harness new wheel-link --template first-steps`. Put your own folder where you see `wheel-link` or `DIR`. Output blocks are real output of the tool. Numbers such as the model hash (`8a25f0c99a86`) depend on the project and the tool version; yours can differ.
+- **Commands** use a practice project called `wheel-link`, made with `harness new wheel-link --template first-steps`. Put your own folder where you see `wheel-link` or `DIR`. Output blocks are real output of the tool. Numbers such as the model hash (`310e4c4a4345`) depend on the project and the tool version; yours can differ.
 - **App steps** (menus, buttons, tabs) use the names that the program shows. The app was not run on a screen when this manual was written. The labels and the behaviour were taken from the program's code, not from looking at it. Pages with app steps say "GUI, not run" where it matters.
-- **Newer than the 0.1.0 packages.** Some things are on the `master` branch only: the examples `minimal-satellite` and `flatsat`, the wiring-diagram drawing with wire colours, *Edit > Wire colours...* and `design-worksheet.md`. They are not in the 0.1.0 `.deb` and `.tar.gz`. `harness --version` prints `0.1.0` on both. `harness new --list` shows three examples on the packages and five on a build from `master`. The [changelog](../../CHANGELOG.md#unreleased-after-010) lists what is new. Pages that use these say so.
+- **New in 1.0.0.** Some things are not in the 0.1.0 packages: the examples `minimal-satellite` and `flatsat`, the wiring-diagram drawing with wire colours, *Edit > Wire colours...* and `design-worksheet.md`. They are not in the 0.1.0 `.deb` and `.tar.gz`. `harness new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](../../CHANGELOG.md) lists what is new. Pages that use these say so.
 - **No claim of compliance.** The tool was created mainly by an AI and has not been reviewed independently. Results rest on placeholders and example parts until you supply your own values. See [the status](../../README.md#status).
 
 ## If you are new

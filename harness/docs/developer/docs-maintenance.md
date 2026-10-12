@@ -52,7 +52,7 @@ Pictures of the harness plans tab, the generate preview, the release window and 
 5. **Anchors.** GitHub makes a heading's anchor by lower-casing the text, dropping punctuation and backticks, and replacing spaces with hyphens: `## 2. Add units` is `#2-add-units`. A link to a heading that you rename breaks. Search for the old anchor before you rename: `grep -rn "old-anchor" --include=*.md .`.
 6. **Check.** Run the two checks in the next section.
 7. **If the page describes the program,** check the button and menu names against `gui/strings.py` and `gui/main_window.py`, and the command names and options against `harness COMMAND --help`.
-8. **Things only on `master`.** If a page uses something that is not in the 0.1.0 packages, say so on the page (see the `Unreleased` section of [`../../CHANGELOG.md`](../../CHANGELOG.md)).
+8. **Things only on `master`.** If a page uses something that is not in the latest release yet (it is listed under `## Unreleased` in [`../../CHANGELOG.md`](../../CHANGELOG.md)), say so on the page. Where a page keeps a note for people who have the 0.1.0 packages, say "not in the 0.1.0 packages".
 
 To change the in-app guide, edit `docs/guide/USER_GUIDE.md` and run `python -m tools.build_guide`. Keep paragraphs under 700 characters, name only buttons that exist, and document every new command in it (`test_docs.py` checks all three).
 
@@ -83,7 +83,7 @@ For every page written for readers (not for the records in `compliance/`):
 - Never claim compliance with a standard. Keep the wording of the records: "waived by the owner" accepts a deviation and does not meet the requirement.
 - Never invent a feature, a value or a fact. If you could not check it, say so on the page.
 - Mark steps that need the app, which cannot be run in an automatic test, so a reader knows what was driven and what was only read from the program text.
-- Say "newer than the 0.1.0 packages" for anything that is only on `master`.
+- Say "not in the 0.1.0 packages" for anything that 0.1.0 lacks and keep that note only where it still helps someone who has 0.1.0 installed. Say "not in the latest release yet" for anything that is only under `## Unreleased`.
 - GitHub Markdown only: no HTML, no extensions that GitHub does not render.
 - A fenced `python` block is checked by `ruff format --check .` (CI and the release check run it). Write it in ruff's layout or run `ruff format .` on the page.
 

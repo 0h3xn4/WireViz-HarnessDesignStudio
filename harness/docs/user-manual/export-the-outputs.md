@@ -19,7 +19,7 @@ This page shows how to write the drawings and lists of a design (wire lists, pin
 
 ## 1. Export
 
-**In the app** (GUI, not run): open the **Harness plans** tab and press **Export outputs**. The project must be saved to a folder first. When it is done the app says "38 files written to the outputs folder (design 8a25f0c99a86)." (your numbers will differ).
+**In the app** (GUI, not run): open the **Harness plans** tab and press **Export outputs**. The project must be saved to a folder first. When it is done the app says "38 files written to the outputs folder (design 310e4c4a4345)." (your numbers will differ).
 
 **On the command line**:
 
@@ -28,7 +28,7 @@ harness export wheel-link
 ```
 
 ```
-38 files written to wheel-link/outputs (model 8a25f0c99a86).
+38 files written to wheel-link/outputs (model 310e4c4a4345).
 ```
 
 The files are checked independently before they are written. If that check fails, nothing is written and the app says "The outputs failed their independent check, so nothing was written".
@@ -76,7 +76,7 @@ Only the A3 drawing is also written as SVG; the A4 drawing is a PDF only. Full l
 Every file carries the tool version and a **model hash** (a short fingerprint of the design): CSV and YAML files start with a comment line, for example
 
 ```
-# harness-design-studio 0.1.0 model 8a25f0c99a86
+# harness-design-studio 1.0.0 model 310e4c4a4345
 ```
 
 A program that reads the CSV must skip lines that start with `# `. A printed sheet can be traced to the exact design it came from by that hash.
@@ -90,7 +90,7 @@ W002-P1,cable,PCDU1-J01,EX-MICROD-9-M,2,,,W002-002,no
 W002-P1,cable,PCDU1-J01,EX-MICROD-9-M,3,,,,yes
 ```
 
-The drawing is a wiring diagram. The connectors are tables left and right, with every used pin and its signal. The wires run between them. In between, each cable has a block that lists its wires with the number of wires, the gauge ("pending" when undecided) and the length. A title block closes the sheet. Wire colours are drawn only if you set them ([set wire colours](set-wire-colours.md)); unset wires are grey. The wiring-diagram drawing is newer than the 0.1.0 packages (see the [changelog](../../CHANGELOG.md#unreleased-after-010)); the 0.1.0 drawing is the older wire-by-wire sheet.
+The drawing is a wiring diagram. The connectors are tables left and right, with every used pin and its signal. The wires run between them. In between, each cable has a block that lists its wires with the number of wires, the gauge ("pending" when undecided) and the length. A title block closes the sheet. Wire colours are drawn only if you set them ([set wire colours](set-wire-colours.md)); unset wires are grey. The wiring-diagram drawing is not in the 0.1.0 packages (see the [changelog](../../CHANGELOG.md)); the 0.1.0 drawing is the older wire-by-wire sheet.
 
 The title block shows the author, checker, approver and date as "-" until the harness has been reviewed and released.
 

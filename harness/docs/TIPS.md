@@ -17,7 +17,7 @@ This page collects shortcuts and habits that save time once you have finished [`
 - [Small habits](#small-habits)
 - [Working with other tools](#working-with-other-tools)
 
-Every command on this page was run with the tool (version `0.1.0`, built from `master`) before it was written down. Some of the options need the newer examples; the page says so where it matters (see [`examples/README.md`](examples/README.md) for which build has what).
+Every command on this page was run with the tool (version `1.0.0`) before it was written down. Some of the options need examples that are not in the 0.1.0 packages; the page says so where it matters (see [`examples/README.md`](examples/README.md)).
 
 ## Keyboard shortcuts
 
@@ -107,7 +107,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
-38 files written to cib/outputs (model 91531b45fd2c).
+38 files written to cib/outputs (model da1379ad567b).
 2 interfaces and 6 wires checked: 0 error(s)
 build ok: cib/outputs
 ```
@@ -166,7 +166,7 @@ The tool defines no wire colours. A wire has a colour only if you set one: by ha
 "wire_colour_by_signal": {"PWR": "red", "RTN": "black"}
 ```
 
-After `harness generate`, the wire list has the colours and the drawings draw them (with the IEC 60757 code as text, so a black-and-white print loses nothing). Unset wires stay grey. Running this on `small-satellite` and comparing the two folders with `harness compare` listed the changed configuration and 23 wires whose `colour` went from `(none)` to `red` or `black` (`Comparing sa with sb: 0 added, 0 removed, 24 changed.`). This needs the newer build; see [`OUTPUTS.md`](OUTPUTS.md).
+After `harness generate`, the wire list has the colours and the drawings draw them (with the IEC 60757 code as text, so a black-and-white print loses nothing). Unset wires stay grey. Running this on `small-satellite` and comparing the two folders with `harness compare` listed the changed configuration and 23 wires whose `colour` went from `(none)` to `red` or `black` (`Comparing sa with sb: 0 added, 0 removed, 24 changed.`). The colours are not in the 0.1.0 packages; see [`OUTPUTS.md`](OUTPUTS.md).
 
 ## Waivers
 
@@ -195,7 +195,7 @@ A warning of the design rule check can be fixed or **waived**: in the app, press
 - **Look at the Why tab:** select a wire and read *Why is it like this?* before you override a choice.
 - **Lock what you decided:** a wire or pin you set by hand and lock is kept by every later generation.
 - **Verify before you send:** `harness verify DIR --outputs` re-reads the exported files and compares them with the design; the 12-character model hash in every file tells you which design printed it.
-- **Plan on paper first** with `design-worksheet.md` from the templates (on `master`, not in the 0.1.0 packages).
+- **Plan on paper first** with `design-worksheet.md` from the templates (not in the 0.1.0 packages).
 
 ## Working with other tools
 
@@ -249,7 +249,7 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
 | YAML | `wireviz.yaml` per harness | "WireViz-style" input: `metadata`, `connectors`, `cables`, `connections`. Written by this tool; **not validated against the WireViz program**. |
 | Markdown | `system/drc_report.md`, `system/revision_report.md` | reports |
 
-Every CSV starts with a comment line (`# harness-design-studio 0.1.0 model <hash>`) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The interface Properties panel of the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
+Every CSV starts with a comment line (`# harness-design-studio 1.0.0 model <hash>`) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The interface Properties panel of the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
 
 ### Ideas, not features
 

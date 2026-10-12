@@ -1,0 +1,90 @@
+name: harness-design-studio release
+
+# Pushing an annotated tag vX.Y.Z builds the packages and publishes the GitHub release page
+# (docs/RELEASE.md step 15). `workflow_dispatch` with the tag name runs it again for an existing
+# tag: the files and the notes of an existing release page are replaced.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to (re)build and publish, for example v1.0.0"
+        required: true
+        type: string
+
+permissions:
+  contents: read  # only the release job below may write
+
+concurrency:
+  group: harness-release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false  # never stop a release half way
+
+defaults:
+  run:
+    working-directory: harness
+
+jobs:
+  release:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    permissions:
+      contents: write  # create the release and attach the files; nothing else in this workflow may
+    env:
+      TAG: ${{ inputs.tag || github.ref_name }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ env.TAG }}
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: The tag matches the version and the changelog
+        run: python -m tools.release_notes check "$TAG"
+      - name: Qt system libraries
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
+      - run: python -m pip install -e ".[gui,dev]"
+      - run: python -m tools.build_installer
+      - run: python -m tools.build_deb
+      - name: Frozen app self-test
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: dist/harness-design-studio/harness-design-studio --selftest
+      - name: Install the .deb and run it
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: |
+          sudo apt-get install -y ./dist/harness-design-studio_*_amd64.deb
+          test "$(harness --version)" = "harness ${TAG#v}"
+          harness-design-studio --selftest
+          test -f /usr/share/doc/harness-design-studio/copyright
+      - name: Checksums (SHA256SUMS next to the packages, names without folders)
+        run: |
+          python -m tools.gen_scf dist
+          cd dist && sha256sum -c SHA256SUMS
+      - name: Release notes
+        run: python -m tools.release_notes notes "$TAG" dist/SHA256SUMS "$RUNNER_TEMP/notes.md"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: harness-design-studio-${{ env.TAG }}
+          if-no-files-found: error
+          path: |
+            harness/dist/*.deb
+            harness/dist/*.tar.gz
+            harness/dist/SHA256SUMS
+            harness/dist/scf.json
+      - name: Publish the release page
+        run: |
+          title="Harness Design Studio ${TAG#v}"
+          files=(dist/*.tar.gz dist/*.deb dist/SHA256SUMS)
+          flags=()
+          case "$TAG" in *rc*) flags+=(--prerelease) ;; esac
+          if gh release view "$TAG" >/dev/null 2>&1; then
+            gh release edit "$TAG" --title "$title" --notes-file "$RUNNER_TEMP/notes.md"
+            gh release upload "$TAG" "${files[@]}" --clobber
+          else
+            gh release create "$TAG" --verify-tag --title "$title" --notes-file "$RUNNER_TEMP/notes.md" "${flags[@]}" "${files[@]}"
+          fi

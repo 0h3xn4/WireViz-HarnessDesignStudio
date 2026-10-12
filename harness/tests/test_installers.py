@@ -422,6 +422,28 @@ def test_the_deb_ships_licences_and_not_the_tarball_scripts(tmp_path: Path) -> N
     assert "libc6 (>= 2.39)" in DEPENDS and "libxcb-xinerama0" in DEPENDS
 
 
+@pytest.mark.skipif(shutil.which("dpkg-deb") is None, reason="dpkg-deb not installed")
+def test_the_deb_copyright_names_the_owner_and_grants_no_licence(tmp_path: Path) -> None:
+    from tools.build_deb import build
+
+    deb = build(fake_package(tmp_path / "src"), tmp_path / "out")
+    subprocess.run(["dpkg-deb", "-x", str(deb), str(tmp_path / "x")], check=True)
+    text = (
+        tmp_path / "x" / "usr" / "share" / "doc" / "harness-design-studio" / "copyright"
+    ).read_text()
+    assert "Copyright: the repository owner (GitHub account 0h3xn4)" in text
+    assert "Not chosen yet by the owner (decision D-02" in text
+    assert "No licence is granted by this file." in text
+    assert "to be filled in" not in text and "decided by the project owner" not in text
+    # machine-readable format: a header paragraph, then paragraphs of Files / Copyright / License
+    paragraphs = [p for p in text.strip().split("\n\n") if p.strip()]
+    assert paragraphs[0].startswith("Format: https://www.debian.org/doc/packaging-manuals/")
+    for para in paragraphs[1:]:
+        fields = [ln.split(":", 1)[0] for ln in para.splitlines() if not ln.startswith(" ")]
+        assert fields == ["Files", "Copyright", "License"], para
+    assert "License: LicenseRef-Proprietary" in text
+
+
 def test_the_licence_collector_finds_the_runtime_packages_and_the_lgpl_text(tmp_path: Path) -> None:
     from tools.collect_licences import collect, runtime_distributions
 
@@ -517,3 +539,91 @@ def test_the_root_setup_describes_the_package_with_the_upstream_readme() -> None
     assert meta["python_requires"] == ">=3.7"
     # a wheel built from the source distribution needs the file too
     assert "docs/upstream/README.upstream.md" in (root / "MANIFEST.in").read_text(encoding="utf-8")
+
+
+RELEASE_WORKFLOW = ROOT.parent / ".github" / "workflows" / "release.yml"
+
+
+def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
+    """Pushing a tag vX.Y.Z builds, verifies and publishes; only the release job may write."""
+    if not RELEASE_WORKFLOW.is_file():
+        pytest.skip("the repository root is not here")
+    text = RELEASE_WORKFLOW.read_text(encoding="utf-8")
+    assert 'tags: ["v*"]' in text and "workflow_dispatch:" in text and "tag:" in text
+    assert text.index("push:") < text.index("tags:") < text.index("jobs:")
+    # the token is read-only for the workflow and writable for the release job alone
+    assert "permissions:\n  contents: read" in text
+    assert text.count("contents: write") == 1
+    assert text.index("contents: write") > text.index("jobs:\n  release:")
+    for command in (
+        "python -m tools.release_notes check",
+        "python -m tools.build_installer",
+        "python -m tools.build_deb",
+        "--selftest",
+        "python -m tools.gen_scf dist",
+        "sha256sum -c SHA256SUMS",
+        "gh release create",
+        "--verify-tag",
+        "gh release upload",
+        "--clobber",
+        "dist/*.tar.gz",
+        "dist/*.deb",
+        "dist/SHA256SUMS",
+    ):
+        assert command in text, command
+    # the order matters: build, then checksums, then the page
+    for earlier, later in (
+        ("tools.build_installer", "tools.build_deb"),
+        ("tools.build_deb", "tools.gen_scf"),
+        ("tools.gen_scf", "tools.release_notes notes"),
+        ("tools.release_notes notes", "gh release create"),
+    ):
+        assert text.index(earlier) < text.index(later), (earlier, later)
+    # only actions that the other workflows already use
+    used = {ln.split("uses:")[1].strip() for ln in text.splitlines() if "uses:" in ln}
+    assert used <= {"actions/checkout@v4", "actions/setup-python@v5", "actions/upload-artifact@v4"}
+    # the system libraries are the ones the CI job that installs the packages uses
+    ci = (RELEASE_WORKFLOW.parent / "harness-ci.yml").read_text(encoding="utf-8")
+    libs = (
+        "libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0"
+    )
+    line = next(ln for ln in text.splitlines() if libs in ln).split("install -y")[1].strip()
+    assert line in ci
+
+
+def test_the_release_check_refuses_a_tag_that_does_not_fit() -> None:
+    from tools import release_notes as rn
+
+    log = "# Changelog\n\n## Unreleased\n\n## 2.0.0 (date)\n\nintro\n\n- a\n\n## 1.0.0\n\n- b\n"
+    assert rn.problems("v2.0.0", "2.0.0", log) == []
+    assert "want v2.0.0" in rn.problems("v2.0.1", "2.0.0", log)[0]
+    assert "no '## 3.0.0' heading" in rn.problems("v3.0.0", "3.0.0", log)[0]
+    assert (
+        "empty" in rn.problems("v2.0.0", "2.0.0", "## Unreleased\n\n## 2.0.0 (x)\n\n## 1.0.0\n")[0]
+    )
+    unreleased = log.replace("## Unreleased\n", "## Unreleased\n\n- not released\n")
+    assert "Unreleased" in rn.problems("v2.0.0", "2.0.0", unreleased)[0]
+    # 2.0.0 must not match the heading of 2.0.0rc1 or 12.0.0
+    assert rn.section("## 2.0.0rc1\n\n- x\n", "2.0.0") is None
+    assert rn.section("## 12.0.0\n\n- x\n", "2.0.0") is None
+
+
+def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path: Path) -> None:
+    from harness_design_studio import __version__
+    from tools import release_notes as rn
+
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    assert rn.problems(f"v{__version__}", __version__, changelog) == []  # the real files agree
+    body = rn.section(changelog, __version__)
+    assert body and not any(ln.startswith("## ") for ln in body.splitlines())
+    sums = tmp_path / "SHA256SUMS"
+    sums.write_text(
+        f"{'a' * 64}  harness-design-studio_{__version__}_amd64.deb\n", encoding="utf-8"
+    )
+    out = tmp_path / "notes.md"
+    assert rn.main(["notes", f"v{__version__}", str(sums), str(out)]) == 0
+    text = out.read_text(encoding="utf-8")
+    assert text.startswith("The packages are not signed")
+    assert "not a statement of compliance" in text and body in text
+    assert f"| `harness-design-studio_{__version__}_amd64.deb` | `{'a' * 64}` |" in text
+    assert rn.main(["notes", "v0.0.1", str(sums), str(out)]) == 1  # the tag must fit the version

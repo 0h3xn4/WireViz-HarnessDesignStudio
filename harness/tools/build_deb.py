@@ -24,9 +24,10 @@ COPYRIGHT = """Format: https://www.debian.org/doc/packaging-manuals/copyright-fo
 Upstream-Name: harness-design-studio
 
 Files: *
-Copyright: the project owner (to be filled in before distribution)
+Copyright: the repository owner (GitHub account 0h3xn4)
 License: LicenseRef-Proprietary
- The licence of Harness Design Studio itself is decided by the project owner (see pyproject.toml).
+ Not chosen yet by the owner (decision D-02, deliberately left open for 1.0.0).
+ No licence is granted by this file.
 
 Files: opt/harness-design-studio/_internal/* opt/harness-design-studio/cli/_internal/*
 Copyright: the authors of the bundled libraries
