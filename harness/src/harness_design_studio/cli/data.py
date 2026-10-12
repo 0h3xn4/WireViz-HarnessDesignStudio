@@ -8,7 +8,7 @@ from harness_design_studio.core import configcheck, standard_profiles
 from harness_design_studio.core.commands import History, SetConfig
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.generate.lengths import plan_length_import
-from harness_design_studio.core.imports import ImportError_, read_table
+from harness_design_studio.core.imports import ImportError_, read_table, read_table_sheet
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
 from harness_design_studio.core.library_import import (
@@ -170,7 +170,9 @@ def run(args: argparse.Namespace) -> int:
             return 2
         if args.command == "import-netlist":
             return _netlist(project, args)
-        table = read_table(args.file)
+        table, sheet = read_table_sheet(args.file)
+        if sheet is not None:
+            print(f"Reading sheet '{sheet}' (the first visible sheet of the workbook).")
         if args.command == "import-parts":
             return _parts(project, table, args)
         return _lengths(project, table, args)

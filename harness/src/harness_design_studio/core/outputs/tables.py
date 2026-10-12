@@ -3,6 +3,7 @@ matrices. Each function returns `Table` (header row first). No design numbers ar
 unknown values are written as "pending", "unknown" or "TBD (placeholder)"."""
 
 from collections import defaultdict
+from decimal import Decimal
 
 from harness_design_studio.core.generate.lengths import clear_length_cache, wire_length
 from harness_design_studio.core.generate.mass import harness_mass
@@ -15,7 +16,21 @@ TBD = "TBD (placeholder)"
 
 
 def num(v: float | None) -> str:
+    """A number for display text on drawings (6 significant digits)."""
     return "" if v is None else f"{v:.6g}"
+
+
+def data_num(v: float | None) -> str:
+    """A number for the data files (tables, YAML): the shortest text that reads back as the same
+    value, without an exponent, rounded to 9 decimals so sums carry no floating point noise
+    (0.30000000000000004). The verifier compares these cells with the model."""
+    if v is None:
+        return ""
+    r = round(v, 9) + 0.0  # + 0.0 turns -0.0 into 0.0
+    text = repr(r)
+    if "e" in text or "E" in text:
+        text = format(Decimal(text), "f")
+    return text[:-2] if text.endswith(".0") else text
 
 
 def clear_cache() -> None:
@@ -51,7 +66,7 @@ def wire_list(project: Project, h: Harness) -> Table:
         rows.append([
             w.id, w.signal or "", w.interface_id or "", w.from_connector, w.from_pin,
             w.to_connector, w.to_pin, PENDING if w.gauge_awg is None else str(w.gauge_awg),
-            w.part_id or "", w.colour or "", num(wire_length(h, w)), shields.get(w.id, ""),
+            w.part_id or "", w.colour or "", data_num(wire_length(h, w)), shields.get(w.id, ""),
             "yes" if w.locked else "", *([emc_class_of(project, w)] if emc else []),
         ])  # fmt: skip
     return rows
@@ -138,7 +153,7 @@ def bom(project: Project, harnesses: list[Harness]) -> Table:
             pid, part.category if part else "unknown", (part.manufacturer or "") if part else "",
             (part.part_number or "") if part else "", (part.description or "") if part else "",
             ("missing from parts list" if part is None else part.approval + (" (example data)" if part.unverified else "")),
-            num(round(metres[pid], 6)) if is_wire else str(counts[pid]), "m" if is_wire else "ea",
+            data_num(metres[pid]) if is_wire else str(counts[pid]), "m" if is_wire else "ea",
             str(unknown[pid]) if is_wire else "", ";".join(sorted(used[pid])),
         ])  # fmt: skip
     return rows
@@ -162,8 +177,8 @@ def mass_length(project: Project, harnesses: list[Harness]) -> Table:
         known = sum(x for x in lengths if x is not None)
         unk = sum(1 for x in lengths if x is None)
         rows.append([
-            h.id, str(len(h.wires)), str(len(h.connectors)), num(round(known, 6)), str(unk),
-            num(round(r.total_g, 6)), num(r.margin_g), num(r.with_margin_g),
+            h.id, str(len(h.wires)), str(len(h.connectors)), data_num(known), str(unk),
+            data_num(r.total_g), data_num(r.margin_g), data_num(r.with_margin_g),
             "yes" if r.complete and unk == 0 else "no", "; ".join(r.missing),
         ])  # fmt: skip
         tot_len += known
@@ -175,8 +190,9 @@ def mass_length(project: Project, harnesses: list[Harness]) -> Table:
         margins.append(r.margin_g)
     margin = None if any(m is None for m in margins) else sum(m for m in margins if m is not None)
     rows.append([
-        "TOTAL", str(tot_wires), str(tot_conn), num(round(tot_len, 6)), str(tot_unknown),
-        num(round(tot_mass, 6)), num(margin), num(None if margin is None else tot_mass + margin),
+        "TOTAL", str(tot_wires), str(tot_conn), data_num(tot_len), str(tot_unknown),
+        data_num(tot_mass), data_num(margin),
+        data_num(None if margin is None else tot_mass + margin),
         "yes" if complete else "no", "totals count only what is known" if not complete else "",
     ])  # fmt: skip
     return rows

@@ -29,6 +29,14 @@ Changes on `master` since the release of 0.1.0. They are not in the 0.1.0 packag
 - **Records**: `compliance/SIGNOFF.md` has a Publication section for 0.1.0 (merge commit, tag, release page); `docs/RELEASE.md` has a step for tagging and publishing a release; `docs/SECURITY.md` says the SBOM ships with every release.
 - **Release check**: the version step skips an `Unreleased` section when it compares the changelog with the version.
 
+### Fixed
+
+- Export no longer refuses a wire length with more than six digits (for example 1234.567 mm from a CAD file). Tables and the YAML keep the full number; only the drawings round.
+- A connector or wire ID of up to 64 characters is drawn in a smaller font instead of being cut, so export and the output check succeed.
+- A stray double quote in a CSV file is reported with its line number and nothing is imported (it used to swallow the rows after it).
+- XLSX import reads the first visible sheet, as documented, and says which sheet it read.
+- `drc`, `verify`, `log`, `diff`, `compare`, `config`, `library`, `generate`, `review`, `release`, `revise` and the imports refuse a project with damaged files (exit 2, damaged file named) instead of printing a clean result or saving over it.
+
 ## 0.1.0 (first release, 2026-10-09; released by the owner with the engineering decisions still open, see compliance/SIGNOFF.md; not a statement of compliance)
 
 This is release candidate 0.1.0rc8 without the `rc`, plus the note below. The program is unchanged: results differ from rc8 only in the stamps (version, model hash). **Still open at this release**: the harness boundary rule (D-10) and the title block (D-15) are at their defaults; the real derating and EMC values (D-11) and the approved parts list (D-12) have not been supplied, so results rest on placeholders and example parts unless a person has reviewed them (a release of a harness needs a written reason, D-135 and D-136). Waived by the owner and not done: independent verification and validation, the formal reviews, usability sessions, the screen-reader pass and the clean-machine installation test; the packages are unsigned (`compliance/DEVIATIONS.md` T-18 to T-31). Platform: Ubuntu 24.04 and newer.
