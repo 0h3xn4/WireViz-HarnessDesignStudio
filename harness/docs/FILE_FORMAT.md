@@ -50,7 +50,13 @@ A file that is not valid JSON/UTF-8, has duplicate keys, a wrong structure, or a
 Each file is written to a temp file, flushed, `fsync`ed and renamed; the previous version is kept as `<file>.bak`. Only changed files are written. Files for deleted objects are renamed to `.bak`, not erased. A crash can leave some files updated and others not, but every file is whole; `harness validate` / `harness check` report cross-file inconsistencies, and saves are refused while integrity errors exist. If the folder changed on disk since opening (e.g. a Git pull), a save with the opening fingerprint is refused.
 
 ## Locking
-`.harness.lock` (pid, host name, start time; no design data) prevents opening one project twice. A lock whose process no longer exists on the same host is taken over; a lock from another host is respected.
+`.harness.lock` (pid, host name, start time, and on Linux the boot id of the computer and the start time of the process; no design data) prevents opening one project twice. A lock is taken over when it is stale: its process no longer exists, the computer was restarted since (other boot id), or the process number now belongs to another program (other process start time). A lock from another computer is respected, because it cannot be checked; the error names the lock file, and deleting that file is the way out when nobody has the project open. Locks made by older versions have no boot id and process start time and are checked by process number only. A folder that is neither empty nor a project gets no lock and no helper file.
+
+## Saving
+New files get the mode `0666` minus the user's umask (an existing file keeps its mode). A file that is a link is replaced by the new file and has no `.bak`; saving never reads through a link. Temporary files of a save are `.<file>.<8 characters>.tmp`; a later save removes the ones a killed save left behind (only names of that form in the project folder and the managed folders). The upgrade of an old project keeps its original files in `.migration-backup-vN/`, built as `.migration-backup-vN.partial` and renamed when complete; if that name already exists as anything but a real folder the upgrade is refused.
+
+## Number ranges
+The loader sets aside (reports, keeps in `quarantine.json`) an object with a number outside these ranges, and the editor refuses such an edit: wire gauge (AWG) 0 to 40, whole numbers; `length_m` of a wire or segment 0 to 10000; `max_current_a`, `voltage_v`, `impedance_ohm` above 0; part `pin_count` 1 to 1000; `mass_g`, `mass_per_m_g` and each `ratings` value 0 or more; `default_gauge_awg` 0 to 40; `next_harness_number` 1 or more; `schema_version` 1 or more. A missing value (`null`) is still allowed everywhere it was.
 
 ## Hash
 `model_hash` is the SHA-256 of all canonical files with the saving tool's version blanked. Every output file carries its first 12 characters, so a printed sheet can be traced to the exact model.
@@ -76,7 +82,17 @@ All optional with defaults; projects saved before them load unchanged.
 
 ## Change control additions: review, release, baselines, change log (schema version stays 1)
 - `Harness.author`, `checker`, `approver`, `released_on` (all optional): who put the harness into review, who checked and released it, and the release date (YYYY-MM-DD). `status` is `draft`, `in_review` or `released`; `revision` is letters.
-- `baselines/<harness ID>/<baseline ID>.json`: `id` (`<harness>.<revision>`), `harness_id`, `revision`, `released_on`, `by`, `comment`, `content_hash`, `snapshot` (`units`, `interfaces`, `connectors` = box connectors, `harnesses` = the released harness). Written once at release; never edited by the tool.
+- `baselines/<harness ID>/<baseline ID>.json`: `id` (`<harness>.<revision>`), `harness_id`, `revision`, `released_on`, `by`, `comment`, `content_hash`, `snapshot` (`units`, `interfaces`, `connectors` = box connectors, `harnesses` = the released harness, and the records listed below). Written once at release; never edited by the tool.
+- `snapshot.parts`, `interface_types`, `config` and `waivers` record what the release froze (see "What a release freezes"). They are optional: a baseline made by an earlier version has none of them, is read without them and written back unchanged, and `harness check` compares nothing for it.
+
+### What a release freezes
+A released harness locks, besides itself: the design fields of the interfaces it carries (not name, notes, requirement), the units those interfaces connect (not name, notes, zone), the box connectors it plugs into or that carry its interfaces (part, gender, keying and the pins of its interfaces), and, new in this version:
+- **parts it uses**: the part of each of its connectors, the part of each wire, the part of the box connectors above, and the counterpart named in `mates_with` of those parts. Every field but `notes` is frozen (approval, mass, `pin_count`, `unverified`, ratings, part number, ...).
+- **interface types** of the interfaces it carries (every field but `name` and `notes`).
+- **configuration its checks and outputs read**: all values of `derating`, `emc`, `segregation` and `titleblock`, and in `generation` the keys `conductor_resistivity_ohm_m`, `mass_margin_fraction`, `power_return_gap_pins`, `shield_end_a`, `shield_end_b`, `test_continuity_max_ohm`, `test_isolation_min_mohm` and `test_isolation_voltage_v`. These apply to every harness, so they are frozen while any harness is released. `segmentation`, `naming`, the other `generation` keys (which only decide how new harnesses are made) and the `placeholder` flags stay editable.
+- **waivers** that name the harness or one of its objects are recorded in the baseline but not locked: a waiver can be added or changed after a release (the change log and `harness compare` show it).
+
+The editor and the data commands (`import-parts`, `config`, `library`) refuse a change to a frozen item with the reason and "start a new revision"; `harness check` reports a hand edit as `released_modified`. Allowed at any time: adding parts and interface types, editing and deleting those no released harness uses, and notes and names. To change a frozen item: `harness revise` the harness (every released harness for configuration), make the change, release again.
 - `changelog.json`: `{"changelog": [{id (C0001...), harness_id, revision, kind (review | release | new_revision), by, when, comment}]}`.
 - `outputs/manifest.json` gained `content_hash` (see D-104).
 

@@ -149,10 +149,10 @@ harness generate lk
 ```
 
 ```
-error: This project is already open in another instance of the tool. Close it there first, or open this copy read-only.
+error: This project is already open in another instance of the tool (process 4242). Close it there first (lock file: 'lk/.harness.lock').
 ```
 
-The exit code is 1. Commands that only read (such as `harness validate lk`) still work. **Why:** the app and every command that changes a project take the same lock (`.harness.lock` in the project folder), so they never write at once. **Fix:** close the other window or wait for the other command to end. A lock left behind by a crashed session on the same machine is taken over automatically. A lock written by another computer (a shared drive) cannot be checked, so it is treated as alive; if you are certain nobody has the project open, delete the `.harness.lock` file in the project folder.
+The exit code is 1. Commands that only read (such as `harness validate lk`) still work. **Why:** the app and every command that changes a project take the same lock (`.harness.lock` in the project folder), so they never write at once. **Fix:** close the other window or wait for the other command to end. A lock left behind by a crashed session on the same machine is taken over automatically, also after a restart of the computer and when the process number has since been given to another program (on Linux). A lock written by another computer (a shared drive) cannot be checked, so it is treated as alive and the error names the lock file; if you are certain nobody has the project open, delete that `.harness.lock` file.
 
 ### "This project has problems" (the recovery view)
 
