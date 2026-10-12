@@ -40,7 +40,14 @@ Library parts need `mass_g` and `mass_per_m_g` for a complete mass; otherwise th
 | `generation.json` | `shield_end_a`, `shield_end_b` (grounding concept) | shield unterminated, shield wrong end |
 | `segregation.json` | `category_pairs_to_separate`, e.g. `[["power", "analog"]]` | category mixed |
 | `emc.json` | `conflicting_class_pairs`, e.g. `[["A", "B"]]` (format chosen by the tool; the owner may change it) | EMC mixed |
-Part ratings: `ratings.contact_current_a` on connector parts (key name set by `derating.contact_rating_key`).
+| `derating.json` | `bundle_factor_by_count` | bundle current; replaces `bundle_derating` in wire sizing and in current over wire |
+| `derating.json` | `connector_voltage_factor_withstand`, `connector_voltage_factor_rated` | connector voltage |
+| `derating.json` | `wire_voltage_factor` | wire voltage |
+| `derating.json` | `max_ambient_temperature_c` with `connector_temperature_margin_c`, `wire_temperature_margin_c` | temperature margin |
+| `derating.json` | `max_mating_cycles` | mating cycles |
+| `generation.json` | `power_return_gap_pins` | power return adjacent |
+| `emc.json` | `shield_bonding`, `same_class_one_bundle` | shield bonding, shield parts, EMC class split |
+Part ratings: `ratings.contact_current_a` on connector parts (key name set by `derating.contact_rating_key`); the rules of the standard profiles (D-131) also need `rated_voltage_v`, `dielectric_withstand_v`, `max_temp_c`, `mating_cycles`, `conductive_finish`, `shield_insulated` on the parts. A rule whose part has no such rating is silent for that part, and `unchecked-config` names the part. A wire the current or voltage-drop checks must skip (no gauge, no length, no bundle factor for its wire count) is listed there too.
 
 ## Test limits, title block and mass data
 | File (`config/`) | Key | Effect while `null` |

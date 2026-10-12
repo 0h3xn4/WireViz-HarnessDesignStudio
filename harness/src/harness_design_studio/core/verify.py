@@ -4,7 +4,9 @@ It reads the project as data (exactly what is saved), re-derives from the logica
 the harnesses must contain, and compares. If generation has a bug, this is where it shows.
 Checks: every logical signal appears end to end exactly once; both ends of every wire agree with
 the pinout tables (pins, the wire's signal label and the cable connector's own pin table); no pin
-is used twice; harness bookkeeping matches its wires; outputs are not stale. It never raises.
+is used twice; a shielded type has a shield group covering its wires; harness bookkeeping matches
+its wires; outputs are not stale. Wire gauge, colour and part are not checked (they are design
+choices, see the design rules). It never raises.
 """
 
 from collections import Counter
@@ -46,21 +48,32 @@ class VerifyReport:
         self.issues.append(Issue("warning", code, message, None, obj))
 
 
+def _pairing(signals: list[tuple[str, str]]) -> tuple[list[str], list[str], set[str]]:
+    """Outputs, inputs and the directional signals that pass straight through (no partner)."""
+    outs = [n for n, d in signals if d == "out"]
+    ins = [n for n, d in signals if d == "in"]
+    paired = min(len(outs), len(ins)) if (outs and ins) else 0
+    return outs[:paired], ins[:paired], {*outs[paired:], *ins[paired:]}
+
+
+def passthrough_signals(signals: list[tuple[str, str]]) -> set[str]:
+    """Unpaired directional signals (more outputs than inputs or the reverse): they connect to
+    the same name at the other end. The design rules use this too, so both agree."""
+    return _pairing(signals)[2]
+
+
 def expected_connections(signals: list[tuple[str, str]]) -> Counter[Connection]:
     """Connections an interface of this type needs, as unordered pairs of (end, signal).
 
     End 0/1 are the interface's first/second endpoint. An `out` signal at one end connects to the
     `in` signal at the same position in the other end; `passive`/`bidir` connect to the same name.
     """
-    outs = [n for n, d in signals if d == "out"]
-    ins = [n for n, d in signals if d == "in"]
+    outs, ins, leftover = _pairing(signals)
     need: Counter[Connection] = Counter()
-    paired = min(len(outs), len(ins)) if (outs and ins) else 0
-    for k in range(paired):
+    for k in range(len(outs)):
         need[frozenset({(0, outs[k]), (1, ins[k])})] += 1
         need[frozenset({(1, outs[k]), (0, ins[k])})] += 1
-    leftover = {*outs[paired:], *ins[paired:]}  # unpaired directional signals pass straight through
-    for name, direction in signals:
+    for name, direction in signals:  # unpaired directional signals pass straight through
         if direction in ("passive", "bidir") or name in leftover:
             need[frozenset({(0, name), (1, name)})] += 1
     return need
@@ -203,6 +216,32 @@ def _wire_label(a: str, b: str) -> set[str]:
     return {a} if a == b else {f"{a}/{b}", f"{b}/{a}"}
 
 
+def _check_shields(project: Project, rep: VerifyReport) -> None:
+    """A type with shielding has a shield group covering its wires (overall: every wire; per
+    pair: at least one wire, as signals without a pair are not shielded). The groups' ends and
+    kinds are checked by design rules, not here."""
+    for h in sorted(project.harnesses.values(), key=lambda x: x.id):
+        if not h.generated:
+            continue
+        covered = {wid for sh in h.shields if sh.kind != "twisted_pair" for wid in sh.wire_ids}
+        for iid in sorted({w.interface_id for w in h.wires if w.interface_id}):
+            i = project.interfaces.get(iid)
+            itype = project.interface_types.get(i.type_id) if i else None
+            if itype is None or itype.shielding == "none":
+                continue
+            ids = sorted(w.id for w in h.wires if w.interface_id == iid)
+            missing = ids if not covered.intersection(ids) else []
+            if itype.shielding == "overall":
+                missing = [w for w in ids if w not in covered]
+            if missing:
+                rep.error(
+                    "shield_missing",
+                    f"Interface {iid} ({itype.id}) is shielded ({itype.shielding.replace('_', ' ')}) but no shield group of {h.id} covers "
+                    f"{', '.join(missing[:3])}{' and others' if len(missing) > 3 else ''}.",
+                    h.id,
+                )
+
+
 def verify_project(project: Project) -> VerifyReport:
     from .generate.engine import generation_status  # a hash comparison only, no generation logic
 
@@ -261,6 +300,7 @@ def verify_project(project: Project) -> VerifyReport:
                 f"Interface {i.id} has a wire {a[1]} to {b[1]} that its type does not define.",
                 i.id,
             )
+    _check_shields(project, rep)
     for iid in sorted(set(by_interface) - set(project.interfaces)):
         rep.warning("wire_orphan", f"Wires trace to interface {iid}, which no longer exists.", iid)
 

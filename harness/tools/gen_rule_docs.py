@@ -73,6 +73,10 @@ def render() -> str:
         "",
         "Mismatches found by the independent verifier (`verify-mismatch`): a wire missing, extra, swapped or duplicated compared with the interfaces. Fix: regenerate the harnesses.",
         "",
+        "The same rule name also reports a stale generation: the design changed after the harness plans were generated. Fix: generate again, then export again.",
+        "",
+        "A harness whose interface type is shielded must have a shield group covering its wires The verifier does not check the gauge, colour or part of a wire.",
+        "",
     ]
     return "\n".join(lines)
 

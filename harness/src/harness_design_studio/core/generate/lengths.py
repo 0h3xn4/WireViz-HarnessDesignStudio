@@ -9,27 +9,68 @@ from harness_design_studio.core.imports import Table
 from harness_design_studio.core.model import Harness, Project, Segment, Wire, evolve
 
 
-def path_length(h: Harness, start: str, end: str) -> float | None:
-    """Sum of segment lengths along the (unique) path in the harness tree; None if any is unknown."""
-    graph: dict[str, list[tuple[str, float | None]]] = {}
+def _adjacency(h: Harness) -> dict[str, list[tuple[str, str, float | None]]]:
+    graph: dict[str, list[tuple[str, str, float | None]]] = {}
     for s in h.segments:
-        graph.setdefault(s.from_node, []).append((s.to_node, s.length_m))
-        graph.setdefault(s.to_node, []).append((s.from_node, s.length_m))
+        graph.setdefault(s.from_node, []).append((s.to_node, s.id, s.length_m))
+        graph.setdefault(s.to_node, []).append((s.from_node, s.id, s.length_m))
+    return graph
+
+
+def _find_path(
+    graph: dict[str, list[tuple[str, str, float | None]]], start: str, end: str, skip: str = ""
+) -> list[tuple[str, float | None]] | None:
+    """Segments (id, length) of a fewest-hops path from start to end that avoids segment `skip`."""
     seen = {start}
-    queue: deque[tuple[str, list[float | None]]] = deque([(start, [])])
+    queue: deque[tuple[str, list[tuple[str, float | None]]]] = deque([(start, [])])
     while queue:
         node, trail = queue.popleft()
         if node == end:
-            return (
-                None
-                if any(x is None for x in trail)
-                else float(sum(x for x in trail if x is not None))
-            )
-        for nxt, length in graph.get(node, []):
-            if nxt not in seen:
+            return trail
+        for nxt, sid, length in graph.get(node, []):
+            if nxt not in seen and sid != skip:
                 seen.add(nxt)
-                queue.append((nxt, [*trail, length]))
+                queue.append((nxt, [*trail, (sid, length)]))
     return None
+
+
+def path_length(h: Harness, start: str, end: str) -> float | None:
+    """Sum of segment lengths along the path in the harness tree; None if any is unknown.
+
+    The one path rule of the tool (builder, tables, rules): the path must be unique. If the
+    segments form a loop that the path can take either way, there is no single length and the
+    answer is None; the design rule `segment-loop` reports the loop."""
+    graph = _adjacency(h)
+    trail = _find_path(graph, start, end)
+    if trail is None:
+        return None
+    if any(_find_path(graph, start, end, sid) is not None for sid, _ in trail):
+        return None  # a second route exists: not a tree path
+    lengths = [length for _, length in trail]
+    return (
+        None if any(x is None for x in lengths) else float(sum(x for x in lengths if x is not None))
+    )
+
+
+def loop_segments(h: Harness) -> list[str]:
+    """IDs of segments that close a loop (a segment graph must be a tree or a forest), in ID order."""
+    parent: dict[str, str] = {}
+
+    def find(x: str) -> str:
+        parent.setdefault(x, x)
+        while parent[x] != x:
+            parent[x] = parent[parent[x]]
+            x = parent[x]
+        return x
+
+    closing = []
+    for s in sorted(h.segments, key=lambda x: x.id):
+        a, b = find(s.from_node), find(s.to_node)
+        if a == b:
+            closing.append(s.id)
+        else:
+            parent[a] = b
+    return closing
 
 
 _PATHS: dict[tuple[int, str, str], tuple[Harness, float | None]] = {}
@@ -142,6 +183,7 @@ __all__ = [
     "LengthPlan",
     "LengthRow",
     "Segment",
+    "loop_segments",
     "path_length",
     "plan_length_import",
     "segment_lengths_known",

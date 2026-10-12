@@ -11,6 +11,7 @@ Rules that need numbers from your standards (see PLACEHOLDERS.md) check nothing 
 | `duplicate-id` | error (not waivable) | Duplicate IDs | Two objects with the same ID make every table, label and drawing ambiguous. | Rename one of them. | none |
 | `wire-dangling` | error (not waivable) | Dangling wires | A wire that ends nowhere cannot be built or tested. | Connect the wire end to an existing pin or delete the wire. | none |
 | `model-inconsistent` | warning (waivable) | Model consistency | The logical and physical parts of the model disagree, so later outputs may be wrong. | Open the object and correct the mismatch. | none |
+| `segment-loop` | error (not waivable) | Routing loops | A loop in the routing segments gives a wire two possible routes, so its length is not defined. | Remove or merge a segment so the segments form a tree. | none |
 | `signal-unassigned` | warning (waivable) | Unassigned signals | A signal without a pin never reaches a wire. | Regenerate the harnesses, or assign the pin by hand. | none |
 | `pin-floating` | warning (waivable) | Floating pins | A named pin with no wire looks connected on the drawing but carries nothing. | Attach a wire or clear the signal name. | none |
 | `mate-mismatch` | error (not waivable) | Mating halves | Connectors that do not fit, or fit only by force, damage hardware. | Choose the mating part, opposite gender and the same pin count and keying. | `ECSS-Q-ST-30-11_0140054` |
@@ -54,3 +55,7 @@ Rules that need numbers from your standards (see PLACEHOLDERS.md) check nothing 
 ## Also reported as errors
 
 Mismatches found by the independent verifier (`verify-mismatch`): a wire missing, extra, swapped or duplicated compared with the interfaces. Fix: regenerate the harnesses.
+
+The same rule name also reports a stale generation: the design changed after the harness plans were generated. Fix: generate again, then export again.
+
+A harness whose interface type is shielded must have a shield group covering its wires The verifier does not check the gauge, colour or part of a wire.
