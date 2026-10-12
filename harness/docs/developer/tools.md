@@ -48,6 +48,7 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 | `collect_licences` | Collects the licence texts of the shipped runtime packages into a `LICENSES` folder |
 | `check_vulnerabilities` | Checks the shipped dependencies for known vulnerabilities (needs network access) |
 | `gen_scf` | Writes the software configuration file and the `SHA256SUMS` of a delivery |
+| `release_notes` | Checks that a release tag fits the version and the changelog and writes the text of the GitHub release page (used by `.github/workflows/release.yml`) |
 
 ## Checks and measurements
 
