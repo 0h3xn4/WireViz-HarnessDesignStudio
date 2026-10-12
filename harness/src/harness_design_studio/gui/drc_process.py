@@ -7,6 +7,7 @@ If it cannot be started, or dies, the check runs in the calling thread as before
 """
 
 import atexit
+import contextlib
 import gc
 import os
 import subprocess
@@ -21,6 +22,7 @@ from harness_design_studio.core.model import Project
 
 FLAG = "--drc-worker"  # how a frozen (packaged) program is told to act as the worker
 PAUSE = 0.0005  # seconds between pieces
+CHECK_TIMEOUT_S = 180.0  # a helper that has not finished by then is killed; the check runs here
 DISABLE_ENV = "HARNESS_DRC_INPROCESS"  # set to 1 to run the check in a thread (tests, debugging)
 
 
@@ -43,7 +45,8 @@ class DrcProcess:
         return self._proc is not None and self._proc.poll() is None
 
     def run(self, project: Project) -> list[Finding]:
-        """Findings for a project. Raises OSError/EOFError/RuntimeError if the process failed."""
+        """Findings for a project. Raises if the process failed, sent something unusable or did not
+        finish within CHECK_TIMEOUT_S (TimeoutError); the process is killed in each case."""
         with self._lock:
             proc = self._ensure()
             if proc.stdin is None or proc.stdout is None:
@@ -54,6 +57,17 @@ class DrcProcess:
             # passes, which stop every thread; nothing here is cyclic, so it waits until we are done.
             was_enabled = gc.isenabled()
             gc.disable()
+            # A stuck helper is killed from a timer: that ends a blocked read or write at once
+            expired = threading.Event()
+
+            def expire() -> None:
+                expired.set()
+                with contextlib.suppress(OSError):
+                    proc.kill()
+
+            timer = threading.Timer(CHECK_TIMEOUT_S, expire)
+            timer.daemon = True
+            timer.start()
             try:
                 for message in worker.project_messages(project):
                     worker.send(proc.stdin, message)
@@ -63,22 +77,39 @@ class DrcProcess:
                     if not isinstance(reply, tuple) or not reply:
                         raise EOFError("the rule check process ended")
                     if reply[0] == "findings":
-                        found.extend(reply[1])
+                        batch = reply[1]
+                        if not isinstance(batch, list) or not all(
+                            isinstance(f, Finding) for f in batch
+                        ):
+                            raise RuntimeError("the rule check process sent unusable results")
+                        found.extend(batch)
                         time.sleep(PAUSE)
                     elif reply[0] == "done":
                         return found
                     else:
                         raise RuntimeError(f"the rule check failed:\n{reply[-1]}")
-            except (ValueError, EOFError, OSError):
+            except Exception:  # also a corrupt length or an unreadable reply
                 self._kill()
+                if expired.is_set():
+                    raise TimeoutError("the rule check took too long") from None
                 raise
             finally:
+                timer.cancel()
                 if was_enabled:
                     gc.enable()
 
     def close(self) -> None:
-        with self._lock:
-            self._kill()
+        # Kill first, without the lock: a check that is stuck holds it, and ends as soon as its
+        # pipes close. Then clean up once the lock is free.
+        proc = self._proc
+        if proc is not None:
+            with contextlib.suppress(OSError):
+                proc.kill()
+        if self._lock.acquire(timeout=5):
+            try:
+                self._kill()
+            finally:
+                self._lock.release()
 
     def _ensure(self) -> "subprocess.Popen[bytes]":
         if not self.alive:
@@ -121,5 +152,5 @@ def run_check(project: Project) -> list[Finding]:
         return drc.run(project)
     try:
         return _shared.run(project)
-    except (OSError, EOFError):
+    except Exception:  # a dead, stuck or confused helper must not decide the result
         return drc.run(project)
