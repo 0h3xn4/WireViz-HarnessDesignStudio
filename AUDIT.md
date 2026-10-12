@@ -1,8 +1,45 @@
 # Pre-release audit: findings list
 
-Status: **findings only. Nothing in the product has been changed.** Phase 4 (fixes) starts after the owner has read this list and answered the questions in section 4.
+Status: findings list from the audit (nothing was changed while auditing). **Critical and high findings are fixed on this branch (see 'Phase 4 status').** Medium and low findings are not fixed yet.
 
 Audited tree: `master` at `956ff71` (Harness Design Studio 0.1.0 plus the WireViz fork it lives in). Audit date: 2026-10-12.
+
+## Phase 4 status: critical and high findings (branch `fix/audit-critical-high`)
+
+Each fix has a test that failed on the old code (the agents ran the new tests against the unmodified source first). Full suite on the merged branch: **1244 passed, 1 skipped, 1 timing test failed once** (`test_gui_perf.py::test_selection_is_fast`, 155 ms against 150 ms; it fails and passes alternately on `master` too, the known open "selection at stress size" item). I also re-ran my own reproductions of F2-1, A-2, C-1, E-1, D-1 and A-3 against the merged branch: all are fixed.
+
+| Finding | Status | Note |
+|---|---|---|
+| F2-1 (segfault) | fixed | unit height cached and changed only after the scene is told; 5 subprocess paint tests (they segfault on the old code); I also ran the reviewer's crash scripts on flatsat in both modes and 6 random walks: no crash |
+| A-2 / E-13 / F1-7 (undo erases saved release) | fixed, **default applied** | undo of a *saved* release/revision/review is refused; unsaved still undoable |
+| A-1 (linked/unreadable/oversized file overwritten) | fixed | such files make the project "recovered"; save refuses; CLI refuses too (E-2) |
+| A-3 (lone surrogate) | fixed | loader treats it as invalid JSON; writers raise a plain `SaveError`; editor shows a message instead of an exception |
+| A-4 / C-1 (wire from a pin to itself) | fixed | new integrity error `wire_to_itself`; verifier no longer raises (`wire_same_pin`, `wire_same_end`) |
+| B-1 (up to date despite errors) | fixed | plan with errors is not empty; editor opens the preview |
+| B-2 (invalid configuration used) | fixed | validated first, invalid values treated as unset and reported |
+| B-4 (naming templates crash/hang) | fixed | falls back to the default with a warning |
+| C-2 / F1-4 (DRC failure shown as all clear) | fixed | "Design rule check failed: ..." in the panel and as an error finding |
+| C-3 (verifier blind to exchanged pins) | fixed, **default applied** | `Wire.signal` (when set) and written cable-side pin signals must match the pinout |
+| C-5 (temperature errors never block) | fixed | finding is per connector/wire use |
+| C-6 (silent skips) | fixed | "not checked" notes for missing bundle factor, gauge, length (and C-7, C-18) |
+| D-1 (6-digit lengths refuse export) | fixed, **default applied** | full precision in data files, 6 digits only on drawings |
+| D-2 (long IDs refuse export) | fixed, **default applied** | font shrinks to 1.4 mm instead of cutting; one exception: a cable-block title with two 64-character IDs is still cut (both IDs appear whole in the connector headers) |
+| E-1 (stray quote) | fixed | strict CSV; plain error with the line; nothing imported |
+| E-2 / C-13 (damaged project, exit 0) | fixed, **default applied** | all reading and writing commands refuse with exit 2 |
+| E-3 / K-2 (XLSX active sheet) | fixed | first visible sheet, named in the output |
+| F1-1, F1-2, F1-3 (read-only lost) | fixed | restore and reload keep read-only; the other window's journal is kept |
+| F1-6 (export into read-only/damaged) | fixed | |
+| F1-8 (bad settings crash) | fixed | |
+| F2-2 / F1-12, F2-3, F2-9 | fixed | stale Confirm, filter with "-" or spaces, silent rounding of current/voltage |
+| G-1 (undeclared bundled code) | fixed, **default applied** | the six packages are excluded; build fails on anything not on the allow-list; real build and frozen run checked (12 MB smaller, output byte-identical) |
+| I-1 (one signal on two fixed pins) | fixed | and B-6 |
+| I-2 (release locks) | **partly** | box connectors and units of the baseline are now compared by `check`; locks pinned by tests. **Not done:** freezing parts, interface types and configuration (waiting for your answer to question 2) |
+| H-18 (my `setup.py` regression) | fixed | |
+| H-1 to H-9 (upstream WireViz) | **not done** | waiting for your answer to question 31 |
+
+Also fixed on the way: C-7, C-18, A-5/F1-10, F1-15/F2-11, F1-3, B-6, parts of B-5 and C-14 (helper deadline of 180 s; `close()` no longer waits on a stuck check; waiting for a long legitimate check on window release is unchanged).
+
+Defaults applied for questions you have not answered yet (change them by telling me): see the **default applied** rows. Also: a read-only session that restores a journal stays read-only (Save As only); a plan with warnings (not only errors) now opens the preview rather than the "up to date" notice; the verifier refuses on integrity errors with the wording "damaged files" because `export` already did, which is slightly wrong for a design error and can be reworded.
 
 ## 1. Verdict and summary
 
