@@ -21,7 +21,7 @@ You describe the **units** (computer, power unit, reaction wheel ...) and the **
 - **Starts from the usual standards.** RS-422, RS-485 and CAN for communication, Micro-D (9 to 31 pin) for power and data, Ethernet as the alternative for high data rates, SMA for RF (what each one is: [glossary](docs/GLOSSARY.md)). Other types and connectors can be added.
 - **Honest about what it does not know.** Engineering values (derating, ampacity, EMC rules, approved parts; see the [glossary](docs/GLOSSARY.md)) are never invented. Until you supply them, results say *pending* or *not checked*.
 
-Runs on **Ubuntu 24.04 or newer**. Version `0.1.0`, released by the owner with the engineering decisions still open (see [Status](#status)).
+Runs on **Ubuntu 24.04 or newer**. Version `1.0.0` (see [Status](#status)).
 
 ## Try it in five minutes
 
@@ -63,7 +63,7 @@ That is the whole idea. [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) wal
 
 ## Examples and templates
 
-`harness new --list` shows the example projects shipped with the tool. All five, with what to run and what you should see, are on the [examples page](docs/examples/README.md). `minimal-satellite`, `flatsat` and the `design-worksheet.md` template are on `master` and **not in the 0.1.0 packages**, which have `blank`, `first-steps` and `small-satellite`.
+`harness new --list` shows the example projects shipped with the tool. All five, with what to run and what you should see, are on the [examples page](docs/examples/README.md). `minimal-satellite`, `flatsat` and the `design-worksheet.md` template are new in 1.0.0; the 0.1.0 packages have `blank`, `first-steps` and `small-satellite` only.
 
 | Example | What it is |
 | --- | --- |
@@ -81,7 +81,7 @@ A project is a folder of small JSON files (`project.json`, `config/`, `library/`
 
 ## Status
 
-Version `0.1.0`, released by the owner on 2026-10-09 with the following still open ([`compliance/SIGNOFF.md`](compliance/SIGNOFF.md); all the records are indexed in [`compliance/README.md`](compliance/README.md)). Not supplied: the harness boundary rule (D-10), real derating and EMC values (D-11), the approved parts list (D-12), the title block (D-15). Not done and waived by the owner: independent review, usability sessions, a screen-reader pass and a clean-machine installation test ([`compliance/DEVIATIONS.md`](compliance/DEVIATIONS.md)). See [`docs/OPEN_DECISIONS.md`](docs/OPEN_DECISIONS.md) and [`docs/RELEASE.md`](docs/RELEASE.md). Until the engineering values exist, results say so. `master` is ahead of the 0.1.0 packages and still reports `0.1.0`; the [changelog](CHANGELOG.md) section *Unreleased* lists the difference.
+Version `1.0.0`, released on the owner's instruction on 2026-10-12 ([`compliance/SIGNOFF.md`](compliance/SIGNOFF.md); all the records are indexed in [`compliance/README.md`](compliance/README.md)). It is not a statement of compliance with any standard. On 2026-10-12 the assistant recorded defaults for the four open engineering decisions under the owner's delegation, which the owner can change later ([`docs/DECISIONS.md`](docs/DECISIONS.md) D-142 to D-145): the harness boundary rule (D-10) and the title block (D-15) are the documented defaults the tool implements; the tool ships no derating or EMC values (D-11) and no approved parts list (D-12), so each project supplies them and until then results rest on placeholders and example parts. The licence of `harness/` stays the placeholder `LicenseRef-Proprietary` (D-02, D-143). Not done and waived by the owner: independent review, usability sessions, a screen-reader pass and a clean-machine installation test; the packages are not signed ([`compliance/DEVIATIONS.md`](compliance/DEVIATIONS.md)). See [`docs/OPEN_DECISIONS.md`](docs/OPEN_DECISIONS.md) (the options as they were) and [`docs/RELEASE.md`](docs/RELEASE.md). Until the engineering values exist, results say so. The [changelog](CHANGELOG.md) lists what is new since 0.1.0.
 
 ## For developers
 
