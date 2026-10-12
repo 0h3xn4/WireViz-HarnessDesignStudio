@@ -105,7 +105,7 @@ Read every entry of the **Problems** tab or of `harness drc`. For each one, deci
 
 ## 8. Release and change (30 minutes)
 
-A released harness is locked. To change it, you start a new revision, so the old one stays reproducible. The steps, with the exact commands, are in [`HOWTO.md`](HOWTO.md) and in Part 9 of [`GETTING_STARTED.md`](GETTING_STARTED.md). Practise on a copy of your project, not on the real one.
+A released harness is locked, and so are the parts, interface types and configuration values it uses. To change them, you start a new revision, so the old one stays reproducible. The steps, with the exact commands, are in [`HOWTO.md`](HOWTO.md) and in Part 9 of [`GETTING_STARTED.md`](GETTING_STARTED.md). Practise on a copy of your project, not on the real one.
 
 **Done when:** you can show, with `harness diff` and `harness log`, what changed since revision A. After `harness revise`, `harness diff DIR W002` compares revision A with the working design; revision B has a baseline of its own only after you release it, and then `--from A --to B` compares the two.
 

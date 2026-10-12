@@ -87,7 +87,7 @@ Every choice has a reason. Select a harness, open **Harness plans > Why**, and r
 The tool checks your design all the time, in two layers:
 
 - **Quick checks** run instantly on every edit (an interface with no connector, an isolated unit, ...).
-- **Design rules** (33 of them, listed in [`RULES.md`](RULES.md)) run in the background a moment after you stop editing: connector look-alikes, unapproved parts, pin reuse, separation, current limits, and more.
+- **Design rules** (34 of them, listed in [`RULES.md`](RULES.md)) run in the background a moment after you stop editing: connector look-alikes, unapproved parts, pin reuse, separation, current limits, and more.
 
 Each finding is an **error** (must be fixed), a **warning** (fix it, or **waive** it with a written reason of at least 10 characters), or a **note** (information). Waived warnings stay in the report with their reason, so a reviewer sees them.
 
@@ -106,7 +106,7 @@ The files that hold these values are in the project's `config/` folder and are d
 A harness has a **status**: `draft`, then optionally `in_review`, then `released`.
 
 - **Release** needs a person's name and a comment (at least 10 characters). It is blocked while something is missing (a wire without a gauge or length, unresolved errors) and the reasons are listed in plain words. It is also blocked while a configuration file is still marked `"placeholder": true`, unless you give a written reason (`--accept-placeholders`), which is kept in the change log and the baseline. The same goes for parts: a release is blocked while the harness uses a part that is not approved (or is example data), unless you give a written reason (`--accept-unapproved-parts`).
-- A released harness is **locked**: it, the interfaces it carries and the pins it uses cannot be edited. A **baseline** (frozen snapshot) and a **change log** entry are stored.
+- A released harness is **locked**: it, the interfaces it carries and the pins it uses cannot be edited, and neither can the parts, interface types and configuration values it uses. A **baseline** (frozen snapshot) and a **change log** entry are stored.
 - To change it you start a new **revision** (A, B, C ...). The old revision stays.
 
 The release check looks at the harness itself and at the placeholder mark of the configuration files. It cannot tell whether the values are right; that stays your decision and your responsibility.

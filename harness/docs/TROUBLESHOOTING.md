@@ -18,19 +18,20 @@ This page lists the error messages you are most likely to meet, with the exact t
 
 ## How this page was made
 
-Every message below was produced on purpose with the tool (version `0.1.0`, installed into a clean Python virtual environment on Ubuntu 24.04) and pasted as the tool printed it; some messages were reworded in 1.0.0 (the [changelog](../CHANGELOG.md) names the changes), so yours may differ in wording. Project folder names such as `demo` are the ones used in the commands. Some things were **not** run, and the page says so where they appear: the `.deb` and `.tar.gz` installs and the packaged `--selftest` (text quoted from [`INSTALL.md`](INSTALL.md)), and anything that needs the app window (text quoted from the program's own message list). Messages about the examples of the released 0.1.0 packages were produced from the source of the `v0.1.0` tag.
+Every message below was produced on purpose with the tool (version `0.1.0`, installed into a clean Python virtual environment on Ubuntu 24.04) and pasted as the tool printed it. The messages that 1.0.0 added or reworded (the release freeze, damaged projects, number ranges, the lock, the PDF character warning, import errors) were produced again with 1.0.0 from the source tree. Others may be worded a little differently; the [changelog](../CHANGELOG.md) names the changes. Project folder names such as `demo` are the ones used in the commands. Some things were **not** run, and the page says so where they appear: the `.deb` and `.tar.gz` installs and the packaged `--selftest` (text quoted from [`INSTALL.md`](INSTALL.md)), and anything that needs the app window (text quoted from the program's own message list). Messages about the examples of the released 0.1.0 packages were produced from the source of the `v0.1.0` tag.
 
 Questions that are not errors ("which example should I start with?", "does it use the internet?") are answered in [`FAQ.md`](FAQ.md). Words you do not know are explained in [`GLOSSARY.md`](GLOSSARY.md).
 
 ## Exit codes: what 0, 1 and 2 mean
 
-Every `harness` command ends with a number you can read with `echo $?`. Scripts and CI use it. The full table is in [`CLI.md`](CLI.md).
+Every `harness` command ends with a number you can read with `echo $?`. Scripts and CI use it. The full table is in [`CLI.md`](CLI.md). A reader that closes the pipe (`harness generate demo | head -1`) does not stop the command: it still finishes and saves; only its output is dropped.
 
 | Code | Meaning | Example you can try |
 | --- | --- | --- |
 | 0 | It worked. Warnings are allowed. | `harness validate demo` |
 | 1 | The project has errors, or a step is **blocked** (a release, an import with bad rows, an export with nothing to export). Your command was understood; the design or the data is the problem. | `harness export demo` before `harness generate demo` |
-| 2 | **Usage error**: a wrong word, a missing argument, a folder that is not a project, a file that cannot be read. Your command was not understood or its input does not exist. | `harness generate notproj` |
+| 2 | **Usage error**: a wrong word, a missing argument, a folder that is not a project, a file that cannot be read, or a project with **damaged files** (every command that reports on or changes a project refuses it, except `validate` and `check`, which list the damage and end with 1). Your command was not understood or its input does not exist or cannot be used. | `harness generate notproj` |
+| 130 | **Interrupted** with Ctrl-C. The command prints `interrupted. If it was saving, run `harness validate` to check the project.` instead of a Python traceback. | press Ctrl-C during a long `harness export` |
 
 ```
 harness validate demo
@@ -115,7 +116,7 @@ The app's own wording:
 Read-only: this project was saved by a newer version of the tool, or is open in another window. You cannot change it here.
 ```
 
-Nothing was changed. Two causes:
+Nothing was changed. Three causes:
 
 1. **The project was saved by a newer tool.** On the command line the same project gives a warning on `validate` and refuses to change anything. This is what a project marked as format 99 printed (made by editing `project.json` for the test):
 
@@ -139,6 +140,7 @@ Nothing was changed. Two causes:
 
    The exit code is 2. `harness migrate newer` gives the same error. **Fix:** install the newer tool (see [`INSTALL.md`](INSTALL.md)); `harness validate` can still read the project with this one. Do not edit `project.json` by hand to make the warning go away.
 2. **It is open in another window.** See the next entry.
+3. **The folder cannot be locked for editing here** (read-only media, a folder you may not write to). The editor opens it read-only and says so in a note ("This project was opened read-only because it cannot be locked for editing here: ..."). Copy the project to a folder you can write to, or **Save As**. A journal restore and a reload after a change on disk keep a read-only window read-only, and **Discard** or **Save As** from it never deletes the autosave journal of another window.
 
 ### "Project already open" / "This project is already open in another instance of the tool"
 
@@ -152,7 +154,7 @@ harness generate lk
 error: This project is already open in another instance of the tool (process 4242). Close it there first (lock file: 'lk/.harness.lock').
 ```
 
-The exit code is 1. Commands that only read (such as `harness validate lk`) still work. **Why:** the app and every command that changes a project take the same lock (`.harness.lock` in the project folder), so they never write at once. **Fix:** close the other window or wait for the other command to end. A lock left behind by a crashed session on the same machine is taken over automatically, also after a restart of the computer and when the process number has since been given to another program (on Linux). A lock written by another computer (a shared drive) cannot be checked, so it is treated as alive and the error names the lock file; if you are certain nobody has the project open, delete that `.harness.lock` file.
+The exit code is 1. Commands that only read (such as `harness validate lk`) still work. **Why:** the app and every command that changes a project take the same lock (`.harness.lock` in the project folder), so they never write at once. **Fix:** close the other window or wait for the other command to end. A lock left behind by a crashed session on the same machine is taken over automatically, also after a restart of the computer and when the process number has since been given to another program (on Linux). A lock written by another computer (a shared drive) cannot be checked, so it is treated as alive. The error then reads `error: This project is already open on another computer ('other-host'), or that computer left it locked. That cannot be checked from here. If you are sure nobody has it open, delete the lock file 'lk/.harness.lock' and try again.`; if you are certain nobody has the project open, delete that `.harness.lock` file. The editor opens a project whose lock cannot be taken at all (for example on read-only media) **read-only**, with a note, instead of refusing; a folder that is not a project, or a project that is already open in the same window, gets no lock file and the existing lock is kept.
 
 ### "This project has problems" (the recovery view)
 
@@ -369,6 +371,30 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 A Git merge left `<<<<<<<`, `=======` and `>>>>>>>` lines in a project file. Open the file named in brackets, decide which side to keep, delete the three marker lines, and run `harness check` again. Use `check` rather than `validate` after a merge: `check` also finds these markers and released harnesses that were edited.
 
+### `error: the project has damaged files (first: ...)`, exit code 2
+
+```
+harness drc dmg
+```
+
+```
+error: the project has damaged files (first: ERROR   quarantined: A harness could not be loaded and was set aside: wires.0.gauge_awg: Input should be less than or equal to 40; wires.1.length_m: Input should be greater than or equal to 0 (line 452) [physical/harnesses/W001.json]); nothing was checked
+```
+
+`drc`, `verify`, `export`, `generate`, `config`, `library`, `log`, `diff`, `compare`, `review`, `release`, `revise`, `migrate` and the imports refuse a project with damaged files instead of printing a clean-looking result or saving over it (the editor opens such a project in the recovery view). A file counts as damaged when it is not valid JSON, has a wrong structure, is a link, is over 64 MB or cannot be read, or holds a **number outside its range**: wire gauge (AWG) 0 to 40, wire length 0 to 10000 m, current and voltage above 0, a part's pin count 1 to 1000, masses and ratings 0 or more, harness number and schema version 1 or more. A value like that is set aside and kept (never used), and the message names the field and the limit. **Fix:** run `harness validate DIR` (or `harness check DIR`), which lists the damage with the file and line, correct the value in the file named, and run the command again. The original files are never overwritten while the project is in this state; in the app **Save salvaged copy…** writes the rest to a new folder.
+
+### `ERROR released_modified: ... it no longer matches its baseline`
+
+```
+harness check rel
+```
+
+```
+ERROR   released_modified: W002 was changed after its release (revision A) (part EX-MICROD-9-M it uses was changed); it no longer matches its baseline. Undo the change, or start a new revision of the harness and make it there.
+```
+
+Exit code 1. A released harness, the links it carries, the units and box connectors it uses, **and the parts, interface types and configuration values it relies on** are compared with the baseline stored at the release. The text in the second brackets says what changed (`configuration derating it depends on was changed` for a configuration file). Someone edited a file by hand (or merged one) after the release. **Fix:** undo the edit (`git checkout` the file), or `harness revise DIR W002 --by NAME --comment TEXT`, make the change in the new revision and release it. A baseline made by version 0.1.0 holds none of the parts, interface types and configuration, so nothing of that kind is compared for it.
+
 ### `harness drc` ends with exit code 1
 
 An open **error** of the design rule check. The summary line says how many:
@@ -431,7 +457,7 @@ row 5: ERROR '-5' is not a length (digits with a decimal point or comma)
 Nothing was changed.
 ```
 
-Row numbers count the header as row 1. A row with two problems shows only the first one (row 4 has a missing harness and a length `abc`; with the harness right, `abc` is reported as `'abc' is not a length (digits with a decimal point or comma)`). Use the harness and segment IDs from your project (the drawing and `wirelist.csv` show them; segments are called `W001-L1` and so on). A length must be digits, with a decimal point or comma, no minus sign. The default unit is millimetres; add `--unit m` or `--unit cm`. If **every** row fails on the harness name, the columns are in the wrong order:
+Row numbers count the header as row 1. A row with two problems shows only the first one (row 4 has a missing harness and a length `abc`; with the harness right, `abc` is reported as `'abc' is not a length (digits with a decimal point or comma)`). Use the harness and segment IDs from your project (the drawing and `wirelist.csv` show them; segments are called `W001-L1` and so on). A length must be digits, with a decimal point or comma, no minus sign, and at most 10000 m. The default unit is millimetres; add `--unit m` or `--unit cm`. If **every** row fails on the harness name, the columns are in the wrong order:
 
 ```
 row 2: ERROR Harness 'W001-L1' does not exist
@@ -462,7 +488,16 @@ row 3: ERROR Category 'widget' is not one of connector, contact, backshell, wire
 row 5: ERROR The row has no part ID or part number
 ```
 
-Give every row a `category` column value from that list (or one `--category` for the whole file), and a part number.
+Give every row a `category` column value from that list (or one `--category` for the whole file), and a part number. Numbers must be plain, and the message names the row and the field:
+
+```
+row 2: ERROR Mass (g) '1e3' is not a plain number (digits, with a point for decimals)
+row 3: ERROR Mass (g) '1,234' could mean 1.234 or a thousands separator; write it with a point
+row 4: ERROR Pin count '0' is not a whole number from 1 to 1000
+row 3: ERROR 'P1' is already in row 2 of this file; each part may appear once
+```
+
+`1e3`, `1_0`, `-0` and `1,234` are refused; a pin count is 1 to 1000; a part ID may appear once. Two approval columns give `error: Two columns of the file are both about the approval status; keep only one.` (exit code 2). A stray double quote in a CSV file gives `error: Line 2: unbalanced quote. A " opens a text that is never closed, ... Nothing was imported.` and imports nothing. An Excel file is read from its first **visible** sheet, and the first output line names it (`Reading sheet 'Parts' (the first visible sheet of the workbook).`). After a release, an import that changes a part a released harness uses is blocked (see below).
 
 ### `import-netlist`: `The file is not a KiCad netlist`
 
@@ -505,6 +540,19 @@ error: there are no harnesses to export; run `harness generate` first.
 ```
 
 Exit code 1. Outputs are written per harness, and none exists yet. Run `harness generate demo`, then `harness export demo`. (With the `blank` project it stays this way until you add units and interfaces in the app.)
+
+### `warning: [out_pdf_chars] These characters cannot be shown in the PDF ...`
+
+```
+harness export demo
+```
+
+```
+warning: [out_pdf_chars] These characters cannot be shown in the PDF drawings of W001 and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
+38 files written to demo/outputs (model a7c0ccce1928).
+```
+
+Not an error (exit code 0, the files are written). The PDF drawings use the Windows-1252 character set, so a name or note with characters outside it (the ohm sign Ω, Greek letters) prints a `?` in the PDF; the SVG drawing, the CSV files and the workbook keep the characters. The warning names every character it replaced (up to eight, then "and N more") and is repeated by `harness verify DIR --outputs`. **Fix:** if the PDF is what you send, write the name with letters of Windows-1252 (for example "ohm"); otherwise use the SVG.
 
 ### No outputs folder
 
@@ -575,6 +623,29 @@ blocked: [not_released] W003 is not released, so it can be edited directly.
 ```
 
 (exit code 1: you asked `harness revise` for a harness that is not released; revisions are only for released harnesses.)
+
+### `error: This change was blocked because it touches released items.`
+
+After a harness is released, its parts, interface types and configuration are frozen too (see [`FILE_FORMAT.md`](FILE_FORMAT.md#what-a-release-freezes)). A command that would change one of them stops before it writes anything:
+
+```
+harness import-parts rel approved-parts.csv --approved Approved --pending Review --rejected Rejected
+```
+
+```
+row 2: OK updated EX-MICROD-9-F
+...
+5 part(s) ready, 0 row(s) with problems.
+error: This change was blocked because it touches released items.
+  - Part EX-MICROD-9-F is used by W002, which is released. W002 is released (revision A); start a new revision to change it.
+  - Part EX-MICROD-9-M is used by W002, which is released. W002 is released (revision A); start a new revision to change it.
+```
+
+Exit code 1 (`--dry-run` ends the same way with `Dry run: this import would be blocked. Nothing was changed.`). `harness config rel --apply-profile NAME` is refused the same way, with `Configuration 'derating' is used by the checks of the released harness(es) W002. Start a new revision of them to change it.`; configuration applies to every harness, so with several released harnesses each needs a new revision. **Fix:** `harness revise DIR W002 --by NAME --comment TEXT`, make the change, generate, export and release again ([change a released harness](user-manual/change-a-released-harness.md)). Not blocked: new parts, parts no released harness uses, notes and names, `harness library`, and the naming, segmentation and other `generation` settings.
+
+### `blocked: [outputs_linked] The outputs folder (or a folder in it) is a link ...`
+
+A release is blocked up front when the `outputs` folder is a link or cannot be written. Replace the link with a real folder and run `harness export DIR`. If the re-export fails *after* the release was saved, the release stands: the message says `The release was recorded (see `harness log`); only the outputs still show the old status. Fix the problem, then run `harness export` to re-stamp them.` A name, checker, comment or reason with control characters or too much text is also a `blocked:` line that names the option (`--by`, `--comment`), for example `blocked: [by_invalid] --by: The name must not contain control characters or line breaks.`
 
 ### `harness diff ... --from A --to B`: `error: W003 has no baseline for revision B.`
 

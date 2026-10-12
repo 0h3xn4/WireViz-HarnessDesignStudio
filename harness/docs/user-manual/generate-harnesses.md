@@ -26,7 +26,7 @@ This page shows how to turn your units and links into harnesses (connectors, pin
 2. A window shows a **preview** of what would be added, changed and removed. Nothing changes until you press **Apply**. (**Cancel** leaves the project as it was.)
 3. To take it back, press **Undo** (Ctrl+Z). One Undo reverses the whole generation.
 
-If there is nothing to generate the app says so ("There is nothing to generate yet. Add units and connect them with interfaces first." or "Harnesses are already up to date. Nothing to change.").
+If there is nothing to generate the app says so ("There is nothing to generate yet. Add units and connect them with interfaces first." or "Harnesses are already up to date. Nothing to change."). If generation finds problems (for example an interface that has no free pins), the preview opens with the errors listed ("Some harnesses could not be generated (N problem(s)). Fix the connectors or interfaces named in the list, then generate again."). It never says "up to date" while errors are waiting. If you edit the project while the plan is being made, the plan is refused ("The project changed while the plan was being made, so nothing was applied. Press Generate again.").
 
 **On the command line**
 
@@ -52,7 +52,16 @@ harness generate wheel-link
 2 interfaces and 6 wires checked: 0 error(s)
 ```
 
-Generating again keeps the IDs, never touches a released harness, and gives the same bytes for the same design, so Git diffs show real changes only.
+Generating again keeps the IDs, never touches a released harness, and gives the same bytes for the same design, so Git diffs show real changes only. (A project from an older version that has ten or more shields or segments in one harness shows those harnesses as *changed* once, because the generator now uses the order the files are saved in; after that it is stable.)
+
+**Bad input is reported, not used.** Generation checks `config/*.json` first. A value that is set but impossible (a derating factor above 1, an ampacity table in which a thinner wire carries more, a gauge outside AWG 0 to 40, a negative or fractional pin gap, a number written as text, a wrong `default_gauge_awg` or `wire_colour_by_signal`) is an error in the result and is treated as unset, so the gauge stays *pending*:
+
+```
+error: [config_invalid] config/generation.json: default_gauge_awg must be a whole number from 0 to 40.
+Not saved: fix the errors above first.
+```
+
+Nothing is saved while the result holds errors (exit code 1). A naming pattern that fails, gives a reserved name such as `COM1` or repeats a name is replaced by the default with a warning (`warning: [naming] ...`, see [naming and title block](naming-and-title-block.md)). An interface whose two ends are on one connector, that has fewer than two ends, or whose type repeats a signal name is skipped with a finding (`interface_skipped`) instead of being wired onto one pin. A locked wire or an entered segment length that cannot be carried over to the new plan is named in a warning (`locked_data_lost: W002: W002-001 cannot be carried over and will be lost.`); read it before you apply. A manual harness (one you made by hand, `generated: false`) that takes over an interface makes the generation status *stale*, and deleting a unit that a manual harness plugs into is refused.
 
 ## 2. Check the result on its own
 
@@ -114,7 +123,7 @@ Generation may change a wire or a pin you edited. To keep a value, mark it as lo
 
 - In a wire's entry in `physical/harnesses/<ID>.json`, set `"locked": true`. Generation then keeps the gauge, colour, part and length you put there. Without the lock it writes its own value again.
 - In a pin's entry, `"locked": true` keeps the pin where it is. The report counts them: "0 locked pin(s) kept".
-- The app does not have a button to lock a wire or a pin. Its wire list only shows a **Locked** column.
+- The app does not have a button to lock a wire or a pin. Its wire list only shows a **Locked** column. A locked pin that already carries a signal stays where it is on a connector with a fixed pinout, and a locked fixed pin keeps its interface. In `per_unit_pair` mode a renamed unit keeps its harness IDs, locked wires and lengths when the interfaces stay the same.
 
 This was checked on the command line with `first-steps`: a wire set to gauge 20 and colour `red` with `"locked": true` kept both after `harness generate`, and a wire set to gauge 20 without the lock went back to the tool's own value (here no gauge, because the derating values are still placeholders). Edit the file while the project is not open in the app. If it is open, the app reports "Project changed on disk" and offers to reload.
 

@@ -112,7 +112,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 build ok: cib/outputs
 ```
 
-What it runs: `check`, `generate`, `verify`, `drc` (it stops with the report if there is an open error), `export` and `verify --outputs`. `ci/github-actions.yml` is the same list as a GitHub Actions workflow for a design repository; it installs the `.deb` from a `tools/` folder and expects the project in a folder called `design`. Edit both files for your own repository before you use them. The exit codes that make this work are 0 (ok), 1 (errors or blocked) and 2 (usage error), see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md#exit-codes-what-0-1-and-2-mean).
+What it runs: `check`, `generate`, `verify`, `drc` (it stops with the report if there is an open error), `export` and `verify --outputs`. `ci/github-actions.yml` is the same list as a GitHub Actions workflow for a design repository; it installs the `.deb` from a `tools/` folder and expects the project in a folder called `design`. Edit both files for your own repository before you use them. The exit codes that make this work are 0 (ok), 1 (errors or blocked), 2 (usage error or an unreadable or damaged project) and 130 (Ctrl-C), see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md#exit-codes-what-0-1-and-2-mean).
 
 A report you can attach to a review: `harness drc my-design > drc-report.md`.
 
@@ -131,6 +131,7 @@ harness compare my-design my-design-try
 Comparing my-design with my-design-try: 0 added, 0 removed, 0 changed.
 
 No differences.
+Not compared: the generation record, the contents of baselines (only their revision, date, name, comment and hash), and the files of the outputs folders.
 ```
 
 For a harness you have released, `harness diff DIR W001` shows what changed since its baseline, and `harness log DIR` prints the change log. `--from A --to B` works between two **released** revisions (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md#releasing) for the error you get otherwise).

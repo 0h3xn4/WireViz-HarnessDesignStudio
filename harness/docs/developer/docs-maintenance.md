@@ -84,6 +84,8 @@ For every page written for readers (not for the records in `compliance/`):
 - Never invent a feature, a value or a fact. If you could not check it, say so on the page.
 - Mark steps that need the app, which cannot be run in an automatic test, so a reader knows what was driven and what was only read from the program text.
 - Say "not in the 0.1.0 packages" for anything that 0.1.0 lacks and keep that note only where it still helps someone who has 0.1.0 installed. Say "not in the latest release yet" for anything that is only under `## Unreleased`.
+- The packages hold the documents as they were at the tag: the in-app guide (`docs/guide/USER_GUIDE.md`, built into the package) and `packaging/ubuntu/README.txt` are not updated by a later change on `master` until the next release. The 1.0.0 packages were built from commit `0c6a96a`.
+- Numbers that appear in many pages (the count of design rules, the count of examples, the exit codes) are easy to leave stale: after a change, search the documents for the old number (for example, search for the old number of design rules when a rule is added).
 - GitHub Markdown only: no HTML, no extensions that GitHub does not render.
 - A fenced `python` block is checked by `ruff format --check .` (CI and the release check run it). Write it in ruff's layout or run `ruff format .` on the page.
 

@@ -5,6 +5,7 @@ Rules live in `config/*.json` inside the project, not in code. There are seven f
 ## Contents
 
 - [The shape of a file](#the-shape-of-a-file)
+- [What is checked (ranges)](#what-is-checked-ranges)
 - [`segmentation.json`](#segmentationjson)
 - [`segregation.json`](#segregationjson)
 - [`derating.json`](#deratingjson)
@@ -35,6 +36,32 @@ Every file is a wrapper with three fields: `name` (the file's name without `.jso
 ```
 
 Keys that are left out stay unset (`null`). `harness validate` accepts this file, and `harness config DIR` counts the four keys as set. Put a key outside `values` and the file is rejected: `harness validate` prints `ERROR quarantined: ... bundle_derating: Extra inputs are not permitted`, sets the file aside and falls back to the built-in placeholder for that file. A new project already contains all seven files with every key; edit those instead of writing one from scratch.
+
+## What is checked (ranges)
+
+`harness config DIR`, `harness validate`, the editor (rule `config-invalid`) and generation all use the same checks. A value that is set but outside its range is an error that names the file, the key and the limit (`config/generation.json: default_gauge_awg must be a whole number from 0 to 40.`); generation reports it and treats the value as unset, and never uses it. `null` (not decided) is never an error.
+
+| Value | Allowed |
+| --- | --- |
+| `bundle_derating`, `temperature_derating`, `contact_current_factor`, `connector_voltage_factor_withstand`, `connector_voltage_factor_rated`, `rf_power_factor`, `wire_voltage_factor` | a number above 0 and at most 1 |
+| `bundle_factor_by_count` | a table of wire count (1 or more) to K, each K above 0 and at most 1, not rising as the count grows |
+| `partial_load_factor` | `below_25_percent`, `25_to_50_percent` and `above_50_percent`, each above 0 and at most 2 |
+| `ampacity_a_by_awg` | gauges are whole numbers 0 to 40, amperes above 0, and a thinner wire (higher AWG number) never carries more than a thicker one |
+| `spare_pin_fraction` | 0 or more, below 1 |
+| `max_voltage_drop_v`, `conductor_resistivity_ohm_m`, `test_continuity_max_ohm`, `test_isolation_min_mohm`, `test_isolation_voltage_v` | above 0 |
+| `service_loop_m`, `mass_margin_fraction`, `connector_temperature_margin_c`, `wire_temperature_margin_c` | 0 or more |
+| `power_signal_gap_pins`, `power_return_gap_pins` | a whole number, 0 or more |
+| `default_gauge_awg` | a whole number from 0 to 40 |
+| `max_mating_cycles` | a whole number, 1 or more |
+| `max_ambient_temperature_c` | a temperature in degC above -273.15 |
+| `shield_end_a`, `shield_end_b` | `backshell_360`, `pigtail` or `floating` |
+| `category_pairs_to_separate`, `conflicting_class_pairs` | a list of pairs of two different names, each pair once (`["A","B"]` and `["B","A"]` are the same pair) |
+| `forbid_nominal_with_redundant`, `forbid_pyro_with_other` | `true` or `false` |
+| `classes` (emc) | a list of non-empty class names |
+| `contact_rating_key` | the name of a part rating |
+| `titleblock.fields` | known field names, each at most once, written as text (see below) |
+
+Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limits of the project data itself (a wire gauge 0 to 40, a length 0 to 10000 m, a pin count 1 to 1000, ...) are in [`FILE_FORMAT.md`](FILE_FORMAT.md#number-ranges). While a harness is released, most of these files are frozen: see [`FILE_FORMAT.md`](FILE_FORMAT.md#what-a-release-freezes).
 
 ## `segmentation.json`
 | Key | Meaning |
