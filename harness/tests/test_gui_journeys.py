@@ -250,7 +250,7 @@ def test_j4_new_interface_dialog_disables_unusable_units_with_reason(win) -> Non
     win.new_interface_flow()
     disabled = [t for t in seen["items"] if not t[1]]
     assert any(
-        "PCDU" in t[0] and "No free CAN connector" in t[0] and "Expert mode" in t[2]
+        "PCDU" in t[0] and "No free CAN connector" in t[0] and "unit template" in t[2]
         for t in disabled
     )
     assert len(win.ctl.project.interfaces) == n + 1  # accepted: added with the chosen valid units

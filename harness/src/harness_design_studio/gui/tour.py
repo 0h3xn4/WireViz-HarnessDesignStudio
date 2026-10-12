@@ -1,5 +1,7 @@
 """First-run tour: a card beside each highlighted area. Skippable and replayable."""
 
+from collections.abc import Callable
+
 from PySide6.QtCore import QRect, Qt
 from PySide6.QtGui import QPainter, QPen
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
@@ -28,6 +30,7 @@ class Tour:
     def __init__(self, window: QWidget, theme: ThemeManager, targets: dict[str, QWidget]) -> None:
         self.window, self.theme, self.targets = window, theme, targets
         self.index = -1
+        self.on_stop: Callable[[], None] | None = None
         self.highlight = _Highlight(window, theme)
         self.card = QFrame(window)
         self.card.setObjectName("tour-card")
@@ -68,9 +71,12 @@ class Tour:
         self.show_step(0)
 
     def stop(self) -> None:
+        was_active = self.index >= 0
         self.index = -1
         self.card.hide()
         self.highlight.hide()
+        if was_active and self.on_stop is not None:
+            self.on_stop()  # skipping or finishing both count: the tour is not shown again
 
     def show_step(self, i: int) -> None:
         steps = strings.TOUR_STEPS

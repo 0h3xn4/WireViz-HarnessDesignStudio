@@ -352,7 +352,7 @@ def unit_compat(
         return Compat(
             False,
             f"No free {name} connector",
-            f"{unit_id} has no free {name} connector. Switch to Expert mode to add one.",
+            f'{unit_id} has no free {name} connector. Use a unit template that has one (for example "Computer (many interfaces)").',
         )
     return Compat(True)
 

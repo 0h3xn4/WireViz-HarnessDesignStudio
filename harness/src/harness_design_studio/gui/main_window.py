@@ -287,6 +287,7 @@ class MainWindow(QMainWindow):
         self._build_status()
         self.toasts = ToastHost(self.view)
         self.tour = Tour(self, theme, self._tour_targets())
+        self.tour.on_stop = lambda: self.settings.setValue("tour/done", True)
 
         self.ctl.message.connect(self._on_message)
         self.ctl.drcChanged.connect(self._update_tab_badges)
@@ -634,8 +635,8 @@ class MainWindow(QMainWindow):
         self.mode_expert.setText(strings.EXPERT)
         self.mode_expert.setCheckable(True)
         self.mode_expert.setToolTip(strings.EXPERT_TIP)
-        self.mode_guided.clicked.connect(lambda: self.ctl.set_mode("guided"))
-        self.mode_expert.clicked.connect(lambda: self.ctl.set_mode("expert"))
+        self.mode_guided.clicked.connect(lambda: self._pick_mode("guided"))
+        self.mode_expert.clicked.connect(lambda: self._pick_mode("expert"))
         tb.addWidget(self.mode_guided)
         tb.addWidget(self.mode_expert)
         tb.addSeparator()
@@ -679,7 +680,7 @@ class MainWindow(QMainWindow):
         """(label, value) pairs for the second filter picker."""
         p = self.ctl.project
         if kind == "class":
-            return [(f"{i['icon']}  {i['label']}", key) for key, i in CATEGORIES.items()]
+            return [(i["label"], key) for key, i in CATEGORIES.items()]
         if kind == "connector":
             used = sorted(
                 {
@@ -878,6 +879,10 @@ class MainWindow(QMainWindow):
         self.hint.style().polish(self.hint)
         self.view.viewport().update()
 
+    def _pick_mode(self, mode: str) -> None:
+        self.ctl.set_mode(mode)
+        self._on_mode()  # a click on the active button must not leave both unchecked
+
     def _on_mode(self) -> None:
         self.mode_guided.setChecked(self.ctl.mode == "guided")
         self.mode_expert.setChecked(self.ctl.mode == "expert")
@@ -937,6 +942,12 @@ class MainWindow(QMainWindow):
         accepted = self.run_dialog(GeneratePreviewDialog(self, plan)) == QDialog.DialogCode.Accepted
         if accepted and self.ctl.apply_generation(plan):
             self.tabs.setCurrentWidget(self.harness_panel)
+            self._give_room_to(self.dock_bottom, 420)
+
+    def _give_room_to(self, dock: QDockWidget, height: int) -> None:
+        """Make a bottom dock at least `height` tall (the plans tab is unusable as a sliver)."""
+        if dock.height() < height:
+            self.resizeDocks([dock], [height], Qt.Orientation.Vertical)
 
     def _compute_plan(self) -> GenerationPlan | None:
         """Plan in a worker thread behind a cancellable progress dialog; None if cancelled."""

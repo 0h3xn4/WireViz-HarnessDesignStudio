@@ -14,6 +14,7 @@ pytestmark = pytest.mark.gui
 
 from harness_design_studio.core import routing, templates  # noqa: E402
 from harness_design_studio.core.io.loader import load_project  # noqa: E402
+from harness_design_studio.core.samples import sat15  # noqa: E402
 from harness_design_studio.gui.canvas import W  # noqa: E402
 from tests.gui_helpers import make_window  # noqa: E402
 
@@ -190,3 +191,47 @@ def test_a_port_row_stays_inside_its_half(right, count) -> None:
     assert all(a[1] <= b[0] + 0.01 for a, b in zip(spans, spans[1:], strict=False)), (
         spans
     )  # no overlap
+
+
+def test_tab_walks_the_units_and_links_and_then_leaves_the_diagram(win) -> None:
+    view = win.view
+    order = view.focus_order()
+    units = [it for it in order if hasattr(it, "unit_id")]
+    assert len(units) == len(view.dscene.unit_items) and len(order) > len(units)
+    seen = []
+    while view.step_focus():
+        seen.append(view.dscene.focusItem())
+    assert seen == order  # every unit, then every link, once each
+    assert not view.step_focus()  # past the last: Tab goes on to the next control
+    assert view.step_focus(backwards=True)  # Shift+Tab goes back one
+    assert view.dscene.focusItem() is order[-2]
+
+
+def test_the_first_run_tour_is_not_shown_again_after_skipping_it(win) -> None:
+    win.settings.setValue("tour/done", False)
+    win.tour.start()
+    assert win.tour.active
+    win.tour.skip.click()
+    assert not win.tour.active and win.settings.value("tour/done", False, bool) is True
+
+
+def test_clicking_the_active_mode_button_keeps_it_checked(win) -> None:
+    win.mode_guided.click()
+    assert win.mode_guided.isChecked() and not win.mode_expert.isChecked()
+    win.mode_expert.click()
+    win.mode_expert.click()
+    assert win.mode_expert.isChecked() and not win.mode_guided.isChecked()
+
+
+def test_a_unit_with_no_free_connector_is_not_told_to_do_the_impossible() -> None:
+    from harness_design_studio.core import edit
+
+    p = sat15()
+    hints = [
+        c.why
+        for uid in p.units
+        for tid in p.interface_types
+        for c in [edit.unit_compat(p, tid, uid)]
+        if not c.ok and "no free" in c.why
+    ]
+    assert hints and all("Switch to Expert mode" not in h for h in hints)

@@ -20,7 +20,7 @@ LIGHT: Final[dict[str, str]] = {  # IBM Carbon "White" theme (darker status tone
     "text-muted": "#525252",
     "primary": "#0353E9",
     "on-primary": "#FFFFFF",
-    "focus": "#0353E9",
+    "focus": "#6A2FD8",
     "error": "#A2191F",
     "warning": "#684E00",
     "success": "#0E6027",

@@ -560,9 +560,13 @@ class LinkItem(QGraphicsPathItem):
             painter.setPen(halo)
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawPath(self.path())
+        # (a faded link is drawn as one line: nobody sees the gap, and it halves the paint)
         twin = (
-            not far and t is not None and any(sig.pair for sig in t.signals)
-        )  # a twisted pair: two lines
+            not far
+            and self.opacity() >= 0.5
+            and t is not None
+            and any(sig.pair for sig in t.signals)
+        )
         pen = QPen(color, float(info["weight"]) + (2 if selected else 0) + (3.0 if twin else 0.0))
         if i.redundancy == "redundant":
             pen.setStyle(Qt.PenStyle.DashLine)
@@ -686,9 +690,9 @@ class DiagramScene(QGraphicsScene):
         self._slots: dict[str, dict[str, tuple[str, int, int]]] = {}
         self._routes: dict[str, list[tuple[float, float]]] | None = None
         self._batch = 0  # while above 0, routes are worked out once at the end
-        self._geo_sig: object = None
-        self._route_key: tuple[list[routing.RouteLink], routing.Geometry] | None = None
-        self._route_cache: dict[str, list[tuple[float, float]]] = {}
+        self._focus_cache: tuple[object, tuple[set[str], set[str]] | None] | None = None
+        self._route_key: object = None  # what the cached routes were worked out from
+        self._route_cache: dict[str, list[tuple[float, float]]] | None = None
         self._routes_stale = False
         self.filter: tuple[str, str] | None = None  # view state, not part of the project
         ctl.changed.connect(self.apply)
@@ -760,7 +764,21 @@ class DiagramScene(QGraphicsScene):
             gaps[k] = (lo, hi)
         return routing.Geometry(gaps, edges, blocks)
 
+    def _routes_key(self) -> object:
+        """Everything the routes depend on: where the units are, how tall, the links (type,
+        redundancy, ends) and the edge each leaves from. Cheap to build, so that an edit that
+        changes none of it (a rename, a note, a voltage) does not work the routes out again."""
+        links = tuple(
+            (i.id, i.type_id, i.redundancy, tuple((e.unit_id, e.connector_id) for e in i.endpoints))
+            for i in sorted(self.ctl.project.interfaces.values(), key=lambda x: x.id)
+        )
+        return (self._geometry_signature(), links)
+
     def _compute_routes(self) -> dict[str, list[tuple[float, float]]]:
+        key = self._routes_key()
+        if self._route_cache is not None and key == self._route_key:
+            return self._route_cache
+        self._slots.clear()  # the order of links on an edge follows where their other ends are
         links: list[routing.RouteLink] = []
         for iid in sorted(self.ctl.project.interfaces):
             i = self.ctl.project.interfaces[iid]
@@ -780,11 +798,8 @@ class DiagramScene(QGraphicsScene):
                     (pa.x(), pa.y()), (pb.x(), pb.y()), side_a, style,
                 )
             )  # fmt: skip
-        geo = self._geometry()
-        if self._route_key == (links, geo):  # same input as last time (a rename, say): same routes
-            return self._route_cache
-        self._route_key = (links, geo)
-        self._route_cache = routing.route_links(links, geo)
+        self._route_key = key
+        self._route_cache = routing.route_links(links, self._geometry())
         return self._route_cache
 
     def reroute(self) -> None:
@@ -864,12 +879,17 @@ class DiagramScene(QGraphicsScene):
 
     def focus_sets(self) -> tuple[set[str], set[str]] | None:
         """(interfaces, units) that stay in full colour because they belong to the selection, or
-        None when nothing is selected (or the selection has no links): then nothing fades."""
+        None when nothing is selected (or the selection has no links): then nothing fades.
+        Worked out once per selection and change (every link asks while it is painted)."""
         sel = self.ctl.selection
         if sel is None:
             return None
+        if self._focus_cache is not None and self._focus_cache[0] == sel:
+            return self._focus_cache[1]
         links, units = routing.focus(self.ctl.project, sel.kind, sel.id)
-        return (links, units) if links else None
+        found = (links, units) if links else None
+        self._focus_cache = (sel, found)
+        return found
 
     def _apply_filter(self) -> None:
         """Fade what the Show filter does not keep and what the selection does not concern.
@@ -940,6 +960,7 @@ class DiagramScene(QGraphicsScene):
         self._slots.clear()
 
     def rebuild(self) -> None:
+        self._focus_cache = None
         self.clear()
         self.unit_items.clear()
         self.link_items.clear()
@@ -1009,6 +1030,7 @@ class DiagramScene(QGraphicsScene):
             self.setSceneRect(rect)
 
     def apply(self, delta: Delta) -> None:
+        self._focus_cache = None  # the model changed: the focus of the selection may have
         if delta.full:
             self.rebuild()
             return
@@ -1020,9 +1042,7 @@ class DiagramScene(QGraphicsScene):
             self._apply_units_and_links(delta)
         finally:
             self._batch -= 1
-        sig = self._geometry_signature()
-        if delta.interfaces or sig != self._geo_sig:  # a rename or a note changes no route
-            self._geo_sig = sig
+        if self._routes_key() != self._route_key:  # a rename or a note changes no route
             self._routes = None
             self._redraw_changed()
         self._update_extent()
@@ -1059,8 +1079,9 @@ class DiagramScene(QGraphicsScene):
             if iid in project.interfaces:
                 if link is None:
                     self._add_link(iid)
-                else:
-                    link.update_path()
+                elif iid not in delta.followers:  # (a link that only follows its unit is redrawn
+                    link.update_path()  # by the routes, if they changed)
+                    link.update()  # its picture or numbers may have changed, though not its route
             elif link is not None:
                 self.removeItem(link)
                 self.chip_forget(iid)
@@ -1072,8 +1093,8 @@ class DiagramScene(QGraphicsScene):
         self.reroute()
 
     def refresh_all(self) -> None:
-        self._slots.clear()
-        self._routes = None
+        self._focus_cache = None
+        self._routes = None  # (worked out again only if what they depend on changed)
         for it in self.unit_items.values():
             it.prepareGeometryChange()
             it.update()
@@ -1313,6 +1334,40 @@ class DiagramView(QGraphicsView):
             event.accept()
             return
         super().keyPressEvent(event)
+
+    def focusNextPrevChild(self, next: bool) -> bool:  # noqa: A002, N802
+        """Tab and Shift+Tab visit the units and links (Qt alone would skip them); past either end
+        the focus leaves the diagram for the next or previous control."""
+        if self.step_focus(backwards=not next):
+            return True
+        return super().focusNextPrevChild(next)
+
+    def focus_order(self) -> list[QGraphicsItem]:
+        """The items Tab visits: units by lane, then top to bottom, then links by ID. (Qt only
+        tab-chains widgets, never plain graphics items, so the view does it.)"""
+        scene = self.dscene
+        units = sorted(
+            scene.unit_items.values(),
+            key=lambda it: (it.lane(), it.pos().y(), it.unit_id),
+        )
+        links = [scene.link_items[k] for k in sorted(scene.link_items)]
+        return [*units, *links]
+
+    def step_focus(self, *, backwards: bool = False) -> bool:
+        """Move the focus to the next (or previous) unit or link and scroll it into view. Returns
+        False at either end, so that Tab then leaves the diagram for the next control."""
+        order = self.focus_order()
+        if not order:
+            return False
+        current = self.dscene.focusItem()
+        at = order.index(current) if current in order else -1
+        nxt = (at - 1 if at >= 0 else len(order) - 1) if backwards else at + 1
+        if not 0 <= nxt < len(order):
+            return False
+        item = order[nxt]
+        item.setFocus(Qt.FocusReason.TabFocusReason)
+        self.ensureVisible(item, 40, 40)
+        return True
 
     def reveal(self, unit_id: str) -> None:
         """Scroll a unit into view without changing keyboard focus."""

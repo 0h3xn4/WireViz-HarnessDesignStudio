@@ -487,6 +487,7 @@ class PropertiesPanel(QScrollArea):
         self.lay.addWidget(muted(strings.FIELD_CHAIN))
         side = QComboBox()
         side.setObjectName("if-chain")
+        side.setAccessibleName(strings.FIELD_CHAIN)
         side.addItems(["nominal", "redundant", "none"])
         side.setCurrentText(i.redundancy)
         side.activated.connect(lambda _i: ctl.update_interface(iid, redundancy=side.currentText()))
@@ -530,6 +531,9 @@ class PropertiesPanel(QScrollArea):
         if ctl.mode == "expert":
             combo = QComboBox()
             combo.setObjectName(f"end-{k}")
+            combo.setAccessibleName(
+                strings.CONNECTOR_AT_END.format(strings.FROM if k == 0 else strings.TO, e.unit_id)
+            )
             choices = [
                 c
                 for c in edit.unit_connectors(p, e.unit_id)
@@ -1137,6 +1141,9 @@ class HarnessPanel(QWidget):
         self.wires = QTableWidget(0, len(strings.WIRE_COLUMNS))
         self.wires.setObjectName("plans-wires")
         self.wires.setHorizontalHeaderLabels(strings.WIRE_COLUMNS)
+        self.wires.horizontalHeader().setSectionResizeMode(
+            QHeaderView.ResizeMode.ResizeToContents
+        )  # every column, the Colour one too, stays in view
         self.harnesses.setAccessibleName(strings.HARNESS_LIST)
         self.wires.setAccessibleName(strings.WIRE_LIST)
         for t in (self.harnesses, self.wires):

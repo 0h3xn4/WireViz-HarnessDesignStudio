@@ -494,6 +494,7 @@ class CommandPalette(QDialog):
         self.input.setAccessibleName(strings.COMMANDS_PLACEHOLDER)
         self.list = QListWidget()
         self.list.setObjectName("palette-list")
+        self.list.setAccessibleName(strings.COMMANDS_LIST)
         lay.addWidget(self.input)
         lay.addWidget(self.list)
         self.input.textChanged.connect(self._filter)

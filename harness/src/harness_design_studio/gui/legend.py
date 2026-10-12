@@ -24,7 +24,7 @@ class LegendBar(QWidget):
         self.project: Project | None = None
         self._signature: object = None
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
-        self.setAccessibleName("Key to the pictures in the diagram")
+        self.setAccessibleName(strings.LEGEND_NAME)
         theme.changed.connect(self.update)
 
     def set_project(self, project: Project) -> None:
@@ -62,7 +62,7 @@ class LegendBar(QWidget):
             (
                 "gender",
                 None,
-                "solid: male (pins) · outline: female (sockets) · dashed: not set · number: pins",
+                strings.LEGEND_GENDER,
             ),
         ]
         return out
@@ -129,5 +129,7 @@ class LegendBar(QWidget):
                 p.setPen(QPen(th.color("auto-fill"), 2, Qt.PenStyle.DashLine))
                 p.drawRoundedRect(QRectF(x + 4, cy - 6, 14, 12), 3, 3)
             p.setPen(th.color("auto-fill") if kind == "auto" else th.color("text"))
-            p.drawText(QRectF(x + icon + 6, y, 400, ROW), Qt.AlignmentFlag.AlignVCenter, label)
+            room = max(20.0, self.width() - (x + icon + 6) - 4)
+            text = p.fontMetrics().elidedText(label, Qt.TextElideMode.ElideRight, int(room))
+            p.drawText(QRectF(x + icon + 6, y, room + 4, ROW), Qt.AlignmentFlag.AlignVCenter, text)
         p.end()

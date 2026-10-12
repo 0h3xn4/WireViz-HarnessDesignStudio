@@ -6,7 +6,7 @@ EMPTY_STATE = (
 )
 EMPTY_CANVAS = "Your diagram is empty.\nAdd your first unit from the palette on the left."
 CANVAS = "Block diagram canvas"
-CANVAS_HELP = "Tab moves between units, Enter selects, Shift+arrow keys move the selected unit. The Interface table tab lists every interface and is the screen-reader friendly alternative."
+CANVAS_HELP = "Tab and Shift+Tab move between units and links, Enter selects, Shift+arrow keys move the selected unit, Escape clears the selection. The Interface table tab lists every interface and is the screen-reader friendly alternative."
 MINIMAP = "Minimap: click to move the view"
 
 GLOSSARY: list[tuple[str, str]] = [
@@ -421,3 +421,8 @@ WIRE_COLOURS_SIGNAL = "Signal"
 WIRE_COLOURS_COLUMN = "Colour"
 WIRE_COLOURS_NO_SIGNALS = "The project has no interface types with signals yet."
 WIRE_COLOURS_SET = "Wire colours saved. Generate the harnesses to apply them."
+
+CONNECTOR_AT_END = "Connector at the {} end, unit {}"
+COMMANDS_LIST = "Matching commands"
+LEGEND_NAME = "Key to the pictures in the diagram"
+LEGEND_GENDER = "solid: male (pins) · outline: female (sockets) · dashed: not set"

@@ -118,7 +118,7 @@ def test_compat_rules_unit_level() -> None:
     c = edit.unit_compat(p, "rs422", "OBC", source_unit="OBC")
     assert not c.ok and "itself" in c.why
     c = edit.unit_compat(p, "can", "PCDU")  # PCDU connectors carry power and discrete/rs422
-    assert not c.ok and c.short == "No free CAN connector" and "Expert mode" in c.why
+    assert not c.ok and c.short == "No free CAN connector" and "unit template" in c.why
     c = edit.unit_compat(p, "rs422", "RW1")  # RW1-J02 already carries IF-TM-RW1
     assert not c.ok
 

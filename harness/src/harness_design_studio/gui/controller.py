@@ -60,6 +60,7 @@ class Delta:
 
     units: set[str] = field(default_factory=set)
     interfaces: set[str] = field(default_factory=set)
+    followers: set[str] = field(default_factory=set)  # in `interfaces` only because a unit moved
     full: bool = False
     tables: bool = True
 
@@ -318,8 +319,9 @@ class EditorController(QObject):
                 self._note(d, op)
         # links follow their units
         for i in self.project.interfaces.values():
-            if any(e.unit_id in d.units for e in i.endpoints):
+            if i.id not in d.interfaces and any(e.unit_id in d.units for e in i.endpoints):
                 d.interfaces.add(i.id)
+                d.followers.add(i.id)
         return d
 
     def _note(self, d: Delta, op: Put | Delete) -> None:
