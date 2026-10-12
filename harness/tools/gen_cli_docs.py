@@ -85,6 +85,8 @@ FALLBACK_HELP = {
     "file": "the file to read",
     "netlist": "the netlist file to read",
     "dry_run": "show what would be done and change nothing",
+    "old": "the project folder to compare from",
+    "new": "the project folder to compare with",
 }
 
 
@@ -122,6 +124,15 @@ def render() -> str:
         "| 1 | the project has errors, or a step is blocked (for example a release) |",
         "| 2 | usage error, or a project or file that could not be read |",
         "| 130 | interrupted with Ctrl-C |",
+        "",
+        "A project with damaged files (a file that is not valid, a link, over 64 MB or unreadable) "
+        "is refused with exit 2 and the damaged file named by every command that reports on it or "
+        "changes it: `drc`, `verify`, `export`, `generate`, `config`, `library`, `log`, `diff`, "
+        "`compare`, `review`, `release`, `revise`, `migrate` and the imports. Only `validate` and "
+        "`check` read it and list the damage (exit 1), so you can see what to repair. "
+        "With Ctrl-C a command prints `interrupted` and ends with 130 (if it was saving, run "
+        "`harness validate`). A reader that closes the pipe (`harness generate | head -1`) does "
+        "not stop the command: it still finishes and saves.",
         "",
         "Every command that changes a project takes the same lock as the app, so the two never write "
         "at once. The commands that import data (`import-parts`, `import-lengths`, `import-netlist`) "
