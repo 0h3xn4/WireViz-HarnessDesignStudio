@@ -10,8 +10,7 @@ DOCS = [
     ROOT / "README.md",
     ROOT / "CLAUDE.md",
     ROOT / "CHANGELOG.md",
-    *sorted((ROOT / "docs").glob("*.md")),
-    ROOT / "docs" / "guide" / "USER_GUIDE.md",
+    *sorted((ROOT / "docs").rglob("*.md")),  # also developer/, user-manual/, guide/, examples/ ...
     ROOT / "src" / "harness_design_studio" / "resources" / "examples" / "templates" / "README.md",
 ]
 LINK = re.compile(r"(?<!\!)\[[^\]]*\]\(([^)\s]+)\)|!\[[^\]]*\]\(([^)\s]+)\)")

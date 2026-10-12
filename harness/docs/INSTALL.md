@@ -98,7 +98,9 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
 (or log out and in). Until then you can start the app from the application menu or `~/.local/bin/harness-design-studio`.
 
-Other options of `install.sh`: `sudo ./install.sh --system` installs for everyone into `/usr/local/lib/harness-design-studio`; `--prefix FOLDER` chooses the folder. Remove with `./uninstall.sh` (or `sudo ./uninstall.sh --system`); it removes only what the installer put there.
+Other options of `install.sh`: `sudo ./install.sh --system` installs for everyone into `/usr/local/lib/harness-design-studio`; `--prefix FOLDER` chooses the folder. Remove with `./uninstall.sh` (or `sudo ./uninstall.sh --system`); it removes only what the installer put there. The installer writes a file `.harness-design-studio-install` into the install folder that lists what it installed; it never replaces or removes a `cli`, `LICENSES`, `_internal` or `harness-design-studio` folder that is not in that list, and it refuses to install into the folder the package was unpacked from. Files installed as `root` belong to `root`.
+
+If `install.sh` says that a folder "was not installed by this installer", the install folder holds one of these names from something else (or from an older installer, which wrote no list). Choose another `--prefix`, or move that folder away first.
 
 Run `install.sh` from the **unpacked package**. Run from the source tree it refuses and prints: `This folder (...) has no built program, so there is nothing to install.`
 
@@ -132,7 +134,7 @@ Then open `wheel-link` in the app (**File > Open project...**). If this works, t
 The app needs a few system libraries that every normal Ubuntu desktop has. On a minimal install (a container, a server image) add them:
 
 ```
-sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0
+sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
 ```
 
 The `.deb` asks `apt` for these itself. More help: [`FAQ.md`](FAQ.md).
@@ -151,7 +153,7 @@ The `.deb` asks `apt` for these itself. More help: [`FAQ.md`](FAQ.md).
 You need Python 3.12 or newer (Ubuntu 24.04 has it) and the Qt libraries above.
 
 ```
-sudo apt install python3-venv git libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0
+sudo apt install python3-venv git libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
 git clone <the repository> && cd <the repository>/harness
 python3 -m venv .venv
 . .venv/bin/activate

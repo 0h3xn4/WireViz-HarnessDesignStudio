@@ -57,7 +57,7 @@ EXAMPLES: dict[str, list[str]] = {
         '--checker "B. Checker"',
     ],
     "revise": ['harness revise my-design W001 --by "A. Engineer" --comment "Connector change"'],
-    "diff": ["harness diff my-design W001", "harness diff my-design W001 --from A --to B"],
+    "diff": ["harness diff my-design W001", "harness diff my-design W001 --from A"],
     "log": ["harness log my-design", "harness log my-design W001"],
     "compare": ["harness compare old-checkout new-checkout"],
     "migrate": ["harness migrate my-design"],
@@ -79,12 +79,27 @@ def _name(action: argparse.Action) -> str:
     return str(action.metavar or action.dest)
 
 
+# arguments that have no help text in the program
+FALLBACK_HELP = {
+    "project": "the project folder",
+    "file": "the file to read",
+    "netlist": "the netlist file to read",
+    "dry_run": "show what would be done and change nothing",
+}
+
+
 def _detail(action: argparse.Action) -> str:
-    text = (action.help or "").replace("|", "\\|")
+    text = (action.help or FALLBACK_HELP.get(action.dest, "")).replace("|", "\\|")
     notes = []
     if isinstance(action, argparse._AppendAction):
         notes.append("repeatable")
-    if action.option_strings and action.default not in (None, False, []):
+    if action.choices and action.option_strings:
+        notes.append("one of " + ", ".join(sorted(map(str, action.choices))))
+    if (
+        action.option_strings
+        and action.default not in (None, False, [])
+        and f"default {action.default}" not in text  # the help already says it
+    ):
         notes.append(f"default {action.default}")
     return text + (f" ({'; '.join(notes)})" if notes else "")
 
@@ -109,8 +124,15 @@ def render() -> str:
         "| 130 | interrupted with Ctrl-C |",
         "",
         "Every command that changes a project takes the same lock as the app, so the two never write "
-        "at once. Commands that import data accept `--dry-run`: they show what they would do and "
-        "change nothing.",
+        "at once. The commands that import data (`import-parts`, `import-lengths`, `import-netlist`) "
+        "accept `--dry-run`: they show what they would do and change nothing; "
+        "`config --ampacity-csv` does not.",
+        "",
+        "The examples show the form of each command with example names. They do not all work "
+        "on any project: `release` is blocked until its conditions are met (placeholder "
+        "configuration, unapproved parts, missing gauges and lengths; see "
+        "[`GETTING_STARTED.md`](GETTING_STARTED.md)), and `revise` works only on a released "
+        "harness.",
         "",
         "## Contents",
         "",

@@ -41,7 +41,7 @@ Short answers. If yours is not here, check the **Problems** tab (it says what is
 | You see | Why and what to do |
 | --- | --- |
 | `harness: command not found` after `install.sh` | `~/.local/bin` is not on your PATH. Run `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && . ~/.bashrc`, or log out and in. |
-| The app does not start; a message about `xcb`, `libEGL` or `libxkbcommon` | System libraries are missing. `sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0`. |
+| The app does not start; a message about `xcb`, `libEGL` or `libxkbcommon` | System libraries are missing. `sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0`. |
 | The window is tiny or the text is too small or large | **View > UI scale** (the settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini`; delete it to reset). |
 | *Read-only* banner | The project was saved by a newer tool version, or is open in another window. Install the newer tool, or close the other window. Nothing was changed. |
 | *Project already open* | Another window or session has it open. Close it there, or choose **Open read-only**. A lock left by a crashed session on the same machine is taken over automatically. |

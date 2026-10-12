@@ -117,7 +117,7 @@ def run_soak(steps: int, seed: int = 1, folder: Path | None = None) -> SoakResul
                 if kind == "undo" and hist.can_undo:
                     hist.undo()
                     hist.redo()
-                    assert model_hash(project) != "" and True
+                    assert model_hash(project) == before, "undo then redo did not restore the model"
                 elif kind == "redo" and hist.can_redo:
                     hist.redo()
             result.applied += 1

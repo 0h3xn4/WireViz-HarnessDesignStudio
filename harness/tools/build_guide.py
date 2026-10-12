@@ -39,6 +39,13 @@ def slug(text: str) -> str:
     return re.sub(r"[^a-z0-9]+", "-", re.sub(r"^\d+\.\s*", "", text.lower())).strip("-")
 
 
+def split_row(line: str) -> list[str]:
+    """The cells of a Markdown table row: split on `|`, but not on an escaped `\\|`, which is a
+    literal bar inside the cell."""
+    cells = re.split(r"(?<!\\)\|", line.strip().removeprefix("|").removesuffix("|"))
+    return [c.strip().replace("\\|", "|") for c in cells]
+
+
 def convert(md: str) -> str:
     lines = md.split("\n")
     body: list[str] = []
@@ -62,7 +69,7 @@ def convert(md: str) -> str:
         elif line.startswith("|"):
             rows = []
             while k < len(lines) and lines[k].startswith("|"):
-                rows.append([c.strip() for c in lines[k].strip().strip("|").split("|")])
+                rows.append(split_row(lines[k]))
                 k += 1
             k -= 1
             head, data = rows[0], [r for r in rows[2:]]

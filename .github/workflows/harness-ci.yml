@@ -7,6 +7,9 @@ on:
   pull_request:
     paths: ["harness/**", ".github/workflows/harness-ci.yml"]
 
+permissions:
+  contents: read  # the jobs only read the repository; artifacts need no token rights
+
 # A newer push to the same branch replaces the run in progress or waiting, so pushes in quick
 # succession do not pile up and keep the shared runners busy for hours.
 concurrency:
@@ -120,7 +123,7 @@ jobs:
           name: harness-design-studio-ubuntu-24.04
           path: pkg
       - name: Qt system libraries
-        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
       - name: Run the tarball built in the test job
         working-directory: pkg
         run: |

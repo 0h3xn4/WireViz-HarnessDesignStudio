@@ -46,7 +46,6 @@ def requirements(sbom: dict[str, Any], own: str) -> list[str]:
 def main(sbom_path: str | None = None) -> int:
     path = Path(sbom_path) if sbom_path else ROOT / "dist" / "release-docs" / "sbom.cdx.json"
     out = ROOT / "dist" / "release-docs" / "vulnerability-report.txt"
-    out.parent.mkdir(parents=True, exist_ok=True)
     if not path.is_file():
         print(f"no SBOM at {path}; run python -m tools.gen_sbom first")
         return 2
@@ -67,6 +66,7 @@ def main(sbom_path: str | None = None) -> int:
             print(f"the scan could not run: {exc}")
             return 2
     text = (run.stdout + run.stderr).strip()
+    out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(f"checked {len(reqs)} packages\n" + "\n".join(reqs) + "\n\n" + text + "\n")
     # pip-audit: 0 = nothing found, 1 = vulnerabilities found; other failures (no network, a
     # package missing from the index) must not read as a pass.

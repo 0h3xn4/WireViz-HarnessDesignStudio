@@ -94,9 +94,9 @@ def test_desktop_entry_and_icon_are_valid() -> None:
 def test_deb_has_the_right_files_and_metadata(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
-    monkeypatch.setenv("SOURCE_DATE_EPOCH", "1700000000")
+    monkeypatch.delenv("SOURCE_DATE_EPOCH", raising=False)  # the release machine does not set it
     from harness_design_studio import __version__
-    from tools.build_deb import build
+    from tools.build_deb import build, epoch
 
     app = fake_package(tmp_path / "src")
     deb = build(app, tmp_path / "out")
@@ -120,6 +120,40 @@ def test_deb_has_the_right_files_and_metadata(
     assert "root/root" in listing  # owned by root, not by the build user
     again = build(app, tmp_path / "out2")
     assert again.read_bytes() == deb.read_bytes()  # reproducible
+    # every member of the ar archive carries the fixed time, not the time of the build
+    data = deb.read_bytes()
+    pos, times = 8, set()
+    while pos < len(data):
+        times.add(int(data[pos + 16 : pos + 28]))
+        pos += 60 + int(data[pos + 48 : pos + 58])
+        pos += pos % 2
+    assert times == {epoch()}
+
+
+def test_the_tarball_does_not_depend_on_who_builds_it(tmp_path: Path) -> None:
+    import tarfile
+
+    from tools.build_installer import make_tarball
+
+    pkg = fake_package(tmp_path / "src")
+    if os.getuid() == 0:
+        for path in [pkg, *pkg.rglob("*")]:
+            os.chown(path, 1001, 1001, follow_symlinks=False)
+    first = make_tarball(pkg.parent, "harness-design-studio", tmp_path / "a.tar.gz", 1_700_000_000)
+    for path in pkg.rglob("*"):  # a later build: other times and modes
+        os.utime(path, (1_800_000_000, 1_800_000_000), follow_symlinks=False)
+        if path.is_file() and not os.access(path, os.X_OK):
+            path.chmod(0o664)
+    second = make_tarball(pkg.parent, "harness-design-studio", tmp_path / "b.tar.gz", 1_700_000_000)
+    assert first.read_bytes() == second.read_bytes()
+    with tarfile.open(first) as tar:
+        members = tar.getmembers()
+    assert members[0].name == "harness-design-studio" and len(members) > 5
+    for m in members:
+        assert (m.uid, m.gid, m.uname, m.gname, m.mtime) == (0, 0, "root", "root", 1_700_000_000)
+    modes = {m.name: m.mode for m in members}
+    assert modes["harness-design-studio/install.sh"] in (0o644, 0o755)
+    assert modes["harness-design-studio/cli/harness"] == 0o755
 
 
 def test_container_recipes_are_valid_shell_and_name_the_right_base() -> None:
@@ -142,6 +176,35 @@ def test_container_recipes_are_valid_shell_and_name_the_right_base() -> None:
         )
 
 
+def test_the_release_image_has_what_the_tests_that_must_not_skip_need() -> None:
+    import re
+
+    cont = PK / "container"
+    image = (cont / "Dockerfile.build-24.04").read_text()
+    pin = re.search(r'"playwright==([\d.]+)"', (ROOT / "pyproject.toml").read_text())
+    assert pin and f"playwright=={pin.group(1)}" in image  # the same version as the dev extra
+    assert "poppler-utils" in image and "install --with-deps chromium" in image
+    assert (
+        "PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers" in image
+    )  # where tests/test_prototype.py looks
+    assert "HARNESS_REQUIRE_BROWSER=1" in (cont / "build-in-container.sh").read_text()
+
+
+def test_every_library_list_in_the_docs_is_the_one_the_deb_depends_on() -> None:
+    import re
+
+    from tools.build_deb import DEPENDS
+
+    libs = {d.split()[0] for d in DEPENDS.split(", ")} - {"libc6"}
+    assert len(libs) == 14
+    where = [ROOT / "packaging/ubuntu/README.txt", ROOT / "docs/INSTALL.md", ROOT / "docs/FAQ.md"]
+    where += [ROOT / "docs/TROUBLESHOOTING.md", ROOT.parent / ".github/workflows/harness-ci.yml"]
+    where += [PK / "container" / "Dockerfile.build-24.04"]
+    for path in where:
+        words = set(re.findall(r"[\w.+-]+", path.read_text()))
+        assert libs <= words, (path.name, sorted(libs - words))
+
+
 def test_install_refuses_a_folder_without_the_built_program(tmp_path: Path) -> None:
     """Running install.sh from the source folder once left dangling links and reported success."""
     src = tmp_path / "source"
@@ -160,10 +223,117 @@ def test_uninstall_removes_only_what_was_installed(tmp_path: Path) -> None:
     prefix.mkdir()
     (prefix / "mydata.txt").write_text("keep me")
     assert run_script(pkg / "install.sh", tmp_path, "--prefix", str(prefix)).returncode == 0
+    assert (prefix / ".harness-design-studio-install").is_file()
     r = run_script(pkg / "uninstall.sh", tmp_path, "--prefix", str(prefix))
     assert r.returncode == 0
     assert (prefix / "mydata.txt").read_text() == "keep me"
     assert not (prefix / "harness-design-studio").exists() and not (prefix / "_internal").exists()
+    assert not (prefix / ".harness-design-studio-install").exists()
+
+
+def test_a_folder_the_installer_did_not_make_is_never_removed_or_replaced(tmp_path: Path) -> None:
+    """The user's own cli/ and LICENSES/ were erased, with a message that said all was well."""
+    pkg = fake_package(tmp_path)
+    mine = tmp_path / "proj"
+    for name in ("cli", "LICENSES", "_internal"):
+        (mine / name).mkdir(parents=True)
+        (mine / name / "mine.txt").write_text("mine")
+    r = run_script(pkg / "uninstall.sh", tmp_path, "--prefix", str(mine))
+    assert r.returncode == 1 and "not touching" in r.stderr and "Removed" not in r.stdout
+    r = run_script(pkg / "install.sh", tmp_path, "--prefix", str(mine))
+    assert r.returncode == 1 and "not touching" in r.stderr
+    for name in ("cli", "LICENSES", "_internal"):
+        assert (mine / name / "mine.txt").read_text() == "mine"
+    assert not (mine / "harness-design-studio").exists()  # nothing was half installed
+    # a folder the installer made is removed, but only the items it listed
+    ok = tmp_path / "ok"
+    assert run_script(pkg / "install.sh", tmp_path, "--prefix", str(ok)).returncode == 0
+    (ok / "notes").mkdir()
+    assert run_script(pkg / "uninstall.sh", tmp_path, "--prefix", str(ok)).returncode == 0
+    assert (ok / "notes").is_dir() and not (ok / "cli").exists()
+
+
+def test_the_marker_cannot_make_uninstall_remove_other_folders(tmp_path: Path) -> None:
+    pkg = fake_package(tmp_path)
+    prefix = tmp_path / "opt"
+    assert run_script(pkg / "install.sh", tmp_path, "--prefix", str(prefix)).returncode == 0
+    (prefix / "precious").mkdir()
+    with (prefix / ".harness-design-studio-install").open("a") as f:
+        f.write("precious\n../opt\n")
+    assert run_script(pkg / "uninstall.sh", tmp_path, "--prefix", str(prefix)).returncode == 0
+    assert (prefix / "precious").is_dir()
+
+
+def test_install_inside_the_unpack_folders_parent_keeps_the_package(tmp_path: Path) -> None:
+    """--prefix = the folder that holds the unpacked package used to delete the package itself."""
+    pkg = fake_package(tmp_path / "opt")
+    r = run_script(pkg / "install.sh", tmp_path, "--prefix", str(tmp_path / "opt"))
+    assert r.returncode == 2 and "unpacked inside" in r.stderr
+    assert (pkg / "harness-design-studio").is_file() and (pkg / "_internal" / "lib.txt").is_file()
+    link = tmp_path / "linked"
+    link.symlink_to(pkg)
+    r = run_script(pkg / "install.sh", tmp_path, "--prefix", str(link))
+    assert r.returncode == 2 and (pkg / "cli" / "harness").is_file()
+
+
+def test_installed_files_belong_to_root_not_to_whoever_unpacked(tmp_path: Path) -> None:
+    pkg = fake_package(tmp_path)
+    if os.getuid() == 0:
+        for path in [pkg, *pkg.rglob("*")]:
+            os.chown(path, 1234, 1234, follow_symlinks=False)
+    prefix = tmp_path / "opt"
+    assert run_script(pkg / "install.sh", tmp_path, "--prefix", str(prefix)).returncode == 0
+    owners = {(p.lstat().st_uid, p.lstat().st_gid) for p in prefix.rglob("*")}
+    assert owners == {(os.getuid(), os.getgid())}
+    assert not list(prefix.glob(".*.new"))  # no leftovers of the temporary copy
+
+
+def test_help_and_empty_prefix(tmp_path: Path) -> None:
+    pkg = fake_package(tmp_path)
+    for script in ("install.sh", "uninstall.sh"):
+        r = run_script(pkg / script, tmp_path, "--help")
+        assert r.returncode == 0 and "Usage" in r.stdout
+        r = run_script(pkg / script, tmp_path, "--prefix", "")
+        assert r.returncode == 2 and "empty" in r.stderr
+    r = run_script(pkg / "install.sh", tmp_path, "--prefix", "/")
+    assert r.returncode == 2 and "root folder" in r.stderr
+    assert not (tmp_path / "home").exists()
+
+
+def test_a_link_to_another_program_is_not_replaced(tmp_path: Path) -> None:
+    pkg = fake_package(tmp_path)
+    bindir = tmp_path / "root" / "bin"
+    bindir.mkdir(parents=True)
+    other = tmp_path / "somewhere"
+    other.mkdir()
+    (bindir / "harness").symlink_to(other)  # a link to a folder: ln -sf would put a link inside it
+    r = run_script(pkg / "install.sh", tmp_path, "--prefix", str(tmp_path / "opt"))
+    assert r.returncode == 1 and "not touching" in r.stderr
+    assert not list(other.iterdir()) and not (tmp_path / "opt").exists()
+
+
+def test_uninstalling_one_install_keeps_the_launcher_of_another(tmp_path: Path) -> None:
+    pkg = fake_package(tmp_path)
+    a, b = tmp_path / "a", tmp_path / "b"
+    assert run_script(pkg / "install.sh", tmp_path, "--prefix", str(a)).returncode == 0
+    assert run_script(pkg / "install.sh", tmp_path, "--prefix", str(b)).returncode == 0
+    assert run_script(pkg / "uninstall.sh", tmp_path, "--prefix", str(a)).returncode == 0
+    root = tmp_path / "root"
+    desktop = (root / "share" / "applications" / "harness-design-studio.desktop").read_text()
+    assert f"{b}/harness-design-studio" in desktop
+    assert (root / "share" / "icons" / "harness-design-studio.svg").is_file()
+    assert (root / "bin" / "harness").resolve() == (b / "cli" / "harness").resolve()
+
+
+def test_a_backslash_in_the_prefix_is_escaped_for_the_desktop_entry(tmp_path: Path) -> None:
+    pkg = fake_package(tmp_path)
+    prefix = tmp_path / "back\\slash"
+    assert run_script(pkg / "install.sh", tmp_path, "--prefix", str(prefix)).returncode == 0
+    desktop = (
+        tmp_path / "root" / "share" / "applications" / "harness-design-studio.desktop"
+    ).read_text()
+    exec_line = next(ln for ln in desktop.splitlines() if ln.startswith("Exec="))
+    assert "back\\\\\\\\slash" in exec_line  # four backslashes stand for one
 
 
 def test_uninstall_never_removes_a_program_that_is_not_ours(tmp_path: Path) -> None:
@@ -236,10 +406,7 @@ def test_the_local_system_install_does_not_share_the_debs_folder() -> None:
 
 
 @pytest.mark.skipif(shutil.which("dpkg-deb") is None, reason="dpkg-deb not installed")
-def test_the_deb_ships_licences_and_not_the_tarball_scripts(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("SOURCE_DATE_EPOCH", "1700000000")
+def test_the_deb_ships_licences_and_not_the_tarball_scripts(tmp_path: Path) -> None:
     from tools.build_deb import DEPENDS, build
 
     app = fake_package(tmp_path / "src")
@@ -252,7 +419,7 @@ def test_the_deb_ships_licences_and_not_the_tarball_scripts(
     assert "./usr/share/doc/harness-design-studio/copyright" in listing
     assert "./usr/share/doc/harness-design-studio/LICENSES/README.txt" in listing
     assert "opt/harness-design-studio/install.sh" not in listing
-    assert "libc6 (>= 2.35)" in DEPENDS and "libxcb-xinerama0" in DEPENDS
+    assert "libc6 (>= 2.39)" in DEPENDS and "libxcb-xinerama0" in DEPENDS
 
 
 def test_the_licence_collector_finds_the_runtime_packages_and_the_lgpl_text(tmp_path: Path) -> None:
