@@ -28,8 +28,11 @@ def ampacity_table(raw: object) -> dict[int, float] | None:
     out: dict[int, float] = {}
     for k, v in raw.items():
         try:
-            out[int(k)] = float(v)
+            gauge = int(k)
+            out[gauge] = float(v)
         except (TypeError, ValueError):
+            return None
+        if not 0 <= gauge <= 40:  # outside the supported gauges: no table rather than a crash
             return None
     return out
 
