@@ -32,6 +32,7 @@ class LegendBar(QWidget):
         sig = (
             sorted((t.id, t.name, t.category) for t in project.interface_types.values()),
             sorted(describe.connector_family(project, cid)[0] for cid in project.all_connectors()),
+            sorted({i.type_id for i in project.interfaces.values()}),  # the kinds drawn
         )
         self.project = project
         if sig != self._signature:

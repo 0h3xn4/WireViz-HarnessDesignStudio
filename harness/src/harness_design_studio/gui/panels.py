@@ -964,6 +964,9 @@ class InterfaceModel(QAbstractTableModel):
         text = str(value).strip()
         col = index.column()
         if col == 1:
+            if "\n" in text or "\r" in text:  # a name is one line (the form field cannot hold more)
+                self.ctl.message.emit(strings.NAME_ONE_LINE, False)
+                return False
             return self.ctl.update_interface(iid, name=text)
         if col == 5:
             return self.ctl.update_interface(iid, redundancy=text)
@@ -1378,6 +1381,8 @@ class OutlinePanel(QWidget):
         super().showEvent(event)  # type: ignore[arg-type]
         if self._dirty:
             self.refresh()
+        else:
+            self._select_current()  # (the selection may have changed while this tab was hidden)
 
     def refresh(self) -> None:
         self._dirty = False
@@ -1417,7 +1422,12 @@ class OutlinePanel(QWidget):
 
     def _select_current(self) -> None:
         sel = self.ctl.selection
-        if sel is None or not self.isVisible():
+        if sel is None:  # nothing selected: no row stays highlighted
+            self._syncing = True
+            self.tree.clearSelection()
+            self._syncing = False
+            return
+        if not self.isVisible():
             return
         self._syncing = True
         self.tree.clearSelection()
