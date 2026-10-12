@@ -16,6 +16,7 @@ from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Harness, Project
 
 from .stamp import Stamp, Table
+from .tables import data_num
 
 JSON_FORMAT = "harness-design-studio-export"
 JSON_VERSION = 1
@@ -46,7 +47,7 @@ def wireviz_yaml(project: Project, h: Harness, stamp: Stamp) -> bytes:
             out.append(f"    colors: [{_q(w.colour)}]")
         length = wire_length(h, w)
         if length is not None:
-            out.append(f"    length: {length:.6g}")
+            out.append(f"    length: {data_num(length)}")
     out.append("connections:")
     for w in wires:
         out.append(f"  - - {_q(w.from_connector)}: [{_q(w.from_pin)}]")

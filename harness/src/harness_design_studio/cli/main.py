@@ -231,6 +231,16 @@ def _plain(exc: ValueError) -> str:
     return str(exc).splitlines()[0][:200] if str(exc) else "a value is not acceptable."
 
 
+# Every command that reads or writes the project refuses a damaged project (exit 2) and says what
+# it did not do; `validate` and `check` are the ones that report the damage.
+NOTHING_DONE = {
+    "migrate": "migrated", "export": "exported", "generate": "generated", "drc": "checked",
+    "verify": "verified", "log": "listed", "diff": "compared", "compare": "compared",
+    "config": "reported or changed", "library": "reported or changed",
+    "review": "changed", "release": "released", "revise": "revised",
+    "import-parts": "imported", "import-lengths": "imported", "import-netlist": "imported",
+}  # fmt: skip
+
 MUTATING = {
     "generate", "export", "migrate", "review", "release", "revise",
     "import-parts", "import-lengths", "import-netlist",
@@ -277,22 +287,27 @@ def _project_lock(args: argparse.Namespace) -> Iterator[None]:
 def _dispatch(args: argparse.Namespace) -> int:
     if args.command in start.COMMANDS:
         return start.run(args)
-    if args.command in ("migrate", "export"):
-        loaded = load_project(args.project)
-        probe = loaded.project
-        if loaded.has_errors or probe.recovered:
-            print(
-                f"error: the project has damaged files (first: {errors(loaded.issues)[0].render() if loaded.has_errors else 'parts set aside'}); "
-                f"nothing was {'migrated' if args.command == 'migrate' else 'exported'}. "
-                "Run `harness validate` to see them.",
-                file=sys.stderr,
-            )
-            return 2
-        if probe.read_only:
-            print(
-                "error: this project is read-only (saved by a newer tool version).", file=sys.stderr
-            )
-            return 2
+    if args.command in NOTHING_DONE:
+        for folder in (args.old, args.new) if args.command == "compare" else (args.project,):
+            loaded = load_project(folder)
+            probe = loaded.project
+            if loaded.has_errors or probe.recovered:
+                first = (
+                    errors(loaded.issues)[0].render() if loaded.has_errors else "parts set aside"
+                )
+                print(
+                    f"error: the project has damaged files (first: {first}); "
+                    f"nothing was {NOTHING_DONE[args.command]}. "
+                    "Run `harness validate` to see them.",
+                    file=sys.stderr,
+                )
+                return 2
+            if args.command in ("migrate", "export") and probe.read_only:
+                print(
+                    "error: this project is read-only (saved by a newer tool version).",
+                    file=sys.stderr,
+                )
+                return 2
     if args.command == "migrate":
         migrated = migrate_project(args.project)
         print("Already up to date." if migrated is None else MIGRATED)

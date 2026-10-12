@@ -7,7 +7,8 @@ from setuptools import find_packages, setup
 
 from src.wireviz import APP_URL, CMD_NAME, __version__
 
-README_PATH = Path(__file__).parent / "docs" / "README.md"
+# The description published with the package is the upstream README (docs/README.md is the docs index)
+README_PATH = Path(__file__).parent / "docs" / "upstream" / "README.upstream.md"
 
 setup(
     name=CMD_NAME,
@@ -15,8 +16,9 @@ setup(
     author="Daniel Rojas",
     # author_email='',
     description="Easily document cables and wiring harnesses",
-    long_description=open(README_PATH).read(),
+    long_description=README_PATH.read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
+    python_requires=">=3.7",
     install_requires=[
         "click",
         "pyyaml",

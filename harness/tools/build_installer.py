@@ -8,6 +8,7 @@ import platform
 import shutil
 import subprocess
 import sys
+from collections.abc import Iterable
 from pathlib import Path
 
 from harness_design_studio import __version__
@@ -18,8 +19,59 @@ EXCLUDES = ["PySide6.QtNetwork", "PySide6.QtWebEngineCore", "PySide6.QtWebEngine
             "PySide6.QtPdf", "PySide6.QtSvg", "tkinter",
             # development tools that PyInstaller would otherwise pull in from the build environment
             "mypy", "pydantic.mypy", "hypothesis", "pytest", "_pytest", "lxml", "setuptools",
-            "pkg_resources", "attr", "attrs", "pip"]  # fmt: skip
+            "pkg_resources", "attr", "attrs", "pip",
+            # pydantic imports rich (and through it pygments, markdown_it, mdurl, chardet, toml)
+            # only to pretty-print its own debug output; their licences are not shipped
+            "rich", "pygments", "markdown_it", "mdurl", "chardet", "toml"]  # fmt: skip
 FORBIDDEN = {"mypy", "hypothesis", "pytest", "_pytest", "lxml", "setuptools", "pip", "ruff"}
+# The only third-party code that may be in the package: the declared runtime dependencies (and what
+# they need), PySide6 with shiboken6, and the app. Everything else must be the standard library.
+ALLOWED_PACKAGES = frozenset({
+    "harness_design_studio", "pydantic", "pydantic_core", "annotated_types", "typing_extensions",
+    "typing_inspection", "openpyxl", "et_xmlfile", "defusedxml", "PySide6", "shiboken6",
+})  # fmt: skip
+PYINSTALLER_PREFIXES = ("_pyi", "pyi_", "PyInstaller", "_sysconfigdata")  # runtime hooks and tables
+
+
+def _is_known(top: str) -> bool:
+    return (
+        top in ALLOWED_PACKAGES
+        or top in sys.stdlib_module_names
+        or top.startswith(PYINSTALLER_PREFIXES)
+    )
+
+
+def undeclared_modules(names: Iterable[str]) -> list[str]:
+    """Top-level modules in a module list (the PYZ table of contents) that are neither the standard
+    library nor an allowed package."""
+    return sorted({n.split(".")[0] for n in names if not _is_known(n.split(".")[0])})
+
+
+def undeclared_files(internal: Path) -> list[str]:
+    """The same for the files next to the archive (extension modules, package folders, metadata)."""
+    found = set()
+    for entry in internal.iterdir():
+        if entry.name.startswith("lib") or entry.name == "base_library.zip":
+            continue  # shared libraries and the frozen standard library
+        top = entry.name.split("-")[0] if entry.name.endswith(".dist-info") else entry.name
+        top = top.split(".")[0]
+        if top != "python3" and not _is_known(top):
+            found.add(top)
+    return sorted(found)
+
+
+def undeclared_in_build(app: Path) -> list[str]:
+    """Everything in the built package, the PYZ archives included, that the allow-list does not cover."""
+    from PyInstaller.archive.readers import ZlibArchiveReader  # type: ignore[import-untyped]
+
+    found: set[str] = set()
+    for name in ("harness-design-studio", "harness"):
+        pyz = ROOT / "build" / name / name / "PYZ-00.pyz"
+        found.update(undeclared_modules(ZlibArchiveReader(str(pyz)).toc))
+    for base in (app / "_internal", app / "cli" / "_internal"):
+        if base.is_dir():
+            found.update(undeclared_files(base))
+    return sorted(found)
 
 
 def _pyinstaller(
@@ -74,6 +126,15 @@ def main() -> int:
     if leaked:
         print(
             f"error: development tools ended up in the package: {', '.join(leaked)}",
+            file=sys.stderr,
+        )
+        return 1
+    extra = undeclared_in_build(app)
+    if extra:
+        print(
+            "error: code that is not a declared dependency ended up in the package (its licence "
+            f"is not shipped): {', '.join(extra)}. Add it to EXCLUDES, or to ALLOWED_PACKAGES with "
+            "its licence and SBOM entry.",
             file=sys.stderr,
         )
         return 1

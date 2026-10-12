@@ -4,6 +4,7 @@ Units are millimetres, origin top-left, y down. All text uses one monospaced fon
 PDF), so text widths are exact (every character is 0.6 em wide) and layout never guesses.
 """
 
+import math
 from dataclasses import dataclass, field
 
 
@@ -24,6 +25,14 @@ def fit(s: str, width: float, size: float) -> str:
     """Shorten `s` with an ellipsis so it fits in `width` mm."""
     n = max(1, int(width / (size * CHAR_EM)))
     return s if len(s) <= n else s[: max(1, n - 1)] + "~"
+
+
+def fit_size(s: str, width: float, size: float, floor: float) -> float:
+    """The font size (at most `size`, at least `floor`) at which `s` fits in `width` mm. Used for
+    IDs, which are shrunk and never cut."""
+    if text_width(s, size) <= width:
+        return size
+    return max(floor, math.floor(width / (len(s) * CHAR_EM) * 100 - 1e-6) / 100)
 
 
 @dataclass(frozen=True)

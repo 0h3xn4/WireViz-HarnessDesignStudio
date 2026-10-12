@@ -48,14 +48,25 @@ def parse_csv(text: str) -> Table:
     if len(text) > MAX_BYTES:
         raise ImportError_("The file is too large to import (limit 8 MB).")
     text = text.replace("\r\n", "\n").replace("\r", "\n")  # old Mac files use a bare CR
+    reader = csv.reader(io.StringIO(text), delimiter=_delimiter(text), strict=True)
+    rows: Table = []
     try:
-        rows = [
-            [c.strip() for c in r]
-            for r in csv.reader(io.StringIO(text), delimiter=_delimiter(text))
-            if any(c.strip() for c in r)
-        ]
+        while True:
+            start = reader.line_num  # a record that fails starts on the line after this one
+            try:
+                r = next(reader)
+            except StopIteration:
+                break
+            if any(c.strip() for c in r):
+                rows.append([c.strip() for c in r])
     except csv.Error as exc:  # for example a stray NUL or a quote that never closes
-        raise ImportError_(f"The file is not valid CSV ({_plain(exc)}).") from exc
+        if "unexpected end of data" not in str(exc) and "expected after" not in str(exc):
+            raise ImportError_(f"The file is not valid CSV ({_plain(exc)}).") from exc
+        raise ImportError_(
+            f'Line {start + 1}: unbalanced quote. A " opens a text that is never closed, or '
+            'is followed by other text. Remove the stray quote or write it twice ("") inside '
+            "a quoted cell. Nothing was imported."
+        ) from exc
     if len(rows) > MAX_ROWS + 1:
         raise ImportError_(f"The file has more than {MAX_ROWS} rows.")
     check_width(rows)
@@ -95,6 +106,11 @@ def check_width(rows: Table) -> None:
 
 def read_table(path: Path | str) -> Table:
     """Read a .csv or .xlsx file into rows of text. The first row is the header."""
+    return read_table_sheet(path)[0]
+
+
+def read_table_sheet(path: Path | str) -> tuple[Table, str | None]:
+    """Like `read_table`, and also the name of the sheet that was read (None for a CSV file)."""
     path = Path(path)
     try:
         info = path.stat()
@@ -111,7 +127,7 @@ def read_table(path: Path | str) -> Table:
                 raw = fh.read(MAX_BYTES + 1)
             if len(raw) > MAX_BYTES:
                 raise ImportError_("The file is too large to import (limit 8 MB).")
-            return parse_csv(raw.decode("utf-8-sig"))
+            return parse_csv(raw.decode("utf-8-sig")), None
         except UnicodeDecodeError as exc:
             raise ImportError_(
                 "The file is not UTF-8 text. Save it as CSV UTF-8 and try again."
@@ -123,7 +139,7 @@ def read_table(path: Path | str) -> Table:
     raise ImportError_("Only .csv and .xlsx files can be imported.")
 
 
-def _read_xlsx(path: Path) -> Table:
+def _read_xlsx(path: Path) -> tuple[Table, str]:
     import zipfile
 
     from openpyxl import load_workbook
@@ -142,9 +158,10 @@ def _read_xlsx(path: Path) -> Table:
     except Exception as exc:  # noqa: BLE001 - any parser failure of a damaged file is "not valid"
         raise ImportError_("The file is not a valid .xlsx workbook.") from exc
     try:
-        ws = wb.active
+        # the first visible sheet, as documented, not the one that was active when it was saved
+        ws = next((w for w in wb.worksheets if w.sheet_state == "visible"), None)
         if ws is None:
-            raise ImportError_("The workbook has no sheet.")
+            raise ImportError_("The workbook has no visible sheet.")
         if hasattr(ws, "reset_dimensions"):  # some exporters declare a one-cell sheet
             ws.reset_dimensions()
         rows: Table = []
@@ -157,7 +174,7 @@ def _read_xlsx(path: Path) -> Table:
             if len(rows) > MAX_ROWS + 1:
                 raise ImportError_(f"The sheet has more than {MAX_ROWS} rows.")
         check_width(rows)
-        return rows
+        return rows, ws.title
     except ImportError_:
         raise
     except Exception as exc:  # noqa: BLE001 - a half-written sheet must not show a traceback

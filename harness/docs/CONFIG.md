@@ -1,6 +1,6 @@
 # Configuration reference
 
-Rules live in `config/*.json` inside the project, not in code. There are seven files. Every file except `naming.json` has `"placeholder": true` until an engineer has reviewed it; set it to `false` afterwards. (`naming.json` ships with `"placeholder": false`, because name patterns are a style choice, not an engineering value.) Values shown as `null` are placeholders: results say so and the affected checks say *not checked*. Which standard to take values from is for you to decide; the tool ships none. `harness config DIR` lists what is missing and checks what is set (ranges, table order); see IMPORTS.md.
+Rules live in `config/*.json` inside the project, not in code. There are seven files. Every file except `naming.json` has `"placeholder": true` until an engineer has reviewed it; set it to `false` afterwards. (`naming.json` ships with `"placeholder": false`, because name patterns are a style choice, not an engineering value.) Values shown as `null` are placeholders: results say so and the affected checks say *not checked*. Which standard to take values from is for you to decide; the tool ships none. `harness config DIR` lists what is missing and checks what is set (ranges, table order); see IMPORTS.md. Generation runs the same check: a value that is set but invalid is reported as an error in the generation result and treated as unset (the gauge stays *pending*); the tool never uses it.
 
 ## Contents
 
@@ -54,7 +54,7 @@ Keys that are left out stay unset (`null`). `harness validate` accepts this file
 | `contact_current_factor` | fraction of the contact rating that may be used |
 | `bundle_derating` | factor for wires in a bundle |
 | `temperature_derating` | factor for the maximum ambient temperature |
-| `max_ambient_temperature_c` | recorded for reference |
+| `max_ambient_temperature_c` | hottest ambient temperature; the `temperature-margin` rule compares it with the part ratings |
 | `max_voltage_drop_v` | allowed voltage drop over a wire path |
 | `spare_pin_fraction` | share of pins that must stay spare |
 | `ampacity_a_by_awg` | current in amperes per gauge, for example `{"20": 5.0}` |
@@ -90,7 +90,7 @@ Keys that are left out stay unset (`null`). `harness validate` accepts this file
 | `branch` | `{harness}-B{n}` | branch point |
 | `segment` | `{harness}-L{n}` | routing segment |
 
-The shipped file lists only the first four keys; `shield`, `branch` and `segment` use the defaults above until you add them. A pattern that does not give a different valid ID for every number is reported and the default is used. IDs are stable once released.
+The shipped file lists only the first four keys; `shield`, `branch` and `segment` use the defaults above until you add them. A pattern that does not give a different valid ID for every number (tried up to 200; a reserved name such as COM1 is not valid) is reported and the default is used. IDs are stable once released.
 
 ## `titleblock.json`
 | Key | Meaning |

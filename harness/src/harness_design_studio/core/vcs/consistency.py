@@ -1,9 +1,9 @@
 """Consistency of released harnesses with their baselines (used by the rules and `harness check`)."""
 
 from harness_design_studio.core.issues import Issue
-from harness_design_studio.core.model import Harness, Project
+from harness_design_studio.core.model import Harness, Project, Snapshot
 
-from .locks import interface_design
+from .locks import _pins_equal, interface_design, unit_design
 from .snapshot import normalize
 
 
@@ -44,7 +44,24 @@ def release_integrity(project: Project) -> list[Issue]:
             for i in b.snapshot.interfaces
         ):
             out.append(_modified(h, "an interface it carries was changed"))
+        elif any(
+            (unit_now := project.units.get(u.id)) is None or unit_design(unit_now) != unit_design(u)
+            for u in b.snapshot.units
+        ):
+            out.append(_modified(h, "a unit it connects to was changed"))
+        elif _box_connector_changed(project, b.snapshot):
+            out.append(_modified(h, "a box connector it plugs into was changed"))
     return out
+
+
+def _box_connector_changed(project: Project, snapshot: Snapshot) -> bool:
+    """A stored box connector is gone, or its part, gender, keying or the pins that carry the
+    harness's interfaces differ (other pins and labels may change)."""
+    carried = {i.id for i in snapshot.interfaces}
+    return any(
+        (now := project.connectors.get(c.id)) is None or not _pins_equal(c, now, carried)
+        for c in snapshot.connectors
+    )
 
 
 def _modified(h: Harness, what: str = "") -> Issue:

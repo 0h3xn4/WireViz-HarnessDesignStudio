@@ -58,6 +58,7 @@ def _describe(exc: ValidationError) -> str:
 
 
 MAX_FILE_BYTES = 64 * 1024 * 1024  # a project file this big is damaged or hostile
+UNREAD_CODES = ("symlink_ignored", "file_too_large", "file_unreadable")
 
 
 def read_tree(root: Path) -> tuple[dict[str, Any], dict[str, bytes], list[Issue]]:
@@ -111,6 +112,8 @@ def _json_problem(exc: ValueError) -> str:
         return f"The file is not valid JSON at line {exc.lineno}, column {exc.colno}: {exc.msg}."
     if isinstance(exc, UnicodeDecodeError):
         return f"The file is not valid UTF-8 at byte {exc.start}."
+    if isinstance(exc, canonical.LoneSurrogateError):
+        return "The file contains a text escape (\\ud800 to \\udfff) that is not valid text."
     return f"The file is not valid JSON or UTF-8 ({type(exc).__name__}: {str(exc)[:120]})."
 
 
@@ -322,6 +325,10 @@ def load_from_files(
     else:
         files_for_build = files
     _build(files_for_build, project, issues)
+    # a file that was skipped unread is damage, not absence: saving must not replace it
+    for issue in issues:
+        if issue.code in UNREAD_CODES and issue.location:
+            project.quarantine.append(QuarantinedItem(issue.location, "file", issue.message, None))
     for name, cfg in default_configs().items():
         if name not in project.config:
             project.config[name] = cfg

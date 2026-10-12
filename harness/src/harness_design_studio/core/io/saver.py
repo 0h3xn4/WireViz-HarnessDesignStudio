@@ -80,6 +80,10 @@ def save_project(
 
     result = SaveResult()
     files = serialize(project, tool_version=__version__)
+    # from here on the release record may be on disk: History.undo must not take it away again
+    project.saved_records |= frozenset(f"baselines:{k}" for k in project.baselines) | frozenset(
+        f"changelog:{k}" for k in project.changelog
+    )
     if exists and project.migrated_from is not None:
         backup = base / f".migration-backup-v{project.migrated_from}"
         if not backup.exists():

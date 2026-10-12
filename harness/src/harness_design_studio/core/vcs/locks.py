@@ -3,12 +3,13 @@ uses cannot be changed or deleted; the only way forward is a new revision (vcs.r
 
 from harness_design_studio.core.commands import Delete, Op, Put
 from harness_design_studio.core.errors import TransactionError
-from harness_design_studio.core.model import Connector, Harness, InterfaceInstance, Project
+from harness_design_studio.core.model import Connector, Harness, InterfaceInstance, Project, Unit
 
 from .snapshot import carried_interfaces
 
 _META = {"status", "revision", "checker", "approver", "released_on"}
 COSMETIC_INTERFACE_FIELDS = {"name", "notes", "requirement_id"}  # may change after release
+COSMETIC_UNIT_FIELDS = {"name", "notes", "zone"}  # may change after release
 
 
 def interface_design(i: InterfaceInstance) -> dict[str, object]:
@@ -29,6 +30,11 @@ def _pins_equal(a: Connector, b: Connector, locked: set[str]) -> bool:
     ap = {p.id: p for p in a.pins if p.interface_id in locked}
     bp = {p.id: p for p in b.pins if p.id in ap}
     return ap == bp and (a.part_id, a.gender, a.keying) == (b.part_id, b.gender, b.keying)
+
+
+def unit_design(u: Unit) -> dict[str, object]:
+    """The fields of a unit that the released wiring depends on (not its label, notes or zone)."""
+    return u.model_dump(exclude=COSMETIC_UNIT_FIELDS)
 
 
 def check_locks(project: Project, ops: list[Op]) -> None:
@@ -58,6 +64,12 @@ def check_locks(project: Project, ops: list[Op]) -> None:
         c.mates_with: h.id for h in released.values() for c in h.connectors if c.mates_with
     }
     locked_ifaces = set(owner)
+    unit_owner = {
+        e.unit_id: owner[i]
+        for i in sorted(locked_ifaces)
+        if i in project.interfaces
+        for e in project.interfaces[i].endpoints
+    }
     problems: list[str] = []
 
     def why(hid: str) -> str:
@@ -82,6 +94,13 @@ def check_locks(project: Project, ops: list[Op]) -> None:
                 problems.append(
                     f"Interface {key} is carried by {owner[key]}, which is released. "
                     + why(owner[key])
+                )
+        elif op.collection == "units" and key in unit_owner:
+            old_u = project.units.get(key)
+            if not isinstance(new, Unit) or old_u is None or unit_design(new) != unit_design(old_u):
+                problems.append(
+                    f"Unit {key} is used by {unit_owner[key]}, which is released. "
+                    + why(unit_owner[key])
                 )
         elif op.collection == "connectors":
             old_c = project.connectors.get(key)
