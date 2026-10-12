@@ -54,7 +54,7 @@ Keys that are left out stay unset (`null`). `harness validate` accepts this file
 | `contact_current_factor` | fraction of the contact rating that may be used |
 | `bundle_derating` | factor for wires in a bundle |
 | `temperature_derating` | factor for the maximum ambient temperature |
-| `max_ambient_temperature_c` | recorded for reference |
+| `max_ambient_temperature_c` | hottest ambient temperature; the `temperature-margin` rule compares it with the part ratings |
 | `max_voltage_drop_v` | allowed voltage drop over a wire path |
 | `spare_pin_fraction` | share of pins that must stay spare |
 | `ampacity_a_by_awg` | current in amperes per gauge, for example `{"20": 5.0}` |
