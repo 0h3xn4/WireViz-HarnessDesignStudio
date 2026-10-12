@@ -1,13 +1,19 @@
 """Layout (where things sit in the diagram) and review records (waivers)."""
 
-from typing import Annotated, Literal
+from typing import Annotated, Any, Literal
 
-from pydantic import AfterValidator, StringConstraints
+from pydantic import (
+    AfterValidator,
+    SerializerFunctionWrapHandler,
+    StringConstraints,
+    model_serializer,
+)
 
 from harness_design_studio.core.ids import Id
 
 from .base import Entity, Name, Text, _no_control_chars
-from .logical import InterfaceInstance, Unit
+from .library import Part
+from .logical import InterfaceInstance, InterfaceType, Unit
 from .physical import Connector, Harness
 
 Justification = Annotated[
@@ -43,6 +49,21 @@ class Snapshot(Entity):
     interfaces: list[InterfaceInstance] = []
     connectors: list[Connector] = []  # box connectors the harness mates with
     harnesses: list[Harness] = []  # the released harness itself
+    # Frozen with the release as well. `None` = not recorded (a baseline made before these were
+    # kept): nothing is compared then, and the field is left out of the file so that old
+    # baselines are written back unchanged.
+    parts: list[Part] | None = None  # every part the harness uses (see vcs.snapshot.used_part_ids)
+    interface_types: list[InterfaceType] | None = None  # types of the interfaces it carries
+    config: dict[str, dict[str, Any]] | None = None  # configuration it depends on, by file name
+    waivers: list[Waiver] | None = None  # waivers that applied to it (recorded, not locked)
+
+    @model_serializer(mode="wrap")
+    def _leave_out_unrecorded(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data: dict[str, Any] = handler(self)
+        for name in ("parts", "interface_types", "config", "waivers"):
+            if data.get(name) is None:
+                data.pop(name, None)
+        return data
 
 
 class Baseline(Entity):

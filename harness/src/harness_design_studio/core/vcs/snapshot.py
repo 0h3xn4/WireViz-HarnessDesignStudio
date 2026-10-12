@@ -1,6 +1,23 @@
 """What a baseline stores: one harness and the design objects it depends on."""
 
-from harness_design_studio.core.model import Harness, Project, Snapshot, evolve
+from typing import Any
+
+from harness_design_studio.core.model import ConfigFile, Harness, Project, Snapshot, evolve
+
+# What a release freezes, besides the harness itself (docs/FILE_FORMAT.md, "What a release freezes").
+# Configuration that checks and outputs of an existing harness read; the rest (segmentation,
+# naming, and the generation values that only decide how new harnesses are made) stays editable.
+FROZEN_CONFIG_FILES = ("derating", "emc", "segregation", "titleblock")
+FROZEN_GENERATION_KEYS = (
+    "conductor_resistivity_ohm_m",
+    "mass_margin_fraction",
+    "power_return_gap_pins",
+    "shield_end_a",
+    "shield_end_b",
+    "test_continuity_max_ohm",
+    "test_isolation_min_mohm",
+    "test_isolation_voltage_v",
+)  # fmt: skip
 
 
 def normalize(h: Harness) -> Harness:
@@ -21,6 +38,56 @@ def carried_interfaces(h: Harness) -> set[str]:
     return {w.interface_id for w in h.wires if w.interface_id} | set(h.interfaces)
 
 
+def _box_ids(h: Harness, interfaces: list[Any]) -> set[str]:
+    boxes = {c.mates_with for c in h.connectors if c.mates_with}
+    return boxes | {e.connector_id for i in interfaces for e in i.endpoints if e.connector_id}
+
+
+def used_part_ids(project: Project, h: Harness) -> set[str]:
+    """Parts a harness depends on: its connectors, its wires, the box connectors it plugs into
+    (or that carry its interfaces), and the counterpart part each connector part names."""
+    interfaces = [
+        project.interfaces[i] for i in sorted(carried_interfaces(h)) if i in project.interfaces
+    ]
+    ids = {c.part_id for c in h.connectors} | {w.part_id for w in h.wires if w.part_id}
+    ids |= {
+        project.connectors[b].part_id for b in _box_ids(h, interfaces) if b in project.connectors
+    }
+    ids |= {
+        part.mates_with
+        for pid in ids
+        if (part := project.parts.get(pid)) is not None and part.mates_with
+    }
+    return ids
+
+
+def used_interface_type_ids(project: Project, h: Harness) -> set[str]:
+    """Interface types of the interfaces a harness carries."""
+    return {project.interfaces[i].type_id for i in carried_interfaces(h) if i in project.interfaces}
+
+
+def frozen_values(name: str, config: ConfigFile | None) -> dict[str, Any] | None:
+    """The part of one configuration file a release freezes, or None if the file is not frozen
+    (or missing). The `placeholder` flag is not part of it: it records a review, not a value."""
+    if config is None:
+        return None
+    if name in FROZEN_CONFIG_FILES:
+        return dict(config.values)
+    if name == "generation":
+        return {k: config.values[k] for k in FROZEN_GENERATION_KEYS if k in config.values}
+    return None
+
+
+def frozen_config(project: Project) -> dict[str, dict[str, Any]]:
+    """The configuration values a release freezes (see FROZEN_*), by file name."""
+    out: dict[str, dict[str, Any]] = {}
+    for name in sorted(project.config):
+        values = frozen_values(name, project.config[name])
+        if values is not None:
+            out[name] = values
+    return out
+
+
 def snapshot_for(project: Project, h: Harness) -> Snapshot:
     interfaces = [
         project.interfaces[i] for i in sorted(carried_interfaces(h)) if i in project.interfaces
@@ -28,13 +95,25 @@ def snapshot_for(project: Project, h: Harness) -> Snapshot:
     units = sorted(
         {e.unit_id for i in interfaces for e in i.endpoints if e.unit_id in project.units}
     )
-    boxes = {c.mates_with for c in h.connectors if c.mates_with}
-    boxes |= {e.connector_id for i in interfaces for e in i.endpoints if e.connector_id}
+    boxes = _box_ids(h, interfaces)
+    related = related_ids(project, h)
     return Snapshot(
         units=[project.units[u] for u in units],
         interfaces=interfaces,
         connectors=[project.connectors[c] for c in sorted(boxes) if c in project.connectors],
         harnesses=[normalize(h)],
+        parts=[project.parts[p] for p in sorted(used_part_ids(project, h)) if p in project.parts],
+        interface_types=[
+            project.interface_types[t]
+            for t in sorted(used_interface_type_ids(project, h))
+            if t in project.interface_types
+        ],
+        config=frozen_config(project),
+        waivers=[
+            w
+            for _, w in sorted(project.waivers.items())
+            if w.object_id in related or w.object_id.split(".")[0] in related
+        ],
     )
 
 
