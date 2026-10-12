@@ -640,7 +640,9 @@ def ops_add_interface(
 
 
 def ops_confirm_interface(project: Project, interface_id: str) -> list[Op]:
-    i = project.interfaces[interface_id]
+    i = project.interfaces.get(interface_id)
+    if i is None:
+        raise EditError(f"Interface '{interface_id}' does not exist.")
     return [Put("interfaces", evolve(i, endpoints=[evolve(e, auto=False) for e in i.endpoints]))]
 
 

@@ -1,6 +1,7 @@
 """Side and bottom panels: palette, properties, problems, to-do, interface table, harness plans."""
 
 from collections.abc import Callable
+from decimal import Decimal
 from functools import partial
 
 from PySide6.QtCore import (
@@ -262,6 +263,17 @@ class _Field(QWidget):
         self.edit.style().polish(self.edit)
 
 
+def format_number(value: float | None) -> str:
+    """The shortest text that reads back as exactly the same number, without an exponent (a field
+    shows what is stored, so leaving it unchanged changes nothing)."""
+    if value is None:
+        return ""
+    text = repr(float(value))
+    if "e" in text or "E" in text:
+        text = format(Decimal(text), "f")
+    return text.removesuffix(".0")
+
+
 def parse_optional_float(text: str) -> tuple[float | None, str]:
     text = text.strip()
     if not text:
@@ -286,6 +298,7 @@ class PropertiesPanel(QScrollArea):
         self.lay = scroll_body(self)
         self.body: QWidget = self.widget()  # type: ignore[assignment]
         self.fields: dict[str, QWidget] = {}
+        self._touching: set[str] = set()  # the links the form shows for a selected unit
         ctl.selectionChanged.connect(self.rebuild)
         ctl.modeChanged.connect(self.rebuild)
         ctl.stateChanged.connect(self._state)
@@ -302,7 +315,7 @@ class PropertiesPanel(QScrollArea):
         if s is None:
             return
         if (
-            (s.kind == "unit" and s.id in delta.units)
+            (s.kind == "unit" and (s.id in delta.units or self._links_changed(s.id, delta)))
             or (s.kind == "interface" and s.id in delta.interfaces)
             or delta.full
         ):
@@ -312,11 +325,27 @@ class PropertiesPanel(QScrollArea):
             ):  # never rebuild under the cursor
                 self.rebuild()
 
+    def _links_changed(self, unit_id: str, delta: Delta) -> bool:
+        """A link of this unit came, went or changed (a link that is gone can no longer be
+        looked up, so the form remembers which ones it showed)."""
+        if delta.interfaces & self._touching:
+            return True
+        interfaces = self.ctl.project.interfaces
+        return any(
+            iid in interfaces and any(e.unit_id == unit_id for e in interfaces[iid].endpoints)
+            for iid in delta.interfaces
+        )
+
     def rebuild(self) -> None:
         clear_layout(self.lay)
         self.fields.clear()
         s = self.ctl.selection
         p = self.ctl.project
+        self._touching = (
+            {i.id for i in p.interfaces.values() if any(e.unit_id == s.id for e in i.endpoints)}
+            if s is not None and s.kind == "unit"
+            else set()
+        )
         if (
             s is None
             or (s.kind == "unit" and s.id not in p.units)
@@ -498,7 +527,7 @@ class PropertiesPanel(QScrollArea):
             ("voltage_v", strings.FIELD_VOLTAGE),
         ):
             cur = getattr(i, key)
-            f = _Field(label, "" if cur is None else f"{cur:g}")
+            f = _Field(label, format_number(cur))
             self._editable(f.edit)
             self.fields[key] = f.edit
             f.edit.editingFinished.connect(lambda k=key, fld=f: self._commit_number(iid, fld, k))
@@ -911,7 +940,7 @@ class InterfaceModel(QAbstractTableModel):
             t = self.ctl.project.interface_types.get(i.type_id)
             return [
                 i.id, i.name, t.name if t else i.type_id, self._end(i, 0), self._end(i, 1), i.redundancy,
-                "" if i.max_current_a is None else f"{i.max_current_a:g}", i.requirement_id or "",
+                format_number(i.max_current_a), i.requirement_id or "",
             ][col]  # fmt: skip
         if role == Qt.ItemDataRole.AccessibleTextRole:
             return f"{COLUMNS[col]} of {i.id}: {self.data(index, Qt.ItemDataRole.DisplayRole)}"
@@ -937,6 +966,9 @@ class InterfaceModel(QAbstractTableModel):
             if err:
                 self.ctl.message.emit(err, False)
                 return False
+            current = self.ctl.project.interfaces[iid].max_current_a
+            if num == current:  # (an unchanged cell is not an edit)
+                return True
             return self.ctl.update_interface(iid, max_current_a=num)
         return self.ctl.update_interface(iid, requirement_id=text or None)
 
@@ -944,14 +976,20 @@ class InterfaceModel(QAbstractTableModel):
 class _RowFilter(QSortFilterProxyModel):
     """Match every word typed against the ID, name, type (name and ID), units and requirement."""
 
+    words: tuple[str, ...] = ()  # the typed words as they are (not a pattern)
+
+    def set_text(self, text: str) -> None:
+        self.beginFilterChange()
+        self.words = tuple(text.lower().split())
+        self.endFilterChange()
+
     def filterAcceptsRow(
         self, source_row: int, source_parent: QModelIndex | QPersistentModelIndex
     ) -> bool:
         model = self.sourceModel()
-        words = self.filterRegularExpression().pattern().lower().split()
-        if not words or not isinstance(model, InterfaceModel):
+        if not self.words or not isinstance(model, InterfaceModel):
             return True
-        return all(w in model.search_text(source_row) for w in words)
+        return all(w in model.search_text(source_row) for w in self.words)
 
 
 class _ChainDelegate(QStyledItemDelegate):
@@ -1027,9 +1065,7 @@ class InterfaceTable(QWidget):
             self.refresh()
 
     def _set_filter(self, text: str) -> None:
-        import re
-
-        self.proxy.setFilterRegularExpression(re.escape(text.strip()) if text.strip() else "")
+        self.proxy.set_text(text)
 
     def _changed(self, delta: Delta) -> None:
         if delta.full or delta.interfaces or delta.units:
