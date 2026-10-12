@@ -104,6 +104,12 @@ def case_dangling_wire_pin(p: Project) -> None:
     p.harnesses["W001"] = evolve(h, wires=[w, h.wires[1]])
 
 
+def case_wire_to_itself(p: Project) -> None:
+    h = _w1(p)
+    w = evolve(h.wires[0], to_connector=h.wires[0].from_connector, to_pin=h.wires[0].from_pin)
+    p.harnesses["W001"] = evolve(h, wires=[w, h.wires[1]])
+
+
 def case_wire_part(p: Project) -> None:
     h = _w1(p)
     w = evolve(h.wires[0], part_id="EX-DSUB-9-F")
@@ -189,6 +195,7 @@ NEGATIVE: list[tuple[str, Callable[[Project], None], str]] = [
     ("duplicate_pin", case_duplicate_pin, "duplicate_pin"),
     ("dangling_wire_connector", case_dangling_wire_connector, "dangling_wire"),
     ("dangling_wire_pin", case_dangling_wire_pin, "dangling_wire"),
+    ("wire_to_itself", case_wire_to_itself, "wire_to_itself"),
     ("wire_part", case_wire_part, "unknown_part"),
     ("wire_interface", case_wire_interface, "unknown_interface"),
     ("duplicate_wire_id", case_duplicate_wire_id, "duplicate_id"),

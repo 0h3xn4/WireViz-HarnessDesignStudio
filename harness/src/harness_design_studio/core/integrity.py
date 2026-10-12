@@ -132,6 +132,8 @@ def _check_harness(
                 out.append(_err("dangling_wire", f"Wire '{w.id}' ends on connector '{cid}', which does not exist (or is not part of harness '{h.id}').", w.id))  # fmt: skip
             elif pin not in pins_of[cid]:
                 out.append(_err("dangling_wire", f"Wire '{w.id}' ends on pin '{pin}' of connector '{cid}', but that pin does not exist.", w.id))  # fmt: skip
+        if (w.from_connector, w.from_pin) == (w.to_connector, w.to_pin):
+            out.append(_err("wire_to_itself", f"Wire '{w.id}' starts and ends on the same pin ('{w.from_pin}' of connector '{w.from_connector}'). Connect its other end to a different pin or delete the wire.", w.id))  # fmt: skip
         if w.part_id is not None:
             part = project.parts.get(w.part_id)
             if part is None or part.category != "wire":
