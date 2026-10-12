@@ -117,6 +117,20 @@ def flatten_project(p: Project) -> Flat:
         _flatten_harness(flat, h)
     for name, cfg in p.config.items():
         flat[("config", name)] = {"values": cfg.values, "placeholder": cfg.placeholder}
+    for w in p.waivers.values():
+        flat[("waiver", w.id)] = _dump(w)
+    for pl in p.placements.values():
+        flat[("placement", pl.id)] = _dump(pl)
+    flat[("project", "name")] = {"name": p.meta.name, "description": p.meta.description}
+    flat[("zones", "list")] = {"zones": list(p.zones)}
+    flat[("library", "info")] = _dump(p.library_info)
+    for b in p.baselines.values():
+        flat[("baseline", b.id)] = {
+            "revision": b.revision, "released_on": b.released_on, "by": b.by,
+            "comment": b.comment, "content_hash": b.content_hash,
+        }  # fmt: skip
+    for e in p.changelog.values():
+        flat[("change_entry", e.id)] = _dump(e)
     return flat
 
 
@@ -163,6 +177,8 @@ KIND_NAMES = {
     "box_connector": "Box connector", "box_pin": "Box pin", "harness": "Harness",
     "cable_connector": "Cable connector", "cable_pin": "Cable pin", "wire": "Wire", "splice": "Splice",
     "shield": "Shield", "branch_point": "Branch point", "segment": "Segment", "config": "Configuration",
+    "waiver": "Waiver", "placement": "Diagram position", "project": "Project", "zones": "Zones",
+    "library": "Parts library information", "baseline": "Baseline", "change_entry": "Change log entry",
 }  # fmt: skip
 
 

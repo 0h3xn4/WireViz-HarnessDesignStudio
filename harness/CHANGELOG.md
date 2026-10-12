@@ -42,6 +42,11 @@ Changes on `master` since the release of 0.1.0. They are not in the 0.1.0 packag
 
 ### Fixed
 
+- Import commands blocked by a release: `--dry-run` now says so (it printed OK), and the real run prints the reasons and exits 1 as `docs/CLI.md` says (it hid them and exited 2). `import-netlist` keeps a locked pin and warns, and clears the interface of a pin whose signal is cleared. `harness compare` also compares waivers, project name and description, zones, library information, diagram positions, baselines and the change log, and names what it does not compare.
+- Ctrl-C ends a command with "interrupted" and exit 130, not a traceback. A reader that closes the pipe (`harness generate | head -1`) no longer stops the command before it saves. A release is blocked up front when the outputs folder is a link or not writable; if the re-export after a release fails, the message says the release was recorded and to run `harness export`.
+- `harness library` and `import-parts --library-*` give the date message only for dates (strictly `YYYY-MM-DD`); other bad values name the field. `import-parts` refuses a part ID twice in the file, `1e3`, `1_0`, `-0`, `1,234` and a pin count outside 1 to 1000, names the field of a bad row, and refuses two approval columns.
+- A name, checker, comment or reason with control characters, line breaks (names), or too much text is a release/review/revise blocker (exit 1) that names the option; line breaks in a comment are shown as spaces in the change log and the revision report. `--date ""` is an error. A KiCad XML netlist in UTF-16 or UTF-32 without a byte order mark no longer bypasses the DOCTYPE and entity check. A missing netlist file says it could not be read. `--apply-profile` lists the files that are placeholders afterwards.
+
 - Export no longer refuses a wire length with more than six digits (for example 1234.567 mm from a CAD file). Tables and the YAML keep the full number; only the drawings round.
 - A connector or wire ID of up to 64 characters is drawn in a smaller font instead of being cut, so export and the output check succeed.
 - A stray double quote in a CSV file is reported with its line number and nothing is imported (it used to swallow the rows after it).

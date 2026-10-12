@@ -106,6 +106,7 @@ def render() -> str:
         "| 0 | success (warnings are allowed) |",
         "| 1 | the project has errors, or a step is blocked (for example a release) |",
         "| 2 | usage error, or a project or file that could not be read |",
+        "| 130 | interrupted with Ctrl-C |",
         "",
         "Every command that changes a project takes the same lock as the app, so the two never write "
         "at once. Commands that import data accept `--dry-run`: they show what they would do and "

@@ -1,6 +1,6 @@
 # Importing outside data
 
-Everything is previewed row by row and applied as one undo step (CLI: nothing is written if any row has a problem, and `--dry-run` shows the rows without changing anything). The command line has imports for parts, segment lengths and KiCad netlists; importing interfaces is app only.
+Everything is previewed row by row and applied as one undo step (CLI: nothing is written if any row has a problem, and `--dry-run` shows the rows without changing anything). An import that would change something a release froze is blocked: both the preview and the real run say what is blocked and exit with 1. The command line has imports for parts, segment lengths and KiCad netlists; importing interfaces is app only.
 
 Starting files for every import below are in the templates (`harness templates FOLDER`): `interfaces.csv`, `approved-parts.csv`, `segment-lengths.csv`, `wheel-connectors.net`, `signal-map.csv` and `ampacity-DEMO-ONLY.csv`. They are written for the `first-steps` example (`harness new DIR --template first-steps`), so you can try each one before using your own data. Walk-through: [`GETTING_STARTED.md`](GETTING_STARTED.md), parts 7 and 8.
 
@@ -16,6 +16,9 @@ CSV files may use commas, semicolons or tabs between columns (the header line de
 - Every row needs a category (a `category` column or `--category`); a row without one is refused ("Category '(empty)' is not one of ...").
 - Columns are matched by header: part ID or part number, manufacturer, description, category, specification, approval status, pin count, mass (g), mass per metre (g/m), mating part.
 - **You say what the approval values mean** with `--approved`, `--pending`, `--rejected` (repeat for several values). A value in none of the lists is an error for that row. The tool never decides that something is approved.
+- Numbers are plain: digits with a point (`12.5`), or one decimal comma (`1,5`). `1e3`, `1_0`, `-0` and `1,234` (thousands or decimals?) are refused with a message to write them with a point. The pin count is a whole number from 1 to 1000.
+- A part ID may appear once in the file; a second row with the same ID is an error row. Two columns that both look like the approval status are refused.
+- A row that cannot be used says which field is wrong (for example `Description: String should have at most 200 characters`).
 - New parts are added; existing parts are updated with the columns that are filled in. Imported parts are no longer marked as example data.
 - Parts that are used but not approved stay design rule warnings until the list marks them approved.
 - A program-specific format (for example an EPPL or DCL export) can be added as a column mapping once you can show an example file.
@@ -34,6 +37,6 @@ KiCad: it is used for the electronics inside each unit, so it is where each unit
 
 ## Where the library data come from
 
-`harness import-parts` records the file name and its SHA-256 as the library's **source**. Say more with `--library-source`, `--library-version`, `--library-name` and `--library-date YYYY-MM-DD` (the date of the data, which you enter; the tool does not read the clock). `harness library DIR` shows what is recorded and `harness library DIR --library-source "..." --library-date 2026-09-30` sets it without an import. The editor shows the same line under the part picker and every export carries it in `system/provenance.json`.
+`harness import-parts` records the file name and its SHA-256 as the library's **source**. Say more with `--library-source`, `--library-version`, `--library-name` and `--library-date YYYY-MM-DD` (the date of the data, which you enter; the tool does not read the clock). The date is written exactly `YYYY-MM-DD`; any other field that is empty, too long or has control characters is named in the message. `harness library DIR` shows what is recorded and `harness library DIR --library-source "..." --library-date 2026-09-30` sets it without an import. The editor shows the same line under the part picker and every export carries it in `system/provenance.json`.
 
 Next: [import data (user manual)](user-manual/import-data.md), [`KICAD.md`](KICAD.md).

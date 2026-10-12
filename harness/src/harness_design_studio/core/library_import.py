@@ -6,13 +6,17 @@ approved, pending or rejected. A status that is not in any of your lists is an e
 row; the tool never guesses whether a part is approved. Preview first, apply as one undo step.
 """
 
+import re
 from dataclasses import dataclass, field
+
+from pydantic import ValidationError
 
 from harness_design_studio.core.commands import Op, Put, SetLibraryInfo
 from harness_design_studio.core.ids import ID_RE
 from harness_design_studio.core.imports import ImportError_
 from harness_design_studio.core.model import Part, Project, evolve
 from harness_design_studio.core.model.library import PART_CATEGORIES
+from harness_design_studio.core.vcs.release import valid_date
 
 Table = list[list[str]]
 
@@ -58,6 +62,10 @@ class PartsPlan:
 
 def guess_mapping(header: list[str]) -> dict[str, int]:
     norm = ["".join(ch for ch in h.lower() if ch.isalnum()) for h in header]
+    if sum(h in _ALIASES["approval"] for h in norm) > 1:  # which one would be meant?
+        raise ImportError_(
+            "Two columns of the file are both about the approval status; keep only one."
+        )
     out: dict[str, int] = {}
     used: set[int] = set()
     for key, _ in FIELDS:
@@ -74,12 +82,37 @@ def _words(values: list[str]) -> set[str]:
     return {v.strip().casefold() for v in values if v.strip()}
 
 
+MAX_PIN_COUNT = 1000
+_PLAIN = re.compile(r"[0-9]{1,15}(\.[0-9]{1,12})?")
+_COMMA = re.compile(r"([0-9]{1,15}),([0-9]{1,12})")
+_WHOLE = re.compile(r"[0-9]{1,6}(\.0+)?")
+
+
 def _number(text: str) -> float | None:
-    try:
-        value = float(text.replace(",", "."))
-    except ValueError:
-        return None
-    return value if value >= 0 and value == value and value != float("inf") else None
+    """A plain number: digits with a point, or with one decimal comma. Not 1e3, 1_0, -0, inf, a
+    thousands separator (1,234 could be 1.234 or 1234) or digits of another script."""
+    text = text.strip()
+    if _PLAIN.fullmatch(text):
+        return float(text)
+    m = _COMMA.fullmatch(text)
+    if m and len(m.group(2)) != 3:  # three digits after a comma: thousands or decimals?
+        return float(f"{m.group(1)}.{m.group(2)}")
+    return None
+
+
+def _number_problem(text: str, label: str) -> str:
+    if _COMMA.fullmatch(text.strip()):
+        return f"{label} '{text}' could mean {text.replace(',', '.')} or a thousands separator; write it with a point"  # fmt: skip
+    return f"{label} '{text}' is not a plain number (digits, with a point for decimals)"
+
+
+def _field_message(exc: ValidationError) -> str:
+    """The first problem of a part as 'Label: what is wrong', never the raw validation text."""
+    labels = dict(FIELDS)
+    err = exc.errors()[0]
+    name = str(err["loc"][0]) if err["loc"] else "part"
+    what = str(err["msg"]).removeprefix("Value error, ")
+    return f"{labels.get(name, name)}: {what}"
 
 
 def plan_parts_import(
@@ -107,6 +140,7 @@ def plan_parts_import(
         )
     plan = PartsPlan()
     seen: dict[str, Part] = {}
+    first_row: dict[str, int] = {}
     by_fold = {p.casefold(): p for p in project.parts}
     for n, row in enumerate(table[1:], start=2):
 
@@ -124,6 +158,16 @@ def plan_parts_import(
                     n,
                     False,
                     f"'{pid}' cannot be used as a part ID (letters, digits, - _ . and a letter first); put a usable ID in the ID column",
+                    pid,
+                )
+            )
+            continue
+        if pid in first_row:
+            plan.rows.append(
+                PartRow(
+                    n,
+                    False,
+                    f"'{pid}' is already in row {first_row[pid]} of this file; each part may appear once",
                     pid,
                 )
             )
@@ -181,23 +225,29 @@ def plan_parts_import(
             if cell(key):
                 value = _number(cell(key))
                 if value is None:
-                    problem = f"'{cell(key)}' is not a valid {key.replace('_', ' ')}"
+                    problem = problem or _number_problem(cell(key), dict(FIELDS)[key])
                 changes[key] = value
         if cell("pin_count"):
-            pins = _number(cell("pin_count"))
-            if pins is None or pins != int(pins) or pins < 1:
-                problem = problem or f"'{cell('pin_count')}' is not a valid pin count"
+            text = cell("pin_count")
+            if _WHOLE.fullmatch(text) and 1 <= float(text) <= MAX_PIN_COUNT:
+                changes["pin_count"] = int(float(text))
             else:
-                changes["pin_count"] = int(pins)
+                problem = problem or (
+                    f"Pin count '{text}' is not a whole number from 1 to {MAX_PIN_COUNT}"
+                )
         if problem:
             plan.rows.append(PartRow(n, False, problem, pid))
             continue
         try:
             part = evolve(old, **changes) if old is not None else Part(id=pid, **changes)  # type: ignore[arg-type]
+        except ValidationError as exc:
+            plan.rows.append(PartRow(n, False, _field_message(exc), pid))
+            continue
         except ValueError as exc:
             plan.rows.append(PartRow(n, False, str(exc).splitlines()[0][:120], pid))
             continue
         seen[pid] = part
+        first_row[pid] = n
         by_fold.setdefault(pid.casefold(), pid)
         plan.rows.append(PartRow(n, True, "", pid, "updated" if pid in project.parts else "added"))
     for k, prow in enumerate(plan.rows):  # a mating part must exist (now or after this import)
@@ -223,16 +273,19 @@ def library_ops(
     date: str | None = None,
 ) -> list[Op]:
     """Operations that record where the library comes from; fields left as None stay as they are.
-    A bad date (not YYYY-MM-DD) raises ImportError_ before anything changes."""
-    changes = {k: v for k, v in (("name", name), ("version", version), ("source", source), ("date", date)) if v is not None}  # fmt: skip
-    if not changes:
+    A bad value raises ImportError_ before anything changes; only a bad date gets the date message."""
+    given = {k: v for k, v in (("name", name), ("version", version), ("source", source), ("date", date)) if v is not None}  # fmt: skip
+    if not given:
         return []
-    try:
-        info = evolve(project.library_info, **changes)
-    except ValueError as exc:
-        raise ImportError_(
-            "The library date must be written YYYY-MM-DD (for example 2026-10-08)."
-        ) from exc
+    if date is not None and not valid_date(date):
+        raise ImportError_("The library date must be written YYYY-MM-DD (for example 2026-10-08).")
+    for key, value in given.items():  # say which field is wrong, and what is wrong with it
+        try:
+            evolve(project.library_info, **{key: value})
+        except ValidationError as exc:
+            what = str(exc.errors()[0]["msg"]).removeprefix("Value error, ")
+            raise ImportError_(f"The library {key} is not acceptable: {what}.") from exc
+    info = evolve(project.library_info, **given)
     return [] if info == project.library_info else [SetLibraryInfo(info)]
 
 

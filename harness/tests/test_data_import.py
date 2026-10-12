@@ -201,13 +201,11 @@ def test_parts_import_maps_columns_and_statuses_and_never_guesses() -> None:
 def test_parts_import_updates_existing_parts_and_keeps_unlisted_fields() -> None:
     p = sat15()
     old = p.parts["EX-DSUB-9-F"]
-    table = [["id", "status"], ["EX-DSUB-9-F", "OK"], ["EX-DSUB-9-F", "REJECTED"]]
+    table = [["id", "status"], ["EX-DSUB-9-F", "REJECTED"]]
     plan = plan_parts_import(
         p, table, {"id": 0, "approval": 1}, approved=["ok"], rejected=["rejected"]
     )
-    assert [r.action for r in plan.rows] == ["updated", "updated"] and len(
-        plan.ops
-    ) == 1  # the last row for a part wins
+    assert [r.action for r in plan.rows] == ["updated"] and len(plan.ops) == 1
     History(p).execute("import", plan.ops)
     new = p.parts["EX-DSUB-9-F"]
     assert (

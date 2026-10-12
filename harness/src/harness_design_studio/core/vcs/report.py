@@ -13,11 +13,27 @@ EVENTS = {
 }
 
 
+def one_line(text: str) -> str:
+    """A comment with its line breaks and runs of spaces collapsed, so that it cannot look like a
+    separate entry in a table or in the report."""
+    return " ".join(text.split())
+
+
 def changelog_rows(project: Project, harness_id: str | None = None) -> list[list[str]]:
     rows = [LOG_HEADER]
     for e in sorted(project.changelog.values(), key=lambda x: x.id):
         if harness_id is None or e.harness_id == harness_id:
-            rows.append([e.id, e.harness_id, e.revision, EVENTS[e.kind], e.by, e.when, e.comment])
+            rows.append(
+                [
+                    e.id,
+                    e.harness_id,
+                    e.revision,
+                    EVENTS[e.kind],
+                    one_line(e.by),
+                    e.when,
+                    one_line(e.comment),
+                ]
+            )
     return rows
 
 
@@ -56,9 +72,9 @@ def revision_report(project: Project, stamp_line: str) -> str:
         for e in sorted(
             (e for e in project.changelog.values() if e.harness_id == hid), key=lambda x: x.id
         ):
-            tail = f": {e.comment}" if e.comment else ""
+            tail = f": {one_line(e.comment)}" if e.comment else ""
             lines.append(
-                f"- {e.when}, {e.by}: revision {e.revision} {EVENTS[e.kind]}{tail} (`{e.id}`)"
+                f"- {e.when}, {one_line(e.by)}: revision {e.revision} {EVENTS[e.kind]}{tail} (`{e.id}`)"
             )
         bases = baselines_of(project, hid)
         for a, b in zip(bases, bases[1:], strict=False):

@@ -1,16 +1,19 @@
 """`harness` command line entry point.
 
-Exit codes: 0 ok (warnings allowed), 1 the project has errors, 2 usage error or unreadable project.
+Exit codes: 0 ok (warnings allowed), 1 the project has errors or the step is blocked, 2 usage error
+or unreadable project, 130 interrupted (Ctrl-C).
 """
 
 import argparse
 import contextlib
+import os
 import sys
 from collections.abc import Iterator, Sequence
 from pathlib import Path
+from typing import Any
 
 from harness_design_studio import __version__
-from harness_design_studio.cli import changes, data, start
+from harness_design_studio.cli import blocked_text, changes, data, start
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError, TransactionError
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, load_project, non_canonical_files
@@ -194,11 +197,63 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command is None:
         parser.print_usage(sys.stderr)
         return 2
+    real_stdout = sys.stdout
+    sys.stdout = guard = _PipeGuard(real_stdout)
+    try:
+        return _run(args)
+    finally:
+        guard.flush()
+        sys.stdout = real_stdout
+        if guard.broken:
+            _silence(real_stdout)
+
+
+class _PipeGuard:
+    """Stands in for stdout. When the reader goes away (`harness generate | head -1`) the output
+    is dropped and the command still finishes, so that it saves what it was asked to save."""
+
+    def __init__(self, inner: Any) -> None:
+        self._inner = inner
+        self.broken = False
+
+    def write(self, text: str) -> int:
+        if not self.broken:
+            try:
+                return int(self._inner.write(text))
+            except BrokenPipeError:
+                self.broken = True
+        return len(text)
+
+    def flush(self) -> None:
+        if not self.broken:
+            try:
+                self._inner.flush()
+            except BrokenPipeError:
+                self.broken = True
+
+    def __getattr__(self, name: str) -> Any:
+        return getattr(self._inner, name)
+
+
+def _silence(stream: Any) -> None:
+    """Point the closed standard output at the null device so that the interpreter does not
+    complain about the unwritten rest when it exits."""
+    with contextlib.suppress(OSError, ValueError, AttributeError):
+        os.dup2(os.open(os.devnull, os.O_WRONLY), stream.fileno())
+
+
+def _run(args: argparse.Namespace) -> int:
     try:
         with _project_lock(args):
             return _dispatch(args)
+    except KeyboardInterrupt:
+        print(
+            "interrupted. If it was saving, run `harness validate` to check the project.",
+            file=sys.stderr,
+        )
+        return 130
     except (ProjectLockedError, TransactionError) as exc:  # blocked, not misused
-        print(f"error: {exc} {' '.join(getattr(exc, 'problems', []))}".strip(), file=sys.stderr)
+        print(blocked_text(exc), file=sys.stderr)
         return 1
     except HarnessError as exc:
         print(f"error: {exc}", file=sys.stderr)

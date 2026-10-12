@@ -10,7 +10,9 @@ entry, and locks the harness (see `locks`). The only way to change it afterwards
 revision, which keeps the old baseline.
 """
 
+import os
 import re
+import unicodedata
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -53,6 +55,7 @@ class Blocker:
     code: str
     message: str
     object_id: str | None = None
+    about: str | None = None  # the input it is about: "by", "comment", "checker", "reason"
 
 
 @dataclass
@@ -102,21 +105,56 @@ def _entry(
     )
 
 
+def text_blockers(
+    value: str | None, about: str, what: str, *, limit: int = 200, one_line: bool = True
+) -> list[Blocker]:
+    """A name, comment or reason must be plain text of a sensible length. Names are one line;
+    comments may have line breaks (the reports show them as one line)."""
+    if value is None:
+        return []
+    allowed = "" if one_line else "\n\t"  # what the data model accepts in a text
+    bad = any(
+        (unicodedata.category(c) in ("Cc", "Cs") and c not in allowed) or c in "\ufffe\uffff"
+        for c in value
+    )
+    if bad:
+        kind = "control characters" if not one_line else "control characters or line breaks"
+        return [Blocker(f"{about}_invalid", f"{what} must not contain {kind}.", about=about)]
+    if len(value.strip()) > limit:
+        return [
+            Blocker(
+                f"{about}_long",
+                f"{what} is longer than {limit} characters; shorten it.",
+                about=about,
+            )
+        ]
+    return []
+
+
 def _common(project: Project, hid: str, by: str, comment: str | None, when: str) -> list[Blocker]:
     out: list[Blocker] = []
     if hid not in project.harnesses:
         return [Blocker("no_harness", f"Harness {hid} does not exist.", hid)]
     if not by.strip():
-        out.append(Blocker("no_name", "Enter your name; it is recorded in the change log."))
-    if comment is not None and len(comment.strip()) < MIN_COMMENT:
         out.append(
-            Blocker(
-                "comment_short",
-                f"The comment needs at least {MIN_COMMENT} characters: say what changed or why.",
+            Blocker("no_name", "Enter your name; it is recorded in the change log.", about="by")
+        )
+    else:
+        out.extend(text_blockers(by, "by", "The name"))
+    if comment is not None:
+        if len(comment.strip()) < MIN_COMMENT:
+            out.append(
+                Blocker(
+                    "comment_short",
+                    f"The comment needs at least {MIN_COMMENT} characters: say what changed or why.",
+                    about="comment",
+                )
             )
+        out.extend(
+            text_blockers(comment, "comment", "The comment", limit=MAX_COMMENT, one_line=False)
         )
     if not valid_date(when):
-        out.append(Blocker("bad_date", "The date must look like 2026-03-31."))
+        out.append(Blocker("bad_date", "The date must look like 2026-03-31.", about="date"))
     return out
 
 
@@ -134,7 +172,8 @@ def placeholder_blockers(project: Project, accept_placeholders: str | None) -> l
                 f"These configuration files are still placeholders: {listed}. Have an engineer "
                 'review the values and set "placeholder" to false in each file '
                 "(`harness config DIR` lists them). Or release on placeholders with a written "
-                "reason; the reason is kept in the change log.",
+                "reason (command line: --accept-placeholders REASON); the reason is kept in the "
+                "change log.",
             )
         ]
     if len(accept_placeholders.strip()) < MIN_COMMENT:
@@ -187,7 +226,8 @@ def part_blockers(project: Project, h: Harness, accept_unapproved: str | None) -
                 "parts_unapproved",
                 f"{len(ids)} part(s) used by {h.id} are not approved (or are example data): "
                 f"{_listed(ids)}. Approve them in the parts list, or release with a written "
-                "reason; the reason is kept in the change log.",
+                "reason (command line: --accept-unapproved-parts REASON); the reason is kept "
+                "in the change log.",
                 h.id,
             )
         ]
@@ -224,6 +264,7 @@ def release_blockers(
     outputs_folder: Path | None,
     accept_placeholders: str | None = None,
     accept_unapproved_parts: str | None = None,
+    checker: str | None = None,
 ) -> list[Blocker]:
     out = _common(project, hid, by, comment, when)
     h = project.harnesses.get(hid)
@@ -234,12 +275,18 @@ def release_blockers(
     notes = placeholder_note(project, by, accept_placeholders) + part_note(
         project, h, by, accept_unapproved_parts
     )
-    if len(comment.strip() + notes) > MAX_COMMENT:
+    out.extend(text_blockers(accept_placeholders, "reason", "The reason for releasing on placeholders", limit=MAX_COMMENT, one_line=False))  # fmt: skip
+    out.extend(text_blockers(accept_unapproved_parts, "reason", "The reason for releasing with parts that are not approved", limit=MAX_COMMENT, one_line=False))  # fmt: skip
+    out.extend(text_blockers(checker, "checker", "The checker's name"))
+    if len(comment.strip() + notes) > MAX_COMMENT and not any(
+        b.code == "comment_long" for b in out
+    ):
         out.append(
             Blocker(
                 "comment_long",
                 f"The comment (with the reason for releasing on placeholders) is longer than "
                 f"{MAX_COMMENT} characters; shorten it.",
+                about="comment",
             )
         )
     if h.status == "released":
@@ -308,6 +355,24 @@ def release_blockers(
     return out
 
 
+def _linked_or_read_only(folder: Path) -> str:
+    """Why the outputs cannot be written again after the release (the status in the title blocks
+    is stamped by a second export), or '' if they can. Checked before anything is committed."""
+    if folder.is_symlink() or any(
+        (Path(root) / d).is_symlink() for root, dirs, _ in os.walk(folder) for d in dirs
+    ):
+        return (
+            "The outputs folder (or a folder in it) is a link, so the released status could not "
+            "be written into the outputs. Replace the link with a real folder and export again."
+        )
+    if folder.is_dir() and not os.access(folder, os.W_OK | os.X_OK):
+        return (
+            "The outputs folder cannot be written, so the released status could not be stamped "
+            "into the outputs. Make it writable and export again."
+        )
+    return ""
+
+
 def outputs_blockers(
     project: Project, folder: Path | None, hid: str | None = None
 ) -> list[Blocker]:
@@ -324,6 +389,9 @@ def outputs_blockers(
                 "Save the project to a folder and export the outputs before releasing.",
             )
         ]
+    linked = _linked_or_read_only(folder)
+    if linked:
+        return [Blocker("outputs_linked", linked)]
     state = outputs_content_state(project, folder)
     if state == "none":
         return [
@@ -374,6 +442,7 @@ def plan_release(
     blockers = release_blockers(
         project, hid, by=by, comment=comment, when=when, outputs_folder=outputs_folder,
         accept_placeholders=accept_placeholders, accept_unapproved_parts=accept_unapproved_parts,
+        checker=checker,
     )  # fmt: skip
     plan = ReleasePlan(blockers=blockers, label=f"Release {hid}")
     if blockers:
