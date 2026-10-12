@@ -9,6 +9,7 @@ Generated from the program by `python -m tools.gen_cli_docs`; do not edit by han
 | 0 | success (warnings are allowed) |
 | 1 | the project has errors, or a step is blocked (for example a release) |
 | 2 | usage error, or a project or file that could not be read |
+| 130 | interrupted with Ctrl-C |
 
 Every command that changes a project takes the same lock as the app, so the two never write at once. Commands that import data accept `--dry-run`: they show what they would do and change nothing.
 
@@ -250,7 +251,7 @@ harness import-parts my-design connectors.xlsx --approved Yes --category connect
 
 ### harness import-lengths
 
-Import segment lengths, for example exported from the mechanical CAD (KiCad users: see docs/IMPORTS.md).
+Import segment lengths, for example exported from the mechanical CAD. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).
 
 `harness import-lengths project file [options]`
 
@@ -269,7 +270,7 @@ harness import-lengths my-design lengths.csv --unit mm --dry-run
 
 ### harness import-netlist
 
-Create or update the box connectors of one unit from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. See docs/KICAD.md.
+Create or update the box connectors of one unit from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The user guide has a chapter on it.
 
 `harness import-netlist project netlist [options]`
 

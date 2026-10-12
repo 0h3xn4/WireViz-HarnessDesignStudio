@@ -5,6 +5,7 @@ import sys
 from datetime import date
 from pathlib import Path
 
+from harness_design_studio.cli import blocked_text
 from harness_design_studio.core.commands import History
 from harness_design_studio.core.errors import HarnessError, SaveError
 from harness_design_studio.core.io.loader import load_project
@@ -19,6 +20,10 @@ from harness_design_studio.core.vcs.release import (
 from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, working_diff
 
 COMMANDS = ("review", "release", "revise", "diff", "compare", "log")
+OPTIONS = {
+    "by": "--by", "comment": "--comment", "checker": "--checker", "date": "--date",
+    "reason": "--accept-placeholders / --accept-unapproved-parts",
+}  # fmt: skip
 
 
 def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None:
@@ -83,14 +88,23 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     log.add_argument("harness", nargs="?", default=None, help="limit to one harness")
 
 
+NOT_COMPARED = (
+    "Not compared: the generation record, the contents of baselines (only their revision, date, "
+    "name, comment and hash), and the files of the outputs folders."
+)
+
+
 def _today(value: str | None) -> str:
-    return value or date.today().isoformat()
+    """An empty --date is a mistake (the date check names it), not a request for today."""
+    return date.today().isoformat() if value is None else value
 
 
 def _apply(path: Path, plan: ReleasePlan) -> int:
     if not plan.ok:
         for b in plan.blockers:
-            print(f"blocked: [{b.code}] {b.message}", file=sys.stderr)
+            option = OPTIONS.get(b.about or "")
+            where = f"{option}: " if option else ""
+            print(f"blocked: [{b.code}] {where}{b.message}", file=sys.stderr)
         return 2 if any(b.code == "no_harness" for b in plan.blockers) else 1
     return 0
 
@@ -105,6 +119,7 @@ def run(args: argparse.Namespace) -> int:
             ),
             end="",
         )
+        print(NOT_COMPARED)
         return 0
     project = load_project(args.project).project
     if cmd == "log":
@@ -144,12 +159,18 @@ def run(args: argparse.Namespace) -> int:
         History(project).execute(plan.label, plan.ops)
         save_project(project, args.project)
     except HarnessError as exc:
-        print(f"error: {exc} {' '.join(getattr(exc, 'problems', []))}".strip(), file=sys.stderr)
+        print(blocked_text(exc), file=sys.stderr)
         return 2 if isinstance(exc, SaveError) else 1
     print(f"{plan.label}: done.")
     if cmd == "release":
         return _restamp(args.project)
     return 0
+
+
+RESTAMP_HINT = (
+    "The release was recorded (see `harness log`); only the outputs still show the old status. "
+    "Fix the problem, then run `harness export` to re-stamp them."
+)
 
 
 def _restamp(path: Path) -> int:
@@ -161,17 +182,29 @@ def _restamp(path: Path) -> int:
     )
     from harness_design_studio.core.outputs.verify import verify_outputs
 
-    project = load_project(path).project
-    built = build_outputs(project)
-    if not verify_outputs(project, built.files).ok:
-        print(
-            "error: the re-exported outputs failed their independent check; nothing was written.",
-            file=sys.stderr,
-        )
-        return 1
-    write_outputs(project, path / DEFAULT_FOLDER, built)
+    try:
+        project = load_project(path).project
+        built = build_outputs(project)
+        if not verify_outputs(project, built.files).ok:
+            print(
+                "error: the re-exported outputs failed their independent check; nothing was written.",
+                file=sys.stderr,
+            )
+            print(RESTAMP_HINT, file=sys.stderr)
+            return 1
+        write_outputs(project, path / DEFAULT_FOLDER, built)
+    except (HarnessError, OSError) as exc:
+        print(f"error: the outputs could not be re-stamped ({_why(exc)}).", file=sys.stderr)
+        print(RESTAMP_HINT, file=sys.stderr)
+        return 2
     print(f"Outputs re-exported with the released status ({len(built.files)} files).")
     return 0
+
+
+def _why(exc: Exception) -> str:
+    if isinstance(exc, OSError):
+        return exc.strerror or "file problem"
+    return str(exc).rstrip(".")
 
 
 def _diff(project: "object", args: argparse.Namespace) -> int:
