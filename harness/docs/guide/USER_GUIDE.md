@@ -120,7 +120,7 @@ The quick checks run on every edit. The design rules (33 of them) run in the bac
 
 ## 8. Outputs
 
-`outputs/` contains, for every harness: drawing (SVG and PDF, A3 and A4), wire list, pinouts, BOM, mass and length, continuity and isolation tests, labels, a WireViz-style YAML file and an Excel workbook. For the whole system: block diagram, harness overview, BOM, mating and traceability matrices, DRC report, change log, revision report, and one JSON file with the whole model. Every file carries the tool version and a model hash. The Harness plans tab shows whether the outputs are up to date. Details are in `docs/OUTPUTS.md` in the repository (it is not installed with the app).
+`outputs/` contains, for every harness: drawing (SVG for the A3 sheets, PDF for A3 and A4), wire list, pinouts, BOM, mass and length, continuity and isolation tests, labels, a WireViz-style YAML file and an Excel workbook. For the whole system: block diagram, harness overview, BOM, mating and traceability matrices, DRC report, change log, revision report, and one JSON file with the whole model. Every file carries the tool version and a model hash. The Harness plans tab shows whether the outputs are up to date. Details are in `docs/OUTPUTS.md` in the repository (it is not installed with the app).
 
 Outputs are checked independently before they are written. If that check fails, nothing is written. The `outputs` folder is always safe to delete and make again.
 
