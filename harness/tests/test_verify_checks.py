@@ -1,4 +1,4 @@
-"""REQ-GEN-04: each check of the independent verifier fires on its own mutation, and the verifier
+"""Each check of the independent verifier fires on its own mutation, and the verifier
 and the design rule check never raise on a damaged project (a missing check cannot go unnoticed)."""
 
 from collections.abc import Callable

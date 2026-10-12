@@ -293,3 +293,139 @@ def test_a_plain_twisted_pair_is_not_a_shield_and_never_raises_shield_findings()
     assert plain
     for rule in ("shield-unterminated", "shield-wrong-end", "shield-bonding", "shield-parts"):
         assert not any(f.object_id.split(".")[-1] in plain for f in t.fire(rule, p)), rule
+
+
+# ---- a temperature error belongs to the harness that uses the part (audit C-5) --------------------
+
+
+def _temperature_blockers(p: Project, harness_id: str) -> list[Any]:
+    from harness_design_studio.core.vcs.release import release_blockers
+
+    blockers = release_blockers(
+        p,
+        harness_id,
+        by="x",
+        comment="release it please now",
+        when="2026-01-01",
+        outputs_folder=None,
+    )
+    return [b for b in blockers if b.code == "rule_error" and "temperature" in b.message]
+
+
+def test_connector_temperature_error_blocks_the_harness_using_the_part() -> None:
+    p = t.pos_temperature_margin()
+    h, w = t.wire_of(p, "power")
+    assert _temperature_blockers(p, h.id)
+    others = [x for x in p.harnesses if x != h.id]
+    assert any(not _temperature_blockers(p, x) for x in others)  # not every harness is blocked
+
+
+def test_wire_temperature_error_blocks_the_harness_using_the_wire_part() -> None:
+    p = t.base()
+    t.set_cfg(p, "derating", max_ambient_temperature_c=100.0, wire_temperature_margin_c=30.0)
+    h, w = t.wire_of(p, "power")
+    t.set_part(p, w.part_id or "", max_temp_c=120.0)
+    found = hits("temperature-margin", p)
+    assert w.id in found
+    assert _temperature_blockers(p, h.id)
+
+
+def test_temperature_findings_name_the_connector_or_wire_that_uses_the_part() -> None:
+    p = t.pos_temperature_margin()
+    for f in t.fire("temperature-margin", p):
+        assert drc.locate(p, f.object_id) is not None, f.object_id
+
+
+# ---- checks that could not run say so (audit C-6, C-7, C-18) -------------------------------------
+
+
+def _notes(p: Project) -> str:
+    return " | ".join(f.title for f in drc.run(p) if f.rule == "unchecked-config")
+
+
+def _power_wire_with_current(p: Project, amps: float = 3.0, **wire_fields: Any) -> Any:
+    h, w = t.wire_of(p, "power")
+    i = p.interfaces[w.interface_id or ""]
+    apply_ops(p, [Put("interfaces", evolve(i, max_current_a=amps))])
+    t.put_harness(p, h, wires=[evolve(x, **wire_fields) if x.id == w.id else x for x in h.wires])
+    return p.harnesses[h.id], w
+
+
+def test_a_bundle_table_without_an_entry_for_the_wire_count_is_named_as_not_checked() -> None:
+    p = t.base()
+    t.full_config(p)
+    t.set_cfg(p, "derating", bundle_factor_by_count={"1": 1.0})
+    h, w = _power_wire_with_current(p, 500.0, gauge_awg=20)
+    assert len(h.wires) > 1
+    assert hits("bundle-current", p) == [] and hits("current-over-wire", p) == []
+    text = _notes(p)
+    assert "bundle factors has no entry" in text
+    assert f"{h.id} ({len(h.wires)} wires)" in text
+
+
+def test_a_bundle_table_that_covers_every_harness_adds_no_such_note() -> None:
+    p = t.base()
+    t.full_config(p)
+    t.set_cfg(p, "derating", bundle_factor_by_count={"300": 0.5})
+    _power_wire_with_current(p, 1.0, gauge_awg=20)
+    assert "bundle factors has no entry" not in _notes(p)
+
+
+def test_wires_without_a_gauge_are_named_as_not_checked_for_current() -> None:
+    p = t.base()
+    t.full_config(p)
+    h, w = _power_wire_with_current(p, 500.0, gauge_awg=None)
+    assert hits("current-over-wire", p) == []
+    text = _notes(p)
+    assert "Wire current was not checked for" in text and "without a gauge" in text
+
+
+def test_voltage_drop_names_wires_without_gauge_or_length() -> None:
+    p = t.base()
+    t.full_config(p)
+    t.set_cfg(p, "derating", max_voltage_drop_v=0.0001)
+    h, w = _power_wire_with_current(p, 3.0, gauge_awg=None, length_m=None)
+    t.put_harness(p, h, wires=[evolve(x, length_m=None) for x in h.wires], segments=[])
+    text = _notes(p)
+    assert "Voltage drop was not checked for" in text
+    assert "without a gauge" in text and "without a length" in text
+
+
+def test_voltage_drop_with_everything_known_adds_no_such_note() -> None:
+    p = t.base()
+    t.full_config(p)
+    t.set_cfg(p, "derating", max_voltage_drop_v=1000.0)
+    h, _w = _power_wire_with_current(p, 3.0)
+    t.put_harness(p, h, wires=[evolve(x, gauge_awg=20, length_m=2.0) for x in h.wires])
+    assert "Voltage drop was not checked for" not in _notes(p)
+
+
+def test_voltage_drop_is_checked_for_gauge_zero() -> None:
+    p = t.base()
+    t.full_config(p)
+    t.set_cfg(p, "derating", max_voltage_drop_v=0.0001)
+    h, w = _power_wire_with_current(p, 3.0, gauge_awg=0, length_m=50.0)
+    assert w.id in hits("voltage-drop", p)
+
+
+def test_temperature_margins_that_are_not_set_are_named() -> None:
+    p = t.base()
+    t.set_cfg(p, "derating", max_ambient_temperature_c=100.0)
+    text = _notes(p)
+    assert "connector_temperature_margin_c" in text and "wire_temperature_margin_c" in text
+
+
+def test_parts_without_a_maximum_temperature_are_named_as_not_checked() -> None:
+    p = t.base()
+    t.set_cfg(
+        p,
+        "derating",
+        max_ambient_temperature_c=100.0,
+        connector_temperature_margin_c=30.0,
+        wire_temperature_margin_c=30.0,
+    )
+    text = _notes(p)
+    h, w = t.wire_of(p, "power")
+    assert "Temperature margin was not checked for connector part(s)" in text
+    assert f"Temperature margin was not checked for wire part(s) {w.part_id}" in text
+    assert "no max_temp_c rating" in text

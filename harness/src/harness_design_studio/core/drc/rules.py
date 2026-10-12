@@ -271,7 +271,9 @@ def _voltage_drop(project: Project) -> Iterator[Hit]:
             i = project.interfaces.get(w.interface_id or "")
             itype = project.interface_types.get(i.type_id) if i else None
             length = wire_length(h, w)
-            if not (i and itype and i.max_current_a is not None and length and w.gauge_awg):
+            if not (
+                i and itype and i.max_current_a is not None and length and w.gauge_awg is not None
+            ):
                 continue
             if not 0 <= w.gauge_awg <= 40:  # a hand-edited gauge must not stop the whole check
                 yield Hit(
@@ -450,6 +452,68 @@ def _released_modified(project: Project) -> Iterator[Hit]:
 # ---- what could not be checked ---------------------------------------------------------------------
 
 
+def _carries_current(project: Project, w: Wire) -> bool:
+    i = project.interfaces.get(w.interface_id or "")
+    return i is not None and i.max_current_a is not None
+
+
+def _current_gaps(project: Project, table: dict[int, float] | None) -> Iterator[Hit]:
+    """Wires the current checks skipped for lack of a bundle factor or a gauge."""
+    if table is None:
+        return  # the placeholder note already says that no current limit was checked
+    d = cfg(project, "derating")
+    by_count = d.get("bundle_factor_by_count")
+    if isinstance(by_count, dict) and by_count:
+        short = [
+            f"{h.id} ({len(h.wires)} wires)"
+            for h in sorted(project.harnesses.values(), key=lambda x: x.id)
+            if any(_carries_current(project, w) for w in h.wires)
+            and bundle_k(by_count, len(h.wires)) is None
+        ]
+        if short:
+            yield Hit(
+                "bundle-factor",
+                f"Wire and bundle current were not checked for {', '.join(short)}: the table of bundle factors has no entry for that many wires",
+            )
+    no_gauge = sorted(
+        w.id
+        for h in project.harnesses.values()
+        for w in h.wires
+        if w.gauge_awg is None and _carries_current(project, w)
+    )
+    if no_gauge:
+        yield Hit(
+            "wire-gauge",
+            f"Wire current was not checked for {len(no_gauge)} wire(s) without a gauge (first: {no_gauge[0]})",
+        )
+
+
+def _voltage_drop_gaps(project: Project) -> Iterator[Hit]:
+    """Wires the voltage-drop check skipped for lack of a gauge or a length."""
+    limit = number(cfg(project, "derating").get("max_voltage_drop_v"))
+    rho = number(cfg(project, "generation").get("conductor_resistivity_ohm_m"))
+    if limit is None or rho is None:
+        return  # the placeholder note already says that the check did not run
+    no_gauge: list[str] = []
+    no_length: list[str] = []
+    for h in sorted(project.harnesses.values(), key=lambda x: x.id):
+        for w in h.wires:
+            i = project.interfaces.get(w.interface_id or "")
+            if not (i and i.type_id in project.interface_types and i.max_current_a is not None):
+                continue
+            if w.gauge_awg is None:
+                no_gauge.append(w.id)
+            if wire_length(h, w) is None:
+                no_length.append(w.id)
+    if no_gauge or no_length:
+        parts = []
+        if no_gauge:
+            parts.append(f"{len(no_gauge)} wire(s) without a gauge (first: {no_gauge[0]})")
+        if no_length:
+            parts.append(f"{len(no_length)} wire(s) without a length (first: {no_length[0]})")
+        yield Hit("voltage-drop-wires", f"Voltage drop was not checked for {' and '.join(parts)}")
+
+
 def _unchecked(project: Project) -> Iterator[Hit]:
     d, g = cfg(project, "derating"), cfg(project, "generation")
     has_current = any(i.max_current_a is not None for i in project.interfaces.values())
@@ -478,6 +542,7 @@ def _unchecked(project: Project) -> Iterator[Hit]:
                 "derating-gauge",
                 f"Wire current was not checked for AWG {', '.join(str(g) for g in missing_gauges)}: the ampacity table has no value for it",
             )
+    yield from _current_gaps(project, table)
     if number(d.get("contact_current_factor")) is not None:
         unrated = sorted(
             {
@@ -502,6 +567,7 @@ def _unchecked(project: Project) -> Iterator[Hit]:
             "voltage-drop",
             "Voltage drop was not checked: the limit or the conductor resistivity is still a placeholder",
         )
+    yield from _voltage_drop_gaps(project)
     if any(h.shields for h in project.harnesses.values()) and None in (
         g.get("shield_end_a"),
         g.get("shield_end_b"),
