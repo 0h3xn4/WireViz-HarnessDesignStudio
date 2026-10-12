@@ -9,6 +9,7 @@ import pytest
 from harness_design_studio.cli.main import main as cli_main
 from harness_design_studio.core.imports import ImportError_, parse_csv, read_table, read_table_sheet
 from harness_design_studio.core.io.saver import save_project
+from harness_design_studio.core.model import Project
 from harness_design_studio.core.samples import mini3
 
 # ---- E-1: a stray quote must not swallow the rows after it ----------------------------------------
@@ -167,7 +168,7 @@ def test_a_sound_project_still_works(tmp_path: Path) -> None:
 # ---- D-1: lengths keep their digits in the data files ---------------------------------------------
 
 
-def _exports_cleanly(project):  # type: ignore[no-untyped-def]
+def _exports_cleanly(project: Project) -> dict[str, bytes]:
     from harness_design_studio.core.outputs.build import build_outputs
     from harness_design_studio.core.outputs.verify import verify_outputs
 
@@ -177,7 +178,7 @@ def _exports_cleanly(project):  # type: ignore[no-untyped-def]
     return files
 
 
-def _with_lengths(*lengths: float):  # type: ignore[no-untyped-def]
+def _with_lengths(*lengths: float) -> Project:
     from harness_design_studio.core.model import evolve
 
     p = mini3()

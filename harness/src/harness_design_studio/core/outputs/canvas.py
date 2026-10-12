@@ -67,6 +67,7 @@ class Text:
     bold: bool = False
     anchor: str = "start"  # start | middle | end
     color: str = "#000000"
+    ref: str = ""  # an optional label for the output check, written as data-ref in the SVG
 
     @property
     def left(self) -> float:
@@ -138,9 +139,10 @@ def to_svg(sheet: Sheet, metadata: str) -> bytes:
             )
         else:
             weight = ' font-weight="bold"' if it.bold else ""
+            ref = f' data-ref="{escape(it.ref).replace(chr(34), "&quot;")}"' if it.ref else ""
             out.append(
                 f'<text x="{_n(it.x)}" y="{_n(it.y)}" font-size="{_n(it.size)}"{weight} '
-                f'text-anchor="{it.anchor}" fill="{it.color}">{escape(it.s)}</text>'
+                f'text-anchor="{it.anchor}" fill="{it.color}"{ref}>{escape(it.s)}</text>'
             )
     out.append("</svg>")
     return ("\n".join(out) + "\n").encode()

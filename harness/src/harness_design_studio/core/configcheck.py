@@ -123,6 +123,7 @@ def validate(project: Project) -> list[Issue]:
                 bad(n, 'must be a list of pairs of names, for example [["A", "B"]]')
         elif n.key == "ampacity_a_by_awg":
             out.extend(_validate_ampacity(n, v))
+    out.extend(validate_titleblock(project))
     out.extend(standard_profiles.validate(project))
     return out
 
@@ -219,3 +220,53 @@ def report(project: Project) -> tuple[str, bool]:
             f"Waiting for an owner decision: config/{name}.json is a placeholder until {decisions[name]} is made."
         )
     return "\n".join(lines), not todo and not problems
+
+
+TITLEBLOCK_FIELDS = (
+    "project", "harness_id", "title", "revision", "date", "author", "checker", "approver",
+    "sheet", "status",
+)  # fmt: skip
+TITLEBLOCK_DEFAULT = ("project", "harness_id", "title", "revision", "status", "sheet")
+
+
+def validate_titleblock(project: Project) -> list[Issue]:
+    """`titleblock.json` `fields` must be a list of known field names, each at most once. Any
+    of them may be left out (the sheet number too); a missing or empty list means the default."""
+    raw = _cfg(project, "titleblock").get("fields")
+    if raw is None:
+        return []
+    where = "config/titleblock.json"
+
+    def err(why: str) -> list[Issue]:
+        return [
+            Issue(
+                "error",
+                "config_invalid",
+                f"{where}: fields {why}. The fields are: {', '.join(TITLEBLOCK_FIELDS)}.",
+                where,
+                "titleblock.fields",
+            )
+        ]
+
+    if not isinstance(raw, list):
+        return err("must be a list of field names")
+    for f in raw:
+        if not isinstance(f, str):
+            return err("must contain only field names written as text")
+    unknown = [f for f in raw if f not in TITLEBLOCK_FIELDS]
+    if unknown:
+        shown = ", ".join(f"'{f[:30]}'" for f in unknown[:3])
+        return err(f"names a field that does not exist ({shown})")
+    twice = sorted({f for f in raw if raw.count(f) > 1})
+    if twice:
+        return err(f"lists '{twice[0]}' more than once")
+    return []
+
+
+def titleblock_fields(project: Project) -> list[str]:
+    """The fields the title block shows, in order: the configured list when it is valid and not
+    empty, else the default. (An invalid list is reported by `validate_titleblock`.)"""
+    raw = _cfg(project, "titleblock").get("fields")
+    if validate_titleblock(project) or not isinstance(raw, list) or not raw:
+        return list(TITLEBLOCK_DEFAULT)
+    return [str(f) for f in raw]

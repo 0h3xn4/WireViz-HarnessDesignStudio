@@ -2,6 +2,7 @@
 
 import csv
 import io
+import re
 from dataclasses import dataclass
 
 from harness_design_studio import __version__
@@ -30,18 +31,24 @@ def stamp_of(project: Project) -> Stamp:
 Table = list[list[str]]  # first row is the header
 
 
+_TRIGGERS = ("=", "+", "-", "@", "\t", "\r")
+_PLAIN_NUMBER = re.compile(r"[+-]?(\d+\.?\d*|\.\d+)([eE][+-]?\d+)?")
+
+
 def _safe(cell: str) -> str:
-    """Spreadsheet programs run cells that start with = + - @ as formulas; mark such text."""
-    if cell[:1] in ("=", "+", "-", "@", "\t", "\r"):
-        try:
-            float(cell)
-        except ValueError:
-            return "'" + cell
+    """Spreadsheet programs run cells that start with = + - @ (or a tab or carriage return) as
+    formulas; mark such text with a leading apostrophe. A plain number such as -5 is left alone.
+    A cell that already starts with apostrophes followed by such a character gets one more, so
+    `_unsafe` can always undo exactly one."""
+    core = cell.lstrip("'")
+    if core[:1] in _TRIGGERS and (core != cell or not _PLAIN_NUMBER.fullmatch(cell)):
+        return "'" + cell
     return cell
 
 
 def _unsafe(cell: str) -> str:
-    return cell[1:] if cell[:1] == "'" and cell[1:2] in ("=", "+", "-", "@", "\t", "\r") else cell
+    """Inverse of `_safe`."""
+    return cell[1:] if cell[:1] == "'" and cell.lstrip("'")[:1] in _TRIGGERS else cell
 
 
 def csv_bytes(table: Table, stamp: Stamp) -> bytes:

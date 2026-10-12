@@ -149,7 +149,7 @@ def test_a_wire_with_both_ends_on_one_side_does_not_run_backwards_through_the_bl
     assert wire_ids_drawn(sheets(own)) == ["W1"]
 
 
-def test_a_long_pin_id_stays_inside_its_column() -> None:
+def test_a_long_pin_id_is_drawn_whole_and_stays_inside_its_column() -> None:
     long_id = "LONGPINNAME_B12"
     h = Harness(
         id="H1",
@@ -157,15 +157,11 @@ def test_a_long_pin_id_stays_inside_its_column() -> None:
         connectors=[conn("A", 1, ["SHIELD_GND_1"]), conn("B", 1, [long_id])],
         wires=[wire("W1", "A", "SHIELD_GND_1", "B", long_id)],
     )
+    drawn = {it.s for sh in sheets(h) for it in sh.items if isinstance(it, Text)}
+    assert {"SHIELD_GND_1", long_id} <= drawn  # never cut to "SHIELD~" (two pins looked alike)
     for it in (i for sh in sheets(h) for i in sh.items if isinstance(i, Text)):
-        if (
-            it.bold
-            and it.size == drawing.PIN_SIZE
-            and it.s != "W1"
-            and "~" in it.s
-            or it.s in ("SHIELD_GND_1", long_id)
-        ):
-            assert text_width(it.s, it.size) <= 10.5 + 0.01, it.s
+        if it.s in ("SHIELD_GND_1", long_id):
+            assert text_width(it.s, it.size) <= drawing.CONN_W - 2.5, it.s
 
 
 def test_long_shield_and_spare_pin_lines_are_wrapped_not_cut() -> None:

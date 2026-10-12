@@ -8,7 +8,8 @@
 <text x="8" y="17" font-size="2.8" text-anchor="start" fill="#555555">Revision A  status draft</text>
 <text x="9" y="26" font-size="2.6" font-weight="bold" text-anchor="start" fill="#000000">Routing (schematic, not to scale):</text>
 <line x1="50" y1="32.5" x2="84" y2="32.5" stroke="#000000" stroke-width="0.5"/>
-<text x="67" y="31.5" font-size="2.2" text-anchor="middle" fill="#555555">W002-L1 ? m</text>
+<text x="67" y="31.5" font-size="2.2" text-anchor="middle" fill="#555555">W002-L1</text>
+<text x="67" y="34.9" font-size="2.2" text-anchor="middle" fill="#555555">? m</text>
 <rect x="14" y="29" width="36" height="7" fill="#ffffff" stroke="#000000" stroke-width="0.4"/>
 <text x="15" y="33.6" font-size="2.6" font-weight="bold" text-anchor="start" fill="#000000">W002-P1</text>
 <rect x="84" y="29" width="36" height="7" fill="#ffffff" stroke="#000000" stroke-width="0.4"/>
@@ -20,16 +21,16 @@
 <text x="88" y="54.6" font-size="2.2" text-anchor="middle" fill="#555555">mates OBC-J01</text>
 <line x1="105" y1="55.7" x2="105" y2="72.5" stroke="#000000" stroke-width="0.25"/>
 <line x1="59" y1="59.9" x2="117" y2="59.9" stroke="#bbbbbb" stroke-width="0.2"/>
-<text x="60.5" y="58.7" font-size="2.5" text-anchor="start" fill="#000000">TX+</text>
-<text x="115.5" y="58.7" font-size="2.5" font-weight="bold" text-anchor="end" fill="#000000">1</text>
+<text x="60.5" y="58.7" font-size="2.5" text-anchor="start" fill="#000000" data-ref="sig/W002-P1/1">TX+</text>
+<text x="115.5" y="58.7" font-size="2.5" font-weight="bold" text-anchor="end" fill="#000000" data-ref="pin/W002-P1/1">1</text>
 <line x1="59" y1="64.1" x2="117" y2="64.1" stroke="#bbbbbb" stroke-width="0.2"/>
-<text x="60.5" y="62.9" font-size="2.5" text-anchor="start" fill="#000000">TX-</text>
-<text x="115.5" y="62.9" font-size="2.5" font-weight="bold" text-anchor="end" fill="#000000">2</text>
+<text x="60.5" y="62.9" font-size="2.5" text-anchor="start" fill="#000000" data-ref="sig/W002-P1/2">TX-</text>
+<text x="115.5" y="62.9" font-size="2.5" font-weight="bold" text-anchor="end" fill="#000000" data-ref="pin/W002-P1/2">2</text>
 <line x1="59" y1="68.3" x2="117" y2="68.3" stroke="#bbbbbb" stroke-width="0.2"/>
-<text x="60.5" y="67.1" font-size="2.5" text-anchor="start" fill="#000000">RX+</text>
-<text x="115.5" y="67.1" font-size="2.5" font-weight="bold" text-anchor="end" fill="#000000">3</text>
-<text x="60.5" y="71.3" font-size="2.5" text-anchor="start" fill="#000000">RX-</text>
-<text x="115.5" y="71.3" font-size="2.5" font-weight="bold" text-anchor="end" fill="#000000">4</text>
+<text x="60.5" y="67.1" font-size="2.5" text-anchor="start" fill="#000000" data-ref="sig/W002-P1/3">RX+</text>
+<text x="115.5" y="67.1" font-size="2.5" font-weight="bold" text-anchor="end" fill="#000000" data-ref="pin/W002-P1/3">3</text>
+<text x="60.5" y="71.3" font-size="2.5" text-anchor="start" fill="#000000" data-ref="sig/W002-P1/4">RX-</text>
+<text x="115.5" y="71.3" font-size="2.5" font-weight="bold" text-anchor="end" fill="#000000" data-ref="pin/W002-P1/4">4</text>
 <rect x="303" y="44" width="58" height="28.5" fill="#ffffff" stroke="#000000" stroke-width="0.35"/>
 <rect x="303" y="44" width="58" height="11.7" fill="#e6e6e6" stroke="#000000" stroke-width="0.35"/>
 <text x="332" y="46.8" font-size="2.8" font-weight="bold" text-anchor="middle" fill="#000000">W002-P2</text>
@@ -37,16 +38,16 @@
 <text x="332" y="54.6" font-size="2.2" text-anchor="middle" fill="#555555">mates RW1-J02</text>
 <line x1="315" y1="55.7" x2="315" y2="72.5" stroke="#000000" stroke-width="0.25"/>
 <line x1="303" y1="59.9" x2="361" y2="59.9" stroke="#bbbbbb" stroke-width="0.2"/>
-<text x="304.5" y="58.7" font-size="2.5" font-weight="bold" text-anchor="start" fill="#000000">1</text>
-<text x="316.5" y="58.7" font-size="2.5" text-anchor="start" fill="#000000">TX+</text>
+<text x="304.5" y="58.7" font-size="2.5" font-weight="bold" text-anchor="start" fill="#000000" data-ref="pin/W002-P2/1">1</text>
+<text x="316.5" y="58.7" font-size="2.5" text-anchor="start" fill="#000000" data-ref="sig/W002-P2/1">TX+</text>
 <line x1="303" y1="64.1" x2="361" y2="64.1" stroke="#bbbbbb" stroke-width="0.2"/>
-<text x="304.5" y="62.9" font-size="2.5" font-weight="bold" text-anchor="start" fill="#000000">2</text>
-<text x="316.5" y="62.9" font-size="2.5" text-anchor="start" fill="#000000">TX-</text>
+<text x="304.5" y="62.9" font-size="2.5" font-weight="bold" text-anchor="start" fill="#000000" data-ref="pin/W002-P2/2">2</text>
+<text x="316.5" y="62.9" font-size="2.5" text-anchor="start" fill="#000000" data-ref="sig/W002-P2/2">TX-</text>
 <line x1="303" y1="68.3" x2="361" y2="68.3" stroke="#bbbbbb" stroke-width="0.2"/>
-<text x="304.5" y="67.1" font-size="2.5" font-weight="bold" text-anchor="start" fill="#000000">3</text>
-<text x="316.5" y="67.1" font-size="2.5" text-anchor="start" fill="#000000">RX+</text>
-<text x="304.5" y="71.3" font-size="2.5" font-weight="bold" text-anchor="start" fill="#000000">4</text>
-<text x="316.5" y="71.3" font-size="2.5" text-anchor="start" fill="#000000">RX-</text>
+<text x="304.5" y="67.1" font-size="2.5" font-weight="bold" text-anchor="start" fill="#000000" data-ref="pin/W002-P2/3">3</text>
+<text x="316.5" y="67.1" font-size="2.5" text-anchor="start" fill="#000000" data-ref="sig/W002-P2/3">RX+</text>
+<text x="304.5" y="71.3" font-size="2.5" font-weight="bold" text-anchor="start" fill="#000000" data-ref="pin/W002-P2/4">4</text>
+<text x="316.5" y="71.3" font-size="2.5" text-anchor="start" fill="#000000" data-ref="sig/W002-P2/4">RX-</text>
 <rect x="162" y="44.45" width="96" height="39.3" fill="none" stroke="#555555" stroke-width="0.3" stroke-dasharray="1.5 1"/>
 <text x="210" y="47.25" font-size="2.8" font-weight="bold" text-anchor="middle" fill="#000000">W002-P1 - W002-P2</text>
 <text x="210" y="51.15" font-size="2.2" text-anchor="middle" fill="#555555">4x  pending  length n/a</text>
