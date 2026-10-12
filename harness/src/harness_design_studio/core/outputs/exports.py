@@ -8,15 +8,13 @@ import zipfile
 from datetime import datetime
 from typing import Any
 
-from openpyxl import Workbook
-from openpyxl.cell import WriteOnlyCell
-from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE
-
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Harness, Project
 
+from .errors import OutputsError
 from .stamp import Stamp, Table
 from .tables import data_num
+from .xlsx_env import ILLEGAL_CHARACTERS_RE, Workbook, WriteOnlyCell
 
 JSON_FORMAT = "harness-design-studio-export"
 JSON_VERSION = 1
@@ -62,6 +60,13 @@ def json_export(project: Project, stamp: Stamp) -> bytes:
     def dump(objs: object) -> list[object]:
         return [o.model_dump(mode="json") for o in sorted(objs, key=lambda x: x.id)]  # type: ignore[call-overload]
 
+    def harness_dump(h: Harness) -> dict[str, Any]:
+        """As saved: the lists of a harness are in ID order, whatever order it was built in."""
+        data = h.model_dump(mode="json")
+        for key in ("connectors", "wires", "splices", "shields", "branch_points", "segments"):
+            data[key] = sorted(data[key], key=lambda x: x["id"])
+        return data
+
     doc = {
         "format": JSON_FORMAT,
         "format_version": JSON_VERSION,
@@ -73,7 +78,9 @@ def json_export(project: Project, stamp: Stamp) -> bytes:
         "interface_types": dump(project.interface_types.values()),
         "interfaces": dump(project.interfaces.values()),
         "box_connectors": dump(project.connectors.values()),
-        "harnesses": dump(project.harnesses.values()),
+        "harnesses": [
+            harness_dump(h) for h in sorted(project.harnesses.values(), key=lambda x: x.id)
+        ],
         "parts": dump(project.parts.values()),
     }
     return (json.dumps(doc, indent=1, sort_keys=True, ensure_ascii=False) + "\n").encode()
@@ -82,10 +89,28 @@ def json_export(project: Project, stamp: Stamp) -> bytes:
 _FIXED = datetime(2000, 1, 1)
 
 
+def _reason(exc: Exception) -> str:
+    """Why a workbook failed, in a few plain words (no design data, no paths)."""
+    if isinstance(exc, OSError) and exc.strerror:
+        return exc.strerror
+    text = str(exc).splitlines()[0][:80] if str(exc) else ""
+    return f"{type(exc).__name__}: {text}" if text else type(exc).__name__
+
+
 def xlsx_bytes(sheets: dict[str, Table], stamp: Stamp) -> bytes:
     """A workbook with one sheet per table plus an About sheet carrying the stamp. The zip is
     rewritten with fixed timestamps so equal input gives equal bytes. Text that looks like a
-    formula is stored as text."""
+    formula is stored as text. Any failure of the spreadsheet library (a full temporary folder,
+    for example) is reported as an `OutputsError` that says why."""
+    try:
+        return _xlsx_bytes(sheets, stamp)
+    except Exception as exc:  # the library raises many kinds (OSError, lxml, zipfile)
+        raise OutputsError(
+            f"The Excel workbook could not be built ({_reason(exc)}). Nothing was written."
+        ) from exc
+
+
+def _xlsx_bytes(sheets: dict[str, Table], stamp: Stamp) -> bytes:
     wb = Workbook(write_only=True)
     wb.properties.creator = "harness-design-studio"
     wb.properties.created = wb.properties.modified = _FIXED
@@ -96,7 +121,7 @@ def xlsx_bytes(sheets: dict[str, Table], stamp: Stamp) -> bytes:
         for v in row:
             v = ILLEGAL_CHARACTERS_RE.sub("", v)  # a control character would abort the workbook
             c = WriteOnlyCell(ws, value=v)
-            if v[:1] in ("=", "+", "-", "@"):
+            if v[:1] in ("=", "+", "-", "@", "\t", "\r"):
                 c.data_type = "s"
             out.append(c)
         return out

@@ -17,6 +17,7 @@ from harness_design_studio.core.vcs.report import changelog_rows, revision_repor
 
 from . import drawing, exports, system, tables
 from .canvas import SHEETS, Sheet, to_pdf, to_svg
+from .errors import OutputsError
 from .provenance import provenance_bytes
 from .stamp import Stamp, Table, csv_bytes, stamp_of
 
@@ -316,6 +317,8 @@ def outputs_status(project: Project, folder: Path | str, *, deep: bool = False) 
 __all__ = [
     "SHEETS",
     "OutputSet",
+    "OutputsCancelled",
+    "OutputsError",
     "OutputStatus",
     "build_outputs",
     "outputs_status",

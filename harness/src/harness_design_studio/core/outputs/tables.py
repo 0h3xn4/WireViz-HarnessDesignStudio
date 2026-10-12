@@ -78,7 +78,7 @@ def _pin_rows(project: Project, c: Connector, attached: dict[tuple[str, str], li
         wires = attached.get((c.id, p.id), [])
         rows.append([
             c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or "", p.interface_id or "",
-            ";".join(wires), "no" if wires or p.interface_id or p.signal else "yes",
+            ";".join(sorted(wires)), "no" if wires or p.interface_id or p.signal else "yes",
         ])  # fmt: skip
     return rows
 
@@ -235,12 +235,9 @@ def labels(project: Project, h: Harness) -> Table:
         near = f"{w.from_connector}.{w.from_pin}"
         emc = emc_class_of(project, w)
         tag = f" [EMC {emc}]" if emc else ""  # personnel can see the category (20-07C 4.2.13.1 d)
-        rows.append(
-            [f"{w.id}-A", "wire", f"{w.id} {w.signal or ''} to {far}{tag}".replace("  ", " "), "1"]
-        )
-        rows.append(
-            [f"{w.id}-B", "wire", f"{w.id} {w.signal or ''} to {near}{tag}".replace("  ", " "), "1"]
-        )
+        head = f"{w.id} {w.signal}" if w.signal else w.id  # a signal name keeps its own spacing
+        rows.append([f"{w.id}-A", "wire", f"{head} to {far}{tag}", "1"])
+        rows.append([f"{w.id}-B", "wire", f"{head} to {near}{tag}", "1"])
     return rows
 
 
@@ -264,7 +261,7 @@ def mating_matrix(project: Project) -> Table:
         ]
     ]
     for b in sorted(project.connectors.values(), key=lambda x: x.id):
-        pairs = sorted(mated.get(b.id, []), key=lambda t: t[1].id) or [("", None)]  # type: ignore[list-item]
+        pairs = sorted(mated.get(b.id, []), key=lambda t: (t[1].id, t[0])) or [("", None)]  # type: ignore[list-item]
         for hid, c in pairs:
             rows.append(
                 [

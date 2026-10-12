@@ -95,7 +95,7 @@ The shipped file lists only the first four keys; `shield`, `branch` and `segment
 ## `titleblock.json`
 | Key | Meaning |
 | --- | --- |
-| `fields` | which title block fields appear, in order: `project`, `harness_id`, `title`, `revision`, `date`, `author`, `checker`, `approver`, `sheet`, `status` |
+| `fields` | which title block fields appear, in order: `project`, `harness_id`, `title`, `revision`, `date`, `author`, `checker`, `approver`, `sheet`, `status`. None is mandatory (leave `sheet` out to hide the sheet number). A name that is not in this list, a name twice, or an entry that is not text is a configuration error; the default fields are drawn until it is fixed. Empty or missing means the default: `project`, `harness_id`, `title`, `revision`, `status`, `sheet` |
 
 ## Optional values from the supplied standards (D-131)
 

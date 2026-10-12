@@ -62,7 +62,7 @@ The shipped file lists all ten fields, in order:
            "author", "checker", "approver", "sheet", "status"]
 ```
 
-Remove a field to hide it, or reorder them. With `["project", "harness_id", "revision", "status", "sheet"]` the title block of `HN-01` shows:
+Remove a field to hide it (the sheet number too), or reorder them. A name that is not in the list, a name twice, or anything that is not text is reported as a configuration error (`harness validate` and `harness config` show it) and the default fields are drawn until it is fixed. With `["project", "harness_id", "revision", "status", "sheet"]` the title block of `HN-01` shows:
 
 ```
 PROJECT         First steps: reaction wheel link

@@ -178,7 +178,7 @@ def _exports_cleanly(project: Project) -> dict[str, bytes]:
     return files
 
 
-def _with_lengths(*lengths: float):  # type: ignore[no-untyped-def]
+def _with_lengths(*lengths: float) -> Project:
     from harness_design_studio.core.model import evolve
 
     p = mini3()

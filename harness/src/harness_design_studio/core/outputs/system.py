@@ -146,14 +146,16 @@ def block_diagram(project: Project, stamp: Stamp) -> Sheet:
     return _diagram(project, stamp, f"Block diagram: {project.meta.name}", edges, legend)
 
 
-def harness_overview(project: Project, stamp: Stamp) -> Sheet:
-    edges = []
+def _harness_edges(project: Project) -> list[Edge]:
+    edges: list[Edge] = []
     for h in sorted(project.harnesses.values(), key=lambda x: x.id):
-        units = []
-        for c in h.connectors:
-            box = project.connectors.get(c.mates_with or "")
-            if box is not None and box.unit_id:
-                units.append(box.unit_id)
+        units = sorted(
+            {
+                box.unit_id
+                for c in h.connectors
+                if (box := project.connectors.get(c.mates_with or "")) is not None and box.unit_id
+            }
+        )
         if len(units) < 2:
             continue
         sides = {
@@ -162,15 +164,22 @@ def harness_overview(project: Project, stamp: Stamp) -> Sheet:
             if w.interface_id in project.interfaces
         }
         redundant = "redundant" in sides
-        edges.append(
-            Edge(
-                units[0],
-                units[-1],
-                h.id,
-                REDUNDANT_COLOR if redundant else NOMINAL_COLOR,
-                REDUNDANT_DASH if redundant else None,
-            )
-        )
+        for k, first in enumerate(units):  # a harness joins every pair of its units
+            for second in units[k + 1 :]:
+                edges.append(
+                    Edge(
+                        first,
+                        second,
+                        h.id,
+                        REDUNDANT_COLOR if redundant else NOMINAL_COLOR,
+                        REDUNDANT_DASH if redundant else None,
+                    )
+                )
+    return edges
+
+
+def harness_overview(project: Project, stamp: Stamp) -> Sheet:
+    edges = _harness_edges(project)
     legend = [
         ("nominal harness: solid", NOMINAL_COLOR, None),
         ("redundant harness: dashed", REDUNDANT_COLOR, REDUNDANT_DASH),
