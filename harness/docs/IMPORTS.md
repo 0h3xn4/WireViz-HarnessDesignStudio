@@ -1,11 +1,11 @@
 # Importing outside data
 
-Everything is previewed row by row and applied as one undo step (CLI: nothing is written if any row has a problem, and `--dry-run` shows the rows without changing anything).
+Everything is previewed row by row and applied as one undo step (CLI: nothing is written if any row has a problem, and `--dry-run` shows the rows without changing anything). The command line has imports for parts, segment lengths and KiCad netlists; importing interfaces is app only.
 
 Starting files for every import below are in the templates (`harness templates FOLDER`): `interfaces.csv`, `approved-parts.csv`, `segment-lengths.csv`, `wheel-connectors.net`, `signal-map.csv` and `ampacity-DEMO-ONLY.csv`. They are written for the `first-steps` example (`harness new DIR --template first-steps`), so you can try each one before using your own data. Walk-through: [`GETTING_STARTED.md`](GETTING_STARTED.md), parts 7 and 8.
 
 ## Interfaces (CSV or XLSX)
-Editor: File > Import interfaces. Columns: id, type, from, to, redundancy (optional); headers are matched by name (`from` is also read from `from unit`, `source` or `a`; `to` from `to unit`, `destination`, `target` or `b`; the type from `interface type`, `kind` or `protocol`). The units must exist; `type` is an interface type's name or ID. Each row needs a free connector on both units that can carry the type; a row that cannot be placed says why and nothing is applied.
+App only: File > Import interfaces (there is no command line command for this import, so a script or CI job cannot do it). Columns: id, type, from, to, redundancy (optional); headers are matched by name (`from` is also read from `from unit`, `source` or `a`; `to` from `to unit`, `destination`, `target` or `b`; the type from `interface type`, `kind` or `protocol`). The units must exist; `type` is an interface type's name or ID. Each row needs a free connector on both units that can carry the type; a row that cannot be placed says why and nothing is applied.
 
 ## File formats
 CSV files may use commas, semicolons or tabs between columns (the header line decides), UTF-8 with or without a byte order mark. A number with a decimal comma must be in quotes when commas separate the columns (`"1,5"`), or the file must use semicolons; a row with more columns than the header is refused rather than cut off. At most 20,000 rows and 8 MB; XLSX files are read from the first sheet. Only regular files are read (not pipes or devices).
@@ -35,3 +35,5 @@ KiCad: it is used for the electronics inside each unit, so it is where each unit
 ## Where the library data come from
 
 `harness import-parts` records the file name and its SHA-256 as the library's **source**. Say more with `--library-source`, `--library-version`, `--library-name` and `--library-date YYYY-MM-DD` (the date of the data, which you enter; the tool does not read the clock). `harness library DIR` shows what is recorded and `harness library DIR --library-source "..." --library-date 2026-09-30` sets it without an import. The editor shows the same line under the part picker and every export carries it in `system/provenance.json`.
+
+Next: [import data (user manual)](user-manual/import-data.md), [`KICAD.md`](KICAD.md).

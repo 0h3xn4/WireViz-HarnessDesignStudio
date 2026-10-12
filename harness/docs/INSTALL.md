@@ -2,7 +2,21 @@
 
 The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package).
 
+## Contents
+
+- [Before you start (two minutes)](#before-you-start-two-minutes)
+- [Get the package](#get-the-package)
+- [A. The `.deb` package (recommended)](#a-the-deb-package-recommended)
+- [B. The `.tar.gz` without administrator rights](#b-the-targz-without-administrator-rights)
+- [Check that it works](#check-that-it-works)
+- [Your first five minutes after installing](#your-first-five-minutes-after-installing)
+- [If the app does not start](#if-the-app-does-not-start)
+- [C. Run from source (developers)](#c-run-from-source-developers)
+- [Where things are stored](#where-things-are-stored)
+
 Pick **one** of the three ways. If you are unsure, use A.
+
+**Which version do you have?** The five examples (`minimal-satellite` and `flatsat` among them), the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are on `master` and are **not** in the released 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md#unreleased-after-010)). `harness --version` prints `0.1.0` for both. To tell them apart run `harness new --list`: a newer build lists five examples, the 0.1.0 packages list three (`blank`, `first-steps`, `small-satellite`). Way C has them when you clone `master`. The other pages of this manual describe the newer build.
 
 | | You are | Way |
 | --- | --- | --- |
@@ -27,10 +41,10 @@ You also need about 500 MB of free disk space for the program (`df -h ~` shows i
 
 You need one file, either `harness-design-studio_<version>_amd64.deb` (way A) or `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B). Ask your tool administrator, or take it from one of these places:
 
-- the **Releases** page of the project's repository, when the packages are attached to the release (look for the newest version number);
-- the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact is called `harness-design-studio-ubuntu-24.04` and holds both files and a `SHA256SUMS` file.
+- the **Releases** page of the project's repository, when the packages are attached to the release (look for the newest version number). The release record says that attaching the files to the release page is up to the repository owner (`compliance/SIGNOFF.md`, section Publication); if the page lists no `.deb` or `.tar.gz`, use one of the other two places or way C;
+- the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact is called `harness-design-studio-ubuntu-24.04` and holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file).
 
-You can also build it yourself (way C, last section).
+You can also build it yourself (way C, last section). That route needs no release files at all.
 
 Copy the file to the machine. It never needs to reach the network.
 
@@ -40,7 +54,7 @@ Copy the file to the machine. It never needs to reach the network.
 sha256sum harness-design-studio_<version>_amd64.deb
 ```
 
-The printed value must be the same as the one in the list. If it differs, do not install the file. The packages are not signed (this is a recorded deviation, `compliance/DEVIATIONS.md` T-19), so the checksum is the only check you have. A package built by CI is built again on another machine, so its checksum can differ from the recorded one; use the `SHA256SUMS` file that came in the same artifact.
+The printed value must be the same as the one in the list. If it differs, do not install the file. The packages are not signed (this is a recorded deviation, `compliance/DEVIATIONS.md` T-19), so the checksum is the only check you have. A package built by CI is built again on another machine, so its checksum can differ from the recorded one. For such a package compute the checksum yourself (`sha256sum`) on the machine that built it and compare it with the file you received; the recorded list applies to the packages named in it.
 
 ## A. The `.deb` package (recommended)
 
@@ -86,14 +100,18 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
 Other options of `install.sh`: `sudo ./install.sh --system` installs for everyone into `/usr/local/lib/harness-design-studio`; `--prefix FOLDER` chooses the folder. Remove with `./uninstall.sh` (or `sudo ./uninstall.sh --system`); it removes only what the installer put there.
 
-Run `install.sh` from the **unpacked package**. Run from the source tree it refuses, because the built program is missing there.
+Run `install.sh` from the **unpacked package**. Run from the source tree it refuses and prints: `This folder (...) has no built program, so there is nothing to install.`
 
 ## Check that it works
+
+For ways A and B (the installed program):
 
 ```
 harness --version          # prints the version
 harness-design-studio --selftest    # opens the editor offscreen, makes a project, generates, exports, and prints "selftest ok"
 ```
+
+`--selftest` exists only in the installed program (`harness-design-studio`). When you run from source (way C) the app command is `harness-gui`, which does not know the flag and simply starts the app. From source, check with `harness --version`, then the five-minute check below, and `pytest` if you installed the `dev` extras.
 
 Then start **Harness Design Studio** from the application menu. The first start opens a sample project and a short tour.
 
@@ -124,9 +142,9 @@ The `.deb` asks `apt` for these itself. More help: [`FAQ.md`](FAQ.md).
 | `E: Unable to locate package ./harness-design-studio_...` or `apt` cannot find the file | Run the command in the folder that holds the file, and keep the `./` in front of the name. |
 | `dpkg: dependency problems` | Run `sudo apt install -f`. It installs the missing system libraries from your normal Ubuntu sources (this is the only step that may need network). |
 | `harness: command not found` after the `.tar.gz` install | `~/.local/bin` is not on your PATH; see way B above. |
-| The app window is blank or the app closes at once | Run `harness-design-studio --selftest` in a terminal. If it prints an error about `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. |
+| The app window is blank or the app closes at once | With way A or B, run `harness-design-studio --selftest` in a terminal. If it prints an error about `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. |
 | You are connected by SSH and the app does not open | The app needs a screen. Use the `harness` command line tool over SSH, or start the app on the machine itself. |
-| `install.sh` says the built program is missing | You ran it from the source tree. Run it from the unpacked `.tar.gz` folder. |
+| `install.sh` says `This folder (...) has no built program, so there is nothing to install.` | You ran it from the source tree. Run it from the unpacked `.tar.gz` folder. |
 
 ## C. Run from source (developers)
 

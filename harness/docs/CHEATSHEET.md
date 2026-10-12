@@ -5,7 +5,7 @@ One page. Every command is explained in [`CLI.md`](CLI.md); `harness COMMAND --h
 ## The loop
 
 ```
-harness new my-design --template blank    # start a project (harness new --list shows the examples)
+harness new my-design --template first-steps   # start a project that has units (harness new --list shows the examples)
 harness generate my-design                # make harnesses, connectors, pins, wires
 harness check my-design                   # fast logical check
 harness drc my-design                     # the full design rule check, as a report
@@ -15,29 +15,32 @@ harness verify my-design --outputs        # an independent check of the exported
 
 Run the loop again after every change. Generating twice without a change changes nothing (the second run prints "0 added").
 
+The command line cannot add units or interfaces. The loop works on a project that already has them: an example such as `first-steps`, or your own design after you added the units in the app. On a `blank` project `generate` finds 0 interfaces and `export` stops with `error: there are no harnesses to export; run harness generate first.`
+
 ## Bring in data
 
 | You have | Command |
 | --- | --- |
-| interfaces in a table | app: **File > Import interfaces** |
+| the example import files, demo values and CI scripts | `harness templates my-templates` (the folder must be new or empty) |
+| interfaces in a table | app only: **File > Import interfaces** |
 | a parts list | `harness import-parts DIR parts.csv --approved Approved` |
 | segment lengths | `harness import-lengths DIR lengths.csv --unit mm` |
 | unit connectors in KiCad | `harness import-netlist DIR file.net --unit RW1 --prefix J --connector J1=RW1-J01 --dry-run` |
 | engineering values | edit `config/*.json`, see [`CONFIG.md`](CONFIG.md); `harness config DIR` lists what is missing |
 
-Add `--dry-run` to any import to see what it would do first.
+Add `--dry-run` to any import to see what it would do first. Other commands (`compare`, `schema`, `library`, `migrate`, and options such as `config --ampacity-csv`) are in [`CLI.md`](CLI.md).
 
 ## Release and change
 
 ```
-harness review  DIR W001 --by "Name"                      # submit for review
-harness release DIR W001 --by "Name" --comment "why"      # baseline, change log entry, lock
-harness revise  DIR W001 --by "Name" --comment "why"      # open a new revision of a released harness
-harness diff    DIR W001                                  # what changed against the baseline
-harness log     DIR                                       # the change log
+harness review  DIR W001 --by "Name"                                   # submit for review
+harness release DIR W001 --by "Name" --comment "why, 10+ characters"   # baseline, change log entry, lock
+harness revise  DIR W001 --by "Name" --comment "why, 10+ characters"   # open a new revision of a released harness
+harness diff    DIR W001                                               # what changed against the baseline
+harness log     DIR                                                    # the change log
 ```
 
-A release is blocked while checks fail, while a configuration file is a placeholder, or while the harness uses parts that are not approved. You can release anyway with `--accept-placeholders REASON` and `--accept-unapproved-parts REASON`; the reason is kept in the change log.
+The comment must have at least 10 characters. A release is blocked while checks fail, while a configuration file is a placeholder, or while the harness uses parts that are not approved. You can release anyway with `--accept-placeholders REASON` and `--accept-unapproved-parts REASON`; the reason is kept in the change log.
 
 ## Exit codes
 
@@ -47,11 +50,15 @@ A release is blocked while checks fail, while a configuration file is a placehol
 
 | Keys | Action |
 | --- | --- |
+| Ctrl+N, Ctrl+O | new project, open project |
+| Ctrl+S, Ctrl+Shift+S | save, save as |
+| Ctrl+Shift+I | import interfaces (a table) |
+| Ctrl+Q | quit |
 | Ctrl+K | command palette: type a command or an ID |
-| Ctrl+Z, Ctrl+Y | undo, redo |
-| Ctrl+S | save |
+| Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | undo, redo |
 | Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, out, fit |
-| Tab, Enter | move between units and links, select |
+| C, Esc | start the Connect tool, back to Select (Esc also clears the selection) |
+| Tab, Enter or Space | move between units and links, select |
 | Shift+arrows | move the selected unit |
 | Delete | delete the selected item (after showing what it affects) |
 | F1 | the user guide |
@@ -67,7 +74,8 @@ my-design/
   physical/           connectors and harnesses (what the tool generates)
   generated/          how the last generation was made (for explanations)
   outputs/            drawings and lists (safe to delete and regenerate)
-  changelog.json      release history, with baselines
+  changelog.json      release history
+  baselines/          the frozen copy of each released harness (written at release)
 ```
 
 Put the folder in Git. Everything except `outputs/` is meant to be reviewed as text.
@@ -85,3 +93,5 @@ Put the folder in Git. Everything except `outputs/` is meant to be reviewed as t
 | baseline | the frozen copy stored at release |
 
 More: [`CONCEPTS.md`](CONCEPTS.md) and the glossary in the user guide.
+
+Next: [user manual](user-manual/README.md), [`CLI.md`](CLI.md), [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md).

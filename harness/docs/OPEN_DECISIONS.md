@@ -1,5 +1,7 @@
 # Open decisions and their options
 
+> **Historical.** Written for the owner as of the October 2026 audit, before 0.1.0 was released. The owner released 0.1.0 with D-10, D-11, D-12 and D-15 still open ([`SIGNOFF.md`](../compliance/SIGNOFF.md), [`DEVIATIONS.md`](../compliance/DEVIATIONS.md) T-31), so the options below are still the options, but "you" and "after the audit" refer to that time. The current status is in [`SIGNOFF.md`](../compliance/SIGNOFF.md).
+
 Status after the October audit. Decided by you: D-11 and D-12 will be supplied later (the tool is prepared, see below), D-13 KiCad is the CAD tool, D-20 not needed.
 
 ## D-10 Harness boundary rule (what goes into one harness)

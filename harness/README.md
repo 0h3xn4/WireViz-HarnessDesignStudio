@@ -2,11 +2,11 @@
 
 An offline desktop tool for designing the electrical harnesses of a spacecraft.
 
-> **Created mainly by an AI.** Harness Design Studio was written mainly by Claude, Anthropic's AI assistant, used through Claude Code; the repository owner set the requirements and approved the decisions and releases. No other person has reviewed it independently (waived by the owner, `compliance/DEVIATIONS.md`), and no compliance with any standard is claimed. Check its results before relying on them.
+> **Created mainly by an AI.** Harness Design Studio was written mainly by Claude, Anthropic's AI assistant, used through Claude Code; the repository owner set the requirements and approved the decisions and releases. No other person has reviewed it independently (waived by the owner, see [`compliance/DEVIATIONS.md`](compliance/DEVIATIONS.md)), and no compliance with any standard is claimed. Check its results before relying on them.
 >
-> **Based in the WireViz repository.** This repository is a fork of [WireViz](https://github.com/wireviz/WireViz). Harness Design Studio is a separate, clean-room codebase inside it: no WireViz code is copied or imported (D-01 in [`docs/DECISIONS.md`](docs/DECISIONS.md)), and WireViz is an export target (WireViz-style YAML, best effort). The original WireViz documentation is at [`../docs/README.md`](../docs/README.md).
+> **Based in the WireViz repository.** This repository is a fork of [WireViz](https://github.com/wireviz/WireViz). Harness Design Studio is a separate, clean-room codebase inside it: no WireViz code is copied or imported (D-01 in [`docs/DECISIONS.md`](docs/DECISIONS.md)), and WireViz is an export target (WireViz-style YAML, best effort). The original WireViz documentation is in the [repository README](../README.md#original-wireviz-readme); [`../docs/README.md`](../docs/README.md) is the index of all documents.
 
-You describe the **units** (computer, power unit, reaction wheel ...) and the **interfaces** between them. The tool generates the harnesses (connectors, pins, wires), checks them, writes the drawings and lists, and keeps a change-controlled record of every release.
+You describe the **units** (computer, power unit, reaction wheel ...) and the **interfaces** between them. The tool generates the harnesses (connectors, pins, wires), checks them, writes the drawings and lists, and keeps a change-controlled record of every release. A harness is the bundle of wires and connectors that joins the units; words you do not know are in the [glossary](docs/GLOSSARY.md).
 
 ```
  you draw                      the tool makes                  the tool writes
@@ -18,8 +18,8 @@ You describe the **units** (computer, power unit, reaction wheel ...) and the **
 - **Your design is the source of truth.** Harnesses, drawings and lists are generated from it and can be regenerated at any time.
 - **Offline.** It never uses the network (a test enforces this).
 - **Reproducible.** The same design always produces byte-identical files, so Git diffs show real changes only.
-- **Starts from the usual standards.** RS-422, RS-485 and CAN for communication, Micro-D (9 to 31 pin) for power and data, Ethernet as the alternative for high data rates, SMA for RF. Other types and connectors can be added.
-- **Honest about what it does not know.** Engineering values (derating, ampacity, EMC rules, approved parts) are never invented. Until you supply them, results say *pending* or *not checked*.
+- **Starts from the usual standards.** RS-422, RS-485 and CAN for communication, Micro-D (9 to 31 pin) for power and data, Ethernet as the alternative for high data rates, SMA for RF (what each one is: [glossary](docs/GLOSSARY.md)). Other types and connectors can be added.
+- **Honest about what it does not know.** Engineering values (derating, ampacity, EMC rules, approved parts; see the [glossary](docs/GLOSSARY.md)) are never invented. Until you supply them, results say *pending* or *not checked*.
 
 Runs on **Ubuntu 24.04 or newer**. Version `0.1.0`, released by the owner with the engineering decisions still open (see [Status](#status)).
 
@@ -51,18 +51,19 @@ That is the whole idea. [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) wal
 | --- | --- |
 | **new to the tool** | [`docs/LEARNING_PATH.md`](docs/LEARNING_PATH.md): the route in nine steps. Or directly [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md): your first harness in 45 minutes, then [`docs/CONCEPTS.md`](docs/CONCEPTS.md): how the tool thinks, in ten minutes. |
 | **installing it** | [`docs/INSTALL.md`](docs/INSTALL.md) |
-| **doing a task** (import, KiCad, release, Git, CI) | [`docs/HOWTO.md`](docs/HOWTO.md), step by step |
-| **looking something up** | [`docs/CLI.md`](docs/CLI.md) (every command), [`docs/guide/USER_GUIDE.md`](docs/guide/USER_GUIDE.md) (also in the app: **F1**), [`docs/FAQ.md`](docs/FAQ.md), the one-page [`docs/CHEATSHEET.md`](docs/CHEATSHEET.md) |
-| **stuck** | [`docs/FAQ.md`](docs/FAQ.md) |
+| **doing a task** (draw, generate, import, KiCad, export, colours, release, Git, CI) | [`docs/user-manual/`](docs/user-manual/README.md): one page per task |
+| **looking something up** | [`docs/CLI.md`](docs/CLI.md) (every command), [`docs/guide/USER_GUIDE.md`](docs/guide/USER_GUIDE.md) (the **user guide**, also in the app: **F1**), the one-page [`docs/CHEATSHEET.md`](docs/CHEATSHEET.md), [`docs/TIPS.md`](docs/TIPS.md), the [glossary](docs/GLOSSARY.md) |
+| **stuck** | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) (error messages and fixes), [`docs/FAQ.md`](docs/FAQ.md) (questions) |
+| **wanting to see what changed** | [`CHANGELOG.md`](CHANGELOG.md) |
 | **an engineer supplying values** | [`docs/CONFIG.md`](docs/CONFIG.md), [`docs/PLACEHOLDERS.md`](docs/PLACEHOLDERS.md), [`docs/IMPORTS.md`](docs/IMPORTS.md) |
 | **a reviewer or releaser** | [`docs/RULES.md`](docs/RULES.md), [`docs/OUTPUTS.md`](docs/OUTPUTS.md), the review checklist in the templates |
-| **a developer** | [`CLAUDE.md`](CLAUDE.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/SECURITY.md`](docs/SECURITY.md) |
+| **a developer** | [`../CONTRIBUTING.md`](../CONTRIBUTING.md), [`docs/developer/`](docs/developer/README.md), [`CLAUDE.md`](CLAUDE.md), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/DECISIONS.md`](docs/DECISIONS.md), [`docs/SECURITY.md`](docs/SECURITY.md) |
 
-[`docs/README.md`](docs/README.md) lists every document.
+[`../docs/README.md`](../docs/README.md) is the index of every document in the repository; [`docs/README.md`](docs/README.md) is the index of this tool's documents.
 
 ## Examples and templates
 
-`harness new --list` shows the example projects shipped with the tool:
+`harness new --list` shows the example projects shipped with the tool. All five, with what to run and what you should see, are on the [examples page](docs/examples/README.md). `minimal-satellite`, `flatsat` and the `design-worksheet.md` template are on `master` and **not in the 0.1.0 packages**, which have `blank`, `first-steps` and `small-satellite`.
 
 | Example | What it is |
 | --- | --- |
@@ -80,11 +81,11 @@ A project is a folder of small JSON files (`project.json`, `config/`, `library/`
 
 ## Status
 
-Version `0.1.0`, released by the owner on 2026-10-09 with the following still open (`compliance/SIGNOFF.md`). Not supplied: the harness boundary rule (D-10), real derating and EMC values (D-11), the approved parts list (D-12), the title block (D-15). Not done and waived by the owner: independent review, usability sessions, a screen-reader pass and a clean-machine installation test (`compliance/DEVIATIONS.md`). See [`docs/OPEN_DECISIONS.md`](docs/OPEN_DECISIONS.md) and [`docs/RELEASE.md`](docs/RELEASE.md). Until the engineering values exist, results say so.
+Version `0.1.0`, released by the owner on 2026-10-09 with the following still open ([`compliance/SIGNOFF.md`](compliance/SIGNOFF.md); all the records are indexed in [`compliance/README.md`](compliance/README.md)). Not supplied: the harness boundary rule (D-10), real derating and EMC values (D-11), the approved parts list (D-12), the title block (D-15). Not done and waived by the owner: independent review, usability sessions, a screen-reader pass and a clean-machine installation test ([`compliance/DEVIATIONS.md`](compliance/DEVIATIONS.md)). See [`docs/OPEN_DECISIONS.md`](docs/OPEN_DECISIONS.md) and [`docs/RELEASE.md`](docs/RELEASE.md). Until the engineering values exist, results say so. `master` is ahead of the 0.1.0 packages and still reports `0.1.0`; the [changelog](CHANGELOG.md) section *Unreleased* lists the difference.
 
 ## For developers
 
-Clean-room project: never copy code from `../src/wireviz` (GPL-3.0). Start with [`CLAUDE.md`](CLAUDE.md) (commands, layout, conventions), then [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/DECISIONS.md`](docs/DECISIONS.md) and [`docs/SECURITY.md`](docs/SECURITY.md). Release procedure: [`docs/RELEASE.md`](docs/RELEASE.md).
+Clean-room project: never copy code from `../src/wireviz` (GPL-3.0). Start with [`../CONTRIBUTING.md`](../CONTRIBUTING.md) and [`docs/developer/`](docs/developer/README.md), then [`CLAUDE.md`](CLAUDE.md) (commands, layout, conventions), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/DECISIONS.md`](docs/DECISIONS.md) and [`docs/SECURITY.md`](docs/SECURITY.md). Release procedure: [`docs/RELEASE.md`](docs/RELEASE.md).
 
 ```
 python3 -m venv .venv && . .venv/bin/activate && pip install -e ".[gui,dev]"
@@ -92,3 +93,5 @@ pytest --cov      # tests; the 90% core coverage gate applies with --cov
 ruff format . && ruff check . && mypy
 python -m tools.release_check --quick
 ```
+
+Next: [`docs/INSTALL.md`](docs/INSTALL.md), [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md).

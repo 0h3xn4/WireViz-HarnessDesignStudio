@@ -1,6 +1,23 @@
 # UX specification (gate for M2)
 
-Status: **approved by the owner; the Qt editor is implemented (section 12).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and 33 automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots are in `docs/ux/screens/`.
+> **Design record of M2, partly superseded.** This is the specification that the editor was built from. Two later decisions changed what the diagram looks like: **D-140** replaced the one-letter chips on links by pictures (and added routing, focus and connector pictures), and **D-141** made the harness drawing a wiring diagram in which wires are drawn in their wire colour (the old rule "wire colours are text only, never drawing colours" no longer holds). The wireframes below show the earlier look. For the current behaviour read the [user guide](guide/USER_GUIDE.md); the pictures of the real editor are in [`ux/qt/`](ux/qt/02-guided-main.png); the screenshots in `ux/screens/` are of the prototype (see [`ux/screens/README.md`](ux/screens/README.md)). See [`DECISIONS.md`](DECISIONS.md) for D-140 and D-141.
+
+## Contents
+
+- [1. Targets (from the spec) and how they are checked](#1-targets-from-the-spec-and-how-they-are-checked)
+- [2. Personas](#2-personas)
+- [3. The ten journeys](#3-the-ten-journeys)
+- [4. Information architecture](#4-information-architecture)
+- [5. Wireframes](#5-wireframes)
+- [6. Interaction rules ("prevent, then explain")](#6-interaction-rules-prevent-then-explain)
+- [7. Design system](#7-design-system)
+- [8. Mapping to the M2 implementation (Qt)](#8-mapping-to-the-m2-implementation-qt)
+- [9. Usability test plan (you run it; findings become priority bugs)](#9-usability-test-plan-you-run-it-findings-become-priority-bugs)
+- [10. UX review log (my own walkthrough, as the process requires)](#10-ux-review-log-my-own-walkthrough-as-the-process-requires)
+- [11. Questions for you (please answer or mark "you decide")](#11-questions-for-you-please-answer-or-mark-you-decide)
+- [12. Qt editor review log (M2 implementation)](#12-qt-editor-review-log-m2-implementation)
+
+Status: **approved by the owner; the Qt editor is implemented (section 12).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
 
 This document is the contract for the editor in M2. Where the prototype and this text disagree, this text wins; tell me which is wrong.
 
@@ -72,7 +89,7 @@ Navigation rules: everything reachable by command palette; panels collapsible; b
 
 ## 5. Wireframes
 
-### 5.1 Main window (see `screens/02-guided-main.png`, `04-expert-connectors.png`)
+### 5.1 Main window (see the prototype pictures [`ux/screens/02-guided-main.png`](ux/screens/02-guided-main.png) and [`04-expert-connectors.png`](ux/screens/04-expert-connectors.png))
 ```
 ┌───────────────────────────────────────────────────────────────────────────────────────────────┐
 │ Harness Design Studio  mini3  [Prototype]   [Guided|Expert] ↶ ↷  [Search Ctrl+K] [Generate] ? ⋯More │
@@ -96,7 +113,7 @@ Navigation rules: everything reachable by command palette; panels collapsible; b
 └───────────────────────────────────────────────────────────────────────────────────────────────┘
 ```
 
-### 5.2 Connecting (see `03-connect-compatible-highlight.png`)
+### 5.2 Connecting (see [`ux/screens/03-connect-compatible-highlight.png`](ux/screens/03-connect-compatible-highlight.png))
 ```
  Palette: [CAN]●pressed     Hint: "Click the second unit. Valid ones are highlighted."
  ┌OBC-A────── FROM┐  (dashed primary outline)      ┌ST1──────NOMINAL┐ (greyed)
@@ -105,7 +122,7 @@ Navigation rules: everything reachable by command palette; panels collapsible; b
  If no unit qualifies, the hint turns into a warning: "No other unit has a free CAN connector. Pick another type…"
 ```
 
-### 5.3 Harness plans tab with the verifier result (see `09-harness-plans.png`)
+### 5.3 Harness plans tab with the verifier result (see [`ux/screens/09-harness-plans.png`](ux/screens/09-harness-plans.png))
 ```
  ✓ Independent check passed  model ca4eee68        W001: PCDU-A to RW1 (Primary power)   [Why does this harness exist?] [Release…]
  ID    Harness                 Chain     Status    Wire      Signal From          To          Gauge        Lock  [Why this pin?]
@@ -130,7 +147,7 @@ The real tab (M3/M5) adds the harness drawing preview, wire list, pinout, BOM an
 ```
 Open question for you: do you have a company title block (D-15)?
 
-### 5.5 Regeneration preview and release (`08-generate-preview.png`, release dialog)
+### 5.5 Regeneration preview and release ([`ux/screens/08-generate-preview.png`](ux/screens/08-generate-preview.png), release dialog)
 ```
  Regenerate harness plans?   Regeneration will keep 1 pin lock and change 3 of 4 harness plans.
                              Nothing is applied until you confirm. Locked pins are never moved.   [Cancel] [Regenerate]
@@ -197,7 +214,7 @@ All text and status colours meet at least 4.5:1 on every surface; borders, focus
 | Discrete | `d` | 1.5 px | `#5500FF` | `#B89C14` | 7.4 / 6.7 |
 | Ground | `G` | 1 px | `#3A0953` | `#46A6B9` | 15.6 / 6.4 |
 
-Each category also has a one-letter icon in a chip on every link, a text label, and a line weight. Redundancy is a dashed line and a REDUNDANT label, never colour alone. Colours were searched, not hand-picked, to stay apart under simulated colour blindness (Machado 2009 matrices). Closest pair of category colours, in CIE76 dE (above about 20 is clearly distinguishable):
+Each category also has a one-letter icon in a chip on every link (superseded by D-140: every kind of link now has its own picture), a text label, and a line weight. Redundancy is a dashed line and a REDUNDANT label, never colour alone. Colours were searched, not hand-picked, to stay apart under simulated colour blindness (Machado 2009 matrices). Closest pair of category colours, in CIE76 dE (above about 20 is clearly distinguishable):
 
 | Vision | Light: closest pair (dE) | Dark: closest pair (dE) |
 | --- | --- | --- |
@@ -211,7 +228,7 @@ An earlier hand-picked palette had a protanopia pair at dE 2.2 (indistinguishabl
 ### 7.3 Typography, spacing, icons, components
 - **Fonts (bundled, no CDN):** Inter (UI) and JetBrains Mono (IDs, pins, hashes), both SIL OFL. The prototype falls back to system fonts; the release bundles the files and PDF output embeds them.
 - **Scale (px):** xs 11, sm 12, base 14, md 16, lg 20, xl 24. **Spacing:** 4 / 8 / 12 / 16 / 24 / 32 / 48 (4/8 px grid).
-- **Icons:** Lucide (ISC) bundled as SVG; the prototype uses text chips only. Category icons are letters in chips so they survive black-and-white printing.
+- **Icons:** Lucide (ISC) bundled as SVG; the prototype uses text chips only. Category icons are letters in chips so they survive black-and-white printing (superseded by D-140: pictures replaced the letters; the dark outline and dash patterns keep prints readable).
 - **Components:** button (default, primary, danger, ghost, pressed), segmented control, text field with live validation message, select, table with sticky header and inline editing, badge (auto, locked, released, stale, ok, warn, error), problem card, to-do row, dialog (title, impact list, Cancel default, primary action), toast with Undo, progress bar with Cancel, tour card, command palette, glossary.
 - **States** (always more than colour): selected (thick primary outline), hover, focus (3 px focus colour ring), error (red + text), warning (amber + icon + text), auto-filled (dashed amber + "Auto"), locked and released (lock icon + greyed controls), disabled (reduced opacity + reason in tooltip/label), outdated (amber badge + disabled release).
 - **Themes:** light, dark (follows the OS by default); outputs always use the print theme. Native controls follow the theme (`color-scheme`).
@@ -263,10 +280,10 @@ I rendered every screen and walked every journey. Found, fixed, and covered by a
 | 6 | Redundant copy overlapped its neighbours; links between units in the same lane drew as degenerate loops; both links entered a unit at one point | Medium | Fixed: free-slot placement, ports on the side facing the gap, offset anchors |
 | 7 | Toasts covered the Problems buttons; the tour card covered the element it explained | Medium | Fixed: toasts over the canvas, tour card placed beside its target (`test_tour_card_*`) |
 | 8 | Dark theme showed bright white native checkboxes | Low | Fixed (`color-scheme`) |
-| 9 | Link labels can still overlap in dense diagrams; no automatic layout | Medium | **Open**: M2 needs label de-overlap and auto-layout with nudging that is remembered |
+| 9 | Link labels can still overlap in dense diagrams; no automatic layout | Medium | Closed later: labels slide along their link (Q11, M7); **Arrange diagram** exists (M8); D-140 added routing |
 | 10 | Wire list shows only two rows in the default bottom panel height | Low | Mitigated ("Taller" button); real tab gets a split view |
-| 11 | When Properties is auto-hidden (narrow window) selecting an item shows nothing | Low | **Open**: show a one-line hint with a button to open it |
-| 12 | No minimap, no keyboard-only way to draw a link other than Tab and Enter on units | Medium | **Open**: M2 (minimap, arrow-key link drawing) |
+| 11 | When Properties is auto-hidden (narrow window) selecting an item shows nothing | Low | Closed later: a message says so (Q14, M7) |
+| 12 | No minimap, no keyboard-only way to draw a link other than Tab and Enter on units | Medium | Closed later: the overview map exists (View > Show overview map); in the editor the Connect tool starts with **C** and Enter picks a unit |
 | 13 | Prototype data is mock: pins, gauges and the "independent check" are simulated | Info | By design; the real verifier is M3 |
 
 ## 11. Questions for you (please answer or mark "you decide")
@@ -278,11 +295,11 @@ I rendered every screen and walked every journey. Found, fixed, and covered by a
 5. **Unit templates** in the palette (computer, power unit, wheel, ...): which units does your organisation use most? Do you want to import your own list (CSV) in M2?
 6. **Title block / drawing standard** (D-15) and whether sheet size defaults to A3.
 7. **Language of the glossary:** the 10 terms in the prototype are my wording. Please correct any definition your reviewers would dispute.
-8. **Prototype sign-off:** which of the open issues (9, 11, 12) block you from approving M2 implementation?
+8. **Prototype sign-off:** which of the open issues (9, 11, 12; all closed since) block you from approving M2 implementation?
 
 ## 12. Qt editor review log (M2 implementation)
 
-Screenshots of the real editor (offscreen render) are in `docs/ux/qt/`; the 40 journey tests are in `tests/test_gui_journeys.py`. I walked every journey and rendered every screen as the process requires. Found, fixed and covered by a test unless marked open.
+Screenshots of the real editor (offscreen render) are in `docs/ux/qt/`; the journey tests are in `tests/test_gui_journeys.py`. I walked every journey and rendered every screen as the process requires. Found, fixed and covered by a test unless marked open.
 
 | # | Issue | Severity | Status |
 | --- | --- | --- | --- |

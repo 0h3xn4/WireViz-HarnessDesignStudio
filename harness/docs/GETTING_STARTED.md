@@ -2,6 +2,21 @@
 
 You will start from a small example, look at what the tool makes of it, fix a finding, export the drawings and lists, and (optionally) see what a release looks like. Every step shows what you should see, and what to do if you do not.
 
+## Contents
+
+- [Part 1: create a practice project](#part-1-create-a-practice-project)
+- [Part 2: look around](#part-2-look-around)
+- [Part 3: generate the harnesses](#part-3-generate-the-harnesses)
+- [Part 4: read what the tool made](#part-4-read-what-the-tool-made)
+- [Part 5: read and answer the Problems](#part-5-read-and-answer-the-problems)
+- [Part 6: export drawings and lists](#part-6-export-drawings-and-lists)
+- [Part 7: fill in values, and see wires get sized](#part-7-fill-in-values-and-see-wires-get-sized)
+- [Part 8: bring in your own data](#part-8-bring-in-your-own-data)
+- [Optional: give the wires a colour](#optional-give-the-wires-a-colour)
+- [Part 9 (optional, practice only): release a harness](#part-9-optional-practice-only-release-a-harness)
+- [Part 10: build your own from blank](#part-10-build-your-own-from-blank)
+- [Where to go next](#where-to-go-next)
+
 **Looking for the whole route?** [`LEARNING_PATH.md`](LEARNING_PATH.md) puts this tutorial in context: before it, a ten-minute read; after it, a realistic small spacecraft, a worksheet for your own design, real data, release and automation.
 
 **You need:** the tool installed ([`INSTALL.md`](INSTALL.md), five minutes) and nothing else. No spacecraft data, no network.
@@ -26,6 +41,8 @@ small-satellite    14 units with nominal and redundant chains. Generate it to se
 flatsat            A complete bench: 23 flight and ground units, generated, with example numbers.
 ```
 
+**Which build do you have?** The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are on `master` and are **not** in the released 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md#unreleased-after-010)). `harness --version` prints `0.1.0` for both, so check with the command above: a newer build lists five examples, the 0.1.0 packages list three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
+
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 
 ```
@@ -45,12 +62,12 @@ harness validate wheel-link
 
 ```
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 2 interfaces, 8 connectors, 0 harnesses: 0 error(s), 0 warning(s).
+3 units, 2 interfaces, 9 connectors, 0 harnesses: 0 error(s), 0 warning(s).
 ```
 
 0 errors is what you want. The INFO line is normal: it says the engineering values are not filled in yet (Part 7).
 
-**In the app:** start **Harness Design Studio**, choose **File > Open project…** and pick the `wheel-link` folder. The app also opens a built-in sample the first time and offers a short tour; **Skip tour** or follow it.
+**In the app:** start **Harness Design Studio**, choose **File > Open project…** and pick the `wheel-link` folder. The app also opens a built-in sample the first time and offers a short tour; **Skip tour** or follow it. To start a new practice project inside the app, use **File > New project from an example…** (the same examples) or **File > New project…** (an empty one).
 
 ## Part 2: look around
 
@@ -62,7 +79,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 | --- | --- |
 | Left, **Add a unit** | buttons that add a computer, a power unit, a wheel and so on |
 | Left, **Connect with** | the interface types. Pick one, then click two units |
-| Middle | the **diagram**: units in lanes (*panel-A*, *panel-B*), links between them. Red is power, blue is data |
+| Middle | the **diagram**: units in lanes (*panel-A*, *panel-B*), links between them. Every kind of link has its own picture and colour; the key under the diagram shows them (power is red in the light theme) |
 | Right, **Properties** | the selected unit or interface: names, **Max current (A)**, notes |
 | Bottom tabs | **Problems**, **To-do**, **Interface table**, **Harness plans** |
 | Top | **Undo**, **Redo**, **Guided / Expert**, **Search / commands** (Ctrl+K), **Generate harnesses** |
@@ -135,7 +152,7 @@ A warning can be fixed, or **waived**. **Waive one (app):** in the Problems tab 
 
 The **notes** say *not checked*: EMC separation, shield grounding and so on are not checked, **because the engineering values are still placeholders**. A silent pass would be a lie, so the tool says nothing was checked.
 
-The **To-do** tab lists what is left, including *confirm auto-filled connectors*: the connectors on `IF-001` and `IF-002` were chosen by the tool, and a person should confirm them. In the app, select an interface and press **Confirm auto-filled connectors** in Properties.
+The **To-do** tab lists what is left, including *N auto-filled connector assignments to review*: the connectors on `IF-001` and `IF-002` were chosen by the tool, and a person should confirm them. In the app, select an interface and press **Confirm auto-filled connectors** in Properties.
 
 ## Part 6: export drawings and lists
 
@@ -149,9 +166,9 @@ harness export wheel-link
 38 files written to wheel-link/outputs (model 8a25f0c99a86).
 ```
 
-The files are checked independently before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`:
+The files are checked independently before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.
 
-| File | What it is |
+| File (main files only) | What it is |
 | --- | --- |
 | `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` | the harness drawing |
 | `harnesses/W001/wirelist.csv` | every wire: signal, interface, connectors, pins, gauge, part, length |
@@ -171,7 +188,7 @@ The block diagram:
 
 ![The block diagram](img/block-diagram.png)
 
-Look at the drawing. Wire gauge says `pending`, colour and length say `n/a`. Those are the open questions, and the next two parts answer them.
+Look at the drawing. The cable block says `pending` for the wire gauge and `length n/a`, and the wires are grey because no wire colour is set (the tool defines no colours). Gauge and length are the open questions, and the next two parts answer them. The optional step after Part 8 gives the wires a colour.
 
 Can you release this harness yet? Try. A release needs a name and a comment of at least 10 characters:
 
@@ -243,8 +260,10 @@ harness import-parts wheel-link my-templates/approved-parts.csv --approved Appro
 ```
 
 ```
-Imported 5 part(s).
+Imported 5 part(s). Project parts library (version 0), source: approved-parts.csv (sha256 b3e2067afea8), date: not recorded.
 ```
+
+(The `row N: OK updated ...` lines come first. The dry run ends with `Dry run: nothing was changed.`)
 
 Ask the rules what they think now:
 
@@ -276,10 +295,25 @@ Open: 0 error(s), 7 warning(s), 3 note(s). Waived: 0.
 | You have | Do |
 | --- | --- |
 | segment lengths from CAD or a spreadsheet | `harness import-lengths wheel-link my-templates/segment-lengths.csv --unit mm --dry-run` |
-| the interfaces as a table | app: **File > Import interfaces…** with `my-templates/interfaces.csv` |
+| the interfaces as a table | app only (there is no command for it): **File > Import interfaces…** with `my-templates/interfaces.csv` |
 | the connector pinout of a unit in KiCad | `harness import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run` |
 
 Details and column names: [`IMPORTS.md`](IMPORTS.md), [`KICAD.md`](KICAD.md).
+
+## Optional: give the wires a colour
+
+This step needs a build newer than the 0.1.0 packages (see the note in Part 1). A wire's colour is data that you choose; the tool has no colours of its own, which is why the wires of `wheel-link` are grey.
+
+**In the app:** choose **Edit > Wire colours...**. The window lists each signal of the project (`PWR`, `RTN`, `TX+` and so on); pick a colour for `PWR` (for example red) and `RTN` (for example black) from the IEC 60757 list and confirm. The message *Wire colours saved. Generate the harnesses to apply them.* appears. Then press **Generate harnesses**, **Apply** and **Export outputs**. The colours are saved in `config/generation.json` as `wire_colour_by_signal`.
+
+On the command line the same two commands apply colours that are already in `generation.json` (the command line has no command to set them; [`CONFIG.md`](CONFIG.md) shows the format):
+
+```
+harness generate wheel-link
+harness export wheel-link
+```
+
+The wire list now has the colour in its *Colour* column (`red`, `black`), and the harness drawing draws the wires in those colours with the IEC 60757 code written as text. A wire between two different signals (`TX+/RX+`) takes the colour of the first.
 
 ## Part 9 (optional, practice only): release a harness
 
@@ -342,3 +376,5 @@ You have now done everything the tool does, once. Add a **Create redundant copy*
 | to plan a design on paper first | `design-worksheet.md` in the templates (`harness templates my-templates`) |
 | something went wrong | [`FAQ.md`](FAQ.md) |
 | what the examples and templates contain | [`../src/harness_design_studio/resources/examples/templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) |
+
+Next: [user manual](user-manual/README.md), [`CONCEPTS.md`](CONCEPTS.md), [`LEARNING_PATH.md`](LEARNING_PATH.md).
