@@ -3,7 +3,7 @@
 import re
 from typing import Annotated
 
-from pydantic import AfterValidator
+from pydantic import AfterValidator, Field
 
 ID_RE = re.compile(r"^[A-Za-z][A-Za-z0-9_.\-]{0,63}$")
 PIN_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.\-]{0,15}$")
@@ -34,5 +34,9 @@ def check_pin_id(value: str) -> str:
     return value
 
 
-Id = Annotated[str, AfterValidator(check_id)]
-PinId = Annotated[str, AfterValidator(check_pin_id)]
+# The pattern is only for the JSON Schemas (editors); the validators above do the checking and
+# give the plain-language messages.
+Id = Annotated[str, AfterValidator(check_id), Field(json_schema_extra={"pattern": ID_RE.pattern})]
+PinId = Annotated[
+    str, AfterValidator(check_pin_id), Field(json_schema_extra={"pattern": PIN_RE.pattern})
+]
