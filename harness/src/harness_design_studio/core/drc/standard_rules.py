@@ -90,25 +90,43 @@ def _wire_voltage(project: Project) -> Iterator[Hit]:
                 )
 
 
+def _temperature_users(project: Project, what: str) -> Iterator[tuple[str, str]]:
+    """(object ID, part ID) of every connector or wire that uses a part, in a stable order. The
+    finding is placed on the use, so the release gate can tell which harness it blocks."""
+    if what == "connector":
+        for conn in sorted(project.connectors.values(), key=lambda x: x.id):
+            yield conn.id, conn.part_id
+        for h in sorted(project.harnesses.values(), key=lambda x: x.id):
+            for cable in h.connectors:
+                yield cable.id, cable.part_id
+    else:
+        for h in sorted(project.harnesses.values(), key=lambda x: x.id):
+            for w in h.wires:
+                if w.part_id:
+                    yield w.id, w.part_id
+
+
 def _temperature(project: Project) -> Iterator[Hit]:
     d = cfg(project, "derating")
     ambient = number(d.get("max_ambient_temperature_c"))
     if ambient is None:
         return
-    for margin_key, parts, what in (
-        ("connector_temperature_margin_c", _connector_parts(project), "connector"),
-        ("wire_temperature_margin_c", _wire_parts(project), "wire"),
+    for margin_key, what in (
+        ("connector_temperature_margin_c", "connector"),
+        ("wire_temperature_margin_c", "wire"),
     ):
         margin = number(d.get(margin_key))
         if margin is None:
             continue
-        for pid in parts:
+        seen: set[str] = set()
+        for oid, pid in _temperature_users(project, what):
             top = _rating(project, pid, "max_temp_c")
-            if top is not None and ambient > top - margin:
+            if top is not None and ambient > top - margin and oid not in seen:
+                seen.add(oid)
                 yield Hit(
-                    f"{what}-temperature.{pid}",
+                    oid,
                     f"The hottest ambient temperature ({ambient:g} degC) is above {top - margin:g} degC, "
-                    f"the limit for {what} part {pid} (maximum {top:g} degC, margin {margin:g} degC), "
+                    f"the limit for {what} part {pid} used by {oid} (maximum {top:g} degC, margin {margin:g} degC), "
                     "before any self-heating of the conductor",
                 )
 
@@ -219,6 +237,23 @@ def unchecked(project: Project) -> Iterator[Hit]:
             "temperature",
             "Temperature margins were not checked: the hottest ambient temperature (derating.max_ambient_temperature_c) is not set",
         )
+    if number(d.get("max_ambient_temperature_c")) is not None:
+        for key, what, parts in (
+            ("connector_temperature_margin_c", "Connector", _connector_parts(project)),
+            ("wire_temperature_margin_c", "Wire", _wire_parts(project)),
+        ):
+            if number(d.get(key)) is None:
+                yield Hit(
+                    f"temperature-{what.lower()}-margin",
+                    f"{what} temperature margin was not checked: the margin (derating.{key}) is not set",
+                )
+                continue
+            bad = [p for p in parts if _rating(project, p, "max_temp_c") is None]
+            if bad:
+                yield Hit(
+                    f"temperature-{what.lower()}-parts",
+                    f"Temperature margin was not checked for {what.lower()} part(s) {', '.join(bad)}: the part has no max_temp_c rating",
+                )
     if number(d.get("wire_temperature_margin_c")) is not None and project.harnesses:
         yield Hit(
             "thermal-analysis",

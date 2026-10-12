@@ -3,7 +3,8 @@
 It reads the project as data (exactly what is saved), re-derives from the logical layer alone what
 the harnesses must contain, and compares. If generation has a bug, this is where it shows.
 Checks: every logical signal appears end to end exactly once; both ends of every wire agree with
-the pinout tables; no pin is used twice; harness bookkeeping matches its wires; outputs are not stale.
+the pinout tables (pins, the wire's signal label and the cable connector's own pin table); no pin
+is used twice; harness bookkeeping matches its wires; outputs are not stale. It never raises.
 """
 
 from collections import Counter
@@ -78,11 +79,19 @@ def _check_wire_ends(
     for h in project.harnesses.values():
         for w in h.wires:
             rep.wires_checked += 1
+            same_pin = (w.from_connector, w.from_pin) == (w.to_connector, w.to_pin)
+            if same_pin:
+                rep.error(
+                    "wire_same_pin",
+                    f"Wire {w.id} starts and ends on the same pin ({w.from_pin} of {w.from_connector}).",
+                    w.id,
+                )
             for side, cid, pid in (
                 ("from", w.from_connector, w.from_pin),
                 ("to", w.to_connector, w.to_pin),
             ):
-                cable_use.setdefault((cid, pid), []).append(w.id)
+                if not (same_pin and side == "to"):  # one pin used once, reported above
+                    cable_use.setdefault((cid, pid), []).append(w.id)
                 owner = cables.get(cid)
                 if owner is None or owner[0].id != h.id:
                     rep.error(
@@ -99,7 +108,8 @@ def _check_wire_ends(
                         w.id,
                     )
                 if cable.mates_with in project.connectors:
-                    box_use.setdefault((str(cable.mates_with), pid), []).append(w.id)
+                    if not (same_pin and side == "to"):
+                        box_use.setdefault((str(cable.mates_with), pid), []).append(w.id)
                 elif h.generated:
                     rep.error(
                         "mate_missing",
@@ -155,8 +165,42 @@ def _wire_connection(
                 w.id,
             )
             return None
+        cable_pin = next((p for p in owner[1].pins if p.id == pid), None) if owner else None
+        if cable_pin is not None and (
+            cable_pin.signal not in (None, pin.signal)
+            or cable_pin.interface_id not in (None, pin.interface_id)
+        ):
+            rep.error(
+                "cable_pin_mismatch",
+                f"Wire {w.id}: pin {pid} of cable connector {cid} is marked "
+                f"{cable_pin.signal or 'no signal'} of {cable_pin.interface_id or 'no interface'}, "
+                f"but pin {pid} of {box.id} carries {pin.signal} of {pin.interface_id}.",
+                w.id,
+            )
+            return None
         ends.append((idx, pin.signal))
+    if ends[0] == ends[1]:
+        if (w.from_connector, w.from_pin) != (w.to_connector, w.to_pin):  # else reported earlier
+            rep.error(
+                "wire_same_end",
+                f"Wire {w.id} joins two pins at the same end of interface {i.id}, both carrying {ends[0][1]}.",
+                w.id,
+            )
+        return None
+    label = _wire_label(ends[0][1], ends[1][1])
+    if w.signal is not None and w.signal not in label:
+        rep.error(
+            "wire_signal_mismatch",
+            f"Wire {w.id} is labelled {w.signal}, but its pins carry {ends[0][1]} and {ends[1][1]} "
+            f"in the pinout tables of {i.id}.",
+            w.id,
+        )
     return frozenset(ends)
+
+
+def _wire_label(a: str, b: str) -> set[str]:
+    """Labels a wire between signals `a` and `b` may carry: the shared name, or one of the two orders."""
+    return {a} if a == b else {f"{a}/{b}", f"{b}/{a}"}
 
 
 def verify_project(project: Project) -> VerifyReport:

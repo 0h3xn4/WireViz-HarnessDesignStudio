@@ -180,7 +180,7 @@ def test_verifier_detects_missing_wire():
     p = generated(sat15())
     h = next(x for x in p.harnesses.values() if x.generated and len(x.wires) > 1)
     apply_ops(p, [Put("harnesses", evolve(h, wires=h.wires[1:]))])
-    assert codes(p)
+    assert "signal_missing" in codes(p)
 
 
 def test_verifier_detects_swapped_pins():
@@ -193,7 +193,7 @@ def test_verifier_detects_swapped_pins():
         *h.wires[2:],
     ]
     apply_ops(p, [Put("harnesses", evolve(h, wires=swapped))])
-    assert codes(p)
+    assert "wire_signal_mismatch" in codes(p)
 
 
 def test_verifier_detects_duplicate_wire():
@@ -201,7 +201,7 @@ def test_verifier_detects_duplicate_wire():
     h = next(x for x in p.harnesses.values() if x.generated and x.wires)
     dup = evolve(h.wires[0], id=h.wires[0].id + "-dup")
     apply_ops(p, [Put("harnesses", evolve(h, wires=[*h.wires, dup]))])
-    assert codes(p)
+    assert {"pin_reused", "signal_duplicated"} <= codes(p)
 
 
 def test_verifier_detects_missing_end_connector():
@@ -209,7 +209,7 @@ def test_verifier_detects_missing_end_connector():
     h = next(x for x in p.harnesses.values() if x.generated and x.wires)
     w = evolve(h.wires[0], to_connector="NOPE")
     apply_ops(p, [Put("harnesses", evolve(h, wires=[w, *h.wires[1:]]))])
-    assert codes(p)
+    assert "wire_end_missing" in codes(p)
 
 
 def test_verifier_flags_outdated_outputs():
