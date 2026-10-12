@@ -31,7 +31,18 @@ It works offline and produces byte-identical files for the same design, so the f
 
 ## Quick start
 
-You need Ubuntu 24.04 or newer on a 64-bit PC (see [Requirements](#requirements)). These commands install the command line tool in a private Python environment and make a practice project:
+You need Ubuntu 24.04 or newer on a 64-bit PC (see [Requirements](#requirements)).
+
+**Easiest: the ready-made package.** Download `harness-design-studio_1.0.0_amd64.deb` and `SHA256SUMS` from the [latest release](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest), then in the folder with the files:
+
+```
+sha256sum -c SHA256SUMS --ignore-missing
+sudo apt install ./harness-design-studio_1.0.0_amd64.deb
+```
+
+That installs the `harness` command and the `harness-gui` app; the packages are not signed, so the checksum check is the only proof that the download is intact. The release page also has a `.tar.gz` with an `install.sh` that needs no administrator rights.
+
+**From the source code.** These commands install the command line tool in a private Python environment and make a practice project:
 
 ```
 sudo apt install python3-venv git
@@ -46,7 +57,7 @@ harness export wheel-link
 
 You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 units, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `38 files written to wheel-link/outputs (model da1379ad567b).` The drawings and lists are in `wheel-link/outputs/`. To see the diagram, run `harness-gui` and open the project with **File > Open project…**.
 
-The other way to install is a ready-made `.deb` package, which needs no Python knowledge: [`INSTALL.md`](harness/docs/INSTALL.md) has both ways and explains what to do if something fails. The full walk-through with the output of every command is [`GETTING_STARTED.md`](harness/docs/GETTING_STARTED.md).
+[`INSTALL.md`](harness/docs/INSTALL.md) has all the ways to install (package, tarball, source) and explains what to do if something fails. The full walk-through with the output of every command is [`GETTING_STARTED.md`](harness/docs/GETTING_STARTED.md).
 
 ## Where to go next
 
