@@ -19,7 +19,7 @@ from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Connector, Harness, Project, ShieldGroup, Wire
 from harness_design_studio.core.wirecolours import resolve
 
-from .canvas import SHEETS, Curve, Line, Rect, Sheet, Text, fit
+from .canvas import SHEETS, Curve, Line, Rect, Sheet, Text, fit, fit_size
 from .stamp import Stamp
 from .tables import PENDING, num
 
@@ -80,6 +80,7 @@ MAX_WIRE_RUN = 45.0  # longest stretch of wire between a connector table and a c
 WIRE_W = 0.8
 PIN_SIZE = 2.5
 HEAD_SIZE = 2.2
+ID_FLOOR = 1.4  # smallest text size for a long ID (64 characters fit in a connector table)
 
 
 def wire_colour(name: str | None) -> tuple[str, str]:
@@ -447,6 +448,8 @@ def _draw_page(
         for k, (text, size, bold) in enumerate(
             ((cid, 2.8, True), (part, HEAD_SIZE, False), (mate, HEAD_SIZE, False))
         ):
+            if k == 0:  # the connector ID is shrunk to fit, never cut
+                size = fit_size(text, CONN_W - 2.0, size, ID_FLOOR)
             sh.add(
                 Text(
                     x + CONN_W / 2,
@@ -484,12 +487,13 @@ def _draw_page(
         bottom = max(bottom, bt + height)
         sh.add(Rect(box_x, bt, BOX_W, height, width=0.3, dash=(1.5, 1.0), color=GREY))
         title = f"{g[0]} - {g[1]}" + ("  (continued)" if g in page.continued else "")
+        title_size = fit_size(title, BOX_W - 2.0, 2.8, ID_FLOOR)  # two long IDs: shrink first
         sh.add(
             Text(
                 box_x + BOX_W / 2,
                 bt + HEAD_ROW - 1.1,
-                fit(title, BOX_W - 2.0, 2.8),
-                size=2.8,
+                fit(title, BOX_W - 2.0, title_size),
+                size=title_size,
                 bold=True,
                 anchor="middle",
             )
@@ -569,12 +573,13 @@ def _draw_page(
                 length = wire_length(h, w)
                 gauge = "AWG ?" if w.gauge_awg is None else f"AWG {w.gauge_awg}"
                 label += f"  {gauge}  {num(length) + ' m' if length is not None else 'n/a'}"
+            label_size = fit_size(label, BOX_W - 2.0, PIN_SIZE, ID_FLOOR)  # shrunk, not cut
             sh.add(
                 Text(
                     box_x + BOX_W / 2,
                     cy - 1.0,
-                    fit(label, BOX_W - 2.0, PIN_SIZE),
-                    size=PIN_SIZE,
+                    fit(label, BOX_W - 2.0, label_size),
+                    size=label_size,
                     anchor="middle",
                     bold=True,
                 )
