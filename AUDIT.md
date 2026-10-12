@@ -1,6 +1,6 @@
 # Pre-release audit: findings list
 
-Status: findings list from the audit (nothing was changed while auditing). **Critical and high findings are fixed on this branch (see 'Phase 4 status').** Medium and low findings are not fixed yet.
+Status: findings list from the audit (nothing was changed while auditing). **Critical and high findings are fixed on this branch (see 'Phase 4 status').** Medium findings are fixed on the branch `fix/audit-medium` (see 'Phase 4 status: medium findings'); most low findings are not.
 
 Audited tree: `master` at `956ff71` (Harness Design Studio 0.1.0 plus the WireViz fork it lives in). Audit date: 2026-10-12.
 
@@ -46,6 +46,27 @@ Each fix has a test that failed on the old code (the agents ran the new tests ag
 Also fixed on the way: C-7, C-18, A-5/F1-10, F1-15/F2-11, F1-3, B-6, parts of B-5 and C-14 (helper deadline of 180 s; `close()` no longer waits on a stuck check; waiting for a long legitimate check on window release is unchanged).
 
 Defaults applied for questions you have not answered yet (change them by telling me): see the **default applied** rows. Also: a read-only session that restores a journal stays read-only (Save As only); a plan with warnings (not only errors) now opens the preview rather than the "up to date" notice; the verifier refuses on integrity errors with the wording "damaged files" because `export` already did, which is slightly wrong for a design error and can be reworded.
+
+## Phase 4 status: medium findings (branch `fix/audit-medium`)
+
+Same method: every fix has a test that failed on the old code (agents ran the new tests against the unmodified source). Full suite on the merged branch: **1735 passed, 2 skipped** (one skip needs a non-root user). `ruff`, `ruff format` and bare `mypy` (which covers `src`, `tests` and `tools`, as CI does) are clean.
+
+**Fixed:** A-5, A-6, A-7, A-8 (and low A-9 to A-12), B-3, B-5, B-6, B-7, B-8 (manual harnesses only), B-9, B-10, B-11, B-12, B-14, B-20 (and most of B-15), C-4 to C-13, C-15 to C-17 (and C-20, C-21, C-24), C-14 (helper deadline of 180 s, close and release no longer wait on a stuck check), D-3 to D-11, D-13 (core side), E-4 to E-12, F1-3, F1-9, F1-11, F1-13 to F1-21, F1-23, F1-28 (partly), F2-4, F2-6, F2-7, F2-12, F2-13, G-2 to G-6, G-8 to G-11, I-3 to I-8, I-12, K-4 to K-7. Several low findings fixed on the way (see the commits and `CHANGELOG.md`).
+
+**Owner decision Q2 (yes) implemented (E-5, I-2):** a release now freezes the parts, interface types and configuration that the released harness uses; `check` reports a change as released-modified; edits are refused while the harness is released ("start a new revision"). Config is frozen as whole files (`derating`, `emc`, `segregation`, `titleblock`) plus eight named `generation` keys, while any harness is released. Waivers are recorded but not locked. Old baselines without these records still load and are not flagged.
+
+**Not fixed or only partly (and why):**
+- B-8: a released harness is not part of the generation input hash, because that would make releasing one harness block the next (the release gate refuses a stale generation). Only manual harnesses are included.
+- B-13 (a segment cycle that the generator can build in one corner case) is now reported as a rule error (`segment-loop`); the generator itself is unchanged.
+- B-16, B-17, B-19, B-21 and the remaining B-22 items: open questions for the owner or low.
+- C-19, C-22, C-23: partly (the double report of one wire by two cited rules is kept; some silent skips remain).
+- D-12, D-14, D-17: low, not done. D-18 done (headings).
+- F1-16 (QAction leak does not reproduce; the stale-entry crash is fixed), F1-27 (strings partly moved), F1-28 (some tests added), F2-10 (newline refused in the interface table only).
+- G-12 to G-17: the cheap items done (libc6 >= 2.39, install.sh links, permissions block in CI, library lists, test_docs_links covers the developer and manual folders); not done: action SHA pinning, the `.deb` shipping README/svg under /opt, the `gui_entry --selftest` details, wheel dotfiles, a metrics.json freshness test (it would conflict on every change).
+- I-9 (traceability counts a requirement ID that is only mentioned) and I-11 (coverage gate on `core` only, as T-07 defines): left unchanged, owner decisions.
+- K-10 (docs promise locking a wire or pin in the app; the app cannot) and the other low K items.
+
+**New behaviour you should know about (defaults, tell me to change them):** `sheet` may be left out of the title block (the verifier skips the sheet-number check then); unknown or duplicate title block fields are an error; PDFs keep Windows-1252 and the export warns by naming each replaced character; a shield's end A is the start of its lowest-ID wire for the whole harness; the CSV apostrophe guard is kept and now reversible (`+5V` still appears as `'+5V`); an import-parts file with a repeated part ID is an error; numbers in imports must be plain (`1,234` is refused as ambiguous); pin counts are 1 to 1000; the numeric ranges of the model (AWG 0 to 40, lengths 0 to 10 000 m, currents and voltages above 0); a project whose lock cannot be taken opens read-only automatically; the rule count is 34 (new rule `segment-loop`); `libc6 (>= 2.39)` in the `.deb`; the release script fails when the version is already a git tag or `## Unreleased` is not empty.
 
 ## 1. Verdict and summary
 
