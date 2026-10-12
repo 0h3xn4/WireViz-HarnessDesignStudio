@@ -3,7 +3,8 @@
 ECSS-Q-ST-80C 6.2.4.3, 6.2.4.4, 6.2.4.8 to 6.2.4.11 (gap G-07). Writes, into dist/release-docs:
   scf.json     version, source commit, pinned dependencies, SHA-256 of every source file, and an
                aggregate source integrity value; the deliverables found in dist/ with size and SHA-256
-  SHA256SUMS   the deliverables in the format of `sha256sum -c`
+  SHA256SUMS   the deliverables in the format of `sha256sum -c`; the names are relative to dist/,
+               so check them with `cd dist && sha256sum -c release-docs/SHA256SUMS`
 Deterministic: no dates. The content of ECSS-M-ST-40 Annex E (the SCF DRD) was not supplied, so the
 layout is the project's own; compliance/docs/SCF.md says so.
 Usage: python -m tools.gen_scf [OUT_DIR]
@@ -38,7 +39,10 @@ def source_files(root: Path) -> list[Path]:
         files += [
             p
             for p in (root / folder).rglob("*")
-            if p.is_file() and "__pycache__" not in p.parts and p.suffix != ".pyc"
+            if p.is_file()
+            and "__pycache__" not in p.parts
+            and p.suffix != ".pyc"
+            and not any(part.endswith(".egg-info") for part in p.parts)  # pip -e / wheel build
         ]
     return sorted(set(files), key=lambda p: p.relative_to(root).as_posix())
 
@@ -82,9 +86,14 @@ def build_scf(root: Path = ROOT, dist: Path | None = None) -> dict[str, object]:
 
 
 def main(out: str = "dist/release-docs") -> int:
-    scf = build_scf()
+    scf = build_scf(ROOT)
     files: dict[str, str] = scf["source_files"]  # type: ignore[assignment]
     delivered: dict[str, dict[str, object]] = scf["deliverables"]  # type: ignore[assignment]
+    if not delivered:
+        sys.stderr.write(
+            f"error: no .deb or .tar.gz of version {scf['version']} in dist/: build the package first\n"
+        )
+        return 1
     out_dir = ROOT / out
     out_dir.mkdir(parents=True, exist_ok=True)
     text = json.dumps(scf, indent=2, sort_keys=True) + "\n"

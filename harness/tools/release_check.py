@@ -12,6 +12,12 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 Result = tuple[bool, str]
+QUICK = False  # set by main: a quick run is not a release, so the release-time checks are skipped
+# Skipped tests that may stay in a release run: (text of the reason, condition under which it is fine).
+# Everything else (no Chromium, no poppler, no PySide6 ...) means a check did not run: the gate fails.
+ALLOWED_SKIPS: list[tuple[str, Callable[[], bool]]] = [
+    ("needs POSIX non-root", lambda: os.geteuid() == 0),  # the container builds as root
+]
 
 
 def run(cmd: list[str], timeout: int = 3600, env: dict[str, str] | None = None) -> tuple[int, str]:
@@ -29,6 +35,18 @@ def _selftest_line(out: str) -> str:
     return next((ln for ln in out.splitlines() if "selftest" in ln), "no selftest output")
 
 
+def unreleased_text(changelog: str) -> str:
+    """What is written under the `## Unreleased` heading (up to the next `## `), without blanks."""
+    match = re.search(r"^## Unreleased[^\n]*\n(.*?)(?=^## |\Z)", changelog, re.M | re.S)
+    return match.group(1).strip() if match else ""
+
+
+def tag_exists(version: str) -> bool | None:
+    """Whether the git tag v<version> exists; None when git cannot tell."""
+    code, out = run(["git", "tag", "-l", f"v{version}"])
+    return None if code else bool(out.strip())
+
+
 def versions() -> Result:
     from harness_design_studio import __version__
 
@@ -40,7 +58,26 @@ def versions() -> Result:
         "pyproject": pyproject.group(1) if pyproject else "?",
         "CHANGELOG": change.group(1) if change else "?",
     }
-    return len(set(found.values())) == 1, ", ".join(f"{k} {v}" for k, v in found.items())
+    detail = ", ".join(f"{k} {v}" for k, v in found.items())
+    if len(set(found.values())) != 1:
+        return False, detail
+    if QUICK:
+        return True, detail
+    # a release is a new version: the old one must not be reused, and nothing may be left unreleased
+    tagged = tag_exists(__version__)
+    if tagged is None:
+        return False, f"{detail}; git cannot list the tags, so a reused version cannot be ruled out"
+    if tagged:
+        return (
+            False,
+            f"{detail}; the tag v{__version__} already exists: a release needs a new version",
+        )
+    if unreleased_text((ROOT / "CHANGELOG.md").read_text()):
+        return (
+            False,
+            f"{detail}; CHANGELOG.md still has text under '## Unreleased': rename it to the version",
+        )
+    return True, f"{detail}; v{__version__} is not tagged yet, nothing is left under Unreleased"
 
 
 def lint() -> Result:
@@ -52,16 +89,39 @@ def lint() -> Result:
     return True, "ruff format, ruff check, mypy --strict clean"
 
 
+def skipped_tests(out: str) -> tuple[int, list[str]]:
+    """The number of skipped tests in a `pytest -rs` output and the reasons that are not allowed."""
+    total, refused = 0, []
+    for count, where, reason in re.findall(r"^SKIPPED \[(\d+)\] (\S+?): (.*)$", out, re.M):
+        total += int(count)
+        if not any(text in reason and fine() for text, fine in ALLOWED_SKIPS):
+            refused.append(f"{where} {reason}")
+    return total, refused
+
+
+def run_suite(extra: list[str]) -> Result:
+    """The test suite with the skips counted: a silent skip is a check that did not run."""
+    env = {**os.environ, "HARNESS_REQUIRE_BROWSER": "1"}  # no Chromium: fail, do not skip
+    code, out = run(
+        [sys.executable, "-m", "pytest", "-q", "-rs", "-p", "no:cacheprovider", *extra], env=env
+    )
+    total, refused = skipped_tests(out)
+    last = tail(re.sub(r"^SKIPPED .*$", "", out, flags=re.M).strip(), 1)
+    detail = f"{last}; {total} skipped"
+    if refused:
+        detail += f", NOT allowed: {'; '.join(sorted(set(refused))[:4])}"
+        return False, detail
+    return code == 0, detail
+
+
 def tests() -> Result:
-    code, out = run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider", "--cov"])
-    return code == 0, tail(out, 3)
+    return run_suite(["--cov"])
 
 
 def tests_plain() -> Result:
     """The same suite without coverage instrumentation (ECSS-Q-ST-80C 6.2.3.8): the result is
     the one that counts for the released code, since instrumentation changes timing."""
-    code, out = run([sys.executable, "-m", "pytest", "-q", "-p", "no:cacheprovider"])
-    return code == 0, tail(out, 3)
+    return run_suite([])
 
 
 def fuzz() -> Result:
@@ -213,7 +273,8 @@ STEPS: list[tuple[str, Callable[[], Result], bool]] = [
 
 
 def main() -> int:
-    quick = "--quick" in sys.argv
+    global QUICK
+    quick = QUICK = "--quick" in sys.argv
     lines = ["# Release report", ""]
     failed = 0
     for name, step, fast in STEPS:
