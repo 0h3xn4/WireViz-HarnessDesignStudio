@@ -29,22 +29,29 @@ class Allocation:
 
 
 def _allocate_fixed(
-    connector: Connector, requests: list[Request], previous: dict[tuple[str, str], str]
+    connector: Connector,
+    requests: list[Request],
+    previous: dict[tuple[str, str], str],
+    held: dict[tuple[str, str], str],
 ) -> Allocation:
     """The pinout is fixed by the unit's design: every signal goes to the free pin of that name.
-    A signal the connector has no pin for is an error; nothing is placed on unnamed pins."""
+    A signal the connector has no pin for is an error; nothing is placed on unnamed pins. A locked
+    pin that already carries a signal of an interface keeps it (`held`): that signal is not
+    placed again and the pin is not offered to anyone else."""
     result = Allocation()
     by_signal: dict[str, list[str]] = {}
     for p in connector.pins:
         if p.fixed and p.signal and not p.locked:
             by_signal.setdefault(p.signal, []).append(p.id)
-    used: set[str] = set()
+    used: set[str] = set(held.values())
     for req in sorted(
         requests, key=lambda r: (CATEGORY_RANK.get(r.itype.category, 2), r.interface_id)
     ):
         missing = []
         picked: list[tuple[str, str]] = []
         for sig in (s.name for s in req.itype.signals):
+            if (req.interface_id, sig) in held:
+                continue  # already on its locked pin
             free = [pid for pid in by_signal.get(sig, []) if pid not in used]
             if not free:
                 missing.append(sig)
@@ -68,6 +75,12 @@ def _allocate_fixed(
             result.reasons.setdefault(pid, []).append(
                 f"pin-allocation: {sig} of {req.interface_id} uses pin {pid} because the pinout of {connector.id} is fixed by the unit design"
             )
+        for sig in (s.name for s in req.itype.signals):
+            if (locked_pin := held.get((req.interface_id, sig))) is not None:
+                result.pins[(req.interface_id, sig)] = locked_pin
+                result.reasons.setdefault(locked_pin, []).append(
+                    f"pin-allocation: {sig} of {req.interface_id} stays on pin {locked_pin} because the pin is locked"
+                )
     return result
 
 
@@ -101,9 +114,9 @@ def allocate(
     as it is instead of placing the signal on another pin. `return_gap` unassigned pins are left
     between the signals of a power interface (ECSS-Q-ST-30-11C 6.11.3 a)."""
     result = Allocation()
-    if any(p.fixed and p.signal for p in connector.pins):  # even when a released harness holds some
-        return _allocate_fixed(connector, requests, previous)
     held = held or {}
+    if any(p.fixed and p.signal for p in connector.pins):  # even when a released harness holds some
+        return _allocate_fixed(connector, requests, previous, held)
     order = [p.id for p in connector.pins]
     index = {pid: k for k, pid in enumerate(order)}
     taken = {p.id for p in connector.pins if p.locked}

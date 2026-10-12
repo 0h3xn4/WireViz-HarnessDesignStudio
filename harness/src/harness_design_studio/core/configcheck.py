@@ -7,6 +7,7 @@ wire gets bigger is rejected with a reason), and reads an ampacity table from a 
 to type JSON by hand. It never supplies a number itself.
 """
 
+import math
 from dataclasses import dataclass
 
 from harness_design_studio.core import standard_profiles
@@ -57,7 +58,10 @@ def missing(project: Project) -> list[Need]:
 
 
 def _num(v: object) -> float | None:
-    return float(v) if isinstance(v, int | float) and not isinstance(v, bool) else None
+    """A finite number (not a bool, not inf or nan); anything else is not a number here."""
+    if isinstance(v, int | float) and not isinstance(v, bool) and math.isfinite(v):
+        return float(v)
+    return None
 
 
 def _pairs_ok(v: object) -> bool:

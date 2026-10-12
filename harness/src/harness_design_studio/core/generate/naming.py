@@ -1,8 +1,9 @@
 """Naming schemes from the `naming` configuration. Invalid templates fall back to the defaults."""
 
+import re
 from dataclasses import dataclass, field
 
-from harness_design_studio.core.ids import ID_RE
+from harness_design_studio.core.ids import check_id
 from harness_design_studio.core.model import Project
 
 DEFAULTS = {
@@ -24,13 +25,18 @@ class Namer:
         template = self.templates.get(kind, DEFAULTS[kind])
         try:
             name = template.format(**kw)
-        except (KeyError, IndexError, ValueError):
+        except Exception:  # a template can fail in many ways (attributes, subscripts, formats)
             name = ""
-        if not ID_RE.fullmatch(name) or name.endswith("."):
+        if not _valid_id(name):
             if kind in self.templates and f"naming.{kind}" not in self.warnings:
                 self.warnings.append(f"naming.{kind}")
             name = DEFAULTS[kind].format(**kw)
         return name
+
+    def use_default(self, kind: str) -> None:
+        """Give up on a template that ran out of free names; the default pattern is used from now."""
+        if self.templates.pop(kind, None) is not None and f"naming.{kind}" not in self.warnings:
+            self.warnings.append(f"naming.{kind}")
 
     def harness(self, n: int) -> str:
         return self._fmt("harness", n=n)
@@ -51,18 +57,29 @@ class Namer:
         return self._fmt("segment", harness=harness, n=n)
 
 
+def _valid_id(name: str) -> bool:
+    try:
+        check_id(name)
+    except ValueError:
+        return False
+    return True
+
+
 def _distinct(kind: str, template: str) -> bool:
-    """A template must give a different name for every harness and every number, or IDs collide
-    (and a template without a number would make generation search for a free name forever)."""
+    """A template must give a valid, different name for every harness and every number, or IDs
+    collide (and a template without a number would make generation search for a free name
+    forever). Numbers up to 200 are tried; the engine bounds its search for the rest."""
+    if re.search(r"\{[^{}]*\d{3,}[^{}]*\}", template):  # a width of hundreds would eat memory
+        return False
     if kind == "harness":
-        samples: list[dict[str, object]] = [{"n": n} for n in (1, 2, 3)]
+        samples: list[dict[str, object]] = [{"n": n} for n in range(1, 201)]
     else:
-        samples = [{"harness": h, "n": n} for h in ("H1", "H2") for n in (1, 2)]
+        samples = [{"harness": h, "n": n} for h in ("H1", "H2") for n in range(1, 201)]
     try:
         names = {template.format(**kw) for kw in samples}
-    except (KeyError, IndexError, ValueError):
+    except Exception:
         return False
-    return len(names) == len(samples)
+    return len(names) == len(samples) and all(_valid_id(x) for x in names)
 
 
 def namer_for(project: Project) -> Namer:

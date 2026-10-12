@@ -8,11 +8,15 @@ the same bytes. Released harnesses are frozen; locked pins and wires are never m
 
 import hashlib
 import json
+import math
 from collections.abc import Callable
 from dataclasses import dataclass, field, replace
 from typing import Any, cast
 
+from pydantic import TypeAdapter, ValidationError
+
 from harness_design_studio import __version__
+from harness_design_studio.core import configcheck
 from harness_design_studio.core.commands import Delete, Op, Put, SetGeneration
 from harness_design_studio.core.describe import part_gender
 from harness_design_studio.core.edit import clone_with
@@ -30,6 +34,7 @@ from harness_design_studio.core.model import (
     Wire,
     evolve,
 )
+from harness_design_studio.core.model.base import Name
 from harness_design_studio.core.vcs.snapshot import carried_interfaces
 
 from .lengths import path_length
@@ -81,13 +86,23 @@ class RegenReport:
             parts.append(f"update {n(len(self.changed), 'harness plan', 'harness plans')}")
         if self.removed:
             parts.append(f"remove {n(len(self.removed), 'harness plan', 'harness plans')}")
-        text = ("This will " + ", ".join(parts) + ".") if parts else "Nothing needs to change."
+        if parts:
+            text = "This will " + ", ".join(parts) + "."
+        elif self.errors:
+            text = "Nothing could be generated."
+        else:
+            text = "Nothing needs to change."
         if self.unchanged and parts:
             text += f" {n(len(self.unchanged), 'plan stays', 'plans stay')} as it is."
         if self.frozen:
             text += f" {n(len(self.frozen), 'released harness is', 'released harnesses are')} left untouched."
         if self.kept_locks:
             text += f" {n(len(self.kept_locks), 'locked pin stays', 'locked pins stay')} where you put it."
+        if self.errors:
+            shown = [f.message for f in self.errors[:3]]
+            more = len(self.errors) - len(shown)
+            text += f" {n(len(self.errors), 'problem needs', 'problems need')} your attention: "
+            text += " ".join(shown) + (f" ... and {more} more." if more else "")
         return text
 
     def summary(self) -> str:
@@ -107,8 +122,9 @@ class GenerationPlan:
 
     @property
     def empty(self) -> bool:
-        """True if applying the plan would change nothing but (possibly) the record."""
-        return all(isinstance(op, SetGeneration) for op in self.ops)
+        """True if applying the plan would change nothing but (possibly) the record and the plan
+        has no error to show: a plan whose only result is an error is not "up to date"."""
+        return all(isinstance(op, SetGeneration) for op in self.ops) and not self.report.errors
 
 
 # ---- inputs and status ---------------------------------------------------------------------------
@@ -177,6 +193,56 @@ def _num(v: object) -> float | None:
     return float(v) if isinstance(v, int | float) and not isinstance(v, bool) else None
 
 
+def _whole(v: object, low: int, high: int | None = None) -> bool:
+    x = _num(v)
+    return x is not None and math.isfinite(x) and x == int(x) and low <= x <= (high or math.inf)
+
+
+def _checked_config(
+    project: Project, report: RegenReport
+) -> tuple[dict[str, object], dict[str, object]]:
+    """The generation and derating values, with every invalid one reported as an error finding and
+    left out, so it counts as unset (the result is "pending"; no value is made up from it)."""
+    values = {"generation": _cfg(project, "generation"), "derating": _cfg(project, "derating")}
+    gen = values["generation"]
+
+    def bad(key: str, why: str) -> None:
+        msg = f"config/generation.json: {key} {why}."
+        report.findings.append(Finding("error", "config_invalid", msg))
+        gen.pop(key, None)
+
+    for issue in configcheck.validate(project):
+        report.findings.append(Finding("error", "config_invalid", issue.message))
+        file, _dot, key = (issue.object_id or "").partition(".")
+        values.get(file, {}).pop(key, None)
+    if gen.get("power_return_gap_pins") is not None and not _whole(gen["power_return_gap_pins"], 0):
+        bad("power_return_gap_pins", "must be a whole number of 0 or more")
+    if gen.get("default_gauge_awg") is not None and not _whole(gen["default_gauge_awg"], 0, 40):
+        bad("default_gauge_awg", "must be a whole number from 0 to 40")
+    colours = gen.get("wire_colour_by_signal")
+    if colours is not None and not isinstance(colours, dict):
+        bad(
+            "wire_colour_by_signal",
+            'must be a table of signal and colour, for example {"PWR": "red"}',
+        )
+    elif isinstance(colours, dict):
+        kept = {}
+        for sig in sorted(colours):
+            try:
+                ok = isinstance(colours[sig], str) and bool(
+                    TypeAdapter(Name).validate_python(colours[sig])
+                )
+            except ValidationError:
+                ok = False
+            if ok:
+                kept[sig] = colours[sig]
+            else:
+                msg = f"config/generation.json: wire_colour_by_signal for '{sig}' must be a colour name (text, 1 to 200 characters)."
+                report.findings.append(Finding("error", "config_invalid", msg))
+        gen["wire_colour_by_signal"] = kept
+    return gen, values["derating"]
+
+
 @dataclass
 class _Ctx:
     project: Project
@@ -212,11 +278,12 @@ def plan_generation(
             progress(frac, text)
 
     report = RegenReport()
+    gen, der = _checked_config(project, report)
     seg = segment(project)
     namer = namer_for(project)
     prev = project.generation
     ctx = _Ctx(
-        project, namer, _cfg(project, "generation"), _cfg(project, "derating"), report, {}, {}, set(),
+        project, namer, gen, der, report, {}, {}, set(),
         max(1, prev.next_harness_number if prev else 1), set(project.harnesses),
     )  # fmt: skip
     for note in seg.notes:
@@ -227,10 +294,6 @@ def plan_generation(
             "interface_skipped",
             f"{s.interface_id} was not generated: {s.reason}.",
             s.interface_id,
-        )
-    for w in namer.warnings:
-        ctx.finding(
-            "warning", "naming", f"The naming template '{w}' is not valid; the default was used."
         )
 
     old_by_key = {h.group_key: h for h in project.harnesses.values() if h.generated}
@@ -333,6 +396,10 @@ def plan_generation(
     )
     if project.generation != record:
         ops.append(SetGeneration(record))
+    for w in namer.warnings:  # after the names were made: a template can fail while it is used
+        ctx.finding(
+            "warning", "naming", f"The naming template '{w}' is not valid; the default was used."
+        )
     report.findings.sort(
         key=lambda f: (
             {"error": 0, "warning": 1, "info": 2}[f.severity],
@@ -422,7 +489,6 @@ def _allocate_pins(
             and pin.interface_id
             and pin.signal
             and pin.interface_id not in frozen_ifaces
-            and not pin.fixed
         }
         res = allocate(
             work,
@@ -459,6 +525,10 @@ def _connector_ops(ctx: _Ctx, frozen_ifaces: set[str]) -> list[Op]:
         for pin in box.pins:
             if pin.fixed:
                 if pin.interface_id in frozen_ifaces:
+                    pins.append(pin)
+                elif pin.locked:  # the person's choice stays, whatever the plan says
+                    if pin.interface_id is not None and pin.interface_id not in p.interfaces:
+                        pin = evolve(pin, interface_id=None)  # its interface is gone
                     pins.append(pin)
                 elif pin.id in assigned:
                     pins.append(evolve(pin, interface_id=assigned[pin.id][0]))
@@ -528,12 +598,10 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
             if box_id in old_cables:
                 cid = old_cables[box_id].id
             else:
-                while (
-                    ctx.namer.cable_connector(hid, n) in used_cables
-                    or ctx.namer.cable_connector(hid, n) in ctx.used_ids
-                ):
-                    n += 1
-                cid = ctx.namer.cable_connector(hid, n)
+                n, cid = _first_free(
+                    ctx, "cable_connector", n, lambda k: ctx.namer.cable_connector(hid, k),
+                    used_cables, ctx.used_ids,
+                )  # fmt: skip
                 used_cables.add(cid)
             part = p.parts.get(box.part_id)
             mate = part.mates_with if part is not None and part.mates_with else box.part_id
@@ -623,12 +691,9 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
             if prev_w is not None:
                 wid = prev_w.id
             else:
-                while (
-                    ctx.namer.wire(hid, wire_n) in used_wires
-                    or ctx.namer.wire(hid, wire_n) in ctx.used_ids
-                ):
-                    wire_n += 1
-                wid = ctx.namer.wire(hid, wire_n)
+                wire_n, wid = _first_free(
+                    ctx, "wire", wire_n, lambda k: ctx.namer.wire(hid, k), used_wires, ctx.used_ids
+                )
                 used_wires.add(wid)
             length = path_length(skeleton, cables[src_box].id, cables[dst_box].id)
             if length is not None and loop is not None:
@@ -701,11 +766,27 @@ def _describe(group: Group) -> str:
     }[group.mode]
 
 
+def _first_free(
+    ctx: _Ctx, kind: str, start: int, make: Callable[[int], str], *taken: set[str]
+) -> tuple[int, str]:
+    """The first number from `start` whose name is in none of `taken`, and that name. A template
+    that cannot give a free name within as many tries as there are names in use (it repeats
+    itself) is dropped for the default pattern, which always can."""
+    tries = 1 + sum(len(t) for t in taken)
+    for n in range(start, start + tries):
+        name = make(n)
+        if not any(name in t for t in taken):
+            return n, name
+    ctx.namer.use_default(kind)
+    n = start
+    while any(make(n) in t for t in taken):
+        n += 1
+    return n, make(n)
+
+
 def _new_harness_id(ctx: _Ctx) -> str:
-    while ctx.namer.harness(ctx.next_n) in ctx.used_ids:
-        ctx.next_n += 1
-    hid = ctx.namer.harness(ctx.next_n)
-    ctx.next_n += 1
+    n, hid = _first_free(ctx, "harness", ctx.next_n, ctx.namer.harness, ctx.used_ids)
+    ctx.next_n = n + 1
     ctx.used_ids.add(hid)
     return hid
 
