@@ -31,7 +31,7 @@ CSV files may use commas, semicolons or tabs between columns (the header line de
 Until the values exist, wire gauges stay "pending", the affected checks say "not checked", and a harness cannot be released while a wire has no gauge or length. To see the machinery work first, the templates contain **demo** values (`config-demo-values/`, `ampacity-DEMO-ONLY.csv`); they are not engineering data and the files stay marked as placeholders.
 
 ## Segment lengths from a CAD or spreadsheet (D-13)
-`harness import-lengths DIR FILE [--unit mm|cm|m] [--dry-run]` with columns harness ID, segment ID, length (default unit millimetres, decimal commas accepted). Run `harness generate DIR` afterwards so the wire lengths follow.
+`harness import-lengths DIR FILE [--unit mm|cm|m] [--dry-run]` with columns harness ID, segment ID, length (default unit millimetres, decimal commas accepted). A length is a plain number from 0 to 10000 m; a bad row (a minus sign, text, too large) stops the whole import. Run `harness generate DIR` afterwards so the wire lengths follow.
 
 KiCad: it is used for the electronics inside each unit, so it is where each unit connector's pinout comes from. It has no harness segment lengths; those come from a plain table as above. The connector pinouts are read from a KiCad netlist with `harness import-netlist` (see `docs/KICAD.md`).
 

@@ -145,7 +145,13 @@ harness compare wheel-link-A wheel-link
 ```
 # Project comparison
 
-Comparing wheel-link-A with wheel-link: 0 added, 0 removed, 4 changed.
+Comparing wheel-link-A with wheel-link: 3 added, 0 removed, 4 changed.
+
+## Added (3)
+
+- Baseline `W002.B`
+- Change log entry `C0003`
+- Change log entry `C0004`
 
 ## Changed (4)
 
@@ -158,14 +164,15 @@ Comparing wheel-link-A with wheel-link: 0 added, 0 removed, 4 changed.
   - colour: (none) -> red
 - Wire `W002-002`
   - colour: (none) -> black
+Not compared: the generation record, the contents of baselines (only their revision, date, name, comment and hash), and the files of the outputs folders.
 ```
 
-It does not change either folder. Equal folders print `No differences.` See [use Git and CI](use-git-and-ci.md).
+It does not change either folder. It compares the units, interfaces, connectors, harnesses, wires, parts, interface types, configuration, waivers, the project name and description, the zones, the library information, the diagram positions, the baselines and the change log, and it ends with a line that names what it does not compare. Equal folders print `No differences.` followed by that line. See [use Git and CI](use-git-and-ci.md).
 
 ## Common mistakes
 
-- **Editing the JSON of a released harness.** Start a revision instead. `harness check` finds the edit.
-- **"blocked because it touches released items" when you import parts or change a derating value.** A released harness uses those parts or values. Start a new revision of that harness (of each released harness, for configuration), make the change, and release again.
+- **Editing the JSON of a released harness, or of a part, interface type or configuration value it uses.** Start a revision instead. `harness check` finds the edit (`released_modified`).
+- **"This change was blocked because it touches released items" when you import parts, apply a profile or change a derating value.** A released harness uses those parts or values. Start a new revision of that harness (of each released harness, for configuration), make the change, and release again. The command ends with exit code 1 and changes nothing; `--dry-run` says it would be blocked.
 - **Forgetting to export after the release.** `harness release` exports for you; after a revision you still export yourself before the next release.
 - **"W002 has no baseline for revision B."** Revision B is not released yet.
 - **Deleting a released harness.** The app does not allow it. Start a new revision and change it.

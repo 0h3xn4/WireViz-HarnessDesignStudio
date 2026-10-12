@@ -51,7 +51,7 @@ A pattern must give a different valid ID for every harness and number. If it doe
 warning: [naming] The naming template 'naming.harness' is not valid; the default was used.
 ```
 
-(That is what `"harness": "HN"` gives.) Valid IDs start with a letter and use letters, digits and `_ - .` only.
+(That is what `"harness": "HN"` gives.) Valid IDs start with a letter and use letters, digits and `_ - .` only. The same fallback, with the same warning, happens when a pattern raises an error (`{x}` that does not exist), gives a reserved name such as `COM1`, repeats a name, or would give a name too long for the harness (the warning appears after the names are made). A pattern can no longer crash or hang the generation.
 
 ## 2. Title block: `config/titleblock.json`
 
@@ -62,7 +62,7 @@ The shipped file lists all ten fields, in order:
            "author", "checker", "approver", "sheet", "status"]
 ```
 
-Remove a field to hide it (the sheet number too), or reorder them. A name that is not in the list, a name twice, or anything that is not text is reported as a configuration error (`harness validate` and `harness config` show it) and the default fields are drawn until it is fixed. With `["project", "harness_id", "revision", "status", "sheet"]` the title block of `HN-01` shows:
+Remove a field to hide it (the sheet number too: the output check then does not look for it), or reorder them. A name that is not in the list, a name twice, or anything that is not text is reported as a configuration error (`harness validate` and `harness config` show it, for example `config/titleblock.json: fields names a field that does not exist ('sheet2'). The fields are: project, harness_id, ...`) and the default fields (`project`, `harness_id`, `title`, `revision`, `status`, `sheet`) are drawn until it is fixed. An empty list also means the default. After a release the title block fields are frozen with the rest of the configuration ([change a released harness](change-a-released-harness.md)). With `["project", "harness_id", "revision", "status", "sheet"]` the title block of `HN-01` shows:
 
 ```
 PROJECT         First steps: reaction wheel link

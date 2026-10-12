@@ -44,7 +44,7 @@ The comment must have at least 10 characters. A release is blocked while checks 
 
 ## Exit codes
 
-`0` success (warnings allowed), `1` the project has errors or a step is blocked, `2` usage error or an unreadable project.
+`0` success (warnings allowed), `1` the project has errors or a step is blocked, `2` usage error or an unreadable project (also a project with damaged files), `130` interrupted with Ctrl-C.
 
 ## In the app
 

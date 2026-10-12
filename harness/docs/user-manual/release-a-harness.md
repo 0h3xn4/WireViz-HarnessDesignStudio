@@ -1,6 +1,6 @@
 # Release a harness
 
-This page shows how to review and release a harness, which freezes it: it, the links it carries and the pins it uses can no longer be edited, and a record is stored.
+This page shows how to review and release a harness, which freezes it: it, the links it carries, the pins it uses, and the parts, interface types and configuration values it relies on can no longer be changed, and a record is stored.
 
 > **Two meanings of "release".** This page is about releasing a **harness** of your design. Releasing the **tool itself** (a new version of Harness Design Studio) is a different job for the developers: [`developer/release.md`](../developer/release.md). The release checklist in [`RELEASE.md`](../RELEASE.md) is about the tool, not about your harness.
 
@@ -30,6 +30,7 @@ A release is blocked until all of these hold. The tool lists what is missing, in
 | `gauge_pending`: a wire has no gauge | Fill in the derating values ([fill in the engineering values](fill-in-engineering-values.md)), or set the gauge by hand. |
 | `length_unknown`: a wire has no length | Import the segment lengths ([import data](import-data.md#segment-lengths)). |
 | `outputs_missing` / `outputs_stale` | Export, then release ([export the outputs](export-the-outputs.md)). |
+| `outputs_linked`: the `outputs` folder (or a folder in it) is a link, or cannot be written | Replace the link with a real folder, make the folder writable, and export again. The release is blocked up front because the released status could not be written into the outputs. |
 | `placeholder_config`: a config file is still marked `"placeholder": true` | An engineer reviews the values and sets `"placeholder": false` in each file. Or release with a written reason (below). |
 | `parts_unapproved`: the harness uses a part that is not approved, or is example data | Import your approved parts list ([import data](import-data.md#approved-parts-list)). Or release with a written reason (below). |
 
@@ -76,7 +77,9 @@ Release W002 revision A: done.
 Outputs re-exported with the released status (38 files).
 ```
 
-`--checker` is optional and goes in the title block. Each reason needs at least 10 characters.
+`--checker` is optional and goes in the title block. Each reason needs at least 10 characters. A name, checker, comment or reason with control characters or too much text (a name is one line of at most 200 characters; a comment together with the reasons at most 2,000) is a blocker that names the option, for example `blocked: [by_invalid] --by: The name must not contain control characters or line breaks.` Line breaks in a comment are allowed and are shown as spaces in the change log and the revision report. `--date ""` is an error; leave `--date` out for today.
+
+If the re-export after the release fails (for example the disk is full), the release stands. The command says `The release was recorded (see `harness log`); only the outputs still show the old status. Fix the problem, then run `harness export` to re-stamp them.` and ends with an error code (1 or 2).
 
 **In the app**
 
@@ -92,6 +95,15 @@ GUI, not run: the app steps are described from the program's texts and code. The
 ## 4. After the release
 
 - `W002` is now **released (locked)**. The Harness plans tab shows "A released (locked)". The harness, the links it carries and the pins it uses cannot be edited. The app refuses an edit and gives the reason.
+- **A release also freezes what the harness uses**: the parts of its connectors and wires (and of the unit connectors it plugs into), the interface types of its links, and the configuration its checks and outputs read (all of `derating`, `emc`, `segregation` and `titleblock`, and eight keys of `generation`). The editor and the commands `import-parts` and `config` (including `--apply-profile` and `--ampacity-csv`) refuse a change to these, with the reason and the way out. (`harness library`, which only records where the parts data come from, is not affected.) Example, importing the parts list after the release:
+
+```
+error: This change was blocked because it touches released items.
+  - Part EX-MICROD-9-F is used by W002, which is released. W002 is released (revision A); start a new revision to change it.
+```
+
+The exit code is 1, and `--dry-run` says the same ("Dry run: this import would be blocked. Nothing was changed."). What stays open: new parts, parts and interface types that no released harness uses, notes and names, and the `segmentation`, `naming` and other `generation` settings. The configuration applies to every harness, so while any harness is released a change to it needs a new revision of each released harness. The complete list is in [`FILE_FORMAT.md`](../FILE_FORMAT.md#what-a-release-freezes). A release of the 0.1.0 tool froze less; its baselines are still read and are not flagged.
+- A release or new revision that has been **saved** can no longer be undone (the Undo button is off, and its tooltip says "This release was saved; it cannot be undone. Use 'Revise' to change the harness."). Before you save, it can still be undone.
 - A **baseline** (a frozen copy) is stored in `baselines/W002/W002.A.json`, and an entry goes into `changelog.json`.
 - Print the history:
 
@@ -108,7 +120,7 @@ C0002 | W002 | A | released | A. Engineer | 2026-10-10 | First release of the wh
 (The date is the day you run it.)
 
 - The drawing now says `status released`, and its title block shows the date of the release, the author and approver (the name you gave) and the checker. The release command exports again for you; in the app, press **Export outputs** again.
-- If someone edits a released harness file by hand anyway, `harness check` reports `released_modified: W002 was changed after its release (revision A); it no longer matches its baseline.` and exits with 1. To change a released harness, start a new revision: [change a released harness](change-a-released-harness.md).
+- If someone edits a released harness file by hand anyway, `harness check` reports `released_modified: W002 was changed after its release (revision A); it no longer matches its baseline.` and exits with 1. It also compares the units and box connectors, and the parts, interface types and configuration values stored in the baseline. To change a released harness, start a new revision: [change a released harness](change-a-released-harness.md).
 
 ## Common mistakes
 
@@ -117,6 +129,7 @@ C0002 | W002 | A | released | A. Engineer | 2026-10-10 | First release of the wh
 - **"The comment needs at least 10 characters."** Write a real comment.
 - **"Harness W999 does not exist."** Check the ID in the **Harness plans** tab (exit code 2).
 - **A comment that is too long.** Together with the reasons it must fit 2,000 characters.
+- **"This change was blocked because it touches released items" when you import parts or change a derating value.** A released harness uses them. Start a new revision ([change a released harness](change-a-released-harness.md)).
 
 More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md), [`CLI.md`](../CLI.md#harness-release).
 

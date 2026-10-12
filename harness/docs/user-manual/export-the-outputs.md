@@ -31,7 +31,7 @@ harness export wheel-link
 38 files written to wheel-link/outputs (model 310e4c4a4345).
 ```
 
-The files are checked independently before they are written. If that check fails, nothing is written and the app says "The outputs failed their independent check, so nothing was written".
+The files are checked independently before they are written. If that check fails, nothing is written and the app says "The outputs failed their independent check, so nothing was written". The check compares every cell of the pinouts, BOM, test tables, labels, mass table, mating matrix, traceability, box pinouts and design rule findings with the design, the values in the YAML files, the pins and signals in the drawings, the texts of the PDFs, the sheets of the Excel workbooks and the provenance values. A workbook that cannot be built (for example because the temporary folder is full) gives a message that says why. Export is refused, in the app and on the command line, for a project that is read-only or has damaged files ("This project is read-only, so nothing was exported. Save a copy to a new folder first."); an export or generation that was started before you edited the project is dropped ("The project was edited while this ran, so the result was dropped. Please try again.").
 
 ## 2. What you get
 
@@ -92,7 +92,9 @@ W002-P1,cable,PCDU1-J01,EX-MICROD-9-M,3,,,,yes
 
 The drawing is a wiring diagram. The connectors are tables left and right, with every used pin and its signal. The wires run between them. In between, each cable has a block that lists its wires with the number of wires, the gauge ("pending" when undecided) and the length. A title block closes the sheet. Wire colours are drawn only if you set them ([set wire colours](set-wire-colours.md)); unset wires are grey. The wiring-diagram drawing is not in the 0.1.0 packages (see the [changelog](../../CHANGELOG.md)); the 0.1.0 drawing is the older wire-by-wire sheet.
 
-The title block shows the author, checker, approver and date as "-" until the harness has been reviewed and released.
+The title block shows the author, checker, approver and date as "-" until the harness has been reviewed and released. Its fields come from `config/titleblock.json` ([naming and title block](naming-and-title-block.md)); `sheet` may be left out. A pin ID is drawn whole (smaller, or in a wider pin column), a connector or wire ID of up to 64 characters is drawn in a smaller font instead of being cut, and a shield keeps its end A on every sheet. The harness overview draws every pair of units that a harness joins.
+
+Numbers in the tables and the YAML keep all their digits (a length of 1234.567 mm is written as it is); only the text on the drawings is rounded. A CSV cell that starts with `=`, `+`, `-` or `@` and is not a plain number is written with a leading `'` so a spreadsheet program does not run it as a formula (`+5V` appears as `'+5V`; `-12` stays `-12`); the guard can be undone exactly, so such a signal exports and verifies. The Excel files are written without lxml, so the same design gives identical bytes on every machine.
 
 ## 4. Check that the outputs are current
 
@@ -121,6 +123,7 @@ It also finds files that were edited or deleted after the export (`[out_modified
 - **Editing a file in `outputs/`.** The next export overwrites it, and `harness verify --outputs` reports it as changed. Change the design instead.
 - **Committing `outputs/` by accident.** The `.gitignore` the tool writes covers lock, backup and temporary files, not `outputs/`. Add `outputs/` yourself if you do not want it in Git ([use Git and CI](use-git-and-ci.md)).
 - **Opening the CSV in a spreadsheet shows a first line starting with `#`.** That is the stamp. It is meant to be there.
+- **`warning: [out_pdf_chars] These characters cannot be shown in the PDF ...`** A name or note holds characters outside the Windows-1252 set (for example Ω or Greek letters). The PDF prints `?`; the SVG, the CSV files and the workbook keep them. The warning names every character, and the files are written ([troubleshooting](../TROUBLESHOOTING.md)).
 
 More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 

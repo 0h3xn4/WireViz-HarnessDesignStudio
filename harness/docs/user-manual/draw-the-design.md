@@ -60,7 +60,7 @@ The app also has **File > Open the sample project**. That is example data. Save 
 1. In the palette on the left, under **Add a unit**, press one of the buttons: **＋ Computer**, **＋ Power unit**, **＋ Actuator (wheel)**, **＋ Sensor (star tracker)**, **＋ Payload**, **＋ Transceiver**, **＋ Pyro unit**, **＋ Computer (many interfaces)**, **＋ Power distribution unit**, **＋ Battery**, **＋ Solar array**, **＋ Sun sensor**, **＋ Magnetorquer** or **＋ Heater panel**. Long names are shortened on the button; the tooltip has the full name. **Edit > Add unit** has the same list.
 2. The unit appears at once. No window opens. The ID and the name are given automatically, for example `PCDU1` and "Power unit 1", `OBC1` and "Computer 1", `RW1` and "Actuator (wheel) 1".
 3. To change the ID or the name, select the unit and edit **ID** or **Name** in **Properties** on the right.
-4. Drag the unit to move it. The lane it sits in is its **zone** (a panel or compartment of the spacecraft). A blank project has two lanes, `panel-A` and `panel-B`. **Edit > Add zone…** adds a lane: type a zone name.
+4. Drag the unit to move it. A unit cannot be dragged past the top or left edge of the diagram, and the diagram grows to the right and downwards to hold a unit you place far out (switching to **Expert** grows it too). The lane it sits in is its **zone** (a panel or compartment of the spacecraft). A blank project has two lanes, `panel-A` and `panel-B`. **Edit > Add zone…** adds a lane: type a zone name.
 
 Each unit comes with connectors. You do not need to look at them in Guided mode.
 
@@ -69,14 +69,14 @@ Each unit comes with connectors. You do not need to look at them in Guided mode.
 1. Under **Connect with** in the palette, press an interface type, for example **RS-422** or **Primary power**. (**Edit > Connect with** has the same list; the key **C** switches the connect tool on.)
 2. Click the first unit, then the second unit. Units that cannot take that type are greyed out, with the reason next to them.
 3. A link is drawn. It gets an ID (`IF-001`) and a name such as "Primary power PCDU1 to RW1". The tool picks the connectors and marks them **auto-filled** until you confirm them (see [read and fix problems](read-and-fix-problems.md)).
-4. The connect tool stays on, so you can draw more links. Press **Esc**, or the **Select** button above the diagram, to stop.
+4. The connect tool stays on, so you can draw more links. Press **Esc**, or the **Select** button above the diagram, to stop. While the connect tool is on, dragging a unit moves nothing (it is not a move tool); if the first unit you clicked is deleted or its link is undone, the tool forgets that first click.
 
 To make a backup chain, select a unit and press **Create redundant copy** (in **Properties** or in the **Edit** menu). The tool adds the twin unit (`PCDU1-R`) and copies its links to it. See [redundancy and zones](redundancy-and-zones.md).
 
 ## 4. Set the current and voltage of a link
 
 1. Click the link. **Properties** shows its fields.
-2. Fill in **Max current (A)** and, if you know it, **Voltage (V)**. Use a plain number such as `2` or `2.5`.
+2. Fill in **Max current (A)** and, if you know it, **Voltage (V)**. Use a plain number such as `2` or `2.5`; it must be above 0 (a value of 0 or less, or an impossible number, is refused). The field shows the stored number exactly (`12.3456789`, not `12.3457`), so leaving a field without typing never changes the value.
 3. **Chain (nominal / redundant)** says whether the link belongs to the main chain or to the backup.
 
 Without a current on a power link, the wire gauge (the thickness of the wire) stays *pending*. The tool never guesses it.
@@ -101,15 +101,19 @@ Switching never changes your data.
 
 ## 7. Change your mind: delete, undo, save
 
-- **Delete** removes the selected unit or link. A window first lists what else it removes (the links and connectors of the unit). **Undo** (Ctrl+Z) brings it back; **Redo** is Ctrl+Y.
-- **Ctrl+S** saves. The status bar says "All changes saved" or "Unsaved changes (autosaved to the recovery journal)". For the sample, or a project that has no folder yet, nothing is autosaved, and it says "Unsaved changes (not kept anywhere until you save)". If the app closes before you save, it offers to **Restore** your last edits at the next start.
+- **Delete** removes the selected unit or link. A window first lists what else it removes (the links and connectors of the unit). A unit that a manual harness plugs into cannot be deleted until that harness is changed. **Undo** (Ctrl+Z) brings it back; **Redo** is Ctrl+Y. When a step cannot be undone the Undo button is off and its tooltip says why: after you **save** a release or a new revision it reads "This release was saved; it cannot be undone. Use 'Revise' to change the harness." A redo that is no longer possible gives a plain message instead of failing silently.
+- **Ctrl+S** saves. The status bar says "All changes saved" or "Unsaved changes (autosaved to the recovery journal)". For the sample, or a project that has no folder yet, nothing is autosaved, and it says "Unsaved changes (not kept anywhere until you save)". If the app closes before you save, it offers to **Restore** your last edits at the next start. If the project files changed after those edits were made (for example by a Git pull), the window says so before it restores: restoring brings back the old state of everything and saving then replaces the newer files. A failed restore says so ("The unsaved changes could not be restored. They are still in the recovery folder."). **Discard changes** when you close removes the recovery journal. A project that is open read-only stays read-only after a restore or a reload.
+- If the project changed on disk (for a Git pull, say), the window offers **Reload** or **Keep my version**, and asks once per state of the files. A project that was deleted, or lost its `project.json`, while it was open is reported when you come back to the window.
+- A message at the bottom (a toast) that repeats with a new **Undo** replaces the old one. Save, Save As and autosave say in plain words when the project holds text that cannot be written to a file (an unpaired special character): "Nothing was saved: the project contains text that cannot be written to a file ...". Retype that text and save again.
 - **File > Save as…** (Ctrl+Shift+S) saves a copy in another empty folder.
 
 ## Common mistakes
 
 - **A unit cannot be connected.** It is greyed out because it has no free connector of that type. The reason is written next to it. Pick another unit, or add a unit that has the connector.
 - **Nothing happens when you click a unit.** The connect tool is still on and waits for the second end. Press **Esc**.
-- **"Read-only" banner.** The project was saved by a newer tool, or it is open in another window. See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
+- **An interface name with a line break.** A name is one line; typing a line break in the table gives "A name is one line. Remove the line break." A project name that is too long or has control characters is explained in the same way.
+- **A long ID ends in "...".** Long unit IDs and connector names are shortened on the diagram with an ellipsis; select the unit to read the full text in **Properties**.
+- **"Read-only" banner.** The project was saved by a newer tool, it is open in another window, or its folder cannot be locked for editing (read-only media). See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 - **The folder is refused.** `harness new` and **New project…** need a folder that does not exist yet or is empty. Nothing is ever overwritten.
 
 Next: [generate the harnesses](generate-harnesses.md), [redundancy and zones](redundancy-and-zones.md)

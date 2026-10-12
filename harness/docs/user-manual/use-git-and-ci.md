@@ -96,11 +96,11 @@ In the app, a project that changes on disk (for example after a `git pull`) show
 harness compare OLD NEW
 ```
 
-lists what was added, removed and changed between two project folders, for example two checkouts of different commits. It changes nothing. Equal folders print `No differences.` An example with output is in [change a released harness](change-a-released-harness.md#compare-two-copies-of-a-project).
+lists what was added, removed and changed between two project folders, for example two checkouts of different commits. It changes nothing. Equal folders print `No differences.` The last line names what is not compared (the generation record, the contents of baselines and the files of the outputs folders). An example with output is in [change a released harness](change-a-released-harness.md#compare-two-copies-of-a-project).
 
 ## 4. Run it in a script
 
-Every `harness` command returns an exit code: **0** success, **1** the project has errors or a step is blocked, **2** a usage error or a project that cannot be read. So `&&` stops at the first problem:
+Every `harness` command returns an exit code: **0** success, **1** the project has errors or a step is blocked, **2** a usage error or a project that cannot be read (a project with damaged files is refused with 2 by every command except `validate` and `check`, which list the damage and end with 1), **130** you pressed Ctrl-C. So `&&` stops at the first problem:
 
 ```
 harness validate design && harness generate design && harness drc design && harness export design

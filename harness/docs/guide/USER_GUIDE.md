@@ -67,7 +67,7 @@ Version 1.0.0 has five examples. If `harness new --list` shows only `blank`, `fi
 
 ## 4. Your first project in ten steps
 
-1. Start the app. The sample project opens with a short tour; skip it or follow it.
+1. Start the app. The sample project opens with a short tour; skip it or follow it. The tour leaves out a step whose panel is hidden (a small window or a high UI scale), records that it was shown however you close it, and can be started again with **Help > Replay the tour**.
 2. **File > New project…**, choose an empty folder, give it a name. Or **File > New project from an example…** and pick one of the examples of section 3 (`first-steps` has three units, start there); the list is the same as `harness new --list`.
 3. In the palette on the left press **Add a unit** and pick *Computer*. Add a *Power unit* and an *Actuator (wheel)*.
 4. Pick an interface type (for example *RS-422*), then click the first unit and the second unit. Units that cannot take this interface are greyed out, with the reason written next to them.
@@ -107,7 +107,7 @@ Zoomed far out, the diagram shows lines only; zoom in to see pictures and number
 - **Warning**: fix it, or **Waive** it with a reason of at least 10 characters. Waived warnings stay visible in the report with their reason.
 - **Note**: information, for example *not checked because a value is still a placeholder*.
 
-The quick checks run on every edit. The design rules (33 of them) run in the background a moment after you stop editing; the Problems tab says when they are checking.
+The quick checks run on every edit. The design rules (34 of them) run in the background a moment after you stop editing; the Problems tab says when they are checking.
 
 ## 7. Generating harnesses
 
@@ -122,21 +122,21 @@ The quick checks run on every edit. The design rules (33 of them) run in the bac
 
 `outputs/` contains, for every harness: drawing (SVG for the A3 sheets, PDF for A3 and A4), wire list, pinouts, BOM, mass and length, continuity and isolation tests, labels, a WireViz-style YAML file and an Excel workbook. For the whole system: block diagram, harness overview, BOM, mating and traceability matrices, DRC report, change log, revision report, and one JSON file with the whole model. Every file carries the tool version and a model hash. The Harness plans tab shows whether the outputs are up to date. Details are in `docs/OUTPUTS.md` in the repository (it is not installed with the app).
 
-Outputs are checked independently before they are written. If that check fails, nothing is written. The `outputs` folder is always safe to delete and make again.
+Outputs are checked independently before they are written (every cell of the tables, the pins and signals in the drawings, the PDF texts and the sheets of the workbooks are compared with the design). If that check fails, nothing is written. Export is refused for a project that is read-only or has damaged files. The PDF drawings use the Windows-1252 character set: a character outside it (for example the ohm sign) shows as `?` in the PDF, and the export warns and names each such character; the SVG keeps it. The `outputs` folder is always safe to delete and make again.
 
 ## 9. Review, release and revisions
 
 1. Make the design pass: no errors, plans current, every wire sized and measured.
 2. **Export outputs** and review them.
 3. In **Harness plans** select the harness: **Submit for review** (optional), then **Release…**. Type your name and a comment (at least 10 characters). Anything that blocks the release is listed in plain words. While a configuration file is still marked as a placeholder, the window also asks for a written reason (at least 10 characters); it is kept in the change log and the baseline. Once an engineer has reviewed the values and cleared the mark, no reason is asked. The same holds for the parts: while the harness uses parts that are not approved (or are example data), the window asks for a second written reason.
-4. The harness is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited. A baseline (frozen snapshot) and a change log entry are stored.
+4. The harness is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited, and neither can the parts, interface types and configuration values it uses (importing parts or applying a profile that would change them is refused). A baseline (frozen snapshot) and a change log entry are stored. Once you have saved a release, **Undo** is off for that step; to change the harness start a new revision.
 5. To change it: **New revision…**. The old revision stays available. **Changes…** shows what differs from a baseline and can mark the changed units and interfaces on the diagram. **Change log…** shows who did what, when and why.
 
 Export the outputs again after a release so the drawings show *released*. The release check looks at the harness (gauges, lengths, open errors) and at whether the configuration files are still marked as placeholders. It cannot judge whether the values are right; that stays a decision for a person.
 
 ## 10. Command line
 
-All commands take the project folder. Exit code 0 means success, 1 means the project has errors or a step is blocked, 2 means usage error or unreadable project. Commands that import data take `--dry-run`: they show what they would do and change nothing.
+All commands take the project folder. Exit code 0 means success, 1 means the project has errors or a step is blocked, 2 means usage error or unreadable project (this includes a project with damaged files, which every command except `validate` and `check` refuses), 130 means interrupted with Ctrl-C. Commands that import data take `--dry-run`: they show what they would do and change nothing.
 
 | Command | What it does |
 | --- | --- |
@@ -155,7 +155,7 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness release DIR HARNESS --by NAME --comment TEXT [--checker NAME] [--accept-placeholders REASON] [--accept-unapproved-parts REASON]` | release (blocked while checks fail, or while values are placeholders or parts are not approved and no reason is given) and re-export |
 | `harness revise DIR HARNESS --by NAME --comment TEXT` | start a new revision |
 | `harness diff DIR HARNESS [--from REV] [--to REV]` | what changed since a baseline |
-| `harness compare OLD NEW` | compare two project folders (for example two Git checkouts) |
+| `harness compare OLD NEW` | compare two project folders (for example two Git checkouts); the last line names what is not compared |
 | `harness log DIR [HARNESS]` | print the change log |
 | `harness config DIR [--ampacity-csv FILE] [--apply-profile NAME]` | list missing or invalid engineering values; load a current-by-gauge table; fill unset values from a standard profile |
 | `harness import-parts DIR FILE --approved VALUE ...` | import an approved-parts list; you say what the approval values mean |
@@ -190,13 +190,13 @@ Example files for every one of these are in the templates folder (`harness templ
 
 | You see | Meaning and what to do |
 | --- | --- |
-| *Read-only* banner | The project was saved by a newer version of the tool, or is open in another window. Install the newer tool, or close the other window. Nothing was changed. |
-| *Project already open* | Another window or session has the project open. Close it there, or choose **Open read-only**. |
+| *Read-only* banner | The project was saved by a newer version of the tool, is open in another window, or its folder cannot be locked for editing (for example read-only media). Install the newer tool, close the other window, or copy the project to a folder you can write to. Nothing was changed. |
+| *Project already open* | Another window or session has the project open. Close it there, or choose **Open read-only**. A lock left by a crashed session or from before a restart is taken over; a lock from another computer is respected (the message names the lock file). |
 | *This project has problems* (recovery view) | Some files could not be loaded. Everything else loaded. **Save salvaged copy** writes a clean copy; the original is protected. |
-| *Unsaved changes found* at start | The last session ended before saving. **Restore** brings back your last edits. |
-| *Project changed on disk* | Someone (or Git) changed the files. Reload to see them. |
+| *Unsaved changes found* at start | The last session ended before saving. **Restore** brings back your last edits; if the files changed since (a Git pull), the window says so first. A project that was open read-only stays read-only. |
+| *Project changed on disk* | Someone (or Git) changed the files. Reload to see them, or keep your version (asked once per state of the files). A project that was deleted while open is reported when you return to the window. |
 | *Outputs: out of date* | The design changed since the last export. Export again. |
-| *Blocked because it touches released items* | The harness is released. Start a new revision. |
+| *Blocked because it touches released items* | The harness is released, and so are the parts, interface types and configuration values it uses. Start a new revision. |
 | A wire gauge says *pending* | A value is missing: `harness config DIR` says which. A gauge also needs the interface's Max current and the segment lengths. |
 | `harness` is not found | `~/.local/bin` is not on your PATH. Add it, or log out and in. |
 
