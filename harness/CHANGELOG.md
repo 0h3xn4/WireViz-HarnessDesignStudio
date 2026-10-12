@@ -2,9 +2,11 @@
 
 Versions follow semantic versioning. Every project file records the tool version that saved it.
 
-## Unreleased (after 0.1.0)
+## Unreleased
 
-Changes on `master` since the release of 0.1.0. They are not in the 0.1.0 packages.
+## 1.0.0 (2026-10-12; released on the owner's instruction, see compliance/SIGNOFF.md; not a statement of compliance)
+
+Version 1.0.0 is 0.1.0 plus the changes listed below: the fixes of the October 2026 pre-release audit (the findings and what was done about each are in `AUDIT.md` at the root of the repository), the release freeze of parts, interface types and configuration, two more examples (`minimal-satellite`, `flatsat`), a design worksheet template and the wiring-diagram drawing. The open engineering decisions were recorded as defaults on 2026-10-12 (`docs/DECISIONS.md` D-142 to D-145); the tool still ships no standard or part data. **What is still true**: the configuration files are placeholders and the parts are example parts, so results rest on placeholders; no compliance with any standard is claimed; the packages are not signed; the upstream WireViz code under `src/wireviz/` is unchanged.
 
 - **Fixed: a release freezes the parts, interface types and configuration it uses** (audit E-5, I-2). The baseline now also records the parts, interface types, configuration values and waivers of the released harness (old baselines without them still load and are written back unchanged). While a harness is released, the editor and the data commands refuse to change or delete a part, interface type or configuration value it uses, and `harness check` reports a hand edit as *released-modified*. Adding parts, editing parts no released harness uses, notes and names stay allowed. The exact list is in `docs/FILE_FORMAT.md` ("What a release freezes").
 - **Fixed: impossible numbers** (audit A-6, D-9, B-18, K-19). A wire gauge outside AWG 0 to 40, a length below 0 or above 10000 m, a current or voltage of 0 or less, a pin count outside 1 to 1000, a negative mass or rating, a harness number below 1 and a schema version below 1 are refused by the editor and set aside on load (reported, kept), instead of reaching the outputs.

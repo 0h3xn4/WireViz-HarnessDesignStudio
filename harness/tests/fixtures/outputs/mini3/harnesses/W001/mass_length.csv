@@ -1,4 +1,4 @@
-# harness-design-studio 0.1.0 model 818e953ff828
+# harness-design-studio 1.0.0 model ccc0cee5a01e
 Harness,Wires,Connectors,Wire length known (m),Wires without length,Mass of known parts (g),Margin (g),Mass with margin (g),Complete,Missing data
 W001,2,2,0,2,0,,,no,mass of connector part EX-MICROD-9-F; mass of connector part EX-MICROD-9-M; mass per metre of wire part (none)
 TOTAL,2,2,0,2,0,,,no,totals count only what is known
