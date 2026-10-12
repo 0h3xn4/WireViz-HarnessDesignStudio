@@ -4,6 +4,12 @@ Status: findings list from the audit (nothing was changed while auditing). **Cri
 
 Audited tree: `master` at `956ff71` (Harness Design Studio 0.1.0 plus the WireViz fork it lives in). Audit date: 2026-10-12.
 
+## Owner decisions received (2026-10-12)
+
+- **Q2: yes.** A release freezes the parts, interface types and configuration that the released harness uses (E-5, second half of I-2). To be implemented with the medium fixes.
+- **Q31: never change WireViz.** The upstream findings H-1 to H-9 (and all other H-* findings in `src/wireviz/`) are **will not fix**; they stay listed so the README/docs can name them. Only fork-level files (`setup.py`, `MANIFEST.in`, docs) may change.
+- **Q32: keep** the distribution name `wireviz` and version `0.4.1` of the root package.
+
 ## Phase 4 status: critical and high findings (branch `fix/audit-critical-high`)
 
 Each fix has a test that failed on the old code (the agents ran the new tests against the unmodified source first). Full suite on the merged branch: **1244 passed, 1 skipped, 1 timing test failed once** (`test_gui_perf.py::test_selection_is_fast`, 155 ms against 150 ms; it fails and passes alternately on `master` too, the known open "selection at stress size" item). I also re-ran my own reproductions of F2-1, A-2, C-1, E-1, D-1 and A-3 against the merged branch: all are fixed.
@@ -33,9 +39,9 @@ Each fix has a test that failed on the old code (the agents ran the new tests ag
 | F2-2 / F1-12, F2-3, F2-9 | fixed | stale Confirm, filter with "-" or spaces, silent rounding of current/voltage |
 | G-1 (undeclared bundled code) | fixed, **default applied** | the six packages are excluded; build fails on anything not on the allow-list; real build and frozen run checked (12 MB smaller, output byte-identical) |
 | I-1 (one signal on two fixed pins) | fixed | and B-6 |
-| I-2 (release locks) | **partly** | box connectors and units of the baseline are now compared by `check`; locks pinned by tests. **Not done:** freezing parts, interface types and configuration (waiting for your answer to question 2) |
+| I-2 (release locks) | **partly** | box connectors and units of the baseline are now compared by `check`; locks pinned by tests. **Not done yet:** freezing parts, interface types and configuration (owner said yes; scheduled with the medium fixes) |
 | H-18 (my `setup.py` regression) | fixed | |
-| H-1 to H-9 (upstream WireViz) | **not done** | waiting for your answer to question 31 |
+| H-1 to H-9 (upstream WireViz) | **will not fix** | owner decision: WireViz code is never changed |
 
 Also fixed on the way: C-7, C-18, A-5/F1-10, F1-15/F2-11, F1-3, B-6, parts of B-5 and C-14 (helper deadline of 180 s; `close()` no longer waits on a stuck check; waiting for a long legitimate check on window release is unchanged).
 
