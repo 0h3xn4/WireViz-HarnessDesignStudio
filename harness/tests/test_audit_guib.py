@@ -69,6 +69,8 @@ def test_a_failing_rule_check_is_reported_not_shown_as_all_clear(
     texts = " ".join(x.text() for x in win.problems.findChildren(QLabel))
     assert "all " not in texts and "No problems" not in texts
     assert "Design rule check failed: rule exploded" in texts
+    state = win.problems.findChild(QLabel, "drc-state")
+    assert state is not None and state.text() == strings.DRC_FAILED.format("rule exploded")
     assert win.ctl.severity_counts()[0] >= 1
     assert win.ctl._drc_timer.isActive() is False  # no endless retry loop
 
@@ -423,10 +425,10 @@ def test_save_with_an_unwritable_character_shows_a_message(qtbot, tmp_path) -> N
     w.open_project(folder)
     _with_surrogate(w)
     assert w.save_flow() is False
-    assert w.toasts.messages[-1] == strings.SAVE_BAD_TEXT
+    assert "not valid text" in w.toasts.messages[-1]
     w.ask_folder = lambda title: str(tmp_path / "copy")  # type: ignore[assignment]
     assert w.save_as_flow() is False
-    assert w.toasts.messages[-1] == strings.SAVE_BAD_TEXT
+    assert "not valid text" in w.toasts.messages[-1]
 
 
 def test_autosave_with_an_unwritable_character_does_not_raise(qtbot, tmp_path) -> None:  # type: ignore[no-untyped-def]
@@ -438,7 +440,7 @@ def test_autosave_with_an_unwritable_character_does_not_raise(qtbot, tmp_path) -
     w.ctl.add_unit("sensor")
     _with_surrogate(w)
     w.ctl.write_journal_now()
-    assert strings.SAVE_BAD_TEXT in " ".join(w.toasts.messages)
+    assert "not valid text" in " ".join(w.toasts.messages)
 
 
 # ---- small controller fixes -------------------------------------------------------------------

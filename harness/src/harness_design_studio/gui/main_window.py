@@ -811,7 +811,10 @@ class MainWindow(QMainWindow):
         p = self.ctl.project
         try:
             digest = model_hash(p)[:8]
-        except ValueError:  # text that cannot be encoded: the save says so, the hash is a label
+        except (
+            ValueError,
+            HarnessError,
+        ):  # text that cannot be encoded: the save says so, the hash is a label
             digest = "--------"
         self.status_counts.setText(
             strings.STATUS_COUNTS.format(

@@ -682,12 +682,18 @@ class ProblemsPanel(QScrollArea):
             tuple((f.id, f.waiver.justification if f.waiver else "") for f in waived),
             self.ctl.read_only,
             checking,
+            self.ctl.drc_error,
         )
         if signature == self._signature:
             return
         self._signature = signature
         clear_layout(self.lay)
-        state = muted(strings.DRC_CHECKING if checking else strings.DRC_DONE.format(len(drc.RULES)))
+        if self.ctl.drc_error is not None:
+            state = muted(self.ctl.drc_error)
+        else:
+            state = muted(
+                strings.DRC_CHECKING if checking else strings.DRC_DONE.format(len(drc.RULES))
+            )
         state.setObjectName("drc-state")
         self.lay.addWidget(state)
         if not open_ and not checking:
