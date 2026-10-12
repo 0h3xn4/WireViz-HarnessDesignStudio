@@ -1,9 +1,10 @@
 """Optional value profiles taken from the supplied standards (D-131).
 
 The tool ships no standard values by default. A project may switch a profile on; the profile fills
-only the values that are still unset (`null`), leaves the file marked as a placeholder, and every
-value carries the ID of the requirement it comes from (compliance/requirements). Nothing here is
-applied silently, and the values still need an engineer's review.
+only the values that are still unset (`null`), marks every file it changes as a placeholder (even
+one an engineer had reviewed: the new values are not reviewed), and every value carries the ID of
+the requirement it comes from (compliance/requirements). Nothing here is applied silently, and
+the values still need an engineer's review.
 
 Profiles:
   ecss-q-st-30-11c   derating of connectors, wires and bundles (ECSS-Q-ST-30-11C Rev.2)
@@ -12,6 +13,8 @@ Profiles:
 
 from __future__ import annotations
 
+import copy
+import math
 from dataclasses import dataclass
 
 from harness_design_studio.core.issues import Issue
@@ -83,6 +86,9 @@ class ProfilePlan:
     configs: list[ConfigFile]  # files to write
     applied: list[Setting]
     kept: list[tuple[Setting, object]]  # already set by a person: not overwritten
+    marked: tuple[
+        str, ...
+    ] = ()  # reviewed files that are a placeholder again, as values were added
 
 
 def plan_profile(project: Project, name: str) -> ProfilePlan:
@@ -98,24 +104,30 @@ def plan_profile(project: Project, name: str) -> ProfilePlan:
         values.update(changed.get(s.file, {}))
         current = values.get(s.key)
         if current is None:
-            changed.setdefault(s.file, {})[s.key] = s.value
+            changed.setdefault(s.file, {})[s.key] = copy.deepcopy(
+                s.value
+            )  # not shared with the profile
             applied.append(s)
         elif current != s.value:
             kept.append((s, current))
     out = []
+    marked: list[str] = []
     for fname, new in sorted(changed.items()):
         base = files.get(fname)
+        if base is not None and not base.placeholder:
+            marked.append(fname)
         out.append(
             ConfigFile(
                 name=fname,
-                placeholder=True if base is None else base.placeholder,
+                placeholder=True,  # values the profile set are not reviewed (D-131)
                 values={**(base.values if base else {}), **new},
             )
         )
-    return ProfilePlan(out, applied, kept)
+    return ProfilePlan(out, applied, kept, tuple(marked))
 
 
-def _table_ok(v: object, numeric_keys: bool) -> bool:
+def _table_ok(v: object, numeric_keys: bool, upper: float = 2) -> bool:
+    """A non-empty table of numbers above 0 and up to `upper` (K is at most 1, L up to 2)."""
     if not isinstance(v, dict) or not v:
         return False
     for k, x in v.items():
@@ -125,7 +137,7 @@ def _table_ok(v: object, numeric_keys: bool) -> bool:
                     return False
             except (TypeError, ValueError):
                 return False
-        if not isinstance(x, int | float) or isinstance(x, bool) or not 0 < x <= 2:
+        if not isinstance(x, int | float) or isinstance(x, bool) or not 0 < x <= upper:
             return False
     return True
 
@@ -157,8 +169,12 @@ def validate(project: Project) -> list[Issue]:
         bad("derating", "max_mating_cycles", "must be a whole number of 1 or more")
     v = dv.get("bundle_factor_by_count")
     if v is not None:
-        if not _table_ok(v, True):
-            bad("derating", "bundle_factor_by_count", "must be a table of wire count and factor")
+        if not _table_ok(v, True, 1):
+            bad(
+                "derating",
+                "bundle_factor_by_count",
+                "must be a table of wire count and factor (K above 0, at most 1)",
+            )
         else:
             counts = sorted(v, key=int)
             factors = [v[c] for c in counts]
@@ -176,8 +192,29 @@ def validate(project: Project) -> list[Issue]:
     v = gv.get("power_return_gap_pins")
     if v is not None and not (isinstance(v, int) and not isinstance(v, bool) and v >= 0):
         bad("generation", "power_return_gap_pins", "must be a whole number of 0 or more")
+    v = gv.get("default_gauge_awg")
+    if v is not None and not (isinstance(v, int) and not isinstance(v, bool) and 0 <= v <= 40):
+        bad("generation", "default_gauge_awg", "must be a whole number from 0 to 40")
+    v = dv.get("max_ambient_temperature_c")
+    if v is not None and not (
+        isinstance(v, int | float) and not isinstance(v, bool) and math.isfinite(v) and v > -273.15
+    ):
+        bad("derating", "max_ambient_temperature_c", "must be a temperature in degC above -273.15")
+    v = dv.get("contact_rating_key")
+    if v is not None and not (isinstance(v, str) and v.strip()):
+        bad("derating", "contact_rating_key", "must be the name of a part rating")
+    s = project.config.get("segregation")
+    for k in ("forbid_nominal_with_redundant", "forbid_pyro_with_other"):
+        v = (s.values if s is not None else {}).get(k)
+        if v is not None and not isinstance(v, bool):
+            bad("segregation", k, "must be true or false")
     e = project.config.get("emc")
     ev = e.values if e is not None else {}
+    v = ev.get("classes")
+    if v is not None and not (
+        isinstance(v, list) and all(isinstance(x, str) and x.strip() for x in v)
+    ):
+        bad("emc", "classes", "must be a list of class names")
     v = ev.get("shield_bonding")
     if v is not None and v != "both_ends_backshell":
         bad("emc", "shield_bonding", "must be both_ends_backshell")

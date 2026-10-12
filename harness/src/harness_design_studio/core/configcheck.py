@@ -65,9 +65,13 @@ def _num(v: object) -> float | None:
 
 
 def _pairs_ok(v: object) -> bool:
-    return isinstance(v, list) and all(
+    """Pairs of two different names, each pair once (["A","B"] and ["B","A"] are the same pair)."""
+    if not isinstance(v, list) or not all(
         isinstance(p, list) and len(p) == 2 and all(isinstance(x, str) and x for x in p) for p in v
-    )
+    ):
+        return False
+    pairs = [frozenset(p) for p in v]
+    return all(len(p) == 2 for p in pairs) and len(set(pairs)) == len(pairs)
 
 
 def validate(project: Project) -> list[Issue]:
@@ -120,7 +124,10 @@ def validate(project: Project) -> list[Issue]:
                 bad(n, f"must be one of {', '.join(SHIELD_ENDS)}")
         elif n.key in ("category_pairs_to_separate", "conflicting_class_pairs"):
             if not _pairs_ok(v):
-                bad(n, 'must be a list of pairs of names, for example [["A", "B"]]')
+                bad(
+                    n,
+                    'must be a list of pairs of two different names, each pair once, for example [["A", "B"]]',
+                )
         elif n.key == "ampacity_a_by_awg":
             out.extend(_validate_ampacity(n, v))
     out.extend(standard_profiles.validate(project))

@@ -5,16 +5,23 @@ nothing while those configuration values are placeholders; `unchecked-config` th
 clean report can never be mistaken for a passed check.
 """
 
+import hashlib
 from collections import Counter, defaultdict
 from collections.abc import Iterator
 
 from harness_design_studio.core.configcheck import validate as validate_config
-from harness_design_studio.core.generate.lengths import wire_length
-from harness_design_studio.core.generate.sizing import ampacity_table, bundle_k
+from harness_design_studio.core.generate.lengths import loop_segments, wire_length
+from harness_design_studio.core.generate.sizing import (
+    ampacity_table,
+    bundle_k,
+    derated_limit,
+    exceeds,
+    voltage_drop_v,
+)
 from harness_design_studio.core.integrity import check_integrity
 from harness_design_studio.core.model import Connector, Harness, InterfaceInstance, Project, Wire
-from harness_design_studio.core.units import awg_to_area_mm2
 from harness_design_studio.core.vcs.consistency import release_integrity
+from harness_design_studio.core.verify import passthrough_signals
 
 from .base import Hit, Rule, cfg, flag, number
 from .standard_rules import STANDARD_RULES
@@ -67,11 +74,33 @@ def _dangling_wires(project: Project) -> Iterator[Hit]:
     for h in sorted(project.harnesses.values(), key=lambda x: x.id):
         pins = {c.id: {p.id for p in c.pins} for c in h.connectors}
         for w in h.wires:
-            for cid, pid in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
+            for end, cid, pid in (
+                ("from", w.from_connector, w.from_pin),
+                ("to", w.to_connector, w.to_pin),
+            ):
                 if cid not in pins:
-                    yield Hit(w.id, f"Wire {w.id} ends on connector {cid}, which is not in {h.id}")
+                    yield Hit(
+                        w.id,
+                        f"Wire {w.id} ends on connector {cid}, which is not in {h.id}",
+                        key=f"{w.id}.{end}",
+                    )
                 elif pid not in pins[cid]:
-                    yield Hit(w.id, f"Wire {w.id} ends on pin {pid} of {cid}, which does not exist")
+                    yield Hit(
+                        w.id,
+                        f"Wire {w.id} ends on pin {pid} of {cid}, which does not exist",
+                        key=f"{w.id}.{end}",
+                    )
+
+
+def _segment_loop(project: Project) -> Iterator[Hit]:
+    for h in sorted(project.harnesses.values(), key=lambda x: x.id):
+        loops = loop_segments(h)
+        if loops:
+            yield Hit(
+                h.id,
+                f"The routing segments of {h.id} form a loop (segment {loops[0]} closes it): a wire "
+                "would have two possible routes, so its length is not defined and is left unknown",
+            )
 
 
 def _signal_unassigned(project: Project) -> Iterator[Hit]:
@@ -110,7 +139,12 @@ def _floating_pins(project: Project) -> Iterator[Hit]:
 
 def _model_inconsistent(project: Project) -> Iterator[Hit]:
     for n, issue in enumerate(i for i in check_integrity(project) if i.severity != "error"):
-        yield Hit(issue.object_id or f"{issue.code}-{n}", issue.message)
+        # one object can have several problems; the message tells them apart
+        digest = hashlib.sha256(issue.message.encode()).hexdigest()[:6]
+        yield Hit(
+            issue.object_id or f"{issue.code}-{n}", issue.message,
+            key=f"{issue.object_id or issue.code}.{issue.code}.{digest}",
+        )  # fmt: skip
 
 
 # ---- connectors ------------------------------------------------------------------------------------
@@ -176,6 +210,11 @@ def _unapproved_parts(project: Project) -> Iterator[Hit]:
         elif part.approval != "approved":
             state = "rejected" if part.approval == "not_approved" else "not approved yet"
             yield Hit(pid, f"Part {pid} is {state} but is used ({len(used[pid])} place(s))")
+        elif part.unverified:  # the release gate counts these too (unapproved_parts)
+            yield Hit(
+                pid,
+                f"Part {pid} is marked as unverified example data but is used ({len(used[pid])} place(s))",
+            )
 
 
 # ---- signals ---------------------------------------------------------------------------------------
@@ -189,8 +228,13 @@ def _direction_conflict(project: Project) -> Iterator[Hit]:
             if itype is None or not {"out", "in"} <= {s.direction for s in itype.signals}:
                 continue  # one-directional types (analog, discrete) cannot be judged by direction
             dirs = {s.name: s.direction for s in itype.signals}
-            a = dirs.get(_end_signal(project, h, w.from_connector, w.from_pin) or "")
-            b = dirs.get(_end_signal(project, h, w.to_connector, w.to_pin) or "")
+            na = _end_signal(project, h, w.from_connector, w.from_pin) or ""
+            nb = _end_signal(project, h, w.to_connector, w.to_pin) or ""
+            if na == nb and na in passthrough_signals(
+                [(s.name, s.direction) for s in itype.signals]
+            ):
+                continue  # the verifier expects this wire straight through (an unpaired signal)
+            a, b = dirs.get(na), dirs.get(nb)
             if a == b and a in ("out", "in"):
                 what = (
                     "two outputs (driver against driver)"
@@ -209,11 +253,18 @@ def _contact_rating(project: Project, conn: Connector) -> float | None:
     return part.ratings.get(key) if part else None
 
 
+def _bundle_table_given(d: dict[str, object]) -> bool:
+    """The table of bundle factors replaces the single factor (as in sizing)."""
+    return isinstance(d.get("bundle_factor_by_count"), dict) and bool(
+        d.get("bundle_factor_by_count")
+    )
+
+
 def _derated_limit_ready(project: Project) -> bool:
     d = cfg(project, "derating")
     return (
         ampacity_table(d.get("ampacity_a_by_awg")) is not None
-        and number(d.get("bundle_derating")) is not None
+        and (number(d.get("bundle_derating")) is not None or _bundle_table_given(d))
         and number(d.get("temperature_derating")) is not None
     )
 
@@ -228,7 +279,11 @@ def _current_over_contact(project: Project) -> Iterator[Hit]:
         for e in i.endpoints:
             conn = project.connectors.get(e.connector_id or "")
             rating = _contact_rating(project, conn) if conn else None
-            if conn is not None and rating is not None and rating * factor < i.max_current_a:
+            if (
+                conn is not None
+                and rating is not None
+                and exceeds(i.max_current_a, rating * factor)
+            ):
                 yield Hit(
                     f"{i.id}.{conn.id}",
                     f"{i.id} carries {i.max_current_a:g} A but contacts of {conn.id} allow {rating * factor:g} A after derating",
@@ -246,7 +301,7 @@ def _wire_current_limit(project: Project, w: Wire, h: Harness | None = None) -> 
         bundle = bundle_k(by_count, len(h.wires))
     if table is None or bundle is None or temp is None or w.gauge_awg not in table:
         return None
-    return table[w.gauge_awg] * bundle * temp
+    return derated_limit(table[w.gauge_awg], bundle, temp)
 
 
 def _current_over_wire(project: Project) -> Iterator[Hit]:
@@ -254,7 +309,12 @@ def _current_over_wire(project: Project) -> Iterator[Hit]:
         for w in h.wires:
             i = project.interfaces.get(w.interface_id or "")
             limit = _wire_current_limit(project, w, h)
-            if i and i.max_current_a is not None and limit is not None and limit < i.max_current_a:
+            if (
+                i
+                and i.max_current_a is not None
+                and limit is not None
+                and exceeds(i.max_current_a, limit)
+            ):
                 yield Hit(
                     w.id,
                     f"Wire {w.id} (AWG {w.gauge_awg}) carries {i.max_current_a:g} A but allows {limit:g} A after derating",
@@ -281,8 +341,8 @@ def _voltage_drop(project: Project) -> Iterator[Hit]:
                 )
                 continue
             n = 2 if itype.category in ("power", "ground") else 1
-            drop = i.max_current_a * rho * length / (awg_to_area_mm2(w.gauge_awg) * 1e-6) * n
-            if drop > limit:
+            drop = voltage_drop_v(i.max_current_a, rho, length, w.gauge_awg, n)
+            if exceeds(drop, limit):
                 yield Hit(w.id, f"Wire {w.id} drops {drop:.3g} V, more than the {limit:g} V limit")
 
 
@@ -294,7 +354,7 @@ def _spare_pins(project: Project) -> Iterator[Hit]:
         if not c.pins or not any(p.interface_id for p in c.pins):
             continue
         spare = sum(1 for p in c.pins if p.interface_id is None and not p.signal)
-        if spare < fraction * len(c.pins):
+        if exceeds(fraction * len(c.pins), spare):
             yield Hit(
                 c.id,
                 f"{c.id} has {spare} spare pin(s) of {len(c.pins)}, fewer than the required {fraction:.0%}",
@@ -606,6 +666,9 @@ RULES: tuple[Rule, ...] = (
     Rule("model-inconsistent", "warning", "Model consistency",
          "The logical and physical parts of the model disagree, so later outputs may be wrong.",
          "Open the object and correct the mismatch.", _model_inconsistent),
+    Rule("segment-loop", "error", "Routing loops",
+         "A loop in the routing segments gives a wire two possible routes, so its length is not defined.",
+         "Remove or merge a segment so the segments form a tree.", _segment_loop),
     Rule("signal-unassigned", "warning", "Unassigned signals",
          "A signal without a pin never reaches a wire.",
          "Regenerate the harnesses, or assign the pin by hand.", _signal_unassigned),
