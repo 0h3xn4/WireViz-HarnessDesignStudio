@@ -45,6 +45,12 @@ def facing_side(lane: int, lanes: int) -> str:
     return "right" if lane <= (lanes - 1) // 2 else "left"
 
 
+def elide(fm: QFontMetrics, text: str, width: float, *, middle: bool = False) -> str:
+    """The text cut to `width` with an ellipsis (in the middle for names that differ at the end)."""
+    mode = Qt.TextElideMode.ElideMiddle if middle else Qt.TextElideMode.ElideRight
+    return fm.elidedText(text, mode, max(1, int(width)))
+
+
 class UnitItem(QGraphicsItem):
     def __init__(self, scene: "DiagramScene", unit_id: str) -> None:
         super().__init__()
@@ -64,6 +70,15 @@ class UnitItem(QGraphicsItem):
         )
         self.setAcceptHoverEvents(True)
         self.setZValue(2)
+        self._placing = False  # True while the scene puts the unit where the model says
+
+    def place(self, x: float, y: float) -> None:
+        """Put the unit where the model says (never clamped: the scene grows to hold it)."""
+        self._placing = True
+        try:
+            self.setPos(x, y)
+        finally:
+            self._placing = False
 
     # ---- geometry ---------------------------------------------------------------------------
     @property
@@ -224,7 +239,11 @@ class UnitItem(QGraphicsItem):
         small.setPixelSize(th.px(11))
         painter.setFont(bold)
         painter.setPen(th.color("text"))
-        painter.drawText(QRectF(10, 0, W - 80, HEADER_H), Qt.AlignmentFlag.AlignVCenter, unit.id)
+        painter.drawText(
+            QRectF(10, 0, W - 80, HEADER_H),
+            Qt.AlignmentFlag.AlignVCenter,
+            elide(painter.fontMetrics(), unit.id, W - 80),
+        )
         painter.setFont(small)
         painter.setPen(th.color("text-muted"))
         tag = (
@@ -242,7 +261,7 @@ class UnitItem(QGraphicsItem):
             painter.drawText(
                 QRectF(10, 34, W - 20, 16),
                 Qt.AlignmentFlag.AlignVCenter,
-                QFontMetrics(small).elidedText(unit.name, Qt.TextElideMode.ElideRight, int(W - 20)),
+                elide(QFontMetrics(small), unit.name, W - 20),
             )
             self._paint_connector_row(painter, small, th)
         painter.setOpacity(base)
@@ -321,7 +340,9 @@ class UnitItem(QGraphicsItem):
         painter.setFont(font)
         painter.setPen(th.color("text"))
         painter.drawText(
-            QRectF(8, 0, W - 16, self.height()), Qt.AlignmentFlag.AlignVCenter, self.unit_id
+            QRectF(8, 0, W - 16, self.height()),
+            Qt.AlignmentFlag.AlignVCenter,
+            elide(painter.fontMetrics(), self.unit_id, W - 16),
         )
 
     def _paint_ports(self, painter: QPainter, small: QFont, th: ThemeManager, state: str) -> None:
@@ -357,7 +378,11 @@ class UnitItem(QGraphicsItem):
                 Qt.AlignmentFlag.AlignRight if right else Qt.AlignmentFlag.AlignLeft
             )
             painter.setPen(ink)
-            painter.drawText(QRectF(row["name"][0], y - 9, glyphs.ROW_NAME_W, 18), align, c.name)
+            painter.drawText(
+                QRectF(row["name"][0], y - 9, glyphs.ROW_NAME_W, 18),
+                align,
+                elide(painter.fontMetrics(), c.name, glyphs.ROW_NAME_W, middle=True),
+            )
             glyphs.draw_connector(
                 painter, row["connector"][0], y - glyphs.CONNECTOR_H / 2, family, pins, gender, ink, th.color("surface")
             )  # fmt: skip
@@ -382,6 +407,12 @@ class UnitItem(QGraphicsItem):
             return
         super().mousePressEvent(event)
 
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if self.ctl.tool == "connect":
+            event.accept()  # a press with the Connect tool picks the unit; it never drags it
+            return
+        super().mouseMoveEvent(event)
+
     def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         super().mouseReleaseEvent(event)
         if self._press_pos is not None and self.pos() != self._press_pos and not self.ctl.read_only:
@@ -394,7 +425,10 @@ class UnitItem(QGraphicsItem):
         ):
             if self.ctl.read_only and self._press_pos is not None:
                 return self._press_pos
-            return QPointF(round(value.x() / GRID) * GRID, round(value.y() / GRID) * GRID)
+            x, y = round(value.x() / GRID) * GRID, round(value.y() / GRID) * GRID
+            if self._placing:
+                return QPointF(x, y)
+            return QPointF(max(0.0, x), max(0.0, y))  # a drag cannot leave the top left corner
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
             self.dscene.relink(self.unit_id)
         return super().itemChange(change, value)
@@ -402,16 +436,17 @@ class UnitItem(QGraphicsItem):
     def hoverMoveEvent(self, event: object) -> None:
         _, reason = self._compat_reason()
         tip = reason
-        if self.ctl.mode == "expert" and self.ctl.tool == "connect" and self.ctl.connect_type:
-            cid = self.port_at(event.pos())  # type: ignore[attr-defined]
-            if cid:
-                c = self.ctl.connector_compat(cid)
-                tip = "" if c.ok else c.why
+        cid = self.port_at(event.pos())  # type: ignore[attr-defined]  # (None unless Expert)
+        if cid and self.ctl.tool == "connect" and self.ctl.connect_type:
+            c = self.ctl.connector_compat(cid)
+            tip = "" if c.ok else c.why
         if tip:
             QToolTip.showText(event.screenPos(), tip)  # type: ignore[attr-defined]
         else:
             u = self.ctl.project.units.get(self.unit_id)
-            self.setToolTip(f"{u.id}: {u.name}" if u else "")
+            conn = self.ctl.project.connectors.get(cid) if cid else None
+            full = f"{u.id}: {u.name}" if u else ""
+            self.setToolTip(f"{full}\n{conn.name}" if conn else full)  # (the whole text, if elided)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:
         ctl = self.ctl
@@ -436,7 +471,9 @@ class UnitItem(QGraphicsItem):
             and not ctl.read_only
         ):
             dx, dy = nudge[key]  # type: ignore[index]
-            ctl.move_unit(self.unit_id, self.pos().x() + dx, self.pos().y() + dy)
+            ctl.move_unit(
+                self.unit_id, max(0.0, self.pos().x() + dx), max(0.0, self.pos().y() + dy)
+            )
             event.accept()
             return
         super().keyPressEvent(event)
@@ -470,6 +507,7 @@ class LinkItem(QGraphicsPathItem):
         self.interface_id = interface_id
         self._chip = QRectF()
         self._chip_placed = False
+        self._chip_values = 0  # how many characters of numbers the registered label was sized for
         self.ends: QLineF | None = None  # straight line between the two anchors (for the map)
         self.poly: list[tuple[float, float]] = []  # the corners of the route now drawn
         self._hover = False
@@ -500,7 +538,8 @@ class LinkItem(QGraphicsPathItem):
         self.setPath(path)
         i = self.dscene.ctl.project.interfaces.get(self.interface_id)
         name = i.id if i is not None else self.interface_id
-        width = self._chip_width(len(describe.link_values(self.dscene.ctl.project, name)) * 6.5)
+        self._chip_values = len(describe.link_values(self.dscene.ctl.project, name))
+        width = self._chip_width(self._chip_values * 6.5)
         spots = self._label_spots(route, width + 12)
         center = spots[0] if spots else path.pointAtPercent(0.5)
         for spot in spots:  # the first spot on a straight piece where the label overlaps nothing
@@ -511,6 +550,16 @@ class LinkItem(QGraphicsPathItem):
         self._chip_placed = True
         self.dscene.chip_place(name, QRectF(center.x() - width / 2, center.y() - 11, width, 22))
         return True
+
+    def refresh_chip(self) -> None:
+        """The numbers on the link changed: register a label of the new size (update_path does
+        nothing inside a batch, and the route may be the same)."""
+        i = self.dscene.ctl.project.interfaces.get(self.interface_id)
+        if i is None or not self._chip_placed:
+            return
+        if len(describe.link_values(self.dscene.ctl.project, i.id)) != self._chip_values:
+            self._chip_placed = False
+            self.update_path()
 
     @staticmethod
     def _chip_width(text_w: float) -> float:
@@ -1022,7 +1071,7 @@ class DiagramScene(QGraphicsScene):
         item = UnitItem(self, uid)
         x, y = edit.position_of(self.ctl.project, uid)
         self.addItem(item)
-        item.setPos(x, y)
+        item.place(x, y)
         self.unit_items[uid] = item
 
     def _add_link(self, iid: str) -> None:
@@ -1048,9 +1097,12 @@ class DiagramScene(QGraphicsScene):
             # each edit repaint every unit and link)
 
     def _update_extent(self) -> None:
-        bottom = max(
-            (it.pos().y() + it.height() + 60 for it in self.unit_items.values()), default=0
-        )
+        bottom = left = top = right = 0.0
+        for it in self.unit_items.values():
+            pos = it.pos()
+            bottom = max(bottom, pos.y() + it.height() + 60)
+            left, top = min(left, pos.x() - 40), min(top, pos.y() - 40)
+            right = max(right, pos.x() + W + 40)
         # in steps, so adding or undoing one unit rarely resizes the scene (which repaints it all)
         height = max(700.0, math.ceil((bottom + 40) / LANE_STEP) * LANE_STEP)
         if height != self.lane_height:
@@ -1058,7 +1110,12 @@ class DiagramScene(QGraphicsScene):
                 z.prepareGeometryChange()
             self.lane_height = height
         width = max(1, len(self.zone_items)) * edit.LANE_WIDTH + 2 * edit.LANE_X0
-        rect = QRectF(0, 0, width, self.lane_height)
+        # a unit placed outside the lanes (by a file, or far out) keeps the scene big enough to
+        # reach it; steps, so a drag nearby does not resize the scene each time
+        width = max(width, math.ceil(right / LANE_STEP) * LANE_STEP)
+        left = -math.ceil(-left / LANE_STEP) * LANE_STEP
+        top = -math.ceil(-top / LANE_STEP) * LANE_STEP
+        rect = QRectF(left, top, width - left, self.lane_height - top)
         if rect != self.sceneRect():
             self.setSceneRect(rect)
 
@@ -1079,6 +1136,10 @@ class DiagramScene(QGraphicsScene):
         if self._routes_key() != self._route_key:  # a rename or a note changes no route
             self._routes = None
             self._redraw_changed()
+        for iid in delta.interfaces:  # new numbers need a bigger label in the registry
+            link = self.link_items.get(iid)
+            if link is not None and iid not in delta.followers:
+                link.refresh_chip()
         self._update_extent()
         if self.filter is not None or self.ctl.selection is not None:
             self._apply_filter()
@@ -1103,7 +1164,7 @@ class DiagramScene(QGraphicsScene):
                 else:
                     item.prepareGeometryChange()
                     if (item.pos().x(), item.pos().y()) != (x, y):
-                        item.setPos(x, y)
+                        item.place(x, y)
                     item.update()
             elif item is not None:
                 self.removeItem(item)
@@ -1135,6 +1196,7 @@ class DiagramScene(QGraphicsScene):
             it.update()
         for link in self.link_items.values():
             link.update_path()
+        self._update_extent()  # (expert units are taller)
         self.update()
 
     def _repaint_units(self) -> None:

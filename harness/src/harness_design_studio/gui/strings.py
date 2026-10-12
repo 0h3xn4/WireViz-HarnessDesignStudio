@@ -435,3 +435,7 @@ CONNECTOR_AT_END = "Connector at the {} end, unit {}"
 COMMANDS_LIST = "Matching commands"
 LEGEND_NAME = "Key to the pictures in the diagram"
 LEGEND_GENDER = "solid: male (pins) · outline: female (sockets) · dashed: not set"
+
+
+# ---- m6a strings ----------------------------------------------------------------------------
+NAME_ONE_LINE = "A name is one line. Remove the line break."

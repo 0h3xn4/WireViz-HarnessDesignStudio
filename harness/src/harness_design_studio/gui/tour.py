@@ -2,6 +2,7 @@
 
 from collections.abc import Callable
 
+import shiboken6
 from PySide6.QtCore import QRect, Qt
 from PySide6.QtGui import QPainter, QPen
 from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
@@ -68,7 +69,19 @@ class Tour:
         return self.index >= 0
 
     def start(self) -> None:
+        # (the first-run timer can fire after the window was closed or deleted)
+        if not shiboken6.isValid(self.window) or not self.window.isVisible():
+            return
         self.show_step(0)
+
+    def _shown_steps(self) -> list[int]:
+        """The steps whose target is on screen now (a high UI scale or a small window hides docks)."""
+        out = []
+        for k, (key, _text) in enumerate(strings.TOUR_STEPS):
+            target = self.targets[key]
+            if target.isVisibleTo(self.window) and not target.size().isEmpty():
+                out.append(k)
+        return out
 
     def stop(self) -> None:
         was_active = self.index >= 0
@@ -82,16 +95,23 @@ class Tour:
         steps = strings.TOUR_STEPS
         if i < 0:
             return
+        shown = self._shown_steps()
+        forward = i >= self.index
+        if i < len(steps) and i not in shown:  # skip a step that would point at nothing
+            later = [k for k in shown if (k > i if forward else k < i)]
+            if not later and not forward:
+                return  # nothing earlier to go back to
+            i = (later[0] if forward else later[-1]) if later else len(steps)
         if i >= len(steps):
             self.stop()
             return
         self.index = i
         key, text = steps[i]
         target = self.targets[key]
-        self.title.setText(f"<b>{strings.TOUR_STEP.format(i + 1, len(steps))}</b>")
+        self.title.setText(f"<b>{strings.TOUR_STEP.format(shown.index(i) + 1, len(shown))}</b>")
         self.text.setText(text)
-        self.back.setEnabled(i > 0)
-        self.next.setText(strings.TOUR_FINISH if i == len(steps) - 1 else strings.TOUR_NEXT)
+        self.back.setEnabled(i > shown[0])
+        self.next.setText(strings.TOUR_FINISH if i == shown[-1] else strings.TOUR_NEXT)
         self.highlight.setGeometry(self.window.rect())
         top_left = target.mapTo(self.window, target.rect().topLeft())
         rect = QRect(top_left, target.size())
