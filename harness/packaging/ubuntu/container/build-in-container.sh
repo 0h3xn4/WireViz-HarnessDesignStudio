@@ -3,6 +3,8 @@
 # dependencies, runs the whole release checklist and leaves the packages in dist/.
 set -eu
 cd /src
+git config --global --add safe.directory /src   # the mounted source belongs to another user
+export HARNESS_REQUIRE_BROWSER=1                  # no Chromium: fail, do not skip
 python3 -m venv /tmp/venv
 . /tmp/venv/bin/activate
 pip install -e ".[gui,dev]"

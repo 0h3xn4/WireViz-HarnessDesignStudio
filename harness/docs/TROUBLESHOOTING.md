@@ -88,7 +88,7 @@ This application failed to start because no Qt platform plugin could be initiali
 The command ended with exit code 134 (aborted). Why: a system library that Qt needs is missing, or there is no screen to draw on. A normal Ubuntu desktop has these libraries; a container or a server image does not. Fix, from [`INSTALL.md`](INSTALL.md):
 
 ```
-sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0
+sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
 ```
 
 Messages that mention `libEGL` or `libxkbcommon` have the same fix. If you are connected over SSH, the app has no screen: use the `harness` command line over SSH, or start the app on the machine itself. The `harness` command line never needs these libraries.
@@ -559,7 +559,7 @@ A release that rests on placeholders or example parts teaches the flow and nothi
 
 ```
 Release W003 revision A: done.
-Outputs re-exported with the released status (111 files).
+Outputs re-exported with the released status (112 files).
 ```
 
 Other release messages:

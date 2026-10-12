@@ -4,10 +4,12 @@ Ubuntu only (D-110). Build on Ubuntu 24.04 (the supported platform).
 Output: dist/harness-design-studio-<version>-linux-<arch>.tar.gz
 """
 
+import gzip
 import platform
 import shutil
 import subprocess
 import sys
+import tarfile
 from collections.abc import Iterable
 from pathlib import Path
 
@@ -72,6 +74,30 @@ def undeclared_in_build(app: Path) -> list[str]:
         if base.is_dir():
             found.update(undeclared_files(base))
     return sorted(found)
+
+
+def make_tarball(root_dir: Path, base_dir: str, target: Path, stamp: int) -> Path:
+    """A .tar.gz of root_dir/base_dir that does not depend on who builds it or when: owner root,
+    sorted entries, fixed times, normalised modes and no time in the gzip header."""
+
+    def clean(info: tarfile.TarInfo) -> tarfile.TarInfo:
+        info.uid = info.gid = 0
+        info.uname = info.gname = "root"
+        info.mtime = stamp
+        if not info.issym():
+            info.mode = 0o755 if info.isdir() or info.mode & 0o111 else 0o644
+        return info
+
+    paths = [root_dir / base_dir, *sorted((root_dir / base_dir).rglob("*"))]
+    with (
+        target.open("wb") as raw,
+        gzip.GzipFile(filename="", fileobj=raw, mode="wb", mtime=0) as gz,
+        tarfile.open(fileobj=gz, mode="w") as tar,
+    ):
+        for path in paths:
+            tar.add(path, arcname=path.relative_to(root_dir).as_posix(), recursive=False,
+                    filter=clean)  # fmt: skip
+    return target
 
 
 def _pyinstaller(
@@ -150,9 +176,10 @@ def main() -> int:
     base = (
         ROOT / "dist" / f"harness-design-studio-{__version__}-{system}-{platform.machine().lower()}"
     )
-    fmt = "gztar"
-    archive = shutil.make_archive(
-        str(base), fmt, root_dir=ROOT / "dist", base_dir="harness-design-studio"
+    from tools.build_deb import epoch
+
+    archive = make_tarball(
+        ROOT / "dist", "harness-design-studio", base.with_name(base.name + ".tar.gz"), epoch()
     )
     print(archive)
     return 0
