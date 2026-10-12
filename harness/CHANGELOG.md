@@ -25,6 +25,7 @@ Changes on `master` since the release of 0.1.0. They are not in the 0.1.0 packag
 - **CI**: for changes that touch only Markdown directly under `harness/`, Markdown under `harness/docs/` or anything under `harness/compliance/`, the full suite and the package jobs are skipped and a `docs` job runs the checks that read documents (D-138). Any other change runs everything.
 - **Records**: `compliance/SIGNOFF.md` has a Publication section for 0.1.0 (merge commit, tag, release page); `docs/RELEASE.md` has a step for tagging and publishing a release; `docs/SECURITY.md` says the SBOM ships with every release.
 - **Release check**: the version step skips an `Unreleased` section when it compares the changelog with the version.
+- **Fixed: undeclared code in the package** (audit G-1). The packages held rich, pygments, markdown-it, mdurl, chardet and toml (pulled in through pydantic), with no licence text and no SBOM entry. They are now left out (the package is about 12 MB smaller), and `tools.build_installer` fails when the built package, the module archives included, holds anything that is not the standard library or a declared runtime dependency.
 
 ## 0.1.0 (first release, 2026-10-09; released by the owner with the engineering decisions still open, see compliance/SIGNOFF.md; not a statement of compliance)
 
