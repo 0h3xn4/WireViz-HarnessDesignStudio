@@ -49,7 +49,11 @@ def working_diff(project: Project, h: Harness, base: Baseline) -> Diff:
 
 
 def revision_report(project: Project, stamp_line: str) -> str:
-    lines = [f"<!-- {stamp_line} -->", f"# Revision report: {project.meta.name}", ""]
+    lines = [
+        f"<!-- {stamp_line} -->",
+        f"# Revision report: {' '.join(project.meta.name.split())}",
+        "",
+    ]
     hids = sorted(
         {b.harness_id for b in project.baselines.values()}
         | {e.harness_id for e in project.changelog.values()}

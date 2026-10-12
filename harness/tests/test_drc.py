@@ -13,7 +13,6 @@ from harness_design_studio.core.drc.rules import RULES
 from harness_design_studio.core.generate.engine import generate_project, plan_generation
 from harness_design_studio.core.io.saver import save_project
 from harness_design_studio.core.model import (
-    Connector,
     Harness,
     Pin,
     Project,

@@ -142,7 +142,7 @@ def read_table_sheet(path: Path | str) -> tuple[Table, str | None]:
 def _read_xlsx(path: Path) -> tuple[Table, str]:
     import zipfile
 
-    from openpyxl import load_workbook
+    from harness_design_studio.core.outputs.xlsx_env import load_workbook
 
     try:
         with zipfile.ZipFile(path) as z:  # refuse zip bombs before parsing anything
