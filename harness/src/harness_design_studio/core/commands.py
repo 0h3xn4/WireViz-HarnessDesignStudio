@@ -52,6 +52,9 @@ _TYPES: dict[str, type[Entity]] = {
 }
 
 
+RELEASE_SAVED = "This release was saved; it cannot be undone. Use 'Revise' to change the harness."
+
+
 @dataclass(frozen=True)
 class Put:
     """Add or replace one object (matched by its ID)."""
@@ -201,7 +204,7 @@ class History:
 
     @property
     def can_undo(self) -> bool:
-        return bool(self._undo)
+        return bool(self._undo) and self.undo_blocked is None
 
     @property
     def can_redo(self) -> bool:
@@ -211,7 +214,22 @@ class History:
     def next_undo_label(self) -> str | None:
         return self._undo[-1].label if self._undo else None
 
+    @property
+    def undo_blocked(self) -> str | None:
+        """Why the latest step cannot be undone (it removes a saved release record), else None."""
+        if not self._undo:
+            return None
+        saved = self.project.saved_records
+        for op in self._undo[-1].backward:
+            if isinstance(op, Delete | Put) and op.collection in ("baselines", "changelog"):
+                key = op.key if isinstance(op, Delete) else str(getattr(op.obj, "id", ""))
+                if f"{op.collection}:{key}" in saved:
+                    return RELEASE_SAVED
+        return None
+
     def undo(self) -> str:
+        if self.undo_blocked:
+            raise TransactionError(self.undo_blocked)
         step = self._undo.pop()
         apply_ops(self.project, step.backward)
         self._redo.append(step)
@@ -220,7 +238,11 @@ class History:
         return step.label
 
     def redo(self) -> str:
-        step = self._redo.pop()
+        from .vcs.locks import check_locks
+
+        step = self._redo[-1]
+        check_locks(self.project, step.forward)  # the state is the one the step was made in
+        self._redo.pop()
         apply_ops(self.project, step.forward)
         self._undo.append(step)
         self.revision += 1

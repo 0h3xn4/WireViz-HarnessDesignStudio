@@ -53,6 +53,9 @@ class Project:
     quarantine_files: dict[str, bytes] = field(default_factory=dict)
     read_only: bool = False  # written by a newer tool version
     migrated_from: int | None = None
+    # release records ("baselines:<id>", "changelog:<id>") that a save has written; undo must not
+    # take these away again (set by save_project, not stored in the project files)
+    saved_records: frozenset[str] = field(default_factory=frozenset, compare=False, repr=False)
 
     @property
     def recovered(self) -> bool:
