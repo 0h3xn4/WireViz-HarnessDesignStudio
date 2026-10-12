@@ -41,14 +41,14 @@ You also need about 500 MB of free disk space for the program (`df -h ~` shows i
 
 You need one file, either `harness-design-studio_<version>_amd64.deb` (way A) or `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B). Ask your tool administrator, or take it from one of these places:
 
-- the **Releases** page of the project's repository, when the packages are attached to the release (look for the newest version number). The release record says that attaching the files to the release page is up to the repository owner (`compliance/SIGNOFF.md`, section Publication); if the page lists no `.deb` or `.tar.gz`, use one of the other two places or way C;
+- the **Releases** page of the project's repository (look for the newest version number). Version 1.0.0 has the `.deb`, the `.tar.gz` and a `SHA256SUMS` file attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed. The release record says that attaching the files to the release page is up to the repository owner (`compliance/SIGNOFF.md`, section Publication); if the page lists no `.deb` or `.tar.gz`, use one of the other two places or way C;
 - the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact is called `harness-design-studio-ubuntu-24.04` and holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file).
 
 You can also build it yourself (way C, last section). That route needs no release files at all.
 
 Copy the file to the machine. It never needs to reach the network.
 
-**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file (`compliance/evidence/release_<version>_SHA256SUMS` in the repository). Compare:
+**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file (the `SHA256SUMS` file on the release page, and `compliance/evidence/release_<version>_SHA256SUMS` in the repository for 0.1.0 and 1.0.0). Compare:
 
 ```
 sha256sum harness-design-studio_<version>_amd64.deb
@@ -98,9 +98,9 @@ echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 
 (or log out and in). Until then you can start the app from the application menu or `~/.local/bin/harness-design-studio`.
 
-Other options of `install.sh`: `sudo ./install.sh --system` installs for everyone into `/usr/local/lib/harness-design-studio`; `--prefix FOLDER` chooses the folder. Remove with `./uninstall.sh` (or `sudo ./uninstall.sh --system`); it removes only what the installer put there. The installer writes a file `.harness-design-studio-install` into the install folder that lists what it installed; it never replaces or removes a `cli`, `LICENSES`, `_internal` or `harness-design-studio` folder that is not in that list, and it refuses to install into the folder the package was unpacked from. Files installed as `root` belong to `root`.
+Other options of `install.sh`: `sudo ./install.sh --system` installs for everyone into `/usr/local/lib/harness-design-studio`; `--prefix FOLDER` chooses the folder. Remove with `./uninstall.sh` (or `sudo ./uninstall.sh --system`); it removes only what the installer put there. The installer writes a file `.harness-design-studio-install` into the install folder that lists what it installed. `uninstall.sh` removes only the folders on that list and refuses to touch a `cli`, `LICENSES`, `_internal` or `harness-design-studio` folder that is not on it (the 0.1.0 `uninstall.sh` deleted such folders without asking); `install.sh` never replaces one either. `install.sh` refuses to install into the folder the package was unpacked from (or a folder that holds it), copies to a temporary name before it replaces an older install (a failed copy leaves the old install and the package intact), and does not replace a `harness` or `harness-design-studio` link in the bin folder that points to another program. `--prefix ""` is refused. `uninstall.sh` removes a link only if it points into the install it removes and keeps the application-menu entry of another install; `uninstall.sh --help` prints its usage. Files installed as `root` belong to `root`. The `.tar.gz` is built with owner root, sorted entries and fixed times, so building it again gives the same bytes.
 
-If `install.sh` says that a folder "was not installed by this installer", the install folder holds one of these names from something else (or from an older installer, which wrote no list). Choose another `--prefix`, or move that folder away first.
+If `install.sh` says that a folder "was not installed by this installer", the install folder holds one of these names from something else (or from an older installer, which wrote no list; an install made by the 0.1.0 `install.sh` is of this kind). Choose another `--prefix`, or move that folder away first. To replace a 0.1.0 install, remove it first (run its own `uninstall.sh`, or delete `~/.local/opt/harness-design-studio` yourself), then run the new `install.sh`. Your projects are never inside the install folder.
 
 Run `install.sh` from the **unpacked package**. Run from the source tree it refuses and prints: `This folder (...) has no built program, so there is nothing to install.`
 
