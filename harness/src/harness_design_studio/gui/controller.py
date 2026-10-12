@@ -49,9 +49,14 @@ class DrcWorker(QThread):
         self.snapshot = snapshot
         self.token = token
         self.found: list[checks.Finding] = []
+        self.error: str | None = None  # why the check could not be completed
 
     def run(self) -> None:
-        self.found = run_check(self.snapshot)
+        try:
+            self.found = run_check(self.snapshot)
+        except Exception as exc:  # never let it escape the thread: that would read as "no problems"
+            lines = (_plain(exc) or type(exc).__name__).strip().splitlines()
+            self.error = lines[0] if lines else type(exc).__name__
 
 
 @dataclass
@@ -117,6 +122,7 @@ class EditorController(QObject):
         self._open_cache: list[checks.Finding] | None = None
         self._counts_cache: tuple[object, tuple[int, int]] | None = None
         self._owners: dict[str, str] = {}
+        self._ends: dict[str, tuple[str, ...]] = {}
         self._installs = 0
         self.diff_marks: dict[str, str] = {}  # object ID -> added | changed | removed
         self.user_name = ""
@@ -125,6 +131,8 @@ class EditorController(QObject):
         self._drc_token: tuple[int, int] | None = None  # (installs, revision) the result is for
         self._drc_worker: DrcWorker | None = None
         self._drc_version = 0
+        self.drc_error: str | None = None  # the last check failed (shown instead of "all checked")
+        self._drc_failed_token: tuple[int, int] | None = None
         self._drc_timer = QTimer(self)
         self._drc_timer.setSingleShot(True)
         self._drc_timer.setInterval(drc_delay_ms)
@@ -150,6 +158,8 @@ class EditorController(QObject):
         key = self.findings_key()
         if self._findings_cache is None or self._findings_cache[0] != key:
             merged = [*checks.find(self.project), *drc.apply_waivers(self.project, self._drc_raw)]
+            if self.drc_error is not None:
+                merged.append(self._drc_failure_finding(self.drc_error))
             order = {"error": 0, "warning": 1, "info": 2}
             merged.sort(key=lambda f: (order[f.severity], f.id))
             self._findings_cache = (key, merged)
@@ -161,6 +171,17 @@ class EditorController(QObject):
     @property
     def drc_current(self) -> bool:
         return self._drc_token == (self._installs, self.history.revision)
+
+    @staticmethod
+    def _drc_failure_finding(message: str) -> checks.Finding:
+        return checks.Finding(
+            id="drc-failed",
+            rule="drc-failed",
+            severity="error",
+            object_id="",
+            title=message,
+            why=strings.DRC_FAILED_WHY,
+        )
 
     def _schedule_drc(self) -> None:
         self._drc_timer.start()
@@ -181,9 +202,18 @@ class EditorController(QObject):
             return
         worker.wait()
         if worker.token[0] == self._installs:
-            self._drc_raw, self._drc_token = worker.found, worker.token
+            if worker.error is None:
+                self._drc_raw, self._drc_token = worker.found, worker.token
+                self.drc_error = self._drc_failed_token = None
+            else:  # not a result: stays "not current" and is not retried until something changes
+                self._drc_raw, self._drc_token = [], None
+                self.drc_error = strings.DRC_FAILED.format(worker.error)
+                self._drc_failed_token = worker.token
             self._drc_version += 1
-        if not self.drc_current:
+        if not self.drc_current and self._drc_failed_token != (
+            self._installs,
+            self.history.revision,
+        ):
             self._schedule_drc()
         self.drcChanged.emit()
         self.drcStateChanged.emit()
@@ -194,6 +224,7 @@ class EditorController(QObject):
         self.wait_drc()
         self._drc_raw = drc.run(self.project)
         self._drc_token = (self._installs, self.history.revision)
+        self.drc_error = self._drc_failed_token = None
         self._drc_version += 1
         self.drcChanged.emit()
         self.drcStateChanged.emit()
@@ -252,7 +283,7 @@ class EditorController(QObject):
         """Execute ops as one transaction. Returns False (and tells the user why) if rejected."""
         if not ops:
             return True
-        owners = self._connector_owners()
+        before = self._before_change()
         try:
             self.history.execute(label, ops)
         except TransactionError as exc:
@@ -261,7 +292,7 @@ class EditorController(QObject):
         except HarnessError as exc:
             self.message.emit(str(exc), False)
             return False
-        self._after_change(self.history.last_ops, owners)
+        self._after_change(self.history.last_ops, before)
         if message:
             self.message.emit(message, undo)
         return True
@@ -277,24 +308,34 @@ class EditorController(QObject):
 
     def undo(self) -> None:
         if self.history.can_undo and not self.read_only:
-            owners = self._connector_owners()
+            before = self._before_change()
             label = self.history.undo()
-            self._after_change(self.history.last_ops, owners)
+            self._after_change(self.history.last_ops, before)
             self.message.emit(f"Undone: {label}", False)
 
     def redo(self) -> None:
         if self.history.can_redo and not self.read_only:
-            owners = self._connector_owners()
+            before = self._before_change()
             label = self.history.redo()
-            self._after_change(self.history.last_ops, owners)
+            self._after_change(self.history.last_ops, before)
             self.message.emit(f"Redone: {label}", False)
 
-    def _connector_owners(self) -> dict[str, str]:
-        """Unit of every box connector, captured before a change so deletions can be attributed."""
-        return {c.id: c.unit_id for c in self.project.connectors.values() if c.unit_id}
+    def _before_change(self) -> tuple[dict[str, str], dict[str, tuple[str, ...]]]:
+        """Unit of every box connector and units at the ends of every interface, captured before a
+        change so that deletions (and the undo of an addition) can be attributed."""
+        owners = {c.id: c.unit_id for c in self.project.connectors.values() if c.unit_id}
+        ends = {
+            i.id: tuple(e.unit_id for e in i.endpoints) for i in self.project.interfaces.values()
+        }
+        return owners, ends
 
-    def _after_change(self, ops: list[Op], owners: dict[str, str] | None = None) -> None:
-        self._owners = owners or {}
+    def _after_change(
+        self,
+        ops: list[Op],
+        before: tuple[dict[str, str], dict[str, tuple[str, ...]]] | None = None,
+    ) -> None:
+        self._owners, self._ends = before or ({}, {})
+        self._clear_stale_connect()
         delta = self._delta_of(ops)
         if self.selection and not self._selection_exists():
             self.selection = None
@@ -303,6 +344,13 @@ class EditorController(QObject):
         self.stateChanged.emit()
         self._schedule_journal()
         self._schedule_drc()
+
+    def _clear_stale_connect(self) -> None:
+        """The connect tool forgets a first pick whose unit is gone (deleted, or its add undone)."""
+        src = self.connect_from
+        if src is not None and src.unit_id not in self.project.units:
+            self.connect_from = None
+            self.connectChanged.emit()
 
     def _selection_exists(self) -> bool:
         s = self.selection
@@ -330,6 +378,7 @@ class EditorController(QObject):
             d.units.add(key)
         elif op.collection == "interfaces":
             d.interfaces.add(key)
+            d.units.update(self._ends.get(key, ()))  # as it was before (it may be gone now)
             for e in (
                 self.project.interfaces[key].endpoints if key in self.project.interfaces else ()
             ):
@@ -402,6 +451,7 @@ class EditorController(QObject):
         """Connect tool: first pick sets the source, second pick creates the interface."""
         if self.read_only or self.connect_type is None:
             return
+        self._clear_stale_connect()
         compat = (
             self.connector_compat(connector_id)
             if self.mode == "expert" and connector_id
@@ -418,9 +468,15 @@ class EditorController(QObject):
             self.connectChanged.emit()
             return
         src, type_id = self.connect_from, self.connect_type
-        ops, iid = edit.ops_add_interface(
-            self.project, type_id, src.unit_id, unit_id, src.connector_id, connector_id
-        )
+        try:
+            ops, iid = edit.ops_add_interface(
+                self.project, type_id, src.unit_id, unit_id, src.connector_id, connector_id
+            )
+        except HarnessError as exc:
+            self.message.emit(str(exc), False)
+            self.connect_from = None
+            self.connectChanged.emit()
+            return
         auto = (
             " Connectors were chosen for you and are marked Auto until you confirm them."
             if self.mode == "guided"
@@ -599,14 +655,21 @@ class EditorController(QObject):
             return False
         return self.run(plan.label, plan.ops, message=message)
 
+    @staticmethod
+    def plan_problems(plan: GenerationPlan) -> int:
+        """Errors and warnings the plan carries; a plan with any is never "up to date"."""
+        return sum(f.severity in ("error", "warning") for f in plan.report.findings)
+
     def apply_generation(self, plan: GenerationPlan) -> bool:
-        if plan.empty:
+        errors = len(plan.report.errors)
+        if plan.empty and not self.plan_problems(plan):
             if not self.project.interfaces:
                 self.message.emit(strings.GEN_NO_INTERFACES, False)
                 return True
             self.message.emit(strings.GEN_UP_TO_DATE, False)
             return True
-        return self.run("Generate harnesses", plan.ops, message=plan.report.plain_summary())
+        message = strings.GEN_WITH_ERRORS.format(errors) if errors else plan.report.plain_summary()
+        return self.run("Generate harnesses", plan.ops, message=message)
 
     def apply_import(self, plan: ImportPlan) -> bool:
         n = plan.ok_count
@@ -638,6 +701,7 @@ class EditorController(QObject):
         self.diff_marks = {}
         self.wait_drc()
         self._drc_raw, self._drc_token = [], None
+        self.drc_error = self._drc_failed_token = None
         self._drc_version += 1
         self.changed.emit(Delta(full=True))
         self.selectionChanged.emit()
@@ -690,8 +754,9 @@ class EditorController(QObject):
         if self.root is None:
             return False
         res = read_journal(self.root)
-        if res is None or res.has_errors:
+        if res is None:
             return False
+        res.project.read_only = res.project.read_only or self.read_only  # never opens up a session
         keep_root, keep_lock = self.root, self._lock
         self._install(res.project, keep_root, keep_lock)
         self._saved_revision = -1  # restored state differs from disk: stays dirty
@@ -699,7 +764,7 @@ class EditorController(QObject):
         return True
 
     def discard_journal(self) -> None:
-        if self.root is not None:
+        if self.root is not None and self._lock is not None:  # only our own; not another window's
             clear_journal(self.root)
 
     def save(self) -> None:
@@ -725,9 +790,10 @@ class EditorController(QObject):
             self.project.read_only = was_read_only
             lock.release()
             raise
+        owned = self._lock is not None
         if self._lock:
             self._lock.release()
-        if self.root is not None:
+        if self.root is not None and owned:  # a read-only copy must not delete the other's journal
             clear_journal(self.root)
         self._lock, self.root, self.sample = lock, folder, False
         self._after_save()
@@ -751,6 +817,7 @@ class EditorController(QObject):
             return None
         folder, lock = self.root, self._lock
         result = load_project(folder)
+        result.project.read_only = result.project.read_only or self.read_only
         self._install(result.project, folder, lock)
         return result
 
@@ -773,10 +840,11 @@ class EditorController(QObject):
             return
         try:
             write_journal(self.project, self.root)
-        except HarnessError as exc:
+        except (HarnessError, ValueError) as exc:  # ValueError: text that cannot be encoded
             if not self.journal_error_shown:
                 self.journal_error_shown = True
-                self.message.emit(f"Autosave is not working: {exc}", False)
+                why = str(exc) if isinstance(exc, HarnessError) else strings.SAVE_BAD_TEXT
+                self.message.emit(f"Autosave is not working: {why}", False)
 
 
 def _plain(exc: Exception) -> str:

@@ -5,7 +5,17 @@ from collections.abc import Callable
 from functools import partial
 from pathlib import Path
 
-from PySide6.QtCore import QEvent, QEventLoop, QSettings, Qt, QThread, QTimer, QUrl, Signal
+from PySide6.QtCore import (
+    QByteArray,
+    QEvent,
+    QEventLoop,
+    QSettings,
+    Qt,
+    QThread,
+    QTimer,
+    QUrl,
+    Signal,
+)
 from PySide6.QtGui import QAction, QActionGroup, QCloseEvent, QDesktopServices, QKeySequence
 from PySide6.QtWidgets import (
     QApplication,
@@ -799,11 +809,13 @@ class MainWindow(QMainWindow):
 
     def _update_hash(self) -> None:
         p = self.ctl.project
+        try:
+            digest = model_hash(p)[:8]
+        except ValueError:  # text that cannot be encoded: the save says so, the hash is a label
+            digest = "--------"
         self.status_counts.setText(
             strings.STATUS_COUNTS.format(
-                strings.units_text(len(p.units)),
-                strings.interfaces_text(len(p.interfaces)),
-                model_hash(p)[:8],
+                strings.units_text(len(p.units)), strings.interfaces_text(len(p.interfaces)), digest
             )
         )
 
@@ -936,7 +948,7 @@ class MainWindow(QMainWindow):
         if plan is None:
             self.toasts.show_message(strings.GEN_CANCELLED, None)
             return
-        if plan.empty:
+        if plan.empty and not self.ctl.plan_problems(plan):
             self.ctl.apply_generation(plan)
             return
         accepted = self.run_dialog(GeneratePreviewDialog(self, plan)) == QDialog.DialogCode.Accepted
@@ -1105,6 +1117,12 @@ class MainWindow(QMainWindow):
         self.run_dialog(dlg)
 
     def export_flow(self) -> None:
+        if self.ctl.read_only:  # the command line refuses the same two cases
+            self.toasts.show_message(strings.EXPORT_READ_ONLY, None)
+            return
+        if self.ctl.project.recovered:
+            self.toasts.show_message(strings.EXPORT_DAMAGED, None)
+            return
         folder = self.ctl.outputs_folder()
         if folder is None:
             self.toasts.show_message(strings.EXPORT_SAVE_FIRST, None)
@@ -1357,7 +1375,8 @@ class MainWindow(QMainWindow):
                 [strings.RESTORE, strings.DISCARD_CHANGES],
             )
             if choice == 0:
-                self.ctl.restore_journal()
+                if not self.ctl.restore_journal():
+                    self.toasts.show_message(strings.RESTORE_FAILED, None, 8000)
             else:
                 self.ctl.discard_journal()
         if result.has_errors and not self.ctl.project.recovered:
@@ -1369,7 +1388,7 @@ class MainWindow(QMainWindow):
             self.ctl.save()
         except NeedSaveAs:
             return self.save_as_flow()
-        except (HarnessError, OSError) as exc:
+        except (HarnessError, OSError, ValueError) as exc:
             self._on_save_error(exc)
             return False
         self.toasts.show_message(strings.SAVED, None, 2500)
@@ -1381,7 +1400,7 @@ class MainWindow(QMainWindow):
             return False
         try:
             self.ctl.save_as(Path(folder))
-        except (HarnessError, OSError) as exc:
+        except (HarnessError, OSError, ValueError) as exc:
             self._error(self._explain(exc, folder))
             return False
         self.settings.setValue("project/last", folder)
@@ -1396,6 +1415,8 @@ class MainWindow(QMainWindow):
         """An error as a sentence a person can act on (never a Python message)."""
         if isinstance(exc, HarnessError):
             return str(exc)
+        if isinstance(exc, ValueError):  # for example a lone surrogate that cannot be encoded
+            return strings.SAVE_BAD_TEXT
         where = f" in {folder}" if folder else ""
         reason = getattr(exc, "strerror", None) or "the folder cannot be used"
         return strings.FILE_ERROR.format(where=where, reason=reason)
@@ -1433,22 +1454,28 @@ class MainWindow(QMainWindow):
     # ---- settings, theme, scale -----------------------------------------------------------------
     def _restore_settings(self) -> None:
         dark = self.settings.value("ui/theme", "light") == "dark"
-        scale = int(str(self.settings.value("ui/scale", 100)))
+        try:  # a hand-edited settings file must not stop the editor from starting
+            scale = int(str(self.settings.value("ui/scale", 100)))
+        except ValueError:
+            scale = 100
+        if scale not in self.scale_actions:
+            scale = 100
         mode = str(self.settings.value("ui/mode", "guided"))
         self.act_dark.setChecked(dark)
         wanted = bool(self.settings.value("ui/minimap", True, bool))
         self.act_minimap.setChecked(wanted)
         self.view.set_minimap_wanted(wanted)
-        if scale in self.scale_actions:
-            self.scale_actions[scale].setChecked(True)
+        self.scale_actions[scale].setChecked(True)
         app = QApplication.instance()
         if isinstance(app, QApplication):
             self.theme.apply(app, "dark" if dark else "light", scale / 100)
         self.ctl.set_mode(mode if mode in ("guided", "expert") else "guided")
         geo = self.settings.value("ui/geometry")
-        if geo:
-            self.restoreGeometry(geo)
-        else:
+        try:
+            restored = isinstance(geo, QByteArray) and self.restoreGeometry(geo)
+        except TypeError:
+            restored = False
+        if not restored:
             self.resize(1360, 860)
 
     def _save_settings(self) -> None:

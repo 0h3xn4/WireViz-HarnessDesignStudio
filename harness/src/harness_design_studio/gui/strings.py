@@ -202,6 +202,7 @@ GEN_APPLY = "Apply"
 GEN_RUNNING = "Generating harnesses…"
 GEN_CANCELLED = "Generation cancelled. Nothing was changed."
 GEN_UP_TO_DATE = "Harnesses are already up to date. Nothing to change."
+GEN_WITH_ERRORS = "Some harnesses could not be generated ({0} problem(s)). Fix the connectors or interfaces named in the list, then generate again."
 GEN_PLACEHOLDERS = "Some engineering values are not filled in yet, so wire gauges stay blank and related checks say 'not checked'. Help > User guide, section 11 (What an engineer must fill in), shows what to fill in."
 GEN_PREVIEW_HEAD = "Nothing changes until you press Apply, and Undo reverses it."
 RELEASE_CONFIRM = "Release"
@@ -297,6 +298,7 @@ RESTORE_BODY = "The last session ended before its changes were saved. Restore th
 RESTORE = "Restore"
 DISCARD_CHANGES = "Discard them"
 PROJECT_HAS_ERRORS = "The project has consistency errors. See Help ▸ Show project problems."
+RESTORE_FAILED = "The unsaved changes could not be restored. They are still in the recovery folder."
 SAVED = "Saved."
 CHANGED_TITLE = "Project changed on disk"
 CHANGED_BODY = "The project files changed outside this window (for example after a Git pull). Reload to see the new version."
@@ -308,12 +310,18 @@ MORE_PROBLEMS = "…and {} more. Resolve the ones above first."
 
 DRC_CHECKING = "Design rules: checking…"
 DRC_DONE = "Design rules: all {} rules checked."
+DRC_FAILED = "Design rule check failed: {}"
+DRC_FAILED_WHY = "The design rules could not be checked, so the design is not confirmed clean. Change something to try again."
 NOTHING_TO_SHOW = "This item has no place on the diagram (it is a setting or a part)."
 
 EXPORT = "Export outputs"
 EXPORT_TIP = "Write drawings, wire lists, BOM, tests, labels and exports to the project's outputs folder; they are checked independently first"
 EXPORT_SAVE_FIRST = "Save the project to a folder first; outputs are written next to it."
 EXPORT_NO_HARNESSES = "There are no harnesses yet. Generate harnesses first."
+EXPORT_READ_ONLY = (
+    "This project is read-only, so nothing was exported. Save a copy to a new folder first."
+)
+EXPORT_DAMAGED = "Parts of this project could not be loaded, so nothing was exported. See Help > Show project problems, or save a copy to a new folder."
 EXPORT_RUNNING = "Exporting outputs…"
 EXPORT_CANCELLED = "Export cancelled. Nothing was written."
 EXPORT_DONE = "{0} files written to the outputs folder (design {1})."
@@ -390,6 +398,7 @@ UNDO_STALE = "That change is no longer the latest one. Use Edit > Undo to step b
 FILE_ERROR = (
     "Could not save{where}: {reason}. Nothing was lost; choose another folder or free some space."
 )
+SAVE_BAD_TEXT = "Nothing was saved: the project contains text that cannot be written to a file (for example an unpaired special character). Remove or retype it, then save again."
 A_MINIMAP = "Show overview map"
 WHY_READ_ONLY = "This project is read-only."
 WHY_NO_SELECTION = "Select something in the diagram first."
