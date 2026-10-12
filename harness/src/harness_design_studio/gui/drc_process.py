@@ -14,6 +14,7 @@ import subprocess
 import sys
 import threading
 import time
+from collections.abc import Callable
 
 from harness_design_studio.core import drc
 from harness_design_studio.core.checks import Finding
@@ -98,6 +99,14 @@ class DrcProcess:
                 if was_enabled:
                     gc.enable()
 
+    def abort(self) -> None:
+        """End a check that is running (or stuck) at once, without waiting for it: the helper is
+        killed, so the call blocked on its pipes fails and cleans up by itself."""
+        proc = self._proc
+        if proc is not None:
+            with contextlib.suppress(OSError):
+                proc.kill()
+
     def close(self) -> None:
         # Kill first, without the lock: a check that is stuck holds it, and ends as soon as its
         # pipes close. Then clean up once the lock is free.
@@ -146,11 +155,21 @@ _shared = DrcProcess()
 atexit.register(_shared.close)
 
 
-def run_check(project: Project) -> list[Finding]:
-    """The rule check in the helper process; in this thread if that is switched off or fails."""
+def abort_check() -> None:
+    """Kill the helper if it is busy (the result is not wanted any more)."""
+    _shared.abort()
+
+
+def run_check(project: Project, cancelled: Callable[[], bool] | None = None) -> list[Finding]:
+    """The rule check in the helper process; in this thread if that is switched off or fails
+    (unless `cancelled()` says nobody wants the result any more: then the failure is raised)."""
+    if cancelled is not None and cancelled():
+        raise RuntimeError("the rule check was cancelled")
     if os.environ.get(DISABLE_ENV) == "1":
         return drc.run(project)
     try:
         return _shared.run(project)
     except Exception:  # a dead, stuck or confused helper must not decide the result
+        if cancelled is not None and cancelled():
+            raise
         return drc.run(project)
