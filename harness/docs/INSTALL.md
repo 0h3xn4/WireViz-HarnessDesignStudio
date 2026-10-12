@@ -16,7 +16,7 @@ The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86). It needs no network, n
 
 Pick **one** of the three ways. If you are unsure, use A.
 
-**Which version do you have?** The five examples (`minimal-satellite` and `flatsat` among them), the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are on `master` and are **not** in the released 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md#unreleased-after-010)). `harness --version` prints `0.1.0` for both. To tell them apart run `harness new --list`: a newer build lists five examples, the 0.1.0 packages list three (`blank`, `first-steps`, `small-satellite`). Way C has them when you clone `master`. The other pages of this manual describe the newer build.
+**Which version do you have?** Run `harness --version`. These pages describe version 1.0.0. If you still have the 0.1.0 packages, they lack the five examples (`minimal-satellite` and `flatsat` are new), the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...*: `harness new --list` shows three examples (`blank`, `first-steps`, `small-satellite`) instead of five. See [`CHANGELOG.md`](../CHANGELOG.md) for what changed.
 
 | | You are | Way |
 | --- | --- | --- |
@@ -74,7 +74,7 @@ harness --version
 ```
 
 ```
-harness 0.1.0
+harness 1.0.0
 ```
 
 Remove it later with `sudo apt remove harness-design-studio`. Upgrade by installing the newer `.deb` the same way.

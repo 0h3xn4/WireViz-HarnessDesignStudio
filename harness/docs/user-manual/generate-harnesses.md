@@ -72,7 +72,7 @@ Exit code 0 means no errors. 1 means the project has errors. 2 means a usage err
 
 In the app, open the **Harness plans** tab (bottom) and select a harness, for example `W002`:
 
-- The wire list shows each wire with its signal, ends, **AWG** (gauge), **Length (m)** and **Colour** (the **Colour** column in the app is newer than the 0.1.0 packages).
+- The wire list shows each wire with its signal, ends, **AWG** (gauge), **Length (m)** and **Colour** (the **Colour** column in the app is not in the 0.1.0 packages).
 - The **Why** tab (right of the list) names the rule behind every wire, pin, gauge and length. This is the tool's answer to "why is it like this?".
 - The **Drawing** tab previews the sheet that [export](export-the-outputs.md) writes. **Previous sheet** and **Next sheet** page through it.
 
@@ -98,7 +98,7 @@ By default one harness is made for each pair of unit connectors. The setting is 
 | `per_unit_pair` | pair of units |
 | `per_zone_pair` | pair of zones (links between the same two lanes) |
 
-With the `minimal-satellite` example (11 links), the default makes 11 harnesses. After changing `mode` to `per_unit_pair` and running `harness generate` again, the report is `10 added, 0 changed, 0 unchanged, 11 removed`: ten harnesses replace the eleven. The new ones get new IDs (`W012` to `W021`), and the files of the old ones stay in `physical/harnesses/` with the ending `.json.bak`. (`minimal-satellite` is newer than the 0.1.0 packages; see the [changelog](../../CHANGELOG.md#unreleased-after-010).)
+With the `minimal-satellite` example (11 links), the default makes 11 harnesses. After changing `mode` to `per_unit_pair` and running `harness generate` again, the report is `10 added, 0 changed, 0 unchanged, 11 removed`: ten harnesses replace the eleven. The new ones get new IDs (`W012` to `W021`), and the files of the old ones stay in `physical/harnesses/` with the ending `.json.bak`. (`minimal-satellite` is not in the 0.1.0 packages; see the [changelog](../../CHANGELOG.md).)
 
 Whatever the mode:
 

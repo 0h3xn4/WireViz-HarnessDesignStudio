@@ -76,7 +76,7 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 
 ## Recipes that did not exist before
 
-- [Set wire colours](user-manual/set-wire-colours.md). This is newer than the 0.1.0 packages.
+- [Set wire colours](user-manual/set-wire-colours.md). It is not in the 0.1.0 packages.
 - [Naming and title block](user-manual/naming-and-title-block.md).
 - [Redundancy and zones](user-manual/redundancy-and-zones.md).
 

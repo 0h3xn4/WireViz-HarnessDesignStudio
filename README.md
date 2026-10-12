@@ -43,7 +43,7 @@ harness generate wheel-link
 harness export wheel-link
 ```
 
-You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 units, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `38 files written to wheel-link/outputs (model 91531b45fd2c).` The drawings and lists are in `wheel-link/outputs/`. To see the diagram, run `harness-gui` and open the project with **File > Open project…**.
+You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 units, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `38 files written to wheel-link/outputs (model da1379ad567b).` The drawings and lists are in `wheel-link/outputs/`. To see the diagram, run `harness-gui` and open the project with **File > Open project…**.
 
 The other way to install is a ready-made `.deb` package, which needs no Python knowledge: [`INSTALL.md`](harness/docs/INSTALL.md) has both ways and explains what to do if something fails. The full walk-through with the output of every command is [`GETTING_STARTED.md`](harness/docs/GETTING_STARTED.md).
 
@@ -87,10 +87,10 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 ## Licence and status
 
-- **Version `0.1.0`**, released by the repository owner on 2026-10-09 with the engineering decisions still open: the harness boundary rule, the real derating and EMC values, the approved parts list and the title block have not been supplied, so results rest on placeholders and example parts. [`harness/README.md#status`](harness/README.md#status) has the details.
+- **Version `1.0.0`**, released on the repository owner's instruction on 2026-10-12. The open engineering decisions were recorded as defaults on that day: the tool ships no standard or part data, so the real derating and EMC values and the approved parts list have not been supplied and results rest on placeholders and example parts. [`harness/README.md#status`](harness/README.md#status) has the details.
 - **Created mainly by an AI.** Harness Design Studio was written mainly by Claude (Anthropic's AI assistant, used through Claude Code); the owner set the requirements and approved the decisions and releases. No other person has reviewed it independently, and it makes no claim of compliance with any standard. Check its results before relying on them. The records are in [`harness/compliance/`](harness/compliance/README.md).
-- **Not in the 0.1.0 packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are on the `master` branch and not in the 0.1.0 packages. `harness new --list` shows three examples on the packages and five on a build from `master`. The [changelog](harness/CHANGELOG.md) lists what is new.
-- **Licence.** The [`LICENSE`](LICENSE) file in this repository is the GPL-3.0 licence of WireViz. The licence of the code in `harness/` has not been decided (decision D-02 in [`harness/docs/DECISIONS.md`](harness/docs/DECISIONS.md); the package metadata says `LicenseRef-Proprietary`). No licence has been granted for it yet.
+- **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](harness/CHANGELOG.md) lists what is new.
+- **Licence.** The [`LICENSE`](LICENSE) file in this repository is the GPL-3.0 licence of WireViz. The licence of the code in `harness/` has not been decided (decision D-02 in [`harness/docs/DECISIONS.md`](harness/docs/DECISIONS.md), kept open for 1.0.0 in D-143; the package metadata says `LicenseRef-Proprietary`; the copyright holder is the repository owner, GitHub account `0h3xn4`). No licence has been granted for it yet.
 
 ## What this repository adds to WireViz
 

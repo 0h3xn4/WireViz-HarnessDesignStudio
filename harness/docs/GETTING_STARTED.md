@@ -41,7 +41,7 @@ small-satellite    14 units with nominal and redundant chains. Generate it to se
 flatsat            A complete bench: 23 flight and ground units, generated, with example numbers.
 ```
 
-**Which build do you have?** The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are on `master` and are **not** in the released 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md#unreleased-after-010)). `harness --version` prints `0.1.0` for both, so check with the command above: a newer build lists five examples, the 0.1.0 packages list three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
+**Which version do you have?** This tutorial is written for 1.0.0. The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
 
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 
@@ -138,7 +138,7 @@ harness drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `8a25f0c99a86`. Rules run: 34.
+Model hash: `310e4c4a4345`. Rules run: 34.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.
@@ -163,7 +163,7 @@ harness export wheel-link
 ```
 
 ```
-38 files written to wheel-link/outputs (model 8a25f0c99a86).
+38 files written to wheel-link/outputs (model 310e4c4a4345).
 ```
 
 The files are checked independently before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.
@@ -180,7 +180,7 @@ The files are checked independently before they are written; if that check fails
 | `system/harness_overview.pdf`, `box_pinouts.csv`, `mating_matrix.csv`, `traceability.csv` | all harnesses at a glance; the pinout of every unit connector; which cable mates with which unit; which interface is carried by which wires |
 | `system/drc_report.md`, `changelog.csv`, `revision_report.md`, `export.json` | the Problems report; the change log; the revision report; the whole model as one JSON |
 
-The harness drawing, with a title block and the model hash (`8a25f0c99a86` is the same fingerprint you saw above):
+The harness drawing, with a title block and the model hash (`310e4c4a4345` is the same fingerprint you saw above):
 
 ![A harness drawing](img/w001-drawing.png)
 
@@ -302,7 +302,7 @@ Details and column names: [`IMPORTS.md`](IMPORTS.md), [`KICAD.md`](KICAD.md).
 
 ## Optional: give the wires a colour
 
-This step needs a build newer than the 0.1.0 packages (see the note in Part 1). A wire's colour is data that you choose; the tool has no colours of its own, which is why the wires of `wheel-link` are grey.
+This step is not in 0.1.0 packages (see the note in Part 1). A wire's colour is data that you choose; the tool has no colours of its own, which is why the wires of `wheel-link` are grey.
 
 **In the app:** choose **Edit > Wire colours...**. The window lists each signal of the project (`PWR`, `RTN`, `TX+` and so on); pick a colour for `PWR` (for example red) and `RTN` (for example black) from the IEC 60757 list and confirm. The message *Wire colours saved. Generate the harnesses to apply them.* appears. Then press **Generate harnesses**, **Apply** and **Export outputs**. The colours are saved in `config/generation.json` as `wire_colour_by_signal`.
 
