@@ -1548,3 +1548,60 @@ yaml.safe_load (a !!python/object/apply:os.system tag is rejected); UTF-8 BOM an
 
 ##### Questions for the owner
 Should upstream code in this fork be changed at all (H-1, H-2, H-3, H-4, H-6, H-7, H-8 are real bugs with small fixes; if no, the README should say which upstream issues remain)? Which text fields are meant to accept HTML (H-4, H-14)? H-16: AWG table "nearest" or "not smaller than"; keep show_equiv? H-18: should the package built from this repository keep the name wireviz and version 0.4.1? H-9: a wire used twice in a connection set: warning or error?
+
+## Release 1.0.0 (2026-10-12)
+
+**What was released.** Harness Design Studio 1.0.0: version 0.1.0 plus the fixes of this audit (critical, high and medium findings and the cheap low ones, see the two Phase 4 status sections above), the release freeze of parts, interface types and configuration (owner decision Q2), the examples `minimal-satellite` and `flatsat`, the design worksheet template and the wiring-diagram drawing (`harness/CHANGELOG.md`, section 1.0.0). Pull request 45 (`release/1.0.0`) was merged into `master` as commit `0c6a96a`. The tag `v1.0.0` points to that commit. It is not a statement of compliance with any standard; the compliance records say nothing new (`harness/compliance/SIGNOFF.md`, "Release 1.0.0" and "Publication of 1.0.0").
+
+**How it was published.** The working session that prepared the release could not push the tag: every tag push was refused with HTTP 403. The owner created the tag through the GitHub release page instead (Releases, Draft a new release, tag `v1.0.0` created on publish, target `master`) and published it on 2026-10-12 at 20:37 UTC. The tag started `.github/workflows/release.yml`, which ran green: it checked that the tag matches the version and the changelog, built the packages, ran the packaged self-test, wrote `SHA256SUMS` and attached the files to the release page.
+
+| File on the release page | SHA-256 |
+|---|---|
+| `harness-design-studio-1.0.0-linux-x86_64.tar.gz` | `f75c2747babbb66502fa3ccf82480067e81230ef06542097eaf5db69e2436692` |
+| `harness-design-studio_1.0.0_amd64.deb` | `0fec64f63ca95c4c69d4a2eb6e57895802a9a63f3f33648a9b29696cd5af2248` |
+
+The packages are unsigned (`harness/compliance/DEVIATIONS.md` T-19). They were built from `0c6a96a`; documents changed on `master` after that commit are not inside them (this includes the in-app user guide). The last full test run recorded in this file is the Phase 5 one (1735 passed, 2 skipped on `master` after PR 43); this section does not add a new count.
+
+**What remains open (honestly).**
+- **Repository "About" text.** It still describes WireViz. Only the owner can change it in the repository settings (item 3 of the Phase 5 list).
+- **Licence of `harness/` (D-02).** Kept as the placeholder `LicenseRef-Proprietary`; the root `LICENSE` is the GPL-3.0 licence of WireViz; the `.deb` copyright text says no licence is granted (D-143). The owner has not chosen a licence.
+- **Engineering values and parts.** Nobody has supplied real derating, ampacity or EMC values or an approved parts list (D-11, D-12). D-10 and D-15 were recorded as the defaults the tool implements (D-142 to D-145). Results rest on placeholders and example parts.
+- **Low findings not fixed**, and medium ones fixed only in part (the list is under "Not fixed or only partly" in the medium status section): B-16, B-17, B-19, B-21, the rest of B-22, C-19, C-22, C-23, D-12, D-14, D-17, A-13 to A-18, F1-16, F1-27, F1-28 (partly), F2-10 (partly), G-12 to G-17 (the cheap ones done), I-9, I-11, K-10 and the other low K items. B-8 covers manual harnesses only (a released harness is not part of the generation input hash).
+- **Upstream WireViz (H-1 to H-23).** Not fixed by decision (Q31: `src/wireviz` is never changed). H-1 to H-9 are listed in the root `README.md` ("Known problems in the bundled upstream WireViz code"). H-18 (the fork's `setup.py`) is fixed.
+- **Not verified, so not claimed:** the `.deb` and `install.sh` on a real clean Ubuntu 24.04 machine, the editor on a real display (all editor tests run offscreen; drag, drop, the tour and high scale factors deserve a manual pass), Excel, LibreOffice and Acrobat opening the outputs, non-Ubuntu systems, and the glossary entries marked "(general meaning)" (they need an engineer). No independent review took place (waived, T-20 to T-30). Transitive dependencies are not locked (G-16), and the GitHub actions are not pinned to commit hashes.
+
+**Section 4, the open questions, and the default that was applied.** The owner answered Q2 (yes), Q31 (never change WireViz) and Q32 (keep the name `wireviz` and version `0.4.1`). For the others the defaults below were applied and can be changed by telling the maintainer. "Open" means no behaviour was changed.
+
+| Q | Default applied |
+|---|---|
+| 1 | Undo of a release, new revision or review is refused once it has been saved; unsaved ones can still be undone. |
+| 2 | Yes: a release freezes the parts, interface types and configuration the harness uses (`docs/FILE_FORMAT.md`, "What a release freezes"). |
+| 3 | Every command that reports on or changes a project refuses damaged files with exit 2 (`validate` and `check` list the damage, exit 1). |
+| 4 | A restored journal or a reload keeps a read-only session read-only and never deletes another window's journal. |
+| 5 | Boot id and process start time in the lock; a lock from before a restart or a reused process number is taken over; a lock from another computer is respected and the error names the file. |
+| 6 | AWG 0 to 40 (whole numbers), length 0 to 10000 m, current and voltage above 0, pin count 1 to 1000, masses 0 or more, harness number and schema version 1 or more. |
+| 7 | Tables and YAML keep full precision; only the drawings round to six digits. |
+| 8 | An ambiguous number such as `1,234` is refused; pin count 1 to 1000. |
+| 9 | IDs are never cut: the drawing shrinks the font (down to 1.4 mm); the model limits stay. |
+| 10 | `Wire.signal` and the cable-side pin table are derived and checked by the verifier when set. |
+| 11 | A missing shield group is a verifier error; gauge, colour and part of a wire are not checked by the verifier. |
+| 12 | An unpaired directional signal that generation wires straight through is no longer a `direction-conflict`. |
+| 13 | `power-return-adjacent` counts unassigned contacts between any two power or ground pins. |
+| 14 | `--apply-profile` sets `"placeholder": true` on every file it changes. |
+| 15 | `part-unapproved` also reports example (unverified) parts. |
+| 16, 17, 18 | Open (mass completeness, segregation settings, multi-colour wires). |
+| 19 | A locked wire or entered length that regeneration cannot carry over is a warning (`locked_data_lost`); the status turns stale when a manual harness takes over an interface; released harnesses do not make it stale. |
+| 20 | Segments must form a tree: error `segment-loop`. |
+| 21 | `sheet` may be left out of the title block; unknown or repeated field names and non-text entries are a configuration error. |
+| 22 | The CSV apostrophe guard is kept and can be undone exactly. |
+| 23 | PDFs keep Windows-1252; the export names every character it replaced. |
+| 24 | A shield's end A is the start of its lowest-ID wire for the whole harness; the overview draws every pair of units. |
+| 25 | `OPENPYXL_LXML` is forced off, so XLSX files are identical with or without lxml. |
+| 26 | The release check fails when the version is already a tag or `## Unreleased` has text. |
+| 27 | The CI template runs `harness drc`. |
+| 28 | The six undeclared packages are excluded; the build fails on anything not on the allow-list. |
+| 29 | Open (K-10): the app cannot lock a wire or pin; the documents say so. |
+| 30 | Open: names are checked for control characters and length, `--date ""` is an error; the same person may author, check and approve; a release may be dated before its review. |
+| 33 | The licence stays the placeholder (D-143). |
+| 34 | Open (A-14): the undo history is not capped. |
+| 35 | Exit-code policy unchanged (0, 1, 2); `docs/CLI.md` now lists 130 for Ctrl-C. |
