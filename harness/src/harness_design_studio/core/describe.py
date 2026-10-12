@@ -33,13 +33,13 @@ def link_caption(project: Project, interface_id: str) -> str:
 
 def part_gender(part: Part | None) -> Gender:
     """ "male", "female" or "unspecified", as the library part says it in its description (e.g.
-    "D-sub 9-pin, female"). A part that does not say gives "unspecified"; nothing is guessed."""
+    "D-sub 9-pin, female"); where it says both ("male plug, mates with female socket") the first
+    word counts. A part that does not say gives "unspecified"; nothing is guessed."""
     text = (part.description or "").lower() if part is not None else ""
-    if re.search(r"\bfemale\b", text):
-        return "female"
-    if re.search(r"\bmale\b", text):
-        return "male"
-    return "unspecified"
+    found = re.search(r"\b(female|male)\b", text)
+    if found is None:
+        return "unspecified"
+    return "female" if found.group(1) == "female" else "male"
 
 
 def link_values(project: Project, interface_id: str) -> str:
@@ -81,6 +81,7 @@ def connector_family(project: Project, connector_id: str) -> tuple[str, int, str
     family = "generic"
     for key, name in (
         ("micro-d", "microd"),
+        ("microd", "microd"),
         ("mdm", "microd"),
         ("d-sub", "dsub"),
         ("dsub", "dsub"),
@@ -91,7 +92,9 @@ def connector_family(project: Project, connector_id: str) -> tuple[str, int, str
         ("sma", "coax"),
         ("tnc", "coax"),
     ):
-        if key in text:
+        if re.search(
+            rf"(?<![a-z0-9]){re.escape(key)}(?![a-z0-9])", text
+        ):  # a word, not part of one
             family = name
             break
     gender = c.gender if c.gender != "unspecified" else part_gender(part)
