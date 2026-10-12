@@ -13,6 +13,7 @@ from typing import Any
 from pydantic import BaseModel, create_model
 
 from harness_design_studio.core.model import (
+    PART_CATEGORIES,
     Baseline,
     ChangeEntry,
     ConfigFile,
@@ -46,7 +47,10 @@ def _kinds() -> list[tuple[str, str, type[BaseModel]]]:
         ("project", "project.json", ProjectMeta),
         ("config", "config/*.json", ConfigFile),
         ("library-info", "library/manifest.json", LibraryInfo),
-        ("parts", "library/*.json", _list_file("PartsFile", "parts", Part)),
+        *[
+            ("parts", f"library/{category}.json", _list_file("PartsFile", "parts", Part))
+            for category in PART_CATEGORIES
+        ],  # the parts files only: library/manifest.json has its own schema
         (
             "interface-types",
             "logical/interface_types.json",
@@ -76,10 +80,13 @@ def schemas() -> dict[str, dict[str, Any]]:
     """Schema name to JSON Schema (draft 2020-12, as pydantic writes it)."""
     out = {}
     for name, pattern, model in _kinds():
+        if name in out:
+            continue  # one schema for the six parts files
         schema = model.model_json_schema()
         schema.setdefault("title", name)
+        shown = "library/<category>.json" if name == "parts" else pattern
         schema["description"] = (
-            f"Harness Design Studio project file {pattern}. Generated from the model."
+            f"Harness Design Studio project file {shown}. Generated from the model."
         )
         out[name] = schema
     return out

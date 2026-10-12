@@ -54,3 +54,26 @@ def test_schema_output_is_deterministic(tmp_path: Path) -> None:
     main(["schema", str(tmp_path / "b")])
     for f in sorted((tmp_path / "a").iterdir()):
         assert f.read_bytes() == (tmp_path / "b" / f.name).read_bytes()
+
+
+def test_every_project_file_matches_exactly_one_schema() -> None:
+    patterns = [(pattern, name) for name, pattern, _ in schemas._kinds()]
+    for rel in serialize(sat15()):
+        hits = sorted(name for pattern, name in patterns if fnmatch.fnmatch(rel, pattern))
+        assert len(hits) <= 1, (rel, hits)
+    manifest = [
+        name for pattern, name in patterns if fnmatch.fnmatch("library/manifest.json", pattern)
+    ]
+    assert manifest == ["library-info"]
+    assert [
+        name for pattern, name in patterns if fnmatch.fnmatch("library/wire.json", pattern)
+    ] == ["parts"]
+
+
+def test_the_schemas_state_the_id_rule_and_the_numeric_ranges() -> None:
+    docs = schemas.schemas()
+    assert docs["units"]["$defs"]["Unit"]["properties"]["id"]["pattern"].startswith("^[A-Za-z]")
+    wire = docs["harness"]["$defs"]["Wire"]["properties"]
+    assert wire["from_pin"]["pattern"]
+    assert wire["gauge_awg"]["anyOf"][0]["maximum"] == 40
+    assert docs["project"]["properties"]["schema_version"]["minimum"] == 1

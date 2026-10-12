@@ -1,5 +1,6 @@
 """Save a project folder. Writes only changed files, atomically, keeping a `.bak` of each."""
 
+import os
 import shutil
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -11,7 +12,7 @@ from harness_design_studio.core.issues import errors
 from harness_design_studio.core.model import SCHEMA_VERSION, Project, evolve
 
 from . import canonical
-from .fs import atomic_write_bytes, escapes_root, long_path
+from .fs import atomic_write_bytes, escapes_root, long_path, sweep_stale_temp_files
 from .layout import MANAGED_DIRS, is_managed, serialize
 from .loader import LoadResult, disk_fingerprint, load_project
 
@@ -79,19 +80,14 @@ def save_project(
         )
 
     result = SaveResult()
+    sweep_stale_temp_files(base, MANAGED_DIRS)  # leftovers of a save that was killed
     files = serialize(project, tool_version=__version__)
     # from here on the release record may be on disk: History.undo must not take it away again
     project.saved_records |= frozenset(f"baselines:{k}" for k in project.baselines) | frozenset(
         f"changelog:{k}" for k in project.changelog
     )
     if exists and project.migrated_from is not None:
-        backup = base / f".migration-backup-v{project.migrated_from}"
-        if not backup.exists():
-            for rel in sorted(r for r in _managed_on_disk(base)):
-                dest = backup / rel
-                dest.parent.mkdir(parents=True, exist_ok=True)
-                shutil.copyfile(base / rel, dest)
-        result.backup_dir = backup.name
+        result.backup_dir = _migration_backup(base, project.migrated_from).name
 
     # The record of what was generated and the project file go last: if a write fails half-way,
     # the record still describes the older harnesses instead of claiming newer ones.
@@ -100,7 +96,7 @@ def save_project(
         files.items(), key=lambda kv: (kv[0] in last, kv[0] == "project.json", kv[0])
     ):
         path = base / rel
-        if path.is_file() and path.read_bytes() == data:
+        if path.is_file() and not path.is_symlink() and path.read_bytes() == data:
             continue
         atomic_write_bytes(path, data, root=base)
         result.written.append(rel)
@@ -124,6 +120,41 @@ def save_project(
     project.meta = evolve(project.meta, tool_version=__version__, schema_version=SCHEMA_VERSION)
     project.migrated_from = None
     return result
+
+
+def _migration_backup(base: Path, version: int) -> Path:
+    """The folder holding the original files of a project that is being upgraded. It is built
+    under a temporary name and renamed when complete, so a folder of this name is a whole backup
+    (or something else, which is then refused). Files that are links are not copied."""
+    backup = base / f".migration-backup-v{version}"
+    if os.path.lexists(backup):
+        if backup.is_symlink() or not backup.is_dir():
+            raise SaveError(
+                f"'{backup.name}' exists but is not a folder of backed-up files, so the project "
+                "was not upgraded. Rename or remove it and try again."
+            )
+        return backup
+    partial = base / f".migration-backup-v{version}.partial"
+    if partial.is_symlink():
+        partial.unlink()
+    elif partial.exists():
+        shutil.rmtree(partial)  # left by an upgrade that was killed half-way
+    try:
+        for rel in sorted(_managed_on_disk(base)):
+            if (base / rel).is_symlink():
+                continue  # the loader ignores links, and a copy would pull outside content in
+            dest = partial / rel
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(base / rel, dest)
+        partial.mkdir(exist_ok=True)
+        partial.rename(backup)
+    except OSError as exc:
+        shutil.rmtree(partial, ignore_errors=True)
+        raise SaveError(
+            "The backup of the original files could not be made "
+            f"({exc.strerror or 'file system error'}), so the project was not upgraded."
+        ) from exc
+    return backup
 
 
 def _managed_on_disk(base: Path) -> list[str]:

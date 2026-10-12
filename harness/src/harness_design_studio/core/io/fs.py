@@ -76,7 +76,10 @@ def atomic_write_bytes(
                 f"'{path.name}' would be written outside the project folder (a link leads out "
                 "of it), so nothing was written."
             )
-        mode = (target.stat().st_mode & 0o777) if target.exists() else 0o644
+        is_link = target.is_symlink()  # a link is replaced by the new file, never read through
+        mode = (
+            (target.stat().st_mode & 0o777) if target.exists() and not is_link else _new_file_mode()
+        )
         fd, tmp = _temp_beside(target)
         with os.fdopen(fd, "wb") as fh:
             fh.write(data)
@@ -84,9 +87,10 @@ def atomic_write_bytes(
             if durable:
                 os.fsync(fh.fileno())
         os.chmod(tmp, mode)
-        if backup and target.exists():
+        if backup and target.exists() and not is_link:
             # copy to a temp file and rename it over the backup, so a link named ".bak" is
-            # replaced and never followed
+            # replaced and never followed; a linked target has no backup (it would copy the
+            # content of whatever the link points at into the project)
             fd, bak_tmp = _temp_beside(target)
             os.close(fd)
             shutil.copyfile(target, bak_tmp)
@@ -102,6 +106,46 @@ def atomic_write_bytes(
         for leftover in (tmp, bak_tmp):
             if leftover is not None:
                 leftover.unlink(missing_ok=True)
+
+
+def _new_file_mode() -> int:
+    """Mode of a new file: 0o666 without the bits the user's umask removes (0o644 if unknown)."""
+    try:
+        for line in Path("/proc/self/status").read_text(encoding="ascii").splitlines():
+            if line.startswith("Umask:"):
+                return 0o666 & ~int(line.split()[1], 8)
+    except (OSError, ValueError, IndexError):
+        pass
+    return 0o644
+
+
+# `.<name>.<8 random characters>.tmp`: what `_temp_beside` makes (and a killed save leaves behind)
+_TEMP_NAME = re.compile(
+    r"^\..+\.json(?:\.bak)?\.[a-z0-9_]{8}\.tmp$|^\.gitignore\.[a-z0-9_]{8}\.tmp$"
+)
+
+
+def sweep_stale_temp_files(root: Path, folders: tuple[str, ...]) -> list[str]:
+    """Remove temp files that a killed save left in the project (the caller holds the project
+    lock, so none of them is in use). Links are never followed. Returns the names removed."""
+    removed: list[str] = []
+    base = long_path(root)
+    for top in ("", *folders):
+        start = base / top if top else base
+        if start.is_symlink() or not start.is_dir():
+            continue
+        for current, dirs, names in os.walk(start, followlinks=False):
+            if not top:
+                dirs[:] = []  # the project folder itself only; the managed folders are listed
+            for name in names:
+                path = Path(current) / name
+                if _TEMP_NAME.match(name) and not path.is_symlink():
+                    try:
+                        path.unlink()
+                    except OSError:
+                        continue
+                    removed.append(path.relative_to(base).as_posix())
+    return sorted(removed)
 
 
 def escapes_root(root: Path, path: Path) -> bool:
@@ -127,6 +171,24 @@ def _fsync_dir(directory: Path) -> None:
         os.close(fd)
 
 
+def _boot_id() -> str | None:
+    """Identifies this start of the operating system (Linux only; None elsewhere)."""
+    try:
+        return Path("/proc/sys/kernel/random/boot_id").read_text(encoding="ascii").strip() or None
+    except OSError:
+        return None
+
+
+def _start_time(pid: int) -> str | None:
+    """When process `pid` started, in clock ticks since boot (Linux /proc; None elsewhere).
+    Together with the pid it names one process, even after the number has been reused."""
+    try:
+        text = Path(f"/proc/{pid}/stat").read_text(encoding="ascii", errors="replace")
+        return text.rsplit(")", 1)[1].split()[19]  # field 22; the name (field 2) may hold spaces
+    except (OSError, IndexError):
+        return None
+
+
 def _pid_alive(pid: int) -> bool:
     if pid <= 0:
         return False
@@ -149,8 +211,18 @@ class ProjectLock:
     def acquire(self) -> None:
         """Take the lock. The whole decision runs under a guard (flock on a sidecar file), so no
         other process can delete our fresh lock between our check and our create."""
-        info = {"pid": os.getpid(), "host": platform.node(), "since": int(time.time())}
+        info: dict[str, object] = {
+            "pid": os.getpid(),
+            "host": platform.node(),
+            "since": int(time.time()),
+        }
+        if (boot := _boot_id()) is not None:
+            info["boot"] = boot
+        if (start := _start_time(os.getpid())) is not None:
+            info["start"] = start
         guard = self.path.with_name(self.path.name + ".takeover")
+        if not self._worth_locking():
+            return
         try:
             fd = os.open(guard, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
         except OSError as exc:
@@ -159,11 +231,8 @@ class ProjectLock:
             fcntl.flock(fd, fcntl.LOCK_EX)
             try:
                 if self.path.exists() or self.path.is_symlink():
-                    if self._is_live_foreign_lock():
-                        raise ProjectLockedError(
-                            "This project is already open in another instance of the tool. "
-                            "Close it there first, or open this copy read-only."
-                        )
+                    if (holder := self._holder()) is not None:
+                        raise ProjectLockedError(holder)
                     self.path.unlink(missing_ok=True)  # stale lock from a crashed session
                 self._create_atomically(info)
                 self._held = True
@@ -188,15 +257,49 @@ class ProjectLock:
         finally:
             tmp.unlink(missing_ok=True)
 
-    def _is_live_foreign_lock(self) -> bool:
+    def _worth_locking(self) -> bool:
+        """A folder that is neither a project nor empty gets no lock (and no helper file in it):
+        there is nothing to protect, and the command reports that it is not a project."""
+        root = self.path.parent
+        try:
+            return (
+                not root.is_dir()
+                or (root / "project.json").exists()
+                or self.path.exists()
+                or self.path.is_symlink()
+                or self.path.with_name(self.path.name + ".takeover").exists()  # someone locks now
+                or not any(root.iterdir())
+            )
+        except OSError:
+            return True
+
+    def _holder(self) -> str | None:
+        """None if the lock file is stale (nobody holds it), else the plain-language reason why
+        the project counts as open. Nothing is guessed: what cannot be checked counts as held."""
         try:
             info = json.loads(self.path.read_text(encoding="utf-8"))
             pid, host = int(info["pid"]), str(info["host"])
         except (OSError, ValueError, KeyError, TypeError):
-            return False  # unreadable lock: treat as stale
-        if host != platform.node():
-            return True  # another machine (shared drive): cannot verify, assume alive
-        return _pid_alive(pid)  # includes this very process: a second open must be refused
+            return None  # unreadable lock: treat as stale
+        boot, start = info.get("boot"), info.get("start")
+        ours = _boot_id()
+        same_boot = isinstance(boot, str) and ours is not None and boot == ours
+        if host != platform.node() and not same_boot:
+            return (
+                f"This project is already open on another computer ('{host}'), or that computer "
+                "left it locked. That cannot be checked from here. If you are sure nobody has it "
+                f"open, delete the lock file '{self.path}' and try again."
+            )
+        if isinstance(boot, str) and ours is not None and boot != ours:
+            return None  # written before the last restart of this computer
+        if not _pid_alive(pid):  # includes this very process: a second open must be refused
+            return None
+        if isinstance(start, str) and (now := _start_time(pid)) is not None and now != start:
+            return None  # the process number now belongs to another program
+        return (
+            f"This project is already open in another instance of the tool (process {pid}). "
+            f"Close it there first (lock file: '{self.path}')."
+        )
 
     def release(self) -> None:
         if self._held:

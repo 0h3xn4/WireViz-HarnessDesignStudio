@@ -1,7 +1,9 @@
 """In-memory project: the single mutable container. Change it only through `commands`."""
 
 from dataclasses import dataclass, field
-from typing import Any
+from typing import Annotated, Any
+
+from pydantic import Field
 
 from .base import Entity, Name, Text
 from .config import ConfigFile, default_configs
@@ -18,7 +20,7 @@ DEFAULT_ZONES = ("panel-A", "panel-B")
 class ProjectMeta(Entity):
     name: Name = "Untitled project"
     description: Text = ""
-    schema_version: int = SCHEMA_VERSION
+    schema_version: Annotated[int, Field(ge=1)] = SCHEMA_VERSION
     tool_version: str = ""  # version of the tool that last saved the project
 
 

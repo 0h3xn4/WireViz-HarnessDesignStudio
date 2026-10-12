@@ -3,11 +3,11 @@
 from datetime import date
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator
+from pydantic import AfterValidator, Field
 
 from harness_design_studio.core.ids import Id
 
-from .base import Entity, Name, Text
+from .base import MAX_PIN_COUNT, Entity, Name, NonNegative, Text
 
 PartCategory = Literal["connector", "contact", "backshell", "wire", "sleeving", "label"]
 PART_CATEGORIES: tuple[PartCategory, ...] = (
@@ -25,11 +25,11 @@ class Part(Entity):
     description: Name | None = None
     approval: Approval = "pending"
     unverified: bool = False  # example data that no engineer has checked
-    pin_count: int | None = None
+    pin_count: Annotated[int, Field(ge=1, le=MAX_PIN_COUNT)] | None = None
     mates_with: Id | None = None  # connector parts: the mating counterpart (e.g. male for female)
-    mass_g: float | None = None
-    mass_per_m_g: float | None = None
-    ratings: dict[Name, float] = {}
+    mass_g: NonNegative | None = None
+    mass_per_m_g: NonNegative | None = None
+    ratings: dict[Name, NonNegative] = {}
     notes: Text = ""
 
 

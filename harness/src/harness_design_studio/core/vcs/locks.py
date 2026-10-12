@@ -1,15 +1,31 @@
-"""Locks on released items. A released harness, the interfaces it carries and the box pins it
-uses cannot be changed or deleted; the only way forward is a new revision (vcs.release)."""
+"""Locks on released items. A released harness, the interfaces it carries, the box pins it uses,
+the parts and interface types it uses and the configuration its checks read cannot be changed or
+deleted; the only way forward is a new revision (vcs.release)."""
 
-from harness_design_studio.core.commands import Delete, Op, Put
+from harness_design_studio.core.commands import Delete, DeleteConfig, Op, Put, SetConfig
 from harness_design_studio.core.errors import TransactionError
-from harness_design_studio.core.model import Connector, Harness, InterfaceInstance, Project, Unit
+from harness_design_studio.core.model import (
+    Connector,
+    Harness,
+    InterfaceInstance,
+    InterfaceType,
+    Part,
+    Project,
+    Unit,
+)
 
-from .snapshot import carried_interfaces
+from .snapshot import (
+    carried_interfaces,
+    frozen_values,
+    used_interface_type_ids,
+    used_part_ids,
+)
 
 _META = {"status", "revision", "checker", "approver", "released_on"}
 COSMETIC_INTERFACE_FIELDS = {"name", "notes", "requirement_id"}  # may change after release
 COSMETIC_UNIT_FIELDS = {"name", "notes", "zone"}  # may change after release
+COSMETIC_PART_FIELDS = {"notes"}  # may change after release
+COSMETIC_TYPE_FIELDS = {"name", "notes"}  # may change after release
 
 
 def interface_design(i: InterfaceInstance) -> dict[str, object]:
@@ -35,6 +51,20 @@ def _pins_equal(a: Connector, b: Connector, locked: set[str]) -> bool:
 def unit_design(u: Unit) -> dict[str, object]:
     """The fields of a unit that the released wiring depends on (not its label, notes or zone)."""
     return u.model_dump(exclude=COSMETIC_UNIT_FIELDS)
+
+
+def part_design(p: Part) -> dict[str, object]:
+    """The fields of a part that the released drawings, lists and checks depend on."""
+    return p.model_dump(exclude=COSMETIC_PART_FIELDS)
+
+
+def type_design(t: InterfaceType) -> dict[str, object]:
+    """The fields of an interface type that decide the wires of its interfaces."""
+    return t.model_dump(exclude=COSMETIC_TYPE_FIELDS)
+
+
+def _names(owners: list[str]) -> str:
+    return ", ".join(owners[:3]) + (f" and {len(owners) - 3} more" if len(owners) > 3 else "")
 
 
 def check_locks(project: Project, ops: list[Op]) -> None:
@@ -70,12 +100,32 @@ def check_locks(project: Project, ops: list[Op]) -> None:
         if i in project.interfaces
         for e in project.interfaces[i].endpoints
     }
+    part_owner: dict[str, str] = {}
+    type_owner: dict[str, str] = {}
+    if any(
+        isinstance(op, Put | Delete) and op.collection in ("parts", "interface_types") for op in ops
+    ):
+        for rid in sorted(released, reverse=True):  # the first released harness (by ID) is named
+            for pid in used_part_ids(project, released[rid]):
+                part_owner[pid] = rid
+            for tid in used_interface_type_ids(project, released[rid]):
+                type_owner[tid] = rid
     problems: list[str] = []
 
     def why(hid: str) -> str:
         return f"{hid} is released (revision {released[hid].revision}); start a new revision to change it."
 
     for op in ops:
+        if isinstance(op, SetConfig | DeleteConfig):
+            name = op.config.name if isinstance(op, SetConfig) else op.name
+            new_cfg = op.config if isinstance(op, SetConfig) else None
+            if frozen_values(name, new_cfg) != frozen_values(name, project.config.get(name)):
+                names = _names(sorted(released))
+                problems.append(
+                    f"Configuration '{name}' is used by the checks of the released harness(es) "
+                    f"{names}. Start a new revision of them to change it."
+                )
+            continue
         if not isinstance(op, Put | Delete):
             continue
         key = op.key if isinstance(op, Delete) else str(getattr(op.obj, "id", ""))
@@ -94,6 +144,24 @@ def check_locks(project: Project, ops: list[Op]) -> None:
                 problems.append(
                     f"Interface {key} is carried by {owner[key]}, which is released. "
                     + why(owner[key])
+                )
+        elif op.collection == "parts" and key in part_owner:
+            old_p = project.parts.get(key)
+            if not isinstance(new, Part) or old_p is None or part_design(new) != part_design(old_p):
+                problems.append(
+                    f"Part {key} is used by {part_owner[key]}, which is released. "
+                    + why(part_owner[key])
+                )
+        elif op.collection == "interface_types" and key in type_owner:
+            old_t = project.interface_types.get(key)
+            if (
+                not isinstance(new, InterfaceType)
+                or old_t is None
+                or type_design(new) != type_design(old_t)
+            ):
+                problems.append(
+                    f"Interface type {key} is used by {type_owner[key]}, which is released. "
+                    + why(type_owner[key])
                 )
         elif op.collection == "units" and key in unit_owner:
             old_u = project.units.get(key)
