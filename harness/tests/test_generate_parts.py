@@ -1,7 +1,5 @@
 """M3 building blocks: sizing, mass, lengths, pin allocation, segmentation modes, naming."""
 
-import math
-
 import pytest
 
 from harness_design_studio.core.commands import Put, apply_ops
@@ -85,7 +83,7 @@ def test_sizing_voltage_drop_limit_is_inclusive() -> None:
                          path_conductors=2).awg  # fmt: skip
 
     assert awg_for(d20) == 20
-    assert awg_for(math.nextafter(d20, 0.0)) == 18
+    assert awg_for(d20 * (1 - 1e-6)) == 18  # clearly over the limit (the tolerance is 1e-9)
 
 
 def test_sizing_error_when_nothing_carries_the_current() -> None:
@@ -274,8 +272,9 @@ def test_pins_non_adjacent_is_a_warning() -> None:
     c = _connector(6)
     pins = [evolve(x, locked=True, signal="X") if x.id in ("2", "4", "6") else x for x in c.pins]
     out = allocate(evolve(c, pins=pins), [Request("IF-A", p.interface_types["rs422"])], {}, 0)
-    # TX+ and TX- land on pins 1 and 3 with a warning; RX has one free pin left: an error
-    assert out.pins == {("IF-A", "TX+"): "1", ("IF-A", "TX-"): "3"}
+    # TX+ and TX- could only go on pins 1 and 3 (a warning); RX has one free pin left: an error.
+    # An interface that fails keeps none of its pins (all or nothing), so the pins stay free.
+    assert out.pins == {}
     assert [w[1] for w in out.warnings] == [
         "TX+, TX- could not be placed on adjacent pins of U-J01"
     ]

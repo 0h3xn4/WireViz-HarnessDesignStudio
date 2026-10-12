@@ -1,7 +1,6 @@
 """REQ-EDIT-01: block-diagram edit operations (headless): positive and negative cases."""
 
 import pytest
-from pydantic import ValidationError
 
 from harness_design_studio.core import edit
 from harness_design_studio.core.commands import Delete, History, Put
@@ -230,7 +229,7 @@ def test_rename_unit_cascades() -> None:
         edit.ops_rename_unit(p, "OBC", "pcdu")
     with pytest.raises(edit.EditError, match="does not exist"):
         edit.ops_rename_unit(p, "GHOST", "X")
-    with pytest.raises(ValidationError, match="start with a letter"):
+    with pytest.raises(edit.EditError, match="start with a letter"):
         edit.ops_rename_unit(p, "OBC", "1bad")
 
 

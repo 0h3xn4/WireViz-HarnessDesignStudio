@@ -532,8 +532,8 @@ harness release rel W001 --by "Ada" --comment "short"
 
 ```
 blocked: [comment_short] The comment needs at least 10 characters: say what changed or why.
-blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason; the reason is kept in the change log.
-blocked: [parts_unapproved] 3 part(s) used by W001 are not approved (or are example data): EX-MICROD-21-M, EX-MICROD-25-M, EX-WIRE-TWISTED-SHIELDED. Approve them in the parts list, or release with a written reason; the reason is kept in the change log.
+blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
+blocked: [parts_unapproved] 3 part(s) used by W001 are not approved (or are example data): EX-MICROD-21-M, EX-MICROD-25-M, EX-WIRE-TWISTED-SHIELDED. Approve them in the parts list, or release with a written reason (command line: --accept-unapproved-parts REASON); the reason is kept in the change log.
 blocked: [gauge_pending] 4 wire(s) have no gauge decided (first: W001-001). Fill in the derating values (the file config/derating.json; `harness config DIR` lists what is missing) or set the gauge by hand.
 blocked: [length_unknown] 4 wire(s) have no length (first: W001-001). Enter the routing segment lengths (`harness import-lengths DIR FILE` loads them from a table).
 blocked: [outputs_missing] Outputs have not been exported yet. Export them, review them, then release.
