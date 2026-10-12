@@ -54,6 +54,9 @@ class UnitItem(QGraphicsItem):
         self._moved = False
         self._lane_key: tuple[float, int] | None = None
         self._lane = 0
+        # The height is kept here, not read from the model: Qt must see the old rectangle until
+        # prepareGeometryChange() has run, or its index loses the item (and the program crashes).
+        self._h = scene.unit_height(unit_id)
         self.setFlags(
             QGraphicsItem.GraphicsItemFlag.ItemIsMovable
             | QGraphicsItem.GraphicsItemFlag.ItemIsFocusable
@@ -71,9 +74,14 @@ class UnitItem(QGraphicsItem):
         return edit.unit_connectors(self.ctl.project, self.unit_id)
 
     def height(self) -> float:
-        if self.ctl.mode == "expert":
-            return edit.expert_height(len(self.connectors()))
-        return edit.guided_height(len(self.dscene.adjacent(self.unit_id)))
+        return self._h
+
+    def set_height(self, height: float) -> None:
+        """Take a new height: Qt is told first, while the old rectangle is still in effect."""
+        if height != self._h:
+            self.prepareGeometryChange()
+            self._h = height
+            self.update()
 
     def lane(self) -> int:
         key = (self.pos().x(), self.dscene.zone_count)
@@ -985,6 +993,31 @@ class DiagramScene(QGraphicsScene):
         if self.filter is not None or self.ctl.selection is not None:
             self._apply_filter()
 
+    def unit_height(self, uid: str) -> float:
+        """The height a unit has now: expert mode, one row per connector; guided, one per link."""
+        if self.ctl.mode == "expert":
+            return edit.expert_height(len(edit.unit_connectors(self.ctl.project, uid)))
+        return edit.guided_height(len(self.adjacent(uid)))
+
+    def _heights(self) -> dict[str, float]:
+        """The height of every unit now, in one pass over the project."""
+        project = self.ctl.project
+        if self.ctl.mode != "expert":
+            return {uid: edit.guided_height(len(self.adjacent(uid))) for uid in project.units}
+        rows = dict.fromkeys(project.units, 0)
+        for c in project.connectors.values():
+            if c.role == "box" and c.unit_id in rows:
+                rows[c.unit_id] += 1
+        return {uid: edit.expert_height(n) for uid, n in rows.items()}
+
+    def _refresh_heights(self) -> None:
+        """Bring every unit item to its height now (a link or connector may have come or gone
+        without its unit being named in the change). Units that are gone keep the height Qt knows."""
+        heights = self._heights()
+        for uid, item in self.unit_items.items():
+            if uid in heights:
+                item.set_height(heights[uid])
+
     def _add_unit(self, uid: str) -> None:
         item = UnitItem(self, uid)
         x, y = edit.position_of(self.ctl.project, uid)
@@ -1021,9 +1054,9 @@ class DiagramScene(QGraphicsScene):
         # in steps, so adding or undoing one unit rarely resizes the scene (which repaints it all)
         height = max(700.0, math.ceil((bottom + 40) / LANE_STEP) * LANE_STEP)
         if height != self.lane_height:
-            self.lane_height = height
             for z in self.zone_items:
                 z.prepareGeometryChange()
+            self.lane_height = height
         width = max(1, len(self.zone_items)) * edit.LANE_WIDTH + 2 * edit.LANE_X0
         rect = QRectF(0, 0, width, self.lane_height)
         if rect != self.sceneRect():
@@ -1037,6 +1070,7 @@ class DiagramScene(QGraphicsScene):
         self._rebuild_adjacency()
         self._routes = None
         self._sync_zones()
+        self._refresh_heights()
         self._batch += 1  # several units and links change together: route once, at the end
         try:
             self._apply_units_and_links(delta)
@@ -1095,6 +1129,7 @@ class DiagramScene(QGraphicsScene):
     def refresh_all(self) -> None:
         self._focus_cache = None
         self._routes = None  # (worked out again only if what they depend on changed)
+        self._refresh_heights()  # (the mode may have changed)
         for it in self.unit_items.values():
             it.prepareGeometryChange()
             it.update()
