@@ -314,3 +314,39 @@ def test_the_known_runtime_packages_are_all_allowed_in_the_package() -> None:
     # rich and the like come in only through pydantic's optional pretty printing: keep them out
     assert {"rich", "pygments", "markdown_it", "mdurl", "chardet", "toml"} <= set(EXCLUDES)
     assert not {"rich", "pygments", "chardet"} & ALLOWED_PACKAGES
+
+
+def test_the_root_setup_describes_the_package_with_the_upstream_readme() -> None:
+    """The fork's root setup.py (the WireViz package) reads its description as UTF-8 whatever the locale."""
+    import json
+    import sys
+
+    root = ROOT.parent
+    if not (root / "setup.py").is_file():
+        pytest.skip("the repository root is not here")
+    driver = (
+        "import json, runpy, setuptools\n"
+        "seen = {}\n"
+        "setuptools.setup = lambda **kw: seen.update(kw)\n"
+        "runpy.run_path('setup.py')\n"
+        "keys = ('long_description', 'long_description_content_type', 'python_requires', 'name')\n"
+        "print(json.dumps({k: seen.get(k) for k in keys}))\n"
+    )
+    env = {**os.environ, "LC_ALL": "C", "PYTHONUTF8": "0", "PYTHONIOENCODING": "utf-8"}
+    env.pop("LANG", None)
+    r = subprocess.run(
+        [sys.executable, "-c", driver],
+        cwd=root,
+        capture_output=True,
+        text=True,
+        env=env,
+        check=False,
+    )
+    assert r.returncode == 0, r.stderr[-600:]
+    meta = json.loads(r.stdout)
+    upstream = (root / "docs" / "upstream" / "README.upstream.md").read_text(encoding="utf-8")
+    assert meta["long_description"] == upstream and upstream.startswith("# WireViz")
+    assert meta["long_description_content_type"] == "text/markdown"
+    assert meta["python_requires"] == ">=3.7"
+    # a wheel built from the source distribution needs the file too
+    assert "docs/upstream/README.upstream.md" in (root / "MANIFEST.in").read_text(encoding="utf-8")

@@ -26,6 +26,7 @@ Changes on `master` since the release of 0.1.0. They are not in the 0.1.0 packag
 - **Records**: `compliance/SIGNOFF.md` has a Publication section for 0.1.0 (merge commit, tag, release page); `docs/RELEASE.md` has a step for tagging and publishing a release; `docs/SECURITY.md` says the SBOM ships with every release.
 - **Release check**: the version step skips an `Unreleased` section when it compares the changelog with the version.
 - **Fixed: undeclared code in the package** (audit G-1). The packages held rich, pygments, markdown-it, mdurl, chardet and toml (pulled in through pydantic), with no licence text and no SBOM entry. They are now left out (the package is about 12 MB smaller), and `tools.build_installer` fails when the built package, the module archives included, holds anything that is not the standard library or a declared runtime dependency.
+- **Fixed: description of the WireViz package** (audit H-18). The root `setup.py` used `docs/README.md`, now the documentation index, as the package description, read it without an encoding (it failed under a non-UTF-8 locale) and set no `python_requires`. It now reads `docs/upstream/README.upstream.md` as UTF-8, requires Python 3.7 or newer like the upstream CI matrix, and `MANIFEST.in` puts the file into the source distribution. The distribution name and version are unchanged.
 
 ## 0.1.0 (first release, 2026-10-09; released by the owner with the engineering decisions still open, see compliance/SIGNOFF.md; not a statement of compliance)
 
