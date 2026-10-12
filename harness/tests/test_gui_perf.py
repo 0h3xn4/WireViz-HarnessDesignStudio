@@ -12,6 +12,7 @@ import pytest
 
 from tests.helpers import time_limit
 
+pytest.importorskip("PySide6")
 pytestmark = [pytest.mark.gui, pytest.mark.perf]
 
 from PySide6.QtWidgets import QApplication  # noqa: E402

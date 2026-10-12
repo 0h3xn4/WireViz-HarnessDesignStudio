@@ -88,7 +88,7 @@ This application failed to start because no Qt platform plugin could be initiali
 The command ended with exit code 134 (aborted). Why: a system library that Qt needs is missing, or there is no screen to draw on. A normal Ubuntu desktop has these libraries; a container or a server image does not. Fix, from [`INSTALL.md`](INSTALL.md):
 
 ```
-sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0
+sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
 ```
 
 Messages that mention `libEGL` or `libxkbcommon` have the same fix. If you are connected over SSH, the app has no screen: use the `harness` command line over SSH, or start the app on the machine itself. The `harness` command line never needs these libraries.
@@ -149,10 +149,10 @@ harness generate lk
 ```
 
 ```
-error: This project is already open in another instance of the tool. Close it there first, or open this copy read-only.
+error: This project is already open in another instance of the tool (process 4242). Close it there first (lock file: 'lk/.harness.lock').
 ```
 
-The exit code is 1. Commands that only read (such as `harness validate lk`) still work. **Why:** the app and every command that changes a project take the same lock (`.harness.lock` in the project folder), so they never write at once. **Fix:** close the other window or wait for the other command to end. A lock left behind by a crashed session on the same machine is taken over automatically. A lock written by another computer (a shared drive) cannot be checked, so it is treated as alive; if you are certain nobody has the project open, delete the `.harness.lock` file in the project folder.
+The exit code is 1. Commands that only read (such as `harness validate lk`) still work. **Why:** the app and every command that changes a project take the same lock (`.harness.lock` in the project folder), so they never write at once. **Fix:** close the other window or wait for the other command to end. A lock left behind by a crashed session on the same machine is taken over automatically, also after a restart of the computer and when the process number has since been given to another program (on Linux). A lock written by another computer (a shared drive) cannot be checked, so it is treated as alive and the error names the lock file; if you are certain nobody has the project open, delete that `.harness.lock` file.
 
 ### "This project has problems" (the recovery view)
 
@@ -532,8 +532,8 @@ harness release rel W001 --by "Ada" --comment "short"
 
 ```
 blocked: [comment_short] The comment needs at least 10 characters: say what changed or why.
-blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason; the reason is kept in the change log.
-blocked: [parts_unapproved] 3 part(s) used by W001 are not approved (or are example data): EX-MICROD-21-M, EX-MICROD-25-M, EX-WIRE-TWISTED-SHIELDED. Approve them in the parts list, or release with a written reason; the reason is kept in the change log.
+blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
+blocked: [parts_unapproved] 3 part(s) used by W001 are not approved (or are example data): EX-MICROD-21-M, EX-MICROD-25-M, EX-WIRE-TWISTED-SHIELDED. Approve them in the parts list, or release with a written reason (command line: --accept-unapproved-parts REASON); the reason is kept in the change log.
 blocked: [gauge_pending] 4 wire(s) have no gauge decided (first: W001-001). Fill in the derating values (the file config/derating.json; `harness config DIR` lists what is missing) or set the gauge by hand.
 blocked: [length_unknown] 4 wire(s) have no length (first: W001-001). Enter the routing segment lengths (`harness import-lengths DIR FILE` loads them from a table).
 blocked: [outputs_missing] Outputs have not been exported yet. Export them, review them, then release.
@@ -559,7 +559,7 @@ A release that rests on placeholders or example parts teaches the flow and nothi
 
 ```
 Release W003 revision A: done.
-Outputs re-exported with the released status (111 files).
+Outputs re-exported with the released status (112 files).
 ```
 
 Other release messages:

@@ -23,6 +23,16 @@ def run(project: Project) -> list[Finding]:
     return sorted(apply_waivers(project, found), key=lambda f: (_ORDER[f.severity], f.id))
 
 
+_MISMATCH_WHY = (
+    "The wires do not match the interfaces they should implement, so the harness would "
+    "not carry the intended signals. To fix it: regenerate the harnesses, or correct the wiring by hand."
+)
+_OUTDATED_WHY = (
+    "The design changed after the harness plans were generated, so the plans and outputs may no "
+    "longer describe it. To fix it: generate the harnesses again, then export again."
+)
+
+
 def _verifier_findings(project: Project) -> list[Finding]:
     import hashlib
 
@@ -32,19 +42,18 @@ def _verifier_findings(project: Project) -> list[Finding]:
     if not project.harnesses:
         return []
     out = []
-    for n, issue in enumerate(verify_project(project).issues):
+    for issue in verify_project(project).issues:
         if issue.severity != "error":
             continue
         # the message is part of the ID: several findings can share a code and an object
         # (one per missing signal), and every finding needs an ID of its own
         digest = hashlib.sha256(issue.message.encode()).hexdigest()[:6]
-        obj = f"{issue.code}.{issue.object_id or n}.{digest}"
+        obj = f"{issue.code}.{issue.object_id or 'design'}.{digest}"  # no enumeration index: stable IDs
         out.append(
             Finding(
                 finding_id("verify-mismatch", obj), "verify-mismatch", "error", issue.object_id or obj,
                 issue.message,
-                "The wires do not match the interfaces they should implement, so the harness would "
-                "not carry the intended signals. To fix it: regenerate the harnesses, or correct the wiring by hand.",
+                _OUTDATED_WHY if issue.code == "outputs_outdated" else _MISMATCH_WHY,
                 "Regenerate harnesses", False,
             )
         )  # fmt: skip
@@ -80,7 +89,12 @@ def locate(project: Project, object_id: str) -> tuple[str, str] | None:
     for h in project.harnesses.values():
         if any(w.id == object_id for w in h.wires) or any(c.id == object_id for c in h.connectors):
             return "harness", h.id
-    head = object_id.split(".")[0]
+    parts = object_id.split(".")
+    if parts[0] == "shield-parts" and len(parts) > 2 and parts[1] in project.harnesses:
+        return "harness", parts[1]
+    if parts[0] == "emc-class" and len(parts) > 2 and parts[2] in project.units:
+        return "unit", parts[2]
+    head = parts[0]
     return locate(project, head) if head != object_id else None
 
 

@@ -4,9 +4,10 @@ import argparse
 import sys
 from pathlib import Path
 
-from harness_design_studio.core import configcheck, standard_profiles
-from harness_design_studio.core.commands import History, SetConfig
-from harness_design_studio.core.errors import HarnessError
+from harness_design_studio.cli import blocked_text
+from harness_design_studio.core import configcheck, edit, standard_profiles
+from harness_design_studio.core.commands import History, Op, SetConfig
+from harness_design_studio.core.errors import HarnessError, TransactionError
 from harness_design_studio.core.generate.lengths import plan_length_import
 from harness_design_studio.core.imports import ImportError_, read_table, read_table_sheet
 from harness_design_studio.core.io.loader import load_project
@@ -78,7 +79,7 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     nn = sub.add_parser(
         "import-netlist",
         help="read unit connector pinouts from a KiCad netlist",
-        description="Create or update the box connectors of one unit from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. See docs/KICAD.md.",
+        description="Create or update the box connectors of one unit from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The user guide has a chapter on it.",
     )
     nn.add_argument("project", type=Path)
     nn.add_argument("netlist", type=Path)
@@ -124,7 +125,7 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     ll = sub.add_parser(
         "import-lengths",
         help="import routing segment lengths (CSV or XLSX: harness, segment, length)",
-        description="Import segment lengths, for example exported from the mechanical CAD (KiCad users: see docs/IMPORTS.md).",
+        description="Import segment lengths, for example exported from the mechanical CAD. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).",
     )
     ll.add_argument("project", type=Path)
     ll.add_argument("file", type=Path)
@@ -176,9 +177,24 @@ def run(args: argparse.Namespace) -> int:
         if args.command == "import-parts":
             return _parts(project, table, args)
         return _lengths(project, table, args)
+    except TransactionError as exc:  # blocked (for example by a release), not misused
+        print(blocked_text(exc), file=sys.stderr)
+        return 1
     except (HarnessError, ImportError_) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+
+
+def _would_be_blocked(project, label: str, ops: list[Op]) -> bool:  # type: ignore[no-untyped-def]
+    """Dry runs ask the same question as the real run: would the change be refused (a released
+    harness, a release record, an inconsistent result)? It is tried on a copy and then dropped."""
+    try:
+        History(edit.clone_with(project, [])).execute(label, ops)
+    except TransactionError as exc:
+        print(blocked_text(exc), file=sys.stderr)
+        print("Dry run: this import would be blocked. Nothing was changed.")
+        return True
+    return False
 
 
 def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
@@ -217,10 +233,16 @@ def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untype
             print(f"set {s.file}.{s.key} = {s.value!r}  ({s.source}: {s.note})")
         for s, current in plan.kept:
             print(f"kept {s.file}.{s.key} = {current!r}; the profile says {s.value!r} ({s.source})")
+        marked = [f"config/{n}.json" for n in project.placeholder_configs()]
         print(
             f"Profile {args.apply_profile}: {len(plan.applied)} value(s) set, {len(plan.kept)} kept. "
-            "These values come from the supplied standard and still need an engineer's review; "
-            'the files stay "placeholder": true until you set it to false.'
+            "These values come from the supplied standard and still need an engineer's review."
+        )
+        print(
+            f'Files marked "placeholder": true now: {", ".join(marked)}. Set it to false in a '
+            "file when its values have been reviewed."
+            if marked
+            else 'No configuration file is marked "placeholder": true.'
         )
     text, ok = configcheck.report(project)
     print(text)
@@ -255,9 +277,9 @@ def _parts(project, table: list[list[str]], args: argparse.Namespace) -> int:  #
         )
     bad = [r for r in plan.rows if not r.ok]
     print(f"{plan.ok_count} part(s) ready, {len(bad)} row(s) with problems.")
-    if args.dry_run or bad:
-        print("Nothing was changed." if bad else "Dry run: nothing was changed.")
-        return 1 if bad else 0
+    if bad:
+        print("Nothing was changed.")
+        return 1
     source = args.library_source or _file_source(args.file)
     ops = [
         *plan.ops,
@@ -269,6 +291,11 @@ def _parts(project, table: list[list[str]], args: argparse.Namespace) -> int:  #
             date=args.library_date,
         ),
     ]
+    if args.dry_run:
+        if _would_be_blocked(project, "Import parts", ops):
+            return 1
+        print("Dry run: nothing was changed.")
+        return 0
     History(project).execute("Import parts", ops)
     save_project(project, args.project)
     print(f"Imported {plan.ok_count} part(s). {describe_library(project)}.")
@@ -312,9 +339,14 @@ def _lengths(project, table: list[list[str]], args: argparse.Namespace) -> int: 
     print(f"{len(plan.rows) - len(bad)} length(s) ready, {len(bad)} row(s) with problems.")
     if plan.hint:
         print(plan.hint)
-    if args.dry_run or bad:
-        print("Nothing was changed." if bad else "Dry run: nothing was changed.")
-        return 1 if bad else 0
+    if bad:
+        print("Nothing was changed.")
+        return 1
+    if args.dry_run:
+        if _would_be_blocked(project, "Import segment lengths", plan.ops):
+            return 1
+        print("Dry run: nothing was changed.")
+        return 0
     History(project).execute("Import segment lengths", plan.ops)
     save_project(project, args.project)
     print("Lengths imported. Generate harnesses again to update the wire lengths.")
@@ -391,6 +423,13 @@ def _netlist(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyp
         for name in sorted(plan.unmatched_signals):
             print(f"  {name}: {', '.join(plan.unmatched_signals[name][:4])}")
     bad = [r for r in plan.rows if not r.ok]
+    if (
+        args.dry_run
+        and not bad
+        and plan.ops
+        and _would_be_blocked(project, "Import connector pinouts from KiCad", plan.ops)
+    ):
+        return 1
     if args.dry_run or bad or not plan.ops:
         print(
             "Nothing was changed."

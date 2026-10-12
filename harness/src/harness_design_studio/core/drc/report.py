@@ -31,7 +31,7 @@ def render_markdown(project: Project, findings: list[Finding] | None = None) -> 
     open_ = [f for f in found if f.waiver is None]
     waived = [f for f in found if f.waiver is not None]
     lines = [
-        f"# Design rule check: {project.meta.name}",
+        f"# Design rule check: {' '.join(project.meta.name.split())}",
         "",
         f"Model hash: `{model_hash(project)[:12]}`. Rules run: {len(RULES)}.",
         f"Open: {sum(f.severity == 'error' for f in open_)} error(s), "

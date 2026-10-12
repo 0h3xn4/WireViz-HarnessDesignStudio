@@ -175,7 +175,7 @@ def waive_op(finding: Finding, justification: str) -> Op:
         )
     except ValueError as exc:  # a justification that is too short or too long, for example
         raise edit.EditError(
-            "The reason is not acceptable: it needs at least 10 characters and no more than 2000."
+            "The reason is not acceptable: it needs at least 10 characters, no more than 2000, and no control characters."
         ) from exc
     return Put("waivers", waiver)
 

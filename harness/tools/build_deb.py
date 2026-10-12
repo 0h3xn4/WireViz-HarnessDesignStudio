@@ -3,6 +3,7 @@ Reproducible: fixed file times (SOURCE_DATE_EPOCH or the last commit), root owne
 Usage: python -m tools.build_deb"""
 
 import os
+import platform
 import shutil
 import subprocess
 import sys
@@ -12,8 +13,10 @@ from pathlib import Path
 from harness_design_studio import __version__
 
 ROOT = Path(__file__).resolve().parents[1]
+# libc6: the bundled libpython (Python 3.12/3.13 of the 24.04 build host) needs GLIBC_2.38 and the
+# build host has glibc 2.39; the supported system is Ubuntu 24.04 or newer
 DEPENDS = (
-    "libc6 (>= 2.35), libegl1, libgl1, libxkbcommon0, libxkbcommon-x11-0, libfontconfig1, "
+    "libc6 (>= 2.39), libegl1, libgl1, libxkbcommon0, libxkbcommon-x11-0, libfontconfig1, "
     "libdbus-1-3, libxcb-cursor0, libxcb-icccm4, libxcb-image0, libxcb-keysyms1, libxcb-randr0, "
     "libxcb-render-util0, libxcb-shape0, libxcb-xinerama0"
 )
@@ -101,14 +104,22 @@ def build(app: Path, out_dir: Path) -> Path:
             path.chmod(0o755 if path.is_dir() or os.access(path, os.X_OK) else 0o644)
     out_dir.mkdir(parents=True, exist_ok=True)
     target = out_dir / f"harness-design-studio_{__version__}_amd64.deb"
-    subprocess.run(
-        ["dpkg-deb", "--root-owner-group", "-Zxz", "--build", str(stage), str(target)], check=True
+    subprocess.run(  # SOURCE_DATE_EPOCH also fixes the time stamps in the ar archive itself
+        ["dpkg-deb", "--root-owner-group", "-Zxz", "--build", str(stage), str(target)],
+        check=True,
+        env={**os.environ, "SOURCE_DATE_EPOCH": str(stamp)},
     )
     shutil.rmtree(stage.parent, ignore_errors=True)
     return target
 
 
 def main() -> int:
+    if platform.machine().lower() not in ("x86_64", "amd64"):
+        print(
+            f"the .deb is built for amd64 only, this machine is {platform.machine()}",
+            file=sys.stderr,
+        )
+        return 1
     app = ROOT / "dist" / "harness-design-studio"
     if not (app / "harness-design-studio").is_file():
         print("run `python -m tools.build_installer` first", file=sys.stderr)

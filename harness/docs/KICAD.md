@@ -6,7 +6,7 @@ KiCad is used only for the electronics inside each unit. The pinout of a unit's 
 
 ## Input
 
-A KiCad netlist, in either format: the S-expression `.net` that KiCad's schematic editor writes by default (File, Export, Netlist), or the XML one (`kicad-cli sch export netlist --format kicadxml`). The tool tells them apart by the first character. Reading `.kicad_sch` directly is not implemented: it would mean resolving wires, labels and sheets ourselves, where the netlist is KiCad's own computed connectivity.
+A KiCad netlist, in either format: the S-expression `.net` that KiCad's schematic editor writes by default (File, Export, Netlist), or the XML one (`kicad-cli sch export netlist --format kicadxml`). The tool tells them apart by the first character. UTF-8, and UTF-16 or UTF-32 text with or without a byte order mark, are read; a file with a DOCTYPE or entity declaration is refused whatever its encoding. Reading `.kicad_sch` directly is not implemented: it would mean resolving wires, labels and sheets ourselves, where the netlist is KiCad's own computed connectivity.
 
 ## Try it
 
@@ -35,7 +35,8 @@ The result is `2 added, 0 changed, ...` and `2 interfaces and 6 wires checked: 0
 - `--ref J7` (repeatable) names the connectors to import instead of using `--prefix`. `--pin-function` takes the pin's name in the KiCad symbol (for example `CAN_H`) as the signal instead of the net name.
 - A net named `A/B` that is a global label keeps its whole name; for a net of a sheet (`/sheet/NET`) only `NET` is used, so two sheets with a net of the same name give the same signal name.
 - A connector whose KiCad pin count is larger than the library part's is refused: choose the right part with `--part`. A `--connector` or `--part` key that is not one of the imported connectors is reported as ignored.
-- `--dry-run` shows the rows and changes nothing.
+- A pin that is **locked** (`locked: true`) is not changed: it keeps its signal and the import prints a warning when the netlist says something else. A pin whose net has no name loses its signal and its interface (the next generation allocates again).
+- `--dry-run` shows the rows and changes nothing; it also says when the import would be blocked, for example by a released harness (exit 1, as the real run).
 - The result is one undoable transaction. Imported pins are marked `fixed`.
 
 ## What "fixed" does

@@ -18,6 +18,28 @@ class Sizing:
     error: str | None = None
 
 
+REL_TOL = 1e-9  # a value within a billionth of its limit is at the limit, not over it
+
+
+def exceeds(value: float, limit: float) -> bool:
+    """True if `value` is above `limit` by more than float rounding. The one comparison that
+    sizing and the design rules share, so both agree at the exact limit."""
+    if value <= limit or math.isnan(value):
+        return False
+    return math.isinf(value) or value - limit > REL_TOL * max(abs(value), abs(limit))
+
+
+def derated_limit(base: float, bundle: float, temperature: float) -> float:
+    """`base` after the bundle and temperature factors; one order of operations for everybody."""
+    return base * (bundle * temperature)
+
+
+def voltage_drop_v(
+    current_a: float, resistivity_ohm_m: float, length_m: float, awg: int, conductors: int
+) -> float:
+    return current_a * resistivity_ohm_m * length_m / (awg_to_area_mm2(awg) * 1e-6) * conductors
+
+
 def _num(value: object) -> float | None:
     return float(value) if isinstance(value, int | float) and not isinstance(value, bool) else None
 
@@ -86,13 +108,15 @@ def size_wire(
         return s
     factor = bundle * temp
     candidates = sorted(table, reverse=True)  # smallest conductor first (highest AWG number)
-    ok = [awg for awg in candidates if table[awg] * factor >= current_a]
+    ok = [
+        awg for awg in candidates if not exceeds(current_a, derated_limit(table[awg], bundle, temp))
+    ]
     if not ok:
         s.error = f"no listed gauge carries {current_a:g} A after derating (factor {factor:g})"
         return s
     awg = ok[0]
     s.notes.append(
-        f"ampacity: AWG {awg} carries {table[awg] * factor:g} A derated (factor {factor:g}) for {current_a:g} A"
+        f"ampacity: AWG {awg} carries {derated_limit(table[awg], bundle, temp):g} A derated (factor {factor:g}) for {current_a:g} A"
     )
     max_drop = _num(derating.get("max_voltage_drop_v"))
     rho = _num(generation.get("conductor_resistivity_ohm_m"))
@@ -104,8 +128,8 @@ def size_wire(
         s.pending.append("wire length (enter routing segment lengths)")
     if max_drop is not None and rho is not None and length_m is not None:
         for cand in sorted((a for a in table if a <= awg), reverse=True):
-            drop = current_a * rho * length_m / (awg_to_area_mm2(cand) * 1e-6) * path_conductors
-            if drop <= max_drop and math.isfinite(drop):
+            drop = voltage_drop_v(current_a, rho, length_m, cand, path_conductors)
+            if not exceeds(drop, max_drop) and math.isfinite(drop):
                 awg = cand
                 s.notes.append(
                     f"voltage drop: AWG {cand} gives {drop:g} V over {path_conductors} conductor(s), limit {max_drop:g} V"

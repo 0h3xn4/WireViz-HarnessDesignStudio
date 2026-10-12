@@ -20,3 +20,21 @@ def test_every_requirement_is_traced_to_something() -> None:
 def test_traceability_file_is_current() -> None:
     with (ROOT / "compliance" / "traceability.csv").open(newline="", encoding="utf-8") as f:
         assert list(csv.reader(f)) == [trace.HEADER, *trace.build()]
+
+
+def test_a_file_that_names_a_requirement_contains_tests() -> None:
+    """`traced` means a test file mentions the ID (tools/trace.py); at least make sure that such a
+    file defines test functions, so a mention in a helper module or a leftover cannot count.
+    Whether the mentioning test really checks the requirement stays a review question."""
+    import ast
+
+    empty = []
+    for rid, files in trace.tests_naming().items():
+        for name in files:
+            tree = ast.parse((ROOT / "tests" / name).read_text(encoding="utf-8"))
+            if not any(
+                isinstance(n, ast.FunctionDef | ast.AsyncFunctionDef) and n.name.startswith("test_")
+                for n in ast.walk(tree)
+            ):
+                empty.append(f"{rid} in {name}")
+    assert not empty, empty

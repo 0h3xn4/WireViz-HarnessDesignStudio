@@ -2,9 +2,10 @@
 fixed in one click and shown on the diagram; edits never wait for the check."""
 
 import pytest
-from PySide6.QtWidgets import QPushButton
 
 pytest.importorskip("PySide6")
+from PySide6.QtWidgets import QPushButton  # noqa: E402
+
 pytestmark = pytest.mark.gui
 
 from harness_design_studio.core import drc  # noqa: E402

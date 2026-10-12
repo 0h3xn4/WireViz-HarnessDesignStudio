@@ -82,7 +82,7 @@ harness drc my-blank
 0 interfaces and 0 wires checked: 0 error(s)
 # Design rule check: My project
 
-Model hash: `83e9a4b5c394`. Rules run: 33.
+Model hash: `83e9a4b5c394`. Rules run: 34.
 Open: 0 error(s), 0 warning(s), 0 note(s). Waived: 0.
 ```
 
@@ -114,7 +114,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 interfaces and 6 wires checked: 0 error(s)
 # Design rule check: First steps: reaction wheel link
 
-Model hash: `91531b45fd2c`. Rules run: 33.
+Model hash: `91531b45fd2c`. Rules run: 34.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 ```
 
@@ -151,7 +151,7 @@ harness drc my-minimal-satellite
 11 interfaces and 24 wires checked: 0 error(s)
 # Design rule check: Minimal satellite
 
-Model hash: `b236e927941b`. Rules run: 33.
+Model hash: `b236e927941b`. Rules run: 34.
 Open: 0 error(s), 15 warning(s), 17 note(s). Waived: 0.
 ```
 
@@ -180,7 +180,7 @@ harness drc my-small-satellite
 24 interfaces and 54 wires checked: 0 error(s)
 # Design rule check: Small satellite (reference)
 
-Model hash: `02ebf01ed3a9`. Rules run: 33.
+Model hash: `02ebf01ed3a9`. Rules run: 34.
 Open: 0 error(s), 20 warning(s), 28 note(s). Waived: 0.
 ```
 
@@ -212,11 +212,11 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 44 interfaces and 103 wires checked: 0 error(s)
 # Design rule check: Flatsat (EXAMPLE numbers, not engineering data)
 
-Model hash: `25294117de0d`. Rules run: 33.
+Model hash: `25294117de0d`. Rules run: 34.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
-`harness export my-flatsat` writes `111 files written to my-flatsat/outputs (model 25294117de0d).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
+`harness export my-flatsat` writes `112 files written to my-flatsat/outputs (model 25294117de0d).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
 
 ## Does every example run?
 
@@ -228,7 +228,7 @@ Every example was run through `new`, `validate`, `generate` (where it is not alr
 | `first-steps` | 0 errors | 2 added, 6 wires | 0 errors, 10 warnings, 8 notes | 38 files | 0 errors |
 | `minimal-satellite` | 0 errors | 11 added, 24 wires | 0 errors, 15 warnings, 17 notes | 137 files | 0 errors |
 | `small-satellite` | 0 errors | 24 added, 54 wires | 0 errors, 20 warnings, 28 notes | 280 files | 0 errors |
-| `flatsat` | 0 errors | 8 unchanged, 103 wires | 0 errors, 28 warnings, 47 notes | 111 files | 0 errors |
+| `flatsat` | 0 errors | 8 unchanged, 103 wires | 0 errors, 28 warnings, 47 notes | 112 files | 0 errors |
 
 ## The 15 template files
 

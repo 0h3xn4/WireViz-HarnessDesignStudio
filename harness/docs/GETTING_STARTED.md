@@ -138,7 +138,7 @@ harness drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `8a25f0c99a86`. Rules run: 33.
+Model hash: `8a25f0c99a86`. Rules run: 34.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.
@@ -197,8 +197,8 @@ harness release wheel-link W002 --by "A. Engineer" --comment "First release of t
 ```
 
 ```
-blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason; the reason is kept in the change log.
-blocked: [parts_unapproved] 2 part(s) used by W002 are not approved (or are example data): EX-MICROD-9-M, EX-WIRE-SINGLE. Approve them in the parts list, or release with a written reason; the reason is kept in the change log.
+blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
+blocked: [parts_unapproved] 2 part(s) used by W002 are not approved (or are example data): EX-MICROD-9-M, EX-WIRE-SINGLE. Approve them in the parts list, or release with a written reason (command line: --accept-unapproved-parts REASON); the reason is kept in the change log.
 blocked: [gauge_pending] 2 wire(s) have no gauge decided (first: W002-001). Fill in the derating values (the file config/derating.json; `harness config DIR` lists what is missing) or set the gauge by hand.
 blocked: [length_unknown] 2 wire(s) have no length (first: W002-001). Enter the routing segment lengths (`harness import-lengths DIR FILE` loads them from a table).
 ```
@@ -272,7 +272,7 @@ harness drc wheel-link
 ```
 
 ```
-Open: 1 error(s), 7 warning(s), 3 note(s). Waived: 0.
+Open: 1 error(s), 7 warning(s), 5 note(s). Waived: 0.
 ```
 
 One **error**: *The model changed after the harness plans were generated. Generate again before releasing.* Approving parts changed the design's library, so the plans and outputs are out of date. That is exactly what the check is for. Make the plans and outputs current:
@@ -287,7 +287,7 @@ harness drc wheel-link
 ```
 
 ```
-Open: 0 error(s), 7 warning(s), 3 note(s). Waived: 0.
+Open: 0 error(s), 7 warning(s), 5 note(s). Waived: 0.
 ```
 
 0 errors, and 7 warnings: the three parts you approved no longer warn. Other imports work the same way:
@@ -324,8 +324,8 @@ harness release wheel-link W002 --by "A. Engineer" --comment "First release of t
 ```
 
 ```
-blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason; the reason is kept in the change log.
-blocked: [parts_unapproved] 1 part(s) used by W002 are not approved (or are example data): EX-WIRE-SINGLE. Approve them in the parts list, or release with a written reason; the reason is kept in the change log.
+blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
+blocked: [parts_unapproved] 1 part(s) used by W002 are not approved (or are example data): EX-WIRE-SINGLE. Approve them in the parts list, or release with a written reason (command line: --accept-unapproved-parts REASON); the reason is kept in the change log.
 ```
 
 For a real design the engineer reviews the values and sets `"placeholder": false` in each file, and the parts list approves the parts. For this practice project, accept both and say why; the reasons are kept in the change log and in the baseline:

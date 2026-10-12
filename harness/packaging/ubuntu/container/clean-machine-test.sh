@@ -4,7 +4,8 @@
 #   packaging/ubuntu/container/clean-machine-test.sh 24.04 dist/harness-design-studio_<version>_amd64.deb
 # The image is prepared with the runtime libraries while online; the test itself runs with --network none.
 set -eu
-release="$1"; deb="$2"
+release="${1:?usage: clean-machine-test.sh UBUNTU_RELEASE PATH_TO_DEB}"; deb="${2:?usage: clean-machine-test.sh UBUNTU_RELEASE PATH_TO_DEB}"
+case "$deb" in /*) ;; *) deb="$(pwd)/$deb" ;; esac
 image="harness-clean:$release"
 docker build -t "$image" - <<DOCKER
 FROM ubuntu:$release
@@ -14,5 +15,5 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 \
  && rm -rf /var/lib/apt/lists/*
 DOCKER
-docker run --rm --network none -e QT_QPA_PLATFORM=offscreen -v "$(pwd)/$deb":/pkg.deb:ro "$image" sh -c '
+docker run --rm --network none -e QT_QPA_PLATFORM=offscreen -v "$deb":/pkg.deb:ro "$image" sh -c '
   dpkg -i /pkg.deb && harness --version && harness-design-studio --selftest && echo CLEAN-MACHINE-TEST-OK'

@@ -4,7 +4,7 @@ from typing import Literal
 
 from harness_design_studio.core.ids import Id
 
-from .base import Entity, Name, Text
+from .base import Awg, Entity, Name, Positive, Text
 
 Side = Literal["nominal", "redundant", "none"]
 Category = Literal[
@@ -38,10 +38,10 @@ class InterfaceType(Entity):
     category: Category
     signals: list[SignalDef]
     construction: Construction = "single"
-    impedance_ohm: float | None = None
+    impedance_ohm: Positive | None = None
     shielding: Shielding = "none"
     emc_class: Name | None = None
-    default_gauge_awg: int | None = None
+    default_gauge_awg: Awg | None = None
     unverified: bool = False  # True for starter/example data nobody has confirmed
     notes: Text = ""
 
@@ -60,7 +60,7 @@ class InterfaceInstance(Entity):
     endpoints: list[Endpoint]
     redundancy: Side = "none"
     flow: Flow = "unspecified"
-    max_current_a: float | None = None
-    voltage_v: float | None = None
+    max_current_a: Positive | None = None
+    voltage_v: Positive | None = None
     requirement_id: Name | None = None
     notes: Text = ""

@@ -37,7 +37,7 @@ from harness_design_studio.core.imports import (
     guess_mapping,
     parse_csv,
     plan_interface_import,
-    read_table,
+    read_table_sheet,
 )
 from harness_design_studio.core.issues import Issue
 from harness_design_studio.core.model import Project
@@ -323,7 +323,7 @@ class ImportDialog(QDialog):
         self.preview = QTableWidget(0, 6)
         self.preview.setObjectName("import-preview")
         self.preview.setAccessibleName(strings.IMPORT_PREVIEW)
-        self.preview.setHorizontalHeaderLabels(["Row", "Interface", "Type", "From", "To", "Status"])
+        self.preview.setHorizontalHeaderLabels(list(strings.IMPORT_COLUMNS))
         self.preview.verticalHeader().hide()
         self.preview.horizontalHeader().setStretchLastSection(True)
         self.preview.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
@@ -347,11 +347,12 @@ class ImportDialog(QDialog):
         if not path:
             return
         try:
-            self.table = read_table(path)
+            self.table, sheet = read_table_sheet(path)
         except ImportError_ as exc:
-            self.summary.setText(f"✕ {exc}")
+            self._clear_plan(f"✕ {exc}")
             return
-        self.file_label.setText(Path(path).name)
+        name = Path(path).name
+        self.file_label.setText(strings.IMPORT_SHEET.format(name, sheet) if sheet else name)
         self.text.blockSignals(True)
         self.text.setPlainText(table_to_csv(self.table))
         self.text.blockSignals(False)
@@ -361,10 +362,18 @@ class ImportDialog(QDialog):
         try:
             self.table = parse_csv(self.text.toPlainText())
         except ImportError_ as exc:
-            self.table = []
-            self.summary.setText(f"✕ {exc}")
+            self._clear_plan(f"✕ {exc}")
             return
         self._setup_mapping()
+
+    def _clear_plan(self, message: str) -> None:
+        """The text cannot be read: nothing from an earlier reading may stay importable."""
+        self.table = []
+        self.plan = ImportPlan()
+        self.preview.setRowCount(0)
+        self.summary.setText(message)
+        self.ok.setText(strings.IMPORT_N.format(0, "s"))
+        self.ok.setEnabled(False)
 
     def _setup_mapping(self) -> None:
         header = self.table[0] if self.table else []
@@ -449,6 +458,7 @@ class IssuesDialog(QDialog):
             lab.setWordWrap(True)
             lay.addWidget(lab)
         self.list = QListWidget()
+        self.list.setAccessibleName(strings.ISSUES_LIST)
         for i in issues:
             if i.severity == "info":
                 continue
@@ -738,6 +748,7 @@ class DiffDialog(QDialog):
         lay.addWidget(QLabel(f"<h3>{title}</h3>"))
         self.baseline = QComboBox()
         self.baseline.setObjectName("diff-baseline")
+        self.baseline.setAccessibleName(strings.DIFF_BASELINE)
         self.baseline.addItems(baselines)
         self.baseline.setCurrentText(current)
         row0 = QHBoxLayout()
@@ -750,6 +761,7 @@ class DiffDialog(QDialog):
         lay.addWidget(self.summary)
         self.list = QListWidget()
         self.list.setObjectName("diff-list")
+        self.list.setAccessibleName(strings.DIFF_LIST)
         self.set_diff(diff)
         lay.addWidget(self.list, 1)
         row = QHBoxLayout()
@@ -790,6 +802,7 @@ class HistoryDialog(QDialog):
         lay.addWidget(QLabel(f"<h3>{title}</h3>"))
         self.list = QListWidget()
         self.list.setObjectName("history-list")
+        self.list.setAccessibleName(strings.HISTORY_LIST)
         for r in rows[1:]:
             tail = f": {r[6]}" if r[6] else ""
             QListWidgetItem(f"{r[5]}  {r[1]} rev {r[2]}  {r[3]} by {r[4]}{tail}", self.list)

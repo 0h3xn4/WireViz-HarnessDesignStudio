@@ -19,8 +19,16 @@ jobs:
           harness check design
           harness generate design
           harness verify design
+          harness drc design > drc-report.md   # fails the build when an error is not waived
           harness export design
           harness verify design --outputs
+      - name: Keep the design rule report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: harness-drc-report
+          path: drc-report.md
+          if-no-files-found: ignore
       - name: Keep the outputs
         uses: actions/upload-artifact@v4
         with:

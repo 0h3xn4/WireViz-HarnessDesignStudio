@@ -84,10 +84,6 @@ def test_interface_changed_by_hand_after_release_is_reported(tmp_path: Path) -> 
     assert issues and "interface" in issues[0].message
 
 
-def test_mini3_is_untouched() -> None:
-    assert mini3().units
-
-
 # ---- io, recovery and locks ---------------------------------------------------------------------
 
 
@@ -145,7 +141,8 @@ def test_infinite_numbers_are_a_load_problem_not_a_crash_on_save(tmp_path: Path)
     data["values"] = {"x": 0}
     cfg.write_text(json.dumps(data).replace('"x": 0', '"x": 1e999'))
     loaded = load_project(tmp_path / "p")
-    assert loaded.has_errors or loaded.project.quarantine or loaded.issues
+    assert loaded.has_errors
+    assert "invalid_json" in {i.code for i in loaded.issues}  # named, not silently defaulted
 
 
 def test_stale_lock_takeover_gives_the_lock_to_exactly_one_process(tmp_path: Path) -> None:

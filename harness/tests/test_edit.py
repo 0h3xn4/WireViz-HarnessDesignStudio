@@ -229,7 +229,7 @@ def test_rename_unit_cascades() -> None:
         edit.ops_rename_unit(p, "OBC", "pcdu")
     with pytest.raises(edit.EditError, match="does not exist"):
         edit.ops_rename_unit(p, "GHOST", "X")
-    with pytest.raises(Exception, match="start with a letter"):
+    with pytest.raises(edit.EditError, match="start with a letter"):
         edit.ops_rename_unit(p, "OBC", "1bad")
 
 
@@ -308,7 +308,7 @@ def test_add_unit_rolls_back_when_harness_blocks_delete() -> None:
     assert "OBC" in p.units
 
 
-def test_harness_object_import_is_used() -> None:
+def test_a_new_harness_is_a_draft() -> None:
     assert Harness(id="H1", name="h").status == "draft"
 
 
@@ -333,11 +333,9 @@ def test_unit_templates_follow_the_baseline_standards() -> None:
             else:
                 assert conn.part_id.startswith("EX-MICROD-"), (template.id, conn.part_id)
                 assert parts[conn.part_id].pin_count and parts[conn.part_id].pin_count >= 9  # type: ignore[operator]
-    sizes = {edit.TEMPLATES["power"].connectors[0].part_id: 9, "EX-MICROD-15-F": 15}
     assert edit._box_part(("rs422",)) == "EX-MICROD-9-F"
     assert edit._box_part(("rs422", "can")) == "EX-MICROD-15-F"
     assert edit._box_part(("rs422", "rs485", "can")) == "EX-MICROD-21-F"
     assert edit._box_part(("rs422", "rs485", "can", "discrete")) == "EX-MICROD-25-F"
     assert edit._box_part(("rs422", "rs485", "can", "discrete", "analog")) == "EX-MICROD-31-F"
     assert edit._box_part(("power_primary",)) == "EX-MICROD-9-F"
-    assert sizes

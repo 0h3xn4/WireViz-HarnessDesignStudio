@@ -95,11 +95,11 @@ The shipped file lists only the first four keys; `shield`, `branch` and `segment
 ## `titleblock.json`
 | Key | Meaning |
 | --- | --- |
-| `fields` | which title block fields appear, in order: `project`, `harness_id`, `title`, `revision`, `date`, `author`, `checker`, `approver`, `sheet`, `status` |
+| `fields` | which title block fields appear, in order: `project`, `harness_id`, `title`, `revision`, `date`, `author`, `checker`, `approver`, `sheet`, `status`. None is mandatory (leave `sheet` out to hide the sheet number). A name that is not in this list, a name twice, or an entry that is not text is a configuration error; the default fields are drawn until it is fixed. Empty or missing means the default: `project`, `harness_id`, `title`, `revision`, `status`, `sheet` |
 
 ## Optional values from the supplied standards (D-131)
 
-None of these is set by default. `harness config DIR --apply-profile ecss-q-st-30-11c` (and `ecss-e-st-20-07c`) fills the ones that are still unset and keeps what you set; each value cites the requirement it comes from in the command output and in `src/harness_design_studio/core/standard_profiles.py`. The file stays `"placeholder": true` until you review it. A rule that needs one of these values or a part rating stays silent without it, and the rule `unchecked-config` says what was not checked.
+None of these is set by default. `harness config DIR --apply-profile ecss-q-st-30-11c` (and `ecss-e-st-20-07c`) fills the ones that are still unset and keeps what you set; each value cites the requirement it comes from in the command output and in `src/harness_design_studio/core/standard_profiles.py`. A file the profile changes is set to `"placeholder": true` again, even if you had reviewed it before, because the new values are not reviewed; set it back to `false` after your review. A rule that needs one of these values or a part rating stays silent without it, and the rule `unchecked-config` says what was not checked.
 
 ### `derating.json`, additional keys
 | Key | Meaning | Source (requirement ID) |
@@ -110,7 +110,7 @@ None of these is set by default. `harness config DIR --apply-profile ecss-q-st-3
 | `rf_power_factor` | RF power as a fraction of the rating (0.75); recorded, no rule yet (no RF power on interfaces) | ECSS-Q-ST-30-11_0140058 |
 | `wire_voltage_factor` | working voltage as a fraction of the wire's rated voltage (0.5) | ECSS-Q-ST-30-11_0140213 |
 | `wire_temperature_margin_c` | degrees below the manufacturer's maximum for the wire surface (50); only the ambient part is checked (`max_ambient_temperature_c`), self-heating needs a thermal analysis | ECSS-Q-ST-30-11_0140213 |
-| `bundle_factor_by_count` | table: number of wires to factor K. A bundle uses the next listed count; replaces `bundle_derating` in sizing and in the rule `bundle-current`. The single wire current is your `ampacity_a_by_awg`. | ECSS-Q-ST-30-11_0140218 |
+| `bundle_factor_by_count` | table: number of wires to factor K (above 0, at most 1, not rising with the count). A bundle uses the next listed count; replaces `bundle_derating` in sizing and in the rule `bundle-current`. The single wire current is your `ampacity_a_by_awg`. | ECSS-Q-ST-30-11_0140218 |
 | `partial_load_factor` | table L for partly loaded bundles; recorded, not applied (the report says so) | ECSS-Q-ST-30-11_0140220 |
 | `max_mating_cycles` | mating cycles a connector may be used for (50) | ECSS-Q-ST-30-11_0140056 |
 

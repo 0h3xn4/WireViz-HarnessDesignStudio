@@ -14,10 +14,12 @@ import zlib
 from collections import Counter, defaultdict
 from collections.abc import Callable
 from pathlib import Path
+from typing import Any
 
-from harness_design_studio.core import checks, drc
+from harness_design_studio import __version__
+from harness_design_studio.core import checks, configcheck, drc
 from harness_design_studio.core.io.layout import model_hash
-from harness_design_studio.core.model import Harness, Project
+from harness_design_studio.core.model import Connector, Harness, Project, Wire
 from harness_design_studio.core.verify import VerifyReport
 
 from .stamp import parse_csv
@@ -266,7 +268,7 @@ def _harness(r: VerifyReport, project: Project, h: Harness, files: dict[str, byt
                 r.error("out_bom", f"The BOM of {h.id} has the wrong quantity for {pid}.", h.id)
         metres: dict[str, float] = defaultdict(float)
         for w in h.wires:
-            length = _length(h, w.id)
+            length = _length_of(h, w)
             if w.part_id and length is not None:
                 metres[w.part_id] += length
         for pid, total in sorted(metres.items()):
@@ -304,7 +306,8 @@ def _harness(r: VerifyReport, project: Project, h: Harness, files: dict[str, byt
                 "out_xlsx", f"The workbook of {h.id} lists different wires than the design.", h.id
             )
     _harness_cells(r, project, h, files)
-    _drawings(r, h, files)
+    _harness_tables(r, project, h, files)
+    _drawings(r, project, h, files)
 
 
 # ---- cell-level expectations, derived from the project alone ------------------------------------
@@ -313,7 +316,10 @@ def _harness(r: VerifyReport, project: Project, h: Harness, files: dict[str, byt
 def _length(h: Harness, wire_id: str) -> float | None:
     """A wire's own length, else the sum of the segments on the path between its connectors
     (worked out here, not imported from the table builders)."""
-    w = next(x for x in h.wires if x.id == wire_id)
+    return _length_of(h, next(x for x in h.wires if x.id == wire_id))
+
+
+def _length_of(h: Harness, w: Wire) -> float | None:
     if w.length_m is not None:
         return w.length_m
     adj: dict[str, list[tuple[str, float | None]]] = defaultdict(list)
@@ -331,6 +337,14 @@ def _length(h: Harness, wire_id: str) -> float | None:
                 seen.add(nxt)
                 stack.append((nxt, [*trail, ln]))
     return None
+
+
+def _saved_order(h: Harness) -> dict[str, Any]:
+    """A harness as the JSON export shows it: its lists in ID order (as in the saved files)."""
+    data = h.model_dump(mode="json")
+    for key in ("connectors", "wires", "splices", "shields", "branch_points", "segments"):
+        data[key] = sorted(data[key], key=lambda x: x["id"])
+    return data
 
 
 def _same_number(cell: str, expected: float | None) -> bool:
@@ -353,7 +367,7 @@ def _mass(project: Project, h: Harness) -> tuple[float, bool]:
             total += part.mass_g
     for w in h.wires:
         part = project.parts.get(w.part_id) if w.part_id else None
-        length = _length(h, w.id)
+        length = _length_of(h, w)
         if part is None or part.mass_per_m_g is None or length is None:
             complete = False
         else:
@@ -391,7 +405,7 @@ def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[st
                 wrong.append("part")
             if row[9] != (w.colour or ""):
                 wrong.append("colour")
-            if not _same_number(row[10], _length(h, w.id)):
+            if not _same_number(row[10], _length_of(h, w)):
                 wrong.append("length")
             if row[11] != shield_of.get(w.id, ""):
                 wrong.append("shield group")
@@ -443,10 +457,13 @@ def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[st
 
 
 def _mass_row(r: VerifyReport, project: Project, h: Harness, row: list[str], what: str) -> None:
-    if len(row) < 9:
+    if len(row) != 10:
+        r.error(
+            "out_mass", f"The mass and length row of {what} has the wrong number of columns.", what
+        )
         return
     total, complete = _mass(project, h)
-    lengths = [_length(h, w.id) for w in h.wires]
+    lengths = [_length_of(h, w) for w in h.wires]
     known = sum(x for x in lengths if x is not None)
     unknown = sum(1 for x in lengths if x is None)
     margin = _margin(project)
@@ -459,12 +476,13 @@ def _mass_row(r: VerifyReport, project: Project, h: Harness, row: list[str], wha
         and _same_number(row[6], None if margin is None else total * margin)
         and _same_number(row[7], None if margin is None else total * (1 + margin))
         and row[8] == ("yes" if complete and unknown == 0 else "no")
+        and row[9] == _missing_mass_data(project, h)
     )
     if not ok:
         r.error("out_mass", f"The mass and length of {what} do not match the design.", what)
 
 
-def _drawings(r: VerifyReport, h: Harness, files: dict[str, bytes]) -> None:
+def _drawings(r: VerifyReport, project: Project, h: Harness, files: dict[str, bytes]) -> None:
     base = f"harnesses/{h.id}"
     svgs = sorted(k for k in files if re.fullmatch(re.escape(base) + r"/drawing_A3_s\d+\.svg", k))
     if not svgs:
@@ -483,10 +501,13 @@ def _drawings(r: VerifyReport, h: Harness, files: dict[str, bytes]) -> None:
     for c in h.connectors:
         if c.id not in words and c.id not in text:
             r.error("out_drawing", f"Connector {c.id} is missing from the drawing of {h.id}.", c.id)
-    for k in svgs:
-        sheet = re.search(r"_s(\d+)\.svg", k).group(1)  # type: ignore[union-attr]
-        if f"{sheet} / {len(svgs)}" not in _svg_text(files[k]):
-            r.error("out_drawing", f"The title block of {k} shows the wrong sheet number.", h.id)
+    if "sheet" in configcheck.titleblock_fields(project):  # a title block may leave it out
+        for k in svgs:
+            sheet = re.search(r"_s(\d+)\.svg", k).group(1)  # type: ignore[union-attr]
+            if f"{sheet} / {len(svgs)}" not in _svg_text(files[k]):
+                r.error(
+                    "out_drawing", f"The title block of {k} shows the wrong sheet number.", h.id
+                )
     a3 = files.get(f"{base}/drawing_A3.pdf")
     if a3 is not None and _pdf_pages(a3) != len(svgs):
         r.error(
@@ -505,6 +526,115 @@ def _drawings(r: VerifyReport, h: Harness, files: dict[str, bytes]) -> None:
                         w.id,
                     )
                     break
+    _drawing_pins(r, project, h, svgs, files)
+    for size in ("A3", "A4"):
+        pdf = files.get(f"{base}/drawing_{size}.pdf")
+        if pdf is not None:
+            for c in h.connectors:
+                if b"(" + c.id.encode() + b") Tj" not in pdf:
+                    r.error("out_drawing", f"Connector {c.id} is missing from the {size} PDF of {h.id}.", c.id)  # fmt: skip
+                    break
+    if a3 is not None:
+        _pdf_matches_svgs(r, f"The A3 PDF of {h.id}", a3, [files[k] for k in svgs], h.id)
+    if a3 is not None or files.get(f"{base}/drawing_A4.pdf") is not None:
+        _unencodable(r, f"the PDF drawings of {h.id}", [files[k] for k in svgs], h.id)
+
+
+_TEXT = re.compile(r"<text ([^>]*)>([^<]*)</text>")
+
+
+def _svg_items(data: bytes) -> list[tuple[str, str]]:
+    """(data-ref label or "", text) of every text element of a drawing."""
+    out = []
+    for attrs, content in _TEXT.findall(data.decode()):
+        ref = re.search(r'data-ref="([^"]*)"', attrs)
+        out.append((html.unescape(ref[1]) if ref else "", html.unescape(content)))
+    return out
+
+
+def _drawn_signal(project: Project, h: Harness, cid: str, pin: str) -> str:
+    """The signal a pin row shows: the cable connector's, else the box connector's it mates with."""
+    conn = next((c for c in h.connectors if c.id == cid), None)
+    box = project.connectors.get(conn.mates_with or "") if conn else None
+    for c in (conn, box):
+        sig = next((p.signal for p in (c.pins if c else []) if p.id == pin and p.signal), None)
+        if sig:
+            return sig
+    return ""
+
+
+def _drawing_pins(
+    r: VerifyReport, project: Project, h: Harness, svgs: list[str], files: dict[str, bytes]
+) -> None:
+    """Every pin row of the drawing shows the right pin number and signal, and every wire end is
+    drawn. (The drawing labels each pin and signal text with `data-ref` so it can be found.)"""
+    real = {(c.id, p.id) for c in h.connectors for p in c.pins}
+    drawn: set[tuple[str, str]] = set()
+    bad: list[str] = []
+    for k in svgs:
+        for ref, text in _svg_items(files[k]):
+            kind, _s, rest = ref.partition("/")
+            if kind not in ("pin", "sig"):
+                continue
+            cid, _s, pin = rest.partition("/")
+            if (cid, pin) not in real:
+                bad.append(f"{cid}.{pin} is not a pin of the design")
+            elif kind == "pin":
+                drawn.add((cid, pin))
+                if text != pin:
+                    bad.append(f"pin {cid}.{pin} is drawn as '{text}'")
+            else:
+                want = _drawn_signal(project, h, cid, pin)
+                cut = text.endswith("~") and len(text) < len(want) and want.startswith(text[:-1])
+                if text != want and not cut:
+                    bad.append(f"the signal of {cid}.{pin} is drawn as '{text}'")
+    for w in h.wires:
+        for end in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
+            if end not in drawn:
+                bad.append(f"pin {end[0]}.{end[1]} of wire {w.id} is not drawn")
+    for text in dict.fromkeys(bad[:3]):
+        r.error("out_drawing", f"The drawing of {h.id} is wrong: {text}.", h.id)
+    if len(bad) > 3:
+        r.error("out_drawing", f"The drawing of {h.id} has {len(bad) - 3} more wrong pins.", h.id)
+
+
+def _pdf_texts(data: bytes) -> list[bytes]:
+    """The strings the pages of a PDF of this tool show (uncompressed content streams)."""
+    found = re.findall(rb"\(((?:\\.|[^\\()])*)\) Tj", data)
+    return sorted(re.sub(rb"\\(.)", rb"\1", t) for t in found)
+
+
+def _pdf_matches_svgs(r: VerifyReport, what: str, pdf: bytes, svgs: list[bytes], obj: str) -> None:
+    """A PDF drawing carries the same texts as the SVG sheets it was made with (as Windows-1252)."""
+    want = sorted(
+        text.encode("cp1252", "replace") for svg in svgs for _ref, text in _svg_items(svg)
+    )
+    if _pdf_texts(pdf) != want:
+        r.error("out_drawing", f"{what} does not show the same texts as the SVG drawing.", obj)
+
+
+def _unencodable(r: VerifyReport, what: str, svgs: list[bytes], obj: str) -> None:
+    """PDF text is Windows-1252; other characters turn into '?'. Say which, once."""
+    chars = sorted(
+        {ch for svg in svgs for _ref, text in _svg_items(svg) for ch in text if _no_cp1252(ch)}
+    )
+    if chars:
+        names = ", ".join(f"{c} (U+{ord(c):04X})" for c in chars[:8])
+        more = f" and {len(chars) - 8} more" if len(chars) > 8 else ""
+        r.warning(
+            "out_pdf_chars",
+            f"These characters cannot be shown in {what} and appear as '?' there: {names}{more}. "
+            "The SVG drawings show them correctly.",
+            obj,
+        )
+
+
+def _no_cp1252(ch: str) -> bool:
+    try:
+        ch.encode("cp1252")
+    except UnicodeEncodeError:
+        return True
+    return False
 
 
 def _provenance(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
@@ -523,22 +653,52 @@ def _provenance(r: VerifyReport, project: Project, files: dict[str, bytes]) -> N
         return
     settings = doc.get("settings", {})
     placeholders = sorted(n for n, c in project.config.items() if c.placeholder)
-    listed = sorted(n for n, v in settings.items() if isinstance(v, dict) and v.get("placeholder"))
+    listed = (
+        sorted(n for n, v in settings.items() if isinstance(v, dict) and v.get("placeholder"))
+        if isinstance(settings, dict)
+        else []
+    )
     if listed != placeholders:
         r.error(
             "out_provenance",
             "system/provenance.json does not list the placeholder settings of the design.",
             "provenance",
         )
-    design = doc.get("design", {})
-    if design.get("wires") != sum(len(h.wires) for h in project.harnesses.values()) or design.get(
-        "harnesses"
-    ) != len(project.harnesses):
+    approvals = Counter(p.approval for p in project.parts.values())
+    info = project.library_info
+    want: dict[str, object] = {
+        "tool_version": __version__,
+        "model_hash": model_hash(project),
+        "project": project.meta.name,
+        "library": {
+            "name": info.name, "version": info.version, "source": info.source, "date": info.date,
+            "parts": len(project.parts), "parts_by_approval": dict(sorted(approvals.items())),
+            "unverified_parts": sum(p.unverified for p in project.parts.values()),
+        },
+        "settings": {
+            name: {"placeholder": cfg.placeholder, "values_sha256_16": _values_hash(cfg.values)}
+            for name, cfg in sorted(project.config.items())
+        },
+        "design": {
+            "units": len(project.units),
+            "interfaces": len(project.interfaces),
+            "harnesses": len(project.harnesses),
+            "wires": sum(len(h.wires) for h in project.harnesses.values()),
+            "released_harnesses": sum(h.status == "released" for h in project.harnesses.values()),
+        },
+    }  # fmt: skip
+    wrong = [key for key, value in want.items() if doc.get(key) != value]
+    if wrong:
         r.error(
             "out_provenance",
-            "system/provenance.json counts differ from the design.",
+            f"system/provenance.json differs from the design: {', '.join(wrong)}.",
             "provenance",
         )
+
+
+def _values_hash(values: dict[str, object]) -> str:
+    text = json.dumps(values, sort_keys=True, separators=(",", ":"), default=str)
+    return hashlib.sha256(text.encode()).hexdigest()[:16]
 
 
 def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
@@ -553,6 +713,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
             "out_mass", "The system mass and length table does not count every wire.", "mass_length"
         )
     elif ml:
+        _mass_total(r, project, ml[-1])
         by_h = {row[0]: row for row in ml[1:-1]}
         if set(by_h) != set(project.harnesses):
             r.error(
@@ -563,13 +724,11 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
         for hid, row in sorted(by_h.items()):
             if hid in project.harnesses:
                 _mass_row(r, project, project.harnesses[hid], row, hid)
+    harnesses = sorted(project.harnesses.values(), key=lambda x: x.id)
     bm = _table(files, "system/bom.csv")
     if bm:
-        want = Counter(c.part_id for h in project.harnesses.values() for c in h.connectors)
-        sys_rows = {row[0]: row for row in bm[1:]}
-        for pid, n in sorted(want.items()):
-            if pid not in sys_rows or sys_rows[pid][6] != str(n):
-                r.error("out_bom", f"The system BOM has the wrong quantity for {pid}.", pid)
+        _compare_rows(r, "out_bom", "The system BOM", bm, _BOM_HEADER,
+                      _bom_rows(project, harnesses), (0,), "bom")  # fmt: skip
     mm = _table(files, "system/mating_matrix.csv")
     if mm:
         boxes = {row[0] for row in mm[1:]}
@@ -584,6 +743,8 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
             for c in h.connectors:
                 if c.mates_with and (c.mates_with, c.id) not in pairs:
                     r.error("out_matrix", f"{c.id} is missing from the mating matrix.", c.id)
+        _compare_rows(r, "out_matrix", "The mating matrix", mm, _MATING_HEADER,
+                      _mating_rows(project), (0, 4, 7), "mating_matrix")  # fmt: skip
     tr = _table(files, "system/traceability.csv")
     if tr:
         routed = {w.interface_id for w in wires if w.interface_id}
@@ -596,6 +757,21 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
         for row in tr[1:]:
             if (row[7] == "yes") != (row[0] in routed):
                 r.error("out_trace", f"{row[0]} is marked wrongly as routed or not routed.", row[0])
+        _compare_rows(r, "out_trace", "The traceability matrix", tr, _TRACE_HEADER,
+                      _trace_rows(project), (0,), "traceability")  # fmt: skip
+    bp = _table(files, "system/box_pinouts.csv")
+    if bp:
+        attached: dict[tuple[str, str], list[str]] = defaultdict(list)
+        for h in project.harnesses.values():
+            mates = {c.id: c.mates_with for c in h.connectors}
+            for w in h.wires:
+                for cid, pin in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
+                    if mates.get(cid):
+                        attached[(mates[cid] or "", pin)].append(w.id)
+        boxes_sorted = sorted(project.connectors.values(), key=lambda c: c.id)
+        _compare_rows(r, "out_box_pinouts", "The box connector pinouts", bp, _PINOUT_HEADER,
+                      _pin_rows(boxes_sorted, attached), (0, 4), "box_pinouts")  # fmt: skip
+    _system_workbook(r, project, files)
     ex = files.get("system/export.json")
     if ex is not None:
         try:
@@ -606,7 +782,18 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
                 and len(doc["interfaces"]) == len(project.interfaces)
                 and sum(len(h["wires"]) for h in doc["harnesses"]) == len(wires)
                 and {h["id"]: h for h in doc["harnesses"]}
-                == {h.id: h.model_dump(mode="json") for h in project.harnesses.values()}
+                == {h.id: _saved_order(h) for h in project.harnesses.values()}
+                and all(
+                    {o["id"]: o for o in doc[key]}
+                    == {o.id: o.model_dump(mode="json") for o in objs}
+                    for key, objs in (
+                        ("units", project.units.values()),
+                        ("interface_types", project.interface_types.values()),
+                        ("interfaces", project.interfaces.values()),
+                        ("box_connectors", project.connectors.values()),
+                        ("parts", project.parts.values()),
+                    )
+                )
             )
         except (ValueError, KeyError, TypeError):
             same = False
@@ -629,10 +816,22 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
                 )
     fd = _table(files, "system/drc_findings.csv")
     if fd:
-        n = len(checks.find(project)) + len(drc.run(project))
-        if len(fd) - 1 != n:
+        found = [*checks.find(project), *drc.run(project)]
+        want_rows = [
+            [f.id, f.rule, f.severity, f.object_id or "", f.title, "yes" if f.waiver else "",
+             f.waiver.justification if f.waiver else "", " ".join(f.sources)]
+            for f in found
+        ]  # fmt: skip
+        if fd[0] != _FINDING_HEADER or len(fd) - 1 != len(found):
             r.error(
                 "out_drc", "The DRC findings table does not list every finding.", "drc_findings"
+            )
+        elif Counter(map(tuple, fd[1:])) != Counter(map(tuple, want_rows)):
+            r.error(
+                "out_drc",
+                "The DRC findings table has a finding whose text, severity or waiver differs "
+                "from the design.",
+                "drc_findings",
             )
     cl = _table(files, "system/changelog.csv")
     if cl and sorted(row[0] for row in cl[1:]) != sorted(project.changelog):
@@ -650,3 +849,401 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
     md = files.get("system/drc_report.md")
     if md is not None and "Waived:" not in md.decode():
         r.error("out_drc", "The DRC report is incomplete.", "drc_report")
+
+
+# ---- row-by-row comparison of the tables with the design --------------------------------------
+# Every cell of every table is derived here from the project (the wording of the cells is the
+# documented format in docs/OUTPUTS.md), then compared with what was written.
+
+Cell = str | float | None  # a float (or None, meaning "no value") is compared as a number
+
+
+def _cell_ok(got: str, want: Cell) -> bool:
+    return got == want if isinstance(want, str) else _same_number(got, want)
+
+
+def _compare_rows(
+    r: VerifyReport,
+    code: str,
+    what: str,
+    got: list[list[str]],
+    header: list[str],
+    want: list[list[Cell]],
+    keycols: tuple[int, ...],
+    obj: str,
+) -> None:
+    """Report the first differences between a written table and the rows the design requires:
+    wrong column headings, missing, extra or repeated rows, and cells with the wrong content."""
+    if got[0] != header:
+        r.error(code, f"{what} has the wrong column headings.", obj)
+        return
+    expected = {tuple(str(row[i]) for i in keycols): row for row in want}
+    seen: set[tuple[str, ...]] = set()
+    problems: list[str] = []
+    for row in got[1:]:
+        if len(row) != len(header):
+            problems.append("a row has the wrong number of cells")
+            continue
+        key = tuple(row[i] for i in keycols)
+        name = "/".join(k for k in key if k) or "(empty key)"
+        exp = expected.get(key)
+        if exp is None:
+            problems.append(f"{name} is not in the design")
+        elif key in seen:
+            problems.append(f"{name} appears twice")
+        else:
+            seen.add(key)
+            cols = [
+                header[i]
+                for i, (g, e) in enumerate(zip(row, exp, strict=True))
+                if not _cell_ok(g, e)
+            ]
+            if cols:
+                problems.append(f"{name} ({', '.join(cols)})")
+    problems += [
+        f"{'/'.join(k for k in key if k)} is missing" for key in sorted(set(expected) - seen)
+    ]
+    if problems:
+        more = f" and {len(problems) - 3} more" if len(problems) > 3 else ""
+        r.error(code, f"{what} differs from the design: {'; '.join(problems[:3])}{more}.", obj)
+
+
+_PINOUT_HEADER = [
+    "Connector", "Role", "Mates with", "Part", "Pin", "Signal", "Interface", "Wires", "Spare",
+]  # fmt: skip
+
+
+def _pin_rows(
+    connectors: list[Connector], attached: dict[tuple[str, str], list[str]]
+) -> list[list[Cell]]:
+    rows: list[list[Cell]] = []
+    for c in connectors:
+        for p in c.pins:
+            wires = sorted(attached.get((c.id, p.id), []))
+            rows.append([
+                c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or "",
+                p.interface_id or "", ";".join(wires),
+                "no" if wires or p.interface_id or p.signal else "yes",
+            ])  # fmt: skip
+    return rows
+
+
+def _harness_attached(h: Harness) -> dict[tuple[str, str], list[str]]:
+    attached: dict[tuple[str, str], list[str]] = defaultdict(list)
+    for w in h.wires:
+        attached[(w.from_connector, w.from_pin)].append(w.id)
+        attached[(w.to_connector, w.to_pin)].append(w.id)
+    return attached
+
+
+_BOM_HEADER = [
+    "Part", "Category", "Manufacturer", "Part number", "Description", "Approval",
+    "Quantity", "Unit", "Wires without length", "Used in",
+]  # fmt: skip
+
+
+def _bom_rows(project: Project, harnesses: list[Harness]) -> list[list[Cell]]:
+    counts: Counter[str] = Counter()
+    metres: dict[str, float] = defaultdict(float)
+    unknown: Counter[str] = Counter()
+    used: dict[str, set[str]] = defaultdict(set)
+    wire_parts: set[str] = set()
+    for h in harnesses:
+        for c in h.connectors:
+            counts[c.part_id] += 1
+            used[c.part_id].add(h.id)
+        for w in h.wires:
+            pid = w.part_id or "(no part)"
+            wire_parts.add(pid)
+            used[pid].add(h.id)
+            length = _length_of(h, w)
+            if length is None:
+                unknown[pid] += 1
+            else:
+                metres[pid] += length
+    rows: list[list[Cell]] = []
+    for pid in sorted({*counts, *wire_parts}):
+        part = project.parts.get(pid)
+        is_wire = pid in wire_parts
+        approval = (
+            "missing from parts list"
+            if part is None
+            else part.approval + (" (example data)" if part.unverified else "")
+        )
+        rows.append([
+            pid, part.category if part else "unknown", (part.manufacturer or "") if part else "",
+            (part.part_number or "") if part else "", (part.description or "") if part else "",
+            approval, metres[pid] if is_wire else str(counts[pid]), "m" if is_wire else "ea",
+            str(unknown[pid]) if is_wire else "", ";".join(sorted(used[pid])),
+        ])  # fmt: skip
+    return rows
+
+
+def _limit(project: Project, key: str, unit: str) -> str:
+    cfg = project.config.get("generation")
+    v = cfg.values.get(key) if cfg else None
+    return (
+        f"{v:g} {unit}"
+        if isinstance(v, int | float) and not isinstance(v, bool)
+        else "TBD (placeholder)"
+    )
+
+
+_TEST_HEADER = ["Test", "Type", "From", "To", "Expected", "Limit", "Test voltage", "Wire"]
+
+
+def _test_rows(project: Project, h: Harness) -> list[list[Cell]]:
+    cont = _limit(project, "test_continuity_max_ohm", "ohm max")
+    iso = _limit(project, "test_isolation_min_mohm", "Mohm min")
+    volts = _limit(project, "test_isolation_voltage_v", "V")
+    wires = sorted(h.wires, key=lambda x: x.id)
+    rows: list[list[Cell]] = []
+    for w in wires:
+        rows.append(["", "continuity", f"{w.from_connector}.{w.from_pin}", f"{w.to_connector}.{w.to_pin}", "continuous", cont, "", w.id])  # fmt: skip
+    for w in wires:
+        rows.append(["", "isolation", f"{w.from_connector}.{w.from_pin}", "all other wires and shields", "isolated", iso, volts, w.id])  # fmt: skip
+    for s in sorted(h.shields, key=lambda x: x.id):
+        rows.append(["", "isolation", f"shield {s.id}", "all wires", "isolated", iso, volts, ";".join(sorted(s.wire_ids))])  # fmt: skip
+    for n, row in enumerate(rows, start=1):
+        row[0] = f"T{n:03d}"
+    return rows
+
+
+_LABEL_HEADER = ["Label", "Kind", "Text", "Quantity"]
+
+
+def _emc_class(project: Project, w: Wire) -> str:
+    i = project.interfaces.get(w.interface_id or "")
+    t = project.interface_types.get(i.type_id) if i else None
+    return (t.emc_class if t else None) or ""
+
+
+def _label_rows(project: Project, h: Harness) -> list[list[Cell]]:
+    rows: list[list[Cell]] = [
+        [c.id, "connector", f"{c.id} mates {c.mates_with or '-'}", "1"] for c in h.connectors
+    ]
+    for w in h.wires:
+        head = f"{w.id} {w.signal}" if w.signal else w.id
+        emc = _emc_class(project, w)
+        tag = f" [EMC {emc}]" if emc else ""
+        rows.append([f"{w.id}-A", "wire", f"{head} to {w.to_connector}.{w.to_pin}{tag}", "1"])
+        rows.append([f"{w.id}-B", "wire", f"{head} to {w.from_connector}.{w.from_pin}{tag}", "1"])
+    return rows
+
+
+def _missing_mass_data(project: Project, h: Harness) -> str:
+    """The text of the "Missing data" column: what is needed to complete the mass."""
+    missing: set[str] = set()
+    for c in h.connectors:
+        part = project.parts.get(c.part_id)
+        if part is None or part.mass_g is None:
+            missing.add(f"mass of connector part {c.part_id}")
+    for w in h.wires:
+        part = project.parts.get(w.part_id) if w.part_id else None
+        if part is None or part.mass_per_m_g is None:
+            missing.add(f"mass per metre of wire part {w.part_id or '(none)'}")
+        elif _length_of(h, w) is None:
+            missing.add(f"length of wire {w.id}")
+    return "; ".join(sorted(missing))
+
+
+def _mating_rows(project: Project) -> list[list[Cell]]:
+    mated: dict[str, list[tuple[str, Connector]]] = defaultdict(list)
+    for h in project.harnesses.values():
+        for c in h.connectors:
+            if c.mates_with:
+                mated[c.mates_with].append((h.id, c))
+    rows: list[list[Cell]] = []
+    for b in project.connectors.values():
+        pairs = mated.get(b.id, [])
+        if not pairs:
+            rows.append([b.id, b.unit_id or "", b.part_id, b.gender, "", "", "", ""])
+        for hid, c in pairs:
+            rows.append([b.id, b.unit_id or "", b.part_id, b.gender, c.id, c.part_id, c.gender, hid])  # fmt: skip
+    return rows
+
+
+def _trace_rows(project: Project) -> list[list[Cell]]:
+    carried: dict[str, list[tuple[str, str]]] = defaultdict(list)
+    for h in project.harnesses.values():
+        for w in h.wires:
+            if w.interface_id:
+                carried[w.interface_id].append((h.id, w.id))
+    rows: list[list[Cell]] = []
+    for i in project.interfaces.values():
+        ends = [f"{e.unit_id}/{e.connector_id or '-'}" for e in i.endpoints]
+        wires = sorted(w for _h, w in carried.get(i.id, []))
+        rows.append([
+            i.id, i.name, i.type_id, ends[0] if ends else "", ends[1] if len(ends) > 1 else "",
+            ";".join(sorted({hid for hid, _w in carried.get(i.id, [])})), ";".join(wires),
+            "yes" if wires else "no",
+        ])  # fmt: skip
+    return rows
+
+
+def _harness_tables(r: VerifyReport, project: Project, h: Harness, files: dict[str, bytes]) -> None:
+    """Pinouts, BOM, tests and labels of one harness, cell by cell."""
+    base = f"harnesses/{h.id}"
+    po = _table(files, f"{base}/pinouts.csv")
+    if po:
+        conns = sorted(h.connectors, key=lambda c: c.id)
+        _compare_rows(r, "out_pinout", f"The pinout table of {h.id}", po, _PINOUT_HEADER,
+                      _pin_rows(conns, _harness_attached(h)), (0, 4), h.id)  # fmt: skip
+    bm = _table(files, f"{base}/bom.csv")
+    if bm:
+        _compare_rows(r, "out_bom", f"The BOM of {h.id}", bm, _BOM_HEADER,
+                      _bom_rows(project, [h]), (0,), h.id)  # fmt: skip
+    ts = _table(files, f"{base}/tests.csv")
+    if ts:
+        _compare_rows(r, "out_tests", f"The test list of {h.id}", ts, _TEST_HEADER,
+                      _test_rows(project, h), (0,), h.id)  # fmt: skip
+    lb = _table(files, f"{base}/labels.csv")
+    if lb:
+        _compare_rows(r, "out_labels", f"The labels of {h.id}", lb, _LABEL_HEADER,
+                      _label_rows(project, h), (0,), h.id)  # fmt: skip
+    yml = files.get(f"{base}/wireviz.yaml")
+    if yml is not None:
+        _yaml_values(r, h, yml.decode())
+    x = files.get(f"{base}/{h.id}.xlsx")
+    if x is not None:
+        sheets = _xlsx_sheets(x)
+        for name, rel in (
+            ("Pinouts", "pinouts.csv"), ("BOM", "bom.csv"), ("Mass and length", "mass_length.csv"),
+            ("Tests", "tests.csv"), ("Labels", "labels.csv"),
+        ):  # fmt: skip
+            table = _table(files, f"{base}/{rel}")
+            if table and sheets.get(name) != table:
+                r.error("out_xlsx", f"The '{name}' sheet of the workbook of {h.id} differs from {rel}.", h.id)  # fmt: skip
+
+
+def _yaml_values(r: VerifyReport, h: Harness, text: str) -> None:
+    """The values in the WireViz file: pins of each connector, gauge, colour and length of each
+    wire, and the two ends of every connection."""
+    section, cur = "", ""
+    blocks: dict[str, dict[str, dict[str, str]]] = {"connectors": {}, "cables": {}}
+    links: list[list[str]] = []
+    for line in text.splitlines()[1:]:
+        if line in ("connectors:", "cables:", "connections:"):
+            section = line[:-1]
+        elif section in blocks:
+            head = re.fullmatch(r'  ("(?:[^"\\]|\\.)*"):', line)
+            item = re.fullmatch(r"    (\w+): (.*)", line)
+            if head:
+                cur = json.loads(head[1])
+                blocks[section][cur] = {}
+            elif item and cur in blocks[section]:
+                blocks[section][cur][item[1]] = item[2]
+        elif section == "connections":
+            if line.startswith("  - - "):
+                links.append([line[6:]])
+            elif line.startswith("    - ") and links:
+                links[-1].append(line[6:])
+    wrong: list[str] = []
+
+    def q(s: str) -> str:
+        return json.dumps(s, ensure_ascii=False)
+
+    for c in h.connectors:
+        got = blocks["connectors"].get(c.id, {})
+        if got.get("pincount") != str(len(c.pins)):
+            wrong.append(f"pin count of {c.id}")
+        if got.get("pinlabels") != "[" + ", ".join(q(p.id) for p in c.pins) + "]":
+            wrong.append(f"pin names of {c.id}")
+        if got.get("type") != q(c.part_id):
+            wrong.append(f"part of {c.id}")
+    for w in h.wires:
+        got = blocks["cables"].get(w.id, {})
+        if got.get("gauge") != (None if w.gauge_awg is None else q(f"{w.gauge_awg} AWG")):
+            wrong.append(f"gauge of {w.id}")
+        if got.get("colors") != (f"[{q(w.colour)}]" if w.colour else None):
+            wrong.append(f"colour of {w.id}")
+        length = _length_of(h, w)
+        shown = got.get("length")
+        if length is None:
+            if shown is not None:
+                wrong.append(f"length of {w.id}")
+        elif shown is None or not _same_number(shown, length):
+            wrong.append(f"length of {w.id}")
+    want = Counter(
+        (q(w.from_connector), q(w.from_pin), q(w.id), q(w.to_connector), q(w.to_pin))
+        for w in h.wires
+    )
+    got_links: Counter[tuple[str, ...]] = Counter()
+    for link in links:
+        m = [re.fullmatch(r'("(?:[^"\\]|\\.)*"): \[(.*)\]', x) for x in link]
+        if len(link) == 3 and all(m):
+            ends = [x for x in m if x is not None]
+            got_links[(ends[0][1], ends[0][2], ends[1][1], ends[2][1], ends[2][2])] += 1
+    if got_links != want:
+        wrong.append("the connections")
+    if wrong:
+        r.error(
+            "out_yaml",
+            f"The WireViz file of {h.id} differs from the design: {', '.join(wrong[:3])}"
+            + (f" and {len(wrong) - 3} more" if len(wrong) > 3 else "")
+            + ".",
+            h.id,
+        )
+
+
+_MATING_HEADER = [
+    "Box connector", "Unit", "Part", "Gender", "Cable connector", "Cable part", "Cable gender",
+    "Harness",
+]  # fmt: skip
+_TRACE_HEADER = ["Interface", "Name", "Type", "From", "To", "Harnesses", "Wires", "Routed"]
+_FINDING_HEADER = [
+    "Finding", "Rule", "Severity", "Object", "Statement", "Waived", "Justification", "Requirement",
+]  # fmt: skip
+
+
+def _mass_total(r: VerifyReport, project: Project, row: list[str]) -> None:
+    """The TOTAL row of the system mass and length table."""
+    if not project.harnesses:
+        return
+    hs = list(project.harnesses.values())
+    mass, all_complete = 0.0, True
+    known, unknown = 0.0, 0
+    for h in hs:
+        m, complete = _mass(project, h)
+        mass += m
+        lengths = [_length_of(h, w) for w in h.wires]
+        known += sum(x for x in lengths if x is not None)
+        unknown += sum(1 for x in lengths if x is None)
+        all_complete = all_complete and complete
+    all_complete = all_complete and unknown == 0
+    margin = _margin(project)
+    ok = (
+        len(row) == 10
+        and row[2] == str(sum(len(h.connectors) for h in hs))
+        and _same_number(row[3], known)
+        and row[4] == str(unknown)
+        and _same_number(row[5], mass)
+        and _same_number(row[6], None if margin is None else mass * margin)
+        and _same_number(row[7], None if margin is None else mass * (1 + margin))
+        and row[8] == ("yes" if all_complete else "no")
+        and row[9] == ("" if all_complete else "totals count only what is known")
+    )
+    if not ok:
+        r.error("out_mass", "The TOTAL row of the system mass table does not match the design.", "mass_length")  # fmt: skip
+
+
+def _system_workbook(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
+    """The system workbook carries the same tables as the CSV files; the PDFs of the system
+    diagrams carry the texts of their SVGs."""
+    x = files.get("system/system.xlsx")
+    if x is not None:
+        sheets = _xlsx_sheets(x)
+        for name, rel in (
+            ("BOM", "bom.csv"), ("Mass and length", "mass_length.csv"),
+            ("Mating matrix", "mating_matrix.csv"), ("Traceability", "traceability.csv"),
+            ("Box pinouts", "box_pinouts.csv"), ("DRC findings", "drc_findings.csv"),
+            ("Change log", "changelog.csv"),
+        ):  # fmt: skip
+            table = _table(files, f"system/{rel}")
+            if table and sheets.get(name) != table:
+                r.error("out_xlsx", f"The '{name}' sheet of system.xlsx differs from {rel}.", "system.xlsx")  # fmt: skip
+    for name in ("block_diagram", "harness_overview"):
+        svg, pdf = files.get(f"system/{name}.svg"), files.get(f"system/{name}.pdf")
+        if svg is not None and pdf is not None:
+            _pdf_matches_svgs(r, f"The PDF of the {name.replace('_', ' ')}", pdf, [svg], name)
+            _unencodable(r, f"the PDF of the {name.replace('_', ' ')}", [svg], name)

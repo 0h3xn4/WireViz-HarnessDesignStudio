@@ -4,7 +4,7 @@ from typing import Literal
 
 from harness_design_studio.core.ids import Id, PinId
 
-from .base import Entity, Name, Text
+from .base import Awg, Entity, LengthM, Name, Text
 
 Gender = Literal["male", "female", "unspecified"]
 Role = Literal["box", "cable", "inline", "feedthrough", "test"]
@@ -47,10 +47,10 @@ class Wire(Entity):
     from_pin: PinId
     to_connector: Id
     to_pin: PinId
-    gauge_awg: int | None = None
+    gauge_awg: Awg | None = None
     part_id: Id | None = None
     colour: Name | None = None
-    length_m: float | None = None
+    length_m: LengthM | None = None
     interface_id: Id | None = None
     locked: bool = False  # user-set gauge, colour, part and length: regeneration keeps them
 
@@ -78,7 +78,7 @@ class Segment(Entity):
     id: Id
     from_node: Id  # a connector or branch point of the same harness
     to_node: Id
-    length_m: float | None = None
+    length_m: LengthM | None = None
 
 
 class Harness(Entity):

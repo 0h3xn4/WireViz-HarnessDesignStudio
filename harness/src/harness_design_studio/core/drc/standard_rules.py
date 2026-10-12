@@ -16,7 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 
-from harness_design_studio.core.generate.sizing import ampacity_table, bundle_k
+from harness_design_studio.core.generate.sizing import ampacity_table, bundle_k, exceeds
 from harness_design_studio.core.model import Connector, Harness, Project
 
 from .base import Hit, Rule, cfg, number
@@ -68,7 +68,7 @@ def _connector_voltage(project: Project) -> Iterator[Hit]:
         for e in i.endpoints:
             conn = project.connectors.get(e.connector_id or "")
             limit = connector_voltage_limit(project, conn.part_id) if conn else None
-            if conn is not None and limit is not None and i.voltage_v > limit:
+            if conn is not None and limit is not None and exceeds(i.voltage_v, limit):
                 yield Hit(
                     f"{i.id}.{conn.id}",
                     f"{i.id} works at {i.voltage_v:g} V but {conn.id} ({conn.part_id}) allows {limit:g} V after derating",
@@ -83,7 +83,12 @@ def _wire_voltage(project: Project) -> Iterator[Hit]:
         for w in h.wires:
             i = project.interfaces.get(w.interface_id or "")
             rated = _rating(project, w.part_id or "", "rated_voltage_v")
-            if i and i.voltage_v is not None and rated is not None and i.voltage_v > factor * rated:
+            if (
+                i
+                and i.voltage_v is not None
+                and rated is not None
+                and exceeds(i.voltage_v, factor * rated)
+            ):
                 yield Hit(
                     w.id,
                     f"Wire {w.id} works at {i.voltage_v:g} V but {w.part_id} allows {factor * rated:g} V after derating",
@@ -121,7 +126,7 @@ def _temperature(project: Project) -> Iterator[Hit]:
         seen: set[str] = set()
         for oid, pid in _temperature_users(project, what):
             top = _rating(project, pid, "max_temp_c")
-            if top is not None and ambient > top - margin and oid not in seen:
+            if top is not None and exceeds(ambient, top - margin) and oid not in seen:
                 seen.add(oid)
                 yield Hit(
                     oid,
@@ -169,7 +174,7 @@ def _wire_specification(project: Project) -> Iterator[Hit]:
 def _adjacent_power_return(project: Project) -> Iterator[Hit]:
     """Power and return pins side by side (30-11C 6.11.3 a), only when a gap is required."""
     gap = number(cfg(project, "generation").get("power_return_gap_pins"))
-    if gap is None or gap < 1:
+    if gap is None or not 1 <= gap <= 1000:  # also rules out nan and inf
         return
     for conn in sorted(project.connectors.values(), key=lambda x: x.id):
         yield from _power_pairs(project, conn, int(gap))
@@ -179,17 +184,27 @@ def _adjacent_power_return(project: Project) -> Iterator[Hit]:
 
 
 def _power_pairs(project: Project, conn: Connector, gap: int) -> Iterator[Hit]:
-    order = [p for p in conn.pins]
-    for k, p in enumerate(order):
-        i = project.interfaces.get(p.interface_id or "")
+    """Any two power or ground pins of different signals that have fewer than `gap` unassigned
+    contacts between them (only pairs with at most `gap` contacts between are looked at)."""
+    order = list(conn.pins)
+
+    def is_power(k: int) -> bool:
+        i = project.interfaces.get(order[k].interface_id or "")
         itype = project.interface_types.get(i.type_id) if i else None
-        if itype is None or itype.category not in ("power", "ground"):
+        return itype is not None and itype.category in ("power", "ground")
+
+    for k, p in enumerate(order):
+        if not p.signal or not is_power(k):
             continue
-        for q in order[k + 1 : k + 1 + gap]:
-            if q.interface_id == p.interface_id and q.signal and p.signal and q.signal != p.signal:
+        for m in range(k + 1, min(k + 2 + gap, len(order))):
+            q = order[m]
+            if not q.signal or q.signal == p.signal or not is_power(m):
+                continue
+            free = sum(1 for x in order[k + 1 : m] if x.interface_id is None and not x.signal)
+            if free < gap:
                 yield Hit(
                     f"{conn.id}.{p.id}+{q.id}",
-                    f"{conn.id}: {p.signal} (pin {p.id}) and {q.signal} (pin {q.id}) of {p.interface_id} have fewer than {gap} unassigned contact(s) between them",
+                    f"{conn.id}: {p.signal} (pin {p.id}) and {q.signal} (pin {q.id}) have {free} unassigned contact(s) between them, fewer than the {gap} required",
                 )
 
 
@@ -324,7 +339,7 @@ def _bundle_current(project: Project) -> Iterator[Hit]:
             if i is None or i.max_current_a is None or w.gauge_awg not in table:
                 continue
             limit = table[w.gauge_awg] * k
-            if i.max_current_a > limit:
+            if exceeds(i.max_current_a, limit):
                 yield Hit(
                     w.id,
                     f"Wire {w.id} (AWG {w.gauge_awg}) carries {i.max_current_a:g} A but a bundle of {bundle_wire_count(h)} wires ({h.id}) allows {limit:g} A (single wire {table[w.gauge_awg]:g} A x K {k:g})",

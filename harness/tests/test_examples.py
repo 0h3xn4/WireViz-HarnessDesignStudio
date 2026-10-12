@@ -1,6 +1,7 @@
 """The bundled examples and templates are valid, current and really work with the tool."""
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -223,13 +224,22 @@ def test_the_ci_script_runs_on_an_example(generated: Path) -> None:
 
 
 def test_the_github_workflow_template_uses_real_commands() -> None:
-    text = (TEMPLATES / "ci" / "github-actions.yml").read_text()
+    text = (TEMPLATES / "ci" / "github-actions.yml").read_text(encoding="utf-8")
     for command in ("check", "generate", "verify", "export"):
         assert f"harness {command} design" in text
 
+    # the same commands in the same order as build.sh (it once left out `drc`, the only one that
+    # fails on design rule errors)
+    def commands(source: str, folder: str) -> list[str]:
+        return re.findall(rf"^\s*harness (\w+) {folder}(?=\s|$)", source, re.M)
+
+    script = (TEMPLATES / "ci" / "build.sh").read_text()
+    assert commands(text, "design") == commands(script, r'"\$DIR"')
+    assert "drc" in commands(text, "design")
+
 
 def test_the_template_readme_lists_every_file() -> None:
-    text = (TEMPLATES / "README.md").read_text()
+    text = (TEMPLATES / "README.md").read_text(encoding="utf-8")
     for path in TEMPLATES.rglob("*"):
         if path.is_file() and path.name != "README.md" and path.parent.name != "config-demo-values":
             assert path.name in text, path.name

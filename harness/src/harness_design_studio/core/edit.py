@@ -6,11 +6,15 @@ edit is a transaction that is rolled back if it would leave the project inconsis
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
+
+from pydantic import TypeAdapter, ValidationError
 
 from .commands import Delete, Op, Put, SetConfig, SetZones
 from .describe import part_gender
 from .errors import HarnessError
+from .ids import check_id
 from .model import (
     Connector,
     Endpoint,
@@ -21,6 +25,7 @@ from .model import (
     Unit,
     evolve,
 )
+from .model.base import Name
 from .model.config import ConfigFile
 
 LANE_WIDTH = 470.0
@@ -67,6 +72,22 @@ def unit_footprint(project: Project, unit_id: str) -> float:
 
 class EditError(HarnessError):
     """An edit that cannot be done; the message says why in plain language."""
+
+
+def _check_new_id(new_id: str) -> None:
+    """An EditError (not a raw validation error) for an ID the model would refuse."""
+    try:
+        check_id(new_id)
+    except ValueError as exc:
+        raise EditError(f"'{new_id}' cannot be used as an ID: it {exc}.") from exc
+
+
+def _known[V](table: Mapping[str, V], key: str, what: str) -> V:
+    """The object called `key`, or an EditError that says which one is missing."""
+    got = table.get(key)
+    if got is None:
+        raise EditError(f"{what} '{key}' does not exist.")
+    return got
 
 
 # ---- templates ---------------------------------------------------------------------------------
@@ -178,7 +199,9 @@ def lane_index_of_x(project: Project, x: float) -> int:
 
 
 def zone_of_x(project: Project, x: float) -> str:
-    return effective_zones(project)[lane_index_of_x(project, x)]
+    """The zone (lane) at `x`; '' while the project has no zones (one implicit lane)."""
+    zones = effective_zones(project)
+    return zones[lane_index_of_x(project, x)] if zones else ""
 
 
 def lane_x(index: int) -> float:
@@ -189,7 +212,7 @@ def position_of(project: Project, unit_id: str) -> tuple[float, float]:
     p = project.placements.get(unit_id)
     if p is not None:
         return p.x, p.y
-    return free_slot(project, project.units[unit_id].zone)
+    return free_slot(project, _known(project.units, unit_id, "Unit").zone)
 
 
 def ops_autoplace(project: Project) -> list[Op]:
@@ -222,7 +245,7 @@ def ops_arrange(project: Project) -> list[Op]:
     to shorten and uncross links (barycenter ordering from the neighbouring lanes, a few sweeps),
     then stacked top to bottom without overlap. Deterministic; one undo step."""
     zones = effective_zones(project)
-    lanes: dict[int, list[str]] = {k: [] for k in range(len(zones))}
+    lanes: dict[int, list[str]] = {k: [] for k in range(max(1, len(zones)))}  # no zones: one lane
     for uid in sorted(project.units):
         zone = project.units[uid].zone
         lane = (
@@ -280,9 +303,9 @@ def free_slot(
     else:  # no preference: fill the emptiest lane first so the diagram stays balanced
         counts = [
             sum(1 for px, _, _ in placed if lane_index_of_x(project, px) == i)
-            for i in range(len(zones))
+            for i in range(max(1, len(zones)))
         ]
-        order = sorted(range(len(zones)), key=lambda i: (counts[i], i))
+        order = sorted(range(max(1, len(zones))), key=lambda i: (counts[i], i))
     for lane in order:
         x = lane_x(lane)
         y = 40.0
@@ -306,11 +329,33 @@ class Compat:
     why: str = ""
 
 
+_USED: tuple[tuple[InterfaceInstance, ...], dict[str, InterfaceInstance]] | None = None
+
+
+def _used_connectors(project: Project) -> dict[str, InterfaceInstance]:
+    """Connector ID -> the first interface that ends on it. Built once and reused while the
+    interfaces are the same objects (they are immutable), so asking about every connector of a
+    large project does not scan all interfaces each time."""
+    global _USED
+    current = tuple(project.interfaces.values())
+    hit = _USED
+    if (
+        hit is not None
+        and len(hit[0]) == len(current)
+        and all(a is b for a, b in zip(hit[0], current, strict=True))
+    ):
+        return hit[1]
+    index: dict[str, InterfaceInstance] = {}
+    for i in current:
+        for e in i.endpoints:
+            if e.connector_id is not None:
+                index.setdefault(e.connector_id, i)
+    _USED = (current, index)
+    return index
+
+
 def interface_using(project: Project, connector_id: str) -> InterfaceInstance | None:
-    for i in project.interfaces.values():
-        if any(e.connector_id == connector_id for e in i.endpoints):
-            return i
-    return None
+    return _used_connectors(project).get(connector_id)
 
 
 def unit_connectors(project: Project, unit_id: str) -> list[Connector]:
@@ -325,10 +370,9 @@ def carries(connector: Connector, type_id: str) -> bool:
 
 
 def free_connectors(project: Project, unit_id: str, type_id: str) -> list[Connector]:
+    used = _used_connectors(project)
     return [
-        c
-        for c in unit_connectors(project, unit_id)
-        if carries(c, type_id) and interface_using(project, c.id) is None
+        c for c in unit_connectors(project, unit_id) if carries(c, type_id) and c.id not in used
     ]
 
 
@@ -345,6 +389,8 @@ def unit_compat(
         return Compat(
             False, "Unknown interface type", f"Interface type '{type_id}' does not exist."
         )
+    if unit_id not in project.units:
+        return Compat(False, "Unknown unit", f"Unit '{unit_id}' does not exist.")
     if source_unit == unit_id:
         return Compat(False, "Same unit", "A unit cannot be connected to itself.")
     if not free_connectors(project, unit_id, type_id):
@@ -371,14 +417,14 @@ def connector_compat(
     used = interface_using(project, connector_id)
     if used is not None:
         return Compat(
-            False, "In use", f"{c.name} already carries {used.id}. One interface per connector."
+            False, "In use", f"{c.id} already carries {used.id}. One interface per connector."
         )
     if not carries(c, type_id):
         names = ", ".join(_type_name(project, t) for t in c.carries)
         return Compat(
             False,
             "Wrong type",
-            f"{c.name} does not carry {_type_name(project, type_id)} (it carries {names}).",
+            f"{c.id} does not carry {_type_name(project, type_id)} (it carries {names}).",
         )
     return Compat(True)
 
@@ -412,10 +458,11 @@ def ops_add_unit(
         uid = unit_id
         if uid.casefold() in _taken(set(project.units)) | _connector_owners(project):
             raise EditError(f"ID {uid} is already used.")
+        _check_new_id(uid)
         unit_name = name or f"{tpl.label} {uid}"
     if x is None or y is None:
         x, y = free_slot(project, None, expert_height(len(tpl.connectors)))
-    zone = zone_of_x(project, x)
+    zone = zone_of_x(project, x) or None  # a project without zones has one implicit lane
     ops: list[Op] = [
         Put(
             "units",
@@ -456,15 +503,24 @@ def delete_impact(project: Project, unit_id: str) -> DeleteImpact:
     ifs = sorted(
         i.id for i in project.interfaces.values() if any(e.unit_id == unit_id for e in i.endpoints)
     )
-    blocked = sorted(
-        h.id
-        for h in project.harnesses.values()
-        if (not h.generated or h.status == "released")  # generated plans just become outdated
-        and any(
-            w.from_connector in conns or w.to_connector in conns or w.interface_id in ifs
+    blocked = []
+    for h in project.harnesses.values():
+        if h.generated and h.status != "released":  # generated plans just become outdated
+            continue
+        # a wire ends on a cable connector of the harness; the unit's connector is what it mates with
+        box_of = {c.id: c.mates_with for c in h.connectors}
+
+        def on_unit(
+            cid: str, conns: set[str] = conns, box_of: dict[str, str | None] = box_of
+        ) -> bool:
+            return cid in conns or box_of.get(cid) in conns
+
+        if any(
+            on_unit(w.from_connector) or on_unit(w.to_connector) or w.interface_id in ifs
             for w in h.wires
-        )
-    )
+        ):
+            blocked.append(h.id)
+    blocked.sort()
     return DeleteImpact(tuple(ifs), tuple(sorted(conns)), tuple(blocked))
 
 
@@ -540,10 +596,10 @@ def ops_delete_harness(project: Project, harness_id: str) -> list[Op]:
 
 
 def ops_move_unit(project: Project, unit_id: str, x: float, y: float) -> list[Op]:
-    unit = project.units[unit_id]
+    unit = _known(project.units, unit_id, "Unit")
     ops: list[Op] = [Put("placements", Placement(id=unit_id, x=x, y=y))]
-    zone = zone_of_x(project, x)
-    if unit.zone != zone:
+    zone = zone_of_x(project, x) or None
+    if zone is not None and unit.zone != zone:
         ops.append(Put("units", evolve(unit, zone=zone)))
     return ops
 
@@ -552,6 +608,12 @@ def ops_add_zone(project: Project, name: str) -> list[Op]:
     name = name.strip()
     if not name:
         raise EditError("A zone needs a name.")
+    try:
+        TypeAdapter(Name).validate_python(name, strict=True)
+    except ValidationError as exc:
+        raise EditError(
+            "A zone name can have 1 to 200 characters and no control characters."
+        ) from exc
     if name.casefold() in {z.casefold() for z in effective_zones(project)}:
         raise EditError(f"A zone called '{name}' already exists.")
     return [SetZones((*project.zones, name))]
@@ -571,7 +633,8 @@ def ops_rename_unit(project: Project, old: str, new: str) -> list[Op]:
     }
     if new.casefold() in foreign:
         raise EditError(f"ID {new} is already used as the start of other connector IDs.")
-    unit = evolve(project.units[old], id=new)  # validates the new ID format
+    _check_new_id(new)
+    unit = evolve(project.units[old], id=new)
     ops: list[Op] = [Put("units", unit), Delete("units", old)]
     if old in project.placements:
         p = project.placements[old]
@@ -603,6 +666,8 @@ def ops_add_interface(
 ) -> tuple[list[Op], str]:
     """Add an interface; connectors not given are chosen automatically and marked `auto`."""
     chosen: list[tuple[str, str, bool]] = []
+    if interface_id is not None and interface_id in project.interfaces:
+        raise EditError(f"ID {interface_id} is already used.")
     for unit_id, conn_id in ((from_unit, from_connector), (to_unit, to_connector)):
         if unit_id not in project.units:
             raise EditError(f"Unit '{unit_id}' does not exist.")
@@ -626,8 +691,11 @@ def ops_add_interface(
             )
             if not compat.ok:
                 raise EditError(compat.why)
+            if project.connectors[conn_id].unit_id != unit_id:
+                raise EditError(f"{conn_id} is not a connector of {unit_id}.")
             chosen.append((unit_id, conn_id, False))
     iid = interface_id or next_interface_id(project)
+    _check_new_id(iid)
     side = project.units[from_unit].side
     inst = InterfaceInstance(
         id=iid,
@@ -717,10 +785,16 @@ def _twin_unit_ops(project: Project, unit: Unit) -> list[Op]:
     tid = twin_id(unit.id)
     lane = lane_index_of_x(project, position_of(project, unit.id)[0])
     zones = effective_zones(project)
-    target_zone = zones[(lane + 1) % len(zones)] if len(zones) > 1 else zones[0]
+    target_zone = (
+        zones[(lane + 1) % len(zones)] if len(zones) > 1 else (zones[0] if zones else None)
+    )
     x, y = free_slot(project, target_zone, unit_footprint(project, unit.id))
     twin = evolve(
-        unit, id=tid, name=f"{unit.name} (redundant)", side="redundant", zone=zone_of_x(project, x)
+        unit,
+        id=tid,
+        name=f"{unit.name} (redundant)",
+        side="redundant",
+        zone=zone_of_x(project, x) or None,
     )
     ops: list[Op] = [Put("units", twin), Put("placements", Placement(id=tid, x=x, y=y))]
     for c in unit_connectors(project, unit.id):
@@ -728,13 +802,21 @@ def _twin_unit_ops(project: Project, unit: Unit) -> list[Op]:
         new_id = f"{tid}-{suffix}"
         if new_id.casefold() in {x.casefold() for x in project.connectors}:
             raise EditError(f"Cannot make the redundant copy: connector {new_id} already exists.")
-        ops.append(Put("connectors", evolve(c, id=new_id, unit_id=tid)))
+        # the copy starts without the original's pin assignments: they belong to interfaces that
+        # do not end on the twin. Pins the person locked or the unit fixes keep their signal.
+        pins = [
+            evolve(p, interface_id=None, signal=p.signal if p.locked or p.fixed else None)
+            if p.interface_id is not None
+            else p
+            for p in c.pins
+        ]
+        ops.append(Put("connectors", evolve(c, id=new_id, unit_id=tid, pins=pins)))
     return ops
 
 
 def ops_complete_chain(project: Project, interface_id: str) -> tuple[list[Op], str]:
     """Fix for a cross-strap: move the nominal end of the interface onto a redundant twin."""
-    i = project.interfaces[interface_id]
+    i = _known(project.interfaces, interface_id, "Interface")
     nominal = [
         e
         for e in i.endpoints
@@ -793,7 +875,9 @@ def ops_set_endpoint_connector(
     project: Project, interface_id: str, index: int, connector_id: str
 ) -> list[Op]:
     """Expert mode: choose the exact connector for one end of an interface (marks it confirmed)."""
-    i = project.interfaces[interface_id]
+    i = _known(project.interfaces, interface_id, "Interface")
+    if not 0 <= index < len(i.endpoints):
+        raise EditError(f"{interface_id} has no end number {index}.")
     end = i.endpoints[index]
     if end.connector_id == connector_id:
         return []
@@ -811,7 +895,7 @@ def ops_set_endpoint_connector(
 
 
 def ops_set_connector_part(project: Project, connector_id: str, part_id: str) -> list[Op]:
-    c = project.connectors[connector_id]
+    c = _known(project.connectors, connector_id, "Connector")
     part = project.parts.get(part_id)
     if part is None or part.category != "connector":
         raise EditError(f"'{part_id}' is not a connector part in the library.")
@@ -836,7 +920,9 @@ def ops_update_interface(project: Project, interface_id: str, **changes: object)
     bad = set(changes) - allowed
     if bad:
         raise EditError(f"These interface fields cannot be changed here: {', '.join(sorted(bad))}.")
-    return [Put("interfaces", evolve(project.interfaces[interface_id], **changes))]
+    return [
+        Put("interfaces", evolve(_known(project.interfaces, interface_id, "Interface"), **changes))
+    ]
 
 
 def ops_update_unit(project: Project, unit_id: str, **changes: object) -> list[Op]:
@@ -844,7 +930,7 @@ def ops_update_unit(project: Project, unit_id: str, **changes: object) -> list[O
     bad = set(changes) - allowed
     if bad:
         raise EditError(f"These unit fields cannot be changed here: {', '.join(sorted(bad))}.")
-    return [Put("units", evolve(project.units[unit_id], **changes))]
+    return [Put("units", evolve(_known(project.units, unit_id, "Unit"), **changes))]
 
 
 def signal_names(project: Project) -> list[str]:
@@ -867,7 +953,7 @@ def wire_colour_map(project: Project) -> dict[str, str]:
 def ops_set_wire_colours(project: Project, colours: dict[str, str]) -> list[Op]:
     """Ops that set the wire colour of each signal; an empty colour removes the entry. The wires
     take the colours the next time the harnesses are generated."""
-    old = project.config["generation"]
+    old = _known(project.config, "generation", "Configuration file")
     values = dict(old.values)
     kept = {k: v for k, v in sorted(colours.items()) if v}
     if kept:

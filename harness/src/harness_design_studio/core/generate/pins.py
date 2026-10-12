@@ -127,9 +127,13 @@ def allocate(
     for req in ranked:
         is_power = req.itype.category in ("power", "ground")
         min_start = 0 if is_power else (power_end + 1 + gap_pins if power_end >= 0 else 0)
+        taken_before, power_end_before = set(taken), power_end
+        failed = False
         for why, signals in groups_of(req.itype):
             for s in [s for s in signals if (req.interface_id, s) in held]:
                 pid = held[(req.interface_id, s)]
+                if is_power and pid in index:  # a locked power pin counts for the gap as well
+                    power_end = max(power_end, index[pid])
                 result.pins[(req.interface_id, s)] = pid
                 result.reasons.setdefault(pid, []).append(
                     f"pin-allocation: {s} of {req.interface_id} stays on pin {pid} because the pin is locked"
@@ -194,7 +198,8 @@ def allocate(
                             f"{connector.id} has too few free pins for {', '.join(signals)} ({len(free)} free, {k} needed)",
                         )
                     )
-                    continue
+                    failed = True
+                    break
             for s, pid in zip(signals, chosen, strict=True):
                 taken.add(pid)
                 result.pins[(req.interface_id, s)] = pid
@@ -203,4 +208,18 @@ def allocate(
                 )
             if is_power:
                 power_end = max(power_end, max(index[p] for p in chosen))
+        if failed:  # all or nothing per interface: its other pins stay free for the next one
+            for key in [k for k in result.pins if k[0] == req.interface_id]:
+                pid = result.pins.pop(key)
+                if pid in result.reasons:
+                    result.reasons[pid] = [
+                        line
+                        for line in result.reasons[pid]
+                        if f" of {req.interface_id} " not in line
+                    ]
+                    if not result.reasons[pid]:
+                        del result.reasons[pid]
+            taken.clear()
+            taken.update(taken_before)
+            power_end = power_end_before
     return result

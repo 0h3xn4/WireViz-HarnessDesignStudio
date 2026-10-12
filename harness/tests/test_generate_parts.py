@@ -1,5 +1,7 @@
 """M3 building blocks: sizing, mass, lengths, pin allocation, segmentation modes, naming."""
 
+import pytest
+
 from harness_design_studio.core.commands import Put, apply_ops
 from harness_design_studio.core.generate.engine import generate_project, plan_generation
 from harness_design_studio.core.generate.lengths import (
@@ -22,6 +24,7 @@ from harness_design_studio.core.model import (
 )
 from harness_design_studio.core.model.config import ConfigFile
 from harness_design_studio.core.samples import mini3, sat15
+from harness_design_studio.core.units import awg_to_area_mm2
 from harness_design_studio.core.verify import verify_project
 
 # Test-only numbers: they exercise the arithmetic and are NOT engineering data.
@@ -48,12 +51,39 @@ def test_sizing_picks_smallest_gauge_that_carries_current() -> None:
     assert size_wire(FULL, gen, current_a=2.0, length_m=1.0, path_conductors=2).awg is None
 
 
+RHO = 1.7e-8  # test input, not engineering data
+
+
+def _drop_v(awg: int, current: float, length: float, conductors: int) -> float:
+    return current * RHO * length / (awg_to_area_mm2(awg) * 1e-6) * conductors
+
+
 def test_sizing_voltage_drop_can_force_a_larger_wire() -> None:
-    s = size_wire(
-        {**FULL, "max_voltage_drop_v": 0.001}, {"conductor_resistivity_ohm_m": 1.7e-8},
-        current_a=2.0, length_m=5.0, path_conductors=2,
-    )  # fmt: skip
-    assert s.error or (s.awg is not None and s.awg <= 20)
+    # 20 AWG carries 2 A after derating (5 A * 0.5), 18 AWG is the next larger wire in the table
+    d20, d18 = _drop_v(20, 2.0, 5.0, 2), _drop_v(18, 2.0, 5.0, 2)
+    assert d18 < d20
+    gen: dict[str, object] = {"conductor_resistivity_ohm_m": RHO}
+    s = size_wire({**FULL, "max_voltage_drop_v": (d20 + d18) / 2}, gen, current_a=2.0,
+                  length_m=5.0, path_conductors=2)  # fmt: skip
+    assert s.awg == 18 and not s.error
+    assert any(n.startswith("voltage drop: AWG 18") for n in s.notes)
+    # too strict for every listed gauge: an error, no gauge
+    s = size_wire({**FULL, "max_voltage_drop_v": d18 / 2}, gen, current_a=2.0, length_m=5.0,
+                  path_conductors=2)  # fmt: skip
+    assert s.awg is None and s.error and "voltage drop" in s.error
+
+
+def test_sizing_voltage_drop_limit_is_inclusive() -> None:
+    """A drop exactly equal to the limit passes; one hair over moves to the next larger wire."""
+    d20 = _drop_v(20, 2.0, 5.0, 2)
+    gen: dict[str, object] = {"conductor_resistivity_ohm_m": RHO}
+
+    def awg_for(limit: float) -> int | None:
+        return size_wire({**FULL, "max_voltage_drop_v": limit}, gen, current_a=2.0, length_m=5.0,
+                         path_conductors=2).awg  # fmt: skip
+
+    assert awg_for(d20) == 20
+    assert awg_for(d20 * (1 - 1e-6)) == 18  # clearly over the limit (the tolerance is 1e-9)
 
 
 def test_sizing_error_when_nothing_carries_the_current() -> None:
@@ -87,14 +117,24 @@ def test_mass_with_full_data_and_margin() -> None:
     p = generate_and_return(mini3())
     h = p.harnesses["W001"]
     parts = {c.part_id for c in h.connectors}
+    assert len(h.wires) == 2 and len(h.connectors) == 2
     for pid in parts:
         apply_ops(p, [Put("parts", evolve(p.parts[pid], mass_g=10.0))])
-    wp = next(iter(p.parts.values()))
-    assert wp is not None
-    r = harness_mass(p, h)
-    assert r.total_g == 20.0 or r.missing
+    wire_part = evolve(p.parts["EX-WIRE-SINGLE"], mass_per_m_g=3.0)
+    apply_ops(p, [Put("parts", wire_part)])
+    h2 = evolve(
+        h, wires=[evolve(w, part_id=wire_part.id, length_m=2.0 + k) for k, w in enumerate(h.wires)]
+    )
+    apply_ops(p, [Put("harnesses", h2)])
+    r = harness_mass(p, h2)
+    # two connectors of 10 g, wires of 2 m and 3 m at 3 g/m
+    assert r.complete and not r.missing
+    assert r.total_g == 20.0 + 3.0 * 2.0 + 3.0 * 3.0
+    assert r.margin_g is None and r.with_margin_g is None  # margin is still a placeholder
     _with_config(p, "generation", mass_margin_fraction=0.1)
-    assert harness_mass(p, h).margin_g is not None
+    r = harness_mass(p, h2)
+    assert r.margin_g == pytest.approx(3.5)
+    assert r.with_margin_g == pytest.approx(38.5)
 
 
 def generate_and_return(p: Project) -> Project:
@@ -232,7 +272,26 @@ def test_pins_non_adjacent_is_a_warning() -> None:
     c = _connector(6)
     pins = [evolve(x, locked=True, signal="X") if x.id in ("2", "4", "6") else x for x in c.pins]
     out = allocate(evolve(c, pins=pins), [Request("IF-A", p.interface_types["rs422"])], {}, 0)
-    assert out.warnings or out.errors
+    # TX+ and TX- could only go on pins 1 and 3 (a warning); RX has one free pin left: an error.
+    # An interface that fails keeps none of its pins (all or nothing), so the pins stay free.
+    assert out.pins == {}
+    assert [w[1] for w in out.warnings] == [
+        "TX+, TX- could not be placed on adjacent pins of U-J01"
+    ]
+    assert [e[1] for e in out.errors] == [
+        "U-J01 has too few free pins for RX+, RX- (1 free, 2 needed)"
+    ]
+
+
+def test_pins_non_adjacent_fallback_still_places_every_signal() -> None:
+    p = mini3()
+    c = _connector(8)
+    pins = [evolve(x, locked=True, signal="X") if x.id in ("2", "4", "6") else x for x in c.pins]
+    out = allocate(evolve(c, pins=pins), [Request("IF-A", p.interface_types["rs422"])], {}, 0)
+    assert not out.errors and len(set(out.pins.values())) == 4
+    assert [w[1] for w in out.warnings] == [
+        "RX+, RX- could not be placed on adjacent pins of U-J01"
+    ]
 
 
 # ---- segmentation modes and naming ---------------------------------------------------------------

@@ -15,6 +15,7 @@ What is not known yet is how your KiCad names relate to the tool's, so nothing i
 """
 
 import re
+import stat
 from dataclasses import dataclass, field
 from pathlib import Path
 from xml.etree import ElementTree  # noqa: S405 - DOCTYPE and entities are refused before parsing
@@ -169,15 +170,30 @@ def _parse_sexpr(data: bytes) -> Netlist:
 
 
 def _to_utf8(data: bytes) -> bytes:
-    """Drop a byte order mark and convert UTF-16 text (some editors save it that way)."""
+    """Text as UTF-8 bytes: a byte order mark is dropped and UTF-16 or UTF-32 text (some editors
+    save it that way), with or without a mark, is converted. The checks that follow then see the
+    same characters whatever the file's encoding."""
     if data.startswith(b"\xef\xbb\xbf"):
         return data[3:]
-    if data.startswith((b"\xff\xfe", b"\xfe\xff")):
-        try:
-            return data.decode("utf-16").encode("utf-8")
-        except UnicodeDecodeError as exc:
-            raise NetlistError("The netlist is not valid UTF-16 text.") from exc
-    return data
+    codec = None
+    if data.startswith((b"\xff\xfe\x00\x00", b"\x00\x00\xfe\xff")):
+        codec = "utf-32"
+    elif data.startswith((b"\xff\xfe", b"\xfe\xff")):
+        codec = "utf-16"
+    elif len(data) >= 4 and data[1:4] == b"\0\0\0" and data[0]:
+        codec = "utf-32-le"  # no mark: the first character is ASCII, so zero bytes give it away
+    elif len(data) >= 4 and data[:3] == b"\0\0\0" and data[3]:
+        codec = "utf-32-be"
+    elif len(data) >= 2 and data[1] == 0 and data[0]:
+        codec = "utf-16-le"
+    elif len(data) >= 2 and data[0] == 0 and data[1]:
+        codec = "utf-16-be"
+    if codec is None:
+        return data
+    try:
+        return data.decode(codec).encode("utf-8")
+    except UnicodeDecodeError as exc:
+        raise NetlistError(f"The netlist is not valid {codec.split('-')[0].upper()} text.") from exc
 
 
 def parse_netlist(data: bytes) -> Netlist:
@@ -237,9 +253,10 @@ def _parse_xml(data: bytes) -> Netlist:
 def read_netlist(path: Path | str) -> Netlist:
     p = Path(path)
     try:
-        if not p.is_file():
+        info = p.stat()
+        if not stat.S_ISREG(info.st_mode):
             raise NetlistError("The netlist must be a regular file.")
-        if p.stat().st_size > MAX_BYTES:
+        if info.st_size > MAX_BYTES:
             raise NetlistError("The netlist is too large (limit 32 MB).")
         return parse_netlist(p.read_bytes())
     except OSError as exc:
@@ -408,12 +425,19 @@ def plan_netlist_import(
                 seen_names.setdefault(signal, number)
             was = next((p for p in (old.pins if old else []) if p.id == number), None)
             base = was or Pin(id=number)
+            if base.locked:  # a pin someone locked by hand is not the netlist's to change
+                pins[number] = base
+                if signal != base.signal:
+                    plan.warnings.append(
+                        f"{cid}: pin {number} is locked (signal {base.signal or 'none'}) and was not changed; the netlist says {signal or 'no signal'}"
+                    )
+                continue
             try:
                 pins[number] = evolve(
                     base,
                     signal=signal,
                     fixed=signal is not None,
-                    interface_id=None if signal is not None else base.interface_id,
+                    interface_id=None,  # generation allocates again; a pin without a signal has none
                 )
             except ValueError:  # a signal name longer than a signal name may be, for example
                 plan.rows.append(

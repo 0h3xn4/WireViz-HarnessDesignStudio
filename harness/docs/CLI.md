@@ -9,8 +9,11 @@ Generated from the program by `python -m tools.gen_cli_docs`; do not edit by han
 | 0 | success (warnings are allowed) |
 | 1 | the project has errors, or a step is blocked (for example a release) |
 | 2 | usage error, or a project or file that could not be read |
+| 130 | interrupted with Ctrl-C |
 
-Every command that changes a project takes the same lock as the app, so the two never write at once. Commands that import data accept `--dry-run`: they show what they would do and change nothing.
+Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-netlist`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not.
+
+The examples show the form of each command with example names. They do not all work on any project: `release` is blocked until its conditions are met (placeholder configuration, unapproved parts, missing gauges and lengths; see [`GETTING_STARTED.md`](GETTING_STARTED.md)), and `revise` works only on a released harness.
 
 ## Contents
 
@@ -188,7 +191,7 @@ Hand-over checklist for the engineering values (derating, grounding, test limits
 
 | Argument | Meaning |
 | --- | --- |
-| `project` |  |
+| `project` | the project folder |
 | `--ampacity-csv AMPACITY_CSV` | CSV with a gauge column and an amperes column; sets derating.ampacity_a_by_awg |
 | `--apply-profile NAME` | fill the unset values from a standard profile (ecss-q-st-30-11c, ecss-e-st-20-07c); values you already set are kept; the files stay placeholders until you review them |
 
@@ -208,7 +211,7 @@ Without options: print the library's name, version, source and date. With option
 
 | Argument | Meaning |
 | --- | --- |
-| `project` |  |
+| `project` | the project folder |
 | `--library-name LIBRARY_NAME` | name of the parts library |
 | `--library-version LIBRARY_VERSION` | version of the parts data |
 | `--library-source LIBRARY_SOURCE` | where the data comes from (default for import-parts: the file name and its SHA-256) |
@@ -229,8 +232,8 @@ Import parts with their approval status. Say what the approval values in your li
 
 | Argument | Meaning |
 | --- | --- |
-| `project` |  |
-| `file` |  |
+| `project` | the project folder |
+| `file` | the file to read |
 | `--approved APPROVED` | a value of the approval column that means approved (repeat) (repeatable) |
 | `--pending PENDING` | a value that means not decided yet (repeat) (repeatable) |
 | `--rejected REJECTED` | a value that means not approved (repeat) (repeatable) |
@@ -250,16 +253,16 @@ harness import-parts my-design connectors.xlsx --approved Yes --category connect
 
 ### harness import-lengths
 
-Import segment lengths, for example exported from the mechanical CAD (KiCad users: see docs/IMPORTS.md).
+Import segment lengths, for example exported from the mechanical CAD. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).
 
 `harness import-lengths project file [options]`
 
 | Argument | Meaning |
 | --- | --- |
-| `project` |  |
-| `file` |  |
-| `--unit UNIT` | unit of the length column (default mm) (default mm) |
-| `--dry-run` |  |
+| `project` | the project folder |
+| `file` | the file to read |
+| `--unit UNIT` | unit of the length column (default mm) (one of cm, m, mm) |
+| `--dry-run` | show what would be done and change nothing |
 
 Examples:
 
@@ -269,22 +272,22 @@ harness import-lengths my-design lengths.csv --unit mm --dry-run
 
 ### harness import-netlist
 
-Create or update the box connectors of one unit from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. See docs/KICAD.md.
+Create or update the box connectors of one unit from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The user guide has a chapter on it.
 
 `harness import-netlist project netlist [options]`
 
 | Argument | Meaning |
 | --- | --- |
-| `project` |  |
-| `netlist` |  |
+| `project` | the project folder |
+| `netlist` | the netlist file to read |
 | `--unit UNIT` | the unit these connectors belong to, for example OBC1 |
 | `--ref REF` | reference of a connector in the netlist, for example J1 (repeat; default: every component starting with --prefix) (repeatable) |
-| `--prefix PREFIX` | reference prefix that marks connectors (default J) (default J) |
+| `--prefix PREFIX` | reference prefix that marks connectors (default J) |
 | `--connector REF=ID` | connector ID for a reference, for example J1=OBC1-J01 (default: the symbol field HarnessConnector, else <unit>-<ref>) (repeatable) |
 | `--part REF=PART` | library part for a new connector (default: the symbol field HarnessPart, or the existing connector's part) (repeatable) |
 | `--signal-map NAME=SIGNAL|FILE` | translate a KiCad net name to an interface signal name (repeatable), or a CSV (net name, signal) or JSON object file of such pairs (repeatable) |
 | `--pin-function` | use the pin names of the symbol instead of the net names as signals |
-| `--dry-run` |  |
+| `--dry-run` | show what would be done and change nothing |
 
 Examples:
 
@@ -373,7 +376,7 @@ Examples:
 
 ```
 harness diff my-design W001
-harness diff my-design W001 --from A --to B
+harness diff my-design W001 --from A
 ```
 
 ### harness log

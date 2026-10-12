@@ -1,9 +1,10 @@
 """J5/J6 (M3): generate harnesses from the editor: preview, one undo step, status, Explain."""
 
 import pytest
-from PySide6.QtWidgets import QDialog, QPushButton
 
 pytest.importorskip("PySide6")
+from PySide6.QtWidgets import QPushButton  # noqa: E402
+
 pytestmark = pytest.mark.gui
 
 from harness_design_studio.core.commands import Put  # noqa: E402
@@ -99,7 +100,8 @@ def test_default_worker_computes_a_plan(win) -> None:  # type: ignore[no-untyped
 
 def test_read_only_project_cannot_generate(win) -> None:  # type: ignore[no-untyped-def]
     win.ctl.project.read_only = True
+    before = model_hash(win.ctl.project)
     script = DialogScript(win, accept=True)
     win.generate_flow()
     assert not script.seen
-    assert QDialog is not None
+    assert model_hash(win.ctl.project) == before  # nothing generated, nothing changed

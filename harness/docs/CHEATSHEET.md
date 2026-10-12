@@ -7,7 +7,7 @@ One page. Every command is explained in [`CLI.md`](CLI.md); `harness COMMAND --h
 ```
 harness new my-design --template first-steps   # start a project that has units (harness new --list shows the examples)
 harness generate my-design                # make harnesses, connectors, pins, wires
-harness check my-design                   # fast logical check
+harness check my-design                   # validate, plus leftovers of Git merges and edits to released harnesses
 harness drc my-design                     # the full design rule check, as a report
 harness export my-design                  # drawings, wire lists, pinouts, BOM, test tables
 harness verify my-design --outputs        # an independent check of the exported files

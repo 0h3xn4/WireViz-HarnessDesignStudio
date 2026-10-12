@@ -15,11 +15,12 @@ repeats the connectors it needs and marks a continued cable block.
 import textwrap
 from dataclasses import dataclass
 
+from harness_design_studio.core import configcheck
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Connector, Harness, Project, ShieldGroup, Wire
 from harness_design_studio.core.wirecolours import resolve
 
-from .canvas import SHEETS, Curve, Line, Rect, Sheet, Text, fit, fit_size
+from .canvas import CHAR_EM, SHEETS, Curve, Line, Rect, Sheet, Text, fit, fit_size
 from .stamp import Stamp
 from .tables import PENDING, num
 
@@ -317,7 +318,7 @@ def _draw_sleeve(
     bottom_row: float,
     depth: int,
     inner: int,
-    wires: list[Wire],
+    first: Wire,
 ) -> None:
     """A shield as a sleeve around its wires: a grey jacket reaching a little beyond the cable
     block (less far for a shield inside another), a line above it with the shield's name and
@@ -332,8 +333,9 @@ def _draw_sleeve(
             x0, top, x1 - x0, bottom - top, width=0.45, fill=_LEVELS[min(depth, 2)], color="#444444"
         )
     )
-    first = next((w for w in wires if w.id in shield.wire_ids), wires[0])
-    left_is_a = side.get(first.from_connector, 0) == 0  # end A is the end of the first wire's start
+    # end A is the start of the shield's reference wire (its lowest wire ID in the whole harness),
+    # so the ends never swap between sheets
+    left_is_a = side.get(first.from_connector, 0) == 0
     left, right = (shield.end_a, shield.end_b) if left_is_a else (shield.end_b, shield.end_a)
     base = head_y + 3.0
     sh.add(
@@ -360,6 +362,16 @@ def _draw_sleeve(
         else:  # floating: an open end, drawn as a cross
             sh.add(Line(x - 1.2, mid - 1.2, x + 1.2, mid + 1.2, width=0.4, color="#444444"))
             sh.add(Line(x - 1.2, mid + 1.2, x + 1.2, mid - 1.2, width=0.4, color="#444444"))
+
+
+def _reference_wire(h: Harness, shield: ShieldGroup, page_wires: list[Wire]) -> Wire:
+    """The wire that says which end of the shield is end A: the shield's wire with the lowest ID
+    in the whole harness, not the first one on this sheet."""
+    by_id = {w.id: w for w in h.wires}
+    ids = sorted(i for i in shield.wire_ids if i in by_id)
+    if ids:
+        return by_id[ids[0]]
+    return next((w for w in page_wires if w.id in shield.wire_ids), page_wires[0])
 
 
 def _place_blocks(
@@ -461,21 +473,27 @@ def _draw_page(
                     color=GREY if k else "#000000",
                 )
             )
-        split = x + CONN_W - 12.0 if col == 0 else x + 12.0
+        longest = max((len(p) for p in rows[cid]), default=0)
+        num_w = max(12.0, longest * ID_FLOOR * CHAR_EM + 2.5)  # wide enough for the longest pin ID
+        split = x + CONN_W - num_w if col == 0 else x + num_w
         sh.add(Line(split, top[cid] + HEAD_H, split, top[cid] + height, width=0.25))
         for k, pin in enumerate(rows[cid]):
             yy = top[cid] + HEAD_H + (k + 1) * ROW
             if k < len(rows[cid]) - 1:
                 sh.add(Line(x, yy, x + CONN_W, yy, width=0.2, color="#bbbbbb"))
             base = yy - 1.2
-            signal = fit(_signal(cid, pin, project, h), CONN_W - 12.0 - 3.0, PIN_SIZE)
-            number = fit(pin, 10.5, PIN_SIZE)
+            signal = fit(_signal(cid, pin, project, h), CONN_W - num_w - 3.0, PIN_SIZE)
+            n_size = fit_size(pin, num_w - 1.5, PIN_SIZE, ID_FLOOR)  # shrunk, never cut
+            ref = f"{cid}/{pin}"  # lets the output check find the pin and its signal again
             if col == 0:
-                sh.add(Text(x + 1.5, base, signal, size=PIN_SIZE))
-                sh.add(Text(x + CONN_W - 1.5, base, number, size=PIN_SIZE, bold=True, anchor="end"))
+                sh.add(Text(x + 1.5, base, signal, size=PIN_SIZE, ref=f"sig/{ref}"))
+                sh.add(
+                    Text(x + CONN_W - 1.5, base, pin, size=n_size, bold=True, anchor="end",
+                         ref=f"pin/{ref}")
+                )  # fmt: skip
             else:
-                sh.add(Text(x + 1.5, base, number, size=PIN_SIZE, bold=True))
-                sh.add(Text(x + 12.0 + 1.5, base, signal, size=PIN_SIZE))
+                sh.add(Text(x + 1.5, base, pin, size=n_size, bold=True, ref=f"pin/{ref}"))
+                sh.add(Text(x + num_w + 1.5, base, signal, size=PIN_SIZE, ref=f"sig/{ref}"))
     # cable blocks, sleeves and wires
     shields = {sg.id: sg for sg in h.shields}
     bottom = max(ends) - GAP
@@ -529,8 +547,9 @@ def _draw_page(
         for sid in sorted(heads, key=lambda k: (heads[k], k)):  # the outer sleeves first
             depth = next(len(c) - 1 for _y, kd, _w, c in placed if kd == "head" and c[-1] == sid)
             _draw_sleeve(
-                sh, shields[sid], side, box_x, heads[sid], last[sid], depth, inner[sid], ws
-            )
+                sh, shields[sid], side, box_x, heads[sid], last[sid], depth, inner[sid],
+                _reference_wire(h, shields[sid], ws),
+            )  # fmt: skip
         for yy, _kind, wire, _chain in placed:
             if wire is None:
                 continue
@@ -620,13 +639,7 @@ def _title_block(
 
 def harness_sheets(project: Project, h: Harness, stamp: Stamp, size: str) -> list[Sheet]:
     w_mm, h_mm = SHEETS[size]
-    raw_fields = (
-        project.config["titleblock"].values.get("fields")
-        if "titleblock" in project.config
-        else None
-    )
-    fields = [str(f) for f in raw_fields] if isinstance(raw_fields, list) else []
-    fields = fields or ["project", "harness_id", "title", "revision", "status", "sheet"]
+    fields = configcheck.titleblock_fields(project)
     head_h = 14.0
     capacity = h_mm - 2 * MARGIN - head_h - TB_H - 4.0
     groups: dict[tuple[str, str], list[Wire]] = {}
@@ -719,16 +732,18 @@ def _draw_sketch(sh: Sheet, h: Harness, y: float, width: float) -> None:
             ya, yb = ay + NODE_H / 2, by + NODE_H / 2
             sh.add(Line(xa, ya, xb, yb, width=0.5))
             length = f"{num(g.length_m)} m" if g.length_m is not None else "? m"
-            sh.add(
-                Text(
-                    (xa + xb) / 2,
-                    (ya + yb) / 2 - 1.0,
-                    fit(f"{g.id} {length}", gap_x, 2.2),
-                    size=2.2,
-                    anchor="middle",
-                    color=GREY,
+            for k, text in enumerate((g.id, length)):  # the ID above the line, the length below
+                size = fit_size(text, gap_x, 2.2, ID_FLOOR)
+                sh.add(
+                    Text(
+                        (xa + xb) / 2,
+                        (ya + yb) / 2 - 1.0 + k * 3.4,
+                        fit(text, gap_x, size),
+                        size=size,
+                        anchor="middle",
+                        color=GREY,
+                    )
                 )
-            )
     connector_ids = {c.id for c in h.connectors}
     for n, (x, yy) in pos.items():
         sh.add(

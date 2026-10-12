@@ -149,7 +149,7 @@ def input_hash(project: Project) -> str:
         ]
         boxes.append(d)
     generated = [h for h in project.harnesses.values() if h.generated]
-    payload = {
+    payload: dict[str, Any] = {
         "units": dump(project.units.values()),
         "interfaces": dump(project.interfaces.values()),
         "interface_types": dump(project.interface_types.values()),
@@ -165,6 +165,19 @@ def input_hash(project: Project) -> str:
             h.id: sorted((s.id, s.length_m) for s in h.segments) for h in generated
         },
     }
+    # Interfaces that manual harnesses route are left out of generation. Only added when there are
+    # any, so a project without manual harnesses keeps its hash. Never the release status.
+    manual = sorted(
+        {
+            w.interface_id
+            for h in project.harnesses.values()
+            if not h.generated
+            for w in h.wires
+            if w.interface_id
+        }
+    )
+    if manual:
+        payload["manual_interfaces"] = manual
     return hashlib.sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
     ).hexdigest()
@@ -306,6 +319,7 @@ def plan_generation(
         for w in h.wires
         if w.interface_id
     }  # manual harnesses own their pins
+    old_for = _match_renamed(old_by_key, frozen, seg.groups)
     tick(0.02, "Segmenting")
 
     frozen_owned = {
@@ -313,7 +327,7 @@ def plan_generation(
     }
     live: list[Group] = []
     for g in seg.groups:
-        if old_by_key.get(g.key) and old_by_key[g.key].id in frozen:
+        if old_for.get(g.key) and old_for[g.key].id in frozen:
             continue
         # an interface a released harness already carries must not be wired a second time, even
         # when a change (redundancy, segmentation mode) moved it into a different group
@@ -333,7 +347,7 @@ def plan_generation(
     new_harnesses: dict[str, Harness] = {}
     for n, group in enumerate(live):
         tick(0.2 + 0.7 * n / max(1, len(live)), f"Building {group.label}")
-        h = _build_harness(ctx, group, old_by_key.get(group.key))
+        h = _build_harness(ctx, group, old_for.get(group.key))
         if h is not None:
             new_harnesses[h.id] = h
 
@@ -365,6 +379,8 @@ def plan_generation(
         if old.id not in new_harnesses and old.id not in frozen:
             report.removed.append(old.id)
             ops.append(Delete("harnesses", old.id))
+        if old.id not in frozen:
+            _warn_lost_data(ctx, old, new_harnesses.get(old.id))
     for hid in sorted(new_harnesses):
         h = new_harnesses[hid]
         existing = project.harnesses.get(hid)
@@ -650,12 +666,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
     # generation.
     segments.sort(key=lambda s: s.id)
     # ---- wires
-    old_wires = {}
-    for w in old.wires if old else []:
-        src = next(
-            (c.mates_with for c in (old.connectors if old else []) if c.id == w.from_connector), ""
-        )
-        old_wires[f"{w.interface_id}|{w.signal}|{src}"] = w
+    old_wires = _wire_keys(old)
     used_wires = {w.id for w in old_wires.values()}
     wire_n = 1
     wires: list[Wire] = []
@@ -686,7 +697,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
             pin_dst = _pin_of(ctx, dst_box, i.id, link.to_signal)
             if pin_src is None or pin_dst is None:
                 continue
-            key = f"{i.id}|{link.label}|{src_box}"
+            key = _wire_key(i.id, link.label, src_box)
             prev_w = old_wires.get(key)
             if prev_w is not None:
                 wid = prev_w.id
@@ -756,6 +767,73 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
             )
             built = evolve(built, status="draft", checker=None)
     return built
+
+
+def _wire_keys(h: Harness | None) -> dict[str, Wire]:
+    """The wires of a harness by what they carry: interface, signal and the box the wire starts at
+    (the cable connector's name changes with the harness, the box does not)."""
+    if h is None:
+        return {}
+    box_of = {c.id: c.mates_with or "" for c in h.connectors}
+    return {
+        _wire_key(w.interface_id or "", w.signal or "", box_of.get(w.from_connector, "")): w
+        for w in h.wires
+    }
+
+
+def _wire_key(interface_id: str, signal: str, source_box: str) -> str:
+    """A wire between two different signal names (TX+/RX+) is told apart by the box it starts at.
+    A wire with one name at both ends has no direction, so its key leaves the box out and
+    survives the two ends swapping sides (a unit rename in per_unit_pair mode)."""
+    return f"{interface_id}|{signal}|{source_box if '/' in signal else ''}"
+
+
+def _match_renamed(
+    old_by_key: dict[str, Harness], frozen: set[str], groups: list[Group]
+) -> dict[str, Harness]:
+    """Old harnesses by group key. A group whose key is new (a unit was renamed in per_unit_pair
+    mode) takes over the unreleased old harness that carries exactly the same interfaces, so its
+    ID, locked wires and entered lengths survive. The first such harness by ID wins."""
+    matched = dict(old_by_key)
+    keys = {g.key for g in groups}
+    spare = sorted(
+        (h for h in old_by_key.values() if h.group_key not in keys and h.id not in frozen),
+        key=lambda h: h.id,
+    )
+    for g in groups:
+        if g.key in old_by_key:
+            continue
+        want = sorted(g.interface_ids)
+        for h in spare:
+            if sorted(h.interfaces) == want:
+                matched[g.key] = h
+                spare.remove(h)
+                break
+    return matched
+
+
+def _warn_lost_data(ctx: _Ctx, old: Harness, new: Harness | None) -> None:
+    """Locked wires and entered segment lengths of `old` that `new` does not carry over."""
+    kept_wires = _wire_keys(new)
+    kept_segments = {(s.from_node, s.to_node) for s in new.segments} if new else set()
+    lost = [
+        f"the locked wire {w.id} ({w.interface_id} {w.signal})"
+        for key, w in _wire_keys(old).items()
+        if w.locked and key not in kept_wires
+    ]
+    lost += [
+        f"the entered length of segment {s.id} ({s.length_m:g} m)"
+        for s in old.segments
+        if s.length_m is not None and (s.from_node, s.to_node) not in kept_segments
+    ]
+    if lost:
+        lost.sort()
+        ctx.finding(
+            "warning",
+            "locked_data_lost",
+            f"{old.id}: {', '.join(lost)} cannot be carried over and will be lost.",
+            old.id,
+        )
 
 
 def _describe(group: Group) -> str:

@@ -1,6 +1,7 @@
 """REQ-UX-02: the clickable prototype really supports the main journeys (run in headless Chromium).
 
-Skipped when Playwright or a Chromium binary is not available. Fails on any console error or on
+Skipped when Playwright or a Chromium binary is not available (unless HARNESS_REQUIRE_BROWSER is
+set, as in CI: then either one missing is an error). Fails on any console error or on
 any request that is not a local file (the prototype must work fully offline).
 """
 
@@ -12,7 +13,10 @@ from typing import Any
 
 import pytest
 
-pytest.importorskip("playwright")
+if os.environ.get("HARNESS_REQUIRE_BROWSER"):  # CI: a missing package is an error, not a skip
+    import playwright  # noqa: F401
+else:
+    pytest.importorskip("playwright")
 from playwright.sync_api import Page, Route, sync_playwright  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]

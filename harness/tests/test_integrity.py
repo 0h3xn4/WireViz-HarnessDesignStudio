@@ -217,8 +217,30 @@ def test_rule_fires(name: str, mutate: Callable[[Project], None], code: str) -> 
 
 
 def test_all_rule_codes_have_negative_test() -> None:
-    assert len({c for _, _, c in NEGATIVE}) >= 14
+    """Every code that integrity.py can report appears in NEGATIVE (or, for the stale-data
+    warnings, in another test file); a new code without a test fails here."""
+    import re
+    from pathlib import Path
+
+    src = (Path(__file__).parents[1] / "src/harness_design_studio/core/integrity.py").read_text(
+        encoding="utf-8"
+    )
+    reported = set(
+        re.findall(
+            r'(?:_err\(|_orphan\([^,"]+, |Issue\(\s*"(?:warning|error)",\s*)"([a-z]+(?:_[a-z]+)+)"',
+            src,
+        )
+    )
+    assert len(reported) >= 18, reported  # the pattern still finds the codes
+    tested = {c for _, _, c in NEGATIVE}
+    others = "".join(
+        p.read_text(encoding="utf-8")
+        for p in Path(__file__).parent.glob("test_*.py")
+        if p.name != "test_integrity.py"
+    )
+    missing = sorted(c for c in reported - tested if f'"{c}"' not in others)
+    assert not missing, missing
 
 
-def test_part_object_unused() -> None:
+def test_a_new_part_is_pending_until_someone_approves_it() -> None:
     assert Part(id="X", category="wire").approval == "pending"

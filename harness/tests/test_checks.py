@@ -105,7 +105,7 @@ def test_cross_strap_warning_fix_and_waiver() -> None:
     )
     assert checks.todos(p)[-1].text == "2 warnings to fix or waive"
     # waive one: mandatory justification
-    with pytest.raises(Exception, match="at least 10"):
+    with pytest.raises(edit.EditError, match="at least 10"):
         checks.waive_op(cross[0], "short")
     run(p, [checks.waive_op(cross[0], "Cross-strap is intentional, see ICD 4.2")])
     assert len(p.waivers) == 1

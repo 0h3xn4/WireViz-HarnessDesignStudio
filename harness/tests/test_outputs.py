@@ -180,7 +180,8 @@ def test_pdf_and_svg_escape_special_characters() -> None:
     s = Sheet(*SHEETS["A4"])
     s.add(Text(10, 10, "a<b & (c) \\ é ✓"), Rect(1, 1, 5, 5))
     ET.fromstring(to_svg(s, "m"))  # noqa: S314
-    assert b"\\(c\\)" in to_pdf([s], "t", "m")
+    # parentheses and the backslash are escaped inside the PDF string; the accent is cp1252
+    assert b"(a<b & \\(c\\) \\\\ \xe9" in to_pdf([s], "t", "m")
 
 
 # ---- system outputs ---------------------------------------------------------------------------------
@@ -389,7 +390,7 @@ def test_detects_drawing_problems() -> None:
     assert "out_drawing" in codes(p, f)
     p, f = project_and_files("sat15")
     del f[f"{H}/drawing_A3_s1.svg"]
-    assert "out_missing" in codes(p, f) or "out_drawing" in codes(p, f)
+    assert codes(p, f) == {"out_missing"}
     p, f = project_and_files("sat15")
     f[f"{H}/drawing_A4.pdf"] = f[f"{H}/drawing_A4.pdf"].replace(b"W010-001", b"W010-XXX")
     assert "out_drawing" in codes(p, f)
@@ -492,7 +493,9 @@ def test_outputs_match_the_golden_digests(name: str) -> None:
 
     _, files = project_and_files(name)
     golden = json.loads(
-        (FIXTURES / "outputs" / f"{'sat15_full' if name == 'full' else name}.json").read_text()
+        (FIXTURES / "outputs" / f"{'sat15_full' if name == 'full' else name}.json").read_text(
+            encoding="utf-8"
+        )
     )
     got = output_digests(files)
     assert sorted(got) == sorted(golden)

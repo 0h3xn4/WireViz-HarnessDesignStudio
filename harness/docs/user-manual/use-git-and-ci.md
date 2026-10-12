@@ -132,7 +132,7 @@ Importing interfaces is not part of a script: it works in the app only ([import 
 
 ## 5. Run it on a build server
 
-`my-templates/ci/github-actions.yml` is a GitHub Actions workflow that does the same on every push, except that it leaves out the `harness drc` step. Copy it to `.github/workflows/` in your design repository. It expects the `.deb` package of the tool in the repository (under `tools/`), installs it, runs the checks and keeps `design/outputs` as a download. Change the folder name `design` and the package path to match your repository. The build server needs no network access to the tool itself, because the tool never uses the network.
+`my-templates/ci/github-actions.yml` is a GitHub Actions workflow that does the same on every push, including the `harness drc` step (it fails the build when an error is not waived and keeps `drc-report.md` as a download). Copy it to `.github/workflows/` in your design repository. It expects the `.deb` package of the tool in the repository (under `tools/`), installs it, runs the checks and keeps `design/outputs` as a download. Change the folder name `design` and the package path to match your repository. The build server needs no network access to the tool itself, because the tool never uses the network.
 
 This file was not run on a build server for this page. The `ci/build.sh` script was run (above).
 

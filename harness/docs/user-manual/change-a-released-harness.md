@@ -17,7 +17,7 @@ This page shows how to change a harness after it was released, by starting a new
 
 - A harness is released and locked ([release a harness](release-a-harness.md)). This page continues with the practice project of that page: the harness `W002`, revision A, released.
 - You never edit a released harness. You start a **new revision** (A, B, C, ...). The old revision stays available, so it can always be reproduced.
-- Editing a locked harness, a link it carries or a pin it uses is refused, with the reason. If the files were changed by hand anyway, `harness check` reports it ([release a harness](release-a-harness.md#4-after-the-release)).
+- Editing a locked harness, a link it carries or a pin it uses is refused, with the reason. So is editing a **part** or **interface type** the harness uses (its connectors' and wires' parts, and the parts of the box connectors it plugs into) or the **configuration** its checks read (derating, EMC, segregation, title block, and the electrical and test values in the generation file), for example by importing parts or changing a derating value. Notes and names stay editable, and so does everything no released harness uses: new parts, other parts, the naming and segmentation settings. The exact list is in [`FILE_FORMAT.md`](../FILE_FORMAT.md#what-a-release-freezes). If the files were changed by hand anyway, `harness check` reports it ([release a harness](release-a-harness.md#4-after-the-release)).
 
 ## 1. Start a new revision
 
@@ -165,6 +165,7 @@ It does not change either folder. Equal folders print `No differences.` See [use
 ## Common mistakes
 
 - **Editing the JSON of a released harness.** Start a revision instead. `harness check` finds the edit.
+- **"blocked because it touches released items" when you import parts or change a derating value.** A released harness uses those parts or values. Start a new revision of that harness (of each released harness, for configuration), make the change, and release again.
 - **Forgetting to export after the release.** `harness release` exports for you; after a revision you still export yourself before the next release.
 - **"W002 has no baseline for revision B."** Revision B is not released yet.
 - **Deleting a released harness.** The app does not allow it. Start a new revision and change it.

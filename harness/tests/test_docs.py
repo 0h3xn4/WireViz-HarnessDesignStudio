@@ -18,6 +18,33 @@ def test_guide_html_is_up_to_date() -> None:
     assert TARGET.read_text() == convert(SOURCE.read_text()), "run: python -m tools.build_guide"
 
 
+def test_every_guide_table_row_has_the_cells_of_its_header() -> None:
+    """An escaped bar in a cell (`a\\|b`) once split the cell and broke the row."""
+    from html.parser import HTMLParser
+
+    class Rows(HTMLParser):
+        def __init__(self) -> None:
+            super().__init__()
+            self.tables: list[list[int]] = []
+            self.depth = 0
+
+        def handle_starttag(self, tag: str, attrs: list[tuple[str, str | None]]) -> None:
+            if tag == "table":
+                self.tables.append([])
+            elif tag == "tr":
+                self.tables[-1].append(0)
+            elif tag in ("td", "th"):
+                self.tables[-1][-1] += 1
+
+    rows = Rows()
+    rows.feed(TARGET.read_text())
+    assert rows.tables
+    for table in rows.tables:
+        assert set(table) == {table[0]}, table
+    html = convert("| a | b |\n|---|---|\n| `x \\| y` | z |\n")
+    assert "<td><code>x | y</code></td><td>z</td>" in html and "\\" not in html
+
+
 def test_guide_internal_links_resolve() -> None:
     html = TARGET.read_text()
     ids = set(re.findall(r'id="([^"]+)"', html))
@@ -113,23 +140,71 @@ def test_cli_examples_name_real_commands_and_options() -> None:
             parser.parse_args(argv)
 
 
-def _commands_in(markdown: Path) -> list[str]:
-    """Command lines (harness ..., cp ...) from the fenced blocks of a document, in order."""
-    out: list[str] = []
+def _fenced_blocks(markdown: Path) -> list[list[str]]:
+    blocks: list[list[str]] = []
     inside = False
     for line in markdown.read_text().splitlines():
         if line.startswith("```"):
             inside = not inside
-        elif inside and line.startswith(("harness ", "cp ")):
-            out.append(line.strip())
+            if inside:
+                blocks.append([])
+        elif inside:
+            blocks[-1].append(line)
+    return blocks
+
+
+def _is_command(line: str) -> bool:
+    return line.startswith(("harness ", "cp "))
+
+
+def _commands_in(markdown: Path) -> list[str]:
+    """Command lines (harness ..., cp ...) from the fenced blocks of a document, in order."""
+    return [ln.strip() for block in _fenced_blocks(markdown) for ln in block if _is_command(ln)]
+
+
+def _quoted_outputs(markdown: Path) -> dict[int, list[str]]:
+    """The block that follows a block of commands, by the index of the block's last command: the
+    output the text quotes for it (or a file the text shows; the tests list those)."""
+    out: dict[int, list[str]] = {}
+    blocks = _fenced_blocks(markdown)
+    index = -1
+    for k, block in enumerate(blocks):
+        index += sum(_is_command(ln) for ln in block)
+        if (
+            any(_is_command(ln) for ln in block)
+            and _is_command(block[-1])
+            and k + 1 < len(blocks)
+            and blocks[k + 1]
+            and not _is_command(blocks[k + 1][0])
+        ):
+            out[index] = blocks[k + 1]
     return out
 
 
+MASK = re.compile(r"\b[0-9a-f]{12}\b")
+
+
+def _quoted_lines_are_real(quoted: list[str], real: str) -> list[str]:
+    """The quoted lines (hashes masked, `...` and blank lines skipped) that the real output lacks."""
+    have = {MASK.sub("<hash>", ln.strip()) for ln in real.splitlines()}
+    return [
+        ln
+        for ln in quoted
+        if ln.strip() not in ("", "...") and MASK.sub("<hash>", ln.strip()) not in have
+    ]
+
+
 def _run_document(
-    markdown: Path, tmp: Path, expected: dict[str, list[int]]
+    markdown: Path,
+    tmp: Path,
+    expected: dict[str, list[int]],
+    not_output: frozenset[str] = frozenset(),
 ) -> list[tuple[str, str]]:
     """Run every command of a document in order, in a scratch folder, and check the exit codes.
-    `expected` lists, per command start, the codes of its successive runs (default: 0)."""
+    `expected` lists, per command start, the codes of its successive runs (default: 0).
+    The output that the text quotes after a block of commands must be what the command prints
+    (hashes masked); `not_output` names the blocks that show a file instead, as
+    `"<command>#<run number>"` (the first run is 0)."""
     import os
     import subprocess
     import sys
@@ -137,7 +212,8 @@ def _run_document(
     env = {**os.environ, "PATH": f"{Path(sys.executable).parent}{os.pathsep}{os.environ['PATH']}"}
     seen: dict[str, int] = {}
     results: list[tuple[str, str]] = []
-    for command in _commands_in(markdown):
+    quoted = _quoted_outputs(markdown)
+    for number, command in enumerate(_commands_in(markdown)):
         key = next((k for k in expected if command.startswith(k)), command)
         n = seen.get(key, 0)
         seen[key] = n + 1
@@ -149,6 +225,13 @@ def _run_document(
             f"{markdown.name}: `{command}` exited {done.returncode}, expected {want}\n"
             f"{done.stdout[-600:]}{done.stderr[-600:]}"
         )
+        run_number = sum(c == command for c, _ in results)  # earlier runs of this very command
+        if number in quoted and f"{command}#{run_number}" not in not_output:
+            missing = _quoted_lines_are_real(quoted[number], done.stdout + done.stderr)
+            assert not missing, (
+                f"{markdown.name}: the text quotes output of `{command}` that the tool does not "
+                f"print:\n{missing}\nreal output:\n{(done.stdout + done.stderr)[:1500]}"
+            )
         results.append((command, done.stdout))
     return results
 
@@ -164,7 +247,14 @@ def test_getting_started_commands_work_in_order(tmp_path: Path) -> None:
             "harness config wheel-link": [1],  # exit 1 while values are missing
             "harness drc wheel-link": [0, 1, 0],  # the library import makes the plans stale (1)
         },
+        # the block after this export shows two lines of a file, checked below
+        not_output=frozenset({"harness export wheel-link#1"}),
     )
+    wirelist = (
+        tmp_path / "wheel-link" / "outputs" / "harnesses" / "W002" / "wirelist.csv"
+    ).read_text()
+    shown = [ln for ln in doc.read_text().splitlines() if ln.startswith("W002-00")]
+    assert shown and all(ln in wirelist for ln in shown), shown
     # the model hash quoted in the text is the one the first export prints
     first_export = next(out for cmd, out in results if cmd == "harness export wheel-link")
     printed = re.search(r"model ([0-9a-f]{12})", first_export)
@@ -179,3 +269,67 @@ def test_getting_started_commands_work_in_order(tmp_path: Path) -> None:
 
 def test_readme_quick_start_commands_work(tmp_path: Path) -> None:
     _run_document(ROOT / "README.md", tmp_path, {})
+
+
+def _run_example(name: str, tmp: Path) -> str:
+    """new, validate, generate, drc, export and verify of one template; all the output, joined."""
+    import os
+    import subprocess
+    import sys
+
+    env = {**os.environ, "PATH": f"{Path(sys.executable).parent}{os.pathsep}{os.environ['PATH']}"}
+    folder = f"my-{name}"
+    steps = [
+        f"harness new {folder} --template {name}",
+        f"harness validate {folder}",
+        f"harness generate {folder}",
+        f"harness drc {folder}",
+        f"harness export {folder}",
+        f"harness verify {folder} --outputs",
+    ]
+    out = []
+    for step in steps:
+        done = subprocess.run(
+            ["sh", "-c", step], cwd=tmp, env=env, capture_output=True, text=True, check=False
+        )
+        out.append(f"## {step}\n{done.stdout}{done.stderr}")
+    return "\n".join(out)
+
+
+def test_the_examples_readme_quotes_what_the_tool_prints(tmp_path: Path) -> None:
+    """The counts and output lines on docs/examples/README.md are those of a real run."""
+    doc = ROOT / "docs" / "examples" / "README.md"
+    sections = re.split(r"^## ", doc.read_text(), flags=re.M)
+    names = ("blank", "first-steps", "minimal-satellite", "small-satellite", "flatsat")
+    real = {n: _run_example(n, tmp_path) for n in names}
+    seen = set()
+    for section in sections:
+        name = section.split("\n", 1)[0].strip()
+        if name not in names:
+            continue
+        seen.add(name)
+        lines: list[str] = []
+        inside = False
+        for line in section.splitlines():
+            if line.startswith("```"):
+                inside = not inside
+            elif inside and not _is_command(line):
+                lines.append(line)
+        prose = re.sub(r"```.*?```", "", section, flags=re.S)
+        for span in re.findall(r"`([^`]*(?:files written|error\(s\))[^`]*)`", prose):
+            if not span.startswith(("harness ", "error:")):
+                lines.append(span)
+        assert len(lines) > 3, name
+        missing = _quoted_lines_are_real(lines, real[name])
+        assert not missing, f"docs/examples/README.md, {name}: the tool does not print {missing}"
+    assert seen == set(names)
+    # the table at the end quotes the number of exported files and the findings of drc
+    for row in re.findall(r"^\| `([\w-]+)` \|.*$", doc.read_text(), re.M):
+        line = next(ln for ln in doc.read_text().splitlines() if ln.startswith(f"| `{row}` |"))
+        files = re.search(r"\| (\d+) files \|", line)
+        if files:
+            assert f"{files.group(1)} files written to" in real[row], row
+        found = re.search(r"(\d+) errors, (\d+) warnings, (\d+) notes", line)
+        if found:
+            e, w, n = found.groups()
+            assert f"Open: {e} error(s), {w} warning(s), {n} note(s)." in real[row], row

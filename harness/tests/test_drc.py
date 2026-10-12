@@ -2,7 +2,6 @@
 
 import time
 from collections.abc import Callable
-from copy import copy
 
 import pytest
 
@@ -13,7 +12,14 @@ from harness_design_studio.core.drc.report import render_markdown, stale_waivers
 from harness_design_studio.core.drc.rules import RULES
 from harness_design_studio.core.generate.engine import generate_project, plan_generation
 from harness_design_studio.core.io.saver import save_project
-from harness_design_studio.core.model import Connector, Harness, Pin, Project, Wire, evolve
+from harness_design_studio.core.model import (
+    Harness,
+    Pin,
+    Project,
+    Segment,
+    Wire,
+    evolve,
+)
 from harness_design_studio.core.model.config import ConfigFile
 from harness_design_studio.core.samples import sat15, stress_project
 from tests.helpers import time_limit
@@ -297,13 +303,23 @@ def pos_unchecked() -> Project:
     return base()
 
 
+def pos_segment_loop() -> Project:
+    p = base()
+    h = next(x for x in sorted(p.harnesses.values(), key=lambda x: x.id) if x.generated)
+    a, b = h.connectors[0].id, h.connectors[1].id
+    segs = [Segment(id="S1", from_node=a, to_node="BP1"), Segment(id="S2", from_node="BP1", to_node=b),
+            Segment(id="S3", from_node=b, to_node=a)]  # fmt: skip
+    put_harness(p, h, segments=segs)
+    return p
+
+
 def neg_all_clean(rule_id: str) -> Project:
     """A project where `rule_id` has nothing to report."""
     p = base()
     full_config(p)
     if rule_id == "part-unapproved":
         for part in list(p.parts.values()):
-            apply_ops(p, [Put("parts", evolve(part, approval="approved"))])
+            apply_ops(p, [Put("parts", evolve(part, approval="approved", unverified=False))])
     if rule_id == "connector-lookalike":
         for c in list(p.connectors.values()):
             apply_ops(p, [Put("connectors", evolve(c, keying=c.id))])
@@ -452,6 +468,7 @@ POSITIVE: dict[str, Callable[[], Project]] = {
     "connector-lookalike": pos_lookalike,
     "part-unapproved": pos_unapproved,
     "unchecked-config": pos_unchecked,
+    "segment-loop": pos_segment_loop,
     "connector-voltage": pos_connector_voltage,
     "wire-voltage": pos_wire_voltage,
     "temperature-margin": pos_temperature_margin,
@@ -567,7 +584,7 @@ def test_stale_waivers_are_listed() -> None:
     f = next(x for x in drc.run(p) if x.rule == "part-unapproved")
     History(p).execute("waive", [checks.waive_op(f, "Pending approval, tracked in RID-12")])
     for part in list(p.parts.values()):
-        apply_ops(p, [Put("parts", evolve(part, approval="approved"))])
+        apply_ops(p, [Put("parts", evolve(part, approval="approved", unverified=False))])
     assert f.id in stale_waivers(p, drc.run(p))
     assert "Waivers without a matching finding" in render_markdown(p)
 
@@ -610,8 +627,6 @@ def test_drc_on_the_stress_project_is_fast_enough_for_background_runs() -> None:
     found = drc.run(p)
     assert time.perf_counter() - t0 < time_limit(5)
     assert not [f for f in found if f.severity == "error"]
-    assert copy(p) is not p  # the copy used by background runs is cheap to make
-    assert isinstance(Connector, type) and isinstance(Pin, type)
 
 
 def test_sat15_drc_report_matches_golden(capsys) -> None:  # type: ignore[no-untyped-def]
@@ -619,7 +634,7 @@ def test_sat15_drc_report_matches_golden(capsys) -> None:  # type: ignore[no-unt
 
     folder = Path(__file__).parent / "fixtures" / "projects" / "sat15"
     cli_main(["drc", str(folder)])
-    golden = (Path(__file__).parent / "fixtures" / "drc" / "sat15.md").read_text()
+    golden = (Path(__file__).parent / "fixtures" / "drc" / "sat15.md").read_text(encoding="utf-8")
     assert capsys.readouterr().out == golden
 
 
@@ -642,7 +657,8 @@ def test_regression_lookalike_rule_copes_with_mixed_keying() -> None:
             Put("connectors", evolve(conns[1], keying=None)),
         ],
     )
-    list(next(r for r in RULES if r.id == "connector-lookalike").check(p))
+    hits = list(next(r for r in RULES if r.id == "connector-lookalike").check(p))
+    assert all(h.object_id for h in hits)  # it answers, with findings that point at an object
 
 
 def test_cited_requirements_exist_in_the_extracted_lists() -> None:
