@@ -510,7 +510,7 @@ def _spots_along(
     mid = (lo + hi) / 2
     ts = [mid]
     k = 1
-    while mid - k * step >= lo - 0.01 and len(ts) < 41:
+    while mid - k * step >= lo - 0.01 and len(ts) < 25:
         ts += [mid - k * step, mid + k * step]
         k += 1
     return [QPointF(t, fixed) if horizontal else QPointF(fixed, t) for t in ts]
@@ -586,7 +586,9 @@ class LinkItem(QGraphicsPathItem):
             rect = QRectF(spot.x() - width / 2, spot.y() - height / 2, width, height)
             if not self.dscene.chip_free(rect, name):
                 continue
-            crossed = self.dscene.link_crossings(rect, name)
+            crossed = self.dscene.link_crossings(
+                rect, name, fewest if best is not None else 1 << 30
+            )
             if best is None or crossed < fewest:
                 best, fewest = spot, crossed
             if crossed == 0:
@@ -619,10 +621,10 @@ class LinkItem(QGraphicsPathItem):
         for p, q in pieces:
             if p[1] == q[1] and abs(q[0] - p[0]) >= need:
                 lo, hi = min(p[0], q[0]), max(p[0], q[0])
-                wide += _spots_along(lo + need / 2, hi - need / 2, 8.0, p[1], True)
+                wide += _spots_along(lo + need / 2, hi - need / 2, 12.0, p[1], True)
             elif p[0] == q[0] and abs(q[1] - p[1]) >= 28:
                 lo, hi = min(p[1], q[1]), max(p[1], q[1])
-                tall += _spots_along(lo + 14, hi - 14, 8.0, p[0], False)
+                tall += _spots_along(lo + 14, hi - 14, 12.0, p[0], False)
         return wide + tall
 
     def shape(self) -> QPainterPath:
@@ -924,12 +926,19 @@ class DiagramScene(QGraphicsScene):
         self._redraw_changed()
 
     def _redraw_changed(self) -> None:
+        moved: list[QRectF] = []
         for iid, link in self.link_items.items():
             if link.poly != self.route(iid):
                 link.update_path()
-        for iid, link in self.link_items.items():  # a label that another route now runs through
+                moved += [
+                    QRectF(QPointF(*p), QPointF(*q)).normalized().adjusted(-1, -1, 1, 1)
+                    for p, q in zip(link.poly, link.poly[1:], strict=False)
+                ]
+        if not moved or len(moved) == sum(len(link.poly) - 1 for link in self.link_items.values()):
+            return  # nothing moved, or everything did (a new diagram): every label was just placed
+        for iid, link in self.link_items.items():  # a label that a moved link now runs through
             rect = self._chip_rects.get(iid)
-            if rect is not None and self.link_crossings(rect, iid):
+            if rect is not None and any(m.intersects(rect.adjusted(-2, -2, 2, 2)) for m in moved):
                 link._chip_placed = False
                 link.update_path()
 
@@ -1045,23 +1054,37 @@ class DiagramScene(QGraphicsScene):
                     return False
         return True
 
+    MAX_INDEXED_PIECES = 3000  # (labels are placed in a loop over all links: keep it fast)
+    SEG_CELL = 32.0  # finer than CELL: a dense diagram has many route pieces in one big cell
+
+    def _seg_cells(self, r: QRectF) -> list[tuple[int, int]]:
+        c = self.SEG_CELL
+        x0, x1 = int(r.left() // c), int(r.right() // c)
+        y0, y1 = int(r.top() // c), int(r.bottom() // c)
+        return [(x, y) for x in range(x0, x1 + 1) for y in range(y0, y1 + 1)]
+
     def _index_segments(self, routes: dict[str, list[tuple[float, float]]]) -> None:
         """The straight pieces of every route in the grid, so that a label can keep clear of them."""
         self._segments.clear()
+        if sum(len(r) for r in routes.values()) > self.MAX_INDEXED_PIECES:
+            return  # too dense to keep every label clear: labels only avoid each other
         for iid, route in routes.items():
             for p, q in zip(route, route[1:], strict=False):
                 box = QRectF(QPointF(*p), QPointF(*q)).normalized().adjusted(-1, -1, 1, 1)
-                for cell in self._cells(box):
+                for cell in self._seg_cells(box):
                     self._segments.setdefault(cell, []).append((iid, box))
 
-    def link_crossings(self, rect: QRectF, own: str) -> int:
-        """How many pieces of other links run through `rect` (a label's box, with a little air)."""
+    def link_crossings(self, rect: QRectF, own: str, limit: int = 1 << 30) -> int:
+        """How many pieces of other links run through `rect` (a label's box, with a little air);
+        counting stops at `limit`."""
         pad = rect.adjusted(-2, -2, 2, 2)
         seen: set[tuple[str, float, float]] = set()
-        for cell in self._cells(pad):
+        for cell in self._seg_cells(pad):
             for other, box in self._segments.get(cell, ()):
                 if other != own and box.intersects(pad):
                     seen.add((other, box.x(), box.y()))
+                    if len(seen) >= limit:
+                        return len(seen)
         return len(seen)
 
     def chip_forget(self, interface_id: str) -> None:
