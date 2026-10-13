@@ -57,25 +57,25 @@ The app also has **File > Open the sample project**. That is example data. Save 
 
 ## 2. Add units
 
-1. In the palette on the left, under **Add a unit**, press one of the buttons: **＋ Computer**, **＋ Power unit**, **＋ Actuator (wheel)**, **＋ Sensor (star tracker)**, **＋ Payload**, **＋ Transceiver**, **＋ Pyro unit**, **＋ Computer (many interfaces)**, **＋ Power distribution unit**, **＋ Battery**, **＋ Solar array**, **＋ Sun sensor**, **＋ Magnetorquer** or **＋ Heater panel**. Long names are shortened on the button; the tooltip has the full name. **Edit > Add unit** has the same list.
+1. Open the **Palette** tab on the left, and under **Add a unit** press one of the buttons: **＋ Computer**, **＋ Power unit**, **＋ Actuator (wheel)**, **＋ Sensor (star tracker)**, **＋ Payload**, **＋ Transceiver**, **＋ Pyro unit**, **＋ Computer (many interfaces)**, **＋ Power distribution unit**, **＋ Battery**, **＋ Solar array**, **＋ Sun sensor**, **＋ Magnetorquer** or **＋ Heater panel**. Long names are shortened on the button; the tooltip has the full name. **Edit > Add unit** has the same list, and so has **Add > Unit…** in the **Project** tab.
 2. The unit appears at once. No window opens. The ID and the name are given automatically, for example `PCDU1` and "Power unit 1", `OBC1` and "Computer 1", `RW1` and "Actuator (wheel) 1".
-3. To change the ID or the name, select the unit and edit **ID** or **Name** in **Properties** on the right.
+3. To change the ID or the name, select the unit and edit **ID** or **Name** in the **Inspector** on the right.
 4. Drag the unit to move it. A unit cannot be dragged past the top or left edge of the diagram, and the diagram grows to the right and downwards to hold a unit you place far out (switching to **Expert** grows it too). The lane it sits in is its **zone** (a panel or compartment of the spacecraft). A blank project has two lanes, `panel-A` and `panel-B`. **Edit > Add zone…** adds a lane: type a zone name.
 
 Each unit comes with connectors. You do not need to look at them in Guided mode.
 
 ## 3. Connect two units
 
-1. Under **Connect with** in the palette, press an interface type, for example **RS-422** or **Primary power**. (**Edit > Connect with** has the same list; the key **C** switches the connect tool on.)
+1. Under **Connect with** in the **Palette** tab, press an interface type, for example **RS-422** or **Primary power**. (**Edit > Connect with** has the same list; the key **C** switches the connect tool on. **Ctrl+I** or **Add > Interface…** opens a form where you pick the type and both units.)
 2. Click the first unit, then the second unit. Units that cannot take that type are greyed out, with the reason next to them.
 3. A link is drawn. It gets an ID (`IF-001`) and a name such as "Primary power PCDU1 to RW1". The tool picks the connectors and marks them **auto-filled** until you confirm them (see [read and fix problems](read-and-fix-problems.md)).
 4. The connect tool stays on, so you can draw more links. Press **Esc**, or the **Select** button above the diagram, to stop. While the connect tool is on, dragging a unit moves nothing (it is not a move tool); if the first unit you clicked is deleted or its link is undone, the tool forgets that first click.
 
-To make a backup chain, select a unit and press **Create redundant copy** (in **Properties** or in the **Edit** menu). The tool adds the twin unit (`PCDU1-R`) and copies its links to it. See [redundancy and zones](redundancy-and-zones.md).
+To make a backup chain, select a unit and press **Create redundant copy** (above the diagram, in the **Inspector** or in the **Edit** menu). The tool adds the twin unit (`PCDU1-R`) and copies its links to it. See [redundancy and zones](redundancy-and-zones.md).
 
 ## 4. Set the current and voltage of a link
 
-1. Click the link. **Properties** shows its fields.
+1. Click the link. The **Inspector** shows its fields.
 2. Fill in **Max current (A)** and, if you know it, **Voltage (V)**. Use a plain number such as `2` or `2.5`; it must be above 0 (a value of 0 or less, or an impossible number, is refused). The field shows the stored number exactly (`12.3456789`, not `12.3457`), so leaving a field without typing never changes the value.
 3. **Chain (nominal / redundant)** says whether the link belongs to the main chain or to the backup.
 
@@ -96,8 +96,10 @@ Switching never changes your data.
 - **Click a unit or a link** and only its links stay in full colour. Press **Esc** or click the empty background to see everything again.
 - The **Show** list in the toolbar fades everything except one signal class, one connector or one bundle (a harness).
 - **Ctrl+K** (**Search / commands**) lets you type a command or an ID and jump to it.
-- Zoom with **Ctrl+=**, **Ctrl+-** and **Ctrl+0** (fit). **View > Show all link labels** shows voltages and currents on every link in a dense diagram.
-- The bottom tabs **Interface table** and **Outline** list every link and unit as text. They also work with a screen reader.
+- Zoom with **Ctrl+=** and **Ctrl+-**, or **Ctrl+wheel** at the pointer. **F** fits the whole diagram, **Shift+F** zooms to the selection and **Ctrl+0** shows 100 %. **View > Show all link labels** shows voltages and currents on every link in a dense diagram.
+- **Shift+click**, **Ctrl+click** or a drag on the background select several items; **Ctrl+A** selects all. **Ctrl+F** finds a unit or link and marks every match. **Edit > Align**, **Space evenly** and **Duplicate** (Ctrl+D) work on the selection.
+- A badge on a unit or link counts its problems, warnings and values still to enter, and a lock with *W001 A* shows what a released harness holds.
+- The **Project** tab on the left and the bottom tabs **Interface table** and **Outline** list every link and unit as text. They also work with a screen reader.
 
 ## 7. Change your mind: delete, undo, save
 
@@ -112,7 +114,7 @@ Switching never changes your data.
 - **A unit cannot be connected.** It is greyed out because it has no free connector of that type. The reason is written next to it. Pick another unit, or add a unit that has the connector.
 - **Nothing happens when you click a unit.** The connect tool is still on and waits for the second end. Press **Esc**.
 - **An interface name with a line break.** A name is one line; typing a line break in the table gives "A name is one line. Remove the line break." A project name that is too long or has control characters is explained in the same way.
-- **A long ID ends in "...".** Long unit IDs and connector names are shortened on the diagram with an ellipsis; select the unit to read the full text in **Properties**.
+- **A long ID ends in "...".** Long unit IDs and connector names are shortened on the diagram with an ellipsis; select the unit to read the full text in the **Inspector**.
 - **"Read-only" banner.** The project was saved by a newer tool, it is open in another window, or its folder cannot be locked for editing (read-only media). See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 - **The folder is refused.** `harness new` and **New project…** need a folder that does not exist yet or is empty. Nothing is ever overwritten.
 

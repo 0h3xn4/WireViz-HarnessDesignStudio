@@ -11,7 +11,7 @@
 
 An offline desktop tool for designing the electrical harnesses of a spacecraft: you draw the units and the connections between them, and the tool works out the connectors, pins and wires, checks them, and writes the drawings and lists.
 
-![A bench of 23 flight and ground units joined by links; the key under the diagram explains the pictures](harness/docs/img/flatsat-overview.png)
+![A bench of 23 flight and ground units joined by links; the legend at the bottom left of the diagram explains the pictures](harness/docs/img/flatsat-overview.png)
 
 *The `flatsat` example, one of the five projects that come with the tool.*
 
@@ -83,6 +83,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 ## Features
 
 - **Your design is the source of truth.** Harnesses, drawings and lists are generated from it and can be regenerated at any time.
+- **A diagram editor with views** — units and links on a diagram with marks for problems, locks and values still to enter; a project tree; tabs for the Harness (pins, wires, drawing, why), Lists, Checks and Releases; an Export window and an Import wizard.
 - **Generates the harnesses** — connectors, pins, wires, shields, with a *Why is it like this?* explanation for every choice.
 - **Checks them** against 34 design rules and says clearly which checks could not run because a number is missing.
 - **Writes the documents** — a wiring-diagram drawing per harness (SVG and PDF), wire lists, pinouts, bill of materials, test tables, labels, a block diagram and a change log.

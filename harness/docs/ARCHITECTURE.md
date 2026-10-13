@@ -57,7 +57,8 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | `schemas.py` | JSON Schemas of the project files, made from the model itself |
 | `samples.py`, `starter.py`, `templates.py` | reference projects for tests and the first-run sample; starter library and interface types (example data only); the example projects and import templates shipped with the tool |
 | `standard_profiles.py`, `configcheck.py` | optional value profiles from the supplied standards (D-131); check and fill in the engineering configuration (D-11) |
-| `wirecolours.py`, `routing.py`, `describe.py` | the IEC 60757 wire colours; link-drawing rules that do not need Qt; plain-language captions for links and connectors |
+| `wirecolours.py`, `routing.py`, `describe.py` | the IEC 60757 wire colours; link-drawing rules that do not need Qt; plain-language captions for links and connectors, the link tooltip, the picture of a unit |
+| `usedby.py`, `why.py`, `generation_status.py` | where a unit, link, part or interface type is used; why an object is the way it is (reads the generation record); whether the harness plans match the design |
 | `imports.py`, `library_import.py`, `kicad.py` | CSV/XLSX import of interfaces; import of an approved-parts list (D-12); reading unit connector pinouts from a KiCad netlist (D-123) |
 | `io/` | project folder input and output: `canonical` (canonical JSON), `fs` (atomic writes, safe names, lock), `layout` (memory to folder mapping), `loader`, `saver`, `migrate` (schema migrations) |
 
@@ -66,10 +67,10 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | Module | What it does |
 | --- | --- |
 | `generate/` | harness generation: `engine` (interfaces in, harnesses out, as a previewable plan), `segmentation` (which interfaces share a harness), `pins` (pin allocation for a box connector), `wiring` (which signal connects to which), `sizing` (wire sizing), `lengths` (lengths from segments, CSV import), `mass`, `naming` (naming schemes), `explain` (the recorded reasons behind generated objects) |
-| `drc/` | design rule check: `base` (rule building blocks), `rules` (the rules, one function each), `standard_rules` (rules that apply the supplied standards), `report` (the report), `worker` (the child process that runs the check) |
+| `drc/` | design rule check: `base` (rule building blocks), `rules` (the rules, one function each), `standard_rules` (rules that apply the supplied standards), `report` (the report), `by_rule` (one result per rule: pass, fail, not checked, pending), `worker` (the child process that runs the check) |
 | `verify.py` | independent output verifier: a separate code path from `generate/` that shares no logic with it |
 | `outputs/` | `build` (build, write and check the output set), `canvas` (small deterministic SVG and PDF drawing model), `drawing` (the harness drawing), `system` (block diagram and harness overview), `tables`, `exports` (WireViz-style YAML, JSON, XLSX), `xlsx_env` (turns lxml off before openpyxl is imported, so workbooks are identical on every machine), `provenance`, `stamp` (tool version and model hash on every file), `verify` (output verifier: re-reads the finished files) |
-| `vcs/` | change control: `release` (review, release, new revision), `locks` (locks on released items), `snapshot`, `diff`, `hashing`, `consistency` (released harnesses against their baselines), `report` (change log and revision report) |
+| `vcs/` | change control: `release` (review, release, new revision), `locks` (locks on released items), `snapshot`, `diff`, `hashing`, `consistency` (released harnesses against their baselines), `lockview` (what a release locks and why, which fields stay editable), `timeline` (the change log as rows, differences grouped by kind), `report` (change log and revision report) |
 
 ### `cli/` and `gui/`
 
@@ -77,12 +78,16 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | --- | --- |
 | `cli/main.py` | the `harness` entry point |
 | `cli/start.py`, `cli/data.py`, `cli/changes.py` | getting started (`new`, `templates`); outside data (`config`, `import-parts`, `import-lengths`, `import-netlist`); change control (`review`, `release`, `revise`, `diff`, `compare`, `log`) |
-| `gui/app.py`, `gui/main_window.py` | GUI entry point; main window: palette (left), diagram (centre), properties (right), problems and tables (bottom) |
+| `gui/app.py`, `gui/main_window.py`, `gui/shell.py`, `gui/topbar.py` | GUI entry point; main window: top bar and banners, the tabs Diagram, Harness, Lists, Checks and Releases, the project tree and palette (left), the inspector (right), the older problems and tables (bottom), status bar; the slots views plug into; the status chip and banner rules |
 | `gui/controller.py` | `EditorController`: the only object that changes the project |
-| `gui/canvas.py`, `gui/glyphs.py`, `gui/legend.py` | the diagram canvas (zone lanes, units, links, overview map); pictograms for links and connectors; the key under the diagram |
-| `gui/panels.py`, `gui/dialogs.py`, `gui/preview.py`, `gui/tour.py` | side and bottom panels; dialogs; drawing preview; the first-run tour |
+| `gui/canvas.py`, `gui/glyphs.py`, `gui/legend.py`, `gui/canvas_state.py`, `gui/canvas_badges.py` | the diagram canvas (zone lanes, units, links, overview map); pictograms for links and connectors; the legend overlay; the index of problems, pending values and locks per object; the badges and the corner chip |
+| `gui/project_tree.py`, `gui/inspector.py`, `gui/why_panel.py` | the project tree, the inspector (fields, used in, lock banner) and the Why panel |
+| `gui/harness_view.py`, `gui/lists_panel.py`, `gui/plan_table.py`, `gui/checks_panel.py`, `gui/config_dialog.py`, `gui/releases_panel.py` | the Harness, Lists, Checks and Releases tabs; the table of the generate plan; the engineering values form |
+| `gui/export_dialog.py`, `gui/import_wizard.py`, `gui/new_project_dialog.py`, `gui/lock_tree.py`, `gui/notice.py` | the export window, the import wizard, the new project window, the tree of what a release locks, inline notices |
+| `gui/tables.py`, `gui/states.py`, `gui/icons.py`, `gui/indicators.py`, `gui/background.py` | shared tables, state chips, icons, check box and radio button pictures drawn from the tokens, background jobs |
+| `gui/panels.py`, `gui/dialogs.py`, `gui/preview.py`, `gui/tour.py` | the palette, properties, problems, to-do, interface table, harness plans and outline panels; dialogs; the zoomable drawing preview; the first-run tour |
 | `gui/drc_process.py` | runs the design rule check in a separate, long-lived process |
-| `gui/strings.py`, `gui/tokens.py`, `gui/theme.py`, `gui/fonts.py` | all user-visible text; design tokens (colours, type, spacing); theme (light, dark, UI scale); bundled IBM Plex fonts |
+| `gui/strings.py`, `gui/tokens.py`, `gui/theme.py`, `gui/fonts.py` | all user-visible text; design tokens (colours, type, spacing); theme (system, light, dark; interface size); bundled IBM Plex fonts |
 
 ### `resources/`
 

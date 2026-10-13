@@ -15,8 +15,8 @@ This page shows how to give each signal (power, return, CAN high, ...) a wire co
 2. The **Wire colours** window lists each signal name of the interface types the project uses (for example `PWR`, `RTN`, `TX+`, `CANH`). Next to each is a list: **no colour**, or one of the colours with its code.
 3. Pick a colour for each signal you want, then press **Save**.
 4. The app says "Wire colours saved. Generate the harnesses to apply them." Saving is one undo step.
-5. Press **Generate harnesses** and **Apply**. The wires take the colours now, and the **Colour** column of the wire list in the **Harness plans** tab shows them.
-6. Press **Export outputs** to get the drawings with the colours ([export the outputs](export-the-outputs.md)).
+5. Press **Generate** and **Apply**. The wires take the colours now, and the **Colour** column of the wire table in the **Harness** tab (and of the wire list in **Lists**) shows them.
+6. Press **Export…** to get the drawings with the colours ([export the outputs](export-the-outputs.md)).
 
 GUI, not run: the menu name and the texts above are taken from the program's code. The dialog has not been looked at on screen.
 

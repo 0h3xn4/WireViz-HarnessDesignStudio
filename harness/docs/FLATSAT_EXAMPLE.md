@@ -57,7 +57,7 @@ Eight harnesses, because the example uses the segmentation mode `per_zone_pair` 
 | `W007` | egse and egse | 8 | checkout system to power supply and RF equipment |
 | `W008` | egse and payload | 4 | the payload test interface |
 
-(The wire counts and what each harness holds are produced by the tool; read any harness in the app with **Why is it like this?** on a wire.)
+(The wire counts and what each harness holds are produced by the tool; read any harness in the **Harness** tab of the app and select a wire to see **Why** it is like this.)
 
 The totals in `outputs/system/mass_length.csv` after `harness export`: 329.6 m of wire and 2.6 kg with margin. These numbers include the three harnesses that touch the ground equipment (`W005`, `W007`, `W008`); the tool does not know which harnesses fly, so subtract them yourself when you need the flight mass.
 

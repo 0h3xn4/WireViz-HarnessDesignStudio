@@ -19,7 +19,7 @@ This page shows how to write the drawings and lists of a design (wire lists, pin
 
 ## 1. Export
 
-**In the app** (GUI, not run): open the **Harness plans** tab and press **Export outputs**. The project must be saved to a folder first. When it is done the app says "38 files written to the outputs folder (design 310e4c4a4345)." (your numbers will differ).
+**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…**, Ctrl+E). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, and the button **Export**. The project must be saved to a folder first (the window says so and offers **Save project…**). When it is done the window lists the files written ("38 files written to …") and the app says "38 files written to the outputs folder (design 310e4c4a4345)." (your numbers will differ). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The export always writes the whole set. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
 
 **On the command line**:
 
@@ -31,7 +31,7 @@ harness export wheel-link
 38 files written to wheel-link/outputs (model 310e4c4a4345).
 ```
 
-The files are checked independently before they are written. If that check fails, nothing is written and the app says "The outputs failed their independent check, so nothing was written". The check compares every cell of the pinouts, BOM, test tables, labels, mass table, mating matrix, traceability, box pinouts and design rule findings with the design, the values in the YAML files, the pins and signals in the drawings, the texts of the PDFs, the sheets of the Excel workbooks and the provenance values. A workbook that cannot be built (for example because the temporary folder is full) gives a message that says why. Export is refused, in the app and on the command line, for a project that is read-only or has damaged files ("This project is read-only, so nothing was exported. Save a copy to a new folder first."); an export or generation that was started before you edited the project is dropped ("The project was edited while this ran, so the result was dropped. Please try again.").
+The files are checked independently before they are written. If that check fails, nothing is written and the window shows a notice, "The independent check found n problem(s) in the outputs, so nothing was written", with the first problems, until the next export succeeds. The check compares every cell of the pinouts, BOM, test tables, labels, mass table, mating matrix, traceability, box pinouts and design rule findings with the design, the values in the YAML files, the pins and signals in the drawings, the texts of the PDFs, the sheets of the Excel workbooks and the provenance values. A workbook that cannot be built (for example because the temporary folder is full) gives a message that says why. Export is refused, in the app and on the command line, for a project that is read-only or has damaged files ("This project is read-only, so nothing was exported. Save a copy to a new folder first."); an export or generation that was started before you edited the project is dropped ("The project was edited while this ran, so the result was dropped. Please try again.").
 
 ## 2. What you get
 
@@ -98,7 +98,7 @@ Numbers in the tables and the YAML keep all their digits (a length of 1234.567 m
 
 ## 4. Check that the outputs are current
 
-The **Harness plans** tab shows the state: "Outputs: up to date with the design.", "Outputs: out of date, the design changed after the last export.", "Outputs: not exported yet.", "Outputs: files were changed after export." On the command line:
+The status chip in the top bar and the header of the **Harness** tab show the state (*Up to date*, *Outputs out of date*, *Not exported*, *Outputs changed*); a banner under the top bar offers **Export…** when the files are out of date. The **Harness plans** tab of the bottom panel spells it out: "Outputs: up to date with the design.", "Outputs: out of date, the design changed after the last export.", "Outputs: not exported yet.", "Outputs: files were changed after export." On the command line:
 
 ```
 harness verify wheel-link --outputs

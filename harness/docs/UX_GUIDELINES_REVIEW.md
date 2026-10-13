@@ -1,5 +1,7 @@
 # Review against the UX/UI guidelines (October 2026)
 
+> **Newer standard.** This page reviews the first guideline set (*UX/UI Guidelines for the Harness Tool*), and its statuses below are still true for that set. Later in October 2026 the owner gave a second document, the "UX/UI Standard: Harness Design Studio", and approved an audit of the editor against it; the editor was then rebuilt. That audit, with an issue-by-issue **Build status** (done, partly, not done, needs owner decision), is [`ux-audit.md`](ux-audit.md); the design rules the rebuild follows are in [`DESIGN.md`](DESIGN.md). Where the two disagree about how the window looks (for example "Problems panel", "navigation for large harnesses", the palette or the tab layout), read those two pages.
+
 The owner's document *UX/UI Guidelines for the Harness Tool* is written for a WireViz-based tool: YAML on one side, a live diagram on the other, Monaco as the editor, Graphviz for drawing. This tool is different by design: it is **model-first** (the design is a folder of JSON files edited through a diagram editor, tables and dialogs; generated harnesses are never edited by hand) and **clean-room** (WireViz YAML is an export format only; WireViz and Graphviz are not used). So some guidelines apply as written, some apply in a different form, and some do not apply. This page says which, with the evidence. Done in this change: marked **new**.
 
 ## Offline and closed operation

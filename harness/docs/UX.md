@@ -1,6 +1,6 @@
 # UX specification (gate for M2)
 
-> **Design record of M2, partly superseded.** This is the specification that the editor was built from. Two later decisions changed what the diagram looks like: **D-140** replaced the one-letter chips on links by pictures (and added routing, focus and connector pictures), and **D-141** made the harness drawing a wiring diagram in which wires are drawn in their wire colour (the old rule "wire colours are text only, never drawing colours" no longer holds). The wireframes below show the earlier look. For the current behaviour read the [user guide](guide/USER_GUIDE.md); the pictures of the real editor are in [`ux/qt/`](ux/qt/02-guided-main.png); the screenshots in `ux/screens/` are of the prototype (see [`ux/screens/README.md`](ux/screens/README.md)). See [`DECISIONS.md`](DECISIONS.md) for D-140 and D-141.
+> **Design record of M2, partly superseded.** This is the specification that the editor was first built from. In October 2026 the editor was rebuilt against the owner's "UX/UI Standard" (new window layout, tokens, type scale, icons, state chips, new views); sections 4, 5, 7 and 8 below describe the M2 design and are kept as the record, and the new design is in [`DESIGN.md`](DESIGN.md), with what was built per issue in [`ux-audit.md`](ux-audit.md#build-status) and a summary in [section 13](#13-redesign-against-the-uxui-standard-october-2026). Two earlier decisions changed what the diagram looks like: **D-140** replaced the one-letter chips on links by pictures (and added routing, focus and connector pictures), and **D-141** made the harness drawing a wiring diagram in which wires are drawn in their wire colour (the old rule "wire colours are text only, never drawing colours" no longer holds). The wireframes below show the earlier look. For the current behaviour read the [user guide](guide/USER_GUIDE.md); the pictures of the real editor are in [`ux/qt/`](ux/qt/02-guided-main.png) (they show the current window, not the wireframes below); the screenshots in `ux/screens/` are of the prototype (see [`ux/screens/README.md`](ux/screens/README.md)). See [`DECISIONS.md`](DECISIONS.md) for D-140 and D-141.
 
 ## Contents
 
@@ -16,8 +16,9 @@
 - [10. UX review log (my own walkthrough, as the process requires)](#10-ux-review-log-my-own-walkthrough-as-the-process-requires)
 - [11. Questions for you (please answer or mark "you decide")](#11-questions-for-you-please-answer-or-mark-you-decide)
 - [12. Qt editor review log (M2 implementation)](#12-qt-editor-review-log-m2-implementation)
+- [13. Redesign against the UX/UI Standard (October 2026)](#13-redesign-against-the-uxui-standard-october-2026)
 
-Status: **approved by the owner; the Qt editor is implemented (section 12).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
+Status: **approved by the owner; the Qt editor is implemented (section 12) and was rebuilt in October 2026 (section 13).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
 
 This document is the contract for the editor in M2. Where the prototype and this text disagree, this text wins; tell me which is wrong.
 
@@ -44,7 +45,7 @@ This document is the contract for the editor in M2. Where the prototype and this
 
 ## 3. The ten journeys
 
-Each journey lists the steps, what the tool must do to prevent mistakes, and the success criterion. "P" marks what the prototype demonstrates; the test name is in `tests/test_prototype.py`.
+Each journey lists the steps, what the tool must do to prevent mistakes, and the success criterion. The journeys are unchanged; where they name the palette, the bottom panel or the Properties panel, the same step is now done in the project tree or the Add menu, the Checks tab or the Problems dock, and the Inspector (see section 13 and the user guide). "P" marks what the prototype demonstrates; the test name is in `tests/test_prototype.py`.
 
 **J1. First run and tour (Dana).** Opens the app, sees a sample project (mini3) and a 5-step tour (palette, canvas, connecting, problems/to-do, generate) that she can skip or replay from Help. Success: she can name the next action without reading anything else. *P: `test_j1_*`.*
 
@@ -74,6 +75,8 @@ Each journey lists the steps, what the tool must do to prevent mistakes, and the
 
 ## 4. Information architecture
 
+This is the M2 layout. The window today has a top bar, main tabs and a project tree instead; see [section 13](#13-redesign-against-the-uxui-standard-october-2026).
+
 ```
 Window
 ├─ Header: project name · Mode [Guided|Expert] · Undo/Redo · Search/commands (Ctrl+K) · Generate · Help · More (scale, theme, panel toggles)
@@ -88,6 +91,8 @@ Modes: Guided shows the logical layer only; Expert adds connectors, pins and par
 Navigation rules: everything reachable by command palette; panels collapsible; below 1500 CSS px the secondary header controls move to "More", below 1150 px the Properties panel hides, below 800 px the palette hides, and when the window is under 640 px tall the bottom panel collapses to its tab bar (this is what makes 150% to 200% scaling usable, `test_panels_collapse_*`).
 
 ## 5. Wireframes
+
+The wireframes show the M2 look. Pictures of the current editor are in [`ux/qt/`](ux/qt/).
 
 ### 5.1 Main window (see the prototype pictures [`ux/screens/02-guided-main.png`](ux/screens/02-guided-main.png) and [`04-expert-connectors.png`](ux/screens/04-expert-connectors.png))
 ```
@@ -166,6 +171,8 @@ Open question for you: do you have a company title block (D-15)?
 
 ## 6. Interaction rules ("prevent, then explain")
 
+The rules still hold. Where rule 7 says a cell reads "rules pending", the editor now shows a **Pending** chip (icon, word and dotted pattern), and a rule that could not run shows a **Not checked** chip; see [`DESIGN.md`](DESIGN.md).
+
 1. **Only valid actions are possible.** Compatibility is computed before the click; invalid targets are greyed with the reason as visible text, an `aria-label` and a tooltip.
 2. **Auto-filled values are visibly marked** (dashed amber outline + "Auto" badge) until a person confirms them; the to-do list counts them.
 3. **Messages have three parts:** what is wrong, why it matters, how to fix it (with a button when the fix is safe). No codes in the headline; the rule ID is in "Details".
@@ -178,6 +185,8 @@ Open question for you: do you have a company title block (D-15)?
 10. **Terminology** is fixed: *unit*, *interface*, *connector*, *pin*, *wire*, *harness*, *chain* (nominal/redundant), *plan* for the generated documents. The glossary and tooltips carry the domain terms.
 
 ## 7. Design system
+
+**M2 values.** The colours, fonts, scale and icon notes in this section are the M2 design. The current values are in `gui/tokens.py` and described in [`DESIGN.md`](DESIGN.md): IBM Carbon colours (White and Gray 100), IBM Plex Sans and Mono (D-132), type scale 12 / 13 / 16 / 20 px, spacing 4 / 8 / 12 / 16 / 24 / 32 px, Lucide icons drawn in code, and the extra tokens `pending`, `not-checked`, `stale`, `paper` and `pasteboard`.
 
 Single source of truth: `src/harness_design_studio/gui/tokens.py` (no Qt import). The prototype and the real GUI both read it, and `tests/test_tokens.py` enforces the accessibility numbers below.
 
@@ -235,6 +244,8 @@ An earlier hand-picked palette had a protanopia pair at dE 2.2 (indistinguishabl
 - **Scaling:** UI scale 100 to 200% with automatic panel collapsing (section 4). In Qt this is application scaling plus the same collapsing rules.
 
 ## 8. Mapping to the M2 implementation (Qt)
+
+This is the M2 mapping. Since then the overview map and the legend are overlays on the canvas, tables use `tables.TableView`, and the views are the modules listed in section 13.
 
 | UX element | Qt building block |
 | --- | --- |
@@ -319,3 +330,22 @@ Screenshots of the real editor (offscreen render) are in `docs/ux/qt/`; the jour
 | Q14 | Properties and palette auto-hide on narrow windows without a hint | Low | Fixed in M7: a message says so once, and again when Properties is needed |
 | Q15 | The canvas is not exposed to screen readers (Qt graphics items) | Medium | Partly fixed in M7: the canvas announces unit and interface counts and the selection and names the Interface table as the accessible alternative; items are still not individually exposed. A test audit (`tests/test_accessibility.py`) found and fixed unnamed fields in the release dialog and the harness tables. A manual screen-reader pass (Orca) is still needed |
 | Q16 | An edit at stress size costs about 120 ms (target 100 ms); undo about 250 ms | Medium | Improved in M7: integrity results are cached per object (a generated 20,000-wire project: 110 ms to 22 ms per check). Measured now: rename about 100 ms, move about 100 ms, undo about 200 ms. Measured again on 2026-10-09 (`python -m tools.bench_gui`, three whole add / undo / redo cycles, software rendering, 200 units, 2,000 interfaces): select under 20 ms, rename and move 25 to 60 ms, add unit 60 to 90 ms, **undo 46 to 59 ms**, redo 11 to 26 ms. All inside the 100 ms target. The earlier "undo about 200 ms" was the first undo after start-up, which pays for one-off work (about 100 to 200 ms once); the benchmark took a single sample and so reported that one. It now times whole cycles. **Closed** |
+
+## 13. Redesign against the UX/UI Standard (October 2026)
+
+The owner approved an audit of the editor against the "UX/UI Standard: Harness Design Studio" ([`ux-audit.md`](ux-audit.md): 83 numbered issues) and the editor was rebuilt. What changed in the window:
+
+```
+Window
+├─ Top bar: project name · short model hash · saved / unsaved · Generate (the one primary button) · Check · Export… · status chip
+├─ Banners (persistent): plans or files out of date, failed generate / export / check (a refused change stays as a message over the diagram, with "Start new revision…")
+├─ Tabs: Diagram · Harness · Lists · Checks · Releases (Ctrl+1 to Ctrl+5)
+├─ Left dock: Project tree (units, interfaces, harnesses, parts, interface types, configuration, imports) · Palette
+├─ Right dock: Inspector · Why · Problems (the Inspector tab also lists "Used in")
+├─ Bottom dock (the five M2 tabs, still there): Problems · To-do · Interface table · Harness plans · Outline
+└─ Status bar: folder · rules and version · "Generated at model xxxxxxxx" · values pending link · zoom
+```
+
+New dialogs: Export (harness by document tree, result list, Reveal in folder), the Import wizard (parts, segment lengths, ampacity, KiCad netlist; interfaces keep their older dialog), New project (one dialog), the engineering values form (**Supply value…**), and release and new-revision dialogs that list what is locked and what becomes editable. The diagram gained multi-selection, navigation keys, state badges, locks, a legend overlay, find and context menus.
+
+The journeys of section 3 still apply; the screenshots in [`ux/qt/`](ux/qt/) and [`ux/build/`](ux/build/) show the result, and [`DESIGN.md`](DESIGN.md) has one line per design decision. What was not built, and why, is under "Build status" in the audit (for example the Fix all button, the non-modal palette, compact Guided footprints, writing a subset of the outputs).

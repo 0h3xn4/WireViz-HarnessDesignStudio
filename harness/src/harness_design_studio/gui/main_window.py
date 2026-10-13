@@ -455,6 +455,8 @@ class MainWindow(QMainWindow):
         self.ctl.changed.connect(self._on_changed)
         self.ctl.selectionChanged.connect(self._on_selection)
         self.ctl.openRequested.connect(self._open_requested)
+        self.ctl.problemsRequested.connect(self._show_problems)
+        self.ctl.whyRequested.connect(self._show_why)
         self.props.deleteRequested.connect(self.delete_flow)
         self.ctl.connectChanged.connect(self._on_connect)
         self.ctl.modeChanged.connect(self._on_mode)
@@ -849,6 +851,12 @@ class MainWindow(QMainWindow):
         """The Why of a harness, wire, connector or pin: in the right dock's Why tab."""
         self.dock_right.show()
         self.inspector.show_object(kind, ident, tab="why")
+
+    def _show_problems(self, object_id: str) -> None:
+        """A badge on the diagram asked for the problems of an object: the right dock's Problems
+        tab (the object is already selected, so the diagram keeps showing what they are about)."""
+        self.dock_right.show()
+        self.inspector.show_tab("problems")
 
     def _tree_selected(self, kind: str, ident: str) -> None:
         if kind not in ("unit", "interface"):  # (those the tree selects on the canvas itself)
