@@ -236,7 +236,7 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
 | CSV | `wirelist.csv` | `Wire,Signal,Interface,From connector,From pin,To connector,To pin,AWG,Part,Colour,Length (m),Shield group,Locked` |
 | CSV | `pinouts.csv`, `system/box_pinouts.csv` | `Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare` |
 | CSV | `bom.csv` (per harness and `system/`) | `Part,Category,Manufacturer,Part number,Description,Approval,Quantity,Unit,Wires without length,Used in` |
-| CSV | `mass_length.csv` (per harness and `system/`) | `Harness,Wires,Connectors,Wire length known (m),Wires without length,Mass of known parts (g),Margin (g),Mass with margin (g),Complete,Missing data` |
+| CSV | `mass_length.csv` (per harness and `system/`) | `Harness,Wires,Connectors,Wire length known (m),Wires without length,Mass of wires and cable connectors (g),Margin (g),Mass with margin (g),Complete,Missing data` |
 | CSV | `tests.csv` | `Test,Type,From,To,Expected,Limit,Test voltage,Wire` |
 | CSV | `labels.csv` | `Label,Kind,Text,Quantity` |
 | CSV | `system/mating_matrix.csv` | `Box connector,Unit,Part,Gender,Cable connector,Cable part,Cable gender,Harness` |
