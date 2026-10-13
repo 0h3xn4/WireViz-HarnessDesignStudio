@@ -1,12 +1,16 @@
 """Design rule check (DRC): `run(project)` returns every finding with waivers applied."""
 
 from dataclasses import replace
+from typing import TYPE_CHECKING
 
 from harness_design_studio.core.checks import Finding
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.model import Project
 
 from .rules import RULES
+
+if TYPE_CHECKING:
+    from . import by_rule
 
 _ORDER = {"error": 0, "warning": 1, "info": 2}
 
@@ -21,6 +25,16 @@ def run(project: Project) -> list[Finding]:
     # the independent verifier also reports mismatches between interfaces and wires
     found += _verifier_findings(project)
     return sorted(apply_waivers(project, found), key=lambda f: (_ORDER[f.severity], f.id))
+
+
+def run_by_rule(
+    project: Project, findings: list[Finding] | None = None
+) -> "list[by_rule.RuleResult]":
+    """A pass / fail / not checked / pending result for each rule (see `drc.by_rule`). Pass the
+    findings of a check that already ran to avoid running the rules again."""
+    from . import by_rule
+
+    return by_rule.run_by_rule(project, findings)
 
 
 _MISMATCH_WHY = (
@@ -113,4 +127,4 @@ def locate(project: Project, object_id: str) -> tuple[str, str] | None:
     return locate(project, head) if head != object_id else None
 
 
-__all__ = ["RULES", "apply_waivers", "fix_ops", "locate", "run"]
+__all__ = ["RULES", "apply_waivers", "fix_ops", "locate", "run", "run_by_rule"]
