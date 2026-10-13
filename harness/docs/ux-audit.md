@@ -1,6 +1,6 @@
 # UX audit against the "UX/UI Standard — Harness Design Studio" (October 2026)
 
-Status: **audit only, nothing in the editor has been changed for it.** The standard says to stop here and wait for approval; the sections "Approval needed" at the end list what I propose to build and in which order.
+Status: **the owner approved this audit and the redesign was built.** The findings below are the audit as it was written, about the editor as it was **before** the build; they are kept unchanged so the issue IDs stay traceable. What was done for each ID, in which branch and module, which test covers it and why anything was left out is in [Build status](#build-status) at the end. The decisions behind the new look are in [`DESIGN.md`](DESIGN.md); the user-visible changes are in the `Unreleased` section of the [changelog](../CHANGELOG.md).
 
 What was audited: the editor (`harness-gui`, PySide6 widgets) on the `flatsat` example, offscreen, light and dark, 1280×720, 1920×1080 and 3840×2160, plus a 100-unit / 800-link stress project. Three reviewers worked in parallel (A: app shell and visual system; B: canvas and states; C: the Harness, Lists, Checks, Releases, Imports and Export screens and the flatsat journey). They ran and drove the program; each finding says how it was verified. Screenshots are in `docs/ux/audit/`. What earlier UX work already did is in [`UX_GUIDELINES_REVIEW.md`](UX_GUIDELINES_REVIEW.md) (the earlier guideline set) and [`UX.md`](UX.md).
 
@@ -8,7 +8,9 @@ Not covered: a real display and real GPU (everything ran on the Qt `offscreen` p
 
 **Severity.** *high*: breaks a non-negotiable principle of the standard or a core flow. *medium*: clear gap against the target layout. *low*: polish. **Effort.** S under a day, M a few days, L about a week or more.
 
-## 0. What the editor is today (confirmed)
+## 0. What the editor was when audited (confirmed)
+
+This section and sections A to C describe the editor **before** the build; the present tense below is the audit's.
 
 - Stack: PySide6 widgets (the standard said "confirm from the code first"). Main window `gui/main_window.py`; token-driven theme `gui/theme.py` + `gui/tokens.py`; canvas `gui/canvas.py`; panels `gui/panels.py`.
 - Shell: left **Palette** dock | centre diagram with a tool row and the legend | right **Properties** dock | bottom dock with five tabs (Problems, To-do, Interface table, Harness plans, Outline). Top toolbar: Undo, Redo, Guided/Expert, Search (Ctrl+K), filters, Generate.
@@ -275,3 +277,115 @@ Counts: high 8 (SC-1, 2, 3, 4, 5, 6, 11, 12), medium 14, low 4.
 About 20 clicks and 4 modal dialogs from open to revise, excluding typing. Hidden state: stale plans and outputs, not-checked rules, release state, lock state in Properties, pending values.
 
 Not verified in this part: 100 units, 4K, screen readers; whether `write_outputs` can write a subset without changing `manifest.json` (SC-12); whether `plan_generation` can be scoped to one harness (SC-13); toast timing in real time.
+
+## Build status
+
+Checked against the code and the tests of branch `ux/docs` (the merge of all UX branches, `ux/all`, plus this documentation). Each claim was confirmed by reading the module and the test named in the row. **done** means the proposed fix exists in the window and a test covers it; **partly** says what is missing; **not done** and **needs owner decision** say why.
+
+Branches (all merged into `ux/all`): **found** = `ux/found` (tokens, theme, icons, state chips, shared tables); **core** = `ux/core` (headless helpers); **canvas** = `ux/canvas` (navigation, selection, editing); **cstate** = `ux/cstate` (state marks on the diagram); **tree** = `ux/tree` (project tree, inspector, Why); **checks** = `ux/checks`; **harness** = `ux/harness` (Harness view, Lists, generate plan table); **rel** = `ux/rel` (Releases, Export, Import, New project); **shell** = `ux/shell` (top bar, banners, tabs, layout, palette, shortcuts). Module names are under `gui/` unless they start with `core/`. Tests are under `tests/`.
+
+Totals: SH 28 = 19 done, 9 partly; CV 29 = 22 done, 6 partly, 1 not done; SC 26 = 20 done, 5 partly, 1 needs an owner decision.
+
+### Shell and visual system (SH)
+
+| ID | Status | Built in | Covered by | Note |
+|---|---|---|---|---|
+| SH-1 | done | shell: `topbar.py` | `test_ux_shell.py` | Name, short hash (mono), dirty marker, Generate (the only primary button), Check, Export…, status chip. The Guided, Expert, Select and Connect toggles are neutral (`toggle` property). |
+| SH-2 | done | shell: `shell.py`, `topbar.py` | `test_ux_shell.py` | Status chip (up to date, plans or outputs out of date, generating, exporting, checking) and persistent banners with Generate and Export…; the stale banner can be hidden until the next change. |
+| SH-3 | done | checks: `checks_panel.py`, `core/drc/by_rule.py`; shell: status bar | `test_ux_checks.py`, `test_drc_by_rule.py` | "34 rules: n passed · n failed · n not checked"; the status-bar link "n values pending · n rules not checked" opens Checks filtered. |
+| SH-4 | done | core: `core/vcs/lockview.py`; cstate: `canvas_badges.py`; tree: `project_tree.py`, `inspector.py` | `test_vcs_lockview.py`, `test_gui_canvas_state.py`, `test_ux_tree.py`, `test_ux_inspector.py` | Lock icon and "W001 A" on cards, links, connectors, tree rows and in the Inspector, with fields disabled and the reason as tooltip. The audit's `ctl.locked_ids()` was not needed; the views read `lockview.locked_objects`. |
+| SH-5 | done | shell: `main_window.py`, `shell.py` | `test_ux_shell.py` | A refusal stays on screen with "Start new revision…" until the next change goes through. |
+| SH-6 | done | tree: `project_tree.py` | `test_ux_tree.py` | `QTreeView` over a model, seven groups, state chips, problem counts, locks, incremental updates, filter, Add menu. The Palette was kept as a second tab of the left dock instead of being replaced. |
+| SH-7 | partly | shell: `main_window.py` (tabs); harness: `harness_view.py` | `test_ux_shell.py`, `test_ux_harness.py` | The main tabs Diagram, Harness, Lists, Checks, Releases and the new Harness view exist. The bottom dock still has its five old tabs (Problems, To-do, Interface table, Harness plans, Outline), including the old `HarnessPanel` with its two `QTableWidget`s (`panels.py`). They were kept so nothing was lost; retiring them is a follow-up. |
+| SH-8 | done | tree: `inspector.py`, `why_panel.py`, `core/usedby.py` | `test_ux_inspector.py`, `test_usedby.py`, `test_ux_why.py` | Right dock tabs Inspector, Why, Problems; "Used in"; engineering values of a configuration file with a status chip each. |
+| SH-9 | done | shell: `main_window.py` | `test_ux_shell.py` | Project folder (mono, cut in the middle), "34 rules · v1.0.0", "Generated at model xxxxxxxx" (from the generation record, no clock), pending-values link, zoom. |
+| SH-10 | done | shell: `main_window.py`; found: `tables.py` | `test_ux_shell.py`, `test_ux_foundation.py` | `saveState` with a version, View > Reset layout, table column widths saved. |
+| SH-11 | partly | shell: `main_window.py`, `dialogs.py` (`CommandPalette`) | `test_ux_shell.py` | Ctrl+K lists every enabled action (Generate, Export, Check, Release, Revise, Reset layout, tabs, imports, go to harness) with its shortcut, ranks by prefix, has no result cap. It is still a modal dialog, not a non-modal overlay. |
+| SH-12 | done | shell: `main_window.py`; canvas | `test_ux_shell.py`, `test_gui_canvas_ux.py` | Every shortcut is in a menu; Connect `C` is in Edit; `F` fits, Ctrl+0 is 100 %; Ctrl+G, Ctrl+E, F5, Ctrl+I; tooltips read "text (shortcut)". |
+| SH-13 | partly | shell: `main_window.py` | `test_ux_shell.py` | F6 and Shift+F6 cycle the panels, Ctrl+1 to Ctrl+5 switch tabs. The diagram still takes one Tab stop per unit and link (`DiagramView.focusNextPrevChild`); there is no roving focus, F6 is the way out. |
+| SH-14 | partly | shell: `main_window.py` | `test_ux_shell.py` | "Undo Move PDU2" and "Redo …" from the history labels. No history list or dock; it is still the core `History`, not `QUndoStack`. |
+| SH-15 | done | canvas: `canvas.py` | `test_gui_canvas_ux.py`, `test_gui_perf.py` | Only the moved units' links are drawn, as straight lines, while dragging; routes are worked out on release. |
+| SH-16 | partly | harness: `harness_view.py`, `background.py`; shell: `main_window.py` | `test_ux_harness.py`, `test_ux_shell.py` | The independent check, the outputs state and the plan state of the Harness and Lists views run in a worker and are cached; the hash and states of the top bar are read once per model state after a pause. Export builds and verifies in a worker, but `write_outputs` is still called on the UI thread when the worker has finished (`export_dialog.py`), and the status chip's outputs state is read on the UI thread. |
+| SH-17 | done | checks: `checks_panel.py`; shell: `shell.py` | `test_ux_checks.py`, `test_ux_shell.py` | A failed generate, export or check is a banner until the next success; a running check says "Checking…" and can be cancelled. |
+| SH-18 | partly | rel: `new_project_dialog.py` | `test_ux_rel_newproject.py`, `test_ux_shell.py` | New project and New project from an example are one dialog with the problem next to the field. Add zone is still a `QInputDialog`. |
+| SH-19 | done | found: `theme.py` | `test_ux_foundation.py` | `QPalette` from the tokens; System (default), Light, Dark; follows the OS scheme. |
+| SH-20 | done | found: `tokens.py`, `theme.py`, `preview.py` | `test_ux_foundation.py` | `paper` and `pasteboard` tokens; a test finds no hex literal and no `setStyleSheet` outside the theme (the logo in `appicon.py` is the one exception). |
+| SH-21 | done | found: `theme.py` (`mono_font`) | `test_ux_foundation.py` | IBM Plex Mono for hashes, paths, IDs, pin and wire numbers, the drawing preview. |
+| SH-22 | done | found: `tokens.py`, `theme.py` | `test_ux_foundation.py` | Type 12 / 13 / 16 / 20, spacing 4 / 8 / 12 / 16 / 24 / 32, `theme.type()` and `theme.space()`; a test finds no literal pixel sizes. |
+| SH-23 | done | found: `theme.py` | `test_ux_foundation.py` | One 32 px control height. |
+| SH-24 | partly | shell: `panels.py` | `test_ux_shell.py` | The Fix buttons on problem cards are no longer primary, so Generate is the one primary button. The single "Fix all (n)" button was not built. |
+| SH-25 | partly | found: `icons.py` | `test_ux_foundation.py` | A Lucide icon set (ISC licence, D-146) with tooltips naming the shortcut, recoloured from the tokens. The icons are painter paths read from path strings, not SVG files, because the package has no QtSvg. |
+| SH-26 | done | shell: `main_window.py`, `shell.py`; canvas: `legend.py` | `test_ux_shell.py`, `test_gui_canvas_ux.py` | The legend and overview map are overlays; the bottom panel hides in a window under 800 px high so the diagram keeps at least 55 % of the height at 1280 x 720; the first UI scale follows the screen height. The tool row stayed above the diagram. |
+| SH-27 | partly | rel: `export_dialog.py`, `export_docs.py` | `test_ux_rel_export.py`, `test_outputs_subset.py` | Folder, harness by document tree, progress with Cancel, result list, Reveal in folder, Open, drawing picture. The ticks choose what the result list shows and what "Copy selection to folder" copies; the export always writes the full set, because the core cannot write a subset (see SC-12). |
+| SH-28 | done | found: `states.py`; checks | `test_ux_foundation.py`, `test_ux_checks.py` | State chips with icon, word and, for pending (dotted) and not checked (hatched), a pattern; used in every table, the tree, the canvas and the dialogs. |
+
+### Diagram canvas (CV)
+
+| ID | Status | Built in | Covered by | Note |
+|---|---|---|---|---|
+| CV-1 | done | canvas: `canvas.py`, `controller.py`, `core/edit.py` | `test_gui_canvas_ux.py`, `test_edit_canvas.py` | The selection is a set (`ctl.selected`; `ctl.selection` is the primary one); Shift- and Ctrl-click, rubber band, Ctrl+A, common fields in Properties, one undo step per action. |
+| CV-2 | done | canvas: `core/edit.py` | `test_gui_canvas_ux.py`, `test_edit_canvas.py` | `ops_align`, `ops_distribute`, `ops_duplicate_unit`; Edit and right-click menus; Ctrl+D. |
+| CV-3 | done | canvas: `canvas.py` | `test_gui_canvas_ux.py` | Ctrl+wheel zooms, the wheel scrolls, middle button or Space and drag pan. |
+| CV-4 | done | canvas: `canvas.py`, `main_window.py` | `test_gui_canvas_ux.py` | `F`, Shift+F, Ctrl+0 = 100 %, zoom level shown, View > "Interface size", tooltips. |
+| CV-5 | partly | canvas: `canvas.py`, `legend.py` | `test_gui_canvas_ux.py` | Overview text in screen pixels, a fit floor (10 %, 22 % on opening), legend and map fold in a small window. Compact footprints for Guided were not built: the room a unit takes (`edit.unit_footprints`, the taller of the Guided and Expert heights) decides where units are placed and saved in `logical/layout.json` and in the example projects, so changing it moves saved layouts. Needs an owner decision. |
+| CV-6 | partly | cstate: `canvas_state.py`, `canvas_badges.py` | `test_canvas_state.py`, `test_gui_canvas_state.py` | One index of problems, warnings, pending and not checked per object; badge = icon + count, with the word in the tooltip. A click on a badge selects the object and emits `ctl.problemsRequested(id)`; `MainWindow` has no receiver for it yet, so Problems is not opened and filtered (the test checks the signal, not the window). |
+| CV-7 | done | cstate: `canvas_badges.py`; tree: `inspector.py`; core: `lockview.py` | `test_gui_canvas_state.py`, `test_ux_inspector.py`, `test_vcs_lockview.py` | Lock and "W001 A" on cards, links and connectors, a faint released tint, Inspector banner with "Start new revision". |
+| CV-8 | done | cstate: `canvas.py`, `core/describe.py` | `test_gui_canvas_state.py`, `test_describe_cstate.py` | "n auto" chip in Guided too; "V ? · A ?" in the pending style on power links. |
+| CV-9 | done | tree: `inspector.py`, `panels.py` | `test_ux_refused_edit.py` | A refused edit rebuilds the form; the refusal stays with a "Start new revision…" button (SH-5). |
+| CV-10 | done | cstate: `core/describe.py` (`link_summary`) | `test_describe_cstate.py`, `test_gui_canvas_state.py` | Rich tooltip: harness, wire count, state, what is still to enter, lock, checks. |
+| CV-11 | done | canvas | `test_gui_canvas_ux.py` | Double-click or Enter emits `ctl.openRequested`; the window opens the Harness tab with the wire selected, or a toast "Not generated yet" with Generate. |
+| CV-12 | done | canvas | `test_gui_canvas_ux.py` | Right-click menus built from the window's actions; a greyed entry carries the reason. |
+| CV-13 | done | canvas: `canvas.py` | `test_gui_canvas_ux.py` | Ctrl+F bar over ID, name, connector, type; matches get a dashed halo; Enter and Shift+Enter centre on the next and previous. |
+| CV-14 | done | canvas | `test_gui_canvas_ux.py` | A link label is part of the link's shape. |
+| CV-15 | done | canvas: `legend.py` | `test_gui_canvas_ux.py` | Collapsible overlay, View > Show legend, lists only what is drawn. |
+| CV-16 | done | canvas | `test_gui_canvas_ux.py` | The map can be dragged, is smaller or hidden in a small window, uses thin see-through lines. |
+| CV-17 | done | canvas | `test_gui_canvas_ux.py` | Grid from 50 %, View > Snap to grid (saved), Alt bypasses. |
+| CV-18 | done | canvas, shell | `test_gui_canvas_ux.py` | Deleting an interface asks first and names both ends and the harness wires; Delete works only from the diagram and the tables. |
+| CV-19 | partly | cstate: `core/describe.py` (`unit_glyph`), `canvas.py` | `test_describe_cstate.py`, `test_gui_canvas_state.py` | Type picture, "12 conn", "+3" instead of a silent cut, NOMINAL only where there is a redundant chain. The flight / ground tag is a viewer setting (`QSettings` key `canvas/zone_tags`, default none) set per zone name from the unit's menu, not a property of the unit; the open question below stands. |
+| CV-20 | done | canvas | `test_gui_canvas_ux.py` | Read-only drag, Delete, nudge and arrange say why. |
+| CV-21 | done | cstate: `canvas.py` | `test_gui_canvas_state.py` | Below 50 % each category has its own dash pattern and a small plate with its picture. |
+| CV-22 | done | cstate: `canvas_badges.py` | `test_gui_canvas_state.py` | Corner chip on the diagram plus the top-bar chip and banners (SH-2). |
+| CV-23 | partly | cstate, tree: `why_panel.py`, `core/why.py`, `inspector.py` | `test_gui_canvas_state.py`, `test_why.py`, `test_ux_why.py`, `test_ux_refused_edit.py` | The Why tab of the Inspector, the Why pane of the Harness view and the tooltip of the auto badge give the recorded reasons. "Why?" in the right-click menu and the click on the auto chip emit `ctl.whyRequested`, which `MainWindow` does not connect yet, so they do nothing visible. |
+| CV-24 | done | canvas | `test_gui_canvas_ux.py`, `test_gui_perf.py` | See SH-15. |
+| CV-25 | partly | canvas: `canvas.py` | `test_gui_canvas_ux.py` | The gap line only from scale 0.8, links outside the exposed rectangle skipped, pens and fonts cached. No `ItemCoordinateCache` and no batched lines when far out; the 200-unit, 2000-link size was not re-measured for this page. |
+| CV-26 | not done | — | — | Toasts still appear over the top of the diagram (`ToastHost.reposition` in `main_window.py`), not in a strip under the toolbar. |
+| CV-27 | done | canvas, shell | `test_gui_canvas_ux.py` | Ctrl+Shift+L and a toolbar button; a diagram of more than 60 units is arranged in a worker. |
+| CV-28 | done | canvas | `test_gui_canvas_ux.py` | The empty-state text mentions Ctrl+K and Import, and a diagram without links says "press C to connect". |
+| CV-29 | partly | canvas: `canvas.py` | `test_gui_canvas_ux.py` | `CanvasMetrics` holds the numbers; they were not moved into a `CANVAS` token group. |
+
+### Harness, Lists, Checks, Releases, Imports, Export (SC)
+
+| ID | Status | Built in | Covered by | Note |
+|---|---|---|---|---|
+| SC-1 | done | core: `core/drc/by_rule.py`; checks: `checks_panel.py`, `panels.py` | `test_drc_by_rule.py`, `test_ux_checks.py` | Per-rule results (pass, fail, not checked, pending); the Problems header no longer says "all 34 rules checked"; not-checked notes are never cut by the 25-card limit. |
+| SC-2 | done | checks: `checks_panel.py` | `test_ux_checks.py` | Rules table with a summary strip, offending objects, Enter or double-click shows one on the diagram; `ProblemsPanel` stays as the dockable Problems view. |
+| SC-3 | done | core: `core/configcheck.py` (`engineering_values`, `plan_set_value`); checks: `config_dialog.py` | `test_configcheck_values.py`, `test_ux_checks.py` | **Supply value…** opens every engineering value by config file, with units, inline reasons, and one undo step for Apply; Design > Engineering values…; pending link in the status bar. |
+| SC-4 | done | shell: `topbar.py`, `shell.py` | `test_ux_shell.py` | Chip and banners (see SH-2). The audit's "plans out of date" To-do item was not added. |
+| SC-5 | done | harness: `harness_view.py` | `test_ux_harness.py`, `test_ux_harness_core.py` | Harness is a main tab with a header (name, release state, interfaces, hash, chips) and splitters between pin table, wire table, drawing and Why. |
+| SC-6 | done | core: `lockview.py`; tree: `inspector.py`; cstate | `test_vcs_lockview.py`, `test_ux_inspector.py` | Release chip and lock everywhere; locked fields disabled with the reason. |
+| SC-7 | done | harness: `harness_view.py`, found: `states.py` | `test_ux_harness.py`, `test_ux_foundation.py` | State chips in the pin and wire tables, lock chip with a tooltip naming the release, right-aligned numbers. |
+| SC-8 | done | tree: `why_panel.py`; harness: `harness_view.py` | `test_ux_why.py`, `test_ux_harness.py`, `test_why.py` | Why for a unit, link, harness, wire, connector or pin, in the right dock and in the Harness view. |
+| SC-9 | done | harness: `harness_view.py` | `test_ux_harness.py`, `test_ux_harness_core.py` | Connector and pin table with shield, locked and state columns; spare pins hidden and counted. |
+| SC-10 | done | harness: `preview.py` (`SheetView`), `core/outputs/canvas.py` | `test_ux_harness.py`, `test_ux_harness_core.py` | Zoom 1x to 24x, pan, hover and selection linked with the tables; the written SVG and PDF are unchanged. |
+| SC-11 | done | harness: `lists_panel.py` | `test_ux_lists.py` | Wire list, pinouts, BOM, mass and length, test tables, labels, system BOM; units in headers; Ctrl+C as TSV; CSV and Excel export of the visible rows. |
+| SC-12 | partly | rel: `export_dialog.py`, `export_docs.py` | `test_ux_rel_export.py`, `test_outputs_subset.py` | The result list, Reveal in folder, picture and notices exist. Writing only the chosen harnesses is not possible in the core: `write_outputs` deletes what is not in the new set and the independent check expects every harness; `test_outputs_subset.py` records this. Changing it would touch the verifier and the manifest. |
+| SC-13 | partly | harness: `plan_table.py` | `test_ux_lists.py` | `GeneratePlanTable` (each harness: create, change, remove, keep, locked pins kept) is built and tested but the Generate preview dialog (`GeneratePreviewDialog` in `dialogs.py`) does not use it yet. A per-harness Regenerate is not possible: `plan_generation` has no way to scope to one harness, so the button says it covers every harness. |
+| SC-14 | done | rel: `lock_tree.py`, `dialogs.py`; core: `lockview.release_locks` | `test_ux_rel_dialogs.py`, `test_vcs_lockview.py` | "This release locks: …" as a tree, placeholders shown as pending. |
+| SC-15 | done | rel: `dialogs.py` | `test_ux_rel_dialogs.py` | The new-revision dialog says what happens and what becomes editable; a disabled OK says what is missing. |
+| SC-16 | done | rel: `releases_panel.py`; core: `core/vcs/timeline.py` | `test_ux_rel_panel.py`, `test_vcs_timeline.py` | Timeline of reviews, releases and revisions, differences grouped by kind, Mark on diagram. |
+| SC-17 | partly | rel: `import_wizard.py`, `import_kinds.py` | `test_ux_rel_import.py` | The four-page wizard (file, columns with live preview, conflicts and placeholders, apply) serves approved parts, segment lengths, the ampacity table and a KiCad netlist; every import is one undo step. Interfaces from Ctrl+Shift+I still open the older `ImportDialog` (the wizard can also import them but is not wired to that command). |
+| SC-18 | done | shell: `topbar.py` | `test_ux_shell.py` | See SH-1. |
+| SC-19 | done | shell: `main_window.py` | `test_ux_shell.py` | Actions with shortcuts, palette entries, saved layout and Reset layout. |
+| SC-20 | done | tree: `project_tree.py` | `test_ux_tree.py` | See SH-6. |
+| SC-21 | partly | found: `tables.py`; used by harness, checks, releases, export, import wizard and the tree | `test_ux_foundation.py` | Shared `TableView`, `DictTableModel`, `TableProxy`, state delegate, TSV copy, saved widths. Still `QTableWidget`: the old Harness plans panel (`panels.py`), the older import dialog and the wire colours window (`dialogs.py`). |
+| SC-22 | done | harness: `harness_view.py`, `lists_panel.py`; tree | `test_ux_lists.py`, `test_ux_harness.py`, `test_ux_tree.py` | Empty states say what to do; one enabled Generate button only when there are interfaces. |
+| SC-23 | partly | shell: `shell.py`, `main_window.py` | `test_ux_shell.py` | Failed generate and export and lock refusals are persistent. The note "changed during the job" is still a toast. |
+| SC-24 | done | harness: `background.py` (`JobRunner`), `harness_view.py`, `lists_panel.py` | `test_ux_harness.py` | The check, the outputs state and the plan state are computed on a copy in a worker and cached by the state token. |
+| SC-25 | needs owner decision | — | — | A name-only change to an interface of a released harness is cosmetic by design, yet the plans then say "out of date" and the independent check reports an error. Nothing was changed: whether a cosmetic field counts as outdated is a rule decision. |
+| SC-26 | done | found: `theme.py`, `tokens.py` | `test_ux_foundation.py` | See SH-20. |
+
+### Left for the owner or a follow-up
+
+- **Decisions.** SC-25 (do cosmetic edits make released outputs "outdated"); CV-5 compact Guided footprints (changes saved layouts); what flight and ground mean for a unit (CV-19).
+- **Core limits.** Writing a subset of the outputs (SC-12) and generating one harness (SC-13) need changes in `write_outputs`, the output verifier and `plan_generation`.
+- **Follow-ups in the window.** Connect `ctl.problemsRequested` and `ctl.whyRequested` in `MainWindow` (CV-6, CV-23); retire the five bottom tabs and the old Harness plans panel (SH-7, SC-21); a non-modal palette (SH-11); roving focus in the diagram (SH-13); a history list (SH-14); "Fix all (n)" (SH-24); toasts in a strip (CV-26); inline zone edit (SH-18); wire the Generate preview to `GeneratePlanTable` (SC-13); wire interface import to the wizard (SC-17); write outputs inside the worker (SH-16).
