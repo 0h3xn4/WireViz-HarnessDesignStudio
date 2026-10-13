@@ -50,7 +50,7 @@ The full, current layout of `core/` is in [`../ARCHITECTURE.md`](../ARCHITECTURE
 | `core/vcs/` | Release, revisions, baselines, diff, change log. |
 | `core/kicad.py`, `core/library_import.py`, `core/imports.py` | The importers. |
 | `cli/` | One module per group of commands; `main.py` builds the parser. |
-| `gui/` | `controller.py` (the only thing that changes the project), `canvas.py`, `panels.py`, `dialogs.py`, `main_window.py`, `strings.py` (all UI text). |
+| `gui/` | `controller.py` (the only thing that changes the project), `main_window.py` and `shell.py` (the window), `canvas.py`, the views (`project_tree.py`, `inspector.py`, `harness_view.py`, `lists_panel.py`, `checks_panel.py`, `releases_panel.py`), the dialogs (`export_dialog.py`, `import_wizard.py`, `new_project_dialog.py`, `config_dialog.py`), the shared parts (`tables.py`, `states.py`, `icons.py`, `theme.py`), `panels.py`, `dialogs.py`, `strings.py` (all UI text). [`../DESIGN.md`](../DESIGN.md) says how they fit. |
 | `resources/` | The offline user guide (HTML), the example projects, the templates, fonts. |
 | `tools/` | Maintenance scripts, outside the package ([`tools.md`](tools.md)). |
 | `tests/` | The tests and their golden files ([`setup-and-tests.md`](setup-and-tests.md)). |

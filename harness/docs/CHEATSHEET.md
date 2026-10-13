@@ -22,7 +22,7 @@ The command line cannot add units or interfaces. The loop works on a project tha
 | You have | Command |
 | --- | --- |
 | the example import files, demo values and CI scripts | `harness templates my-templates` (the folder must be new or empty) |
-| interfaces in a table | app only: **File > Import interfaces** |
+| interfaces in a table | app only: **File > Import > Import interfaces…** |
 | a parts list | `harness import-parts DIR parts.csv --approved Approved` |
 | segment lengths | `harness import-lengths DIR lengths.csv --unit mm` |
 | unit connectors in KiCad | `harness import-netlist DIR file.net --unit RW1 --prefix J --connector J1=RW1-J01 --dry-run` |
@@ -48,15 +48,23 @@ The comment must have at least 10 characters. A release is blocked while checks 
 
 ## In the app
 
+The window: a top bar (**Generate**, **Check**, **Export…**, a status chip), the tabs Diagram, Harness, Lists, Checks and Releases, the project tree on the left, the Inspector, Why and Problems on the right.
+
 | Keys | Action |
 | --- | --- |
 | Ctrl+N, Ctrl+O | new project, open project |
 | Ctrl+S, Ctrl+Shift+S | save, save as |
 | Ctrl+Shift+I | import interfaces (a table) |
+| Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
+| Ctrl+I | new interface |
+| Ctrl+1 to Ctrl+5 | the tabs: Diagram, Harness, Lists, Checks, Releases |
+| F6, Shift+F6 | next and previous panel |
 | Ctrl+Q | quit |
 | Ctrl+K | command palette: type a command or an ID |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | undo, redo |
-| Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, out, fit |
+| Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, out, 100 % |
+| F, Shift+F | fit everything, zoom to the selection |
+| Ctrl+A, Ctrl+D, Ctrl+F | select all, duplicate, find (in the diagram) |
 | C, Esc | start the Connect tool, back to Select (Esc also clears the selection) |
 | Tab, Enter or Space | move between units and links, select |
 | Shift+arrows | move the selected unit |

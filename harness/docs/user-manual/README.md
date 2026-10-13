@@ -35,7 +35,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 
 1. [Draw the design](draw-the-design.md): start a project; add units; connect them; guided and expert mode; save.
 2. [Redundancy and zones](redundancy-and-zones.md): the redundant copy of a unit; links between the chains; lanes.
-3. [Generate harnesses](generate-harnesses.md): preview, apply and undo; the independent check; the "Why" tab; how links are grouped.
+3. [Generate harnesses](generate-harnesses.md): preview, apply and undo; the independent check; the Harness tab and its "Why" pane; how links are grouped.
 4. [Read and fix problems](read-and-fix-problems.md): errors, warnings and notes; fixes; waivers; `harness drc`.
 5. [Fill in the engineering values](fill-in-engineering-values.md): `harness config`; the file shape; the gauge table; demo values; profiles.
 6. [Import data](import-data.md): interfaces (app only), approved parts, segment lengths.

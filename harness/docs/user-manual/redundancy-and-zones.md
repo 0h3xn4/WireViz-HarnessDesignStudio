@@ -13,7 +13,7 @@ The steps below use the app. They are described from the program's texts and cod
 ## 1. Make a redundant copy of a unit
 
 1. Select a unit, for example `PCDU1`.
-2. Press **Create redundant copy** in **Properties**, or choose **Edit > Create redundant copy**. (The button is greyed out for a unit that already is a redundant copy or already has one.)
+2. Press **Create redundant copy** above the diagram (or in the **Inspector**), or choose **Edit > Create redundant copy**. (The button is greyed out for a unit that already is a redundant copy or already has one.)
 3. A twin appears in the next lane: `PCDU1-R`, named "Power unit 1 (redundant)", with the same connectors (`PCDU1-R-J01`, ...). The tool then copies the links of the unit (their IDs end in `-R`).
 
 A copied link needs a free connector of the right type at the other end. In `first-steps`, `RW1` has one power connector and it is used, so copying `PCDU1` first copies no link. A message says so ("1 interface(s) could not be mirrored (no free connector): IF-001"). Copy `RW1` next: `IF-001-R` then joins `PCDU1-R` and `RW1-R`.
@@ -22,7 +22,7 @@ If the unit at the other end has no twin yet but has a free connector, the copie
 
 ## 2. Fix a link between the two chains
 
-This is the usual result when you copy several units one after the other. With `first-steps`, copy `PCDU1`, then `RW1`, then `OBC1`. The **Problems** tab then shows:
+This is the usual result when you copy several units one after the other. With `first-steps`, copy `PCDU1`, then `RW1`, then `OBC1`. The **Problems** tab (right panel or bottom panel) then shows:
 
 ```
 IF-002-R connects the nominal chain to the redundant chain
@@ -51,7 +51,7 @@ You can also draw a link by hand: under **Connect with**, pick the type, click `
 
 ## 3. Zones and lanes
 
-- A unit's zone is **set by where you place it**: drag the unit into a lane. The field **Zone (set by where you place the unit)** in **Properties** is read-only.
+- A unit's zone is **set by where you place it**: drag the unit into a lane. The field **Zone (set by where you place the unit)** in the **Inspector** is read-only.
 - **Edit > Add zone…** asks for a **Zone name** and adds a lane. A name that exists already is refused.
 - A blank project and `first-steps` have the lanes `panel-A` and `panel-B`.
 - Zones matter when harnesses are made. The default groups links by pair of unit connectors. The setting `per_zone_pair` groups links between the same two zones. See [generate harnesses](generate-harnesses.md#how-links-become-harnesses).

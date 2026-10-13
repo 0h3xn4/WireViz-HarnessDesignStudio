@@ -42,7 +42,7 @@ Short answers. If yours is not here, check the **Problems** tab (it says what is
 | --- | --- |
 | `harness: command not found` after `install.sh` | `~/.local/bin` is not on your PATH. Run `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && . ~/.bashrc`, or log out and in. |
 | The app does not start; a message about `xcb`, `libEGL` or `libxkbcommon` | System libraries are missing. `sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0`. |
-| The window is tiny or the text is too small or large | **View > UI scale** (the settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini`; delete it to reset). |
+| The window is tiny or the text is too small or large | **View > Interface size** (the first size follows your screen; the settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini`; delete it to reset). |
 | *Read-only* banner | The project was saved by a newer tool version, is open in another window, or its folder cannot be locked for editing (for example read-only media). Install the newer tool, close the other window, or copy the project to a folder you can write to. Nothing was changed. |
 | *Project already open* | Another window or session has it open. Close it there, or choose **Open read-only**. A lock left by a crashed session on the same machine is taken over automatically, also after a restart. A lock from another computer is respected: the message names the lock file to delete if you are sure nobody has the project open. |
 | *This project has problems* (recovery view) | Some files could not be loaded; everything else did. **Save salvaged copy** writes a clean copy. The original is protected and never overwritten. |
@@ -51,7 +51,7 @@ Short answers. If yours is not here, check the **Problems** tab (it says what is
 | `harness generate` says *not saved* | The project has errors. Run `harness validate DIR` and fix what it prints. |
 | A wire gauge says *pending* | A value is missing. `harness config DIR` says which; a gauge also needs the interface's **Max current** and the segment lengths. |
 | `harness release` says *blocked* | Each reason is printed in words. Typically a gauge or length is missing, an error is open, or the configuration files are still placeholders (review them and set `"placeholder": false`, or give a reason with `--accept-placeholders`), or a part is not approved (approve it in the parts list, or give a reason with `--accept-unapproved-parts`). |
-| *Outputs: out of date* | The design changed since the last export. Export again. |
+| *Outputs out of date* (status chip or banner) | The design changed since the last export. Export again. |
 | *Blocked because it touches released items* | The harness is released, and so are the parts, interface types and configuration values it uses. An edit, `harness import-parts` or `harness config` that would change them is refused. Start a new revision (`harness revise`), make the change, release again. |
 | `import-netlist` says a file is not a netlist | It must be KiCad's `.net` (S-expression) or XML export, not a `.kicad_sch`. |
 | `kicad-cli` cannot load a library | A KiCad installation problem. Export the netlist from the schematic editor instead (File > Export > Netlist). |

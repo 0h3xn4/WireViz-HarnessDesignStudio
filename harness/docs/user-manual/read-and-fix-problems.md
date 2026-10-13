@@ -27,16 +27,25 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 ## 2. In the app
 
-1. Open the **Problems** tab at the bottom. The tab title shows how many open errors and warnings there are, for example "Problems (10)". While the design rules run, the status line says "Design rules: checking…" and then "Design rules: all 34 rules checked."
+1. Open the **Problems** tab (in the right panel, or in the bottom panel). The tab title shows how many open errors and warnings there are, for example "Problems (10)". While the design rules run, the status line says "Design rules: checking…" and then, for example, "Design rules: 34 rules, 20 passed, 2 failed, 12 not checked." A rule that could not run because a value is missing counts as *not checked*, never as passed. The **Checks** tab (Ctrl+4) lists all 34 rules with a result for each; see [section 2a](#2a-the-checks-tab).
 2. Each finding is a card. (GUI, not run: described from the program's texts and code.) It says what is wrong and why it matters. Many cards have a button that fixes it in one click. The cards have these buttons:
    - **Show** jumps to the unit, link or harness it is about.
    - A fix button, named after the fix, for example **Choose connectors automatically**, **Confirm connectors** or **Connect to a redundant copy of OBC1**.
    - **Waive…** (warnings only).
 3. Three or more errors or notes of the same rule about the same object are shown as one card with a list. (Warnings always get a card each, because each one can be waived on its own.)
 4. The **To-do** tab lists what is left to do, for example "2 auto-filled connector assignments to review". It is not the same list as the problems.
-5. The Properties panel of a link has **Confirm auto-filled connectors**. Press it once you have looked at the connectors the tool chose.
+5. The **Inspector** of a link has **Confirm auto-filled connectors**. Press it once you have looked at the connectors the tool chose.
 
 Click a card or a to-do line to jump to the item.
+
+## 2a. The Checks tab
+
+The **Checks** tab has one row for each design rule: its ID, name, severity, a **Result** chip and how many findings are open or waived.
+
+- The result is **Pass**, **Fail**, **Not checked** or **Pending**, each with an icon and a word; **Pass (placeholder values)** means the rule passed on values nobody has reviewed. A strip above the table counts the results; each count is a button that filters the table.
+- Select a rule to read what it found, what it needs and the requirements it serves. **Enter** or a double-click on an offending object shows it on the diagram.
+- A rule that is *not checked* names the value it waits for and has **Supply value…**. It opens **Engineering values**, where you type the values (see [fill in the engineering values](fill-in-engineering-values.md)); **Apply** sets them as one undo step and the checks run again.
+- **Check** in the top bar (F5) runs the rules now; they also run by themselves a moment after you stop editing.
 
 ## 3. On the command line
 
