@@ -22,12 +22,18 @@ Versions follow semantic versioning. Every project file records the tool version
 - Engineering values form (`gui/config_dialog.py`): **Supply value…** on a pending rule opens every engineering value grouped by config file, with units, the placeholder flag, inline reasons for a refused value and locked values disabled with the reason; Apply sets all changes as one undo step and the checks run again.
 - A status-bar link "n values pending · n rules not checked" (`PendingValuesLink`) that filters the Checks tab.
 
+- Project tree (new `gui/project_tree.py`, not yet in the window): Units, Interfaces, Harnesses with their release state, Parts, Interface types, Configuration with its placeholder and pending values, and the import entry points; problem counts and a lock on every object, a filter, keyboard navigation and an "Add" menu. It updates only the rows a change touches.
+- Inspector (new `gui/inspector.py`): tabs Inspector, Why and Problems; a banner that says why an object is locked and offers "Start new revision"; fields a release forbids changed are disabled with the reason; "Used in" lists the links, harnesses and wires that use a unit, link, part or interface type; a configuration file lists its engineering values with a status chip each.
+- Why panel (new `gui/why_panel.py`): the recorded reasons for a unit, link, harness, wire, connector or pin as "rule: sentence" lines, what is still pending and the placeholder files generation used.
+
 ### Changed
 
 - The release dialog lists what the release will lock (wires, pins, interfaces, parts, interface types, config files, with placeholder values shown as pending); the new-revision dialog says what happens and what becomes editable instead of "Nothing blocks this release"; both say in words what is still missing for the button to work (the 10-character comment, a name, a reason). They take effect where the window passes `ChangeDialog.for_release` and `for_revise`.
 - The Problems header no longer says "all 34 rules checked" while rules were not checked: it reads "34 rules: n passed · n failed · n not checked", and the notes about rules that could not run are never cut off by the 25 card limit.
 - The drawing preview is a zoomable view: the wheel zooms to the cursor, drag pans, `+` `-` `0` zoom and fit, Page Up and Page Down change sheet; hovering a wire or pin marks it. The written SVG and PDF files are unchanged.
 - The independent check and the state of the outputs are worked out in the background and cached, so the harness view no longer waits for them on every change.
+- The tooltip of the "Auto" badge on a connector says why the tool chose it and that it is not confirmed yet.
+- A refused edit (an object held by a released harness) puts the stored value back into the form instead of leaving the rejected one showing.
 - Text is 13 px at 100 % (it was 14) and follows the 12 / 13 / 16 / 20 px type scale; spacing follows 4 / 8 / 12 / 16 / 24 / 32 px; all buttons, combo boxes and fields are 32 px high.
 - Hashes, IDs, requirement IDs, pin and wire numbers and the drawing preview use IBM Plex Mono.
 - The drawing preview takes its page and background colours from the theme.
