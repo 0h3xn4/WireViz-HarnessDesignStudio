@@ -32,3 +32,19 @@ def explain_wire(project: Project, h: Harness, w: Wire) -> list[str]:
 def explain_harness(project: Project, h: Harness) -> list[str]:
     prov = project.generation.provenance if project.generation else {}
     return list(prov.get(f"harness:{h.id}", []))
+
+
+def explain_connector(project: Project, h: Harness, connector_id: str) -> list[str]:
+    """Why a cable connector of the harness is as it is (its mating part), as recorded."""
+    prov = project.generation.provenance if project.generation else {}
+    return list(prov.get(f"connector:{connector_id}", []))
+
+
+def explain_pin(project: Project, h: Harness, connector_id: str, pin: str) -> list[str]:
+    """Why a pin carries its signal, as recorded for the box connector that the cable connector
+    mates with."""
+    prov = project.generation.provenance if project.generation else {}
+    cable = next((c for c in h.connectors if c.id == connector_id), None)
+    if cable is None or not cable.mates_with:
+        return []
+    return list(prov.get(f"pin:{cable.mates_with}.{pin}", []))
