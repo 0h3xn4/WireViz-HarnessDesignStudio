@@ -4,9 +4,9 @@ APP_TITLE = "Harness Design Studio"
 EMPTY_STATE = (
     "No project open. Create a new project, start from an example or open an existing one to begin."
 )
-EMPTY_CANVAS = "Your diagram is empty.\nAdd your first unit from the palette on the left."
+EMPTY_CANVAS = "Your diagram is empty.\nAdd your first unit from the palette on the left, press Ctrl+K to find a command, or bring in a table with File > Import."
 CANVAS = "Block diagram canvas"
-CANVAS_HELP = "Tab and Shift+Tab move between units and links, Enter selects, Shift+arrow keys move the selected unit, Escape clears the selection. The Interface table tab lists every interface and is the screen-reader friendly alternative."
+CANVAS_HELP = "Tab and Shift+Tab move between units and links, Enter shows the item in the harness plans, Space selects it, Ctrl+A selects everything, Shift+arrow keys move the selected units, Ctrl+F finds, Escape clears the selection. The Interface table tab lists every interface and is the screen-reader friendly alternative."
 MINIMAP = "Minimap: click to move the view"
 
 GLOSSARY: list[tuple[str, str]] = [
@@ -258,7 +258,7 @@ A_QUIT = "Quit"
 A_ADD_ZONE = "Add zone…"
 A_DARK = "Dark theme"
 A_LABELS = "Show all link labels"
-A_SCALE = "UI scale"
+A_SCALE = "Interface size"
 A_COMMANDS = "Search and commands"
 A_TOUR = "Replay the tour"
 A_GLOSSARY = "Glossary"
@@ -520,3 +520,101 @@ HARNESS_BY_HAND = "by hand"
 PROGRESS_VERIFY = "Independent check"
 FOLDER_UNUSABLE = "the folder cannot be used"
 TABLE_FILES = "Tables (*.csv *.xlsx)"
+
+
+# ---- diagram canvas: selection, navigation, search, menus (block appended for the canvas work) ----
+READ_ONLY_REFUSAL = (
+    "This project is read-only, so nothing was changed. Use Save as to make a copy you can edit."
+)
+STEP_DELETE_MANY = "Delete {} items"
+DELETED_MANY = "Deleted {} items."
+STEP_MOVE_MANY = "Move {} units"
+STEP_ALIGN = "Align units"
+STEP_DISTRIBUTE = "Space units evenly"
+STEP_DUPLICATE = "Duplicate {}"
+STEP_DUPLICATE_MANY = "Duplicate {} units"
+DUPLICATED = "Copied as {}. The copy has the connectors of the original but none of its links."
+STEP_EDIT_MANY = "Edit {} items"
+CANVAS_SELECTED_MANY = "{} items selected."
+# edit and view menu
+A_SELECT_ALL = "Select all"
+A_DUPLICATE = "Duplicate"
+A_ALIGN = "Align"
+A_DISTRIBUTE = "Space evenly"
+A_FIND = "Find in diagram"
+A_FIT_ALL = "Fit all"
+A_ZOOM_100 = "Zoom to 100 %"
+A_ZOOM_SELECTION = "Zoom to selection"
+A_LEGEND = "Show legend"
+A_SNAP = "Snap to grid"
+ALIGN_NAMES = {
+    "left": "Align left edges",
+    "hcenter": "Align centres (vertical line)",
+    "right": "Align right edges",
+    "top": "Align top edges",
+    "vmiddle": "Align middles (horizontal line)",
+    "bottom": "Align bottom edges",
+}
+DISTRIBUTE_NAMES = {
+    "horizontal": "Space evenly, side by side",
+    "vertical": "Space evenly, one above the other",
+}
+WHY_NEED_TWO_UNITS = "Select at least two units."
+WHY_NEED_THREE_UNITS = "Select at least three units."
+WHY_NEED_UNIT_SELECTED = "Select a unit first."
+WHY_SELECT_NO_ROOM = "There is no free room for a copy."
+DUPLICATE_TIP = "Copy the selected units with their connectors (Ctrl+D)"
+SELECT_ALL_TIP = "Select every unit and link in the diagram (Ctrl+A)"
+FIND_TIP = "Find a unit or link by ID, name, connector or type (Ctrl+F)"
+FIT_TIP = "Show the whole diagram (F)"
+ZOOM_IN_TIP = "Zoom in (Ctrl+=)"
+ZOOM_OUT_TIP = "Zoom out (Ctrl+-)"
+ZOOM_100_TIP = "Real size, 100 % (Ctrl+0)"
+ZOOM_SELECTION_TIP = "Fill the view with the selection (Shift+F)"
+ARRANGE_TIP = "Tidy the diagram: order the units to shorten and uncross links (Ctrl+Shift+L)"
+ZOOM_LEVEL_NAME = "Zoom level"
+ZOOM_LEVEL_TIP = "Zoom level of the diagram. Click to go back to 100 % (Ctrl+0)."
+ZOOM_PERCENT = "{} %"
+ARRANGING = "Arranging the diagram"
+# find in diagram
+SEARCH_NAME = "Find in diagram"
+SEARCH_PLACEHOLDER = "Find unit, link, connector or type"
+SEARCH_TIP = "Type to mark every match. Enter goes to the next one, Shift+Enter to the one before, Escape closes."
+SEARCH_COUNT_NAME = "Number of matches"
+SEARCH_PREV = "Previous match (Shift+Enter)"
+SEARCH_NEXT = "Next match (Enter)"
+SEARCH_CLOSE = "Close search (Escape)"
+SEARCH_NONE = "No match"
+SEARCH_POSITION = "{0} of {1}"
+# legend
+LEGEND_TITLE = "Legend"
+LEGEND_TOGGLE_TIP = "Show or fold the key to the pictures (View > Show legend hides it)"
+LEGEND_TOGGLE_NAME = "Legend, fold or unfold"
+# empty states
+EMPTY_NO_LINKS = (
+    "No links yet. Press C to connect two units, or pick an interface type in the palette."
+)
+# context menu
+CM_OPEN_PLAN = "Show in harness plans"
+CM_CONNECT_FROM = "Connect from here with"
+CM_ADD_HERE = "Add unit here"
+NOT_GENERATED = "Not generated yet: {} is not in any harness plan. Generate the harnesses first."
+# deleting
+DELETE_MANY_TITLE = "Delete {} items?"
+DELETE_MANY_BODY = (
+    "<p>These will be deleted:</p><ul>{items}</ul>{plans}<p>You can undo this with Ctrl+Z.</p>"
+)
+DELETE_IF_TITLE = "Delete {}?"
+DELETE_IF_BODY = "<p><b>{iid}</b> ({type}) connects <b>{a}</b> and <b>{b}</b>.</p>{plans}<p>You can undo this with Ctrl+Z.</p>"
+DELETE_IF_PLAN = "<p>In harness <b>{h}</b>, {n} wire(s) belong to it. They become out of date and come back, or go, the next time you generate.</p>"
+# properties of several items
+MULTI_UNITS = "{} units"
+MULTI_LINKS = "{} links"
+MULTI_MIXED = "{} units and {} links"
+MULTI_HEAD = "Selection"
+MULTI_HELP = "Fields shown here change every selected item at once. A field that reads (different) holds different values; leave it alone to keep them."
+MULTI_DIFFERENT = "(different)"
+MULTI_DELETE = "Delete selection"
+MULTI_ONLY_SOME = "These fields apply to {} only."
+SELECTED_MANY = "Selected: {} items"
+EMPTY_HINT_NAME = "What to do next"
