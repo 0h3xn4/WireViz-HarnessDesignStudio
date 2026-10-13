@@ -280,7 +280,15 @@ def _route_same(same: list[RouteLink], geo: Geometry) -> dict[str, list[Point]]:
 
 
 def route_links(links: list[RouteLink], geo: Geometry) -> dict[str, list[Point]]:
-    """The corner points of every link, in right angles, from its end A to its end B."""
+    """The corner points of every link, in right angles, from its end A to its end B. The room must
+    hold the gap on each side of the lanes a link joins (`ValueError` names the link otherwise)."""
+    for link in links:
+        lo, hi = sorted((link.lane_a, link.lane_b))
+        if lo != hi and (lo not in geo.gaps or hi - 1 not in geo.gaps):
+            raise ValueError(
+                f"Link '{link.id}' joins lane {lo} and lane {hi}, but the room has no gap "
+                f"{lo if lo not in geo.gaps else hi - 1} for it."
+            )
     cross = []
     same = []
     for link in links:

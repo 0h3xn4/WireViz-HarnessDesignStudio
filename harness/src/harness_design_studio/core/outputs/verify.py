@@ -47,7 +47,7 @@ def read_folder(folder: Path | str) -> dict[str, bytes]:
     return {
         p.relative_to(root).as_posix(): p.read_bytes()
         for p in sorted(root.rglob("*"))
-        if p.is_file() and not p.name.endswith(".tmp")
+        if p.is_file() and not p.is_symlink() and not p.name.endswith(".tmp")
     }
 
 
