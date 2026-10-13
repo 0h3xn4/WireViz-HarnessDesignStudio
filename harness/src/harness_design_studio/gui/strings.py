@@ -984,7 +984,7 @@ NP_ERR_NAME_LONG = "The name is too long: {0} characters, at most 200."
 NP_ERR_NAME_CHARS = "The name must not contain line breaks or other control characters."
 NP_HINT_FOLDER_FIX = "use a folder that is new or empty (see the message above)"
 NP_HINT_NAME_FIX = "fix the name (see the message above)"
-# ==== Checks view, engineering value dialog, pending values link (ux/checks) ======================
+# ==== Checks view, engineering value dialog, pending values link (ux/checks) ========
 NOT_CHECKED_HEADING = "Not checked"
 CHECKS = "Checks"
 CHECKS_TABLE = "Design rules"
@@ -1106,8 +1106,8 @@ LOCK_TIP = "Locked by {harness}, released as revision {rev}. Start a new revisio
 LOCK_TIP_MORE = " It is also locked by {}."
 LOCK_TIP_COSMETIC = " Names, notes and the position can still be edited."
 AUTO_COUNT = "{} auto"
-AUTO_TIP = "{n} connector(s) chosen for you and not confirmed yet."
-AUTO_TIP_MORE = "More: right-click and choose Why?"
+AUTO_CHIP_TIP = "{n} connector(s) chosen for you and not confirmed yet."
+AUTO_CHIP_MORE = "More: right-click and choose Why?"
 CONN_COUNT = "{} conn"
 CONN_COUNT_TIP = "{} connectors on this unit"
 CONN_MORE = "+{}"
@@ -1131,3 +1131,305 @@ CM_TAG_GROUND = "Ground"
 CM_TAG_NONE = "No tag"
 WHY_NOTHING_TO_SHOW = "nothing to show here"
 WHY_NOTHING_CHOSEN = "nothing was chosen for you here"
+
+# ==== UX harness view, lists and generate plan (gui/harness_view.py, lists_panel.py, plan_table.py) ==
+PREVIEW_HELP = "Drawing preview. Wheel zooms, drag pans, + and - zoom, 0 fits, Page Up and Page Down change sheet."
+PREVIEW_ZOOM_FIT = "Fit"
+PREVIEW_FIRST = "This is the first sheet"
+PREVIEW_LAST = "This is the last sheet"
+
+# Harness view (gui/harness_view.py)
+HV_PINS_TITLE = "Connectors and pins"
+HV_WIRES_TITLE = "Wires"
+HV_DRAWING_TITLE = "Drawing"
+HV_WHY_TITLE = "Why"
+HV_HARNESS = "Harness"
+HV_HARNESS_TIP = "Choose the harness to show"
+HV_INTERFACES = "Interfaces: {}"
+HV_INTERFACES_NONE = "Interfaces: none"
+HV_GENERATED_FROM = "Generated from {}"
+HV_GENERATED_FROM_TIP = "Hash of the design that Generate last read: {}"
+HV_NOT_GENERATED = "Not generated yet"
+HV_FILTER_PINS = "Filter pins"
+HV_FILTER_WIRES = "Filter wires"
+HV_SHOW_SPARE = "Show spare pins"
+HV_SHOW_SPARE_TIP = "Spare pins carry no signal and no wire; they are hidden until you ask for them"
+HV_PIN_COUNT = "{} pins shown"
+HV_PIN_COUNT_SPARE = "{} pins shown, {} spare hidden"
+HV_WIRE_COUNT = "{} wires"
+HV_NO_WIRES = "This harness has no wires."
+HV_COL_CONNECTOR = "Connector"
+HV_COL_PIN = "Pin"
+HV_COL_SIGNAL = "Signal"
+HV_COL_WIRE = "Wire"
+HV_COL_FROM = "From"
+HV_COL_TO = "To"
+HV_COL_GAUGE = "Gauge"
+HV_COL_LENGTH = "Length"
+HV_COL_COLOUR = "Colour"
+HV_COL_SHIELD = "Shield"
+HV_COL_LOCKED = "Locked"
+HV_COL_STATE = "State"
+HV_PENDING = "pending"
+HV_LOCKED_WORD = "Locked"
+HV_LOCK_PIN = "You fixed this pin by hand; Generate keeps it where it is."
+HV_LOCK_WIRE = (
+    "You set the gauge, colour, part or length of this wire by hand; Generate keeps them."
+)
+HV_STATE_AUTO = "Auto-filled"
+HV_STATE_AUTO_TIP = "Chosen by Generate; nobody has reviewed it yet."
+HV_PENDING_GAUGE = "Gauge pending"
+HV_PENDING_LENGTH = "Length pending"
+HV_PENDING_BOTH = "Gauge and length pending"
+HV_GAUGE_PENDING_TIP = "The gauge is not decided yet. It stays pending until the values that wire sizing needs are supplied."
+HV_LENGTH_PENDING_TIP = "The length is not known yet: a routing segment on its path has no length."
+HV_REL_DRAFT = "Draft · rev {}"
+HV_REL_REVIEW = "In review · rev {}"
+HV_REL_RELEASED = "Released · rev {}"
+HV_REL_REVISED = "Revised · rev {}"
+HV_REL_TIP = {
+    "draft": "Draft: it can still be edited and regenerated.",
+    "in-review": "In review: submitted for review, not released yet.",
+    "released": "Released: the harness and what it uses are locked. Revise it to change it.",
+    "revised": "A new revision of a released harness: editable again, the released one is kept.",
+}
+HV_GEN_CURRENT = "Up to date"
+HV_GEN_STALE = "Out of date"
+HV_GEN_NONE = "Not generated"
+HV_OUT_CURRENT = "Outputs current"
+HV_OUT_STALE = "Outputs out of date"
+HV_OUT_NONE = "Not exported"
+HV_OUT_UNSAVED = "Not saved"
+HV_OUT_MODIFIED = "Outputs changed"
+HV_OUT_UNREADABLE = "Outputs unreadable"
+HV_CHECKING = "Checking…"
+HV_CHECKING_TIP = (
+    "The independent check and the outputs state are being worked out in the background."
+)
+HV_VERIFY_OK = "Check passed"
+HV_VERIFY_BAD = "Check found {} problem(s)"
+HV_VERIFY_FAILED = "Could not check: {}"
+HV_VERIFIED_IN = "Checked in {} ms in the background; this view refreshed in {} ms."
+HV_REGENERATE = "Regenerate"
+HV_REGENERATE_TIP = "Generate all harnesses again from the diagram. Generate covers every harness, not only this one; a preview comes first and Undo reverts it"
+HV_EXPORT = "Export"
+HV_REVIEW = "Open in review"
+HV_REVIEW_TIP = "Open {} in the review view"
+HV_REVISE = "Revise…"
+HV_WHY_NO_HARNESS = "Select a harness first."
+HV_WHY_RELEASED = "{} is released. Revise it to make changes."
+HV_WHY_NOT_RELEASED = "Only a released harness can be revised."
+HV_WHY_RELEASE_NOT_DRAFT = "Only a draft or a harness in review can be released."
+HV_EMPTY_TITLE = "No harnesses yet"
+HV_EMPTY_NO_INTERFACES = "Add interfaces on the diagram or import a table (Ctrl+Shift+I). Then press Generate to build the harnesses."
+HV_EMPTY_READY = "The diagram has {} interface(s) and no harnesses yet. Press Generate to build them. You see a preview first and Undo reverts it."
+HV_GENERATE_NOW = "Generate harnesses"
+HV_WHY_HARNESS = "Harness {}"
+HV_WHY_WIRE = "Wire {}"
+HV_WHY_CONNECTOR = "Connector {}"
+HV_WHY_PIN = "Pin {}"
+HV_WHY_HINT = "Select a wire, connector or pin to see why it is as it is."
+HV_WHY_OPEN = "Show in Why panel"
+HV_WHY_OPEN_TIP = "Show the reasons for the selection in the Why panel"
+HV_WHY_NONE = (
+    "No reason is recorded for this one (it was made by hand, or the harness was not generated)."
+)
+
+# Lists panel (gui/lists_panel.py)
+LP_WIRELIST = "Wire list"
+LP_PINOUTS = "Pinouts"
+LP_BOM = "BOM"
+LP_MASS = "Mass and length"
+LP_TESTS = "Test tables"
+LP_LABELS = "Labels"
+LP_SYSTEM_BOM = "System BOM"
+LP_TABS = "Lists"
+LP_HARNESS = "Harness"
+LP_HARNESS_TIP = "The harness the lists are for (the system BOM covers all harnesses)"
+LP_FILTER = "Filter rows"
+LP_FILTER_TIP = "Keep the rows that contain every word you type (Ctrl+F)"
+LP_ONLY_OPEN = "Only pending or not checked"
+LP_ONLY_OPEN_TIP = "Show only the rows that still have a pending or not-checked value"
+LP_EXPORT = "Export table"
+LP_EXPORT_TIP = "Save the rows you see (as filtered and sorted) as CSV or an Excel workbook"
+LP_EXPORT_CSV = "CSV file…"
+LP_EXPORT_XLSX = "Excel workbook…"
+LP_COUNT = "{} of {} rows"
+LP_COUNT_ALL = "{} rows"
+LP_STALE = "The diagram changed after the harnesses were generated, so these lists show the earlier harnesses. Regenerate to bring them up to date."
+LP_STALE_CHIP = "Out of date"
+LP_REGENERATE_TIP = "Generate all harnesses again from the diagram (a preview comes first)"
+LP_EMPTY_TITLE = "No lists yet"
+LP_EMPTY_NO_INTERFACES = "The lists are made from generated harnesses. Add interfaces on the diagram or import a table (Ctrl+Shift+I), then press Generate."
+LP_EMPTY_READY = "The lists are made from generated harnesses. Press Generate to build them; you see a preview first."
+LP_NO_ROWS = "This list has no rows."
+LP_EXPORT_NONE = "There is nothing to export: this list has no rows."
+LP_EXPORT_DONE = "Saved {} rows to {}"
+LP_APPROVAL_MISSING = "The part is not in the parts list."
+
+# Generate plan table (gui/plan_table.py)
+GP_HARNESS = "Harness"
+GP_NAME = "Name"
+GP_CHANGE = "Change"
+GP_LOCKED = "Locked pins kept"
+GP_NEW = "New"
+GP_CHANGED = "Changed"
+GP_UNCHANGED = "Unchanged"
+GP_REMOVED = "Removed"
+GP_FROZEN = "Released, kept"
+GP_TIPS = {
+    "new": "Generate creates this harness.",
+    "changed": "Generate rewrites this harness; Undo restores it.",
+    "unchanged": "Generate leaves this harness exactly as it is.",
+    "removed": "Generate removes this harness: nothing needs it any more. Undo restores it.",
+    "frozen": "This harness is released. Generate does not touch it.",
+}
+GP_TABLE = "Harnesses Generate will create, change or leave"
+GP_LOCKS_ELSEWHERE = "{} more locked pin(s) outside these harnesses stay where you put them."
+GP_NONE = "Generate has nothing to do for any harness."
+HV_DRAWING_BUSY = "Drawing the sheets…"
+# ==== UX tree and inspector (gui/project_tree.py, gui/inspector.py, gui/why_panel.py) ==============
+TREE_NAME = "Project tree"
+TREE_HELP = (
+    "Units, interfaces, harnesses, parts, interface types, configuration and imports. Arrow keys "
+    "move, Enter selects, Ctrl+Enter opens, Right and Left open and close a group, typing jumps "
+    "to a name, / filters."
+)
+TREE_ROOTS = {
+    "units": "Units",
+    "interfaces": "Interfaces",
+    "harnesses": "Harnesses",
+    "parts": "Parts",
+    "interface_types": "Interface types",
+    "config": "Configuration",
+    "imports": "Imports",
+}
+TREE_EMPTY = {
+    "units": "No units yet. Add one with the Add button.",
+    "interfaces": "No interfaces yet. Add one with Ctrl+I or import a table.",
+    "harnesses": "No harnesses yet. Generate them from the interfaces.",
+    "parts": "No parts yet. Import an approved parts list.",
+    "interface_types": "No interface types yet.",
+}
+TREE_IMPORTS = {
+    "interfaces": "Interfaces (CSV, XLSX)…",
+    "parts": "Approved parts…",
+    "lengths": "Segment lengths…",
+    "engineering": "Engineering values…",
+    "netlist": "KiCad netlist…",
+}
+TREE_IMPORT_TIP = "Import {}. Press Enter or double-click to start."
+TREE_IMPORT_READ_ONLY = "This project is read-only, so nothing can be imported."
+TREE_FILTER_NAME = "Filter the project tree"
+TREE_FILTER_PLACEHOLDER = "Filter"
+TREE_FILTER_TIP = "Filter the project tree by ID or name (press / in the tree)"
+TREE_NO_MATCH = "Nothing matches “{}”."
+TREE_ADD = "Add"
+TREE_ADD_TIP = "Add something to the project"
+TREE_ADD_ENTRIES = {"unit": "Unit…", "interface": "Interface…"}
+TREE_ADD_IN = "Add {}…"
+TREE_MENU_SELECT = "Select on the diagram"
+TREE_MENU_OPEN = "Open"
+TREE_MENU_COPY_ID = "Copy ID"
+TREE_MENU_EXPAND = "Expand all"
+TREE_MENU_COLLAPSE = "Collapse all"
+TREE_N_ERRORS = ("{} error", "{} errors")
+TREE_N_WARNINGS = ("{} warning", "{} warnings")
+TREE_N_NOT_CHECKED = ("{} not checked", "{} not checked")
+TREE_CONFIG_PLACEHOLDER = "Placeholder"
+TREE_CONFIG_PENDING = "{} pending"
+TREE_TIP_UNIT = "Unit {}: {}. Subsystem {}, zone {}, chain {}."
+TREE_TIP_INTERFACE = "Interface {}: {} ({})."
+TREE_TIP_HARNESS = "Harness {}: {}. Revision {}, {}."
+TREE_TIP_PART = "Part {}: {} ({})."
+TREE_TIP_TYPE = "Interface type {}: {} ({} interface)."
+TREE_TIP_CONFIG_PLACEHOLDER = (
+    "Configuration {} is still a placeholder: nobody has reviewed its values."
+)
+TREE_TIP_CONFIG_MISSING = "{} not set yet: {}."
+TREE_TIP_CONFIG_OK = "Configuration {} is set and reviewed."
+TREE_NO_ZONE = "none yet"
+TREE_VALUE_WORD = ("value", "values")
+WHY_NAME = "Why"
+WHY_TAB_TIP = "Why the selected object is the way it is"
+WHY_EMPTY = "Select a unit, link, harness, wire, connector or pin to see why it is the way it is."
+WHY_TITLE = "Why: {} {}"
+WHY_KIND = {
+    "unit": "unit",
+    "interface": "link",
+    "harness": "harness",
+    "wire": "wire",
+    "connector": "connector",
+    "pin": "pin",
+}
+WHY_INTRO = "What the tool recorded when it generated this."
+WHY_NONE = "Nothing was recorded for this yet. Generate the harnesses to get the reasons."
+WHY_SHOW_ALL = "Show all {}"
+WHY_SHOW_FEWER = "Show fewer"
+WHY_SHOW_ALL_TIP = "Show every recorded reason"
+WHY_PENDING = "Pending"
+WHY_PLACEHOLDER = "Placeholder"
+WHY_PLACEHOLDER_NOTE = (
+    "Generated on placeholder values from: {}. Nobody has reviewed them, so treat the result as "
+    "provisional."
+)
+WHY_RULE_NAME = "Rule {}"
+INS_NAME = "Inspector"
+INS_TAB_INSPECTOR = "Inspector"
+INS_TAB_WHY = "Why"
+INS_TAB_PROBLEMS = "Problems"
+INS_TAB_PROBLEMS_N = "Problems ({})"
+INS_NO_PROBLEMS_HOST = "The problems list is not attached yet."
+INS_REVISE = "Start new revision"
+INS_REVISE_TIP = "Start a new revision of {}: it becomes a draft you can edit; the released revision stays on record"
+INS_BANNER_COSMETIC = "Names and notes can still be changed."
+INS_BANNER_RELEASED = "Released {} {}"
+INS_BANNER_DRAFT = "{} is a draft (revision {})."
+INS_BANNER_IN_REVIEW = "{} is in review (revision {}). It can be edited until it is released."
+INS_BANNER_REVISED = "{} is revision {}, a draft after a release. It can be edited."
+INS_USED_IN = "Used in"
+INS_USED_IN_N = "Used in ({})"
+INS_USED_NONE = "Not used anywhere yet."
+INS_USED_COLUMNS = ("Kind", "ID", "How")
+INS_USED_KINDS = {"interface": "Link", "harness": "Harness", "wire": "Wire", "unit": "Unit"}
+INS_USED_TIP = "Double-click or press Enter to show it on the diagram"
+INS_FACTS_NAME = "Properties of {} {}"
+INS_FACT_COLUMNS = ("Property", "Value", "Status")
+INS_VALUES_NAME = "Engineering values of {}"
+INS_STATUS_NOT_SET = "Not set"
+INS_STATUS_UNREVIEWED = "Unreviewed"
+INS_STATUS_UNREVIEWED_TIP = "{} is still a placeholder file: nobody has reviewed this value."
+INS_STATUS_NOT_SET_TIP = "Not set yet. {}"
+INS_STATUS_UNVERIFIED = "Not verified"
+INS_STATUS_UNVERIFIED_TIP = "Example data that no engineer has verified."
+INS_FACT_KIND = {
+    "harness": "Harness",
+    "part": "Part",
+    "interface_type": "Interface type",
+    "config": "Configuration",
+}
+INS_FACT_LABELS = {
+    "name": "Name",
+    "revision": "Revision",
+    "state": "State",
+    "interfaces": "Interfaces",
+    "wires": "Wires",
+    "connectors": "Connectors",
+    "released_on": "Released on",
+    "approver": "Released by",
+    "category": "Category",
+    "manufacturer": "Maker",
+    "part_number": "Part number",
+    "approval": "Approval",
+    "pins": "Pins",
+    "description": "Description",
+    "construction": "Construction",
+    "signals": "Signals",
+    "placeholder": "Review",
+}
+INS_FACT_REVIEWED = "Reviewed"
+INS_FACT_PLACEHOLDER = "Placeholder: not reviewed yet"
+INS_NOTHING = (
+    "Nothing selected. Pick a unit or a link on the diagram, or a row in the project tree."
+)
+TREE_FILTER_CLEAR = "Clear the filter"

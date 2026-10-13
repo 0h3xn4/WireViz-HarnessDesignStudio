@@ -8,7 +8,7 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
-from harness_design_studio.core.model import Part
+from harness_design_studio.core.model import Harness, Part
 from harness_design_studio.core.model.physical import Gender
 from harness_design_studio.core.model.project import Project
 
@@ -365,3 +365,14 @@ def why_lines(project: Project, kind: str, ident: str) -> list[str]:
         else:
             out.append("Nothing to explain: you chose these yourself, and nothing was recorded.")
     return out
+
+
+def harness_state(harness: Harness) -> str:
+    """The state of a harness in change control as a key of `gui.states`: "draft", "in-review",
+    "released", or "revised" for a draft that is a later revision of a released harness (its
+    revision is not the first, "A")."""
+    if harness.status == "released":
+        return "released"
+    if harness.status == "in_review":
+        return "in-review"
+    return "revised" if harness.revision != "A" else "draft"

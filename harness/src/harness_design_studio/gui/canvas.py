@@ -884,7 +884,7 @@ class UnitItem(QGraphicsItem):
             return mark.tip
         n = self.dscene.states.of("unit", self.unit_id).auto
         lines = describe.why_lines(self.ctl.project, "unit", self.unit_id)[:3]
-        return "\n".join([strings.AUTO_TIP.format(n=n), *lines, strings.AUTO_TIP_MORE])
+        return "\n".join([strings.AUTO_CHIP_TIP.format(n=n), *lines, strings.AUTO_CHIP_MORE])
 
     def hoverMoveEvent(self, event: object) -> None:
         _, reason = self._compat_reason()
