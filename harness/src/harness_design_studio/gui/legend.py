@@ -70,7 +70,7 @@ class LegendBar(QWidget):
 
     def _font(self) -> QFont:
         f = QFont(self.font())
-        f.setPixelSize(self.theme.px(11))
+        f.setPixelSize(self.theme.type("sm"))
         return f
 
     def _positions(self, width: int) -> tuple[list[tuple[float, float, float]], int]:

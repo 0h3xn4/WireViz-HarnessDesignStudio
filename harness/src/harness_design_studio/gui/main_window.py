@@ -90,6 +90,7 @@ from harness_design_studio.gui.dialogs import (
     WaiverDialog,
     WireColoursDialog,
 )
+from harness_design_studio.gui.icons import icon, icon_button, style_dock_buttons, tooltip_text
 from harness_design_studio.gui.legend import LegendBar
 from harness_design_studio.gui.panels import (
     HarnessPanel,
@@ -101,7 +102,7 @@ from harness_design_studio.gui.panels import (
     TodoPanel,
     category_icon,
 )
-from harness_design_studio.gui.theme import ThemeManager
+from harness_design_studio.gui.theme import MODES, ThemeManager, mark_mono
 from harness_design_studio.gui.tokens import CATEGORIES
 from harness_design_studio.gui.tour import Tour
 from harness_design_studio.resources import guide_path
@@ -358,7 +359,9 @@ class MainWindow(QMainWindow):
         self.banner = Banner()
         lay.addWidget(self.banner)
         bar = QHBoxLayout()
-        bar.setContentsMargins(8, 4, 8, 4)
+        bar.setContentsMargins(
+            self.theme.space(8), self.theme.space(4), self.theme.space(8), self.theme.space(4)
+        )
         self.tool_select = QToolButton()
         self.tool_select.setText(strings.TOOL_SELECT)
         self.tool_select.setObjectName("tool-select")
@@ -385,13 +388,11 @@ class MainWindow(QMainWindow):
         self.delete_btn.setProperty("danger", True)
         self.delete_btn.clicked.connect(self.delete_flow)
         self.zoom_in_btn = QToolButton()
-        self.zoom_in_btn.setText("+")
-        self.zoom_in_btn.setAccessibleName(strings.ZOOM_IN)
+        icon_button(self.zoom_in_btn, "zoom-in", self.theme, strings.ZOOM_IN, "Ctrl+=")
         self.zoom_out_btn = QToolButton()
-        self.zoom_out_btn.setText("−")
-        self.zoom_out_btn.setAccessibleName(strings.ZOOM_OUT)
+        icon_button(self.zoom_out_btn, "zoom-out", self.theme, strings.ZOOM_OUT, "Ctrl+-")
         self.fit_btn = QToolButton()
-        self.fit_btn.setText(strings.FIT)
+        icon_button(self.fit_btn, "fit", self.theme, strings.FIT, "Ctrl+0", text=strings.FIT)
         bar.addWidget(self.tool_select)
         bar.addWidget(self.tool_connect)
         bar.addWidget(self.hint, 1)
@@ -464,6 +465,7 @@ class MainWindow(QMainWindow):
             | QDockWidget.DockWidgetFeature.DockWidgetMovable
         )
         self.addDockWidget(area, dock)
+        style_dock_buttons(dock, self.theme, strings.DOCK_CLOSE)
         return dock
 
     def _build_status(self) -> None:
@@ -471,9 +473,13 @@ class MainWindow(QMainWindow):
         self.status_saved = QLabel(strings.ALL_SAVED)
         self.status_sel = QLabel("")
         self.status_counts = QLabel("")
-        for w in (self.status_saved, self.status_sel, self.status_counts):
+        self.status_hash = QLabel("")  # the model hash reads in the monospace font
+        self.status_hash.setObjectName("status-hash")
+        self.status_hash.setAccessibleName(strings.STATUS_HASH)
+        mark_mono(self.status_hash)
+        for w in (self.status_saved, self.status_sel, self.status_counts, self.status_hash):
             sb.addWidget(w)
-            w.setContentsMargins(8, 0, 8, 0)
+            w.setContentsMargins(self.theme.space(8), 0, self.theme.space(8), 0)
 
     # ---- actions -------------------------------------------------------------------------------
     def _act(
@@ -533,6 +539,19 @@ class MainWindow(QMainWindow):
         group.addAction(self.act_expert)
         self.act_guided.setChecked(True)
         self.act_dark = a(strings.A_DARK, self._toggle_dark, checkable=True, name="act-dark")
+        self.theme_actions: dict[str, QAction] = {}
+        tgroup = QActionGroup(self)
+        for mode, label in (
+            ("system", strings.A_THEME_SYSTEM),
+            ("light", strings.A_THEME_LIGHT),
+            ("dark", strings.A_THEME_DARK),
+        ):
+            act = a(
+                label, partial(self.set_theme_mode, mode), checkable=True, name=f"act-theme-{mode}"
+            )
+            tgroup.addAction(act)
+            self.theme_actions[mode] = act
+        self.theme_actions[self.theme.mode].setChecked(True)
         self.act_minimap = a(
             strings.A_MINIMAP, self._toggle_minimap, checkable=True, name="act-minimap"
         )
@@ -619,7 +638,9 @@ class MainWindow(QMainWindow):
         v.addAction(self.act_guided)
         v.addAction(self.act_expert)
         v.addSeparator()
-        v.addAction(self.act_dark)
+        theme_menu = v.addMenu(strings.A_THEME)
+        for act in self.theme_actions.values():
+            theme_menu.addAction(act)
         v.addAction(self.act_minimap)
         v.addAction(self.act_labels)
         scale_menu = v.addMenu(strings.A_SCALE)
@@ -645,6 +666,10 @@ class MainWindow(QMainWindow):
         tb = self.addToolBar(strings.TOOLBAR)
         tb.setObjectName("main-toolbar")
         tb.setMovable(False)
+        tb.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.act_undo.setIcon(icon("undo", self.theme))
+        self.act_redo.setIcon(icon("redo", self.theme))
+        self.act_redo.setToolTip(tooltip_text(strings.REDO, "Ctrl+Y"))
         tb.addAction(self.act_undo)
         tb.addAction(self.act_redo)
         for act in (self.act_undo, self.act_redo):  # reachable with Tab, not only by shortcut
@@ -670,6 +695,14 @@ class MainWindow(QMainWindow):
         tb.addSeparator()
         self.search_btn = QPushButton(strings.SEARCH_BUTTON)
         self.search_btn.setObjectName("search-button")
+        icon_button(
+            self.search_btn,
+            "search",
+            self.theme,
+            strings.A_COMMANDS,
+            "Ctrl+K",
+            text=strings.SEARCH_BUTTON,
+        )
         self.search_btn.clicked.connect(self.open_commands)
         tb.addWidget(self.search_btn)
         self.filter_combo = QComboBox()
@@ -798,7 +831,7 @@ class MainWindow(QMainWindow):
         unsaved = strings.UNSAVED if c.autosaves else strings.UNSAVED_NO_JOURNAL
         self.status_saved.setText(unsaved if c.dirty else strings.ALL_SAVED)
         blocked = c.history.undo_blocked  # a disabled Undo must say why
-        self.act_undo.setToolTip(blocked or strings.UNDO)
+        self.act_undo.setToolTip(blocked or tooltip_text(strings.UNDO, "Ctrl+Z"))
         self._update_banner()
         self._update_selection_actions()
         self._hash_timer.start()
@@ -849,10 +882,11 @@ class MainWindow(QMainWindow):
         ):  # text that cannot be encoded: the save says so, the hash is a label
             digest = "--------"
         self.status_counts.setText(
-            strings.STATUS_COUNTS.format(
-                strings.units_text(len(p.units)), strings.interfaces_text(len(p.interfaces)), digest
+            strings.STATUS_COUNTS_NOHASH.format(
+                strings.units_text(len(p.units)), strings.interfaces_text(len(p.interfaces))
             )
         )
+        self.status_hash.setText(digest)
 
     def _on_changed(self, delta: Delta) -> None:
         if self.filter_combo.currentData():  # connectors and harnesses come and go (generate, undo)
@@ -868,10 +902,11 @@ class MainWindow(QMainWindow):
         self._update_selection_actions()
         p = self.ctl.project  # the counts follow every edit at once; only the hash waits
         self.status_counts.setText(
-            strings.STATUS_COUNTS.format(
-                strings.units_text(len(p.units)), strings.interfaces_text(len(p.interfaces)), "…"
+            strings.STATUS_COUNTS_NOHASH.format(
+                strings.units_text(len(p.units)), strings.interfaces_text(len(p.interfaces))
             )
         )
+        self.status_hash.setText("…")
 
     def _on_selection(self) -> None:
         s = self.ctl.selection
@@ -1542,7 +1577,8 @@ class MainWindow(QMainWindow):
 
     # ---- settings, theme, scale -----------------------------------------------------------------
     def _restore_settings(self) -> None:
-        dark = self.settings.value("ui/theme", "light") == "dark"
+        saved_theme = str(self.settings.value("ui/theme", "system"))
+        mode_name = saved_theme if saved_theme in MODES else "system"  # default: the OS scheme
         try:  # a hand-edited settings file must not stop the editor from starting
             scale = int(str(self.settings.value("ui/scale", 100)))
         except ValueError:
@@ -1550,14 +1586,17 @@ class MainWindow(QMainWindow):
         if scale not in self.scale_actions:
             scale = 100
         mode = str(self.settings.value("ui/mode", "guided"))
-        self.act_dark.setChecked(dark)
         wanted = bool(self.settings.value("ui/minimap", True, bool))
         self.act_minimap.setChecked(wanted)
         self.view.set_minimap_wanted(wanted)
         self.scale_actions[scale].setChecked(True)
         app = QApplication.instance()
         if isinstance(app, QApplication):
-            self.theme.apply(app, "dark" if dark else "light", scale / 100)
+            self.theme.apply(app, mode_name, scale / 100)
+        else:
+            self.theme.mode = mode_name
+        self._sync_theme_actions()
+        self.theme.changed.connect(self._sync_theme_actions)
         self.ctl.set_mode(mode if mode in ("guided", "expert") else "guided")
         geo = self.settings.value("ui/geometry")
         try:
@@ -1578,13 +1617,27 @@ class MainWindow(QMainWindow):
         self.view.dscene.show_all_labels = self.act_labels.isChecked()
         self.view.viewport().update()
 
-    def _toggle_dark(self) -> None:
+    def _sync_theme_actions(self) -> None:
+        """Keep the Theme menu and the dark-theme toggle in step with the theme (also when the
+        operating system changes its scheme while the mode is "system")."""
+        self.theme_actions[self.theme.mode].setChecked(True)
+        self.act_dark.setChecked(self.theme.name == "dark")
+
+    def set_theme_mode(self, mode: str) -> None:
+        """Choose "system" (follow the OS), "light" or "dark"; stored as `ui/theme`."""
+        if mode not in MODES:
+            return
         app = QApplication.instance()
-        name = "dark" if self.act_dark.isChecked() else "light"
         if isinstance(app, QApplication):
-            self.theme.apply(app, name)
-        self.settings.setValue("ui/theme", name)
+            self.theme.apply(app, mode)
+        else:
+            self.theme.mode = mode
+        self._sync_theme_actions()
+        self.settings.setValue("ui/theme", mode)
         self.view.viewport().update()
+
+    def _toggle_dark(self) -> None:
+        self.set_theme_mode("dark" if self.act_dark.isChecked() else "light")
 
     def set_scale(self, pct: int) -> None:
         app = QApplication.instance()

@@ -520,3 +520,32 @@ HARNESS_BY_HAND = "by hand"
 PROGRESS_VERIFY = "Independent check"
 FOLDER_UNUSABLE = "the folder cannot be used"
 TABLE_FILES = "Tables (*.csv *.xlsx)"
+
+# ==== UX foundation (theme, icons, state chips, shared tables) =====================================
+A_THEME = "Theme"
+A_THEME_SYSTEM = "Follow the system"
+A_THEME_LIGHT = "Light"
+A_THEME_DARK = "Dark"
+STATUS_COUNTS_NOHASH = "{} · {} · model"
+DOCK_CLOSE = "Close panel"
+SHOW_ON_DIAGRAM = "Show on the diagram"
+# state chips (gui/states.py): the word shown beside the icon
+STATE_LABELS = {
+    "pass": "Pass",
+    "fail": "Fail",
+    "warning": "Warning",
+    "info": "Info",
+    "pending": "Pending",
+    "not-checked": "Not checked",
+    "locked": "Locked",
+    "released": "Released",
+    "stale": "Out of date",
+    "draft": "Draft",
+    "in-review": "In review",
+    "revised": "Revised",
+}
+# tables (gui/tables.py)
+TABLE_HEADER_UNIT = "{} ({})"
+TABLE_COPY_TIP = "Ctrl+C copies the selected cells (tab separated)"
+TABLE_COPIED = "Copied {} cells"
+STATUS_HASH = "Model hash"

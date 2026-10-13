@@ -2,7 +2,7 @@
 see here is what is exported (title block stamped "preview" because no export has happened)."""
 
 from PySide6.QtCore import QPointF, QRectF, Qt, Signal
-from PySide6.QtGui import QColor, QFont, QPainter, QPainterPath, QPen
+from PySide6.QtGui import QColor, QPainter, QPainterPath, QPen
 from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QVBoxLayout, QWidget
 
 from harness_design_studio.core.model import Harness, Project
@@ -10,14 +10,18 @@ from harness_design_studio.core.outputs.canvas import Curve, Line, Rect, Sheet, 
 from harness_design_studio.core.outputs.drawing import harness_sheets
 from harness_design_studio.core.outputs.stamp import Stamp
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.theme import ThemeManager, current_theme
 
 
 class SheetView(QWidget):
-    """Draws one `Sheet` scaled to fit, on a white page (the page stays white in dark themes:
-    it is a picture of paper)."""
+    """Draws one `Sheet` scaled to fit, on a paper-coloured page (the `paper` token is white in
+    both themes: it is a picture of paper) over the `pasteboard` token. Text is drawn in the
+    monospace font, as in the exported drawing."""
 
-    def __init__(self) -> None:
+    def __init__(self, theme: ThemeManager | None = None) -> None:
         super().__init__()
+        self.theme = theme or current_theme()
+        self.theme.changed.connect(self.update)
         self.sheet: Sheet | None = None
         self.setMinimumSize(240, 170)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Expanding)
@@ -29,7 +33,7 @@ class SheetView(QWidget):
     def paintEvent(self, event: object) -> None:  # noqa: N802
         painter = QPainter(self)
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.fillRect(self.rect(), QColor("#8a8a94"))
+        painter.fillRect(self.rect(), self.theme.color("pasteboard"))
         sheet = self.sheet
         if sheet is None:
             return
@@ -39,7 +43,7 @@ class SheetView(QWidget):
             (self.height() - sheet.height * scale) / 2,
         )
         painter.fillRect(
-            QRectF(ox, oy, sheet.width * scale, sheet.height * scale), QColor("#ffffff")
+            QRectF(ox, oy, sheet.width * scale, sheet.height * scale), self.theme.color("paper")
         )
 
         def pen(color: str, width: float, dash: tuple[float, float] | None) -> QPen:
@@ -76,9 +80,8 @@ class SheetView(QWidget):
                 px = it.size * scale
                 if px < 3:  # too small to read at this zoom: skip instead of drawing a smear
                     continue
-                font = QFont("Courier")
-                font.setStyleHint(QFont.StyleHint.Monospace)
-                font.setPixelSize(max(3, round(px)))
+                font = self.theme.mono_font()
+                font.setPixelSize(max(3, round(px)))  # the drawing's own size at this zoom
                 font.setBold(it.bold)
                 painter.setFont(font)
                 painter.setPen(QColor(it.color))
@@ -91,14 +94,14 @@ class DrawingPreview(QWidget):
 
     pageChanged = Signal(int, int)  # page, total
 
-    def __init__(self) -> None:
+    def __init__(self, theme: ThemeManager | None = None) -> None:
         super().__init__()
         self.setObjectName("drawing-preview")
         self.sheets: list[Sheet] = []
         self.page = 0
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
-        self.view = SheetView()
+        self.view = SheetView(theme)
         self.view.setObjectName("drawing-sheet")
         self.view.setAccessibleName(strings.PREVIEW_SHEET)
         lay.addWidget(self.view, 1)
