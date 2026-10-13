@@ -23,7 +23,9 @@ STAMP = Stamp("test", "0" * 8)
 
 @cache
 def flatsat() -> Project:
-    return load_project(examples_path() / "projects" / "flatsat").project
+    root = examples_path()
+    assert root is not None
+    return load_project(root / "projects" / "flatsat").project
 
 
 def test_every_wire_pin_and_connector_of_a_harness_is_marked_on_some_sheet() -> None:
@@ -50,8 +52,8 @@ def test_a_wire_mark_points_at_the_curves_and_lines_that_draw_it() -> None:
         idx = sheet.marks[("wire", w.id)]
         kinds = {type(sheet.items[i]) for i in idx}
         assert Curve in kinds and Line in kinds and Text in kinds  # leads, the run, its label
-        label = [sheet.items[i] for i in idx if isinstance(sheet.items[i], Text)]
-        assert any(t.s.startswith(w.id) for t in label)
+        labels = [it.s for it in (sheet.items[i] for i in idx) if isinstance(it, Text)]
+        assert any(s.startswith(w.id) for s in labels)
     for key, idx in sheet.marks.items():
         assert idx == sorted(set(idx)) and all(0 <= i < len(sheet.items) for i in idx), key
 
@@ -60,7 +62,9 @@ def test_marks_never_reach_the_written_files() -> None:
     p = flatsat()
     h = p.harnesses["W002"]
     sheets = harness_sheets(p, h, STAMP, "A3")
-    assert sum(1 for s in sheets if s.marks) >= 2  # the sheets with the lines under the diagram have none
+    assert (
+        sum(1 for s in sheets if s.marks) >= 2
+    )  # the sheets with the lines under the diagram have none
     for sheet in sheets:
         svg, pdf = to_svg(sheet, STAMP.line), to_pdf([sheet], "t", STAMP.line)
         bare = Sheet(sheet.width, sheet.height, list(sheet.items), sheet.title)

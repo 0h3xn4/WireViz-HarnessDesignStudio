@@ -10,7 +10,7 @@ zoom buttons and the previous / next sheet buttons.
 import math
 from collections.abc import Iterable, Sequence
 
-from PySide6.QtCore import QPointF, QRectF, QSize, Qt, Signal
+from PySide6.QtCore import QPointF, QRect, QRectF, QSize, Qt, Signal
 from PySide6.QtGui import (
     QColor,
     QFont,
@@ -49,7 +49,11 @@ Key = tuple[str, str]  # (kind, id) of a drawn object: "wire", "pin" ("J1/3"), "
 MAX_ZOOM = 24.0  # times the fit-to-window scale
 MIN_TEXT_PX = 3.0  # text smaller than this on screen is skipped instead of drawn as a smear
 HIT_PX = 4.0  # how near (in screen px) the pointer must be to a wire to pick it
-_PRIORITY = {"wire": 0, "pin": 1, "connector": 2}  # what a click picks first (shields are only drawn)
+_PRIORITY = {
+    "wire": 0,
+    "pin": 1,
+    "connector": 2,
+}  # what a click picks first (shields are only drawn)
 _TEXT_K = 8.0  # text is set at 8 times its size and the painter scaled down: no rounding at 2.6 mm
 
 
@@ -160,9 +164,7 @@ class _SheetItem(QGraphicsItem):
             return
         lod = option.levelOfDetailFromTransform(painter.worldTransform()) or 1.0
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
-        painter.fillRect(
-            QRectF(0, 0, sheet.width, sheet.height), self._view.theme.color("paper")
-        )
+        painter.fillRect(QRectF(0, 0, sheet.width, sheet.height), self._view.theme.color("paper"))
         expose = option.exposedRect.adjusted(-1, -1, 1, 1)
         for i, it in enumerate(sheet.items):
             if not geo.bounds[i].intersects(expose):
@@ -279,7 +281,7 @@ class SheetView(QGraphicsView):
         self.setFrameShape(QGraphicsView.Shape.NoFrame)
         self.setMouseTracking(True)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self.setTransformationAnchor(QGraphicsView.ViewportAnchor.NoAnchor)
         self.setResizeAnchor(QGraphicsView.ViewportAnchor.AnchorViewCenter)
         self.setViewportUpdateMode(QGraphicsView.ViewportUpdateMode.MinimalViewportUpdate)
         self.setAlignment(Qt.AlignmentFlag.AlignCenter)
@@ -354,23 +356,32 @@ class SheetView(QGraphicsView):
         self.setHorizontalScrollBarPolicy(policy)
         self.setVerticalScrollBarPolicy(policy)
 
-    def _apply(self, zoom: float, anchor: QGraphicsView.ViewportAnchor | None = None) -> None:
+    def _apply(self, zoom: float, anchor: QPointF | None = None) -> None:
+        """Set the zoom (times the fit size). With `anchor`, a point of the viewport, the part of
+        the sheet under it stays under it."""
         zoom = max(1.0, min(MAX_ZOOM, zoom))
         self.zoom = zoom
         self._scrollbars()
-        if anchor is not None:
-            self.setTransformationAnchor(anchor)
         scale = self._fit_scale() * zoom
+        held = self.mapToScene(anchor.toPoint()) if anchor is not None else None
         self.setTransform(self.transform().fromScale(scale, scale))
         if zoom <= 1.0 and self.sheet:
             self.centerOn(self.sheet.width / 2, self.sheet.height / 2)
+        elif held is not None and anchor is not None:
+            moved = self.mapToScene(anchor.toPoint()) - held
+            self.horizontalScrollBar().setValue(
+                self.horizontalScrollBar().value() - round(moved.x() * scale)
+            )
+            self.verticalScrollBar().setValue(
+                self.verticalScrollBar().value() - round(moved.y() * scale)
+            )
         self.zoomChanged.emit(zoom)
 
     def fit(self) -> None:
         self._apply(1.0)
 
     def zoom_to(self, zoom: float) -> None:
-        self._apply(zoom, QGraphicsView.ViewportAnchor.AnchorViewCenter)
+        self._apply(zoom, QPointF(self.viewport().rect().center()))
 
     def zoom_in(self) -> None:
         self.zoom_to(self.zoom * 1.25)
@@ -389,7 +400,7 @@ class SheetView(QGraphicsView):
             super().wheelEvent(event)
             return
         old = self.zoom
-        self._apply(old * math.pow(1.2, steps), QGraphicsView.ViewportAnchor.AnchorUnderMouse)
+        self._apply(old * math.pow(1.2, steps), event.position())
         event.accept()
 
     # ---- pointer and keys ----------------------------------------------------------------
@@ -415,7 +426,9 @@ class SheetView(QGraphicsView):
         if self._pan_from is not None:
             delta = pos - self._pan_from
             self._pan_from = pos
-            self.horizontalScrollBar().setValue(self.horizontalScrollBar().value() - round(delta.x()))
+            self.horizontalScrollBar().setValue(
+                self.horizontalScrollBar().value() - round(delta.x())
+            )
             self.verticalScrollBar().setValue(self.verticalScrollBar().value() - round(delta.y()))
             event.accept()
             return
@@ -459,7 +472,7 @@ class SheetView(QGraphicsView):
             return
         event.accept()
 
-    def drawForeground(self, painter: QPainter, rect: QRectF) -> None:  # noqa: N802
+    def drawForeground(self, painter: QPainter, rect: QRectF | QRect) -> None:  # noqa: N802
         if self.hasFocus():  # the keyboard focus ring (the sheet itself has no widget frame)
             painter.save()
             painter.resetTransform()
@@ -503,6 +516,7 @@ class DrawingPreview(QWidget):
         self.sheets: list[Sheet] = []
         self.page = 0
         self._selected: tuple[Key, ...] = ()
+        self._empty_text = strings.PREVIEW_NONE
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         row = QHBoxLayout()
@@ -527,7 +541,12 @@ class DrawingPreview(QWidget):
         self.prev = QPushButton()
         self.prev.setObjectName("preview-prev")
         icons.icon_button(
-            self.prev, "chevron-left", theme, strings.PREVIEW_PREV, "PgUp", text=strings.PREVIEW_PREV
+            self.prev,
+            "chevron-left",
+            theme,
+            strings.PREVIEW_PREV,
+            "PgUp",
+            text=strings.PREVIEW_PREV,
         )
         self.label = QLabel()
         self.label.setObjectName("preview-label")
@@ -535,7 +554,12 @@ class DrawingPreview(QWidget):
         self.next = QPushButton()
         self.next.setObjectName("preview-next")
         icons.icon_button(
-            self.next, "chevron-right", theme, strings.PREVIEW_NEXT, "PgDn", text=strings.PREVIEW_NEXT
+            self.next,
+            "chevron-right",
+            theme,
+            strings.PREVIEW_NEXT,
+            "PgDn",
+            text=strings.PREVIEW_NEXT,
         )
         row.addWidget(self.prev)
         row.addWidget(self.label)
@@ -565,8 +589,10 @@ class DrawingPreview(QWidget):
         else:
             self.set_sheets(harness_sheets(project, h, Stamp("preview", "preview"), "A3"))
 
-    def set_sheets(self, sheets: Sequence[Sheet]) -> None:
+    def set_sheets(self, sheets: Sequence[Sheet], empty_text: str | None = None) -> None:
+        """Show these sheets; with none, the label says `empty_text` (default: select a harness)."""
         self.sheets = list(sheets)
+        self._empty_text = empty_text or strings.PREVIEW_NONE
         self.page = max(0, min(self.page, len(self.sheets) - 1))
         self._refresh()
 
@@ -583,13 +609,15 @@ class DrawingPreview(QWidget):
         n = len(self.sheets)
         self.view.set_sheet(self.sheets[self.page] if n else None)
         self.view.set_selected(self._selected)
-        self.label.setText(
-            strings.PREVIEW_PAGE.format(self.page + 1, n) if n else strings.PREVIEW_NONE
-        )
+        self.label.setText(strings.PREVIEW_PAGE.format(self.page + 1, n) if n else self._empty_text)
         self.prev.setEnabled(self.page > 0)
         self.next.setEnabled(self.page < n - 1)
-        self.prev.setToolTip(strings.PREVIEW_PREV + " (PgUp)" if self.page > 0 else strings.PREVIEW_FIRST)
-        self.next.setToolTip(strings.PREVIEW_NEXT + " (PgDn)" if self.page < n - 1 else strings.PREVIEW_LAST)
+        self.prev.setToolTip(
+            strings.PREVIEW_PREV + " (PgUp)" if self.page > 0 else strings.PREVIEW_FIRST
+        )
+        self.next.setToolTip(
+            strings.PREVIEW_NEXT + " (PgDn)" if self.page < n - 1 else strings.PREVIEW_LAST
+        )
         for b in (self.zoom_in_btn, self.zoom_out_btn, self.fit_btn):
             b.setEnabled(bool(n))
         self._zoom_text(self.view.zoom)

@@ -16,7 +16,7 @@ behind it, as four views of one selection.
 
 import html
 from collections import defaultdict
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from time import perf_counter
 from typing import Any
@@ -35,7 +35,6 @@ from PySide6.QtCore import (
 from PySide6.QtGui import QBrush, QColor, QPainter, QPaintEvent, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView,
-    QCheckBox,
     QComboBox,
     QFrame,
     QHBoxLayout,
@@ -64,8 +63,8 @@ from harness_design_studio.core.outputs.canvas import Sheet
 from harness_design_studio.core.outputs.drawing import harness_sheets
 from harness_design_studio.core.outputs.stamp import Stamp
 from harness_design_studio.core.outputs.tables import shield_of
-from harness_design_studio.core.verify import verify_project
 from harness_design_studio.core.vcs.lockview import Locked, lock_reason, locked_objects
+from harness_design_studio.core.verify import verify_project
 from harness_design_studio.core.wirecolours import name_of, resolve
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.background import Job, JobRunner
@@ -105,7 +104,9 @@ def release_state(project: Project, h: Harness) -> tuple[str, str]:
     return "draft", strings.HV_REL_DRAFT.format(h.revision)
 
 
-def _wire_state(h: Harness, awg: int | None, length: float | None, hand_set: bool) -> tuple[str, str, str]:
+def _wire_state(
+    h: Harness, awg: int | None, length: float | None, hand_set: bool
+) -> tuple[str, str, str]:
     """(state key, word, tooltip) of a wire row: pending values first, then auto-filled."""
     gauge, long = awg is None, length is None
     if gauge or long:
@@ -118,7 +119,10 @@ def _wire_state(h: Harness, awg: int | None, length: float | None, hand_set: boo
         )
         tip = " ".join(
             t
-            for t, on in ((strings.HV_GAUGE_PENDING_TIP, gauge), (strings.HV_LENGTH_PENDING_TIP, long))
+            for t, on in (
+                (strings.HV_GAUGE_PENDING_TIP, gauge),
+                (strings.HV_LENGTH_PENDING_TIP, long),
+            )
             if on
         )
         return "pending", word, tip
@@ -157,7 +161,11 @@ def pin_rows(project: Project, h: Harness, locked: Locked | None = None) -> list
             ref = f"{c.id}/{p.id}"
             signal = p.signal or box_signal.get(p.id) or ""
             pin_word, pin_tip = _lock(
-                project, "cable_pin", f"{c.id}.{p.id}", locked, strings.HV_LOCK_PIN if p.locked else None
+                project,
+                "cable_pin",
+                f"{c.id}.{p.id}",
+                locked,
+                strings.HV_LOCK_PIN if p.locked else None,
             )
             wires = sorted(attached.get((c.id, p.id), []), key=lambda w: w.id) or [None]
             for w in wires:
@@ -224,11 +232,15 @@ def _length_text(v: Any) -> str:
 
 
 def _gauge_tip(row: Row) -> str | None:
-    return strings.HV_GAUGE_PENDING_TIP if isinstance(row, dict) and row.get("gauge_state") else None
+    return (
+        strings.HV_GAUGE_PENDING_TIP if isinstance(row, dict) and row.get("gauge_state") else None
+    )
 
 
 def _length_tip(row: Row) -> str | None:
-    return strings.HV_LENGTH_PENDING_TIP if isinstance(row, dict) and row.get("length_state") else None
+    return (
+        strings.HV_LENGTH_PENDING_TIP if isinstance(row, dict) and row.get("length_state") else None
+    )
 
 
 PIN_COLUMNS = [
@@ -238,10 +250,10 @@ PIN_COLUMNS = [
     Column("wire", strings.HV_COL_WIRE, mono=True, width=92),
     Column("gauge", strings.HV_COL_GAUGE, unit="AWG", numeric=True, state="gauge_state",
            fmt=_gauge_text, tooltip=_gauge_tip, width=110),
-    Column("colour", strings.HV_COL_COLOUR, width=104),
+    Column("colour", strings.HV_COL_COLOUR, width=124),
     Column("shield", strings.HV_COL_SHIELD, mono=True, width=60),
     Column("locked", strings.HV_COL_LOCKED, state="locked_state", tooltip="locked_why", width=88),
-    Column("state", strings.HV_COL_STATE, state="state_key", tooltip="state_why", width=150),
+    Column("state", strings.HV_COL_STATE, state="state_key", tooltip="state_why", width=184),
 ]  # fmt: skip
 WIRE_COLUMNS = [
     Column("id", strings.HV_COL_WIRE, mono=True, width=92),
@@ -252,9 +264,9 @@ WIRE_COLUMNS = [
            fmt=_gauge_text, tooltip=_gauge_tip, width=110),
     Column("length", strings.HV_COL_LENGTH, unit="m", numeric=True, state="length_state",
            fmt=_length_text, tooltip=_length_tip, width=96),
-    Column("colour", strings.HV_COL_COLOUR, width=104),
+    Column("colour", strings.HV_COL_COLOUR, width=124),
     Column("locked", strings.HV_COL_LOCKED, state="locked_state", tooltip="locked_why", width=88),
-    Column("state", strings.HV_COL_STATE, state="state_key", tooltip="state_why", width=150),
+    Column("state", strings.HV_COL_STATE, state="state_key", tooltip="state_why", width=184),
 ]  # fmt: skip
 
 
@@ -304,7 +316,8 @@ class _LinkedModel(DictTableModel):
 
     def _swatch(self, hexcolour: str) -> QPixmap:
         theme = self.theme
-        assert theme is not None
+        if theme is None:
+            return QPixmap()
         key = (hexcolour, theme.name)
         pm = self._swatches.get(key)
         if pm is None:
@@ -326,7 +339,8 @@ class _LinkedModel(DictTableModel):
         if role == Qt.ItemDataRole.BackgroundRole and index.row() in self.hover and self.theme:
             return QBrush(self.theme.color("surface-2"))
         if role == Qt.ItemDataRole.DecorationRole and self.columns[index.column()].key == "colour":
-            hexcolour = self.row(index.row()).get("colour_hex") if isinstance(self.row(index.row()), dict) else ""  # type: ignore[union-attr]
+            row = self.row(index.row())
+            hexcolour = row.get("colour_hex") if isinstance(row, Mapping) else ""
             return self._swatch(str(hexcolour)) if hexcolour else None
         return super().data(index, role)
 
@@ -355,7 +369,11 @@ def compute_status(project: Project, folder: Any) -> Status:
     out = "unsaved" if folder is None else outputs_status(project, folder).state
     rep = verify_project(project) if project.harnesses else None
     return Status(
-        gen, out, rep.ok if rep else True, rep.summary() if rep else "", len(rep.errors) if rep else 0
+        gen,
+        out,
+        rep.ok if rep else True,
+        rep.summary() if rep else "",
+        len(rep.errors) if rep else 0,
     )
 
 
@@ -366,16 +384,22 @@ class _ElideLabel(QLabel):
     """A one-line label that shortens its text with "…" instead of clipping it; the full text is the
     tooltip."""
 
-    def __init__(self, text: str = "") -> None:
+    def __init__(self, text: str = "", *, wants_room: bool = False) -> None:
         super().__init__()
         self._full = ""
-        self.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
+        # a label that takes what is left over (Ignored), or one that asks for its whole text and
+        # only gives it up when the window is too narrow (Preferred)
+        self.setSizePolicy(
+            QSizePolicy.Policy.Preferred if wants_room else QSizePolicy.Policy.Ignored,
+            QSizePolicy.Policy.Preferred,
+        )
         self.set_full(text)
 
     def set_full(self, text: str, tip: str | None = None) -> None:
         self._full = text
         self.setToolTip(tip if tip is not None else text)
         self.setAccessibleName(text)
+        self.updateGeometry()
         self.update()
 
     def full(self) -> str:
@@ -389,14 +413,14 @@ class _ElideLabel(QLabel):
 
     def sizeHint(self) -> QSize:  # noqa: N802
         return QSize(
-            self.fontMetrics().horizontalAdvance(self._full) + 4, super().sizeHint().height()
+            self.fontMetrics().horizontalAdvance(self._full) + 12, super().sizeHint().height()
         )
 
     def paintEvent(self, event: QPaintEvent) -> None:  # noqa: N802
         p = QPainter(self)
         p.setPen(self.palette().color(self.foregroundRole()))
         shown = self.fontMetrics().elidedText(self._full, Qt.TextElideMode.ElideRight, self.width())
-        p.drawText(self.rect(), int(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignLeft), shown)
+        p.drawText(self.rect(), int(self.alignment() | Qt.AlignmentFlag.AlignVCenter), shown)
         p.end()
 
 
@@ -524,7 +548,11 @@ class HarnessView(QWidget):
         self.empty_generate.setObjectName("harness-empty-generate")
         self.empty_generate.setProperty("primary", True)
         icon_button(
-            self.empty_generate, "generate", theme, strings.GENERATE_TIP, text=strings.HV_GENERATE_NOW
+            self.empty_generate,
+            "generate",
+            theme,
+            strings.GENERATE_TIP,
+            text=strings.HV_GENERATE_NOW,
         )
         self.empty_generate.clicked.connect(self.generateRequested)
         e.addWidget(self.empty_title)
@@ -573,11 +601,10 @@ class HarnessView(QWidget):
         self.name = _ElideLabel()
         self.name.setObjectName("harness-name")
         self.name.setProperty("heading", False)
-        self.hash_label = _ElideLabel()
+        self.hash_label = _ElideLabel(wants_room=True)
         self.hash_label.setObjectName("harness-hash")
         self.hash_label.setProperty("mono", True)
         self.hash_label.setProperty("muted", True)
-        self.hash_label.setMinimumWidth(theme.px(160))
         self.hash_label.setAlignment(Qt.AlignmentFlag.AlignRight)
         row1.addWidget(self.selector)
         row1.addWidget(self.release_chip)
@@ -599,7 +626,7 @@ class HarnessView(QWidget):
             row2.addWidget(chip, 0)
         box.addLayout(row2)
         row3 = QHBoxLayout()
-        self.actions: dict[str, QPushButton] = {}
+        self.action_buttons: dict[str, QPushButton] = {}
         specs = (
             ("regenerate", "generate", strings.HV_REGENERATE, strings.HV_REGENERATE_TIP),
             ("export", "export", strings.HV_EXPORT, strings.EXPORT_TIP),
@@ -611,14 +638,16 @@ class HarnessView(QWidget):
             b = QPushButton()
             b.setObjectName(f"harness-{key}")
             icon_button(b, icon_name, theme, tip, text=text)
-            self.actions[key] = b
+            self.action_buttons[key] = b
             row3.addWidget(b)
         row3.addStretch(1)
-        self.actions["regenerate"].clicked.connect(self.generateRequested)
-        self.actions["export"].clicked.connect(self.exportRequested)
-        self.actions["review"].clicked.connect(lambda: self._emit_for(self.reviewRequested))
-        self.actions["release"].clicked.connect(lambda: self._emit_for(self.releaseRequested))
-        self.actions["revise"].clicked.connect(lambda: self._emit_for(self.reviseRequested))
+        self.action_buttons["regenerate"].clicked.connect(self.generateRequested)
+        self.action_buttons["export"].clicked.connect(self.exportRequested)
+        self.action_buttons["review"].clicked.connect(lambda: self._emit_for(self.reviewRequested))
+        self.action_buttons["release"].clicked.connect(
+            lambda: self._emit_for(self.releaseRequested)
+        )
+        self.action_buttons["revise"].clicked.connect(lambda: self._emit_for(self.reviseRequested))
         self.action_bar = row3
         box.addLayout(row3)
         return box
@@ -651,10 +680,15 @@ class HarnessView(QWidget):
         self.pin_filter.setAccessibleName(strings.HV_FILTER_PINS)
         self.pin_filter.setClearButtonEnabled(True)
         self.pin_filter.setMaximumWidth(theme.px(180))
-        self.spare = QCheckBox(strings.HV_SHOW_SPARE)
+        # a toggle button, not a check box: the theme styles a pressed button (fill, icon and word),
+        # and a check box's tick box would disappear in the dark theme
+        self.spare = QPushButton()
         self.spare.setObjectName("pin-spare")
-        self.spare.setToolTip(strings.HV_SHOW_SPARE_TIP)
-        self.spare.setAccessibleName(strings.HV_SHOW_SPARE)
+        self.spare.setCheckable(True)
+        icon_button(
+            self.spare, "filter", theme, strings.HV_SHOW_SPARE_TIP,
+            text=strings.HV_SHOW_SPARE, checked_role="on-primary",
+        )  # fmt: skip
         bar.addWidget(self.pin_filter)
         bar.addWidget(self.spare)
         pl.addLayout(bar)
@@ -701,10 +735,13 @@ class HarnessView(QWidget):
         self.wire_filter.textChanged.connect(lambda _t: self._update_counts())
         self.spare.toggled.connect(self._spare_toggled)
         self._spare_toggled(False)
-        for table, handler in ((self.pin_table, self._pin_current), (self.wire_table, self._wire_current)):
+        for table, handler in (
+            (self.pin_table, self._pin_current),
+            (self.wire_table, self._wire_current),
+        ):
             sm = table.selectionModel()
-            assert sm is not None
-            sm.currentChanged.connect(handler)
+            if sm is not None:
+                sm.currentChanged.connect(handler)
             table.entered.connect(self._table_entered)
         self.pin_table.activated.connect(lambda _i: self._why_requested())
         self.wire_table.activated.connect(lambda _i: self._why_requested())
@@ -845,7 +882,6 @@ class HarnessView(QWidget):
         self.empty_generate.setVisible(show)  # no row of disabled buttons without a harness
 
     def _fill_selector(self, ids: list[str]) -> None:
-        p = self.ctl.project
         if ids != self._combo_ids:
             keep = self._hid
             self.selector.blockSignals(True)
@@ -911,9 +947,13 @@ class HarnessView(QWidget):
 
     def _update_counts(self) -> None:
         shown = self.pin_table.proxy.rowCount()
-        hidden = sum(1 for r in self._pin_data if self._is_spare(r)) if not self.spare.isChecked() else 0
+        hidden = (
+            sum(1 for r in self._pin_data if self._is_spare(r)) if not self.spare.isChecked() else 0
+        )
         self.pin_count.setText(
-            strings.HV_PIN_COUNT_SPARE.format(shown, hidden) if hidden else strings.HV_PIN_COUNT.format(shown)
+            strings.HV_PIN_COUNT_SPARE.format(shown, hidden)
+            if hidden
+            else strings.HV_PIN_COUNT.format(shown)
         )
         self.wire_count.setText(
             strings.HV_WIRE_COUNT.format(self.wire_table.proxy.rowCount())
@@ -953,7 +993,7 @@ class HarnessView(QWidget):
             ),
         }
         for key, (on, why, tip) in specs.items():
-            b = self.actions[key]
+            b = self.action_buttons[key]
             b.setEnabled(on)
             # a disabled button says why; an enabled one says what it does
             b.setToolTip(tip if on else f"{b.text()}: {why}")
@@ -999,10 +1039,15 @@ class HarnessView(QWidget):
             return
         if not self.isVisible() and self._shown_sheets_key is not None:
             return  # a hidden view draws when it is shown again
+        if self._shown_sheets_key is None or self._shown_sheets_key[1] != self._hid:
+            self.preview.set_sheets([], strings.HV_DRAWING_BUSY)  # not the previous harness's
+            self._shown_sheets_key = None
         snapshot = edit.clone_with(self.ctl.project, [])
         h = snapshot.harnesses[self._hid]
         self.jobs.start(
-            "sheets", self._hid, lambda: harness_sheets(snapshot, h, Stamp("preview", "preview"), "A3")
+            "sheets",
+            self._hid,
+            lambda: harness_sheets(snapshot, h, Stamp("preview", "preview"), "A3"),
         )
 
     def _job_done(self, job: Job) -> None:
@@ -1018,9 +1063,10 @@ class HarnessView(QWidget):
                 self._show_status(st)
         elif job.kind == "sheets" and job.error is None:
             sheets: list[Sheet] = job.value
-            self._sheets[(job.token, job.key)] = sheets
-            while len(self._sheets) > SHEETS_KEPT:
-                self._sheets.pop(next(iter(self._sheets)))
+            if current:
+                self._sheets[(job.token, job.key)] = sheets
+                while len(self._sheets) > SHEETS_KEPT:
+                    self._sheets.pop(next(iter(self._sheets)))
             if current and job.key == self._hid:
                 self._shown_sheets_key = (job.token, job.key)
                 self.preview.set_sheets(sheets)
@@ -1119,7 +1165,9 @@ class HarnessView(QWidget):
             return keys
         if kind == "pin":
             keys = [("pin", ident)]
-            keys += [("wire", r["wire_id"]) for r in self._pin_data if r["ref"] == ident and r["wire_id"]]
+            keys += [
+                ("wire", r["wire_id"]) for r in self._pin_data if r["ref"] == ident and r["wire_id"]
+            ]
             return keys
         if kind == "connector":
             return [("connector", ident)]
@@ -1138,7 +1186,8 @@ class HarnessView(QWidget):
                 first = top
             sel.select(top, table.proxy.index(top.row(), last_col))
         sm = table.selectionModel()
-        assert sm is not None
+        if sm is None:
+            return
         self._syncing = True
         try:
             sm.clearSelection()
@@ -1178,14 +1227,16 @@ class HarnessView(QWidget):
         if self._syncing or not cur.isValid():
             return
         row = self.pin_table.row_at(cur)
-        assert isinstance(row, dict)
+        if not isinstance(row, dict):
+            return
         self._set_selection(("pin", row["ref"]), origin="pin")
 
     def _wire_current(self, cur: QModelIndex, _prev: QModelIndex) -> None:
         if self._syncing or not cur.isValid():
             return
         row = self.wire_table.row_at(cur)
-        assert isinstance(row, dict)
+        if not isinstance(row, dict):
+            return
         self._set_selection(("wire", row["id"]), origin="wire")
 
     def _drawing_clicked(self, kind: str, ident: str) -> None:

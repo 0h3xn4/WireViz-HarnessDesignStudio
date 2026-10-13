@@ -84,3 +84,22 @@ Each category has its own colour, line weight and letter, so colour is not the o
 - `pending` is teal and dotted, `not-checked` is slate and hatched, `stale` is orange; none of them is the green, red or amber of pass, fail and warning, and each has its own icon and word. (SH-28)
 - Chip fill is a 4 % tint so text on it keeps AA contrast on all three surfaces; a test computes it. (SH-28)
 - A new table starts in the order the rows are given; a click on a header sorts. (SC-21)
+
+## Harness view, lists and generate plan (SC-5, SC-7 to SC-11, SC-13, SC-22, SC-24)
+
+Code: `gui/harness_view.py` (`HarnessView`), `gui/lists_panel.py` (`ListsPanel`), `gui/plan_table.py` (`GeneratePlanTable`), `gui/preview.py` (`SheetView`, `DrawingPreview`), `gui/background.py` (`JobRunner`).
+
+- A released harness shows `Released · rev B`, a draft with an earlier release `Revised · rev B`; the same chip words as the tree and the tables. (SC-5)
+- The pin table's State column: `Pending` chip (words "Gauge pending", "Length pending") for a value not known yet, `Not checked` chip with the word "Auto-filled" for what Generate chose and nobody has reviewed, nothing for a spare pin or a value set by hand. (SC-7, SC-9)
+- The Locked column is the lock chip with the sentence of `lockview.lock_reason` as its tooltip (it names the harness and revision); a lock set by hand says that Generate keeps it. (SC-7)
+- Spare pins are hidden by default and counted under the table ("52 pins shown, 432 spare hidden"), so nothing disappears silently. (SC-9)
+- The wire colour has a swatch and its name and code ("red (RD)"). The swatch comes from `core.wirecolours`, so it is a data colour, not a token.
+- Hover is a dashed outline in the drawing and a surface tint on table rows; selection is a solid outline and the table selection, so they differ without colour. (SC-10)
+- The drawing sheet is painted from `core.outputs.canvas.Sheet` in scene units (mm); `Sheet.marks` maps (kind, id) to item indexes and never reaches SVG or PDF. Zoom is 1x (fit) to 24x, the wheel zooms to the cursor, drag pans. (SC-10)
+- Why is shown for a wire, a connector, a pin (box pin reasons plus the wire's) or the harness, from `core.generate.explain`; "Show in Why panel" emits `whyRequested(kind, id)`. (SC-8)
+- The independent check, the outputs state and the design state are computed on a copy of the project in a worker and cached by the editor's state token; until they arrive the three chips say "Checking…" (pending). The tooltip of the check chip gives both times. (SC-24)
+- Empty states say what to do and show one enabled Generate button only when there are interfaces; there is no row of disabled buttons without a harness. (SC-22)
+- A disabled action's tooltip is the reason ("Only a released harness can be revised."), an enabled one's is what it does.
+- Lists: a cell that is `pending`, `TBD (placeholder)`, an unknown part category, a part missing from the parts list, or a length that could not be worked out is a chip, so it cannot be taken for an empty cell or a pass. (SC-11)
+- Lists export the rows as shown (filtered, sorted) through `csv_bytes` and `xlsx_bytes`; the panel emits `exportTableRequested(name, fmt)` and never opens a file dialog. (SC-11)
+- Generate has no per-harness mode, so the harness view's Regenerate says it covers every harness; the plan table lists every harness the plan names. (SC-13)

@@ -6,6 +6,9 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ### Added
 
+- Harness view (`gui/harness_view.py`): a header with the harness, its release state, its interfaces, the hash Generate last read and chips for design, outputs and independent check; a connector and pin table (locked pins carry a lock and name the release that locks them; pending values and auto-filled rows have their own chips), a wire table, a zoomable drawing and a Why pane for the selected wire, connector or pin, all linked by hover and selection.
+- Lists panel (`gui/lists_panel.py`): the wire list, pinouts, BOM, mass and length, test tables, labels and the system BOM as sortable, filterable tables with units in the headers, Ctrl+C as tab-separated text, a banner when the design changed after Generate, and export of the visible rows as CSV or Excel.
+- A table for the generate preview (`gui/plan_table.py`): each harness with whether Generate creates, changes, removes or leaves it, and the locked pins that stay.
 - Theme: View > Theme offers System (the default, follows the operating system's light or dark scheme), Light and Dark; the choice is stored in the settings.
 - A set of vector icons (from Lucide, ISC licence, drawn in code) for the toolbar and panels; zoom in, zoom out, fit, search, import, undo, redo and the panel close buttons now have an icon and a tooltip that names the shortcut.
 - State chips for pending, not checked, locked, released, out of date, pass and fail: icon, word and, for pending (dotted) and not checked (hatched), a pattern, so colour is never the only sign.
@@ -13,6 +16,8 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ### Changed
 
+- The drawing preview is a zoomable view: the wheel zooms to the cursor, drag pans, `+` `-` `0` zoom and fit, Page Up and Page Down change sheet; hovering a wire or pin marks it. The written SVG and PDF files are unchanged.
+- The independent check and the state of the outputs are worked out in the background and cached, so the harness view no longer waits for them on every change.
 - Text is 13 px at 100 % (it was 14) and follows the 12 / 13 / 16 / 20 px type scale; spacing follows 4 / 8 / 12 / 16 / 24 / 32 px; all buttons, combo boxes and fields are 32 px high.
 - Hashes, IDs, requirement IDs, pin and wire numbers and the drawing preview use IBM Plex Mono.
 - The drawing preview takes its page and background colours from the theme.

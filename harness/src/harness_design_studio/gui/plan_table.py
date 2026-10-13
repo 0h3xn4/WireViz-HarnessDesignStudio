@@ -52,12 +52,12 @@ def plan_rows(plan: GenerationPlan, project: Project | None = None) -> list[dict
     ):
         state, word = CHANGES[change]
         for hid in ids:
-            h = known.get(hid)
+            found = known.get(hid)
             n = sum(1 for box in kept if box in boxes.get(hid, ()))
             rows.append(
                 {
                     "harness": hid,
-                    "name": h.name if h else "",
+                    "name": found.name if found else "",
                     "change": word,
                     "change_key": change,
                     "change_state": state,
@@ -84,6 +84,7 @@ class GeneratePlanTable(QWidget):
     def __init__(self, theme: ThemeManager, settings: QSettings | None = None) -> None:
         super().__init__()
         self.setObjectName("generate-plan-table")
+        self._rows: list[dict[str, Any]] = []
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
         self.model = DictTableModel(COLUMNS, (), theme)
@@ -98,8 +99,13 @@ class GeneratePlanTable(QWidget):
         self.note.setProperty("muted", True)
         lay.addWidget(self.note)
 
+    def rows(self) -> list[dict[str, Any]]:
+        """The rows now shown (see `plan_rows`), in the order of the table before any sorting."""
+        return list(self._rows)
+
     def set_plan(self, plan: GenerationPlan, project: Project | None = None) -> None:
         rows = plan_rows(plan, project)
+        self._rows = rows
         self.model.set_rows(rows)
         attributed = sum(r["locked"] for r in rows)
         elsewhere = len(plan.report.kept_locks) - attributed

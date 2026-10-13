@@ -591,7 +591,9 @@ HV_COL_STATE = "State"
 HV_PENDING = "pending"
 HV_LOCKED_WORD = "Locked"
 HV_LOCK_PIN = "You fixed this pin by hand; Generate keeps it where it is."
-HV_LOCK_WIRE = "You set the gauge, colour, part or length of this wire by hand; Generate keeps them."
+HV_LOCK_WIRE = (
+    "You set the gauge, colour, part or length of this wire by hand; Generate keeps them."
+)
 HV_STATE_AUTO = "Auto-filled"
 HV_STATE_AUTO_TIP = "Chosen by Generate; nobody has reviewed it yet."
 HV_PENDING_GAUGE = "Gauge pending"
@@ -619,7 +621,9 @@ HV_OUT_UNSAVED = "Not saved"
 HV_OUT_MODIFIED = "Outputs changed"
 HV_OUT_UNREADABLE = "Outputs unreadable"
 HV_CHECKING = "Checking…"
-HV_CHECKING_TIP = "The independent check and the outputs state are being worked out in the background."
+HV_CHECKING_TIP = (
+    "The independent check and the outputs state are being worked out in the background."
+)
 HV_VERIFY_OK = "Check passed"
 HV_VERIFY_BAD = "Check found {} problem(s)"
 HV_VERIFY_FAILED = "Could not check: {}"
@@ -645,7 +649,9 @@ HV_WHY_PIN = "Pin {}"
 HV_WHY_HINT = "Select a wire, connector or pin to see why it is as it is."
 HV_WHY_OPEN = "Show in Why panel"
 HV_WHY_OPEN_TIP = "Show the reasons for the selection in the Why panel"
-HV_WHY_NONE = "No reason is recorded for this one (it was made by hand, or the harness was not generated)."
+HV_WHY_NONE = (
+    "No reason is recorded for this one (it was made by hand, or the harness was not generated)."
+)
 
 # Lists panel (gui/lists_panel.py)
 LP_WIRELIST = "Wire list"
@@ -699,3 +705,4 @@ GP_TIPS = {
 GP_TABLE = "Harnesses Generate will create, change or leave"
 GP_LOCKS_ELSEWHERE = "{} more locked pin(s) outside these harnesses stay where you put them."
 GP_NONE = "Generate has nothing to do for any harness."
+HV_DRAWING_BUSY = "Drawing the sheets…"

@@ -14,10 +14,9 @@ through the existing CSV and XLSX writers of the outputs.
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QSettings, Qt, Signal
-from PySide6.QtGui import QAction, QKeySequence, QShortcut
+from PySide6.QtCore import QSettings, Qt, QTimer, Signal
+from PySide6.QtGui import QAction, QFontMetrics, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
-    QCheckBox,
     QComboBox,
     QFrame,
     QHBoxLayout,
@@ -40,10 +39,11 @@ from harness_design_studio.core.outputs.stamp import Table, csv_bytes, stamp_of
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.background import Job, JobRunner
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.harness_view import REFRESH_DELAY_MS
 from harness_design_studio.gui.icons import icon_button
-from harness_design_studio.gui.states import StateChip
+from harness_design_studio.gui.states import StateChip, chip_size
 from harness_design_studio.gui.tables import Column, DictTableModel, TableView
-from harness_design_studio.gui.theme import ThemeManager
+from harness_design_studio.gui.theme import ThemeManager, mono_item_font
 
 # (name, tab title, needs a harness)
 LISTS: tuple[tuple[str, str, bool], ...] = (
@@ -143,6 +143,9 @@ def table_columns(name: str, header: list[str], body: list[list[str]]) -> list[C
         def state(row: Any, i: int = i, h: str = h) -> str | None:
             return cell_state(h, str(row[i])) if i < len(row) else None
 
+        def tip(row: Any, i: int = i, h: str = h) -> str | None:
+            return _tip(h, str(row[i])) if i < len(row) else None
+
         cols.append(
             Column(
                 i,
@@ -150,7 +153,7 @@ def table_columns(name: str, header: list[str], body: list[list[str]]) -> list[C
                 numeric=numeric,
                 mono=h in MONO and not numeric,
                 state=state,
-                tooltip=lambda row, i=i, h=h: _tip(h, str(row[i])) if i < len(row) else None,
+                tooltip=tip,
             )
         )
     return cols
@@ -173,8 +176,48 @@ def build_tables(project: Project, h: Harness | None) -> dict[str, Table]:
         out["mass"] = tables.mass_length(project, [h])
         out["tests"] = tables.tests(project, h)
         out["labels"] = tables.labels(project, h)
-    out["system-bom"] = tables.bom(project, [project.harnesses[i] for i in sorted(project.harnesses)])
+    out["system-bom"] = tables.bom(
+        project, [project.harnesses[i] for i in sorted(project.harnesses)]
+    )
     return out
+
+
+class _MeasuredTable(TableView):
+    """A table whose columns are as wide as their header, their longest cell and their chips need,
+    worked out from the model (not from the rows Qt happens to have laid out, which misses a chip
+    that is below the first screenful); widths the person changed and saved win."""
+
+    MAX_ROWS = 2000  # a longer list is measured by its first rows
+
+    def _fit_columns(self) -> None:
+        model = self.source
+        if self._sized or model.rowCount() == 0:
+            return
+        theme = self.theme
+        head = self.horizontalHeader()
+        text_fm, mono_fm = self.fontMetrics(), QFontMetrics(mono_item_font())
+        head_fm = head.fontMetrics()
+        helper = self._widths
+        if helper is not None:
+            helper.busy = True
+        try:
+            for k, c in enumerate(model.columns):
+                wanted = head_fm.horizontalAdvance(c.title) + theme.space(16) + theme.px(16)
+                fm = mono_fm if c.mono else text_fm
+                for r in range(min(model.rowCount(), self.MAX_ROWS)):
+                    text, state = model.text_at(r, k), model.state_at(r, k)
+                    if state:
+                        w = chip_size(
+                            state, theme, text or None, self.font()
+                        ).width() + theme.space(8)
+                    else:
+                        w = fm.horizontalAdvance(text) + theme.space(12)
+                    wanted = max(wanted, w)
+                head.resizeSection(k, min(wanted, theme.px(360)))
+        finally:
+            if helper is not None:
+                helper.busy = False
+        self._sized = True
 
 
 class ListsPanel(QWidget):
@@ -202,9 +245,14 @@ class ListsPanel(QWidget):
         self._gen: tuple[tuple[int, int], str] | None = None
         self.jobs = JobRunner(ctl)
         self.jobs.done.connect(self._job_done)
+        self._timer = QTimer(self)
+        self._timer.setSingleShot(True)
+        self._timer.setInterval(REFRESH_DELAY_MS)
+        self._timer.timeout.connect(self.refresh)
         self.views: dict[str, TableView] = {}
         self.models: dict[str, DictTableModel] = {}
         self._combo_ids: list[str] = []
+        self._measured: dict[str, str | None] = {}  # the harness each list's widths fit
 
         root = QVBoxLayout(self)
         gap = theme.space(8)
@@ -228,7 +276,11 @@ class ListsPanel(QWidget):
         self.empty_generate.setObjectName("lists-empty-generate")
         self.empty_generate.setProperty("primary", True)
         icon_button(
-            self.empty_generate, "generate", theme, strings.GENERATE_TIP, text=strings.HV_GENERATE_NOW
+            self.empty_generate,
+            "generate",
+            theme,
+            strings.GENERATE_TIP,
+            text=strings.HV_GENERATE_NOW,
         )
         self.empty_generate.clicked.connect(self.generateRequested)
         e.addWidget(title)
@@ -256,10 +308,13 @@ class ListsPanel(QWidget):
         self.filter.setAccessibleName(strings.LP_FILTER)
         self.filter.setToolTip(strings.LP_FILTER_TIP)
         self.filter.setClearButtonEnabled(True)
-        self.only_open = QCheckBox(strings.LP_ONLY_OPEN)
+        self.only_open = QPushButton()  # a toggle button: it stays visible in the dark theme
         self.only_open.setObjectName("lists-only-open")
-        self.only_open.setToolTip(strings.LP_ONLY_OPEN_TIP)
-        self.only_open.setAccessibleName(strings.LP_ONLY_OPEN)
+        self.only_open.setCheckable(True)
+        icon_button(
+            self.only_open, "filter", theme, strings.LP_ONLY_OPEN_TIP,
+            text=strings.LP_ONLY_OPEN, checked_role="on-primary",
+        )  # fmt: skip
         self.count = QLabel()
         self.count.setObjectName("lists-count")
         self.count.setProperty("muted", True)
@@ -291,7 +346,13 @@ class ListsPanel(QWidget):
         self.banner_text.setWordWrap(True)
         self.banner_btn = QPushButton()
         self.banner_btn.setObjectName("lists-stale-regenerate")
-        icon_button(self.banner_btn, "generate", theme, strings.LP_REGENERATE_TIP, text=strings.HV_REGENERATE)
+        icon_button(
+            self.banner_btn,
+            "generate",
+            theme,
+            strings.LP_REGENERATE_TIP,
+            text=strings.HV_REGENERATE,
+        )
         self.banner_btn.clicked.connect(self.generateRequested)
         bl.addWidget(self.banner_chip)
         bl.addWidget(self.banner_text, 1)
@@ -303,14 +364,14 @@ class ListsPanel(QWidget):
         self.tabs.setObjectName("lists-tabs")
         self.tabs.setAccessibleName(strings.LP_TABS)
         c.addWidget(self.tabs, 1)
-        for name, title, _needs in LISTS:
+        for name, tab_title, _needs in LISTS:
             model = DictTableModel([], (), theme)
-            view = TableView(
-                model, theme, name=title, settings=settings, key=f"lists-{name}"
+            view = _MeasuredTable(
+                model, theme, name=tab_title, settings=settings, key=f"lists-{name}"
             )
             view.setObjectName(f"list-{name}")
             self.views[name], self.models[name] = view, model
-            self.tabs.addTab(view, title)
+            self.tabs.addTab(view, tab_title)
         self.tabs.currentChanged.connect(lambda _i: self._update_count())
         self.filter.textChanged.connect(self._apply_filter)
         self.only_open.toggled.connect(self._apply_filter)
@@ -357,6 +418,7 @@ class ListsPanel(QWidget):
 
     def refresh(self) -> None:
         """Rebuild the lists from the harnesses. The staleness check runs in the background."""
+        self._timer.stop()
         self._dirty = False
         p = self.ctl.project
         ids = sorted(p.harnesses)
@@ -365,9 +427,7 @@ class ListsPanel(QWidget):
             self._hid = None
             self._combo_ids = []
             n = len(p.interfaces)
-            self.empty_body.setText(
-                strings.LP_EMPTY_READY if n else strings.LP_EMPTY_NO_INTERFACES
-            )
+            self.empty_body.setText(strings.LP_EMPTY_READY if n else strings.LP_EMPTY_NO_INTERFACES)
             self.empty_generate.setVisible(bool(n) and not self.ctl.read_only)
             self._set_stale(False)
             return
@@ -387,13 +447,16 @@ class ListsPanel(QWidget):
         in the order of the sort."""
         name = name or self.current_name()
         view, model = self.views[name], self.models[name]
-        header = [str(model.headerData(i, Qt.Orientation.Horizontal) or "") for i in range(model.columnCount())]
+        header = [
+            str(model.headerData(i, Qt.Orientation.Horizontal) or "")
+            for i in range(model.columnCount())
+        ]
         source = self._data.get(name, [])
         header = list(source[0]) if source else header
         rows: Table = []
         for r in range(view.proxy.rowCount()):
             src = view.proxy.mapToSource(view.proxy.index(r, 0)).row()
-            rows.append([str(v) for v in model.row(src)])  # type: ignore[union-attr]
+            rows.append([str(v) for v in model.row(src)])
         return [header, *rows]
 
     def table_bytes(self, fmt: str, name: str | None = None) -> bytes:
@@ -422,7 +485,7 @@ class ListsPanel(QWidget):
     def _invalidate(self) -> None:
         self._dirty = True
         if self.isVisible():
-            self.refresh()
+            self._timer.start()  # edits close together share one refresh, after the edit itself
 
     def showEvent(self, event: object) -> None:  # noqa: N802
         super().showEvent(event)  # type: ignore[arg-type]
@@ -459,8 +522,12 @@ class ListsPanel(QWidget):
         header, body = (table[0], table[1:]) if table else ([], [])
         model, view = self.models[name], self.views[name]
         cols = table_columns(name, header, body)
-        if [c.header for c in model.columns] != header:
-            view._sized = False  # new columns: measure them again for the new rows
+        saved = view._widths is not None and view._widths.has_saved
+        if not saved and (
+            [c.header for c in model.columns] != header or self._measured.get(name) != self._hid
+        ):
+            view._sized = False  # other columns or another harness: measure again
+        self._measured[name] = self._hid
         model.columns = cols  # replaced just before the reset that `set_rows` does
         model.set_rows([tuple(r) for r in body])
         self._apply_filter()
@@ -478,7 +545,9 @@ class ListsPanel(QWidget):
         view, model = self.views[name], self.models[name]
         shown, total = view.proxy.rowCount(), model.rowCount()
         self.count.setText(
-            strings.LP_COUNT.format(shown, total) if shown != total else strings.LP_COUNT_ALL.format(total)
+            strings.LP_COUNT.format(shown, total)
+            if shown != total
+            else strings.LP_COUNT_ALL.format(total)
         )
 
     def _export_requested(self, fmt: str) -> None:
