@@ -6,6 +6,7 @@ from pathlib import Path
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QApplication
 
+from harness_design_studio.gui.appicon import app_icon
 from harness_design_studio.gui.main_window import MainWindow
 from harness_design_studio.gui.theme import ThemeManager
 
@@ -22,8 +23,11 @@ def create_window(
 ) -> MainWindow:
     if QApplication.instance() is None:
         QApplication(sys.argv)
+    QApplication.setWindowIcon(app_icon())
+    QApplication.setDesktopFileName("harness-design-studio")  # the launcher entry, for Wayland
     theme = ThemeManager()
     win = MainWindow(settings or make_settings(), theme, first_run=first_run)
+    win.setWindowIcon(app_icon())
     return win
 
 
