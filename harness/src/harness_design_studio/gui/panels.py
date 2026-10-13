@@ -38,7 +38,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import checks, drc, edit
+from harness_design_studio.core import checks, drc, edit, why
 from harness_design_studio.core.generate.explain import explain_harness, explain_wire
 from harness_design_studio.core.library_import import describe_library
 from harness_design_studio.core.model import InterfaceInstance, Part
@@ -302,6 +302,7 @@ def parse_optional_float(text: str) -> tuple[float | None, str]:
 
 class PropertiesPanel(QScrollArea):
     confirmRequested = Signal(str)
+    rebuilt = Signal()  # the form was built again (the inspector re-applies locks to its fields)
 
     def __init__(self, ctl: EditorController, theme: ThemeManager) -> None:
         super().__init__()
@@ -367,10 +368,19 @@ class PropertiesPanel(QScrollArea):
             self.lay.addWidget(heading(strings.PROPERTIES))
             self.lay.addWidget(muted(strings.NOTHING_SELECTED))
             self.lay.addStretch(1)
+            self.rebuilt.emit()
             return
         (self._unit_form if s.kind == "unit" else self._interface_form)(s.id)
         self.lay.addStretch(1)
         self._state()
+        self.rebuilt.emit()
+
+    def _kept(self, accepted: bool) -> bool:
+        """After an edit: when the controller refused it (a released harness holds the object),
+        show the stored values again instead of the rejected one (CV-9)."""
+        if not accepted:
+            self.rebuild()
+        return accepted
 
     def _editable(self, w: QWidget) -> QWidget:
         w.setProperty("editable", True)
@@ -397,7 +407,7 @@ class PropertiesPanel(QScrollArea):
         def commit_id() -> None:
             text = f_id.edit.text().strip()
             if text != uid and not check_id(text):
-                ctl.rename_unit(uid, text)
+                self._kept(ctl.rename_unit(uid, text))
 
         f_id.edit.editingFinished.connect(commit_id)
         self.lay.addWidget(f_id)
@@ -415,7 +425,7 @@ class PropertiesPanel(QScrollArea):
         side.setCurrentText(u.side)
         side.setToolTip(strings.CHAIN_TIP)
         side.setAccessibleName(strings.FIELD_CHAIN)
-        side.activated.connect(lambda _i: ctl.update_unit(uid, side=side.currentText()))
+        side.activated.connect(lambda _i: self._kept(ctl.update_unit(uid, side=side.currentText())))
         self._editable(side)
         self.lay.addWidget(side)
         zone = _Field(strings.FIELD_ZONE_AUTO, u.zone or "", enabled=False)
@@ -445,7 +455,7 @@ class PropertiesPanel(QScrollArea):
             field.show_error(_first_line(exc))
             return
         field.show_error("")
-        self.ctl.update_unit(uid, **{key: value})
+        self._kept(self.ctl.update_unit(uid, **{key: value}))
 
     def _connector_rows(self, uid: str) -> None:
         ctl, p = self.ctl, self.ctl.project
@@ -464,7 +474,7 @@ class PropertiesPanel(QScrollArea):
             row.addWidget(QLabel(f"<b>{c.name}</b>"))
             if c.id in auto_by_conn:
                 badge = QLabel(strings.AUTO)
-                badge.setToolTip(strings.AUTO_TIP)
+                badge.setToolTip(self._auto_tip(c.id))
                 row.addWidget(badge)
                 confirm = QPushButton(strings.CONFIRM)
                 confirm.setObjectName(f"confirm-{c.id}")
@@ -482,7 +492,9 @@ class PropertiesPanel(QScrollArea):
             combo.setCurrentText(c.part_id)
             combo.setAccessibleName(f"{strings.LIBRARY_PART} {c.name}")
             combo.activated.connect(
-                lambda _i, cid=c.id, cb=combo: ctl.set_connector_part(cid, cb.currentText())
+                lambda _i, cid=c.id, cb=combo: self._kept(
+                    ctl.set_connector_part(cid, cb.currentText())
+                )
             )
             self._editable(combo)
             lay.addWidget(combo)
@@ -532,7 +544,9 @@ class PropertiesPanel(QScrollArea):
         side.setAccessibleName(strings.FIELD_CHAIN)
         side.addItems(["nominal", "redundant", "none"])
         side.setCurrentText(i.redundancy)
-        side.activated.connect(lambda _i: ctl.update_interface(iid, redundancy=side.currentText()))
+        side.activated.connect(
+            lambda _i: self._kept(ctl.update_interface(iid, redundancy=side.currentText()))
+        )
         self._editable(side)
         self.lay.addWidget(side)
         for key, label in (
@@ -586,16 +600,23 @@ class PropertiesPanel(QScrollArea):
             if e.connector_id in [c.id for c in choices]:
                 combo.setCurrentIndex([c.id for c in choices].index(e.connector_id))
             combo.activated.connect(
-                lambda _i, cb=combo: ctl.set_endpoint_connector(i.id, k, cb.currentData())
+                lambda _i, cb=combo: self._kept(
+                    ctl.set_endpoint_connector(i.id, k, cb.currentData())
+                )
             )
             self._editable(combo)
             lay.addWidget(combo)
         if e.auto:
             badge = QLabel(strings.AUTO)
-            badge.setToolTip(strings.AUTO_TIP)
+            badge.setToolTip(self._auto_tip(e.connector_id))
             lay.addWidget(badge)
         lay.addStretch(1)
         return box
+
+    def _auto_tip(self, connector_id: str | None) -> str:
+        """Why the tool chose this connector: the recorded reasons, then what is not confirmed."""
+        text = why.why_text(self.ctl.project, "connector", connector_id, 2) if connector_id else ""
+        return f"{strings.AUTO_TIP}\n{text}" if text else strings.AUTO_TIP
 
     def _commit_if(self, iid: str, field: _Field, key: str, value: object) -> None:
         if value == getattr(self.ctl.project.interfaces[iid], key):
@@ -606,7 +627,7 @@ class PropertiesPanel(QScrollArea):
             field.show_error(_first_line(exc))
             return
         field.show_error("")
-        self.ctl.update_interface(iid, **{key: value})
+        self._kept(self.ctl.update_interface(iid, **{key: value}))
 
     def _commit_number(self, iid: str, field: _Field, key: str) -> None:
         value, error = parse_optional_float(field.edit.text())
