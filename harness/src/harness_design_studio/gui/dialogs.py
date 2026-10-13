@@ -174,7 +174,7 @@ class NewInterfaceDialog(QDialog):
             compat = (
                 edit.unit_compat(self.project, tid, uid, source)
                 if tid
-                else edit.Compat(False, "No type")
+                else edit.Compat(False, strings.NO_TYPE)
             )
             item = QStandardItem(uid if compat.ok else f"{uid}: {compat.short}")
             item.setData(uid, Qt.ItemDataRole.UserRole)
@@ -339,7 +339,7 @@ class ImportDialog(QDialog):
 
     @staticmethod
     def _default_pick() -> str | None:
-        path, _ = QFileDialog.getOpenFileName(None, strings.OPEN_FILE, "", "Tables (*.csv *.xlsx)")
+        path, _ = QFileDialog.getOpenFileName(None, strings.OPEN_FILE, "", strings.TABLE_FILES)
         return path or None
 
     def open_file(self) -> None:
