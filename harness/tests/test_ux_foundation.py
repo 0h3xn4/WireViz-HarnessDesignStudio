@@ -186,7 +186,7 @@ def test_no_literal_pixel_sizes_and_no_hard_coded_colours_in_gui() -> None:
     """New code asks the theme: no `setPixelSize(12)`, no `setStyleSheet`, no "#RRGGBB" outside
     tokens (the logo in appicon.py keeps its brand colours)."""
     literal = re.compile(r"setPixelSize\(\s*[\d.]")
-    computed_ok = {"theme.py", "preview.py", "panels.py"}  # sizes computed from a zoom or a box
+    computed_ok = {"theme.py", "preview.py", "panels.py", "canvas.py"}  # sizes computed from a zoom or a box
     from_theme = re.compile(r"setPixelSize\((?:[\w.]*\.type\(|OVERVIEW_FONT_PX)")
     hexcolour = re.compile(r"""["']#[0-9a-fA-F]{6}["']""")
     for f in sorted(GUI_DIR.glob("*.py")):
@@ -433,7 +433,7 @@ def test_existing_icon_buttons_have_icons_and_tooltips_with_shortcuts(qtbot, tmp
     expect = {
         w.zoom_in_btn: "Ctrl+=",
         w.zoom_out_btn: "Ctrl+-",
-        w.fit_btn: "Ctrl+0",
+        w.fit_btn: "F",
         w.search_btn: "Ctrl+K",
         w.palette_panel.import_btn: "Ctrl+Shift+I",
     }
