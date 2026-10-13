@@ -483,11 +483,9 @@ def _allocate_pins(
         # pins that must stay: locked, frozen-owned, or typed in by a person without a lock
         def keep(pin: Pin) -> Pin:
             if pin.fixed:  # a fixed pin is free for its signal unless a released harness uses it
-                return (
-                    evolve(pin, locked=True)
-                    if pin.interface_id in frozen_ifaces
-                    else evolve(pin, interface_id=None)
-                )
+                if pin.interface_id in frozen_ifaces or not pin.signal:
+                    return evolve(pin, locked=True)  # a fixed pin with no signal is never offered
+                return evolve(pin, interface_id=None)
             if (
                 pin.locked
                 or pin.interface_id in frozen_ifaces
@@ -546,6 +544,8 @@ def _connector_ops(ctx: _Ctx, frozen_ifaces: set[str]) -> list[Op]:
                     if pin.interface_id is not None and pin.interface_id not in p.interfaces:
                         pin = evolve(pin, interface_id=None)  # its interface is gone
                     pins.append(pin)
+                    for line in res.reasons.get(pin.id, []) if res else []:
+                        ctx.note(f"pin:{cid}.{pin.id}", line)
                 elif pin.id in assigned:
                     pins.append(evolve(pin, interface_id=assigned[pin.id][0]))
                     for line in res.reasons.get(pin.id, []) if res else []:
@@ -563,6 +563,8 @@ def _connector_ops(ctx: _Ctx, frozen_ifaces: set[str]) -> list[Op]:
                         pin, interface_id=None
                     )  # its interface is gone; the pin stays locked
                 pins.append(pin)
+                for line in res.reasons.get(pin.id, []) if res and pin.locked else []:
+                    ctx.note(f"pin:{cid}.{pin.id}", line)
             elif pin.id in assigned:
                 iid, sig = assigned[pin.id]
                 pins.append(evolve(pin, signal=sig, interface_id=iid))
@@ -620,7 +622,8 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
                 )  # fmt: skip
                 used_cables.add(cid)
             part = p.parts.get(box.part_id)
-            mate = part.mates_with if part is not None and part.mates_with else box.part_id
+            declared = part.mates_with if part is not None and part.mates_with else None
+            mate = declared or box.part_id
             if mate not in p.parts:
                 ctx.finding(
                     "warning",
@@ -635,7 +638,12 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
             )  # fmt: skip
             ctx.note(
                 f"connector:{cid}",
-                f"mating: cable end for {box_id} ({box.unit_id}); part {mate} mates with {box.part_id}",
+                f"mating: cable end for {box_id} ({box.unit_id}); "
+                + (
+                    f"part {mate} mates with {box.part_id}"
+                    if declared and mate == declared
+                    else f"{box.part_id} has no mating part in the library, so the same part is used"
+                ),
             )
     # ---- routing: branch points and segments, keeping user-entered lengths
     old_len = {(s.from_node, s.to_node): s.length_m for s in (old.segments if old else [])}
@@ -647,7 +655,8 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
         if len(conns) == 1:
             end_node[side] = conns[0]
         else:
-            bid = ctx.namer.branch(hid, k)
+            nodes = {c.id for c in cables.values()} | {b.id for b in branches}
+            _n, bid = _first_free(ctx, "branch", k, lambda m: ctx.namer.branch(hid, m), nodes)
             branches.append(BranchPoint(id=bid, name=f"Branch {side}"))
             end_node[side] = bid
     pairs = [(end_node["X"], end_node["Y"])]
@@ -745,7 +754,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
     interfaces = sorted(i.id for i in ifaces)
     ctx.note(
         f"harness:{hid}",
-        f"segmentation: {', '.join(interfaces)} share a harness because they have the same {_describe(group)} and chain ({group.chain})",
+        f"segmentation: {', '.join(interfaces)} share a harness because they have the same {_describe(group)} and chain ({group.chain or 'nominal or redundant'})",
     )
     built = Harness(
         id=hid, name=group.label, revision=old.revision if old else "A", status=old.status if old else "draft",

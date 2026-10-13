@@ -4,6 +4,14 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Fixed
+
+- A two-colour wire written `yellow/green` or `green-yellow` shows both codes (`YE/GN`) in the drawing instead of a cut-off word; it is still drawn grey (audit B-19).
+- `forbid_nominal_with_redundant: false` now lets nominal and redundant interfaces share a harness, and `category_pairs_to_separate` separates only the pairs it lists (audit B-17).
+- The mass table header says it covers wires and cable connectors; backshells, shielding, sleeving and tie-downs are not in the mass (audit B-21).
+- The Explain tab no longer says "(X drives)" for power and other single-path signals, names the connector on each pin line, and shows the "stays on pin ... because the pin is locked" line; a missing mating part is no longer written as "mates with itself" (audit B-16).
+- Arranging the diagram twice changes nothing more, also at stress size; a fixed pin with no signal is never given to an interface; a branch name cannot equal a cable connector ID (audit B-22).
+
 ## 1.0.0 (2026-10-12; released on the owner's instruction, see compliance/SIGNOFF.md; not a statement of compliance)
 
 Version 1.0.0 is 0.1.0 plus the changes listed below: the fixes of the October 2026 pre-release audit (the findings and what was done about each are in `AUDIT.md` at the root of the repository), the release freeze of parts, interface types and configuration, two more examples (`minimal-satellite`, `flatsat`), a design worksheet template and the wiring-diagram drawing. The open engineering decisions were recorded as defaults on 2026-10-12 (`docs/DECISIONS.md` D-142 to D-145); the tool still ships no standard or part data. **What is still true**: the configuration files are placeholders and the parts are example parts, so results rest on placeholders; no compliance with any standard is claimed; the packages are not signed; the upstream WireViz code under `src/wireviz/` is unchanged.

@@ -261,6 +261,31 @@ def test_a_new_interface_never_lands_on_unnamed_pins_of_a_fixed_connector() -> N
     assert again == first
 
 
+def test_a_fixed_pin_without_a_signal_is_never_given_to_an_interface() -> None:
+    p = mini3()
+    box = p.connectors["OBC-J01"]
+    p.connectors["OBC-J01"] = evolve(
+        box, pins=[evolve(x, fixed=True) if x.id == "1" else x for x in box.pins]
+    )
+    generate_project(p)
+    pins = {x.id: x for x in p.connectors["OBC-J01"].pins}
+    assert pins["1"].interface_id is None  # B-22: it used to carry the interface without a signal
+    assert {x.id for x in pins.values() if x.interface_id == "IF-TM-RW1"} == {"2", "3", "4", "5"}
+    assert verify_project(p).ok
+
+
+def test_a_branch_template_cannot_give_a_branch_the_id_of_a_cable_connector() -> None:
+    p = sat15()
+    names = ConfigFile(name="naming", placeholder=False, values={"branch": "{harness}-P{n}"})
+    mode = ConfigFile(name="segmentation", placeholder=False, values={"mode": "per_zone_pair"})
+    History(p).execute("naming", [SetConfig(names), SetConfig(mode)])
+    generate_project(p)
+    branches = [(h, b.id) for h in p.harnesses.values() for b in h.branch_points]
+    assert branches  # B-22: the branch used to be W001-P1, the id of the first cable connector
+    assert all(b not in {c.id for c in h.connectors} for h, b in branches)
+    assert verify_project(p).ok
+
+
 # ---- KiCad ------------------------------------------------------------------------------------
 
 NET = (
@@ -315,3 +340,125 @@ def test_bad_pin_numbers_names_and_pin_counts_are_row_errors_not_crashes() -> No
     ):
         plan = plan_netlist_import(p, parse_netlist(_net(name, pin)), "OBC", parts={"J1": part.id})
         assert not plan.rows[0].ok and why in plan.rows[0].message, (why, plan.rows[0])
+
+
+# ---- segregation settings behave as documented (B-17) -------------------------------------------
+
+
+def _three_between_obc_and_rw1(**segregation: object) -> Project:
+    p = mini3()
+    set_seg = ConfigFile(name="segregation", placeholder=False, values=dict(segregation))
+    History(p).execute("seg", [SetConfig(set_seg)])
+    base = p.interfaces["IF-TM-RW1"]
+    for n, t, chain in (
+        ("IF-X1", "rs422", "nominal"),
+        ("IF-X2", "discrete", "nominal"),
+        ("IF-X3", "analog", "nominal"),
+        ("IF-X4", "rs485", "redundant"),
+    ):
+        p.interfaces[n] = evolve(base, id=n, type_id=t, redundancy=chain)
+    del p.interfaces["IF-TM-RW1"]
+    return p
+
+
+def _group_ids(p: Project, mode: str) -> list[list[str]]:
+    from harness_design_studio.core.generate.segmentation import segment
+
+    set_mode = ConfigFile(name="segmentation", placeholder=False, values={"mode": mode})
+    History(p).execute("mode", [SetConfig(set_mode)])
+    return sorted(sorted(g.interface_ids) for g in segment(p).groups)
+
+
+def test_nominal_and_redundant_may_share_a_harness_when_the_setting_is_off() -> None:
+    kept = _group_ids(
+        _three_between_obc_and_rw1(forbid_nominal_with_redundant=True), "per_connector_pair"
+    )
+    assert kept == [["IF-X1", "IF-X2", "IF-X3"], ["IF-X4"]]
+    mixed = _group_ids(
+        _three_between_obc_and_rw1(forbid_nominal_with_redundant=False), "per_connector_pair"
+    )
+    assert mixed == [["IF-X1", "IF-X2", "IF-X3", "IF-X4"]]
+
+
+def test_only_the_listed_category_pairs_are_kept_apart() -> None:
+    pairs = [["data", "discrete"]]
+    got = _group_ids(_three_between_obc_and_rw1(category_pairs_to_separate=pairs), "per_unit_pair")
+    # analog is in no pair and stays with the data interface; only discrete is separated from data
+    assert got == [["IF-X1", "IF-X3"], ["IF-X2"], ["IF-X4"]]
+
+
+def test_category_pairs_with_a_chain_of_conflicts_keep_every_pair_apart() -> None:
+    pairs = [["data", "discrete"], ["discrete", "analog"]]
+    got = _group_ids(_three_between_obc_and_rw1(category_pairs_to_separate=pairs), "per_unit_pair")
+    assert got == [["IF-X1", "IF-X3"], ["IF-X2"], ["IF-X4"]]  # data and analog may share
+
+
+def test_the_mass_table_says_what_the_mass_covers() -> None:
+    # B-21: "Complete: yes" must not read as a claim about shielding, sleeving or backshells
+    from harness_design_studio.core.outputs.tables import mass_length
+
+    p = sat15()
+    header = mass_length(p, sorted(p.harnesses.values(), key=lambda h: h.id))[0]
+    assert header[5] == "Mass of wires and cable connectors (g)"
+
+
+# ---- the explanations say only what was decided (B-16) -------------------------------------------
+
+
+def _explained(p: Project, signal: str) -> list[str]:
+    lines = [
+        line
+        for h in p.harnesses.values()
+        for w in h.wires
+        if w.signal == signal
+        for line in explain_wire(p, h, w)
+    ]
+    assert lines, signal
+    return lines
+
+
+def test_a_passive_signal_is_not_said_to_be_driven_by_an_end() -> None:
+    p = sat15()
+    generate_project(p)
+    pwr = [line for line in _explained(p, "PWR") if line.startswith("wiring:")]
+    assert pwr and all("drives" not in line for line in pwr)
+    tx = [line for line in _explained(p, "TX+/RX+") if line.startswith("wiring:")]
+    assert tx and all("drives)" in line for line in tx)
+
+
+def test_the_pin_lines_of_a_wire_name_the_connector_they_are_about() -> None:
+    p = mini3()
+    generate_project(p)
+    h = next(h for h in p.harnesses.values() if any(w.signal == "TX+/RX+" for w in h.wires))
+    w = next(w for w in h.wires if w.signal == "TX+/RX+")
+    lines = [x for x in explain_wire(p, h, w) if "pin-allocation:" in x]
+    assert len(lines) == 2 and len(set(lines)) == 2
+    assert lines[0].startswith("OBC-J01 pin ") and lines[1].startswith("RW1-J02 pin ")
+
+
+def test_a_locked_pin_keeps_its_reason_in_the_explanation() -> None:
+    p = mini3()
+    generate_project(p)
+    box = p.connectors["OBC-J01"]
+    pin = next(x for x in box.pins if x.interface_id == "IF-TM-RW1")
+    p.connectors["OBC-J01"] = evolve(
+        box, pins=[evolve(x, locked=True) if x.id == pin.id else x for x in box.pins]
+    )
+    generate_project(p)
+    text = " ".join(_explained(p, "TX+/RX+"))
+    assert f"stays on pin {pin.id} because the pin is locked" in text
+
+
+def test_a_missing_mating_part_is_not_explained_as_mating_with_itself() -> None:
+    p = mini3()
+    part_id = p.connectors["OBC-J01"].part_id
+    p.parts[part_id] = evolve(p.parts[part_id], mates_with=None)
+    generate_project(p)
+    lines = [
+        line
+        for key, v in p.generation.provenance.items()  # type: ignore[union-attr]
+        for line in v
+        if key.startswith("connector:") and "mating:" in line
+    ]
+    assert lines and not any(f"part {part_id} mates with {part_id}" in line for line in lines)
+    assert any("no mating part" in line for line in lines)
