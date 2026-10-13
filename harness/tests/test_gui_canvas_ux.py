@@ -468,7 +468,8 @@ def test_the_map_and_legend_make_room_in_a_small_window(win) -> None:
     v = win.view
     big = v.minimap.size()
     assert v.legend.isVisibleTo(v) and v.minimap.isVisibleTo(v)
-    win.resize(1280, 640)  # about 330 px for the diagram
+    win.resize(1280, 640)
+    win.dock_bottom.show()  # (the shell hides it in a short window; shown again: about 330 px left)
     QApplication.processEvents()
     assert not v.minimap.isVisibleTo(v) or v.minimap.size().height() < big.height()
     assert not v.legend.is_open  # starts folded where it would cover the diagram
@@ -505,13 +506,14 @@ def test_double_click_and_enter_ask_for_the_plans(win) -> None:
 
 
 def test_opening_a_link_shows_its_wire_in_the_harness_plans(win) -> None:
+    # the Harness tab of the shell (the old plans panel of the bottom dock no longer takes it)
     win.ctl.request_open("interface", "IF-010")
-    assert win.tabs.currentWidget() is win.harness_panel
-    assert win.harness_panel.selected_harness() == "W001"
-    rows = win.harness_panel.wires.selectionModel().selectedRows()
-    assert rows and win.harness_panel.wires.item(rows[0].row(), 0).text().startswith("W001")
+    assert win.main_tabs.currentWidget() is win.harness_view
+    assert win.harness_view.harness_id() == "W001"
+    selection = win.harness_view.selection()
+    assert selection is not None and selection[0] == "wire" and selection[1].startswith("W001")
     win.ctl.request_open("unit", "RW1")
-    assert win.harness_panel.selected_harness() is not None
+    assert win.harness_view.harness_id() is not None
 
 
 def test_a_link_with_no_plan_gets_a_toast_with_a_generate_button(plain) -> None:

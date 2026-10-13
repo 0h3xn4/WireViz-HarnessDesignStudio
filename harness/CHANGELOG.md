@@ -24,6 +24,12 @@ Versions follow semantic versioning. Every project file records the tool version
 - Canvas state marks: every unit card and link label shows its problems, warnings, values still to enter and "not checked yet" as a badge (icon and count), a click on a badge asks for the Problems of that object; units, links and connectors that a release locks show a lock and "W001 A" and a faint released tint; the legend lists only the marks that are on the diagram.
 - A corner chip on the diagram says whether the harnesses and the outputs are out of date, not generated, not exported or up to date.
 - Why? in the diagram's right-click menu for links, units and connectors, and on the "n auto" chip: why the tool chose a connector and what generation recorded.
+- Top bar (`gui/topbar.py`): project name, short model hash in mono, a dirty marker, **Generate** (the one primary button), Check, Export and a status chip (up to date, plans out of date, outputs out of date, generating, exporting, checking). Ctrl+G generates, Ctrl+E exports, F5 runs the checks.
+- Persistent banners: when the plans or the exported files no longer match the design a notice stays under the top bar with Generate and Export buttons; a failed generate or export stays as a notice until the next success.
+- Main tabs Diagram, Harness, Lists, Checks and Releases (Ctrl+1 to Ctrl+5; Harness and Lists show when their views are installed), the Checks and Releases tabs, and a File > Import submenu (interfaces, approved parts, segment lengths, ampacity values, KiCad netlist); Export opens the export dialog.
+- F6 and Shift+F6 move the keyboard focus between the diagram, the project panel, the inspector and the bottom panel; Ctrl+I adds an interface; the Connect tool is in the Edit menu; every shortcut is in a menu and in the tooltip ("text (shortcut)").
+- View > Reset layout; the dock layout is saved with the window.
+- The status bar shows the project folder (monospace, cut in the middle when narrow), the number of rules and the tool version, "Generated at model xxxxxxxx" and the pending-values link.
 
 - Project tree (new `gui/project_tree.py`, not yet in the window): Units, Interfaces, Harnesses with their release state, Parts, Interface types, Configuration with its placeholder and pending values, and the import entry points; problem counts and a lock on every object, a filter, keyboard navigation and an "Add" menu. It updates only the rows a change touches.
 - Inspector (new `gui/inspector.py`): tabs Inspector, Why and Problems; a banner that says why an object is locked and offers "Start new revision"; fields a release forbids changed are disabled with the reason; "Used in" lists the links, harnesses and wires that use a unit, link, part or interface type; a configuration file lists its engineering values with a status chip each.
@@ -50,6 +56,12 @@ Versions follow semantic versioning. Every project file records the tool version
 - Deleting an interface asks first and names both ends and the harness wires it affects; the Delete key works only from the diagram and the tables; a read-only project says why a drag, Delete or arrange did nothing.
 - Arrange diagram has a shortcut (Ctrl+Shift+L) and a toolbar button, and big diagrams are arranged in the background; dragging a unit among many is smooth (straight lines while dragging, routes on release); a click on a link label selects its own link.
 - The editor window and the taskbar entry now show the Harness Design Studio logo (drawn in code, so the packaged program needs no SVG support).
+- The Guided, Expert, Select and Connect toggles use a neutral selected style (bold with a bar under), so Generate is the only accent-coloured button; the Fix buttons on problem cards are no longer primary.
+- Ctrl+K lists every command (Generate, Check, Export, Release, Revise, Reset layout, the tabs, the import kinds, engineering values, go to harness), ranks a name that starts with what you typed first and no longer stops at 14 results.
+- Undo and Redo name the step ("Undo Move PDU2"); a refusal because of a release stays on screen with a "Start new revision…" button until the next change goes through.
+- New project and New project from an example are one dialog (folder, name, example); release and new revision use the dialogs that list what is locked and unlocked.
+- The Harness and Lists tabs, the project tree (left) and the inspector with its Why and Problems tabs (right) are on the window; a link double-click opens the Harness tab, "Export table" in Lists saves CSV or XLSX, and a panel can no longer make the window wider than the screen.
+- The first interface size follows the screen (200 % on a 4K screen at ratio 1); in a window shorter than 800 px the bottom panel is hidden so the diagram keeps at least 55 % of the height at 1280 x 720; the plans check is read once per model state.
 
 ### Fixed
 

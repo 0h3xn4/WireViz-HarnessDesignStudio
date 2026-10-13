@@ -239,6 +239,7 @@ QPushButton[primary="true"]:hover:enabled {{ background: {t["primary"]}; }}
 QPushButton[danger="true"] {{ border-color: {t["error"]}; color: {t["error"]}; }}
 QPushButton[align="left"] {{ text-align: left; }}
 QToolButton:checked, QPushButton:checked {{ background: {t["primary"]}; color: {t["on-primary"]}; border-color: {t["primary"]}; }}
+QToolButton[toggle="true"]:checked, QPushButton[toggle="true"]:checked {{ background: {t["surface-2"]}; color: {t["text"]}; border: 1px solid {t["border"]}; border-bottom: 3px solid {t["text"]}; font-weight: 600; }}
 QPushButton:focus, QToolButton:focus, QLineEdit:focus, QComboBox:focus, QTextEdit:focus, QPlainTextEdit:focus {{ border: 2px solid {t["focus"]}; }}
 QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox {{ background: {t["surface"]}; border: 1px solid {t["surface-2"]}; border-bottom: 1px solid {t["border"]}; border-radius: 0; padding: 0 {s8}; min-height: {inner}; max-height: {inner}; }}
 QTextEdit, QPlainTextEdit {{ background: {t["surface"]}; border: 1px solid {t["surface-2"]}; border-bottom: 1px solid {t["border"]}; border-radius: 0; padding: {s4} {s8}; }}
@@ -254,6 +255,8 @@ QHeaderView::section {{ background: {t["surface"]}; color: {t["text-muted"]}; bo
 QScrollArea {{ border: none; }}
 QLabel[muted="true"] {{ color: {t["text-muted"]}; }}
 QLabel[error="true"] {{ color: {t["error"]}; }}
+QLabel[title="true"] {{ font-size: {px(TYPE_SCALE["md"])}; font-weight: 600; }}
+QLabel[dirty="true"] {{ color: {t["warning"]}; font-weight: 600; }}
 QLabel[heading="true"] {{ color: {t["text-muted"]}; font-weight: 600; text-transform: uppercase; }}
 QFrame[card="true"] {{ background: {t["bg"]}; border: 1px solid {t["border"]}; border-radius: 0; }}
 QFrame[card="true"][severity="warning"] {{ border-left: {px(6)} solid {t["warning"]}; }}

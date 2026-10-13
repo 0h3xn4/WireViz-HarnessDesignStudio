@@ -66,3 +66,27 @@ class DialogScript:
         if self.fn:
             self.fn(dialog)
         return int(QDialog.DialogCode.Accepted if self.accept else QDialog.DialogCode.Rejected)
+
+
+def new_project_answers(
+    win: MainWindow,
+    folder: Path,
+    name: str,
+    *,
+    template: str | None = None,
+    accept: bool = True,
+) -> list[QDialog]:
+    """Replaces `run_dialog` for "New project": fills the one new-project dialog (folder, name and,
+    when given, the example) and answers OK or Cancel. Returns the dialogs that were shown."""
+    shown: list[QDialog] = []
+
+    def run(dlg: QDialog) -> int:
+        shown.append(dlg)
+        dlg.folder.setText(str(folder))  # type: ignore[attr-defined]
+        dlg.name.setText(name)  # type: ignore[attr-defined]
+        if template is not None:
+            assert dlg.select_template(template)  # type: ignore[attr-defined]
+        return int(QDialog.DialogCode.Accepted if accept else QDialog.DialogCode.Rejected)
+
+    win.run_dialog = run
+    return shown

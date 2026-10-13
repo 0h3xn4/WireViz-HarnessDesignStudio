@@ -42,8 +42,8 @@ from harness_design_studio.core import checks, edit, why
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.generate.explain import explain_harness, explain_wire
 from harness_design_studio.core.library_import import describe_library
-from harness_design_studio.core.model import InterfaceInstance, Part
-from harness_design_studio.core.verify import verify_project
+from harness_design_studio.core.model import InterfaceInstance, Part, Project
+from harness_design_studio.core.verify import VerifyReport, verify_project
 from harness_design_studio.core.wirecolours import name_of, resolve
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import LIST_DELAY_MS, Delta, EditorController
@@ -1006,8 +1006,7 @@ class ProblemsPanel(QScrollArea):
         row.addWidget(show)
         if f.fix_label:
             fix = QPushButton(f.fix_label)
-            fix.setObjectName("fix")
-            fix.setProperty("primary", True)
+            fix.setObjectName("fix")  # (not primary: Generate is the one primary button)
             fix.setEnabled(not self.ctl.read_only)
             fix.clicked.connect(lambda: self.ctl.apply_fix(f))
             row.addWidget(fix)
@@ -1487,13 +1486,23 @@ class HarnessPanel(QWidget):
         item = self.harnesses.item(rows[0].row(), 0) if rows else None
         return item.text() if item else None
 
+    _verify_cache: tuple[tuple[int, int], VerifyReport] | None = None
+
+    def _verified(self, p: Project) -> VerifyReport:
+        """The independent check of the plans, read once per model state (it takes about 2 s at
+        stress size, and the panel refreshes every time it is shown)."""
+        token = self.ctl.state_token
+        if self._verify_cache is None or self._verify_cache[0] != token:
+            self._verify_cache = (token, verify_project(p))
+        return self._verify_cache[1]
+
     def refresh(self) -> None:
         self._dirty = False
         p = self.ctl.project
         status = self.ctl.generation_status()
         self.status.setText(strings.GEN_STATUS[status])
         self.status.setProperty("state", status)
-        report = verify_project(p) if p.harnesses else None
+        report = self._verified(p) if p.harnesses else None
         if report is None:
             self.verify.setText("")
         else:
