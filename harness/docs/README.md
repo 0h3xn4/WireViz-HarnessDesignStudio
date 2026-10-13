@@ -77,6 +77,7 @@ These explain how the tool was specified and checked; you do not need them to us
 | --- | --- |
 | [`SPEC.md`](SPEC.md), [`REQUIREMENTS.md`](REQUIREMENTS.md), [`UX.md`](UX.md) | What the tool must do and how it should feel |
 | [`UX_GUIDELINES_REVIEW.md`](UX_GUIDELINES_REVIEW.md) | The owner's UX/UI guidelines, point by point: done, new, not applicable, open |
+| [`DESIGN.md`](DESIGN.md) | The design system of the editor: tokens, type and spacing, icons, state badges, shortcuts |
 | [`DECISIONS.md`](DECISIONS.md), [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | What was decided, and what still needs an owner |
 | [`PLAN.md`](PLAN.md), [`demos/`](demos/README.md) | The plan and the note from each milestone |
 | [`AUDIT.md`](AUDIT.md) | The October audit |
