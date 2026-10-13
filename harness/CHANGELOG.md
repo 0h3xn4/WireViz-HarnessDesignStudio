@@ -7,6 +7,7 @@ Versions follow semantic versioning. Every project file records the tool version
 ### Changed
 
 - The editor window and the taskbar entry now show the Harness Design Studio logo (drawn in code, so the packaged program needs no SVG support).
+
 ### Fixed
 
 - A review, release or new revision cannot be dated before the last change-log entry of the same harness (`date_before_last`).
