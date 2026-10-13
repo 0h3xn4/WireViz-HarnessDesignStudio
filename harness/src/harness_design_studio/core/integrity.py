@@ -99,6 +99,17 @@ def _check_connector(project: Project, c: Connector, owner: str) -> list[Issue]:
                 c.id,
             )
         )
+    out.extend(
+        Issue(
+            "warning",
+            "unknown_carried_type",
+            f"Connector '{c.id}' is meant for interface type '{t}', which does not exist.",
+            None,
+            c.id,
+        )  # fmt: skip
+        for t in c.carries
+        if t not in project.interface_types
+    )
     for pin in c.pins:
         if pin.interface_id is not None and pin.interface_id not in project.interfaces:
             out.append(Issue("warning", "orphan_pin_assignment", f"Pin {pin.id} of '{c.id}' was allocated for interface '{pin.interface_id}', which no longer exists. Generate again to release it.", None, c.id))  # fmt: skip
@@ -166,15 +177,43 @@ def _check_harness(
     return out
 
 
+def _check_parts_and_records(project: Project) -> list[Issue]:
+    """Parts that mate with nothing real, and release records that belong to no harness."""
+    out: list[Issue] = []
+    for part in project.parts.values():
+        mate = part.mates_with
+        if mate is not None and (mate == part.id or mate not in project.parts):
+            what = "itself" if mate == part.id else f"'{mate}', which is not in the parts library"
+            out.append(_err("unknown_mate_part", f"Part '{part.id}' mates with {what}.", part.id))
+    for b in project.baselines.values():
+        if b.harness_id not in project.harnesses:
+            out.append(_err("unknown_harness", f"Baseline '{b.id}' belongs to harness '{b.harness_id}', which does not exist.", b.id))  # fmt: skip
+        if b.id != f"{b.harness_id}.{b.revision}":
+            out.append(_err("baseline_id_mismatch", f"Baseline '{b.id}' is not called '{b.harness_id}.{b.revision}', as its harness and revision say.", b.id))  # fmt: skip
+    out.extend(
+        Issue(
+            "warning",
+            "unknown_harness",
+            f"Change log entry '{e.id}' is about harness '{e.harness_id}', which no longer exists.",
+            None,
+            e.id,
+        )  # fmt: skip
+        for e in project.changelog.values()
+        if e.harness_id not in project.harnesses
+    )
+    return out
+
+
 def check_integrity(project: Project) -> list[Issue]:
     """Return every consistency problem; an empty list means the model is internally consistent."""
     out: list[Issue] = []
     for kind, ids in (
         ("units", project.units), ("interfaces", project.interfaces),
         ("interface types", project.interface_types), ("parts", project.parts),
-        ("harnesses", project.harnesses),
+        ("harnesses", project.harnesses), ("baselines", project.baselines),
     ):  # fmt: skip
         out.extend(_casefold_duplicates(kind, ids))
+    out.extend(_check_parts_and_records(project))
     all_connectors = [c.id for c in project.connectors.values()]
     all_connectors += [c.id for h in project.harnesses.values() for c in h.connectors]
     out.extend(_casefold_duplicates("connectors", set(all_connectors)))
@@ -220,6 +259,8 @@ def check_integrity(project: Project) -> list[Issue]:
         hash(frozenset(project.interfaces)),
         hash(frozenset((p.id, p.category, p.pin_count) for p in project.parts.values())),
         hash(frozenset(k for k, n in wire_counts.items() if n > 1)),
+        hash(frozenset(project.interface_types)),
+        hash(frozenset(h.id for h in project.harnesses.values() if h.generated)),
     )
     seen: dict[tuple[int, str], tuple[object, tuple[int, ...], list[Issue]]] = {}
 

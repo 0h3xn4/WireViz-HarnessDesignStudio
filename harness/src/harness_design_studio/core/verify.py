@@ -12,6 +12,7 @@ choices, see the design rules). It never raises.
 from collections import Counter
 from dataclasses import dataclass, field
 
+from .generation_status import generation_status
 from .issues import Issue
 from .model import Connector, Harness, Project, Wire
 
@@ -243,8 +244,6 @@ def _check_shields(project: Project, rep: VerifyReport) -> None:
 
 
 def verify_project(project: Project) -> VerifyReport:
-    from .generate.engine import generation_status  # a hash comparison only, no generation logic
-
     rep = VerifyReport()
     cables = _cable_index(project)
     cable_use, box_use = _check_wire_ends(project, rep, cables)

@@ -13,11 +13,7 @@ Versions follow semantic versioning. Every project file records the tool version
 - `harness new --name` with a blank name is refused, and a name is stored without surrounding spaces. A link (also a dangling one) is not accepted as the folder of a new project, with the usual "not an empty folder" message.
 - `import-lengths` help, `IMPORTS.md` and the templates README say that its three columns are read by position. The exit code table in `CLI.md` names the imports and `config` under exit code 1.
 - `FILE_FORMAT.md` and `TROUBLESHOOTING.md` describe the empty `.harness.lock.takeover` file.
-### Fixed
-
 - **Fixed: outputs, low findings** (audit D-12, D-14, D-17). Wires with both ends on one side of a cable block (loop-back plugs) are counted when the drawing is split into sheets, so their loops no longer run into the title block. A damaged output manifest that lists a folder no longer makes every export fail; the empty folder of a removed harness is removed; the deep output check treats a linked output file as changed and the output reader skips links. The routing function names a missing gap instead of raising a key error.
-### Fixed
-
 - The package self-test (`--selftest`) no longer leaves a temporary folder behind, names the step that failed, works when `QT_QPA_PLATFORM` is set but empty, and only reacts to its flag as the first argument.
 - The `.deb` no longer carries the tarball-only `README.txt`, icon and desktop template under `/opt`.
 - The CI run on a merge to `master` is no longer cancelled by the next merge; the documents-only job also runs the flatsat walkthrough test; a missing `.deb` or `.tar.gz` fails the build job.
@@ -26,16 +22,17 @@ Versions follow semantic versioning. Every project file records the tool version
 - `harness config` no longer names decision-log numbers (D-10, D-15).
 - Documents: locking a wire or pin is done by editing the harness file (the app has no button); `emc.classes` is documented as read by no rule.
 - Build tools: a failing example builder keeps the old example folder; `tools.metrics --coverage` and `tools.usability_summary` give a message instead of a traceback; `tools.extract_requirements` checks that all PDFs exist before it rewrites any list; the user-guide converter keeps code spans and link targets intact.
-### Fixed
-
 - A two-colour wire written `yellow/green` or `green-yellow` shows both codes (`YE/GN`) in the drawing instead of a cut-off word; it is still drawn grey (audit B-19).
 - `forbid_nominal_with_redundant: false` now lets nominal and redundant interfaces share a harness, and `category_pairs_to_separate` separates only the pairs it lists (audit B-17).
 - The mass table header says it covers wires and cable connectors; backshells, shielding, sleeving and tie-downs are not in the mass (audit B-21).
 - The Explain tab no longer says "(X drives)" for power and other single-path signals, names the connector on each pin line, and shows the "stays on pin ... because the pin is locked" line; a missing mating part is no longer written as "mates with itself" (audit B-16).
 - Arranging the diagram twice changes nothing more, also at stress size; a fixed pin with no signal is never given to an interface; a branch name cannot equal a cable connector ID (audit B-22).
-### Fixed
-
 - **Fixed: editor, small items** (audit F1-26, F1-27, F2-10). A number typed with other scripts' digits (Arabic-Indic, full-width) is refused in the number fields and the table. An unknown chain typed into the interface table is refused with a plain message. The names of the steps in the Undo menu, the table headings and a few words on the diagram moved into `strings.py`. The accessible-name test no longer accepts a tooltip as a name.
+- Loading a project with many set-aside objects reads and scans each file once (it was quadratic: 32000 bad units took 30 s). Audit A-13.
+- The undo history keeps the last 200 steps, and an edit with no operations is no longer an undo step (it also cleared redo). Audit A-14.
+- Names refuse line and paragraph separators, the byte-order mark and private-use characters; dates (library, release, change log) must be exactly `YYYY-MM-DD`; zone names in `layout.json` are checked like other names. Audit A-16.
+- The integrity check reports a part that mates with itself or a missing part, a baseline of a missing harness or with an ID that is not `<harness>.<revision>`, baselines whose IDs differ only by case, and (as warnings) a connector for a missing interface type and a change log entry of a deleted harness. The integrity cache follows the generated flag of the owning harness. Audit A-15, A-17.
+- The connector-manufacturer rule ignores case and spaces; emc-class-split also sees interfaces named only by wires; wire-spec and mating-cycles findings can be shown; `config --apply-profile` says when the plans became out of date. The verifier no longer imports the generator. Audit C-22, C-23.
 
 ## 1.0.0 (2026-10-12; released on the owner's instruction, see compliance/SIGNOFF.md; not a statement of compliance)
 

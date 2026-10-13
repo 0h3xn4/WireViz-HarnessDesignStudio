@@ -20,8 +20,8 @@ from pathlib import Path
 from harness_design_studio.core import drc
 from harness_design_studio.core.commands import Op, Put
 from harness_design_studio.core.errors import HarnessError
-from harness_design_studio.core.generate.engine import generation_status
 from harness_design_studio.core.generate.lengths import wire_length
+from harness_design_studio.core.generation_status import generation_status
 from harness_design_studio.core.model import Baseline, ChangeEntry, Harness, Project, evolve
 from harness_design_studio.core.model.review import ChangeKind
 from harness_design_studio.core.verify import verify_project

@@ -154,7 +154,10 @@ def _manufacturer(project: Project) -> Iterator[Hit]:
         for c in h.connectors:
             box = project.connectors.get(c.mates_with or "")
             a, b = project.parts.get(c.part_id), project.parts.get(box.part_id) if box else None
-            if a and b and a.manufacturer and b.manufacturer and a.manufacturer != b.manufacturer:
+            if (
+                a and b and a.manufacturer and b.manufacturer
+                and a.manufacturer.strip().casefold() != b.manufacturer.strip().casefold()
+            ):  # fmt: skip
                 yield Hit(
                     c.id,
                     f"{c.id} ({a.manufacturer}) mates with {box.id if box else ''} ({b.manufacturer}): a connector and its mate should come from one manufacturer",
@@ -286,7 +289,7 @@ def unchecked(project: Project) -> Iterator[Hit]:
         bad = sorted(
             {
                 pid
-                for _h, kind, pid in _shielded_parts(project)[0]
+                for _h, kind, pid in _shielded_parts(project)
                 if _rating(
                     project, pid, "conductive_finish" if kind == "connector" else "shield_insulated"
                 )
@@ -361,8 +364,8 @@ def _shield_bonding(project: Project) -> Iterator[Hit]:
                 )
 
 
-def _shielded_parts(project: Project) -> tuple[list[tuple[str, str, str]], list[str]]:
-    """(harness, kind, part) triples the shield-parts rule looks at, and parts it cannot judge."""
+def _shielded_parts(project: Project) -> list[tuple[str, str, str]]:
+    """(harness, kind, part) triples the shield-parts rule looks at."""
     seen: list[tuple[str, str, str]] = []
     for h in sorted(project.harnesses.values(), key=lambda x: x.id):
         if not any(s.kind != "twisted_pair" for s in h.shields):
@@ -375,14 +378,14 @@ def _shielded_parts(project: Project) -> tuple[list[tuple[str, str, str]], list[
             for wid in sh.wire_ids:
                 if wid in by_id and by_id[wid].part_id:
                     seen.append((h.id, "wire", by_id[wid].part_id or ""))
-    return sorted(set(seen)), []
+    return sorted(set(seen))
 
 
 def _shield_parts(project: Project) -> Iterator[Hit]:
     """Connectors for shielded wires have a conductive finish; shields have an insulating sheath."""
     if cfg(project, "emc").get("shield_bonding") is None:
         return
-    for hid, kind, pid in _shielded_parts(project)[0]:
+    for hid, kind, pid in _shielded_parts(project):
         key = "conductive_finish" if kind == "connector" else "shield_insulated"
         value = _rating(project, pid, key)
         if value is not None and value == 0:
@@ -400,7 +403,8 @@ def _emc_class_split(project: Project) -> Iterator[Hit]:
         return
     carried: dict[tuple[str, str, str], set[str]] = {}
     for h in project.harnesses.values():
-        for iid in h.interfaces:
+        # a harness drawn by hand may carry interfaces only through its wires
+        for iid in sorted({*h.interfaces, *(w.interface_id for w in h.wires if w.interface_id)}):
             i = project.interfaces.get(iid)
             t = project.interface_types.get(i.type_id) if i else None
             if i is None or t is None or not t.emc_class or len(i.endpoints) != 2:

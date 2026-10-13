@@ -2,11 +2,13 @@
 
 import hashlib
 import json
+import re
+from bisect import bisect_right
 from dataclasses import dataclass, field, replace
 from pathlib import Path
 from typing import Any
 
-from pydantic import ValidationError
+from pydantic import TypeAdapter, ValidationError
 
 from harness_design_studio.core.errors import LoadError
 from harness_design_studio.core.integrity import check_integrity
@@ -32,7 +34,7 @@ from harness_design_studio.core.model import (
     Waiver,
     default_configs,
 )
-from harness_design_studio.core.model.base import Entity
+from harness_design_studio.core.model.base import Entity, Name
 
 from . import canonical
 from .fs import escapes_root, long_path
@@ -117,47 +119,51 @@ def _json_problem(exc: ValueError) -> str:
     return f"The file is not valid JSON or UTF-8 ({type(exc).__name__}: {str(exc)[:120]})."
 
 
-def _line_of(data: bytes, object_id: str) -> int | None:
-    """Line of `"id": "<object_id>"` in a project file, if it is there once."""
-    needle = f'"id": "{object_id}"'.encode()
-    at = data.find(needle)
-    if at < 0 or data.find(needle, at + 1) >= 0:
-        return None
-    return data.count(b"\n", 0, at) + 1
+_ID_AT = re.compile(rb'"id": "([^"\\]*)"')
+
+
+def _id_lines(data: bytes) -> dict[str, int | None]:
+    """Line of every `"id": "<x>"` in a project file; None when the same id is there twice."""
+    newlines = [m.start() for m in re.finditer(rb"\n", data)]
+    lines: dict[str, int | None] = {}
+    for m in _ID_AT.finditer(data):
+        key = m.group(1).decode("utf-8", "replace")
+        lines[key] = None if key in lines else bisect_right(newlines, m.start()) + 1
+    return lines
+
+
+def _quarantine_message(kind: str, reason: str) -> str:
+    return f"A {kind} could not be loaded and was set aside: {reason}"
 
 
 def _add_lines(root: Path, result: "LoadResult") -> None:
     """Tell where in its file each set-aside object starts (line numbers help hand repair)."""
     base = long_path(root)
+    by_file: dict[str, dict[str, int | None]] = {}  # each file is read and scanned once
     fixed: dict[tuple[str, str], int | None] = {}
     for item in result.project.quarantine:
         raw = item.raw
         oid = raw.get("id") if isinstance(raw, dict) else None
         if not isinstance(oid, str):
             continue
-        try:
-            data = (base / item.file).read_bytes()
-        except OSError:
+        if item.file not in by_file:
+            try:
+                by_file[item.file] = _id_lines((base / item.file).read_bytes())
+            except OSError:
+                by_file[item.file] = {}
+        if oid not in by_file[item.file]:
             continue
-        key = (item.file, item.reason)
-        fixed[key] = None if key in fixed else _line_of(data, oid)  # same reason twice: unsure
+        key = (item.file, _quarantine_message(item.kind, item.reason))
+        fixed[key] = None if key in fixed else by_file[item.file][oid]  # same message twice: unsure
     lines = {k: v for k, v in fixed.items() if v is not None}
     if not lines:
         return
-    out = []
-    for issue in result.issues:
-        hit = next(
-            (
-                n
-                for (file, reason), n in lines.items()
-                if issue.code == "quarantined"
-                and issue.location == file
-                and issue.message.endswith(reason)
-            ),
-            None,
-        )
-        out.append(replace(issue, message=f"{issue.message} (line {hit})") if hit else issue)
-    result.issues[:] = out
+    result.issues[:] = [
+        replace(issue, message=f"{issue.message} (line {hit})")
+        if issue.code == "quarantined" and (hit := lines.get((issue.location or "", issue.message)))
+        else issue
+        for issue in result.issues
+    ]
 
 
 class _Builder:
@@ -167,7 +173,7 @@ class _Builder:
 
     def quarantine(self, rel: str, kind: str, reason: str, raw: Any) -> None:
         self.p.quarantine.append(QuarantinedItem(rel, kind, reason, raw))
-        self.issues.append(Issue("error", "quarantined", f"A {kind} could not be loaded and was set aside: {reason}", rel))  # fmt: skip
+        self.issues.append(Issue("error", "quarantined", _quarantine_message(kind, reason), rel))
 
     def one[T: Entity](self, rel: str, kind: str, model: type[T], raw: Any) -> T | None:
         try:
@@ -193,12 +199,26 @@ class _Builder:
                 target[oid] = obj
 
 
+_ZONE_NAME = TypeAdapter(Name)
+
+
+def _zone_name_ok(text: str) -> bool:
+    """A zone name is a normal name (not blank, no control or invisible characters, at most 200 long)."""
+    if not text.strip():
+        return False
+    try:
+        _ZONE_NAME.validate_python(text)
+    except ValidationError:
+        return False
+    return True
+
+
 def _layout(b: "_Builder", rel: str, data: Any) -> None:
     ok = isinstance(data, dict) and set(data) == {"zones", "placements"}
     if not ok or not isinstance(data["zones"], list) or not isinstance(data["placements"], list):
         b.quarantine(rel, "file", "expected an object with 'zones' and 'placements' lists", data)
         return
-    zones = [z for z in data["zones"] if isinstance(z, str) and z.strip()]
+    zones = [z for z in data["zones"] if isinstance(z, str) and _zone_name_ok(z)]
     if len(zones) != len(data["zones"]) or len(set(zones)) != len(zones):
         b.quarantine(rel, "zone list", "zone names must be unique, non-empty text", data["zones"])
     else:
