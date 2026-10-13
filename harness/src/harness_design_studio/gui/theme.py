@@ -256,6 +256,8 @@ QFrame[card="true"][severity="warning"] {{ border-left: {px(6)} solid {t["warnin
 QFrame[card="true"][severity="error"] {{ border-left: {px(6)} solid {t["error"]}; }}
 QFrame[card="true"][severity="info"] {{ border-left: {px(6)} solid {t["info"]}; }}
 QFrame[banner="true"] {{ background: {t["surface-2"]}; border: 1px solid {t["warning"]}; }}
+QFrame[banner="true"][severity="error"] {{ border: 1px solid {t["error"]}; border-left: {px(6)} solid {t["error"]}; }}
+QFrame[banner="true"][severity="info"] {{ border: 1px solid {t["info"]}; border-left: {px(6)} solid {t["info"]}; }}
 QToolTip {{ background: {t["surface"]}; color: {t["text"]}; border: 1px solid {t["border"]}; padding: {s4}; }}
 QProgressBar {{ border: 1px solid {t["border"]}; border-radius: 0; text-align: center; }}
 QProgressBar::chunk {{ background: {t["primary"]}; }}

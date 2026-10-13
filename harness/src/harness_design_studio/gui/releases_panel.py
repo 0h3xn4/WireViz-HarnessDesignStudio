@@ -12,6 +12,7 @@ the existing change dialog. Which state a harness is in is always a state chip (
 released, revised), never colour alone.
 """
 
+from collections.abc import Mapping
 from typing import Any
 
 from PySide6.QtCore import QModelIndex, QSettings, Qt, Signal
@@ -43,8 +44,12 @@ from harness_design_studio.core.vcs.timeline import (
 from harness_design_studio.gui import icons, strings
 from harness_design_studio.gui.controller import EditorController
 from harness_design_studio.gui.states import STATES, StateChip
-from harness_design_studio.gui.tables import Column, DictTableModel, TableView
+from harness_design_studio.gui.tables import Column, DictTableModel, Row, TableView
 from harness_design_studio.gui.theme import ThemeManager
+
+def _m(row: Row) -> Mapping[Any, Any]:
+    return row if isinstance(row, Mapping) else {}
+
 
 ALL = ""  # the combo box entry "All harnesses"
 WORKING = ""  # the "with" entry "Working design"
@@ -169,7 +174,7 @@ class ReleasesPanel(QWidget):
         head.addWidget(self.harness)
         head.addWidget(self.state)
         head.addStretch(1)
-        self.actions: dict[str, QPushButton] = {}
+        self.action_buttons: dict[str, QPushButton] = {}
         for action, icon, text, tip in (
             ("review", "review", strings.REL_SUBMIT, strings.REL_SUBMIT_TIP),
             ("release", "release", strings.REL_RELEASE, strings.REL_RELEASE_TIP),
@@ -181,7 +186,7 @@ class ReleasesPanel(QWidget):
             b.setToolTip(tip)
             b.clicked.connect(lambda _=False, a=action: self._request(a))
             head.addWidget(b)
-            self.actions[action] = b
+            self.action_buttons[action] = b
         lay.addLayout(head)
         self.action_note = QLabel()
         self.action_note.setObjectName("releases-note")
@@ -205,11 +210,11 @@ class ReleasesPanel(QWidget):
             Column("id", strings.REL_COLUMNS["id"], mono=True),
             Column("harness", strings.REL_COLUMNS["harness"], mono=True),
             Column("revision", strings.REL_COLUMNS["revision"], mono=True),
-            Column("event", strings.REL_COLUMNS["event"], state=lambda r: _EVENT_STATE.get(str(r["kind"]))),  # fmt: skip
+            Column("event", strings.REL_COLUMNS["event"], state=lambda r: _EVENT_STATE.get(str(_m(r)["kind"]))),  # fmt: skip
             Column("by", strings.REL_COLUMNS["by"]),
             Column("when", strings.REL_COLUMNS["when"], mono=True),
             Column("comment", strings.REL_COLUMNS["comment"], tooltip="comment", width=360),
-            Column("baseline", strings.REL_COLUMNS["baseline"], state=lambda r: "released" if r["has_baseline"] else None, tooltip=lambda r: strings.REL_BASELINE_TIP.format(r["revision"]) if r["has_baseline"] else strings.REL_NO_BASELINE_TIP),  # fmt: skip
+            Column("baseline", strings.REL_COLUMNS["baseline"], state=lambda r: "released" if _m(r)["has_baseline"] else None, tooltip=lambda r: strings.REL_BASELINE_TIP.format(_m(r)["revision"]) if _m(r)["has_baseline"] else strings.REL_NO_BASELINE_TIP),  # fmt: skip
         ]
         self.timeline_model = DictTableModel(cols, [], theme)
         self.timeline = TableView(
@@ -362,9 +367,8 @@ class ReleasesPanel(QWidget):
         if chosen:
             return str(chosen)
         rows = self.timeline.selected_rows()
-        if rows:
-            first = rows[0]
-            return str(first["harness"]) if isinstance(first, dict) else None
+        if rows and isinstance(rows[0], Mapping):
+            return str(rows[0]["harness"])
         return None
 
     def select_harness(self, harness_id: str) -> bool:
@@ -396,7 +400,7 @@ class ReleasesPanel(QWidget):
 
     def _selected_revision(self) -> str | None:
         rows = self.timeline.selected_rows()
-        if rows and isinstance(rows[0], dict) and rows[0].get("has_baseline"):
+        if rows and isinstance(rows[0], Mapping) and rows[0].get("has_baseline"):
             return str(rows[0]["revision"])
         return None
 
@@ -415,7 +419,7 @@ class ReleasesPanel(QWidget):
 
     def _request(self, action: str) -> None:
         hid = self.current_harness()
-        if not hid or not self.actions[action].isEnabled():
+        if not hid or not self.action_buttons[action].isEnabled():
             return
         self.changeRequested.emit(action, hid)
         {
@@ -425,7 +429,7 @@ class ReleasesPanel(QWidget):
         }[action].emit(hid)
 
     def action_enabled(self, action: str) -> bool:
-        return self.actions[action].isEnabled()
+        return self.action_buttons[action].isEnabled()
 
     def _update_actions(self) -> None:
         project = self.ctl.project
@@ -443,7 +447,7 @@ class ReleasesPanel(QWidget):
             "release": strings.REL_RELEASE_TIP,
             "revise": strings.REL_REVISE_TIP,
         }
-        for action, button in self.actions.items():
+        for action, button in self.action_buttons.items():
             ok = h is not None and status in wanted[action] and not self.ctl.read_only
             button.setEnabled(ok)
             tip = tips[action]

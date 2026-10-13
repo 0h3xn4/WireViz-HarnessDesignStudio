@@ -125,13 +125,13 @@ def test_actions_follow_the_state_and_emit_signals(qtbot, released, tmp_path) ->
     panel.select_harness("W001")  # released
     assert panel.action_enabled("revise")
     assert not panel.action_enabled("release") and not panel.action_enabled("review")
-    assert "released" in panel.actions["release"].toolTip()  # a disabled button says why
-    panel.actions["revise"].click()
+    assert "released" in panel.action_buttons["release"].toolTip()  # a disabled button says why
+    panel.action_buttons["revise"].click()
     panel.select_harness("W002")  # a draft
     assert panel.action_enabled("review") and panel.action_enabled("release")
     assert not panel.action_enabled("revise")
-    panel.actions["release"].click()
-    panel.actions["review"].click()
+    panel.action_buttons["release"].click()
+    panel.action_buttons["review"].click()
     assert asked == [("revise", "W001"), ("release", "W002"), ("review", "W002")]
     assert release_spy == [("W002",)]
     assert revise_spy == [("W001",)]
@@ -142,8 +142,8 @@ def test_a_read_only_project_offers_no_action(qtbot, released, tmp_path) -> None
     released.project.read_only = True
     panel = make_panel(qtbot, released, tmp_path)
     panel.select_harness("W002")
-    assert not any(panel.action_enabled(a) for a in panel.actions)
-    assert strings.REL_READ_ONLY in panel.actions["release"].toolTip()
+    assert not any(panel.action_enabled(a) for a in panel.action_buttons)
+    assert strings.REL_READ_ONLY in panel.action_buttons["release"].toolTip()
 
 
 def test_selecting_a_timeline_line_selects_its_harness_for_the_actions(qtbot, released, tmp_path) -> None:  # fmt: skip
@@ -272,8 +272,8 @@ def test_keyboard_only(qtbot, released, tmp_path) -> None:
     QTest.keyClick(panel.harness, Qt.Key.Key_Down)  # W001
     assert panel.current_harness() == "W001"
     spy = collect(panel.changeRequested)
-    panel.actions["revise"].setFocus()
-    QTest.keyClick(panel.actions["revise"], Qt.Key.Key_Space)
+    panel.action_buttons["revise"].setFocus()
+    QTest.keyClick(panel.action_buttons["revise"], Qt.Key.Key_Space)
     assert spy == [("revise", "W001")]
     # the table is reachable and moves with the arrows
     panel.timeline.setFocus()
@@ -291,5 +291,6 @@ def test_every_control_has_a_name(qtbot, released, tmp_path) -> None:
     for c in panel.findChildren(QComboBox):
         assert c.accessibleName()
     for v in panel.findChildren(QAbstractItemView):
-        assert v.accessibleName()
+        if v.objectName().startswith("releases-"):  # not the pop-up list of a combo box
+            assert v.accessibleName()
     assert isinstance(panel.group_index("wire"), QModelIndex)

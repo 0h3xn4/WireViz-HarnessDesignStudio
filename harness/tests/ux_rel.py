@@ -35,7 +35,7 @@ def flatsat_controller(tmp_path: Path) -> EditorController:
     assert root is not None
     folder = tmp_path / "flatsat"
     shutil.copytree(root / "projects" / "flatsat", folder)
-    ctl = EditorController()
+    ctl = EditorController(drc_delay_ms=600_000)  # no background check during a test
     ctl.open_path(folder)
     ctl.today = lambda: "2026-03-01"
     return ctl
