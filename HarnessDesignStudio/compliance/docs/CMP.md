@@ -6,7 +6,7 @@ Addresses ECSS-Q-ST-80C 6.2.4.1 to 6.2.4.12 and ECSS-E-ST-40C 5.3.2 (gaps G-14, 
 
 ## Items under control
 
-All files of the repository folder `harness/` (source, tests, tools, documents, compliance records, packaging), the pinned dependency versions in `pyproject.toml`, and the delivered packages.
+All files of the repository folder `HarnessDesignStudio/` (source, tests, tools, documents, compliance records, packaging), the pinned dependency versions in `pyproject.toml`, and the delivered packages.
 
 ## Baselines
 

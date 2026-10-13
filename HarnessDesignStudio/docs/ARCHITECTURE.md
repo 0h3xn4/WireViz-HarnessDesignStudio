@@ -29,10 +29,10 @@ This table and the choice below are the proposal as it was written. The choice w
 
 ## 2. Layering
 
-The layout of `harness/src/harness_design_studio/`. The one-line descriptions are the first lines of each module's docstring. The generated table of every module, with the requirements it serves, is [`compliance/sdd_components.csv`](../compliance/sdd_components.csv) (see [`compliance/docs/SDD.md`](../compliance/docs/SDD.md)).
+The layout of `HarnessDesignStudio/src/harness_design_studio/`. The one-line descriptions are the first lines of each module's docstring. The generated table of every module, with the requirements it serves, is [`compliance/sdd_components.csv`](../compliance/sdd_components.csv) (see [`compliance/docs/SDD.md`](../compliance/docs/SDD.md)).
 
 ```
-harness/src/harness_design_studio/
+HarnessDesignStudio/src/harness_design_studio/
   __init__.py      offline spacecraft harness design tool
   core/            headless: no GUI, CLI or network imports (enforced by tests/test_architecture.py)
   cli/             the `harness` command

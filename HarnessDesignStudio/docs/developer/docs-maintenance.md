@@ -13,7 +13,7 @@ This page shows which documents are generated and how to regenerate each one, ho
 
 ## Which documents are generated
 
-Never edit a generated file by hand. Change its source (or the program) and run the command. A test fails while the file is stale. All commands run from the `harness/` folder with the development environment active ([`setup-and-tests.md`](setup-and-tests.md)). The first seven commands below were run on a clean checkout: each printed a line about what it wrote (the last three also print a summary) and left `git status` clean.
+Never edit a generated file by hand. Change its source (or the program) and run the command. A test fails while the file is stale. All commands run from the `HarnessDesignStudio/` folder with the development environment active ([`setup-and-tests.md`](setup-and-tests.md)). The first seven commands below were run on a clean checkout: each printed a line about what it wrote (the last three also print a summary) and left `git status` clean.
 
 | File | Source | Regenerate | Test that fails if stale |
 | --- | --- | --- | --- |
@@ -45,7 +45,7 @@ There are no pictures of the older Harness plans tab, the generate preview and t
 
 ## Add or change a page
 
-1. **Where.** Pages of the tool go in `harness/docs/`. Their names are UPPER_CASE (`GETTING_STARTED.md`). The sub-folders `user-manual/` and `developer/` use lower-case words joined by hyphens. Do not create a name that differs from an existing one only by case.
+1. **Where.** Pages of the tool go in `HarnessDesignStudio/docs/`. Their names are UPPER_CASE (`GETTING_STARTED.md`). The sub-folders `user-manual/` and `developer/` use lower-case words joined by hyphens. Do not create a name that differs from an existing one only by case.
 2. **Shape.** The first sentence says what the page is for. A page of more than about 100 lines gets a `## Contents` list of links right after that sentence. The last line is `Next: [..](..), [..](..)`. See [Style rules](#style-rules).
 3. **Link it.** Add the page to the index of its folder (`docs/README.md`, `docs/user-manual/README.md` or `docs/developer/README.md`). Link a hard term the first time you use it to [`GLOSSARY.md`](../GLOSSARY.md) and add the term there if it is missing.
 4. **Commands and output.** Run every command you show, in a scratch folder, and paste the real output. Output that depends on the machine (a model hash, a date) is marked as such.

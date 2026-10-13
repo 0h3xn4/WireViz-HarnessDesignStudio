@@ -154,7 +154,7 @@ You need Python 3.12 or newer (Ubuntu 24.04 has it) and the Qt libraries above.
 
 ```
 sudo apt install python3-venv git libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
-git clone <the repository> && cd <the repository>/harness
+git clone <the repository> && cd <the repository>/HarnessDesignStudio
 python3 -m venv .venv
 . .venv/bin/activate
 pip install -e ".[gui,dev]"

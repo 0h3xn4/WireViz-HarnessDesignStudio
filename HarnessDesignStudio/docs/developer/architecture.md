@@ -12,7 +12,7 @@ This page gives a new contributor the shape of the code and the rules to keep, i
 
 ## The picture
 
-Harness Design Studio is a Python program with three layers inside `harness/src/harness_design_studio/`:
+Harness Design Studio is a Python program with three layers inside `HarnessDesignStudio/src/harness_design_studio/`:
 
 ```
 gui/   the editor (PySide6): draws the diagram and the panels; thin

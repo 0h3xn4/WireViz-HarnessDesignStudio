@@ -22,7 +22,7 @@ concurrency:
 
 defaults:
   run:
-    working-directory: harness
+    working-directory: HarnessDesignStudio
 
 jobs:
   release:
@@ -72,10 +72,10 @@ jobs:
           name: harness-design-studio-${{ env.TAG }}
           if-no-files-found: error
           path: |
-            harness/dist/*.deb
-            harness/dist/*.tar.gz
-            harness/dist/SHA256SUMS
-            harness/dist/scf.json
+            HarnessDesignStudio/dist/*.deb
+            HarnessDesignStudio/dist/*.tar.gz
+            HarnessDesignStudio/dist/SHA256SUMS
+            HarnessDesignStudio/dist/scf.json
       - name: Publish the release page
         run: |
           title="Harness Design Studio ${TAG#v}"

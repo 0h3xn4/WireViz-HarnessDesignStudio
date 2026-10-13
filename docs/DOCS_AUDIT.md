@@ -27,7 +27,7 @@ This page records what was found when the documentation of this repository was a
 
 How it was done:
 
-- **Clean install.** A fresh Python virtual environment, `pip install "harness[gui]"` from the source tree, then every command of the README and `GETTING_STARTED.md` was run in an empty folder and the output compared with the quoted output. Python 3.13 was used; the docs ask for 3.12 or newer. **Result:** the install works and the quick start works. Everything in the tutorial matched except one number (8 connectors; the tool prints 9) and one outdated sentence about wire colour. Nothing failed to run.
+- **Clean install.** A fresh Python virtual environment, `pip install "HarnessDesignStudio[gui]"` from the source tree, then every command of the README and `GETTING_STARTED.md` was run in an empty folder and the output compared with the quoted output. Python 3.13 was used; the docs ask for 3.12 or newer. **Result:** the install works and the quick start works. Everything in the tutorial matched except one number (8 connectors; the tool prints 9) and one outdated sentence about wire colour. Nothing failed to run.
 - **Not testable in this session** (so not checked, not guessed): the `.deb` and `.tar.gz` installs, the packaged `--selftest`, the GUI itself, KiCad, the CI artifact, and the files attached to the `v0.1.0` release page.
 - **Link check.** An offline pass over all 117 Markdown files (relative links, images, anchors). One broken link existed (`docs/README.md`, `../../../releases`, which only works inside the GitHub web page). The repository's own tests already keep the rest of the tool's links intact. External links get a separate online pass at the end ([section 7](#7-deferred-and-decisions-for-the-owner)).
 - **Screenshots** were re-rendered offscreen with the repository's own scripts and compared pixel by pixel with the committed ones.
@@ -48,18 +48,18 @@ The five things that matter most:
 | Is it a fork? | Yes. It is a fork of [wireviz/WireViz](https://github.com/wireviz/WireViz). | `git log` begins with WireViz's first commit of 2020-05-20; the upstream `src/wireviz`, `docs/`, `examples/` and `tutorial/` are all here. |
 | Which upstream commit? | `e4fe099` (2025-01-16, "Use ubuntu-latest for the supported Python versions (#442)"), WireViz version 0.4.1. | `git fetch` of upstream `master`; `git merge-base` with this repository's `master` is that commit, so nothing upstream is missing and nothing upstream was changed. |
 | Is there an `upstream` remote? | No. Only `origin`. The upstream commit above was fetched by URL without adding a remote. | `git remote -v`. |
-| What did Claude build on top? | A second, separate tool, **Harness Design Studio**, in `harness/` (clean-room: no WireViz code copied or imported, decision D-01), a CI workflow `.github/workflows/harness-ci.yml`, and a preface in `docs/README.md`. | `git diff e4fe099..master --stat -- . ':!harness'` shows three files: the workflow, `.gitignore`, `docs/README.md`. |
+| What did Claude build on top? | A second, separate tool, **Harness Design Studio**, in `HarnessDesignStudio/` (clean-room: no WireViz code copied or imported, decision D-01), a CI workflow `.github/workflows/harness-ci.yml`, and a preface in `docs/README.md`. | `git diff e4fe099..master --stat -- . ':!harness'` shows three files: the workflow, `.gitignore`, `docs/README.md`. |
 | Where was the upstream README? | `docs/README.md` (upstream has no root README either). It was byte-identical to upstream from line 29 on; lines 1–28 were the preface. | `git diff`. |
 | Default branch | `master` (there is no `main`). The pull request for this audit targets `master`. | `git ls-remote`. |
 
-The tool's own documents live in `harness/docs/` (upper-case names such as `GETTING_STARTED.md`). Tests in `harness/tests/test_docs.py` and `test_docs_links.py` run the commands of `README.md` and `GETTING_STARTED.md`, check the model hash quoted there, and check every link and anchor in those files. New pages for the tool were therefore added there, in the same style, instead of under the lower-case names a first reading of the task suggests (`faq.md` next to `FAQ.md` would also collide on Windows and macOS file systems). See the mapping in the [index](README.md).
+The tool's own documents live in `HarnessDesignStudio/docs/` (upper-case names such as `GETTING_STARTED.md`). Tests in `HarnessDesignStudio/tests/test_docs.py` and `test_docs_links.py` run the commands of `README.md` and `GETTING_STARTED.md`, check the model hash quoted there, and check every link and anchor in those files. New pages for the tool were therefore added there, in the same style, instead of under the lower-case names a first reading of the task suggests (`faq.md` next to `FAQ.md` would also collide on Windows and macOS file systems). See the mapping in the [index](README.md).
 
 ## 3. Findings
 
 Severity: **high** = a reader is blocked or misled, or a status statement is false; **medium** = wrong or missing but a reader can work around it; **low** = polish.
 Status: **fixed**, **partly** (explained in the note), **deferred** (see [section 7](#7-deferred-and-decisions-for-the-owner)), **kept** (judged correct as is).
 
-Paths: bare names such as `INSTALL.md` are in `harness/docs/`; `README.md` alone is `harness/README.md`.
+Paths: bare names such as `INSTALL.md` are in `HarnessDesignStudio/docs/`; `README.md` alone is `HarnessDesignStudio/README.md`.
 
 ### 3.1 Version and status
 
@@ -70,7 +70,7 @@ Paths: bare names such as `INSTALL.md` are in `harness/docs/`; `README.md` alone
 | V3 | `compliance/DEVIATIONS.md:3,39` | Header says "No waiver has been granted by anyone"; T-18 to T-31 are waivers granted by the owner. Line 39 says "Fourteen granted … without a stated reason" but lists 13 and 12 of them do state a circumstance. | high | Correct the header and the counting sentence. Nothing else in the file is changed. | fixed |
 | V4 | `compliance/docs/SRelD.md:9,10,16` | 5.1 points at the *Unreleased* changelog section, which is not in 0.1.0. The list of known problems says derating, EMC and approved parts were "supplied by the owner (D-11, D-12)"; they were not. Line 16 says the UX improvements are "planned after this audit"; they are done. | high | Point 5.1 at the `0.1.0` section; say the values were not supplied; link to `SIGNOFF.md` and `DEVIATIONS.md`. | fixed |
 | V5 | `AUDIT.md:3,31,40` | "six independent reviewers" (no independent review exists: `README.md:5`, T-20, `SIGNOFF.md:22`). Still treats Ubuntu 22.04 as a target and lists waived items as "still needed". | high | Add a banner marking it a historical record of 2026-10-07; correct "independent". | fixed |
-| V6 | `README.md:5`, front page `:19` | The "created mainly by an AI, not independently reviewed" notice exists as two prose copies with different wording; the evidence files are named in code spans, not links. | medium | One text in `harness/README.md#status`; the root README links to it; real links to the evidence. | partly (the root README has a short statement and real links; the long notice stays in `harness/README.md`) |
+| V6 | `README.md:5`, front page `:19` | The "created mainly by an AI, not independently reviewed" notice exists as two prose copies with different wording; the evidence files are named in code spans, not links. | medium | One text in `HarnessDesignStudio/README.md#status`; the root README links to it; real links to the evidence. | partly (the root README has a short statement and real links; the long notice stays in `HarnessDesignStudio/README.md`) |
 | V7 | `CLAUDE.md:6` | The status paragraph repeats the release and open-decision text three times. | medium | Left as is. `CLAUDE.md` is the coding assistant's instruction file; the owner maintains it. Listed for the owner. | deferred |
 | V8 | `compliance/SUMMARY.md:56`, `compliance/docs/SRS.md:3`, `SECURITY.md:23` | Counts out of date: 89 modules / 74 reached (CSV: 94 / 79), 65 requirements (78), 9 packages (10 scanned, 11 in the SBOM report). | medium | Correct to the recomputed numbers, or remove the number and cite the report that owns it. | fixed (also `SPAMR.md`, `SVR.md`, `SDD.md`) |
 | V9 | `compliance/SUMMARY.md:26` vs `:38` | 347 versus 344 rows for ECSS-Q-ST-80C, unexplained (3 rows were deleted from the standard's table). | low | Add a footnote. | fixed |
@@ -124,10 +124,10 @@ Paths: bare names such as `INSTALL.md` are in `harness/docs/`; `README.md` alone
 | S6 | `guide/USER_GUIDE.md:163,167` | The in-app guide (the only document installed with the tool) points to files that are not installed (`docs/PLACEHOLDERS.md`, `ci/build.sh`). | low | Name the in-app route (`harness config DIR`, `harness templates`) as well. | fixed |
 | S7 | `UX.md`, `UX_GUIDELINES_REVIEW.md:34` | Design records not marked as superseded: letter chips (replaced by pictograms, D-140), "wire colours never used as drawing colours" (D-141), "no auto layout / no minimap" listed as open (both exist), test counts that are wrong. | medium | Add a banner; correct the three rows. | fixed |
 | S8 | `docs/ux/qt/01–07, 12, 13`, `docs/ux/screens/*` | Nine editor screenshots predate D-140 (3–5.6 % of pixels differ); 14 prototype screenshots are history with the same file numbers in a second folder. | medium | Re-render the nine with `tools/gui_screenshots.py`; add a README to `ux/screens/`. | fixed (`screens/` kept and labelled as history) |
-| S9 | `compliance/` | 21 process documents, `DEVIATIONS.md`, `SIGNOFF.md`, `OPEN_ACTIONS.md`, `RISK_REGISTER.md` have no inbound link; only `SUMMARY.md` is linked. | high | `harness/compliance/README.md` as an index; link from the status section and the docs index. | fixed |
+| S9 | `compliance/` | 21 process documents, `DEVIATIONS.md`, `SIGNOFF.md`, `OPEN_ACTIONS.md`, `RISK_REGISTER.md` have no inbound link; only `SUMMARY.md` is linked. | high | `HarnessDesignStudio/compliance/README.md` as an index; link from the status section and the docs index. | fixed |
 | S10 | `CHANGELOG.md` | Zero inbound links. | medium | Link from the root README, the tool README and the index ("What's new"). | fixed |
 | S11 | `docs/README.md` (front page), repo root | No root `README.md`; GitHub showed the upstream README. A newcomer clicking `examples` or `tutorial` at the root gets WireViz material, and the tool's example projects are linked from nowhere. | high | New root `README.md` (see [section 6](#6-changes-made-to-the-upstream-readme)); examples page. | fixed |
-| S12 | `harness/docs/README.md` | Mixes user documents and internal records on one page; the five examples are not listed there. | medium | Rebuild as the tool's index, grouped, with a separate "Project records" group. | fixed |
+| S12 | `HarnessDesignStudio/docs/README.md` | Mixes user documents and internal records on one page; the five examples are not listed there. | medium | Rebuild as the tool's index, grouped, with a separate "Project records" group. | fixed |
 | S13 | `INSTALL.md`, `README.md`, `USER_GUIDE.md`, `HOWTO.md`, `FAQ.md`, `CLAUDE.md` | Install steps, the PATH fix, the Qt library line and four troubleshooting tables are copied across files. | medium | `INSTALL.md` owns installation, `FAQ.md` and the new `TROUBLESHOOTING.md` own runtime problems; the others link. | partly |
 | S14 | `CLI.md` vs `USER_GUIDE.md`, `CHEATSHEET.md`, `CLAUDE.md` | Four hand-copied command lists. | low | `CLI.md` is the single source; no copy was found to be wrong, so the copies stay and the cheatsheet links. | kept |
 | S15 | `CLI.md:285` | Generated row with an unescaped vertical bar in the text of one option: it renders as a broken table row. The cause is in `tools/gen_cli_docs.py`. | medium | Code change; deferred. | deferred |
@@ -142,12 +142,12 @@ Paths: bare names such as `INSTALL.md` are in `harness/docs/`; `README.md` alone
 | ID | Missing | Sev. | Fix | Status |
 | --- | --- | --- | --- | --- |
 | C1 | Root `README.md` | high | Written (fork layout). | fixed |
-| C2 | Glossary | high | `harness/docs/GLOSSARY.md`. | fixed |
-| C3 | Troubleshooting page with real errors | high | `harness/docs/TROUBLESHOOTING.md`, from the clean-install run. | fixed |
-| C4 | Task-oriented manual, one page per workflow | medium | `harness/docs/user-manual/`. | fixed |
-| C5 | One page listing every example with how to run it and the expected output | medium | `harness/docs/examples/README.md`. | fixed |
-| C6 | Tips and integration page | medium | `harness/docs/TIPS.md`. No integration with the owner's other tools exists in the code; the page says so and describes the file exchange that does exist. | fixed |
-| C7 | `CONTRIBUTING.md` for people, developer docs, a way to refresh the upstream README | medium | Root `CONTRIBUTING.md`, `harness/docs/developer/`. | fixed |
+| C2 | Glossary | high | `HarnessDesignStudio/docs/GLOSSARY.md`. | fixed |
+| C3 | Troubleshooting page with real errors | high | `HarnessDesignStudio/docs/TROUBLESHOOTING.md`, from the clean-install run. | fixed |
+| C4 | Task-oriented manual, one page per workflow | medium | `HarnessDesignStudio/docs/user-manual/`. | fixed |
+| C5 | One page listing every example with how to run it and the expected output | medium | `HarnessDesignStudio/docs/examples/README.md`. | fixed |
+| C6 | Tips and integration page | medium | `HarnessDesignStudio/docs/TIPS.md`. No integration with the owner's other tools exists in the code; the page says so and describes the file exchange that does exist. | fixed |
+| C7 | `CONTRIBUTING.md` for people, developer docs, a way to refresh the upstream README | medium | Root `CONTRIBUTING.md`, `HarnessDesignStudio/docs/developer/`. | fixed |
 | C8 | Root `CHANGELOG.md` | low | A short pointer file: the tool's and upstream's changelogs are separate. | fixed |
 | C9 | A current picture of the Harness plans tab, the generate preview, the release dialog and the wire-colours dialog | low | Needs the GUI; the screenshot script covers other screens. | deferred |
 
@@ -158,7 +158,7 @@ Upstream's own `docs/*.md`, `tutorial/` and `examples/` were not edited. Observa
 | ID | Observation | Sev. | Status |
 | --- | --- | --- | --- |
 | U1 | The upstream README says `git checkout dev` for the development version; this fork has no `dev` branch, and upstream's own branch layout is not ours to document. | low | kept (verbatim) |
-| U2 | The upstream README says WireViz needs Python 3.7 or later; the tool in `harness/` needs 3.12. The two are separate installs (`pip install -e .` at the root installs WireViz; `pip install -e "harness[gui]"` installs the tool). | medium | explained in the root README and `developer/` |
+| U2 | The upstream README says WireViz needs Python 3.7 or later; the tool in `HarnessDesignStudio/` needs 3.12. The two are separate installs (`pip install -e .` at the root installs WireViz; `pip install -e "HarnessDesignStudio[gui]"` installs the tool). | medium | explained in the root README and `developer/` |
 | U3 | The upstream README links `../examples/…`, `syntax.md`, `CONTRIBUTING.md`, `buildscript.md`, `CHANGELOG.md`, `../tutorial/readme.md`, `../LICENSE`. All broken once it sits at the repository root. | high | fixed in the embedded copy ([section 6](#6-changes-made-to-the-upstream-readme)) |
 | U4 | Upstream's `docs/CONTRIBUTING.md` and `docs/CHANGELOG.md` are WireViz's; the root had neither a tool `CONTRIBUTING.md` nor a `CHANGELOG.md`. | low | root files added, upstream's untouched |
 
@@ -185,7 +185,7 @@ Other findings:
 - ICD, AIT, NCR and VCM, which were named in the task, are used by the tool's documents only in `SPEC.md` and `compliance/`; VCM does not occur at all. ICD, AIT and NCR have glossary entries. VCM was left out because nothing in the repository uses it and its meaning here is not stated.
 - Entries marked "standard meaning" in the glossary come from general engineering knowledge, not from this repository. **An engineer should check them.**
 
-Fix: first-use explanations in the README, a glossary at `harness/docs/GLOSSARY.md` linked from every index, and the early pages (README, INSTALL, GETTING_STARTED, CONCEPTS) link the first use of each hard term.
+Fix: first-use explanations in the README, a glossary at `HarnessDesignStudio/docs/GLOSSARY.md` linked from every index, and the early pages (README, INSTALL, GETTING_STARTED, CONCEPTS) link the first use of each hard term.
 
 ## 5. Findability: clicks from the front page
 
@@ -219,7 +219,7 @@ The upstream README is kept in two places and is not reworded.
 | `](CHANGELOG.md)` becomes `](docs/CHANGELOG.md)` | Same; the root now has its own `CHANGELOG.md`. |
 | `](../LICENSE)` becomes `](LICENSE)` | Same. |
 
-How to refresh it after an upstream change: [`harness/docs/developer/upstream-sync.md`](../harness/docs/developer/upstream-sync.md).
+How to refresh it after an upstream change: [`HarnessDesignStudio/docs/developer/upstream-sync.md`](../HarnessDesignStudio/docs/developer/upstream-sync.md).
 
 The old `docs/README.md` (the WireViz README plus the preface) became the documentation index. Its preface text was moved into the root README. No other upstream file was edited.
 
@@ -229,7 +229,7 @@ The old `docs/README.md` (the WireViz README plus the preface) became the docume
 
 1. **Version.** `master` and the released 0.1.0 both print `0.1.0`. Cut 0.1.1 (or 0.2.0) so that docs and packages agree, or keep the "newer than 0.1.0" notes. Until then the notes are in the docs.
 2. **Release page.** Attach the `.deb`, the `.tar.gz` and the checksums to the `v0.1.0` release if that has not been done (the sign-off says it is up to you). Could not be checked here.
-3. **Licence.** The repository `LICENSE` is GPL-3.0 (WireViz's). Decision D-02 leaves the licence of `harness/` open and the package metadata says `LicenseRef-Proprietary`. The root README says exactly that and nothing more. A licence text needs your choice.
+3. **Licence.** The repository `LICENSE` is GPL-3.0 (WireViz's). Decision D-02 leaves the licence of `HarnessDesignStudio/` open and the package metadata says `LicenseRef-Proprietary`. The root README says exactly that and nothing more. A licence text needs your choice.
 4. **Your other tools.** The README names no integration with SpaceMissionStudio, Requirements Studio, Budget Studio, AIT Logbook or ICD Studio, because the code has none. `TIPS.md` lists the file formats that could carry data between tools; anything that needs a real exporter or importer is written as a suggestion, not a feature. Tell me what exchange you intend and I will document it once it exists.
 5. **Glossary check.** Entries marked "standard meaning" were not taken from the repository; an engineer should read them.
 6. **Compliance records.** Only factual corrections were made (counts, a header that contradicted its own table, a statement that engineering values were supplied, malformed table rows). Wording that records your decisions or sign-offs was not rewritten.
@@ -255,7 +255,7 @@ The old `docs/README.md` (the WireViz README plus the preface) became the docume
 | Offline (`lychee --offline --include-fragments --exclude-path compliance/requirements --exclude-path docs/upstream '**/*.md'`) over every Markdown file | 1,630 links, 0 errors |
 | Own checker for tables and fences, and a render with a Markdown parser | no broken tables or fences in the changed pages (one existing table in `DECISIONS.md` was repaired, S20) |
 | `test_docs.py` and `test_docs_links.py` | 48 passed |
-| Whole test suite (`pytest`, from `harness/`) | 1025 passed, 1 skipped |
+| Whole test suite (`pytest`, from `HarnessDesignStudio/`) | 1025 passed, 1 skipped |
 | `ruff format --check`, `ruff check`, `mypy` | clean. Note: ruff also formats the Python code blocks inside Markdown files, so a code block in a document can fail the lint step of CI; the developer pages say so. |
 | External links, online | **Not completed.** The sandbox this work was done in blocks most outside hosts (4 of 227 links answered). The pages written for this audit contain 8 external URLs: the upstream repository, its commit `e4fe099`, the lychee releases page, the repository's own CI page and badge, `kicad.org`, and the repository's clone URL. The repository, the commit and the lychee release were reached with `git` and a download; the badge, the Actions page and `kicad.org` were not. Run `lychee --no-progress '**/*.md'` from a normal machine to check them (the upstream part of the root README has about 180 more, which are WireViz's own). |
 

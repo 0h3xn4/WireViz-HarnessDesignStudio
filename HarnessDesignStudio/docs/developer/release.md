@@ -30,7 +30,7 @@ Pushing the tag `vX.Y.Z` (or publishing a release that creates the tag on GitHub
 ## Before you start
 
 - You need Ubuntu 24.04 (the only supported system, [D-127](../DECISIONS.md)), the development environment from [`setup-and-tests.md`](setup-and-tests.md), and network access for the SBOM and the vulnerability scan (or a wheelhouse made with `python -m tools.vendor`).
-- Every change since the last release is in `harness/CHANGELOG.md` under `## Unreleased`.
+- Every change since the last release is in `HarnessDesignStudio/CHANGELOG.md` under `## Unreleased`.
 - The pull request with the changes is merged, or you are working on the branch that will be.
 
 ## 1. Prepare the version
@@ -43,7 +43,7 @@ Pushing the tag `vX.Y.Z` (or publishing a release that creates the tag on GitHub
 
 ## 2. Run the automatic checks
 
-From `harness/`:
+From `HarnessDesignStudio/`:
 
 ```
 python -m tools.release_check

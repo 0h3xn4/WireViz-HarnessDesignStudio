@@ -18,12 +18,12 @@ This page shows how to set up a place to work on Harness Design Studio, run the 
 - Ubuntu 24.04 or newer, 64-bit. Windows and macOS are not supported (decision D-127 in [`DECISIONS.md`](../DECISIONS.md)).
 - Python 3.12 or newer (`python3 --version`), with `python3-venv`, and Git.
 - For Qt, the system libraries `libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0`. CI installs a few more (`libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0`) and `poppler-utils`. On a machine without a screen the tests use Qt's `offscreen` mode, so no display is needed. The apt line was copied from `CLAUDE.md` and the CI file. It was not run for this page, because the libraries were already present on the machine used.
-- Work in the `harness/` folder. The WireViz code at the repository root is a separate program ([`CONTRIBUTING.md`](../../../CONTRIBUTING.md)).
+- Work in the `HarnessDesignStudio/` folder. The WireViz code at the repository root is a separate program ([`CONTRIBUTING.md`](../../../CONTRIBUTING.md)).
 
 ## 1. Set up
 
 ```
-cd harness
+cd HarnessDesignStudio
 python3 -m venv .venv && . .venv/bin/activate
 pip install -e ".[gui,dev]"
 ```
@@ -90,7 +90,7 @@ All checks passed!
 Success: no issues found in 202 source files
 ```
 
-(The file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `harness/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
+(The file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `HarnessDesignStudio/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
 
 ## 4. The tests that read the documents
 
@@ -98,14 +98,14 @@ A change that only touches Markdown can still break a test. Know these:
 
 | Test file | What it enforces |
 | --- | --- |
-| `tests/test_docs_links.py` | Every relative link and every `#anchor` in the listed files resolves. The list: `harness/README.md`, `CLAUDE.md`, `CHANGELOG.md`, every `docs/*.md` (not the sub-folders), `docs/guide/USER_GUIDE.md` and the templates `README.md`. Links inside code fences are not checked. The anchor rule is GitHub's. |
-| `tests/test_docs.py` | The in-app guide (`resources/guide/index.html`) equals what `tools.build_guide` makes from `docs/guide/USER_GUIDE.md`; every `harness` command is named in the guide; the buttons the guide names exist in `gui/strings.py`; no paragraph of the guide is longer than 700 characters; `docs/RULES.md` and `docs/CLI.md` equal what their generators write; every config key is in `docs/CONFIG.md`; the commands of `docs/GETTING_STARTED.md` and of `harness/README.md` are run in order in a scratch folder with the expected exit codes; the model hash quoted in `GETTING_STARTED.md` equals the one the first `export` prints; the **F1** key opens the guide. |
+| `tests/test_docs_links.py` | Every relative link and every `#anchor` in the listed files resolves. The list: `HarnessDesignStudio/README.md`, `CLAUDE.md`, `CHANGELOG.md`, every `docs/*.md` (not the sub-folders), `docs/guide/USER_GUIDE.md` and the templates `README.md`. Links inside code fences are not checked. The anchor rule is GitHub's. |
+| `tests/test_docs.py` | The in-app guide (`resources/guide/index.html`) equals what `tools.build_guide` makes from `docs/guide/USER_GUIDE.md`; every `harness` command is named in the guide; the buttons the guide names exist in `gui/strings.py`; no paragraph of the guide is longer than 700 characters; `docs/RULES.md` and `docs/CLI.md` equal what their generators write; every config key is in `docs/CONFIG.md`; the commands of `docs/GETTING_STARTED.md` and of `HarnessDesignStudio/README.md` are run in order in a scratch folder with the expected exit codes; the model hash quoted in `GETTING_STARTED.md` equals the one the first `export` prints; the **F1** key opens the guide. |
 | `tests/test_examples.py` | The example projects equal what `tools.build_examples` writes; the design worksheet names only real unit kinds and interface types; the numbers in `docs/FLATSAT_EXAMPLE.md` match the `flatsat` example. |
 | `tests/test_compliance_matrix.py`, `test_trace.py`, `test_sdd_components.py`, `test_metrics.py`, `test_scf.py`, `test_family_group_mapping.py`, `test_profiles.py`, `tests/test_drc.py::test_cited_requirements_exist_in_the_extracted_lists` | The generated compliance files are current (matrix, traceability, component table), no matrix row claims compliance, every module has a docstring, and every cited requirement ID exists. |
 
-The sub-folders `docs/user-manual/` and `docs/developer/`, the root `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md` and `harness/compliance/**/*.md` are not in the link test. Check them with the offline link checker in [`docs-maintenance.md`](docs-maintenance.md#check-the-links).
+The sub-folders `docs/user-manual/` and `docs/developer/`, the root `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md` and `HarnessDesignStudio/compliance/**/*.md` are not in the link test. Check them with the offline link checker in [`docs-maintenance.md`](docs-maintenance.md#check-the-links).
 
-When only Markdown under `harness/` changes, CI runs just the `docs` job: `test_docs.py`, `test_docs_links.py` and the compliance tests above (decision D-138).
+When only Markdown under `HarnessDesignStudio/` changes, CI runs just the `docs` job: `test_docs.py`, `test_docs_links.py` and the compliance tests above (decision D-138).
 
 ## 5. Golden files
 

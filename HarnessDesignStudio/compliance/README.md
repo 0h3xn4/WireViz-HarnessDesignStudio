@@ -45,7 +45,7 @@ This folder holds the project's self-assessment against the ECSS and ESCC standa
 | [`family_group_mapping.csv`](family_group_mapping.csv) | The data behind `FAMILY_GROUP_MAPPING.md` |
 | [`metrics.json`](metrics.json) | Basic software metrics |
 
-These files are produced by scripts in `harness/tools/` (see [`../docs/developer/tools.md`](../docs/developer/tools.md)); tests fail when they are out of date.
+These files are produced by scripts in `HarnessDesignStudio/tools/` (see [`../docs/developer/tools.md`](../docs/developer/tools.md)); tests fail when they are out of date.
 
 ## The folders
 

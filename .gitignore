@@ -13,6 +13,11 @@ venv/
 desktop.ini
 thumbs.db
 temp/
+HarnessDesignStudio/.venv/
+HarnessDesignStudio/build/
+HarnessDesignStudio/dist/
+HarnessDesignStudio/wheelhouse/
+# the old folder name: local leftovers (virtual environment, builds) of a checkout from before the rename
 harness/.venv/
 harness/build/
 harness/dist/

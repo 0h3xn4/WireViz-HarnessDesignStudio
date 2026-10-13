@@ -3,9 +3,9 @@ name: harness-design-studio CI
 on:
   push:
     branches: [master]  # branches are tested through their pull request; running both doubled every push
-    paths: ["harness/**", ".github/workflows/harness-ci.yml"]
+    paths: ["HarnessDesignStudio/**", ".github/workflows/harness-ci.yml"]
   pull_request:
-    paths: ["harness/**", ".github/workflows/harness-ci.yml"]
+    paths: ["HarnessDesignStudio/**", ".github/workflows/harness-ci.yml"]
 
 permissions:
   contents: read  # the jobs only read the repository; artifacts need no token rights
@@ -19,11 +19,11 @@ concurrency:
 
 defaults:
   run:
-    working-directory: harness
+    working-directory: HarnessDesignStudio
 
 jobs:
   changes:
-    # Documents only (Markdown under harness/ and everything under harness/compliance/): the full
+    # Documents only (Markdown under HarnessDesignStudio/ and all of its compliance/ folder): the full
     # suite and the platform jobs are skipped and the `docs` job below runs the checks that read
     # documents. Anything else, or any doubt, runs everything (docs/DECISIONS.md D-138).
     runs-on: ubuntu-24.04
@@ -40,7 +40,7 @@ jobs:
         run: |
           code=true
           if files=$(git diff --name-only "$BASE...$HEAD" 2>/dev/null) && [ -n "$files" ]; then
-            if ! echo "$files" | grep -v -E '^harness/[^/]+\.md$|^harness/docs/.*\.md$|^harness/compliance/' | grep -q .; then
+            if ! echo "$files" | grep -v -E '^HarnessDesignStudio/[^/]+\.md$|^HarnessDesignStudio/docs/.*\.md$|^HarnessDesignStudio/compliance/' | grep -q .; then
               code=false
             fi
           fi
@@ -109,9 +109,9 @@ jobs:
           name: harness-design-studio-${{ matrix.os }}
           if-no-files-found: error
           path: |
-            harness/dist/*.deb
-            harness/dist/*.tar.gz
-            harness/dist/release-docs/*
+            HarnessDesignStudio/dist/*.deb
+            HarnessDesignStudio/dist/*.tar.gz
+            HarnessDesignStudio/dist/release-docs/*
 
   package-on-24-04:
     # Prove that the packages work on a fresh machine without the source tree.
@@ -120,7 +120,7 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: ${{ github.workspace }}  # this job has no checkout, so there is no harness/ folder
+        working-directory: ${{ github.workspace }}  # this job has no checkout, so there is no HarnessDesignStudio/ folder
     steps:
       - uses: actions/download-artifact@v4
         with:

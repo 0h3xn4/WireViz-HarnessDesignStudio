@@ -1,8 +1,8 @@
-# The scripts in `harness/tools/`
+# The scripts in `HarnessDesignStudio/tools/`
 
-This page lists every script in `harness/tools/` with what it does, so that you can tell which one to run; the first line of each script's own docstring is the source of the descriptions.
+This page lists every script in `HarnessDesignStudio/tools/` with what it does, so that you can tell which one to run; the first line of each script's own docstring is the source of the descriptions.
 
-Run them from the `harness/` folder with the development environment active (see [`setup-and-tests.md`](setup-and-tests.md)), as `python -m tools.NAME`. Some need extra setup (Docker, network access, the standards' PDFs); the notes say so.
+Run them from the `HarnessDesignStudio/` folder with the development environment active (see [`setup-and-tests.md`](setup-and-tests.md)), as `python -m tools.NAME`. Some need extra setup (Docker, network access, the standards' PDFs); the notes say so.
 
 ## Contents
 
