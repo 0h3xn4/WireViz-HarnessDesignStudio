@@ -77,7 +77,7 @@ Release W002 revision A: done.
 Outputs re-exported with the released status (38 files).
 ```
 
-`--checker` is optional and goes in the title block. Each reason needs at least 10 characters. A name, checker, comment or reason with control characters or too much text (a name is one line of at most 200 characters; a comment together with the reasons at most 2,000) is a blocker that names the option, for example `blocked: [by_invalid] --by: The name must not contain control characters or line breaks.` Line breaks in a comment are allowed and are shown as spaces in the change log and the revision report. `--date ""` is an error; leave `--date` out for today.
+`--checker` is optional and goes in the title block. Each reason needs at least 10 characters. A name, checker, comment or reason with control characters or too much text (a name is one line of at most 200 characters; a comment together with the reasons at most 2,000) is a blocker that names the option, for example `blocked: [by_invalid] --by: The name must not contain control characters or line breaks.` Line breaks in a comment are allowed and are shown as spaces in the change log and the revision report. `--date ""` is an error; leave `--date` out for today. A date earlier than the last change-log entry of the same harness is refused (`blocked: [date_before_last] --date: ...`), so a release cannot be dated before its own review.
 
 If the re-export after the release fails (for example the disk is full), the release stands. The command says `The release was recorded (see `harness log`); only the outputs still show the old status. Fix the problem, then run `harness export` to re-stamp them.` and ends with an error code (1 or 2).
 

@@ -121,7 +121,7 @@ def render() -> str:
         "| Code | Meaning |",
         "| --- | --- |",
         "| 0 | success (warnings are allowed) |",
-        "| 1 | the project has errors, or a step is blocked (for example a release) |",
+        "| 1 | the project has errors, or a step is blocked (for example a release, or an import or `config` that found problems and changed nothing) |",
         "| 2 | usage error, or a project or file that could not be read |",
         "| 130 | interrupted with Ctrl-C |",
         "",

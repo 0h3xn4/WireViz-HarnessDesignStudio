@@ -124,8 +124,8 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     nn.add_argument("--dry-run", action="store_true")
     ll = sub.add_parser(
         "import-lengths",
-        help="import routing segment lengths (CSV or XLSX: harness, segment, length)",
-        description="Import segment lengths, for example exported from the mechanical CAD. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).",
+        help="import routing segment lengths (CSV or XLSX: harness, segment, length, in this order)",
+        description="Import segment lengths, for example exported from the mechanical CAD. The columns are read by position (harness, segment, length), not by their headings. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).",
     )
     ll.add_argument("project", type=Path)
     ll.add_argument("file", type=Path)

@@ -22,7 +22,7 @@ The values in `config-demo-values/` and `ampacity-DEMO-ONLY.csv` are **not from 
 
 ## The CSV files
 
-- Header names are matched by meaning, so `from` is also read from `source`, `part number` from `pn` or `mpn`, and so on (see `docs/IMPORTS.md`). Order of columns does not matter.
+- Header names are matched by meaning, so `from` is also read from `source`, `part number` from `pn` or `mpn`, and so on (see `docs/IMPORTS.md`). Order of columns does not matter, with one exception: `import-lengths` reads its three columns **by position** (harness, segment, length) and ignores the headings.
 - CSV files may use commas, semicolons or tabs. A decimal comma needs quotes (`"1,5"`) when commas separate the columns.
 - Excel files (`.xlsx`) work too. The first sheet is read.
 - Every import first shows what it would do. With the command line, add `--dry-run`; nothing is changed until you run it again without it.
