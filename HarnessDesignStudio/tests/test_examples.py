@@ -4,7 +4,6 @@ import os
 import re
 import shutil
 import subprocess
-import sys
 from pathlib import Path
 
 import pytest
@@ -15,6 +14,7 @@ from harness_design_studio.core.generate.engine import plan_generation
 from harness_design_studio.core.imports import guess_mapping, plan_interface_import, read_table
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.resources import examples_path
+from tests.helpers import program_path
 from tools import build_examples
 
 EXAMPLES = examples_path()
@@ -217,7 +217,7 @@ def test_ampacity_demo_table_loads(generated: Path, capsys: pytest.CaptureFixtur
 def test_the_ci_script_runs_on_an_example(generated: Path) -> None:
     script = TEMPLATES / "ci" / "build.sh"
     assert subprocess.run(["sh", "-n", str(script)], check=False).returncode == 0
-    env = {**os.environ, "PATH": f"{Path(sys.executable).parent}{os.pathsep}{os.environ['PATH']}"}
+    env = {**os.environ, "PATH": program_path(generated.parent / "programs")}
     done = subprocess.run(["sh", str(script), str(generated)], env=env, capture_output=True, text=True, check=False)  # fmt: skip
     assert done.returncode == 0, done.stdout + done.stderr
     assert "build ok" in done.stdout
@@ -226,12 +226,12 @@ def test_the_ci_script_runs_on_an_example(generated: Path) -> None:
 def test_the_github_workflow_template_uses_real_commands() -> None:
     text = (TEMPLATES / "ci" / "github-actions.yml").read_text(encoding="utf-8")
     for command in ("check", "generate", "verify", "export"):
-        assert f"harness {command} design" in text
+        assert f"harness-design-studio {command} design" in text
 
     # the same commands in the same order as build.sh (it once left out `drc`, the only one that
     # fails on design rule errors)
     def commands(source: str, folder: str) -> list[str]:
-        return re.findall(rf"^\s*harness (\w+) {folder}(?=\s|$)", source, re.M)
+        return re.findall(rf"^\s*harness-design-studio (\w+) {folder}(?=\s|$)", source, re.M)
 
     script = (TEMPLATES / "ci" / "build.sh").read_text()
     assert commands(text, "design") == commands(script, r'"\$DIR"')

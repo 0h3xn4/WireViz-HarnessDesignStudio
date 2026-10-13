@@ -15,7 +15,7 @@ while [ $# -gt 0 ]; do
   esac
   shift
 done
-if [ ! -x "$here/harness-design-studio" ] || [ ! -d "$here/_internal" ]; then
+if [ ! -x "$here/harness-design-studio-gui" ] || [ ! -d "$here/_internal" ]; then
   echo "This folder ($here) has no built program, so there is nothing to install." >&2
   echo "Run install.sh from the unpacked harness-design-studio-<version>-linux-<arch>.tar.gz," >&2
   echo "or install the .deb. To build the package from source: python -m tools.build_installer" >&2
@@ -42,7 +42,8 @@ if [ "$prefix_real" = "$here_real" ]; then
   echo "The install folder must not be the folder the package was unpacked in." >&2
   exit 2
 fi
-items="harness-design-studio _internal cli LICENSES"
+items="harness-design-studio-gui _internal cli LICENSES"
+legacy_gui="harness-design-studio"   # the program file of version 1.0.0 (now harness-design-studio-gui)
 marker="$prefix/.harness-design-studio-install"
 for item in $items; do   # installing would delete the package this script is running from
   case "$here_real/" in
@@ -63,18 +64,27 @@ if [ -n "${HARNESS_INSTALL_ROOT:-}" ]; then
   bindir="$HARNESS_INSTALL_ROOT/bin"; appdir="$HARNESS_INSTALL_ROOT/share/applications"; icondir="$HARNESS_INSTALL_ROOT/share/icons"
 fi
 # never replace a program the user put there themselves: only links to our own programs are replaced
-for pair in "harness-design-studio:*/harness-design-studio" "harness:*/cli/harness"; do
-  name=${pair%%:*}; shape=${pair#*:}
+# (the second shape of a name is the link that version 1.0.0 made, replaced when upgrading)
+is_ours() {   # LINK_TEXT SHAPE...
+  target=$1; shift
+  for shape in "$@"; do
+    case "$target" in $shape) return 0 ;; esac
+  done
+  return 1
+}
+for pair in "harness-design-studio:*/cli/harness-design-studio:*/harness-design-studio" \
+            "harness-design-studio-gui:*/harness-design-studio-gui:*/harness-design-studio-gui" \
+            "harness:*/cli/harness-design-studio:*/cli/harness"; do
+  name=${pair%%:*}; shapes=${pair#*:}; shape1=${shapes%%:*}; shape2=${shapes#*:}
   if [ -e "$bindir/$name" ] || [ -L "$bindir/$name" ]; then
     if [ ! -L "$bindir/$name" ]; then
       echo "$bindir/$name exists and is not a link made by this installer; not touching it." >&2
       exit 1
     fi
-    case "$(readlink "$bindir/$name")" in
-      $shape) ;;
-      *) echo "$bindir/$name is a link to something else, not made by this installer; not touching it." >&2
-         exit 1 ;;
-    esac
+    if ! is_ours "$(readlink "$bindir/$name")" "$shape1" "$shape2"; then
+      echo "$bindir/$name is a link to something else, not made by this installer; not touching it." >&2
+      exit 1
+    fi
   fi
 done
 # a folder this installer did not make is never replaced or removed
@@ -97,6 +107,11 @@ for item in $items; do
   # files belong to root in a root install, not to whoever unpacked the package
   if [ "$(id -u)" = 0 ]; then chown -hR root:root "$prefix/.$item.new"; fi
 done
+# an upgrade from 1.0.0: its program file is listed in the old marker and is now named -gui
+legacy_old=0
+if [ -f "$marker" ] && grep -qx "$legacy_gui" "$marker" && [ -f "$prefix/$legacy_gui" ] && [ ! -L "$prefix/$legacy_gui" ]; then
+  legacy_old=1
+fi
 : > "$marker.new"
 echo "# Made by install.sh of Harness Design Studio; uninstall.sh removes only the items listed here." >> "$marker.new"
 for item in $items; do
@@ -105,11 +120,13 @@ for item in $items; do
   mv "$prefix/.$item.new" "$prefix/$item"
   echo "$item" >> "$marker.new"
 done
+if [ "$legacy_old" = 1 ]; then rm -f "${prefix:?}/$legacy_gui"; fi
 mv "$marker.new" "$marker"
-ln -sfn "$prefix/harness-design-studio" "$bindir/harness-design-studio"
-ln -sfn "$prefix/cli/harness" "$bindir/harness"
+ln -sfn "$prefix/cli/harness-design-studio" "$bindir/harness-design-studio"
+ln -sfn "$prefix/harness-design-studio-gui" "$bindir/harness-design-studio-gui"
+ln -sfn "$prefix/cli/harness-design-studio" "$bindir/harness"   # short alias of the command line tool
 # the launcher line must survive spaces and special characters in the path (desktop entry quoting)
-quoted=$(printf '%s' "$prefix/harness-design-studio" | sed 's/[\\"`$]/\\&/g; s/\\/\\\\/g; s/%/%%/g')
+quoted=$(printf '%s' "$prefix/harness-design-studio-gui" | sed 's/[\\"`$]/\\&/g; s/\\/\\\\/g; s/%/%%/g')
 : > "$appdir/harness-design-studio.desktop"
 while IFS= read -r line; do
   case "$line" in
@@ -121,12 +138,13 @@ while IFS= read -r line; do
   printf '%s\n' "$line" >> "$appdir/harness-design-studio.desktop"
 done < "$here/harness-design-studio.desktop.in"
 cp "$here/harness-design-studio.svg" "$icondir/harness-design-studio.svg"
-echo "Installed to $prefix. Start it from the application menu or run: harness-design-studio"
+echo "Installed to $prefix. Start it from the application menu or run: harness-design-studio-gui"
+echo "The command line tool is harness-design-studio (the short name harness works too)."
 case ":$PATH:" in
   *":$bindir:"*) ;;
   *)
-    echo "Note: $bindir is not on your PATH, so the commands harness-design-studio and harness are not found yet."
-    echo "  Run now:     $bindir/harness-design-studio"
+    echo "Note: $bindir is not on your PATH, so the commands harness-design-studio-gui, harness-design-studio and harness are not found yet."
+    echo "  Run now:     $bindir/harness-design-studio-gui"
     echo "  Fix for good: echo 'export PATH=\"$bindir:\$PATH\"' >> ~/.bashrc && . ~/.bashrc"
     echo "  (or log out and in again; Ubuntu adds ~/.local/bin at login when it exists)"
     ;;

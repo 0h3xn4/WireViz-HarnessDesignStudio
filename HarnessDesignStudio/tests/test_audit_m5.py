@@ -234,7 +234,7 @@ def test_a_failed_restamp_says_the_release_was_recorded(
 
     monkeypatch.setattr("harness_design_studio.core.outputs.build.write_outputs", full_disk)
     rc, text = run(capsys, *release_args(exported))
-    assert rc != 0 and "release was recorded" in text and "harness export" in text
+    assert rc != 0 and "release was recorded" in text and "harness-design-studio export" in text
     assert "W001.A" in load_project(exported).project.baselines
 
 

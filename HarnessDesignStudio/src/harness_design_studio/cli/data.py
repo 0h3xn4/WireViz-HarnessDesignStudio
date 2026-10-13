@@ -238,7 +238,7 @@ def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untype
         if was_current and generation_status(project) == "stale":
             print(
                 "The profile changes values the generator reads, so the harness plans are now "
-                "out of date. Run `harness generate` again, then export again."
+                "out of date. Run `harness-design-studio generate` again, then export again."
             )
         marked = [f"config/{n}.json" for n in project.placeholder_configs()]
         print(

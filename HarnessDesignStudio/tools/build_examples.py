@@ -1,4 +1,4 @@
-"""Rebuild the example projects shipped with the tool (`harness new --list`).
+"""Rebuild the example projects shipped with the tool (`harness-design-studio new --list`).
 
 The projects are made with the tool's own editing functions, so they are valid by construction and
 always in the current file format. Run `python -m tools.build_examples` after changing a sample or
@@ -19,7 +19,7 @@ from harness_design_studio.core.samples import new_project, sat15
 ROOT = Path(__file__).resolve().parents[1]
 TARGET = ROOT / "src" / "harness_design_studio" / "resources" / "examples" / "projects"
 
-# name -> (title, one line shown by `harness new --list`)
+# name -> (title, one line shown by `harness-design-studio new --list`)
 PROJECTS = {
     "blank": ("My project", "An empty project: the starter parts and interface types, no units."),
     "first-steps": (

@@ -33,7 +33,7 @@ fi
 removed=0
 marker="$prefix/.harness-design-studio-install"
 if [ ! -f "$marker" ]; then   # a folder this installer did not make is never touched
-  for item in harness-design-studio _internal cli LICENSES; do
+  for item in harness-design-studio-gui harness-design-studio _internal cli LICENSES; do   # the second is the program file of 1.0.0
     if [ -e "$prefix/$item" ] || [ -L "$prefix/$item" ]; then
       echo "$prefix/$item was not installed by this installer (no .harness-design-studio-install file); not touching it." >&2
       exit 1
@@ -41,13 +41,19 @@ if [ ! -f "$marker" ]; then   # a folder this installer did not make is never to
   done
 fi
 # remove a link only if it points into this install; never delete a program that is not ours
-for pair in "harness-design-studio:$prefix/harness-design-studio" "harness:$prefix/cli/harness"; do
-  name=${pair%%:*}; target=${pair#*:}
-  if [ -L "$bindir/$name" ] && [ "$(readlink "$bindir/$name")" = "$target" ]; then
-    rm -f "$bindir/$name"; removed=1
-  fi
-done
+remove_link() {   # NAME TARGET...  (the last targets are the links that version 1.0.0 made)
+  name=$1; shift
+  [ -L "$bindir/$name" ] || return 0
+  current=$(readlink "$bindir/$name")
+  for target in "$@"; do
+    if [ "$current" = "$target" ]; then rm -f "$bindir/$name"; removed=1; return 0; fi
+  done
+}
+remove_link harness-design-studio "$prefix/cli/harness-design-studio" "$prefix/harness-design-studio"
+remove_link harness-design-studio-gui "$prefix/harness-design-studio-gui"
+remove_link harness "$prefix/cli/harness-design-studio" "$prefix/cli/harness"
 # the launcher and icon are shared by all installs: remove them only when they belong to this one
+# (the text also matches the launcher of 1.0.0, which pointed at $prefix/harness-design-studio)
 desktop="$appdir/harness-design-studio.desktop"
 if [ -e "$desktop" ] && grep -qF -- "$prefix/harness-design-studio" "$desktop" 2>/dev/null; then
   rm -f "$desktop"; removed=1
@@ -60,7 +66,7 @@ if [ -n "$prefix" ] && [ "$prefix" != "/" ]; then
   if [ -f "$marker" ]; then
     while IFS= read -r item; do
       case "$item" in
-        harness-design-studio|_internal|cli|LICENSES)
+        harness-design-studio-gui|harness-design-studio|_internal|cli|LICENSES)
           [ -e "$prefix/$item" ] && { rm -rf "${prefix:?}/$item"; removed=1; } ;;
       esac
     done < "$marker"

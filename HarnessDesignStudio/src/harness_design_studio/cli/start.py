@@ -14,7 +14,7 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
         "new",
         help="create a new project from an example (blank, first-steps, minimal-satellite, small-satellite, flatsat)",
         description="Create a project folder from one of the bundled examples. "
-        "`harness new --list` shows them. The folder must not exist yet or be empty.",
+        "`harness-design-studio new --list` shows them. The folder must not exist yet or be empty.",
     )
     n.add_argument("folder", type=Path, nargs="?", help="the new project folder")
     n.add_argument("--template", default="blank", help="which example to start from")
@@ -59,7 +59,7 @@ def run(args: argparse.Namespace) -> int:
     print(
         f"Project '{project.meta.name}' created in {args.folder} "
         f"({len(project.units)} units, {len(project.interfaces)} interfaces).\n"
-        f"Next: harness validate {args.folder}   or open it in the app (File > Open project)."
+        f"Next: harness-design-studio validate {args.folder}   or open it in the app (File > Open project)."
     )
     return 0
 

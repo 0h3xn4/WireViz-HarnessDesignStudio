@@ -183,7 +183,8 @@ def migrate_project(root: Path | str) -> LoadResult | None:
         return None
     if result.has_errors:
         raise LoadError(
-            "The project has errors and was not migrated. Run `harness validate` first."
+            "The project has errors and was not migrated. "
+            "Run `harness-design-studio validate` first."
         )
     save_project(result.project, root)
     return result

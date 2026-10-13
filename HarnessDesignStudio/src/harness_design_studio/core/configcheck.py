@@ -52,7 +52,7 @@ NEEDS: tuple[Need, ...] = (
 
 # Values that are not part of the hand-over list above: the rules of the supplied standards
 # (D-131) stay silent until a profile or an engineer sets them. They are listed apart so that
-# `missing`, `report` and `harness config` keep saying exactly what they said before.
+# `missing`, `report` and `harness-design-studio config` keep saying exactly what they said before.
 OPTIONAL_NEEDS: tuple[Need, ...] = (
     Need("derating", "max_ambient_temperature_c", "hottest ambient temperature, in degrees Celsius", "temperature margin check"),
     Need("derating", "connector_temperature_margin_c", "how far below its maximum rating a connector must stay, in degrees Celsius", "temperature margin check"),

@@ -25,6 +25,9 @@ def create_window(
         QApplication(sys.argv)
     QApplication.setWindowIcon(app_icon())
     QApplication.setDesktopFileName("harness-design-studio")  # the launcher entry, for Wayland
+    # the window class on X11 (the launcher's StartupWMClass); without this it is the name of the
+    # executable, which differs between the packaged program, the pip command and its alias
+    QApplication.setApplicationName("harness-design-studio")
     theme = ThemeManager()
     win = MainWindow(settings or make_settings(), theme, first_run=first_run)
     win.setWindowIcon(app_icon())

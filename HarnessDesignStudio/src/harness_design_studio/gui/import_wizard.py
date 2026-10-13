@@ -9,7 +9,7 @@ words ...) with a live preview of the first rows, 3 the conflicts and placeholde
 reason for every row, 4 apply. Nothing in the project changes before Finish.
 
 Kinds: interfaces (CSV/XLSX), approved parts, segment lengths, engineering values (the ampacity
-table, as `harness config --ampacity-csv` reads it) and a KiCad netlist. Each is planned by the
+table, as `harness-design-studio config --ampacity-csv` reads it) and a KiCad netlist. Each is planned by the
 planner the command line uses (see `import_kinds`); the existing `ImportDialog` keeps working and
 also lets you paste CSV text.
 """

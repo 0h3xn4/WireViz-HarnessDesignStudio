@@ -1,4 +1,4 @@
-"""Consistency of released harnesses with their baselines (used by the rules and `harness check`)."""
+"""Consistency of released harnesses with their baselines (used by the rules and `harness-design-studio check`)."""
 
 from harness_design_studio.core.issues import Issue
 from harness_design_studio.core.model import Harness, Project, Snapshot

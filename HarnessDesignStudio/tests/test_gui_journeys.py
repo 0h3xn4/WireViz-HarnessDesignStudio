@@ -798,7 +798,7 @@ def test_link_labels_do_not_overlap_in_a_dense_diagram(qtbot, tmp_path) -> None:
 
 
 def test_new_project_from_an_example(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
-    """REQ-GUI-03: the editor can start from the same examples as `harness new --template`."""
+    """REQ-GUI-03: the editor can start from the same examples as `harness-design-studio new --template`."""
     folder = tmp_path / "wheel"
     shown = new_project_answers(win, folder, "Wheel link", template="first-steps")
     win.new_from_example_flow()

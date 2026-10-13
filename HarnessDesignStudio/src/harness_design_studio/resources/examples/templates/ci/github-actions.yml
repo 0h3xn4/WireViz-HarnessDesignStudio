@@ -16,12 +16,12 @@ jobs:
         run: sudo apt-get install -y ./tools/harness-design-studio_*_amd64.deb
       - name: Validate, generate, check and export
         run: |
-          harness check design
-          harness generate design
-          harness verify design
-          harness drc design > drc-report.md   # fails the build when an error is not waived
-          harness export design
-          harness verify design --outputs
+          harness-design-studio check design
+          harness-design-studio generate design
+          harness-design-studio verify design
+          harness-design-studio drc design > drc-report.md   # fails the build when an error is not waived
+          harness-design-studio export design
+          harness-design-studio verify design --outputs
       - name: Keep the design rule report
         if: always()
         uses: actions/upload-artifact@v4

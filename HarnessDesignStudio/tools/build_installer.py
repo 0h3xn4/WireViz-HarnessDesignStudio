@@ -2,6 +2,11 @@
 
 Ubuntu only (D-110). Build on Ubuntu 24.04 (the supported platform).
 Output: dist/harness-design-studio-<version>-linux-<arch>.tar.gz
+
+Layout of the package folder dist/harness-design-studio/ (the name of the folder, the .deb and the
+install folder stays; the programs inside it are named like the commands of a pip install):
+  harness-design-studio-gui   the editor (also answers --selftest and --drc-worker)
+  cli/harness-design-studio   the command line tool (`harness` is a link to it, made by the installers)
 """
 
 import gzip
@@ -32,6 +37,9 @@ ALLOWED_PACKAGES = frozenset({
     "harness_design_studio", "pydantic", "pydantic_core", "annotated_types", "typing_extensions",
     "typing_inspection", "openpyxl", "et_xmlfile", "defusedxml", "PySide6", "shiboken6",
 })  # fmt: skip
+GUI_NAME = "harness-design-studio-gui"
+CLI_NAME = "harness-design-studio"
+PACKAGE_NAME = "harness-design-studio"  # the folder, the archive, the .deb and the install folder
 PYINSTALLER_PREFIXES = ("_pyi", "pyi_", "PyInstaller", "_sysconfigdata")  # runtime hooks and tables
 
 
@@ -67,7 +75,7 @@ def undeclared_in_build(app: Path) -> list[str]:
     from PyInstaller.archive.readers import ZlibArchiveReader  # type: ignore[import-untyped]
 
     found: set[str] = set()
-    for name in ("harness-design-studio", "harness"):
+    for name in (GUI_NAME, CLI_NAME):
         pyz = ROOT / "build" / name / name / "PYZ-00.pyz"
         found.update(undeclared_modules(ZlibArchiveReader(str(pyz)).toc))
     for base in (app / "_internal", app / "cli" / "_internal"):
@@ -103,10 +111,11 @@ def make_tarball(root_dir: Path, base_dir: str, target: Path, stamp: int) -> Pat
 def _pyinstaller(
     name: str, entry: Path, *, windowed: bool, extra_excludes: tuple[str, ...] = ()
 ) -> int:
+    """Build one program; its folder (named like the program) is made in build/dist-<name>."""
     work = ROOT / "build"
     cmd = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean",
            "--windowed" if windowed else "--console",
-           "--name", name, "--distpath", str(ROOT / "dist"), "--workpath", str(work / name),
+           "--name", name, "--distpath", str(work / f"dist-{name}"), "--workpath", str(work / name),
            "--specpath", str(work), "--paths", str(ROOT / "src")]  # fmt: skip
     for mod in (*EXCLUDES, *extra_excludes):
         cmd += ["--exclude-module", mod]
@@ -118,7 +127,7 @@ def _pyinstaller(
     cmd += ["--add-data", f"{guide}:harness_design_studio/resources/guide"]
     examples = (
         ROOT / "src" / "harness_design_studio" / "resources" / "examples"
-    )  # `harness new`, templates
+    )  # `harness-design-studio new`, templates
     cmd += ["--add-data", f"{examples}:harness_design_studio/resources/examples"]
     fonts = ROOT / "src" / "harness_design_studio" / "resources" / "fonts"  # IBM Plex, SIL OFL 1.1
     cmd += ["--add-data", f"{fonts}:harness_design_studio/resources/fonts"]
@@ -128,23 +137,20 @@ def _pyinstaller(
 
 def main() -> int:
     packaging = ROOT / "packaging"
-    if _pyinstaller("harness-design-studio", packaging / "gui_entry.py", windowed=True):
+    if _pyinstaller(GUI_NAME, packaging / "gui_entry.py", windowed=True):
         return 1
     # Console command (validate/check/migrate); no Qt, so it stays small. Shipped inside the folder.
     if _pyinstaller(
-        "harness",
+        CLI_NAME,
         packaging / "cli_entry.py",
         windowed=False,
         extra_excludes=("PySide6", "shiboken6"),
     ):
         return 1
-    shutil.copytree(
-        ROOT / "dist" / "harness",
-        ROOT / "dist" / "harness-design-studio" / "cli",
-        dirs_exist_ok=True,
-    )
-    shutil.rmtree(ROOT / "dist" / "harness", ignore_errors=True)
-    app = ROOT / "dist" / "harness-design-studio"
+    app = ROOT / "dist" / PACKAGE_NAME
+    shutil.rmtree(app, ignore_errors=True)
+    shutil.copytree(ROOT / "build" / f"dist-{GUI_NAME}" / GUI_NAME, app, symlinks=True)
+    shutil.copytree(ROOT / "build" / f"dist-{CLI_NAME}" / CLI_NAME, app / "cli")
     leaked = sorted(
         p.name for base in (app / "_internal", app / "cli" / "_internal") if base.is_dir()
         for p in base.iterdir() if p.name.split(".")[0] in FORBIDDEN
@@ -171,15 +177,13 @@ def main() -> int:
         ROOT / "packaging" / "ubuntu"
     ).iterdir():  # install scripts, desktop file, icon, readme
         if item.is_file():
-            shutil.copy2(item, ROOT / "dist" / "harness-design-studio" / item.name)
+            shutil.copy2(item, app / item.name)
     system = platform.system().lower()
-    base = (
-        ROOT / "dist" / f"harness-design-studio-{__version__}-{system}-{platform.machine().lower()}"
-    )
+    base = ROOT / "dist" / f"{PACKAGE_NAME}-{__version__}-{system}-{platform.machine().lower()}"
     from tools.build_deb import epoch
 
     archive = make_tarball(
-        ROOT / "dist", "harness-design-studio", base.with_name(base.name + ".tar.gz"), epoch()
+        ROOT / "dist", PACKAGE_NAME, base.with_name(base.name + ".tar.gz"), epoch()
     )
     print(archive)
     return 0

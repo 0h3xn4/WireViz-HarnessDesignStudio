@@ -7,6 +7,7 @@ import pytest
 
 from harness_design_studio.cli.main import build_parser
 from harness_design_studio.core.model.config import default_configs
+from tests.helpers import PROGRAMS, program_path
 from tools.build_guide import SOURCE, TARGET, convert
 from tools.gen_rule_docs import TARGET as RULES_MD
 from tools.gen_rule_docs import render
@@ -57,7 +58,9 @@ def test_guide_documents_every_cli_command() -> None:
     sub = next(a for a in parser._actions if a.dest == "command")
     text = SOURCE.read_text()
     for name in sub.choices:  # type: ignore[union-attr]
-        assert f"`harness {name}" in text, f"the guide does not document 'harness {name}'"
+        assert f"`harness-design-studio {name}" in text, (
+            f"the guide does not document 'harness-design-studio {name}'"
+        )
 
 
 def test_guide_names_buttons_that_exist() -> None:
@@ -154,11 +157,12 @@ def _fenced_blocks(markdown: Path) -> list[list[str]]:
 
 
 def _is_command(line: str) -> bool:
-    return line.startswith(("harness ", "cp "))
+    return line.startswith(tuple(f"{p} " for p in PROGRAMS) + ("cp ",))
 
 
 def _commands_in(markdown: Path) -> list[str]:
-    """Command lines (harness ..., cp ...) from the fenced blocks of a document, in order."""
+    """Command lines (harness-design-studio ..., harness ..., cp ...) from the fenced blocks of a
+    document, in order."""
     return [ln.strip() for block in _fenced_blocks(markdown) for ln in block if _is_command(ln)]
 
 
@@ -207,9 +211,8 @@ def _run_document(
     `"<command>#<run number>"` (the first run is 0)."""
     import os
     import subprocess
-    import sys
 
-    env = {**os.environ, "PATH": f"{Path(sys.executable).parent}{os.pathsep}{os.environ['PATH']}"}
+    env = {**os.environ, "PATH": program_path(tmp.parent / f"{tmp.name}-programs")}
     seen: dict[str, int] = {}
     results: list[tuple[str, str]] = []
     quoted = _quoted_outputs(markdown)
@@ -243,12 +246,20 @@ def test_getting_started_commands_work_in_order(tmp_path: Path) -> None:
         doc,
         tmp_path,
         {
-            "harness release wheel-link": [1, 1, 0],  # blocked, blocked on placeholders, accepted
-            "harness config wheel-link": [1],  # exit 1 while values are missing
-            "harness drc wheel-link": [0, 1, 0],  # the library import makes the plans stale (1)
+            "harness-design-studio release wheel-link": [
+                1,
+                1,
+                0,
+            ],  # blocked, blocked on placeholders, accepted
+            "harness-design-studio config wheel-link": [1],  # exit 1 while values are missing
+            "harness-design-studio drc wheel-link": [
+                0,
+                1,
+                0,
+            ],  # the library import makes the plans stale (1)
         },
         # the block after this export shows two lines of a file, checked below
-        not_output=frozenset({"harness export wheel-link#1"}),
+        not_output=frozenset({"harness-design-studio export wheel-link#1"}),
     )
     wirelist = (
         tmp_path / "wheel-link" / "outputs" / "harnesses" / "W002" / "wirelist.csv"
@@ -256,7 +267,9 @@ def test_getting_started_commands_work_in_order(tmp_path: Path) -> None:
     shown = [ln for ln in doc.read_text().splitlines() if ln.startswith("W002-00")]
     assert shown and all(ln in wirelist for ln in shown), shown
     # the model hash quoted in the text is the one the first export prints
-    first_export = next(out for cmd, out in results if cmd == "harness export wheel-link")
+    first_export = next(
+        out for cmd, out in results if cmd == "harness-design-studio export wheel-link"
+    )
     printed = re.search(r"model ([0-9a-f]{12})", first_export)
     assert printed and f"(model {printed.group(1)})" in doc.read_text(), (
         "the model hash in docs/GETTING_STARTED.md is out of date: "
@@ -275,17 +288,16 @@ def _run_example(name: str, tmp: Path) -> str:
     """new, validate, generate, drc, export and verify of one template; all the output, joined."""
     import os
     import subprocess
-    import sys
 
-    env = {**os.environ, "PATH": f"{Path(sys.executable).parent}{os.pathsep}{os.environ['PATH']}"}
+    env = {**os.environ, "PATH": program_path(tmp.parent / f"{tmp.name}-programs")}
     folder = f"my-{name}"
     steps = [
-        f"harness new {folder} --template {name}",
-        f"harness validate {folder}",
-        f"harness generate {folder}",
-        f"harness drc {folder}",
-        f"harness export {folder}",
-        f"harness verify {folder} --outputs",
+        f"harness-design-studio new {folder} --template {name}",
+        f"harness-design-studio validate {folder}",
+        f"harness-design-studio generate {folder}",
+        f"harness-design-studio drc {folder}",
+        f"harness-design-studio export {folder}",
+        f"harness-design-studio verify {folder} --outputs",
     ]
     out = []
     for step in steps:
@@ -317,7 +329,7 @@ def test_the_examples_readme_quotes_what_the_tool_prints(tmp_path: Path) -> None
                 lines.append(line)
         prose = re.sub(r"```.*?```", "", section, flags=re.S)
         for span in re.findall(r"`([^`]*(?:files written|error\(s\))[^`]*)`", prose):
-            if not span.startswith(("harness ", "error:")):
+            if not span.startswith(("harness-design-studio ", "harness ", "error:")):
                 lines.append(span)
         assert len(lines) > 3, name
         missing = _quoted_lines_are_real(lines, real[name])

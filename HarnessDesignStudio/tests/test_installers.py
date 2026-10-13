@@ -20,7 +20,7 @@ def fake_package(tmp: Path) -> Path:
     (pkg / "cli").mkdir(parents=True)
     (pkg / "_internal").mkdir()
     (pkg / "_internal" / "lib.txt").write_text("x")
-    for exe in (pkg / "harness-design-studio", pkg / "cli" / "harness"):
+    for exe in (pkg / "harness-design-studio-gui", pkg / "cli" / "harness-design-studio"):
         exe.write_text('#!/bin/sh\necho stub "$@"\n')
         exe.chmod(0o755)
     for item in PK.iterdir():
@@ -43,15 +43,19 @@ def test_install_then_uninstall_leaves_nothing_behind(tmp_path: Path) -> None:
     assert r.returncode == 0, r.stderr
     root = tmp_path / "root"
     assert (
-        (prefix / "harness-design-studio").is_file()
-        and (prefix / "cli" / "harness").is_file()
+        (prefix / "harness-design-studio-gui").is_file()
+        and (prefix / "cli" / "harness-design-studio").is_file()
         and (prefix / "_internal" / "lib.txt").is_file()
     )
-    link = root / "bin" / "harness-design-studio"
-    assert link.is_symlink() and os.readlink(link) == str(prefix / "harness-design-studio")
-    assert (root / "bin" / "harness").resolve() == (prefix / "cli" / "harness").resolve()
+    link = root / "bin" / "harness-design-studio"  # the command line tool, as with pip
+    cli = prefix / "cli" / "harness-design-studio"
+    assert link.is_symlink() and os.readlink(link) == str(cli)
+    gui = root / "bin" / "harness-design-studio-gui"
+    assert gui.is_symlink() and os.readlink(gui) == str(prefix / "harness-design-studio-gui")
+    alias = root / "bin" / "harness"  # the short alias of the command line tool
+    assert alias.is_symlink() and os.readlink(alias) == str(cli)
     desktop = (root / "share" / "applications" / "harness-design-studio.desktop").read_text()
-    assert f'Exec="{prefix}/harness-design-studio"' in desktop and "@" not in desktop
+    assert f'Exec="{prefix}/harness-design-studio-gui"' in desktop and "@" not in desktop
     assert (root / "share" / "icons" / "harness-design-studio.svg").is_file()
     out = subprocess.run(
         [str(link), "--version"], capture_output=True, text=True, check=True
@@ -111,9 +115,10 @@ def test_deb_has_the_right_files_and_metadata(
         ["dpkg-deb", "-c", str(deb)], capture_output=True, text=True, check=True
     ).stdout
     for path in (
-        "./opt/harness-design-studio/harness-design-studio",
-        "./opt/harness-design-studio/cli/harness",
+        "./opt/harness-design-studio/harness-design-studio-gui",
+        "./opt/harness-design-studio/cli/harness-design-studio",
         "./usr/bin/harness-design-studio",
+        "./usr/bin/harness-design-studio-gui",
         "./usr/bin/harness",
         "./usr/share/applications/harness-design-studio.desktop",
         "./usr/share/icons/hicolor/scalable/apps/harness-design-studio.svg",
@@ -155,7 +160,7 @@ def test_the_tarball_does_not_depend_on_who_builds_it(tmp_path: Path) -> None:
         assert (m.uid, m.gid, m.uname, m.gname, m.mtime) == (0, 0, "root", "root", 1_700_000_000)
     modes = {m.name: m.mode for m in members}
     assert modes["harness-design-studio/install.sh"] in (0o644, 0o755)
-    assert modes["harness-design-studio/cli/harness"] == 0o755
+    assert modes["harness-design-studio/cli/harness-design-studio"] == 0o755
 
 
 def test_container_recipes_are_valid_shell_and_name_the_right_base() -> None:
@@ -229,7 +234,8 @@ def test_uninstall_removes_only_what_was_installed(tmp_path: Path) -> None:
     r = run_script(pkg / "uninstall.sh", tmp_path, "--prefix", str(prefix))
     assert r.returncode == 0
     assert (prefix / "mydata.txt").read_text() == "keep me"
-    assert not (prefix / "harness-design-studio").exists() and not (prefix / "_internal").exists()
+    assert not (prefix / "harness-design-studio-gui").exists()
+    assert not (prefix / "_internal").exists()
     assert not (prefix / ".harness-design-studio-install").exists()
 
 
@@ -246,7 +252,7 @@ def test_a_folder_the_installer_did_not_make_is_never_removed_or_replaced(tmp_pa
     assert r.returncode == 1 and "not touching" in r.stderr
     for name in ("cli", "LICENSES", "_internal"):
         assert (mine / name / "mine.txt").read_text() == "mine"
-    assert not (mine / "harness-design-studio").exists()  # nothing was half installed
+    assert not (mine / "harness-design-studio-gui").exists()  # nothing was half installed
     # a folder the installer made is removed, but only the items it listed
     ok = tmp_path / "ok"
     assert run_script(pkg / "install.sh", tmp_path, "--prefix", str(ok)).returncode == 0
@@ -267,15 +273,22 @@ def test_the_marker_cannot_make_uninstall_remove_other_folders(tmp_path: Path) -
 
 
 def test_install_inside_the_unpack_folders_parent_keeps_the_package(tmp_path: Path) -> None:
-    """--prefix = the folder that holds the unpacked package used to delete the package itself."""
+    """--prefix = the folder that holds the unpacked package used to delete the package itself
+    (the package folder and the program file had the same name). Nothing of the package is an
+    install item now, so it is simply left where it is; an item folder that holds it is refused."""
     pkg = fake_package(tmp_path / "opt")
     r = run_script(pkg / "install.sh", tmp_path, "--prefix", str(tmp_path / "opt"))
+    assert r.returncode == 0, r.stderr
+    assert (pkg / "harness-design-studio-gui").is_file()
+    assert (pkg / "_internal" / "lib.txt").is_file() and (pkg / "install.sh").is_file()
+    inside = fake_package(tmp_path / "other" / "cli")  # unpacked inside the item folder cli/
+    r = run_script(inside / "install.sh", tmp_path, "--prefix", str(tmp_path / "other"))
     assert r.returncode == 2 and "unpacked inside" in r.stderr
-    assert (pkg / "harness-design-studio").is_file() and (pkg / "_internal" / "lib.txt").is_file()
+    assert (inside / "cli" / "harness-design-studio").is_file()
     link = tmp_path / "linked"
     link.symlink_to(pkg)
     r = run_script(pkg / "install.sh", tmp_path, "--prefix", str(link))
-    assert r.returncode == 2 and (pkg / "cli" / "harness").is_file()
+    assert r.returncode == 2 and (pkg / "cli" / "harness-design-studio").is_file()
 
 
 def test_installed_files_belong_to_root_not_to_whoever_unpacked(tmp_path: Path) -> None:
@@ -322,9 +335,14 @@ def test_uninstalling_one_install_keeps_the_launcher_of_another(tmp_path: Path) 
     assert run_script(pkg / "uninstall.sh", tmp_path, "--prefix", str(a)).returncode == 0
     root = tmp_path / "root"
     desktop = (root / "share" / "applications" / "harness-design-studio.desktop").read_text()
-    assert f"{b}/harness-design-studio" in desktop
+    assert f"{b}/harness-design-studio-gui" in desktop
     assert (root / "share" / "icons" / "harness-design-studio.svg").is_file()
-    assert (root / "bin" / "harness").resolve() == (b / "cli" / "harness").resolve()
+    cli = (b / "cli" / "harness-design-studio").resolve()
+    assert (root / "bin" / "harness").resolve() == cli
+    assert (root / "bin" / "harness-design-studio").resolve() == cli
+    assert (root / "bin" / "harness-design-studio-gui").resolve() == (
+        b / "harness-design-studio-gui"
+    ).resolve()
 
 
 def test_a_backslash_in_the_prefix_is_escaped_for_the_desktop_entry(tmp_path: Path) -> None:
@@ -359,7 +377,7 @@ def test_a_prefix_with_spaces_and_symbols_gives_a_valid_launcher(tmp_path: Path)
         tmp_path / "root" / "share" / "applications" / "harness-design-studio.desktop"
     ).read_text()
     exec_line = next(ln for ln in desktop.splitlines() if ln.startswith("Exec="))
-    assert exec_line == f'Exec="{prefix}/harness-design-studio"' and "@" not in desktop
+    assert exec_line == f'Exec="{prefix}/harness-design-studio-gui"' and "@" not in desktop
     out = subprocess.run(
         [str(tmp_path / "root" / "bin" / "harness-design-studio"), "--version"],
         capture_output=True,
@@ -389,7 +407,7 @@ def test_a_relative_prefix_and_the_unpack_folder_are_handled(tmp_path: Path) -> 
     assert os.path.isabs(os.readlink(link)) and link.resolve().is_file()
     r = run_script(pkg / "install.sh", tmp_path, "--prefix", str(pkg))
     assert (
-        r.returncode == 2 and (pkg / "harness-design-studio").is_file()
+        r.returncode == 2 and (pkg / "harness-design-studio-gui").is_file()
     )  # its own source survives
 
 
@@ -749,3 +767,93 @@ def test_the_offline_wheelhouse_downloads_only_pinned_packages(
     assert vendor.main(str(tmp_path / "wheelhouse")) == 0
     named = [a for c in commands[1:] for a in c[c.index("download") + 3 :]]
     assert named and all("==" in a for a in named), named
+
+
+def test_the_pip_commands_and_their_short_aliases() -> None:
+    """`harness-design-studio` (command line) and `harness-design-studio-gui` (editor) are the
+    names; `harness` and `harness-gui` stay as aliases of the same functions."""
+    import tomllib
+
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))["project"]
+    cli, gui = "harness_design_studio.cli.main:main", "harness_design_studio.gui.app:main"
+    assert pyproject["scripts"] == {"harness-design-studio": cli, "harness": cli}
+    assert pyproject["gui-scripts"] == {"harness-design-studio-gui": gui, "harness-gui": gui}
+
+
+def test_the_workflows_start_the_editor_by_its_gui_name() -> None:
+    """--selftest belongs to the packaged editor; `harness-design-studio` is the command line."""
+    if not RELEASE_WORKFLOW.is_file():
+        pytest.skip("the repository root is not here")
+    for name in ("release.yml", "harness-ci.yml"):
+        text = (RELEASE_WORKFLOW.parent / name).read_text(encoding="utf-8")
+        for line in text.splitlines():
+            if "--selftest" in line:
+                assert "harness-design-studio-gui --selftest" in line, (name, line)
+
+
+def test_upgrading_from_1_0_0_replaces_its_program_file_and_links(tmp_path: Path) -> None:
+    """1.0.0 installed the editor as `harness-design-studio` and linked `harness` to cli/harness.
+    Installing the new package over it leaves nothing of the old names, and the new uninstall
+    script also removes an install that was made by 1.0.0."""
+    pkg = fake_package(tmp_path)
+    prefix = tmp_path / "opt"
+    root = tmp_path / "root"
+    prefix.mkdir()
+    (prefix / "_internal").mkdir()
+    (prefix / "cli").mkdir()
+    (prefix / "harness-design-studio").write_text("old editor")
+    (prefix / "cli" / "harness").write_text("old cli")
+    (prefix / ".harness-design-studio-install").write_text(
+        "# made by 1.0.0\nharness-design-studio\n_internal\ncli\n"
+    )
+    (root / "bin").mkdir(parents=True)
+    (root / "bin" / "harness-design-studio").symlink_to(prefix / "harness-design-studio")
+    (root / "bin" / "harness").symlink_to(prefix / "cli" / "harness")
+    old = tmp_path / "old-copy"
+    shutil.copytree(prefix, old, symlinks=True)
+    assert run_script(pkg / "install.sh", tmp_path, "--prefix", str(prefix)).returncode == 0
+    assert not (prefix / "harness-design-studio").exists()  # the old program file is gone
+    assert (prefix / "harness-design-studio-gui").is_file()
+    assert not (prefix / "cli" / "harness").exists()
+    assert (root / "bin" / "harness-design-studio").resolve() == (
+        prefix / "cli" / "harness-design-studio"
+    ).resolve()
+    assert (root / "bin" / "harness").resolve() == (
+        prefix / "cli" / "harness-design-studio"
+    ).resolve()
+    assert run_script(pkg / "uninstall.sh", tmp_path, "--prefix", str(prefix)).returncode == 0
+    assert not prefix.exists() and not list(root.rglob("harness*"))
+
+
+def test_uninstall_of_a_1_0_0_install_removes_its_links_and_files(tmp_path: Path) -> None:
+    pkg = fake_package(tmp_path)
+    prefix = tmp_path / "opt"
+    root = tmp_path / "root"
+    (prefix / "cli").mkdir(parents=True)
+    (prefix / "_internal").mkdir()
+    (prefix / "harness-design-studio").write_text("old editor")
+    (prefix / "cli" / "harness").write_text("old cli")
+    (prefix / ".harness-design-studio-install").write_text(
+        "# made by 1.0.0\nharness-design-studio\n_internal\ncli\n"
+    )
+    (root / "bin").mkdir(parents=True)
+    (root / "bin" / "harness-design-studio").symlink_to(prefix / "harness-design-studio")
+    (root / "bin" / "harness").symlink_to(prefix / "cli" / "harness")
+    mine = root / "bin" / "harness-design-studio-gui"
+    mine.write_text("a program of the user")  # not ours: never removed
+    assert run_script(pkg / "uninstall.sh", tmp_path, "--prefix", str(prefix)).returncode == 0
+    assert not prefix.exists()
+    assert not (root / "bin" / "harness").is_symlink()
+    assert not (root / "bin" / "harness-design-studio").is_symlink()
+    assert mine.read_text() == "a program of the user"
+
+
+def test_install_does_not_replace_a_gui_link_that_is_not_ours(tmp_path: Path) -> None:
+    pkg = fake_package(tmp_path)
+    bindir = tmp_path / "root" / "bin"
+    bindir.mkdir(parents=True)
+    other = tmp_path / "somewhere"
+    other.mkdir()
+    (bindir / "harness-design-studio-gui").symlink_to(other)
+    r = run_script(pkg / "install.sh", tmp_path, "--prefix", str(tmp_path / "opt"))
+    assert r.returncode == 1 and "not touching" in r.stderr and not (tmp_path / "opt").exists()

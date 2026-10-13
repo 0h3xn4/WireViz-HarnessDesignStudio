@@ -1,4 +1,4 @@
-"""PyInstaller entry point for the console command `harness` (validate, check, migrate)."""
+"""PyInstaller entry point for the console command `harness-design-studio` (alias `harness`)."""
 
 from harness_design_studio.cli.main import main
 

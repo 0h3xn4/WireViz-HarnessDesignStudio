@@ -8,17 +8,17 @@ set -eu
 
 DIR="${1:?usage: sh build.sh PROJECT_FOLDER}"
 
-harness check "$DIR"       # errors, leftover Git merge markers, released harnesses that were edited
-harness generate "$DIR"    # make or update the harnesses (not saved if there are errors)
-harness verify "$DIR"      # independent check of the result against the interfaces
+harness-design-studio check "$DIR"       # errors, leftover Git merge markers, released harnesses that were edited
+harness-design-studio generate "$DIR"    # make or update the harnesses (not saved if there are errors)
+harness-design-studio verify "$DIR"      # independent check of the result against the interfaces
 REPORT="$(mktemp)"
-harness drc "$DIR" > "$REPORT" || {
+harness-design-studio drc "$DIR" > "$REPORT" || {
     # exit 1 means unwaived errors; the report says which
     cat "$REPORT"
     rm -f "$REPORT"
     exit 1
 }
 rm -f "$REPORT"
-harness export "$DIR"      # drawings, tables and exports, verified before they are written
-harness verify "$DIR" --outputs
+harness-design-studio export "$DIR"      # drawings, tables and exports, verified before they are written
+harness-design-studio verify "$DIR" --outputs
 echo "build ok: $DIR/outputs"

@@ -168,8 +168,8 @@ def run(args: argparse.Namespace) -> int:
 
 
 RESTAMP_HINT = (
-    "The release was recorded (see `harness log`); only the outputs still show the old status. "
-    "Fix the problem, then run `harness export` to re-stamp them."
+    "The release was recorded (see `harness-design-studio log`); only the outputs still show the old status. "
+    "Fix the problem, then run `harness-design-studio export` to re-stamp them."
 )
 
 

@@ -100,7 +100,7 @@ jobs:
       - run: python -m tools.build_installer
       - run: python -m tools.build_deb
       - name: Frozen app self-test
-        run: dist/harness-design-studio/harness-design-studio --selftest
+        run: dist/harness-design-studio/harness-design-studio-gui --selftest
       - run: python -m tools.gen_sbom
       - name: Both packages exist
         run: ls dist/*.deb dist/*.tar.gz  # the upload below only fails when none of its files exist
@@ -133,16 +133,18 @@ jobs:
         run: |
           ls -R .
           tar xzf harness-design-studio-*-linux-*.tar.gz
-          QT_QPA_PLATFORM=offscreen ./harness-design-studio/harness-design-studio --selftest
+          QT_QPA_PLATFORM=offscreen ./harness-design-studio/harness-design-studio-gui --selftest
           HOME="$PWD/home" ./harness-design-studio/install.sh
+          HOME="$PWD/home" "$PWD/home/.local/bin/harness-design-studio" --version
           HOME="$PWD/home" "$PWD/home/.local/bin/harness" --version
           HOME="$PWD/home" ./harness-design-studio/uninstall.sh
       - name: Install and run the .deb built in the test job
         working-directory: pkg
         run: |
           sudo apt-get install -y ./harness-design-studio_*_amd64.deb
+          harness-design-studio --version
           harness --version
-          QT_QPA_PLATFORM=offscreen harness-design-studio --selftest
+          QT_QPA_PLATFORM=offscreen harness-design-studio-gui --selftest
           test -f /usr/share/doc/harness-design-studio/copyright
           sudo apt-get remove -y harness-design-studio
           ! test -e /opt/harness-design-studio

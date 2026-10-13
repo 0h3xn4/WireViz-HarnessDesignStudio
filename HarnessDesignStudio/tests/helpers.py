@@ -3,11 +3,30 @@
 import json
 import os
 import shutil
+import sys
 from pathlib import Path
 from typing import Any
 
 FIXTURES = Path(__file__).parent / "fixtures"
 MINI3 = FIXTURES / "projects" / "mini3"
+
+
+PROGRAMS = ("harness-design-studio", "harness")  # the command line tool and its short alias
+
+
+def program_path(folder: Path) -> str:
+    """A PATH in which the command line tool (and its alias) is the program of this source tree.
+
+    One small script per name is written into `folder`. Without it the commands would run whatever
+    copy is installed in the environment: an older one, one from another checkout, or none."""
+    folder.mkdir(parents=True, exist_ok=True)
+    for program in PROGRAMS:
+        script = folder / program
+        script.write_text(
+            f'#!/bin/sh\nexec "{sys.executable}" -m harness_design_studio.cli.main "$@"\n'
+        )
+        script.chmod(0o755)
+    return os.pathsep.join([str(folder), str(Path(sys.executable).parent), os.environ["PATH"]])
 
 
 def copy_project(src: Path, dest: Path) -> Path:

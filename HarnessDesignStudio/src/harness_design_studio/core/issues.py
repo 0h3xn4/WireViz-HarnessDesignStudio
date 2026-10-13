@@ -1,4 +1,4 @@
-"""Findings reported by loading, integrity checking and `harness validate`/`check`."""
+"""Findings reported by loading, integrity checking and `harness-design-studio validate`/`check`."""
 
 from dataclasses import dataclass
 from typing import Literal

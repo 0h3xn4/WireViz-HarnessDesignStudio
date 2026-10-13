@@ -1,6 +1,6 @@
 """What the import wizard can import, and how each kind is planned. No Qt in here.
 
-Every kind reads a file and asks the planner the command line asks (`harness import-parts`,
+Every kind reads a file and asks the planner the command line asks (`harness-design-studio import-parts`,
 `import-lengths`, `import-netlist`, `config --ampacity-csv`, and the interface planner of the
 existing import dialog); this module only turns their results into one shape the wizard shows:
 rows with an exact reason each, the operations that apply them, and what stays pending. Nothing is
@@ -50,7 +50,11 @@ from harness_design_studio.core.model.library import PART_CATEGORIES
 from harness_design_studio.gui import strings
 
 PREVIEW_ROWS: Final = 20  # rows of the live preview on the mapping page
-LENGTH_UNITS: Final = {"mm": 0.001, "cm": 0.01, "m": 1.0}  # as `harness import-lengths --unit`
+LENGTH_UNITS: Final = {
+    "mm": 0.001,
+    "cm": 0.01,
+    "m": 1.0,
+}  # as `harness-design-studio import-lengths --unit`
 AMPACITY_KEY: Final = ("derating", "ampacity_a_by_awg")
 
 
@@ -125,7 +129,7 @@ class Source:
 
     def library_source(self) -> str:
         """The file's name and a short checksum, so the origin of the parts can be told later (the
-        same text `harness import-parts` records)."""
+        same text `harness-design-studio import-parts` records)."""
         digest = hashlib.sha256(self.path.read_bytes()).hexdigest()[:12]
         return f"{self.path.name} (sha256 {digest})"
 

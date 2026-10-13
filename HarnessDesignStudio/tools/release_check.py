@@ -228,7 +228,7 @@ def package() -> Result:
     if code:
         return False, tail(out)
     code, out = run(
-        [str(ROOT / "dist" / "harness-design-studio" / "harness-design-studio"), "--selftest"]
+        [str(ROOT / "dist" / "harness-design-studio" / "harness-design-studio-gui"), "--selftest"]
     )
     return code == 0 and "selftest ok" in out, f"tarball and deb built; {_selftest_line(out)}"
 
@@ -241,9 +241,15 @@ def deb_install() -> Result:
         code, out = run(["dpkg-deb", "-x", str(deb), tmp])
         if code:
             return False, tail(out)
-        code, out = run([f"{tmp}/opt/harness-design-studio/harness-design-studio", "--selftest"])
-        cli_code, cli_out = run([f"{tmp}/opt/harness-design-studio/cli/harness", "--version"])
-        new_code, new_out = run([f"{tmp}/opt/harness-design-studio/cli/harness", "new", "--list"])
+        code, out = run(
+            [f"{tmp}/opt/harness-design-studio/harness-design-studio-gui", "--selftest"]
+        )
+        cli_code, cli_out = run(
+            [f"{tmp}/opt/harness-design-studio/cli/harness-design-studio", "--version"]
+        )
+        new_code, new_out = run(
+            [f"{tmp}/opt/harness-design-studio/cli/harness-design-studio", "new", "--list"]
+        )
     return (
         code == 0
         and cli_code == 0

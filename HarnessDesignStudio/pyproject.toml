@@ -19,10 +19,12 @@ dev = [
 ]
 
 [project.scripts]
-harness = "harness_design_studio.cli.main:main"
+harness-design-studio = "harness_design_studio.cli.main:main"
+harness = "harness_design_studio.cli.main:main"  # short alias, kept so existing scripts keep working
 
 [project.gui-scripts]
-harness-gui = "harness_design_studio.gui.app:main"
+harness-design-studio-gui = "harness_design_studio.gui.app:main"
+harness-gui = "harness_design_studio.gui.app:main"  # short alias, kept so existing launchers keep working
 
 [tool.setuptools.packages.find]
 where = ["src"]

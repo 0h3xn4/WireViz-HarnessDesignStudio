@@ -43,7 +43,7 @@ def test_config_set_complete_and_placeholders_flagged() -> None:
 
 
 def test_the_config_checklist_does_not_use_decision_log_numbers() -> None:
-    """`harness config` is read by people who have no access to the repository's decision log."""
+    """`harness-design-studio config` is read by people who have no access to the repository's decision log."""
     import re
 
     from harness_design_studio.core import configcheck

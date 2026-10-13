@@ -261,7 +261,7 @@ def test_applying_a_profile_to_generated_plans_says_they_are_out_of_date(
     assert load_project(tmp_path / "p").project.generation is not None
     main(["config", str(tmp_path / "p"), "--apply-profile", "ecss-q-st-30-11c"])
     out = capsys.readouterr().out
-    assert "out of date" in out and "harness generate" in out
+    assert "out of date" in out and "harness-design-studio generate" in out
 
 
 # ---- C-23 -----------------------------------------------------------------------------------------------

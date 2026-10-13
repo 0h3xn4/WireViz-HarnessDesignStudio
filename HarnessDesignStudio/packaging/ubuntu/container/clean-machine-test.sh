@@ -16,4 +16,4 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
  && rm -rf /var/lib/apt/lists/*
 DOCKER
 docker run --rm --network none -e QT_QPA_PLATFORM=offscreen -v "$deb":/pkg.deb:ro "$image" sh -c '
-  dpkg -i /pkg.deb && harness --version && harness-design-studio --selftest && echo CLEAN-MACHINE-TEST-OK'
+  dpkg -i /pkg.deb && harness-design-studio --version && harness --version && harness-design-studio-gui --selftest && echo CLEAN-MACHINE-TEST-OK'

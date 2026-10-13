@@ -67,7 +67,7 @@ def _run_steps(tmp: Path) -> list[str]:
 
 
 def _examples_are_bundled(tmp: Path) -> bool:
-    """`harness new` works from the packaged program: the example projects are inside it."""
+    """`harness-design-studio new` works from the packaged program: the examples are inside it."""
     from harness_design_studio.core import templates
 
     made = templates.create_project(tmp / "from-example", "first-steps")

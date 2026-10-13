@@ -2539,7 +2539,7 @@ class MainWindow(QMainWindow):
         self._new_project_dialog(None)
 
     def new_from_example_flow(self) -> None:
-        """Start from a bundled example (the same ones as `harness new --template`): the same
+        """Start from a bundled example (the same ones as `harness-design-studio new --template`): the same
         dialog, with the first example ticked."""
         from harness_design_studio.core import templates
 

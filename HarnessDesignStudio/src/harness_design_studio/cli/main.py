@@ -24,11 +24,16 @@ NOT_CANONICAL = (
     "File differs from the tool's own formatting (hand-edited or merged). "
     "It will be rewritten on the next save."
 )
+PROG = "harness-design-studio"  # `harness` is kept as a short alias of the same command
 MIGRATED = "Migrated; the original files are kept in a .migration-backup-* folder."
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(prog="harness", description="Spacecraft harness design tool")
+    parser = argparse.ArgumentParser(
+        prog=PROG,
+        description="Spacecraft harness design tool",
+        epilog="`harness` still works as a short alias of this command.",
+    )
     parser.add_argument("--version", action="store_true", help="print the tool version and exit")
     sub = parser.add_subparsers(dest="command")
     for name, text in (
@@ -132,7 +137,7 @@ def _export(path: Path) -> int:
     project = load_project(path).project
     if not project.harnesses:
         print(
-            "error: there are no harnesses to export; run `harness generate` first.",
+            "error: there are no harnesses to export; run `harness-design-studio generate` first.",
             file=sys.stderr,
         )
         return 1
@@ -174,7 +179,10 @@ def _verify(path: Path, outputs: bool = False) -> int:
 
         folder = path / DEFAULT_FOLDER
         if not folder.is_dir():
-            print("error: no outputs folder; run `harness export` first.", file=sys.stderr)
+            print(
+                "error: no outputs folder; run `harness-design-studio export` first.",
+                file=sys.stderr,
+            )
             return 1
         out = verify_outputs(project, read_folder(folder))
         report.issues += out.issues
@@ -183,7 +191,9 @@ def _verify(path: Path, outputs: bool = False) -> int:
         print(f"{issue.severity}: [{issue.code}] {issue.message}")
     print(report.summary())
     if report.interfaces_checked and not report.wires_checked and not report.ok:
-        print("hint: there are no wires yet; run `harness generate` first, then verify again.")
+        print(
+            "hint: there are no wires yet; run `harness-design-studio generate` first, then verify again."
+        )
     return 0 if report.ok else 1
 
 
@@ -211,7 +221,7 @@ def main(argv: Sequence[str] | None = None) -> int:
 
 
 class _PipeGuard:
-    """Stands in for stdout. When the reader goes away (`harness generate | head -1`) the output
+    """Stands in for stdout. When the reader goes away (`harness-design-studio generate | head -1`) the output
     is dropped and the command still finishes, so that it saves what it was asked to save."""
 
     def __init__(self, inner: Any) -> None:
@@ -250,7 +260,7 @@ def _run(args: argparse.Namespace) -> int:
             return _dispatch(args)
     except KeyboardInterrupt:
         print(
-            "interrupted. If it was saving, run `harness validate` to check the project.",
+            "interrupted. If it was saving, run `harness-design-studio validate` to check the project.",
             file=sys.stderr,
         )
         return 130
@@ -355,7 +365,7 @@ def _dispatch(args: argparse.Namespace) -> int:
                 print(
                     f"error: the project has damaged files (first: {first}); "
                     f"nothing was {NOTHING_DONE[args.command]}. "
-                    "Run `harness validate` to see them.",
+                    "Run `harness-design-studio validate` to see them.",
                     file=sys.stderr,
                 )
                 return 2

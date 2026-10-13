@@ -719,7 +719,7 @@ RULES: tuple[Rule, ...] = (
     *STANDARD_RULES,
     Rule("config-invalid", "error", "Engineering values",
          "A value outside its possible range (a factor above 1, a table that falls as the wire grows) would silently produce wrong gauges and checks.",
-         "Correct the value in config/*.json; `harness config DIR` lists what is missing or invalid.", _config_invalid),
+         "Correct the value in config/*.json; `harness-design-studio config DIR` lists what is missing or invalid.", _config_invalid),
     Rule("released-modified", "error", "Released items",
          "A released harness must match its baseline exactly; otherwise the released drawings no longer describe what is stored.",
          "Restore the harness from its baseline, or start a new revision for the change.", _released_modified),

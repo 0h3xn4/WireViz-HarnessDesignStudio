@@ -1,4 +1,4 @@
-"""REQ-CLI-01: `harness validate` and `harness check`."""
+"""REQ-CLI-01: `harness-design-studio validate` and `harness-design-studio check`."""
 
 from pathlib import Path
 
@@ -54,8 +54,8 @@ def test_verify_before_generate_says_to_generate(
     templates.create_project(tmp_path / "p", "first-steps")
     assert main(["verify", str(tmp_path / "p")]) == 1
     out = capsys.readouterr().out
-    assert "signal_missing" in out and "run `harness generate` first" in out
+    assert "signal_missing" in out and "run `harness-design-studio generate` first" in out
     assert main(["generate", str(tmp_path / "p")]) == 0
     capsys.readouterr()
     assert main(["verify", str(tmp_path / "p")]) == 0
-    assert "harness generate" not in capsys.readouterr().out
+    assert "harness-design-studio generate" not in capsys.readouterr().out

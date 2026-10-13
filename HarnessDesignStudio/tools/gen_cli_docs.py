@@ -1,11 +1,11 @@
-"""Generate docs/CLI.md (every `harness` command with its arguments and examples) from the
+"""Generate docs/CLI.md (every `harness-design-studio` command, its arguments and examples) from the
 program's own argument parser, so the reference cannot drift from the commands. A test fails if the
 committed file is stale. Usage: python -m tools.gen_cli_docs"""
 
 import argparse
 from pathlib import Path
 
-from harness_design_studio.cli.main import build_parser
+from harness_design_studio.cli.main import PROG, build_parser
 
 TARGET = Path(__file__).resolve().parents[1] / "docs" / "CLI.md"
 
@@ -20,47 +20,57 @@ GROUPS = (
 )
 EXAMPLES: dict[str, list[str]] = {
     "new": [
-        "harness new --list",
-        'harness new my-design --name "My first design"',
-        "harness new wheel-link --template first-steps",
+        "harness-design-studio new --list",
+        'harness-design-studio new my-design --name "My first design"',
+        "harness-design-studio new wheel-link --template first-steps",
     ],
-    "templates": ["harness templates my-templates"],
-    "schema": ["harness schema my-design/schemas"],
-    "validate": ["harness validate my-design"],
-    "check": ["harness check my-design"],
-    "drc": ["harness drc my-design > drc-report.md"],
-    "verify": ["harness verify my-design", "harness verify my-design --outputs"],
-    "generate": ["harness generate my-design"],
-    "export": ["harness export my-design"],
+    "templates": ["harness-design-studio templates my-templates"],
+    "schema": ["harness-design-studio schema my-design/schemas"],
+    "validate": ["harness-design-studio validate my-design"],
+    "check": ["harness-design-studio check my-design"],
+    "drc": ["harness-design-studio drc my-design > drc-report.md"],
+    "verify": [
+        "harness-design-studio verify my-design",
+        "harness-design-studio verify my-design --outputs",
+    ],
+    "generate": ["harness-design-studio generate my-design"],
+    "export": ["harness-design-studio export my-design"],
     "config": [
-        "harness config my-design",
-        "harness config my-design --ampacity-csv ampacity.csv",
-        "harness config my-design --apply-profile ecss-q-st-30-11c",
+        "harness-design-studio config my-design",
+        "harness-design-studio config my-design --ampacity-csv ampacity.csv",
+        "harness-design-studio config my-design --apply-profile ecss-q-st-30-11c",
     ],
     "library": [
-        "harness library my-design",
-        'harness library my-design --library-version 4 --library-source "ESCC part data, supplier file" --library-date 2026-09-30',
+        "harness-design-studio library my-design",
+        'harness-design-studio library my-design --library-version 4 --library-source "ESCC part data, supplier file" --library-date 2026-09-30',
     ],
     "import-parts": [
-        "harness import-parts my-design parts.csv --approved Approved --pending Review "
+        "harness-design-studio import-parts my-design parts.csv --approved Approved --pending Review "
         "--rejected Rejected --dry-run",
-        "harness import-parts my-design connectors.xlsx --approved Yes --category connector",
+        "harness-design-studio import-parts my-design connectors.xlsx --approved Yes --category connector",
     ],
-    "import-lengths": ["harness import-lengths my-design lengths.csv --unit mm --dry-run"],
+    "import-lengths": [
+        "harness-design-studio import-lengths my-design lengths.csv --unit mm --dry-run"
+    ],
     "import-netlist": [
-        "harness import-netlist my-design wheel.net --unit RW1 --prefix J "
+        "harness-design-studio import-netlist my-design wheel.net --unit RW1 --prefix J "
         "--connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run",
     ],
-    "review": ['harness review my-design W001 --by "A. Engineer"'],
+    "review": ['harness-design-studio review my-design W001 --by "A. Engineer"'],
     "release": [
-        'harness release my-design W001 --by "A. Engineer" --comment "First release" '
+        'harness-design-studio release my-design W001 --by "A. Engineer" --comment "First release" '
         '--checker "B. Checker"',
     ],
-    "revise": ['harness revise my-design W001 --by "A. Engineer" --comment "Connector change"'],
-    "diff": ["harness diff my-design W001", "harness diff my-design W001 --from A"],
-    "log": ["harness log my-design", "harness log my-design W001"],
-    "compare": ["harness compare old-checkout new-checkout"],
-    "migrate": ["harness migrate my-design"],
+    "revise": [
+        'harness-design-studio revise my-design W001 --by "A. Engineer" --comment "Connector change"'
+    ],
+    "diff": [
+        "harness-design-studio diff my-design W001",
+        "harness-design-studio diff my-design W001 --from A",
+    ],
+    "log": ["harness-design-studio log my-design", "harness-design-studio log my-design W001"],
+    "compare": ["harness-design-studio compare old-checkout new-checkout"],
+    "migrate": ["harness-design-studio migrate my-design"],
 }
 
 
@@ -114,7 +124,8 @@ def render() -> str:
         "# Command line reference",
         "",
         "Generated from the program by `python -m tools.gen_cli_docs`; do not edit by hand. "
-        "`project` is a project folder. Run `harness COMMAND --help` for the same text in a terminal.",
+        "`project` is a project folder. Run `harness-design-studio COMMAND --help` for the same text in a terminal. "
+        "`harness` still works as a short alias of `harness-design-studio` (the same program).",
         "",
         "## Exit codes",
         "",
@@ -131,7 +142,7 @@ def render() -> str:
         "`compare`, `review`, `release`, `revise`, `migrate` and the imports. Only `validate` and "
         "`check` read it and list the damage (exit 1), so you can see what to repair. "
         "With Ctrl-C a command prints `interrupted` and ends with 130 (if it was saving, run "
-        "`harness validate`). A reader that closes the pipe (`harness generate | head -1`) does "
+        "`harness-design-studio validate`). A reader that closes the pipe (`harness-design-studio generate | head -1`) does "
         "not stop the command: it still finishes and saves.",
         "",
         "Every command that changes a project takes the same lock as the app, so the two never write "
@@ -149,7 +160,7 @@ def render() -> str:
         "",
     ]
     for title, cmds in GROUPS:
-        lines.append(f"- {title}: " + ", ".join(f"[`{c}`](#harness-{c})" for c in cmds))
+        lines.append(f"- {title}: " + ", ".join(f"[`{c}`](#{PROG}-{c})" for c in cmds))
     for title, cmds in GROUPS:
         lines += ["", f"## {title}"]
         for cmd in cmds:
@@ -157,13 +168,13 @@ def render() -> str:
             actions = [a for a in p._actions if not isinstance(a, argparse._HelpAction)]
             positional = [a for a in actions if not a.option_strings]
             usage = " ".join(
-                [f"harness {cmd}"]
+                [f"{PROG} {cmd}"]
                 + [f"[{_name(a)}]" if a.nargs == "?" else _name(a) for a in positional]
                 + (["[options]"] if len(positional) != len(actions) else [])
             )
             lines += [
                 "",
-                f"### harness {cmd}",
+                f"### {PROG} {cmd}",
                 "",
                 p.description or p.format_usage(),
                 "",

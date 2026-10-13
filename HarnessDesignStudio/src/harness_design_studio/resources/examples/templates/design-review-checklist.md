@@ -5,21 +5,21 @@ Copy this next to your design and tick it off for each harness before you releas
 Project: ____________  Harness: ______  Revision: ___  Reviewer: ____________  Date: ____________
 
 ## Before the review
-- [ ] `harness check DIR` prints no error.
-- [ ] `harness generate DIR` changes nothing (the harnesses are up to date).
-- [ ] `harness verify DIR` finds no error.
-- [ ] `harness export DIR` ran after the last change, and **Harness plans** says the outputs are up to date.
+- [ ] `harness-design-studio check DIR` prints no error.
+- [ ] `harness-design-studio generate DIR` changes nothing (the harnesses are up to date).
+- [ ] `harness-design-studio verify DIR` finds no error.
+- [ ] `harness-design-studio export DIR` ran after the last change, and **Harness plans** says the outputs are up to date.
 
 ## Look at
 - [ ] **Problems** tab: no error, every warning fixed or waived with a reason you agree with.
 - [ ] **To-do** tab is empty or every item is understood.
 - [ ] No interface shows *auto-filled*: a person confirmed every connector the tool chose.
-- [ ] `harness config DIR`: nothing is missing; every file is reviewed and no longer marked `placeholder`.
+- [ ] `harness-design-studio config DIR`: nothing is missing; every file is reviewed and no longer marked `placeholder`.
 - [ ] Every wire has a gauge (none *pending*) and a length.
 - [ ] The **Why** tab explains each choice you did not expect.
 - [ ] Parts: every used part is approved in your parts list.
 
-## If you use the ECSS profiles (`harness config DIR --apply-profile ...`)
+## If you use the ECSS profiles (`harness-design-studio config DIR --apply-profile ...`)
 These points cannot be checked by the tool. The requirement IDs are in `compliance/requirements` of the tool's repository.
 - [ ] Connector savers are used during equipment tests; mating cycles of every connector are counted and stay within the limit (ECSS-Q-ST-30-11C 6.11.3 b and e, 6.12.3 a and c).
 - [ ] The contact assignments of connectors close to each other cannot cause damage if a wrong connector is mated (6.11.3 c).

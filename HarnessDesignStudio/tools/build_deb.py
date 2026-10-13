@@ -77,17 +77,19 @@ def build(app: Path, out_dir: Path) -> Path:
     ):  # dpkg owns these files; the scripts are for tarballs
         (opt / script).unlink(missing_ok=True)
     (stage / "usr" / "bin").mkdir(parents=True)
-    (stage / "usr" / "bin" / "harness-design-studio").symlink_to(
-        "/opt/harness-design-studio/harness-design-studio"
+    cli = "/opt/harness-design-studio/cli/harness-design-studio"
+    (stage / "usr" / "bin" / "harness-design-studio").symlink_to(cli)
+    (stage / "usr" / "bin" / "harness-design-studio-gui").symlink_to(
+        "/opt/harness-design-studio/harness-design-studio-gui"
     )
-    (stage / "usr" / "bin" / "harness").symlink_to("/opt/harness-design-studio/cli/harness")
+    (stage / "usr" / "bin" / "harness").symlink_to(cli)  # short alias of the command line tool
     pk = ROOT / "packaging" / "ubuntu"
     apps = stage / "usr" / "share" / "applications"
     apps.mkdir(parents=True)
     (apps / "harness-design-studio.desktop").write_text(
         (pk / "harness-design-studio.desktop.in")
         .read_text()
-        .replace("@EXEC@", "/usr/bin/harness-design-studio")
+        .replace("@EXEC@", "/usr/bin/harness-design-studio-gui")
         .replace("@ICON@", "harness-design-studio")
     )
     icons = stage / "usr" / "share" / "icons" / "hicolor" / "scalable" / "apps"
@@ -125,7 +127,7 @@ def main() -> int:
         )
         return 1
     app = ROOT / "dist" / "harness-design-studio"
-    if not (app / "harness-design-studio").is_file():
+    if not (app / "harness-design-studio-gui").is_file():
         print("run `python -m tools.build_installer` first", file=sys.stderr)
         return 1
     print(build(app, ROOT / "dist"))
