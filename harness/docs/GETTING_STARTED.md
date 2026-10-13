@@ -67,7 +67,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 0 errors is what you want. The INFO line is normal: it says the engineering values are not filled in yet (Part 7).
 
-**In the app:** start **Harness Design Studio**, choose **File > Open project…** and pick the `wheel-link` folder. The app also opens a built-in sample the first time and offers a short tour; **Skip tour** or follow it. To start a new practice project inside the app, use **File > New project from an example…** (the same examples) or **File > New project…** (an empty one).
+**In the app:** start **Harness Design Studio**, choose **File > Open project…** and pick the `wheel-link` folder. The app also opens a built-in sample the first time and offers a short tour; **Skip tour** or follow it. To start a new practice project inside the app, use **File > New project from an example…** (the same examples) or **File > New project…** (an empty one); both open one window where you choose the folder, the name and the example.
 
 ## Part 2: look around
 
@@ -77,22 +77,24 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 | Where | What it is |
 | --- | --- |
-| Left, **Add a unit** | buttons that add a computer, a power unit, a wheel and so on |
-| Left, **Connect with** | the interface types. Pick one, then click two units |
-| Middle | the **diagram**: units in lanes (*panel-A*, *panel-B*), links between them. Every kind of link has its own picture and colour; the key under the diagram shows them (power is red in the light theme) |
-| Right, **Properties** | the selected unit or interface: names, **Max current (A)**, notes |
-| Bottom tabs | **Problems**, **To-do**, **Interface table**, **Harness plans** |
-| Top | **Undo**, **Redo**, **Guided / Expert**, **Search / commands** (Ctrl+K), **Generate harnesses** |
+| Top bar | the project name, a short model hash, whether it is saved, **Generate** (the one blue button), **Check**, **Export…** and a status chip (*Up to date*, *Plans out of date* ...) |
+| Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases** (Ctrl+1 to Ctrl+5) |
+| Middle, **Diagram** | units in lanes (*panel-A*, *panel-B*), links between them. Every kind of link has its own picture and colour; the legend (bottom left of the diagram) shows them (power is red in the light theme). Small badges show problems, values still to enter and locks |
+| Left, **Project** | a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports; **Add** adds a unit or an interface |
+| Left, **Palette** | **Add a unit** buttons (a computer, a power unit, a wheel and so on) and **Connect with**, the interface types: pick one, then click two units |
+| Right, **Inspector** | the selected unit or interface: names, **Max current (A)**, notes, and where it is used. The tabs **Why** and **Problems** are beside it |
+| Bottom tabs | **Problems**, **To-do**, **Interface table**, **Harness plans**, **Outline** (hidden in a short window; **View > Problems and status**) |
+| Toolbar | **Undo**, **Redo**, **Guided / Expert**, **Arrange diagram**, **Search / commands** (Ctrl+K) |
 
 Try this:
 
-1. Click the unit `RW1`. The Properties panel shows it. Click the red link: it is the interface `IF-001`, power from `PCDU1` to `RW1`, with **Max current (A)** 2.
-2. Open the **Interface table** tab: every interface in a list (this view also works with a screen reader).
+1. Click the unit `RW1`. The Inspector shows it. Click the red link: it is the interface `IF-001`, power from `PCDU1` to `RW1`, with **Max current (A)** 2.
+2. Open the **Interface table** tab of the bottom panel: every interface in a list (this view also works with a screen reader). The **Project** tab on the left lists the same objects as a tree.
 3. Press **Ctrl+Z** after any change to undo it. You cannot break anything here: the example is a practice copy.
 
 ## Part 3: generate the harnesses
 
-**In the app:** press **Generate harnesses**. A preview lists what will be added. Read it, then press **Apply**.
+**In the app:** press **Generate** in the top bar (the menu item is **Design > Generate harnesses**, Ctrl+G). A preview lists what will be added. Read it, then press **Apply**; the **Harness** tab opens.
 
 **On the command line:**
 
@@ -119,17 +121,17 @@ harness verify wheel-link
 
 ## Part 4: read what the tool made
 
-In the app open **Harness plans** and select `W002`:
+In the app open the **Harness** tab (Ctrl+2) and pick `W002` in the list at the top left:
 
-- The wire list shows the two wires `PWR` and `RTN`.
-- The **Why** tab says, for each wire and pin, the rule that decided it. Read a few. This is the tool's answer to "why is it like this?".
-- The **Drawing** tab previews the sheet that export will write.
+- **Wires** shows the two wires `PWR` and `RTN`, and **Connectors and pins** shows every pin and the wire on it. The **Lists** tab has the same as tables you can sort, filter and copy.
+- **Why** says, for the wire, connector or pin you select, the rule that decided it. Read a few. This is the tool's answer to "why is it like this?".
+- **Drawing** previews the sheet that export will write; use the wheel to zoom and the buttons to change sheet.
 
 Notice the wire gauge says **pending**. That is deliberate and is the subject of Part 7.
 
 ## Part 5: read and answer the Problems
 
-Open the **Problems** tab, or run:
+Open the **Problems** tab (right panel or bottom panel), or the **Checks** tab for all 34 rules and their result, or run:
 
 ```
 harness drc wheel-link
@@ -152,11 +154,11 @@ A warning can be fixed, or **waived**. **Waive one (app):** in the Problems tab 
 
 The **notes** say *not checked*: EMC separation, shield grounding and so on are not checked, **because the engineering values are still placeholders**. A silent pass would be a lie, so the tool says nothing was checked.
 
-The **To-do** tab lists what is left, including *N auto-filled connector assignments to review*: the connectors on `IF-001` and `IF-002` were chosen by the tool, and a person should confirm them. In the app, select an interface and press **Confirm auto-filled connectors** in Properties.
+The **To-do** tab lists what is left, including *N auto-filled connector assignments to review*: the connectors on `IF-001` and `IF-002` were chosen by the tool, and a person should confirm them. In the app, select an interface and press **Confirm auto-filled connectors** in the Inspector.
 
 ## Part 6: export drawings and lists
 
-**In the app:** press **Export outputs**. **On the command line:**
+**In the app:** press **Export…** in the top bar (Ctrl+E) and then **Export** in the window that opens; it also lists the files written. **On the command line:**
 
 ```
 harness export wheel-link
@@ -236,7 +238,7 @@ W002-001,PWR,IF-001,W002-P1,1,W002-P2,1,22,EX-WIRE-SINGLE,,1,W002-S1,
 W002-002,RTN,IF-001,W002-P1,2,W002-P2,2,22,EX-WIRE-SINGLE,,1,W002-S1,
 ```
 
-Gauge 22 and length 1 m. The **Why** tab now explains it:
+Gauge 22 and length 1 m. The **Why** pane of the **Harness** tab now explains it:
 
 ```
 wire-sizing: ampacity: AWG 22 carries 2.16 A derated (factor 0.72) for 2 A
@@ -295,7 +297,7 @@ Open: 0 error(s), 7 warning(s), 5 note(s). Waived: 0.
 | You have | Do |
 | --- | --- |
 | segment lengths from CAD or a spreadsheet | `harness import-lengths wheel-link my-templates/segment-lengths.csv --unit mm --dry-run` |
-| the interfaces as a table | app only (there is no command for it): **File > Import interfaces…** with `my-templates/interfaces.csv` |
+| the interfaces as a table | app only (there is no command for it): **File > Import > Import interfaces…** with `my-templates/interfaces.csv` |
 | the connector pinout of a unit in KiCad | `harness import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run` |
 
 Details and column names: [`IMPORTS.md`](IMPORTS.md), [`KICAD.md`](KICAD.md).
@@ -304,7 +306,7 @@ Details and column names: [`IMPORTS.md`](IMPORTS.md), [`KICAD.md`](KICAD.md).
 
 This step is not in 0.1.0 packages (see the note in Part 1). A wire's colour is data that you choose; the tool has no colours of its own, which is why the wires of `wheel-link` are grey.
 
-**In the app:** choose **Edit > Wire colours...**. The window lists each signal of the project (`PWR`, `RTN`, `TX+` and so on); pick a colour for `PWR` (for example red) and `RTN` (for example black) from the IEC 60757 list and confirm. The message *Wire colours saved. Generate the harnesses to apply them.* appears. Then press **Generate harnesses**, **Apply** and **Export outputs**. The colours are saved in `config/generation.json` as `wire_colour_by_signal`.
+**In the app:** choose **Edit > Wire colours...**. The window lists each signal of the project (`PWR`, `RTN`, `TX+` and so on); pick a colour for `PWR` (for example red) and `RTN` (for example black) from the IEC 60757 list and confirm. The message *Wire colours saved. Generate the harnesses to apply them.* appears. Then press **Generate**, **Apply** and **Export…**. The colours are saved in `config/generation.json` as `wire_colour_by_signal`.
 
 On the command line the same two commands apply colours that are already in `generation.json` (the command line has no command to set them; [`CONFIG.md`](CONFIG.md) shows the format):
 
@@ -339,7 +341,7 @@ Release W002 revision A: done.
 Outputs re-exported with the released status (38 files).
 ```
 
-`W002` is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited, nor can the parts, interface types and configuration values it uses (a later `harness import-parts` or `harness config --apply-profile` that would change them ends with `This change was blocked because it touches released items`), a baseline and a change log entry are stored, and the drawing says *released*. To change it you start a revision with `harness revise wheel-link W002 --by NAME --comment "..."`; `harness log wheel-link` prints the history, including the reasons for releasing on placeholders and with unapproved parts. In the app the same steps are **Release…**, **New revision…** and **Change log…** in **Harness plans**; the release window asks for the reason when placeholders remain.
+`W002` is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited, nor can the parts, interface types and configuration values it uses (a later `harness import-parts` or `harness config --apply-profile` that would change them ends with `This change was blocked because it touches released items`), a baseline and a change log entry are stored, and the drawing says *released*. To change it you start a revision with `harness revise wheel-link W002 --by NAME --comment "..."`; `harness log wheel-link` prints the history, including the reasons for releasing on placeholders and with unapproved parts. In the app the same steps are **Release…** and **New revision…** in the **Releases** tab (or the **Harness** tab) and **Change log…** in **Harness plans**; the release window lists what the release locks and asks for the reason when placeholders remain.
 
 Do this only in the practice project. Releasing on placeholders and example parts teaches the flow and nothing more: the change log records that the release rested on them.
 
@@ -353,11 +355,11 @@ harness new my-first-design --name "My first design"
 
 In the app, **File > Open project…** it, then:
 
-1. Press **+ Power unit**, **+ Computer** and **+ Actuator (wheel)** in the palette. Units appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in Properties if you want.
-2. Under **Connect with** pick **Primary power**, click `PCDU1`, then click `RW1`. Units that cannot take this interface are greyed out, with the reason beside them.
+1. Open the **Palette** tab on the left and press **+ Power unit**, **+ Computer** and **+ Actuator (wheel)** (or use **Add > Unit…** in the Project tab). Units appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in the Inspector if you want.
+2. Under **Connect with** in the Palette tab pick **Primary power**, click `PCDU1`, then click `RW1`. Units that cannot take this interface are greyed out, with the reason beside them.
 3. Select the new link and set **Max current (A)** to 2. Without a current, a power wire's gauge stays pending.
 4. Pick **RS-422**, click `OBC1`, then `RW1`.
-5. Look at **Problems** and **To-do**, then **Generate harnesses**, **Apply**, **Export outputs**. **Ctrl+S** saves.
+5. Look at **Problems** and **To-do**, then **Generate**, **Apply**, **Export…**. **Ctrl+S** saves.
 
 You have now done everything the tool does, once. Add a **Create redundant copy** of the wheel (select it, press the button) and watch the tool build the backup chain and warn when something connects nominal to redundant.
 

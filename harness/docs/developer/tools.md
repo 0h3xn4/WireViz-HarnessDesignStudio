@@ -30,8 +30,8 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 
 | Script | What it does |
 | --- | --- |
-| `gui_screenshots` | Renders screenshots of the real editor (offscreen) into `docs/ux/qt` |
-| `flatsat_screenshots` | Pictures of the flatsat example in the editor, for `docs/FLATSAT_EXAMPLE.md` |
+| `gui_screenshots` | Renders 26 screenshots of the real editor (offscreen) into `docs/ux/qt`: the sample project and the views and dialogs on the flatsat example (about a minute) |
+| `flatsat_screenshots` | Pictures of the flatsat diagram in the editor (overview and one unit in focus), for `docs/FLATSAT_EXAMPLE.md` and the README |
 | `ux_screenshots` | Screenshots of the prototype's key screens into `docs/ux/screens` (needs Playwright; history only) |
 
 ## Build and release

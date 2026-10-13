@@ -71,7 +71,7 @@ Switching never changes data. Start in Guided.
 
 ## From design to harness: generation
 
-Pressing **Generate harnesses** (or `harness generate DIR`) does four things:
+Pressing **Generate** (or `harness generate DIR`) does four things:
 
 1. **Groups** the interfaces into harnesses. By default one harness per pair of unit connectors.
 2. **Allocates pins**: power first, pairs side by side, spare pins left free, pins you locked (in the harness file) never moved.
@@ -80,7 +80,7 @@ Pressing **Generate harnesses** (or `harness generate DIR`) does four things:
 
 You always see a **preview** first; nothing changes until you **Apply**, and **Undo** takes it back. Generating again keeps IDs and locked choices and never touches a released harness. The same design always gives byte-identical results, so Git diffs show real changes only.
 
-Every choice has a reason. Select a harness, open **Harness plans > Why**, and read the rule behind each wire, pin, gauge and length.
+Every choice has a reason. Open the **Harness** tab, pick a harness, select a wire, connector or pin, and read the rule behind it in **Why** (gauge and length included).
 
 ## Problems, rules and waivers
 
@@ -113,7 +113,7 @@ The release check looks at the harness itself and at the placeholder mark of the
 
 ## Outputs
 
-**Export outputs** writes a folder `outputs/` into the project: per harness a drawing (SVG for the A3 sheets, PDF for A3 and A4), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
+**Export…** writes a folder `outputs/` into the project: per harness a drawing (SVG for the A3 sheets, PDF for A3 and A4), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
 
 Outputs are checked independently before they are written. `outputs/` is always safe to delete and regenerate.
 

@@ -39,6 +39,8 @@ Waiting for an owner decision: config/titleblock.json is a placeholder until the
 
 The command exits with 1 while values are missing. It lists every missing value, what depends on it, and any value that is set but invalid (for example `INVALID config/derating.json: bundle_derating must be a number above 0 and at most 1.`). Use it as your hand-over checklist. The full list of files and keys is in [`CONFIG.md`](../CONFIG.md) and [`PLACEHOLDERS.md`](../PLACEHOLDERS.md).
 
+**In the app** (GUI, not run here): the status bar says how many values are pending, for example "4 values pending · 12 rules not checked"; pressing it opens the **Checks** tab filtered to the rules that could not run. Press **Supply value…** on one of them, or choose **Design > Engineering values…**, to open the **Engineering values** window. It lists every value by config file with its unit and what it is needed for. Type the values you have and press **Apply** (Ctrl+Enter): all of them are set as one undo step and the checks run again. A refused value is explained under its field, and a value that a released harness locks is disabled with the reason. The window changes the same files as the steps below.
+
 ## The shape of a config file
 
 Every file in the project's `config/` folder has the same three keys: `name`, `placeholder` and `values`. The numbers go **inside `values`**:
@@ -98,7 +100,7 @@ Engineering values: 1 of 17 set.
 
 ## 3. Edit the other values
 
-Open the file named in the list, for example `config/derating.json`, in a text editor and set the values inside `values`. Close the project in the app first, or reload it afterwards. Then check:
+Open the file named in the list, for example `config/derating.json`, in a text editor and set the values inside `values` (or use the **Engineering values** window of the app, see above). Close the project in the app first, or reload it afterwards. Then check:
 
 ```
 harness config wheel-link
@@ -123,7 +125,7 @@ harness generate wheel-link
 
 ## 5. Mark a file as reviewed
 
-When an engineer has reviewed all the values in a file, set `"placeholder": false` in that file (top level, next to `name`). Do it only after the review. The mark is what the release check looks at ([release a harness](release-a-harness.md)). It cannot tell whether the values are right. That stays a decision for a person.
+When an engineer has reviewed all the values in a file, set `"placeholder": false` in that file (top level, next to `name`). Do it only after the review (in the app, untick *Values in this file are placeholders (not reviewed)* in the **Engineering values** window). The mark is what the release check looks at ([release a harness](release-a-harness.md)). It cannot tell whether the values are right. That stays a decision for a person.
 
 ## Practice with demo values
 

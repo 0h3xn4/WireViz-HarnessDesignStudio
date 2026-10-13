@@ -37,10 +37,8 @@ def test_results_arrive_in_the_background(win, qtbot) -> None:  # type: ignore[n
     rules = {f.rule for f in win.ctl.findings()}
     assert "part-unapproved" in rules and "unchecked-config" in rules
     win.tabs.setCurrentWidget(win.problems)
-    assert (
-        "checked"
-        in win.problems.findChild(type(win.problems.lay.itemAt(0).widget()), "drc-state").text()
-    )
+    header = win.problems.findChild(type(win.problems.lay.itemAt(0).widget()), "drc-state").text()
+    assert "34 rules" in header and "not checked" in header and "all" not in header.lower()
 
 
 def test_editing_marks_the_check_as_running_again(win, qtbot) -> None:  # type: ignore[no-untyped-def]
@@ -76,15 +74,15 @@ def test_one_click_fix_regenerates(win, qtbot) -> None:  # type: ignore[no-untyp
     assert not [x for x in win.ctl.open_findings() if x.rule == "verify-mismatch"]
 
 
-def test_show_selects_units_and_switches_to_harness_plans(win, qtbot) -> None:  # type: ignore[no-untyped-def]
+def test_show_selects_units_and_switches_to_the_harness_tab(win, qtbot) -> None:  # type: ignore[no-untyped-def]
     p = win.ctl.project
     unit = next(iter(p.units))
     win.show_object(unit)
     assert win.ctl.selection and win.ctl.selection.id == unit
     h = next(iter(p.harnesses))
     win.show_object(h)
-    assert win.tabs.currentWidget() is win.harness_panel
-    assert win.harness_panel.selected_harness() == h
+    assert win.main_tabs.currentWidget() is win.harness_view  # the Harness tab of the shell
+    assert win.harness_view.harness_id() == h
     win.show_object("derating")
     assert "no place" in win.toasts.messages[-1]
 

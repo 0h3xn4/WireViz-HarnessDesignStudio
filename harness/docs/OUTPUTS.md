@@ -1,6 +1,6 @@
 # Outputs
 
-`harness export DIR` (or **Export outputs** in the Harness plans tab) writes everything below into `DIR/outputs/`. The files are produced from the model only: the same model gives the same bytes. Nothing in them is typed in by hand; edit the model and export again.
+`harness export DIR` (or **Export…** in the top bar of the app) writes everything below into `DIR/outputs/`. The files are produced from the model only: the same model gives the same bytes. Nothing in them is typed in by hand; edit the model and export again.
 
 ```
 outputs/

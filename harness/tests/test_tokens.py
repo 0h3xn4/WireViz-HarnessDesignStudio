@@ -5,12 +5,31 @@ import math
 
 import pytest
 
-from harness_design_studio.gui.tokens import CATEGORIES, DARK, LIGHT, SPACING, _lin, contrast
+from harness_design_studio.gui.tokens import (
+    CATEGORIES,
+    CONTROL_HEIGHT,
+    DARK,
+    LIGHT,
+    SPACING,
+    TYPE_SCALE,
+    _lin,
+    contrast,
+)
 
 THEMES = {"light": LIGHT, "dark": DARK}
 SURFACES = ("bg", "surface", "surface-2")
 TEXT_ROLES = ("text", "text-muted", "primary", "error", "warning", "success", "info",
-              "auto-fill", "locked", "released")  # fmt: skip
+              "auto-fill", "locked", "released", "pending", "not-checked", "stale")  # fmt: skip
+STATE_TOKENS = (
+    "success",
+    "error",
+    "warning",
+    "pending",
+    "not-checked",
+    "locked",
+    "released",
+    "stale",
+)
 CATS = [f"cat-{c}" for c in CATEGORIES]
 
 # Machado et al. (2009) colour-vision-deficiency matrices, full severity, linear RGB.
@@ -82,3 +101,27 @@ def test_every_category_has_non_colour_cues() -> None:
 
 def test_spacing_is_on_the_4px_grid() -> None:
     assert all(s % 4 == 0 for s in SPACING)
+
+
+def test_type_and_spacing_scales_are_the_standards() -> None:
+    assert tuple(TYPE_SCALE.values()) == (12, 13, 16, 20)
+    assert SPACING == (4, 8, 12, 16, 24, 32)
+    assert CONTROL_HEIGHT in SPACING
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_pending_and_not_checked_have_their_own_colours(theme: str) -> None:
+    """New state tokens exist in both themes and no two state colours are the same."""
+    t = THEMES[theme]
+    for token in ("pending", "not-checked", "stale", "locked", "released", "paper", "pasteboard"):
+        assert token in t, (theme, token)
+    values = [t[k].upper() for k in STATE_TOKENS if k not in ("released",)]
+    # released may share the pass tone (it is a pass-like state, told apart by icon and word)
+    assert len(values) == len(set(values)), (theme, values)
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_drawing_paper_and_pasteboard_stay_apart(theme: str) -> None:
+    t = THEMES[theme]
+    assert t["paper"].upper() == "#FFFFFF"  # the picture of a sheet stays white in both themes
+    assert contrast(t["paper"], t["pasteboard"]) >= 3.0

@@ -35,7 +35,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | What it says |
 | --- | --- |
-| [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md) | The user guide that opens with **F1** in the app: screen, modes, menus, shortcuts |
+| [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md) | The user guide that opens with **F1** in the app: the window and its tabs, modes, checks, export and import, menus, shortcuts |
 | [`CLI.md`](CLI.md) | Every `harness` command and option (generated from the program) |
 | [`RULES.md`](RULES.md) | Every design rule: what, why, how to fix, severity (generated) |
 | [`CONFIG.md`](CONFIG.md) | Every key of `config/*.json` |
@@ -54,7 +54,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md) | A tour of the biggest example, a flatsat with ground equipment |
 | [`templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) | What each file written by `harness templates FOLDER` is for |
 
-`harness new --list` shows the example projects and `harness templates FOLDER` copies the import templates, demo values, CI scripts and the review checklist. Screenshots of the app are in [`ux/qt/`](ux/qt/).
+`harness new --list` shows the example projects and `harness templates FOLDER` copies the import templates, demo values, CI scripts and the review checklist. Screenshots of the app are in [`ux/qt/`](ux/qt/) (see [`ux/README.md`](ux/README.md) for the other picture folders).
 
 ## Stuck
 
@@ -77,6 +77,8 @@ These explain how the tool was specified and checked; you do not need them to us
 | --- | --- |
 | [`SPEC.md`](SPEC.md), [`REQUIREMENTS.md`](REQUIREMENTS.md), [`UX.md`](UX.md) | What the tool must do and how it should feel |
 | [`UX_GUIDELINES_REVIEW.md`](UX_GUIDELINES_REVIEW.md) | The owner's UX/UI guidelines, point by point: done, new, not applicable, open |
+| [`DESIGN.md`](DESIGN.md) | The design system of the editor: tokens, type and spacing, themes, icons, state chips, tables, the diagram, the window, the views, shortcuts, decisions |
+| [`ux-audit.md`](ux-audit.md) | The October 2026 audit of the editor against the UX/UI Standard (83 numbered issues) and, at the end, what was built for each one |
 | [`DECISIONS.md`](DECISIONS.md), [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | What was decided, and what still needs an owner |
 | [`PLAN.md`](PLAN.md), [`demos/`](demos/README.md) | The plan and the note from each milestone |
 | [`AUDIT.md`](AUDIT.md) | The October audit |

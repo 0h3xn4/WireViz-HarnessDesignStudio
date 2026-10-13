@@ -80,6 +80,6 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 - [Naming and title block](user-manual/naming-and-title-block.md).
 - [Redundancy and zones](user-manual/redundancy-and-zones.md).
 
-Keyboard: **Ctrl+K** command palette, **Ctrl+Z** and **Ctrl+Y** undo and redo, **Ctrl+S** save, **Ctrl+=**, **Ctrl+-** and **Ctrl+0** zoom, **F1** the user guide. The full list is in the [user guide](guide/USER_GUIDE.md).
+Keyboard: **Ctrl+K** command palette, **Ctrl+Z** and **Ctrl+Y** undo and redo, **Ctrl+S** save, **Ctrl+=** and **Ctrl+-** zoom, **F** fit, **Ctrl+0** 100 %, **Ctrl+G** generate, **Ctrl+E** export, **F1** the user guide. The full list is in the [user guide](guide/USER_GUIDE.md).
 
 Next: [user manual](user-manual/README.md), [`GETTING_STARTED.md`](GETTING_STARTED.md)

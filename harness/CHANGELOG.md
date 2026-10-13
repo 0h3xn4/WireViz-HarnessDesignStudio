@@ -4,12 +4,82 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Added
+
+Look and feel
+- Theme: View > Theme offers System (the default, follows the operating system's light or dark scheme), Light and Dark; the choice is stored in the settings.
+- Vector icons (from Lucide, ISC licence, drawn in code) for the toolbar and panels: zoom in, zoom out, fit, search, import, undo, redo and the panel close buttons have an icon and a tooltip that names the shortcut.
+- State chips for pending, not checked, locked, released, out of date, pass and fail: icon, word and, for pending (dotted) and not checked (hatched), a pattern, so colour is never the only sign.
+- Shared table code (`gui/tables.py`): right-aligned numbers, units in the header, sorting, filtering, Ctrl+C copies the selected cells as tab-separated text, column widths are remembered.
+
+Diagram
+- Several items can be selected (Shift-click, Ctrl-click, a rubber band, Ctrl+A); Properties shows what they have in common, and they are moved, deleted, aligned, spaced out and duplicated as one undo step (Ctrl+D, Edit menu, right-click menu).
+- Find with Ctrl+F marks units and links; a right-click menu offers the same actions as the menus, with the reason for each greyed entry, and "Add unit here"; a grid and View > Snap to grid (Alt places freely).
+- Marks on every unit card and link label: problems, warnings, values still to enter and "not checked yet" as a badge (icon and count); units, links and connectors that a release locks show a lock and "W001 A" and a faint released tint; the legend lists only the marks that are on the diagram. A click on a badge selects the object and asks the window to show its problems (the window does not act on that yet).
+- A corner chip says whether the harnesses and the outputs are out of date, not generated, not exported or up to date.
+- The "n auto" chip and the tooltip of the Auto badge say why the tool chose a connector and that it is not confirmed yet. "Why?" in the right-click menu asks the window for the same (not connected to a panel yet).
+- Cards show a picture of their kind of unit, the number of connectors ("12 conn"), "+3" where connector pictures do not fit, and the "n auto" count in Guided mode too; FLIGHT or GROUND can be set per zone from the unit's menu (a viewer setting, not in the project file).
+
+New views
+- Harness tab (`gui/harness_view.py`): a header with the harness, its release state, its interfaces, the hash Generate last read and chips for design, outputs and independent check; a connector and pin table (locked pins carry a lock and name the release that locks them; pending values and auto-filled rows have their own chips), a wire table, a zoomable drawing and a Why pane for the selected wire, connector or pin, all linked by hover and selection.
+- Lists tab (`gui/lists_panel.py`): the wire list, pinouts, BOM, mass and length, test tables, labels and the system BOM as sortable, filterable tables with units in the headers, Ctrl+C as tab-separated text, a banner when the design changed after Generate, and export of the visible rows as CSV or Excel ("Export table").
+- Checks tab (`gui/checks_panel.py`): one row for each of the design rules with its result (pass, fail, not checked, pending), a summary strip ("34 rules: 20 passed · 2 failed · 12 not checked · 4 pending values"), the requirement IDs of each rule, the offending objects (Enter or double-click shows one), and the exact configuration value a pending rule waits for. A check that is running can be cancelled, and a failed check leaves a banner until the next one succeeds.
+- Releases tab (`gui/releases_panel.py`): the timeline of reviews, releases and new revisions of every harness with state chips, the differences between two revisions or a revision and the working design grouped by kind with counts (values read "(none)", never `None`), and Submit for review, Release and New revision per harness.
+- Project tree (`gui/project_tree.py`, left panel): Units, Interfaces, Harnesses with their release state, Parts, Interface types, Configuration with its placeholder and pending values, and the import entry points; problem counts and a lock on every object, a filter, keyboard navigation and an "Add" menu. It updates only the rows a change touches.
+- Inspector (`gui/inspector.py`, right panel): tabs Inspector, Why and Problems; a banner that says why an object is locked and offers "Start new revision"; fields a release forbids changed are disabled with the reason; "Used in" lists the links, harnesses and wires that use a unit, link, part or interface type; a configuration file lists its engineering values with a status chip each.
+- Why panel (`gui/why_panel.py`): the recorded reasons for a unit, link, harness, wire, connector or pin as "rule: sentence" lines, what is still pending and the placeholder files generation used.
+- A table for the generate preview (`gui/plan_table.py`): each harness with whether Generate creates, changes, removes or leaves it, and the locked pins that stay. It is not in the Generate preview window yet.
+
+Dialogs
+- Export window (`gui/export_dialog.py`): output folder, a harness by document tree, progress with Cancel, and the list of files written with Reveal in folder, Open, a picture of the selected drawing and Copy selection to folder. A failed independent check or write error is a notice in the window that stays. The export still writes the full set.
+- Import wizard (`gui/import_wizard.py`): approved parts, segment lengths, the ampacity table and a KiCad netlist (interfaces too, though Ctrl+Shift+I still opens the older window) in four steps (file, columns with a live preview, conflicts and placeholders with the exact reason for each row, apply); every import is one undo step called "Import n rows". File > Import lists every kind.
+- New project window (`gui/new_project_dialog.py`): folder, name and example in one dialog with the problems said next to the field.
+- Engineering values form (`gui/config_dialog.py`): **Supply value…** on a pending rule (or Design > Engineering values…) opens every engineering value grouped by config file, with units, the placeholder flag, inline reasons for a refused value and locked values disabled with the reason; Apply sets all changes as one undo step and the checks run again.
+
+Window
+- Top bar (`gui/topbar.py`): project name, short model hash in mono, a dirty marker, **Generate** (the one primary button), Check, Export… and a status chip (up to date, plans out of date, outputs out of date, generating, exporting, checking). Ctrl+G generates, Ctrl+E exports, F5 runs the checks.
+- Persistent banners: when the plans or the exported files no longer match the design a notice stays under the top bar with Generate and Export buttons; a failed generate, export or check stays as a notice until the next success.
+- Main tabs Diagram, Harness, Lists, Checks and Releases (Ctrl+1 to Ctrl+5), the project tree and palette on the left, the inspector with its Why and Problems tabs on the right; a link double-click opens the Harness tab.
+- A status-bar link "n values pending · n rules not checked" that opens the Checks tab filtered; the status bar also shows the project folder (monospace, cut in the middle when narrow), the number of rules and the tool version, "Generated at model xxxxxxxx" and the zoom level.
+- F6 and Shift+F6 move the keyboard focus between the diagram, the project panel, the inspector and the bottom panel; Ctrl+I adds an interface; the Connect tool is in the Edit menu; every shortcut is in a menu and in the tooltip ("text (shortcut)").
+- View > Reset layout; the dock layout is saved with the window.
+
 ### Changed
 
-- The editor window and the taskbar entry now show the Harness Design Studio logo (drawn in code, so the packaged program needs no SVG support).
+Look and feel
+- Text is 13 px at 100 % (it was 14) and follows the 12 / 13 / 16 / 20 px type scale; spacing follows 4 / 8 / 12 / 16 / 24 / 32 px; all buttons, combo boxes and fields are 32 px high.
+- Hashes, IDs, requirement IDs, pin and wire numbers and the drawing preview use IBM Plex Mono; the drawing preview takes its page and background colours from the theme.
+- The Guided, Expert, Select and Connect toggles use a neutral selected style (bold with a bar under), so Generate is the only accent-coloured button; the Fix buttons on problem cards are no longer primary.
+- The editor window and the taskbar entry show the Harness Design Studio logo (drawn in code, so the packaged program needs no SVG support).
+- The first interface size follows the screen (200 % on a 4K screen at ratio 1); the View menu item "UI scale" is now "Interface size".
+
+Diagram
+- Navigation: Ctrl+wheel zooms, the wheel scrolls, the middle button or Space with a drag pans; F fits, Shift+F zooms to the selection, Ctrl+0 shows 100 % (it used to fit); the zoom level is shown. Unit names stay readable when zoomed out, and zoomed out links of different kinds differ by dash pattern and a small picture, with a readable label on the selected or hovered link.
+- Double-click or Enter on a unit or link opens it in the Harness tab (or says it is not generated yet).
+- The legend is an overlay you can fold or hide (View > Show legend) and lists only what the diagram uses; the overview map can be dragged and is smaller or hidden in a small window.
+- A missing voltage or current on a power link reads "V ?" or "A ?" in the pending style instead of staying blank; the link tooltip lists harness, wire count, state and lock; NOMINAL is shown only where the project has a redundant chain.
+- Deleting an interface asks first and names both ends and the harness wires it affects; the Delete key works only from the diagram and the tables; a read-only project says why a drag, Delete or arrange did nothing.
+- Arrange diagram has a shortcut (Ctrl+Shift+L) and a toolbar button, and big diagrams are arranged in the background; dragging a unit among many is smooth (straight lines while dragging, routes on release); a click on a link label selects its own link.
+
+Views and dialogs
+- The Problems header no longer says "all 34 rules checked" while rules were not checked: it reads "34 rules: n passed · n failed · n not checked", and the notes about rules that could not run are never cut off by the 25 card limit.
+- The drawing preview is a zoomable view: the wheel zooms to the cursor, drag pans, `+` `-` `0` zoom and fit, Page Up and Page Down change sheet; hovering a wire or pin marks it. The written SVG and PDF files are unchanged.
+- The independent check and the state of the outputs are worked out in the background and cached, so the Harness tab no longer waits for them on every change.
+- A refused edit (an object held by a released harness) puts the stored value back into the form instead of leaving the rejected one showing; a refusal stays on screen with a "Start new revision…" button until the next change goes through.
+- The release dialog lists what the release will lock (wires, pins, interfaces, parts, interface types, config files, with placeholder values shown as pending); the new-revision dialog says what happens and what becomes editable instead of "Nothing blocks this release"; both say in words what is still missing for the button to work (the 10-character comment, a name, a reason).
+- New project and New project from an example are one dialog (folder, name, example).
+- Export opens the export window; the plans check of the older Harness plans panel is read once per model state.
+
+Window
+- Ctrl+K lists every command (Generate, Check, Export, Release, Revise, Reset layout, the tabs, the import kinds, engineering values, go to harness), ranks a name that starts with what you typed first and no longer stops at 14 results; it is still a modal window.
+- Undo and Redo name the step ("Undo Move PDU2").
+- In a window shorter than 800 px the bottom panel is hidden so the diagram keeps at least 55 % of the height at 1280 x 720; a panel can no longer make the window wider than the screen.
+- The older bottom panel (Problems, To-do, Interface table, Harness plans, Outline) and the Palette tab are still there; the Fix all button, a non-modal palette and per-harness Generate are not built (see `docs/ux-audit.md`, "Build status").
 
 ### Fixed
 
+- LVDS and RS-422 no longer share one picture: LVDS shows a differential pair closed by a termination resistor (a test fails if two kinds of link share a picture, apart from primary and secondary power, which differ by colour and name).
+- A link's label in the diagram keeps clear of the other links: it is placed where no other link runs through it, and where there is no such place a smaller label (the picture alone) is used. On the flatsat example 10 of 44 labels still touch another cable (before: 28).
 - A review, release or new revision cannot be dated before the last change-log entry of the same harness (`date_before_last`).
 - `harness new --name` with a blank name is refused, and a name is stored without surrounding spaces. A link (also a dangling one) is not accepted as the folder of a new project, with the usual "not an empty folder" message.
 - `import-lengths` help, `IMPORTS.md` and the templates README say that its three columns are read by position. The exit code table in `CLI.md` names the imports and `config` under exit code 1.

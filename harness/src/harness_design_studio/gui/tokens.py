@@ -5,7 +5,9 @@ the status tones darkened where our stricter rule needs AA text contrast on ever
 
 The clickable prototype (tools/build_prototype.py) and the real GUI both read these values.
 Colour is never the only carrier of meaning: signal categories also differ by label, icon and
-line weight; redundancy is a dashed line. Category colours were chosen to stay apart under
+line weight; redundancy is a dashed line. State colours (pending, not-checked, locked, released,
+stale) are always shown with an icon and a word too, and pending / not-checked also with a dotted
+or hatched pattern (gui/states.py), so they cannot be mistaken for pass, fail or an empty cell. Category colours were chosen to stay apart under
 simulated colour blindness. Contrast and separation are verified in tests/test_tokens.py.
 """
 
@@ -28,6 +30,11 @@ LIGHT: Final[dict[str, str]] = {  # IBM Carbon "White" theme (darker status tone
     "auto-fill": "#7A5C00",
     "locked": "#525252",
     "released": "#0E6027",
+    "pending": "#005D5D",
+    "not-checked": "#4D5358",
+    "stale": "#8A3800",
+    "paper": "#FFFFFF",
+    "pasteboard": "#8A8A94",
     "cat-power": "#B83014",
     "cat-data": "#000080",
     "cat-analog": "#235C53",
@@ -54,6 +61,11 @@ DARK: Final[dict[str, str]] = {  # IBM Carbon "Gray 100" theme
     "auto-fill": "#F1C21B",
     "locked": "#C6C6C6",
     "released": "#42BE65",
+    "pending": "#3DDBD9",
+    "not-checked": "#C1C7CD",
+    "stale": "#FF9A57",
+    "paper": "#FFFFFF",
+    "pasteboard": "#3A3A3A",
     "cat-power": "#DDFF33",
     "cat-data": "#33FFFF",
     "cat-analog": "#9EF075",
@@ -88,9 +100,16 @@ FONT_UI: Final[str] = (
     "'IBM Plex Sans', 'Segoe UI', system-ui, sans-serif"  # bundled, see gui/fonts.py
 )
 FONT_MONO: Final[str] = "'IBM Plex Mono', Consolas, monospace"
-# Type scale in px (base 14, ratio ~1.2) and spacing on a 4/8 px grid.
-TYPE_SCALE: Final[dict[str, int]] = {"xs": 11, "sm": 12, "base": 14, "md": 16, "lg": 20, "xl": 24}
-SPACING: Final[tuple[int, ...]] = (4, 8, 12, 16, 24, 32, 48)
+# The UX standard's type scale (12 / 13 / 16 / 20 px) and spacing (4 / 8 / 12 / 16 / 24 / 32 px).
+# Names: sm = captions, canvas labels and table cells; base = body text; md = sub-headings;
+# lg = titles. Code asks the theme (`theme.type(name)`, `theme.space(n)`), which also applies the
+# UI scale; a test fails on a literal pixel size for a font in gui/.
+TYPE_SCALE: Final[dict[str, int]] = {"sm": 12, "base": 13, "md": 16, "lg": 20}
+SPACING: Final[tuple[int, ...]] = (4, 8, 12, 16, 24, 32)
+# The zoomed-out diagram draws unit IDs in scene units (not UI px) so they stay readable far away.
+OVERVIEW_FONT_PX: Final[int] = 22
+# Height of every button, combo box and line edit in px at 100 % scale (on the spacing grid).
+CONTROL_HEIGHT: Final[int] = 32
 
 
 def _lin(c: int) -> float:

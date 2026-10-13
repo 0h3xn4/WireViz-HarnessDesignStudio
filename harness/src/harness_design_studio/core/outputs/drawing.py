@@ -472,6 +472,7 @@ def _draw_page(
         col = side.get(cid, 0)
         x = left_x if col == 0 else right_x
         height = HEAD_H + len(rows[cid]) * ROW
+        conn_start = len(sh.items)
         sh.add(Rect(x, top[cid], CONN_W, height, width=0.35, fill="#ffffff"))
         sh.add(Rect(x, top[cid], CONN_W, HEAD_H, width=0.35, fill="#e6e6e6"))
         mate = f"mates {c.mates_with}" if c is not None and c.mates_with else ""
@@ -498,6 +499,7 @@ def _draw_page(
         sh.add(Line(split, top[cid] + HEAD_H, split, top[cid] + height, width=0.25))
         for k, pin in enumerate(rows[cid]):
             yy = top[cid] + HEAD_H + (k + 1) * ROW
+            pin_start = len(sh.items)
             if k < len(rows[cid]) - 1:
                 sh.add(Line(x, yy, x + CONN_W, yy, width=0.2, color="#bbbbbb"))
             base = yy - 1.2
@@ -513,6 +515,8 @@ def _draw_page(
             else:
                 sh.add(Text(x + 1.5, base, pin, size=n_size, bold=True, ref=f"pin/{ref}"))
                 sh.add(Text(x + num_w + 1.5, base, signal, size=PIN_SIZE, ref=f"sig/{ref}"))
+            sh.mark("pin", ref, pin_start)
+        sh.mark("connector", cid, conn_start)
     # cable blocks, sleeves and wires
     shields = {sg.id: sg for sg in h.shields}
     bottom = max(ends) - GAP
@@ -565,14 +569,17 @@ def _draw_page(
                 y += ROW
         for sid in sorted(heads, key=lambda k: (heads[k], k)):  # the outer sleeves first
             depth = next(len(c) - 1 for _y, kd, _w, c in placed if kd == "head" and c[-1] == sid)
+            sleeve_start = len(sh.items)
             _draw_sleeve(
                 sh, shields[sid], side, box_x, heads[sid], last[sid], depth, inner[sid],
                 _reference_wire(h, shields[sid], ws),
             )  # fmt: skip
+            sh.mark("shield", sid, sleeve_start)
         for yy, _kind, wire, _chain in placed:
             if wire is None:
                 continue
             w = wire
+            wire_start = len(sh.items)
             cy = yy + ROW / 2
             code, hexcolour = wire_colour(w.colour)
             (ca, pa), (cb, pb) = (w.from_connector, w.from_pin), (w.to_connector, w.to_pin)
@@ -622,6 +629,7 @@ def _draw_page(
                     bold=True,
                 )
             )
+            sh.mark("wire", w.id, wire_start)
     return bottom
 
 

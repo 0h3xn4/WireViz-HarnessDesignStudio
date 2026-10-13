@@ -21,11 +21,11 @@ Every command on this page was run with the tool (version `1.0.0`) before it was
 
 ## Keyboard shortcuts
 
-These are the shortcuts the app defines (read from the program's source, `gui/main_window.py` and `gui/canvas.py`). Menus show the same keys.
+These are the shortcuts the app defines (read from the program's source, `gui/main_window.py` and `gui/canvas.py`). Menus show the same keys, and the tooltip of a button names its key.
 
 | Keys | What it does |
 | --- | --- |
-| Ctrl+N | New project... |
+| Ctrl+N | New project... (one window: folder, name, example) |
 | Ctrl+O | Open project... |
 | Ctrl+S | Save |
 | Ctrl+Shift+S | Save as... |
@@ -33,18 +33,30 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+Q | Quit |
 | Ctrl+Z | Undo |
 | Ctrl+Y or Ctrl+Shift+Z | Redo |
-| Delete | Delete the selected item (it first shows what else goes with it) |
+| Ctrl+G | Generate harnesses (a preview comes first) |
+| F5 | Run the design rule check now |
+| Ctrl+E | Export... (the Export outputs window) |
+| Ctrl+I | New interface... |
+| Ctrl+1 to Ctrl+5 | The tabs Diagram, Harness, Lists, Checks, Releases |
+| F6 and Shift+F6 | Move the keyboard focus to the next or previous panel |
+| Delete | Delete the selection (it first shows what else goes with it); in the diagram, the Interface table and the Outline |
 | C | Start the Connect tool; then click the two units to add an interface |
 | Esc | Back to the Select tool; also clears the selection and ends the focus on a unit or link |
 | Ctrl+= and Ctrl+- | Zoom in and out |
-| Ctrl+0 | Fit the whole diagram in the window |
+| F | Fit the whole diagram in the window (diagram has the focus) |
+| Shift+F | Zoom to the selection (diagram has the focus) |
+| Ctrl+0 | Zoom to 100 % |
+| Ctrl+wheel | Zoom at the pointer; the wheel alone scrolls, Shift+wheel scrolls sideways, middle button or Space and drag pans |
+| Ctrl+A, Ctrl+D, Ctrl+F | Select all, duplicate the selected units, find in the diagram (diagram has the focus) |
+| Ctrl+Shift+L | Arrange the diagram |
 | Ctrl+K | Search and commands (the command palette, next section) |
 | F1 | The user guide |
-| Tab | Move between units and links with the keyboard (Undo and Redo in the toolbar are reachable the same way) |
+| Tab | Move between units and links with the keyboard (F6 leaves the diagram) |
 | Enter or Space | Select the unit or link that has the keyboard focus (with the Connect tool active, a unit with the focus is picked) |
 | Shift+arrow keys | Move the focused unit by one grid step (10 diagram units), in the Select tool, when the project is not read-only |
+| Ctrl+C in a table | Copy the selected cells as tab-separated text (Ctrl+Shift+C adds the header row) |
 
-Everything else is in the menus: **View > Arrange diagram** tidies the units (they stay in their lanes; Undo restores the old positions), **View > UI scale** offers 100, 125, 150 and 200 %, and **View > Dark theme**, **Show overview map** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data.
+Everything else is in the menus: **View > Arrange diagram** tidies the units (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** follows the system or is Light or Dark, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data.
 
 ## The command palette (Ctrl+K)
 
@@ -55,13 +67,15 @@ Press **Ctrl+K**, type a few letters, press **Enter**. The list is one searchabl
 - **Connect with ...** for each interface type (17 ship with the tool);
 - **Go to unit** `OBC1 (Computer 1)` for every unit, and **Go to interface** `IF-002 (...)` for every interface.
 
-Type several words and every word must match, in any order (`go rw1` finds *Go to unit RW1*). **Up** and **Down** move through the list and the list shows at most 14 lines at a time; keep typing to narrow it. It is the quickest way to jump to one object in a project with dozens of units.
+Type several words and every word must match, in any order (`go rw1` finds *Go to unit RW1*). A name that starts with what you typed comes first. **Up** and **Down** move through the list, which has no length limit; keep typing to narrow it. The commands include Generate, Run checks, Export, Release, Start new revision, the imports, Engineering values and Reset layout. It is the quickest way to jump to one object in a project with dozens of units.
 
 ## Reading a busy diagram
 
 - **Click a unit or a link**: its links stay in colour and everything else fades. Click the empty background or press **Esc** to see everything again.
 - **Show** in the toolbar fades everything except one *signal class*, one *connector* or one *bundle (harness)*: choose **All interfaces**, **By signal class**, **By connector** or **By bundle (harness)**, then the value. It changes the picture only, never the project.
-- **Interface table** and **Outline** tabs list every interface and every unit as text. They are the screen-reader friendly views, and also the fastest way to find one row in a large design.
+- The **Interface table** and **Outline** tabs of the bottom panel list every interface and every unit as text, and the **Project** tab (left) is a tree of the same objects with a filter (press `/`). They are the screen-reader friendly views, and also the fastest way to find one row in a large design.
+- **Ctrl+F** finds units and links by ID, name, connector or type and marks every match; **Shift+click**, **Ctrl+click** and a drag on the background select several items.
+- Small marks tell the state: a badge with an icon and a count is a problem, a warning, a value still to enter or *not checked*; a lock with *W001 A* means a released harness holds the object.
 - A voltage or current shows next to a link only when it was entered; **View > Show all link labels** shows them all.
 
 ## Keep a project in Git
@@ -140,7 +154,9 @@ For a harness you have released, `harness diff DIR W001` shows what changed sinc
 
 `harness config DIR` is the hand-over checklist: which engineering values are still missing, what depends on each, and which values that are set are invalid. It ends with exit code 1 while anything is missing, so it can also be a gate in a script. Its first line counts the values that are set; a new project says `Engineering values: 0 of 17 set.`
 
-Two shortcuts fill values in:
+In the app, press **Supply value…** on a rule marked *Not checked* in the **Checks** tab, or choose **Design > Engineering values…**: one window lists every value by config file with its unit, and **Apply** sets them as one undo step.
+
+Two command-line shortcuts fill values in:
 
 - **A current-by-gauge table from a file:** `harness config DIR --ampacity-csv FILE` (two columns, `gauge,amperes`; the file `ampacity-DEMO-ONLY.csv` in the templates is a learning example). It is checked before anything is written: `Loaded 6 gauges into config/derating.json. Review it, then set "placeholder": false when the file is complete.`
 - **Values from a named profile:** `harness config DIR --apply-profile ecss-q-st-30-11c` (or `ecss-e-st-20-07c`) fills the values that are still empty, keeps every value you set, and prints which requirement of the supplied standard each value comes from. The files stay `"placeholder": true` until an engineer has reviewed them. This is a convenience for filling in numbers from a standard that you were given; it is not a statement that a design complies with it. See [`CONFIG.md`](CONFIG.md).
@@ -250,7 +266,7 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
 | YAML | `wireviz.yaml` per harness | "WireViz-style" input: `metadata`, `connectors`, `cables`, `connections`. Written by this tool; **not validated against the WireViz program**. |
 | Markdown | `system/drc_report.md`, `system/revision_report.md` | reports |
 
-Every CSV starts with a comment line (`# harness-design-studio 1.0.0 model <hash>`) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The interface Properties panel of the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
+Every CSV starts with a comment line (`# harness-design-studio 1.0.0 model <hash>`) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The Inspector of an interface in the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
 
 ### Ideas, not features
 

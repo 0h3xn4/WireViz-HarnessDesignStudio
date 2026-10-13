@@ -24,7 +24,7 @@ REQ-UX-01,Design tokens meet WCAG 2.2 AA and category colours stay distinguishab
 REQ-UX-02,"The prototype supports the ten journeys, works offline and logs no console errors.",SPEC Part 3 (UX process 1 and 2),`tests/test_prototype.py`,test_prototype.py,traced
 REQ-UX-03,The committed prototype matches the generator and is self-contained.,SPEC Part 1 (offline),`tests/test_prototype_build.py`,test_prototype_build.py,traced
 REQ-GUI-01,"The Qt editor supports the UX journeys (add units, connect safely, table and import, redundancy and findings, delete and undo, modes, search, files, recovery, read-only).",UX.md section 3,`tests/test_gui_journeys.py`,test_gui_journeys.py,traced
-REQ-EDIT-01,Diagram edits are validated operations that compose into transactions.,SPEC Part 3 (foolproof),`tests/test_edit.py`,test_edit.py,traced
+REQ-EDIT-01,Diagram edits are validated operations that compose into transactions.,SPEC Part 3 (foolproof),`tests/test_edit.py`,test_edit.py test_edit_canvas.py,traced
 REQ-EDIT-02,"Units saved without positions get deterministic, non-overlapping ones.",UX.md section 6,`tests/test_autoplace.py`,test_autoplace.py,traced
 REQ-CHECK-01,"Logical findings state what, why and how to fix; fixes are safe; waivers need a justification.",SPEC Part 3 (DRC),`tests/test_checks.py`,test_checks.py,traced
 REQ-IMPORT-01,Imports show a per-row preview and apply as one undo step.,SPEC Part 4 (imports),"`tests/test_imports.py`, GUI import tests",test_imports.py,traced

@@ -36,7 +36,7 @@ harness templates my-templates
 
 Importing interfaces works in the app. There is no command for it. (GUI, not run: the steps are described from the program's code. The column names and messages are the program's.)
 
-1. Open the project. Choose **File > Import interfaces…** (Ctrl+Shift+I), or press **Import interfaces from CSV / XLSX…** under **Bring in data** in the palette.
+1. Open the project. Choose **File > Import > Import interfaces…** (Ctrl+Shift+I), or press **Import interfaces from CSV / XLSX…** under **Bring in data** in the **Palette** tab, or press Enter on **Interfaces** under **Imports** in the **Project** tab.
 2. Press **Open file…** and pick a `.csv` or `.xlsx` file. You can also paste CSV text into the box. Try `my-templates/interfaces.csv`:
 
 ```
@@ -167,7 +167,7 @@ row 3: ERROR 'abc' is not a length (digits with a decimal point or comma)
 Nothing was changed.
 ```
 
-To find the segment IDs, open the generated harness in the **Harness plans** tab, or look in `physical/harnesses/W001.json` under `segments`.
+To find the segment IDs, open the generated harness in the **Harness** tab, or look in `physical/harnesses/W001.json` under `segments`.
 
 ## Other imports
 

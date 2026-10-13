@@ -221,6 +221,11 @@ class History:
         return self._undo[-1].label if self._undo else None
 
     @property
+    def next_redo_label(self) -> str | None:
+        """The label of the step a redo would run again (None when there is nothing to redo)."""
+        return self._redo[-1].label if self._redo else None
+
+    @property
     def undo_blocked(self) -> str | None:
         """Why the latest step cannot be undone (it removes a saved release record), else None."""
         if not self._undo:

@@ -36,12 +36,12 @@ The tutorial `docs/GETTING_STARTED.md` is not generated, but `test_docs.py` runs
 
 | Pictures | Made by | Notes |
 | --- | --- | --- |
-| `docs/ux/qt/*.png` (the editor) | `QT_QPA_PLATFORM=offscreen python -m tools.gui_screenshots` | Takes about three seconds. A run is not repeatable to the pixel: in four runs on the machine used, none to two of the thirteen files (05, 06, 07 and 12 were seen) came out slightly different from the committed ones, so look at `git diff --stat` and keep only meaningful changes. |
-| `docs/img/flatsat-overview.png`, `flatsat-focus.png` | `QT_QPA_PLATFORM=offscreen python -m tools.flatsat_screenshots` | Came out identical to the committed files (one run). |
+| `docs/ux/qt/*.png` (the editor) | `QT_QPA_PLATFORM=offscreen python -m tools.gui_screenshots` | 26 pictures at 1440 x 900 (light theme): 01 to 13 show the built-in sample (tour, Guided and Expert, connecting, problems, import preview, delete, waiver, palette, dark theme, 150 %); 14 and up show the flatsat example (project tree and inspector, Harness, Lists, Checks, engineering values, plans out of date, export window, released locks, Releases, new revision, new project, import wizard, release dialog). The script waits for the design rule check and for messages to go away, so it takes about a minute. The project path in the status bar is a fixed folder under the system temp folder, so that runs match. In repeated runs on the machine used, 24 of the 26 files came out identical every time; 06 and 07 now and then differ by about a hundred pixels of one link route. Check `git diff --stat` and keep only meaningful changes. |
+| `docs/img/flatsat-overview.png`, `flatsat-focus.png` | `QT_QPA_PLATFORM=offscreen python -m tools.flatsat_screenshots` | The diagram only (the docks are hidden), 1600 x 1000 window, legend open. Two runs gave identical files. |
 | `docs/img/w001-drawing.png`, `docs/img/block-diagram.png` (the tutorial) | no script in the repository | They are the exported SVG sheets of the tutorial project, rendered to PNG with Qt's SVG renderer and cropped. They carry the model hash of the tutorial, so redo them when the hash changes. |
 | `docs/ux/screens/*.png` (the HTML prototype, history) | `python -m tools.ux_screenshots` (needs Playwright) | Kept as history. Do not refresh. |
 
-Pictures of the harness plans tab, the generate preview, the release window and the wire colours window do not exist yet.
+There are no pictures of the older Harness plans tab, the generate preview and the wire colours window.
 
 ## Add or change a page
 

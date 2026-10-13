@@ -28,8 +28,15 @@ class _Highlight(QWidget):
 
 
 class Tour:
-    def __init__(self, window: QWidget, theme: ThemeManager, targets: dict[str, QWidget]) -> None:
+    def __init__(
+        self,
+        window: QWidget,
+        theme: ThemeManager,
+        targets: dict[str, QWidget],
+        reveals: dict[str, Callable[[], None]] | None = None,
+    ) -> None:
         self.window, self.theme, self.targets = window, theme, targets
+        self.reveals = reveals or {}  # what to bring to the front before a step points at it
         self.index = -1
         self.on_stop: Callable[[], None] | None = None
         self.highlight = _Highlight(window, theme)
@@ -107,6 +114,8 @@ class Tour:
             return
         self.index = i
         key, text = steps[i]
+        if key in self.reveals:
+            self.reveals[key]()
         target = self.targets[key]
         self.title.setText(f"<b>{strings.TOUR_STEP.format(shown.index(i) + 1, len(shown))}</b>")
         self.text.setText(text)

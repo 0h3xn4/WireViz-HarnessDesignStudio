@@ -23,6 +23,23 @@ def test_execute_undo_redo_restores_exact_state() -> None:
     assert h.redo() == "add unit" and model_hash(p) == after
 
 
+def test_next_redo_label_names_the_step_redo_would_run() -> None:
+    p = mini3()
+    h = History(p)
+    assert h.next_redo_label is None
+    h.execute("a", [Put("units", Unit(id="A1", name="n", subsystem="s"))])
+    h.execute("b", [Put("units", Unit(id="B1", name="n", subsystem="s"))])
+    assert h.next_redo_label is None
+    h.undo()
+    assert h.next_redo_label == "b"
+    h.undo()
+    assert h.next_redo_label == "a"  # the next redo is the step undone last
+    h.redo()
+    assert h.next_redo_label == "b"
+    h.execute("c", [Put("units", Unit(id="C1", name="n", subsystem="s"))])
+    assert h.next_redo_label is None
+
+
 def test_new_change_clears_redo() -> None:
     p = mini3()
     h = History(p)

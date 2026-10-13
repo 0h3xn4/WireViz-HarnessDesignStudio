@@ -39,7 +39,7 @@ from harness_design_studio.gui.dialogs import (  # noqa: E402
     ImportDialog,
     IssuesDialog,
 )
-from tests.gui_helpers import DialogScript, make_window  # noqa: E402
+from tests.gui_helpers import DialogScript, make_window, new_project_answers  # noqa: E402
 
 
 @pytest.fixture
@@ -74,24 +74,23 @@ def _fail(*_a: object) -> int:
 
 @pytest.mark.parametrize("name", ["N" * 300, "bad\x07name"])
 def test_new_project_with_an_invalid_name_says_so(win, tmp_path, name) -> None:  # type: ignore[no-untyped-def]
+    # the standard: one dialog that says what is wrong next to the field and never creates anything
     folder = tmp_path / "new"
-    win.ask_folder = lambda _t: str(folder)
-    win.ask_text = lambda _t, _l, _d: name
+    shown = new_project_answers(win, folder, name)
     win.new_project_flow()
     assert not (folder / "project.json").exists()
-    shown = win.toasts.messages[-1]
-    assert shown and "validation error" not in shown and "Traceback" not in shown
+    problem = shown[0].errors()["name"]  # type: ignore[attr-defined]
+    assert problem and "validation error" not in problem and "Traceback" not in problem
+    assert not shown[0].ok.isEnabled()  # type: ignore[attr-defined]
 
 
 def test_new_example_with_an_invalid_name_says_so(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
     folder = tmp_path / "ex"
-    win.ask_choice = lambda _t, _x, _b: 0
-    win.ask_folder = lambda _t: str(folder)
-    win.ask_text = lambda _t, _l, _d: "N" * 300
     assert TEMPLATES
+    shown = new_project_answers(win, folder, "N" * 300, template=TEMPLATES[0].name)
     win.new_from_example_flow()
     assert not (folder / "project.json").exists()
-    assert "validation error" not in win.toasts.messages[-1]
+    assert "validation error" not in shown[0].errors()["name"]  # type: ignore[attr-defined]
 
 
 # ---- F1-11: the import dialog never keeps an old plan --------------------------------------------

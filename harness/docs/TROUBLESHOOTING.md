@@ -106,7 +106,7 @@ and then kept running until it was stopped after 15 seconds. To check a source i
 
 ### The window is blank, tiny, or closes at once
 
-Run `harness-design-studio --selftest` in a terminal (packaged install) and read the message; if it names `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. If the window is tiny or the text too small, use **View > UI scale**. The settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini`; delete it to reset the scale, theme and last project (it holds no design data).
+Run `harness-design-studio --selftest` in a terminal (packaged install) and read the message; if it names `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. If the window is tiny or the text too small, use **View > Interface size**. The settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini`; delete it to reset the scale, theme and last project (it holds no design data).
 
 ### A banner says "Read-only: this project was saved by a newer version of the tool, or is open in another window"
 
@@ -525,7 +525,7 @@ J1: ERROR Connector RW1-J77 has no library part: set the field HarnessPart or us
 
 ### Interfaces: a row cannot be placed
 
-Importing interfaces (**File > Import interfaces...**, CSV or XLSX) is done in the app only; there is no `harness` command for it. The preview lists each row; a row that cannot be placed says why (a unit that does not exist, no free connector on a unit that can carry the type) and nothing is applied. See [`IMPORTS.md`](IMPORTS.md). The messages were not run for this page because they need the app window.
+Importing interfaces (**File > Import > Import interfaces…**, CSV or XLSX) is done in the app only; there is no `harness` command for it. The preview lists each row; a row that cannot be placed says why (a unit that does not exist, no free connector on a unit that can carry the type) and nothing is applied. See [`IMPORTS.md`](IMPORTS.md). The messages were not run for this page because they need the app window.
 
 ## Exporting
 
@@ -616,7 +616,7 @@ Other release messages:
 blocked: [no_harness] Harness W999 does not exist.
 ```
 
-(exit code 2: wrong harness ID; the IDs are in the Harness plans tab and the `outputs/` folder names.)
+(exit code 2: wrong harness ID; the IDs are in the Harness tab, the Project tree and the `outputs/` folder names.)
 
 ```
 blocked: [not_released] W003 is not released, so it can be edited directly.

@@ -969,3 +969,195 @@ def ops_set_wire_colours(project: Project, colours: dict[str, str]) -> list[Op]:
     if values == old.values:
         return []
     return [SetConfig(ConfigFile(name="generation", placeholder=old.placeholder, values=values))]
+
+
+# ---- canvas editing: layout of several units, duplicate, interface delete impact ------------------
+# (kept together at the end of the module; the GUI canvas uses these through the controller)
+
+ALIGN_MODES = ("left", "hcenter", "right", "top", "vmiddle", "bottom")
+DISTRIBUTE_AXES = ("horizontal", "vertical")
+
+
+def _half(value: float) -> float:
+    """A position rounded to half a unit of the diagram (alignments never leave odd decimals)."""
+    return round(value * 2) / 2
+
+
+def _unit_boxes(
+    project: Project, unit_ids: list[str], heights: Mapping[str, float] | None
+) -> dict[str, tuple[float, float, float]]:
+    """(x, y, height) of each named unit; the height is `heights[id]` or the unit's footprint."""
+    room = unit_footprints(project)
+    boxes: dict[str, tuple[float, float, float]] = {}
+    for uid in unit_ids:
+        _known(project.units, uid, "Unit")
+        x, y = position_of(project, uid)
+        h = heights[uid] if heights is not None and uid in heights else room[uid]
+        boxes[uid] = (x, y, h)
+    return boxes
+
+
+def _move_ops(project: Project, positions: Mapping[str, tuple[float, float]]) -> list[Op]:
+    """Ops that put each unit at its new position (and in the zone of that place); a unit that
+    stays where it is gives none."""
+    ops: list[Op] = []
+    for uid in sorted(positions):
+        x, y = positions[uid]
+        if position_of(project, uid) != (x, y) or uid not in project.placements:
+            ops += ops_move_unit(project, uid, x, y)
+    return ops
+
+
+def ops_move_units(project: Project, positions: Mapping[str, tuple[float, float]]) -> list[Op]:
+    """Move several units in one step (a drag of a selection)."""
+    for uid in positions:
+        _known(project.units, uid, "Unit")
+    return _move_ops(project, positions)
+
+
+def ops_align(
+    project: Project,
+    unit_ids: list[str],
+    mode: str,
+    heights: Mapping[str, float] | None = None,
+) -> list[Op]:
+    """Line the named units up on their left, centre or right edge, or on their top, middle or
+    bottom edge. `heights` are the heights now drawn (default: each unit's room)."""
+    if mode not in ALIGN_MODES:
+        raise EditError(f"Unknown way to align: {mode}.")
+    ids = sorted(set(unit_ids))
+    if len(ids) < 2:
+        raise EditError("Select at least two units to align them.")
+    boxes = _unit_boxes(project, ids, heights)
+    xs = [b[0] for b in boxes.values()]
+    ys = [b[1] for b in boxes.values()]
+    target: dict[str, tuple[float, float]] = {}
+    for uid, (x, y, h) in boxes.items():
+        nx, ny = x, y
+        if mode == "left":
+            nx = min(xs)
+        elif mode == "right":
+            nx = max(xs)
+        elif mode == "hcenter":
+            nx = sum(xs) / len(xs)
+        elif mode == "top":
+            ny = min(ys)
+        elif mode == "bottom":
+            ny = max(b[1] + b[2] for b in boxes.values()) - h
+        else:  # vmiddle
+            middle = sum(b[1] + b[2] / 2 for b in boxes.values()) / len(boxes)
+            ny = middle - h / 2
+        target[uid] = (_half(nx), max(0.0, _half(ny)))
+    return _move_ops(project, target)
+
+
+def ops_distribute(
+    project: Project,
+    unit_ids: list[str],
+    axis: str,
+    heights: Mapping[str, float] | None = None,
+) -> list[Op]:
+    """Space three or more units evenly between the outermost two (equal gaps between edges)."""
+    if axis not in DISTRIBUTE_AXES:
+        raise EditError(f"Unknown way to distribute: {axis}.")
+    ids = sorted(set(unit_ids))
+    if len(ids) < 3:
+        raise EditError("Select at least three units to space them evenly.")
+    boxes = _unit_boxes(project, ids, heights)
+    horizontal = axis == "horizontal"
+    order = sorted(ids, key=lambda u: (boxes[u][0] if horizontal else boxes[u][1], u))
+    size = {u: (UNIT_W if horizontal else boxes[u][2]) for u in order}
+    first = boxes[order[0]][0 if horizontal else 1]
+    last = boxes[order[-1]][0 if horizontal else 1] + size[order[-1]]
+    gap = (last - first - sum(size.values())) / (len(order) - 1)
+    if gap < 0:
+        raise EditError("The units are too close together to be spread out evenly.")
+    target: dict[str, tuple[float, float]] = {}
+    at = first
+    for uid in order:
+        x, y, _h = boxes[uid]
+        target[uid] = (_half(at), y) if horizontal else (x, _half(at))
+        at += size[uid] + gap
+    return _move_ops(project, target)
+
+
+def ops_duplicate_unit(project: Project, unit_id: str) -> tuple[list[Op], str]:
+    """A copy of a unit: the same kind of connectors, none of its links or pin assignments (those
+    belong to the original), a new ID built from the original's, placed in the same lane."""
+    import re
+
+    unit = _known(project.units, unit_id, "Unit")
+    prefix = re.sub(r"\d+$", "", unit.id) or "U"
+    new_id, _n = next_unit_id(project, prefix)
+    _check_new_id(new_id)
+    x, y = free_slot(project, unit.zone, unit_footprint(project, unit_id))
+    twin = evolve(unit, id=new_id, name=f"{unit.name} (copy)", zone=zone_of_x(project, x) or None)
+    ops: list[Op] = [Put("units", twin), Put("placements", Placement(id=new_id, x=x, y=y))]
+    taken = {c.casefold() for c in project.connectors}
+    for k, c in enumerate(unit_connectors(project, unit_id), start=1):
+        suffix = c.id.rsplit("-", 1)[-1] if "-" in c.id else f"J{k:02d}"
+        cid = f"{new_id}-{suffix}"
+        if cid.casefold() in taken:
+            raise EditError(f"Cannot copy {unit_id}: connector {cid} already exists.")
+        taken.add(cid.casefold())
+        pins = [
+            evolve(p, interface_id=None, signal=p.signal if p.locked or p.fixed else None)
+            if p.interface_id is not None
+            else p
+            for p in c.pins
+        ]
+        ops.append(Put("connectors", evolve(c, id=cid, unit_id=new_id, pins=pins)))
+    return ops, new_id
+
+
+@dataclass(frozen=True)
+class InterfaceImpact:
+    """What deleting one interface touches, for the question asked before it is done."""
+
+    ends: tuple[str, ...]  # the units at its two ends
+    type_name: str
+    plan_wires: dict[str, int]  # generated, not released harness -> wires that become outdated
+    blocked_by_harnesses: tuple[str, ...]
+
+
+def interface_impact(project: Project, interface_id: str) -> InterfaceImpact:
+    i = _known(project.interfaces, interface_id, "Interface")
+    plan: dict[str, int] = {}
+    blocked: list[str] = []
+    for h in sorted(project.harnesses.values(), key=lambda x: x.id):
+        n = sum(1 for w in h.wires if w.interface_id == interface_id)
+        if not n:
+            continue
+        if h.generated and h.status != "released":
+            plan[h.id] = n
+        else:
+            blocked.append(h.id)
+    t = project.interface_types.get(i.type_id)
+    return InterfaceImpact(
+        tuple(e.unit_id for e in i.endpoints),
+        t.name if t is not None else i.type_id,
+        plan,
+        tuple(blocked),
+    )
+
+
+def ops_delete_many(project: Project, unit_ids: list[str], interface_ids: list[str]) -> list[Op]:
+    """Delete units and interfaces in one step; an interface that goes with a unit is deleted once."""
+    ops: list[Op] = []
+    seen: set[tuple[str, str]] = set()
+
+    def add(new: list[Op]) -> None:
+        for op in new:
+            key = (op.collection, op.key if isinstance(op, Delete) else op.obj.id)  # type: ignore[union-attr]
+            if key not in seen:
+                seen.add(key)
+                ops.append(op)
+
+    gone: set[str] = set()
+    for uid in sorted(unit_ids):
+        add(ops_delete_unit(project, uid))
+        gone.update(delete_impact(project, uid).interfaces)
+    for iid in sorted(interface_ids):
+        if iid not in gone:
+            add(ops_delete_interface(project, iid))
+    return ops

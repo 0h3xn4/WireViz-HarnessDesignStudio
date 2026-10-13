@@ -45,7 +45,8 @@ def test_apply_is_one_undo_step_and_fills_the_plans_tab(win) -> None:  # type: i
     p = win.ctl.project
     assert p.harnesses and win.ctl.generation_status() == "current"
     panel = win.harness_panel
-    assert win.tabs.currentWidget() is panel
+    assert win.main_tabs.currentWidget() is win.harness_view  # the Harness tab shows the result
+    win.tabs.setCurrentWidget(panel)  # (the old plans panel refreshes when it is shown)
     assert panel.harnesses.rowCount() == len(p.harnesses)
     assert "Up to date" in panel.status.text()
     assert "0 error(s)" in panel.verify.text()
@@ -77,6 +78,7 @@ def test_explain_shows_recorded_reasons(win, qtbot) -> None:  # type: ignore[no-
     DialogScript(win, accept=True)
     win.findChild(QPushButton, "generate").click()
     panel = win.harness_panel
+    win.tabs.setCurrentWidget(panel)  # (the old plans panel refreshes when it is shown)
     panel.harnesses.selectRow(0)
     assert panel.wires.rowCount() > 0
     panel.wires.selectRow(0)
