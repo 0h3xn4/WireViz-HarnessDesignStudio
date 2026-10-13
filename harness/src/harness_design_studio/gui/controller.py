@@ -16,6 +16,7 @@ from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
 from harness_design_studio.core import checks, drc, edit
 from harness_design_studio.core.commands import Delete, History, Op, Put, SetZones, apply_ops
+from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, SaveError, TransactionError
 from harness_design_studio.core.generate.engine import GenerationPlan
 from harness_design_studio.core.generation_status import generation_status, input_hash
@@ -945,6 +946,43 @@ class EditorController(QObject):
                 why = str(exc) if isinstance(exc, HarnessError) else strings.SAVE_BAD_TEXT
                 self.message.emit(strings.AUTOSAVE_FAILED.format(why), False)
                 self.stateChanged.emit()  # the status line stops promising an autosave
+
+    # ==== Checks view support (ux/checks): added methods only, nothing above changes ==============
+
+    _rule_cache: tuple[tuple[int, int, int, int], list[by_rule.RuleResult]] | None = None
+
+    def drc_busy(self) -> bool:
+        """A check is running or about to start (the editor waits a moment after the last edit)."""
+        return self._drc_worker is not None or self._drc_timer.isActive()
+
+    def drc_has_result(self) -> bool:
+        """At least one check of this project has finished (it may be out of date)."""
+        return self._drc_token is not None
+
+    def drc_rule_results(self) -> list[by_rule.RuleResult]:
+        """One result per design rule (pass, fail, not checked, pending), grouped from the findings
+        this controller already holds, so no rule runs twice. Built once per finished check; while a
+        check is running or out of date the last finished one is returned (an empty list before
+        the first). Never computed from findings that no longer match the project."""
+        if self.drc_current:
+            key = self.findings_key()
+            if self._rule_cache is None or self._rule_cache[0] != key:
+                self._rule_cache = (key, by_rule.run_by_rule(self.project, self.findings()))
+        elif self._rule_cache is not None and self._rule_cache[0][0] != self._installs:
+            self._rule_cache = None  # another project was opened: its rules say nothing about this
+        return self._rule_cache[1] if self._rule_cache is not None else []
+
+    def check_now(self) -> None:
+        """Start the design rule check without waiting for the pause after an edit."""
+        self._drc_timer.stop()
+        self._start_drc()
+        self.drcStateChanged.emit()
+
+    def cancel_check(self) -> None:
+        """Stop the running (or scheduled) check; the results stay out of date until the next one."""
+        self._drc_timer.stop()
+        self.wait_drc()
+        self.drcStateChanged.emit()
 
 
 def reason_of(exc: BaseException) -> str:

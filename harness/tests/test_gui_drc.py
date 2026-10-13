@@ -37,10 +37,8 @@ def test_results_arrive_in_the_background(win, qtbot) -> None:  # type: ignore[n
     rules = {f.rule for f in win.ctl.findings()}
     assert "part-unapproved" in rules and "unchecked-config" in rules
     win.tabs.setCurrentWidget(win.problems)
-    assert (
-        "checked"
-        in win.problems.findChild(type(win.problems.lay.itemAt(0).widget()), "drc-state").text()
-    )
+    header = win.problems.findChild(type(win.problems.lay.itemAt(0).widget()), "drc-state").text()
+    assert "34 rules" in header and "not checked" in header and "all" not in header.lower()
 
 
 def test_editing_marks_the_check_as_running_again(win, qtbot) -> None:  # type: ignore[no-untyped-def]
