@@ -16,6 +16,12 @@ Versions follow semantic versioning. Every project file records the tool version
 - Text is 13 px at 100 % (it was 14) and follows the 12 / 13 / 16 / 20 px type scale; spacing follows 4 / 8 / 12 / 16 / 24 / 32 px; all buttons, combo boxes and fields are 32 px high.
 - Hashes, IDs, requirement IDs, pin and wire numbers and the drawing preview use IBM Plex Mono.
 - The drawing preview takes its page and background colours from the theme.
+- The diagram canvas selects several items (Shift-click, Ctrl-click, a rubber band, Ctrl+A), shows what they have in common in Properties and moves, deletes, aligns, spaces out and duplicates them as one undo step (Ctrl+D, Edit menu, right-click menu).
+- Diagram navigation: Ctrl+wheel zooms, the wheel scrolls, the middle button or Space with a drag pans; F fits, Shift+F zooms to the selection, Ctrl+0 shows 100 %; the zoom level is shown and the View menu item "UI scale" is now "Interface size".
+- Double-click or Enter on a unit or link opens it in the Harness plans (or says it is not generated yet); a right-click menu offers the same actions as the menus, with the reason for each greyed entry, and "Add unit here"; Ctrl+F finds and marks units and links.
+- The legend is an overlay you can fold or hide (View > Show legend) and lists only what the diagram uses; the overview map can be dragged and is smaller or hidden in a small window; a grid and View > Snap to grid (Alt places freely); unit names stay readable when zoomed out.
+- Deleting an interface asks first and names both ends and the harness wires it affects; the Delete key works only from the diagram and the tables; a read-only project says why a drag, Delete or arrange did nothing.
+- Arrange diagram has a shortcut (Ctrl+Shift+L) and a toolbar button, and big diagrams are arranged in the background; dragging a unit among many is smooth (straight lines while dragging, routes on release); a click on a link label selects its own link.
 - The editor window and the taskbar entry now show the Harness Design Studio logo (drawn in code, so the packaged program needs no SVG support).
 
 ### Fixed

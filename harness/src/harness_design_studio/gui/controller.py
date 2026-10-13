@@ -6,7 +6,7 @@ small `Delta` so they redraw only what changed.
 """
 
 import json
-from collections.abc import Callable
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -115,6 +115,7 @@ class EditorController(QObject):
     drcChanged = Signal()  # new design rule results arrived
     drcStateChanged = Signal()  # checking started or finished
     marksChanged = Signal()  # diff marks on the diagram changed
+    openRequested = Signal(str, str)  # kind ("unit" | "interface"), id: show it in the plans view
 
     def __init__(
         self, journal_delay_ms: int = JOURNAL_DELAY_MS, drc_delay_ms: int = DRC_DELAY_MS
@@ -125,7 +126,8 @@ class EditorController(QObject):
         self.root: Path | None = None
         self.sample = False
         self.mode = "guided"
-        self.selection: Selection | None = None
+        self._selected: tuple[Selection, ...] = ()  # everything selected, in the order picked
+        self._primary: Selection | None = None  # the one the panels show (the last one picked)
         self.tool = "select"
         self.connect_type: str | None = None
         self.connect_from: ConnectFrom | None = None
@@ -380,9 +382,7 @@ class EditorController(QObject):
         self._owners, self._ends = before or ({}, {})
         self._clear_stale_connect()
         delta = self._delta_of(ops)
-        if self.selection and not self._selection_exists():
-            self.selection = None
-            self.selectionChanged.emit()
+        self._prune_selection()
         self.changed.emit(delta)
         self.stateChanged.emit()
         self._schedule_journal()
@@ -395,10 +395,16 @@ class EditorController(QObject):
             self.connect_from = None
             self.connectChanged.emit()
 
-    def _selection_exists(self) -> bool:
-        s = self.selection
-        if s is None:
-            return False
+    def _prune_selection(self) -> None:
+        """Forget selected items the edit removed (the primary one moves to the last that is left)."""
+        if not self._selected:
+            return
+        kept = tuple(s for s in self._selected if self._exists(s))
+        if kept != self._selected:
+            primary = self._primary if self._primary in kept else (kept[-1] if kept else None)
+            self._set_selection(kept, primary)
+
+    def _exists(self, s: Selection) -> bool:
         return s.id in (self.project.units if s.kind == "unit" else self.project.interfaces)
 
     def _delta_of(self, ops: list[Op]) -> Delta:
@@ -437,11 +443,90 @@ class EditorController(QObject):
 
     # ---- selection and connect tool ---------------------------------------------------------
 
+    @property
+    def selection(self) -> Selection | None:
+        """The primary selected item (the one picked last), or None. With several items selected
+        the others are in `selected`."""
+        return self._primary
+
+    @selection.setter
+    def selection(self, value: Selection | None) -> None:
+        # (silent: callers that assign emit selectionChanged themselves)
+        self._selected = () if value is None else (value,)
+        self._primary = value
+
+    @property
+    def selected(self) -> tuple[Selection, ...]:
+        """Every selected item, in the order they were picked; the primary one is last."""
+        return self._selected
+
+    def selected_ids(self, kind: str) -> list[str]:
+        return [s.id for s in self._selected if s.kind == kind]
+
+    def is_selected(self, kind: str, id_: str) -> bool:
+        return any(s.kind == kind and s.id == id_ for s in self._selected)
+
     def select(self, kind: str | None, id_: str | None = None) -> None:
+        """Select one item, replacing any selection (None clears it)."""
         new = Selection(kind, id_) if kind and id_ else None
-        if new != self.selection:
-            self.selection = new
+        if new is None:
+            self._set_selection((), None)
+        else:
+            self._set_selection((new,), new)
+
+    def select_many(
+        self,
+        items: Iterable[tuple[str, str] | Selection],
+        *,
+        primary: tuple[str, str] | Selection | None = None,
+        add: bool = False,
+    ) -> None:
+        """Select several items at once (`add` keeps what is selected). The primary item is the
+        last one given unless `primary` names one."""
+        chosen: list[Selection] = list(self._selected) if add else []
+        for item in items:
+            sel = item if isinstance(item, Selection) else Selection(*item)
+            if sel not in chosen:
+                chosen.append(sel)
+        if primary is not None:
+            head = primary if isinstance(primary, Selection) else Selection(*primary)
+            if head in chosen:
+                chosen.remove(head)
+            chosen.append(head)
+        self._set_selection(tuple(chosen), chosen[-1] if chosen else None)
+
+    def toggle(self, kind: str, id_: str) -> None:
+        """Add the item to the selection, or take it out if it is already in (Ctrl+click)."""
+        sel = Selection(kind, id_)
+        if sel in self._selected:
+            rest = tuple(s for s in self._selected if s != sel)
+            primary = self._primary if self._primary != sel else (rest[-1] if rest else None)
+            self._set_selection(rest, primary)
+        else:
+            self._set_selection((*self._selected, sel), sel)
+
+    def select_all(self) -> None:
+        """Every unit and every interface."""
+        p = self.project
+        self.select_many(
+            [
+                *(("unit", u) for u in sorted(p.units)),
+                *(("interface", i) for i in sorted(p.interfaces)),
+            ]
+        )
+
+    def _set_selection(self, items: tuple[Selection, ...], primary: Selection | None) -> None:
+        if items != self._selected or primary != self._primary:
+            self._selected, self._primary = items, primary
             self.selectionChanged.emit()
+
+    def request_open(self, kind: str, id_: str) -> None:
+        """Ask the window to show a unit or link in the harness plans (double-click, Enter)."""
+        self.openRequested.emit(kind, id_)
+
+    def refuse_read_only(self) -> None:
+        """Say why an edit did nothing (a read-only project refuses edits)."""
+        self.message.emit(strings.READ_ONLY_REFUSAL, False)
 
     def begin_connect(self, type_id: str | None) -> None:
         if type_id is not None and type_id not in self.project.interface_types:
@@ -556,19 +641,90 @@ class EditorController(QObject):
         return edit.delete_impact(self.project, unit_id)
 
     def delete_selected(self) -> bool:
-        s = self.selection
-        if s is None:
+        """Delete everything selected as one undoable step."""
+        chosen = self._selected
+        if not chosen:
             return False
-        if s.kind == "unit":
-            return self.attempt(
-                strings.STEP_DELETE.format(s.id),
-                lambda: edit.ops_delete_unit(self.project, s.id),
-                message=strings.DELETED.format(s.id),
-            )
+        units, links = self.selected_ids("unit"), self.selected_ids("interface")
+        if len(chosen) == 1:
+            only = chosen[0]
+            label, message = strings.STEP_DELETE.format(only.id), strings.DELETED.format(only.id)
+        else:
+            label = strings.STEP_DELETE_MANY.format(len(chosen))
+            message = strings.DELETED_MANY.format(len(chosen))
         return self.attempt(
-            strings.STEP_DELETE.format(s.id),
-            lambda: edit.ops_delete_interface(self.project, s.id),
-            message=strings.DELETED.format(s.id),
+            label, lambda: edit.ops_delete_many(self.project, units, links), message=message
+        )
+
+    def move_units(self, positions: Mapping[str, tuple[float, float]]) -> bool:
+        """Move several units in one undoable step."""
+        if len(positions) == 1:
+            ((uid, (x, y)),) = positions.items()
+            self.move_unit(uid, x, y)
+            return True
+        return self.attempt(
+            strings.STEP_MOVE_MANY.format(len(positions)),
+            lambda: edit.ops_move_units(self.project, positions),
+        )
+
+    def align_selected(self, mode: str, heights: Mapping[str, float] | None = None) -> bool:
+        units = self.selected_ids("unit")
+        return self.attempt(
+            strings.STEP_ALIGN,
+            lambda: edit.ops_align(self.project, units, mode, heights),
+        )
+
+    def distribute_selected(self, axis: str, heights: Mapping[str, float] | None = None) -> bool:
+        units = self.selected_ids("unit")
+        return self.attempt(
+            strings.STEP_DISTRIBUTE,
+            lambda: edit.ops_distribute(self.project, units, axis, heights),
+        )
+
+    def duplicate_selected(self) -> list[str]:
+        """Copy every selected unit (one undo step) and select the copies. Returns their IDs."""
+        units = self.selected_ids("unit")
+        if not units:
+            return []
+        ops: list[Op] = []
+        made: list[str] = []
+        scratch = self.project
+        try:
+            for uid in units:
+                new_ops, new_id = edit.ops_duplicate_unit(scratch, uid)
+                ops += new_ops
+                made.append(new_id)
+                scratch = edit.clone_with(scratch, new_ops)  # the next copy sees this one
+        except HarnessError as exc:
+            self.message.emit(str(exc), False)
+            return []
+        label = (
+            strings.STEP_DUPLICATE.format(units[0])
+            if len(units) == 1
+            else strings.STEP_DUPLICATE_MANY.format(len(units))
+        )
+        if not self.run(label, ops, message=strings.DUPLICATED.format(", ".join(made))):
+            return []
+        self.select_many([("unit", m) for m in made])
+        return made
+
+    def update_units(self, unit_ids: Iterable[str], **changes: object) -> bool:
+        """Change the same plain fields of several units in one undoable step."""
+        ids = sorted(unit_ids)
+        return self.attempt(
+            strings.STEP_EDIT_MANY.format(len(ids)),
+            lambda: [
+                op for uid in ids for op in edit.ops_update_unit(self.project, uid, **changes)
+            ],
+        )
+
+    def update_interfaces(self, interface_ids: Iterable[str], **changes: object) -> bool:
+        ids = sorted(interface_ids)
+        return self.attempt(
+            strings.STEP_EDIT_MANY.format(len(ids)),
+            lambda: [
+                op for iid in ids for op in edit.ops_update_interface(self.project, iid, **changes)
+            ],
         )
 
     def move_unit(self, unit_id: str, x: float, y: float) -> None:
@@ -630,10 +786,11 @@ class EditorController(QObject):
         except Exception as exc:
             self.message.emit(_plain(exc), False)
             return False
-        was_selected = self.selection is not None and self.selection.id == old
+        was_selected = self.is_selected("unit", old)
         ok = self.run(strings.STEP_RENAME.format(old), ops)
         if ok and was_selected:
-            self.select("unit", new)
+            others = [s for s in self._selected if s != Selection("unit", old)]
+            self.select_many([*others, Selection("unit", new)])
         return ok
 
     def update_unit(self, unit_id: str, **changes: object) -> bool:

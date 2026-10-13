@@ -300,8 +300,18 @@ def parse_optional_float(text: str) -> tuple[float | None, str]:
     return value, ""
 
 
+_DIFFERENT = object()  # the selected items hold different values of a field
+
+
+def _common(values: list[object]) -> object:
+    """The value all items share, or _DIFFERENT."""
+    first = values[0]
+    return first if all(v == first for v in values) else _DIFFERENT
+
+
 class PropertiesPanel(QScrollArea):
     confirmRequested = Signal(str)
+    deleteRequested = Signal()  # the Delete selection button of the several-items form
 
     def __init__(self, ctl: EditorController, theme: ThemeManager) -> None:
         super().__init__()
@@ -326,6 +336,15 @@ class PropertiesPanel(QScrollArea):
     def _changed(self, delta: Delta) -> None:
         s = self.ctl.selection
         if s is None:
+            return
+        if len(self.ctl.selected) > 1:
+            touched = any(
+                sel.id in (delta.units if sel.kind == "unit" else delta.interfaces)
+                for sel in self.ctl.selected
+            )
+            focus = self.body.focusWidget()
+            if (touched or delta.full) and not isinstance(focus, QLineEdit | QPlainTextEdit):
+                self.rebuild()
             return
         if (
             (s.kind == "unit" and (s.id in delta.units or self._links_changed(s.id, delta)))
@@ -354,6 +373,12 @@ class PropertiesPanel(QScrollArea):
         self.fields.clear()
         s = self.ctl.selection
         p = self.ctl.project
+        if len(self.ctl.selected) > 1:
+            self._touching = set()
+            self._multi_form()
+            self.lay.addStretch(1)
+            self._state()
+            return
         self._touching = (
             {i.id for i in p.interfaces.values() if any(e.unit_id == s.id for e in i.endpoints)}
             if s is not None and s.kind == "unit"
@@ -375,6 +400,119 @@ class PropertiesPanel(QScrollArea):
     def _editable(self, w: QWidget) -> QWidget:
         w.setProperty("editable", True)
         return w
+
+    # several items -----------------------------------------------------------------------------
+    def _multi_form(self) -> None:
+        """What the selected items have in common, editable at once (one undo step)."""
+        ctl, p = self.ctl, self.ctl.project
+        units = [u for u in ctl.selected_ids("unit") if u in p.units]
+        links = [i for i in ctl.selected_ids("interface") if i in p.interfaces]
+        self.lay.addWidget(heading(strings.MULTI_HEAD))
+        if units and links:
+            count = strings.MULTI_MIXED.format(len(units), len(links))
+        elif units:
+            count = strings.MULTI_UNITS.format(len(units))
+        else:
+            count = strings.MULTI_LINKS.format(len(links))
+        title = QLabel(f"<b>{count}</b>")
+        title.setObjectName("multi-count")
+        self.lay.addWidget(title)
+        ids = [*units, *links]
+        shown = ", ".join(ids[:12]) + (
+            f" {strings.AND_MORE.format(len(ids) - 12)}" if len(ids) > 12 else ""
+        )
+        listing = muted(shown)
+        listing.setObjectName("multi-ids")
+        self.lay.addWidget(listing)
+        self.lay.addWidget(muted(strings.MULTI_HELP))
+        if units:
+            self.lay.addWidget(heading(strings.UNIT))
+            self.lay.addWidget(muted(strings.FIELD_CHAIN))
+            self._multi_choice(
+                "unit-side", ["nominal", "redundant", "none"],
+                _common([p.units[u].side for u in units]),
+                lambda text: ctl.update_units(units, side=text),
+            )  # fmt: skip
+        if links:
+            self.lay.addWidget(heading(strings.INTERFACE))
+            self.lay.addWidget(muted(strings.FIELD_CHAIN))
+            self._multi_choice(
+                "if-chain", ["nominal", "redundant", "none"],
+                _common([p.interfaces[i].redundancy for i in links]),
+                lambda text: ctl.update_interfaces(links, redundancy=text),
+            )  # fmt: skip
+            for key, label in (
+                ("max_current_a", strings.FIELD_MAX_A),
+                ("voltage_v", strings.FIELD_VOLTAGE),
+            ):
+                self._multi_number(links, key, label)
+            self._multi_text(links, "requirement_id", strings.FIELD_REQUIREMENT)
+        delete = QPushButton(strings.MULTI_DELETE)
+        delete.setObjectName("multi-delete")
+        delete.setProperty("danger", True)
+        delete.setToolTip(strings.DELETE_TIP)
+        delete.clicked.connect(self.deleteRequested)
+        self._editable(delete)
+        self.lay.addWidget(delete)
+
+    def _multi_choice(
+        self, name: str, choices: list[str], common: object, apply: Callable[[str], object]
+    ) -> None:
+        box = QComboBox()
+        box.setObjectName(name)
+        box.setAccessibleName(strings.FIELD_CHAIN)
+        if common is _DIFFERENT:
+            box.addItem(strings.MULTI_DIFFERENT)
+        box.addItems(choices)
+        if common is not _DIFFERENT:
+            box.setCurrentText(str(common))
+        box.activated.connect(
+            lambda _i: apply(box.currentText()) if box.currentText() in choices else None
+        )
+        self._editable(box)
+        self.lay.addWidget(box)
+
+    def _multi_text(self, links: list[str], key: str, label: str) -> None:
+        p = self.ctl.project
+        common = _common([getattr(p.interfaces[i], key) for i in links])
+        field = _Field(label, "" if common is _DIFFERENT else str(common or ""))
+        if common is _DIFFERENT:
+            field.edit.setPlaceholderText(strings.MULTI_DIFFERENT)
+        self._editable(field.edit)
+        self.fields[f"multi-{key}"] = field.edit
+
+        def commit() -> None:
+            text = field.edit.text().strip()
+            if common is _DIFFERENT and not text:
+                return  # left alone: the values stay different
+            if text != str(common or ""):
+                self.ctl.update_interfaces(links, **{key: text or None})
+
+        field.edit.editingFinished.connect(commit)
+        self.lay.addWidget(field)
+
+    def _multi_number(self, links: list[str], key: str, label: str) -> None:
+        p = self.ctl.project
+        common = _common([getattr(p.interfaces[i], key) for i in links])
+        field = _Field(label, "" if common is _DIFFERENT else format_number(common))  # type: ignore[arg-type]
+        if common is _DIFFERENT:
+            field.edit.setPlaceholderText(strings.MULTI_DIFFERENT)
+        self._editable(field.edit)
+        self.fields[f"multi-{key}"] = field.edit
+
+        def commit() -> None:
+            text = field.edit.text()
+            if common is _DIFFERENT and not text.strip():
+                return
+            value, error = parse_optional_float(text)
+            field.show_error(error)
+            if error:
+                return
+            if common is _DIFFERENT or value != common:
+                self.ctl.update_interfaces(links, **{key: value})
+
+        field.edit.editingFinished.connect(commit)
+        self.lay.addWidget(field)
 
     # unit ---------------------------------------------------------------------------------------
     def _unit_form(self, uid: str) -> None:
@@ -1287,6 +1425,15 @@ class HarnessPanel(QWidget):
                 self.harnesses.selectRow(r)
                 return
 
+    def select_wire(self, wire_id: str) -> None:
+        """Select a wire of the harness now shown (the diagram's double-click lands here)."""
+        for r in range(self.wires.rowCount()):
+            item = self.wires.item(r, 0)
+            if item is not None and item.text() == wire_id:
+                self.wires.selectRow(r)
+                self.wires.scrollToItem(item)
+                return
+
     def selected_harness(self) -> str | None:
         rows = self.harnesses.selectionModel().selectedRows()
         item = self.harnesses.item(rows[0].row(), 0) if rows else None
@@ -1392,6 +1539,7 @@ class OutlinePanel(QWidget):
         self.tree.setHeaderHidden(True)
         self.tree.setAccessibleName(strings.OUTLINE)
         self.tree.setAccessibleDescription(strings.OUTLINE_HELP)
+        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         lay.addWidget(self.tree)
         self._dirty = True
         self._syncing = False
@@ -1445,8 +1593,9 @@ class OutlinePanel(QWidget):
             return
         items = self.tree.selectedItems()
         if items:
-            kind, ident = items[0].data(0, Qt.ItemDataRole.UserRole)
-            self.ctl.select(kind, ident)
+            self.ctl.select_many([tuple(i.data(0, Qt.ItemDataRole.UserRole)) for i in items])
+        elif self.ctl.selected:  # a row clicked away
+            self.ctl.select(None)
 
     def _select_current(self) -> None:
         sel = self.ctl.selection
@@ -1457,6 +1606,7 @@ class OutlinePanel(QWidget):
             return
         if not self.isVisible():
             return
+        wanted = {(s.kind, s.id) for s in self.ctl.selected}
         self._syncing = True
         self.tree.clearSelection()
         for k in range(self.tree.topLevelItemCount()):
@@ -1464,12 +1614,11 @@ class OutlinePanel(QWidget):
             if node is None:
                 continue
             for item in (node, *(node.child(c) for c in range(node.childCount()))):
-                if item is not None and item.data(0, Qt.ItemDataRole.UserRole) == (
-                    sel.kind,
-                    sel.id,
-                ):
+                if item is None:
+                    continue
+                key = tuple(item.data(0, Qt.ItemDataRole.UserRole))
+                if key in wanted:
                     item.setSelected(True)
-                    self.tree.scrollToItem(item)
-                    self._syncing = False
-                    return
+                    if key == (sel.kind, sel.id):
+                        self.tree.scrollToItem(item)
         self._syncing = False

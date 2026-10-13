@@ -74,7 +74,8 @@ def test_j2_empty_state_and_adding_units(win) -> None:  # type: ignore[no-untype
     win.ctl._install(new_project(), None, None)  # an empty project
     assert win.view.empty.isVisible() and "Add your first unit" in win.view.empty.text()
     button(win, "add-computer").click()
-    assert not win.view.empty.isVisible() and "OBC1" in win.ctl.project.units
+    # the "diagram is empty" words go; a diagram of units without links says what comes next
+    assert "Add your first unit" not in win.view.empty.text() and "OBC1" in win.ctl.project.units
     assert win.ctl.selection and win.ctl.selection.id == "OBC1"
 
 
@@ -402,7 +403,12 @@ def test_j6_deleting_a_unit_with_harness_wires_is_refused_with_reason(win) -> No
 def test_delete_key_and_interface_selection(win) -> None:  # type: ignore[no-untyped-def]
     click_link(win, "IF-TM-RW1")
     assert win.ctl.selection and win.ctl.selection.kind == "interface"
+    seen: list[str] = []
+    DialogScript(
+        win, lambda d: seen.append(d.body.text()), accept=True
+    )  # deleting a link asks first
     win.act_delete.trigger()
+    assert "OBC" in seen[0] and "RW1" in seen[0]  # it names both ends
     assert "IF-TM-RW1" not in win.ctl.project.interfaces
 
 

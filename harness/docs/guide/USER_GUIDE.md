@@ -210,11 +210,16 @@ Example files for every one of these are in the templates folder (`harness templ
 | Ctrl+Q | quit |
 | Ctrl+K | command palette: type a command or an ID |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | undo, redo |
-| Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, out, fit |
+| Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, zoom out, real size (100 %) |
+| F, Shift+F | fit the whole diagram, zoom to the selection (when the diagram has the keyboard focus) |
+| Ctrl+wheel | zoom at the pointer; the wheel alone scrolls (Shift+wheel sideways); middle button or Space and drag pan |
+| Ctrl+A, Ctrl+D, Ctrl+F | select everything, duplicate the selected units, find in the diagram (in the diagram) |
+| Ctrl+Shift+L | arrange the diagram |
 | C, Esc | start the Connect tool, back to Select (Esc also clears the selection) |
-| Tab, Enter or Space | move between units and links, select |
-| Shift+arrows | move the selected unit |
-| Delete | delete the selected item (after showing what it affects) |
+| Tab, Enter or Space | move between units and links; Space selects, Enter also shows the item in the harness plans |
+| Shift+click, Ctrl+click, drag on the background | add to the selection, take out of it, rubber band |
+| Shift+arrows | move the selected units |
+| Delete | delete the selected items (after showing what it affects; only in the diagram and the tables) |
 | F1 | this guide |
 
 Every command is in a menu. The keys above are shown next to the items.
@@ -229,7 +234,8 @@ Every command is in a menu. The keys above are shown next to the items.
 | File | Import interfaces… (Ctrl+Shift+I) | imports interfaces from a CSV or XLSX table (section 12) |
 | File | Quit (Ctrl+Q) | closes the app |
 | Edit | Undo, Redo | steps back and forward through your changes |
-| Edit | Delete | deletes the selected unit or link, after showing what else goes with it |
+| Edit | Delete | deletes the selected units and links, after showing what else goes with it |
+| Edit | Select all, Duplicate, Align, Space evenly, Find in diagram | work on several units at once; Duplicate copies a unit with its connectors but not its links |
 | Edit | Create redundant copy | builds a redundant (backup) copy of the selected unit and its chain |
 | Edit | Add zone… | adds a lane to the diagram; asks for its name |
 | Edit | Wire colours... | chooses the wire colour of each signal (section 7) |
@@ -239,8 +245,9 @@ Every command is in a menu. The keys above are shown next to the items.
 | View | Dark theme | switches the colours between light and dark |
 | View | Show overview map | shows or hides the small map of the whole diagram |
 | View | Show all link labels | shows the values (such as `28 V · 5 A`) on every link, not only on the selected one |
-| View | UI scale | makes text and controls larger: 100, 125, 150 or 200 % |
-| View | Zoom in, Zoom out, Fit | zooms the diagram (Ctrl+=, Ctrl+-, Ctrl+0) |
+| View | Interface size | makes text and controls larger: 100, 125, 150 or 200 % |
+| View | Show legend, Snap to grid | shows the key to the pictures; makes units land on the 10-unit grid (hold Alt while dragging to place freely) |
+| View | Zoom in, Zoom out, Fit all, Zoom to 100 %, Zoom to selection | zooms the diagram (Ctrl+=, Ctrl+-, F, Ctrl+0, Shift+F) |
 | View | Arrange diagram | tidies the units inside their lanes; Undo restores them |
 | View | Palette, Properties, Problems and status | shows or hides each panel |
 | Help | User guide (F1) | opens this guide |

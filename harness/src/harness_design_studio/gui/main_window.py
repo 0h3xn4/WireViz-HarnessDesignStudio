@@ -40,6 +40,7 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio import __version__
 from harness_design_studio.core import drc, edit
+from harness_design_studio.core.commands import Op
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError
 from harness_design_studio.core.generate.engine import (
     GenerationCancelled,
@@ -65,7 +66,7 @@ from harness_design_studio.core.vcs.release import (
 from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, working_diff
 from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import strings
-from harness_design_studio.gui.canvas import DiagramView
+from harness_design_studio.gui.canvas import DiagramView, ZoomIndicator
 from harness_design_studio.gui.controller import (
     LIST_DELAY_MS,
     Delta,
@@ -91,7 +92,6 @@ from harness_design_studio.gui.dialogs import (
     WireColoursDialog,
 )
 from harness_design_studio.gui.icons import icon, icon_button, style_dock_buttons, tooltip_text
-from harness_design_studio.gui.legend import LegendBar
 from harness_design_studio.gui.panels import (
     HarnessPanel,
     InterfaceTable,
@@ -108,6 +108,7 @@ from harness_design_studio.gui.tour import Tour
 from harness_design_studio.resources import guide_path
 
 SCALES = (100, 125, 150, 200)
+ARRANGE_IN_WORKER = 60  # a diagram with more units is arranged off the UI thread
 
 
 def _exec(dialog: QDialog) -> int:
@@ -144,6 +145,27 @@ class PlanWorker(QThread):
             self.plan = None
         except Exception as exc:  # shown as the reason, never as "cancelled"
             self.plan = None
+            self.error = reason_of(exc)
+
+
+class ArrangeWorker(QThread):
+    """Works out the tidy layout of a big diagram off the UI thread (it has no way to stop early)."""
+
+    progressed = Signal(float, str)
+
+    def __init__(self, project: Project) -> None:
+        super().__init__()
+        self._project = project
+        self.ops: list[Op] | None = None
+        self.error: str | None = None
+
+    def cancel(self) -> None:
+        return  # (the layout is one calculation; its result is simply not used)
+
+    def run(self) -> None:
+        try:
+            self.ops = edit.ops_arrange(self._project)
+        except Exception as exc:  # shown as the reason
             self.error = reason_of(exc)
 
 
@@ -198,11 +220,16 @@ class ToastHost(QWidget):
         self.hide()
 
     def show_message(
-        self, text: str, undo: Callable[[], None] | None = None, ms: int = 5000
+        self,
+        text: str,
+        undo: Callable[[], None] | None = None,
+        ms: int = 5000,
+        *,
+        action: tuple[str, Callable[[], None]] | None = None,
     ) -> None:
         self.messages.append(text)
         self._frames = [f for f in self._frames if self._alive(f[0])]
-        if undo is None and any(t == text for _f, t, _u in self._frames):
+        if undo is None and action is None and any(t == text for _f, t, _u in self._frames):
             return  # the same message is already showing (one with a new Undo replaces the old)
         if undo is not None:  # an older Undo would now undo the wrong thing
             for frame, _t, has_undo in list(self._frames):
@@ -232,6 +259,17 @@ class ToastHost(QWidget):
 
             b.clicked.connect(do)
             row.addWidget(b)
+        if action is not None:  # one more button that does something about the message
+            act_b = QPushButton(action[0])
+            act_b.setObjectName("toast-action")
+            act_b.setAccessibleName(action[0])
+
+            def act_do() -> None:
+                self._remove(frame)
+                action[1]()
+
+            act_b.clicked.connect(act_do)
+            row.addWidget(act_b)
         close = QPushButton("×")
         close.setObjectName("toast-close")
         close.setFlat(True)
@@ -322,6 +360,8 @@ class MainWindow(QMainWindow):
         self.ctl.stateChanged.connect(self._on_state)
         self.ctl.changed.connect(self._on_changed)
         self.ctl.selectionChanged.connect(self._on_selection)
+        self.ctl.openRequested.connect(self._open_requested)
+        self.props.deleteRequested.connect(self.delete_flow)
         self.ctl.connectChanged.connect(self._on_connect)
         self.ctl.modeChanged.connect(self._on_mode)
         self.palette_panel.addUnit.connect(self._add_unit)
@@ -392,10 +432,13 @@ class MainWindow(QMainWindow):
         self.zoom_out_btn = QToolButton()
         icon_button(self.zoom_out_btn, "zoom-out", self.theme, strings.ZOOM_OUT, "Ctrl+-")
         self.fit_btn = QToolButton()
-        icon_button(self.fit_btn, "fit", self.theme, strings.FIT, "Ctrl+0", text=strings.FIT)
+        icon_button(self.fit_btn, "fit", self.theme, strings.FIT, "F", text=strings.FIT)
         bar.addWidget(self.tool_select)
         bar.addWidget(self.tool_connect)
         bar.addWidget(self.hint, 1)
+        self.view = DiagramView(self.ctl, self.theme)
+        self.view.setObjectName("diagram")
+        self.zoom_level = ZoomIndicator(self.view)  # "100 %"; View.zoomChanged(float) feeds it
         for w in (
             self.redundant_btn,
             self.delete_btn,
@@ -405,17 +448,12 @@ class MainWindow(QMainWindow):
         ):
             bar.addWidget(w)
         lay.addLayout(bar)
-        self.view = DiagramView(self.ctl, self.theme)
-        self.view.setObjectName("diagram")
         self.zoom_in_btn.clicked.connect(lambda: self.view.zoom_by(1.2))
         self.zoom_out_btn.clicked.connect(lambda: self.view.zoom_by(1 / 1.2))
-        self.fit_btn.clicked.connect(self.view.fit)
+        self.fit_btn.clicked.connect(lambda _c=False: self.view.fit())
         lay.addWidget(self.view, 1)
-        self.legend = LegendBar(self.theme)
-        lay.addWidget(self.legend)
+        self.legend = self.view.legend.bar  # (the key is an overlay of the view now)
         self.setCentralWidget(centre)
-        self.ctl.changed.connect(lambda _d=None: self.legend.set_project(self.ctl.project))
-        self.legend.set_project(self.ctl.project)
 
     def _build_docks(self) -> None:
         self.palette_panel = PalettePanel(self.ctl, self.theme)
@@ -480,6 +518,7 @@ class MainWindow(QMainWindow):
         for w in (self.status_saved, self.status_sel, self.status_counts, self.status_hash):
             sb.addWidget(w)
             w.setContentsMargins(self.theme.space(8), 0, self.theme.space(8), 0)
+        sb.addPermanentWidget(self.zoom_level)  # "100 %" (the view's zoomChanged feeds it)
 
     # ---- actions -------------------------------------------------------------------------------
     def _act(
@@ -490,16 +529,23 @@ class MainWindow(QMainWindow):
         *,
         checkable: bool = False,
         name: str = "",
+        only_in: tuple[QWidget, ...] = (),
     ) -> QAction:
+        """An action on the window. With `only_in`, the shortcut works only while one of those
+        widgets has the keyboard focus (so a bare F or Delete cannot act from another panel)."""
         a = QAction(text, self)
         if name:
             a.setObjectName(name)
         if shortcut is not None:
             a.setShortcut(QKeySequence(shortcut))
-            a.setShortcutContext(Qt.ShortcutContext.WindowShortcut)
+            a.setShortcutContext(
+                Qt.ShortcutContext.WidgetShortcut if only_in else Qt.ShortcutContext.WindowShortcut
+            )
         a.setCheckable(checkable)
         a.triggered.connect(lambda _c=False: slot())
         self.addAction(a)
+        for widget in only_in:
+            widget.addAction(a)
         return a
 
     def _build_actions(self) -> None:
@@ -516,7 +562,13 @@ class MainWindow(QMainWindow):
         self.act_undo = a(strings.UNDO, self.ctl.undo, "Ctrl+Z", name="act-undo")
         self.act_redo = a(strings.REDO, self.ctl.redo, "Ctrl+Y", name="act-redo")
         self.act_redo2 = a(strings.REDO, self.ctl.redo, "Ctrl+Shift+Z", name="act-redo2")
-        self.act_delete = a(strings.DELETE, self.delete_flow, "Delete", name="act-delete")
+        self.act_delete = a(
+            strings.DELETE,
+            self.delete_flow,
+            "Delete",
+            name="act-delete",
+            only_in=(self.view, self.table.view, self.outline.tree),  # not from other panels
+        )
         self.act_redundant = a(
             strings.REDUNDANT_COPY, self._redundant_selected, name="act-redundant"
         )
@@ -574,8 +626,13 @@ class MainWindow(QMainWindow):
         self.act_zoom_out = a(
             strings.ZOOM_OUT, lambda: self.view.zoom_by(1 / 1.2), "Ctrl+-", name="act-zoom-out"
         )
-        self.act_fit = a(strings.FIT, self.view.fit, "Ctrl+0", name="act-fit")
-        self.act_arrange = a(strings.A_ARRANGE, self.arrange_flow, name="act-arrange")
+        self.act_fit = a(
+            strings.A_FIT_ALL, lambda: self.view.fit(), "F", name="act-fit", only_in=(self.view,)
+        )
+        self.act_arrange = a(
+            strings.A_ARRANGE, self.arrange_flow, "Ctrl+Shift+L", name="act-arrange"
+        )
+        self._build_canvas_actions()
         self.act_wire_colours = a(
             strings.A_WIRE_COLOURS, self.wire_colours_flow, name="act-wire-colours"
         )
@@ -591,8 +648,106 @@ class MainWindow(QMainWindow):
         self.act_about = a(strings.A_ABOUT, self.about_flow, name="act-about")
         self.act_issues = a(strings.A_ISSUES, self.issues_flow, name="act-issues")
 
+    # ---- canvas actions: selection, layout, navigation (one block, for the lead to merge) -----------
+    def _build_canvas_actions(self) -> None:
+        a, v = self._act, self.view
+        self.act_select_all = a(
+            strings.A_SELECT_ALL, self.ctl.select_all, "Ctrl+A", name="act-select-all", only_in=(v,)
+        )
+        self.act_duplicate = a(
+            strings.A_DUPLICATE, self.duplicate_flow, "Ctrl+D", name="act-duplicate", only_in=(v,)
+        )
+        self.act_find = a(
+            strings.A_FIND, v.search.open_bar, "Ctrl+F", name="act-find", only_in=(v,)
+        )
+        self.act_zoom_100 = a(strings.A_ZOOM_100, v.zoom_100, "Ctrl+0", name="act-zoom-100")
+        self.act_zoom_selection = a(
+            strings.A_ZOOM_SELECTION,
+            v.zoom_to_selection,
+            "Shift+F",
+            name="act-zoom-selection",
+            only_in=(v,),
+        )
+        self.act_legend = a(
+            strings.A_LEGEND, self._toggle_legend, checkable=True, name="act-legend"
+        )
+        self.act_legend.setChecked(True)
+        self.act_snap = a(strings.A_SNAP, self._toggle_snap, checkable=True, name="act-snap")
+        self.act_snap.setChecked(True)
+        self.align_actions: dict[str, QAction] = {}
+        for mode, label in strings.ALIGN_NAMES.items():
+            act = a(label, partial(self.align_flow, mode), name=f"act-align-{mode}")
+            self.align_actions[mode] = act
+        self.distribute_actions: dict[str, QAction] = {}
+        for axis, label in strings.DISTRIBUTE_NAMES.items():
+            act = a(label, partial(self.distribute_flow, axis), name=f"act-distribute-{axis}")
+            self.distribute_actions[axis] = act
+        for act, tip in (
+            (self.act_select_all, strings.SELECT_ALL_TIP),
+            (self.act_find, strings.FIND_TIP),
+            (self.act_fit, strings.FIT_TIP),
+            (self.act_zoom_100, strings.ZOOM_100_TIP),
+            (self.act_zoom_selection, strings.ZOOM_SELECTION_TIP),
+            (self.act_arrange, strings.ARRANGE_TIP),
+        ):
+            act.setToolTip(tip)
+        v.menu_actions = {
+            "delete": self.act_delete,
+            "duplicate": self.act_duplicate,
+            "redundant": self.act_redundant,
+            "select_all": self.act_select_all,
+            "find": self.act_find,
+            "fit": self.act_fit,
+            "zoom100": self.act_zoom_100,
+            "zoom_selection": self.act_zoom_selection,
+            "arrange": self.act_arrange,
+            "distribute_h": self.distribute_actions["horizontal"],
+            "distribute_v": self.distribute_actions["vertical"],
+            **{f"align_{m}": act for m, act in self.align_actions.items()},
+        }
+
+    def _unit_heights(self) -> dict[str, float]:
+        """The heights the units are drawn at now (Guided and Expert differ)."""
+        return {uid: it.height() for uid, it in self.view.dscene.unit_items.items()}
+
+    def align_flow(self, mode: str) -> None:
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        self.ctl.align_selected(mode, self._unit_heights())
+
+    def distribute_flow(self, axis: str) -> None:
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        self.ctl.distribute_selected(axis, self._unit_heights())
+
+    def duplicate_flow(self) -> None:
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        made = self.ctl.duplicate_selected()
+        if made:
+            self.view.focus_unit(made[-1])
+
     def arrange_flow(self) -> None:
-        ops = edit.ops_arrange(self.ctl.project)
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        project = self.ctl.project
+        if len(project.units) > ARRANGE_IN_WORKER:  # a big diagram takes a second or more
+            token = self.ctl.state_token
+            worker = ArrangeWorker(edit.clone_with(project, []))
+            self._run_worker(worker, strings.ARRANGING, "arrange-progress")
+            if worker.ops is None:
+                self.toasts.show_message(strings.GEN_FAILED.format(worker.error or ""), None)
+                return
+            if token != self.ctl.state_token:
+                self.toasts.show_message(strings.CHANGES_DURING_JOB, None)
+                return
+            ops = worker.ops
+        else:
+            ops = edit.ops_arrange(project)
         if not ops:
             self.toasts.show_message(strings.ARRANGE_NOTHING, None)
             return
@@ -622,12 +777,21 @@ class MainWindow(QMainWindow):
         for act in (
             self.act_undo,
             self.act_redo,
+            self.act_select_all,
+            self.act_duplicate,
             self.act_delete,
             self.act_redundant,
-            self.act_add_zone,
-            self.act_wire_colours,
+            self.act_find,
         ):
             e.addAction(act)
+        align_menu = e.addMenu(strings.A_ALIGN)
+        for act in self.align_actions.values():
+            align_menu.addAction(act)
+        spread_menu = e.addMenu(strings.A_DISTRIBUTE)
+        for act in self.distribute_actions.values():
+            spread_menu.addAction(act)
+        e.addAction(self.act_add_zone)
+        e.addAction(self.act_wire_colours)
         self.menu_add = e.addMenu(strings.M_ADD_UNIT)
         for tid, tpl in edit.TEMPLATES.items():
             act = self._act(tpl.label, partial(self._add_unit, tid), name=f"menu-add-{tid}")
@@ -642,12 +806,21 @@ class MainWindow(QMainWindow):
         for act in self.theme_actions.values():
             theme_menu.addAction(act)
         v.addAction(self.act_minimap)
+        v.addAction(self.act_legend)
+        v.addAction(self.act_snap)
         v.addAction(self.act_labels)
         scale_menu = v.addMenu(strings.A_SCALE)
         for act in self.scale_actions.values():
             scale_menu.addAction(act)
         v.addSeparator()
-        for act in (self.act_zoom_in, self.act_zoom_out, self.act_fit, self.act_arrange):
+        for act in (
+            self.act_zoom_in,
+            self.act_zoom_out,
+            self.act_fit,
+            self.act_zoom_100,
+            self.act_zoom_selection,
+            self.act_arrange,
+        ):
             v.addAction(act)
         v.addSeparator()
         for dock in (self.dock_left, self.dock_right, self.dock_bottom):
@@ -692,6 +865,14 @@ class MainWindow(QMainWindow):
         self.mode_expert.clicked.connect(lambda: self._pick_mode("expert"))
         tb.addWidget(self.mode_guided)
         tb.addWidget(self.mode_expert)
+        tb.addSeparator()
+        self.arrange_btn = QToolButton()
+        self.arrange_btn.setObjectName("arrange-button")
+        self.arrange_btn.setDefaultAction(self.act_arrange)
+        self.arrange_btn.setText(strings.A_ARRANGE)
+        self.arrange_btn.setToolTip(strings.ARRANGE_TIP)
+        self.arrange_btn.setAccessibleName(strings.A_ARRANGE)
+        tb.addWidget(self.arrange_btn)
         tb.addSeparator()
         self.search_btn = QPushButton(strings.SEARCH_BUTTON)
         self.search_btn.setObjectName("search-button")
@@ -909,8 +1090,12 @@ class MainWindow(QMainWindow):
         self.status_hash.setText("…")
 
     def _on_selection(self) -> None:
-        s = self.ctl.selection
-        self.status_sel.setText(strings.SELECTED.format(s.id) if s else strings.NOTHING_SEL)
+        c = self.ctl
+        s = c.selection
+        if len(c.selected) > 1:
+            self.status_sel.setText(strings.SELECTED_MANY.format(len(c.selected)))
+        else:
+            self.status_sel.setText(strings.SELECTED.format(s.id) if s else strings.NOTHING_SEL)
         if s is not None and s.kind == "unit":
             self.view.reveal(s.id)
         if s is not None and not self.dock_right.isVisibleTo(self) and not self._told_properties:
@@ -919,10 +1104,13 @@ class MainWindow(QMainWindow):
         self._update_selection_actions()
 
     def _update_selection_actions(self) -> None:
-        s, c = self.ctl.selection, self.ctl
+        c = self.ctl
+        s, chosen = c.selection, c.selected
+        units = [u for u in c.selected_ids("unit") if u in c.project.units]
         ro = c.read_only
         can_red = bool(
             s
+            and len(chosen) == 1
             and s.kind == "unit"
             and s.id in c.project.units
             and c.project.units[s.id].side != "redundant"
@@ -932,12 +1120,21 @@ class MainWindow(QMainWindow):
         self.act_redundant.setEnabled(can_red and not ro)
         self.delete_btn.setEnabled(bool(s) and not ro)
         self.act_delete.setEnabled(bool(s) and not ro)
+        self.act_duplicate.setEnabled(bool(units) and not ro)
+        self.act_select_all.setEnabled(bool(c.project.units))
+        for act in self.align_actions.values():
+            act.setEnabled(len(units) >= 2 and not ro)
+        for act in self.distribute_actions.values():
+            act.setEnabled(len(units) >= 3 and not ro)
         # a disabled control must say why
         if ro:
-            why_red = why_del = strings.WHY_READ_ONLY
+            why_red = why_del = why_dup = why_align = why_spread = strings.WHY_READ_ONLY
         else:
             why_del = "" if s else strings.WHY_NO_SELECTION
-            if not (s and s.kind == "unit" and s.id in c.project.units):
+            why_dup = "" if units else strings.WHY_NEED_UNIT_SELECTED
+            why_align = "" if len(units) >= 2 else strings.WHY_NEED_TWO_UNITS
+            why_spread = "" if len(units) >= 3 else strings.WHY_NEED_THREE_UNITS
+            if len(chosen) > 1 or not (s and s.kind == "unit" and s.id in c.project.units):
                 why_red = strings.WHY_SELECT_UNIT
             elif c.project.units[s.id].side == "redundant":
                 why_red = strings.WHY_IS_REDUNDANT
@@ -949,6 +1146,11 @@ class MainWindow(QMainWindow):
         self.act_redundant.setToolTip(why_red or strings.REDUNDANT_TIP)
         self.delete_btn.setToolTip(why_del or strings.DELETE_TIP)
         self.act_delete.setToolTip(why_del or strings.DELETE_TIP)
+        self.act_duplicate.setToolTip(why_dup or strings.DUPLICATE_TIP)
+        for act in self.align_actions.values():
+            act.setToolTip(why_align or act.text())
+        for act in self.distribute_actions.values():
+            act.setToolTip(why_spread or act.text())
 
     def _on_connect(self) -> None:
         c = self.ctl
@@ -996,14 +1198,25 @@ class MainWindow(QMainWindow):
             self.ctl.redundant_copy(s.id)
 
     def delete_flow(self) -> None:
-        s = self.ctl.selection
-        if s is None or self.ctl.read_only:
+        """Delete what is selected, after saying what else goes with it."""
+        c = self.ctl
+        chosen = c.selected
+        if not chosen:
             return
-        if s.kind == "unit":
-            impact = self.ctl.delete_impact(s.id)
-            if impact.blocked_by_harnesses:
-                self.ctl.delete_selected()  # explains why it cannot be done
-                return
+        if c.read_only:
+            c.refuse_read_only()
+            return
+        project = c.project
+        units = [u for u in c.selected_ids("unit") if u in project.units]
+        links = [i for i in c.selected_ids("interface") if i in project.interfaces]
+        # a unit that cannot be deleted, or a link that cannot: the edit itself says why
+        if any(c.delete_impact(u).blocked_by_harnesses for u in units) or any(
+            edit.interface_impact(project, i).blocked_by_harnesses for i in links
+        ):
+            c.delete_selected()
+            return
+        if len(chosen) == 1 and units:
+            impact = c.delete_impact(units[0])
             ifs = ", ".join(f"<b>{i}</b>" for i in impact.interfaces)
             body = strings.DELETE_BODY.format(
                 n=len(impact.interfaces),
@@ -1011,10 +1224,93 @@ class MainWindow(QMainWindow):
                 ifs=f": {ifs}" if ifs else "",
                 c=len(impact.connectors),
             )
-            dlg = ConfirmDialog(self, strings.DELETE_TITLE.format(s.id), body, strings.DELETE)
-            if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
-                return
-        self.ctl.delete_selected()
+            title = strings.DELETE_TITLE.format(units[0])
+        elif len(chosen) == 1:
+            title, body = self._interface_delete_text(links[0])
+        else:
+            title, body = self._many_delete_text(units, links)
+        dlg = ConfirmDialog(self, title, body, strings.DELETE)
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
+            return
+        c.delete_selected()
+
+    def _plan_lines(self, interface_ids: list[str]) -> str:
+        """For the delete question: the generated harnesses whose wires belong to these links."""
+        wires: dict[str, int] = {}
+        for iid in interface_ids:
+            for hid, n in edit.interface_impact(self.ctl.project, iid).plan_wires.items():
+                wires[hid] = wires.get(hid, 0) + n
+        return "".join(strings.DELETE_IF_PLAN.format(h=h, n=n) for h, n in sorted(wires.items()))
+
+    def _interface_delete_text(self, iid: str) -> tuple[str, str]:
+        impact = edit.interface_impact(self.ctl.project, iid)
+        a, b = (impact.ends + ("?", "?"))[:2]
+        body = strings.DELETE_IF_BODY.format(
+            iid=iid, type=impact.type_name, a=a, b=b, plans=self._plan_lines([iid])
+        )
+        return strings.DELETE_IF_TITLE.format(iid), body
+
+    def _many_delete_text(self, units: list[str], links: list[str]) -> tuple[str, str]:
+        project = self.ctl.project
+        gone = {i for u in units for i in self.ctl.delete_impact(u).interfaces}
+        every = sorted(gone | set(links))
+        items = "".join(
+            f"<li><b>{u}</b> (unit {project.units[u].name})</li>" for u in sorted(units)
+        )
+        for iid in sorted(set(links) - gone):
+            impact = edit.interface_impact(project, iid)
+            items += f"<li><b>{iid}</b> ({impact.type_name}, {' to '.join(impact.ends)})</li>"
+        if gone:
+            items += f"<li>{strings.interfaces_text(len(gone))} of the units: {', '.join(sorted(gone))}</li>"
+        n = len(self.ctl.selected)
+        return strings.DELETE_MANY_TITLE.format(n), strings.DELETE_MANY_BODY.format(
+            items=items, plans=self._plan_lines(every)
+        )
+
+    # ---- opening the plans from the diagram ---------------------------------------------------------
+    def _harness_for(self, kind: str, ident: str) -> tuple[str, str | None] | None:
+        """(harness, wire) that show a unit or a link in the plans, or None if none does."""
+        project = self.ctl.project
+        if kind == "interface":
+            for hid in sorted(project.harnesses):
+                h = project.harnesses[hid]
+                wires = sorted(w.id for w in h.wires if w.interface_id == ident)
+                if wires or ident in h.interfaces:
+                    return hid, (wires[0] if wires else None)
+            return None
+        mine = {c.id for c in edit.unit_connectors(project, ident)}
+        links = {
+            i.id
+            for i in project.interfaces.values()
+            if any(e.unit_id == ident for e in i.endpoints)
+        }
+        for hid in sorted(project.harnesses):
+            h = project.harnesses[hid]
+            box_of = {c.id: c.mates_with for c in h.connectors}
+            for w in sorted(h.wires, key=lambda x: x.id):
+                ends = (w.from_connector, w.to_connector)
+                if w.interface_id in links or any(e in mine or box_of.get(e) in mine for e in ends):
+                    return hid, w.id
+        return None
+
+    def _open_requested(self, kind: str, ident: str) -> None:
+        """Double-click or Enter on a unit or link: show it in the harness plans."""
+        found = self._harness_for(kind, ident)
+        if found is None:
+            self.toasts.show_message(
+                strings.NOT_GENERATED.format(ident),
+                None,
+                8000,
+                action=(strings.GENERATE, self.generate_flow),
+            )
+            return
+        hid, wire = found
+        self.dock_bottom.show()
+        self.tabs.setCurrentWidget(self.harness_panel)
+        self.harness_panel.select_harness(hid)
+        if wire:
+            self.harness_panel.select_wire(wire)
+        self._give_room_to(self.dock_bottom, 420)
 
     def generate_flow(self) -> None:
         if self.ctl.read_only:
@@ -1050,7 +1346,9 @@ class MainWindow(QMainWindow):
         self.job_error = worker.error
         return worker.plan
 
-    def _run_worker(self, worker: "PlanWorker | OutputsWorker", label: str, name: str) -> None:
+    def _run_worker(
+        self, worker: "PlanWorker | OutputsWorker | ArrangeWorker", label: str, name: str
+    ) -> None:
         progress = QProgressDialog(label, strings.CANCEL, 0, 100, self)
         progress.setObjectName(name)
         progress.setWindowModality(Qt.WindowModality.WindowModal)
@@ -1301,6 +1599,8 @@ class MainWindow(QMainWindow):
         self.ctl.select(kind, target)
         if kind == "unit":
             self.view.focus_unit(target)
+        else:
+            self.view.focus_link(target)
 
     def _todo_activated(self, kind: str, target: str) -> None:
         if kind == "tab":
@@ -1589,6 +1889,12 @@ class MainWindow(QMainWindow):
         wanted = bool(self.settings.value("ui/minimap", True, bool))
         self.act_minimap.setChecked(wanted)
         self.view.set_minimap_wanted(wanted)
+        legend = bool(self.settings.value("ui/legend", True, bool))
+        self.act_legend.setChecked(legend)
+        self.view.set_legend_wanted(legend)
+        snap = bool(self.settings.value("ui/snap", True, bool))
+        self.act_snap.setChecked(snap)
+        self.view.set_snap(snap)
         self.scale_actions[scale].setChecked(True)
         app = QApplication.instance()
         if isinstance(app, QApplication):
@@ -1612,6 +1918,14 @@ class MainWindow(QMainWindow):
     def _toggle_minimap(self) -> None:
         self.view.set_minimap_wanted(self.act_minimap.isChecked())
         self.settings.setValue("ui/minimap", self.act_minimap.isChecked())
+
+    def _toggle_legend(self) -> None:
+        self.view.set_legend_wanted(self.act_legend.isChecked())
+        self.settings.setValue("ui/legend", self.act_legend.isChecked())
+
+    def _toggle_snap(self) -> None:
+        self.view.set_snap(self.act_snap.isChecked())
+        self.settings.setValue("ui/snap", self.act_snap.isChecked())
 
     def _toggle_labels(self) -> None:
         self.view.dscene.show_all_labels = self.act_labels.isChecked()
