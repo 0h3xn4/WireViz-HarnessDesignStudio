@@ -549,3 +549,111 @@ TABLE_HEADER_UNIT = "{} ({})"
 TABLE_COPY_TIP = "Ctrl+C copies the selected cells (tab separated)"
 TABLE_COPIED = "Copied {} cells"
 STATUS_HASH = "Model hash"
+
+# ==== UX release / export / import wave (ux/rel): releases panel, release dialogs, export, import wizard, new project ====
+# what a release locks / what a revision makes editable (gui/lock_tree.py)
+LOCK_GROUP_WIRES = "Wires"
+LOCK_GROUP_PINS = "Pins"
+LOCK_GROUP_INTERFACES = "Interfaces"
+LOCK_GROUP_CONNECTORS = "Connectors"
+LOCK_GROUP_UNITS = "Units"
+LOCK_GROUP_PARTS = "Parts"
+LOCK_GROUP_TYPES = "Interface types"
+LOCK_GROUP_CONFIG = "Config files"
+LOCK_GROUP_OTHER = "Other items of the harness"
+LOCK_NOTHING = "nothing"
+LOCK_STAYS_EDITABLE = "{} stay editable"
+LOCK_NOT_SET = "not set (pending)"
+LOCK_NOT_SET_NOTE = "No value yet. The release records it as not set; giving it a value later needs a new revision."
+LOCK_PLACEHOLDER = "placeholder values"
+LOCK_PLACEHOLDER_NOTE = "This file is still marked as a placeholder: its numbers were never reviewed, and the release freezes them as they are."
+LOCK_PIN_CABLE = "cable"
+LOCK_PIN_UNIT = "unit connector"
+LOCK_ALSO = "also locked by {}"
+LOCK_TREE_HEADER = "Locked object"
+# release and revise dialogs
+RELEASE_LOCKS_HEAD = "This release locks: {}."
+RELEASE_LOCKS_TREE = "What this release locks"
+RELEASE_LOCKS_TIP = "Open a group (arrow keys, Enter) to see every object, and the values of the config files that are frozen."
+RELEASE_LOCKS_PLACEHOLDERS = "Still placeholders when released: {}. The release freezes these numbers unreviewed."
+REVISE_EXPLAIN = (
+    "<b>What happens.</b> {0} gets revision {2} as a new draft; revision {1} stays on record as "
+    "a frozen baseline that you can compare with. What only {0} locks becomes editable again, "
+    "and the change log records who started the revision and why."
+)
+REVISE_EDITABLE_HEAD = "What becomes editable: {}."
+REVISE_EDITABLE_NONE = "What becomes editable: nothing besides the harness itself."
+REVISE_EDITABLE_TREE = "What becomes editable"
+REVISE_STILL_LOCKED = "Still locked because another released harness uses it: {}."
+REVISE_STILL_TREE = "Stays locked"
+HINT_HEAD = "To enable “{0}”: {1}."
+HINT_NAME = "enter your name"
+HINT_COMMENT = "write at least 10 characters in the comment ({} more to go)"
+HINT_PLACEHOLDER_REASON = "give a reason of at least 10 characters for releasing on placeholder values"
+HINT_PARTS_REASON = "give a reason of at least 10 characters for releasing unapproved parts"
+HINT_BLOCKERS = "fix what is listed above first"
+HINT_OK = "Ready: everything needed is filled in."
+COMMENT_MIN = 10
+# releases panel (gui/releases_panel.py)
+REL_TITLE = "Releases"
+REL_ACCESSIBLE = "Releases and change control"
+REL_HARNESS = "Harness"
+REL_ALL = "All harnesses"
+REL_HARNESS_ITEM = "{0} — {1} (revision {2})"
+REL_TIMELINE = "Timeline of reviews, releases and new revisions"
+REL_TIMELINE_NAME = "Timeline"
+REL_COLUMNS = {
+    "id": "Entry",
+    "harness": "Harness",
+    "revision": "Revision",
+    "event": "Event",
+    "by": "By",
+    "when": "When",
+    "comment": "Comment",
+    "baseline": "Baseline",
+}
+REL_BASELINE_CHIP = "Baseline {0}"
+REL_BASELINE_TIP = "A frozen copy of revision {0} was kept when it was released; you can compare with it."
+REL_NO_BASELINE_TIP = "No frozen copy: this step did not release a revision."
+REL_EMPTY_ALL = "Nothing has been reviewed, released or revised yet. Submit a draft for review or release it, and the step appears here."
+REL_EMPTY_ONE = "{0} has no review, release or new revision yet."
+REL_SUBMIT = "Submit for review"
+REL_RELEASE = "Release…"
+REL_REVISE = "New revision…"
+REL_SUBMIT_TIP = "Mark the draft harness as ready for review"
+REL_RELEASE_TIP = "Release the harness: records a baseline and the change log, and locks what it uses"
+REL_REVISE_TIP = "Unlock a released harness by starting its next revision (the released one is kept)"
+REL_CHOOSE_HARNESS = "Choose a harness first (or select a line of the timeline)."
+REL_READ_ONLY = "This project is read-only, so nothing can be released or revised."
+REL_WRONG_STATE = "{0} is {1}; this step is for harnesses that are {2}."
+REL_DIFF_TITLE = "Differences"
+REL_BEFORE = "Compare revision"
+REL_AFTER = "with"
+REL_WORKING = "Working design"
+REL_REVISION = "Revision {0}"
+REL_DIFF_NEED_HARNESS = "Choose a harness (or select a line of the timeline) to compare its revisions."
+REL_DIFF_NO_BASE = "{0} has no baseline yet; a baseline is created when the harness is released."
+REL_DIFF_SAME = "Choose two different revisions to compare."
+REL_DIFF_NONE = "No differences between {0} and {1}."
+REL_DIFF_SUMMARY = "{0} compared with {1}: {2}."
+REL_DIFF_NAME = "Changes grouped by kind"
+REL_DIFF_TABLE = "Changed objects"
+REL_ALL_KINDS = "All kinds"
+REL_GROUP_ITEM = "{0}: {1}"
+REL_COUNTS_ZERO = "no changes"
+REL_ADDED = "Added"
+REL_REMOVED = "Removed"
+REL_CHANGED = "Changed"
+REL_WHOLE_OBJECT = "(whole object)"
+REL_DID_NOT_EXIST = "(did not exist)"
+REL_NO_LONGER = "(removed)"
+REL_DIFF_COLUMNS = {
+    "change": "Change",
+    "kind": "Kind",
+    "id": "Object",
+    "field": "Field",
+    "before": "Before",
+    "after": "After",
+}
+REL_MARK_TIP = "Mark the units, interfaces and harnesses that changed on the diagram"
+REL_CLEAR_TIP = "Remove the marks from the diagram"

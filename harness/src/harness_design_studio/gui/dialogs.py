@@ -23,6 +23,7 @@ from PySide6.QtWidgets import (
     QScrollArea,
     QTableWidget,
     QTableWidgetItem,
+    QTreeView,
     QVBoxLayout,
     QWidget,
 )
@@ -42,9 +43,11 @@ from harness_design_studio.core.imports import (
 from harness_design_studio.core.issues import Issue
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.vcs.diff import KIND_NAMES, Diff
+from harness_design_studio.core.vcs.lockview import ReleaseLocks, release_locks
+from harness_design_studio.core.vcs.release import ReleaseError, next_revision
 from harness_design_studio.core.wirecolours import COLOURS, name_of
-from harness_design_studio.gui import strings
-from harness_design_studio.gui.theme import ThemeManager
+from harness_design_studio.gui import lock_tree, strings
+from harness_design_studio.gui.theme import ThemeManager, current_theme
 
 
 def _buttons(
@@ -621,7 +624,12 @@ class GeneratePreviewDialog(QDialog):
 
 class ChangeDialog(QDialog):
     """Review, release and new-revision steps: who, optional checker, mandatory comment, and
-    anything that blocks the step (shown as plain sentences; OK stays disabled until clear)."""
+    anything that blocks the step (shown as plain sentences; OK stays disabled until clear, and a
+    line under the form says what is still missing).
+
+    A release passes `locks` (from `release_locks`) and the dialog lists what the release will
+    lock as a tree; a new revision passes `explain` (what happens) and `unlocks` (what becomes
+    editable). `for_release` and `for_revise` build both from the project."""
 
     def __init__(
         self,
@@ -635,6 +643,9 @@ class ChangeDialog(QDialog):
         ok_text: str = strings.OK,
         placeholders: list[str] | None = None,
         unapproved_parts: list[str] | None = None,
+        locks: ReleaseLocks | None = None,
+        explain: str | None = None,
+        unlocks: "lock_tree.RevisionUnlocks | None" = None,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
@@ -642,6 +653,8 @@ class ChangeDialog(QDialog):
         self._comment_needed = ask_comment
         self._placeholders = placeholders or []
         self._unapproved = unapproved_parts or []
+        self._ok_text = ok_text
+        theme = current_theme()
         lay = QVBoxLayout(self)
         lay.addWidget(QLabel(f"<h3>{title}</h3>"))
         self.blockers = blockers
@@ -653,9 +666,34 @@ class ChangeDialog(QDialog):
             self.status.setText(
                 strings.BLOCKED + "<ul>" + "".join(f"<li>{b}</li>" for b in blockers[:8]) + "</ul>"
             )
+        elif explain is not None:
+            self.status.setText(explain)
         else:
             self.status.setText(strings.READY_TO_RELEASE if ask_comment else "")
         lay.addWidget(self.status)
+        # what the step locks (release) or unlocks (new revision)
+        self.locks_summary = QLabel()
+        self.locks_summary.setObjectName("change-locks-summary")
+        self.locks_summary.setWordWrap(True)
+        self.locks_summary.setTextFormat(Qt.TextFormat.PlainText)
+        self.locks_tree = QTreeView()
+        self.locks_tree.setObjectName("change-locks-tree")
+        self.locks_tree.setHeaderHidden(True)
+        self.locks_tree.setEditTriggers(QTreeView.EditTrigger.NoEditTriggers)
+        self.locks_tree.setMinimumHeight(theme.px(120))
+        self.locks_tree.setMaximumHeight(theme.px(200))
+        self.locks_tree.setToolTip(strings.RELEASE_LOCKS_TIP)
+        self.locks_tree.setWordWrap(True)
+        self._lock_groups: list[lock_tree.LockGroup] = []
+        if locks is not None:
+            self._show_locks(locks, theme)
+        elif unlocks is not None:
+            self._show_unlocks(unlocks, theme)
+        else:
+            self.locks_summary.hide()
+            self.locks_tree.hide()
+        lay.addWidget(self.locks_summary)
+        lay.addWidget(self.locks_tree)
         lay.addWidget(QLabel(strings.YOUR_NAME))
         self.by = QLineEdit(by)
         self.by.setObjectName("change-by")
@@ -696,24 +734,125 @@ class ChangeDialog(QDialog):
             lay.addWidget(pwarn)
             lay.addWidget(QLabel(strings.UNAPPROVED_PARTS_REASON))
             lay.addWidget(self.parts_reason)
+        # why the OK button is disabled, in words (a disabled button alone says nothing)
+        self.hint = QLabel()
+        self.hint.setObjectName("change-hint")
+        self.hint.setWordWrap(True)
+        self.hint.setProperty("muted", True)
+        lay.addWidget(self.hint)
         self.ok, self.cancel, row = _buttons(self, ok_text, danger=False, primary=True)
         lay.addLayout(row)
         self.by.textChanged.connect(self._validate)
         self.comment.textChanged.connect(self._validate)
         self.placeholder_reason.textChanged.connect(self._validate)
         self.parts_reason.textChanged.connect(self._validate)
-        self.setMinimumWidth(480)
+        self.setMinimumWidth(theme.px(520))
         self._validate()
 
-    def _validate(self) -> None:
-        good = not self.blockers and bool(self.by.text().strip())
+    # ---- builders from the project ----------------------------------------------------------
+
+    @classmethod
+    def for_release(
+        cls,
+        parent: QWidget | None,
+        project: Project,
+        harness_id: str,
+        title: str,
+        *,
+        by: str,
+        blockers: list[str],
+        placeholders: list[str] | None = None,
+        unapproved_parts: list[str] | None = None,
+    ) -> "ChangeDialog":
+        """The release dialog: asks the questions and lists everything the release will lock."""
+        return cls(
+            parent,
+            title,
+            by=by,
+            blockers=blockers,
+            ask_checker=True,
+            ok_text=strings.RELEASE_CONFIRM,
+            placeholders=placeholders,
+            unapproved_parts=unapproved_parts,
+            locks=release_locks(project, harness_id),
+        )
+
+    @classmethod
+    def for_revise(
+        cls, parent: QWidget | None, project: Project, harness_id: str, title: str, *, by: str
+    ) -> "ChangeDialog":
+        """The new-revision dialog: explains what happens and what becomes editable."""
+        unlocks = lock_tree.revision_unlocks(project, harness_id)
+        h = project.harnesses.get(harness_id)
+        try:
+            new = next_revision(h.revision) if h is not None else "?"
+        except ReleaseError:  # a revision that is not letters: the plan itself will refuse
+            new = "?"
+        return cls(
+            parent,
+            title,
+            by=by,
+            blockers=[],
+            ok_text=strings.NEW_REV_CONFIRM,
+            explain=strings.REVISE_EXPLAIN.format(harness_id, unlocks.revision, new),
+            unlocks=unlocks,
+        )
+
+    # ---- the lock lists ---------------------------------------------------------------------
+
+    def _fill_tree(self, groups: list[lock_tree.LockGroup], theme: ThemeManager, name: str) -> None:
+        self._lock_groups = groups
+        self.locks_tree.setModel(lock_tree.tree_model(groups, theme))
+        self.locks_tree.setAccessibleName(name)
+        self.locks_tree.setVisible(bool(groups))
+
+    def _show_locks(self, locks: ReleaseLocks, theme: ThemeManager) -> None:
+        groups = lock_tree.release_groups(locks)
+        text = strings.RELEASE_LOCKS_HEAD.format(lock_tree.summary_text(groups))
+        if locks.placeholder_files:
+            text += " " + strings.RELEASE_LOCKS_PLACEHOLDERS.format(", ".join(locks.placeholder_files))  # fmt: skip
+        self.locks_summary.setText(text)
+        self._fill_tree(groups, theme, strings.RELEASE_LOCKS_TREE)
+
+    def _show_unlocks(self, unlocks: "lock_tree.RevisionUnlocks", theme: ThemeManager) -> None:
+        groups = list(unlocks.editable)
+        head = (
+            strings.REVISE_EDITABLE_HEAD.format(lock_tree.summary_text(groups, lock_tree.SUMMARY_KEYS))  # fmt: skip
+            if groups
+            else strings.REVISE_EDITABLE_NONE
+        )
+        if unlocks.still_locked:
+            head += " " + strings.REVISE_STILL_LOCKED.format(
+                lock_tree.summary_text(list(unlocks.still_locked), tuple(lock_tree.NOUNS))
+            )
+        self.locks_summary.setText(head)
+        self._fill_tree([*groups, *unlocks.still_locked], theme, strings.REVISE_EDITABLE_TREE)
+
+    # ---- validation -------------------------------------------------------------------------
+
+    def missing(self) -> list[str]:
+        """What still has to be filled in before OK is enabled, as short phrases."""
+        todo: list[str] = []
+        if self.blockers:
+            todo.append(strings.HINT_BLOCKERS)
+        if not self.by.text().strip():
+            todo.append(strings.HINT_NAME)
         if self._comment_needed:
-            good = good and len(self.comment.toPlainText().strip()) >= 10
-        if self._placeholders:
-            good = good and len(self.placeholder_reason.text().strip()) >= 10
-        if self._unapproved:
-            good = good and len(self.parts_reason.text().strip()) >= 10
-        self.ok.setEnabled(good)
+            n = len(self.comment.toPlainText().strip())
+            if n < strings.COMMENT_MIN:
+                todo.append(strings.HINT_COMMENT.format(strings.COMMENT_MIN - n))
+        if self._placeholders and len(self.placeholder_reason.text().strip()) < strings.COMMENT_MIN:
+            todo.append(strings.HINT_PLACEHOLDER_REASON)
+        if self._unapproved and len(self.parts_reason.text().strip()) < strings.COMMENT_MIN:
+            todo.append(strings.HINT_PARTS_REASON)
+        return todo
+
+    def _validate(self) -> None:
+        todo = self.missing()
+        self.ok.setEnabled(not todo)
+        text = strings.HINT_HEAD.format(self._ok_text, "; ".join(todo)) if todo else strings.HINT_OK  # fmt: skip
+        self.hint.setText(text)
+        self.ok.setToolTip("" if not todo else text)
 
     def accepted_unapproved_parts(self) -> str | None:
         """The written reason for releasing with parts that are not approved (None if none)."""
