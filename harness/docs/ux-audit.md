@@ -102,3 +102,102 @@ Requirement by requirement (done / partly / missing). Evidence: file and line, o
 Counts: high 8 (SH-1, 2, 3, 4, 6, 7, 15, 28), medium 15, low 5.
 
 Verified good and to keep: cancellable workers with a private clone and a stale-plan guard; one labelled undo history with locks enforced on edit and redo; a single token-driven QSS with contrast-tested tokens and bundled IBM Plex Sans; accessible names; Outline and Interface table as keyboard alternatives; a toast when panels are hidden by a narrow window; `InterfaceTable` as a real `QTableView`.
+
+## C. Harness, Lists, Checks, Releases, Imports, Export (non-canvas screens)
+
+Method: the shipped `flatsat` example opened as a real project folder, driven through the controller and the window (real mouse clicks on the canvas where possible), rendered offscreen at 1440×900, 1280×720, 1920×1080 and dark. Screenshots: `docs/ux/audit/screens-*.png`.
+
+### C1. Headline findings
+
+1. **There is no Harness, Lists, Checks or Releases tab.** "Harness plans" is one of five bottom-dock tabs. At the default dock height it is clipped; after Generate the dock grows to 420 px and leaves the canvas about 250 px high at 1440×900 and about 70 px at 1280×720 ([shot](ux/audit/screens-j06e-harness-1280x720.png)).
+2. **"Not checked" is hidden and misreported.** The panel says "Design rules: all 34 rules checked." while flatsat has 3 not-checked notes; they sit below "…and 51 more" because the Problems list shows at most 25 cards ([shot](ux/audit/screens-j07a-problems-tab-after-checks.png)). The words "not checked" never appear on screen.
+3. **A pending value cannot be supplied in the editor.** Engineering values (derating, EMC, separation, generation, ampacity) are edited only in `config/*.json` or `harness config`. The editor never names the missing key, although `core/configcheck.missing()` knows it.
+4. **Stale plans and outputs have no banner, chip or To-do item**; only a plain label inside the Harness plans tab ([shot](ux/audit/screens-j04c-interface-added.png)).
+5. **Release and lock state is discovered by failing an edit.** The Status column is out of view at 1440 px; Properties of an interface carried by a released harness looks editable ([shot](ux/audit/screens-j09g-properties-of-released-interface.png)); the wire table's Locked column is empty for released wires.
+6. **Export is one blind click**: no choice of harnesses or documents, no folder, no result list, no Reveal, no thumbnail; the result is a 5 s toast ([shot](ux/audit/screens-j08a-after-export.png)).
+
+### C2. Requirement by requirement
+
+| Area | Requirement | Status | Evidence |
+|---|---|---|---|
+| Harness tab | Header: name, release state, interfaces, last generated hash | missing | three plain labels (`panels.py:1137`); name and status only as list columns |
+| | Connector/pin table (connector, pin, signal, wire, gauge, colour, shield, locked, state) | missing | only a wire table (`Wire, Signal, From, To, AWG, Length, Colour, Locked`); no connector or pin rows, no shield or state column |
+| | Drawing preview: zoomable, hover linked to the table | partly | `DrawingPreview` paints the real sheet with Previous/Next; no zoom, no hover link, hard-coded colours and font |
+| | Why for the selection | partly | a "Why" tab for wires only, one raw `QLabel`; 4 clicks away |
+| | Three synchronised views in a splitter | partly | no `QSplitter` in `gui/`; Drawing and Why are alternatives; the drawing does not follow the wire selection |
+| | Locked pins with lock icon and tooltip naming the release | missing | "Locked" shows `yes` for user locks only; cell tooltips empty |
+| | Actions: regenerate this harness / export this harness / open in review | missing / missing / partly | only global Generate and Export; "Submit for review" per harness in a row of 6 equal buttons |
+| Lists | Wire list, pinouts, BOM, test tables as views | missing | they exist only as exported files (113 for flatsat) |
+| | `QTableView`, sort/filter, units in headers, Ctrl+C TSV, export from the view | partly / missing | only the Interface table is a `QTableView`; Ctrl+C copies one cell, not TSV |
+| | Pending / not-checked cell styling; stale banner | missing | `pending` in the AWG column is ordinary text |
+| Checks | Rules table (ID, name, severity, result, count); summary strip | missing | Problems is a scroll of cards; no row for passing rules |
+| | Not-checked rules show the missing value + *Supply value…* | missing | `unchecked-config` cards have no value and no action; "Show" gives "This item has no place on the diagram" |
+| | Expand a rule; double-click selects on canvas | partly | cards list up to 8 titles; a "Show" button per card; no double-click |
+| Releases | Timeline; diff against released | partly | modal list "Change log…" and modal diff with raw `None` values; no tab |
+| | Release dialog lists what will be locked | missing | it lists blockers and asks reasons; it does not list the wires, pins, parts, types or configuration that become locked |
+| | Revise explains what becomes editable | missing | opens with "Nothing blocks this release." |
+| | Consistent released badge | missing | text in one hidden column; none on canvas, Properties or tree |
+| | Lock refusal says why and how to revise | done (text) | toast naming interface, harness, revision and the way forward; shown only after the attempt |
+| Imports | One wizard pattern for CSV/XLSX/KiCad | partly | one dialog for interface CSV/XLSX; parts, lengths, engineering values and KiCad are CLI-only |
+| | Mapping with live preview; apply undoable | done | live re-plan on mapping change; "Import n rows (one undo step)" |
+| Export | Choose harnesses × documents; folder; open after export | missing | none |
+| | Progress and Cancel; independent check before write | done | `OutputsWorker`, `verify_outputs` before `write_outputs` |
+| | Result list, Reveal in folder, thumbnail | missing | toast "113 files written…" |
+| Shared | `QTableView` + model + delegates + proxy | partly | 1 `QTableView` against 4 `QTableWidget` and several `QListWidget`s; column widths not saved; numbers left-aligned; no `QFormLayout`; no engineering-value UI |
+| | Inline validation, no `QMessageBox` for validation | done | `_Field.show_error`; `QMessageBox` only for About and discard-changes |
+| | Empty states; toasts; persistent banners for stale or failed | partly | table and Harness tab empty states say nothing; failed runs and lock refusals are 5 s toasts |
+| | Long work in a worker | partly | Generate and Export yes; Check has no progress or Cancel; `verify_project` and the preview run on the UI thread (308 ms on flatsat) |
+
+Anti-patterns present: pending/not-checked that looks like a pass or like empty (**yes**); lock state only discoverable when an edit fails (**yes**); outputs stale without a banner (**yes**); tables built with `QTableWidget` (**yes**); chains of modal dialogs (partly: release, revise, review, changes, history, import, new interface, waive and the generate preview are all modal; none nested); no primary action (Generate is not styled primary). Not present: frozen UI during generate/export; icon-only buttons.
+
+### C3. Issues
+
+| ID | Issue | Sev | Proposed fix | Eff | Screenshot | Hits |
+|---|---|---|---|---|---|---|
+| SC-1 | "Not checked" hidden and misreported ("all 34 rules checked"); the 25-card cap hides the not-checked notes | high | reword to "34 rules ran: n passed, n failed, n not checked" from a per-rule result (`core/drc.run_by_rule()` grouping existing hits, no rule-logic change); never cap not-checked items | M | [shot](ux/audit/screens-j07a-problems-tab-after-checks.png) | P2 |
+| SC-2 | No Checks tab: no rules table, no summary strip, no double-click or keyboard activation | high | new `gui/checks_panel.py`: `RulesModel` + proxy + `StateDelegate`, offending objects as children, summary strip, double-click → `show_object`; keep `ProblemsPanel` as the dockable Problems view | L | same | P2, P6 |
+| SC-3 | A pending value cannot be supplied; the missing key is never shown | high | `gui/config_dialog.py` or a form in Checks: `QFormLayout` from `configcheck.NEEDS`, unit suffixes, placeholder/source toggle, inline validation, applied through the existing config ops via `ctl.run`; **Supply value…** on not-checked rows; "n values pending" status-bar link | L | [shot](ux/audit/screens-j09a-release-dialog-empty.png) | P2, P5 |
+| SC-4 | Stale state has no banner, chip or To-do item | high | status chip (generated / stale / running / outputs stale) fed by `ctl.generation_status()` and `ctl.outputs_state()`; persistent `Banner` with Generate and Export; "plans out of date" To-do item | M | [shot](ux/audit/screens-j04c-interface-added.png) | P3 |
+| SC-5 | Harness view in a bottom-dock tab: clipped at default height; Generate squeezes the canvas to 250 px (70 px at 1280×720); no header | high | central `QTabWidget` (Diagram · Harness · Lists · Checks · Releases); `QSplitter` for table / drawing / Why; `HarnessHeader`; drop `_give_room_to` | L | [shot](ux/audit/screens-j03-harness-tab-bottom.png) | P1, P3 |
+| SC-6 | Release state hidden in an out-of-view column; no badge in Properties, canvas or tree; locked Properties looks editable | high | `ReleaseBadge` (token `released`, lock icon plus text) in a delegate; Properties disables fields with "Locked: carried by W001 rev A. New revision…" from `vcs.locks`; badge on `UnitItem` | M | [shot](ux/audit/screens-j09g-properties-of-released-interface.png) | P3, P5 |
+| SC-7 | Wire table: no lock icon or tooltip; `pending` looks like data | medium | `WireModel` + `StateDelegate` (text plus icon, italic for pending), tooltip naming the release, right-aligned numbers | M | [shot](ux/audit/screens-j14a-harness-tab-dark.png) | P2 |
+| SC-8 | Why is 4 clicks away, wires only, one raw label | medium | a **Why** dock bound to the selection (unit, interface, harness, wire); tooltip from `explain_wire`; formatted list; reuse `core.generate.explain` | M | [shot](ux/audit/screens-j06b-why-for-wire.png) | P4 |
+| SC-9 | No connector/pin table | medium | `ConnectorPinModel` (connectors, pins, wires, shield, state) | M | [shot](ux/audit/screens-j06a-harness-selected.png) | harness spec |
+| SC-10 | Drawing preview: no zoom/pan, no hover link, hard-coded colours | medium | rebuild on `QGraphicsView` with wheel zoom, fit, pan; wire ids on the in-memory sheet for hover/selection sync (no change to written bytes); tokens | L | [shot](ux/audit/screens-j06c-drawing-tab.png) | P1 |
+| SC-11 | No Lists tab | high | `gui/lists_panel.py`: sub-tabs fed by the `core.outputs.tables` builders (read-only), one generic `TableModel` + proxy, units in headers, Ctrl+C TSV, export CSV/XLSX, stale banner | L | [shot](ux/audit/screens-j06a-harness-selected.png) | P1, P2 |
+| SC-12 | Export is blind (no selection, folder, result list, Reveal, thumbnail) | high | `ExportDialog` (harness × document tree, folder, open after export) and `ExportResultPanel` (paths, Reveal in folder, thumbnail); default stays the full export so the byte-identical output set is unchanged; **first check that `write_outputs` can write a subset without breaking `manifest.json`** | L | [shot](ux/audit/screens-j08a-after-export.png) | export spec |
+| SC-13 | Generate preview is a thin modal (counts only); no per-harness regenerate | medium | table harness / change / locked pins kept from `plan.report`; per-harness regenerate only if `plan_generation` can be scoped (core check needed) | M | [shot](ux/audit/screens-j05b-generate-preview-dialog.png) | harness actions |
+| SC-14 | The release dialog does not list what gets locked | medium | a tree "This release locks: n wires, n pins, interfaces, parts, interface types, config files" from `vcs.snapshot` and `locks.check_locks`; show placeholder values | S–M | [shot](ux/audit/screens-j09a-release-dialog-empty.png) | P5 |
+| SC-15 | Revise dialog says "Nothing blocks this release."; OK disabled with no hint | medium | separate `REVISE_EXPLAIN` text; inline hint for the 10-character minimum | S | [shot](ux/audit/screens-j10a-revise-dialog.png) | P5 |
+| SC-16 | Releases: no timeline tab; history and diff are modal lists with raw text | medium | `gui/releases_panel.py`: `QTableView` timeline from `changelog_rows`, diff grouped by `KIND_NAMES`, values formatted with `diff._show`; keep "Mark on diagram" | M | [shot](ux/audit/screens-j10c-changes-diff-dialog.png) | P3 |
+| SC-17 | Imports: only interfaces have a GUI; one cramped dialog; long reasons elided | medium | `ImportWizard(QWizard)`: file → mapping + preview → conflicts and placeholders → apply, reusing the CLI planners (`core/imports.py`, `core/kicad.py`) | L | [shot](ux/audit/screens-j11a-import-dialog.png) | import spec |
+| SC-18 | Top bar lacks name, hash, dirty marker, Check, Export, chip; Generate not primary | medium | see SH-1 | M | [shot](ux/audit/screens-j01-open.png) | layout spec |
+| SC-19 | No shortcuts for Generate, Export, New interface, Check, tab switching; Ctrl+K has none of them; layout not saved | medium | actions with shortcuts (Ctrl+G, Ctrl+E, Ctrl+I, …); palette entries; `saveState`/`restoreState` and Reset layout | S–M | same | P6 |
+| SC-20 | Left side is a palette, not a project tree | medium | see SH-6 | L | same | layout spec |
+| SC-21 | Table code not shared: 4 `QTableWidget`; widths not saved; Ctrl+C copies one cell; left-aligned numbers | medium | `gui/tables.py`: `DictTableModel`, `StateDelegate`, `copy_tsv`, width persistence; migrate harness, wire, import, diff, history views | M | — | tables rule |
+| SC-22 | Empty states say nothing about what to do | low | overlay text "No interfaces yet. Add one with Ctrl+I or import a table"; hide the disabled action row when there is no harness | S | [shot](ux/audit/screens-j12b-empty-project-table.png) | empty-state rule |
+| SC-23 | Failed generate/export, "changed during job" and lock refusals are 5 s toasts | medium | store the last job error; show it in the stale banner until the next success | S–M | [shot](ux/audit/screens-j09e-locked-edit-refused.png) | toasts vs banners |
+| SC-24 | `HarnessPanel.refresh` takes 308 ms on the UI thread on every change | low | compute verify and outputs state in a worker like `DrcWorker`; debounce the sheet | S–M | — | P7 |
+| SC-25 | **Needs an owner decision.** A name-only change to an interface carried by a released harness is allowed (cosmetic by design), yet the panel then says "Out of date" and the independent check reports "outdated … 1 error" | low | decide whether cosmetic fields count as outdated; if not, exclude them from the check without touching generated bytes | S | [shot](ux/audit/screens-j09g-properties-of-released-interface.png) | P3 |
+| SC-26 | Hard-coded colours and one inline stylesheet | low | tokens (see SH-20) | S | — | visual system |
+
+Counts: high 7 (SC-1, 2, 3, 4, 5, 6, 11, 12 are marked high: 8), medium 14, low 4.
+
+### C4. Journey walk (flatsat, real project folder, 1440×900)
+
+| # | Step | Clicks | Dialogs | Friction | Screenshot |
+|---|---|---|---|---|---|
+| 1 | Open | 0 here (File > Open is 2 + folder chooser) | none | no project name, hash or state chip; "Design rules: checking…" until the background check ends; the Harness view is only a bottom tab | [shot](ux/audit/screens-j01-open.png) |
+| 2 | Select a unit | 1 | none | Properties has no connector count, "used by", placeholder/source status, lock state or Why | — |
+| 3 | Add an interface | 3 | none on canvas | picking a unit with no free connector gives a clear toast; the new interface makes plans stale with no visible sign outside one tab | [shot](ux/audit/screens-j04c-interface-added.png) |
+| 4 | Generate | 2 | 1 modal preview | the preview does not say which plan changes or which locks are kept; afterwards the dock jumps to 420 px and the drawing area is an empty grey box | [shot](ux/audit/screens-j05b-generate-preview-dialog.png) |
+| 5 | Read a Why | 4 | none | wires only, raw text, no hover, not reachable from canvas or Properties | [shot](ux/audit/screens-j06b-why-for-wire.png) |
+| 6 | Run checks | 1 (they also run on their own) | none | no Check button, no progress; "all 34 rules checked" while 3 are not; not-checked items hidden behind "…and 51 more" | [shot](ux/audit/screens-j07a-problems-tab-after-checks.png) |
+| 7 | Supply a pending value | **not possible in the editor** | — | the 4 missing values and 6 placeholder files can be changed only by editing `config/*.json` or `harness config` | — |
+| 8 | Export | 2 | none (progress dialog over 400 ms) | no choice, no folder, no result list; toast only | [shot](ux/audit/screens-j08a-after-export.png) |
+| 9 | Release | 4 + typing | 1 modal | export first is a release blocker; the dialog does not list what is locked; two free-text reasons required; afterwards the released state is visible only in the out-of-view Status column | [shot](ux/audit/screens-j09a-release-dialog-empty.png) |
+| 10 | Revise | 3 + typing | 1 modal | the dialog opens with release wording; the diff shows raw `None` values | [shot](ux/audit/screens-j10a-revise-dialog.png) |
+
+About 20 clicks and 4 modal dialogs from open to revise, excluding typing. Hidden state: stale plans and outputs, not-checked rules, release state, lock state in Properties, pending values.
+
+Not verified in this part: 100 units, 4K, screen readers; whether `write_outputs` can write a subset without changing `manifest.json` (SC-12); whether `plan_generation` can be scoped to one harness (SC-13); toast timing in real time.
