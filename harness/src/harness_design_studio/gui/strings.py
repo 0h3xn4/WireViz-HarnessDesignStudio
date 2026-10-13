@@ -1087,7 +1087,6 @@ CONFIG_DONE_MANY = "Set {} engineering values."
 CONFIG_FIELD_NAME = "{label} ({unit})"
 CONFIG_PAIRS_HINT_TIP = "{hint}"
 CONFIG_REFUSED = "The change was refused. The message at the bottom of the window says why."
-=======
 # ==== UX harness view, lists and generate plan (gui/harness_view.py, lists_panel.py, plan_table.py) ==
 PREVIEW_HELP = "Drawing preview. Wheel zooms, drag pans, + and - zoom, 0 fits, Page Up and Page Down change sheet."
 PREVIEW_ZOOM_FIT = "Fit"
