@@ -72,7 +72,7 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 | Part | What it holds |
 | --- | --- |
 | **Top bar** | The project name, a short model hash, *Saved* or *Unsaved changes*, **Generate** (the one blue button), **Check**, **Export…** and a status chip. |
-| **Banner** | Appears under the top bar when something needs you: the plans or the exported files are out of date (buttons **Generate** and **Export…**), a generate, export or check failed (**Try again**), or a change was refused because a harness is released (**Start new revision…**). |
+| **Banner** | Appears under the top bar when something needs you: the plans or the exported files are out of date (buttons **Generate** and **Export…**), or a generate, export or check failed (**Try again**). A change that is refused because a harness is released stays on screen as a message over the diagram, with **Start new revision…**, until the next change goes through. |
 | **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases** (Ctrl+1 to Ctrl+5). |
 | **Left panel** | The **Project** tab: a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports, with a filter and an **Add** button. The **Palette** tab: **Add a unit**, **Connect with** and the interface import. |
 | **Right panel** | **Inspector** (the fields of what you selected, and where it is used), **Why** (the reasons for a choice) and **Problems** (the problem cards). |

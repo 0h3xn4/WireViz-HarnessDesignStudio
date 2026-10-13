@@ -338,7 +338,7 @@ The owner approved an audit of the editor against the "UX/UI Standard: Harness D
 ```
 Window
 ├─ Top bar: project name · short model hash · saved / unsaved · Generate (the one primary button) · Check · Export… · status chip
-├─ Banners (persistent): plans or files out of date, failed generate / export / check, refused change with "Start new revision…"
+├─ Banners (persistent): plans or files out of date, failed generate / export / check (a refused change stays as a message over the diagram, with "Start new revision…")
 ├─ Tabs: Diagram · Harness · Lists · Checks · Releases (Ctrl+1 to Ctrl+5)
 ├─ Left dock: Project tree (units, interfaces, harnesses, parts, interface types, configuration, imports) · Palette
 ├─ Right dock: Inspector · Why · Problems (the Inspector tab also lists "Used in")
