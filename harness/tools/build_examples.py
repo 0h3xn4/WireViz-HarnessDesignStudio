@@ -291,11 +291,19 @@ BUILDERS = {
 def build(target: Path = TARGET) -> None:
     for name, make in BUILDERS.items():
         folder = target / name
-        if folder.exists():
-            shutil.rmtree(folder)
-        save_project(make(), folder)
-        for stray in folder.rglob("*.bak"):
-            stray.unlink()
+        # built next to the old folder and swapped in, so a failure leaves the old example alone
+        fresh = target / f".{name}.new"
+        if fresh.exists():
+            shutil.rmtree(fresh)
+        try:
+            save_project(make(), fresh)
+            for stray in fresh.rglob("*.bak"):
+                stray.unlink()
+            if folder.exists():
+                shutil.rmtree(folder)
+            fresh.rename(folder)
+        finally:
+            shutil.rmtree(fresh, ignore_errors=True)
 
 
 def main() -> int:

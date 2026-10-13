@@ -4,6 +4,17 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Fixed
+
+- The package self-test (`--selftest`) no longer leaves a temporary folder behind, names the step that failed, works when `QT_QPA_PLATFORM` is set but empty, and only reacts to its flag as the first argument.
+- The `.deb` no longer carries the tarball-only `README.txt`, icon and desktop template under `/opt`.
+- The CI run on a merge to `master` is no longer cancelled by the next merge; the documents-only job also runs the flatsat walkthrough test; a missing `.deb` or `.tar.gz` fails the build job.
+- The wheel carries the `.gitignore` files of the example projects; `tools.vendor` no longer downloads an unpinned `wheel`; a licence such as "GPL-3.0 with LGPL exception" is rejected by the licence report.
+- `harness verify` on a project without wires says to run `harness generate` first.
+- `harness config` no longer names decision-log numbers (D-10, D-15).
+- Documents: locking a wire or pin is done by editing the harness file (the app has no button); `emc.classes` is documented as read by no rule.
+- Build tools: a failing example builder keeps the old example folder; `tools.metrics --coverage` and `tools.usability_summary` give a message instead of a traceback; `tools.extract_requirements` checks that all PDFs exist before it rewrites any list; the user-guide converter keeps code spans and link targets intact.
+
 ## 1.0.0 (2026-10-12; released on the owner's instruction, see compliance/SIGNOFF.md; not a statement of compliance)
 
 Version 1.0.0 is 0.1.0 plus the changes listed below: the fixes of the October 2026 pre-release audit (the findings and what was done about each are in `AUDIT.md` at the root of the repository), the release freeze of parts, interface types and configuration, two more examples (`minimal-satellite`, `flatsat`), a design worksheet template and the wiring-diagram drawing. The open engineering decisions were recorded as defaults on 2026-10-12 (`docs/DECISIONS.md` D-142 to D-145); the tool still ships no standard or part data. **What is still true**: the configuration files are placeholders and the parts are example parts, so results rest on placeholders; no compliance with any standard is claimed; the packages are not signed; the upstream WireViz code under `src/wireviz/` is unchanged.

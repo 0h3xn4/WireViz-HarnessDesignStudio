@@ -28,11 +28,21 @@ a{color:var(--accent)} p,li{max-width:42rem}
 
 def inline(text: str) -> str:
     out = html.escape(text, quote=False)
-    out = re.sub(r"`([^`]+)`", lambda m: f"<code>{m.group(1)}</code>", out)
+    spans: list[str] = []  # code is set aside so `*.csv and *.xlsx` is not read as emphasis
+
+    def keep(m: re.Match[str]) -> str:
+        spans.append(f"<code>{m.group(1)}</code>")
+        return f"\x00{len(spans) - 1}\x00"
+
+    out = re.sub(r"`([^`]+)`", keep, out)
     out = re.sub(r"\*\*([^*]+)\*\*", r"<strong>\1</strong>", out)
     out = re.sub(r"(?<![\w*])\*([^*\n]+)\*(?![\w*])", r"<em>\1</em>", out)
-    out = re.sub(r"\[([^\]]+)\]\(([^)]+)\)", r'<a href="\2">\1</a>', out)
-    return out
+    out = re.sub(
+        r"\[([^\]]+)\]\(([^)]+)\)",
+        lambda m: f'<a href="{m.group(2).replace(chr(34), "&quot;")}">{m.group(1)}</a>',
+        out,
+    )
+    return re.sub(r"\x00(\d+)\x00", lambda m: spans[int(m.group(1))], out)
 
 
 def slug(text: str) -> str:

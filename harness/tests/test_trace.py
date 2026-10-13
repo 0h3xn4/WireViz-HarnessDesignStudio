@@ -5,6 +5,8 @@ from __future__ import annotations
 import csv
 from pathlib import Path
 
+import pytest
+
 from tools import trace
 
 ROOT = Path(__file__).resolve().parent.parent
@@ -38,3 +40,21 @@ def test_a_file_that_names_a_requirement_contains_tests() -> None:
             ):
                 empty.append(f"{rid} in {name}")
     assert not empty, empty
+
+
+def test_a_missing_standard_pdf_is_found_before_any_list_is_rewritten(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from tools import extract_requirements as er
+
+    folder = tmp_path / "pdfs"
+    folder.mkdir()
+    (folder / next(iter(er.STANDARDS.values()))).write_bytes(b"%PDF-1.4")  # only the first one
+
+    def not_called(*_a: object, **_k: object) -> None:
+        raise AssertionError("a standard was processed although another PDF is missing")
+
+    monkeypatch.setattr(er, "to_text", not_called)
+    monkeypatch.setattr(er, "write", not_called)
+    assert er.main(str(folder)) == 2
+    assert capsys.readouterr().err.count("missing:") == len(er.STANDARDS) - 1

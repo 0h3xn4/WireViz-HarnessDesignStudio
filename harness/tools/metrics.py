@@ -76,7 +76,16 @@ def collect(coverage_json: Path | None = None) -> dict[str, object]:
 
 
 def main(argv: list[str]) -> int:
-    cov = Path(argv[argv.index("--coverage") + 1]) if "--coverage" in argv else None
+    cov = None
+    if "--coverage" in argv:
+        at = argv.index("--coverage") + 1
+        if at >= len(argv):
+            print(
+                "usage: python -m tools.metrics [--coverage coverage.json] [--write]",
+                file=sys.stderr,
+            )
+            return 2
+        cov = Path(argv[at])
     text = json.dumps(collect(cov), indent=2, sort_keys=True) + "\n"
     if "--write" in argv:
         (ROOT / "compliance" / "metrics.json").write_text(text, encoding="utf-8")

@@ -137,3 +137,23 @@ def test_finding_ids_are_stable_and_bounded() -> None:
     fid = checks.finding_id("cross-strap", long)
     assert len(fid) <= 64 and fid == checks.finding_id("cross-strap", long)
     assert checks.finding_id("a", "b") == "a.b"
+
+
+def test_the_logical_rule_table_in_the_rule_reference_matches_the_checks() -> None:
+    """tools/gen_rule_docs.py writes its own table of these four rules; it must not drift."""
+    from harness_design_studio.core.commands import Put
+    from harness_design_studio.core.model import evolve
+    from tools.gen_rule_docs import LOGICAL
+
+    p = mini3()
+    run(p, edit.ops_redundant_copy(p, "RW1").ops)  # cross-strap, unconfirmed
+    run(p, edit.ops_add_unit(p, "computer")[0])  # isolated
+    q = two_unit_project()
+    ops, iid = edit.ops_add_interface(q, "rs422", "OBC1", "RW1")
+    run(q, ops)
+    ends = [evolve(e, connector_id=None, auto=False) for e in q.interfaces[iid].endpoints]
+    run(q, [Put("interfaces", evolve(q.interfaces[iid], endpoints=ends))])  # no-connector
+    seen = {f.rule: f.severity for f in checks.find(p) + checks.find(q)}
+    assert {r for r, *_ in LOGICAL} <= set(seen)
+    for rule, severity, *_ in LOGICAL:
+        assert seen[rule] == severity, rule

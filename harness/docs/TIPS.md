@@ -194,7 +194,7 @@ A warning of the design rule check can be fixed or **waived**: in the app, press
 - **Preview imports:** every `import-*` command accepts `--dry-run`; it shows each row and changes nothing. See [`IMPORTS.md`](IMPORTS.md).
 - **Undo is cheap:** an import is applied as one undo step in the app, however many rows it has.
 - **Look at the Why tab:** select a wire and read *Why is it like this?* before you override a choice.
-- **Lock what you decided:** a wire or pin you set by hand and lock is kept by every later generation.
+- **Lock what you decided:** a wire or pin you set by hand and lock is kept by every later generation. You lock it by editing the harness file (`"locked": true` in the entry); the app has no button for this, see [`user-manual/generate-harnesses.md`](user-manual/generate-harnesses.md#keep-a-choice-of-your-own).
 - **Verify before you send:** `harness verify DIR --outputs` re-reads the exported files and compares them with the design; the 12-character model hash in every file tells you which design printed it.
 - **Plan on paper first** with `design-worksheet.md` from the templates (not in the 0.1.0 packages).
 

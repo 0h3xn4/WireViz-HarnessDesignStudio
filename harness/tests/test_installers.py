@@ -6,6 +6,7 @@ import subprocess
 import sys
 import xml.etree.ElementTree as ET  # noqa: S405
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -618,7 +619,9 @@ def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     # the real files agree; text under "## Unreleased" is allowed between releases (the release
     # gate in tools/release_check refuses it at release time)
-    found = [p for p in rn.problems(f"v{__version__}", __version__, changelog) if "Unreleased" not in p]
+    found = [
+        p for p in rn.problems(f"v{__version__}", __version__, changelog) if "Unreleased" not in p
+    ]
     assert found == []
     body = rn.section(changelog, __version__)
     assert body and not any(ln.startswith("## ") for ln in body.splitlines())
@@ -634,10 +637,12 @@ def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path
     assert rn.main(["notes", "v0.0.1", str(sums), str(out)]) == 1  # the tag must fit the version
 
 
-def _load_gui_entry():  # type: ignore[no-untyped-def]
+def _load_gui_entry() -> Any:
     import importlib.util
 
-    spec = importlib.util.spec_from_file_location("gui_entry_under_test", ROOT / "packaging/gui_entry.py")
+    spec = importlib.util.spec_from_file_location(
+        "gui_entry_under_test", ROOT / "packaging/gui_entry.py"
+    )
     assert spec and spec.loader
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
@@ -708,3 +713,39 @@ def test_the_ci_workflow_keeps_runs_on_master_and_checks_both_packages() -> None
     # the documents-only job also runs the test that reads the flatsat walkthrough
     docs_job = ci[ci.index("  docs:") : ci.index("  test:")]
     assert "tests/test_examples.py::test_the_flatsat_walkthrough_matches_the_example" in docs_job
+
+
+def test_the_wheel_carries_the_dotfiles_of_the_example_projects() -> None:
+    """The `**` in package-data does not match names that start with a dot."""
+    import glob
+    import tomllib
+
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    patterns = pyproject["tool"]["setuptools"]["package-data"]["harness_design_studio.resources"]
+    pkg = ROOT / "src" / "harness_design_studio" / "resources"
+    shipped = {
+        f
+        for pat in patterns
+        for f in glob.glob(pat, root_dir=pkg, recursive=True)  # noqa: PTH207
+    }
+    dotfiles = {
+        p.relative_to(pkg).as_posix() for p in (pkg / "examples").rglob(".*") if p.is_file()
+    }
+    assert dotfiles and dotfiles <= shipped, sorted(dotfiles - shipped)
+
+
+def test_the_offline_wheelhouse_downloads_only_pinned_packages(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from tools import vendor
+
+    commands: list[list[str]] = []
+
+    def fake(cmd: list[str], **_k: object) -> subprocess.CompletedProcess[str]:
+        commands.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(subprocess, "run", fake)
+    assert vendor.main(str(tmp_path / "wheelhouse")) == 0
+    named = [a for c in commands[1:] for a in c[c.index("download") + 3 :]]
+    assert named and all("==" in a for a in named), named

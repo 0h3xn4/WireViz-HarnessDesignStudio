@@ -52,7 +52,7 @@ Mark each line. "Not yet" is a good answer: the tool says *pending* and does not
 | Connector pinouts of the units (KiCad or table) | yes / not yet | | |
 | Title block and drawing numbers | yes / not yet | | |
 
-Each "not yet" is listed by `harness config DIR` and shown in the Problems tab until it is filled in. See `docs/PLACEHOLDERS.md`.
+Each "not yet" is listed by `harness config DIR` and shown in the Problems tab until it is filled in. See `docs/PLACEHOLDERS.md` in the tool's repository (it is not installed with the app).
 
 ## 5. Check before you start
 
@@ -68,4 +68,4 @@ Each "not yet" is listed by `harness config DIR` and shown in the Problems tab u
 2. Add the units, then the interfaces, in the app, or import the table.
 3. `harness generate my-design`, then read the Problems tab.
 
-The step-by-step version is in `docs/GETTING_STARTED.md`, the whole route in `docs/LEARNING_PATH.md`.
+The step-by-step version is in `docs/GETTING_STARTED.md`, the whole route in `docs/LEARNING_PATH.md` (both in the tool's repository, not installed with the app).

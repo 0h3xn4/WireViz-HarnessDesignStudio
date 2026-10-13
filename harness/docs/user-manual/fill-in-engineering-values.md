@@ -33,8 +33,8 @@ Engineering values: 0 of 17 set.
 - MISSING config/derating.json bundle_derating: factor (above 0, at most 1) for wires in a bundle. Needed for: wire sizing, wire current check.
 ...
 Files still marked as placeholder (set "placeholder": false after review): derating, emc, generation, segregation.
-Waiting for an owner decision: config/segmentation.json is a placeholder until D-10 (harness boundary rule) is made.
-Waiting for an owner decision: config/titleblock.json is a placeholder until D-15 (title block) is made.
+Waiting for an owner decision: config/segmentation.json is a placeholder until the rule for how interfaces are grouped into harnesses is confirmed.
+Waiting for an owner decision: config/titleblock.json is a placeholder until the title block fields are confirmed.
 ```
 
 The command exits with 1 while values are missing. It lists every missing value, what depends on it, and any value that is set but invalid (for example `INVALID config/derating.json: bundle_derating must be a number above 0 and at most 1.`). Use it as your hand-over checklist. The full list of files and keys is in [`CONFIG.md`](../CONFIG.md) and [`PLACEHOLDERS.md`](../PLACEHOLDERS.md).

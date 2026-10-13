@@ -16,7 +16,7 @@ Short answers. If yours is not here, check the **Problems** tab (it says what is
 
 **Can I just use the demo values?** For learning, yes (`harness templates DIR` copies them, see [`GETTING_STARTED.md`](GETTING_STARTED.md) part 7). They are not engineering data. Never release a real design with them. A release is refused while the configuration files are marked as placeholders unless you give a written reason, which is kept in the change log.
 
-**Can I edit a generated harness by hand?** Not in the sense of editing a drawing. You change the design (units, interfaces, connectors, values) and generate again. To keep a wire or pin choice, **lock** it; generation then keeps it. A harness that is released is locked; start a new revision to change it.
+**Can I edit a generated harness by hand?** Not in the sense of editing a drawing. You change the design (units, interfaces, connectors, values) and generate again. To keep a wire or pin choice, lock it by setting `"locked": true` in its entry in the harness file (`physical/harnesses/<ID>.json`; the app has no button for this); generation then keeps it. A harness that is released is locked; start a new revision to change it.
 
 **What happens when I generate again?** IDs, locked wires and locked pins are kept, released harnesses are never touched, and a report says what was added, changed and removed. Generating twice gives the same result.
 
