@@ -13,6 +13,9 @@ Versions follow semantic versioning. Every project file records the tool version
 - `harness new --name` with a blank name is refused, and a name is stored without surrounding spaces. A link (also a dangling one) is not accepted as the folder of a new project, with the usual "not an empty folder" message.
 - `import-lengths` help, `IMPORTS.md` and the templates README say that its three columns are read by position. The exit code table in `CLI.md` names the imports and `config` under exit code 1.
 - `FILE_FORMAT.md` and `TROUBLESHOOTING.md` describe the empty `.harness.lock.takeover` file.
+### Fixed
+
+- **Fixed: outputs, low findings** (audit D-12, D-14, D-17). Wires with both ends on one side of a cable block (loop-back plugs) are counted when the drawing is split into sheets, so their loops no longer run into the title block. A damaged output manifest that lists a folder no longer makes every export fail; the empty folder of a removed harness is removed; the deep output check treats a linked output file as changed and the output reader skips links. The routing function names a missing gap instead of raising a key error.
 
 ## 1.0.0 (2026-10-12; released on the owner's instruction, see compliance/SIGNOFF.md; not a statement of compliance)
 

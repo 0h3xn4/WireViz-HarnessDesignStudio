@@ -79,6 +79,8 @@ SLEEVE_HEAD = 5.4  # the line above a sleeve: its name and how its two ends are 
 SLEEVE_OVER = 8.0  # how far a sleeve reaches beyond the cable block on each side
 MAX_WIRE_RUN = 45.0  # longest stretch of wire between a connector table and a cable block
 WIRE_W = 0.8
+LOOP_BASE = 2.5  # a wire with both ends on one side runs this far below its block ...
+LOOP_STEP = 0.9  # ... plus this much for every wire row above it
 PIN_SIZE = 2.5
 HEAD_SIZE = 2.2
 ID_FLOOR = 1.4  # smallest text size for a long ID (64 characters fit in a connector table)
@@ -212,6 +214,22 @@ def _block_height(wires: list[Wire], shields: list[ShieldGroup]) -> float:
     return HEAD_H + sum(SLEEVE_HEAD if kind == "head" else ROW for kind, _s, _w, _c in rows)
 
 
+def _loop_depth(wires: list[Wire], shields: list[ShieldGroup], side: dict[str, int]) -> float:
+    """How far below its cable block the lowest wire with both ends on one side runs (0 if none)."""
+    depth, nth = 0.0, 0
+    for kind, _sid, wire, _chain in _block_rows(wires, shields):
+        if kind == "wire" and wire is not None:
+            if side.get(wire.from_connector, 0) == side.get(wire.to_connector, 0):
+                depth = LOOP_BASE + LOOP_STEP * nth
+            nth += 1
+    return depth
+
+
+def _block_extent(wires: list[Wire], shields: list[ShieldGroup], side: dict[str, int]) -> float:
+    """The room a cable block needs: its height and the wire loops below it."""
+    return _block_height(wires, shields) + _loop_depth(wires, shields, side)
+
+
 def _fits(
     wires: list[tuple[tuple[str, str], Wire]],
     side: dict[str, int],
@@ -227,7 +245,7 @@ def _fits(
     cols: list[list[float]] = [[], []]
     for cid, used in pins.items():
         cols[side.get(cid, 0)].append(HEAD_H + len(used) * ROW)
-    cable = [_block_height(ws, shields) for ws in per_group.values()]
+    cable = [_block_extent(ws, shields, side) for ws in per_group.values()]
     return max(_stack_height(cols[0]), _stack_height(cols[1]), _stack_height(cable)) <= capacity
 
 
@@ -446,7 +464,8 @@ def _draw_page(
         ]
         want[g] = sum(ys) / len(ys)
     heights = {g: _block_height(ws, h.shields) for g, ws in groups.items()}
-    box_top = _place_blocks(want, heights, y0, limit)
+    extents = {g: _block_extent(ws, h.shields, side) for g, ws in groups.items()}
+    box_top = _place_blocks(want, extents, y0, limit)  # the loops below a block count too
     # connector tables
     for cid in order:
         c = conns.get(cid)
@@ -575,7 +594,7 @@ def _draw_page(
                 toward = -1.0 if col == 0 else 1.0  # from the block to its connectors
                 nth = len([r for r in placed if r[2] is not None and r[0] < yy])
                 out, back = far - toward * (3.0 + 0.9 * nth), near + toward * (3.0 + 0.9 * nth)
-                yr = bt + height + 2.5 + 0.9 * nth
+                yr = bt + height + LOOP_BASE + LOOP_STEP * nth
                 for width, colour in ((WIRE_W + 0.7, "#000000"), (WIRE_W, hexcolour)):
                     sh.add(
                         Curve(x1, y1, near, cy, width=width, color=colour),
