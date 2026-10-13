@@ -96,9 +96,18 @@ class Sheet:
     height: float
     items: list[Item] = field(default_factory=list)
     title: str = ""
+    # In-memory only, never written to SVG or PDF: which items draw which design object, as
+    # (kind, id) -> indexes into `items`. Kinds: "wire", "connector", "pin" (id "connector/pin")
+    # and "shield". The editor's drawing preview uses it to link the picture and the tables.
+    marks: dict[tuple[str, str], list[int]] = field(default_factory=dict, compare=False, repr=False)
 
     def add(self, *items: Item) -> None:
         self.items.extend(items)
+
+    def mark(self, kind: str, ident: str, start: int) -> None:
+        """Say that the items added since `start` (an earlier `len(self.items)`) draw this object."""
+        if len(self.items) > start:
+            self.marks.setdefault((kind, ident), []).extend(range(start, len(self.items)))
 
 
 def _n(v: float) -> str:
