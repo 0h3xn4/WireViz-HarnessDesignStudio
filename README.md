@@ -1,9 +1,13 @@
+<p align="center"><img src="harness/docs/img/banner.svg" alt="Harness Design Studio: offline spacecraft wiring-harness design" width="100%"></p>
+
 # Harness Design Studio
 
 > **This repository is Harness Design Studio, a tool built on top of [WireViz](https://github.com/wireviz/WireViz).**
 > The first part of this README covers Harness Design Studio. The original WireViz README follows unchanged below the divider: [jump to the original WireViz README](#original-wireviz-readme).
 
+[![latest release](https://img.shields.io/github/v/release/0h3xn4/WireViz-harnessdesignstudio?label=release&color=4a1fb8)](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest)
 [![harness-design-studio CI](https://github.com/0h3xn4/WireViz-harnessdesignstudio/actions/workflows/harness-ci.yml/badge.svg?branch=master)](https://github.com/0h3xn4/WireViz-harnessdesignstudio/actions/workflows/harness-ci.yml)
+[![Ubuntu 24.04 or newer](https://img.shields.io/badge/Ubuntu-24.04%2B-E95420?logo=ubuntu&logoColor=white)](harness/docs/INSTALL.md)
 
 An offline desktop tool for designing the electrical harnesses of a spacecraft: you draw the units and the connections between them, and the tool works out the connectors, pins and wires, checks them, and writes the drawings and lists.
 
