@@ -160,6 +160,9 @@ def apply_ops(project: Project, ops: list[Op]) -> list[Op]:
     return undo
 
 
+MAX_UNDO_STEPS = 200  # a retained step can hold much of the project; the oldest are dropped
+
+
 @dataclass
 class _Step:
     label: str
@@ -180,6 +183,8 @@ class History:
     def execute(self, label: str, ops: list[Op]) -> None:
         if self.project.read_only:
             raise TransactionError("This project is read-only (saved by a newer tool version).")
+        if not ops:
+            return  # nothing to apply: no undo step, and redo stays
         from .vcs.locks import check_locks  # local import: locks builds on this module
 
         check_locks(self.project, ops)
@@ -198,6 +203,7 @@ class History:
                 [i.message for i in after_issues if i.key() in new],
             )
         self._undo.append(_Step(label, list(ops), backward))
+        del self._undo[:-MAX_UNDO_STEPS]  # the oldest steps go first
         self._redo.clear()
         self.revision += 1
         self.last_ops = list(ops)
