@@ -3,17 +3,29 @@
 from harness_design_studio.core.model import Harness, Project, Wire
 
 
+def _without_driver(line: str, w: Wire) -> str:
+    """Only a TX/RX pair (labelled "TX+/RX+") has a driving end; PWR, RTN and other single paths
+    do not, so "(X drives)" is left off their wiring line."""
+    if line.startswith("wiring:") and w.signal and "/" not in w.signal:
+        for end in ("X", "Y"):
+            line = line.removesuffix(f" ({end} drives)")
+    return line
+
+
 def explain_wire(project: Project, h: Harness, w: Wire) -> list[str]:
     prov = project.generation.provenance if project.generation else {}
     keys = [f"wire:{w.id}", f"gauge:{w.id}", f"harness:{h.id}"]
     cables = {c.id: c for c in h.connectors}
+    pin_keys = []
     for cid, pin in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
         box = cables[cid].mates_with if cid in cables else None
         if box:
-            keys.append(f"pin:{box}.{pin}")
+            pin_keys.append((f"pin:{box}.{pin}", f"{box} pin {pin}: "))
     out: list[str] = []
     for k in keys:
-        out.extend(prov.get(k, []))
+        out.extend(_without_driver(line, w) for line in prov.get(k, []))
+    for k, where in pin_keys:  # the line itself does not say which connector it is about
+        out.extend(where + line for line in prov.get(k, []))
     return out
 
 

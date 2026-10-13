@@ -43,18 +43,28 @@ def _cfg(project: Project, name: str) -> dict[str, object]:
     return dict(c.values) if c is not None else {}
 
 
+def _category_classes(sep: dict[str, object]) -> dict[str, str]:
+    """Class of every category named in `category_pairs_to_separate`: the pairs are coloured greedily
+    (sorted names), so only the listed pairs end in different classes. Colour 0 is "main"."""
+    pairs = sep.get("category_pairs_to_separate")
+    if not isinstance(pairs, list):
+        return {}
+    edges = [sorted(map(str, p)) for p in pairs if isinstance(p, list) and len(p) == 2]
+    colour: dict[str, int] = {}
+    for cat in sorted({c for e in edges for c in e}):
+        taken = {colour[o] for e in edges if cat in e for o in e if o != cat and o in colour}
+        colour[cat] = next(n for n in range(len(colour) + 1) if n not in taken)
+    members = {n: sorted(c for c, k in colour.items() if k == n) for n in set(colour.values())}
+    return {c: "main" if k == 0 else "cat-" + "+".join(members[k]) for c, k in colour.items()}
+
+
 def _class_of(
     project: Project, i: InterfaceInstance, seg: dict[str, object], sep: dict[str, object]
 ) -> str:
     cat = project.interface_types[i.type_id].category
     if cat == "pyro" and sep.get("forbid_pyro_with_other") in (None, True):
         return "pyro"
-    pairs = sep.get("category_pairs_to_separate")
-    if isinstance(pairs, list):
-        separated = {c for pair in pairs if isinstance(pair, list) for c in pair}
-        if cat in separated:
-            return f"cat-{cat}"
-    return "main"
+    return _category_classes(sep).get(cat, "main")
 
 
 def orient(
@@ -133,7 +143,9 @@ def segment(project: Project) -> Segmentation:
                 Skipped(i.id, f"both ends are on the same connector ({a.connector_id})", "error")
             )
             continue
-        chain = i.redundancy
+        # with forbid_nominal_with_redundant off, the two chains may share a harness
+        keep_chains = sep_cfg.get("forbid_nominal_with_redundant") is not False
+        chain = i.redundancy if keep_chains else ""
         cls = _class_of(project, i, seg_cfg, sep_cfg)
         ua, ub = sorted([a.unit_id, b.unit_id])
         za, zb = sorted([project.units[a.unit_id].zone or "", project.units[b.unit_id].zone or ""])

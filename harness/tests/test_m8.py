@@ -106,6 +106,12 @@ def test_arrange_keeps_lanes_never_overlaps_and_is_idempotent() -> None:
     assert len(zones) >= 1
 
 
+def test_arrange_is_idempotent_at_stress_size() -> None:
+    p = stress_project()
+    apply_ops(p, edit.ops_arrange(p))
+    assert edit.ops_arrange(p) == []  # B-22: it used to move 100 units on the second run
+
+
 def test_arrange_reduces_total_link_length_and_is_one_undo_step() -> None:
     p = sat15()
 
