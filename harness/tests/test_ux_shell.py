@@ -235,6 +235,38 @@ def test_the_top_bar_shows_the_project_the_hash_and_the_state(flat) -> None:
     assert bar.dirty_label.text() == strings.TB_CLEAN
 
 
+def test_the_top_bar_folds_parts_away_instead_of_widening_the_window(qtbot, flat) -> None:
+    from harness_design_studio.gui.topbar import TopBar
+
+    bar = TopBar(flat.theme)
+    qtbot.addWidget(bar)
+    bar.apply(
+        ShellStatus(
+            name="A rather long project name for a narrow window",
+            model_hash="1a2b3c4d",
+            dirty=True,
+            generation="stale",
+            has_harnesses=True,
+        )
+    )
+    bar.show()
+    bar.resize(1000, bar.height())
+    assert bar.level() == 0 and "Unsaved changes" in bar.dirty_label.text()
+    bar.resize(300, bar.height())
+    assert bar.level() == 3  # the smallest: a dirty dot, no hash, Check and Export as icons
+    assert bar.dirty_label.text() == "●" and bar.hash_label.isHidden()
+    assert bar.check_btn.text() == "" and bar.check_btn.accessibleName() == strings.TB_CHECK
+    assert bar.check_btn.toolTip() and bar.export_btn.toolTip()  # still named on hover
+    assert bar.generate_btn.text() == strings.TB_GENERATE  # Generate keeps its word
+    bar.resize(1000, bar.height())
+    assert bar.level() == 0 and not bar.hash_label.isHidden()  # and it all comes back
+    # the window itself is never made wider by what the bar says (it was 1150 px before the shell)
+    edit_something(flat)
+    flat.go_to("checks")  # with the results of the check loaded in the Checks tab
+    size = flat.minimumSizeHint()
+    assert size.width() <= 1160 and size.height() <= 520
+
+
 def test_only_generate_is_primary_and_the_toggles_are_neutral(flat) -> None:
     primary = [
         b.objectName() or b.text()

@@ -18,8 +18,9 @@ model state there, because a hash of a big design takes a moment).
 
 from dataclasses import dataclass, replace
 
-from PySide6.QtCore import Qt, Signal
-from PySide6.QtWidgets import QHBoxLayout, QLabel, QPushButton, QSizePolicy, QWidget
+from PySide6.QtCore import QSize, Qt, Signal
+from PySide6.QtGui import QResizeEvent
+from PySide6.QtWidgets import QHBoxLayout, QLabel, QLayout, QPushButton, QSizePolicy, QWidget
 
 from harness_design_studio.gui import icons, strings
 from harness_design_studio.gui.icons import tooltip_text
@@ -86,9 +87,13 @@ class TopBar(QWidget):
         super().__init__(parent)
         self.theme = theme
         self.status = ShellStatus()
+        self._level = 0  # how much has been folded away to fit (see `_fit`)
+        self._fitting = False
         self.setObjectName("topbar")
         self.setAccessibleName(strings.TB_ACCESSIBLE)
         lay = QHBoxLayout(self)
+        self.lay = lay
+        lay.setSizeConstraint(QLayout.SizeConstraint.SetNoConstraint)  # the bar folds, see `_fit`
         lay.setContentsMargins(theme.space(8), theme.space(4), theme.space(8), theme.space(4))
         lay.setSpacing(theme.space(8))
 
@@ -149,7 +154,7 @@ class TopBar(QWidget):
         self.name_label.setText(s.name or strings.TB_UNSAVED_PROJECT)
         self.hash_label.setText(s.model_hash)
         self.hash_label.setToolTip(strings.TB_HASH_TIP.format(s.model_hash))
-        self.dirty_label.setText(f"●  {strings.TB_DIRTY}" if s.dirty else strings.TB_CLEAN)
+        self.dirty_label.setAccessibleName(strings.TB_DIRTY if s.dirty else strings.TB_CLEAN)
         self.dirty_label.setToolTip(strings.TB_DIRTY_TIP if s.dirty else strings.TB_CLEAN_TIP)
         self.dirty_label.setProperty("dirty", s.dirty)
         self.dirty_label.setProperty("muted", not s.dirty)
@@ -167,6 +172,53 @@ class TopBar(QWidget):
             self.generate_btn.setToolTip(tooltip_text(strings.GENERATE_TIP, "Ctrl+G"))
         self.check_btn.setEnabled(not busy)
         self.export_btn.setEnabled(not busy)
+        self._fit()
+
+    # ---- fitting a narrow window ----
+    def minimumSizeHint(self) -> QSize:  # noqa: N802
+        """Small and constant: when the bar is narrow it folds parts away (`_fit`) instead of
+        asking the window to grow."""
+        return QSize(self.theme.px(480), self.lay.minimumSize().height())
+
+    def resizeEvent(self, event: QResizeEvent) -> None:  # noqa: N802
+        super().resizeEvent(event)
+        self._fit()
+
+    def _set_level(self, level: int) -> None:
+        """0: everything. 1: the dirty marker is a dot. 2: the hash goes too. 3: Check and Export
+        keep their icon and lose their word (the tooltip and the accessible name stay)."""
+        s = self.status
+        self._level = level
+        if level >= 1:
+            self.dirty_label.setText("●" if s.dirty else "")
+            self.dirty_label.setVisible(s.dirty)
+        else:
+            self.dirty_label.setText(f"●  {strings.TB_DIRTY}" if s.dirty else strings.TB_CLEAN)
+            self.dirty_label.setVisible(True)
+        self.hash_label.setVisible(level < 2)
+        for button, word in ((self.check_btn, strings.TB_CHECK), (self.export_btn, strings.TB_EXPORT)):  # fmt: skip
+            button.setText("" if level >= 3 else word)
+            button.setProperty("iconOnly", level >= 3)
+            button.style().unpolish(button)
+            button.style().polish(button)
+
+    def level(self) -> int:
+        return self._level
+
+    def _fit(self) -> None:
+        if self._fitting:
+            return
+        self._fitting = True
+        try:
+            for level in range(4):
+                self._set_level(level)
+                self.lay.activate()
+                # the name may shrink to 160 px (it is cut in the middle) before anything else folds
+                give = max(0, self.name_label.sizeHint().width() - self.theme.px(160))
+                if self.lay.sizeHint().width() - give <= self.width():
+                    break
+        finally:
+            self._fitting = False
 
     def update_status(self, **changes: object) -> None:
         """Change some fields of the current status and show the result."""

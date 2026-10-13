@@ -33,6 +33,15 @@ from PySide6.QtWidgets import (
 from harness_design_studio.gui import icons, strings
 from harness_design_studio.gui.theme import ThemeManager
 
+
+def shrinkable(widget: QWidget) -> QWidget:
+    """Let a panel be squeezed: its own size hint no longer sets the minimum size of the window.
+    (A table with many columns or a long unwrapped line in a panel that is not even shown would
+    otherwise make the window wider than the screen.)"""
+    widget.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Ignored)
+    return widget
+
+
 # ---- empty state -------------------------------------------------------------------------------
 
 
@@ -111,7 +120,10 @@ class SlotTabs(QTabWidget):
         *,
         installed: bool = True,
         tip: str = "",
+        shrink: bool = True,
     ) -> int:
+        if shrink:
+            shrinkable(widget)
         index = self.addTab(widget, title)
         self._names.append(name)
         self._installed[name] = installed
@@ -153,6 +165,7 @@ class SlotTabs(QTabWidget):
         tab. Returns the widget that was replaced (it is scheduled for deletion)."""
         index = self.index_of(name)
         old = self.widget_of(name)
+        shrinkable(widget)
         title, tip = self.tabText(index), self.tabToolTip(index)
         was_current = self.currentIndex() == index
         self.blockSignals(True)

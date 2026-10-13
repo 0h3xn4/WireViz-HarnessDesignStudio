@@ -131,6 +131,7 @@ from harness_design_studio.gui.shell import (
     SlotTabs,
     auto_scale,
     refusal_harness,
+    shrinkable,
 )
 from harness_design_studio.gui.theme import MODES, ThemeManager, mark_mono
 from harness_design_studio.gui.tokens import CATEGORIES
@@ -575,7 +576,13 @@ class MainWindow(QMainWindow):
         self.main_tabs.setAccessibleName(strings.SHELL_MAIN_TABS)
         self.checks_panel = ChecksPanel(self.ctl, self.theme, settings=self.settings)
         self.releases_panel = ReleasesPanel(self.ctl, self.theme, settings=self.settings)
-        self.main_tabs.add_slot("diagram", strings.TAB_DIAGRAM, centre, tip=strings.TAB_TIP.format(strings.TAB_DIAGRAM, 1))  # fmt: skip
+        self.main_tabs.add_slot(
+            "diagram",
+            strings.TAB_DIAGRAM,
+            centre,
+            tip=strings.TAB_TIP.format(strings.TAB_DIAGRAM, 1),
+            shrink=False,  # the diagram page keeps its own minimum (its tool row)
+        )
         self.main_tabs.add_slot(
             "harness",
             strings.TAB_HARNESS,
@@ -657,6 +664,8 @@ class MainWindow(QMainWindow):
         self.tabs.addTab(self.table, strings.INTERFACE_TABLE)
         self.tabs.addTab(self.harness_panel, strings.HARNESS_PLANS)
         self.tabs.addTab(self.outline, strings.OUTLINE)
+        for page in (self.problems, self.todo, self.table, self.harness_panel, self.outline):
+            shrinkable(page)  # a long line in a card must not widen the whole window
         self.dock_bottom = self._dock(
             strings.PROBLEMS_AND_STATUS,
             self.tabs,
