@@ -169,7 +169,7 @@ class OutputsWorker(QThread):
                 cancel=lambda: self._cancelled,
                 progress=lambda f, t: self.progressed.emit(f, t),
             )
-            self.progressed.emit(0.95, "Independent check")
+            self.progressed.emit(0.95, strings.PROGRESS_VERIFY)
             self.report = verify_outputs(self._project, self.result.files)
         except OutputsCancelled:
             self.result = None
@@ -1137,7 +1137,9 @@ class MainWindow(QMainWindow):
         except edit.EditError as exc:
             self._error(str(exc))
             return
-        if self.ctl.run(f"Delete {hid}", ops, message=strings.HARNESS_DELETED.format(hid)):
+        if self.ctl.run(
+            strings.STEP_DELETE.format(hid), ops, message=strings.HARNESS_DELETED.format(hid)
+        ):
             self.harness_panel.refresh()
 
     def _changes_flow(self, hid: str) -> None:
@@ -1499,7 +1501,7 @@ class MainWindow(QMainWindow):
         if isinstance(exc, ValueError):  # for example a lone surrogate that cannot be encoded
             return strings.SAVE_BAD_TEXT
         where = f" in {folder}" if folder else ""
-        reason = getattr(exc, "strerror", None) or "the folder cannot be used"
+        reason = getattr(exc, "strerror", None) or strings.FOLDER_UNUSABLE
         return strings.FILE_ERROR.format(where=where, reason=reason)
 
     def _error(self, text: str) -> None:

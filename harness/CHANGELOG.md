@@ -33,6 +33,9 @@ Versions follow semantic versioning. Every project file records the tool version
 - The mass table header says it covers wires and cable connectors; backshells, shielding, sleeving and tie-downs are not in the mass (audit B-21).
 - The Explain tab no longer says "(X drives)" for power and other single-path signals, names the connector on each pin line, and shows the "stays on pin ... because the pin is locked" line; a missing mating part is no longer written as "mates with itself" (audit B-16).
 - Arranging the diagram twice changes nothing more, also at stress size; a fixed pin with no signal is never given to an interface; a branch name cannot equal a cable connector ID (audit B-22).
+### Fixed
+
+- **Fixed: editor, small items** (audit F1-26, F1-27, F2-10). A number typed with other scripts' digits (Arabic-Indic, full-width) is refused in the number fields and the table. An unknown chain typed into the interface table is refused with a plain message. The names of the steps in the Undo menu, the table headings and a few words on the diagram moved into `strings.py`. The accessible-name test no longer accepts a tooltip as a name.
 
 ## 1.0.0 (2026-10-12; released on the owner's instruction, see compliance/SIGNOFF.md; not a statement of compliance)
 

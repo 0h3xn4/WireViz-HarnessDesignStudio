@@ -530,7 +530,7 @@ class EditorController(QObject):
             self.connectChanged.emit()
             return
         auto = strings.IF_ADDED_AUTO if self.mode == "guided" else ""
-        if self.run("Add interface", ops, message=strings.IF_ADDED.format(iid) + auto):
+        if self.run(strings.STEP_ADD_INTERFACE, ops, message=strings.IF_ADDED.format(iid) + auto):
             self.connect_from = None
             self.select("interface", iid)
             self.connectChanged.emit()
@@ -546,7 +546,7 @@ class EditorController(QObject):
             self.message.emit(str(exc), False)
             return None
         label = edit.TEMPLATES[template_id].label
-        if self.run(f"Add {label}", ops):
+        if self.run(strings.STEP_ADD.format(label), ops):
             self.select("unit", uid)
             return uid
         return None
@@ -560,19 +560,22 @@ class EditorController(QObject):
             return False
         if s.kind == "unit":
             return self.attempt(
-                f"Delete {s.id}",
+                strings.STEP_DELETE.format(s.id),
                 lambda: edit.ops_delete_unit(self.project, s.id),
                 message=strings.DELETED.format(s.id),
             )
         return self.attempt(
-            f"Delete {s.id}",
+            strings.STEP_DELETE.format(s.id),
             lambda: edit.ops_delete_interface(self.project, s.id),
             message=strings.DELETED.format(s.id),
         )
 
     def move_unit(self, unit_id: str, x: float, y: float) -> None:
         zone_before = self.project.units[unit_id].zone
-        if self.attempt(f"Move {unit_id}", lambda: edit.ops_move_unit(self.project, unit_id, x, y)):
+        if self.attempt(
+            strings.STEP_MOVE.format(unit_id),
+            lambda: edit.ops_move_unit(self.project, unit_id, x, y),
+        ):
             zone = self.project.units[unit_id].zone
             if zone != zone_before:
                 self.message.emit(strings.NOW_IN_ZONE.format(unit_id, zone), True)
@@ -589,7 +592,7 @@ class EditorController(QObject):
             else ""
         )
         if self.run(
-            f"Create redundant copy of {unit_id}",
+            strings.STEP_REDUNDANT_COPY.format(unit_id),
             result.ops,
             message=strings.REDUNDANT_DONE.format(result.twin_id, extra),
         ):
@@ -601,7 +604,7 @@ class EditorController(QObject):
         except HarnessError as exc:
             self.message.emit(str(exc), False)
             return
-        self.run(f"Fix: {finding.title}", ops, message=msg)
+        self.run(strings.STEP_FIX.format(finding.title), ops, message=msg)
 
     def waive(self, finding: checks.Finding, justification: str) -> bool:
         try:
@@ -610,14 +613,14 @@ class EditorController(QObject):
             self.message.emit(_plain(exc), False)
             return False
         return self.run(
-            f"Waive {finding.id}",
+            strings.STEP_WAIVE.format(finding.id),
             [op],
             message=strings.WAIVED,
         )
 
     def confirm_interface(self, interface_id: str) -> None:
         self.attempt(
-            "Confirm connectors", lambda: edit.ops_confirm_interface(self.project, interface_id)
+            strings.STEP_CONFIRM, lambda: edit.ops_confirm_interface(self.project, interface_id)
         )
 
     def rename_unit(self, old: str, new: str) -> bool:
@@ -627,25 +630,26 @@ class EditorController(QObject):
             self.message.emit(_plain(exc), False)
             return False
         was_selected = self.selection is not None and self.selection.id == old
-        ok = self.run(f"Rename {old}", ops)
+        ok = self.run(strings.STEP_RENAME.format(old), ops)
         if ok and was_selected:
             self.select("unit", new)
         return ok
 
     def update_unit(self, unit_id: str, **changes: object) -> bool:
         return self.attempt(
-            f"Edit {unit_id}", lambda: edit.ops_update_unit(self.project, unit_id, **changes)
+            strings.STEP_EDIT.format(unit_id),
+            lambda: edit.ops_update_unit(self.project, unit_id, **changes),
         )
 
     def update_interface(self, interface_id: str, **changes: object) -> bool:
         return self.attempt(
-            f"Edit {interface_id}",
+            strings.STEP_EDIT.format(interface_id),
             lambda: edit.ops_update_interface(self.project, interface_id, **changes),
         )
 
     def set_endpoint_connector(self, interface_id: str, index: int, connector_id: str) -> bool:
         return self.attempt(
-            "Choose connector",
+            strings.STEP_CHOOSE_CONNECTOR,
             lambda: edit.ops_set_endpoint_connector(
                 self.project, interface_id, index, connector_id
             ),
@@ -653,13 +657,13 @@ class EditorController(QObject):
 
     def set_connector_part(self, connector_id: str, part_id: str) -> bool:
         return self.attempt(
-            "Change connector part",
+            strings.STEP_CHANGE_PART,
             lambda: edit.ops_set_connector_part(self.project, connector_id, part_id),
         )
 
     def add_zone(self, name: str) -> bool:
         return self.attempt(
-            "Add zone",
+            strings.STEP_ADD_ZONE,
             lambda: edit.ops_add_zone(self.project, name),
             message=strings.ZONE_ADDED.format(name.strip()),
         )
@@ -670,7 +674,7 @@ class EditorController(QObject):
         except HarnessError as exc:
             self.message.emit(str(exc), False)
             return False
-        if self.run("Add interface", ops, message=strings.IF_ADDED.format(iid)):
+        if self.run(strings.STEP_ADD_INTERFACE, ops, message=strings.IF_ADDED.format(iid)):
             self.select("interface", iid)
             return True
         return False
@@ -732,12 +736,12 @@ class EditorController(QObject):
             self.message.emit(strings.GEN_UP_TO_DATE, False)
             return True
         message = strings.GEN_WITH_ERRORS.format(errors) if errors else plan.report.plain_summary()
-        return self.run("Generate harnesses", plan.ops, message=message)
+        return self.run(strings.STEP_GENERATE, plan.ops, message=message)
 
     def apply_import(self, plan: ImportPlan) -> bool:
         n = plan.ok_count
         return self.run(
-            f"Import {n} interfaces",
+            strings.STEP_IMPORT.format(n),
             plan.ops,
             message=strings.IMPORTED.format(n, "s" if n != 1 else ""),
         )
@@ -953,5 +957,5 @@ def _plain(exc: BaseException) -> str:
     errors = getattr(exc, "errors", None)
     if callable(errors):
         parts = [str(e.get("msg", "")).removeprefix("Value error, ") for e in errors()]
-        return "; ".join(p for p in parts if p) or "The value is not valid."
+        return "; ".join(p for p in parts if p) or strings.INVALID_VALUE
     return str(exc)

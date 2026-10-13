@@ -278,6 +278,8 @@ def parse_optional_float(text: str) -> tuple[float | None, str]:
     text = text.strip()
     if not text:
         return None, ""
+    if not text.isascii():  # float() also reads other scripts' digits (Arabic-Indic, full-width)
+        return None, strings.NUMBER_HELP
     try:
         value = float(text)
     except ValueError:
@@ -771,7 +773,7 @@ class ProblemsPanel(QScrollArea):
         if isinstance(lay, QVBoxLayout):
             listing = muted(
                 "\n".join(f"• {f.title}" for f in fs[:GROUP_LIST])
-                + (f"\n… and {count - GROUP_LIST} more" if count > GROUP_LIST else "")
+                + ("\n" + strings.AND_MORE.format(count - GROUP_LIST) if count > GROUP_LIST else "")
             )
             lay.insertWidget(1, listing)
         return card
@@ -874,8 +876,9 @@ class TodoPanel(QScrollArea):
 
 # ---- interface table -----------------------------------------------------------------------------
 
-COLUMNS = ["ID", "Name", "Type", "From", "To", "Chain", "Max A", "Requirement"]
+COLUMNS = strings.INTERFACE_COLUMNS
 EDITABLE = {1, 5, 6, 7}
+CHAINS = ["nominal", "redundant", "none"]
 
 
 class InterfaceModel(QAbstractTableModel):
@@ -969,6 +972,9 @@ class InterfaceModel(QAbstractTableModel):
                 return False
             return self.ctl.update_interface(iid, name=text)
         if col == 5:
+            if text not in CHAINS:
+                self.ctl.message.emit(strings.CHAIN_HELP, False)
+                return False
             return self.ctl.update_interface(iid, redundancy=text)
         if col == 6:
             num, err = parse_optional_float(text)
@@ -1006,7 +1012,7 @@ class _ChainDelegate(QStyledItemDelegate):
         self, parent: QWidget, option: object, index: QModelIndex | QPersistentModelIndex
     ) -> QWidget:
         cb = QComboBox(parent)
-        cb.addItems(["nominal", "redundant", "none"])
+        cb.addItems(CHAINS)
         return cb
 
     def setEditorData(self, editor: QWidget, index: QModelIndex | QPersistentModelIndex) -> None:
@@ -1292,7 +1298,7 @@ class HarnessPanel(QWidget):
             h = p.harnesses[hid]
             cells = [hid, h.name, str(len(h.wires)), str(len(h.interfaces)),
                      f"{h.revision} {strings.RELEASED_LOCKED}" if h.status == "released" else f"{h.revision} {h.status.replace('_', ' ')}",
-                     "generated" if h.generated else "by hand"]  # fmt: skip
+                     strings.HARNESS_GENERATED if h.generated else strings.HARNESS_BY_HAND]  # fmt: skip
             for c, text in enumerate(cells):
                 self.harnesses.setItem(r, c, QTableWidgetItem(text))
             if hid == keep:
