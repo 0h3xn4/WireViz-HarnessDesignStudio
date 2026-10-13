@@ -186,7 +186,12 @@ def test_no_literal_pixel_sizes_and_no_hard_coded_colours_in_gui() -> None:
     """New code asks the theme: no `setPixelSize(12)`, no `setStyleSheet`, no "#RRGGBB" outside
     tokens (the logo in appicon.py keeps its brand colours)."""
     literal = re.compile(r"setPixelSize\(\s*[\d.]")
-    computed_ok = {"theme.py", "preview.py", "panels.py", "canvas.py"}  # sizes computed from a zoom or a box
+    computed_ok = {
+        "theme.py",
+        "preview.py",
+        "panels.py",
+        "canvas.py",
+    }  # sizes computed from a zoom or a box
     from_theme = re.compile(r"setPixelSize\((?:[\w.]*\.type\(|OVERVIEW_FONT_PX)")
     hexcolour = re.compile(r"""["']#[0-9a-fA-F]{6}["']""")
     for f in sorted(GUI_DIR.glob("*.py")):

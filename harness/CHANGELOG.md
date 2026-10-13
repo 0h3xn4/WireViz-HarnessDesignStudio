@@ -10,9 +10,14 @@ Versions follow semantic versioning. Every project file records the tool version
 - A set of vector icons (from Lucide, ISC licence, drawn in code) for the toolbar and panels; zoom in, zoom out, fit, search, import, undo, redo and the panel close buttons now have an icon and a tooltip that names the shortcut.
 - State chips for pending, not checked, locked, released, out of date, pass and fail: icon, word and, for pending (dotted) and not checked (hatched), a pattern, so colour is never the only sign.
 - Shared table code (`gui/tables.py`): right-aligned numbers, units in the header, sorting, filtering, Ctrl+C copies the selected cells as tab-separated text, column widths are remembered.
+- Releases tab (`gui/releases_panel.py`): the timeline of reviews, releases and new revisions of every harness with state chips, the differences between two revisions or a revision and the working design grouped by kind with counts (values read "(none)", never `None`), and Submit for review, Release and New revision per harness. It is not on the window yet.
+- Export dialog (`gui/export_dialog.py`): output folder, a harness by document tree, progress with Cancel, and the list of files written with Reveal in folder, Open, a picture of the selected drawing and Copy selection to folder. A failed independent check or write error is a notice in the dialog that stays. The export still writes the full set. It is not on the window yet.
+- Import wizard (`gui/import_wizard.py`): interfaces, approved parts, segment lengths, the ampacity table and a KiCad netlist in four pages (file, columns with a live preview, conflicts and placeholders with the exact reason for each row, apply); every import is one undo step called "Import n rows". It is not on the window yet.
+- New project dialog (`gui/new_project_dialog.py`): folder, name and example in one dialog with the problems said next to the field. It is not on the window yet.
 
 ### Changed
 
+- The release dialog lists what the release will lock (wires, pins, interfaces, parts, interface types, config files, with placeholder values shown as pending); the new-revision dialog says what happens and what becomes editable instead of "Nothing blocks this release"; both say in words what is still missing for the button to work (the 10-character comment, a name, a reason). They take effect where the window passes `ChangeDialog.for_release` and `for_revise`.
 - Text is 13 px at 100 % (it was 14) and follows the 12 / 13 / 16 / 20 px type scale; spacing follows 4 / 8 / 12 / 16 / 24 / 32 px; all buttons, combo boxes and fields are 32 px high.
 - Hashes, IDs, requirement IDs, pin and wire numbers and the drawing preview use IBM Plex Mono.
 - The drawing preview takes its page and background colours from the theme.
