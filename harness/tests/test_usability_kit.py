@@ -1,5 +1,6 @@
 """M7: the usability kit computes SUS and success correctly and prepares the task material."""
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -80,3 +81,14 @@ def test_icd_csv_has_exactly_two_bad_rows_for_t4(tmp_path: Path) -> None:
     project = load_project(tmp_path / "t6-t7-generated").project
     plan = plan_interface_import(project, table, {"id": 0, "type": 1, "from": 2, "to": 3})
     assert plan.ok_count == 1 and len([r for r in plan.rows if not r.ok]) == 2
+
+
+def test_a_missing_input_file_is_a_message_not_a_traceback(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from tools import usability_summary
+
+    monkeypatch.setattr(sys, "argv", ["x", str(tmp_path / "a.csv"), str(tmp_path / "b.csv")])
+    assert usability_summary.main() == 2
+    err = capsys.readouterr().err
+    assert "could not be read" in err and "a.csv" in err

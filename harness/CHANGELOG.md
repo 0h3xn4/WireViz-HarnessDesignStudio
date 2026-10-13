@@ -16,6 +16,16 @@ Versions follow semantic versioning. Every project file records the tool version
 ### Fixed
 
 - **Fixed: outputs, low findings** (audit D-12, D-14, D-17). Wires with both ends on one side of a cable block (loop-back plugs) are counted when the drawing is split into sheets, so their loops no longer run into the title block. A damaged output manifest that lists a folder no longer makes every export fail; the empty folder of a removed harness is removed; the deep output check treats a linked output file as changed and the output reader skips links. The routing function names a missing gap instead of raising a key error.
+### Fixed
+
+- The package self-test (`--selftest`) no longer leaves a temporary folder behind, names the step that failed, works when `QT_QPA_PLATFORM` is set but empty, and only reacts to its flag as the first argument.
+- The `.deb` no longer carries the tarball-only `README.txt`, icon and desktop template under `/opt`.
+- The CI run on a merge to `master` is no longer cancelled by the next merge; the documents-only job also runs the flatsat walkthrough test; a missing `.deb` or `.tar.gz` fails the build job.
+- The wheel carries the `.gitignore` files of the example projects; `tools.vendor` no longer downloads an unpinned `wheel`; a licence such as "GPL-3.0 with LGPL exception" is rejected by the licence report.
+- `harness verify` on a project without wires says to run `harness generate` first.
+- `harness config` no longer names decision-log numbers (D-10, D-15).
+- Documents: locking a wire or pin is done by editing the harness file (the app has no button); `emc.classes` is documented as read by no rule.
+- Build tools: a failing example builder keeps the old example folder; `tools.metrics --coverage` and `tools.usability_summary` give a message instead of a traceback; `tools.extract_requirements` checks that all PDFs exist before it rewrites any list; the user-guide converter keeps code spans and link targets intact.
 
 ## 1.0.0 (2026-10-12; released on the owner's instruction, see compliance/SIGNOFF.md; not a statement of compliance)
 

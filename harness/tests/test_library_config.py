@@ -40,3 +40,15 @@ def test_config_set_complete_and_placeholders_flagged() -> None:
     assert {n for n, c in cfg.items() if c.placeholder} == {
         "segmentation", "segregation", "derating", "emc", "titleblock", "generation"
     }  # fmt: skip
+
+
+def test_the_config_checklist_does_not_use_decision_log_numbers() -> None:
+    """`harness config` is read by people who have no access to the repository's decision log."""
+    import re
+
+    from harness_design_studio.core import configcheck
+    from harness_design_studio.core.samples import new_project
+
+    text, _ok = configcheck.report(new_project())
+    assert "Waiting for an owner decision" in text
+    assert not re.search(r"\bD-\d+\b", text), text

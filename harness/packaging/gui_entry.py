@@ -9,7 +9,13 @@ import sys
 import tempfile
 from pathlib import Path
 
-if __name__ == "__main__" and "--drc-worker" in sys.argv[1:]:
+
+def _asked(flag: str, argv: list[str]) -> bool:
+    """True when `flag` is the first argument (a project path or other argument never counts)."""
+    return argv[1:2] == [flag]
+
+
+if __name__ == "__main__" and _asked("--drc-worker", sys.argv):
     # The editor starts this same program as its helper process for the design rule check.
     from harness_design_studio.core.drc.worker import main as _drc_worker
 
@@ -19,33 +25,45 @@ from harness_design_studio.gui.app import create_window, main  # noqa: E402
 
 
 def selftest() -> int:
-    os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
+    if not os.environ.get("QT_QPA_PLATFORM"):  # an empty value is as good as none and aborts Qt
+        os.environ["QT_QPA_PLATFORM"] = "offscreen"
+    with tempfile.TemporaryDirectory(prefix="harness-selftest-") as folder:
+        failed = _run_steps(Path(folder))
+    if failed:
+        print("selftest FAILED at: " + ", ".join(failed))
+        return 1
+    print("selftest ok")
+    return 0
+
+
+def _run_steps(tmp: Path) -> list[str]:
+    """Run every step; return the names of the ones that failed."""
     from PySide6.QtCore import QSettings
 
     from harness_design_studio.core.io.loader import load_project
 
-    tmp = Path(tempfile.mkdtemp())
     win = create_window(QSettings(str(tmp / "ui.ini"), QSettings.Format.IniFormat), first_run=False)
     win.show()
     ctl = win.ctl
-    uid = ctl.add_unit("sensor")
-    ctl.begin_connect("rs422")
-    ctl.pick("OBC")
-    ctl.pick(uid or "ST1")
-    ctl.save_as(tmp / "project")
-    loaded = load_project(tmp / "project")
-    ok = (
-        uid in loaded.project.units
-        and len(loaded.project.interfaces) == 3
-        and not loaded.has_errors
-    )
-    ok = ok and _generate_and_export(ctl, tmp)
-    ok = ok and _rule_check_process_works(ctl)
-    ok = ok and _examples_are_bundled(tmp)
-    ok = ok and _fonts_are_bundled()
-    ctl.release()
-    print("selftest ok" if ok else "selftest FAILED")
-    return 0 if ok else 1
+    try:
+        uid = ctl.add_unit("sensor")
+        ctl.begin_connect("rs422")
+        ctl.pick("OBC")
+        ctl.pick(uid or "ST1")
+        ctl.save_as(tmp / "project")
+        loaded = load_project(tmp / "project")
+        results = {
+            "edit, save and reload": uid in loaded.project.units
+            and len(loaded.project.interfaces) == 3
+            and not loaded.has_errors,
+            "generate and export": _generate_and_export(ctl, tmp),
+            "rule check process": _rule_check_process_works(ctl),
+            "bundled examples": _examples_are_bundled(tmp),
+            "bundled fonts": _fonts_are_bundled(),
+        }
+    finally:
+        ctl.release()
+    return [name for name, ok in results.items() if not ok]
 
 
 def _examples_are_bundled(tmp: Path) -> bool:
@@ -93,6 +111,6 @@ def _generate_and_export(ctl: object, tmp: Path) -> bool:
 
 
 if __name__ == "__main__":
-    if "--selftest" in sys.argv:
+    if _asked("--selftest", sys.argv):
         raise SystemExit(selftest())
     raise SystemExit(main())

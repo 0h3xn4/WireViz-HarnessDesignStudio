@@ -339,11 +339,15 @@ def write(
 
 def main(folder: str) -> int:
     base = Path(folder)
+    absent = [base / name for name in STANDARDS.values() if not (base / name).is_file()]
+    for (
+        pdf
+    ) in absent:  # before any list is rewritten, so a missing PDF leaves all of them as they were
+        print(f"missing: {pdf}", file=sys.stderr)
+    if absent:
+        return 2
     for standard, name in STANDARDS.items():
         pdf = base / name
-        if not pdf.is_file():
-            print(f"missing: {pdf}", file=sys.stderr)
-            return 2
         lines = to_text(pdf)
         tables = None
         if standard == "ECSS-E-ST-40C":

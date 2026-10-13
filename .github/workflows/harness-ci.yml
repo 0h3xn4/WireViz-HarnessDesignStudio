@@ -11,10 +11,11 @@ permissions:
   contents: read  # the jobs only read the repository; artifacts need no token rights
 
 # A newer push to the same branch replaces the run in progress or waiting, so pushes in quick
-# succession do not pile up and keep the shared runners busy for hours.
+# succession do not pile up and keep the shared runners busy for hours. A push to master is never
+# cancelled: the release steps want a green run on every merge commit.
 concurrency:
   group: harness-ci-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
 
 defaults:
   run:
@@ -65,6 +66,7 @@ jobs:
           tests/test_scf.py tests/test_sdd_components.py tests/test_trace.py tests/test_metrics.py
           tests/test_family_group_mapping.py tests/test_profiles.py
           tests/test_drc.py::test_cited_requirements_exist_in_the_extracted_lists
+          tests/test_examples.py::test_the_flatsat_walkthrough_matches_the_example
 
   test:
     needs: changes
@@ -100,6 +102,8 @@ jobs:
       - name: Frozen app self-test
         run: dist/harness-design-studio/harness-design-studio --selftest
       - run: python -m tools.gen_sbom
+      - name: Both packages exist
+        run: ls dist/*.deb dist/*.tar.gz  # the upload below only fails when none of its files exist
       - uses: actions/upload-artifact@v4
         with:
           name: harness-design-studio-${{ matrix.os }}

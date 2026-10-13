@@ -22,8 +22,7 @@ def main(dest: str = "wheelhouse", extras: str = "gui,dev") -> int:
         "--dest",
         dest,
         "setuptools==84.0.0",
-        "wheel",
-    ]
+    ]  # this setuptools builds wheels itself: the separate, unpinned `wheel` package is not needed
     return subprocess.run(backend, check=False).returncode
 
 

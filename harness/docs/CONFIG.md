@@ -103,7 +103,7 @@ Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limit
 ## `emc.json`
 | Key | Meaning |
 | --- | --- |
-| `classes` | EMC classes (format is yours to define) |
+| `classes` | a list of the EMC class names your project uses, kept for reference. No rule reads it. The class of an interface is the `emc_class` of its interface type, and the rules compare those with `conflicting_class_pairs` |
 | `conflicting_class_pairs` | pairs of EMC classes that must not share a harness, for example `[["A", "B"]]` |
 
 ## `naming.json`
