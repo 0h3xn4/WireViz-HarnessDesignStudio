@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" width="256" height="256" role="img" aria-labelledby="t">
+  <title id="t">Harness Design Studio</title>
+  <rect width="64" height="64" rx="10" fill="#4a1fb8"/>
+  <rect x="8" y="12" width="16" height="12" rx="2" fill="#fff"/>
+  <rect x="40" y="40" width="16" height="12" rx="2" fill="#fff"/>
+  <path d="M24 18 C36 18 28 46 40 46" fill="none" stroke="#fff" stroke-width="3"/>
+  <path d="M24 22 C32 22 32 42 40 42" fill="none" stroke="#f2b04a" stroke-width="2" stroke-dasharray="4 2"/>
+</svg>
