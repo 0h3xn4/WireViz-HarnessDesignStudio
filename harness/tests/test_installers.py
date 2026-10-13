@@ -615,7 +615,9 @@ def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
     # the real files agree; text under "## Unreleased" is allowed between releases (the release
     # gate in tools/release_check refuses it at release time)
-    found = [p for p in rn.problems(f"v{__version__}", __version__, changelog) if "Unreleased" not in p]
+    found = [
+        p for p in rn.problems(f"v{__version__}", __version__, changelog) if "Unreleased" not in p
+    ]
     assert found == []
     body = rn.section(changelog, __version__)
     assert body and not any(ln.startswith("## ") for ln in body.splitlines())
