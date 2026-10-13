@@ -502,6 +502,24 @@ def rounded_path(points: list[tuple[float, float]], radius: float = 8.0) -> QPai
     return path
 
 
+def _spots_along(
+    lo: float, hi: float, step: float, fixed: float, horizontal: bool
+) -> list[QPointF]:
+    """Positions between lo and hi on a horizontal piece at height `fixed` (or a vertical piece at
+    x = `fixed`), the middle first, then alternately either side of it."""
+    mid = (lo + hi) / 2
+    ts = [mid]
+    k = 1
+    while mid - k * step >= lo - 0.01 and len(ts) < 41:
+        ts += [mid - k * step, mid + k * step]
+        k += 1
+    return [QPointF(t, fixed) if horizontal else QPointF(fixed, t) for t in ts]
+
+
+COMPACT_W = 22.0  # a link label that has to squeeze between other links: the picture alone
+COMPACT_H = 18.0
+
+
 class LinkItem(QGraphicsPathItem):
     def __init__(self, scene: "DiagramScene", interface_id: str) -> None:
         super().__init__()
@@ -509,6 +527,7 @@ class LinkItem(QGraphicsPathItem):
         self.interface_id = interface_id
         self._chip = QRectF()
         self._chip_placed = False
+        self._compact = False  # the picture alone, where the full label has no clear spot
         self._chip_values = 0  # how many characters of numbers the registered label was sized for
         self.ends: QLineF | None = None  # straight line between the two anchors (for the map)
         self.poly: list[tuple[float, float]] = []  # the corners of the route now drawn
@@ -542,16 +561,37 @@ class LinkItem(QGraphicsPathItem):
         name = i.id if i is not None else self.interface_id
         self._chip_values = len(describe.link_values(self.dscene.ctl.project, name))
         width = self._chip_width(self._chip_values * 6.5)
-        spots = self._label_spots(route, width + 12)
-        center = spots[0] if spots else path.pointAtPercent(0.5)
-        for spot in spots:  # the first spot on a straight piece where the label overlaps nothing
-            if self.dscene.chip_free(QRectF(spot.x() - width / 2, spot.y() - 11, width, 22), name):
-                center = spot
-                break
+        center, crossed = self._pick_spot(route, width, 22.0, name)
+        self._compact = False
+        if crossed:  # nowhere is clear: a smaller label, the picture alone, may still fit
+            small, crossed_small = self._pick_spot(route, COMPACT_W, COMPACT_H, name)
+            if crossed_small < crossed:
+                center, self._compact = small, True
+        if center is None:
+            center = path.pointAtPercent(0.5)
         self._chip_center = center
         self._chip_placed = True
-        self.dscene.chip_place(name, QRectF(center.x() - width / 2, center.y() - 11, width, 22))
+        w, h = (COMPACT_W, COMPACT_H) if self._compact else (width, 22.0)
+        self.dscene.chip_place(name, QRectF(center.x() - w / 2, center.y() - h / 2, w, h))
         return True
+
+    def _pick_spot(
+        self, route: list[tuple[float, float]], width: float, height: float, name: str
+    ) -> tuple[QPointF | None, int]:
+        """The first spot on the route where a label of this size overlaps no label and no other
+        link, else the free spot that other links run through least; and how many run through it."""
+        best: QPointF | None = None
+        fewest = 0
+        for spot in self._label_spots(route, width + 4):
+            rect = QRectF(spot.x() - width / 2, spot.y() - height / 2, width, height)
+            if not self.dscene.chip_free(rect, name):
+                continue
+            crossed = self.dscene.link_crossings(rect, name)
+            if best is None or crossed < fewest:
+                best, fewest = spot, crossed
+            if crossed == 0:
+                break
+        return best, fewest
 
     def refresh_chip(self) -> None:
         """The numbers on the link changed: register a label of the new size (update_path does
@@ -570,20 +610,19 @@ class LinkItem(QGraphicsPathItem):
 
     @staticmethod
     def _label_spots(route: list[tuple[float, float]], need: float) -> list[QPointF]:
-        """Where a label can sit: the middle of a horizontal piece long enough to hold it, the
-        pieces nearest the end first; then the middle of a vertical piece of some length."""
+        """Where a label can sit: along a horizontal piece long enough to hold it (the middle
+        first, then to either side), the pieces nearest the end first; then the same along the
+        vertical pieces of some length."""
         pieces = list(zip(route, route[1:], strict=False))[::-1]
-        mid = [QPointF((p[0] + q[0]) / 2, (p[1] + q[1]) / 2) for p, q in pieces]
-        wide = [
-            m
-            for m, (p, q) in zip(mid, pieces, strict=True)
-            if p[1] == q[1] and abs(q[0] - p[0]) >= need
-        ]
-        tall = [
-            m
-            for m, (p, q) in zip(mid, pieces, strict=True)
-            if p[0] == q[0] and abs(q[1] - p[1]) >= 28
-        ]
+        wide: list[QPointF] = []
+        tall: list[QPointF] = []
+        for p, q in pieces:
+            if p[1] == q[1] and abs(q[0] - p[0]) >= need:
+                lo, hi = min(p[0], q[0]), max(p[0], q[0])
+                wide += _spots_along(lo + need / 2, hi - need / 2, 8.0, p[1], True)
+            elif p[0] == q[0] and abs(q[1] - p[1]) >= 28:
+                lo, hi = min(p[1], q[1]), max(p[1], q[1])
+                tall += _spots_along(lo + 14, hi - 14, 8.0, p[0], False)
         return wide + tall
 
     def shape(self) -> QPainterPath:
@@ -647,15 +686,27 @@ class LinkItem(QGraphicsPathItem):
             if self.dscene.label_full(i.id, self._hover)
             else ""
         )
+        if self._compact:
+            values = ""
         text_w = QFontMetrics(font).horizontalAdvance(values) if values else 0
-        width = self._chip_width(text_w)
-        rect = QRectF(c.x() - width / 2, c.y() - 11, width, 22)
+        width = COMPACT_W if self._compact else self._chip_width(text_w)
+        height = COMPACT_H if self._compact else 22.0
+        rect = QRectF(c.x() - width / 2, c.y() - height / 2, width, height)
         self._chip = rect
         painter.setBrush(QBrush(th.color("bg")))
         painter.setPen(QPen(color, 3 if selected else 2))
-        painter.drawRoundedRect(rect, 11, 11)
+        painter.drawRoundedRect(rect, height / 2, height / 2)
+        scale = 0.8 if self._compact else 1.0
         glyphs.draw_link_glyph(
-            painter, rect.x() + 6, rect.y() + 4, i.type_id, t.category if t else "data", color
+            painter,
+            rect.x() + (rect.width() - glyphs.LINK_GLYPH_W * scale) / 2
+            if self._compact
+            else rect.x() + 6,
+            rect.y() + (rect.height() - glyphs.LINK_GLYPH_H * scale) / 2,
+            i.type_id,
+            t.category if t else "data",
+            color,
+            scale,
         )
         if values:
             painter.setFont(font)
@@ -739,6 +790,7 @@ class DiagramScene(QGraphicsScene):
         self.link_items: dict[str, LinkItem] = {}
         self._chips: dict[tuple[int, int], list[tuple[str, QRectF]]] = {}
         self._chip_rects: dict[str, QRectF] = {}
+        self._segments: dict[tuple[int, int], list[tuple[str, QRectF]]] = {}  # route pieces
         self.zone_items: list[ZoneItem] = []
         self.lane_height = 700.0
         self._adj: dict[str, list[str]] = {}
@@ -859,6 +911,7 @@ class DiagramScene(QGraphicsScene):
             )  # fmt: skip
         self._route_key = key
         self._route_cache = routing.route_links(links, self._geometry())
+        self._index_segments(self._route_cache)
         return self._route_cache
 
     def reroute(self) -> None:
@@ -873,6 +926,11 @@ class DiagramScene(QGraphicsScene):
     def _redraw_changed(self) -> None:
         for iid, link in self.link_items.items():
             if link.poly != self.route(iid):
+                link.update_path()
+        for iid, link in self.link_items.items():  # a label that another route now runs through
+            rect = self._chip_rects.get(iid)
+            if rect is not None and self.link_crossings(rect, iid):
+                link._chip_placed = False
                 link.update_path()
 
     # ---- filter by signal class, connector or bundle: the others fade, nothing is hidden --------------
@@ -986,6 +1044,25 @@ class DiagramScene(QGraphicsScene):
                 if other != own and r.intersects(pad):
                     return False
         return True
+
+    def _index_segments(self, routes: dict[str, list[tuple[float, float]]]) -> None:
+        """The straight pieces of every route in the grid, so that a label can keep clear of them."""
+        self._segments.clear()
+        for iid, route in routes.items():
+            for p, q in zip(route, route[1:], strict=False):
+                box = QRectF(QPointF(*p), QPointF(*q)).normalized().adjusted(-1, -1, 1, 1)
+                for cell in self._cells(box):
+                    self._segments.setdefault(cell, []).append((iid, box))
+
+    def link_crossings(self, rect: QRectF, own: str) -> int:
+        """How many pieces of other links run through `rect` (a label's box, with a little air)."""
+        pad = rect.adjusted(-2, -2, 2, 2)
+        seen: set[tuple[str, float, float]] = set()
+        for cell in self._cells(pad):
+            for other, box in self._segments.get(cell, ()):
+                if other != own and box.intersects(pad):
+                    seen.add((other, box.x(), box.y()))
+        return len(seen)
 
     def chip_forget(self, interface_id: str) -> None:
         rect = self._chip_rects.pop(interface_id, None)

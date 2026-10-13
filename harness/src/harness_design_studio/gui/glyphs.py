@@ -59,6 +59,14 @@ def _diff(p: QPainter) -> None:  # a differential pair: two lines, opposite arro
     _poly(p, [(1, 10), (6, 7), (6, 13)])
 
 
+def _lvds(p: QPainter) -> None:  # a differential pair closed by a termination resistor
+    _line(p, 1, 3, 17, 3)
+    _line(p, 1, 11, 17, 11)
+    _line(p, 12, 3, 12, 4.5)
+    p.drawRect(QRectF(10.5, 4.5, 3, 5))
+    _line(p, 12, 9.5, 12, 11)
+
+
 def _multidrop(p: QPainter) -> None:  # a bus with three drops
     _line(p, 1, 4, 17, 4)
     for x in (3, 9, 15):
@@ -146,7 +154,7 @@ _GLYPHS = {
     "mil1553b": _stubs,
     "spacewire": _network,
     "ethernet": _ethernet,
-    "lvds": _diff,
+    "lvds": _lvds,
     "i2c": _clock,
     "analog": _sine,
     "discrete": _square,

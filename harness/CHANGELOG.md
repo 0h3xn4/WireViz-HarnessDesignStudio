@@ -10,6 +10,8 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ### Fixed
 
+- LVDS and RS-422 no longer share one picture: LVDS shows a differential pair closed by a termination resistor (a test fails if two kinds of link share a picture, apart from primary and secondary power, which differ by colour and name).
+- A link's label in the diagram keeps clear of the other links: it is placed where no other link runs through it, and where there is no such place a smaller label (the picture alone) is used. On the flatsat example 10 of 44 labels still touch another cable (before: 28).
 - A review, release or new revision cannot be dated before the last change-log entry of the same harness (`date_before_last`).
 - `harness new --name` with a blank name is refused, and a name is stored without surrounding spaces. A link (also a dangling one) is not accepted as the folder of a new project, with the usual "not an empty folder" message.
 - `import-lengths` help, `IMPORTS.md` and the templates README say that its three columns are read by position. The exit code table in `CLI.md` names the imports and `config` under exit code 1.
