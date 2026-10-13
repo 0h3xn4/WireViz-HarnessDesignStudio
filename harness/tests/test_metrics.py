@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import ast
 
+import pytest
+
 from tools import metrics
 
 
@@ -24,3 +26,11 @@ def test_collect_has_every_area_and_is_deterministic() -> None:
     assert metrics.collect() == a
     core = a["core"]
     assert isinstance(core, dict) and core["source_lines"] > 1000
+
+
+def test_a_coverage_option_without_a_file_is_a_usage_error(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    assert metrics.main(["--coverage"]) == 2
+    captured = capsys.readouterr()
+    assert "usage:" in captured.err and "Traceback" not in captured.err

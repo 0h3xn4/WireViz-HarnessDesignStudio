@@ -68,6 +68,29 @@ Same method: every fix has a test that failed on the old code (agents ran the ne
 
 **New behaviour you should know about (defaults, tell me to change them):** `sheet` may be left out of the title block (the verifier skips the sheet-number check then); unknown or duplicate title block fields are an error; PDFs keep Windows-1252 and the export warns by naming each replaced character; a shield's end A is the start of its lowest-ID wire for the whole harness; the CSV apostrophe guard is kept and now reversible (`+5V` still appears as `'+5V`); an import-parts file with a repeated part ID is an error; numbers in imports must be plain (`1,234` is refused as ambiguous); pin counts are 1 to 1000; the numeric ranges of the model (AWG 0 to 40, lengths 0 to 10 000 m, currents and voltages above 0); a project whose lock cannot be taken opens read-only automatically; the rule count is 34 (new rule `segment-loop`); `libc6 (>= 2.39)` in the `.deb`; the release script fails when the version is already a git tag or `## Unreleased` is not empty.
 
+## Phase 4 status: low findings (branch `lows/all`, after release 1.0.0)
+
+Six agents re-checked every remaining low finding against the current code (many were already fixed in the medium round), fixed what still reproduced, and gave each fix a test that failed on the old code. The upstream WireViz findings H-1 to H-23 are not touched (owner decision: WireViz code is never changed). The fixes are listed under `## Unreleased` in `harness/CHANGELOG.md`; the version was not bumped.
+
+**Fixed:** A-13, A-16 (dates must be `YYYY-MM-DD`; U+2028, U+2029, U+FEFF and private-use characters refused; zone names validated), A-17 (new integrity checks: unknown mate part, baseline of a missing harness, baseline ID mismatch, unknown carried type, change-log entry of a deleted harness), B-16, B-17, B-19, B-21 (header and docs), B-22 (arrange is idempotent, fixed pin without signal, branch ID collision), C-22 (partly), C-23, D-12, D-14, D-17, D-18, E-15 (a date may not be earlier than the harness's last change-log entry), E-17, F1-26 (stricter test), F1-27 (strings moved into `gui/strings.py`), F2-10, G-13 to G-16 (the cheap parts), K-9, K-10 (docs reworded; no feature), K-11, K-14, K-16, K-17.
+
+**Already fixed in the medium round (checked, nothing to do):** A-9 to A-12, B-15, B-18, C-18, C-19 (kept as decided), D-15, D-16, E-14 (except `|` in names), E-16, E-18, F1-18, F1-22, F1-24, F1-25, F2-5, F2-8, F2-14, G-12, G-17, I-13, K-8, K-12, K-13, K-15, K-18, K-19.
+
+**Not fixed, with the reason:**
+- A-14 (partly): undo history is capped at 200 steps and an empty edit is no undo step; the second whole-model integrity check per edit (about 90 ms at stress size) is left.
+- A-15 (partly): the integrity cache sees a generated-flag change; the model is still only shallowly frozen (a list can be changed in place; nothing does).
+- A-16: NFC normalisation, direction and zero-width characters, whitespace-only names: left (they would change saved names and model hashes, or existing tests accept them on purpose).
+- A-17: orphaned waivers and a released status without a baseline are not integrity errors (false positives).
+- A-18 (partly): some surviving mutations (fsync, lock takeover, link checks) are not covered.
+- B-16: `Interface.flow` is still not used by generation (open owner question). B-22: `ops_add_unit` speed.
+- C-22/C-19: the same wire reported by two rules is kept; mate-mismatch stays silent without gender data.
+- D-18: XLSX numbers stay text and CSV has no BOM (documented output; changing it is a policy call). D-12: a loop-back wire with more than about 50 rows above it can push its vertical run past the next connector column (not reproduced in tests, very rare).
+- E-14: `|` in `--by`/`--comment` is ambiguous in the plain-text `harness log` table. E-15: extreme and future dates are still accepted (owner question 30).
+- G-13 to G-16: action SHA pinning, locking transitive dependencies, declaring `packaging`, the `.deb` copyright wording (D-02), the `rules.py` text that points at `docs/PLACEHOLDERS.md` (a change would alter goldens).
+- I-9, I-11: unchanged, owner decisions.
+
+**Defaults applied (tell me to change them):** undo cap 200 (Q34); a two-colour wire shows both codes (`YE/GN`) but is drawn grey (Q18); the mass table says it covers wires and cable connectors only (Q16); segregation settings now behave as `docs/CONFIG.md` describes (Q17); a newline in an interface name is refused in the interface table only (F2-10); a review, release or revision cannot be dated before the harness's last entry (Q30, ordering rule only).
+
 ## Phase 5: release readiness (2026-10-12, `master` after PR 43)
 
 **Verdict: the tools are not releasable as 0.1.0, and could be released as a next version once the owner items below are decided.** The code-side blockers found by the audit (critical, high and medium) are fixed on `master`; what remains is a decision or an action only the owner can take. I am not certifying anything: "releasable" here means "I know of no code defect that should stop it", not a compliance statement.

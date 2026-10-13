@@ -18,11 +18,11 @@ Files to copy and adapt. Get them with `harness templates FOLDER`.
 
 ## Read this before using the demo values
 
-The values in `config-demo-values/` and `ampacity-DEMO-ONLY.csv` are **not from any standard and not engineering data**. They exist so that you can see what the tool does when the numbers are filled in. The files stay marked `"placeholder": true`, so every result built on them still says so. For a real design your own programme's values replace them (see `docs/CONFIG.md`), and only then is `"placeholder"` set to `false`.
+The values in `config-demo-values/` and `ampacity-DEMO-ONLY.csv` are **not from any standard and not engineering data**. They exist so that you can see what the tool does when the numbers are filled in. The files stay marked `"placeholder": true`, so every result built on them still says so. For a real design your own programme's values replace them (see `docs/CONFIG.md` in the tool's repository; it is not installed with the app), and only then is `"placeholder"` set to `false`.
 
 ## The CSV files
 
-- Header names are matched by meaning, so `from` is also read from `source`, `part number` from `pn` or `mpn`, and so on (see `docs/IMPORTS.md`). Order of columns does not matter.
+- Header names are matched by meaning, so `from` is also read from `source`, `part number` from `pn` or `mpn`, and so on (see `docs/IMPORTS.md` in the tool's repository; it is not installed with the app). Order of columns does not matter, with one exception: `import-lengths` reads its three columns **by position** (harness, segment, length) and ignores the headings.
 - CSV files may use commas, semicolons or tabs. A decimal comma needs quotes (`"1,5"`) when commas separate the columns.
 - Excel files (`.xlsx`) work too. The first sheet is read.
 - Every import first shows what it would do. With the command line, add `--dry-run`; nothing is changed until you run it again without it.

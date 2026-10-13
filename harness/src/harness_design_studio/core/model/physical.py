@@ -4,7 +4,7 @@ from typing import Literal
 
 from harness_design_studio.core.ids import Id, PinId
 
-from .base import Awg, Entity, LengthM, Name, Text
+from .base import Awg, Entity, IsoDate, LengthM, Name, Text
 
 Gender = Literal["male", "female", "unspecified"]
 Role = Literal["box", "cable", "inline", "feedthrough", "test"]
@@ -98,5 +98,5 @@ class Harness(Entity):
     author: Name | None = None  # who put it into review (change control)
     checker: Name | None = None  # who checked it at release
     approver: Name | None = None  # who released it
-    released_on: Name | None = None  # date of the release (YYYY-MM-DD)
+    released_on: IsoDate | None = None  # date of the release (YYYY-MM-DD)
     notes: Text = ""

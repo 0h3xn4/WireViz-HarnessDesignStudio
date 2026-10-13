@@ -240,6 +240,9 @@ def ops_autoplace(project: Project) -> list[Op]:
     return ops
 
 
+MAX_SWEEPS = 30  # ordering sweeps of ops_arrange; it stops earlier once nothing moves
+
+
 def ops_arrange(project: Project) -> list[Op]:
     """Tidy the diagram: units stay in their lanes (zones); inside each lane they are ordered
     to shorten and uncross links (barycenter ordering from the neighbouring lanes, a few sweeps),
@@ -270,10 +273,13 @@ def ops_arrange(project: Project) -> list[Op]:
         others = [order[n] for n in neighbours[u] if lane_of[n] != lane_of[u]]
         return sum(others) / len(others) if others else order[u]
 
-    for _sweep in range(4):
+    for _sweep in range(MAX_SWEEPS):
+        before = {k: list(units) for k, units in lanes.items()}
         for k in sorted(lanes):
             lanes[k].sort(key=lambda u: (centre(u), u))
             order.update({u: float(pos) for pos, u in enumerate(lanes[k])})
+        if lanes == before:  # settled: arranging again changes nothing
+            break
     room = unit_footprints(project)
     ops: list[Op] = []
     for k, units in sorted(lanes.items()):

@@ -244,3 +244,19 @@ def test_the_template_readme_lists_every_file() -> None:
         if path.is_file() and path.name != "README.md" and path.parent.name != "config-demo-values":
             assert path.name in text, path.name
     assert "config-demo-values/" in text
+
+
+def test_a_failing_example_builder_keeps_the_old_folder(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    (tmp_path / "blank").mkdir()
+    (tmp_path / "blank" / "marker.txt").write_text("old")
+
+    def boom() -> object:
+        raise SystemExit("the builder failed")
+
+    monkeypatch.setattr(build_examples, "BUILDERS", {"blank": boom})
+    with pytest.raises(SystemExit):
+        build_examples.build(tmp_path)
+    assert (tmp_path / "blank" / "marker.txt").read_text() == "old"
+    assert [p.name for p in tmp_path.iterdir()] == ["blank"]  # no half-built folder left

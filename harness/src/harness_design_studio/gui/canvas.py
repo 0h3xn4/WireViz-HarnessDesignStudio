@@ -181,7 +181,7 @@ class UnitItem(QGraphicsItem):
         if ctl.unit_has_valid_connector(self.unit_id):
             return "ok", ""
         name = ctl.project.interface_types[ctl.connect_type].name
-        return "no", f"No free {name} connector"
+        return "no", strings.NO_FREE_CONNECTOR.format(name)
 
     def _auto_connectors(self) -> set[str]:
         out: set[str] = set()
@@ -247,7 +247,9 @@ class UnitItem(QGraphicsItem):
         painter.setFont(small)
         painter.setPen(th.color("text-muted"))
         tag = (
-            "FROM" if state == "from" else ("REDUNDANT" if unit.side == "redundant" else "NOMINAL")
+            strings.TAG_FROM
+            if state == "from"
+            else (strings.TAG_REDUNDANT if unit.side == "redundant" else strings.TAG_NOMINAL)
         )
         painter.drawText(
             QRectF(W - 90, 0, 80, HEADER_H),

@@ -74,7 +74,7 @@ Switching never changes data. Start in Guided.
 Pressing **Generate harnesses** (or `harness generate DIR`) does four things:
 
 1. **Groups** the interfaces into harnesses. By default one harness per pair of unit connectors.
-2. **Allocates pins**: power first, pairs side by side, spare pins left free, pins you locked never moved.
+2. **Allocates pins**: power first, pairs side by side, spare pins left free, pins you locked (in the harness file) never moved.
 3. **Makes wires** for every signal, picks a part and, when it has the numbers, a gauge.
 4. **Checks itself** with a separate verifier that does not share code with the generator.
 
@@ -148,7 +148,7 @@ Files are written in a fixed format, so two people editing different parts of a 
 - **Baseline**: a frozen snapshot made when a harness is released.
 - **Model hash**: a fingerprint of the whole design, printed on every output.
 - **Auto-filled**: a connector the tool chose; unconfirmed until a person looks at it.
-- **Locked** (wire or pin): a choice you made that generation will keep.
+- **Locked** (wire or pin): a choice you made that generation will keep. You mark it by editing the harness file (`"locked": true`); the app has no button for it.
 - **Released (locked)**: a harness that can no longer be edited; start a new revision.
 - **DRC**: design rule check, the background rules listed in [`RULES.md`](RULES.md).
 - **Fixed pin**: a pin whose signal is defined by the unit itself (imported from KiCad); generation never moves it.

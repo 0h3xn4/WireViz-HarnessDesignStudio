@@ -333,3 +333,12 @@ def test_the_examples_readme_quotes_what_the_tool_prints(tmp_path: Path) -> None
         if found:
             e, w, n = found.groups()
             assert f"Open: {e} error(s), {w} warning(s), {n} note(s)." in real[row], row
+
+
+def test_the_guide_converter_leaves_code_alone_and_quotes_link_targets() -> None:
+    from tools.build_guide import inline
+
+    assert inline("`*.csv and *.xlsx`") == "<code>*.csv and *.xlsx</code>"
+    assert inline("a *b* and `c*d* e`") == "a <em>b</em> and <code>c*d* e</code>"
+    assert inline('[x](a"onmouseover="y)') == '<a href="a&quot;onmouseover=&quot;y">x</a>'
+    assert inline("[`code`](u.md)") == '<a href="u.md"><code>code</code></a>'

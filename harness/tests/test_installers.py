@@ -3,8 +3,10 @@
 import os
 import shutil
 import subprocess
+import sys
 import xml.etree.ElementTree as ET  # noqa: S405
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -419,6 +421,8 @@ def test_the_deb_ships_licences_and_not_the_tarball_scripts(tmp_path: Path) -> N
     assert "./usr/share/doc/harness-design-studio/copyright" in listing
     assert "./usr/share/doc/harness-design-studio/LICENSES/README.txt" in listing
     assert "opt/harness-design-studio/install.sh" not in listing
+    for name in ("README.txt", "harness-design-studio.desktop.in", "harness-design-studio.svg"):
+        assert f"opt/harness-design-studio/{name}" not in listing, name  # tarball-only files
     assert "libc6 (>= 2.39)" in DEPENDS and "libxcb-xinerama0" in DEPENDS
 
 
@@ -613,7 +617,12 @@ def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path
     from tools import release_notes as rn
 
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    assert rn.problems(f"v{__version__}", __version__, changelog) == []  # the real files agree
+    # the real files agree; text under "## Unreleased" is allowed between releases (the release
+    # gate in tools/release_check refuses it at release time)
+    found = [
+        p for p in rn.problems(f"v{__version__}", __version__, changelog) if "Unreleased" not in p
+    ]
+    assert found == []
     body = rn.section(changelog, __version__)
     assert body and not any(ln.startswith("## ") for ln in body.splitlines())
     sums = tmp_path / "SHA256SUMS"
@@ -621,9 +630,122 @@ def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path
         f"{'a' * 64}  harness-design-studio_{__version__}_amd64.deb\n", encoding="utf-8"
     )
     out = tmp_path / "notes.md"
-    assert rn.main(["notes", f"v{__version__}", str(sums), str(out)]) == 0
-    text = out.read_text(encoding="utf-8")
+    text = rn.notes(__version__, changelog, sums.read_text(encoding="utf-8"))
     assert text.startswith("The packages are not signed")
     assert "not a statement of compliance" in text and body in text
     assert f"| `harness-design-studio_{__version__}_amd64.deb` | `{'a' * 64}` |" in text
     assert rn.main(["notes", "v0.0.1", str(sums), str(out)]) == 1  # the tag must fit the version
+
+
+def _load_gui_entry() -> Any:
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location(
+        "gui_entry_under_test", ROOT / "packaging/gui_entry.py"
+    )
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_entry_flags_count_only_as_the_first_argument() -> None:
+    entry = _load_gui_entry()
+    assert entry._asked("--selftest", ["prog", "--selftest"])
+    assert entry._asked("--drc-worker", ["prog", "--drc-worker"])
+    assert not entry._asked("--selftest", ["prog", "my--selftest", "--selftest"])
+    assert not entry._asked("--drc-worker", ["prog", "/path/to/project", "--drc-worker"])
+    assert not entry._asked("--selftest", ["prog"])
+
+
+def _selftest_env(tmp_path: Path, **extra: str) -> dict[str, str]:
+    scratch = tmp_path / "scratch"
+    scratch.mkdir(exist_ok=True)
+    env = {**os.environ, "TMPDIR": str(scratch), "PYTHONPATH": os.pathsep.join(sys.path)}
+    env.pop("QT_QPA_PLATFORM", None)
+    return {**env, **extra}
+
+
+def test_the_selftest_accepts_an_empty_platform_variable_and_cleans_up(tmp_path: Path) -> None:
+    """QT_QPA_PLATFORM= (empty) aborted Qt, and every run left its temporary folder behind."""
+    r = subprocess.run(
+        [sys.executable, "-P", str(ROOT / "packaging/gui_entry.py"), "--selftest"],
+        capture_output=True,
+        text=True,
+        env=_selftest_env(tmp_path, QT_QPA_PLATFORM=""),
+        check=False,
+        timeout=300,
+    )
+    assert r.returncode == 0 and "selftest ok" in r.stdout, (r.stdout, r.stderr[-500:])
+    assert list((tmp_path / "scratch").iterdir()) == []
+
+
+def test_a_failing_selftest_names_the_step(tmp_path: Path) -> None:
+    code = (
+        "import importlib.util, sys\n"
+        f"spec = importlib.util.spec_from_file_location('entry', {str(ROOT / 'packaging/gui_entry.py')!r})\n"
+        "m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+        "m._fonts_are_bundled = lambda: False\n"
+        "raise SystemExit(m.selftest())\n"
+    )
+    r = subprocess.run(
+        [sys.executable, "-P", "-c", code],
+        capture_output=True,
+        text=True,
+        env=_selftest_env(tmp_path, QT_QPA_PLATFORM="offscreen"),
+        check=False,
+        timeout=300,
+    )
+    assert r.returncode == 1, (r.stdout, r.stderr[-500:])
+    assert "selftest FAILED at: bundled fonts" in r.stdout
+    assert list((tmp_path / "scratch").iterdir()) == []
+
+
+def test_the_ci_workflow_keeps_runs_on_master_and_checks_both_packages() -> None:
+    ci_file = ROOT.parent / ".github" / "workflows" / "harness-ci.yml"
+    if not ci_file.is_file():
+        pytest.skip("the repository root is not here")
+    ci = ci_file.read_text(encoding="utf-8")
+    # a second merge must not cancel the run on the first merge commit
+    assert "cancel-in-progress: ${{ github.event_name == 'pull_request' }}" in ci
+    # upload-artifact only fails when none of its files exist
+    assert "ls dist/*.deb dist/*.tar.gz" in ci
+    # the documents-only job also runs the test that reads the flatsat walkthrough
+    docs_job = ci[ci.index("  docs:") : ci.index("  test:")]
+    assert "tests/test_examples.py::test_the_flatsat_walkthrough_matches_the_example" in docs_job
+
+
+def test_the_wheel_carries_the_dotfiles_of_the_example_projects() -> None:
+    """The `**` in package-data does not match names that start with a dot."""
+    import glob
+    import tomllib
+
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    patterns = pyproject["tool"]["setuptools"]["package-data"]["harness_design_studio.resources"]
+    pkg = ROOT / "src" / "harness_design_studio" / "resources"
+    shipped = {
+        f
+        for pat in patterns
+        for f in glob.glob(pat, root_dir=pkg, recursive=True)  # noqa: PTH207
+    }
+    dotfiles = {
+        p.relative_to(pkg).as_posix() for p in (pkg / "examples").rglob(".*") if p.is_file()
+    }
+    assert dotfiles and dotfiles <= shipped, sorted(dotfiles - shipped)
+
+
+def test_the_offline_wheelhouse_downloads_only_pinned_packages(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    from tools import vendor
+
+    commands: list[list[str]] = []
+
+    def fake(cmd: list[str], **_k: object) -> subprocess.CompletedProcess[str]:
+        commands.append(cmd)
+        return subprocess.CompletedProcess(cmd, 0)
+
+    monkeypatch.setattr(subprocess, "run", fake)
+    assert vendor.main(str(tmp_path / "wheelhouse")) == 0
+    named = [a for c in commands[1:] for a in c[c.index("download") + 3 :]]
+    assert named and all("==" in a for a in named), named

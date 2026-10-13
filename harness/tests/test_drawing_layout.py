@@ -211,3 +211,14 @@ def test_part_gender_takes_the_first_word_it_finds() -> None:
     assert gender("male plug, mates with female socket") == "male"
     assert gender("female socket, mates with male plug") == "female"
     assert gender("D-sub 9-pin") == "unspecified"
+
+
+@pytest.mark.parametrize("size", ["A4", "A3"])
+@pytest.mark.parametrize("n", [20, 30, 36, 40, 44])
+def test_wire_loops_below_a_cable_block_stay_above_the_title_block(size, n) -> None:
+    # a loop-back plug: many wires share the same two pins, each runs round the block's far end
+    ws = [wire(f"W{k:03d}", "A", "1", "A", "2") for k in range(1, n + 1)]
+    h = Harness(id="H1", name="h", connectors=[conn("A", 2)], wires=ws)
+    out = sheets(h, size)
+    assert not [b for sh in out for b in below_the_title_block(sh, size)]
+    assert sorted(wire_ids_drawn(out)) == sorted(w.id for w in ws)

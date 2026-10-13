@@ -182,6 +182,8 @@ def _verify(path: Path, outputs: bool = False) -> int:
     for issue in report.issues:
         print(f"{issue.severity}: [{issue.code}] {issue.message}")
     print(report.summary())
+    if report.interfaces_checked and not report.wires_checked and not report.ok:
+        print("hint: there are no wires yet; run `harness generate` first, then verify again.")
     return 0 if report.ok else 1
 
 

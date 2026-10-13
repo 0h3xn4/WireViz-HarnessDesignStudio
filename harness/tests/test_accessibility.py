@@ -48,9 +48,9 @@ def unnamed(root: QWidget) -> list[str]:
             and w.isVisibleTo(root)
             and not label_of(w).strip()
         ):
-            tip = w.toolTip().strip()
-            if not tip and not w.accessibleDescription():
-                bad.append(f"{type(w).__name__} '{w.objectName() or '(no name)'}'")
+            bad.append(
+                f"{type(w).__name__} '{w.objectName() or '(no name)'}'"
+            )  # (a tooltip is no name)
     return bad
 
 

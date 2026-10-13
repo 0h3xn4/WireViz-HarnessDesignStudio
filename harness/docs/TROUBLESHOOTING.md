@@ -707,7 +707,7 @@ The files are plain text (JSON), so a project folder can be copied, zipped, e-ma
 | Drawings, wire lists, BOM, exports | `<project>/outputs/` (made by `harness export`; safe to delete and make again) |
 | Autosave of the app | `<project>/.harness-recovery/` (offered for restore after a crash; ignored by Git) |
 | App settings (theme, scale, last project) | `~/.config/HarnessDesigner/HarnessDesigner.ini` (no design data) |
-| Lock file while a project is open | `<project>/.harness.lock` (removed when closed) |
+| Lock file while a project is open | `<project>/.harness.lock` (removed when closed); beside it an empty `.harness.lock.takeover` stays (no data, ignored by Git, safe to delete when the project is closed) |
 | Copies of the import templates | the folder you gave to `harness templates` |
 
 **To start over:**

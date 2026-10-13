@@ -71,6 +71,9 @@ def build(app: Path, out_dir: Path) -> Path:
     for script in (
         "install.sh",
         "uninstall.sh",
+        "README.txt",  # tells the reader to run ./install.sh
+        "harness-design-studio.desktop.in",  # dpkg installs the finished entry and the icon below
+        "harness-design-studio.svg",
     ):  # dpkg owns these files; the scripts are for tarballs
         (opt / script).unlink(missing_ok=True)
     (stage / "usr" / "bin").mkdir(parents=True)

@@ -216,7 +216,10 @@ def report(project: Project) -> tuple[str, bool]:
         lines.append(
             f'Files still marked as placeholder (set "placeholder": false after review): {", ".join(still)}.'
         )
-    decisions = {"segmentation": "D-10 (harness boundary rule)", "titleblock": "D-15 (title block)"}
+    decisions = {
+        "segmentation": "the rule for how interfaces are grouped into harnesses is confirmed",
+        "titleblock": "the title block fields are confirmed",
+    }
     waiting = sorted(
         name
         for name, c in project.config.items()
@@ -224,7 +227,7 @@ def report(project: Project) -> tuple[str, bool]:
     )
     for name in waiting:  # not values to type in, but owner decisions that are still open
         lines.append(
-            f"Waiting for an owner decision: config/{name}.json is a placeholder until {decisions[name]} is made."
+            f"Waiting for an owner decision: config/{name}.json is a placeholder until {decisions[name]}."
         )
     return "\n".join(lines), not todo and not problems
 

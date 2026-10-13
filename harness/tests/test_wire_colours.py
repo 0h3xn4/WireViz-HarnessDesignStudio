@@ -28,6 +28,17 @@ def test_codes_and_names_resolve_to_the_same_colour() -> None:
     assert len({code for _n, code, _h in COLOURS}) == len(COLOURS)
 
 
+def test_two_colour_wires_keep_both_codes() -> None:
+    # B-19: "yellow/green" was cut to "yellow" -> ("yellow", grey); "white/blue" printed "white/"
+    for typed in ("yellow/green", "green-yellow", "YE/GN", "Yellow / Green"):
+        code, hexcolour = resolve(typed)
+        assert "/" in code and len(code.split("/")) == 2 and hexcolour == "#808080"
+    assert resolve("yellow/green")[0] == "YE/GN" and resolve("green-yellow")[0] == "GN/YE"
+    assert resolve("white/blue")[0] == "WH/BU"
+    assert name_of("yellow/green") == ""  # not one colour of the table
+    assert resolve("red/striped")[0] == "red/st"  # one part unknown: kept as typed (shortened)
+
+
 def test_signal_names_and_the_colour_ops(project) -> None:
     signals = edit.signal_names(project)
     assert signals and signals == sorted(signals)

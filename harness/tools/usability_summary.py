@@ -89,7 +89,11 @@ def main() -> int:
     if len(sys.argv) != 3:
         print(__doc__)
         return 2
-    text, ok = report(read(Path(sys.argv[1])), read(Path(sys.argv[2])))
+    try:
+        text, ok = report(read(Path(sys.argv[1])), read(Path(sys.argv[2])))
+    except OSError as exc:
+        print(f"error: a file could not be read ({exc.strerror}): {exc.filename}", file=sys.stderr)
+        return 2
     print(text)
     return 0 if ok else 1
 

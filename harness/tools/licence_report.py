@@ -38,7 +38,9 @@ def classify(licence: str) -> str:
             "allowed" if all(classify(p) == "allowed" for p in text.split(" and ")) else "rejected"
         )
     if "lgpl" in text or "lesser general public" in text:
-        return "allowed"
+        # the LGPL part is fine, but a plain GPL named next to it ("GPL-3.0 with LGPL exception") is not
+        plain = re.sub(r"lgpl[\w.+-]*|lesser general public licen[sc]e", " ", text)
+        return "rejected" if REJECTED_RE.search(plain) else "allowed"
     if REJECTED_RE.search(text):
         return "rejected"
     words = (rf"(?<![a-z0-9]){re.escape(w)}(?![a-z0-9])" for w in ALLOWED_WORDS)

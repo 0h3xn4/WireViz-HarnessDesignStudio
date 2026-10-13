@@ -9,6 +9,7 @@ from harness_design_studio.core import configcheck, edit, standard_profiles
 from harness_design_studio.core.commands import History, Op, SetConfig
 from harness_design_studio.core.errors import HarnessError, TransactionError
 from harness_design_studio.core.generate.lengths import plan_length_import
+from harness_design_studio.core.generation_status import generation_status
 from harness_design_studio.core.imports import ImportError_, read_table, read_table_sheet
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
@@ -124,8 +125,8 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     nn.add_argument("--dry-run", action="store_true")
     ll = sub.add_parser(
         "import-lengths",
-        help="import routing segment lengths (CSV or XLSX: harness, segment, length)",
-        description="Import segment lengths, for example exported from the mechanical CAD. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).",
+        help="import routing segment lengths (CSV or XLSX: harness, segment, length, in this order)",
+        description="Import segment lengths, for example exported from the mechanical CAD. The columns are read by position (harness, segment, length), not by their headings. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).",
     )
     ll.add_argument("project", type=Path)
     ll.add_argument("file", type=Path)
@@ -224,6 +225,7 @@ def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untype
         except ValueError as exc:
             print(f"error: {exc}", file=sys.stderr)
             return 2
+        was_current = generation_status(project) == "current"
         if plan.configs:
             History(project).execute(
                 f"Apply profile {args.apply_profile}", [SetConfig(c) for c in plan.configs]
@@ -233,6 +235,11 @@ def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untype
             print(f"set {s.file}.{s.key} = {s.value!r}  ({s.source}: {s.note})")
         for s, current in plan.kept:
             print(f"kept {s.file}.{s.key} = {current!r}; the profile says {s.value!r} ({s.source})")
+        if was_current and generation_status(project) == "stale":
+            print(
+                "The profile changes values the generator reads, so the harness plans are now "
+                "out of date. Run `harness generate` again, then export again."
+            )
         marked = [f"config/{n}.json" for n in project.placeholder_configs()]
         print(
             f"Profile {args.apply_profile}: {len(plan.applied)} value(s) set, {len(plan.kept)} kept. "

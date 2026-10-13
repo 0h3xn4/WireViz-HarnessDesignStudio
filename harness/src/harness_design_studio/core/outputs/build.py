@@ -198,7 +198,11 @@ def write_outputs(
     except OSError as exc:
         raise SaveError(f"The outputs folder cannot be created ({exc.strerror}).") from exc
     # no file may be written or deleted behind a link at any depth: check them all first
-    stale = [r for r in sorted(old.files if old else {}) if r not in result.files and _safe_rel(r)]
+    stale = [
+        r
+        for r in sorted(old.files if old else {})
+        if r not in result.files and _safe_rel(r) and not (root / r).is_dir()  # a damaged manifest
+    ]
     for rel in (*result.files, *stale):
         target = root / rel
         if target.is_symlink() or escapes_root(root, target.parent):
@@ -211,10 +215,22 @@ def write_outputs(
             _atomic(root / rel, data, root)
         for rel in stale:
             (root / rel).unlink(missing_ok=True)
+            _remove_empty_folders(root, Path(rel).parent)
         _atomic(root / MANIFEST, result.manifest(project), root)
     except OSError as exc:
         raise SaveError(f"The outputs could not be written ({exc.strerror}).") from exc
     return result
+
+
+def _remove_empty_folders(root: Path, folder: Path) -> None:
+    """Remove the folders below the top-level ones that a deleted output file has left empty
+    (the folder of a removed harness); a folder that still holds anything stays."""
+    while len(folder.parts) >= 2:
+        try:
+            (root / folder).rmdir()
+        except OSError:
+            return
+        folder = folder.parent
 
 
 def _atomic(path: Path, data: bytes, root: Path) -> None:
@@ -303,6 +319,7 @@ def outputs_status(project: Project, folder: Path | str, *, deep: bool = False) 
         if (
             not _safe_rel(rel)
             or not path.is_file()
+            or path.is_symlink()
             or hashlib.sha256(path.read_bytes()).hexdigest() != digest
         ):
             bad.append(rel)

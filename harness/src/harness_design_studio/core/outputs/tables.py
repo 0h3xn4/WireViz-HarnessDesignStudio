@@ -161,7 +161,7 @@ def bom(project: Project, harnesses: list[Harness]) -> Table:
 
 MASS_HEADER = [
     "Harness", "Wires", "Connectors", "Wire length known (m)", "Wires without length",
-    "Mass of known parts (g)", "Margin (g)", "Mass with margin (g)", "Complete", "Missing data",
+    "Mass of wires and cable connectors (g)", "Margin (g)", "Mass with margin (g)", "Complete", "Missing data",
 ]  # fmt: skip
 
 

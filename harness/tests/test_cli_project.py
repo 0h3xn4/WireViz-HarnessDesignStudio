@@ -44,3 +44,18 @@ def test_check_read_only_project(tmp_path: Path, capsys: pytest.CaptureFixture[s
     edit_json(root / "project.json", lambda d: d.update(schema_version=99))
     main(["check", str(root)])
     assert "newer_version" in capsys.readouterr().out
+
+
+def test_verify_before_generate_says_to_generate(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from harness_design_studio.core import templates
+
+    templates.create_project(tmp_path / "p", "first-steps")
+    assert main(["verify", str(tmp_path / "p")]) == 1
+    out = capsys.readouterr().out
+    assert "signal_missing" in out and "run `harness generate` first" in out
+    assert main(["generate", str(tmp_path / "p")]) == 0
+    capsys.readouterr()
+    assert main(["verify", str(tmp_path / "p")]) == 0
+    assert "harness generate" not in capsys.readouterr().out

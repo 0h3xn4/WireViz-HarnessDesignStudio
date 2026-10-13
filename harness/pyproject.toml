@@ -28,7 +28,7 @@ harness-gui = "harness_design_studio.gui.app:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-"harness_design_studio.resources" = ["guide/*.html", "examples/**/*", "fonts/*"]
+"harness_design_studio.resources" = ["guide/*.html", "examples/**/*", "examples/**/.gitignore", "fonts/*"]  # ** skips dotfiles
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
