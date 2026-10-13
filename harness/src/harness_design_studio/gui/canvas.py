@@ -32,7 +32,7 @@ from harness_design_studio.core import describe, edit, routing
 from harness_design_studio.gui import glyphs, strings
 from harness_design_studio.gui.controller import Delta, EditorController
 from harness_design_studio.gui.theme import ThemeManager
-from harness_design_studio.gui.tokens import CATEGORIES, style_category
+from harness_design_studio.gui.tokens import CATEGORIES, OVERVIEW_FONT_PX, style_category
 
 W = edit.UNIT_W
 HEADER_H = 30
@@ -236,7 +236,7 @@ class UnitItem(QGraphicsItem):
         bold = QFont(painter.font())
         bold.setBold(True)
         small = QFont(painter.font())
-        small.setPixelSize(th.px(11))
+        small.setPixelSize(th.type("sm"))
         painter.setFont(bold)
         painter.setPen(th.color("text"))
         painter.drawText(
@@ -338,7 +338,7 @@ class UnitItem(QGraphicsItem):
         painter.drawRect(QRectF(0, 0, W, self.height()))
         font = QFont(painter.font())
         font.setBold(True)
-        font.setPixelSize(22)
+        font.setPixelSize(OVERVIEW_FONT_PX)  # scene units: it must read when zoomed far out
         painter.setFont(font)
         painter.setPen(th.color("text"))
         painter.drawText(
@@ -682,7 +682,7 @@ class LinkItem(QGraphicsPathItem):
             return  # zoomed out or faded: the line only, no label
         c = self._chip_center
         font = QFont(painter.font())
-        font.setPixelSize(th.px(11))
+        font.setPixelSize(th.type("sm"))
         values = (
             describe.link_values(ctl.project, i.id)
             if self.dscene.label_full(i.id, self._hover)
@@ -776,7 +776,7 @@ class ZoneItem(QGraphicsItem):
         painter.drawRoundedRect(self.boundingRect(), 8, 8)
         font = QFont(painter.font())
         font.setBold(True)
-        font.setPixelSize(th.px(12))
+        font.setPixelSize(th.type("sm"))
         painter.setFont(font)
         painter.setPen(th.color("text-muted"))
         name = zones[self.index].upper() if self.index < len(zones) else ""
