@@ -181,8 +181,12 @@ def test_the_code_never_evaluates_data_or_starts_programs() -> None:
 
 def test_the_code_never_replaces_the_process_or_opens_a_browser() -> None:
     """No os.exec*/os.spawn*/os.system/os.popen, no webbrowser; the only QDesktopServices use is
-    the Help menu opening the local guide (it passes QUrl.fromLocalFile, see main_window)."""
-    allowed = {"gui/main_window.py": {"QDesktopServices"}}
+    the Help menu opening the local guide and the Export dialog's Open / Reveal in folder for files
+    the export wrote (both pass QUrl.fromLocalFile)."""
+    allowed = {
+        "gui/main_window.py": {"QDesktopServices"},
+        "gui/export_dialog.py": {"QDesktopServices"},
+    }
     found = {}
     for path in SRC.rglob("*.py"):
         rel = path.relative_to(SRC).as_posix()
@@ -195,6 +199,8 @@ def test_the_code_never_replaces_the_process_or_opens_a_browser() -> None:
     assert not found, found
     main_window = (SRC / "gui" / "main_window.py").read_text(encoding="utf-8")
     assert "QUrl.fromLocalFile" in main_window  # the guide is a local file, never a web address
+    export_dialog = (SRC / "gui" / "export_dialog.py").read_text(encoding="utf-8")
+    assert "QUrl.fromLocalFile" in export_dialog  # exported files, never a web address
 
 
 def test_the_process_and_browser_scan_sees_the_usual_ways_in() -> None:
