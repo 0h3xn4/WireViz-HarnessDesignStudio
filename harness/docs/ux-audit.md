@@ -103,6 +103,80 @@ Counts: high 8 (SH-1, 2, 3, 4, 6, 7, 15, 28), medium 15, low 5.
 
 Verified good and to keep: cancellable workers with a private clone and a stale-plan guard; one labelled undo history with locks enforced on edit and redo; a single token-driven QSS with contrast-tested tokens and bundled IBM Plex Sans; accessible names; Outline and Interface table as keyboard alternatives; a toast when panels are hidden by a narrow window; `InterfaceTable` as a real `QTableView`.
 
+## B. Diagram canvas and states
+
+Method: real `QTest` mouse, key, wheel and context-menu events on the real window; flatsat (23 units, 44 links), flatsat with W001 exported and released, an empty project, a read-only project, and synthetic 23/100/150/200-unit projects. Offscreen software rendering, so absolute timings are pessimistic; 4K and screen readers were not tested.
+
+### B1. Requirement matrix
+
+| Requirement | Verdict | Evidence |
+|---|---|---|
+| Pan: Space+drag, middle drag, wheel | missing (defect) | the wheel always zooms by a fixed ×1.1 (`canvas.py:1491`), also with Ctrl or Shift; middle drag and Space+drag on a unit move the unit or do nothing |
+| Zoom to cursor | done | scene point under the cursor unchanged within 0.5 units |
+| Fit (`F`) | partly | button, Ctrl+0 and View > Fit work; key `F` does nothing |
+| Zoom to selection; 100 % (Ctrl+0) | missing | Ctrl+0 is Fit; View > Scale is UI scaling; no zoom level is shown |
+| Minimap | partly | click re-centres, no drag; at 1280×720 it covers 41 % of the canvas height; solid black at 100 units |
+| Grid; snap toggle | missing / partly | no grid; a hard-wired 10-unit snap with no toggle or indicator |
+| Auto-layout with undo; manual positions saved | done | undo restores exact positions; positions in `logical/layout.json`; no shortcut; synchronous (0.8–1.3 s at 100 units) |
+| Cards: name | done | |
+| Cards: type icon; flight/ground tag | missing | `Unit` has no kind or flight/ground field; the only tag is NOMINAL/REDUNDANT on every card |
+| Cards: connector count | partly | groups that do not fit are dropped silently, no total |
+| Cards: problem badge; release/lock badge | missing | flatsat has 28 problems and none appear on the canvas; after releasing W001 the canvas is unchanged |
+| Links coloured by type; legend | done / missing toggle | 7 category colours, weights, dashes, twin lines, picture chips (hidden at default Fit); the legend is a permanent 82 px strip |
+| Selection: click | done | |
+| Shift-click, rubber band, Ctrl+A, multi-select inspector | missing | the controller holds one `Selection(kind, id)` |
+| Delete with confirm naming objects | partly | units: yes; interfaces: no confirm (a window-wide `Delete` action deleted IF-002 silently from the Interface table) |
+| Ctrl+D; align/distribute | missing | |
+| Link hover tooltip | partly | type, V, A and ends; no harness, wire count or state |
+| Double-click opens Harness view; right-click context menu | missing | |
+| Ctrl+F search | partly | only Ctrl+K "Go to"; does not centre; no highlight of matches |
+| Pending / not-checked / problem badges (P2) | missing | a missing V/A is blank, the same as "not applicable"; "auto-filled, not reviewed" is drawn only in Expert mode |
+| State visible (P3): dirty / outputs stale / release / locks | partly | dirty yes; stale, release and locks no |
+| Why one click away (P4) | missing from the canvas | 4 steps away in Harness plans |
+| Undoable (P5) | done | move, arrange, delete, zone change, redundant copy |
+| Nothing silent; locked items say why and how (P5) | partly | good text, but a 5 s toast with no action; after a refused edit the Properties combo kept showing the rejected value; read-only drag, Delete and nudge are silent |
+| 100+ units smooth (P7) | partly | pan, zoom and select 25–80 ms at 100 units / 300 links; dragging a unit costs 146–795 ms per move; the 200-unit / 2000-link spec size is slow everywhere |
+
+### B2. Issues
+
+| ID | Issue | Sev | Proposed fix | Eff | Screenshot | Hits |
+|---|---|---|---|---|---|---|
+| CV-1 | Single selection only: no shift-click, rubber band, Ctrl+A or multi-select inspector | high | `Selection` becomes a set; `ItemIsSelectable` synced with `scene.selectionChanged`; `RubberBandDrag`; Ctrl+A action; multi-form with common fields; multi-delete in one `History` transaction | L | — | P1 |
+| CV-2 | No align/distribute, no Ctrl+D | medium | `core/edit.py`: `ops_align`, `ops_distribute`, `ops_duplicate_unit`; Edit menu and context menu; after CV-1 | M | — | selection |
+| CV-3 | Pan model wrong: wheel always zooms; Space-drag and middle-drag do nothing | high | Ctrl+wheel zooms by `exp(delta/240)`, plain and Shift wheel scroll; middle button and a Space flag switch to hand drag | S/M | — | pan |
+| CV-4 | Navigation shortcuts wrong or missing: no `F`, no zoom to selection, Ctrl+0 = Fit, no 100 %, no zoom indicator; zoom buttons lack tooltips | high | `F` fit, Ctrl+0 100 %, Shift+F zoom to selection; rename View > Scale to "Interface size"; zoom % label | S | [shot](ux/audit/canvas-nav_1280x720.png) | P6 |
+| CV-5 | Canvas too small and Fit illegible: 692×313 px at 1280×720; unit names 5.7 / 3.6 / 2.1 px at Fit | high | overview text in screen pixels; minimum legible fit scale; auto-collapse legend and docks on small windows; compact footprints for Guided | M/L | [shot](ux/audit/canvas-nav_1280x720.png) | P1, 1280×720 |
+| CV-6 | No problem/pending/not-checked badge on any object | high | `gui/canvas_state.py` index id → errors, warnings, not-checked, pending; header badge strip (icon plus count, never colour alone); badge on the link chip; click opens Problems filtered | M/L | [shot](ux/audit/canvas-cv-flatsat-overview-light.png) | P2 |
+| CV-7 | Release state and locks invisible on canvas and inspector | high | lock owner from a pure `vcs/locks.lock_owners`; lock glyph plus "W001 A" on cards and links; Properties banner "Locked by W001 (released, rev A)" with a revise button; locked fields disabled with a tooltip | M | [shot](ux/audit/canvas-cv-released-overview.png) | P3, P5 |
+| CV-8 | Auto-filled (not reviewed) drawn only in Expert; missing V/A looks like "not applicable" | high | olive dashed outline and "n auto" count in Guided too; "V ?" / "A ?" in a pending style | S/M | [shot](ux/audit/canvas-cv-cards-guided-100.png) | P2 |
+| CV-9 | A refused edit leaves the form showing the rejected value; the refusal is a 5 s toast with no action | high | rebuild the form when `ctl.update_*` returns False; refusal toast with a "Start new revision" action; refusals persist | S/M | [shot](ux/audit/canvas-cv-locked-edit-refused.png) | P5 |
+| CV-10 | Link tooltip lacks harness, wire count, state | medium | pure `describe.link_summary(project, iid)`; rich text | S | [shot](ux/audit/canvas-cv-link-hover.png) | P4 |
+| CV-11 | Double-click on a link or unit does nothing | high | `ctl.openRequested(kind, id)`; the window opens the Harness view on the wire; if none, a toast "Not generated yet" with Generate | S | — | P1 |
+| CV-12 | No context menu | high | `DiagramView.contextMenuEvent` built from the existing actions; disabled entries carry the reason | S/M | — | P6 |
+| CV-13 | No Ctrl+F; "Go to" does not centre or scroll to links; no highlight of matches | medium | Ctrl+F overlay search over id, name, connector, type; highlight all matches; Enter cycles with `centerOn` | M | — | search |
+| CV-14 | 8 of 44 link labels cannot be clicked: clicking IF-010's chip selects IF-014 | medium | test `_chip_rects` before `itemAt`; add the chip rect to `LinkItem.shape()`; raise the hovered or selected link | S | [shot](ux/audit/canvas-cv-link-label-hit-conflict.png) | P1 |
+| CV-15 | Legend is a permanent strip (82 px), not toggleable, lists non-applicable entries | medium | collapsible overlay; View > Show legend; list only what is present | S/M | [shot](ux/audit/canvas-cv-empty-project.png) | legend |
+| CV-16 | Minimap: click only, 41 % of the canvas height at 1280×720, black at 100 units | medium | drag the view rectangle; hide on small windows; thinner pen and alpha when zoomed far out | S | [shot](ux/audit/canvas-cv-perf-zoned-100u-300l.png) | minimap |
+| CV-17 | Snap forced, invisible, not switchable; no grid | medium | grid in `drawBackground` at scale ≥ 0.5; View > Snap to grid (saved); Alt bypasses | S | — | grid/snap |
+| CV-18 | Interface delete has no confirm; the `Delete` action is window-wide | medium | confirm naming both ends and affected harness and wires; shortcut context limited to the diagram and tables | S | [shot](ux/audit/canvas-cv-delete-confirm-unit.png) | P5 |
+| CV-19 | Cards lack a type icon and a flight/ground tag; NOMINAL printed on every card; connector groups dropped silently | medium | type icon derived from connector families and interface categories (`describe.unit_glyph`, no model change); tag chips from a UI-side zone mapping; "12 conn" total and "+3" instead of a silent cut | M | [shot](ux/audit/canvas-cv-cards-guided-100.png) | cards |
+| CV-20 | Read-only: drag, Delete and nudge are silent | low | say why ("…Save a copy to edit."); forbidden cursor | S | — | P5 |
+| CV-21 | At default Fit the type chips are hidden; CAN, RS-422 and Ethernet share navy | low | per-category dash or marker patterns in far mode; minimum-size chip on selected or hovered link | M | [shot](ux/audit/canvas-cv-flatsat-overview-light.png) | visual |
+| CV-22 | Stale outputs not shown anywhere visible | high | banner and top-bar status chip (see SH-2) and a canvas corner chip | S | — | P3 |
+| CV-23 | Why is not reachable from the canvas | high | a "Why" section in Properties for the selected link or connector (first lines plus "Show all"); tooltip on the auto badge says why the connector was chosen | M | — | P4 |
+| CV-24 | Dragging a unit at 100 units costs 146–795 ms per move (all links are re-routed) | medium | during a drag update only the moved unit's links as straight preview lines, throttle 16–33 ms, route on release; cache unchanged route groups | M | — | P7 |
+| CV-25 | Spec-size project (200 units / 2000 links) slow everywhere: 705 `LinkItem.paint` calls cost 0.31 s of a 0.39 s repaint | medium | gap line only above LOD 0.8; cache pens, fonts and metrics; skip links outside the exposed rect; `ItemCoordinateCache` at low LOD; batched lines when far out | M | — | P7 |
+| CV-26 | Toasts overlay the top of the canvas (a third of it at 1280×720) | low | show them in a strip under the toolbar | S | — | P5 |
+| CV-27 | Arrange has no shortcut or button and is synchronous | low | Ctrl+Shift+L and a toolbar button; run through the worker above 60 units | S/M | — | P6, P7 |
+| CV-28 | Empty-state label is an opaque box with no keyboard path and no "units but no links" hint | low | transparent; mention Ctrl+K and Import; second hint "press C to connect two units" | S | [shot](ux/audit/canvas-cv-empty-project.png) | empty states |
+| CV-29 | The canvas has no token set of its own; magic numbers in `canvas.py` | low | `CANVAS` token group and one `CanvasMetrics` dataclass | S | — | visual |
+
+Counts: high 12 (CV-1, 3, 4, 5, 6, 7, 8, 9, 11, 12, 22, 23), medium 11, low 6.
+
+Open question for the owner: what "flight" and "ground" mean for a unit. The model has no such field and the standard forbids changing the model, so CV-19 proposes a UI-side mapping from the zone name.
+
+Performance (offscreen; ms): at 23 units / 44 links every action is under 135 ms; at 100 units / 300 links (zoned) pan, zoom and select take 25–80 ms but dragging a unit takes 146–795 ms; at 200 units / 2000 links pan 250–350 ms, zoom step about 600 ms, drag up to 5 s.
+
 ## C. Harness, Lists, Checks, Releases, Imports, Export (non-canvas screens)
 
 Method: the shipped `flatsat` example opened as a real project folder, driven through the controller and the window (real mouse clicks on the canvas where possible), rendered offscreen at 1440×900, 1280×720, 1920×1080 and dark. Screenshots: `docs/ux/audit/screens-*.png`.
