@@ -445,7 +445,7 @@ class MainWindow(QMainWindow):
         self.toasts = ToastHost(self.view)
         self._register_slots()
         self._install_default_views()
-        self.tour = Tour(self, theme, self._tour_targets())
+        self.tour = Tour(self, theme, self._tour_targets(), self._tour_reveals())
         self.tour.on_stop = lambda: self.settings.setValue("tour/done", True)
 
         self.ctl.message.connect(self._on_message)
@@ -1432,6 +1432,14 @@ class MainWindow(QMainWindow):
             act = self._act(t.name, partial(self._toggle_connect, tid), name=f"menu-connect-{tid}")
             act.setIcon(category_icon(t.category, self.theme))
             self.menu_connect.addAction(act)
+
+    def _tour_reveals(self) -> dict[str, Callable[[], None]]:
+        """The steps about the palette and the interface types need the Palette tab in front."""
+
+        def palette() -> None:
+            self.left_tabs.setCurrentIndex(self.left_tabs.index_of("palette"))
+
+        return {"palette": palette, "types": palette}
 
     def _tour_targets(self) -> dict[str, QWidget]:
         return {

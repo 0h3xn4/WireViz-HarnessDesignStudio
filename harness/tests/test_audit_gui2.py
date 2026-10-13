@@ -118,7 +118,7 @@ def test_nudging_a_unit_with_the_keyboard_stops_at_the_edge(win) -> None:  # typ
 
 
 def test_the_tour_skips_steps_whose_target_is_not_on_screen(win) -> None:  # type: ignore[no-untyped-def]
-    win.palette_panel.hide()  # what a high UI scale does to the left dock
+    win.dock_left.hide()  # what a high UI scale does to the left dock
     win.tour.start()
     seen: list[str] = []
     for _ in range(10):
@@ -134,7 +134,7 @@ def test_the_tour_skips_steps_whose_target_is_not_on_screen(win) -> None:  # typ
 
 
 def test_the_tour_counts_only_the_steps_it_shows(win) -> None:  # type: ignore[no-untyped-def]
-    win.palette_panel.hide()
+    win.dock_left.hide()
     win.tour.start()
     assert "Step 1 of 3" in win.tour.title.text()
     win.tour.skip.click()
