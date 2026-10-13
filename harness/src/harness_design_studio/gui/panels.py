@@ -38,7 +38,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import checks, drc, edit
+from harness_design_studio.core import checks, edit
+from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.generate.explain import explain_harness, explain_wire
 from harness_design_studio.core.library_import import describe_library
 from harness_design_studio.core.model import InterfaceInstance, Part
@@ -765,6 +766,7 @@ def _first_line(exc: Exception) -> str:
 
 
 MAX_CARDS = 25
+UNCHECKED_RULE = "unchecked-config"  # the notes of rules that could not look at everything
 GROUP_LIST = 8  # findings named on a grouped card
 
 
@@ -821,7 +823,13 @@ class ProblemsPanel(QScrollArea):
         checking = not self.ctl.drc_current
         findings = self.ctl.findings()
         open_ = self.ctl.open_findings()
-        cards, total = self._cards(open_)
+        # Notes that a rule could not run are never cut off by the card limit: hiding them is how
+        # "all rules checked" used to be claimed while rules had not been looked at.
+        unchecked = [f for f in open_ if f.rule == UNCHECKED_RULE]
+        rest = [f for f in open_ if f.rule != UNCHECKED_RULE] if unchecked else open_
+        cards, total = self._cards(rest)
+        note_cards, _ = self._cards(unchecked, limit=None)
+        header = self._header(checking)
         waived = (
             [f for f in findings if f.waiver is not None] if len(findings) != len(open_) else []
         )
@@ -829,7 +837,9 @@ class ProblemsPanel(QScrollArea):
         # stay: rebuilding the cards and laying them out cost 150 to 300 ms after every edit.
         signature = (
             tuple(identity for identity, _ in cards),
+            tuple(identity for identity, _ in note_cards),
             total,
+            header,
             tuple((f.id, f.waiver.justification if f.waiver else "") for f in waived),
             self.ctl.read_only,
             checking,
@@ -839,12 +849,7 @@ class ProblemsPanel(QScrollArea):
             return
         self._signature = signature
         clear_layout(self.lay)
-        if self.ctl.drc_error is not None:
-            state = muted(self.ctl.drc_error)
-        else:
-            state = muted(
-                strings.DRC_CHECKING if checking else strings.DRC_DONE.format(len(drc.RULES))
-            )
+        state = muted(header)
         state.setObjectName("drc-state")
         self.lay.addWidget(state)
         if not open_ and not checking:
@@ -853,6 +858,10 @@ class ProblemsPanel(QScrollArea):
             self.lay.addWidget(build())
         if total > MAX_CARDS:
             self.lay.addWidget(muted(strings.MORE_PROBLEMS.format(total - MAX_CARDS)))
+        if note_cards:
+            self.lay.addWidget(heading(strings.NOT_CHECKED_HEADING))
+            for _, build in note_cards:
+                self.lay.addWidget(build())
         if waived:
             self.lay.addWidget(heading(strings.WAIVED))
             for f in waived:
@@ -860,13 +869,31 @@ class ProblemsPanel(QScrollArea):
                     self.lay.addWidget(muted(f"✓ {f.id}: “{f.waiver.justification}”"))
         self.lay.addStretch(1)
 
+    def _header(self, checking: bool) -> str:
+        """The line above the cards: what the last check did, from the result of each rule."""
+        if self.ctl.drc_error is not None:
+            return self.ctl.drc_error
+        if checking:  # an edit is waiting for its check, or the check was cancelled
+            return strings.DRC_CHECKING if self.ctl.drc_busy() else strings.DRC_STALE
+        results = self.ctl.drc_rule_results()
+        if not results:
+            return strings.DRC_STALE
+        s = by_rule.summary(results)
+        unchecked = s.not_checked + s.pending
+        if not s.failed and not unchecked:
+            return strings.DRC_ALL_PASSED.format(total=s.total)
+        return strings.DRC_DONE.format(
+            total=s.total, passed=s.passed, failed=s.failed, unchecked=unchecked
+        )
+
     def _cards(
-        self, open_: list[checks.Finding]
+        self, open_: list[checks.Finding], limit: int | None = MAX_CARDS
     ) -> tuple[list[tuple[object, Callable[[], QFrame]]], int]:
-        """Builders for the first MAX_CARDS cards and the total number of cards. One card per
-        finding, except that three or more unwaivable findings of one rule about the same object
-        (a wire missing for each signal of an interface) share a single card. Counted in one
-        cheap pass and built on demand: a project can have tens of thousands of findings."""
+        """Builders for the first `limit` cards (all of them without a limit) and the total number
+        of cards. One card per finding, except that three or more unwaivable findings of one rule
+        about the same object (a wire missing for each signal of an interface) share a single
+        card. Counted in one cheap pass and built on demand: a project can have tens of thousands
+        of findings."""
         Key = tuple[str, str, str, str | None]
         key: Key | None
 
@@ -889,7 +916,7 @@ class ProblemsPanel(QScrollArea):
         done: set[Key] = set()
         cards: list[tuple[object, Callable[[], QFrame]]] = []
         for f in open_:
-            if len(cards) >= MAX_CARDS:
+            if limit is not None and len(cards) >= limit:
                 break
             key = None if f.can_waive else key_of(f)
             if key is not None and counts[key] >= 3:

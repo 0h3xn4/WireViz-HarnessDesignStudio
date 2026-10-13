@@ -124,3 +124,13 @@ One line per decision. Sections are added by the work that makes the decision.
 - The import wizard uses the planner the command line uses for each kind, shows the same per-row reasons, and keeps the command line's rule that a list with a bad row is not imported at all (parts, lengths, ampacity table, netlist); only interfaces skip bad rows, as the existing dialog does. Option names of the command line in a planner message are put in the wizard's own words. (SC-17)
 - Every import is one `ctl.run` step called "Import n rows"; what stays pending afterwards (parts whose approval is pending, the derating file that stays a placeholder, interfaces whose connectors are Auto, signals no interface uses) is listed on the third page with the pending chip. (SC-17)
 - New project is one dialog (folder, name, example) with the error under the field it belongs to; the name follows the folder name until it is typed. (SH-18)
+
+### Checks view (ux/checks: SC-1, SC-2, SC-3, SH-3, SH-17, SH-28)
+
+- A result is one of pass, fail, not checked or pending, each a state chip (icon, word and pattern); a pass that read a placeholder file says "Pass (placeholder values)" so a pass never looks reviewed when it is not. (SC-1, SH-28)
+- Results are grouped once per finished check from the findings the controller already holds (`ctl.drc_rule_results()`); while a check runs or is out of date the last finished list stays, and before the first one the table is empty with a sentence, never a list of passes. (SC-1)
+- The summary strip counts "not checked" as not checked plus pending rules and "pending values" as the hand-over list `configcheck.missing`; each count is a button that filters the table. (SH-3)
+- Rows sort worst first (fail, pending, not checked, pass); Tab leaves a table and the arrows move inside it; Enter on a rule moves to its details, Enter on an object shows it on the diagram. (SC-2)
+- A value is supplied in a window of its own (not modal), validated while typing with the same planner that applies it, shown under the field and never in a message box; Apply is one undo step with a label. (SC-3)
+- A running check says "checking" with Cancel; a failed check leaves a banner until the next success instead of a toast. (SH-17)
+- Shortcuts: Ctrl+F filters the rules, Ctrl+Enter applies the engineering values, Enter shows the selected object.

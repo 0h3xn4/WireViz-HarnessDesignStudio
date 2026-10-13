@@ -15,9 +15,14 @@ Versions follow semantic versioning. Every project file records the tool version
 - Import wizard (`gui/import_wizard.py`): interfaces, approved parts, segment lengths, the ampacity table and a KiCad netlist in four pages (file, columns with a live preview, conflicts and placeholders with the exact reason for each row, apply); every import is one undo step called "Import n rows". It is not on the window yet.
 - New project dialog (`gui/new_project_dialog.py`): folder, name and example in one dialog with the problems said next to the field. It is not on the window yet.
 
+- Checks tab (`gui/checks_panel.py`): one row for each of the design rules with its result (pass, fail, not checked, pending), a summary strip ("34 rules: 20 passed · 2 failed · 12 not checked · 4 pending values"), the requirement IDs of each rule, the offending objects (Enter or double-click shows one), and the exact configuration value a pending rule waits for. A check that is running can be cancelled, and a failed check leaves a banner until the next one succeeds.
+- Engineering values form (`gui/config_dialog.py`): **Supply value…** on a pending rule opens every engineering value grouped by config file, with units, the placeholder flag, inline reasons for a refused value and locked values disabled with the reason; Apply sets all changes as one undo step and the checks run again.
+- A status-bar link "n values pending · n rules not checked" (`PendingValuesLink`) that filters the Checks tab.
+
 ### Changed
 
 - The release dialog lists what the release will lock (wires, pins, interfaces, parts, interface types, config files, with placeholder values shown as pending); the new-revision dialog says what happens and what becomes editable instead of "Nothing blocks this release"; both say in words what is still missing for the button to work (the 10-character comment, a name, a reason). They take effect where the window passes `ChangeDialog.for_release` and `for_revise`.
+- The Problems header no longer says "all 34 rules checked" while rules were not checked: it reads "34 rules: n passed · n failed · n not checked", and the notes about rules that could not run are never cut off by the 25 card limit.
 - Text is 13 px at 100 % (it was 14) and follows the 12 / 13 / 16 / 20 px type scale; spacing follows 4 / 8 / 12 / 16 / 24 / 32 px; all buttons, combo boxes and fields are 32 px high.
 - Hashes, IDs, requirement IDs, pin and wire numbers and the drawing preview use IBM Plex Mono.
 - The drawing preview takes its page and background colours from the theme.
