@@ -549,3 +549,149 @@ TABLE_HEADER_UNIT = "{} ({})"
 TABLE_COPY_TIP = "Ctrl+C copies the selected cells (tab separated)"
 TABLE_COPIED = "Copied {} cells"
 STATUS_HASH = "Model hash"
+
+# ==== UX tree and inspector (gui/project_tree.py, gui/inspector.py, gui/why_panel.py) ==============
+TREE_NAME = "Project tree"
+TREE_HELP = (
+    "Units, interfaces, harnesses, parts, interface types, configuration and imports. Arrow keys "
+    "move, Enter selects, Ctrl+Enter opens, Right and Left open and close a group, typing jumps "
+    "to a name, / filters."
+)
+TREE_ROOTS = {
+    "units": "Units",
+    "interfaces": "Interfaces",
+    "harnesses": "Harnesses",
+    "parts": "Parts",
+    "interface_types": "Interface types",
+    "config": "Configuration",
+    "imports": "Imports",
+}
+TREE_EMPTY = {
+    "units": "No units yet. Add one with the Add button.",
+    "interfaces": "No interfaces yet. Add one with Ctrl+I or import a table.",
+    "harnesses": "No harnesses yet. Generate them from the interfaces.",
+    "parts": "No parts yet. Import an approved parts list.",
+    "interface_types": "No interface types yet.",
+}
+TREE_IMPORTS = {
+    "interfaces": "Interfaces (CSV, XLSX)…",
+    "parts": "Approved parts…",
+    "lengths": "Segment lengths…",
+    "engineering": "Engineering values…",
+    "netlist": "KiCad netlist…",
+}
+TREE_IMPORT_TIP = "Import {}. Press Enter or double-click to start."
+TREE_IMPORT_READ_ONLY = "This project is read-only, so nothing can be imported."
+TREE_FILTER_NAME = "Filter the project tree"
+TREE_FILTER_PLACEHOLDER = "Filter"
+TREE_FILTER_TIP = "Filter the project tree by ID or name (press / in the tree)"
+TREE_NO_MATCH = "Nothing matches “{}”."
+TREE_ADD = "Add"
+TREE_ADD_TIP = "Add something to the project"
+TREE_ADD_ENTRIES = {"unit": "Unit…", "interface": "Interface…"}
+TREE_ADD_IN = "Add {}…"
+TREE_MENU_SELECT = "Select on the diagram"
+TREE_MENU_OPEN = "Open"
+TREE_MENU_COPY_ID = "Copy ID"
+TREE_MENU_EXPAND = "Expand all"
+TREE_MENU_COLLAPSE = "Collapse all"
+TREE_N_ERRORS = ("{} error", "{} errors")
+TREE_N_WARNINGS = ("{} warning", "{} warnings")
+TREE_N_NOT_CHECKED = ("{} not checked", "{} not checked")
+TREE_CONFIG_PLACEHOLDER = "Placeholder"
+TREE_CONFIG_PENDING = "{} pending"
+TREE_TIP_UNIT = "Unit {}: {}. Subsystem {}, zone {}, chain {}."
+TREE_TIP_INTERFACE = "Interface {}: {} ({})."
+TREE_TIP_HARNESS = "Harness {}: {}. Revision {}, {}."
+TREE_TIP_PART = "Part {}: {} ({})."
+TREE_TIP_TYPE = "Interface type {}: {} ({} interface)."
+TREE_TIP_CONFIG_PLACEHOLDER = (
+    "Configuration {} is still a placeholder: nobody has reviewed its values."
+)
+TREE_TIP_CONFIG_MISSING = "{} not set yet: {}."
+TREE_TIP_CONFIG_OK = "Configuration {} is set and reviewed."
+TREE_NO_ZONE = "none yet"
+TREE_VALUE_WORD = ("value", "values")
+WHY_NAME = "Why"
+WHY_TAB_TIP = "Why the selected object is the way it is"
+WHY_EMPTY = "Select a unit, link, harness, wire, connector or pin to see why it is the way it is."
+WHY_TITLE = "Why: {} {}"
+WHY_KIND = {
+    "unit": "unit",
+    "interface": "link",
+    "harness": "harness",
+    "wire": "wire",
+    "connector": "connector",
+    "pin": "pin",
+}
+WHY_INTRO = "What the tool recorded when it generated this."
+WHY_NONE = "Nothing was recorded for this yet. Generate the harnesses to get the reasons."
+WHY_SHOW_ALL = "Show all {}"
+WHY_SHOW_FEWER = "Show fewer"
+WHY_SHOW_ALL_TIP = "Show every recorded reason"
+WHY_PENDING = "Pending"
+WHY_PLACEHOLDER = "Placeholder"
+WHY_PLACEHOLDER_NOTE = (
+    "Generated on placeholder values from: {}. Nobody has reviewed them, so treat the result as "
+    "provisional."
+)
+WHY_RULE_NAME = "Rule {}"
+INS_NAME = "Inspector"
+INS_TAB_INSPECTOR = "Inspector"
+INS_TAB_WHY = "Why"
+INS_TAB_PROBLEMS = "Problems"
+INS_TAB_PROBLEMS_N = "Problems ({})"
+INS_NO_PROBLEMS_HOST = "The problems list is not attached yet."
+INS_REVISE = "Start new revision"
+INS_REVISE_TIP = "Start a new revision of {}: it becomes a draft you can edit; the released revision stays on record"
+INS_BANNER_COSMETIC = "Names and notes can still be changed."
+INS_BANNER_RELEASED = "Released {} {}"
+INS_BANNER_DRAFT = "{} is a draft (revision {})."
+INS_BANNER_IN_REVIEW = "{} is in review (revision {}). It can be edited until it is released."
+INS_BANNER_REVISED = "{} is revision {}, a draft after a release. It can be edited."
+INS_USED_IN = "Used in"
+INS_USED_IN_N = "Used in ({})"
+INS_USED_NONE = "Not used anywhere yet."
+INS_USED_COLUMNS = ("Kind", "ID", "How")
+INS_USED_KINDS = {"interface": "Link", "harness": "Harness", "wire": "Wire", "unit": "Unit"}
+INS_USED_TIP = "Double-click or press Enter to show it on the diagram"
+INS_FACTS_NAME = "Properties of {} {}"
+INS_FACT_COLUMNS = ("Property", "Value", "Status")
+INS_VALUES_NAME = "Engineering values of {}"
+INS_STATUS_NOT_SET = "Not set"
+INS_STATUS_UNREVIEWED = "Unreviewed"
+INS_STATUS_UNREVIEWED_TIP = "{} is still a placeholder file: nobody has reviewed this value."
+INS_STATUS_NOT_SET_TIP = "Not set yet. {}"
+INS_STATUS_UNVERIFIED = "Not verified"
+INS_STATUS_UNVERIFIED_TIP = "Example data that no engineer has verified."
+INS_FACT_KIND = {
+    "harness": "Harness",
+    "part": "Part",
+    "interface_type": "Interface type",
+    "config": "Configuration",
+}
+INS_FACT_LABELS = {
+    "name": "Name",
+    "revision": "Revision",
+    "state": "State",
+    "interfaces": "Interfaces",
+    "wires": "Wires",
+    "connectors": "Connectors",
+    "released_on": "Released on",
+    "approver": "Released by",
+    "category": "Category",
+    "manufacturer": "Maker",
+    "part_number": "Part number",
+    "approval": "Approval",
+    "pins": "Pins",
+    "description": "Description",
+    "construction": "Construction",
+    "signals": "Signals",
+    "placeholder": "Review",
+}
+INS_FACT_REVIEWED = "Reviewed"
+INS_FACT_PLACEHOLDER = "Placeholder: not reviewed yet"
+INS_NOTHING = (
+    "Nothing selected. Pick a unit or a link on the diagram, or a row in the project tree."
+)
+TREE_FILTER_CLEAR = "Clear the filter"
