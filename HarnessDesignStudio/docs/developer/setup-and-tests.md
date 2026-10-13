@@ -41,14 +41,14 @@ Versions are pinned in `pyproject.toml`. A new dependency needs its name, versio
 Check it:
 
 ```
-harness --version
+harness-design-studio --version
 ```
 
 ```
 harness 1.0.0
 ```
 
-Start the editor with `harness-gui`.
+Start the editor with `harness-design-studio-gui`.
 
 The prototype tests drive a Chromium browser. `playwright` is installed by `dev`, but the browser is not. CI runs `python -m playwright install --with-deps chromium`. Without a browser those tests are skipped.
 
@@ -99,7 +99,7 @@ A change that only touches Markdown can still break a test. Know these:
 | Test file | What it enforces |
 | --- | --- |
 | `tests/test_docs_links.py` | Every relative link and every `#anchor` in the listed files resolves. The list: `HarnessDesignStudio/README.md`, `CLAUDE.md`, `CHANGELOG.md`, every `docs/*.md` (not the sub-folders), `docs/guide/USER_GUIDE.md` and the templates `README.md`. Links inside code fences are not checked. The anchor rule is GitHub's. |
-| `tests/test_docs.py` | The in-app guide (`resources/guide/index.html`) equals what `tools.build_guide` makes from `docs/guide/USER_GUIDE.md`; every `harness` command is named in the guide; the buttons the guide names exist in `gui/strings.py`; no paragraph of the guide is longer than 700 characters; `docs/RULES.md` and `docs/CLI.md` equal what their generators write; every config key is in `docs/CONFIG.md`; the commands of `docs/GETTING_STARTED.md` and of `HarnessDesignStudio/README.md` are run in order in a scratch folder with the expected exit codes; the model hash quoted in `GETTING_STARTED.md` equals the one the first `export` prints; the **F1** key opens the guide. |
+| `tests/test_docs.py` | The in-app guide (`resources/guide/index.html`) equals what `tools.build_guide` makes from `docs/guide/USER_GUIDE.md`; every `harness-design-studio` command is named in the guide; the buttons the guide names exist in `gui/strings.py`; no paragraph of the guide is longer than 700 characters; `docs/RULES.md` and `docs/CLI.md` equal what their generators write; every config key is in `docs/CONFIG.md`; the commands of `docs/GETTING_STARTED.md` and of `HarnessDesignStudio/README.md` are run in order in a scratch folder with the expected exit codes; the model hash quoted in `GETTING_STARTED.md` equals the one the first `export` prints; the **F1** key opens the guide. |
 | `tests/test_examples.py` | The example projects equal what `tools.build_examples` writes; the design worksheet names only real unit kinds and interface types; the numbers in `docs/FLATSAT_EXAMPLE.md` match the `flatsat` example. |
 | `tests/test_compliance_matrix.py`, `test_trace.py`, `test_sdd_components.py`, `test_metrics.py`, `test_scf.py`, `test_family_group_mapping.py`, `test_profiles.py`, `tests/test_drc.py::test_cited_requirements_exist_in_the_extracted_lists` | The generated compliance files are current (matrix, traceability, component table), no matrix row claims compliance, every module has a docstring, and every cited requirement ID exists. |
 
@@ -122,7 +122,7 @@ A golden file is a stored, reviewed result that a test compares with a fresh one
 
 ## 6. What CI runs
 
-`.github/workflows/harness-ci.yml` runs on Ubuntu 24.04 with Python 3.12. After the Qt libraries and `pip install -e ".[gui,dev]"` and Chromium, it runs `ruff check .`, `ruff format --check .`, `mypy`, `pytest --cov`, `python -m tools.check_reproducible`, `python -m tools.build_installer`, `python -m tools.build_deb`, the self-test of the frozen program (`dist/harness-design-studio/harness-design-studio --selftest`) and `python -m tools.gen_sbom`. It uploads the packages and the SBOM as an artifact. A second job (`package-on-24-04`) installs the packages on a fresh machine without the source tree. `python -m tools.release_check --quick` runs only the first three checks locally (versions, lint and types, the verifiers); it is not a release check ([`release.md`](release.md)).
+`.github/workflows/harness-ci.yml` runs on Ubuntu 24.04 with Python 3.12. After the Qt libraries and `pip install -e ".[gui,dev]"` and Chromium, it runs `ruff check .`, `ruff format --check .`, `mypy`, `pytest --cov`, `python -m tools.check_reproducible`, `python -m tools.build_installer`, `python -m tools.build_deb`, the self-test of the frozen program (`dist/harness-design-studio/harness-design-studio-gui --selftest`) and `python -m tools.gen_sbom`. It uploads the packages and the SBOM as an artifact. A second job (`package-on-24-04`) installs the packages on a fresh machine without the source tree. `python -m tools.release_check --quick` runs only the first three checks locally (versions, lint and types, the verifiers); it is not a release check ([`release.md`](release.md)).
 
 ## When something fails
 

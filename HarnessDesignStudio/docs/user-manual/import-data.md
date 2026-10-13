@@ -14,11 +14,11 @@ This page shows how to bring data you already have into a project: a list of int
 
 ## Before you start
 
-- You have a practice project: `harness new wheel-link --template first-steps`.
+- You have a practice project: `harness-design-studio new wheel-link --template first-steps`.
 - Starting files for every import are in the templates. Copy them once:
 
 ```
-harness templates my-templates
+harness-design-studio templates my-templates
 ```
 
 ```
@@ -56,7 +56,7 @@ Rules for a row: the two units must exist already; `type` is the name or ID of a
 The starter library has only example parts, none of them approved. Your programme's approved parts list replaces them. You say what the approval values in your file mean. The tool never decides that a part is approved.
 
 ```
-harness import-parts wheel-link my-templates/approved-parts.csv --approved Approved --pending Review --rejected Rejected --dry-run
+harness-design-studio import-parts wheel-link my-templates/approved-parts.csv --approved Approved --pending Review --rejected Rejected --dry-run
 ```
 
 ```
@@ -72,7 +72,7 @@ Dry run: nothing was changed.
 Run it again without `--dry-run`:
 
 ```
-harness import-parts wheel-link my-templates/approved-parts.csv --approved Approved --pending Review --rejected Rejected
+harness-design-studio import-parts wheel-link my-templates/approved-parts.csv --approved Approved --pending Review --rejected Rejected
 ```
 
 ```
@@ -106,7 +106,7 @@ Nothing was changed.
 The import changes the library, so the harness plans and outputs are out of date. Check, then make them current:
 
 ```
-harness drc wheel-link
+harness-design-studio drc wheel-link
 ```
 
 ```
@@ -114,9 +114,9 @@ Open: 1 error(s), 7 warning(s), 8 note(s). Waived: 0.
 ```
 
 ```
-harness generate wheel-link
-harness export wheel-link
-harness drc wheel-link
+harness-design-studio generate wheel-link
+harness-design-studio export wheel-link
+harness-design-studio drc wheel-link
 ```
 
 ```
@@ -138,8 +138,8 @@ W002,W002-L1,900
 The columns are read **by position**: harness, segment, length. Generate once first, because the segment IDs (`W001-L1`) belong to the generated harnesses. Without them every row fails: "Harness 'W001' does not exist".
 
 ```
-harness generate wheel-link
-harness import-lengths wheel-link my-templates/segment-lengths.csv --unit mm --dry-run
+harness-design-studio generate wheel-link
+harness-design-studio import-lengths wheel-link my-templates/segment-lengths.csv --unit mm --dry-run
 ```
 
 ```
@@ -150,8 +150,8 @@ Dry run: nothing was changed.
 ```
 
 ```
-harness import-lengths wheel-link my-templates/segment-lengths.csv --unit mm
-harness generate wheel-link
+harness-design-studio import-lengths wheel-link my-templates/segment-lengths.csv --unit mm
+harness-design-studio generate wheel-link
 ```
 
 ```
@@ -173,17 +173,17 @@ To find the segment IDs, open the generated harness in the **Harness** tab, or l
 
 | You have | Do |
 | --- | --- |
-| A current-by-gauge table | `harness config DIR --ampacity-csv FILE` ([fill in the engineering values](fill-in-engineering-values.md#2-load-the-current-by-gauge-table)) |
-| A unit's connector pinout in KiCad | `harness import-netlist` ([import KiCad pinouts](import-kicad-pinouts.md)) |
-| Values from a standard | `harness config DIR --apply-profile NAME` ([fill in the engineering values](fill-in-engineering-values.md#values-from-a-standard-profiles)) |
+| A current-by-gauge table | `harness-design-studio config DIR --ampacity-csv FILE` ([fill in the engineering values](fill-in-engineering-values.md#2-load-the-current-by-gauge-table)) |
+| A unit's connector pinout in KiCad | `harness-design-studio import-netlist` ([import KiCad pinouts](import-kicad-pinouts.md)) |
+| Values from a standard | `harness-design-studio config DIR --apply-profile NAME` ([fill in the engineering values](fill-in-engineering-values.md#values-from-a-standard-profiles)) |
 
 ## Where the library data come from
 
-`harness import-parts` records the file name and its SHA-256 checksum as the **source** of the parts library. You can say more, and set the date of the data yourself (the tool does not read the clock for it):
+`harness-design-studio import-parts` records the file name and its SHA-256 checksum as the **source** of the parts library. You can say more, and set the date of the data yourself (the tool does not read the clock for it):
 
 ```
-harness library wheel-link
-harness library wheel-link --library-source "Programme parts list, issue 3" --library-date 2026-09-30
+harness-design-studio library wheel-link
+harness-design-studio library wheel-link --library-source "Programme parts list, issue 3" --library-date 2026-09-30
 ```
 
 ```

@@ -5,10 +5,10 @@ A tour of the biggest example that ships with the tool: a **flatsat**. It shows 
 A flatsat is the electronics of a spacecraft laid out on a bench, connected with test harnesses, so that the software and the electrical interfaces can be tested before the spacecraft is built. Besides the flight units it contains **ground equipment** that drives them: a checkout system, a power supply and RF test equipment. The example has both.
 
 ```
-harness new flatsat-bench --template flatsat
+harness-design-studio new flatsat-bench --template flatsat
 ```
 
-**This example is not in the 0.1.0 packages** (see [`CHANGELOG.md`](../CHANGELOG.md)). `harness new --list` shows five examples on 1.0.0 and three on 0.1.0; on a 0.1.0 package the command above fails with `error: Unknown template 'flatsat'`.
+**This example is not in the 0.1.0 packages** (see [`CHANGELOG.md`](../CHANGELOG.md)). `harness-design-studio new --list` shows five examples on 1.0.0 and three on 0.1.0; on a 0.1.0 package the command above fails with `error: Unknown template 'flatsat'`.
 
 Open it in the app (**File > Open project...**) or read on first. Everything in this page is what the project really contains; a test checks the numbers.
 
@@ -59,11 +59,11 @@ Eight harnesses, because the example uses the segmentation mode `per_zone_pair` 
 
 (The wire counts and what each harness holds are produced by the tool; read any harness in the **Harness** tab of the app and select a wire to see **Why** it is like this.)
 
-The totals in `outputs/system/mass_length.csv` after `harness export`: 329.6 m of wire and 2.6 kg with margin. These numbers include the three harnesses that touch the ground equipment (`W005`, `W007`, `W008`); the tool does not know which harnesses fly, so subtract them yourself when you need the flight mass.
+The totals in `outputs/system/mass_length.csv` after `harness-design-studio export`: 329.6 m of wire and 2.6 kg with margin. These numbers include the three harnesses that touch the ground equipment (`W005`, `W007`, `W008`); the tool does not know which harnesses fly, so subtract them yourself when you need the flight mass.
 
 ## What the design rule check says
 
-`harness drc` reports no errors. It reports warnings and notes, and they are worth reading, because they show what the tool is for:
+`harness-design-studio drc` reports no errors. It reports warnings and notes, and they are worth reading, because they show what the tool is for:
 
 - **Connector look-alikes.** Many units have several identical connectors (a power distribution unit has eleven identical Micro-D 9 connectors). The rule warns that two cables could be plugged into the wrong place. On a real flatsat you would key the connectors differently or label them.
 - **Unapproved parts.** Every part is an example part that nobody has approved, so each is listed. This is the example being honest.
@@ -72,7 +72,7 @@ The totals in `outputs/system/mass_length.csv` after `harness export`: 329.6 m o
 ## Things to try
 
 1. **Read the diagram.** With 44 interfaces the whole picture is busy, by nature. Open the project and click `PDU2`: only its links stay in colour and everything else fades. Click the empty background to see everything again, then try `OBC1`, then a single link. Use **Show** in the toolbar to look at power only, then at data only, then at one connector. Select a wire and read **Why is it like this?**
-2. **Check the outputs.** `harness export flatsat-bench`, then open `outputs/system/block_diagram.pdf`, `harness_overview.pdf` and a harness drawing in `outputs/harnesses/`. `harness verify flatsat-bench --outputs` re-reads the files independently.
+2. **Check the outputs.** `harness-design-studio export flatsat-bench`, then open `outputs/system/block_diagram.pdf`, `harness_overview.pdf` and a harness drawing in `outputs/harnesses/`. `harness-design-studio verify flatsat-bench --outputs` re-reads the files independently.
 3. **Change a number and watch.** In the app, select the interface *Feed of the AOCS distribution unit* and set its Max current to 8 A, then generate again. The generation reports wire sizing errors that name the wires: no listed gauge carries 8 A after derating. Set it back to 5 A.
 4. **Use the spare connectors.** The computer has one free data connector and `PCDU1` has one spare power connector. Add a unit from the *sensor* template, an RS-422 interface from `OBC1` to it and a power interface from `PCDU1` to it, then generate. The new wires appear in the harness between the lanes of the two units. Undo restores everything.
 5. **Run out of connectors.** Now add one more unit that needs power and data. The tool tells you that no free connector is left and offers Expert mode, where you add connectors by hand. That is the moment a real design asks for another distribution unit.

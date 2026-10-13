@@ -14,7 +14,7 @@ This page shows how to turn your units and links into harnesses (connectors, pin
 
 ## Before you start
 
-- You have a project with units and links. For a quick start make one: `harness new wheel-link --template first-steps` (see [draw the design](draw-the-design.md)).
+- You have a project with units and links. For a quick start make one: `harness-design-studio new wheel-link --template first-steps` (see [draw the design](draw-the-design.md)).
 - A **harness** is a bundle of wires with connectors that carries the links between two units. You never draw it. The tool generates it from your design, and it can generate it again at any time.
 - Wire gauges (thicknesses) stay *pending* until the engineering values exist. That is normal. See [fill in the engineering values](fill-in-engineering-values.md).
 
@@ -33,7 +33,7 @@ If there is nothing to generate the app says so ("There is nothing to generate y
 **On the command line**
 
 ```
-harness generate wheel-link
+harness-design-studio generate wheel-link
 ```
 
 ```
@@ -46,7 +46,7 @@ Two harnesses were made, one for each pair of connectors the two links use: `W00
 Run the same command again:
 
 ```
-harness generate wheel-link
+harness-design-studio generate wheel-link
 ```
 
 ```
@@ -70,7 +70,7 @@ Nothing is saved while the result holds errors (exit code 1). A naming pattern t
 The tool checks its own result with a second program path that shares no code with the generator. In the app the header of the **Harness** tab shows a chip, *Check passed* or *Check found n problem(s)*; the older **Harness plans** tab of the bottom panel shows "Independent check: …". On the command line:
 
 ```
-harness verify wheel-link
+harness-design-studio verify wheel-link
 ```
 
 ```
@@ -110,7 +110,7 @@ By default one harness is made for each pair of unit connectors. The setting is 
 | `per_unit_pair` | pair of units |
 | `per_zone_pair` | pair of zones (links between the same two lanes) |
 
-With the `minimal-satellite` example (11 links), the default makes 11 harnesses. After changing `mode` to `per_unit_pair` and running `harness generate` again, the report is `10 added, 0 changed, 0 unchanged, 11 removed`: ten harnesses replace the eleven. The new ones get new IDs (`W012` to `W021`), and the files of the old ones stay in `physical/harnesses/` with the ending `.json.bak`. (`minimal-satellite` is not in the 0.1.0 packages; see the [changelog](../../CHANGELOG.md).)
+With the `minimal-satellite` example (11 links), the default makes 11 harnesses. After changing `mode` to `per_unit_pair` and running `harness-design-studio generate` again, the report is `10 added, 0 changed, 0 unchanged, 11 removed`: ten harnesses replace the eleven. The new ones get new IDs (`W012` to `W021`), and the files of the old ones stay in `physical/harnesses/` with the ending `.json.bak`. (`minimal-satellite` is not in the 0.1.0 packages; see the [changelog](../../CHANGELOG.md).)
 
 Whatever the mode:
 
@@ -128,13 +128,13 @@ Generation may change a wire or a pin you edited. To keep a value, mark it as lo
 - In a pin's entry, `"locked": true` keeps the pin where it is. The report counts them: "0 locked pin(s) kept".
 - The app does not have a button to lock a wire or a pin. Its wire list only shows a **Locked** column. A locked pin that already carries a signal stays where it is on a connector with a fixed pinout, and a locked fixed pin keeps its interface. In `per_unit_pair` mode a renamed unit keeps its harness IDs, locked wires and lengths when the interfaces stay the same.
 
-This was checked on the command line with `first-steps`: a wire set to gauge 20 and colour `red` with `"locked": true` kept both after `harness generate`, and a wire set to gauge 20 without the lock went back to the tool's own value (here no gauge, because the derating values are still placeholders). Edit the file while the project is not open in the app. If it is open, the app reports "Project changed on disk" and offers to reload.
+This was checked on the command line with `first-steps`: a wire set to gauge 20 and colour `red` with `"locked": true` kept both after `harness-design-studio generate`, and a wire set to gauge 20 without the lock went back to the tool's own value (here no gauge, because the derating values are still placeholders). Edit the file while the project is not open in the app. If it is open, the app reports "Project changed on disk" and offers to reload.
 
 ## Common mistakes
 
-- **"there are no harnesses to export; run `harness generate` first."** You have not generated yet, or the project has no links. Generate first.
+- **"there are no harnesses to export; run `harness-design-studio generate` first."** You have not generated yet, or the project has no links. Generate first.
 - **A blank project generates nothing.** The command line cannot add units. Add units and links in the app ([draw the design](draw-the-design.md)), or start from an example.
-- **Gauge says *pending*.** Not a fault. A value is missing: run `harness config DIR` ([fill in the engineering values](fill-in-engineering-values.md)). The power link also needs its **Max current (A)**.
+- **Gauge says *pending*.** Not a fault. A value is missing: run `harness-design-studio config DIR` ([fill in the engineering values](fill-in-engineering-values.md)). The power link also needs its **Max current (A)**.
 - **"The model changed after the harness plans were generated."** You changed the design after generating. Generate again.
 
 More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).

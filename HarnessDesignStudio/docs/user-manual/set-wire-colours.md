@@ -2,7 +2,7 @@
 
 This page shows how to give each signal (power, return, CAN high, ...) a wire colour, so that the wire list shows it and the harness drawings draw it.
 
-> **Not in the 0.1.0 packages.** *Edit > Wire colours...*, the *Colour* column set from signals and the coloured wiring-diagram drawing are new in 1.0.0. They are not in the 0.1.0 `.deb` and `.tar.gz`. See the [changelog](../../CHANGELOG.md). `harness new --list` shows five examples on 1.0.0 and three on 0.1.0.
+> **Not in the 0.1.0 packages.** *Edit > Wire colours...*, the *Colour* column set from signals and the coloured wiring-diagram drawing are new in 1.0.0. They are not in the 0.1.0 `.deb` and `.tar.gz`. See the [changelog](../../CHANGELOG.md). `harness-design-studio new --list` shows five examples on 1.0.0 and three on 0.1.0.
 
 ## Before you start
 
@@ -34,8 +34,8 @@ The setting is the key `wire_colour_by_signal` in `config/generation.json`, insi
 (The rest of the file stays as it is. See [the shape of a config file](fill-in-engineering-values.md#the-shape-of-a-config-file).) Then:
 
 ```
-harness generate wheel-link
-harness export wheel-link
+harness-design-studio generate wheel-link
+harness-design-studio export wheel-link
 ```
 
 ```

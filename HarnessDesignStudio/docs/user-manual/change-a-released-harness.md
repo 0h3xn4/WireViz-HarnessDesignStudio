@@ -17,14 +17,14 @@ This page shows how to change a harness after it was released, by starting a new
 
 - A harness is released and locked ([release a harness](release-a-harness.md)). This page continues with the practice project of that page: the harness `W002`, revision A, released.
 - You never edit a released harness. You start a **new revision** (A, B, C, ...). The old revision stays available, so it can always be reproduced.
-- Editing a locked harness, a link it carries or a pin it uses is refused, with the reason. So is editing a **part** or **interface type** the harness uses (its connectors' and wires' parts, and the parts of the box connectors it plugs into) or the **configuration** its checks read (derating, EMC, segregation, title block, and the electrical and test values in the generation file), for example by importing parts or changing a derating value. Notes and names stay editable, and so does everything no released harness uses: new parts, other parts, the naming and segmentation settings. The exact list is in [`FILE_FORMAT.md`](../FILE_FORMAT.md#what-a-release-freezes). If the files were changed by hand anyway, `harness check` reports it ([release a harness](release-a-harness.md#4-after-the-release)).
+- Editing a locked harness, a link it carries or a pin it uses is refused, with the reason. So is editing a **part** or **interface type** the harness uses (its connectors' and wires' parts, and the parts of the box connectors it plugs into) or the **configuration** its checks read (derating, EMC, segregation, title block, and the electrical and test values in the generation file), for example by importing parts or changing a derating value. Notes and names stay editable, and so does everything no released harness uses: new parts, other parts, the naming and segmentation settings. The exact list is in [`FILE_FORMAT.md`](../FILE_FORMAT.md#what-a-release-freezes). If the files were changed by hand anyway, `harness-design-studio check` reports it ([release a harness](release-a-harness.md#4-after-the-release)).
 
 ## 1. Start a new revision
 
 **On the command line**
 
 ```
-harness revise wheel-link W002 --by "A. Engineer" --comment "Add wire colours for the second revision"
+harness-design-studio revise wheel-link W002 --by "A. Engineer" --comment "Add wire colours for the second revision"
 ```
 
 ```
@@ -40,7 +40,7 @@ Revision B is a `draft` that you can edit. Revision A and its baseline are kept.
 Edit the design as usual. As an example, give the two power signals colours in `config/generation.json` (or use **Edit > Wire colours...**; see [set wire colours](set-wire-colours.md)), then generate. (Wire colours are **not in the 0.1.0 packages**. With a 0.1.0 package, make a different change; the output below then differs.)
 
 ```
-harness generate wheel-link
+harness-design-studio generate wheel-link
 ```
 
 ```
@@ -53,7 +53,7 @@ harness generate wheel-link
 **On the command line**
 
 ```
-harness diff wheel-link W002
+harness-design-studio diff wheel-link W002
 ```
 
 ```
@@ -84,8 +84,8 @@ Without `--from` and `--to` the command compares the working design with the lat
 Export, then release as before:
 
 ```
-harness export wheel-link
-harness release wheel-link W002 --by "A. Engineer" --comment "Second revision with wire colours" --accept-placeholders "Practice project: demo values only" --accept-unapproved-parts "Practice project: example parts only"
+harness-design-studio export wheel-link
+harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "Second revision with wire colours" --accept-placeholders "Practice project: demo values only" --accept-unapproved-parts "Practice project: example parts only"
 ```
 
 ```
@@ -97,7 +97,7 @@ Outputs re-exported with the released status (38 files).
 Now both revisions have a baseline, and you can compare them:
 
 ```
-harness diff wheel-link W002 --from A --to B
+harness-design-studio diff wheel-link W002 --from A --to B
 ```
 
 ```
@@ -121,7 +121,7 @@ Before revision B is released, `--to B` fails: `error: W002 has no baseline for 
 ## 5. Read the history
 
 ```
-harness log wheel-link
+harness-design-studio log wheel-link
 ```
 
 ```
@@ -132,14 +132,14 @@ C0003 | W002 | B | new revision started | A. Engineer | 2026-10-10 | Add wire co
 C0004 | W002 | B | released | A. Engineer | 2026-10-10 | Second revision with wire colours [Released on placeholder configuration (...); ...] [...]
 ```
 
-(Long parts of the comment column are shortened here with `...`.) Add a harness ID (`harness log wheel-link W002`) to see one harness. In the app: the timeline of the **Releases** tab, or **Change log…** in the **Harness plans** tab. The entries cannot be deleted. The outputs also have them: `system/changelog.csv` and `system/revision_report.md`.
+(Long parts of the comment column are shortened here with `...`.) Add a harness ID (`harness-design-studio log wheel-link W002`) to see one harness. In the app: the timeline of the **Releases** tab, or **Change log…** in the **Harness plans** tab. The entries cannot be deleted. The outputs also have them: `system/changelog.csv` and `system/revision_report.md`.
 
 ## Compare two copies of a project
 
 To see what differs between two project folders (for example two Git checkouts, or a copy you made before the change with `cp -r wheel-link wheel-link-A`):
 
 ```
-harness compare wheel-link-A wheel-link
+harness-design-studio compare wheel-link-A wheel-link
 ```
 
 ```
@@ -171,12 +171,12 @@ It does not change either folder. It compares the units, interfaces, connectors,
 
 ## Common mistakes
 
-- **Editing the JSON of a released harness, or of a part, interface type or configuration value it uses.** Start a revision instead. `harness check` finds the edit (`released_modified`).
+- **Editing the JSON of a released harness, or of a part, interface type or configuration value it uses.** Start a revision instead. `harness-design-studio check` finds the edit (`released_modified`).
 - **"This change was blocked because it touches released items" when you import parts, apply a profile or change a derating value.** A released harness uses those parts or values. Start a new revision of that harness (of each released harness, for configuration), make the change, and release again. The command ends with exit code 1 and changes nothing; `--dry-run` says it would be blocked.
-- **Forgetting to export after the release.** `harness release` exports for you; after a revision you still export yourself before the next release.
+- **Forgetting to export after the release.** `harness-design-studio release` exports for you; after a revision you still export yourself before the next release.
 - **"W002 has no baseline for revision B."** Revision B is not released yet.
 - **Deleting a released harness.** The app does not allow it. Start a new revision and change it.
 
-More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md), [`CLI.md`](../CLI.md#harness-revise).
+More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md), [`CLI.md`](../CLI.md#harness-design-studio-revise).
 
 Next: [use Git and CI](use-git-and-ci.md), [release a harness](release-a-harness.md)

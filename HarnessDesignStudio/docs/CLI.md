@@ -1,6 +1,6 @@
 # Command line reference
 
-Generated from the program by `python -m tools.gen_cli_docs`; do not edit by hand. `project` is a project folder. Run `harness COMMAND --help` for the same text in a terminal.
+Generated from the program by `python -m tools.gen_cli_docs`; do not edit by hand. `project` is a project folder. Run `harness-design-studio COMMAND --help` for the same text in a terminal. `harness` still works as a short alias of `harness-design-studio` (the same program).
 
 ## Exit codes
 
@@ -11,7 +11,7 @@ Generated from the program by `python -m tools.gen_cli_docs`; do not edit by han
 | 2 | usage error, or a project or file that could not be read |
 | 130 | interrupted with Ctrl-C |
 
-A project with damaged files (a file that is not valid, a link, over 64 MB or unreadable) is refused with exit 2 and the damaged file named by every command that reports on it or changes it: `drc`, `verify`, `export`, `generate`, `config`, `library`, `log`, `diff`, `compare`, `review`, `release`, `revise`, `migrate` and the imports. Only `validate` and `check` read it and list the damage (exit 1), so you can see what to repair. With Ctrl-C a command prints `interrupted` and ends with 130 (if it was saving, run `harness validate`). A reader that closes the pipe (`harness generate | head -1`) does not stop the command: it still finishes and saves.
+A project with damaged files (a file that is not valid, a link, over 64 MB or unreadable) is refused with exit 2 and the damaged file named by every command that reports on it or changes it: `drc`, `verify`, `export`, `generate`, `config`, `library`, `log`, `diff`, `compare`, `review`, `release`, `revise`, `migrate` and the imports. Only `validate` and `check` read it and list the damage (exit 1), so you can see what to repair. With Ctrl-C a command prints `interrupted` and ends with 130 (if it was saving, run `harness-design-studio validate`). A reader that closes the pipe (`harness-design-studio generate | head -1`) does not stop the command: it still finishes and saves.
 
 Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-netlist`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not.
 
@@ -19,20 +19,20 @@ The examples show the form of each command with example names. They do not all w
 
 ## Contents
 
-- Start: [`new`](#harness-new), [`templates`](#harness-templates), [`schema`](#harness-schema)
-- Check: [`validate`](#harness-validate), [`check`](#harness-check), [`drc`](#harness-drc), [`verify`](#harness-verify)
-- Generate and export: [`generate`](#harness-generate), [`export`](#harness-export)
-- Bring in data: [`config`](#harness-config), [`library`](#harness-library), [`import-parts`](#harness-import-parts), [`import-lengths`](#harness-import-lengths), [`import-netlist`](#harness-import-netlist)
-- Review, release and change: [`review`](#harness-review), [`release`](#harness-release), [`revise`](#harness-revise), [`diff`](#harness-diff), [`log`](#harness-log), [`compare`](#harness-compare)
-- Maintenance: [`migrate`](#harness-migrate)
+- Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
+- Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
+- Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export)
+- Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist)
+- Review, release and change: [`review`](#harness-design-studio-review), [`release`](#harness-design-studio-release), [`revise`](#harness-design-studio-revise), [`diff`](#harness-design-studio-diff), [`log`](#harness-design-studio-log), [`compare`](#harness-design-studio-compare)
+- Maintenance: [`migrate`](#harness-design-studio-migrate)
 
 ## Start
 
-### harness new
+### harness-design-studio new
 
-Create a project folder from one of the bundled examples. `harness new --list` shows them. The folder must not exist yet or be empty.
+Create a project folder from one of the bundled examples. `harness-design-studio new --list` shows them. The folder must not exist yet or be empty.
 
-`harness new [folder] [options]`
+`harness-design-studio new [folder] [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -44,16 +44,16 @@ Create a project folder from one of the bundled examples. `harness new --list` s
 Examples:
 
 ```
-harness new --list
-harness new my-design --name "My first design"
-harness new wheel-link --template first-steps
+harness-design-studio new --list
+harness-design-studio new my-design --name "My first design"
+harness-design-studio new wheel-link --template first-steps
 ```
 
-### harness templates
+### harness-design-studio templates
 
 Copy the bundled templates for the imports, CI scripts and the review checklist. The folder must not exist yet or be empty.
 
-`harness templates folder`
+`harness-design-studio templates folder`
 
 | Argument | Meaning |
 | --- | --- |
@@ -62,14 +62,14 @@ Copy the bundled templates for the imports, CI scripts and the review checklist.
 Examples:
 
 ```
-harness templates my-templates
+harness-design-studio templates my-templates
 ```
 
-### harness schema
+### harness-design-studio schema
 
 Write one JSON Schema per kind of project file, made from the program's own model, and a settings fragment that maps the files to them. For people who edit project files by hand. Nothing is downloaded. The folder must not exist yet or be empty.
 
-`harness schema folder`
+`harness-design-studio schema folder`
 
 | Argument | Meaning |
 | --- | --- |
@@ -78,16 +78,16 @@ Write one JSON Schema per kind of project file, made from the program's own mode
 Examples:
 
 ```
-harness schema my-design/schemas
+harness-design-studio schema my-design/schemas
 ```
 
 ## Check
 
-### harness validate
+### harness-design-studio validate
 
 check a project folder for errors and inconsistencies
 
-`harness validate project`
+`harness-design-studio validate project`
 
 | Argument | Meaning |
 | --- | --- |
@@ -96,14 +96,14 @@ check a project folder for errors and inconsistencies
 Examples:
 
 ```
-harness validate my-design
+harness-design-studio validate my-design
 ```
 
-### harness check
+### harness-design-studio check
 
 validate, plus detect problems left behind by Git merges
 
-`harness check project`
+`harness-design-studio check project`
 
 | Argument | Meaning |
 | --- | --- |
@@ -112,14 +112,14 @@ validate, plus detect problems left behind by Git merges
 Examples:
 
 ```
-harness check my-design
+harness-design-studio check my-design
 ```
 
-### harness drc
+### harness-design-studio drc
 
 run the design rule check and print the report (waived findings included)
 
-`harness drc project`
+`harness-design-studio drc project`
 
 | Argument | Meaning |
 | --- | --- |
@@ -128,14 +128,14 @@ run the design rule check and print the report (waived findings included)
 Examples:
 
 ```
-harness drc my-design > drc-report.md
+harness-design-studio drc my-design > drc-report.md
 ```
 
-### harness verify
+### harness-design-studio verify
 
 independently verify the generated harnesses against the interfaces
 
-`harness verify project [options]`
+`harness-design-studio verify project [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -145,17 +145,17 @@ independently verify the generated harnesses against the interfaces
 Examples:
 
 ```
-harness verify my-design
-harness verify my-design --outputs
+harness-design-studio verify my-design
+harness-design-studio verify my-design --outputs
 ```
 
 ## Generate and export
 
-### harness generate
+### harness-design-studio generate
 
 generate harnesses from the interfaces and save the project
 
-`harness generate project`
+`harness-design-studio generate project`
 
 | Argument | Meaning |
 | --- | --- |
@@ -164,14 +164,14 @@ generate harnesses from the interfaces and save the project
 Examples:
 
 ```
-harness generate my-design
+harness-design-studio generate my-design
 ```
 
-### harness export
+### harness-design-studio export
 
 write all outputs (drawings, tables, exports) to <project>/outputs and verify them
 
-`harness export project`
+`harness-design-studio export project`
 
 | Argument | Meaning |
 | --- | --- |
@@ -180,16 +180,16 @@ write all outputs (drawings, tables, exports) to <project>/outputs and verify th
 Examples:
 
 ```
-harness export my-design
+harness-design-studio export my-design
 ```
 
 ## Bring in data
 
-### harness config
+### harness-design-studio config
 
 Hand-over checklist for the engineering values (derating, grounding, test limits ...). Exit 1 while something is missing or invalid.
 
-`harness config project [options]`
+`harness-design-studio config project [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -200,16 +200,16 @@ Hand-over checklist for the engineering values (derating, grounding, test limits
 Examples:
 
 ```
-harness config my-design
-harness config my-design --ampacity-csv ampacity.csv
-harness config my-design --apply-profile ecss-q-st-30-11c
+harness-design-studio config my-design
+harness-design-studio config my-design --ampacity-csv ampacity.csv
+harness-design-studio config my-design --apply-profile ecss-q-st-30-11c
 ```
 
-### harness library
+### harness-design-studio library
 
 Without options: print the library's name, version, source and date. With options: record them. The date is the date of the data (YYYY-MM-DD) and is entered by you; the tool never reads the clock into a project.
 
-`harness library project [options]`
+`harness-design-studio library project [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -222,15 +222,15 @@ Without options: print the library's name, version, source and date. With option
 Examples:
 
 ```
-harness library my-design
-harness library my-design --library-version 4 --library-source "ESCC part data, supplier file" --library-date 2026-09-30
+harness-design-studio library my-design
+harness-design-studio library my-design --library-version 4 --library-source "ESCC part data, supplier file" --library-date 2026-09-30
 ```
 
-### harness import-parts
+### harness-design-studio import-parts
 
 Import parts with their approval status. Say what the approval values in your list mean; unknown values are rejected, never guessed.
 
-`harness import-parts project file [options]`
+`harness-design-studio import-parts project file [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -249,15 +249,15 @@ Import parts with their approval status. Say what the approval values in your li
 Examples:
 
 ```
-harness import-parts my-design parts.csv --approved Approved --pending Review --rejected Rejected --dry-run
-harness import-parts my-design connectors.xlsx --approved Yes --category connector
+harness-design-studio import-parts my-design parts.csv --approved Approved --pending Review --rejected Rejected --dry-run
+harness-design-studio import-parts my-design connectors.xlsx --approved Yes --category connector
 ```
 
-### harness import-lengths
+### harness-design-studio import-lengths
 
 Import segment lengths, for example exported from the mechanical CAD. The columns are read by position (harness, segment, length), not by their headings. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).
 
-`harness import-lengths project file [options]`
+`harness-design-studio import-lengths project file [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -269,14 +269,14 @@ Import segment lengths, for example exported from the mechanical CAD. The column
 Examples:
 
 ```
-harness import-lengths my-design lengths.csv --unit mm --dry-run
+harness-design-studio import-lengths my-design lengths.csv --unit mm --dry-run
 ```
 
-### harness import-netlist
+### harness-design-studio import-netlist
 
 Create or update the box connectors of one unit from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The user guide has a chapter on it.
 
-`harness import-netlist project netlist [options]`
+`harness-design-studio import-netlist project netlist [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -294,16 +294,16 @@ Create or update the box connectors of one unit from a KiCad netlist (the .net f
 Examples:
 
 ```
-harness import-netlist my-design wheel.net --unit RW1 --prefix J --connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run
+harness-design-studio import-netlist my-design wheel.net --unit RW1 --prefix J --connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run
 ```
 
 ## Review, release and change
 
-### harness review
+### harness-design-studio review
 
 submit a draft harness for review
 
-`harness review project harness [options]`
+`harness-design-studio review project harness [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -315,14 +315,14 @@ submit a draft harness for review
 Examples:
 
 ```
-harness review my-design W001 --by "A. Engineer"
+harness-design-studio review my-design W001 --by "A. Engineer"
 ```
 
-### harness release
+### harness-design-studio release
 
 release a harness: baseline, change log entry and lock (blocked while checks fail)
 
-`harness release project harness [options]`
+`harness-design-studio release project harness [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -338,14 +338,14 @@ release a harness: baseline, change log entry and lock (blocked while checks fai
 Examples:
 
 ```
-harness release my-design W001 --by "A. Engineer" --comment "First release" --checker "B. Checker"
+harness-design-studio release my-design W001 --by "A. Engineer" --comment "First release" --checker "B. Checker"
 ```
 
-### harness revise
+### harness-design-studio revise
 
 start a new revision of a released harness
 
-`harness revise project harness [options]`
+`harness-design-studio revise project harness [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -358,14 +358,14 @@ start a new revision of a released harness
 Examples:
 
 ```
-harness revise my-design W001 --by "A. Engineer" --comment "Connector change"
+harness-design-studio revise my-design W001 --by "A. Engineer" --comment "Connector change"
 ```
 
-### harness diff
+### harness-design-studio diff
 
 show what changed in a harness since a baseline (or between two baselines)
 
-`harness diff project harness [options]`
+`harness-design-studio diff project harness [options]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -377,15 +377,15 @@ show what changed in a harness since a baseline (or between two baselines)
 Examples:
 
 ```
-harness diff my-design W001
-harness diff my-design W001 --from A
+harness-design-studio diff my-design W001
+harness-design-studio diff my-design W001 --from A
 ```
 
-### harness log
+### harness-design-studio log
 
 print the change log
 
-`harness log project [harness]`
+`harness-design-studio log project [harness]`
 
 | Argument | Meaning |
 | --- | --- |
@@ -395,15 +395,15 @@ print the change log
 Examples:
 
 ```
-harness log my-design
-harness log my-design W001
+harness-design-studio log my-design
+harness-design-studio log my-design W001
 ```
 
-### harness compare
+### harness-design-studio compare
 
 Compare two project folders object by object.
 
-`harness compare old new`
+`harness-design-studio compare old new`
 
 | Argument | Meaning |
 | --- | --- |
@@ -413,16 +413,16 @@ Compare two project folders object by object.
 Examples:
 
 ```
-harness compare old-checkout new-checkout
+harness-design-studio compare old-checkout new-checkout
 ```
 
 ## Maintenance
 
-### harness migrate
+### harness-design-studio migrate
 
 upgrade an old-format project in place (originals are kept)
 
-`harness migrate project`
+`harness-design-studio migrate project`
 
 | Argument | Meaning |
 | --- | --- |
@@ -431,5 +431,5 @@ upgrade an old-format project in place (originals are kept)
 Examples:
 
 ```
-harness migrate my-design
+harness-design-studio migrate my-design
 ```

@@ -71,7 +71,7 @@ Switching never changes data. Start in Guided.
 
 ## From design to harness: generation
 
-Pressing **Generate** (or `harness generate DIR`) does four things:
+Pressing **Generate** (or `harness-design-studio generate DIR`) does four things:
 
 1. **Groups** the interfaces into harnesses. By default one harness per pair of unit connectors.
 2. **Allocates pins**: power first, pairs side by side, spare pins left free, pins you locked (in the harness file) never moved.
@@ -97,7 +97,7 @@ The tool contains **no engineering numbers from any standard**: no derating fact
 
 - Wire gauges stay **pending**.
 - Checks that need a number say **not checked** instead of silently passing.
-- `harness config DIR` lists exactly what is missing and what depends on it.
+- `harness-design-studio config DIR` lists exactly what is missing and what depends on it.
 
 The files that hold these values are in the project's `config/` folder and are described in [`CONFIG.md`](CONFIG.md). The examples ship a set of **demo values for learning**; they are not engineering data (see [`../src/harness_design_studio/resources/examples/templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md)).
 

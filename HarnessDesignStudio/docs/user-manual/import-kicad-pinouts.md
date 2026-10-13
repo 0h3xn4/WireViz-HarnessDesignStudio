@@ -15,8 +15,8 @@ This page shows how to read the connector pinout of a unit (which signal is on w
 ## 1. Get the practice files
 
 ```
-harness new wheel-link --template first-steps
-harness templates my-templates
+harness-design-studio new wheel-link --template first-steps
+harness-design-studio templates my-templates
 ```
 
 `my-templates/wheel-connectors.net` is a small netlist for the two connectors of the wheel `RW1` (`RW1-J01` for power, `RW1-J02` for the RS-422 link). `my-templates/signal-map.csv` renames KiCad net names to signal names.
@@ -24,7 +24,7 @@ harness templates my-templates
 ## 2. Try it without changing anything
 
 ```
-harness import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run
+harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run
 ```
 
 ```
@@ -48,7 +48,7 @@ Read each line. It names the connector and how many pins got a signal. Net names
 Run the same command without `--dry-run`:
 
 ```
-harness import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02
+harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02
 ```
 
 ```
@@ -60,7 +60,7 @@ Imported 2 connector(s). Generate harnesses again to connect interfaces to the f
 The import is all or nothing: a netlist with a problem changes nothing. Now generate:
 
 ```
-harness generate wheel-link
+harness-design-studio generate wheel-link
 ```
 
 ```

@@ -14,7 +14,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 ## Before you start
 
-- You have a project. The examples use `wheel-link` from `harness new wheel-link --template first-steps`, generated with `harness generate wheel-link` ([generate harnesses](generate-harnesses.md)).
+- You have a project. The examples use `wheel-link` from `harness-design-studio new wheel-link --template first-steps`, generated with `harness-design-studio generate wheel-link` ([generate harnesses](generate-harnesses.md)).
 - The tool checks the design at two speeds. **Quick checks** run on every edit (a link without a connector, a unit with no link, connectors chosen by the tool and not confirmed, a link between the nominal and the redundant chain). The **design rules** (34 of them, all listed in [`RULES.md`](../RULES.md)) run in the background a moment after you stop editing.
 
 ## 1. The three kinds of finding
@@ -50,7 +50,7 @@ The **Checks** tab has one row for each design rule: its ID, name, severity, a *
 ## 3. On the command line
 
 ```
-harness drc wheel-link
+harness-design-studio drc wheel-link
 ```
 
 ```
@@ -69,7 +69,7 @@ The exit code is 0 when there are no unwaived errors and 1 when there is at leas
 To check only that the folder is sound (no rule check):
 
 ```
-harness validate wheel-link
+harness-design-studio validate wheel-link
 ```
 
 ```
@@ -86,7 +86,7 @@ The command line cannot waive a finding. Waivers are made in the app.
 **An error you can make appear.** Change a value in `config/generation.json` after you generated (for example `service_loop_m` from `null` to `0.1`, inside `values`), then run the check:
 
 ```
-harness drc wheel-link
+harness-design-studio drc wheel-link
 ```
 
 ```
@@ -100,7 +100,7 @@ Open: 1 error(s), 10 warning(s), 8 note(s). Waived: 0.
 The command exits with 1. Fix: generate again.
 
 ```
-harness generate wheel-link
+harness-design-studio generate wheel-link
 ```
 
 ```
@@ -108,7 +108,7 @@ harness generate wheel-link
 2 interfaces and 6 wires checked: 0 error(s)
 ```
 
-The report then shows `Open: 0 error(s), 10 warning(s), 8 note(s).` Export again (`harness export wheel-link`) if you want current outputs.
+The report then shows `Open: 0 error(s), 10 warning(s), 8 note(s).` Export again (`harness-design-studio export wheel-link`) if you want current outputs.
 
 **A warning you can waive.** On a practice project the starter library's example parts give warnings such as "Part EX-MICROD-15-F is not approved yet but is used (2 place(s))".
 
@@ -129,7 +129,7 @@ The notes also name what could not be checked on a wire or a harness instead of 
 - **A design rule check that fails is shown as failed.** If the background check cannot run, the status line says "Design rule check failed: ..." and the Problems panel adds an error finding. It never says "all 34 rules checked" then. A check that does not answer within three minutes is stopped and run again inside the editor.
 - **Each problem has its own ID.** If one object has several problems (the two ends of a dangling wire, several problems of one connector), each finding has its own ID, so a waiver covers one problem only. A waiver made in an earlier version for a *model-inconsistent* warning no longer matches and shows as stale; waive the finding again.
 - **Routing segments must form a tree.** The error `segment-loop` means two routes join twice, so a wire's route (and its length) is not unique. Remove or merge a segment ([`RULES.md`](../RULES.md)).
-- **A wire from a pin to itself** is an error that `harness validate` reports (`wire_to_itself`); the independent check calls it `wire_same_pin`.
+- **A wire from a pin to itself** is an error that `harness-design-studio validate` reports (`wire_to_itself`); the independent check calls it `wire_same_pin`.
 
 ## Common mistakes
 

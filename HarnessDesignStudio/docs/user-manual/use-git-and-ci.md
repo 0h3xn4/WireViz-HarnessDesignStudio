@@ -25,7 +25,7 @@ The project folder can be a repository, or a folder inside one. Example, with a 
 ```
 mkdir gitdemo && cd gitdemo
 git init -b main .
-harness new design --template first-steps
+harness-design-studio new design --template first-steps
 git add -A
 git commit -m "Start from first-steps"
 ```
@@ -35,7 +35,7 @@ The tool wrote a `.gitignore` inside the project (`design/.gitignore`). It ignor
 Work as usual, then commit. Generate once and commit the result:
 
 ```
-harness generate design
+harness-design-studio generate design
 git add -A
 git commit -m "Generate harnesses"
 ```
@@ -43,7 +43,7 @@ git commit -m "Generate harnesses"
 A second generation changes nothing:
 
 ```
-harness generate design
+harness-design-studio generate design
 git status --short
 ```
 
@@ -63,14 +63,14 @@ git diff
 +    "service_loop_m": 0.1,
 ```
 
-Running `harness generate design` then also changes `design/generated/generation.json`, because the model changed. Commit both before you go on.
+Running `harness-design-studio generate design` then also changes `design/generated/generation.json`, because the model changed. Commit both before you go on.
 
 ## 2. After a merge
 
 If Git stops on a conflict inside a project file, it leaves markers (`<<<<<<<`, `=======`, `>>>>>>>`) in the file. Resolve it like any text conflict. Then let the tool check the folder:
 
 ```
-harness check design
+harness-design-studio check design
 ```
 
 Before the conflict is resolved, this prints:
@@ -86,30 +86,30 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 3 units, 2 interfaces, 13 connectors, 2 harnesses: 0 error(s), 0 warning(s).
 ```
 
-`harness check` does everything `harness validate` does, and also finds merge markers and released harnesses that were edited after their release (`released_modified`).
+`harness-design-studio check` does everything `harness-design-studio validate` does, and also finds merge markers and released harnesses that were edited after their release (`released_modified`).
 
 In the app, a project that changes on disk (for example after a `git pull`) shows "Project changed on disk" with **Reload** and **Keep my version**.
 
 ## 3. Compare two checkouts
 
 ```
-harness compare OLD NEW
+harness-design-studio compare OLD NEW
 ```
 
 lists what was added, removed and changed between two project folders, for example two checkouts of different commits. It changes nothing. Equal folders print `No differences.` The last line names what is not compared (the generation record, the contents of baselines and the files of the outputs folders). An example with output is in [change a released harness](change-a-released-harness.md#compare-two-copies-of-a-project).
 
 ## 4. Run it in a script
 
-Every `harness` command returns an exit code: **0** success, **1** the project has errors or a step is blocked, **2** a usage error or a project that cannot be read (a project with damaged files is refused with 2 by every command except `validate` and `check`, which list the damage and end with 1), **130** you pressed Ctrl-C. So `&&` stops at the first problem:
+Every `harness-design-studio` command returns an exit code: **0** success, **1** the project has errors or a step is blocked, **2** a usage error or a project that cannot be read (a project with damaged files is refused with 2 by every command except `validate` and `check`, which list the damage and end with 1), **130** you pressed Ctrl-C. So `&&` stops at the first problem:
 
 ```
-harness validate design && harness generate design && harness drc design && harness export design
+harness-design-studio validate design && harness-design-studio generate design && harness-design-studio drc design && harness-design-studio export design
 ```
 
 The templates contain a ready script. Copy the templates and run it:
 
 ```
-harness templates my-templates
+harness-design-studio templates my-templates
 sh my-templates/ci/build.sh design
 ```
 
@@ -132,19 +132,19 @@ Importing interfaces is not part of a script: it works in the app only ([import 
 
 ## 5. Run it on a build server
 
-`my-templates/ci/github-actions.yml` is a GitHub Actions workflow that does the same on every push, including the `harness drc` step (it fails the build when an error is not waived and keeps `drc-report.md` as a download). Copy it to `.github/workflows/` in your design repository. It expects the `.deb` package of the tool in the repository (under `tools/`), installs it, runs the checks and keeps `design/outputs` as a download. Change the folder name `design` and the package path to match your repository. The build server needs no network access to the tool itself, because the tool never uses the network.
+`my-templates/ci/github-actions.yml` is a GitHub Actions workflow that does the same on every push, including the `harness-design-studio drc` step (it fails the build when an error is not waived and keeps `drc-report.md` as a download). Copy it to `.github/workflows/` in your design repository. It expects the `.deb` package of the tool in the repository (under `tools/`), installs it, runs the checks and keeps `design/outputs` as a download. Change the folder name `design` and the package path to match your repository. The build server needs no network access to the tool itself, because the tool never uses the network.
 
 This file was not run on a build server for this page. The `ci/build.sh` script was run (above).
 
 ## Other helpers
 
-- `harness migrate design` upgrades a project saved by an older tool version (the originals are kept). On a current project it says `Already up to date.`
-- `harness schema design/schemas` writes JSON Schemas of the project files, for editors that complete and check JSON. The command tells you how to use them in VS Code.
+- `harness-design-studio migrate design` upgrades a project saved by an older tool version (the originals are kept). On a current project it says `Already up to date.`
+- `harness-design-studio schema design/schemas` writes JSON Schemas of the project files, for editors that complete and check JSON. The command tells you how to use them in VS Code.
 - `design-review-checklist.md` in the templates is a list for the person who releases a harness.
 
 ## Common mistakes
 
-- **Merging by taking one side of a whole file.** Check with `harness check` afterwards.
+- **Merging by taking one side of a whole file.** Check with `harness-design-studio check` afterwards.
 - **Editing a released harness in an editor.** The check reports it. Start a new revision instead ([change a released harness](change-a-released-harness.md)).
 - **Committing the lock file.** `.harness.lock` is ignored by the `.gitignore` the tool writes. If you copied the project without it, add the lines yourself.
 - **CI fails with exit code 1 and the drc report.** There are unwaived errors. The report says which.

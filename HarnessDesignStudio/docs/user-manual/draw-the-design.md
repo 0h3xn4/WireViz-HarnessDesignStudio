@@ -16,7 +16,7 @@ This page shows how to start a project and draw its units and the interfaces bet
 
 ## Before you start
 
-- The tool is installed ([`INSTALL.md`](../INSTALL.md)). Start **Harness Design Studio** from the application menu. From a source install, run `harness-gui`.
+- The tool is installed ([`INSTALL.md`](../INSTALL.md)). Start **Harness Design Studio** from the application menu. From a source install, run `harness-design-studio-gui`.
 - You know what a **unit** (a box with connectors on it, such as the on-board computer) and an **interface** (one connection between two units, such as a data link) are. If not, read [`CONCEPTS.md`](../CONCEPTS.md) first (ten minutes) or look the word up in the [glossary](../GLOSSARY.md).
 - You do **not** draw wires, pins or connectors. The tool makes them from your units and interfaces ([generate harnesses](generate-harnesses.md)).
 
@@ -28,20 +28,20 @@ You can start in the app or on the command line. The result is the same: a folde
 
 **In the app**
 
-1. Choose **File > New project from an example…** and pick an example (the list is the same as `harness new --list`). Or choose **File > New project…** for an empty project.
+1. Choose **File > New project from an example…** and pick an example (the list is the same as `harness-design-studio new --list`). Or choose **File > New project…** for an empty project.
 2. Choose an **empty folder**, then type a project name.
 3. To open a project you made earlier: **File > Open project…** (Ctrl+O).
 
 **On the command line**
 
 ```
-harness new --list
-harness new wheel-link --template first-steps --name "Wheel link"
+harness-design-studio new --list
+harness-design-studio new wheel-link --template first-steps --name "Wheel link"
 ```
 
 ```
 Project 'Wheel link' created in wheel-link (3 units, 2 interfaces).
-Next: harness validate wheel-link   or open it in the app (File > Open project).
+Next: harness-design-studio validate wheel-link   or open it in the app (File > Open project).
 ```
 
 Then open the `wheel-link` folder with **File > Open project…**. You cannot break the example: it is your own copy.
@@ -51,7 +51,7 @@ Then open the `wheel-link` folder with **File > Open project…**. You cannot br
 | `blank` | A real design. Starter parts and 17 interface types, no units. |
 | `first-steps` | Learning. Three units, a power link and an RS-422 link (a data link between two units). |
 | `small-satellite` | Seeing a realistic system with redundancy. 14 units. |
-| `minimal-satellite`, `flatsat` | A small spacecraft and a complete test bench. **Not in the 0.1.0 packages** (see the [changelog](../../CHANGELOG.md)). `harness new --list` shows five examples on 1.0.0 and three on 0.1.0. |
+| `minimal-satellite`, `flatsat` | A small spacecraft and a complete test bench. **Not in the 0.1.0 packages** (see the [changelog](../../CHANGELOG.md)). `harness-design-studio new --list` shows five examples on 1.0.0 and three on 0.1.0. |
 
 The app also has **File > Open the sample project**. That is example data. Save a copy (**Save a copy…** in the banner) before you change anything.
 
@@ -116,6 +116,6 @@ Switching never changes your data.
 - **An interface name with a line break.** A name is one line; typing a line break in the table gives "A name is one line. Remove the line break." A project name that is too long or has control characters is explained in the same way.
 - **A long ID ends in "...".** Long unit IDs and connector names are shortened on the diagram with an ellipsis; select the unit to read the full text in the **Inspector**.
 - **"Read-only" banner.** The project was saved by a newer tool, it is open in another window, or its folder cannot be locked for editing (read-only media). See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
-- **The folder is refused.** `harness new` and **New project…** need a folder that does not exist yet or is empty. Nothing is ever overwritten.
+- **The folder is refused.** `harness-design-studio new` and **New project…** need a folder that does not exist yet or is empty. Nothing is ever overwritten.
 
 Next: [generate the harnesses](generate-harnesses.md), [redundancy and zones](redundancy-and-zones.md)

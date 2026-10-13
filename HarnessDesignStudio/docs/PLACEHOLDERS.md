@@ -1,6 +1,6 @@
 # Placeholder values an engineer must fill in
 
-The tool never invents numbers from standards. These shipped values are placeholders; `harness validate` reports `placeholder_config` while any remain. Set `"placeholder": false` in the file once reviewed.
+The tool never invents numbers from standards. These shipped values are placeholders; `harness-design-studio validate` reports `placeholder_config` while any remain. Set `"placeholder": false` in the file once reviewed.
 
 | File (`config/`) | What is needed | Owner | Needed for |
 | --- | --- | --- | --- |
@@ -11,9 +11,9 @@ The tool never invents numbers from standards. These shipped values are placehol
 | `segmentation.json` | confirm the harness boundary rule (default `per_connector_pair`: one harness for each pair of unit connectors; `per_unit_pair` and `per_zone_pair` group more interfaces into one harness) | Owner (DECISIONS D-10) | how interfaces are grouped into harnesses |
 | `titleblock.json` | company title block layout | Owner (D-15) | the title block of the drawings |
 
-`naming.json` is not in the table: it ships with `"placeholder": false`, because the name patterns are a style choice and not an engineering value. That is why `harness validate` lists six placeholder files, not seven.
+`naming.json` is not in the table: it ships with `"placeholder": false`, because the name patterns are a style choice and not an engineering value. That is why `harness-design-studio validate` lists six placeholder files, not seven.
 
-The templates (`harness templates FOLDER`) contain a set of **demo values** for these files so that wire sizing, voltage drop and test limits can be seen working. They are not engineering data and the files stay `"placeholder": true` (D-129). Replace them with your programme's values.
+The templates (`harness-design-studio templates FOLDER`) contain a set of **demo values** for these files so that wire sizing, voltage drop and test limits can be seen working. They are not engineering data and the files stay `"placeholder": true` (D-129). Replace them with your programme's values.
 
 Library: every starter part (Micro-D 9, 15, 21, 25 and 31 pin, RJ45, SMA, wires, sleeving, labels, and some older D-sub, MDM, circular and TNC parts) is `unverified: true`, `approval: "pending"`, with no mass or ratings. Import or enter real parts before any result is trusted.
 Interface types: starter types are `unverified`; impedance, EMC class and default gauge are `null`.

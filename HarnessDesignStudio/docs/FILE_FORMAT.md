@@ -15,7 +15,7 @@ logical/interfaces/<subsystem>.json  {"interfaces": [...]}   grouped by the subs
 physical/connectors/<subsystem>.json {"connectors": [...]}   box connectors, grouped by their unit's subsystem
 physical/harnesses/<id>.json      one harness with its connectors, wires, splices, shields, branch points, segments
 generated/generation.json         the last generation record (provenance for Explain)
-outputs/                          written by `harness export` (see OUTPUTS.md); safe to delete and regenerate
+outputs/                          written by `harness-design-studio export` (see OUTPUTS.md); safe to delete and regenerate
 changelog.json                    the change log (append-only; entries cannot be deleted)
 baselines/<harness ID>/<baseline ID>.json   frozen snapshot made at each release
 .gitignore                        written once: *.bak, lock files, temp files, .harness-recovery/, .migration-backup-v*/
@@ -39,7 +39,7 @@ A key written outside `values` is rejected, the file is set aside (`quarantined`
 
 ## Versions and migration
 `schema_version` is an integer in `project.json`. A missing value means version 0.
-- **Older file:** opened with an in-memory migration (`migrated` info message). Nothing on disk changes until you save; saving (or `harness migrate`) first copies every original file to `.migration-backup-v<N>/`.
+- **Older file:** opened with an in-memory migration (`migrated` info message). Nothing on disk changes until you save; saving (or `harness-design-studio migrate`) first copies every original file to `.migration-backup-v<N>/`.
 - **Newer file:** opened read-only (`newer_version` warning); entities the tool does not understand are quarantined and listed.
 - Each migration is one function in `core/io/migrate.py`, tested against a fixture of the old format (`tests/fixtures/v0_project`).
 
@@ -47,7 +47,7 @@ A key written outside `values` is rejected, the file is set aside (`quarantined`
 A file that is not valid JSON/UTF-8, has duplicate keys, a wrong structure, or an invalid object does not stop loading: the bad part is reported (`quarantined`, `invalid_json`, `merge_conflict`, ...) and kept in memory as quarantine. The message says where: the line and column of a syntax error, the byte of a bad character, or the line where a set-aside object starts. It never quotes the content of the file (it may be export-controlled). A project file that is a link, larger than 64 MB or unreadable counts as damaged in the same way, and so does a file with a lone surrogate escape (`\ud800`), which cannot be written back as UTF-8. A project with quarantined data **cannot overwrite its folder**. "Save as" writes a new folder with `quarantine.json` (rejected objects, verbatim) and `quarantine/files/` (unreadable files, verbatim), so nothing is lost.
 
 ## Saving
-Each file is written to a temp file, flushed, `fsync`ed and renamed; the previous version is kept as `<file>.bak`. Only changed files are written. Files for deleted objects are renamed to `.bak`, not erased. A crash can leave some files updated and others not, but every file is whole; `harness validate` / `harness check` report cross-file inconsistencies, and saves are refused while integrity errors exist. If the folder changed on disk since opening (e.g. a Git pull), a save with the opening fingerprint is refused.
+Each file is written to a temp file, flushed, `fsync`ed and renamed; the previous version is kept as `<file>.bak`. Only changed files are written. Files for deleted objects are renamed to `.bak`, not erased. A crash can leave some files updated and others not, but every file is whole; `harness-design-studio validate` / `harness-design-studio check` report cross-file inconsistencies, and saves are refused while integrity errors exist. If the folder changed on disk since opening (e.g. a Git pull), a save with the opening fingerprint is refused.
 
 ## Locking
 `.harness.lock` (pid, host name, start time, and on Linux the boot id of the computer and the start time of the process; no design data) prevents opening one project twice. A lock is taken over when it is stale: its process no longer exists, the computer was restarted since (other boot id), or the process number now belongs to another program (other process start time). A lock from another computer is respected, because it cannot be checked; the error names the lock file, and deleting that file is the way out when nobody has the project open. Locks made by older versions have no boot id and process start time and are checked by process number only. The lock is decided under a second, empty file next to it, `.harness.lock.takeover` (it stays in the folder after the first locked command; it holds no data, is ignored by the `.gitignore` the tool writes and may be deleted when nothing has the project open). A folder that is neither empty nor a project gets no lock and no helper file. The editor opens a project whose lock cannot be taken (for example on read-only media) read-only, with the note "This project was opened read-only because it cannot be locked for editing here" and the reason; a command that has to write says `error: a file or folder could not be used (...)` and ends with 2.
@@ -89,22 +89,22 @@ All optional with defaults; projects saved before them load unchanged.
 ## Change control additions: review, release, baselines, change log (schema version stays 1)
 - `Harness.author`, `checker`, `approver`, `released_on` (all optional): who put the harness into review, who checked and released it, and the release date (YYYY-MM-DD). `status` is `draft`, `in_review` or `released`; `revision` is letters.
 - `baselines/<harness ID>/<baseline ID>.json`: `id` (`<harness>.<revision>`), `harness_id`, `revision`, `released_on`, `by`, `comment`, `content_hash`, `snapshot` (`units`, `interfaces`, `connectors` = box connectors, `harnesses` = the released harness, and the records listed below). Written once at release; never edited by the tool.
-- `snapshot.parts`, `interface_types`, `config` and `waivers` record what the release froze (see "What a release freezes"). They are optional: a baseline made by an earlier version has none of them, is read without them and written back unchanged, and `harness check` compares nothing for it.
+- `snapshot.parts`, `interface_types`, `config` and `waivers` record what the release froze (see "What a release freezes"). They are optional: a baseline made by an earlier version has none of them, is read without them and written back unchanged, and `harness-design-studio check` compares nothing for it.
 
 ### What a release freezes
 A released harness locks, besides itself: the design fields of the interfaces it carries (not name, notes, requirement), the units those interfaces connect (not name, notes, zone), the box connectors it plugs into or that carry its interfaces (part, gender, keying and the pins of its interfaces), and, new in this version:
 - **parts it uses**: the part of each of its connectors, the part of each wire, the part of the box connectors above, and the counterpart named in `mates_with` of those parts. Every field but `notes` is frozen (approval, mass, `pin_count`, `unverified`, ratings, part number, ...).
 - **interface types** of the interfaces it carries (every field but `name` and `notes`).
 - **configuration its checks and outputs read**: all values of `derating`, `emc`, `segregation` and `titleblock`, and in `generation` the keys `conductor_resistivity_ohm_m`, `mass_margin_fraction`, `power_return_gap_pins`, `shield_end_a`, `shield_end_b`, `test_continuity_max_ohm`, `test_isolation_min_mohm` and `test_isolation_voltage_v`. These apply to every harness, so they are frozen while any harness is released. `segmentation`, `naming`, the other `generation` keys (which only decide how new harnesses are made) and the `placeholder` flags stay editable.
-- **waivers** that name the harness or one of its objects are recorded in the baseline but not locked: a waiver can be added or changed after a release (the change log and `harness compare` show it).
+- **waivers** that name the harness or one of its objects are recorded in the baseline but not locked: a waiver can be added or changed after a release (the change log and `harness-design-studio compare` show it).
 
-The editor and the data commands (`import-parts`, `config`; `library` only records the source of the data and is not affected) refuse a change to a frozen item with the reason and "start a new revision" (exit 1, also with `--dry-run`); `harness check` reports a hand edit as `released_modified`. Allowed at any time: adding parts and interface types, editing and deleting those no released harness uses, and notes and names. To change a frozen item: `harness revise` the harness (every released harness for configuration), make the change, release again.
+The editor and the data commands (`import-parts`, `config`; `library` only records the source of the data and is not affected) refuse a change to a frozen item with the reason and "start a new revision" (exit 1, also with `--dry-run`); `harness-design-studio check` reports a hand edit as `released_modified`. Allowed at any time: adding parts and interface types, editing and deleting those no released harness uses, and notes and names. To change a frozen item: `harness-design-studio revise` the harness (every released harness for configuration), make the change, release again.
 - `changelog.json`: `{"changelog": [{id (C0001...), harness_id, revision, kind (review | release | new_revision), by, when, comment}]}`.
 - `outputs/manifest.json` gained `content_hash` (see D-104).
 
 ## Editing files by hand: JSON Schemas
 
-`harness schema my-design/schemas` writes one JSON Schema per kind of file, made from the same strict models the loader uses (so they cannot drift), and `editor-settings.json` with the `json.schemas` entries that map the project's files to them for VS Code. With them an editor completes keys, shows the allowed values and underlines mistakes before the tool ever sees the file. Nothing is downloaded. The tool itself does not need the schemas.
+`harness-design-studio schema my-design/schemas` writes one JSON Schema per kind of file, made from the same strict models the loader uses (so they cannot drift), and `editor-settings.json` with the `json.schemas` entries that map the project's files to them for VS Code. With them an editor completes keys, shows the allowed values and underlines mistakes before the tool ever sees the file. Nothing is downloaded. The tool itself does not need the schemas.
 
 `library/manifest.json` holds `name`, `version`, `source` and `date` of the parts library (the last two may be `null`).
 

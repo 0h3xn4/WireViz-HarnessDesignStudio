@@ -16,7 +16,7 @@ The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86). It needs no network, n
 
 Pick **one** of the three ways. If you are unsure, use A.
 
-**Which version do you have?** Run `harness --version`. These pages describe version 1.0.0. If you still have the 0.1.0 packages, they lack the five examples (`minimal-satellite` and `flatsat` are new), the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...*: `harness new --list` shows three examples (`blank`, `first-steps`, `small-satellite`) instead of five. See [`CHANGELOG.md`](../CHANGELOG.md) for what changed.
+**Which version do you have?** Run `harness-design-studio --version`. These pages describe the command names that come after version 1.0.0: the command line tool is `harness-design-studio`, the editor `harness-design-studio-gui`, and `harness` is kept as a short alias of the command line tool. The packages of 0.1.0 and 1.0.0 only know the short name `harness` for the command line tool (their `harness-design-studio` is the editor), so type `harness` instead of `harness-design-studio` and `harness-design-studio --selftest` instead of `harness-design-studio-gui --selftest` there. These pages describe version 1.0.0 and later. If you still have the 0.1.0 packages, they lack the five examples (`minimal-satellite` and `flatsat` are new), the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...*: `harness-design-studio new --list` shows three examples (`blank`, `first-steps`, `small-satellite`) instead of five. See [`CHANGELOG.md`](../CHANGELOG.md) for what changed.
 
 | | You are | Way |
 | --- | --- | --- |
@@ -62,15 +62,18 @@ The printed value must be the same as the one in the list. If it differs, do not
 sudo apt install ./harness-design-studio_<version>_amd64.deb
 ```
 
-(Use `./` in front of the name; without it `apt` looks in its online lists.) This installs the program into `/opt/harness-design-studio` and puts two commands on your path:
+(Use `./` in front of the name; without it `apt` looks in its online lists.) This installs the program into `/opt/harness-design-studio` and puts three commands on your path:
 
-- `harness-design-studio`: the app (also in the application menu as **Harness Design Studio**).
-- `harness`: the command line tool.
+- `harness-design-studio-gui`: the app (also in the application menu as **Harness Design Studio**).
+- `harness-design-studio`: the command line tool.
+- `harness`: a short alias of the command line tool (the same program). Existing scripts that call `harness` keep working.
+
+The names are the same as in a source or `pip` install (way C).
 
 Check it:
 
 ```
-harness --version
+harness-design-studio --version
 ```
 
 ```
@@ -89,16 +92,16 @@ cd harness-design-studio
 
 This installs for **your user only**, into `~/.local/opt/harness-design-studio`, and adds links in `~/.local/bin` and an entry in your application menu.
 
-If `install.sh` ends with a note that `~/.local/bin` is not on your PATH, the commands `harness-design-studio` and `harness` are not found yet. Fix it once:
+If `install.sh` ends with a note that `~/.local/bin` is not on your PATH, the commands `harness-design-studio-gui`, `harness-design-studio` and `harness` are not found yet. Fix it once:
 
 ```
 echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 . ~/.bashrc
 ```
 
-(or log out and in). Until then you can start the app from the application menu or `~/.local/bin/harness-design-studio`.
+(or log out and in). Until then you can start the app from the application menu or `~/.local/bin/harness-design-studio-gui`.
 
-Other options of `install.sh`: `sudo ./install.sh --system` installs for everyone into `/usr/local/lib/harness-design-studio`; `--prefix FOLDER` chooses the folder. Remove with `./uninstall.sh` (or `sudo ./uninstall.sh --system`); it removes only what the installer put there. The installer writes a file `.harness-design-studio-install` into the install folder that lists what it installed. `uninstall.sh` removes only the folders on that list and refuses to touch a `cli`, `LICENSES`, `_internal` or `harness-design-studio` folder that is not on it (the 0.1.0 `uninstall.sh` deleted such folders without asking); `install.sh` never replaces one either. `install.sh` refuses to install into the folder the package was unpacked from (or a folder that holds it), copies to a temporary name before it replaces an older install (a failed copy leaves the old install and the package intact), and does not replace a `harness` or `harness-design-studio` link in the bin folder that points to another program. `--prefix ""` is refused. `uninstall.sh` removes a link only if it points into the install it removes and keeps the application-menu entry of another install; `uninstall.sh --help` prints its usage. Files installed as `root` belong to `root`. The `.tar.gz` is built with owner root, sorted entries and fixed times, so building it again gives the same bytes.
+Other options of `install.sh`: `sudo ./install.sh --system` installs for everyone into `/usr/local/lib/harness-design-studio`; `--prefix FOLDER` chooses the folder. Remove with `./uninstall.sh` (or `sudo ./uninstall.sh --system`); it removes only what the installer put there. The installer writes a file `.harness-design-studio-install` into the install folder that lists what it installed. `uninstall.sh` removes only the folders on that list and refuses to touch a `cli`, `LICENSES`, `_internal` or `harness-design-studio-gui` item that is not on it (the 0.1.0 `uninstall.sh` deleted such folders without asking); `install.sh` never replaces one either. `install.sh` refuses to install into the folder the package was unpacked from (or a folder that holds it), copies to a temporary name before it replaces an older install (a failed copy leaves the old install and the package intact), and does not replace a `harness`, `harness-design-studio` or `harness-design-studio-gui` link in the bin folder that points to another program. `--prefix ""` is refused. `uninstall.sh` removes a link only if it points into the install it removes and keeps the application-menu entry of another install; `uninstall.sh --help` prints its usage. Files installed as `root` belong to `root`. The `.tar.gz` is built with owner root, sorted entries and fixed times, so building it again gives the same bytes.
 
 If `install.sh` says that a folder "was not installed by this installer", the install folder holds one of these names from something else (or from an older installer, which wrote no list; an install made by the 0.1.0 `install.sh` is of this kind). Choose another `--prefix`, or move that folder away first. To replace a 0.1.0 install, remove it first (run its own `uninstall.sh`, or delete `~/.local/opt/harness-design-studio` yourself), then run the new `install.sh`. Your projects are never inside the install folder.
 
@@ -109,11 +112,11 @@ Run `install.sh` from the **unpacked package**. Run from the source tree it refu
 For ways A and B (the installed program):
 
 ```
-harness --version          # prints the version
-harness-design-studio --selftest    # opens the editor offscreen, makes a project, generates, exports, and prints "selftest ok"
+harness-design-studio --version          # prints the version
+harness-design-studio-gui --selftest    # opens the editor offscreen, makes a project, generates, exports, and prints "selftest ok"
 ```
 
-`--selftest` exists only in the installed program (`harness-design-studio`). When you run from source (way C) the app command is `harness-gui`, which does not know the flag and simply starts the app. From source, check with `harness --version`, then the five-minute check below, and `pytest` if you installed the `dev` extras.
+`--selftest` exists only in the installed editor (`harness-design-studio-gui` of the `.deb` and the `.tar.gz`). When you run from source (way C) the app command is also called `harness-design-studio-gui` (and `harness-gui`), but that one does not know the flag and simply starts the app. From source, check with `harness-design-studio --version`, then the five-minute check below, and `pytest` if you installed the `dev` extras.
 
 Then start **Harness Design Studio** from the application menu. The first start opens a sample project and a short tour.
 
@@ -122,9 +125,9 @@ Then start **Harness Design Studio** from the application menu. The first start 
 ## Your first five minutes after installing
 
 ```
-harness new wheel-link --template first-steps
-harness generate wheel-link
-harness drc wheel-link
+harness-design-studio new wheel-link --template first-steps
+harness-design-studio generate wheel-link
+harness-design-studio drc wheel-link
 ```
 
 Then open `wheel-link` in the app (**File > Open project...**). If this works, the installation is complete. Continue with [`LEARNING_PATH.md`](LEARNING_PATH.md) (the whole route) or [`GETTING_STARTED.md`](GETTING_STARTED.md) (the first step in detail).
@@ -144,8 +147,8 @@ The `.deb` asks `apt` for these itself. More help: [`FAQ.md`](FAQ.md).
 | `E: Unable to locate package ./harness-design-studio_...` or `apt` cannot find the file | Run the command in the folder that holds the file, and keep the `./` in front of the name. |
 | `dpkg: dependency problems` | Run `sudo apt install -f`. It installs the missing system libraries from your normal Ubuntu sources (this is the only step that may need network). |
 | `harness: command not found` after the `.tar.gz` install | `~/.local/bin` is not on your PATH; see way B above. |
-| The app window is blank or the app closes at once | With way A or B, run `harness-design-studio --selftest` in a terminal. If it prints an error about `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. |
-| You are connected by SSH and the app does not open | The app needs a screen. Use the `harness` command line tool over SSH, or start the app on the machine itself. |
+| The app window is blank or the app closes at once | With way A or B, run `harness-design-studio-gui --selftest` in a terminal. If it prints an error about `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. |
+| You are connected by SSH and the app does not open | The app needs a screen. Use the `harness-design-studio` command line tool over SSH, or start the app on the machine itself. |
 | `install.sh` says `This folder (...) has no built program, so there is nothing to install.` | You ran it from the source tree. Run it from the unpacked `.tar.gz` folder. |
 
 ## C. Run from source (developers)
@@ -160,14 +163,14 @@ python3 -m venv .venv
 pip install -e ".[gui,dev]"
 ```
 
-Run the app with `harness-gui`, the command line tool with `harness`. Run the tests with `pytest` (they run offscreen). **Without network:** build a wheelhouse once on a connected machine with `python -m tools.vendor`, copy it over and install with `pip install --no-index --find-links wheelhouse -e ".[gui,dev]"`.
+Run the app with `harness-design-studio-gui`, the command line tool with `harness-design-studio`. The old short names `harness-gui` and `harness` still work as aliases. Run the tests with `pytest` (they run offscreen). **Without network:** build a wheelhouse once on a connected machine with `python -m tools.vendor`, copy it over and install with `pip install --no-index --find-links wheelhouse -e ".[gui,dev]"`.
 
 Build the packages yourself:
 
 ```
 python -m tools.build_installer      # dist/harness-design-studio/ and the .tar.gz
 python -m tools.build_deb            # dist/harness-design-studio_<version>_amd64.deb
-dist/harness-design-studio/harness-design-studio --selftest
+dist/harness-design-studio/harness-design-studio-gui --selftest
 ```
 
 The release procedure and the clean-machine check are in [`RELEASE.md`](RELEASE.md).

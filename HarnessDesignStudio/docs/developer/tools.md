@@ -19,10 +19,10 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 
 | Script | What it does |
 | --- | --- |
-| `gen_cli_docs` | Writes `docs/CLI.md` (every `harness` command with its arguments and examples) from the argument parser |
+| `gen_cli_docs` | Writes `docs/CLI.md` (every `harness-design-studio` command with its arguments and examples) from the argument parser |
 | `gen_rule_docs` | Writes `docs/RULES.md` (every design rule: what, why, how to fix, severity) |
 | `build_guide` | Builds the offline user guide: `docs/guide/USER_GUIDE.md` to the HTML that opens with **F1** |
-| `build_examples` | Rebuilds the example projects shipped with the tool (`harness new --list`) |
+| `build_examples` | Rebuilds the example projects shipped with the tool (`harness-design-studio new --list`) |
 | `build_prototype` | Assembles the single-file clickable prototype from the design tokens |
 | `gen_output_goldens` | Regenerates the golden output digests on purpose. Review the diff. |
 

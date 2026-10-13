@@ -2,7 +2,7 @@
 
 This page is a short index: each recipe that used to be here now has its own page in the [user manual](user-manual/README.md), with the commands and the output you should see.
 
-**New to the tool?** Do [`GETTING_STARTED.md`](GETTING_STARTED.md) first (45 minutes, with real output) and read [`CONCEPTS.md`](CONCEPTS.md) for the words. Every command and option is in [`CLI.md`](CLI.md). Problems are in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) and [`FAQ.md`](FAQ.md). The example files used in the manual come from `harness templates FOLDER`.
+**New to the tool?** Do [`GETTING_STARTED.md`](GETTING_STARTED.md) first (45 minutes, with real output) and read [`CONCEPTS.md`](CONCEPTS.md) for the words. Every command and option is in [`CLI.md`](CLI.md). Problems are in [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md) and [`FAQ.md`](FAQ.md). The example files used in the manual come from `harness-design-studio templates FOLDER`.
 
 **Former section numbers.** This file used to hold 17 numbered recipes, and other documents may still say "HOWTO section 15". The headings below keep those numbers. Each heading now has one line and a link.
 
@@ -12,7 +12,7 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 
 ## 2. Start a project
 
-[Draw the design](user-manual/draw-the-design.md#1-start-a-project): `harness new`, **File > New project…**, **File > New project from an example…**.
+[Draw the design](user-manual/draw-the-design.md#1-start-a-project): `harness-design-studio new`, **File > New project…**, **File > New project from an example…**.
 
 ## 3. Add units and interfaces
 

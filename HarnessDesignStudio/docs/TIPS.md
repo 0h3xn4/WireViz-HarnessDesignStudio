@@ -80,12 +80,12 @@ Type several words and every word must match, in any order (`go rw1` finds *Go t
 
 ## Keep a project in Git
 
-A project is a folder of small, plain JSON files in a fixed format (sorted keys, two-space indent, lists sorted by ID), so a Git diff shows real changes only. Commit the whole folder. `harness new` writes a `.gitignore` that already leaves out lock files, backups and the app's autosave. `outputs/` can be committed or ignored; it is always safe to delete and make again. The format is in [`FILE_FORMAT.md`](FILE_FORMAT.md).
+A project is a folder of small, plain JSON files in a fixed format (sorted keys, two-space indent, lists sorted by ID), so a Git diff shows real changes only. Commit the whole folder. `harness-design-studio new` writes a `.gitignore` that already leaves out lock files, backups and the app's autosave. `outputs/` can be committed or ignored; it is always safe to delete and make again. The format is in [`FILE_FORMAT.md`](FILE_FORMAT.md).
 
 After a merge or a pull, run:
 
 ```
-harness check my-design
+harness-design-studio check my-design
 ```
 
 `check` is `validate` plus a search for leftover merge-conflict markers and for released harnesses that were edited. It ends with exit code 1 when it finds a problem (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md#checking)).
@@ -93,7 +93,7 @@ harness check my-design
 If you edit project files by hand, let your editor check them. The command writes one JSON Schema for each kind of file and a settings snippet:
 
 ```
-harness schema my-design/schemas
+harness-design-studio schema my-design/schemas
 ```
 
 ```
@@ -104,18 +104,18 @@ The folder must not exist yet or must be empty.
 
 ## Run the checks in a script or CI
 
-`harness templates my-templates` copies, among others, `ci/build.sh` and `ci/github-actions.yml`. The script stops at the first problem:
+`harness-design-studio templates my-templates` copies, among others, `ci/build.sh` and `ci/github-actions.yml`. The script stops at the first problem:
 
 ```
-harness templates my-templates
-harness new cib --template first-steps
+harness-design-studio templates my-templates
+harness-design-studio new cib --template first-steps
 sh my-templates/ci/build.sh cib
 ```
 
 ```
 15 files written to my-templates. Start with my-templates/README.md.
 Project 'First steps: reaction wheel link' created in cib (3 units, 2 interfaces).
-Next: harness validate cib   or open it in the app (File > Open project).
+Next: harness-design-studio validate cib   or open it in the app (File > Open project).
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
 3 units, 2 interfaces, 9 connectors, 0 harnesses: 0 error(s), 0 warning(s).
 2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
@@ -128,15 +128,15 @@ build ok: cib/outputs
 
 What it runs: `check`, `generate`, `verify`, `drc` (it stops with the report if there is an open error), `export` and `verify --outputs`. `ci/github-actions.yml` is the same list as a GitHub Actions workflow for a design repository; it installs the `.deb` from a `tools/` folder and expects the project in a folder called `design`. Edit both files for your own repository before you use them. The exit codes that make this work are 0 (ok), 1 (errors or blocked), 2 (usage error or an unreadable or damaged project) and 130 (Ctrl-C), see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md#exit-codes-what-0-1-and-2-mean).
 
-A report you can attach to a review: `harness drc my-design > drc-report.md`.
+A report you can attach to a review: `harness-design-studio drc my-design > drc-report.md`.
 
 ## Compare two versions of a design
 
-`harness compare OLD NEW` compares two project folders object by object. Use it for two Git checkouts, or for "before" and "after" copies:
+`harness-design-studio compare OLD NEW` compares two project folders object by object. Use it for two Git checkouts, or for "before" and "after" copies:
 
 ```
 cp -r my-design my-design-try
-harness compare my-design my-design-try
+harness-design-studio compare my-design my-design-try
 ```
 
 ```
@@ -148,20 +148,20 @@ No differences.
 Not compared: the generation record, the contents of baselines (only their revision, date, name, comment and hash), and the files of the outputs folders.
 ```
 
-For a harness you have released, `harness diff DIR W001` shows what changed since its baseline, and `harness log DIR` prints the change log. `--from A --to B` works between two **released** revisions (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md#releasing) for the error you get otherwise).
+For a harness you have released, `harness-design-studio diff DIR W001` shows what changed since its baseline, and `harness-design-studio log DIR` prints the change log. `--from A --to B` works between two **released** revisions (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md#releasing) for the error you get otherwise).
 
 ## Engineering values: config, profiles and the ampacity table
 
-`harness config DIR` is the hand-over checklist: which engineering values are still missing, what depends on each, and which values that are set are invalid. It ends with exit code 1 while anything is missing, so it can also be a gate in a script. Its first line counts the values that are set; a new project says `Engineering values: 0 of 17 set.`
+`harness-design-studio config DIR` is the hand-over checklist: which engineering values are still missing, what depends on each, and which values that are set are invalid. It ends with exit code 1 while anything is missing, so it can also be a gate in a script. Its first line counts the values that are set; a new project says `Engineering values: 0 of 17 set.`
 
 In the app, press **Supply value…** on a rule marked *Not checked* in the **Checks** tab, or choose **Design > Engineering values…**: one window lists every value by config file with its unit, and **Apply** sets them as one undo step.
 
 Two command-line shortcuts fill values in:
 
-- **A current-by-gauge table from a file:** `harness config DIR --ampacity-csv FILE` (two columns, `gauge,amperes`; the file `ampacity-DEMO-ONLY.csv` in the templates is a learning example). It is checked before anything is written: `Loaded 6 gauges into config/derating.json. Review it, then set "placeholder": false when the file is complete.`
-- **Values from a named profile:** `harness config DIR --apply-profile ecss-q-st-30-11c` (or `ecss-e-st-20-07c`) fills the values that are still empty, keeps every value you set, and prints which requirement of the supplied standard each value comes from. The files stay `"placeholder": true` until an engineer has reviewed them. This is a convenience for filling in numbers from a standard that you were given; it is not a statement that a design complies with it. See [`CONFIG.md`](CONFIG.md).
+- **A current-by-gauge table from a file:** `harness-design-studio config DIR --ampacity-csv FILE` (two columns, `gauge,amperes`; the file `ampacity-DEMO-ONLY.csv` in the templates is a learning example). It is checked before anything is written: `Loaded 6 gauges into config/derating.json. Review it, then set "placeholder": false when the file is complete.`
+- **Values from a named profile:** `harness-design-studio config DIR --apply-profile ecss-q-st-30-11c` (or `ecss-e-st-20-07c`) fills the values that are still empty, keeps every value you set, and prints which requirement of the supplied standard each value comes from. The files stay `"placeholder": true` until an engineer has reviewed them. This is a convenience for filling in numbers from a standard that you were given; it is not a statement that a design complies with it. See [`CONFIG.md`](CONFIG.md).
 
-Remember that the settings live **inside** `"values": {...}` in each file; a key beside it is refused (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md#checking)), and a misspelled key inside it is silently ignored, so run `harness config DIR` after every edit and check that the count went up.
+Remember that the settings live **inside** `"values": {...}` in each file; a key beside it is refused (see [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md#checking)), and a misspelled key inside it is silently ignored, so run `harness-design-studio config DIR` after every edit and check that the count went up.
 
 ## Choose how interfaces are grouped into harnesses
 
@@ -173,7 +173,7 @@ Remember that the settings live **inside** `"values": {...}` in each file; a key
 | `per_unit_pair` | pair of units | 23 |
 | `per_zone_pair` | pair of zones (lanes of the diagram) | 5 |
 
-Edit the file (`"mode": "per_zone_pair"` inside `"values"`), run `harness generate DIR`, and the report says `5 added, 0 changed, 0 unchanged, 24 removed`. Released harnesses are never touched. Which rule your company wants is an open decision of the owner (D-10, see [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md)); the default is a placeholder. The `flatsat` example ships with `per_zone_pair`.
+Edit the file (`"mode": "per_zone_pair"` inside `"values"`), run `harness-design-studio generate DIR`, and the report says `5 added, 0 changed, 0 unchanged, 24 removed`. Released harnesses are never touched. Which rule your company wants is an open decision of the owner (D-10, see [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md)); the default is a placeholder. The `flatsat` example ships with `per_zone_pair`.
 
 ## Wire colours
 
@@ -183,7 +183,7 @@ The tool defines no wire colours. A wire has a colour only if you set one: by ha
 "wire_colour_by_signal": {"PWR": "red", "RTN": "black"}
 ```
 
-After `harness generate`, the wire list has the colours and the drawings draw them (with the IEC 60757 code as text, so a black-and-white print loses nothing). Unset wires stay grey. Running this on `small-satellite` and comparing the two folders with `harness compare` listed the changed configuration and 23 wires whose `colour` went from `(none)` to `red` or `black` (`Comparing sa with sb: 0 added, 0 removed, 24 changed.`). The colours are not in the 0.1.0 packages; see [`OUTPUTS.md`](OUTPUTS.md).
+After `harness-design-studio generate`, the wire list has the colours and the drawings draw them (with the IEC 60757 code as text, so a black-and-white print loses nothing). Unset wires stay grey. Running this on `small-satellite` and comparing the two folders with `harness-design-studio compare` listed the changed configuration and 23 wires whose `colour` went from `(none)` to `red` or `black` (`Comparing sa with sb: 0 added, 0 removed, 24 changed.`). The colours are not in the 0.1.0 packages; see [`OUTPUTS.md`](OUTPUTS.md).
 
 ## Waivers
 
@@ -203,7 +203,7 @@ A warning of the design rule check can be fixed or **waived**: in the app, press
 }
 ```
 
-`harness drc` then counts it (`Open: 0 error(s), 9 warning(s), 8 note(s). Waived: 1.`) and lists it in a section *Waived findings*, with the reason, so a reviewer still sees it. The id is `<rule>.<object>`. (The app writes this file; the copy above was typed by hand to see what `harness drc` does with it.) Do not confuse this with *waived by the owner* in the compliance documents; the words differ in meaning (see [`GLOSSARY.md`](GLOSSARY.md#words-that-mean-two-things-here)).
+`harness-design-studio drc` then counts it (`Open: 0 error(s), 9 warning(s), 8 note(s). Waived: 1.`) and lists it in a section *Waived findings*, with the reason, so a reviewer still sees it. The id is `<rule>.<object>`. (The app writes this file; the copy above was typed by hand to see what `harness-design-studio drc` does with it.) Do not confuse this with *waived by the owner* in the compliance documents; the words differ in meaning (see [`GLOSSARY.md`](GLOSSARY.md#words-that-mean-two-things-here)).
 
 ## Small habits
 
@@ -211,7 +211,7 @@ A warning of the design rule check can be fixed or **waived**: in the app, press
 - **Undo is cheap:** an import is applied as one undo step in the app, however many rows it has.
 - **Look at the Why tab:** select a wire and read *Why is it like this?* before you override a choice.
 - **Lock what you decided:** a wire or pin you set by hand and lock is kept by every later generation. You lock it by editing the harness file (`"locked": true` in the entry); the app has no button for this, see [`user-manual/generate-harnesses.md`](user-manual/generate-harnesses.md#keep-a-choice-of-your-own).
-- **Verify before you send:** `harness verify DIR --outputs` re-reads the exported files and compares them with the design; the 12-character model hash in every file tells you which design printed it.
+- **Verify before you send:** `harness-design-studio verify DIR --outputs` re-reads the exported files and compares them with the design; the 12-character model hash in every file tells you which design printed it.
 - **Plan on paper first** with `design-worksheet.md` from the templates (not in the 0.1.0 packages).
 
 ## Working with other tools
@@ -224,18 +224,18 @@ What does exist is **files**. The tool reads a few file formats in and writes se
 
 | What | File type | Exact columns or fields | How |
 | --- | --- | --- | --- |
-| Interfaces between units | CSV or XLSX (first sheet) | `id`, `type`, `from`, `to`, `redundancy` (the last is optional). Headers are matched by name; `from` is also read from `from unit`, `source` or `a`; `to` from `to unit`, `destination`, `target` or `b`; the type from `interface type`, `kind` or `protocol`. The units must already exist; `type` is the name or ID of an interface type. | App only: **File > Import interfaces...** (no `harness` command). Starting file: `interfaces.csv` |
-| Approved parts list | CSV or XLSX | Matched by header: part ID or part number, manufacturer, description, category, specification, approval status, pin count, mass (g), mass per metre (g/m), mating part. The template has `part number,manufacturer,description,category,pin count,approval status`. You say what the approval values mean with `--approved`, `--pending` and `--rejected`. | `harness import-parts DIR FILE ...` |
-| Segment lengths | CSV or XLSX | `harness,segment,length`, read **by position** (this order); default unit millimetres; `--unit` can be `mm`, `cm` or `m`. | `harness import-lengths DIR FILE` |
-| Unit connector pinouts | KiCad netlist (`.net`, S-expression or XML) | Components whose reference starts with the prefix (default `J`); the symbol fields `HarnessConnector` (connector ID) and `HarnessPart` (part); net names become signal names, optionally renamed with a signal map with the columns `net,signal`. | `harness import-netlist DIR FILE --unit UNIT ...` ([`KICAD.md`](KICAD.md)) |
-| Current by wire gauge | CSV | `gauge,amperes` (header optional) | `harness config DIR --ampacity-csv FILE` |
-| Other engineering values | the JSON files in `config/` | see [`CONFIG.md`](CONFIG.md) | edit by hand, check with `harness config DIR` |
+| Interfaces between units | CSV or XLSX (first sheet) | `id`, `type`, `from`, `to`, `redundancy` (the last is optional). Headers are matched by name; `from` is also read from `from unit`, `source` or `a`; `to` from `to unit`, `destination`, `target` or `b`; the type from `interface type`, `kind` or `protocol`. The units must already exist; `type` is the name or ID of an interface type. | App only: **File > Import interfaces...** (no `harness-design-studio` command). Starting file: `interfaces.csv` |
+| Approved parts list | CSV or XLSX | Matched by header: part ID or part number, manufacturer, description, category, specification, approval status, pin count, mass (g), mass per metre (g/m), mating part. The template has `part number,manufacturer,description,category,pin count,approval status`. You say what the approval values mean with `--approved`, `--pending` and `--rejected`. | `harness-design-studio import-parts DIR FILE ...` |
+| Segment lengths | CSV or XLSX | `harness,segment,length`, read **by position** (this order); default unit millimetres; `--unit` can be `mm`, `cm` or `m`. | `harness-design-studio import-lengths DIR FILE` |
+| Unit connector pinouts | KiCad netlist (`.net`, S-expression or XML) | Components whose reference starts with the prefix (default `J`); the symbol fields `HarnessConnector` (connector ID) and `HarnessPart` (part); net names become signal names, optionally renamed with a signal map with the columns `net,signal`. | `harness-design-studio import-netlist DIR FILE --unit UNIT ...` ([`KICAD.md`](KICAD.md)) |
+| Current by wire gauge | CSV | `gauge,amperes` (header optional) | `harness-design-studio config DIR --ampacity-csv FILE` |
+| Other engineering values | the JSON files in `config/` | see [`CONFIG.md`](CONFIG.md) | edit by hand, check with `harness-design-studio config DIR` |
 
 Units themselves cannot be imported from a table; you add them in the app. The details of every column are in [`IMPORTS.md`](IMPORTS.md).
 
 ### What the tool writes
 
-`harness export DIR` writes everything into `DIR/outputs/`. For the `first-steps` example it writes 38 files; these are the names (per harness, `W001` and `W002` here):
+`harness-design-studio export DIR` writes everything into `DIR/outputs/`. For the `first-steps` example it writes 38 files; these are the names (per harness, `W001` and `W002` here):
 
 ```
 outputs/manifest.json

@@ -31,10 +31,10 @@ If a word here is new to you, see [`GLOSSARY.md`](../GLOSSARY.md). Every example
 
 ## Which build do you have?
 
-`harness --version` prints `harness 1.0.0` for this version. If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
+`harness-design-studio --version` prints `harness 1.0.0` for this version. If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
 
 ```
-harness new --list
+harness-design-studio new --list
 ```
 
 Version **1.0.0** lists five:
@@ -64,17 +64,17 @@ The same five commands work on every example: `new`, `validate`, `generate`, `dr
 **What it shows:** an empty project: the starter parts library (example connectors, contacts, wires), the 17 interface types, the seven configuration files (six of them placeholders), two lanes called `panel-A` and `panel-B`, and no units. It is where your own design starts. The command line cannot add units or interfaces; open the project in the app and add them (Part 10 of [`GETTING_STARTED.md`](../GETTING_STARTED.md)).
 
 ```
-harness new my-blank --template blank
+harness-design-studio new my-blank --template blank
 ```
 
 ```
 Project 'My project' created in my-blank (0 units, 0 interfaces).
-Next: harness validate my-blank   or open it in the app (File > Open project).
+Next: harness-design-studio validate my-blank   or open it in the app (File > Open project).
 ```
 
 ```
-harness generate my-blank
-harness drc my-blank
+harness-design-studio generate my-blank
+harness-design-studio drc my-blank
 ```
 
 ```
@@ -86,25 +86,25 @@ Model hash: `569e2969fb60`. Rules run: 34.
 Open: 0 error(s), 0 warning(s), 0 note(s). Waived: 0.
 ```
 
-`harness validate my-blank` ends with `0 units, 0 interfaces, 0 connectors, 0 harnesses: 0 error(s), 0 warning(s).` Exporting an empty project is not possible and says so (exit code 1): `error: there are no harnesses to export; run `harness generate` first.` Next, in the app: **File > Open project...**.
+`harness-design-studio validate my-blank` ends with `0 units, 0 interfaces, 0 connectors, 0 harnesses: 0 error(s), 0 warning(s).` Exporting an empty project is not possible and says so (exit code 1): `error: there are no harnesses to export; run `harness-design-studio generate` first.` Next, in the app: **File > Open project...**.
 
 ## first-steps
 
 **What it shows:** three units (`RW1` a reaction wheel, `OBC1` the on-board computer, `PCDU1` a power unit) and two interfaces: a primary-power link from `PCDU1` to `RW1`, and an RS-422 data link from `OBC1` to `RW1`. Nothing is generated yet. This is the project of the tutorial: you generate two harnesses (`W001` for the data link, `W002` for the power link), read the problems, fill in the gaps and release one. Start here.
 
 ```
-harness new my-first-steps --template first-steps
+harness-design-studio new my-first-steps --template first-steps
 ```
 
 ```
 Project 'First steps: reaction wheel link' created in my-first-steps (3 units, 2 interfaces).
-Next: harness validate my-first-steps   or open it in the app (File > Open project).
+Next: harness-design-studio validate my-first-steps   or open it in the app (File > Open project).
 ```
 
 ```
-harness validate my-first-steps
-harness generate my-first-steps
-harness drc my-first-steps
+harness-design-studio validate my-first-steps
+harness-design-studio generate my-first-steps
+harness-design-studio drc my-first-steps
 ```
 
 ```
@@ -119,7 +119,7 @@ Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 ```
 
 ```
-harness export my-first-steps
+harness-design-studio export my-first-steps
 ```
 
 ```
@@ -133,17 +133,17 @@ All ten warnings say that an example part is used and nobody has approved it. Th
 **What it shows:** a small spacecraft with no redundancy, between `first-steps` and `small-satellite`: seven units (`SA1` solar array, `BAT1` battery, `PCDU1` power distribution unit, `OBC1` computer, `TRX1` transceiver, `RW1` reaction wheel, `SS1` sun sensor) and 11 interfaces, in two lanes `panel-A` and `panel-B`. A good starting point to copy, then rename, add and remove units to describe your own spacecraft. **New in 1.0.0; not in the 0.1.0 packages.**
 
 ```
-harness new my-minimal-satellite --template minimal-satellite
+harness-design-studio new my-minimal-satellite --template minimal-satellite
 ```
 
 ```
 Project 'Minimal satellite' created in my-minimal-satellite (7 units, 11 interfaces).
-Next: harness validate my-minimal-satellite   or open it in the app (File > Open project).
+Next: harness-design-studio validate my-minimal-satellite   or open it in the app (File > Open project).
 ```
 
 ```
-harness generate my-minimal-satellite
-harness drc my-minimal-satellite
+harness-design-studio generate my-minimal-satellite
+harness-design-studio drc my-minimal-satellite
 ```
 
 ```
@@ -155,24 +155,24 @@ Model hash: `b000cd53786a`. Rules run: 34.
 Open: 0 error(s), 15 warning(s), 17 note(s). Waived: 0.
 ```
 
-`harness validate` first reports `7 units, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness export` then writes `137 files written to my-minimal-satellite/outputs (model b000cd53786a).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the units and interfaces of your own on paper first.
+`harness-design-studio validate` first reports `7 units, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `137 files written to my-minimal-satellite/outputs (model b000cd53786a).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the units and interfaces of your own on paper first.
 
 ## small-satellite
 
 **What it shows:** 14 units and 24 interfaces with **nominal and redundant chains**: a redundant computer (`OBC1-R`) and power unit (`PCDU1-R`) next to the main ones, a battery, solar array, transceiver, payload, star tracker, two reaction wheels, sun sensor, magnetorquer and a heater panel, in three lanes (`bus`, `aocs`, `payload`). The tool keeps the two chains in separate connectors and harnesses and warns if something connects them. It is the example to read when you want to see a realistic diagram and how redundancy looks. A trial of this example is recorded in [`TRIAL_small_satellite.md`](../demos/TRIAL_small_satellite.md).
 
 ```
-harness new my-small-satellite --template small-satellite
+harness-design-studio new my-small-satellite --template small-satellite
 ```
 
 ```
 Project 'Small satellite (reference)' created in my-small-satellite (14 units, 24 interfaces).
-Next: harness validate my-small-satellite   or open it in the app (File > Open project).
+Next: harness-design-studio validate my-small-satellite   or open it in the app (File > Open project).
 ```
 
 ```
-harness generate my-small-satellite
-harness drc my-small-satellite
+harness-design-studio generate my-small-satellite
+harness-design-studio drc my-small-satellite
 ```
 
 ```
@@ -184,25 +184,25 @@ Model hash: `d897215c313a`. Rules run: 34.
 Open: 0 error(s), 20 warning(s), 28 note(s). Waived: 0.
 ```
 
-`harness validate` first reports `14 units, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness export` writes `280 files written to my-small-satellite/outputs (model d897215c313a).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a unit and use **Create redundant copy** on it, or read the Problems tab.
+`harness-design-studio validate` first reports `14 units, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `280 files written to my-small-satellite/outputs (model d897215c313a).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a unit and use **Create redundant copy** on it, or read the Problems tab.
 
 ## flatsat
 
 **What it shows:** a complete bench setup, the biggest example. 23 units (flight units and the ground equipment that drives them: a checkout system, a ground power supply and RF test equipment), 44 interfaces, four lanes (`egse`, `bus`, `aocs`, `payload`), eight harnesses and 103 wires, grouped by pair of lanes (`per_zone_pair`). Unlike the others it **ships already generated**, with example numbers filled in, so that every output has content from the first minute; the numbers and parts are for learning only. **New in 1.0.0; not in the 0.1.0 packages.** A guided tour with exercises is in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md).
 
 ```
-harness new my-flatsat --template flatsat
+harness-design-studio new my-flatsat --template flatsat
 ```
 
 ```
 Project 'Flatsat (EXAMPLE numbers, not engineering data)' created in my-flatsat (23 units, 44 interfaces).
-Next: harness validate my-flatsat   or open it in the app (File > Open project).
+Next: harness-design-studio validate my-flatsat   or open it in the app (File > Open project).
 ```
 
 ```
-harness validate my-flatsat
-harness generate my-flatsat
-harness drc my-flatsat
+harness-design-studio validate my-flatsat
+harness-design-studio generate my-flatsat
+harness-design-studio drc my-flatsat
 ```
 
 ```
@@ -216,7 +216,7 @@ Model hash: `005b1d0df347`. Rules run: 34.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
-`harness export my-flatsat` writes `112 files written to my-flatsat/outputs (model 005b1d0df347).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
+`harness-design-studio export my-flatsat` writes `112 files written to my-flatsat/outputs (model 005b1d0df347).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
 
 ## Does every example run?
 
@@ -232,10 +232,10 @@ Every example was run through `new`, `validate`, `generate` (where it is not alr
 
 ## The 15 template files
 
-`harness templates my-templates` copies the import templates, scripts and checklists to a folder that must not exist yet:
+`harness-design-studio templates my-templates` copies the import templates, scripts and checklists to a folder that must not exist yet:
 
 ```
-harness templates my-templates
+harness-design-studio templates my-templates
 ```
 
 ```
@@ -248,11 +248,11 @@ The files are written for the `first-steps` example, so you can try each one bef
 | --- | --- | --- | --- | --- |
 | 1 | `README.md` | what the other files are | read it first | yes |
 | 2 | `interfaces.csv` | two example interface rows | app: **File > Import interfaces...** | yes |
-| 3 | `approved-parts.csv` | five example part rows: three `Approved`, one `Review`, one `Rejected` | `harness import-parts` | yes |
-| 4 | `segment-lengths.csv` | two example segment lengths (millimetres) | `harness import-lengths` | yes |
-| 5 | `wheel-connectors.net` | a KiCad netlist for the connectors of `RW1` | `harness import-netlist` | yes |
+| 3 | `approved-parts.csv` | five example part rows: three `Approved`, one `Review`, one `Rejected` | `harness-design-studio import-parts` | yes |
+| 4 | `segment-lengths.csv` | two example segment lengths (millimetres) | `harness-design-studio import-lengths` | yes |
+| 5 | `wheel-connectors.net` | a KiCad netlist for the connectors of `RW1` | `harness-design-studio import-netlist` | yes |
 | 6 | `signal-map.csv` | renames KiCad net names to signal names | `--signal-map` of `import-netlist` | yes |
-| 7 | `ampacity-DEMO-ONLY.csv` | learning only: current by wire gauge | `harness config --ampacity-csv` | yes |
+| 7 | `ampacity-DEMO-ONLY.csv` | learning only: current by wire gauge | `harness-design-studio config --ampacity-csv` | yes |
 | 8 | `config-demo-values/derating.json` | learning only: demo values for `derating.json` | copy over `config/derating.json` of a practice project | yes |
 | 9 | `config-demo-values/emc.json` | learning only: demo values for `emc.json` | copy over `config/emc.json` | yes |
 | 10 | `config-demo-values/generation.json` | learning only: demo values for `generation.json` | copy over `config/generation.json` | yes |

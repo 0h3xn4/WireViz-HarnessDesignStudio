@@ -24,17 +24,17 @@ Questions that are not errors ("which example should I start with?", "does it us
 
 ## Exit codes: what 0, 1 and 2 mean
 
-Every `harness` command ends with a number you can read with `echo $?`. Scripts and CI use it. The full table is in [`CLI.md`](CLI.md). A reader that closes the pipe (`harness generate demo | head -1`) does not stop the command: it still finishes and saves; only its output is dropped.
+Every `harness-design-studio` command ends with a number you can read with `echo $?`. Scripts and CI use it. The full table is in [`CLI.md`](CLI.md). A reader that closes the pipe (`harness-design-studio generate demo | head -1`) does not stop the command: it still finishes and saves; only its output is dropped.
 
 | Code | Meaning | Example you can try |
 | --- | --- | --- |
-| 0 | It worked. Warnings are allowed. | `harness validate demo` |
-| 1 | The project has errors, or a step is **blocked** (a release, an import with bad rows, an export with nothing to export). Your command was understood; the design or the data is the problem. | `harness export demo` before `harness generate demo` |
-| 2 | **Usage error**: a wrong word, a missing argument, a folder that is not a project, a file that cannot be read, or a project with **damaged files** (every command that reports on or changes a project refuses it, except `validate` and `check`, which list the damage and end with 1). Your command was not understood or its input does not exist or cannot be used. | `harness generate notproj` |
-| 130 | **Interrupted** with Ctrl-C. The command prints `interrupted. If it was saving, run `harness validate` to check the project.` instead of a Python traceback. | press Ctrl-C during a long `harness export` |
+| 0 | It worked. Warnings are allowed. | `harness-design-studio validate demo` |
+| 1 | The project has errors, or a step is **blocked** (a release, an import with bad rows, an export with nothing to export). Your command was understood; the design or the data is the problem. | `harness-design-studio export demo` before `harness-design-studio generate demo` |
+| 2 | **Usage error**: a wrong word, a missing argument, a folder that is not a project, a file that cannot be read, or a project with **damaged files** (every command that reports on or changes a project refuses it, except `validate` and `check`, which list the damage and end with 1). Your command was not understood or its input does not exist or cannot be used. | `harness-design-studio generate notproj` |
+| 130 | **Interrupted** with Ctrl-C. The command prints `interrupted. If it was saving, run `harness-design-studio validate` to check the project.` instead of a Python traceback. | press Ctrl-C during a long `harness-design-studio export` |
 
 ```
-harness validate demo
+harness-design-studio validate demo
 echo $?
 ```
 
@@ -44,23 +44,23 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 0
 ```
 
-Two commands use 1 in a way that can surprise you: `harness drc` ends with 1 when there is an open **error** (warnings still give 0), and `harness config` ends with 1 while any engineering value is still missing, which is normal for a new project.
+Two commands use 1 in a way that can surprise you: `harness-design-studio drc` ends with 1 when there is an open **error** (warnings still give 0), and `harness-design-studio config` ends with 1 while any engineering value is still missing, which is normal for a new project.
 
 ## Installing
 
-### `harness: command not found`
+### `harness-design-studio: command not found`
 
 ```
-bash: line 1: harness: command not found
+bash: line 1: harness-design-studio: command not found
 ```
 
-(In a terminal you type into, the `line 1:` part is missing.) The shell cannot find the `harness` program. Why, by the way you installed:
+(In a terminal you type into, the `line 1:` part is missing.) The shell cannot find the `harness-design-studio` program. The same happens with its short alias `harness`. Why, by the way you installed:
 
 - **`.tar.gz` install (way B of [`INSTALL.md`](INSTALL.md)):** `~/.local/bin` is not on your `PATH`. Fix it once with `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc` and then `. ~/.bashrc` (or log out and in).
 - **Run from source or pip into a virtual environment (way C):** the environment is not active in this terminal. Run `. .venv/bin/activate` in the folder where you made it.
 - **Nothing installed yet:** start at [`INSTALL.md`](INSTALL.md).
 
-Check with `harness --version`; it prints `harness 1.0.0` (or a newer number).
+Check with `harness-design-studio --version`; it prints `harness 1.0.0` (or a newer number).
 
 ### I am on Windows or macOS
 
@@ -92,21 +92,21 @@ The command ended with exit code 134 (aborted). Why: a system library that Qt ne
 sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
 ```
 
-Messages that mention `libEGL` or `libxkbcommon` have the same fix. If you are connected over SSH, the app has no screen: use the `harness` command line over SSH, or start the app on the machine itself. The `harness` command line never needs these libraries.
+Messages that mention `libEGL` or `libxkbcommon` have the same fix. If you are connected over SSH, the app has no screen: use the `harness-design-studio` command line over SSH, or start the app on the machine itself. The command line never needs these libraries.
 
-### `harness-gui --selftest` does not print `selftest ok`; it opens the app
+### `harness-design-studio-gui --selftest` does not print `selftest ok`; it opens the app
 
-`--selftest` belongs to the **packaged** program `harness-design-studio` (the `.deb` and `.tar.gz` installs). The `harness-gui` command of a source or pip install does not know the word and starts the app. Run offscreen (`QT_QPA_PLATFORM=offscreen harness-gui --selftest`) it printed
+`--selftest` belongs to the **packaged** editor (`harness-design-studio-gui` of the `.deb` and `.tar.gz` installs). The editor command of a source or pip install has the same name but does not know the word and starts the app. Run offscreen (`QT_QPA_PLATFORM=offscreen harness-gui --selftest`, the old name of that command) it printed
 
 ```
 This plugin does not support propagateSizeHints()
 ```
 
-and then kept running until it was stopped after 15 seconds. To check a source install use `harness --version` and, for developers, `pytest`. To check a packaged install use `harness-design-studio --selftest`, which is expected to print `selftest ok` (not run for this page).
+and then kept running until it was stopped after 15 seconds. To check a source install use `harness-design-studio --version` and, for developers, `pytest`. To check a packaged install use `harness-design-studio-gui --selftest`, which is expected to print `selftest ok` (not run for this page).
 
 ### The window is blank, tiny, or closes at once
 
-Run `harness-design-studio --selftest` in a terminal (packaged install) and read the message; if it names `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. If the window is tiny or the text too small, use **View > Interface size**. The settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini`; delete it to reset the scale, theme and last project (it holds no design data).
+Run `harness-design-studio-gui --selftest` in a terminal (packaged install) and read the message; if it names `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. If the window is tiny or the text too small, use **View > Interface size**. The settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini`; delete it to reset the scale, theme and last project (it holds no design data).
 
 ### A banner says "Read-only: this project was saved by a newer version of the tool, or is open in another window"
 
@@ -121,7 +121,7 @@ Nothing was changed. Three causes:
 1. **The project was saved by a newer tool.** On the command line the same project gives a warning on `validate` and refuses to change anything. This is what a project marked as format 99 printed (made by editing `project.json` for the test):
 
    ```
-   harness validate newer
+   harness-design-studio validate newer
    ```
 
    ```
@@ -131,14 +131,14 @@ Nothing was changed. Three causes:
    ```
 
    ```
-   harness generate newer
+   harness-design-studio generate newer
    ```
 
    ```
    error: this project is read-only (saved by a newer tool version).
    ```
 
-   The exit code is 2. `harness migrate newer` gives the same error. **Fix:** install the newer tool (see [`INSTALL.md`](INSTALL.md)); `harness validate` can still read the project with this one. Do not edit `project.json` by hand to make the warning go away.
+   The exit code is 2. `harness-design-studio migrate newer` gives the same error. **Fix:** install the newer tool (see [`INSTALL.md`](INSTALL.md)); `harness-design-studio validate` can still read the project with this one. Do not edit `project.json` by hand to make the warning go away.
 2. **It is open in another window.** See the next entry.
 3. **The folder cannot be locked for editing here** (read-only media, a folder you may not write to). The editor opens it read-only and says so in a note ("This project was opened read-only because it cannot be locked for editing here: ..."). Copy the project to a folder you can write to, or **Save As**. A journal restore and a reload after a change on disk keep a read-only window read-only, and **Discard** or **Save As** from it never deletes the autosave journal of another window.
 
@@ -147,14 +147,14 @@ Nothing was changed. Three causes:
 The app's dialog says: *This project is already open in another window or session. Close it there first, or open this copy read-only.* with the button **Open read-only**. On the command line, with a lock file of a running session in the project folder:
 
 ```
-harness generate lk
+harness-design-studio generate lk
 ```
 
 ```
 error: This project is already open in another instance of the tool (process 4242). Close it there first (lock file: 'lk/.harness.lock').
 ```
 
-The exit code is 1. Commands that only read (such as `harness validate lk`) still work. **Why:** the app and every command that changes a project take the same lock (`.harness.lock` in the project folder), so they never write at once. **Fix:** close the other window or wait for the other command to end. A lock left behind by a crashed session on the same machine is taken over automatically, also after a restart of the computer and when the process number has since been given to another program (on Linux). A lock written by another computer (a shared drive) cannot be checked, so it is treated as alive. The error then reads `error: This project is already open on another computer ('other-host'), or that computer left it locked. That cannot be checked from here. If you are sure nobody has it open, delete the lock file 'lk/.harness.lock' and try again.`; if you are certain nobody has the project open, delete that `.harness.lock` file. The editor opens a project whose lock cannot be taken at all (for example on read-only media) **read-only**, with a note, instead of refusing; a folder that is not a project, or a project that is already open in the same window, gets no lock file and the existing lock is kept.
+The exit code is 1. Commands that only read (such as `harness-design-studio validate lk`) still work. **Why:** the app and every command that changes a project take the same lock (`.harness.lock` in the project folder), so they never write at once. **Fix:** close the other window or wait for the other command to end. A lock left behind by a crashed session on the same machine is taken over automatically, also after a restart of the computer and when the process number has since been given to another program (on Linux). A lock written by another computer (a shared drive) cannot be checked, so it is treated as alive. The error then reads `error: This project is already open on another computer ('other-host'), or that computer left it locked. That cannot be checked from here. If you are sure nobody has it open, delete the lock file 'lk/.harness.lock' and try again.`; if you are certain nobody has the project open, delete that `.harness.lock` file. The editor opens a project whose lock cannot be taken at all (for example on read-only media) **read-only**, with a note, instead of refusing; a folder that is not a project, or a project that is already open in the same window, gets no lock file and the existing lock is kept.
 
 ### "This project has problems" (the recovery view)
 
@@ -167,7 +167,7 @@ Parts of this project could not be loaded. Everything else was loaded. The origi
 and in the window: *Some parts could not be loaded. Everything else was loaded. The original folder is protected: it cannot be overwritten.* One or more files are damaged. The app shows what it could read. **Fix:** press **Save salvaged copy…** to write a clean copy to a new folder (the parts that could not be loaded are kept word for word in `quarantine.json` and `quarantine/files/` beside it, so nothing is lost), and repair or restore the original from Git. On the command line the same damage looks like this (a unit file cut off in the middle, made for the test):
 
 ```
-harness validate dmg
+harness-design-studio validate dmg
 ```
 
 ```
@@ -181,7 +181,7 @@ WARNING orphan_placement: A diagram position exists for 'RW1', which is not a un
 2 units, 2 interfaces, 9 connectors, 0 harnesses: 5 error(s), 1 warning(s).
 ```
 
-Read the **first** error: it names the file and the line and column. The other errors follow from it (the wheel is missing, so everything that mentions it is wrong). The message never prints the content of the file, because it may be confidential. Fix the file (a JSON-aware editor shows the position; `git diff` shows what changed) and run `harness validate` again. `harness generate` on a project with errors changes nothing; after two `warning: [interface_skipped]` lines it ends with (exit code 1):
+Read the **first** error: it names the file and the line and column. The other errors follow from it (the wheel is missing, so everything that mentions it is wrong). The message never prints the content of the file, because it may be confidential. Fix the file (a JSON-aware editor shows the position; `git diff` shows what changed) and run `harness-design-studio validate` again. `harness-design-studio generate` on a project with errors changes nothing; after two `warning: [interface_skipped]` lines it ends with (exit code 1):
 
 ```
 2 interfaces and 0 wires checked: 6 error(s)
@@ -201,21 +201,21 @@ The app keeps an autosave (`.harness-recovery/` in the project folder). Press **
 ### `error: Unknown template 'satellite'. Choose one of: ...`
 
 ```
-harness new x1 --template satellite
+harness-design-studio new x1 --template satellite
 ```
 
 ```
 error: Unknown template 'satellite'. Choose one of: blank, first-steps, minimal-satellite, small-satellite, flatsat.
 ```
 
-Exit code 2. The name after `--template` must be exactly one of the five names. `harness new --list` prints them with a one-line description. See [`examples/README.md`](examples/README.md).
+Exit code 2. The name after `--template` must be exactly one of the five names. `harness-design-studio new --list` prints them with a one-line description. See [`examples/README.md`](examples/README.md).
 
 ### The same error for `minimal-satellite` or `flatsat`, on the 0.1.0 packages
 
 The examples `minimal-satellite` and `flatsat`, and the template `design-worksheet.md`, are new in 1.0.0 (see [`../CHANGELOG.md`](../CHANGELOG.md)). A tool installed from the 0.1.0 `.deb` or `.tar.gz` has only three examples. This is what the source of the `v0.1.0` tag prints:
 
 ```
-harness new --list
+harness-design-studio new --list
 ```
 
 ```
@@ -225,37 +225,37 @@ small-satellite  14 units with nominal and redundant chains. Generate it to see 
 ```
 
 ```
-harness new old1 --template minimal-satellite
+harness-design-studio new old1 --template minimal-satellite
 ```
 
 ```
 error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.
 ```
 
-**Fix:** use `first-steps` or `small-satellite`, or install 1.0.0 (see [`INSTALL.md`](INSTALL.md)). `harness templates DIR` also writes 14 files instead of 15 on 0.1.0 (no `design-worksheet.md`).
+**Fix:** use `first-steps` or `small-satellite`, or install 1.0.0 (see [`INSTALL.md`](INSTALL.md)). `harness-design-studio templates DIR` also writes 14 files instead of 15 on 0.1.0 (no `design-worksheet.md`).
 
 ### `error: demo already exists and is not an empty folder; choose a new one.`
 
 ```
-harness new demo --template first-steps
+harness-design-studio new demo --template first-steps
 ```
 
 ```
 error: demo already exists and is not an empty folder; choose a new one.
 ```
 
-Exit code 2. `harness new` never overwrites anything. Choose a folder name that does not exist yet, or an existing folder that is empty. To throw the old project away and start again, see [the last section](#where-do-my-files-go-and-how-do-i-start-over).
+Exit code 2. `harness-design-studio new` never overwrites anything. Choose a folder name that does not exist yet, or an existing folder that is empty. To throw the old project away and start again, see [the last section](#where-do-my-files-go-and-how-do-i-start-over).
 
 ### `error: give the folder for the new project (or use --list).`
 
-You ran `harness new` with no folder name. Give one: `harness new my-design --template first-steps`.
+You ran `harness-design-studio new` with no folder name. Give one: `harness-design-studio new my-design --template first-steps`.
 
 ## Generating
 
 ### `error: 'notproj' is not a harness project folder (no project.json).`
 
 ```
-harness generate notproj
+harness-design-studio generate notproj
 ```
 
 ```
@@ -267,8 +267,8 @@ Exit code 2. The folder exists but is not a project: a project folder always has
 ### Generating a blank project makes nothing
 
 ```
-harness new demo-blank --template blank
-harness generate demo-blank
+harness-design-studio new demo-blank --template blank
+harness-design-studio generate demo-blank
 ```
 
 ```
@@ -294,11 +294,11 @@ error: [wire_sizing] W002-002: no listed gauge carries 8 A after derating (facto
 Not saved: fix the errors above first.
 ```
 
-Exit code 1. **Why:** the current is more than the connector contact (or the largest wire in your ampacity table) can carry after derating. The line `44 interfaces and 103 wires checked: 0 error(s)` is the same independent check that `harness verify` prints; the errors that stopped the save are the `error:` lines above it. Nothing was written. **Fix:** lower the current, or choose a connector or wire that can carry it. If you think the derating values are wrong, ask the engineer who owns them (`harness config DIR` lists them); do not lower them just to make the error go away. Run `harness generate` again.
+Exit code 1. **Why:** the current is more than the connector contact (or the largest wire in your ampacity table) can carry after derating. The line `44 interfaces and 103 wires checked: 0 error(s)` is the same independent check that `harness-design-studio verify` prints; the errors that stopped the save are the `error:` lines above it. Nothing was written. **Fix:** lower the current, or choose a connector or wire that can carry it. If you think the derating values are wrong, ask the engineer who owns them (`harness-design-studio config DIR` lists them); do not lower them just to make the error go away. Run `harness-design-studio generate` again.
 
 ### A wire gauge says `pending`
 
-Not an error. A gauge stays *pending* until the interface has a **Max current (A)**, the ampacity and derating values exist, and the segment lengths are known. `harness config DIR` lists what is missing and why it matters. See [`CONFIG.md`](CONFIG.md) and [`PLACEHOLDERS.md`](PLACEHOLDERS.md).
+Not an error. A gauge stays *pending* until the interface has a **Max current (A)**, the ampacity and derating values exist, and the segment lengths are known. `harness-design-studio config DIR` lists what is missing and why it matters. See [`CONFIG.md`](CONFIG.md) and [`PLACEHOLDERS.md`](PLACEHOLDERS.md).
 
 ## Checking
 
@@ -326,7 +326,7 @@ The configuration files in `config/` do **not** have the settings at the top lev
 If you add `"bundle_derating": 0.8` next to `"values"` (a typical mistake, because the key tables in [`CONFIG.md`](CONFIG.md) list the keys without showing the wrapper), the file is refused and the built-in placeholder is used instead:
 
 ```
-harness validate q
+harness-design-studio validate q
 ```
 
 ```
@@ -355,12 +355,12 @@ Exit code 1. **Fix:** move the key into `"values"`:
 }
 ```
 
-Then `harness validate` is clean again and `harness config DIR` counts the value as set (it said `Engineering values: 1 of 17 set.` after this change). A misspelled key **inside** `values` is not reported: `harness validate` stays quiet and the key is ignored, so `harness config DIR` still lists the correct key as `MISSING`. Run `harness config DIR` after every edit of a configuration file and check that the count of set values went up. Set `"placeholder": false` only after an engineer has reviewed the whole file. To get a file back to its starting state, copy it from a fresh project: `harness new fresh --template blank`, then copy `fresh/config/derating.json` over yours.
+Then `harness-design-studio validate` is clean again and `harness-design-studio config DIR` counts the value as set (it said `Engineering values: 1 of 17 set.` after this change). A misspelled key **inside** `values` is not reported: `harness-design-studio validate` stays quiet and the key is ignored, so `harness-design-studio config DIR` still lists the correct key as `MISSING`. Run `harness-design-studio config DIR` after every edit of a configuration file and check that the count of set values went up. Set `"placeholder": false` only after an engineer has reviewed the whole file. To get a file back to its starting state, copy it from a fresh project: `harness-design-studio new fresh --template blank`, then copy `fresh/config/derating.json` over yours.
 
 ### `ERROR merge_conflict: The file contains unresolved Git merge conflict markers.`
 
 ```
-harness check mc
+harness-design-studio check mc
 ```
 
 ```
@@ -369,33 +369,33 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 3 units, 1 interfaces, 9 connectors, 0 harnesses: 1 error(s), 0 warning(s).
 ```
 
-A Git merge left `<<<<<<<`, `=======` and `>>>>>>>` lines in a project file. Open the file named in brackets, decide which side to keep, delete the three marker lines, and run `harness check` again. Use `check` rather than `validate` after a merge: `check` also finds these markers and released harnesses that were edited.
+A Git merge left `<<<<<<<`, `=======` and `>>>>>>>` lines in a project file. Open the file named in brackets, decide which side to keep, delete the three marker lines, and run `harness-design-studio check` again. Use `check` rather than `validate` after a merge: `check` also finds these markers and released harnesses that were edited.
 
 ### `error: the project has damaged files (first: ...)`, exit code 2
 
 ```
-harness drc dmg
+harness-design-studio drc dmg
 ```
 
 ```
 error: the project has damaged files (first: ERROR   quarantined: A harness could not be loaded and was set aside: wires.0.gauge_awg: Input should be less than or equal to 40; wires.1.length_m: Input should be greater than or equal to 0 (line 452) [physical/harnesses/W001.json]); nothing was checked
 ```
 
-`drc`, `verify`, `export`, `generate`, `config`, `library`, `log`, `diff`, `compare`, `review`, `release`, `revise`, `migrate` and the imports refuse a project with damaged files instead of printing a clean-looking result or saving over it (the editor opens such a project in the recovery view). A file counts as damaged when it is not valid JSON, has a wrong structure, is a link, is over 64 MB or cannot be read, or holds a **number outside its range**: wire gauge (AWG) 0 to 40, wire length 0 to 10000 m, current and voltage above 0, a part's pin count 1 to 1000, masses and ratings 0 or more, harness number and schema version 1 or more. A value like that is set aside and kept (never used), and the message names the field and the limit. **Fix:** run `harness validate DIR` (or `harness check DIR`), which lists the damage with the file and line, correct the value in the file named, and run the command again. The original files are never overwritten while the project is in this state; in the app **Save salvaged copy…** writes the rest to a new folder.
+`drc`, `verify`, `export`, `generate`, `config`, `library`, `log`, `diff`, `compare`, `review`, `release`, `revise`, `migrate` and the imports refuse a project with damaged files instead of printing a clean-looking result or saving over it (the editor opens such a project in the recovery view). A file counts as damaged when it is not valid JSON, has a wrong structure, is a link, is over 64 MB or cannot be read, or holds a **number outside its range**: wire gauge (AWG) 0 to 40, wire length 0 to 10000 m, current and voltage above 0, a part's pin count 1 to 1000, masses and ratings 0 or more, harness number and schema version 1 or more. A value like that is set aside and kept (never used), and the message names the field and the limit. **Fix:** run `harness-design-studio validate DIR` (or `harness-design-studio check DIR`), which lists the damage with the file and line, correct the value in the file named, and run the command again. The original files are never overwritten while the project is in this state; in the app **Save salvaged copy…** writes the rest to a new folder.
 
 ### `ERROR released_modified: ... it no longer matches its baseline`
 
 ```
-harness check rel
+harness-design-studio check rel
 ```
 
 ```
 ERROR   released_modified: W002 was changed after its release (revision A) (part EX-MICROD-9-M it uses was changed); it no longer matches its baseline. Undo the change, or start a new revision of the harness and make it there.
 ```
 
-Exit code 1. A released harness, the links it carries, the units and box connectors it uses, **and the parts, interface types and configuration values it relies on** are compared with the baseline stored at the release. The text in the second brackets says what changed (`configuration derating it depends on was changed` for a configuration file). Someone edited a file by hand (or merged one) after the release. **Fix:** undo the edit (`git checkout` the file), or `harness revise DIR W002 --by NAME --comment TEXT`, make the change in the new revision and release it. A baseline made by version 0.1.0 holds none of the parts, interface types and configuration, so nothing of that kind is compared for it.
+Exit code 1. A released harness, the links it carries, the units and box connectors it uses, **and the parts, interface types and configuration values it relies on** are compared with the baseline stored at the release. The text in the second brackets says what changed (`configuration derating it depends on was changed` for a configuration file). Someone edited a file by hand (or merged one) after the release. **Fix:** undo the edit (`git checkout` the file), or `harness-design-studio revise DIR W002 --by NAME --comment TEXT`, make the change in the new revision and release it. A baseline made by version 0.1.0 holds none of the parts, interface types and configuration, so nothing of that kind is compared for it.
 
-### `harness drc` ends with exit code 1
+### `harness-design-studio drc` ends with exit code 1
 
 An open **error** of the design rule check. The summary line says how many:
 
@@ -403,14 +403,14 @@ An open **error** of the design rule check. The summary line says how many:
 Open: 5 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
-Errors cannot be waived; fix them. Read the `## Errors` section of the report (`harness drc DIR`), where each finding says why it matters and how to fix it. Warnings can be fixed or waived with a written reason in the app. The rules are explained in [`RULES.md`](RULES.md).
+Errors cannot be waived; fix them. Read the `## Errors` section of the report (`harness-design-studio drc DIR`), where each finding says why it matters and how to fix it. Warnings can be fixed or waived with a written reason in the app. The rules are explained in [`RULES.md`](RULES.md).
 
-### `harness verify DIR` or `--outputs` prints `[outputs_outdated]`, `[out_stale]`, `[out_stamp]` or `[out_modified]`
+### `harness-design-studio verify DIR` or `--outputs` prints `[outputs_outdated]`, `[out_stale]`, `[out_stamp]` or `[out_modified]`
 
 You changed the design (here: renamed a unit in a project that was already generated and exported) or edited an exported file:
 
 ```
-harness verify so --outputs
+harness-design-studio verify so --outputs
 ```
 
 ```
@@ -426,11 +426,11 @@ error: [out_stamp] harnesses/W001/W001.xlsx does not carry the current generator
 error: [out_modified] system/bom.csv was changed after it was exported.
 ```
 
-Exit code 1. **Fix:** never edit files in `outputs/`; they are made from the design and are safe to delete. Run `harness generate DIR`, then `harness export DIR`, then `harness verify DIR --outputs`.
+Exit code 1. **Fix:** never edit files in `outputs/`; they are made from the design and are safe to delete. Run `harness-design-studio generate DIR`, then `harness-design-studio export DIR`, then `harness-design-studio verify DIR --outputs`.
 
 ## Importing
 
-All imports preview first. With `--dry-run` nothing is changed; without it, **nothing is written if any row has a problem**. The exit code is 1 when a row has a problem. Fix the file and run again. The columns and their alternative names are in [`IMPORTS.md`](IMPORTS.md); starting files are in `harness templates DIR`.
+All imports preview first. With `--dry-run` nothing is changed; without it, **nothing is written if any row has a problem**. The exit code is 1 when a row has a problem. Fix the file and run again. The columns and their alternative names are in [`IMPORTS.md`](IMPORTS.md); starting files are in `harness-design-studio templates DIR`.
 
 ### `import-lengths`: `row N: ERROR ...`
 
@@ -445,7 +445,7 @@ W002,W002-L1,-5
 ```
 
 ```
-harness import-lengths imp bad-lengths.csv --dry-run
+harness-design-studio import-lengths imp bad-lengths.csv --dry-run
 ```
 
 ```
@@ -466,12 +466,12 @@ Every row failed on the harness name. The columns are read by position: harness,
 Nothing was changed.
 ```
 
-Unlike the other imports, this one reads the columns **by position**: first the harness, then the segment, then the length. After a successful import run `harness generate DIR` so the wire lengths follow. A file that does not exist gives `error: The file could not be read (No such file or directory).` (exit code 2).
+Unlike the other imports, this one reads the columns **by position**: first the harness, then the segment, then the length. After a successful import run `harness-design-studio generate DIR` so the wire lengths follow. A file that does not exist gives `error: The file could not be read (No such file or directory).` (exit code 2).
 
 ### `import-parts`: `Approval status 'Approved' is not in your approved, pending or rejected lists; say what it means`
 
 ```
-harness import-parts imp approved-parts.csv --dry-run
+harness-design-studio import-parts imp approved-parts.csv --dry-run
 ```
 
 ```
@@ -502,7 +502,7 @@ row 3: ERROR 'P1' is already in row 2 of this file; each part may appear once
 ### `import-netlist`: `The file is not a KiCad netlist`
 
 ```
-harness import-netlist imp bad.kicad_sch --unit RW1
+harness-design-studio import-netlist imp bad.kicad_sch --unit RW1
 ```
 
 ```
@@ -525,26 +525,26 @@ J1: ERROR Connector RW1-J77 has no library part: set the field HarnessPart or us
 
 ### Interfaces: a row cannot be placed
 
-Importing interfaces (**File > Import > Import interfaces…**, CSV or XLSX) is done in the app only; there is no `harness` command for it. The preview lists each row; a row that cannot be placed says why (a unit that does not exist, no free connector on a unit that can carry the type) and nothing is applied. See [`IMPORTS.md`](IMPORTS.md). The messages were not run for this page because they need the app window.
+Importing interfaces (**File > Import > Import interfaces…**, CSV or XLSX) is done in the app only; there is no `harness-design-studio` command for it. The preview lists each row; a row that cannot be placed says why (a unit that does not exist, no free connector on a unit that can carry the type) and nothing is applied. See [`IMPORTS.md`](IMPORTS.md). The messages were not run for this page because they need the app window.
 
 ## Exporting
 
 ### There are no harnesses to export
 
 ```
-harness export demo
+harness-design-studio export demo
 ```
 
 ```
-error: there are no harnesses to export; run `harness generate` first.
+error: there are no harnesses to export; run `harness-design-studio generate` first.
 ```
 
-Exit code 1. Outputs are written per harness, and none exists yet. Run `harness generate demo`, then `harness export demo`. (With the `blank` project it stays this way until you add units and interfaces in the app.)
+Exit code 1. Outputs are written per harness, and none exists yet. Run `harness-design-studio generate demo`, then `harness-design-studio export demo`. (With the `blank` project it stays this way until you add units and interfaces in the app.)
 
 ### `warning: [out_pdf_chars] These characters cannot be shown in the PDF ...`
 
 ```
-harness export demo
+harness-design-studio export demo
 ```
 
 ```
@@ -552,16 +552,16 @@ warning: [out_pdf_chars] These characters cannot be shown in the PDF drawings of
 38 files written to demo/outputs (model a7c0ccce1928).
 ```
 
-Not an error (exit code 0, the files are written). The PDF drawings use the Windows-1252 character set, so a name or note with characters outside it (the ohm sign Ω, Greek letters) prints a `?` in the PDF; the SVG drawing, the CSV files and the workbook keep the characters. The warning names every character it replaced (up to eight, then "and N more") and is repeated by `harness verify DIR --outputs`. **Fix:** if the PDF is what you send, write the name with letters of Windows-1252 (for example "ohm"); otherwise use the SVG.
+Not an error (exit code 0, the files are written). The PDF drawings use the Windows-1252 character set, so a name or note with characters outside it (the ohm sign Ω, Greek letters) prints a `?` in the PDF; the SVG drawing, the CSV files and the workbook keep the characters. The warning names every character it replaced (up to eight, then "and N more") and is repeated by `harness-design-studio verify DIR --outputs`. **Fix:** if the PDF is what you send, write the name with letters of Windows-1252 (for example "ohm"); otherwise use the SVG.
 
 ### No outputs folder
 
 ```
-harness verify demo --outputs
+harness-design-studio verify demo --outputs
 ```
 
 ```
-error: no outputs folder; run `harness export` first.
+error: no outputs folder; run `harness-design-studio export` first.
 ```
 
 Exit code 1. `--outputs` checks the files in `demo/outputs`; there are none yet.
@@ -575,15 +575,15 @@ See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-st
 A release is refused (exit code 1) until every check passes. Each reason is printed on a line `blocked: [code] words`. Read all lines: fix them one by one. This is what a first try on the `first-steps` example prints:
 
 ```
-harness release rel W001 --by "Ada" --comment "short"
+harness-design-studio release rel W001 --by "Ada" --comment "short"
 ```
 
 ```
 blocked: [comment_short] The comment needs at least 10 characters: say what changed or why.
-blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
+blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness-design-studio config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
 blocked: [parts_unapproved] 3 part(s) used by W001 are not approved (or are example data): EX-MICROD-21-M, EX-MICROD-25-M, EX-WIRE-TWISTED-SHIELDED. Approve them in the parts list, or release with a written reason (command line: --accept-unapproved-parts REASON); the reason is kept in the change log.
-blocked: [gauge_pending] 4 wire(s) have no gauge decided (first: W001-001). Fill in the derating values (the file config/derating.json; `harness config DIR` lists what is missing) or set the gauge by hand.
-blocked: [length_unknown] 4 wire(s) have no length (first: W001-001). Enter the routing segment lengths (`harness import-lengths DIR FILE` loads them from a table).
+blocked: [gauge_pending] 4 wire(s) have no gauge decided (first: W001-001). Fill in the derating values (the file config/derating.json; `harness-design-studio config DIR` lists what is missing) or set the gauge by hand.
+blocked: [length_unknown] 4 wire(s) have no length (first: W001-001). Enter the routing segment lengths (`harness-design-studio import-lengths DIR FILE` loads them from a table).
 blocked: [outputs_missing] Outputs have not been exported yet. Export them, review them, then release.
 ```
 
@@ -591,10 +591,10 @@ blocked: [outputs_missing] Outputs have not been exported yet. Export them, revi
 | --- | --- | --- |
 | `comment_short` | `--comment` has fewer than 10 characters. | Say what changed or why, in at least 10 characters. |
 | `placeholder_config` | A configuration file is still marked `"placeholder": true`: nobody has reviewed the engineering values. | Have an engineer review the files and set `"placeholder": false` in each; or release anyway with `--accept-placeholders "reason"`. The reason is kept in the change log and the baseline. |
-| `parts_unapproved` | The harness uses a part that is not on the approved list, or is example data. | Approve the parts (`harness import-parts`, see [`IMPORTS.md`](IMPORTS.md)); or release with `--accept-unapproved-parts "reason"`. |
-| `gauge_pending` | A wire has no gauge. | Enter the derating and ampacity values (`harness config DIR`), the interface currents, and generate again. |
-| `length_unknown` | A wire has no length. | `harness import-lengths DIR FILE`, then `harness generate DIR`. |
-| `outputs_missing` | You have not exported yet. | `harness export DIR`. (`outputs_stale` and `outputs_modified` mean the outputs no longer match the design; export again.) |
+| `parts_unapproved` | The harness uses a part that is not on the approved list, or is example data. | Approve the parts (`harness-design-studio import-parts`, see [`IMPORTS.md`](IMPORTS.md)); or release with `--accept-unapproved-parts "reason"`. |
+| `gauge_pending` | A wire has no gauge. | Enter the derating and ampacity values (`harness-design-studio config DIR`), the interface currents, and generate again. |
+| `length_unknown` | A wire has no length. | `harness-design-studio import-lengths DIR FILE`, then `harness-design-studio generate DIR`. |
+| `outputs_missing` | You have not exported yet. | `harness-design-studio export DIR`. (`outputs_stale` and `outputs_modified` mean the outputs no longer match the design; export again.) |
 
 The two reasons for placeholders and unapproved parts need at least 10 characters too:
 
@@ -622,14 +622,14 @@ blocked: [no_harness] Harness W999 does not exist.
 blocked: [not_released] W003 is not released, so it can be edited directly.
 ```
 
-(exit code 1: you asked `harness revise` for a harness that is not released; revisions are only for released harnesses.)
+(exit code 1: you asked `harness-design-studio revise` for a harness that is not released; revisions are only for released harnesses.)
 
 ### `error: This change was blocked because it touches released items.`
 
 After a harness is released, its parts, interface types and configuration are frozen too (see [`FILE_FORMAT.md`](FILE_FORMAT.md#what-a-release-freezes)). A command that would change one of them stops before it writes anything:
 
 ```
-harness import-parts rel approved-parts.csv --approved Approved --pending Review --rejected Rejected
+harness-design-studio import-parts rel approved-parts.csv --approved Approved --pending Review --rejected Rejected
 ```
 
 ```
@@ -641,18 +641,18 @@ error: This change was blocked because it touches released items.
   - Part EX-MICROD-9-M is used by W002, which is released. W002 is released (revision A); start a new revision to change it.
 ```
 
-Exit code 1 (`--dry-run` ends the same way with `Dry run: this import would be blocked. Nothing was changed.`). `harness config rel --apply-profile NAME` is refused the same way, with `Configuration 'derating' is used by the checks of the released harness(es) W002. Start a new revision of them to change it.`; configuration applies to every harness, so with several released harnesses each needs a new revision. **Fix:** `harness revise DIR W002 --by NAME --comment TEXT`, make the change, generate, export and release again ([change a released harness](user-manual/change-a-released-harness.md)). Not blocked: new parts, parts no released harness uses, notes and names, `harness library`, and the naming, segmentation and other `generation` settings.
+Exit code 1 (`--dry-run` ends the same way with `Dry run: this import would be blocked. Nothing was changed.`). `harness-design-studio config rel --apply-profile NAME` is refused the same way, with `Configuration 'derating' is used by the checks of the released harness(es) W002. Start a new revision of them to change it.`; configuration applies to every harness, so with several released harnesses each needs a new revision. **Fix:** `harness-design-studio revise DIR W002 --by NAME --comment TEXT`, make the change, generate, export and release again ([change a released harness](user-manual/change-a-released-harness.md)). Not blocked: new parts, parts no released harness uses, notes and names, `harness-design-studio library`, and the naming, segmentation and other `generation` settings.
 
 ### `blocked: [outputs_linked] The outputs folder (or a folder in it) is a link ...`
 
-A release is blocked up front when the `outputs` folder is a link or cannot be written. Replace the link with a real folder and run `harness export DIR`. If the re-export fails *after* the release was saved, the release stands: the message says `The release was recorded (see `harness log`); only the outputs still show the old status. Fix the problem, then run `harness export` to re-stamp them.` A name, checker, comment or reason with control characters or too much text is also a `blocked:` line that names the option (`--by`, `--comment`), for example `blocked: [by_invalid] --by: The name must not contain control characters or line breaks.`
+A release is blocked up front when the `outputs` folder is a link or cannot be written. Replace the link with a real folder and run `harness-design-studio export DIR`. If the re-export fails *after* the release was saved, the release stands: the message says `The release was recorded (see `harness-design-studio log`); only the outputs still show the old status. Fix the problem, then run `harness-design-studio export` to re-stamp them.` A name, checker, comment or reason with control characters or too much text is also a `blocked:` line that names the option (`--by`, `--comment`), for example `blocked: [by_invalid] --by: The name must not contain control characters or line breaks.`
 
-### `harness diff ... --from A --to B`: `error: W003 has no baseline for revision B.`
+### `harness-design-studio diff ... --from A --to B`: `error: W003 has no baseline for revision B.`
 
-After `harness release` (revision A) and `harness revise` (revision B), this fails:
+After `harness-design-studio release` (revision A) and `harness-design-studio revise` (revision B), this fails:
 
 ```
-harness diff fs W003 --from A --to B
+harness-design-studio diff fs W003 --from A --to B
 ```
 
 ```
@@ -662,7 +662,7 @@ error: W003 has no baseline for revision B.
 Exit code 2. A baseline (the frozen snapshot that `diff` compares) is written **when a revision is released**. Revision B is only a draft until you release it, so it has no baseline. What works: compare revision A with the working design (this is the default; leave out `--to`):
 
 ```
-harness diff fs W003 --from A
+harness-design-studio diff fs W003 --from A
 ```
 
 ```
@@ -679,11 +679,11 @@ Comparing before with after: 0 added, 0 removed, 1 changed.
   - status: released -> draft
 ```
 
-For a harness that was never released: `error: W001 has no baseline yet; release it first.` (exit code 2). `harness log DIR` prints the history, including the reasons given for releasing on placeholders and example parts.
+For a harness that was never released: `error: W001 has no baseline yet; release it first.` (exit code 2). `harness-design-studio log DIR` prints the history, including the reasons given for releasing on placeholders and example parts.
 
 ## Where do my files go, and how do I start over?
 
-**A project is a folder.** `harness new demo --template first-steps` creates the folder `demo` **inside the folder you are in** (a path like `~/projects/demo` creates it there). Nothing is kept anywhere else. This is what you get:
+**A project is a folder.** `harness-design-studio new demo --template first-steps` creates the folder `demo` **inside the folder you are in** (a path like `~/projects/demo` creates it there). Nothing is kept anywhere else. This is what you get:
 
 ```
 demo/
@@ -693,7 +693,7 @@ demo/
   logical/                units, interface types, interfaces, diagram layout
   physical/               connectors (and, after generating, harnesses/)
   generated/              the record of the last generation (after generating)
-  outputs/                drawings, tables, exports (after harness export)
+  outputs/                drawings, tables, exports (after harness-design-studio export)
   baselines/, changelog.json   written when you release
   waivers.json            written when you waive a finding
   .gitignore              written once; lists files that Git should ignore
@@ -704,11 +704,11 @@ The files are plain text (JSON), so a project folder can be copied, zipped, e-ma
 | What | Where |
 | --- | --- |
 | Your design | the project folder you named |
-| Drawings, wire lists, BOM, exports | `<project>/outputs/` (made by `harness export`; safe to delete and make again) |
+| Drawings, wire lists, BOM, exports | `<project>/outputs/` (made by `harness-design-studio export`; safe to delete and make again) |
 | Autosave of the app | `<project>/.harness-recovery/` (offered for restore after a crash; ignored by Git) |
 | App settings (theme, scale, last project) | `~/.config/HarnessDesigner/HarnessDesigner.ini` (no design data) |
 | Lock file while a project is open | `<project>/.harness.lock` (removed when closed); beside it an empty `.harness.lock.takeover` stays (no data, ignored by Git, safe to delete when the project is closed) |
-| Copies of the import templates | the folder you gave to `harness templates` |
+| Copies of the import templates | the folder you gave to `harness-design-studio templates` |
 
 **To start over:**
 
@@ -716,15 +716,15 @@ The files are plain text (JSON), so a project folder can be copied, zipped, e-ma
 
   ```
   rm -r demo
-  harness new demo --template first-steps
+  harness-design-studio new demo --template first-steps
   ```
 
-- *Make the generated harnesses and outputs fresh:* `harness generate demo` is safe to repeat (generating twice gives the same result); `rm -r demo/outputs` and `harness export demo` rebuild the outputs.
-- *Put one configuration file back to its starting state:* copy it from a fresh project (`harness new fresh --template blank`, then copy `fresh/config/derating.json` over yours).
+- *Make the generated harnesses and outputs fresh:* `harness-design-studio generate demo` is safe to repeat (generating twice gives the same result); `rm -r demo/outputs` and `harness-design-studio export demo` rebuild the outputs.
+- *Put one configuration file back to its starting state:* copy it from a fresh project (`harness-design-studio new fresh --template blank`, then copy `fresh/config/derating.json` over yours).
 - *Reset the app's look and scale:* delete `~/.config/HarnessDesigner/HarnessDesigner.ini`.
-- *Undo a mistake in the app:* **Ctrl+Z**. A released harness is locked; start a new revision with `harness revise` instead of editing it.
-- *Two copies to try different ideas:* copy the folder (`cp -r demo demo-try`); `harness compare demo demo-try` shows the differences.
+- *Undo a mistake in the app:* **Ctrl+Z**. A released harness is locked; start a new revision with `harness-design-studio revise` instead of editing it.
+- *Two copies to try different ideas:* copy the folder (`cp -r demo demo-try`); `harness-design-studio compare demo demo-try` shows the differences.
 
-Still stuck? Run `harness validate DIR` and `harness drc DIR` and read the messages: each says what is wrong and how to fix it. Check the output first before you send it to anyone if the project is confidential: the messages name units, interfaces and parts. More answers: [`FAQ.md`](FAQ.md).
+Still stuck? Run `harness-design-studio validate DIR` and `harness-design-studio drc DIR` and read the messages: each says what is wrong and how to fix it. Check the output first before you send it to anyone if the project is confidential: the messages name units, interfaces and parts. More answers: [`FAQ.md`](FAQ.md).
 
 Next: [`FAQ.md`](FAQ.md), [`GLOSSARY.md`](GLOSSARY.md)

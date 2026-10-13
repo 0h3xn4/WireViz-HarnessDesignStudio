@@ -36,9 +36,9 @@ Other interface types and older connector parts stay in the library for projects
 ## 2. Install and start (Ubuntu 24.04 or newer)
 
 1. Install the package: `sudo apt install ./harness-design-studio_<version>_amd64.deb`. Or unpack the `.tar.gz` anywhere and run `./harness-design-studio/install.sh` (no administrator rights needed; it installs for your user).
-2. Check it: `harness --version` prints the version. If the command is not found after `install.sh`, add `~/.local/bin` to your PATH (the installer prints how).
+2. Check it: `harness-design-studio --version` prints the version. If the command is not found after `install.sh`, add `~/.local/bin` to your PATH (the installer prints how).
 3. Start **Harness Design Studio** from the application menu, or run `harness-design-studio`.
-4. The command line tool is `harness` (see section 10, Command line).
+4. The command line tool is `harness-design-studio`; `harness` works as a short alias (see section 10, Command line).
 
 No network access is needed or used. On a minimal Ubuntu the app may need a few system libraries; the installer lists them.
 
@@ -47,13 +47,13 @@ No network access is needed or used. On a minimal Ubuntu the app may need a few 
 The tool ships five practice projects (examples). List them and create one in a new folder:
 
 ```
-harness new --list
-harness new wheel-link --template first-steps
+harness-design-studio new --list
+harness-design-studio new wheel-link --template first-steps
 ```
 
 Then **File > Open project…** and pick the folder. You cannot break anything: it is your own copy.
 
-Version 1.0.0 has five examples. If `harness new --list` shows only `blank`, `first-steps` and `small-satellite`, you have the 0.1.0 packages, which have those three; `minimal-satellite`, `flatsat` and the wire colours of section 7 are new in 1.0.0.
+Version 1.0.0 has five examples. If `harness-design-studio new --list` shows only `blank`, `first-steps` and `small-satellite`, you have the 0.1.0 packages, which have those three; `minimal-satellite`, `flatsat` and the wire colours of section 7 are new in 1.0.0.
 
 | Example | What it is |
 | --- | --- |
@@ -63,7 +63,7 @@ Version 1.0.0 has five examples. If `harness new --list` shows only `blank`, `fi
 | `small-satellite` | 14 units with nominal and redundant chains. Generate it to see a realistic system. |
 | `flatsat` | A complete bench: 23 flight and ground units, generated, with example numbers. |
 
-`harness templates my-templates` copies templates for your own data: CSV files for interfaces, parts and lengths, a KiCad netlist, a CI script and a review checklist. The demo engineering values in it are for learning only.
+`harness-design-studio templates my-templates` copies templates for your own data: CSV files for interfaces, parts and lengths, a KiCad netlist, a CI script and a review checklist. The demo engineering values in it are for learning only.
 
 ## 4. The window and your first project
 
@@ -187,39 +187,39 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 
 | Command | What it does |
 | --- | --- |
-| `harness new FOLDER [--template NAME] [--name TEXT]` | create a project from an example (`harness new --list` shows them) |
-| `harness templates FOLDER` | copy the import templates, CI scripts and the review checklist to a new folder |
-| `harness library DIR [--library-version V] [--library-source TEXT] [--library-date YYYY-MM-DD]` | show or record where the parts library comes from |
-| `harness schema FOLDER` | write JSON Schemas of the project files for editors that complete and check JSON |
-| `harness validate DIR` | check a project for errors |
-| `harness check DIR` | validate, plus problems left by Git merges (including released harnesses that were edited) |
-| `harness migrate DIR` | upgrade an old-format project (originals are kept) |
-| `harness generate DIR` | generate harnesses and save (not saved if errors) |
-| `harness verify DIR [--outputs]` | independent check of the harnesses, and of `outputs/` |
-| `harness drc DIR` | design rule report (Markdown); exit 1 on unwaived errors |
-| `harness export DIR` | write and verify all outputs |
-| `harness review DIR HARNESS --by NAME` | submit a draft for review |
-| `harness release DIR HARNESS --by NAME --comment TEXT [--checker NAME] [--accept-placeholders REASON] [--accept-unapproved-parts REASON]` | release (blocked while checks fail, or while values are placeholders or parts are not approved and no reason is given) and re-export |
-| `harness revise DIR HARNESS --by NAME --comment TEXT` | start a new revision |
-| `harness diff DIR HARNESS [--from REV] [--to REV]` | what changed since a baseline |
-| `harness compare OLD NEW` | compare two project folders (for example two Git checkouts); the last line names what is not compared |
-| `harness log DIR [HARNESS]` | print the change log |
-| `harness config DIR [--ampacity-csv FILE] [--apply-profile NAME]` | list missing or invalid engineering values; load a current-by-gauge table; fill unset values from a standard profile |
-| `harness import-parts DIR FILE --approved VALUE ...` | import an approved-parts list; you say what the approval values mean |
-| `harness import-lengths DIR FILE [--unit mm]` | import routing segment lengths from a table |
-| `harness import-netlist DIR FILE --unit U [--prefix J] [--connector J1=ID] [--part J1=PART] [--signal-map NAME=SIGNAL\|FILE]` | read connector pinouts of a unit from a KiCad netlist (.net or .xml); the pins become fixed |
+| `harness-design-studio new FOLDER [--template NAME] [--name TEXT]` | create a project from an example (`harness-design-studio new --list` shows them) |
+| `harness-design-studio templates FOLDER` | copy the import templates, CI scripts and the review checklist to a new folder |
+| `harness-design-studio library DIR [--library-version V] [--library-source TEXT] [--library-date YYYY-MM-DD]` | show or record where the parts library comes from |
+| `harness-design-studio schema FOLDER` | write JSON Schemas of the project files for editors that complete and check JSON |
+| `harness-design-studio validate DIR` | check a project for errors |
+| `harness-design-studio check DIR` | validate, plus problems left by Git merges (including released harnesses that were edited) |
+| `harness-design-studio migrate DIR` | upgrade an old-format project (originals are kept) |
+| `harness-design-studio generate DIR` | generate harnesses and save (not saved if errors) |
+| `harness-design-studio verify DIR [--outputs]` | independent check of the harnesses, and of `outputs/` |
+| `harness-design-studio drc DIR` | design rule report (Markdown); exit 1 on unwaived errors |
+| `harness-design-studio export DIR` | write and verify all outputs |
+| `harness-design-studio review DIR HARNESS --by NAME` | submit a draft for review |
+| `harness-design-studio release DIR HARNESS --by NAME --comment TEXT [--checker NAME] [--accept-placeholders REASON] [--accept-unapproved-parts REASON]` | release (blocked while checks fail, or while values are placeholders or parts are not approved and no reason is given) and re-export |
+| `harness-design-studio revise DIR HARNESS --by NAME --comment TEXT` | start a new revision |
+| `harness-design-studio diff DIR HARNESS [--from REV] [--to REV]` | what changed since a baseline |
+| `harness-design-studio compare OLD NEW` | compare two project folders (for example two Git checkouts); the last line names what is not compared |
+| `harness-design-studio log DIR [HARNESS]` | print the change log |
+| `harness-design-studio config DIR [--ampacity-csv FILE] [--apply-profile NAME]` | list missing or invalid engineering values; load a current-by-gauge table; fill unset values from a standard profile |
+| `harness-design-studio import-parts DIR FILE --approved VALUE ...` | import an approved-parts list; you say what the approval values mean |
+| `harness-design-studio import-lengths DIR FILE [--unit mm]` | import routing segment lengths from a table |
+| `harness-design-studio import-netlist DIR FILE --unit U [--prefix J] [--connector J1=ID] [--part J1=PART] [--signal-map NAME=SIGNAL\|FILE]` | read connector pinouts of a unit from a KiCad netlist (.net or .xml); the pins become fixed |
 
-A script that builds everything: `harness check DIR`, `harness generate DIR`, `harness verify DIR`, `harness drc DIR`, `harness export DIR`. `harness templates FOLDER` copies the templates, and `ci/build.sh` in that folder is this script.
+A script that builds everything: `harness-design-studio check DIR`, `harness-design-studio generate DIR`, `harness-design-studio verify DIR`, `harness-design-studio drc DIR`, `harness-design-studio export DIR`. `harness-design-studio templates FOLDER` copies the templates, and `ci/build.sh` in that folder is this script.
 
 ## 11. What an engineer must fill in
 
-Some values must come from your program's standards. Until they are filled in, results say so and the affected checks say *not checked*. The list: derating factors and ampacity table (`config/derating.json`), resistivity, service loop, pin gap, mass margin, shield grounding concept and test limits (`config/generation.json`), separation rules (`config/segregation.json`), EMC rules (`config/emc.json`), title block fields (`config/titleblock.json`), part masses and ratings in the library. `harness config DIR` prints this list for your project, with what depends on each value; the same list is in `docs/PLACEHOLDERS.md` in the repository (not installed with the app).
+Some values must come from your program's standards. Until they are filled in, results say so and the affected checks say *not checked*. The list: derating factors and ampacity table (`config/derating.json`), resistivity, service loop, pin gap, mass margin, shield grounding concept and test limits (`config/generation.json`), separation rules (`config/segregation.json`), EMC rules (`config/emc.json`), title block fields (`config/titleblock.json`), part masses and ratings in the library. `harness-design-studio config DIR` prints this list for your project, with what depends on each value; the same list is in `docs/PLACEHOLDERS.md` in the repository (not installed with the app).
 
 In the app, press **Supply value…** on a rule in the **Checks** tab (section 6) to type values in; the window also lets you clear the *placeholder* mark once the values are reviewed.
 
-On the command line, run `harness config DIR` to see what is missing and what depends on it, load a current-by-gauge table from a CSV with `--ampacity-csv`, edit the rest in the JSON file (the keys go inside its `values` object), and set `"placeholder": false` once reviewed.
+On the command line, run `harness-design-studio config DIR` to see what is missing and what depends on it, load a current-by-gauge table from a CSV with `--ampacity-csv`, edit the rest in the JSON file (the keys go inside its `values` object), and set `"placeholder": false` once reviewed.
 
-If you work to ECSS-Q-ST-30-11C or ECSS-E-ST-20-07C you can start from the values of those standards with `--apply-profile ecss-q-st-30-11c` or `ecss-e-st-20-07c`: only unset values are filled, each is printed with the requirement it comes from, and the files stay placeholders until you review them (`harness config DIR` lists the keys; `docs/CONFIG.md` in the repository describes them and the part ratings the new rules need).
+If you work to ECSS-Q-ST-30-11C or ECSS-E-ST-20-07C you can start from the values of those standards with `--apply-profile ecss-q-st-30-11c` or `ecss-e-st-20-07c`: only unset values are filled, each is printed with the requirement it comes from, and the files stay placeholders until you review them (`harness-design-studio config DIR` lists the keys; `docs/CONFIG.md` in the repository describes them and the part ratings the new rules need).
 
 To see the machinery work before you have real values, copy the demo values from the templates (`config-demo-values/`) over a practice project. They are not engineering data, and the files stay marked as placeholders so every result built on them says so. Never release a real design with them.
 
@@ -230,14 +230,14 @@ Every import first shows what it would do, and a bad row stops the whole import 
 | You have | Do |
 | --- | --- |
 | Interfaces as a table | **File > Import > Import interfaces…** (Ctrl+Shift+I; CSV or XLSX with the columns id, type, from, to and optionally redundancy) |
-| An approved-parts list | **File > Import > Import approved parts…**, or `harness import-parts`, saying what your approval values mean |
-| Segment lengths | **File > Import > Import segment lengths…**, or `harness import-lengths`, then generate again |
-| A unit's connector pinout in KiCad | export a netlist, then **File > Import > Import KiCad netlist…**, or `harness import-netlist`; the pins become fixed |
-| A current-by-gauge table | **File > Import > Import engineering values: ampacity table…**, or `harness config DIR --ampacity-csv FILE` |
+| An approved-parts list | **File > Import > Import approved parts…**, or `harness-design-studio import-parts`, saying what your approval values mean |
+| Segment lengths | **File > Import > Import segment lengths…**, or `harness-design-studio import-lengths`, then generate again |
+| A unit's connector pinout in KiCad | export a netlist, then **File > Import > Import KiCad netlist…**, or `harness-design-studio import-netlist`; the pins become fixed |
+| A current-by-gauge table | **File > Import > Import engineering values: ampacity table…**, or `harness-design-studio config DIR --ampacity-csv FILE` |
 
 Parts, lengths, ampacity values and netlists open the **Import data** wizard in four steps: **1 Choose what and which file**, **2 Match the columns and check the first rows** (a live preview shows every row and the reason a row is refused), **3 Conflicts and placeholders** (what stays pending afterwards, such as parts whose approval is pending) and **4 Import**. Interfaces use their own earlier window, which also previews every row. The same imports are in the Project tab: press Enter on an entry under **Imports**.
 
-Example files for every one of these are in the templates folder (`harness templates FOLDER`).
+Example files for every one of these are in the templates folder (`harness-design-studio templates FOLDER`).
 
 ## 13. When something goes wrong
 
@@ -250,8 +250,8 @@ Example files for every one of these are in the templates folder (`harness templ
 | *Project changed on disk* | Someone (or Git) changed the files. Reload to see them, or keep your version (asked once per state of the files). A project that was deleted while open is reported when you return to the window. |
 | *Outputs out of date* (status chip or banner) | The design changed since the last export. Export again. |
 | *Blocked because it touches released items* | The harness is released, and so are the parts, interface types and configuration values it uses. Start a new revision. |
-| A wire gauge says *pending* | A value is missing: `harness config DIR` says which. A gauge also needs the interface's Max current and the segment lengths. |
-| `harness` is not found | `~/.local/bin` is not on your PATH. Add it, or log out and in. |
+| A wire gauge says *pending* | A value is missing: `harness-design-studio config DIR` says which. A gauge also needs the interface's Max current and the segment lengths. |
+| `harness-design-studio` is not found | `~/.local/bin` is not on your PATH. Add it, or log out and in. |
 
 ## 14. Keyboard and menus
 

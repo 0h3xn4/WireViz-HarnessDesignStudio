@@ -6,15 +6,15 @@ Short answers. If yours is not here, check the **Problems** tab (it says what is
 
 **Where do I start?** Install it ([`INSTALL.md`](INSTALL.md)), then follow [`LEARNING_PATH.md`](LEARNING_PATH.md): nine short steps, each with the example or template to use and how you know you are done. A one-page summary of commands and keys is in [`CHEATSHEET.md`](CHEATSHEET.md).
 
-**Which example should I start with?** `first-steps` for the tutorial (three units). `minimal-satellite` to see a small but realistic spacecraft and as a starting point to adapt. `small-satellite` to see redundancy and a larger diagram. `flatsat` for a complete bench setup with ground equipment, already generated ([`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md)). `blank` for your own design. `harness new --list` shows them all. `minimal-satellite`, `flatsat` and the `design-worksheet.md` template are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): the list shows five examples on 1.0.0, three (`blank`, `first-steps`, `small-satellite`) on 0.1.0.
+**Which example should I start with?** `first-steps` for the tutorial (three units). `minimal-satellite` to see a small but realistic spacecraft and as a starting point to adapt. `small-satellite` to see redundancy and a larger diagram. `flatsat` for a complete bench setup with ground equipment, already generated ([`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md)). `blank` for your own design. `harness-design-studio new --list` shows them all. `minimal-satellite`, `flatsat` and the `design-worksheet.md` template are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): the list shows five examples on 1.0.0, three (`blank`, `first-steps`, `small-satellite`) on 0.1.0.
 
-**I have no data yet. Can I still use the tool?** Yes. Fill in `design-worksheet.md` from the templates (`harness templates my-templates`) to decide your units and interfaces on paper, then enter them. Every missing number shows up as *pending* or *not checked* until you supply it; nothing is invented.
+**I have no data yet. Can I still use the tool?** Yes. Fill in `design-worksheet.md` from the templates (`harness-design-studio templates my-templates`) to decide your units and interfaces on paper, then enter them. Every missing number shows up as *pending* or *not checked* until you supply it; nothing is invented.
 
 **Do I need to know how the tool works inside?** No. [`CONCEPTS.md`](CONCEPTS.md) is enough, and [`GETTING_STARTED.md`](GETTING_STARTED.md) walks you through it.
 
-**Why does it say "pending" and "not checked" everywhere?** Because the tool contains no engineering numbers. Derating factors, wire ratings, EMC rules and part approvals come from your programme; until they are entered, results say so instead of guessing. `harness config DIR` lists what is missing. See "Placeholders" in [`CONCEPTS.md`](CONCEPTS.md).
+**Why does it say "pending" and "not checked" everywhere?** Because the tool contains no engineering numbers. Derating factors, wire ratings, EMC rules and part approvals come from your programme; until they are entered, results say so instead of guessing. `harness-design-studio config DIR` lists what is missing. See "Placeholders" in [`CONCEPTS.md`](CONCEPTS.md).
 
-**Can I just use the demo values?** For learning, yes (`harness templates DIR` copies them, see [`GETTING_STARTED.md`](GETTING_STARTED.md) part 7). They are not engineering data. Never release a real design with them. A release is refused while the configuration files are marked as placeholders unless you give a written reason, which is kept in the change log.
+**Can I just use the demo values?** For learning, yes (`harness-design-studio templates DIR` copies them, see [`GETTING_STARTED.md`](GETTING_STARTED.md) part 7). They are not engineering data. Never release a real design with them. A release is refused while the configuration files are marked as placeholders unless you give a written reason, which is kept in the change log.
 
 **Can I edit a generated harness by hand?** Not in the sense of editing a drawing. You change the design (units, interfaces, connectors, values) and generate again. To keep a wire or pin choice, lock it by setting `"locked": true` in its entry in the harness file (`physical/harnesses/<ID>.json`; the app has no button for this); generation then keeps it. A harness that is released is locked; start a new revision to change it.
 
@@ -32,7 +32,7 @@ Short answers. If yours is not here, check the **Problems** tab (it says what is
 
 **What do I commit, and what not?** Commit the whole project folder. `outputs/` can be committed (reviewers like to see it) or ignored; it is always safe to delete and regenerate.
 
-**How do I know a printed drawing matches the design?** Every output carries the tool version and a *model hash* (12 characters). `harness verify DIR --outputs` checks the files against the design.
+**How do I know a printed drawing matches the design?** Every output carries the tool version and a *model hash* (12 characters). `harness-design-studio verify DIR --outputs` checks the files against the design.
 
 **Where is the user guide?** In the app: **F1**. As a file: [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md).
 
@@ -47,20 +47,20 @@ Short answers. If yours is not here, check the **Problems** tab (it says what is
 | *Project already open* | Another window or session has it open. Close it there, or choose **Open read-only**. A lock left by a crashed session on the same machine is taken over automatically, also after a restart. A lock from another computer is respected: the message names the lock file to delete if you are sure nobody has the project open. |
 | *This project has problems* (recovery view) | Some files could not be loaded; everything else did. **Save salvaged copy** writes a clean copy. The original is protected and never overwritten. |
 | *Unsaved changes found* at start | The last session ended before saving. **Restore** brings your last edits back. |
-| `harness new` says the folder is not empty | Choose a folder that does not exist yet (or is empty). It never overwrites. |
-| `harness generate` says *not saved* | The project has errors. Run `harness validate DIR` and fix what it prints. |
-| A wire gauge says *pending* | A value is missing. `harness config DIR` says which; a gauge also needs the interface's **Max current** and the segment lengths. |
-| `harness release` says *blocked* | Each reason is printed in words. Typically a gauge or length is missing, an error is open, or the configuration files are still placeholders (review them and set `"placeholder": false`, or give a reason with `--accept-placeholders`), or a part is not approved (approve it in the parts list, or give a reason with `--accept-unapproved-parts`). |
+| `harness-design-studio new` says the folder is not empty | Choose a folder that does not exist yet (or is empty). It never overwrites. |
+| `harness-design-studio generate` says *not saved* | The project has errors. Run `harness-design-studio validate DIR` and fix what it prints. |
+| A wire gauge says *pending* | A value is missing. `harness-design-studio config DIR` says which; a gauge also needs the interface's **Max current** and the segment lengths. |
+| `harness-design-studio release` says *blocked* | Each reason is printed in words. Typically a gauge or length is missing, an error is open, or the configuration files are still placeholders (review them and set `"placeholder": false`, or give a reason with `--accept-placeholders`), or a part is not approved (approve it in the parts list, or give a reason with `--accept-unapproved-parts`). |
 | *Outputs out of date* (status chip or banner) | The design changed since the last export. Export again. |
-| *Blocked because it touches released items* | The harness is released, and so are the parts, interface types and configuration values it uses. An edit, `harness import-parts` or `harness config` that would change them is refused. Start a new revision (`harness revise`), make the change, release again. |
+| *Blocked because it touches released items* | The harness is released, and so are the parts, interface types and configuration values it uses. An edit, `harness-design-studio import-parts` or `harness-design-studio config` that would change them is refused. Start a new revision (`harness-design-studio revise`), make the change, release again. |
 | `import-netlist` says a file is not a netlist | It must be KiCad's `.net` (S-expression) or XML export, not a `.kicad_sch`. |
 | `kicad-cli` cannot load a library | A KiCad installation problem. Export the netlist from the schematic editor instead (File > Export > Netlist). |
 | An import says *row N* has a problem | Nothing was applied. Fix the row; the message says what is wrong. Use `--dry-run` to check first. |
-| Merge conflict in a project file | Open the file, resolve the markers like in any text file, then `harness check DIR` finds leftovers. |
-| Exit code 2 from `harness` | A usage error, or an unreadable project (including a project with damaged files: `harness validate DIR` lists them). The message says which. Exit 1 means the project has errors or a step is blocked; 0 is success; 130 means you pressed Ctrl-C. |
+| Merge conflict in a project file | Open the file, resolve the markers like in any text file, then `harness-design-studio check DIR` finds leftovers. |
+| Exit code 2 from `harness-design-studio` | A usage error, or an unreadable project (including a project with damaged files: `harness-design-studio validate DIR` lists them). The message says which. Exit 1 means the project has errors or a step is blocked; 0 is success; 130 means you pressed Ctrl-C. |
 
 ## Still stuck
 
-Run `harness validate DIR` and `harness drc DIR` and read the messages: each says what is wrong and how to fix it. Include their output when you ask for help, and check it first if the project is confidential: the messages name units, interfaces and parts.
+Run `harness-design-studio validate DIR` and `harness-design-studio drc DIR` and read the messages: each says what is wrong and how to fix it. Include their output when you ask for help, and check it first if the project is confidential: the messages name units, interfaces and parts.
 
 Next: [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md), [`GLOSSARY.md`](GLOSSARY.md), [user manual](user-manual/README.md).

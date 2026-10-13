@@ -35,7 +35,7 @@ The layout of `HarnessDesignStudio/src/harness_design_studio/`. The one-line des
 HarnessDesignStudio/src/harness_design_studio/
   __init__.py      offline spacecraft harness design tool
   core/            headless: no GUI, CLI or network imports (enforced by tests/test_architecture.py)
-  cli/             the `harness` command
+  cli/             the `harness-design-studio` command
   gui/             PySide6 editor; depends on core, the core never depends on it
   resources/       bundled offline user guide, example projects and templates, fonts
 ```
@@ -51,7 +51,7 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | `edit.py` | editing operations for the block diagram (pure functions that build lists of operations) |
 | `ids.py`, `units.py`, `errors.py` | identifier rules; SI helpers (AWG with mm² alongside); explicit error types |
 | `integrity.py` | referential integrity of a project; runs on every load, save and transaction |
-| `issues.py` | findings reported by loading, integrity checking and `harness validate` / `check` |
+| `issues.py` | findings reported by loading, integrity checking and `harness-design-studio validate` / `check` |
 | `checks.py` | logical-layer findings shown in the Problems panel and the to-do list |
 | `recovery.py` | autosave journal of an open project, kept inside the project folder |
 | `schemas.py` | JSON Schemas of the project files, made from the model itself |
@@ -76,7 +76,7 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 
 | Module | What it does |
 | --- | --- |
-| `cli/main.py` | the `harness` entry point |
+| `cli/main.py` | the `harness-design-studio` entry point |
 | `cli/start.py`, `cli/data.py`, `cli/changes.py` | getting started (`new`, `templates`); outside data (`config`, `import-parts`, `import-lengths`, `import-netlist`); change control (`review`, `release`, `revise`, `diff`, `compare`, `log`) |
 | `gui/app.py`, `gui/main_window.py`, `gui/shell.py`, `gui/topbar.py` | GUI entry point; main window: top bar and banners, the tabs Diagram, Harness, Lists, Checks and Releases, the project tree and palette (left), the inspector (right), the older problems and tables (bottom), status bar; the slots views plug into; the status chip and banner rules |
 | `gui/controller.py` | `EditorController`: the only object that changes the project |

@@ -17,7 +17,7 @@ A route from "I have just installed it" to "I can use it on my own spacecraft". 
 
 If you have not installed the tool yet, start with [`INSTALL.md`](INSTALL.md).
 
-**Which version do you have?** Steps 3 and 4 use the example `minimal-satellite` and the template `design-worksheet.md`, and the `flatsat` example is mentioned too. These, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)). `harness new --list` shows five examples on 1.0.0 and three (`blank`, `first-steps`, `small-satellite`) on 0.1.0. With 0.1.0, do step 3 with `small-satellite` and plan on paper in step 4.
+**Which version do you have?** Steps 3 and 4 use the example `minimal-satellite` and the template `design-worksheet.md`, and the `flatsat` example is mentioned too. These, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)). `harness-design-studio new --list` shows five examples on 1.0.0 and three (`blank`, `first-steps`, `small-satellite`) on 0.1.0. With 0.1.0, do step 3 with `small-satellite` and plan on paper in step 4.
 
 | Step | You learn | Time | Uses |
 | --- | --- | --- | --- |
@@ -42,10 +42,10 @@ Read [`CONCEPTS.md`](CONCEPTS.md). You should be able to say, in your own words,
 Follow [`GETTING_STARTED.md`](GETTING_STARTED.md) from Part 1 to Part 6. It uses the example `first-steps` (three units, two interfaces) and shows the real output of every command.
 
 ```
-harness new wheel-link --template first-steps
-harness generate wheel-link
-harness drc wheel-link
-harness export wheel-link
+harness-design-studio new wheel-link --template first-steps
+harness-design-studio generate wheel-link
+harness-design-studio drc wheel-link
+harness-design-studio export wheel-link
 ```
 
 **Done when:** you have opened `wheel-link/outputs/` and found the wire list, the pinout of one connector and the block diagram, and you know which of them says "pending" and why.
@@ -55,9 +55,9 @@ harness export wheel-link
 `minimal-satellite` has seven units without redundancy: solar array, battery, power distribution unit (`PCDU1`), on-board computer, transceiver, one reaction wheel and a sun sensor. It is the smallest example that looks like a real spacecraft.
 
 ```
-harness new mini --template minimal-satellite
-harness generate mini
-harness drc mini
+harness-design-studio new mini --template minimal-satellite
+harness-design-studio generate mini
+harness-design-studio drc mini
 ```
 
 Open it in the app (**File > Open project...**). Try these four things, in this order:
@@ -73,7 +73,7 @@ The 14-unit example `small-satellite` has redundant chains; use it once you are 
 
 ## 4. Plan your own design (30 minutes)
 
-Before you open the tool, fill in `design-worksheet.md` (get it with `harness templates my-templates`). It asks for the units, the interfaces between them, which of them need redundancy, and which numbers you do not have yet. A filled worksheet is half of the data entry.
+Before you open the tool, fill in `design-worksheet.md` (get it with `harness-design-studio templates my-templates`). It asks for the units, the interfaces between them, which of them need redundancy, and which numbers you do not have yet. A filled worksheet is half of the data entry.
 
 **Done when:** every interface on the worksheet has two units, a type and (for power) a maximum current.
 
@@ -81,25 +81,25 @@ Before you open the tool, fill in `design-worksheet.md` (get it with `harness te
 
 Two ways, and you can mix them:
 
-- **In the app.** Start a project from `blank` (`harness new my-design`), add units (**Add** in the Project tab, or the Palette tab), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10.
+- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add units (**Add** in the Project tab, or the Palette tab), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10.
 - **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import interfaces**. Add the units first. Importing interfaces is app only: there is no command line command for it.
 
-**Done when:** `harness generate my-design` finishes and `harness check my-design` reports no errors.
+**Done when:** `harness-design-studio generate my-design` finishes and `harness-design-studio check my-design` reports no errors.
 
 ## 6. Bring in real data (as needed)
 
 Do this when the data exists; the tool works without it and says so.
 
-- **Parts list:** `approved-parts.csv`, then `harness import-parts`. Only approved parts make a harness releasable without a written reason.
-- **Segment lengths:** `segment-lengths.csv`, then `harness import-lengths`. Wire lengths, mass and voltage drop depend on them.
+- **Parts list:** `approved-parts.csv`, then `harness-design-studio import-parts`. Only approved parts make a harness releasable without a written reason.
+- **Segment lengths:** `segment-lengths.csv`, then `harness-design-studio import-lengths`. Wire lengths, mass and voltage drop depend on them.
 - **Engineering values** (derating, ampacity, EMC classes): [`CONFIG.md`](CONFIG.md). The files in `config-demo-values/` are **for learning only**; they stay marked as placeholders. Never copy demo values into a real design.
 - **Unit connector pinouts from KiCad:** [`KICAD.md`](KICAD.md).
 
-**Done when:** `harness config my-design` lists no missing value you are responsible for.
+**Done when:** `harness-design-studio config my-design` lists no missing value you are responsible for.
 
 ## 7. Check and review (30 minutes)
 
-Read every entry of the **Problems** tab or of `harness drc`. For each one, decide: fix it, waive it with a reason, or note that it is outside the tool. Then go through `design-review-checklist.md` with a colleague. Rule texts: [`RULES.md`](RULES.md).
+Read every entry of the **Problems** tab or of `harness-design-studio drc`. For each one, decide: fix it, waive it with a reason, or note that it is outside the tool. Then go through `design-review-checklist.md` with a colleague. Rule texts: [`RULES.md`](RULES.md).
 
 **Done when:** every open problem has a decision.
 
@@ -107,7 +107,7 @@ Read every entry of the **Problems** tab or of `harness drc`. For each one, deci
 
 A released harness is locked, and so are the parts, interface types and configuration values it uses. To change them, you start a new revision, so the old one stays reproducible. The steps, with the exact commands, are in [`HOWTO.md`](HOWTO.md) and in Part 9 of [`GETTING_STARTED.md`](GETTING_STARTED.md). Practise on a copy of your project, not on the real one.
 
-**Done when:** you can show, with `harness diff` and `harness log`, what changed since revision A. After `harness revise`, `harness diff DIR W002` compares revision A with the working design; revision B has a baseline of its own only after you release it, and then `--from A --to B` compares the two.
+**Done when:** you can show, with `harness-design-studio diff` and `harness-design-studio log`, what changed since revision A. After `harness-design-studio revise`, `harness-design-studio diff DIR W002` compares revision A with the working design; revision B has a baseline of its own only after you release it, and then `--from A --to B` compares the two.
 
 ## 9. Automate
 

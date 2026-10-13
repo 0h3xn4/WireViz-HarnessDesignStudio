@@ -46,6 +46,8 @@ Window
 
 ### Changed
 
+- **Names** (D-147): the folder `harness/` is now `HarnessDesignStudio/`; the command line tool is `harness-design-studio` and the editor `harness-design-studio-gui` (pip and packages alike; in the packages the editor was called `harness-design-studio`). `harness` and `harness-gui` still work as aliases. Project files, settings and the output of `--version` are unchanged.
+
 Look and feel
 - Text is 13 px at 100 % (it was 14) and follows the 12 / 13 / 16 / 20 px type scale; spacing follows 4 / 8 / 12 / 16 / 24 / 32 px; all buttons, combo boxes and fields are 32 px high.
 - Hashes, IDs, requirement IDs, pin and wire numbers and the drawing preview use IBM Plex Mono; the drawing preview takes its page and background colours from the theme.

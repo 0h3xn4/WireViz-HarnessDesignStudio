@@ -1,6 +1,6 @@
 # Configuration reference
 
-Rules live in `config/*.json` inside the project, not in code. There are seven files. Every file except `naming.json` has `"placeholder": true` until an engineer has reviewed it; set it to `false` afterwards. (`naming.json` ships with `"placeholder": false`, because name patterns are a style choice, not an engineering value.) Values shown as `null` are placeholders: results say so and the affected checks say *not checked*. Which standard to take values from is for you to decide; the tool ships none. `harness config DIR` lists what is missing and checks what is set (ranges, table order); see IMPORTS.md. Generation runs the same check: a value that is set but invalid is reported as an error in the generation result and treated as unset (the gauge stays *pending*); the tool never uses it.
+Rules live in `config/*.json` inside the project, not in code. There are seven files. Every file except `naming.json` has `"placeholder": true` until an engineer has reviewed it; set it to `false` afterwards. (`naming.json` ships with `"placeholder": false`, because name patterns are a style choice, not an engineering value.) Values shown as `null` are placeholders: results say so and the affected checks say *not checked*. Which standard to take values from is for you to decide; the tool ships none. `harness-design-studio config DIR` lists what is missing and checks what is set (ranges, table order); see IMPORTS.md. Generation runs the same check: a value that is set but invalid is reported as an error in the generation result and treated as unset (the gauge stays *pending*); the tool never uses it.
 
 ## Contents
 
@@ -35,11 +35,11 @@ Every file is a wrapper with three fields: `name` (the file's name without `.jso
 }
 ```
 
-Keys that are left out stay unset (`null`). `harness validate` accepts this file, and `harness config DIR` counts the four keys as set. Put a key outside `values` and the file is rejected: `harness validate` prints `ERROR quarantined: ... bundle_derating: Extra inputs are not permitted`, sets the file aside and falls back to the built-in placeholder for that file. A new project already contains all seven files with every key; edit those instead of writing one from scratch.
+Keys that are left out stay unset (`null`). `harness-design-studio validate` accepts this file, and `harness-design-studio config DIR` counts the four keys as set. Put a key outside `values` and the file is rejected: `harness-design-studio validate` prints `ERROR quarantined: ... bundle_derating: Extra inputs are not permitted`, sets the file aside and falls back to the built-in placeholder for that file. A new project already contains all seven files with every key; edit those instead of writing one from scratch.
 
 ## What is checked (ranges)
 
-`harness config DIR`, `harness validate`, the editor (rule `config-invalid`) and generation all use the same checks. A value that is set but outside its range is an error that names the file, the key and the limit (`config/generation.json: default_gauge_awg must be a whole number from 0 to 40.`); generation reports it and treats the value as unset, and never uses it. `null` (not decided) is never an error.
+`harness-design-studio config DIR`, `harness-design-studio validate`, the editor (rule `config-invalid`) and generation all use the same checks. A value that is set but outside its range is an error that names the file, the key and the limit (`config/generation.json: default_gauge_awg must be a whole number from 0 to 40.`); generation reports it and treats the value as unset, and never uses it. `null` (not decided) is never an error.
 
 | Value | Allowed |
 | --- | --- |
@@ -126,7 +126,7 @@ The shipped file lists only the first four keys; `shield`, `branch` and `segment
 
 ## Optional values from the supplied standards (D-131)
 
-None of these is set by default. `harness config DIR --apply-profile ecss-q-st-30-11c` (and `ecss-e-st-20-07c`) fills the ones that are still unset and keeps what you set; each value cites the requirement it comes from in the command output and in `src/harness_design_studio/core/standard_profiles.py`. A file the profile changes is set to `"placeholder": true` again, even if you had reviewed it before, because the new values are not reviewed; set it back to `false` after your review. A rule that needs one of these values or a part rating stays silent without it, and the rule `unchecked-config` says what was not checked.
+None of these is set by default. `harness-design-studio config DIR --apply-profile ecss-q-st-30-11c` (and `ecss-e-st-20-07c`) fills the ones that are still unset and keeps what you set; each value cites the requirement it comes from in the command output and in `src/harness_design_studio/core/standard_profiles.py`. A file the profile changes is set to `"placeholder": true` again, even if you had reviewed it before, because the new values are not reviewed; set it back to `false` after your review. A rule that needs one of these values or a part rating stays silent without it, and the rule `unchecked-config` says what was not checked.
 
 ### `derating.json`, additional keys
 | Key | Meaning | Source (requirement ID) |

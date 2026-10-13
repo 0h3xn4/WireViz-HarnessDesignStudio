@@ -36,22 +36,23 @@ This manual has one page for each job you do with Harness Design Studio, written
 1. [Draw the design](draw-the-design.md): start a project; add units; connect them; guided and expert mode; save.
 2. [Redundancy and zones](redundancy-and-zones.md): the redundant copy of a unit; links between the chains; lanes.
 3. [Generate harnesses](generate-harnesses.md): preview, apply and undo; the independent check; the Harness tab and its "Why" pane; how links are grouped.
-4. [Read and fix problems](read-and-fix-problems.md): errors, warnings and notes; fixes; waivers; `harness drc`.
-5. [Fill in the engineering values](fill-in-engineering-values.md): `harness config`; the file shape; the gauge table; demo values; profiles.
+4. [Read and fix problems](read-and-fix-problems.md): errors, warnings and notes; fixes; waivers; `harness-design-studio drc`.
+5. [Fill in the engineering values](fill-in-engineering-values.md): `harness-design-studio config`; the file shape; the gauge table; demo values; profiles.
 6. [Import data](import-data.md): interfaces (app only), approved parts, segment lengths.
-7. [Import KiCad pinouts](import-kicad-pinouts.md): `harness import-netlist` and fixed pins.
+7. [Import KiCad pinouts](import-kicad-pinouts.md): `harness-design-studio import-netlist` and fixed pins.
 8. [Export the outputs](export-the-outputs.md): what each file is for; checking that it is current.
 9. [Set wire colours](set-wire-colours.md): *Edit > Wire colours...* and the file setting. **New in 1.0.0 (not in the 0.1.0 packages).**
 10. [Naming and title block](naming-and-title-block.md): name patterns and title block fields.
 11. [Release a harness](release-a-harness.md): review, release, the gates, the change log.
 12. [Change a released harness](change-a-released-harness.md): new revision, `diff`, `log`, `compare`.
-13. [Use Git and CI](use-git-and-ci.md): Git habits, `harness check`, a build script, a workflow.
+13. [Use Git and CI](use-git-and-ci.md): Git habits, `harness-design-studio check`, a build script, a workflow.
 
 ## How to read the pages
 
-- **Commands** use a practice project called `wheel-link`, made with `harness new wheel-link --template first-steps`. Put your own folder where you see `wheel-link` or `DIR`. Output blocks are real output of the tool. Numbers such as the model hash (`310e4c4a4345`) depend on the project and the tool version; yours can differ.
+- **Commands** use a practice project called `wheel-link`, made with `harness-design-studio new wheel-link --template first-steps`. Put your own folder where you see `wheel-link` or `DIR`. Output blocks are real output of the tool. Numbers such as the model hash (`310e4c4a4345`) depend on the project and the tool version; yours can differ.
+- **Command names.** The command line tool is `harness-design-studio`; `harness` is a short alias that runs the same program, so older scripts keep working. The app is `harness-design-studio-gui` (alias `harness-gui`) when started from a terminal.
 - **App steps** (menus, buttons, tabs) use the names that the program shows. The app was not run on a screen when this manual was written. The labels and the behaviour were taken from the program's code, not from looking at it. Pages with app steps say "GUI, not run" where it matters.
-- **New in 1.0.0.** Some things are not in the 0.1.0 packages: the examples `minimal-satellite` and `flatsat`, the wiring-diagram drawing with wire colours, *Edit > Wire colours...* and `design-worksheet.md`. They are not in the 0.1.0 `.deb` and `.tar.gz`. `harness new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](../../CHANGELOG.md) lists what is new. Pages that use these say so.
+- **New in 1.0.0.** Some things are not in the 0.1.0 packages: the examples `minimal-satellite` and `flatsat`, the wiring-diagram drawing with wire colours, *Edit > Wire colours...* and `design-worksheet.md`. They are not in the 0.1.0 `.deb` and `.tar.gz`. `harness-design-studio new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](../../CHANGELOG.md) lists what is new. Pages that use these say so.
 - **No claim of compliance.** The tool was created mainly by an AI and has not been reviewed independently. Results rest on placeholders and example parts until you supply your own values. See [the status](../../README.md#status).
 
 ## If you are new

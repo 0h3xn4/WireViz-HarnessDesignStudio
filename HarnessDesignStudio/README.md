@@ -29,17 +29,19 @@ Runs on **Ubuntu 24.04 or newer**. Version `1.0.0` (see [Status](#status)).
 
    ```
    sudo apt install ./harness-design-studio_<version>_amd64.deb
-   harness --version
+   harness-design-studio --version
    ```
 
 2. **Make a practice project** from the built-in example and let the tool work on it:
 
    ```
-   harness new wheel-link --template first-steps
-   harness generate wheel-link
-   harness drc wheel-link
-   harness export wheel-link
+   harness-design-studio new wheel-link --template first-steps
+   harness-design-studio generate wheel-link
+   harness-design-studio drc wheel-link
+   harness-design-studio export wheel-link
    ```
+
+   (`harness` still works as a short name for `harness-design-studio`.)
 
 3. **Look at the result**: drawings and lists are in `wheel-link/outputs/`. Open the project in the app (**Harness Design Studio** in the application menu, then **File > Open project…**) to see the diagram, the *Checks* tab and, in the *Harness* tab, the *Why* explanation of every wire.
 
@@ -63,7 +65,7 @@ That is the whole idea. [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) wal
 
 ## Examples and templates
 
-`harness new --list` shows the example projects shipped with the tool. All five, with what to run and what you should see, are on the [examples page](docs/examples/README.md). `minimal-satellite`, `flatsat` and the `design-worksheet.md` template are new in 1.0.0; the 0.1.0 packages have `blank`, `first-steps` and `small-satellite` only.
+`harness-design-studio new --list` shows the example projects shipped with the tool. All five, with what to run and what you should see, are on the [examples page](docs/examples/README.md). `minimal-satellite`, `flatsat` and the `design-worksheet.md` template are new in 1.0.0; the 0.1.0 packages have `blank`, `first-steps` and `small-satellite` only.
 
 | Example | What it is |
 | --- | --- |
@@ -73,7 +75,7 @@ That is the whole idea. [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) wal
 | `small-satellite` | 14 units with redundant chains. Generate it to see a realistic system. |
 | `flatsat` | A complete bench: 23 flight and ground units, generated, with example numbers. Read [`docs/FLATSAT_EXAMPLE.md`](docs/FLATSAT_EXAMPLE.md) for a tour. |
 
-`harness templates my-templates` copies templates for your own data: CSV files for interfaces, approved parts and segment lengths, a KiCad netlist, a CI script, a GitHub Actions workflow, a **design worksheet** to plan a design on paper, a design review checklist and *demo* engineering values for learning (not engineering data). What each file is for: [`src/harness_design_studio/resources/examples/templates/README.md`](src/harness_design_studio/resources/examples/templates/README.md).
+`harness-design-studio templates my-templates` copies templates for your own data: CSV files for interfaces, approved parts and segment lengths, a KiCad netlist, a CI script, a GitHub Actions workflow, a **design worksheet** to plan a design on paper, a design review checklist and *demo* engineering values for learning (not engineering data). What each file is for: [`src/harness_design_studio/resources/examples/templates/README.md`](src/harness_design_studio/resources/examples/templates/README.md).
 
 ## What is in a project
 

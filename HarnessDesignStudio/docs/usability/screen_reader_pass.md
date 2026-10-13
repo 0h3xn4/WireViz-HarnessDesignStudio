@@ -3,9 +3,9 @@
 The automated audit (`tests/test_accessibility.py`) checks names on controls, text size at every scale, keyboard reach and the canvas announcement. It cannot check what a screen reader says. This pass does, with a person using **Orca** on Ubuntu 24.04. Known limit (D-76, D-118, UX.md Q15): the canvas items are not exposed one by one; the **Interface table** and the **Outline** tab are the item-by-item accessible views. This pass judges whether those views are enough, and records what is not.
 
 ## Set up
-1. Install the build under test; record the version (`harness --version`) and the model hash of the sample project on the result sheet.
+1. Install the build under test; record the version (`harness-design-studio --version`) and the model hash of the sample project on the result sheet.
 2. Turn Orca on (Super+Alt+S). Start the editor from the application menu. Use a scaling of 100 % first, then 200 %.
-3. Use only the keyboard. Do not look at the screen if the tester normally works without it. Open the sample project that the first start offers, or `harness new` a project from an example.
+3. Use only the keyboard. Do not look at the screen if the tester normally works without it. Open the sample project that the first start offers, or `harness-design-studio new` a project from an example.
 
 ## What to try (one row per item on the result sheet)
 | # | Item | Pass when |

@@ -36,8 +36,8 @@ The card explains that one failure could affect both chains. It has a **Show** b
 After the fix, the project has six units and four links. Save with Ctrl+S. Then on the command line:
 
 ```
-harness generate red2
-harness drc red2
+harness-design-studio generate red2
+harness-design-studio drc red2
 ```
 
 ```
@@ -45,7 +45,7 @@ harness drc red2
 4 interfaces and 12 wires checked: 0 error(s)
 ```
 
-(`red2` is whatever folder you made with `harness new red2 --template first-steps`. The second line comes from `harness generate`; `harness drc` prints the whole design rule report.) The design rule report no longer lists a `cross-strap` warning.
+(`red2` is whatever folder you made with `harness-design-studio new red2 --template first-steps`. The second line comes from `harness-design-studio generate`; `harness-design-studio drc` prints the whole design rule report.) The design rule report no longer lists a `cross-strap` warning.
 
 You can also draw a link by hand: under **Connect with**, pick the type, click `OBC1-R`, then `RW1-R`. The tool sets the **Chain** of that link to *redundant* by itself, because both ends are redundant.
 

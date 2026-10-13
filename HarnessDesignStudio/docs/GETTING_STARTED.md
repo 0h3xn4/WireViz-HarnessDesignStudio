@@ -23,14 +23,14 @@ You will start from a small example, look at what the tool makes of it, fix a fi
 
 **Words you do not know?** Read [`CONCEPTS.md`](CONCEPTS.md) first (ten minutes) or look words up as you go.
 
-You can follow the steps in the **app**, on the **command line**, or both. The command line steps give the same results and are easy to paste into a script.
+You can follow the steps in the **app**, on the **command line**, or both. The command line steps give the same results and are easy to paste into a script. The command line tool is called `harness-design-studio`; the short name `harness` still works and runs the same program.
 
 ## Part 1: create a practice project
 
 The tool ships five examples. List them:
 
 ```
-harness new --list
+harness-design-studio new --list
 ```
 
 ```
@@ -46,18 +46,18 @@ flatsat            A complete bench: 23 flight and ground units, generated, with
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 
 ```
-harness new wheel-link --template first-steps --name "Wheel link"
+harness-design-studio new wheel-link --template first-steps --name "Wheel link"
 ```
 
 ```
 Project 'Wheel link' created in wheel-link (3 units, 2 interfaces).
-Next: harness validate wheel-link   or open it in the app (File > Open project).
+Next: harness-design-studio validate wheel-link   or open it in the app (File > Open project).
 ```
 
 Check it:
 
 ```
-harness validate wheel-link
+harness-design-studio validate wheel-link
 ```
 
 ```
@@ -99,7 +99,7 @@ Try this:
 **On the command line:**
 
 ```
-harness generate wheel-link
+harness-design-studio generate wheel-link
 ```
 
 ```
@@ -112,7 +112,7 @@ Two harnesses were made, one for each pair of connectors the interfaces use: `W0
 Run the independent check, which shares no code with the generator:
 
 ```
-harness verify wheel-link
+harness-design-studio verify wheel-link
 ```
 
 ```
@@ -134,7 +134,7 @@ Notice the wire gauge says **pending**. That is deliberate and is the subject of
 Open the **Problems** tab (right panel or bottom panel), or the **Checks** tab for all 34 rules and their result, or run:
 
 ```
-harness drc wheel-link
+harness-design-studio drc wheel-link
 ```
 
 ```
@@ -161,7 +161,7 @@ The **To-do** tab lists what is left, including *N auto-filled connector assignm
 **In the app:** press **Export…** in the top bar (Ctrl+E) and then **Export** in the window that opens; it also lists the files written. **On the command line:**
 
 ```
-harness export wheel-link
+harness-design-studio export wheel-link
 ```
 
 ```
@@ -195,14 +195,14 @@ Look at the drawing. The cable block says `pending` for the wire gauge and `leng
 Can you release this harness yet? Try. A release needs a name and a comment of at least 10 characters:
 
 ```
-harness release wheel-link W002 --by "A. Engineer" --comment "First release of the wheel power harness"
+harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "First release of the wheel power harness"
 ```
 
 ```
-blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
+blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness-design-studio config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
 blocked: [parts_unapproved] 2 part(s) used by W002 are not approved (or are example data): EX-MICROD-9-M, EX-WIRE-SINGLE. Approve them in the parts list, or release with a written reason (command line: --accept-unapproved-parts REASON); the reason is kept in the change log.
-blocked: [gauge_pending] 2 wire(s) have no gauge decided (first: W002-001). Fill in the derating values (the file config/derating.json; `harness config DIR` lists what is missing) or set the gauge by hand.
-blocked: [length_unknown] 2 wire(s) have no length (first: W002-001). Enter the routing segment lengths (`harness import-lengths DIR FILE` loads them from a table).
+blocked: [gauge_pending] 2 wire(s) have no gauge decided (first: W002-001). Fill in the derating values (the file config/derating.json; `harness-design-studio config DIR` lists what is missing) or set the gauge by hand.
+blocked: [length_unknown] 2 wire(s) have no length (first: W002-001). Enter the routing segment lengths (`harness-design-studio import-lengths DIR FILE` loads them from a table).
 ```
 
 The tool refuses and says why, in words. Nothing was changed. The first two reasons (placeholders and unapproved parts) wait until Part 9; the next part removes the other two.
@@ -212,7 +212,7 @@ The tool refuses and says why, in words. Nothing was changed. The first two reas
 A wire's gauge depends on the current, the derating factors, the length and the allowed voltage drop. The tool cannot know your programme's numbers, so it asks:
 
 ```
-harness config wheel-link
+harness-design-studio config wheel-link
 ```
 
 ```
@@ -224,11 +224,11 @@ Engineering values: 0 of 17 set.
 For learning, the tool ships **demo values**. They are **not engineering data**; they exist so you can see the machinery work. Copy them over the practice project's configuration, and import the segment lengths from a table:
 
 ```
-harness templates my-templates
+harness-design-studio templates my-templates
 cp my-templates/config-demo-values/*.json wheel-link/config/
-harness import-lengths wheel-link my-templates/segment-lengths.csv --unit mm
-harness generate wheel-link
-harness export wheel-link
+harness-design-studio import-lengths wheel-link my-templates/segment-lengths.csv --unit mm
+harness-design-studio generate wheel-link
+harness-design-studio export wheel-link
 ```
 
 Now `outputs/harnesses/W002/wirelist.csv` says:
@@ -257,8 +257,8 @@ The three CSV files in `my-templates/` (`interfaces.csv`, `approved-parts.csv`, 
 Every import first shows what it would do. On the command line add `--dry-run` to look without changing anything. Try the approved parts list from the templates, and say what the approval values in it mean (the tool never decides that a part is approved):
 
 ```
-harness import-parts wheel-link my-templates/approved-parts.csv --approved Approved --pending Review --rejected Rejected --dry-run
-harness import-parts wheel-link my-templates/approved-parts.csv --approved Approved --pending Review --rejected Rejected
+harness-design-studio import-parts wheel-link my-templates/approved-parts.csv --approved Approved --pending Review --rejected Rejected --dry-run
+harness-design-studio import-parts wheel-link my-templates/approved-parts.csv --approved Approved --pending Review --rejected Rejected
 ```
 
 ```
@@ -270,7 +270,7 @@ Imported 5 part(s). Project parts library (version 0), source: approved-parts.cs
 Ask the rules what they think now:
 
 ```
-harness drc wheel-link
+harness-design-studio drc wheel-link
 ```
 
 ```
@@ -280,12 +280,12 @@ Open: 1 error(s), 7 warning(s), 5 note(s). Waived: 0.
 One **error**: *The model changed after the harness plans were generated. Generate again before releasing.* Approving parts changed the design's library, so the plans and outputs are out of date. That is exactly what the check is for. Make the plans and outputs current:
 
 ```
-harness generate wheel-link
-harness export wheel-link
+harness-design-studio generate wheel-link
+harness-design-studio export wheel-link
 ```
 
 ```
-harness drc wheel-link
+harness-design-studio drc wheel-link
 ```
 
 ```
@@ -296,9 +296,9 @@ Open: 0 error(s), 7 warning(s), 5 note(s). Waived: 0.
 
 | You have | Do |
 | --- | --- |
-| segment lengths from CAD or a spreadsheet | `harness import-lengths wheel-link my-templates/segment-lengths.csv --unit mm --dry-run` |
+| segment lengths from CAD or a spreadsheet | `harness-design-studio import-lengths wheel-link my-templates/segment-lengths.csv --unit mm --dry-run` |
 | the interfaces as a table | app only (there is no command for it): **File > Import > Import interfaces…** with `my-templates/interfaces.csv` |
-| the connector pinout of a unit in KiCad | `harness import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run` |
+| the connector pinout of a unit in KiCad | `harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run` |
 
 Details and column names: [`IMPORTS.md`](IMPORTS.md), [`KICAD.md`](KICAD.md).
 
@@ -311,8 +311,8 @@ This step is not in 0.1.0 packages (see the note in Part 1). A wire's colour is 
 On the command line the same two commands apply colours that are already in `generation.json` (the command line has no command to set them; [`CONFIG.md`](CONFIG.md) shows the format):
 
 ```
-harness generate wheel-link
-harness export wheel-link
+harness-design-studio generate wheel-link
+harness-design-studio export wheel-link
 ```
 
 The wire list now has the colour in its *Colour* column (`red`, `black`), and the harness drawing draws the wires in those colours with the IEC 60757 code written as text. A wire between two different signals (`TX+/RX+`) takes the colour of the first.
@@ -322,18 +322,18 @@ The wire list now has the colour in its *Colour* column (`red`, `black`), and th
 With the demo values and the lengths of Part 7 the gauge and length reasons of Part 6 are gone, but two are left: the configuration files are still marked `"placeholder": true`, and the parts are the example parts, which nobody has approved. A release is refused until a person has reviewed the values and approved the parts, or accepts both with a written reason:
 
 ```
-harness release wheel-link W002 --by "A. Engineer" --comment "First release of the wheel power harness"
+harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "First release of the wheel power harness"
 ```
 
 ```
-blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
+blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness-design-studio config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
 blocked: [parts_unapproved] 1 part(s) used by W002 are not approved (or are example data): EX-WIRE-SINGLE. Approve them in the parts list, or release with a written reason (command line: --accept-unapproved-parts REASON); the reason is kept in the change log.
 ```
 
 For a real design the engineer reviews the values and sets `"placeholder": false` in each file, and the parts list approves the parts. For this practice project, accept both and say why; the reasons are kept in the change log and in the baseline:
 
 ```
-harness release wheel-link W002 --by "A. Engineer" --comment "First release of the wheel power harness" --accept-placeholders "Practice project: demo values only" --accept-unapproved-parts "Practice project: example parts only"
+harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "First release of the wheel power harness" --accept-placeholders "Practice project: demo values only" --accept-unapproved-parts "Practice project: example parts only"
 ```
 
 ```
@@ -341,7 +341,7 @@ Release W002 revision A: done.
 Outputs re-exported with the released status (38 files).
 ```
 
-`W002` is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited, nor can the parts, interface types and configuration values it uses (a later `harness import-parts` or `harness config --apply-profile` that would change them ends with `This change was blocked because it touches released items`), a baseline and a change log entry are stored, and the drawing says *released*. To change it you start a revision with `harness revise wheel-link W002 --by NAME --comment "..."`; `harness log wheel-link` prints the history, including the reasons for releasing on placeholders and with unapproved parts. In the app the same steps are **Release…** and **New revision…** in the **Releases** tab (or the **Harness** tab) and **Change log…** in **Harness plans**; the release window lists what the release locks and asks for the reason when placeholders remain.
+`W002` is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited, nor can the parts, interface types and configuration values it uses (a later `harness-design-studio import-parts` or `harness-design-studio config --apply-profile` that would change them ends with `This change was blocked because it touches released items`), a baseline and a change log entry are stored, and the drawing says *released*. To change it you start a revision with `harness-design-studio revise wheel-link W002 --by NAME --comment "..."`; `harness-design-studio log wheel-link` prints the history, including the reasons for releasing on placeholders and with unapproved parts. In the app the same steps are **Release…** and **New revision…** in the **Releases** tab (or the **Harness** tab) and **Change log…** in **Harness plans**; the release window lists what the release locks and asks for the reason when placeholders remain.
 
 Do this only in the practice project. Releasing on placeholders and example parts teaches the flow and nothing more: the change log records that the release rested on them.
 
@@ -350,7 +350,7 @@ Do this only in the practice project. Releasing on placeholders and example part
 Now do it yourself. Create a blank project and rebuild the wheel link:
 
 ```
-harness new my-first-design --name "My first design"
+harness-design-studio new my-first-design --name "My first design"
 ```
 
 In the app, **File > Open project…** it, then:
@@ -372,10 +372,10 @@ You have now done everything the tool does, once. Add a **Create redundant copy*
 | the screen, shortcuts, glossary | the user guide ([`guide/USER_GUIDE.md`](guide/USER_GUIDE.md); **F1** in the app) |
 | the whole route from beginner to release | [`LEARNING_PATH.md`](LEARNING_PATH.md) |
 | a one-page summary of commands and keys | [`CHEATSHEET.md`](CHEATSHEET.md) |
-| to try a small but realistic spacecraft | `harness new mini --template minimal-satellite`, then generate it |
-| to try a large system with redundancy | `harness new sat --template small-satellite`, then generate it |
-| to see a complete bench setup with ground equipment | `harness new bench --template flatsat`, then [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md) |
-| to plan a design on paper first | `design-worksheet.md` in the templates (`harness templates my-templates`) |
+| to try a small but realistic spacecraft | `harness-design-studio new mini --template minimal-satellite`, then generate it |
+| to try a large system with redundancy | `harness-design-studio new sat --template small-satellite`, then generate it |
+| to see a complete bench setup with ground equipment | `harness-design-studio new bench --template flatsat`, then [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md) |
+| to plan a design on paper first | `design-worksheet.md` in the templates (`harness-design-studio templates my-templates`) |
 | something went wrong | [`FAQ.md`](FAQ.md) |
 | what the examples and templates contain | [`../src/harness_design_studio/resources/examples/templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) |
 

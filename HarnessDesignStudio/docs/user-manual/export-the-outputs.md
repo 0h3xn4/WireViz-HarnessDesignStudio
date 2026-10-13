@@ -24,7 +24,7 @@ This page shows how to write the drawings and lists of a design (wire lists, pin
 **On the command line**:
 
 ```
-harness export wheel-link
+harness-design-studio export wheel-link
 ```
 
 ```
@@ -64,7 +64,7 @@ wheel-link/outputs/
 | `labels.csv` | One label for each connector and two for each wire. |
 | `mating_matrix.csv` | Which cable connector mates with which unit connector, with the gender of each. |
 | `traceability.csv` | Which interface is carried by which wires. |
-| `drc_report.md` | The same report as `harness drc`. |
+| `drc_report.md` | The same report as `harness-design-studio drc`. |
 | `changelog.csv`, `revision_report.md` | The change log and the history of each harness ([release a harness](release-a-harness.md)). |
 | `export.json` | The whole model in one JSON file, for other tools. |
 | `provenance.json` | Which tool version and which design made the outputs, the library, and every config file with its placeholder flag. |
@@ -101,7 +101,7 @@ Numbers in the tables and the YAML keep all their digits (a length of 1234.567 m
 The status chip in the top bar and the header of the **Harness** tab show the state (*Up to date*, *Outputs out of date*, *Not exported*, *Outputs changed*); a banner under the top bar offers **Export…** when the files are out of date. The **Harness plans** tab of the bottom panel spells it out: "Outputs: up to date with the design.", "Outputs: out of date, the design changed after the last export.", "Outputs: not exported yet.", "Outputs: files were changed after export." On the command line:
 
 ```
-harness verify wheel-link --outputs
+harness-design-studio verify wheel-link --outputs
 ```
 
 ```
@@ -115,12 +115,12 @@ error: [outputs_outdated] The model changed after the harness plans were generat
 error: [out_stale] The outputs were made from an older version of the design.
 ```
 
-It also finds files that were edited or deleted after the export (`[out_modified]`). Fix: `harness generate wheel-link` and `harness export wheel-link`.
+It also finds files that were edited or deleted after the export (`[out_modified]`). Fix: `harness-design-studio generate wheel-link` and `harness-design-studio export wheel-link`.
 
 ## Common mistakes
 
-- **"error: there are no harnesses to export; run `harness generate` first."** Generate first.
-- **Editing a file in `outputs/`.** The next export overwrites it, and `harness verify --outputs` reports it as changed. Change the design instead.
+- **"error: there are no harnesses to export; run `harness-design-studio generate` first."** Generate first.
+- **Editing a file in `outputs/`.** The next export overwrites it, and `harness-design-studio verify --outputs` reports it as changed. Change the design instead.
 - **Committing `outputs/` by accident.** The `.gitignore` the tool writes covers lock, backup and temporary files, not `outputs/`. Add `outputs/` yourself if you do not want it in Git ([use Git and CI](use-git-and-ci.md)).
 - **Opening the CSV in a spreadsheet shows a first line starting with `#`.** That is the stamp. It is meant to be there.
 - **`warning: [out_pdf_chars] These characters cannot be shown in the PDF ...`** A name or note holds characters outside the Windows-1252 set (for example Ω or Greek letters). The PDF prints `?`; the SVG, the CSV files and the workbook keep them. The warning names every character, and the files are written ([troubleshooting](../TROUBLESHOOTING.md)).

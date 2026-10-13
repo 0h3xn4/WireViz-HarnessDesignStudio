@@ -16,7 +16,7 @@ Harness Design Studio is a Python program with three layers inside `HarnessDesig
 
 ```
 gui/   the editor (PySide6): draws the diagram and the panels; thin
-cli/   the `harness` command: a thin shell over the same core
+cli/   the `harness-design-studio` command: a thin shell over the same core
 core/  everything else: the model, the rules, generation, outputs, change control
 ```
 

@@ -52,7 +52,7 @@ The owner of the repository decides what is merged. Releases are the owner's dec
 
 ## Report a problem
 
-Open an issue on GitHub. The project treats every problem with the tool, a document or a test as a *software problem report*; the template and the way it is handled are in [`HarnessDesignStudio/compliance/docs/PROBLEM_REPORTING.md`](HarnessDesignStudio/compliance/docs/PROBLEM_REPORTING.md) and [`HarnessDesignStudio/compliance/templates/problem_report.md`](HarnessDesignStudio/compliance/templates/problem_report.md). Say which version you used (`harness --version`; note that `master` and the released 0.1.0 print the same version), what you did, what you expected and what happened.
+Open an issue on GitHub. The project treats every problem with the tool, a document or a test as a *software problem report*; the template and the way it is handled are in [`HarnessDesignStudio/compliance/docs/PROBLEM_REPORTING.md`](HarnessDesignStudio/compliance/docs/PROBLEM_REPORTING.md) and [`HarnessDesignStudio/compliance/templates/problem_report.md`](HarnessDesignStudio/compliance/templates/problem_report.md). Say which version you used (`harness-design-studio --version`; note that `master` and the released 0.1.0 print the same version), what you did, what you expected and what happened.
 
 ## Change the documents
 

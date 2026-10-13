@@ -19,12 +19,12 @@ This page shows how to supply the numbers the tool does not invent (derating fac
 
 - Out of the box the tool holds **no engineering numbers**. Your programme decides them. (Optional profiles can fill in values from a standard; see [the end of this page](#values-from-a-standard-profiles). They still need an engineer's review.) Until you enter them they are **placeholders**: wire gauges stay *pending*, and checks that need a number say *not checked* instead of passing silently ([glossary](../GLOSSARY.md)).
 - Who supplies the numbers: an engineer on your programme, for example from your programme's derating standard (*derating* means using a wire or contact below its maximum for safety; see the [glossary](../GLOSSARY.md)). This page does not tell you which numbers to use.
-- You have a generated project, for example `harness new wheel-link --template first-steps` then `harness generate wheel-link`.
+- You have a generated project, for example `harness-design-studio new wheel-link --template first-steps` then `harness-design-studio generate wheel-link`.
 
 ## 1. See what is missing
 
 ```
-harness config wheel-link
+harness-design-studio config wheel-link
 ```
 
 ```
@@ -62,7 +62,7 @@ Every file in the project's `config/` folder has the same three keys: `name`, `p
 }
 ```
 
-`null` means "not decided". If you write a key at the top level, outside `values`, the file is refused. This is what `harness validate` prints when `"bundle_derating": 0.8` stands next to `values`:
+`null` means "not decided". If you write a key at the top level, outside `values`, the file is refused. This is what `harness-design-studio validate` prints when `"bundle_derating": 0.8` stands next to `values`:
 
 ```
 ERROR   quarantined: A configuration could not be loaded and was set aside: bundle_derating: Extra inputs are not permitted [config/derating.json]
@@ -86,7 +86,7 @@ gauge,amperes
 Load it. The command checks it before it writes anything:
 
 ```
-harness config wheel-link --ampacity-csv amp.csv
+harness-design-studio config wheel-link --ampacity-csv amp.csv
 ```
 
 ```
@@ -103,8 +103,8 @@ Engineering values: 1 of 17 set.
 Open the file named in the list, for example `config/derating.json`, in a text editor and set the values inside `values` (or use the **Engineering values** window of the app, see above). Close the project in the app first, or reload it afterwards. Then check:
 
 ```
-harness config wheel-link
-harness validate wheel-link
+harness-design-studio config wheel-link
+harness-design-studio validate wheel-link
 ```
 
 A thinner wire must not carry more than a thicker one; a factor must be above 0 and at most 1. The check says so if you break such a rule. The same problems appear as errors in the app (rule `config-invalid`).
@@ -120,7 +120,7 @@ A gauge needs more than the table. It also needs the current of the link and the
 3. Generate again:
 
 ```
-harness generate wheel-link
+harness-design-studio generate wheel-link
 ```
 
 ## 5. Mark a file as reviewed
@@ -132,11 +132,11 @@ When an engineer has reviewed all the values in a file, set `"placeholder": fals
 To see the machinery work before you have real values, the templates contain demo values. They are **not engineering data**. Never release a real design with them.
 
 ```
-harness templates my-templates
+harness-design-studio templates my-templates
 cp my-templates/config-demo-values/*.json wheel-link/config/
-harness import-lengths wheel-link my-templates/segment-lengths.csv --unit mm
-harness generate wheel-link
-harness export wheel-link
+harness-design-studio import-lengths wheel-link my-templates/segment-lengths.csv --unit mm
+harness-design-studio generate wheel-link
+harness-design-studio export wheel-link
 ```
 
 ```
@@ -165,7 +165,7 @@ The files stay marked `"placeholder": true`, so every result built on them still
 If your programme works to ECSS-Q-ST-30-11C or ECSS-E-ST-20-07C, you can start from the values the tool holds from the text of those standards as supplied to this project:
 
 ```
-harness config wheel-link --apply-profile ecss-q-st-30-11c
+harness-design-studio config wheel-link --apply-profile ecss-q-st-30-11c
 ```
 
 ```
@@ -180,7 +180,7 @@ Only values that are still unset are filled; each is printed with the requiremen
 
 - **Values at the top level of the file.** See [the shape of a config file](#the-shape-of-a-config-file).
 - **Setting `"placeholder": false` to make a warning go away.** The mark means "an engineer reviewed this". Do not use it for anything else.
-- **Gauges still pending after all values are set.** The link has no **Max current (A)**, or the wire has no length. `harness release` lists which ([release a harness](release-a-harness.md)).
+- **Gauges still pending after all values are set.** The link has no **Max current (A)**, or the wire has no length. `harness-design-studio release` lists which ([release a harness](release-a-harness.md)).
 - **Using the demo values for a real design.** They exist only to show the flow.
 
 More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).

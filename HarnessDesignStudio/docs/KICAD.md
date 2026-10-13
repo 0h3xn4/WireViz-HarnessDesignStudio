@@ -10,22 +10,22 @@ A KiCad netlist, in either format: the S-expression `.net` that KiCad's schemati
 
 ## Try it
 
-The templates (`harness templates FOLDER`) contain `wheel-connectors.net`, a small netlist for the connectors `RW1-J01` (power) and `RW1-J02` (RS-422) of the `first-steps` example, and `signal-map.csv`. Run these in an empty folder. The first command makes a copy of the example, the second copies the templates (the folder `my-templates` must not exist yet), and the third shows what the import would do without changing anything:
+The templates (`harness-design-studio templates FOLDER`) contain `wheel-connectors.net`, a small netlist for the connectors `RW1-J01` (power) and `RW1-J02` (RS-422) of the `first-steps` example, and `signal-map.csv`. Run these in an empty folder. The first command makes a copy of the example, the second copies the templates (the folder `my-templates` must not exist yet), and the third shows what the import would do without changing anything:
 
-    harness new wheel-link --template first-steps
-    harness templates my-templates
-    harness import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J \
+    harness-design-studio new wheel-link --template first-steps
+    harness-design-studio templates my-templates
+    harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J \
         --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run
 
 It prints one line per connector (`J1: OK updated RW1-J01 (2 signal pin(s))`, `J2: OK updated RW1-J02 (4 signal pin(s))`) and `Dry run: nothing was changed.` When the rows look right, run the same command again **without** `--dry-run`. It ends with `Imported 2 connector(s). Generate harnesses again to connect interfaces to the fixed pins.` Then connect the interfaces to those pins:
 
-    harness generate wheel-link
+    harness-design-studio generate wheel-link
 
 The result is `2 added, 0 changed, ...` and `2 interfaces and 6 wires checked: 0 error(s)`. The path `my-templates/wheel-connectors.net` is relative to the folder you run the commands in; with your own netlist, give its path.
 
 ## Command
 
-    harness import-netlist DIR FILE --unit OBC [--ref J7 ...] [--prefix J]
+    harness-design-studio import-netlist DIR FILE --unit OBC [--ref J7 ...] [--prefix J]
                            [--connector J1=OBC-J01] [--part J1=PART-ID]
                            [--signal-map NET=SIGNAL | FILE] [--pin-function] [--dry-run]
 

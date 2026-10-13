@@ -36,7 +36,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | Document | What it says |
 | --- | --- |
 | [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md) | The user guide that opens with **F1** in the app: the window and its tabs, modes, checks, export and import, menus, shortcuts |
-| [`CLI.md`](CLI.md) | Every `harness` command and option (generated from the program) |
+| [`CLI.md`](CLI.md) | Every `harness-design-studio` command and option (generated from the program) |
 | [`RULES.md`](RULES.md) | Every design rule: what, why, how to fix, severity (generated) |
 | [`CONFIG.md`](CONFIG.md) | Every key of `config/*.json` |
 | [`PLACEHOLDERS.md`](PLACEHOLDERS.md) | Which engineering values are still placeholders, who owns them |
@@ -52,9 +52,9 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | --- | --- |
 | [`examples/README.md`](examples/README.md) | The five example projects and the template files: what each is, how to run it, what you should see |
 | [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md) | A tour of the biggest example, a flatsat with ground equipment |
-| [`templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) | What each file written by `harness templates FOLDER` is for |
+| [`templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) | What each file written by `harness-design-studio templates FOLDER` is for |
 
-`harness new --list` shows the example projects and `harness templates FOLDER` copies the import templates, demo values, CI scripts and the review checklist. Screenshots of the app are in [`ux/qt/`](ux/qt/) (see [`ux/README.md`](ux/README.md) for the other picture folders).
+`harness-design-studio new --list` shows the example projects and `harness-design-studio templates FOLDER` copies the import templates, demo values, CI scripts and the review checklist. Screenshots of the app are in [`ux/qt/`](ux/qt/) (see [`ux/README.md`](ux/README.md) for the other picture folders).
 
 ## Stuck
 

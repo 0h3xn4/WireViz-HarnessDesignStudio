@@ -18,7 +18,7 @@ Never edit a generated file by hand. Change its source (or the program) and run 
 | File | Source | Regenerate | Test that fails if stale |
 | --- | --- | --- | --- |
 | `docs/RULES.md` | the rule registry in `core/drc/` | `python -m tools.gen_rule_docs` | `test_docs.py::test_rule_reference_is_up_to_date` |
-| `docs/CLI.md` | the `harness` argument parser and the examples in `tools/gen_cli_docs.py` | `python -m tools.gen_cli_docs` | `test_docs.py::test_cli_reference_is_up_to_date` |
+| `docs/CLI.md` | the `harness-design-studio` argument parser and the examples in `tools/gen_cli_docs.py` | `python -m tools.gen_cli_docs` | `test_docs.py::test_cli_reference_is_up_to_date` |
 | `src/harness_design_studio/resources/guide/index.html` (the **F1** guide) | `docs/guide/USER_GUIDE.md` | `python -m tools.build_guide` | `test_docs.py::test_guide_html_is_up_to_date` |
 | the example projects in `src/harness_design_studio/resources/examples/projects/` | the editing functions and `tools/build_examples.py` | `python -m tools.build_examples` | `test_examples.py` |
 | `compliance/compliance_matrix.csv` | `compliance/requirements/*.csv` and `compliance/assessment/*.csv` | `python -m tools.build_compliance_matrix` | `test_compliance_matrix.py` |
@@ -51,7 +51,7 @@ There are no pictures of the older Harness plans tab, the generate preview and t
 4. **Commands and output.** Run every command you show, in a scratch folder, and paste the real output. Output that depends on the machine (a model hash, a date) is marked as such.
 5. **Anchors.** GitHub makes a heading's anchor by lower-casing the text, dropping punctuation and backticks, and replacing spaces with hyphens: `## 2. Add units` is `#2-add-units`. A link to a heading that you rename breaks. Search for the old anchor before you rename: `grep -rn "old-anchor" --include=*.md .`.
 6. **Check.** Run the two checks in the next section.
-7. **If the page describes the program,** check the button and menu names against `gui/strings.py` and `gui/main_window.py`, and the command names and options against `harness COMMAND --help`.
+7. **If the page describes the program,** check the button and menu names against `gui/strings.py` and `gui/main_window.py`, and the command names and options against `harness-design-studio COMMAND --help`.
 8. **Things only on `master`.** If a page uses something that is not in the latest release yet (it is listed under `## Unreleased` in [`../../CHANGELOG.md`](../../CHANGELOG.md)), say so on the page. Where a page keeps a note for people who have the 0.1.0 packages, say "not in the 0.1.0 packages".
 
 To change the in-app guide, edit `docs/guide/USER_GUIDE.md` and run `python -m tools.build_guide`. Keep paragraphs under 700 characters, name only buttons that exist, and document every new command in it (`test_docs.py` checks all three).

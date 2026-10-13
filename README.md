@@ -44,7 +44,7 @@ sha256sum -c SHA256SUMS --ignore-missing
 sudo apt install ./harness-design-studio_1.0.0_amd64.deb
 ```
 
-That installs the `harness` command and the `harness-gui` app; the packages are not signed, so the checksum check is the only proof that the download is intact. The release page also has a `.tar.gz` with an `install.sh` that needs no administrator rights.
+That installs the `harness-design-studio` command line tool (`harness` works as a short alias) and the `harness-design-studio-gui` app; the packages are not signed, so the checksum check is the only proof that the download is intact. The release page also has a `.tar.gz` with an `install.sh` that needs no administrator rights.
 
 **From the source code.** These commands install the command line tool in a private Python environment and make a practice project:
 
@@ -54,12 +54,12 @@ git clone https://github.com/0h3xn4/WireViz-harnessdesignstudio.git
 cd WireViz-harnessdesignstudio/HarnessDesignStudio
 python3 -m venv .venv && . .venv/bin/activate
 pip install ".[gui]"
-harness new wheel-link --template first-steps
-harness generate wheel-link
-harness export wheel-link
+harness-design-studio new wheel-link --template first-steps
+harness-design-studio generate wheel-link
+harness-design-studio export wheel-link
 ```
 
-You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 units, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `38 files written to wheel-link/outputs (model da1379ad567b).` The drawings and lists are in `wheel-link/outputs/`. To see the diagram, run `harness-gui` and open the project with **File > Open project…**.
+(`harness` still works as a short name for `harness-design-studio`.) You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 units, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `38 files written to wheel-link/outputs (model da1379ad567b).` The drawings and lists are in `wheel-link/outputs/`. To see the diagram, run `harness-gui` and open the project with **File > Open project…**.
 
 [`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md) has all the ways to install (package, tarball, source) and explains what to do if something fails. The full walk-through with the output of every command is [`GETTING_STARTED.md`](HarnessDesignStudio/docs/GETTING_STARTED.md).
 
@@ -106,7 +106,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 - **Version `1.0.0`**, released on the repository owner's instruction on 2026-10-12 (tag `v1.0.0` on commit `0c6a96a`; the packages and `SHA256SUMS` are on the GitHub release page). The open engineering decisions were recorded as defaults on that day: the tool ships no standard or part data, so the real derating and EMC values and the approved parts list have not been supplied and results rest on placeholders and example parts. [`HarnessDesignStudio/README.md#status`](HarnessDesignStudio/README.md#status) has the details.
 - **Created mainly by an AI.** Harness Design Studio was written mainly by Claude (Anthropic's AI assistant, used through Claude Code); the owner set the requirements and approved the decisions and releases. No other person has reviewed it independently, and it makes no claim of compliance with any standard. Check its results before relying on them. The records are in [`HarnessDesignStudio/compliance/`](HarnessDesignStudio/compliance/README.md).
-- **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](HarnessDesignStudio/CHANGELOG.md) lists what is new.
+- **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness-design-studio new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](HarnessDesignStudio/CHANGELOG.md) lists what is new.
 - **Licence.** The [`LICENSE`](LICENSE) file in this repository is the GPL-3.0 licence of WireViz. The licence of the code in `HarnessDesignStudio/` has not been decided (decision D-02 in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md), kept open for 1.0.0 in D-143; the package metadata says `LicenseRef-Proprietary`; the copyright holder is the repository owner, GitHub account `0h3xn4`). No licence has been granted for it yet.
 
 ## What this repository adds to WireViz
