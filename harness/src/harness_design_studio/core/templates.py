@@ -57,6 +57,8 @@ TEMPLATES = (
 
 def _usable(dest: Path) -> bool:
     """A folder that does not exist yet, or exists and is empty."""
+    if dest.is_symlink():  # a link (also a dangling one) is never written through
+        return False
     return not dest.exists() or (dest.is_dir() and not any(dest.iterdir()))
 
 
@@ -74,12 +76,14 @@ def create_project(dest: Path, template: str, name: str | None = None) -> Projec
         raise TemplateError(f"Unknown template '{template}'. Choose one of: {', '.join(known)}.")
     if not _usable(dest):
         raise TemplateError(f"{dest} already exists and is not an empty folder; choose a new one.")
+    if name is not None and not name.strip():
+        raise TemplateError("The project name must not be empty.")
     loaded = load_project(_root() / "projects" / template)
     if loaded.has_errors:
         raise TemplateError(f"The bundled example '{template}' is damaged.")
     project = loaded.project
-    if name:
-        project.meta = evolve(project.meta, name=name)
+    if name is not None:
+        project.meta = evolve(project.meta, name=name.strip())
     save_project(project, dest)
     return project
 

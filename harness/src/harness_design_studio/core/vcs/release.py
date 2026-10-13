@@ -155,6 +155,17 @@ def _common(project: Project, hid: str, by: str, comment: str | None, when: str)
         )
     if not valid_date(when):
         out.append(Blocker("bad_date", "The date must look like 2026-03-31.", about="date"))
+    else:
+        last = max((e.when for e in project.changelog.values() if e.harness_id == hid), default="")
+        if valid_date(last) and when < last:  # ISO dates sort as dates
+            out.append(
+                Blocker(
+                    "date_before_last",
+                    f"The date {when} is earlier than the last change-log entry of {hid} "
+                    f"({last}). Use that date or a later one.",
+                    about="date",
+                )
+            )
     return out
 
 

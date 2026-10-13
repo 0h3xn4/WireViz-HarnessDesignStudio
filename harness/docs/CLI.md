@@ -7,7 +7,7 @@ Generated from the program by `python -m tools.gen_cli_docs`; do not edit by han
 | Code | Meaning |
 | --- | --- |
 | 0 | success (warnings are allowed) |
-| 1 | the project has errors, or a step is blocked (for example a release) |
+| 1 | the project has errors, or a step is blocked (for example a release, or an import or `config` that found problems and changed nothing) |
 | 2 | usage error, or a project or file that could not be read |
 | 130 | interrupted with Ctrl-C |
 
@@ -255,7 +255,7 @@ harness import-parts my-design connectors.xlsx --approved Yes --category connect
 
 ### harness import-lengths
 
-Import segment lengths, for example exported from the mechanical CAD. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).
+Import segment lengths, for example exported from the mechanical CAD. The columns are read by position (harness, segment, length), not by their headings. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).
 
 `harness import-lengths project file [options]`
 

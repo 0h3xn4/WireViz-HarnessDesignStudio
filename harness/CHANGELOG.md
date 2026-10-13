@@ -7,6 +7,12 @@ Versions follow semantic versioning. Every project file records the tool version
 ### Changed
 
 - The editor window and the taskbar entry now show the Harness Design Studio logo (drawn in code, so the packaged program needs no SVG support).
+### Fixed
+
+- A review, release or new revision cannot be dated before the last change-log entry of the same harness (`date_before_last`).
+- `harness new --name` with a blank name is refused, and a name is stored without surrounding spaces. A link (also a dangling one) is not accepted as the folder of a new project, with the usual "not an empty folder" message.
+- `import-lengths` help, `IMPORTS.md` and the templates README say that its three columns are read by position. The exit code table in `CLI.md` names the imports and `config` under exit code 1.
+- `FILE_FORMAT.md` and `TROUBLESHOOTING.md` describe the empty `.harness.lock.takeover` file.
 
 ## 1.0.0 (2026-10-12; released on the owner's instruction, see compliance/SIGNOFF.md; not a statement of compliance)
 
