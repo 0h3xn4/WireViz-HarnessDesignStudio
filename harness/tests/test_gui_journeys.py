@@ -13,11 +13,13 @@ from harness_design_studio.core import edit  # noqa: E402
 from harness_design_studio.core.io.layout import model_hash  # noqa: E402
 from harness_design_studio.core.io.loader import load_project  # noqa: E402
 from harness_design_studio.core.samples import new_project  # noqa: E402
+from harness_design_studio.core.templates import TEMPLATES  # noqa: E402
 from tests.gui_helpers import (  # noqa: E402
     DialogScript,
     click_link,
     click_unit,
     make_window,
+    new_project_answers,
     unit_item,
 )
 
@@ -519,8 +521,7 @@ def test_keyboard_selection_nudge_and_connect(win) -> None:  # type: ignore[no-u
 
 def test_j10_new_save_open_roundtrip(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
     folder = tmp_path / "proj"
-    win.ask_folder = lambda title: str(folder)
-    win.ask_text = lambda t, label, default: "My satellite"
+    new_project_answers(win, folder, "My satellite")
     win.new_project_flow()
     assert (folder / "project.json").exists() and win.ctl.root == folder
     assert win.windowTitle().startswith("My satellite")
@@ -541,10 +542,9 @@ def test_new_project_refuses_non_empty_folder(win, tmp_path) -> None:  # type: i
     busy = tmp_path / "busy"
     busy.mkdir()
     (busy / "x.txt").write_text("hi")
-    win.ask_folder = lambda title: str(busy)
-    win.ask_text = lambda t, label, default: "n"
+    shown = new_project_answers(win, busy, "n")
     win.new_project_flow()
-    assert "empty folder" in last_toast(win) and win.ctl.root is None
+    assert "empty folder" in shown[0].errors()["folder"] and win.ctl.root is None  # type: ignore[attr-defined]
 
 
 def test_sample_save_as_keeps_changes_and_clears_banner(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
@@ -560,8 +560,7 @@ def test_autosave_journal_and_restore_after_crash(qtbot, tmp_path) -> None:  # t
     folder = tmp_path / "proj"
     w1 = make_window(tmp_path / "a", journal_ms=10)
     qtbot.addWidget(w1)
-    w1.ask_folder = lambda title: str(folder)
-    w1.ask_text = lambda t, label, default: "P"
+    new_project_answers(w1, folder, "P")
     w1.new_project_flow()
     button(w1, "add-sensor").click()  # unsaved change
     from harness_design_studio.core.recovery import journal_path
@@ -590,8 +589,7 @@ def test_discarding_the_journal(qtbot, tmp_path) -> None:  # type: ignore[no-unt
     folder = tmp_path / "proj"
     w1 = make_window(tmp_path / "a", journal_ms=10)
     qtbot.addWidget(w1)
-    w1.ask_folder = lambda title: str(folder)
-    w1.ask_text = lambda t, label, default: "P"
+    new_project_answers(w1, folder, "P")
     w1.new_project_flow()
     button(w1, "add-sensor").click()
     w1.ctl.write_journal_now()
@@ -607,8 +605,7 @@ def test_project_open_twice_offers_read_only(qtbot, tmp_path) -> None:  # type: 
     folder = tmp_path / "proj"
     w1 = make_window(tmp_path / "a")
     qtbot.addWidget(w1)
-    w1.ask_folder = lambda title: str(folder)
-    w1.ask_text = lambda t, label, default: "P"
+    new_project_answers(w1, folder, "P")
     w1.new_project_flow()
     w2 = make_window(tmp_path / "b")
     qtbot.addWidget(w2)
@@ -803,17 +800,11 @@ def test_link_labels_do_not_overlap_in_a_dense_diagram(qtbot, tmp_path) -> None:
 def test_new_project_from_an_example(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
     """REQ-GUI-03: the editor can start from the same examples as `harness new --template`."""
     folder = tmp_path / "wheel"
-    seen: list[str] = []
-
-    def choose(title: str, text: str, buttons: list[str]) -> int:
-        seen.extend(buttons)
-        return buttons.index("first-steps")
-
-    win.ask_choice = choose  # type: ignore[assignment]
-    win.ask_folder = lambda title: str(folder)
-    win.ask_text = lambda t, label, default: "Wheel link"
+    shown = new_project_answers(win, folder, "Wheel link", template="first-steps")
     win.new_from_example_flow()
-    assert seen[:4] == ["blank", "first-steps", "minimal-satellite", "small-satellite"]
+    names = [t.name for t in TEMPLATES]
+    assert names[:4] == ["blank", "first-steps", "minimal-satellite", "small-satellite"]
+    assert shown[0].model.rowCount() == len(names)  # type: ignore[attr-defined]  # one list of examples
     assert (folder / "project.json").exists() and win.ctl.root == folder
     assert set(win.ctl.project.units) == {"PCDU1", "OBC1", "RW1"}  # the first-steps example
     assert win.windowTitle().startswith("Wheel link")
@@ -821,7 +812,7 @@ def test_new_project_from_an_example(win, tmp_path) -> None:  # type: ignore[no-
 
 
 def test_choosing_cancel_in_the_example_dialog_changes_nothing(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
-    win.ask_choice = lambda title, text, buttons: len(buttons) - 1  # type: ignore[assignment]
+    new_project_answers(win, tmp_path / "x", "n", accept=False)
     root_before = win.ctl.root
     win.new_from_example_flow()
     assert win.ctl.root == root_before and not (tmp_path / "x").exists()

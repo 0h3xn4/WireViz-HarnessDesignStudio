@@ -490,6 +490,30 @@ class PaletteEntry:
     hint: str = ""
 
 
+def rank_entries(entries: list[PaletteEntry], text: str) -> list[PaletteEntry]:
+    """The entries whose label holds every word of `text`, best first: a label that starts with
+    the text, then a label with a word that starts with it, then the rest in their own order.
+    There is no cap: the list scrolls."""
+    words = text.lower().split()
+    if not words:
+        return list(entries)
+    whole = text.lower().strip()
+    ranked: list[tuple[int, int, PaletteEntry]] = []
+    for position, e in enumerate(entries):
+        label = e.label.lower()
+        if not all(w in label for w in words):
+            continue
+        if label.startswith(whole):
+            rank = 0
+        elif any(part.startswith(words[0]) for part in label.replace("(", " ").split()):
+            rank = 1
+        else:
+            rank = 2
+        ranked.append((rank, position, e))
+    ranked.sort(key=lambda r: (r[0], r[1]))
+    return [e for _r, _p, e in ranked]
+
+
 class CommandPalette(QDialog):
     """Ctrl+K: every action and every unit/interface ID in one searchable list."""
 
@@ -518,21 +542,35 @@ class CommandPalette(QDialog):
         self.input.setFocus()
 
     def _filter(self, text: str) -> None:
-        words = text.lower().split()
         self.list.clear()
-        shown = [e for e in self.entries if all(w in e.label.lower() for w in words)][:14]
+        shown = rank_entries(self.entries, text)
         for e in shown:
             item = QListWidgetItem(f"{e.label}    {e.hint}".rstrip())
             item.setData(Qt.ItemDataRole.UserRole, e)
             self.list.addItem(item)
         if shown:
             self.list.setCurrentRow(0)
+        else:
+            none = QListWidgetItem(strings.PALETTE_NO_MATCH)
+            none.setFlags(Qt.ItemFlag.NoItemFlags)
+            self.list.addItem(none)
+
+    def shown_labels(self) -> list[str]:
+        """The labels listed now, best match first (for tests and screen readers)."""
+        out = []
+        for i in range(self.list.count()):
+            entry = self.list.item(i).data(Qt.ItemDataRole.UserRole)
+            if entry is not None:
+                out.append(entry.label)
+        return out
 
     def _run_current(self) -> None:
         item = self.list.currentItem()
         if item is None:
             return
-        entry: PaletteEntry = item.data(Qt.ItemDataRole.UserRole)
+        entry: PaletteEntry | None = item.data(Qt.ItemDataRole.UserRole)
+        if entry is None:
+            return
         self.accept()
         entry.run()
 
