@@ -7,6 +7,7 @@ the pixel tests paint the real items into an image."""
 
 import time
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -733,7 +734,7 @@ def test_the_menu_key_opens_the_menu_of_the_unit_or_link_that_has_the_focus(win)
     from PySide6.QtCore import QPoint
     from PySide6.QtGui import QContextMenuEvent
 
-    shown: list = []
+    shown: list[Any] = []
     win.view.exec_menu = lambda menu, at: shown.append(menu)
     key = QContextMenuEvent.Reason.Keyboard
     win.view.dscene.unit_items["HTR1"].setFocus()
