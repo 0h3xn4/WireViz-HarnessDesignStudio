@@ -5,6 +5,8 @@ small picture (a bolt for power, a wave for an analog signal, a bus for CAN, ...
 of connector has its own outline (D-shaped, circular, RJ45, coax) with its pin dots.
 """
 
+import math
+
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPolygonF
 
@@ -185,6 +187,124 @@ def draw_link_glyph(
         QPen(color, 1.6, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
     )
     p.setBrush(QBrush(color) if draw in (_bolt, _pyro) else Qt.BrushStyle.NoBrush)
+    draw(p)
+    p.restore()
+
+
+# ---- units: the picture on a card (what kind of equipment it is) --------------------------------
+# Each is drawn in the same 18 x 14 box as the link pictures, from the key `describe.unit_glyph` gives.
+def _u_computer(p: QPainter) -> None:  # a chip: body with pins on every side
+    p.drawRoundedRect(QRectF(3.5, 2.5, 11, 9), 1.5, 1.5)
+    for x in (6.5, 9, 11.5):
+        _line(p, x, 0.5, x, 2.5)
+        _line(p, x, 11.5, x, 13.5)
+    for y in (5, 9):
+        _line(p, 1.5, y, 3.5, y)
+        _line(p, 14.5, y, 16.5, y)
+
+
+def _u_power(p: QPainter) -> None:  # a battery with its plus
+    p.drawRoundedRect(QRectF(1, 3, 13, 8), 1.5, 1.5)
+    p.drawRect(QRectF(14, 5.5, 2.5, 3))
+    _line(p, 4.5, 7, 8.5, 7)
+    _line(p, 6.5, 5, 6.5, 9)
+
+
+def _u_comms(p: QPainter) -> None:  # an antenna with waves
+    _line(p, 9, 6, 9, 13.5)
+    p.drawEllipse(QPointF(9, 5), 1.2, 1.2)
+    for r in (3.5, 6.5):
+        rect = QRectF(9 - r, 5 - r, 2 * r, 2 * r)
+        p.drawArc(rect, 40 * 16, 100 * 16)
+        p.drawArc(rect, 140 * 16, 100 * 16)
+
+
+def _u_thermal(p: QPainter) -> None:  # a thermometer
+    p.drawRoundedRect(QRectF(7, 0.5, 4, 9), 2, 2)
+    p.drawEllipse(QPointF(9, 11), 3, 3)
+    _line(p, 9, 4, 9, 9)
+
+
+def _u_payload(p: QPainter) -> None:  # a camera
+    p.drawRoundedRect(QRectF(1, 3, 16, 10), 2, 2)
+    p.drawEllipse(QPointF(9, 8), 3, 3)
+    _line(p, 5, 1.5, 8, 1.5)
+
+
+def _u_mechanism(p: QPainter) -> None:  # a gear
+    p.drawEllipse(QPointF(9, 7), 3, 3)
+    for k in range(8):
+        a = math.radians(k * 45)
+        _line(
+            p,
+            9 + 4.2 * math.cos(a),
+            7 + 4.2 * math.sin(a),
+            9 + 6.4 * math.cos(a),
+            7 + 6.4 * math.sin(a),
+        )
+
+
+def _u_sensor(p: QPainter) -> None:  # a target
+    p.drawEllipse(QPointF(9, 7), 4.5, 4.5)
+    p.drawEllipse(QPointF(9, 7), 1, 1)
+    for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0)):
+        _line(p, 9 + dx * 4.5, 7 + dy * 4.5, 9 + dx * 6.8, 7 + dy * 6.8)
+
+
+def _u_actuator(p: QPainter) -> None:  # a wheel with spokes
+    p.drawEllipse(QPointF(9, 7), 6.2, 6.2)
+    p.drawEllipse(QPointF(9, 7), 1.2, 1.2)
+    for k in range(3):
+        a = math.radians(90 + k * 120)
+        _line(
+            p,
+            9 + 1.2 * math.cos(a),
+            7 + 1.2 * math.sin(a),
+            9 + 6.2 * math.cos(a),
+            7 + 6.2 * math.sin(a),
+        )
+
+
+def _u_egse(p: QPainter) -> None:  # a plug
+    p.drawRoundedRect(QRectF(5, 5, 8, 5), 1.5, 1.5)
+    _line(p, 7, 1, 7, 5)
+    _line(p, 11, 1, 11, 5)
+    _line(p, 9, 10, 9, 13.5)
+
+
+def _u_unit(p: QPainter) -> None:  # an equipment box
+    p.drawRoundedRect(QRectF(2, 2, 14, 10), 2, 2)
+    _line(p, 2, 5.5, 16, 5.5)
+
+
+_UNIT_GLYPHS = {
+    "computer": _u_computer,
+    "power": _u_power,
+    "comms": _u_comms,
+    "thermal": _u_thermal,
+    "payload": _u_payload,
+    "mechanism": _u_mechanism,
+    "pyro": _pyro,
+    "sensor": _u_sensor,
+    "actuator": _u_actuator,
+    "egse": _u_egse,
+    "unit": _u_unit,
+}
+
+
+def draw_unit_glyph(
+    p: QPainter, x: float, y: float, kind: str, color: QColor, scale: float = 1.0
+) -> None:
+    """The picture of a kind of equipment (a key of `describe.UNIT_GLYPHS`), its top left corner at
+    (x, y) in an 18 x 14 box; an unknown key draws the plain equipment box."""
+    draw = _UNIT_GLYPHS.get(kind, _u_unit)
+    p.save()
+    p.translate(x, y)
+    p.scale(scale, scale)
+    p.setPen(
+        QPen(color, 1.4, Qt.PenStyle.SolidLine, Qt.PenCapStyle.RoundCap, Qt.PenJoinStyle.RoundJoin)
+    )
+    p.setBrush(QBrush(color) if draw is _pyro else Qt.BrushStyle.NoBrush)
     draw(p)
     p.restore()
 

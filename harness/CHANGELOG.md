@@ -18,6 +18,9 @@ Versions follow semantic versioning. Every project file records the tool version
 - Checks tab (`gui/checks_panel.py`): one row for each of the design rules with its result (pass, fail, not checked, pending), a summary strip ("34 rules: 20 passed · 2 failed · 12 not checked · 4 pending values"), the requirement IDs of each rule, the offending objects (Enter or double-click shows one), and the exact configuration value a pending rule waits for. A check that is running can be cancelled, and a failed check leaves a banner until the next one succeeds.
 - Engineering values form (`gui/config_dialog.py`): **Supply value…** on a pending rule opens every engineering value grouped by config file, with units, the placeholder flag, inline reasons for a refused value and locked values disabled with the reason; Apply sets all changes as one undo step and the checks run again.
 - A status-bar link "n values pending · n rules not checked" (`PendingValuesLink`) that filters the Checks tab.
+- Canvas state marks: every unit card and link label shows its problems, warnings, values still to enter and "not checked yet" as a badge (icon and count), a click on a badge asks for the Problems of that object; units, links and connectors that a release locks show a lock and "W001 A" and a faint released tint; the legend lists only the marks that are on the diagram.
+- A corner chip on the diagram says whether the harnesses and the outputs are out of date, not generated, not exported or up to date.
+- Why? in the diagram's right-click menu for links, units and connectors, and on the "n auto" chip: why the tool chose a connector and what generation recorded.
 
 ### Changed
 
@@ -26,6 +29,9 @@ Versions follow semantic versioning. Every project file records the tool version
 - Text is 13 px at 100 % (it was 14) and follows the 12 / 13 / 16 / 20 px type scale; spacing follows 4 / 8 / 12 / 16 / 24 / 32 px; all buttons, combo boxes and fields are 32 px high.
 - Hashes, IDs, requirement IDs, pin and wire numbers and the drawing preview use IBM Plex Mono.
 - The drawing preview takes its page and background colours from the theme.
+- Diagram cards show a picture of their kind of unit, the number of connectors ("12 conn"), "+3" where connector pictures do not fit, and the "n auto" count in Guided mode too; NOMINAL is shown only where the project has a redundant chain; FLIGHT or GROUND can be set per zone from the unit's menu (a viewer setting, not in the project file).
+- A missing voltage or current on a power link reads "V ?" or "A ?" in the pending style instead of staying blank; the link tooltip lists harness, wire count, state and lock.
+- Zoomed out, links of different kinds differ by dash pattern and a small picture, and the selected or hovered link keeps a readable label.
 - The diagram canvas selects several items (Shift-click, Ctrl-click, a rubber band, Ctrl+A), shows what they have in common in Properties and moves, deletes, aligns, spaces out and duplicates them as one undo step (Ctrl+D, Edit menu, right-click menu).
 - Diagram navigation: Ctrl+wheel zooms, the wheel scrolls, the middle button or Space with a drag pans; F fits, Shift+F zooms to the selection, Ctrl+0 shows 100 %; the zoom level is shown and the View menu item "UI scale" is now "Interface size".
 - Double-click or Enter on a unit or link opens it in the Harness plans (or says it is not generated yet); a right-click menu offers the same actions as the menus, with the reason for each greyed entry, and "Add unit here"; Ctrl+F finds and marks units and links.

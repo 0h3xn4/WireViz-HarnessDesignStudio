@@ -35,9 +35,11 @@ from harness_design_studio.core.recovery import (
     write_journal,
 )
 from harness_design_studio.core.samples import mini3, new_project
+from harness_design_studio.core.vcs import lockview
 from harness_design_studio.core.vcs.release import ReleasePlan
 
 from . import strings
+from .canvas_state import StateIndex, build_index
 from .drc_process import abort_check, run_check
 
 JOURNAL_DELAY_MS = 1500
@@ -1140,6 +1142,43 @@ class EditorController(QObject):
         self._drc_timer.stop()
         self.wait_drc()
         self.drcStateChanged.emit()
+
+    # ==== Canvas state support (ux/cstate): added members only, nothing above changes =============
+
+    problemsRequested = Signal(str)  # object ID: show the Problems list filtered to that object
+    whyRequested = Signal(str, str)  # kind ("interface" | "unit" | "connector"), id: show why
+
+    _locks_cache: tuple[tuple[int, int, int], lockview.Locked] | None = None
+    _state_cache: tuple[tuple[object, ...], StateIndex] | None = None
+
+    def locked_objects(self) -> lockview.Locked:
+        """Which objects a release locks, (kind, id) -> the harnesses (ID, revision) that lock
+        it; worked out once per model revision (a canvas asks for it on every change)."""
+        key = (self._installs, self.history.revision, id(self.project))
+        if self._locks_cache is None or self._locks_cache[0] != key:
+            self._locks_cache = (key, lockview.locked_objects(self.project))
+        return self._locks_cache[1]
+
+    def state_index(self) -> StateIndex:
+        """Problems, pending values, not-checked, auto-filled connectors and locks of every unit
+        and link, as an index (see `canvas_state`); rebuilt only when the findings, the check
+        result or the model changed, so asking for it is cheap."""
+        checked = self.drc_has_result() and self.drc_error is None
+        key = (self.findings_key(), checked)
+        if self._state_cache is None or self._state_cache[0] != key:
+            index = build_index(
+                self.project, self.open_findings(), self.locked_objects(), checked=checked
+            )
+            self._state_cache = (key, index)
+        return self._state_cache[1]
+
+    def request_problems(self, object_id: str) -> None:
+        """A badge on the canvas was clicked: ask the window to show Problems for this object."""
+        self.problemsRequested.emit(object_id)
+
+    def request_why(self, kind: str, ident: str) -> None:
+        """ "Why?" on the canvas: ask the window to show why this link, unit or connector is so."""
+        self.whyRequested.emit(kind, ident)
 
 
 def reason_of(exc: BaseException) -> str:

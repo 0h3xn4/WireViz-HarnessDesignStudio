@@ -1,11 +1,12 @@
 """Block-diagram canvas: zone lanes, unit boxes, interface links, minimap."""
 
+import html
 import math
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Sequence
 from dataclasses import dataclass
 from functools import partial
 
-from PySide6.QtCore import QLineF, QPoint, QPointF, QRect, QRectF, Qt, QTimer, Signal
+from PySide6.QtCore import QLineF, QPoint, QPointF, QRect, QRectF, QSettings, Qt, QTimer, Signal
 from PySide6.QtGui import (
     QAction,
     QBrush,
@@ -43,8 +44,11 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio.core import describe, edit, routing
 from harness_design_studio.core.model import Project
+from harness_design_studio.gui import canvas_badges as cbadges
 from harness_design_studio.gui import glyphs, strings
+from harness_design_studio.gui.canvas_state import NO_INDEX, ObjectState, StateIndex, badge_text
 from harness_design_studio.gui.controller import Delta, EditorController, Selection
+from harness_design_studio.gui.icons import draw_icon
 from harness_design_studio.gui.theme import ThemeManager
 from harness_design_studio.gui.tokens import CATEGORIES, style_category
 
@@ -79,10 +83,20 @@ class CanvasMetrics:
     minimap_small_below: int = 560  # viewport height under which the small map is used
     minimap_hide_below: int = 360  # ... and under which there is none
     legend_collapse_below: int = 640  # viewport height under which the legend starts collapsed
+    badge_h: float = 18.0  # the marks on a card's header (problems, lock, auto)
+    chip_badge_h: float = 14.0  # the badge on a link's label
+    state_delay_ms: int = 120  # the state marks are rebuilt this long after the last edit
+    far_marker_min_lod: float = (
+        0.08  # far out, a link kind's marker is drawn from this scale up ...
+    )
+    far_marker_max_links: int = 400  # ... in a diagram with no more links than this
+    far_marker_px: tuple[float, float] = (18.0, 14.0)  # its size on the screen
+    min_chip_px: float = 18.0  # the label of a selected or hovered link is never smaller than this
 
 
 METRICS = CanvasMetrics()
 W = METRICS.unit_w
+RELEASED_TINT = 0.09  # the share of the "released" colour laid over a card that a release locks
 HEADER_H = METRICS.header_h
 PORT_ROW = METRICS.port_row
 GRID = METRICS.grid
@@ -97,6 +111,34 @@ def elide(fm: QFontMetrics, text: str, width: float, *, middle: bool = False) ->
     """The text cut to `width` with an ellipsis (in the middle for names that differ at the end)."""
     mode = Qt.TextElideMode.ElideMiddle if middle else Qt.TextElideMode.ElideRight
     return fm.elidedText(text, mode, max(1, int(width)))
+
+
+@dataclass(frozen=True)
+class CardFacts:
+    """What a card shows that comes from the model, worked out once per edit for one unit."""
+
+    key: tuple[int, int]
+    groups: tuple[tuple[tuple[str, int, str], int], ...]  # ((family, pins, gender), how many)
+    total: int  # all its box connectors
+    glyph: str  # describe.unit_glyph
+
+
+@dataclass
+class CardLayout:
+    """Where the marks of a card go (item coordinates), worked out once and kept until what they
+    depend on changes. `hits` answer the pointer; `limit` is how far right the connector row of a
+    guided card may run; `id_w` how wide the unit's ID may be."""
+
+    key: tuple[object, ...]
+    badges: list[tuple[QRectF, str, str]]  # (rect, state key, text)
+    tags: list[tuple[QRectF, str, str, bool]]  # (rect, text, token, dashed)
+    lock: tuple[QRectF, str] | None
+    auto: tuple[QRectF, str] | None
+    conn: tuple[QRectF, str] | None
+    id_w: float
+    limit: float
+    name_w: float
+    hits: list[cbadges.Hit]
 
 
 class UnitItem(QGraphicsItem):
@@ -121,6 +163,9 @@ class UnitItem(QGraphicsItem):
         self.setAcceptHoverEvents(True)
         self.setZValue(2)
         self._placing = False  # True while the scene puts the unit where the model says
+        self._facts: CardFacts | None = None
+        self._card_cache: CardLayout | None = None
+        self._overview = False  # the last paint drew the overview box (no marks to point at)
 
     def place(self, x: float, y: float) -> None:
         """Put the unit where the model says (never clamped: the scene grows to hold it)."""
@@ -243,6 +288,173 @@ class UnitItem(QGraphicsItem):
             )
         return out
 
+    # ---- what the card shows: facts from the model, marks of the state ------------------------
+    def facts(self) -> CardFacts:
+        """The connector groups, their total and the picture of the unit, worked out once per edit."""
+        key = self.dscene.facts_key()
+        f = self._facts
+        if f is None or f.key != key:
+            project = self.ctl.project
+            counts: dict[tuple[str, int, str], int] = {}
+            conns = self.connectors()
+            for c in conns:
+                fam = describe.connector_family(project, str(c.id))
+                counts[fam] = counts.get(fam, 0) + 1
+            glyph = describe.unit_glyph(project, self.unit_id, self.dscene.unit_categories())
+            f = self._facts = CardFacts(key, tuple(counts.items()), len(conns), glyph)
+        return f
+
+    def _tag_specs(self, unit: object, state: str) -> list[tuple[str, str, bool, str]]:
+        """The little words after the ID: (text, colour token, dashed, tooltip). NOMINAL appears
+        only where the project has a redundant chain; FLIGHT / GROUND only for zones the viewer tagged."""
+        sc = self.dscene
+        side = getattr(unit, "side", "none")
+        out: list[tuple[str, str, bool, str]] = []
+        if state == "from":
+            out.append((strings.TAG_FROM, "primary", False, ""))
+        if side == "redundant":
+            out.append((strings.TAG_REDUNDANT, "text-muted", True, strings.TAG_REDUNDANT_TIP))
+        elif sc.has_redundancy():
+            out.append((strings.TAG_NOMINAL, "text-muted", False, strings.TAG_NOMINAL_TIP))
+        if sc.zone_tags.any():
+            zone = getattr(unit, "zone", None)
+            if not zone and 0 <= self.lane() < len(sc.zone_names):
+                zone = sc.zone_names[self.lane()]
+            tag = sc.zone_tags.tag_of(zone or "")
+            if tag:
+                text = strings.TAG_FLIGHT if tag == "flight" else strings.TAG_GROUND
+                out.append((text, "text-muted", False, strings.ZONE_TAG_TIP.format(zone)))
+        return out
+
+    def _state_tip(self, key: str, n: int) -> str:
+        plural = "s" if n != 1 else ""
+        if key == "fail":
+            return f"{n} problem{plural} on {self.unit_id}. {strings.BADGE_CLICK}"
+        if key == "warning":
+            return f"{n} warning{plural} on {self.unit_id}. {strings.BADGE_CLICK}"
+        if key == "pending":
+            word = f"{n} value{plural} still to enter on the links of {self.unit_id}"
+            return strings.BADGE_PENDING_TIP.format(word)
+        return strings.BADGE_NOT_CHECKED_TIP
+
+    def lock_tip(self, st: ObjectState) -> str:
+        """The sentence for the lock mark: who locks the unit and what can still be edited."""
+        harness, rev = st.locks[0]
+        text = strings.LOCK_TIP.format(harness=harness, rev=rev)
+        if len(st.locks) > 1:
+            text += strings.LOCK_TIP_MORE.format(", ".join(f"{h} {r}" for h, r in st.locks[1:]))
+        return text + strings.LOCK_TIP_COSMETIC
+
+    def card_layout(self, unit: object, st: ObjectState, state: str = "") -> CardLayout:
+        """Where the marks of the card go; kept until the unit's state, the mode, the theme or the
+        project changes (so a repaint only draws)."""
+        sc = self.dscene
+        facts = self.facts()
+        expert = self.ctl.mode == "expert"
+        tags = self._tag_specs(unit, state)
+        uid = self.unit_id
+        key: tuple[object, ...] = (st, facts.key, expert, tuple(tags), sc.theme_epoch, uid)
+        cached = self._card_cache
+        if cached is not None and cached.key == key:
+            return cached
+        th = sc.theme
+        font = sc.px_font(th.type("sm"))
+
+        def tw(text: str) -> float:
+            return float(sc.text_width(font, text))
+
+        bh = METRICS.badge_h
+        y = (HEADER_H - bh) / 2
+        hits: list[cbadges.Hit] = []
+        bl: list[tuple[QRectF, str, str]] = []
+        x = W - 8.0
+        for skey, n in st.badges():
+            text = badge_text(n, skey)
+            w = cbadges.badge_width(tw(text), text)
+            x -= w
+            rect = QRectF(x, y, w, bh)
+            bl.append((rect, skey, text))
+            hits.append(cbadges.Hit(rect, "state", self._state_tip(skey, n), skey))
+            x -= cbadges.GAP
+        id_w_full = float(QFontMetrics(sc.bold_font()).horizontalAdvance(uid))
+        lock = auto = conn = None
+        lock_text = st.lock_text
+        auto_text = strings.AUTO_COUNT.format(st.auto) if st.auto else ""
+        conn_text = strings.CONN_COUNT.format(facts.total) if facts.total else ""
+        name_w, limit = W - 20.0, W - 8.0
+        if expert:  # everything in the header, the less important marks dropped first
+            id_end = 30.0 + min(id_w_full, 56.0)
+
+            def place(width: float) -> QRectF | None:
+                nonlocal x
+                if x - width < id_end + 8:
+                    return None
+                x -= width
+                rect = QRectF(x, y, width, bh)
+                x -= cbadges.GAP
+                return rect
+
+            if auto_text and (r := place(tw(auto_text) + 10)) is not None:
+                auto = (r, auto_text)
+                hits.append(cbadges.Hit(r, "auto", ""))
+            if (
+                lock_text
+                and (r := place(cbadges.badge_width(tw(lock_text), lock_text))) is not None
+            ):
+                lock = (r, lock_text)
+                hits.append(cbadges.Hit(r, "lock", self.lock_tip(st)))
+            if conn_text and (r := place(tw(conn_text) + 4)) is not None:
+                conn = (r, conn_text)
+                hits.append(cbadges.Hit(r, "conn", strings.CONN_COUNT_TIP.format(facts.total)))
+        else:  # name line: the lock; connector line: how many, and the auto count
+            if lock_text:
+                w = cbadges.badge_width(tw(lock_text), lock_text)
+                r = QRectF(W - 8 - w, 33.0, w, 16.0)
+                lock = (r, lock_text)
+                hits.append(cbadges.Hit(r, "lock", self.lock_tip(st)))
+                name_w = r.left() - 16.0
+            xr = W - 8.0
+            if auto_text:
+                w = tw(auto_text) + 10
+                r = QRectF(xr - w, 52.0, w, 16.0)
+                auto = (r, auto_text)
+                hits.append(cbadges.Hit(r, "auto", ""))
+                xr -= w + cbadges.GAP
+            if conn_text:
+                w = tw(conn_text) + 2
+                r = QRectF(xr - w, 52.0, w, 16.0)
+                conn = (r, conn_text)
+                hits.append(cbadges.Hit(r, "conn", strings.CONN_COUNT_TIP.format(facts.total)))
+                xr -= w + cbadges.GAP
+            limit = xr
+        strip_left = x + cbadges.GAP
+        id_w = max(36.0, strip_left - 36.0) if bl or expert else W - 40.0
+        id_w = min(id_w, id_w_full + 2)
+        tx, tag_limit = 30.0 + id_w + 6.0, strip_left - 4.0
+        tl: list[tuple[QRectF, str, str, bool]] = []
+        for text, token, dashed, tip in tags:
+            w = tw(text) + 10
+            if tx + w > tag_limit:
+                break
+            rect = QRectF(tx, y + 1, w, bh - 2)
+            tl.append((rect, text, token, dashed))
+            if tip:
+                hits.append(cbadges.Hit(rect, "tag", tip))
+            tx += w + cbadges.GAP
+        layout = CardLayout(key, bl, tl, lock, auto, conn, id_w, limit, name_w, hits)
+        self._card_cache = layout
+        return layout
+
+    def hit_at(self, pos: QPointF) -> cbadges.Hit | None:
+        """The mark of the card under a point of the unit (None far out, where there are none)."""
+        card = self._card_cache
+        if card is None or self._overview:
+            return None
+        for hit in card.hits:
+            if hit.rect.adjusted(-1, -2, 1, 2).contains(pos):
+                return hit
+        return None
+
     # ---- painting ---------------------------------------------------------------------------
     def paint(
         self, painter: QPainter, option: QStyleOptionGraphicsItem, widget: QWidget | None = None
@@ -256,8 +468,10 @@ class UnitItem(QGraphicsItem):
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         h = self.height()
         lod = option.levelOfDetailFromTransform(painter.worldTransform())
-        if lod < METRICS.overview_lod and not reason:
-            self._paint_overview(painter, th, unit, state, lod)
+        st = self.dscene.states.of("unit", self.unit_id)
+        self._overview = lod < METRICS.overview_lod and not reason
+        if self._overview:
+            self._paint_overview(painter, th, unit, state, lod, st)
             return
         selected = ctl.is_selected("unit", self.unit_id)
         faded = state == "no"
@@ -280,39 +494,52 @@ class UnitItem(QGraphicsItem):
         painter.setBrush(QBrush(th.color("surface-2")))
         painter.drawRoundedRect(QRectF(1, 1, W - 2, HEADER_H), 7, 7)
         painter.drawRect(QRectF(1, HEADER_H - 8, W - 2, 9))
-        bold = QFont(painter.font())
-        bold.setBold(True)
+        if st.locks:  # a released harness locks the unit: a faint tint (and the lock mark below)
+            tint = QColor(th.color("released"))
+            tint.setAlphaF(RELEASED_TINT)
+            painter.setBrush(QBrush(tint))
+            painter.drawRoundedRect(body.adjusted(1, 1, -1, -1), 7, 7)
+        bold = self.dscene.bold_font()
         small = QFont(painter.font())
         small.setPixelSize(th.type("sm"))
+        card = self.card_layout(unit, st, state)
+        facts = self.facts()
+        glyph_y = (HEADER_H - glyphs.LINK_GLYPH_H) / 2
+        glyphs.draw_unit_glyph(painter, 8, glyph_y, facts.glyph, th.color("text-muted"))
         painter.setFont(bold)
         painter.setPen(th.color("text"))
         painter.drawText(
-            QRectF(10, 0, W - 80, HEADER_H),
+            QRectF(30, 0, card.id_w, HEADER_H),
             Qt.AlignmentFlag.AlignVCenter,
-            elide(painter.fontMetrics(), unit.id, W - 80),
+            elide(painter.fontMetrics(), unit.id, card.id_w),
         )
         painter.setFont(small)
+        for rect, text, token, dashed in card.tags:
+            cbadges.paint_tag(painter, rect, text, th, small, token=token, dashed=dashed)
+        for rect, skey, text in card.badges:
+            cbadges.paint_badge(painter, rect, skey, text, th, small, ground="surface-2")
+        if card.lock is not None:
+            cbadges.paint_badge(painter, card.lock[0], "locked", card.lock[1], th, small)
+        if card.auto is not None:
+            cbadges.paint_auto(painter, card.auto[0], card.auto[1], th, small)
         painter.setPen(th.color("text-muted"))
-        tag = (
-            strings.TAG_FROM
-            if state == "from"
-            else (strings.TAG_REDUNDANT if unit.side == "redundant" else strings.TAG_NOMINAL)
-        )
-        painter.drawText(
-            QRectF(W - 90, 0, 80, HEADER_H),
-            Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight,
-            tag,
-        )
+        if card.conn is not None:
+            painter.drawText(
+                card.conn[0],
+                int(Qt.AlignmentFlag.AlignVCenter | Qt.AlignmentFlag.AlignRight),
+                card.conn[1],
+            )
+        painter.setPen(th.color("text-muted"))
         if ctl.mode == "expert":
             self._paint_halves(painter, th, h)
             self._paint_ports(painter, small, th, state)
         else:
             painter.drawText(
-                QRectF(10, 34, W - 20, 16),
+                QRectF(10, 34, card.name_w, 16),
                 Qt.AlignmentFlag.AlignVCenter,
-                elide(QFontMetrics(small), unit.name, W - 20),
+                elide(QFontMetrics(small), unit.name, card.name_w),
             )
-            self._paint_connector_row(painter, small, th)
+            self._paint_connector_row(painter, small, th, facts, card.limit)
         painter.setOpacity(base)
         if reason:
             painter.setPen(th.color("error"))
@@ -358,33 +585,55 @@ class UnitItem(QGraphicsItem):
         painter.setPen(QPen(th.color("border"), 1.2, Qt.PenStyle.DashLine))
         painter.drawLine(QPointF(W / 2, HEADER_H + 4), QPointF(W / 2, h - 5))
 
-    def _paint_connector_row(self, painter: QPainter, small: QFont, th: ThemeManager) -> None:
-        """Guided mode: the unit's connectors as little pictures (the same ones are counted)."""
-        project = self.ctl.project
-        counts: dict[tuple[str, int, str], int] = {}
-        for c in self.connectors():
-            key = describe.connector_family(project, str(c.id))
-            counts[key] = counts.get(key, 0) + 1
+    def _paint_connector_row(
+        self,
+        painter: QPainter,
+        small: QFont,
+        th: ThemeManager,
+        facts: CardFacts | None = None,
+        limit: float = W - 8.0,
+    ) -> None:
+        """Guided mode: the unit's connectors as little pictures (the same ones are counted). What
+        does not fit before `limit` is not dropped silently: "+3" says how many are left out."""
+        facts = facts or self.facts()
+        step = glyphs.CONNECTOR_W * 0.75 + 1
+        widths = [step + (22 if n > 9 else 16 if n > 1 else 0) + 4 for _key, n in facts.groups]
+        shown = fit_groups(widths, limit - 10.0)
         x = 10.0
-        for (family, pins, gender), n in counts.items():
-            if x + glyphs.CONNECTOR_W * 0.75 + (16 if n > 1 else 0) > W - 8:
-                break  # no room for more: the unit's properties list them all
+        for ((family, pins, gender), n), w in zip(facts.groups[:shown], widths, strict=False):
             glyphs.draw_connector(
                 painter, x, 51, family, pins, gender, th.color("text"), th.color("surface"), 0.75
             )
-            x += glyphs.CONNECTOR_W * 0.75 + 1
+            painter.setPen(th.color("text-muted"))
             if n > 1:
-                painter.setPen(th.color("text-muted"))
-                painter.drawText(QRectF(x, 50, 18, 20), Qt.AlignmentFlag.AlignVCenter, f"×{n}")
-                x += 16
-            x += 4
+                painter.drawText(
+                    QRectF(x + step, 50, 26, 20), Qt.AlignmentFlag.AlignVCenter, f"×{n}"
+                )
+            x += w
+        left_out = sum(n for _key, n in facts.groups[shown:])
+        if left_out:
+            painter.setPen(th.color("text-muted"))
+            painter.drawText(
+                QRectF(x, 50, 26, 20),
+                Qt.AlignmentFlag.AlignVCenter,
+                strings.CONN_MORE.format(left_out),
+            )
 
     def _paint_overview(
-        self, painter: QPainter, th: ThemeManager, unit: object, state: str, lod: float
+        self,
+        painter: QPainter,
+        th: ThemeManager,
+        unit: object,
+        state: str,
+        lod: float,
+        st: ObjectState | None = None,
     ) -> None:
-        """Zoomed far out: a plain box and the ID only (fast for diagrams with hundreds of units).
-        The ID is sized in screen pixels, so it stays readable however far the view is zoomed out
-        (it is cut to the box where the box is too small to hold it)."""
+        """Zoomed far out: a plain box and the ID only (fast for diagrams with hundreds of units),
+        and the marks that matter at a glance: the most serious badge and the lock, drawn in
+        screen pixels so they stay readable. The ID is sized in screen pixels too, so it stays
+        readable however far the view is zoomed out (it is cut to the box where the box is too
+        small to hold it)."""
+        st = st if st is not None else self.dscene.states.of("unit", self.unit_id)
         selected = self.ctl.is_selected("unit", self.unit_id)
         pen = QPen(
             th.color("primary") if selected or state in ("ok", "from") else th.color("border"),
@@ -394,18 +643,91 @@ class UnitItem(QGraphicsItem):
         painter.setBrush(QBrush(th.color("surface")))
         h = self.height()
         painter.drawRect(QRectF(0, 0, W, h))
+        if st.locks:
+            tint = QColor(th.color("released"))
+            tint.setAlphaF(RELEASED_TINT)
+            painter.setPen(Qt.PenStyle.NoPen)
+            painter.setBrush(QBrush(tint))
+            painter.drawRect(QRectF(0, 0, W, h))
+        marks, marks_px, k = self._overview_marks(th, st, lod)
+        strip = marks_px / max(lod, 0.01)  # (scene units)
+        self._paint_overview_marks(painter, th, marks, lod, k)
         font = QFont(painter.font())
         font.setBold(True)
-        wanted = METRICS.legible_px / max(lod, 0.01)
-        font.setPixelSize(max(1, int(min(h * 0.85, max(22.0, wanted)))))
+        # the ID stays readable: 12 screen pixels where there is room, smaller (never under 8) where
+        # the marks take some of the box; it is cut with an ellipsis only below that
+        room = max(1.0, W - 16 - strip - (4 if marks else 0))
+        sc = self.dscene
+        id_px = sc.text_width(sc.px_font(th.type("sm")), self.unit_id) * 1.1
+        px = min(float(METRICS.legible_px), max(8.0, room * lod / max(id_px, 1.0) * 12.0))
+        wanted = px / max(lod, 0.01)
+        font.setPixelSize(max(1, int(min(h * 0.85, max(22.0 * px / 12.0, wanted)))))
         painter.setFont(font)
         painter.setPen(th.color("text"))
         painter.drawText(
-            QRectF(8, 0, W - 16, h),
+            QRectF(8, 0, room, h),
             Qt.AlignmentFlag.AlignVCenter,
-            elide(painter.fontMetrics(), self.unit_id, W - 16, middle=True),
+            elide(painter.fontMetrics(), self.unit_id, room, middle=True),
         )
         self._paint_highlight(painter, th, QRectF(0, 0, W, h))
+
+    def _overview_marks(
+        self, th: ThemeManager, st: ObjectState, lod: float
+    ) -> tuple[list[tuple[str, str]], float, float]:
+        """The marks an overview box has room for, their width in screen pixels and the share of
+        their normal size they are drawn at (a box shorter than a badge gets a smaller one): the
+        most serious badge with its count and the lock; else the same without counts; else the
+        badge alone; else none (the box is too small to hold both a readable ID and a mark)."""
+        sc = self.dscene
+        font = sc.px_font(th.type("sm"))
+        full: list[tuple[str, str]] = []
+        if st.badges():
+            skey, n = st.badges()[0]
+            full.append((skey, badge_text(n, skey)))
+        if st.locks:
+            full.append(("locked", ""))
+        if not full:
+            return [], 0.0, 1.0
+        k = min(1.0, (self.height() - 8) * lod / METRICS.badge_h)
+        id_px = sc.text_width(font, self.unit_id) * 1.1
+        spare = (
+            W * lod - 8 - id_px * 8 / 12
+        )  # what is left of the box when the ID is at its smallest
+        for variant in (full, [(k, "") for k, _t in full], full[:1] and [(full[0][0], "")]):
+            if not variant:
+                continue
+            width = sum(cbadges.badge_width(sc.text_width(font, t), t) for _k, t in variant)
+            width = (width + cbadges.GAP * (len(variant) - 1)) * k
+            if width <= spare:
+                return variant, width, k
+        return [], 0.0, 1.0
+
+    def _paint_overview_marks(
+        self,
+        painter: QPainter,
+        th: ThemeManager,
+        marks: list[tuple[str, str]],
+        lod: float,
+        share: float = 1.0,
+    ) -> None:
+        """The marks in the top right corner of an overview box, at their size on the screen
+        (scaled by 1 / lod, so about METRICS.badge_h pixels high)."""
+        if not marks:
+            return
+        sc = self.dscene
+        font = sc.px_font(th.type("sm"))
+        scale = share / max(lod, 0.01)
+        bh = METRICS.badge_h
+        painter.save()
+        painter.translate(W - 5, 4)
+        painter.scale(scale, scale)
+        x = 0.0
+        for skey, text in reversed(marks):
+            w = cbadges.badge_width(sc.text_width(font, text), text)
+            x -= w
+            cbadges.paint_badge(painter, QRectF(x, 0, w, bh), skey, text, th, font)
+            x -= cbadges.GAP
+        painter.restore()
 
     def _paint_ports(self, painter: QPainter, small: QFont, th: ThemeManager, state: str) -> None:
         ctl = self.ctl
@@ -426,6 +748,17 @@ class UnitItem(QGraphicsItem):
             painter.setPen(pen)
             painter.setBrush(QBrush(th.color("primary") if valid else th.color("bg")))
             painter.drawRoundedRect(rect, 3, 3)
+            if self.dscene.states.of(
+                "connector", str(c.id)
+            ).locks:  # a release locks this connector
+                side = rect.width() - 4
+                draw_icon(
+                    painter,
+                    "lock",
+                    QRectF(rect.center().x() - side / 2, rect.center().y() - side / 2, side, side),
+                    th.color("on-primary" if valid else "locked"),
+                    stroke=1.4,
+                )
             painter.setPen(
                 th.color("text") if (compat is None or valid) else th.color("text-muted")
             )
@@ -462,6 +795,17 @@ class UnitItem(QGraphicsItem):
         self.setFocus()
         if ctl.tool == "connect":
             ctl.pick(self.unit_id, self.port_at(event.pos()))
+            event.accept()
+            return
+        mark = self.hit_at(event.pos())
+        if mark is not None and mark.kind in ("state", "auto"):
+            # a click on a badge: the unit is picked and the window shows what the badge counts
+            ctl.select("unit", self.unit_id)
+            if mark.kind == "state":
+                ctl.request_problems(self.unit_id)
+            else:
+                ctl.request_why("unit", self.unit_id)
+            self._press_pos = None
             event.accept()
             return
         self._moved = self._refused = self._collapse_on_release = False
@@ -534,9 +878,26 @@ class UnitItem(QGraphicsItem):
             self.dscene.relink(self.unit_id)
         return super().itemChange(change, value)
 
+    def mark_tip(self, mark: cbadges.Hit) -> str:
+        """The tooltip of a mark on the card; the auto count also says why the tool chose."""
+        if mark.kind != "auto":
+            return mark.tip
+        n = self.dscene.states.of("unit", self.unit_id).auto
+        lines = describe.why_lines(self.ctl.project, "unit", self.unit_id)[:3]
+        return "\n".join([strings.AUTO_TIP.format(n=n), *lines, strings.AUTO_TIP_MORE])
+
     def hoverMoveEvent(self, event: object) -> None:
         _, reason = self._compat_reason()
         tip = reason
+        mark = self.hit_at(event.pos())  # type: ignore[attr-defined]
+        if mark is not None and not reason:
+            self.setToolTip(self.mark_tip(mark))
+            if mark.kind in ("state", "auto"):
+                self.setCursor(Qt.CursorShape.PointingHandCursor)
+            else:
+                self.unsetCursor()
+            return
+        self.unsetCursor()
         cid = self.port_at(event.pos())  # type: ignore[attr-defined]  # (None unless Expert)
         if cid and self.ctl.tool == "connect" and self.ctl.connect_type:
             c = self.ctl.connector_compat(cid)
@@ -547,7 +908,14 @@ class UnitItem(QGraphicsItem):
             u = self.ctl.project.units.get(self.unit_id)
             conn = self.ctl.project.connectors.get(cid) if cid else None
             full = f"{u.id}: {u.name}" if u else ""
-            self.setToolTip(f"{full}\n{conn.name}" if conn else full)  # (the whole text, if elided)
+            text = f"{full}\n{conn.name}" if conn else full  # (the whole text, if elided)
+            locks = self.dscene.states.of("connector", cid).locks if cid else ()
+            if locks:
+                text += "\n" + self.lock_tip(ObjectState(locks=locks))
+            if cid and cid in self._auto_connectors():  # why the tool chose this connector
+                why = describe.why_lines(self.ctl.project, "connector", cid)
+                text += "\n" + "\n".join(why[:2])
+            self.setToolTip(text)
 
     def activate(self, *, open_plan: bool = False) -> None:
         """Enter or Space on the unit: pick it with the Connect tool, otherwise select it (Enter
@@ -603,6 +971,18 @@ class UnitItem(QGraphicsItem):
         return next((c.id for c in self.connectors() if self.ctl.connector_compat(c.id).ok), None)
 
 
+def fit_groups(widths: Sequence[float], room: float, more: float = 26.0) -> int:
+    """How many connector pictures of these widths fit in `room`: all of them if they do, else as
+    many as leave `more` for the "+N" that says how many were left out (never silently dropped)."""
+    if sum(widths) <= room:
+        return len(widths)
+    shown, used = 0, 0.0
+    while shown < len(widths) and used + widths[shown] + more <= room:
+        used += widths[shown]
+        shown += 1
+    return shown
+
+
 def rounded_path(points: list[tuple[float, float]], radius: float = 8.0) -> QPainterPath:
     """A path through the corner points of a route with softly rounded corners."""
     path = QPainterPath(QPointF(*points[0]))
@@ -633,6 +1013,15 @@ def _spots_along(
     return [QPointF(t, fixed) if horizontal else QPointF(fixed, t) for t in ts]
 
 
+# how a link looks from far away, per category: dash patterns (in pen widths) and nothing for the
+# solid kinds, so that analog, RF, pyro, discrete and ground differ without their label
+FAR_DASHES: dict[str, tuple[float, ...]] = {
+    "analog": (4.0, 3.0),
+    "rf": (3.0, 1.5, 0.6, 1.5),
+    "pyro": (1.0, 1.2),
+    "discrete": (1.2, 2.5),
+    "ground": (6.0, 2.0, 1.0, 2.0),
+}
 COMPACT_W = METRICS.chip_compact_w  # a link label that has to squeeze between other links
 COMPACT_H = METRICS.chip_compact_h
 
@@ -651,6 +1040,7 @@ class LinkItem(QGraphicsPathItem):
         self._hover = False
         self._preview = False  # a straight line while one of its units is being dragged
         self._base_z = 1.0
+        self._badge_hit: QRectF | None = None  # where the badge on the label was drawn (clickable)
         self.setZValue(1)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsFocusable)
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemUsesExtendedStyleOption)  # exposedRect
@@ -680,7 +1070,7 @@ class LinkItem(QGraphicsPathItem):
         self.setPath(path)
         i = self.dscene.ctl.project.interfaces.get(self.interface_id)
         name = i.id if i is not None else self.interface_id
-        self._chip_values = len(describe.link_values(self.dscene.ctl.project, name))
+        self._chip_values = self._label_chars()
         width = self._chip_width(self._chip_values * 6.5)
         center, crossed = self._pick_spot(route, width, METRICS.chip_h, name)
         self._compact = False
@@ -722,9 +1112,42 @@ class LinkItem(QGraphicsPathItem):
         i = self.dscene.ctl.project.interfaces.get(self.interface_id)
         if i is None or not self._chip_placed:
             return
-        if len(describe.link_values(self.dscene.ctl.project, i.id)) != self._chip_values:
+        if self._label_chars() != self._chip_values:
             self._chip_placed = False
             self.update_path()
+
+    def _label_chars(self) -> int:
+        """How many characters the label may need: the numbers (with "V ?" for one that is needed
+        and missing) and, for a locked link, the lock and its "W001 A"."""
+        sc = self.dscene
+        n = len(describe.link_label(sc.ctl.project, self.interface_id))
+        locks = sc.states.of("interface", self.interface_id).lock_text
+        return n + (len(locks) + 3 if locks else 0)
+
+    def _label_parts(self, st: ObjectState) -> list[tuple[str, str]]:
+        """What the full label says, in pieces: ("value" | "pending" | "lock", text)."""
+        label = describe.link_label(self.dscene.ctl.project, self.interface_id)
+        parts = [("pending" if p.endswith("?") else "value", p) for p in label.split(" · ") if p]
+        if st.locks:
+            parts.append(("lock", st.lock_text))
+        return parts
+
+    def _parts_widths(self, font: QFont, parts: list[tuple[str, str]]) -> tuple[list[float], float]:
+        """The width of each piece of the label and of the whole (pieces are joined by " · ", the
+        lock stands apart with its icon)."""
+        sc = self.dscene
+        sep = sc.text_width(font, " · ")
+        widths: list[float] = []
+        total = 0.0
+        for k, (kind, text) in enumerate(parts):
+            w = float(sc.text_width(font, text))
+            if kind == "lock":
+                w += 14.0  # the lock icon
+                total += (6.0 if k else 0.0) + w
+            else:
+                total += (sep if k else 0.0) + w
+            widths.append(w)
+        return widths, total
 
     @staticmethod
     def _chip_width(text_w: float) -> float:
@@ -756,6 +1179,8 @@ class LinkItem(QGraphicsPathItem):
         chip = None if self._preview else self.dscene.chip_rect(self.interface_id)
         if chip is not None:
             path.addRect(chip)
+        if self._badge_hit is not None and not self._preview:
+            path.addRect(self._badge_hit)
         return path
 
     def boundingRect(self) -> QRectF:
@@ -798,7 +1223,8 @@ class LinkItem(QGraphicsPathItem):
         weight = float(info["weight"])
         selected = ctl.is_selected("interface", i.id)
         lod = option.levelOfDetailFromTransform(painter.worldTransform())
-        far = (lod < METRICS.far_lod or bool(sc._drag_units)) and not selected
+        # (a selected link, or the one under the pointer, is drawn in full at any zoom)
+        far = ((lod < METRICS.far_lod and not self._hover) or bool(sc._drag_units)) and not selected
         painter.setRenderHint(QPainter.RenderHint.Antialiasing, not far)  # (plain while dragging)
         marked = i.id in ctl.diff_marks
         if marked:  # a wide, dotted halo in the warning colour (not colour alone: also dotted)
@@ -822,30 +1248,54 @@ class LinkItem(QGraphicsPathItem):
             and any(sig.pair for sig in t.signals)
         )
         style = Qt.PenStyle.DashLine if i.redundancy == "redundant" else Qt.PenStyle.SolidLine
-        painter.setPen(
-            sc.pen(f"cat-{cat}", weight + (2 if selected else 0) + (3.0 if twin else 0.0), style)
-        )
+        if far and i.redundancy != "redundant" and cat in FAR_DASHES:
+            painter.setPen(sc.far_pen(cat, weight))  # from far, each kind has its own dashes
+        else:
+            painter.setPen(
+                sc.pen(
+                    f"cat-{cat}", weight + (2 if selected else 0) + (3.0 if twin else 0.0), style
+                )
+            )
         painter.setBrush(Qt.BrushStyle.NoBrush)
         painter.drawPath(self.path())
         if twin:  # the gap between the two lines
             painter.setPen(sc.pen("bg", 1.4, style))
             painter.drawPath(self.path())
         if far or self._preview or self.opacity() < 0.5:
-            return  # zoomed out, faded or being dragged: the line only, no label
+            if far and not self._preview and not sc._drag_units and self.opacity() >= 0.5:
+                self._paint_far_marker(painter, option, i, t, cat, lod)
+            else:
+                self._badge_hit = None
+            return
         th = sc.theme
+        st = sc.states.of("interface", i.id)
         color = th.color(f"cat-{cat}")
         c = self._chip_center
         font = sc.px_font(th.type("sm"))
-        values = describe.link_values(ctl.project, i.id) if sc.label_full(i.id, self._hover) else ""
-        if self._compact:
-            values = ""
-        text_w = sc.text_width(font, values) if values else 0
+        parts = (
+            [] if self._compact or not sc.label_full(i.id, self._hover) else self._label_parts(st)
+        )
+        widths, text_w = self._parts_widths(font, parts) if parts else ([], 0.0)
         width = METRICS.chip_compact_w if self._compact else self._chip_width(text_w)
         height = METRICS.chip_compact_h if self._compact else METRICS.chip_h
         rect = QRectF(c.x() - width / 2, c.y() - height / 2, width, height)
         self._chip = rect
-        if not option.exposedRect.intersects(rect.adjusted(-4, -4, 4, 4)):
+        grow = 1.0
+        if lod < METRICS.far_lod and (selected or self._hover):
+            # the label of the selected or hovered link is never smaller than a readable minimum
+            grow = min(8.0, max(1.0, METRICS.min_chip_px / (height * max(lod, 0.01))))
+        margin = 4 + (grow - 1) * max(width, height) + METRICS.chip_badge_h
+        if not option.exposedRect.intersects(rect.adjusted(-margin, -margin, margin, margin)):
             return  # the label is outside what is being repainted
+        painter.save()
+        if grow > 1.0:
+            painter.translate(c)
+            painter.scale(grow, grow)
+            painter.translate(-c.x(), -c.y())
+        if any(e.auto for e in i.endpoints):  # a connector nobody confirmed: the key's dashed ring
+            painter.setBrush(Qt.BrushStyle.NoBrush)
+            painter.setPen(sc.pen("auto-fill", 1.6, Qt.PenStyle.DashLine))
+            painter.drawRoundedRect(rect.adjusted(-3, -3, 3, 3), height / 2 + 3, height / 2 + 3)
         painter.setBrush(QBrush(th.color("bg")))
         painter.setPen(sc.pen(f"cat-{cat}", 3 if selected else 2))
         painter.drawRoundedRect(rect, height / 2, height / 2)
@@ -861,18 +1311,163 @@ class LinkItem(QGraphicsPathItem):
             color,
             scale,
         )
-        if values:
-            painter.setFont(font)
-            painter.setPen(th.color("text"))
-            painter.drawText(
-                QRectF(rect.x() + 26, rect.y(), text_w + 4, METRICS.chip_h),
-                Qt.AlignmentFlag.AlignVCenter,
-                values,
-            )
+        if parts:
+            self._paint_parts(painter, th, font, rect, parts, widths)
+        lock_shown = any(kind == "lock" for kind, _t in parts)
+        self._paint_chip_marks(painter, rect, c, grow, st, font, lock_shown)
         if self.hasFocus():
             painter.setPen(QPen(th.color("focus"), 3))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRoundedRect(rect.adjusted(-3, -3, 3, 3), 13, 13)
+        painter.restore()
+
+    def _paint_parts(
+        self,
+        painter: QPainter,
+        th: ThemeManager,
+        font: QFont,
+        rect: QRectF,
+        parts: list[tuple[str, str]],
+        widths: list[float],
+    ) -> None:
+        """The text of the label: numbers in the text colour, a missing one ("V ?") in the pending
+        style (italic, its own colour), the lock with its icon and "W001 A"."""
+        sc = self.dscene
+        sep = sc.text_width(font, " · ")
+        x = rect.x() + 26
+        painter.setFont(font)
+        italic = QFont(font)
+        italic.setItalic(True)
+        for k, ((kind, text), w) in enumerate(zip(parts, widths, strict=True)):
+            if kind == "lock":
+                x += 6.0 if k else 0.0
+                locked = th.color("locked")
+                draw_icon(
+                    painter, "lock", QRectF(x, rect.center().y() - 6, 12, 12), locked, stroke=1.5
+                )
+                painter.setFont(font)
+                painter.setPen(locked)
+                painter.drawText(
+                    QRectF(x + 14, rect.y(), w, METRICS.chip_h), Qt.AlignmentFlag.AlignVCenter, text
+                )
+                x += w
+                continue
+            if k and parts[k - 1][0] != "lock":
+                painter.setFont(font)
+                painter.setPen(th.color("text-muted"))
+                painter.drawText(
+                    QRectF(x, rect.y(), sep + 2, METRICS.chip_h),
+                    Qt.AlignmentFlag.AlignVCenter,
+                    " · ",
+                )
+                x += sep
+            painter.setFont(italic if kind == "pending" else font)
+            painter.setPen(th.color("pending" if kind == "pending" else "text"))
+            painter.drawText(
+                QRectF(x, rect.y(), w + 4, METRICS.chip_h), Qt.AlignmentFlag.AlignVCenter, text
+            )
+            x += w
+
+    def _paint_chip_marks(
+        self,
+        painter: QPainter,
+        rect: QRectF,
+        centre: QPointF,
+        grow: float,
+        st: ObjectState,
+        font: QFont,
+        lock_shown: bool,
+    ) -> None:
+        """The most serious badge on the label's top right corner (icon and count), and a lock icon
+        on its top left when the label has no room for the lock's own text."""
+        sc = self.dscene
+        th = sc.theme
+        bh = METRICS.chip_badge_h
+        self._badge_hit = None
+        bl = st.badges()
+        if bl:
+            skey, n = bl[0]
+            text = badge_text(n, skey)
+            w = cbadges.badge_width(sc.text_width(font, text), text)
+            r = QRectF(rect.right() - w + 5, rect.top() - bh + 6, w, bh)
+            cbadges.paint_badge(painter, r, skey, text, th, font, ground="bg")
+            self._badge_hit = QRectF(
+                centre.x() + (r.x() - centre.x()) * grow,
+                centre.y() + (r.y() - centre.y()) * grow,
+                r.width() * grow,
+                r.height() * grow,
+            )
+        if st.locks and not lock_shown:
+            w = cbadges.badge_width(0, "")
+            r = QRectF(rect.left() - 5, rect.top() - bh + 6, w, bh)
+            cbadges.paint_badge(painter, r, "locked", "", th, font, ground="bg")
+
+    def _paint_far_marker(
+        self,
+        painter: QPainter,
+        option: QStyleOptionGraphicsItem,
+        i: object,
+        t: object,
+        cat: str,
+        lod: float,
+    ) -> None:
+        """Zoomed out the labels are gone, so the kind of link is drawn at a small fixed size on
+        screen (its picture on a little plate), with its most serious badge; not in a very large
+        diagram, where it would cost more than it tells."""
+        sc = self.dscene
+        self._badge_hit = None
+        if (
+            not self._chip_placed
+            or lod < METRICS.far_marker_min_lod
+            or len(sc.link_items) > METRICS.far_marker_max_links
+        ):
+            return
+        k = 1.0 / lod
+        wpx, hpx = METRICS.far_marker_px
+        c = self._chip_center
+        rect = QRectF(c.x() - wpx * k / 2, c.y() - hpx * k / 2, wpx * k, hpx * k)
+        if not option.exposedRect.intersects(rect.adjusted(-10 * k, -10 * k, 10 * k, 10 * k)):
+            return
+        th = sc.theme
+        color = th.color(f"cat-{cat}")
+        painter.setRenderHint(QPainter.RenderHint.Antialiasing, True)
+        painter.setBrush(QBrush(th.color("bg")))
+        painter.setPen(sc.pen(f"cat-{cat}", 1.2 * k))
+        painter.drawRoundedRect(rect, 3 * k, 3 * k)
+        g = 0.8 * k
+        glyphs.draw_link_glyph(
+            painter,
+            rect.x() + (rect.width() - glyphs.LINK_GLYPH_W * g) / 2,
+            rect.y() + (rect.height() - glyphs.LINK_GLYPH_H * g) / 2,
+            getattr(i, "type_id", ""),
+            getattr(t, "category", "data") if t is not None else "data",
+            color,
+            g,
+        )
+        st = sc.states.of("interface", getattr(i, "id", ""))
+        bl = st.badges()
+        self._badge_hit = None
+        if bl:  # the badge, drawn at its screen size
+            skey, n = bl[0]
+            text = badge_text(n, skey)
+            font = sc.px_font(th.type("sm"))
+            w = cbadges.badge_width(sc.text_width(font, text), text) * k
+            bh = METRICS.chip_badge_h * k
+            r = QRectF(rect.right() - w + 5 * k, rect.top() - bh + 6 * k, w, bh)
+            painter.save()
+            painter.translate(r.topLeft())
+            painter.scale(k, k)
+            cbadges.paint_badge(
+                painter,
+                QRectF(0, 0, r.width() / k, r.height() / k),
+                skey,
+                text,
+                th,
+                font,
+                ground="bg",
+            )
+            painter.restore()
+            self._badge_hit = r
 
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
         if self.dscene.ctl.tool == "connect":
@@ -882,6 +1477,8 @@ class LinkItem(QGraphicsPathItem):
             event.accept()
             return
         self.click(event.modifiers())
+        if self._badge_hit is not None and self._badge_hit.contains(event.pos()):
+            self.dscene.ctl.request_problems(self.interface_id)  # the badge: show what it counts
         event.accept()
 
     def click(self, modifiers: Qt.KeyboardModifier = Qt.KeyboardModifier.NoModifier) -> None:
@@ -916,12 +1513,34 @@ class LinkItem(QGraphicsPathItem):
             return
         super().keyPressEvent(event)
 
+    def tooltip_html(self) -> str:
+        """The tooltip of the link as rich text: name, type and numbers, where it ends, which
+        harness and how many wires carry it, what is still to enter, what the checks say, and the
+        lock (from `describe.link_summary` and the state index)."""
+        sc = self.dscene
+        st = sc.states.of("interface", self.interface_id)
+        summary = describe.link_summary(sc.ctl.project, self.interface_id, st.locks)
+        rows = summary.facts()
+        says = st.sentence()
+        if says:
+            rows.append(("Checks", says))
+        else:
+            rows.append(("Checks", "no problems found" if sc.states.checked else "not checked yet"))
+        body = "".join(
+            f"<tr><td style='padding-right:8px'><b>{html.escape(k)}</b></td>"
+            f"<td>{html.escape(v)}</td></tr>"
+            for k, v in rows
+            if k != "Type"
+        )
+        head = f"<b>{html.escape(summary.name)}</b> ({html.escape(summary.id)})"
+        return (
+            f"{head}<br>{html.escape(summary.caption)}<table>{body}</table>"
+            f"<i>{html.escape(strings.LINK_TIP_WHY)}</i>"
+        )
+
     def hoverEnterEvent(self, event: object) -> None:
-        project = self.dscene.ctl.project
-        i = project.interfaces.get(self.interface_id)
-        if i is not None:
-            ends = " ↔ ".join(e.unit_id for e in i.endpoints)
-            self.setToolTip(f"{i.name} ({i.id})\n{describe.link_caption(project, i.id)}\n{ends}")
+        if self.dscene.ctl.project.interfaces.get(self.interface_id) is not None:
+            self.setToolTip(self.tooltip_html())
         if not self._hover:
             self._hover = True
             self.setZValue(self._base_z + 0.2)  # the link under the pointer lies on top
@@ -970,10 +1589,26 @@ class ZoneItem(QGraphicsItem):
 
 
 class DiagramScene(QGraphicsScene):
+    statesChanged = Signal(object)  # the StateIndex now in use (the legend lists what it holds)
+
     def __init__(self, ctl: EditorController, theme: ThemeManager) -> None:
         super().__init__()
         self.ctl = ctl
         self.theme = theme
+        # what the objects say about themselves (problems, pending, locks ...): an index built by
+        # the controller, read by the items; it is replaced a moment after a change, never in paint
+        self.states: StateIndex = NO_INDEX
+        self.zone_tags = cbadges.ZoneTags()  # FLIGHT / GROUND tags by zone name (a viewer setting)
+        self.zone_names: list[str] = []
+        self.theme_epoch = 0  # counts theme changes: cached layouts of the marks depend on fonts
+        self._bold: QFont | None = None
+        self._far_pens: dict[tuple[str, float], QPen] = {}
+        self._redundancy: tuple[tuple[int, int], bool] | None = None
+        self._categories: tuple[tuple[int, int], dict[str, list[str]]] | None = None
+        self._state_timer = QTimer(self)
+        self._state_timer.setSingleShot(True)
+        self._state_timer.setInterval(METRICS.state_delay_ms)
+        self._state_timer.timeout.connect(self.refresh_states)
         self.unit_items: dict[str, UnitItem] = {}
         self.link_items: dict[str, LinkItem] = {}
         self._chips: dict[tuple[int, int], list[tuple[str, QRectF]]] = {}
@@ -1009,19 +1644,89 @@ class DiagramScene(QGraphicsScene):
         self._preview_timer.setInterval(METRICS.drag_preview_ms)
         self._preview_timer.timeout.connect(self._preview_tick)
         ctl.changed.connect(self.apply)
+        ctl.drcChanged.connect(self.refresh_states)
         ctl.selectionChanged.connect(self._on_selection)
         ctl.marksChanged.connect(self.refresh_all)
         ctl.connectChanged.connect(self._repaint_units)
         ctl.modeChanged.connect(self.refresh_all)
         theme.changed.connect(self._theme_changed)
         self.rebuild()
+        self.refresh_states()
 
     # ---- small helpers for painting (cached: a repaint asks for the same few pens and fonts) ----
     def _theme_changed(self) -> None:
         self._pens.clear()
         self._fonts.clear()
         self._metrics.clear()
+        self._far_pens.clear()
+        self._bold = None
+        self.theme_epoch += 1
         self.update()
+
+    def bold_font(self) -> QFont:
+        """The font of a unit's ID (the application font in bold; cached)."""
+        if self._bold is None:
+            self._bold = QFont(QApplication.font())
+            self._bold.setBold(True)
+        return self._bold
+
+    def far_pen(self, category: str, width: float) -> QPen:
+        """The pen of a link seen from far away: its category colour with the category's own dash
+        pattern, so kinds that share a colour still differ without the label."""
+        key = (category, width)
+        pen = self._far_pens.get(key)
+        if pen is None:
+            pen = QPen(self.theme.color(f"cat-{category}"), width)
+            pattern = FAR_DASHES.get(category)
+            if pattern:
+                pen.setDashPattern(list(pattern))
+            self._far_pens[key] = pen
+        return pen
+
+    # ---- what the objects say about themselves ----------------------------------------------
+    def facts_key(self) -> tuple[int, int]:
+        """Changes with every edit and every installed project; what the cards cache is stamped with it."""
+        return (id(self.ctl.project), self.ctl.history.revision)
+
+    def unit_categories(self) -> dict[str, list[str]]:
+        """Unit ID -> the categories of its links, once per edit (for the picture on each card)."""
+        key = self.facts_key()
+        if self._categories is None or self._categories[0] != key:
+            self._categories = (key, describe.unit_categories(self.ctl.project))
+        return self._categories[1]
+
+    def has_redundancy(self) -> bool:
+        """The project has a redundant chain (a redundant unit or link): only then is the nominal
+        chain worth a tag of its own."""
+        key = self.facts_key()
+        if self._redundancy is None or self._redundancy[0] != key:
+            p = self.ctl.project
+            found = any(u.side == "redundant" for u in p.units.values()) or any(
+                i.redundancy == "redundant" for i in p.interfaces.values()
+            )
+            self._redundancy = (key, found)
+        return self._redundancy[1]
+
+    def refresh_states(self) -> None:
+        """Take the controller's state index now and repaint only the objects whose marks changed.
+        (Called by a short timer after an edit, when the check results arrive, and by tests.)"""
+        self._state_timer.stop()
+        new = self.ctl.state_index()
+        old = self.states
+        if new is old:
+            return
+        self.states = new
+        for kind, ident in new.changed_from(old):
+            if kind == "unit":
+                item = self.unit_items.get(ident)
+                if item is not None:
+                    item.update()
+            elif kind == "interface":
+                link = self.link_items.get(ident)
+                if link is not None:
+                    link.refresh_chip()  # (a lock text widens the label)
+                    link.update()
+        self.statesChanged.emit(new)
 
     def pen(self, token: str, width: float, style: Qt.PenStyle = Qt.PenStyle.SolidLine) -> QPen:
         key = (token, width, style)
@@ -1536,7 +2241,9 @@ class DiagramScene(QGraphicsScene):
         link.update_path()
 
     def _sync_zones(self) -> None:
-        n = len(edit.effective_zones(self.ctl.project))
+        zones = edit.effective_zones(self.ctl.project)
+        n = len(zones)
+        self.zone_names = zones
         self.zone_count = n
         while len(self.zone_items) > n:
             self.removeItem(self.zone_items.pop())
@@ -1578,7 +2285,9 @@ class DiagramScene(QGraphicsScene):
         self._focus_cache = None  # the model changed: the focus of the selection may have
         if delta.full:
             self.rebuild()
+            self.refresh_states()
             return
+        self._state_timer.start()  # the marks follow a moment later, off the edit's path
         self._rebuild_adjacency()
         self._routes = None
         self._sync_zones()
@@ -2012,6 +2721,9 @@ class DiagramView(QGraphicsView):
         self.legend = LegendOverlay(theme, self)
         self.legend_wanted = True  # ... and so can it the legend
         self.search = SearchBar(self)
+        self.status = cbadges.CornerStatus(ctl, theme, self)  # harnesses / outputs out of date?
+        self.dscene.statesChanged.connect(self.legend.set_states)
+        self.legend.set_states(self.dscene.states)
         self._fit_scale = 0.25
         self._space = False  # Space is held: a drag pans
         self._space_used = False
@@ -2082,6 +2794,11 @@ class DiagramView(QGraphicsView):
         self.legend_wanted = wanted
         self._layout_overlays()
 
+    def set_settings(self, settings: QSettings | None) -> None:
+        """Give the view the viewer's settings, where the FLIGHT / GROUND tags of zones are kept."""
+        self.dscene.zone_tags.attach(settings)
+        self.dscene._repaint_units()
+
     def set_snap(self, on: bool) -> None:
         self.dscene.snap_to_grid = on
         self.viewport().update()
@@ -2120,6 +2837,7 @@ class DiagramView(QGraphicsView):
         self.legend.setVisible(self.legend_wanted and bool(self.ctl.project.units))
         self.search.adjustSize()
         self.search.move(r.right() - self.search.width() - 12, r.top() + 12)
+        self.status.move(r.left() + 12, r.top() + 12)
 
     def resizeEvent(self, event: object) -> None:
         super().resizeEvent(event)  # type: ignore[arg-type]
@@ -2352,19 +3070,28 @@ class DiagramView(QGraphicsView):
     # ---- context menu ------------------------------------------------------------------------------
     def contextMenuEvent(self, event: QContextMenuEvent) -> None:
         pos = event.pos()
+        if event.reason() == QContextMenuEvent.Reason.Keyboard:
+            # the Menu key: the menu is about the unit or link that has the keyboard focus
+            focus = self.dscene.focusItem()
+            if isinstance(focus, UnitItem):
+                pos = self.mapFromScene(focus.mapToScene(QPointF(60, 12)))
+            elif isinstance(focus, LinkItem) and focus.path().elementCount():
+                pos = self.mapFromScene(focus._chip_center)
         at = self.mapToScene(pos)
         item = self.itemAt(pos)
         kind: str | None = None
         ident: str | None = None
+        connector: str | None = None
         if isinstance(item, UnitItem):
             kind, ident = "unit", item.unit_id
+            connector = item.port_at(item.mapFromScene(at))  # (a connector row, in Expert mode)
         else:
             link = item if isinstance(item, LinkItem) else self.dscene.chip_at(at)
             if link is not None:
                 kind, ident = "interface", link.interface_id
         if kind and ident and not self.ctl.is_selected(kind, ident):
             self.ctl.select(kind, ident)  # the menu is about what was clicked
-        menu = self.build_context_menu(kind, ident, at)
+        menu = self.build_context_menu(kind, ident, at, connector=connector)
         self.last_menu = menu
         self.exec_menu(menu, event.globalPos())
         event.accept()
@@ -2400,8 +3127,11 @@ class DiagramView(QGraphicsView):
         menu.addAction(entry)
         return entry
 
-    def build_context_menu(self, kind: str | None, ident: str | None, at: QPointF) -> QMenu:
-        """The right-click menu for a unit, a link or the background, from the window's actions."""
+    def build_context_menu(
+        self, kind: str | None, ident: str | None, at: QPointF, connector: str | None = None
+    ) -> QMenu:
+        """The right-click menu for a unit, a link or the background, from the window's actions.
+        `connector` is the connector row under the pointer in Expert mode (Why? explains that one)."""
         ctl = self.ctl
         menu = QMenu(self)
         menu.setObjectName("diagram-menu")
@@ -2409,6 +3139,7 @@ class DiagramView(QGraphicsView):
         ro = strings.WHY_READ_ONLY if ctl.read_only else ""
         if kind == "unit" and ident:
             self._entry(menu, strings.CM_OPEN_PLAN, lambda: ctl.request_open("unit", ident))
+            self._state_entries(menu, "unit", ident, connector)
             menu.addSeparator()
             self._mirror(menu, "duplicate")
             self._mirror(menu, "redundant")
@@ -2424,6 +3155,7 @@ class DiagramView(QGraphicsView):
             self._mirror(menu, "delete")
         elif kind == "interface" and ident:
             self._entry(menu, strings.CM_OPEN_PLAN, lambda: ctl.request_open("interface", ident))
+            self._state_entries(menu, "interface", ident)
             i = ctl.project.interfaces.get(ident)
             if i is not None and any(e.auto for e in i.endpoints):
                 self._entry(menu, strings.CONFIRM_AUTO, lambda: ctl.confirm_interface(ident), ro)
@@ -2442,6 +3174,57 @@ class DiagramView(QGraphicsView):
             for name in ("select_all", "find", "fit", "zoom100", "zoom_selection", "arrange"):
                 self._mirror(menu, name)
         return menu
+
+    def _state_entries(
+        self, menu: QMenu, kind: str, ident: str, connector: str | None = None
+    ) -> None:
+        """Show problems (Problems list filtered to the object) and Why? (why the tool chose what it
+        chose); a unit also gets the flight / ground tag of its zone."""
+        ctl = self.ctl
+        st = self.dscene.states.of(kind, ident)
+        nothing = "" if st.badges() else strings.WHY_NOTHING_TO_SHOW
+        self._entry(menu, strings.CM_SHOW_PROBLEMS, lambda: ctl.request_problems(ident), nothing)
+        if connector:
+            target = ("connector", connector)
+            auto = connector in {
+                e.connector_id
+                for i in ctl.project.interfaces.values()
+                for e in i.endpoints
+                if e.auto
+            }
+        elif kind == "unit":
+            target, auto = ("unit", ident), st.auto > 0
+        else:
+            target, auto = (
+                ("interface", ident),
+                True,
+            )  # a link can always say what generation recorded
+        why = "" if auto else strings.WHY_NOTHING_CHOSEN
+        self._entry(menu, strings.CM_WHY, lambda: ctl.request_why(*target), why)
+        if kind == "unit":
+            unit = ctl.project.units.get(ident)
+            item = self.dscene.unit_items.get(ident)
+            zone = (unit.zone if unit is not None else None) or (
+                self.dscene.zone_names[item.lane()]
+                if item is not None and item.lane() < len(self.dscene.zone_names)
+                else ""
+            )
+            if zone:
+                sub = menu.addMenu(strings.CM_ZONE_TAG.format(zone))
+                sub.setObjectName("diagram-menu-zone-tag")
+                for tag, label in (
+                    ("flight", strings.CM_TAG_FLIGHT),
+                    ("ground", strings.CM_TAG_GROUND),
+                    ("", strings.CM_TAG_NONE),
+                ):
+                    act = self._entry(sub, label, partial(self.set_zone_tag, zone, tag))
+                    act.setCheckable(True)
+                    act.setChecked(self.dscene.zone_tags.tag_of(zone) == tag)
+
+    def set_zone_tag(self, zone: str, tag: str) -> None:
+        """Tag a zone FLIGHT or GROUND (or clear it): a setting of the viewer, never the project."""
+        self.dscene.zone_tags.set_tag(zone, tag)
+        self.dscene._repaint_units()
 
     def _align_menus(self, menu: QMenu) -> None:
         enough = len(self.ctl.selected_ids("unit"))

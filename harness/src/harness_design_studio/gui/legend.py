@@ -9,7 +9,9 @@ from PySide6.QtWidgets import QFrame, QSizePolicy, QToolButton, QVBoxLayout, QWi
 
 from harness_design_studio.core import describe
 from harness_design_studio.core.model.project import Project
+from harness_design_studio.gui import canvas_badges as badges
 from harness_design_studio.gui import glyphs, strings
+from harness_design_studio.gui.canvas_state import StateIndex
 from harness_design_studio.gui.theme import ThemeManager
 from harness_design_studio.gui.tokens import CATEGORIES, style_category
 
@@ -24,9 +26,19 @@ class LegendBar(QWidget):
         self.theme = theme
         self.project: Project | None = None
         self._signature: object = None
+        self._present: tuple[bool, bool, bool, bool, bool] = (False,) * 5
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setAccessibleName(strings.LEGEND_NAME)
         theme.changed.connect(self.update)
+
+    def set_states(self, index: StateIndex) -> None:
+        """Remember which marks the diagram shows now (problems, warnings, pending values, locks,
+        unchecked objects); the legend lists only those, and redraws only when that changes."""
+        present = index.present()
+        if present != self._present:
+            self._present = present
+            self._layout(self.width())
+            self.update()
 
     def set_project(self, project: Project) -> None:
         """Remember the project and redraw only when the kinds shown changed."""
@@ -79,6 +91,16 @@ class LegendBar(QWidget):
             out.append(("auto", None, strings.AUTO_LEGEND))
         if genders:
             out.append(("gender", None, strings.LEGEND_GENDER))
+        fail, warn, pend, locked, unchecked = self._present
+        for flag, state, label in (
+            (fail, "fail", strings.LEGEND_BADGE_FAIL),
+            (warn, "warning", strings.LEGEND_BADGE_WARNING),
+            (pend, "pending", strings.LEGEND_BADGE_PENDING),
+            (unchecked, "not-checked", strings.LEGEND_BADGE_NOT_CHECKED),
+            (locked, "locked", strings.LEGEND_LOCK),
+        ):
+            if flag:  # only the marks that are on the diagram now
+                out.append(("badge", state, label))
         return out
 
     def _font(self) -> QFont:
@@ -94,6 +116,7 @@ class LegendBar(QWidget):
             icon = {
                 "conn": glyphs.CONNECTOR_W,
                 "gender": 2 * (glyphs.CONNECTOR_W + 2),
+                "badge": badges.badge_width(0, ""),
             }.get(kind, 26.0)
             w = icon + 6 + fm.horizontalAdvance(label)
             if x and x + w > width:
@@ -142,6 +165,11 @@ class LegendBar(QWidget):
             elif kind == "auto":
                 p.setPen(QPen(th.color("auto-fill"), 2, Qt.PenStyle.DashLine))
                 p.drawRoundedRect(QRectF(x + 4, cy - 6, 14, 12), 3, 3)
+            elif kind == "badge":
+                icon = badges.badge_width(0, "")
+                badges.paint_badge(
+                    p, QRectF(x, cy - 8, icon, 16), str(payload), "", th, self._font(), ground="bg"
+                )
             p.setPen(th.color("auto-fill") if kind == "auto" else th.color("text"))
             room = max(20.0, self.width() - (x + icon + 6) - 4)
             text = p.fontMetrics().elidedText(label, Qt.TextElideMode.ElideRight, int(room))
@@ -179,6 +207,11 @@ class LegendOverlay(QFrame):
     def set_project(self, project: Project) -> None:
         self.bar.set_project(project)
         self._fit()
+
+    def set_states(self, index: StateIndex) -> None:
+        self.bar.set_states(index)
+        self._fit()
+        self.place(self._area, self._width)
 
     @property
     def is_open(self) -> bool:
