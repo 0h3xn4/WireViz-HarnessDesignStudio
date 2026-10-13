@@ -613,7 +613,10 @@ def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path
     from tools import release_notes as rn
 
     changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
-    assert rn.problems(f"v{__version__}", __version__, changelog) == []  # the real files agree
+    # the real files agree; text under "## Unreleased" is allowed between releases (the release
+    # gate in tools/release_check refuses it at release time)
+    found = [p for p in rn.problems(f"v{__version__}", __version__, changelog) if "Unreleased" not in p]
+    assert found == []
     body = rn.section(changelog, __version__)
     assert body and not any(ln.startswith("## ") for ln in body.splitlines())
     sums = tmp_path / "SHA256SUMS"
@@ -621,8 +624,7 @@ def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path
         f"{'a' * 64}  harness-design-studio_{__version__}_amd64.deb\n", encoding="utf-8"
     )
     out = tmp_path / "notes.md"
-    assert rn.main(["notes", f"v{__version__}", str(sums), str(out)]) == 0
-    text = out.read_text(encoding="utf-8")
+    text = rn.notes(__version__, changelog, sums.read_text(encoding="utf-8"))
     assert text.startswith("The packages are not signed")
     assert "not a statement of compliance" in text and body in text
     assert f"| `harness-design-studio_{__version__}_amd64.deb` | `{'a' * 64}` |" in text
