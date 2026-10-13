@@ -98,7 +98,7 @@ def plural(n: int, key: str) -> str:
 
 
 def summary_text(groups: list[LockGroup], keys: tuple[str, ...] = SUMMARY_KEYS) -> str:
-    """"12 wires, 40 pins, 3 interfaces, 5 parts, 2 interface types, 3 config files"; a group
+    """ "12 wires, 40 pins, 3 interfaces, 5 parts, 2 interface types, 3 config files"; a group
     without objects is left out ("nothing" when none is left)."""
     by_key = {g.key: g.count for g in groups}
     parts = [plural(by_key[k], k) for k in keys if by_key.get(k)]
@@ -115,7 +115,9 @@ def _editable_note(kind: str) -> str:
     return strings.LOCK_STAYS_EDITABLE.format(", ".join(f.replace("_", " ") for f in fields)) if fields else ""  # fmt: skip
 
 
-def _config_item(name: str, placeholder: bool, values: dict[str, object], unset: set[str]) -> LockItem:
+def _config_item(
+    name: str, placeholder: bool, values: dict[str, object], unset: set[str]
+) -> LockItem:
     children = tuple(
         LockItem(
             f"{key}: {strings.LOCK_NOT_SET}" if key in unset else f"{key}: {format_value(value)}",
@@ -126,7 +128,10 @@ def _config_item(name: str, placeholder: bool, values: dict[str, object], unset:
     )
     if placeholder:
         return LockItem(
-            f"{name} ({strings.LOCK_PLACEHOLDER})", "pending", strings.LOCK_PLACEHOLDER_NOTE, children
+            f"{name} ({strings.LOCK_PLACEHOLDER})",
+            "pending",
+            strings.LOCK_PLACEHOLDER_NOTE,
+            children,
         )
     return LockItem(name, None, "", children)
 
@@ -221,7 +226,9 @@ def _item(entry: LockItem, theme: ThemeManager) -> QStandardItem:
     return row
 
 
-def tree_model(groups: list[LockGroup] | tuple[LockGroup, ...], theme: ThemeManager) -> QStandardItemModel:
+def tree_model(
+    groups: list[LockGroup] | tuple[LockGroup, ...], theme: ThemeManager
+) -> QStandardItemModel:
     """One top-level row per group ("Wires (12)"), the objects below it."""
     model = QStandardItemModel()
     model.setHorizontalHeaderLabels([strings.LOCK_TREE_HEADER])

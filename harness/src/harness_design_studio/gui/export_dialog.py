@@ -25,7 +25,13 @@ from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
 from PySide6.QtCore import QEventLoop, QItemSelectionModel, QSettings, Qt, QUrl, Signal
-from PySide6.QtGui import QDesktopServices, QKeySequence, QShortcut, QStandardItem, QStandardItemModel
+from PySide6.QtGui import (
+    QDesktopServices,
+    QKeySequence,
+    QShortcut,
+    QStandardItem,
+    QStandardItemModel,
+)
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
@@ -89,7 +95,7 @@ def _ask_folder(title: str) -> str | None:
 
 
 def human_size(n: int) -> str:
-    """"512 B", "12.3 kB", "1.4 MB" (decimal, as file managers show)."""
+    """ "512 B", "12.3 kB", "1.4 MB" (decimal, as file managers show)."""
     if n < 1000:
         return f"{n} B"
     if n < 1_000_000:
@@ -133,7 +139,7 @@ class ExportResult:
 
 
 def scope_label(project: Project, scope: str) -> str:
-    """"W001  Power harness", "System documents" (the manifest has no scope)."""
+    """ "W001  Power harness", "System documents" (the manifest has no scope)."""
     if scope == export_docs.SYSTEM:
         return strings.EXP_SYSTEM
     h = project.harnesses.get(scope)
@@ -191,7 +197,13 @@ class ExportResultPanel(QWidget):
             Column("rel", strings.EXP_COLUMNS["path"], mono=True, tooltip="full_path", width=320),
             Column("doc", strings.EXP_COLUMNS["doc"], width=190),
             Column("scope", strings.EXP_COLUMNS["harness"], width=130),
-            Column("size", strings.EXP_COLUMNS["size"], numeric=True, fmt=lambda v: human_size(int(v or 0)), width=80),  # fmt: skip
+            Column(
+                "size",
+                strings.EXP_COLUMNS["size"],
+                numeric=True,
+                fmt=lambda v: human_size(int(v or 0)),
+                width=80,
+            ),  # fmt: skip
         ]
         self.model = DictTableModel(cols, [], theme)
         self.table = TableView(
@@ -315,7 +327,10 @@ class ExportResultPanel(QWidget):
             for r, f in zip(self._rows, result.files, strict=True)
             if self._filter is None or f.rel in self._filter or f.rel == export_docs.MANIFEST
         ]
+        kept = [f.rel for f in self.selected_files()]  # the selected file stays selected
         self.model.set_rows(shown)
+        if kept:
+            self.select_file(kept[0])
         hidden = len(shown) != result.count
         self.showing.setText(strings.EXP_SHOWING.format(len(shown), result.count) if hidden else "")
         self.showing.setVisible(hidden)
@@ -444,7 +459,7 @@ class ExportDialog(QDialog):
         self.resize(theme.px(1000), theme.px(620))
         self.setMinimumSize(theme.px(760), theme.px(480))
         self.export_result: ExportResult | None = None
-        self.worker: "OutputsWorker | None" = None
+        self.worker: OutputsWorker | None = None
         self._token: tuple[int, int] | None = None
         self._project: Project | None = None
         self._bulk = False
@@ -680,7 +695,9 @@ class ExportDialog(QDialog):
         busy = self.running
         can = self.blocker() is None and not busy
         self.export_btn.setEnabled(can)
-        self.export_btn.setText(strings.EXP_AGAIN if self.export_result is not None else strings.EXP_BUTTON)
+        self.export_btn.setText(
+            strings.EXP_AGAIN if self.export_result is not None else strings.EXP_BUTTON
+        )
         self.tree.setEnabled(not busy)
         self.all_btn.setEnabled(not busy)
         self.none_btn.setEnabled(not busy)
@@ -749,7 +766,9 @@ class ExportDialog(QDialog):
                     child.setEditable(False)
                     child.setData(key, Qt.ItemDataRole.UserRole)
                     child.setCheckState(
-                        Qt.CheckState.Unchecked if (scope, key) in unchecked else Qt.CheckState.Checked
+                        Qt.CheckState.Unchecked
+                        if (scope, key) in unchecked
+                        else Qt.CheckState.Checked
                     )
                     top.appendRow(child)
                 self.model.appendRow(top)
@@ -782,7 +801,9 @@ class ExportDialog(QDialog):
         self._selection_changed()
 
     def _selection_changed(self) -> None:
-        self.result_panel.set_filter(self.selected_paths() if self.export_result is not None else None)
+        self.result_panel.set_filter(
+            self.selected_paths() if self.export_result is not None else None
+        )
         self.selectionChanged.emit()
 
     def set_all_checked(self, on: bool) -> None:

@@ -3,7 +3,7 @@
 import csv
 import io
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
@@ -817,7 +817,9 @@ class ChangeDialog(QDialog):
     def _show_unlocks(self, unlocks: "lock_tree.RevisionUnlocks", theme: ThemeManager) -> None:
         groups = list(unlocks.editable)
         head = (
-            strings.REVISE_EDITABLE_HEAD.format(lock_tree.summary_text(groups, lock_tree.SUMMARY_KEYS))  # fmt: skip
+            strings.REVISE_EDITABLE_HEAD.format(
+                lock_tree.summary_text(groups, lock_tree.SUMMARY_KEYS)
+            )  # fmt: skip
             if groups
             else strings.REVISE_EDITABLE_NONE
         )
@@ -826,7 +828,11 @@ class ChangeDialog(QDialog):
                 lock_tree.summary_text(list(unlocks.still_locked), tuple(lock_tree.NOUNS))
             )
         self.locks_summary.setText(head)
-        self._fill_tree([*groups, *unlocks.still_locked], theme, strings.REVISE_EDITABLE_TREE)
+        kept = [
+            replace(g, label=f"{strings.REVISE_STILL_TREE}: {g.label}")
+            for g in unlocks.still_locked
+        ]
+        self._fill_tree([*groups, *kept], theme, strings.REVISE_EDITABLE_TREE)
 
     # ---- validation -------------------------------------------------------------------------
 

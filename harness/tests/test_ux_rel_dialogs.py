@@ -117,6 +117,9 @@ def test_the_revise_dialog_explains_what_becomes_editable(qtbot, ctl) -> None:
     assert "Still locked because another released harness uses it" in dlg.locks_summary.text()
     names = list(top_rows(dlg.locks_tree))
     assert any(n.startswith("Wires") for n in names)
+    assert any(
+        n.startswith("Stays locked: Parts") for n in names
+    )  # told apart from the editable ones
 
 
 def test_what_becomes_editable_matches_the_locks_after_the_revision(qtbot, ctl) -> None:
@@ -170,3 +173,12 @@ def test_the_old_calls_still_work(qtbot) -> None:
     qtbot.addWidget(dlg)
     assert dlg.ok.isEnabled() and not dlg.locks_tree.isVisibleTo(dlg)
     assert dlg.status.text() == ""
+
+
+def test_the_summary_leaves_out_what_is_not_locked_and_says_nothing_when_empty() -> None:
+    assert lock_tree.summary_text([]) == "nothing"
+    one = lock_tree.LockGroup("wires", "Wires", (lock_tree.LockItem("W1"),))
+    two = lock_tree.LockGroup("pins", "Pins", (lock_tree.LockItem("J1.1"), lock_tree.LockItem("J1.2")))  # fmt: skip
+    assert lock_tree.summary_text([one, two]) == "1 wire, 2 pins"
+    assert lock_tree.plural(1, "interface_types") == "1 interface type"
+    assert lock_tree.plural(0, "config_files") == "0 config files"

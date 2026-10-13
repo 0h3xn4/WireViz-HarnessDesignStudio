@@ -15,7 +15,7 @@ released, revised), never colour alone.
 from collections.abc import Mapping
 from typing import Any
 
-from PySide6.QtCore import QModelIndex, QSettings, Qt, Signal
+from PySide6.QtCore import QItemSelectionModel, QModelIndex, QSettings, Qt, QTimer, Signal
 from PySide6.QtGui import QStandardItem, QStandardItemModel
 from PySide6.QtWidgets import (
     QAbstractItemView,
@@ -47,10 +47,12 @@ from harness_design_studio.gui.states import STATES, StateChip
 from harness_design_studio.gui.tables import Column, DictTableModel, Row, TableView
 from harness_design_studio.gui.theme import ThemeManager
 
+
 def _m(row: Row) -> Mapping[Any, Any]:
     return row if isinstance(row, Mapping) else {}
 
 
+REFRESH_MS = 150  # a visible panel reads the project this long after the last change
 ALL = ""  # the combo box entry "All harnesses"
 WORKING = ""  # the "with" entry "Working design"
 _EVENT_STATE = {"review": "in-review", "release": "released", "new_revision": "revised"}
@@ -117,15 +119,19 @@ def diff_table_rows(groups: list[DiffGroup], kind: str | None = None) -> list[di
                     "kind": r.kind_name,
                     "id": r.id,
                     "field": strings.REL_WHOLE_OBJECT if whole else r.label,
-                    "before": strings.REL_DID_NOT_EXIST if whole and r.change == "added" else r.before,  # fmt: skip
-                    "after": strings.REL_NO_LONGER if whole and r.change == "removed" else r.after,  # fmt: skip
+                    "before": strings.REL_DID_NOT_EXIST
+                    if whole and r.change == "added"
+                    else r.before,  # fmt: skip
+                    "after": strings.REL_NO_LONGER
+                    if whole and r.change == "removed"
+                    else r.after,  # fmt: skip
                 }
             )
     return rows
 
 
 def group_text(g: DiffGroup) -> str:
-    """"Wire: 2 added, 1 changed" (kinds with no change of a sort leave that sort out)."""
+    """ "Wire: 2 added, 1 changed" (kinds with no change of a sort leave that sort out)."""
     counts = g.counts
     parts = [f"{counts[k]} {k}" for k in ("added", "removed", "changed") if counts[k]]
     return strings.REL_GROUP_ITEM.format(g.name, ", ".join(parts) or strings.REL_COUNTS_ZERO)
@@ -210,11 +216,24 @@ class ReleasesPanel(QWidget):
             Column("id", strings.REL_COLUMNS["id"], mono=True),
             Column("harness", strings.REL_COLUMNS["harness"], mono=True),
             Column("revision", strings.REL_COLUMNS["revision"], mono=True),
-            Column("event", strings.REL_COLUMNS["event"], state=lambda r: _EVENT_STATE.get(str(_m(r)["kind"]))),  # fmt: skip
+            Column(
+                "event",
+                strings.REL_COLUMNS["event"],
+                state=lambda r: _EVENT_STATE.get(str(_m(r)["kind"])),
+            ),  # fmt: skip
             Column("by", strings.REL_COLUMNS["by"]),
             Column("when", strings.REL_COLUMNS["when"], mono=True),
             Column("comment", strings.REL_COLUMNS["comment"], tooltip="comment", width=360),
-            Column("baseline", strings.REL_COLUMNS["baseline"], state=lambda r: "released" if _m(r)["has_baseline"] else None, tooltip=lambda r: strings.REL_BASELINE_TIP.format(_m(r)["revision"]) if _m(r)["has_baseline"] else strings.REL_NO_BASELINE_TIP),  # fmt: skip
+            Column(
+                "baseline",
+                strings.REL_COLUMNS["baseline"],
+                state=lambda r: "released" if _m(r)["has_baseline"] else None,
+                tooltip=lambda r: (
+                    strings.REL_BASELINE_TIP.format(_m(r)["revision"])
+                    if _m(r)["has_baseline"]
+                    else strings.REL_NO_BASELINE_TIP
+                ),
+            ),  # fmt: skip
         ]
         self.timeline_model = DictTableModel(cols, [], theme)
         self.timeline = TableView(
@@ -288,8 +307,12 @@ class ReleasesPanel(QWidget):
             Column("kind", strings.REL_DIFF_COLUMNS["kind"], width=120),
             Column("id", strings.REL_DIFF_COLUMNS["id"], mono=True, width=110),
             Column("field", strings.REL_DIFF_COLUMNS["field"], width=150),
-            Column("before", strings.REL_DIFF_COLUMNS["before"], mono=True, tooltip="before", width=200),  # fmt: skip
-            Column("after", strings.REL_DIFF_COLUMNS["after"], mono=True, tooltip="after", width=200),  # fmt: skip
+            Column(
+                "before", strings.REL_DIFF_COLUMNS["before"], mono=True, tooltip="before", width=200
+            ),  # fmt: skip
+            Column(
+                "after", strings.REL_DIFF_COLUMNS["after"], mono=True, tooltip="after", width=200
+            ),  # fmt: skip
         ]
         self.diff_model = DictTableModel(dcols, [], theme)
         self.diff = TableView(
@@ -321,15 +344,21 @@ class ReleasesPanel(QWidget):
             groups_sel.currentChanged.connect(lambda *_: self._show_group())
         self.mark.clicked.connect(self.mark_on_diagram)
         self.clear.clicked.connect(lambda: self.ctl.set_marks({}))
+        self._timer = QTimer(self)
+        self._timer.setSingleShot(True)
+        self._timer.setInterval(REFRESH_MS)
+        self._timer.timeout.connect(self.refresh)
         ctl.changed.connect(lambda _d: self._invalidate())
         self.refresh()
 
     # ---- keeping up with the project ------------------------------------------------------
 
     def _invalidate(self) -> None:
+        """The project changed: a visible panel reads it again a moment later (many edits in a row
+        cost one read, and an edit stays under its time budget); a hidden one when it is shown."""
         self._dirty = True
         if self.isVisible():
-            self.refresh()
+            self._timer.start()
 
     def showEvent(self, event: object) -> None:
         super().showEvent(event)  # type: ignore[arg-type]
@@ -342,6 +371,7 @@ class ReleasesPanel(QWidget):
         self._cache.clear()
         project = self.ctl.project
         keep = self.current_harness()
+        keep_entry = self.selected_entry()
         self._building = True
         try:
             self.harness.clear()
@@ -355,9 +385,36 @@ class ReleasesPanel(QWidget):
         finally:
             self._building = False
         self._load_timeline()
+        self._select_entry(keep_entry)
         self._fill_pickers()
         self._update_actions()
         self._compare()
+
+    def _select_entry(self, entry: str | None) -> None:
+        """Select the timeline line with this entry ID again (after the rows were read anew)."""
+        sel = self.timeline.selectionModel()
+        if not entry or sel is None:
+            return
+        self._building = True
+        try:
+            for i in range(self.timeline.proxy.rowCount()):
+                row = self.timeline.row_at(self.timeline.proxy.index(i, 0))
+                if isinstance(row, Mapping) and row.get("id") == entry:
+                    index = self.timeline.proxy.index(i, 0)
+                    sel.setCurrentIndex(index, QItemSelectionModel.SelectionFlag.NoUpdate)
+                    sel.select(
+                        index,
+                        QItemSelectionModel.SelectionFlag.ClearAndSelect
+                        | QItemSelectionModel.SelectionFlag.Rows,
+                    )
+                    return
+        finally:
+            self._building = False
+
+    def selected_entry(self) -> str | None:
+        """The change-log entry ("C0001") of the selected timeline line, if one is selected."""
+        rows = self.timeline.selected_rows()
+        return str(rows[0]["id"]) if rows and isinstance(rows[0], Mapping) else None
 
     # ---- the harness the panel is about -------------------------------------------------------
 

@@ -67,7 +67,9 @@ class InlineNotice(QFrame):
 
     def _restyle(self) -> None:
         self.icon.setPixmap(
-            icons.icon(_ICON[self.severity], self.theme, self.severity).pixmap(self.theme.icon_size(16), self.theme.icon_size(16))  # fmt: skip
+            icons.icon(_ICON[self.severity], self.theme, self.severity).pixmap(
+                self.theme.icon_size(16), self.theme.icon_size(16)
+            )  # fmt: skip
         )
         self.style().unpolish(self)
         self.style().polish(self)

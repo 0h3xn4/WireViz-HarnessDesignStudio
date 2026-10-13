@@ -12,6 +12,7 @@ from PySide6.QtGui import QColor, QFont, QFontDatabase, QGuiApplication, QPalett
 from PySide6.QtWidgets import QApplication, QWidget
 
 from harness_design_studio.gui import fonts
+from harness_design_studio.gui.indicators import indicator_css
 from harness_design_studio.gui.tokens import CONTROL_HEIGHT, DARK, LIGHT, SPACING, TYPE_SCALE
 
 BASE_PX = TYPE_SCALE["base"]
@@ -196,7 +197,10 @@ class ThemeManager(QObject):
         font.setPixelSize(self.type("base"))
         app.setFont(font)
         app.setPalette(build_palette(self.tokens))
-        app.setStyleSheet(stylesheet(self.tokens, self.scale, mono_family()))
+        app.setStyleSheet(
+            stylesheet(self.tokens, self.scale, mono_family())
+            + indicator_css(self.tokens, self.name, self.scale)
+        )
         self.changed.emit()
 
     def _os_changed(self, _scheme: object = None) -> None:
@@ -256,6 +260,7 @@ QFrame[card="true"][severity="warning"] {{ border-left: {px(6)} solid {t["warnin
 QFrame[card="true"][severity="error"] {{ border-left: {px(6)} solid {t["error"]}; }}
 QFrame[card="true"][severity="info"] {{ border-left: {px(6)} solid {t["info"]}; }}
 QFrame[banner="true"] {{ background: {t["surface-2"]}; border: 1px solid {t["warning"]}; }}
+QFrame[banner="true"] QLabel {{ background: transparent; }}
 QFrame[banner="true"][severity="error"] {{ border: 1px solid {t["error"]}; border-left: {px(6)} solid {t["error"]}; }}
 QFrame[banner="true"][severity="info"] {{ border: 1px solid {t["info"]}; border-left: {px(6)} solid {t["info"]}; }}
 QToolTip {{ background: {t["surface"]}; color: {t["text"]}; border: 1px solid {t["border"]}; padding: {s4}; }}

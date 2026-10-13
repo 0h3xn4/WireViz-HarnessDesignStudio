@@ -23,7 +23,14 @@ from harness_design_studio.gui.releases_panel import (  # noqa: E402
 )
 from harness_design_studio.gui.states import STATE_ROLE  # noqa: E402
 from tests.test_accessibility import unnamed  # noqa: E402
-from tests.ux_rel import collect, flatsat_controller, release_all, settings, themed  # noqa: E402
+from tests.ux_rel import (  # noqa: E402
+    collect,
+    dict_rows,
+    flatsat_controller,
+    release_all,
+    settings,
+    themed,
+)
 
 
 @pytest.fixture
@@ -97,7 +104,7 @@ def test_a_review_and_a_new_revision_get_their_own_chips(qtbot, released, tmp_pa
         "new revision started": "revised",
     }
     # a new revision has no frozen copy of its own: the baseline cell stays empty, not "none"
-    rows = panel.timeline_model.rows()
+    rows = dict_rows(panel.timeline_model)
     revised = next(r for r in rows if r["kind"] == "new_revision")
     assert panel.timeline_model.text_at(rows.index(revised), column(panel, "baseline")) == ""
     assert panel.timeline_model.state_at(rows.index(revised), column(panel, "baseline")) is None
@@ -107,7 +114,7 @@ def test_choosing_a_harness_filters_the_timeline_and_names_its_state(qtbot, rele
     panel = make_panel(qtbot, released, tmp_path)
     assert panel.harness.count() == 1 + len(released.project.harnesses)
     assert panel.select_harness("W003")
-    assert [r["harness"] for r in panel.timeline_model.rows()] == ["W003"]
+    assert [r["harness"] for r in dict_rows(panel.timeline_model)] == ["W003"]
     assert panel.state.state() == "released" and "A" in (panel.state.text() or "")
     assert panel.select_harness("W002")
     assert panel.timeline_empty.isVisible()
@@ -167,7 +174,7 @@ def test_differences_group_by_kind_with_counts_and_no_raw_none(qtbot, released, 
     assert names[0].startswith(strings.REL_ALL_KINDS)
     assert any(n.startswith("Wire: 1 changed") for n in names)
     assert any(n.startswith("Harness: 1 changed") for n in names)
-    rows = panel.diff_model.rows()
+    rows = dict_rows(panel.diff_model)
     assert rows
     for row in rows:
         for key in ("change", "kind", "id", "field", "before", "after"):
@@ -178,9 +185,9 @@ def test_differences_group_by_kind_with_counts_and_no_raw_none(qtbot, released, 
     assert cleared and cleared[0]["after"] == "(none)"  # a cleared value reads "(none)", not None
     # one kind only
     panel.select_group("wire")
-    assert {r["kind"] for r in panel.diff_model.rows()} == {"Wire"}
+    assert {r["kind"] for r in dict_rows(panel.diff_model)} == {"Wire"}
     panel.select_group(None)
-    assert len({r["kind"] for r in panel.diff_model.rows()}) > 1
+    assert len({r["kind"] for r in dict_rows(panel.diff_model)}) > 1
 
 
 def test_compare_two_revisions_and_the_same_revision(qtbot, released, tmp_path) -> None:
@@ -252,7 +259,9 @@ def test_the_panel_follows_the_project(qtbot, ctl, tmp_path) -> None:
     panel = make_panel(qtbot, ctl, tmp_path)
     assert panel.timeline_model.rowCount() == 0
     release_all(ctl)
-    assert panel.timeline_model.rowCount() == 2  # a visible panel refreshes itself
+    qtbot.waitUntil(
+        lambda: panel.timeline_model.rowCount() == 2, timeout=5000
+    )  # it follows by itself
     assert panel.harness.itemText(panel.harness.findData("W001")).startswith("W001 — Released")
 
 
@@ -294,3 +303,12 @@ def test_every_control_has_a_name(qtbot, released, tmp_path) -> None:
         if v.objectName().startswith("releases-"):  # not the pop-up list of a combo box
             assert v.accessibleName()
     assert isinstance(panel.group_index("wire"), QModelIndex)
+
+
+def test_the_selected_line_survives_a_refresh(qtbot, released, tmp_path) -> None:
+    panel = make_panel(qtbot, released, tmp_path)
+    panel.timeline.selectRow(1)
+    assert panel.current_harness() == "W003" and panel.selected_entry() == "C0002"
+    panel.refresh()
+    assert panel.selected_entry() == "C0002" and panel.current_harness() == "W003"
+    assert panel.action_enabled("revise")

@@ -4,6 +4,7 @@ approved parts, segment lengths, engineering values and a KiCad netlist, on the 
 Each import is ONE undo step called "Import n rows", and Undo takes all of it back."""
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -26,7 +27,7 @@ from harness_design_studio.gui.import_wizard import (  # noqa: E402
 )
 from harness_design_studio.resources import examples_path  # noqa: E402
 from tests.test_accessibility import unnamed  # noqa: E402
-from tests.ux_rel import collect, flatsat_controller, release_all, themed  # noqa: E402
+from tests.ux_rel import collect, dict_rows, flatsat_controller, release_all, themed  # noqa: E402
 
 TEMPLATES = examples_path() / "templates"  # type: ignore[operator]
 
@@ -57,8 +58,8 @@ def finish(w: ImportWizard) -> None:
     button.click()
 
 
-def rows_of(model) -> list[dict]:
-    return [r for r in model.rows()]  # type: ignore[misc]
+def rows_of(model) -> list[dict[Any, Any]]:
+    return dict_rows(model)
 
 
 def parts_to_the_page_with_words(w: ImportWizard) -> None:
@@ -89,7 +90,9 @@ def test_the_first_page_offers_every_kind_and_waits_for_a_readable_file(qtbot, c
     assert "Only .csv and .xlsx" in w.file_page.notice.text()
     assert w.load_file(str(TEMPLATES / "interfaces.csv"))
     assert not w.file_page.notice.isVisible()
-    assert "interfaces.csv" in w.file_page.status.text() and "2 data rows" in w.file_page.status.text()
+    assert (
+        "interfaces.csv" in w.file_page.status.text() and "2 data rows" in w.file_page.status.text()
+    )
     assert w.button(QWizard.WizardButton.NextButton).isEnabled()
 
 
@@ -182,7 +185,9 @@ def test_parts_with_unknown_words_are_listed_with_the_exact_reason_and_block_the
     assert rows["5"]["reason"].startswith("Category 'gizmo' is not one of connector")
     assert check.rows_model.state_at(2, 2) == "fail"
     assert "1 of 4 rows can be imported; 3 have problems" in check.summary.text()
-    assert strings.IMP_CHECK_BLOCKS in check.summary.text()  # parts: one error stops all, as on the CLI
+    assert (
+        strings.IMP_CHECK_BLOCKS in check.summary.text()
+    )  # parts: one error stops all, as on the CLI
     assert not w.button(QWizard.WizardButton.NextButton).isEnabled()
     # the filter hides what is fine; a reason is also the cell's tooltip
     assert check.only.isChecked() and check.rows.proxy.rowCount() == 3
@@ -238,7 +243,7 @@ def test_a_length_for_a_released_harness_is_refused_with_the_reason(qtbot, ctl, 
     reasons = {r["item"]: r["reason"] for r in rows_of(w.check_page.rows_model)}
     assert reasons["W001 / W001-L1"] == "Harness 'W001' is released and locked"
     assert reasons["W002 / W002-L1"] == ""
-    assert not w.plan.importable  # one bad row stops all  # type: ignore[union-attr]
+    assert w.plan is not None and not w.plan.importable  # one bad row stops all
 
 
 def test_a_length_file_with_another_column_order_gets_the_hint(qtbot, ctl, tmp_path) -> None:
@@ -364,7 +369,12 @@ def test_changing_a_column_choice_reads_the_rows_again(qtbot, ctl, tmp_path) -> 
     w.browse()
     next_(w)
     page = w.map_page
-    assert [page.map_boxes[k].currentIndex() for k in ("id", "type", "from", "to")] == [1, 2, 3, 4]  # by position
+    assert [page.map_boxes[k].currentIndex() for k in ("id", "type", "from", "to")] == [
+        1,
+        2,
+        3,
+        4,
+    ]  # by position
     assert rows_of(page.model)[0]["state"] == "pass"
     page.map_boxes["type"].setCurrentIndex(0)  # not used
     row = rows_of(page.model)[0]

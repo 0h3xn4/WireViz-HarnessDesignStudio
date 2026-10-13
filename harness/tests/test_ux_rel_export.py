@@ -31,7 +31,15 @@ from harness_design_studio.gui.export_dialog import (  # noqa: E402
 )
 from harness_design_studio.gui.main_window import OutputsWorker  # noqa: E402
 from tests.test_accessibility import unnamed  # noqa: E402
-from tests.ux_rel import app, collect, flatsat_controller, settings, themed  # noqa: E402
+from tests.ux_rel import (  # noqa: E402
+    app,
+    collect,
+    dict_rows,
+    flatsat_controller,
+    outputs_of,
+    settings,
+    themed,
+)
 
 
 @pytest.fixture(scope="module")
@@ -56,6 +64,16 @@ def done(tmp_path_factory):
     assert result is not None
     yield SimpleNamespace(ctl=ctl, dlg=dlg, res=result, opened=opened, tmp=tmp, exported=exported)
     dlg.close()
+
+
+def recorder(opened: list[QUrl]):  # type: ignore[no-untyped-def]
+    """An opener that remembers the URLs it was given."""
+
+    def opener(url: QUrl) -> bool:
+        opened.append(url)
+        return True
+
+    return opener
 
 
 def activate(widget) -> None:
@@ -180,7 +198,9 @@ def test_the_tree_offers_harness_by_document_with_everything_ticked(qtbot, tmp_p
     assert [t.data(Qt.ItemDataRole.UserRole) for t in top] == [*sorted(ctl.project.harnesses), "system"]  # fmt: skip
     assert top[0].text().startswith("W001  ")
     assert top[0].rowCount() == len(export_docs.HARNESS_DOCS)
-    assert top[-1].text() == strings.EXP_SYSTEM and top[-1].rowCount() == len(export_docs.SYSTEM_DOCS)
+    assert top[-1].text() == strings.EXP_SYSTEM and top[-1].rowCount() == len(
+        export_docs.SYSTEM_DOCS
+    )
     assert all(t.checkState() == Qt.CheckState.Checked for t in top)
     assert dlg.checked_documents() == {(s, d.key) for s, docs in export_docs.planned_layout(ctl.project.harnesses) for d in docs}  # fmt: skip
     assert strings.EXP_FULL_NOTE in dlg.note.text()  # says the whole set is always written
@@ -194,7 +214,7 @@ def test_the_tree_offers_harness_by_document_with_everything_ticked(qtbot, tmp_p
 
 
 def test_the_export_writes_the_full_set_and_lists_every_file(done) -> None:
-    folder = done.ctl.outputs_folder()
+    folder = outputs_of(done.ctl)
     res = done.res
     assert isinstance(res, ExportResult) and res.folder == folder
     assert len(done.exported) == 1 and done.exported[0][0] is res
@@ -210,7 +230,7 @@ def test_the_export_writes_the_full_set_and_lists_every_file(done) -> None:
     assert done.dlg.export_btn.text() == strings.EXP_AGAIN
     assert "113 files written" in panel.summary.text() and res.stamp in panel.summary.text()
     # columns: path, document, harness, size (a number, shown in kB)
-    first = panel.model.rows()[0]
+    first = dict_rows(panel.model)[0]
     assert set(first) >= {"rel", "doc", "scope", "size"}
     size_col = panel.model.column_index("size")
     assert panel.model.text_at(0, size_col) == human_size(int(first["size"]))
@@ -218,7 +238,7 @@ def test_the_export_writes_the_full_set_and_lists_every_file(done) -> None:
 
 
 def test_reveal_and_open_build_the_right_urls(clean) -> None:
-    dlg, folder = clean.dlg, clean.ctl.outputs_folder()
+    dlg, folder = clean.dlg, outputs_of(clean.ctl)
     panel = dlg.result_panel
     assert panel.reveal_selected() is None  # nothing selected yet
     select(dlg, "harnesses/W001/wirelist.csv")
@@ -236,7 +256,7 @@ def test_reveal_and_open_build_the_right_urls(clean) -> None:
 
 
 def test_enter_opens_and_ctrl_enter_reveals_from_the_keyboard(clean) -> None:
-    dlg, folder = clean.dlg, clean.ctl.outputs_folder()
+    dlg, folder = clean.dlg, outputs_of(clean.ctl)
     select(dlg, "system/bom.csv")
     table = dlg.result_panel.table
     table.setFocus()
@@ -268,23 +288,27 @@ def test_the_ticks_choose_what_the_result_list_shows(clean) -> None:
     dlg, panel = clean.dlg, clean.dlg.result_panel
     assert panel.model.rowCount() == 113 and not panel.showing.isVisible()
     dlg.set_checked("W002", None, False)
-    shown = {r["rel"] for r in panel.model.rows()}
+    shown = {r["rel"] for r in dict_rows(panel.model)}
     assert not any(rel.startswith("harnesses/W002/") for rel in shown)
     assert any(rel.startswith("harnesses/W001/") for rel in shown)
     assert "manifest.json" in shown  # part of what was written, always listed
     assert panel.showing.isVisible() and f"of {clean.res.count} files" in panel.showing.text()
+    select(dlg, "harnesses/W001/drawing_A3_s1.svg")
+    dlg.set_checked("W003", None, False)
+    assert [f.rel for f in panel.selected_files()] == ["harnesses/W001/drawing_A3_s1.svg"]  # kept
+    assert panel.previewing()
     dlg.set_all_checked(True)
     dlg.set_checked("system", "sys_bom", False)
-    assert "system/bom.csv" not in {r["rel"] for r in panel.model.rows()}
+    assert "system/bom.csv" not in {r["rel"] for r in dict_rows(panel.model)}
     dlg.none_btn.click()
-    assert {r["rel"] for r in panel.model.rows()} == {"manifest.json"}
+    assert {r["rel"] for r in dict_rows(panel.model)} == {"manifest.json"}
     assert dlg.selected_paths() == set()
     dlg.all_btn.click()
     assert panel.model.rowCount() == 113 and len(dlg.selected_paths()) == 112
 
 
 def test_copy_selection_copies_the_ticked_files_byte_for_byte_without_the_manifest(clean, tmp_path) -> None:  # fmt: skip
-    dlg, folder = clean.dlg, clean.ctl.outputs_folder()
+    dlg, folder = clean.dlg, outputs_of(clean.ctl)
     dlg.none_btn.click()
     dlg.set_checked("W001", None, True)
     dlg.set_checked("system", "sys_changelog", True)
@@ -346,13 +370,13 @@ def test_a_failed_independent_check_is_a_persistent_notice_and_writes_nothing(do
     assert "The wire list of W000 does not match the design" in text
     assert "… and 3 more" in text  # six are listed, the rest counted
     assert len(failed) == 1
-    assert not (ctl.outputs_folder() / "manifest.json").exists()
+    assert not (outputs_of(ctl) / "manifest.json").exists()
     assert QApplication.activeModalWidget() is modal  # no pop-up appeared
     assert dlg.export_btn.isEnabled() and dlg.pages.currentIndex() == 0
     # the notice stays until the next export works
     dlg.worker_factory = fake_factory(done.res.built)
     assert dlg.run() is not None and not dlg.notice.isVisible()
-    assert (ctl.outputs_folder() / "manifest.json").is_file()
+    assert (outputs_of(ctl) / "manifest.json").is_file()
 
 
 def test_a_write_error_is_a_notice_too(done, qtbot, tmp_path, monkeypatch) -> None:
@@ -382,7 +406,7 @@ def test_cancel_stops_the_export_and_writes_nothing(qtbot, tmp_path) -> None:
     qtbot.waitUntil(lambda: not dlg.running, timeout=30000)
     assert len(cancelled) == 1
     assert dlg.notice.text() == strings.EXPORT_CANCELLED
-    assert not (ctl.outputs_folder() / "manifest.json").exists()
+    assert not (outputs_of(ctl) / "manifest.json").exists()
     assert dlg.export_btn.isEnabled() and dlg.tree.isEnabled()
 
 
@@ -394,7 +418,7 @@ def test_closing_while_it_runs_cancels_it(qtbot, tmp_path) -> None:
     assert dlg.start()
     dlg.reject()
     assert not dlg.running and not dlg.isVisible()
-    assert not (ctl.outputs_folder() / "manifest.json").exists()
+    assert not (outputs_of(ctl) / "manifest.json").exists()
 
 
 def test_an_edit_during_the_export_drops_the_result(done, qtbot, tmp_path) -> None:
@@ -407,7 +431,7 @@ def test_an_edit_during_the_export_drops_the_result(done, qtbot, tmp_path) -> No
     assert ctl.run("rename", [Put("units", evolve(unit, name="Renamed"))])
     qtbot.waitUntil(lambda: not dlg.running, timeout=10000)
     assert dlg.notice.text() == strings.EXP_NOTE_CHANGED
-    assert not (ctl.outputs_folder() / "manifest.json").exists()
+    assert not (outputs_of(ctl) / "manifest.json").exists()
 
 
 def test_open_after_export_opens_the_folder_and_is_remembered(done, qtbot, tmp_path) -> None:
@@ -416,7 +440,7 @@ def test_open_after_export_opens_the_folder_and_is_remembered(done, qtbot, tmp_p
     opened: list[QUrl] = []
     dlg = ExportDialog(
         ctl, themed(), settings=store, worker_factory=fake_factory(done.res.built),
-        opener=lambda u: opened.append(u) or True,
+        opener=recorder(opened),
     )  # fmt: skip
     qtbot.addWidget(dlg)
     assert not dlg.open_after.isChecked()
@@ -437,7 +461,10 @@ def test_keyboard_only_journey(done, qtbot, tmp_path) -> None:
     ctl = flatsat_controller(tmp_path)
     opened: list[QUrl] = []
     dlg = ExportDialog(
-        ctl, themed(), worker_factory=fake_factory(done.res.built), opener=lambda u: opened.append(u) or True  # fmt: skip
+        ctl,
+        themed(),
+        worker_factory=fake_factory(done.res.built),
+        opener=recorder(opened),  # fmt: skip
     )
     qtbot.addWidget(dlg)
     dlg.resize(1100, 700)

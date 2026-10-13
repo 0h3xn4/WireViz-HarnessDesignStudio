@@ -18,14 +18,14 @@ from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import Qt, QTimer, Signal
+from PySide6.QtCore import QTimer, Signal
 from PySide6.QtWidgets import (
     QAbstractButton,
     QButtonGroup,
     QCheckBox,
     QComboBox,
     QFileDialog,
-    QFormLayout,
+    QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -139,6 +139,38 @@ class FilePage(QWizardPage):
         return self.wiz.source is not None and not self.wiz.ctl.read_only
 
 
+class GridForm:
+    """Label and field pairs laid out in `columns` columns, so a long list of choices (eleven
+    columns to match) leaves room for the preview below it. `addRow(label, field)` takes the next
+    cell; `addRow(widget)` takes a whole row."""
+
+    def __init__(self, host: QWidget, columns: int = 3) -> None:
+        self.grid = QGridLayout(host)
+        self.grid.setContentsMargins(0, 0, 0, 0)
+        self.columns = columns
+        self._n = 0
+        for c in range(columns):
+            self.grid.setColumnStretch(c * 2 + 1, 1)
+
+    def addRow(self, first: "str | QWidget", field: QWidget | None = None) -> None:  # noqa: N802
+        if field is None:
+            widget = first if isinstance(first, QWidget) else QLabel(first)
+            self._n += (-self._n) % self.columns  # finish the row
+            self.grid.addWidget(widget, self._n // self.columns, 0, 1, self.columns * 2)
+            self._n += self.columns
+            return
+        row, col = divmod(self._n, self.columns)
+        label = QLabel(first) if isinstance(first, str) else None
+        if label is not None:
+            label.setWordWrap(True)
+            label.setBuddy(field)
+            self.grid.addWidget(label, row, col * 2)
+        elif isinstance(first, QWidget):
+            self.grid.addWidget(first, row, col * 2)
+        self.grid.addWidget(field, row, col * 2 + 1)
+        self._n += 1
+
+
 class MapPage(QWizardPage):
     """Match columns, choose units and words, and see the first rows as they will be read."""
 
@@ -195,16 +227,14 @@ class MapPage(QWizardPage):
         self._build(kind, source, options)
         self._set_columns(kind)
 
-    def _form(self) -> tuple[QWidget, QFormLayout]:
+    def _form(self) -> tuple[QWidget, "GridForm"]:
         w = QWidget()
-        form = QFormLayout(w)
-        form.setContentsMargins(0, 0, 0, 0)
-        form.setFieldGrowthPolicy(QFormLayout.FieldGrowthPolicy.AllNonFixedFieldsGrow)
+        form = GridForm(w, columns=3)
         self.stack.addWidget(w)
         self.stack.setCurrentWidget(w)
         return w, form
 
-    def _combo(self, form: QFormLayout, key: str, label: str, header: list[str], current: int | None) -> None:  # fmt: skip
+    def _combo(self, form: GridForm, key: str, label: str, header: list[str], current: int | None) -> None:  # fmt: skip
         box = QComboBox()
         box.setObjectName(f"import-map-{key}")
         box.setAccessibleName(label)
@@ -217,7 +247,7 @@ class MapPage(QWizardPage):
         self.map_boxes[key] = box
         form.addRow(label, box)
 
-    def _words(self, form: QFormLayout, key: str, label: str, words: list[str]) -> None:
+    def _words(self, form: GridForm, key: str, label: str, words: list[str]) -> None:
         edit = QLineEdit(", ".join(words))
         edit.setObjectName(f"import-words-{key}")
         edit.setAccessibleName(label)
@@ -266,7 +296,7 @@ class MapPage(QWizardPage):
         elif kind == "netlist":
             self._build_netlist(form, options)
 
-    def _build_netlist(self, form: QFormLayout, options: Options) -> None:
+    def _build_netlist(self, form: GridForm, options: Options) -> None:
         theme = self.wiz.theme
         self.net_unit = QComboBox()
         self.net_unit.setObjectName("import-net-unit")
@@ -293,7 +323,13 @@ class MapPage(QWizardPage):
         for attr, key, label, tip, pairs in (
             ("ids", "ids", strings.IMP_NET_IDS, strings.IMP_NET_IDS_TIP, options.connector_ids),
             ("parts", "parts", strings.IMP_NET_PARTS, strings.IMP_NET_PARTS_TIP, options.parts),
-            ("signals", "signals", strings.IMP_NET_SIGNALS, strings.IMP_NET_SIGNALS_TIP, options.signal_map),  # fmt: skip
+            (
+                "signals",
+                "signals",
+                strings.IMP_NET_SIGNALS,
+                strings.IMP_NET_SIGNALS_TIP,
+                options.signal_map,
+            ),  # fmt: skip
         ):
             edit = QPlainTextEdit("\n".join(f"{k}={v}" for k, v in pairs.items()))
             edit.setObjectName(f"import-net-{key}")
@@ -401,7 +437,9 @@ class CheckPage(QWizardPage):
         cols = [
             Column("row", strings.IMP_COLUMNS["row"], mono=True, width=60),
             Column("item", strings.IMP_COLUMNS["item"], mono=True, width=170),
-            Column("result", strings.IMP_COLUMNS["result"], state="state", tooltip="reason", width=130),  # fmt: skip
+            Column(
+                "result", strings.IMP_COLUMNS["result"], state="state", tooltip="reason", width=130
+            ),  # fmt: skip
             Column("reason", strings.IMP_COLUMNS["reason"], tooltip="reason", width=420),
         ]
         self.rows_model = DictTableModel(cols, [], wizard.theme)
@@ -412,7 +450,13 @@ class CheckPage(QWizardPage):
         head.setProperty("heading", True)
         lay.addWidget(head)
         pcols = [
-            Column("item", strings.IMP_PENDING_COLUMNS["item"], mono=True, state="pending_state", width=190),  # fmt: skip
+            Column(
+                "item",
+                strings.IMP_PENDING_COLUMNS["item"],
+                mono=True,
+                state="pending_state",
+                width=190,
+            ),  # fmt: skip
             Column("what", strings.IMP_PENDING_COLUMNS["what"], tooltip="what", width=480),
         ]
         self.pending_model = DictTableModel(pcols, [], wizard.theme)
@@ -460,7 +504,10 @@ class CheckPage(QWizardPage):
         self.only.blockSignals(False)
         self._filter()
         self.pending_model.set_rows(
-            [{"item": item, "what": what, "pending_state": "pending"} for item, what in plan.pending]
+            [
+                {"item": item, "what": what, "pending_state": "pending"}
+                for item, what in plan.pending
+            ]
         )
         self.none.setVisible(not plan.pending)
         self.pending.setVisible(bool(plan.pending))

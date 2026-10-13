@@ -41,7 +41,11 @@ def test_it_starts_empty_with_the_templates_of_the_command_line(qtbot) -> None:
     assert dlg.template() == BLANK and dlg.model.item(0).text() == strings.NP_EMPTY_TITLE
     assert dlg.summary.text() == TEMPLATES[0].summary
     assert not dlg.ok.isEnabled() and dlg.request() is None
-    assert dlg.hint.isVisible() and "choose a folder" in dlg.hint.text() and "give it a name" in dlg.hint.text()
+    assert (
+        dlg.hint.isVisible()
+        and "choose a folder" in dlg.hint.text()
+        and "give it a name" in dlg.hint.text()
+    )
     assert not dlg.folder_error.isVisible()  # nothing typed yet, so nothing to complain about
 
 

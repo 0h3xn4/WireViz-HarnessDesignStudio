@@ -564,7 +564,9 @@ LOCK_GROUP_OTHER = "Other items of the harness"
 LOCK_NOTHING = "nothing"
 LOCK_STAYS_EDITABLE = "{} stay editable"
 LOCK_NOT_SET = "not set (pending)"
-LOCK_NOT_SET_NOTE = "No value yet. The release records it as not set; giving it a value later needs a new revision."
+LOCK_NOT_SET_NOTE = (
+    "No value yet. The release records it as not set; giving it a value later needs a new revision."
+)
 LOCK_PLACEHOLDER = "placeholder values"
 LOCK_PLACEHOLDER_NOTE = "This file is still marked as a placeholder: its numbers were never reviewed, and the release freezes them as they are."
 LOCK_PIN_CABLE = "cable"
@@ -575,7 +577,9 @@ LOCK_TREE_HEADER = "Locked object"
 RELEASE_LOCKS_HEAD = "This release locks: {}."
 RELEASE_LOCKS_TREE = "What this release locks"
 RELEASE_LOCKS_TIP = "Open a group (arrow keys, Enter) to see every object, and the values of the config files that are frozen."
-RELEASE_LOCKS_PLACEHOLDERS = "Still placeholders when released: {}. The release freezes these numbers unreviewed."
+RELEASE_LOCKS_PLACEHOLDERS = (
+    "Still placeholders when released: {}. The release freezes these numbers unreviewed."
+)
 REVISE_EXPLAIN = (
     "<b>What happens.</b> {0} gets revision {2} as a new draft; revision {1} stays on record as "
     "a frozen baseline that you can compare with. What only {0} locks becomes editable again, "
@@ -589,7 +593,9 @@ REVISE_STILL_TREE = "Stays locked"
 HINT_HEAD = "To enable “{0}”: {1}."
 HINT_NAME = "enter your name"
 HINT_COMMENT = "write at least 10 characters in the comment ({} more to go)"
-HINT_PLACEHOLDER_REASON = "give a reason of at least 10 characters for releasing on placeholder values"
+HINT_PLACEHOLDER_REASON = (
+    "give a reason of at least 10 characters for releasing on placeholder values"
+)
 HINT_PARTS_REASON = "give a reason of at least 10 characters for releasing unapproved parts"
 HINT_BLOCKERS = "fix what is listed above first"
 HINT_OK = "Ready: everything needed is filled in."
@@ -613,7 +619,9 @@ REL_COLUMNS = {
     "baseline": "Baseline",
 }
 REL_BASELINE_CHIP = "Baseline {0}"
-REL_BASELINE_TIP = "A frozen copy of revision {0} was kept when it was released; you can compare with it."
+REL_BASELINE_TIP = (
+    "A frozen copy of revision {0} was kept when it was released; you can compare with it."
+)
 REL_NO_BASELINE_TIP = "No frozen copy: this step did not release a revision."
 REL_EMPTY_ALL = "Nothing has been reviewed, released or revised yet. Submit a draft for review or release it, and the step appears here."
 REL_EMPTY_ONE = "{0} has no review, release or new revision yet."
@@ -621,8 +629,12 @@ REL_SUBMIT = "Submit for review"
 REL_RELEASE = "Release…"
 REL_REVISE = "New revision…"
 REL_SUBMIT_TIP = "Mark the draft harness as ready for review"
-REL_RELEASE_TIP = "Release the harness: records a baseline and the change log, and locks what it uses"
-REL_REVISE_TIP = "Unlock a released harness by starting its next revision (the released one is kept)"
+REL_RELEASE_TIP = (
+    "Release the harness: records a baseline and the change log, and locks what it uses"
+)
+REL_REVISE_TIP = (
+    "Unlock a released harness by starting its next revision (the released one is kept)"
+)
 REL_CHOOSE_HARNESS = "Choose a harness first (or select a line of the timeline)."
 REL_READ_ONLY = "This project is read-only, so nothing can be released or revised."
 REL_WRONG_STATE = "{0} is {1}; this step is for harnesses that are {2}."
@@ -631,7 +643,9 @@ REL_BEFORE = "Compare revision"
 REL_AFTER = "with"
 REL_WORKING = "Working design"
 REL_REVISION = "Revision {0}"
-REL_DIFF_NEED_HARNESS = "Choose a harness (or select a line of the timeline) to compare its revisions."
+REL_DIFF_NEED_HARNESS = (
+    "Choose a harness (or select a line of the timeline) to compare its revisions."
+)
 REL_DIFF_NO_BASE = "{0} has no baseline yet; a baseline is created when the harness is released."
 REL_DIFF_SAME = "Choose two different revisions to compare."
 REL_DIFF_NONE = "No differences between {0} and {1}."
@@ -669,7 +683,9 @@ EXP_FULL_NOTE = (
     "and what “Copy selection to folder…” copies."
 )
 EXP_TREE_NAME = "Harnesses and documents"
-EXP_TREE_TIP = "Tick the documents you want to see in the result and to copy. Space ticks or unticks."
+EXP_TREE_TIP = (
+    "Tick the documents you want to see in the result and to copy. Space ticks or unticks."
+)
 EXP_SELECT_ALL = "Select all"
 EXP_SELECT_NONE = "Select none"
 EXP_SELECT_ALL_TIP = "Tick every harness and document"
@@ -689,7 +705,9 @@ EXP_CLOSE_TIP = "Close this window (Esc)"
 EXP_RUNNING = "Exporting…"
 EXP_PROGRESS_NAME = "Export progress"
 EXP_CANCEL_TIP = "Stop the export; nothing is written (Esc)"
-EXP_CHECK_FAILED = "The independent check found {0} problem(s) in the outputs, so nothing was written:"
+EXP_CHECK_FAILED = (
+    "The independent check found {0} problem(s) in the outputs, so nothing was written:"
+)
 EXP_WRITE_FAILED = "The outputs could not be written. {0}"
 EXP_BANNER_DISMISS = "Dismiss"
 EXP_BANNER_DISMISS_TIP = "Hide this message"
@@ -708,7 +726,9 @@ EXP_REVEAL_FOLDER_TIP = "Show the outputs folder in the file manager"
 EXP_COPY = "Copy selection to folder…"
 EXP_COPY_TIP = "Copy the ticked documents (without the manifest) to a folder you choose"
 EXP_COPY_NONE = "Nothing is ticked, so there is nothing to copy."
-EXP_COPY_DONE = "Copied {0} files to {1}. The manifest is not copied: it describes the whole outputs folder."
+EXP_COPY_DONE = (
+    "Copied {0} files to {1}. The manifest is not copied: it describes the whole outputs folder."
+)
 EXP_COPY_NOT_EMPTY = "Choose an empty folder for the copy."
 EXP_COPY_FOLDER = "Choose an empty folder for the copy"
 EXP_SELECTED_NONE = "Select a file in the list."
@@ -721,8 +741,9 @@ EXP_LAST_CURRENT = "Last export: up to date with the design."
 EXP_LAST_STALE = "Last export: the design changed after it."
 EXP_LAST_MODIFIED = "Last export: files were changed afterwards."
 EXP_LAST_UNREADABLE = "Last export: its manifest cannot be read."
-EXP_NOTE_CHANGED = "The project was edited while the export ran, so its result was dropped. Please export again."
-EXP_NOT_STARTED = "Nothing to export."
+EXP_NOTE_CHANGED = (
+    "The project was edited while the export ran, so its result was dropped. Please export again."
+)
 # import wizard (gui/import_wizard.py, gui/import_kinds.py)
 IMP_TITLE = "Import data"
 IMP_ACCESSIBLE = "Import wizard"
@@ -732,7 +753,9 @@ IMP_STEP_CHECK = "3  Conflicts and placeholders"
 IMP_STEP_APPLY = "4  Import"
 IMP_KIND_PROMPT = "What do you want to import?"
 IMP_KIND_INTERFACES = "Interfaces"
-IMP_KIND_INTERFACES_TIP = "A table (CSV or XLSX) with one interface per row: ID, type, the two units and the redundancy."
+IMP_KIND_INTERFACES_TIP = (
+    "A table (CSV or XLSX) with one interface per row: ID, type, the two units and the redundancy."
+)
 IMP_KIND_PARTS = "Approved parts"
 IMP_KIND_PARTS_TIP = "A parts list (CSV or XLSX) with an approval status per part. You say what the status values mean; nothing is guessed."
 IMP_KIND_LENGTHS = "Segment lengths"
@@ -753,12 +776,10 @@ IMP_FILE_COMPONENTS = "{0} components"
 IMP_FILTER_TABLES = "Tables (*.csv *.xlsx)"
 IMP_FILTER_NETLIST = "KiCad netlists (*.net *.xml);;All files (*)"
 IMP_MAP_INTRO = "These are the first rows as the import will read them. Change a choice and the rows are read again."
-IMP_MAP_FIELDS = "Which column holds what"
 IMP_NOT_MAPPED = "(not used)"
 IMP_COLUMN_N = "(column {0})"
 IMP_PREVIEW_NAME = "First rows"
 IMP_PREVIEW_MORE = "Showing the first {0} of {1} rows."
-IMP_PARTS_MEANING = "What the approval column means in your list"
 IMP_PARTS_APPROVED = "Approved when it says"
 IMP_PARTS_PENDING = "Not decided when it says"
 IMP_PARTS_REJECTED = "Not approved when it says"
@@ -766,7 +787,9 @@ IMP_PARTS_WORDS_TIP = "Words separated by commas, for example: Approved, EPPL. A
 IMP_PARTS_CATEGORY = "Category for rows that have none"
 IMP_PARTS_SOURCE = "Library source recorded: {0}"
 IMP_LENGTHS_UNIT = "Unit of the length column"
-IMP_LENGTHS_NOTE = "The columns are read by position, not by their headings: harness, segment, length."
+IMP_LENGTHS_NOTE = (
+    "The columns are read by position, not by their headings: harness, segment, length."
+)
 IMP_VALUES_NOTE = "Two columns: wire gauge (AWG) and ampacity (A). The table replaces the one in the derating values."
 IMP_NET_UNIT = "Unit the connectors belong to"
 IMP_NET_UNIT_NONE = "(choose a unit)"
@@ -778,9 +801,13 @@ IMP_NET_IDS_TIP = "Optional: one REF=ID per line, for example J1=OBC1-J01. Other
 IMP_NET_PARTS = "Part for each connector"
 IMP_NET_PARTS_TIP = "One REF=PART per line, for example J1=MD-9S. Needed when the symbol has no field HarnessPart and the connector is new."
 IMP_NET_SIGNALS = "Net name to signal"
-IMP_NET_SIGNALS_TIP = "Optional: one NAME=SIGNAL per line to translate a KiCad net name to an interface signal name."
+IMP_NET_SIGNALS_TIP = (
+    "Optional: one NAME=SIGNAL per line to translate a KiCad net name to an interface signal name."
+)
 IMP_NET_PINFUNC = "Use the pin names of the symbol instead of the net names"
-IMP_CHECK_INTRO = "Every row with the reason it can or cannot be imported, and what stays pending afterwards."
+IMP_CHECK_INTRO = (
+    "Every row with the reason it can or cannot be imported, and what stays pending afterwards."
+)
 IMP_CHECK_SUMMARY = "{0} of {1} rows can be imported; {2} have problems."
 IMP_CHECK_ALL_OK = "All {0} rows can be imported."
 IMP_CHECK_BLOCKS = "One problem stops the whole import (nothing is imported from a list with an error, as on the command line). Fix the file and choose it again."
@@ -796,7 +823,6 @@ IMP_PENDING_COLUMNS = {"item": "Item", "what": "What stays open"}
 IMP_WILL_ADD = "Will add"
 IMP_WILL_UPDATE = "Will update"
 IMP_WILL_SET = "Will set"
-IMP_WILL_REPLACE = "Will replace"
 IMP_SKIPPED = "Skipped"
 IMP_WARNING = "Warning"
 IMP_BLOCKED = "The import would be refused: {0}"
@@ -827,7 +853,9 @@ IMP_NEED_ID_COLUMN = "No column looks like a part ID or part number; choose one.
 IMP_BAD_PAIR = "{0} “{1}” must look like REF=VALUE"
 IMP_BACK = "Back"
 IMP_NEXT = "Next"
-IMP_READ_ONLY = "This project is read-only, so nothing can be imported. Save a copy to a new folder first."
+IMP_READ_ONLY = (
+    "This project is read-only, so nothing can be imported. Save a copy to a new folder first."
+)
 IMP_VALUES_SAME = "The table is the same as the one already in the derating values, so there is nothing to import."
 # new project dialog (gui/new_project_dialog.py)
 NP_TITLE = "New project"
@@ -840,7 +868,9 @@ NP_NAME = "Project name"
 NP_NAME_TIP = "Shown in the title bar and on the drawings"
 NP_TEMPLATE = "Start from"
 NP_TEMPLATE_NAME = "Project to start from"
-NP_TEMPLATE_TIP = "Choose what the project starts with. Every example opens as a normal project you can change."
+NP_TEMPLATE_TIP = (
+    "Choose what the project starts with. Every example opens as a normal project you can change."
+)
 NP_EMPTY_TITLE = "Empty project"
 NP_CREATE = "Create project"
 NP_CREATE_TIP = "Create the project and open it (Enter)"
@@ -854,6 +884,5 @@ NP_ERR_FOLDER_WRITE = "Nothing can be written in {0}. Choose another folder."
 NP_ERR_NAME_NONE = "Give the project a name."
 NP_ERR_NAME_LONG = "The name is too long: {0} characters, at most 200."
 NP_ERR_NAME_CHARS = "The name must not contain line breaks or other control characters."
-NP_SELECTED = "Selected: {0}"
 NP_HINT_FOLDER_FIX = "use a folder that is new or empty (see the message above)"
 NP_HINT_NAME_FIX = "fix the name (see the message above)"

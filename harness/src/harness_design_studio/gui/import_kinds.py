@@ -64,11 +64,28 @@ class KindInfo:
 
 
 KINDS: Final[tuple[KindInfo, ...]] = (
-    KindInfo("interfaces", strings.IMP_KIND_INTERFACES, strings.IMP_KIND_INTERFACES_TIP, strings.IMP_FILTER_TABLES),  # fmt: skip
-    KindInfo("parts", strings.IMP_KIND_PARTS, strings.IMP_KIND_PARTS_TIP, strings.IMP_FILTER_TABLES),  # fmt: skip
-    KindInfo("lengths", strings.IMP_KIND_LENGTHS, strings.IMP_KIND_LENGTHS_TIP, strings.IMP_FILTER_TABLES),  # fmt: skip
-    KindInfo("values", strings.IMP_KIND_VALUES, strings.IMP_KIND_VALUES_TIP, strings.IMP_FILTER_TABLES),  # fmt: skip
-    KindInfo("netlist", strings.IMP_KIND_NETLIST, strings.IMP_KIND_NETLIST_TIP, strings.IMP_FILTER_NETLIST, False),  # fmt: skip
+    KindInfo(
+        "interfaces",
+        strings.IMP_KIND_INTERFACES,
+        strings.IMP_KIND_INTERFACES_TIP,
+        strings.IMP_FILTER_TABLES,
+    ),  # fmt: skip
+    KindInfo(
+        "parts", strings.IMP_KIND_PARTS, strings.IMP_KIND_PARTS_TIP, strings.IMP_FILTER_TABLES
+    ),  # fmt: skip
+    KindInfo(
+        "lengths", strings.IMP_KIND_LENGTHS, strings.IMP_KIND_LENGTHS_TIP, strings.IMP_FILTER_TABLES
+    ),  # fmt: skip
+    KindInfo(
+        "values", strings.IMP_KIND_VALUES, strings.IMP_KIND_VALUES_TIP, strings.IMP_FILTER_TABLES
+    ),  # fmt: skip
+    KindInfo(
+        "netlist",
+        strings.IMP_KIND_NETLIST,
+        strings.IMP_KIND_NETLIST_TIP,
+        strings.IMP_FILTER_NETLIST,
+        False,
+    ),  # fmt: skip
 )
 KIND_BY_KEY: Final = {k.key: k for k in KINDS}
 
@@ -170,12 +187,12 @@ def default_options(kind: str, source: Source) -> Options:
 
 
 def parse_words(text: str) -> list[str]:
-    """"Approved, EPPL; Released" -> ["Approved", "EPPL", "Released"]."""
+    """ "Approved, EPPL; Released" -> ["Approved", "EPPL", "Released"]."""
     return [w.strip() for w in re.split(r"[,;\n]", text) if w.strip()]
 
 
 def parse_pairs(text: str, what: str) -> dict[str, str]:
-    """"J1=OBC-J01" lines (or comma-separated) -> {"J1": "OBC-J01"}; a malformed entry raises
+    """ "J1=OBC-J01" lines (or comma-separated) -> {"J1": "OBC-J01"}; a malformed entry raises
     `ImportError_` naming it."""
     out: dict[str, str] = {}
     for item in parse_words(text):
@@ -364,7 +381,13 @@ def _plan_lengths(project: Project, source: Source, options: Options) -> ImportP
         hid, sid, text = r.values
         item = f"{hid} / {sid}" if hid or sid else "(empty row)"
         view.rows.append(
-            PlanRow(str(r.row_number), item, "pass" if r.ok else "fail", strings.IMP_WILL_SET if r.ok else strings.IMP_SKIPPED, r.message)  # fmt: skip
+            PlanRow(
+                str(r.row_number),
+                item,
+                "pass" if r.ok else "fail",
+                strings.IMP_WILL_SET if r.ok else strings.IMP_SKIPPED,
+                r.message,
+            )  # fmt: skip
         )
         view.preview.append([str(r.row_number), hid, sid, f"{text} {options.length_unit}" if text else ""])  # fmt: skip
     if plan.hint:
@@ -422,7 +445,9 @@ def _plan_values(project: Project, source: Source, options: Options) -> ImportPl
             view.notes.append(f"The table with {len(old)} gauges in the derating values is replaced by this one with {len(table)}.")  # fmt: skip
         if project.config[file].placeholder:
             view.pending.append((f"config/{file}.json", strings.IMP_P_CONFIG))
-        clone = edit.clone_with(project, view.ops)  # the same check the command line runs afterwards
+        clone = edit.clone_with(
+            project, view.ops
+        )  # the same check the command line runs afterwards
         invalid = [i for i in configcheck.validate(clone) if i.object_id == f"{file}.{key}"]
         if invalid:
             view.problem = invalid[0].message
@@ -438,7 +463,9 @@ def _plan_netlist(project: Project, source: Source, options: Options) -> ImportP
     if not options.unit_id:
         view.problem = strings.IMP_NO_UNIT
         return view
-    assert source.netlist is not None
+    if source.netlist is None:
+        view.problem = strings.IMP_EMPTY
+        return view
     plan = plan_netlist_import(
         project, source.netlist, options.unit_id, refs=options.refs or None, prefix=options.prefix,
         connector_ids=options.connector_ids, parts=options.parts, signal_map=options.signal_map,

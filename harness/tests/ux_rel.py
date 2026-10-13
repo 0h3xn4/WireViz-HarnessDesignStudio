@@ -2,7 +2,9 @@
 folder behind an `EditorController`, and a project with released harnesses."""
 
 import shutil
+from collections.abc import Mapping
 from pathlib import Path
+from typing import Any
 
 from PySide6.QtCore import QSettings
 from PySide6.QtWidgets import QApplication
@@ -10,6 +12,7 @@ from PySide6.QtWidgets import QApplication
 from harness_design_studio.core.outputs.build import write_outputs
 from harness_design_studio.core.vcs.release import plan_release
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.tables import DictTableModel
 from harness_design_studio.gui.theme import ThemeManager
 from harness_design_studio.resources import examples_path
 
@@ -71,3 +74,15 @@ def collect(signal) -> list[tuple]:  # type: ignore[no-untyped-def,type-arg]
     calls: list[tuple] = []  # type: ignore[type-arg]
     signal.connect(lambda *args: calls.append(args))
     return calls
+
+
+def dict_rows(model: DictTableModel) -> list[dict[Any, Any]]:
+    """The rows of a table model that were given as dicts."""
+    return [dict(r) for r in model.rows() if isinstance(r, Mapping)]
+
+
+def outputs_of(ctl: EditorController) -> Path:
+    """The outputs folder of a saved project."""
+    folder = ctl.outputs_folder()
+    assert folder is not None
+    return folder
