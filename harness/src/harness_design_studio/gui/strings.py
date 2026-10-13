@@ -1519,3 +1519,6 @@ INS_NOTHING = (
     "Nothing selected. Pick a unit or a link on the diagram, or a row in the project tree."
 )
 TREE_FILTER_CLEAR = "Clear the filter"
+LISTS_EXPORT_TITLE = "Export table"
+LISTS_EXPORT_FILTER = {"csv": "CSV files (*.csv)", "xlsx": "Excel workbooks (*.xlsx)"}
+LISTS_EXPORTED = "Saved {}."

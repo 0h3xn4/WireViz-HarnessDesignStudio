@@ -626,7 +626,8 @@ class DrawingPreview(QWidget):
     def page_with(self, keys: Iterable[Key]) -> int | None:
         """The first sheet (0-based) that draws one of the objects, the current one first."""
         wanted = list(keys)
-        order = [self.page, *[i for i in range(len(self.sheets)) if i != self.page]]
+        order = [i for i in (self.page,) if i < len(self.sheets)]  # (no sheets yet: none)
+        order += [i for i in range(len(self.sheets)) if i != self.page]
         for i in order:
             if any(k in self.sheets[i].marks for k in wanted):
                 return i

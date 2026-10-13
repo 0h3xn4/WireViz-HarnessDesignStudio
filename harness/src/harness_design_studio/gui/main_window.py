@@ -24,6 +24,7 @@ from PySide6.QtGui import (
     QAction,
     QActionGroup,
     QCloseEvent,
+    QCursor,
     QDesktopServices,
     QGuiApplication,
     QKeySequence,
@@ -105,9 +106,12 @@ from harness_design_studio.gui.dialogs import (
     WireColoursDialog,
 )
 from harness_design_studio.gui.export_dialog import ExportDialog, ExportResult
+from harness_design_studio.gui.harness_view import HarnessView
 from harness_design_studio.gui.icons import icon, icon_button, style_dock_buttons, tooltip_text
 from harness_design_studio.gui.import_kinds import KINDS
 from harness_design_studio.gui.import_wizard import ImportWizard
+from harness_design_studio.gui.inspector import Inspector
+from harness_design_studio.gui.lists_panel import ListsPanel
 from harness_design_studio.gui.new_project_dialog import (
     BLANK,
     NewProjectDialog,
@@ -123,6 +127,7 @@ from harness_design_studio.gui.panels import (
     TodoPanel,
     category_icon,
 )
+from harness_design_studio.gui.project_tree import ProjectTree
 from harness_design_studio.gui.releases_panel import ReleasesPanel
 from harness_design_studio.gui.shell import (
     BannerStack,
@@ -415,6 +420,8 @@ class MainWindow(QMainWindow):
         # hooks for the import wizard's file chooser and the export dialog's worker (tests replace them)
         self.ask_import_file: Callable[[str, str], str | None] | None = None
         self.export_worker_factory: Callable[[Project], OutputsWorker] | None = None
+        # file name for "Export table" of the Lists tab: (title, suggested name, filter) -> path
+        self.ask_save_path: Callable[[str, str, str], str | None] = self._ask_save_path
         self.busy: str | None = None  # "generate" | "export" | "arrange" while a job runs
         self._view_slots: dict[str, ViewSlot] = {}
         self._facts_key: tuple[object, ...] | None = None
@@ -437,6 +444,7 @@ class MainWindow(QMainWindow):
         self._build_status()
         self.toasts = ToastHost(self.view)
         self._register_slots()
+        self._install_default_views()
         self.tour = Tour(self, theme, self._tour_targets())
         self.tour.on_stop = lambda: self.settings.setValue("tour/done", True)
 
@@ -773,9 +781,15 @@ class MainWindow(QMainWindow):
             slot.tabs.setCurrentWidget(widget)
             self._sync_dock_titles()
         self._update_view_actions()
-        self._update_hash()
+        if hasattr(self, "_hash_timer"):  # (not while the window is still being built)
+            self._update_hash()
 
     def _wire_view(self, widget: QWidget) -> None:
+        """Connect the signals of a view that was plugged in. The views of this program are wired
+        by `_wire_known_view`; any other widget may have `showRequested(str)`,
+        `changeRequested(str, str)` or `exportRequested()`."""
+        if self._wire_known_view(widget):
+            return
         for signal_name, target in (
             ("showRequested", self.show_object),
             ("changeRequested", self.change_flow),
@@ -784,6 +798,100 @@ class MainWindow(QMainWindow):
             signal = getattr(widget, signal_name, None)
             if signal is not None:
                 signal.connect(target)
+
+    def _wire_known_view(self, widget: QWidget) -> bool:
+        if isinstance(widget, HarnessView):
+            widget.generateRequested.connect(lambda: self.act_generate.trigger())
+            widget.exportRequested.connect(lambda: self.export_dialog_flow())
+            widget.reviewRequested.connect(lambda hid: self.change_flow("review", hid))
+            widget.releaseRequested.connect(lambda hid: self.change_flow("release", hid))
+            widget.reviseRequested.connect(lambda hid: self.change_flow("revise", hid))
+            widget.whyRequested.connect(lambda kind, ident: self._show_why(kind, ident))
+            return True
+        if isinstance(widget, ListsPanel):
+            widget.generateRequested.connect(self.act_generate.trigger)
+            widget.exportTableRequested.connect(lambda name, fmt: self.export_table_flow(name, fmt))
+            return True
+        if isinstance(widget, ProjectTree):
+            widget.selectionRequested.connect(self._tree_selected)
+            widget.openRequested.connect(self._tree_opened)
+            widget.importRequested.connect(self._tree_import)
+            widget.addRequested.connect(self._tree_add)
+            return True
+        if isinstance(widget, Inspector):
+            widget.reviseRequested.connect(lambda hid: self.change_flow("revise", hid))
+            widget.showRequested.connect(lambda _kind, ident: self.show_object(ident))
+            return True
+        return False
+
+    def _install_default_views(self) -> None:
+        """Plug in the views that exist: Harness, Lists, the project tree and the inspector (with
+        its Why and Problems tabs; its Problems tab has a panel of its own, the one of the bottom
+        panel stays where it is until that one is retired)."""
+        self.harness_view = HarnessView(self.ctl, self.theme, self.settings)
+        self.lists_panel = ListsPanel(self.ctl, self.theme, self.settings)
+        self.project_tree = ProjectTree(self.ctl, self.theme, self.settings)
+        # the properties panel leaves its tab for the inspector that wraps it
+        self.side_tabs.install("inspector", EmptyStateWidget(self.theme, strings.TAB_INSPECTOR, ""))
+        self.problems_side = ProblemsPanel(self.ctl)
+        self.problems_side.showRequested.connect(self.show_object)
+        self.problems_side.waiveRequested.connect(self.waive_flow)
+        self.inspector = Inspector(
+            self.ctl, self.theme, props=self.props, problems=self.problems_side
+        )
+        self.install_view("harness", self.harness_view)
+        self.install_view("lists", self.lists_panel)
+        self.install_view("tree", self.project_tree)
+        self.install_view("inspector", self.inspector)
+
+    # ---- what the new views ask for ----------------------------------------------------------------
+    def _show_why(self, kind: str, ident: str) -> None:
+        """The Why of a harness, wire, connector or pin: in the right dock's Why tab."""
+        self.dock_right.show()
+        self.inspector.show_object(kind, ident, tab="why")
+
+    def _tree_selected(self, kind: str, ident: str) -> None:
+        if kind not in ("unit", "interface"):  # (those the tree selects on the canvas itself)
+            self.inspector.show_object(kind, ident)
+
+    def _tree_opened(self, kind: str, ident: str) -> None:
+        if kind in ("unit", "interface"):
+            self.ctl.request_open(kind, ident)
+        elif kind == "harness":
+            self._go_to_harness(ident)
+        else:
+            self.inspector.show_object(kind, ident)
+
+    def _tree_import(self, kind: str) -> None:
+        if kind == "interfaces":
+            self.import_flow()
+        else:
+            self.import_wizard_flow({"engineering": "values"}.get(kind, kind))
+
+    def _tree_add(self, kind: str) -> None:
+        if kind == "interface":
+            self.new_interface_flow()
+        else:
+            self.menu_add.exec(QCursor.pos())  # which kind of unit
+
+    def export_table_flow(self, name: str, fmt: str) -> None:
+        """ "Export table" of the Lists tab: ask where, then write the rows as they are shown."""
+        path = self.ask_save_path(
+            strings.LISTS_EXPORT_TITLE, f"{name}.{fmt}", strings.LISTS_EXPORT_FILTER.get(fmt, "")
+        )
+        if not path:
+            return
+        try:
+            written = self.lists_panel.export_to(Path(path), name)
+        except (OSError, ValueError) as exc:
+            self._error(self._explain(exc, Path(path).parent))
+            return
+        self.toasts.show_message(strings.LISTS_EXPORTED.format(written.name), None)
+
+    @staticmethod
+    def _ask_save_path(title: str, suggested: str, filters: str) -> str | None:
+        path, _ = QFileDialog.getSaveFileName(None, title, suggested, filters)
+        return path or None
 
     # ---- actions -------------------------------------------------------------------------------
     def _act(
@@ -1327,9 +1435,9 @@ class MainWindow(QMainWindow):
 
     def _tour_targets(self) -> dict[str, QWidget]:
         return {
-            "palette": self.palette_panel,
+            "palette": self.left_tabs,
             "canvas": self.view,
-            "types": self.palette_panel,
+            "types": self.left_tabs,
             "bottom": self.tabs,
             "generate": self.generate_btn,
         }
@@ -1815,8 +1923,11 @@ class MainWindow(QMainWindow):
         if select_harness is not None:
             select_harness(hid)
         select_wire = getattr(view, "select_wire", None)
+        select_any = getattr(view, "select", None)
         if wire and select_wire is not None:
             select_wire(wire)
+        elif wire and select_any is not None:
+            select_any("wire", wire)
 
     def harness_target(self) -> QWidget:
         """The widget that shows harnesses now: the Harness view once installed, else the plans
@@ -2015,7 +2126,9 @@ class MainWindow(QMainWindow):
         candidates: list[object] = []
         if self.view_installed("harness"):
             view = self.view_widget("harness")
-            candidates.append(getattr(view, "current_harness", lambda: None)())
+            candidates.append(
+                getattr(view, "harness_id", getattr(view, "current_harness", lambda: None))()
+            )
         if self.main_tabs.currentWidget() is self.releases_panel:
             candidates.append(self.releases_panel.current_harness())
         candidates.append(self.harness_panel.selected_harness())

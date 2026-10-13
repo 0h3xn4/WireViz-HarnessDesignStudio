@@ -54,6 +54,7 @@ Versions follow semantic versioning. Every project file records the tool version
 - Ctrl+K lists every command (Generate, Check, Export, Release, Revise, Reset layout, the tabs, the import kinds, engineering values, go to harness), ranks a name that starts with what you typed first and no longer stops at 14 results.
 - Undo and Redo name the step ("Undo Move PDU2"); a refusal because of a release stays on screen with a "Start new revision…" button until the next change goes through.
 - New project and New project from an example are one dialog (folder, name, example); release and new revision use the dialogs that list what is locked and unlocked.
+- The Harness and Lists tabs, the project tree (left) and the inspector with its Why and Problems tabs (right) are on the window; a link double-click opens the Harness tab, "Export table" in Lists saves CSV or XLSX, and a panel can no longer make the window wider than the screen.
 - The first interface size follows the screen (200 % on a 4K screen at ratio 1); in a window shorter than 800 px the bottom panel is hidden so the diagram keeps at least 55 % of the height at 1280 x 720; the plans check is read once per model state.
 
 ### Fixed

@@ -37,9 +37,13 @@ from harness_design_studio.gui.dialogs import (  # noqa: E402
     rank_entries,
 )
 from harness_design_studio.gui.export_dialog import ExportDialog  # noqa: E402
+from harness_design_studio.gui.harness_view import HarnessView  # noqa: E402
 from harness_design_studio.gui.import_wizard import ImportWizard  # noqa: E402
+from harness_design_studio.gui.inspector import Inspector  # noqa: E402
+from harness_design_studio.gui.lists_panel import ListsPanel  # noqa: E402
 from harness_design_studio.gui.main_window import MainWindow  # noqa: E402
 from harness_design_studio.gui.new_project_dialog import NewProjectDialog  # noqa: E402
+from harness_design_studio.gui.project_tree import ProjectTree  # noqa: E402
 from harness_design_studio.gui.shell import (  # noqa: E402
     BannerStack,
     ElidedLabel,
@@ -523,15 +527,31 @@ def test_the_path_is_cut_in_the_middle_in_a_narrow_window(qtbot) -> None:
 
 def test_main_tabs_and_their_shortcuts(flat) -> None:
     tabs = flat.main_tabs
-    assert tabs.visible_names() == ["diagram", "checks", "releases"]  # harness, lists: not yet
+    assert tabs.visible_names() == ["diagram", "harness", "lists", "checks", "releases"]
     flat.go_actions["checks"].trigger()
     assert tabs.currentWidget() is flat.checks_panel
     flat.go_actions["releases"].trigger()
     assert tabs.currentWidget() is flat.releases_panel
+    flat.go_actions["harness"].trigger()
+    assert tabs.currentWidget() is flat.harness_view
+    flat.go_actions["lists"].trigger()
+    assert tabs.currentWidget() is flat.lists_panel
     flat.go_actions["diagram"].trigger()
     assert tabs.currentWidget() is flat.diagram_page
-    assert not flat.go_actions["lists"].isEnabled()  # no Lists view to go to yet
-    assert flat.go_to("lists") is False and "not available" in flat.toasts.messages[-1]
+
+
+def test_the_views_that_exist_are_plugged_into_their_slots(flat) -> None:
+    assert isinstance(flat.view_widget("harness"), HarnessView)
+    assert isinstance(flat.view_widget("lists"), ListsPanel)
+    assert isinstance(flat.view_widget("tree"), ProjectTree)
+    assert isinstance(flat.view_widget("inspector"), Inspector)
+    assert flat.inspector.props is flat.props  # the properties form lives inside the inspector
+    assert flat.left_tabs.currentWidget() is flat.project_tree
+    assert flat.dock_left.windowTitle() == strings.TAB_PROJECT
+    assert flat.inspector.problems_panel() is flat.problems_side
+    assert flat.view_installed("harness") and not flat.view_installed(
+        "why"
+    )  # (the inspector has it)
 
 
 def test_a_view_that_is_installed_gets_its_tab_and_the_signals(flat) -> None:
@@ -552,12 +572,9 @@ def test_a_view_that_is_installed_gets_its_tab_and_the_signals(flat) -> None:
         def select_wire(self, wire: str) -> None:
             self.chosen.append(("", wire))
 
-    assert not flat.view_installed("harness")
-    assert isinstance(flat.view_widget("harness"), EmptyStateWidget)
     view = FakeHarnessView()
-    flat.install_view("harness", view)
+    flat.install_view("harness", view)  # another widget can replace a view
     assert flat.view_installed("harness") and flat.view_widget("harness") is view
-    assert flat.main_tabs.visible_names() == ["diagram", "harness", "checks", "releases"]
     flat.go_actions["harness"].trigger()
     assert flat.main_tabs.currentWidget() is view
     seen: list[tuple[str, str]] = []
@@ -572,22 +589,20 @@ def test_a_view_that_is_installed_gets_its_tab_and_the_signals(flat) -> None:
     assert view.chosen and view.chosen[0][0] in flat.ctl.project.harnesses
 
 
-def test_open_requested_uses_the_old_plans_panel_until_the_harness_view_exists(flat) -> None:
+def test_double_click_on_a_link_opens_the_harness_tab(flat) -> None:
     iid = sorted(flat.ctl.project.interfaces)[0]
     flat.ctl.request_open("interface", iid)
-    assert flat.tabs.currentWidget() is flat.harness_panel
-    assert flat.dock_bottom.isVisibleTo(flat)
+    assert flat.main_tabs.currentWidget() is flat.harness_view
+    assert flat.harness_view.harness_id() in flat.ctl.project.harnesses
 
 
-def test_every_slot_name_can_be_installed(flat) -> None:
+def test_slots_that_have_no_view_yet_keep_an_empty_state(flat) -> None:
     assert flat.view_slots() == ["harness", "inspector", "lists", "problems", "tree", "why"]
-    for name in ("lists", "tree", "why", "problems"):
-        assert not flat.view_installed(name)
+    for name in ("why", "problems"):
+        assert isinstance(flat.view_widget(name), EmptyStateWidget)
         w = QLabel(name)
         flat.install_view(name, w)
         assert flat.view_widget(name) is w and flat.view_installed(name)
-    assert flat.left_tabs.currentWidget().text() == "tree"  # type: ignore[attr-defined]
-    assert flat.dock_left.windowTitle() == strings.TAB_PROJECT
 
 
 def test_the_inspector_slot_keeps_the_old_panel_alive_when_replaced(flat) -> None:
@@ -595,6 +610,71 @@ def test_the_inspector_slot_keeps_the_old_panel_alive_when_replaced(flat) -> Non
     flat.install_view("inspector", QLabel("new"))
     assert flat.view_widget("inspector").text() == "new"  # type: ignore[attr-defined]
     assert props.objectName() is not None  # the replaced panel is not deleted
+
+
+# ---- what the new views ask the window for -----------------------------------------------------
+
+
+def test_the_harness_view_asks_for_generate_export_and_change_control(flat) -> None:
+    view = flat.harness_view
+    calls: list[tuple[str, ...]] = []
+    flat.act_generate.trigger = lambda: calls.append(("generate",))  # type: ignore[method-assign]
+    flat.change_flow = lambda a, h: calls.append((a, h))  # type: ignore[method-assign]
+    flat.export_dialog_flow = lambda: calls.append(("export",))  # type: ignore[method-assign]
+    view.generateRequested.emit()
+    view.reviewRequested.emit("W001")
+    view.releaseRequested.emit("W001")
+    view.reviseRequested.emit("W001")
+    assert calls == [("generate",), ("review", "W001"), ("release", "W001"), ("revise", "W001")]
+    view.whyRequested.emit("harness", "W001")  # opens the Why tab of the inspector
+    assert flat.inspector.tabs.currentWidget() is flat.inspector.why
+
+
+def test_the_lists_tab_exports_a_table_through_the_save_hook(flat, tmp_path) -> None:
+    asked: list[tuple[str, str, str]] = []
+    target = tmp_path / "wires.csv"
+
+    def ask(title: str, suggested: str, filters: str) -> str:
+        asked.append((title, suggested, filters))
+        return str(target)
+
+    flat.ask_save_path = ask
+    flat.go_to("lists")
+    flat.lists_panel.exportTableRequested.emit("wirelist", "csv")
+    assert asked and asked[0][1] == "wirelist.csv" and "csv" in asked[0][2].lower()
+    assert target.exists() and target.stat().st_size > 0
+    assert any("wires.csv" in m for m in flat.toasts.messages)
+    flat.ask_save_path = lambda *_a: None  # cancelled: nothing is written
+    flat.lists_panel.exportTableRequested.emit("wirelist", "xlsx")
+    assert not (tmp_path / "wirelist.xlsx").exists()
+
+
+def test_the_project_tree_opens_imports_adds_and_points_the_inspector(flat) -> None:
+    tree = flat.project_tree
+    wizard: list[str] = []
+    flat.import_wizard_flow = wizard.append  # type: ignore[method-assign]
+    seen: list[str] = []
+    flat.import_flow = lambda: seen.append("interfaces")  # type: ignore[method-assign]
+    for kind in ("interfaces", "parts", "lengths", "engineering", "netlist"):
+        tree.importRequested.emit(kind)
+    assert seen == ["interfaces"] and wizard == ["parts", "lengths", "values", "netlist"]
+    flat.new_interface_flow = lambda: seen.append("new-interface")  # type: ignore[method-assign]
+    tree.addRequested.emit("interface")
+    assert seen[-1] == "new-interface"
+    tree.selectionRequested.emit("harness", "W001")  # something the canvas cannot select
+    assert flat.inspector.current() == ("harness", "W001")
+    tree.openRequested.emit("harness", "W001")
+    assert flat.main_tabs.currentWidget() is flat.harness_view
+    assert flat.harness_view.harness_id() == "W001"
+
+
+def test_the_inspector_asks_for_a_revision_and_shows_objects(flat) -> None:
+    asked: list[tuple[str, str]] = []
+    flat.change_flow = lambda a, h: asked.append((a, h))  # type: ignore[method-assign]
+    flat.inspector.reviseRequested.emit("W001")
+    assert asked == [("revise", "W001")]
+    flat.inspector.showRequested.emit("unit", "OBC1")
+    assert flat.ctl.selection is not None and flat.ctl.selection.id == "OBC1"
 
 
 def test_slot_tabs_hide_until_installed_and_hide_a_lone_bar(qtbot) -> None:
