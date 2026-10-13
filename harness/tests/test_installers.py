@@ -3,6 +3,7 @@
 import os
 import shutil
 import subprocess
+import sys
 import xml.etree.ElementTree as ET  # noqa: S405
 from pathlib import Path
 
@@ -419,6 +420,8 @@ def test_the_deb_ships_licences_and_not_the_tarball_scripts(tmp_path: Path) -> N
     assert "./usr/share/doc/harness-design-studio/copyright" in listing
     assert "./usr/share/doc/harness-design-studio/LICENSES/README.txt" in listing
     assert "opt/harness-design-studio/install.sh" not in listing
+    for name in ("README.txt", "harness-design-studio.desktop.in", "harness-design-studio.svg"):
+        assert f"opt/harness-design-studio/{name}" not in listing, name  # tarball-only files
     assert "libc6 (>= 2.39)" in DEPENDS and "libxcb-xinerama0" in DEPENDS
 
 
@@ -629,3 +632,79 @@ def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path
     assert "not a statement of compliance" in text and body in text
     assert f"| `harness-design-studio_{__version__}_amd64.deb` | `{'a' * 64}` |" in text
     assert rn.main(["notes", "v0.0.1", str(sums), str(out)]) == 1  # the tag must fit the version
+
+
+def _load_gui_entry():  # type: ignore[no-untyped-def]
+    import importlib.util
+
+    spec = importlib.util.spec_from_file_location("gui_entry_under_test", ROOT / "packaging/gui_entry.py")
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
+def test_the_entry_flags_count_only_as_the_first_argument() -> None:
+    entry = _load_gui_entry()
+    assert entry._asked("--selftest", ["prog", "--selftest"])
+    assert entry._asked("--drc-worker", ["prog", "--drc-worker"])
+    assert not entry._asked("--selftest", ["prog", "my--selftest", "--selftest"])
+    assert not entry._asked("--drc-worker", ["prog", "/path/to/project", "--drc-worker"])
+    assert not entry._asked("--selftest", ["prog"])
+
+
+def _selftest_env(tmp_path: Path, **extra: str) -> dict[str, str]:
+    scratch = tmp_path / "scratch"
+    scratch.mkdir(exist_ok=True)
+    env = {**os.environ, "TMPDIR": str(scratch), "PYTHONPATH": os.pathsep.join(sys.path)}
+    env.pop("QT_QPA_PLATFORM", None)
+    return {**env, **extra}
+
+
+def test_the_selftest_accepts_an_empty_platform_variable_and_cleans_up(tmp_path: Path) -> None:
+    """QT_QPA_PLATFORM= (empty) aborted Qt, and every run left its temporary folder behind."""
+    r = subprocess.run(
+        [sys.executable, "-P", str(ROOT / "packaging/gui_entry.py"), "--selftest"],
+        capture_output=True,
+        text=True,
+        env=_selftest_env(tmp_path, QT_QPA_PLATFORM=""),
+        check=False,
+        timeout=300,
+    )
+    assert r.returncode == 0 and "selftest ok" in r.stdout, (r.stdout, r.stderr[-500:])
+    assert list((tmp_path / "scratch").iterdir()) == []
+
+
+def test_a_failing_selftest_names_the_step(tmp_path: Path) -> None:
+    code = (
+        "import importlib.util, sys\n"
+        f"spec = importlib.util.spec_from_file_location('entry', {str(ROOT / 'packaging/gui_entry.py')!r})\n"
+        "m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)\n"
+        "m._fonts_are_bundled = lambda: False\n"
+        "raise SystemExit(m.selftest())\n"
+    )
+    r = subprocess.run(
+        [sys.executable, "-P", "-c", code],
+        capture_output=True,
+        text=True,
+        env=_selftest_env(tmp_path, QT_QPA_PLATFORM="offscreen"),
+        check=False,
+        timeout=300,
+    )
+    assert r.returncode == 1, (r.stdout, r.stderr[-500:])
+    assert "selftest FAILED at: bundled fonts" in r.stdout
+    assert list((tmp_path / "scratch").iterdir()) == []
+
+
+def test_the_ci_workflow_keeps_runs_on_master_and_checks_both_packages() -> None:
+    ci_file = ROOT.parent / ".github" / "workflows" / "harness-ci.yml"
+    if not ci_file.is_file():
+        pytest.skip("the repository root is not here")
+    ci = ci_file.read_text(encoding="utf-8")
+    # a second merge must not cancel the run on the first merge commit
+    assert "cancel-in-progress: ${{ github.event_name == 'pull_request' }}" in ci
+    # upload-artifact only fails when none of its files exist
+    assert "ls dist/*.deb dist/*.tar.gz" in ci
+    # the documents-only job also runs the test that reads the flatsat walkthrough
+    docs_job = ci[ci.index("  docs:") : ci.index("  test:")]
+    assert "tests/test_examples.py::test_the_flatsat_walkthrough_matches_the_example" in docs_job
