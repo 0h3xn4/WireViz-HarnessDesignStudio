@@ -84,3 +84,13 @@ Each category has its own colour, line weight and letter, so colour is not the o
 - `pending` is teal and dotted, `not-checked` is slate and hatched, `stale` is orange; none of them is the green, red or amber of pass, fail and warning, and each has its own icon and word. (SH-28)
 - Chip fill is a 4 % tint so text on it keeps AA contrast on all three surfaces; a test computes it. (SH-28)
 - A new table starts in the order the rows are given; a click on a header sorts. (SC-21)
+
+### Checks view (ux/checks: SC-1, SC-2, SC-3, SH-3, SH-17, SH-28)
+
+- A result is one of pass, fail, not checked or pending, each a state chip (icon, word and pattern); a pass that read a placeholder file says "Pass (placeholder values)" so a pass never looks reviewed when it is not. (SC-1, SH-28)
+- Results are grouped once per finished check from the findings the controller already holds (`ctl.drc_rule_results()`); while a check runs or is out of date the last finished list stays, and before the first one the table is empty with a sentence, never a list of passes. (SC-1)
+- The summary strip counts "not checked" as not checked plus pending rules and "pending values" as the hand-over list `configcheck.missing`; each count is a button that filters the table. (SH-3)
+- Rows sort worst first (fail, pending, not checked, pass); Tab leaves a table and the arrows move inside it; Enter on a rule moves to its details, Enter on an object shows it on the diagram. (SC-2)
+- A value is supplied in a window of its own (not modal), validated while typing with the same planner that applies it, shown under the field and never in a message box; Apply is one undo step with a label. (SC-3)
+- A running check says "checking" with Cancel; a failed check leaves a banner until the next success instead of a toast. (SH-17)
+- Shortcuts: Ctrl+F filters the rules, Ctrl+Enter applies the engineering values, Enter shows the selected object.
