@@ -46,8 +46,9 @@ from harness_design_studio.core.verify import verify_project
 from harness_design_studio.core.wirecolours import name_of, resolve
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import LIST_DELAY_MS, Delta, EditorController
+from harness_design_studio.gui.icons import icon_button
 from harness_design_studio.gui.preview import DrawingPreview
-from harness_design_studio.gui.theme import ThemeManager
+from harness_design_studio.gui.theme import ThemeManager, current_theme, mark_mono, mono_item_font
 from harness_design_studio.gui.tokens import CATEGORIES, style_category
 
 
@@ -183,6 +184,14 @@ class PalettePanel(QScrollArea):
         outer.addWidget(heading(strings.BRING_IN_DATA))
         self.import_btn = QPushButton(strings.IMPORT_BUTTON)
         self.import_btn.setObjectName("import-button")
+        icon_button(
+            self.import_btn,
+            "import",
+            theme,
+            strings.IMPORT_BUTTON,
+            "Ctrl+Shift+I",
+            text=strings.IMPORT_BUTTON,
+        )
         self.import_btn.clicked.connect(self.importRequested)
         outer.addWidget(self.import_btn)
         outer.addStretch(1)
@@ -238,7 +247,7 @@ class PalettePanel(QScrollArea):
 class _Field(QWidget):
     """A labelled line edit with an inline error line (live validation)."""
 
-    def __init__(self, label: str, value: str, *, enabled: bool = True) -> None:
+    def __init__(self, label: str, value: str, *, enabled: bool = True, mono: bool = False) -> None:
         super().__init__()
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -247,6 +256,8 @@ class _Field(QWidget):
         self.edit = QLineEdit(value)
         self.edit.setEnabled(enabled)
         self.edit.setAccessibleName(label)
+        if mono:  # IDs and requirement IDs read in the monospace font
+            mark_mono(self.edit)
         self.error = QLabel("")
         self.error.setProperty("error", True)
         self.error.setWordWrap(True)
@@ -370,7 +381,7 @@ class PropertiesPanel(QScrollArea):
         ctl, p = self.ctl, self.ctl.project
         u = p.units[uid]
         self.lay.addWidget(heading(strings.UNIT))
-        f_id = _Field(strings.FIELD_ID, u.id)
+        f_id = _Field(strings.FIELD_ID, u.id, mono=True)
         self._editable(f_id.edit)
         self.fields["id"] = f_id.edit
 
@@ -498,7 +509,7 @@ class PropertiesPanel(QScrollArea):
         i = p.interfaces[iid]
         t = p.interface_types[i.type_id]
         self.lay.addWidget(heading(strings.INTERFACE))
-        self.lay.addWidget(_Field(strings.FIELD_ID, i.id, enabled=False))
+        self.lay.addWidget(_Field(strings.FIELD_ID, i.id, enabled=False, mono=True))
         f_name = _Field(strings.FIELD_NAME, i.name)
         self._editable(f_name.edit)
         self.fields["name"] = f_name.edit
@@ -534,7 +545,7 @@ class PropertiesPanel(QScrollArea):
             self.fields[key] = f.edit
             f.edit.editingFinished.connect(lambda k=key, fld=f: self._commit_number(iid, fld, k))
             self.lay.addWidget(f)
-        f_req = _Field(strings.FIELD_REQUIREMENT, i.requirement_id or "")
+        f_req = _Field(strings.FIELD_REQUIREMENT, i.requirement_id or "", mono=True)
         self._editable(f_req.edit)
         self.fields["requirement_id"] = f_req.edit
         f_req.edit.editingFinished.connect(
@@ -800,9 +811,11 @@ class ProblemsPanel(QScrollArea):
             ref.setAccessibleName(ref.text())
             ref.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             ref.setWordWrap(True)
+            mark_mono(ref)
             lay.addWidget(ref)
         row = QHBoxLayout()
         show = QPushButton(strings.SHOW)
+        icon_button(show, "search", current_theme(), strings.SHOW_ON_DIAGRAM, text=strings.SHOW)
         show.clicked.connect(lambda: self.showRequested.emit(f.object_id))
         row.addWidget(show)
         if f.fix_label:
@@ -868,7 +881,7 @@ class TodoPanel(QScrollArea):
         for k, t in enumerate(items):
             b = QPushButton(f"☐ {t.text}")
             b.setObjectName(f"todo-{k}")
-            b.setStyleSheet("text-align: left;")
+            b.setProperty("align", "left")  # the theme's rule left-aligns the text
             b.clicked.connect(lambda _=False, x=t: self.activated.emit(x.kind, x.target))
             self.lay.addWidget(b)
         self.lay.addStretch(1)
@@ -878,6 +891,7 @@ class TodoPanel(QScrollArea):
 
 COLUMNS = strings.INTERFACE_COLUMNS
 EDITABLE = {1, 5, 6, 7}
+MONO_COLUMNS = {0, 7}  # ID and requirement ID read in the monospace font
 CHAINS = ["nominal", "redundant", "none"]
 
 
@@ -953,6 +967,8 @@ class InterfaceModel(QAbstractTableModel):
             ][col]  # fmt: skip
         if role == Qt.ItemDataRole.AccessibleTextRole:
             return f"{COLUMNS[col]} of {i.id}: {self.data(index, Qt.ItemDataRole.DisplayRole)}"
+        if role == Qt.ItemDataRole.FontRole and col in MONO_COLUMNS:
+            return mono_item_font()  # IDs and requirement IDs
         return None
 
     def setData(
@@ -1300,7 +1316,10 @@ class HarnessPanel(QWidget):
                      f"{h.revision} {strings.RELEASED_LOCKED}" if h.status == "released" else f"{h.revision} {h.status.replace('_', ' ')}",
                      strings.HARNESS_GENERATED if h.generated else strings.HARNESS_BY_HAND]  # fmt: skip
             for c, text in enumerate(cells):
-                self.harnesses.setItem(r, c, QTableWidgetItem(text))
+                item = QTableWidgetItem(text)
+                if c == 0:
+                    item.setFont(mono_item_font())  # harness IDs
+                self.harnesses.setItem(r, c, item)
             if hid == keep:
                 self.harnesses.selectRow(r)
         self._show_wires()
@@ -1328,7 +1347,10 @@ class HarnessPanel(QWidget):
                      self._colour_text(w.colour),
                      "yes" if w.locked else ""]  # fmt: skip
             for c, text in enumerate(cells):
-                self.wires.setItem(r, c, QTableWidgetItem(text))
+                item = QTableWidgetItem(text)
+                if c in (0, 2, 3):
+                    item.setFont(mono_item_font())  # wire IDs and connector.pin
+                self.wires.setItem(r, c, item)
         self._show_explain()
 
     def _update_preview(self) -> None:
