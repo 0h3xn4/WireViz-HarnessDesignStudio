@@ -17,7 +17,8 @@ from PySide6.QtCore import QObject, QThread, QTimer, Signal
 from harness_design_studio.core import checks, drc, edit
 from harness_design_studio.core.commands import Delete, History, Op, Put, SetZones, apply_ops
 from harness_design_studio.core.errors import HarnessError, SaveError, TransactionError
-from harness_design_studio.core.generate.engine import GenerationPlan, generation_status, input_hash
+from harness_design_studio.core.generate.engine import GenerationPlan
+from harness_design_studio.core.generation_status import generation_status, input_hash
 from harness_design_studio.core.imports import ImportPlan
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, disk_fingerprint, load_project

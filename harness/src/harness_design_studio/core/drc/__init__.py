@@ -75,6 +75,19 @@ def fix_ops(project: Project, finding: Finding) -> tuple[list[Op], str] | None:
     return None
 
 
+def _where_part_is_used(project: Project, part_id: str) -> tuple[str, str] | None:
+    """The first harness (by ID) that uses the part, else the first unit with a box connector of it."""
+    for h in sorted(project.harnesses.values(), key=lambda x: x.id):
+        if any(c.part_id == part_id for c in h.connectors) or any(
+            w.part_id == part_id for w in h.wires
+        ):
+            return "harness", h.id
+    units = sorted(
+        c.unit_id for c in project.connectors.values() if c.part_id == part_id and c.unit_id
+    )
+    return ("unit", units[0]) if units else None
+
+
 def locate(project: Project, object_id: str) -> tuple[str, str] | None:
     """Where to show a finding: ("unit" | "interface" | "harness", id), or None if it has no place."""
     if object_id in project.units:
@@ -92,6 +105,8 @@ def locate(project: Project, object_id: str) -> tuple[str, str] | None:
     parts = object_id.split(".")
     if parts[0] == "shield-parts" and len(parts) > 2 and parts[1] in project.harnesses:
         return "harness", parts[1]
+    if parts[0] in ("wire-spec", "mating-cycles") and len(parts) == 2:
+        return _where_part_is_used(project, parts[1])
     if parts[0] == "emc-class" and len(parts) > 2 and parts[2] in project.units:
         return "unit", parts[2]
     head = parts[0]

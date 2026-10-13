@@ -33,7 +33,7 @@ A key written outside `values` is rejected, the file is set aside (`quarantined`
 ## Rules
 - **Group file names are cosmetic.** Loading never depends on them; two subsystems whose names slug to the same file simply share it. Harness files must be named `<harness id>.json` (otherwise a warning).
 - **IDs** match `[A-Za-z][A-Za-z0-9_.-]{0,63}`, no trailing dot, no Windows device names (`CON`, `NUL`, `COM1`, ...). Pin names allow a leading digit and up to 16 characters. IDs must be unique ignoring case. Connector IDs are unique across the whole project (box and harness connectors share one namespace), as are wire IDs.
-- **Strict typing:** no type coercion (a string is never accepted for a number), unknown fields are rejected, `NaN`/`Infinity` are rejected, duplicate JSON keys are rejected, control characters are rejected in names and notes.
+- **Strict typing:** no type coercion (a string is never accepted for a number), unknown fields are rejected, `NaN`/`Infinity` are rejected, duplicate JSON keys are rejected, control characters are rejected in names and notes, and so are line and paragraph separators, the byte-order mark and private-use characters (direction controls and zero-width characters are still accepted). Dates (library date, release date, change log date) are written exactly `YYYY-MM-DD`.
 - **Lists are sorted by ID** on save, except where order carries meaning (`endpoints`, `signals`, a connector's `pins` keep their order of entry).
 - `null` means "not yet decided". The tool never fills engineering numbers on its own.
 

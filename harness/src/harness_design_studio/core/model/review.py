@@ -11,7 +11,7 @@ from pydantic import (
 
 from harness_design_studio.core.ids import Id
 
-from .base import Entity, Name, Text, _no_control_chars
+from .base import Entity, IsoDate, Name, Text, _no_control_chars
 from .library import Part
 from .logical import InterfaceInstance, InterfaceType, Unit
 from .physical import Connector, Harness
@@ -72,7 +72,7 @@ class Baseline(Entity):
     id: Id
     harness_id: Id
     revision: Name
-    released_on: Name
+    released_on: IsoDate
     by: Name
     comment: Justification
     content_hash: Name  # hash of the design content at release (see vcs.hashing)
@@ -90,5 +90,5 @@ class ChangeEntry(Entity):
     revision: Name
     kind: ChangeKind
     by: Name
-    when: Name
+    when: IsoDate
     comment: Text = ""

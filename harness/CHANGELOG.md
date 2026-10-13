@@ -4,6 +4,14 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Fixed
+
+- Loading a project with many set-aside objects reads and scans each file once (it was quadratic: 32000 bad units took 30 s). Audit A-13.
+- The undo history keeps the last 200 steps, and an edit with no operations is no longer an undo step (it also cleared redo). Audit A-14.
+- Names refuse line and paragraph separators, the byte-order mark and private-use characters; dates (library, release, change log) must be exactly `YYYY-MM-DD`; zone names in `layout.json` are checked like other names. Audit A-16.
+- The integrity check reports a part that mates with itself or a missing part, a baseline of a missing harness or with an ID that is not `<harness>.<revision>`, baselines whose IDs differ only by case, and (as warnings) a connector for a missing interface type and a change log entry of a deleted harness. The integrity cache follows the generated flag of the owning harness. Audit A-15, A-17.
+- The connector-manufacturer rule ignores case and spaces; emc-class-split also sees interfaces named only by wires; wire-spec and mating-cycles findings can be shown; `config --apply-profile` says when the plans became out of date. The verifier no longer imports the generator. Audit C-22, C-23.
+
 ## 1.0.0 (2026-10-12; released on the owner's instruction, see compliance/SIGNOFF.md; not a statement of compliance)
 
 Version 1.0.0 is 0.1.0 plus the changes listed below: the fixes of the October 2026 pre-release audit (the findings and what was done about each are in `AUDIT.md` at the root of the repository), the release freeze of parts, interface types and configuration, two more examples (`minimal-satellite`, `flatsat`), a design worksheet template and the wiring-diagram drawing. The open engineering decisions were recorded as defaults on 2026-10-12 (`docs/DECISIONS.md` D-142 to D-145); the tool still ships no standard or part data. **What is still true**: the configuration files are placeholders and the parts are example parts, so results rest on placeholders; no compliance with any standard is claimed; the packages are not signed; the upstream WireViz code under `src/wireviz/` is unchanged.

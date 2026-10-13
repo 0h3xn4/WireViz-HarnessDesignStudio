@@ -1,13 +1,12 @@
 """Parts library: real, qualified parts the plans refer to."""
 
-from datetime import date
 from typing import Annotated, Literal
 
-from pydantic import AfterValidator, Field
+from pydantic import Field
 
 from harness_design_studio.core.ids import Id
 
-from .base import MAX_PIN_COUNT, Entity, Name, NonNegative, Text
+from .base import MAX_PIN_COUNT, Entity, IsoDate, Name, NonNegative, Text
 
 PartCategory = Literal["connector", "contact", "backshell", "wire", "sleeving", "label"]
 PART_CATEGORIES: tuple[PartCategory, ...] = (
@@ -33,12 +32,6 @@ class Part(Entity):
     notes: Text = ""
 
 
-def _iso_date(value: str | None) -> str | None:
-    if value is not None:
-        date.fromisoformat(value)  # ValueError (a validation error) unless YYYY-MM-DD
-    return value
-
-
 class LibraryInfo(Entity):
     """Where the parts of the library come from. `source` and `date` are entered by a person (or
     the import records the file name); the tool never reads a clock into project data."""
@@ -46,4 +39,4 @@ class LibraryInfo(Entity):
     name: Name = "Project parts library"
     version: Name = "0"
     source: Name | None = None  # for example the file or database the parts were imported from
-    date: Annotated[str | None, AfterValidator(_iso_date)] = None  # date of that data, YYYY-MM-DD
+    date: IsoDate | None = None  # date of that data, YYYY-MM-DD
