@@ -73,7 +73,7 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 | --- | --- |
 | **Top bar** | The project name, a short model hash, *Saved* or *Unsaved changes*, **Generate** (the one blue button), **Check**, **Export…** and a status chip. |
 | **Banner** | Appears under the top bar when something needs you: the plans or the exported files are out of date (buttons **Generate** and **Export…**), or a generate, export or check failed (**Try again**). A change that is refused because a harness is released stays on screen as a message over the diagram, with **Start new revision…**, until the next change goes through. |
-| **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases** (Ctrl+1 to Ctrl+5). |
+| **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6). |
 | **Left panel** | The **Project** tab: a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports, with a filter and an **Add** button. The **Palette** tab: **Add a unit**, **Connect with** and the interface import. |
 | **Right panel** | **Inspector** (the fields of what you selected, and where it is used), **Why** (the reasons for a choice) and **Problems** (the problem cards). |
 | **Bottom panel** | The earlier views: **Problems**, **To-do**, **Interface table**, **Harness plans**, **Outline**. It is hidden in a window under 800 px high; View > Problems and status shows it. |
@@ -97,6 +97,18 @@ Panels you hide or move are remembered; **View > Reset layout** puts them back. 
 10. Press **Export…** in the top bar (Ctrl+E): choose what to look at and press **Export** to write drawings and lists into the project's `outputs` folder (section 8).
 
 On a power interface set **Max current (A)** in the Inspector; without it the wire gauge stays pending.
+
+### The Devices tab
+
+The **Devices** tab (Ctrl+6) shows one unit down to each pin. Pick the unit on the diagram or in the project tree, or in the box at the top of the tab. The header gives its state (*Draft*: no interface ends on it, *In use*, *Locked* by a released harness, or *Read-only*), the number of connectors, pins and signals, and two buttons: **Duplicate** (the same as Edit > Duplicate) and **Export pinout…**.
+
+Left, the list of the unit's connectors; right, the connector's part, gender, keying and what it carries, and how its pins are allocated: *Automatic* (Generate puts the signals on free pins) or *Fixed pinout* (the signals go to the pins of their own name).
+
+Below, the pin table: pin, signal, mode (*Free*, *Fixed*, *Locked*), interface, direction and class (taken from the interface type of the signal, empty when no type has that signal), the wire and a state. **Contact details** adds the contact size and the termination.
+
+Under it the notes about the connector, for example a signal that no interface type has, or *CANH* without *CANL* on a fixed pinout; a double-click selects the pin the note is about.
+
+At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv` for this unit; **Export pinout…** saves them as a CSV file or an Excel workbook.
 
 ## 5. Guided and Expert mode
 
@@ -264,7 +276,7 @@ Example files for every one of these are in the templates folder (`harness-desig
 | Ctrl+K | command palette: type a command, an ID or a name; every command of the menus is in it |
 | Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
 | Ctrl+I | new interface |
-| Ctrl+1 to Ctrl+5 | the tabs Diagram, Harness, Lists, Checks, Releases |
+| Ctrl+1 to Ctrl+6 | the tabs Diagram, Harness, Lists, Checks, Releases, Devices |
 | F6, Shift+F6 | next and previous panel (diagram, project panel, inspector, bottom panel) |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | undo, redo (the menu names the step, for example *Undo Move PDU2*) |
 | Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, zoom out, real size (100 %) |
@@ -317,7 +329,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Design | Export… (Ctrl+E) | the Export outputs window |
 | Design | Submit harness for review…, Release harness…, Start new revision… | change control for the harness in view (section 9) |
 | Design | Engineering values… | the window where you type the values the rules wait for (section 6) |
-| Go | Go to Diagram, Harness, Lists, Checks, Releases (Ctrl+1 to Ctrl+5) | shows that tab |
+| Go | Go to Diagram, Harness, Lists, Checks, Releases, Devices (Ctrl+1 to Ctrl+6) | shows that tab |
 | Go | Next panel, Previous panel (F6, Shift+F6) | moves the keyboard focus between the panels |
 | Help | User guide (F1) | opens this guide |
 | Help | Search and commands (Ctrl+K) | the command palette |

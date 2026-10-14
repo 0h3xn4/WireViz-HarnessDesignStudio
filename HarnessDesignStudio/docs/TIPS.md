@@ -37,7 +37,7 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | F5 | Run the design rule check now |
 | Ctrl+E | Export... (the Export outputs window) |
 | Ctrl+I | New interface... |
-| Ctrl+1 to Ctrl+5 | The tabs Diagram, Harness, Lists, Checks, Releases |
+| Ctrl+1 to Ctrl+6 | The tabs Diagram, Harness, Lists, Checks, Releases, Devices |
 | F6 and Shift+F6 | Move the keyboard focus to the next or previous panel |
 | Delete | Delete the selection (it first shows what else goes with it); in the diagram, the Interface table and the Outline |
 | C | Start the Connect tool; then click the two units to add an interface |

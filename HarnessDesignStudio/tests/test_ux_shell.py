@@ -31,6 +31,7 @@ from harness_design_studio.core.commands import History, Put  # noqa: E402
 from harness_design_studio.core.model import Unit  # noqa: E402
 from harness_design_studio.core.samples import mini3  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
+from harness_design_studio.gui.devices_view import DevicesView  # noqa: E402
 from harness_design_studio.gui.dialogs import (  # noqa: E402
     CommandPalette,
     PaletteEntry,
@@ -392,6 +393,7 @@ def test_shortcuts_run_generate_check_and_export(flat) -> None:
         (flat.go_actions["diagram"], "Ctrl+1"),
         (flat.go_actions["checks"], "Ctrl+4"),
         (flat.go_actions["releases"], "Ctrl+5"),
+        (flat.go_actions["devices"], "Ctrl+6"),
     ):
         assert act.shortcut().toString() == key
         assert key in act.toolTip() or act.toolTip() == "", (act.text(), act.toolTip())
@@ -527,7 +529,9 @@ def test_the_path_is_cut_in_the_middle_in_a_narrow_window(qtbot) -> None:
 
 def test_main_tabs_and_their_shortcuts(flat) -> None:
     tabs = flat.main_tabs
-    assert tabs.visible_names() == ["diagram", "harness", "lists", "checks", "releases"]
+    assert tabs.visible_names() == [
+        "diagram", "harness", "lists", "checks", "releases", "devices",
+    ]  # fmt: skip
     flat.go_actions["checks"].trigger()
     assert tabs.currentWidget() is flat.checks_panel
     flat.go_actions["releases"].trigger()
@@ -536,6 +540,8 @@ def test_main_tabs_and_their_shortcuts(flat) -> None:
     assert tabs.currentWidget() is flat.harness_view
     flat.go_actions["lists"].trigger()
     assert tabs.currentWidget() is flat.lists_panel
+    flat.go_actions["devices"].trigger()
+    assert tabs.currentWidget() is flat.devices_view
     flat.go_actions["diagram"].trigger()
     assert tabs.currentWidget() is flat.diagram_page
 
@@ -543,6 +549,7 @@ def test_main_tabs_and_their_shortcuts(flat) -> None:
 def test_the_views_that_exist_are_plugged_into_their_slots(flat) -> None:
     assert isinstance(flat.view_widget("harness"), HarnessView)
     assert isinstance(flat.view_widget("lists"), ListsPanel)
+    assert isinstance(flat.view_widget("devices"), DevicesView)
     assert isinstance(flat.view_widget("tree"), ProjectTree)
     assert isinstance(flat.view_widget("inspector"), Inspector)
     assert flat.inspector.props is flat.props  # the properties form lives inside the inspector
@@ -597,7 +604,9 @@ def test_double_click_on_a_link_opens_the_harness_tab(flat) -> None:
 
 
 def test_slots_that_have_no_view_yet_keep_an_empty_state(flat) -> None:
-    assert flat.view_slots() == ["harness", "inspector", "lists", "problems", "tree", "why"]
+    assert flat.view_slots() == [
+        "devices", "harness", "inspector", "lists", "problems", "tree", "why",
+    ]  # fmt: skip
     for name in ("why", "problems"):
         assert isinstance(flat.view_widget(name), EmptyStateWidget)
         w = QLabel(name)

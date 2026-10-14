@@ -125,7 +125,7 @@ Each category has its own colour, line weight and letter, so colour is not the o
 
 Code: `gui/main_window.py`, `gui/shell.py` (slots, banners, status chip rules, `auto_scale`), `gui/topbar.py`, `gui/notice.py`. Tests: `test_ux_shell.py`.
 
-- **Layout.** Top bar, a banner area, then the main tabs Diagram · Harness · Lists · Checks · Releases (Ctrl+1 to Ctrl+5); left dock (the Project tree tab, the Palette tab), right dock (the Inspector view with its Inspector, Why and Problems tabs), bottom dock (Problems, To-do, Interface table, Harness plans, Outline: the five old tabs, kept until they are retired), status bar. Views plug into named slots (`MainWindow.install_view(name, widget)`: harness, lists, tree, inspector, why, problems); a slot that is not filled keeps an empty-state page and its tab stays hidden. The Harness, Lists, tree and inspector slots are filled; the Why and Problems tabs live inside the Inspector view, so those two slots stay unfilled. (SH-7, SC-5)
+- **Layout.** Top bar, a banner area, then the main tabs Diagram · Harness · Lists · Checks · Releases · Devices (Ctrl+1 to Ctrl+6); left dock (the Project tree tab, the Palette tab), right dock (the Inspector view with its Inspector, Why and Problems tabs), bottom dock (Problems, To-do, Interface table, Harness plans, Outline: the five old tabs, kept until they are retired), status bar. Views plug into named slots (`MainWindow.install_view(name, widget)`: harness, lists, devices, tree, inspector, why, problems); a slot that is not filled keeps an empty-state page and its tab stays hidden. The Harness, Lists, Devices, tree and inspector slots are filled; the Why and Problems tabs live inside the Inspector view, so those two slots stay unfilled. (SH-7, SC-5)
 - **One primary button.** Generate is the only accent-coloured button of the window (see [State badges](#state-badges-and-chips)). (SH-1, SH-24)
 - **Top bar.** Project name, short model hash in monospace, a dirty marker, Generate, Check, Export… and the status chip. It folds the dirty text, the hash and the words of Check and Export away when narrow. (SH-1)
 - **Status chip.** Words, icon and colour from the state chips: Up to date (pass), Plans up to date (nothing exported yet), Plans out of date and Outputs out of date (stale), Generating, Exporting and Checking (info), Not generated (draft). Order of precedence: a running job, then out of date (plans before files), then a running check, then up to date. (SH-2)
@@ -205,6 +205,16 @@ Code: `gui/releases_panel.py`, `gui/export_dialog.py`, `gui/export_docs.py`, `gu
 - The import wizard uses the planner the command line uses for each kind, shows the same per-row reasons, and keeps the command line's rule that a list with a bad row is not imported at all (parts, lengths, ampacity table, netlist); only interfaces skip bad rows, as the existing dialog does. Option names of the command line in a planner message are put in the wizard's own words. (SC-17)
 - Every import is one `ctl.run` step called "Import n rows"; what stays pending afterwards (parts whose approval is pending, the derating file that stays a placeholder, interfaces whose connectors are Auto, signals no interface uses) is listed on the third page with the pending chip. (SC-17)
 
+### Devices
+
+Code: `gui/devices_view.py`; core `core/devices.py`. Audit, proposal and the owner's decisions: [`ux-custom-devices-audit.md`](ux-custom-devices-audit.md). Tests: `test_ux_devices.py`, `test_edit_device.py`, `test_device_equivalence.py`.
+
+- The sixth main tab (Ctrl+6, owner decision CD-Q10); a unit selected on the diagram or in the tree is the device shown, and a unit picked in the tab is selected on the diagram.
+- Header (unit, state chip, name, subsystem and chain, counts, Duplicate, Export pinout), connector list, connector card, pin table, notes under it and "Pinout as exported" below. The state is worked out from the project each time (`devices.device_state`): Draft, In use, Locked, Read-only; the file holds none.
+- The pin table shows only what the model holds: pin, signal, mode, interface, wire, and (hidden until asked) contact size and termination. Direction and class are derived from the interface type of the signal and are empty, with the reason as tooltip, when nothing can be said (CD-Q1: no format change, so no pin description, remarks, own direction, voltage or current).
+- Notes are inline (`devices.pinout_problems`, CD-K1 to CD-K8); no design rule is added (CD-Q7).
+- "Pinout as exported" is `outputs.tables.box_pinouts` for the unit's connectors, so what is shown is what `system/box_pinouts.csv` will hold.
+
 ## Shortcuts
 
 Every shortcut is in a menu and in the tooltip as "text (shortcut)". Keys marked "diagram" work only while the diagram has the keyboard focus.
@@ -220,7 +230,8 @@ Every shortcut is in a menu and in the tooltip as "text (shortcut)". Keys marked
 | Ctrl+K | Search and commands |
 | F1 | User guide |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | Undo, redo |
-| Ctrl+1 to Ctrl+5 | The main tabs: Diagram, Harness, Lists, Checks, Releases |
+| Ctrl+1 to Ctrl+6 | The main tabs: Diagram, Harness, Lists, Checks, Releases, Devices |
+| Ctrl+F in the Devices tab | Go to the pin filter |
 | F6, Shift+F6 | Next and previous panel |
 | Ctrl+= , Ctrl+- , Ctrl+0 | Zoom in, zoom out, 100 % |
 | F, Shift+F (diagram) | Fit all, zoom to the selection |
