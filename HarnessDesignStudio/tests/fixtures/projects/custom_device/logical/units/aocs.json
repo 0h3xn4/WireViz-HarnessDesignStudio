@@ -1,0 +1,13 @@
+{
+  "units": [
+    {
+      "id": "GYRO1",
+      "mass_relevant": true,
+      "name": "Gyro unit",
+      "notes": "",
+      "side": "nominal",
+      "subsystem": "aocs",
+      "zone": null
+    }
+  ]
+}

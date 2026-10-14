@@ -1,0 +1,9 @@
+{
+  "name": "segregation",
+  "placeholder": true,
+  "values": {
+    "category_pairs_to_separate": null,
+    "forbid_nominal_with_redundant": true,
+    "forbid_pyro_with_other": true
+  }
+}

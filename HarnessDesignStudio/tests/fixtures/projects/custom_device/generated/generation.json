@@ -1,0 +1,88 @@
+{
+  "generator_version": "1.0.0",
+  "input_hash": "9bc66d2007fa05d613cbd8ac835da7886053c3aa365c96fc6bf2d4bca55d0166",
+  "next_harness_number": 3,
+  "placeholders_used": [
+    "derating",
+    "emc",
+    "generation",
+    "segmentation",
+    "segregation",
+    "titleblock"
+  ],
+  "provenance": {
+    "connector:W001-P1": [
+      "mating: cable end for GYRO1-J01 (GYRO1); part MY-HD-6-M mates with MY-HD-6-F"
+    ],
+    "connector:W001-P2": [
+      "mating: cable end for PCDU1-J01 (PCDU1); part EX-MICROD-9-M mates with EX-MICROD-9-F"
+    ],
+    "connector:W002-P1": [
+      "mating: cable end for GYRO1-J02 (GYRO1); part MY-HD-6-M mates with MY-HD-6-F"
+    ],
+    "connector:W002-P2": [
+      "mating: cable end for OBC1-J01 (OBC1); part EX-MICROD-25-M mates with EX-MICROD-25-F"
+    ],
+    "gauge:W001-001": [
+      "wire-sizing: undecided, waiting for interface current (set Max current on the interface)"
+    ],
+    "gauge:W001-002": [
+      "wire-sizing: undecided, waiting for interface current (set Max current on the interface)"
+    ],
+    "gauge:W002-001": [
+      "wire-sizing: undecided, waiting for interface current (set Max current on the interface)"
+    ],
+    "gauge:W002-002": [
+      "wire-sizing: undecided, waiting for interface current (set Max current on the interface)"
+    ],
+    "harness:W001": [
+      "lengths: service loop is a placeholder (0 used); lengths exclude service loops",
+      "shielding: shield termination is a placeholder (floating used); the grounding concept decides it",
+      "segmentation: IF-001 share a harness because they have the same pair of unit connectors and chain (nominal)"
+    ],
+    "harness:W002": [
+      "lengths: service loop is a placeholder (0 used); lengths exclude service loops",
+      "shielding: shield termination is a placeholder (floating used); the grounding concept decides it",
+      "segmentation: IF-002 share a harness because they have the same pair of unit connectors and chain (nominal)"
+    ],
+    "pin:GYRO1-J01.A1": [
+      "pin-allocation: PWR of IF-001 uses pin A1 because the pinout of GYRO1-J01 is fixed by the unit design"
+    ],
+    "pin:GYRO1-J01.A2": [
+      "pin-allocation: RTN of IF-001 uses pin A2 because the pinout of GYRO1-J01 is fixed by the unit design"
+    ],
+    "pin:GYRO1-J02.1": [
+      "pin-allocation: CANH of IF-002 uses pin 1 because the pinout of GYRO1-J02 is fixed by the unit design"
+    ],
+    "pin:GYRO1-J02.2": [
+      "pin-allocation: CANL of IF-002 uses pin 2 because the pinout of GYRO1-J02 is fixed by the unit design"
+    ],
+    "pin:OBC1-J01.1": [
+      "pin-allocation: CANH of IF-002 (pair BUS on adjacent pins)"
+    ],
+    "pin:OBC1-J01.2": [
+      "pin-allocation: CANL of IF-002 (pair BUS on adjacent pins)"
+    ],
+    "pin:PCDU1-J01.1": [
+      "pin-allocation: PWR of IF-001 (power and return grouped)"
+    ],
+    "pin:PCDU1-J01.2": [
+      "pin-allocation: RTN of IF-001 (power and return grouped)"
+    ],
+    "rules": [
+      "pin-allocation: power-to-signal pin gap is a placeholder (0 used)"
+    ],
+    "wire:W001-001": [
+      "wiring: PWR of IF-001 connects GYRO1-J01 pin A1 to PCDU1-J01 pin 1 (X drives)"
+    ],
+    "wire:W001-002": [
+      "wiring: RTN of IF-001 connects GYRO1-J01 pin A2 to PCDU1-J01 pin 2 (X drives)"
+    ],
+    "wire:W002-001": [
+      "wiring: CANH of IF-002 connects GYRO1-J02 pin 1 to OBC1-J01 pin 1 (X drives)"
+    ],
+    "wire:W002-002": [
+      "wiring: CANL of IF-002 connects GYRO1-J02 pin 2 to OBC1-J01 pin 2 (X drives)"
+    ]
+  }
+}
