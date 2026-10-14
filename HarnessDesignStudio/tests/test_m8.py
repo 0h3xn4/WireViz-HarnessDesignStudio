@@ -230,6 +230,7 @@ def test_arrange_action_runs_and_can_be_undone(win) -> None:  # type: ignore[no-
     assert "already" in win.toasts.messages[-1].lower()
 
 
+@pytest.mark.perf
 @pytest.mark.gui
 def test_arrange_is_fast_at_stress_size() -> None:
     import time

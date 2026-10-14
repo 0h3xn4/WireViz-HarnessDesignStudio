@@ -78,7 +78,7 @@ jobs:
         # installs the packages on a fresh runner that has no source checkout.
         os: [ubuntu-24.04]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 300  # the suite has about 2,600 tests, many of them GUI tests; a hung test must still not block the run for six hours
+    timeout-minutes: 150  # about 1 hour is expected on 4 cores (the serial run took 1h38 to 2h57); the limit also covers 2 cores and still stops a hung test
     env:
       HARNESS_TIME_FACTOR: "3"  # shared runners are slower than a workstation; limits in tests scale by this
       HARNESS_REQUIRE_BROWSER: "1"  # the clickable prototype tests must run, not skip
@@ -95,7 +95,14 @@ jobs:
       - run: ruff check .
       - run: ruff format --check .
       - run: mypy
-      - run: pytest --cov --cov-report=term-missing
+      # The suite runs on all the runner's cores (pytest-xdist, docs/DECISIONS.md D-148). Tests that
+      # assert a wall-clock limit (marker `perf`) would fail on a loaded machine, so they run alone,
+      # after the parallel run; the two selections together are the whole suite. The first step
+      # collects coverage without judging it, the second adds its own and applies the 90% gate on core.
+      - name: Tests in parallel (all but the timing tests)
+        run: pytest -n auto --dist worksteal -m "not perf" --cov --cov-report= --cov-fail-under=0
+      - name: Timing tests, one at a time
+        run: pytest -m perf --cov --cov-append --cov-report=term-missing
       - run: python -m tools.check_reproducible
       - run: python -m tools.build_installer
       - run: python -m tools.build_deb

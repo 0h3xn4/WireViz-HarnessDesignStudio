@@ -7,7 +7,7 @@ M0 to M9 done (`docs/demos/`), then the October audit (`docs/AUDIT.md`) and the 
 
 ## Commands (run from `HarnessDesignStudio/`)
 - Setup: `python3 -m venv .venv && . .venv/bin/activate && pip install -e ".[gui,dev]"` (Linux also needs libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 for Qt)
-- Test: `pytest` (Qt runs offscreen via tests/conftest.py); coverage: `pytest --cov` (90% gate on core, enforced)
+- Test: `pytest` (Qt runs offscreen via tests/conftest.py); coverage: `pytest --cov` (90% gate on core, enforced). In parallel (pytest-xdist, D-148): `pytest -n auto -m "not perf"`, then the tests with a wall-clock limit alone: `pytest -m perf` (they carry `@pytest.mark.perf`; `tests/test_parallel_safety.py` fails if one does not). CI runs both steps with `--cov`/`--cov-append`. Tests use `tmp_path` and never a fixed path, so workers do not share files.
 - Lint/type: `ruff format . && ruff check . && mypy`
 - CLI: `harness-design-studio --version | new FOLDER [--template NAME] | templates FOLDER | validate DIR | check DIR | migrate DIR | generate DIR | verify DIR | drc DIR | export DIR | verify DIR --outputs | review/release/revise/diff/log DIR HARNESS | compare OLD NEW | config DIR | import-parts/import-lengths/import-netlist DIR FILE`; GUI: `harness-design-studio-gui`; `harness` and `harness-gui` are kept as aliases
 - GUI tests: `QT_QPA_PLATFORM=offscreen pytest tests/test_gui_journeys.py` (conftest sets it); timings: `python -m tools.bench_gui`; screenshots of the real editor: `python -m tools.gui_screenshots` (docs/ux/qt, 26 pictures, about a minute) and `python -m tools.flatsat_screenshots` (docs/img)

@@ -77,6 +77,7 @@ Window
 - Undo and Redo name the step ("Undo Move PDU2").
 - In a window shorter than 800 px the bottom panel is hidden so the diagram keeps at least 55 % of the height at 1280 x 720; a panel can no longer make the window wider than the screen.
 - The older bottom panel (Problems, To-do, Interface table, Harness plans, Outline) and the Palette tab are still there; the Fix all button, a non-modal palette and per-harness Generate are not built (see `docs/ux-audit.md`, "Build status").
+- Developers: the test suite runs in parallel with `pytest -n auto` (pytest-xdist 3.8.0, dev only; D-148). Tests that assert a wall-clock limit carry the marker `perf` and run alone afterwards (`pytest -m perf`); CI does both and applies the same 90 % core coverage gate.
 
 ### Fixed
 

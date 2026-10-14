@@ -11,3 +11,11 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 _CONFIG_HOME = tempfile.mkdtemp(prefix="harness-tests-config-")
 os.environ["XDG_CONFIG_HOME"] = _CONFIG_HOME
 atexit.register(shutil.rmtree, _CONFIG_HOME, ignore_errors=True)
+
+# Every process (the one that runs pytest and each pytest-xdist worker) imports this file and so has
+# its own folder, which keeps parallel workers from sharing one settings file. A worker ends without
+# running the atexit hook, so the folder is removed when pytest unconfigures as well.
+
+
+def pytest_unconfigure(config: object) -> None:
+    shutil.rmtree(_CONFIG_HOME, ignore_errors=True)
