@@ -833,6 +833,7 @@ def _hundred(results: list[by_rule.RuleResult]) -> list[by_rule.RuleResult]:
     return [replace(results[i % len(results)], rule_id=f"rule-{i:03d}") for i in range(100)]
 
 
+@pytest.mark.perf
 def test_a_hundred_rules_build_filter_and_sort_quickly(host) -> None:
     ctl, theme, panel = host
     results = _hundred(ctl.drc_rule_results())

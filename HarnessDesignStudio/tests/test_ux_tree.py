@@ -780,6 +780,7 @@ def test_the_tree_lists_100_units_and_800_links(big) -> None:
     assert len(tree.child_ids("units")) == 100 and len(tree.child_ids("interfaces")) == 800
 
 
+@pytest.mark.perf
 def test_an_edit_stays_under_the_budget_with_the_tree_open(big) -> None:
     ctl, tree = big
     elapsed_ms(lambda: ctl.update_unit("U001", name="warm"))
@@ -787,6 +788,7 @@ def test_an_edit_stays_under_the_budget_with_the_tree_open(big) -> None:
     assert t < time_limit(100), t
 
 
+@pytest.mark.perf
 def test_the_tree_itself_takes_a_small_part_of_the_edit_budget(big) -> None:
     from harness_design_studio.gui.controller import Delta
 
@@ -799,6 +801,7 @@ def test_the_tree_itself_takes_a_small_part_of_the_edit_budget(big) -> None:
     assert took < time_limit(30), took
 
 
+@pytest.mark.perf
 def test_adding_a_unit_stays_under_the_budget_and_inserts_one_row(big) -> None:
     ctl, tree = big
     spy = Spy(tree)
@@ -814,6 +817,7 @@ def test_a_move_does_not_rebuild_any_row(big) -> None:
     assert spy.inserted == [] and spy.removed == [] and spy.resets == 0
 
 
+@pytest.mark.perf
 def test_selecting_a_row_far_down_the_list_is_fast(big) -> None:
     ctl, tree = big
     iid = tree.child_ids("interfaces")[700]
@@ -826,6 +830,7 @@ def test_selecting_a_row_far_down_the_list_is_fast(big) -> None:
     assert iid
 
 
+@pytest.mark.perf
 def test_counts_of_a_big_project_match_the_findings(big) -> None:
     """About 12,000 findings (wire and verifier errors, a part warning) sorted onto their rows."""
     ctl, tree = big
@@ -841,6 +846,7 @@ def test_counts_of_a_big_project_match_the_findings(big) -> None:
     assert took < time_limit(150), took  # sorting thousands of findings onto 100 + 800 + 30 rows
 
 
+@pytest.mark.perf
 def test_with_many_findings_the_counts_follow_the_edit_on_a_short_timer(big, qtbot) -> None:
     ctl, tree = big
     ctl.run_drc_now()
