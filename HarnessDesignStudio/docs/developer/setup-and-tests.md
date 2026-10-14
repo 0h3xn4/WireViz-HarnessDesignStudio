@@ -76,6 +76,7 @@ Notes:
 
 - A test that needs a normal user (`tests/test_atomic_lock.py`) is skipped when you run as root. Run the suite as a normal user in CI.
 - Every bug fix gets a regression test, and tests come first. See the conventions in [`../../CLAUDE.md`](../../CLAUDE.md).
+- GUI tests do not have to close their windows: `tests/conftest.py` deletes the top-level widgets a test left open (an autouse fixture). Without it every later test in the process got slower and the process grew to gigabytes.
 - Parallel runs: every test must use its own `tmp_path` (never a fixed path such as `/tmp/x`) and must not write into the source tree, because the workers run at the same time. `tests/conftest.py` gives each worker its own settings folder. A new test that asserts a time limit (`time_limit`, `perf_counter`) gets `@pytest.mark.perf`; `tests/test_parallel_safety.py` fails until it has.
 - The GUI tests need no screen: `QT_QPA_PLATFORM=offscreen pytest tests/test_gui_journeys.py`.
 

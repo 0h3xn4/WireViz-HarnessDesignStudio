@@ -78,7 +78,7 @@ jobs:
         # installs the packages on a fresh runner that has no source checkout.
         os: [ubuntu-24.04]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 150  # about 1 hour is expected on 4 cores (the serial run took 1h38 to 2h57); the limit also covers 2 cores and still stops a hung test
+    timeout-minutes: 120  # the tests took about 25 minutes on a 4-core machine (1h38 to 2h57 in one process before); the limit leaves room for the packaging steps, 2 cores and slow runners, and still stops a hung test
     env:
       HARNESS_TIME_FACTOR: "3"  # shared runners are slower than a workstation; limits in tests scale by this
       HARNESS_REQUIRE_BROWSER: "1"  # the clickable prototype tests must run, not skip

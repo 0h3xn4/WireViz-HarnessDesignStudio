@@ -1,7 +1,11 @@
 import atexit
 import os
 import shutil
+import sys
 import tempfile
+from collections.abc import Iterator
+
+import pytest
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
@@ -19,3 +23,34 @@ atexit.register(shutil.rmtree, _CONFIG_HOME, ignore_errors=True)
 
 def pytest_unconfigure(config: object) -> None:
     shutil.rmtree(_CONFIG_HOME, ignore_errors=True)
+
+
+@pytest.fixture(autouse=True)
+def _close_the_windows_a_test_left_open() -> Iterator[None]:
+    """Delete the top-level widgets a test created and did not close (most GUI tests build a
+    window and walk away). Each one kept its timers and its child widgets alive for the rest of
+    the process, so later tests got slower and slower (a layout test took 77 s after 160 left-over
+    windows and 8 s on its own) and a worker grew to several GB. Windows that exist before the
+    test starts (those of module-scoped fixtures) are left alone; the editor's own clean-up
+    (`ctl.release`: timers, helper process, project lock) runs first."""
+    if "PySide6.QtWidgets" not in sys.modules:
+        yield  # a test that never imports Qt has nothing to close
+        return
+    from PySide6.QtCore import QEvent
+    from PySide6.QtWidgets import QApplication
+
+    # the list keeps their Python objects alive; before the first test there is no application
+    before = QApplication.topLevelWidgets() if QApplication.instance() else []
+    yield
+    app = QApplication.instance()
+    if app is None:
+        return
+    for widget in QApplication.topLevelWidgets():
+        if widget in before:
+            continue
+        release = getattr(getattr(widget, "ctl", None), "release", None)
+        if callable(release):
+            release()
+        widget.hide()
+        widget.deleteLater()
+    app.sendPostedEvents(None, QEvent.Type.DeferredDelete)
