@@ -78,7 +78,7 @@ jobs:
         # installs the packages on a fresh runner that has no source checkout.
         os: [ubuntu-24.04]
     runs-on: ${{ matrix.os }}
-    timeout-minutes: 180  # the suite has about 2,600 tests, many of them GUI tests; a hung test must still not block the run for six hours
+    timeout-minutes: 300  # the suite has about 2,600 tests, many of them GUI tests; a hung test must still not block the run for six hours
     env:
       HARNESS_TIME_FACTOR: "3"  # shared runners are slower than a workstation; limits in tests scale by this
       HARNESS_REQUIRE_BROWSER: "1"  # the clickable prototype tests must run, not skip

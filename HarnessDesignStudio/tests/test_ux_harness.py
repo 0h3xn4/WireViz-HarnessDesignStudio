@@ -616,13 +616,22 @@ def test_hover_is_linked_both_ways(qtbot, theme) -> None:
     view._hover("", "", from_drawing=False)
     assert sv.hover_keys == ()
     # the real pointer over a wire in the drawing
-    vp = sv.mapFromScene(wire_point(view, wid))
-    QTest.mouseMove(sv.viewport(), vp)
-    assert wid in {
-        r["id"]
-        for r in view.wire_model.rows()
-        if source_row(view.wire_table, id=r["id"]) in view.wire_model.hover
-    }
+    point = wire_point(view, wid)
+    qtbot.waitUntil(lambda: sv.geometry_of_sheet is not None)  # the new sheet is laid out
+    QTest.mouseMove(sv.viewport(), QPoint(1, 1))  # a move needs somewhere to come from
+
+    def hovered_ids() -> set[str]:
+        return {
+            r["id"]
+            for r in view.wire_model.rows()
+            if source_row(view.wire_table, id=r["id"]) in view.wire_model.hover
+        }
+
+    def pointer_on_wire() -> bool:
+        QTest.mouseMove(sv.viewport(), sv.mapFromScene(point))  # mapped again: the view may move
+        return wid in hovered_ids()
+
+    qtbot.waitUntil(pointer_on_wire, timeout=5000)
 
 
 def test_selection_survives_a_refresh_and_is_dropped_when_the_object_goes(qtbot, theme) -> None:
