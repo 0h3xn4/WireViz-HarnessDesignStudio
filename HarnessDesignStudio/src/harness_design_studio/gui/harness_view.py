@@ -32,7 +32,7 @@ from PySide6.QtCore import (
     QTimer,
     Signal,
 )
-from PySide6.QtGui import QBrush, QColor, QPainter, QPaintEvent, QPixmap
+from PySide6.QtGui import QAction, QBrush, QColor, QPainter, QPaintEvent, QPixmap
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
@@ -40,11 +40,13 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMenu,
     QPushButton,
     QSizePolicy,
     QSplitter,
     QStackedWidget,
     QTextBrowser,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
@@ -484,7 +486,9 @@ class HarnessView(QWidget):
     """One harness, four linked views and its actions. See the module text.
 
     Signals: `generateRequested()`, `exportRequested()`, `reviewRequested(harness_id)`,
-    `releaseRequested(harness_id)`, `reviseRequested(harness_id)` (the window runs these flows),
+    `releaseRequested(harness_id)`, `reviseRequested(harness_id)`, `changesRequested(harness_id)`,
+    `historyRequested(harness_id)`, `deleteRequested(harness_id)` (the window runs these flows;
+    the last three are in the "More" menu),
     `whyRequested(kind, id)` with kind "harness", "wire", "connector" or "pin" (a pin is
     "connector/pin"), `selectionChanged(kind, id)` and `harnessChanged(harness_id)`.
     """
@@ -494,6 +498,9 @@ class HarnessView(QWidget):
     reviewRequested = Signal(str)
     releaseRequested = Signal(str)
     reviseRequested = Signal(str)
+    changesRequested = Signal(str)
+    historyRequested = Signal(str)
+    deleteRequested = Signal(str)
     whyRequested = Signal(str, str)
     selectionChanged = Signal(str, str)
     harnessChanged = Signal(str)
@@ -640,6 +647,26 @@ class HarnessView(QWidget):
             icon_button(b, icon_name, theme, tip, text=text)
             self.action_buttons[key] = b
             row3.addWidget(b)
+        self.more_button = QToolButton()
+        self.more_button.setObjectName("harness-more")
+        icon_button(
+            self.more_button, "chevron-down", theme, strings.HV_MORE_TIP, text=strings.HV_MORE
+        )
+        self.more_button.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.more_menu = QMenu(self.more_button)
+        self.more_actions: dict[str, QAction] = {}
+        for key, text, tip, signal in (
+            ("changes", strings.CHANGES, strings.CHANGES_TIP, self.changesRequested),
+            ("history", strings.HISTORY, strings.HISTORY_TIP, self.historyRequested),
+            ("delete", strings.DELETE_HARNESS, strings.DELETE_HARNESS_TIP, self.deleteRequested),
+        ):
+            act = self.more_menu.addAction(text)
+            act.setObjectName(f"harness-more-{key}")
+            act.setToolTip(tip)
+            act.triggered.connect(lambda _c=False, sig=signal: self._emit_for(sig))
+            self.more_actions[key] = act
+        self.more_button.setMenu(self.more_menu)
+        row3.addWidget(self.more_button)
         row3.addStretch(1)
         self.action_buttons["regenerate"].clicked.connect(self.generateRequested)
         self.action_buttons["export"].clicked.connect(self.exportRequested)
@@ -992,6 +1019,10 @@ class HarnessView(QWidget):
                 strings.NEW_REV_TIP,
             ),
         }
+        has_base = any(b.harness_id == h.id for b in self.ctl.project.baselines.values())
+        self.more_actions["changes"].setEnabled(has_base)
+        self.more_actions["history"].setEnabled(True)
+        self.more_actions["delete"].setEnabled(st in ("draft", "in_review") and not ro)
         for key, (on, why, tip) in specs.items():
             b = self.action_buttons[key]
             b.setEnabled(on)

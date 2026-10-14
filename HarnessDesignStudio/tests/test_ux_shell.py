@@ -548,7 +548,7 @@ def test_the_views_that_exist_are_plugged_into_their_slots(flat) -> None:
     assert flat.inspector.props is flat.props  # the properties form lives inside the inspector
     assert flat.left_tabs.currentWidget() is flat.project_tree
     assert flat.dock_left.windowTitle() == strings.TAB_PROJECT
-    assert flat.inspector.problems_panel() is flat.problems_side
+    assert flat.inspector.problems_panel() is flat.problems
     assert flat.view_installed("harness") and not flat.view_installed(
         "why"
     )  # (the inspector has it)
@@ -720,8 +720,6 @@ def test_the_dock_layout_round_trips_through_the_settings(qtbot, tmp_path) -> No
     win = make_window(tmp_path)
     qtbot.addWidget(win)
     win.dock_left.hide()
-    win.dock_bottom.hide()
-    win._bottom_auto_hidden = False
     win._save_settings()
     win.settings.sync()
     win.ctl.release()
@@ -730,8 +728,27 @@ def test_the_dock_layout_round_trips_through_the_settings(qtbot, tmp_path) -> No
     win2.resize(1440, 900)
     win2.show()
     assert win2._have_saved_state
-    assert win2.dock_left.isHidden() and win2.dock_bottom.isHidden()
+    assert win2.dock_left.isHidden()
     assert not win2.dock_right.isHidden()
+
+
+def test_a_layout_saved_with_the_bottom_panel_is_ignored(qtbot, tmp_path) -> None:
+    """The saved dock layout carries a version; the one from before the bottom panel was retired
+    (version 1) names a dock that no longer exists, so it is dropped and the default layout used."""
+    from PySide6.QtCore import QByteArray
+
+    win = make_window(tmp_path)
+    qtbot.addWidget(win)
+    win.settings.setValue("ui/state", QByteArray(win.saveState(1)))  # (the old version number)
+    win.settings.sync()
+    win.ctl.release()
+    win2 = MainWindow(QSettings(str(tmp_path / "ui.ini"), QSettings.Format.IniFormat), ThemeManager(), first_run=False)  # fmt: skip
+    qtbot.addWidget(win2)
+    win2.resize(1440, 900)
+    win2.show()
+    assert not win2._have_saved_state
+    assert not hasattr(win2, "dock_bottom")
+    assert win2.findChild(type(win2.dock_left), "dock-bottom") is None
 
 
 def test_reset_layout_brings_the_panels_back_and_forgets_the_saved_layout(qtbot, tmp_path) -> None:
@@ -756,15 +773,15 @@ def test_f6_cycles_through_the_panels_and_shift_f6_goes_back(flat) -> None:
     QApplication.processEvents()
     flat.view.setFocus()
     flat._pane = 0
-    names = [flat.cycle_panes(1) for _ in range(4)]
-    assert names == [strings.PANE_TREE, strings.PANE_INSPECTOR, strings.PANE_BOTTOM, strings.PANE_CANVAS]  # fmt: skip
+    names = [flat.cycle_panes(1) for _ in range(3)]
+    assert names == [strings.PANE_TREE, strings.PANE_INSPECTOR, strings.PANE_CANVAS]
     assert flat.pane_of_focus() == 0
     back = [flat.cycle_panes(-1) for _ in range(2)]
-    assert back == [strings.PANE_BOTTOM, strings.PANE_INSPECTOR]
+    assert back == [strings.PANE_INSPECTOR, strings.PANE_TREE]
     flat.dock_right.hide()  # a hidden panel is skipped
     flat.view.setFocus()
     flat._pane = 0
-    seen = {flat.cycle_panes(1) for _ in range(4)}
+    seen = {flat.cycle_panes(1) for _ in range(3)}
     assert strings.PANE_INSPECTOR not in seen
 
 
@@ -794,25 +811,20 @@ def test_the_diagram_keeps_most_of_the_window(qtbot, tmp_path, size, theme_name)
     assert share >= 0.55, (size, theme_name, share)
     shot = win.grab()
     assert shot.width() > 0 and not shot.isNull()
-    if size[0] == 1280:
-        assert win.dock_bottom.isHidden()  # hidden for lack of height, the diagram has 55 %+
-        assert strings.PANELS_HIDDEN_SHORT in win.toasts.messages
 
 
-def test_a_tall_window_keeps_the_bottom_panel_and_a_short_one_gives_it_back(
-    qtbot, tmp_path
-) -> None:
+def test_a_short_window_hides_no_panel_for_lack_of_height(qtbot, tmp_path) -> None:
+    """The bottom panel is gone, so only the width decides which side panels show: a 1440 x 700
+    window keeps both, and the diagram has the whole height between them."""
     win = make_window(tmp_path)
     qtbot.addWidget(win)
     win.resize(1440, 900)
     win.auto_layout()
-    assert not win.dock_bottom.isHidden()
-    win.resize(1440, 700)  # crossing the height threshold acts without a call
+    assert not win.dock_left.isHidden() and not win.dock_right.isHidden()
+    win.resize(1440, 700)
     QApplication.processEvents()
-    assert win.dock_bottom.isHidden()
-    win.resize(1440, 900)
-    QApplication.processEvents()
-    assert not win.dock_bottom.isHidden()  # it was only hidden for lack of height
+    assert not win.dock_left.isHidden() and not win.dock_right.isHidden()
+    assert win.view.height() / win.height() >= 0.55
 
 
 def test_the_first_ui_scale_comes_from_the_screen(qtbot, tmp_path, monkeypatch) -> None:

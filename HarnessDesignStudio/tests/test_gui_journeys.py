@@ -5,7 +5,7 @@ import pytest
 pytest.importorskip("PySide6")
 from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
-from PySide6.QtWidgets import QLineEdit, QPushButton  # noqa: E402
+from PySide6.QtWidgets import QLabel, QLineEdit, QPushButton  # noqa: E402
 
 pytestmark = pytest.mark.gui
 
@@ -14,12 +14,16 @@ from harness_design_studio.core.io.layout import model_hash  # noqa: E402
 from harness_design_studio.core.io.loader import load_project  # noqa: E402
 from harness_design_studio.core.samples import new_project  # noqa: E402
 from harness_design_studio.core.templates import TEMPLATES  # noqa: E402
+from harness_design_studio.gui import strings  # noqa: E402
 from tests.gui_helpers import (  # noqa: E402
     DialogScript,
+    add_unit,
     click_link,
     click_unit,
     make_window,
     new_project_answers,
+    pick_connect_type,
+    show_problems,
     unit_item,
 )
 
@@ -75,7 +79,7 @@ def test_sample_project_opens_with_banner(win) -> None:  # type: ignore[no-untyp
 def test_j2_empty_state_and_adding_units(win) -> None:  # type: ignore[no-untyped-def]
     win.ctl._install(new_project(), None, None)  # an empty project
     assert win.view.empty.isVisible() and "Add your first unit" in win.view.empty.text()
-    button(win, "add-computer").click()
+    add_unit(win, "computer")
     # the "diagram is empty" words go; a diagram of units without links says what comes next
     assert "Add your first unit" not in win.view.empty.text() and "OBC1" in win.ctl.project.units
     assert win.ctl.selection and win.ctl.selection.id == "OBC1"
@@ -93,7 +97,7 @@ def test_j2_new_units_never_overlap(win) -> None:  # type: ignore[no-untyped-def
         "pyro",
         "computer",
     ):
-        button(win, f"add-{tid}").click()
+        add_unit(win, tid)
     items = list(win.view.dscene.unit_items.values())
     for i, a in enumerate(items):
         for b in items[i + 1 :]:
@@ -146,8 +150,8 @@ def test_j2_dragging_a_unit_changes_its_zone(win, qtbot) -> None:  # type: ignor
 
 def test_j3_guided_connect_prevents_invalid_and_marks_auto(win) -> None:  # type: ignore[no-untyped-def]
     ctl = win.ctl
-    button(win, "add-sensor").click()  # ST1 carries power, spacewire/rs422, not CAN
-    button(win, "type-can").click()
+    add_unit(win, "sensor")  # ST1 carries power, spacewire/rs422, not CAN
+    pick_connect_type(win, "can")
     assert ctl.tool == "connect"
     # greyed with visible reason text
     state, reason = unit_item(win, "ST1")._compat_reason()
@@ -160,7 +164,7 @@ def test_j3_guided_connect_prevents_invalid_and_marks_auto(win) -> None:  # type
     assert "No other unit has a free CAN connector" in win.hint.text()
     ctl.end_connect()
     n = len(ctl.project.interfaces)
-    button(win, "type-rs422").click()
+    pick_connect_type(win, "rs422")
     click_unit(win, "OBC")
     click_unit(win, "ST1")
     assert len(ctl.project.interfaces) == n + 1
@@ -174,7 +178,7 @@ def test_j3_guided_connect_prevents_invalid_and_marks_auto(win) -> None:  # type
 def test_j3_expert_mode_exact_connector_rules(win) -> None:  # type: ignore[no-untyped-def]
     ctl = win.ctl
     ctl.set_mode("expert")
-    button(win, "type-power_primary").click()
+    pick_connect_type(win, "power_primary")
     assert (
         not ctl.connector_compat("RW1-J01").ok
         and "already carries" in ctl.connector_compat("RW1-J01").why
@@ -192,11 +196,11 @@ def test_j3_expert_mode_exact_connector_rules(win) -> None:  # type: ignore[no-u
 
 
 def test_connect_tool_escape_and_toggle(win) -> None:  # type: ignore[no-untyped-def]
-    button(win, "type-rs422").click()
+    pick_connect_type(win, "rs422")
     assert win.ctl.tool == "connect"
-    button(win, "type-rs422").click()  # clicking the active type again turns the tool off
+    pick_connect_type(win, "rs422")  # clicking the active type again turns the tool off
     assert win.ctl.tool == "select"
-    button(win, "type-rs422").click()
+    pick_connect_type(win, "rs422")
     win.view.setFocus()
     QTest.keyClick(win.view, Qt.Key.Key_Escape)
     assert win.ctl.tool == "select" and win.ctl.connect_type is None
@@ -204,7 +208,7 @@ def test_connect_tool_escape_and_toggle(win) -> None:  # type: ignore[no-untyped
 
 def test_undo_redo_roundtrip_via_actions_and_shortcuts(win) -> None:  # type: ignore[no-untyped-def]
     h0 = model_hash(win.ctl.project)
-    button(win, "add-payload").click()
+    add_unit(win, "payload")
     assert model_hash(win.ctl.project) != h0 and win.act_undo.isEnabled()
     win.act_undo.trigger()
     assert model_hash(win.ctl.project) == h0 and win.act_redo.isEnabled()
@@ -216,8 +220,8 @@ def test_undo_redo_roundtrip_via_actions_and_shortcuts(win) -> None:  # type: ig
 
 
 def test_j4_table_edits_sync_and_filter(win) -> None:  # type: ignore[no-untyped-def]
-    win.tabs.setCurrentIndex(2)  # the table refreshes while visible (and on show)
-    m = win.table.model
+    win.show_interfaces()  # the table refreshes while visible (and on show)
+    m = win.interface_table.model
     idx = m.index(m.ids.index("IF-PWR-RW1"), 1)
     assert m.setData(idx, "Wheel supply")
     assert win.ctl.project.interfaces["IF-PWR-RW1"].name == "Wheel supply"
@@ -229,11 +233,11 @@ def test_j4_table_edits_sync_and_filter(win) -> None:  # type: ignore[no-untyped
         and win.ctl.project.interfaces[m.ids[0]].max_current_a == 2.5
     )
     # selecting in the table selects on the canvas and in properties
-    win.table.view.selectRow(0)
-    first = win.table.proxy.data(win.table.proxy.index(0, 0))
+    win.interface_table.view.selectRow(0)
+    first = win.interface_table.proxy.data(win.interface_table.proxy.index(0, 0))
     assert win.ctl.selection and win.ctl.selection.id == first
-    win.table.filter.setText("rs422")
-    assert win.table.proxy.rowCount() == 1
+    win.interface_table.filter.setText("rs422")
+    assert win.interface_table.proxy.rowCount() == 1
 
 
 def test_j4_new_interface_dialog_disables_unusable_units_with_reason(win) -> None:  # type: ignore[no-untyped-def]
@@ -340,7 +344,8 @@ def test_j5_redundant_copy_cross_strap_fix_and_waiver(win) -> None:  # type: ign
     assert win.redundant_btn.isEnabled()
     win.redundant_btn.click()
     assert "RW1-R" in ctl.project.units and ctl.project.units["RW1-R"].side == "redundant"
-    assert win.tabs.tabText(0) == "Problems (2)"
+    assert win.inspector.tabs.tabText(2) == "Problems (2)"  # the count on the Problems tab
+    show_problems(win)
     cards = [
         w
         for w in win.problems.findChildren(type(win.hint))
@@ -371,9 +376,10 @@ def test_j5_redundant_copy_cross_strap_fix_and_waiver(win) -> None:  # type: ign
 
 
 def test_j6_todo_items_are_clickable(win) -> None:  # type: ignore[no-untyped-def]
-    button(win, "add-pyro").click()
-    win.tabs.setCurrentIndex(1)
-    assert win.tabs.tabText(1) == "To-do (1)"
+    add_unit(win, "pyro")
+    show_problems(win)
+    heading = win.problems.findChild(QLabel, "todo-heading")  # was the To-do tab and its count
+    assert heading is not None and heading.text() == "TO DO (1)"
     t = button(win, "todo-0")
     assert "not connected to anything" in t.text()
     win.ctl.select(None)
@@ -525,7 +531,7 @@ def test_j10_new_save_open_roundtrip(win, tmp_path) -> None:  # type: ignore[no-
     win.new_project_flow()
     assert (folder / "project.json").exists() and win.ctl.root == folder
     assert win.windowTitle().startswith("My satellite")
-    button(win, "add-computer").click()
+    add_unit(win, "computer")
     assert win.ctl.dirty and "*" in win.windowTitle()
     assert win.save_flow()
     assert not win.ctl.dirty and (folder / "logical/layout.json").exists()
@@ -548,7 +554,7 @@ def test_new_project_refuses_non_empty_folder(win, tmp_path) -> None:  # type: i
 
 
 def test_sample_save_as_keeps_changes_and_clears_banner(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
-    button(win, "add-payload").click()
+    add_unit(win, "payload")
     win.ask_folder = lambda title: str(tmp_path / "copy")
     assert win.save_flow()  # no folder yet: falls back to Save As
     assert (tmp_path / "copy" / "project.json").exists() and not win.banner.isVisible()
@@ -562,7 +568,7 @@ def test_autosave_journal_and_restore_after_crash(qtbot, tmp_path) -> None:  # t
     qtbot.addWidget(w1)
     new_project_answers(w1, folder, "P")
     w1.new_project_flow()
-    button(w1, "add-sensor").click()  # unsaved change
+    add_unit(w1, "sensor")  # unsaved change
     from harness_design_studio.core.recovery import journal_path
 
     qtbot.waitUntil(lambda: journal_path(folder).exists(), timeout=2000)
@@ -591,7 +597,7 @@ def test_discarding_the_journal(qtbot, tmp_path) -> None:  # type: ignore[no-unt
     qtbot.addWidget(w1)
     new_project_answers(w1, folder, "P")
     w1.new_project_flow()
-    button(w1, "add-sensor").click()
+    add_unit(w1, "sensor")
     w1.ctl.write_journal_now()
     w1.ctl._lock.release()  # type: ignore[union-attr]
     w2 = make_window(tmp_path / "b")
@@ -619,8 +625,13 @@ def test_project_open_twice_offers_read_only(qtbot, tmp_path) -> None:  # type: 
     assert w2.open_project(folder)
     assert prompts == ["Project already open"] and w2.ctl.read_only
     assert w2.banner.isVisible() and "Read-only" in w2.banner.label.text()
-    # read-only: no edits, no undo, add buttons disabled
-    assert not button(w2, "add-computer").isEnabled() and not w2.act_save.isEnabled()
+    # read-only: no edits, no undo, the ways to add a unit and to connect are disabled
+    assert not w2.menu_add.isEnabled() and not w2.menu_connect.isEnabled()
+    assert not w2.project_tree.add_button.isEnabled()
+    assert (
+        strings.WHY_READ_ONLY in w2.project_tree.add_button.toolTip()
+    )  # a disabled button says why
+    assert not w2.act_save.isEnabled()
     assert w2.ctl.add_unit("computer") is None and "read-only" in last_toast(w2).lower()
     w1.ctl.release()
 
@@ -701,7 +712,7 @@ def test_external_change_offers_reload(win, tmp_path) -> None:  # type: ignore[n
 
 
 def test_closing_with_unsaved_changes_asks(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
-    button(win, "add-payload").click()
+    add_unit(win, "payload")
     asked: list[str] = []
 
     def choice(title, text, buttons):  # type: ignore[no-untyped-def]

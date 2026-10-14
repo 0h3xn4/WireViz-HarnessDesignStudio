@@ -58,6 +58,7 @@ The window: a top bar (**Generate**, **Check**, **Export…**, a status chip), t
 | Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
 | Ctrl+I | new interface |
 | Ctrl+1 to Ctrl+5 | the tabs: Diagram, Harness, Lists, Checks, Releases |
+| Ctrl+Shift+T | the Interface table |
 | F6, Shift+F6 | next and previous panel |
 | Ctrl+Q | quit |
 | Ctrl+K | command palette: type a command or an ID |
