@@ -1565,3 +1565,104 @@ TREE_FILTER_CLEAR = "Clear the filter"
 LISTS_EXPORT_TITLE = "Export table"
 LISTS_EXPORT_FILTER = {"csv": "CSV files (*.csv)", "xlsx": "Excel workbooks (*.xlsx)"}
 LISTS_EXPORTED = "Saved {}."
+
+
+# ---- Devices view (custom devices, docs/ux-custom-devices-audit.md) -------------------------------
+TAB_DEVICES = "Devices"
+A_GO_DEVICES = "Go to Devices"
+DV_ACCESSIBLE = "Devices: connectors and pins of a unit"
+EMPTY_VIEW_DEVICES = "The connectors and pins of a unit appear here: pick a unit on the diagram or in the project tree."
+DV_EMPTY_TITLE = "No devices yet"
+DV_EMPTY_BODY = (
+    "A device is a unit with its connectors and pins. Add a unit to see its pinout here."
+)
+DV_ADD = "Add a unit…"
+DV_ADD_TIP = "Add a unit to the project"
+DV_DEVICE = "Device"
+DV_DEVICE_TIP = "The unit whose connectors and pins are shown. A unit picked on the diagram or in the project tree is shown here."
+DV_SUBSYSTEM = "Subsystem {}"
+DV_CHAIN = {"nominal": "Nominal chain", "redundant": "Redundant chain", "none": "No chain"}
+DV_STATE_TIP = "{}"
+DV_STATE_DRAFT = "Draft"
+DV_STATE_IN_USE = "In use"
+DV_STATE_LOCKED = "Locked"
+DV_STATE_READ_ONLY = "Read-only"
+DV_DUPLICATE = "Duplicate"
+DV_DUPLICATE_TIP = "Copy this unit with its connectors and pins (not its links)"
+DV_EXPORT = "Export pinout…"
+DV_EXPORT_TIP = "Save the pinout below as a CSV file or an Excel workbook, to compare with the interface control document"
+DV_EXPORT_TITLE = "Export pinout"
+DV_EXPORTED = "Saved {}."
+DV_COUNTS = "{connectors}, {pins}, {signals} set, {interfaces}"
+DV_N_CONNECTORS = ("{} connector", "{} connectors")
+DV_N_PINS = ("{} pin", "{} pins")
+DV_N_SIGNALS = ("{} signal", "{} signals")
+DV_N_INTERFACES = ("{} interface", "{} interfaces")
+DV_CONNECTORS = "Connectors"
+DV_CONNECTORS_TIP = "The box connectors of this unit"
+DV_COL_CONNECTOR = "Connector"
+DV_COL_PART = "Part"
+DV_COL_PINS = "Pins"
+DV_COL_GENDER = "Gender"
+DV_COL_STATE = "State"
+DV_NO_CONNECTORS = "This unit has no connectors yet."
+DV_CARD_PART = "Part"
+DV_CARD_GENDER = "Gender"
+DV_CARD_KEYING = "Keying"
+DV_CARD_CARRIES = "Carries"
+DV_CARD_ALLOCATION = "Pin allocation"
+DV_CARD_NOTES = "Notes"
+DV_CARD_ANY = "any interface type"
+DV_CARD_NONE = "not set"
+DV_GENDER = {"male": "male", "female": "female", "unspecified": "not set"}
+DV_ALLOC_FIXED = "Fixed pinout: this table is the truth. Every signal of every interface on this connector needs a pin of its name, and pins without a name are never used."
+DV_ALLOC_AUTO = "Automatic: Generate puts the signals of the interfaces on free pins."
+DV_PINS = "Pins"
+DV_PIN_TABLE = "Pins of {}"
+DV_PIN_FILTER = "Filter pins"
+DV_PIN_FILTER_TIP = "Show the pins that contain these words in any cell"
+DV_CONTACT = "Contact details"
+DV_CONTACT_TIP = (
+    "Show the contact size and the termination of each pin. No output or check uses them yet"
+)
+DV_PIN_COUNT = "{} of {} pins"
+DV_PIN_COUNT_ALL = "{} pins"
+DV_COL_PIN = "Pin"
+DV_COL_SIGNAL = "Signal"
+DV_COL_MODE = "Mode"
+DV_COL_INTERFACE = "Interface"
+DV_COL_DIRECTION = "Direction"
+DV_COL_CLASS = "Class"
+DV_COL_WIRE = "Wire"
+DV_COL_CONTACT_SIZE = "Contact size"
+DV_COL_TERMINATION = "Termination"
+DV_MODE = {"free": "Free", "fixed": "Fixed", "locked": "Locked"}
+DV_MODE_TIP = {
+    "free": "Free: Generate may put a signal here; a signal typed here is kept",
+    "fixed": "Fixed: the device defines this pin; interfaces connect to the pin of their signal's name",
+    "locked": "Locked: Generate never moves this pin",
+}
+DV_TERMINATION = {"crimp": "crimp", "solder": "solder", "unspecified": ""}
+DV_STATE_SPARE = "Spare"
+DV_STATE_AUTO = "Auto-filled"
+DV_STATE_AUTO_TIP = "Generate put this signal here; it can move at the next Generate"
+DV_STATE_LOCKED_PIN = "Locked"
+DV_STATE_ERROR = "Error"
+DV_STATE_WARNING = "Warning"
+DV_STATE_NOTE = "Note"
+DV_NOTES = "Notes on this connector"
+DV_NOTES_TABLE = "Notes on {}"
+DV_NOTES_NONE = "No notes: every check passes."
+DV_NOTES_COUNT = ("{} note", "{} notes")
+DV_NOTES_TIP = "Double-click or press Enter to select the pin the note is about"
+DV_COL_SEVERITY = "Severity"
+DV_COL_WHERE = "Where"
+DV_COL_CHECK = "Check"
+DV_COL_NOTE = "Note"
+DV_PREVIEW = "Pinout as exported"
+DV_PREVIEW_TABLE = "Pinout as exported"
+DV_PREVIEW_HINT = (
+    "These are the rows of system/box_pinouts.csv for this unit: what you see is what you ship."
+)
+DV_WHY_TIP = "Double-click or press Enter to see why the pin is the way it is"
+DV_EXPORT_FILTER = "CSV files (*.csv);;Excel workbooks (*.xlsx)"
