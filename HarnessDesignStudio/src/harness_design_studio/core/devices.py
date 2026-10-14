@@ -783,11 +783,13 @@ def plan_pin_rows(
     rows: Sequence[Mapping[str, str]],
     *,
     replace: bool = False,
+    row_numbers: Sequence[int] | None = None,
 ) -> PinRowsPlan:
     """Pin rows (keys of `ROW_COLUMNS`; only the keys present are written) merged into the pins
     of a connector: a row whose `pin` exists changes that pin, any other adds a pin at the end.
     With `replace` the pins that no row names are dropped (an import of a whole pinout). Every
-    row that cannot be used gets a reason; nothing is raised for a bad row."""
+    row that cannot be used gets a reason; nothing is raised for a bad row. `row_numbers` says what
+    each row is called in the file it came from (default 1, 2, 3 ...)."""
     c = _box(project, connector_id)
     order = [p.id for p in c.pins]
     by_id: dict[str, Pin] = {p.id: p for p in c.pins}
@@ -797,7 +799,8 @@ def plan_pin_rows(
     added: list[str] = []
     changed: list[str] = []
     named: list[str] = []
-    for n, row in enumerate(rows, start=1):
+    for k, row in enumerate(rows):
+        n = row_numbers[k] if row_numbers is not None else k + 1
         raw = (row.get("pin") or "").strip()
         try:
             pid = check_pin(raw) if raw else None

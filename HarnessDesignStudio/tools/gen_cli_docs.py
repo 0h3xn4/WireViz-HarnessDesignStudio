@@ -14,7 +14,11 @@ GROUPS = (
     ("Start", ("new", "templates", "schema")),
     ("Check", ("validate", "check", "drc", "verify")),
     ("Generate and export", ("generate", "export")),
-    ("Bring in data", ("config", "library", "import-parts", "import-lengths", "import-netlist")),
+    (
+        "Bring in data",
+        ("config", "library", "import-parts", "import-lengths", "import-netlist", "import-pinout"),
+    ),
+    ("Write data out", ("export-pinout",)),
     ("Review, release and change", ("review", "release", "revise", "diff", "log", "compare")),
     ("Maintenance", ("migrate",)),
 )
@@ -55,6 +59,14 @@ EXAMPLES: dict[str, list[str]] = {
     "import-netlist": [
         "harness-design-studio import-netlist my-design wheel.net --unit RW1 --prefix J "
         "--connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run",
+    ],
+    "import-pinout": [
+        "harness-design-studio import-pinout my-design gyro-pinout.csv --unit GYRO1 --default-part MY-HD-9-F --dry-run",
+        'harness-design-studio import-pinout my-design icd.xlsx --unit CAM1 --new-device "Camera" --part J1=MY-HD-9-F --part J2=MY-HD-15-M',
+    ],
+    "export-pinout": [
+        "harness-design-studio export-pinout my-design --unit GYRO1",
+        "harness-design-studio export-pinout my-design --unit GYRO1 -o gyro-pinout.xlsx",
     ],
     "review": ['harness-design-studio review my-design W001 --by "A. Engineer"'],
     "release": [
@@ -146,7 +158,7 @@ def render() -> str:
         "not stop the command: it still finishes and saves.",
         "",
         "Every command that changes a project takes the same lock as the app, so the two never write "
-        "at once. The commands that import data (`import-parts`, `import-lengths`, `import-netlist`) "
+        "at once. The commands that import data (`import-parts`, `import-lengths`, `import-netlist`, `import-pinout`) "
         "accept `--dry-run`: they show what they would do and change nothing; "
         "`config --ampacity-csv` does not.",
         "",

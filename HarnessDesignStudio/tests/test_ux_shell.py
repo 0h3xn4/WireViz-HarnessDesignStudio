@@ -892,14 +892,15 @@ def test_cancelling_the_new_project_dialog_changes_nothing(qtbot, tmp_path) -> N
 
 def test_import_submenu_opens_the_wizard_for_each_kind(flat) -> None:
     texts = [a.text() for a in flat.menu_import.actions()]
-    assert texts[0] == strings.A_IMPORT and len(texts) == 5
+    assert texts[0] == strings.A_IMPORT and len(texts) == 6
     assert any("KiCad netlist" in t for t in texts)
+    assert any("device pinout" in t for t in texts)
     seen: list[QDialog] = []
     flat.run_dialog = capture(seen)
-    for kind in ("parts", "lengths", "values", "netlist"):
+    for kind in ("parts", "lengths", "values", "pinout", "netlist"):
         flat.import_actions[kind].trigger()
     wizards = [d for d in seen if isinstance(d, ImportWizard)]
-    assert [w.kind for w in wizards] == ["parts", "lengths", "values", "netlist"]
+    assert [w.kind for w in wizards] == ["parts", "lengths", "values", "pinout", "netlist"]
     assert unnamed(wizards[0]) == []
 
 

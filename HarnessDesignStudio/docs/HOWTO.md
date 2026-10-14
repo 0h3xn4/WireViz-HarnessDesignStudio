@@ -24,7 +24,7 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 
 ## 5. Take connector pinouts from KiCad
 
-[Import KiCad pinouts](user-manual/import-kicad-pinouts.md).
+[Import KiCad pinouts](user-manual/import-kicad-pinouts.md). A device of your own, pin by pin, or from a spreadsheet: [Define a device](user-manual/define-a-device.md).
 
 ## 6. Read and fix problems
 
