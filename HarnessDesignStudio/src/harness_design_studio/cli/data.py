@@ -1,4 +1,5 @@
-"""Commands that bring outside data into a project: config, import-parts, import-lengths."""
+"""Commands that bring outside data into a project (config, import-parts, import-lengths,
+import-netlist, import-pinout) and one that writes a device's pinout out (export-pinout)."""
 
 import argparse
 import sys
@@ -20,7 +21,10 @@ from harness_design_studio.core.library_import import (
     plan_parts_import,
 )
 
-COMMANDS = ("config", "library", "import-parts", "import-lengths", "import-netlist")
+COMMANDS = (
+    "config", "library", "import-parts", "import-lengths", "import-netlist", "import-pinout",
+    "export-pinout",
+)  # fmt: skip
 UNITS = {"mm": 0.001, "m": 1.0, "cm": 0.01}
 
 
@@ -123,6 +127,73 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
         help="use the pin names of the symbol instead of the net names as signals",
     )
     nn.add_argument("--dry-run", action="store_true")
+    pn = sub.add_parser(
+        "import-pinout",
+        help="import a device's pinout from a spreadsheet (CSV or XLSX)",
+        description="Create or update the box connectors of one unit from a table: one row per pin with the connector, the pin, the signal, whether the device fixes it, a contact size and a termination. Columns are matched by their headings (Connector, Pin, Signal, Mode or Fixed, Contact size, Termination, Part, Gender); columns the project cannot store, such as a description or a voltage, are named in a warning and left out. A row with a problem stops the whole import; nothing is changed then. A new connector needs a library part (a Part column, --part J1=PART or --default-part). The user guide has a chapter on it.",
+    )
+    pn.add_argument("project", type=Path)
+    pn.add_argument("file", type=Path)
+    pn.add_argument(
+        "--unit", required=True, help="the unit the connectors belong to, for example GYRO1"
+    )
+    pn.add_argument(
+        "--new-device",
+        default=None,
+        metavar="NAME",
+        help="make the unit as a new device with this name when it does not exist",
+    )
+    pn.add_argument(
+        "--subsystem", default=None, help="subsystem of a new device (default: the most used one)"
+    )
+    pn.add_argument(
+        "--part",
+        action="append",
+        default=[],
+        metavar="REF=PART",
+        help="library part for a new connector, for example J1=MY-HD-9-F (repeat)",
+    )
+    pn.add_argument(
+        "--default-part", default=None, help="library part for new connectors that have none"
+    )
+    pn.add_argument(
+        "--gender",
+        choices=["male", "female"],
+        default=None,
+        help="gender of new connectors (default: the part's)",
+    )
+    pn.add_argument(
+        "--connector",
+        default=None,
+        help="connector for rows of a table that has no Connector column (default J01)",
+    )
+    pn.add_argument(
+        "--column",
+        action="append",
+        default=[],
+        metavar="FIELD=HEADING",
+        help="use this column for a field when the headings are not recognised, for example pin=Contact (repeat)",
+    )
+    pn.add_argument(
+        "--replace",
+        action="store_true",
+        help="drop the pins of an existing connector that the table does not name (default: keep them)",
+    )
+    pn.add_argument("--dry-run", action="store_true", help="show the preview only")
+    xp = sub.add_parser(
+        "export-pinout",
+        help="write one device's pinout as CSV or XLSX",
+        description="Write the rows of system/box_pinouts.csv that belong to one unit (connector, pin, signal, interface, wires, spare) to a file, or to the screen as CSV. The format follows the file name (.csv or .xlsx). The rows are the ones export writes, so the file compares with an interface control document.",
+    )
+    xp.add_argument("project", type=Path)
+    xp.add_argument("--unit", required=True, help="the unit to write, for example GYRO1")
+    xp.add_argument(
+        "--output",
+        "-o",
+        type=Path,
+        default=None,
+        help="the file to write (default: CSV on the screen)",
+    )
     ll = sub.add_parser(
         "import-lengths",
         help="import routing segment lengths (CSV or XLSX: harness, segment, length, in this order)",
@@ -165,6 +236,8 @@ def run(args: argparse.Namespace) -> int:
             return _config(project, args)
         if args.command == "library":
             return _library(project, args)
+        if args.command == "export-pinout":
+            return _export_pinout(project, args)
         if project.read_only:
             print(
                 "error: this project is read-only (saved by a newer tool version).", file=sys.stderr
@@ -172,11 +245,18 @@ def run(args: argparse.Namespace) -> int:
             return 2
         if args.command == "import-netlist":
             return _netlist(project, args)
-        table, sheet = read_table_sheet(args.file)
+        if args.command == "import-pinout":
+            from harness_design_studio.core.pinout_import import read_pinout_table
+
+            table, sheet = read_pinout_table(args.file)
+        else:
+            table, sheet = read_table_sheet(args.file)
         if sheet is not None:
             print(f"Reading sheet '{sheet}' (the first visible sheet of the workbook).")
         if args.command == "import-parts":
             return _parts(project, table, args)
+        if args.command == "import-pinout":
+            return _pinout(project, table, args)
         return _lengths(project, table, args)
     except TransactionError as exc:  # blocked (for example by a release), not misused
         print(blocked_text(exc), file=sys.stderr)
@@ -451,4 +531,82 @@ def _netlist(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyp
     print(
         f"Imported {plan.ok_count} connector(s). Generate harnesses again to connect interfaces to the fixed pins."
     )
+    return 0
+
+
+def _pinout(project, table: list[list[str]], args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+    from harness_design_studio.core.pinout_import import FIELDS, guess_mapping, plan_pinout_import
+
+    mapping = guess_mapping(table[0]) if table else {}
+    labels = {key for key, _ in FIELDS}
+    for key, heading in _pairs(args.column, "--column").items():
+        if key not in labels:
+            raise ImportError_(f"--column: '{key}' is not a field ({', '.join(sorted(labels))}).")
+        found = [i for i, h in enumerate(table[0]) if h.strip().casefold() == heading.casefold()]
+        if not found:
+            raise ImportError_(f"--column: the file has no column headed '{heading}'.")
+        mapping[key] = found[0]
+    plan = plan_pinout_import(
+        project, table, mapping, unit_id=args.unit, new_unit_name=args.new_device,
+        subsystem=args.subsystem, parts=_pairs(args.part, "--part"), default_part=args.default_part,
+        gender=args.gender, connector=args.connector, replace=args.replace,
+    )  # fmt: skip
+    for r in plan.rows:
+        if not r.ok:
+            print(f"row {r.row_number}: ERROR {r.message}")
+    for cid in plan.connectors:
+        verb = "added" if cid in plan.added else "updated"
+        n = sum(1 for r in plan.rows if r.ok and r.connector == cid)
+        print(f"{cid}: OK {verb} ({n} pin(s))")
+    for w in plan.warnings:
+        print(f"warning: {w}")
+    if plan.unmatched_signals:
+        print(
+            "Signals that match no interface type (nothing can connect to them until a type has them):"
+        )
+        for name in sorted(plan.unmatched_signals):
+            print(f"  {name}: {', '.join(plan.unmatched_signals[name][:4])}")
+    if plan.bad_count:
+        print("Nothing was changed.")
+        return 1
+    if not plan.ops:
+        print("Nothing to import.")
+        return 1
+    if args.dry_run:
+        if _would_be_blocked(project, plan.label, plan.ops):
+            return 1
+        print("Dry run: nothing was changed.")
+        return 0
+    History(project).execute(plan.label, plan.ops)
+    save_project(project, args.project)
+    print(
+        f"Imported {len(plan.connectors)} connector(s), {plan.pins} pin(s). "
+        "Generate harnesses again to connect interfaces to the pins."
+    )
+    return 0
+
+
+def _export_pinout(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+    from harness_design_studio.core import devices
+    from harness_design_studio.core.outputs import exports
+    from harness_design_studio.core.outputs.stamp import csv_bytes, stamp_of
+
+    table = devices.pinout_table(project, args.unit)
+    if len(table) < 2:
+        print(f"error: unit '{args.unit}' has no connectors to write.", file=sys.stderr)
+        return 1
+    stamp = stamp_of(project)
+    if args.output is None:
+        sys.stdout.write(csv_bytes(table, stamp).decode("utf-8"))
+        return 0
+    if args.output.suffix.lower() == ".xlsx":
+        data = exports.xlsx_bytes({"Pinout": table}, stamp)
+    else:
+        data = csv_bytes(table, stamp)
+    try:
+        args.output.write_bytes(data)
+    except OSError as exc:
+        print(f"error: the file could not be written ({exc.strerror}).", file=sys.stderr)
+        return 2
+    print(f"Wrote {args.output} ({len(table) - 1} pin row(s) of {args.unit}).")
     return 0

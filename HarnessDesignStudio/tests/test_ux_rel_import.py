@@ -77,7 +77,7 @@ def test_the_first_page_offers_every_kind_and_waits_for_a_readable_file(qtbot, c
     w = make(qtbot, ctl, "interfaces")
     assert w.currentId() == PAGE_FILE
     names = {r.accessibleName() for r in w.file_page.radios.values()}
-    assert names == {k.title for k in import_kinds.KINDS} and len(names) == 5
+    assert names == {k.title for k in import_kinds.KINDS} and len(names) == 6
     assert w.file_page.radios["interfaces"].isChecked()
     assert not w.button(QWizard.WizardButton.NextButton).isEnabled()
     assert w.file_page.status.text() == strings.IMP_FILE_NONE

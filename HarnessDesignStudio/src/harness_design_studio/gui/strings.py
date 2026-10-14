@@ -1813,3 +1813,33 @@ DVD_ASSIGN_NONE = "No interface ends on this device yet. Make one with New inter
 DVD_ASSIGN_OK = "Assign pins"
 DVD_NEW_INTERFACE = "New interface…"
 DVD_NEW_INTERFACE_TIP = "Make an interface from this device to another, then assign it"
+
+
+# ---- import wizard: a device's pinout (core/pinout_import.py) ---------------------------------------
+IMP_KIND_PINOUT = "Device pinout"
+IMP_KIND_PINOUT_TIP = "A pinout table (CSV or XLSX) with one pin per row: connector, pin, signal, mode, contact size, termination. Creates or updates the connectors of one device; columns the project cannot store are left out."
+IMP_NEXT_PINOUT = "Generate harnesses again to connect interfaces to the pins; signals that no interface type has stay free text."
+IMP_PIN_DEVICE = "Device"
+IMP_PIN_DEVICE_TIP = "The unit whose connectors the table defines, or a new device"
+IMP_PIN_DEVICE_NEW = "New device…"
+IMP_PIN_NEW_NAME = "Name of the new device"
+IMP_PIN_NEW_NAME_TIP = "Needed when the device is new; its ID is the next free DEV number"
+IMP_PIN_SUBSYSTEM = "Subsystem of the new device"
+IMP_PIN_SUBSYSTEM_TIP = "Optional; the most used subsystem when empty"
+IMP_PIN_PART = "Part for new connectors"
+IMP_PIN_PART_TIP = (
+    "A connector part of the library, used for every new connector that has no part of its own"
+)
+IMP_PIN_PART_NONE = "(none)"
+IMP_PIN_PARTS = "Part for each connector"
+IMP_PIN_PARTS_TIP = "Optional: one NAME=PART per line, for example J1=MY-HD-9-F, for new connectors that need another part"
+IMP_PIN_GENDER = "Gender of new connectors"
+IMP_PIN_GENDER_TIP = "Male or female; the gender of the part when not set"
+IMP_PIN_GENDER_PART = "(the part's)"
+IMP_PIN_CONNECTOR = "Connector for rows without one"
+IMP_PIN_CONNECTOR_TIP = "Used when the table has no Connector column (J01 when empty)"
+IMP_PIN_REPLACE = "Drop the pins of an existing connector that the table does not name"
+IMP_PIN_REPLACE_TIP = "Off: the pins of the table are merged into the connector and the others stay"
+IMP_PIN_NEEDS_PIN = "Match a column to Pin: the table needs one."
+IMP_PIN_NEEDS_DEVICE = "Name the new device, or choose an existing one."
+IMP_P_PIN_SIGNAL = "no interface type has this signal ({0}); it stays free text"

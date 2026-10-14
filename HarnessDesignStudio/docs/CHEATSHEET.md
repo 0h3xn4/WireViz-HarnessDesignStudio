@@ -26,6 +26,8 @@ The command line cannot add units or interfaces. The loop works on a project tha
 | a parts list | `harness-design-studio import-parts DIR parts.csv --approved Approved` |
 | segment lengths | `harness-design-studio import-lengths DIR lengths.csv --unit mm` |
 | unit connectors in KiCad | `harness-design-studio import-netlist DIR file.net --unit RW1 --prefix J --connector J1=RW1-J01 --dry-run` |
+| a device's pins from a table | `harness-design-studio import-pinout DIR gyro.csv --unit GYRO1 --new-device "Gyro unit" --default-part MY-HD-9-F --dry-run` |
+| a device's pinout as a file | `harness-design-studio export-pinout DIR --unit GYRO1 -o gyro.xlsx` |
 | engineering values | edit `config/*.json`, see [`CONFIG.md`](CONFIG.md); `harness-design-studio config DIR` lists what is missing |
 
 Add `--dry-run` to any import to see what it would do first. Other commands (`compare`, `schema`, `library`, `migrate`, and options such as `config --ampacity-csv`) are in [`CLI.md`](CLI.md).
