@@ -1,0 +1,7 @@
+{
+  "name": "segmentation",
+  "placeholder": true,
+  "values": {
+    "mode": "per_connector_pair"
+  }
+}

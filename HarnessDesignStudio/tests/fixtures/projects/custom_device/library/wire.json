@@ -1,0 +1,36 @@
+{
+  "parts": [
+    {
+      "approval": "pending",
+      "category": "wire",
+      "description": "Single-conductor wire (example)",
+      "id": "EX-WIRE-SINGLE",
+      "manufacturer": null,
+      "mass_g": null,
+      "mass_per_m_g": null,
+      "mates_with": null,
+      "notes": "",
+      "part_number": null,
+      "pin_count": null,
+      "ratings": {},
+      "specification": null,
+      "unverified": true
+    },
+    {
+      "approval": "pending",
+      "category": "wire",
+      "description": "Twisted shielded pair (example)",
+      "id": "EX-WIRE-TWISTED-SHIELDED",
+      "manufacturer": null,
+      "mass_g": null,
+      "mass_per_m_g": null,
+      "mates_with": null,
+      "notes": "",
+      "part_number": null,
+      "pin_count": null,
+      "ratings": {},
+      "specification": null,
+      "unverified": true
+    }
+  ]
+}
