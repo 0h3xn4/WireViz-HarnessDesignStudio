@@ -58,7 +58,8 @@ def test_loading_a_stress_project_is_reasonable(qtbot, tmp_path) -> None:  # typ
     win = make_window(tmp_path)
     qtbot.addWidget(win)
     t = elapsed_ms(lambda: win.ctl._install(build(), None, None))
-    assert t < time_limit(5000), t
+    # 2.5 s on a workstation; the slower hosted runners take 15 s (two runs: 15.35 s and 15.46 s)
+    assert t < time_limit(10000), t
 
 
 def test_problems_panel_is_capped(stress) -> None:  # type: ignore[no-untyped-def]
