@@ -12,6 +12,7 @@ pin that carries a released interface. `check_locks` itself is not changed.
 
 from __future__ import annotations
 
+import re
 from collections import defaultdict
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -19,17 +20,31 @@ from typing import Literal, get_args
 
 from pydantic import TypeAdapter, ValidationError
 
+from . import edit
 from .commands import Delete, Op, Put
 from .describe import part_gender
 from .edit import EditError, unit_connectors
 from .ids import check_pin_id
 from .issues import Severity
-from .model import Connector, Harness, InterfaceInstance, InterfaceType, Part, Pin, Project, evolve
+from .model import (
+    Connector,
+    Harness,
+    InterfaceInstance,
+    InterfaceType,
+    Part,
+    Pin,
+    Placement,
+    Project,
+    SignalDef,
+    Unit,
+    evolve,
+)
 from .model.base import MAX_PIN_COUNT, Name
+from .model.logical import Category, Construction, Direction, Shielding, Side
 from .model.physical import Gender, Termination
 from .outputs.stamp import Table
 from .outputs.tables import box_pinouts
-from .vcs.lockview import LockRef, lock_reason, locked_objects
+from .vcs.lockview import LockRef, field_lock_reason, lock_reason, locked_objects
 from .vcs.snapshot import carried_interfaces
 
 PinMode = Literal["free", "fixed", "locked"]
@@ -583,6 +598,15 @@ def pin_impact(project: Project, connector_id: str, pin_ids: Collection[str]) ->
         pin_set_frozen(project, connector_id),
         locked,
     )
+
+
+def next_pin_ids(
+    project: Project, connector_id: str, count: int = 1, after: str | None = None
+) -> list[str]:
+    """The names `ops_add_pins` gives to new pins: the next free numbers, counted on from the pin
+    `after` (or from the highest number), ignoring case."""
+    c = _box(project, connector_id)
+    return _next_numbers((p.id for p in c.pins), count, after)
 
 
 def ops_add_pins(
@@ -1235,6 +1259,521 @@ def device_state(project: Project, unit_id: str) -> DeviceState:
     return DeviceState(state, sentence, ifs, tuple(harnesses), tuple(refs))
 
 
+# ---- a new device (CD-C1) ----------------------------------------------------------------------
+
+DEVICE_FIELDS = frozenset({"name", "subsystem", "side", "notes"})
+_SIDES: tuple[str, ...] = get_args(Side)
+
+
+def default_subsystem(project: Project) -> str:
+    """The subsystem most units have (the first by name on a tie), else "general": what a new
+    device gets until its owner types another."""
+    counts: dict[str, int] = defaultdict(int)
+    for u in project.units.values():
+        counts[u.subsystem] += 1
+    return sorted(counts, key=lambda k: (-counts[k], k))[0] if counts else "general"
+
+
+def ops_add_device(
+    project: Project,
+    *,
+    unit_id: str | None = None,
+    name: str | None = None,
+    subsystem: str | None = None,
+    side: str = "nominal",
+    zone: str | None = None,
+    x: float | None = None,
+    y: float | None = None,
+) -> tuple[list[Op], str]:
+    """Add a device: a unit with no connectors yet, placed in a free slot of its lane. The ID is
+    the next free `DEV<n>` unless given; the subsystem is `default_subsystem` unless given."""
+    _writable(project)
+    if unit_id is None:
+        uid, n = edit.next_unit_id(project, "DEV")
+        label = f"Device {n}"
+    else:
+        uid, label = unit_id, f"Device {unit_id}"
+        edit._check_new_id(uid)
+        if uid.casefold() in edit._taken(set(project.units)) | edit._connector_owners(project):
+            raise EditError(f"ID {uid} is already used.")
+    if side not in _SIDES:
+        raise EditError(f"A chain is one of {', '.join(_SIDES)}.")
+    if zone is not None and zone not in edit.effective_zones(project):
+        raise EditError(f"Zone '{zone}' does not exist.")
+    if x is None or y is None:
+        x, y = edit.free_slot(project, zone, edit.expert_height(0))
+    unit = Unit(
+        id=uid,
+        name=_text(name, "A device name") or label,
+        subsystem=_text(subsystem, "A subsystem") or default_subsystem(project),
+        zone=zone or edit.zone_of_x(project, x) or None,
+        side=side,  # type: ignore[arg-type]
+    )
+    return [Put("units", unit), Put("placements", Placement(id=uid, x=x, y=y))], uid
+
+
+def ops_update_device(project: Project, unit_id: str, **changes: object) -> list[Op]:
+    """Change the name, subsystem, chain or notes of a device. Subsystem and chain are design
+    fields: refused with the reason while a release uses the device."""
+    _writable(project)
+    unit = project.units.get(unit_id)
+    if unit is None:
+        raise EditError(f"Unit '{unit_id}' does not exist.")
+    bad = set(changes) - DEVICE_FIELDS
+    if bad:
+        raise EditError(f"These device fields cannot be changed here: {', '.join(sorted(bad))}.")
+    new: dict[str, object] = {}
+    for key, value in changes.items():
+        if key in ("name", "subsystem"):
+            text = _text(value, "A device name" if key == "name" else "A subsystem")
+            if text is None:
+                raise EditError(
+                    "A device needs a name." if key == "name" else "A device needs a subsystem."
+                )
+            new[key] = text
+        elif key == "side":
+            if value not in _SIDES:
+                raise EditError(f"A chain is one of {', '.join(_SIDES)}.")
+            new[key] = value
+        else:
+            if not isinstance(value, str):
+                raise EditError("Notes must be text.")
+            new[key] = value
+    new = {k: v for k, v in new.items() if getattr(unit, k) != v}
+    for key in new:
+        if why := field_lock_reason(project, "unit", unit_id, key):
+            raise EditError(f"The {key} of {unit_id} cannot change. {why}")
+    return [Put("units", evolve(unit, **new))] if new else []
+
+
+# ---- interface on pins (CD-C7) -----------------------------------------------------------------
+
+
+def ops_assign_pins(
+    project: Project,
+    connector_id: str,
+    pin_ids: Sequence[str],
+    interface_id: str,
+    signals: Sequence[str] | None = None,
+) -> list[Op]:
+    """Put an interface on pins: each pin becomes locked, with the interface and one signal of its
+    type (the type's signals in order unless `signals` names one per pin). The interface must end
+    on this device; an end without a connector gets this one in the same step. A connector carries
+    one interface in the editor, so a connector another interface ends on is refused."""
+    _writable(project)
+    c = _box(project, connector_id)
+    i = project.interfaces.get(interface_id)
+    if i is None:
+        raise EditError(f"Interface '{interface_id}' does not exist.")
+    t = project.interface_types.get(i.type_id)
+    if t is None:
+        raise EditError(f"Interface type '{i.type_id}' does not exist.")
+    ends = [k for k, e in enumerate(i.endpoints) if e.unit_id == c.unit_id]
+    if not ends:
+        raise EditError(f"{interface_id} does not end on {c.unit_id}.")
+    fill: int | None = None  # the end that gets this connector
+    if not any(i.endpoints[k].connector_id == connector_id for k in ends):
+        fill = next((k for k in ends if i.endpoints[k].connector_id is None), None)
+        if fill is None:
+            raise EditError(
+                f"{interface_id} ends on {i.endpoints[ends[0]].connector_id}, not on {connector_id}."
+            )
+        used = edit.interface_using(project, connector_id)
+        if used is not None and used.id != interface_id:
+            raise EditError(
+                f"{connector_id} already carries {used.id}. One interface per connector."
+            )
+        if not edit.carries(c, i.type_id):
+            raise EditError(f"{connector_id} is not meant for {t.name}.")
+        if why := field_lock_reason(project, "interface", interface_id, "endpoints"):
+            raise EditError(f"{interface_id} cannot change. {why}")
+    names = list(signals) if signals is not None else [s.name for s in t.signals]
+    if len(pin_ids) != len(names):
+        raise EditError(
+            f"{t.name} needs {len(names)} pin{'s' if len(names) != 1 else ''} "
+            f"({', '.join(names)}); {len(pin_ids)} {'is' if len(pin_ids) == 1 else 'are'} selected."
+        )
+    _unique_ids(list(pin_ids))
+    for sig in names:
+        if sig not in {s.name for s in t.signals}:
+            raise EditError(f"{sig} is not a signal of {t.name}.")
+    if len(set(names)) != len(names):
+        raise EditError("A signal can be on one pin only.")
+    mapping = dict(zip(pin_ids, names, strict=True))
+    missing = sorted(set(pin_ids) - {p.id for p in c.pins})
+    if missing:
+        raise EditError(f"{connector_id} has no pin '{missing[0]}'.")
+    pins = []
+    for p in c.pins:
+        if p.id in mapping:
+            if why := pin_lock_reason(project, connector_id, p.id):
+                raise EditError(f"Pin {p.id} of {connector_id} cannot change. {why}")
+            p = evolve(p, signal=mapping[p.id], interface_id=interface_id, locked=True, fixed=False)
+        pins.append(p)
+    ops: list[Op] = [Put("connectors", c.model_copy(update={"pins": pins}))]
+    if fill is not None:
+        eps = [
+            e.model_copy(update={"connector_id": connector_id, "auto": False}) if k == fill else e
+            for k, e in enumerate(i.endpoints)
+        ]
+        ops.append(Put("interfaces", evolve(i, endpoints=eps)))
+    return ops
+
+
+def ops_unassign_pins(project: Project, connector_id: str, pin_ids: Sequence[str]) -> list[Op]:
+    """Take pins off their interface: the pin goes back to free, with no signal and no interface.
+    A pin with no interface is left as it is."""
+    _writable(project)
+    c = _box(project, connector_id)
+    missing = sorted(set(pin_ids) - {p.id for p in c.pins})
+    if missing:
+        raise EditError(f"{connector_id} has no pin '{missing[0]}'.")
+    pins = []
+    changed = False
+    for p in c.pins:
+        if p.id in pin_ids and p.interface_id is not None:
+            if why := pin_lock_reason(project, connector_id, p.id):
+                raise EditError(f"Pin {p.id} of {connector_id} cannot change. {why}")
+            p = evolve(p, signal=None, interface_id=None, locked=False)
+            changed = True
+        pins.append(p)
+    return [Put("connectors", c.model_copy(update={"pins": pins}))] if changed else []
+
+
+# ---- pasted cells (CD-C6) ----------------------------------------------------------------------
+
+GRID_COLUMNS = ROW_COLUMNS  # the columns a pasted block can fill
+
+
+def rows_from_grid(
+    project: Project,
+    connector_id: str,
+    start_pin: str | None,
+    columns: Sequence[str],
+    grid: Sequence[Sequence[str]],
+) -> list[dict[str, str]]:
+    """Cells from a spreadsheet as pin rows for `ops_paste_rows`. `columns` names what each pasted
+    column is (keys of `ROW_COLUMNS`). With a `pin` column every row names its pin (new names add
+    pins); without one the rows go to the pins from `start_pin` downwards, one pin per row."""
+    c = _box(project, connector_id)
+    bad = [k for k in columns if k not in GRID_COLUMNS]
+    if bad:
+        raise EditError(f"'{bad[0]}' is not a column that can be pasted.")
+    out: list[dict[str, str]] = []
+    ids = [p.id for p in c.pins]
+    if "pin" in columns:
+        for line in grid:
+            out.append({k: (line[n] if n < len(line) else "") for n, k in enumerate(columns)})
+        return out
+    if start_pin is None or start_pin not in ids:
+        raise EditError("Pick the pin the paste starts at.")
+    first = ids.index(start_pin)
+    if first + len(grid) > len(ids):
+        room = len(ids) - first
+        raise EditError(
+            f"The paste has {len(grid)} row{'s' if len(grid) != 1 else ''} but only {room} "
+            f"pin{'s' if room != 1 else ''} from {start_pin} down."
+        )
+    for n, line in enumerate(grid):
+        row = {k: (line[m] if m < len(line) else "") for m, k in enumerate(columns)}
+        row["pin"] = ids[first + n]
+        out.append(row)
+    return out
+
+
+# ---- parts the editor makes: always pending and unverified, never approved (CD-C9) -------------
+
+PART_FIELDS = frozenset(
+    {
+        "manufacturer",
+        "part_number",
+        "specification",
+        "description",
+        "pin_count",
+        "mates_with",
+        "notes",
+    }
+)
+
+
+def _new_part_id(project: Project, part_id: str) -> str:
+    edit._check_new_id(part_id)
+    if part_id.casefold() in {p.casefold() for p in project.parts}:
+        raise EditError(f"A part called '{part_id}' already exists.")
+    return part_id
+
+
+def _pin_count(value: object) -> int:
+    if isinstance(value, bool) or not isinstance(value, int) or not 1 <= value <= MAX_PIN_COUNT:
+        raise EditError(f"A pin count is a whole number from 1 to {MAX_PIN_COUNT}.")
+    return value
+
+
+def _part_description(pin_count: int, gender: str | None, description: str | None) -> str | None:
+    """What the person typed, else the pin count and the gender they chose (so the gender of a
+    connector made from this part can be read from the part, as for every other part)."""
+    text = _text(description, "A description")
+    if text is None and gender in ("male", "female"):
+        return f"{pin_count}-pin connector, {gender}"
+    return text
+
+
+def ops_add_part(
+    project: Project,
+    *,
+    part_id: str,
+    pin_count: int,
+    gender: str | None = None,
+    manufacturer: str | None = None,
+    part_number: str | None = None,
+    description: str | None = None,
+    mates_with: str | None = None,
+) -> list[Op]:
+    """Add a connector part to the library: approval `pending`, `unverified` true. The tool never
+    approves a part; that is a decision for the people who own the parts list."""
+    _writable(project)
+    pid = _new_part_id(project, part_id)
+    n = _pin_count(pin_count)
+    if gender is not None and gender not in ("male", "female"):
+        raise EditError("A part is male or female.")
+    if mates_with is not None:
+        _connector_part(project, mates_with)
+    part = Part(
+        id=pid,
+        category="connector",
+        approval="pending",
+        unverified=True,
+        pin_count=n,
+        manufacturer=_text(manufacturer, "A manufacturer"),
+        part_number=_text(part_number, "A part number"),
+        description=_part_description(n, gender, description),
+        mates_with=mates_with,
+    )
+    ops: list[Op] = [Put("parts", part)]
+    if mates_with is not None:  # the other half names this one too
+        ops.append(Put("parts", evolve(project.parts[mates_with], mates_with=pid)))
+    return ops
+
+
+def _swap_gender(text: str, other: str) -> str:
+    """The description of the mating half: `male` and `female` change places; a description that
+    names neither gets `, <other>` added, so the gender can be read from it."""
+    swapped = re.sub(
+        r"\b(fe)?male\b",
+        lambda m: "male" if m.group(0).lower().startswith("fe") else "female",
+        text,
+        flags=re.IGNORECASE,
+    )
+    return swapped if swapped != text else f"{text}, {other}"
+
+
+def _mate_id(part_id: str, gender: str) -> str:
+    """`X-F` -> `X-M` (and back) when the ID ends in the letter of its gender, else `X-M`/`X-F`."""
+    mine, theirs = ("F", "M") if gender == "female" else ("M", "F")
+    if part_id.upper().endswith(f"-{mine}"):
+        return f"{part_id[:-1]}{theirs}"
+    return f"{part_id}-{theirs}"
+
+
+def ops_add_part_pair(
+    project: Project,
+    *,
+    part_id: str,
+    pin_count: int,
+    gender: str = "female",
+    mate_id: str | None = None,
+    manufacturer: str | None = None,
+    part_number: str | None = None,
+    description: str | None = None,
+) -> list[Op]:
+    """Add a connector part and its mating half in one step: opposite genders, `mates_with` both
+    ways, both `pending` and `unverified`. The mate's ID is the same with the other letter (`X-F` and `X-M`) unless given."""
+    _writable(project)
+    if gender not in ("male", "female"):
+        raise EditError("A part is male or female.")
+    other = "male" if gender == "female" else "female"
+    pid = _new_part_id(project, part_id)
+    mid = _new_part_id(project, mate_id or _mate_id(pid, gender))
+    if mid.casefold() == pid.casefold():
+        raise EditError("The mating part needs its own ID.")
+    n = _pin_count(pin_count)
+    maker = _text(manufacturer, "A manufacturer")
+    text = _part_description(n, gender, description)
+    mate_text = _swap_gender(text, other) if text else f"{n}-pin connector, {other}"
+    here = Part(
+        id=pid, category="connector", approval="pending", unverified=True, pin_count=n,
+        manufacturer=maker, part_number=_text(part_number, "A part number"), mates_with=mid,
+        description=text,
+    )  # fmt: skip
+    there = Part(
+        id=mid, category="connector", approval="pending", unverified=True, pin_count=n,
+        manufacturer=maker, mates_with=pid, description=mate_text,
+    )  # fmt: skip
+    return [Put("parts", here), Put("parts", there)]
+
+
+def ops_update_part(project: Project, part_id: str, **changes: object) -> list[Op]:
+    """Change a part's maker, part number, specification, description, pin count, mating part or
+    notes; never its approval. Refused while a release uses the part, and for a pin count below the
+    pins a connector of this part already has."""
+    _writable(project)
+    part = project.parts.get(part_id)
+    if part is None:
+        raise EditError(f"Part '{part_id}' does not exist.")
+    bad = set(changes) - PART_FIELDS
+    if bad:
+        raise EditError(f"These part fields cannot be changed here: {', '.join(sorted(bad))}.")
+    new: dict[str, object] = {}
+    for key, value in changes.items():
+        if key == "pin_count":
+            new[key] = _pin_count(value)
+        elif key == "mates_with":
+            if value is not None:
+                _connector_part(project, str(value))
+            new[key] = value
+        elif key == "notes":
+            if not isinstance(value, str):
+                raise EditError("Notes must be text.")
+            new[key] = value
+        else:
+            new[key] = _text(value, f"The {key.replace('_', ' ')}")
+    new = {k: v for k, v in new.items() if getattr(part, k) != v}
+    count = new.get("pin_count")
+    if isinstance(count, int):
+        for c in project.connectors.values():
+            if c.part_id == part_id and len(c.pins) > count:
+                raise EditError(f"{c.id} has {len(c.pins)} pins; {part_id} cannot have fewer.")
+    for key in new:
+        if why := field_lock_reason(project, "part", part_id, key):
+            raise EditError(f"The {key.replace('_', ' ')} of {part_id} cannot change. {why}")
+    return [Put("parts", evolve(part, **new))] if new else []
+
+
+# ---- interface types the editor makes: unverified (CD-C10) -------------------------------------
+
+TYPE_FIELDS = frozenset(
+    {"name", "category", "signals", "construction", "shielding", "impedance_ohm", "emc_class",
+     "default_gauge_awg", "notes"}
+)  # fmt: skip
+SignalSpec = tuple[str, str, str | None]  # name, direction, pair
+_DIRECTIONS: tuple[str, ...] = get_args(Direction)
+_CHOICES: dict[str, tuple[str, ...]] = {
+    "category": get_args(Category),
+    "construction": get_args(Construction),
+    "shielding": get_args(Shielding),
+}
+
+
+def parse_signal_lines(text: str) -> list[SignalSpec]:
+    """Lines of `NAME [direction [pair]]` (direction `out`, `in`, `bidir` or `passive`, default
+    `passive`) as signal specs for `ops_add_interface_type`; blank lines are skipped."""
+    out: list[SignalSpec] = []
+    for n, line in enumerate(text.splitlines(), start=1):
+        words = line.split()
+        if not words:
+            continue
+        if len(words) > 3:
+            raise EditError(f"Line {n}: write a name, then a direction, then a pair name.")
+        direction = words[1] if len(words) > 1 else "passive"
+        if direction not in _DIRECTIONS:
+            raise EditError(f"Line {n}: a direction is one of {', '.join(_DIRECTIONS)}.")
+        out.append((words[0], direction, words[2] if len(words) > 2 else None))
+    return out
+
+
+def _signals(specs: Iterable[SignalSpec | SignalDef]) -> list[SignalDef]:
+    out: list[SignalDef] = []
+    for spec in specs:
+        name, direction, pair = (
+            (spec.name, spec.direction, spec.pair) if isinstance(spec, SignalDef) else spec
+        )
+        text = _text(name, "A signal name")
+        if text is None:
+            raise EditError("A signal needs a name.")
+        if direction not in _DIRECTIONS:
+            raise EditError(f"A direction is one of {', '.join(_DIRECTIONS)}.")
+        out.append(SignalDef(name=text, direction=direction, pair=_text(pair, "A pair name")))  # type: ignore[arg-type]
+    if not out:
+        raise EditError("An interface type needs at least one signal.")
+    names = [s.name for s in out]
+    for n in names:
+        if names.count(n) > 1:
+            raise EditError(f"The signal {n} is listed twice.")
+    return out
+
+
+def ops_add_interface_type(
+    project: Project,
+    *,
+    type_id: str,
+    name: str,
+    category: str,
+    signals: Iterable[SignalSpec],
+    construction: str = "single",
+    shielding: str = "none",
+) -> list[Op]:
+    """Add an interface type: its signals with direction and pair, marked `unverified` (nobody
+    has confirmed it). The ID is free ignoring case."""
+    _writable(project)
+    edit._check_new_id(type_id)
+    if type_id.casefold() in {t.casefold() for t in project.interface_types}:
+        raise EditError(f"An interface type called '{type_id}' already exists.")
+    label = _text(name, "A name")
+    if label is None:
+        raise EditError("An interface type needs a name.")
+    for key, value in (
+        ("category", category),
+        ("construction", construction),
+        ("shielding", shielding),
+    ):
+        if value not in _CHOICES[key]:
+            raise EditError(f"A {key} is one of {', '.join(_CHOICES[key])}.")
+    t = InterfaceType(
+        id=type_id,
+        name=label,
+        category=category,  # type: ignore[arg-type]
+        signals=_signals(signals),
+        construction=construction,  # type: ignore[arg-type]
+        shielding=shielding,  # type: ignore[arg-type]
+        unverified=True,
+    )
+    return [Put("interface_types", t)]
+
+
+def ops_update_interface_type(project: Project, type_id: str, **changes: object) -> list[Op]:
+    """Change an interface type's name, category, signals, construction, shielding, impedance, EMC
+    class, default gauge or notes. Refused while a release uses the type."""
+    _writable(project)
+    t = project.interface_types.get(type_id)
+    if t is None:
+        raise EditError(f"Interface type '{type_id}' does not exist.")
+    bad = set(changes) - TYPE_FIELDS
+    if bad:
+        raise EditError(
+            f"These interface type fields cannot be changed here: {', '.join(sorted(bad))}."
+        )
+    new: dict[str, object] = {}
+    for key, value in changes.items():
+        if key == "signals":
+            if isinstance(value, str) or not isinstance(value, Iterable):
+                raise EditError("Signals are a list.")
+            new[key] = _signals(value)
+        elif key == "name":
+            text = _text(value, "A name")
+            if text is None:
+                raise EditError("An interface type needs a name.")
+            new[key] = text
+        else:
+            if key in _CHOICES and value not in _CHOICES[key]:
+                raise EditError(f"A {key} is one of {', '.join(_CHOICES[key])}.")
+            new[key] = value
+    new = {k: v for k, v in new.items() if getattr(t, k) != v}
+    for key in new:
+        if why := field_lock_reason(project, "interface_type", type_id, key):
+            raise EditError(f"The {key.replace('_', ' ')} of {type_id} cannot change. {why}")
+    return [Put("interface_types", evolve(t, **new))] if new else []
+
+
 __all__ = [
     "CONNECTOR_FIELDS",
     "PIN_FIELDS",
@@ -1255,6 +1794,24 @@ __all__ = [
     "device_state",
     "fill_from_type",
     "next_connector_name",
+    "GRID_COLUMNS",
+    "DEVICE_FIELDS",
+    "PART_FIELDS",
+    "TYPE_FIELDS",
+    "SignalSpec",
+    "default_subsystem",
+    "ops_add_device",
+    "ops_update_device",
+    "ops_assign_pins",
+    "ops_unassign_pins",
+    "ops_add_part",
+    "ops_add_part_pair",
+    "ops_update_part",
+    "ops_add_interface_type",
+    "ops_update_interface_type",
+    "parse_signal_lines",
+    "rows_from_grid",
+    "next_pin_ids",
     "ops_add_connector",
     "ops_add_pins",
     "ops_change_part",

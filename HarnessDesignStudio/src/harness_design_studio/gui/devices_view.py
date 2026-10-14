@@ -1,47 +1,64 @@
-"""Devices view: one unit with its connectors and pins, the pinout as it will be exported, and the
-notes the pin checks give. Plugged into the window as the sixth main tab (`install_view("devices",
-...)`, Ctrl+6).
+"""Devices view: one unit with its connectors and pins, edited in place, the pinout as it will be
+exported, and the notes the pin checks give. Plugged into the window as the sixth main tab
+(`install_view("devices", ...)`, Ctrl+6).
 
     DevicesView(ctl, theme, settings=None)
 
-* Header: the device (a unit; the unit selected on the diagram or in the project tree is the one
-  shown), its state (Draft, In use, Locked, Read-only), counts, Duplicate and Export pinout.
-* Connector list, connector card (part, gender, keying, what it carries, how its pins are
-  allocated) and the pin table (pin, signal, mode, interface, direction, class, wire, state).
-  Direction and class are worked out from the interface type of the pin's signal and are empty,
-  with the reason as tooltip, when nothing can be said: nothing is guessed.
+* Header: the device (a unit; the unit selected on the diagram or in the tree is the one shown),
+  its name, subsystem and chain, its state (Draft, In use, Locked, Read-only), counts, Duplicate
+  and Export pinout. A released device shows the lock banner with Start new revision.
+* Connector list with an inline "add connector" row (a part picker that searches the library, its
+  first entry is New part), connector card (part, gender, keying, what it carries, how its pins are
+  allocated) and the pin table (pin, signal, mode, interface, direction, class, wire, state) whose
+  cells are edited in place (`devices_pin_table`). Direction and class are worked out from the
+  interface type of the pin's signal and are empty, with the reason as tooltip, when nothing can
+  be said: nothing is guessed.
 * Notes under the pin table (`core.devices.pinout_problems`) and "Pinout as exported": exactly
   the rows of `system/box_pinouts.csv` for this unit.
-* Every number and sentence comes from headless code in `core.devices`; this file only shows it.
+* Every number and sentence comes from headless code in `core.devices`, and every change goes
+  through the controller as one named undo step; this file only asks. A question that needs an
+  answer (a part change that resizes the pins, a delete) is asked on a line in the tab, never in a
+  message box.
 """
 
-from collections.abc import Mapping
+from collections.abc import Callable, Mapping
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QModelIndex, QSettings, Qt, QTimer, Signal
-from PySide6.QtGui import QKeySequence, QShortcut
+from PySide6.QtCore import QItemSelectionModel, QModelIndex, QSettings, Qt, QTimer, Signal
+from PySide6.QtGui import QAction, QGuiApplication, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
+    QCheckBox,
     QComboBox,
     QFrame,
     QGridLayout,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QMenu,
     QPushButton,
     QSplitter,
     QStackedWidget,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
 from harness_design_studio.core import devices, edit
+from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.outputs import exports
 from harness_design_studio.core.outputs.stamp import Table, csv_bytes, stamp_of
+from harness_design_studio.core.vcs.lockview import field_lock_reason
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.devices_pin_table import (
+    PinDelegate,
+    PinModel,
+    PinTable,
+    plan_paste,
+)
 from harness_design_studio.gui.harness_view import REFRESH_DELAY_MS
-from harness_design_studio.gui.icons import icon_button
+from harness_design_studio.gui.icons import icon_button, tooltip_text
 from harness_design_studio.gui.lists_panel import table_columns
 from harness_design_studio.gui.states import StateChip
 from harness_design_studio.gui.tables import Column, DictTableModel, Row, TableView, natural_key
@@ -58,6 +75,9 @@ _DEVICE_STATE = {
     "locked": ("locked", strings.DV_STATE_LOCKED),
     "read_only": ("locked", strings.DV_STATE_READ_ONLY),
 }
+_SIDES = ("nominal", "redundant", "none")
+_GENDERS = ("female", "male", "unspecified")
+_NEW_PART = "\0new-part"  # the data of the first entry of the part picker
 
 
 def plural(words: tuple[str, str], n: int) -> str:
@@ -81,7 +101,9 @@ def pin_state(row: devices.PinRow, notes: list[devices.PinProblem]) -> tuple[str
 
 
 def pin_rows_for_table(
-    rows: list[devices.PinRow], problems: list[devices.PinProblem]
+    rows: list[devices.PinRow],
+    problems: list[devices.PinProblem],
+    frozen: str | None = None,
 ) -> list[dict[str, Any]]:
     """The pin table's rows (dicts) for `PIN_COLUMNS`."""
     by_pin: dict[str, list[devices.PinProblem]] = {}
@@ -96,6 +118,7 @@ def pin_rows_for_table(
                 "pin": r.pin,
                 "signal": r.signal,
                 "mode": strings.DV_MODE[r.mode],
+                "mode_key": r.mode,
                 "mode_tip": strings.DV_MODE_TIP[r.mode],
                 "interface": r.interface_id,
                 "direction": r.direction,
@@ -104,9 +127,12 @@ def pin_rows_for_table(
                 "wire": ";".join(r.wires),
                 "contact_size": r.contact_size,
                 "termination": strings.DV_TERMINATION[r.termination],
+                "termination_key": r.termination,
                 "state_key": key,
                 "state": word,
                 "state_tip": tip,
+                "lock": r.lock or "",
+                "pin_frozen": frozen or "",
             }
         )
     return out
@@ -142,7 +168,7 @@ CONNECTOR_COLUMNS = [
     Column("name", strings.DV_COL_CONNECTOR, mono=True, width=80),
     Column("part", strings.DV_COL_PART, mono=True, width=130),
     Column("pins", strings.DV_COL_PINS, numeric=True, width=56),
-        Column(
+    Column(
         "state", strings.DV_COL_STATE, state=lambda r: _field(r, "state_key"), tooltip=_tip("state_tip"),
         width=110,
     ),
@@ -159,16 +185,23 @@ NOTE_COLUMNS = [
 class DevicesView(QWidget):
     """One unit, its connectors, pins, notes and exported pinout. See the module text.
 
-    Signals: `addRequested()` (the empty state's button), `duplicateRequested(unit_id)`,
-    `exportPinoutRequested(unit_id)` (the window asks for a file name and calls `export_to`),
-    `whyRequested(kind, id)` for a pin ("pin", "connector.pin"), `deviceChanged(unit_id)` and
-    `connectorChanged(connector_id)`.
+    Signals (the window runs the flows): `addRequested()` (the empty state's button),
+    `duplicateRequested(unit_id)`, `exportPinoutRequested(unit_id)` (the window asks for a file
+    name and calls `export_to`), `whyRequested(kind, id)` for a pin ("pin", "connector.pin"),
+    `reviseRequested(harness_id)`, `fillRequested(connector_id, pins)`,
+    `assignRequested(connector_id, pins)`, `newPartRequested()`, `newTypeRequested()`,
+    `deviceChanged(unit_id)` and `connectorChanged(connector_id)`.
     """
 
     addRequested = Signal()
     duplicateRequested = Signal(str)
     exportPinoutRequested = Signal(str)
     whyRequested = Signal(str, str)
+    reviseRequested = Signal(str)
+    fillRequested = Signal(str, list)
+    assignRequested = Signal(str, list)
+    newPartRequested = Signal()
+    newTypeRequested = Signal()
     deviceChanged = Signal(str)
     connectorChanged = Signal(str)
 
@@ -188,6 +221,14 @@ class DevicesView(QWidget):
         self._pinout: Table = []
         self._pin_index: dict[str, int] = {}
         self._notes: list[devices.PinProblem] = []
+        self._want_pin: str | None = None  # the pin to select when the table next changes
+        self._want_connector: str | None = None
+        self._confirm: Callable[[list[bool]], None] | None = None
+        self._frozen: str | None = None
+        self._suggestion: list[str] = []
+        self._banner_harness: str | None = None
+        self._adding = False
+        self._acting = False
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.setInterval(REFRESH_DELAY_MS)
@@ -206,6 +247,9 @@ class DevicesView(QWidget):
         c.setSpacing(gap)
         self.stack.addWidget(self.content)
         c.addLayout(self._build_header(theme))
+        self._build_banner(theme)
+        c.addWidget(self.banner)
+        c.addWidget(self.confirm_bar)
         self.vsplit = QSplitter(Qt.Orientation.Vertical)
         self.vsplit.setObjectName("devices-splitter")
         self.vsplit.setChildrenCollapsible(False)
@@ -221,7 +265,11 @@ class DevicesView(QWidget):
         self.hsplit.setStretchFactor(1, 7)
         self.vsplit.setStretchFactor(0, 3)
         self.vsplit.setStretchFactor(1, 1)
+        dup = QShortcut(QKeySequence("Ctrl+D"), self)
+        dup.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        dup.activated.connect(self._duplicate)
 
+        ctl.message.connect(self._on_message)
         ctl.changed.connect(lambda _d: self._invalidate())
         ctl.selectionChanged.connect(self._follow_selection)
         ctl.stateChanged.connect(self._read_only_changed)
@@ -243,7 +291,9 @@ class DevicesView(QWidget):
         self.empty_add = QPushButton()
         self.empty_add.setObjectName("devices-empty-add")
         self.empty_add.setProperty("primary", True)
-        icon_button(self.empty_add, "plus", theme, strings.DV_ADD_TIP, text=strings.DV_ADD)
+        icon_button(
+            self.empty_add, "plus", theme, strings.DV_ADD_TIP, "Ctrl+Shift+N", text=strings.DV_ADD
+        )
         self.empty_add.clicked.connect(self.addRequested)
         e.addWidget(title)
         e.addWidget(body)
@@ -264,17 +314,35 @@ class DevicesView(QWidget):
         self.selector.currentIndexChanged.connect(self._selector_changed)
         self.state_chip = StateChip(theme, "draft", strings.DV_STATE_DRAFT)
         self.state_chip.setObjectName("devices-state")
-        self.name = QLabel()
+        self.name = QLineEdit()
         self.name.setObjectName("devices-name")
+        self.name.setAccessibleName(strings.DV_NAME)
+        self.name.setToolTip(strings.DV_NAME_TIP)
         self.name.setProperty("title", True)
-        self.name.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        self.subsystem = QLabel()
+        self.name.editingFinished.connect(self._name_edited)
+        self.subsystem = QComboBox()
         self.subsystem.setObjectName("devices-subsystem")
-        self.subsystem.setProperty("muted", True)
+        self.subsystem.setEditable(True)
+        self.subsystem.setAccessibleName(strings.DV_SUBSYSTEM_LABEL)
+        self.subsystem.setToolTip(strings.DV_SUBSYSTEM_TIP)
+        self.subsystem.setMinimumWidth(theme.px(120))
+        line = self.subsystem.lineEdit()
+        if line is not None:
+            line.editingFinished.connect(self._subsystem_edited)
+        self.subsystem.activated.connect(lambda _i: self._subsystem_edited())
+        self.chain = QComboBox()
+        self.chain.setObjectName("devices-chain")
+        self.chain.setAccessibleName(strings.DV_CHAIN_LABEL)
+        self.chain.setToolTip(strings.DV_CHAIN_TIP)
+        for side in _SIDES:
+            self.chain.addItem(strings.DV_CHAIN[side], side)
+        self.chain.activated.connect(self._chain_edited)
         row1.addWidget(self.selector)
         row1.addWidget(self.state_chip)
         row1.addWidget(self.name, 1)
+        row1.addWidget(QLabel(strings.DV_SUBSYSTEM_LABEL))
         row1.addWidget(self.subsystem)
+        row1.addWidget(self.chain)
         box.addLayout(row1)
         row2 = QHBoxLayout()
         self.counts = QLabel()
@@ -297,6 +365,51 @@ class DevicesView(QWidget):
         box.addLayout(row2)
         return box
 
+    def _build_banner(self, theme: ThemeManager) -> None:
+        """The lock banner (a released device, a read-only project) and the question line."""
+        self.banner = QFrame()
+        self.banner.setObjectName("devices-banner")
+        self.banner.setProperty("banner", True)
+        bl = QHBoxLayout(self.banner)
+        self.banner_text = QLabel()
+        self.banner_text.setObjectName("devices-banner-text")
+        self.banner_text.setWordWrap(True)
+        self.banner_btn = QPushButton()
+        self.banner_btn.setObjectName("devices-revise")
+        icon_button(self.banner_btn, "revise", theme, strings.DV_REVISE_TIP, text=strings.DV_REVISE)
+        self.banner_btn.clicked.connect(self._revise)
+        bl.addWidget(self.banner_text, 1)
+        bl.addWidget(self.banner_btn)
+        self.banner.hide()
+
+        self.confirm_bar = QFrame()
+        self.confirm_bar.setObjectName("devices-confirm")
+        self.confirm_bar.setProperty("banner", True)
+        self.confirm_bar.setProperty("severity", "info")
+        cl = QHBoxLayout(self.confirm_bar)
+        self.confirm_text = QLabel()
+        self.confirm_text.setObjectName("devices-confirm-text")
+        self.confirm_text.setWordWrap(True)
+        self.confirm_checks: list[QCheckBox] = []
+        self.confirm_checks_box = QHBoxLayout()
+        self.confirm_ok = QPushButton()
+        self.confirm_ok.setObjectName("devices-confirm-ok")
+        self.confirm_ok.setProperty("primary", True)
+        self.confirm_ok.clicked.connect(self._confirmed)
+        self.confirm_cancel = QPushButton(strings.CANCEL)
+        self.confirm_cancel.setObjectName("devices-confirm-cancel")
+        self.confirm_cancel.setAccessibleName(strings.CANCEL)
+        self.confirm_cancel.setToolTip(f"{strings.CANCEL} (Esc)")
+        self.confirm_cancel.clicked.connect(self.cancel_confirm)
+        cl.addWidget(self.confirm_text, 1)
+        cl.addLayout(self.confirm_checks_box)
+        cl.addWidget(self.confirm_ok)
+        cl.addWidget(self.confirm_cancel)
+        self.confirm_bar.hide()
+        esc = QShortcut(QKeySequence("Esc"), self.confirm_bar)
+        esc.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        esc.activated.connect(self.cancel_confirm)
+
     @staticmethod
     def _caption(text: str) -> QLabel:
         label = QLabel(text)
@@ -305,6 +418,7 @@ class DevicesView(QWidget):
 
     def _build_connectors(self, theme: ThemeManager) -> None:
         left = QWidget()
+        left.setObjectName("devices-left")
         ll = QVBoxLayout(left)
         ll.setContentsMargins(0, 0, 0, 0)
         ll.setSpacing(theme.space(4))
@@ -318,6 +432,11 @@ class DevicesView(QWidget):
         self.conn_table.setToolTip(strings.DV_CONNECTORS_TIP)
         self.conn_table.setSelectionBehavior(self.conn_table.SelectionBehavior.SelectRows)
         self.conn_table.setSelectionMode(self.conn_table.SelectionMode.SingleSelection)
+        for sc in self.conn_table.findChildren(QShortcut):
+            if sc.key() == QKeySequence("Ctrl+Shift+C"):
+                sc.setEnabled(
+                    False
+                )  # here the key adds a connector; the pin table keeps "copy with header"
         sm = self.conn_table.selectionModel()
         if sm is not None:
             sm.currentChanged.connect(self._connector_current)
@@ -327,6 +446,38 @@ class DevicesView(QWidget):
         self.no_connectors.setProperty("muted", True)
         self.no_connectors.setWordWrap(True)
         ll.addWidget(self.no_connectors)
+        self.part_picker = QComboBox()
+        self.part_picker.setObjectName("devices-part-picker")
+        self.part_picker.setEditable(True)
+        self.part_picker.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)
+        self.part_picker.setAccessibleName(strings.DV_PART_PICKER)
+        self.part_picker.setToolTip(strings.DV_PART_PICKER_TIP)
+        ll.addWidget(self.part_picker)
+        self.add_connector_btn = QPushButton()
+        self.add_connector_btn.setObjectName("devices-add-connector")
+        icon_button(
+            self.add_connector_btn, "plus", theme, strings.DV_ADD_CONNECTOR_TIP, "Ctrl+Shift+C",
+            text=strings.DV_ADD_CONNECTOR,
+        )  # fmt: skip
+        self.add_connector_btn.clicked.connect(self._add_connector)
+        self.delete_connector_btn = QPushButton()
+        self.delete_connector_btn.setObjectName("devices-delete-connector")
+        icon_button(
+            self.delete_connector_btn, "close", theme, strings.DV_DELETE_CONNECTOR_TIP,
+            text=strings.DV_DELETE_CONNECTOR,
+        )  # fmt: skip
+        self.delete_connector_btn.clicked.connect(self._delete_connector)
+        row2 = QHBoxLayout()
+        row2.addWidget(self.add_connector_btn)
+        row2.addWidget(self.delete_connector_btn)
+        ll.addLayout(row2)
+        self.part_picker.activated.connect(self._part_picked)
+        line = self.part_picker.lineEdit()
+        if line is not None:
+            line.returnPressed.connect(self._return_in_picker)
+        sc = QShortcut(QKeySequence("Ctrl+Shift+C"), left)
+        sc.setContext(Qt.ShortcutContext.WidgetWithChildrenShortcut)
+        sc.activated.connect(self._focus_part_picker)
         self.hsplit.addWidget(left)
 
     def _build_pins(self, theme: ThemeManager) -> None:
@@ -341,24 +492,70 @@ class DevicesView(QWidget):
         grid.setContentsMargins(theme.space(8), theme.space(4), theme.space(8), theme.space(4))
         grid.setHorizontalSpacing(theme.space(12))
         self.card_values: dict[str, QLabel] = {}
-        for k, (key, label) in enumerate(
-            (
-                ("part", strings.DV_CARD_PART),
-                ("gender", strings.DV_CARD_GENDER),
-                ("keying", strings.DV_CARD_KEYING),
-                ("carries", strings.DV_CARD_CARRIES),
-                ("allocation", strings.DV_CARD_ALLOCATION),
-            )
-        ):
-            cap = QLabel(label)
-            cap.setProperty("muted", True)
-            value = QLabel()
-            value.setObjectName(f"devices-card-{key}")
-            value.setWordWrap(True)
-            value.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-            grid.addWidget(cap, k, 0, Qt.AlignmentFlag.AlignTop)
-            grid.addWidget(value, k, 1)
-            self.card_values[key] = value
+
+        def caption(text: str) -> QLabel:
+            label = QLabel(text)
+            label.setProperty("muted", True)
+            return label
+
+        def value(key: str) -> QLabel:
+            label = QLabel()
+            label.setObjectName(f"devices-card-{key}")
+            label.setWordWrap(True)
+            label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            self.card_values[key] = label
+            return label
+
+        top = Qt.AlignmentFlag.AlignTop
+        self.part_edit = QComboBox()
+        self.part_edit.setObjectName("devices-card-part-edit")
+        self.part_edit.setAccessibleName(strings.DV_CARD_PART)
+        self.part_edit.setMinimumWidth(theme.px(200))
+        self.part_edit.setToolTip(strings.DV_CARD_PART_TIP)
+        self.part_edit.activated.connect(self._part_chosen)
+        part_box = QHBoxLayout()
+        part_box.addWidget(self.part_edit)
+        part_box.addWidget(value("part"), 1)
+        grid.addWidget(caption(strings.DV_CARD_PART), 0, 0, top)
+        grid.addLayout(part_box, 0, 1)
+        self.gender_edit = QComboBox()
+        self.gender_edit.setObjectName("devices-card-gender-edit")
+        self.gender_edit.setAccessibleName(strings.DV_CARD_GENDER)
+        self.gender_edit.setToolTip(strings.DV_CARD_GENDER_TIP)
+        for g in _GENDERS:
+            self.gender_edit.addItem(strings.DV_GENDER[g], g)
+        self.gender_edit.activated.connect(self._gender_chosen)
+        self.keying_edit = QLineEdit()
+        self.keying_edit.setObjectName("devices-card-keying-edit")
+        self.keying_edit.setAccessibleName(strings.DV_CARD_KEYING)
+        self.keying_edit.setToolTip(strings.DV_CARD_KEYING_TIP)
+        self.keying_edit.setPlaceholderText(strings.DV_CARD_NONE)
+        self.keying_edit.editingFinished.connect(self._keying_edited)
+        gender_box = QHBoxLayout()
+        gender_box.addWidget(self.gender_edit)
+        gender_box.addWidget(caption(strings.DV_CARD_KEYING))
+        gender_box.addWidget(self.keying_edit, 1)
+        grid.addWidget(caption(strings.DV_CARD_GENDER), 1, 0, top)
+        grid.addLayout(gender_box, 1, 1)
+        self.carries_btn = QToolButton()
+        self.carries_btn.setObjectName("devices-card-carries-edit")
+        self.carries_btn.setText(strings.DV_CARRIES_EDIT)
+        self.carries_btn.setAccessibleName(strings.DV_CARRIES_EDIT)
+        self.carries_btn.setToolTip(strings.DV_CARRIES_TIP)
+        self.carries_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.carries_menu = QMenu(self.carries_btn)
+        self.carries_btn.setMenu(self.carries_menu)
+        self.carries_suggest = QPushButton()
+        self.carries_suggest.setObjectName("devices-card-carries-suggest")
+        self.carries_suggest.clicked.connect(self._use_suggestion)
+        carries_box = QHBoxLayout()
+        carries_box.addWidget(value("carries"), 1)
+        carries_box.addWidget(self.carries_suggest)
+        carries_box.addWidget(self.carries_btn)
+        grid.addWidget(caption(strings.DV_CARD_CARRIES), 2, 0, top)
+        grid.addLayout(carries_box, 2, 1)
+        grid.addWidget(caption(strings.DV_CARD_ALLOCATION), 3, 0, top)
+        grid.addWidget(value("allocation"), 3, 1)
         grid.setColumnStretch(1, 1)
         rl.addWidget(self.card)
 
@@ -366,13 +563,26 @@ class DevicesView(QWidget):
         self.pins_caption = self._caption(strings.DV_PINS)
         bar.addWidget(self.pins_caption)
         bar.addStretch(1)
+        self.pin_buttons: dict[str, QPushButton] = {}
+        for key, icon_name, text, tip, shortcut, slot in (
+            ("add", "plus", strings.DV_ADD_PIN, strings.DV_ADD_PIN_TIP, "Insert", self._insert_pin),
+            ("delete", "close", strings.DV_DELETE_PINS, strings.DV_DELETE_PINS_TIP, "Shift+Delete", self._request_delete_pins),
+            ("fill", "interface-type", strings.DV_FILL, strings.DV_FILL_TIP, "Ctrl+L", self._request_fill),
+            ("assign", "interface", strings.DV_ASSIGN, strings.DV_ASSIGN_TIP, "Ctrl+Enter", self._request_assign),
+        ):  # fmt: skip
+            b = QPushButton()
+            b.setObjectName(f"devices-pin-{key}")
+            icon_button(b, icon_name, theme, tip, shortcut, text=text)
+            b.clicked.connect(lambda _c=False, f=slot: f())
+            self.pin_buttons[key] = b
+            bar.addWidget(b)
         self.pin_filter = QLineEdit()
         self.pin_filter.setObjectName("devices-pin-filter")
         self.pin_filter.setPlaceholderText(strings.DV_PIN_FILTER)
         self.pin_filter.setAccessibleName(strings.DV_PIN_FILTER)
         self.pin_filter.setToolTip(f"{strings.DV_PIN_FILTER_TIP} (Ctrl+F)")
         self.pin_filter.setClearButtonEnabled(True)
-        self.pin_filter.setMaximumWidth(theme.px(180))
+        self.pin_filter.setMaximumWidth(theme.px(160))
         self.contact_btn = QPushButton()
         self.contact_btn.setObjectName("devices-contact")
         self.contact_btn.setCheckable(True)
@@ -383,15 +593,39 @@ class DevicesView(QWidget):
         bar.addWidget(self.pin_filter)
         bar.addWidget(self.contact_btn)
         rl.addLayout(bar)
-        self.pin_model = DictTableModel(PIN_COLUMNS, (), self.theme)
-        self.pin_table = TableView(
+        self.pin_model = PinModel(PIN_COLUMNS, (), self.theme)
+        self.pin_table = PinTable(
             self.pin_model, self.theme, name=strings.DV_PINS, settings=self.settings,
             key="devices-pins",
         )  # fmt: skip
         self.pin_table.setObjectName("devices-pin-table")
-        self.pin_table.sortByColumn(-1, Qt.SortOrder.AscendingOrder)
+        self.pin_table.setItemDelegate(
+            PinDelegate(
+                self.theme,
+                self._signal_choices,
+                self._validate_cell,
+                self._show_error,
+                self.pin_table,
+            )
+        )
         self.pin_table.activated.connect(self._pin_activated)
+        self.pin_model.cellEdited.connect(self._cell_edited)
+        self.pin_table.insertRequested.connect(self._insert_pin)
+        self.pin_table.deleteRequested.connect(self._request_delete_pins)
+        self.pin_table.clearRequested.connect(self._clear_signals)
+        self.pin_table.cycleModeRequested.connect(self._cycle_mode)
+        self.pin_table.fillRequested.connect(self._request_fill)
+        self.pin_table.assignRequested.connect(self._request_assign)
+        self.pin_table.pasteRequested.connect(self._paste)
+        self.pin_table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.pin_table.customContextMenuRequested.connect(self._pin_menu)
         rl.addWidget(self.pin_table, 1)
+        self.edit_error = QLabel()
+        self.edit_error.setObjectName("devices-edit-error")
+        self.edit_error.setProperty("error", True)
+        self.edit_error.setWordWrap(True)
+        self.edit_error.hide()
+        rl.addWidget(self.edit_error)
         self.pin_count = QLabel()
         self.pin_count.setObjectName("devices-pin-count")
         self.pin_count.setProperty("muted", True)
@@ -405,7 +639,7 @@ class DevicesView(QWidget):
         )  # fmt: skip
         self.note_table.setObjectName("devices-note-table")
         self.note_table.setToolTip(strings.DV_NOTES_TIP)
-        self.note_table.setMaximumHeight(theme.px(150))
+        self.note_table.setMaximumHeight(theme.px(96))
         self.note_table.activated.connect(self._note_activated)
         rl.addWidget(self.note_table)
         self.note_label = QLabel()
@@ -461,6 +695,7 @@ class DevicesView(QWidget):
         self._unit = unit_id
         if connector_id is not None:
             self._cid = connector_id
+        self._key = None
         self.refresh()
         return True
 
@@ -484,12 +719,44 @@ class DevicesView(QWidget):
         self.pin_table.scrollTo(index)
         return True
 
+    def _reselect(self, current: str, pins: list[str]) -> None:
+        """Select these pins again after the rows were replaced (the cursor on `current`)."""
+        sm = self.pin_table.selectionModel()
+        if sm is None:
+            return
+        flags = QItemSelectionModel.SelectionFlag.Select | QItemSelectionModel.SelectionFlag.Rows
+        sm.clearSelection()
+        for pid in pins:
+            row = self._pin_index.get(pid)
+            if row is not None:
+                sm.select(self.pin_table.proxy.mapFromSource(self.pin_model.index(row, 0)), flags)
+        row = self._pin_index[current]
+        sm.setCurrentIndex(
+            self.pin_table.proxy.mapFromSource(self.pin_model.index(row, 0)),
+            QItemSelectionModel.SelectionFlag.NoUpdate,
+        )
+
     def current_pin(self) -> str | None:
         index = self.pin_table.currentIndex()
         if not index.isValid():
             return None
         row = self.pin_table.row_at(index)
         return str(row["pin"]) if isinstance(row, dict) else None
+
+    def selected_pins(self) -> list[str]:
+        """The pins of the selected rows, in the order of the table; the current pin when no row
+        is selected."""
+        rows = self.pin_table.selected_rows()
+        pins = [str(r["pin"]) for r in rows if isinstance(r, dict)]
+        if not pins and (cur := self.current_pin()):
+            pins = [cur]
+        return pins
+
+    def current_column(self) -> str | None:
+        index = self.pin_table.currentIndex()
+        if not index.isValid():
+            return None
+        return str(self.pin_model.columns[self.pin_table.proxy.mapToSource(index).column()].key)
 
     def notes(self) -> list[devices.PinProblem]:
         """The notes shown under the pin table."""
@@ -514,6 +781,19 @@ class DevicesView(QWidget):
         path.write_bytes(data)
         return path
 
+    def focus_name(self) -> None:
+        """Put the keyboard in the name of the device, selected (a new device is named first)."""
+        self.name.setFocus()
+        self.name.selectAll()
+
+    def select_part(self, part_id: str) -> None:
+        """Choose a part in the picker of the add-connector row (after New part)."""
+        self._fill_parts()
+        i = self.part_picker.findData(part_id)
+        if i >= 0:
+            self.part_picker.setCurrentIndex(i)
+            self.part_picker.setFocus()
+
     def refresh(self) -> None:
         """Bring everything in line with the project (the pin table keeps its selection)."""
         self._timer.stop()
@@ -535,7 +815,7 @@ class DevicesView(QWidget):
         self._show_unit_now()
         self._key = (self.ctl.state_token, self._unit, self._cid, self.ctl.read_only)
 
-    # ---- internals ---------------------------------------------------------------------------
+    # ---- internals: following the project ------------------------------------------------------
     def _invalidate(self) -> None:
         self._dirty = True
         self._key = None
@@ -553,6 +833,12 @@ class DevicesView(QWidget):
     def _focus_filter(self) -> None:
         self.pin_filter.setFocus()
         self.pin_filter.selectAll()
+
+    def _focus_part_picker(self) -> None:
+        self.part_picker.setFocus()
+        line = self.part_picker.lineEdit()
+        if line is not None:
+            line.selectAll()
 
     def _refresh_units(self) -> None:
         ids = sorted(self.ctl.project.units, key=natural_key)
@@ -589,6 +875,7 @@ class DevicesView(QWidget):
         uid = self.selector.currentData()
         if isinstance(uid, str) and uid != self._unit and not self._syncing:
             self._unit, self._cid = uid, None
+            self.cancel_confirm()
             self.refresh()
             self.ctl.select("unit", uid)  # (the diagram and the tree follow)
             self.deviceChanged.emit(uid)
@@ -602,10 +889,22 @@ class DevicesView(QWidget):
         key, word = _DEVICE_STATE[state.state]
         self.state_chip.set_state(key, word)
         self.state_chip.setToolTip(state.sentence)
-        self.name.setText(unit.name)
-        self.subsystem.setText(
-            f"{strings.DV_SUBSYSTEM.format(unit.subsystem)} · {strings.DV_CHAIN[unit.side]}"
-        )
+        ro = self.ctl.read_only
+        self._syncing = True
+        try:
+            if not self.name.hasFocus():
+                self.name.setText(unit.name)
+            self._fill_subsystems(unit.subsystem)
+            self.chain.setCurrentIndex(max(0, self.chain.findData(unit.side)))
+        finally:
+            self._syncing = False
+        # the design fields of a released device stay as they are, with the reason
+        design_lock = field_lock_reason(p, "unit", uid, "subsystem")
+        self.subsystem.setEnabled(not ro and not design_lock)
+        self.chain.setEnabled(not ro and not design_lock)
+        self.name.setEnabled(not ro)
+        self.subsystem.setToolTip(design_lock or strings.DV_SUBSYSTEM_TIP)
+        self.chain.setToolTip(design_lock or strings.DV_CHAIN_TIP)
         pins = sum(len(c.pins) for c in conns)
         signals = sum(1 for c in conns for x in c.pins if x.signal)
         self.counts.setText(
@@ -616,7 +915,11 @@ class DevicesView(QWidget):
                 interfaces=plural(strings.DV_N_INTERFACES, len(state.interfaces)),
             )
         )
-        self.duplicate_btn.setEnabled(not self.ctl.read_only)
+        self.duplicate_btn.setEnabled(not ro)
+        self._banner_for(state)
+        self._fill_parts()
+        self.part_picker.setEnabled(not ro)
+        self.add_connector_btn.setEnabled(not ro)
         # connectors
         problems = {c.id: devices.pinout_problems(p, c.id) for c in conns}
         rows = []
@@ -637,6 +940,8 @@ class DevicesView(QWidget):
                 }
             )  # fmt: skip
         ids = [c.id for c in conns]
+        if self._want_connector in ids:
+            self._cid, self._want_connector = self._want_connector, None
         if self._cid not in ids:
             self._cid = ids[0] if ids else None
         self._syncing = True
@@ -647,6 +952,7 @@ class DevicesView(QWidget):
                 self.conn_table.selectRow(ids.index(self._cid))
         finally:
             self._syncing = False
+        self.delete_connector_btn.setEnabled(bool(conns) and not ro)
         # the pinout as exported
         self._pinout = devices.pinout_table(p, uid)
         header, body = self._pinout[0], self._pinout[1:]
@@ -655,44 +961,141 @@ class DevicesView(QWidget):
         self.export_btn.setEnabled(bool(body))
         self._show_connector(problems.get(self._cid or "", []))
 
+    def _fill_subsystems(self, current: str) -> None:
+        names = sorted({u.subsystem for u in self.ctl.project.units.values()} | {current})
+        have = [self.subsystem.itemText(i) for i in range(self.subsystem.count())]
+        if have != names:
+            self.subsystem.clear()
+            self.subsystem.addItems(names)
+        if not self.subsystem.hasFocus():
+            self.subsystem.setCurrentText(current)
+
+    def _fill_parts(self) -> None:
+        """The part pickers: connector parts of the library; the first entry of the add row is
+        New part."""
+        parts = sorted(
+            (p for p in self.ctl.project.parts.values() if p.category == "connector"),
+            key=lambda p: natural_key(p.id),
+        )
+        labels = [
+            (p.id, f"{p.id} · {plural(strings.DV_N_PINS, p.pin_count)}" if p.pin_count else p.id)
+            for p in parts
+        ]
+        for box, new in ((self.part_picker, True), (self.part_edit, False)):
+            want = ([(_NEW_PART, strings.DV_NEW_PART)] if new else []) + labels
+            have = [(str(box.itemData(i)), box.itemText(i)) for i in range(box.count())]
+            if have != want:
+                keep = box.currentData()
+                box.blockSignals(True)
+                box.clear()
+                for data, text in want:
+                    box.addItem(text, data)
+                idx = box.findData(keep) if keep is not None else -1
+                box.setCurrentIndex(idx if idx >= 0 else (1 if new and len(want) > 1 else 0))
+                box.blockSignals(False)
+        comp = self.part_picker.completer()
+        if comp is not None:
+            comp.setCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
+            comp.setFilterMode(Qt.MatchFlag.MatchContains)
+
+    def _banner_for(self, state: devices.DeviceState) -> None:
+        ro = self.ctl.read_only
+        hid = state.released_by[0].harness_id if state.released_by else None
+        self._banner_harness = hid
+        if ro:
+            self.banner.setProperty("severity", "warning")
+            self.banner_text.setText(strings.DV_READ_ONLY_BANNER)
+            self.banner_btn.hide()
+            self.banner.show()
+        elif state.state == "locked" and hid:
+            self.banner.setProperty("severity", "info")
+            self.banner_text.setText(state.sentence)
+            self.banner_btn.show()
+            self.banner_btn.setToolTip(strings.DV_REVISE_TIP_FOR.format(hid))
+            self.banner.show()
+        else:
+            self.banner.hide()
+        style = self.banner.style()
+        style.unpolish(self.banner)
+        style.polish(self.banner)
+
     def _show_connector(self, problems: list[devices.PinProblem]) -> None:
         p = self.ctl.project
         cid = self._cid
+        keep_pin = self._want_pin or self.current_pin()
+        kept = [] if self._want_pin else self.selected_pins()
+        self._want_pin = None
+        ro = self.ctl.read_only
+        self.pin_model.read_only = ro
+        for b in self.pin_buttons.values():
+            b.setEnabled(cid is not None and not ro)
         if cid is None or cid not in p.connectors:
+            for w in (self.part_edit, self.gender_edit, self.keying_edit, self.carries_btn):
+                w.setEnabled(False)
+            self.carries_suggest.hide()
             self.pin_model.update_rows([])
             self.note_model.update_rows([])
             self._pin_index = {}
             self._notes = []
+            self._frozen = None
             for label in self.card_values.values():
                 label.setText("")
+            self.keying_edit.setText("")
             self.pin_count.setText("")
             self.note_label.setText("")
             return
         c = p.connectors[cid]
         part = p.parts.get(c.part_id)
-        self.card_values["part"].setText(
-            f"{c.part_id}" + (f" · {part.description}" if part and part.description else "")
-        )
-        self.card_values["gender"].setText(strings.DV_GENDER[c.gender])
-        self.card_values["keying"].setText(c.keying or strings.DV_CARD_NONE)
+        frozen = devices.pin_set_frozen(p, cid)
+        self._frozen = frozen
+        self._syncing = True
+        try:
+            self.part_edit.setCurrentIndex(max(0, self.part_edit.findData(c.part_id)))
+            self.gender_edit.setCurrentIndex(max(0, self.gender_edit.findData(c.gender)))
+            if not self.keying_edit.hasFocus():
+                self.keying_edit.setText(c.keying or "")
+        finally:
+            self._syncing = False
+        for w in (self.part_edit, self.gender_edit, self.keying_edit):
+            w.setEnabled(not ro and not frozen)
+        self.carries_btn.setEnabled(not ro)
+        self.part_edit.setToolTip(frozen or strings.DV_CARD_PART_TIP)
+        self.gender_edit.setToolTip(frozen or strings.DV_CARD_GENDER_TIP)
+        self.keying_edit.setToolTip(frozen or strings.DV_CARD_KEYING_TIP)
+        self.card_values["part"].setText(part.description if part and part.description else "")
         self.card_values["carries"].setText(
             ", ".join(p.interface_types[t].name if t in p.interface_types else t for t in c.carries)
             or strings.DV_CARD_ANY
         )
+        self._fill_carries_menu(c.carries)
+        self._suggestion = [t for t in devices.suggest_carries(p, cid) if t not in c.carries]
+        self.carries_suggest.setVisible(bool(self._suggestion) and not ro)
+        if self._suggestion:
+            names = ", ".join(p.interface_types[t].name for t in self._suggestion)
+            self.carries_suggest.setText(strings.DV_CARRIES_SUGGEST.format(names))
+            self.carries_suggest.setAccessibleName(strings.DV_CARRIES_SUGGEST.format(names))
+            self.carries_suggest.setToolTip(strings.DV_CARRIES_SUGGEST_TIP)
         fixed = any(x.fixed and x.signal for x in c.pins)
         self.card_values["allocation"].setText(
             strings.DV_ALLOC_FIXED if fixed else strings.DV_ALLOC_AUTO
         )
-        frozen = devices.pin_set_frozen(p, cid)
         self.card.setProperty("severity", "info" if frozen else "")
         self.card.style().unpolish(self.card)
         self.card.style().polish(self.card)
         self.card.setToolTip(frozen or "")
         rows = devices.pin_rows(p, cid, problems=problems)
-        data = pin_rows_for_table(rows, problems)
+        data = pin_rows_for_table(rows, problems, frozen)
         self._pin_index = {r.pin: k for k, r in enumerate(rows)}
         self.pins_caption.setText(strings.DV_PIN_TABLE.format(c.name))
         self.pin_table.setAccessibleName(strings.DV_PIN_TABLE.format(c.id))
+        for key in ("add", "delete"):
+            self.pin_buttons[key].setEnabled(not ro and not frozen)
+            base, keys = (
+                (strings.DV_ADD_PIN_TIP, "Insert")
+                if key == "add"
+                else (strings.DV_DELETE_PINS_TIP, "Shift+Delete")
+            )
+            self.pin_buttons[key].setToolTip(frozen or tooltip_text(base, keys))
         self.pin_model.update_rows(data)
         self._notes = list(problems)
         self.note_model.update_rows(
@@ -713,6 +1116,29 @@ class DevicesView(QWidget):
         )
         self.note_table.setVisible(bool(problems))
         self._update_pin_count()
+        if keep_pin is not None and keep_pin in self._pin_index:
+            if len(kept) > 1 and keep_pin in kept:
+                self._reselect(keep_pin, kept)
+            else:
+                self.select_pin(keep_pin)
+
+    def _fill_carries_menu(self, carried: list[str]) -> None:
+        self.carries_menu.clear()
+        types = sorted(
+            self.ctl.project.interface_types.values(), key=lambda x: (x.name.casefold(), x.id)
+        )
+        for t in types:
+            act = QAction(t.name, self.carries_menu)
+            act.setCheckable(True)
+            act.setChecked(t.id in carried)
+            act.setData(t.id)
+            act.setToolTip(t.id)
+            act.toggled.connect(lambda _on: self._carries_toggled())
+            self.carries_menu.addAction(act)
+        self.carries_menu.addSeparator()
+        new = QAction(strings.DV_NEW_TYPE_MENU, self.carries_menu)
+        new.triggered.connect(self.newTypeRequested)
+        self.carries_menu.addAction(new)
 
     def _update_pin_count(self) -> None:
         shown, total = self.pin_table.proxy.rowCount(), self.pin_model.rowCount()
@@ -734,6 +1160,7 @@ class DevicesView(QWidget):
         if isinstance(cid, str) and cid != self._cid:
             self._cid = cid
             self._key = None
+            self.cancel_confirm()
             self.refresh()
             self.connectorChanged.emit(cid)
 
@@ -751,9 +1178,420 @@ class DevicesView(QWidget):
             self.pin_table.setFocus()
 
     def _duplicate(self) -> None:
-        if self._unit is not None:
+        if self._unit is not None and not self.ctl.read_only:
             self.duplicateRequested.emit(self._unit)
 
     def _export(self) -> None:
         if self._unit is not None:
             self.exportPinoutRequested.emit(self._unit)
+
+    def _revise(self) -> None:
+        if self._banner_harness is not None:
+            self.reviseRequested.emit(self._banner_harness)
+
+    # ---- internals: asking a question on a line of the tab -------------------------------------
+    def ask(
+        self,
+        text: str,
+        ok: str,
+        apply: Callable[[list[bool]], None],
+        checks: tuple[tuple[str, bool], ...] = (),
+    ) -> None:
+        """Show a question with the options as check boxes and Apply/Cancel; `apply` gets the
+        state of each check box. Esc or Cancel drops it. Nothing happens until Apply."""
+        self.cancel_confirm()
+        self.confirm_text.setText(text)
+        self.confirm_ok.setText(ok)
+        self.confirm_ok.setAccessibleName(ok)
+        self.confirm_ok.setToolTip(ok)
+        for label, on in checks:
+            box = QCheckBox(label)
+            box.setChecked(on)
+            box.setAccessibleName(label)
+            box.setToolTip(label)
+            self.confirm_checks.append(box)
+            self.confirm_checks_box.addWidget(box)
+        self._confirm = apply
+        self.confirm_bar.show()
+        self.confirm_ok.setFocus()
+
+    def cancel_confirm(self) -> None:
+        for box in self.confirm_checks:
+            self.confirm_checks_box.removeWidget(box)
+            box.deleteLater()
+        self.confirm_checks = []
+        self._confirm = None
+        self.confirm_bar.hide()
+
+    def _confirmed(self) -> None:
+        apply, states = self._confirm, [b.isChecked() for b in self.confirm_checks]
+        self.cancel_confirm()
+        if apply is not None:
+            apply(states)
+
+    def _do(self, method: Callable[..., Any], *args: Any, **kwargs: Any) -> Any:
+        """Run a controller action for this tab: when it is refused, the sentence is shown on the
+        tab (under the table) as well as in the status line."""
+        self._acting = True
+        try:
+            return method(*args, **kwargs)
+        finally:
+            self._acting = False
+
+    def _on_message(self, text: str, offer_undo: bool) -> None:
+        if self._acting and not offer_undo:
+            self._show_error(text)
+
+    def _show_error(self, message: str) -> None:
+        self.edit_error.setText(message)
+        self.edit_error.setVisible(bool(message))
+
+    def _reload(self) -> None:
+        """Show the project's values again (after a change that was refused)."""
+        self._key = None
+        self._invalidate()
+
+    # ---- internals: editing the header ---------------------------------------------------------
+    def _name_edited(self) -> None:
+        if self._syncing or self._unit is None:
+            return
+        text = self.name.text().strip()
+        if text != self.ctl.project.units[self._unit].name:
+            if self._do(self.ctl.update_device, self._unit, name=text):
+                self._reload()
+            else:
+                self.name.setText(self.ctl.project.units[self._unit].name)
+
+    def _subsystem_edited(self) -> None:
+        if self._syncing or self._unit is None:
+            return
+        text = self.subsystem.currentText().strip()
+        if text != self.ctl.project.units[self._unit].subsystem and not self._do(
+            self.ctl.update_device, self._unit, subsystem=text
+        ):
+            self._reload()
+
+    def _chain_edited(self, _i: int) -> None:
+        if self._syncing or self._unit is None:
+            return
+        side = self.chain.currentData()
+        if side != self.ctl.project.units[self._unit].side and not self._do(
+            self.ctl.update_device, self._unit, side=side
+        ):
+            self._reload()
+
+    # ---- internals: connectors -----------------------------------------------------------------
+    def _part_picked(self, _i: int) -> None:
+        if self.part_picker.currentData() == _NEW_PART:
+            self.newPartRequested.emit()
+
+    def _add_connector(self) -> None:
+        if self._unit is None or self.ctl.read_only:
+            return
+        part = self.part_picker.currentData()
+        if part == _NEW_PART:
+            self.newPartRequested.emit()
+            return
+        text = self.part_picker.currentText().strip()
+        if not part and text:  # typed: an ID, or the start of one
+            hit = self.part_picker.findText(text, Qt.MatchFlag.MatchStartsWith)
+            part = self.part_picker.itemData(hit) if hit >= 0 else text
+        if not isinstance(part, str) or not part:
+            self._show_error(strings.DV_PICK_PART)
+            return
+        cid = self._do(self.ctl.add_connector, self._unit, part)
+        if cid:
+            self._show_error("")
+            self._want_connector = cid
+            self._reload()
+            self.refresh()
+            self.connectorChanged.emit(cid)
+
+    def _return_in_picker(self) -> None:
+        """Enter in the part picker adds the connector (Qt reports Return in an editable combo
+        box twice for one key press; the second is ignored)."""
+        if self._adding:
+            return
+        self._adding = True
+        QTimer.singleShot(0, lambda: setattr(self, "_adding", False))
+        self._add_connector()
+
+    def _delete_connector(self) -> None:
+        cid = self._cid
+        if cid is None:
+            return
+        impact = devices.connector_delete_impact(self.ctl.project, cid)
+        if impact.frozen:
+            self._show_error(impact.frozen)
+            return
+        if impact.blocked_by_harnesses:
+            self._show_error(
+                strings.DV_DELETE_BLOCKED.format(cid, ", ".join(impact.blocked_by_harnesses))
+            )
+            return
+        parts = [strings.DV_DELETE_CONNECTOR_Q.format(cid)]
+        if impact.interfaces:
+            parts.append(strings.DV_DELETE_CONNECTOR_IFS.format(", ".join(impact.interfaces)))
+        if impact.outdated_harnesses:
+            parts.append(strings.DV_OUTDATED.format(", ".join(impact.outdated_harnesses)))
+        self.ask(
+            " ".join(parts),
+            strings.DV_DELETE_CONNECTOR_OK,
+            lambda _s: self._do_delete_connector(cid),
+        )
+
+    def _do_delete_connector(self, cid: str) -> None:
+        if self._do(self.ctl.delete_connector, cid):
+            self._cid = None
+            self._show_error("")
+
+    def _part_chosen(self, _i: int) -> None:
+        cid = self._cid
+        part_id = self.part_edit.currentData()
+        if self._syncing or cid is None or not isinstance(part_id, str):
+            return
+        if part_id == self.ctl.project.connectors[cid].part_id:
+            return
+        try:
+            plan = devices.plan_change_part(self.ctl.project, cid, part_id)
+        except EditError as exc:
+            self._show_error(str(exc))
+            self._reload()
+            return
+        if plan.frozen:
+            self._show_error(plan.frozen)
+            self._reload()
+            return
+        if plan.blocked:
+            self._show_error(
+                strings.DV_PART_BLOCKED.format(
+                    plan.new_pin_count, plan.old_pin_count, ", ".join(plan.blocked)
+                )
+            )
+            self._reload()
+            return
+        checks: list[tuple[str, bool]] = []
+        if plan.add or plan.remove:
+            checks.append((strings.DV_PART_RESIZE.format(plan.new_pin_count), True))
+        if plan.gender is not None:
+            checks.append((strings.DV_PART_SET_GENDER.format(strings.DV_GENDER[plan.gender]), True))
+        if not checks:
+            self._do(self.ctl.change_connector_part, cid, part_id, resize=False, regender=False)
+            return
+        resizes = bool(plan.add or plan.remove)
+
+        def apply(states: list[bool]) -> None:
+            resize = states[0] if resizes else False
+            regender = states[-1] if plan.gender is not None else False
+            self._do(self.ctl.change_connector_part, cid, part_id, resize=resize, regender=regender)
+
+        self.ask(strings.DV_PART_Q.format(cid, part_id), strings.DV_PART_OK, apply, tuple(checks))
+
+    def _gender_chosen(self, _i: int) -> None:
+        cid = self._cid
+        if self._syncing or cid is None:
+            return
+        gender = self.gender_edit.currentData()
+        if gender != self.ctl.project.connectors[cid].gender and not self._do(
+            self.ctl.update_connector, cid, gender=gender
+        ):
+            self._reload()
+
+    def _keying_edited(self) -> None:
+        cid = self._cid
+        if self._syncing or cid is None:
+            return
+        text = self.keying_edit.text().strip()
+        if text != (self.ctl.project.connectors[cid].keying or "") and not self._do(
+            self.ctl.update_connector, cid, keying=text
+        ):
+            self._reload()
+
+    def _carries_toggled(self) -> None:
+        cid = self._cid
+        if self._syncing or cid is None:
+            return
+        chosen = [
+            str(a.data()) for a in self.carries_menu.actions() if a.isCheckable() and a.isChecked()
+        ]
+        if chosen != self.ctl.project.connectors[cid].carries:
+            self._do(self.ctl.update_connector, cid, carries=chosen)
+
+    def _use_suggestion(self) -> None:
+        cid = self._cid
+        if cid is None or not self._suggestion:
+            return
+        carried = list(self.ctl.project.connectors[cid].carries)
+        self._do(self.ctl.update_connector, cid, carries=[*carried, *self._suggestion])
+
+    # ---- internals: pins -----------------------------------------------------------------------
+    def _signal_choices(self) -> list[tuple[str, str]]:
+        """(signal name, interface type name) for the signal editor, by interface type."""
+        out: list[tuple[str, str]] = []
+        types = sorted(
+            self.ctl.project.interface_types.values(), key=lambda x: (x.name.casefold(), x.id)
+        )
+        for t in types:
+            out.extend((s.name, t.name) for s in t.signals)
+        return out
+
+    def _validate_cell(self, key: str, row: dict[str, Any], text: str) -> str | None:
+        """What is wrong with this text for this cell (None: nothing), as the planner says."""
+        text = text.strip()
+        if key == "pin":
+            try:
+                devices.check_pin(text)
+            except EditError as exc:
+                return str(exc)
+            cid = self._cid
+            if cid is not None and text.casefold() != str(row.get("pin", "")).casefold():
+                pins = self.ctl.project.connectors[cid].pins
+                if any(p.id.casefold() == text.casefold() for p in pins):
+                    return strings.DV_PIN_EXISTS.format(text)
+            return None
+        if key in ("signal", "contact_size") and len(text) > 200:
+            return strings.DV_TEXT_TOO_LONG
+        return None
+
+    def _cell_edited(self, row_no: int, key: str, value: object) -> None:
+        cid = self._cid
+        row = self.pin_model.row(row_no)
+        if cid is None or not isinstance(row, dict):
+            return
+        pin = str(row["pin"])
+        if key == "pin":
+            new = str(value)
+            if new == pin:
+                return
+            ok = self._do(self.ctl.rename_pin, cid, pin, new)
+            if ok:
+                self._want_pin = new
+            self._cell_done(ok)
+            return
+        old_key = {"mode": "mode_key", "termination": "termination_key"}.get(key, key)
+        if str(value) == str(row.get(old_key) or ""):
+            return
+        self._cell_done(self._do(self.ctl.set_pin, cid, pin, **{key: value}))
+
+    def _cell_done(self, ok: bool) -> None:
+        if ok:
+            self._show_error("")
+        else:
+            self._reload()
+
+    def _insert_pin(self) -> None:
+        cid = self._cid
+        if cid is None or self.ctl.read_only:
+            return
+        after = self.current_pin()
+        new = devices.next_pin_ids(self.ctl.project, cid, 1, after)
+        if self._do(self.ctl.add_pins, cid, None, after=after):
+            self._want_pin = new[0] if new else None
+            self._show_error("")
+
+    def _clear_signals(self) -> None:
+        cid = self._cid
+        pins = self.selected_pins()
+        if cid is None or not pins or self.ctl.read_only:
+            return
+        have = {r.pin: r.signal for r in devices.pin_rows(self.ctl.project, cid)}
+        rows = [{"pin": p, "signal": ""} for p in pins if have.get(p)]
+        if not rows:
+            return
+        label = strings.STEP_CLEAR_SIGNALS.format(len(rows), self.ctl.project.connectors[cid].name)
+        self._do(self.ctl.paste_pin_rows, cid, rows, label)
+
+    def _cycle_mode(self) -> None:
+        cid = self._cid
+        pins = self.selected_pins()
+        if cid is None or not pins or self.ctl.read_only:
+            return
+        modes = {r.pin: r.mode for r in devices.pin_rows(self.ctl.project, cid)}
+        order = list(devices.PIN_MODES)
+        nxt = order[(order.index(modes.get(pins[0], "free")) + 1) % len(order)]
+        rows = [{"pin": p, "mode": nxt} for p in pins]
+        label = strings.STEP_SET_MODE.format(len(rows), self.ctl.project.connectors[cid].name)
+        self._do(self.ctl.paste_pin_rows, cid, rows, label)
+
+    def _request_delete_pins(self) -> None:
+        cid = self._cid
+        pins = self.selected_pins()
+        if cid is None or not pins or self.ctl.read_only:
+            return
+        impact = devices.pin_impact(self.ctl.project, cid, pins)
+        if impact.frozen:
+            self._show_error(impact.frozen)
+            return
+        if impact.locked:
+            self._show_error(impact.locked[0][1])
+            return
+        if impact.blocked_by_harnesses:
+            self._show_error(
+                strings.DV_DELETE_BLOCKED.format(
+                    ", ".join(pins), ", ".join(impact.blocked_by_harnesses)
+                )
+            )
+            return
+        text = strings.DV_DELETE_PINS_Q.format(", ".join(pins))
+        if impact.sentence():
+            text += " " + impact.sentence()[0].upper() + impact.sentence()[1:] + "."
+        self.ask(text, strings.DV_DELETE_PINS_OK, lambda _s: self._do_delete_pins(cid, pins))
+
+    def _do_delete_pins(self, cid: str, pins: list[str]) -> None:
+        if self._do(self.ctl.delete_pins, cid, pins):
+            self._show_error("")
+            self.pin_table.setFocus()
+
+    def _request_fill(self) -> None:
+        cid, pins = self._cid, self.selected_pins()
+        if cid is not None and pins and not self.ctl.read_only:
+            self.fillRequested.emit(cid, pins)
+
+    def _request_assign(self) -> None:
+        cid, pins = self._cid, self.selected_pins()
+        if cid is not None and pins and not self.ctl.read_only:
+            self.assignRequested.emit(cid, pins)
+
+    def _unassign(self) -> None:
+        cid, pins = self._cid, self.selected_pins()
+        if cid is None or not pins or self.ctl.read_only:
+            return
+        self._do(self.ctl.unassign_pins, cid, pins)
+
+    def _paste(self) -> None:
+        cid = self._cid
+        if cid is None or self.ctl.read_only:
+            return
+        text = QGuiApplication.clipboard().text()
+        try:
+            rows, label = plan_paste(
+                self.ctl.project, cid, (self.current_pin(), self.current_column()), text
+            )
+        except EditError as exc:
+            self._show_error(str(exc))
+            return
+        if self._do(self.ctl.paste_pin_rows, cid, rows, label):
+            self._show_error("")
+
+    def paste_text(self, text: str) -> bool:
+        """Paste this text as if it came from the clipboard (for tests and scripts); True when
+        the project changed."""
+        QGuiApplication.clipboard().setText(text)
+        before = self.ctl.history.revision
+        self._paste()
+        return self.ctl.history.revision != before
+
+    def _pin_menu(self, pos: Any) -> None:
+        menu = QMenu(self.pin_table)
+        for text, slot in (
+            (strings.DV_ADD_PIN, self._insert_pin),
+            (strings.DV_DELETE_PINS, self._request_delete_pins),
+            (strings.DV_FILL, self._request_fill),
+            (strings.DV_ASSIGN, self._request_assign),
+            (strings.DV_UNASSIGN, self._unassign),
+            (strings.DV_PASTE, self._paste),
+        ):
+            act = menu.addAction(text)
+            act.setEnabled(not self.ctl.read_only)
+            act.triggered.connect(lambda _c=False, f=slot: f())
+        menu.exec(self.pin_table.viewport().mapToGlobal(pos))
