@@ -22,7 +22,7 @@ concurrency:
 
 defaults:
   run:
-    working-directory: harness
+    working-directory: HarnessDesignStudio
 
 jobs:
   release:
@@ -52,14 +52,14 @@ jobs:
       - name: Frozen app self-test
         env:
           QT_QPA_PLATFORM: offscreen
-        run: dist/harness-design-studio/harness-design-studio --selftest
+        run: dist/harness-design-studio/harness-design-studio-gui --selftest
       - name: Install the .deb and run it
         env:
           QT_QPA_PLATFORM: offscreen
         run: |
           sudo apt-get install -y ./dist/harness-design-studio_*_amd64.deb
           test "$(harness --version)" = "harness ${TAG#v}"
-          harness-design-studio --selftest
+          harness-design-studio-gui --selftest
           test -f /usr/share/doc/harness-design-studio/copyright
       - name: Checksums (SHA256SUMS next to the packages, names without folders)
         run: |
@@ -72,10 +72,10 @@ jobs:
           name: harness-design-studio-${{ env.TAG }}
           if-no-files-found: error
           path: |
-            harness/dist/*.deb
-            harness/dist/*.tar.gz
-            harness/dist/SHA256SUMS
-            harness/dist/scf.json
+            HarnessDesignStudio/dist/*.deb
+            HarnessDesignStudio/dist/*.tar.gz
+            HarnessDesignStudio/dist/SHA256SUMS
+            HarnessDesignStudio/dist/scf.json
       - name: Publish the release page
         run: |
           title="Harness Design Studio ${TAG#v}"

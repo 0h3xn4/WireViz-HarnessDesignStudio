@@ -1,4 +1,4 @@
-<p align="center"><img src="harness/docs/img/banner.svg" alt="Harness Design Studio: offline spacecraft wiring-harness design" width="100%"></p>
+<p align="center"><img src="HarnessDesignStudio/docs/img/banner.svg" alt="Harness Design Studio: offline spacecraft wiring-harness design" width="100%"></p>
 
 # Harness Design Studio
 
@@ -7,11 +7,11 @@
 
 [![latest release](https://img.shields.io/github/v/release/0h3xn4/WireViz-harnessdesignstudio?label=release&color=4a1fb8)](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest)
 [![harness-design-studio CI](https://github.com/0h3xn4/WireViz-harnessdesignstudio/actions/workflows/harness-ci.yml/badge.svg?branch=master)](https://github.com/0h3xn4/WireViz-harnessdesignstudio/actions/workflows/harness-ci.yml)
-[![Ubuntu 24.04 or newer](https://img.shields.io/badge/Ubuntu-24.04%2B-E95420?logo=ubuntu&logoColor=white)](harness/docs/INSTALL.md)
+[![Ubuntu 24.04 or newer](https://img.shields.io/badge/Ubuntu-24.04%2B-E95420?logo=ubuntu&logoColor=white)](HarnessDesignStudio/docs/INSTALL.md)
 
 An offline desktop tool for designing the electrical harnesses of a spacecraft: you draw the units and the connections between them, and the tool works out the connectors, pins and wires, checks them, and writes the drawings and lists.
 
-![A bench of 23 flight and ground units joined by links; the legend at the bottom left of the diagram explains the pictures](harness/docs/img/flatsat-overview.png)
+![A bench of 23 flight and ground units joined by links; the legend at the bottom left of the diagram explains the pictures](HarnessDesignStudio/docs/img/flatsat-overview.png)
 
 *The `flatsat` example, one of the five projects that come with the tool.*
 
@@ -44,24 +44,24 @@ sha256sum -c SHA256SUMS --ignore-missing
 sudo apt install ./harness-design-studio_1.0.0_amd64.deb
 ```
 
-That installs the `harness` command and the `harness-gui` app; the packages are not signed, so the checksum check is the only proof that the download is intact. The release page also has a `.tar.gz` with an `install.sh` that needs no administrator rights.
+That installs the `harness-design-studio` command line tool (`harness` works as a short alias) and the `harness-design-studio-gui` app; the packages are not signed, so the checksum check is the only proof that the download is intact. The release page also has a `.tar.gz` with an `install.sh` that needs no administrator rights.
 
 **From the source code.** These commands install the command line tool in a private Python environment and make a practice project:
 
 ```
 sudo apt install python3-venv git
 git clone https://github.com/0h3xn4/WireViz-harnessdesignstudio.git
-cd WireViz-harnessdesignstudio/harness
+cd WireViz-harnessdesignstudio/HarnessDesignStudio
 python3 -m venv .venv && . .venv/bin/activate
 pip install ".[gui]"
-harness new wheel-link --template first-steps
-harness generate wheel-link
-harness export wheel-link
+harness-design-studio new wheel-link --template first-steps
+harness-design-studio generate wheel-link
+harness-design-studio export wheel-link
 ```
 
-You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 units, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `38 files written to wheel-link/outputs (model da1379ad567b).` The drawings and lists are in `wheel-link/outputs/`. To see the diagram, run `harness-gui` and open the project with **File > Open project…**.
+(`harness` still works as a short name for `harness-design-studio`.) You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 units, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `38 files written to wheel-link/outputs (model da1379ad567b).` The drawings and lists are in `wheel-link/outputs/`. To see the diagram, run `harness-gui` and open the project with **File > Open project…**.
 
-[`INSTALL.md`](harness/docs/INSTALL.md) has all the ways to install (package, tarball, source) and explains what to do if something fails. The full walk-through with the output of every command is [`GETTING_STARTED.md`](harness/docs/GETTING_STARTED.md).
+[`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md) has all the ways to install (package, tarball, source) and explains what to do if something fails. The full walk-through with the output of every command is [`GETTING_STARTED.md`](HarnessDesignStudio/docs/GETTING_STARTED.md).
 
 ## Where to go next
 
@@ -69,15 +69,15 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 | You want to | Go to |
 | --- | --- |
-| **Get started** | [Install](harness/docs/INSTALL.md) · [Getting started](harness/docs/GETTING_STARTED.md) (45 minutes, real output of every command) · [Learning path](harness/docs/LEARNING_PATH.md) (nine steps) · [Concepts](harness/docs/CONCEPTS.md) (ten minutes) |
-| **Do a task** | [User manual](harness/docs/user-manual/README.md) (one page per task) · [Tips](harness/docs/TIPS.md) · [Cheat sheet](harness/docs/CHEATSHEET.md) |
-| **Look something up** | [User guide](harness/docs/guide/USER_GUIDE.md) (the same text opens in the app with **F1**) · [Command line](harness/docs/CLI.md) · [Design rules](harness/docs/RULES.md) · [Configuration](harness/docs/CONFIG.md) · [Outputs](harness/docs/OUTPUTS.md) · [File format](harness/docs/FILE_FORMAT.md) · [Glossary](harness/docs/GLOSSARY.md) |
-| **See examples** | [Examples](harness/docs/examples/README.md) · [The flatsat tour](harness/docs/FLATSAT_EXAMPLE.md) |
-| **Bring your data** | [Imports](harness/docs/IMPORTS.md) · [KiCad pinouts](harness/docs/KICAD.md) · [Engineering values and placeholders](harness/docs/PLACEHOLDERS.md) |
-| **Fix a problem** | [Troubleshooting](harness/docs/TROUBLESHOOTING.md) · [FAQ](harness/docs/FAQ.md) |
-| **See what changed** | [Changelog](harness/CHANGELOG.md) (the root [`CHANGELOG.md`](CHANGELOG.md) explains the two changelogs) |
-| **Check the status** | [Status of the tool](harness/README.md#status) · [Compliance records](harness/compliance/README.md) · [Open decisions](harness/docs/OPEN_DECISIONS.md) |
-| **Develop or contribute** | [`CONTRIBUTING.md`](CONTRIBUTING.md) · [Developer docs](harness/docs/developer/README.md) · [Architecture](harness/docs/ARCHITECTURE.md) · [Decisions](harness/docs/DECISIONS.md) · [Security](harness/docs/SECURITY.md) · [Release procedure](harness/docs/RELEASE.md) |
+| **Get started** | [Install](HarnessDesignStudio/docs/INSTALL.md) · [Getting started](HarnessDesignStudio/docs/GETTING_STARTED.md) (45 minutes, real output of every command) · [Learning path](HarnessDesignStudio/docs/LEARNING_PATH.md) (nine steps) · [Concepts](HarnessDesignStudio/docs/CONCEPTS.md) (ten minutes) |
+| **Do a task** | [User manual](HarnessDesignStudio/docs/user-manual/README.md) (one page per task) · [Tips](HarnessDesignStudio/docs/TIPS.md) · [Cheat sheet](HarnessDesignStudio/docs/CHEATSHEET.md) |
+| **Look something up** | [User guide](HarnessDesignStudio/docs/guide/USER_GUIDE.md) (the same text opens in the app with **F1**) · [Command line](HarnessDesignStudio/docs/CLI.md) · [Design rules](HarnessDesignStudio/docs/RULES.md) · [Configuration](HarnessDesignStudio/docs/CONFIG.md) · [Outputs](HarnessDesignStudio/docs/OUTPUTS.md) · [File format](HarnessDesignStudio/docs/FILE_FORMAT.md) · [Glossary](HarnessDesignStudio/docs/GLOSSARY.md) |
+| **See examples** | [Examples](HarnessDesignStudio/docs/examples/README.md) · [The flatsat tour](HarnessDesignStudio/docs/FLATSAT_EXAMPLE.md) |
+| **Bring your data** | [Imports](HarnessDesignStudio/docs/IMPORTS.md) · [KiCad pinouts](HarnessDesignStudio/docs/KICAD.md) · [Engineering values and placeholders](HarnessDesignStudio/docs/PLACEHOLDERS.md) |
+| **Fix a problem** | [Troubleshooting](HarnessDesignStudio/docs/TROUBLESHOOTING.md) · [FAQ](HarnessDesignStudio/docs/FAQ.md) |
+| **See what changed** | [Changelog](HarnessDesignStudio/CHANGELOG.md) (the root [`CHANGELOG.md`](CHANGELOG.md) explains the two changelogs) |
+| **Check the status** | [Status of the tool](HarnessDesignStudio/README.md#status) · [Compliance records](HarnessDesignStudio/compliance/README.md) · [Open decisions](HarnessDesignStudio/docs/OPEN_DECISIONS.md) |
+| **Develop or contribute** | [`CONTRIBUTING.md`](CONTRIBUTING.md) · [Developer docs](HarnessDesignStudio/docs/developer/README.md) · [Architecture](HarnessDesignStudio/docs/ARCHITECTURE.md) · [Decisions](HarnessDesignStudio/docs/DECISIONS.md) · [Security](HarnessDesignStudio/docs/SECURITY.md) · [Release procedure](HarnessDesignStudio/docs/RELEASE.md) |
 | **Use WireViz itself** | The [original WireViz README](#original-wireviz-readme) below, its [syntax description](docs/syntax.md), [tutorial](tutorial/readme.md) and [examples](examples/readme.md) |
 
 ## Features
@@ -104,18 +104,18 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 ## Licence and status
 
-- **Version `1.0.0`**, released on the repository owner's instruction on 2026-10-12 (tag `v1.0.0` on commit `0c6a96a`; the packages and `SHA256SUMS` are on the GitHub release page). The open engineering decisions were recorded as defaults on that day: the tool ships no standard or part data, so the real derating and EMC values and the approved parts list have not been supplied and results rest on placeholders and example parts. [`harness/README.md#status`](harness/README.md#status) has the details.
-- **Created mainly by an AI.** Harness Design Studio was written mainly by Claude (Anthropic's AI assistant, used through Claude Code); the owner set the requirements and approved the decisions and releases. No other person has reviewed it independently, and it makes no claim of compliance with any standard. Check its results before relying on them. The records are in [`harness/compliance/`](harness/compliance/README.md).
-- **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](harness/CHANGELOG.md) lists what is new.
-- **Licence.** The [`LICENSE`](LICENSE) file in this repository is the GPL-3.0 licence of WireViz. The licence of the code in `harness/` has not been decided (decision D-02 in [`harness/docs/DECISIONS.md`](harness/docs/DECISIONS.md), kept open for 1.0.0 in D-143; the package metadata says `LicenseRef-Proprietary`; the copyright holder is the repository owner, GitHub account `0h3xn4`). No licence has been granted for it yet.
+- **Version `1.0.0`**, released on the repository owner's instruction on 2026-10-12 (tag `v1.0.0` on commit `0c6a96a`; the packages and `SHA256SUMS` are on the GitHub release page). The open engineering decisions were recorded as defaults on that day: the tool ships no standard or part data, so the real derating and EMC values and the approved parts list have not been supplied and results rest on placeholders and example parts. [`HarnessDesignStudio/README.md#status`](HarnessDesignStudio/README.md#status) has the details.
+- **Created mainly by an AI.** Harness Design Studio was written mainly by Claude (Anthropic's AI assistant, used through Claude Code); the owner set the requirements and approved the decisions and releases. No other person has reviewed it independently, and it makes no claim of compliance with any standard. Check its results before relying on them. The records are in [`HarnessDesignStudio/compliance/`](HarnessDesignStudio/compliance/README.md).
+- **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness-design-studio new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](HarnessDesignStudio/CHANGELOG.md) lists what is new.
+- **Licence.** The [`LICENSE`](LICENSE) file in this repository is the GPL-3.0 licence of WireViz. The licence of the code in `HarnessDesignStudio/` has not been decided (decision D-02 in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md), kept open for 1.0.0 in D-143; the package metadata says `LicenseRef-Proprietary`; the copyright holder is the repository owner, GitHub account `0h3xn4`). No licence has been granted for it yet.
 
 ## What this repository adds to WireViz
 
 | | WireViz (upstream) | This repository |
 | --- | --- | --- |
 | Program | The `wireviz` Python package in `src/wireviz`, with its `docs/`, `examples/` and `tutorial/` | Unchanged. |
-| Second tool | — | **Harness Design Studio** in [`harness/`](harness/README.md): a separate, clean-room codebase (no WireViz code is copied or imported, decision D-01). |
-| Where each one's documents are | `docs/`, `tutorial/`, `examples/` | The tool's documents are in [`harness/docs/`](harness/docs/README.md) and `harness/compliance/`. [`docs/README.md`](docs/README.md) is the index of both. |
+| Second tool | — | **Harness Design Studio** in [`HarnessDesignStudio/`](HarnessDesignStudio/README.md): a separate, clean-room codebase (no WireViz code is copied or imported, decision D-01). |
+| Where each one's documents are | `docs/`, `tutorial/`, `examples/` | The tool's documents are in [`HarnessDesignStudio/docs/`](HarnessDesignStudio/docs/README.md) and `HarnessDesignStudio/compliance/`. [`docs/README.md`](docs/README.md) is the index of both. |
 | README | `docs/README.md` | This file, with the original WireViz README embedded unchanged (except for relative links that had to change) below; an untouched copy is at [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md). |
 | Continuous integration | WireViz's own workflows | The same, plus [`.github/workflows/harness-ci.yml`](.github/workflows/harness-ci.yml) for the tool. |
 | Install | `pip install wireviz` (needs GraphViz) | Separate: see the [quick start](#quick-start). The two do not need each other. |
@@ -123,10 +123,10 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 ## Related tools
 
 - **[WireViz](https://github.com/wireviz/WireViz)** draws single cables and harnesses from YAML. Harness Design Studio can export each harness as WireViz-style YAML (best effort, not checked with the WireViz program).
-- **[KiCad](https://www.kicad.org/)**: connector pinouts of a unit can be imported from a KiCad netlist ([how](harness/docs/KICAD.md)).
-- Moving data between this tool and other engineering tools is described, with what does and does not exist, in [Tips: working with other tools](harness/docs/TIPS.md).
+- **[KiCad](https://www.kicad.org/)**: connector pinouts of a unit can be imported from a KiCad netlist ([how](HarnessDesignStudio/docs/KICAD.md)).
+- Moving data between this tool and other engineering tools is described, with what does and does not exist, in [Tips: working with other tools](HarnessDesignStudio/docs/TIPS.md).
 
-Next: [install it](harness/docs/INSTALL.md), then [getting started](harness/docs/GETTING_STARTED.md).
+Next: [install it](HarnessDesignStudio/docs/INSTALL.md), then [getting started](HarnessDesignStudio/docs/GETTING_STARTED.md).
 
 ## Known problems in the bundled upstream WireViz code (not changed in this repository)
 
@@ -148,7 +148,7 @@ Smaller upstream findings (H-10 to H-23: unescaped text in HTML and SVG output, 
 
 # Original WireViz README
 
-The text below is the README of [wireviz/WireViz](https://github.com/wireviz/WireViz), taken from `docs/README.md` at commit [`e4fe099`](https://github.com/wireviz/WireViz/commit/e4fe099f8c7b86736aee7b4227cc794b6e8b36f0) (2025-01-16, WireViz 0.4.1). It is not reworded. Its headings are one level lower and its relative links point to the right place in this repository. The known problems of that code, which this repository does not change, are listed under [Known problems](#known-problems-in-the-bundled-upstream-wireviz-code-not-changed-in-this-repository). An untouched copy and the steps to refresh it: [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md), [`upstream-sync.md`](harness/docs/developer/upstream-sync.md).
+The text below is the README of [wireviz/WireViz](https://github.com/wireviz/WireViz), taken from `docs/README.md` at commit [`e4fe099`](https://github.com/wireviz/WireViz/commit/e4fe099f8c7b86736aee7b4227cc794b6e8b36f0) (2025-01-16, WireViz 0.4.1). It is not reworded. Its headings are one level lower and its relative links point to the right place in this repository. The known problems of that code, which this repository does not change, are listed under [Known problems](#known-problems-in-the-bundled-upstream-wireviz-code-not-changed-in-this-repository). An untouched copy and the steps to refresh it: [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md), [`upstream-sync.md`](HarnessDesignStudio/docs/developer/upstream-sync.md).
 
 <!-- BEGIN UPSTREAM README -->
 

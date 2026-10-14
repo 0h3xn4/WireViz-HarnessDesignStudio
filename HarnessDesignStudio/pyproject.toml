@@ -1,0 +1,96 @@
+[build-system]
+requires = ["setuptools==84.0.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "harness-design-studio"
+version = "1.0.0"
+description = "Offline spacecraft harness design tool"
+requires-python = ">=3.12"
+license = "LicenseRef-Proprietary"
+dependencies = ["pydantic==2.13.5", "openpyxl==3.1.5", "defusedxml==0.7.1"]
+
+[project.optional-dependencies]
+gui = ["PySide6-Essentials==6.11.2"]
+dev = [
+  "pytest==9.1.1", "pytest-cov==7.1.0", "pytest-qt==4.5.0", "hypothesis==6.168.5",
+  "mypy==2.4.0", "ruff==0.16.10", "cyclonedx-bom==7.5.0", "pip-licenses==5.5.5", "pip-audit==2.9.0",
+  "pyinstaller==6.22.3", "playwright==1.63.0",
+]
+
+[project.scripts]
+harness-design-studio = "harness_design_studio.cli.main:main"
+harness = "harness_design_studio.cli.main:main"  # short alias, kept so existing scripts keep working
+
+[project.gui-scripts]
+harness-design-studio-gui = "harness_design_studio.gui.app:main"
+harness-gui = "harness_design_studio.gui.app:main"  # short alias, kept so existing launchers keep working
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.setuptools.package-data]
+"harness_design_studio.resources" = ["guide/*.html", "examples/**/*", "examples/**/.gitignore", "fonts/*"]  # ** skips dotfiles
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["."]
+addopts = "-ra --strict-markers"
+filterwarnings = ["error"]
+markers = ["gui: needs Qt (run with QT_QPA_PLATFORM=offscreen)", "ux: drives the clickable prototype in a browser", "perf: timing checks at stress size"]
+
+[tool.coverage.run]
+source = ["harness_design_studio.core"]
+branch = true
+
+[tool.coverage.report]
+fail_under = 90
+exclude_also = ["if sys.platform == \"win32\":", "pragma: no cover"]
+
+[tool.mypy]
+strict = true
+python_version = "3.12"
+plugins = ["pydantic.mypy"]
+files = ["src", "tests", "tools"]
+
+[[tool.mypy.overrides]]
+module = ["tests.*"]
+warn_unused_ignores = false
+
+[[tool.mypy.overrides]]
+module = ["tests.test_generate"]
+disallow_untyped_defs = false
+disallow_untyped_calls = false
+disallow_incomplete_defs = false
+
+[[tool.mypy.overrides]]
+module = ["openpyxl", "openpyxl.*"]
+ignore_missing_imports = true
+
+[tool.ruff]
+line-length = 100
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "B", "UP", "SIM", "S"]
+
+[tool.ruff.lint.per-file-ignores]
+"src/harness_design_studio/core/drc/*.py" = ["E501"]  # plain-language messages
+"src/harness_design_studio/core/outputs/*.py" = ["E501"]  # table rows
+"src/harness_design_studio/core/vcs/*.py" = ["E501"]  # plain-language messages
+"src/harness_design_studio/core/library_import.py" = ["E501"]  # plain-language messages
+"src/harness_design_studio/core/configcheck.py" = ["E501"]  # plain-language messages
+"src/harness_design_studio/core/kicad.py" = ["E501"]  # plain-language messages
+"src/harness_design_studio/cli/*.py" = ["E501"]  # help texts
+"src/harness_design_studio/core/integrity.py" = ["E501"]  # long plain-language messages
+"src/harness_design_studio/core/io/loader.py" = ["E501"]
+"src/harness_design_studio/core/starter.py" = ["E501"]  # data tables
+"src/harness_design_studio/core/samples.py" = ["E501"]
+"src/harness_design_studio/core/edit.py" = ["E501"]
+"src/harness_design_studio/gui/*.py" = ["E501"]  # style sheet and UI text
+"src/harness_design_studio/core/generate/*.py" = ["E501"]  # long plain-language messages
+"src/harness_design_studio/core/verify.py" = ["E501"]
+"src/harness_design_studio/core/checks.py" = ["E501"]
+"src/harness_design_studio/core/imports.py" = ["E501"]
+"tools/*" = ["S101", "S603", "S607", "E501"]
+"tests/*" = ["S101", "S311", "S603", "S607", "E501"]
