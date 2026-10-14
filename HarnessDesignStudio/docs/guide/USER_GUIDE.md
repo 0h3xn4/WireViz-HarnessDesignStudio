@@ -104,11 +104,20 @@ The **Devices** tab (Ctrl+6) shows one unit down to each pin. Pick the unit on t
 
 Left, the list of the unit's connectors; right, the connector's part, gender, keying and what it carries, and how its pins are allocated: *Automatic* (Generate puts the signals on free pins) or *Fixed pinout* (the signals go to the pins of their own name).
 
-Below, the pin table: pin, signal, mode (*Free*, *Fixed*, *Locked*), interface, direction and class (taken from the interface type of the signal, empty when no type has that signal), the wire and a state. **Contact details** adds the contact size and the termination.
+Below, the pin table: pin, signal, mode (*Free*, *Fixed*, *Locked*), interface, direction and class (taken from the interface type of the signal, empty when no type has that signal), the wire and a state. **Contact** adds the contact size and the termination.
 
 Under it the notes about the connector, for example a signal that no interface type has, or *CANH* without *CANL* on a fixed pinout; a double-click selects the pin the note is about.
 
 At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv` for this unit; **Export pinout…** saves them as a CSV file or an Excel workbook.
+
+#### Defining a device
+
+- **Add > Device…** (Ctrl+Shift+N) adds an empty device in a free slot and opens the Devices tab with its name selected. Type the name; the subsystem and the chain are in the header.
+- Under the connector list pick a part (type to search; the first entry is **New part…**, which also makes the mating half) and press **Add connector** (Ctrl+Shift+C goes to the picker; Enter adds). The pins are numbered from the part's pin count. **Delete connector** shows what it touches first.
+- Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down; Esc cancels. A pin name is checked while you type. **Add pin** (Insert) adds a pin after the current one; Delete clears the signal of the selected pins; **Delete** (Shift+Delete) deletes pins after a line that says what they touch; Space cycles the mode (*Free*, *Fixed*, *Locked*); Ctrl+V pastes cells copied from a spreadsheet, either a column from the current cell down or a table with a header row (*Pin*, *Signal*, *Mode*, *Contact size*, *Termination*).
+- **Fill…** (Ctrl+L) puts the signals of an interface type on the selected pins in order (for example *CANH*, *CANL*). **Assign…** (Ctrl+Enter) locks the selected pins to an interface that ends on this device. Both are one undo step; **New interface type…** is in the dialog.
+- On the card, a part with another pin count asks on one line whether to resize the pins and set the gender; both happen in one step. A fixed pinout is a promise that each interface signal has a pin of its name (the card says so).
+- A part or interface type made here is marked *pending* or *unverified*. The tool never approves a part. A released device shows a banner with **Start new revision…**; its spare pins stay editable, its pin names and count do not.
 
 ## 5. Guided and Expert mode
 
