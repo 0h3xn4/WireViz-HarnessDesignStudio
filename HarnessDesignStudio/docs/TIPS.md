@@ -68,7 +68,7 @@ Press **Ctrl+K**, type a few letters, press **Enter**. The list is one searchabl
 - **Connect with ...** for each interface type (17 ship with the tool);
 - **Go to unit** `OBC1 (Computer 1)` for every unit, and **Go to interface** `IF-002 (...)` for every interface.
 
-Type several words and every word must match, in any order (`go rw1` finds *Go to unit RW1*). A name that starts with what you typed comes first. **Up** and **Down** move through the list, which has no length limit; keep typing to narrow it. The commands include Generate, Run checks, Export, Release, Start new revision, the imports, Engineering values and Reset layout. It is the quickest way to jump to one object in a project with dozens of units.
+Type several words and every word must match, in any order (`go rw1` finds *Go to unit RW1*). A name that starts with what you typed comes first. **Up** and **Down** move through the list, which has no length limit; keep typing to narrow it. The palette floats over the window instead of blocking it: **Esc**, a click anywhere else or **Ctrl+K** again closes it. The commands include Generate, Run checks, Export, Release, Start new revision, the imports, Engineering values and Reset layout. It is the quickest way to jump to one object in a project with dozens of units.
 
 ## Reading a busy diagram
 

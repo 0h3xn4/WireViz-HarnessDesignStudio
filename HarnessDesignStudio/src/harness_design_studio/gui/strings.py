@@ -227,6 +227,10 @@ def interfaces_text(n: int) -> str:
     return f"{n} interface" if n == 1 else f"{n} interfaces"
 
 
+def problems_text(n: int) -> str:
+    return f"{n} problem" if n == 1 else f"{n} problems"
+
+
 STATUS_COUNTS = "{} · {} · model {}"
 SELECTED = "Selected: {}"
 NOTHING_SEL = "Nothing selected"
@@ -1545,3 +1549,17 @@ A_HISTORY = "Show change log of harness…"
 A_DELETE_HARNESS = "Delete harness…"
 HV_MORE = "More"
 HV_MORE_TIP = "Changes since a baseline, the change log, and deleting this harness"
+
+# ---- Fix all (n) and the command palette overlay (SH-24, SH-11) -------------------------------
+CHECKS_FIX_ALL = "Fix all ({})"
+CHECKS_FIX_ALL_TIP = (
+    "Apply the one-click fix of every open problem that has one ({}), as one step: {}. "
+    "Undo takes all of them back."
+)
+CHECKS_FIX_ALL_NONE = "Nothing to fix automatically: no open problem has a one-click fix."
+STEP_FIX_ALL = "Fix all ({})"
+FIX_ALL_DONE = "Fixed {} in one step: {}."
+FIX_ALL_SKIPPED = " {} left alone: {}"
+FIX_ALL_NOTHING = "Nothing could be fixed automatically. {}"
+COMMANDS_HELP = "Type to search, Up and Down to choose, Enter to run, Esc to close."
+COMMANDS_KEYS = "Up, Down: choose · Enter: run · Esc: close"
