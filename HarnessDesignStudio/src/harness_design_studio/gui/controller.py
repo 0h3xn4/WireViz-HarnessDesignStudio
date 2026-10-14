@@ -766,6 +766,36 @@ class EditorController(QObject):
             return
         self.run(strings.STEP_FIX.format(finding.title), ops, message=msg)
 
+    def fixable_count(self) -> int:
+        """How many open problems have a one-click fix (the n of "Fix all (n)")."""
+        return len(checks.fixable(self.open_findings()))
+
+    def fix_all(self) -> bool:
+        """Apply the fix of every open finding that has one, as ONE undo step. The fixes are made
+        one after the other on a copy (a later one sees what an earlier one took), a finding that
+        a release lock refuses or that an earlier fix already settled is left alone and named in
+        the message. Returns True when something was changed."""
+        if self.read_only:
+            self.refuse_read_only()
+            return False
+        plan = checks.fix_all_plan(self.project, self.open_findings())
+        left = (
+            strings.FIX_ALL_SKIPPED.format(
+                strings.problems_text(len(plan.skipped)), plan.skipped[0][1]
+            )
+            if plan.skipped
+            else ""
+        )
+        if not plan.fixed:
+            self.message.emit(strings.FIX_ALL_NOTHING.format(left.strip()).strip(), False)
+            return False
+        n = strings.problems_text(len(plan.fixed))
+        return self.run(
+            strings.STEP_FIX_ALL.format(len(plan.fixed)),
+            plan.ops,
+            message=strings.FIX_ALL_DONE.format(n) + left,
+        )
+
     def waive(self, finding: checks.Finding, justification: str) -> bool:
         try:
             op = checks.waive_op(finding, justification)

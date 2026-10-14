@@ -6,6 +6,7 @@ Every finding says what is wrong, why it matters and (when safe) offers a fix.
 
 import hashlib
 import re
+from collections.abc import Iterable
 from dataclasses import dataclass
 
 from . import edit
@@ -222,3 +223,68 @@ def todos_from(all_findings: list[Finding]) -> list[Todo]:
         n = len(warnings)
         out.append(Todo(f"{n} warning{'s' if n > 1 else ''} to fix or waive", "tab", "problems"))
     return out
+
+
+# ---- "Fix all": every one-click fix as one transaction (SH-24) ---------------------------------
+
+# findings that are put right by generating the harnesses again: one plan covers all of them
+REGENERATE_RULES: frozenset[str] = frozenset({"signal-unassigned", "verify-mismatch"})
+
+
+@dataclass(frozen=True)
+class FixAllPlan:
+    """What "Fix all" does: the operations in the order they were worked out (to run as one
+    transaction), the findings they resolve, and the findings it leaves alone with the reason."""
+
+    ops: list[Op]
+    fixed: list[Finding]
+    skipped: list[tuple[Finding, str]]
+
+
+def fixable(findings: Iterable[Finding]) -> list[Finding]:
+    """The open findings that have a one-click fix, in the order given."""
+    return [f for f in findings if f.waiver is None and f.fix_label]
+
+
+def fix_all_plan(project: Project, findings: Iterable[Finding]) -> FixAllPlan:
+    """Work out every one-click fix of `findings`. The fixes are made one after the other on a
+    scratch copy of the project, so a later fix sees the connectors an earlier one took. A fix that
+    a release lock refuses, or that no longer applies after the ones before it, is left out and
+    named in `skipped`. Fixes that regenerate the harnesses come last and count once. The project
+    itself is not changed: run `ops` through `History` as one step."""
+    from .commands import apply_ops
+    from .errors import HarnessError, TransactionError
+    from .vcs.locks import check_locks
+
+    def reason(exc: HarnessError) -> str:
+        if isinstance(exc, TransactionError) and exc.problems:
+            return exc.problems[0]
+        return str(exc)
+
+    work = edit.clone_with(project, [])
+    ops: list[Op] = []
+    fixed: list[Finding] = []
+    skipped: list[tuple[Finding, str]] = []
+    todo = fixable(findings)
+    for f in (f for f in todo if f.rule not in REGENERATE_RULES):
+        try:
+            made, _message = fix_ops(work, f)
+            check_locks(project, made)
+        except (HarnessError, KeyError) as exc:
+            skipped.append((f, reason(exc) if isinstance(exc, HarnessError) else str(exc)))
+            continue
+        apply_ops(work, made)
+        ops.extend(made)
+        fixed.append(f)
+    again = [f for f in todo if f.rule in REGENERATE_RULES]
+    if again:
+        try:
+            made, _message = fix_ops(work, again[0])
+            check_locks(project, made)
+        except (HarnessError, KeyError) as exc:
+            why = reason(exc) if isinstance(exc, HarnessError) else str(exc)
+            skipped.extend((f, why) for f in again)
+        else:
+            ops.extend(made)
+            fixed.extend(again)
+    return FixAllPlan(ops, fixed, skipped)
