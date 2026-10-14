@@ -31,7 +31,7 @@ from harness_design_studio.core.commands import History, Put  # noqa: E402
 from harness_design_studio.core.model import Unit  # noqa: E402
 from harness_design_studio.core.samples import mini3  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
-from harness_design_studio.gui.dialogs import (  # noqa: E402
+from harness_design_studio.gui.command_palette import (  # noqa: E402
     CommandPalette,
     PaletteEntry,
     rank_entries,

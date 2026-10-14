@@ -80,6 +80,7 @@ from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.canvas import DiagramView, ZoomIndicator
 from harness_design_studio.gui.checks_panel import ChecksPanel, PendingValuesLink
+from harness_design_studio.gui.command_palette import CommandPalette, PaletteEntry
 from harness_design_studio.gui.controller import (
     Delta,
     EditorController,
@@ -90,7 +91,6 @@ from harness_design_studio.gui.controller import (
 from harness_design_studio.gui.dialogs import (
     Banner,
     ChangeDialog,
-    CommandPalette,
     ConfirmDialog,
     DiffDialog,
     GeneratePreviewDialog,
@@ -99,7 +99,6 @@ from harness_design_studio.gui.dialogs import (
     ImportDialog,
     IssuesDialog,
     NewInterfaceDialog,
-    PaletteEntry,
     WaiverDialog,
     WireColoursDialog,
 )
@@ -425,6 +424,7 @@ class MainWindow(QMainWindow):
         self._have_saved_state = False
         self._layout_class: tuple[bool, bool] | None = None
         self._left_width = 0  # the left panel's width before the Interfaces tab widened it
+        self.command_palette: CommandPalette | None = None  # the Ctrl+K overlay, while it is open
         self._pane = 0
 
         self._build_center()
@@ -2479,7 +2479,15 @@ class MainWindow(QMainWindow):
             self.view.focus_link(target)
 
     def open_commands(self) -> None:
-        self.run_dialog(CommandPalette(self, self.palette_entries()))
+        """Ctrl+K: the command palette, a non-modal overlay over the window (Ctrl+K again, Esc, a
+        click elsewhere or any other move of the keyboard closes it)."""
+        if self.command_palette is not None and self.command_palette.isVisible():
+            self.command_palette.dismiss()
+            return
+        if self.command_palette is not None:
+            self.command_palette.deleteLater()
+        self.command_palette = CommandPalette(self, self.palette_entries())
+        self.command_palette.open()
 
     def palette_entries(self) -> list[PaletteEntry]:
         """Everything Ctrl+K can do: every enabled action of the window with its shortcut
@@ -2989,6 +2997,8 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event: object) -> None:
         super().resizeEvent(event)  # type: ignore[arg-type]
         self.toasts.reposition()
+        if self.command_palette is not None and self.command_palette.isVisible():
+            self.command_palette.reposition()
         if self._shown and self._layout_class_now() != self._layout_class:
             if self._have_saved_state:  # (a saved layout is kept; only a crossing is acted on)
                 self._have_saved_state = False

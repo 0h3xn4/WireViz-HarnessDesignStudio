@@ -1553,12 +1553,12 @@ HV_MORE_TIP = "Changes since a baseline, the change log, and deleting this harne
 # ---- Fix all (n) and the command palette overlay (SH-24, SH-11) -------------------------------
 CHECKS_FIX_ALL = "Fix all ({})"
 CHECKS_FIX_ALL_TIP = (
-    "Apply the one-click fix of every open problem that has one ({}), as one step. "
+    "Apply the one-click fix of every open problem that has one ({}), as one step: {}. "
     "Undo takes all of them back."
 )
 CHECKS_FIX_ALL_NONE = "Nothing to fix automatically: no open problem has a one-click fix."
 STEP_FIX_ALL = "Fix all ({})"
-FIX_ALL_DONE = "Fixed {} in one step."
+FIX_ALL_DONE = "Fixed {} in one step: {}."
 FIX_ALL_SKIPPED = " {} left alone: {}"
 FIX_ALL_NOTHING = "Nothing could be fixed automatically. {}"
 COMMANDS_HELP = "Type to search, Up and Down to choose, Enter to run, Esc to close."

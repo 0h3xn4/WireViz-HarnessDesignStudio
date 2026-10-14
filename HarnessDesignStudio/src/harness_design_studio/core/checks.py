@@ -246,6 +246,16 @@ def fixable(findings: Iterable[Finding]) -> list[Finding]:
     return [f for f in findings if f.waiver is None and f.fix_label]
 
 
+def fix_summary(findings: Iterable[Finding]) -> str:
+    """What a "Fix all" over these findings does, by kind of fix, biggest first: "Confirm
+    connectors (40), Choose connectors automatically (2)". Empty when nothing has a fix."""
+    counts: dict[str, int] = {}
+    for f in fixable(findings):
+        counts[f.fix_label or ""] = counts.get(f.fix_label or "", 0) + 1
+    ordered = sorted(counts.items(), key=lambda kv: (-kv[1], kv[0]))
+    return ", ".join(f"{label} ({n})" for label, n in ordered)
+
+
 def fix_all_plan(project: Project, findings: Iterable[Finding]) -> FixAllPlan:
     """Work out every one-click fix of `findings`. The fixes are made one after the other on a
     scratch copy of the project, so a later fix sees the connectors an earlier one took. A fix that

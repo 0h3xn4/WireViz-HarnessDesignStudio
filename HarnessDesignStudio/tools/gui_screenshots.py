@@ -106,13 +106,11 @@ def main() -> int:
     win.run_dialog = lambda d: (waive_dialog(d), 0)[1]  # type: ignore[assignment,misc]
     win.waive_flow(cross)
 
-    def palette(d):  # type: ignore[no-untyped-def]
-        d.show()
-        d.input.setText("conn")
-        shot("11-command-palette", d)
-
-    win.run_dialog = lambda d: (palette(d), 0)[1]  # type: ignore[assignment,misc]
-    win.open_commands()
+    win.open_commands()  # the palette is an overlay over the window, not a dialog
+    assert win.command_palette is not None
+    win.command_palette.input.setText("conn")
+    shot("11-command-palette")
+    win.command_palette.dismiss()
     win.act_dark.trigger()
     shot("12-dark-theme")
     win.act_dark.trigger()

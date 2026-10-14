@@ -793,7 +793,7 @@ class EditorController(QObject):
         return self.run(
             strings.STEP_FIX_ALL.format(len(plan.fixed)),
             plan.ops,
-            message=strings.FIX_ALL_DONE.format(n) + left,
+            message=strings.FIX_ALL_DONE.format(n, checks.fix_summary(plan.fixed)) + left,
         )
 
     def waive(self, finding: checks.Finding, justification: str) -> bool:

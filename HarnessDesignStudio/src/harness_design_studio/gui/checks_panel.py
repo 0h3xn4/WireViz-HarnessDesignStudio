@@ -39,7 +39,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import configcheck
+from harness_design_studio.core import checks, configcheck
 from harness_design_studio.core.checks import Finding
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.drc.by_rule import MissingValue, RuleResult
@@ -620,7 +620,7 @@ class ChecksPanel(QWidget):
             self.fix_all_btn,
             "check",
             theme,
-            strings.CHECKS_FIX_ALL_TIP.format(0),
+            strings.CHECKS_FIX_ALL.format(0),
             text=strings.CHECKS_FIX_ALL.format(0),
         )
         self.fix_all_btn.clicked.connect(self.ctl.fix_all)
@@ -848,7 +848,9 @@ class ChecksPanel(QWidget):
         else:
             reason = ""
         text = strings.CHECKS_FIX_ALL.format(n)
-        tip = strings.CHECKS_FIX_ALL_TIP.format(strings.problems_text(n))
+        tip = strings.CHECKS_FIX_ALL_TIP.format(
+            strings.problems_text(n), checks.fix_summary(ctl.open_findings())
+        )
         btn = self.fix_all_btn
         btn.setText(text)
         btn.setAccessibleName(text)

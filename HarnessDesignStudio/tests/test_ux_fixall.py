@@ -15,7 +15,7 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 from harness_design_studio.core import checks  # noqa: E402
 from harness_design_studio.core.io.layout import model_hash  # noqa: E402
 from harness_design_studio.core.samples import new_project  # noqa: E402
-from harness_design_studio.core.vcs.locks import carried_interfaces  # noqa: E402
+from harness_design_studio.core.vcs.snapshot import carried_interfaces  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
 from tests.gui_helpers import make_window  # noqa: E402
 from tests.test_accessibility import unnamed  # noqa: E402
@@ -46,6 +46,7 @@ def test_the_button_says_how_many_problems_it_will_fix(win) -> None:
     b = win.checks_panel.fix_all_btn
     assert b.text() == f"Fix all ({n})" and b.accessibleName() == f"Fix all ({n})"
     assert b.isEnabled() and "one step" in b.toolTip() and f"{n} problems" in b.toolTip()
+    assert checks.fix_summary(win.ctl.open_findings()) in b.toolTip()  # what kinds of fix it makes
     assert not b.icon().isNull() and not b.property("primary")  # Generate is the one primary button
 
 
@@ -56,7 +57,9 @@ def test_one_click_fixes_everything_that_has_a_fix_as_one_undo_step(win) -> None
     got = messages(win)
     win.checks_panel.fix_all_btn.click()
     assert ctl.history.revision == revision + 1  # ONE step
-    assert got and got[-1][1] is True and strings.FIX_ALL_DONE.format(f"{n} problems") in got[-1][0]
+    assert got and got[-1][1] is True
+    assert got[-1][0].startswith(f"Fixed {n} problems in one step: ")
+    assert "Confirm connectors (" in got[-1][0] and "Choose connectors" in got[-1][0]
     assert ctl.history.next_undo_label == strings.STEP_FIX_ALL.format(n)
     assert not [f for f in checks.fixable(ctl.open_findings()) if f.rule != "unconfirmed"]
     win.checks_panel.refresh()

@@ -9,7 +9,7 @@ from harness_design_studio.core.commands import History, Put
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Project, Waiver, evolve
 from harness_design_studio.core.samples import mini3, new_project
-from harness_design_studio.core.vcs.locks import carried_interfaces
+from harness_design_studio.core.vcs.snapshot import carried_interfaces
 from tests.test_change_control import do_release, exported, full, releasable
 
 
@@ -53,6 +53,15 @@ def test_fixable_lists_only_open_findings_that_have_a_fix() -> None:
     assert {f.rule for f in fixable} == {"unconfirmed", "no-connector"}
     assert all(f.fix_label and f.waiver is None for f in fixable)
     assert not [f for f in fixable if f.rule == "isolated"]  # an isolated unit has no fix
+
+
+def test_the_summary_names_the_kinds_of_fix_biggest_first() -> None:
+    p = project_with_fixable_findings()
+    summary = checks.fix_summary(checks.open_findings(p))
+    labels = [part.rsplit(" (", 1)[0] for part in summary.split(", ")]
+    assert labels[0] == "Confirm connectors" and "Choose connectors automatically" in labels
+    assert summary.startswith("Confirm connectors (2)") and summary.endswith("(1)")
+    assert checks.fix_summary([]) == ""
 
 
 def test_a_waived_finding_is_not_fixable() -> None:
