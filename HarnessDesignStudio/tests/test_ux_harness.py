@@ -11,8 +11,8 @@ import pytest
 pytest.importorskip("PySide6")
 pytestmark = pytest.mark.gui
 
-from PySide6.QtCore import QPoint, QPointF, QSettings, Qt  # noqa: E402
-from PySide6.QtGui import QWheelEvent  # noqa: E402
+from PySide6.QtCore import QEvent, QPoint, QPointF, QSettings, Qt  # noqa: E402
+from PySide6.QtGui import QMouseEvent, QWheelEvent  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtWidgets import (  # noqa: E402
     QAbstractButton,
@@ -615,35 +615,26 @@ def test_hover_is_linked_both_ways(qtbot, theme) -> None:
     assert ("wire", wid) in sv.hover_keys
     view._hover("", "", from_drawing=False)
     assert sv.hover_keys == ()
-    # the real pointer over a wire in the drawing
+    # a pointer move over a wire in the drawing, sent to the viewport as the window system would
     point = wire_point(view, wid)
     qtbot.waitUntil(lambda: sv.geometry_of_sheet is not None)  # the new sheet is laid out
-    sv.centerOn(
-        point
-    )  # the point is inside the viewport whatever the font metrics made of the sheet
-    QTest.mouseMove(sv.viewport(), QPoint(1, 1))  # a move needs somewhere to come from
-
-    def hovered_ids() -> set[str]:
-        return {
-            r["id"]
-            for r in view.wire_model.rows()
-            if source_row(view.wire_table, id=r["id"]) in view.wire_model.hover
-        }
-
-    def pointer_on_wire() -> bool:
-        QTest.mouseMove(sv.viewport(), sv.mapFromScene(point))  # mapped again: the view may move
-        return wid in hovered_ids()
-
-    try:
-        qtbot.waitUntil(pointer_on_wire, timeout=5000)
-    except (
-        Exception
-    ) as exc:  # say what the pointer found, so a failure on another machine explains itself
-        at = sv.mapFromScene(point)
-        raise AssertionError(
-            f"wire {wid} at view {at} (viewport {sv.viewport().size()}, zoom {sv.zoom}, "
-            f"page {view.preview.page}): the drawing picked {sv.object_at(QPointF(at))}"
-        ) from exc
+    sv.centerOn(point)  # inside the viewport whatever the font metrics made of the sheet
+    local = QPointF(sv.mapFromScene(point))
+    assert sv.object_at(local) == ("wire", wid)
+    move = QMouseEvent(
+        QEvent.Type.MouseMove,
+        local,
+        sv.viewport().mapToGlobal(local),
+        Qt.MouseButton.NoButton,
+        Qt.MouseButton.NoButton,
+        Qt.KeyboardModifier.NoModifier,
+    )
+    QApplication.sendEvent(sv.viewport(), move)
+    assert wid in {
+        r["id"]
+        for r in view.wire_model.rows()
+        if source_row(view.wire_table, id=r["id"]) in view.wire_model.hover
+    }
 
 
 def test_selection_survives_a_refresh_and_is_dropped_when_the_object_goes(qtbot, theme) -> None:
