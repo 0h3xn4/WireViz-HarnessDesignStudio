@@ -20,7 +20,7 @@ import random, shutil, sys
 from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from harness_design_studio.resources import examples_path
-from tests.gui_helpers import DialogScript, make_window
+from tests.gui_helpers import DialogScript, add_unit, make_window
 
 tmp = Path(sys.argv[1])
 win = make_window(tmp)
@@ -65,7 +65,7 @@ SCENARIOS = {
     "expert_add_unit_then_undo": """
         win.act_expert.trigger()
         paint()
-        win.palette_panel.add_buttons["payload"].click()
+        add_unit(win, "payload")
         paint()
         win.act_undo.trigger()
         paint()

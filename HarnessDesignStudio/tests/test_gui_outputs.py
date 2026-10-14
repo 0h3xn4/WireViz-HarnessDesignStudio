@@ -1,4 +1,4 @@
-"""M5 (GUI): export outputs from the Harness plans tab, with progress, independent check and
+"""M5 (GUI): export outputs (status in the Harness tab), with progress, independent check and
 a stale indicator."""
 
 import pytest
@@ -27,24 +27,39 @@ def win(qtbot, tmp_path):  # type: ignore[no-untyped-def]
     return w
 
 
-def test_export_button_writes_outputs_and_status_turns_current(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
-    panel = win.harness_panel
-    panel.refresh()
-    assert "not exported" in panel.outputs.text()
-    panel.export_btn.click()
+def test_export_writes_outputs_and_the_harness_tab_status_turns_current(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
+    view = win.harness_view
+    win.go_to("harness")
+    view.refresh()
+    assert view.wait_idle()
+    assert view.outputs_chip.state() == "not-checked"  # nothing exported yet
+    assert "not exported" in view.outputs_chip.toolTip()
+    win.export_flow()
     folder = tmp_path / "proj" / "outputs"
     assert (folder / "manifest.json").is_file()
-    assert "up to date" in panel.outputs.text()
+    assert view.wait_idle()
+    assert view.outputs_chip.state() == "pass" and "up to date" in view.outputs_chip.toolTip()
     assert "files written" in win.toasts.messages[-1]
 
 
+def test_the_export_button_of_the_harness_tab_opens_the_export_window(win) -> None:  # type: ignore[no-untyped-def]
+    from harness_design_studio.gui.export_dialog import ExportDialog
+
+    win.go_to("harness")
+    script = DialogScript(win, accept=False)
+    win.harness_view.action_buttons["export"].click()
+    assert script.seen and isinstance(script.seen[0], ExportDialog)
+
+
 def test_status_goes_stale_after_an_edit(win) -> None:  # type: ignore[no-untyped-def]
-    win.tabs.setCurrentWidget(win.harness_panel)  # hidden panels refresh lazily
-    win.harness_panel.export_btn.click()
+    win.go_to("harness")  # hidden views refresh lazily
+    win.export_flow()
     unit = next(iter(win.ctl.project.units.values()))
     win.ctl.run("rename", [Put("units", evolve(unit, name="Renamed"))])
-    win.harness_panel.refresh()
-    assert "out of date" in win.harness_panel.outputs.text()
+    view = win.harness_view
+    view.refresh()
+    assert view.wait_idle()
+    assert view.outputs_chip.state() == "stale" and "out of date" in view.outputs_chip.toolTip()
 
 
 def test_export_needs_a_saved_project_and_harnesses(win, qtbot, tmp_path) -> None:  # type: ignore[no-untyped-def]
@@ -88,13 +103,14 @@ def test_real_worker_exports(win, tmp_path) -> None:  # type: ignore[no-untyped-
     assert result is not None and result[1].ok
 
 
-def test_export_button_hidden_until_there_are_harnesses(qtbot, tmp_path) -> None:  # type: ignore[no-untyped-def]
+def test_nothing_to_export_until_there_are_harnesses(qtbot, tmp_path) -> None:  # type: ignore[no-untyped-def]
     w = make_window(tmp_path)
     qtbot.addWidget(w)
     w.ctl._install(new_project("x"), None, None)
-    w.harness_panel.refresh()
-    assert w.harness_panel.export_btn.isHidden()
-    assert w.findChild(QPushButton, "export") is not None
+    w.harness_view.refresh()
+    assert w.harness_view.stack.currentWidget() is w.harness_view.empty  # no Export button shown
+    assert not w.harness_view.action_buttons["export"].isVisible()
+    assert w.findChild(QPushButton, "topbar-export") is not None  # the top bar's Export stays
 
 
 def test_a_toast_that_expires_after_the_window_is_gone_does_not_raise(qtbot, tmp_path) -> None:  # type: ignore[no-untyped-def]

@@ -57,7 +57,7 @@ The app also has **File > Open the sample project**. That is example data. Save 
 
 ## 2. Add units
 
-1. Open the **Palette** tab on the left, and under **Add a unit** press one of the buttons: **＋ Computer**, **＋ Power unit**, **＋ Actuator (wheel)**, **＋ Sensor (star tracker)**, **＋ Payload**, **＋ Transceiver**, **＋ Pyro unit**, **＋ Computer (many interfaces)**, **＋ Power distribution unit**, **＋ Battery**, **＋ Solar array**, **＋ Sun sensor**, **＋ Magnetorquer** or **＋ Heater panel**. Long names are shortened on the button; the tooltip has the full name. **Edit > Add unit** has the same list, and so has **Add > Unit…** in the **Project** tab.
+1. Choose **Edit > Add unit** and pick one of the kinds: **Computer**, **Power unit**, **Actuator (wheel)**, **Sensor (star tracker)**, **Payload**, **Transceiver**, **Pyro unit**, **Computer (many interfaces)**, **Power distribution unit**, **Battery**, **Solar array**, **Sun sensor**, **Magnetorquer** or **Heater panel**. **Add > Unit…** in the **Project** tab on the left shows the same list, and so does the command palette (Ctrl+K, type "add").
 2. The unit appears at once. No window opens. The ID and the name are given automatically, for example `PCDU1` and "Power unit 1", `OBC1` and "Computer 1", `RW1` and "Actuator (wheel) 1".
 3. To change the ID or the name, select the unit and edit **ID** or **Name** in the **Inspector** on the right.
 4. Drag the unit to move it. A unit cannot be dragged past the top or left edge of the diagram, and the diagram grows to the right and downwards to hold a unit you place far out (switching to **Expert** grows it too). The lane it sits in is its **zone** (a panel or compartment of the spacecraft). A blank project has two lanes, `panel-A` and `panel-B`. **Edit > Add zone…** adds a lane: type a zone name.
@@ -66,7 +66,7 @@ Each unit comes with connectors. You do not need to look at them in Guided mode.
 
 ## 3. Connect two units
 
-1. Under **Connect with** in the **Palette** tab, press an interface type, for example **RS-422** or **Primary power**. (**Edit > Connect with** has the same list; the key **C** switches the connect tool on. **Ctrl+I** or **Add > Interface…** opens a form where you pick the type and both units.)
+1. Open the arrow beside the **Connect** button above the diagram and pick an interface type, for example **RS-422** or **Primary power**; the type in use has a tick. (**Edit > Connect with** has the same list; the key **C** switches the connect tool on with the last type. **Ctrl+I** or **Add > Interface…** opens a form where you pick the type and both units.)
 2. Click the first unit, then the second unit. Units that cannot take that type are greyed out, with the reason next to them.
 3. A link is drawn. It gets an ID (`IF-001`) and a name such as "Primary power PCDU1 to RW1". The tool picks the connectors and marks them **auto-filled** until you confirm them (see [read and fix problems](read-and-fix-problems.md)).
 4. The connect tool stays on, so you can draw more links. Press **Esc**, or the **Select** button above the diagram, to stop. While the connect tool is on, dragging a unit moves nothing (it is not a move tool); if the first unit you clicked is deleted or its link is undone, the tool forgets that first click.
@@ -99,7 +99,7 @@ Switching never changes your data.
 - Zoom with **Ctrl+=** and **Ctrl+-**, or **Ctrl+wheel** at the pointer. **F** fits the whole diagram, **Shift+F** zooms to the selection and **Ctrl+0** shows 100 %. **View > Show all link labels** shows voltages and currents on every link in a dense diagram.
 - **Shift+click**, **Ctrl+click** or a drag on the background select several items; **Ctrl+A** selects all. **Ctrl+F** finds a unit or link and marks every match. **Edit > Align**, **Space evenly** and **Duplicate** (Ctrl+D) work on the selection.
 - A badge on a unit or link counts its problems, warnings and values still to enter, and a lock with *W001 A* shows what a released harness holds.
-- The **Project** tab on the left and the bottom tabs **Interface table** and **Outline** list every link and unit as text. They also work with a screen reader.
+- The **Project** tab on the left lists every unit and link as a tree, and the **Interfaces** tab beside it (Ctrl+Shift+T) lists every link as a table you can edit. They also work with a screen reader. Shift+arrows in the tree select several units or links at once.
 
 ## 7. Change your mind: delete, undo, save
 

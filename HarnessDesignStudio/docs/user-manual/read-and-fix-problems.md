@@ -27,13 +27,13 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 ## 2. In the app
 
-1. Open the **Problems** tab (in the right panel, or in the bottom panel). The tab title shows how many open errors and warnings there are, for example "Problems (10)". While the design rules run, the status line says "Design rules: checking…" and then, for example, "Design rules: 34 rules, 20 passed, 2 failed, 12 not checked." A rule that could not run because a value is missing counts as *not checked*, never as passed. The **Checks** tab (Ctrl+4) lists all 34 rules with a result for each; see [section 2a](#2a-the-checks-tab).
+1. Open the **Problems** tab (in the right panel). The tab title shows how many open errors and warnings there are, for example "Problems (10)". While the design rules run, the status line says "Design rules: checking…" and then, for example, "Design rules: 34 rules, 20 passed, 2 failed, 12 not checked." A rule that could not run because a value is missing counts as *not checked*, never as passed. The **Checks** tab (Ctrl+4) lists all 34 rules with a result for each; see [section 2a](#2a-the-checks-tab).
 2. Each finding is a card. (GUI, not run: described from the program's texts and code.) It says what is wrong and why it matters. Many cards have a button that fixes it in one click. The cards have these buttons:
    - **Show** jumps to the unit, link or harness it is about.
    - A fix button, named after the fix, for example **Choose connectors automatically**, **Confirm connectors** or **Connect to a redundant copy of OBC1**.
    - **Waive…** (warnings only).
 3. Three or more errors or notes of the same rule about the same object are shown as one card with a list. (Warnings always get a card each, because each one can be waived on its own.)
-4. The **To-do** tab lists what is left to do, for example "2 auto-filled connector assignments to review". It is not the same list as the problems.
+4. The **To do** list at the top of the Problems tab says what is left to do, for example "2 auto-filled connector assignments to review". It is a short list of actions, not the same as the problem cards below it.
 5. The **Inspector** of a link has **Confirm auto-filled connectors**. Press it once you have looked at the connectors the tool chose.
 
 Click a card or a to-do line to jump to the item.

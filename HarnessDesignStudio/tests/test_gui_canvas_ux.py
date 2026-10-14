@@ -19,7 +19,7 @@ from harness_design_studio.core import edit, templates  # noqa: E402
 from harness_design_studio.core.io.loader import load_project  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
 from harness_design_studio.gui.canvas import METRICS, CanvasMetrics, find_matches  # noqa: E402
-from tests.gui_helpers import DialogScript, make_window, unit_point  # noqa: E402
+from tests.gui_helpers import DialogScript, make_window, show_problems, unit_point  # noqa: E402
 
 LEFT = Qt.MouseButton.LeftButton
 
@@ -224,16 +224,28 @@ def test_a_selection_puts_all_its_links_in_focus_and_the_filter_takes_several_va
     assert scene.filter is None
 
 
-def test_the_outline_follows_and_drives_a_selection_of_several(win) -> None:
-    win.tabs.setCurrentWidget(win.outline)
+def test_the_tree_follows_and_drives_a_selection_of_several(win) -> None:
+    """Was the Outline's test: a selection of several units shows in the tree, and Shift in the
+    tree selects several on the diagram (the keyboard way to what the rubber band does)."""
+    tree = win.project_tree
     QApplication.processEvents()
+
+    def highlighted() -> set[tuple[str, str]]:
+        rows = tree.view.selectionModel().selectedRows()
+        return {(tree._node_at(i).kind, tree._node_at(i).id) for i in rows}
+
     win.ctl.select_many([("unit", "RW1"), ("unit", "RW2")])
-    picked = {tuple(i.data(0, Qt.ItemDataRole.UserRole)) for i in win.outline.tree.selectedItems()}
-    assert {("unit", "RW1"), ("unit", "RW2")} <= picked
-    win.outline.tree.clearSelection()
-    win.outline.tree.topLevelItem(0).setSelected(True)
-    win.outline.tree.topLevelItem(1).setSelected(True)
-    assert len(win.ctl.selected) == 2
+    assert highlighted() == {("unit", "RW1"), ("unit", "RW2")}
+    win.ctl.select(None)
+    assert highlighted() == set()
+    first, second = tree.child_ids("units")[:2]
+    tree.view.setCurrentIndex(tree.index_for("unit", first))
+    tree.view.setFocus()
+    QTest.keyClick(tree.view, Qt.Key.Key_Down, Qt.KeyboardModifier.ShiftModifier)
+    assert {(s.kind, s.id) for s in win.ctl.selected} == {("unit", first), ("unit", second)}
+    assert highlighted() == {("unit", first), ("unit", second)}
+    QTest.keyClick(tree.view, Qt.Key.Key_Up, Qt.KeyboardModifier.ShiftModifier)
+    assert {(s.kind, s.id) for s in win.ctl.selected} == {("unit", first)}  # back to one
 
 
 def test_dragging_one_of_several_selected_units_moves_them_together_as_one_step(win) -> None:
@@ -407,8 +419,8 @@ def test_f_fits_ctrl_0_is_100_percent_and_shift_f_zooms_to_the_selection(win) ->
 
 def test_f_does_nothing_when_the_keyboard_is_elsewhere(win) -> None:
     win.view.zoom_100()
-    win.table.view.setFocus()
-    QTest.keyClick(win.table.view, Qt.Key.Key_F)
+    win.interface_table.view.setFocus()
+    QTest.keyClick(win.interface_table.view, Qt.Key.Key_F)
     assert win.view.zoom_scale() == 1.0
 
 
@@ -468,8 +480,9 @@ def test_the_map_and_legend_make_room_in_a_small_window(win) -> None:
     v = win.view
     big = v.minimap.size()
     assert v.legend.isVisibleTo(v) and v.minimap.isVisibleTo(v)
-    win.resize(1280, 640)
-    win.dock_bottom.show()  # (the shell hides it in a short window; shown again: about 330 px left)
+    win.resize(
+        1280, 520
+    )  # (the bottom panel is gone: a window this short is what is left of 640 px with it)
     QApplication.processEvents()
     assert not v.minimap.isVisibleTo(v) or v.minimap.size().height() < big.height()
     assert not v.legend.is_open  # starts folded where it would cover the diagram
@@ -818,11 +831,13 @@ def test_deleting_an_interface_names_both_ends_and_the_plans(win) -> None:
     assert "W001" in body and "wire" in body
 
 
-def test_delete_works_from_the_diagram_and_the_tables_but_not_from_other_panels(plain) -> None:
+def test_delete_works_from_the_diagram_the_tables_and_the_tree_but_not_from_other_panels(
+    plain,
+) -> None:
     win = plain
     DialogScript(win, accept=True)
     win.ctl.select("interface", "IF-TM-RW1")
-    win.tabs.setCurrentWidget(win.problems)
+    show_problems(win)
     win.problems.setFocus()
     QTest.keyClick(win.problems, Qt.Key.Key_Delete)
     assert "IF-TM-RW1" in win.ctl.project.interfaces  # a stray key in another panel does nothing
@@ -830,10 +845,17 @@ def test_delete_works_from_the_diagram_and_the_tables_but_not_from_other_panels(
     QTest.keyClick(win.view, Qt.Key.Key_Delete)
     assert "IF-TM-RW1" not in win.ctl.project.interfaces
     win.act_undo.trigger()
-    win.tabs.setCurrentWidget(win.table)
-    win.table.view.setFocus()
+    win.show_interfaces()
+    win.interface_table.view.setFocus()
     win.ctl.select("interface", "IF-TM-RW1")
-    QTest.keyClick(win.table.view, Qt.Key.Key_Delete)
+    QTest.keyClick(win.interface_table.view, Qt.Key.Key_Delete)
+    assert "IF-TM-RW1" not in win.ctl.project.interfaces
+    win.act_undo.trigger()
+    tree = win.project_tree  # and from the project tree (it took over from the Outline)
+    tree.view.setCurrentIndex(tree.index_for("interface", "IF-TM-RW1"))
+    win.ctl.select("interface", "IF-TM-RW1")
+    tree.view.setFocus()
+    QTest.keyClick(tree.view, Qt.Key.Key_Delete)
     assert "IF-TM-RW1" not in win.ctl.project.interfaces
 
 
