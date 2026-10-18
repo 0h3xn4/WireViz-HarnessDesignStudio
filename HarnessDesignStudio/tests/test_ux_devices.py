@@ -387,6 +387,7 @@ def test_it_draws_in_both_themes_and_sizes(qtbot, qapp, mode: str, size: tuple[i
         ThemeManager().apply(qapp, "light", 1.0)
 
 
+@pytest.mark.perf
 def test_a_connector_with_1000_pins_in_a_100_unit_project_refreshes_fast(qtbot, theme) -> None:
     import time
 
