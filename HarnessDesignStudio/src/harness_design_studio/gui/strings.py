@@ -49,8 +49,8 @@ GLOSSARY: list[tuple[str, str]] = [
 
 TOUR_STEPS: list[tuple[str, str]] = [
     (
-        "palette",
-        "Start here: add units from the palette. Each is a box in your system, like a computer or a wheel.",
+        "add",
+        "Start here: press Add in the project panel and pick Unit. Each unit is a box in your system, like a computer or a wheel.",
     ),
     (
         "canvas",
@@ -58,11 +58,11 @@ TOUR_STEPS: list[tuple[str, str]] = [
     ),
     (
         "types",
-        "To connect two units, pick an interface type, then click the two units. Only valid choices light up.",
+        "To connect two units, open the arrow next to Connect and pick an interface type, then click the two units. Only valid choices light up.",
     ),
     (
-        "bottom",
-        "Problems and a to-do list appear here and update as you work. Click any line to jump to the item.",
+        "problems",
+        "Problems and a to-do list appear in the Problems tab here and update as you work. Click any line to jump to the item.",
     ),
     (
         "generate",
@@ -70,13 +70,6 @@ TOUR_STEPS: list[tuple[str, str]] = [
     ),
 ]
 
-PALETTE = "Palette"
-ADD_UNIT = "Add a unit"
-ADD_UNIT_TIP = "Add a {} to the diagram"
-CONNECT_WITH = "Connect with"
-CONNECT_HELP = "Pick an interface type, then click the first and the second unit."
-BRING_IN_DATA = "Bring in data"
-IMPORT_BUTTON = "Import interfaces from CSV / XLSX…"
 PROPERTIES = "Properties"
 NOTHING_SELECTED = (
     "Select a unit or an interface to see its details. The rest of the diagram fades, so you can "
@@ -113,9 +106,7 @@ SIGNALS = "Signals: {}"
 NUMBER_HELP = "Enter a number in the unit shown, for example 2.5."
 INVALID_VALUE = "This value is not valid."
 PROBLEMS = "Problems"
-TODO = "To-do"
 INTERFACE_TABLE = "Interface table"
-HARNESS_PLANS = "Harness plans"
 NO_PROBLEMS = "No problems. Nice work."
 WAIVED = "Waived"
 SEV_WARNING = "⚠ Warning:"
@@ -124,13 +115,9 @@ SEV_INFO = "ⓘ Info:"
 SHOW = "Show"
 REQUIREMENT_LABEL = "Requirement: {}"
 WAIVE = "Waive…"
-ALL_DONE = "Nothing left to do."
 FILTER_PLACEHOLDER = "Filter by ID, unit or type"
 NEW_INTERFACE = "＋ Interface…"
 NO_PLANS_TITLE = "No harness plans yet."
-NO_PLANS_BODY = (
-    "No harnesses yet. Build the diagram, resolve the problems, then press Generate harnesses."
-)
 
 CANCEL = "Cancel"
 CLOSE = "Close"
@@ -176,7 +163,7 @@ EXPERT_TIP = "Expert mode: all physical details (connectors, pins, parts)."
 TOOL_SELECT = "Select"
 TOOL_CONNECT = "Connect"
 TOOL_SELECT_TIP = "Select and move (Esc)"
-TOOL_CONNECT_TIP = "Connect two units (C)"
+TOOL_CONNECT_TIP = "Connect two units (C). The arrow next to it lists the interface types: pick one, then click the first and the second unit."
 HINT = "Hint"
 ZOOM_IN = "Zoom in"
 ZOOM_OUT = "Zoom out"
@@ -184,7 +171,6 @@ FIT = "Fit"
 NOMINAL = "nominal"
 REDUNDANT = "redundant"
 AUTO_LEGEND = "auto-filled, not reviewed"
-PROBLEMS_AND_STATUS = "Problems and status"
 TOOLBAR = "Main toolbar"
 SEARCH_BUTTON = "Search / commands  Ctrl+K"
 FILTER_LABEL = "Show"
@@ -227,10 +213,8 @@ GEN_STATUS = {
 }
 PLANS_VERIFY_OK = "Independent check: {0}"
 PLANS_VERIFY_BAD = "Independent check found problems: {0}"
-PLANS_COLUMNS = ["Harness", "Name", "Wires", "Interfaces", "Status", "Origin"]
 WIRE_COLUMNS = ["Wire", "Signal", "From", "To", "AWG", "Length (m)", "Colour", "Locked"]
 EXPLAIN = "Why is it like this?"
-EXPLAIN_NONE = "No explanation recorded (this item was made by hand)."
 ALL_SAVED = "All changes saved"
 UNSAVED = "Unsaved changes (autosaved to the recovery journal)"
 
@@ -241,6 +225,10 @@ def units_text(n: int) -> str:
 
 def interfaces_text(n: int) -> str:
     return f"{n} interface" if n == 1 else f"{n} interfaces"
+
+
+def problems_text(n: int) -> str:
+    return f"{n} problem" if n == 1 else f"{n} problems"
 
 
 STATUS_COUNTS = "{} · {} · model {}"
@@ -342,11 +330,8 @@ OUT_STATUS = {
 }
 OK = "OK"
 
-REVIEW = "Submit for review"
-REVIEW_TIP = "Mark the selected draft harness as ready for review"
 RELEASE = "Release…"
 RELEASE_TIP = "Release the selected harness: records a baseline and the change log, and locks it"
-NEW_REV = "New revision…"
 NEW_REV_TIP = "Unlock a released harness by starting its next revision (the released one is kept)"
 CHANGES = "Changes…"
 CHANGES_TIP = "Show what changed since a baseline"
@@ -360,7 +345,6 @@ CHECKED_BY = "Checked by (optional)"
 COMMENT = "Comment (what changed or why)"
 BLOCKED = "Blocked until these are fixed:"
 READY_TO_RELEASE = "Nothing blocks this release."
-RELEASED_LOCKED = "released (locked)"
 RELEASE_DONE = "{0} released. Export the outputs again so the drawings show the released status."
 CHANGES_TITLE = "Changes in {0}"
 COMPARE_WITH = "Compare the working design with"
@@ -374,8 +358,6 @@ NO_HISTORY = "Nothing has been recorded yet."
 CANVAS_NAME = "Block diagram: {0}, {1}"
 CANVAS_SELECTED = "Selected: {0} {1}."
 CANVAS_NONE = "Nothing selected."
-HARNESS_LIST = "Harnesses"
-WIRE_LIST = "Wires of the selected harness"
 PANELS_HIDDEN = "The window is narrow, so the palette and properties are hidden. Widen the window or use the View menu to show them."
 PROPERTIES_HIDDEN = (
     "Properties are hidden because the window is narrow. Widen the window or use the View menu."
@@ -390,9 +372,6 @@ PREVIEW_NEXT = "Next sheet"
 PREVIEW_PAGE = "Sheet {0} of {1} (preview: what the export will draw)"
 PREVIEW_NONE = "Select a harness to see its drawing."
 TAB_WHY = "Why"
-TAB_DRAWING = "Drawing"
-OUTLINE = "Outline"
-OUTLINE_HELP = "Every unit with its interfaces as a tree. Arrow keys move, Enter selects; the selection follows the diagram."
 A_ARRANGE = "Arrange diagram"
 ARRANGE_DONE = "Diagram arranged: units stay in their lanes, ordered to shorten links. Undo restores the old positions."
 ARRANGE_NOTHING = "The diagram is already arranged."
@@ -487,7 +466,6 @@ ISSUES_LIST = "Problems found while opening the project"
 HISTORY_LIST = "Change log"
 DIFF_BASELINE = "Compare with released revision"
 DIFF_LIST = "Changes since the released revision"
-BOTTOM_TABS = "Problems, to-do list, interfaces, harness plans and outline"
 ARRANGE_LABEL = "Arrange diagram"
 REVIEW_SUBMITTED = "{} submitted for review."
 NEW_REV_STARTED = "New revision of {} started; it can be edited again."
@@ -517,8 +495,6 @@ TAG_REDUNDANT = "REDUNDANT"
 NO_FREE_CONNECTOR = "No free {} connector"
 NO_TYPE = "No type"
 AND_MORE = "… and {} more"
-HARNESS_GENERATED = "generated"
-HARNESS_BY_HAND = "by hand"
 PROGRESS_VERIFY = "Independent check"
 FOLDER_UNUSABLE = "the folder cannot be used"
 TABLE_FILES = "Tables (*.csv *.xlsx)"
@@ -1145,7 +1121,6 @@ TAB_RELEASES = "Releases"
 TAB_INSPECTOR = "Inspector"
 TAB_PROBLEMS = "Problems"
 TAB_PROJECT = "Project"
-TAB_PALETTE = "Palette"
 TAB_TIP = "{} (Ctrl+{})"
 # empty states of views that are not installed yet
 EMPTY_VIEW_TITLE = "{} is not available yet"
@@ -1249,7 +1224,6 @@ REDO_NOTHING = "Nothing to redo"
 NO_HARNESS_FOR_ACTION = "Choose a harness first (there is more than one)."
 NO_HARNESSES_FOR_ACTION = "There are no harnesses yet. Generate harnesses first."
 VIEW_NOT_INSTALLED = "{} is not available in this version yet."
-PANELS_HIDDEN_SHORT = "The window is short, so the bottom panel is hidden to keep the diagram large. Use the View menu to show it."
 CHECK_STARTED = "Checking the design rules…"
 CHECK_FINISHED = "Checks finished: {failed} failed · {unchecked} not checked."
 CHECK_FINISHED_CLEAN = "Checks finished: nothing failed · {unchecked} not checked."
@@ -1258,7 +1232,6 @@ PALETTE_NO_MATCH = "No command matches."
 PANE_CANVAS = "Diagram"
 PANE_TREE = "Project panel"
 PANE_INSPECTOR = "Inspector"
-PANE_BOTTOM = "Bottom panel"
 PANE_FOCUSED = "{} has the keyboard focus"
 M_DESIGN = "&Design"
 # ==== UX harness view, lists and generate plan (gui/harness_view.py, lists_panel.py, plan_table.py) ==
@@ -1666,3 +1639,27 @@ DV_PREVIEW_HINT = (
 )
 DV_WHY_TIP = "Double-click or press Enter to see why the pin is the way it is"
 DV_EXPORT_FILTER = "CSV files (*.csv);;Excel workbooks (*.xlsx)"
+# ---- retiring the bottom tabs and the Palette: where their functions went ---------------------
+TAB_INTERFACES = "Interfaces"
+TAB_INTERFACES_TIP = "Every interface as a table you can edit with the keyboard (Ctrl+Shift+T)"
+A_GO_INTERFACES = "Go to Interface table"
+TODO_HEADING = "To do ({})"
+A_CHANGES = "Show changes of harness…"
+A_HISTORY = "Show change log of harness…"
+A_DELETE_HARNESS = "Delete harness…"
+HV_MORE = "More"
+HV_MORE_TIP = "Changes since a baseline, the change log, and deleting this harness"
+
+# ---- Fix all (n) and the command palette overlay (SH-24, SH-11) -------------------------------
+CHECKS_FIX_ALL = "Fix all ({})"
+CHECKS_FIX_ALL_TIP = (
+    "Apply the one-click fix of every open problem that has one ({}), as one step: {}. "
+    "Undo takes all of them back."
+)
+CHECKS_FIX_ALL_NONE = "Nothing to fix automatically: no open problem has a one-click fix."
+STEP_FIX_ALL = "Fix all ({})"
+FIX_ALL_DONE = "Fixed {} in one step: {}."
+FIX_ALL_SKIPPED = " {} left alone: {}"
+FIX_ALL_NOTHING = "Nothing could be fixed automatically. {}"
+COMMANDS_HELP = "Type to search, Up and Down to choose, Enter to run, Esc to close."
+COMMANDS_KEYS = "Up, Down: choose · Enter: run · Esc: close"

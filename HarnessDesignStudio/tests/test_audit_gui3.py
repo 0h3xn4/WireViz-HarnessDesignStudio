@@ -443,9 +443,9 @@ def test_a_release_that_was_saved_cannot_be_undone_and_the_menu_says_why(win, tm
         for h in sorted(win.ctl.project.harnesses.values(), key=lambda x: x.id)
         if all(w.gauge_awg and w.length_m for w in h.wires)
     )
-    win.tabs.setCurrentWidget(win.harness_panel)
-    win.harness_panel.export_btn.click()
-    win.harness_panel.select_harness(hid)
+    win.go_to("harness")
+    win.export_flow()
+    win.harness_view.select_harness(hid)
 
     def fill(d) -> None:  # type: ignore[no-untyped-def]
         d.by.setText("Ada")
@@ -514,11 +514,14 @@ def test_opening_another_project_does_not_wait_for_a_stuck_check(qtbot, monkeypa
 # ---- F1-26: accessible names ---------------------------------------------------------------------------
 
 
-def test_lists_in_dialogs_and_the_bottom_tabs_have_accessible_names(win) -> None:  # type: ignore[no-untyped-def]
+def test_lists_in_dialogs_and_the_side_tabs_have_accessible_names(win) -> None:  # type: ignore[no-untyped-def]
     issues = IssuesDialog(win, [Issue("error", "x", "Something is wrong")], False)
     history = HistoryDialog(win, "Log", [["h"]])
     diff = DiffDialog(win, "Changes", Diff(), ["A"], "A")
-    for widget in (issues.list, history.list, diff.list, diff.baseline, win.tabs):
+    for widget in (
+        issues.list, history.list, diff.list, diff.baseline,
+        win.left_tabs, win.side_tabs, win.interface_table.view,
+    ):  # fmt: skip
         assert widget.accessibleName().strip(), widget.objectName()
 
 

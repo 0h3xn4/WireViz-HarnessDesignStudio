@@ -40,7 +40,7 @@ from harness_design_studio.gui.config_dialog import ConfigValueDialog  # noqa: E
 from harness_design_studio.gui.controller import EditorController  # noqa: E402
 from harness_design_studio.gui.states import STATE_ROLE  # noqa: E402
 from harness_design_studio.gui.theme import ThemeManager  # noqa: E402
-from tests.gui_helpers import make_window  # noqa: E402
+from tests.gui_helpers import make_window, show_problems  # noqa: E402
 from tests.helpers import time_limit  # noqa: E402
 from tests.test_accessibility import unnamed  # noqa: E402
 
@@ -90,7 +90,7 @@ def result_of(panel: ChecksPanel, rule_id: str) -> by_rule.RuleResult:
 
 
 def test_the_problems_header_never_says_all_rules_were_checked_while_some_were_not(flat) -> None:
-    flat.tabs.setCurrentWidget(flat.problems)
+    show_problems(flat)
     state = flat.problems.findChild(QLabel, "drc-state")
     assert state is not None
     s = by_rule.summary(flat.ctl.drc_rule_results())
@@ -107,7 +107,7 @@ def test_the_problems_header_says_all_passed_only_when_nothing_failed_or_is_open
         replace(r, status="pass", count=0, missing=(), notes=()) for r in ctl.drc_rule_results()
     ]
     ctl._rule_cache = (ctl.findings_key(), results)
-    flat.tabs.setCurrentWidget(flat.problems)
+    show_problems(flat)
     flat.problems._signature = None
     flat.problems.refresh()
     state = flat.problems.findChild(QLabel, "drc-state")
@@ -128,7 +128,7 @@ def test_not_checked_notes_are_never_cut_off_by_the_card_limit(flat) -> None:
     ]  # fmt: skip
     ctl._drc_raw = [*drc.run(ctl.project), *many]
     ctl._drc_version += 1
-    flat.tabs.setCurrentWidget(flat.problems)
+    show_problems(flat)
     flat.problems._signature = None
     flat.problems.refresh()
     cards = [f for f in flat.problems.findChildren(QFrame) if f.property("card")]
@@ -145,7 +145,7 @@ def test_a_cancelled_check_is_called_out_of_date_in_problems(flat) -> None:
     unit = next(iter(ctl.project.units.values()))
     ctl.update_unit(unit.id, name="Renamed")
     ctl.cancel_check()
-    flat.tabs.setCurrentWidget(flat.problems)
+    show_problems(flat)
     flat.problems.refresh()
     state = flat.problems.findChild(QLabel, "drc-state")
     assert state is not None and state.text() == strings.DRC_STALE
@@ -793,7 +793,9 @@ def test_everything_can_be_done_from_the_keyboard(host, qtbot) -> None:
     assert editor.text() == "0.25" and dlg.apply_btn.isEnabled()
     steps = len(ctl.history._undo)
     dlg.activateWindow()
-    QApplication.processEvents()
+    # Ctrl+Return is a window shortcut: it only fires once the dialog is the active window, which
+    # takes a moment on a loaded machine
+    qtbot.waitUntil(dlg.isActiveWindow, timeout=5000)
     QTest.keyClick(editor, Qt.Key.Key_Return, Qt.KeyboardModifier.ControlModifier)
     assert len(ctl.history._undo) == steps + 1 and not dlg.isVisible()
     wait_current(qtbot, ctl)
@@ -833,6 +835,7 @@ def _hundred(results: list[by_rule.RuleResult]) -> list[by_rule.RuleResult]:
     return [replace(results[i % len(results)], rule_id=f"rule-{i:03d}") for i in range(100)]
 
 
+@pytest.mark.perf
 def test_a_hundred_rules_build_filter_and_sort_quickly(host) -> None:
     ctl, theme, panel = host
     results = _hundred(ctl.drc_rule_results())

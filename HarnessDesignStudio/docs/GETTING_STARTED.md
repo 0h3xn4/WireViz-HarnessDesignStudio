@@ -81,15 +81,15 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 | Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6) |
 | Middle, **Diagram** | units in lanes (*panel-A*, *panel-B*), links between them. Every kind of link has its own picture and colour; the legend (bottom left of the diagram) shows them (power is red in the light theme). Small badges show problems, values still to enter and locks |
 | Left, **Project** | a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports; **Add** adds a unit or an interface |
-| Left, **Palette** | **Add a unit** buttons (a computer, a power unit, a wheel and so on) and **Connect with**, the interface types: pick one, then click two units |
-| Right, **Inspector** | the selected unit or interface: names, **Max current (A)**, notes, and where it is used. The tabs **Why** and **Problems** are beside it |
-| Bottom tabs | **Problems**, **To-do**, **Interface table**, **Harness plans**, **Outline** (hidden in a short window; **View > Problems and status**) |
+| Left, **Interfaces** | every interface as a table you can sort, filter and edit with the keyboard (Ctrl+Shift+T) |
+| Right, **Inspector** | the selected unit or interface: names, **Max current (A)**, notes, and where it is used. The tabs **Why** and **Problems** (with a **To do** list above the problem cards) are beside it |
+| Above the diagram | **Select** and **Connect** (the arrow beside **Connect** lists the interface types), **Delete**, zoom |
 | Toolbar | **Undo**, **Redo**, **Guided / Expert**, **Arrange diagram**, **Search / commands** (Ctrl+K) |
 
 Try this:
 
 1. Click the unit `RW1`. The Inspector shows it. Click the red link: it is the interface `IF-001`, power from `PCDU1` to `RW1`, with **Max current (A)** 2.
-2. Open the **Interface table** tab of the bottom panel: every interface in a list (this view also works with a screen reader). The **Project** tab on the left lists the same objects as a tree.
+2. Open the **Interfaces** tab on the left (Ctrl+Shift+T): every interface in a table (this view also works with a screen reader). The **Project** tab beside it lists the same objects as a tree.
 3. Press **Ctrl+Z** after any change to undo it. You cannot break anything here: the example is a practice copy.
 
 ## Part 3: generate the harnesses
@@ -131,7 +131,7 @@ Notice the wire gauge says **pending**. That is deliberate and is the subject of
 
 ## Part 5: read and answer the Problems
 
-Open the **Problems** tab (right panel or bottom panel), or the **Checks** tab for all 34 rules and their result, or run:
+Open the **Problems** tab (right panel), or the **Checks** tab for all 34 rules and their result, or run:
 
 ```
 harness-design-studio drc wheel-link
@@ -154,7 +154,7 @@ A warning can be fixed, or **waived**. **Waive one (app):** in the Problems tab 
 
 The **notes** say *not checked*: EMC separation, shield grounding and so on are not checked, **because the engineering values are still placeholders**. A silent pass would be a lie, so the tool says nothing was checked.
 
-The **To-do** tab lists what is left, including *N auto-filled connector assignments to review*: the connectors on `IF-001` and `IF-002` were chosen by the tool, and a person should confirm them. In the app, select an interface and press **Confirm auto-filled connectors** in the Inspector.
+The **To do** list at the top of the **Problems** tab shows what is left, including *N auto-filled connector assignments to review*: the connectors on `IF-001` and `IF-002` were chosen by the tool, and a person should confirm them. In the app, select an interface and press **Confirm auto-filled connectors** in the Inspector.
 
 ## Part 6: export drawings and lists
 
@@ -355,11 +355,11 @@ harness-design-studio new my-first-design --name "My first design"
 
 In the app, **File > Open project…** it, then:
 
-1. Open the **Palette** tab on the left and press **+ Power unit**, **+ Computer** and **+ Actuator (wheel)** (or use **Add > Unit…** in the Project tab). Units appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in the Inspector if you want.
-2. Under **Connect with** in the Palette tab pick **Primary power**, click `PCDU1`, then click `RW1`. Units that cannot take this interface are greyed out, with the reason beside them.
+1. Press **Add** in the Project tab on the left, choose **Unit…**, and add a **Power unit**, a **Computer** and an **Actuator (wheel)** (**Edit > Add unit** has the same list). Units appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in the Inspector if you want.
+2. Open the arrow beside **Connect** above the diagram (or **Edit > Connect with**), pick **Primary power**, click `PCDU1`, then click `RW1`. Units that cannot take this interface are greyed out, with the reason beside them.
 3. Select the new link and set **Max current (A)** to 2. Without a current, a power wire's gauge stays pending.
 4. Pick **RS-422**, click `OBC1`, then `RW1`.
-5. Look at **Problems** and **To-do**, then **Generate**, **Apply**, **Export…**. **Ctrl+S** saves.
+5. Look at **Problems** and its **To do** list, then **Generate**, **Apply**, **Export…**. **Ctrl+S** saves.
 
 You have now done everything the tool does, once. Add a **Create redundant copy** of the wheel (select it, press the button) and watch the tool build the backup chain and warn when something connects nominal to redundant.
 

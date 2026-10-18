@@ -795,6 +795,7 @@ def stress_window(qtbot, tmp_path, units: int = 100, links: int = 800):
     return w
 
 
+@pytest.mark.perf
 def test_marks_stay_inside_the_edit_budget_at_100_units_and_800_links(qtbot, tmp_path) -> None:
     w = stress_window(qtbot, tmp_path)
     scene = w.view.dscene
@@ -815,6 +816,7 @@ def test_marks_stay_inside_the_edit_budget_at_100_units_and_800_links(qtbot, tmp
     assert (time.perf_counter() - t) * 1000 < time_limit(100)
 
 
+@pytest.mark.perf
 def test_a_full_repaint_with_marks_costs_little_at_100_units(qtbot, tmp_path) -> None:
     w = stress_window(qtbot, tmp_path)
     w.view.grab()  # warm

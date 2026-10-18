@@ -156,63 +156,70 @@ def win(qtbot, tmp_path):  # type: ignore[no-untyped-def]
     qtbot.addWidget(w)
     p = sat15_full()
     w.ctl._install(p, None, None)
-    w.tabs.setCurrentWidget(w.harness_panel)
+    w.go_to("harness")
     return w
 
 
 @pytest.mark.gui
 def test_preview_shows_the_selected_harness_and_pages(win) -> None:  # type: ignore[no-untyped-def]
-    panel = win.harness_panel
-    panel.side.setCurrentWidget(panel.preview)
-    assert "Select a harness" in panel.preview.label.text()
-    panel.select_harness("W010")
-    assert panel.preview.sheets and "Sheet 1 of" in panel.preview.label.text()
-    assert not panel.preview.prev.isEnabled()
-    img = panel.preview.view.grab()  # paints the real sheet without errors
+    view = win.harness_view  # the drawing of the Harness tab
+    assert view.select_harness("W010")
+    assert view.wait_idle()
+    assert view.preview.sheets and "Sheet 1 of" in view.preview.label.text()
+    assert not view.preview.prev.isEnabled()
+    img = view.preview.view.grab()  # paints the real sheet without errors
     assert not img.isNull()
 
 
 @pytest.mark.gui
 def test_preview_follows_the_design(win) -> None:  # type: ignore[no-untyped-def]
-    panel = win.harness_panel
-    panel.side.setCurrentWidget(panel.preview)
-    panel.select_harness("W010")
+    view = win.harness_view
+    view.select_harness("W010")
+    assert view.wait_idle()
     h = win.ctl.project.harnesses["W010"]
     win.ctl.run("rename", [Put("harnesses", evolve(h, name="Renamed harness"))])
-    items = panel.preview.sheets[0].items
+    view.refresh()
+    assert view.wait_idle()
+    items = view.preview.sheets[0].items
     assert any("Renamed harness" in getattr(i, "s", "") for i in items)
 
 
 @pytest.mark.gui
 def test_preview_pagination_buttons(win) -> None:  # type: ignore[no-untyped-def]
-    panel = win.harness_panel
-    panel.side.setCurrentWidget(panel.preview)
+    view = win.harness_view
     h = win.ctl.project.harnesses["W010"]
     many = [evolve(h.wires[k % len(h.wires)], id=f"W010-{k + 1:03d}") for k in range(70)]
     apply_ops(win.ctl.project, [Put("harnesses", evolve(h, wires=many, shields=[]))])
-    panel.refresh()
-    panel.select_harness("W010")
-    panel.preview.show_harness(win.ctl.project, win.ctl.project.harnesses["W010"])
-    n = len(panel.preview.sheets)
-    assert n >= 2 and panel.preview.next.isEnabled()
-    panel.preview.next.click()
-    assert panel.preview.page == 1 and panel.preview.prev.isEnabled()
+    view.refresh()
+    view.select_harness("W010")
+    assert view.wait_idle()
+    n = len(view.preview.sheets)
+    assert n >= 2 and view.preview.next.isEnabled()
+    view.preview.next.click()
+    assert view.preview.page == 1 and view.preview.prev.isEnabled()
 
 
 @pytest.mark.gui
-def test_outline_lists_units_and_interfaces_and_follows_selection(win, qtbot) -> None:  # type: ignore[no-untyped-def]
-    win.tabs.setCurrentWidget(win.outline)
-    tree = win.outline.tree
+def test_the_project_tree_lists_units_and_interfaces_and_follows_selection(win) -> None:  # type: ignore[no-untyped-def]
+    """Was the Outline: every unit and interface as a tree the keyboard and screen readers walk
+    through, the selection following the diagram both ways."""
+    from PySide6.QtCore import Qt
+    from PySide6.QtTest import QTest
+
+    tree = win.project_tree
     p = win.ctl.project
-    assert tree.topLevelItemCount() == len(p.units)
-    node = tree.topLevelItem(0)
-    assert node.childCount() >= 1
-    child = node.child(0)
-    child.setSelected(True)  # picking in the tree selects in the diagram
-    assert win.ctl.selection and win.ctl.selection.kind == "interface"
+    assert tree.child_ids("units") == sorted(p.units)
+    assert tree.child_ids("interfaces") == sorted(p.interfaces)
+    iid = sorted(p.interfaces)[0]
+    tree.view.setCurrentIndex(tree.index_for("interface", iid))
+    QTest.keyClick(tree.view, Qt.Key.Key_Return)  # picking in the tree selects in the diagram
+    assert win.ctl.selection and (win.ctl.selection.kind, win.ctl.selection.id) == (
+        "interface",
+        iid,
+    )
     unit = sorted(p.units)[3]
     win.ctl.select("unit", unit)  # and the other way round
-    assert tree.selectedItems() and tree.selectedItems()[0].text(0).startswith(unit)
+    assert tree.current() == ("unit", unit)
 
 
 @pytest.mark.gui
@@ -230,6 +237,7 @@ def test_arrange_action_runs_and_can_be_undone(win) -> None:  # type: ignore[no-
     assert "already" in win.toasts.messages[-1].lower()
 
 
+@pytest.mark.perf
 @pytest.mark.gui
 def test_arrange_is_fast_at_stress_size() -> None:
     import time

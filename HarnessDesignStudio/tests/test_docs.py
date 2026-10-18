@@ -76,11 +76,9 @@ def test_guide_names_buttons_that_exist() -> None:
         "New revision…",
         "Changes…",
         "Change log…",
-        "Add a unit",
         "Interface table",
-        "Harness plans",
         "Problems",
-        "To-do",
+        "To do",
         "Waive",
         "Save salvaged copy",
     ):

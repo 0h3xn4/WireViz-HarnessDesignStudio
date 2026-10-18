@@ -93,12 +93,12 @@ def test_the_dialog_sets_the_colours_and_the_wire_list_shows_them(qtbot, tmp_pat
     assert edit.wire_colour_map(win.ctl.project) == {}
     win.act_wire_colours.trigger()
     generate_project(win.ctl.project)
-    panel = win.harness_panel
-    panel.refresh()
-    panel.select_harness(sorted(win.ctl.project.harnesses)[0])
-    panel._show_wires()
+    view = win.harness_view  # the wire table of the Harness tab has the Colour column
+    win.go_to("harness")
+    view.refresh()
+    assert view.select_harness(sorted(win.ctl.project.harnesses)[0])
     assert win.ctl.project.harnesses, "generation made no harness"
-    cells = [panel.wires.item(r, 6) for r in range(panel.wires.rowCount())]
-    assert all(c is not None for c in cells)
-    texts = [c.text() for c in cells if c is not None]
+    col = view.wire_model.column_index("colour")
+    texts = [view.wire_model.text_at(r, col) for r in range(view.wire_model.rowCount())]
+    assert texts
     assert "yellow (YE)" in texts

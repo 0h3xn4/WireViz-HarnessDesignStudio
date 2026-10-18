@@ -3,7 +3,7 @@
 import csv
 import io
 from collections.abc import Callable
-from dataclasses import dataclass, replace
+from dataclasses import replace
 from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
@@ -481,120 +481,6 @@ class IssuesDialog(QDialog):
         close.clicked.connect(self.accept)
         row.addWidget(close)
         lay.addLayout(row)
-
-
-@dataclass
-class PaletteEntry:
-    label: str
-    run: Callable[[], None]
-    hint: str = ""
-
-
-def rank_entries(entries: list[PaletteEntry], text: str) -> list[PaletteEntry]:
-    """The entries whose label holds every word of `text`, best first: a label that starts with
-    the text, then a label with a word that starts with it, then the rest in their own order.
-    There is no cap: the list scrolls."""
-    words = text.lower().split()
-    if not words:
-        return list(entries)
-    whole = text.lower().strip()
-    ranked: list[tuple[int, int, PaletteEntry]] = []
-    for position, e in enumerate(entries):
-        label = e.label.lower()
-        if not all(w in label for w in words):
-            continue
-        if label.startswith(whole):
-            rank = 0
-        elif any(part.startswith(words[0]) for part in label.replace("(", " ").split()):
-            rank = 1
-        else:
-            rank = 2
-        ranked.append((rank, position, e))
-    ranked.sort(key=lambda r: (r[0], r[1]))
-    return [e for _r, _p, e in ranked]
-
-
-class CommandPalette(QDialog):
-    """Ctrl+K: every action and every unit/interface ID in one searchable list."""
-
-    def __init__(self, parent: QWidget | None, entries: list[PaletteEntry]) -> None:
-        super().__init__(parent)
-        self.entries = entries
-        self.setWindowTitle(strings.COMMANDS_TITLE)
-        self.setObjectName("command-palette")
-        self.setWindowFlag(Qt.WindowType.FramelessWindowHint, True)
-        self.resize(560, 380)
-        lay = QVBoxLayout(self)
-        self.input = QLineEdit()
-        self.input.setObjectName("palette-input")
-        self.input.setPlaceholderText(strings.COMMANDS_PLACEHOLDER)
-        self.input.setAccessibleName(strings.COMMANDS_PLACEHOLDER)
-        self.list = QListWidget()
-        self.list.setObjectName("palette-list")
-        self.list.setAccessibleName(strings.COMMANDS_LIST)
-        lay.addWidget(self.input)
-        lay.addWidget(self.list)
-        self.input.textChanged.connect(self._filter)
-        self.input.installEventFilter(self)
-        self.list.itemActivated.connect(lambda _i: self._run_current())
-        self.list.itemClicked.connect(lambda _i: self._run_current())
-        self._filter("")
-        self.input.setFocus()
-
-    def _filter(self, text: str) -> None:
-        self.list.clear()
-        shown = rank_entries(self.entries, text)
-        for e in shown:
-            item = QListWidgetItem(f"{e.label}    {e.hint}".rstrip())
-            item.setData(Qt.ItemDataRole.UserRole, e)
-            self.list.addItem(item)
-        if shown:
-            self.list.setCurrentRow(0)
-        else:
-            none = QListWidgetItem(strings.PALETTE_NO_MATCH)
-            none.setFlags(Qt.ItemFlag.NoItemFlags)
-            self.list.addItem(none)
-
-    def shown_labels(self) -> list[str]:
-        """The labels listed now, best match first (for tests and screen readers)."""
-        out = []
-        for i in range(self.list.count()):
-            entry = self.list.item(i).data(Qt.ItemDataRole.UserRole)
-            if entry is not None:
-                out.append(entry.label)
-        return out
-
-    def _run_current(self) -> None:
-        item = self.list.currentItem()
-        if item is None:
-            return
-        entry: PaletteEntry | None = item.data(Qt.ItemDataRole.UserRole)
-        if entry is None:
-            return
-        self.accept()
-        entry.run()
-
-    def eventFilter(self, obj: object, event: object) -> bool:
-        from PySide6.QtCore import QEvent
-        from PySide6.QtGui import QKeyEvent
-
-        if (
-            obj is self.input
-            and isinstance(event, QEvent)
-            and event.type() == QEvent.Type.KeyPress
-            and isinstance(event, QKeyEvent)
-        ):
-            key = event.key()
-            if key == Qt.Key.Key_Down:
-                self.list.setCurrentRow(min(self.list.count() - 1, self.list.currentRow() + 1))
-                return True
-            if key == Qt.Key.Key_Up:
-                self.list.setCurrentRow(max(0, self.list.currentRow() - 1))
-                return True
-            if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
-                self._run_current()
-                return True
-        return super().eventFilter(obj, event)  # type: ignore[arg-type]
 
 
 class Banner(QFrame):

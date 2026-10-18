@@ -75,7 +75,7 @@ One look for a state everywhere (table cell, card, header): icon, word and, for 
 
 - A new table starts in the order the rows are given; a click on a header sorts. Column widths and the sort order are saved. (SC-21, SH-10)
 - A list's columns are measured from the model (header, longest cell, widest chip) and re-measured when the harness changes, so a "pending" chip is never cut off; the Harness view's columns have fixed widths so that showing a harness does not measure hundreds of chips. (SC-7, SC-11, SC-24)
-- Tables are `QTableView` over a model, never `QTableWidget`; a test checks the table code. The old Harness plans panel, the older import dialog and the wire colours window still hold `QTableWidget`s (SC-21).
+- Tables are `QTableView` over a model, never `QTableWidget`; a test checks the table code. The older import dialog and the wire colours window still hold `QTableWidget`s (SC-21); the old Harness plans panel, which also did, is gone.
 
 ## The diagram
 
@@ -92,7 +92,7 @@ Each category has its own colour, line weight and letter, so colour is not the o
 - **Align is by the heights drawn now.** The window passes the item heights (Guided and Expert differ). Aligning side to side across lanes changes the unit's zone, as moving it does. (CV-2)
 - **Duplicate copies connectors, never links or pin assignments** (those belong to the original); the copy gets a new ID from the original's prefix and sits in the same lane. (CV-2)
 - **The wheel never zooms by itself.** Ctrl+wheel zooms at the pointer (1.2 per notch), the wheel scrolls up and down, Shift+wheel sideways, a trackpad scrolls by pixels. Middle button or Space with a left drag pans and never moves a unit. (CV-3)
-- **Bare-key shortcuts act only in the diagram.** `F`, `Shift+F`, `Ctrl+A`, `Ctrl+D`, `Ctrl+F` and `Delete` work only while the diagram (and for Delete the interface table or the outline) has the keyboard focus, so they cannot act from another panel. (CV-4, CV-18)
+- **Bare-key shortcuts act only in the diagram.** `F`, `Shift+F`, `Ctrl+A`, `Ctrl+D`, `Ctrl+F` and `Delete` work only while the diagram (and for Delete the interface table or the project tree) has the keyboard focus, so they cannot act from another panel. (CV-4, CV-18)
 - **Fit has a floor.** Fit never zooms out below 10 %, and a project that has just been opened not below 22 %, so names stay readable; a bigger diagram scrolls and can still be zoomed out by hand. Zoomed out, a unit shows its ID in a font sized in screen pixels (about 12 px) instead of in diagram units. The zoom level is shown in the status bar; a click on it returns to 100 %. (CV-4, CV-5)
 - **Overlays, never panels.** The legend (folded to one line in a window under 640 px of diagram height unless the person opened it; View > Show legend hides it, saved), the overview map (smaller under 560 px, none under 360 px, draggable, thin see-through lines) and the search bar sit over the canvas and take no layout space. (CV-15, CV-16)
 - **The legend lists only what is drawn.** No nominal/redundant lines without a redundant chain, no "auto-filled" entry without an auto-filled connector, no gender key without a known gender, no lock entry without a lock. (CV-15)
@@ -125,20 +125,20 @@ Each category has its own colour, line weight and letter, so colour is not the o
 
 Code: `gui/main_window.py`, `gui/shell.py` (slots, banners, status chip rules, `auto_scale`), `gui/topbar.py`, `gui/notice.py`. Tests: `test_ux_shell.py`.
 
-- **Layout.** Top bar, a banner area, then the main tabs Diagram · Harness · Lists · Checks · Releases · Devices (Ctrl+1 to Ctrl+6); left dock (the Project tree tab, the Palette tab), right dock (the Inspector view with its Inspector, Why and Problems tabs), bottom dock (Problems, To-do, Interface table, Harness plans, Outline: the five old tabs, kept until they are retired), status bar. Views plug into named slots (`MainWindow.install_view(name, widget)`: harness, lists, devices, tree, inspector, why, problems); a slot that is not filled keeps an empty-state page and its tab stays hidden. The Harness, Lists, Devices, tree and inspector slots are filled; the Why and Problems tabs live inside the Inspector view, so those two slots stay unfilled. (SH-7, SC-5)
+- **Layout.** Top bar, a banner area, then the main tabs Diagram · Harness · Lists · Checks · Releases · Devices (Ctrl+1 to Ctrl+6); left dock (the Project tree tab and the Interfaces tab, the editable interface table, Ctrl+Shift+T), right dock (the Inspector view with its Inspector, Why and Problems tabs; the Problems tab starts with the To do lines), status bar. There is no bottom dock: its five tabs and the Palette were retired in October 2026 (SH-6, SH-7, SC-21; where each function went is in the table in `ux-audit.md`, Build status). The Interfaces tab widens the left dock to about 620 px when it opens and puts it back when the Project tab returns; Connect has an arrow that lists the interface types; Add in the Project tab and Edit > Add unit add units. Views plug into named slots (`MainWindow.install_view(name, widget)`: harness, lists, tree, inspector, why, problems); a slot that is not filled keeps an empty-state page and its tab stays hidden. The Harness, Lists, tree and inspector slots are filled; the Why and Problems tabs live inside the Inspector view, so those two slots stay unfilled. (SH-7, SC-5)
 - **One primary button.** Generate is the only accent-coloured button of the window (see [State badges](#state-badges-and-chips)). (SH-1, SH-24)
 - **Top bar.** Project name, short model hash in monospace, a dirty marker, Generate, Check, Export… and the status chip. It folds the dirty text, the hash and the words of Check and Export away when narrow. (SH-1)
 - **Status chip.** Words, icon and colour from the state chips: Up to date (pass), Plans up to date (nothing exported yet), Plans out of date and Outputs out of date (stale), Generating, Exporting and Checking (info), Not generated (draft). Order of precedence: a running job, then out of date (plans before files), then a running check, then up to date. (SH-2)
 - **Banners and refusals stay.** Out-of-date plans or files, and a failed generate, export or check, are banners with the buttons that fix them (Generate, Export…, Try again); the stale banner can be hidden until the design changes again, the chip never hides. A refusal because of a release stays as a toast without a timer, with "Start new revision…", until the next change goes through. (SH-2, SH-5, SH-17, SC-23)
-- **Hash and states are read once per model state**, after a pause of 250 ms that grows to at most 2 s for a design that takes long to hash (4 times what the last reading cost). The plans check of the old Harness plans panel is cached the same way; the Harness and Lists views compute theirs in a worker. (SH-16, SC-24)
+- **Hash and states are read once per model state**, after a pause of 250 ms that grows to at most 2 s for a design that takes long to hash (4 times what the last reading cost). The Harness and Lists views compute theirs in a worker. (SH-16, SC-24)
 - **Status bar.** Folder in monospace cut in the middle, "34 rules · v1.0.0", "Generated at model xxxxxxxx" (the generation record's input hash, no clock, so exports stay reproducible), the pending-values link ("4 values pending · 12 rules not checked", it opens Checks filtered), the zoom level. (SH-9, SH-3)
 - **Layout is saved.** `saveState` with a version number next to the geometry; View > Reset layout restores the first layout and forgets the saved one. Table column widths are saved by the tables. (SH-10)
-- **Short and narrow windows.** Below 800 px (at 100 %) of height the bottom panel is hidden, below 1150 px of width the right dock and below 800 px the left dock; a toast says so, and the panel comes back when the window grows again unless the person hid it. The bottom panel never takes more than 40 % of the window. At 1280 x 720 the diagram has about 70 % of the window height on the flatsat example (a test requires at least 55 %). (SH-26)
-- **Panels may be squeezed.** Pages of the main tabs and of the bottom panel have the Ignored size policy, so what a panel holds never makes the window wider than the screen (it did, to 1600 px, once the check results were in). The smallest window the layout allows is about 1150 x 300 px at 100 % scale (measured offscreen). (SH-26)
-- **Ctrl+K** lists every enabled action with its shortcut, the unit and interface templates, go to harness, unit or interface; a name that starts with the typed text comes first, then a word that starts with it, then the rest; there is no cap. It is still a modal dialog. (SH-11)
+- **Short and narrow windows.** Below 1150 px (at 100 %) of width the right dock is hidden and below 800 px the left dock; a toast says so, and the panel comes back when the window grows again unless the person hid it. Height no longer hides anything: with the bottom panel gone the diagram has the whole height between the top bar and the status bar (a test requires at least 55 % of the window at 1280 x 720). (SH-26)
+- **Panels may be squeezed.** Pages of the main tabs and of the side panels have the Ignored size policy, so what a panel holds never makes the window wider than the screen (it did, to 1600 px, once the check results were in). The smallest window the layout allows is about 1150 x 300 px at 100 % scale (measured offscreen). (SH-26)
+- **Ctrl+K** lists every enabled action with its shortcut, the unit and interface templates, go to harness, unit or interface; a name that starts with the typed text comes first, then a word that starts with it, then the rest; there is no cap. It is a non-modal overlay centred over the window (a child widget, not a dialog): the window stays usable under it; Up, Down, Page Up, Page Down and Enter, Esc closes, and a click elsewhere or any other move of the keyboard focus closes it too. (SH-11)
 - **Undo and Redo name the step** ("Undo Move PDU2") from `History.next_undo_label` and `next_redo_label`. (SH-14)
 - **One dialog for a new project**, after the question about unsaved changes: folder, name and example, with the error under the field it belongs to; the name follows the folder name until it is typed. (SH-18)
-- **Focus.** F6 and Shift+F6 move between the diagram, the project panel, the inspector and the bottom panel; the diagram still takes a Tab stop for each unit and link. (SH-13)
+- **Focus.** F6 and Shift+F6 move between the diagram, the project panel and the inspector; the diagram still takes a Tab stop for each unit and link. (SH-13)
 
 ## Views
 
@@ -231,6 +231,7 @@ Every shortcut is in a menu and in the tooltip as "text (shortcut)". Keys marked
 | F1 | User guide |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | Undo, redo |
 | Ctrl+1 to Ctrl+6 | The main tabs: Diagram, Harness, Lists, Checks, Releases, Devices |
+| Ctrl+Shift+T | The Interface table (Interfaces tab of the left panel) |
 | Ctrl+F in the Devices tab | Go to the pin filter |
 | F6, Shift+F6 | Next and previous panel |
 | Ctrl+= , Ctrl+- , Ctrl+0 | Zoom in, zoom out, 100 % |
@@ -238,7 +239,7 @@ Every shortcut is in a menu and in the tooltip as "text (shortcut)". Keys marked
 | Ctrl+A, Ctrl+D, Ctrl+F (diagram) | Select all, duplicate, find |
 | Ctrl+Shift+L | Arrange the diagram |
 | C, Esc | Connect tool, back to Select |
-| Delete (diagram, interface table, outline) | Delete the selection, after showing what it affects |
+| Delete (diagram, interface table, project tree) | Delete the selection, after showing what it affects |
 | Ctrl+wheel, wheel, Shift+wheel, middle button or Space and drag | Zoom at the pointer, scroll, scroll sideways, pan |
 | Ctrl+C, Ctrl+Shift+C in a table | Copy the selected cells as tab-separated text, with the header row |
 | Ctrl+F in Checks or Lists | Filter the rules or the rows |
@@ -261,5 +262,4 @@ Decisions about the foundation, one line each (decisions of a view are in its se
 - Overlays (legend, overview map, search) never take layout space. (CV-15, CV-16)
 - Export writes the full output set; the choice in the dialog only filters what is listed and copied, until the core can write a subset. (SC-12)
 - A badge, chip or cell for an unknown value is never empty and never green: pending and not checked have a pattern. (SH-28, CV-8)
-- The command palette (Ctrl+K) is still a modal dialog, and the Palette is still a tab beside the project tree; both are kept for now. (SH-6, SH-11)
 - Flight and ground are a viewer setting by zone name, because the model has no such field and the redesign may not change the model. (CV-19)

@@ -38,18 +38,18 @@ def test_generate_button_is_enabled_and_shows_a_preview(win) -> None:  # type: i
     assert win.ctl.generation_status() == "none"
 
 
-def test_apply_is_one_undo_step_and_fills_the_plans_tab(win) -> None:  # type: ignore[no-untyped-def]
+def test_apply_is_one_undo_step_and_fills_the_harness_tab(win) -> None:  # type: ignore[no-untyped-def]
     before = model_hash(win.ctl.project)
     DialogScript(win, accept=True)
     win.findChild(QPushButton, "generate").click()
     p = win.ctl.project
     assert p.harnesses and win.ctl.generation_status() == "current"
-    panel = win.harness_panel
-    assert win.main_tabs.currentWidget() is win.harness_view  # the Harness tab shows the result
-    win.tabs.setCurrentWidget(panel)  # (the old plans panel refreshes when it is shown)
-    assert panel.harnesses.rowCount() == len(p.harnesses)
-    assert "Up to date" in panel.status.text()
-    assert "0 error(s)" in panel.verify.text()
+    view = win.harness_view
+    assert win.main_tabs.currentWidget() is view  # the Harness tab shows the result
+    assert view.wait_idle()
+    assert view.selector.count() == len(p.harnesses)  # the harnesses (was the plans list)
+    assert view.gen_chip.state() == "pass" and "Up to date" in view.gen_chip.toolTip()
+    assert view.verify_chip.state() == "pass" and "0 error(s)" in view.verify_chip.toolTip()
     win.ctl.undo()
     assert model_hash(win.ctl.project) == before
     assert not win.ctl.project.harnesses
@@ -70,19 +70,22 @@ def test_status_goes_out_of_date_after_an_edit(win) -> None:  # type: ignore[no-
     win.findChild(QPushButton, "generate").click()
     unit = next(iter(win.ctl.project.units.values()))
     win.ctl.run("rename", [Put("units", evolve(unit, name="Renamed unit"))])
-    win.harness_panel.refresh()
-    assert "Out of date" in win.harness_panel.status.text()
+    view = win.harness_view
+    view.refresh()
+    assert view.wait_idle()
+    assert view.gen_chip.state() == "stale" and "Out of date" in view.gen_chip.toolTip()
 
 
 def test_explain_shows_recorded_reasons(win, qtbot) -> None:  # type: ignore[no-untyped-def]
     DialogScript(win, accept=True)
     win.findChild(QPushButton, "generate").click()
-    panel = win.harness_panel
-    win.tabs.setCurrentWidget(panel)  # (the old plans panel refreshes when it is shown)
-    panel.harnesses.selectRow(0)
-    assert panel.wires.rowCount() > 0
-    panel.wires.selectRow(0)
-    text = panel.explain.text()
+    view = win.harness_view
+    assert view.wait_idle()
+    assert view.wire_model.rowCount() > 0
+    wire_id = str(view.wire_model.row(0)["id"])
+    view.select("wire", wire_id)  # the Why pane of the Harness tab shows the recorded reasons
+    assert view.why.kind == "wire" and view.why.ident == wire_id
+    text = " ".join(view.why.lines) + " " + view.why.body.toPlainText()
     assert "wiring:" in text or "segmentation:" in text
 
 

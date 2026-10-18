@@ -27,6 +27,8 @@ from typing import Any, Final
 
 from PySide6.QtCore import (
     QAbstractItemModel,
+    QItemSelection,
+    QItemSelectionModel,
     QModelIndex,
     QPersistentModelIndex,
     QPoint,
@@ -38,7 +40,16 @@ from PySide6.QtCore import (
     QTimer,
     Signal,
 )
-from PySide6.QtGui import QAction, QContextMenuEvent, QFont, QFontMetrics, QKeyEvent, QPainter, QPen
+from PySide6.QtGui import (
+    QAction,
+    QContextMenuEvent,
+    QFont,
+    QFontMetrics,
+    QKeyEvent,
+    QMouseEvent,
+    QPainter,
+    QPen,
+)
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -1008,16 +1019,28 @@ class _FilterEdit(QLineEdit):
 
 
 class _TreeView(QTreeView):
-    """The tree: Enter and Ctrl+Enter are reported instead of the default `activated`, and "/"
-    asks for the filter box."""
+    """The tree: Enter and Ctrl+Enter are reported instead of the default `activated`, Delete is
+    reported, and "/" asks for the filter box."""
 
     enterPressed = Signal(QModelIndex)
     openPressed = Signal(QModelIndex)
+    deletePressed = Signal(QModelIndex)
     filterRequested = Signal()
     menuRequested = Signal(QPoint)
+    press_modifiers = Qt.KeyboardModifier.NoModifier  # of the last mouse press
+
+    def mousePressEvent(self, event: QMouseEvent) -> None:  # noqa: N802
+        self.press_modifiers = event.modifiers()
+        super().mousePressEvent(event)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802
         key = event.key()
+        if key == Qt.Key.Key_Delete:
+            index = self.currentIndex()
+            if index.isValid():
+                self.deletePressed.emit(index)
+            event.accept()
+            return
         if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter):
             index = self.currentIndex()
             if index.isValid():
@@ -1050,6 +1073,7 @@ class ProjectTree(QWidget):
     openRequested = Signal(str, str)
     importRequested = Signal(str)
     addRequested = Signal(str)
+    deleteRequested = Signal(str, str)
 
     def __init__(
         self, ctl: EditorController, theme: ThemeManager, settings: QSettings | None = None
@@ -1059,6 +1083,7 @@ class ProjectTree(QWidget):
         self.setObjectName("project-tree")
         self.contextActions: ContextProvider | None = None
         self._syncing = False
+        self._pushing = False  # the controller is being told of a selection made in the tree
         self._expanded_before: set[str] | None = None
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
@@ -1106,7 +1131,9 @@ class ProjectTree(QWidget):
         self.view.setAnimated(False)
         self.view.setIndentation(theme.space(16))
         self.view.setFrameShape(QTreeView.Shape.NoFrame)
-        self.view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        # Shift and Ctrl pick several units and interfaces (the keyboard way to a multiple
+        # selection that the diagram makes with a rubber band)
+        self.view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
         self.view.setExpandsOnDoubleClick(True)
         self.view.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.view.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
@@ -1127,6 +1154,7 @@ class ProjectTree(QWidget):
         ctl.changed.connect(self._on_changed)
         ctl.selectionChanged.connect(self._sync_selection)
         ctl.stateChanged.connect(self.model.refresh_read_only)
+        ctl.stateChanged.connect(self._read_only_changed)
         ctl.drcChanged.connect(self._schedule_counts)
         theme.changed.connect(self._restyle)
         self.filter_edit.textChanged.connect(self._filter_changed)
@@ -1135,12 +1163,15 @@ class ProjectTree(QWidget):
         self.view.clicked.connect(self._clicked)
         self.view.doubleClicked.connect(self._double_clicked)
         self.view.enterPressed.connect(self._enter)
+        self.view.deletePressed.connect(self._delete)
+        self._watch_selection()
         self.view.openPressed.connect(self._open)
         self.view.filterRequested.connect(self.focus_filter)
         self.view.menuRequested.connect(self._show_menu)
         self.view.expanded.connect(self._remember_expansion)
         self.view.collapsed.connect(self._remember_expansion)
         self._sync_selection()
+        self._read_only_changed()
 
     # ---- public helpers ----------------------------------------------------------------------
 
@@ -1218,6 +1249,14 @@ class ProjectTree(QWidget):
 
     # ---- following the controller ------------------------------------------------------------
 
+    def _read_only_changed(self) -> None:
+        """Nothing can be added to a read-only project: the Add button says so."""
+        ro = self.ctl.read_only
+        self.add_button.setEnabled(not ro)
+        self.add_button.setToolTip(
+            f"{strings.TREE_ADD_TIP}. {strings.WHY_READ_ONLY}" if ro else strings.TREE_ADD_TIP
+        )
+
     def _on_changed(self, delta: Delta) -> None:
         project = self.ctl.project
         if delta.full or project is not self._project:
@@ -1242,14 +1281,75 @@ class ProjectTree(QWidget):
             self.flush()
 
     def _sync_selection(self) -> None:
+        if self._pushing:  # the selection came from here: the cursor is where the person put it
+            return
         s = self.ctl.selection
+        chosen = [(c.kind, c.id) for c in self.ctl.selected]
         if s is None:
             self._syncing = True
             self.view.setCurrentIndex(QModelIndex())
             self.view.clearSelection()
             self._syncing = False
+        elif len(chosen) > 1:
+            self._select_rows(chosen, (s.kind, s.id))
         else:
+            if len(self.view.selectionModel().selectedRows()) > 1:  # a multiple selection ended
+                self._syncing = True
+                self.view.clearSelection()
+                self._syncing = False
             self.select(s.kind, s.id)
+
+    def _select_rows(self, chosen: list[tuple[str, str]], primary: tuple[str, str]) -> None:
+        """Highlight several rows (the cursor on the primary one) without telling anybody."""
+        picked = QItemSelection()
+        for kind, id_ in chosen:
+            index = self.index_for(kind, id_)
+            if index.isValid():
+                picked.select(index, index)
+        cursor = self.index_for(*primary)
+        self._syncing = True
+        try:
+            model = self.view.selectionModel()
+            model.select(
+                picked,
+                QItemSelectionModel.SelectionFlag.ClearAndSelect
+                | QItemSelectionModel.SelectionFlag.Rows,
+            )
+            if cursor.isValid():
+                model.setCurrentIndex(cursor, QItemSelectionModel.SelectionFlag.NoUpdate)
+        finally:
+            self._syncing = False
+
+    def _watch_selection(self) -> None:
+        """Follow the person's own selection (the selection model is new after each `setModel`)."""
+        self.view.selectionModel().selectionChanged.connect(self._selection_edited)
+
+    def _selection_edited(self) -> None:
+        """Several units or interfaces picked in the tree (Shift or Ctrl) select them all on the
+        diagram; going back to one row selects that one. One row alone is chosen with Enter or a
+        click, as before."""
+        if self._syncing:
+            return
+        picked: list[tuple[str, str]] = []
+        for index in self.view.selectionModel().selectedRows():
+            node = self._node_at(index)
+            if node.kind in CANVAS_KINDS:
+                picked.append((node.kind, node.id))
+        if len(picked) < 2 and len(self.ctl.selected) < 2:
+            return
+        self._pushing = True
+        try:
+            if len(picked) >= 2:
+                self.ctl.select_many(picked)
+            elif picked:
+                self.ctl.select(*picked[0])
+        finally:
+            self._pushing = False
+
+    def _delete(self, index: QModelIndex) -> None:
+        node = self._node_at(index)
+        if node.kind in CANVAS_KINDS and not self.ctl.read_only:
+            self.deleteRequested.emit(node.kind, node.id)
 
     def _restyle(self) -> None:
         self.view.setIndentation(self.theme.space(16))
@@ -1274,6 +1374,10 @@ class ProjectTree(QWidget):
             self._select_node(node)
 
     def _clicked(self, index: QModelIndex) -> None:
+        if self.view.press_modifiers & (
+            Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier
+        ):
+            return  # building a multiple selection: `_selection_edited` has it
         self._select_node(self._node_at(index))
 
     def _enter(self, index: QModelIndex) -> None:
@@ -1369,12 +1473,14 @@ class ProjectTree(QWidget):
                 self._expanded_before = {r for r in ROOT_ORDER if self.is_expanded(r)}
                 self.proxy.setSourceModel(self.model)
                 self.view.setModel(self.proxy)
+                self._watch_selection()
             self.proxy.set_text(text)
             self.view.expandAll()
             return
         if self._filtering():
             self.proxy.set_text("")
             self.view.setModel(self.model)
+            self._watch_selection()
             self.proxy.setSourceModel(None)  # type: ignore[arg-type]
             before = self._expanded_before or set(_EXPANDED_BY_DEFAULT)
             self._expanded_before = None
