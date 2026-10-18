@@ -1,4 +1,4 @@
-# harness-design-studio 1.0.0 model ccc0cee5a01e
+# harness-design-studio 1.1.0 model fec3787f3271
 Part,Category,Manufacturer,Part number,Description,Approval,Quantity,Unit,Wires without length,Used in
 (no part),unknown,,,,missing from parts list,0,m,2,W001
 EX-MICROD-9-F,connector,,,"Micro-D 9-pin, female (example, baseline power and data)",pending (example data),1,ea,,W001

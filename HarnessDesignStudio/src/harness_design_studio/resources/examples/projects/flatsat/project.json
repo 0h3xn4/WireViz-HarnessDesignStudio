@@ -2,5 +2,5 @@
   "description": "A flatsat: the electronics of a small spacecraft laid out on a bench, with the ground equipment (checkout system, power supply, RF equipment) that drives them. Generated, with example numbers filled in so that every output has content. The numbers and parts are for learning only.",
   "name": "Flatsat (EXAMPLE numbers, not engineering data)",
   "schema_version": 1,
-  "tool_version": "1.0.0"
+  "tool_version": "1.1.0"
 }

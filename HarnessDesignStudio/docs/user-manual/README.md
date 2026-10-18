@@ -51,7 +51,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 
 ## How to read the pages
 
-- **Commands** use a practice project called `wheel-link`, made with `harness-design-studio new wheel-link --template first-steps`. Put your own folder where you see `wheel-link` or `DIR`. Output blocks are real output of the tool. Numbers such as the model hash (`310e4c4a4345`) depend on the project and the tool version; yours can differ.
+- **Commands** use a practice project called `wheel-link`, made with `harness-design-studio new wheel-link --template first-steps`. Put your own folder where you see `wheel-link` or `DIR`. Output blocks are real output of the tool. Numbers such as the model hash (`1707f1d0c671`) depend on the project and the tool version; yours can differ.
 - **Command names.** The command line tool is `harness-design-studio`; `harness` is a short alias that runs the same program, so older scripts keep working. The app is `harness-design-studio-gui` (alias `harness-gui`) when started from a terminal.
 - **App steps** (menus, buttons, tabs) use the names that the program shows. The app was not run on a screen when this manual was written. The labels and the behaviour were taken from the program's code, not from looking at it. Pages with app steps say "GUI, not run" where it matters.
 - **New in 1.0.0.** Some things are not in the 0.1.0 packages: the examples `minimal-satellite` and `flatsat`, the wiring-diagram drawing with wire colours, *Edit > Wire colours...* and `design-worksheet.md`. They are not in the 0.1.0 `.deb` and `.tar.gz`. `harness-design-studio new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](../../CHANGELOG.md) lists what is new. Pages that use these say so.
