@@ -414,3 +414,56 @@ Not decided by the owner, so the default of the proposal stands:
 | CD-Q8 | The commands `import-pinout` and `export-pinout` are added and documented. |
 | CD-Q9 | The pin id rule stays (`[A-Za-z0-9_.-]`, 16 characters); gender stays derived from the part, with an explicit edit of the connector's gender field only where the model already has it. |
 | CD-Q11 | No connector face drawing. |
+
+## Build status (14 October 2026)
+
+What was built of the proposal, in the order of section 5.11, each as a small branch that left the whole program working. Nothing in the file format, the design rules (the count is still 34), the generator or the outputs was changed; `check_locks` is unchanged (CD-Q6). "Partly" says what is missing.
+
+| ID | What | Status | Where |
+|---|---|---|---|
+| CD-B1 | Core: connectors, pins, checks | done | `core/devices.py`, `tests/test_edit_device.py` |
+| CD-B2 | Core: lock hardening in the planners, `device_state` | done | `core/devices.py` (`pin_set_frozen`, `pin_lock_reason`, `device_state`) |
+| CD-B3 | Devices tab, read only (Ctrl+6) | done | `gui/devices_view.py`, `tests/test_ux_devices.py` |
+| CD-B4 | Devices tab, editing | done | `gui/devices_pin_table.py`, `gui/devices_view.py`, `tests/test_ux_devices_edit.py` |
+| CD-B5 | Add device, from part, assign, parts, types | done | `gui/devices_dialogs.py`, `core/devices.py` |
+| CD-B6 | Pinout import and the two commands | done | `core/pinout_import.py`, `cli/data.py`, `gui/import_kinds.py`, `gui/import_wizard.py` |
+| CD-B7 | Docs | done, without the usability session | `docs/user-manual/define-a-device.md`, guide, cheatsheet, `CLI.md` |
+| CD-B8 | Device file (export and import of a device) | not built (owner decision CD-Q4) | |
+| CD-B9 | Format version 2 (description, remarks, direction, voltage, current, review state) | not built (owner decisions CD-Q1, CD-Q2) | |
+
+| ID | Status | Note |
+|---|---|---|
+| CD-C1 | done | `ops_add_device`, `ops_update_device`, `default_subsystem` |
+| CD-C2 | done | `ops_add_connector`, `next_connector_name` |
+| CD-C3 | done | `ops_update_connector`, `plan_change_part`, `ops_change_part` (fixes CD-G5; the old `ops_set_connector_part` is unchanged, the Inspector's picker now uses `ops_change_part`), `connector_delete_impact`, `ops_delete_connector` |
+| CD-C4 | done | `ops_set_pin` (also `mode`) |
+| CD-C5 | done | `ops_add_pins`, `ops_delete_pins`, `ops_rename_pin`, `pin_impact` |
+| CD-C6 | done | `ops_set_pinout`, `plan_pin_rows`, `ops_paste_rows`, `rows_from_grid` |
+| CD-C7 | done | `ops_assign_pins`, `ops_unassign_pins` |
+| CD-C8 | done | `suggest_carries`, `fill_from_type` |
+| CD-C9 | done | `ops_add_part`, `ops_add_part_pair`, `ops_update_part` (never `approved`) |
+| CD-C10 | done | `ops_add_interface_type`, `ops_update_interface_type`, `parse_signal_lines` (always `unverified`) |
+| CD-C11 | done | `pinout_table` (`box_pinouts` filtered), `pin_rows` |
+| CD-C12 | done | `plan_pinout_import` in `core/pinout_import.py` |
+| CD-C13 | done | `pin_set_frozen`, `pin_lock_reason`, `device_state` |
+| CD-C14 | done | `pinout_problems` |
+| CD-C15 | not built | owner decision CD-Q4 |
+| CD-J1 | done | with the keyboard; the part picker is on the left of the connector list, Ctrl+Shift+C goes to it while the connector list has the focus (in the pin table the same keys copy with the header row) |
+| CD-J2 | done | four-page wizard and `import-pinout`; a sheet is one undo step; the unstored columns are named |
+| CD-J3 | partly | (a) "+ From part" is the part picker of "Add connector"; (b) Ctrl+D; (c) New part with its mating half; (d) copy and paste of pin rows between devices work through the clipboard |
+| CD-J4 | done | |
+| CD-J5 | not built | owner decision CD-Q4 |
+| CD-J6 | done | the preview and Export pinout, and `export-pinout` |
+| CD-S1 to CD-S7 | done, except "Export device…" | header, connector list, card, pin table, preview, notes, empty state |
+| CD-K1 to CD-K8 | done | inline notes under the table; K8 and K5 only on a fixed pinout, as the engine reads it |
+| CD-X1, CD-X2 | done | `tests/test_edit_device.py` (a Hypothesis run of random edits with undo and redo) |
+| CD-X3 | done | the same file: the hole in `check_locks` is shown and closed in the planner, `device_state` for the four states |
+| CD-X4 | done | `tests/test_device_equivalence.py`, fixture `tests/fixtures/projects/custom_device` |
+| CD-X5 | done | `tests/test_pinout_import.py`, `tests/test_pinout_cli.py` |
+| CD-X6 | done | each check with a positive and a quiet case |
+| CD-X7 | partly | keyboard journeys, names, tab order, read-only, released, empty, 1280 x 720, 1000 pins, light and dark for the read-only view; the editor is drawn in the light theme only |
+| CD-X8 | done | one cell edit under 100 ms at 1000 pins and 100 units, in the planner and in the view |
+| CD-X9 | done | guide, cheatsheet, `CLI.md` (`import-pinout`, `export-pinout`), links |
+| CD-X10 | **open** | the usability session with six people (three electrical, three AIT) needs people; nothing here was observed on a real screen by a user. Use `tools.usability_setup` with the journeys CD-J1 and CD-J2 |
+
+Deviations and things to know: the connector part of a new device is chosen from the library before pins exist (no "device from a pinout" page without a part); the Add menu entry is **Device…** under **Edit > Add unit**; a part change in the Devices tab asks on one line, in the Inspector it is applied at once; the diagram does not move the units below a device that grew (use **Arrange diagram**).

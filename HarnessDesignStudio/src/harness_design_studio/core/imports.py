@@ -109,8 +109,12 @@ def read_table(path: Path | str) -> Table:
     return read_table_sheet(path)[0]
 
 
-def read_table_sheet(path: Path | str) -> tuple[Table, str | None]:
-    """Like `read_table`, and also the name of the sheet that was read (None for a CSV file)."""
+def read_table_sheet(
+    path: Path | str, *, skip_sheets: tuple[str, ...] = ()
+) -> tuple[Table, str | None]:
+    """Like `read_table`, and also the name of the sheet that was read (None for a CSV file).
+    `skip_sheets` names sheets that are passed over (the "About" sheet of the tool's own workbooks);
+    by default the first visible sheet is read."""
     path = Path(path)
     try:
         info = path.stat()
@@ -135,11 +139,11 @@ def read_table_sheet(path: Path | str) -> tuple[Table, str | None]:
         except OSError as exc:
             raise ImportError_(f"The file could not be read ({exc.strerror}).") from exc
     if suffix in (".xlsx", ".xlsm"):
-        return _read_xlsx(path)
+        return _read_xlsx(path, skip_sheets)
     raise ImportError_("Only .csv and .xlsx files can be imported.")
 
 
-def _read_xlsx(path: Path) -> tuple[Table, str]:
+def _read_xlsx(path: Path, skip_sheets: tuple[str, ...] = ()) -> tuple[Table, str]:
     import zipfile
 
     from harness_design_studio.core.outputs.xlsx_env import load_workbook
@@ -159,7 +163,10 @@ def _read_xlsx(path: Path) -> tuple[Table, str]:
         raise ImportError_("The file is not a valid .xlsx workbook.") from exc
     try:
         # the first visible sheet, as documented, not the one that was active when it was saved
-        ws = next((w for w in wb.worksheets if w.sheet_state == "visible"), None)
+        ws = next(
+            (w for w in wb.worksheets if w.sheet_state == "visible" and w.title not in skip_sheets),
+            None,
+        )
         if ws is None:
             raise ImportError_("The workbook has no visible sheet.")
         if hasattr(ws, "reset_dimensions"):  # some exporters declare a one-cell sheet

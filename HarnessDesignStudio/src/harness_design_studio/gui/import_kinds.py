@@ -47,6 +47,14 @@ from harness_design_studio.core.library_import import (
 )
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.model.library import PART_CATEGORIES
+from harness_design_studio.core.pinout_import import FIELDS as PINOUT_FIELDS
+from harness_design_studio.core.pinout_import import (
+    guess_mapping as guess_pinout_mapping,
+)
+from harness_design_studio.core.pinout_import import (
+    plan_pinout_import,
+    read_pinout_table,
+)
 from harness_design_studio.gui import strings
 
 PREVIEW_ROWS: Final = 20  # rows of the live preview on the mapping page
@@ -84,6 +92,9 @@ KINDS: Final[tuple[KindInfo, ...]] = (
         "values", strings.IMP_KIND_VALUES, strings.IMP_KIND_VALUES_TIP, strings.IMP_FILTER_TABLES
     ),  # fmt: skip
     KindInfo(
+        "pinout", strings.IMP_KIND_PINOUT, strings.IMP_KIND_PINOUT_TIP, strings.IMP_FILTER_TABLES
+    ),  # fmt: skip
+    KindInfo(
         "netlist",
         strings.IMP_KIND_NETLIST,
         strings.IMP_KIND_NETLIST_TIP,
@@ -100,6 +111,7 @@ PREVIEW_COLUMNS: Final = {
     "lengths": ("Row", "Harness", "Segment", "Length"),
     "values": ("Row", "Wire gauge (AWG)", "Ampacity (A)"),
     "netlist": ("Reference", "Connector", "Pins"),
+    "pinout": ("Row", "Connector", "Pin", "Signal", "Mode"),
 }
 
 
@@ -143,6 +155,9 @@ def read_source(kind: str, path: Path | str) -> Source:
             return Source(kind, p, netlist=read_netlist(p))
         if kind == "values":
             return Source(kind, p, table=read_table(p))
+        if kind == "pinout":
+            table, sheet = read_pinout_table(p)
+            return Source(kind, p, table=table, sheet=sheet)
         table, sheet = read_table_sheet(p)
         return Source(kind, p, table=table, sheet=sheet)
     except OSError as exc:
@@ -169,6 +184,13 @@ class Options:
     parts: dict[str, str] = field(default_factory=dict)
     signal_map: dict[str, str] = field(default_factory=dict)
     pin_function: bool = False
+    device: str = ""  # pinout: the unit, or "" for a new device
+    new_device_name: str = ""
+    subsystem: str = ""
+    default_part: str = ""
+    gender: str = ""
+    connector: str = ""
+    replace: bool = False
 
 
 def mapping_fields(kind: str) -> tuple[tuple[str, str], ...]:
@@ -177,6 +199,8 @@ def mapping_fields(kind: str) -> tuple[tuple[str, str], ...]:
         return INTERFACE_FIELDS
     if kind == "parts":
         return PART_FIELDS
+    if kind == "pinout":
+        return PINOUT_FIELDS
     return ()
 
 
@@ -187,6 +211,8 @@ def default_options(kind: str, source: Source) -> Options:
         options.mapping = guess_interface_mapping(source.table[0])
     elif source.table and kind == "parts":
         options.mapping = guess_part_mapping(source.table[0])
+    elif source.table and kind == "pinout":
+        options.mapping = guess_pinout_mapping(source.table[0])
     return options
 
 
@@ -235,6 +261,7 @@ class ImportPlanView:
     partial: bool = False  # True: rows with a problem are skipped and the others imported
     next_step: str = ""
     total_rows: int = 0
+    name: str = ""  # the name of the undo step, when it is not "Import n rows"
 
     @property
     def ok_count(self) -> int:
@@ -254,6 +281,8 @@ class ImportPlanView:
     @property
     def label(self) -> str:
         """The name of the undo step: "Import 12 rows"."""
+        if self.name:
+            return self.name
         n = self.ok_count
         return strings.IMP_LABEL.format(n, "" if n == 1 else "s")
 
@@ -491,10 +520,67 @@ def _plan_netlist(project: Project, source: Source, options: Options) -> ImportP
     return view
 
 
+# ---- a device's pinout ----------------------------------------------------------------------------
+
+
+def _plan_pinout(project: Project, source: Source, options: Options) -> ImportPlanView:
+    view = ImportPlanView("pinout", next_step=strings.IMP_NEXT_PINOUT)
+    table, mapping = source.table, options.mapping
+    if len(table) < 2:
+        view.problem = strings.IMP_EMPTY
+        return view
+    if "pin" not in mapping:
+        view.problem = strings.IMP_PIN_NEEDS_PIN
+        return view
+    if not options.device and not options.new_device_name.strip():
+        view.problem = strings.IMP_PIN_NEEDS_DEVICE
+        return view
+    unit_id = options.device or edit.next_unit_id(project, "DEV")[0]
+    plan = plan_pinout_import(
+        project, table, mapping, unit_id=unit_id,
+        new_unit_name=None if options.device else options.new_device_name.strip(),
+        subsystem=options.subsystem.strip() or None, parts=options.parts,
+        default_part=options.default_part or None, gender=options.gender or None,
+        connector=options.connector.strip() or None, replace=options.replace,
+    )  # fmt: skip
+    view.ops = plan.ops
+    view.total_rows = len(plan.rows)
+    view.name = plan.label
+
+    def cell(row: list[str], key: str) -> str:
+        i = mapping.get(key)
+        return row[i].strip() if i is not None and i < len(row) else ""
+
+    for r in plan.rows:
+        row = table[r.row_number - 1] if 0 < r.row_number <= len(table) else []
+        result = (
+            strings.IMP_SKIPPED
+            if not r.ok
+            else strings.IMP_WILL_UPDATE
+            if r.message == "updated"
+            else strings.IMP_WILL_ADD
+        )
+        item = f"{r.connector} / {r.pin}" if r.pin else r.connector or "(empty row)"
+        view.rows.append(
+            PlanRow(str(r.row_number), item, "pass" if r.ok else "fail", result, "" if r.ok else r.message)
+        )  # fmt: skip
+        view.preview.append(
+            [str(r.row_number), cell(row, "connector"), cell(row, "pin"), cell(row, "signal"), cell(row, "mode")]
+        )  # fmt: skip
+    for w in plan.warnings:
+        view.rows.append(PlanRow("", strings.IMP_WARNING, "warning", strings.IMP_WARNING, w))
+    for name, where in sorted(plan.unmatched_signals.items()):
+        view.pending.append((name, strings.IMP_P_PIN_SIGNAL.format(", ".join(where[:3]))))
+    if not plan.ops and not view.problem and not any(r.state == "fail" for r in view.rows):
+        view.problem = strings.IMP_EMPTY
+    return view
+
+
 _PLANNERS = {
     "interfaces": _plan_interfaces,
     "parts": _plan_parts,
     "lengths": _plan_lengths,
     "values": _plan_values,
     "netlist": _plan_netlist,
+    "pinout": _plan_pinout,
 }

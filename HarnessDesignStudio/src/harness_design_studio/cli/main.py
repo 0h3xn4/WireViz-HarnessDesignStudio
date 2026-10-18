@@ -306,11 +306,12 @@ NOTHING_DONE = {
     "config": "reported or changed", "library": "reported or changed",
     "review": "changed", "release": "released", "revise": "revised",
     "import-parts": "imported", "import-lengths": "imported", "import-netlist": "imported",
+    "import-pinout": "imported", "export-pinout": "exported",
 }  # fmt: skip
 
 MUTATING = {
     "generate", "export", "migrate", "review", "release", "revise",
-    "import-parts", "import-lengths", "import-netlist",
+    "import-parts", "import-lengths", "import-netlist", "import-pinout",
 }  # fmt: skip
 
 

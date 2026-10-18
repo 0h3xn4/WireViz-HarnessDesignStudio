@@ -1,0 +1,141 @@
+# Define a device
+
+This page shows how to define a device of your own down to each pin: its connectors, the name or number of every pin, the signal on it, and which interface uses which pins. You can do it by hand in the **Devices** tab, or load the pinout from a spreadsheet.
+
+## Contents
+
+- [Before you start](#before-you-start)
+- [1. Add the device](#1-add-the-device)
+- [2. Add its connectors](#2-add-its-connectors)
+- [3. Name the pins and give them signals](#3-name-the-pins-and-give-them-signals)
+- [4. Put an interface on pins](#4-put-an-interface-on-pins)
+- [Take the pinout from a spreadsheet](#take-the-pinout-from-a-spreadsheet)
+- [Check the result and write it out](#check-the-result-and-write-it-out)
+- [Change a device later](#change-a-device-later)
+- [What a pin can hold](#what-a-pin-can-hold)
+- [Common mistakes](#common-mistakes)
+
+## Before you start
+
+- You have a project (for example `harness-design-studio new wheel-link --template first-steps`). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
+- A **device** is a unit with connectors of its own. The **Devices** tab (Ctrl+6) shows one unit at a time: the unit you select on the diagram or in the project tree is the one shown.
+- The tool never decides what is approved. A connector part or an interface type that you make here is marked *pending* or *unverified*, and a harness that uses it says so when it is released.
+- Everything you do is one undo step with a name, for example *Undo Edit pin GYRO1-J01.A2*.
+
+## 1. Add the device
+
+1. Choose **Edit > Add unit > Device…** (Ctrl+Shift+N). An empty device appears in a free place of the diagram and the **Devices** tab opens with its name selected.
+2. Type the name and press Enter. The **Subsystem** box takes one that exists or a new word; **Chain** says nominal, redundant or none.
+
+The state chip next to the name says **Draft** while no interface ends on the device, **In use** when one does, and **Locked** once a released harness uses it.
+
+## 2. Add its connectors
+
+1. Under the connector list, open the part picker (Ctrl+Shift+C goes to it). Type to search the library. The first entry is **New part…**: it asks for an ID, the number of pins, the gender and optionally the maker and the part number, and can make the **mating half** at the same time. Both parts are marked *pending* and *unverified*.
+2. Press Enter, or **Add connector**. The connector appears with pins `1` to `N`, the number the part has, and its gender is the one the part says.
+3. On the connector's card you can change the **part** (a part with another number of pins asks, on one line, whether to resize the pins and set the gender; both happen in one step), the **gender**, the **keying** and what it **Carries**. If the pins already carry every signal of an interface type, the card offers *Complete for: CAN*.
+
+**Delete connector** shows first what it touches. An interface that ends on the connector keeps its unit and loses the connector.
+
+## 3. Name the pins and give them signals
+
+Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down; Esc cancels. A pin name is checked while you type: letters, digits, `_`, `-` and `.`, at most 16 characters, and no two pins that differ only in case.
+
+| Key (pin table) | What it does |
+| --- | --- |
+| F2, Enter | edit the cell |
+| Tab, Shift+Tab | next and previous cell (Tab leaves the table after the last cell) |
+| Insert | add a pin after the current one, with the next free number |
+| Delete | clear the signal of the selected pins |
+| Shift+Delete | delete the selected pins, after a line that says what they touch |
+| Space | cycle the **Mode** of the selected pins: *Free*, *Fixed*, *Locked* |
+| Ctrl+V | paste cells copied from a spreadsheet |
+| Ctrl+L | fill the selected pins from an interface type |
+| Ctrl+Enter | assign the selected pins to an interface |
+
+- **Signal** is a box with the signals of the project's interface types and free text. A name no interface type has is allowed, and the notes say that nothing can connect to it.
+- **Mode**: *Fixed* means the device defines the pin; the interface connects to the pin of its signal's name, and the pin never moves. *Locked* means Generate never moves the pin. *Free* leaves it to Generate. Mind that one fixed pin with a signal makes the connector a *fixed pinout*: every signal of every interface on it then needs a pin of its own name, and pins without a name are never used. The card says so in words.
+- **Pasting.** Copy cells in the spreadsheet. A column of signals pastes from the current cell down, one pin per row. A table whose first row has headings (*Pin*, *Signal*, *Mode*, *Contact size*, *Termination*) names its pins and adds the pins that do not exist. One paste is one undo step.
+- **Contact** shows the contact size and the termination. No output or rule reads them yet.
+
+## 4. Put an interface on pins
+
+- **Fill…** (Ctrl+L): select the pins, choose an interface type, check the preview, press **Fill pins**. The signals of the type go on the pins in order (`CANH`, `CANL`), and the pins become *Fixed*. If the type you need is not there, **New interface type…** in the dialog makes one (one line per signal: name, direction `out`, `in`, `bidir` or `passive`, and a pair name for twisted signals); it is marked *unverified*.
+- **Assign…** (Ctrl+Enter): select the pins, choose an interface that ends on this device, pick the pin for each signal, press **Assign pins**. The pins become *Locked* to that interface with its signals. An interface end that has no connector yet gets this one in the same step.
+
+The **Direction** and **Class** columns come from the interface type of the pin's signal. They are empty, with the reason in the tooltip, when nothing can be said. They are never guessed.
+
+## Take the pinout from a spreadsheet
+
+Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination* and, if you have them, *Part* and *Gender*. Columns the project cannot store (a description, remarks, a voltage, a direction) are named in a warning and left out.
+
+In the app: **File > Import > Import device pinout…**, pick the file, choose the device (an existing unit, or **New device…** with a name), the library part for the new connectors, and read the preview. A row with a problem is listed with its reason, and then nothing is imported. **Import** is one undo step, *Import pinout (1 connector, 6 pins)*.
+
+On the command line (the same planner):
+
+```
+harness-design-studio import-pinout wheel-link gyro-pinout.csv --unit GYRO1 --new-device "Gyro unit" --default-part EX-MICROD-9-F --dry-run
+```
+
+```
+GYRO1-J01: OK added (6 pin(s))
+warning: Column 'Remarks' is not imported: a pin has no field for it.
+Signals that match no interface type (nothing can connect to them until a type has them):
+  HEATER_ENABLE: GYRO1-J01 pin 5
+Dry run: nothing was changed.
+```
+
+Run it again without `--dry-run` to apply. `--part J1=PART` gives a part per connector, `--column pin=Contact` says which column is which when the headings are not recognised, and `--replace` drops the pins of an existing connector that the table does not name. A bad row stops the whole import:
+
+```
+row 2: ERROR No part for the new connector J01: give one for it (--part J01=PART) or one for all
+Nothing was changed.
+```
+
+Signals that match no interface type stay as free text; they are listed so that you can add the type or correct the name.
+
+## Check the result and write it out
+
+- Under the pin table the **notes** list what is odd about the connector, each with the pin it is about: a pin name that is the same ignoring case, fewer pins than the part has, a signal on two pins, a signal no interface type has, an interface type that is only half there on a fixed pinout (for example `CANH` without `CANL`), a locked pin whose interface does not end on this connector, a gender that nobody states. They are notes, not design rules: nothing here changes the design rules or what Generate does.
+- **Pinout as exported** shows exactly the rows of `system/box_pinouts.csv` for this unit. **Export pinout…** saves them as CSV or Excel, to compare with the interface control document. The command line does the same:
+
+```
+harness-design-studio export-pinout wheel-link --unit GYRO1
+```
+
+```
+# harness-design-studio 1.0.0 model 63a0c0a2300c
+Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare
+GYRO1-J01,box,,EX-MICROD-9-F,A1,PWR,,,no
+GYRO1-J01,box,,EX-MICROD-9-F,A2,RTN,,,no
+GYRO1-J01,box,,EX-MICROD-9-F,3,CANH,,,no
+GYRO1-J01,box,,EX-MICROD-9-F,4,CANL,,,no
+GYRO1-J01,box,,EX-MICROD-9-F,5,HEATER_ENABLE,,,no
+GYRO1-J01,box,,EX-MICROD-9-F,6,,,,yes
+```
+
+`-o file.csv` or `-o file.xlsx` writes a file. A file written this way can be imported again with `import-pinout`.
+
+- Then connect the device to others as usual (**Ctrl+I**) and **Generate**. The pins you defined are used as you defined them; a second Generate changes nothing.
+
+## Change a device later
+
+Edit a cell, add or delete pins, change the part: each is one step, and **Undo** takes it back. When a released harness uses the device:
+
+- a banner says which harness, with **Start new revision…**;
+- the pin names and the number of pins of a connector that a released cable plugs into are frozen, and so are the part, the gender and the keying; every cell of a pin that carries a released interface is disabled, with the reason as tooltip;
+- the **spare** pins of that connector can still get a signal, a contact size or a termination, and the names and notes of the device can be changed.
+
+Where a harness made by hand (not generated) has a wire on a pin, the pin cannot be deleted or renamed until that harness is deleted or revised. A generated harness only becomes out of date and is rebuilt by the next Generate.
+
+## What a pin can hold
+
+A pin has a name or number, a signal, a mode, a contact size, a termination and, once Generate or **Assign…** has put an interface on it, that interface. There is **no field** for a function description, remarks, a voltage, a current or a direction of its own, and the tool does not pretend there is. Direction and class are shown from the interface type; for the rest keep your interface control document next to the project. Changing the file format to hold them is a decision for the owner of the tool and has not been made.
+
+## Common mistakes
+
+- **Fixed pins and a missing name.** After you fix one pin with a signal, an interface whose signal has no pin of that name fails with *has a fixed pinout and no free pin named …*. Add the pin or fill it from the interface type.
+- **Two interfaces on one connector.** The app offers one interface per connector. Use a second connector.
+- **A signal typed a little differently** (`canh` for `CANH`): it is free text and nothing connects to it. The note says *Did you mean CANH?*.
+- **A part with no gender in its description.** The cable end cannot be checked to fit. Set the gender on the card.
+- **Changing a part of a released device.** Start a new revision first ([change a released harness](change-a-released-harness.md)).

@@ -13,7 +13,7 @@ Generated from the program by `python -m tools.gen_cli_docs`; do not edit by han
 
 A project with damaged files (a file that is not valid, a link, over 64 MB or unreadable) is refused with exit 2 and the damaged file named by every command that reports on it or changes it: `drc`, `verify`, `export`, `generate`, `config`, `library`, `log`, `diff`, `compare`, `review`, `release`, `revise`, `migrate` and the imports. Only `validate` and `check` read it and list the damage (exit 1), so you can see what to repair. With Ctrl-C a command prints `interrupted` and ends with 130 (if it was saving, run `harness-design-studio validate`). A reader that closes the pipe (`harness-design-studio generate | head -1`) does not stop the command: it still finishes and saves.
 
-Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-netlist`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not.
+Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-netlist`, `import-pinout`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not.
 
 The examples show the form of each command with example names. They do not all work on any project: `release` is blocked until its conditions are met (placeholder configuration, unapproved parts, missing gauges and lengths; see [`GETTING_STARTED.md`](GETTING_STARTED.md)), and `revise` works only on a released harness.
 
@@ -22,7 +22,8 @@ The examples show the form of each command with example names. They do not all w
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
 - Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export)
-- Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist)
+- Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout)
+- Write data out: [`export-pinout`](#harness-design-studio-export-pinout)
 - Review, release and change: [`review`](#harness-design-studio-review), [`release`](#harness-design-studio-release), [`revise`](#harness-design-studio-revise), [`diff`](#harness-design-studio-diff), [`log`](#harness-design-studio-log), [`compare`](#harness-design-studio-compare)
 - Maintenance: [`migrate`](#harness-design-studio-migrate)
 
@@ -295,6 +296,55 @@ Examples:
 
 ```
 harness-design-studio import-netlist my-design wheel.net --unit RW1 --prefix J --connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run
+```
+
+### harness-design-studio import-pinout
+
+Create or update the box connectors of one unit from a table: one row per pin with the connector, the pin, the signal, whether the device fixes it, a contact size and a termination. Columns are matched by their headings (Connector, Pin, Signal, Mode or Fixed, Contact size, Termination, Part, Gender); columns the project cannot store, such as a description or a voltage, are named in a warning and left out. A row with a problem stops the whole import; nothing is changed then. A new connector needs a library part (a Part column, --part J1=PART or --default-part). The user guide has a chapter on it.
+
+`harness-design-studio import-pinout project file [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | the project folder |
+| `file` | the file to read |
+| `--unit UNIT` | the unit the connectors belong to, for example GYRO1 |
+| `--new-device NAME` | make the unit as a new device with this name when it does not exist |
+| `--subsystem SUBSYSTEM` | subsystem of a new device (default: the most used one) |
+| `--part REF=PART` | library part for a new connector, for example J1=MY-HD-9-F (repeat) (repeatable) |
+| `--default-part DEFAULT_PART` | library part for new connectors that have none |
+| `--gender GENDER` | gender of new connectors (default: the part's) (one of female, male) |
+| `--connector CONNECTOR` | connector for rows of a table that has no Connector column (default J01) |
+| `--column FIELD=HEADING` | use this column for a field when the headings are not recognised, for example pin=Contact (repeat) (repeatable) |
+| `--replace` | drop the pins of an existing connector that the table does not name (default: keep them) |
+| `--dry-run` | show the preview only |
+
+Examples:
+
+```
+harness-design-studio import-pinout my-design gyro-pinout.csv --unit GYRO1 --default-part MY-HD-9-F --dry-run
+harness-design-studio import-pinout my-design icd.xlsx --unit CAM1 --new-device "Camera" --part J1=MY-HD-9-F --part J2=MY-HD-15-M
+```
+
+## Write data out
+
+### harness-design-studio export-pinout
+
+Write the rows of system/box_pinouts.csv that belong to one unit (connector, pin, signal, interface, wires, spare) to a file, or to the screen as CSV. The format follows the file name (.csv or .xlsx). The rows are the ones export writes, so the file compares with an interface control document.
+
+`harness-design-studio export-pinout project [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | the project folder |
+| `--unit UNIT` | the unit to write, for example GYRO1 |
+| `--output, -o OUTPUT` | the file to write (default: CSV on the screen) |
+
+Examples:
+
+```
+harness-design-studio export-pinout my-design --unit GYRO1
+harness-design-studio export-pinout my-design --unit GYRO1 -o gyro-pinout.xlsx
 ```
 
 ## Review, release and change

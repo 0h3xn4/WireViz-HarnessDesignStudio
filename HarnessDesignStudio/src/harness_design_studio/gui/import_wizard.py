@@ -9,7 +9,8 @@ words ...) with a live preview of the first rows, 3 the conflicts and placeholde
 reason for every row, 4 apply. Nothing in the project changes before Finish.
 
 Kinds: interfaces (CSV/XLSX), approved parts, segment lengths, engineering values (the ampacity
-table, as `harness-design-studio config --ampacity-csv` reads it) and a KiCad netlist. Each is planned by the
+table, as `harness-design-studio config --ampacity-csv` reads it), a device pinout (one pin per row,
+as `import-pinout` reads it) and a KiCad netlist. Each is planned by the
 planner the command line uses (see `import_kinds`); the existing `ImportDialog` keeps working and
 also lets you paste CSV text.
 """
@@ -197,6 +198,7 @@ class MapPage(QWizardPage):
         self.parts = QPlainTextEdit()
         self.signals = QPlainTextEdit()
         self.pin_function = QCheckBox(strings.IMP_NET_PINFUNC)
+        self.pin_widgets: dict[str, QWidget] = {}
         self._pages: dict[str, QWidget] = {}
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
@@ -258,7 +260,7 @@ class MapPage(QWizardPage):
 
     def _build(self, kind: str, source: Source, options: Options) -> None:
         _, form = self._form()
-        if kind in ("interfaces", "parts"):
+        if kind in ("interfaces", "parts", "pinout"):
             header = source.table[0] if source.table else []
             for key, label in import_kinds.mapping_fields(kind):
                 self._combo(form, key, label, header, options.mapping.get(key))
@@ -293,8 +295,65 @@ class MapPage(QWizardPage):
             note.setProperty("muted", True)
             note.setWordWrap(True)
             form.addRow(note)
+        elif kind == "pinout":
+            self._build_pinout(form, options)
         elif kind == "netlist":
             self._build_netlist(form, options)
+
+    def _pin_field(self, form: GridForm, key: str, widget: QWidget, label: str, tip: str) -> None:
+        widget.setObjectName(f"import-pinout-{key}")
+        widget.setAccessibleName(label)
+        widget.setToolTip(tip)
+        self.pin_widgets[key] = widget
+        form.addRow(label, widget)
+
+    def _build_pinout(self, form: GridForm, options: Options) -> None:
+        theme = self.wiz.theme
+        project = self.wiz.ctl.project
+        self.pin_widgets = {}
+        device = QComboBox()
+        device.addItem(strings.IMP_PIN_DEVICE_NEW, "")
+        for uid, unit in sorted(project.units.items()):
+            device.addItem(f"{uid}  {unit.name}", uid)
+        device.setCurrentIndex(max(0, device.findData(options.device)))
+        device.currentIndexChanged.connect(self.wiz.options_changed)
+        self._pin_field(form, "device", device, strings.IMP_PIN_DEVICE, strings.IMP_PIN_DEVICE_TIP)
+        for key, label, tip, text in (
+            ("name", strings.IMP_PIN_NEW_NAME, strings.IMP_PIN_NEW_NAME_TIP, options.new_device_name),
+            ("subsystem", strings.IMP_PIN_SUBSYSTEM, strings.IMP_PIN_SUBSYSTEM_TIP, options.subsystem),
+            ("connector", strings.IMP_PIN_CONNECTOR, strings.IMP_PIN_CONNECTOR_TIP, options.connector),
+        ):  # fmt: skip
+            line = QLineEdit(text)
+            line.textChanged.connect(self._later)
+            self._pin_field(form, key, line, label, tip)
+        part = QComboBox()
+        part.addItem(strings.IMP_PIN_PART_NONE, "")
+        for pid, p in sorted(project.parts.items()):
+            if p.category == "connector":
+                part.addItem(pid, pid)
+        part.setCurrentIndex(max(0, part.findData(options.default_part)))
+        part.currentIndexChanged.connect(self.wiz.options_changed)
+        self._pin_field(form, "part", part, strings.IMP_PIN_PART, strings.IMP_PIN_PART_TIP)
+        parts = QPlainTextEdit("\n".join(f"{k}={v}" for k, v in options.parts.items()))
+        parts.setFixedHeight(theme.px(56))
+        mark_mono(parts)
+        parts.textChanged.connect(self._later)
+        self._pin_field(form, "parts", parts, strings.IMP_PIN_PARTS, strings.IMP_PIN_PARTS_TIP)
+        gender = QComboBox()
+        gender.addItem(strings.IMP_PIN_GENDER_PART, "")
+        for g in ("female", "male"):
+            gender.addItem(strings.DV_GENDER[g], g)
+        gender.setCurrentIndex(max(0, gender.findData(options.gender)))
+        gender.currentIndexChanged.connect(self.wiz.options_changed)
+        self._pin_field(form, "gender", gender, strings.IMP_PIN_GENDER, strings.IMP_PIN_GENDER_TIP)
+        replace = QCheckBox(strings.IMP_PIN_REPLACE)
+        replace.setChecked(options.replace)
+        replace.toggled.connect(self.wiz.options_changed)
+        replace.setObjectName("import-pinout-replace")
+        replace.setAccessibleName(strings.IMP_PIN_REPLACE)
+        replace.setToolTip(strings.IMP_PIN_REPLACE_TIP)
+        self.pin_widgets["replace"] = replace
+        form.addRow(replace)
 
     def _build_netlist(self, form: GridForm, options: Options) -> None:
         theme = self.wiz.theme
@@ -360,14 +419,27 @@ class MapPage(QWizardPage):
             unit_id=base.unit_id, prefix=base.prefix, refs=list(base.refs),
             connector_ids=dict(base.connector_ids), parts=dict(base.parts),
             signal_map=dict(base.signal_map), pin_function=base.pin_function,
+            device=base.device, new_device_name=base.new_device_name, subsystem=base.subsystem,
+            default_part=base.default_part, gender=base.gender, connector=base.connector,
+            replace=base.replace,
         )  # fmt: skip
-        if kind in ("interfaces", "parts"):
+        if kind in ("interfaces", "parts", "pinout"):
             o.mapping = {k: int(b.currentData()) for k, b in self.map_boxes.items() if int(b.currentData()) >= 0}  # fmt: skip
         if kind == "parts":
             o.approved = import_kinds.parse_words(self.word_edits["approved"].text())
             o.pending = import_kinds.parse_words(self.word_edits["pending"].text())
             o.rejected = import_kinds.parse_words(self.word_edits["rejected"].text())
             o.category = str(self.category.currentData() or "")
+        elif kind == "pinout":
+            w = self.pin_widgets
+            o.device = str(w["device"].currentData() or "")  # type: ignore[attr-defined]
+            o.new_device_name = w["name"].text()  # type: ignore[attr-defined]
+            o.subsystem = w["subsystem"].text()  # type: ignore[attr-defined]
+            o.connector = w["connector"].text()  # type: ignore[attr-defined]
+            o.default_part = str(w["part"].currentData() or "")  # type: ignore[attr-defined]
+            o.parts = import_kinds.parse_pairs(w["parts"].toPlainText(), "Part")  # type: ignore[attr-defined]
+            o.gender = str(w["gender"].currentData() or "")  # type: ignore[attr-defined]
+            o.replace = w["replace"].isChecked()  # type: ignore[attr-defined]
         elif kind == "lengths":
             o.length_unit = str(self.unit_box.currentData() or "mm")
         elif kind == "netlist":
@@ -560,7 +632,8 @@ class ApplyPage(QWizardPage):
 
 
 class ImportWizard(QWizard):
-    """Import interfaces, approved parts, segment lengths, engineering values or a KiCad netlist.
+    """Import interfaces, approved parts, segment lengths, engineering values, a device pinout or a
+    KiCad netlist.
 
     `pick_file(kind, filters)` is the file chooser (tests replace it). `kind` and `path` start the
     wizard on that kind with that file already read."""

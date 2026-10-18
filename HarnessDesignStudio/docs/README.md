@@ -26,7 +26,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | What it gives you |
 | --- | --- |
-| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, generate harnesses, read and fix problems, fill in engineering values, import data, import KiCad pinouts, export the outputs, set wire colours, release a harness, use Git and CI |
+| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, generate harnesses, read and fix problems, fill in engineering values, import data, define a device, import KiCad pinouts, export the outputs, set wire colours, release a harness, use Git and CI |
 | [`HOWTO.md`](HOWTO.md) | The index of the old recipes, pointing at the user manual |
 | [`TIPS.md`](TIPS.md) | Shortcuts, power-user workflows, and exchanging data with other tools |
 | [`CHEATSHEET.md`](CHEATSHEET.md) | One page: the loop, the data imports, release, shortcuts, the folder layout, the words |
@@ -40,7 +40,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`RULES.md`](RULES.md) | Every design rule: what, why, how to fix, severity (generated) |
 | [`CONFIG.md`](CONFIG.md) | Every key of `config/*.json` |
 | [`PLACEHOLDERS.md`](PLACEHOLDERS.md) | Which engineering values are still placeholders, who owns them |
-| [`IMPORTS.md`](IMPORTS.md) | Importing interfaces, parts, lengths, engineering values |
+| [`IMPORTS.md`](IMPORTS.md) | Importing interfaces, parts, lengths, engineering values, device pinouts |
 | [`KICAD.md`](KICAD.md) | Taking unit connector pinouts from a KiCad netlist |
 | [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |
@@ -79,7 +79,7 @@ These explain how the tool was specified and checked; you do not need them to us
 | [`UX_GUIDELINES_REVIEW.md`](UX_GUIDELINES_REVIEW.md) | The owner's UX/UI guidelines, point by point: done, new, not applicable, open |
 | [`DESIGN.md`](DESIGN.md) | The design system of the editor: tokens, type and spacing, themes, icons, state chips, tables, the diagram, the window, the views, shortcuts, decisions |
 | [`ux-audit.md`](ux-audit.md) | The October 2026 audit of the editor against the UX/UI Standard (83 numbered issues) and, at the end, what was built for each one |
-| [`ux-custom-devices-audit.md`](ux-custom-devices-audit.md) | Audit and design proposal (not built, waiting for the owner): what the tool does today for a device of your own (unit, connectors, pins, interfaces on pins, pinout import), the gaps, and a Devices tab with a pin table; pictures in [`ux/custom-devices/`](ux/custom-devices/) |
+| [`ux-custom-devices-audit.md`](ux-custom-devices-audit.md) | Audit and design proposal for custom devices (approved on 14 October 2026 and built as the Devices tab; the owner's decisions are at its end): what the tool does today for a device of your own (unit, connectors, pins, interfaces on pins, pinout import), the gaps, and a Devices tab with a pin table; pictures in [`ux/custom-devices/`](ux/custom-devices/) |
 | [`DECISIONS.md`](DECISIONS.md), [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | What was decided, and what still needs an owner |
 | [`PLAN.md`](PLAN.md), [`demos/`](demos/README.md) | The plan and the note from each milestone |
 | [`AUDIT.md`](AUDIT.md) | The October audit |
