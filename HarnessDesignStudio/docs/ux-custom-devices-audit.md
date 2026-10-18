@@ -1,6 +1,6 @@
 # Custom devices: audit and design proposal (October 2026)
 
-Status: **proposal, waiting for the owner's approval. Nothing is built.** The UX standard says audit first, then approval, then build; this page is the audit (sections 1 to 4) and the proposal (sections 5 and 6). It follows the style of [`ux-audit.md`](ux-audit.md) and [`DESIGN.md`](DESIGN.md).
+Status: **approved by the owner on 14 October 2026; built in stages B1 to B7 (see [Owner decisions](#owner-decisions-14-october-2026)).** Until then this page was a proposal and nothing was built. The UX standard says audit first, then approval, then build; this page is the audit (sections 1 to 4) and the proposal (sections 5 and 6). It follows the style of [`ux-audit.md`](ux-audit.md) and [`DESIGN.md`](DESIGN.md).
 
 The feedback behind it, from the owner: *many users, especially electrical and AIT engineers, are missing a core functionality of the tool: to create custom devices and define the interfaces down to each pin themselves.* This page does not assume the feedback is right or wrong; it reports what the code does, with evidence, and then proposes a way to close what is missing.
 
@@ -14,6 +14,7 @@ The feedback behind it, from the owner: *many users, especially electrical and A
 - [5. Proposal](#5-proposal)
 - [6. Questions and decisions for the owner](#6-questions-and-decisions-for-the-owner)
 - [Appendix: commands that were run](#appendix-commands-that-were-run)
+- [Owner decisions (14 October 2026)](#owner-decisions-14-october-2026)
 
 ## Summary
 
@@ -390,3 +391,26 @@ All in scratch folders outside the repository, with the tool at `1.0.0` from thi
 8. **Pictures.** `MainWindow` on a copy of the `flatsat` example, Expert mode, `widget.grab()` for each dock, menu and dialog; the run printed `units 23 connectors 109 parts 28 types 17`.
 
 Next: the owner's decisions in section 6, then the first build step (CD-B1).
+
+## Owner decisions (14 October 2026)
+
+The owner approved building the custom device editor (CD-B1 to CD-B7 of section 5.11) and decided the open questions of section 6 as follows.
+
+| ID | Decision | What it means for the build |
+|---|---|---|
+| CD-Q6 | Close the lock hole (CD-G15) **only in the new editor's planners**. Do **not** change `check_locks` or any rule logic. | The planners refuse to change the pin set (ids and count) of a connector that a released cable connector mates with (`pin_set_frozen`). A hand edit or another caller of `History` is refused exactly as before. |
+| CD-Q10 | **Yes**: the Devices view is a sixth main tab (Ctrl+6). | Plugged in through `MainWindow.install_view("devices", ...)`. |
+| CD-Q1 | **No file-format change now.** Only the fields the model has today are used. | The pin columns that need a format change (description, remarks, own direction, voltage, current) are **not built**. They stay a documented future option (CD-B9, section 5.9). |
+| CD-Q4 | The reusable device file (CD-B8) and format version 2 (CD-B9) are **not built now**. | CD-C15 and CD-J5 stay in the proposal as future options. |
+
+Not decided by the owner, so the default of the proposal stands:
+
+| ID | Default that stands |
+|---|---|
+| CD-Q2 | No separate "pinout reviewed" state. |
+| CD-Q3 | The GUI keeps refusing two interfaces on one connector; `connector_compat` is not changed. |
+| CD-Q5 | A part made in the editor is always `pending` and `unverified`; the tool never approves. |
+| CD-Q7 | Pinout checks are inline notes only; no new design rule, the rule count stays 34. |
+| CD-Q8 | The commands `import-pinout` and `export-pinout` are added and documented. |
+| CD-Q9 | The pin id rule stays (`[A-Za-z0-9_.-]`, 16 characters); gender stays derived from the part, with an explicit edit of the connector's gender field only where the model already has it. |
+| CD-Q11 | No connector face drawing. |

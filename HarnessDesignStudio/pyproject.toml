@@ -87,6 +87,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "S"]
 "src/harness_design_studio/core/starter.py" = ["E501"]  # data tables
 "src/harness_design_studio/core/samples.py" = ["E501"]
 "src/harness_design_studio/core/edit.py" = ["E501"]
+"src/harness_design_studio/core/devices.py" = ["E501"]  # plain-language messages
 "src/harness_design_studio/gui/*.py" = ["E501"]  # style sheet and UI text
 "src/harness_design_studio/core/generate/*.py" = ["E501"]  # long plain-language messages
 "src/harness_design_studio/core/verify.py" = ["E501"]

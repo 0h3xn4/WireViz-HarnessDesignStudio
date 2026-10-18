@@ -3,6 +3,7 @@ matrices. Each function returns `Table` (header row first). No design numbers ar
 unknown values are written as "pending", "unknown" or "TBD (placeholder)"."""
 
 from collections import defaultdict
+from collections.abc import Collection
 from decimal import Decimal
 
 from harness_design_studio.core.generate.lengths import clear_length_cache, wire_length
@@ -107,7 +108,9 @@ def pinouts(project: Project, h: Harness) -> Table:
     return rows
 
 
-def box_pinouts(project: Project) -> Table:
+def box_pinouts(project: Project, connector_ids: Collection[str] | None = None) -> Table:
+    """The rows of `system/box_pinouts.csv`; `connector_ids` keeps only those box connectors
+    (the Devices view shows one device's rows exactly as they are exported)."""
     attached: dict[tuple[str, str], list[str]] = defaultdict(list)
     for h in project.harnesses.values():
         mates = {c.id: c.mates_with for c in h.connectors}
@@ -117,7 +120,8 @@ def box_pinouts(project: Project) -> Table:
                     attached[(mates[cid] or "", pin)].append(w.id)
     rows = [PINOUT_HEADER]
     for c in sorted(project.connectors.values(), key=lambda x: x.id):
-        rows += _pin_rows(project, c, attached)
+        if connector_ids is None or c.id in connector_ids:
+            rows += _pin_rows(project, c, attached)
     return rows
 
 

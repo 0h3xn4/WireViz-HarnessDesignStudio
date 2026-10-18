@@ -1,0 +1,13 @@
+{
+  "units": [
+    {
+      "id": "PCDU1",
+      "mass_relevant": true,
+      "name": "Power distribution unit 1",
+      "notes": "",
+      "side": "nominal",
+      "subsystem": "power",
+      "zone": "panel-B"
+    }
+  ]
+}
