@@ -13,7 +13,7 @@ from harness_design_studio.core.commands import Put  # noqa: E402
 from harness_design_studio.core.generate.engine import generate_project  # noqa: E402
 from harness_design_studio.core.model import evolve  # noqa: E402
 from harness_design_studio.core.samples import sat15  # noqa: E402
-from tests.gui_helpers import DialogScript, make_window  # noqa: E402
+from tests.gui_helpers import DialogScript, make_window, show_problems  # noqa: E402
 
 
 @pytest.fixture
@@ -36,7 +36,7 @@ def test_results_arrive_in_the_background(win, qtbot) -> None:  # type: ignore[n
     wait_for_drc(qtbot, win)
     rules = {f.rule for f in win.ctl.findings()}
     assert "part-unapproved" in rules and "unchecked-config" in rules
-    win.tabs.setCurrentWidget(win.problems)
+    show_problems(win)
     header = win.problems.findChild(type(win.problems.lay.itemAt(0).widget()), "drc-state").text()
     assert "34 rules" in header and "not checked" in header and "all" not in header.lower()
 
@@ -119,7 +119,7 @@ def test_a_finding_card_shows_the_requirement_it_serves(win, qtbot) -> None:  # 
     from PySide6.QtWidgets import QLabel
 
     wait_for_drc(qtbot, win)
-    win.tabs.setCurrentWidget(win.problems)
+    show_problems(win)
     cited = [f for f in win.ctl.findings() if f.sources and f.waiver is None]
     assert cited, "sat15 has a connector look-alike warning"
     labels = [

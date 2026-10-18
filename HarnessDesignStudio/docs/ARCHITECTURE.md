@@ -52,7 +52,7 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | `ids.py`, `units.py`, `errors.py` | identifier rules; SI helpers (AWG with mm² alongside); explicit error types |
 | `integrity.py` | referential integrity of a project; runs on every load, save and transaction |
 | `issues.py` | findings reported by loading, integrity checking and `harness-design-studio validate` / `check` |
-| `checks.py` | logical-layer findings shown in the Problems panel and the to-do list |
+| `checks.py` | logical-layer findings shown in the Problems tab (with its to-do list) |
 | `recovery.py` | autosave journal of an open project, kept inside the project folder |
 | `schemas.py` | JSON Schemas of the project files, made from the model itself |
 | `samples.py`, `starter.py`, `templates.py` | reference projects for tests and the first-run sample; starter library and interface types (example data only); the example projects and import templates shipped with the tool |
@@ -78,14 +78,14 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | --- | --- |
 | `cli/main.py` | the `harness-design-studio` entry point |
 | `cli/start.py`, `cli/data.py`, `cli/changes.py` | getting started (`new`, `templates`); outside data (`config`, `import-parts`, `import-lengths`, `import-netlist`); change control (`review`, `release`, `revise`, `diff`, `compare`, `log`) |
-| `gui/app.py`, `gui/main_window.py`, `gui/shell.py`, `gui/topbar.py` | GUI entry point; main window: top bar and banners, the tabs Diagram, Harness, Lists, Checks and Releases, the project tree and palette (left), the inspector (right), the older problems and tables (bottom), status bar; the slots views plug into; the status chip and banner rules |
+| `gui/app.py`, `gui/main_window.py`, `gui/shell.py`, `gui/topbar.py` | GUI entry point; main window: top bar and banners, the tabs Diagram, Harness, Lists, Checks and Releases, the project tree and the interface table (left), the inspector with its Problems tab (right), status bar; the slots views plug into; the status chip and banner rules |
 | `gui/controller.py` | `EditorController`: the only object that changes the project |
 | `gui/canvas.py`, `gui/glyphs.py`, `gui/legend.py`, `gui/canvas_state.py`, `gui/canvas_badges.py` | the diagram canvas (zone lanes, units, links, overview map); pictograms for links and connectors; the legend overlay; the index of problems, pending values and locks per object; the badges and the corner chip |
 | `gui/project_tree.py`, `gui/inspector.py`, `gui/why_panel.py` | the project tree, the inspector (fields, used in, lock banner) and the Why panel |
 | `gui/harness_view.py`, `gui/lists_panel.py`, `gui/plan_table.py`, `gui/checks_panel.py`, `gui/config_dialog.py`, `gui/releases_panel.py` | the Harness, Lists, Checks and Releases tabs; the table of the generate plan; the engineering values form |
 | `gui/export_dialog.py`, `gui/import_wizard.py`, `gui/new_project_dialog.py`, `gui/lock_tree.py`, `gui/notice.py` | the export window, the import wizard, the new project window, the tree of what a release locks, inline notices |
 | `gui/tables.py`, `gui/states.py`, `gui/icons.py`, `gui/indicators.py`, `gui/background.py` | shared tables, state chips, icons, check box and radio button pictures drawn from the tokens, background jobs |
-| `gui/panels.py`, `gui/dialogs.py`, `gui/preview.py`, `gui/tour.py` | the palette, properties, problems, to-do, interface table, harness plans and outline panels; dialogs; the zoomable drawing preview; the first-run tour |
+| `gui/panels.py`, `gui/dialogs.py`, `gui/preview.py`, `gui/tour.py` | the properties and problems panels (the problems list holds the to-do lines), `gui/interface_table.py` the editable interface table; dialogs; the zoomable drawing preview; the first-run tour |
 | `gui/drc_process.py` | runs the design rule check in a separate, long-lived process |
 | `gui/strings.py`, `gui/tokens.py`, `gui/theme.py`, `gui/fonts.py` | all user-visible text; design tokens (colours, type, spacing); theme (system, light, dark; interface size); bundled IBM Plex fonts |
 

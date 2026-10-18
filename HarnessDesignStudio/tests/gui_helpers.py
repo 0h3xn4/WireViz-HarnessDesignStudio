@@ -26,6 +26,36 @@ def make_window(tmp_path: Path, *, first_run: bool = False, journal_ms: int = 20
     return win
 
 
+def show_problems(win: MainWindow):  # type: ignore[no-untyped-def]
+    """Bring the problems list to the front (the Problems tab of the right panel) and return it.
+    Hidden panels refresh lazily, so tests that read its cards call this first."""
+    win.dock_right.show()
+    win.inspector.show_tab("problems")
+    QApplication.processEvents()
+    return win.problems
+
+
+def action_named(win: MainWindow, name: str):  # type: ignore[no-untyped-def]
+    """The window's `QAction` with this object name ("menu-add-payload", "menu-connect-can", ...)."""
+    from PySide6.QtGui import QAction
+
+    for act in win.findChildren(QAction):
+        if act.objectName() == name:
+            return act
+    raise AssertionError(f"no action {name!r}")
+
+
+def add_unit(win: MainWindow, template_id: str) -> None:
+    """What the Palette's "＋ <kind>" button did: Edit > Add unit > <kind>."""
+    action_named(win, f"menu-add-{template_id}").trigger()
+
+
+def pick_connect_type(win: MainWindow, type_id: str) -> None:
+    """What the Palette's interface type button did: Edit > Connect with > <type> (the arrow next
+    to the Connect tool lists the same actions); picking the active type again turns the tool off."""
+    action_named(win, f"menu-connect-{type_id}").trigger()
+
+
 def unit_point(win: MainWindow, unit_id: str, *, port: str | None = None) -> QPoint:
     """Viewport position inside a unit item (its header, or a named connector row in Expert mode)."""
     item = win.view.dscene.unit_items[unit_id]

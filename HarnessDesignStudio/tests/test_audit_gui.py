@@ -15,7 +15,7 @@ from harness_design_studio.core.model import evolve  # noqa: E402
 from harness_design_studio.core.samples import mini3, sat15, stress_project  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
 from harness_design_studio.gui.main_window import ToastHost  # noqa: E402
-from tests.gui_helpers import DialogScript, click_unit, make_window  # noqa: E402
+from tests.gui_helpers import DialogScript, click_unit, make_window, show_problems  # noqa: E402
 
 
 @pytest.fixture
@@ -138,10 +138,14 @@ def test_the_preview_and_summary_are_plain_words() -> None:
     assert "frozen" not in text and "unchanged" not in text
 
 
-def test_a_hand_made_harness_can_be_deleted_from_the_plans_tab(win) -> None:  # type: ignore[no-untyped-def]
+def test_a_hand_made_harness_can_be_deleted_from_the_harness_tab(win) -> None:  # type: ignore[no-untyped-def]
     win.ctl._install(mini3(), None, None)
+    win.go_to("harness")
+    win.harness_view.select_harness("W001")
+    delete = win.harness_view.more_actions["delete"]  # "More" menu of the Harness tab
+    assert delete.isEnabled()
     script = DialogScript(win, accept=True)
-    win.change_flow("delete", "W001")
+    delete.trigger()
     assert script.seen and "W001" not in win.ctl.project.harnesses
     win.ctl.undo()
     assert "W001" in win.ctl.project.harnesses
@@ -163,7 +167,7 @@ def test_findings_of_one_kind_about_one_interface_share_a_card(win) -> None:  # 
     win.ctl._install(p, None, None)
     p.harnesses[hid] = evolve(h, wires=[])  # every signal of its interfaces loses its wire
     win.ctl.run_drc_now()
-    win.problems.refresh()
+    show_problems(win).refresh()
     from PySide6.QtWidgets import QFrame
 
     names = [f.objectName() for f in win.problems.findChildren(QFrame)]
@@ -218,7 +222,7 @@ def test_confirming_a_missing_interface_is_a_plain_edit_error(win) -> None:  # t
 
 def test_the_interface_filter_finds_ids_and_two_words(win) -> None:  # type: ignore[no-untyped-def]
     win.ctl._install(mini3(), None, None)
-    t = win.table
+    t = win.interface_table
     t.refresh()
     ids = sorted(win.ctl.project.interfaces)
     assert len(ids) == 2
@@ -248,8 +252,8 @@ def test_leaving_a_number_field_unchanged_changes_nothing(win) -> None:  # type:
     i = win.ctl.project.interfaces["IF-PWR-RW1"]
     assert (i.max_current_a, i.voltage_v) == (12.3456789, 28.123456789)
     assert win.ctl.history.revision == revision
-    win.table.refresh()
-    model = win.table.model
+    win.interface_table.refresh()
+    model = win.interface_table.model
     assert model.data(model.index(0, 6)) == "12.3456789"
     assert model.setData(model.index(0, 6), "12.3456789")  # an unchanged cell is not an edit
     assert win.ctl.history.revision == revision

@@ -73,9 +73,10 @@ def main() -> None:
     for label, column in (("add unit", 0), ("undo", 1), ("redo", 2), ("undo (again)", 3)):
         print(f"{label:28}", [c[column] for c in cycles], "ms")
     print(f"{'full repaint (grab)':28}", [ms(lambda: view.grab()) for _ in range(3)], "ms")
-    win.tabs.setCurrentIndex(0)
+    win.dock_right.show()
+    win.inspector.show_tab("problems")
     print("problems tab visible: change", ms(lambda: ctl.update_unit("U002", name="x")), "ms")
-    win.tabs.setCurrentIndex(2)
+    win.show_interfaces()
     print("table tab visible: change", ms(lambda: ctl.update_unit("U002", name="y")), "ms")
     ctl.release()
 

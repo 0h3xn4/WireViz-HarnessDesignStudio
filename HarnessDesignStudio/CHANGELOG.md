@@ -39,9 +39,9 @@ Dialogs
 Window
 - Top bar (`gui/topbar.py`): project name, short model hash in mono, a dirty marker, **Generate** (the one primary button), Check, Export… and a status chip (up to date, plans out of date, outputs out of date, generating, exporting, checking). Ctrl+G generates, Ctrl+E exports, F5 runs the checks.
 - Persistent banners: when the plans or the exported files no longer match the design a notice stays under the top bar with Generate and Export buttons; a failed generate, export or check stays as a notice until the next success.
-- Main tabs Diagram, Harness, Lists, Checks and Releases (Ctrl+1 to Ctrl+5), the project tree and palette on the left, the inspector with its Why and Problems tabs on the right; a link double-click opens the Harness tab.
+- Main tabs Diagram, Harness, Lists, Checks and Releases (Ctrl+1 to Ctrl+5), the project tree on the left, the inspector with its Why and Problems tabs on the right; a link double-click opens the Harness tab.
 - A status-bar link "n values pending · n rules not checked" that opens the Checks tab filtered; the status bar also shows the project folder (monospace, cut in the middle when narrow), the number of rules and the tool version, "Generated at model xxxxxxxx" and the zoom level.
-- F6 and Shift+F6 move the keyboard focus between the diagram, the project panel, the inspector and the bottom panel; Ctrl+I adds an interface; the Connect tool is in the Edit menu; every shortcut is in a menu and in the tooltip ("text (shortcut)").
+- F6 and Shift+F6 move the keyboard focus between the diagram, the project panel and the inspector; Ctrl+I adds an interface; the Connect tool is in the Edit menu; every shortcut is in a menu and in the tooltip ("text (shortcut)").
 - View > Reset layout; the dock layout is saved with the window.
 
 ### Changed
@@ -70,13 +70,15 @@ Views and dialogs
 - A refused edit (an object held by a released harness) puts the stored value back into the form instead of leaving the rejected one showing; a refusal stays on screen with a "Start new revision…" button until the next change goes through.
 - The release dialog lists what the release will lock (wires, pins, interfaces, parts, interface types, config files, with placeholder values shown as pending); the new-revision dialog says what happens and what becomes editable instead of "Nothing blocks this release"; both say in words what is still missing for the button to work (the 10-character comment, a name, a reason).
 - New project and New project from an example are one dialog (folder, name, example).
-- Export opens the export window; the plans check of the older Harness plans panel is read once per model state.
+- Export opens the export window.
 
 Window
 - Ctrl+K lists every command (Generate, Check, Export, Release, Revise, Reset layout, the tabs, the import kinds, engineering values, go to harness), ranks a name that starts with what you typed first and no longer stops at 14 results; it is still a modal window.
 - Undo and Redo name the step ("Undo Move PDU2").
+- A panel can no longer make the window wider than the screen.
+- The bottom panel (Problems, To-do, Interface table, Harness plans, Outline) and the Palette tab are gone, and nothing they did is lost (the table is in `docs/ux-audit.md`, "Build status"): Problems and a To do list are in the Problems tab on the right; the interface table is the Interfaces tab on the left (Ctrl+Shift+T, Go menu); the harness list, check, outputs and wires are in the Harness tab, whose More menu has Changes…, Change log… and Delete harness; the project tree replaces the Outline and takes Shift and Ctrl for a multiple selection and Delete; units are added with Add in the project tree or Edit > Add unit; the arrow beside Connect lists the interface types. A short window no longer hides a panel, and the tour has the steps Add, Connect and Problems at their new places. The Fix all button, a non-modal palette and per-harness Generate are not built (see `docs/ux-audit.md`, "Build status").
 - In a window shorter than 800 px the bottom panel is hidden so the diagram keeps at least 55 % of the height at 1280 x 720; a panel can no longer make the window wider than the screen.
-- The older bottom panel (Problems, To-do, Interface table, Harness plans, Outline) and the Palette tab are still there; the Fix all button, a non-modal palette and per-harness Generate are not built (see `docs/ux-audit.md`, "Build status").
+- The Fix all button, a non-modal palette and per-harness Generate are not built yet (see `docs/ux-audit.md`, "Build status").
 - Developers: the test suite is several times faster. GUI tests no longer leave their windows alive for the rest of the run (`tests/conftest.py` deletes them), and the suite runs in parallel with `pytest -n auto` (pytest-xdist 3.8.0, dev only; D-148). Tests that assert a wall-clock limit carry the marker `perf` and run alone afterwards (`pytest -m perf`); CI does both and applies the same 90 % core coverage gate.
 
 ### Fixed
