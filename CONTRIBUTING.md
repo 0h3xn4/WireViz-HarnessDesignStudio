@@ -32,7 +32,7 @@ The tool runs on Ubuntu 24.04 or newer only. From a clone of this repository:
 cd HarnessDesignStudio
 python3 -m venv .venv && . .venv/bin/activate
 pip install -e ".[gui,dev]"
-pytest
+pytest -n auto -m "not perf" && pytest -m perf   # in parallel, then the timing tests alone (plain `pytest` also works, only slower)
 ruff format . && ruff check . && mypy
 ```
 
