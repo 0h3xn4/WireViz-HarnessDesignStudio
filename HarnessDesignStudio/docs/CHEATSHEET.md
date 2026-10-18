@@ -59,6 +59,7 @@ The window: a top bar (**Generate**, **Check**, **Export…**, a status chip), t
 | Ctrl+I | new interface |
 | Ctrl+1 to Ctrl+6 | the tabs: Diagram, Harness, Lists, Checks, Releases, Devices |
 | Ctrl+Shift+N | add a device (Devices tab: F2 or Enter edits a cell, Insert adds a pin, Shift+Delete deletes pins, Ctrl+L fills from an interface type, Ctrl+Enter assigns to an interface) |
+| Ctrl+Shift+T | the Interface table |
 | F6, Shift+F6 | next and previous panel |
 | Ctrl+Q | quit |
 | Ctrl+K | command palette: type a command or an ID |

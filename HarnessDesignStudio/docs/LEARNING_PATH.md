@@ -81,7 +81,7 @@ Before you open the tool, fill in `design-worksheet.md` (get it with `harness-de
 
 Two ways, and you can mix them:
 
-- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add units (**Add** in the Project tab, or the Palette tab), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10.
+- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add units (**Add** in the Project tab, or **Edit > Add unit**), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10.
 - **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import interfaces**. Add the units first. Importing interfaces is app only: there is no command line command for it.
 
 **Done when:** `harness-design-studio generate my-design` finishes and `harness-design-studio check my-design` reports no errors.

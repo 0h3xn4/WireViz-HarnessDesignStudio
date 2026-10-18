@@ -96,6 +96,7 @@ def test_the_worker_stops_on_a_message_it_does_not_understand() -> None:
         assert proc.wait(timeout=30) == 1
 
 
+@pytest.mark.perf
 def test_a_check_does_not_hold_up_the_calling_threads_neighbour() -> None:
     """While a big check runs in the helper, another thread of the editor's process is never kept
     waiting long (a check in a thread held the interpreter for 70 ms or more at a time)."""

@@ -890,6 +890,7 @@ def test_connector_removed_by_undo_of_add() -> None:
     assert isinstance(ops[0], Put) and not any(isinstance(o, Delete) for o in ops)
 
 
+@pytest.mark.perf
 def test_a_cell_edit_takes_under_100_ms_at_1000_pins_and_100_units() -> None:
     """CD-X8, the headless part: plan + History.execute of one pin edit."""
     import time

@@ -65,9 +65,17 @@ def win(qtbot, tmp_path):  # type: ignore[no-untyped-def]
 
 
 def test_main_window_widgets_have_accessible_names(win) -> None:  # type: ignore[no-untyped-def]
-    for tab in range(win.tabs.count()):
-        win.tabs.setCurrentIndex(tab)
-        assert unnamed(win) == [], f"tab {tab}"
+    for name in win.main_tabs.names():  # Diagram, Harness, Lists, Checks, Releases
+        win.go_to(name)
+        assert unnamed(win) == [], f"main tab {name}"
+    win.go_to("diagram")
+    for tabs in (
+        win.left_tabs,
+        win.side_tabs,
+    ):  # project tree, interface table; inspector, why, problems
+        for name in tabs.names():
+            tabs.setCurrentIndex(tabs.index_of(name))
+            assert unnamed(win) == [], f"side tab {name}"
 
 
 def test_dialogs_have_accessible_names(win) -> None:  # type: ignore[no-untyped-def]

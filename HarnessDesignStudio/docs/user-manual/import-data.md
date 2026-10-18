@@ -36,7 +36,7 @@ harness-design-studio templates my-templates
 
 Importing interfaces works in the app. There is no command for it. (GUI, not run: the steps are described from the program's code. The column names and messages are the program's.)
 
-1. Open the project. Choose **File > Import > Import interfaces…** (Ctrl+Shift+I), or press **Import interfaces from CSV / XLSX…** under **Bring in data** in the **Palette** tab, or press Enter on **Interfaces** under **Imports** in the **Project** tab.
+1. Open the project. Choose **File > Import > Import interfaces…** (Ctrl+Shift+I), or press Enter on **Interfaces** under **Imports** in the **Project** tab.
 2. Press **Open file…** and pick a `.csv` or `.xlsx` file. You can also paste CSV text into the box. Try `my-templates/interfaces.csv`:
 
 ```

@@ -92,6 +92,7 @@ Clean-room project: never copy code from `../src/wireviz` (GPL-3.0). Start with 
 ```
 python3 -m venv .venv && . .venv/bin/activate && pip install -e ".[gui,dev]"
 pytest --cov      # tests; the 90% core coverage gate applies with --cov
+pytest -n auto -m "not perf" && pytest -m perf   # the same in parallel (pytest-xdist), timing tests last and alone
 ruff format . && ruff check . && mypy
 python -m tools.release_check --quick
 ```

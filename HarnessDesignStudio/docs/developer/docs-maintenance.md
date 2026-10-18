@@ -41,7 +41,7 @@ The tutorial `docs/GETTING_STARTED.md` is not generated, but `test_docs.py` runs
 | `docs/img/w001-drawing.png`, `docs/img/block-diagram.png` (the tutorial) | no script in the repository | They are the exported SVG sheets of the tutorial project, rendered to PNG with Qt's SVG renderer and cropped. They carry the model hash of the tutorial, so redo them when the hash changes. |
 | `docs/ux/screens/*.png` (the HTML prototype, history) | `python -m tools.ux_screenshots` (needs Playwright) | Kept as history. Do not refresh. |
 
-There are no pictures of the older Harness plans tab, the generate preview and the wire colours window.
+There are no pictures of the generate preview and the wire colours window.
 
 ## Add or change a page
 

@@ -864,6 +864,7 @@ def test_add_device_is_in_the_menus_and_refused_when_read_only(qtbot, tmp_path: 
     assert win.ctl.project.units == {}
 
 
+@pytest.mark.perf
 def test_a_cell_edit_is_under_100_ms_at_1000_pins_and_100_units(qtbot, theme) -> None:
     import time
 
