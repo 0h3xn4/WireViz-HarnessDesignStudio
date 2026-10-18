@@ -78,6 +78,8 @@ Window
 - Undo and Redo name the step ("Undo Move PDU2").
 - A panel can no longer make the window wider than the screen.
 - The bottom panel (Problems, To-do, Interface table, Harness plans, Outline) and the Palette tab are gone, and nothing they did is lost (the table is in `docs/ux-audit.md`, "Build status"): Problems and a To do list are in the Problems tab on the right; the interface table is the Interfaces tab on the left (Ctrl+Shift+T, Go menu); the harness list, check, outputs and wires are in the Harness tab, whose More menu has Changes…, Change log… and Delete harness; the project tree replaces the Outline and takes Shift and Ctrl for a multiple selection and Delete; units are added with Add in the project tree or Edit > Add unit; the arrow beside Connect lists the interface types. A short window no longer hides a panel, and the tour has the steps Add, Connect and Problems at their new places. Per-harness Generate is not built (see `docs/ux-audit.md`, "Build status").
+- In a window shorter than 800 px the bottom panel is hidden so the diagram keeps at least 55 % of the height at 1280 x 720; a panel can no longer make the window wider than the screen.
+- Developers: the test suite is several times faster. GUI tests no longer leave their windows alive for the rest of the run (`tests/conftest.py` deletes them), and the suite runs in parallel with `pytest -n auto` (pytest-xdist 3.8.0, dev only; D-148). Tests that assert a wall-clock limit carry the marker `perf` and run alone afterwards (`pytest -m perf`); CI does both and applies the same 90 % core coverage gate.
 
 ### Fixed
 

@@ -231,6 +231,7 @@ def test_present_lists_what_the_legend_may_show(project) -> None:
     assert fail and warn and unchecked and not locked
 
 
+@pytest.mark.perf
 def test_building_the_index_is_fast_at_stress_size() -> None:
     """The index is rebuilt a moment after every edit: 200 units and 2000 links with thousands
     of findings must stay far below the edit budget."""

@@ -79,6 +79,7 @@ These explain how the tool was specified and checked; you do not need them to us
 | [`UX_GUIDELINES_REVIEW.md`](UX_GUIDELINES_REVIEW.md) | The owner's UX/UI guidelines, point by point: done, new, not applicable, open |
 | [`DESIGN.md`](DESIGN.md) | The design system of the editor: tokens, type and spacing, themes, icons, state chips, tables, the diagram, the window, the views, shortcuts, decisions |
 | [`ux-audit.md`](ux-audit.md) | The October 2026 audit of the editor against the UX/UI Standard (83 numbered issues) and, at the end, what was built for each one |
+| [`ux-custom-devices-audit.md`](ux-custom-devices-audit.md) | Audit and design proposal (not built, waiting for the owner): what the tool does today for a device of your own (unit, connectors, pins, interfaces on pins, pinout import), the gaps, and a Devices tab with a pin table; pictures in [`ux/custom-devices/`](ux/custom-devices/) |
 | [`DECISIONS.md`](DECISIONS.md), [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | What was decided, and what still needs an owner |
 | [`PLAN.md`](PLAN.md), [`demos/`](demos/README.md) | The plan and the note from each milestone |
 | [`AUDIT.md`](AUDIT.md) | The October audit |

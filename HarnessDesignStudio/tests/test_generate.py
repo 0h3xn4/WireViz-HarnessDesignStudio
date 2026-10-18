@@ -240,6 +240,7 @@ def test_property_regeneration_idempotent(units, interfaces, signals, zones):
     assert verify_project(p).ok
 
 
+@pytest.mark.perf
 def test_stress_generates_fast():
     p = stress_project()
     t0 = time.perf_counter()

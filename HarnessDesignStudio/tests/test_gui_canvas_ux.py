@@ -1010,6 +1010,7 @@ def test_the_canvas_numbers_live_in_one_dataclass() -> None:
 # ---- speed -----------------------------------------------------------------------------------------
 
 
+@pytest.mark.perf
 def test_dragging_a_unit_at_100_units_is_fast(qtbot, tmp_path) -> None:
     import time
 
