@@ -50,16 +50,30 @@ jobs:
       - run: python -m tools.build_installer
       - run: python -m tools.build_deb
       - name: Frozen app self-test
+        timeout-minutes: 5
         env:
           QT_QPA_PLATFORM: offscreen
         run: dist/harness-design-studio/harness-design-studio-gui --selftest
       - name: Install the .deb and run it
+        timeout-minutes: 5  # without it a stuck program holds the job for the 60 minutes below
         env:
           QT_QPA_PLATFORM: offscreen
+          PYTHONFAULTHANDLER: "1"  # SIGABRT makes a stuck program print where each thread is
         run: |
           sudo apt-get install -y ./dist/harness-design-studio_*_amd64.deb
           test "$(harness --version)" = "harness ${TAG#v}"
-          harness-design-studio-gui --selftest
+          descendants() { for c in $(pgrep -P "$1"); do echo "$c"; descendants "$c"; done; }
+          harness-design-studio-gui --selftest &
+          pid=$!
+          for _ in $(seq 120); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
+          if kill -0 "$pid" 2>/dev/null; then
+            echo "::error::the self-test of the installed program did not finish in 120 s"
+            ps -eo pid,ppid,etime,stat,args --forest
+            for c in $(descendants "$pid") "$pid"; do kill -ABRT "$c" 2>/dev/null || true; done
+            sleep 5
+            exit 1
+          fi
+          wait "$pid"
           test -f /usr/share/doc/harness-design-studio/copyright
       - name: Checksums (SHA256SUMS next to the packages, names without folders)
         run: |
