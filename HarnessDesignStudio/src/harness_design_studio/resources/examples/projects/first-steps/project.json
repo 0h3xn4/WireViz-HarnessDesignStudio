@@ -2,5 +2,5 @@
   "description": "Power control unit, on-board computer and a reaction wheel. Generate the harnesses to see what the tool makes of two interfaces.",
   "name": "First steps: reaction wheel link",
   "schema_version": 1,
-  "tool_version": "1.0.0"
+  "tool_version": "1.1.0"
 }

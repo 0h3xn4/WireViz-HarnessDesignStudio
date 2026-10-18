@@ -2,7 +2,11 @@
 
 Versions follow semantic versioning. Every project file records the tool version that saved it.
 
-## Unreleased
+## 1.1.0 (2026-10-18; not a statement of compliance)
+
+Version 1.1.0 is 1.0.0 plus the changes listed below: the editor rebuilt against the new UX standard (a token-driven theme, the Harness, Lists, Checks, Releases and Devices tabs, the project tree and the inspector, state chips that never rely on colour alone, "Fix all", the Ctrl+K overlay, clearer link labels and pictograms); **the Devices tab, with which a device is defined down to each pin** (connectors, pins, the interface each pin carries, import of a pinout from CSV or XLSX, `import-pinout` and `export-pinout`); the rename of the folder and the commands (`harness-design-studio`, `harness-design-studio-gui`; `harness` and `harness-gui` stay as aliases); and a test run that takes about 30 minutes in CI instead of up to three hours.
+
+What did not change: the design model, the file format (a project saved by 1.0.0 opens as it is), the 34 design rules and their results, the generated outputs (the golden output files are byte for byte the same as in 1.0.0; a project's model hash differs because it includes the tool version), and the command line apart from the two new commands. The tool still ships no derating or EMC values and no approved parts list (D-11, D-12): each project supplies them. This release has not been signed off by the owner (`docs/RELEASE.md` step 14, `compliance/SIGNOFF.md`).
 
 ### Added
 

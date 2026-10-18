@@ -56,7 +56,7 @@ harness-design-studio drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `310e4c4a4345`. Rules run: 34.
+Model hash: `1707f1d0c671`. Rules run: 34.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.
