@@ -112,9 +112,9 @@ def test_the_projects_add_button_opens_the_list_of_unit_kinds(win, monkeypatch) 
     monkeypatch.setattr(win.menu_add, "exec", lambda *a, **k: shown.append(win.menu_add))
     win.project_tree.add_actions["unit"].trigger()
     assert shown == [win.menu_add]
-    assert {a.objectName() for a in win.menu_add.actions()} == {
-        f"menu-add-{t}" for t in edit.TEMPLATES
-    }
+    names = {a.objectName() for a in win.menu_add.actions() if a.objectName()}
+    # every kind of unit, and the way to add a device of one's own (the Devices tab, Ctrl+Shift+N)
+    assert names == {f"menu-add-{t}" for t in edit.TEMPLATES} | {"act-add-device"}
 
 
 def test_the_connect_arrow_lists_every_interface_type_and_ticks_the_one_in_use(win) -> None:

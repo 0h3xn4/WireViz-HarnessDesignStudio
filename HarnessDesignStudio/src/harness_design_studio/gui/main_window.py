@@ -88,6 +88,12 @@ from harness_design_studio.gui.controller import (
     _plain,
     reason_of,
 )
+from harness_design_studio.gui.devices_dialogs import (
+    AssignDialog,
+    FillDialog,
+    NewPartDialog,
+    NewTypeDialog,
+)
 from harness_design_studio.gui.devices_view import DevicesView
 from harness_design_studio.gui.dialogs import (
     Banner,
@@ -808,6 +814,11 @@ class MainWindow(QMainWindow):
             widget.duplicateRequested.connect(self._duplicate_device)
             widget.exportPinoutRequested.connect(self.export_pinout_flow)
             widget.whyRequested.connect(lambda kind, ident: self._show_why(kind, ident))
+            widget.reviseRequested.connect(lambda hid: self.change_flow("revise", hid))
+            widget.fillRequested.connect(self.fill_pins_flow)
+            widget.assignRequested.connect(self.assign_pins_flow)
+            widget.newPartRequested.connect(self.new_part_flow)
+            widget.newTypeRequested.connect(self.new_type_flow)
             return True
         if isinstance(widget, ProjectTree):
             widget.selectionRequested.connect(self._tree_selected)
@@ -909,6 +920,69 @@ class MainWindow(QMainWindow):
             self.new_interface_flow()
         else:
             self.menu_add.exec(QCursor.pos())  # which kind of unit
+
+    # ---- devices: a new device, parts, interface types, pins from a type or an interface -----------
+    def add_device_flow(self) -> None:
+        """Add > Device… (Ctrl+Shift+N): an empty device in a free slot, and the Devices tab with
+        its name selected (no dialog)."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        uid = self.ctl.add_device()
+        if uid is None:
+            return
+        self.go_to("devices")
+        self.devices_view.show_unit(uid)
+        self.devices_view.focus_name()
+
+    def new_part_flow(self) -> str | None:
+        """New part… (a connector part, with its mating half if asked): always pending and
+        unverified. The part is chosen in the picker of the Devices tab afterwards."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return None
+        dlg = NewPartDialog(self, self.theme, self.ctl.project)
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
+            return None
+        pair, fields = dlg.values()
+        pid = self.ctl.add_part(pair, **fields)
+        if pid:
+            self.devices_view.select_part(pid)
+        return pid
+
+    def new_type_flow(self) -> str | None:
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return None
+        dlg = NewTypeDialog(self, self.theme, self.ctl.project)
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
+            return None
+        return self.ctl.add_interface_type(**dlg.values())
+
+    def fill_pins_flow(self, connector_id: str, pins: list[str]) -> None:
+        """Fill from interface type… (Ctrl+L in the pin table)."""
+        dlg = FillDialog(self, self.theme, self.ctl.project, connector_id, pins)
+        accepted = self.run_dialog(dlg) == QDialog.DialogCode.Accepted
+        if dlg.wants_new_type:
+            if self.new_type_flow():
+                self.fill_pins_flow(connector_id, pins)
+            return
+        if accepted:
+            self.ctl.fill_pins(connector_id, pins, dlg.type_id(), fixed=dlg.fixed.isChecked())
+
+    def assign_pins_flow(self, connector_id: str, pins: list[str]) -> None:
+        """Assign to interface… (Ctrl+Enter in the pin table)."""
+        dlg = AssignDialog(self, self.theme, self.ctl.project, connector_id, pins)
+        accepted = self.run_dialog(dlg) == QDialog.DialogCode.Accepted
+        if dlg.wants_new_interface:
+            before = set(self.ctl.project.interfaces)
+            self.new_interface_flow()
+            if set(self.ctl.project.interfaces) != before:
+                self.assign_pins_flow(connector_id, pins)
+            return
+        if accepted:
+            chosen, signals = dlg.assignment()
+            self.ctl.assign_pins(connector_id, chosen, dlg.interface_id(), signals)
 
     def _duplicate_device(self, unit_id: str) -> None:
         """Duplicate in the Devices tab: the same step as Edit > Duplicate on that unit."""
@@ -1100,6 +1174,10 @@ class MainWindow(QMainWindow):
         self.act_new_interface = a(
             strings.A_NEW_INTERFACE, self.new_interface_flow, "Ctrl+I", name="act-new-interface"
         )
+        self.act_add_device = a(
+            strings.A_ADD_DEVICE, self.add_device_flow, "Ctrl+Shift+N", name="act-add-device"
+        )
+        self.act_add_device.setToolTip(f"{strings.A_ADD_DEVICE_TIP} (Ctrl+Shift+N)")
         self.act_reset_layout = a(
             strings.A_RESET_LAYOUT, self.reset_layout, name="act-reset-layout"
         )
@@ -1291,6 +1369,8 @@ class MainWindow(QMainWindow):
         e.addAction(self.act_add_zone)
         e.addAction(self.act_wire_colours)
         self.menu_add = e.addMenu(strings.M_ADD_UNIT)
+        self.menu_add.addAction(self.act_add_device)
+        self.menu_add.addSeparator()
         for tid, tpl in edit.TEMPLATES.items():
             act = self._act(tpl.label, partial(self._add_unit, tid), name=f"menu-add-{tid}")
             self.menu_add.addAction(act)
@@ -1583,6 +1663,7 @@ class MainWindow(QMainWindow):
         for act in self.import_actions.values():
             act.setEnabled(not ro)
         self.act_new_interface.setEnabled(not ro)
+        self.act_add_device.setEnabled(not ro)
         self.menu_add.setEnabled(not ro)  # the ways to add a unit and to connect (the Palette's)
         self.menu_connect.setEnabled(not ro)
         self.act_generate.setEnabled(not ro)

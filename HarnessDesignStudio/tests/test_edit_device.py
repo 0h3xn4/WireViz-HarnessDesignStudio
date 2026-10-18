@@ -913,3 +913,436 @@ def test_a_cell_edit_takes_under_100_ms_at_1000_pins_and_100_units() -> None:
     start = time.perf_counter()
     devices.pin_rows(p, cid)
     assert time.perf_counter() - start < time_limit(0.1)
+
+
+# ---- a new device, interface on pins, pasted cells, parts and interface types ---------------------
+
+
+def test_add_device_makes_an_empty_unit_in_a_free_slot() -> None:
+    p = new_project()
+    ops, uid = devices.ops_add_device(p)
+    run(p, "add", ops)
+    assert uid == "DEV1" and p.units[uid].name == "Device 1" and p.units[uid].side == "nominal"
+    assert p.units[uid].subsystem == "general" and edit.unit_connectors(p, uid) == []
+    assert uid in p.placements
+    ops, uid2 = devices.ops_add_device(
+        p, name="Gyro", subsystem="aocs", side="redundant", zone="panel-B"
+    )
+    run(p, "add", ops)
+    assert uid2 == "DEV2" and p.units[uid2].zone == "panel-B" and p.units[uid2].subsystem == "aocs"
+    assert devices.default_subsystem(p) == "aocs"  # one each: the first by name
+    assert len({(v.x, v.y) for v in p.placements.values()}) == 2
+    ops, uid3 = devices.ops_add_device(p, unit_id="GYRO1")
+    assert uid3 == "GYRO1" and len(ops) == 2
+
+
+def test_add_device_errors() -> None:
+    p = new_project()
+    run(p, "a", devices.ops_add_device(p, unit_id="G1")[0])
+    assert "already used" in refused(devices.ops_add_device, p, unit_id="g1")
+    assert "cannot be used as an ID" in refused(devices.ops_add_device, p, unit_id="1G")
+    assert "chain" in refused(devices.ops_add_device, p, side="left")
+    assert "does not exist" in refused(devices.ops_add_device, p, zone="nowhere")
+    assert "1 to 200" in refused(devices.ops_add_device, p, name="x" * 201)
+    p.read_only = True
+    assert "read-only" in refused(devices.ops_add_device, p)
+
+
+def test_the_id_of_a_renamed_unit_is_not_free_for_a_new_device() -> None:
+    """A renamed unit keeps its connector ids, so its old id would overwrite them."""
+    p, cid = with_connector()
+    run(p, "rename", edit.ops_rename_unit(p, "GYRO1", "GYRO2"))
+    assert "GYRO1" in cid and "already used" in refused(devices.ops_add_device, p, unit_id="GYRO1")
+
+
+def test_update_device() -> None:
+    p = device()
+    run(
+        p,
+        "u",
+        devices.ops_update_device(
+            p, "GYRO1", name="Gyro 2", subsystem="adcs", side="redundant", notes="n"
+        ),
+    )
+    u = p.units["GYRO1"]
+    assert (u.name, u.subsystem, u.side, u.notes) == ("Gyro 2", "adcs", "redundant", "n")
+    assert devices.ops_update_device(p, "GYRO1", name="Gyro 2") == []
+    assert "needs a name" in refused(devices.ops_update_device, p, "GYRO1", name=" ")
+    assert "needs a subsystem" in refused(devices.ops_update_device, p, "GYRO1", subsystem="")
+    assert "chain" in refused(devices.ops_update_device, p, "GYRO1", side="x")
+    assert "cannot be changed here" in refused(devices.ops_update_device, p, "GYRO1", zone="z")
+    assert "does not exist" in refused(devices.ops_update_device, p, "NOPE", name="x")
+
+
+def test_a_released_device_keeps_its_design_fields_but_not_its_labels(tmp_path: Path) -> None:
+    p, hid, cid = released(tmp_path)
+    unit = p.connectors[cid].unit_id
+    assert unit
+    run(p, "labels", devices.ops_update_device(p, unit, name="Renamed", notes="x"))
+    why = refused(devices.ops_update_device, p, unit, subsystem="other")
+    assert hid in why and "released" in why
+
+
+def can_link(p: Project, cid: str) -> tuple[str, str]:
+    """A CAN link between an OBC and GYRO1 whose GYRO1 end has no connector yet."""
+    ops, obc = edit.ops_add_unit(p, "computer")
+    run(p, "u", ops)
+    ops, iid = edit.ops_add_interface(p, "can", obc, "GYRO1", to_connector=cid)
+    run(p, "i", ops)
+    i = p.interfaces[iid]
+    eps = [
+        e.model_copy(update={"connector_id": None, "auto": False}) if e.unit_id == "GYRO1" else e
+        for e in i.endpoints
+    ]
+    p.interfaces[iid] = evolve(i, endpoints=eps)
+    return obc, iid
+
+
+def test_assign_pins_writes_locked_interface_and_signals_and_the_end_gets_the_connector() -> None:
+    p, cid = with_connector()
+    _obc, iid = can_link(p, cid)
+    ops = devices.ops_assign_pins(p, cid, ["3", "4"], iid)
+    assert len(ops) == 2  # the connector and the interface's end, one step
+    run(p, "assign", ops)
+    assert [
+        (x.id, x.signal, x.interface_id, x.locked, x.fixed) for x in p.connectors[cid].pins[2:4]
+    ] == [("3", "CANH", iid, True, False), ("4", "CANL", iid, True, False)]
+    end = next(e for e in p.interfaces[iid].endpoints if e.unit_id == "GYRO1")
+    assert end.connector_id == cid and not end.auto
+    assert not [x for x in devices.pinout_problems(p, cid) if x.severity == "error"]
+    # a second time the end is already on this connector: only the pins change
+    assert len(devices.ops_assign_pins(p, cid, ["5", "6"], iid)) == 1
+    row = next(r for r in devices.pin_rows(p, cid) if r.pin == "3")
+    assert (row.interface_id, row.mode, row.direction, row.auto) == (iid, "locked", "bidir", False)
+
+
+def test_assign_pins_with_chosen_signals_and_errors() -> None:
+    p, cid = with_connector()
+    _obc, iid = can_link(p, cid)
+    run(p, "a", devices.ops_assign_pins(p, cid, ["5", "2"], iid, ["CANL", "CANH"]))
+    assert (pin(p, cid, "5").signal, pin(p, cid, "2").signal) == ("CANL", "CANH")
+    assert "needs 2 pins (CANH, CANL); 1 is selected" in refused(
+        devices.ops_assign_pins, p, cid, ["1"], iid
+    )
+    assert "TX+ is not a signal of CAN" in refused(
+        devices.ops_assign_pins, p, cid, ["1", "3"], iid, ["TX+", "CANL"]
+    )
+    assert "one pin only" in refused(
+        devices.ops_assign_pins, p, cid, ["1", "3"], iid, ["CANL", "CANL"]
+    )
+    assert "listed twice" in refused(devices.ops_assign_pins, p, cid, ["1", "1"], iid)
+    assert "no pin 'Z'" in refused(devices.ops_assign_pins, p, cid, ["1", "Z"], iid)
+    assert "does not exist" in refused(devices.ops_assign_pins, p, cid, ["1", "2"], "IF-999")
+
+
+def test_assign_pins_refuses_an_interface_that_does_not_end_here_or_another_connector() -> None:
+    p, cid = with_connector()
+    obc, iid = can_link(p, cid)
+    ops, c2 = devices.ops_add_connector(p, "GYRO1", part_id="MY-HD-6-F")
+    run(p, "c", ops)
+    ops, other = edit.ops_add_unit(p, "computer")
+    run(p, "u", ops)
+    assert "does not end on" in refused(
+        devices.ops_assign_pins,
+        p,
+        p.connectors[edit.unit_connectors(p, other)[0].id].id,
+        ["1", "2"],
+        iid,
+    )
+    # the connector of the interface's end is the first one; the second is refused
+    run(p, "assign", devices.ops_assign_pins(p, cid, ["1", "2"], iid))
+    assert f"ends on {cid}, not on {c2}" in refused(devices.ops_assign_pins, p, c2, ["1", "2"], iid)
+    # a connector that carries another interface is refused with the editor's rule
+    ops, iid2 = edit.ops_add_interface(p, "can", other, "GYRO1", to_connector=c2)
+    run(p, "i2", ops)
+    i2 = p.interfaces[iid2]
+    p.interfaces[iid2] = evolve(
+        i2,
+        endpoints=[
+            e.model_copy(update={"connector_id": None}) if e.unit_id == "GYRO1" else e
+            for e in i2.endpoints
+        ],
+    )
+    run(p, "c", devices.ops_update_connector(p, cid, carries=["can"]))
+    assert "already carries" in refused(
+        devices.ops_assign_pins, p, cid, ["3", "4"], iid2
+    ) or "not meant" in refused(devices.ops_assign_pins, p, cid, ["3", "4"], iid2)
+    run(p, "c", devices.ops_update_connector(p, c2, carries=["rs422"]))
+    assert "is not meant for CAN" in refused(devices.ops_assign_pins, p, c2, ["3", "4"], iid2)
+
+
+def test_unassign_pins_frees_them() -> None:
+    p, cid = with_connector()
+    _obc, iid = can_link(p, cid)
+    run(p, "assign", devices.ops_assign_pins(p, cid, ["3", "4"], iid))
+    run(p, "unassign", devices.ops_unassign_pins(p, cid, ["3", "5"]))
+    assert pin(p, cid, "3") == Pin(id="3") and pin(p, cid, "4").interface_id == iid
+    assert devices.ops_unassign_pins(p, cid, ["1"]) == []
+    assert "no pin 'Z'" in refused(devices.ops_unassign_pins, p, cid, ["Z"])
+
+
+def test_assigned_pins_of_a_released_interface_cannot_be_reassigned(tmp_path: Path) -> None:
+    p, hid, cid = released(tmp_path)
+    used = next(x for x in p.connectors[cid].pins if x.interface_id)
+    why = refused(devices.ops_unassign_pins, p, cid, [used.id])
+    assert hid in why and "released" in why
+
+
+def test_rows_from_a_pasted_block() -> None:
+    p, cid = with_connector()
+    rows = devices.rows_from_grid(p, cid, "3", ["signal"], [["CANH"], ["CANL"]])
+    assert rows == [{"signal": "CANH", "pin": "3"}, {"signal": "CANL", "pin": "4"}]
+    run(p, "paste", devices.ops_paste_rows(p, cid, rows))
+    assert (pin(p, cid, "3").signal, pin(p, cid, "4").signal) == ("CANH", "CANL")
+    named = devices.rows_from_grid(
+        p, cid, None, ["pin", "signal", "mode"], [["1", "PWR", "fixed"], ["2"]]
+    )
+    assert named == [
+        {"pin": "1", "signal": "PWR", "mode": "fixed"},
+        {"pin": "2", "signal": "", "mode": ""},
+    ]
+    assert "only 2 pins from 5 down" in refused(
+        devices.rows_from_grid, p, cid, "5", ["signal"], [["a"], ["b"], ["c"]]
+    )
+    assert "starts at" in refused(devices.rows_from_grid, p, cid, None, ["signal"], [["a"]])
+    assert "starts at" in refused(devices.rows_from_grid, p, cid, "Z", ["signal"], [["a"]])
+    assert "not a column" in refused(devices.rows_from_grid, p, cid, "1", ["wire"], [["a"]])
+
+
+def test_add_part_is_pending_and_unverified_and_never_approved() -> None:
+    p = device()
+    ops = devices.ops_add_part(
+        p,
+        part_id="MY-NEW-12-F",
+        pin_count=12,
+        gender="female",
+        manufacturer="Acme",
+        part_number="A-12",
+    )
+    run(p, "part", ops)
+    part = p.parts["MY-NEW-12-F"]
+    assert (part.category, part.approval, part.unverified, part.pin_count) == (
+        "connector",
+        "pending",
+        True,
+        12,
+    )
+    assert part.description == "12-pin connector, female" and part.manufacturer == "Acme"
+    ops, cid = devices.ops_add_connector(p, "GYRO1", part_id="MY-NEW-12-F")
+    run(p, "c", ops)
+    assert p.connectors[cid].gender == "female" and len(p.connectors[cid].pins) == 12
+    # mating half named: both name each other
+    run(
+        p,
+        "mate",
+        devices.ops_add_part(
+            p, part_id="MY-NEW-12-M", pin_count=12, gender="male", mates_with="MY-NEW-12-F"
+        ),
+    )
+    assert (
+        p.parts["MY-NEW-12-F"].mates_with == "MY-NEW-12-M"
+        and p.parts["MY-NEW-12-M"].mates_with == "MY-NEW-12-F"
+    )
+    # the approval cannot be passed in
+    assert "cannot be changed here" in refused(
+        devices.ops_update_part, p, "MY-NEW-12-F", approval="approved"
+    )
+
+
+def test_add_part_pair_makes_both_halves() -> None:
+    p = device()
+    run(
+        p,
+        "pair",
+        devices.ops_add_part_pair(
+            p,
+            part_id="MY-NEW-9-F",
+            pin_count=9,
+            gender="female",
+            description="Mini D 9-pin, female",
+        ),
+    )
+    a, b = p.parts["MY-NEW-9-F"], p.parts["MY-NEW-9-M"]
+    assert (a.mates_with, b.mates_with) == ("MY-NEW-9-M", "MY-NEW-9-F")
+    assert a.approval == b.approval == "pending" and a.unverified and b.unverified
+    from harness_design_studio.core.describe import part_gender
+
+    assert (part_gender(a), part_gender(b)) == ("female", "male")
+    run(
+        p,
+        "pair",
+        devices.ops_add_part_pair(
+            p, part_id="OTHER-M", pin_count=3, gender="male", mate_id="OTHER-F"
+        ),
+    )
+    assert (
+        p.parts["OTHER-F"].mates_with == "OTHER-M" and part_gender(p.parts["OTHER-F"]) == "female"
+    )
+
+
+def test_part_errors_and_update() -> None:
+    p = device()
+    assert "already exists" in refused(devices.ops_add_part, p, part_id="my-hd-6-f", pin_count=3)
+    assert "pin count" in refused(devices.ops_add_part, p, part_id="X1", pin_count=0)
+    assert "pin count" in refused(devices.ops_add_part, p, part_id="X1", pin_count=1001)
+    assert "pin count" in refused(devices.ops_add_part, p, part_id="X1", pin_count=True)
+    assert "male or female" in refused(
+        devices.ops_add_part, p, part_id="X1", pin_count=3, gender="x"
+    )
+    assert "not a connector part" in refused(
+        devices.ops_add_part, p, part_id="X1", pin_count=3, mates_with="EX-LABEL"
+    )
+    assert "own ID" in refused(
+        devices.ops_add_part_pair, p, part_id="Z-F", pin_count=3, mate_id="z-f"
+    )
+    assert "cannot be used as an ID" in refused(
+        devices.ops_add_part_pair, p, part_id="1", pin_count=3
+    )
+    run(
+        p,
+        "u",
+        devices.ops_update_part(
+            p, "MY-PLAIN-4", manufacturer="Acme", description="4 pin, male", pin_count=5
+        ),
+    )
+    assert p.parts["MY-PLAIN-4"].pin_count == 5 and p.parts["MY-PLAIN-4"].manufacturer == "Acme"
+    assert devices.ops_update_part(p, "MY-PLAIN-4", manufacturer="Acme") == []
+    ops, cid = devices.ops_add_connector(p, "GYRO1", part_id="MY-PLAIN-4")
+    run(p, "c", ops)
+    assert "has 5 pins; MY-PLAIN-4 cannot have fewer" in refused(
+        devices.ops_update_part, p, "MY-PLAIN-4", pin_count=3
+    )
+    assert "does not exist" in refused(devices.ops_update_part, p, "NOPE", notes="x")
+    assert "must be text" in refused(devices.ops_update_part, p, "MY-PLAIN-4", notes=3)
+
+
+def test_a_part_a_release_uses_cannot_be_edited(tmp_path: Path) -> None:
+    p, hid, cid = released(tmp_path)
+    part = p.connectors[cid].part_id
+    why = refused(devices.ops_update_part, p, part, manufacturer="Acme")
+    assert hid in why and "released" in why
+    assert devices.ops_update_part(p, part, notes="a note")  # cosmetic
+
+
+def test_signal_lines() -> None:
+    assert devices.parse_signal_lines("CANH bidir BUS\n\nCANL bidir BUS\nGND\n") == [
+        ("CANH", "bidir", "BUS"), ("CANL", "bidir", "BUS"), ("GND", "passive", None),
+    ]  # fmt: skip
+    assert "Line 2: a direction is one of" in refused(devices.parse_signal_lines, "A\nB sideways")
+    assert "Line 1: write a name" in refused(devices.parse_signal_lines, "A out P extra")
+
+
+def test_add_interface_type_is_unverified_and_usable() -> None:
+    p, cid = with_connector()
+    specs = devices.parse_signal_lines("HEAT_ON out\nHEAT_RTN passive")
+    run(
+        p,
+        "t",
+        devices.ops_add_interface_type(
+            p, type_id="heater_ctl", name="Heater control", category="discrete", signals=specs
+        ),
+    )
+    t = p.interface_types["heater_ctl"]
+    assert t.unverified and [(s.name, s.direction) for s in t.signals] == [
+        ("HEAT_ON", "out"),
+        ("HEAT_RTN", "passive"),
+    ]
+    run(p, "fill", devices.fill_from_type(p, cid, ["1", "2"], "heater_ctl"))
+    assert pin(p, cid, "1").signal == "HEAT_ON"
+    assert devices.suggest_carries(p, cid) == ["heater_ctl"]
+    row = next(r for r in devices.pin_rows(p, cid) if r.pin == "1")
+    assert (row.direction, row.category) == ("out", "discrete")
+    assert "already exists" in refused(
+        devices.ops_add_interface_type,
+        p,
+        type_id="HEATER_CTL",
+        name="x",
+        category="data",
+        signals=specs,
+    )
+    assert "needs at least one signal" in refused(
+        devices.ops_add_interface_type, p, type_id="n1", name="x", category="data", signals=[]
+    )
+    assert "listed twice" in refused(
+        devices.ops_add_interface_type,
+        p,
+        type_id="n1",
+        name="x",
+        category="data",
+        signals=[("A", "in", None), ("A", "in", None)],
+    )
+    assert "category is one of" in refused(
+        devices.ops_add_interface_type, p, type_id="n1", name="x", category="loud", signals=specs
+    )
+    assert "construction is one of" in refused(
+        devices.ops_add_interface_type,
+        p,
+        type_id="n1",
+        name="x",
+        category="data",
+        signals=specs,
+        construction="rope",
+    )
+    assert "needs a name" in refused(
+        devices.ops_add_interface_type, p, type_id="n1", name=" ", category="data", signals=specs
+    )
+    assert "direction is one of" in refused(
+        devices.ops_add_interface_type,
+        p,
+        type_id="n1",
+        name="n",
+        category="data",
+        signals=[("A", "up", None)],
+    )
+
+
+def test_update_interface_type() -> None:
+    p = device()
+    run(
+        p,
+        "u",
+        devices.ops_update_interface_type(
+            p,
+            "can",
+            name="CAN 2.0",
+            shielding="overall",
+            signals=[
+                ("CANH", "bidir", "BUS"),
+                ("CANL", "bidir", "BUS"),
+                ("CANGND", "passive", None),
+            ],
+        ),
+    )
+    t = p.interface_types["can"]
+    assert t.name == "CAN 2.0" and t.shielding == "overall" and len(t.signals) == 3
+    assert devices.ops_update_interface_type(p, "can", name="CAN 2.0") == []
+    assert "cannot be changed here" in refused(
+        devices.ops_update_interface_type, p, "can", unverified=False
+    )
+    assert "shielding is one of" in refused(
+        devices.ops_update_interface_type, p, "can", shielding="x"
+    )
+    assert "needs a name" in refused(devices.ops_update_interface_type, p, "can", name="")
+    assert "Signals are a list" in refused(
+        devices.ops_update_interface_type, p, "can", signals="CANH"
+    )
+    assert "does not exist" in refused(devices.ops_update_interface_type, p, "nope", name="x")
+
+
+def test_an_interface_type_a_release_uses_cannot_be_edited(tmp_path: Path) -> None:
+    p, hid, cid = released(tmp_path)
+    tid = p.interfaces[
+        next(
+            iter(
+                p.harnesses[hid].interfaces
+                or {w.interface_id for w in p.harnesses[hid].wires if w.interface_id}
+            )
+        )
+    ].type_id
+    why = refused(
+        devices.ops_update_interface_type,
+        p,
+        tid,
+        shielding="none" if p.interface_types[tid].shielding != "none" else "overall",
+    )
+    assert hid in why

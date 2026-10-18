@@ -214,6 +214,9 @@ Code: `gui/devices_view.py`; core `core/devices.py`. Audit, proposal and the own
 - The pin table shows only what the model holds: pin, signal, mode, interface, wire, and (hidden until asked) contact size and termination. Direction and class are derived from the interface type of the signal and are empty, with the reason as tooltip, when nothing can be said (CD-Q1: no format change, so no pin description, remarks, own direction, voltage or current).
 - Notes are inline (`devices.pinout_problems`, CD-K1 to CD-K8); no design rule is added (CD-Q7).
 - "Pinout as exported" is `outputs.tables.box_pinouts` for the unit's connectors, so what is shown is what `system/box_pinouts.csv` will hold.
+- Editing (`gui/devices_pin_table.py`, `gui/devices_dialogs.py`): the table's cells are edited in place. F2 or Enter edits, Enter commits and goes down, Esc cancels, Tab leaves the table after the last cell; Insert, Delete, Shift+Delete, Space, Ctrl+L, Ctrl+Enter and Ctrl+V as in the proposal's keyboard model. A wrong pin name marks the editor invalid and says why under the table; a refused change puts the old value back and says why. A question (a part change that resizes the pins, a delete) is asked on one line under the header, never in a message box. Every action is one named step ("Edit pin J01.A2", "Paste 9 pins into J01", "Change part of J01 and resize pins").
+- Ctrl+Shift+C adds a connector while the connector list or the part picker has the focus; in the pin table it still copies with the header row (the proposal gave both to the same key; the table keeps the copy, the owner is not asked).
+- A released device keeps its design fields locked with the reason as tooltip, and the pin set (names and count) of a connector a released cable mates with is frozen in the planners; `check_locks` is unchanged (CD-Q6).
 
 ## Shortcuts
 

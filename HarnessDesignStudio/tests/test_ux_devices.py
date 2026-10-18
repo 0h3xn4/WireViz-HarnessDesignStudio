@@ -117,7 +117,7 @@ def test_header_counts_state_and_connector_list(qtbot, theme) -> None:
     ctl, view = make_view(qtbot, theme, p)
     assert view.unit_id() == "GYRO1" and view.connector_id() == "GYRO1-J01"
     assert view.name.text() == "Gyro unit"
-    assert "aocs" in view.subsystem.text() and "Nominal chain" in view.subsystem.text()
+    assert view.subsystem.currentText() == "aocs" and view.chain.currentText() == "Nominal chain"
     assert view.counts.text() == "2 connectors, 10 pins, 4 signals set, 0 interfaces"
     assert (view.state_chip.state(), view.state_chip.text()) == ("draft", "Draft")
     rows = view.conn_model.rows()
@@ -186,11 +186,12 @@ def test_a_clean_connector_says_so(qtbot, theme) -> None:
 def test_card_says_how_pins_are_allocated(qtbot, theme) -> None:
     ctl, view = make_view(qtbot, theme, custom())
     assert view.card_values["allocation"].text() == strings.DV_ALLOC_FIXED
+    # part, gender and keying are controls in the editor; the label under the part is its description
     assert (
-        "MY-HD-6-F" in view.card_values["part"].text()
-        and view.card_values["gender"].text() == "female"
+        view.part_edit.currentData() == "MY-HD-6-F" and view.gender_edit.currentData() == "female"
     )
-    assert view.card_values["keying"].text() == strings.DV_CARD_NONE
+    assert "Custom 6-pin" in view.card_values["part"].text()
+    assert view.keying_edit.text() == ""
     assert view.card_values["carries"].text() == strings.DV_CARD_ANY
     p = device()
     ops, _ = devices.ops_add_connector(p, "GYRO1", part_id="MY-HD-6-F", carries=["can"])

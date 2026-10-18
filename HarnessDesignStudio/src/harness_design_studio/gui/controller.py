@@ -14,7 +14,7 @@ from pathlib import Path
 from pydantic import ValidationError
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from harness_design_studio.core import checks, drc, edit
+from harness_design_studio.core import checks, devices, drc, edit
 from harness_design_studio.core.commands import Delete, History, Op, Put, SetZones, apply_ops
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, SaveError, TransactionError
@@ -847,9 +847,17 @@ class EditorController(QObject):
         )
 
     def set_connector_part(self, connector_id: str, part_id: str) -> bool:
+        """The Inspector's part picker. A part with another pin count or a stated gender also gives
+        the connector its pins and gender (the audit's CD-G5); the Devices tab asks first."""
+        label = strings.STEP_CHANGE_PART
+        try:
+            plan = devices.plan_change_part(self.project, connector_id, part_id)
+            if plan.add or plan.remove:
+                label = strings.STEP_CHANGE_PART_RESIZE.format(connector_id)
+        except HarnessError:
+            pass  # (the planner below says what is wrong)
         return self.attempt(
-            strings.STEP_CHANGE_PART,
-            lambda: edit.ops_set_connector_part(self.project, connector_id, part_id),
+            label, lambda: devices.ops_change_part(self.project, connector_id, part_id)
         )
 
     def add_zone(self, name: str) -> bool:
@@ -858,6 +866,140 @@ class EditorController(QObject):
             lambda: edit.ops_add_zone(self.project, name),
             message=strings.ZONE_ADDED.format(name.strip()),
         )
+
+    # ---- devices: custom devices down to each pin (one undo step each, named) -------------------
+    def add_device(self, **fields: object) -> str | None:
+        """Add an empty device in a free slot and select it; returns its ID (None: refused)."""
+        try:
+            ops, uid = devices.ops_add_device(self.project, **fields)  # type: ignore[arg-type]
+        except (HarnessError, ValidationError) as exc:
+            self.message.emit(_plain(exc), False)
+            return None
+        if not self.run(strings.STEP_ADD_DEVICE.format(uid), ops):
+            return None
+        self.select("unit", uid)
+        return uid
+
+    def update_device(self, unit_id: str, **changes: object) -> bool:
+        return self.attempt(
+            strings.STEP_EDIT.format(unit_id),
+            lambda: devices.ops_update_device(self.project, unit_id, **changes),
+        )
+
+    def add_connector(self, unit_id: str, part_id: str, **fields: object) -> str | None:
+        """Add a connector to a unit; returns its ID (None: refused)."""
+        try:
+            ops, cid = devices.ops_add_connector(self.project, unit_id, part_id=part_id, **fields)  # type: ignore[arg-type]
+        except (HarnessError, ValidationError) as exc:
+            self.message.emit(_plain(exc), False)
+            return None
+        return cid if self.run(strings.STEP_ADD_CONNECTOR.format(cid), ops) else None
+
+    def update_connector(self, connector_id: str, **changes: object) -> bool:
+        return self.attempt(
+            strings.STEP_EDIT.format(connector_id),
+            lambda: devices.ops_update_connector(self.project, connector_id, **changes),
+        )
+
+    def change_connector_part(
+        self, connector_id: str, part_id: str, *, resize: bool, regender: bool
+    ) -> bool:
+        label = strings.STEP_CHANGE_PART_RESIZE if resize else strings.STEP_CHANGE_PART_OF
+        return self.attempt(
+            label.format(connector_id),
+            lambda: devices.ops_change_part(
+                self.project, connector_id, part_id, resize=resize, regender=regender
+            ),
+        )
+
+    def delete_connector(self, connector_id: str) -> bool:
+        return self.attempt(
+            strings.STEP_DELETE.format(connector_id),
+            lambda: devices.ops_delete_connector(self.project, connector_id),
+        )
+
+    def set_pin(self, connector_id: str, pin_id: str, **changes: object) -> bool:
+        return self.attempt(
+            strings.STEP_EDIT_PIN.format(f"{connector_id}.{pin_id}"),
+            lambda: devices.ops_set_pin(self.project, connector_id, pin_id, **changes),
+        )
+
+    def rename_pin(self, connector_id: str, old: str, new: str) -> bool:
+        return self.attempt(
+            strings.STEP_RENAME_PIN.format(f"{connector_id}.{old}", new),
+            lambda: devices.ops_rename_pin(self.project, connector_id, old, new),
+        )
+
+    def add_pins(
+        self, connector_id: str, pin_ids: list[str] | None = None, *, after: str | None = None
+    ) -> bool:
+        return self.attempt(
+            strings.STEP_ADD_PIN.format(connector_id),
+            lambda: devices.ops_add_pins(self.project, connector_id, pin_ids, after=after),
+        )
+
+    def delete_pins(self, connector_id: str, pin_ids: list[str]) -> bool:
+        return self.attempt(
+            strings.STEP_DELETE_PINS.format(", ".join(pin_ids), connector_id),
+            lambda: devices.ops_delete_pins(self.project, connector_id, pin_ids),
+        )
+
+    def paste_pin_rows(
+        self, connector_id: str, rows: list[dict[str, str]], label: str, *, replace: bool = False
+    ) -> bool:
+        return self.attempt(
+            label,
+            lambda: devices.ops_paste_rows(self.project, connector_id, rows, replace=replace),
+        )
+
+    def fill_pins(
+        self, connector_id: str, pin_ids: list[str], type_id: str, *, fixed: bool
+    ) -> bool:
+        return self.attempt(
+            strings.STEP_FILL_PINS.format(", ".join(pin_ids), type_id),
+            lambda: devices.fill_from_type(
+                self.project, connector_id, pin_ids, type_id, fixed=fixed
+            ),
+        )
+
+    def assign_pins(
+        self, connector_id: str, pin_ids: list[str], interface_id: str, signals: list[str] | None
+    ) -> bool:
+        return self.attempt(
+            strings.STEP_ASSIGN_PINS.format(", ".join(pin_ids), interface_id),
+            lambda: devices.ops_assign_pins(
+                self.project, connector_id, pin_ids, interface_id, signals
+            ),
+        )
+
+    def unassign_pins(self, connector_id: str, pin_ids: list[str]) -> bool:
+        return self.attempt(
+            strings.STEP_UNASSIGN_PINS.format(", ".join(pin_ids), connector_id),
+            lambda: devices.ops_unassign_pins(self.project, connector_id, pin_ids),
+        )
+
+    def add_part(self, pair: bool, **fields: object) -> str | None:
+        """A new connector part (and its mating half): pending and unverified, never approved."""
+        try:
+            ops = (
+                devices.ops_add_part_pair(self.project, **fields)  # type: ignore[arg-type]
+                if pair
+                else devices.ops_add_part(self.project, **fields)  # type: ignore[arg-type]
+            )
+        except (HarnessError, ValidationError) as exc:
+            self.message.emit(_plain(exc), False)
+            return None
+        pid = str(fields.get("part_id", ""))
+        return pid if self.run(strings.STEP_ADD_PART.format(pid), ops) else None
+
+    def add_interface_type(self, **fields: object) -> str | None:
+        try:
+            ops = devices.ops_add_interface_type(self.project, **fields)  # type: ignore[arg-type]
+        except (HarnessError, ValidationError) as exc:
+            self.message.emit(_plain(exc), False)
+            return None
+        tid = str(fields.get("type_id", ""))
+        return tid if self.run(strings.STEP_ADD_TYPE.format(tid), ops) else None
 
     def add_interface_between(self, type_id: str, from_unit: str, to_unit: str) -> bool:
         try:
