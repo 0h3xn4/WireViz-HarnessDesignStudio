@@ -22,7 +22,7 @@ If the unit at the other end has no twin yet but has a free connector, the copie
 
 ## 2. Fix a link between the two chains
 
-This is the usual result when you copy several units one after the other. With `first-steps`, copy `PCDU1`, then `RW1`, then `OBC1`. The **Problems** tab (right panel or bottom panel) then shows:
+This is the usual result when you copy several units one after the other. With `first-steps`, copy `PCDU1`, then `RW1`, then `OBC1`. The **Problems** tab (right panel) then shows:
 
 ```
 IF-002-R connects the nominal chain to the redundant chain

@@ -20,7 +20,7 @@ def win(qtbot, tmp_path):  # type: ignore[no-untyped-def]
     qtbot.addWidget(w)
     w.ctl._install(mini3(), None, None)
     QApplication.processEvents()
-    w.table.refresh()
+    w.interface_table.refresh()
     return w
 
 
@@ -46,7 +46,7 @@ def test_ascii_numbers_and_blank_still_parse() -> None:
 
 
 def test_a_non_ascii_digit_in_the_max_current_cell_is_refused(win) -> None:  # type: ignore[no-untyped-def]
-    model = win.table.model
+    model = win.interface_table.model
     messages = _messages(win)
     iid = model.ids[0]
     before = win.ctl.project.interfaces[iid].max_current_a
@@ -59,7 +59,7 @@ def test_a_non_ascii_digit_in_the_max_current_cell_is_refused(win) -> None:  # t
 
 @pytest.mark.parametrize("text", ["bogus", ""])
 def test_an_unknown_chain_in_the_table_is_refused_in_plain_words(win, text: str) -> None:  # type: ignore[no-untyped-def]
-    model = win.table.model
+    model = win.interface_table.model
     messages = _messages(win)
     iid = model.ids[0]
     before = win.ctl.project.interfaces[iid].redundancy
@@ -71,7 +71,7 @@ def test_an_unknown_chain_in_the_table_is_refused_in_plain_words(win, text: str)
 
 
 def test_a_known_chain_in_the_table_is_accepted(win) -> None:  # type: ignore[no-untyped-def]
-    model = win.table.model
+    model = win.interface_table.model
     iid = model.ids[0]
     new = "none" if win.ctl.project.interfaces[iid].redundancy != "none" else "nominal"
     assert model.setData(model.index(0, 5), new) is True
@@ -84,7 +84,7 @@ def test_a_known_chain_in_the_table_is_accepted(win) -> None:  # type: ignore[no
 def test_table_headers_come_from_strings(win, monkeypatch) -> None:  # type: ignore[no-untyped-def]
     headers = list(strings.INTERFACE_COLUMNS)
     assert headers[:3] == ["ID", "Name", "Type"]
-    model = win.table.model
+    model = win.interface_table.model
     got = [model.headerData(c, Qt.Orientation.Horizontal) for c in range(model.columnCount())]
     assert got == headers
 

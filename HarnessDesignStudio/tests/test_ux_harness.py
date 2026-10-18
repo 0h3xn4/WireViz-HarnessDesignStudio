@@ -366,6 +366,7 @@ def test_with_interfaces_but_no_harness_the_empty_state_offers_generate(qtbot, t
 # ---- SC-24: slow work off the UI thread ---------------------------------------------------------
 
 
+@pytest.mark.perf
 def test_refresh_is_fast_on_the_ui_thread(qtbot, theme) -> None:
     ctl, view = make_view(qtbot, theme)
     times = []
@@ -380,6 +381,7 @@ def test_refresh_is_fast_on_the_ui_thread(qtbot, theme) -> None:
     assert view.status_ms > 0  # the check ran, in the background
 
 
+@pytest.mark.perf
 def test_check_and_outputs_state_are_worked_out_in_a_worker_and_cached(
     qtbot, theme, monkeypatch
 ) -> None:
@@ -794,6 +796,7 @@ def test_no_widget_in_the_new_modules_sets_a_style_sheet_or_a_colour_literal() -
         assert not re.search(r"""["']#[0-9a-fA-F]{6}["']""", text), name
 
 
+@pytest.mark.perf
 def test_edits_in_the_main_window_are_not_blocked_by_the_view(qtbot, theme) -> None:
     """A change while the view is showing refreshes it later, not inside the edit."""
     ctl, view = make_view(qtbot, theme)

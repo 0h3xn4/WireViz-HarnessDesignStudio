@@ -1,25 +1,19 @@
-"""Side and bottom panels: palette, properties, problems, to-do, interface table, harness plans."""
+"""Dock panels: the properties form and the problems list (with its to-do lines), and the helpers other panels use."""
 
 from collections.abc import Callable
 from decimal import Decimal
 from functools import partial
 
 from PySide6.QtCore import (
-    QAbstractTableModel,
-    QModelIndex,
-    QPersistentModelIndex,
-    QSortFilterProxyModel,
     Qt,
     QTimer,
     Signal,
 )
 from PySide6.QtGui import QColor, QFont, QIcon, QPainter, QPen, QPixmap
 from PySide6.QtWidgets import (
-    QAbstractItemView,
     QComboBox,
     QFrame,
     QHBoxLayout,
-    QHeaderView,
     QLabel,
     QLayout,
     QLineEdit,
@@ -27,29 +21,18 @@ from PySide6.QtWidgets import (
     QPushButton,
     QScrollArea,
     QSizePolicy,
-    QStyledItemDelegate,
-    QTableView,
-    QTableWidget,
-    QTableWidgetItem,
-    QTabWidget,
-    QTreeWidget,
-    QTreeWidgetItem,
     QVBoxLayout,
     QWidget,
 )
 
 from harness_design_studio.core import checks, edit, why
 from harness_design_studio.core.drc import by_rule
-from harness_design_studio.core.generate.explain import explain_harness, explain_wire
 from harness_design_studio.core.library_import import describe_library
-from harness_design_studio.core.model import InterfaceInstance, Part, Project
-from harness_design_studio.core.verify import VerifyReport, verify_project
-from harness_design_studio.core.wirecolours import name_of, resolve
+from harness_design_studio.core.model import InterfaceInstance, Part
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import LIST_DELAY_MS, Delta, EditorController
 from harness_design_studio.gui.icons import icon_button
-from harness_design_studio.gui.preview import DrawingPreview
-from harness_design_studio.gui.theme import ThemeManager, current_theme, mark_mono, mono_item_font
+from harness_design_studio.gui.theme import ThemeManager, current_theme, mark_mono
 from harness_design_studio.gui.tokens import CATEGORIES, style_category
 
 
@@ -70,21 +53,6 @@ def category_icon(cat: str, theme: ThemeManager, size: int = 20, pressed: bool =
     f.setPixelSize(max(8, int(s * 0.55)))
     p.setFont(f)
     p.drawText(pm.rect(), Qt.AlignmentFlag.AlignCenter, CATEGORIES[cat]["icon"])
-    p.end()
-    return QIcon(pm)
-
-
-def type_icon(type_id: str, cat: str, theme: ThemeManager, pressed: bool = False) -> QIcon:
-    """The picture of a kind of link (bolt, bus, wave ...) in its category colour."""
-    from harness_design_studio.gui import glyphs
-
-    w, h = int(glyphs.LINK_GLYPH_W * 1.4), int(glyphs.LINK_GLYPH_H * 1.4)
-    pm = QPixmap(theme.px(w + 4), theme.px(h + 4))
-    pm.fill(Qt.GlobalColor.transparent)
-    p = QPainter(pm)
-    p.setRenderHint(QPainter.RenderHint.Antialiasing)
-    colour = QColor(theme.tokens["on-primary" if pressed else f"cat-{style_category(cat)}"])
-    glyphs.draw_link_glyph(p, 2, 2, type_id, cat, colour, 1.4 * theme.px(1))
     p.end()
     return QIcon(pm)
 
@@ -144,102 +112,6 @@ def clear_layout(layout: QLayout) -> None:
         sub = item.layout()
         if sub is not None:
             clear_layout(sub)
-
-
-# ---- palette -------------------------------------------------------------------------------------
-
-
-class PalettePanel(QScrollArea):
-    addUnit = Signal(str)
-    connectType = Signal(str)
-    importRequested = Signal()
-
-    def __init__(self, ctl: EditorController, theme: ThemeManager) -> None:
-        super().__init__()
-        self.ctl, self.theme = ctl, theme
-        self.setObjectName("palette")
-        self.setAccessibleName(strings.PALETTE)
-        self.setWidgetResizable(True)
-        self.setHorizontalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAlwaysOff)
-        body = QWidget()
-        self.setWidget(body)
-        outer = QVBoxLayout(body)
-        outer.setSpacing(4)
-        outer.setSizeConstraint(QLayout.SizeConstraint.SetMinimumSize)
-        outer.addWidget(heading(strings.ADD_UNIT))
-        self.add_buttons: dict[str, QPushButton] = {}
-        for tid, tpl in edit.TEMPLATES.items():
-            shown = (
-                tpl.label if len(tpl.label) <= 22 else tpl.label[:21] + "…"
-            )  # full text in the tip
-            b = QPushButton(f"＋ {shown}")
-            b.setObjectName(f"add-{tid}")
-            b.setToolTip(strings.ADD_UNIT_TIP.format(tpl.label))
-            b.clicked.connect(lambda _=False, t=tid: self.addUnit.emit(t))
-            outer.addWidget(b)
-            self.add_buttons[tid] = b
-        outer.addWidget(heading(strings.CONNECT_WITH))
-        self.type_box = QVBoxLayout()
-        outer.addLayout(self.type_box)
-        outer.addWidget(muted(strings.CONNECT_HELP))
-        outer.addWidget(heading(strings.BRING_IN_DATA))
-        self.import_btn = QPushButton(strings.IMPORT_BUTTON)
-        self.import_btn.setObjectName("import-button")
-        icon_button(
-            self.import_btn,
-            "import",
-            theme,
-            strings.IMPORT_BUTTON,
-            "Ctrl+Shift+I",
-            text=strings.IMPORT_BUTTON,
-        )
-        self.import_btn.clicked.connect(self.importRequested)
-        outer.addWidget(self.import_btn)
-        outer.addStretch(1)
-        self.type_buttons: dict[str, QPushButton] = {}
-        ctl.connectChanged.connect(self.refresh)
-        ctl.stateChanged.connect(self.refresh)
-        ctl.changed.connect(lambda _d: self._maybe_rebuild_types())
-        theme.changed.connect(self._rebuild_types)  # icons depend on the theme
-        self._rebuild_types()
-
-    def _maybe_rebuild_types(self) -> None:
-        if set(self.type_buttons) != set(self.ctl.project.interface_types):
-            self._rebuild_types()
-
-    def _rebuild_types(self) -> None:
-        clear_layout(self.type_box)
-        self.type_buttons.clear()
-        for tid, t in sorted(self.ctl.project.interface_types.items()):
-            b = QPushButton(t.name)
-            b.setObjectName(f"type-{tid}")
-            b.setCheckable(True)
-            b.setIcon(type_icon(tid, t.category, self.theme))
-            b.setToolTip(f"{t.name}: {CATEGORIES[style_category(t.category)]['label']} interface")
-            b.clicked.connect(lambda _=False, x=tid: self.connectType.emit(x))
-            self.type_box.addWidget(b)
-            self.type_buttons[tid] = b
-        self.type_box.invalidate()
-        body = self.widget()
-        if body is not None:
-            body.updateGeometry()
-        self.refresh()
-
-    def refresh(self) -> None:
-        ro = self.ctl.read_only
-        for b in self.add_buttons.values():
-            b.setEnabled(not ro)
-        self.import_btn.setEnabled(not ro)
-        for tid, b in self.type_buttons.items():
-            active = self.ctl.tool == "connect" and self.ctl.connect_type == tid
-            b.setEnabled(not ro)
-            if b.isChecked() != active or b.property("icon-state") is None:
-                b.blockSignals(True)
-                b.setChecked(active)
-                b.blockSignals(False)
-                t = self.ctl.project.interface_types[tid]
-                b.setIcon(type_icon(tid, t.category, self.theme, pressed=active))
-                b.setProperty("icon-state", active)
 
 
 # ---- properties ----------------------------------------------------------------------------------
@@ -851,6 +723,7 @@ class ProblemsPanel(QScrollArea):
         cards, total = self._cards(rest)
         note_cards, _ = self._cards(unchecked, limit=None)
         header = self._header(checking)
+        todos = self.ctl.todos()
         waived = (
             [f for f in findings if f.waiver is not None] if len(findings) != len(open_) else []
         )
@@ -861,6 +734,7 @@ class ProblemsPanel(QScrollArea):
             tuple(identity for identity, _ in note_cards),
             total,
             header,
+            tuple((t.text, t.kind, t.target) for t in todos),
             tuple((f.id, f.waiver.justification if f.waiver else "") for f in waived),
             self.ctl.read_only,
             checking,
@@ -873,6 +747,16 @@ class ProblemsPanel(QScrollArea):
         state = muted(header)
         state.setObjectName("drc-state")
         self.lay.addWidget(state)
+        if todos:  # what is left to do, as short lines that jump to the object (was the To-do tab)
+            todo_heading = heading(strings.TODO_HEADING.format(len(todos)))
+            todo_heading.setObjectName("todo-heading")
+            self.lay.addWidget(todo_heading)
+            for k, t in enumerate(todos):
+                b = QPushButton(f"☐ {t.text}")
+                b.setObjectName(f"todo-{k}")
+                b.setProperty("align", "left")  # the theme's rule left-aligns the text
+                b.clicked.connect(lambda _=False, x=t: self._todo_clicked(x.kind, x.target))
+                self.lay.addWidget(b)
         if not open_ and not checking:
             self.lay.addWidget(muted(strings.NO_PROBLEMS))
         for _, build in cards:
@@ -889,6 +773,17 @@ class ProblemsPanel(QScrollArea):
                 if f.waiver is not None:
                     self.lay.addWidget(muted(f"✓ {f.id}: “{f.waiver.justification}”"))
         self.lay.addStretch(1)
+
+    def _todo_clicked(self, kind: str, target: str) -> None:
+        """A to-do line: an object is shown on the diagram; "warnings to fix or waive" scrolls to
+        the first card below."""
+        if kind != "tab":
+            self.showRequested.emit(target)
+            return
+        for card in self.findChildren(QFrame):
+            if card.property("card"):
+                self.ensureWidgetVisible(card)
+                return
 
     def _header(self, checking: bool) -> str:
         """The line above the cards: what the last check did, from the result of each rule."""
@@ -1019,663 +914,3 @@ class ProblemsPanel(QScrollArea):
         row.addStretch(1)
         lay.addLayout(row)
         return card
-
-
-class TodoPanel(QScrollArea):
-    activated = Signal(str, str)  # kind, target
-
-    def __init__(self, ctl: EditorController) -> None:
-        super().__init__()
-        self.ctl = ctl
-        self.setObjectName("todo")
-        self.setAccessibleName(strings.TODO)
-        self.lay = scroll_body(self)
-        self._dirty = True
-        self._later = _list_timer(self, self._refresh_if_dirty)
-        ctl.changed.connect(lambda _d: self._invalidate())
-        ctl.drcChanged.connect(self._invalidate)
-        self.refresh()
-
-    def _invalidate(self) -> None:
-        self._dirty = True
-        if not self.isVisible():
-            return
-        if self.ctl.findings_are_many():
-            self._later.start()  # after the canvas is redrawn, once per burst of changes
-        else:
-            self.refresh()
-
-    def _refresh_if_dirty(self) -> None:
-        if self._dirty and self.isVisible():
-            self.refresh()
-
-    def showEvent(self, event: object) -> None:
-        super().showEvent(event)  # type: ignore[arg-type]
-        if self._dirty:
-            self.refresh()
-
-    def items(self) -> list[checks.Todo]:
-        return self.ctl.todos()
-
-    def refresh(self) -> None:
-        self._dirty = False
-        clear_layout(self.lay)
-        items = self.items()
-        if not items:
-            self.lay.addWidget(muted(strings.ALL_DONE))
-        for k, t in enumerate(items):
-            b = QPushButton(f"☐ {t.text}")
-            b.setObjectName(f"todo-{k}")
-            b.setProperty("align", "left")  # the theme's rule left-aligns the text
-            b.clicked.connect(lambda _=False, x=t: self.activated.emit(x.kind, x.target))
-            self.lay.addWidget(b)
-        self.lay.addStretch(1)
-
-
-# ---- interface table -----------------------------------------------------------------------------
-
-COLUMNS = strings.INTERFACE_COLUMNS
-EDITABLE = {1, 5, 6, 7}
-MONO_COLUMNS = {0, 7}  # ID and requirement ID read in the monospace font
-CHAINS = ["nominal", "redundant", "none"]
-
-
-class InterfaceModel(QAbstractTableModel):
-    def __init__(self, ctl: EditorController) -> None:
-        super().__init__()
-        self.ctl = ctl
-        self.ids: list[str] = []
-        self.reload()
-
-    def reload(self) -> bool:
-        """Follow the project. Returns True when the rows changed (a reset); the same rows only get
-        new values, which keeps column widths and selection and is much cheaper with many rows."""
-        ids = sorted(self.ctl.project.interfaces)
-        if ids == self.ids and ids:
-            self.dataChanged.emit(self.index(0, 0), self.index(len(ids) - 1, len(COLUMNS) - 1))
-            return False
-        self.beginResetModel()
-        self.ids = ids
-        self.endResetModel()
-        return True
-
-    def rowCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()) -> int:  # noqa: B008
-        return 0 if parent.isValid() else len(self.ids)
-
-    def columnCount(self, parent: QModelIndex | QPersistentModelIndex = QModelIndex()) -> int:  # noqa: B008
-        return 0 if parent.isValid() else len(COLUMNS)
-
-    def headerData(
-        self, section: int, orientation: Qt.Orientation, role: int = Qt.ItemDataRole.DisplayRole
-    ) -> object:
-        if orientation == Qt.Orientation.Horizontal and role == Qt.ItemDataRole.DisplayRole:
-            return COLUMNS[section]
-        return None
-
-    def flags(self, index: QModelIndex | QPersistentModelIndex) -> Qt.ItemFlag:
-        f = super().flags(index)
-        if index.column() in EDITABLE and not self.ctl.read_only:
-            f |= Qt.ItemFlag.ItemIsEditable
-        return f
-
-    def search_text(self, row: int) -> str:
-        i = self.ctl.project.interfaces.get(self.ids[row])
-        if i is None:
-            return ""
-        t = self.ctl.project.interface_types.get(i.type_id)
-        parts = [i.id, i.name, i.type_id, t.name if t else "", i.requirement_id or "", i.redundancy]
-        parts += [e.unit_id for e in i.endpoints]
-        return " ".join(parts).lower()
-
-    def _end(self, i: InterfaceInstance, k: int) -> str:
-        e = i.endpoints[k]
-        name = e.unit_id
-        if self.ctl.mode == "expert" and e.connector_id:
-            c = self.ctl.project.connectors.get(e.connector_id)
-            name += f".{c.name}" if c else ""
-        return name + (" (auto)" if e.auto else "")
-
-    def data(
-        self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
-    ) -> object:
-        if not index.isValid() or index.row() >= len(self.ids):
-            return None
-        i = self.ctl.project.interfaces.get(self.ids[index.row()])
-        if i is None:
-            return None
-        col = index.column()
-        if role in (Qt.ItemDataRole.DisplayRole, Qt.ItemDataRole.EditRole):
-            t = self.ctl.project.interface_types.get(i.type_id)
-            return [
-                i.id, i.name, t.name if t else i.type_id, self._end(i, 0), self._end(i, 1), i.redundancy,
-                format_number(i.max_current_a), i.requirement_id or "",
-            ][col]  # fmt: skip
-        if role == Qt.ItemDataRole.AccessibleTextRole:
-            return f"{COLUMNS[col]} of {i.id}: {self.data(index, Qt.ItemDataRole.DisplayRole)}"
-        if role == Qt.ItemDataRole.FontRole and col in MONO_COLUMNS:
-            return mono_item_font()  # IDs and requirement IDs
-        return None
-
-    def setData(
-        self,
-        index: QModelIndex | QPersistentModelIndex,
-        value: object,
-        role: int = Qt.ItemDataRole.EditRole,
-    ) -> bool:
-        if role != Qt.ItemDataRole.EditRole or index.column() not in EDITABLE:
-            return False
-        iid = self.ids[index.row()]
-        text = str(value).strip()
-        col = index.column()
-        if col == 1:
-            if "\n" in text or "\r" in text:  # a name is one line (the form field cannot hold more)
-                self.ctl.message.emit(strings.NAME_ONE_LINE, False)
-                return False
-            return self.ctl.update_interface(iid, name=text)
-        if col == 5:
-            if text not in CHAINS:
-                self.ctl.message.emit(strings.CHAIN_HELP, False)
-                return False
-            return self.ctl.update_interface(iid, redundancy=text)
-        if col == 6:
-            num, err = parse_optional_float(text)
-            if err:
-                self.ctl.message.emit(err, False)
-                return False
-            current = self.ctl.project.interfaces[iid].max_current_a
-            if num == current:  # (an unchanged cell is not an edit)
-                return True
-            return self.ctl.update_interface(iid, max_current_a=num)
-        return self.ctl.update_interface(iid, requirement_id=text or None)
-
-
-class _RowFilter(QSortFilterProxyModel):
-    """Match every word typed against the ID, name, type (name and ID), units and requirement."""
-
-    words: tuple[str, ...] = ()  # the typed words as they are (not a pattern)
-
-    def set_text(self, text: str) -> None:
-        self.beginFilterChange()
-        self.words = tuple(text.lower().split())
-        self.endFilterChange()
-
-    def filterAcceptsRow(
-        self, source_row: int, source_parent: QModelIndex | QPersistentModelIndex
-    ) -> bool:
-        model = self.sourceModel()
-        if not self.words or not isinstance(model, InterfaceModel):
-            return True
-        return all(w in model.search_text(source_row) for w in self.words)
-
-
-class _ChainDelegate(QStyledItemDelegate):
-    def createEditor(
-        self, parent: QWidget, option: object, index: QModelIndex | QPersistentModelIndex
-    ) -> QWidget:
-        cb = QComboBox(parent)
-        cb.addItems(CHAINS)
-        return cb
-
-    def setEditorData(self, editor: QWidget, index: QModelIndex | QPersistentModelIndex) -> None:
-        editor.setCurrentText(str(index.data(Qt.ItemDataRole.EditRole)))  # type: ignore[attr-defined]
-
-    def setModelData(
-        self, editor: QWidget, model: object, index: QModelIndex | QPersistentModelIndex
-    ) -> None:
-        model.setData(index, editor.currentText(), Qt.ItemDataRole.EditRole)  # type: ignore[attr-defined]
-
-
-class InterfaceTable(QWidget):
-    newInterfaceRequested = Signal()
-
-    def __init__(self, ctl: EditorController) -> None:
-        super().__init__()
-        self.ctl = ctl
-        self.setObjectName("interface-table")
-        self.scale_factor = 1.0
-        lay = QVBoxLayout(self)
-        top = QHBoxLayout()
-        self.filter = QLineEdit()
-        self.filter.setPlaceholderText(strings.FILTER_PLACEHOLDER)
-        self.filter.setAccessibleName(strings.FILTER_PLACEHOLDER)
-        self.filter.setClearButtonEnabled(True)
-        self.add_btn = QPushButton(strings.NEW_INTERFACE)
-        self.add_btn.setObjectName("new-interface")
-        self.add_btn.clicked.connect(self.newInterfaceRequested)
-        top.addWidget(self.filter, 1)
-        top.addWidget(self.add_btn)
-        lay.addLayout(top)
-        self.model = InterfaceModel(ctl)
-        self.proxy = _RowFilter()
-        self.proxy.setSourceModel(self.model)
-        self.proxy.setFilterCaseSensitivity(Qt.CaseSensitivity.CaseInsensitive)
-        self.proxy.setFilterKeyColumn(-1)
-        self.view = QTableView()
-        self.view.setObjectName("interfaces")
-        self.view.setAccessibleName(strings.INTERFACE_TABLE)
-        self.view.setModel(self.proxy)
-        self.view.setSortingEnabled(True)
-        self.view.sortByColumn(0, Qt.SortOrder.AscendingOrder)  # IF-001 first
-        self.view.setAlternatingRowColors(True)
-        self.view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
-        self.view.setItemDelegateForColumn(5, _ChainDelegate(self.view))
-        header = self.view.horizontalHeader()
-        header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
-        header.setStretchLastSection(True)
-        self._apply_widths()
-        self.view.verticalHeader().hide()
-        lay.addWidget(self.view)
-        self.filter.textChanged.connect(self._set_filter)
-        self.view.selectionModel().selectionChanged.connect(self._row_selected)
-        ctl.changed.connect(self._changed)
-        ctl.modeChanged.connect(self._mode_changed)
-        ctl.selectionChanged.connect(self._sync_if_visible)
-        ctl.stateChanged.connect(lambda: self.add_btn.setEnabled(not ctl.read_only))
-        self._busy = False
-        self._dirty = False
-
-    def _mode_changed(self) -> None:
-        self._dirty = True
-        if self.isVisible():
-            self.refresh()
-
-    def _set_filter(self, text: str) -> None:
-        self.proxy.set_text(text)
-
-    def _changed(self, delta: Delta) -> None:
-        if delta.full or delta.interfaces or delta.units:
-            self._dirty = True
-            if self.isVisible():
-                self.refresh()
-
-    def _apply_widths(self) -> None:
-        for col, width in enumerate((120, 260, 150, 130, 130, 100, 70)):
-            self.view.setColumnWidth(col, self.ctl_scale(width))
-
-    def ctl_scale(self, px: int) -> int:
-        return round(px * self.scale_factor)
-
-    def refresh(self) -> None:
-        self._dirty = False
-        if self.model.reload():  # a model reset restores default column widths
-            self._apply_widths()
-            self._sync_selection()
-
-    def showEvent(self, event: object) -> None:
-        super().showEvent(event)  # type: ignore[arg-type]
-        if self._dirty:
-            self.refresh()
-
-    def _row_selected(self) -> None:
-        if self._busy:
-            return
-        rows = self.view.selectionModel().selectedRows()
-        if rows:
-            iid = self.proxy.data(rows[0], Qt.ItemDataRole.DisplayRole)
-            self._busy = True
-            self.ctl.select("interface", str(iid))
-            self._busy = False
-
-    def _sync_if_visible(self) -> None:
-        if self.isVisible():
-            self._sync_selection()
-
-    def _sync_selection(self) -> None:
-        if self._busy:
-            return
-        s = self.ctl.selection
-        self._busy = True
-        self.view.clearSelection()
-        if s is not None and s.kind == "interface" and s.id in self.model.ids:
-            src = self.model.index(self.model.ids.index(s.id), 0)
-            idx = self.proxy.mapFromSource(src)
-            if idx.isValid():
-                self.view.selectRow(idx.row())
-        self._busy = False
-
-
-class HarnessPanel(QWidget):
-    """Generated harnesses: status, independent check, harness list, wires and why they are so."""
-
-    exportRequested = Signal()
-    changeRequested = Signal(str, str)  # action, harness ID
-
-    def __init__(self, ctl: EditorController) -> None:
-        super().__init__()
-        self.ctl = ctl
-        self.setObjectName("harness-plans")
-        self._dirty = True
-        lay = QVBoxLayout(self)
-        self.status = QLabel()
-        self.status.setObjectName("plans-status")
-        self.status.setWordWrap(True)
-        self.verify = QLabel()
-        self.verify.setObjectName("plans-verify")
-        self.verify.setWordWrap(True)
-        lay.addWidget(self.status)
-        lay.addWidget(self.verify)
-        out_row = QHBoxLayout()
-        self.outputs = QLabel()
-        self.outputs.setObjectName("plans-outputs")
-        self.outputs.setWordWrap(True)
-        self.export_btn = QPushButton(strings.EXPORT)
-        self.export_btn.setObjectName("export")
-        self.export_btn.setToolTip(strings.EXPORT_TIP)
-        self.export_btn.clicked.connect(self.exportRequested)
-        out_row.addWidget(self.outputs, 1)
-        out_row.addWidget(self.export_btn)
-        lay.addLayout(out_row)
-        cc_row = QHBoxLayout()
-        self.cc_buttons: dict[str, QPushButton] = {}
-        for action, text, tip in (
-            ("review", strings.REVIEW, strings.REVIEW_TIP),
-            ("release", strings.RELEASE, strings.RELEASE_TIP),
-            ("revise", strings.NEW_REV, strings.NEW_REV_TIP),
-            ("changes", strings.CHANGES, strings.CHANGES_TIP),
-            ("history", strings.HISTORY, strings.HISTORY_TIP),
-            ("delete", strings.DELETE_HARNESS, strings.DELETE_HARNESS_TIP),
-        ):
-            b = QPushButton(text)
-            b.setObjectName(f"plans-{action}")
-            b.setToolTip(tip)
-            b.clicked.connect(lambda _=False, a=action: self._request(a))
-            cc_row.addWidget(b)
-            self.cc_buttons[action] = b
-        cc_row.addStretch(1)
-        lay.addLayout(cc_row)
-        self.empty = muted(strings.NO_PLANS_BODY)
-        self.empty.setObjectName("plans-empty")
-        lay.addWidget(self.empty)
-        self.harnesses = QTableWidget(0, len(strings.PLANS_COLUMNS))
-        self.harnesses.setObjectName("plans-harnesses")
-        self.harnesses.setHorizontalHeaderLabels(strings.PLANS_COLUMNS)
-        self.wires = QTableWidget(0, len(strings.WIRE_COLUMNS))
-        self.wires.setObjectName("plans-wires")
-        self.wires.setHorizontalHeaderLabels(strings.WIRE_COLUMNS)
-        self.wires.horizontalHeader().setSectionResizeMode(
-            QHeaderView.ResizeMode.ResizeToContents
-        )  # every column, the Colour one too, stays in view
-        self.harnesses.setAccessibleName(strings.HARNESS_LIST)
-        self.wires.setAccessibleName(strings.WIRE_LIST)
-        for t in (self.harnesses, self.wires):
-            t.setEditTriggers(QTableWidget.EditTrigger.NoEditTriggers)
-            t.setSelectionBehavior(QTableWidget.SelectionBehavior.SelectRows)
-            t.setSelectionMode(QTableWidget.SelectionMode.SingleSelection)
-            t.verticalHeader().setVisible(False)
-            t.horizontalHeader().setStretchLastSection(True)
-        self.explain = QLabel()
-        self.explain.setObjectName("plans-explain")
-        self.explain.setWordWrap(True)
-        self.explain.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
-        body = QHBoxLayout()
-        body.addWidget(self.harnesses, 3)
-        body.addWidget(self.wires, 4)
-        self.side = QTabWidget()
-        self.side.setObjectName("plans-side")
-        self.side.setAccessibleName(strings.TAB_DRAWING)
-        why = QScrollArea()
-        why.setWidgetResizable(True)
-        why.setWidget(self.explain)
-        why.setAccessibleName(strings.EXPLAIN)
-        self.preview = DrawingPreview()
-        self.side.addTab(self.preview, strings.TAB_DRAWING)
-        self.side.addTab(why, strings.TAB_WHY)
-        self.side.currentChanged.connect(lambda _i: self._update_preview())
-        body.addWidget(self.side, 5)
-        lay.addLayout(body, 1)
-        self.harnesses.itemSelectionChanged.connect(self._show_wires)
-        self.harnesses.itemSelectionChanged.connect(self._update_cc_buttons)
-        self.harnesses.itemSelectionChanged.connect(self._update_preview)
-        self.wires.itemSelectionChanged.connect(self._show_explain)
-        ctl.changed.connect(lambda _d: self._invalidate())
-        self.refresh()
-
-    def _invalidate(self) -> None:
-        self._dirty = True
-        if self.isVisible():
-            self.refresh()
-
-    def showEvent(self, event: object) -> None:
-        super().showEvent(event)  # type: ignore[arg-type]
-        if self._dirty:
-            self.refresh()
-
-    def _request(self, action: str) -> None:
-        hid = self.selected_harness()
-        if hid:
-            self.changeRequested.emit(action, hid)
-
-    def _update_cc_buttons(self) -> None:
-        p = self.ctl.project
-        h = p.harnesses.get(self.selected_harness() or "")
-        ro = self.ctl.read_only
-        status = h.status if h else ""
-        has_base = bool(h) and any(b.harness_id == h.id for b in p.baselines.values())  # type: ignore[union-attr]
-        on = {
-            "review": status == "draft",
-            "release": status in ("draft", "in_review"),
-            "revise": status == "released",
-            "changes": has_base,
-            "history": h is not None,
-            "delete": status in ("draft", "in_review"),
-        }
-        for action, b in self.cc_buttons.items():
-            b.setEnabled(on[action] and (action in ("changes", "history") or not ro))
-
-    def select_harness(self, harness_id: str) -> None:
-        if self._dirty:
-            self.refresh()
-        for r in range(self.harnesses.rowCount()):
-            item = self.harnesses.item(r, 0)
-            if item and item.text() == harness_id:
-                self.harnesses.selectRow(r)
-                return
-
-    def select_wire(self, wire_id: str) -> None:
-        """Select a wire of the harness now shown (the diagram's double-click lands here)."""
-        for r in range(self.wires.rowCount()):
-            item = self.wires.item(r, 0)
-            if item is not None and item.text() == wire_id:
-                self.wires.selectRow(r)
-                self.wires.scrollToItem(item)
-                return
-
-    def selected_harness(self) -> str | None:
-        rows = self.harnesses.selectionModel().selectedRows()
-        item = self.harnesses.item(rows[0].row(), 0) if rows else None
-        return item.text() if item else None
-
-    _verify_cache: tuple[tuple[int, int], VerifyReport] | None = None
-
-    def _verified(self, p: Project) -> VerifyReport:
-        """The independent check of the plans, read once per model state (it takes about 2 s at
-        stress size, and the panel refreshes every time it is shown)."""
-        token = self.ctl.state_token
-        if self._verify_cache is None or self._verify_cache[0] != token:
-            self._verify_cache = (token, verify_project(p))
-        return self._verify_cache[1]
-
-    def refresh(self) -> None:
-        self._dirty = False
-        p = self.ctl.project
-        status = self.ctl.generation_status()
-        self.status.setText(strings.GEN_STATUS[status])
-        self.status.setProperty("state", status)
-        report = self._verified(p) if p.harnesses else None
-        if report is None:
-            self.verify.setText("")
-        else:
-            fmt = strings.PLANS_VERIFY_OK if report.ok else strings.PLANS_VERIFY_BAD
-            self.verify.setText(fmt.format(report.summary()))
-        self.empty.setVisible(not p.harnesses)
-        self.outputs.setText(strings.OUT_STATUS[self.ctl.outputs_state()] if p.harnesses else "")
-        self.export_btn.setEnabled(bool(p.harnesses))
-        self.export_btn.setVisible(bool(p.harnesses))
-        keep = self.selected_harness()
-        self.harnesses.setRowCount(len(p.harnesses))
-        for r, hid in enumerate(sorted(p.harnesses)):
-            h = p.harnesses[hid]
-            cells = [hid, h.name, str(len(h.wires)), str(len(h.interfaces)),
-                     f"{h.revision} {strings.RELEASED_LOCKED}" if h.status == "released" else f"{h.revision} {h.status.replace('_', ' ')}",
-                     strings.HARNESS_GENERATED if h.generated else strings.HARNESS_BY_HAND]  # fmt: skip
-            for c, text in enumerate(cells):
-                item = QTableWidgetItem(text)
-                if c == 0:
-                    item.setFont(mono_item_font())  # harness IDs
-                self.harnesses.setItem(r, c, item)
-            if hid == keep:
-                self.harnesses.selectRow(r)
-        self._show_wires()
-        self._update_cc_buttons()
-        self._update_preview()
-
-    @staticmethod
-    def _colour_text(colour: str | None) -> str:
-        """ "red (RD)" for a colour the table knows, the text as typed otherwise, "" if unset."""
-        if not colour:
-            return ""
-        name = name_of(colour)
-        return f"{name} ({resolve(colour)[0]})" if name else colour
-
-    def _show_wires(self) -> None:
-        p = self.ctl.project
-        h = p.harnesses.get(self.selected_harness() or "")
-        wires = h.wires if h else []
-        self.wires.setRowCount(len(wires))
-        for r, w in enumerate(wires):
-            cells = [w.id, w.signal or "", f"{w.from_connector}.{w.from_pin}",
-                     f"{w.to_connector}.{w.to_pin}",
-                     "pending" if w.gauge_awg is None else str(w.gauge_awg),
-                     "" if w.length_m is None else f"{w.length_m:g}",
-                     self._colour_text(w.colour),
-                     "yes" if w.locked else ""]  # fmt: skip
-            for c, text in enumerate(cells):
-                item = QTableWidgetItem(text)
-                if c in (0, 2, 3):
-                    item.setFont(mono_item_font())  # wire IDs and connector.pin
-                self.wires.setItem(r, c, item)
-        self._show_explain()
-
-    def _update_preview(self) -> None:
-        """The drawing is rebuilt only while its tab is showing (selection or design changed)."""
-        if self.side.currentWidget() is not self.preview or not self.isVisible():
-            return
-        p = self.ctl.project
-        h = p.harnesses.get(self.selected_harness() or "")
-        self.preview.show_harness(p if h else None, h)
-
-    def _show_explain(self) -> None:
-        p = self.ctl.project
-        h = p.harnesses.get(self.selected_harness() or "")
-        rows = self.wires.selectionModel().selectedRows()
-        item = self.wires.item(rows[0].row(), 0) if rows else None
-        if h is None:
-            self.explain.setText("")
-            return
-        wire = next((w for w in h.wires if item and w.id == item.text()), None)
-        lines = explain_wire(p, h, wire) if wire else explain_harness(p, h)
-        title = f"<b>{strings.EXPLAIN}</b>"
-        self.explain.setText(
-            title + "<br>" + ("<br>".join(lines) if lines else strings.EXPLAIN_NONE)
-        )
-
-
-class OutlinePanel(QWidget):
-    """The diagram as a tree: every unit with the interfaces it takes part in. Plain Qt tree, so
-    screen readers read it item by item (the canvas itself is one object to them)."""
-
-    def __init__(self, ctl: EditorController) -> None:
-        super().__init__()
-        self.ctl = ctl
-        self.setObjectName("outline")
-        lay = QVBoxLayout(self)
-        lay.setContentsMargins(0, 0, 0, 0)
-        self.tree = QTreeWidget()
-        self.tree.setObjectName("outline-tree")
-        self.tree.setHeaderHidden(True)
-        self.tree.setAccessibleName(strings.OUTLINE)
-        self.tree.setAccessibleDescription(strings.OUTLINE_HELP)
-        self.tree.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
-        lay.addWidget(self.tree)
-        self._dirty = True
-        self._syncing = False
-        ctl.changed.connect(lambda _d: self._invalidate())
-        ctl.selectionChanged.connect(self._select_current)
-        self.tree.itemSelectionChanged.connect(self._picked)
-        self.refresh()
-
-    def _invalidate(self) -> None:
-        self._dirty = True
-        if self.isVisible():
-            self.refresh()
-
-    def showEvent(self, event: object) -> None:
-        super().showEvent(event)  # type: ignore[arg-type]
-        if self._dirty:
-            self.refresh()
-        else:
-            self._select_current()  # (the selection may have changed while this tab was hidden)
-
-    def refresh(self) -> None:
-        self._dirty = False
-        p = self.ctl.project
-        self._syncing = True
-        self.tree.clear()
-        for uid in sorted(p.units):
-            u = p.units[uid]
-            node = QTreeWidgetItem(
-                [
-                    f"{uid}: {u.name} ({u.side})"
-                    if u.side != "none" and u.side not in u.name  # "(redundant)" may be in the name
-                    else f"{uid}: {u.name}"
-                ]
-            )
-            node.setData(0, Qt.ItemDataRole.UserRole, ("unit", uid))
-            for i in sorted(
-                (i for i in p.interfaces.values() if any(e.unit_id == uid for e in i.endpoints)),
-                key=lambda x: x.id,
-            ):
-                other = next((e.unit_id for e in i.endpoints if e.unit_id != uid), "?")
-                t = p.interface_types.get(i.type_id)
-                child = QTreeWidgetItem([f"{i.id}: {t.name if t else i.type_id} to {other}"])
-                child.setData(0, Qt.ItemDataRole.UserRole, ("interface", i.id))
-                node.addChild(child)
-            self.tree.addTopLevelItem(node)
-        self._syncing = False
-        self._select_current()
-
-    def _picked(self) -> None:
-        if self._syncing:
-            return
-        items = self.tree.selectedItems()
-        if items:
-            self.ctl.select_many([tuple(i.data(0, Qt.ItemDataRole.UserRole)) for i in items])
-        elif self.ctl.selected:  # a row clicked away
-            self.ctl.select(None)
-
-    def _select_current(self) -> None:
-        sel = self.ctl.selection
-        if sel is None:  # nothing selected: no row stays highlighted
-            self._syncing = True
-            self.tree.clearSelection()
-            self._syncing = False
-            return
-        if not self.isVisible():
-            return
-        wanted = {(s.kind, s.id) for s in self.ctl.selected}
-        self._syncing = True
-        self.tree.clearSelection()
-        for k in range(self.tree.topLevelItemCount()):
-            node = self.tree.topLevelItem(k)
-            if node is None:
-                continue
-            for item in (node, *(node.child(c) for c in range(node.childCount()))):
-                if item is None:
-                    continue
-                key = tuple(item.data(0, Qt.ItemDataRole.UserRole))
-                if key in wanted:
-                    item.setSelected(True)
-                    if key == (sel.kind, sel.id):
-                        self.tree.scrollToItem(item)
-        self._syncing = False

@@ -34,7 +34,7 @@ This took about 40 seconds with a network connection and ended without errors. T
 | --- | --- |
 | (none) | The program and its libraries: `pydantic`, `openpyxl`, `defusedxml`. This is all the command line needs. |
 | `gui` | `PySide6-Essentials` (Qt), for the editor. |
-| `dev` | Test and build tools: `pytest`, `pytest-cov`, `pytest-qt`, `hypothesis`, `mypy`, `ruff`, `cyclonedx-bom`, `pip-licenses`, `pip-audit`, `pyinstaller`, `playwright`. |
+| `dev` | Test and build tools: `pytest`, `pytest-cov`, `pytest-qt`, `pytest-xdist`, `hypothesis`, `mypy`, `ruff`, `cyclonedx-bom`, `pip-licenses`, `pip-audit`, `pyinstaller`, `playwright`. |
 
 Versions are pinned in `pyproject.toml`. A new dependency needs its name, version and licence recorded in [`DECISIONS.md`](../DECISIONS.md).
 
@@ -65,6 +65,8 @@ The whole suite has about 1,000 tests (1,026 when this page was checked) and too
 | `pytest -q tests/test_docs.py tests/test_docs_links.py` | Only the tests that read the documents (a minute or less). |
 | `pytest tests/test_gui_journeys.py` | The editor journeys, driven like a user. |
 | `pytest --cov` | The tests with coverage. The gate is 90 % on `harness_design_studio.core`; the run prints `Required test coverage of 90.0% reached`. The same run had 95.7 %. The GUI is outside the measure. |
+| `pytest -n auto -m "not perf"` | The suite in parallel, one worker per core (pytest-xdist, D-148). The tests that assert a wall-clock limit carry the marker `perf` and are left out, because a loaded machine makes them fail for no reason. |
+| `pytest -m perf` | Those timing tests alone, one at a time. Run it after the parallel run; the two commands together are the whole suite. Add `--cov --cov-append` to both when you want one coverage number. |
 | `pytest -k wire_colours` | Only tests whose name matches. |
 | `HARNESS_TIME_FACTOR=3 pytest tests/test_gui_perf.py` | The speed tests with limits three times as generous. On a slow or shared machine one or two of them can fail without the factor. CI sets 3. |
 | `HARNESS_FUZZ_EXAMPLES=5000 pytest tests/test_fuzz.py` | The long fuzzing run (the default is 40 examples). |
@@ -74,6 +76,8 @@ Notes:
 
 - A test that needs a normal user (`tests/test_atomic_lock.py`) is skipped when you run as root. Run the suite as a normal user in CI.
 - Every bug fix gets a regression test, and tests come first. See the conventions in [`../../CLAUDE.md`](../../CLAUDE.md).
+- GUI tests do not have to close their windows: `tests/conftest.py` deletes the top-level widgets a test left open (an autouse fixture). Without it every later test in the process got slower and the process grew to gigabytes.
+- Parallel runs: every test must use its own `tmp_path` (never a fixed path such as `/tmp/x`) and must not write into the source tree, because the workers run at the same time. `tests/conftest.py` gives each worker its own settings folder. A new test that asserts a time limit (`time_limit`, `perf_counter`) gets `@pytest.mark.perf`; `tests/test_parallel_safety.py` fails until it has.
 - The GUI tests need no screen: `QT_QPA_PLATFORM=offscreen pytest tests/test_gui_journeys.py`.
 
 ## 3. Check the style and the types
@@ -122,14 +126,14 @@ A golden file is a stored, reviewed result that a test compares with a fresh one
 
 ## 6. What CI runs
 
-`.github/workflows/harness-ci.yml` runs on Ubuntu 24.04 with Python 3.12. After the Qt libraries and `pip install -e ".[gui,dev]"` and Chromium, it runs `ruff check .`, `ruff format --check .`, `mypy`, `pytest --cov`, `python -m tools.check_reproducible`, `python -m tools.build_installer`, `python -m tools.build_deb`, the self-test of the frozen program (`dist/harness-design-studio/harness-design-studio-gui --selftest`) and `python -m tools.gen_sbom`. It uploads the packages and the SBOM as an artifact. A second job (`package-on-24-04`) installs the packages on a fresh machine without the source tree. `python -m tools.release_check --quick` runs only the first three checks locally (versions, lint and types, the verifiers); it is not a release check ([`release.md`](release.md)).
+`.github/workflows/harness-ci.yml` runs on Ubuntu 24.04 with Python 3.12. After the Qt libraries and `pip install -e ".[gui,dev]"` and Chromium, it runs `ruff check .`, `ruff format --check .`, `mypy`, `pytest -n auto -m "not perf" --cov` and then `pytest -m perf --cov --cov-append` (the timing tests alone; the 90 % gate is applied by the second step), `python -m tools.check_reproducible`, `python -m tools.build_installer`, `python -m tools.build_deb`, the self-test of the frozen program (`dist/harness-design-studio/harness-design-studio-gui --selftest`) and `python -m tools.gen_sbom`. It uploads the packages and the SBOM as an artifact. A second job (`package-on-24-04`) installs the packages on a fresh machine without the source tree. `python -m tools.release_check --quick` runs only the first three checks locally (versions, lint and types, the verifiers); it is not a release check ([`release.md`](release.md)).
 
 ## When something fails
 
 - **`qt.qpa.plugin: Could not load the Qt platform plugin "xcb"`**: a Qt system library is missing. Install the apt line above, or use `QT_QPA_PLATFORM=offscreen`.
-- **A speed test fails** but nothing else: use `HARNESS_TIME_FACTOR=3`.
+- **A speed test fails** but nothing else: use `HARNESS_TIME_FACTOR=3`, and run it alone (`pytest -m perf`), not next to parallel workers.
 - **A test about a generated file fails** ("run: python -m tools.gen_..."): run the generator the message names, then read the diff before you commit.
 - **`test_docs_links.py` fails**: the message names the file, the link and whether the file or the heading is missing.
-- **The suite is slow**: run only the file you changed, then the whole suite once before you push.
+- **The suite is slow**: run only the file you changed, then the whole suite once before you push (`pytest -n auto -m "not perf"` uses all cores).
 
 Next: [architecture](architecture.md), [docs maintenance](docs-maintenance.md)

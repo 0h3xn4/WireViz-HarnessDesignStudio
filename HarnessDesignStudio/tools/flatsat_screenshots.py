@@ -34,7 +34,7 @@ def main() -> int:
     )
     win.resize(1600, 1000)  # a big window, so the diagram and its legend have room
     win.show()
-    for dock in (win.dock_left, win.dock_right, win.dock_bottom):
+    for dock in (win.dock_left, win.dock_right):
         dock.hide()  # the pictures are of the diagram only
     _wait(300)
     assert win.open_project(tmp / "flatsat")

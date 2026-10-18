@@ -620,6 +620,7 @@ def test_cli_drc_exit_code_and_output(tmp_path, capsys) -> None:  # type: ignore
     assert cli_main(["drc", str(tmp_path / "bad")]) == 1
 
 
+@pytest.mark.perf
 def test_drc_on_the_stress_project_is_fast_enough_for_background_runs() -> None:
     p = stress_project()
     generate_project(p)

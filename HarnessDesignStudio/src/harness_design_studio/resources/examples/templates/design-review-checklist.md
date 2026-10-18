@@ -8,11 +8,11 @@ Project: ____________  Harness: ______  Revision: ___  Reviewer: ____________  D
 - [ ] `harness-design-studio check DIR` prints no error.
 - [ ] `harness-design-studio generate DIR` changes nothing (the harnesses are up to date).
 - [ ] `harness-design-studio verify DIR` finds no error.
-- [ ] `harness-design-studio export DIR` ran after the last change, and **Harness plans** says the outputs are up to date.
+- [ ] `harness-design-studio export DIR` ran after the last change, and the **Harness** tab says the outputs are up to date.
 
 ## Look at
 - [ ] **Problems** tab: no error, every warning fixed or waived with a reason you agree with.
-- [ ] **To-do** tab is empty or every item is understood.
+- [ ] The **To do** list at the top of the **Problems** tab is empty or every item is understood.
 - [ ] No interface shows *auto-filled*: a person confirmed every connector the tool chose.
 - [ ] `harness-design-studio config DIR`: nothing is missing; every file is reviewed and no longer marked `placeholder`.
 - [ ] Every wire has a gauge (none *pending*) and a length.

@@ -75,7 +75,7 @@ from harness_design_studio.gui.tokens import (  # noqa: E402
     TYPE_SCALE,
     contrast,
 )
-from tests.gui_helpers import make_window  # noqa: E402
+from tests.gui_helpers import make_window, show_problems  # noqa: E402
 from tests.ux_host import WIRE_COLUMNS, WIRE_ROWS, UxHost, wire_model  # noqa: E402
 
 GUI_DIR = Path(gui_pkg.__file__).parent
@@ -236,8 +236,8 @@ def test_status_bar_hash_ids_and_pin_columns_are_monospace(qtbot, tmp_path) -> N
     w.status_hash.ensurePolished()
     assert re.fullmatch(r"[0-9a-f]{8}|-{8}", w.status_hash.text())
     assert QFontInfo(w.status_hash.font()).family() == "IBM Plex Mono"
-    w.tabs.setCurrentWidget(w.table)
-    model = w.table.model
+    w.show_interfaces()
+    model = w.interface_table.model
     model.reload()
     assert model.rowCount() > 0
     mono = model.index(0, 0).data(Qt.ItemDataRole.FontRole)
@@ -268,12 +268,12 @@ def test_todo_buttons_are_left_aligned_by_a_theme_rule(qtbot, tmp_path) -> None:
     w = make_window(tmp_path)
     qtbot.addWidget(w)
     from harness_design_studio.core import checks
-    from harness_design_studio.gui.panels import TodoPanel
+    from harness_design_studio.gui.panels import ProblemsPanel
 
-    panel = TodoPanel(w.ctl)
-    qtbot.addWidget(panel)
     monkey = checks.Todo("a thing to do", "unit", "X")
-    panel.items = lambda: [monkey]  # type: ignore[method-assign]
+    w.ctl.todos = lambda: [monkey]  # type: ignore[method-assign]
+    panel = ProblemsPanel(w.ctl)  # the to-do lines are the top of the Problems list
+    qtbot.addWidget(panel)
     panel.refresh()
     b = panel.findChild(QPushButton, "todo-0")
     assert b is not None and b.styleSheet() == "" and b.property("align") == "left"
@@ -440,14 +440,16 @@ def test_existing_icon_buttons_have_icons_and_tooltips_with_shortcuts(qtbot, tmp
         w.zoom_out_btn: "Ctrl+-",
         w.fit_btn: "F",
         w.search_btn: "Ctrl+K",
-        w.palette_panel.import_btn: "Ctrl+Shift+I",
     }
     for button, key in expect.items():
         assert not button.icon().isNull(), button.objectName()
         assert key in button.toolTip(), (button.objectName(), button.toolTip())
         assert button.accessibleName().strip()
     assert w.zoom_in_btn.text() == "" and w.zoom_out_btn.text() == ""  # no "+" / "−" text
-    for dock in (w.dock_left, w.dock_right, w.dock_bottom):
+    assert w.act_import.shortcut().toString() == "Ctrl+Shift+I"  # was the Palette's Import button
+    assert "(C)" in w.tool_connect.toolTip() and w.tool_connect.accessibleName() == "Connect"
+    assert w.tool_connect.menu() is w.menu_connect  # the type arrow (the Palette's Connect with)
+    for dock in (w.dock_left, w.dock_right):
         close = dock.findChild(QAbstractButton, "qt_dockwidget_closebutton")
         assert close is not None and not close.icon().isNull()
         assert close.toolTip() == strings.DOCK_CLOSE and close.accessibleName()
@@ -462,7 +464,7 @@ def test_problem_show_button_has_an_icon_and_a_tooltip(qtbot, tmp_path) -> None:
 
     w = make_window(tmp_path)
     qtbot.addWidget(w)
-    w.tabs.setCurrentIndex(0)
+    show_problems(w)
     finding = checks.Finding(
         id="r.U1", rule="r", severity="warning", object_id="U1", title="A problem", why="because"
     )
@@ -847,6 +849,7 @@ def test_persist_widths_waits_for_a_model_that_fills_later(theme, qtbot, tmp_pat
     assert helper.restored and view.horizontalHeader().sectionSize(2) == 70
 
 
+@pytest.mark.perf
 def test_big_tables_stay_fast(theme, qtbot) -> None:
     import time
 
