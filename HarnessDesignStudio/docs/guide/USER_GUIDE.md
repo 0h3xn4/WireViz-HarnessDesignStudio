@@ -146,6 +146,7 @@ The **Checks** tab (Ctrl+4) has one row for each rule:
 
 - A strip on top counts the rules *passed*, *failed*, *not checked* and the *pending values*; each count is a button that filters the table. The status-bar link *n values pending · n rules not checked* opens the same tab.
 - **Result** is a chip with an icon and a word: *Pass*, *Fail*, *Not checked* (the rule could not run) or *Pending*. *Pass (placeholder values)* means the rule passed on values nobody has reviewed. Click the **Result** header to put the worst first.
+- **Fix all (n)** (top right of the tab) applies the one-click fix of every open problem that has one, as one undo step; n is how many there are, and its tooltip says which kinds of fix (for example *Choose connectors automatically (2)*). It never confirms a connector the tool chose: confirming says that a person looked at it, so those stay open for you (the *Confirm connectors* button on the problem itself does it). It is greyed out, with the reason in its tooltip, when n is 0 or the project is read-only. A fix that a released harness locks is left out and named in the message; the rest are done. Connectors the tool chooses this way are marked *auto* until you confirm them.
 - Select a rule to see what it found, what it needs, and the requirement IDs it serves. Press Enter on an offending object, or double-click it, to show it on the diagram. Ctrl+F filters the rules.
 - A rule that is *not checked* names the value it waits for and has **Supply value…**. It opens **Engineering values**: every value the rules need, grouped by config file, with its unit, a *placeholder* toggle and the reason when a value is refused. **Apply** (Ctrl+Enter) sets all your changes as one undo step and the checks run again. Values locked by a released harness are shown disabled with the reason. The tool never supplies a number itself. **Design > Engineering values…** opens the same window.
 
@@ -260,7 +261,7 @@ Example files for every one of these are in the templates folder (`harness-desig
 | Ctrl+S, Ctrl+Shift+S | save, save as |
 | Ctrl+Shift+I | import interfaces from a table |
 | Ctrl+Q | quit |
-| Ctrl+K | command palette: type a command, an ID or a name; every command of the menus is in it |
+| Ctrl+K | command palette (it floats over the window; Esc or a click elsewhere closes it): type a command, an ID or a name; every command of the menus is in it |
 | Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
 | Ctrl+I | new interface |
 | Ctrl+1 to Ctrl+5 | the tabs Diagram, Harness, Lists, Checks, Releases |

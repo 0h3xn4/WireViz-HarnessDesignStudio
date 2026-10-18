@@ -458,35 +458,29 @@ def test_expert_properties_choose_exact_connector_for_an_interface_end(win) -> N
 
 
 def test_command_palette_runs_commands_and_finds_ids(win) -> None:  # type: ignore[no-untyped-def]
-    labels: list[str] = []
-
-    def fn(d) -> None:  # type: ignore[no-untyped-def]
-        labels.extend(e.label for e in d.entries)
-        d.input.setText("expert")
-        d._run_current()
-
-    DialogScript(win, fn)
+    script = DialogScript(win)  # the palette is an overlay: no dialog is run for it
     win.open_commands()
-    assert win.ctl.mode == "expert"
+    palette = win.command_palette
+    assert palette is not None and palette.isVisible()
+    labels = [e.label for e in palette.entries]
+    palette.input.setText("expert")
+    palette._run_current()
+    assert win.ctl.mode == "expert" and not palette.isVisible()
     assert any(x.startswith("Go to unit RW1") for x in labels) and any(
         x == "Connect with CAN" for x in labels
     )
-
-    def go(d) -> None:  # type: ignore[no-untyped-def]
-        d.input.setText("go to unit pcdu")
-        d._run_current()
-
-    DialogScript(win, go)
     win.open_commands()
+    assert win.command_palette is not None
+    win.command_palette.input.setText("go to unit pcdu")
+    win.command_palette._run_current()
     assert win.ctl.selection and win.ctl.selection.id == "PCDU"
+    assert script.seen == []
 
 
-def test_command_palette_keyboard_navigation(qtbot, win) -> None:  # type: ignore[no-untyped-def]
-    from harness_design_studio.gui.dialogs import CommandPalette
+def test_command_palette_keyboard_navigation(win) -> None:  # type: ignore[no-untyped-def]
+    from harness_design_studio.gui.command_palette import CommandPalette, PaletteEntry
 
     ran: list[str] = []
-    from harness_design_studio.gui.dialogs import PaletteEntry
-
     d = CommandPalette(
         win,
         [
@@ -494,13 +488,12 @@ def test_command_palette_keyboard_navigation(qtbot, win) -> None:  # type: ignor
             PaletteEntry("beta", lambda: ran.append("b")),
         ],
     )
-    qtbot.addWidget(d)
-    d.show()
+    d.open()
     QTest.keyClick(d.input, Qt.Key.Key_Down)
     QTest.keyClick(d.input, Qt.Key.Key_Up)
     QTest.keyClick(d.input, Qt.Key.Key_Down)
     QTest.keyClick(d.input, Qt.Key.Key_Return)
-    assert ran == ["b"]
+    assert ran == ["b"] and not d.isVisible()
 
 
 # ---- keyboard operation -----------------------------------------------------------------------
