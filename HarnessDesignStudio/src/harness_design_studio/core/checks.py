@@ -241,9 +241,17 @@ class FixAllPlan:
     skipped: list[tuple[Finding, str]]
 
 
+# findings whose fix records that a person looked at something: "Fix all" never does that for them
+# (the button on the finding itself still does)
+PERSON_ONLY_RULES: frozenset[str] = frozenset({"unconfirmed"})
+
+
 def fixable(findings: Iterable[Finding]) -> list[Finding]:
-    """The open findings that have a one-click fix, in the order given."""
-    return [f for f in findings if f.waiver is None and f.fix_label]
+    """The open findings "Fix all" puts right in one step: those that have a one-click fix, in the
+    order given, except the ones only a person may settle (confirming a connector the tool chose)."""
+    return [
+        f for f in findings if f.waiver is None and f.fix_label and f.rule not in PERSON_ONLY_RULES
+    ]
 
 
 def fix_summary(findings: Iterable[Finding]) -> str:

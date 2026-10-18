@@ -43,7 +43,7 @@ Window
 - A status-bar link "n values pending · n rules not checked" that opens the Checks tab filtered; the status bar also shows the project folder (monospace, cut in the middle when narrow), the number of rules and the tool version, "Generated at model xxxxxxxx" and the zoom level.
 - F6 and Shift+F6 move the keyboard focus between the diagram, the project panel and the inspector; Ctrl+I adds an interface; the Connect tool is in the Edit menu; every shortcut is in a menu and in the tooltip ("text (shortcut)").
 - View > Reset layout; the dock layout is saved with the window.
-- Fix all (n) in the Checks tab applies the one-click fix of every open problem that has one as one undo step; it is greyed out with the reason when there is nothing to fix or the project is read-only, and a fix that a released harness locks is left out and named.
+- Fix all (n) in the Checks tab applies the one-click fix of every open problem that has one as one undo step; it is greyed out with the reason when there is nothing to fix or the project is read-only, and a fix that a released harness locks is left out and named. It never confirms a connector the tool chose (a person does that, one problem at a time).
 
 ### Changed
 
