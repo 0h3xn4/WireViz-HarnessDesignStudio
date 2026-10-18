@@ -793,7 +793,9 @@ def test_everything_can_be_done_from_the_keyboard(host, qtbot) -> None:
     assert editor.text() == "0.25" and dlg.apply_btn.isEnabled()
     steps = len(ctl.history._undo)
     dlg.activateWindow()
-    QApplication.processEvents()
+    # Ctrl+Return is a window shortcut: it only fires once the dialog is the active window, which
+    # takes a moment on a loaded machine
+    qtbot.waitUntil(dlg.isActiveWindow, timeout=5000)
     QTest.keyClick(editor, Qt.Key.Key_Return, Qt.KeyboardModifier.ControlModifier)
     assert len(ctl.history._undo) == steps + 1 and not dlg.isVisible()
     wait_current(qtbot, ctl)
@@ -833,6 +835,7 @@ def _hundred(results: list[by_rule.RuleResult]) -> list[by_rule.RuleResult]:
     return [replace(results[i % len(results)], rule_id=f"rule-{i:03d}") for i in range(100)]
 
 
+@pytest.mark.perf
 def test_a_hundred_rules_build_filter_and_sort_quickly(host) -> None:
     ctl, theme, panel = host
     results = _hundred(ctl.drc_rule_results())

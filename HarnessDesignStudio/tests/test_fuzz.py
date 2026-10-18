@@ -190,6 +190,7 @@ def test_xlsx_import_rejects_random_bytes_politely(raw: bytes) -> None:
             read_table(f)
 
 
+@pytest.mark.perf
 def test_zip_bomb_workbook_is_refused_quickly(tmp_path: Path) -> None:
     import time
 

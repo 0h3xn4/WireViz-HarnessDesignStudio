@@ -849,6 +849,7 @@ def test_persist_widths_waits_for_a_model_that_fills_later(theme, qtbot, tmp_pat
     assert helper.restored and view.horizontalHeader().sectionSize(2) == 70
 
 
+@pytest.mark.perf
 def test_big_tables_stay_fast(theme, qtbot) -> None:
     import time
 
