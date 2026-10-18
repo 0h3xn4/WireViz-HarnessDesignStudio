@@ -66,13 +66,13 @@ def test_the_legend_is_redrawn_when_the_last_link_of_a_kind_goes_and_comes_back(
 # ---- F2-5 ---------------------------------------------------------------------------------------
 
 
-def test_the_outline_drops_its_highlighted_row_when_the_selection_is_cleared(win) -> None:  # type: ignore[no-untyped-def]
-    win.tabs.setCurrentWidget(win.outline)
+def test_the_tree_drops_its_highlighted_row_when_the_selection_is_cleared(win) -> None:  # type: ignore[no-untyped-def]
+    tree = win.project_tree
     QApplication.processEvents()
     win.ctl.select("unit", "OBC")
-    assert len(win.outline.tree.selectedItems()) == 1
+    assert len(tree.view.selectionModel().selectedRows()) == 1
     win.ctl.select(None)
-    assert win.outline.tree.selectedItems() == []
+    assert tree.view.selectionModel().selectedRows() == []
 
 
 # ---- F2-6 ---------------------------------------------------------------------------------------
@@ -129,14 +129,14 @@ def test_the_tour_skips_steps_whose_target_is_not_on_screen(win) -> None:  # typ
         assert target.isVisibleTo(win), key
         seen.append(key)
         win.tour.next.click()
-    assert seen and "palette" not in seen and "types" not in seen
+    assert seen == ["canvas", "types", "problems", "generate"]  # the "add" step points at the dock
     assert not win.tour.active
 
 
 def test_the_tour_counts_only_the_steps_it_shows(win) -> None:  # type: ignore[no-untyped-def]
     win.dock_left.hide()
     win.tour.start()
-    assert "Step 1 of 3" in win.tour.title.text()
+    assert "Step 1 of 4" in win.tour.title.text()
     win.tour.skip.click()
 
 
@@ -220,8 +220,8 @@ def test_long_ids_and_connector_names_are_elided_with_an_ellipsis() -> None:
 
 
 def test_a_newline_in_a_name_typed_into_the_table_is_refused(win) -> None:  # type: ignore[no-untyped-def]
-    win.table.refresh()
-    model = win.table.model
+    win.interface_table.refresh()
+    model = win.interface_table.model
     messages: list[str] = []
     win.ctl.message.connect(lambda text, ok: messages.append(text))
     iid = model.ids[0]

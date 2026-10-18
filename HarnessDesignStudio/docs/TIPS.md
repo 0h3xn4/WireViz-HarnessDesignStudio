@@ -38,8 +38,9 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+E | Export... (the Export outputs window) |
 | Ctrl+I | New interface... |
 | Ctrl+1 to Ctrl+5 | The tabs Diagram, Harness, Lists, Checks, Releases |
+| Ctrl+Shift+T | The Interface table (the Interfaces tab of the left panel) |
 | F6 and Shift+F6 | Move the keyboard focus to the next or previous panel |
-| Delete | Delete the selection (it first shows what else goes with it); in the diagram, the Interface table and the Outline |
+| Delete | Delete the selection (it first shows what else goes with it); in the diagram, the Interface table and the Project tree |
 | C | Start the Connect tool; then click the two units to add an interface |
 | Esc | Back to the Select tool; also clears the selection and ends the focus on a unit or link |
 | Ctrl+= and Ctrl+- | Zoom in and out |
@@ -67,13 +68,13 @@ Press **Ctrl+K**, type a few letters, press **Enter**. The list is one searchabl
 - **Connect with ...** for each interface type (17 ship with the tool);
 - **Go to unit** `OBC1 (Computer 1)` for every unit, and **Go to interface** `IF-002 (...)` for every interface.
 
-Type several words and every word must match, in any order (`go rw1` finds *Go to unit RW1*). A name that starts with what you typed comes first. **Up** and **Down** move through the list, which has no length limit; keep typing to narrow it. The commands include Generate, Run checks, Export, Release, Start new revision, the imports, Engineering values and Reset layout. It is the quickest way to jump to one object in a project with dozens of units.
+Type several words and every word must match, in any order (`go rw1` finds *Go to unit RW1*). A name that starts with what you typed comes first. **Up** and **Down** move through the list, which has no length limit; keep typing to narrow it. The palette floats over the window instead of blocking it: **Esc**, a click anywhere else or **Ctrl+K** again closes it. The commands include Generate, Run checks, Export, Release, Start new revision, the imports, Engineering values and Reset layout. It is the quickest way to jump to one object in a project with dozens of units.
 
 ## Reading a busy diagram
 
 - **Click a unit or a link**: its links stay in colour and everything else fades. Click the empty background or press **Esc** to see everything again.
 - **Show** in the toolbar fades everything except one *signal class*, one *connector* or one *bundle (harness)*: choose **All interfaces**, **By signal class**, **By connector** or **By bundle (harness)**, then the value. It changes the picture only, never the project.
-- The **Interface table** and **Outline** tabs of the bottom panel list every interface and every unit as text, and the **Project** tab (left) is a tree of the same objects with a filter (press `/`). They are the screen-reader friendly views, and also the fastest way to find one row in a large design.
+- The **Interfaces** tab (left panel, Ctrl+Shift+T) lists every interface as an editable table, and the **Project** tab beside it is a tree of every unit, interface and more, with a filter (press `/`); Shift+arrows in the tree select several units at once. They are the screen-reader friendly views, and also the fastest way to find one row in a large design.
 - **Ctrl+F** finds units and links by ID, name, connector or type and marks every match; **Shift+click**, **Ctrl+click** and a drag on the background select several items.
 - Small marks tell the state: a badge with an icon and a count is a problem, a warning, a value still to enter or *not checked*; a lock with *W001 A* means a released harness holds the object.
 - A voltage or current shows next to a link only when it was entered; **View > Show all link labels** shows them all.

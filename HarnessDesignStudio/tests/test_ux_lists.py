@@ -335,6 +335,7 @@ def test_stale_banner_appears_when_the_model_changed_since_generation(qtbot, the
     assert not panel.banner.isVisible()
 
 
+@pytest.mark.perf
 def test_staleness_is_worked_out_off_the_ui_thread(qtbot, theme, monkeypatch) -> None:
     import threading
     import time

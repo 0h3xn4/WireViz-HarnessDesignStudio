@@ -12,7 +12,8 @@ from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QSettings
-from PySide6.QtWidgets import QApplication, QDialog, QPushButton
+from PySide6.QtGui import QAction
+from PySide6.QtWidgets import QApplication, QDialog
 
 from harness_design_studio.gui.main_window import MainWindow
 from harness_design_studio.gui.theme import ThemeManager
@@ -42,10 +43,10 @@ def main() -> int:
         (widget or win).grab().save(str(OUT / f"{name}.png"))  # type: ignore[attr-defined]
         print(name)
 
-    def btn(name: str) -> QPushButton:
-        b = win.findChild(QPushButton, name)
-        assert b is not None
-        return b
+    def action(name: str) -> QAction:
+        a = next((x for x in win.findChildren(QAction) if x.objectName() == name), None)
+        assert a is not None, name
+        return a
 
     app.processEvents()
     win.view.fit()
@@ -53,24 +54,27 @@ def main() -> int:
     shot("01-first-run-tour")
     win.tour.stop()
     shot("02-guided-main")
-    btn("add-sensor").click()
-    btn("type-can").click()
+    action("menu-add-sensor").trigger()  # Edit > Add unit (was the Palette's button)
+    action("menu-connect-can").trigger()  # Edit > Connect with; the Connect tool's arrow lists them
     win.ctl.pick("OBC")
     shot("03-connect-compatible-highlight")
     win.ctl.end_connect()
     win.ctl.set_mode("expert")
-    btn("type-power_primary").click()
+    action("menu-connect-power_primary").trigger()
     shot("04-expert-connectors")
     win.ctl.end_connect()
     win.ctl.select("unit", "RW1")
     shot("05-expert-properties")
     win.ctl.set_mode("guided")
     win.ctl.redundant_copy("RW1")
-    win.tabs.setCurrentIndex(0)
+    win.dock_right.show()
+    win.inspector.show_tab("problems")
     shot("06-redundant-copy-and-problems")
     win.ctl.select("interface", "IF-TM-RW1")
-    win.tabs.setCurrentIndex(2)
+    win.show_interfaces()
     shot("07-interface-table")
+    win.left_tabs.setCurrentIndex(win.left_tabs.index_of("tree"))
+    win.inspector.show_tab("inspector")
 
     def import_dialog(d):  # type: ignore[no-untyped-def]
         d.resize(900, 640)
@@ -102,13 +106,11 @@ def main() -> int:
     win.run_dialog = lambda d: (waive_dialog(d), 0)[1]  # type: ignore[assignment,misc]
     win.waive_flow(cross)
 
-    def palette(d):  # type: ignore[no-untyped-def]
-        d.show()
-        d.input.setText("conn")
-        shot("11-command-palette", d)
-
-    win.run_dialog = lambda d: (palette(d), 0)[1]  # type: ignore[assignment,misc]
-    win.open_commands()
+    win.open_commands()  # the palette is an overlay over the window, not a dialog
+    assert win.command_palette is not None
+    win.command_palette.input.setText("conn")
+    shot("11-command-palette")
+    win.command_palette.dismiss()
     win.act_dark.trigger()
     shot("12-dark-theme")
     win.act_dark.trigger()

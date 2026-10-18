@@ -120,7 +120,7 @@ harness-design-studio-gui --selftest    # opens the editor offscreen, makes a pr
 
 Then start **Harness Design Studio** from the application menu. The first start opens a sample project and a short tour.
 
-**What you should see:** a window with the title *Harness Design Studio*, a diagram of boxes (units) joined by lines (interfaces) in the middle, tabs such as *Problems* at the bottom or side, and the menus **File**, **Edit**, **View**, **Help**. If the window is too small or the text is hard to read, see *If the app does not start* below. **F1** opens the user guide.
+**What you should see:** a window with the title *Harness Design Studio*, a diagram of boxes (units) joined by lines (interfaces) in the middle, tabs such as *Problems* on the right and *Project* on the left, and the menus **File**, **Edit**, **View**, **Help**. If the window is too small or the text is hard to read, see *If the app does not start* below. **F1** opens the user guide.
 
 ## Your first five minutes after installing
 

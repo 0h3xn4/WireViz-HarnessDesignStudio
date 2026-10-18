@@ -1,7 +1,6 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
-"""The new docks inside the real window (as the lead will wire them): the tree on the left, the
-inspector on the right with the existing properties and problems panels. They must pass the same
-audits as the old panels."""
+"""The docks inside the real window: the tree on the left, the inspector on the right with the
+properties and problems panels. They must pass the accessible-name audit and stay in step."""
 
 from pathlib import Path
 
@@ -15,8 +14,6 @@ from PySide6.QtWidgets import QApplication, QWidget  # noqa: E402
 
 from harness_design_studio.core.generate.engine import generate_project  # noqa: E402
 from harness_design_studio.core.samples import sat15_full  # noqa: E402
-from harness_design_studio.gui.inspector import Inspector  # noqa: E402
-from harness_design_studio.gui.project_tree import ProjectTree  # noqa: E402
 from tests.gui_helpers import make_window  # noqa: E402
 from tests.test_accessibility import unnamed  # noqa: E402
 
@@ -28,10 +25,9 @@ def wired(qtbot, tmp_path: Path):
     p = sat15_full()
     generate_project(p)
     win.ctl._install(p, None, None)
-    tree = ProjectTree(win.ctl, win.theme)
-    insp = Inspector(win.ctl, win.theme, props=win.props, problems=win.problems)
-    win.dock_left.setWidget(tree)
-    win.dock_right.setWidget(insp)
+    tree, insp = win.project_tree, win.inspector  # the window plugs them in itself
+    win.dock_left.show()
+    win.dock_right.show()
     tree.selectionRequested.connect(insp.show_object)
     QApplication.processEvents()
     return win, tree, insp

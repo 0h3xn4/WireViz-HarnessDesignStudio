@@ -1,4 +1,4 @@
-"""Main window: top bar, banners, main tabs, project panel, inspector, bottom panels, status bar."""
+"""Main window: top bar, banners, main tabs, project panel with the interface table, inspector, status bar."""
 
 import contextlib
 import time
@@ -44,7 +44,6 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressDialog,
     QPushButton,
-    QTabWidget,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -81,8 +80,8 @@ from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.canvas import DiagramView, ZoomIndicator
 from harness_design_studio.gui.checks_panel import ChecksPanel, PendingValuesLink
+from harness_design_studio.gui.command_palette import CommandPalette, PaletteEntry
 from harness_design_studio.gui.controller import (
-    LIST_DELAY_MS,
     Delta,
     EditorController,
     NeedSaveAs,
@@ -92,7 +91,6 @@ from harness_design_studio.gui.controller import (
 from harness_design_studio.gui.dialogs import (
     Banner,
     ChangeDialog,
-    CommandPalette,
     ConfirmDialog,
     DiffDialog,
     GeneratePreviewDialog,
@@ -101,7 +99,6 @@ from harness_design_studio.gui.dialogs import (
     ImportDialog,
     IssuesDialog,
     NewInterfaceDialog,
-    PaletteEntry,
     WaiverDialog,
     WireColoursDialog,
 )
@@ -111,22 +108,14 @@ from harness_design_studio.gui.icons import icon, icon_button, style_dock_button
 from harness_design_studio.gui.import_kinds import KINDS
 from harness_design_studio.gui.import_wizard import ImportWizard
 from harness_design_studio.gui.inspector import Inspector
+from harness_design_studio.gui.interface_table import InterfaceTable
 from harness_design_studio.gui.lists_panel import ListsPanel
 from harness_design_studio.gui.new_project_dialog import (
     BLANK,
     NewProjectDialog,
     NewProjectRequest,
 )
-from harness_design_studio.gui.panels import (
-    HarnessPanel,
-    InterfaceTable,
-    OutlinePanel,
-    PalettePanel,
-    ProblemsPanel,
-    PropertiesPanel,
-    TodoPanel,
-    category_icon,
-)
+from harness_design_studio.gui.panels import ProblemsPanel, PropertiesPanel, category_icon
 from harness_design_studio.gui.project_tree import ProjectTree
 from harness_design_studio.gui.releases_panel import ReleasesPanel
 from harness_design_studio.gui.shell import (
@@ -136,7 +125,6 @@ from harness_design_studio.gui.shell import (
     SlotTabs,
     auto_scale,
     refusal_harness,
-    shrinkable,
 )
 from harness_design_studio.gui.theme import MODES, ThemeManager, mark_mono
 from harness_design_studio.gui.tokens import CATEGORIES
@@ -146,10 +134,11 @@ from harness_design_studio.resources import guide_path
 
 SCALES = (100, 125, 150, 200)
 ARRANGE_IN_WORKER = 60  # a diagram with more units is arranged off the UI thread
-STATE_VERSION = 1  # of the saved dock layout (`saveState`); change it when the docks change
+STATE_VERSION = 2  # of the saved dock layout (`saveState`); change it when the docks change
 WIDE_PX = 1150  # in UI-scale-free px: the right dock needs this much window width
 MEDIUM_PX = 800  # ... and the left dock this much
-TALL_PX = 800  # below this window height the bottom panel is hidden so the diagram keeps 55 %
+# the left dock opens this wide on the Interfaces tab (if the window allows)
+INTERFACE_DOCK_PX = 620
 MAIN_TABS = ("diagram", "harness", "lists", "checks", "releases")  # Ctrl+1 ... Ctrl+5
 
 
@@ -433,8 +422,9 @@ class MainWindow(QMainWindow):
         self._check_asked = False  # the person pressed Check: say when it has finished
         self._shown = False
         self._have_saved_state = False
-        self._layout_class: tuple[bool, bool, bool] | None = None
-        self._bottom_auto_hidden = False
+        self._layout_class: tuple[bool, bool] | None = None
+        self._left_width = 0  # the left panel's width before the Interfaces tab widened it
+        self.command_palette: CommandPalette | None = None  # the Ctrl+K overlay, while it is open
         self._pane = 0
 
         self._build_center()
@@ -449,7 +439,6 @@ class MainWindow(QMainWindow):
         self.tour.on_stop = lambda: self.settings.setValue("tour/done", True)
 
         self.ctl.message.connect(self._on_message)
-        self.ctl.drcChanged.connect(self._update_tab_badges)
         self.ctl.drcStateChanged.connect(self._on_check_state)
         self.ctl.stateChanged.connect(self._on_state)
         self.ctl.changed.connect(self._on_changed)
@@ -460,13 +449,7 @@ class MainWindow(QMainWindow):
         self.props.deleteRequested.connect(self.delete_flow)
         self.ctl.connectChanged.connect(self._on_connect)
         self.ctl.modeChanged.connect(self._on_mode)
-        self.palette_panel.addUnit.connect(self._add_unit)
-        self.palette_panel.connectType.connect(self._toggle_connect)
-        self.palette_panel.importRequested.connect(self.import_flow)
-        self.problems.showRequested.connect(self.show_object)
-        self.problems.waiveRequested.connect(self.waive_flow)
-        self.todo.activated.connect(self._todo_activated)
-        self.table.newInterfaceRequested.connect(self.new_interface_flow)
+        self.interface_table.newInterfaceRequested.connect(self.new_interface_flow)
         self.checks_panel.showRequested.connect(self.show_object)
         self.releases_panel.changeRequested.connect(self.change_flow)
         self.pending_link.filterRequested.connect(self.show_unchecked)
@@ -485,10 +468,6 @@ class MainWindow(QMainWindow):
         self._hash_timer.setSingleShot(True)
         self._hash_timer.setInterval(250)
         self._hash_timer.timeout.connect(self._update_hash)
-        self._badge_timer = QTimer(self)
-        self._badge_timer.setSingleShot(True)
-        self._badge_timer.setInterval(LIST_DELAY_MS)
-        self._badge_timer.timeout.connect(self._apply_tab_badges)
 
         self._default_state = self.saveState(STATE_VERSION)  # View > Reset layout goes back to it
         self._restore_settings()
@@ -538,6 +517,10 @@ class MainWindow(QMainWindow):
         self.tool_connect.setCheckable(True)
         self.tool_connect.setProperty("toggle", True)
         self.tool_connect.setToolTip(strings.TOOL_CONNECT_TIP)
+        self.tool_connect.setAccessibleName(strings.TOOL_CONNECT)
+        self.tool_connect.setAccessibleDescription(strings.TOOL_CONNECT_TIP)
+        # the arrow next to it lists the interface types (it was the palette's job)
+        self.tool_connect.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.tool_select.clicked.connect(lambda: self.ctl.end_connect())
         self.tool_connect.clicked.connect(lambda: self.ctl.begin_connect(self.ctl.connect_type))
         self._told_properties = False
@@ -614,8 +597,8 @@ class MainWindow(QMainWindow):
         self.setCentralWidget(shell)
 
     def _build_docks(self) -> None:
-        self.palette_panel = PalettePanel(self.ctl, self.theme)
-        # left: the project tree (a slot, filled when it exists) and the palette
+        # left: the project tree (a slot, filled when it exists) and the interface table
+        self.interface_table = InterfaceTable(self.ctl)
         self.left_tabs = SlotTabs()
         self.left_tabs.setObjectName("left-tabs")
         self.left_tabs.setAccessibleName(strings.SHELL_LEFT_TABS)
@@ -625,14 +608,19 @@ class MainWindow(QMainWindow):
             EmptyStateWidget(self.theme, strings.TAB_PROJECT, strings.EMPTY_VIEW_TREE, icon="tree"),
             installed=False,
         )
-        self.left_tabs.add_slot("palette", strings.TAB_PALETTE, self.palette_panel)
+        self.left_tabs.add_slot(
+            "interfaces",
+            strings.TAB_INTERFACES,
+            self.interface_table,
+            tip=strings.TAB_INTERFACES_TIP,
+        )
         self.dock_left = self._dock(
-            strings.PALETTE,
+            strings.TAB_PROJECT,
             self.left_tabs,
             Qt.DockWidgetArea.LeftDockWidgetArea,
-            "dock-palette",
+            "dock-project",
         )
-        self.left_tabs.currentChanged.connect(lambda _i: self._sync_dock_titles())
+        self.left_tabs.currentChanged.connect(lambda _i: self._left_tab_changed())
         # right: Inspector (the properties panel until the new one arrives), Why, Problems
         self.props = PropertiesPanel(self.ctl, self.theme)
         self.side_tabs = SlotTabs()
@@ -659,34 +647,9 @@ class MainWindow(QMainWindow):
             Qt.DockWidgetArea.RightDockWidgetArea,
             "dock-properties",
         )
-        self.problems = ProblemsPanel(self.ctl)
-        self.todo = TodoPanel(self.ctl)
-        self.table = InterfaceTable(self.ctl)
-        self.outline = OutlinePanel(self.ctl)
-        self.harness_panel = HarnessPanel(self.ctl)
-        self.harness_panel.exportRequested.connect(self.export_flow)
-        self.harness_panel.changeRequested.connect(self.change_flow)
-        self.tabs = QTabWidget()
-        self.tabs.setObjectName("bottom-tabs")
-        self.tabs.setAccessibleName(strings.BOTTOM_TABS)
-        self.tabs.addTab(self.problems, strings.PROBLEMS)
-        self.tabs.addTab(self.todo, strings.TODO)
-        self.tabs.addTab(self.table, strings.INTERFACE_TABLE)
-        self.tabs.addTab(self.harness_panel, strings.HARNESS_PLANS)
-        self.tabs.addTab(self.outline, strings.OUTLINE)
-        for page in (self.problems, self.todo, self.table, self.harness_panel, self.outline):
-            shrinkable(page)  # a long line in a card must not widen the whole window
-        self.dock_bottom = self._dock(
-            strings.PROBLEMS_AND_STATUS,
-            self.tabs,
-            Qt.DockWidgetArea.BottomDockWidgetArea,
-            "dock-bottom",
-        )
         self.dock_left.setMinimumWidth(240)
         self.dock_right.setMinimumWidth(260)
         self.resizeDocks([self.dock_left, self.dock_right], [250, 310], Qt.Orientation.Horizontal)
-        self.tabs.setMinimumHeight(90)  # without this the panels' own minimum takes ~430 px
-        self.resizeDocks([self.dock_bottom], [170], Qt.Orientation.Vertical)
 
     def _dock(self, title: str, widget: QWidget, area: Qt.DockWidgetArea, name: str) -> QDockWidget:
         dock = QDockWidget(title, self)
@@ -736,11 +699,25 @@ class MainWindow(QMainWindow):
         sb.addPermanentWidget(self.pending_link)
         sb.addPermanentWidget(self.zoom_level)  # "100 %" (the view's zoomChanged feeds it)
 
+    def _left_tab_changed(self) -> None:
+        self._sync_dock_titles()
+        if not self.dock_left.isVisible():
+            return
+        if self.left_tabs.currentWidget() is self.interface_table:
+            # the table has eight columns: give the left panel room for them (at most half the window)
+            want = min(self.theme.px(INTERFACE_DOCK_PX), self.width() // 2)
+            if self.dock_left.width() < want:
+                self._left_width = self.dock_left.width()
+                self.resizeDocks([self.dock_left], [want], Qt.Orientation.Horizontal)
+        elif self._left_width:  # back to the tree: the panel narrows to what it was
+            self.resizeDocks([self.dock_left], [self._left_width], Qt.Orientation.Horizontal)
+            self._left_width = 0
+
     def _sync_dock_titles(self) -> None:
         self.dock_left.setWindowTitle(
-            strings.TAB_PROJECT
-            if self.left_tabs.currentWidget() is not self.palette_panel
-            else strings.PALETTE  # fmt: skip
+            strings.TAB_INTERFACES
+            if self.left_tabs.currentWidget() is self.interface_table
+            else strings.TAB_PROJECT  # fmt: skip
         )
 
     # ---- the slot registry: views that are written elsewhere plug in here --------------------------
@@ -808,6 +785,9 @@ class MainWindow(QMainWindow):
             widget.reviewRequested.connect(lambda hid: self.change_flow("review", hid))
             widget.releaseRequested.connect(lambda hid: self.change_flow("release", hid))
             widget.reviseRequested.connect(lambda hid: self.change_flow("revise", hid))
+            widget.changesRequested.connect(lambda hid: self.change_flow("changes", hid))
+            widget.historyRequested.connect(lambda hid: self.change_flow("history", hid))
+            widget.deleteRequested.connect(lambda hid: self.change_flow("delete", hid))
             widget.whyRequested.connect(lambda kind, ident: self._show_why(kind, ident))
             return True
         if isinstance(widget, ListsPanel):
@@ -827,24 +807,23 @@ class MainWindow(QMainWindow):
         return False
 
     def _install_default_views(self) -> None:
-        """Plug in the views that exist: Harness, Lists, the project tree and the inspector (with
-        its Why and Problems tabs; its Problems tab has a panel of its own, the one of the bottom
-        panel stays where it is until that one is retired)."""
+        """Plug in the views: Harness, Lists, the project tree and the inspector (with its Why and
+        Problems tabs; the Problems tab holds the problems list with the to-do items)."""
         self.harness_view = HarnessView(self.ctl, self.theme, self.settings)
         self.lists_panel = ListsPanel(self.ctl, self.theme, self.settings)
         self.project_tree = ProjectTree(self.ctl, self.theme, self.settings)
         # the properties panel leaves its tab for the inspector that wraps it
         self.side_tabs.install("inspector", EmptyStateWidget(self.theme, strings.TAB_INSPECTOR, ""))
-        self.problems_side = ProblemsPanel(self.ctl)
-        self.problems_side.showRequested.connect(self.show_object)
-        self.problems_side.waiveRequested.connect(self.waive_flow)
-        self.inspector = Inspector(
-            self.ctl, self.theme, props=self.props, problems=self.problems_side
-        )
+        self.problems = ProblemsPanel(self.ctl)
+        self.problems.showRequested.connect(self.show_object)
+        self.problems.waiveRequested.connect(self.waive_flow)
+        self.inspector = Inspector(self.ctl, self.theme, props=self.props, problems=self.problems)
         self.install_view("harness", self.harness_view)
         self.install_view("lists", self.lists_panel)
         self.install_view("tree", self.project_tree)
         self.install_view("inspector", self.inspector)
+        self.project_tree.set_context_actions(self._tree_actions)
+        self.project_tree.deleteRequested.connect(self._tree_delete)
 
     # ---- what the new views ask for ----------------------------------------------------------------
     def _show_why(self, kind: str, ident: str) -> None:
@@ -869,6 +848,38 @@ class MainWindow(QMainWindow):
             self._go_to_harness(ident)
         else:
             self.inspector.show_object(kind, ident)
+
+    def _tree_actions(self, kind: str, ident: str) -> list[QAction]:
+        """The change-control steps of a harness row in the tree's context menu."""
+        h = self.ctl.project.harnesses.get(ident)
+        if kind != "harness" or h is None:
+            return []
+        ro = self.ctl.read_only
+        has_base = any(b.harness_id == ident for b in self.ctl.project.baselines.values())
+        steps = (
+            ("review", strings.A_REVIEW, h.status == "draft" and not ro),
+            ("release", strings.A_RELEASE, h.status in ("draft", "in_review") and not ro),
+            ("revise", strings.A_REVISE, h.status == "released" and not ro),
+            ("changes", strings.A_CHANGES, has_base),
+            ("history", strings.A_HISTORY, True),
+            ("delete", strings.A_DELETE_HARNESS, h.status in ("draft", "in_review") and not ro),
+        )
+        out: list[QAction] = []
+        for action, text, enabled in steps:
+            act = QAction(text, self)
+            act.setObjectName(f"tree-harness-{action}")
+            act.setEnabled(enabled)
+            act.triggered.connect(lambda _c=False, a=action: self.change_flow(a, ident))
+            out.append(act)
+        return out
+
+    def _tree_delete(self, kind: str, ident: str) -> None:
+        """Delete pressed in the project tree on a unit or an interface: what is deleted is the
+        row with the cursor (and the rest of a multiple selection made in the tree)."""
+        chosen = {(s.kind, s.id) for s in self.ctl.selected}
+        if (kind, ident) not in chosen:
+            self.ctl.select(kind, ident)
+        self.delete_flow()
 
     def _tree_import(self, kind: str) -> None:
         if kind == "interfaces":
@@ -949,7 +960,8 @@ class MainWindow(QMainWindow):
             self.delete_flow,
             "Delete",
             name="act-delete",
-            only_in=(self.view, self.table.view, self.outline.tree),  # not from other panels
+            # not from other panels (the project tree reports its own Delete)
+            only_in=(self.view, self.interface_table.view),
         )
         self.act_redundant = a(
             strings.REDUNDANT_COPY, self._redundant_selected, name="act-redundant"
@@ -1043,6 +1055,12 @@ class MainWindow(QMainWindow):
         self.act_review = a(strings.A_REVIEW, partial(self.change_target, "review"), name="act-review")  # fmt: skip
         self.act_release = a(strings.A_RELEASE, partial(self.change_target, "release"), name="act-release")  # fmt: skip
         self.act_revise = a(strings.A_REVISE, partial(self.change_target, "revise"), name="act-revise")  # fmt: skip
+        self.act_changes = a(strings.A_CHANGES, partial(self.harness_step, "changes"), name="act-changes")  # fmt: skip
+        self.act_history = a(strings.A_HISTORY, partial(self.harness_step, "history"), name="act-history")  # fmt: skip
+        self.act_delete_harness = a(strings.A_DELETE_HARNESS, partial(self.harness_step, "delete"), name="act-delete-harness")  # fmt: skip
+        self.act_changes.setToolTip(strings.CHANGES_TIP)
+        self.act_history.setToolTip(strings.HISTORY_TIP)
+        self.act_delete_harness.setToolTip(strings.DELETE_HARNESS_TIP)
         self.act_values = a(strings.A_VALUES, self.values_flow, name="act-values")
         self.act_new_interface = a(
             strings.A_NEW_INTERFACE, self.new_interface_flow, "Ctrl+I", name="act-new-interface"
@@ -1068,6 +1086,9 @@ class MainWindow(QMainWindow):
             start=1,
         ):
             self.go_actions[name] = a(label, partial(self._go_tab, name), f"Ctrl+{k}", name=f"act-go-{name}")  # fmt: skip
+        self.act_go_interfaces = a(
+            strings.A_GO_INTERFACES, self.show_interfaces, "Ctrl+Shift+T", name="act-go-interfaces"
+        )
         # File > Import: the existing dialog for interfaces, the wizard for the other kinds
         self.import_actions: dict[str, QAction] = {}
         for kind in KINDS:
@@ -1239,6 +1260,7 @@ class MainWindow(QMainWindow):
             self.menu_add.addAction(act)
         self.menu_connect = e.addMenu(strings.M_CONNECT_WITH)
         self._rebuild_connect_menu()
+        self.tool_connect.setMenu(self.menu_connect)
         v = mb.addMenu(strings.M_VIEW)
         v.addAction(self.act_guided)
         v.addAction(self.act_expert)
@@ -1264,7 +1286,7 @@ class MainWindow(QMainWindow):
         ):
             v.addAction(act)
         v.addSeparator()
-        for dock in (self.dock_left, self.dock_right, self.dock_bottom):
+        for dock in (self.dock_left, self.dock_right):
             v.addAction(dock.toggleViewAction())
         v.addAction(self.act_reset_layout)
         d = mb.addMenu(strings.M_DESIGN)
@@ -1272,7 +1294,14 @@ class MainWindow(QMainWindow):
         for act in (self.act_generate, self.act_check, self.act_cancel_check, self.act_export):
             d.addAction(act)
         d.addSeparator()
-        for act in (self.act_review, self.act_release, self.act_revise):
+        for act in (
+            self.act_review,
+            self.act_release,
+            self.act_revise,
+            self.act_changes,
+            self.act_history,
+            self.act_delete_harness,
+        ):
             d.addAction(act)
         d.addSeparator()
         d.addAction(self.act_values)
@@ -1280,6 +1309,7 @@ class MainWindow(QMainWindow):
         self.menu_go = g
         for act in self.go_actions.values():
             g.addAction(act)
+        g.addAction(self.act_go_interfaces)
         g.addSeparator()
         g.addAction(self.act_next_pane)
         g.addAction(self.act_prev_pane)
@@ -1431,30 +1461,49 @@ class MainWindow(QMainWindow):
         kind = self.filter_combo.currentData()
         self.view.dscene.set_filter(kind, self.filter_value.currentData() if kind else None)
 
+    def _sync_connect_menu(self) -> None:
+        """Tick the interface type the Connect tool is using (and none while it is off)."""
+        c = self.ctl
+        for act in self.menu_connect.actions():
+            act.setChecked(
+                c.tool == "connect"
+                and act.objectName().removeprefix("menu-connect-") == c.connect_type
+            )
+
     def _rebuild_connect_menu(self) -> None:
         for old in self.menu_connect.actions():  # `_act` also registered them on the window
             self.removeAction(old)
             old.deleteLater()
         self.menu_connect.clear()
         for tid, t in sorted(self.ctl.project.interface_types.items()):
-            act = self._act(t.name, partial(self._toggle_connect, tid), name=f"menu-connect-{tid}")
+            act = self._act(
+                t.name,
+                partial(self._toggle_connect, tid),
+                checkable=True,
+                name=f"menu-connect-{tid}",
+            )
             act.setIcon(category_icon(t.category, self.theme))
             self.menu_connect.addAction(act)
+        self._sync_connect_menu()
 
     def _tour_reveals(self) -> dict[str, Callable[[], None]]:
-        """The steps about the palette and the interface types need the Palette tab in front."""
+        """The step about adding units needs the project tree in front, the one about problems
+        the Problems tab of the inspector."""
 
-        def palette() -> None:
-            self.left_tabs.setCurrentIndex(self.left_tabs.index_of("palette"))
+        def tree() -> None:
+            self.left_tabs.setCurrentIndex(self.left_tabs.index_of("tree"))
 
-        return {"palette": palette, "types": palette}
+        def problems() -> None:
+            self.inspector.show_tab("problems")
+
+        return {"add": tree, "problems": problems}
 
     def _tour_targets(self) -> dict[str, QWidget]:
         return {
-            "palette": self.left_tabs,
+            "add": self.left_tabs,
             "canvas": self.view,
-            "types": self.left_tabs,
-            "bottom": self.tabs,
+            "types": self.tool_connect,
+            "problems": self.side_tabs,
             "generate": self.generate_btn,
         }
 
@@ -1498,6 +1547,8 @@ class MainWindow(QMainWindow):
         for act in self.import_actions.values():
             act.setEnabled(not ro)
         self.act_new_interface.setEnabled(not ro)
+        self.menu_add.setEnabled(not ro)  # the ways to add a unit and to connect (the Palette's)
+        self.menu_connect.setEnabled(not ro)
         self.act_generate.setEnabled(not ro)
         self.act_wire_colours.setEnabled(not ro)
         unsaved = strings.UNSAVED if c.autosaves else strings.UNSAVED_NO_JOURNAL
@@ -1511,7 +1562,6 @@ class MainWindow(QMainWindow):
         opened = self._facts_token is None or self._facts_token[0] != c.state_token[0]
         self._show_status(path=True, compute=opened)
         self._hash_timer.start()
-        self._update_tab_badges()
 
     def _refresh_undo_actions(self) -> None:
         """ "Undo Move PDU2" / "Redo Move PDU2": the menu says which step it would run."""
@@ -1544,19 +1594,6 @@ class MainWindow(QMainWindow):
             self.banner.show_message(strings.BANNER_SAMPLE, strings.SAVE_COPY, self._save_copy)
         else:
             self.banner.hide()
-
-    def _update_tab_badges(self) -> None:
-        if self.ctl.findings_are_many():
-            self._badge_timer.start()  # counting tens of thousands of findings waits for the redraw
-        else:
-            self._apply_tab_badges()
-
-    def _apply_tab_badges(self) -> None:
-        errors, warnings = self.problems.counts()
-        label = strings.PROBLEMS + (f" ({errors + warnings})" if errors + warnings else "")
-        self.tabs.setTabText(0, label)
-        n = len(self.ctl.todos())
-        self.tabs.setTabText(1, f"{strings.TODO} ({n})" if n else strings.TODO)
 
     def _update_hash(self) -> None:
         """Read the model hash and the plan and output states now (cached by model state: the
@@ -1704,7 +1741,6 @@ class MainWindow(QMainWindow):
             a.objectName().removeprefix("menu-connect-") for a in self.menu_connect.actions()
         }:
             self._rebuild_connect_menu()
-        self._update_tab_badges()
         self._update_selection_actions()
         p = self.ctl.project  # the counts follow every edit at once; only the hash waits
         self.status_counts.setText(
@@ -1784,6 +1820,7 @@ class MainWindow(QMainWindow):
         c = self.ctl
         self.tool_select.setChecked(c.tool == "select")
         self.tool_connect.setChecked(c.tool == "connect")
+        self._sync_connect_menu()
         hint, warn = c.connect_hint_and_warning()
         self.hint.setText(hint)
         # reserve two lines so a long hint never makes the toolbar jump
@@ -1946,9 +1983,8 @@ class MainWindow(QMainWindow):
             select_any("wire", wire)
 
     def harness_target(self) -> QWidget:
-        """The widget that shows harnesses now: the Harness view once installed, else the plans
-        panel of the bottom dock."""
-        return self.view_widget("harness") if self.view_installed("harness") else self.harness_panel
+        """The widget that shows harnesses: the Harness view."""
+        return self.view_widget("harness")
 
     def generate_flow(self) -> None:
         if self.ctl.read_only:
@@ -1988,17 +2024,8 @@ class MainWindow(QMainWindow):
         return self.ctl.apply_generation(plan, token)
 
     def show_harness_view(self) -> None:
-        """Show the harnesses: the Harness tab once it exists, else the plans in the bottom panel."""
-        if self.main_tabs.show_slot("harness"):
-            return
-        self.dock_bottom.show()
-        self.tabs.setCurrentWidget(self.harness_panel)
-        self._give_room_to(self.dock_bottom, 420)
-
-    def _give_room_to(self, dock: QDockWidget, height: int) -> None:
-        """Make a bottom dock at least `height` tall (the plans tab is unusable as a sliver)."""
-        if dock.height() < height:
-            self.resizeDocks([dock], [height], Qt.Orientation.Vertical)
+        """Show the harnesses: the Harness tab."""
+        self.main_tabs.show_slot("harness")
 
     def _compute_plan(self) -> GenerationPlan | None:
         """Plan in a worker thread behind a cancellable progress dialog; None if cancelled."""
@@ -2131,13 +2158,12 @@ class MainWindow(QMainWindow):
         else:
             plan = plan_new_revision(project, hid, by=by, comment=comment, when=today)
             msg = strings.NEW_REV_STARTED.format(hid)
-        if self.ctl.apply_change(plan, msg):
-            self.harness_panel.refresh()
+        self.ctl.apply_change(plan, msg)
 
     # ---- change control on "the" harness (menu, shortcut, Ctrl+K) ----------------------------------
     def current_harness(self) -> str | None:
         """The harness the person is looking at: the Harness view's, the Releases tab's, or the
-        plans table's selection; None when none is chosen."""
+        tree's; None when none is chosen."""
         project = self.ctl.project
         candidates: list[object] = []
         if self.view_installed("harness"):
@@ -2147,7 +2173,9 @@ class MainWindow(QMainWindow):
             )
         if self.main_tabs.currentWidget() is self.releases_panel:
             candidates.append(self.releases_panel.current_harness())
-        candidates.append(self.harness_panel.selected_harness())
+        tree_row = self.project_tree.current()
+        if tree_row is not None and tree_row[0] == "harness":
+            candidates.append(tree_row[1])
         candidates.append(self.releases_panel.current_harness())
         for c in candidates:
             if isinstance(c, str) and c in project.harnesses:
@@ -2173,6 +2201,25 @@ class MainWindow(QMainWindow):
         if chosen is None:
             self.go_to("releases")
             self.toasts.show_message(strings.NO_HARNESS_FOR_ACTION, None)
+            return
+        self.change_flow(action, chosen)
+
+    def harness_step(self, action: str) -> None:
+        """Changes, change log or delete for "the" harness (menu, tree, Ctrl+K): the one in view,
+        else the only one there is; with several, the Releases tab opens so one can be chosen."""
+        project = self.ctl.project
+        if not project.harnesses:
+            self.toasts.show_message(strings.NO_HARNESSES_FOR_ACTION, None)
+            return
+        chosen = self.current_harness()
+        if chosen is None and len(project.harnesses) == 1:
+            chosen = next(iter(project.harnesses))
+        if chosen is None:
+            self.go_to("releases")
+            self.toasts.show_message(strings.NO_HARNESS_FOR_ACTION, None)
+            return
+        if action == "delete" and self.ctl.read_only:
+            self.ctl.refuse_read_only()
             return
         self.change_flow(action, chosen)
 
@@ -2209,17 +2256,19 @@ class MainWindow(QMainWindow):
 
     # ---- the main tabs ---------------------------------------------------------------------------
     def go_to(self, name: str) -> bool:
-        """Show a main view: diagram, harness, lists, checks or releases. The Harness tab falls
-        back to the plans panel of the bottom dock until the new view exists; Lists has no
-        fallback (False and a note)."""
-        if name == "harness" and not self.main_tabs.is_installed("harness"):
-            self.show_harness_view()
-            return True
+        """Show a main view: diagram, harness, lists, checks or releases (False and a note when
+        the view is not installed)."""
         if self.main_tabs.show_slot(name):
             return True
         title = {"lists": strings.TAB_LISTS}.get(name, name)
         self.toasts.show_message(strings.VIEW_NOT_INSTALLED.format(title), None)
         return False
+
+    def show_interfaces(self) -> None:
+        """Go to the Interface table (the left panel's second tab) and put the keyboard in it."""
+        self.dock_left.show()
+        self.left_tabs.setCurrentWidget(self.interface_table)
+        self.interface_table.view.setFocus()
 
     def _go_tab(self, name: str) -> None:
         self.go_to(name)
@@ -2233,6 +2282,9 @@ class MainWindow(QMainWindow):
         self.act_release.setEnabled(has and not self.ctl.read_only)
         self.act_revise.setEnabled(has and not self.ctl.read_only)
         self.act_review.setEnabled(has and not self.ctl.read_only)
+        self.act_history.setEnabled(has)
+        self.act_changes.setEnabled(bool(self.ctl.project.baselines))
+        self.act_delete_harness.setEnabled(has and not self.ctl.read_only)
 
     # ---- export, import, new project ----------------------------------------------------------------
     def export_dialog_flow(self) -> None:
@@ -2257,7 +2309,7 @@ class MainWindow(QMainWindow):
         self._job_succeeded()
         if isinstance(result, ExportResult):
             self.toasts.show_message(strings.EXPORT_DONE.format(result.count, result.stamp), None)
-        self.harness_panel.refresh()
+        self.harness_view.refresh_status()  # the files changed, the design did not
         self._update_hash()
 
     def _export_failed(self, reason: str) -> None:
@@ -2286,10 +2338,9 @@ class MainWindow(QMainWindow):
         except edit.EditError as exc:
             self._error(str(exc))
             return
-        if self.ctl.run(
+        self.ctl.run(
             strings.STEP_DELETE.format(hid), ops, message=strings.HARNESS_DELETED.format(hid)
-        ):
-            self.harness_panel.refresh()
+        )
 
     def _changes_flow(self, hid: str) -> None:
         project = self.ctl.project
@@ -2358,7 +2409,7 @@ class MainWindow(QMainWindow):
             return
         self._outputs_epoch += 1
         self._job_succeeded()
-        self.harness_panel.refresh()
+        self.harness_view.refresh_status()
         self.toasts.show_message(
             strings.EXPORT_DONE.format(len(built.files), built.stamp.short), None
         )
@@ -2427,14 +2478,16 @@ class MainWindow(QMainWindow):
         else:
             self.view.focus_link(target)
 
-    def _todo_activated(self, kind: str, target: str) -> None:
-        if kind == "tab":
-            self.tabs.setCurrentIndex(0)
-        else:
-            self.show_object(target)
-
     def open_commands(self) -> None:
-        self.run_dialog(CommandPalette(self, self.palette_entries()))
+        """Ctrl+K: the command palette, a non-modal overlay over the window (Ctrl+K again, Esc, a
+        click elsewhere or any other move of the keyboard closes it)."""
+        if self.command_palette is not None and self.command_palette.isVisible():
+            self.command_palette.dismiss()
+            return
+        if self.command_palette is not None:
+            self.command_palette.deleteLater()
+        self.command_palette = CommandPalette(self, self.palette_entries())
+        self.command_palette.open()
 
     def palette_entries(self) -> list[PaletteEntry]:
         """Everything Ctrl+K can do: every enabled action of the window with its shortcut
@@ -2792,10 +2845,9 @@ class MainWindow(QMainWindow):
         self.settings.remove("ui/state")
         self._have_saved_state = False
         self.restoreState(self._default_state, STATE_VERSION)
-        for dock in (self.dock_left, self.dock_right, self.dock_bottom):
+        for dock in (self.dock_left, self.dock_right):
             dock.setFloating(False)
         self.main_tabs.show_slot("diagram")
-        self._bottom_auto_hidden = False
         self._layout_class = None
         self.auto_layout()
 
@@ -2808,7 +2860,6 @@ class MainWindow(QMainWindow):
         for name, dock, tabs in (
             (strings.PANE_TREE, self.dock_left, self.left_tabs),
             (strings.PANE_INSPECTOR, self.dock_right, self.side_tabs),
-            (strings.PANE_BOTTOM, self.dock_bottom, self.tabs),
         ):
             if dock.isVisibleTo(self):
                 panes.append((name, dock, tabs.currentWidget()))
@@ -2912,43 +2963,27 @@ class MainWindow(QMainWindow):
         self.settings.setValue("ui/scale", pct)
         self.auto_layout()
 
-    def _layout_class_now(self) -> tuple[bool, bool, bool]:
-        scale = self.theme.scale
-        eff_w, eff_h = self.width() / scale, self.height() / scale
-        return (eff_w >= WIDE_PX, eff_w >= MEDIUM_PX, eff_h >= TALL_PX)
+    def _layout_class_now(self) -> tuple[bool, bool]:
+        eff_w = self.width() / self.theme.scale
+        return (eff_w >= WIDE_PX, eff_w >= MEDIUM_PX)
 
     def auto_layout(self) -> None:
         """At high UI scale or small windows, hide secondary panels so the diagram keeps room:
-        narrow windows lose the side panels, short windows the bottom panel (the diagram keeps at
-        least 55 % of the height at 1280 x 720). Called on first show, when the window crosses one
-        of those sizes, and when the scale changes."""
+        narrow windows lose the side panels (the diagram never shares its height with a bottom
+        panel any more). Called on first show, when the window crosses one of those widths, and
+        when the scale changes."""
         scale = self.theme.scale
-        wide, medium, tall = self._layout_class = self._layout_class_now()
+        wide, medium = self._layout_class = self._layout_class_now()
         was = (self.dock_left.isVisibleTo(self), self.dock_right.isVisibleTo(self))
         self.dock_right.setVisible(wide)
         self.dock_left.setVisible(medium)
         now = (self.dock_left.isVisibleTo(self), self.dock_right.isVisibleTo(self))
         if was != now and (was[0] and not now[0] or was[1] and not now[1]):
             self.toasts.show_message(strings.PANELS_HIDDEN, None)  # never hide panels silently
-        if not tall and self.dock_bottom.isVisibleTo(self):
-            self.dock_bottom.hide()
-            self._bottom_auto_hidden = True
-            self.toasts.show_message(strings.PANELS_HIDDEN_SHORT, None)
-        elif tall and self._bottom_auto_hidden:
-            self.dock_bottom.show()  # it was only hidden for lack of height
-            self._bottom_auto_hidden = False
-        self.table.scale_factor = scale
+        self.interface_table.scale_factor = scale
         self.dock_left.setMinimumWidth(self.theme.px(240))
         self.dock_right.setMinimumWidth(self.theme.px(260))
         self.resizeDocks([self.dock_left], [self.theme.px(250)], Qt.Orientation.Horizontal)
-        # the bottom panel never takes more than 40% of the window, so the diagram keeps room
-        # at large UI scales (its content scrolls; the View menu can still hide it)
-        self.dock_bottom.setMaximumHeight(max(self.theme.px(160), int(self.height() * 0.40)))
-        self.resizeDocks(
-            [self.dock_bottom],
-            [max(self.theme.px(110), int(self.height() * 0.20))],
-            Qt.Orientation.Vertical,
-        )
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)
@@ -2962,6 +2997,8 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event: object) -> None:
         super().resizeEvent(event)  # type: ignore[arg-type]
         self.toasts.reposition()
+        if self.command_palette is not None and self.command_palette.isVisible():
+            self.command_palette.reposition()
         if self._shown and self._layout_class_now() != self._layout_class:
             if self._have_saved_state:  # (a saved layout is kept; only a crossing is acted on)
                 self._have_saved_state = False

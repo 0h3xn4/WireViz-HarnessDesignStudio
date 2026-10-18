@@ -17,7 +17,7 @@ pytestmark = [pytest.mark.gui, pytest.mark.perf]
 
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from tests.gui_helpers import make_window  # noqa: E402
+from tests.gui_helpers import make_window, show_problems  # noqa: E402
 from tools.bench_stress import build  # noqa: E402
 
 
@@ -65,7 +65,7 @@ def test_loading_a_stress_project_is_reasonable(qtbot, tmp_path) -> None:  # typ
 def test_problems_panel_is_capped(stress) -> None:  # type: ignore[no-untyped-def]
     from PySide6.QtWidgets import QFrame
 
-    stress.tabs.setCurrentIndex(0)
+    show_problems(stress)
     QApplication.processEvents()
     cards = [f for f in stress.problems.findChildren(QFrame) if f.property("card")]
     assert 0 < len(cards) <= 25
@@ -76,7 +76,7 @@ def test_the_problems_panel_builds_only_the_cards_it_shows(stress, qtbot) -> Non
     shows 25, making add, undo and redo 3 to 6 times slower. Counted, so slow machines do not matter."""
     from harness_design_studio.gui import panels
 
-    stress.tabs.setCurrentIndex(0)
+    show_problems(stress)
     QApplication.processEvents()
     built: list[int] = []
     original = stress.problems._card
@@ -121,10 +121,10 @@ def test_editing_notes_does_not_dirty_the_lanes_or_resize_the_scene(stress) -> N
 
 
 def test_the_interface_table_keeps_its_rows_on_a_rename(stress) -> None:  # type: ignore[no-untyped-def]
-    stress.tabs.setCurrentIndex(2)
+    stress.show_interfaces()
     QApplication.processEvents()
     resets: list[int] = []
-    stress.table.model.modelReset.connect(lambda: resets.append(1))
+    stress.interface_table.model.modelReset.connect(lambda: resets.append(1))
     stress.ctl.update_unit("U001", name="other")
     QApplication.processEvents()
     assert not resets
@@ -145,7 +145,7 @@ def test_links_follow_a_moved_unit_exactly_as_a_full_rebuild_draws_them(stress) 
 def test_lists_of_many_findings_refresh_after_the_edit_not_inside_it(stress, qtbot) -> None:  # type: ignore[no-untyped-def]
     """With thousands of findings the problems list and tab counts follow on a short timer, so the
     canvas is redrawn first."""
-    stress.tabs.setCurrentIndex(0)
+    show_problems(stress)
     QApplication.processEvents()
     assert stress.ctl.findings_are_many()
     stress.ctl.update_unit("U001", name="x")

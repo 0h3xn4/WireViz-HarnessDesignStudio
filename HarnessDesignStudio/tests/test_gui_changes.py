@@ -21,7 +21,7 @@ def win(qtbot, tmp_path):  # type: ignore[no-untyped-def]
     save_project(p, tmp_path / "proj")
     assert w.open_project(tmp_path / "proj")
     w.ctl.today = lambda: "2026-03-01"
-    w.tabs.setCurrentWidget(w.harness_panel)
+    w.go_to("harness")
     return w
 
 
@@ -48,15 +48,20 @@ def fill(by: str = "Ada", comment: str = "First release for the CDR", checker: s
 
 
 def select(win, hid: str) -> None:  # type: ignore[no-untyped-def]
-    win.harness_panel.select_harness(hid)
+    assert win.harness_view.select_harness(hid)
 
 
 def test_buttons_follow_the_status_of_the_selected_harness(win) -> None:  # type: ignore[no-untyped-def]
     hid = releasable(win)
     select(win, hid)
-    b = win.harness_panel.cc_buttons
+    view = win.harness_view
+    b, more = (
+        view.action_buttons,
+        view.more_actions,
+    )  # the change-control buttons of the Harness tab
     assert b["review"].isEnabled() and b["release"].isEnabled() and not b["revise"].isEnabled()
-    assert not b["changes"].isEnabled() and b["history"].isEnabled()
+    assert not more["changes"].isEnabled() and more["history"].isEnabled()
+    assert more["delete"].isEnabled()  # a draft can be deleted
 
 
 def test_release_dialog_lists_blockers_and_disables_ok(win) -> None:  # type: ignore[no-untyped-def]
@@ -73,7 +78,7 @@ def test_release_dialog_lists_blockers_and_disables_ok(win) -> None:  # type: ig
 
 def test_release_dialog_asks_for_a_reason_while_values_are_placeholders(win) -> None:  # type: ignore[no-untyped-def]
     hid = releasable(win)
-    win.harness_panel.export_btn.click()
+    win.export_flow()
     script = DialogScript(win, accept=False)
     win.change_flow("release", hid)
     dlg = script.seen[0]
@@ -96,14 +101,16 @@ def test_release_dialog_asks_for_a_reason_while_values_are_placeholders(win) -> 
 
 def test_full_cycle_release_lock_new_revision_changes_and_log(win, qtbot) -> None:  # type: ignore[no-untyped-def]
     hid = releasable(win)
-    win.harness_panel.export_btn.click()  # outputs must be exported before a release
+    win.export_flow()  # outputs must be exported before a release
     select(win, hid)
     DialogScript(win, fill())
     win.change_flow("release", hid)
     h = win.ctl.project.harnesses[hid]
     assert (h.status, h.approver, h.checker) == ("released", "Ada", "Bob")
-    win.harness_panel.refresh()
-    assert win.harness_panel.harnesses.item(0, 4).text().endswith("released (locked)")
+    view = win.harness_view
+    view.refresh()
+    assert view.release_chip.state() == "released"  # the chip beside the harness name
+    assert win.project_tree.state_of("harness", hid)[0] == "released"  # and the row in the tree
     # locked: editing is refused with a plain message
     assert not win.ctl.run("edit", [Put("harnesses", evolve(h, name="Nope"))])
     assert "released" in win.toasts.messages[-1]
@@ -136,7 +143,7 @@ def test_full_cycle_release_lock_new_revision_changes_and_log(win, qtbot) -> Non
 
 def test_undo_takes_a_release_back(win) -> None:  # type: ignore[no-untyped-def]
     hid = releasable(win)
-    win.harness_panel.export_btn.click()
+    win.export_flow()
     DialogScript(win, fill())
     win.change_flow("release", hid)
     win.ctl.undo()

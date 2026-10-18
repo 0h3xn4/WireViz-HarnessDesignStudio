@@ -39,7 +39,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import configcheck
+from harness_design_studio.core import checks, configcheck
 from harness_design_studio.core.checks import Finding
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.drc.by_rule import MissingValue, RuleResult
@@ -614,6 +614,17 @@ class ChecksPanel(QWidget):
             self.again_btn, "refresh", theme, strings.CHECKS_AGAIN_TIP, text=strings.CHECKS_AGAIN
         )
         self.again_btn.clicked.connect(self.ctl.check_now)
+        self.fix_all_btn = QPushButton()  # one step for every problem that has a one-click fix
+        self.fix_all_btn.setObjectName("checks-fix-all")
+        icon_button(
+            self.fix_all_btn,
+            "check",
+            theme,
+            strings.CHECKS_FIX_ALL.format(0),
+            text=strings.CHECKS_FIX_ALL.format(0),
+        )
+        self.fix_all_btn.clicked.connect(self.ctl.fix_all)
+        row.addWidget(self.fix_all_btn)
         row.addWidget(self.cancel_btn)
         row.addWidget(self.again_btn)
         return row
@@ -803,6 +814,7 @@ class ChecksPanel(QWidget):
             )
         self.cancel_btn.setVisible(busy)
         self.again_btn.setVisible(not busy and not current and error is None)
+        self._update_fix_all()
         self.strip.setVisible(bool(results))
         if results:
             s = by_rule.summary(results)
@@ -821,6 +833,30 @@ class ChecksPanel(QWidget):
                 b.setToolTip(strings.CHECKS_SEGMENT_TIP)
             self.strip.setAccessibleName(self.summary_text())
             self.strip.setToolTip(self._placeholder_note(results))
+
+    def _update_fix_all(self) -> None:
+        """Fix all (n): n open problems have a one-click fix. Disabled, with the reason as its
+        tooltip and description, when n is 0 or the project is read-only. (It does not wait for a
+        running check: like the Fix button of a card it works from the findings shown, and a fix
+        that no longer applies is left out and named.)"""
+        ctl = self.ctl
+        n = ctl.fixable_count()
+        if ctl.read_only:
+            reason = strings.WHY_READ_ONLY
+        elif n == 0:
+            reason = strings.CHECKS_FIX_ALL_NONE
+        else:
+            reason = ""
+        text = strings.CHECKS_FIX_ALL.format(n)
+        tip = strings.CHECKS_FIX_ALL_TIP.format(
+            strings.problems_text(n), checks.fix_summary(ctl.open_findings())
+        )
+        btn = self.fix_all_btn
+        btn.setText(text)
+        btn.setAccessibleName(text)
+        btn.setEnabled(not reason)
+        btn.setToolTip(f"{text}: {reason}" if reason else tip)
+        btn.setAccessibleDescription(reason or tip)
 
     @staticmethod
     def _placeholder_note(results: Sequence[RuleResult]) -> str:

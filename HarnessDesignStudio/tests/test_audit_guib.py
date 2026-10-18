@@ -39,7 +39,7 @@ from harness_design_studio.gui.controller import Delta, EditorController  # noqa
 from harness_design_studio.gui.drc_process import DrcProcess, run_check  # noqa: E402
 from harness_design_studio.gui.main_window import MainWindow  # noqa: E402
 from harness_design_studio.gui.theme import ThemeManager  # noqa: E402
-from tests.gui_helpers import DialogScript, make_window  # noqa: E402
+from tests.gui_helpers import DialogScript, make_window, show_problems  # noqa: E402
 
 # ---- the design rule check must say so when it fails ------------------------------------------
 
@@ -67,7 +67,7 @@ def test_a_failing_rule_check_is_reported_not_shown_as_all_clear(
     qtbot.waitUntil(lambda: win.ctl._drc_worker is None, timeout=10000)
     assert not win.ctl.drc_current
     assert strings.DRC_FAILED.format("rule exploded") == win.ctl.drc_error
-    win.tabs.setCurrentWidget(win.problems)
+    show_problems(win)
     texts = " ".join(x.text() for x in win.problems.findChildren(QLabel))
     assert "all " not in texts and "No problems" not in texts
     assert "Design rule check failed: rule exploded" in texts
