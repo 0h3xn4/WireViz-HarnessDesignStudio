@@ -37,11 +37,11 @@ It works offline and produces byte-identical files for the same design, so the f
 
 You need Ubuntu 24.04 or newer on a 64-bit PC (see [Requirements](#requirements)).
 
-**Easiest: the ready-made package.** Download `harness-design-studio_1.0.0_amd64.deb` and `SHA256SUMS` from the [latest release](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest), then in the folder with the files:
+**Easiest: the ready-made package.** Download `harness-design-studio_1.1.0_amd64.deb` and `SHA256SUMS` from the [latest release](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest), then in the folder with the files:
 
 ```
 sha256sum -c SHA256SUMS --ignore-missing
-sudo apt install ./harness-design-studio_1.0.0_amd64.deb
+sudo apt install ./harness-design-studio_1.1.0_amd64.deb
 ```
 
 That installs the `harness-design-studio` command line tool (`harness` works as a short alias) and the `harness-design-studio-gui` app; the packages are not signed, so the checksum check is the only proof that the download is intact. The release page also has a `.tar.gz` with an `install.sh` that needs no administrator rights.
@@ -104,9 +104,9 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 ## Licence and status
 
-- **Version `1.1.0`** is prepared on `master` and not published yet (the packages on the release page are 1.0.0 until it is). **Version `1.0.0`**, released on the repository owner's instruction on 2026-10-12 (tag `v1.0.0` on commit `0c6a96a`; the packages and `SHA256SUMS` are on the GitHub release page). The open engineering decisions were recorded as defaults on that day: the tool ships no standard or part data, so the real derating and EMC values and the approved parts list have not been supplied and results rest on placeholders and example parts. [`HarnessDesignStudio/README.md#status`](HarnessDesignStudio/README.md#status) has the details.
+- **Version `1.1.0`**, published on 2026-10-18 (tag `v1.1.0` on commit `f998cd9`; the packages and `SHA256SUMS` are on the GitHub release page). It has not been signed off by the owner as a compliance record (the changelog says so; [`compliance/SIGNOFF.md`](HarnessDesignStudio/compliance/SIGNOFF.md) has an entry for 1.0.0 only). **Version `1.0.0`**, released on the repository owner's instruction on 2026-10-12 (tag `v1.0.0` on commit `0c6a96a`; the packages and `SHA256SUMS` are on the GitHub release page). The open engineering decisions were recorded as defaults on that day: the tool ships no standard or part data, so the real derating and EMC values and the approved parts list have not been supplied and results rest on placeholders and example parts. [`HarnessDesignStudio/README.md#status`](HarnessDesignStudio/README.md#status) has the details.
 - **Created mainly by an AI.** Harness Design Studio was written mainly by Claude (Anthropic's AI assistant, used through Claude Code); the owner set the requirements and approved the decisions and releases. No other person has reviewed it independently, and it makes no claim of compliance with any standard. Check its results before relying on them. The records are in [`HarnessDesignStudio/compliance/`](HarnessDesignStudio/compliance/README.md).
-- **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness-design-studio new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](HarnessDesignStudio/CHANGELOG.md) lists what is new.
+- **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness-design-studio new --list` shows three examples on 0.1.0 and five on 1.0.0 and 1.1.0. The [changelog](HarnessDesignStudio/CHANGELOG.md) lists what is new.
 - **Licence.** The [`LICENSE`](LICENSE) file in this repository is the GPL-3.0 licence of WireViz. The licence of the code in `HarnessDesignStudio/` has not been decided (decision D-02 in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md), kept open for 1.0.0 in D-143; the package metadata says `LicenseRef-Proprietary`; the copyright holder is the repository owner, GitHub account `0h3xn4`). No licence has been granted for it yet.
 
 ## What this repository adds to WireViz
