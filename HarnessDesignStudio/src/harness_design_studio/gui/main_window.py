@@ -88,6 +88,7 @@ from harness_design_studio.gui.controller import (
     _plain,
     reason_of,
 )
+from harness_design_studio.gui.devices_view import DevicesView
 from harness_design_studio.gui.dialogs import (
     Banner,
     ChangeDialog,
@@ -139,7 +140,7 @@ WIDE_PX = 1150  # in UI-scale-free px: the right dock needs this much window wid
 MEDIUM_PX = 800  # ... and the left dock this much
 # the left dock opens this wide on the Interfaces tab (if the window allows)
 INTERFACE_DOCK_PX = 620
-MAIN_TABS = ("diagram", "harness", "lists", "checks", "releases")  # Ctrl+1 ... Ctrl+5
+MAIN_TABS = ("diagram", "harness", "lists", "checks", "releases", "devices")  # Ctrl+1 ... Ctrl+6
 
 
 @dataclass
@@ -592,6 +593,13 @@ class MainWindow(QMainWindow):
         )  # fmt: skip
         self.main_tabs.add_slot("checks", strings.TAB_CHECKS, self.checks_panel, tip=strings.TAB_TIP.format(strings.TAB_CHECKS, 4))  # fmt: skip
         self.main_tabs.add_slot("releases", strings.TAB_RELEASES, self.releases_panel, tip=strings.TAB_TIP.format(strings.TAB_RELEASES, 5))  # fmt: skip
+        self.main_tabs.add_slot(
+            "devices",
+            strings.TAB_DEVICES,
+            EmptyStateWidget(self.theme, strings.TAB_DEVICES, strings.EMPTY_VIEW_DEVICES, icon="unit"),
+            installed=False,
+            tip=strings.TAB_TIP.format(strings.TAB_DEVICES, 6),
+        )  # fmt: skip
         outer.addWidget(self.main_tabs, 1)
         self.main_tabs.tabBar().setAccessibleName(strings.SHELL_MAIN_TABS)
         self.setCentralWidget(shell)
@@ -726,6 +734,7 @@ class MainWindow(QMainWindow):
         for name, tabs, title in (
             ("harness", self.main_tabs, strings.TAB_HARNESS),
             ("lists", self.main_tabs, strings.TAB_LISTS),
+            ("devices", self.main_tabs, strings.TAB_DEVICES),
             ("tree", self.left_tabs, strings.TAB_PROJECT),
             ("inspector", self.side_tabs, strings.TAB_INSPECTOR),
             ("why", self.side_tabs, strings.TAB_WHY),
@@ -794,6 +803,12 @@ class MainWindow(QMainWindow):
             widget.generateRequested.connect(self.act_generate.trigger)
             widget.exportTableRequested.connect(lambda name, fmt: self.export_table_flow(name, fmt))
             return True
+        if isinstance(widget, DevicesView):
+            widget.addRequested.connect(lambda: self.menu_add.exec(QCursor.pos()))
+            widget.duplicateRequested.connect(self._duplicate_device)
+            widget.exportPinoutRequested.connect(self.export_pinout_flow)
+            widget.whyRequested.connect(lambda kind, ident: self._show_why(kind, ident))
+            return True
         if isinstance(widget, ProjectTree):
             widget.selectionRequested.connect(self._tree_selected)
             widget.openRequested.connect(self._tree_opened)
@@ -820,6 +835,8 @@ class MainWindow(QMainWindow):
         self.inspector = Inspector(self.ctl, self.theme, props=self.props, problems=self.problems)
         self.install_view("harness", self.harness_view)
         self.install_view("lists", self.lists_panel)
+        self.devices_view = DevicesView(self.ctl, self.theme, self.settings)
+        self.install_view("devices", self.devices_view)
         self.install_view("tree", self.project_tree)
         self.install_view("inspector", self.inspector)
         self.project_tree.set_context_actions(self._tree_actions)
@@ -892,6 +909,24 @@ class MainWindow(QMainWindow):
             self.new_interface_flow()
         else:
             self.menu_add.exec(QCursor.pos())  # which kind of unit
+
+    def _duplicate_device(self, unit_id: str) -> None:
+        """Duplicate in the Devices tab: the same step as Edit > Duplicate on that unit."""
+        self.ctl.select("unit", unit_id)
+        self.ctl.duplicate_selected()
+
+    def export_pinout_flow(self, unit_id: str) -> None:
+        """ "Export pinout" of the Devices tab: ask where, then write the rows as they are shown."""
+        suggested = f"{unit_id}_pinout.csv"
+        path = self.ask_save_path(strings.DV_EXPORT_TITLE, suggested, strings.DV_EXPORT_FILTER)
+        if not path:
+            return
+        try:
+            written = self.devices_view.export_to(Path(path))
+        except (OSError, ValueError) as exc:
+            self._error(self._explain(exc, Path(path).parent))
+            return
+        self.toasts.show_message(strings.DV_EXPORTED.format(written.name), None)
 
     def export_table_flow(self, name: str, fmt: str) -> None:
         """ "Export table" of the Lists tab: ask where, then write the rows as they are shown."""
@@ -1080,6 +1115,7 @@ class MainWindow(QMainWindow):
                     strings.A_GO_LISTS,
                     strings.A_GO_CHECKS,
                     strings.A_GO_RELEASES,
+                    strings.A_GO_DEVICES,
                 ),  # fmt: skip
                 strict=True,
             ),

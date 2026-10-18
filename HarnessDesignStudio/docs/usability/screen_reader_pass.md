@@ -11,7 +11,7 @@ The automated audit (`tests/test_accessibility.py`) checks names on controls, te
 | # | Item | Pass when |
 | --- | --- | --- |
 | 1 | Start the editor | The window title and the first focus are announced; the tour or the empty state is readable |
-| 2 | Move between the tabs: the main tabs (Diagram, Harness, Lists, Checks, Releases; Ctrl+1 to Ctrl+5), the right panel (Inspector, Why, Problems) and the bottom tabs (Problems, To-do, Interface table, Harness plans, Outline); F6 moves between the panels | Each tab name is announced; focus order is logical |
+| 2 | Move between the tabs: the main tabs (Diagram, Harness, Lists, Checks, Releases, Devices; Ctrl+1 to Ctrl+6), the right panel (Inspector, Why, Problems) and the bottom tabs (Problems, To-do, Interface table, Harness plans, Outline); F6 moves between the panels | Each tab name is announced; focus order is logical |
 | 3 | Interface table | Rows and column headers are announced; a row can be selected and edited from the keyboard |
 | 4 | Outline tab | Units, interfaces and harnesses can be walked item by item; the selection is announced |
 | 5 | Diagram (canvas) | The announcement of unit and interface counts and of the selection is understandable; Tab and Enter move between units and links; what is missing is written down |

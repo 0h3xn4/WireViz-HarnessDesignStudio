@@ -78,7 +78,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 | Where | What it is |
 | --- | --- |
 | Top bar | the project name, a short model hash, whether it is saved, **Generate** (the one blue button), **Check**, **Export…** and a status chip (*Up to date*, *Plans out of date* ...) |
-| Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases** (Ctrl+1 to Ctrl+5) |
+| Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6) |
 | Middle, **Diagram** | units in lanes (*panel-A*, *panel-B*), links between them. Every kind of link has its own picture and colour; the legend (bottom left of the diagram) shows them (power is red in the light theme). Small badges show problems, values still to enter and locks |
 | Left, **Project** | a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports; **Add** adds a unit or an interface |
 | Left, **Interfaces** | every interface as a table you can sort, filter and edit with the keyboard (Ctrl+Shift+T) |
