@@ -73,8 +73,11 @@ def test_a_long_toast_is_not_cut_off(win) -> None:  # type: ignore[no-untyped-de
     assert label.minimumHeight() >= label.fontMetrics().height() * 3
 
 
-def test_saving_to_an_unusable_folder_is_a_message_not_an_exception(win) -> None:  # type: ignore[no-untyped-def]
-    win.ask_folder = lambda _title: "/proc/does-not-exist"  # type: ignore[assignment]
+def test_saving_to_an_unusable_folder_is_a_message_not_an_exception(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
+    blocker = tmp_path / "a-file"
+    blocker.write_text("not a folder")
+    unusable = str(blocker / "project")  # nothing can be created below a file, on any system
+    win.ask_folder = lambda _title: unusable  # type: ignore[assignment]
     assert win.save_as_flow() is False
     assert "Could not save" in win.toasts.messages[-1]
 

@@ -145,39 +145,45 @@ def test_infinite_numbers_are_a_load_problem_not_a_crash_on_save(tmp_path: Path)
     assert "invalid_json" in {i.code for i in loaded.issues}  # named, not silently defaulted
 
 
+def _lock_worker(root: str, barrier: object, out: object) -> None:
+    import time
+
+    from harness_design_studio.core.errors import ProjectLockedError
+    from harness_design_studio.core.io.fs import ProjectLock
+
+    lock = ProjectLock(Path(root))
+    barrier.wait()  # type: ignore[attr-defined]
+    try:
+        lock.acquire()
+        out.put(1)  # type: ignore[attr-defined]
+        time.sleep(0.3)  # keep holding while the others finish
+    except ProjectLockedError:
+        out.put(0)  # type: ignore[attr-defined]
+
+
 def test_stale_lock_takeover_gives_the_lock_to_exactly_one_process(tmp_path: Path) -> None:
     import json
     import multiprocessing as mp
 
-    from harness_design_studio.core.errors import ProjectLockedError
-    from harness_design_studio.core.io.fs import LOCK_NAME, ProjectLock
+    from harness_design_studio.core.io.fs import LOCK_NAME
 
-    ctx = mp.get_context("fork")
-
-    def worker(root: str, barrier: object, out: object) -> None:
-        lock = ProjectLock(Path(root))
-        barrier.wait()  # type: ignore[attr-defined]
-        try:
-            lock.acquire()
-            out.put(1)  # type: ignore[attr-defined]
-            import time
-
-            time.sleep(0.3)  # keep holding while the others finish
-        except ProjectLockedError:
-            out.put(0)  # type: ignore[attr-defined]
-
-    for _ in range(8):
+    # fork where there is one; Windows has only spawn (slower, so fewer rounds)
+    forking = "fork" in mp.get_all_start_methods()
+    ctx = mp.get_context("fork" if forking else "spawn")
+    for _ in range(8 if forking else 2):
         (tmp_path / LOCK_NAME).write_text(
             json.dumps({"pid": 2**22 + 12345, "host": __import__("platform").node(), "since": 1})
         )
         barrier = ctx.Barrier(5)
         out = ctx.Queue()
-        procs = [ctx.Process(target=worker, args=(str(tmp_path), barrier, out)) for _ in range(5)]
+        procs = [
+            ctx.Process(target=_lock_worker, args=(str(tmp_path), barrier, out)) for _ in range(5)
+        ]
         for pr in procs:
             pr.start()
-        results = [out.get(timeout=20) for _ in procs]
+        results = [out.get(timeout=60) for _ in procs]
         for pr in procs:
-            pr.join(timeout=20)
+            pr.join(timeout=60)
         (tmp_path / LOCK_NAME).unlink(missing_ok=True)
         assert sum(results) == 1, results
 
