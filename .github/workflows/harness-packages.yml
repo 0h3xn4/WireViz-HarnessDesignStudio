@@ -36,6 +36,10 @@ jobs:
           $found = (Get-Command ISCC -ErrorAction SilentlyContinue) -or (Test-Path "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe") -or (Test-Path "${env:LOCALAPPDATA}\Programs\Inno Setup 6\ISCC.exe")
           if (-not $found) { choco install innosetup --version=6.4.3 -y --no-progress }
           else { Write-Host "Inno Setup is already installed" }
+      - name: Where the settings file goes
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -c "from PySide6.QtWidgets import QApplication; a = QApplication([]); from harness_design_studio.gui.app import make_settings; print(make_settings().fileName())"
       - run: python -m PyInstaller --version
       - name: Build the zip and the setup program
         run: python -m tools.build_windows
@@ -72,6 +76,10 @@ jobs:
           python-version: "3.12"
       - run: python -c "import platform; print(platform.machine())"
       - run: python -m pip install -e ".[gui,dev]"
+      - name: Where the settings file goes
+        env:
+          QT_QPA_PLATFORM: offscreen
+        run: python -c "from PySide6.QtWidgets import QApplication; a = QApplication([]); from harness_design_studio.gui.app import make_settings; print(make_settings().fileName())"
       - run: python -m PyInstaller --version
       - name: Build the app and the disk image
         run: python -m tools.build_macos
