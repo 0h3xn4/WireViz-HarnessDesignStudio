@@ -475,6 +475,7 @@ class MainWindow(QMainWindow):
         self.ctl.connectChanged.connect(self._on_connect)
         self.ctl.modeChanged.connect(self._on_mode)
         self.interface_table.newInterfaceRequested.connect(self.new_interface_flow)
+        self.unit_table.newUnitRequested.connect(lambda: self.menu_add.exec(QCursor.pos()))
         self.checks_panel.showRequested.connect(self.show_object)
         self.releases_panel.changeRequested.connect(self.change_flow)
         self.pending_link.filterRequested.connect(self.show_unchecked)

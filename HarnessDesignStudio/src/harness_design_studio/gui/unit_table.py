@@ -18,11 +18,14 @@ from PySide6.QtCore import (
     QSettings,
     QSortFilterProxyModel,
     Qt,
+    Signal,
 )
 from PySide6.QtWidgets import (
     QComboBox,
+    QHBoxLayout,
     QHeaderView,
     QLineEdit,
+    QPushButton,
     QTableView,
     QVBoxLayout,
     QWidget,
@@ -197,6 +200,8 @@ class _ChainDelegate(SheetDelegate):
 
 
 class UnitTable(QWidget):
+    newUnitRequested = Signal()
+
     def __init__(self, ctl: EditorController, settings: QSettings | None = None) -> None:
         super().__init__()
         self.ctl = ctl
@@ -207,7 +212,13 @@ class UnitTable(QWidget):
         self.filter.setPlaceholderText(strings.UNIT_FILTER_PLACEHOLDER)
         self.filter.setAccessibleName(strings.UNIT_FILTER_PLACEHOLDER)
         self.filter.setClearButtonEnabled(True)
-        lay.addWidget(self.filter)
+        top = QHBoxLayout()
+        top.addWidget(self.filter, 1)
+        self.add_btn = QPushButton(strings.NEW_UNIT)
+        self.add_btn.setObjectName("new-unit")
+        self.add_btn.clicked.connect(self.newUnitRequested)
+        top.addWidget(self.add_btn)
+        lay.addLayout(top)
         self.model = UnitModel(ctl)
         self.proxy = _RowFilter()
         self.proxy.setSourceModel(self.model)
@@ -225,11 +236,18 @@ class UnitTable(QWidget):
         self._apply_widths()
         self.view.verticalHeader().hide()
         lay.addWidget(self.view)
-        attach_empty_state(self.view, strings.EMPTY_UNITS_TITLE, strings.EMPTY_UNITS_HINT)
+        attach_empty_state(
+            self.view,
+            strings.EMPTY_UNITS_TITLE,
+            strings.EMPTY_UNITS_HINT,
+            action=strings.NEW_UNIT,
+            on_action=self.newUnitRequested.emit,
+        )
         self.filter.textChanged.connect(self.proxy.set_text)
         self.view.selectionModel().selectionChanged.connect(self._row_selected)
         ctl.changed.connect(self._changed)
         ctl.selectionChanged.connect(self._sync_if_visible)
+        ctl.stateChanged.connect(lambda: self.add_btn.setEnabled(not ctl.read_only))
         self._busy = False
         self._dirty = False
 

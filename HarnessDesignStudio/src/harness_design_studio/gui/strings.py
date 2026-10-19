@@ -2003,3 +2003,4 @@ EMPTY_UNITS_HINT = (
 )
 A_GO_UNITS = "Go to Unit table"
 UNIT_FILTER_PLACEHOLDER = "Filter by ID, name, subsystem, zone or notes"
+NEW_UNIT = "New unit"

@@ -330,3 +330,15 @@ def test_every_saved_table_gets_the_column_menu(qtbot, tmp_path) -> None:
     qtbot.addWidget(again)
     assert again.isColumnHidden(1)
     assert TableView(model, theme, name="T").column_menu is None  # no key, nothing to keep it in
+
+
+def test_the_unit_table_has_a_new_unit_button_that_asks_the_window(win) -> None:
+    t = shown(win, "units")
+    asked: list[bool] = []
+    t.newUnitRequested.disconnect()  # (the window's own handler opens a menu and waits for a click)
+    t.newUnitRequested.connect(lambda: asked.append(True))
+    t.add_btn.click()
+    assert asked == [True] and t.add_btn.text() == strings.NEW_UNIT
+    win.ctl.project.read_only = True
+    win.ctl.stateChanged.emit()
+    assert not t.add_btn.isEnabled()
