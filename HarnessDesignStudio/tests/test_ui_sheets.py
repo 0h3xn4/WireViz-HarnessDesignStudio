@@ -323,6 +323,7 @@ def test_every_saved_table_gets_the_column_menu(qtbot, tmp_path) -> None:
     model = DictTableModel([Column("a", "A"), Column("b", "B")], [{"a": 1, "b": 2}], theme)
     view = TableView(model, theme, name="T", settings=settings, key="demo")
     qtbot.addWidget(view)
+    assert view.column_menu is not None
     view.column_menu.set_hidden(1, True)
     assert view.isColumnHidden(1)
     again = TableView(model, theme, name="T", settings=settings, key="demo")
