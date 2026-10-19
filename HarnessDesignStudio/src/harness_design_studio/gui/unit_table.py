@@ -204,8 +204,8 @@ class UnitTable(QWidget):
         self.scale_factor = 1.0
         lay = QVBoxLayout(self)
         self.filter = QLineEdit()
-        self.filter.setPlaceholderText(strings.FILTER_PLACEHOLDER)
-        self.filter.setAccessibleName(strings.FILTER_PLACEHOLDER)
+        self.filter.setPlaceholderText(strings.UNIT_FILTER_PLACEHOLDER)
+        self.filter.setAccessibleName(strings.UNIT_FILTER_PLACEHOLDER)
         self.filter.setClearButtonEnabled(True)
         lay.addWidget(self.filter)
         self.model = UnitModel(ctl)

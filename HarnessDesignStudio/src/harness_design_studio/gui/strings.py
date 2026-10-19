@@ -2002,3 +2002,4 @@ EMPTY_UNITS_HINT = (
     "Add a unit from the palette on the diagram, or import a table with File > Import."
 )
 A_GO_UNITS = "Go to Unit table"
+UNIT_FILTER_PLACEHOLDER = "Filter by ID, name, subsystem, zone or notes"

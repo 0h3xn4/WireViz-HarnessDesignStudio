@@ -156,7 +156,7 @@ STATE_VERSION = 3  # of the saved dock layout (`saveState`); change it when the 
 WIDE_PX = 1222  # in UI-scale-free px: the right dock needs this much window width (the rail's 72 included)
 MEDIUM_PX = 872  # ... and the left dock this much
 # the left dock opens this wide on the Interfaces tab (if the window allows)
-INTERFACE_DOCK_PX = 620
+INTERFACE_DOCK_PX = 760
 MAIN_TABS = ("diagram", "harness", "lists", "checks", "releases", "devices")  # Ctrl+1 ... Ctrl+6
 
 
@@ -808,8 +808,8 @@ class MainWindow(QMainWindow):
         if not self.dock_left.isVisible():
             return
         if self.left_tabs.currentWidget() in (self.interface_table, self.unit_table):
-            # the table has eight columns: give the left panel room for them (at most half the window)
-            want = min(self.theme.px(INTERFACE_DOCK_PX), self.width() // 2)
+            # the table has eight columns: give the left panel room for them (at most 55 % of the window)
+            want = min(self.theme.px(INTERFACE_DOCK_PX), self.width() * 11 // 20)
             if self.dock_left.width() < want:
                 self._left_width = self.dock_left.width()
                 self.resizeDocks([self.dock_left], [want], Qt.Orientation.Horizontal)
