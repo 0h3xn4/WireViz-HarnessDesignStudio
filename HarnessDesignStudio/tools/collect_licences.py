@@ -16,6 +16,9 @@ from pathlib import Path
 from packaging.requirements import Requirement
 
 COMMON = Path("/usr/share/common-licenses")  # Debian and Ubuntu base-files
+BUNDLED = (
+    Path(__file__).resolve().parents[1] / "packaging" / "licences"
+)  # the same texts, for Windows and macOS builds
 LICENCE_FILE = re.compile(r"(^|/)(licen[sc]e|copying|notice|authors)[^/]*$", re.IGNORECASE)
 
 
@@ -124,7 +127,11 @@ def collect(dest: Path) -> list[str]:
         for name in ("LGPL-3", "GPL-3"):
             src = COMMON / name
             if not src.is_file():
-                problems.append(f"{src} not found: build on Ubuntu or Debian")
+                src = (
+                    BUNDLED / name
+                )  # no Debian base-files on Windows and macOS: use the copy in the repository
+            if not src.is_file():
+                problems.append(f"{COMMON / name} and {src} not found")
                 continue
             shutil.copyfile(src, dest / f"{name}.txt")
     (dest / "README.txt").write_text(

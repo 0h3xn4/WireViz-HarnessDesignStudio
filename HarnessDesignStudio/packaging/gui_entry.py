@@ -2,6 +2,9 @@
 
 The self-test opens the sample, adds a unit, connects two units, saves to a temp folder, reloads it
 and checks the result, so a broken package fails loudly instead of showing an empty window.
+
+The Windows editor has no console, so it prints nothing: the exit code (0 = ok) is the result, and
+`--selftest --selftest-out FILE` also writes the message ("selftest ok" or what failed) to FILE.
 """
 
 import os
@@ -24,16 +27,36 @@ if __name__ == "__main__" and _asked("--drc-worker", sys.argv):
 from harness_design_studio.gui.app import create_window, main  # noqa: E402
 
 
-def selftest() -> int:
+def _report(message: str, out: Path | None) -> None:
+    """Print the result and, when asked, write it to a file (a windowed program has no stdout)."""
+    print(message)
+    if out is not None:
+        out.write_text(message + "\n", encoding="utf-8")
+
+
+def selftest(out: Path | None = None) -> int:
     if not os.environ.get("QT_QPA_PLATFORM"):  # an empty value is as good as none and aborts Qt
         os.environ["QT_QPA_PLATFORM"] = "offscreen"
-    with tempfile.TemporaryDirectory(prefix="harness-selftest-") as folder:
-        failed = _run_steps(Path(folder))
-    if failed:
-        print("selftest FAILED at: " + ", ".join(failed))
+    try:
+        with tempfile.TemporaryDirectory(prefix="harness-selftest-") as folder:
+            failed = _run_steps(Path(folder))
+    except Exception:
+        if out is None:
+            raise
+        import traceback
+
+        _report("selftest FAILED with an error:\n" + traceback.format_exc(), out)
         return 1
-    print("selftest ok")
+    if failed:
+        _report("selftest FAILED at: " + ", ".join(failed), out)
+        return 1
+    _report("selftest ok", out)
     return 0
+
+
+def _selftest_out(argv: list[str]) -> Path | None:
+    """The FILE of `--selftest --selftest-out FILE` (None without it)."""
+    return Path(argv[3]) if len(argv) == 4 and argv[2] == "--selftest-out" else None
 
 
 def _run_steps(tmp: Path) -> list[str]:
@@ -112,5 +135,5 @@ def _generate_and_export(ctl: object, tmp: Path) -> bool:
 
 if __name__ == "__main__":
     if _asked("--selftest", sys.argv):
-        raise SystemExit(selftest())
+        raise SystemExit(selftest(_selftest_out(sys.argv)))
     raise SystemExit(main())

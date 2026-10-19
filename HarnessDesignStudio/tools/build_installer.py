@@ -1,7 +1,8 @@
 """Build a self-contained, offline package with PyInstaller (one-folder) and archive it.
 
-Ubuntu only (D-110). Build on Ubuntu 24.04 (the supported platform).
-Output: dist/harness-design-studio-<version>-linux-<arch>.tar.gz
+Build on Ubuntu 24.04 (the Linux platform, D-127). Output: dist/harness-design-studio-<version>-linux-<arch>.tar.gz
+The Windows and macOS packages (D-149) are built by tools/build_windows.py and tools/build_macos.py;
+they use the pieces of this module (the program builds, the exclude list and the allow-list check).
 
 Layout of the package folder dist/harness-design-studio/ (the name of the folder, the .deb and the
 install folder stays; the programs inside it are named like the commands of a pip install):
@@ -10,6 +11,7 @@ install folder stays; the programs inside it are named like the commands of a pi
 """
 
 import gzip
+import os
 import platform
 import shutil
 import subprocess
@@ -61,7 +63,11 @@ def undeclared_files(internal: Path) -> list[str]:
     """The same for the files next to the archive (extension modules, package folders, metadata)."""
     found = set()
     for entry in internal.iterdir():
-        if entry.name.startswith("lib") or entry.name == "base_library.zip":
+        if (
+            entry.name.startswith("lib")
+            or entry.name == "base_library.zip"
+            or entry.name.lower().endswith((".dll", ".dylib"))  # Windows and macOS shared libraries
+        ):
             continue  # shared libraries and the frozen standard library
         top = entry.name.split("-")[0] if entry.name.endswith(".dist-info") else entry.name
         top = top.split(".")[0]
@@ -70,15 +76,20 @@ def undeclared_files(internal: Path) -> list[str]:
     return sorted(found)
 
 
-def undeclared_in_build(app: Path) -> list[str]:
-    """Everything in the built package, the PYZ archives included, that the allow-list does not cover."""
+def undeclared_in_build(app: Path, bases: Iterable[Path] | None = None) -> list[str]:
+    """Everything in the built package, the PYZ archives included, that the allow-list does not cover.
+
+    `bases` are the folders next to the archives (default: the two `_internal` folders of the Linux
+    and Windows layout; the macOS app bundle names its own)."""
     from PyInstaller.archive.readers import ZlibArchiveReader  # type: ignore[import-untyped]
 
     found: set[str] = set()
     for name in (GUI_NAME, CLI_NAME):
         pyz = ROOT / "build" / name / name / "PYZ-00.pyz"
         found.update(undeclared_modules(ZlibArchiveReader(str(pyz)).toc))
-    for base in (app / "_internal", app / "cli" / "_internal"):
+    if bases is None:
+        bases = (app / "_internal", app / "cli" / "_internal")
+    for base in bases:
         if base.is_dir():
             found.update(undeclared_files(base))
     return sorted(found)
@@ -108,10 +119,16 @@ def make_tarball(root_dir: Path, base_dir: str, target: Path, stamp: int) -> Pat
     return target
 
 
-def _pyinstaller(
-    name: str, entry: Path, *, windowed: bool, extra_excludes: tuple[str, ...] = ()
+def pyinstaller_build(
+    name: str,
+    entry: Path,
+    *,
+    windowed: bool,
+    extra_excludes: tuple[str, ...] = (),
+    extra_args: tuple[str, ...] = (),
 ) -> int:
-    """Build one program; its folder (named like the program) is made in build/dist-<name>."""
+    """Build one program; its folder (named like the program) is made in build/dist-<name>.
+    `extra_args` are more PyInstaller options (an icon, the bundle identifier of the macOS app)."""
     work = ROOT / "build"
     cmd = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean",
            "--windowed" if windowed else "--console",
@@ -123,36 +140,41 @@ def _pyinstaller(
         "--hidden-import",
         "defusedxml",
     ]  # openpyxl imports it only if present: XML bomb protection
+    sep = os.pathsep  # the separator of --add-data is ":" on Linux and macOS and ";" on Windows
     guide = ROOT / "src" / "harness_design_studio" / "resources" / "guide"
-    cmd += ["--add-data", f"{guide}:harness_design_studio/resources/guide"]
+    cmd += ["--add-data", f"{guide}{sep}harness_design_studio/resources/guide"]
     examples = (
         ROOT / "src" / "harness_design_studio" / "resources" / "examples"
     )  # `harness-design-studio new`, templates
-    cmd += ["--add-data", f"{examples}:harness_design_studio/resources/examples"]
+    cmd += ["--add-data", f"{examples}{sep}harness_design_studio/resources/examples"]
     fonts = ROOT / "src" / "harness_design_studio" / "resources" / "fonts"  # IBM Plex, SIL OFL 1.1
-    cmd += ["--add-data", f"{fonts}:harness_design_studio/resources/fonts"]
+    cmd += ["--add-data", f"{fonts}{sep}harness_design_studio/resources/fonts"]
+    cmd += extra_args
     cmd.append(str(entry))
     return subprocess.run(cmd, check=False).returncode
 
 
-def main() -> int:
+def build_programs(gui_args: tuple[str, ...] = (), cli_args: tuple[str, ...] = ()) -> int:
+    """Build the editor (windowed) and the command line tool (console, no Qt) with PyInstaller."""
     packaging = ROOT / "packaging"
-    if _pyinstaller(GUI_NAME, packaging / "gui_entry.py", windowed=True):
+    if pyinstaller_build(GUI_NAME, packaging / "gui_entry.py", windowed=True, extra_args=gui_args):
         return 1
     # Console command (validate/check/migrate); no Qt, so it stays small. Shipped inside the folder.
-    if _pyinstaller(
+    return pyinstaller_build(
         CLI_NAME,
         packaging / "cli_entry.py",
         windowed=False,
         extra_excludes=("PySide6", "shiboken6"),
-    ):
-        return 1
-    app = ROOT / "dist" / PACKAGE_NAME
-    shutil.rmtree(app, ignore_errors=True)
-    shutil.copytree(ROOT / "build" / f"dist-{GUI_NAME}" / GUI_NAME, app, symlinks=True)
-    shutil.copytree(ROOT / "build" / f"dist-{CLI_NAME}" / CLI_NAME, app / "cli")
+        extra_args=cli_args,
+    )
+
+
+def check_package(bases: Iterable[Path], app: Path | None = None) -> int:
+    """Refuse a package that holds development tools or code that is not a declared dependency
+    (its licence would not be shipped). `bases` are the folders that hold the libraries."""
+    bases = list(bases)
     leaked = sorted(
-        p.name for base in (app / "_internal", app / "cli" / "_internal") if base.is_dir()
+        p.name for base in bases if base.is_dir()
         for p in base.iterdir() if p.name.split(".")[0] in FORBIDDEN
     )  # fmt: skip
     if leaked:
@@ -161,7 +183,7 @@ def main() -> int:
             file=sys.stderr,
         )
         return 1
-    extra = undeclared_in_build(app)
+    extra = undeclared_in_build(app or ROOT, bases)
     if extra:
         print(
             "error: code that is not a declared dependency ended up in the package (its licence "
@@ -169,6 +191,18 @@ def main() -> int:
             "its licence and SBOM entry.",
             file=sys.stderr,
         )
+        return 1
+    return 0
+
+
+def main() -> int:
+    if build_programs():
+        return 1
+    app = ROOT / "dist" / PACKAGE_NAME
+    shutil.rmtree(app, ignore_errors=True)
+    shutil.copytree(ROOT / "build" / f"dist-{GUI_NAME}" / GUI_NAME, app, symlinks=True)
+    shutil.copytree(ROOT / "build" / f"dist-{CLI_NAME}" / CLI_NAME, app / "cli")
+    if check_package((app / "_internal", app / "cli" / "_internal"), app):
         return 1
     from tools.collect_licences import collect
 

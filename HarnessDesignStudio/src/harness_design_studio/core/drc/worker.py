@@ -86,7 +86,7 @@ def main() -> int:
     # Findings go back over a private copy of stdout; anything else that prints must not corrupt it.
     out = os.fdopen(os.dup(sys.stdout.fileno()), "wb")
     sys.stdout = sys.stderr
-    with contextlib.suppress(OSError):
+    with contextlib.suppress(OSError, AttributeError):  # Windows has no os.nice
         os.nice(5)  # the editor matters more than its background check
     stdin = sys.stdin.buffer
     project: Project | None = None
