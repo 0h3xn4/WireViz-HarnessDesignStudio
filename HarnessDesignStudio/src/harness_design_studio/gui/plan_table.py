@@ -17,6 +17,7 @@ from PySide6.QtWidgets import QLabel, QVBoxLayout, QWidget
 from harness_design_studio.core.generate.engine import GenerationPlan
 from harness_design_studio.core.model import Harness, Project
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.empty_state import attach_empty_state
 from harness_design_studio.gui.tables import Column, DictTableModel, TableView, natural_key
 from harness_design_studio.gui.theme import ThemeManager
 
@@ -93,6 +94,7 @@ class GeneratePlanTable(QWidget):
         )
         self.view.setObjectName("generate-plan")
         lay.addWidget(self.view, 1)
+        attach_empty_state(self.view, strings.EMPTY_LIST_TITLE, strings.EMPTY_LIST_HINT)
         self.note = QLabel()
         self.note.setObjectName("generate-plan-note")
         self.note.setWordWrap(True)

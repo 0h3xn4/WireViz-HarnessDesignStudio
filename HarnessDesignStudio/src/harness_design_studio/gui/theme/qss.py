@@ -73,6 +73,10 @@ QPushButton[primary="true"]:disabled {{ background: {c("bg.hover")}; color: {c("
 QPushButton[danger="true"] {{ border-color: {c("status.critical")}; color: {c("status.critical")}; }}
 QPushButton[ghost="true"], QToolButton[ghost="true"] {{ background: transparent; border-color: transparent; }}
 QPushButton[ghost="true"]:hover:enabled, QToolButton[ghost="true"]:hover:enabled {{ background: {c("bg.hover")}; }}
+QPushButton[step="done"] {{ border-bottom: {px(3)} solid {c("status.normal")}; }}
+QPushButton[step="attention"] {{ border-bottom: {px(3)} solid {c("status.caution")}; }}
+QPushButton[step="running"] {{ border-bottom: {px(3)} solid {c("status.standby")}; }}
+QPushButton[step="blocked"] {{ color: {c("text.muted")}; }}
 QPushButton[align="left"] {{ text-align: left; }}
 QToolButton:checked, QPushButton:checked {{ background: {c("accent")}; color: {c("accent.text")}; border-color: {c("accent")}; }}
 QToolButton[toggle="true"]:checked, QPushButton[toggle="true"]:checked {{ background: {c("bg.selected")}; color: {c("text.primary")}; border: 1px solid {c("accent")}; font-weight: 600; }}

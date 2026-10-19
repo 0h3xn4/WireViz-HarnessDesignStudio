@@ -4,9 +4,10 @@ import contextlib
 import hashlib
 import time
 from collections.abc import Callable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from functools import partial
 from pathlib import Path
+from typing import Any
 
 from pydantic import ValidationError
 from PySide6.QtCore import (
@@ -15,6 +16,7 @@ from PySide6.QtCore import (
     QEventLoop,
     QSettings,
     QSize,
+    QStandardPaths,
     Qt,
     QThread,
     QTimer,
@@ -80,7 +82,7 @@ from harness_design_studio.core.vcs.release import (
 )
 from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, working_diff
 from harness_design_studio.core.verify import VerifyReport
-from harness_design_studio.gui import areas, strings
+from harness_design_studio.gui import areas, recent, strings
 from harness_design_studio.gui.canvas import DiagramView, ZoomIndicator
 from harness_design_studio.gui.checks_panel import ChecksPanel, PendingValuesLink
 from harness_design_studio.gui.command_palette import CommandPalette, PaletteEntry
@@ -443,6 +445,8 @@ class MainWindow(QMainWindow):
         self._pane = 0
         self._area = areas.DEFAULT
         self._switching_area = False
+        self.examples_folder: Callable[[], Path] = self._examples_folder  # (tests replace it)
+        self._recent_shown: list[recent.RecentEntry] | None = None
         self._active_worker: PlanWorker | OutputsWorker | ArrangeWorker | None = None
         self._last_check = ""
 
@@ -475,6 +479,7 @@ class MainWindow(QMainWindow):
         self.pending_link.filterRequested.connect(self.show_unchecked)
         self.topbar.generateClicked.connect(self.act_generate.trigger)
         self.topbar.checkClicked.connect(self.act_check.trigger)
+        self.topbar.releaseClicked.connect(self.act_release.trigger)
         self.topbar.exportClicked.connect(self.act_export.trigger)
         self.alerts.dismissed.connect(self._alert_dismissed)
         shows = getattr(self.view, "showRequested", None)  # the canvas's "Show" plumbing
@@ -630,6 +635,9 @@ class MainWindow(QMainWindow):
             open_=lambda: self.act_open.trigger(),
             example=lambda: self.act_new_example.trigger(),
             sample=lambda: self.act_sample.trigger(),
+            open_recent=lambda path: self.open_recent_flow(path),
+            forget_recent=lambda path: self.forget_recent(path),
+            open_example=lambda name: self.open_example_flow(name),
         )
         self.settings_page = SettingsPage(
             self.theme,
@@ -929,6 +937,13 @@ class MainWindow(QMainWindow):
         self.install_view("inspector", self.inspector)
         self.project_tree.set_context_actions(self._tree_actions)
         self.project_tree.deleteRequested.connect(self._tree_delete)
+        # the lock banner follows the harness chosen in Drawings and in Revisions
+        self.harness_view.selector.currentIndexChanged.connect(
+            lambda _i: self._update_lock_banner()
+        )
+        self.releases_panel.harness.currentIndexChanged.connect(
+            lambda _i: self._update_lock_banner()
+        )
 
     # ---- what the new views ask for ----------------------------------------------------------------
     def _show_why(self, kind: str, ident: str) -> None:
@@ -1790,6 +1805,7 @@ class MainWindow(QMainWindow):
         self._update_problems_button()
         self._update_selection_actions()
         self._update_view_actions()
+        self._update_lock_banner()
         self.act_cancel_check.setEnabled(c.drc_busy())
         # a newly opened project is read at once; an edit waits for the pause (hashing takes time)
         opened = self._facts_token is None or self._facts_token[0] != c.state_token[0]
@@ -1876,7 +1892,7 @@ class MainWindow(QMainWindow):
         c = self.ctl
         digest, generation, outputs = self._status_facts(compute)
         record = c.project.generation
-        return ShellStatus(
+        status = ShellStatus(
             name=c.project.meta.name,
             model_hash=digest,
             dirty=c.dirty,
@@ -1889,6 +1905,22 @@ class MainWindow(QMainWindow):
             generated_at=record.input_hash[:8] if record is not None else "",
             revision=self._revision_text(),
         )
+        return replace(status, **self._workflow_facts())
+
+    def _workflow_facts(self) -> dict[str, Any]:
+        """What the Check and Release steps need: the rule results and the harness statuses."""
+        c = self.ctl
+        results = c.drc_rule_results() if c.drc_current else []
+        summary = by_rule.summary(results) if results else None
+        statuses = [h.status for h in c.project.harnesses.values()]
+        return {
+            "checked": bool(c.drc_current and results),
+            "failed": summary.failed if summary else 0,
+            "unchecked": (summary.not_checked + summary.pending) if summary else 0,
+            "harnesses": len(statuses),
+            "in_review": statuses.count("in_review"),
+            "released": statuses.count("released"),
+        }
 
     def _revision_text(self) -> str:
         revs = sorted({h.revision for h in self.ctl.project.harnesses.values()})
@@ -1941,10 +1973,70 @@ class MainWindow(QMainWindow):
     def _update_problems_button(self) -> None:
         self.problems_btn.setText(strings.PROBLEMS_BUTTON.format(len(self.ctl.open_findings())))
 
+    # ---- Home: recent projects and the examples -------------------------------------------------
+    @staticmethod
+    def _examples_folder() -> Path:
+        """Where "Try the flatsat example" puts its copy: Documents/Harness Design Studio."""
+        docs = QStandardPaths.writableLocation(QStandardPaths.StandardLocation.DocumentsLocation)
+        return Path(docs or str(Path.home())) / "Harness Design Studio"
+
+    def open_example_flow(self, name: str) -> None:
+        """Open a packaged example as a copy of its own in the examples folder (made the first time,
+        opened as it is afterwards, so the person's changes to it stay)."""
+        from harness_design_studio.core import templates
+
+        if not self._confirm_discard():
+            return
+        dest = self.examples_folder() / name
+        try:
+            if not dest.exists():
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                templates.create_project(dest, name)
+        except (templates.TemplateError, OSError) as exc:
+            self._error(str(exc))
+            return
+        self.open_project(dest)
+
+    def open_recent_flow(self, path: str) -> None:
+        if not Path(path).is_dir():
+            self.toasts.show_message(strings.HOME_MISSING.format(path), None)
+            return
+        if self._confirm_discard():
+            self.open_project(Path(path))
+
+    def forget_recent(self, path: str) -> None:
+        recent.forget(self.settings, path)
+        self._update_home()
+
+    def _remember_current(self) -> None:
+        c = self.ctl
+        root = c.root
+        if root is None:
+            return
+        statuses = [h.status for h in c.project.harnesses.values()]
+        recent.remember(
+            self.settings,
+            recent.RecentEntry(
+                path=str(root),
+                name=c.project.meta.name,
+                units=len(c.project.units),
+                interfaces=len(c.project.interfaces),
+                harnesses=len(statuses),
+                draft=statuses.count("draft"),
+                in_review=statuses.count("in_review"),
+                released=statuses.count("released"),
+            ),
+        )
+
     def _update_home(self) -> None:
         c = self.ctl
         p = c.project
         root = c.root
+        self._remember_current()
+        entries = recent.load(self.settings)
+        if entries != self._recent_shown:
+            self._recent_shown = entries
+            self.home_page.set_recent(entries, exists=lambda path: Path(path).is_dir())
         self.home_page.show_project(
             p.meta.name or strings.TB_UNSAVED_PROJECT,
             str(root) if root is not None else "",
@@ -1960,6 +2052,7 @@ class MainWindow(QMainWindow):
         """The persistent notice when the plans or the exported files no longer match the design:
         it stays (hidden only by the person, until the design changes again) and carries the
         buttons that fix it."""
+        self._update_lock_banner()
         plans = status.generation == "stale"
         files = status.has_harnesses and status.outputs in ("stale", "modified", "unreadable")
         key = (plans, files, status.model_hash)
@@ -1985,6 +2078,46 @@ class MainWindow(QMainWindow):
             if plans:
                 details.append(strings.BN_DETAIL_ORDER)
         self.alerts.show_banner("stale", "warning", text, details=details, actions=actions)
+
+    def _locked_refs(self) -> list[tuple[str, str]]:
+        """(harness, revision) of the released harnesses that lock what is in front of you: the
+        harness shown in Drawings, the one chosen in Revisions, or the selected unit or link."""
+        c = self.ctl
+        released = {
+            h.id: h.revision for h in c.project.harnesses.values() if h.status == "released"
+        }
+        if not released:
+            return []
+        hid: str | None = None
+        if self._area == "drawings" and self.view_installed("harness"):
+            selector = getattr(self.harness_target(), "selector", None)
+            hid = str(selector.currentData() or "") if selector is not None else None
+        elif self._area == "revisions":
+            hid = self.releases_panel.current_harness()
+        elif self._area in ("model", "checks", "outputs"):
+            s = c.selection
+            if s is not None and s.kind in ("unit", "interface"):
+                return [r for r in c.state_index().of(s.kind, s.id).locks]
+            return []
+        return [(hid, released[hid])] if hid in released else []
+
+    def _update_lock_banner(self) -> None:
+        """Released data is unmistakably locked: a banner over the work area says so and offers
+        the way out, a new revision."""
+        refs = self._locked_refs()
+        if not refs:
+            self.alerts.clear("locked")
+            return
+        text = (
+            strings.LOCK_BANNER_ONE.format(*refs[0])
+            if len(refs) == 1
+            else strings.LOCK_BANNER_MANY.format(len(refs))
+        )
+        first = refs[0][0]
+        actions: list[tuple[str, Callable[[], None]]] = []
+        if not self.ctl.read_only:
+            actions.append((strings.LOCK_BANNER_ACTION, lambda: self.change_flow("revise", first)))
+        self.alerts.show_banner("locked", "info", text, actions=actions, dismissible=False)
 
     def _alert_dismissed(self, key: str) -> None:
         if key == "stale":
@@ -2033,6 +2166,7 @@ class MainWindow(QMainWindow):
     def _on_selection(self) -> None:
         c = self.ctl
         s = c.selection
+        self._update_lock_banner()
         if len(c.selected) > 1:
             self.status_sel.setText(strings.SELECTED_MANY.format(len(c.selected)))
         else:
@@ -2606,6 +2740,7 @@ class MainWindow(QMainWindow):
             self.area_stack.setCurrentWidget(tabs)
         self._switching_area = False
         self._update_crumbs()
+        self._update_lock_banner()
 
     def _tab_changed(self) -> None:
         """A tab was chosen (by a click, a shortcut or code): the rail follows it."""

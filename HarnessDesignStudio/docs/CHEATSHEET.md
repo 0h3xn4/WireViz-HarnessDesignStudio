@@ -50,7 +50,7 @@ The comment must have at least 10 characters. A release is blocked while checks 
 
 ## In the app
 
-The window: a rail on the left (Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (**Generate**, **Check**, **Export…**, a status chip), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M).
+The window: a rail on the left (Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M).
 
 | Keys | Action |
 | --- | --- |

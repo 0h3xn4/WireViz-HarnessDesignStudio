@@ -317,6 +317,8 @@ into the summary, all existing tests green (CI on Linux, Windows, macOS), golden
 - *Acceptance:* stepper state equals the existing logic (`plans up to date`, check results, release state) in a
   test over all combinations; the banner appears on every released harness; screenshots 01, 03, 34, 35, 50 redone.
 
+**M3 result (2026-10-19).** Built as planned (D-152). The steps are *Generate, Check, Release* in the top bar, computed by `gui/workflow.py` from facts the window already has and tested over every combination; the lock banner follows what is in front of you; Home lists recent projects and the examples; tables have a generic empty state (Interfaces and the Generate plan; the others had one). Differences: Export stays a button after the steps; the empty state is applied where none existed. No old test was edited.
+
 **M4 Model editors.**
 - Interfaces, Units, Connectors/pins, Wires as spreadsheet-like tables: virtualised, inline edit (Enter to edit,
   Esc to cancel, arrows), multi-row bulk edit, **Ctrl+C/Ctrl+V as TSV to and from Excel**, filter and search,

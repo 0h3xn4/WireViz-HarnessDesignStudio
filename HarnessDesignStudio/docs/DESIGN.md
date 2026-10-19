@@ -125,7 +125,7 @@ Each category has its own colour, line weight and letter, so colour is not the o
 
 ## The window
 
-Code: `gui/main_window.py`, `gui/shell.py` (slots, banners, status chip rules, `auto_scale`), `gui/topbar.py`, `gui/areas.py`, `gui/rail.py`, `gui/pages.py`, `gui/jobs.py`, `gui/problems_panel.py`, `gui/notice.py`. Tests: `test_ux_shell.py`, `test_ui_shell.py`, `test_ui_areas.py`.
+Code: `gui/main_window.py`, `gui/shell.py` (slots, banners, status chip rules, `auto_scale`), `gui/topbar.py`, `gui/workflow.py`, `gui/recent.py`, `gui/empty_state.py`, `gui/areas.py`, `gui/rail.py`, `gui/pages.py`, `gui/jobs.py`, `gui/problems_panel.py`, `gui/notice.py`. Tests: `test_ux_shell.py`, `test_ui_shell.py`, `test_ui_areas.py`, `test_ui_workflow.py`, `test_ui_home.py`.
 
 - **Layout (UI overhaul M2, D-151).** A **navigation rail** down the left edge (Home, Model, Checks, Drawings, Outputs, Revisions, Settings; icon above label, 20 px icons, collapsible to icons, icons only in a window shorter than 640 px), one full-width **top bar**, a banner area, then the open **area**: Model holds the tabs Diagram and Devices (Arrange and the filters sit at the right end of that tab bar), Checks the Checks tab, Drawings the Harness tab, Outputs the Lists tab, Revisions the Releases tab; Home and Settings are pages of their own. Ctrl+1 to Ctrl+6 still go to the six views (and open their area), Ctrl+7 goes Home and Ctrl+, to Settings. The left dock (the Project tree tab and the Interfaces tab, the editable interface table, Ctrl+Shift+T) and the right dock (Inspector, Why and Problems tabs) stay; the **Problems panel** (every open finding: severity, rule, object, message; filter; a click goes to the object) is a bottom dock that is closed until it is asked for (status bar, View menu, Ctrl+Shift+M). Code: `gui/areas.py` (the mapping, no Qt), `gui/rail.py`, `gui/pages.py`, `gui/problems_panel.py`, `gui/jobs.py`. Views plug into named slots (`MainWindow.install_view(name, widget)`: harness, lists, tree, inspector, why, problems); a slot not yet filled shows an empty state and its tab stays hidden. The Interfaces tab widens the left dock when it opens and puts it back when the Project tab returns; Connect has an arrow that lists the interface types; Add in the Project tab and Edit > Add unit add units.
 - **One primary button.** Generate is the only accent-coloured button of the window (see [State badges](#state-badges-and-chips)). (SH-1, SH-24)
@@ -141,6 +141,13 @@ Code: `gui/main_window.py`, `gui/shell.py` (slots, banners, status chip rules, `
 - **Undo and Redo name the step** ("Undo Move PDU2") from `History.next_undo_label` and `next_redo_label`. (SH-14)
 - **One dialog for a new project**, after the question about unsaved changes: folder, name and example, with the error under the field it belongs to; the name follows the folder name until it is typed. (SH-18)
 - **Focus.** F6 and Shift+F6 move between the diagram, the project panel, the inspector and the Problems panel when it is open (the rail is first in the Tab order); the diagram still takes a Tab stop for each unit and link. (SH-13)
+
+### Workflow steps, lock banner, Home, empty states (M3)
+
+- The top bar shows **Generate, Check, Release** as three step buttons with chevrons between them (then Export). A step is *done* (check mark, calm), *to do*, *running*, *attention* (amber) or *blocked* (muted); its tooltip says why. State is never colour alone: each state has its own icon. The rules live in `gui/workflow.py`.
+- Whatever released data is in front of you (the harness in Drawings or Revisions, the selected unit or link) gets an info banner over the work area, "W001 revision A is released and locked", with *Start new revision* unless the project is read-only.
+- Home: the flatsat example is the primary action, recent projects are cards (name, folder, counts, how many harnesses are draft, in review, released; a missing folder is marked and can be forgotten), then the other examples. Nothing about recent projects is written into a project.
+- A table without rows says what to do (title, one line, the action if there is one); a filter that hides every row says "No row matches". Use `attach_empty_state(view, title, hint, action=..., on_action=...)`.
 
 ## Views
 

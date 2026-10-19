@@ -34,9 +34,10 @@ ROLES: Final[dict[str, tuple[str, QPalette.ColorRole]]] = {
     "status.standby": ("link", R.Link),
     "status.caution": ("tooltip-base", R.ToolTipBase),
     "status.serious": ("tooltip-text", R.ToolTipText),
+    "status.normal": ("button-text", R.ButtonText),  # (the style sheet colours button text itself)
 }
-# roles that repeat a token for the parts of Qt that read them (plain text, button text)
-_ALSO: Final[dict[str, tuple[QPalette.ColorRole, ...]]] = {"text.primary": (R.Text, R.ButtonText)}
+# roles that repeat a token for the parts of Qt that read them (plain text)
+_ALSO: Final[dict[str, tuple[QPalette.ColorRole, ...]]] = {"text.primary": (R.Text,)}
 
 
 def role(token: str) -> str:
@@ -52,6 +53,6 @@ def build_palette(t: dict[str, str]) -> QPalette:
         pal.setColor(qt_role, QColor(t[token]))
         for extra in _ALSO.get(token, ()):
             pal.setColor(extra, QColor(t[token]))
-    for qt_role in (R.WindowText, R.Text, R.ButtonText):
+    for qt_role in (R.WindowText, R.Text):
         pal.setColor(QPalette.ColorGroup.Disabled, qt_role, QColor(t["text.muted"]))
     return pal

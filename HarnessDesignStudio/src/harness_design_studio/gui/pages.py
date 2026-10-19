@@ -10,7 +10,7 @@ what is open and how to start another. Settings holds what used to hide in the V
 interface size, mode) and points to the project's configuration (the engineering values).
 """
 
-from collections.abc import Callable
+from collections.abc import Callable, Sequence
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -27,8 +27,18 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.recent import RecentEntry
 from harness_design_studio.gui.shell import ElidedLabel
+from harness_design_studio.gui.states import StateChip
 from harness_design_studio.gui.theme import ThemeManager, mark_mono
+
+
+def _example_infos() -> tuple:  # type: ignore[type-arg]
+    """The packaged examples (`core.templates.TEMPLATES`) except the empty project."""
+    from harness_design_studio.core import templates
+
+    return tuple(t for t in templates.TEMPLATES if t.name != "blank")
+
 
 SCALES = (100, 125, 150, 200)
 THEMES = (
@@ -83,8 +93,14 @@ class HomePage(QScrollArea):
         open_: Callable[[], None],
         example: Callable[[], None],
         sample: Callable[[], None],
+        open_recent: Callable[[str], None] | None = None,
+        forget_recent: Callable[[str], None] | None = None,
+        open_example: Callable[[str], None] | None = None,
     ) -> None:
         super().__init__()
+        self.theme = theme
+        self._open_recent = open_recent or (lambda _p: None)
+        self._forget_recent = forget_recent or (lambda _p: None)
         page, column = _page(theme, "home-page", strings.HOME_TITLE)
         self.setObjectName("home-page")
         self.setWidgetResizable(True)
@@ -124,7 +140,100 @@ class HomePage(QScrollArea):
         row.addStretch(1)
         start_lay.addLayout(row)
         column.addWidget(start)
+        # recent projects: a card each, filled by `set_recent`
+        self.recent_card, self.recent_lay = _card(theme, strings.HOME_RECENT)
+        self.recent_empty = QLabel(strings.HOME_RECENT_NONE)
+        self.recent_empty.setProperty("muted", True)
+        self.recent_empty.setWordWrap(True)
+        self.recent_lay.addWidget(self.recent_empty)
+        self.recent_rows: list[QWidget] = []
+        column.addWidget(self.recent_card)
+        # the packaged examples, with a one-click way into the flatsat
+        ex, ex_lay = _card(theme, strings.HOME_EXAMPLES)
+        self.example_buttons: dict[str, QPushButton] = {}
+        for info in _example_infos():
+            line = QHBoxLayout()
+            col = QVBoxLayout()
+            title = QLabel(info.title)
+            title.setProperty("title", False)
+            blurb = QLabel(info.summary)
+            blurb.setWordWrap(True)
+            blurb.setProperty("muted", True)
+            col.addWidget(title)
+            col.addWidget(blurb)
+            line.addLayout(col, 1)
+            b = QPushButton(
+                strings.HOME_EXAMPLE_FLATSAT
+                if info.name == "flatsat"
+                else strings.HOME_EXAMPLE_OPEN
+            )
+            b.setObjectName(f"home-example-{info.name}")
+            b.setAccessibleName(f"{strings.HOME_EXAMPLE_OPEN}: {info.title}")
+            if info.name == "flatsat":
+                b.setProperty("primary", True)
+                b.setToolTip(strings.HOME_EXAMPLE_FLATSAT_TIP)
+            if open_example is not None:
+                b.clicked.connect(lambda _c=False, n=info.name: open_example(n))
+            line.addWidget(b, 0, Qt.AlignmentFlag.AlignTop)
+            ex_lay.addLayout(line)
+            self.example_buttons[info.name] = b
+        column.addWidget(ex)
         column.addStretch(1)
+
+    def set_recent(self, entries: Sequence[RecentEntry], *, exists: Callable[[str], bool]) -> None:
+        """One card per recent project (the folder must still exist to be opened)."""
+        for w in self.recent_rows:
+            self.recent_lay.removeWidget(w)
+            w.deleteLater()
+        self.recent_rows = []
+        self.recent_empty.setVisible(not entries)
+        for e in entries:
+            card = QWidget()
+            card.setObjectName("home-recent")
+            lay = QHBoxLayout(card)
+            lay.setContentsMargins(0, self.theme.space(4), 0, self.theme.space(4))
+            col = QVBoxLayout()
+            title = QLabel(e.name or e.path)
+            title.setProperty("title", True)
+            path = ElidedLabel(e.path)
+            mark_mono(path)
+            path.setProperty("muted", True)
+            counts = QLabel(strings.HOME_COUNTS.format(e.units, e.interfaces, e.harnesses))
+            counts.setProperty("muted", True)
+            col.addWidget(title)
+            col.addWidget(path)
+            chips = QHBoxLayout()
+            chips.addWidget(counts)
+            for state, n, text in (
+                ("draft", e.draft, strings.HOME_DRAFT),
+                ("in-review", e.in_review, strings.HOME_IN_REVIEW),
+                ("released", e.released, strings.HOME_RELEASED),
+            ):
+                if n:
+                    chip = StateChip(self.theme)
+                    chip.set_state(state, str(n))
+                    chip.setToolTip(text.format(n))
+                    chips.addWidget(chip)
+            chips.addStretch(1)
+            col.addLayout(chips)
+            lay.addLayout(col, 1)
+            present = exists(e.path)
+            open_btn = QPushButton(strings.HOME_OPEN_BTN)
+            open_btn.setObjectName("home-recent-open")
+            open_btn.setAccessibleName(f"{strings.HOME_OPEN_BTN} {e.name or e.path}")
+            open_btn.setEnabled(present)
+            if not present:
+                open_btn.setToolTip(strings.HOME_MISSING.format(e.path))
+            open_btn.clicked.connect(lambda _c=False, p=e.path: self._open_recent(p))
+            drop = QPushButton(strings.HOME_REMOVE)
+            drop.setObjectName("home-recent-remove")
+            drop.setProperty("ghost", True)
+            drop.setAccessibleName(f"{strings.HOME_REMOVE}: {e.name or e.path}")
+            drop.clicked.connect(lambda _c=False, p=e.path: self._forget_recent(p))
+            lay.addWidget(open_btn, 0, Qt.AlignmentFlag.AlignTop)
+            lay.addWidget(drop, 0, Qt.AlignmentFlag.AlignTop)
+            self.recent_lay.addWidget(card)
+            self.recent_rows.append(card)
 
     def show_project(self, name: str, path: str, summary: str) -> None:
         self.name.set_full_text(name)
