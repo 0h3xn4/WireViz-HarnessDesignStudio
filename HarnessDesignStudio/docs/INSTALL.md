@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package).
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit) and **macOS 13 or newer** (Apple Silicon and Intel). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows and macOS sections below describe the packages from 1.2.0.
 
 ## Contents
 
@@ -12,9 +12,11 @@ The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86). It needs no network, n
 - [Your first five minutes after installing](#your-first-five-minutes-after-installing)
 - [If the app does not start](#if-the-app-does-not-start)
 - [C. Run from source (developers)](#c-run-from-source-developers)
+- [D. Windows (from 1.2.0)](#d-windows-from-120)
+- [E. macOS (from 1.2.0)](#e-macos-from-120)
 - [Where things are stored](#where-things-are-stored)
 
-Pick **one** of the three ways. If you are unsure, use A.
+Pick **one** way. On Ubuntu, if you are unsure, use A. On Windows use D, on a Mac use E.
 
 **Which version do you have?** Run `harness-design-studio --version`. These pages describe the command names that come after version 1.0.0: the command line tool is `harness-design-studio`, the editor `harness-design-studio-gui`, and `harness` is kept as a short alias of the command line tool. The packages of 0.1.0 and 1.0.0 only know the short name `harness` for the command line tool (their `harness-design-studio` is the editor), so type `harness` instead of `harness-design-studio` and `harness-design-studio --selftest` instead of `harness-design-studio-gui --selftest` there. These pages describe version 1.0.0 and later. If you still have the 0.1.0 packages, they lack the five examples (`minimal-satellite` and `flatsat` are new), the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...*: `harness-design-studio new --list` shows three examples (`blank`, `first-steps`, `small-satellite`) instead of five. See [`CHANGELOG.md`](../CHANGELOG.md) for what changed.
 
@@ -23,23 +25,25 @@ Pick **one** of the three ways. If you are unsure, use A.
 | **A** | an engineer who wants to use the tool | install the `.deb` package |
 | **B** | the same, without administrator rights | unpack the `.tar.gz` and run `install.sh` |
 | **C** | a developer or you want the newest source | run it from source |
+| **D** | on Windows 10 or 11 (from 1.2.0) | run the setup program, or extract the portable `.zip` |
+| **E** | on a Mac, macOS 13 or newer (from 1.2.0) | open the `.dmg` and drag the app to Applications |
 
 ## Before you start (two minutes)
 
-Check that your machine is supported. Open a terminal (Ctrl+Alt+T) and run:
+On Windows and macOS go straight to [D](#d-windows-from-120) or [E](#e-macos-from-120); they have their own checks. On Ubuntu, check that your machine is supported. Open a terminal (Ctrl+Alt+T) and run:
 
 ```
 lsb_release -rs          # must print 24.04 or higher
 uname -m                 # must print x86_64
 ```
 
-If the first command is not found, run `cat /etc/os-release` and read `VERSION_ID`. Ubuntu 22.04 and older are not supported. Other Linux distributions, macOS and Windows are not supported either.
+If the first command is not found, run `cat /etc/os-release` and read `VERSION_ID`. Ubuntu 22.04 and older are not supported. Other Linux distributions are not supported either (Windows and macOS: see D and E, from version 1.2.0).
 
 You also need about 500 MB of free disk space for the program (`df -h ~` shows it) and a screen of at least 1280 x 720 for the app. The command line tool works without a screen.
 
 ## Get the package
 
-You need one file, either `harness-design-studio_<version>_amd64.deb` (way A) or `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B). Ask your tool administrator, or take it from one of these places:
+You need one file, either `harness-design-studio_<version>_amd64.deb` (way A), `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B), `harness-design-studio-<version>-windows-x86_64-setup.exe` or `harness-design-studio-<version>-windows-x86_64.zip` (way D) or `harness-design-studio-<version>-macos-arm64.dmg` / `harness-design-studio-<version>-macos-x86_64.dmg` (way E). Ask your tool administrator, or take it from one of these places:
 
 - the **Releases** page of the project's repository (look for the newest version number). Version 1.0.0 has the `.deb`, the `.tar.gz` and a `SHA256SUMS` file attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed. The release record says that attaching the files to the release page is up to the repository owner (`compliance/SIGNOFF.md`, section Publication); if the page lists no `.deb` or `.tar.gz`, use one of the other two places or way C;
 - the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact is called `harness-design-studio-ubuntu-24.04` and holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file).
@@ -48,11 +52,13 @@ You can also build it yourself (way C, last section). That route needs no releas
 
 Copy the file to the machine. It never needs to reach the network.
 
-**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file (the `SHA256SUMS` file on the release page, and `compliance/evidence/release_<version>_SHA256SUMS` in the repository for 0.1.0 and 1.0.0). Compare:
+**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file (the `SHA256SUMS` file on the release page, one file for all packages of a release from 1.2.0, and `compliance/evidence/release_<version>_SHA256SUMS` in the repository for 0.1.0 and 1.0.0). Compare:
 
 ```
 sha256sum harness-design-studio_<version>_amd64.deb
 ```
+
+(On Windows: `Get-FileHash <file> -Algorithm SHA256` in PowerShell; on macOS: `shasum -a 256 <file>`.)
 
 The printed value must be the same as the one in the list. If it differs, do not install the file. The packages are not signed (this is a recorded deviation, `compliance/DEVIATIONS.md` T-19), so the checksum is the only check you have. A package built by CI is built again on another machine, so its checksum can differ from the recorded one. For such a package compute the checksum yourself (`sha256sum`) on the machine that built it and compare it with the file you received; the recorded list applies to the packages named in it.
 
@@ -175,12 +181,110 @@ dist/harness-design-studio/harness-design-studio-gui --selftest
 
 The release procedure and the clean-machine check are in [`RELEASE.md`](RELEASE.md).
 
+## D. Windows (from 1.2.0)
+
+**Needs:** Windows 10 or 11, 64-bit (x86-64), about 600 MB of free disk space and a screen of at least 1280 x 720 for the app. No administrator account, no network and no other software (Python and Qt are inside the package).
+
+There are two files; take either:
+
+- `harness-design-studio-<version>-windows-x86_64-setup.exe`: the **setup program** (recommended). It installs for your user only.
+- `harness-design-studio-<version>-windows-x86_64.zip`: the **portable** folder. Nothing is installed.
+
+**The first start of an unsigned program.** The packages are not signed (see [`SECURITY.md`](SECURITY.md)), so Windows SmartScreen shows a blue window, *Windows protected your PC*, the first time you run the setup program or the editor. This is expected. Compare the checksum first (above), then choose **More info** and **Run anyway**. If a browser marked the download, you can also right-click the file, choose **Properties** and tick **Unblock** at the bottom. For the `.zip`, unblock it *before* you extract it; otherwise every program in it asks once. Antivirus programs may scan the new files for a minute on the first start.
+
+**Setup program.** Double-click it and follow the pages (the first page is the read-me). It installs into `%LOCALAPPDATA%\Programs\Harness Design Studio` (you can choose another folder), adds **Harness Design Studio** to the Start menu, puts the install folder and its `cli` folder on your user `PATH`, and registers itself under *Settings > Apps > Installed apps* where you can uninstall it. It never asks for administrator rights. Open a **new** terminal afterwards (an open one does not see the changed `PATH`):
+
+```
+harness-design-studio --version
+```
+
+```
+harness 1.2.0
+```
+
+You now have the command line tool `harness-design-studio` (and its short alias `harness`) and the editor `harness-design-studio-gui`. For a script or a shared machine, the setup program also runs without windows: `harness-design-studio-<version>-windows-x86_64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER /DIR="C:\Tools\Harness Design Studio"` (add `/LOG=setup.log` to keep a log). Remove it with *Settings > Apps*, or run `unins000.exe` in the install folder (`/VERYSILENT` makes that silent too). Your projects are never inside the install folder, and uninstalling does not touch them.
+
+**Portable zip.** Extract it into a folder of your choice (right-click, **Extract All**), keep the path short (a very long path can hit the Windows limit of 260 characters), and start `harness-design-studio-gui.exe`. The command line tool is `cli\harness-design-studio.exe` (`cli\harness.exe` is the same program). Nothing is written to the registry or the `PATH`; delete the folder to remove the tool. To type the command from anywhere, add the `cli` folder to your `PATH` yourself.
+
+**Check that it works.** In a terminal, in the install folder (setup program: it is on the `PATH` already; zip: `cd` to the `cli` folder):
+
+```
+harness-design-studio --version
+harness-design-studio new wheel-link --template first-steps
+harness-design-studio generate wheel-link
+harness-design-studio drc wheel-link
+```
+
+The editor is a Windows program without a console window, so it prints nothing there. Its self-test reports through the exit code and a file. In PowerShell (`Start-Process -Wait` makes the shell wait for the editor):
+
+```
+$p = Start-Process .\harness-design-studio-gui.exe -ArgumentList '--selftest','--selftest-out','result.txt' -Wait -PassThru
+$p.ExitCode        # 0 means success
+Get-Content result.txt    # selftest ok
+```
+
+Then start **Harness Design Studio** from the Start menu and continue with [Your first five minutes after installing](#your-first-five-minutes-after-installing).
+
+| You see | Do this |
+| --- | --- |
+| *Windows protected your PC* | Expected for an unsigned program: **More info**, then **Run anyway** (see above). |
+| `harness-design-studio` is not recognized | The terminal was open during the install. Open a new one, or use the full path `%LOCALAPPDATA%\Programs\Harness Design Studio\cli\harness-design-studio.exe`. |
+| The editor does not appear, or a black or empty window shows | Update the graphics driver, then run the self-test above to see whether the program itself is intact. |
+| Your company blocks programs in `%LOCALAPPDATA%` | Ask for an exception for the install folder, or run the portable `.zip` from a folder that is allowed. |
+
+Settings (theme, scale, last project; no design data) are in `%APPDATA%\HarnessDesigner\HarnessDesigner.ini`.
+
+## E. macOS (from 1.2.0)
+
+**Needs:** macOS 13 (Ventura) or newer, about 600 MB of free disk space and no other software. There is one disk image for each kind of Mac; take the one that fits (Apple menu > *About This Mac*: *Chip: Apple M1/M2/...* is Apple Silicon, *Processor: Intel* is Intel; or run `uname -m` in the Terminal: `arm64` or `x86_64`):
+
+- `harness-design-studio-<version>-macos-arm64.dmg`: Apple Silicon (M1 and later).
+- `harness-design-studio-<version>-macos-x86_64.dmg`: Intel Macs.
+
+**Install.** Double-click the `.dmg`, drag **Harness Design Studio** onto the **Applications** folder in the window, then eject the image.
+
+**The first start of an unsigned app.** The app is not signed with a Developer ID and not notarized (see [`SECURITY.md`](SECURITY.md)), so macOS refuses a plain double-click with a message that it cannot verify the developer. Compare the checksum first (above), then do one of these once:
+
+- Open the Applications folder, **right-click** (or Control-click) the app, choose **Open**, then **Open** in the window that appears. From then on it starts normally.
+- Or, in System Settings > *Privacy & Security*, press **Open Anyway** next to the message about the app (it shows for an hour after the refused start).
+- Or, in the Terminal, remove the quarantine mark that the download put on the app: `xattr -dr com.apple.quarantine "/Applications/Harness Design Studio.app"`.
+
+**The command line tool** is inside the app. Use its full path, or link it into a folder on your `PATH`:
+
+```
+"/Applications/Harness Design Studio.app/Contents/MacOS/harness-design-studio" --version
+mkdir -p ~/.local/bin
+ln -s "/Applications/Harness Design Studio.app/Contents/MacOS/harness-design-studio" ~/.local/bin/harness-design-studio
+ln -s "/Applications/Harness Design Studio.app/Contents/MacOS/harness" ~/.local/bin/harness
+```
+
+(If `~/.local/bin` is not on your `PATH`, add `export PATH="$HOME/.local/bin:$PATH"` to `~/.zshrc`.) The editor is the app itself; `Contents/MacOS/harness-design-studio-gui` is the same editor when you want to start it from the Terminal.
+
+**Check that it works.**
+
+```
+harness-design-studio --version
+harness-design-studio-gui --selftest
+```
+
+The self-test works without a window and prints `selftest ok` (use the full path `"/Applications/Harness Design Studio.app/Contents/MacOS/harness-design-studio-gui"` if you did not link the editor). Then continue with [Your first five minutes after installing](#your-first-five-minutes-after-installing) and open the project from the app (**File > Open project...**).
+
+| You see | Do this |
+| --- | --- |
+| *"Harness Design Studio" cannot be opened because the developer cannot be verified* or *is damaged and can't be opened* | Expected for an unsigned app: right-click > **Open**, or the `xattr` command above. |
+| *The application can't be opened* / a message about the processor | You took the wrong image. Use `-arm64` on Apple Silicon and `-x86_64` on Intel. |
+| `harness-design-studio: command not found` | Use the full path, or make the links above and open a new Terminal. |
+
+To remove the tool, drag the app to the Trash. Settings (no design data) are in `~/.config/HarnessDesigner/HarnessDesigner.ini`.
+
+Build the Windows and macOS packages yourself with `python -m tools.build_windows` (on Windows) and `python -m tools.build_macos` (on a Mac); see [`RELEASE.md`](RELEASE.md).
+
 ## Where things are stored
 
 | What | Where |
 | --- | --- |
 | Your projects | wherever you saved them (a folder per project) |
-| App settings (theme, scale, last project) | `~/.config/HarnessDesigner/HarnessDesigner.ini` (no design data) |
+| App settings (theme, scale, last project) | Linux and macOS: `~/.config/HarnessDesigner/HarnessDesigner.ini`; Windows: `%APPDATA%\HarnessDesigner\HarnessDesigner.ini` (no design data) |
 | Autosave of an open project | `<project>/.harness-recovery/` (offered for restore after a crash; ignored by Git) |
 
 Next: [`GETTING_STARTED.md`](GETTING_STARTED.md).

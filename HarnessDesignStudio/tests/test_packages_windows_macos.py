@@ -246,6 +246,7 @@ def test_the_package_check_follows_the_qt_links_and_names_of_the_macos_bundle(
     qt = frameworks / "PySide6" / "Qt" / "lib" / "QtCore.framework" / "Versions" / "A" / "QtCore"
     qt.write_text("x")
     (frameworks / "QtCore").symlink_to(qt.relative_to(frameworks))
+    (frameworks / "Python.framework").mkdir()
     (frameworks / "Python").write_text("x")
     (frameworks / "python3__dot__12").write_text("x")
     assert undeclared_files(frameworks) == []

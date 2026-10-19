@@ -83,7 +83,9 @@ def _is_python_library(name: str, top: str) -> bool:
     """The interpreter itself: python3.13 (Linux), Python (macOS), python3__dot__12 (macOS, the
     name PyInstaller gives a file whose name has a dot)."""
     return (
-        top == "python3" or name == "Python" or re.fullmatch(r"python3__dot__\d+", name) is not None
+        top == "python3"
+        or name in ("Python", "Python.framework")
+        or re.fullmatch(r"python3__dot__\d+", name) is not None
     )
 
 

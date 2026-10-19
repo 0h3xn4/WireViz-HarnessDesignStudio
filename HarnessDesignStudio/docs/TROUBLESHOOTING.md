@@ -64,7 +64,7 @@ Check with `harness-design-studio --version`; it prints `harness 1.0.0` (or a ne
 
 ### I am on Windows or macOS
 
-The tool runs on **Ubuntu 24.04 or newer, 64-bit x86**, and nothing else. Windows, macOS, other Linux distributions and Ubuntu 22.04 and older are not supported (decision D-127). Check your system with `lsb_release -rs` (must print 24.04 or higher). See [`INSTALL.md`](INSTALL.md).
+Version 1.1.0 and older run on **Ubuntu 24.04 or newer, 64-bit x86**, and nothing else. From version 1.2.0 there are packages for **Windows 10 and 11 (64-bit)** and **macOS 13 or newer** (Apple Silicon and Intel), see [`INSTALL.md`](INSTALL.md), ways D and E (decision D-149). They are not signed: Windows SmartScreen shows *Windows protected your PC* (**More info**, then **Run anyway**), and macOS refuses a plain double-click (right-click the app, **Open**). Other Linux distributions and Ubuntu 22.04 and older are not supported. On Ubuntu, check your system with `lsb_release -rs` (must print 24.04 or higher).
 
 ### `E: Unable to locate package ./harness-design-studio_...` or `dpkg: dependency problems`
 

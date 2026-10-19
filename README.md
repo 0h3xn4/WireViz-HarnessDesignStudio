@@ -35,7 +35,7 @@ It works offline and produces byte-identical files for the same design, so the f
 
 ## Quick start
 
-You need Ubuntu 24.04 or newer on a 64-bit PC (see [Requirements](#requirements)).
+You need Ubuntu 24.04 or newer on a 64-bit PC (see [Requirements](#requirements)); the Windows and macOS packages of version 1.2.0 are described in [`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md), ways D and E.
 
 **Easiest: the ready-made package.** Download `harness-design-studio_1.1.0_amd64.deb` and `SHA256SUMS` from the [latest release](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest), then in the folder with the files:
 
@@ -97,7 +97,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 | | |
 | --- | --- |
-| System | Ubuntu 24.04 or newer, 64-bit PC (x86-64). Windows, macOS and other Linux systems are not supported. |
+| System | Ubuntu 24.04 or newer, 64-bit PC (x86-64). From version 1.2.0 also Windows 10 and 11 (64-bit) and macOS 13 or newer (Apple Silicon and Intel). Other Linux systems are not supported. |
 | Python | 3.12 or newer, only if you install from source (the `.deb` brings its own). |
 | Disk and screen | About 500 MB; a screen of at least 1280 × 720 for the app (the command line needs no screen). |
 | Network | None to run it. Installing from source downloads the Python packages once. |

@@ -158,19 +158,27 @@ def block_network(folder: Path) -> Callable[[], None]:
     """Firewall rules that stop every program of `folder` from making outgoing connections; the
     returned function removes them. Best effort (administrator rights are needed)."""
     names: list[str] = []
+    failures: list[str] = []
     for i, exe in enumerate(exe_names(folder)):
         if exe.name.startswith("unins"):
             continue
         name = f"harness-smoke-block-{os.getpid()}-{i}"
-        done = run(["netsh", "advfirewall", "firewall", "add", "rule", f"name={name}", "dir=out",
-                    "action=block", f"program={exe}", "enable=yes"])  # fmt: skip
+        # one string, so that the quotes around the program are the ones netsh wants
+        rule = f'netsh advfirewall firewall add rule name={name} dir=out action=block program="{exe}" enable=yes'
+        done = subprocess.run(rule, capture_output=True, text=True, check=False)  # noqa: S603
         if done.returncode == 0:
             names.append(name)
+        elif not failures:
+            failures.append(tail(done.stdout + done.stderr, 4))
     say(f"network: {len(names)} programs are blocked from outgoing connections by firewall rules")
+    if failures:
+        say("network: the first rule that failed said: " + failures[0])
 
     def undo() -> None:
         for name in names:
-            run(["netsh", "advfirewall", "firewall", "delete", "rule", f"name={name}"])
+            run(
+                ["netsh", "advfirewall", "firewall", "delete", "rule", f"name={name}"]
+            )  # no spaces in name
 
     return undo
 

@@ -31,11 +31,12 @@ def _png(size: int, margin: float = 1.0) -> bytes:
     """The logo as PNG bytes, `size` pixels square; margin < 1 shrinks it into the middle."""
     os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
     from PySide6.QtCore import QBuffer, QByteArray, QIODevice, Qt
-    from PySide6.QtGui import QGuiApplication, QPainter, QPixmap
+    from PySide6.QtGui import QPainter, QPixmap
+    from PySide6.QtWidgets import QApplication
 
     from harness_design_studio.gui.appicon import _pixmap
 
-    app = QGuiApplication.instance() or QGuiApplication(sys.argv[:1])
+    app = QApplication.instance() or QApplication(sys.argv[:1])
     assert app is not None
     inner = max(1, round(size * margin))
     logo = _pixmap(inner)

@@ -4,8 +4,19 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Added
+
+- **Windows and macOS packages (D-149).** The release workflow now builds, for Windows 10 and 11 (64-bit), a per-user setup program made with Inno Setup (no administrator rights, a Start menu entry, `harness-design-studio` and `harness-design-studio-gui` on the user's `PATH`, an uninstaller) and a portable `.zip`, and, for macOS 13 and newer, `Harness Design Studio.app` in a `.dmg` for Apple Silicon (`arm64`) and one for Intel (`x86_64`), next to the Ubuntu `.deb` and `.tar.gz`; one `SHA256SUMS` covers all of them. Built by `tools/build_windows.py` and `tools/build_macos.py`; tested on the finished files (install, run, uninstall; mount, copy, run) by `tools/smoke_package.py` in `.github/workflows/harness-packages.yml` (branches `pkg/**` and manual runs; publishes nothing) and in `release.yml`. The packages are not signed; the workflows have signing and notarization steps that run only when the repository secrets exist (`docs/RELEASE.md`, `docs/SECURITY.md`). Nothing about the model, the file format, the rules, the command line or the generated files changes, and nothing is downloaded when a package is installed or run. Install steps: `docs/INSTALL.md`, ways D and E.
+- The packaged editor accepts `--selftest --selftest-out FILE` and writes `selftest ok` (or what failed) to the file, because the Windows editor has no console; the exit code is the result as before.
+
+### Fixed
+
+- The rule check helper process no longer stops at `os.nice` on Windows, which has no such function.
+
 ### Changed
 
+- The platform decisions D-110 and D-127 (Ubuntu only) are superseded by D-149 (Ubuntu 24.04 and newer, Windows 10 and 11, macOS 13 and newer).
+- `tools/build_installer.py` is split into pieces that the three platform builds share (the program builds and the allow-list check); the Linux packages are unchanged. The licence texts of the GPL-3 and LGPL-3 are kept in `packaging/licences/` for builds on systems without Debian's `common-licenses` folder; `tools/gen_scf.py` lists `.exe`, `.zip` and `.dmg` files too; `tools.release_notes complete` fails a release that lacks a package of any kind.
 - The text of a GitHub release page is now a short page: what the tool is, a table with one row for each package that is attached (what it is for and how to install it), the highlights of the version, the full changelog section folded away, install steps and checksum commands for the systems whose packages are there, and the SHA-256 table. The highlights are written by hand in `docs/releases/<version>.md`; `python -m tools.release_notes check` fails without that file. The release workflow has a "notes only" run (`workflow_dispatch` with `notes_only`) that writes the text of an existing page again from the tag's changelog and the published checksums, without building or uploading anything.
 
 ## 1.1.0 (2026-10-18; not a statement of compliance)
