@@ -257,12 +257,12 @@ def _byte_unlock(fd: int) -> None:
 def _lock_guard(fd: int) -> None:
     """Wait for the exclusive lock on the guard file (released when the file is closed)."""
     if sys.platform == "win32":
-        while True:
+        while True:  # LK_LOCK itself waits a whole second between its tries, so try quickly here
             try:
-                msvcrt.locking(fd, msvcrt.LK_LOCK, 1)  # retries for about ten seconds
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
                 return
             except OSError:
-                continue
+                time.sleep(0.005)
     fcntl.flock(fd, fcntl.LOCK_EX)
 
 

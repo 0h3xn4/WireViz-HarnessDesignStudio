@@ -151,9 +151,16 @@ def test_live_local_lock_blocks(tmp_path: Path) -> None:
 
 
 def test_own_pid_lock_still_blocks(tmp_path: Path) -> None:
-    _write_lock(tmp_path, os.getpid(), platform.node())
-    with pytest.raises(ProjectLockedError):
-        ProjectLock(tmp_path).acquire()
+    held = ProjectLock(tmp_path)
+    if sys.platform == "win32":
+        held.acquire()  # a file written by hand has no handle behind it, so hold a real one
+    else:
+        _write_lock(tmp_path, os.getpid(), platform.node())
+    try:
+        with pytest.raises(ProjectLockedError):
+            ProjectLock(tmp_path).acquire()
+    finally:
+        held.release()
 
 
 def test_pid_alive_edge_cases() -> None:
