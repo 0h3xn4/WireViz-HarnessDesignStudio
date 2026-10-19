@@ -33,7 +33,7 @@ from PySide6.QtCore import (
     Qt,
     QTimer,
 )
-from PySide6.QtGui import QFont, QKeySequence, QShortcut
+from PySide6.QtGui import QFont, QKeyEvent, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -542,6 +542,21 @@ class TableView(QTableView):
 
     def _restyle(self) -> None:
         style_table(self, self.theme)
+
+    def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802
+        """Enter or Return "activates" the current row on every system. Qt does it on Windows and
+        Linux only (on macOS the same key starts editing, which these tables do not do)."""
+        if (
+            event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
+            and not event.modifiers()
+            and self.state() != QAbstractItemView.State.EditingState
+        ):
+            index = self.currentIndex()
+            if index.isValid():
+                self.activated.emit(index)
+            event.ignore()  # as Qt does, so that a default button of a dialog still sees it
+            return
+        super().keyPressEvent(event)
 
     def _fit_columns(self) -> None:
         """Give columns their `width` or fit them to the content (once, unless widths were
