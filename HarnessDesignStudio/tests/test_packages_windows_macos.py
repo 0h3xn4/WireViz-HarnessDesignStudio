@@ -156,6 +156,7 @@ def test_the_app_bundle_describes_itself(monkeypatch: pytest.MonkeyPatch) -> Non
     plistlib.dumps(plist)  # it can be written
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="runs a shell script through links")
 def test_the_macos_command_launcher_is_valid_shell_and_follows_links(tmp_path: Path) -> None:
     from tools import build_macos
 

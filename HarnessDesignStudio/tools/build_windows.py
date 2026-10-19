@@ -64,7 +64,11 @@ def make_zip(folder: Path, target: Path, stamp: int) -> Path:
     like the file). Sorted entries, fixed times and modes: the same input gives the same bytes."""
     date = max(stamp, 315532800)  # the zip format starts in 1980
     when = time.gmtime(date)[:6]
-    files = sorted(p for p in folder.rglob("*") if p.is_file())
+    # sorted by the name in the zip: sorting the paths themselves ignores case on Windows only
+    files = sorted(
+        (p for p in folder.rglob("*") if p.is_file()),
+        key=lambda p: p.relative_to(folder).as_posix(),
+    )
     with zipfile.ZipFile(target, "w", zipfile.ZIP_DEFLATED, compresslevel=9) as zf:
         for path in files:
             info = zipfile.ZipInfo(path.relative_to(folder).as_posix(), when)
