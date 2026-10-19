@@ -1,7 +1,6 @@
 """File-system safety: atomic writes, safe names, long Windows paths, single-instance lock."""
 
 import errno
-import fcntl
 import hashlib
 import json
 import os
@@ -18,7 +17,15 @@ from types import TracebackType
 from harness_design_studio.core.errors import ProjectLockedError, SaveError
 from harness_design_studio.core.ids import RESERVED
 
+if sys.platform == "win32":
+    import msvcrt
+else:
+    import fcntl
+
 LOCK_NAME = ".harness.lock"
+# Windows opens files in text mode unless told otherwise; elsewhere the flags do not exist
+_BINARY = getattr(os, "O_BINARY", 0)
+_NOFOLLOW = getattr(os, "O_NOFOLLOW", 0)
 
 
 def long_path(path: Path) -> Path:
@@ -109,14 +116,27 @@ def atomic_write_bytes(
 
 
 def _new_file_mode() -> int:
-    """Mode of a new file: 0o666 without the bits the user's umask removes (0o644 if unknown)."""
+    """Mode of a new file: 0o666 without the bits the user's umask removes. Linux tells it in
+    /proc; elsewhere a scratch file is created and looked at (changing the umask to read it
+    would let a file made by another thread in that moment be created world-writable)."""
     try:
         for line in Path("/proc/self/status").read_text(encoding="ascii").splitlines():
             if line.startswith("Umask:"):
                 return 0o666 & ~int(line.split()[1], 8)
     except (OSError, ValueError, IndexError):
         pass
-    return 0o644
+    if sys.platform == "win32":
+        return 0o666  # Windows keeps no permission bits beyond read-only
+    try:
+        probe = Path(tempfile.gettempdir()) / f".umask-probe.{os.getpid()}.{os.urandom(4).hex()}"
+        fd = os.open(probe, os.O_WRONLY | os.O_CREAT | os.O_EXCL, 0o666)
+        try:
+            return os.fstat(fd).st_mode & 0o777
+        finally:
+            os.close(fd)
+            probe.unlink(missing_ok=True)
+    except OSError:
+        return 0o644
 
 
 # `.<name>.<8 random characters>.tmp`: what `_temp_beside` makes (and a killed save leaves behind)
@@ -192,6 +212,10 @@ def _start_time(pid: int) -> str | None:
 def _pid_alive(pid: int) -> bool:
     if pid <= 0:
         return False
+    if sys.platform == "win32":
+        # os.kill(pid, 0) would end the process there. A lock held by another process is told
+        # apart in acquire() by whether its file can be removed; here only this process counts.
+        return pid == os.getpid()
     try:
         os.kill(pid, 0)
     except ProcessLookupError:
@@ -201,15 +225,28 @@ def _pid_alive(pid: int) -> bool:
     return True
 
 
+def _lock_guard(fd: int) -> None:
+    """Wait for the exclusive lock on the guard file (released when the file is closed)."""
+    if sys.platform == "win32":
+        while True:
+            try:
+                msvcrt.locking(fd, msvcrt.LK_LOCK, 1)  # retries for about ten seconds
+                return
+            except OSError:
+                continue
+    fcntl.flock(fd, fcntl.LOCK_EX)
+
+
 class ProjectLock:
     """Detects the same project open twice. The lock file holds only pid, host and start time."""
 
     def __init__(self, root: Path) -> None:
         self.path = long_path(root) / LOCK_NAME
         self._held = False
+        self._fd: int | None = None  # Windows: the open lock file
 
     def acquire(self) -> None:
-        """Take the lock. The whole decision runs under a guard (flock on a sidecar file), so no
+        """Take the lock. The whole decision runs under a guard (a lock on a sidecar file), so no
         other process can delete our fresh lock between our check and our create."""
         info: dict[str, object] = {
             "pid": os.getpid(),
@@ -224,31 +261,68 @@ class ProjectLock:
         if not self._worth_locking():
             return
         try:
-            fd = os.open(guard, os.O_RDWR | os.O_CREAT | os.O_NOFOLLOW, 0o600)
+            fd = os.open(guard, os.O_RDWR | os.O_CREAT | _NOFOLLOW | _BINARY, 0o600)
         except OSError as exc:
             raise SaveError(_explain(exc, guard)) from exc
         try:
-            fcntl.flock(fd, fcntl.LOCK_EX)
+            _lock_guard(fd)
             try:
                 if self.path.exists() or self.path.is_symlink():
                     if (holder := self._holder()) is not None:
                         raise ProjectLockedError(holder)
-                    self.path.unlink(missing_ok=True)  # stale lock from a crashed session
-                self._create_atomically(info)
+                    self._remove_stale()
+                self._create(info)
                 self._held = True
             except FileExistsError:
                 raise ProjectLockedError("Could not take the project lock; try again.") from None
             except OSError as exc:
                 raise SaveError(_explain(exc, self.path)) from exc
         finally:
-            os.close(fd)  # closing releases the flock
+            os.close(fd)  # closing releases the guard
+
+    def _remove_stale(self) -> None:
+        """Delete a lock file nobody holds. On Windows the holder keeps the file open, which
+        stops anyone deleting it while the holder lives, so a refused delete means "held"."""
+        try:
+            self.path.unlink(missing_ok=True)
+        except PermissionError:
+            if sys.platform != "win32":
+                raise
+            raise ProjectLockedError(self._held_message(self._pid_in_file())) from None
+
+    def _pid_in_file(self) -> int | str:
+        try:
+            return int(json.loads(self.path.read_text(encoding="utf-8"))["pid"])
+        except (OSError, ValueError, KeyError, TypeError):
+            return "?"
+
+    def _held_message(self, pid: int | str) -> str:
+        return (
+            f"This project is already open in another instance of the tool (process {pid}). "
+            f"Close it there first (lock file: '{self.path}')."
+        )
+
+    def _create(self, info: dict[str, object]) -> None:
+        if sys.platform == "win32":
+            self._create_open(info)
+        else:
+            self._create_atomically(info)
+
+    def _create_open(self, info: dict[str, object]) -> None:
+        """Windows: create the file and keep it open until release(). An open file cannot be
+        deleted there, and when this process dies the system closes it, so the next one can."""
+        flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | _BINARY
+        fd = os.open(self.path, flags, 0o600)
+        self._fd = fd
+        os.write(fd, json.dumps(info).encode("utf-8"))
+        os.fsync(fd)
 
     def _create_atomically(self, info: dict[str, object]) -> None:
         """Create the lock file with its content already in it. Creating it empty and filling it in
         afterwards lets another process read it half written, call it stale and delete it."""
         tmp = self.path.with_name(f"{self.path.name}.{os.getpid()}.{os.urandom(4).hex()}.tmp")
         try:
-            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | os.O_NOFOLLOW, 0o600)
+            fd = os.open(tmp, os.O_WRONLY | os.O_CREAT | os.O_EXCL | _NOFOLLOW, 0o600)
             with os.fdopen(fd, "w", encoding="utf-8") as fh:
                 json.dump(info, fh)
                 fh.flush()
@@ -296,13 +370,13 @@ class ProjectLock:
             return None
         if isinstance(start, str) and (now := _start_time(pid)) is not None and now != start:
             return None  # the process number now belongs to another program
-        return (
-            f"This project is already open in another instance of the tool (process {pid}). "
-            f"Close it there first (lock file: '{self.path}')."
-        )
+        return self._held_message(pid)
 
     def release(self) -> None:
         if self._held:
+            if self._fd is not None:
+                os.close(self._fd)
+                self._fd = None
             self.path.unlink(missing_ok=True)
             self._held = False
 

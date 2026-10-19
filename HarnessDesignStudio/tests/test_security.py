@@ -110,12 +110,14 @@ def test_output_folder_manifest_cannot_make_the_tool_delete_other_files(tmp_path
     write_outputs(p, folder)
     victim = tmp_path / "victim.txt"
     victim.write_text("keep")
+    absolute = tmp_path / "absolute-victim.txt"  # any file that exists, named by its full path
+    absolute.write_text("keep")
     doc = json.loads((folder / MANIFEST).read_text(encoding="utf-8"))
     doc["files"].append({"path": "../victim.txt", "sha256": "0" * 64, "bytes": 1})
-    doc["files"].append({"path": "/etc/hostname", "sha256": "0" * 64, "bytes": 1})
+    doc["files"].append({"path": str(absolute), "sha256": "0" * 64, "bytes": 1})
     (folder / MANIFEST).write_text(json.dumps(doc))
     write_outputs(p, folder)
-    assert victim.read_text() == "keep" and Path("/etc/hostname").exists()
+    assert victim.read_text() == "keep" and absolute.read_text() == "keep"
 
 
 def test_a_damaged_journal_is_ignored(tmp_path: Path) -> None:

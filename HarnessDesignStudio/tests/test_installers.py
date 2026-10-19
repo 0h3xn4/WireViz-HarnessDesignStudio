@@ -30,6 +30,8 @@ def fake_package(tmp: Path) -> Path:
 
 
 def run_script(script: Path, tmp: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    if sys.platform != "linux":
+        pytest.skip("install.sh and uninstall.sh are the Linux tarball's scripts (GNU tools)")
     env = {**os.environ, "HARNESS_INSTALL_ROOT": str(tmp / "root"), "HOME": str(tmp / "home")}
     return subprocess.run(
         ["sh", str(script), *args], capture_output=True, text=True, env=env, check=False
