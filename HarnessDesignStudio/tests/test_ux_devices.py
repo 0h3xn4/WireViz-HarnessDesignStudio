@@ -73,7 +73,8 @@ def state_of(view: DevicesView, row: int, key: str) -> str | None:
 def test_devices_is_the_sixth_main_tab_with_ctrl_6(qtbot, tmp_path) -> None:
     win = make_window(tmp_path)
     qtbot.addWidget(win)
-    assert win.main_tabs.visible_names() == [
+    tabs = win.main_tabs
+    assert [n for n in tabs.names() if tabs.is_installed(n)] == [  # (an area shows its own tabs)
         "diagram",
         "harness",
         "lists",

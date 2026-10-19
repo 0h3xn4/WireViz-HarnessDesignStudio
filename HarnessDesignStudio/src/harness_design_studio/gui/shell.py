@@ -109,6 +109,7 @@ class SlotTabs(QTabWidget):
         self._names: list[str] = []
         self._installed: dict[str, bool] = {}
         self._min_bar = min_bar
+        self._filter: frozenset[str] | None = None  # the names an area shows (None: all)
         self.currentChanged.connect(lambda _i: self._sync_bar())
 
     # ---- slots ----
@@ -129,7 +130,7 @@ class SlotTabs(QTabWidget):
         self._installed[name] = installed
         if tip:
             self.setTabToolTip(index, tip)
-        self.setTabVisible(index, installed)
+        self.setTabVisible(index, self._shows(name, installed))
         self._ensure_visible_current()
         self._sync_bar()
         return index
@@ -172,7 +173,7 @@ class SlotTabs(QTabWidget):
         self.removeTab(index)
         self.insertTab(index, widget, title)
         self.setTabToolTip(index, tip)
-        self.setTabVisible(index, True)
+        self.setTabVisible(index, self._shows(name, True))
         if was_current:
             self.setCurrentIndex(index)
         self.blockSignals(False)
@@ -192,6 +193,17 @@ class SlotTabs(QTabWidget):
             return False
         self.setCurrentIndex(self.index_of(name))
         return True
+
+    def _shows(self, name: str, installed: bool) -> bool:
+        return installed and (self._filter is None or name in self._filter)
+
+    def set_filter(self, names: "Sequence[str] | None") -> None:
+        """Show only the tabs of an area (None shows every installed tab again). The current tab
+        is left alone: a test or a caller may still select a tab of another area."""
+        self._filter = None if names is None else frozenset(names)
+        for i, name in enumerate(self._names):
+            self.setTabVisible(i, self._shows(name, self._installed.get(name, False)))
+        self._sync_bar()
 
     def visible_names(self) -> list[str]:
         return [n for i, n in enumerate(self._names) if self.isTabVisible(i)]

@@ -6,9 +6,11 @@
     bar.exportClicked.connect(window.export_dialog_flow)
     bar.apply(ShellStatus(name="Flatsat", model_hash="1a2b3c4d", dirty=True, generation="stale", ...))
 
-Left to right: the project name, the short model hash in the monospace font, a dirty marker (a dot
-and the words "Unsaved changes"), **Generate** (the one primary button of the window), Check,
-Export and a status chip. The chip says, with an icon and words, whether the harness plans and the
+Left to right: the project name, a save marker (a dot and the words "Unsaved changes", or "Saved"),
+the revision, the short model hash in the monospace font, where you are (area › view), then the
+edit buttons (Undo, Redo), the mode switch and the search field the window puts in with
+`add_edit`, `add_mode` and `add_search`, **Generate** (the one primary button of the window),
+Check, Export and a status chip. The chip says, with an icon and words, whether the harness plans and the
 exported files match the diagram: up to date, plans out of date, outputs out of date, generating,
 exporting or checking. `chip_for` is the pure rule behind it.
 
@@ -43,6 +45,7 @@ class ShellStatus:
     checking: bool = False  # ctl.drc_busy()
     has_harnesses: bool = False
     generated_at: str = ""  # first 8 characters of the generation record's input hash
+    revision: str = ""  # "A" or "A-C": the revisions of the project's harnesses
 
 
 _RUNNING = {
@@ -102,6 +105,9 @@ class TopBar(QWidget):
         self.name_label.setObjectName("topbar-name")
         self.name_label.setAccessibleName(strings.TB_NAME)
         self.name_label.setProperty("title", True)
+        self.name_label.setMaximumWidth(
+            theme.px(260)
+        )  # a long name is cut: the bar has more to say
         self.hash_label = QLabel()
         self.hash_label.setObjectName("topbar-hash")
         self.hash_label.setAccessibleName(strings.STATUS_HASH)
@@ -109,10 +115,23 @@ class TopBar(QWidget):
         self.hash_label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         self.dirty_label = QLabel()
         self.dirty_label.setObjectName("topbar-dirty")
+        self.revision_label = QLabel()
+        self.revision_label.setObjectName("topbar-revision")
+        self.revision_label.setAccessibleName(strings.TB_REVISION_NAME)
+        self.revision_label.setProperty("muted", True)
+        self.crumbs = ElidedLabel()  # where you are: area, then view
+        self.crumbs.setObjectName("topbar-crumbs")
+        self.crumbs.setAccessibleName(strings.CRUMBS_NAME)
+        self.crumbs.setProperty("muted", True)
         lay.addWidget(self.name_label)
-        lay.addWidget(self.hash_label)
         lay.addWidget(self.dirty_label)
+        lay.addWidget(self.revision_label)
+        lay.addWidget(self.hash_label)
+        lay.addWidget(self.crumbs, 1)
         lay.addStretch(1)
+        self._edit: list[QWidget] = []
+        self._search: QWidget | None = None
+        self._search_text = ""
 
         self.generate_btn = QPushButton()
         self.generate_btn.setObjectName("generate")
@@ -148,10 +167,34 @@ class TopBar(QWidget):
         QWidget.setTabOrder(self.check_btn, self.export_btn)
         self.apply(self.status)
 
+    # ---- what the window puts into the bar ----
+    def _insert(self, widget: QWidget) -> None:
+        self.lay.insertWidget(self.lay.indexOf(self.generate_btn), widget)
+
+    def add_edit(self, widget: QWidget) -> None:
+        """Undo and Redo go here, left of the mode switch."""
+        self._insert(widget)
+        self._edit.append(widget)
+
+    def add_mode(self, widget: QWidget) -> None:
+        self._insert(widget)
+
+    def add_search(self, widget: QWidget) -> None:
+        """The search field (it opens the command palette); it keeps its word until level 3."""
+        self._insert(widget)
+        self._search = widget
+
+    def set_crumbs(self, text: str) -> None:
+        self.crumbs.set_full_text(text)
+
     # ---- showing a status ----
     def apply(self, s: ShellStatus) -> None:
         self.status = s
         self.name_label.setText(s.name or strings.TB_UNSAVED_PROJECT)
+        self.revision_label.setText(strings.TB_REVISION.format(s.revision) if s.revision else "")
+        self.revision_label.setToolTip(
+            strings.TB_REVISION_TIP.format(s.revision) if s.revision else ""
+        )
         self.hash_label.setText(s.model_hash)
         self.hash_label.setToolTip(strings.TB_HASH_TIP.format(s.model_hash))
         self.dirty_label.setAccessibleName(strings.TB_DIRTY if s.dirty else strings.TB_CLEAN)
@@ -185,10 +228,12 @@ class TopBar(QWidget):
         self._fit()
 
     def _set_level(self, level: int) -> None:
-        """0: everything. 1: the dirty marker is a dot. 2: the hash goes too. 3: Check and Export
-        keep their icon and lose their word (the tooltip and the accessible name stay)."""
+        """0: everything. 1: the dirty marker is a dot and the breadcrumbs go. 2: the hash and the
+        revision go too. 3: Check, Export and the search field keep their icon and lose their word
+        (the tooltip and the accessible name stay)."""
         s = self.status
         self._level = level
+        self.crumbs.setVisible(level < 1 and bool(self.crumbs.full_text()))
         if level >= 1:
             self.dirty_label.setText("●" if s.dirty else "")
             self.dirty_label.setVisible(s.dirty)
@@ -196,6 +241,15 @@ class TopBar(QWidget):
             self.dirty_label.setText(f"●  {strings.TB_DIRTY}" if s.dirty else strings.TB_CLEAN)
             self.dirty_label.setVisible(True)
         self.hash_label.setVisible(level < 2)
+        self.revision_label.setVisible(level < 2 and bool(s.revision))
+        search = self._search
+        if isinstance(search, QPushButton):
+            if search.text():
+                self._search_text = search.text()
+            search.setText("" if level >= 3 else self._search_text)
+            search.setProperty("iconOnly", level >= 3)
+            search.style().unpolish(search)
+            search.style().polish(search)
         for button, word in ((self.check_btn, strings.TB_CHECK), (self.export_btn, strings.TB_EXPORT)):  # fmt: skip
             button.setText("" if level >= 3 else word)
             button.setProperty("iconOnly", level >= 3)

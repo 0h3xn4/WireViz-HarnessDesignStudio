@@ -77,14 +77,15 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 | Where | What it is |
 | --- | --- |
-| Top bar | the project name, a short model hash, whether it is saved, **Generate** (the one blue button), **Check**, **Export…** and a status chip (*Up to date*, *Plans out of date* ...) |
-| Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6) |
+| Rail (left edge) | **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions**, **Settings** |
+| Top bar | the project name, whether it is saved, the revision, a short model hash, where you are, **Undo**, **Redo**, **Guided / Expert**, **Search** (Ctrl+K), **Generate** (the one blue button), **Check**, **Export…** and a status chip (*Up to date*, *Plans out of date* ...) |
+| Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6); the rail shows the tabs of the area you are in |
 | Middle, **Diagram** | units in lanes (*panel-A*, *panel-B*), links between them. Every kind of link has its own picture and colour; the legend (bottom left of the diagram) shows them (power is red in the light theme). Small badges show problems, values still to enter and locks |
 | Left, **Project** | a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports; **Add** adds a unit or an interface |
 | Left, **Interfaces** | every interface as a table you can sort, filter and edit with the keyboard (Ctrl+Shift+T) |
 | Right, **Inspector** | the selected unit or interface: names, **Max current (A)**, notes, and where it is used. The tabs **Why** and **Problems** (with a **To do** list above the problem cards) are beside it |
 | Above the diagram | **Select** and **Connect** (the arrow beside **Connect** lists the interface types), **Delete**, zoom |
-| Toolbar | **Undo**, **Redo**, **Guided / Expert**, **Arrange diagram**, **Search / commands** (Ctrl+K) |
+| Right end of the Model tab bar | **Arrange diagram** and the **Show** list (all interfaces, one class, one connector, one bundle) |
 
 Try this:
 

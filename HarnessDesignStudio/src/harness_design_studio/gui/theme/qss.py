@@ -41,6 +41,14 @@ QWidget {{ color: {c("text.primary")}; font-size: {base}; font-weight: 400; }}
 QWidget[mono="true"] {{ font-family: "{mono}"; }}
 QMainWindow, QDialog {{ background: {c("bg.canvas")}; }}
 QToolBar {{ background: {c("bg.surface")}; border: none; border-bottom: 1px solid {c("border.subtle")}; spacing: {s4}; padding: {s4}; }}
+QToolBar#main-toolbar {{ background: {c("bg.surface")}; border: none; border-bottom: 1px solid {c("border.subtle")}; padding: 0; }}
+QToolBar#rail-toolbar {{ background: {c("bg.surface")}; border: none; border-right: 1px solid {c("border.subtle")}; padding: 0; }}
+QFrame#nav-rail {{ background: transparent; border: none; }}
+QToolButton[rail="true"] {{ background: transparent; border: none; border-left: {px(3)} solid transparent; border-radius: {r_ctl}; padding: {s4} {s4}; color: {c("text.secondary")}; font-size: {caption}; min-height: {px(52)}; max-height: {px(64)}; }}
+QToolButton[rail="true"][iconOnly="true"] {{ min-height: {inner}; max-height: {inner}; padding: 0; }}
+QToolButton[rail="true"]:hover {{ background: {c("bg.hover")}; color: {c("text.primary")}; }}
+QToolButton[rail="true"]:checked {{ background: {c("bg.selected")}; color: {c("text.primary")}; border-left: {px(3)} solid {c("accent")}; font-weight: 600; }}
+QToolButton[rail="true"]:focus {{ border: {ring} solid {c("focus")}; }}
 QMenuBar {{ background: {c("bg.canvas")}; }}
 QMenuBar::item {{ padding: {s4} {s8}; border-radius: {r_ctl}; background: transparent; }}
 QMenuBar::item:selected {{ background: {c("bg.hover")}; }}

@@ -63,7 +63,7 @@ def gen(qtbot, tmp_path: Path):
 
 def test_there_is_no_bottom_dock_no_palette_and_no_old_plans_panel(win) -> None:
     docks = {d.objectName() for d in win.findChildren(QDockWidget)}
-    assert docks == {"dock-project", "dock-properties"}
+    assert docks == {"dock-project", "dock-properties", "dock-problems"}  # (the last is M2's list)
     for name in (
         "dock_bottom",
         "tabs",
