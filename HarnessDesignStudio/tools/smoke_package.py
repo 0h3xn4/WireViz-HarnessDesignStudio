@@ -164,12 +164,12 @@ def block_network(folder: Path) -> Callable[[], None]:
             continue
         name = f"harness-smoke-block-{os.getpid()}-{i}"
         # one string, so that the quotes around the program are the ones netsh wants
-        rule = f'netsh advfirewall firewall add rule name={name} dir=out action=block program="{exe}" enable=yes'
+        rule = f'netsh advfirewall firewall add rule name="{name}" dir=out action=block program="{exe}" enable=yes'
         done = subprocess.run(rule, capture_output=True, text=True, check=False)  # noqa: S603
         if done.returncode == 0:
             names.append(name)
         elif not failures:
-            failures.append(tail(done.stdout + done.stderr, 4))
+            failures.append(f"{rule} -> {(done.stdout + done.stderr).strip()[:300]}")
     say(f"network: {len(names)} programs are blocked from outgoing connections by firewall rules")
     if failures:
         say("network: the first rule that failed said: " + failures[0])

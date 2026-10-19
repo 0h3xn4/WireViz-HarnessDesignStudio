@@ -32,6 +32,7 @@ from tools.build_installer import (
     ROOT,
     build_programs,
     check_package,
+    ttf_fonts_args,
 )
 
 PK = ROOT / "packaging" / "windows"
@@ -188,7 +189,9 @@ def main(argv: list[str]) -> int:
     (ROOT / "build").mkdir(exist_ok=True)
     icon = write_ico(ROOT / "build" / "harness-design-studio.ico")
     if build_programs(
-        gui_args=("--icon", str(icon)), cli_args=("--icon", str(icon)), extra_excludes=EXCLUDES
+        gui_args=("--icon", str(icon), *ttf_fonts_args()),
+        cli_args=("--icon", str(icon)),
+        extra_excludes=EXCLUDES,
     ):
         return 1
     app = dist / PACKAGE_NAME
