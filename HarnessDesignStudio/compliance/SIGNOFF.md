@@ -79,3 +79,28 @@ Recorded after the fact from the repository owner's publication. Pull request 45
 
 The checksums are also in `evidence/release_1.0.0_SHA256SUMS`. The packages were built from `0c6a96a`: documents changed on `master` after that commit (for example the in-app user guide, which is part of the package) are not in the 1.0.0 packages. The waivers and open items listed in the previous section are unchanged by the publication, and nothing here is a statement of compliance.
 
+## Publication of 1.1.0 (2026-10-18 and 2026-10-19)
+
+Recorded from the GitHub release page and the workflow runs; nobody has signed off 1.1.0 as the owner (`docs/RELEASE.md` step 14), and nothing here is a statement of compliance. The tag `v1.1.0` points to `f998cd9` (pull request 62, version 1.1.0). The repository owner published the GitHub release on 2026-10-18 at 22:17 UTC. The first release run, started by the tag push, hung at the step that installs and runs the `.deb`: it ran the commands of the source install, which come first on the `PATH`, instead of the installed program, and the editor of the source install has no `--selftest` (corrected by pull request 65, which runs the installed program by its full path). The packages were attached on 2026-10-19 at about 07:16 UTC by a run of the corrected workflow started by hand with the tag `v1.1.0`; its checks passed. The packages are not signed. The text of the release page was written again on 2026-10-19 at 14:47 UTC by the "notes only" run, which changed nothing else.
+
+| File | SHA-256 |
+| --- | --- |
+| `harness-design-studio-1.1.0-linux-x86_64.tar.gz` | `f0e686e8e9555822b3bea1f496ff5f5c1b3ae4106c1925139ab7a6957f47ff6b` |
+| `harness-design-studio_1.1.0_amd64.deb` | `6583aef962db6b94cce79afd9c9b9c4b0079bffd6c1a13da9c9e7c4d522ff95b` |
+
+The checksums are also in `evidence/release_1.1.0_SHA256SUMS` (the same bytes as the `SHA256SUMS` file on the release page, 218 bytes). The waivers and open items of the sections above are unchanged by the publication.
+
+## Publication of 1.2.0 (2026-10-19)
+
+Recorded from the GitHub release page and the workflow run. Pull request 69 (version 1.2.0: Windows and macOS packages, decision D-149) was merged as commit `1cdd6a7`. The assistant that prepared it could not push the tag from its working session (tag pushes are refused); the repository owner created the tag `v1.2.0` on that commit through the release page on 2026-10-19 at 15:57 UTC. The tag push started `.github/workflows/release.yml` (run 39281825970). The Linux, Windows and two macOS build jobs built the packages and ran their smoke tests on the finished files; the last job attached the six packages and one `SHA256SUMS` to the release page at 16:19 UTC. The packages are not signed or notarized: no certificate secrets exist, so the signing steps were skipped. Nobody has signed off 1.2.0 as the owner, and nothing here is a statement of compliance. Before the tag, the whole test suite had passed on Linux, Windows and macOS for pull request 69.
+
+| File | SHA-256 |
+| --- | --- |
+| `harness-design-studio-1.2.0-linux-x86_64.tar.gz` | `3fe2c00052738d4a545f6d5a2a6d6138103a0f5a5b16c275c6f3f48e587317d7` |
+| `harness-design-studio-1.2.0-macos-arm64.dmg` | `8558a47aef363d9d6590e86c7beca707760025213dfa74e64d412208b805ac38` |
+| `harness-design-studio-1.2.0-macos-x86_64.dmg` | `ca2eeeb1e1294bc3ab74fb059618caf7ede2a75f4c1f83f157bbd91d26faa038` |
+| `harness-design-studio-1.2.0-windows-x86_64-setup.exe` | `638e1b5da83691a124ba6614632dd448b87f0c976ffa8fecbadc7766f194954c` |
+| `harness-design-studio-1.2.0-windows-x86_64.zip` | `21654feef2a9e2c7ac5cd0de0505bae754c859a33765d5ff77e2cc6e6e2fbefb` |
+| `harness-design-studio_1.2.0_amd64.deb` | `fb402a9775c3723631bf14ca74c08fa3bfadd724247729c5789e5eb12e55add5` |
+
+The checksums are also in `evidence/release_1.2.0_SHA256SUMS` (the same bytes as the `SHA256SUMS` file on the release page, 671 bytes). The packages were built by the workflow on GitHub's machines; they have not been installed on a clean machine without a network by a person (the waiver T-30 stands).
