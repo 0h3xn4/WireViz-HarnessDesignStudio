@@ -13,7 +13,7 @@ The .dmg holds the app and a link to /Applications.
 
 Without a certificate the app is signed ad hoc (Apple Silicon refuses unsigned code) and is neither
 signed with a Developer ID nor notarized: the first start needs *Open* from the context menu. The
-environment can switch signing on (all optional, used by the release workflow when its secrets exist):
+environment can switch signing on (all optional; the release workflow sets them when the repository has a certificate):
   HARNESS_MACOS_IDENTITY       name of the Developer ID Application certificate in the keychain
   HARNESS_NOTARY_APPLE_ID, HARNESS_NOTARY_TEAM_ID, HARNESS_NOTARY_PASSWORD
                                (app-specific password) to notarize and staple the .dmg

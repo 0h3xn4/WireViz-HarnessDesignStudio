@@ -13,6 +13,7 @@ install folder stays; the programs inside it are named like the commands of a pi
 import gzip
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -71,9 +72,30 @@ def undeclared_files(internal: Path) -> list[str]:
             continue  # shared libraries and the frozen standard library
         top = entry.name.split("-")[0] if entry.name.endswith(".dist-info") else entry.name
         top = top.split(".")[0]
-        if top != "python3" and not _is_known(top):
+        if _is_python_library(entry.name, top) or _links_into_known(entry, internal):
+            continue
+        if not _is_known(top):
             found.add(top)
     return sorted(found)
+
+
+def _is_python_library(name: str, top: str) -> bool:
+    """The interpreter itself: python3.13 (Linux), Python (macOS), python3__dot__12 (macOS, the
+    name PyInstaller gives a file whose name has a dot)."""
+    return (
+        top == "python3" or name == "Python" or re.fullmatch(r"python3__dot__\d+", name) is not None
+    )
+
+
+def _links_into_known(entry: Path, base: Path) -> bool:
+    """macOS: Qt's frameworks are linked from the top folder (QtCore -> PySide6/Qt/lib/...)."""
+    if not entry.is_symlink():
+        return False
+    try:
+        inside = entry.resolve().relative_to(base.resolve())
+    except ValueError:
+        return False
+    return len(inside.parts) > 1 and _is_known(inside.parts[0])
 
 
 def undeclared_in_build(app: Path, bases: Iterable[Path] | None = None) -> list[str]:
@@ -154,17 +176,27 @@ def pyinstaller_build(
     return subprocess.run(cmd, check=False).returncode
 
 
-def build_programs(gui_args: tuple[str, ...] = (), cli_args: tuple[str, ...] = ()) -> int:
+def build_programs(
+    gui_args: tuple[str, ...] = (),
+    cli_args: tuple[str, ...] = (),
+    extra_excludes: tuple[str, ...] = (),
+) -> int:
     """Build the editor (windowed) and the command line tool (console, no Qt) with PyInstaller."""
     packaging = ROOT / "packaging"
-    if pyinstaller_build(GUI_NAME, packaging / "gui_entry.py", windowed=True, extra_args=gui_args):
+    if pyinstaller_build(
+        GUI_NAME,
+        packaging / "gui_entry.py",
+        windowed=True,
+        extra_excludes=extra_excludes,
+        extra_args=gui_args,
+    ):
         return 1
     # Console command (validate/check/migrate); no Qt, so it stays small. Shipped inside the folder.
     return pyinstaller_build(
         CLI_NAME,
         packaging / "cli_entry.py",
         windowed=False,
-        extra_excludes=("PySide6", "shiboken6"),
+        extra_excludes=("PySide6", "shiboken6", *extra_excludes),
         extra_args=cli_args,
     )
 
@@ -185,6 +217,12 @@ def check_package(bases: Iterable[Path], app: Path | None = None) -> int:
         return 1
     extra = undeclared_in_build(app or ROOT, bases)
     if extra:
+        for base in bases:  # where they are, to find out what they are
+            if base.is_dir():
+                for p in sorted(base.iterdir()):
+                    if p.name.split(".")[0] in extra or p.name in extra:
+                        target = p.resolve() if p.is_symlink() else "(not a link)"
+                        print(f"  {p} -> {target}", file=sys.stderr)
         print(
             "error: code that is not a declared dependency ended up in the package (its licence "
             f"is not shipped): {', '.join(extra)}. Add it to EXCLUDES, or to ALLOWED_PACKAGES with "

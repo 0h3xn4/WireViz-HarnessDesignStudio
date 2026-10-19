@@ -36,6 +36,9 @@ from tools.build_installer import (
 
 PK = ROOT / "packaging" / "windows"
 ISS = PK / "harness-design-studio.iss"
+# tzdata comes with the build environment on Windows (zoneinfo has no system database there) but the
+# program uses no time zones, and it is not a declared dependency (its licence would not be shipped)
+EXCLUDES = ("tzdata",)
 ALIAS = "harness"  # the short name of the command line tool, as with pip
 DEFAULT_TIMESTAMP_URL = "http://timestamp.digicert.com"
 
@@ -184,7 +187,9 @@ def main(argv: list[str]) -> int:
     dist = ROOT / "dist"
     (ROOT / "build").mkdir(exist_ok=True)
     icon = write_ico(ROOT / "build" / "harness-design-studio.ico")
-    if build_programs(gui_args=("--icon", str(icon)), cli_args=("--icon", str(icon))):
+    if build_programs(
+        gui_args=("--icon", str(icon)), cli_args=("--icon", str(icon)), extra_excludes=EXCLUDES
+    ):
         return 1
     app = dist / PACKAGE_NAME
     if assemble(app):
