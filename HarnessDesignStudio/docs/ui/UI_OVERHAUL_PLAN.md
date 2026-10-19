@@ -349,6 +349,8 @@ into the summary, all existing tests green (CI on Linux, Windows, macOS), golden
 - *Acceptance:* the written SVG/PDF of every example is byte-identical to 1.2.0 (existing golden tests plus a
   hash comparison script); fit/zoom/pan under 50 ms per frame on flatsat.
 
+**M6 result (2026-10-19).** Built as D-155. The existing preview already had zoom, pan, fit, sheet paging and the click link to the tables; M6 gives it the room (a vertical split: the drawing on top, the tables and the Why box under it), links a picked wire to the diagram and the inspector, and proves the outputs unchanged: `tools/output_hashes.py` and `docs/ui/OUTPUT_HASHES_1.2.0.json` (made with v1.2.0; 567 files of four examples identical, tested by `test_output_hashes.py`). Measured: fit, zoom and pan paint a frame in 3 to 6 ms (limit 50). Edited tests (layout-dependent, listed in D-155): `test_ux_harness.py` (two).
+
 **M7 Imports wizard.**
 - One wizard for the six import kinds: choose file → map columns with live preview → validation results → diff
   summary to accept or reject. Word-mapping fields show the accepted words. Parsing and preview move to a

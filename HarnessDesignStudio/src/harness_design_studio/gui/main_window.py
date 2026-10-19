@@ -947,6 +947,7 @@ class MainWindow(QMainWindow):
         self.install_view("inspector", self.inspector)
         self.project_tree.set_context_actions(self._tree_actions)
         self.project_tree.deleteRequested.connect(self._tree_delete)
+        self.harness_view.selectionChanged.connect(self._drawing_selected)
         # the lock banner follows the harness chosen in Drawings and in Revisions
         self.harness_view.selector.currentIndexChanged.connect(
             lambda _i: self._update_lock_banner()
@@ -954,6 +955,18 @@ class MainWindow(QMainWindow):
         self.releases_panel.harness.currentIndexChanged.connect(
             lambda _i: self._update_lock_banner()
         )
+
+    def _drawing_selected(self, kind: str, ident: str) -> None:
+        """A wire, connector or pin picked in the drawing or its tables: the inspector shows the
+        link a wire belongs to (the diagram selects it too) and the Why tab knows the object."""
+        if kind == "wire":
+            for h in self.ctl.project.harnesses.values():
+                wire = next((w for w in h.wires if w.id == ident), None)
+                if wire is not None and wire.interface_id in self.ctl.project.interfaces:
+                    self.ctl.select("interface", wire.interface_id)
+                    break
+        if kind in ("wire", "connector", "pin"):
+            self.inspector.show_object(kind, ident)
 
     # ---- what the new views ask for ----------------------------------------------------------------
     def _show_why(self, kind: str, ident: str) -> None:

@@ -575,15 +575,16 @@ class HarnessView(QWidget):
         c.setSpacing(gap)
         self.stack.addWidget(self.content)
         c.addLayout(self._build_header(theme))
-        self.splitter = QSplitter(Qt.Orientation.Horizontal)
+        # the drawing has the width and most of the height; the tables and the reasons sit under it
+        self.splitter = QSplitter(Qt.Orientation.Vertical)
         self.splitter.setObjectName("harness-splitter")
         self.splitter.setChildrenCollapsible(False)
         c.addWidget(self.splitter, 1)
-        self._build_tables(theme)
-        self._build_right(theme)
-        self.splitter.setStretchFactor(0, 5)
-        self.splitter.setStretchFactor(1, 6)
-        self.splitter.setSizes([480, 560])
+        self._build_right(theme)  # the drawing (the top row)
+        self._build_tables(theme)  # pins, wires and why (the bottom row)
+        self.splitter.setStretchFactor(0, 3)
+        self.splitter.setStretchFactor(1, 2)
+        self.splitter.setSizes([420, 280])
         self._restore_splitters()
 
         ctl.changed.connect(lambda _d: self._invalidate())
@@ -690,7 +691,7 @@ class HarnessView(QWidget):
         return view, model
 
     def _build_tables(self, theme: ThemeManager) -> None:
-        left = QSplitter(Qt.Orientation.Vertical)
+        left = QSplitter(Qt.Orientation.Horizontal)
         left.setObjectName("harness-left-splitter")
         left.setChildrenCollapsible(False)
         self.left_splitter = left
@@ -754,7 +755,11 @@ class HarnessView(QWidget):
         self.wire_count.setProperty("muted", True)
         wl.addWidget(self.wire_count)
         left.addWidget(wires)
-        left.setSizes([320, 240])
+        left.addWidget(self._why_box)
+        left.setStretchFactor(0, 4)
+        left.setStretchFactor(1, 4)
+        left.setStretchFactor(2, 3)
+        left.setSizes([340, 340, 240])
         self.splitter.addWidget(left)
         self.pin_filter.textChanged.connect(self.pin_table.proxy.set_text)
         self.pin_filter.textChanged.connect(lambda _t: self._update_counts())
@@ -774,10 +779,6 @@ class HarnessView(QWidget):
         self.wire_table.activated.connect(lambda _i: self._why_requested())
 
     def _build_right(self, theme: ThemeManager) -> None:
-        right = QSplitter(Qt.Orientation.Vertical)
-        right.setObjectName("harness-right-splitter")
-        right.setChildrenCollapsible(False)
-        self.right_splitter = right
         draw = QWidget()
         dl = QVBoxLayout(draw)
         dl.setContentsMargins(0, 0, 0, 0)
@@ -785,7 +786,7 @@ class HarnessView(QWidget):
         dl.addWidget(_caption(strings.HV_DRAWING_TITLE))
         self.preview = DrawingPreview(theme)
         dl.addWidget(self.preview, 1)
-        right.addWidget(draw)
+        self.splitter.addWidget(draw)
         why = QWidget()
         wl = QVBoxLayout(why)
         wl.setContentsMargins(0, 0, 0, 0)
@@ -793,11 +794,7 @@ class HarnessView(QWidget):
         wl.addWidget(_caption(strings.HV_WHY_TITLE))
         self.why = _WhyView(theme)
         wl.addWidget(self.why, 1)
-        right.addWidget(why)
-        right.setStretchFactor(0, 3)
-        right.setStretchFactor(1, 2)
-        right.setSizes([380, 200])
-        self.splitter.addWidget(right)
+        self._why_box = why  # placed beside the tables by `_build_tables`
         self.why.whyRequested.connect(self.whyRequested)
         self.preview.hovered.connect(self._drawing_hovered)
         self.preview.clicked.connect(self._drawing_clicked)
@@ -805,10 +802,9 @@ class HarnessView(QWidget):
     def _restore_splitters(self) -> None:
         if self.settings is None:
             return
-        for name, sp in (
-            ("harness-view/main", self.splitter),
-            ("harness-view/left", self.left_splitter),
-            ("harness-view/right", self.right_splitter),
+        for name, sp in (  # (new keys: the layout changed from columns to rows in M6)
+            ("harness-view/rows", self.splitter),
+            ("harness-view/tables", self.left_splitter),
         ):
             state = self.settings.value(name)
             if state is not None:
