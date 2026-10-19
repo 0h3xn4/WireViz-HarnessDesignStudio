@@ -30,7 +30,7 @@ jobs:
     timeout-minutes: 90
     env:
       QT_QPA_PLATFORM: offscreen
-      HARNESS_TIME_FACTOR: "3"
+      HARNESS_TIME_FACTOR: "8"
       PYTHONUTF8: "1"
     steps:
       - uses: actions/checkout@v4

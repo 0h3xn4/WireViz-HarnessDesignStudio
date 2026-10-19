@@ -900,7 +900,7 @@ def test_the_wheel_carries_the_dotfiles_of_the_example_projects() -> None:
     patterns = pyproject["tool"]["setuptools"]["package-data"]["harness_design_studio.resources"]
     pkg = ROOT / "src" / "harness_design_studio" / "resources"
     shipped = {
-        f
+        f.replace("\\", "/")  # (glob gives backslashes on Windows)
         for pat in patterns
         for f in glob.glob(pat, root_dir=pkg, recursive=True)  # noqa: PTH207
     }

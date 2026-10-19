@@ -225,15 +225,44 @@ def _pid_alive(pid: int) -> bool:
     return True
 
 
+_LOCK_OFFSET = 1 << 20  # Windows: the byte that stands for "this lock file is held" (far beyond
+# the few bytes of text in the file, so other processes can still read it)
+
+
+def _byte_lock(fd: int) -> bool:
+    """Windows: try to lock the marker byte of an open lock file; False if another handle has it."""
+    if sys.platform == "win32":
+        os.lseek(fd, _LOCK_OFFSET, os.SEEK_SET)
+        try:
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            return True
+        except OSError:
+            return False
+        finally:
+            os.lseek(fd, 0, os.SEEK_SET)
+    return False
+
+
+def _byte_unlock(fd: int) -> None:
+    if sys.platform == "win32":
+        os.lseek(fd, _LOCK_OFFSET, os.SEEK_SET)
+        try:
+            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+        finally:
+            os.lseek(fd, 0, os.SEEK_SET)
+
+
 def _lock_guard(fd: int) -> None:
     """Wait for the exclusive lock on the guard file (released when the file is closed)."""
     if sys.platform == "win32":
-        while True:
+        while True:  # LK_LOCK itself waits a whole second between its tries, so try quickly here
             try:
-                msvcrt.locking(fd, msvcrt.LK_LOCK, 1)  # retries for about ten seconds
+                msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
                 return
             except OSError:
-                continue
+                time.sleep(0.005)
     fcntl.flock(fd, fcntl.LOCK_EX)
 
 
@@ -281,14 +310,30 @@ class ProjectLock:
             os.close(fd)  # closing releases the guard
 
     def _remove_stale(self) -> None:
-        """Delete a lock file nobody holds. On Windows the holder keeps the file open, which
-        stops anyone deleting it while the holder lives, so a refused delete means "held"."""
+        """Delete a lock file nobody holds."""
         try:
             self.path.unlink(missing_ok=True)
         except PermissionError:
             if sys.platform != "win32":
                 raise
             raise ProjectLockedError(self._held_message(self._pid_in_file())) from None
+
+    def _locked_by_a_live_holder(self) -> bool:
+        """Windows: True if another handle (also of this process) holds the marker byte. A file that
+        cannot be opened or probed counts as held: nothing is guessed."""
+        try:
+            fd = os.open(self.path, os.O_RDWR | _BINARY)
+        except FileNotFoundError:
+            return False
+        except OSError:
+            return True
+        try:
+            if _byte_lock(fd):
+                _byte_unlock(fd)
+                return False
+            return True
+        finally:
+            os.close(fd)
 
     def _pid_in_file(self) -> int | str:
         try:
@@ -309,11 +354,13 @@ class ProjectLock:
             self._create_atomically(info)
 
     def _create_open(self, info: dict[str, object]) -> None:
-        """Windows: create the file and keep it open until release(). An open file cannot be
-        deleted there, and when this process dies the system closes it, so the next one can."""
+        """Windows: create the file and keep it open, with a byte-range lock on its marker byte,
+        until release(). When this process dies the system drops the lock, so the next one can
+        tell the file is stale."""
         flags = os.O_RDWR | os.O_CREAT | os.O_EXCL | _BINARY
         fd = os.open(self.path, flags, 0o600)
         self._fd = fd
+        _byte_lock(fd)  # held until release() or until this process ends
         os.write(fd, json.dumps(info).encode("utf-8"))
         os.fsync(fd)
 
@@ -366,6 +413,8 @@ class ProjectLock:
             )
         if isinstance(boot, str) and ours is not None and boot != ours:
             return None  # written before the last restart of this computer
+        if sys.platform == "win32":
+            return self._held_message(pid) if self._locked_by_a_live_holder() else None
         if not _pid_alive(pid):  # includes this very process: a second open must be refused
             return None
         if isinstance(start, str) and (now := _start_time(pid)) is not None and now != start:

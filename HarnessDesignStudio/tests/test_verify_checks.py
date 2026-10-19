@@ -241,3 +241,27 @@ def test_verifier_and_rule_check_never_raise_on_a_damaged_wire(name: str) -> Non
     report = verify_project(p)
     assert not report.ok or name in {"no signal"}
     drc.run(p)
+
+
+def test_a_workbook_with_an_unsupported_zip_version_is_a_finding_not_a_crash() -> None:
+    """The fuzz test found it: zipfile raises NotImplementedError for a version above its own."""
+    import io
+    import zipfile
+
+    from harness_design_studio.core.generate.engine import generate_project
+    from harness_design_studio.core.outputs.build import build_outputs
+    from harness_design_studio.core.outputs.verify import verify_outputs
+    from harness_design_studio.core.samples import mini3
+
+    project = mini3()
+    generate_project(project)
+    files = dict(build_outputs(project).files)
+    name = next(n for n in sorted(files) if n.endswith(".xlsx"))
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, "w") as z:
+        info = zipfile.ZipInfo("xl/workbook.xml")
+        info.extract_version = 99
+        z.writestr(info, b"<workbook/>")
+    files[name] = buf.getvalue()
+    report = verify_outputs(project, files)
+    assert any(i.code == "out_unreadable" for i in report.issues), report.issues

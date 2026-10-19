@@ -77,6 +77,7 @@ DAMAGE = (
     EOFError,
     OSError,
     zipfile.BadZipFile,
+    NotImplementedError,  # zipfile: a damaged header names a zip version or method it lacks
     zlib.error,
     csv.Error,
 )

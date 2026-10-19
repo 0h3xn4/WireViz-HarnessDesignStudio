@@ -866,6 +866,7 @@ def test_add_device_is_in_the_menus_and_refused_when_read_only(qtbot, tmp_path: 
 
 @pytest.mark.perf
 def test_a_cell_edit_is_under_100_ms_at_1000_pins_and_100_units(qtbot, theme) -> None:
+    import gc
     import time
 
     from harness_design_studio.core.samples import stress_project
@@ -880,11 +881,19 @@ def test_a_cell_edit_is_under_100_ms_at_1000_pins_and_100_units(qtbot, theme) ->
     view.show_unit(uid, cid)
     assert view.pin_model.rowCount() == 1000
     worst = 0.0
-    for k in range(4):
-        start = time.perf_counter()
-        view._cell_edited(499, "signal", f"S{k}")
-        view.refresh()
-        worst = max(worst, time.perf_counter() - start)
+    # After the other tests of this run about a million objects are alive and one full garbage
+    # collection takes about half a second; a collection that happens to start inside an edit
+    # would time the collector, not the edit (timeit switches it off for the same reason).
+    gc.collect()
+    gc.disable()
+    try:
+        for k in range(4):
+            start = time.perf_counter()
+            view._cell_edited(499, "signal", f"S{k}")
+            view.refresh()
+            worst = max(worst, time.perf_counter() - start)
+    finally:
+        gc.enable()
     assert worst < time_limit(0.1), worst
     assert pin(ctl, cid, "500").signal == "S3"
 
