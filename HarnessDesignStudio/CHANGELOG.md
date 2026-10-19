@@ -2,6 +2,12 @@
 
 Versions follow semantic versioning. Every project file records the tool version that saved it.
 
+## Unreleased
+
+### Changed
+
+- The text of a GitHub release page is now a short page: what the tool is, a table with one row for each package that is attached (what it is for and how to install it), the highlights of the version, the full changelog section folded away, install steps and checksum commands for the systems whose packages are there, and the SHA-256 table. The highlights are written by hand in `docs/releases/<version>.md`; `python -m tools.release_notes check` fails without that file. The release workflow has a "notes only" run (`workflow_dispatch` with `notes_only`) that writes the text of an existing page again from the tag's changelog and the published checksums, without building or uploading anything.
+
 ## 1.1.0 (2026-10-18; not a statement of compliance)
 
 Version 1.1.0 is 1.0.0 plus the changes listed below: the editor rebuilt against the new UX standard (a token-driven theme, the Harness, Lists, Checks, Releases and Devices tabs, the project tree and the inspector, state chips that never rely on colour alone, "Fix all", the Ctrl+K overlay, clearer link labels and pictograms); **the Devices tab, with which a device is defined down to each pin** (connectors, pins, the interface each pin carries, import of a pinout from CSV or XLSX, `import-pinout` and `export-pinout`); the rename of the folder and the commands (`harness-design-studio`, `harness-design-studio-gui`; `harness` and `harness-gui` stay as aliases); and a test run that takes about 30 minutes in CI instead of up to three hours.

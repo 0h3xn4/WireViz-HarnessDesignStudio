@@ -575,7 +575,8 @@ def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
     assert text.index("push:") < text.index("tags:") < text.index("jobs:")
     # the token is read-only for the workflow and writable for the release job alone
     assert "permissions:\n  contents: read" in text
-    assert text.count("contents: write") == 1
+    # only the job that publishes and the job that rewrites the page text may write
+    assert text.count("contents: write") == 2
     assert text.index("contents: write") > text.index("jobs:\n  release:")
     for command in (
         "python -m tools.release_notes check",
@@ -630,7 +631,9 @@ def test_the_release_check_refuses_a_tag_that_does_not_fit() -> None:
     assert rn.section("## 12.0.0\n\n- x\n", "2.0.0") is None
 
 
-def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path: Path) -> None:
+def test_the_release_notes_have_a_download_table_highlights_and_the_checksums(
+    tmp_path: Path,
+) -> None:
     from harness_design_studio import __version__
     from tools import release_notes as rn
 
@@ -638,21 +641,76 @@ def test_the_release_notes_are_the_changelog_section_with_the_checksums(tmp_path
     # the real files agree; text under "## Unreleased" is allowed between releases (the release
     # gate in tools/release_check refuses it at release time)
     found = [
-        p for p in rn.problems(f"v{__version__}", __version__, changelog) if "Unreleased" not in p
+        p
+        for p in rn.problems(f"v{__version__}", __version__, changelog, ROOT)
+        if "Unreleased" not in p
     ]
     assert found == []
     body = rn.section(changelog, __version__)
     assert body and not any(ln.startswith("## ") for ln in body.splitlines())
+    highlights = rn.highlights_file(__version__).read_text(encoding="utf-8")
     sums = tmp_path / "SHA256SUMS"
     sums.write_text(
-        f"{'a' * 64}  harness-design-studio_{__version__}_amd64.deb\n", encoding="utf-8"
+        f"{'a' * 64}  harness-design-studio_{__version__}_amd64.deb\n"
+        f"{'b' * 64}  harness-design-studio-{__version__}-linux-x86_64.tar.gz\n"
+        f"{'c' * 64}  something-else.txt\n",
+        encoding="utf-8",
     )
     out = tmp_path / "notes.md"
-    text = rn.notes(__version__, changelog, sums.read_text(encoding="utf-8"))
-    assert text.startswith("The packages are not signed")
-    assert "not a statement of compliance" in text and body in text
+    text = rn.notes(__version__, changelog, sums.read_text(encoding="utf-8"), highlights)
+    assert text.startswith("**Harness Design Studio**")
+    assert "not a statement of compliance with any standard" in text
+    assert "## Download" in text and f"`harness-design-studio_{__version__}_amd64.deb`" in text
+    assert f"## What is new in {__version__}\n\n{highlights.strip()}" in text
+    # the whole changelog section is kept, folded away
+    assert f"<details>\n<summary>The full list of changes</summary>\n\n{body}" in text
     assert f"| `harness-design-studio_{__version__}_amd64.deb` | `{'a' * 64}` |" in text
+    assert "Other files: `something-else.txt`" in text
+    # only the systems whose files are there get install steps and a checksum command
+    assert "sha256sum -c SHA256SUMS" in text and "Get-FileHash" not in text
+    assert "Windows" not in text.split("## Install")[1].split("## Check")[0]
     assert rn.main(["notes", "v0.0.1", str(sums), str(out)]) == 1  # the tag must fit the version
+
+
+def test_the_release_notes_list_the_windows_and_macos_packages_when_they_exist() -> None:
+    from tools import release_notes as rn
+
+    v = "9.9.9"
+    names = [
+        f"harness-design-studio_{v}_amd64.deb",
+        f"harness-design-studio-{v}-linux-x86_64.tar.gz",
+        f"harness-design-studio-{v}-windows-x86_64-setup.exe",
+        f"harness-design-studio-{v}-windows-x86_64.zip",
+        f"harness-design-studio-{v}-macos-arm64.dmg",
+        f"harness-design-studio-{v}-macos-x86_64.dmg",
+    ]
+    sums = "".join(f"{'d' * 64}  {name}\n" for name in names)
+    text = rn.notes(v, f"## {v}\n\nFirst paragraph.\n\n- a\n", sums)
+    for name in names:
+        assert f"`{name}`" in text
+    assert "Other files" not in text  # every file was recognised
+    assert "First paragraph." in text  # without a highlights file the first paragraph is used
+    for command in ("sha256sum -c", "shasum -a 256 -c", "Get-FileHash"):
+        assert command in text
+    assert "SmartScreen" in text and "right-click" in text
+
+
+def test_every_release_has_a_highlights_file() -> None:
+    from harness_design_studio import __version__
+    from tools import release_notes as rn
+
+    assert rn.highlights_file(__version__).is_file()
+    assert rn.highlights_file(__version__).read_text(encoding="utf-8").strip()
+
+
+def test_the_release_workflow_can_write_the_page_text_again_without_building() -> None:
+    text = RELEASE_WORKFLOW.read_text(encoding="utf-8")
+    assert "notes_only:" in text
+    assert "if: ${{ !inputs.notes_only }}" in text and "if: ${{ inputs.notes_only }}" in text
+    notes_job = text[text.index("\n  notes:") :]
+    assert "gh release edit" in notes_job and "--root" in notes_job
+    for forbidden in ("build_installer", "build_deb", "gh release upload", "gh release create"):
+        assert forbidden not in notes_job, forbidden
 
 
 def _load_gui_entry() -> Any:

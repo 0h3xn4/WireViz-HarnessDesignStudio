@@ -12,6 +12,11 @@ on:
         description: "Existing tag to (re)build and publish, for example v1.0.0"
         required: true
         type: string
+      notes_only:
+        description: "Only write the release page text again (from the tag's changelog and the published SHA256SUMS); build and upload nothing"
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read  # only the release job below may write
@@ -26,6 +31,7 @@ defaults:
 
 jobs:
   release:
+    if: ${{ !inputs.notes_only }}
     runs-on: ubuntu-24.04
     timeout-minutes: 60
     permissions:
@@ -62,7 +68,7 @@ jobs:
         run: |
           sudo apt-get install -y ./dist/harness-design-studio_*_amd64.deb
           # Full paths: the pip install above puts commands of the same names (the source
-          # install, whose editor has no --selftest) in front of /usr/bin on the PATH
+          # install, whose editor does not know the self-test flag) in front of /usr/bin on the PATH
           for cmd in harness harness-design-studio harness-design-studio-gui; do
             case "$(readlink -f "/usr/bin/$cmd")" in
               /opt/harness-design-studio/*) ;;
@@ -110,3 +116,31 @@ jobs:
           else
             gh release create "$TAG" --verify-tag --title "$title" --notes-file "$RUNNER_TEMP/notes.md" "${flags[@]}" "${files[@]}"
           fi
+
+  notes:
+    # Writes the text of an existing release page again with this version of tools/release_notes.py
+    # (the tag's own copy may be older): the tag's changelog and the checksums already published.
+    # Packages and tag are not touched.
+    if: ${{ inputs.notes_only }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write  # edit the release page; nothing else
+    env:
+      TAG: ${{ inputs.tag }}
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          ref: refs/tags/${{ inputs.tag }}
+          path: tagged
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Release notes from the published checksums
+        run: |
+          gh release download "$TAG" --pattern SHA256SUMS --dir "$RUNNER_TEMP" --clobber
+          python -m tools.release_notes notes "$TAG" "$RUNNER_TEMP/SHA256SUMS" "$RUNNER_TEMP/notes.md" --root "$GITHUB_WORKSPACE/tagged/HarnessDesignStudio"
+          gh release edit "$TAG" --title "Harness Design Studio ${TAG#v}" --notes-file "$RUNNER_TEMP/notes.md"
