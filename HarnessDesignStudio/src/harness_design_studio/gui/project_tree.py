@@ -74,7 +74,7 @@ from harness_design_studio.gui.icons import draw_icon, icon_button
 from harness_design_studio.gui.states import STATE_ROLE, STATES, chip_size, paint_chip
 from harness_design_studio.gui.tables import natural_key
 from harness_design_studio.gui.theme import ThemeManager
-from harness_design_studio.gui.tokens import CATEGORIES, style_category
+from harness_design_studio.gui.theme.tokens import CATEGORIES, style_category
 
 ROOT_ORDER: Final = (
     "units",
@@ -784,7 +784,7 @@ class _Kit:
 
     def __init__(self, theme: ThemeManager, base: QFont) -> None:
         self.base = QFont(base)
-        self.small = theme.font("sm")
+        self.small = theme.font("small")
         self.mono = theme.mono_font("base")
         self.bold = QFont(base)
         self.bold.setBold(True)

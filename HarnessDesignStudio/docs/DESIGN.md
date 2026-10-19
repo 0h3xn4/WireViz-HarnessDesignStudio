@@ -1,38 +1,40 @@
 # Design system of the editor
 
-What the editor is made of and why: tokens, type and spacing, themes, icons, state chips, tables, the diagram, the window, the views, shortcuts, and a list of decisions. The code is the source: `gui/tokens.py` (values), `gui/theme.py` (palette, style sheet, fonts), `gui/icons.py`, `gui/states.py`, `gui/tables.py`. `tests/test_tokens.py` checks contrast and colour-blind separation of the tokens and `tests/test_ux_foundation.py` the rest of the foundation; each view has its own test file (named in the sections below).
+What the editor is made of and why: tokens, type and spacing, themes, icons, state chips, tables, the diagram, the window, the views, shortcuts, and a list of decisions. The code is the source: `gui/theme/` (`tokens.py` the values, `palette.py`, `qss.py`, `style.py`, `fonts.py`, `manager.py`), `gui/icons.py`, `gui/states.py`, `gui/tables.py`. `tests/test_tokens.py` checks contrast and colour-blind separation of the tokens and `tests/test_ux_foundation.py` the rest of the foundation; each view has its own test file (named in the sections below).
 
-The standard behind it is "UX/UI Standard: Harness Design Studio"; the audit against it and what was built for each issue is in [`ux-audit.md`](ux-audit.md) (issue IDs such as SH-6, CV-7, SC-12 appear in brackets below). Rules for code in `gui/`: tables are `tables.TableView`, states are `states.StateChip` or `StateDelegate`, icons come from `icons.py`, no widget calls `setStyleSheet` and no code holds a `#RRGGBB` literal, every string is in `gui/strings.py`.
+The standard behind it is "UX/UI Standard: Harness Design Studio"; the audit against it and what was built for each issue is in [`ux-audit.md`](ux-audit.md) (issue IDs such as SH-6, CV-7, SC-12 appear in brackets below). Rules for code in `gui/`: tables are `tables.TableView`, states are `states.StateChip` or `StateDelegate`, icons come from `icons.py`, no widget calls `setStyleSheet`, no code outside `gui/theme/` holds a `#RRGGBB` literal, a font family or a font size, every string is in `gui/strings.py`.
 
 Contents: [Tokens](#tokens) · [Type and spacing](#type-and-spacing) · [Themes](#themes) · [Icons](#icons) · [State badges and chips](#state-badges-and-chips) · [Tables](#tables) · [The diagram](#the-diagram) · [The window](#the-window) · [Views](#views) · [Shortcuts](#shortcuts) · [Decisions](#decisions)
 
 ## Tokens
 
+One source: `gui/theme/tokens.py` (D-150). The design language is the owner's brief (`docs/ui/UI_OVERHAUL.md`); values were tuned only where WCAG 2.2 AA asked for it.
+
 | Token | Use |
 |---|---|
-| `bg`, `surface`, `surface-2`, `border`, `text`, `text-muted` | Surfaces, lines and text |
-| `primary`, `on-primary` | The one accent: the primary action and the selection |
-| `focus` | Keyboard focus ring |
-| `error`, `warning`, `success`, `info` | Severity and pass / fail |
-| `pending`, `not-checked`, `stale` | A value or result that is not known yet, a rule that could not run, outputs older than the model |
-| `locked`, `released` | Locked items, released harnesses |
-| `auto-fill` | Auto-filled, not reviewed |
+| `bg.canvas`, `bg.surface`, `bg.raised`, `bg.hover`, `bg.selected` | The window, panels and tables, floating things (lifted by a shadow), the row or control under the pointer, the selection (the accent at 10 or 16 % over the surface) |
+| `border.subtle`, `border.strong`, `border.control` | Separators; the edge of a button; the outline of an input or a check box (3:1) |
+| `text.primary`, `text.secondary`, `text.muted` | Text; all three reach 4.5:1 on every surface |
+| `accent`, `accent.text`, `accent.hover`, `focus` | The one accent: the primary action, links and the focus ring (2 px); the text on an accent fill; the fill under the pointer |
+| `status.critical`, `status.serious`, `status.caution`, `status.normal`, `status.standby`, `status.off` | Severity and pass / fail, after the Astro UX status taxonomy; each is tuned per theme to 4.5:1 as text |
+| `diff.added`, `diff.removed`, `diff.changed` | Tinted backgrounds of the revision differences |
+| `state.pending`, `state.notchecked`, `state.autofill` and the status tokens | A value or result that is not known yet, a rule that could not run, auto-filled and not reviewed; locked and released use `text.secondary` and `status.normal`; stale uses `status.serious` |
 | `paper`, `pasteboard` | The drawing preview: the sheet (white in both themes, it is a picture of paper) and the table it lies on |
 | `cat-*` | Interface categories on the canvas ([colours](#interface-colours)) |
 
-Text tokens meet 4.5:1 on `bg`, `surface` and `surface-2` in both themes; borders, focus and category colours 3:1. The clickable prototype (`prototype/`, built by `tools.build_prototype`) reads the same values.
+The legacy names (`bg`, `surface`, `surface-2`, `border`, `text`, `text-muted`, `primary`, `on-primary`, `error`, `warning`, `success`, `info`, `auto-fill`, `locked`, `released`, `pending`, `not-checked`, `stale`) are aliases of these tokens, kept while the screens are rebuilt. Text tokens meet 4.5:1 on `bg.canvas`, `bg.surface`, `bg.raised` and `bg.hover` in both themes; control outlines, the focus ring and category colours 3:1. The clickable prototype (`prototype/`, built by `tools.build_prototype`) reads the legacy names.
 
 ## Type and spacing
 
-- Type scale in px: `sm` 12 (captions, canvas labels, table cells, status bar), `base` 13 (body), `md` 16, `lg` 20. IBM Plex Sans for the interface; IBM Plex Mono for pin, wire and part numbers, IDs, requirement IDs, hashes and paths (`mono` property, `theme.mono_font()`, `mono_item_font()` in models).
-- Spacing in px: 4, 8, 12, 16, 24, 32. Every control (button, combo box, line edit, spin box) is 32 px high at 100 % scale, set in the theme with `min-height` and `max-height`.
-- Both are multiplied by the UI scale (100, 125, 150, 200 %; View > Interface size).
-- API: `theme.color(token)`, `theme.type(name)`, `theme.space(n)`, `theme.font(...)`, `theme.mono_font()`, `theme.control_height()`, `theme.icon_size()`; `current_theme()` for widgets built without a reference to the window's manager.
+- Type scale in px: `caption` 11, `small` 12 (canvas labels, table cells, status bar), `base` 13 (body), `section` 15, `title` 18, `display` 22 (rare); weights 400, 500 and 600 only. Inter for the interface; JetBrains Mono for pin, wire and part numbers, IDs, requirement IDs, hashes, paths and logs (`mono` property, `theme.mono_font()`, `mono_item_font()` in models). Both are bundled (SIL OFL); tabular figures with `theme.font(tabular=True)`.
+- Spacing in px on a 4 px grid: 4, 8, 12, 16, 24, 32. Every control (button, combo box, line edit, spin box) is 32 px high at 100 % scale (28 compact), table rows 26; radius 6 for controls and 8 for panels, popovers and dialogs; motion 120 ms (hover) and 180 ms (panels, toasts), 0 with reduce motion.
+- Sizes are multiplied by the UI scale (100, 125, 150, 200 %; View > Interface size).
+- API: `theme.color(token)`, `theme.type(name)`, `theme.space(n)`, `theme.font(...)`, `theme.mono_font()`, `theme.control_height()`, `theme.row_height()`, `theme.radius()`, `theme.icon_size()`, `theme.motion()`; `current_theme()` for widgets built without a reference to the window's manager.
 
 ## Themes
 
 - Three modes: **System** (default, follows the operating system's light/dark scheme while the program runs), **Light**, **Dark**. The choice is stored as `ui/theme` (`system`, `light` or `dark`); View > Theme. A damaged value falls back to System.
-- `ThemeManager.apply()` builds a `QPalette` and the style sheet from the tokens. The only `setStyleSheet` call is the theme's; widgets pick up rules by property: `primary`, `danger`, `muted`, `heading`, `align="left"`, `mono`, `iconOnly`, `toggle`. A test checks that no widget styles itself and that no hex literal or literal pixel size is left in `gui/` (the logo in `appicon.py` is the one brand exception).
+- The application style sheet (`qss.py`) holds no colour: it names palette roles (`palette(base)`), and `palette.ROLES` maps each token to one. A theme switch therefore sets the other `QPalette` and repolishes the visible widgets (hidden ones polish when first shown); it takes under 110 ms where re-setting a style sheet took 0.5 to 1 s. A change of UI scale still installs a new sheet. Check boxes and radio buttons are painted by `ThemeStyle` (`style.py`) from the palette. Widgets pick up rules by property: `primary`, `danger`, `ghost`, `muted`, `heading`, `align="left"`, `mono`, `iconOnly`, `toggle`. A test checks that no widget styles itself and that no hex colour, font family or font size is left in `gui/` outside `gui/theme/` (`tests/test_theme_scan.py`).
 - The first UI scale follows the screen height (1300 px: 125 %, 1600: 150 %, 2000: 200 %) unless the system already scales (ratio 1.5 or more); the person's choice is saved and wins. (SH-26)
 
 ## Icons

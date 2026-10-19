@@ -110,14 +110,18 @@ def collect(dest: Path) -> list[str]:
             target = dest / key / Path(f.as_posix()).name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(Path(str(dist.locate_file(f))), target)
-    plex = Path(__file__).resolve().parents[1] / "src/harness_design_studio/resources/fonts"
-    ofl = plex / "OFL-1.1-IBM-Plex.txt"
-    if ofl.is_file():  # the bundled fonts are not Python packages: record them here
-        rows.append("IBM Plex Sans 1.1.0 and IBM Plex Mono 2.5.0 (fonts): OFL-1.1")
-        (dest / "ibm-plex").mkdir(parents=True, exist_ok=True)
-        shutil.copyfile(ofl, dest / "ibm-plex" / ofl.name)
-    else:
-        problems.append("the licence text of the bundled IBM Plex fonts is missing")
+    fonts = Path(__file__).resolve().parents[1] / "src/harness_design_studio/resources/fonts"
+    for key, label, text in (
+        ("inter", "Inter 4.1 (font)", "OFL-1.1-Inter.txt"),
+        ("jetbrains-mono", "JetBrains Mono 2.304 (font)", "OFL-1.1-JetBrains-Mono.txt"),
+    ):
+        ofl = fonts / text  # the bundled fonts are not Python packages: record them here
+        if ofl.is_file():
+            rows.append(f"{label}: OFL-1.1")
+            (dest / key).mkdir(parents=True, exist_ok=True)
+            shutil.copyfile(ofl, dest / key / ofl.name)
+        else:
+            problems.append(f"the licence text of the bundled {label} is missing")
     rows.append(
         "Lucide icon outlines in gui/icons.py (lucide-static 1.56.0): ISC; some derive from Feather: MIT"
     )

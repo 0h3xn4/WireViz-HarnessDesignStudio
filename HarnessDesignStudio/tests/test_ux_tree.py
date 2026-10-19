@@ -221,7 +221,7 @@ def test_a_reviewed_configuration_without_gaps_shows_no_chip(ctl, theme, qtbot) 
 
 
 def test_ids_are_painted_in_the_monospace_font(flat, theme, qtbot) -> None:
-    """The delegate's IDs use the theme's mono font (IBM Plex Mono or the system fixed font); the
+    """The delegate's IDs use the theme's mono font (JetBrains Mono or the system fixed font); the
     names use the interface font."""
     from harness_design_studio.gui.theme import mono_family
 

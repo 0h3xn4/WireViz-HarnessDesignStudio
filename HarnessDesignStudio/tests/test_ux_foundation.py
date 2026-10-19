@@ -40,7 +40,6 @@ from PySide6.QtWidgets import (  # noqa: E402
 
 import harness_design_studio.gui as gui_pkg  # noqa: E402
 from harness_design_studio.gui import icons, strings  # noqa: E402
-from harness_design_studio.gui import theme as theme_mod  # noqa: E402
 from harness_design_studio.gui.states import (  # noqa: E402
     FILL_ALPHA,
     PATTERN_ALPHA,
@@ -63,12 +62,14 @@ from harness_design_studio.gui.tables import (  # noqa: E402
 )
 from harness_design_studio.gui.theme import (  # noqa: E402
     MODES,
+    ROLES,
     ThemeManager,
     build_palette,
     mark_mono,
     mono_family,
 )
-from harness_design_studio.gui.tokens import (  # noqa: E402
+from harness_design_studio.gui.theme import manager as theme_mod  # noqa: E402
+from harness_design_studio.gui.theme.tokens import (  # noqa: E402
     DARK,
     LIGHT,
     SPACING,
@@ -100,7 +101,9 @@ def test_palette_comes_from_the_tokens(qapp, theme, name, tokens) -> None:
     assert pal.color(QPalette.ColorRole.WindowText).name().upper() == tokens["text"]
     assert pal.color(QPalette.ColorRole.Highlight).name().upper() == tokens["primary"]
     assert pal.color(QPalette.ColorRole.HighlightedText).name().upper() == tokens["on-primary"]
-    assert pal.color(QPalette.ColorRole.AlternateBase).name().upper() == tokens["surface"]
+    assert pal.color(QPalette.ColorRole.AlternateBase).name().upper() == tokens["bg.hover"]
+    for token, (_, qt_role) in ROLES.items():  # every token the style sheet names has its role
+        assert pal.color(qt_role).name().upper() == tokens[token], token
     disabled = pal.color(QPalette.ColorGroup.Disabled, QPalette.ColorRole.Text)
     assert disabled.name().upper() == tokens["text-muted"]
     assert build_palette(tokens).color(QPalette.ColorRole.Link).name().upper() == tokens["info"]
@@ -170,15 +173,15 @@ def test_a_damaged_theme_setting_falls_back_to_system(qtbot, tmp_path) -> None:
 
 
 def test_type_and_space_follow_the_standard_and_the_ui_scale(qapp, theme) -> None:
-    assert [theme.type(k) for k in ("sm", "base", "md", "lg")] == [12, 13, 16, 20]
+    assert [theme.type(k) for k in TYPE_SCALE] == [11, 12, 13, 15, 18, 22]
     assert [theme.space(n) for n in SPACING] == [4, 8, 12, 16, 24, 32]
     theme.apply(qapp, scale=1.5)
-    assert theme.type("lg") == 30 and theme.space(8) == 12
+    assert theme.type("title") == 27 and theme.space(8) == 12
     with pytest.raises(ValueError):
         theme.space(5)
     with pytest.raises(KeyError):
         theme.type("huge")
-    assert list(TYPE_SCALE.values()) == [12, 13, 16, 20]
+    assert list(TYPE_SCALE.values()) == [11, 12, 13, 15, 18, 22]
     assert qapp.font().pixelSize() == theme.type("base")
 
 
@@ -210,13 +213,13 @@ def test_no_literal_pixel_sizes_and_no_hard_coded_colours_in_gui() -> None:
 # ---- SH-21: monospace -----------------------------------------------------------------------
 
 
-def test_mono_font_is_plex_mono_and_follows_the_scale(qapp, theme) -> None:
+def test_mono_font_is_jetbrains_mono_and_follows_the_scale(qapp, theme) -> None:
     f = theme.mono_font()
-    assert f.family() == mono_family() == "IBM Plex Mono"
-    assert f.pixelSize() == 13 and theme.mono_font("sm").pixelSize() == 12
+    assert f.family() == mono_family() == "JetBrains Mono"
+    assert f.pixelSize() == 13 and theme.mono_font("small").pixelSize() == 12
     theme.apply(qapp, scale=2.0)
     assert theme.mono_font().pixelSize() == 26
-    assert theme.font("md", bold=True).bold()
+    assert theme.font("section", bold=True).weight() == QFont.Weight.DemiBold
 
 
 def test_mono_property_gives_a_widget_the_monospace_font(qapp, theme, qtbot) -> None:
@@ -225,7 +228,7 @@ def test_mono_property_gives_a_widget_the_monospace_font(qapp, theme, qtbot) -> 
     plain = QFontInfo(edit.font()).family()
     mark_mono(edit)
     edit.ensurePolished()
-    assert QFontInfo(edit.font()).family() == "IBM Plex Mono" != plain
+    assert QFontInfo(edit.font()).family() == "JetBrains Mono" != plain
     assert edit.styleSheet() == ""  # the theme's rule did it, not a widget style sheet
 
 
@@ -235,14 +238,14 @@ def test_status_bar_hash_ids_and_pin_columns_are_monospace(qtbot, tmp_path) -> N
     w._update_hash()
     w.status_hash.ensurePolished()
     assert re.fullmatch(r"[0-9a-f]{8}|-{8}", w.status_hash.text())
-    assert QFontInfo(w.status_hash.font()).family() == "IBM Plex Mono"
+    assert QFontInfo(w.status_hash.font()).family() == "JetBrains Mono"
     w.show_interfaces()
     model = w.interface_table.model
     model.reload()
     assert model.rowCount() > 0
     mono = model.index(0, 0).data(Qt.ItemDataRole.FontRole)
-    assert mono.family() == "IBM Plex Mono"  # ID
-    assert model.index(0, 7).data(Qt.ItemDataRole.FontRole).family() == "IBM Plex Mono"
+    assert mono.family() == "JetBrains Mono"  # ID
+    assert model.index(0, 7).data(Qt.ItemDataRole.FontRole).family() == "JetBrains Mono"
     assert model.index(0, 1).data(Qt.ItemDataRole.FontRole) is None  # the name stays in Sans
 
 
@@ -634,9 +637,9 @@ def test_numbers_are_right_aligned_with_tabular_figures_and_ids_are_mono(theme) 
     assert m.headerData(5, Qt.Orientation.Horizontal, Qt.ItemDataRole.TextAlignmentRole) == right
     num = m.index(0, 5).data(Qt.ItemDataRole.FontRole)
     assert num.featureValue(QFont.Tag("tnum")) == 1  # tabular figures
-    assert m.index(0, 0).data(Qt.ItemDataRole.FontRole).family() == "IBM Plex Mono"
+    assert m.index(0, 0).data(Qt.ItemDataRole.FontRole).family() == "JetBrains Mono"
     assert m.index(0, 1).data(Qt.ItemDataRole.FontRole) is None
-    f = QFont("IBM Plex Sans")
+    f = QFont("Inter")
     f.setPixelSize(13)
     f.setFeature(QFont.Tag("tnum"), 1)
     metrics = QFontMetrics(f)

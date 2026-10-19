@@ -171,7 +171,9 @@ def pyinstaller_build(
         ROOT / "src" / "harness_design_studio" / "resources" / "examples"
     )  # `harness-design-studio new`, templates
     cmd += ["--add-data", f"{examples}{sep}harness_design_studio/resources/examples"]
-    fonts = ROOT / "src" / "harness_design_studio" / "resources" / "fonts"  # IBM Plex, SIL OFL 1.1
+    fonts = (
+        ROOT / "src" / "harness_design_studio" / "resources" / "fonts"
+    )  # Inter and JetBrains Mono, SIL OFL 1.1
     cmd += ["--add-data", f"{fonts}{sep}harness_design_studio/resources/fonts"]
     cmd += extra_args
     cmd.append(str(entry))

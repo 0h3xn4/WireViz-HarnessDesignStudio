@@ -50,7 +50,7 @@ from harness_design_studio.gui.canvas_state import NO_INDEX, ObjectState, StateI
 from harness_design_studio.gui.controller import Delta, EditorController, Selection
 from harness_design_studio.gui.icons import draw_icon
 from harness_design_studio.gui.theme import ThemeManager
-from harness_design_studio.gui.tokens import CATEGORIES, style_category
+from harness_design_studio.gui.theme.tokens import CATEGORIES, style_category
 
 
 @dataclass(frozen=True)
@@ -358,7 +358,7 @@ class UnitItem(QGraphicsItem):
         if cached is not None and cached.key == key:
             return cached
         th = sc.theme
-        font = sc.px_font(th.type("sm"))
+        font = sc.px_font(th.type("small"))
 
         def tw(text: str) -> float:
             return float(sc.text_width(font, text))
@@ -501,7 +501,7 @@ class UnitItem(QGraphicsItem):
             painter.drawRoundedRect(body.adjusted(1, 1, -1, -1), 7, 7)
         bold = self.dscene.bold_font()
         small = QFont(painter.font())
-        small.setPixelSize(th.type("sm"))
+        small.setPixelSize(th.type("small"))
         card = self.card_layout(unit, st, state)
         facts = self.facts()
         glyph_y = (HEADER_H - glyphs.LINK_GLYPH_H) / 2
@@ -658,7 +658,7 @@ class UnitItem(QGraphicsItem):
         # the marks take some of the box; it is cut with an ellipsis only below that
         room = max(1.0, W - 16 - strip - (4 if marks else 0))
         sc = self.dscene
-        id_px = sc.text_width(sc.px_font(th.type("sm")), self.unit_id) * 1.1
+        id_px = sc.text_width(sc.px_font(th.type("small")), self.unit_id) * 1.1
         px = min(float(METRICS.legible_px), max(8.0, room * lod / max(id_px, 1.0) * 12.0))
         wanted = px / max(lod, 0.01)
         font.setPixelSize(max(1, int(min(h * 0.85, max(22.0 * px / 12.0, wanted)))))
@@ -679,7 +679,7 @@ class UnitItem(QGraphicsItem):
         most serious badge with its count and the lock; else the same without counts; else the
         badge alone; else none (the box is too small to hold both a readable ID and a mark)."""
         sc = self.dscene
-        font = sc.px_font(th.type("sm"))
+        font = sc.px_font(th.type("small"))
         full: list[tuple[str, str]] = []
         if st.badges():
             skey, n = st.badges()[0]
@@ -715,7 +715,7 @@ class UnitItem(QGraphicsItem):
         if not marks:
             return
         sc = self.dscene
-        font = sc.px_font(th.type("sm"))
+        font = sc.px_font(th.type("small"))
         scale = share / max(lod, 0.01)
         bh = METRICS.badge_h
         painter.save()
@@ -1271,7 +1271,7 @@ class LinkItem(QGraphicsPathItem):
         st = sc.states.of("interface", i.id)
         color = th.color(f"cat-{cat}")
         c = self._chip_center
-        font = sc.px_font(th.type("sm"))
+        font = sc.px_font(th.type("small"))
         parts = (
             [] if self._compact or not sc.label_full(i.id, self._hover) else self._label_parts(st)
         )
@@ -1450,7 +1450,7 @@ class LinkItem(QGraphicsPathItem):
         if bl:  # the badge, drawn at its screen size
             skey, n = bl[0]
             text = badge_text(n, skey)
-            font = sc.px_font(th.type("sm"))
+            font = sc.px_font(th.type("small"))
             w = cbadges.badge_width(sc.text_width(font, text), text) * k
             bh = METRICS.chip_badge_h * k
             r = QRectF(rect.right() - w + 5 * k, rect.top() - bh + 6 * k, w, bh)
@@ -1578,7 +1578,7 @@ class ZoneItem(QGraphicsItem):
         font.setBold(True)
         # the name of the lane is sized in screen pixels, so it can be read when zoomed out
         lod = max(option.levelOfDetailFromTransform(painter.worldTransform()), 0.05)
-        size = max(th.type("sm"), min(80, round(th.type("sm") / lod)))
+        size = max(th.type("small"), min(80, round(th.type("small") / lod)))
         font.setPixelSize(size)
         painter.setFont(font)
         painter.setPen(th.color("text-muted"))

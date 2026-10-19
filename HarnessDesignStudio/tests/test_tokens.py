@@ -5,21 +5,21 @@ import math
 
 import pytest
 
-from harness_design_studio.gui.tokens import (
+from harness_design_studio.gui.theme.tokens import (
     CATEGORIES,
     CONTROL_HEIGHT,
     DARK,
     LIGHT,
     SPACING,
+    SURFACES,
+    TEXT_TOKENS,
     TYPE_SCALE,
     _lin,
     contrast,
 )
 
 THEMES = {"light": LIGHT, "dark": DARK}
-SURFACES = ("bg", "surface", "surface-2")
-TEXT_ROLES = ("text", "text-muted", "primary", "error", "warning", "success", "info",
-              "auto-fill", "locked", "released", "pending", "not-checked", "stale")  # fmt: skip
+TEXT_ROLES = (*TEXT_TOKENS, "locked", "released", "stale")  # fmt: skip
 STATE_TOKENS = (
     "success",
     "error",
@@ -69,13 +69,14 @@ def test_text_and_status_colours_meet_aa_text(theme: str) -> None:
     for role in TEXT_ROLES:
         for surface in SURFACES:
             assert contrast(t[role], t[surface]) >= 4.5, (theme, role, surface)
-    assert contrast(t["on-primary"], t["primary"]) >= 4.5
+    assert contrast(t["accent.text"], t["accent"]) >= 4.5
+    assert contrast(t["accent.text"], t["accent.hover"]) >= 4.5
 
 
 @pytest.mark.parametrize("theme", THEMES)
 def test_ui_boundaries_focus_and_categories_meet_aa_graphics(theme: str) -> None:
     t = THEMES[theme]
-    for role in ("border", "focus", *CATS):
+    for role in ("border.control", "focus", *CATS):
         for surface in SURFACES:
             assert contrast(t[role], t[surface]) >= 3.0, (theme, role, surface)
 
@@ -104,7 +105,7 @@ def test_spacing_is_on_the_4px_grid() -> None:
 
 
 def test_type_and_spacing_scales_are_the_standards() -> None:
-    assert tuple(TYPE_SCALE.values()) == (12, 13, 16, 20)
+    assert tuple(TYPE_SCALE.values()) == (11, 12, 13, 15, 18, 22)
     assert SPACING == (4, 8, 12, 16, 24, 32)
     assert CONTROL_HEIGHT in SPACING
 

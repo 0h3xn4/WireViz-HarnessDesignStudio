@@ -59,6 +59,8 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 | Script | What it does |
 | --- | --- |
 | `bench_gui` | Times editor interactions on a stress-size project (offscreen) |
+| `ui_screenshots` | Pictures of every tab, menu and dialog of the editor in light and dark (offscreen) into `docs/ui/screenshots/` (UI overhaul) |
+| `ui_perf` | Start-up, tab switch, theme switch, UI scale and select timings on the flatsat example (UI overhaul) |
 | `bench_stress` | Times load, save, integrity check and transactions on a stress-size project (200 units, 2,000 interfaces) |
 | `bench_generate` | Times generation on the stress project (target: under 10 seconds) |
 | `soak` | Soak test: thousands of random editing steps through the command layer, checking the invariants all the way |
