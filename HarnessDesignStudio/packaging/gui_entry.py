@@ -86,6 +86,7 @@ def _run_steps(tmp: Path) -> list[str]:
         }
     finally:
         ctl.release()
+        win.settings.sync()  # the window keeps Home's recent list in them; write now, not at exit
     return [name for name, ok in results.items() if not ok]
 
 
