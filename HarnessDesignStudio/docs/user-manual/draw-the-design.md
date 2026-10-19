@@ -99,7 +99,7 @@ Switching never changes your data.
 - Zoom with **Ctrl+=** and **Ctrl+-**, or **Ctrl+wheel** at the pointer. **F** fits the whole diagram, **Shift+F** zooms to the selection and **Ctrl+0** shows 100 %. **View > Show all link labels** shows voltages and currents on every link in a dense diagram.
 - **Shift+click**, **Ctrl+click** or a drag on the background select several items; **Ctrl+A** selects all. **Ctrl+F** finds a unit or link and marks every match. **Edit > Align**, **Space evenly** and **Duplicate** (Ctrl+D) work on the selection.
 - A badge on a unit or link counts its problems, warnings and values still to enter, and a lock with *W001 A* shows what a released harness holds.
-- The **Project** tab on the left lists every unit and link as a tree, and the **Interfaces** tab beside it (Ctrl+Shift+T) lists every link as a table you can edit. They also work with a screen reader. Shift+arrows in the tree select several units or links at once.
+- The **Project** tab on the left lists every unit and link as a tree, and the **Interfaces** tab beside it (Ctrl+Shift+T) lists every link as a table you can edit, and the **Units** tab (Ctrl+Shift+J) every unit. The tables work like a spreadsheet: Enter edits a cell, Esc cancels, **Ctrl+V pastes a block copied from Excel** (one Ctrl+Z undoes the whole paste), and an edit made with several rows selected applies to all of them; a right-click on the header chooses the columns. They also work with a screen reader. Shift+arrows in the tree select several units or links at once.
 
 ## 7. Change your mind: delete, undo, save
 

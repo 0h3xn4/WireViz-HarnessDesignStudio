@@ -40,6 +40,7 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+1 to Ctrl+6 | The tabs Diagram, Harness, Lists, Checks, Releases, Devices |
 | Ctrl+Shift+N | Add a device (an empty unit named in the Devices tab) |
 | Ctrl+Shift+T | The Interface table (the Interfaces tab of the left panel) |
+| Ctrl+Shift+J | The Unit table (the Units tab of the left panel) |
 | F6 and Shift+F6 | Move the keyboard focus to the next or previous panel |
 | Delete | Delete the selection (it first shows what else goes with it); in the diagram, the Interface table and the Project tree |
 | C | Start the Connect tool; then click the two units to add an interface |

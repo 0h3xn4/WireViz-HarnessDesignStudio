@@ -82,7 +82,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 | Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6); the rail shows the tabs of the area you are in |
 | Middle, **Diagram** | units in lanes (*panel-A*, *panel-B*), links between them. Every kind of link has its own picture and colour; the legend (bottom left of the diagram) shows them (power is red in the light theme). Small badges show problems, values still to enter and locks |
 | Left, **Project** | a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports; **Add** adds a unit or an interface |
-| Left, **Interfaces** | every interface as a table you can sort, filter and edit with the keyboard (Ctrl+Shift+T) |
+| Left, **Units** and **Interfaces** | every unit and every interface as a table you can sort, filter, edit with the keyboard and paste into from Excel (Ctrl+Shift+J, Ctrl+Shift+T) |
 | Right, **Inspector** | the selected unit or interface: names, **Max current (A)**, notes, and where it is used. The tabs **Why** and **Problems** (with a **To do** list above the problem cards) are beside it |
 | Above the diagram | **Select** and **Connect** (the arrow beside **Connect** lists the interface types), **Delete**, zoom |
 | Right end of the Model tab bar | **Arrange diagram** and the **Show** list (all interfaces, one class, one connector, one bundle) |
