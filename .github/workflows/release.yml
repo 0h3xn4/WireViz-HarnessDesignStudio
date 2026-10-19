@@ -61,9 +61,17 @@ jobs:
           PYTHONFAULTHANDLER: "1"  # SIGABRT makes a stuck program print where each thread is
         run: |
           sudo apt-get install -y ./dist/harness-design-studio_*_amd64.deb
-          test "$(harness --version)" = "harness ${TAG#v}"
+          # Full paths: the pip install above puts commands of the same names (the source
+          # install, whose editor has no --selftest) in front of /usr/bin on the PATH
+          for cmd in harness harness-design-studio harness-design-studio-gui; do
+            case "$(readlink -f "/usr/bin/$cmd")" in
+              /opt/harness-design-studio/*) ;;
+              *) echo "::error::/usr/bin/$cmd is not the installed program"; exit 1 ;;
+            esac
+          done
+          test "$(/usr/bin/harness --version)" = "harness ${TAG#v}"
           descendants() { for c in $(pgrep -P "$1"); do echo "$c"; descendants "$c"; done; }
-          harness-design-studio-gui --selftest &
+          /usr/bin/harness-design-studio-gui --selftest &
           pid=$!
           for _ in $(seq 120); do kill -0 "$pid" 2>/dev/null || break; sleep 1; done
           if kill -0 "$pid" 2>/dev/null; then
