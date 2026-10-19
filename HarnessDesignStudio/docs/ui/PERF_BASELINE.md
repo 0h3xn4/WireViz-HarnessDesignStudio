@@ -57,7 +57,7 @@ Same script with `NODRC=1` (background rule check off):
 | Full repaint | 50 / 38 / 50 ms |
 | Change with Problems tab / interface table visible | 64 / 81 ms |
 
-**Note on the 11 s figures: unexplained, to be resolved before M5.** With the rule check on, every edit in the
+**Note on the 11 s figures (resolved in M5, see "After M5" below and D-154; the text below is what was known at the time).** With the rule check on, every edit in the
 benchmark takes about 11 s in this container; with it off the same edit takes 50 to 240 ms. A short profiling
 script (select two units, then rename one, rule check on, same stress project) did **not** reproduce it: the
 rename took 64 to 219 ms, of which about 50 ms is the GUI thread receiving the check's result from the helper
@@ -88,3 +88,15 @@ change (above). The Inventory in `UI_OVERHAUL_PLAN.md` lists each.
 | Tab switch, first time (Harness, Lists, Checks, Releases, Devices) | 60, 52, 36, 13, 55 ms | 61 to 68, 66 to 78, about 40, about 12, about 55 ms |
 
 How the theme switch got fast: the style sheet holds no colour (it names palette roles), so a switch sets the other palette and repolishes only the 80 or so visible widgets; the 870 hidden ones are unpolished and Qt polishes them when they are first shown. Measured before the change: setting any different application style sheet costs 230 ms for a one-rule sheet and 300 to 500 ms for the real one, because Qt matches every widget again.
+
+## After M5 (the 11-second edit explained and fixed, 2026-10-19; same container, same script)
+
+Cause: two GUI-side lookups that scanned every wire of every harness once per finding (82,549 findings after a check of the stress project): the diagram's state index (`drc.locate`, 49 s under the profiler, about 11 s real) and the project tree's problem counts (`_wire_index`, 5 s). Both now use a dictionary or a set built once. `core` is unchanged.
+
+| What (stress project, rule check on) | Before | After |
+|---|---|---|
+| Rename unit, move unit, add unit, undo, redo | 10.7 to 12.7 s each | 90 to 520 ms (rename 90 to 350, undo 250) |
+| Change while the interface table is visible | 11,481 ms | 109 ms |
+| Change while the Problems tab is visible | 1,016 ms | 567 ms |
+| Taking in a check result on the GUI thread (82,549 findings) | not measured (the same scans) | 132 ms |
+| Edit after a result has arrived, warm, minimum of 3 | about 11,000 ms | 70 to 90 ms |

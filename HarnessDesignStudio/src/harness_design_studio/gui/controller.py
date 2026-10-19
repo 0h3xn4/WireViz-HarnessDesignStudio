@@ -206,6 +206,12 @@ class EditorController(QObject):
             why=strings.DRC_FAILED_WHY,
         )
 
+    @property
+    def drc_scheduled(self) -> bool:
+        """The design changed and the check starts as soon as the person pauses (the result shown
+        is out of date, and a new one is on its way)."""
+        return self._drc_timer.isActive()
+
     def _schedule_drc(self) -> None:
         self._drc_timer.start()
         self.drcStateChanged.emit()

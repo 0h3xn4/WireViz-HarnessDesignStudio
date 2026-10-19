@@ -2004,3 +2004,11 @@ EMPTY_UNITS_HINT = (
 A_GO_UNITS = "Go to Unit table"
 UNIT_FILTER_PLACEHOLDER = "Filter by ID, name, subsystem, zone or notes"
 NEW_UNIT = "New unit"
+
+# ---- UI overhaul M5: Checks and Problems ------------------------------------------------------
+CHECKS_STALE = "Out of date"
+CHECKS_STALE_TIP = "The design changed after these results. Press Check again to update them."
+CHECKS_STALE_SOON = "The design changed after these results; checking again in a moment."
+PROBLEMS_GO_TO = "Go to {0}"
+PROBLEMS_DETAILS = "Details and fixes"
+PROBLEMS_MENU = "Problem"

@@ -597,6 +597,11 @@ class ChecksPanel(QWidget):
             strip.addWidget(b)
             self.segments[key] = b
         row.addWidget(self.strip)
+        # the results shown belong to an earlier state of the design: said at once, in words
+        self.stale = QLabel(strings.CHECKS_STALE)
+        self.stale.setObjectName("checks-stale")
+        self.stale.setVisible(False)
+        row.addWidget(self.stale)
         self.status = QLabel()
         self.status.setObjectName("checks-status")
         self.status.setWordWrap(True)
@@ -814,6 +819,12 @@ class ChecksPanel(QWidget):
             )
         self.cancel_btn.setVisible(busy)
         self.again_btn.setVisible(not busy and not current and error is None)
+        stale = bool(results) and not current and error is None
+        self.stale.setVisible(stale)
+        if stale:
+            self.stale.setToolTip(
+                strings.CHECKS_STALE_SOON if ctl.drc_busy() else strings.CHECKS_STALE_TIP
+            )
         self._update_fix_all()
         self.strip.setVisible(bool(results))
         if results:

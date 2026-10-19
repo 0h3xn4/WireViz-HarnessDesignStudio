@@ -112,6 +112,7 @@ QLabel[muted="true"] {{ color: {c("text.secondary")}; }}
 QLabel[error="true"] {{ color: {c("status.critical")}; }}
 QLabel[title="true"] {{ font-size: {section}; font-weight: 600; }}
 QLabel[dirty="true"] {{ color: {c("status.caution")}; font-weight: 600; }}
+QLabel#checks-stale {{ color: palette(tooltip-text); font-weight: 600; }}
 QLabel[heading="true"] {{ color: {c("text.secondary")}; font-size: {caption}; font-weight: 600; }}
 QFrame[card="true"] {{ background: {c("bg.surface")}; border: 1px solid {c("border.subtle")}; border-radius: {r_panel}; }}
 QFrame[card="true"][severity="warning"] {{ border-left: {px(6)} solid {c("status.caution")}; }}
