@@ -358,6 +358,8 @@ into the summary, all existing tests green (CI on Linux, Windows, macOS), golden
 - *Acceptance:* each kind imports the packaged sample through the new wizard with the same project result as
   before (existing import tests unchanged and green); a 20,000-row file keeps the GUI responsive.
 
+**M7 result (2026-10-19).** Built as D-156. The wizard already existed for five kinds; M7 makes it the one way in (interfaces too, with a paste fallback), reads a file of more than 1,500 rows in a helper thread with a busy line and Cancel, and fixes the two real stalls it found (the interpreter hand-over and the column sizing of a long table). Measured with 20,000 rows: longest pause of the window 530 ms before, about 110 ms after; check page 283 ms before, 30 ms after. Edited test: `test_ux_shell.py` (one stub).
+
 **M8 Outputs and Revisions.**
 - Outputs area: one list of documents with type, format, timestamp, checksum (computed in a worker from the
   written files), Open, Reveal, Copy to folder; the Lists tables as entries. Revisions area: history timeline,
