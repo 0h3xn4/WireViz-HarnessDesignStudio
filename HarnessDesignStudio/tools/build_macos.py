@@ -127,11 +127,16 @@ def is_macho(path: Path) -> bool:
 
 
 def sign_tree(folder: Path, identity: str, entitlements: Path) -> None:
-    """Sign every Mach-O file of a plain folder (the command line tool), deepest first."""
+    """Sign every Mach-O file of a plain folder (the command line tool), deepest first, and then
+    the framework bundles in it (Python.framework), so that each bundle is sealed after its files."""
     files = [p for p in folder.rglob("*") if p.is_file() and not p.is_symlink() and is_macho(p)]
     for path in sorted(files, key=lambda p: len(p.parts), reverse=True):
         run(["codesign", "--force", "--options", "runtime", "--timestamp",
              "--entitlements", str(entitlements), "--sign", identity, str(path)])  # fmt: skip
+    frameworks = [p for p in folder.rglob("*.framework") if p.is_dir() and not p.is_symlink()]
+    for path in sorted(frameworks, key=lambda p: len(p.parts), reverse=True):
+        run(["codesign", "--force", "--options", "runtime", "--timestamp",
+             "--sign", identity, str(path)])  # fmt: skip
 
 
 def sign_app(app: Path, identity: str | None) -> None:

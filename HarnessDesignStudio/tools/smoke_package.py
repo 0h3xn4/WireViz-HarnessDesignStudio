@@ -164,7 +164,7 @@ def block_network(folder: Path) -> Callable[[], None]:
             continue
         name = f"harness-smoke-block-{os.getpid()}-{i}"
         # one string, so that the quotes around the program are the ones netsh wants
-        rule = f'netsh advfirewall firewall add rule name="{name}" dir=out action=block program="{exe}" enable=yes'
+        rule = f'netsh advfirewall firewall add rule name="{name}" dir=out action=block program="{exe.resolve()}" enable=yes'
         done = subprocess.run(rule, capture_output=True, text=True, check=False)  # noqa: S603
         if done.returncode == 0:
             names.append(name)
