@@ -1,6 +1,7 @@
 """M7: Ubuntu packaging (D-110): install and uninstall scripts, desktop entry, icon and the .deb."""
 
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -574,8 +575,16 @@ def test_the_root_setup_describes_the_package_with_the_upstream_readme() -> None
 RELEASE_WORKFLOW = ROOT.parent / ".github" / "workflows" / "release.yml"
 
 
+def _jobs(text: str) -> dict[str, str]:
+    """The text of each job of a workflow file, by job name (a job starts with two spaces)."""
+    body = text[text.index("\njobs:\n") + len("\njobs:\n") :]
+    parts = re.split(r"^  ([a-z0-9_-]+):\n", body, flags=re.M)
+    return dict(zip(parts[1::2], parts[2::2], strict=True))
+
+
 def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
-    """Pushing a tag vX.Y.Z builds, verifies and publishes; only the release job may write."""
+    """Pushing a tag vX.Y.Z builds every platform, verifies and publishes; only the release job
+    (and the one that rewrites the page text) may write."""
     if not RELEASE_WORKFLOW.is_file():
         pytest.skip("the repository root is not here")
     text = RELEASE_WORKFLOW.read_text(encoding="utf-8")
@@ -585,34 +594,64 @@ def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
     assert "permissions:\n  contents: read" in text
     # only the job that publishes and the job that rewrites the page text may write
     assert text.count("contents: write") == 2
-    assert text.index("contents: write") > text.index("jobs:\n  release:")
+    jobs = _jobs(text)
+    assert list(jobs) == ["linux", "windows", "macos", "release", "notes"]
+    assert [name for name, body in jobs.items() if "contents: write" in body] == [
+        "release",
+        "notes",
+    ]
+    # every package is built by a build job and published by the release job alone
+    for name in ("linux", "windows", "macos"):
+        assert "gh release" not in jobs[name] and "upload-artifact" in jobs[name], name
+        assert "if: ${{ !inputs.notes_only }}" in jobs[name], name
+    assert "needs: [linux, windows, macos]" in jobs["release"]
     for command in (
         "python -m tools.release_notes check",
         "python -m tools.build_installer",
         "python -m tools.build_deb",
+        "python -m tools.build_windows",
+        "python -m tools.build_macos",
         "--selftest",
+        "tools.smoke_package windows-setup",
+        "tools.smoke_package windows-zip",
+        "tools.smoke_package macos-dmg",
         "python -m tools.gen_scf dist",
         "sha256sum -c SHA256SUMS",
+        "python -m tools.release_notes complete dist/SHA256SUMS",
         "gh release create",
         "--verify-tag",
         "gh release upload",
         "--clobber",
         "dist/*.tar.gz",
         "dist/*.deb",
+        "dist/*-setup.exe",
+        "dist/*.zip",
+        "dist/*.dmg",
         "dist/SHA256SUMS",
     ):
         assert command in text, command
     # the order matters: build, then checksums, then the page
     for earlier, later in (
         ("tools.build_installer", "tools.build_deb"),
-        ("tools.build_deb", "tools.gen_scf"),
+        ("tools.build_deb", "tools.build_windows"),
+        ("tools.build_windows", "tools.build_macos"),
+        ("tools.build_macos", "tools.gen_scf"),
         ("tools.gen_scf", "tools.release_notes notes"),
         ("tools.release_notes notes", "gh release create"),
     ):
         assert text.index(earlier) < text.index(later), (earlier, later)
-    # only actions that the other workflows already use
+    # one SHA256SUMS over all the files, made after they were downloaded from the build jobs
+    release = jobs["release"]
+    assert release.index("download-artifact") < release.index("tools.gen_scf")
+    assert text.count("python -m tools.gen_scf") == 1
+    # only actions that the other workflows already use (the final job downloads what the others built)
     used = {ln.split("uses:")[1].strip() for ln in text.splitlines() if "uses:" in ln}
-    assert used <= {"actions/checkout@v4", "actions/setup-python@v5", "actions/upload-artifact@v4"}
+    assert used <= {
+        "actions/checkout@v4",
+        "actions/setup-python@v5",
+        "actions/upload-artifact@v4",
+        "actions/download-artifact@v4",
+    }
     # the system libraries are the ones the CI job that installs the packages uses
     ci = (RELEASE_WORKFLOW.parent / "harness-ci.yml").read_text(encoding="utf-8")
     libs = (
@@ -620,6 +659,59 @@ def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
     )
     line = next(ln for ln in text.splitlines() if libs in ln).split("install -y")[1].strip()
     assert line in ci
+
+
+def test_signing_runs_only_when_the_secrets_exist_and_is_documented() -> None:
+    """Without a certificate the packages are built unsigned; the secret names are in the docs."""
+    if not RELEASE_WORKFLOW.is_file():
+        pytest.skip("the repository root is not here")
+    jobs = _jobs(RELEASE_WORKFLOW.read_text(encoding="utf-8"))
+    secrets = {
+        "windows": ("WINDOWS_CERT_PFX_BASE64", "WINDOWS_CERT_PASSWORD"),
+        "macos": (
+            "MACOS_CERT_P12_BASE64",
+            "MACOS_CERT_PASSWORD",
+            "MACOS_NOTARY_APPLE_ID",
+            "MACOS_NOTARY_TEAM_ID",
+            "MACOS_NOTARY_PASSWORD",
+        ),
+    }
+    for job, names in secrets.items():
+        for name in names:
+            assert f"secrets.{name}" in jobs[job], (job, name)
+            for doc in ("RELEASE.md", "SECURITY.md"):
+                assert name in (ROOT / "docs" / doc).read_text(encoding="utf-8"), (doc, name)
+    # every step that needs a certificate is skipped without one
+    assert "if: ${{ env.WINDOWS_CERT_PFX_BASE64 != '' }}" in jobs["windows"]
+    assert "if: ${{ env.MACOS_CERT_P12_BASE64 != '' }}" in jobs["macos"]
+    assert "secrets." not in jobs["linux"] + jobs["release"] + jobs["notes"]
+    # the secrets reach the build scripts only through the environment, never through a command line
+    for script in ("build_windows.py", "build_macos.py"):
+        code = (ROOT / "tools" / script).read_text(encoding="utf-8")
+        assert "HARNESS_" in code and "secrets" not in code
+
+
+def test_the_package_workflow_builds_and_tests_but_never_publishes() -> None:
+    packages = RELEASE_WORKFLOW.parent / "harness-packages.yml"
+    if not packages.is_file():
+        pytest.skip("the repository root is not here")
+    text = packages.read_text(encoding="utf-8")
+    assert 'branches: ["pkg/**"]' in text and "workflow_dispatch:" in text
+    assert "permissions:\n  contents: read" in text and "contents: write" not in text
+    assert "gh release" not in text and "secrets." not in text
+    for os_label in ("windows-latest", "macos-latest", "macos-15-intel"):
+        assert f"os: {os_label}" in text or f"runs-on: {os_label}" in text, os_label
+    assert "macos-13" not in text and "macos-12" not in text  # retired runner images
+    for command in (
+        "python -m tools.build_windows",
+        "python -m tools.build_macos",
+        "tools.smoke_package windows-setup",
+        "tools.smoke_package windows-zip",
+        "tools.smoke_package macos-dmg",
+    ):
+        assert command in text, command
+    used = {ln.split("uses:")[1].strip() for ln in text.splitlines() if "uses:" in ln}
+    assert used <= {"actions/checkout@v4", "actions/setup-python@v5", "actions/upload-artifact@v4"}
 
 
 def test_the_release_check_refuses_a_tag_that_does_not_fit() -> None:

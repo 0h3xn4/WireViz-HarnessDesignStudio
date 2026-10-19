@@ -21,7 +21,7 @@ You describe the **units** (computer, power unit, reaction wheel ...) and the **
 - **Starts from the usual standards.** RS-422, RS-485 and CAN for communication, Micro-D (9 to 31 pin) for power and data, Ethernet as the alternative for high data rates, SMA for RF (what each one is: [glossary](docs/GLOSSARY.md)). Other types and connectors can be added.
 - **Honest about what it does not know.** Engineering values (derating, ampacity, EMC rules, approved parts; see the [glossary](docs/GLOSSARY.md)) are never invented. Until you supply them, results say *pending* or *not checked*.
 
-Runs on **Ubuntu 24.04 or newer**. Version `1.1.0` in this repository, which is also the latest published release (see [Status](#status)).
+Runs on **Ubuntu 24.04 or newer**; packages for **Windows 10 and 11** and **macOS 13 or newer** are built from version 1.2.0 on ([`docs/INSTALL.md`](docs/INSTALL.md), decision D-149). Version `1.1.0` in this repository, which is also the latest published release (see [Status](#status)).
 
 ## Try it in five minutes
 

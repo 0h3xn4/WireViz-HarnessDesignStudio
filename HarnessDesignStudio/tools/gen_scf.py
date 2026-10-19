@@ -22,7 +22,13 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SOURCE_FOLDERS = ("src", "tools", "packaging", "tests", "docs", "compliance")
 SOURCE_FILES = ("pyproject.toml", "README.md", "CLAUDE.md", "CHANGELOG.md")
-DELIVERABLE_SUFFIXES = (".deb", ".tar.gz")
+DELIVERABLE_SUFFIXES = (
+    ".deb",
+    ".tar.gz",
+    ".exe",
+    ".zip",
+    ".dmg",
+)  # Linux, Windows (setup, portable), macOS
 
 
 def sha256(path: Path) -> str:
@@ -91,7 +97,7 @@ def main(out: str = "dist/release-docs") -> int:
     delivered: dict[str, dict[str, object]] = scf["deliverables"]  # type: ignore[assignment]
     if not delivered:
         sys.stderr.write(
-            f"error: no .deb or .tar.gz of version {scf['version']} in dist/: build the package first\n"
+            f"error: no package (.deb, .tar.gz, .exe, .zip or .dmg) of version {scf['version']} in dist/: build the package first\n"
         )
         return 1
     out_dir = ROOT / out

@@ -2,6 +2,7 @@
 
 Usage: python -m tools.release_notes check TAG
        python -m tools.release_notes notes TAG SHA256SUMS OUT [--root DIR]
+       python -m tools.release_notes complete SHA256SUMS
 `check` fails unless TAG is `v` plus the version in pyproject.toml, CHANGELOG.md has a section for
 that version, `docs/releases/<version>.md` (the highlights) exists and nothing is left under
 `## Unreleased`. `notes` writes the page text: what the tool is, a download table with one row
@@ -9,6 +10,8 @@ for each package that is in SHA256SUMS, how to install and check them, the highl
 changelog section folded away, and the SHA-256 table. `--root` is the `HarnessDesignStudio` folder
 of the tagged checkout (default: this one); the highlights file is looked for there first and then
 here, so that the notes of an older tag can be written again with a newer version of this script.
+`complete` fails unless SHA256SUMS lists a file of every kind in PACKAGES (the .deb, the .tar.gz,
+the Windows setup program and zip and the two macOS images): a release that lacks one is not made.
 """
 
 from __future__ import annotations
@@ -178,6 +181,16 @@ def _found(version: str, names: list[str]) -> list[tuple[Package, str]]:
     return found
 
 
+def missing_packages(version: str, names: list[str]) -> list[str]:
+    """The kinds of package (by their file name pattern) for which `names` holds no file."""
+    have = {package.key for package, _ in _found(version, names)}
+    return [
+        package.pattern.format(v=version).replace("\\", "")
+        for package in PACKAGES
+        if package.key not in have
+    ]
+
+
 def _first_paragraph(text: str) -> str:
     return text.strip().split("\n\n", 1)[0].strip()
 
@@ -269,6 +282,12 @@ def main(argv: list[str]) -> int:
         if not found:
             sys.stdout.write(f"{argv[1]}: version {version}, changelog section found\n")
         return 1 if found else 0
+    if len(argv) == 2 and argv[0] == "complete":
+        names = [name for name, _ in parse_sums(Path(argv[1]).read_text(encoding="utf-8"))]
+        absent = missing_packages(version, names)
+        for item in absent:
+            sys.stderr.write(f"error: no file {item} in {argv[1]}\n")
+        return 1 if absent else 0
     if len(argv) == 4 and argv[0] == "notes":
         # the highlights of an older tag may only exist in the newer checkout that runs this
         found = [p for p in problems(argv[1], version, changelog) if "highlights" not in p]

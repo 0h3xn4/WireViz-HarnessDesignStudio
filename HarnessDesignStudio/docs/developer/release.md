@@ -29,7 +29,7 @@ Pushing the tag `vX.Y.Z` (or publishing a release that creates the tag on GitHub
 
 ## Before you start
 
-- You need Ubuntu 24.04 (the only supported system, [D-127](../DECISIONS.md)), the development environment from [`setup-and-tests.md`](setup-and-tests.md), and network access for the SBOM and the vulnerability scan (or a wheelhouse made with `python -m tools.vendor`).
+- You need Ubuntu 24.04 for `tools.release_check` (the Windows and macOS packages are built by the release workflow, see [`RELEASE.md`](../RELEASE.md), [D-149](../DECISIONS.md)), the development environment from [`setup-and-tests.md`](setup-and-tests.md), and network access for the SBOM and the vulnerability scan (or a wheelhouse made with `python -m tools.vendor`).
 - Every change since the last release is in `HarnessDesignStudio/CHANGELOG.md` under `## Unreleased`.
 - The pull request with the changes is merged, or you are working on the branch that will be.
 

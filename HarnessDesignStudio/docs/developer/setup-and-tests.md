@@ -15,7 +15,7 @@ This page shows how to set up a place to work on Harness Design Studio, run the 
 
 ## What you need
 
-- Ubuntu 24.04 or newer, 64-bit. Windows and macOS are not supported (decision D-127 in [`DECISIONS.md`](../DECISIONS.md)).
+- Ubuntu 24.04 or newer, 64-bit, for development and the release check. The tool itself also runs on Windows 10/11 and macOS 13+ from 1.2.0 (decision D-149 in [`DECISIONS.md`](../DECISIONS.md)); the packages for those are built and tested on GitHub's Windows and macOS runners (`harness-packages.yml`, `harness-platforms.yml`).
 - Python 3.12 or newer (`python3 --version`), with `python3-venv`, and Git.
 - For Qt, the system libraries `libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0`. CI installs a few more (`libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0`) and `poppler-utils`. On a machine without a screen the tests use Qt's `offscreen` mode, so no display is needed. The apt line was copied from `CLAUDE.md` and the CI file. It was not run for this page, because the libraries were already present on the machine used.
 - Work in the `HarnessDesignStudio/` folder. The WireViz code at the repository root is a separate program ([`CONTRIBUTING.md`](../../../CONTRIBUTING.md)).
