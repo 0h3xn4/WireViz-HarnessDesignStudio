@@ -1,4 +1,4 @@
-"""SHA-256 of every file the tool writes for each packaged example, to show that a change of the user
+"""SHA-256 of every file the tool writes (a workbook by its members) for each packaged example, to show that a change of the user
 interface left the written files alone (UI overhaul M6; the brief: SVG and PDF byte-identical to 1.2.0).
 
     python -m tools.output_hashes                       # print the hashes as JSON
@@ -10,9 +10,11 @@ The stored file `docs/ui/OUTPUT_HASHES_1.2.0.json` was made with the release 1.2
 """
 
 import hashlib
+import io
 import json
 import sys
 import tempfile
+import zipfile
 from pathlib import Path
 
 from harness_design_studio.core import templates
@@ -21,6 +23,17 @@ from harness_design_studio.core.outputs.build import build_outputs
 
 STORED = Path(__file__).resolve().parent.parent / "docs" / "ui" / "OUTPUT_HASHES_1.2.0.json"
 EXAMPLES = ("first-steps", "minimal-satellite", "small-satellite", "flatsat")
+
+
+def digest(rel: str, data: bytes) -> str:
+    """SHA-256 of a file. A workbook (.xlsx) is a zip whose container bytes depend on the zip
+    library of the platform (the same sheets compress differently on Windows), so it is hashed by
+    the names and the bytes of its members; every other file is hashed as it is."""
+    if rel.endswith(".xlsx"):
+        with zipfile.ZipFile(io.BytesIO(data)) as z:
+            parts = sorted((n, hashlib.sha256(z.read(n)).hexdigest()) for n in z.namelist())
+        return hashlib.sha256(json.dumps(parts).encode()).hexdigest()
+    return hashlib.sha256(data).hexdigest()
 
 
 def hashes() -> dict[str, dict[str, str]]:
@@ -32,7 +45,7 @@ def hashes() -> dict[str, dict[str, str]]:
             if not project.harnesses:
                 generate_project(project)
             files = build_outputs(project).files
-        out[name] = {rel: hashlib.sha256(data).hexdigest() for rel, data in sorted(files.items())}
+        out[name] = {rel: digest(rel, data) for rel, data in sorted(files.items())}
     return out
 
 
