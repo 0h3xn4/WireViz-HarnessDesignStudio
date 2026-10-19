@@ -74,7 +74,7 @@ def test_there_is_no_bottom_dock_no_palette_and_no_old_plans_panel(win) -> None:
         "table",
     ):
         assert not hasattr(win, name), name
-    assert win.left_tabs.names() == ["tree", "interfaces"]
+    assert win.left_tabs.names() == ["tree", "units", "interfaces"]
     from harness_design_studio.gui import panels
 
     for cls in ("PalettePanel", "TodoPanel", "HarnessPanel", "OutlinePanel", "InterfaceTable"):
