@@ -288,9 +288,11 @@ into the summary, all existing tests green (CI on Linux, Windows, macOS), golden
   for the diagram canvas's pen widths, Q9); contrast test for every text/background pair in both themes;
   fonts test (new files, licence texts); smoke test of both themes without Qt warnings.
 - Optional timing log (`HARNESS_UI_TIMING=1`) and `tools.ui_perf`; re-measure the 11 s stress finding on CI.
-- *Acceptance:* theme switch ≤ 150 ms and scale change ≤ 250 ms on the flatsat in `tools.ui_perf`; no
+- *Acceptance (result of M1 in the last paragraph of this milestone):* theme switch ≤ 150 ms and scale change ≤ 250 ms on the flatsat in `tools.ui_perf`; no
   `Carbon`/`IBM Plex` string left outside CHANGELOG history and DECISIONS; start-up not slower than baseline +10 %;
   packaged program (PyInstaller, Windows, macOS) shows the new fonts (`tests/test_packages_*`, smoke test).
+
+**M1 result (2026-10-19).** Theme switch **77 to 138 ms** (was 560 to 950): met. **UI scale change 670 to 940 ms: not met** (250 ms target): a scale change still installs a new style sheet and font, which re-matches every widget; making the sheet scale-free (em units) would change how every control is sized, so it is left for M9 (Settings), where scale becomes a setting; recorded in D-150. Start-up 0.94 to 1.09 s (baseline 1.0 to 1.15): met. No `Carbon` or `IBM Plex` text outside CHANGELOG, DECISIONS and the three historical UX records (each now carries a note): met. Stress-size edit stall: **not re-measured on CI yet**, open for M5.
 
 **M2 Shell.**
 - Nav rail, top bar (project, save state, revision, breadcrumbs, Undo/Redo, mode switch, Ctrl+K field), central

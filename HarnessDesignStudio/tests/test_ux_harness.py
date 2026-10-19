@@ -491,8 +491,10 @@ def test_wheel_zooms_to_the_cursor_and_fit_returns(qtbot, theme) -> None:
     assert sv.zoom == 1.0 and not sv.horizontalScrollBar().isVisible()
     view.preview.zoom_in_btn.click()
     view.preview.zoom_in_btn.click()
-    assert sv.zoom == pytest.approx(1.5625)
-    assert sv.horizontalScrollBar().maximum() > 0 and view.preview.zoom_label.text() == "1.6×"
+    assert sv.zoom == pytest.approx(1.5625) and view.preview.zoom_label.text() == "1.6×"
+    view.preview.zoom_in_btn.click()  # (at 1.5625 the sheet is about as wide as the view)
+    assert sv.horizontalScrollBar().maximum() > 0
+    view.preview.zoom_out_btn.click()
     view.preview.zoom_out_btn.click()
     assert sv.zoom == pytest.approx(1.25)
 

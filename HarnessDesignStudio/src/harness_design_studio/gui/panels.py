@@ -33,7 +33,7 @@ from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import LIST_DELAY_MS, Delta, EditorController
 from harness_design_studio.gui.icons import icon_button
 from harness_design_studio.gui.theme import ThemeManager, current_theme, mark_mono
-from harness_design_studio.gui.tokens import CATEGORIES, style_category
+from harness_design_studio.gui.theme.tokens import CATEGORIES, style_category
 
 
 def category_icon(cat: str, theme: ThemeManager, size: int = 20, pressed: bool = False) -> QIcon:

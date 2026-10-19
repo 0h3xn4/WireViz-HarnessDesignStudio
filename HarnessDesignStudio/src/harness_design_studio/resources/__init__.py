@@ -31,7 +31,7 @@ def examples_path() -> Path | None:
 
 
 def fonts_path() -> Path | None:
-    """The bundled IBM Plex fonts (TrueType, SIL OFL), also inside a PyInstaller build."""
+    """The bundled Inter and JetBrains Mono fonts (TrueType, SIL OFL), also when frozen."""
     roots = [Path(__file__).parent]
     frozen = getattr(sys, "_MEIPASS", None)
     if frozen:

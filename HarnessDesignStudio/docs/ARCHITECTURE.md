@@ -87,7 +87,7 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | `gui/tables.py`, `gui/states.py`, `gui/icons.py`, `gui/indicators.py`, `gui/background.py` | shared tables, state chips, icons, check box and radio button pictures drawn from the tokens, background jobs |
 | `gui/panels.py`, `gui/dialogs.py`, `gui/preview.py`, `gui/tour.py` | the properties and problems panels (the problems list holds the to-do lines), `gui/interface_table.py` the editable interface table; dialogs; the zoomable drawing preview; the first-run tour |
 | `gui/drc_process.py` | runs the design rule check in a separate, long-lived process |
-| `gui/strings.py`, `gui/tokens.py`, `gui/theme.py`, `gui/fonts.py` | all user-visible text; design tokens (colours, type, spacing); theme (system, light, dark; interface size); bundled IBM Plex fonts |
+| `gui/strings.py`, `gui/theme/` | all user-visible text; the theme package: design tokens (colours, type, spacing, radius, motion), palette, style sheet, widget style, bundled Inter and JetBrains Mono fonts, theme manager (system, light, dark; interface size) |
 
 ### `resources/`
 

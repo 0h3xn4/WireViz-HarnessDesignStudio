@@ -219,7 +219,6 @@ class InterfaceTable(QWidget):
         self.view.setModel(self.proxy)
         self.view.setSortingEnabled(True)
         self.view.sortByColumn(0, Qt.SortOrder.AscendingOrder)  # IF-001 first
-        self.view.setAlternatingRowColors(True)
         self.view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
         self.view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
         self.view.setItemDelegateForColumn(5, _ChainDelegate(self.view))

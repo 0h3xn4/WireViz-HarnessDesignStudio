@@ -99,8 +99,8 @@ def _examples_are_bundled(tmp: Path) -> bool:
 
 
 def _fonts_are_bundled() -> bool:
-    """The IBM Plex fonts are inside the package and Qt can load them."""
-    from harness_design_studio.gui import fonts
+    """The Inter and JetBrains Mono fonts are inside the package and Qt can load them."""
+    from harness_design_studio.gui.theme import fonts
 
     return {fonts.UI_FAMILY, fonts.MONO_FAMILY} <= set(fonts.load_fonts())
 

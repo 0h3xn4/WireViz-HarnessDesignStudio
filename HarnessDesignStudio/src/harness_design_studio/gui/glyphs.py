@@ -10,7 +10,7 @@ import math
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QBrush, QColor, QPainter, QPainterPath, QPen, QPolygonF
 
-from harness_design_studio.gui.tokens import style_category
+from harness_design_studio.gui.theme.tokens import style_category
 
 LINK_GLYPH_W = 18.0
 LINK_GLYPH_H = 14.0
@@ -321,7 +321,7 @@ def _dots(p: QPainter, rect: QRectF, pins: int, filled: bool, ink: QColor, rows:
     per = [(shown + 1) // 2, shown // 2] if rows == 2 else [shown]
     r = 1.1 if per[0] <= 9 else 0.85
     p.save()
-    p.setBrush(ink if filled else QColor(0, 0, 0, 0))
+    p.setBrush(ink if filled else QColor(Qt.GlobalColor.transparent))
     p.setPen(QPen(ink, 0.8))
     for k, count in enumerate(per):
         if count == 0:
@@ -401,7 +401,7 @@ def draw_connector(
         p.setPen(QPen(color, 1.6))
         _line(p, 15, 0.8, 15, 3)  # the key
         p.setPen(QPen(detail, 1.0))
-        p.setBrush(detail if male else QColor(0, 0, 0, 0))
+        p.setBrush(detail if male else QColor(Qt.GlobalColor.transparent))
         for k in range(min(max(pins, 3), 8)):
             import math
 
@@ -426,7 +426,7 @@ def draw_connector(
         p.translate(5, 0)  # concentric rings, a solid centre pin for a plug
         p.drawEllipse(QPointF(15, 8), 7.2, 7.2)
         p.setPen(QPen(detail, 1.0))
-        p.setBrush(detail if male else QColor(0, 0, 0, 0))
+        p.setBrush(detail if male else QColor(Qt.GlobalColor.transparent))
         p.drawEllipse(QPointF(15, 8), 2.6, 2.6)
         p.setPen(QPen(color, 1.6))
         _line(p, 1, 8, 7.8, 8)

@@ -8,9 +8,12 @@ packaging/ubuntu/harness-design-studio.svg.
 from PySide6.QtCore import QPointF, QRectF, Qt
 from PySide6.QtGui import QColor, QIcon, QPainter, QPainterPath, QPen, QPixmap
 
+from harness_design_studio.gui.theme.tokens import BRAND
+
 SIZES = (16, 24, 32, 48, 64, 128, 256)
-PURPLE = "#4a1fb8"
-AMBER = "#f2b04a"
+PURPLE = BRAND["purple"]
+AMBER = BRAND["amber"]
+WHITE = BRAND["white"]
 
 
 def _pixmap(size: int) -> QPixmap:
@@ -22,13 +25,13 @@ def _pixmap(size: int) -> QPixmap:
     p.setPen(Qt.PenStyle.NoPen)
     p.setBrush(QColor(PURPLE))
     p.drawRoundedRect(QRectF(0, 0, 64, 64), 10, 10)
-    p.setBrush(QColor("#ffffff"))
+    p.setBrush(QColor(WHITE))
     p.drawRoundedRect(QRectF(8, 12, 16, 12), 2, 2)
     p.drawRoundedRect(QRectF(40, 40, 16, 12), 2, 2)
     p.setBrush(Qt.BrushStyle.NoBrush)
     wire = QPainterPath(QPointF(24, 18))
     wire.cubicTo(QPointF(36, 18), QPointF(28, 46), QPointF(40, 46))
-    p.setPen(QPen(QColor("#ffffff"), 3))
+    p.setPen(QPen(QColor(WHITE), 3))
     p.drawPath(wire)
     core = QPainterPath(QPointF(24, 22))
     core.cubicTo(QPointF(32, 22), QPointF(32, 42), QPointF(40, 42))

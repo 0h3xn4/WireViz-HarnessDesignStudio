@@ -134,7 +134,7 @@ from harness_design_studio.gui.shell import (
     refusal_harness,
 )
 from harness_design_studio.gui.theme import MODES, ThemeManager, mark_mono
-from harness_design_studio.gui.tokens import CATEGORIES
+from harness_design_studio.gui.theme.tokens import CATEGORIES
 from harness_design_studio.gui.topbar import ShellStatus, TopBar
 from harness_design_studio.gui.tour import Tour
 from harness_design_studio.resources import guide_path

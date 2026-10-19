@@ -6,13 +6,13 @@ Usage: python -m tools.build_prototype  ->  prototype/index.html
 import json
 from pathlib import Path
 
-from harness_design_studio.gui.tokens import CATEGORIES, DARK, FONT_MONO, FONT_UI, LIGHT
+from harness_design_studio.gui.theme.tokens import CATEGORIES, DARK, FONT_MONO, FONT_UI, LIGHT
 
 ROOT = Path(__file__).resolve().parents[1] / "prototype"
 
 
 def css_vars(tokens: dict[str, str]) -> str:
-    return "".join(f"--{k}:{v};" for k, v in tokens.items())
+    return "".join(f"--{k}:{v};" for k, v in tokens.items() if "." not in k)  # (the legacy names)
 
 
 def build() -> str:
@@ -21,8 +21,8 @@ def build() -> str:
     replacements = {
         "/*TOKENS_LIGHT*/": css_vars(LIGHT),
         "/*TOKENS_DARK*/": css_vars(DARK),
-        "/*FONT_UI*/": FONT_UI,
-        "/*FONT_MONO*/": FONT_MONO,
+        "/*FONT_UI*/": f"'{FONT_UI}', 'Segoe UI', system-ui, sans-serif",
+        "/*FONT_MONO*/": f"'{FONT_MONO}', Consolas, monospace",
         "/*CATEGORIES_JSON*/": json.dumps(CATEGORIES),
         "/*APP_JS*/": app,
     }

@@ -76,3 +76,15 @@ Generation plan (`PlanWorker`), diagram arrangement (`ArrangeWorker`), export (`
 thread, notably: project open and install (147 ms flatsat, 1.3 to 1.5 s stress), save, the import parsers (file
 read and preview), the interface table rebuild, the diff computation of the Releases tab and theme or scale
 change (above). The Inventory in `UI_OVERHAUL_PLAN.md` lists each.
+
+## After M1 (theme package, 2026-10-19; same container, same script)
+
+| What | Before | After M1 |
+|---|---|---|
+| Start to first interactive window (import + window + show + open flatsat) | 1.0 to 1.15 s | 0.94 to 1.09 s |
+| Switch theme light to dark (and back) | 560 to 950 ms | **77 to 138 ms** (first switch after start-up is the slowest) |
+| Change the UI scale (any step) | 760 to 800 ms | 670 to 940 ms (not improved: a new style sheet and font are installed; see D-150) |
+| Select a unit (median) | 45 ms | 34 to 48 ms |
+| Tab switch, first time (Harness, Lists, Checks, Releases, Devices) | 60, 52, 36, 13, 55 ms | 61 to 68, 66 to 78, about 40, about 12, about 55 ms |
+
+How the theme switch got fast: the style sheet holds no colour (it names palette roles), so a switch sets the other palette and repolishes only the 80 or so visible widgets; the 870 hidden ones are unpolished and Qt polishes them when they are first shown. Measured before the change: setting any different application style sheet costs 230 ms for a one-rule sheet and 300 to 500 ms for the real one, because Qt matches every widget again.

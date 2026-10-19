@@ -13,7 +13,7 @@ from harness_design_studio.gui import canvas_badges as badges
 from harness_design_studio.gui import glyphs, strings
 from harness_design_studio.gui.canvas_state import StateIndex
 from harness_design_studio.gui.theme import ThemeManager
-from harness_design_studio.gui.tokens import CATEGORIES, style_category
+from harness_design_studio.gui.theme.tokens import CATEGORIES, style_category
 
 ROW = 26
 GAP = 18
@@ -105,7 +105,7 @@ class LegendBar(QWidget):
 
     def _font(self) -> QFont:
         f = QFont(self.font())
-        f.setPixelSize(self.theme.type("sm"))
+        f.setPixelSize(self.theme.type("small"))
         return f
 
     def _positions(self, width: int) -> tuple[list[tuple[float, float, float]], int]:

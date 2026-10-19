@@ -481,10 +481,9 @@ def persist_widths(view: QTableView, settings: QSettings, key: str) -> ColumnWid
 
 def style_table(view: QTableView, theme: ThemeManager) -> None:
     """The look every table shares: header stays in view while rows scroll, no row numbers,
-    cell selection (so Ctrl+C copies what is marked), alternating rows, no wrapping, clickable
-    headers with a sort arrow, row height from the font."""
+    cell selection (so Ctrl+C copies what is marked), no zebra rows, no wrapping, clickable
+    headers with a sort arrow, rows 26 px high (more when the font needs it)."""
     view.setObjectName(view.objectName() or "table")
-    view.setAlternatingRowColors(True)
     view.setWordWrap(False)
     view.setTextElideMode(Qt.TextElideMode.ElideRight)
     view.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
@@ -502,7 +501,7 @@ def style_table(view: QTableView, theme: ThemeManager) -> None:
     head.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
     head.setMinimumSectionSize(theme.px(40))
     head.setDefaultAlignment(Qt.AlignmentFlag.AlignLeft | Qt.AlignmentFlag.AlignVCenter)
-    height = view.fontMetrics().height() + theme.space(8)
+    height = max(theme.row_height(), view.fontMetrics().height() + theme.space(8))
     view.verticalHeader().setDefaultSectionSize(height)
     view.verticalHeader().setMinimumSectionSize(height)
 

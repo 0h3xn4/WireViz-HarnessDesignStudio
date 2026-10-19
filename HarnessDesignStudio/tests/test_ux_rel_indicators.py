@@ -1,20 +1,19 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """Check boxes, radio buttons and the tick boxes of trees are visible on both themes: an unticked box has
 a border that stands out from the background (3:1), a ticked one is not only a colour (it holds a
-tick, a dash or a dot)."""
-
-from pathlib import Path
+tick, a dash or a dot). They are painted by `ThemeStyle` from the palette (D-150)."""
 
 import pytest
 
 pytest.importorskip("PySide6")
 pytestmark = pytest.mark.gui
 
+from PySide6.QtCore import Qt  # noqa: E402
 from PySide6.QtGui import QColor, QImage  # noqa: E402
-from PySide6.QtWidgets import QCheckBox, QRadioButton  # noqa: E402
+from PySide6.QtWidgets import QCheckBox, QRadioButton, QTreeWidget, QTreeWidgetItem  # noqa: E402
 
-from harness_design_studio.gui import indicators  # noqa: E402
-from harness_design_studio.gui.tokens import DARK, LIGHT  # noqa: E402
+from harness_design_studio.gui.theme.style import INDICATOR_PX  # noqa: E402
+from harness_design_studio.gui.theme.tokens import DARK, LIGHT  # noqa: E402
 from tests.ux_rel import themed  # noqa: E402
 
 
@@ -30,41 +29,51 @@ def contrast(a: QColor, b: QColor) -> float:
     return (hi + 0.05) / (lo + 0.05)
 
 
-def pictures(css: str) -> dict[str, Path]:
-    import re
-
-    return {Path(m).stem: Path(m) for m in re.findall(r"url\(([^)]+\.png)\)", css)}
+def picture(widget, qtbot) -> QImage:
+    qtbot.addWidget(widget)
+    widget.show()
+    widget.resize(40, 30)
+    image: QImage = widget.grab().toImage()
+    return image
 
 
 @pytest.mark.parametrize(("name", "tokens"), [("light", LIGHT), ("dark", DARK)])
-def test_every_state_is_a_picture_with_a_border_that_shows(name, tokens) -> None:
-    css = indicators.indicator_css(tokens, name, 1.0)
-    pics = pictures(css)
-    assert set(pics) >= {"box-off", "box-on", "box-part", "radio-off", "radio-on"}
-    bg = QColor(tokens["bg"])
-    for state in ("box-off", "radio-off"):
-        image = QImage(str(pics[state]))
-        assert image.width() == image.height() == indicators.SIZE
-        # the outline is the border token and stands out from the page by 3:1
-        edge = QColor(image.pixel(indicators.SIZE // 2, 1))
-        assert edge.alpha() > 0 and contrast(edge, bg) >= 3.0, state
-    on = QImage(str(pics["box-on"]))
-    off = QImage(str(pics["box-off"]))
-    inner = {on.pixel(x, y) for x in range(3, 13) for y in range(3, 13)}
+def test_every_state_has_a_border_that_shows_and_a_mark_that_is_not_only_colour(
+    qtbot, name, tokens
+) -> None:
+    themed(name)
+    page = QColor(tokens["bg.canvas"])
+    for kind in (QCheckBox, QRadioButton):
+        off = kind()  # no text: only the indicator is drawn
+        image = picture(off, qtbot)
+        seen = [QColor(image.pixel(x, y)) for x in range(40) for y in range(30)]
+        assert any(contrast(c, page) >= 3.0 for c in seen), (name, kind.__name__, "outline")
+    on, off, part = QCheckBox(), QCheckBox(), QCheckBox()
+    on.setChecked(True)
+    part.setTristate(True)
+    part.setCheckState(Qt.CheckState.PartiallyChecked)
+    images = [picture(w, qtbot) for w in (off, on, part)]
+    assert len({bytes(i.constBits()) for i in images}) == 3, "off, ticked and dash all differ"
+    ticked = images[1]
+    inner = {ticked.pixel(x, y) for x in range(2, 2 + INDICATOR_PX) for y in range(8, 22)}
     assert len(inner) > 1  # a tick is drawn on the fill, not only a fill
-    assert on != off and QImage(str(pics["box-part"])) != on  # ticked, dash and empty all differ
+    dot = QRadioButton()
+    dot.setChecked(True)
+    assert picture(dot, qtbot) != picture(QRadioButton(), qtbot)
+    themed("light")
 
 
-def test_a_real_check_box_on_the_dark_theme_draws_its_border(qtbot) -> None:
+def test_the_tick_boxes_of_a_tree_use_the_same_painting(qtbot) -> None:
     themed("dark")
-    box = QCheckBox()  # no text: only the indicator is drawn
-    radio = QRadioButton()
-    for w in (box, radio):
-        qtbot.addWidget(w)
-        w.show()
-        w.resize(40, 30)
-        image = w.grab().toImage()
-        bg = QColor(DARK["bg"])
-        seen = [QColor(image.pixel(x, y)) for x in range(0, 40) for y in range(0, 30)]
-        assert any(contrast(c, bg) >= 3.0 for c in seen), type(w).__name__
+    tree = QTreeWidget()
+    item = QTreeWidgetItem(["unit"])
+    item.setCheckState(0, Qt.CheckState.Unchecked)
+    tree.addTopLevelItem(item)
+    qtbot.addWidget(tree)
+    tree.show()
+    tree.resize(200, 80)
+    image = tree.grab().toImage()
+    page = QColor(DARK["bg.surface"])
+    seen = [QColor(image.pixel(x, y)) for x in range(0, 40) for y in range(0, 30)]
+    assert any(contrast(c, page) >= 3.0 for c in seen)
     themed("light")

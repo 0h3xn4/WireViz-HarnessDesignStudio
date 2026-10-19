@@ -4,6 +4,8 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+- **UI overhaul, M1 (foundation; the screens themselves follow in M2 to M9).** A theme package (`gui/theme/`) replaces IBM Carbon: one token source, Inter and JetBrains Mono (bundled, SIL OFL) instead of IBM Plex, rounded controls, a calmer light and dark palette, tuned for WCAG 2.2 AA. Switching light and dark is now instant (about 0.1 s instead of 0.5 to 1 s). No change to the design model, the file formats, the command line or any generated file. See D-150 and `docs/ui/UI_OVERHAUL_PLAN.md`.
+
 ## 1.2.0 (2026-10-19; not a statement of compliance)
 
 Version 1.2.0 is 1.1.0 plus **packages for Windows and macOS** and the changes that make the tool and its whole test suite run there. The tool is supported on Ubuntu 24.04 and newer, Windows 10 and 11 (64-bit) and macOS 13 and newer (Apple Silicon and Intel), decision D-149. The suite of about 2,800 tests passes on all three systems in CI.

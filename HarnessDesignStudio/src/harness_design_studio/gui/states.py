@@ -48,7 +48,7 @@ PATTERN_COVERAGE: Final = {"hatched": 0.28, "dotted": 0.16}  # share of the chip
 class StateSpec:
     key: str
     icon: str  # name in gui/icons.py
-    token: str  # colour token in gui/tokens.py
+    token: str  # colour token in gui/theme/tokens.py
     label: str  # the word (plain language)
     pattern: Pattern  # solid border, or dotted / hatched for "nothing known yet"
 
