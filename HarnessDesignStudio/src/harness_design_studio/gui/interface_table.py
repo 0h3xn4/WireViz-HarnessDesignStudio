@@ -34,6 +34,7 @@ from PySide6.QtWidgets import (
 from harness_design_studio.core.model import InterfaceInstance
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import Delta, EditorController
+from harness_design_studio.gui.empty_state import attach_empty_state
 from harness_design_studio.gui.panels import format_number, parse_optional_float
 from harness_design_studio.gui.theme import mono_item_font
 
@@ -228,6 +229,13 @@ class InterfaceTable(QWidget):
         self._apply_widths()
         self.view.verticalHeader().hide()
         lay.addWidget(self.view)
+        attach_empty_state(
+            self.view,
+            strings.EMPTY_INTERFACES_TITLE,
+            strings.EMPTY_INTERFACES_HINT,
+            action=strings.EMPTY_INTERFACES_ACTION,
+            on_action=self.newInterfaceRequested.emit,
+        )
         self.filter.textChanged.connect(self._set_filter)
         self.view.selectionModel().selectionChanged.connect(self._row_selected)
         ctl.changed.connect(self._changed)

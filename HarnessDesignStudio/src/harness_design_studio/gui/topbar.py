@@ -29,6 +29,7 @@ from harness_design_studio.gui.icons import tooltip_text
 from harness_design_studio.gui.shell import ElidedLabel
 from harness_design_studio.gui.states import StateChip
 from harness_design_studio.gui.theme import ThemeManager, mark_mono
+from harness_design_studio.gui.workflow import WorkflowInputs, workflow
 
 
 @dataclass(frozen=True)
@@ -46,6 +47,12 @@ class ShellStatus:
     has_harnesses: bool = False
     generated_at: str = ""  # first 8 characters of the generation record's input hash
     revision: str = ""  # "A" or "A-C": the revisions of the project's harnesses
+    checked: bool = False  # a rule check result is current
+    failed: int = 0  # rules that failed
+    unchecked: int = 0  # rules not checked or waiting for a value
+    harnesses: int = 0
+    in_review: int = 0
+    released: int = 0
 
 
 _RUNNING = {
@@ -85,6 +92,7 @@ class TopBar(QWidget):
     generateClicked = Signal()
     checkClicked = Signal()
     exportClicked = Signal()
+    releaseClicked = Signal()
 
     def __init__(self, theme: ThemeManager, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -147,6 +155,16 @@ class TopBar(QWidget):
             self.check_btn, "check", theme, strings.TB_CHECK_TIP, "F5", text=strings.TB_CHECK
         )
         self.check_btn.setAccessibleName(strings.TB_CHECK)
+        self.release_btn = QPushButton()
+        self.release_btn.setObjectName("topbar-release")
+        icons.icon_button(
+            self.release_btn, "release", theme, strings.TB_RELEASE_TIP, text=strings.TB_RELEASE
+        )
+        self.release_btn.setAccessibleName(strings.STEP_RELEASE)
+        self.chevrons = [QLabel("›"), QLabel("›")]  # between the three steps
+        for c in self.chevrons:
+            c.setProperty("muted", True)
+            c.setAccessibleName("")
         self.export_btn = QPushButton()
         self.export_btn.setObjectName("topbar-export")
         icons.icon_button(
@@ -156,15 +174,21 @@ class TopBar(QWidget):
         self.chip = StateChip(theme)
         self.chip.setObjectName("topbar-chip")
         self.chip.setAccessibleName(strings.TB_CHIP_NAME)
-        for w in (self.generate_btn, self.check_btn, self.export_btn):
+        for w in (
+            self.generate_btn, self.chevrons[0], self.check_btn, self.chevrons[1],
+            self.release_btn, self.export_btn,
+        ):  # fmt: skip
             lay.addWidget(w)
         lay.addWidget(self.chip)
+        self.steps_buttons = (self.generate_btn, self.check_btn, self.release_btn)
         self.generate_btn.clicked.connect(lambda _c=False: self.generateClicked.emit())
         self.check_btn.clicked.connect(lambda _c=False: self.checkClicked.emit())
         self.export_btn.clicked.connect(lambda _c=False: self.exportClicked.emit())
-        # keyboard: Tab goes name -> Generate -> Check -> Export (the labels are not focusable)
+        self.release_btn.clicked.connect(lambda _c=False: self.releaseClicked.emit())
+        # keyboard: Tab goes name -> Generate -> Check -> Release -> Export (the labels are not focusable)
         QWidget.setTabOrder(self.generate_btn, self.check_btn)
-        QWidget.setTabOrder(self.check_btn, self.export_btn)
+        QWidget.setTabOrder(self.check_btn, self.release_btn)
+        QWidget.setTabOrder(self.release_btn, self.export_btn)
         self.apply(self.status)
 
     # ---- what the window puts into the bar ----
@@ -215,7 +239,40 @@ class TopBar(QWidget):
             self.generate_btn.setToolTip(tooltip_text(strings.GENERATE_TIP, "Ctrl+G"))
         self.check_btn.setEnabled(not busy)
         self.export_btn.setEnabled(not busy)
+        self.release_btn.setEnabled(not busy and not s.read_only and s.harnesses > 0)
+        self._show_steps(s)
         self._fit()
+
+    def steps(self) -> tuple[object, object, object]:
+        """The three workflow steps for the status shown now (see `gui/workflow.py`)."""
+        s = self.status
+        return workflow(
+            WorkflowInputs(
+                generation=s.generation, running=s.running, checking=s.checking, checked=s.checked,
+                failed=s.failed, unchecked=s.unchecked, harnesses=s.harnesses,
+                in_review=s.in_review, released=s.released, read_only=s.read_only,
+            )
+        )  # fmt: skip
+
+    def _show_steps(self, s: ShellStatus) -> None:
+        """Each step button carries its state (colour of its edge, the property `step`) and says
+        what it means in its tooltip, after what the button does and its key; the words say it too,
+        never the colour alone."""
+        base = {
+            self.generate_btn: (
+                strings.TB_GENERATE_READ_ONLY
+                if s.read_only
+                else tooltip_text(strings.GENERATE_TIP, "Ctrl+G")
+            ),
+            self.check_btn: tooltip_text(strings.TB_CHECK_TIP, "F5"),
+            self.release_btn: strings.TB_RELEASE_TIP,
+        }
+        for button, step in zip(self.steps_buttons, self.steps(), strict=True):
+            button.setProperty("step", step.state)  # type: ignore[attr-defined]
+            button.setToolTip(f"{base[button]}\n{step.tooltip}")  # type: ignore[attr-defined]
+            button.setAccessibleDescription(step.detail)  # type: ignore[attr-defined]
+            button.style().unpolish(button)
+            button.style().polish(button)
 
     # ---- fitting a narrow window ----
     def minimumSizeHint(self) -> QSize:  # noqa: N802
@@ -250,7 +307,13 @@ class TopBar(QWidget):
             search.setProperty("iconOnly", level >= 3)
             search.style().unpolish(search)
             search.style().polish(search)
-        for button, word in ((self.check_btn, strings.TB_CHECK), (self.export_btn, strings.TB_EXPORT)):  # fmt: skip
+        for c in self.chevrons:
+            c.setVisible(level < 3)
+        for button, word in (
+            (self.check_btn, strings.TB_CHECK),
+            (self.release_btn, strings.TB_RELEASE),
+            (self.export_btn, strings.TB_EXPORT),
+        ):  # fmt: skip
             button.setText("" if level >= 3 else word)
             button.setProperty("iconOnly", level >= 3)
             button.style().unpolish(button)
