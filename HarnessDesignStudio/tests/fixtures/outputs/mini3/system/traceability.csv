@@ -1,4 +1,4 @@
-# harness-design-studio 1.1.0 model fec3787f3271
+# harness-design-studio 1.2.0 model 422b80ab6d49
 Interface,Name,Type,From,To,Harnesses,Wires,Routed
 IF-PWR-RW1,RW1 power,power_primary,PCDU/PCDU-J01,RW1/RW1-J01,W001,W001-001;W001-002,yes
 IF-TM-RW1,RW1 command and telemetry,rs422,OBC/OBC-J01,RW1/RW1-J02,W002,W002-001;W002-002;W002-003;W002-004,yes

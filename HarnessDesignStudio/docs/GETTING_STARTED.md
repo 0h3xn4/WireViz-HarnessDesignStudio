@@ -41,7 +41,7 @@ small-satellite    14 units with nominal and redundant chains. Generate it to se
 flatsat            A complete bench: 23 flight and ground units, generated, with example numbers.
 ```
 
-**Which version do you have?** This tutorial is written for 1.1.0 (it works the same on 1.0.0). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
+**Which version do you have?** This tutorial is written for 1.2.0 (it works the same on 1.1.0 and 1.0.0). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
 
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 
@@ -140,7 +140,7 @@ harness-design-studio drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `1707f1d0c671`. Rules run: 34.
+Model hash: `1968d783f57a`. Rules run: 34.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.
@@ -165,7 +165,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-38 files written to wheel-link/outputs (model 1707f1d0c671).
+38 files written to wheel-link/outputs (model 1968d783f57a).
 ```
 
 The files are checked independently before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.
@@ -182,7 +182,7 @@ The files are checked independently before they are written; if that check fails
 | `system/harness_overview.pdf`, `box_pinouts.csv`, `mating_matrix.csv`, `traceability.csv` | all harnesses at a glance; the pinout of every unit connector; which cable mates with which unit; which interface is carried by which wires |
 | `system/drc_report.md`, `changelog.csv`, `revision_report.md`, `export.json` | the Problems report; the change log; the revision report; the whole model as one JSON |
 
-The harness drawing, with a title block and the model hash (`1707f1d0c671` is the same fingerprint you saw above):
+The harness drawing, with a title block and the model hash at the bottom (the picture was made with an older version, so its version and hash differ from the ones your tool prints):
 
 ![A harness drawing](img/w001-drawing.png)
 

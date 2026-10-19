@@ -83,7 +83,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.1.0
+harness 1.2.0
 ```
 
 Remove it later with `sudo apt remove harness-design-studio`. Upgrade by installing the newer `.deb` the same way.
