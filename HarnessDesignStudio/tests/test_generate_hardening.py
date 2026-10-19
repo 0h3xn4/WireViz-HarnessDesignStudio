@@ -1,6 +1,5 @@
 """Generation must not crash, hang or invent values on bad input (October audit B-1, B-2, B-4, I-1)."""
 
-import signal
 from collections.abc import Iterator
 from typing import Any
 
@@ -26,6 +25,7 @@ from harness_design_studio.core.model import (
 )
 from harness_design_studio.core.samples import mini3, new_project, sat15, sat15_full
 from harness_design_studio.core.verify import verify_project
+from tests.watchdog import watchdog
 
 # ---- helpers -------------------------------------------------------------------------------------
 
@@ -58,16 +58,8 @@ def set_cfg(p: Project, name: str, **values: object) -> None:
 
 @pytest.fixture
 def timeout() -> Iterator[None]:
-    def alarm(*_a: object) -> None:
-        raise AssertionError("generation did not finish")
-
-    previous = signal.signal(signal.SIGALRM, alarm)
-    signal.alarm(20)
-    try:
+    with watchdog(20, "generation did not finish"):
         yield
-    finally:
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, previous)
 
 
 def codes(plan: GenerationPlan, severity: str | None = None) -> set[str]:

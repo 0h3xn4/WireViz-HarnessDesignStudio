@@ -2,6 +2,7 @@
 
 import os
 import shutil
+import sys
 from pathlib import Path
 
 import pytest
@@ -140,6 +141,7 @@ def test_an_unquoted_decimal_comma_is_refused_not_cut_off() -> None:
     assert parse_csv('harness,segment,length\nW001,W001-L1,"1,5"\n')[1][2] == "1,5"
 
 
+@pytest.mark.skipif(sys.platform == "win32", reason="/dev/zero and named pipes are POSIX")
 def test_special_files_are_refused_without_reading_them(tmp_path: Path) -> None:
     link = tmp_path / "zero.csv"
     link.symlink_to("/dev/zero")

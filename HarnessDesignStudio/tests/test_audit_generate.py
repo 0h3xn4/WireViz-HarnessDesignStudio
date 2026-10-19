@@ -18,6 +18,7 @@ from harness_design_studio.core.model import ConfigFile, Pin, Project, evolve
 from harness_design_studio.core.samples import mini3, sat15, sat15_full
 from harness_design_studio.core.verify import verify_project
 from tests.test_change_control import do_release, exported, releasable
+from tests.watchdog import watchdog
 
 
 def _pins_used_twice(p: Project) -> list[str]:
@@ -91,20 +92,10 @@ def _naming(p: Project, **values: str) -> None:
 
 
 def test_a_harness_template_without_a_number_does_not_hang_and_is_reported() -> None:
-    import signal
-
-    def alarm(*_a: object) -> None:
-        raise AssertionError("generation did not finish")
-
-    previous = signal.signal(signal.SIGALRM, alarm)
-    signal.alarm(20)
-    try:
+    with watchdog(20, "generation did not finish"):
         p = sat15()
         _naming(p, harness="HARN")
         plan = plan_generation(p)
-    finally:
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, previous)
     assert any(f.code == "naming" for f in plan.report.findings)
     assert len(plan.harnesses) > 1
 

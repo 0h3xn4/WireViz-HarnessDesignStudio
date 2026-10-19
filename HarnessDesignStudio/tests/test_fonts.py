@@ -20,8 +20,8 @@ def test_the_font_files_and_their_licence_ship_with_the_program() -> None:
     assert folder is not None
     names = {p.name for p in folder.iterdir()}
     assert {
-        "IBMPlexSans-Regular.woff2",
-        "IBMPlexMono-Regular.woff2",
+        "IBMPlexSans-Regular.ttf",
+        "IBMPlexMono-Regular.ttf",
         "OFL-1.1-IBM-Plex.txt",
     } <= names
     assert "SIL OPEN FONT LICENSE" in (folder / "OFL-1.1-IBM-Plex.txt").read_text(encoding="utf-8")

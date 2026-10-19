@@ -191,6 +191,12 @@ class ThemeManager(QObject):
         if not self._watching:
             self._watching = True
             QGuiApplication.styleHints().colorSchemeChanged.connect(self._os_changed)
+        # Tab reaches every control, as the system setting "full keyboard access" does on macOS
+        QGuiApplication.styleHints().setTabFocusBehavior(Qt.TabFocusBehavior.TabFocusAllControls)
+        if app.style().objectName().lower() != "fusion":
+            # one widget style on every system: the look comes from the tokens below, and the
+            # native macOS and Windows styles differ in keyboard focus and in how cells are edited
+            app.setStyle("Fusion")
         font = QFont(app.font())
         if fonts.UI_FAMILY in fonts.load_fonts():
             font.setFamily(fonts.UI_FAMILY)

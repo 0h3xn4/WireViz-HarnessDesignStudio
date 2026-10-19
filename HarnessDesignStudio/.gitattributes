@@ -1,0 +1,14 @@
+# Text files are checked out with LF on every system (the generated files and the golden files
+# are compared byte for byte); a Windows checkout must not turn them into CRLF.
+* text=auto eol=lf
+*.png binary
+*.pdf binary
+*.xlsx binary
+*.ttf binary
+*.ico binary
+*.icns binary
+*.deb binary
+*.gz binary
+*.zip binary
+compliance/**/*.csv -text
+src/harness_design_studio/resources/fonts/OFL-1.1-IBM-Plex.txt -text

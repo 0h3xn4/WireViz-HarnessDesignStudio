@@ -30,6 +30,8 @@ def fake_package(tmp: Path) -> Path:
 
 
 def run_script(script: Path, tmp: Path, *args: str) -> subprocess.CompletedProcess[str]:
+    if sys.platform != "linux":
+        pytest.skip("install.sh and uninstall.sh are the Linux tarball's scripts (GNU tools)")
     env = {**os.environ, "HARNESS_INSTALL_ROOT": str(tmp / "root"), "HOME": str(tmp / "home")}
     return subprocess.run(
         ["sh", str(script), *args], capture_output=True, text=True, env=env, check=False
@@ -142,6 +144,8 @@ def test_the_tarball_does_not_depend_on_who_builds_it(tmp_path: Path) -> None:
 
     from tools.build_installer import make_tarball
 
+    if sys.platform != "linux":
+        pytest.skip("the tarball is built on Linux (file owners and modes)")
     pkg = fake_package(tmp_path / "src")
     if os.getuid() == 0:
         for path in [pkg, *pkg.rglob("*")]:
@@ -292,6 +296,8 @@ def test_install_inside_the_unpack_folders_parent_keeps_the_package(tmp_path: Pa
 
 
 def test_installed_files_belong_to_root_not_to_whoever_unpacked(tmp_path: Path) -> None:
+    if sys.platform != "linux":
+        pytest.skip("install.sh is the Linux tarball's script (GNU tools)")
     pkg = fake_package(tmp_path)
     if os.getuid() == 0:
         for path in [pkg, *pkg.rglob("*")]:
@@ -388,6 +394,8 @@ def test_a_prefix_with_spaces_and_symbols_gives_a_valid_launcher(tmp_path: Path)
 
 
 def test_a_relative_prefix_and_the_unpack_folder_are_handled(tmp_path: Path) -> None:
+    if sys.platform != "linux":
+        pytest.skip("install.sh is the Linux tarball's script (GNU tools)")
     pkg = fake_package(tmp_path)
     env = {
         **os.environ,
@@ -800,7 +808,7 @@ def test_the_wheel_carries_the_dotfiles_of_the_example_projects() -> None:
     patterns = pyproject["tool"]["setuptools"]["package-data"]["harness_design_studio.resources"]
     pkg = ROOT / "src" / "harness_design_studio" / "resources"
     shipped = {
-        f
+        f.replace("\\", "/")  # (glob gives backslashes on Windows)
         for pat in patterns
         for f in glob.glob(pat, root_dir=pkg, recursive=True)  # noqa: PTH207
     }

@@ -5,6 +5,7 @@ from pathlib import Path
 
 from harness_design_studio.core import edit
 from harness_design_studio.core.commands import History
+from harness_design_studio.core.io.fs import long_path
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
@@ -61,7 +62,7 @@ def test_journal_never_leaves_the_project_folder(tmp_path: Path) -> None:
     root = tmp_path / "p"
     save_project(mini3(), root)
     write_journal(mini3(), root)
-    assert journal_path(root).resolve().is_relative_to(root.resolve())
+    assert journal_path(root).resolve().is_relative_to(long_path(root).resolve())
 
 
 def test_layout_zones_and_waivers_persist(tmp_path: Path) -> None:

@@ -86,10 +86,12 @@ def test_skipped_tests_are_counted_and_only_listed_reasons_are_allowed(
         "SKIPPED [1] tests/test_atomic_lock.py:59: needs POSIX non-root\n"
         "3 passed, 3 skipped in 1s\n"
     )
-    monkeypatch.setattr(os, "geteuid", lambda: 0)
+    monkeypatch.setattr(os, "geteuid", lambda: 0, raising=False)
     total, refused = rc.skipped_tests(out)
     assert total == 3 and refused == ["tests/test_prototype.py:33 no Chromium available"]
-    monkeypatch.setattr(os, "geteuid", lambda: 1000)  # the root-only skip is fine only as root
+    monkeypatch.setattr(
+        os, "geteuid", lambda: 1000, raising=False
+    )  # the root-only skip is fine only as root
     assert len(rc.skipped_tests(out)[1]) == 2
     assert rc.skipped_tests("5 passed in 1s\n") == (0, [])
 

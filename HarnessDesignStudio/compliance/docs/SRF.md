@@ -13,7 +13,7 @@ DRD: ECSS-E-ST-40C Annex N. Status: draft, not reviewed. Reused software is thir
 | defusedxml | 0.7.1 | PSF-2.0 | safe XML parsing of spreadsheets |
 | PySide6-Essentials, shiboken6 | 6.11.2 | LGPL-3.0 (alternatively GPL) | GUI (shipped dynamically linked with licence texts) |
 | PyInstaller | 6.22.3 | GPL-2.0+ with bootloader exception | packaging only, not shipped |
-| IBM Plex Sans 1.1.0, IBM Plex Mono 2.5.0 (WOFF2 font files, not Python packages) | npm packages `@ibm/plex-sans`, `@ibm/plex-mono` | SIL OFL 1.1 | interface typefaces, bundled in `src/harness_design_studio/resources/fonts` with the licence text (D-132) |
+| IBM Plex Sans 1.1.0, IBM Plex Mono 2.5.0 (TrueType font files unpacked unchanged from the WOFF2 files of the npm packages, because Qt on Windows cannot load WOFF2; not Python packages) | npm packages `@ibm/plex-sans`, `@ibm/plex-mono` | SIL OFL 1.1 | interface typefaces, bundled in `src/harness_design_studio/resources/fonts` with the licence text (D-132) |
 | development tools (pytest, pytest-xdist, hypothesis, mypy, ruff, coverage, cyclonedx-bom, pip-licenses, playwright) | pinned in `pyproject.toml` | MIT, BSD, Apache, MPL | not shipped |
 
 ## 5. Compatibility with the project

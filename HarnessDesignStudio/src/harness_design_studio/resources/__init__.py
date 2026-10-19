@@ -31,13 +31,13 @@ def examples_path() -> Path | None:
 
 
 def fonts_path() -> Path | None:
-    """The bundled IBM Plex fonts (WOFF2, SIL OFL), also inside a PyInstaller build."""
+    """The bundled IBM Plex fonts (TrueType, SIL OFL), also inside a PyInstaller build."""
     roots = [Path(__file__).parent]
     frozen = getattr(sys, "_MEIPASS", None)
     if frozen:
         roots.insert(0, Path(frozen) / "harness_design_studio" / "resources")
     for root in roots:
         candidate = root / "fonts"
-        if candidate.is_dir() and any(candidate.glob("*.woff2")):
+        if candidate.is_dir() and any(candidate.glob("*.ttf")):
             return candidate
     return None
