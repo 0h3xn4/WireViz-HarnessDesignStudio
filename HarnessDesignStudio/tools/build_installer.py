@@ -143,15 +143,6 @@ def make_tarball(root_dir: Path, base_dir: str, target: Path, stamp: int) -> Pat
     return target
 
 
-def ttf_fonts_args() -> tuple[str, ...]:
-    """The TrueType copies of the bundled fonts (packaging/fonts/), for the packages of systems whose
-    Qt cannot read WOFF2 (Windows); the Linux and macOS packages do not carry them."""
-    return (
-        "--add-data",
-        f"{ROOT / 'packaging' / 'fonts'}{os.pathsep}harness_design_studio/resources/fonts",
-    )
-
-
 def pyinstaller_build(
     name: str,
     entry: Path,

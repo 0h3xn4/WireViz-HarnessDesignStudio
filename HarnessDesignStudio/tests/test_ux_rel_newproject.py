@@ -2,6 +2,7 @@
 """SH-18: one New project dialog (folder, name, what to start from) with the problems said next to the
 field, instead of a chain of three pop-ups."""
 
+import sys
 from pathlib import Path
 
 import pytest
@@ -101,8 +102,8 @@ def test_problems_are_said_next_to_the_field(qtbot, tmp_path: Path) -> None:
 def test_a_folder_that_cannot_be_written_is_refused(qtbot, tmp_path: Path) -> None:
     import os
 
-    if os.geteuid() == 0:
-        pytest.skip("root can write anywhere")
+    if sys.platform == "win32" or os.geteuid() == 0:
+        pytest.skip("needs POSIX permissions and a user who is not root")
     locked = tmp_path / "locked"
     locked.mkdir()
     locked.chmod(0o500)

@@ -43,7 +43,7 @@ jobs:
       - name: Which bundled fonts Qt can load (information)
         env:
           QT_QPA_PLATFORM: offscreen
-        run: python -c "from PySide6.QtWidgets import QApplication; a = QApplication([]); from PySide6 import __version__ as v; from PySide6.QtGui import QFontDatabase as D; from harness_design_studio.resources import fonts_path; print('PySide6', v); [print(f.name, D.addApplicationFont(str(f)), D.applicationFontFamilies(0)) for f in sorted(fonts_path().glob('*.woff2'))]"
+        run: python -c "from PySide6.QtWidgets import QApplication; a = QApplication([]); from PySide6 import __version__ as v; from PySide6.QtGui import QFontDatabase as D; from harness_design_studio.resources import fonts_path; print('PySide6', v); [print(f.name, D.addApplicationFont(str(f)), D.applicationFontFamilies(0)) for f in sorted(fonts_path().glob('*.ttf'))]"
       - run: python -m PyInstaller --version
       - name: Build the zip and the setup program
         run: python -m tools.build_windows
@@ -87,7 +87,7 @@ jobs:
       - name: Which bundled fonts Qt can load (information)
         env:
           QT_QPA_PLATFORM: offscreen
-        run: python -c "from PySide6.QtWidgets import QApplication; a = QApplication([]); from PySide6 import __version__ as v; from PySide6.QtGui import QFontDatabase as D; from harness_design_studio.resources import fonts_path; print('PySide6', v); [print(f.name, D.addApplicationFont(str(f)), D.applicationFontFamilies(0)) for f in sorted(fonts_path().glob('*.woff2'))]"
+        run: python -c "from PySide6.QtWidgets import QApplication; a = QApplication([]); from PySide6 import __version__ as v; from PySide6.QtGui import QFontDatabase as D; from harness_design_studio.resources import fonts_path; print('PySide6', v); [print(f.name, D.addApplicationFont(str(f)), D.applicationFontFamilies(0)) for f in sorted(fonts_path().glob('*.ttf'))]"
       - run: python -m PyInstaller --version
       - name: Build the app and the disk image
         run: python -m tools.build_macos

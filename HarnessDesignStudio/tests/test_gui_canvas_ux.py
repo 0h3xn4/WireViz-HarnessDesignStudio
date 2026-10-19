@@ -409,7 +409,7 @@ def test_f_fits_ctrl_0_is_100_percent_and_shift_f_zooms_to_the_selection(win) ->
     fitted = v.zoom_scale()
     assert fitted < 0.5 and seen[-1] == fitted
     QTest.keyClick(v, Qt.Key.Key_0, Qt.KeyboardModifier.ControlModifier)
-    assert v.zoom_scale() == 1.0 and win.zoom_level.text() == "100 %"
+    assert v.zoom_scale() == pytest.approx(1.0) and win.zoom_level.text() == "100 %"
     win.ctl.select("unit", "RW3")
     QTest.keyClick(v, Qt.Key.Key_F, Qt.KeyboardModifier.ShiftModifier)
     assert v.zoom_scale() > fitted
@@ -421,7 +421,7 @@ def test_f_does_nothing_when_the_keyboard_is_elsewhere(win) -> None:
     win.view.zoom_100()
     win.interface_table.view.setFocus()
     QTest.keyClick(win.interface_table.view, Qt.Key.Key_F)
-    assert win.view.zoom_scale() == 1.0
+    assert win.view.zoom_scale() == pytest.approx(1.0)
 
 
 def test_the_zoom_controls_have_tooltips_with_their_shortcuts_and_the_scale_menu_is_renamed(
@@ -440,7 +440,7 @@ def test_the_zoom_controls_have_tooltips_with_their_shortcuts_and_the_scale_menu
 def test_clicking_the_zoom_level_returns_to_100_percent(win) -> None:
     win.view.fit()
     win.zoom_level.click()
-    assert win.view.zoom_scale() == 1.0
+    assert win.view.zoom_scale() == pytest.approx(1.0)
 
 
 # ---- CV-5 legible default view ----------------------------------------------------------------------

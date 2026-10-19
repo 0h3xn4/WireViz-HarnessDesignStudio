@@ -188,7 +188,8 @@ MASK = re.compile(r"\b[0-9a-f]{12}\b")
 
 def _quoted_lines_are_real(quoted: list[str], real: str) -> list[str]:
     """The quoted lines (hashes masked, `...` and blank lines skipped) that the real output lacks."""
-    have = {MASK.sub("<hash>", ln.strip()) for ln in real.splitlines()}
+    # (the documents write paths with "/"; on Windows the tool prints them with "\\")
+    have = {MASK.sub("<hash>", ln.strip().replace("\\", "/")) for ln in real.splitlines()}
     return [
         ln
         for ln in quoted

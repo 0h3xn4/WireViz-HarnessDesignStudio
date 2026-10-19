@@ -335,7 +335,8 @@ class PinTable(TableView):
             if key == Qt.Key.Key_Space and not mods:
                 self.cycleModeRequested.emit()
                 return
-            if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter) and not mods:
+            if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_F2) and not mods:
+                # F2 edits on every system (Qt does it on Windows and Linux only)
                 index = self.currentIndex()
                 if index.isValid() and self.model().flags(index) & Qt.ItemFlag.ItemIsEditable:
                     self.edit(index)

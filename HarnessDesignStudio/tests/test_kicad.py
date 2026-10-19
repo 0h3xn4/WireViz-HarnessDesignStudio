@@ -325,6 +325,9 @@ def test_cli_signal_map_json_and_pin_function(
         b"<export><!ENTITY x 'y'></export>",
         b"<not-a-netlist/>", b"<export", b"", b"\x00\x01\x02", b"<export>" + b"<a>" * 100_000,
     ],
+    # short ids: pytest puts the id into an environment variable, and Windows refuses 32767+ characters
+    ids=["entities-expand", "external-entity", "entity-inside", "wrong-root", "cut-off", "empty",
+         "binary", "deep-nesting"],
 )  # fmt: skip
 def test_hostile_or_wrong_files_are_refused_politely(data: bytes) -> None:
     with pytest.raises(NetlistError):
