@@ -668,7 +668,7 @@ def test_the_project_tree_opens_imports_adds_and_points_the_inspector(flat) -> N
     wizard: list[str] = []
     flat.import_wizard_flow = wizard.append  # type: ignore[method-assign]
     seen: list[str] = []
-    flat.import_flow = lambda: seen.append("interfaces")  # type: ignore[method-assign]
+    flat.import_interfaces_flow = lambda: seen.append("interfaces")  # type: ignore[method-assign]  # (the wizard, D-156)
     for kind in ("interfaces", "parts", "lengths", "engineering", "netlist"):
         tree.importRequested.emit(kind)
     assert seen == ["interfaces"] and wizard == ["parts", "lengths", "values", "netlist"]

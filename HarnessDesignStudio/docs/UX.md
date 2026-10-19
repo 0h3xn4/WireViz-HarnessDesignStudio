@@ -345,6 +345,6 @@ Window
 └─ Status bar: folder · rules and version · "Generated at model xxxxxxxx" · values pending link · zoom
 ```
 
-New dialogs: Export (harness by document tree, result list, Reveal in folder), the Import wizard (parts, segment lengths, ampacity, KiCad netlist; interfaces keep their older dialog), New project (one dialog), the engineering values form (**Supply value…**), and release and new-revision dialogs that list what is locked and what becomes editable. The diagram gained multi-selection, navigation keys, state badges, locks, a legend overlay, find and context menus.
+New dialogs: Export (harness by document tree, result list, Reveal in folder), the Import wizard (parts, segment lengths, ampacity, KiCad netlist; since UI overhaul M7 interfaces use the wizard too, with the older dialog behind *Paste table text instead…*), New project (one dialog), the engineering values form (**Supply value…**), and release and new-revision dialogs that list what is locked and what becomes editable. The diagram gained multi-selection, navigation keys, state badges, locks, a legend overlay, find and context menus.
 
 The journeys of section 3 still apply; the screenshots in [`ux/qt/`](ux/qt/) and [`ux/build/`](ux/build/) show the result, and [`DESIGN.md`](DESIGN.md) has one line per design decision. What was not built, and why, is under "Build status" in the audit (for example the Fix all button, the non-modal palette, compact Guided footprints, writing a subset of the outputs).
