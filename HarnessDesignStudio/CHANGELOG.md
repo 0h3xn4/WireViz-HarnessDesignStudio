@@ -12,6 +12,7 @@ Versions follow semantic versioning. Every project file records the tool version
 ### Fixed
 
 - The rule check helper process no longer stops at `os.nice` on Windows, which has no such function.
+- The editor of the Windows package shows the bundled IBM Plex fonts: Qt on Windows cannot read WOFF2, so the package carries TrueType copies (`packaging/fonts/`) and `gui/fonts.py` uses them when the WOFF2 files gave no family. Other packages are unchanged.
 
 ### Changed
 

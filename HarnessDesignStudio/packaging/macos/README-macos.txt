@@ -33,7 +33,7 @@ Check the program
   prints "selftest ok" (it needs no window; it works offscreen).
 
 Remove
-  Drag the app to the Trash. The settings of the editor are in ~/Library/Preferences (no design data).
+  Drag the app to the Trash. The settings of the editor are in ~/.config/HarnessDesigner/HarnessDesigner.ini (no design data).
 
 Licences of the components are in the app (Contents/Resources/LICENSES, README.txt lists them).
 Qt for Python (PySide6) is used under the LGPL-3. The licence of Harness Design Studio itself has
