@@ -11,7 +11,7 @@ import pytest
 pytest.importorskip("PySide6")
 pytestmark = pytest.mark.gui
 
-from PySide6.QtCore import QSettings, Qt, QUrl  # noqa: E402
+from PySide6.QtCore import QDir, QSettings, Qt, QUrl  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtWidgets import QApplication, QDialog  # noqa: E402
 
@@ -252,7 +252,8 @@ def test_reveal_and_open_build_the_right_urls(clean) -> None:
     assert clean.opened[-1] == open_url(folder / "harnesses" / "W001" / "wirelist.csv")
     panel.folder_btn.click()
     assert clean.opened[-1] == QUrl.fromLocalFile(str(folder))
-    assert clean.opened[-1].isLocalFile() and clean.opened[-1].toLocalFile() == str(folder)
+    assert clean.opened[-1].isLocalFile()
+    assert clean.opened[-1].toLocalFile() == QDir.fromNativeSeparators(str(folder))
 
 
 def test_enter_opens_and_ctrl_enter_reveals_from_the_keyboard(clean) -> None:

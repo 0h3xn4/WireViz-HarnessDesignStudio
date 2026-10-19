@@ -144,6 +144,8 @@ def test_the_tarball_does_not_depend_on_who_builds_it(tmp_path: Path) -> None:
 
     from tools.build_installer import make_tarball
 
+    if sys.platform != "linux":
+        pytest.skip("the tarball is built on Linux (file owners and modes)")
     pkg = fake_package(tmp_path / "src")
     if os.getuid() == 0:
         for path in [pkg, *pkg.rglob("*")]:
@@ -294,6 +296,8 @@ def test_install_inside_the_unpack_folders_parent_keeps_the_package(tmp_path: Pa
 
 
 def test_installed_files_belong_to_root_not_to_whoever_unpacked(tmp_path: Path) -> None:
+    if sys.platform != "linux":
+        pytest.skip("install.sh is the Linux tarball's script (GNU tools)")
     pkg = fake_package(tmp_path)
     if os.getuid() == 0:
         for path in [pkg, *pkg.rglob("*")]:

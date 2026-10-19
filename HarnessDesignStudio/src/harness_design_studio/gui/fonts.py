@@ -22,7 +22,7 @@ def load_fonts() -> list[str]:
     families: list[str] = []
     folder = fonts_path()
     if folder is not None:
-        for f in sorted(folder.glob("*.woff2")):
+        for f in sorted(folder.glob("*.ttf")):
             fid = QFontDatabase.addApplicationFont(str(f))
             if fid >= 0:
                 families += [
