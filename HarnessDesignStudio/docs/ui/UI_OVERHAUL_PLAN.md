@@ -307,6 +307,8 @@ into the summary, all existing tests green (CI on Linux, Windows, macOS), golden
   clipped controls (picture 41 redone); first-interactive time ≤ baseline +10 %; no existing test edited except the
   list agreed in Q2.
 
+**M2 result (2026-10-19).** Built as planned, with these differences, all in D-151: the six main tabs stay in one widget and an *area is a filter over them* (so Ctrl+1 to 6, `go_to` and every test keep working), Home and Settings are simple pages (M3 fills Home); Arrange and the Show filters moved into the Model tab bar; the modal generate/export progress dialogs stay (their status-bar twin has Cancel); the Problems panel is the new bottom dock while the inspector's Problems tab (the to-do cards) stays until M5. Measured: start-up 0.95 to 1.05 s (baseline 1.0 to 1.15), theme switch 65 to 130 ms, 35 timing tests green. Edited tests: `test_ux_shell.py` (tab list without the area filter; minimum width + 72 px for the rail), `test_ux_devices.py` (tab list), `test_ux_retire.py` (the dock set gains `dock-problems`). The 1150×400 window now has a one-row top bar, the rail as icons and a status bar that drops its least important parts; its menu bar is unchanged (Q5).
+
 **M3 Home and workflow stepper.**
 - Home with recent projects (stored in `QSettings`), project cards with revision/state badges (read from the
   project; no format change), examples, new, open; empty states with a primary action everywhere a list can be

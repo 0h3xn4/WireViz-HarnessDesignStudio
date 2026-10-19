@@ -183,6 +183,21 @@ def _main_part(theme: str, shots: Shots, tmp: Path) -> None:
         a(f"right-{tab}", lambda n=number, t=tab: shots.grab(f"{n:02d}-right-{t}-tab", win))
     win.inspector.show_tab("inspector")
 
+    # --- the areas of the shell (UI overhaul M2) ------------------------------------------------
+    for number, key in ((14, "home"), (15, "settings")):
+        win.set_area(key)
+        _settle(win, 200)
+        a(f"area-{key}", lambda n=number, k=key: shots.grab(f"{n}-area-{k}", win))
+    win.set_area("model")
+    win.toggle_problems()
+    _settle(win, 600)
+    a("problems-panel", lambda: shots.grab("16-problems-panel", win))
+    win.toggle_problems()
+    win.rail.toggle.click()
+    _settle(win, 200)
+    a("rail-collapsed", lambda: shots.grab("17-rail-collapsed", win))
+    win.rail.toggle.click()
+
     # --- menus, command palette, tour ------------------------------------------------------
     a("menus", lambda: _menus(win, shots))
 

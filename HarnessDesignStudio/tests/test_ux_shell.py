@@ -269,7 +269,7 @@ def test_the_top_bar_folds_parts_away_instead_of_widening_the_window(qtbot, flat
     edit_something(flat)
     flat.go_to("checks")  # with the results of the check loaded in the Checks tab
     size = flat.minimumSizeHint()
-    assert size.width() <= 1160 and size.height() <= 520
+    assert size.width() <= 1160 + 72 and size.height() <= 520  # (the navigation rail adds 72 px)
 
 
 def test_only_generate_is_primary_and_the_toggles_are_neutral(flat) -> None:
@@ -529,9 +529,14 @@ def test_the_path_is_cut_in_the_middle_in_a_narrow_window(qtbot) -> None:
 
 def test_main_tabs_and_their_shortcuts(flat) -> None:
     tabs = flat.main_tabs
-    assert tabs.visible_names() == [
-        "diagram", "harness", "lists", "checks", "releases", "devices",
-    ]  # fmt: skip
+    assert [n for n in tabs.names() if tabs.is_installed(n)] == [
+        "diagram",
+        "harness",
+        "lists",
+        "checks",
+        "releases",
+        "devices",
+    ]  # fmt: skip (every view is a tab; an area shows its own, see test_ui_areas.py)
     flat.go_actions["checks"].trigger()
     assert tabs.currentWidget() is flat.checks_panel
     flat.go_actions["releases"].trigger()

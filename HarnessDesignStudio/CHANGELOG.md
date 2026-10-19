@@ -4,6 +4,8 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+- **UI overhaul, M2 (the shell).** A navigation rail (Home, Model, Checks, Drawings, Outputs, Revisions, Settings), one full-width top bar (Undo, Redo, mode and search moved up from the second tool bar, with the revision and where you are), a job indicator with Cancel and an Offline marker in the status bar, a Problems panel at the bottom (Ctrl+Shift+M), Home and Settings pages, and a layout that is remembered per project. See D-151.
+
 - **UI overhaul, M1 (foundation; the screens themselves follow in M2 to M9).** A theme package (`gui/theme/`) replaces IBM Carbon: one token source, Inter and JetBrains Mono (bundled, SIL OFL) instead of IBM Plex, rounded controls, a calmer light and dark palette, tuned for WCAG 2.2 AA. Switching light and dark is now instant (about 0.1 s instead of 0.5 to 1 s). No change to the design model, the file formats, the command line or any generated file. See D-150 and `docs/ui/UI_OVERHAUL_PLAN.md`.
 
 ## 1.2.0 (2026-10-19; not a statement of compliance)

@@ -83,7 +83,7 @@ Without a current on a power link, the wire gauge (the thickness of the wire) st
 
 ## 5. Guided or Expert
 
-Use the toolbar buttons **Guided** and **Expert** (also in the **View** menu).
+Use the **Guided** and **Expert** buttons in the top bar (also in the **View** menu and under **Settings**).
 
 - **Guided** (the default): you work with units and links. The tool chooses connectors and pins.
 - **Expert**: you also see each connector and can choose the exact connector at each end of a link.
@@ -94,8 +94,8 @@ Switching never changes your data.
 
 - **View > Arrange diagram** puts the units in order and gives each one room. **Undo** restores the old positions.
 - **Click a unit or a link** and only its links stay in full colour. Press **Esc** or click the empty background to see everything again.
-- The **Show** list in the toolbar fades everything except one signal class, one connector or one bundle (a harness).
-- **Ctrl+K** (**Search / commands**) lets you type a command or an ID and jump to it.
+- The **Show** list at the right end of the Model tab bar fades everything except one signal class, one connector or one bundle (a harness).
+- **Ctrl+K** (**Search**) lets you type a command or an ID and jump to it.
 - Zoom with **Ctrl+=** and **Ctrl+-**, or **Ctrl+wheel** at the pointer. **F** fits the whole diagram, **Shift+F** zooms to the selection and **Ctrl+0** shows 100 %. **View > Show all link labels** shows voltages and currents on every link in a dense diagram.
 - **Shift+click**, **Ctrl+click** or a drag on the background select several items; **Ctrl+A** selects all. **Ctrl+F** finds a unit or link and marks every match. **Edit > Align**, **Space evenly** and **Duplicate** (Ctrl+D) work on the selection.
 - A badge on a unit or link counts its problems, warnings and values still to enter, and a lock with *W001 A* shows what a released harness holds.

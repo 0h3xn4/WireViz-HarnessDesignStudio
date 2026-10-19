@@ -71,12 +71,14 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 
 | Part | What it holds |
 | --- | --- |
-| **Top bar** | The project name, a short model hash, *Saved* or *Unsaved changes*, **Generate** (the one blue button), **Check**, **Export…** and a status chip. |
+| **Navigation rail** | Down the left edge: **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions** and, at the bottom, **Settings**. It opens the area you choose; the button at its foot shows icons only. |
+| **Top bar** | The project name, *Saved* or *Unsaved changes*, the revision, a short model hash, where you are, **Undo** and **Redo**, **Guided** and **Expert**, **Search** (Ctrl+K), **Generate** (the one blue button), **Check**, **Export…** and a status chip. |
 | **Banner** | Appears under the top bar when something needs you: the plans or the exported files are out of date (buttons **Generate** and **Export…**), or a generate, export or check failed (**Try again**). A change that is refused because a harness is released stays on screen as a message over the diagram, with **Start new revision…**, until the next change goes through. |
-| **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6). |
+| **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6). Each area shows its own: Model has Diagram and Devices; Checks, Drawings (the Harness tab), Outputs (the Lists tab) and Revisions (the Releases tab) have one each. |
 | **Left panel** | The **Project** tab: a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports, with a filter and an **Add** button. The **Interfaces** tab (Ctrl+Shift+T): every interface as a table you can sort, filter and edit with the keyboard. |
 | **Right panel** | **Inspector** (the fields of what you selected, and where it is used), **Why** (the reasons for a choice) and **Problems** (the problem cards, with a **To do** list above them). |
-| **Status bar** | The project folder, the number of rules and the tool version, *Generated at model …*, a link *n values pending · n rules not checked*, and the zoom level. |
+| **Problems panel** | Closed until you press **Problems (n)** in the status bar (or Ctrl+Shift+M): every open problem with its severity, rule, object and message; click one to go to the object. |
+| **Status bar** | What runs in the background (with **Cancel**) or the last check, the project folder, **Problems (n)**, *Offline*, a link *n values pending · n rules not checked*, and the zoom level. The model hash, the rule count and *Generated at model …* are in the tooltip of the counts. |
 
 The status chip in the top bar says one thing: *Up to date*, *Plans out of date* (the diagram changed after Generate), *Outputs out of date* (the design changed after the last export), *Not generated*, or the running job (*Generating…*, *Exporting…*, *Checking…*). Colour is never the only sign: every state has an icon and a word, and the two states for "nothing known yet" have a pattern. **Pending** (dotted) is a value nobody has entered; **Not checked** (hatched) is a rule that could not run. Neither is a pass, and neither is empty.
 
@@ -133,9 +135,9 @@ A system with many units has many links. The editor makes them readable in these
 - **Connectors are drawn as they look**: a flange with screw holes and the shell in front of it: a tapered D for a D-sub, a rounded block for a Micro-D, a round shell, an RJ45 plug, a coax ring. The size and the dots follow the pin count, which is also written as a number. **Gender is black or white**: a male connector (pins) is drawn solid, a female connector (sockets) as an outline, and a connector whose gender is not set with a dashed outline; the legend says so. The harness drawings and the mating matrix state the gender of every cable connector in words. In Expert mode a dashed line splits the unit into a left side and a darker right side (ports sit on the edge of their side), and every port reads from its edge inwards: the designator (J01), the connector picture and the pin count. In Guided mode a unit shows its connectors as small pictures. What a link carries is drawn on the link.
 - **Numbers appear when they exist.** A power link shows e.g. `28 V · 5 A` beside its picture, but only what somebody entered; nothing is filled in. In a diagram of more than 30 links the numbers show for the selected, focused or hovered link; *View > Show all link labels* shows them everywhere. Hover a link to read its name, type, values and ends in words.
 - **Click a unit or a link.** Only its links stay in full colour; everything else fades. Click the empty background or press Escape to see everything again. This is the quickest way to answer "what is connected to this?".
-- **Show** (the list in the toolbar, *All interfaces* by default) fades everything except one signal class, one connector or one bundle. It can be combined with a selection.
+- **Show** (the list at the right end of the Model tab bar, *All interfaces* by default) fades everything except one signal class, one connector or one bundle. It can be combined with a selection.
 - **Links run in lines.** Each link leaves on the edge that faces the unit at its other end, goes sideways into the gutter between lanes, runs up or down in its own track, and enters the other unit sideways. Links between the same two lanes run side by side, ordered so that they cross as little as possible.
-- **Arrange diagram** (View menu, Ctrl+Shift+L, or the toolbar button) puts the units in order and keeps room for each one: a unit with many connectors is tall in Expert mode, and the units around it make way. One undo step restores the old positions.
+- **Arrange diagram** (View menu, Ctrl+Shift+L, or the button at the right end of the Model tab bar) puts the units in order and keeps room for each one: a unit with many connectors is tall in Expert mode, and the units around it make way. One undo step restores the old positions.
 
 Zoomed far out, a unit shows its ID and each kind of link its own dash pattern and a small picture; zoom in to see pictures and numbers.
 
@@ -353,7 +355,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Help | Show project problems | lists what could not be loaded, for a project with problems |
 | Help | About | the version and a short note about the tool |
 
-The **Show** list in the toolbar fades everything except one signal class (power, data, analog, RF ...), one connector or one bundle (harness), so a large diagram can be read one piece at a time; choose *All interfaces* to see everything again. It changes nothing in the project. The **Interface table** and **Outline** tabs of the bottom panel list every interface and unit as text; they are the screen-reader friendly views of the diagram.
+The **Show** list at the right end of the Model tab bar fades everything except one signal class (power, data, analog, RF ...), one connector or one bundle (harness), so a large diagram can be read one piece at a time; choose *All interfaces* to see everything again. It changes nothing in the project. The **Interface table** and **Outline** tabs of the bottom panel list every interface and unit as text; they are the screen-reader friendly views of the diagram.
 
 ## 15. Glossary
 

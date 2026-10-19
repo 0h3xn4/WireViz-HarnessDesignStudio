@@ -1,6 +1,7 @@
 """Main window: top bar, banners, main tabs, project panel with the interface table, inspector, status bar."""
 
 import contextlib
+import hashlib
 import time
 from collections.abc import Callable
 from dataclasses import dataclass
@@ -44,6 +45,8 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressDialog,
     QPushButton,
+    QStackedWidget,
+    QToolBar,
     QToolButton,
     QVBoxLayout,
     QWidget,
@@ -77,7 +80,7 @@ from harness_design_studio.core.vcs.release import (
 )
 from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, working_diff
 from harness_design_studio.core.verify import VerifyReport
-from harness_design_studio.gui import strings
+from harness_design_studio.gui import areas, strings
 from harness_design_studio.gui.canvas import DiagramView, ZoomIndicator
 from harness_design_studio.gui.checks_panel import ChecksPanel, PendingValuesLink
 from harness_design_studio.gui.command_palette import CommandPalette, PaletteEntry
@@ -116,14 +119,18 @@ from harness_design_studio.gui.import_kinds import KINDS
 from harness_design_studio.gui.import_wizard import ImportWizard
 from harness_design_studio.gui.inspector import Inspector
 from harness_design_studio.gui.interface_table import InterfaceTable
+from harness_design_studio.gui.jobs import JobStatus
 from harness_design_studio.gui.lists_panel import ListsPanel
 from harness_design_studio.gui.new_project_dialog import (
     BLANK,
     NewProjectDialog,
     NewProjectRequest,
 )
+from harness_design_studio.gui.pages import HomePage, SettingsPage
 from harness_design_studio.gui.panels import ProblemsPanel, PropertiesPanel, category_icon
+from harness_design_studio.gui.problems_panel import ProblemsList
 from harness_design_studio.gui.project_tree import ProjectTree
+from harness_design_studio.gui.rail import NavRail
 from harness_design_studio.gui.releases_panel import ReleasesPanel
 from harness_design_studio.gui.shell import (
     BannerStack,
@@ -132,6 +139,7 @@ from harness_design_studio.gui.shell import (
     SlotTabs,
     auto_scale,
     refusal_harness,
+    shrinkable,
 )
 from harness_design_studio.gui.theme import MODES, ThemeManager, mark_mono
 from harness_design_studio.gui.theme.tokens import CATEGORIES
@@ -141,9 +149,9 @@ from harness_design_studio.resources import guide_path
 
 SCALES = (100, 125, 150, 200)
 ARRANGE_IN_WORKER = 60  # a diagram with more units is arranged off the UI thread
-STATE_VERSION = 2  # of the saved dock layout (`saveState`); change it when the docks change
-WIDE_PX = 1150  # in UI-scale-free px: the right dock needs this much window width
-MEDIUM_PX = 800  # ... and the left dock this much
+STATE_VERSION = 3  # of the saved dock layout (`saveState`); change it when the docks change
+WIDE_PX = 1222  # in UI-scale-free px: the right dock needs this much window width (the rail's 72 included)
+MEDIUM_PX = 872  # ... and the left dock this much
 # the left dock opens this wide on the Interfaces tab (if the window allows)
 INTERFACE_DOCK_PX = 620
 MAIN_TABS = ("diagram", "harness", "lists", "checks", "releases", "devices")  # Ctrl+1 ... Ctrl+6
@@ -433,6 +441,10 @@ class MainWindow(QMainWindow):
         self._left_width = 0  # the left panel's width before the Interfaces tab widened it
         self.command_palette: CommandPalette | None = None  # the Ctrl+K overlay, while it is open
         self._pane = 0
+        self._area = areas.DEFAULT
+        self._switching_area = False
+        self._active_worker: PlanWorker | OutputsWorker | ArrangeWorker | None = None
+        self._last_check = ""
 
         self._build_center()
         self._build_docks()
@@ -442,6 +454,7 @@ class MainWindow(QMainWindow):
         self.toasts = ToastHost(self.view)
         self._register_slots()
         self._install_default_views()
+        self._show_area(areas.DEFAULT)
         self.tour = Tour(self, theme, self._tour_targets(), self._tour_reveals())
         self.tour.on_stop = lambda: self.settings.setValue("tour/done", True)
 
@@ -495,9 +508,10 @@ class MainWindow(QMainWindow):
         outer = QVBoxLayout(shell)
         outer.setContentsMargins(0, 0, 0, 0)
         outer.setSpacing(0)
-        self.topbar = TopBar(self.theme)
+        self.topbar = TopBar(
+            self.theme
+        )  # placed in the top tool bar (see _build_menus_and_toolbar)
         self.generate_btn = self.topbar.generate_btn
-        outer.addWidget(self.topbar)
         self.banner = Banner()
         outer.addWidget(self.banner)
         self.alerts = BannerStack(self.theme)
@@ -550,6 +564,7 @@ class MainWindow(QMainWindow):
         icon_button(self.fit_btn, "fit", self.theme, strings.FIT, "F", text=strings.FIT)
         bar.addWidget(self.tool_select)
         bar.addWidget(self.tool_connect)
+        self.tool_row = bar  # Arrange and the filters join it (they only act on the diagram)
         bar.addWidget(self.hint, 1)
         self.view = DiagramView(self.ctl, self.theme)
         self.view.setObjectName("diagram")
@@ -606,8 +621,32 @@ class MainWindow(QMainWindow):
             installed=False,
             tip=strings.TAB_TIP.format(strings.TAB_DEVICES, 6),
         )  # fmt: skip
-        outer.addWidget(self.main_tabs, 1)
         self.main_tabs.tabBar().setAccessibleName(strings.SHELL_MAIN_TABS)
+        # the area pages: Home and Settings are pages of their own, every other area is a set of
+        # tabs of main_tabs (`set_area`)
+        self.home_page = HomePage(
+            self.theme,
+            new=lambda: self.act_new.trigger(),
+            open_=lambda: self.act_open.trigger(),
+            example=lambda: self.act_new_example.trigger(),
+            sample=lambda: self.act_sample.trigger(),
+        )
+        self.settings_page = SettingsPage(
+            self.theme,
+            set_theme=lambda mode: self.set_theme_mode(mode),
+            set_scale=lambda pct: self.scale_actions[pct].trigger(),
+            set_mode=lambda mode: self._pick_mode(mode),
+            open_values=lambda: self.values_flow(),
+        )
+        shrinkable(self.home_page)  # a page never sets the minimum size of the window
+        shrinkable(self.settings_page)
+        self.area_stack = QStackedWidget()
+        self.area_stack.setObjectName("area-stack")
+        self.area_stack.addWidget(self.main_tabs)
+        self.area_stack.addWidget(self.home_page)
+        self.area_stack.addWidget(self.settings_page)
+        outer.addWidget(self.area_stack, 1)
+        self.main_tabs.currentChanged.connect(lambda _i: self._tab_changed())
         self.setCentralWidget(shell)
 
     def _build_docks(self) -> None:
@@ -664,6 +703,18 @@ class MainWindow(QMainWindow):
         self.dock_left.setMinimumWidth(240)
         self.dock_right.setMinimumWidth(260)
         self.resizeDocks([self.dock_left, self.dock_right], [250, 310], Qt.Orientation.Horizontal)
+        # bottom: the Problems panel, closed until it is asked for (status bar, View menu, Ctrl+Shift+M)
+        self.problems_list = ProblemsList(self.ctl, self.theme)
+        self.dock_problems = self._dock(
+            strings.PROBLEMS_PANEL_TITLE,
+            self.problems_list,
+            Qt.DockWidgetArea.BottomDockWidgetArea,
+            "dock-problems",
+        )
+        self.dock_problems.setFeatures(QDockWidget.DockWidgetFeature.DockWidgetClosable)
+        self.dock_problems.setMinimumHeight(120)
+        self.dock_problems.hide()
+        self.problems_list.showRequested.connect(self.show_object)
 
     def _dock(self, title: str, widget: QWidget, area: Qt.DockWidgetArea, name: str) -> QDockWidget:
         dock = QDockWidget(title, self)
@@ -686,6 +737,8 @@ class MainWindow(QMainWindow):
         self.status_hash.setObjectName("status-hash")
         self.status_hash.setAccessibleName(strings.STATUS_HASH)
         mark_mono(self.status_hash)
+        self.jobs = JobStatus(self.theme)  # what runs in the background, with Cancel
+        sb.addWidget(self.jobs)
         for w in (self.status_saved, self.status_sel, self.status_counts, self.status_hash):
             sb.addWidget(w)
             w.setContentsMargins(self.theme.space(8), 0, self.theme.space(8), 0)
@@ -710,6 +763,30 @@ class MainWindow(QMainWindow):
         for w in (self.status_rules, self.status_generated):
             w.setContentsMargins(self.theme.space(8), 0, self.theme.space(8), 0)
             sb.addPermanentWidget(w)
+        self.problems_btn = QPushButton(strings.PROBLEMS_BUTTON.format(0))
+        self.problems_btn.setObjectName("problems-button")
+        self.problems_btn.setProperty("ghost", True)
+        self.problems_btn.setProperty("toggle", True)
+        self.problems_btn.setCheckable(True)
+        self.problems_btn.setToolTip(strings.A_PROBLEMS_TIP)
+        self.problems_btn.setAccessibleName(strings.A_PROBLEMS)
+        self.problems_btn.clicked.connect(lambda _c=False: self.toggle_problems())
+        self.dock_problems.visibilityChanged.connect(self.problems_btn.setChecked)
+        self.offline = QToolButton()  # the program works offline: say so, plainly
+        self.offline.setObjectName("offline-indicator")
+        self.offline.setProperty("ghost", True)
+        self.offline.setText(strings.OFFLINE_TEXT)
+        self.offline.setIcon(icon("lock", self.theme))
+        self.offline.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.offline.setToolTip(strings.OFFLINE_TIP)
+        self.offline.setAccessibleName(f"{strings.OFFLINE_TEXT}. {strings.OFFLINE_TIP}")
+        self.offline.setFocusPolicy(Qt.FocusPolicy.NoFocus)
+        sb.addPermanentWidget(self.problems_btn)
+        sb.addPermanentWidget(self.offline)
+        # the model hash, the rule count and the generation record are details: they stay in the
+        # widgets (and in the tooltip of the counts) but take no room in the bar
+        for w in (self.status_hash, self.status_rules, self.status_generated):
+            w.setVisible(False)
         sb.addPermanentWidget(self.pending_link)
         sb.addPermanentWidget(self.zoom_level)  # "100 %" (the view's zoomChanged feeds it)
 
@@ -1178,12 +1255,19 @@ class MainWindow(QMainWindow):
             strings.A_ADD_DEVICE, self.add_device_flow, "Ctrl+Shift+N", name="act-add-device"
         )
         self.act_add_device.setToolTip(f"{strings.A_ADD_DEVICE_TIP} (Ctrl+Shift+N)")
+        self.act_problems = a(
+            strings.A_PROBLEMS, self.toggle_problems, "Ctrl+Shift+M", name="act-problems"
+        )
         self.act_reset_layout = a(
             strings.A_RESET_LAYOUT, self.reset_layout, name="act-reset-layout"
         )
         self.act_next_pane = a(strings.A_NEXT_PANE, partial(self._cycle, 1), "F6", name="act-next-pane")  # fmt: skip
         self.act_prev_pane = a(strings.A_PREV_PANE, partial(self._cycle, -1), "Shift+F6", name="act-prev-pane")  # fmt: skip
         self.go_actions: dict[str, QAction] = {}
+        self.act_go_home = a(
+            strings.GO_HOME, lambda: self.set_area("home"), "Ctrl+7", name="act-go-home"
+        )
+        self.act_go_settings = a(strings.GO_SETTINGS, lambda: self.set_area("settings"), "Ctrl+,", name="act-go-settings")  # fmt: skip
         for k, (name, label) in enumerate(
             zip(
                 MAIN_TABS,
@@ -1404,6 +1488,7 @@ class MainWindow(QMainWindow):
         v.addSeparator()
         for dock in (self.dock_left, self.dock_right):
             v.addAction(dock.toggleViewAction())
+        v.addAction(self.act_problems)
         v.addAction(self.act_reset_layout)
         d = mb.addMenu(strings.M_DESIGN)
         self.menu_design = d
@@ -1423,8 +1508,10 @@ class MainWindow(QMainWindow):
         d.addAction(self.act_values)
         g = mb.addMenu(strings.M_GO)
         self.menu_go = g
+        g.addAction(self.act_go_home)
         for act in self.go_actions.values():
             g.addAction(act)
+        g.addAction(self.act_go_settings)
         g.addAction(self.act_go_interfaces)
         g.addSeparator()
         g.addAction(self.act_next_pane)
@@ -1440,20 +1527,38 @@ class MainWindow(QMainWindow):
         ):
             h.addAction(act)
 
-        tb = self.addToolBar(strings.TOOLBAR)
+        # the top bar: one full-width row above everything (project, state, where you are, edit,
+        # mode, search, the three jobs)
+        tb = QToolBar(strings.TOOLBAR)
         tb.setObjectName("main-toolbar")
         tb.setMovable(False)
-        tb.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        tb.setFloatable(False)
+        tb.addWidget(self.topbar)
+        self.addToolBar(Qt.ToolBarArea.TopToolBarArea, tb)
+        self.top_toolbar = tb
+        self.rail = NavRail(self.theme)
+        rail_bar = QToolBar(strings.RAIL_NAME)
+        rail_bar.setObjectName("rail-toolbar")
+        rail_bar.setMovable(False)
+        rail_bar.setFloatable(False)
+        rail_bar.addWidget(self.rail)
+        self.addToolBar(Qt.ToolBarArea.LeftToolBarArea, rail_bar)
+        self.rail_toolbar = rail_bar
+        self.rail.select(self._area)
+        self.rail.areaSelected.connect(self.set_area)
         self.act_undo.setIcon(icon("undo", self.theme))
         self.act_redo.setIcon(icon("redo", self.theme))
         self.act_redo.setToolTip(tooltip_text(strings.REDO, "Ctrl+Y"))
-        tb.addAction(self.act_undo)
-        tb.addAction(self.act_redo)
-        for act in (self.act_undo, self.act_redo):  # reachable with Tab, not only by shortcut
-            button = tb.widgetForAction(act)
-            if button is not None:
-                button.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
-        tb.addSeparator()
+        for act, name in ((self.act_undo, "undo-button"), (self.act_redo, "redo-button")):
+            button = QToolButton()
+            button.setObjectName(name)
+            button.setDefaultAction(act)
+            button.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonIconOnly)
+            button.setProperty("iconOnly", True)
+            button.setFocusPolicy(
+                Qt.FocusPolicy.StrongFocus
+            )  # reachable with Tab, not only by shortcut
+            self.topbar.add_edit(button)
         self.mode_guided = QToolButton()
         self.mode_guided.setObjectName("mode-guided")
         self.mode_guided.setText(strings.GUIDED)
@@ -1469,17 +1574,14 @@ class MainWindow(QMainWindow):
         self.mode_expert.setToolTip(strings.EXPERT_TIP)
         self.mode_guided.clicked.connect(lambda: self._pick_mode("guided"))
         self.mode_expert.clicked.connect(lambda: self._pick_mode("expert"))
-        tb.addWidget(self.mode_guided)
-        tb.addWidget(self.mode_expert)
-        tb.addSeparator()
+        self.topbar.add_mode(self.mode_guided)
+        self.topbar.add_mode(self.mode_expert)
         self.arrange_btn = QToolButton()
         self.arrange_btn.setObjectName("arrange-button")
         self.arrange_btn.setDefaultAction(self.act_arrange)
         self.arrange_btn.setText(strings.A_ARRANGE)
         self.arrange_btn.setToolTip(strings.ARRANGE_TIP)
         self.arrange_btn.setAccessibleName(strings.A_ARRANGE)
-        tb.addWidget(self.arrange_btn)
-        tb.addSeparator()
         self.search_btn = QPushButton(strings.SEARCH_BUTTON)
         self.search_btn.setObjectName("search-button")
         icon_button(
@@ -1491,7 +1593,7 @@ class MainWindow(QMainWindow):
             text=strings.SEARCH_BUTTON,
         )
         self.search_btn.clicked.connect(self.open_commands)
-        tb.addWidget(self.search_btn)
+        self.topbar.add_search(self.search_btn)
         self.filter_combo = QComboBox()
         self.filter_combo.setObjectName("filter-kind")
         self.filter_combo.setAccessibleName(strings.FILTER_LABEL)
@@ -1504,14 +1606,27 @@ class MainWindow(QMainWindow):
         ):
             self.filter_combo.addItem(label, kind)
         self.filter_combo.currentIndexChanged.connect(self._filter_kind_changed)
-        tb.addWidget(self.filter_combo)
         self.filter_value = QComboBox()
         self.filter_value.setObjectName("filter-value")
         self.filter_value.setAccessibleName(strings.FILTER_VALUE)
         self.filter_value.setSizeAdjustPolicy(QComboBox.SizeAdjustPolicy.AdjustToContents)
         self.filter_value.currentIndexChanged.connect(self._filter_changed)
-        self.filter_value_action = tb.addWidget(self.filter_value)
-        self.filter_value_action.setVisible(False)  # a toolbar widget is shown through its action
+        self.filter_value.setVisible(False)
+        self.filter_value_action = self.filter_value  # (the toolbar action it once had)
+        # Arrange and the filters act on the diagram only: they sit at the right end of the Model
+        # area's tab bar (a corner widget), which has the room the diagram's tool row has not
+        self.filter_combo.setSizeAdjustPolicy(
+            QComboBox.SizeAdjustPolicy.AdjustToMinimumContentsLengthWithIcon
+        )
+        self.filter_combo.setMinimumContentsLength(10)
+        self.diagram_tools = QWidget()
+        self.diagram_tools.setObjectName("diagram-tools")
+        row = QHBoxLayout(self.diagram_tools)
+        row.setContentsMargins(self.theme.space(4), 0, self.theme.space(8), 0)
+        row.setSpacing(self.theme.space(8))
+        for w in (self.arrange_btn, self.filter_combo, self.filter_value):
+            row.addWidget(w)
+        self.main_tabs.setCornerWidget(self.diagram_tools, Qt.Corner.TopRightCorner)
         self._decorate_tooltips()
 
     def _decorate_tooltips(self) -> None:
@@ -1567,7 +1682,7 @@ class MainWindow(QMainWindow):
             at = self.filter_value.findData(keep)
             self.filter_value.setCurrentIndex(max(at, 0))
         self.filter_value.blockSignals(False)
-        self.filter_value_action.setVisible(bool(kind) and self.filter_value.count() > 0)
+        self.filter_value.setVisible(bool(kind) and self.filter_value.count() > 0)
 
     def _filter_kind_changed(self, _index: int) -> None:
         self._refresh_filter_values()
@@ -1672,6 +1787,7 @@ class MainWindow(QMainWindow):
         self.status_saved.setText(unsaved if c.dirty else strings.ALL_SAVED)
         self._refresh_undo_actions()
         self._update_banner()
+        self._update_problems_button()
         self._update_selection_actions()
         self._update_view_actions()
         self.act_cancel_check.setEnabled(c.drc_busy())
@@ -1771,13 +1887,30 @@ class MainWindow(QMainWindow):
             checking=c.drc_busy(),
             has_harnesses=bool(c.project.harnesses),
             generated_at=record.input_hash[:8] if record is not None else "",
+            revision=self._revision_text(),
         )
+
+    def _revision_text(self) -> str:
+        revs = sorted({h.revision for h in self.ctl.project.harnesses.values()})
+        if not revs:
+            return ""
+        return revs[0] if len(revs) == 1 else f"{revs[0]}-{revs[-1]}"
 
     def _show_status(self, *, path: bool, compute: bool = True) -> None:
         """Push the status into the top bar, the banner and the status bar."""
         status = self.shell_status(compute)
         self.topbar.apply(status)
+        self._update_home()
         self.status_hash.setText(status.model_hash)
+        self.status_counts.setToolTip(
+            " · ".join(
+                (
+                    f"{strings.STATUS_HASH} {status.model_hash}",
+                    self.status_rules.text(),
+                    self.status_generated.text(),
+                )
+            )
+        )
         if status.generated_at:
             self.status_generated.setText(strings.STATUS_GENERATED.format(status.generated_at))
             self.status_generated.setToolTip(strings.STATUS_GENERATED_TIP)
@@ -1793,6 +1926,35 @@ class MainWindow(QMainWindow):
                     strings.STATUS_PATH_SAMPLE if self.ctl.sample else strings.STATUS_PATH_NONE
                 )
         self._update_alerts(status)
+
+    def _fit_status(self) -> None:
+        """The status bar gives up its least important parts when the window is narrow, so what is
+        left is never cut: the selection first, then the counts and the folder, then the save text
+        (the top bar says it too). The job indicator, Problems, Offline, the pending-values link
+        and the zoom stay."""
+        eff = self.width() / self.theme.scale
+        self.status_sel.setVisible(eff >= 1400)
+        self.status_counts.setVisible(eff >= 1250)
+        self.status_path.setVisible(eff >= 1250)
+        self.status_saved.setVisible(eff >= 1100)
+
+    def _update_problems_button(self) -> None:
+        self.problems_btn.setText(strings.PROBLEMS_BUTTON.format(len(self.ctl.open_findings())))
+
+    def _update_home(self) -> None:
+        c = self.ctl
+        p = c.project
+        root = c.root
+        self.home_page.show_project(
+            p.meta.name or strings.TB_UNSAVED_PROJECT,
+            str(root) if root is not None else "",
+            strings.HOME_SUMMARY.format(len(p.units), len(p.interfaces), len(p.harnesses)),
+        )
+        self.settings_page.sync(
+            theme_mode=self.theme.mode,
+            scale=round(self.theme.scale * 100),
+            mode=c.mode,
+        )
 
     def _update_alerts(self, status: ShellStatus) -> None:
         """The persistent notice when the plans or the exported files no longer match the design:
@@ -2154,6 +2316,7 @@ class MainWindow(QMainWindow):
     def _run_worker(
         self, worker: "PlanWorker | OutputsWorker | ArrangeWorker", label: str, name: str
     ) -> None:
+        self._active_worker = worker
         self._set_busy(
             "generate" if isinstance(worker, PlanWorker)
             else "export" if isinstance(worker, OutputsWorker) else "arrange"
@@ -2161,12 +2324,30 @@ class MainWindow(QMainWindow):
         try:
             self._run_worker_loop(worker, label, name)
         finally:
+            self._active_worker = None
             self._set_busy(None)
 
     def _set_busy(self, kind: str | None) -> None:
         """A job runs (or has just ended): the chip says so and the buttons wait."""
         self.busy = kind
         self.topbar.update_status(running=kind)
+        self._update_jobs()
+
+    def _update_jobs(self) -> None:
+        """The status bar's job indicator: the running job (generate, export, arrange or the rule
+        check) with Cancel, or the last result."""
+        if self.busy:
+            text = {
+                "generate": strings.JOB_GENERATING,
+                "export": strings.JOB_EXPORTING,
+                "arrange": strings.JOB_ARRANGING,
+            }.get(self.busy, self.busy)
+            worker = self._active_worker
+            self.jobs.start(text, cancel=worker.cancel if worker is not None else None)
+        elif self.ctl.drc_busy():
+            self.jobs.start(strings.JOB_CHECKING, cancel=self.ctl.cancel_check)
+        else:
+            self.jobs.finish()
 
     def _run_worker_loop(
         self, worker: "PlanWorker | OutputsWorker | ArrangeWorker", label: str, name: str
@@ -2353,6 +2534,11 @@ class MainWindow(QMainWindow):
         busy = self.ctl.drc_busy()
         self.topbar.update_status(checking=busy)
         self.act_cancel_check.setEnabled(busy)
+        if not busy and self.ctl.drc_current:
+            self._last_check = strings.JOB_LAST_CHECK.format(time.strftime("%H:%M"))
+            self.jobs.finish(self._last_check)
+        self._update_jobs()
+        self._update_problems_button()
         if self._check_asked and not busy and self.ctl.drc_current:
             self._check_asked = False
             results = self.ctl.drc_rule_results()
@@ -2375,11 +2561,85 @@ class MainWindow(QMainWindow):
     def go_to(self, name: str) -> bool:
         """Show a main view: diagram, harness, lists, checks or releases (False and a note when
         the view is not installed)."""
-        if self.main_tabs.show_slot(name):
-            return True
+        if self.main_tabs.is_installed(name):
+            self._show_area(areas.area_of_tab(name), tab=name)
+            return self.main_tabs.show_slot(name)
         title = {"lists": strings.TAB_LISTS}.get(name, name)
         self.toasts.show_message(strings.VIEW_NOT_INSTALLED.format(title), None)
         return False
+
+    # ---- areas -----------------------------------------------------------------------------------
+    def area(self) -> str:
+        """The key of the area that is open: home, model, checks, drawings, outputs, revisions or
+        settings."""
+        return self._area
+
+    def set_area(self, key: str) -> None:
+        """Open an area (the rail's buttons call this): its first view, or the view that was open
+        last when it is in the area."""
+        if key not in areas.KEYS:
+            return
+        self._show_area(key)
+
+    def _show_area(self, key: str, *, tab: str | None = None) -> None:
+        a = areas.area(key)
+        self._area = key
+        self._switching_area = True
+        self.rail.select(key)
+        if not a.tabs:
+            self.area_stack.setCurrentWidget(
+                self.home_page if key == "home" else self.settings_page
+            )
+        else:
+            tabs = self.main_tabs
+            tabs.set_filter(None)  # (every tab shows while one is chosen)
+            names = tabs.names()
+            want = tab
+            if want is None:
+                current = names[tabs.currentIndex()]
+                want = current if current in a.tabs else next(
+                    (n for n in a.tabs if tabs.is_installed(n)), None
+                )  # fmt: skip
+            if want is not None and tabs.is_installed(want):
+                tabs.show_slot(want)
+            tabs.set_filter(a.tabs)
+            self.area_stack.setCurrentWidget(tabs)
+        self._switching_area = False
+        self._update_crumbs()
+
+    def _tab_changed(self) -> None:
+        """A tab was chosen (by a click, a shortcut or code): the rail follows it."""
+        if self._switching_area:
+            return
+        names = self.main_tabs.names()
+        i = self.main_tabs.currentIndex()
+        if i < 0 or i >= len(names):
+            return
+        key = areas.area_of_tab(names[i])
+        if key != self._area or self.area_stack.currentWidget() is not self.main_tabs:
+            self._show_area(key, tab=names[i])
+        else:
+            self._update_crumbs()
+
+    def _update_crumbs(self) -> None:
+        a = areas.area(self._area)
+        parts = [a.title]
+        if a.tabs and len(a.tabs) > 1:
+            names = self.main_tabs.names()
+            i = self.main_tabs.currentIndex()
+            if 0 <= i < len(names):
+                parts.append(self.main_tabs.tabText(i))
+        self.topbar.set_crumbs(strings.CRUMB_SEPARATOR.join(parts))
+        names = self.main_tabs.names()
+        i = self.main_tabs.currentIndex()
+        self.diagram_tools.setVisible(0 <= i < len(names) and names[i] == "diagram")
+
+    def toggle_problems(self) -> None:
+        """Show or hide the Problems panel at the bottom of the window."""
+        show = not self.dock_problems.isVisible()
+        self.dock_problems.setVisible(show)
+        if show:
+            self.resizeDocks([self.dock_problems], [self.theme.px(200)], Qt.Orientation.Vertical)
 
     def show_interfaces(self) -> None:
         """Go to the Interface table (the left panel's second tab) and put the keyboard in it."""
@@ -2772,6 +3032,7 @@ class MainWindow(QMainWindow):
         if self._is_open_here(folder):
             self.toasts.show_message(strings.ALREADY_OPEN, None)
             return True
+        self._save_project_layout()  # the project that is open now keeps its panels
         try:
             result = self.ctl.open_path(folder)
         except OSError as exc:
@@ -2792,6 +3053,7 @@ class MainWindow(QMainWindow):
             self._error(str(exc))
             return False
         self._last_issues = result.issues
+        self._restore_project_layout()
         self.settings.setValue("project/last", str(folder))
         if self.ctl.open_note:
             self.toasts.show_message(self.ctl.open_note, None, 10000)
@@ -2956,6 +3218,44 @@ class MainWindow(QMainWindow):
     def _save_settings(self) -> None:
         self.settings.setValue("ui/geometry", self.saveGeometry())
         self.settings.setValue("ui/state", self.saveState(STATE_VERSION))
+        self._save_project_layout()
+
+    def _layout_group(self) -> str | None:
+        """The settings group of this project's layout: the project folder, hashed (a path is not
+        a safe key). None for a project that has no folder yet."""
+        root = self.ctl.root
+        if root is None:
+            return None
+        return "layout/" + hashlib.sha256(str(root).encode("utf-8")).hexdigest()[:12]
+
+    def _save_project_layout(self) -> None:
+        """The panels, the open area and the view, remembered per project (the window's own
+        size is global). Nothing is written into the project."""
+        group = self._layout_group()
+        if group is None:
+            return
+        names = self.main_tabs.names()
+        i = self.main_tabs.currentIndex()
+        self.settings.setValue(f"{group}/state", self.saveState(STATE_VERSION))
+        self.settings.setValue(f"{group}/area", self._area)
+        self.settings.setValue(f"{group}/tab", names[i] if 0 <= i < len(names) else "")
+        self.settings.setValue(f"{group}/rail", self.rail.collapsed)
+
+    def _restore_project_layout(self) -> None:
+        group = self._layout_group()
+        if group is None or not self.settings.contains(f"{group}/area"):
+            return
+        state = self.settings.value(f"{group}/state")
+        try:  # a layout from a version with other docks is ignored
+            if isinstance(state, QByteArray):
+                self.restoreState(state, STATE_VERSION)
+        except TypeError:
+            pass
+        self.rail.set_collapsed(bool(self.settings.value(f"{group}/rail", False, bool)))
+        area = str(self.settings.value(f"{group}/area", areas.DEFAULT))
+        tab = str(self.settings.value(f"{group}/tab", "")) or None
+        if area in areas.KEYS:
+            self._show_area(area, tab=tab if tab in self.main_tabs.names() else None)
 
     def reset_layout(self) -> None:
         """View > Reset layout: the panels back where they start, the saved layout forgotten."""
@@ -2980,6 +3280,8 @@ class MainWindow(QMainWindow):
         ):
             if dock.isVisibleTo(self):
                 panes.append((name, dock, tabs.currentWidget()))
+        if self.dock_problems.isVisibleTo(self):
+            panes.append((strings.PANE_PROBLEMS, self.dock_problems, self.problems_list))
         return panes
 
     @staticmethod
@@ -3114,6 +3416,8 @@ class MainWindow(QMainWindow):
     def resizeEvent(self, event: object) -> None:
         super().resizeEvent(event)  # type: ignore[arg-type]
         self.toasts.reposition()
+        self.rail.set_compact(self.height() < self.theme.px(640))
+        self._fit_status()
         if self.command_palette is not None and self.command_palette.isVisible():
             self.command_palette.reposition()
         if self._shown and self._layout_class_now() != self._layout_class:
