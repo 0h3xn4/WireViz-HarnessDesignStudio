@@ -391,6 +391,8 @@ def test_a_prefix_with_spaces_and_symbols_gives_a_valid_launcher(tmp_path: Path)
 
 
 def test_a_relative_prefix_and_the_unpack_folder_are_handled(tmp_path: Path) -> None:
+    if sys.platform != "linux":
+        pytest.skip("install.sh is the Linux tarball's script (GNU tools)")
     pkg = fake_package(tmp_path)
     env = {
         **os.environ,
