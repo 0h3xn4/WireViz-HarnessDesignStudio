@@ -231,28 +231,27 @@ _LOCK_OFFSET = 1 << 20  # Windows: the byte that stands for "this lock file is h
 
 def _byte_lock(fd: int) -> bool:
     """Windows: try to lock the marker byte of an open lock file; False if another handle has it."""
-    if sys.platform != "win32":
-        return False
-    os.lseek(fd, _LOCK_OFFSET, os.SEEK_SET)
-    try:
-        msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
-        return True
-    except OSError:
-        return False
-    finally:
-        os.lseek(fd, 0, os.SEEK_SET)
+    if sys.platform == "win32":
+        os.lseek(fd, _LOCK_OFFSET, os.SEEK_SET)
+        try:
+            msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+            return True
+        except OSError:
+            return False
+        finally:
+            os.lseek(fd, 0, os.SEEK_SET)
+    return False
 
 
 def _byte_unlock(fd: int) -> None:
-    if sys.platform != "win32":
-        return
-    os.lseek(fd, _LOCK_OFFSET, os.SEEK_SET)
-    try:
-        msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
-    except OSError:
-        pass
-    finally:
-        os.lseek(fd, 0, os.SEEK_SET)
+    if sys.platform == "win32":
+        os.lseek(fd, _LOCK_OFFSET, os.SEEK_SET)
+        try:
+            msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+        except OSError:
+            pass
+        finally:
+            os.lseek(fd, 0, os.SEEK_SET)
 
 
 def _lock_guard(fd: int) -> None:
