@@ -4,6 +4,12 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+Version 1.4.0 is in progress: the feedback of the AIT engineers (plan: `docs/ait/AIT_FEEDBACK_PLAN.md`, decisions D-160 and D-161).
+
+### Added
+
+- **Edit a wire (1.4.0, M1).** The *Edit wire* tab beside *Why* in the Drawings area sets the gauge, type, colour and length of one or several selected wires, a label (printed on the wire labels instead of the signal name) and a note. Gauge, type, colour and length lock the wire, so Generate keeps them; label and note are always kept; *Reset to generated* gives the wires back to generation. One undo step; a released harness is refused with the reason. The wire list gets the columns *Label* and *Note* only when a wire has one, so every existing project keeps byte-identical files and outputs. See `docs/user-manual/edit-a-wire.md` and D-161.
+
 ## 1.3.0 (2026-10-20; not a statement of compliance)
 
 Version 1.3.0 is 1.2.0 with a **new user interface** (the UI overhaul, decisions D-150 to D-159, brief and plan in `docs/ui/`): a navigation rail, one top bar with the three steps Generate, Check and Release, light and dark themes that switch at once with the bundled Inter and JetBrains Mono fonts, tables that work like a spreadsheet, a window that does not freeze, one import wizard, a list of the exported files with their checksums, and a Settings area. Before and after pictures are in `docs/ui/BEFORE_AFTER.md` and `docs/ui/screenshots/`.

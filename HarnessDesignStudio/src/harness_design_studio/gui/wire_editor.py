@@ -119,7 +119,9 @@ class WireEditor(QWidget):
             w.textEdited.connect(lambda _t, w=w: self._touch(w))
         self.part.activated.connect(lambda _i: self._touch(self.part))
         self.colour.activated.connect(lambda _i: self._touch(self.colour))
-        self.colour.lineEdit().textEdited.connect(lambda _t: self._touch(self.colour))
+        colour_edit = self.colour.lineEdit()
+        assert colour_edit is not None
+        colour_edit.textEdited.connect(lambda _t: self._touch(self.colour))
         self.note.textChanged.connect(lambda: self._touch(self.note))
         for w in (self.gauge, self.length, self.label):
             w.returnPressed.connect(self.apply_changes)
@@ -170,9 +172,9 @@ class WireEditor(QWidget):
         self.colour.addItems(["", *[name for name, _code, _hex in COLOURS]])
         if not wires:
             self.title.setText(strings.WIRE_EDIT_NONE)
-            for w in (self.gauge, self.length, self.label):
-                w.clear()
-                w.setPlaceholderText("")
+            for field in (self.gauge, self.length, self.label):
+                field.clear()
+                field.setPlaceholderText("")
             self.part.setCurrentIndex(0)
             self.colour.setCurrentIndex(0)
             self.note.clear()
@@ -202,7 +204,8 @@ class WireEditor(QWidget):
         self.part.setCurrentIndex(max(0, self.part.findText(part)) if isinstance(part, str) else 0)
         colour = _common([w.colour for w in wires])
         self.colour.setCurrentText(colour if isinstance(colour, str) else "")
-        self.note.setPlainText(_common([w.note for w in wires]) or "")  # type: ignore[arg-type]
+        note = _common([w.note for w in wires])
+        self.note.setPlainText(note if isinstance(note, str) else "")
         kept = {w.locked for w in wires}
         self.state.setText(
             strings.WIRE_STATE_MIXED
@@ -225,8 +228,8 @@ class WireEditor(QWidget):
                     reason = strings.WIRE_STATE_RELEASED.format(h.id, h.revision)
                     break
         on = bool(self._ids) and not reason
-        for w in (self.gauge, self.part, self.colour, self.length, self.label, self.note):
-            w.setEnabled(on)
+        for field in (self.gauge, self.part, self.colour, self.length, self.label, self.note):
+            field.setEnabled(on)
         self.apply.setEnabled(on)
         self.reset.setEnabled(on)
         if reason:
@@ -234,7 +237,7 @@ class WireEditor(QWidget):
 
     def _touch(self, widget: QWidget) -> None:
         if not self._filling:
-            self._touched.add(self._names[widget])  # type: ignore[index]
+            self._touched.add(self._names[widget])
 
     # ---- the buttons -----------------------------------------------------------------------
     def _changes(self) -> dict[str, object]:

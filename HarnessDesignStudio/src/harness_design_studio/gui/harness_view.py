@@ -42,6 +42,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMenu,
     QPushButton,
+    QScrollArea,
     QSizePolicy,
     QSplitter,
     QStackedWidget,
@@ -798,7 +799,12 @@ class HarnessView(QWidget):
         side.setObjectName("harness-side-tabs")
         side.setDocumentMode(True)
         side.addTab(self.why, strings.HV_WHY_TITLE)
-        side.addTab(self.wire_editor, strings.HV_EDIT_TAB)
+        scroll = QScrollArea()  # the form scrolls, so it never forces the drawing to shrink
+        scroll.setObjectName("wire-editor-scroll")
+        scroll.setWidgetResizable(True)
+        scroll.setFrameShape(QFrame.Shape.NoFrame)
+        scroll.setWidget(self.wire_editor)
+        side.addTab(scroll, strings.HV_EDIT_TAB)
         self.side_tabs = side
         self._why_box = side  # placed beside the tables by `_build_tables`
         self.why.whyRequested.connect(self.whyRequested)

@@ -183,7 +183,7 @@ Edit the file (`"mode": "per_zone_pair"` inside `"values"`), run `harness-design
 
 ## Wire colours
 
-The tool defines no wire colours. A wire has a colour only if you set one: by hand on the wire, in the app with **Edit > Wire colours...** (one colour per signal name such as `PWR`, `RTN`, `CANH`; one undo step), or in `config/generation.json` under `"values"`:
+The tool defines no wire colours. A wire has a colour only if you set one: on one wire in the **Edit wire** tab (Drawings area, new in 1.4.0), in the app with **Edit > Wire colours...** (one colour per signal name such as `PWR`, `RTN`, `CANH`; one undo step), or in `config/generation.json` under `"values"`:
 
 ```
 "wire_colour_by_signal": {"PWR": "red", "RTN": "black"}
