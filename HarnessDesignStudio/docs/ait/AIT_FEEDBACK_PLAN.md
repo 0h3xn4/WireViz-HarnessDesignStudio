@@ -6,8 +6,8 @@ This page says what the AIT engineers asked for, what the tool does about each p
 
 | # | Requirement | In 1.3.0 | Milestone |
 | --- | --- | --- | --- |
-| 1 | The standard components library connected to InvenTree (nice to have) | missing; the tool has a project parts library (CSV or XLSX import) and never opens a network connection | M5 (an import of an InvenTree export file; no live connection) |
-| 2 | Store connectors or devices with an editable pinout | a device can be defined down to each pin inside a project; nothing to reuse across projects | M5 |
+| 1 | The standard components library connected to InvenTree (nice to have) | missing; the tool has a project parts library (CSV or XLSX import) and never opens a network connection | M5 (the parts import reads an InvenTree export file, .csv .tsv .json .xlsx; no live connection, D-165) |
+| 2 | Store connectors or devices with an editable pinout | a device can be defined down to each pin inside a project; nothing to reuse across projects | M5 (a device library file, D-165) |
 | 3 | A function (name) on every pin | a pin has a name and a signal; no free-text function | M3 |
 | 4 | Choose colour, gauge and type of wires | colour per signal only; gauge is calculated; the type comes from the library part; no way to set them for one wire | M1 |
 | 5 | Every pin-to-pin wire editable | wires are generated; a hand choice needs `"locked": true` in the harness file and the app has no button | M1 (edit a wire), M2 (add, move and delete a wire) |

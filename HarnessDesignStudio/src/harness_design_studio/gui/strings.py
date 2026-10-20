@@ -497,7 +497,7 @@ NO_TYPE = "No type"
 AND_MORE = "… and {} more"
 PROGRESS_VERIFY = "Independent check"
 FOLDER_UNUSABLE = "the folder cannot be used"
-TABLE_FILES = "Tables (*.csv *.xlsx)"
+TABLE_FILES = "Tables (*.csv *.tsv *.json *.xlsx)"
 
 # ==== UX foundation (theme, icons, state chips, shared tables) ==============================
 A_THEME = "Theme"
@@ -847,7 +847,7 @@ IMP_FILE_READ = "Read {0}: {1}."
 IMP_FILE_SHEET = "sheet “{0}”"
 IMP_FILE_ROWS = "{0} data rows"
 IMP_FILE_COMPONENTS = "{0} components"
-IMP_FILTER_TABLES = "Tables (*.csv *.xlsx)"
+IMP_FILTER_TABLES = "Tables (*.csv *.tsv *.json *.xlsx)"
 IMP_FILTER_NETLIST = "KiCad netlists (*.net *.xml);;All files (*)"
 IMP_MAP_INTRO = "These are the first rows as the import will read them. Change a choice and the rows are read again."
 IMP_NOT_MAPPED = "(not used)"
@@ -2221,3 +2221,28 @@ REL_AUTHOR_TIP = (
     "changes made since that commit are not shown."
 )
 REL_AUTHOR_NAME = "Last commit of the project folder"
+
+# ---- 1.4.0 M5: device library files --------------------------------------------------------------
+DV_LIB_SAVE = "Save to library…"
+DV_LIB_SAVE_TIP = (
+    "Save this device with its connectors, pinouts, parts and interface types to a device library "
+    "file, to use it in another project. A file that exists is added to."
+)
+DV_LIB_ADD = "Add from library…"
+DV_LIB_ADD_TIP = (
+    "Add devices from a device library file. A device in your project is never replaced."
+)
+DV_LIB_FILTER = "Device library files (*.json)"
+DV_LIB_SAVE_TITLE = "Save device to a library file"
+DV_LIB_OPEN_TITLE = "Add devices from a library file"
+DV_LIB_SAVED = "Saved {0} to {1}"
+DV_LIB_ADDED = "Added {0} device(s) from {1}"
+DV_LIB_TITLE = "Add devices from a library file"
+DV_LIB_LIST = "Devices in the file"
+DV_LIB_LIST_TIP = "Tick the devices to add"
+DV_LIB_ITEM = "{0}: {1}"
+DV_LIB_NONE = "Tick at least one device."
+DV_LIB_ADD_BUTTON = "Add devices"
+DV_LIB_NOTES = "What will happen: {0}"
+DV_LIB_ROW_OK = "{0} will be added as {1} ({2} connectors, {3} pins)."
+STEP_ADD_DEVICES = "Add devices from a library file"

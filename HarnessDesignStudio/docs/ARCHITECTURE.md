@@ -58,6 +58,7 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | `samples.py`, `starter.py`, `templates.py` | reference projects for tests and the first-run sample; starter library and interface types (example data only); the example projects and import templates shipped with the tool |
 | `standard_profiles.py`, `configcheck.py` | optional value profiles from the supplied standards (D-131); check and fill in the engineering configuration (D-11) |
 | `devices.py`, `pinout_import.py` | custom devices down to each pin: the plans the Devices view and the pinout import call (connectors, pins, pasted rows, the state of a device); import of a device's pinout from CSV or XLSX as a plan |
+| `device_library.py` | device library files: devices with their pinouts, parts and interface types saved outside a project and added to another (D-165) |
 | `wirecolours.py`, `routing.py`, `describe.py` | the IEC 60757 wire colours; link-drawing rules that do not need Qt; plain-language captions for links and connectors, the link tooltip, the picture of a unit |
 | `usedby.py`, `why.py`, `generation_status.py` | where a unit, link, part or interface type is used; why an object is the way it is (reads the generation record); whether the harness plans match the design |
 | `imports.py`, `library_import.py`, `kicad.py` | CSV/XLSX import of interfaces; import of an approved-parts list (D-12); reading unit connector pinouts from a KiCad netlist (D-123) |

@@ -307,11 +307,12 @@ NOTHING_DONE = {
     "review": "changed", "release": "released", "revise": "revised",
     "import-parts": "imported", "import-lengths": "imported", "import-netlist": "imported",
     "import-pinout": "imported", "export-pinout": "exported",
+    "export-devices": "exported", "import-devices": "imported",
 }  # fmt: skip
 
 MUTATING = {
     "generate", "export", "migrate", "review", "release", "revise",
-    "import-parts", "import-lengths", "import-netlist", "import-pinout",
+    "import-parts", "import-lengths", "import-netlist", "import-pinout", "import-devices",
 }  # fmt: skip
 
 

@@ -19,6 +19,8 @@ from PySide6.QtWidgets import (
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QListWidget,
+    QListWidgetItem,
     QPlainTextEdit,
     QPushButton,
     QSpinBox,
@@ -27,6 +29,7 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio.core import devices
+from harness_design_studio.core.device_library import DevicePlan, device_names, plan_device_import
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.model import Project
@@ -423,4 +426,73 @@ class AssignDialog(_PlannerDialog):
             return strings.DVD_ASSIGN_NONE
         pins, signals = self.assignment()
         devices.ops_assign_pins(self.project, self.connector_id, pins, self.interface_id(), signals)
+        return None
+
+
+# ---- devices from a library file -----------------------------------------------------------------
+
+
+class LibraryDialog(_PlannerDialog):
+    """The devices of a device library file with a tick box each, and under them what adding the
+    ticked ones would do (new IDs, parts kept, anything left out). OK stays off until a ticked
+    device can be added."""
+
+    def __init__(
+        self, parent: QWidget | None, theme: ThemeManager, project: Project, data: dict[str, Any]
+    ) -> None:
+        super().__init__(parent, theme, strings.DV_LIB_TITLE, "devices-library-dialog")
+        self.project, self.data = project, data
+        self.devices = QListWidget()
+        self.devices.setObjectName("library-devices")
+        self.devices.setAccessibleName(strings.DV_LIB_LIST)
+        self.devices.setToolTip(strings.DV_LIB_LIST_TIP)
+        for uid, name in device_names(data):
+            item = QListWidgetItem(strings.DV_LIB_ITEM.format(uid, name))
+            item.setData(Qt.ItemDataRole.UserRole, uid)
+            item.setFlags(item.flags() | Qt.ItemFlag.ItemIsUserCheckable)
+            item.setCheckState(Qt.CheckState.Checked)
+            self.devices.addItem(item)
+        self.devices.itemChanged.connect(self.revalidate)
+        self.preview = QLabel()
+        self.preview.setObjectName("library-preview")
+        self.preview.setProperty("muted", True)
+        self.preview.setWordWrap(True)
+        self.lay.addWidget(QLabel(strings.DV_LIB_LIST))
+        self.lay.addWidget(self.devices)
+        self.lay.addWidget(self.preview)
+        self._plan: DevicePlan | None = None
+        self._chosen: list[str] = []
+        self._finish(strings.DV_LIB_ADD_BUTTON)
+
+    def selected(self) -> list[str]:
+        out = []
+        for k in range(self.devices.count()):
+            item = self.devices.item(k)
+            if item is not None and item.checkState() == Qt.CheckState.Checked:
+                out.append(str(item.data(Qt.ItemDataRole.UserRole)))
+        return out
+
+    def plan(self) -> DevicePlan:
+        """What adding the ticked devices does now (the ops are for the controller)."""
+        chosen = self.selected()
+        if self._plan is None or self._chosen != chosen:
+            self._chosen = chosen
+            self._plan = plan_device_import(self.project, self.data, chosen)
+        return self._plan
+
+    def check(self) -> str | None:
+        chosen = self.selected()
+        if not chosen:
+            self.preview.setText("")
+            return strings.DV_LIB_NONE
+        plan = self.plan()
+        lines = [
+            strings.DV_LIB_ROW_OK.format(r.unit_id, r.new_id, r.connectors, r.pins)
+            for r in plan.rows
+            if r.ok
+        ]
+        self.preview.setText(" ".join(lines + plan.notes))
+        bad = next((r for r in plan.rows if not r.ok), None)
+        if bad is not None:
+            return f"{bad.unit_id}: {bad.message}"
         return None

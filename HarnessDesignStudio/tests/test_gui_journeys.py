@@ -308,7 +308,7 @@ def test_j4_import_cancel_changes_nothing_and_file_open_errors(win, tmp_path) ->
     def fn(d) -> None:  # type: ignore[no-untyped-def]
         d.pick_file = lambda: str(bad)
         d.open_file()
-        assert "Only .csv and .xlsx" in d.summary.text()
+        assert "Only .csv, .tsv, .json and .xlsx" in d.summary.text()
         d.text.setPlainText("id,type,from,to\nA1,RS-422,OBC,PCDU\n")
 
     DialogScript(win, fn, accept=False)

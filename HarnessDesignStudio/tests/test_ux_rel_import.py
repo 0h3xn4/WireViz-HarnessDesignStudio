@@ -87,7 +87,7 @@ def test_the_first_page_offers_every_kind_and_waits_for_a_readable_file(qtbot, c
     bad = tmp_path / "list.txt"
     bad.write_text("x")
     assert w.load_file(str(bad)) is False
-    assert "Only .csv and .xlsx" in w.file_page.notice.text()
+    assert "Only .csv, .tsv, .json and .xlsx" in w.file_page.notice.text()
     assert w.load_file(str(TEMPLATES / "interfaces.csv"))
     assert not w.file_page.notice.isVisible()
     assert (

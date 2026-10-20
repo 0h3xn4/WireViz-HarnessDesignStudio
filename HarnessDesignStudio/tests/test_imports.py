@@ -128,7 +128,7 @@ def test_read_table_errors(tmp_path: Path) -> None:
         read_table(fake)
     other = tmp_path / "x.txt"
     other.write_text("a")
-    with pytest.raises(ImportError_, match="Only .csv and .xlsx"):
+    with pytest.raises(ImportError_, match="Only .csv, .tsv, .json and .xlsx"):
         read_table(other)
     big = tmp_path / "big.csv"
     big.write_bytes(b"a,b\n" + b"x" * (9 * 1024 * 1024))

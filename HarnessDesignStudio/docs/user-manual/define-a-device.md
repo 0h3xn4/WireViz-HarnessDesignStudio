@@ -118,6 +118,17 @@ The first line is the stamp (the tool version and the model hash, which depends 
 
 - Then connect the device to others as usual (**Ctrl+I**) and **Generate**. The pins you defined are used as you defined them; a second Generate changes nothing.
 
+## Use a device in another project
+
+Define a device once and keep it in a **device library file**, a JSON file that you can store anywhere, share, or keep in Git.
+
+- **Save:** in the Devices tab choose the device and press **Save to library…**. Pick a file; if it exists the device is added to it (a device with the same ID is replaced, the others stay). The file holds the device, its connectors with every pin (signal, function, contact size, termination, fixed), and the parts and interface types they name. The zone, and anything that Generate allocated in this project, are not saved.
+- **Add:** in the other project press **Add from library…** in the Devices tab, pick the file, tick the devices, and read the sentence under the list: which ID each gets, what is kept. **Add devices** is one undo step. A device that has a problem is named with its reason and the others are still added.
+- Nothing in your project is replaced. If the ID is taken the device is added as `GYRO1-2`; a part or interface type that the project already has stays as it is, and the sentence says when the file's differs. Parts that come with the file keep the approval status the file says; the tool tells you when it is not *approved*, because the file's status is not a decision of your project.
+- On the command line: `harness-design-studio export-devices DIR FILE --unit GYRO1` and `harness-design-studio import-devices DIR FILE --list`, then `--unit GYRO1 --dry-run`, then without `--dry-run`.
+
+Then connect the device as usual and **Generate**.
+
 ## Change a device later
 
 Edit a cell, add or delete pins, change the part: each is one step, and **Undo** takes it back. When a released harness uses the device:
