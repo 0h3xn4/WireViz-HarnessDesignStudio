@@ -58,10 +58,11 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | `samples.py`, `starter.py`, `templates.py` | reference projects for tests and the first-run sample; starter library and interface types (example data only); the example projects and import templates shipped with the tool |
 | `standard_profiles.py`, `configcheck.py` | optional value profiles from the supplied standards (D-131); check and fill in the engineering configuration (D-11) |
 | `devices.py`, `pinout_import.py` | custom devices down to each pin: the plans the Devices view and the pinout import call (connectors, pins, pasted rows, the state of a device); import of a device's pinout from CSV or XLSX as a plan |
+| `wires.py` | the plans behind the *Edit wire* tab (1.4.0): edit a wire (gauge, type, colour, length lock it; label and note are always kept), reset, draw a wire, move its ends, delete, group (twist or shield), set the harness and connector labels (D-161 to D-163) |
 | `device_library.py` | device library files: devices with their pinouts, parts and interface types saved outside a project and added to another (D-165) |
 | `wirecolours.py`, `routing.py`, `describe.py` | the IEC 60757 wire colours; link-drawing rules that do not need Qt; plain-language captions for links and connectors, the link tooltip, the picture of a unit |
 | `usedby.py`, `why.py`, `generation_status.py` | where a unit, link, part or interface type is used; why an object is the way it is (reads the generation record); whether the harness plans match the design |
-| `imports.py`, `library_import.py`, `kicad.py` | CSV/XLSX import of interfaces; import of an approved-parts list (D-12); reading unit connector pinouts from a KiCad netlist (D-123) |
+| `imports.py`, `library_import.py`, `kicad.py` | CSV/TSV/JSON/XLSX tables and the import of interfaces; import of an approved-parts list (D-12; also an InvenTree export file, D-165); reading unit connector pinouts from a KiCad netlist (D-123) |
 | `io/` | project folder input and output: `canonical` (canonical JSON), `fs` (atomic writes, safe names, lock), `layout` (memory to folder mapping), `loader`, `saver`, `migrate` (schema migrations) |
 
 ### `core/`: generation, checks, outputs, change control
@@ -72,14 +73,14 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | `drc/` | design rule check (35 rules): `base` (rule building blocks), `rules` (the rules, one function each), `standard_rules` (rules that apply the supplied standards), `report` (the report), `by_rule` (one result per rule: pass, fail, not checked, pending), `worker` (the child process that runs the check) |
 | `verify.py` | independent output verifier: a separate code path from `generate/` that shares no logic with it |
 | `outputs/` | `build` (build, write and check the output set), `canvas` (small deterministic SVG and PDF drawing model), `drawing` (the harness drawing), `system` (block diagram and harness overview), `tables`, `errors` (the builder's errors in plain language), `exports` (WireViz-style YAML, JSON, XLSX), `xlsx_env` (turns lxml off before openpyxl is imported, so workbooks are identical on every machine), `provenance`, `stamp` (tool version and model hash on every file), `verify` (output verifier: re-reads the finished files) |
-| `vcs/` | change control: `release` (review, release, new revision), `locks` (locks on released items), `snapshot`, `diff`, `hashing`, `consistency` (released harnesses against their baselines), `lockview` (what a release locks and why, which fields stay editable), `timeline` (the change log as rows, differences grouped by kind), `report` (change log and revision report) |
+| `vcs/` | change control: `release` (review, release, new revision), `locks` (locks on released items), `snapshot`, `diff`, `hashing`, `gitinfo` (the last commit of the Git repository around the project folder, read from the `.git` files without starting `git`, D-164), `consistency` (released harnesses against their baselines), `lockview` (what a release locks and why, which fields stay editable), `timeline` (the change log as rows, differences grouped by kind), `report` (change log and revision report) |
 
 ### `cli/` and `gui/`
 
 | Module | What it does |
 | --- | --- |
 | `cli/main.py` | the `harness-design-studio` entry point (`harness` is an alias) |
-| `cli/start.py`, `cli/data.py`, `cli/changes.py` | getting started (`new`, `templates`); outside data (`config`, `import-parts`, `import-lengths`, `import-netlist`, `import-pinout`, `export-pinout`); change control (`review`, `release`, `revise`, `diff`, `compare`, `log`) |
+| `cli/start.py`, `cli/data.py`, `cli/changes.py` | getting started (`new`, `templates`); outside data (`config`, `import-parts`, `import-lengths`, `import-netlist`, `import-pinout`, `import-devices`, `export-pinout`, `export-devices`); change control (`review`, `release`, `revise`, `diff`, `compare`, `log`) |
 
 The editor (`gui/`) has these parts. The window is a navigation rail (Home, Model, Checks, Drawings, Outputs, Revisions, Settings), one top bar with the three steps Generate, Check and Release, the open area, a project panel on the left, the inspector on the right, a Problems panel at the bottom and a status bar. An area is a view onto the six main tabs (Diagram, Devices, Checks, Harness, Lists, Releases); Home and Settings are pages of their own.
 

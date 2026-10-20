@@ -60,7 +60,7 @@ bash: line 1: harness-design-studio: command not found
 - **Run from source or pip into a virtual environment (way C):** the environment is not active in this terminal. Run `. .venv/bin/activate` in the folder where you made it.
 - **Nothing installed yet:** start at [`INSTALL.md`](INSTALL.md).
 
-Check with `harness-design-studio --version`; it prints the version, for example `harness 1.3.0`.
+Check with `harness-design-studio --version`; it prints the version, for example `harness 1.4.0`.
 
 ### I am on Windows or macOS
 

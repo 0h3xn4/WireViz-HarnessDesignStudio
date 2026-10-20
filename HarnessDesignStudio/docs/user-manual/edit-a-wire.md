@@ -4,6 +4,10 @@ This page shows how to change a wire after the tool has generated it (its gauge,
 
 > **New in 1.4.0.** Before 1.4.0 the app had no way to change or draw a single wire (only the colour of a whole signal, see [set wire colours](set-wire-colours.md)). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
 
+![The Drawings area with the Edit wire tab beside Why: wire W001-003 is selected and its gauge, type, colour and length are filled in](../img/edit-wire-tab.png)
+
+*The Edit wire tab (right of the wire table) on the `flatsat` example; the window is 1760 pixels wide. In a narrower window the form scrolls.*
+
 ## Before you start
 
 - You have a generated project with a harness that is not released. A released harness is locked: start a new revision first ([change a released harness](change-a-released-harness.md)).

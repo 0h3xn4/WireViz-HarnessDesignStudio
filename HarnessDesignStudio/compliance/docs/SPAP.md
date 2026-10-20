@@ -1,6 +1,6 @@
 # Software product assurance plan (SPAP)
 
-DRD: ECSS-Q-ST-80C Annex B. Software: Harness Design Studio `0.1.0` (the plan has been applied to every release since, the latest being `1.3.0`; the owner approved it on 2026-10-08 and has not approved it again for a later version; this document was not changed for 1.0.0 to 1.3.0 except this line and the build hosts in 5.3). Criticality: C. Status: approved by the owner on 2026-10-08 (approval given in the working session; the owner is also customer and supplier, so no independent reviewer, see A-01).
+DRD: ECSS-Q-ST-80C Annex B. Software: Harness Design Studio `0.1.0` (the plan has been applied to every release since, the latest being `1.4.0`; the owner approved it on 2026-10-08 and has not approved it again for a later version; this document was not changed for 1.0.0 to 1.4.0 except this line and the build hosts in 5.3). Criticality: C. Status: approved by the owner on 2026-10-08 (approval given in the working session; the owner is also customer and supplier, so no independent reviewer, see A-01).
 
 ## 1. Introduction
 Purpose: define how product assurance is done for the harness design tool. Applicable: ECSS-Q-ST-80C Rev.2 with ECSS-E-ST-40C Rev.1, tailored for category C (Table D-2 and Table R-1, evaluated in `../requirements/`).

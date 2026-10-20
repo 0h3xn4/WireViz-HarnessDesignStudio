@@ -8,6 +8,7 @@ This page shows how to change the IDs the tool gives to harnesses, connectors an
 - Change them **before** you release anything. IDs are stable once a harness is released.
 - The title block layout is a placeholder: the owner's decision D-15 (the company format) is open. The tool shows a generic title block whose fields you can choose. See [`OPEN_DECISIONS.md`](../OPEN_DECISIONS.md).
 - Edit the files while the project is not open in the app.
+- These patterns make the **IDs**. To print other text on the labels, give a wire, a connector or the harness a *label* in the app (since 1.4.0): a wire's and the harness's in the **Edit wire** tab, a box connector's on its card in the **Devices** tab. The ID does not change; `labels.csv` prints the label ([edit a wire](edit-a-wire.md)).
 
 ## 1. Name patterns: `config/naming.json`
 

@@ -56,12 +56,12 @@ wheel-link/outputs/
 
 | File | What it is for |
 | --- | --- |
-| `wirelist.csv` | Every wire: signal, interface, connectors, pins, gauge, part, colour, length. |
-| `pinouts.csv`, `box_pinouts.csv` | Every pin of every cable connector, and of every connector on a unit, with the wire on it and whether it is spare. |
+| `wirelist.csv` | Every wire: signal, interface, connectors, pins, gauge, part, colour, length. Two columns, *Label* and *Note*, are added only when you gave a wire one (1.4.0). |
+| `pinouts.csv`, `box_pinouts.csv` | Every pin of every cable connector, and of every connector on a unit, with the wire on it and whether it is spare. The columns *Function* and *Termination* (crimp or solder) are added only when a pin has one (1.4.0). |
 | `bom.csv` | The bill of materials ([BOM](../GLOSSARY.md)): parts and quantities, with approval status. |
 | `mass_length.csv` | Wire length and mass, and what is still unknown. Totals count only what is known. |
 | `tests.csv` | A continuity test for each wire and an isolation test for each wire and shield. |
-| `labels.csv` | One label for each connector and two for each wire. |
+| `labels.csv` | One label for each connector and two for each wire, and one for the harness when it has a label. A label you gave (1.4.0) is printed instead of only the ID or the signal name. |
 | `mating_matrix.csv` | Which cable connector mates with which unit connector, with the gender of each. |
 | `traceability.csv` | Which interface is carried by which wires. |
 | `drc_report.md` | The same report as `harness-design-studio drc`. |

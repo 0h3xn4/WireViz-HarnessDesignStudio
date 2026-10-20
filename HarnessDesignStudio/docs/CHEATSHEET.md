@@ -23,14 +23,20 @@ The command line cannot add units or interfaces. The loop works on a project tha
 | --- | --- |
 | the example import files, demo values and CI scripts | `harness-design-studio templates my-templates` (the folder must be new or empty) |
 | interfaces in a table | app only: **File > Import > Import interfaces…** |
-| a parts list | `harness-design-studio import-parts DIR parts.csv --approved Approved` |
+| a parts list (CSV, TSV, JSON or XLSX; also an InvenTree export) | `harness-design-studio import-parts DIR parts.csv --approved Approved` |
 | segment lengths | `harness-design-studio import-lengths DIR lengths.csv --unit mm` |
 | unit connectors in KiCad | `harness-design-studio import-netlist DIR file.net --unit RW1 --prefix J --connector J1=RW1-J01 --dry-run` |
 | a device's pins from a table | `harness-design-studio import-pinout DIR gyro.csv --unit GYRO1 --new-device "Gyro unit" --default-part MY-HD-9-F --dry-run` |
 | a device's pinout as a file | `harness-design-studio export-pinout DIR --unit GYRO1 -o gyro.xlsx` |
+| a device from another project (a device library file) | `harness-design-studio import-devices DIR devices.json --list`, then `--unit GYRO1 --dry-run` |
+| a device to keep for other projects | `harness-design-studio export-devices DIR devices.json --unit GYRO1` (or **Save to library…** in the Devices tab) |
 | engineering values | edit `config/*.json`, see [`CONFIG.md`](CONFIG.md); `harness-design-studio config DIR` lists what is missing |
 
 Add `--dry-run` to any import to see what it would do first. Other commands (`compare`, `schema`, `library`, `migrate`, and options such as `config --ampacity-csv`) are in [`CLI.md`](CLI.md).
+
+## Edit what was generated (app, since 1.4.0)
+
+In the **Drawings** area, select a harness and open the **Edit wire** tab beside *Why*: set the gauge, type, colour, length, label and note of the selected wires (the first four lock the wire, so Generate keeps them), **New wire** draws a wire between two pins, **Group** twists or shields selected wires, **Labels** names the harness and its cable connectors. In the **Devices** tab: a pin's *Function*, a connector's *Label*, **Save to library…** and **Add from library…**. Details: [`user-manual/edit-a-wire.md`](user-manual/edit-a-wire.md), [`user-manual/define-a-device.md`](user-manual/define-a-device.md).
 
 ## Release and change
 

@@ -1,6 +1,6 @@
 # Set wire colours
 
-This page shows how to give each signal (power, return, CAN high, ...) a wire colour, so that the wire list shows it and the harness drawings draw it.
+This page shows how to give each signal (power, return, CAN high, ...) a wire colour, so that the wire list shows it and the harness drawings draw it. To colour **one wire** only, use the **Edit wire** tab instead ([edit a wire](edit-a-wire.md), since 1.4.0): that wire is locked and keeps its colour whatever the signal rule says.
 
 > **Not in the 0.1.0 packages.** *Edit > Wire colours...*, the *Colour* column set from signals and the coloured wiring-diagram drawing are new in 1.0.0. They are not in the 0.1.0 `.deb` and `.tar.gz`. See the [changelog](../../CHANGELOG.md). `harness-design-studio new --list` shows five examples on 1.0.0 and three on 0.1.0.
 
@@ -41,7 +41,7 @@ harness-design-studio export wheel-link
 ```
 0 added, 1 changed, 1 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
-38 files written to wheel-link/outputs (model 65c370f29b7c).
+38 files written to wheel-link/outputs (model 780db812ffd5).
 ```
 
 Only the power harness changed, because the RS-422 signals have no colour yet. In `outputs/harnesses/W002/wirelist.csv` the `Colour` column now reads:
@@ -56,7 +56,7 @@ W002-002,RTN,IF-001,W002-P1,2,W002-P2,2,22,EX-WIRE-SINGLE,black,1,W002-S1,
 ## Rules to know
 
 - A wire between two different signals is labelled like `TX+/RX+`. It takes the colour of the first signal that has one.
-- A wire that has a colour of its own (set by hand and locked) keeps it. The signal colour is used only when the wire has none.
+- A wire that has a colour of its own (set in the **Edit wire** tab, or by hand in the file, and locked) keeps it. The signal colour is used only when the wire has none.
 - Change the colours and generate again: the wires follow. `red` became `blue` in a test.
 - A colour that is not in the list (for example `mauve`) is kept as typed. The drawing writes it as text, shortened to six letters, and draws the wire grey. The app's list offers only the 12 colours.
 - A two-letter code (`BK`) in the file is understood too.

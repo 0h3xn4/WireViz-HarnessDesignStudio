@@ -140,6 +140,22 @@ The editor of 1.3.0 (the UI overhaul, D-150 to D-159) has its own tests. All run
 
 Pictures of the result are made with `tools.ui_screenshots`, timings with `tools.ui_perf` ([`tools.md`](tools.md)).
 
+## The tests of the 1.4.0 features
+
+Version 1.4.0 (the AIT feedback, D-160 to D-165) added these tests. The ones that open the editor run offscreen and carry `gui`.
+
+| Tests | What they check |
+| --- | --- |
+| `tests/test_wires.py` | `SparseEntity` (a default field is not written), editing, locking and resetting a wire, generation keeping label and note, a released harness refusing, the wire list columns *Label* and *Note*, and the independent verifier on them. |
+| `tests/test_manual_wires.py` | Drawing, moving and deleting a wire, several wires on one pin (the rule `pin-shared`, the verifier's `pin_shared` warning), groups (twist, shield, ungroup), generation keeping all of it and naming what it cannot keep. |
+| `tests/test_pin_function.py`, `tests/test_ui_pin_function.py` | A pin's function and a connector's or harness's label: edit, paste, pinout import, generation, the optional output columns *Function* and *Termination*, the Devices tab. |
+| `tests/test_gitinfo.py`, `tests/test_ui_authorship.py` | The commit reader on real repositories (loose, packed, detached, worktree, damaged, size bombs) and the line in the Revisions area. It does not start `git`. |
+| `tests/test_device_library.py`, `tests/test_device_library_cli.py`, `tests/test_ui_device_library.py` | Device library files: export, merge, read, adding with renamed IDs, parts and types kept as the project has them, files that are not libraries, the CLI commands and the Devices tab buttons. |
+| `tests/test_inventree_import.py` | An InvenTree export (CSV, TSV, JSON) in the parts import: the IPN as part ID, categories, JSON that is not a flat list. |
+| `tests/test_ui_wire_editor.py` | The Edit wire tab: selection, apply, reset, several wires, the new wire form, groups, the labels form. |
+
+The proof that existing work is unchanged is `tests/test_output_hashes.py` (above): the 567 files of the four examples still match release 1.2.0 apart from the version stamp.
+
 ## 5. Golden files
 
 A golden file is a stored, reviewed result that a test compares with a fresh one. Changing one on purpose is allowed. Changing one to make a test pass without reading the difference is not.

@@ -33,6 +33,7 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 | `gui_screenshots` | Renders 26 screenshots of the real editor (offscreen) into `docs/ux/qt`: the sample project and the views and dialogs on the flatsat example (about a minute) |
 | `ui_screenshots` | Pictures of every area, tab, panel, menu and dialog of the editor on the flatsat example, in the light and the dark theme (offscreen), for the UI overhaul: `python -m tools.ui_screenshots OUT`. The sets are `docs/ui/screenshots/before/` (release 1.2.0) and `docs/ui/screenshots/after/` (release 1.3.0), compared in [`../ui/BEFORE_AFTER.md`](../ui/BEFORE_AFTER.md). **Always give a folder:** without one the script writes into `docs/ui/screenshots/before/`, the 1.2.0 baseline. It runs each theme and part (`--theme light\|dark`, `--part main\|extra`) in a process of its own, because two themes in one process crash Qt's offscreen platform; one picture that fails is listed at the end and does not stop the others |
 | `flatsat_screenshots` | Pictures of the flatsat diagram in the editor (overview and one unit in focus), for `docs/FLATSAT_EXAMPLE.md` and the README |
+| `tab_screenshots` | Two pictures for the user manual (1.4.0): the *Edit wire* tab with a wire selected and the *Devices* tab, in `docs/img` (`python -m tools.tab_screenshots [OUT]`, offscreen, 1760 x 1000) |
 | `ux_screenshots` | Screenshots of the prototype's key screens into `docs/ux/screens` (needs Playwright; history only) |
 
 ## Build and release

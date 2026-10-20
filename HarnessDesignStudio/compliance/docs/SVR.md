@@ -13,7 +13,7 @@ Evidence is stored in `../evidence/`. Dates are not recorded in generated data; 
 The owner's needs are in `../../docs/SPEC.md`. The system-level requirement baseline (SSS) does not exist; verification not possible (G-01, A-02).
 
 ### 4.3 Requirements and architecture engineering
-- 4.3.1 Traceability: `../traceability.csv`, 78 requirements; each names verifying files; 47 are named in at least one test, the rest by file only or by review (`REQ-I18N-01`); `tests/test_trace.py` fails if a requirement has neither a file that exists nor a review. A trace from requirement to design component is not complete (A-10).
+- 4.3.1 Traceability: `../traceability.csv`, 89 requirements; each names verifying files; 47 are named in at least one test, the rest by file only or by review (`REQ-I18N-01`); `tests/test_trace.py` fails if a requirement has neither a file that exists nor a review. A trace from requirement to design component is not complete (A-10).
 - 4.3.2 Feasibility: demonstrated by the working tool.
 
 ### 4.4 Design and implementation engineering

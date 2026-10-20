@@ -51,7 +51,7 @@ Nothing was changed. The exit code is 1. (On a project without the demo values, 
 
 A harness is `draft`, then optionally `in_review`, then `released`.
 
-- App: open the **Releases** tab (Ctrl+5; **Revisions** on the rail), pick the harness and press **Submit for review** (in the **Harness** tab the button is **Open in review**), confirm your name.
+- App: open the **Releases** tab (Ctrl+5; **Revisions** on the rail), pick the harness and press **Submit for review** (in the **Harness** tab the button is **Open in review**), confirm your name. When the project folder is in a Git repository, a line at the top of the tab names the last commit (who, when, what); it is context, not a signature, and the review, release and revision records below stay the change control ([use Git and CI](use-git-and-ci.md)).
 - Command line:
 
 ```

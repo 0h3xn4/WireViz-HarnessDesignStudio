@@ -41,7 +41,7 @@ small-satellite    14 units with nominal and redundant chains. Generate it to se
 flatsat            A complete bench: 23 flight and ground units, generated, with example numbers.
 ```
 
-**Which version do you have?** This tutorial is written for 1.3.0 (the commands work the same on 1.2.0, 1.1.0 and 1.0.0; the window of 1.3.0 is new, so the app steps and the picture look different in 1.2.0 and earlier, which had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
+**Which version do you have?** This tutorial is written for 1.4.0 (the commands work the same on 1.3.0, 1.2.0, 1.1.0 and 1.0.0; the window is the one of 1.3.0 and later, so the app steps and the picture look different in 1.2.0 and earlier, which had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
 
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 

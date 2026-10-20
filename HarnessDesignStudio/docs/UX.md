@@ -18,6 +18,7 @@
 - [12. Qt editor review log (M2 implementation)](#12-qt-editor-review-log-m2-implementation)
 - [13. Redesign against the UX/UI Standard (October 2026)](#13-redesign-against-the-uxui-standard-october-2026)
 - [14. The UI overhaul (version 1.3.0, October 2026)](#14-the-ui-overhaul-version-130-october-2026)
+- [15. The AIT feedback (version 1.4.0, October 2026)](#15-the-ait-feedback-version-140-october-2026)
 
 Status: **approved by the owner; the Qt editor is implemented (section 12), was rebuilt in October 2026 (section 13) and again for version 1.3.0 (section 14).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
 
@@ -370,3 +371,17 @@ Window
 The three steps Generate, Check and Release show their state and what is next. There is one import wizard for every kind of import, and a settings page with Appearance (theme, interface size, reduce motion), Editing, Project, Keyboard shortcuts, About and Licences. The window no longer freezes on a large file or after an edit in a large project. The look is in [`DESIGN.md`](DESIGN.md) and the pictures are in [`ui/BEFORE_AFTER.md`](ui/BEFORE_AFTER.md) and [`ui/screenshots/after/`](ui/screenshots/after/).
 
 What did not change: the design model, the file format, the 34 design rules, the command line and every generated file (checked with `tools/output_hashes.py`). The journeys of section 3 still apply. What was not done, and why, is in [`ui/BEFORE_AFTER.md`](ui/BEFORE_AFTER.md) ("What is left, and why"); no person has used the new interface in a usability session, and the screen-reader pass of [`usability/screen_reader_pass.md`](usability/screen_reader_pass.md) has not been held (waived, `compliance/DEVIATIONS.md`).
+
+## 15. The AIT feedback (version 1.4.0, October 2026)
+
+The feedback of the AIT engineers (ten requirements; plan and status in [`ait/AIT_FEEDBACK_PLAN.md`](ait/AIT_FEEDBACK_PLAN.md), decisions D-160 to D-165) changed the editor in five places. The window of section 14 is otherwise unchanged.
+
+| Where | What is new |
+| --- | --- |
+| Drawings area, Harness tab | The *Edit wire* tab beside *Why*: change the gauge, type, colour, length, label and note of the selected wires; *New wire* draws a wire between two pins; *Group* twists or shields selected wires; *Labels* names the harness and its cable connectors. Several wires may share a pin (the rule *Several wires on one pin*, a warning). |
+| Model area, Devices tab | A *Function* column in the pin table, a *Label* field on the connector card, the buttons *Save to library…* and *Add from library…* (a device library file), and a *Termination* column when pins have one. |
+| Revisions area | A line with the last commit of the project's Git repository (who, when, what, branch), shown only when there is one. |
+| Import wizard | The parts import also reads `.tsv` and `.json` files and an export of InvenTree. |
+| Outputs | The wire list, pinout lists and labels gain columns and rows only when the new fields are used, so existing projects keep the same files. |
+
+The interaction rules of section 6 apply as before: a change is one undo step, a released harness refuses with the reason, a mistake is said inline, and the tool never fills in an engineering value by itself. Known weakness: the *Edit wire* tab shares the box under the drawing with the pin table and the wire table, so its form is often wider than the tab and scrolls sideways (the picture in the manual shows it); a wider tab is a candidate for the next release.

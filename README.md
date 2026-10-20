@@ -15,9 +15,9 @@ An offline desktop tool for designing the electrical harnesses of a spacecraft: 
 
 *The `flatsat` example, one of the five projects that come with the tool.*
 
-![The whole window of version 1.3.0 with the flatsat example: navigation rail on the left, project tree, diagram, inspector, and the steps Generate, Check and Release in the top bar](HarnessDesignStudio/docs/ui/screenshots/after/01-diagram-selected-1440x900_light.png)
+![The whole window (picture taken with version 1.3.0) with the flatsat example: navigation rail on the left, project tree, diagram, inspector, and the steps Generate, Check and Release in the top bar](HarnessDesignStudio/docs/ui/screenshots/after/01-diagram-selected-1440x900_light.png)
 
-*The window of version 1.3.0 (light theme; a dark theme is built in).*
+*The window (light theme; a dark theme is built in). Version 1.4.0 adds the Edit wire tab and the device library buttons; see the [user manual](HarnessDesignStudio/docs/user-manual/edit-a-wire.md).*
 
 ## Contents
 
@@ -89,11 +89,12 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 - **Your design is the source of truth.** Harnesses, drawings and lists are generated from it and can be regenerated at any time.
 - **A diagram editor with views** — units and links on a diagram with marks for problems, locks and values still to enter; a project tree and spreadsheet-like tables for units and interfaces; a navigation rail (Home, Model, Checks, Drawings with pins, wires, drawing and why, Outputs with every exported file and its checksum, Revisions, Settings); the steps Generate, Check and Release in one top bar; a Problems panel; light and dark themes; an Export window and one Import wizard.
 - **Generates the harnesses** — connectors, pins, wires, shields, with a *Why is it like this?* explanation for every choice.
+- **Lets you edit them** (since 1.4.0) — the gauge, type, colour and length of a single wire, wires you draw yourself, several wires on one pin, twisted and shielded groups, a function on every pin and labels on connectors and harnesses; Generate keeps what you set.
 - **Checks them** against 35 design rules and says clearly which checks could not run because a number is missing.
 - **Writes the documents** — a wiring-diagram drawing per harness (SVG and PDF), wire lists, pinouts, bill of materials, test tables, labels, a block diagram and a change log.
-- **Change control** — review, release and revise a harness; a released harness, and the parts, interface types and configuration it uses, are locked, and every change is recorded.
+- **Change control** — review, release and revise a harness; a released harness, and the parts, interface types and configuration it uses, are locked, and every change is recorded; the Revisions area also shows the last Git commit of the project's repository.
 - **Starts from the usual links** — RS-422, RS-485 and CAN for communication, Micro-D (9 to 31 pins) for power and data, Ethernet for high data rates, SMA for RF. Other types and connectors can be added.
-- **Imports** interface tables (CSV or XLSX), approved parts, segment lengths, engineering values and KiCad netlists.
+- **Imports** interface tables (CSV or XLSX), approved parts (also an InvenTree export file), segment lengths, engineering values and KiCad netlists, and **reuses devices** across projects through device library files.
 - **Offline and reproducible** — it never uses the network (a test enforces this), and the same design gives byte-identical files.
 - **Honest** — it does not invent derating, ampacity, EMC values or approved parts. Until you supply them, results say so.
 

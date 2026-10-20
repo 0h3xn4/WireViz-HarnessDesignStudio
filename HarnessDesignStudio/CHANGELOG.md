@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Documentation
+
+- **Documents brought up to 1.4.0.** The user manual (edit a wire, define a device and reuse it, import data with InvenTree files, export, Git, naming, wire colours, generate), the FAQ, glossary, concepts, cheat sheet, learning path, troubleshooting and tips, the user guide, both READMEs, the architecture, design and UX pages, the developer pages (tests of the 1.4.0 features, a picture script), the compliance records and the AIT plan now describe what 1.4.0 does; statements that were no longer true (the app has no button to lock a wire, a harness is never drawn by hand, there is no editor for interface types, the root changelog's latest version) were corrected, quoted model hashes and version stamps renewed, and two pictures added (`docs/img/edit-wire-tab.png`, `docs/img/devices-tab.png`, made by `python -m tools.tab_screenshots`). No code or output changes.
+
 ## 1.4.0 (2026-10-20; not a statement of compliance)
 
 Version 1.4.0 answers the feedback of the AIT engineers (plan: `docs/ait/AIT_FEEDBACK_PLAN.md`, decisions D-160 to D-165): every wire can be edited and drawn by hand, wires can share a pin and be twisted or shielded together, pins have a function, connectors and harnesses have labels, the last commit is shown, and devices can be reused across projects.
