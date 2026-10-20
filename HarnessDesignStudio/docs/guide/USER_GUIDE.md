@@ -33,7 +33,9 @@ The starter library follows one baseline:
 
 Other interface types and older connector parts stay in the library for projects that need them. All parts are examples with fictional part numbers, none approved; your approved parts list replaces them.
 
-## 2. Install and start (Ubuntu 24.04 or newer)
+## 2. Install and start
+
+The steps below are for Ubuntu 24.04 or newer. From version 1.2.0 there are also packages for Windows 10 and 11 and for macOS 13 or newer; `docs/INSTALL.md` in the repository (ways D and E) describes them.
 
 1. Install the package: `sudo apt install ./harness-design-studio_<version>_amd64.deb`. Or unpack the `.tar.gz` anywhere and run `./harness-design-studio/install.sh` (no administrator rights needed; it installs for your user).
 2. Check it: `harness-design-studio --version` prints the version. If the command is not found after `install.sh`, add `~/.local/bin` to your PATH (the installer prints how).
@@ -71,11 +73,11 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 
 | Part | What it holds |
 | --- | --- |
-| **Navigation rail** | Down the left edge: **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions** and, at the bottom, **Settings**. It opens the area you choose; the button at its foot shows icons only. |
-| **Top bar** | The project name, *Saved* or *Unsaved changes*, the revision, a short model hash, where you are, **Undo** and **Redo**, **Guided** and **Expert**, **Search** (Ctrl+K), **Generate** (the one blue button), **Check**, **Export…** and a status chip. |
+| **Navigation rail** | Down the left edge: **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions** and, at the bottom, **Settings**. It opens the area you choose; the button at its foot shows icons only. **Home** and **Settings** are pages of their own. |
+| **Top bar** | The project name, *Saved* or *Unsaved changes*, the revision, a short model hash, where you are, **Undo** and **Redo**, **Guided** and **Expert**, **Search** (Ctrl+K), the three steps **Generate** (the one blue button), **Check** and **Release…**, then **Export…** and a status chip. The tooltip of a step says what is done and what comes next. |
 | **Banner** | Appears under the top bar when something needs you: the plans or the exported files are out of date (buttons **Generate** and **Export…**), or a generate, export or check failed (**Try again**). A change that is refused because a harness is released stays on screen as a message over the diagram, with **Start new revision…**, until the next change goes through. |
 | **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6). Each area shows its own: Model has Diagram and Devices; Checks, Drawings (the Harness tab), Outputs (the Lists tab) and Revisions (the Releases tab) have one each. |
-| **Left panel** | The **Project** tab: a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports, with a filter and an **Add** button. The **Interfaces** tab (Ctrl+Shift+T): every interface as a table you can sort, filter and edit with the keyboard. |
+| **Left panel** | The **Project** tab: a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports, with a filter and an **Add** button. The **Units** tab (Ctrl+Shift+J) and the **Interfaces** tab (Ctrl+Shift+T): every unit and every interface as a table that works like a spreadsheet (see below). |
 | **Right panel** | **Inspector** (the fields of what you selected, and where it is used), **Why** (the reasons for a choice) and **Problems** (the problem cards, with a **To do** list above them). |
 | **Problems panel** | Closed until you press **Problems (n)** in the status bar (or Ctrl+Shift+M): every open problem with its severity, rule, object and message; click one to go to the object. |
 | **Status bar** | What runs in the background (with **Cancel**) or the last check, the project folder, **Problems (n)**, *Offline*, a link *n values pending · n rules not checked*, and the zoom level. The model hash, the rule count and *Generated at model …* are in the tooltip of the counts. |
@@ -84,16 +86,43 @@ The status chip in the top bar says one thing: *Up to date*, *Plans out of date*
 
 Panels you hide or move are remembered; **View > Reset layout** puts them back. In a small or narrow window the tool hides panels so the diagram stays large, and says so.
 
+### Home, the three steps and the tables
+
+**Home** (Ctrl+7) shows the open project with its counts, four buttons (**New project…**, **Open project…**, **New from an example…**, **Open the sample project**), your **Recent projects** with how many harnesses are draft, in review or released (**Open**, **Remove from the list**) and the **Examples**. **Try the flatsat example** opens a copy of that example in your Documents folder.
+
+The three steps in the top bar go in order. **Generate** builds the harnesses, **Check** (F5) runs the design rules, **Release…** locks a harness as a numbered revision. A step that has to wait says what to do first, for example *generate the harnesses first* or *check the design first*. When you look at part of a released harness, a banner says so and offers **Start new revision…** and **Show the revisions**.
+
+The **Units** and **Interfaces** tables work like a spreadsheet:
+
+- **Enter** or **F2** edits the selected cell, **Esc** keeps the old text, and **Ctrl+C** copies the selected cells.
+- **Ctrl+V** pastes a block of cells copied from Excel. It is one undo step; cells that cannot take a value (a read-only column, or past the end of the table) are left out and counted in the message.
+- An edit made with several rows selected applies to all of them.
+- A right-click on the header chooses the columns. Numbers are right-aligned and the unit is in the header.
+- The tables edit the rows that exist. A new interface comes from **New interface…** (Ctrl+I) or the import.
+
+The **Problems panel** (Ctrl+Shift+M, or **Problems (n)** in the status bar) lists every open problem: severity, rule, object and message. Filter it with **All**, **Error** or **Warning**. Click a row to go to the object; **Details and fixes** (right-click, or Shift+Enter) opens the problem as a card in the Inspector.
+
+### Settings
+
+Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every setting takes effect at once and is kept for the next start; the page follows the View menu and Ctrl+K, which change the same settings.
+
+- **Appearance**: **Theme** (*Follow the system*, *Light* or *Dark*), **Interface size** (100, 125, 150 or 200 %; it takes about a second to apply) and **Reduce motion**, which turns off the fades and slides of menus, lists and tooltips. The interface uses the bundled fonts Inter and JetBrains Mono.
+- **Editing**: **Mode** (*Guided* or *Expert*), **Snap units to the grid** and **Show every link label**.
+- **Project**: **Open the engineering values…**, the window of section 6.
+- **Keyboard shortcuts**: every key of the window, with a box **Filter the shortcuts…**. They are fixed and cannot be changed.
+- **About**: the version, the Python, Qt and PySide6 versions, and where your settings are kept. **Help > About** opens this section.
+- **Licences**: the fonts, the icons and Qt, with their licence texts.
+
 ### Your first project in ten steps
 
 1. Start the app. The sample project opens with a short tour; skip it or follow it. The tour leaves out a step whose panel is hidden (a small window or a high interface size), records that it was shown however you close it, and can be started again with **Help > Replay the tour**.
 2. **File > New project…** opens one window: choose an empty folder, give the project a name, and optionally pick an example (section 3; `first-steps` has three units, start there). A problem with the folder or the name is written under the field. **File > New project from an example…** is the same window with the first example ticked.
 3. Add units: press **Add** in the Project tab and choose **Unit…**, or use **Edit > Add unit**. Pick *Computer*, then add a *Power unit* and an *Actuator (wheel)*.
 4. Connect them. Press **C** (or the **Connect** button above the diagram; the arrow beside it lists the interface types, as does **Edit > Connect with**), pick an interface type such as *RS-422*, then click the first unit and the second. Units that cannot take this interface are greyed out, with the reason written next to them. **Ctrl+I** (or **Add > Interface…**) opens a form for the same thing.
-5. Look at **Problems** (right panel). Each card says what is wrong, why it matters and how to fix it. Many have a one-click **Fix**. The **Checks** tab lists all 34 design rules with their result (section 6).
+5. Look at **Problems** (right panel, or the Problems panel at the bottom). Each card says what is wrong, why it matters and how to fix it. Many have a one-click **Fix**. The **Checks** tab lists all 34 design rules with their result (section 6).
 6. The top of the **Problems** tab has a **To do** list of what is left to do; a click on a line shows the unit or interface.
-7. Press **Generate** in the top bar (**Generate harnesses**, Ctrl+G). A preview shows what will be added; nothing changes until you press **Apply**. **Undo** takes it all back. The **Harness** tab opens.
-8. In the **Harness** tab pick a harness: its connectors and pins, its wires, a drawing (zoom with the wheel, change sheet with **Previous sheet** and **Next sheet**) and *Why* for the selected wire, connector or pin. The **Lists** tab shows the wire list, pinouts, BOM and test tables.
+7. Press **Generate** in the top bar (**Generate harnesses**, Ctrl+G). A preview shows what will be added; nothing changes until you press **Apply**. **Undo** takes it all back. The **Harness** tab opens (the Drawings area).
+8. In the **Harness** tab pick a harness: its connectors and pins, its wires, a drawing (zoom with the wheel, change sheet with **Previous sheet** and **Next sheet**) and *Why* for the selected wire, connector or pin. The **Lists** tab (the Outputs area) shows the wire list, pinouts, BOM and test tables.
 9. Save with **Ctrl+S**.
 10. Press **Export…** in the top bar (Ctrl+E): choose what to look at and press **Export** to write drawings and lists into the project's `outputs` folder (section 8).
 
@@ -250,18 +279,18 @@ To see the machinery work before you have real values, copy the demo values from
 
 ## 12. Bring in your own data
 
-Every import first shows what it would do, and a bad row stops the whole import so nothing is half applied. Each import is one undo step called *Import n rows*.
+Every import first shows what it would do. A bad row stops the whole import, so nothing is half applied; only in an interface table is a bad row skipped and the rest imported. Each import is one undo step called *Import n rows*.
 
 | You have | Do |
 | --- | --- |
-| Interfaces as a table | **File > Import > Import interfaces…** (Ctrl+Shift+I; CSV or XLSX with the columns id, type, from, to and optionally redundancy) |
+| Interfaces as a table | **File > Import > Import interfaces…** (Ctrl+Shift+I; CSV or XLSX with the columns id, type, from, to and optionally redundancy), or **Paste table text instead…** in the wizard for CSV text |
 | An approved-parts list | **File > Import > Import approved parts…**, or `harness-design-studio import-parts`, saying what your approval values mean |
 | Segment lengths | **File > Import > Import segment lengths…**, or `harness-design-studio import-lengths`, then generate again |
 | A device's pinout as a table (connector, pin, signal ...) | **File > Import > Import device pinout…**, or `harness-design-studio import-pinout`; a new connector needs a library part; a column the project cannot store is named and left out |
 | A unit's connector pinout in KiCad | export a netlist, then **File > Import > Import KiCad netlist…**, or `harness-design-studio import-netlist`; the pins become fixed |
 | A current-by-gauge table | **File > Import > Import engineering values: ampacity table…**, or `harness-design-studio config DIR --ampacity-csv FILE` |
 
-Parts, lengths, ampacity values and netlists open the **Import data** wizard in four steps: **1 Choose what and which file**, **2 Match the columns and check the first rows** (a live preview shows every row and the reason a row is refused), **3 Conflicts and placeholders** (what stays pending afterwards, such as parts whose approval is pending) and **4 Import**. Interfaces use their own earlier window, which also previews every row. The same imports are in the Project tab: press Enter on an entry under **Imports**.
+All six imports open the same **Import data** wizard, in four steps: **1 Choose what and which file** (the six kinds are *Interfaces*, *Approved parts*, *Segment lengths*, *Engineering values: ampacity table*, *Device pinout* and *KiCad netlist*), **2 Match the columns and check the first rows** (a live preview shows the rows), **3 Conflicts and placeholders** (every row with its reason, and what stays pending afterwards) and **4 Import**. A file of more than 1,500 rows is read in the background with a progress line and **Cancel**. The same imports are in the Project tab: press Enter on an entry under **Imports**.
 
 Example files for every one of these are in the templates folder (`harness-design-studio templates FOLDER`).
 

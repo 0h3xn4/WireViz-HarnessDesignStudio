@@ -7,7 +7,7 @@ DRD: ECSS-E-ST-40C Annex D. Status: draft, not reviewed. The requirements themse
 
 ## 4. Software overview
 - **4.1 Function and purpose:** derive harnesses from a system block diagram, check them, produce drawings and lists, keep a controlled record (`../../docs/SPEC.md` Part 1).
-- **4.2 Environmental considerations:** Ubuntu 24.04 and newer, x86-64, offline workstation, no administrator rights.
+- **4.2 Environmental considerations:** Ubuntu 24.04 and newer (x86-64) and, from 1.2.0, Windows 10 and 11 (64-bit) and macOS 13 and newer (Apple Silicon and Intel) (D-149); offline workstation, no administrator rights.
 - **4.3 Relation to other systems:** reads KiCad netlists, CSV and XLSX; writes SVG, PDF, CSV, XLSX, WireViz YAML, JSON (`ICD.md`). WireViz is an export target only.
 - **4.4 Constraints:** `../../docs/SPEC.md` hard constraints 1 to 8.
 
@@ -20,14 +20,14 @@ Requirement IDs refer to `../../docs/REQUIREMENTS.md`.
 - **5.6 Resources:** self-contained package, no admin rights (REQ-PKG-01).
 - **5.7 Design and implementation constraints:** REQ-ARCH-01, REQ-MODEL-01, REQ-MODEL-02, REQ-LIC-01, REQ-BUILD-01.
 - **5.8 Security and privacy:** REQ-OFFLINE-01; `../../docs/SECURITY.md` (no design data in logs, hostile input handling).
-- **5.9 Portability:** Ubuntu 24.04+ only (D-127).
+- **5.9 Portability:** Ubuntu 24.04 and newer, Windows 10 and 11 and macOS 13 and newer (D-149, from 1.2.0; D-127, Ubuntu only, is superseded). Other systems are not supported.
 - **5.10 Software quality:** REQ-FUZZ-01, REQ-SOAK-01, REQ-M7-02, REQ-NUM-01; coverage target agreed by the owner: 90 % on `core` (statement and branch), GUI excluded from the gate with the reason that it is exercised by journeys and not by line coverage (to be confirmed at review).
 - **5.11 Reliability:** REQ-TX-01, REQ-INTEGRITY-01, REQ-MIGRATE-01.
 - **5.12 Maintainability:** REQ-MODEL-01, REQ-I18N-01, REQ-M7-03 (documentation in sync).
 - **5.13 Safety:** the tool has no safety function itself; see `CRITICALITY.md`. Outputs state *pending* or *not checked* instead of guessing (REQ-GEN-03, REQ-OUT-05, REQ-DRC-03).
 - **5.14 Configuration and delivery:** REQ-SCF-01, REQ-M7-04, REQ-TRACE-01, REQ-MET-01.
 - **5.15 Data definition:** `../../docs/FILE_FORMAT.md`.
-- **5.16 Human factors:** REQ-UX-01..03, REQ-M7-01, REQ-M7-05.
+- **5.16 Human factors:** REQ-UX-01..04, REQ-M7-01, REQ-M7-05.
 - **5.17 Adaptation and installation:** `../../docs/INSTALL.md`, REQ-M7-04.
 
 ## 6. Validation requirements

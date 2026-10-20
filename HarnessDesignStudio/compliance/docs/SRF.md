@@ -14,10 +14,11 @@ DRD: ECSS-E-ST-40C Annex N. Status: draft, not reviewed. Reused software is thir
 | PySide6-Essentials, shiboken6 | 6.11.2 | LGPL-3.0 (alternatively GPL) | GUI (shipped dynamically linked with licence texts) |
 | PyInstaller | 6.22.3 | GPL-2.0+ with bootloader exception | packaging only, not shipped |
 | Inter 4.1 (Regular, Medium, SemiBold) and JetBrains Mono 2.304 (Regular, Medium) (TrueType files, unmodified; not Python packages) | github.com/rsms/inter release 4.1 (`extras/ttf`), github.com/JetBrains/JetBrainsMono release 2.304 (`fonts/ttf`) | SIL OFL 1.1 | interface and monospace typefaces, bundled in `src/harness_design_studio/resources/fonts` with the licence texts (D-150, replacing IBM Plex of D-132) |
+| Lucide icon outlines (lucide-static 1.56.0; a few derive from Feather) | lucide.dev | ISC (Feather: MIT) | the path strings of the interface icons in `gui/icons.py`, drawn with QPainter; no package is installed and no SVG file is shipped (D-146, in the program since 1.1.0) |
 | development tools (pytest, pytest-xdist, hypothesis, mypy, ruff, coverage, cyclonedx-bom, pip-licenses, playwright) | pinned in `pyproject.toml` | MIT, BSD, Apache, MPL | not shipped |
 
 ## 5. Compatibility with the project
-All run on Python 3.12+ on Ubuntu 24.04. Versions are pinned and the wheel build is reproducible (`tools/check_reproducible.py`).
+All run on Python 3.12+ on Ubuntu 24.04 and, from 1.2.0, on Windows 10 and 11 and macOS 13 and newer (D-149; the whole test suite runs on all three in CI). Versions are pinned and the wheel build is reproducible (`tools/check_reproducible.py`).
 
 ## 6. Reuse analysis conclusion
 Suitable. The functional and quality fit is demonstrated by the tests that exercise them through the tool; security aspects (ECSS-Q-ST-80C 6.2.7.3 b) are covered by the hostile-input tests (`../../docs/SECURITY.md`). Not done: a review of the upstream problem lists and a vulnerability check, which need network access and a person (action A-08).

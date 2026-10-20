@@ -9,7 +9,7 @@ See `SDP.md`.
 - **4.1 General:** every output of development is verified before use; verification is by review, analysis, inspection and test.
 - **4.2 Organization:** the developer assistant verifies its own work with automated checks; the owner reviews. An independent verifier is required by ECSS-E-ST-40C for category C (Table R-1) and is not appointed: **action A-01**.
 - **4.3 Master schedule:** at each review (`SRevP.md`) and with every commit (CI).
-- **4.4 Resources:** CI runners, Ubuntu 24.04 build host.
+- **4.4 Resources:** CI runners (Ubuntu 24.04; since 1.2.0 also Windows and macOS runners for the whole test suite and the package smoke tests), Ubuntu 24.04 build host.
 - **4.5 Responsibilities:** developer: run the checks; owner: review, accept.
 - **4.6 Risks and independence:** same author for code and tests is a known weakness; mitigations are the independent output verifier (code-separate from the generators), mutation tests for every output check, property and soak tests, fuzzing.
 - **4.7 Tools, techniques, methods:** pytest, hypothesis, pytest-qt, coverage, mypy strict, ruff, `tools/check_reproducible.py`, `tools/trace.py`, `tools/metrics.py`.

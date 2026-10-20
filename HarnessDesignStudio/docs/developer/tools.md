@@ -31,6 +31,7 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 | Script | What it does |
 | --- | --- |
 | `gui_screenshots` | Renders 26 screenshots of the real editor (offscreen) into `docs/ux/qt`: the sample project and the views and dialogs on the flatsat example (about a minute) |
+| `ui_screenshots` | Pictures of every area, tab, panel, menu and dialog of the editor on the flatsat example, in the light and the dark theme (offscreen), for the UI overhaul: `python -m tools.ui_screenshots OUT`. The sets are `docs/ui/screenshots/before/` (release 1.2.0) and `docs/ui/screenshots/after/` (release 1.3.0), compared in [`../ui/BEFORE_AFTER.md`](../ui/BEFORE_AFTER.md). **Always give a folder:** without one the script writes into `docs/ui/screenshots/before/`, the 1.2.0 baseline. It runs each theme and part (`--theme light\|dark`, `--part main\|extra`) in a process of its own, because two themes in one process crash Qt's offscreen platform; one picture that fails is listed at the end and does not stop the others |
 | `flatsat_screenshots` | Pictures of the flatsat diagram in the editor (overview and one unit in focus), for `docs/FLATSAT_EXAMPLE.md` and the README |
 | `ux_screenshots` | Screenshots of the prototype's key screens into `docs/ux/screens` (needs Playwright; history only) |
 
@@ -49,7 +50,7 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 | `vendor` | Downloads every pinned wheel into a local folder for offline installs (run on a connected host) |
 | `gen_sbom` | Writes a CycloneDX software bill of materials and a licence report for the runtime dependencies |
 | `licence_report` | Licence report for the installed runtime dependencies; fails on anything outside the allow-list |
-| `collect_licences` | Collects the licence texts of the shipped runtime packages into a `LICENSES` folder |
+| `collect_licences` | Collects the licence texts of the shipped runtime packages, and of the bundled fonts (Inter, JetBrains Mono) and icons, into a `LICENSES` folder; fails when a licence text is missing |
 | `check_vulnerabilities` | Checks the shipped dependencies for known vulnerabilities (needs network access) |
 | `gen_scf` | Writes the software configuration file and the `SHA256SUMS` of a delivery |
 | `release_notes` | Checks that a release tag fits the version and the changelog and writes the text of the GitHub release page: download table, highlights from `docs/releases/<version>.md`, folded changelog, install steps, checksums (used by `.github/workflows/release.yml`) |
@@ -59,8 +60,8 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 | Script | What it does |
 | --- | --- |
 | `bench_gui` | Times editor interactions on a stress-size project (offscreen) |
-| `ui_screenshots` | Pictures of every tab, menu and dialog of the editor in light and dark (offscreen) into `docs/ui/screenshots/` (UI overhaul) |
-| `ui_perf` | Start-up, tab switch, theme switch, UI scale and select timings on the flatsat example (UI overhaul) |
+| `ui_perf` | Start-up, tab switch, theme switch, interface size and selection timings of the editor on the flatsat example (offscreen; no arguments). The numbers of 1.2.0 and 1.3.0 are in [`../ui/PERF_BASELINE.md`](../ui/PERF_BASELINE.md) |
+| `output_hashes` | The SHA-256 of every file the tool writes for each of the four packaged examples (a workbook by its members), to show that a change of the interface left the written files alone: `--check docs/ui/OUTPUT_HASHES_1.2.0.json` compares with release 1.2.0 (apart from the version stamp), `--write FILE` stores, no argument prints. `tests/test_output_hashes.py` runs the comparison. Run it after any change in `gui/` that could reach a writer |
 | `bench_stress` | Times load, save, integrity check and transactions on a stress-size project (200 units, 2,000 interfaces) |
 | `bench_generate` | Times generation on the stress project (target: under 10 seconds) |
 | `soak` | Soak test: thousands of random editing steps through the command layer, checking the invariants all the way |

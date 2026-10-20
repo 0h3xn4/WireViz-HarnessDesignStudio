@@ -12,7 +12,7 @@ One GitHub issue per SPR, created from `compliance/templates/problem_report.md` 
 
 ## 3. Content of a report (5.2.5.2)
 
-The template asks for: identification of the software item and version (`harness --version`, model hash if a project is involved), date, reporter, environment (Ubuntu version, install method), a description with steps to reproduce, the **effect** (what goes wrong for the user, or for a harness built from the output), the **severity** (below), the requirement ID it violates if known, and later the analysis, the correction (commit), the regression test and the verification result.
+The template asks for: identification of the software item and version (`harness-design-studio --version`, or its alias `harness`; model hash if a project is involved), date, reporter, environment (operating system and version: Ubuntu, Windows or macOS; install method), a description with steps to reproduce, the **effect** (what goes wrong for the user, or for a harness built from the output), the **severity** (below), the requirement ID it violates if known, and later the analysis, the correction (commit), the regression test and the verification result.
 
 ## 4. Severity
 

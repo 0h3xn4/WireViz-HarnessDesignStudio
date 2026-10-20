@@ -48,9 +48,11 @@ The full, current layout of `core/` is in [`../ARCHITECTURE.md`](../ARCHITECTURE
 | `core/drc/` | The design rules and their report. |
 | `core/outputs/` | The writers and the independent output verifier. |
 | `core/vcs/` | Release, revisions, baselines, diff, change log. |
-| `core/kicad.py`, `core/library_import.py`, `core/imports.py` | The importers. |
+| `core/kicad.py`, `core/library_import.py`, `core/imports.py`, `core/pinout_import.py` | The importers. |
+| `core/devices.py` | Custom devices down to each pin: the plans behind the Devices tab. |
 | `cli/` | One module per group of commands; `main.py` builds the parser. |
-| `gui/` | `controller.py` (the only thing that changes the project), `main_window.py` and `shell.py` (the window), `canvas.py`, the views (`project_tree.py`, `inspector.py`, `harness_view.py`, `lists_panel.py`, `checks_panel.py`, `releases_panel.py`), the dialogs (`export_dialog.py`, `import_wizard.py`, `new_project_dialog.py`, `config_dialog.py`), the shared parts (`tables.py`, `states.py`, `icons.py`, `theme.py`), `panels.py`, `dialogs.py`, `strings.py` (all UI text). [`../DESIGN.md`](../DESIGN.md) says how they fit. |
+| `gui/` | `controller.py` (the only thing that changes the project), `main_window.py` and `shell.py` (the window), `areas.py` and `rail.py` (the navigation rail: Home, Model, Checks, Drawings, Outputs, Revisions, Settings), `topbar.py` and `workflow.py` (the steps Generate, Check, Release), `canvas.py`, the views (`project_tree.py`, `inspector.py`, `harness_view.py`, `lists_panel.py`, `outputs_files.py`, `checks_panel.py`, `releases_panel.py`, `devices_view.py`, `problems_panel.py`), the pages (`pages.py` for Home, `settings_page.py`), the dialogs (`export_dialog.py`, `import_wizard.py`, `new_project_dialog.py`, `config_dialog.py`), the shared parts (`tables.py`, `sheet.py`, `states.py`, `icons.py`), `panels.py`, `dialogs.py`, `strings.py` (all UI text). [`../DESIGN.md`](../DESIGN.md) says how they fit and [`../ARCHITECTURE.md`](../ARCHITECTURE.md), section 2, lists every module. |
+| `gui/theme/` | The theme package, the one source of how the editor looks: `tokens.py` (every colour, type size, gap, radius and duration, light and dark), `palette.py`, `qss.py`, `style.py`, `fonts.py` (the bundled Inter and JetBrains Mono) and `manager.py` (System, Light, Dark; interface size; reduce motion). Nothing outside this folder names a colour, a font family or a font size; `tests/test_theme_scan.py` checks it. |
 | `resources/` | The offline user guide (HTML), the example projects, the templates, fonts. |
 | `tools/` | Maintenance scripts, outside the package ([`tools.md`](tools.md)). |
 | `tests/` | The tests and their golden files ([`setup-and-tests.md`](setup-and-tests.md)). |
@@ -66,11 +68,13 @@ These come from [`../../CLAUDE.md`](../../CLAUDE.md) and the decisions in [`../D
 5. **Never invent standard values.** A derating factor, a current rating or a mass is a `PLACEHOLDER` (`null`) until a person supplies it, and results say so. Profiles fill only unset values and cite a requirement ID that exists. A rule that needs a number stays silent without it and is listed as *not checked*.
 6. **Independent verifiers.** `core/verify.py` and `core/outputs/verify.py` must not import the generator or the writers. They derive their expectations from the project.
 7. **No design data in logs.**
-8. **All UI text in `gui/strings.py`.** New controls need an accessible name (`tests/test_accessibility.py` fails otherwise).
-9. **Every new dependency** is recorded with name, version and licence in `DECISIONS.md`.
-10. **Tests first.** Every bug fix gets a regression test.
-11. **Speed.** Keep edits under 100 ms at stress size; use the change delta, never rebuild the whole scene for a local change (`tests/test_gui_perf.py`).
-12. **Say what is open.** Do not make the examples look reviewed; demo values stay `"placeholder": true` (D-129). Never claim compliance with a standard.
+8. **All UI text in `gui/strings.py`.** New controls need an accessible name (`tests/test_accessibility.py` fails otherwise) and, for an icon-only button, a tooltip (`tests/test_ui_final.py` walks every area in both themes and fails otherwise).
+9. **One token source for the look.** Colours, type sizes, gaps and durations come from `gui/theme/tokens.py` through `theme.color()`, `theme.type()`, `theme.space()` and `theme.font()`; no `setStyleSheet`, `#RRGGBB` literal, font family or font size outside `gui/theme/` (`tests/test_theme_scan.py` checks the colours, families and sizes, `tests/test_ux_foundation.py` the `setStyleSheet` calls). Tables are `tables.TableView`, states are `states.StateChip`, icons come from `icons.py`.
+10. **Every new dependency** is recorded with name, version and licence in `DECISIONS.md`.
+11. **Tests first.** Every bug fix gets a regression test.
+12. **Speed.** Keep edits under 100 ms at stress size; use the change delta, never rebuild the whole scene for a local change (`tests/test_gui_perf.py`). Nothing longer than about 50 ms on the GUI thread: long work goes to a worker with progress and Cancel. Measure with `python -m tools.ui_perf` and `python -m tools.bench_gui`.
+13. **Say what is open.** Do not make the examples look reviewed; demo values stay `"placeholder": true` (D-129). Never claim compliance with a standard.
+14. **A change of the interface leaves the written files alone.** `python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` (and `tests/test_output_hashes.py`) compares every file the four example projects write with release 1.2.0, apart from the version stamp.
 
 ## Adding things
 
@@ -80,6 +84,7 @@ These come from [`../../CLAUDE.md`](../../CLAUDE.md) and the decisions in [`../D
 | A command line command | Add it under `cli/`, add its examples to `tools/gen_cli_docs.py`, document it in the user guide, then `python -m tools.gen_cli_docs` and `python -m tools.build_guide`. |
 | An output file | Build it in `build_outputs`, add its check to `core/outputs/verify.py` with a mutation test, regenerate the goldens, document it in [`../OUTPUTS.md`](../OUTPUTS.md). |
 | A change to an example | `python -m tools.build_examples`. If the tutorial prints something that changed, update `docs/GETTING_STARTED.md` and its pictures. |
+| A view, tab, page or control of the editor | Take its data from the controller and from headless code in `core`; put its text in `gui/strings.py`; take every colour, size and gap from `gui/theme/` (a new colour is a new token, and a token a style rule needs gets a role in `palette.ROLES`); give every control an accessible name and every icon-only button a tooltip; add a new area, tab or page to the `_views()` of `tests/test_ui_final.py`. Then look at it in both themes (`python -m tools.ui_screenshots OUT`, [`tools.md`](tools.md#pictures)). |
 | A module | Give it a docstring (a test fails without one), then `python -m tools.gen_sdd_components`. |
 
 ## Where to read more

@@ -1,6 +1,6 @@
 # Design, coding and tool standards
 
-Status: approved by the owner on 2026-10-08 (approval given in the working session; the owner is also customer and supplier, so no independent reviewer, see A-01).
+Status: approved by the owner on 2026-10-08 (approval given in the working session; the owner is also customer and supplier, so no independent reviewer, see A-01). The rows Build, Platform and CI of the table below were brought up to date for 1.2.0 on 2026-10-20; the owner's approval was given for the earlier text (D-149 is the owner's decision on the platforms).
 
 Addresses ECSS-Q-ST-80C 5.6.1.1 to 5.6.2.3, 6.3.3.2, 6.3.3.4, 6.3.4.1 to 6.3.4.5 (gap G-06). These standards already exist as practice in `CLAUDE.md`, `pyproject.toml` and the CI workflow; this document makes them one mandatory list.
 
@@ -13,9 +13,9 @@ Addresses ECSS-Q-ST-80C 5.6.1.1 to 5.6.2.3, 6.3.3.2, 6.3.3.4, 6.3.4.1 to 6.3.4.5
 | Data model | pydantic v2, strict, immutable | `core/model` |
 | Tests | pytest, hypothesis; 90 % branch and statement coverage on `core` | `pyproject.toml` |
 | Static checks | ruff (E, F, W, I, B, UP, SIM, S), `mypy --strict` | `pyproject.toml` |
-| Build | pinned versions, reproducible wheel, PyInstaller package, `.deb` | `tools/check_reproducible.py`, `tools/build_deb.py` |
-| Platform | Ubuntu 24.04 and newer | D-127 |
-| CI | `.github/workflows/harness-ci.yml` (at the repository root) | |
+| Build | pinned versions, reproducible wheel, PyInstaller package, `.deb`; from 1.2.0 also the Windows setup program and `.zip` and the macOS `.dmg` | `tools/check_reproducible.py`, `tools/build_deb.py`, `tools/build_windows.py`, `tools/build_macos.py` |
+| Platform | Ubuntu 24.04 and newer, Windows 10 and 11 (64-bit), macOS 13 and newer (the last two from 1.2.0) | D-149 (supersedes D-127, Ubuntu only) |
+| CI | `.github/workflows/harness-ci.yml` (at the repository root); since 1.2.0 `harness-platforms.yml` runs the suite on Windows and macOS and `release.yml` builds and tests the packages | |
 
 Suitability (5.6.1.2, 5.6.2.2): chosen because they are permissive or LGPL licensed, run offline, and allow strict static checking; every dependency is recorded with version and licence in `docs/DECISIONS.md` and the SBOM.
 
