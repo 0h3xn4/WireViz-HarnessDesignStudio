@@ -247,14 +247,18 @@ def verify_project(project: Project) -> VerifyReport:
     rep = VerifyReport()
     cables = _cable_index(project)
     cable_use, box_use = _check_wire_ends(project, rep, cables)
+    drawn = {w.id for h in project.harnesses.values() for w in h.wires if w.manual}
     for label, use in (("", cable_use), ("unit connector ", box_use)):
         for (cid, pid), users in sorted(use.items()):
             if len(users) > 1:
-                rep.error(
-                    "pin_reused",
-                    f"Pin {pid} of {label}{cid} is used by {len(users)} wires: {', '.join(sorted(users))}.",
-                    cid,
+                text = (
+                    f"Pin {pid} of {label}{cid} is used by {len(users)} wires: "
+                    f"{', '.join(sorted(users))}."
                 )
+                if drawn.intersection(users):  # a person put a wire there: said, not an error
+                    rep.warning("pin_shared", text, cid)
+                else:
+                    rep.error("pin_reused", text, cid)
 
     by_interface: dict[str, list[Wire]] = {}
     for h in project.harnesses.values():

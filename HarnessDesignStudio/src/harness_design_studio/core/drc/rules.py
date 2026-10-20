@@ -137,6 +137,21 @@ def _floating_pins(project: Project) -> Iterator[Hit]:
                     )
 
 
+def _pin_shared(project: Project) -> Iterator[Hit]:
+    for h in sorted(project.harnesses.values(), key=lambda x: x.id):
+        on_pin: dict[tuple[str, str], list[str]] = {}
+        for w in h.wires:
+            on_pin.setdefault((w.from_connector, w.from_pin), []).append(w.id)
+            on_pin.setdefault((w.to_connector, w.to_pin), []).append(w.id)
+        for (cid, pid), ids in sorted(on_pin.items()):
+            if len(ids) > 1:
+                yield Hit(
+                    h.id,  # the harness is found at once; a pin ID would be searched for among all wires
+                    f"Pin {pid} of {cid} carries {len(ids)} wires ({', '.join(sorted(ids))})",
+                    key=f"{h.id}.{cid}.{pid}",
+                )
+
+
 def _model_inconsistent(project: Project) -> Iterator[Hit]:
     for n, issue in enumerate(i for i in check_integrity(project) if i.severity != "error"):
         # one object can have several problems; the message tells them apart
@@ -675,6 +690,10 @@ RULES: tuple[Rule, ...] = (
     Rule("pin-floating", "warning", "Floating pins",
          "A named pin with no wire looks connected on the drawing but carries nothing.",
          "Attach a wire or clear the signal name.", _floating_pins),
+    Rule("pin-shared", "warning", "Several wires on one pin",
+         "Two wires in one contact need a crimp that holds both, and a fault on that pin is harder to find.",
+         "Move one wire to a spare pin or splice the wires; waive it with a reason if the design needs it.",
+         _pin_shared),
     Rule("mate-mismatch", "error", "Mating halves",
          "Connectors that do not fit, or fit only by force, damage hardware.",
          "Choose the mating part, opposite gender and the same pin count and keying.", _mate_mismatch, sources=("ECSS-Q-ST-30-11_0140054",)),

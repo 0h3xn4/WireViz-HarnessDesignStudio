@@ -3,7 +3,7 @@
     panel = ChecksPanel(ctl, theme)
     panel.showRequested.connect(window.show_object)     # an offending object: show it on the diagram
 
-A summary strip says "34 rules: 20 passed · 2 failed · 12 not checked · 4 pending values" (text and
+A summary strip says "35 rules: 20 passed · 2 failed · 12 not checked · 4 pending values" (text and
 icons; each count filters the table). The rules table shows ID, rule, severity, result as a state chip
 (pass, fail, not checked, pending), open and waived counts, and the standard's requirement IDs as a
 tooltip. Selecting a rule opens its details below: the offending objects (Enter or double-click
@@ -760,7 +760,7 @@ class ChecksPanel(QWidget):
         return list(self._results or [])
 
     def summary_text(self) -> str:
-        """ "34 rules: 20 passed · 2 failed · 12 not checked · 4 pending values", or "" before a
+        """ "35 rules: 20 passed · 2 failed · 12 not checked · 4 pending values", or "" before a
         check has finished."""
         results = self._results
         if not results:

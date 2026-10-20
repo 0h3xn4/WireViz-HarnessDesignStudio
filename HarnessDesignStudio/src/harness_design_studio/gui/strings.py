@@ -2153,3 +2153,43 @@ STEP_RESET_WIRES = "Reset wires"
 WIRE_APPLIED = "Changed {0}."
 WIRE_RESET_DONE = "Reset {0}; Generate sets their values."
 WIRE_NOTHING_CHANGED = "Nothing to change."
+
+# ---- 1.4.0 M2: wires that a person draws ----------------------------------------------------------
+WIRE_ENDS = "Ends"
+WIRE_FROM = "From"
+WIRE_TO = "To"
+WIRE_CONNECTOR = "Connector"
+WIRE_PIN = "Pin"
+WIRE_END_TIP = (
+    "The connector and pin where the wire {0}s. You can move the ends of a wire that you drew."
+)
+WIRE_NEW = "New wire"
+WIRE_SIGNAL = "Signal"
+WIRE_SIGNAL_TIP = "A name for the signal the wire carries (optional), for example HEATER."
+WIRE_ADD = "Add wire"
+WIRE_ADD_TIP = "Add a wire that you draw between the two pins. Generate keeps it as it is."
+WIRE_DELETE = "Delete wire"
+WIRE_DELETE_TIP = (
+    "Delete the selected wires that you drew (a generated wire goes when its interface goes)"
+)
+WIRE_STATE_MANUAL = "You drew this wire: Generate keeps it as it is."
+WIRE_STATE_MANUAL_MANY = "You drew these wires: Generate keeps them as they are."
+STEP_ADD_WIRE = "Add wire"
+STEP_DELETE_WIRES = "Delete wires"
+WIRE_NEW_NO_HARNESS = "Choose a harness first."
+WIRE_GROUP_KINDS = (
+    ("twisted_pair", "Twisted pair (2 wires)"),
+    ("shielded_pair", "Shielded pair (2 wires)"),
+    ("quad", "Quad (4 wires)"),
+    ("coax", "Coax (1 wire)"),
+    ("overall_shield", "Overall shield (2 or more wires)"),
+)
+WIRE_GROUP = "Group"
+WIRE_GROUP_KIND = "Kind of group"
+WIRE_GROUP_KIND_TIP = "How the selected wires run together: twisted, shielded or both."
+WIRE_GROUP_TIP = "Twist or shield the selected wires together. Generate keeps the group."
+WIRE_UNGROUP = "Ungroup"
+WIRE_UNGROUP_TIP = "Take apart the group of the selected wire that you made"
+WIRE_IN_GROUP = "In {0} {1}"
+STEP_GROUP_WIRES = "Group wires"
+STEP_UNGROUP_WIRES = "Ungroup wires"

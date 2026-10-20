@@ -36,8 +36,8 @@ def by_id(results: list[by_rule.RuleResult]) -> dict[str, by_rule.RuleResult]:
 def test_every_rule_has_exactly_one_result_in_report_order() -> None:
     p = base()
     results = by_rule.run_by_rule(p)
-    assert len(RULES) == 34
-    assert [r.rule_id for r in results][:34] == [r.id for r in RULES]
+    assert len(RULES) == 35
+    assert [r.rule_id for r in results][:35] == [r.id for r in RULES]
     assert all(r.status in ("pass", "fail", "not_checked", "pending") for r in results)
 
 
@@ -237,7 +237,7 @@ def test_a_project_without_harnesses_still_gets_every_row() -> None:
     p = Project()
     results = by_rule.run_by_rule(p)
     assert [r.rule_id for r in results] == [r.id for r in RULES]
-    assert by_rule.summary(results).total == 34
+    assert by_rule.summary(results).total == 35
 
 
 def test_it_is_reachable_from_the_drc_package() -> None:

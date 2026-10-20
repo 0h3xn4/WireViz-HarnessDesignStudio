@@ -614,6 +614,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
     # ---- wires
     old_wires = _wire_keys(old)
     used_wires = {w.id for w in old_wires.values()}
+    used_wires |= {w.id for w in (old.wires if old else []) if w.manual}
     wire_n = 1
     wires: list[Wire] = []
     skeleton = Harness(
@@ -688,8 +689,24 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
             ctx.next_n = start_n
             ctx.used_ids.discard(hid)
         return None
+    pins_of = {c.id: {p.id for p in c.pins} for c in cables.values()}
+    for mw in old.wires if old else []:  # the wires a person drew stay exactly as they are
+        if (
+            mw.manual
+            and mw.from_pin in pins_of.get(mw.from_connector, ())
+            and mw.to_pin in pins_of.get(mw.to_connector, ())
+        ):
+            wires.append(mw)
     wires.sort(key=lambda w: w.id)
-    shields = _shields(ctx, hid, ifaces, wires, old)
+    mine = [s for s in (old.shields if old else []) if s.manual]
+    shields = _shields(
+        ctx, hid, ifaces, [w for w in wires if not w.manual], old, frozenset(s.id for s in mine)
+    )
+    grouped = {wid for s in shields for wid in s.wire_ids}
+    have = {w.id for w in wires}
+    for g in mine:  # a group that a person made stays while its wires exist and are in no other
+        if set(g.wire_ids) <= have and not grouped.intersection(g.wire_ids):
+            shields.append(g)
     interfaces = sorted(i.id for i in ifaces)
     ctx.note(
         f"harness:{hid}",
@@ -726,6 +743,7 @@ def _wire_keys(h: Harness | None) -> dict[str, Wire]:
     return {
         _wire_key(w.interface_id or "", w.signal or "", box_of.get(w.from_connector, "")): w
         for w in h.wires
+        if not w.manual  # a wire that a person drew is kept as it is, never matched
     }
 
 
@@ -764,12 +782,24 @@ def _warn_lost_data(ctx: _Ctx, old: Harness, new: Harness | None) -> None:
     """Locked wires, wire labels and notes and entered segment lengths of `old` that `new` does not
     carry over."""
     kept_wires = _wire_keys(new)
+    kept_manual = {w.id for w in new.wires if w.manual} if new else set()
     kept_segments = {(s.from_node, s.to_node) for s in new.segments} if new else set()
     lost = [
         f"the {'locked wire' if w.locked else 'wire with a label or note'} {w.id} "
         f"({w.interface_id} {w.signal})"
         for key, w in _wire_keys(old).items()
         if (w.locked or w.label or w.note) and key not in kept_wires
+    ]
+    lost += [
+        f"the wire {w.id} that you drew ({w.from_connector}.{w.from_pin} to {w.to_connector}.{w.to_pin})"
+        for w in old.wires
+        if w.manual and w.id not in kept_manual
+    ]
+    kept_groups = {s.id for s in new.shields if s.manual} if new else set()
+    lost += [
+        f"the {s.kind.replace('_', ' ')} {s.id} that you made"
+        for s in old.shields
+        if s.manual and s.id not in kept_groups
     ]
     lost += [
         f"the entered length of segment {s.id} ({s.length_m:g} m)"
@@ -907,7 +937,12 @@ def _check_contacts(ctx: _Ctx, wire: Wire, i: InterfaceInstance) -> None:
 
 
 def _shields(
-    ctx: _Ctx, hid: str, ifaces: list[InterfaceInstance], wires: list[Wire], old: Harness | None
+    ctx: _Ctx,
+    hid: str,
+    ifaces: list[InterfaceInstance],
+    wires: list[Wire],
+    old: Harness | None,
+    reserved: frozenset[str] = frozenset(),
 ) -> list[ShieldGroup]:
     p = ctx.project
     ends = [ctx.gen.get("shield_end_a"), ctx.gen.get("shield_end_b")]
@@ -924,6 +959,8 @@ def _shields(
     def add(kind: str, members: list[Wire]) -> None:
         nonlocal n
         if members:
+            while ctx.namer.shield(hid, n) in reserved:  # the IDs of the groups a person made
+                n += 1
             out.append(
                 ShieldGroup(
                     id=ctx.namer.shield(hid, n),

@@ -1,8 +1,8 @@
 # Edit a wire
 
-This page shows how to change one wire after the tool has generated it: its gauge, type, colour, length, a label for the wire labels, and a note.
+This page shows how to change a wire after the tool has generated it (its gauge, type, colour, length, a label for the wire labels, and a note), how to draw a wire of your own, how to put several wires on one pin, and how to twist or shield wires together.
 
-> **New in 1.4.0.** Before 1.4.0 the app had no way to change a single wire (only the colour of a whole signal, see [set wire colours](set-wire-colours.md)). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
+> **New in 1.4.0.** Before 1.4.0 the app had no way to change or draw a single wire (only the colour of a whole signal, see [set wire colours](set-wire-colours.md)). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
 
 ## Before you start
 
@@ -45,14 +45,46 @@ You cannot clear a gauge, type, colour or length on one wire; use **Reset to gen
 - The **wire labels** (`labels.csv`) print the label in place of the signal name: `W001-0003 Heater supply to J2.4`.
 - The independent check (`harness-design-studio verify DIR --outputs`) compares both with the design.
 
-## What cannot be edited here yet
+## 4. Draw a wire yourself
 
-The pins a wire joins follow the interfaces and the pin assignment of the devices (the **Devices** tab; see [define a device](define-a-device.md)). Adding a wire by hand, joining several wires to one pin and stating the twisting of a group are planned for the next steps of version 1.4.0 (`docs/ait/AIT_FEEDBACK_PLAN.md`) and are not in the program yet.
+Generation makes the wires the interfaces need. For a wire that no interface asks for (a heater supply, a test wire, a jumper), draw it:
+
+1. In the **Edit wire** tab, find **New wire** at the bottom.
+2. Under **From** and **To** choose a connector of the harness and a pin of that connector, and type a **Signal** name if you like.
+3. Press **Add wire**. The wire gets the next free wire ID, is marked as yours and is selected, so you can now set its gauge, colour and the rest as above.
+
+A wire you drew:
+
+- is kept exactly as it is when you press **Generate** again. If its connector or pin is gone (the interface was deleted, so the harness goes), Generate says which wire it lost.
+- can have its ends moved: select it and change the **From** and **To** connector and pin under **Ends**, then **Apply**.
+- can be deleted with **Delete wire** (one undo step). A generated wire is removed by changing the design: delete its interface, or change the pin in the **Devices** tab, then **Generate**.
+- has no interface, so the checks that need an interface (signal directions, the current of a link) have nothing to say about it.
+
+The pins of a **generated** wire follow its interface and the pin assignment of the devices, so you change them in the **Devices** tab (see [define a device](define-a-device.md)), not here.
+
+## 5. Several wires on one pin
+
+You may put two wires on one pin: draw the second wire to a pin that already has one. The design rule **Several wires on one pin** (`pin-shared`, a warning) names every such pin, so nobody finds it by surprise; waive it with a reason if the design needs it. The pinout table lists all the wires of a pin, and the independent check (`harness-design-studio verify`) says *pin_shared* as a warning when a wire you drew is one of them. Two **generated** wires on one pin are still an error (*pin_reused*): that is a fault in the generation.
+
+## 6. Twist or shield wires together
+
+Select the wires, choose a kind under **Group** and press **Group**:
+
+| Kind | Wires |
+| --- | --- |
+| Twisted pair | exactly 2 |
+| Shielded pair | exactly 2 |
+| Quad | exactly 4 |
+| Coax | exactly 1 |
+| Overall shield | 2 or more |
+
+The wires must be in one harness and in no group yet (a generated twisted pair is a group too). The group gets the next free shield ID, shows in the **Shield group** column of the wire list and as a sleeve in the drawing, and is kept by **Generate**. Its shield ends are those of the generation settings (floating while they are still placeholders, which the rule **Shield termination** then points out). To take a group apart select one of its wires and press **Ungroup**; only groups you made can be taken apart, because a generated group follows the construction of the interface type.
 
 ## Common mistakes
 
 - **Typing a gauge and finding the wire "locked".** That is intended: a value you type is yours. Use **Reset to generated** to hand it back.
 - **Expecting a label to change the drawing.** The label is for the wire labels and the lists; the drawing shows the signal name.
+- **Looking for the pins of a generated wire.** They follow the interface; change them in the **Devices** tab, or draw a wire of your own.
 - **Editing a wire of a released harness.** The form is off and says why. Start a new revision.
 
 More: [`FILE_FORMAT.md`](../FILE_FORMAT.md) (the fields `Wire.label` and `Wire.note`), [`OUTPUTS.md`](../OUTPUTS.md).

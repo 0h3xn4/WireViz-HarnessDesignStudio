@@ -9,7 +9,8 @@ The stored file `docs/ui/OUTPUT_HASHES_1.2.0.json` was made with the release 1.2
 (`tests/test_output_hashes.py`) compares the current tool with it. Every file the tool writes names the
 version of the tool in its header or title block, so a newer version differs in those bytes only: before
 hashing, the current version string is replaced by `BASE_VERSION` (both have the same length, so no
-offset of a PDF moves). The model hash includes the version a project was saved with, so each example
+offset of a PDF moves), and the number of design rules in the DRC report ("Rules run: 35", one rule was
+added in 1.4.0) is given as in 1.2.0, 34. The model hash includes the version a project was saved with, so each example
 (and its generation record) is first given the version of the release the hashes were made with. Nothing else may differ.
 """
 
@@ -23,6 +24,7 @@ from pathlib import Path
 
 from harness_design_studio import __version__
 from harness_design_studio.core import templates
+from harness_design_studio.core.drc import RULES
 from harness_design_studio.core.generate.engine import generate_project
 from harness_design_studio.core.model import evolve
 from harness_design_studio.core.outputs.build import build_outputs
@@ -30,10 +32,15 @@ from harness_design_studio.core.outputs.build import build_outputs
 STORED = Path(__file__).resolve().parent.parent / "docs" / "ui" / "OUTPUT_HASHES_1.2.0.json"
 EXAMPLES = ("first-steps", "minimal-satellite", "small-satellite", "flatsat")
 BASE_VERSION = "1.2.0"  # the release the stored hashes were made with
+BASE_RULES = 34  # the number of design rules of that release (1.4.0 added `pin-shared`)
 
 
 def as_in_base_version(data: bytes) -> bytes:
     """The bytes of a file with the version stamp of the release the hashes were made with."""
+    if len(RULES) != BASE_RULES and len(str(len(RULES))) == len(str(BASE_RULES)):
+        data = data.replace(
+            f"Rules run: {len(RULES)}.".encode(), f"Rules run: {BASE_RULES}.".encode()
+        )
     if __version__ == BASE_VERSION or len(__version__) != len(BASE_VERSION):
         return data
     return data.replace(__version__.encode(), BASE_VERSION.encode())

@@ -155,6 +155,18 @@ def pos_pin_floating() -> Project:
     return p
 
 
+def pos_pin_shared() -> Project:
+    p = base()
+    h = next(h for h in p.harnesses.values() if h.generated)
+    w = h.wires[0]
+    twin = evolve(
+        w, id="W-SHARED", signal=None, interface_id=None, manual=True, from_pin=w.from_pin,
+        to_pin=h.wires[1].to_pin if h.wires[1].to_connector == w.to_connector else w.to_pin,
+    )  # fmt: skip
+    put_harness(p, h, wires=[*h.wires, twin])
+    return p
+
+
 def pos_mate_mismatch() -> Project:
     p = base()
     h = next(h for h in p.harnesses.values() if h.generated)
@@ -451,6 +463,7 @@ POSITIVE: dict[str, Callable[[], Project]] = {
     "model-inconsistent": pos_model_inconsistent,
     "signal-unassigned": pos_signal_unassigned,
     "pin-floating": pos_pin_floating,
+    "pin-shared": pos_pin_shared,
     "mate-mismatch": pos_mate_mismatch,
     "direction-conflict": pos_direction_conflict,
     "current-over-contact": pos_current_over_contact,

@@ -183,7 +183,7 @@ def pin_rows(project: Project, h: Harness, locked: Locked | None = None) -> list
                 }  # fmt: skip
                 if w is not None:
                     length = wire_length(h, w)
-                    key, word, tip = _wire_state(h, w.gauge_awg, length, w.locked)
+                    key, word, tip = _wire_state(h, w.gauge_awg, length, w.locked or w.manual)
                     w_word, w_tip = _lock(
                         project, "wire", w.id, locked, strings.HV_LOCK_WIRE if w.locked else None
                     )
@@ -207,7 +207,7 @@ def wire_rows(project: Project, h: Harness, locked: Locked | None = None) -> lis
     rows: list[dict[str, Any]] = []
     for w in sorted(h.wires, key=lambda x: natural_key(x.id)):
         length = wire_length(h, w)
-        key, word, tip = _wire_state(h, w.gauge_awg, length, w.locked)
+        key, word, tip = _wire_state(h, w.gauge_awg, length, w.locked or w.manual)
         l_word, l_tip = _lock(
             project, "wire", w.id, locked, strings.HV_LOCK_WIRE if w.locked else None
         )
@@ -808,6 +808,7 @@ class HarnessView(QWidget):
         self.side_tabs = side
         self._why_box = side  # placed beside the tables by `_build_tables`
         self.why.whyRequested.connect(self.whyRequested)
+        self.wire_editor.wireAdded.connect(self._wire_added)
         self.preview.hovered.connect(self._drawing_hovered)
         self.preview.clicked.connect(self._drawing_clicked)
 
@@ -932,7 +933,14 @@ class HarnessView(QWidget):
             self.selector.setCurrentIndex(i)
             self.selector.blockSignals(False)
 
+    def _wire_added(self, wire_id: str) -> None:
+        """A wire was added in the form: show its row and its values."""
+        self.refresh()
+        self.select("wire", wire_id)
+        self._update_wire_editor()
+
     def _header(self, h: Harness) -> None:
+        self.wire_editor.set_harness(h.id)
         p = self.ctl.project
         state, text = release_state(p, h)
         self.release_chip.set_state(state, text)

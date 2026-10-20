@@ -14,6 +14,7 @@ Rules that need numbers from your standards (see PLACEHOLDERS.md) check nothing 
 | `segment-loop` | error (not waivable) | Routing loops | A loop in the routing segments gives a wire two possible routes, so its length is not defined. | Remove or merge a segment so the segments form a tree. | none |
 | `signal-unassigned` | warning (waivable) | Unassigned signals | A signal without a pin never reaches a wire. | Regenerate the harnesses, or assign the pin by hand. | none |
 | `pin-floating` | warning (waivable) | Floating pins | A named pin with no wire looks connected on the drawing but carries nothing. | Attach a wire or clear the signal name. | none |
+| `pin-shared` | warning (waivable) | Several wires on one pin | Two wires in one contact need a crimp that holds both, and a fault on that pin is harder to find. | Move one wire to a spare pin or splice the wires; waive it with a reason if the design needs it. | none |
 | `mate-mismatch` | error (not waivable) | Mating halves | Connectors that do not fit, or fit only by force, damage hardware. | Choose the mating part, opposite gender and the same pin count and keying. | `ECSS-Q-ST-30-11_0140054` |
 | `direction-conflict` | error (not waivable) | Signal directions | Two drivers fight each other, or nothing drives a receiver. | Swap the wire to the correct pin of the interface. | none |
 | `current-over-contact` | error (not waivable) | Contact current | An overloaded contact overheats. | Use a larger contact or split the load over more pins. | `ECSS-Q-ST-30-11_0140050` |
