@@ -139,6 +139,7 @@ gui/releases_panel,gui,"The Releases tab: the timeline of reviews, releases and 
 gui/settings_page,gui,"The Settings area: appearance, editing, the project's values, keyboard shortcuts, About, Licences.",__init__ gui/__init__ gui/empty_state gui/licences gui/strings gui/tables gui/theme/__init__,,REQ-OUT-04
 gui/sheet,gui,"Spreadsheet behaviour for the tables of the model: paste from Excel, bulk edit, Enter to edit and",,,REQ-LIB-03 REQ-OUT-04 REQ-VCS-01
 gui/shell,gui,"Building blocks of the app shell: tabs with slots for views that arrive later, empty states,",gui/__init__ gui/icons gui/strings gui/theme/__init__,,REQ-OUT-04
+gui/startup_help,gui,"Why the editor did not start on Linux, said in one sentence a person can act on.",,,
 gui/states,gui,"State chips: pass, fail, pending, not checked, locked, released, stale ... as icon + word + pattern.",gui/__init__ gui/icons gui/strings gui/theme/__init__,,REQ-LIB-03 REQ-OUT-04 REQ-VCS-01
 gui/strings,gui,All user-visible UI strings live here so translation is possible later.,,REQ-GUI-01 REQ-GUI-03 REQ-GUI-05 REQ-LABEL-01 REQ-LIB-03 REQ-M7-01 REQ-M7-03 REQ-VCS-01 REQ-WIRE-01 REQ-WIRE-03 REQ-WIRE-05,REQ-CC-05 REQ-CC-06 REQ-CC-07 REQ-GUI-02 REQ-OUT-04 REQ-PERF-01
 gui/tables,gui,"Shared table code: one model, one proxy, one view setup, TSV copy and saved column widths.",gui/__init__ gui/sheet gui/states gui/strings gui/theme/__init__,,REQ-LIB-03 REQ-OUT-04 REQ-VCS-01

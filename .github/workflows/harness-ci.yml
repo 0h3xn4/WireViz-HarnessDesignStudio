@@ -127,8 +127,11 @@ jobs:
     timeout-minutes: 15
     defaults:
       run:
-        working-directory: ${{ github.workspace }}  # this job has no checkout, so there is no HarnessDesignStudio/ folder
+        working-directory: ${{ github.workspace }}  # the checkout below holds only the container scripts, not the source tree
     steps:
+      - uses: actions/checkout@v4  # first: it cleans the workspace, so it must come before the download
+        with:
+          sparse-checkout: HarnessDesignStudio/packaging/ubuntu/container
       - uses: actions/download-artifact@v4
         with:
           name: harness-design-studio-ubuntu-24.04
@@ -145,6 +148,8 @@ jobs:
           HOME="$PWD/home" "$PWD/home/.local/bin/harness-design-studio" --version
           HOME="$PWD/home" "$PWD/home/.local/bin/harness" --version
           HOME="$PWD/home" ./harness-design-studio/uninstall.sh
+      - name: Run the tarball on the smallest machine it supports (no Python, three system libraries)
+        run: sh HarnessDesignStudio/packaging/ubuntu/container/minimal-machine-test.sh pkg/harness-design-studio-*-linux-*.tar.gz
       - name: Install and run the .deb built in the test job
         working-directory: pkg
         run: |

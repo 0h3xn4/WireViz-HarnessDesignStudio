@@ -64,6 +64,31 @@ def run(
     )  # fmt: skip
 
 
+PYTHON_NAMES = ("python", "python3", "python.exe", "pythonw.exe", "py.exe")
+
+
+def clean_env(extra: dict[str, str] | None = None) -> dict[str, str]:
+    """The environment of a machine that has no Python for the package to lean on: no PYTHON*
+    variable, no virtual or conda environment, and no PATH folder that holds a Python. A package
+    that passes with this is the "just run the setup" package; with the CI runner's own
+    environment it could pass by borrowing the runner's Python."""
+    env = {
+        k: v
+        for k, v in os.environ.items()
+        if not k.upper().startswith("PYTHON") and k.upper() not in ("VIRTUAL_ENV", "CONDA_PREFIX")
+    }
+    kept = [
+        d
+        for d in env.get("PATH", "").split(os.pathsep)
+        if d and not any((Path(d) / name).exists() for name in PYTHON_NAMES)
+    ]
+    dropped = len([d for d in env.get("PATH", "").split(os.pathsep) if d]) - len(kept)
+    env["PATH"] = os.pathsep.join(kept)
+    env.update(extra or {})
+    say(f"clean environment: no PYTHON* variables, {dropped} PATH folders with a Python removed")
+    return env
+
+
 def tail(text: str, lines: int = 12) -> str:
     return "\n".join(text.strip().splitlines()[-lines:])
 
@@ -77,11 +102,14 @@ def tree_hashes(folder: Path) -> dict[str, str]:
     }
 
 
-def walkthrough(cli: list[str], where: Path) -> tuple[list[str], dict[str, str]]:
-    """Run the first-steps commands with `cli` in `where`; (problems, hashes of the project)."""
+def walkthrough(
+    cli: list[str], where: Path, env: dict[str, str] | None = None
+) -> tuple[list[str], dict[str, str]]:
+    """Run the first-steps commands with `cli` in `where`; (problems, hashes of the project).
+    `env` is the environment of the commands (the program's own, without a Python, for a package)."""
     where.mkdir(parents=True, exist_ok=True)
     problems: list[str] = []
-    env = {**os.environ, "PYTHONUTF8": "1"}
+    env = {**(env if env is not None else os.environ), "PYTHONUTF8": "1"}
     for args in WALKTHROUGH:
         done = run([*cli, *args], cwd=where, env=env)
         if done.returncode != 0:
@@ -111,15 +139,16 @@ def check_program(cli: Path, gui: Path, work: Path, aliases: tuple[Path, ...] = 
     if problems:
         return problems
     want = f"harness {__version__}"
+    bare = clean_env()  # the package must not need the Python of the machine it is tested on
     for exe in (cli, *aliases):
-        done = run([str(exe), "--version"])
+        done = run([str(exe), "--version"], env=bare)
         if done.returncode != 0 or done.stdout.strip() != want:
             problems.append(
                 f"{exe.name} --version printed {done.stdout.strip()!r} (exit {done.returncode}), want {want!r}"
             )
         else:
             say(f"ok: {exe.name} --version -> {want}")
-    steps, got = walkthrough([str(cli)], work / "frozen")
+    steps, got = walkthrough([str(cli)], work / "frozen", bare)
     problems += steps
     if not steps:
         say(f"ok: first-steps walk-through through {cli.name} ({len(got)} project files)")
@@ -135,7 +164,7 @@ def check_program(cli: Path, gui: Path, work: Path, aliases: tuple[Path, ...] = 
             say("ok: every project file is byte-identical to the source install's")
     result = work / "selftest.txt"
     result.unlink(missing_ok=True)
-    env = {**os.environ, "QT_QPA_PLATFORM": "offscreen"}
+    env = {**bare, "QT_QPA_PLATFORM": "offscreen"}
     done = run([str(gui), "--selftest", "--selftest-out", str(result)], env=env)
     text = result.read_text(encoding="utf-8").strip() if result.is_file() else "(no result file)"
     if done.returncode != 0 or text != "selftest ok":

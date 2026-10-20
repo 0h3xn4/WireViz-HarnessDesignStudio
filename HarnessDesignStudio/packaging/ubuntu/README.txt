@@ -19,3 +19,5 @@ The tool never uses the network. The user guide opens with F1 inside the app.
 Programs: harness-design-studio-gui (the editor), harness-design-studio (the command line tool; the short
 name harness works too, it is the same program).
 Check the package: ./harness-design-studio-gui --selftest
+Check the machine: ./harness-design-studio-gui --check-system   (prints "system libraries ok", or names the
+  missing library and the sudo apt install line; install.sh runs it too and warns)
