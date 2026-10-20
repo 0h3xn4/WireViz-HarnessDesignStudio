@@ -19,7 +19,7 @@ This page shows how to write the drawings and lists of a design (wire lists, pin
 
 ## 1. Export
 
-**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…**, Ctrl+E). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, and the button **Export**. The project must be saved to a folder first (the window says so and offers **Save project…**). When it is done the window lists the files written ("38 files written to …") and the app says "38 files written to the outputs folder (design 63eb9fef79dc)." (your numbers will differ). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The same files, with their checksums, are listed afterwards under **Exported files** in the Outputs area ([section 4](#4-check-that-the-outputs-are-current)). The export always writes the whole set. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
+**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…**, Ctrl+E). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, and the button **Export**. The project must be saved to a folder first (the window says so and offers **Save project…**). When it is done the window lists the files written ("38 files written to …") and the app says "38 files written to the outputs folder (design 9bde6217c013)." (your numbers will differ). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The same files, with their checksums, are listed afterwards under **Exported files** in the Outputs area ([section 4](#4-check-that-the-outputs-are-current)). The export always writes the whole set. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
 
 **On the command line**:
 
@@ -28,7 +28,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-38 files written to wheel-link/outputs (model 63eb9fef79dc).
+38 files written to wheel-link/outputs (model 9bde6217c013).
 ```
 
 The files are checked independently before they are written. If that check fails, nothing is written and the window shows a notice, "The independent check found n problem(s) in the outputs, so nothing was written", with the first problems, until the next export succeeds. The check compares every cell of the pinouts, BOM, test tables, labels, mass table, mating matrix, traceability, box pinouts and design rule findings with the design, the values in the YAML files, the pins and signals in the drawings, the texts of the PDFs, the sheets of the Excel workbooks and the provenance values. A workbook that cannot be built (for example because the temporary folder is full) gives a message that says why. Export is refused, in the app and on the command line, for a project that is read-only or has damaged files ("This project is read-only, so nothing was exported. Save a copy to a new folder first."); an export or generation that was started before you edited the project is dropped ("The project was edited while this ran, so the result was dropped. Please try again.").
@@ -76,7 +76,7 @@ Only the A3 drawing is also written as SVG; the A4 drawing is a PDF only. Full l
 Every file carries the tool version and a **model hash** (a short fingerprint of the design): CSV and YAML files start with a comment line, for example
 
 ```
-# harness-design-studio 1.3.0 model 63eb9fef79dc
+# harness-design-studio 1.4.0 model 9bde6217c013
 ```
 
 A program that reads the CSV must skip lines that start with `# `. A printed sheet can be traced to the exact design it came from by that hash.

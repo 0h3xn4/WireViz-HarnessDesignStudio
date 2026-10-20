@@ -4,7 +4,11 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
-Version 1.4.0 is in progress: the feedback of the AIT engineers (plan: `docs/ait/AIT_FEEDBACK_PLAN.md`, decisions D-160 and D-161).
+## 1.4.0 (2026-10-20; not a statement of compliance)
+
+Version 1.4.0 answers the feedback of the AIT engineers (plan: `docs/ait/AIT_FEEDBACK_PLAN.md`, decisions D-160 to D-165): every wire can be edited and drawn by hand, wires can share a pin and be twisted or shielded together, pins have a function, connectors and harnesses have labels, the last commit is shown, and devices can be reused across projects.
+
+What did not change for existing work: every new field is optional and is not written to a project file while it has its default value, so a project that does not use a new feature keeps byte-identical files and outputs (the file format stays at schema version 1). All 567 output files of the four example projects have the same SHA-256 as with release 1.2.0 apart from the tool version they record (`tools/output_hashes.py`, `tests/test_output_hashes.py`). There are 35 design rules (one new, *Several wires on one pin*). A project that uses a new field cannot be read completely by 1.3.0 (an older tool says which fields it does not know). Not done, as in earlier releases: signing the packages, a screen-reader pass and the clean-machine installation test (waived by the owner, `compliance/DEVIATIONS.md`). What soldering needs beyond the termination column in the lists is for the AIT engineers to say.
 
 ### Added
 
