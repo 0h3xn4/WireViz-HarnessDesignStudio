@@ -70,7 +70,17 @@ def test_json_values_become_text() -> None:
 
 @pytest.mark.parametrize(
     "text",
-    ["{", "[]", "[1, 2]", '{"a": 1}', '[{"a": {"b": 1}}]', '[{"a": [1]}]', "[" * 100000],
+    [
+        "{",
+        "[]",
+        "[1, 2]",
+        '{"a": 1}',
+        '[{"a": {"b": 1}}]',
+        '[{"a": [1]}]',
+        pytest.param(
+            "[" * 100000, id="deeply-nested"
+        ),  # a long id would overflow a Windows environment variable
+    ],
 )
 def test_json_that_is_not_a_flat_list_is_refused(text: str) -> None:
     with pytest.raises(ImportError_):
