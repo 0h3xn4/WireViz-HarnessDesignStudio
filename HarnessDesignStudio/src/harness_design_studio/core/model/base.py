@@ -3,9 +3,17 @@
 import re
 import unicodedata
 from datetime import date
-from typing import Annotated, Any
+from typing import Annotated, Any, ClassVar
 
-from pydantic import AfterValidator, BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import (
+    AfterValidator,
+    BaseModel,
+    ConfigDict,
+    Field,
+    SerializerFunctionWrapHandler,
+    StringConstraints,
+    model_serializer,
+)
 
 from harness_design_studio.core.units import AWG_MAX, AWG_MIN
 
@@ -18,10 +26,27 @@ class Entity(BaseModel):
     )
 
 
+class SparseEntity(Entity):
+    """An entity whose optional fields in `OMIT_WHEN_DEFAULT` are left out of every dump while they
+    still have their default value. A field added after release 1.3.0 goes here, so a project that
+    does not use the feature keeps byte-identical files (and the same model hash and outputs), and a
+    project written by this tool can still be read by an older one until the field is used."""
+
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset()
+
+    @model_serializer(mode="wrap")
+    def _leave_out_defaults(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data: dict[str, Any] = handler(self)
+        for name in self.OMIT_WHEN_DEFAULT:
+            if name in data and data[name] == type(self).model_fields[name].default:
+                del data[name]
+        return data
+
+
 def evolve[E: Entity](obj: E, **changes: Any) -> E:
     """Return a re-validated copy of `obj` with some fields replaced."""
     data = obj.model_dump()
-    unknown = set(changes) - set(data)
+    unknown = set(changes) - set(type(obj).model_fields)
     if unknown:
         raise TypeError(f"{type(obj).__name__} has no field(s) {sorted(unknown)}")
     data.update(changes)

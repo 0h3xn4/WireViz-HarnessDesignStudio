@@ -45,6 +45,7 @@ from PySide6.QtWidgets import (
     QSizePolicy,
     QSplitter,
     QStackedWidget,
+    QTabWidget,
     QTextBrowser,
     QToolButton,
     QVBoxLayout,
@@ -76,6 +77,7 @@ from harness_design_studio.gui.preview import DrawingPreview, Key
 from harness_design_studio.gui.states import StateChip
 from harness_design_studio.gui.tables import Column, DictTableModel, Row, TableView, natural_key
 from harness_design_studio.gui.theme import ThemeManager
+from harness_design_studio.gui.wire_editor import WireEditor
 
 REFRESH_DELAY_MS = 60  # edits closer together than this share one refresh
 SHEETS_KEPT = 8  # drawings kept for the harnesses looked at last
@@ -777,6 +779,9 @@ class HarnessView(QWidget):
             table.entered.connect(self._table_entered)
         self.pin_table.activated.connect(lambda _i: self._why_requested())
         self.wire_table.activated.connect(lambda _i: self._why_requested())
+        wsm = self.wire_table.selectionModel()
+        if wsm is not None:
+            wsm.selectionChanged.connect(lambda *_a: self._update_wire_editor())
 
     def _build_right(self, theme: ThemeManager) -> None:
         draw = QWidget()
@@ -787,14 +792,15 @@ class HarnessView(QWidget):
         self.preview = DrawingPreview(theme)
         dl.addWidget(self.preview, 1)
         self.splitter.addWidget(draw)
-        why = QWidget()
-        wl = QVBoxLayout(why)
-        wl.setContentsMargins(0, 0, 0, 0)
-        wl.setSpacing(theme.space(4))
-        wl.addWidget(_caption(strings.HV_WHY_TITLE))
         self.why = _WhyView(theme)
-        wl.addWidget(self.why, 1)
-        self._why_box = why  # placed beside the tables by `_build_tables`
+        self.wire_editor = WireEditor(self.ctl, theme)
+        side = QTabWidget()
+        side.setObjectName("harness-side-tabs")
+        side.setDocumentMode(True)
+        side.addTab(self.why, strings.HV_WHY_TITLE)
+        side.addTab(self.wire_editor, strings.HV_EDIT_TAB)
+        self.side_tabs = side
+        self._why_box = side  # placed beside the tables by `_build_tables`
         self.why.whyRequested.connect(self.whyRequested)
         self.preview.hovered.connect(self._drawing_hovered)
         self.preview.clicked.connect(self._drawing_clicked)
@@ -967,6 +973,19 @@ class HarnessView(QWidget):
             self._set_selection(keep, origin="api")
         else:
             self._set_selection(None, origin="api")
+        self._update_wire_editor()
+
+    def _update_wire_editor(self) -> None:
+        """Show the selected wires of the wire table in the Edit wire form (untouched edits are
+        dropped when the selection or the design changes)."""
+        if self._syncing:
+            return
+        rows = self.wire_table.selected_rows()
+        ids = [str(r["id"]) for r in rows if isinstance(r, dict) and "id" in r]
+        if ids == self.wire_editor.wire_ids() and not self.wire_editor.dirty:
+            self.wire_editor.show_wires(ids)  # same wires: refresh the values
+        elif ids != self.wire_editor.wire_ids():
+            self.wire_editor.show_wires(ids)
 
     def _update_counts(self) -> None:
         shown = self.pin_table.proxy.rowCount()

@@ -675,6 +675,8 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
                 )
             else:
                 wire = _size(ctx, wire, i, itype.category, bundle_wires)
+            if prev_w is not None and (prev_w.label or prev_w.note):
+                wire = evolve(wire, label=prev_w.label, note=prev_w.note)  # a person's, always kept
             wires.append(wire)
             ctx.note(
                 f"wire:{wid}",
@@ -759,13 +761,15 @@ def _match_renamed(
 
 
 def _warn_lost_data(ctx: _Ctx, old: Harness, new: Harness | None) -> None:
-    """Locked wires and entered segment lengths of `old` that `new` does not carry over."""
+    """Locked wires, wire labels and notes and entered segment lengths of `old` that `new` does not
+    carry over."""
     kept_wires = _wire_keys(new)
     kept_segments = {(s.from_node, s.to_node) for s in new.segments} if new else set()
     lost = [
-        f"the locked wire {w.id} ({w.interface_id} {w.signal})"
+        f"the {'locked wire' if w.locked else 'wire with a label or note'} {w.id} "
+        f"({w.interface_id} {w.signal})"
         for key, w in _wire_keys(old).items()
-        if w.locked and key not in kept_wires
+        if (w.locked or w.label or w.note) and key not in kept_wires
     ]
     lost += [
         f"the entered length of segment {s.id} ({s.length_m:g} m)"

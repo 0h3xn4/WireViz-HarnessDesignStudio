@@ -53,15 +53,27 @@ def uses_emc_classes(project: Project) -> bool:
     return any(t.emc_class for t in project.interface_types.values())
 
 
+def uses_wire_text(project: Project) -> bool:
+    """True when a person gave any wire a label or a note (1.4.0)."""
+    return any(w.label or w.note for h in project.harnesses.values() for w in h.wires)
+
+
+def wire_name(w: Wire) -> str:
+    """What the labels of a wire print after its ID: the person's label, else the signal."""
+    return w.label or w.signal or ""
+
+
 def wire_list(project: Project, h: Harness) -> Table:
-    """The EMC class column exists only when the project defines EMC classes, so projects that
-    do not use them keep byte-identical wire lists."""
+    """The EMC class column exists only when the project defines EMC classes, and the Label and
+    Note columns only when a person gave a wire one, so projects that do not use them keep
+    byte-identical wire lists."""
     shields = shield_of(h)
     emc = uses_emc_classes(project)
+    text = uses_wire_text(project)
     rows: Table = [[
         "Wire", "Signal", "Interface", "From connector", "From pin", "To connector", "To pin",
         "AWG", "Part", "Colour", "Length (m)", "Shield group", "Locked",
-        *(["EMC class"] if emc else []),
+        *(["EMC class"] if emc else []), *(["Label", "Note"] if text else []),
     ]]  # fmt: skip
     for w in sorted(h.wires, key=lambda x: x.id):
         rows.append([
@@ -69,6 +81,7 @@ def wire_list(project: Project, h: Harness) -> Table:
             w.to_connector, w.to_pin, PENDING if w.gauge_awg is None else str(w.gauge_awg),
             w.part_id or "", w.colour or "", data_num(wire_length(h, w)), shields.get(w.id, ""),
             "yes" if w.locked else "", *([emc_class_of(project, w)] if emc else []),
+            *([w.label or "", w.note] if text else []),
         ])  # fmt: skip
     return rows
 
@@ -239,7 +252,8 @@ def labels(project: Project, h: Harness) -> Table:
         near = f"{w.from_connector}.{w.from_pin}"
         emc = emc_class_of(project, w)
         tag = f" [EMC {emc}]" if emc else ""  # personnel can see the category (20-07C 4.2.13.1 d)
-        head = f"{w.id} {w.signal}" if w.signal else w.id  # a signal name keeps its own spacing
+        name = wire_name(w)
+        head = f"{w.id} {name}" if name else w.id  # a signal name keeps its own spacing
         rows.append([f"{w.id}-A", "wire", f"{head} to {far}{tag}", "1"])
         rows.append([f"{w.id}-B", "wire", f"{head} to {near}{tag}", "1"])
     return rows
