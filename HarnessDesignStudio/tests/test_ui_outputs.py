@@ -133,9 +133,9 @@ def test_open_reveal_and_copy_act_on_the_selected_files(qtbot, ctl, exported, tm
     assert panel.select_file("harnesses/W001/wirelist.csv") and panel.open_btn.isEnabled()
     panel.open_btn.click()
     panel.reveal_btn.click()
-    assert [u.toLocalFile() for u in opened] == [
-        str(exported / "harnesses/W001/wirelist.csv"),
-        str(exported / "harnesses/W001"),
+    assert [Path(u.toLocalFile()) for u in opened] == [  # (a URL has / where Windows has \)
+        exported / "harnesses/W001/wirelist.csv",
+        exported / "harnesses/W001",
     ]
     assert panel.copy_selected() == 1
     assert (dest / "harnesses/W001/wirelist.csv").read_bytes() == (
