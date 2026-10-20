@@ -776,7 +776,7 @@ def test_everything_can_be_done_from_the_keyboard(host, qtbot) -> None:
     assert panel.current_rule_id() == "duplicate-id"
     QTest.keyClick(table, Qt.Key.Key_Down)
     assert panel.current_rule_id() == "wire-dangling"
-    for _ in range(10):
+    for _ in range(11):  # one more than before 1.4.0: pin-shared sits before it
         QTest.keyClick(table, Qt.Key.Key_Down)
     assert panel.current_rule_id() == "spare-pins-low"
     # Enter in the table moves into the details: the Supply value button of the missing value
