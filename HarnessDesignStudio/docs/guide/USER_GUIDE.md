@@ -331,8 +331,9 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Edit | Add unit | one item for each kind of unit (computer, power unit, wheel ...) |
 | Edit | Connect with | one item for each interface type (the arrow beside the Connect button lists the same); then click two units |
 | View | Guided, Expert | the two modes of section 5 |
-| View | Theme | Follow the system (the default), Light or Dark |
+| View | Theme | Follow the system (the default), Light or Dark (also under **Settings > Appearance**) |
 | View | Show overview map, Show legend, Snap to grid | overlays and the grid |
+| View | Reduce motion | turns off the fades and slides of menus, lists and tooltips |
 | View | Show all link labels | shows the values (such as `28 V · 5 A`) on every link, not only on the selected one |
 | View | Interface size | makes text and controls larger: 100, 125, 150 or 200 %; the first size follows your screen |
 | View | Zoom in, Zoom out, Fit all, Zoom to 100 %, Zoom to selection | zooms the diagram (Ctrl+=, Ctrl+-, F, Ctrl+0, Shift+F) |
@@ -353,7 +354,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Help | Replay the tour | shows the short first-run tour again |
 | Help | Glossary | the list of words the tool uses |
 | Help | Show project problems | lists what could not be loaded, for a project with problems |
-| Help | About | the version and a short note about the tool |
+| Help | About | opens **Settings > About**: the version, the Python and Qt versions and where your settings are kept |
 
 The **Show** list at the right end of the Model tab bar fades everything except one signal class (power, data, analog, RF ...), one connector or one bundle (harness), so a large diagram can be read one piece at a time; choose *All interfaces* to see everything again. It changes nothing in the project. The **Interface table** and **Outline** tabs of the bottom panel list every interface and unit as text; they are the screen-reader friendly views of the diagram.
 

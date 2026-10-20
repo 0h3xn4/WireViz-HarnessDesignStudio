@@ -96,6 +96,9 @@ QTableView, QTreeView, QListView, QListWidget {{ background: {c("bg.surface")}; 
 QTableView, QTreeView {{ font-size: {small}; }}
 QTableView::item:hover, QTreeView::item:hover, QListView::item:hover {{ background: {c("bg.hover")}; }}
 QTableView::item:selected, QTreeView::item:selected, QListView::item:selected {{ background: {c("bg.selected")}; color: {c("text.primary")}; }}
+QListWidget[nav="true"] {{ background: {c("bg.canvas")}; border: none; border-right: 1px solid {c("border.subtle")}; border-radius: 0; padding: {s8}; outline: none; }}
+QListWidget[nav="true"]::item {{ min-height: {inner}; padding: 0 {s8}; border-left: {px(3)} solid transparent; border-radius: {r_ctl}; }}
+QListWidget[nav="true"]::item:selected {{ border-left: {px(3)} solid {c("accent")}; font-weight: 600; }}
 QHeaderView::section {{ background: {c("bg.surface")}; color: {c("text.secondary")}; border: 0; border-bottom: 1px solid {c("border.subtle")}; padding: {s4} {s8}; font-weight: 500; }}
 QTableCornerButton::section {{ background: {c("bg.surface")}; border: 0; }}
 QScrollArea {{ border: none; }}

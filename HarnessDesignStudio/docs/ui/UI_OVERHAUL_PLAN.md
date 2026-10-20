@@ -374,6 +374,8 @@ into the summary, all existing tests green (CI on Linux, Windows, macOS), golden
   (mode, snap, labels), project configuration, shortcuts list, about, licences (fonts, icons).
 - *Acceptance:* every setting persists across restarts and applies live; both themes pass the contrast test.
 
+**M9 result (2026-10-20).** Built as D-158. Settings has six sections (Appearance with Reduce motion, Editing with snap and link labels, Project, Keyboard shortcuts, About, Licences); each setting applies at once and survives a restart (tested with a second window); About is a section, not a message box. Scale choices stay 100 to 200 %. **UI scale change still 1.1 s (target 250 ms: not met):** Qt's own re-reading of the style sheet for 1,250 widgets; a wait cursor shows during it (D-158). No existing test edited.
+
 **Final milestone: performance, accessibility, documentation, release.**
 - Performance pass against `PERF_BASELINE.md`; accessibility pass (keyboard-only walk of every area; visible
   focus; tooltips on every icon-only button; contrast); `docs/ui/screenshots/after/`; `docs/ui/BEFORE_AFTER.md`;
