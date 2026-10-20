@@ -698,7 +698,15 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
         ):
             wires.append(mw)
     wires.sort(key=lambda w: w.id)
-    shields = _shields(ctx, hid, ifaces, [w for w in wires if not w.manual], old)
+    mine = [s for s in (old.shields if old else []) if s.manual]
+    shields = _shields(
+        ctx, hid, ifaces, [w for w in wires if not w.manual], old, frozenset(s.id for s in mine)
+    )
+    grouped = {wid for s in shields for wid in s.wire_ids}
+    have = {w.id for w in wires}
+    for g in mine:  # a group that a person made stays while its wires exist and are in no other
+        if set(g.wire_ids) <= have and not grouped.intersection(g.wire_ids):
+            shields.append(g)
     interfaces = sorted(i.id for i in ifaces)
     ctx.note(
         f"harness:{hid}",
@@ -786,6 +794,12 @@ def _warn_lost_data(ctx: _Ctx, old: Harness, new: Harness | None) -> None:
         f"the wire {w.id} that you drew ({w.from_connector}.{w.from_pin} to {w.to_connector}.{w.to_pin})"
         for w in old.wires
         if w.manual and w.id not in kept_manual
+    ]
+    kept_groups = {s.id for s in new.shields if s.manual} if new else set()
+    lost += [
+        f"the {s.kind.replace('_', ' ')} {s.id} that you made"
+        for s in old.shields
+        if s.manual and s.id not in kept_groups
     ]
     lost += [
         f"the entered length of segment {s.id} ({s.length_m:g} m)"
@@ -923,7 +937,12 @@ def _check_contacts(ctx: _Ctx, wire: Wire, i: InterfaceInstance) -> None:
 
 
 def _shields(
-    ctx: _Ctx, hid: str, ifaces: list[InterfaceInstance], wires: list[Wire], old: Harness | None
+    ctx: _Ctx,
+    hid: str,
+    ifaces: list[InterfaceInstance],
+    wires: list[Wire],
+    old: Harness | None,
+    reserved: frozenset[str] = frozenset(),
 ) -> list[ShieldGroup]:
     p = ctx.project
     ends = [ctx.gen.get("shield_end_a"), ctx.gen.get("shield_end_b")]
@@ -940,6 +959,8 @@ def _shields(
     def add(kind: str, members: list[Wire]) -> None:
         nonlocal n
         if members:
+            while ctx.namer.shield(hid, n) in reserved:  # the IDs of the groups a person made
+                n += 1
             out.append(
                 ShieldGroup(
                     id=ctx.namer.shield(hid, n),

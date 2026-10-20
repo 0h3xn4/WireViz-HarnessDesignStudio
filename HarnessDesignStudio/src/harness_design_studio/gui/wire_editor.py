@@ -28,14 +28,17 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio.core.edit import EditError
-from harness_design_studio.core.model import Wire
+from harness_design_studio.core.model import ShieldGroup, Wire
 from harness_design_studio.core.wirecolours import COLOURS
 from harness_design_studio.core.wires import (
     find_wire,
+    group_of,
     new_wire_id,
     pin_choices,
     plan_add_wire,
     plan_delete_wires,
+    plan_group_wires,
+    plan_ungroup_all,
     plan_wire_edit,
     plan_wire_reset,
     wire_part_choices,
@@ -282,6 +285,31 @@ class WireEditor(QWidget):
         icon_button(self.delete, "close", theme, strings.WIRE_DELETE_TIP, text=strings.WIRE_DELETE)
         self.delete.setVisible(False)
         root.addWidget(self.delete)
+        self.group_label = QLabel()
+        self.group_label.setObjectName("wire-group-label")
+        self.group_label.setProperty("muted", True)
+        root.addWidget(self.group_label)
+        group_row = QHBoxLayout()
+        self.group_kind = QComboBox()
+        self.group_kind.setObjectName("wire-group-kind")
+        self.group_kind.setAccessibleName(strings.WIRE_GROUP_KIND)
+        self.group_kind.setToolTip(strings.WIRE_GROUP_KIND_TIP)
+        for kind, label in strings.WIRE_GROUP_KINDS:
+            self.group_kind.addItem(label, kind)
+        self.group_btn = QPushButton()
+        self.group_btn.setObjectName("wire-group")
+        icon_button(
+            self.group_btn, "harness", theme, strings.WIRE_GROUP_TIP, text=strings.WIRE_GROUP
+        )
+        self.ungroup_btn = QPushButton()
+        self.ungroup_btn.setObjectName("wire-ungroup")
+        icon_button(
+            self.ungroup_btn, "unlock", theme, strings.WIRE_UNGROUP_TIP, text=strings.WIRE_UNGROUP
+        )
+        group_row.addWidget(self.group_kind, 1)
+        group_row.addWidget(self.group_btn)
+        group_row.addWidget(self.ungroup_btn)
+        root.addLayout(group_row)
         self.new_form = NewWireForm(ctl, theme)
         self.new_form.wireAdded.connect(self.wireAdded)
         root.addSpacing(theme.space(8))
@@ -291,6 +319,8 @@ class WireEditor(QWidget):
         self.apply.clicked.connect(self.apply_changes)
         self.reset.clicked.connect(self.reset_wires)
         self.delete.clicked.connect(self.delete_wires)
+        self.group_btn.clicked.connect(self.group_wires)
+        self.ungroup_btn.clicked.connect(self.ungroup_wires)
         self.from_end.changed.connect(lambda: self._touched.update({"from_connector", "from_pin"}))
         self.to_end.changed.connect(lambda: self._touched.update({"to_connector", "to_pin"}))
         for w in (self.gauge, self.length, self.label):
@@ -350,11 +380,25 @@ class WireEditor(QWidget):
     def _selected(self) -> list[Wire]:
         return [find_wire(self.ctl.project, wid)[1] for wid in self._ids]
 
+    def _groups(self, wires: list[Wire]) -> list[ShieldGroup]:
+        """The groups the wires are in, by ID."""
+        found: dict[str, ShieldGroup] = {}
+        for w in wires:
+            g = group_of(find_wire(self.ctl.project, w.id)[0], w.id)
+            if g is not None:
+                found[g.id] = g
+        return [found[k] for k in sorted(found)]
+
     def _show_ends(self) -> None:
         """The ends of a single wire that you drew; the Delete button for wires that you drew."""
         wires = self._selected()
         manual = bool(wires) and all(w.manual for w in wires)
         self.delete.setVisible(manual)
+        groups = self._groups(wires)
+        self.ungroup_btn.setVisible(any(g.manual for g in groups))
+        self.group_label.setText(
+            ", ".join(strings.WIRE_IN_GROUP.format(g.kind.replace("_", " "), g.id) for g in groups)
+        )
         one = len(wires) == 1 and wires[0].manual
         self.ends.setVisible(one)
         if one:
@@ -435,6 +479,9 @@ class WireEditor(QWidget):
         self.apply.setEnabled(on)
         self.reset.setEnabled(on)
         self.delete.setEnabled(on)
+        self.group_btn.setEnabled(on)
+        self.group_kind.setEnabled(on)
+        self.ungroup_btn.setEnabled(on)
         self.from_end.set_enabled(on)
         self.to_end.set_enabled(on)
         self.new_form.set_harness(self.new_form._hid)
@@ -495,6 +542,39 @@ class WireEditor(QWidget):
         if not self.ctl.run(strings.STEP_DELETE_WIRES, ops):
             return False
         self.show_wires([])
+        return True
+
+    def group_wires(self) -> bool:
+        """Twist or shield the selected wires together as one group."""
+        if not self._ids or not self.group_btn.isEnabled():
+            return False
+        kind = str(self.group_kind.currentData())
+        try:
+            ops = plan_group_wires(self.ctl.project, self._ids, kind)
+        except EditError as exc:
+            self._say(str(exc))
+            return False
+        ids = list(self._ids)
+        if not self.ctl.run(strings.STEP_GROUP_WIRES, ops):
+            return False
+        self._say("")
+        self.show_wires(ids)
+        return True
+
+    def ungroup_wires(self) -> bool:
+        """Take apart the groups, that you made, of the selected wires."""
+        if not self._ids or not self.ungroup_btn.isEnabled():
+            return False
+        try:
+            groups = self._groups(self._selected())
+            ops = plan_ungroup_all(self.ctl.project, [g.id for g in groups if g.manual])
+        except EditError as exc:
+            self._say(str(exc))
+            return False
+        ids = list(self._ids)
+        if not ops or not self.ctl.run(strings.STEP_UNGROUP_WIRES, ops):
+            return False
+        self.show_wires(ids)
         return True
 
     def reset_wires(self) -> bool:

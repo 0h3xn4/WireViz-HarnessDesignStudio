@@ -201,3 +201,138 @@ def test_pin_choices_lists_the_pins_of_each_cable_connector(project):
     choices = pin_choices(project, h.id)
     assert set(choices) == {c.id for c in h.connectors}
     assert all(pins for pins in choices.values())
+
+
+def test_the_verifier_says_a_shared_pin_of_a_drawn_wire_is_a_warning_not_an_error(project):
+    from harness_design_studio.core.verify import verify_project
+
+    h = harness(project)
+    w = h.wires[0]
+    other = next(c for c in h.connectors if c.id != w.from_connector)
+    apply_ops(
+        project,
+        plan_add_wire(project, h.id, w.from_connector, w.from_pin, other.id, other.pins[-1].id),
+    )
+    report = verify_project(project)
+    assert not [i for i in report.errors if i.code == "pin_reused"]
+    assert any(i.code == "pin_shared" and i.severity == "warning" for i in report.issues)
+
+
+def test_a_generated_wire_sharing_a_pin_is_still_an_error(project):
+    from harness_design_studio.core.verify import verify_project
+
+    h = harness(project)
+    a, b = h.wires[0], h.wires[1]
+    twin = evolve(b, from_connector=a.from_connector, from_pin=a.from_pin)
+    apply_ops(project, [Put("harnesses", evolve(h, wires=[a, twin, *h.wires[2:]]))])
+    assert any(i.code == "pin_reused" for i in verify_project(project).errors)
+
+
+# ---- twisting and shielding groups ---------------------------------------------------------------
+
+
+def two_drawn_wires(project, h):
+    """Two wires of the harness that are in no group: wires that a person draws."""
+    pins = free_pins(project, h, 4)
+    for a, b in ((pins[0], pins[1]), (pins[2], pins[3])):
+        apply_ops(project, plan_add_wire(project, h.id, a[0], a[1], b[0], b[1]))
+        h = project.harnesses[h.id]
+    return [w.id for w in h.wires if w.manual]
+
+
+def test_twist_two_wires_into_a_pair_that_generation_keeps(project):
+    from harness_design_studio.core.wires import group_of, plan_group_wires, plan_ungroup
+
+    h = harness(project)
+    ids = two_drawn_wires(project, h)
+    apply_ops(project, plan_group_wires(project, ids, "twisted_pair"))
+    h = project.harnesses[h.id]
+    group = group_of(h, ids[0])
+    assert group is not None and group.manual and group.kind == "twisted_pair"
+    assert sorted(group.wire_ids) == sorted(ids)
+    apply_ops(project, plan_generation(project).ops)
+    assert group_of(project.harnesses[h.id], ids[0]) == group  # kept, same ID
+    ids_of_groups = [s.id for s in project.harnesses[h.id].shields]
+    assert len(ids_of_groups) == len(set(ids_of_groups))
+    apply_ops(project, plan_ungroup(project, group.id))
+    assert group_of(project.harnesses[h.id], ids[0]) is None
+
+
+def test_manual_is_not_written_for_the_groups_of_generation(project):
+    data = json.loads(serialize(project)[f"physical/harnesses/{harness(project).id}.json"])
+    assert all("manual" not in s for s in data["shields"])
+
+
+def test_a_group_must_have_the_right_number_of_wires_in_one_harness_and_none_in_a_group(project):
+    from harness_design_studio.core.wires import plan_group_wires, plan_ungroup
+
+    h = harness(project)
+    ids = two_drawn_wires(project, h)
+    with pytest.raises(EditError, match="2 wires, not 1"):
+        plan_group_wires(project, ids[:1], "twisted_pair")
+    with pytest.raises(EditError, match="4 wires, not 2"):
+        plan_group_wires(project, ids, "quad")
+    with pytest.raises(EditError, match="1 wire, not 2"):
+        plan_group_wires(project, ids, "coax")
+    with pytest.raises(EditError, match="No wire"):
+        plan_group_wires(project, [], "twisted_pair")
+    with pytest.raises(EditError, match="one of"):
+        plan_group_wires(project, ids, "braided")
+    grouped = next(w.id for w in h.wires if any(w.id in s.wire_ids for s in h.shields))
+    with pytest.raises(EditError, match="already in"):
+        plan_group_wires(project, [grouped, ids[0]], "twisted_pair")
+    generated_group = next(s for s in h.shields if not s.manual)
+    with pytest.raises(EditError, match="construction"):
+        plan_ungroup(project, generated_group.id)
+    with pytest.raises(EditError, match="does not exist"):
+        plan_ungroup(project, "NOPE")
+
+
+def test_wires_of_two_harnesses_cannot_be_grouped_and_a_released_harness_refuses(project):
+    from harness_design_studio.core.wires import plan_group_wires
+
+    a, b = sorted((h for h in project.harnesses.values() if h.wires), key=lambda h: h.id)[:2]
+    with pytest.raises(EditError, match="same harness"):
+        plan_group_wires(project, [a.wires[0].id, b.wires[0].id], "twisted_pair")
+    ids = two_drawn_wires(project, a)
+    apply_ops(project, [Put("harnesses", evolve(project.harnesses[a.id], status="released"))])
+    with pytest.raises(EditError, match="released"):
+        plan_group_wires(project, ids, "twisted_pair")
+
+
+def test_a_group_is_dropped_with_a_word_when_a_wire_goes(project):
+    from harness_design_studio.core.wires import plan_group_wires
+
+    h = harness(project)
+    ids = two_drawn_wires(project, h)
+    apply_ops(project, plan_group_wires(project, ids, "shielded_pair"))
+    apply_ops(project, plan_delete_wire(project, ids[0]))
+    h = project.harnesses[h.id]
+    assert all(set(s.wire_ids) <= {w.id for w in h.wires} for s in h.shields)
+    assert not any(s.manual for s in h.shields)  # a pair with one wire left is not a pair
+
+
+def test_generation_says_when_it_cannot_keep_a_group(project):
+    from harness_design_studio.core.wires import plan_group_wires
+
+    h = harness(project)
+    ids = two_drawn_wires(project, h)
+    apply_ops(project, plan_group_wires(project, ids, "twisted_pair"))
+    for iid in {x.interface_id for x in h.wires if x.interface_id}:
+        apply_ops(project, [Delete("interfaces", iid)])
+    text = " ".join(f.message for f in plan_generation(project).report.findings)
+    assert "twisted pair" in text and "that you made" in text
+
+
+def test_the_drawing_and_the_outputs_accept_a_group_of_drawn_wires(project):
+    from harness_design_studio.core.outputs.build import build_outputs
+    from harness_design_studio.core.outputs.verify import verify_outputs
+    from harness_design_studio.core.wires import plan_group_wires
+
+    h = harness(project)
+    ids = two_drawn_wires(project, h)
+    apply_ops(project, plan_group_wires(project, ids, "twisted_pair"))
+    files = dict(build_outputs(project).files)
+    assert verify_outputs(project, files).ok
+    gid = next(s.id for s in project.harnesses[h.id].shields if s.manual)
+    assert gid in files[f"harnesses/{h.id}/wirelist.csv"].decode()

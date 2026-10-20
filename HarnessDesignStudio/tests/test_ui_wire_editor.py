@@ -254,3 +254,61 @@ def test_a_released_harness_turns_the_new_wire_form_off(made):
     apply_ops(ctl.project, [Put("harnesses", evolve(h, status="released"))])
     view.refresh()
     assert not ed.new_form.add.isEnabled()
+
+
+def draw_two_wires(ctl, view):
+    hid = view.harness_id()
+    h = ctl.project.harnesses[hid]
+    used = {(w.from_connector, w.from_pin) for w in h.wires} | {
+        (w.to_connector, w.to_pin) for w in h.wires
+    }
+    free = [(c.id, p.id) for c in h.connectors for p in c.pins if (c.id, p.id) not in used]
+    for a, b in ((free[0], free[1]), (free[2], free[3])):
+        ctl.run("add wire", plan_add_wire(ctl.project, hid, *a, *b))
+    view.refresh()
+    return [w.id for w in ctl.project.harnesses[hid].wires if w.manual]
+
+
+def select_ids(view, ids):
+    sm = view.wire_table.selectionModel()
+    sm.clearSelection()
+    for n, wid in enumerate(ids):
+        row = next(i for i, r in enumerate(view._wire_data) if r["id"] == wid)
+        idx = view.wire_table.proxy.mapFromSource(view.wire_table.proxy.sourceModel().index(row, 0))
+        flag = (
+            QItemSelectionModel.SelectionFlag.ClearAndSelect
+            if n == 0
+            else QItemSelectionModel.SelectionFlag.Select
+        )
+        sm.select(idx, flag | QItemSelectionModel.SelectionFlag.Rows)
+        if n == 0:
+            sm.setCurrentIndex(idx, QItemSelectionModel.SelectionFlag.NoUpdate)
+
+
+def test_group_and_ungroup_two_wires_from_the_form(made):
+    from harness_design_studio.core.wires import group_of
+
+    ctl, view, ed = made
+    ids = draw_two_wires(ctl, view)
+    select_ids(view, ids)
+    assert ed.wire_ids() == sorted(ids) or set(ed.wire_ids()) == set(ids)
+    assert ed.ungroup_btn.isHidden()
+    pick(ed.group_kind, "Twisted pair (2 wires)")
+    assert ed.group_wires()
+    h = ctl.project.harnesses[view.harness_id()]
+    g = group_of(h, ids[0])
+    assert g is not None and g.kind == "twisted_pair" and g.manual
+    assert not ed.ungroup_btn.isHidden() and "twisted pair" in ed.group_label.text()
+    assert ed.ungroup_wires()
+    assert group_of(ctl.project.harnesses[view.harness_id()], ids[0]) is None
+    ctl.undo()
+    assert group_of(ctl.project.harnesses[view.harness_id()], ids[0]) is not None
+
+
+def test_the_form_says_why_a_group_cannot_be_made(made):
+    ctl, view, ed = made
+    ids = draw_two_wires(ctl, view)
+    select_ids(view, ids)
+    pick(ed.group_kind, "Quad (4 wires)")
+    assert not ed.group_wires()
+    assert not ed.error.isHidden() and "4 wires, not 2" in ed.error.text()

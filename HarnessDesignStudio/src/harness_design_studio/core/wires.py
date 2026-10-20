@@ -25,7 +25,7 @@ from pydantic import ValidationError
 
 from .commands import Op, Put
 from .edit import EditError
-from .model import Harness, Project, Wire
+from .model import Harness, Project, ShieldGroup, Wire
 from .model.base import evolve
 
 EDITABLE: tuple[str, ...] = ("gauge_awg", "part_id", "colour", "length_m", "label", "note")
@@ -327,11 +327,11 @@ def plan_delete_wires(project: Project, wire_ids: Iterable[str]) -> list[Op]:
         if h.status == "released":
             raise EditError(_released(h))
         gone = {wid for wid, (fh, _w) in found.items() if fh.id == hid}
-        shields = [
-            evolve(s, wire_ids=[i for i in s.wire_ids if i not in gone])
-            for s in h.shields
-            if set(s.wire_ids) - gone
-        ]
+        shields = []
+        for s in h.shields:
+            left = [i for i in s.wire_ids if i not in gone]
+            if left and not (s.manual and len(left) < GROUP_KINDS.get(s.kind, (1, None))[0]):
+                shields.append(evolve(s, wire_ids=left))  # a pair with one wire left is no pair
         ops.append(
             Put(
                 "harnesses",
@@ -339,3 +339,123 @@ def plan_delete_wires(project: Project, wire_ids: Iterable[str]) -> list[Op]:
             )
         )
     return ops
+
+
+# ---- twisting and shielding groups that a person makes -----------------------------------------
+
+
+GROUP_KINDS: dict[str, tuple[int, int | None]] = {
+    "twisted_pair": (2, 2),
+    "shielded_pair": (2, 2),
+    "quad": (4, 4),
+    "coax": (1, 1),
+    "overall_shield": (2, None),
+}  # kind -> (fewest wires, most wires)
+_KIND_WORDS = {
+    "twisted_pair": "twisted pair",
+    "shielded_pair": "shielded pair",
+    "quad": "quad",
+    "coax": "coax",
+    "overall_shield": "overall shield",
+}
+
+
+def group_of(h: Harness, wire_id: str) -> ShieldGroup | None:
+    """The shield or twisting group a wire is in, if any."""
+    return next((s for s in h.shields if wire_id in s.wire_ids), None)
+
+
+def new_group_id(project: Project, harness_id: str) -> str:
+    """The first free shield group ID of the harness, named by the project's naming pattern."""
+    from .generate.naming import namer_for
+
+    namer = namer_for(project)
+    taken = _used_ids(project)
+    n = 1
+    while namer.shield(harness_id, n) in taken:
+        n += 1
+    return namer.shield(harness_id, n)
+
+
+def _group_end(project: Project, key: str) -> str:
+    cfg = project.config.get("generation")
+    value = cfg.values.get(key) if cfg is not None else None
+    return value if value in ("backshell_360", "pigtail", "floating") else "floating"
+
+
+def plan_group_wires(project: Project, wire_ids: Iterable[str], kind: str) -> list[Op]:
+    """Ops that twist or shield wires together as one group (`kind` is a key of `GROUP_KINDS`). The
+    wires must be in one harness and in no group yet. The shield ends are those of the
+    generation settings (floating while they are a placeholder); the rule `shield-unterminated`
+    says so. Generation keeps the group while its wires exist."""
+    if kind not in GROUP_KINDS:
+        raise EditError(f"A group is one of: {', '.join(_KIND_WORDS.values())}.")
+    ids = list(dict.fromkeys(wire_ids))
+    if not ids:
+        raise EditError("No wire is selected.")
+    found = [find_wire(project, wid) for wid in ids]
+    harnesses = {h.id for h, _w in found}
+    if len(harnesses) > 1:
+        raise EditError("The wires of one group must be in the same harness.")
+    h = found[0][0]
+    if h.status == "released":
+        raise EditError(_released(h))
+    low, high = GROUP_KINDS[kind]
+    word = _KIND_WORDS[kind]
+    if len(ids) < low or (high is not None and len(ids) > high):
+        need = f"{low}" if low == high else f"{low} or more" if high is None else f"{low} to {high}"
+        raise EditError(
+            f"A {word} is made of {need} wire{'s' if low != 1 else ''}, not {len(ids)}."
+        )
+    for wid in ids:
+        other = group_of(h, wid)
+        if other is not None:
+            raise EditError(
+                f"Wire {wid} is already in {_KIND_WORDS.get(other.kind, other.kind)} {other.id}. "
+                "Take it out of that group first."
+            )
+    group = ShieldGroup(
+        id=new_group_id(project, h.id),
+        kind=kind,  # type: ignore[arg-type]
+        wire_ids=sorted(ids),
+        end_a=_group_end(project, "shield_end_a"),  # type: ignore[arg-type]
+        end_b=_group_end(project, "shield_end_b"),  # type: ignore[arg-type]
+        manual=True,
+    )
+    return [Put("harnesses", evolve(h, shields=[*h.shields, group]))]
+
+
+def plan_ungroup(project: Project, group_id: str) -> list[Op]:
+    """Ops that take apart a group that a person made. A group of the generated harness follows
+    the interface type, so it goes when the type changes."""
+    return plan_ungroup_all(project, [group_id])
+
+
+def plan_ungroup_all(project: Project, group_ids: Iterable[str]) -> list[Op]:
+    """Ops that take apart several groups that a person made, one `Put` for each harness."""
+    gone: dict[str, set[str]] = {}
+    for gid in dict.fromkeys(group_ids):
+        owner = next(
+            ((h, s) for h in project.harnesses.values() for s in h.shields if s.id == gid), None
+        )
+        if owner is None:
+            raise EditError(f"Group '{gid}' does not exist.")
+        h, s = owner
+        if not s.manual:
+            raise EditError(
+                f"{gid} comes from the construction of the interface type. Change the type, or "
+                "leave it."
+            )
+        if h.status == "released":
+            raise EditError(_released(h))
+        gone.setdefault(h.id, set()).add(gid)
+    return [
+        Put(
+            "harnesses",
+            evolve(
+                project.harnesses[hid],
+                shields=[s for s in project.harnesses[hid].shields if s.id not in ids],
+            ),
+        )
+        for hid, ids in sorted(gone.items())
+    ]

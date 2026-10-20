@@ -9,6 +9,7 @@ Version 1.4.0 is in progress: the feedback of the AIT engineers (plan: `docs/ait
 ### Added
 
 - **Edit a wire (1.4.0, M1).** The *Edit wire* tab beside *Why* in the Drawings area sets the gauge, type, colour and length of one or several selected wires, a label (printed on the wire labels instead of the signal name) and a note. Gauge, type, colour and length lock the wire, so Generate keeps them; label and note are always kept; *Reset to generated* gives the wires back to generation. One undo step; a released harness is refused with the reason. The wire list gets the columns *Label* and *Note* only when a wire has one, so every existing project keeps byte-identical files and outputs. See `docs/user-manual/edit-a-wire.md` and D-161.
+- **Wires that you draw, several wires on one pin, twisting (1.4.0, M2).** In the same tab, *New wire* adds a wire between a connector and pin of the harness at each end; Generate keeps it, you can move its ends or delete it. Two wires may share a pin: the new design rule *Several wires on one pin* (`pin-shared`, 35 rules now) names each such pin, and the independent check says *pin_shared* (a warning) instead of *pin_reused* when a wire you drew is one of them. *Group* twists or shields selected wires together as a twisted pair, shielded pair, quad, coax or overall shield; Generate keeps the group; *Ungroup* takes a group you made apart. See D-162.
 
 ## 1.3.0 (2026-10-20; not a statement of compliance)
 
