@@ -932,6 +932,7 @@ class MainWindow(QMainWindow):
         Problems tabs; the Problems tab holds the problems list with the to-do items)."""
         self.harness_view = HarnessView(self.ctl, self.theme, self.settings)
         self.lists_panel = ListsPanel(self.ctl, self.theme, self.settings)
+        self.lists_panel.files.ask_folder = lambda title: self.ask_folder(title)
         self.project_tree = ProjectTree(self.ctl, self.theme, self.settings)
         # the properties panel leaves its tab for the inspector that wraps it
         self.side_tabs.install("inspector", EmptyStateWidget(self.theme, strings.TAB_INSPECTOR, ""))
@@ -2863,6 +2864,7 @@ class MainWindow(QMainWindow):
         if isinstance(result, ExportResult):
             self.toasts.show_message(strings.EXPORT_DONE.format(result.count, result.stamp), None)
         self.harness_view.refresh_status()  # the files changed, the design did not
+        self.lists_panel.files.invalidate()
         self._update_hash()
 
     def _export_failed(self, reason: str) -> None:
@@ -2976,6 +2978,7 @@ class MainWindow(QMainWindow):
         self._outputs_epoch += 1
         self._job_succeeded()
         self.harness_view.refresh_status()
+        self.lists_panel.files.invalidate()
         self.toasts.show_message(
             strings.EXPORT_DONE.format(len(built.files), built.stamp.short), None
         )
