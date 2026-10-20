@@ -72,6 +72,7 @@ from harness_design_studio.core.verify import verify_project
 from harness_design_studio.core.wirecolours import name_of, resolve
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.background import Job, JobRunner
+from harness_design_studio.gui.connector_editor import ConnectorEditor
 from harness_design_studio.gui.controller import EditorController
 from harness_design_studio.gui.icons import icon_button
 from harness_design_studio.gui.preview import DrawingPreview, Key
@@ -504,6 +505,7 @@ class HarnessView(QWidget):
     changesRequested = Signal(str)
     historyRequested = Signal(str)
     deleteRequested = Signal(str)
+    newHarnessRequested = Signal()
     whyRequested = Signal(str, str)
     selectionChanged = Signal(str, str)
     harnessChanged = Signal(str)
@@ -565,9 +567,16 @@ class HarnessView(QWidget):
             text=strings.HV_GENERATE_NOW,
         )
         self.empty_generate.clicked.connect(self.generateRequested)
+        self.empty_new = QPushButton()
+        self.empty_new.setObjectName("harness-empty-new")
+        icon_button(
+            self.empty_new, "plus", theme, strings.A_NEW_HARNESS_TIP, text=strings.HV_NEW_HARNESS
+        )
+        self.empty_new.clicked.connect(self.newHarnessRequested)
         e.addWidget(self.empty_title)
         e.addWidget(self.empty_body)
         e.addWidget(self.empty_generate, 0, Qt.AlignmentFlag.AlignHCenter)
+        e.addWidget(self.empty_new, 0, Qt.AlignmentFlag.AlignHCenter)
         e.addStretch(2)
         self.stack.addWidget(self.empty)
 
@@ -637,6 +646,13 @@ class HarnessView(QWidget):
             row2.addWidget(chip, 0)
         box.addLayout(row2)
         row3 = QHBoxLayout()
+        self.new_button = QPushButton()
+        self.new_button.setObjectName("harness-new")
+        icon_button(
+            self.new_button, "plus", theme, strings.A_NEW_HARNESS_TIP, text=strings.HV_NEW_HARNESS
+        )
+        self.new_button.clicked.connect(self.newHarnessRequested)
+        row3.addWidget(self.new_button)
         self.action_buttons: dict[str, QPushButton] = {}
         specs = (
             ("regenerate", "generate", strings.HV_REGENERATE, strings.HV_REGENERATE_TIP),
@@ -805,6 +821,15 @@ class HarnessView(QWidget):
         scroll.setFrameShape(QFrame.Shape.NoFrame)
         scroll.setWidget(self.wire_editor)
         side.addTab(scroll, strings.HV_EDIT_TAB)
+        self.connector_editor = ConnectorEditor(self.ctl, theme)
+        cscroll = QScrollArea()
+        cscroll.setObjectName("connector-editor-scroll")
+        cscroll.setWidgetResizable(True)
+        cscroll.setFrameShape(QFrame.Shape.NoFrame)
+        cscroll.setWidget(self.connector_editor)
+        side.addTab(cscroll, strings.HV_CONNECTORS_TAB)
+        self.connector_scroll = cscroll
+        self.connector_editor.connectorAdded.connect(lambda _cid: self.refresh())
         self.side_tabs = side
         self._why_box = side  # placed beside the tables by `_build_tables`
         self.why.whyRequested.connect(self.whyRequested)
@@ -846,6 +871,10 @@ class HarnessView(QWidget):
             return False
         self.selector.setCurrentIndex(i)
         return True
+
+    def show_connectors(self) -> None:
+        """Open the Connectors tab beside the drawing."""
+        self.side_tabs.setCurrentWidget(self.connector_scroll)
 
     def select(self, kind: str, ident: str) -> None:
         """Select a wire, a connector or a pin ("connector/pin") of the shown harness; the tables
@@ -912,10 +941,12 @@ class HarnessView(QWidget):
         p = self.ctl.project
         n = len(p.interfaces)
         self.empty_body.setText(
-            strings.HV_EMPTY_READY.format(n) if n else strings.HV_EMPTY_NO_INTERFACES
+            (strings.HV_EMPTY_READY.format(n) if n else strings.HV_EMPTY_NO_INTERFACES)
+            + strings.HV_EMPTY_BY_HAND
         )
         show = bool(n) and not self.ctl.read_only
         self.empty_generate.setVisible(show)  # no row of disabled buttons without a harness
+        self.empty_new.setVisible(not self.ctl.read_only)
 
     def _fill_selector(self, ids: list[str]) -> None:
         if ids != self._combo_ids:
@@ -941,6 +972,7 @@ class HarnessView(QWidget):
 
     def _header(self, h: Harness) -> None:
         self.wire_editor.set_harness(h.id)
+        self.connector_editor.set_harness(h.id)
         p = self.ctl.project
         state, text = release_state(p, h)
         self.release_chip.set_state(state, text)
@@ -1048,6 +1080,8 @@ class HarnessView(QWidget):
                 strings.NEW_REV_TIP,
             ),
         }
+        self.new_button.setEnabled(not ro)
+        self.new_button.setToolTip(strings.WHY_READ_ONLY if ro else strings.A_NEW_HARNESS_TIP)
         has_base = any(b.harness_id == h.id for b in self.ctl.project.baselines.values())
         self.more_actions["changes"].setEnabled(has_base)
         self.more_actions["history"].setEnabled(True)
