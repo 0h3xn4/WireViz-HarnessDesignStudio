@@ -427,6 +427,29 @@ def _extra_part(theme: str, shots: Shots, tmp: Path) -> None:
     a("fresh-design", fresh_design)
 
 
+def _one_process_each(out: Path, themes: list[str], parts: set[str]) -> int:
+    """Every theme and part in a process of its own: a second window with its own theme manager in a
+    process that has already shown the first one crashes the offscreen platform (a fault inside
+    Qt's `setStyleSheet`, found in the final milestone), so the pictures are never made together."""
+    import subprocess
+
+    worst = 0
+    for theme in themes:
+        for part in sorted(parts):
+            cmd = [
+                sys.executable,
+                "-m",
+                "tools.ui_screenshots",
+                str(out),
+                "--theme",
+                theme,
+                "--part",
+                part,
+            ]
+            worst = max(worst, subprocess.run(cmd, check=False).returncode)
+    return worst
+
+
 def main(argv: list[str]) -> int:
     out = DEFAULT_OUT
     themes = ["light", "dark"]
@@ -442,6 +465,8 @@ def main(argv: list[str]) -> int:
         del args[i : i + 2]
     if args:
         out = Path(args[0])
+    if len(themes) > 1 or len(parts) > 1:
+        return _one_process_each(out, themes, parts)
     app = QApplication.instance() or QApplication(sys.argv)
     assert app is not None
     total = 0

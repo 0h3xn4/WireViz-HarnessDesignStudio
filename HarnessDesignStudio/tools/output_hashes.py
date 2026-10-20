@@ -6,7 +6,11 @@ interface left the written files alone (UI overhaul M6; the brief: SVG and PDF b
     python -m tools.output_hashes --check FILE          # compare with a stored file; exit 1 on a difference
 
 The stored file `docs/ui/OUTPUT_HASHES_1.2.0.json` was made with the release 1.2.0 (tag v1.2.0); a test
-(`tests/test_output_hashes.py`) compares the current tool with it.
+(`tests/test_output_hashes.py`) compares the current tool with it. Every file the tool writes names the
+version of the tool in its header or title block, so a newer version differs in those bytes only: before
+hashing, the current version string is replaced by `BASE_VERSION` (both have the same length, so no
+offset of a PDF moves). The model hash includes the version a project was saved with, so each example
+(and its generation record) is first given the version of the release the hashes were made with. Nothing else may differ.
 """
 
 import hashlib
@@ -17,12 +21,22 @@ import tempfile
 import zipfile
 from pathlib import Path
 
+from harness_design_studio import __version__
 from harness_design_studio.core import templates
 from harness_design_studio.core.generate.engine import generate_project
+from harness_design_studio.core.model import evolve
 from harness_design_studio.core.outputs.build import build_outputs
 
 STORED = Path(__file__).resolve().parent.parent / "docs" / "ui" / "OUTPUT_HASHES_1.2.0.json"
 EXAMPLES = ("first-steps", "minimal-satellite", "small-satellite", "flatsat")
+BASE_VERSION = "1.2.0"  # the release the stored hashes were made with
+
+
+def as_in_base_version(data: bytes) -> bytes:
+    """The bytes of a file with the version stamp of the release the hashes were made with."""
+    if __version__ == BASE_VERSION or len(__version__) != len(BASE_VERSION):
+        return data
+    return data.replace(__version__.encode(), BASE_VERSION.encode())
 
 
 def digest(rel: str, data: bytes) -> str:
@@ -31,9 +45,11 @@ def digest(rel: str, data: bytes) -> str:
     the names and the bytes of its members; every other file is hashed as it is."""
     if rel.endswith(".xlsx"):
         with zipfile.ZipFile(io.BytesIO(data)) as z:
-            parts = sorted((n, hashlib.sha256(z.read(n)).hexdigest()) for n in z.namelist())
+            parts = sorted(
+                (n, hashlib.sha256(as_in_base_version(z.read(n))).hexdigest()) for n in z.namelist()
+            )
         return hashlib.sha256(json.dumps(parts).encode()).hexdigest()
-    return hashlib.sha256(data).hexdigest()
+    return hashlib.sha256(as_in_base_version(data)).hexdigest()
 
 
 def hashes() -> dict[str, dict[str, str]]:
@@ -44,6 +60,9 @@ def hashes() -> dict[str, dict[str, str]]:
             project = templates.create_project(Path(tmp) / name, name)
             if not project.harnesses:
                 generate_project(project)
+            project.meta = evolve(project.meta, tool_version=BASE_VERSION)
+            if project.generation is not None:
+                project.generation = evolve(project.generation, generator_version=BASE_VERSION)
             files = build_outputs(project).files
         out[name] = {rel: digest(rel, data) for rel, data in sorted(files.items())}
     return out

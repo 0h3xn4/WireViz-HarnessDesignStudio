@@ -104,3 +104,27 @@ Cause: two GUI-side lookups that scanned every wire of every harness once per fi
 ## After M9
 
 Change the UI scale: 1,100 to 1,200 ms (unchanged; 1.06 s of it is Qt's `QApplication.setStyleSheet` over about 1,250 widgets; D-158). The window shows a wait cursor while it happens.
+
+## After the final milestone (2026-10-20; same container, same scripts, release 1.3.0)
+
+`python -m tools.ui_perf` (flatsat example):
+
+| What | Baseline (1.2.0) | 1.3.0 |
+|---|---|---|
+| Start to first interactive window | about 1.0 s | 0.95 to 1.0 s (import 436, `MainWindow()` 293, show 99, open flatsat 170 ms) |
+| Switch theme light to dark (and back) | 950 and 710 ms | **145, 79 and 73 ms** |
+| Change the UI scale (any step) | 760 to 800 ms | **1,040 to 1,120 ms: not met** (target 250 ms; slower than the baseline because the window now holds about 1,250 widgets, 25 tables; all of it is Qt's own style sheet pass, D-150, D-158); a wait cursor shows meanwhile |
+| Select a unit (median, max) | 45, 74 ms | 40, 58 ms |
+| Tab switch, first time / median (Harness, Lists, Checks, Releases, Devices) | 60/22, 52/19, 36/19, 13/8, 55/18 ms | 69/35, 120/41, 57/30, 15/10, 61/21 ms (the first show of the Lists tab is 80 to 120 ms with or without the new Exported files panel: seven tables are filled and painted for the first time) |
+
+`python -m tools.bench_gui` (stress project: 200 units, 2,000 interfaces, rule check on):
+
+| What | Baseline (1.2.0) | 1.3.0 |
+|---|---|---|
+| Install project and autoplace | 1,327 ms | 1,128 ms |
+| Rename unit, move unit, add unit, undo, redo | **10.7 to 12.7 s each** | **85 to 460 ms** (rename 91 to 387, move 85 to 460, add 354 to 428, undo 252 to 266, redo 237 to 303) |
+| Change while the Problems tab is visible | 1,016 ms | 86 ms |
+| Change while the interface table is visible | **11,481 ms** | 118 ms |
+| Full repaint | 1,044 / 759 / 35 ms | 103 / 95 / 32 ms |
+
+From the milestones (their own tests carry the limits): the Interfaces table of the stress project opens in about 130 ms and the Units table in about 25 ms (M4); a result of 82,549 findings is taken in on the GUI thread in 132 ms (M5); the drawing preview zooms, pans and fits in 3 to 6 ms a frame (M6); with a 20,000-row import file the longest pause of the window is about 110 ms (was 530) and the check page fills in 30 ms (was 283) (M7).

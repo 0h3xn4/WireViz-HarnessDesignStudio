@@ -83,7 +83,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.2.0
+harness 1.3.0
 ```
 
 Remove it later with `sudo apt remove harness-design-studio`. Upgrade by installing the newer `.deb` the same way.
@@ -199,7 +199,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.2.0
+harness 1.3.0
 ```
 
 You now have the command line tool `harness-design-studio` (and its short alias `harness`) and the editor `harness-design-studio-gui`. For a script or a shared machine, the setup program also runs without windows: `harness-design-studio-<version>-windows-x86_64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER /DIR="C:\Tools\Harness Design Studio"` (add `/LOG=setup.log` to keep a log). Remove it with *Settings > Apps*, or run `unins000.exe` in the install folder (`/VERYSILENT` makes that silent too). Your projects are never inside the install folder, and uninstalling does not touch them.
