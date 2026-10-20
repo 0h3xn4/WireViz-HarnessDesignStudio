@@ -150,7 +150,7 @@ W002-001,PWR,IF-001,W002-P1,1,W002-P2,1,22,EX-WIRE-SINGLE,,1,W002-S1,
 W002-002,RTN,IF-001,W002-P1,2,W002-P2,2,22,EX-WIRE-SINGLE,,1,W002-S1,
 ```
 
-Gauge 22 and length 1 m. In the app, the **Why** tab of `W002` explains it:
+Gauge 22 and length 1 m. In the app, the **Why** pane of the **Harness** tab for `W002` explains it:
 
 ```
 wire-sizing: ampacity: AWG 22 carries 2.16 A derated (factor 0.72) for 2 A
