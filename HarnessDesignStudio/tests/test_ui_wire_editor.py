@@ -312,3 +312,33 @@ def test_the_form_says_why_a_group_cannot_be_made(made):
     pick(ed.group_kind, "Quad (4 wires)")
     assert not ed.group_wires()
     assert not ed.error.isHidden() and "4 wires, not 2" in ed.error.text()
+
+
+# ---- 1.4.0 M3: labels of the harness and its connectors ---------------------------------------
+
+
+def test_the_labels_form_sets_the_harness_label_and_a_connector_label(made):
+    ctl, view, ed = made
+    form = ed.labels_form
+    hid = view.harness_id()
+    assert form.apply.isEnabled() and form.connector.count() >= 1
+    cid = form.connector.currentText()
+    form.harness_label.setText("Bus A")
+    form.connector_label.setText("Sensor end")
+    assert form.apply_labels()
+    h = ctl.project.harnesses[hid]
+    assert h.label == "Bus A"
+    assert next(c for c in h.connectors if c.id == cid).label == "Sensor end"
+    ctl.undo()
+    assert ctl.project.harnesses[hid].label is None
+
+
+def test_the_labels_form_is_off_for_a_released_harness(made):
+    ctl, view, ed = made
+    h = ctl.project.harnesses[view.harness_id()]
+    from harness_design_studio.core.commands import Put
+    from harness_design_studio.core.model import evolve
+
+    apply_ops(ctl.project, [Put("harnesses", evolve(h, status="released"))])
+    view.refresh()
+    assert not ed.labels_form.apply.isEnabled()

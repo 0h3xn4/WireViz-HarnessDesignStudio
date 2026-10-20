@@ -44,7 +44,7 @@ from harness_design_studio.gui.states import StateDelegate
 from harness_design_studio.gui.tables import Column, DictTableModel, Row, TableView
 from harness_design_studio.gui.theme import ThemeManager
 
-EDITABLE = ("pin", "signal", "mode", "contact_size", "termination")
+EDITABLE = ("pin", "signal", "mode", "contact_size", "termination", "function")
 Validator = Callable[[str, dict[str, Any], str], str | None]
 
 
@@ -380,6 +380,7 @@ def clipboard_grid(text: str) -> list[list[str]]:
 HEADER_WORDS = {
     "pin": "pin", "pin name": "pin", "pin number": "pin", "signal": "signal", "signal name": "signal",
     "mode": "mode", "contact size": "contact_size", "contact": "contact_size", "termination": "termination",
+    "function": "function", "pin function": "function",
 }  # fmt: skip
 
 

@@ -38,6 +38,7 @@ from harness_design_studio.core.wires import (
     plan_add_wire,
     plan_delete_wires,
     plan_group_wires,
+    plan_set_labels,
     plan_ungroup_all,
     plan_wire_edit,
     plan_wire_reset,
@@ -201,6 +202,110 @@ class NewWireForm(QWidget):
         self.error.setVisible(bool(text))
 
 
+class LabelsForm(QWidget):
+    """The label of the harness and of one of its cable connectors (what `labels.csv` prints)."""
+
+    def __init__(self, ctl: EditorController, theme: ThemeManager) -> None:
+        super().__init__()
+        self.ctl = ctl
+        self.setObjectName("labels-form")
+        self._hid: str | None = None
+        root = QVBoxLayout(self)
+        root.setContentsMargins(0, 0, 0, 0)
+        root.setSpacing(theme.space(8))
+        title = QLabel(strings.LABELS_TITLE)
+        title.setProperty("heading", True)
+        root.addWidget(title)
+        form = QFormLayout()
+        form.setHorizontalSpacing(theme.space(8))
+        form.setVerticalSpacing(theme.space(4))
+        self.harness_label = QLineEdit()
+        self.connector = QComboBox()
+        self.connector_label = QLineEdit()
+        for widget, name, text, tip in (
+            (
+                self.harness_label,
+                "labels-harness",
+                strings.LABELS_HARNESS,
+                strings.LABELS_HARNESS_TIP,
+            ),
+            (
+                self.connector,
+                "labels-connector",
+                strings.LABELS_CONNECTOR,
+                strings.LABELS_CONNECTOR_TIP,
+            ),
+            (
+                self.connector_label,
+                "labels-connector-label",
+                strings.LABELS_CONNECTOR_LABEL,
+                strings.LABELS_CONNECTOR_LABEL_TIP,
+            ),
+        ):
+            widget.setObjectName(name)
+            widget.setAccessibleName(text)
+            widget.setToolTip(tip)
+            form.addRow(text, widget)
+        root.addLayout(form)
+        self.error = QLabel()
+        self.error.setObjectName("labels-error")
+        self.error.setWordWrap(True)
+        self.error.setProperty("error", True)
+        self.error.setVisible(False)
+        root.addWidget(self.error)
+        self.apply = QPushButton()
+        self.apply.setObjectName("labels-apply")
+        icon_button(self.apply, "pass", theme, strings.LABELS_APPLY_TIP, text=strings.LABELS_APPLY)
+        root.addWidget(self.apply)
+        self.apply.clicked.connect(self.apply_labels)
+        self.connector.activated.connect(lambda _i: self._show_connector())
+        self.harness_label.returnPressed.connect(self.apply_labels)
+        self.connector_label.returnPressed.connect(self.apply_labels)
+        self.set_harness(None)
+
+    def set_harness(self, harness_id: str | None) -> None:
+        """Show the labels of this harness and of its cable connectors."""
+        keep = self.connector.currentText()
+        self._hid = harness_id
+        h = self.ctl.project.harnesses.get(harness_id or "")
+        self.connector.clear()
+        if h is not None:
+            self.connector.addItems(sorted(c.id for c in h.connectors))
+            self.connector.setCurrentIndex(max(0, self.connector.findText(keep)))
+        if not self.harness_label.hasFocus():
+            self.harness_label.setText((h.label or "") if h is not None else "")
+        self._show_connector()
+        on = h is not None and h.status != "released" and not self.ctl.read_only
+        for w in (self.harness_label, self.connector, self.connector_label, self.apply):
+            w.setEnabled(on)
+
+    def _show_connector(self) -> None:
+        h = self.ctl.project.harnesses.get(self._hid or "")
+        c = next(
+            (c for c in (h.connectors if h else []) if c.id == self.connector.currentText()), None
+        )
+        if not self.connector_label.hasFocus():
+            self.connector_label.setText((c.label or "") if c is not None else "")
+
+    def apply_labels(self) -> bool:
+        if self._hid is None or not self.apply.isEnabled():
+            return False
+        cid = self.connector.currentText()
+        try:
+            ops = plan_set_labels(
+                self.ctl.project,
+                self._hid,
+                harness=self.harness_label.text(),
+                connectors={cid: self.connector_label.text()} if cid else None,
+            )
+        except EditError as exc:
+            self.error.setText(str(exc))
+            self.error.setVisible(True)
+            return False
+        self.error.setVisible(False)
+        return not ops or self.ctl.run(strings.STEP_SET_LABELS, ops)
+
+
 class WireEditor(QWidget):
     wireAdded = Signal(str)
 
@@ -314,6 +419,9 @@ class WireEditor(QWidget):
         self.new_form.wireAdded.connect(self.wireAdded)
         root.addSpacing(theme.space(8))
         root.addWidget(self.new_form)
+        self.labels_form = LabelsForm(ctl, theme)
+        root.addSpacing(theme.space(8))
+        root.addWidget(self.labels_form)
         root.addStretch(1)
 
         self.apply.clicked.connect(self.apply_changes)
@@ -376,6 +484,7 @@ class WireEditor(QWidget):
     def set_harness(self, harness_id: str | None) -> None:
         """The harness whose connectors the *New wire* form offers."""
         self.new_form.set_harness(harness_id)
+        self.labels_form.set_harness(harness_id)
 
     def _selected(self) -> list[Wire]:
         return [find_wire(self.ctl.project, wid)[1] for wid in self._ids]

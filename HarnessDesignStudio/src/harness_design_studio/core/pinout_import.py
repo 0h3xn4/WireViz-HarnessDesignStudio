@@ -1,9 +1,10 @@
 """Import a device's pinout from a spreadsheet (CSV or XLSX) as a plan: nothing changes until the
 person confirms. One row of the sheet is one pin: the connector it belongs to, its name or number,
-the signal on it, whether the device fixes it, a contact size and a termination.
+the signal on it, whether the device fixes it, a contact size, a termination and a function
+(free text; a sheet with only a Function column and no Signal column reads it as the signal, as before).
 
 The tool knows no program's table format: columns are matched by their headings (with common
-aliases), the way the parts import does. Columns it cannot store (a function description, remarks,
+aliases), the way the parts import does. Columns it cannot store (remarks,
 a voltage, a direction) are named in a warning and left out; the file format has no field for them.
 Every row gets a result with its exact reason, a sheet with a bad row is not imported at all, and
 what is imported is one `History` step ("Import pinout (2 connectors, 36 pins)").
@@ -30,6 +31,7 @@ FIELDS: tuple[tuple[str, str], ...] = (
     ("mode", "Mode"),
     ("contact_size", "Contact size"),
     ("termination", "Termination"),
+    ("function", "Function"),
     ("part", "Part"),
     ("gender", "Gender"),
 )
@@ -40,13 +42,18 @@ _ALIASES = {
     "mode": ("mode", "allocation", "fixed"),
     "contact_size": ("contactsize", "size", "gauge", "contactgauge"),
     "termination": ("termination", "term", "terminationtype"),
+    "function": (
+        "function",
+        "pinfunction",
+        "functiondescription",
+    ),  # "function" alone means the signal
     "part": ("part", "partid", "partnumber", "connectorpart"),
     "gender": ("gender", "sex"),
 }
 # headings the file format has no field for: named in a warning, never written
 _UNSTORED = frozenset(
     {
-        "description", "functiondescription", "remarks", "remark", "notes", "note", "comment",
+        "description", "remarks", "remark", "notes", "note", "comment",
         "comments", "direction", "dir", "voltage", "current", "class", "iomode",
     }
 )  # fmt: skip

@@ -125,6 +125,7 @@ def pin_rows_for_table(
                 "class": r.category,
                 "meaning_tip": r.note,
                 "wire": ";".join(r.wires),
+                "function": r.function,
                 "contact_size": r.contact_size,
                 "termination": strings.DV_TERMINATION[r.termination],
                 "termination_key": r.termination,
@@ -157,6 +158,7 @@ PIN_COLUMNS = [
     Column("wire", strings.DV_COL_WIRE, mono=True, width=96),
     Column("contact_size", strings.DV_COL_CONTACT_SIZE, mono=True, width=96),
     Column("termination", strings.DV_COL_TERMINATION, width=96),
+    Column("function", strings.DV_COL_FUNCTION, width=140),
     Column(
         "state", strings.DV_COL_STATE, state=lambda r: _field(r, "state_key"), tooltip=_tip("state_tip"),
         width=130,
@@ -556,6 +558,14 @@ class DevicesView(QWidget):
         grid.addLayout(carries_box, 2, 1)
         grid.addWidget(caption(strings.DV_CARD_ALLOCATION), 3, 0, top)
         grid.addWidget(value("allocation"), 3, 1)
+        self.label_edit = QLineEdit()
+        self.label_edit.setObjectName("devices-card-label-edit")
+        self.label_edit.setAccessibleName(strings.DV_CARD_LABEL)
+        self.label_edit.setToolTip(strings.DV_CARD_LABEL_TIP)
+        self.label_edit.setPlaceholderText(strings.DV_CARD_NONE)
+        self.label_edit.editingFinished.connect(self._label_edited)
+        grid.addWidget(caption(strings.DV_CARD_LABEL), 4, 0, top)
+        grid.addWidget(self.label_edit, 4, 1)
         grid.setColumnStretch(1, 1)
         rl.addWidget(self.card)
 
@@ -1030,7 +1040,13 @@ class DevicesView(QWidget):
         for b in self.pin_buttons.values():
             b.setEnabled(cid is not None and not ro)
         if cid is None or cid not in p.connectors:
-            for w in (self.part_edit, self.gender_edit, self.keying_edit, self.carries_btn):
+            for w in (
+                self.part_edit,
+                self.gender_edit,
+                self.keying_edit,
+                self.carries_btn,
+                self.label_edit,
+            ):
                 w.setEnabled(False)
             self.carries_suggest.hide()
             self.pin_model.update_rows([])
@@ -1041,6 +1057,7 @@ class DevicesView(QWidget):
             for label in self.card_values.values():
                 label.setText("")
             self.keying_edit.setText("")
+            self.label_edit.setText("")
             self.pin_count.setText("")
             self.note_label.setText("")
             return
@@ -1054,11 +1071,14 @@ class DevicesView(QWidget):
             self.gender_edit.setCurrentIndex(max(0, self.gender_edit.findData(c.gender)))
             if not self.keying_edit.hasFocus():
                 self.keying_edit.setText(c.keying or "")
+            if not self.label_edit.hasFocus():
+                self.label_edit.setText(c.label or "")
         finally:
             self._syncing = False
         for w in (self.part_edit, self.gender_edit, self.keying_edit):
             w.setEnabled(not ro and not frozen)
         self.carries_btn.setEnabled(not ro)
+        self.label_edit.setEnabled(not ro)  # a label is not part of the design the release locks
         self.part_edit.setToolTip(frozen or strings.DV_CARD_PART_TIP)
         self.gender_edit.setToolTip(frozen or strings.DV_CARD_GENDER_TIP)
         self.keying_edit.setToolTip(frozen or strings.DV_CARD_KEYING_TIP)
@@ -1404,6 +1424,16 @@ class DevicesView(QWidget):
         text = self.keying_edit.text().strip()
         if text != (self.ctl.project.connectors[cid].keying or "") and not self._do(
             self.ctl.update_connector, cid, keying=text
+        ):
+            self._reload()
+
+    def _label_edited(self) -> None:
+        cid = self._cid
+        if self._syncing or cid is None:
+            return
+        text = self.label_edit.text().strip()
+        if text != (self.ctl.project.connectors[cid].label or "") and not self._do(
+            self.ctl.update_connector, cid, label=text
         ):
             self._reload()
 

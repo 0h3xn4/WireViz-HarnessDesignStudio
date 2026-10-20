@@ -8,7 +8,7 @@ from decimal import Decimal
 
 from harness_design_studio.core.generate.lengths import clear_length_cache, wire_length
 from harness_design_studio.core.generate.mass import harness_mass
-from harness_design_studio.core.model import Connector, Harness, Project, Wire
+from harness_design_studio.core.model import Connector, Harness, Pin, Project, Wire
 
 from .stamp import Table
 
@@ -58,6 +58,15 @@ def uses_wire_text(project: Project) -> bool:
     return any(w.label or w.note for h in project.harnesses.values() for w in h.wires)
 
 
+def connector_label(project: Project, c: Connector) -> str:
+    """What the label of a connector prints first: the person's label of the connector, else the one
+    of the box connector it plugs into, else nothing (the ID is in the text anyway)."""
+    if c.label:
+        return c.label
+    box = project.connectors.get(c.mates_with or "")
+    return (box.label or "") if box is not None else ""
+
+
 def wire_name(w: Wire) -> str:
     """What the labels of a wire print after its ID: the person's label, else the signal."""
     return w.label or w.signal or ""
@@ -86,13 +95,31 @@ def wire_list(project: Project, h: Harness) -> Table:
     return rows
 
 
+def _all_pins(project: Project) -> list[Pin]:
+    return [p for c in project.connectors.values() for p in c.pins] + [
+        p for h in project.harnesses.values() for c in h.connectors for p in c.pins
+    ]
+
+
+def uses_pin_function(project: Project) -> bool:
+    """True when a person gave any pin a function (1.4.0)."""
+    return any(p.function for p in _all_pins(project))
+
+
+def uses_termination(project: Project) -> bool:
+    """True when any pin says how a wire is joined to it (crimp or solder, 1.4.0)."""
+    return any(p.termination != "unspecified" for p in _all_pins(project))
+
+
 def _pin_rows(project: Project, c: Connector, attached: dict[tuple[str, str], list[str]]) -> Table:
     rows: Table = []
+    fn, term = uses_pin_function(project), uses_termination(project)
     for p in c.pins:
         wires = attached.get((c.id, p.id), [])
         rows.append([
             c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or "", p.interface_id or "",
             ";".join(sorted(wires)), "no" if wires or p.interface_id or p.signal else "yes",
+            *([p.function or ""] if fn else []), *([p.termination] if term else []),
         ])  # fmt: skip
     return rows
 
@@ -110,12 +137,21 @@ PINOUT_HEADER = [
 ]
 
 
+def pinout_header(project: Project) -> list[str]:
+    """The header of the pinout tables; `Function` and `Termination` follow when a pin has one."""
+    return [
+        *PINOUT_HEADER,
+        *(["Function"] if uses_pin_function(project) else []),
+        *(["Termination"] if uses_termination(project) else []),
+    ]
+
+
 def pinouts(project: Project, h: Harness) -> Table:
     attached: dict[tuple[str, str], list[str]] = defaultdict(list)
     for w in h.wires:
         attached[(w.from_connector, w.from_pin)].append(w.id)
         attached[(w.to_connector, w.to_pin)].append(w.id)
-    rows = [PINOUT_HEADER]
+    rows = [pinout_header(project)]
     for c in sorted(h.connectors, key=lambda x: x.id):
         rows += _pin_rows(project, c, attached)
     return rows
@@ -131,7 +167,7 @@ def box_pinouts(project: Project, connector_ids: Collection[str] | None = None) 
             for cid, pin in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
                 if mates.get(cid):
                     attached[(mates[cid] or "", pin)].append(w.id)
-    rows = [PINOUT_HEADER]
+    rows = [pinout_header(project)]
     for c in sorted(project.connectors.values(), key=lambda x: x.id):
         if connector_ids is None or c.id in connector_ids:
             rows += _pin_rows(project, c, attached)
@@ -245,8 +281,12 @@ def tests(project: Project, h: Harness) -> Table:
 
 def labels(project: Project, h: Harness) -> Table:
     rows: Table = [["Label", "Kind", "Text", "Quantity"]]
+    if h.label:
+        rows.append([h.id, "harness", h.label, "1"])
     for c in sorted(h.connectors, key=lambda x: x.id):
-        rows.append([f"{c.id}", "connector", f"{c.id} mates {c.mates_with or '-'}", "1"])
+        name = connector_label(project, c)
+        mates = f"{c.id} mates {c.mates_with or '-'}"
+        rows.append([f"{c.id}", "connector", f"{name} ({mates})" if name else mates, "1"])
     for w in sorted(h.wires, key=lambda x: x.id):
         far = f"{w.to_connector}.{w.to_pin}"
         near = f"{w.from_connector}.{w.from_pin}"

@@ -1,6 +1,6 @@
 # Edit a wire
 
-This page shows how to change a wire after the tool has generated it (its gauge, type, colour, length, a label for the wire labels, and a note), how to draw a wire of your own, how to put several wires on one pin, and how to twist or shield wires together.
+This page shows how to change a wire after the tool has generated it (its gauge, type, colour, length, a label for the wire labels, and a note), how to draw a wire of your own, how to put several wires on one pin, how to twist or shield wires together, and how to label the harness and its connectors.
 
 > **New in 1.4.0.** Before 1.4.0 the app had no way to change or draw a single wire (only the colour of a whole signal, see [set wire colours](set-wire-colours.md)). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
 
@@ -79,6 +79,15 @@ Select the wires, choose a kind under **Group** and press **Group**:
 | Overall shield | 2 or more |
 
 The wires must be in one harness and in no group yet (a generated twisted pair is a group too). The group gets the next free shield ID, shows in the **Shield group** column of the wire list and as a sleeve in the drawing, and is kept by **Generate**. Its shield ends are those of the generation settings (floating while they are still placeholders, which the rule **Shield termination** then points out). To take a group apart select one of its wires and press **Ungroup**; only groups you made can be taken apart, because a generated group follows the construction of the interface type.
+
+## 7. Labels on the harness and its connectors
+
+At the bottom of the **Edit wire** tab, **Labels** has a **Harness label**, a list of the cable connectors of the harness and a **Connector label**. Type the texts and press **Apply labels** (one undo step). A box connector gets its label on its card in the **Devices** tab (the **Label** field). `labels.csv` prints them: a connector label reads `Rate sensor end (W001-P1 mates GYRO1-J01)`, a cable end without a label of its own prints the label of the box connector it plugs into, and a harness with a label gets a row of the kind `harness`. Generate keeps all of them.
+
+## 8. Function and soldering
+
+- A **function** is your own words for what a pin does; type it in the **Function** column of the pin table in the **Devices** tab (see [define a device](define-a-device.md)). It appears as a column in the pinout tables.
+- The **Termination** of a pin (crimp or solder) is a column of the same table, hidden until you press **Contact**. When any pin has one, the pinout tables get a **Termination** column too. What more the lists should say about soldering is still open; tell the owner what you need.
 
 ## Common mistakes
 

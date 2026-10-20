@@ -67,7 +67,7 @@ The **Direction** and **Class** columns come from the interface type of the pin'
 
 ## Take the pinout from a spreadsheet
 
-Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination* and, if you have them, *Part* and *Gender*. Columns the project cannot store (a description, remarks, a voltage, a direction) are named in a warning and left out.
+Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination*, *Function* and, if you have them, *Part* and *Gender*. A *Function* column is stored as the pin's function when the table also has a *Signal* (or *Net*) column; a table with only a *Function* column reads it as the signal, as before 1.4.0. Columns the project cannot store (a description, remarks, a voltage, a direction) are named in a warning and left out.
 
 In the app: **File > Import > Import device pinout…**, pick the file, choose the device (an existing unit, or **New device…** with a name), the library part for the new connectors, and read the preview. A row with a problem is listed with its reason, and then nothing is imported. **Import** is one undo step, *Import pinout (1 connector, 6 pins)*.
 
@@ -130,7 +130,7 @@ Where a harness made by hand (not generated) has a wire on a pin, the pin cannot
 
 ## What a pin can hold
 
-A pin has a name or number, a signal, a mode, a contact size, a termination and, once Generate or **Assign…** has put an interface on it, that interface. There is **no field** for a function description, remarks, a voltage, a current or a direction of its own, and the tool does not pretend there is. Direction and class are shown from the interface type; for the rest keep your interface control document next to the project. Changing the file format to hold them is a decision for the owner of the tool and has not been made.
+A pin has a name or number, a signal, a mode, a contact size, a termination, a **function** (free text, new in 1.4.0) and, once Generate or **Assign…** has put an interface on it, that interface. The function is your own words for what the pin does ("Battery voltage sense"); the tool carries it to the pinout tables and to the cable end of the pin and decides nothing with it. There is still **no field** for remarks, a voltage, a current or a direction of a pin, and the tool does not pretend there is. Direction and class are shown from the interface type; for the rest keep your interface control document next to the project.
 
 ## Common mistakes
 

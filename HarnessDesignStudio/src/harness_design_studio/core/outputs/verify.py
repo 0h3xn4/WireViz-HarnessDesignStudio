@@ -19,7 +19,7 @@ from typing import Any
 from harness_design_studio import __version__
 from harness_design_studio.core import checks, configcheck, drc
 from harness_design_studio.core.io.layout import model_hash
-from harness_design_studio.core.model import Connector, Harness, Project, Wire
+from harness_design_studio.core.model import Connector, Harness, Pin, Project, Wire
 from harness_design_studio.core.verify import VerifyReport
 
 from .stamp import parse_csv
@@ -290,7 +290,7 @@ def _harness(r: VerifyReport, project: Project, h: Harness, files: dict[str, byt
                 "out_tests", f"{h.id} does not have one isolation test per wire and shield.", h.id
             )
     lb = _table(files, f"{base}/labels.csv")
-    if lb and len(lb) - 1 != len(h.connectors) + 2 * len(h.wires):
+    if lb and len(lb) - 1 != len(h.connectors) + 2 * len(h.wires) + (1 if h.label else 0):
         r.error("out_labels", f"{h.id} has the wrong number of labels.", h.id)
     yml = files.get(f"{base}/wireviz.yaml")
     if yml is not None:
@@ -440,6 +440,8 @@ def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[st
     lb = _table(files, f"{base}/labels.csv")
     if lb:
         want = {c.id for c in h.connectors} | {f"{w.id}-{s}" for w in h.wires for s in "AB"}
+        if h.label:
+            want.add(h.id)
         if {row[0] for row in lb[1:]} != want:
             r.error(
                 "out_labels", f"The labels of {h.id} are not the connectors and wire ends.", h.id
@@ -775,8 +777,8 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
                     if mates.get(cid):
                         attached[(mates[cid] or "", pin)].append(w.id)
         boxes_sorted = sorted(project.connectors.values(), key=lambda c: c.id)
-        _compare_rows(r, "out_box_pinouts", "The box connector pinouts", bp, _PINOUT_HEADER,
-                      _pin_rows(boxes_sorted, attached), (0, 4), "box_pinouts")  # fmt: skip
+        _compare_rows(r, "out_box_pinouts", "The box connector pinouts", bp, _pinout_header(project),
+                      _pin_rows(boxes_sorted, attached, _uses_function(project), _uses_termination(project)), (0, 4), "box_pinouts")  # fmt: skip
     _system_workbook(r, project, files)
     ex = files.get("system/export.json")
     if ex is not None:
@@ -919,8 +921,33 @@ _PINOUT_HEADER = [
 ]  # fmt: skip
 
 
+def _pinout_header(project: Project) -> list[str]:
+    return [
+        *_PINOUT_HEADER,
+        *(["Function"] if _uses_function(project) else []),
+        *(["Termination"] if _uses_termination(project) else []),
+    ]
+
+
+def _all_pins(project: Project) -> list[Pin]:
+    return [p for c in project.connectors.values() for p in c.pins] + [
+        p for h in project.harnesses.values() for c in h.connectors for p in c.pins
+    ]
+
+
+def _uses_function(project: Project) -> bool:
+    return any(p.function for p in _all_pins(project))
+
+
+def _uses_termination(project: Project) -> bool:
+    return any(p.termination != "unspecified" for p in _all_pins(project))
+
+
 def _pin_rows(
-    connectors: list[Connector], attached: dict[tuple[str, str], list[str]]
+    connectors: list[Connector],
+    attached: dict[tuple[str, str], list[str]],
+    function: bool = False,
+    termination: bool = False,
 ) -> list[list[Cell]]:
     rows: list[list[Cell]] = []
     for c in connectors:
@@ -930,6 +957,8 @@ def _pin_rows(
                 c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or "",
                 p.interface_id or "", ";".join(wires),
                 "no" if wires or p.interface_id or p.signal else "yes",
+                *([p.function or ""] if function else []),
+                *([p.termination] if termination else []),
             ])  # fmt: skip
     return rows
 
@@ -1025,12 +1054,15 @@ def _emc_class(project: Project, w: Wire) -> str:
 
 
 def _label_rows(project: Project, h: Harness) -> list[list[Cell]]:
-    rows: list[list[Cell]] = [
-        [c.id, "connector", f"{c.id} mates {c.mates_with or '-'}", "1"] for c in h.connectors
-    ]
+    rows: list[list[Cell]] = [[h.id, "harness", h.label, "1"]] if h.label else []
+    for c in h.connectors:
+        box = project.connectors.get(c.mates_with or "")
+        name = c.label or ((box.label or "") if box is not None else "")
+        mates = f"{c.id} mates {c.mates_with or '-'}"
+        rows.append([c.id, "connector", f"{name} ({mates})" if name else mates, "1"])
     for w in h.wires:
-        name = w.label or w.signal
-        head = f"{w.id} {name}" if name else w.id
+        wname = w.label or w.signal
+        head = f"{w.id} {wname}" if wname else w.id
         emc = _emc_class(project, w)
         tag = f" [EMC {emc}]" if emc else ""
         rows.append([f"{w.id}-A", "wire", f"{head} to {w.to_connector}.{w.to_pin}{tag}", "1"])
@@ -1094,8 +1126,8 @@ def _harness_tables(r: VerifyReport, project: Project, h: Harness, files: dict[s
     po = _table(files, f"{base}/pinouts.csv")
     if po:
         conns = sorted(h.connectors, key=lambda c: c.id)
-        _compare_rows(r, "out_pinout", f"The pinout table of {h.id}", po, _PINOUT_HEADER,
-                      _pin_rows(conns, _harness_attached(h)), (0, 4), h.id)  # fmt: skip
+        _compare_rows(r, "out_pinout", f"The pinout table of {h.id}", po, _pinout_header(project),
+                      _pin_rows(conns, _harness_attached(h), _uses_function(project), _uses_termination(project)), (0, 4), h.id)  # fmt: skip
     bm = _table(files, f"{base}/bom.csv")
     if bm:
         _compare_rows(r, "out_bom", f"The BOM of {h.id}", bm, _BOM_HEADER,

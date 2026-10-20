@@ -49,8 +49,8 @@ from .vcs.snapshot import carried_interfaces
 
 PinMode = Literal["free", "fixed", "locked"]
 PIN_MODES: tuple[PinMode, ...] = get_args(PinMode)
-PIN_FIELDS = frozenset({"signal", "contact_size", "termination", "fixed", "locked"})
-CONNECTOR_FIELDS = frozenset({"name", "gender", "keying", "carries", "notes"})
+PIN_FIELDS = frozenset({"signal", "contact_size", "termination", "fixed", "locked", "function"})
+CONNECTOR_FIELDS = frozenset({"name", "gender", "keying", "carries", "notes", "label"})
 _GENDERS: tuple[str, ...] = get_args(Gender)
 _TERMINATIONS: tuple[str, ...] = get_args(Termination)
 _NAME = TypeAdapter(Name)
@@ -333,6 +333,8 @@ def ops_update_connector(project: Project, connector_id: str, **changes: object)
             new[key] = _gender(value)
         elif key == "keying":
             new[key] = _text(value, "The keying")
+        elif key == "label":
+            new[key] = _text(value, "The label")
         elif key == "carries":
             if isinstance(value, str) or not isinstance(value, Iterable):
                 raise EditError("Carries is a list of interface types.")
@@ -357,6 +359,7 @@ def _pin_is_empty(p: Pin) -> bool:
         and not p.fixed
         and not p.locked
         and p.contact_size is None
+        and p.function is None
         and p.termination == "unspecified"
     )
 
@@ -522,8 +525,13 @@ def _edit_pin(pin: Pin, changes: Mapping[str, object]) -> Pin:
     for key, value in changes.items():
         if key == "mode":
             new.update(_mode_flags(value))
-        elif key in ("signal", "contact_size"):
-            new[key] = _text(value, "A signal" if key == "signal" else "A contact size")
+        elif key in ("signal", "contact_size", "function"):
+            what = {
+                "signal": "A signal",
+                "contact_size": "A contact size",
+                "function": "A function",
+            }
+            new[key] = _text(value, what[key])
         elif key == "termination":
             if value not in _TERMINATIONS:
                 raise EditError(f"A termination is one of {', '.join(_TERMINATIONS)}.")
@@ -740,7 +748,7 @@ def ops_set_pinout(project: Project, connector_id: str, pins: Sequence[Pin]) -> 
 
 # ---- rows from a spreadsheet (paste and import) ------------------------------------------------
 
-ROW_COLUMNS = ("pin", "signal", "mode", "contact_size", "termination")
+ROW_COLUMNS = ("pin", "signal", "mode", "contact_size", "termination", "function")
 
 
 @dataclass(frozen=True)
@@ -826,6 +834,8 @@ def plan_pin_rows(
                 changes["signal"] = row["signal"]
             if "contact_size" in row:
                 changes["contact_size"] = row["contact_size"]
+            if "function" in row:
+                changes["function"] = row["function"]
             if "mode" in row:
                 word = _MODE_WORDS.get(row["mode"].strip().casefold(), "?")
                 if word == "?":
@@ -999,6 +1009,7 @@ class PinRow:
     auto: bool  # allocated by Generate (an interface, not locked, not fixed)
     lock: str | None  # why the pin cannot be edited (a released interface uses it)
     severity: Severity | None  # the worst inline problem about this pin
+    function: str = ""  # a person's words for what the pin does
 
 
 _RANK: dict[Severity, int] = {"error": 0, "warning": 1, "info": 2}
@@ -1054,6 +1065,7 @@ def pin_rows(
                 p.interface_id is not None and not p.locked and not p.fixed,
                 frozen.get(p.id),
                 worst.get(p.id),
+                p.function or "",
             )
         )
     return out
