@@ -15,6 +15,8 @@ File > Import offers six kinds, all through the same wizard: interfaces, approve
 CSV files may use commas, semicolons or tabs between columns (the header line decides), UTF-8 with or without a byte order mark. A number with a decimal comma must be in quotes when commas separate the columns (`"1,5"`), or the file must use semicolons; a row with more columns than the header is refused rather than cut off. At most 20,000 rows and 8 MB; XLSX files are read from the first visible sheet (not the one that was active when the file was saved), and the import names the sheet it read. In a CSV file a quote that is never closed, or that is followed by other text in the cell, is refused with the line number and nothing is imported. Only regular files are read (not pipes or devices).
 
 ## Approved parts list (D-12)
+The file can be `.csv`, `.tsv`, `.json` (a list of records) or `.xlsx`, and can be the export of a parts program such as InvenTree: the `IPN` column is read as the part ID (the `ID` of InvenTree is a database number), `Name` or `Description` as the description, `MPN` as the part number, and a category path such as `Connectors/D-Sub` as `connector`. Nothing connects to a server (D-165). What the approval values mean is still yours to say.
+
 `harness-design-studio import-parts DIR FILE --approved A --approved Yes --pending Review --rejected X [--category connector] [--dry-run]`
 
 - Every row needs a category (a `category` column or `--category`); a row without one is refused ("Category '(empty)' is not one of ...").

@@ -22,8 +22,8 @@ The examples show the form of each command with example names. They do not all w
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
 - Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export)
-- Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout)
-- Write data out: [`export-pinout`](#harness-design-studio-export-pinout)
+- Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices)
+- Write data out: [`export-pinout`](#harness-design-studio-export-pinout), [`export-devices`](#harness-design-studio-export-devices)
 - Review, release and change: [`review`](#harness-design-studio-review), [`release`](#harness-design-studio-release), [`revise`](#harness-design-studio-revise), [`diff`](#harness-design-studio-diff), [`log`](#harness-design-studio-log), [`compare`](#harness-design-studio-compare)
 - Maintenance: [`migrate`](#harness-design-studio-migrate)
 
@@ -326,6 +326,27 @@ harness-design-studio import-pinout my-design gyro-pinout.csv --unit GYRO1 --def
 harness-design-studio import-pinout my-design icd.xlsx --unit CAM1 --new-device "Camera" --part J1=MY-HD-9-F --part J2=MY-HD-15-M
 ```
 
+### harness-design-studio import-devices
+
+Add the devices of a device library file with their connectors, pinouts, parts and interface types. A device never replaces one of the project: a taken ID gets the next free one (GYRO1 becomes GYRO1-2). Parts and interface types the project already has are kept as they are. Use --list to see what the file holds.
+
+`harness-design-studio import-devices project file [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | the project folder |
+| `file` | the file to read |
+| `--unit UNIT` | a device of the file to add (repeat; default: all) (repeatable) |
+| `--list` | list the devices of the file and stop |
+| `--dry-run` | show the preview only |
+
+Examples:
+
+```
+harness-design-studio import-devices my-design device-library.json --list
+harness-design-studio import-devices my-design device-library.json --unit GYRO1 --dry-run
+```
+
 ## Write data out
 
 ### harness-design-studio export-pinout
@@ -345,6 +366,25 @@ Examples:
 ```
 harness-design-studio export-pinout my-design --unit GYRO1
 harness-design-studio export-pinout my-design --unit GYRO1 -o gyro-pinout.xlsx
+```
+
+### harness-design-studio export-devices
+
+Write one or more units, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to: a device with the same ID is replaced, the others stay. What generation allocated in this project does not travel.
+
+`harness-design-studio export-devices project file [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | the project folder |
+| `file` | the device library file to write or add to |
+| `--unit UNIT` | a unit to save, for example GYRO1 (repeat for more) (repeatable) |
+
+Examples:
+
+```
+harness-design-studio export-devices my-design device-library.json --unit GYRO1
+harness-design-studio export-devices my-design device-library.json --unit OBC1 --unit PCU1
 ```
 
 ## Review, release and change

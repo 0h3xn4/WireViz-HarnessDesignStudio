@@ -16,9 +16,17 @@ GROUPS = (
     ("Generate and export", ("generate", "export")),
     (
         "Bring in data",
-        ("config", "library", "import-parts", "import-lengths", "import-netlist", "import-pinout"),
+        (
+            "config",
+            "library",
+            "import-parts",
+            "import-lengths",
+            "import-netlist",
+            "import-pinout",
+            "import-devices",
+        ),
     ),
-    ("Write data out", ("export-pinout",)),
+    ("Write data out", ("export-pinout", "export-devices")),
     ("Review, release and change", ("review", "release", "revise", "diff", "log", "compare")),
     ("Maintenance", ("migrate",)),
 )
@@ -67,6 +75,14 @@ EXAMPLES: dict[str, list[str]] = {
     "export-pinout": [
         "harness-design-studio export-pinout my-design --unit GYRO1",
         "harness-design-studio export-pinout my-design --unit GYRO1 -o gyro-pinout.xlsx",
+    ],
+    "export-devices": [
+        "harness-design-studio export-devices my-design device-library.json --unit GYRO1",
+        "harness-design-studio export-devices my-design device-library.json --unit OBC1 --unit PCU1",
+    ],
+    "import-devices": [
+        "harness-design-studio import-devices my-design device-library.json --list",
+        "harness-design-studio import-devices my-design device-library.json --unit GYRO1 --dry-run",
     ],
     "review": ['harness-design-studio review my-design W001 --by "A. Engineer"'],
     "release": [

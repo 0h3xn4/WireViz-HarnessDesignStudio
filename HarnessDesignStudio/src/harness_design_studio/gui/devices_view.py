@@ -198,6 +198,8 @@ class DevicesView(QWidget):
     addRequested = Signal()
     duplicateRequested = Signal(str)
     exportPinoutRequested = Signal(str)
+    saveToLibraryRequested = Signal(str)
+    addFromLibraryRequested = Signal()
     whyRequested = Signal(str, str)
     reviseRequested = Signal(str)
     fillRequested = Signal(str, list)
@@ -361,7 +363,21 @@ class DevicesView(QWidget):
         self.export_btn.setObjectName("devices-export")
         icon_button(self.export_btn, "export", theme, strings.DV_EXPORT_TIP, text=strings.DV_EXPORT)
         self.export_btn.clicked.connect(self._export)
+        self.lib_save_btn = QPushButton()
+        self.lib_save_btn.setObjectName("devices-library-save")
+        icon_button(
+            self.lib_save_btn, "export", theme, strings.DV_LIB_SAVE_TIP, text=strings.DV_LIB_SAVE
+        )
+        self.lib_save_btn.clicked.connect(self._save_to_library)
+        self.lib_add_btn = QPushButton()
+        self.lib_add_btn.setObjectName("devices-library-add")
+        icon_button(
+            self.lib_add_btn, "unit", theme, strings.DV_LIB_ADD_TIP, text=strings.DV_LIB_ADD
+        )
+        self.lib_add_btn.clicked.connect(self.addFromLibraryRequested.emit)
         row2.addWidget(self.counts, 1)
+        row2.addWidget(self.lib_add_btn)
+        row2.addWidget(self.lib_save_btn)
         row2.addWidget(self.duplicate_btn)
         row2.addWidget(self.export_btn)
         box.addLayout(row2)
@@ -1204,6 +1220,10 @@ class DevicesView(QWidget):
     def _export(self) -> None:
         if self._unit is not None:
             self.exportPinoutRequested.emit(self._unit)
+
+    def _save_to_library(self) -> None:
+        if self._unit is not None:
+            self.saveToLibraryRequested.emit(self._unit)
 
     def _revise(self) -> None:
         if self._banner_harness is not None:

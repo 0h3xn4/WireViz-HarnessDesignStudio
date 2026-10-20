@@ -23,7 +23,7 @@ from harness_design_studio.core.library_import import (
 
 COMMANDS = (
     "config", "library", "import-parts", "import-lengths", "import-netlist", "import-pinout",
-    "export-pinout",
+    "export-pinout", "export-devices", "import-devices",
 )  # fmt: skip
 UNITS = {"mm": 0.001, "m": 1.0, "cm": 0.01}
 
@@ -57,7 +57,7 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     _library_options(lib)
     pp = sub.add_parser(
         "import-parts",
-        help="import an approved-parts list (CSV or XLSX)",
+        help="import an approved-parts list (CSV, TSV, JSON or XLSX; also an InvenTree export)",
         description="Import parts with their approval status. Say what the approval values in your list mean; unknown values are rejected, never guessed.",
     )
     pp.add_argument("project", type=Path)
@@ -194,6 +194,34 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
         default=None,
         help="the file to write (default: CSV on the screen)",
     )
+    xd = sub.add_parser(
+        "export-devices",
+        help="save devices with their connectors and pinouts to a device library file",
+        description="Write one or more units, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to: a device with the same ID is replaced, the others stay. What generation allocated in this project does not travel.",
+    )
+    xd.add_argument("project", type=Path)
+    xd.add_argument("file", type=Path, help="the device library file to write or add to")
+    xd.add_argument(
+        "--unit",
+        action="append",
+        required=True,
+        help="a unit to save, for example GYRO1 (repeat for more)",
+    )
+    idv = sub.add_parser(
+        "import-devices",
+        help="add devices from a device library file to the project",
+        description="Add the devices of a device library file with their connectors, pinouts, parts and interface types. A device never replaces one of the project: a taken ID gets the next free one (GYRO1 becomes GYRO1-2). Parts and interface types the project already has are kept as they are. Use --list to see what the file holds.",
+    )
+    idv.add_argument("project", type=Path)
+    idv.add_argument("file", type=Path)
+    idv.add_argument(
+        "--unit",
+        action="append",
+        default=[],
+        help="a device of the file to add (repeat; default: all)",
+    )
+    idv.add_argument("--list", action="store_true", help="list the devices of the file and stop")
+    idv.add_argument("--dry-run", action="store_true", help="show the preview only")
     ll = sub.add_parser(
         "import-lengths",
         help="import routing segment lengths (CSV or XLSX: harness, segment, length, in this order)",
@@ -238,6 +266,8 @@ def run(args: argparse.Namespace) -> int:
             return _library(project, args)
         if args.command == "export-pinout":
             return _export_pinout(project, args)
+        if args.command == "export-devices":
+            return _export_devices(project, args)
         if project.read_only:
             print(
                 "error: this project is read-only (saved by a newer tool version).", file=sys.stderr
@@ -245,6 +275,8 @@ def run(args: argparse.Namespace) -> int:
             return 2
         if args.command == "import-netlist":
             return _netlist(project, args)
+        if args.command == "import-devices":
+            return _import_devices(project, args)
         if args.command == "import-pinout":
             from harness_design_studio.core.pinout_import import read_pinout_table
 
@@ -583,6 +615,55 @@ def _pinout(project, table: list[list[str]], args: argparse.Namespace) -> int:  
         f"Imported {len(plan.connectors)} connector(s), {plan.pins} pin(s). "
         "Generate harnesses again to connect interfaces to the pins."
     )
+    return 0
+
+
+def _export_devices(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+    from harness_design_studio.core import device_library as dl
+
+    data = dl.export_devices(project, args.unit)
+    existing = dl.read_library(args.file) if args.file.exists() else None
+    dl.write_library(args.file, dl.merge_library(existing, data))
+    n = sum(len(d["connectors"]) for d in data["devices"])
+    print(f"Saved {len(args.unit)} device(s) ({n} connector(s)) to {args.file}.")
+    return 0
+
+
+def _import_devices(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+    from harness_design_studio.core import device_library as dl
+
+    data = dl.read_library(args.file)
+    if args.list:
+        for uid, name in dl.device_names(data):
+            print(f"{uid}: {name}")
+        return 0
+    plan = dl.plan_device_import(project, data, args.unit or None)
+    for r in plan.rows:
+        print(
+            f"{r.unit_id}: "
+            + (
+                f"OK as {r.new_id} ({r.connectors} connector(s), {r.pins} pin(s))"
+                if r.ok
+                else f"ERROR {r.message}"
+            )
+        )
+    for note in plan.notes:
+        print(f"note: {note}")
+    bad = [r for r in plan.rows if not r.ok]
+    if args.dry_run and not bad and plan.ops and _would_be_blocked(project, "Add devices from a library file", plan.ops):  # fmt: skip
+        return 1
+    if args.dry_run or bad or not plan.ops:
+        print(
+            "Nothing was changed."
+            if bad
+            else "Dry run: nothing was changed."
+            if args.dry_run
+            else "Nothing to import."
+        )
+        return 1 if bad or not plan.ops else 0
+    History(project).execute("Add devices from a library file", plan.ops)
+    save_project(project, args.project)
+    print(f"Added {plan.ok_count} device(s). Generate harnesses again to connect interfaces to them.")  # fmt: skip
     return 0
 
 

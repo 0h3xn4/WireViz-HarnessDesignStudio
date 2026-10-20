@@ -55,7 +55,7 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio import __version__
-from harness_design_studio.core import drc, edit
+from harness_design_studio.core import device_library, drc, edit
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError
@@ -96,6 +96,7 @@ from harness_design_studio.gui.controller import (
 from harness_design_studio.gui.devices_dialogs import (
     AssignDialog,
     FillDialog,
+    LibraryDialog,
     NewPartDialog,
     NewTypeDialog,
 )
@@ -429,6 +430,8 @@ class MainWindow(QMainWindow):
         self.export_worker_factory: Callable[[Project], OutputsWorker] | None = None
         # file name for "Export table" of the Lists tab: (title, suggested name, filter) -> path
         self.ask_save_path: Callable[[str, str, str], str | None] = self._ask_save_path
+        # file to read for "Add from library…" of the Devices tab: (title, filter) -> path
+        self.ask_open_path: Callable[[str, str], str | None] = self._ask_open_path
         self.busy: str | None = None  # "generate" | "export" | "arrange" while a job runs
         self._view_slots: dict[str, ViewSlot] = {}
         self._facts_key: tuple[object, ...] | None = None
@@ -916,6 +919,8 @@ class MainWindow(QMainWindow):
             widget.addRequested.connect(lambda: self.menu_add.exec(QCursor.pos()))
             widget.duplicateRequested.connect(self._duplicate_device)
             widget.exportPinoutRequested.connect(self.export_pinout_flow)
+            widget.saveToLibraryRequested.connect(self.save_device_to_library_flow)
+            widget.addFromLibraryRequested.connect(self.add_from_library_flow)
             widget.whyRequested.connect(lambda kind, ident: self._show_why(kind, ident))
             widget.reviseRequested.connect(lambda hid: self.change_flow("revise", hid))
             widget.fillRequested.connect(self.fill_pins_flow)
@@ -1132,6 +1137,50 @@ class MainWindow(QMainWindow):
             return
         self.toasts.show_message(strings.DV_EXPORTED.format(written.name), None)
 
+    def save_device_to_library_flow(self, unit_id: str) -> None:
+        """ "Save to library…" of the Devices tab: ask where, then add the device to that file."""
+        path = self.ask_save_path(
+            strings.DV_LIB_SAVE_TITLE,
+            device_library.default_file_name([unit_id]),
+            strings.DV_LIB_FILTER,
+        )
+        if not path:
+            return
+        target = Path(path)
+        try:
+            data = device_library.export_devices(self.ctl.project, [unit_id])
+            existing = device_library.read_library(target) if target.exists() else None
+            device_library.write_library(target, device_library.merge_library(existing, data))
+        except (HarnessError, OSError) as exc:
+            self._error(self._explain(exc, target.parent))
+            return
+        self.toasts.show_message(strings.DV_LIB_SAVED.format(unit_id, target.name), None)
+
+    def add_from_library_flow(self) -> None:
+        """ "Add from library…" of the Devices tab: choose a file, tick the devices, add them as
+        one undo step."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        path = self.ask_open_path(strings.DV_LIB_OPEN_TITLE, strings.DV_LIB_FILTER)
+        if not path:
+            return
+        try:
+            data = device_library.read_library(Path(path))
+        except (HarnessError, OSError) as exc:
+            self._error(self._explain(exc, Path(path).parent))
+            return
+        dlg = LibraryDialog(self, self.theme, self.ctl.project, data)
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
+            return
+        plan = dlg.plan()
+        if not plan.ops or not self.ctl.run(strings.STEP_ADD_DEVICES, plan.ops):
+            return
+        added = [r.new_id for r in plan.rows if r.ok]
+        self.go_to("devices")
+        self.devices_view.show_unit(added[0])
+        self.toasts.show_message(strings.DV_LIB_ADDED.format(len(added), Path(path).name), None)
+
     def export_table_flow(self, name: str, fmt: str) -> None:
         """ "Export table" of the Lists tab: ask where, then write the rows as they are shown."""
         path = self.ask_save_path(
@@ -1145,6 +1194,11 @@ class MainWindow(QMainWindow):
             self._error(self._explain(exc, Path(path).parent))
             return
         self.toasts.show_message(strings.LISTS_EXPORTED.format(written.name), None)
+
+    @staticmethod
+    def _ask_open_path(title: str, filters: str) -> str | None:
+        path, _ = QFileDialog.getOpenFileName(None, title, "", filters)
+        return path or None
 
     @staticmethod
     def _ask_save_path(title: str, suggested: str, filters: str) -> str | None:

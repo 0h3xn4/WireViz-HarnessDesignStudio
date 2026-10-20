@@ -106,6 +106,10 @@ The editor and the data commands (`import-parts`, `config`; `library` only recor
 - `changelog.json`: `{"changelog": [{id (C0001...), harness_id, revision, kind (review | release | new_revision), by, when, comment}]}`.
 - `outputs/manifest.json` gained `content_hash` (see D-104).
 
+## Device library file (1.4.0; not part of a project)
+
+A device library (`harness-device-library`, D-165) is one JSON file that is kept outside any project. Its top level is `format` (the text `harness-device-library`), `version` (1), `devices`, `parts` and `interface_types`. A device is `{"unit": {...}, "connectors": [...]}` with the same fields as `system/units.json` and `system/connectors.json` of a project (box connectors only, every pin with its `signal`, `function`, `contact_size`, `termination` and `fixed`); `parts` and `interface_types` are the records of `library/parts.json` and `system/interface_types.json` that the connectors name. The zone of a unit and the allocations that generation made on a pin (`interface_id`, `locked`, a signal that was given for an interface) are left out. The file is written sorted by ID with two-space indent. A reader refuses a file of a higher `version`, a file over 8 MB, over 500 devices or over 64 connectors in a device. Importing never changes the project outside what the plan names; see `docs/user-manual/define-a-device.md`.
+
 ## Editing files by hand: JSON Schemas
 
 `harness-design-studio schema my-design/schemas` writes one JSON Schema per kind of file, made from the same strict models the loader uses (so they cannot drift), and `editor-settings.json` with the `json.schemas` entries that map the project's files to them for VS Code. With them an editor completes keys, shows the allowed values and underlines mistakes before the tool ever sees the file. Nothing is downloaded. The tool itself does not need the schemas.

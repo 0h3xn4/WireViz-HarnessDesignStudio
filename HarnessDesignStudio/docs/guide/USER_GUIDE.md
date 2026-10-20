@@ -269,6 +269,8 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio import-netlist DIR FILE --unit U [--prefix J] [--connector J1=ID] [--part J1=PART] [--signal-map NAME=SIGNAL\|FILE]` | read connector pinouts of a unit from a KiCad netlist (.net or .xml); the pins become fixed |
 | `harness-design-studio import-pinout DIR FILE --unit U [--new-device NAME] [--default-part PART] [--part J1=PART] [--column FIELD=HEADING] [--replace]` | define the connectors and pins of a device from a table (CSV or XLSX), one pin per row |
 | `harness-design-studio export-pinout DIR --unit U [-o FILE]` | write one device's pinout (the rows of `system/box_pinouts.csv` for it) as CSV on the screen, or to a .csv or .xlsx file |
+| `harness-design-studio export-devices DIR FILE --unit U [--unit U2 ...]` | save devices with their connectors, pinouts, parts and interface types to a device library file (added to when it exists) |
+| `harness-design-studio import-devices DIR FILE [--unit U] [--list] [--dry-run]` | add devices from a device library file; a taken ID gets the next free one, nothing in the project is replaced |
 
 A script that builds everything: `harness-design-studio check DIR`, `harness-design-studio generate DIR`, `harness-design-studio verify DIR`, `harness-design-studio drc DIR`, `harness-design-studio export DIR`. `harness-design-studio templates FOLDER` copies the templates, and `ci/build.sh` in that folder is this script.
 

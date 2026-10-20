@@ -1,4 +1,7 @@
-"""Import an approved-parts list (CSV or XLSX) into the project's parts library (D-12).
+"""Import an approved-parts list (CSV, TSV, JSON or XLSX) into the project's parts library (D-12).
+An export of a parts program such as InvenTree is such a list: its IPN column is read as the part ID,
+its Name or Description as the description, its MPN as the part number (D-165); the file is read
+offline, nothing connects to a server.
 
 The tool does not know any program's list format, so columns are mapped by header name (with
 common aliases) and the meaning of the approval column is stated by you: values you list as
@@ -27,7 +30,16 @@ FIELDS: tuple[tuple[str, str], ...] = (
     ("mass_per_m_g", "Mass per metre (g/m)"), ("mates_with", "Mating part ID"),
 )  # fmt: skip
 _ALIASES = {
-    "id": ("id", "partid", "part", "item", "ref"),
+    "id": (
+        "ipn",
+        "partipn",
+        "internalpartnumber",
+        "id",
+        "partid",
+        "part",
+        "item",
+        "ref",
+    ),  # InvenTree: the IPN is the name people use, its "ID" is a database number
     "category": ("category", "type", "class", "kind"),
     "manufacturer": ("manufacturer", "mfr", "vendor", "supplier", "maker"),
     "part_number": ("partnumber", "pn", "mpn", "partno", "number"),
@@ -76,6 +88,18 @@ def guess_mapping(header: list[str]) -> dict[str, int]:
                 used.add(hit)
                 break
     return out
+
+
+def _category_word(text: str) -> str:
+    """`Connectors/D-Sub` and `Wires` as a program with category trees exports them: the first step
+    of the path that is one of the tool's six categories or its plural, as that category. Any other
+    text is returned as it is (and then refused, never guessed)."""
+    steps = [x.strip().lower() for x in re.split(r"[/>|\\]", text)]
+    for step in steps:
+        word = step[:-1] if step.endswith("s") and step[:-1] in PART_CATEGORIES else step
+        if word in PART_CATEGORIES:
+            return word
+    return text.strip().lower()
 
 
 def _words(values: list[str]) -> set[str]:
@@ -178,7 +202,7 @@ def plan_parts_import(
                 PartRow(n, False, f"'{pid}' differs only in upper/lower case from '{clash}'", pid)
             )
             continue
-        category = (cell("category") or default_category or "").lower()
+        category = _category_word(cell("category") or default_category or "")
         old = seen.get(pid) or project.parts.get(pid)
         if category not in PART_CATEGORIES:
             if old is None or cell("category"):

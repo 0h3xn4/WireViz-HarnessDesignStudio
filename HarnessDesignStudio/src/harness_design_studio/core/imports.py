@@ -1,4 +1,4 @@
-"""CSV/XLSX import of interfaces. Plans first: nothing changes until the user confirms.
+"""CSV, TSV, JSON and XLSX tables, and the import of interfaces. Plans first: nothing changes until the user confirms.
 
 `plan_interface_import` validates every row against the project (and against the rows before it)
 and returns per-row results plus the operations for the good rows, applied as one undo step.
@@ -6,6 +6,7 @@ and returns per-row results plus the operations for the good rows, applied as on
 
 import csv
 import io
+import json
 import stat
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -73,6 +74,43 @@ def parse_csv(text: str) -> Table:
     return rows
 
 
+def parse_json_table(text: str) -> Table:
+    """A JSON file that holds a list of flat records (as a parts program exports one) as a table:
+    the header is the keys in order of first appearance, an empty cell for a missing or null key.
+    Nested lists and records are refused, never flattened by a guess."""
+    try:
+        data = json.loads(text)
+    except (ValueError, RecursionError) as exc:
+        raise ImportError_(f"The file is not valid JSON ({_plain(exc)}).") from exc
+    if isinstance(data, dict):  # {"results": [...]} as a paged API answer
+        lists = [v for v in data.values() if isinstance(v, list)]
+        data = lists[0] if len(lists) == 1 else data
+    if not isinstance(data, list) or not data or not all(isinstance(r, dict) for r in data):
+        raise ImportError_("The JSON file must hold a list of records, one per row.")
+    if len(data) > MAX_ROWS:
+        raise ImportError_(f"The file has more than {MAX_ROWS} rows.")
+    header: list[str] = []
+    for rec in data:
+        for key in rec:
+            if key not in header:
+                header.append(str(key))
+    if len(header) > MAX_COLUMNS:
+        raise ImportError_(f"The file has more than {MAX_COLUMNS} columns.")
+    rows: Table = [header]
+    for n, rec in enumerate(data, start=1):
+        row: list[str] = []
+        for key in header:
+            value = rec.get(key)
+            if isinstance(value, (dict, list)):
+                raise ImportError_(
+                    f"Record {n}, '{key}': a nested value cannot be a table cell. "
+                    "Export the table without nested fields."
+                )
+            row.append("" if value is None else ("true" if value is True else "false" if value is False else str(value)).strip())  # fmt: skip
+        rows.append(row)
+    return rows
+
+
 def _plain(exc: Exception) -> str:
     return (
         "a field is too long, or the quotes do not match"
@@ -125,13 +163,14 @@ def read_table_sheet(
     if info.st_size > MAX_BYTES:
         raise ImportError_("The file is too large to import (limit 8 MB).")
     suffix = path.suffix.lower()
-    if suffix == ".csv":
+    if suffix in (".csv", ".tsv", ".json"):
         try:
             with path.open("rb") as fh:
                 raw = fh.read(MAX_BYTES + 1)
             if len(raw) > MAX_BYTES:
                 raise ImportError_("The file is too large to import (limit 8 MB).")
-            return parse_csv(raw.decode("utf-8-sig")), None
+            text = raw.decode("utf-8-sig")
+            return (parse_json_table(text) if suffix == ".json" else parse_csv(text)), None
         except UnicodeDecodeError as exc:
             raise ImportError_(
                 "The file is not UTF-8 text. Save it as CSV UTF-8 and try again."
@@ -140,7 +179,7 @@ def read_table_sheet(
             raise ImportError_(f"The file could not be read ({exc.strerror}).") from exc
     if suffix in (".xlsx", ".xlsm"):
         return _read_xlsx(path, skip_sheets)
-    raise ImportError_("Only .csv and .xlsx files can be imported.")
+    raise ImportError_("Only .csv, .tsv, .json and .xlsx files can be imported.")
 
 
 def _read_xlsx(path: Path, skip_sheets: tuple[str, ...] = ()) -> tuple[Table, str]:
