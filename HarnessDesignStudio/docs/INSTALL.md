@@ -45,19 +45,19 @@ You also need about 500 MB of free disk space for the program (`df -h ~` shows i
 
 You need one file, either `harness-design-studio_<version>_amd64.deb` (way A), `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B), `harness-design-studio-<version>-windows-x86_64-setup.exe` or `harness-design-studio-<version>-windows-x86_64.zip` (way D) or `harness-design-studio-<version>-macos-arm64.dmg` / `harness-design-studio-<version>-macos-x86_64.dmg` (way E). Ask your tool administrator, or take it from one of these places:
 
-- the **Releases** page of the project's repository (look for the newest version number). Version 1.3.0 (tag `v1.3.0`, published 2026-10-20) has these seven files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
+- the **Releases** page of the project's repository (look for the newest version number). Version 1.4.0 (tag `v1.4.0`, published 2026-10-20) has these seven files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
 
   | File | For | Way |
   | --- | --- | --- |
-  | `harness-design-studio_1.3.0_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
-  | `harness-design-studio-1.3.0-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
-  | `harness-design-studio-1.3.0-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
-  | `harness-design-studio-1.3.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
-  | `harness-design-studio-1.3.0-macos-arm64.dmg` | macOS 13 or newer, Apple Silicon | E |
-  | `harness-design-studio-1.3.0-macos-x86_64.dmg` | macOS 13 or newer, Intel | E |
+  | `harness-design-studio_1.4.0_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
+  | `harness-design-studio-1.4.0-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
+  | `harness-design-studio-1.4.0-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
+  | `harness-design-studio-1.4.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
+  | `harness-design-studio-1.4.0-macos-arm64.dmg` | macOS 13 or newer, Apple Silicon | E |
+  | `harness-design-studio-1.4.0-macos-x86_64.dmg` | macOS 13 or newer, Intel | E |
   | `SHA256SUMS` | the SHA-256 checksum of each of the six packages | |
 
-  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 has the same six packages as 1.3.0. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
+  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 and 1.3.0 have the same six packages as 1.4.0. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
 - the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact `harness-design-studio-ubuntu-24.04` of the CI run holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file); the run of the workflow `harness-design-studio packages (Windows, macOS)` on a branch `pkg/...` keeps the Windows and macOS packages as the artifacts `harness-design-studio-windows-x86_64`, `harness-design-studio-macos-arm64` and `harness-design-studio-macos-x86_64`. Such a build is made again on another machine and is not the file of a release.
 
 You can also build it yourself (way C, last section). That route needs no release files at all.
