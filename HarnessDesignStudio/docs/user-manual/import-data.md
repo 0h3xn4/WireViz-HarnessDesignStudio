@@ -28,7 +28,7 @@ harness-design-studio templates my-templates
 (On a 0.1.0 package there is one file fewer: `design-worksheet.md` is not in the 0.1.0 packages.)
 
 - Every import shows what it would do. In the app, **File > Import** starts one wizard for six kinds of file (interfaces, approved parts, segment lengths, the ampacity table, a device pinout and a KiCad netlist): choose the file, match the columns, read every row with its reason, then import. On the command line add `--dry-run`: the rows are listed and nothing changes. Run the command again without it to apply.
-- Files can be CSV (commas, semicolons or tabs between columns; UTF-8) or Excel (`.xlsx`, the first **visible** sheet, not the one that was active when the file was saved; the import says `Reading sheet 'Parts' (the first visible sheet of the workbook).`). A number with a decimal comma needs quotes (`"1,5"`) when commas separate the columns. At most 20,000 rows and 8 MB. Details: [`IMPORTS.md`](../IMPORTS.md).
+- Files can be CSV or TSV (commas, semicolons or tabs between columns; UTF-8), JSON (a list of flat records, as an export of a parts program writes it; since 1.4.0) or Excel (`.xlsx`, the first **visible** sheet, not the one that was active when the file was saved; the import says `Reading sheet 'Parts' (the first visible sheet of the workbook).`). A number with a decimal comma needs quotes (`"1,5"`) when commas separate the columns. At most 20,000 rows and 8 MB. Details: [`IMPORTS.md`](../IMPORTS.md).
 - A CSV file with a quote that is never closed (or is followed by other text in the cell) is refused with its line number, and nothing is imported: `error: Line 2: unbalanced quote. A " opens a text that is never closed, or is followed by other text. Remove the stray quote or write it twice ("") inside a quoted cell. Nothing was imported.` (exit code 2).
 - An import that would change something a **release froze** (a part, an interface type or a configuration value that a released harness uses) is blocked, in the preview and in the real run, with exit code 1 ([change a released harness](change-a-released-harness.md)).
 
@@ -37,7 +37,7 @@ harness-design-studio templates my-templates
 Importing interfaces works in the app. There is no command for it. (GUI, not run: the steps are described from the program's code. The column names and messages are the program's.)
 
 1. Open the project. Choose **File > Import > Import interfaces…** (Ctrl+Shift+I), or press Enter on **Interfaces** under **Imports** in the **Project** tab. The **Import data** wizard opens with *Interfaces* chosen. It is the same wizard for the other kinds of file ([other imports](#other-imports)).
-2. Press **Choose file…** and pick a `.csv` or `.xlsx` file. To import text instead, press **Paste table text instead…**: the older window opens, with a box for CSV text. Try `my-templates/interfaces.csv`:
+2. Press **Choose file…** and pick a `.csv`, `.tsv`, `.json` or `.xlsx` file. To import text instead, press **Paste table text instead…**: the older window opens, with a box for CSV text. Try `my-templates/interfaces.csv`:
 
 ```
 id,type,from,to,redundancy
@@ -52,6 +52,8 @@ IF-011,Primary power,PCDU1,OBC1,nominal
 Rules for a row: the two units must exist already; `type` is the name or ID of an interface type (for example `RS-422`); each unit needs a free connector that can carry the type.
 
 ## Approved parts list
+
+**From InvenTree (since 1.4.0).** Export the parts table of InvenTree as CSV, TSV, JSON or XLSX and import that file as it is: the `IPN` column is read as the part ID (the `ID` of InvenTree is a database number), `Name` or `Description` as the description, `MPN` as the part number, `Manufacturer`, `Weight` and `Category` as they are named; a category path such as `Connectors/D-Sub` is read as `connector` (a category the tool does not have is refused with its row). Nothing connects to an InvenTree server: the tool never uses the network. You still say what the approval values mean, as for any list.
 
 The starter library has only example parts, none of them approved. Your programme's approved parts list replaces them. You say what the approval values in your file mean. The tool never decides that a part is approved. In the app use **File > Import > Import approved parts…**: the wizard asks which words in the file mean approved, not decided and not approved. The command line does the same:
 
@@ -176,6 +178,7 @@ To find the segment IDs, open the generated harness in the **Harness** tab, or l
 | A current-by-gauge table | **File > Import > Import engineering values: ampacity table…**, or `harness-design-studio config DIR --ampacity-csv FILE` ([fill in the engineering values](fill-in-engineering-values.md#2-load-the-current-by-gauge-table)) |
 | A unit's connector pinout in KiCad | **File > Import > Import KiCad netlist…**, or `harness-design-studio import-netlist` ([import KiCad pinouts](import-kicad-pinouts.md)) |
 | A device's pinout as a table | **File > Import > Import device pinout…**, or `harness-design-studio import-pinout` ([define a device](define-a-device.md#take-the-pinout-from-a-spreadsheet)) |
+| A device from another project | **Add from library…** in the Devices tab, or `harness-design-studio import-devices` ([define a device](define-a-device.md#use-a-device-in-another-project)) |
 | Values from a standard | `harness-design-studio config DIR --apply-profile NAME` ([fill in the engineering values](fill-in-engineering-values.md#values-from-a-standard-profiles)) |
 
 ## Where the library data come from

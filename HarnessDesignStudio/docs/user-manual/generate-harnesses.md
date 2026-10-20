@@ -122,13 +122,13 @@ The file has a wrapper: the setting is under `values`. A key at the top level is
 
 ## Keep a choice of your own
 
-Generation may change a wire or a pin you edited. To keep a value, mark it as locked.
+Generation may change a wire or a pin you edited. To keep a value, lock it.
 
-- In a wire's entry in `physical/harnesses/<ID>.json`, set `"locked": true`. Generation then keeps the gauge, colour, part and length you put there. Without the lock it writes its own value again.
-- In a pin's entry, `"locked": true` keeps the pin where it is. The report counts them: "0 locked pin(s) kept".
-- The app does not have a button to lock a wire or a pin. Its wire list only shows a **Locked** column. A locked pin that already carries a signal stays where it is on a connector with a fixed pinout, and a locked fixed pin keeps its interface. In `per_unit_pair` mode a renamed unit keeps its harness IDs, locked wires and lengths when the interfaces stay the same.
+- **A wire, in the app (since 1.4.0):** select it in the **Drawings** area and set its gauge, type, colour or length in the **Edit wire** tab. That locks the wire: Generate keeps those values, and **Reset to generated** hands it back. A label and a note are always kept, a wire you draw yourself is kept as it is, and so are the groups you make ([edit a wire](edit-a-wire.md)). If Generate cannot keep something (its interface is gone) it says so with the finding `locked_data_lost`.
+- **A pin, in the app:** the *Mode* column of the **Devices** tab: *locked* keeps the pin where it is, *fixed* also fixes its signal. The report counts them: "0 locked pin(s) kept".
+- **In the file:** a wire's entry in `physical/harnesses/<ID>.json` with `"locked": true` does the same as the Edit wire tab; a pin's entry with `"locked": true` the same as the Devices tab. A locked pin that already carries a signal stays where it is on a connector with a fixed pinout, and a locked fixed pin keeps its interface. In `per_unit_pair` mode a renamed unit keeps its harness IDs, locked wires and lengths when the interfaces stay the same.
 
-This was checked on the command line with `first-steps`: a wire set to gauge 20 and colour `red` with `"locked": true` kept both after `harness-design-studio generate`, and a wire set to gauge 20 without the lock went back to the tool's own value (here no gauge, because the derating values are still placeholders). Edit the file while the project is not open in the app. If it is open, the app reports "Project changed on disk" and offers to reload.
+This was checked on the command line with `first-steps`: a wire set to gauge 20 and colour `red` with `"locked": true` kept both after `harness-design-studio generate`, and a wire set to gauge 20 without the lock went back to the tool's own value (here no gauge, because the derating values are still placeholders). Edit the file only while the project is not open in the app. If it is open, the app reports "Project changed on disk" and offers to reload.
 
 ## Common mistakes
 

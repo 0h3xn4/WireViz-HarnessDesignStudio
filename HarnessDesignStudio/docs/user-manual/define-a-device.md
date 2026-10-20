@@ -65,6 +65,10 @@ Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down
 
 The **Direction** and **Class** columns come from the interface type of the pin's signal. They are empty, with the reason in the tooltip, when nothing can be said. They are never guessed.
 
+![The Devices tab for the unit BAT1: the connector list, the card with the part, a Label field, the pin table with the Function column, and the buttons Add from library, Save to library, Duplicate and Export pinout](../img/devices-tab.png)
+
+*The Devices tab on the `flatsat` example (version 1.4.0).*
+
 ## Take the pinout from a spreadsheet
 
 Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination*, *Function* and, if you have them, *Part* and *Gender*. A *Function* column is stored as the pin's function when the table also has a *Signal* (or *Net*) column; a table with only a *Function* column reads it as the signal, as before 1.4.0. Columns the project cannot store (a description, remarks, a voltage, a direction) are named in a warning and left out.
@@ -104,7 +108,7 @@ harness-design-studio export-pinout wheel-link --unit GYRO1
 ```
 
 ```
-# harness-design-studio 1.3.0 model 3cdce4c529a1
+# harness-design-studio 1.4.0 model <hash>
 Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare
 GYRO1-J01,box,,EX-MICROD-9-F,A1,PWR,,,no
 GYRO1-J01,box,,EX-MICROD-9-F,A2,RTN,,,no

@@ -33,7 +33,7 @@ This page lists every guide in the repository, grouped by what you want to do, w
 
 | Page | What it gives you |
 | --- | --- |
-| [User manual](../HarnessDesignStudio/docs/user-manual/README.md) | One page per task: draw the design, generate harnesses, read and fix problems, fill in engineering values, import data, import KiCad pinouts, export outputs, set wire colours, release a harness, use Git and CI |
+| [User manual](../HarnessDesignStudio/docs/user-manual/README.md) | One page per task: draw the design, generate harnesses, read and fix problems, fill in engineering values, edit a wire, import data, define a device, import KiCad pinouts, export outputs, set wire colours, release a harness, use Git and CI |
 | [How-to index](../HarnessDesignStudio/docs/HOWTO.md) | The old list of recipes, now pointing at the user manual |
 | [User guide](../HarnessDesignStudio/docs/guide/USER_GUIDE.md) | The guide that opens with **F1** in the app: screen, modes, menus, shortcuts |
 | [Tips](../HarnessDesignStudio/docs/TIPS.md) | Shortcuts, power-user workflows, and what can and cannot be exchanged with other tools |

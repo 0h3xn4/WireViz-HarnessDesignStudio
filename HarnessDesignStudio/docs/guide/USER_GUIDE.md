@@ -17,7 +17,7 @@ Seven words carry most of the meaning:
 | **Unit** | A box with connectors on it: the computer `OBC1`, the power unit `PCDU1`, the wheel `RW1`. |
 | **Interface** | One connection between two units, of a type such as RS-422 or primary power. This is what you add. |
 | **Connector, pin** | A plug or socket, and one contact of it. A pin carries one signal. |
-| **Harness** | A bundle of wires with connectors that carries interfaces between units. Generated, never drawn by hand. |
+| **Harness** | A bundle of wires with connectors that carries interfaces between units. Generated; its wires can be edited and wires of your own added. |
 | **Wire** | One conductor between two pins, with a gauge, a part and a length. |
 | **Zone** | A lane of the diagram (a panel or compartment) that units sit in. |
 | **Placeholder** | A value nobody has entered yet. The tool never invents engineering numbers. |
@@ -134,11 +134,13 @@ The **Devices** tab (Ctrl+6) shows one unit down to each pin. Pick the unit on t
 
 Left, the list of the unit's connectors; right, the connector's part, gender, keying and what it carries, and how its pins are allocated: *Automatic* (Generate puts the signals on free pins) or *Fixed pinout* (the signals go to the pins of their own name).
 
-Below, the pin table: pin, signal, mode (*Free*, *Fixed*, *Locked*), interface, direction and class (taken from the interface type of the signal, empty when no type has that signal), the wire and a state. **Contact** adds the contact size and the termination.
+Below, the pin table: pin, signal, mode (*Free*, *Fixed*, *Locked*), interface, direction and class (taken from the interface type of the signal, empty when no type has that signal), the wire and a state. The *Function* column is free text for what the pin does (new in 1.4.0). **Contact** adds the contact size and the termination (*crimp* or *solder*). The connector card has a *Label* field: text that `labels.csv` prints for the connector.
 
 Under it the notes about the connector, for example a signal that no interface type has, or *CANH* without *CANL* on a fixed pinout; a double-click selects the pin the note is about.
 
 At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv` for this unit; **Export pinout…** saves them as a CSV file or an Excel workbook.
+
+**Save to library…** writes the unit with its connectors, pinouts, parts and interface types to a *device library file* (JSON; an existing file is added to), and **Add from library…** adds devices from such a file to this project (new in 1.4.0). Nothing in the project is replaced: a taken ID gets the next free one (`GYRO1-2`), and a part or interface type the project already has stays as it is. Adding is one undo step.
 
 #### Defining a device
 
@@ -293,7 +295,7 @@ Every import first shows what it would do. A bad row stops the whole import, so 
 | You have | Do |
 | --- | --- |
 | Interfaces as a table | **File > Import > Import interfaces…** (Ctrl+Shift+I; CSV or XLSX with the columns id, type, from, to and optionally redundancy), or **Paste table text instead…** in the wizard for CSV text |
-| An approved-parts list | **File > Import > Import approved parts…**, or `harness-design-studio import-parts`, saying what your approval values mean |
+| An approved-parts list (CSV, TSV, JSON or XLSX; an InvenTree export file works too: its `IPN` column is the part ID) | **File > Import > Import approved parts…**, or `harness-design-studio import-parts`, saying what your approval values mean |
 | Segment lengths | **File > Import > Import segment lengths…**, or `harness-design-studio import-lengths`, then generate again |
 | A device's pinout as a table (connector, pin, signal ...) | **File > Import > Import device pinout…**, or `harness-design-studio import-pinout`; a new connector needs a library part; a column the project cannot store is named and left out |
 | A unit's connector pinout in KiCad | export a netlist, then **File > Import > Import KiCad netlist…**, or `harness-design-studio import-netlist`; the pins become fixed |

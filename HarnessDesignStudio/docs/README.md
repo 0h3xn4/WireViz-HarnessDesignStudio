@@ -26,7 +26,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | What it gives you |
 | --- | --- |
-| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, generate harnesses, read and fix problems, fill in engineering values, import data, define a device, import KiCad pinouts, export the outputs, set wire colours, release a harness, use Git and CI |
+| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, generate harnesses, read and fix problems, fill in engineering values, edit a wire, import data, define a device (and reuse it in another project), import KiCad pinouts, export the outputs, set wire colours, release a harness, use Git and CI |
 | [`HOWTO.md`](HOWTO.md) | The index of the old recipes, pointing at the user manual |
 | [`TIPS.md`](TIPS.md) | Shortcuts, power-user workflows, and exchanging data with other tools |
 | [`CHEATSHEET.md`](CHEATSHEET.md) | One page: the loop, the data imports, release, shortcuts, the folder layout, the words |
@@ -45,6 +45,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed, release by release |
+| [`releases/`](releases/1.4.0.md) | The highlights of each release, as the GitHub release page shows them (one file per version) |
 
 ## Examples and templates
 
@@ -54,7 +55,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md) | A tour of the biggest example, a flatsat with ground equipment |
 | [`templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) | What each file written by `harness-design-studio templates FOLDER` is for |
 
-`harness-design-studio new --list` shows the example projects and `harness-design-studio templates FOLDER` copies the import templates, demo values, CI scripts and the review checklist. Screenshots of the app (the window of version 1.3.0, light theme) are in [`ux/qt/`](ux/qt/) (see [`ux/README.md`](ux/README.md) for the other picture folders).
+`harness-design-studio new --list` shows the example projects and `harness-design-studio templates FOLDER` copies the import templates, demo values, CI scripts and the review checklist. Screenshots of the app (the window of version 1.3.0 and later, light theme) are in [`ux/qt/`](ux/qt/) (see [`ux/README.md`](ux/README.md) for the other picture folders).
 
 ## Stuck
 
@@ -79,6 +80,7 @@ These explain how the tool was specified and checked; you do not need them to us
 | [`UX_GUIDELINES_REVIEW.md`](UX_GUIDELINES_REVIEW.md) | The owner's UX/UI guidelines, point by point: done, new, not applicable, open |
 | [`DESIGN.md`](DESIGN.md) | The design system of the editor: tokens, type and spacing, themes, icons, state chips, tables, the diagram, the window, the views, shortcuts, decisions |
 | [`ui/BEFORE_AFTER.md`](ui/BEFORE_AFTER.md), [`ui/UI_OVERHAUL.md`](ui/UI_OVERHAUL.md), [`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md), [`ui/PERF_BASELINE.md`](ui/PERF_BASELINE.md) | The new user interface of version 1.3.0: the window before and after, the brief, the plan and the timing numbers (decisions D-150 to D-159) |
+| [`ait/AIT_FEEDBACK_PLAN.md`](ait/AIT_FEEDBACK_PLAN.md) | The feedback of the AIT engineers (ten requirements), what the tool did about each before 1.4.0, what version 1.4.0 built and in which milestone (decisions D-160 to D-165) |
 | [`ux-audit.md`](ux-audit.md) | The October 2026 audit of the editor against the UX/UI Standard (83 numbered issues) and, at the end, what was built for each one |
 | [`ux-custom-devices-audit.md`](ux-custom-devices-audit.md) | Audit and design proposal for custom devices (approved on 14 October 2026 and built as the Devices tab; the owner's decisions are at its end): what the tool does today for a device of your own (unit, connectors, pins, interfaces on pins, pinout import), the gaps, and a Devices tab with a pin table; pictures in [`ux/custom-devices/`](ux/custom-devices/) |
 | [`DECISIONS.md`](DECISIONS.md), [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | What was decided, and what still needs an owner |

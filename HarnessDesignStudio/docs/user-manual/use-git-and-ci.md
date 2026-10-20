@@ -65,6 +65,8 @@ git diff
 
 Running `harness-design-studio generate design` then also changes `design/generated/generation.json`, because the model changed. Commit both before you go on.
 
+**Who made the last change.** When the project folder is inside a Git repository, the **Revisions** area of the app shows a line with the last commit of that repository: who, when, its first line, the short id and the branch (since 1.4.0). The app reads the repository's own files; it does not run `git` and needs no network. It names the last commit of the whole repository, not of the project alone, and it does not see changes you have not committed yet. The change log of a harness (`harness-design-studio log`) stays the record of who reviewed, released or revised it.
+
 ## 2. After a merge
 
 If Git stops on a conflict inside a project file, it leaves markers (`<<<<<<<`, `=======`, `>>>>>>>`) in the file. Resolve it like any text conflict. Then let the tool check the folder:

@@ -2,6 +2,8 @@
 
 This page says what the AIT engineers asked for, what the tool does about each point today (checked in the code of version 1.3.0), what version 1.4.0 changes and in which order. It is a plan and a record, not a promise: each milestone is a pull request with tests, and what is not built yet is marked.
 
+**Status (2026-10-20).** All five milestones were built and published in version 1.4.0 (pull requests 83 to 88, tag `v1.4.0`). What is only partly done, in the words of the requirements: *#1* there is no live connection to InvenTree (the tool never uses the network); an export file of InvenTree is read offline. *#8* the last commit of the repository is shown; edits that are not committed yet and who made them are not. *#9* soldering is a pin's termination in the lists; what else it needs is for the AIT engineers to say. The rest is done as the table says. The plan below is kept as it was written, with the version 1.3.0 column as the starting point.
+
 ## The ten requirements and where they stand
 
 | # | Requirement | In 1.3.0 | Milestone |

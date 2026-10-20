@@ -32,7 +32,7 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
        └──────────  checks: "problems" and design rules  ◄──────────  verified before writing
 ```
 
-**Your design is the source of truth.** You describe *what must be connected*. The tool works out *how* (which connector, which pin, which wire) and writes everything down. Change the design, generate again, and every drawing and list follows. Nothing generated is edited by hand, so nothing can drift apart.
+**Your design is the source of truth.** You describe *what must be connected*. The tool works out *how* (which connector, which pin, which wire) and writes everything down. Change the design, generate again, and every drawing and list follows. Generated results are not edited as drawings; what you want to keep (a wire's gauge, colour or length, a wire you draw yourself, a label, a pin's function) is set in the app and stays when you generate again, so nothing can drift apart.
 
 ## The things in a design
 
@@ -41,10 +41,10 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 | **Unit** | A box in the spacecraft with connectors on it. | `OBC1` (on-board computer), `PCDU1` (power unit), `RW1` (reaction wheel) |
 | **Interface type** | A kind of connection and its signals. The tool ships 17 (RS-422, RS-485, CAN, Ethernet, primary power, ...). | *RS-422* has the signals `TX+`, `TX-`, `RX+`, `RX-` |
 | **Interface** | One connection of a type between two units. This is what *you* add. | `IF-002`: RS-422 from `OBC1` to `RW1` |
-| **Connector** | A plug or socket. On a unit it is a *box connector*; on a harness it is a *cable connector* that mates with a box connector. | `RW1-J02` on the wheel; `W001-P2` on the cable |
-| **Pin** | One contact of a connector. It carries one signal. | pin 3 of `RW1-J02` carries `RX+` |
-| **Harness** | A bundle of wires with its connectors that carries interfaces between units. **Generated, never drawn by hand.** | `W001`: `OBC1-J01` to `RW1-J02` |
-| **Wire** | One conductor between two pins, with a gauge, a part and a length. | `W001-001`: `TX+`, pin 1 to pin 3 |
+| **Connector** | A plug or socket, which may carry a label (new in 1.4.0). On a unit it is a *box connector*; on a harness it is a *cable connector* that mates with a box connector. | `RW1-J02` on the wheel; `W001-P2` on the cable |
+| **Pin** | One contact of a connector. It carries one signal and may have a *function* (free text, new in 1.4.0). | pin 3 of `RW1-J02` carries `RX+`, function "Wheel command receive" |
+| **Harness** | A bundle of wires with its connectors that carries interfaces between units. **Generated**; individual wires can be edited, and wires can be added by hand (new in 1.4.0). | `W001`: `OBC1-J01` to `RW1-J02` |
+| **Wire** | One conductor between two pins, with a gauge, a part and a length, and optionally a colour, a label and a note. Two wires may share a pin. | `W001-001`: `TX+`, pin 1 to pin 3 |
 | **Segment** | A stretch of the physical route a bundle follows; wire lengths are sums of segments. | `W001-L1` |
 | **Zone** | A lane of the diagram (a panel or compartment). Units sit in zones. | `panel-A`, `panel-B` |
 | **Nominal / redundant** | The main chain of units and its backup. They never share a connector or harness. | `PCDU1` and `PCDU1-R` |
@@ -74,11 +74,11 @@ Switching never changes data. Start in Guided.
 Pressing **Generate** (or `harness-design-studio generate DIR`) does four things:
 
 1. **Groups** the interfaces into harnesses. By default one harness per pair of unit connectors.
-2. **Allocates pins**: power first, pairs side by side, spare pins left free, pins you locked (in the harness file) never moved.
+2. **Allocates pins**: power first, pairs side by side, spare pins left free, pins you locked never moved.
 3. **Makes wires** for every signal, picks a part and, when it has the numbers, a gauge.
 4. **Checks itself** with a separate verifier that does not share code with the generator.
 
-You always see a **preview** first; nothing changes until you **Apply**, and **Undo** takes it back. Generating again keeps IDs and locked choices and never touches a released harness. The same design always gives byte-identical results, so Git diffs show real changes only.
+You always see a **preview** first; nothing changes until you **Apply**, and **Undo** takes it back. Generating again keeps IDs, locked choices, the wires you edited or drew, and your labels, and never touches a released harness. The same design always gives byte-identical results, so Git diffs show real changes only.
 
 Every choice has a reason. Open the **Harness** tab (the Drawings area), pick a harness, select a wire, connector or pin, and read the rule behind it in **Why** (gauge and length included).
 
@@ -142,7 +142,8 @@ Files are written in a fixed format, so two people editing different parts of a 
 - It does not invent standard values (see Placeholders).
 - It does not route cables in 3D; lengths come from you ([`IMPORTS.md`](IMPORTS.md)).
 - It does not draw electronics: KiCad does that, and the tool can read unit connector pinouts from a KiCad netlist ([`KICAD.md`](KICAD.md)).
-- It does not generate buses with more than two ends yet; such links are skipped with a warning.
+- It does not generate buses with more than two ends yet; such links are skipped with a warning. (You can draw such wires yourself in the *Edit wire* tab, and several wires may share a pin.)
+- It does not decide what a soldered joint needs: a pin can say *solder* or *crimp* and the lists show it, nothing more yet.
 - It never uses the network.
 
 ## Words you will meet
@@ -150,7 +151,7 @@ Files are written in a fixed format, so two people editing different parts of a 
 - **Baseline**: a frozen snapshot made when a harness is released.
 - **Model hash**: a fingerprint of the whole design, printed on every output.
 - **Auto-filled**: a connector the tool chose; unconfirmed until a person looks at it.
-- **Locked** (wire or pin): a choice you made that generation will keep. You mark it by editing the harness file (`"locked": true`); the app has no button for it.
+- **Locked** (wire or pin): a choice you made that generation will keep. You set it in the app (a wire in the **Edit wire** tab since 1.4.0, a pin in the **Devices** tab) or by editing the harness file (`"locked": true`).
 - **Released (locked)**: a harness that can no longer be edited; start a new revision.
 - **DRC**: design rule check, the background rules listed in [`RULES.md`](RULES.md).
 - **Fixed pin**: a pin whose signal is defined by the unit itself (imported from KiCad); generation never moves it.

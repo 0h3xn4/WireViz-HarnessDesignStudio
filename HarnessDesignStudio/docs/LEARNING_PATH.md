@@ -90,16 +90,17 @@ Two ways, and you can mix them:
 
 Do this when the data exists; the tool works without it and says so.
 
-- **Parts list:** `approved-parts.csv`, then `harness-design-studio import-parts`. Only approved parts make a harness releasable without a written reason.
+- **Parts list:** `approved-parts.csv`, then `harness-design-studio import-parts` (a CSV, TSV, JSON or XLSX file; an InvenTree export works as it is, see [`IMPORTS.md`](IMPORTS.md)). Only approved parts make a harness releasable without a written reason.
 - **Segment lengths:** `segment-lengths.csv`, then `harness-design-studio import-lengths`. Wire lengths, mass and voltage drop depend on them.
 - **Engineering values** (derating, ampacity, EMC classes): [`CONFIG.md`](CONFIG.md). The files in `config-demo-values/` are **for learning only**; they stay marked as placeholders. Never copy demo values into a real design.
 - **Unit connector pinouts from KiCad:** [`KICAD.md`](KICAD.md).
+- **A device you defined before:** save it once with **Save to library…** in the Devices tab (or `harness-design-studio export-devices`) and add it to the next project with **Add from library…** ([define a device](user-manual/define-a-device.md#use-a-device-in-another-project)).
 
 **Done when:** `harness-design-studio config my-design` lists no missing value you are responsible for.
 
 ## 7. Check and review (30 minutes)
 
-Read every entry of the **Problems** tab, the Problems panel (Ctrl+Shift+M) or `harness-design-studio drc`. For each one, decide: fix it, waive it with a reason, or note that it is outside the tool. Then go through `design-review-checklist.md` with a colleague. Rule texts: [`RULES.md`](RULES.md).
+Read every entry of the **Problems** tab, the Problems panel (Ctrl+Shift+M) or `harness-design-studio drc`. For each one, decide: fix it, waive it with a reason, or note that it is outside the tool. Then go through `design-review-checklist.md` with a colleague. Rule texts: [`RULES.md`](RULES.md). If the tool made a wire that does not match what you build, set its gauge, colour or length in the **Edit wire** tab, or draw the wire yourself ([edit a wire](user-manual/edit-a-wire.md)); Generate keeps it.
 
 **Done when:** every open problem has a decision.
 
