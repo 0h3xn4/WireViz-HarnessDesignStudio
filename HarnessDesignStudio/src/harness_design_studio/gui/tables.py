@@ -570,6 +570,10 @@ class TableView(QTableView):
         if helper is not None:
             helper.busy = True
         try:
+            # Qt measures this many rows to size a column: all of 20,000 rows took half a second,
+            # and the widest cell of a long list is nearly always among the first rows
+            rows = self.source.rowCount()
+            head.setResizeContentsPrecision(1000 if rows <= 1000 else 150)
             self.resizeColumnsToContents()
             for k, c in enumerate(self.source.columns):
                 if c.width:

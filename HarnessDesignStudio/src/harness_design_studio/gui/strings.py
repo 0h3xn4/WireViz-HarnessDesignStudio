@@ -2012,3 +2012,14 @@ CHECKS_STALE_SOON = "The design changed after these results; checking again in a
 PROBLEMS_GO_TO = "Go to {0}"
 PROBLEMS_DETAILS = "Details and fixes"
 PROBLEMS_MENU = "Problem"
+
+# ---- UI overhaul M7: the import wizard ------------------------------------------------------------
+IMP_READING = "Reading {0:,} rows in the background…"
+IMP_READING_NAME = "Reading the rows"
+IMP_READING_CANCELLED = (
+    "Reading the rows was cancelled. Change a choice or press Back to start again."
+)
+IMP_PASTE_TEXT = "Paste table text instead…"
+IMP_PASTE_TEXT_TIP = (
+    "Interfaces only: paste the rows of a table (CSV text) instead of choosing a file"
+)

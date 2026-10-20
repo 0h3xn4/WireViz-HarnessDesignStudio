@@ -1032,7 +1032,7 @@ class MainWindow(QMainWindow):
 
     def _tree_import(self, kind: str) -> None:
         if kind == "interfaces":
-            self.import_flow()
+            self.import_interfaces_flow()
         else:
             self.import_wizard_flow({"engineering": "values"}.get(kind, kind))
 
@@ -1179,7 +1179,9 @@ class MainWindow(QMainWindow):
         self.act_open = a(strings.A_OPEN, self.open_flow, "Ctrl+O", name="act-open")
         self.act_save = a(strings.A_SAVE, self._save_copy_noop, "Ctrl+S", name="act-save")
         self.act_save_as = a(strings.A_SAVE_AS, self._save_copy, "Ctrl+Shift+S", name="act-save-as")
-        self.act_import = a(strings.A_IMPORT, self.import_flow, "Ctrl+Shift+I", name="act-import")
+        self.act_import = a(
+            strings.A_IMPORT, self.import_interfaces_flow, "Ctrl+Shift+I", name="act-import"
+        )
         self.act_quit = a(strings.A_QUIT, self._quit, "Ctrl+Q", name="act-quit")
         self.act_undo = a(strings.UNDO, self.ctl.undo, "Ctrl+Z", name="act-undo")
         self.act_redo = a(strings.REDO, self.ctl.redo, "Ctrl+Y", name="act-redo")
@@ -2873,8 +2875,21 @@ class MainWindow(QMainWindow):
             return
         pick = self.ask_import_file
         wizard = ImportWizard(self.ctl, self.theme, self, pick_file=pick, kind=kind)
+        paste: list[bool] = []
+
+        def ask_paste() -> None:
+            paste.append(True)
+            wizard.reject()
+
+        wizard.pasteRequested.connect(ask_paste)
         self.run_dialog(wizard)
         wizard.deleteLater()
+        if paste:  # "Paste table text instead": the older dialog, which also takes CSV text
+            self.import_flow()
+
+    def import_interfaces_flow(self) -> None:
+        """File > Import > Interfaces and Ctrl+Shift+I: the same wizard as every other kind."""
+        self.import_wizard_flow("interfaces")
 
     def _delete_harness_flow(self, hid: str) -> None:
         h = self.ctl.project.harnesses.get(hid)

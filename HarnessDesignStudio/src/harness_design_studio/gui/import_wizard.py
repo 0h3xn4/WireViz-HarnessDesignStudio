@@ -15,11 +15,12 @@ planner the command line uses (see `import_kinds`); the existing `ImportDialog` 
 also lets you paste CSV text.
 """
 
+import sys
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QTimer, Signal
+from PySide6.QtCore import Qt, QThread, QTimer, Signal
 from PySide6.QtWidgets import (
     QAbstractButton,
     QButtonGroup,
@@ -31,6 +32,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QPlainTextEdit,
+    QProgressBar,
     QPushButton,
     QRadioButton,
     QStackedWidget,
@@ -56,6 +58,7 @@ from harness_design_studio.gui.tables import Column, DictTableModel, TableView
 from harness_design_studio.gui.theme import ThemeManager, mark_mono
 
 PAGE_FILE, PAGE_MAP, PAGE_CHECK, PAGE_APPLY = range(4)
+LARGE_ROWS = 1500  # a file with more rows is read in a helper thread (the window stays usable)
 REPLAN_MS = 200  # typing in an option waits this long before the rows are read again
 PickFile = Callable[[str, str], "str | None"]  # (kind key, file filter) -> path
 
@@ -132,6 +135,12 @@ class FilePage(QWizardPage):
         self.notice = InlineNotice(wizard.theme)
         self.notice.setObjectName("import-file-notice")
         lay.addWidget(self.notice)
+        self.paste = QPushButton(strings.IMP_PASTE_TEXT)
+        self.paste.setObjectName("import-paste")
+        self.paste.setFlat(True)
+        self.paste.setToolTip(strings.IMP_PASTE_TEXT_TIP)
+        self.paste.clicked.connect(wizard.pasteRequested)
+        lay.addWidget(self.paste, 0, Qt.AlignmentFlag.AlignLeft)
         lay.addStretch(1)
         self.browse.clicked.connect(wizard.browse)
         self.path.editingFinished.connect(lambda: wizard.load_file(self.path.text().strip()))
@@ -203,10 +212,29 @@ class MapPage(QWizardPage):
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.setInterval(REPLAN_MS)
-        self._timer.timeout.connect(wizard.replan)
+        self._timer.timeout.connect(wizard.replan_soon)
         self.notice = InlineNotice(wizard.theme)
         self.notice.setObjectName("import-map-notice")
         lay.addWidget(self.notice)
+        self.busy_row = QWidget()
+        busy = QHBoxLayout(self.busy_row)
+        busy.setContentsMargins(0, 0, 0, 0)
+        self.busy_label = QLabel()
+        self.busy_label.setObjectName("import-busy")
+        self.busy_label.setAccessibleName(strings.IMP_READING_NAME)
+        self.busy_bar = QProgressBar()
+        self.busy_bar.setRange(0, 0)  # busy, no percentage: the reading is one step
+        self.busy_bar.setTextVisible(False)
+        self.busy_bar.setMaximumWidth(wizard.theme.px(160))
+        self.busy_cancel = QPushButton(strings.CANCEL)
+        self.busy_cancel.setObjectName("import-busy-cancel")
+        self.busy_cancel.clicked.connect(wizard.cancel_plan)
+        busy.addWidget(self.busy_label)
+        busy.addWidget(self.busy_bar)
+        busy.addWidget(self.busy_cancel)
+        busy.addStretch(1)
+        self.busy_row.setVisible(False)
+        lay.addWidget(self.busy_row)
         self.summary = QLabel()
         self.summary.setObjectName("import-map-summary")
         self.summary.setProperty("muted", True)
@@ -454,6 +482,13 @@ class MapPage(QWizardPage):
 
     # ---- the preview ----------------------------------------------------------------------------
 
+    def set_busy(self, text: str) -> None:
+        """Show (or, with "", hide) the line that says the rows are being read."""
+        self.busy_label.setText(text)
+        self.busy_row.setVisible(bool(text))
+        if text:
+            self.notice.clear()
+
     def _set_columns(self, kind: str) -> None:
         names = import_kinds.PREVIEW_COLUMNS[kind]
         cols = [Column(i, n, mono=i < 2, width=110) for i, n in enumerate(names)]
@@ -480,7 +515,7 @@ class MapPage(QWizardPage):
 
     def isComplete(self) -> bool:  # noqa: N802
         plan = self.wiz.plan  # the reasons are read on the next page, so rows are enough
-        return plan is not None and bool(plan.rows)
+        return not self.wiz.planning and plan is not None and bool(plan.rows)
 
 
 class CheckPage(QWizardPage):
@@ -631,6 +666,39 @@ class ApplyPage(QWizardPage):
         return self.wiz.apply()
 
 
+_SWITCH_BACKGROUND = 0.0001  # seconds: how often a busy Python thread hands the interpreter over
+
+
+class _PlanThread(QThread):
+    """Reads the rows of a large file with the current choices off the GUI thread. The project is
+    only read (the wizard is modal, so nobody edits it meanwhile); a result of an older request
+    is thrown away by the wizard."""
+
+    def __init__(self, project: Any, source: Source, options: Options, generation: int) -> None:
+        super().__init__()
+        self.project, self.source, self.options, self.generation = (
+            project,
+            source,
+            options,
+            generation,
+        )
+        self.plan: ImportPlanView | None = None
+        self.error: str | None = None
+
+    def run(self) -> None:
+        # A busy Python thread keeps the interpreter for up to 5 ms at a time, and every Python
+        # callback of the window (a size hint, a paint) then waits for it: 100 of them were half a
+        # second. Handing it over every 0.1 ms keeps the window responsive while the rows are read.
+        previous = sys.getswitchinterval()
+        sys.setswitchinterval(_SWITCH_BACKGROUND)
+        try:
+            self.plan = import_kinds.plan_import(self.project, self.source, self.options)
+        except Exception as exc:  # never let it escape the thread
+            self.error = str(exc) or type(exc).__name__
+        finally:
+            sys.setswitchinterval(previous)
+
+
 class ImportWizard(QWizard):
     """Import interfaces, approved parts, segment lengths, engineering values, a device pinout or a
     KiCad netlist.
@@ -639,6 +707,8 @@ class ImportWizard(QWizard):
     wizard on that kind with that file already read."""
 
     imported = Signal(int)  # rows imported, after the undo step exists
+    pasteRequested = Signal()  # "paste table text instead": the window opens the paste dialog
+    planned = Signal()  # the rows of a large file were read in the background
 
     def __init__(
         self,
@@ -659,6 +729,9 @@ class ImportWizard(QWizard):
         self.plan: ImportPlanView | None = None
         self._source_version = 0
         self._map_version = -1
+        self._plan_generation = 0  # a newer request or a cancel makes an older result stale
+        self._plan_thread: _PlanThread | None = None
+        self._old_threads: list[_PlanThread] = []
         self.setObjectName("import-wizard")
         self.setWindowTitle(strings.IMP_TITLE)
         self.setAccessibleName(strings.IMP_ACCESSIBLE)
@@ -775,7 +848,7 @@ class ImportWizard(QWizard):
             if self._map_version != self._source_version and self.source is not None:
                 self.map_page.load(self.source, self.choices)
                 self._map_version = self._source_version
-            self.replan()
+            self.replan_soon()
         elif page_id == PAGE_CHECK and self.plan is not None:
             self.check_page.show_plan(self.plan)
             self.check_page.completeChanged.emit()
@@ -783,7 +856,73 @@ class ImportWizard(QWizard):
             self.apply_page.show_plan(self.plan)
 
     def options_changed(self) -> None:
-        self.replan()
+        self.replan_soon()
+
+    @property
+    def planning(self) -> bool:
+        """The rows of a large file are being read in the background."""
+        return self._plan_thread is not None
+
+    def replan_soon(self) -> ImportPlanView | None:
+        """`replan`, but a large file is read in a helper thread, with a progress line and Cancel
+        on the page, so the window never freezes."""
+        if self.source is None or self.source.rows <= LARGE_ROWS:
+            self._drop_background()
+            return self.replan()
+        page = self.map_page
+        try:
+            self.choices = page.collect(self.kind, self.choices)
+        except HarnessError as exc:
+            self._drop_background()
+            self.plan = ImportPlanView(self.kind, problem=str(exc))
+            page.show_plan(self.plan)
+            page.completeChanged.emit()
+            return self.plan
+        self._drop_background()
+        self.plan = None
+        thread = _PlanThread(self.ctl.project, self.source, self.choices, self._plan_generation)
+        thread.finished.connect(self._background_done)
+        self._plan_thread = thread
+        page.set_busy(strings.IMP_READING.format(self.source.rows))
+        page.completeChanged.emit()
+        thread.start()
+        return None
+
+    def cancel_plan(self) -> None:
+        """Stop waiting for the background reading (its result is not used)."""
+        if self._plan_thread is not None:
+            self._drop_background()
+            self.map_page.set_busy("")
+            self.map_page.notice.show_notice("warning", strings.IMP_READING_CANCELLED)
+            self.map_page.completeChanged.emit()
+
+    def _drop_background(self) -> None:
+        thread, self._plan_thread = self._plan_thread, None
+        self._plan_generation += 1
+        if thread is not None:
+            self._old_threads.append(thread)  # kept until it ends (a running thread is not deleted)
+        self._old_threads = [t for t in self._old_threads if t.isRunning()]
+
+    def _background_done(self) -> None:
+        thread = self._plan_thread
+        if thread is None or not thread.isFinished() or thread.generation != self._plan_generation:
+            return  # the signal of a request that was cancelled or replaced
+        self._plan_thread = None
+        page = self.map_page
+        page.set_busy("")
+        if thread.plan is None:
+            self.plan = ImportPlanView(self.kind, problem=thread.error or "")
+        else:
+            self.plan = thread.plan
+        page.show_plan(self.plan)
+        page.completeChanged.emit()
+        self.planned.emit()
+
+    def done(self, result: int) -> None:
+        self._drop_background()
+        for t in self._old_threads:
+            t.wait()  # at most the time one reading takes
+        super().done(result)
 
     def replan(self) -> ImportPlanView | None:
         """Read the rows again with the current choices (the project is not changed)."""
