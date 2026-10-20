@@ -18,7 +18,7 @@ This page shows how to start a project and draw its units and the interfaces bet
 
 - The tool is installed ([`INSTALL.md`](../INSTALL.md)). Start **Harness Design Studio** from the application menu. From a source install, run `harness-design-studio-gui`.
 - You know what a **unit** (a box with connectors on it, such as the on-board computer) and an **interface** (one connection between two units, such as a data link) are. If not, read [`CONCEPTS.md`](../CONCEPTS.md) first (ten minutes) or look the word up in the [glossary](../GLOSSARY.md).
-- You do **not** draw wires, pins or connectors. The tool makes them from your units and interfaces ([generate harnesses](generate-harnesses.md)).
+- Here you draw units and interfaces, and the tool makes the connectors, pins and wires from them ([generate harnesses](generate-harnesses.md)). To make a harness yourself, with no interfaces, see [build a harness by hand](build-a-harness-by-hand.md).
 
 Steps in the app are described from the program's own texts and code. They have not been run on a screen (GUI, not run).
 

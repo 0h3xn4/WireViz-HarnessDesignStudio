@@ -20,6 +20,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 | understand an error or a warning, or waive one | [Read and fix problems](read-and-fix-problems.md) |
 | enter derating factors, wire current ratings and test limits | [Fill in the engineering values](fill-in-engineering-values.md) |
 | change a wire, draw a wire of my own, put two wires on one pin, or twist wires | [Edit a wire](edit-a-wire.md) |
+| make a harness from nothing, with no interfaces: its connectors, pins and wires | [Build a harness by hand](build-a-harness-by-hand.md) |
 | load my interface table, approved parts list or segment lengths | [Import data](import-data.md) |
 | define a device of my own down to each pin, or load its pinout from a spreadsheet | [Define a device](define-a-device.md) |
 | take a unit's pinout from KiCad | [Import KiCad pinouts](import-kicad-pinouts.md) |
@@ -49,6 +50,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 12. [Release a harness](release-a-harness.md): review, release, the gates, the change log.
 13. [Change a released harness](change-a-released-harness.md): new revision, `diff`, `log`, `compare`.
 14. [Use Git and CI](use-git-and-ci.md): Git habits, `harness-design-studio check`, a build script, a workflow.
+15. [Build a harness by hand](build-a-harness-by-hand.md): *New harness*, the *Connectors* tab, pin function and termination, wires between the new connectors. **New in 1.5.0.**
 
 ## How to read the pages
 

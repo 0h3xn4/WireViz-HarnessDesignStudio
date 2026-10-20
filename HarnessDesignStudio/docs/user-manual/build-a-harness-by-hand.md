@@ -65,6 +65,8 @@ Under **Pin of a connector**, choose the connector and the pin, then type a **Fu
 
 Draw wires as in [edit a wire](edit-a-wire.md), section 4: **New wire** in the **Edit wire** tab, choose the connector and pin at each end, type a signal name, press **Add wire**. Then set gauge, type, colour and length, or twist wires together ([edit a wire](edit-a-wire.md), sections 2 and 6).
 
+![The Drawings area with a harness made by hand: the drawing of its two connectors and three wires, the pin and wire tables, and the Connectors tab on the right.](../img/connectors-tab.png)
+
 ## 6. Check, list and release
 
 - **Checks** shows the design checks. A harness by hand has no interface, so the checks that need one (a link's current, signal directions) have nothing to say; the rest apply. With no gauge, the gauge stays *pending*: the tool never guesses.

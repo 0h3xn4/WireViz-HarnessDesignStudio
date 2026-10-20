@@ -68,6 +68,7 @@ The window: a rail on the left (Home, Model, Checks, Drawings, Outputs, Revision
 | Ctrl+1 to Ctrl+6 | the tabs: Diagram, Harness, Lists, Checks, Releases, Devices |
 | Ctrl+7, Ctrl+, | Home, Settings |
 | Ctrl+Shift+M | show or hide the Problems panel |
+| Ctrl+Shift+H | new harness by hand (Drawings area: then add its connectors in the Connectors tab) |
 | Ctrl+Shift+N | add a device (Devices tab: F2 or Enter edits a cell, Insert adds a pin, Shift+Delete deletes pins, Ctrl+L fills from an interface type, Ctrl+Enter assigns to an interface) |
 | Ctrl+Shift+T | the Interface table |
 | Ctrl+Shift+J | the Unit table |

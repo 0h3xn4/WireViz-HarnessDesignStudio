@@ -212,6 +212,8 @@ The **Checks** tab (Ctrl+4) has one row for each rule:
 - Pins are chosen by rules (power first, pairs side by side, pins you locked in the harness file never moved). **Why is it like this?** shows the reason for each choice.
 - Generating again keeps IDs, the wires you edited and the pins you locked, never touches released harnesses, and shows a report of what was added, changed and removed.
 - **Edit wire** (new in 1.4.0): in the **Drawings** area pick one or several wires and open the **Edit wire** tab beside **Why**. It sets the gauge, type (a wire part of the library), colour and length, a label that the wire labels print instead of the signal name, and a note. **Apply** (Ctrl+Enter) changes only the fields you touched; gauge, type, colour and length lock the wire so Generate keeps them, label and note are always kept. **Reset to generated** gives the wires back to generation. The same tab draws wires of your own (**New wire**: a connector and pin at each end; Generate keeps them, and you can move their ends or delete them), allows several wires on one pin (the design rule *Several wires on one pin* names them) and twists or shields selected wires together (**Group**: twisted pair, shielded pair, quad, coax or overall shield; **Ungroup** takes a group you made apart). At the bottom the **Labels** section gives the harness and a cable connector a label for `labels.csv` (a box connector has a **Label** field on its card in the **Devices** tab), and the **Devices** pin table has a **Function** column for your own words about what a pin does. A released harness cannot be edited.
+
+- **New harness** (new in 1.5.0): a harness needs no interface. In the **Drawings** area press **New harness…** (or Edit > New harness…, Ctrl+Shift+H) and type a name. The **Connectors** tab beside the drawing adds its cable connectors (a part of the library, optionally plugging into a connector of a unit, optionally with pin names of your own), sets the function, termination and contact size of a pin, and deletes a connector that has no wires. Draw its wires in **Edit wire**. Generate leaves such a harness as it is; one that Generate made takes no connector here.
 - A wire gauge stays **pending** until the derating values exist and the lengths are known (section 11, What an engineer must fill in). The tool never guesses an engineering value.
 
 ## 8. Outputs
@@ -334,6 +336,7 @@ Example files for every one of these are in the templates folder (`harness-desig
 | Ctrl+7, Ctrl+, | Home, Settings |
 | Ctrl+Shift+T, Ctrl+Shift+J | the Interface table and the Unit table (left panel) |
 | Ctrl+Shift+M | show or hide the Problems panel |
+| Ctrl+Shift+H | new harness by hand (the Connectors tab opens) |
 | Ctrl+Shift+N | add a device (the Devices tab opens) |
 | F6, Shift+F6 | next and previous panel (diagram, project panel, inspector) |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | undo, redo (the menu names the step, for example *Undo Move PDU2*) |
@@ -372,7 +375,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Edit | Align, Space evenly | line up or space out the selected units |
 | Edit | Add zone… | adds a lane to the diagram; asks for its name |
 | Edit | Wire colours... | chooses the wire colour of each signal (section 7) |
-| Edit | Add unit | one item for each kind of unit (computer, power unit, wheel ...), and Device… (Ctrl+Shift+N) |
+| Edit | Add unit | one item for each kind of unit (computer, power unit, wheel ...), and Device… (Ctrl+Shift+N); **New harness…** (Ctrl+Shift+H) is an item of the Edit menu |
 | Edit | Connect with | one item for each interface type (the arrow beside the Connect button lists the same); then click two units |
 | View | Guided, Expert | the two modes of section 5 |
 | View | Theme | Follow the system (the default), Light or Dark (also under **Settings > Appearance**) |

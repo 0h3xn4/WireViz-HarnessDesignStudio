@@ -130,3 +130,34 @@ def test_the_action_has_a_shortcut_a_tip_and_is_off_in_a_read_only_project(tmp_p
     assert act.shortcut().toString() == "Ctrl+Shift+H"
     assert "Ctrl+Shift+H" in act.toolTip()
     win.close()
+
+
+def test_pin_names_and_a_unit_connector_to_plug_into(qtbot, theme):  # noqa: F811
+    from harness_design_studio.core.manual_harness import plan_new_harness
+
+    p = sat15()
+    ctl, view = make_view(qtbot, theme, p)
+    ops, hid = plan_new_harness(ctl.project, "By hand")
+    assert ctl.run("New harness", ops)
+    view.refresh()
+    view.select_harness(hid)
+    ed = view.connector_editor
+    # the unit connectors are offered to plug into; none is chosen by default
+    assert ed.plugs_into.itemData(0) is None and ed.plugs_into.count() > 1
+    ed.part.setCurrentIndex(ed.part.findData("EX-DSUB-9-M"))
+    ed.pins.setText("A1, A2 ,B1")
+    assert ed.add_connector()
+    assert [x.id for x in ctl.project.harnesses[hid].connectors[0].pins] == ["A1", "A2", "B1"]
+    assert ed.pins.text() == ""
+    box = ed.plugs_into.itemData(1)
+    ed.plugs_into.setCurrentIndex(1)
+    assert ed.add_connector()
+    plug = ctl.project.harnesses[hid].connectors[1]
+    assert plug.mates_with == box
+    # that connector is no longer offered, the connector of the unit has its cable end
+    assert ed.plugs_into.findData(box) == -1
+    # a mistake is said in the form
+    ed.pins.setText("a b")
+    ed.plugs_into.setCurrentIndex(0)
+    assert not ed.add_connector()
+    assert not ed.error.isHidden() and "pin name" in ed.error.text()

@@ -830,6 +830,13 @@ class HarnessView(QWidget):
         side.addTab(cscroll, strings.HV_CONNECTORS_TAB)
         self.connector_scroll = cscroll
         self.connector_editor.connectorAdded.connect(lambda _cid: self.refresh())
+        # three tabs in a narrow box: let them shrink and elide, never grow scroll arrows
+        side.setUsesScrollButtons(False)
+        side.setElideMode(Qt.TextElideMode.ElideRight)
+        for i, tip in enumerate(
+            (strings.HV_WHY_TITLE, strings.HV_EDIT_TAB, strings.HV_CONNECTORS_TAB)
+        ):
+            side.setTabToolTip(i, tip)
         self.side_tabs = side
         self._why_box = side  # placed beside the tables by `_build_tables`
         self.why.whyRequested.connect(self.whyRequested)
