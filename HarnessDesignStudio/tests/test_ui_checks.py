@@ -145,3 +145,18 @@ def test_shift_enter_in_the_problems_table_asks_for_details(win, qtbot) -> None:
     panel.table.setCurrentIndex(panel.table.proxy.index(0, 0))
     QTest.keyClick(panel.table, Qt.Key.Key_Return, Qt.KeyboardModifier.ShiftModifier)
     assert len(asked) == 1
+
+
+def test_a_wire_picked_in_the_drawing_selects_its_link_for_the_inspector(win) -> None:
+    c = win.ctl
+    assert release_all(c, ["W001"]) == ["W001"]
+    win.go_to("harness")
+    QApplication.processEvents()
+    view = win.harness_view
+    view.select_harness("W001")
+    wire = next(w for w in c.project.harnesses["W001"].wires if w.interface_id)
+    view._drawing_clicked("wire", wire.id)  # (what a click on the sheet sends)
+    assert c.selection is not None
+    assert (c.selection.kind, c.selection.id) == ("interface", wire.interface_id)
+    view._drawing_clicked("", "")  # a click on the empty sheet keeps the link selected
+    assert c.selection is not None and c.selection.id == wire.interface_id
