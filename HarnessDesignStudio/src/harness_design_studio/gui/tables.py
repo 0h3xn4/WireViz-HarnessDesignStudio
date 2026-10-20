@@ -33,7 +33,7 @@ from PySide6.QtCore import (
     Qt,
     QTimer,
 )
-from PySide6.QtGui import QFont, QKeyEvent, QKeySequence, QShortcut
+from PySide6.QtGui import QBrush, QFont, QKeyEvent, QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QApplication,
@@ -255,6 +255,9 @@ class DictTableModel(QAbstractTableModel):
             if c.mono:
                 return self._mono
             return self._tabular if c.numeric else None
+        if role == Qt.ItemDataRole.BackgroundRole:
+            tint = _get(row, "tint")  # a row may name a colour token (the diff tints, M8)
+            return QBrush(self.theme.color(str(tint))) if tint and self.theme else None
         if role == STATE_ROLE:
             return self.state_at(r, k)
         if role == SORT_ROLE:

@@ -32,6 +32,7 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.model import Project
+from harness_design_studio.core.vcs import lockview
 from harness_design_studio.core.vcs.diff import Diff
 from harness_design_studio.core.vcs.report import baselines_of
 from harness_design_studio.core.vcs.timeline import (
@@ -116,6 +117,7 @@ def diff_table_rows(groups: list[DiffGroup], kind: str | None = None) -> list[di
                 {
                     "change": changes[r.change],
                     "change_key": r.change,
+                    "tint": f"diff.{r.change}",  # a light tint of the status colour; the word says it too
                     "kind": r.kind_name,
                     "id": r.id,
                     "field": strings.REL_WHOLE_OBJECT if whole else r.label,
@@ -289,6 +291,11 @@ class ReleasesPanel(QWidget):
         pick.addWidget(self.mark)
         pick.addWidget(self.clear)
         dl.addLayout(pick)
+        self.locks = QLabel()  # what the shown harness's release locks (M8)
+        self.locks.setObjectName("releases-locks")
+        self.locks.setProperty("muted", True)
+        self.locks.setWordWrap(True)
+        dl.addWidget(self.locks)
         self.summary = QLabel()
         self.summary.setObjectName("releases-summary")
         self.summary.setWordWrap(True)
@@ -571,6 +578,7 @@ class ReleasesPanel(QWidget):
         hid = self.current_harness()
         self._diff, self._groups = None, []
         self.mark.setEnabled(False)
+        self._update_locks(hid)
         if not hid:
             self._no_diff(strings.REL_DIFF_NEED_HARNESS)
             return
@@ -604,6 +612,34 @@ class ReleasesPanel(QWidget):
         self._fill_groups()
         self.mark.setEnabled(not diff.empty)
         self.diffChanged.emit(len(diff.changes))
+
+    def lock_counts(self, hid: str | None) -> dict[str, int]:
+        """What the release of harness `hid` locks, by kind ({} when it is not released): the
+        units, links, unit connectors and configuration files whose lock names it."""
+        p = self.ctl.project
+        h = p.harnesses.get(hid or "")
+        if h is None or h.status != "released":
+            return {}
+        counts: dict[str, int] = {}
+        for (kind, _ident), refs in lockview.locked_objects(p).items():
+            if any(r[0] == h.id for r in refs):
+                counts[kind] = counts.get(kind, 0) + 1
+        return counts
+
+    def _update_locks(self, hid: str | None) -> None:
+        counts = self.lock_counts(hid)
+        if not counts:
+            self.locks.setText("")
+            self.locks.setVisible(False)
+            return
+        h = self.ctl.project.harnesses[hid or ""]
+        parts = [
+            strings.REL_LOCK_KINDS[k].format(n)
+            for k, n in counts.items()
+            if k in strings.REL_LOCK_KINDS
+        ]
+        self.locks.setText(strings.REL_LOCKS.format(h.id, h.revision, ", ".join(parts)))
+        self.locks.setVisible(True)
 
     def _no_diff(self, message: str) -> None:
         self.summary.setText(message)

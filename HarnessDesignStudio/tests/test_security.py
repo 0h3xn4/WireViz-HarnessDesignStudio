@@ -188,6 +188,7 @@ def test_the_code_never_replaces_the_process_or_opens_a_browser() -> None:
     allowed = {
         "gui/main_window.py": {"QDesktopServices"},
         "gui/export_dialog.py": {"QDesktopServices"},
+        "gui/outputs_files.py": {"QDesktopServices"},
     }
     found = {}
     for path in SRC.rglob("*.py"):

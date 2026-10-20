@@ -367,6 +367,8 @@ into the summary, all existing tests green (CI on Linux, Windows, macOS), golden
 - *Acceptance:* checksums equal `SHA256SUMS`-style hashes of the files on disk; Export results identical to
   1.2.0 byte-for-byte; diff view agrees with `core.vcs` change records in a test.
 
+**M8 result (2026-10-20).** Built as D-157. The Lists tab has an *Exported files* panel (state against `manifest.json`, SHA-256 of the file on disk in a helper thread, Open, Reveal, Copy to folder) and the Differences rows are tinted with the diff tokens; the Releases tab says what a release locks. The timeline, diff by kind and the change-control dialogs already existed. Acceptance: the panel's hashes equal the files'; the 567 exported files are byte-identical to 1.2.0; the diff view agrees with `core.vcs` records. One existing test edited (`test_security.py` allows the local Open/Reveal in the new file).
+
 **M9 Settings.**
 - Appearance (theme: system/light/dark, UI scale 90 to 125 % plus existing steps if kept, reduce motion), editor
   (mode, snap, labels), project configuration, shortcuts list, about, licences (fonts, icons).

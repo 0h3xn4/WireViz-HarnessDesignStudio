@@ -2023,3 +2023,40 @@ IMP_PASTE_TEXT = "Paste table text instead…"
 IMP_PASTE_TEXT_TIP = (
     "Interfaces only: paste the rows of a table (CSV text) instead of choosing a file"
 )
+
+# ---- UI overhaul M8: Outputs files and Revisions --------------------------------------------------
+OUT_FILES_NAME = "Exported files"
+OUT_FILES_TITLE = "Exported files"
+OUT_COLUMNS = {
+    "file": "File", "doc": "Document", "scope": "Harness", "format": "Format",
+    "size": "Size", "when": "Written", "sha": "SHA-256", "state": "State",
+}  # fmt: skip
+OUT_STATE_MATCHES = "Matches export"
+OUT_STATE_CHANGED = "Changed since export"
+OUT_STATE_MISSING = "Missing"
+OUT_STATE_UNLISTED = "Not in the export"
+OUT_STATE_MANIFEST = "Manifest"
+OUT_REASON = {
+    OUT_STATE_MATCHES: "The file on disk has the SHA-256 the export recorded.",
+    OUT_STATE_CHANGED: "The file on disk is not the one the export wrote (its SHA-256 differs from the manifest).",
+    OUT_STATE_MISSING: "The manifest lists this file but it is not in the folder.",
+    OUT_STATE_UNLISTED: "The folder holds this file but the manifest does not list it.",
+    OUT_STATE_MANIFEST: "The list of files, with their SHA-256, that the export wrote beside them.",
+}
+OUT_COPY = "Copy to folder…"
+OUT_COPY_TIP = "Copy the selected files, as they are on disk, to an empty folder"
+OUT_VERIFY = "Verify"
+OUT_VERIFY_TIP = "Read the folder again and compare every file with the manifest"
+OUT_READING = "Reading the files…"
+OUT_READ_FAILED = "The outputs folder could not be read: {0}"
+OUT_SUMMARY = "{0} files in {1}, made from design {2}"
+OUT_SUMMARY_BAD = "; {0} differ from the export"
+OUT_EMPTY_TITLE = "Nothing exported yet"
+OUT_EMPTY_HINT = "Export the outputs (Export…) and the files appear here with their checksums."
+REL_LOCKS = "{0} revision {1} is released and locks {2}. Start a new revision to change them."
+REL_LOCK_KINDS = {
+    "unit": "{0} unit(s)",
+    "interface": "{0} link(s)",
+    "box_connector": "{0} unit connector(s)",
+    "config": "{0} configuration file(s)",
+}

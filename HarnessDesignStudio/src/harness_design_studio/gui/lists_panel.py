@@ -24,6 +24,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMenu,
     QPushButton,
+    QSplitter,
     QStackedWidget,
     QTabWidget,
     QToolButton,
@@ -41,6 +42,7 @@ from harness_design_studio.gui.background import Job, JobRunner
 from harness_design_studio.gui.controller import EditorController
 from harness_design_studio.gui.harness_view import REFRESH_DELAY_MS
 from harness_design_studio.gui.icons import icon_button
+from harness_design_studio.gui.outputs_files import OutputsFiles
 from harness_design_studio.gui.states import StateChip, chip_size
 from harness_design_studio.gui.tables import Column, DictTableModel, TableView
 from harness_design_studio.gui.theme import ThemeManager, mono_item_font
@@ -363,7 +365,19 @@ class ListsPanel(QWidget):
         self.tabs = QTabWidget()
         self.tabs.setObjectName("lists-tabs")
         self.tabs.setAccessibleName(strings.LP_TABS)
-        c.addWidget(self.tabs, 1)
+        # the lists above, the files they were exported to under them (M8)
+        self.split = QSplitter(Qt.Orientation.Vertical)
+        self.split.setObjectName("lists-split")
+        self.split.setChildrenCollapsible(False)
+        self.files = OutputsFiles(ctl, theme, settings)
+        self.split.addWidget(self.tabs)
+        self.split.addWidget(self.files)
+        self.split.setStretchFactor(0, 3)
+        self.split.setStretchFactor(1, 2)
+        c.addWidget(self.split, 1)
+        ctl.changed.connect(
+            lambda d: self.files.invalidate() if getattr(d, "full", False) else None
+        )
         for name, tab_title, _needs in LISTS:
             model = DictTableModel([], (), theme)
             view = _MeasuredTable(
