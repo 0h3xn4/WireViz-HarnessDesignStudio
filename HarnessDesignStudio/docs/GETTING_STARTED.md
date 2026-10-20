@@ -133,7 +133,7 @@ Notice the wire gauge says **pending**. That is deliberate and is the subject of
 
 ## Part 5: read and answer the Problems
 
-Open the **Problems** tab (right panel) or the Problems panel at the bottom (Ctrl+Shift+M), or the **Checks** tab for all 34 rules and their result, or run:
+Open the **Problems** tab (right panel) or the Problems panel at the bottom (Ctrl+Shift+M), or the **Checks** tab for all 35 rules and their result, or run:
 
 ```
 harness-design-studio drc wheel-link
@@ -142,7 +142,7 @@ harness-design-studio drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `63eb9fef79dc`. Rules run: 34.
+Model hash: `63eb9fef79dc`. Rules run: 35.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.

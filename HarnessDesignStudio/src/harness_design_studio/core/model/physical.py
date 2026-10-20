@@ -41,7 +41,7 @@ class Connector(Entity):
 
 
 class Wire(SparseEntity):
-    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label", "note"})
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label", "note", "manual"})
 
     id: Id
     signal: Name | None = None
@@ -57,6 +57,7 @@ class Wire(SparseEntity):
     locked: bool = False  # user-set gauge, colour, part and length: regeneration keeps them
     label: Name | None = None  # text for the wire labels instead of the signal name (a person's)
     note: Text = ""  # a person's remark; generation always keeps it
+    manual: bool = False  # drawn by a person: generation keeps it as it is and never matches it
 
 
 class ShieldGroup(Entity):

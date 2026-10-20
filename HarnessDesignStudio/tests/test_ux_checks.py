@@ -157,12 +157,12 @@ def test_a_cancelled_check_is_called_out_of_date_in_problems(flat) -> None:
 def test_one_row_per_rule_with_a_state_chip_for_each_result(host) -> None:
     ctl, _theme, panel = host
     s = by_rule.summary(ctl.drc_rule_results())
-    assert panel.model.rowCount() == s.total == 34
-    states = [panel.model.data(panel.model.index(r, 3), STATE_ROLE) for r in range(34)]
+    assert panel.model.rowCount() == s.total == 35
+    states = [panel.model.data(panel.model.index(r, 3), STATE_ROLE) for r in range(35)]
     assert states.count("pass") == s.passed and states.count("fail") == s.failed
     assert states.count("pending") == s.pending and states.count("not-checked") == s.not_checked
     assert {"pass", "fail", "pending"} <= set(states)
-    ids = [panel.model.index(r, 0).data() for r in range(34)]
+    ids = [panel.model.index(r, 0).data() for r in range(35)]
     assert ids[:2] == ["duplicate-id", "wire-dangling"]
 
 
@@ -171,7 +171,7 @@ def test_the_summary_strip_counts_every_result_in_words_and_icons(host) -> None:
     s = by_rule.summary(ctl.drc_rule_results())
     values = len(configcheck.missing(ctl.project))
     assert panel.summary_text() == (
-        f"34 rules: {s.passed} passed · {s.failed} failed · {s.not_checked + s.pending} not checked"
+        f"35 rules: {s.passed} passed · {s.failed} failed · {s.not_checked + s.pending} not checked"
         f" · {values} pending values"
     )
     for key, word in (
@@ -242,12 +242,12 @@ def test_filter_by_result_text_and_both_together(host) -> None:
     panel.set_result_filter("pass")
     assert len(panel.visible_rule_ids()) == s.passed
     panel.set_result_filter("all")
-    assert len(panel.visible_rule_ids()) == 34
+    assert len(panel.visible_rule_ids()) == 35
     panel.set_text_filter("ECSS-Q-ST-30-11_0140217")  # a requirement ID, not part of any cell
     assert set(panel.visible_rule_ids()) == {"current-over-wire", "bundle-current"}
     panel.set_result_filter("pending")
     assert panel.visible_rule_ids() == ["bundle-current"]
-    assert panel.count_label.text() == strings.CHECKS_SHOWING.format(1, 34)
+    assert panel.count_label.text() == strings.CHECKS_SHOWING.format(1, 35)
     panel.set_text_filter("")
     panel.set_result_filter("all")
     assert [k for k, _t, _s in FILTERS][0] == "all"
@@ -387,7 +387,7 @@ def test_while_the_helper_runs_the_strip_says_checking_and_offers_cancel(host) -
     assert ctl.drc_busy() and not ctl.drc_current
     assert panel.status.text() == strings.CHECKS_CHECKING
     assert panel.cancel_btn.isVisibleTo(panel) and not panel.again_btn.isVisibleTo(panel)
-    assert panel.table.isVisibleTo(panel) and panel.model.rowCount() == 34  # last results stay
+    assert panel.table.isVisibleTo(panel) and panel.model.rowCount() == 35  # last results stay
     panel.cancel_btn.click()
     assert not ctl.drc_busy() and not ctl._drc_timer.isActive()
     assert panel.status.text() == strings.CHECKS_CANCELLED
@@ -434,7 +434,7 @@ def test_a_failed_check_leaves_a_banner_until_the_next_success(
     assert retry is not None
     retry.click()
     qtbot.waitUntil(lambda: ctl.drc_current, timeout=20000)
-    assert not panel.banner.isVisibleTo(panel) and panel.model.rowCount() == 34
+    assert not panel.banner.isVisibleTo(panel) and panel.model.rowCount() == 35
     ctl.wait_drc()
 
 

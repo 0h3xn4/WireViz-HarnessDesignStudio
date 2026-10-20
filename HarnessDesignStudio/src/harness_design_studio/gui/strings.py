@@ -2153,3 +2153,27 @@ STEP_RESET_WIRES = "Reset wires"
 WIRE_APPLIED = "Changed {0}."
 WIRE_RESET_DONE = "Reset {0}; Generate sets their values."
 WIRE_NOTHING_CHANGED = "Nothing to change."
+
+# ---- 1.4.0 M2: wires that a person draws ----------------------------------------------------------
+WIRE_ENDS = "Ends"
+WIRE_FROM = "From"
+WIRE_TO = "To"
+WIRE_CONNECTOR = "Connector"
+WIRE_PIN = "Pin"
+WIRE_END_TIP = (
+    "The connector and pin where the wire {0}s. You can move the ends of a wire that you drew."
+)
+WIRE_NEW = "New wire"
+WIRE_SIGNAL = "Signal"
+WIRE_SIGNAL_TIP = "A name for the signal the wire carries (optional), for example HEATER."
+WIRE_ADD = "Add wire"
+WIRE_ADD_TIP = "Add a wire that you draw between the two pins. Generate keeps it as it is."
+WIRE_DELETE = "Delete wire"
+WIRE_DELETE_TIP = (
+    "Delete the selected wires that you drew (a generated wire goes when its interface goes)"
+)
+WIRE_STATE_MANUAL = "You drew this wire: Generate keeps it as it is."
+WIRE_STATE_MANUAL_MANY = "You drew these wires: Generate keeps them as they are."
+STEP_ADD_WIRE = "Add wire"
+STEP_DELETE_WIRES = "Delete wires"
+WIRE_NEW_NO_HARNESS = "Choose a harness first."
