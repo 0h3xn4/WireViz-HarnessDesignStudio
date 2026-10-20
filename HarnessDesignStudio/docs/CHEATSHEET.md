@@ -50,7 +50,7 @@ The comment must have at least 10 characters. A release is blocked while checks 
 
 ## In the app
 
-The window: a rail on the left (Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M).
+The window: a rail on the left (Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M). **Settings** holds the theme, the interface size, Reduce motion, the list of all keys, About and the licences.
 
 | Keys | Action |
 | --- | --- |
@@ -60,12 +60,15 @@ The window: a rail on the left (Home, Model, Checks, Drawings, Outputs, Revision
 | Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
 | Ctrl+I | new interface |
 | Ctrl+1 to Ctrl+6 | the tabs: Diagram, Harness, Lists, Checks, Releases, Devices |
+| Ctrl+7, Ctrl+, | Home, Settings |
+| Ctrl+Shift+M | show or hide the Problems panel |
 | Ctrl+Shift+N | add a device (Devices tab: F2 or Enter edits a cell, Insert adds a pin, Shift+Delete deletes pins, Ctrl+L fills from an interface type, Ctrl+Enter assigns to an interface) |
 | Ctrl+Shift+T | the Interface table |
 | Ctrl+Shift+J | the Unit table |
 | F6, Shift+F6 | next and previous panel |
 | Ctrl+Q | quit |
-| Ctrl+K | command palette: type a command or an ID |
+| Ctrl+K | Search and commands (the command palette): type a command or an ID |
+| Enter or F2, Esc, Ctrl+V in a table | edit a cell, keep the old text, paste a block of cells from a spreadsheet |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | undo, redo |
 | Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, out, 100 % |
 | F, Shift+F | fit everything, zoom to the selection |

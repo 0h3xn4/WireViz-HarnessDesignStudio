@@ -15,6 +15,10 @@ An offline desktop tool for designing the electrical harnesses of a spacecraft: 
 
 *The `flatsat` example, one of the five projects that come with the tool.*
 
+![The whole window of version 1.3.0 with the flatsat example: navigation rail on the left, project tree, diagram, inspector, and the steps Generate, Check and Release in the top bar](HarnessDesignStudio/docs/ui/screenshots/after/01-diagram-selected-1440x900_light.png)
+
+*The window of version 1.3.0 (light theme; a dark theme is built in).*
+
 ## Contents
 
 - [What is this?](#what-is-this)
@@ -83,7 +87,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 ## Features
 
 - **Your design is the source of truth.** Harnesses, drawings and lists are generated from it and can be regenerated at any time.
-- **A diagram editor with views** — units and links on a diagram with marks for problems, locks and values still to enter; a project tree; tabs for the Harness (pins, wires, drawing, why), Lists, Checks and Releases; an Export window and an Import wizard.
+- **A diagram editor with views** — units and links on a diagram with marks for problems, locks and values still to enter; a project tree and spreadsheet-like tables for units and interfaces; a navigation rail (Home, Model, Checks, Drawings with pins, wires, drawing and why, Outputs with every exported file and its checksum, Revisions, Settings); the steps Generate, Check and Release in one top bar; a Problems panel; light and dark themes; an Export window and one Import wizard.
 - **Generates the harnesses** — connectors, pins, wires, shields, with a *Why is it like this?* explanation for every choice.
 - **Checks them** against 34 design rules and says clearly which checks could not run because a number is missing.
 - **Writes the documents** — a wiring-diagram drawing per harness (SVG and PDF), wire lists, pinouts, bill of materials, test tables, labels, a block diagram and a change log.

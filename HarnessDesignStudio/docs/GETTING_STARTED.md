@@ -41,7 +41,7 @@ small-satellite    14 units with nominal and redundant chains. Generate it to se
 flatsat            A complete bench: 23 flight and ground units, generated, with example numbers.
 ```
 
-**Which version do you have?** This tutorial is written for 1.3.0 (it works the same on 1.2.0, 1.1.0 and 1.0.0). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
+**Which version do you have?** This tutorial is written for 1.3.0 (the commands work the same on 1.2.0, 1.1.0 and 1.0.0; the window of 1.3.0 is new, so the app steps and the picture look different in 1.2.0 and earlier, which had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
 
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 
@@ -71,7 +71,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 ## Part 2: look around
 
-![The main window](ux/qt/02-guided-main.png)
+![The main window of version 1.3.0: the navigation rail on the left, the top bar with Generate, Check and Release, the diagram in the middle, the project panel on the left and the Inspector on the right](ux/qt/02-guided-main.png)
 
 *(The screenshot shows the app's built-in sample, which uses slightly different IDs such as `OBC` and `IF-PWR-RW1`; the layout is the same.)*
 
@@ -79,11 +79,12 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 | --- | --- |
 | Rail (left edge) | **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions**, **Settings** |
 | Top bar | the project name, whether it is saved, the revision, a short model hash, where you are, **Undo**, **Redo**, **Guided / Expert**, **Search** (Ctrl+K), the steps **Generate** (the one blue button), **Check** and **Release…** (each shows what is done and what is next), **Export…** and a status chip (*Up to date*, *Plans out of date* ...) |
-| Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6); the rail shows the tabs of the area you are in |
+| Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6); each area of the rail shows its own: Model has **Diagram** and **Devices**, Drawings has **Harness**, Outputs has **Lists**, Revisions has **Releases** |
 | Middle, **Diagram** | units in lanes (*panel-A*, *panel-B*), links between them. Every kind of link has its own picture and colour; the legend (bottom left of the diagram) shows them (power is red in the light theme). Small badges show problems, values still to enter and locks |
 | Left, **Project** | a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports; **Add** adds a unit or an interface |
 | Left, **Units** and **Interfaces** | every unit and every interface as a table you can sort, filter, edit with the keyboard and paste into from Excel (Ctrl+Shift+J, Ctrl+Shift+T) |
 | Right, **Inspector** | the selected unit or interface: names, **Max current (A)**, notes, and where it is used. The tabs **Why** and **Problems** (with a **To do** list above the problem cards) are beside it |
+| Bottom | the status bar (the running job with **Cancel**, **Problems (n)**, *Offline*, the zoom) and, when you open it (Ctrl+Shift+M), the Problems panel with every open problem |
 | Above the diagram | **Select** and **Connect** (the arrow beside **Connect** lists the interface types), **Delete**, zoom |
 | Right end of the Model tab bar | **Arrange diagram** and the **Show** list (all interfaces, one class, one connector, one bundle) |
 
@@ -122,7 +123,7 @@ harness-design-studio verify wheel-link
 
 ## Part 4: read what the tool made
 
-In the app open the **Harness** tab (Ctrl+2) and pick `W002` in the list at the top left:
+In the app open the **Harness** tab (Ctrl+2, the **Drawings** area) and pick `W002` in the list at the top left:
 
 - **Wires** shows the two wires `PWR` and `RTN`, and **Connectors and pins** shows every pin and the wire on it. The **Lists** tab has the same as tables you can sort, filter and copy.
 - **Why** says, for the wire, connector or pin you select, the rule that decided it. Read a few. This is the tool's answer to "why is it like this?".
@@ -132,7 +133,7 @@ Notice the wire gauge says **pending**. That is deliberate and is the subject of
 
 ## Part 5: read and answer the Problems
 
-Open the **Problems** tab (right panel), or the **Checks** tab for all 34 rules and their result, or run:
+Open the **Problems** tab (right panel) or the Problems panel at the bottom (Ctrl+Shift+M), or the **Checks** tab for all 34 rules and their result, or run:
 
 ```
 harness-design-studio drc wheel-link
@@ -159,7 +160,7 @@ The **To do** list at the top of the **Problems** tab shows what is left, includ
 
 ## Part 6: export drawings and lists
 
-**In the app:** press **Export…** in the top bar (Ctrl+E) and then **Export** in the window that opens; it also lists the files written. **On the command line:**
+**In the app:** press **Export…** in the top bar (Ctrl+E) and then **Export** in the window that opens; it also lists the files written. Afterwards the **Lists** tab (Outputs) shows **Exported files** with the SHA-256 of each file and whether it still matches the export. **On the command line:**
 
 ```
 harness-design-studio export wheel-link
@@ -342,7 +343,7 @@ Release W002 revision A: done.
 Outputs re-exported with the released status (38 files).
 ```
 
-`W002` is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited, nor can the parts, interface types and configuration values it uses (a later `harness-design-studio import-parts` or `harness-design-studio config --apply-profile` that would change them ends with `This change was blocked because it touches released items`), a baseline and a change log entry are stored, and the drawing says *released*. To change it you start a revision with `harness-design-studio revise wheel-link W002 --by NAME --comment "..."`; `harness-design-studio log wheel-link` prints the history, including the reasons for releasing on placeholders and with unapproved parts. In the app the same steps are **Release…** and **New revision…** in the **Releases** tab (or the **Harness** tab) and **Change log…** in **Harness plans**; the release window lists what the release locks and asks for the reason when placeholders remain.
+`W002` is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited, nor can the parts, interface types and configuration values it uses (a later `harness-design-studio import-parts` or `harness-design-studio config --apply-profile` that would change them ends with `This change was blocked because it touches released items`), a baseline and a change log entry are stored, and the drawing says *released*. To change it you start a revision with `harness-design-studio revise wheel-link W002 --by NAME --comment "..."`; `harness-design-studio log wheel-link` prints the history, including the reasons for releasing on placeholders and with unapproved parts. In the app the same steps are **Release…** (also a step in the top bar) and **New revision…** in the **Releases** tab (or the **Harness** tab), and **Change log…** in the **More** menu of the **Harness** tab; the release window lists what the release locks and asks for the reason when placeholders remain.
 
 Do this only in the practice project. Releasing on placeholders and example parts teaches the flow and nothing more: the change log records that the release rested on them.
 

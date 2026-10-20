@@ -1,6 +1,6 @@
 # Questions and troubleshooting
 
-Short answers. If yours is not here, check the **Problems** tab (it says what is wrong and how to fix it) and [`HOWTO.md`](HOWTO.md).
+Short answers. If yours is not here, check the **Problems** tab or the Problems panel (Ctrl+Shift+M; they say what is wrong and how to fix it) and [`HOWTO.md`](HOWTO.md).
 
 ## Questions
 
@@ -36,13 +36,23 @@ Short answers. If yours is not here, check the **Problems** tab (it says what is
 
 **Where is the user guide?** In the app: **F1**. As a file: [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md).
 
+**How do I get the dark theme?** Open **Settings** (Ctrl+,), section **Appearance**, and choose **Theme**: *Follow the system*, *Light* or *Dark*. **View > Theme** does the same. The window changes at once.
+
+**The animations bother me.** Tick **Reduce motion** under **Settings > Appearance** (or **View > Reduce motion**). Menus, lists and tooltips then stop fading and sliding.
+
+**Can I paste from Excel?** Yes, into the **Units** and **Interfaces** tables of the left panel (Ctrl+Shift+J, Ctrl+Shift+T): select the first cell, press Ctrl+V. The block fills the rows that exist and is one undo step. A new unit or interface does not come from a paste: use the **Add** button, **Ctrl+I**, or **File > Import > Import interfaces…**.
+
+**What does "Offline" in the status bar mean?** The program works offline: nothing leaves this computer, and there is no account and no update check.
+
+**Where does the app keep my settings?** **Settings > About** names the file. It holds the theme, the interface size and your other choices, never design data. On Ubuntu it is `~/.config/HarnessDesigner/HarnessDesigner.ini`.
+
 ## Problems
 
 | You see | Why and what to do |
 | --- | --- |
 | `harness: command not found` after `install.sh` | `~/.local/bin` is not on your PATH. Run `echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc && . ~/.bashrc`, or log out and in. |
-| The app does not start; a message about `xcb`, `libEGL` or `libxkbcommon` | System libraries are missing. `sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0`. |
-| The window is tiny or the text is too small or large | **View > Interface size** (the first size follows your screen; the settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini`; delete it to reset). |
+| On Ubuntu the app does not start; a message about `xcb`, `libEGL` or `libxkbcommon` | System libraries are missing. `sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0`. |
+| The window is tiny or the text is too small or large | **Settings > Appearance > Interface size** or **View > Interface size** (the first size follows your screen; changing it takes about a second). The settings file is named in **Settings > About** (on Ubuntu `~/.config/HarnessDesigner/HarnessDesigner.ini`); delete it to reset. |
 | *Read-only* banner | The project was saved by a newer tool version, is open in another window, or its folder cannot be locked for editing (for example read-only media). Install the newer tool, close the other window, or copy the project to a folder you can write to. Nothing was changed. |
 | *Project already open* | Another window or session has it open. Close it there, or choose **Open read-only**. A lock left by a crashed session on the same machine is taken over automatically, also after a restart. A lock from another computer is respected: the message names the lock file to delete if you are sure nobody has the project open. |
 | *This project has problems* (recovery view) | Some files could not be loaded; everything else did. **Save salvaged copy** writes a clean copy. The original is protected and never overwritten. |

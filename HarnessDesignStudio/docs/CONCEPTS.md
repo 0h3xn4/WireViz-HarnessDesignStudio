@@ -80,7 +80,7 @@ Pressing **Generate** (or `harness-design-studio generate DIR`) does four things
 
 You always see a **preview** first; nothing changes until you **Apply**, and **Undo** takes it back. Generating again keeps IDs and locked choices and never touches a released harness. The same design always gives byte-identical results, so Git diffs show real changes only.
 
-Every choice has a reason. Open the **Harness** tab, pick a harness, select a wire, connector or pin, and read the rule behind it in **Why** (gauge and length included).
+Every choice has a reason. Open the **Harness** tab (the Drawings area), pick a harness, select a wire, connector or pin, and read the rule behind it in **Why** (gauge and length included).
 
 ## Problems, rules and waivers
 
@@ -110,6 +110,8 @@ A harness has a **status**: `draft`, then optionally `in_review`, then `released
 - To change it you start a new **revision** (A, B, C ...). The old revision stays.
 
 The release check looks at the harness itself and at the placeholder mark of the configuration files. It cannot tell whether the values are right; that stays your decision and your responsibility.
+
+In the app the work goes in three steps, shown in the top bar: **Generate**, **Check** (the design rules) and **Release…**. Each shows what is done and what is next, and a step that has to wait says what to do first.
 
 ## Outputs
 

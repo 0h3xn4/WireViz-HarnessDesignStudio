@@ -18,7 +18,7 @@ This page shows how to define a device of your own down to each pin: its connect
 ## Before you start
 
 - You have a project (for example `harness-design-studio new wheel-link --template first-steps`). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
-- A **device** is a unit with connectors of its own. The **Devices** tab (Ctrl+6) shows one unit at a time: the unit you select on the diagram or in the project tree is the one shown.
+- A **device** is a unit with connectors of its own. The **Devices** tab (Ctrl+6; in the **Model** area, beside **Diagram**) shows one unit at a time: the unit you select on the diagram or in the project tree is the one shown.
 - The tool never decides what is approved. A connector part or an interface type that you make here is marked *pending* or *unverified*, and a harness that uses it says so when it is released.
 - Everything you do is one undo step with a name, for example *Undo Edit pin GYRO1-J01.A2*.
 
