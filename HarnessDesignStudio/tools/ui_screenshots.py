@@ -191,6 +191,11 @@ def _main_part(theme: str, shots: Shots, tmp: Path) -> None:
         win.set_area(key)
         _settle(win, 200)
         a(f"area-{key}", lambda n=number, k=key: shots.grab(f"{n}-area-{k}", win))
+    for label, section in (("15b", "shortcuts"), ("15c", "about"), ("15d", "licences")):
+        win.settings_page.show_section(section)
+        _settle(win, 200)
+        a(f"settings-{section}", lambda n=label, s=section: shots.grab(f"{n}-settings-{s}", win))
+    win.settings_page.show_section("appearance")
     win.set_area("model")
     win.toggle_problems()
     _settle(win, 600)

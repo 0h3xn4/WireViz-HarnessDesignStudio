@@ -2060,3 +2060,59 @@ REL_LOCK_KINDS = {
     "box_connector": "{0} unit connector(s)",
     "config": "{0} configuration file(s)",
 }
+
+# ---- UI overhaul M9: Settings ------------------------------------------------------------------
+SETTINGS_SECTIONS_NAME = "Settings sections"
+SETTINGS_SECTION_APPEARANCE = "Appearance"
+SETTINGS_SECTION_EDITING = "Editing"
+SETTINGS_SECTION_PROJECT = "Project"
+SETTINGS_SECTION_SHORTCUTS = "Keyboard shortcuts"
+SETTINGS_SECTION_ABOUT = "About"
+SETTINGS_SECTION_LICENCES = "Licences"
+SETTINGS_REDUCE_MOTION = "Reduce motion"
+SETTINGS_REDUCE_MOTION_TIP = "Turn off the fades and slides of menus, lists and tooltips"
+SETTINGS_SCALE_HINT = "Changes the size of text and controls at once. 100 % is the usual size."
+SETTINGS_SNAP = "Snap units to the grid"
+SETTINGS_SNAP_TIP = "Units jump to the grid while you drag them (hold Alt to drag freely)"
+SETTINGS_LABELS = "Show every link label"
+SETTINGS_LABELS_TIP = "Name every link in the diagram, however many there are"
+SETTINGS_SHORTCUTS_TEXT = (
+    "Every key that does something in the window. They are fixed and cannot be changed."
+)
+SETTINGS_SHORTCUTS_FILTER = "Filter the shortcuts…"
+SETTINGS_SHORTCUTS_FILTER_NAME = "Filter shortcuts"
+SHORTCUT_COLUMNS = ("Action", "Shortcut")
+SHORTCUTS_EMPTY = "No shortcut matches"
+SHORTCUTS_EMPTY_HINT = "Clear the filter to see all of them."
+SHORTCUTS_TABLE_NAME = "Keyboard shortcuts"
+SHORTCUTS_EXTRA = (
+    ("Table: edit the selected cell", "Enter or F2"),
+    ("Table: keep the old text of a cell", "Esc"),
+    ("Table: paste a block of cells", "Ctrl+V"),
+    ("Table: copy the selected cells", "Ctrl+C"),
+    ("Diagram: place a unit without snapping", "Alt while dragging"),
+    ("Diagram: pan", "Middle button, or Space, and drag"),
+    ("Dialog: go to the next control", "Tab"),
+)
+ABOUT_TITLE = "Harness Design Studio"
+ABOUT_VERSION = "Version {0}"
+ABOUT_OFFLINE = "Offline spacecraft harness design tool. No data ever leaves this computer."
+ABOUT_RUNTIME = "Python {0}, Qt {1}, PySide6 {2}"
+ABOUT_SETTINGS_FILE = "Your settings are kept in {0}"
+ABOUT_LICENCE_PROJECT = (
+    "Licence of this program: placeholder, not yet chosen (docs/DECISIONS.md, D-02)."
+)
+LICENCES_TEXT = (
+    "The fonts and icons that are part of the interface, and the library the windows are made with."
+)
+LICENCES_PICK = "Component"
+LICENCES_TABLE_NAME = "Licences of the interface components"
+LICENCES_TEXT_NAME = "Licence text"
+LICENCE_COLUMNS = ("Component", "Licence", "Used for")
+LICENCE_QT = (
+    "Qt for Python (PySide6, shiboken6) is used under the GNU Lesser General Public Licence 3.0, as an "
+    "unmodified library. The licence text, and the GPL 3 text it refers to, are in the LICENSES folder "
+    "installed with the program (a package) or with the PySide6 package (an installation from the "
+    "source). The source of Qt for Python is available from the Qt Project (https://code.qt.io)."
+)
+LICENCE_MISSING = "The licence file of {0} is missing from this installation."

@@ -78,6 +78,16 @@ def mark_mono(widget: QWidget) -> None:
     widget.style().polish(widget)
 
 
+MOTION_EFFECTS = (
+    Qt.UIEffect.UI_AnimateMenu,
+    Qt.UIEffect.UI_FadeMenu,
+    Qt.UIEffect.UI_AnimateCombo,
+    Qt.UIEffect.UI_AnimateTooltip,
+    Qt.UIEffect.UI_FadeTooltip,
+    Qt.UIEffect.UI_AnimateToolBox,
+)
+
+
 class ThemeManager(QObject):
     """Holds the current theme and UI scale; widgets that custom-paint listen to `changed`.
 
@@ -94,6 +104,9 @@ class ThemeManager(QObject):
         self.name = "light"
         self.scale = 1.0
         self.reduce_motion = False
+        self._effects: dict[Qt.UIEffect, bool] | None = (
+            None  # Qt's own effects before we changed any
+        )
         self._app: QApplication | None = None
         self._watching = False
         self._sheet_scale: float | None = None  # the scale the installed style sheet was made for
@@ -137,6 +150,17 @@ class ThemeManager(QObject):
     def icon_size(self, step: int = 16) -> int:
         """Edge of an icon in px (16 by default; 12, 16, 24 or 32 on the spacing scale)."""
         return self.px(step)
+
+    def set_reduce_motion(self, on: bool) -> None:
+        """Reduce motion: `motion()` gives 0 and Qt stops its own fades and slides of menus, lists
+        and tooltips (what each was before is put back when it is turned off)."""
+        self.reduce_motion = on
+        if QApplication.instance() is None:
+            return
+        if self._effects is None:
+            self._effects = {e: QApplication.isEffectEnabled(e) for e in MOTION_EFFECTS}
+        for effect, was in self._effects.items():
+            QApplication.setEffectEnabled(effect, was and not on)
 
     def motion(self, base: bool = False) -> int:
         """Duration in ms of a transition (120 for hover, 180 for panels and toasts); 0 when the

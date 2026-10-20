@@ -1,22 +1,16 @@
-"""The two areas that are pages of their own: Home and Settings.
+"""The Home area, a page of its own (Settings is in `settings_page.py`).
 
     home = HomePage(theme, new=..., open_=..., example=..., sample=...)
     home.show_project(name, path, summary)
-    settings = SettingsPage(theme, set_theme=..., set_scale=..., set_mode=..., open_values=...)
-    settings.sync(theme_mode="dark", scale=125, mode="expert")
 
-Both only show and call back; the window does the work. Home is the first screen of a project:
-what is open and how to start another. Settings holds what used to hide in the View menu (theme,
-interface size, mode) and points to the project's configuration (the engineering values).
+It only shows and calls back; the window does the work. Home is the first screen of a project:
+what is open and how to start another.
 """
 
 from collections.abc import Callable, Sequence
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
-    QButtonGroup,
-    QComboBox,
-    QFormLayout,
     QFrame,
     QHBoxLayout,
     QLabel,
@@ -38,15 +32,6 @@ def _example_infos() -> tuple:  # type: ignore[type-arg]
     from harness_design_studio.core import templates
 
     return tuple(t for t in templates.TEMPLATES if t.name != "blank")
-
-
-SCALES = (100, 125, 150, 200)
-THEMES = (
-    ("system", strings.SETTINGS_THEME_SYSTEM),
-    ("light", strings.SETTINGS_THEME_LIGHT),
-    ("dark", strings.SETTINGS_THEME_DARK),
-)
-MODES = (("guided", strings.GUIDED), ("expert", strings.EXPERT))
 
 
 def _page(theme: ThemeManager, name: str, title: str) -> tuple[QScrollArea, QVBoxLayout]:
@@ -239,73 +224,3 @@ class HomePage(QScrollArea):
         self.name.set_full_text(name)
         self.path.set_full_text(path or strings.HOME_NO_PROJECT)
         self.summary.setText(summary)
-
-
-class SettingsPage(QScrollArea):
-    def __init__(
-        self,
-        theme: ThemeManager,
-        *,
-        set_theme: Callable[[str], None],
-        set_scale: Callable[[int], None],
-        set_mode: Callable[[str], None],
-        open_values: Callable[[], None],
-    ) -> None:
-        super().__init__()
-        page, column = _page(theme, "settings-page", strings.SETTINGS_TITLE)
-        self.setObjectName("settings-page")
-        self.setWidgetResizable(True)
-        self.setFrameShape(QFrame.Shape.NoFrame)
-        self.setWidget(page.takeWidget())
-        self.setAccessibleName(strings.SETTINGS_TITLE)
-        look, look_lay = _card(theme, strings.SETTINGS_APPEARANCE)
-        form = QFormLayout()
-        self.theme_combo = QComboBox()
-        self.theme_combo.setObjectName("settings-theme")
-        self.theme_combo.setAccessibleName(strings.SETTINGS_THEME)
-        for key, text in THEMES:
-            self.theme_combo.addItem(text, key)
-        self.theme_combo.activated.connect(lambda i: set_theme(str(self.theme_combo.itemData(i))))
-        self.scale_combo = QComboBox()
-        self.scale_combo.setObjectName("settings-scale")
-        self.scale_combo.setAccessibleName(strings.SETTINGS_SCALE)
-        for pct in SCALES:
-            self.scale_combo.addItem(f"{pct} %", pct)
-        self.scale_combo.activated.connect(lambda i: set_scale(int(self.scale_combo.itemData(i))))
-        form.addRow(strings.SETTINGS_THEME, self.theme_combo)
-        form.addRow(strings.SETTINGS_SCALE, self.scale_combo)
-        look_lay.addLayout(form)
-        column.addWidget(look)
-        edit, edit_lay = _card(theme, strings.SETTINGS_EDITOR)
-        self.mode_combo = QComboBox()
-        self.mode_combo.setObjectName("settings-mode")
-        self.mode_combo.setAccessibleName(strings.SETTINGS_MODE)
-        for key, text in MODES:
-            self.mode_combo.addItem(text, key)
-        self.mode_combo.activated.connect(lambda i: set_mode(str(self.mode_combo.itemData(i))))
-        edit_form = QFormLayout()
-        edit_form.addRow(strings.SETTINGS_MODE, self.mode_combo)
-        edit_lay.addLayout(edit_form)
-        column.addWidget(edit)
-        proj, proj_lay = _card(theme, strings.SETTINGS_PROJECT)
-        note = QLabel(strings.SETTINGS_PROJECT_TEXT)
-        note.setWordWrap(True)
-        note.setProperty("muted", True)
-        proj_lay.addWidget(note)
-        self.values_btn = QPushButton(strings.SETTINGS_PROJECT_BUTTON)
-        self.values_btn.setObjectName("settings-values")
-        self.values_btn.setAccessibleName(strings.SETTINGS_PROJECT_BUTTON.rstrip("…"))
-        self.values_btn.clicked.connect(lambda _c=False: open_values())
-        proj_lay.addWidget(self.values_btn, 0, Qt.AlignmentFlag.AlignLeft)
-        column.addWidget(proj)
-        column.addStretch(1)
-        self._group = QButtonGroup(self)  # (keeps the page's controls in one tab group)
-
-    def sync(self, *, theme_mode: str, scale: int, mode: str) -> None:
-        """Show what the window has now (it changes through the menus, the palette and here)."""
-        for combo, value in ((self.theme_combo, theme_mode), (self.scale_combo, scale), (self.mode_combo, mode)):  # fmt: skip
-            i = combo.findData(value)
-            if i >= 0 and combo.currentIndex() != i:
-                combo.blockSignals(True)
-                combo.setCurrentIndex(i)
-                combo.blockSignals(False)

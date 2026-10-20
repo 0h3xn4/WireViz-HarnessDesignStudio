@@ -100,3 +100,7 @@ Cause: two GUI-side lookups that scanned every wire of every harness once per fi
 | Change while the Problems tab is visible | 1,016 ms | 567 ms |
 | Taking in a check result on the GUI thread (82,549 findings) | not measured (the same scans) | 132 ms |
 | Edit after a result has arrived, warm, minimum of 3 | about 11,000 ms | 70 to 90 ms |
+
+## After M9
+
+Change the UI scale: 1,100 to 1,200 ms (unchanged; 1.06 s of it is Qt's `QApplication.setStyleSheet` over about 1,250 widgets; D-158). The window shows a wait cursor while it happens.

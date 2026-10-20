@@ -128,12 +128,13 @@ from harness_design_studio.gui.new_project_dialog import (
     NewProjectDialog,
     NewProjectRequest,
 )
-from harness_design_studio.gui.pages import HomePage, SettingsPage
+from harness_design_studio.gui.pages import HomePage
 from harness_design_studio.gui.panels import ProblemsPanel, PropertiesPanel, category_icon
 from harness_design_studio.gui.problems_panel import ProblemsList
 from harness_design_studio.gui.project_tree import ProjectTree
 from harness_design_studio.gui.rail import NavRail
 from harness_design_studio.gui.releases_panel import ReleasesPanel
+from harness_design_studio.gui.settings_page import SCALES, SettingsPage
 from harness_design_studio.gui.shell import (
     BannerStack,
     ElidedLabel,
@@ -150,7 +151,6 @@ from harness_design_studio.gui.tour import Tour
 from harness_design_studio.gui.unit_table import UnitTable
 from harness_design_studio.resources import guide_path
 
-SCALES = (100, 125, 150, 200)
 ARRANGE_IN_WORKER = 60  # a diagram with more units is arranged off the UI thread
 STATE_VERSION = 3  # of the saved dock layout (`saveState`); change it when the docks change
 WIDE_PX = 1222  # in UI-scale-free px: the right dock needs this much window width (the rail's 72 included)
@@ -645,8 +645,13 @@ class MainWindow(QMainWindow):
             self.theme,
             set_theme=lambda mode: self.set_theme_mode(mode),
             set_scale=lambda pct: self.scale_actions[pct].trigger(),
+            set_reduce_motion=lambda on: self._set_checked(self.act_reduce_motion, on),
             set_mode=lambda mode: self._pick_mode(mode),
+            set_snap=lambda on: self._set_checked(self.act_snap, on),
+            set_labels=lambda on: self._set_checked(self.act_labels, on),
             open_values=lambda: self.values_flow(),
+            shortcut_rows=self.shortcut_rows,
+            settings_file=self.settings.fileName(),
         )
         shrinkable(self.home_page)  # a page never sets the minimum size of the window
         shrinkable(self.settings_page)
@@ -1237,6 +1242,12 @@ class MainWindow(QMainWindow):
         self.act_labels = a(
             strings.A_LABELS, self._toggle_labels, checkable=True, name="act-labels"
         )
+        self.act_reduce_motion = a(
+            strings.SETTINGS_REDUCE_MOTION,
+            self._toggle_reduce_motion,
+            checkable=True,
+            name="act-reduce-motion",
+        )
         self.act_minimap.setChecked(True)
         self.scale_actions: dict[int, QAction] = {}
         sgroup = QActionGroup(self)
@@ -1522,6 +1533,7 @@ class MainWindow(QMainWindow):
         v.addAction(self.act_legend)
         v.addAction(self.act_snap)
         v.addAction(self.act_labels)
+        v.addAction(self.act_reduce_motion)
         scale_menu = v.addMenu(strings.A_SCALE)
         for act in self.scale_actions.values():
             scale_menu.addAction(act)
@@ -2078,11 +2090,7 @@ class MainWindow(QMainWindow):
             str(root) if root is not None else "",
             strings.HOME_SUMMARY.format(len(p.units), len(p.interfaces), len(p.harnesses)),
         )
-        self.settings_page.sync(
-            theme_mode=self.theme.mode,
-            scale=round(self.theme.scale * 100),
-            mode=c.mode,
-        )
+        self._sync_settings_page()
 
     def _update_alerts(self, status: ShellStatus) -> None:
         """The persistent notice when the plans or the exported files no longer match the design:
@@ -3121,7 +3129,9 @@ class MainWindow(QMainWindow):
         self.run_dialog(GlossaryDialog(self))
 
     def about_flow(self) -> None:
-        QMessageBox.about(self, strings.A_ABOUT, strings.ABOUT_TEXT.format(__version__))
+        """About is a section of Settings, not a message box."""
+        self.set_area("settings")
+        self.settings_page.show_section("about")
 
     def issues_flow(self) -> None:
         r = self._last_issues
@@ -3380,6 +3390,12 @@ class MainWindow(QMainWindow):
         snap = bool(self.settings.value("ui/snap", True, bool))
         self.act_snap.setChecked(snap)
         self.view.set_snap(snap)
+        labels = bool(self.settings.value("ui/labels", False, bool))
+        self.act_labels.setChecked(labels)
+        self.view.dscene.show_all_labels = labels
+        reduce = bool(self.settings.value("ui/reduce_motion", False, bool))
+        self.act_reduce_motion.setChecked(reduce)
+        self.theme.set_reduce_motion(reduce)
         self.scale_actions[scale].setChecked(True)
         app = QApplication.instance()
         if isinstance(app, QApplication):
@@ -3389,6 +3405,10 @@ class MainWindow(QMainWindow):
         self._sync_theme_actions()
         self.theme.changed.connect(self._sync_theme_actions)
         self.ctl.set_mode(mode if mode in ("guided", "expert") else "guided")
+        for toggled in (self.act_snap, self.act_labels, self.act_reduce_motion):
+            toggled.toggled.connect(lambda _on=False: self._sync_settings_page())
+        self.theme.changed.connect(self._sync_settings_page)
+        self._sync_settings_page()
         geo = self.settings.value("ui/geometry")
         try:
             restored = isinstance(geo, QByteArray) and self.restoreGeometry(geo)
@@ -3557,7 +3577,40 @@ class MainWindow(QMainWindow):
 
     def _toggle_labels(self) -> None:
         self.view.dscene.show_all_labels = self.act_labels.isChecked()
+        self.settings.setValue("ui/labels", self.act_labels.isChecked())
         self.view.viewport().update()
+
+    def _toggle_reduce_motion(self) -> None:
+        self.theme.set_reduce_motion(self.act_reduce_motion.isChecked())
+        self.settings.setValue("ui/reduce_motion", self.act_reduce_motion.isChecked())
+
+    @staticmethod
+    def _set_checked(act: QAction, on: bool) -> None:
+        """Make a checkable action `on` through its own handler (a menu click would do the same)."""
+        if act.isChecked() != on:
+            act.trigger()
+
+    def _sync_settings_page(self) -> None:
+        self.settings_page.sync(
+            theme_mode=self.theme.mode,
+            scale=round(self.theme.scale * 100),
+            mode=self.ctl.mode,
+            reduce_motion=self.act_reduce_motion.isChecked(),
+            snap=self.act_snap.isChecked(),
+            labels=self.act_labels.isChecked(),
+        )
+
+    def shortcut_rows(self) -> list[tuple[str, str]]:
+        """Every action of the window that has a key: (name, key), by name."""
+        rows = {
+            (
+                act.text().replace("&", ""),
+                act.shortcut().toString(QKeySequence.SequenceFormat.NativeText),
+            )
+            for act in self.actions()
+            if act.text() and not act.shortcut().isEmpty()
+        }
+        return sorted(rows, key=lambda r: (r[0].lower(), r[1]))
 
     def _sync_theme_actions(self) -> None:
         """Keep the Theme menu and the dark-theme toggle in step with the theme (also when the
@@ -3582,11 +3635,17 @@ class MainWindow(QMainWindow):
         self.set_theme_mode("dark" if self.act_dark.isChecked() else "light")
 
     def set_scale(self, pct: int) -> None:
+        """Set the interface size. Qt makes every widget read the new style sheet (about a second
+        with the window full of tables), so the pointer shows that the program is busy."""
         app = QApplication.instance()
-        if isinstance(app, QApplication):
-            self.theme.apply(app, None, pct / 100)
-        self.settings.setValue("ui/scale", pct)
-        self.auto_layout()
+        QGuiApplication.setOverrideCursor(Qt.CursorShape.WaitCursor)
+        try:
+            if isinstance(app, QApplication):
+                self.theme.apply(app, None, pct / 100)
+            self.settings.setValue("ui/scale", pct)
+            self.auto_layout()
+        finally:
+            QGuiApplication.restoreOverrideCursor()
 
     def _layout_class_now(self) -> tuple[bool, bool]:
         eff_w = self.width() / self.theme.scale
