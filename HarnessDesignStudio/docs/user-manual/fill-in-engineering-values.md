@@ -39,7 +39,7 @@ Waiting for an owner decision: config/titleblock.json is a placeholder until the
 
 The command exits with 1 while values are missing. It lists every missing value, what depends on it, and any value that is set but invalid (for example `INVALID config/derating.json: bundle_derating must be a number above 0 and at most 1.`). Use it as your hand-over checklist. The full list of files and keys is in [`CONFIG.md`](../CONFIG.md) and [`PLACEHOLDERS.md`](../PLACEHOLDERS.md).
 
-**In the app** (GUI, not run here): the status bar says how many values are pending, for example "4 values pending · 12 rules not checked"; pressing it opens the **Checks** tab filtered to the rules that could not run. Press **Supply value…** on one of them, or choose **Design > Engineering values…**, to open the **Engineering values** window. It lists every value by config file with its unit and what it is needed for. Type the values you have and press **Apply** (Ctrl+Enter): all of them are set as one undo step and the checks run again. A refused value is explained under its field, and a value that a released harness locks is disabled with the reason. The window changes the same files as the steps below.
+**In the app** (GUI, not run here): the status bar says how many values are pending, for example "4 values pending · 12 rules not checked"; pressing it opens the **Checks** tab filtered to the rules that could not run. Press **Supply value…** on one of them, or choose **Design > Engineering values…** (or **Open the engineering values…** under **Settings > Project**), to open the **Engineering values** window. It lists every value by config file with its unit and what it is needed for. Type the values you have and press **Apply** (Ctrl+Enter): all of them are set as one undo step and the checks run again. A refused value is explained under its field, and a value that a released harness locks is disabled with the reason. The window changes the same files as the steps below.
 
 ## The shape of a config file
 
@@ -140,7 +140,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-38 files written to wheel-link/outputs (model 57f544aa1797).
+38 files written to wheel-link/outputs (model aa2d94a09c13).
 ```
 
 (The model hash depends on the project; yours may differ.) After two header lines, the first two wires in `outputs/harnesses/W002/wirelist.csv` read:
@@ -150,7 +150,7 @@ W002-001,PWR,IF-001,W002-P1,1,W002-P2,1,22,EX-WIRE-SINGLE,,1,W002-S1,
 W002-002,RTN,IF-001,W002-P1,2,W002-P2,2,22,EX-WIRE-SINGLE,,1,W002-S1,
 ```
 
-Gauge 22 and length 1 m. In the app, the **Why** tab of `W002` explains it:
+Gauge 22 and length 1 m. In the app, the **Why** pane of the **Harness** tab for `W002` explains it:
 
 ```
 wire-sizing: ampacity: AWG 22 carries 2.16 A derated (factor 0.72) for 2 A

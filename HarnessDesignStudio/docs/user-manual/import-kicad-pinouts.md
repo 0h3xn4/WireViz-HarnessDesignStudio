@@ -57,7 +57,11 @@ J2: OK updated RW1-J02 (4 signal pin(s))
 Imported 2 connector(s). Generate harnesses again to connect interfaces to the fixed pins.
 ```
 
-The import is all or nothing: a netlist with a problem changes nothing. Now generate:
+The import is all or nothing: a netlist with a problem changes nothing.
+
+**In the app** (GUI, not run): choose **File > Import > Import KiCad netlist…**. The import wizard opens with *KiCad netlist* chosen. Choose the file, then on page 2 choose **Unit the connectors belong to**; the optional fields are **References that mark connectors**, **Only these references**, **Connector IDs** (one `REF=ID` per line, for example `J1=RW1-J01`), **Part for each connector** (one `REF=PART` per line) and **Net name to signal**. Page 3 lists each connector with its reason, and page 4 imports them as one undo step. The fields are the options of the command above.
+
+Now generate:
 
 ```
 harness-design-studio generate wheel-link

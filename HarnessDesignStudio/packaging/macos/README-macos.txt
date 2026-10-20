@@ -14,7 +14,9 @@ First start of an app that is not signed
   The app is not signed with a Developer ID and not notarized unless the release page says so.
   macOS then refuses a plain double-click ("cannot be opened because the developer cannot be
   verified"). Do one of these once:
-    - Control-click (right-click) the app in Applications, choose Open, then Open again.
+    - Control-click (right-click) the app in Applications, choose Open, then Open again. (In
+      macOS 15 and newer this may not be enough; then use System Settings > Privacy & Security >
+      Open Anyway, which is shown after the refused start. Not tested here.)
     - Or in Terminal:  xattr -dr com.apple.quarantine "/Applications/Harness Design Studio.app"
   Check the file against the SHA256SUMS of the release first:
       shasum -a 256 harness-design-studio-<version>-macos-<arch>.dmg

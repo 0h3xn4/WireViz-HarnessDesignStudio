@@ -8,7 +8,7 @@ See `SDP.md`, `SRS.md`.
 ## SValP 4 to 9
 - **Planning:** validation shows that the tool does what the owner needs (`../../docs/SPEC.md`). Organization: the owner or a person nominated by the owner validates; the developer assistant prepares the material. Independence: the person who validates must not have written the design (ECSS-Q-ST-80C 6.3.5.19, action A-01).
 - **Tasks and approach:** (1) run the validation tests below on the packaged program on a clean Ubuntu 24.04 machine without network (`../../docs/RELEASE.md` step 12); (2) usability sessions with representative users (`../../docs/usability/README.md`, SUS score and task success); (3) run the tutorial `../../docs/GETTING_STARTED.md` word for word; (4) design review of a real project using the review checklist.
-- **Testing facilities:** Ubuntu 24.04 VM, the `.deb` and the `.tar.gz`.
+- **Testing facilities:** Ubuntu 24.04 VM, the `.deb` and the `.tar.gz`. Since 1.2.0 the Windows and macOS packages are tested by the smoke tests of the release workflow on GitHub-hosted machines (`../../docs/RELEASE.md`, section Windows and macOS packages); step 12 of the procedure, the run on a clean machine by a person, names an Ubuntu VM only and is waived (T-30).
 - **Control procedures:** SPRs (`PROBLEM_REPORTING.md`).
 - **System level:** the owner's own acceptance of the generated documents for a real harness; not testable by the developer.
 

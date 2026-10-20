@@ -7,8 +7,8 @@ Software: Harness Design Studio. See `SPAP.md` and `../../docs/SPEC.md`.
 
 ## 4. Software project management approach
 - **4.1 Objectives and priorities:** correctness and traceability of generated harness data first; offline operation; then usability and speed (`../../docs/SPEC.md` parts 1 and 3).
-- **4.2 Master schedule:** milestones M0 to M9 are done (`../../docs/PLAN.md`); the October audit (`../../docs/AUDIT.md`); this compliance audit (phases 0 to 4). Next planned work after the audit: improvement of the tool from the owner's UX/UI guideline document.
-- **4.3 Assumptions, dependencies, constraints:** Ubuntu 24.04+, Python 3.12+, PySide6; no network; open points need the owner (D-10, D-11, D-12, D-15; `../../docs/OPEN_DECISIONS.md`).
+- **4.2 Master schedule:** milestones M0 to M9 are done (`../../docs/PLAN.md`); the October audit (`../../docs/AUDIT.md`); this compliance audit (phases 0 to 4). Next planned work after the audit was the improvement of the tool from the owner's UX/UI guideline document; that, and the later releases, are recorded in `../../CHANGELOG.md`: 1.1.0 (the editor rebuilt against the new UX standard, the Devices tab), 1.2.0 (Windows and macOS packages, D-149) and 1.3.0 (the UI overhaul, D-150 to D-159, with its own milestones M1 to M9 and a final milestone in `../../docs/ui/UI_OVERHAUL_PLAN.md`; these are not the milestones M0 to M9 above). Added 2026-10-20; the owner's approval of 2026-10-08 was for the earlier text.
+- **4.3 Assumptions, dependencies, constraints:** Ubuntu 24.04+ and, from 1.2.0, Windows 10 and 11 and macOS 13+ (D-149), Python 3.12+, PySide6; no network; open points need the owner (D-10, D-11, D-12, D-15; `../../docs/OPEN_DECISIONS.md`).
 - **4.4 Work breakdown:** `core` (model, generate, drc, outputs, vcs, io), `cli`, `gui`, `resources`, `tools`, `tests`, `docs`, `compliance`.
 - **4.5 Risk management:** `SPAP.md` 5.6.
 - **4.6 Monitoring and control:** CI on every push; `CHANGELOG.md`; milestone reports (`SPAMR.md`).

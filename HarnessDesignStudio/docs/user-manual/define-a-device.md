@@ -18,7 +18,7 @@ This page shows how to define a device of your own down to each pin: its connect
 ## Before you start
 
 - You have a project (for example `harness-design-studio new wheel-link --template first-steps`). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
-- A **device** is a unit with connectors of its own. The **Devices** tab (Ctrl+6) shows one unit at a time: the unit you select on the diagram or in the project tree is the one shown.
+- A **device** is a unit with connectors of its own. The **Devices** tab (Ctrl+6; in the **Model** area, beside **Diagram**) shows one unit at a time: the unit you select on the diagram or in the project tree is the one shown.
 - The tool never decides what is approved. A connector part or an interface type that you make here is marked *pending* or *unverified*, and a harness that uses it says so when it is released.
 - Everything you do is one undo step with a name, for example *Undo Edit pin GYRO1-J01.A2*.
 
@@ -104,7 +104,7 @@ harness-design-studio export-pinout wheel-link --unit GYRO1
 ```
 
 ```
-# harness-design-studio 1.0.0 model 63a0c0a2300c
+# harness-design-studio 1.3.0 model 3cdce4c529a1
 Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare
 GYRO1-J01,box,,EX-MICROD-9-F,A1,PWR,,,no
 GYRO1-J01,box,,EX-MICROD-9-F,A2,RTN,,,no
@@ -114,7 +114,7 @@ GYRO1-J01,box,,EX-MICROD-9-F,5,HEATER_ENABLE,,,no
 GYRO1-J01,box,,EX-MICROD-9-F,6,,,,yes
 ```
 
-`-o file.csv` or `-o file.xlsx` writes a file. A file written this way can be imported again with `import-pinout`.
+The first line is the stamp (the tool version and the model hash, which depends on the project). `-o file.csv` or `-o file.xlsx` writes a file. A file written this way can be imported again with `import-pinout`.
 
 - Then connect the device to others as usual (**Ctrl+I**) and **Generate**. The pins you defined are used as you defined them; a second Generate changes nothing.
 

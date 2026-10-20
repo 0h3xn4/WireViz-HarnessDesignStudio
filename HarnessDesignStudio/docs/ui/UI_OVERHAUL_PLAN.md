@@ -384,7 +384,7 @@ into the summary, all existing tests green (CI on Linux, Windows, macOS), golden
   that is waiver T-30 stays open.
 - *Acceptance:* all "Definition of done" lines in the brief; outputs of all examples byte-identical to 1.2.0.
 
-**Final milestone result (2026-10-20).** Built as D-159. Checks over every area in both themes (`tests/test_ui_final.py`) found and fixed a keyboard trap and a panel that did not return to its width; screenshots (103) and `BEFORE_AFTER.md` are complete; version 1.3.0 is prepared (changelog, release page text, regenerated examples and goldens) and the output proof holds for 567 of 567 files apart from the version stamp. Not met: the interface-size change (1.0 to 1.1 s). Not done: tagging and publishing (the owner's step), screen-reader pass, clean-machine install, signing.
+**Final milestone result (2026-10-20).** Built as D-159. Checks over every area in both themes (`tests/test_ui_final.py`) found and fixed a keyboard trap and a panel that did not return to its width; screenshots (103) and `BEFORE_AFTER.md` are complete; version 1.3.0 is prepared (changelog, release page text, regenerated examples and goldens) and the output proof holds for 567 of 567 files apart from the version stamp. Not met: the interface-size change (1.0 to 1.1 s). **Published** on 2026-10-20: the owner created the tag `v1.3.0` on `e7cf531` through the GitHub release page and the release workflow attached the six packages and `SHA256SUMS` (`compliance/SIGNOFF.md`, "Publication of 1.3.0"). Not done: the screen-reader pass, the clean-machine install, signing (all the owner's or waived).
 
 Rough size: M1 and M2 are the heaviest (each about a full session or more), M4 the riskiest, M3 and M5 to M9
 moderate.

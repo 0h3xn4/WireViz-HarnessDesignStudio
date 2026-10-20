@@ -19,7 +19,7 @@ This page shows how to write the drawings and lists of a design (wire lists, pin
 
 ## 1. Export
 
-**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…**, Ctrl+E). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, and the button **Export**. The project must be saved to a folder first (the window says so and offers **Save project…**). When it is done the window lists the files written ("38 files written to …") and the app says "38 files written to the outputs folder (design 63eb9fef79dc)." (your numbers will differ). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The export always writes the whole set. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
+**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…**, Ctrl+E). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, and the button **Export**. The project must be saved to a folder first (the window says so and offers **Save project…**). When it is done the window lists the files written ("38 files written to …") and the app says "38 files written to the outputs folder (design 63eb9fef79dc)." (your numbers will differ). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The same files, with their checksums, are listed afterwards under **Exported files** in the Outputs area ([section 4](#4-check-that-the-outputs-are-current)). The export always writes the whole set. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
 
 **On the command line**:
 
@@ -98,7 +98,9 @@ Numbers in the tables and the YAML keep all their digits (a length of 1234.567 m
 
 ## 4. Check that the outputs are current
 
-The status chip in the top bar and the header of the **Harness** tab show the state (*Up to date*, *Outputs out of date*, *Not exported*, *Outputs changed*); a banner under the top bar offers **Export…** when the files are out of date. The **Harness plans** tab of the bottom panel spells it out: "Outputs: up to date with the design.", "Outputs: out of date, the design changed after the last export.", "Outputs: not exported yet.", "Outputs: files were changed after export." On the command line:
+The status chip in the top bar and the header of the **Harness** tab show the state (*Up to date*, *Outputs out of date*, *Not exported*, *Outputs changed*); a banner under the top bar offers **Export…** when the files are out of date. Hover the outputs chip in the header of the **Harness** tab and it spells the state out: "Outputs: up to date with the design.", "Outputs: out of date, the design changed after the last export.", "Outputs: not exported yet.", "Outputs: files were changed after export."
+
+The list **Exported files** goes one step further. Open the **Lists** tab (**Outputs** on the rail, Ctrl+3): under the tables it lists every file in the `outputs` folder with its document, harness, format, size, time written, **SHA-256** and a state. The state compares the file on disk with the `manifest.json` that the export wrote: *Matches export*, *Changed since export*, *Missing* (the manifest lists it, the folder does not hold it) or *Not in the export* (the folder holds it, the manifest does not list it). The checksums are worked out in the background, so a big folder does not stop the window. **Open**, **Reveal in folder** and **Copy to folder…** act on the selected files, and **Verify** reads the folder again. The list never changes a file. On the command line:
 
 ```
 harness-design-studio verify wheel-link --outputs

@@ -15,6 +15,10 @@ An offline desktop tool for designing the electrical harnesses of a spacecraft: 
 
 *The `flatsat` example, one of the five projects that come with the tool.*
 
+![The whole window of version 1.3.0 with the flatsat example: navigation rail on the left, project tree, diagram, inspector, and the steps Generate, Check and Release in the top bar](HarnessDesignStudio/docs/ui/screenshots/after/01-diagram-selected-1440x900_light.png)
+
+*The window of version 1.3.0 (light theme; a dark theme is built in).*
+
 ## Contents
 
 - [What is this?](#what-is-this)
@@ -35,13 +39,13 @@ It works offline and produces byte-identical files for the same design, so the f
 
 ## Quick start
 
-You need Ubuntu 24.04 or newer on a 64-bit PC (see [Requirements](#requirements)); the Windows and macOS packages of version 1.2.0 are described in [`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md), ways D and E.
+You need Ubuntu 24.04 or newer on a 64-bit PC (see [Requirements](#requirements)); the Windows and macOS packages (from version 1.2.0) are described in [`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md), ways D and E.
 
-**Easiest: the ready-made package.** Download `harness-design-studio_1.2.0_amd64.deb` and `SHA256SUMS` from the [latest release](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest), then in the folder with the files:
+**Easiest: the ready-made package.** Download `harness-design-studio_1.3.0_amd64.deb` and `SHA256SUMS` from the [latest release](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest), then in the folder with the files:
 
 ```
 sha256sum -c SHA256SUMS --ignore-missing
-sudo apt install ./harness-design-studio_1.2.0_amd64.deb
+sudo apt install ./harness-design-studio_1.3.0_amd64.deb
 ```
 
 That installs the `harness-design-studio` command line tool (`harness` works as a short alias) and the `harness-design-studio-gui` app; the packages are not signed, so the checksum check is the only proof that the download is intact. The release page also has a `.tar.gz` with an `install.sh` that needs no administrator rights.
@@ -83,7 +87,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 ## Features
 
 - **Your design is the source of truth.** Harnesses, drawings and lists are generated from it and can be regenerated at any time.
-- **A diagram editor with views** — units and links on a diagram with marks for problems, locks and values still to enter; a project tree; tabs for the Harness (pins, wires, drawing, why), Lists, Checks and Releases; an Export window and an Import wizard.
+- **A diagram editor with views** — units and links on a diagram with marks for problems, locks and values still to enter; a project tree and spreadsheet-like tables for units and interfaces; a navigation rail (Home, Model, Checks, Drawings with pins, wires, drawing and why, Outputs with every exported file and its checksum, Revisions, Settings); the steps Generate, Check and Release in one top bar; a Problems panel; light and dark themes; an Export window and one Import wizard.
 - **Generates the harnesses** — connectors, pins, wires, shields, with a *Why is it like this?* explanation for every choice.
 - **Checks them** against 34 design rules and says clearly which checks could not run because a number is missing.
 - **Writes the documents** — a wiring-diagram drawing per harness (SVG and PDF), wire lists, pinouts, bill of materials, test tables, labels, a block diagram and a change log.
@@ -104,9 +108,9 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 ## Licence and status
 
-- **Version `1.3.0`** (the new user interface) is prepared in this repository and not yet published; the latest published release is **version `1.2.0`**, published on 2026-10-19 (tag `v1.2.0` on commit `1cdd6a7`; the packages for Ubuntu, Windows and macOS and `SHA256SUMS` are on the GitHub release page; the packages are not signed). **Version `1.1.0`**, published on 2026-10-18 (tag `v1.1.0` on commit `f998cd9`; the packages and `SHA256SUMS` are on the GitHub release page). It has not been signed off by the owner as a compliance record (the changelog says so; [`compliance/SIGNOFF.md`](HarnessDesignStudio/compliance/SIGNOFF.md) records the release decision for 1.0.0 only and the publication of 1.1.0 and 1.2.0 after the fact, with no owner sign-off for them). **Version `1.0.0`**, released on the repository owner's instruction on 2026-10-12 (tag `v1.0.0` on commit `0c6a96a`; the packages and `SHA256SUMS` are on the GitHub release page). The open engineering decisions were recorded as defaults on that day: the tool ships no standard or part data, so the real derating and EMC values and the approved parts list have not been supplied and results rest on placeholders and example parts. [`HarnessDesignStudio/README.md#status`](HarnessDesignStudio/README.md#status) has the details.
+- **Version `1.3.0`** (the new user interface) is the latest published release, published on 2026-10-20 (tag `v1.3.0` on commit `e7cf531`; the packages for Ubuntu, Windows and macOS and `SHA256SUMS` are on the GitHub release page; the packages are not signed). **Version `1.2.0`**, published on 2026-10-19 (tag `v1.2.0` on commit `1cdd6a7`; the packages for Ubuntu, Windows and macOS and `SHA256SUMS` are on the GitHub release page; the packages are not signed). **Version `1.1.0`**, published on 2026-10-18 (tag `v1.1.0` on commit `f998cd9`; the packages and `SHA256SUMS` are on the GitHub release page). It has not been signed off by the owner as a compliance record (the changelog says so; [`compliance/SIGNOFF.md`](HarnessDesignStudio/compliance/SIGNOFF.md) records the release decision for 1.0.0 only and the publication of 1.1.0, 1.2.0 and 1.3.0 after the fact, with no owner sign-off for them). **Version `1.0.0`**, released on the repository owner's instruction on 2026-10-12 (tag `v1.0.0` on commit `0c6a96a`; the packages and `SHA256SUMS` are on the GitHub release page). The open engineering decisions were recorded as defaults on that day: the tool ships no standard or part data, so the real derating and EMC values and the approved parts list have not been supplied and results rest on placeholders and example parts. [`HarnessDesignStudio/README.md#status`](HarnessDesignStudio/README.md#status) has the details.
 - **Created mainly by an AI.** Harness Design Studio was written mainly by Claude (Anthropic's AI assistant, used through Claude Code); the owner set the requirements and approved the decisions and releases. No other person has reviewed it independently, and it makes no claim of compliance with any standard. Check its results before relying on them. The records are in [`HarnessDesignStudio/compliance/`](HarnessDesignStudio/compliance/README.md).
-- **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness-design-studio new --list` shows three examples on 0.1.0 and five on 1.0.0, 1.1.0 and 1.2.0. The [changelog](HarnessDesignStudio/CHANGELOG.md) lists what is new.
+- **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness-design-studio new --list` shows three examples on 0.1.0 and five on 1.0.0 and later. The [changelog](HarnessDesignStudio/CHANGELOG.md) lists what is new.
 - **Licence.** The [`LICENSE`](LICENSE) file in this repository is the GPL-3.0 licence of WireViz. The licence of the code in `HarnessDesignStudio/` has not been decided (decision D-02 in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md), kept open for 1.0.0 in D-143; the package metadata says `LicenseRef-Proprietary`; the copyright holder is the repository owner, GitHub account `0h3xn4`). No licence has been granted for it yet.
 
 ## What this repository adds to WireViz

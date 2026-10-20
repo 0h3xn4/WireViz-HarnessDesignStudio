@@ -3,7 +3,7 @@
 - Software item and version: (`harness --version`)
 - Model hash of the project, if any:
 - Date and reporter:
-- Environment: Ubuntu version; installed from deb / tarball / source
+- Environment: operating system and version (Ubuntu, Windows or macOS); installed from deb / tarball / Windows setup program / zip / dmg / source
 - Requirement violated, if known (REQ-... or standard clause):
 
 ## What happened

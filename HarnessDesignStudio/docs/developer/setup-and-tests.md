@@ -9,6 +9,7 @@ This page shows how to set up a place to work on Harness Design Studio, run the 
 - [2. Run the tests](#2-run-the-tests)
 - [3. Check the style and the types](#3-check-the-style-and-the-types)
 - [4. The tests that read the documents](#4-the-tests-that-read-the-documents)
+- [The tests of the user interface](#the-tests-of-the-user-interface)
 - [5. Golden files](#5-golden-files)
 - [6. What CI runs](#6-what-ci-runs)
 - [When something fails](#when-something-fails)
@@ -58,13 +59,23 @@ The prototype tests drive a Chromium browser. `playwright` is installed by `dev`
 pytest
 ```
 
-The whole suite has about 1,000 tests (1,026 when this page was checked) and took about 11 minutes with coverage on the machine used: 1,024 passed and 1 was skipped (the test that needs a normal user; the run was as root). One speed test failed because `HARNESS_TIME_FACTOR` was not set (see the table). Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
+The whole suite has 3,009 tests in 159 files (`pytest --collect-only -q`, counted on 2026-10-20 for version 1.3.0). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
+
+The markers (declared in `pyproject.toml`, and `--strict-markers` is on, so an unknown one is an error):
+
+| Marker | Tests (1.3.0) | Meaning |
+| --- | --- | --- |
+| `gui` | 1,088 | Needs Qt (run with `QT_QPA_PLATFORM=offscreen`, which `conftest.py` sets). `pytest -m gui` runs only these. |
+| `ux` | 33 | Drives the clickable prototype in a Chromium browser (playwright). |
+| `perf` | 44 | Asserts a wall-clock limit. CI runs these alone, after the parallel run. A new timing test must carry it, or `tests/test_parallel_safety.py` fails. |
 
 | Command | What it does |
 | --- | --- |
 | `pytest -q tests/test_docs.py tests/test_docs_links.py` | Only the tests that read the documents (a minute or less). |
 | `pytest tests/test_gui_journeys.py` | The editor journeys, driven like a user. |
-| `pytest --cov` | The tests with coverage. The gate is 90 % on `harness_design_studio.core`; the run prints `Required test coverage of 90.0% reached`. The same run had 95.7 %. The GUI is outside the measure. |
+| `pytest -q tests/test_ui_*.py tests/test_theme_scan.py tests/test_tokens.py tests/test_fonts.py tests/test_output_hashes.py` | The tests of the user interface of 1.3.0 (see [The tests of the user interface](#the-tests-of-the-user-interface)). Some of them carry the `perf` marker, so add `-m "not perf"` for a loaded machine. |
+| `pytest --cov` | The tests with coverage. The gate is 90 % on `harness_design_studio.core`; the run prints `Required test coverage of 90.0% reached` and the percentage it reached (not repeated here, it changes). The GUI is outside the measure. |
+| `pytest -m "not perf"` | Everything except the timing tests, in one process. |
 | `pytest -n auto -m "not perf"` | The suite in parallel, one worker per core (pytest-xdist, D-148). The tests that assert a wall-clock limit carry the marker `perf` and are left out, because a loaded machine makes them fail for no reason. |
 | `pytest -m perf` | Those timing tests alone, one at a time. Run it after the parallel run; the two commands together are the whole suite. Add `--cov --cov-append` to both when you want one coverage number. |
 | `pytest -k wire_colours` | Only tests whose name matches. |
@@ -89,12 +100,12 @@ mypy
 ```
 
 ```
-331 files already formatted
+499 files already formatted
 All checks passed!
-Success: no issues found in 202 source files
+Success: no issues found in 358 source files
 ```
 
-(The file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `HarnessDesignStudio/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
+(Run on 2026-10-20 for version 1.3.0; the file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `HarnessDesignStudio/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
 
 ## 4. The tests that read the documents
 
@@ -102,14 +113,32 @@ A change that only touches Markdown can still break a test. Know these:
 
 | Test file | What it enforces |
 | --- | --- |
-| `tests/test_docs_links.py` | Every relative link and every `#anchor` in the listed files resolves. The list: `HarnessDesignStudio/README.md`, `CLAUDE.md`, `CHANGELOG.md`, every `docs/*.md` (not the sub-folders), `docs/guide/USER_GUIDE.md` and the templates `README.md`. Links inside code fences are not checked. The anchor rule is GitHub's. |
-| `tests/test_docs.py` | The in-app guide (`resources/guide/index.html`) equals what `tools.build_guide` makes from `docs/guide/USER_GUIDE.md`; every `harness-design-studio` command is named in the guide; the buttons the guide names exist in `gui/strings.py`; no paragraph of the guide is longer than 700 characters; `docs/RULES.md` and `docs/CLI.md` equal what their generators write; every config key is in `docs/CONFIG.md`; the commands of `docs/GETTING_STARTED.md` and of `HarnessDesignStudio/README.md` are run in order in a scratch folder with the expected exit codes; the model hash quoted in `GETTING_STARTED.md` equals the one the first `export` prints; the **F1** key opens the guide. |
+| `tests/test_docs_links.py` | Every relative link and every `#anchor` in the listed files resolves. The list: `HarnessDesignStudio/README.md`, `CLAUDE.md`, `CHANGELOG.md`, every Markdown file under `docs/` **including all sub-folders** (`user-manual/`, `developer/`, `guide/`, `examples/`, `ui/`, `releases/`, ...) and the templates `README.md`. Links inside code fences are not checked. The anchor rule is GitHub's. |
+| `tests/test_docs.py` | The in-app guide (`resources/guide/index.html`) equals what `tools.build_guide` makes from `docs/guide/USER_GUIDE.md`; every `harness-design-studio` command is named in the guide; the buttons the guide names exist in `gui/strings.py`; no paragraph of the guide is longer than 700 characters; `docs/RULES.md` and `docs/CLI.md` equal what their generators write; every config key is in `docs/CONFIG.md`; the commands of `docs/GETTING_STARTED.md` and of `HarnessDesignStudio/README.md` are run in order in a scratch folder with the expected exit codes; the counts and output lines quoted in `docs/examples/README.md` are those of a real run; the model hash quoted in `GETTING_STARTED.md` equals the one the first `export` prints; the **F1** key opens the guide. |
 | `tests/test_examples.py` | The example projects equal what `tools.build_examples` writes; the design worksheet names only real unit kinds and interface types; the numbers in `docs/FLATSAT_EXAMPLE.md` match the `flatsat` example. |
 | `tests/test_compliance_matrix.py`, `test_trace.py`, `test_sdd_components.py`, `test_metrics.py`, `test_scf.py`, `test_family_group_mapping.py`, `test_profiles.py`, `tests/test_drc.py::test_cited_requirements_exist_in_the_extracted_lists` | The generated compliance files are current (matrix, traceability, component table), no matrix row claims compliance, every module has a docstring, and every cited requirement ID exists. |
 
-The sub-folders `docs/user-manual/` and `docs/developer/`, the root `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md` and `HarnessDesignStudio/compliance/**/*.md` are not in the link test. Check them with the offline link checker in [`docs-maintenance.md`](docs-maintenance.md#check-the-links).
+The repository's root `README.md`, `CONTRIBUTING.md` and `AUDIT.md` and `HarnessDesignStudio/compliance/**/*.md` are not in the link test. Check them with the offline link checker in [`docs-maintenance.md`](docs-maintenance.md#check-the-links).
 
 When only Markdown under `HarnessDesignStudio/` changes, CI runs just the `docs` job: `test_docs.py`, `test_docs_links.py` and the compliance tests above (decision D-138).
+
+## The tests of the user interface
+
+The editor of 1.3.0 (the UI overhaul, D-150 to D-159) has its own tests. All run offscreen and need no screen:
+
+| Tests | What they check |
+| --- | --- |
+| `tests/test_tokens.py` | The design tokens (`gui/theme/tokens.py`): every text token reaches 4.5:1 on every surface in the light and the dark theme, outlines and the focus ring 3:1, and the diagram category colours stay apart under simulated colour blindness (REQ-UX-01). |
+| `tests/test_theme_scan.py` | An AST scan: no `#RRGGBB` colour, `QColor` with numbers, font family or font size is written in `gui/` outside `gui/theme/` (D-150). A new colour is a new token. (`tests/test_ux_foundation.py` checks that no module directly in `gui/` calls `setStyleSheet`.) |
+| `tests/test_fonts.py` | The interface uses the bundled Inter and JetBrains Mono, their licence texts ship, nothing is fetched (REQ-UX-04). |
+| `tests/test_ui_areas.py`, `test_ui_shell.py`, `test_ui_home.py`, `test_ui_workflow.py` | The areas and the navigation rail, the top bar, the job indicator and the Problems panel, Home with recent projects, the steps Generate, Check and Release over every combination of facts, the lock banner. |
+| `tests/test_ui_sheets.py`, `test_ui_import.py`, `test_ui_checks.py`, `test_ui_outputs.py`, `test_ui_settings.py` | The spreadsheet tables (paste from Excel is one undo step), the import wizard and a large file read in the background, the Problems panel and Checks tab, the list of exported files with their SHA-256, the Settings page and its sections. |
+| `tests/test_ui_final.py` | Walks every area, tab, Settings section and the Problems panel in both themes: no Qt warning, an accessible name on every control, a tooltip on every icon-only button, the Tab key visits every control and returns to where it started, keyboard focus is visible. |
+| `tests/test_ui_timing.py` | The optional timing log (`HARNESS_UI_TIMING=1`). |
+| `tests/test_ui_checks_perf.py`, `test_ui_preview_perf.py`, `test_ui_sheets_perf.py`, `test_ui_state_index_scale.py` | Time limits at stress size (200 units, 2,000 interfaces, about 82,000 findings): an edit after a rule check, a frame of the drawing, a paste of 500 rows. They carry `perf`, so CI runs them alone, with `HARNESS_TIME_FACTOR=3`. |
+| `tests/test_output_hashes.py` | All 567 files the four packaged examples write have the SHA-256 they had with release 1.2.0 (`docs/ui/OUTPUT_HASHES_1.2.0.json`), apart from the version stamp: a change of the interface must not change a written file. |
+
+Pictures of the result are made with `tools.ui_screenshots`, timings with `tools.ui_perf` ([`tools.md`](tools.md)).
 
 ## 5. Golden files
 
@@ -126,7 +155,7 @@ A golden file is a stored, reviewed result that a test compares with a fresh one
 
 ## 6. What CI runs
 
-`.github/workflows/harness-ci.yml` runs on Ubuntu 24.04 with Python 3.12. After the Qt libraries and `pip install -e ".[gui,dev]"` and Chromium, it runs `ruff check .`, `ruff format --check .`, `mypy`, `pytest -n auto -m "not perf" --cov` and then `pytest -m perf --cov --cov-append` (the timing tests alone; the 90 % gate is applied by the second step), `python -m tools.check_reproducible`, `python -m tools.build_installer`, `python -m tools.build_deb`, the self-test of the frozen program (`dist/harness-design-studio/harness-design-studio-gui --selftest`) and `python -m tools.gen_sbom`. It uploads the packages and the SBOM as an artifact. A second job (`package-on-24-04`) installs the packages on a fresh machine without the source tree. `python -m tools.release_check --quick` runs only the first three checks locally (versions, lint and types, the verifiers); it is not a release check ([`release.md`](release.md)).
+`.github/workflows/harness-ci.yml` runs on Ubuntu 24.04 with Python 3.12. After the Qt libraries and `pip install -e ".[gui,dev]"` and Chromium, it runs `ruff check .`, `ruff format --check .`, `mypy`, `pytest -n auto -m "not perf" --cov` and then `pytest -m perf --cov --cov-append` (the timing tests alone; the 90 % gate is applied by the second step), `python -m tools.check_reproducible`, `python -m tools.build_installer`, `python -m tools.build_deb`, the self-test of the frozen program (`dist/harness-design-studio/harness-design-studio-gui --selftest`) and `python -m tools.gen_sbom`. It uploads the packages and the SBOM as an artifact. When only Markdown under `HarnessDesignStudio/` changed, only the `docs` job runs (end of section 4). A second job (`package-on-24-04`) installs the packages on a fresh machine without the source tree. From 1.2.0 two more workflows exist: `harness-platforms.yml` runs the whole suite on `windows-latest` and `macos-latest` (offscreen, `HARNESS_TIME_FACTOR=8`, a time limit per test so that a hang names the test), and `harness-packages.yml` builds and smoke-tests the Windows and macOS packages on branches `pkg/**` (it never publishes); `release.yml` builds and publishes all packages when a tag is pushed ([`release.md`](release.md)). `python -m tools.release_check --quick` runs only the first three checks locally (versions, lint and types, the verifiers); it is not a release check ([`release.md`](release.md)).
 
 ## When something fails
 

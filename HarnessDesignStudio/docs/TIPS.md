@@ -17,11 +17,11 @@ This page collects shortcuts and habits that save time once you have finished [`
 - [Small habits](#small-habits)
 - [Working with other tools](#working-with-other-tools)
 
-Every command on this page was run with the tool (version `1.0.0`) before it was written down. Some of the options need examples that are not in the 0.1.0 packages; the page says so where it matters (see [`examples/README.md`](examples/README.md)).
+Every command on this page was run with the tool before it was written down (first with version `1.0.0`; the quoted model hash and the version stamp were renewed with `1.3.0`, which changes no generated file except the version it records). Some of the options need examples that are not in the 0.1.0 packages; the page says so where it matters (see [`examples/README.md`](examples/README.md)).
 
 ## Keyboard shortcuts
 
-These are the shortcuts the app defines (read from the program's source, `gui/main_window.py` and `gui/canvas.py`). Menus show the same keys, and the tooltip of a button names its key.
+These are the shortcuts the app defines (read from the program's source, `gui/main_window.py` and `gui/canvas.py`). Menus show the same keys, and the tooltip of a button names its key. **Settings > Keyboard shortcuts** lists every key of the window, with a filter; the keys are fixed.
 
 | Keys | What it does |
 | --- | --- |
@@ -38,6 +38,8 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+E | Export... (the Export outputs window) |
 | Ctrl+I | New interface... |
 | Ctrl+1 to Ctrl+6 | The tabs Diagram, Harness, Lists, Checks, Releases, Devices |
+| Ctrl+7 and Ctrl+, | Home and Settings |
+| Ctrl+Shift+M | Show or hide the Problems panel at the bottom |
 | Ctrl+Shift+N | Add a device (an empty unit named in the Devices tab) |
 | Ctrl+Shift+T | The Interface table (the Interfaces tab of the left panel) |
 | Ctrl+Shift+J | The Unit table (the Units tab of the left panel) |
@@ -58,8 +60,9 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Enter or Space | Select the unit or link that has the keyboard focus (with the Connect tool active, a unit with the focus is picked) |
 | Shift+arrow keys | Move the focused unit by one grid step (10 diagram units), in the Select tool, when the project is not read-only |
 | Ctrl+C in a table | Copy the selected cells as tab-separated text (Ctrl+Shift+C adds the header row) |
+| Enter or F2, Esc, Ctrl+V in a table | Edit the selected cell, keep the old text, paste a block of cells copied from a spreadsheet (one undo step) |
 
-Everything else is in the menus: **View > Arrange diagram** tidies the units (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** follows the system or is Light or Dark, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data.
+Everything else is in the menus: **View > Arrange diagram** tidies the units (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** (also **Settings > Appearance**) follows the system or is Light or Dark, **View > Reduce motion** turns off the fades and slides, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data.
 
 ## The command palette (Ctrl+K)
 
@@ -75,7 +78,7 @@ Type several words and every word must match, in any order (`go rw1` finds *Go t
 ## Reading a busy diagram
 
 - **Click a unit or a link**: its links stay in colour and everything else fades. Click the empty background or press **Esc** to see everything again.
-- **Show** in the toolbar fades everything except one *signal class*, one *connector* or one *bundle (harness)*: choose **All interfaces**, **By signal class**, **By connector** or **By bundle (harness)**, then the value. It changes the picture only, never the project.
+- **Show** (the list at the right end of the Model tab bar) fades everything except one *signal class*, one *connector* or one *bundle (harness)*: choose **All interfaces**, **By signal class**, **By connector** or **By bundle (harness)**, then the value. It changes the picture only, never the project.
 - The **Interfaces** tab (left panel, Ctrl+Shift+T) lists every interface as an editable table, and the **Project** tab beside it is a tree of every unit, interface and more, with a filter (press `/`); Shift+arrows in the tree select several units at once. They are the screen-reader friendly views, and also the fastest way to find one row in a large design.
 - **Ctrl+F** finds units and links by ID, name, connector or type and marks every match; **Shift+click**, **Ctrl+click** and a drag on the background select several items.
 - Small marks tell the state: a badge with an icon and a count is a problem, a warning, a value still to enter or *not checked*; a lock with *W001 A* means a released harness holds the object.
@@ -124,7 +127,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
-38 files written to cib/outputs (model da1379ad567b).
+38 files written to cib/outputs (model 9bd0e6ffc051).
 2 interfaces and 6 wires checked: 0 error(s)
 build ok: cib/outputs
 ```
@@ -227,10 +230,11 @@ What does exist is **files**. The tool reads a few file formats in and writes se
 
 | What | File type | Exact columns or fields | How |
 | --- | --- | --- | --- |
-| Interfaces between units | CSV or XLSX (first sheet) | `id`, `type`, `from`, `to`, `redundancy` (the last is optional). Headers are matched by name; `from` is also read from `from unit`, `source` or `a`; `to` from `to unit`, `destination`, `target` or `b`; the type from `interface type`, `kind` or `protocol`. The units must already exist; `type` is the name or ID of an interface type. | App only: **File > Import interfaces...** (no `harness-design-studio` command). Starting file: `interfaces.csv` |
+| Interfaces between units | CSV or XLSX (first sheet) | `id`, `type`, `from`, `to`, `redundancy` (the last is optional). Headers are matched by name; `from` is also read from `from unit`, `source` or `a`; `to` from `to unit`, `destination`, `target` or `b`; the type from `interface type`, `kind` or `protocol`. The units must already exist; `type` is the name or ID of an interface type. | App only: **File > Import > Import interfaces…** (Ctrl+Shift+I, the import wizard; no `harness-design-studio` command). Starting file: `interfaces.csv` |
 | Approved parts list | CSV or XLSX | Matched by header: part ID or part number, manufacturer, description, category, specification, approval status, pin count, mass (g), mass per metre (g/m), mating part. The template has `part number,manufacturer,description,category,pin count,approval status`. You say what the approval values mean with `--approved`, `--pending` and `--rejected`. | `harness-design-studio import-parts DIR FILE ...` |
 | Segment lengths | CSV or XLSX | `harness,segment,length`, read **by position** (this order); default unit millimetres; `--unit` can be `mm`, `cm` or `m`. | `harness-design-studio import-lengths DIR FILE` |
 | Unit connector pinouts | KiCad netlist (`.net`, S-expression or XML) | Components whose reference starts with the prefix (default `J`); the symbol fields `HarnessConnector` (connector ID) and `HarnessPart` (part); net names become signal names, optionally renamed with a signal map with the columns `net,signal`. | `harness-design-studio import-netlist DIR FILE --unit UNIT ...` ([`KICAD.md`](KICAD.md)) |
+| One device's connectors and pins | CSV or XLSX | One pin per row. The columns are found by heading: *Connector*, *Pin*, *Signal*, *Mode*, *Contact size*, *Termination* and, if you have them, *Part* and *Gender*. | `harness-design-studio import-pinout DIR FILE --unit UNIT ...`, or **File > Import > Import device pinout…** ([define a device](user-manual/define-a-device.md#take-the-pinout-from-a-spreadsheet)) |
 | Current by wire gauge | CSV | `gauge,amperes` (header optional) | `harness-design-studio config DIR --ampacity-csv FILE` |
 | Other engineering values | the JSON files in `config/` | see [`CONFIG.md`](CONFIG.md) | edit by hand, check with `harness-design-studio config DIR` |
 
@@ -269,13 +273,13 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
 | YAML | `wireviz.yaml` per harness | "WireViz-style" input: `metadata`, `connectors`, `cables`, `connections`. Written by this tool; **not validated against the WireViz program**. |
 | Markdown | `system/drc_report.md`, `system/revision_report.md` | reports |
 
-Every CSV starts with a comment line (`# harness-design-studio 1.0.0 model <hash>`) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The Inspector of an interface in the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
+Every CSV starts with a comment line (`# harness-design-studio 1.3.0 model <hash>`, with the version that made it) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The Inspector of an interface in the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
 
 ### Ideas, not features
 
 Each sentence below is an **idea, not a feature: not built, not tested**. It names which of the files above could carry data to or from one of your other tools, *if* that tool can read or write that kind of file. Nothing here has been tried, and nothing in this repository knows the formats of those tools.
 
-- **SpaceMissionStudio** - idea, not a feature (not built, not tested): a list of units and links could be turned into `interfaces.csv` (`id,type,from,to,redundancy`) and imported with **File > Import interfaces...**, after the units have been added by hand in the app.
+- **SpaceMissionStudio** - idea, not a feature (not built, not tested): a list of units and links could be turned into `interfaces.csv` (`id,type,from,to,redundancy`) and imported with **File > Import > Import interfaces…**, after the units have been added by hand in the app.
 - **Requirements Studio** - idea, not a feature (not built, not tested): `system/traceability.csv` (interface to harness to wires) and the `Requirement ID` of each interface in `system/export.json` could be read by a script and compared with a requirement list; note that the `Requirement` column of `drc_findings.csv` holds the IDs of the standard requirements a rule serves, not your programme's requirements.
 - **Budget Studio** - idea, not a feature (not built, not tested): `system/mass_length.csv` (known wire length, mass with margin, and whether the data is `Complete`) could feed a mass or harness-length budget; its totals count only what is known, and in the `flatsat` example they include ground-equipment harnesses.
 - **AIT Logbook** - idea, not a feature (not built, not tested): `tests.csv` (one continuity test per wire, isolation tests, limits that read `TBD (placeholder)` until set) and `labels.csv` could be used as the list of what to test and what to label; the tool has no way to read test results back.

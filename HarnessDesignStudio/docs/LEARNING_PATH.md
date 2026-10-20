@@ -17,7 +17,7 @@ A route from "I have just installed it" to "I can use it on my own spacecraft". 
 
 If you have not installed the tool yet, start with [`INSTALL.md`](INSTALL.md).
 
-**Which version do you have?** Steps 3 and 4 use the example `minimal-satellite` and the template `design-worksheet.md`, and the `flatsat` example is mentioned too. These, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)). `harness-design-studio new --list` shows five examples on 1.0.0 and three (`blank`, `first-steps`, `small-satellite`) on 0.1.0. With 0.1.0, do step 3 with `small-satellite` and plan on paper in step 4.
+**Which version do you have?** Steps 3 and 4 use the example `minimal-satellite` and the template `design-worksheet.md`, and the `flatsat` example is mentioned too. These, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)). `harness-design-studio new --list` shows five examples on 1.0.0 and later and three (`blank`, `first-steps`, `small-satellite`) on 0.1.0. With 0.1.0, do step 3 with `small-satellite` and plan on paper in step 4.
 
 | Step | You learn | Time | Uses |
 | --- | --- | --- | --- |
@@ -63,8 +63,8 @@ harness-design-studio drc mini
 Open it in the app (**File > Open project...**). Try these four things, in this order:
 
 1. Click a wire of the power link from the power distribution unit (`PCDU1`) to the computer. Read **Why is it like this?**
-2. Open the **Problems** tab. Most entries say that a value is *pending* or *not checked*. That is the tool being honest: nobody has supplied the derating values yet.
-3. Use the **Show** list in the toolbar to look at the power interfaces only, then at the data interfaces.
+2. Open the **Problems** tab (right panel) or the Problems panel (Ctrl+Shift+M). Most entries say that a value is *pending* or *not checked*. That is the tool being honest: nobody has supplied the derating values yet.
+3. Use the **Show** list at the right end of the Model tab bar to look at the power interfaces only, then at the data interfaces.
 4. Delete a unit, then press **Ctrl+Z**, to see that nothing is lost.
 
 **Done when:** you can find, for any wire, which interface it belongs to and which two connector pins it joins.
@@ -82,7 +82,7 @@ Before you open the tool, fill in `design-worksheet.md` (get it with `harness-de
 Two ways, and you can mix them:
 
 - **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add units (**Add** in the Project tab, or **Edit > Add unit**), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10.
-- **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import interfaces**. Add the units first. Importing interfaces is app only: there is no command line command for it.
+- **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import > Import interfaces…** (Ctrl+Shift+I). Add the units first. You can also paste a block of cells from Excel into the **Units** or **Interfaces** table to change rows that exist. Importing interfaces is app only: there is no command line command for it.
 
 **Done when:** `harness-design-studio generate my-design` finishes and `harness-design-studio check my-design` reports no errors.
 
@@ -99,7 +99,7 @@ Do this when the data exists; the tool works without it and says so.
 
 ## 7. Check and review (30 minutes)
 
-Read every entry of the **Problems** tab or of `harness-design-studio drc`. For each one, decide: fix it, waive it with a reason, or note that it is outside the tool. Then go through `design-review-checklist.md` with a colleague. Rule texts: [`RULES.md`](RULES.md).
+Read every entry of the **Problems** tab, the Problems panel (Ctrl+Shift+M) or `harness-design-studio drc`. For each one, decide: fix it, waive it with a reason, or note that it is outside the tool. Then go through `design-review-checklist.md` with a colleague. Rule texts: [`RULES.md`](RULES.md).
 
 **Done when:** every open problem has a decision.
 

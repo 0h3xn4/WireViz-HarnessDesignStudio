@@ -20,7 +20,7 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 
 ## 4. Import interfaces from a spreadsheet
 
-[Import data](user-manual/import-data.md#interfaces-from-a-table-app-only). This works in the app only.
+[Import data](user-manual/import-data.md#interfaces-from-a-table-app-only). This works in the app only: **File > Import > Import interfaces…** (Ctrl+Shift+I) opens the import wizard.
 
 ## 5. Take connector pinouts from KiCad
 
@@ -80,6 +80,6 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 - [Naming and title block](user-manual/naming-and-title-block.md).
 - [Redundancy and zones](user-manual/redundancy-and-zones.md).
 
-Keyboard: **Ctrl+K** command palette, **Ctrl+Z** and **Ctrl+Y** undo and redo, **Ctrl+S** save, **Ctrl+=** and **Ctrl+-** zoom, **F** fit, **Ctrl+0** 100 %, **Ctrl+G** generate, **Ctrl+E** export, **F1** the user guide. The full list is in the [user guide](guide/USER_GUIDE.md).
+Keyboard: **Ctrl+K** command palette, **Ctrl+Z** and **Ctrl+Y** undo and redo, **Ctrl+S** save, **Ctrl+=** and **Ctrl+-** zoom, **F** fit, **Ctrl+0** 100 %, **Ctrl+G** generate, **Ctrl+E** export, **F1** the user guide. The full list is in the [user guide](guide/USER_GUIDE.md) and, in the app, under **Settings > Keyboard shortcuts**.
 
 Next: [user manual](user-manual/README.md), [`GETTING_STARTED.md`](GETTING_STARTED.md)

@@ -16,7 +16,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | For | What it gives you |
 | --- | --- | --- |
-| [`INSTALL.md`](INSTALL.md) | everyone | Install on Ubuntu, check it works, uninstall, build from source |
+| [`INSTALL.md`](INSTALL.md) | everyone | Install on Ubuntu, Windows or macOS, check it works, uninstall, build from source |
 | [`GETTING_STARTED.md`](GETTING_STARTED.md) | newcomers | A guided tour with real output: example project, generate, read problems, export, fill in values, release |
 | [`LEARNING_PATH.md`](LEARNING_PATH.md) | newcomers | The whole route in nine steps, with the example or template for each and how you know you are done |
 | [`CONCEPTS.md`](CONCEPTS.md) | newcomers | The words and the mental model, in ten minutes |
@@ -35,7 +35,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | What it says |
 | --- | --- |
-| [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md) | The user guide that opens with **F1** in the app: the window and its tabs, modes, checks, export and import, menus, shortcuts |
+| [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md) | The user guide that opens with **F1** in the app: the window (rail, top bar, tabs, Home and Settings), modes, checks, export and import, menus, shortcuts |
 | [`CLI.md`](CLI.md) | Every `harness-design-studio` command and option (generated from the program) |
 | [`RULES.md`](RULES.md) | Every design rule: what, why, how to fix, severity (generated) |
 | [`CONFIG.md`](CONFIG.md) | Every key of `config/*.json` |
@@ -54,7 +54,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md) | A tour of the biggest example, a flatsat with ground equipment |
 | [`templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) | What each file written by `harness-design-studio templates FOLDER` is for |
 
-`harness-design-studio new --list` shows the example projects and `harness-design-studio templates FOLDER` copies the import templates, demo values, CI scripts and the review checklist. Screenshots of the app are in [`ux/qt/`](ux/qt/) (see [`ux/README.md`](ux/README.md) for the other picture folders).
+`harness-design-studio new --list` shows the example projects and `harness-design-studio templates FOLDER` copies the import templates, demo values, CI scripts and the review checklist. Screenshots of the app (the window of version 1.3.0, light theme) are in [`ux/qt/`](ux/qt/) (see [`ux/README.md`](ux/README.md) for the other picture folders).
 
 ## Stuck
 
@@ -78,6 +78,7 @@ These explain how the tool was specified and checked; you do not need them to us
 | [`SPEC.md`](SPEC.md), [`REQUIREMENTS.md`](REQUIREMENTS.md), [`UX.md`](UX.md) | What the tool must do and how it should feel |
 | [`UX_GUIDELINES_REVIEW.md`](UX_GUIDELINES_REVIEW.md) | The owner's UX/UI guidelines, point by point: done, new, not applicable, open |
 | [`DESIGN.md`](DESIGN.md) | The design system of the editor: tokens, type and spacing, themes, icons, state chips, tables, the diagram, the window, the views, shortcuts, decisions |
+| [`ui/BEFORE_AFTER.md`](ui/BEFORE_AFTER.md), [`ui/UI_OVERHAUL.md`](ui/UI_OVERHAUL.md), [`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md), [`ui/PERF_BASELINE.md`](ui/PERF_BASELINE.md) | The new user interface of version 1.3.0: the window before and after, the brief, the plan and the timing numbers (decisions D-150 to D-159) |
 | [`ux-audit.md`](ux-audit.md) | The October 2026 audit of the editor against the UX/UI Standard (83 numbered issues) and, at the end, what was built for each one |
 | [`ux-custom-devices-audit.md`](ux-custom-devices-audit.md) | Audit and design proposal for custom devices (approved on 14 October 2026 and built as the Devices tab; the owner's decisions are at its end): what the tool does today for a device of your own (unit, connectors, pins, interfaces on pins, pinout import), the gaps, and a Devices tab with a pin table; pictures in [`ux/custom-devices/`](ux/custom-devices/) |
 | [`DECISIONS.md`](DECISIONS.md), [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | What was decided, and what still needs an owner |

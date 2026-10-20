@@ -60,7 +60,7 @@ bash: line 1: harness-design-studio: command not found
 - **Run from source or pip into a virtual environment (way C):** the environment is not active in this terminal. Run `. .venv/bin/activate` in the folder where you made it.
 - **Nothing installed yet:** start at [`INSTALL.md`](INSTALL.md).
 
-Check with `harness-design-studio --version`; it prints `harness 1.0.0` (or a newer number).
+Check with `harness-design-studio --version`; it prints the version, for example `harness 1.3.0`.
 
 ### I am on Windows or macOS
 
@@ -106,7 +106,7 @@ and then kept running until it was stopped after 15 seconds. To check a source i
 
 ### The window is blank, tiny, or closes at once
 
-Run `harness-design-studio-gui --selftest` in a terminal (packaged install) and read the message; if it names `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. If the window is tiny or the text too small, use **View > Interface size**. The settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini`; delete it to reset the scale, theme and last project (it holds no design data).
+Run `harness-design-studio-gui --selftest` in a terminal (packaged install) and read the message; if it names `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. If the window is tiny or the text too small, use **Settings > Appearance > Interface size** (or **View > Interface size**). The settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini` on Ubuntu (**Settings > About** names the file on every system); delete it to reset the scale, theme and last project (it holds no design data).
 
 ### A banner says "Read-only: this project was saved by a newer version of the tool, or is open in another window"
 
@@ -525,7 +525,7 @@ J1: ERROR Connector RW1-J77 has no library part: set the field HarnessPart or us
 
 ### Interfaces: a row cannot be placed
 
-Importing interfaces (**File > Import > Import interfaces…**, CSV or XLSX) is done in the app only; there is no `harness-design-studio` command for it. The preview lists each row; a row that cannot be placed says why (a unit that does not exist, no free connector on a unit that can carry the type) and nothing is applied. See [`IMPORTS.md`](IMPORTS.md). The messages were not run for this page because they need the app window.
+Importing interfaces (**File > Import > Import interfaces…**, Ctrl+Shift+I, CSV or XLSX) is done in the app only; there is no `harness-design-studio` command for it. Page 3 of the import wizard lists each row; a row that cannot be placed is marked *Skipped* with the reason (a unit that does not exist, no free connector on a unit that can carry the type), the other rows are still imported, and the summary says how many were skipped. Nothing is applied until you press the import button on page 4. See [`IMPORTS.md`](IMPORTS.md). The messages were not run for this page because they need the app window.
 
 ## Exporting
 
@@ -552,6 +552,8 @@ warning: [out_pdf_chars] These characters cannot be shown in the PDF drawings of
 38 files written to demo/outputs (model a7c0ccce1928).
 ```
 
+(The model hash is from the run with 1.0.0 and depends on the project and the tool version; yours differs.)
+
 Not an error (exit code 0, the files are written). The PDF drawings use the Windows-1252 character set, so a name or note with characters outside it (the ohm sign Ω, Greek letters) prints a `?` in the PDF; the SVG drawing, the CSV files and the workbook keep the characters. The warning names every character it replaced (up to eight, then "and N more") and is repeated by `harness-design-studio verify DIR --outputs`. **Fix:** if the PDF is what you send, write the name with letters of Windows-1252 (for example "ohm"); otherwise use the SVG.
 
 ### No outputs folder
@@ -568,7 +570,7 @@ Exit code 1. `--outputs` checks the files in `demo/outputs`; there are none yet.
 
 ### Which file is what?
 
-See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `38 files written to demo-first-steps/outputs (model da1379ad567b).`
+See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `38 files written to demo-first-steps/outputs (model 9bd0e6ffc051).`
 
 ## Releasing
 
@@ -721,7 +723,7 @@ The files are plain text (JSON), so a project folder can be copied, zipped, e-ma
 
 - *Make the generated harnesses and outputs fresh:* `harness-design-studio generate demo` is safe to repeat (generating twice gives the same result); `rm -r demo/outputs` and `harness-design-studio export demo` rebuild the outputs.
 - *Put one configuration file back to its starting state:* copy it from a fresh project (`harness-design-studio new fresh --template blank`, then copy `fresh/config/derating.json` over yours).
-- *Reset the app's look and scale:* delete `~/.config/HarnessDesigner/HarnessDesigner.ini`.
+- *Reset the app's look and scale:* delete `~/.config/HarnessDesigner/HarnessDesigner.ini` (on Ubuntu; **Settings > About** names the file).
 - *Undo a mistake in the app:* **Ctrl+Z**. A released harness is locked; start a new revision with `harness-design-studio revise` instead of editing it.
 - *Two copies to try different ideas:* copy the folder (`cp -r demo demo-try`); `harness-design-studio compare demo demo-try` shows the differences.
 

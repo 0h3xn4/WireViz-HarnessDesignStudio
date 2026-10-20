@@ -39,7 +39,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 3. [Generate harnesses](generate-harnesses.md): preview, apply and undo; the independent check; the Harness tab and its "Why" pane; how links are grouped.
 4. [Read and fix problems](read-and-fix-problems.md): errors, warnings and notes; fixes; waivers; `harness-design-studio drc`.
 5. [Fill in the engineering values](fill-in-engineering-values.md): `harness-design-studio config`; the file shape; the gauge table; demo values; profiles.
-6. [Import data](import-data.md): interfaces (app only), approved parts, segment lengths.
+6. [Import data](import-data.md): the import wizard (interfaces only in the app), approved parts, segment lengths.
 7. [Import KiCad pinouts](import-kicad-pinouts.md): `harness-design-studio import-netlist` and fixed pins.
 8. [Define a device](define-a-device.md): the Devices tab, pins and signals, `import-pinout` and `export-pinout`.
 9. [Export the outputs](export-the-outputs.md): what each file is for; checking that it is current.
@@ -53,7 +53,8 @@ This manual has one page for each job you do with Harness Design Studio, written
 
 - **Commands** use a practice project called `wheel-link`, made with `harness-design-studio new wheel-link --template first-steps`. Put your own folder where you see `wheel-link` or `DIR`. Output blocks are real output of the tool. Numbers such as the model hash (`63eb9fef79dc`) depend on the project and the tool version; yours can differ.
 - **Command names.** The command line tool is `harness-design-studio`; `harness` is a short alias that runs the same program, so older scripts keep working. The app is `harness-design-studio-gui` (alias `harness-gui`) when started from a terminal.
-- **App steps** (menus, buttons, tabs) use the names that the program shows. The app was not run on a screen when this manual was written. The labels and the behaviour were taken from the program's code, not from looking at it. Pages with app steps say "GUI, not run" where it matters.
+- **App steps** (menus, buttons, tabs) use the names that version 1.3.0 of the program shows. They were checked against the program's texts (`gui/strings.py`) and against the menus and buttons of the window started without a screen. Nobody watched the steps on a screen, so pages with app steps say "GUI, not run" where it matters.
+- **Where things are in the window.** The rail on the left opens an area: **Home**, **Model** (the **Diagram** and **Devices** tabs), **Checks**, **Drawings** (the **Harness** tab), **Outputs** (the **Lists** tab), **Revisions** (the **Releases** tab) and **Settings**. The pages name the tab, as the **Go** menu does (Ctrl+1 to Ctrl+6). The user guide, section 4, describes the window.
 - **New in 1.0.0.** Some things are not in the 0.1.0 packages: the examples `minimal-satellite` and `flatsat`, the wiring-diagram drawing with wire colours, *Edit > Wire colours...* and `design-worksheet.md`. They are not in the 0.1.0 `.deb` and `.tar.gz`. `harness-design-studio new --list` shows three examples on 0.1.0 and five on 1.0.0. The [changelog](../../CHANGELOG.md) lists what is new. Pages that use these say so.
 - **No claim of compliance.** The tool was created mainly by an AI and has not been reviewed independently. Results rest on placeholders and example parts until you supply your own values. See [the status](../../README.md#status).
 

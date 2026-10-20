@@ -104,3 +104,21 @@ Recorded from the GitHub release page and the workflow run. Pull request 69 (ver
 | `harness-design-studio_1.2.0_amd64.deb` | `fb402a9775c3723631bf14ca74c08fa3bfadd724247729c5789e5eb12e55add5` |
 
 The checksums are also in `evidence/release_1.2.0_SHA256SUMS` (the same bytes as the `SHA256SUMS` file on the release page, 671 bytes). The packages were built by the workflow on GitHub's machines; they have not been installed on a clean machine without a network by a person (the waiver T-30 stands).
+
+
+## Publication of 1.3.0 (2026-10-20)
+
+Recorded from the GitHub release page and the workflow run. Version 1.3.0 is the new user interface (the UI overhaul, decisions D-150 to D-159, pull requests 72 to 81); the last of them, the final milestone (pull request 81), was merged as commit `e7cf531`. The assistant that prepared it could not push the tag from its working session (tag pushes are refused with HTTP 403, `docs/RELEASE.md` step 15); the repository owner created the tag `v1.3.0` on that commit through the release page on 2026-10-20 at 06:22 UTC. The tag push started `.github/workflows/release.yml` (run 39380004795). The Linux, Windows and two macOS build jobs built the packages and ran their smoke tests on the finished files; the last job attached the six packages and one `SHA256SUMS` to the release page at 06:27 UTC. The packages are not signed or notarized: no certificate secrets exist, so the signing steps were skipped. Nobody has signed off 1.3.0 as the owner, and nothing here is a statement of compliance. Before the tag, the whole test suite had passed on Linux, Windows and macOS for pull request 81 (one Windows run during the overhaul stopped once with the exit code 3221226505 in `test_gui_paint_crash` and passed on the second run; the cause of that single failure is not known).
+
+What did not change: the design model, the file format, the 34 design rules, the command line and the generated files. All 567 files that the four packaged examples write are identical to those of 1.2.0 apart from the tool version they record (`tools/output_hashes.py`, `docs/ui/OUTPUT_HASHES_1.2.0.json`, `tests/test_output_hashes.py`). Not met: the target of 250 ms for a change of the interface size (it takes about 1.1 s; D-158, D-159, `docs/ui/PERF_BASELINE.md`).
+
+| File | SHA-256 |
+| --- | --- |
+| `harness-design-studio-1.3.0-linux-x86_64.tar.gz` | `5c97954d84f31354d5350859e2464b8ba216e807856a56ed20ca0ec72937197a` |
+| `harness-design-studio-1.3.0-macos-arm64.dmg` | `5a12500c028d621df1fb71764abff077c3b3a346b11bb87480086d1bbc3dafeb` |
+| `harness-design-studio-1.3.0-macos-x86_64.dmg` | `5d7faad8d7b8c46e47d7c98b23925774306e75e4d452b64349b34131f1958bc0` |
+| `harness-design-studio-1.3.0-windows-x86_64-setup.exe` | `95b779aef6762de3dc790c98fa7ea7281c2c4332d113eb8517432c549f1e9c4d` |
+| `harness-design-studio-1.3.0-windows-x86_64.zip` | `9092290ead2faeff1aa14927c2f3be29b325bc3c06f8426491119c867126ce26` |
+| `harness-design-studio_1.3.0_amd64.deb` | `7c630296ce00ee01493eeb4ec5277f3df1400bcac742f11735728cf912a2323f` |
+
+The checksums are also in `evidence/release_1.3.0_SHA256SUMS` (the same bytes as the `SHA256SUMS` file on the release page, 671 bytes, SHA-256 `d79c61d547535f003c7b848ddefa4b366e972e4d990ad1543056e4a231c3d6e5`). The packages were built by the workflow on GitHub's machines; they have not been installed on a clean machine without a network by a person (the waiver T-30 stands), the screen-reader pass was not held (T-27), and no independent review took place (T-20 to T-30). The waivers and open items of the sections above are unchanged by the publication.

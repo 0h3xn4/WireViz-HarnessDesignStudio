@@ -38,6 +38,8 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 Click a card or a to-do line to jump to the item.
 
+**The Problems panel.** Press **Problems (n)** in the status bar, or Ctrl+Shift+M, to open a list of every open problem at the bottom of the window. It has the columns Severity, Rule, Object and Message, and the filters **All**, **Error** and **Warning**. Click a row to go to the object, whether it is a unit, a link, a harness, a parts file or a value file. **Details and fixes** (right-click a row, or press Shift+Enter) shows the problem as a card in the Inspector. The panel counts findings and the Problems tab counts groups of to-do lines, so the two numbers can differ.
+
 ## 2a. The Checks tab
 
 The **Checks** tab has one row for each design rule: its ID, name, severity, a **Result** chip and how many findings are open or waived.
@@ -45,7 +47,7 @@ The **Checks** tab has one row for each design rule: its ID, name, severity, a *
 - The result is **Pass**, **Fail**, **Not checked** or **Pending**, each with an icon and a word; **Pass (placeholder values)** means the rule passed on values nobody has reviewed. A strip above the table counts the results; each count is a button that filters the table.
 - Select a rule to read what it found, what it needs and the requirements it serves. **Enter** or a double-click on an offending object shows it on the diagram.
 - A rule that is *not checked* names the value it waits for and has **Supply value…**. It opens **Engineering values**, where you type the values (see [fill in the engineering values](fill-in-engineering-values.md)); **Apply** sets them as one undo step and the checks run again.
-- **Check** in the top bar (F5) runs the rules now; they also run by themselves a moment after you stop editing.
+- **Check** in the top bar (F5) runs the rules now; they also run by themselves a moment after you stop editing. When the design changes, the tab says *Out of date* until the rules have run again (**Check again** runs them now).
 
 ## 3. On the command line
 

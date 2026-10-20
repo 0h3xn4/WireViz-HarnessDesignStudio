@@ -15,7 +15,7 @@ Threat list and measures: `../../docs/SECURITY.md` (hostile project files, sprea
 | Risk | Treatment | Residual risk (accepted by the owner?) |
 | --- | --- | --- |
 | Look-alike or right-to-left characters in names | IDs are ASCII only; reviewers compare IDs | accepted in `../../docs/SECURITY.md`, owner confirmation open |
-| Packages not signed | `SHA256SUMS`; the owner chose not to sign packages (2026-10-08, `../DEVIATIONS.md` T-19) | waived by the owner; reason not stated |
+| Packages not signed (from 1.2.0 this includes the Windows and macOS packages, which are not notarized either; T-19 was granted before they existed) | `SHA256SUMS`; the owner chose not to sign packages (2026-10-08, `../DEVIATIONS.md` T-19) | waived by the owner; reason not stated |
 | Project folders are neither signed nor encrypted | use repository access control | accepted in `../../docs/SECURITY.md`, owner confirmation open |
 | Vulnerable dependency | pinned versions, SBOM, vulnerability scan in every release check (`tools/check_vulnerabilities.py`, D-134) | scan is automatic; a person reads its result at the release; review of the security analysis by a person still open (A-08) |
 | Helper process uses pickle between two trusted programs of the same package | allowed in two files only, tested | accepted by design (D-128) |
