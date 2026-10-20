@@ -3,7 +3,7 @@ matrices. Each function returns `Table` (header row first). No design numbers ar
 unknown values are written as "pending", "unknown" or "TBD (placeholder)"."""
 
 from collections import defaultdict
-from collections.abc import Collection
+from collections.abc import Collection, Iterator
 from decimal import Decimal
 
 from harness_design_studio.core.generate.lengths import clear_length_cache, wire_length
@@ -95,10 +95,12 @@ def wire_list(project: Project, h: Harness) -> Table:
     return rows
 
 
-def _all_pins(project: Project) -> list[Pin]:
-    return [p for c in project.connectors.values() for p in c.pins] + [
-        p for h in project.harnesses.values() for c in h.connectors for p in c.pins
-    ]
+def _all_pins(project: Project) -> Iterator[Pin]:
+    for c in project.connectors.values():
+        yield from c.pins
+    for h in project.harnesses.values():
+        for c in h.connectors:
+            yield from c.pins
 
 
 def uses_pin_function(project: Project) -> bool:
@@ -111,9 +113,12 @@ def uses_termination(project: Project) -> bool:
     return any(p.termination != "unspecified" for p in _all_pins(project))
 
 
-def _pin_rows(project: Project, c: Connector, attached: dict[tuple[str, str], list[str]]) -> Table:
+def _pin_rows(
+    c: Connector, attached: dict[tuple[str, str], list[str]], fn: bool, term: bool
+) -> Table:
+    """The rows of one connector; `fn` and `term` say whether the Function and Termination columns
+    exist (worked out once per table, since each looks at every pin of the project)."""
     rows: Table = []
-    fn, term = uses_pin_function(project), uses_termination(project)
     for p in c.pins:
         wires = attached.get((c.id, p.id), [])
         rows.append([
@@ -137,13 +142,13 @@ PINOUT_HEADER = [
 ]
 
 
+def _header(fn: bool, term: bool) -> list[str]:
+    return [*PINOUT_HEADER, *(["Function"] if fn else []), *(["Termination"] if term else [])]
+
+
 def pinout_header(project: Project) -> list[str]:
     """The header of the pinout tables; `Function` and `Termination` follow when a pin has one."""
-    return [
-        *PINOUT_HEADER,
-        *(["Function"] if uses_pin_function(project) else []),
-        *(["Termination"] if uses_termination(project) else []),
-    ]
+    return _header(uses_pin_function(project), uses_termination(project))
 
 
 def pinouts(project: Project, h: Harness) -> Table:
@@ -151,9 +156,10 @@ def pinouts(project: Project, h: Harness) -> Table:
     for w in h.wires:
         attached[(w.from_connector, w.from_pin)].append(w.id)
         attached[(w.to_connector, w.to_pin)].append(w.id)
-    rows = [pinout_header(project)]
+    fn, term = uses_pin_function(project), uses_termination(project)
+    rows = [_header(fn, term)]
     for c in sorted(h.connectors, key=lambda x: x.id):
-        rows += _pin_rows(project, c, attached)
+        rows += _pin_rows(c, attached, fn, term)
     return rows
 
 
@@ -167,10 +173,11 @@ def box_pinouts(project: Project, connector_ids: Collection[str] | None = None) 
             for cid, pin in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
                 if mates.get(cid):
                     attached[(mates[cid] or "", pin)].append(w.id)
-    rows = [pinout_header(project)]
+    fn, term = uses_pin_function(project), uses_termination(project)
+    rows = [_header(fn, term)]
     for c in sorted(project.connectors.values(), key=lambda x: x.id):
         if connector_ids is None or c.id in connector_ids:
-            rows += _pin_rows(project, c, attached)
+            rows += _pin_rows(c, attached, fn, term)
     return rows
 
 
