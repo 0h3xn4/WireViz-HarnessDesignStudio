@@ -122,3 +122,21 @@ What did not change: the design model, the file format, the 34 design rules, the
 | `harness-design-studio_1.3.0_amd64.deb` | `7c630296ce00ee01493eeb4ec5277f3df1400bcac742f11735728cf912a2323f` |
 
 The checksums are also in `evidence/release_1.3.0_SHA256SUMS` (the same bytes as the `SHA256SUMS` file on the release page, 671 bytes, SHA-256 `d79c61d547535f003c7b848ddefa4b366e972e4d990ad1543056e4a231c3d6e5`). The packages were built by the workflow on GitHub's machines; they have not been installed on a clean machine without a network by a person (the waiver T-30 stands), the screen-reader pass was not held (T-27), and no independent review took place (T-20 to T-30). The waivers and open items of the sections above are unchanged by the publication.
+
+
+## Publication of 1.4.0 (2026-10-20)
+
+Recorded from the GitHub release page and the workflow run. Version 1.4.0 answers the feedback of the AIT engineers (decisions D-160 to D-165, pull requests 83 to 88); the last of them, the version preparation (pull request 88), was merged as commit `1427aad`. The assistant that prepared it could not push the tag from its working session (tag pushes are refused with HTTP 403, `docs/RELEASE.md` step 15). A first release `v1.4.0` that the repository owner published at 11:57 UTC pointed at commit `cd7d750`, the master of before the merges (version 1.3.0 and none of the 1.4.0 changes); its workflow run failed at the check that the tag matches the version and nothing was attached. That release and its tag were deleted, and the owner created the tag `v1.4.0` again on `1427aad` through the release page on 2026-10-20 at 12:27 UTC. The tag push started `.github/workflows/release.yml` (run 39422417101). The Linux, Windows and two macOS build jobs built the packages and ran their smoke tests on the finished files; the last job wrote one `SHA256SUMS`, the notes, and attached the six packages to the release page.
+
+What did not change for existing work: the file format (schema version 1; every new field is optional and not written while it has its default value) and the generated files. All 567 files that the four packaged examples write are identical to those of 1.2.0 apart from the tool version they record (`tools/output_hashes.py`, `docs/ui/OUTPUT_HASHES_1.2.0.json`, `tests/test_output_hashes.py`). New: 35 design rules (one more), the commands `export-devices` and `import-devices`, and the optional fields described in `docs/FILE_FORMAT.md`.
+
+| File | SHA-256 |
+| --- | --- |
+| `harness-design-studio-1.4.0-linux-x86_64.tar.gz` | `ee1313664ea3d0c325433d4c0fcbdbd1f2d089238821a07b37bbc133b6b23eeb` |
+| `harness-design-studio-1.4.0-macos-arm64.dmg` | `798f74b2cfb677145627c335d36f569facbda7c15cd62a0b0d0a9ee08c1e85ad` |
+| `harness-design-studio-1.4.0-macos-x86_64.dmg` | `63fb2057fbb15c08122d6322a94549abb33f6345be929362db15bd046f96864c` |
+| `harness-design-studio-1.4.0-windows-x86_64-setup.exe` | `069aaddc26b736f17956c22c4011251062bdbfe79c5ce310dd2eca6669b5a7df` |
+| `harness-design-studio-1.4.0-windows-x86_64.zip` | `b5f8caef559a45c41c70107aad691d45cab1ffdd57fd938068f7b13e67324b52` |
+| `harness-design-studio_1.4.0_amd64.deb` | `e4454d4801bb4b39ef90095efaca4164074c4158716909be1bffe84b135e1136` |
+
+The checksums are also in `evidence/release_1.4.0_SHA256SUMS` (the same bytes as the `SHA256SUMS` file on the release page, 671 bytes, SHA-256 `985bb580e94665aca097913dbefd0339e4d043c9960a40d5ae34dbb5fe5d2870`). The packages were built by the workflow on GitHub's machines; they have not been installed on a clean machine without a network by a person (the waiver T-30 stands), the screen-reader pass was not held (T-27), and no independent review took place (T-20 to T-30). The waivers and open items of the sections above are unchanged by the publication. Open for the AIT engineers to say: what soldering needs beyond the termination column of the pinout lists.
