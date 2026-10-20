@@ -2211,3 +2211,13 @@ LABELS_CONNECTOR_LABEL_TIP = "Text for the label of this cable connector (labels
 LABELS_APPLY = "Apply labels"
 LABELS_APPLY_TIP = "Set the harness label and the label of the chosen cable connector"
 STEP_SET_LABELS = "Set labels"
+
+# ---- 1.4.0 M4: who made the last change ----------------------------------------------------------
+REL_AUTHOR = "Last commit of the project folder: {author}, {when}, “{subject}” ({short}{branch})."
+REL_AUTHOR_BRANCH = ", branch {}"
+REL_AUTHOR_TIP = (
+    "Read from the Git repository around the project folder, without starting Git and without a "
+    "network. It is the last commit of the whole repository, not of this project alone, and "
+    "changes made since that commit are not shown."
+)
+REL_AUTHOR_NAME = "Last commit of the project folder"

@@ -13,7 +13,7 @@ This page says what the AIT engineers asked for, what the tool does about each p
 | 5 | Every pin-to-pin wire editable | wires are generated; a hand choice needs `"locked": true` in the harness file and the app has no button | M1 (edit a wire), M2 (add, move and delete a wire) |
 | 6 | Several cables on one pin | generation puts one signal on one pin; the file format has splices, nothing creates them | M2 |
 | 7 | State the twisting | pairs come from the interface type; nothing per wire or cable | M2 |
-| 8 | Version control: version, who made the last change | revision and a change log that names who reviewed, released or revised; nothing for edits between releases | M4 |
+| 8 | Version control: version, who made the last change | revision and a change log that names who reviewed, released or revised; nothing for edits between releases | M4 (the last commit of the Git repository around the project folder, read without starting Git, D-164) |
 | 9 | Soldering | a pin has a termination (crimp, solder, unspecified) and nothing uses it | M3 (written to the lists; what else they want is to be discussed) |
 | 10 | A label on connectors and on the harness | `labels.csv` is generated; the text cannot be edited; a harness has no label | M3 (and a wire label in M1) |
 
@@ -32,7 +32,7 @@ This page says what the AIT engineers asked for, what the tool does about each p
 - **M1, edit a wire** (requirements 4, 5, 10 in part). Per wire: gauge, type (library wire part), colour, length, a label text and a note. Gauge, type, colour and length lock the wire against regeneration; label and note are always kept. A wire can be reset to what generation would give. Where: `core/wires.py` (plans), the Harness tab (an *Edit wire* form beside *Why*), wire list and labels, verifier, change control, tests, manual page.
 - **M2, wires that a person draws** (5, 6, 7). Add a wire between two pins of the connectors of a harness, move one end, delete it; generation keeps such wires. Several wires on one pin with a check that says so; twisting a set of wires (a twisted-pair group that a person makes).
 - **M3, small additions** (3, 9, 10). A free-text function on every pin, a label on every connector and on the harness, the termination (soldered or crimped) in the pinouts and the wire list.
-- **M4, who changed what** (8). A project version and, when the project folder is a Git repository, the last commit (who, when, what) next to the revision, read with the local `git` program (no network).
+- **M4, who changed what** (8). A project version and, when the project folder is a Git repository, the last commit (who, when, what) next to the revision. It is read from the repository's own files, not with the `git` program (D-164), so the rule against `subprocess` keeps its single exception.
 - **M5, reuse** (1, 2). A device and connector library that can be exported from one project and imported into another, and an import of an InvenTree export file into the parts library.
 
 Each milestone ends with the output proof, the tests, the documents (manual, guide, file format, decisions) and a pull request that CI checks on Linux, Windows and macOS. The version becomes 1.4.0 with the last milestone.

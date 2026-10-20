@@ -12,7 +12,9 @@ the existing change dialog. Which state a harness is in is always a state chip (
 released, revised), never colour alone.
 """
 
+import time
 from collections.abc import Mapping
+from pathlib import Path
 from typing import Any
 
 from PySide6.QtCore import QItemSelectionModel, QModelIndex, QSettings, Qt, QTimer, Signal
@@ -34,6 +36,7 @@ from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.vcs import lockview
 from harness_design_studio.core.vcs.diff import Diff
+from harness_design_studio.core.vcs.gitinfo import CommitInfo, last_commit
 from harness_design_studio.core.vcs.report import baselines_of
 from harness_design_studio.core.vcs.timeline import (
     DiffGroup,
@@ -53,6 +56,7 @@ def _m(row: Row) -> Mapping[Any, Any]:
     return row if isinstance(row, Mapping) else {}
 
 
+AUTHOR_SECONDS = 5.0  # the last commit is looked up again after this long
 REFRESH_MS = 150  # a visible panel reads the project this long after the last change
 ALL = ""  # the combo box entry "All harnesses"
 WORKING = ""  # the "with" entry "Working design"
@@ -166,6 +170,8 @@ class ReleasesPanel(QWidget):
         self._groups: list[DiffGroup] = []
         self._cache: dict[tuple[Any, ...], Diff] = {}
         self._building = False
+        self._author_key: tuple[Path | None, float] | None = None
+        self._author_info: CommitInfo | None = None
         lay = QVBoxLayout(self)
 
         # ---- header: harness, its state, the three actions -------------------------------
@@ -201,6 +207,14 @@ class ReleasesPanel(QWidget):
         self.action_note.setProperty("muted", True)
         self.action_note.setWordWrap(True)
         lay.addWidget(self.action_note)
+        self.author = QLabel()  # who made the last commit around the project folder (M4)
+        self.author.setObjectName("releases-author")
+        self.author.setAccessibleName(strings.REL_AUTHOR_NAME)
+        self.author.setToolTip(strings.REL_AUTHOR_TIP)
+        self.author.setProperty("muted", True)
+        self.author.setWordWrap(True)
+        self.author.setVisible(False)
+        lay.addWidget(self.author)
 
         split = QSplitter(Qt.Orientation.Vertical)
         split.setObjectName("releases-split")
@@ -396,6 +410,33 @@ class ReleasesPanel(QWidget):
         self._fill_pickers()
         self._update_actions()
         self._compare()
+        self._update_author()
+
+    def _update_author(self) -> None:
+        """The last commit of the repository around the project folder, when there is one. It
+        reads a few small files, so it is looked up again only after `AUTHOR_SECONDS`."""
+        root = self.ctl.root
+        now = time.monotonic()
+        if (
+            self._author_key is None
+            or self._author_key[0] != root
+            or now - self._author_key[1] > AUTHOR_SECONDS
+        ):
+            self._author_key = (root, now)
+            self._author_info = None if root is None else last_commit(root)
+        info = self._author_info
+        self.author.setVisible(info is not None)
+        if info is not None:
+            branch = strings.REL_AUTHOR_BRANCH.format(info.branch) if info.branch else ""
+            self.author.setText(
+                strings.REL_AUTHOR.format(
+                    author=info.author,
+                    when=info.when,
+                    subject=info.subject,
+                    short=info.short,
+                    branch=branch,
+                )
+            )
 
     def _select_entry(self, entry: str | None) -> None:
         """Select the timeline line with this entry ID again (after the rows were read anew)."""
