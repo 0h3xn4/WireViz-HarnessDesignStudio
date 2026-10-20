@@ -4,6 +4,14 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+## 1.3.0 (2026-10-20; not a statement of compliance)
+
+Version 1.3.0 is 1.2.0 with a **new user interface** (the UI overhaul, decisions D-150 to D-159, brief and plan in `docs/ui/`): a navigation rail, one top bar with the three steps Generate, Check and Release, light and dark themes that switch at once with the bundled Inter and JetBrains Mono fonts, tables that work like a spreadsheet, a window that does not freeze, one import wizard, a list of the exported files with their checksums, and a Settings area. Before and after pictures are in `docs/ui/BEFORE_AFTER.md` and `docs/ui/screenshots/`.
+
+What did not change: the design model, the file format (a project saved by 1.2.0 or earlier opens as it is), the 34 design rules and their results, the command line, and the generated files. Every file the four example projects write was compared with the files of release 1.2.0 (`tools/output_hashes.py`, `docs/ui/OUTPUT_HASHES_1.2.0.json`, `tests/test_output_hashes.py`): 567 files, identical apart from the tool version that they record (the model hash of a generated project includes the version of the generation record). The packages for Ubuntu, Windows and macOS are made as before. Not done, as in earlier releases: signing the packages, a screen-reader pass and the clean-machine installation test (waived by the owner, `compliance/DEVIATIONS.md`).
+
+### Changed
+
 - **UI overhaul, M9 (Settings).** Settings is now a list of sections: Appearance (theme, interface size and a new *Reduce motion*), Editing (mode, snap to grid, all link labels), Project, Keyboard shortcuts (every key of the window, with a filter), About (version, Python and Qt versions, where your settings are kept) and Licences (the fonts, icons and Qt, with their texts). Every setting is applied at once and kept for the next start; the page follows the menus and Ctrl+K. Help > About opens the About section instead of a message box. Changing the interface size still takes about a second.
 - **UI overhaul, M8 (Outputs and Revisions).** The Lists tab shows every exported file with its state (matches the export, changed since, missing, not in the export), SHA-256, document, harness, format, size and time written, and offers Open, Reveal in folder and Copy to folder; the checksums are worked out in the background. In Revisions, the rows of the Differences table are tinted by the kind of change and a line says what the released harness locks. The files an export writes are byte-identical to 1.2.0.
 - **UI overhaul, M7 (Import).** File > Import > Interfaces (Ctrl+Shift+I) opens the same wizard as the other five kinds, with *Paste table text instead…* for the older dialog. A file of more than 1,500 rows is read in the background with a progress line and Cancel, so a 20,000-row table no longer freezes the window, and long tables size their columns much faster. See D-156.
@@ -14,6 +22,14 @@ Versions follow semantic versioning. Every project file records the tool version
 - **UI overhaul, M2 (the shell).** A navigation rail (Home, Model, Checks, Drawings, Outputs, Revisions, Settings), one full-width top bar (Undo, Redo, mode and search moved up from the second tool bar, with the revision and where you are), a job indicator with Cancel and an Offline marker in the status bar, a Problems panel at the bottom (Ctrl+Shift+M), Home and Settings pages, and a layout that is remembered per project. See D-151.
 
 - **UI overhaul, M1 (foundation; the screens themselves follow in M2 to M9).** A theme package (`gui/theme/`) replaces IBM Carbon: one token source, Inter and JetBrains Mono (bundled, SIL OFL) instead of IBM Plex, rounded controls, a calmer light and dark palette, tuned for WCAG 2.2 AA. Switching light and dark is now instant (about 0.1 s instead of 0.5 to 1 s). No change to the design model, the file formats, the command line or any generated file. See D-150 and `docs/ui/UI_OVERHAUL_PLAN.md`.
+
+- **UI overhaul, final milestone (checks).** One test file (`tests/test_ui_final.py`) walks every area, the tabs, the sections of Settings and the Problems panel in both themes: no Qt warning, every control has an accessible name, every icon-only button a tooltip, the Tab key visits every control and returns to where it started, and keyboard focus can be seen on every kind of control. The performance numbers are in `docs/ui/PERF_BASELINE.md` ("After the final milestone"); changing the interface size still takes about a second (D-158, D-159).
+
+### Fixed
+
+- **A keyboard trap in every area.** The tab widget that holds the inspector (and the one of an area with a single tab) has no visible tab bar, but stayed a Tab stop that hands the focus to its hidden bar, so Tab from the project panel's tab bar did nothing. Such a tab widget is no longer a Tab stop.
+- **The left panel did not return to its width.** Going from the Interfaces tab to the Units tab took the widened panel for the normal one, so the Project tab never got its width back; it does now.
+- `python -m tools.ui_screenshots` makes each theme and part in a process of its own (making two themes in one process crashed Qt's offscreen platform).
 
 ## 1.2.0 (2026-10-19; not a statement of compliance)
 

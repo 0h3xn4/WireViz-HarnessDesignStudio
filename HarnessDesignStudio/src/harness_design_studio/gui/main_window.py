@@ -818,7 +818,10 @@ class MainWindow(QMainWindow):
             # the table has eight columns: give the left panel room for them (at most 55 % of the window)
             want = min(self.theme.px(INTERFACE_DOCK_PX), self.width() * 11 // 20)
             if self.dock_left.width() < want:
-                self._left_width = self.dock_left.width()
+                if (
+                    not self._left_width
+                ):  # (going from one table to the other keeps the first width)
+                    self._left_width = self.dock_left.width()
                 self.resizeDocks([self.dock_left], [want], Qt.Orientation.Horizontal)
         elif self._left_width:  # back to the tree: the panel narrows to what it was
             self.resizeDocks([self.dock_left], [self._left_width], Qt.Orientation.Horizontal)

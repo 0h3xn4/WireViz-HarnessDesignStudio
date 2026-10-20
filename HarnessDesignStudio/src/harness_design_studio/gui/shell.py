@@ -210,7 +210,11 @@ class SlotTabs(QTabWidget):
 
     def _sync_bar(self) -> None:
         shown = sum(1 for i in range(self.count()) if self.isTabVisible(i))
-        self.tabBar().setVisible(shown > self._min_bar)
+        bar = shown > self._min_bar
+        self.tabBar().setVisible(bar)
+        # The tab widget is a Tab stop that hands the focus to its tab bar. With the bar hidden that
+        # is a stop that cannot take the focus, and Tab then stays where it was (a keyboard trap).
+        self.setFocusPolicy(Qt.FocusPolicy.TabFocus if bar else Qt.FocusPolicy.NoFocus)
 
 
 # ---- persistent banners ------------------------------------------------------------------------

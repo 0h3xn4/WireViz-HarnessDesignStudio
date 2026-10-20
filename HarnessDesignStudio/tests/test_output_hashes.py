@@ -1,5 +1,6 @@
 """A change of the user interface must leave every file the tool writes alone (UI overhaul M6): the
-SHA-256 of each output file of each packaged example equals the one made with release 1.2.0."""
+SHA-256 of each output file of each packaged example equals the one made with release 1.2.0, apart from
+the version stamp the files carry (`tools.output_hashes.as_in_base_version`)."""
 
 import json
 
