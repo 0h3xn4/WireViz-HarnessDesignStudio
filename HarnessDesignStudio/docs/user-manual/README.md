@@ -19,6 +19,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 | have the tool make connectors, pins and wires | [Generate harnesses](generate-harnesses.md) |
 | understand an error or a warning, or waive one | [Read and fix problems](read-and-fix-problems.md) |
 | enter derating factors, wire current ratings and test limits | [Fill in the engineering values](fill-in-engineering-values.md) |
+| change the gauge, type, colour, length, label or note of one wire | [Edit a wire](edit-a-wire.md) |
 | load my interface table, approved parts list or segment lengths | [Import data](import-data.md) |
 | define a device of my own down to each pin, or load its pinout from a spreadsheet | [Define a device](define-a-device.md) |
 | take a unit's pinout from KiCad | [Import KiCad pinouts](import-kicad-pinouts.md) |
@@ -43,7 +44,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 7. [Import KiCad pinouts](import-kicad-pinouts.md): `harness-design-studio import-netlist` and fixed pins.
 8. [Define a device](define-a-device.md): the Devices tab, pins and signals, `import-pinout` and `export-pinout`.
 9. [Export the outputs](export-the-outputs.md): what each file is for; checking that it is current.
-10. [Set wire colours](set-wire-colours.md): *Edit > Wire colours...* and the file setting. **New in 1.0.0 (not in the 0.1.0 packages).**
+10. [Set wire colours](set-wire-colours.md): *Edit > Wire colours...* and the file setting. **New in 1.0.0 (not in the 0.1.0 packages).** [Edit a wire](edit-a-wire.md): the *Edit wire* tab. **New in 1.4.0.**
 11. [Naming and title block](naming-and-title-block.md): name patterns and title block fields.
 12. [Release a harness](release-a-harness.md): review, release, the gates, the change log.
 13. [Change a released harness](change-a-released-harness.md): new revision, `diff`, `log`, `compare`.

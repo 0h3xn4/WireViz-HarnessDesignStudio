@@ -393,11 +393,16 @@ def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[st
             if w is None or len(row) < 13:
                 continue
             wrong = []
-            if any(t.emc_class for t in project.interface_types.values()):
+            has_emc = any(t.emc_class for t in project.interface_types.values())
+            if has_emc:
                 i = project.interfaces.get(w.interface_id or "")
                 t = project.interface_types.get(i.type_id) if i else None
                 if len(row) < 14 or row[13] != ((t.emc_class if t else None) or ""):
                     wrong.append("EMC class")
+            if any(x.label or x.note for g in project.harnesses.values() for x in g.wires):
+                at = 13 + (1 if has_emc else 0)
+                if len(row) < at + 2 or (row[at], row[at + 1]) != (w.label or "", w.note):
+                    wrong.append("label or note")
             if row[1] != (w.signal or ""):
                 wrong.append("signal")
             if row[2] != (w.interface_id or ""):
@@ -1024,7 +1029,8 @@ def _label_rows(project: Project, h: Harness) -> list[list[Cell]]:
         [c.id, "connector", f"{c.id} mates {c.mates_with or '-'}", "1"] for c in h.connectors
     ]
     for w in h.wires:
-        head = f"{w.id} {w.signal}" if w.signal else w.id
+        name = w.label or w.signal
+        head = f"{w.id} {name}" if name else w.id
         emc = _emc_class(project, w)
         tag = f" [EMC {emc}]" if emc else ""
         rows.append([f"{w.id}-A", "wire", f"{head} to {w.to_connector}.{w.to_pin}{tag}", "1"])

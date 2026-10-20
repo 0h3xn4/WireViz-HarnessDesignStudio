@@ -82,6 +82,7 @@ All optional with defaults; projects saved before them load unchanged.
 - `Pin.fixed`: the signal is defined by the unit design (imported from KiCad, `docs/KICAD.md`). Generation connects interfaces to the pin of the same name and never moves it. Default `false`.
 - `Connector.mates_with`: on a cable connector, the box connector it mates with.
 - `Wire.locked`: gauge, part, colour and length were set by a person; regeneration keeps them.
+- `Wire.label` and `Wire.note` (1.4.0): text for the wire labels instead of the signal name, and a remark. Written only when set; a project without them is byte-identical to one saved by 1.3.0, and 1.3.0 quarantines the fields when it opens a project that uses them.
 - `Harness.generated`, `group_key`, `interfaces`: set for generated harnesses; manual harnesses keep `generated: false`.
 - `Part.mates_with`: library connector parts that mate with it.
 - `generated/generation.json`: the last generation record: `input_hash`, `generator_version`, `next_harness_number`, `placeholders_used`, and `provenance` (object key to list of "rule: reason" lines; the data behind Explain).

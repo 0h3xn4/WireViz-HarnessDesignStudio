@@ -1,10 +1,10 @@
 """Physical layer: connectors, pins, wires, shields and harnesses."""
 
-from typing import Literal
+from typing import ClassVar, Literal
 
 from harness_design_studio.core.ids import Id, PinId
 
-from .base import Awg, Entity, IsoDate, LengthM, Name, Text
+from .base import Awg, Entity, IsoDate, LengthM, Name, SparseEntity, Text
 
 Gender = Literal["male", "female", "unspecified"]
 Role = Literal["box", "cable", "inline", "feedthrough", "test"]
@@ -40,7 +40,9 @@ class Connector(Entity):
     notes: Text = ""
 
 
-class Wire(Entity):
+class Wire(SparseEntity):
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label", "note"})
+
     id: Id
     signal: Name | None = None
     from_connector: Id
@@ -53,6 +55,8 @@ class Wire(Entity):
     length_m: LengthM | None = None
     interface_id: Id | None = None
     locked: bool = False  # user-set gauge, colour, part and length: regeneration keeps them
+    label: Name | None = None  # text for the wire labels instead of the signal name (a person's)
+    note: Text = ""  # a person's remark; generation always keeps it
 
 
 class ShieldGroup(Entity):

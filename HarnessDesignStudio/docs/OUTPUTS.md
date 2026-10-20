@@ -39,12 +39,12 @@ A wiring diagram: the connectors are tables on the left and the right (name, par
 ## Tables
 Numbers in the tables and in the YAML keep all their digits (the shortest text that reads back as the same value, no exponent; totals are rounded to 9 decimals so sums show no floating point noise). Only the text on the drawings is rounded (6 significant digits). Rows that share a key are in ID order whatever order the harnesses were created in (wire IDs in the pinouts are sorted, mating rows are ordered by connector and harness), so equal designs give equal bytes. A long ID is drawn in a smaller font instead of being cut (down to 1.4 mm for the 64 characters the model allows).
 
-- `wirelist.csv`: Wire, Signal, Interface, From connector/pin, To connector/pin, AWG ("pending" when undecided), Part, Colour, Length (m), Shield group, Locked.
+- `wirelist.csv`: Wire, Signal, Interface, From connector/pin, To connector/pin, AWG ("pending" when undecided), Part, Colour, Length (m), Shield group, Locked; then `EMC class` when interface types have one, and `Label` and `Note` when a person gave a wire one (1.4.0), so a project without them keeps the wire list it had.
 - `pinouts.csv` / `box_pinouts.csv`: every pin of every cable / box connector, wires attached, spare flag.
 - `bom.csv`: connector parts by count, wire parts by metres known (plus the number of wires without length), approval status.
 - `mass_length.csv`: known wire length, mass of wires and cable connectors, margin, whether the data is complete, what is missing. Totals count only what is known and say so. Backshells, shielding, sleeving and tie-downs are not in the mass (the tool has no mass data for them); "Complete" refers to the wires and cable connectors only.
 - `tests.csv`: continuity per wire, isolation per wire (against all others and shields) and per shield. Limits come from `generation.test_*` and read "TBD (placeholder)" until set.
-- `labels.csv`: one label per connector, two per wire (one per end).
+- `labels.csv`: one label per connector, two per wire (one per end); a wire label prints the wire's label (1.4.0) instead of its signal name when it has one.
 - `mating_matrix.csv`, `traceability.csv`: box connector to cable connector; interface to harness and wires.
 
 ## WireViz YAML
