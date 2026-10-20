@@ -14,7 +14,7 @@ from harness_design_studio.core.model import Part  # noqa: E402
 from harness_design_studio.core.samples import sat15  # noqa: E402
 from harness_design_studio.core.wires import find_wire  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
-from tests.test_ux_harness import make_view, theme  # noqa: E402, F401
+from tests.test_ux_harness import make_view, theme  # noqa: E402, F401, F811
 
 
 def project():
@@ -45,7 +45,7 @@ def select_rows(view, *rows: int) -> list[str]:
 
 
 @pytest.fixture
-def made(qtbot, theme):
+def made(qtbot, theme):  # noqa: F811
     ctl, view = make_view(qtbot, theme, project())
     return ctl, view, view.wire_editor
 

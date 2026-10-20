@@ -120,8 +120,8 @@ class WireEditor(QWidget):
         self.part.activated.connect(lambda _i: self._touch(self.part))
         self.colour.activated.connect(lambda _i: self._touch(self.colour))
         colour_edit = self.colour.lineEdit()
-        assert colour_edit is not None
-        colour_edit.textEdited.connect(lambda _t: self._touch(self.colour))
+        if colour_edit is not None:
+            colour_edit.textEdited.connect(lambda _t: self._touch(self.colour))
         self.note.textChanged.connect(lambda: self._touch(self.note))
         for w in (self.gauge, self.length, self.label):
             w.returnPressed.connect(self.apply_changes)
