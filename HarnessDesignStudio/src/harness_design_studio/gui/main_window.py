@@ -147,6 +147,7 @@ from harness_design_studio.gui.theme import MODES, ThemeManager, mark_mono
 from harness_design_studio.gui.theme.tokens import CATEGORIES
 from harness_design_studio.gui.topbar import ShellStatus, TopBar
 from harness_design_studio.gui.tour import Tour
+from harness_design_studio.gui.unit_table import UnitTable
 from harness_design_studio.resources import guide_path
 
 SCALES = (100, 125, 150, 200)
@@ -155,7 +156,7 @@ STATE_VERSION = 3  # of the saved dock layout (`saveState`); change it when the 
 WIDE_PX = 1222  # in UI-scale-free px: the right dock needs this much window width (the rail's 72 included)
 MEDIUM_PX = 872  # ... and the left dock this much
 # the left dock opens this wide on the Interfaces tab (if the window allows)
-INTERFACE_DOCK_PX = 620
+INTERFACE_DOCK_PX = 760
 MAIN_TABS = ("diagram", "harness", "lists", "checks", "releases", "devices")  # Ctrl+1 ... Ctrl+6
 
 
@@ -474,6 +475,7 @@ class MainWindow(QMainWindow):
         self.ctl.connectChanged.connect(self._on_connect)
         self.ctl.modeChanged.connect(self._on_mode)
         self.interface_table.newInterfaceRequested.connect(self.new_interface_flow)
+        self.unit_table.newUnitRequested.connect(lambda: self.menu_add.exec(QCursor.pos()))
         self.checks_panel.showRequested.connect(self.show_object)
         self.releases_panel.changeRequested.connect(self.change_flow)
         self.pending_link.filterRequested.connect(self.show_unchecked)
@@ -659,7 +661,8 @@ class MainWindow(QMainWindow):
 
     def _build_docks(self) -> None:
         # left: the project tree (a slot, filled when it exists) and the interface table
-        self.interface_table = InterfaceTable(self.ctl)
+        self.unit_table = UnitTable(self.ctl, self.settings)
+        self.interface_table = InterfaceTable(self.ctl, self.settings)
         self.left_tabs = SlotTabs()
         self.left_tabs.setObjectName("left-tabs")
         self.left_tabs.setAccessibleName(strings.SHELL_LEFT_TABS)
@@ -668,6 +671,9 @@ class MainWindow(QMainWindow):
             strings.TAB_PROJECT,
             EmptyStateWidget(self.theme, strings.TAB_PROJECT, strings.EMPTY_VIEW_TREE, icon="tree"),
             installed=False,
+        )
+        self.left_tabs.add_slot(
+            "units", strings.TAB_UNITS, self.unit_table, tip=strings.TAB_UNITS_TIP
         )
         self.left_tabs.add_slot(
             "interfaces",
@@ -802,9 +808,9 @@ class MainWindow(QMainWindow):
         self._sync_dock_titles()
         if not self.dock_left.isVisible():
             return
-        if self.left_tabs.currentWidget() is self.interface_table:
-            # the table has eight columns: give the left panel room for them (at most half the window)
-            want = min(self.theme.px(INTERFACE_DOCK_PX), self.width() // 2)
+        if self.left_tabs.currentWidget() in (self.interface_table, self.unit_table):
+            # the table has eight columns: give the left panel room for them (at most 55 % of the window)
+            want = min(self.theme.px(INTERFACE_DOCK_PX), self.width() * 11 // 20)
             if self.dock_left.width() < want:
                 self._left_width = self.dock_left.width()
                 self.resizeDocks([self.dock_left], [want], Qt.Orientation.Horizontal)
@@ -813,9 +819,12 @@ class MainWindow(QMainWindow):
             self._left_width = 0
 
     def _sync_dock_titles(self) -> None:
+        current = self.left_tabs.currentWidget()
         self.dock_left.setWindowTitle(
             strings.TAB_INTERFACES
-            if self.left_tabs.currentWidget() is self.interface_table
+            if current is self.interface_table
+            else strings.TAB_UNITS
+            if current is self.unit_table
             else strings.TAB_PROJECT  # fmt: skip
         )
 
@@ -1162,7 +1171,7 @@ class MainWindow(QMainWindow):
             "Delete",
             name="act-delete",
             # not from other panels (the project tree reports its own Delete)
-            only_in=(self.view, self.interface_table.view),
+            only_in=(self.view, self.interface_table.view, self.unit_table.view),
         )
         self.act_redundant = a(
             strings.REDUNDANT_COPY, self._redundant_selected, name="act-redundant"
@@ -1301,6 +1310,9 @@ class MainWindow(QMainWindow):
             self.go_actions[name] = a(label, partial(self._go_tab, name), f"Ctrl+{k}", name=f"act-go-{name}")  # fmt: skip
         self.act_go_interfaces = a(
             strings.A_GO_INTERFACES, self.show_interfaces, "Ctrl+Shift+T", name="act-go-interfaces"
+        )
+        self.act_go_units = a(
+            strings.A_GO_UNITS, self.show_units, "Ctrl+Shift+J", name="act-go-units"
         )
         # File > Import: the existing dialog for interfaces, the wizard for the other kinds
         self.import_actions: dict[str, QAction] = {}
@@ -1528,6 +1540,7 @@ class MainWindow(QMainWindow):
             g.addAction(act)
         g.addAction(self.act_go_settings)
         g.addAction(self.act_go_interfaces)
+        g.addAction(self.act_go_units)
         g.addSeparator()
         g.addAction(self.act_next_pane)
         g.addAction(self.act_prev_pane)
@@ -2782,6 +2795,12 @@ class MainWindow(QMainWindow):
         self.left_tabs.setCurrentWidget(self.interface_table)
         self.interface_table.view.setFocus()
 
+    def show_units(self) -> None:
+        """Go to the Unit table (the left panel's second tab) and put the keyboard in it."""
+        self.dock_left.show()
+        self.left_tabs.setCurrentWidget(self.unit_table)
+        self.unit_table.view.setFocus()
+
     def _go_tab(self, name: str) -> None:
         self.go_to(name)
 
@@ -3535,6 +3554,7 @@ class MainWindow(QMainWindow):
         if was != now and (was[0] and not now[0] or was[1] and not now[1]):
             self.toasts.show_message(strings.PANELS_HIDDEN, None)  # never hide panels silently
         self.interface_table.scale_factor = scale
+        self.unit_table.scale_factor = scale
         self.dock_left.setMinimumWidth(self.theme.px(240))
         self.dock_right.setMinimumWidth(self.theme.px(260))
         self.resizeDocks([self.dock_left], [self.theme.px(250)], Qt.Orientation.Horizontal)

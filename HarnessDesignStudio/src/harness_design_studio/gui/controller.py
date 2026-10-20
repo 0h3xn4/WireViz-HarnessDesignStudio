@@ -730,6 +730,28 @@ class EditorController(QObject):
             ],
         )
 
+    def update_interface_rows(self, rows: Mapping[str, Mapping[str, object]], label: str) -> bool:
+        """Change different fields of different interfaces in one undoable step (a paste)."""
+        return self.attempt(
+            label,
+            lambda: [
+                op
+                for iid in sorted(rows)
+                for op in edit.ops_update_interface(self.project, iid, **rows[iid])
+            ],
+        )
+
+    def update_unit_rows(self, rows: Mapping[str, Mapping[str, object]], label: str) -> bool:
+        """Change different fields of different units in one undoable step (a paste)."""
+        return self.attempt(
+            label,
+            lambda: [
+                op
+                for uid in sorted(rows)
+                for op in edit.ops_update_unit(self.project, uid, **rows[uid])
+            ],
+        )
+
     def move_unit(self, unit_id: str, x: float, y: float) -> None:
         zone_before = self.project.units[unit_id].zone
         if self.attempt(

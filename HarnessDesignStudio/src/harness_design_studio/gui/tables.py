@@ -43,6 +43,7 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.sheet import ColumnMenu
 from harness_design_studio.gui.states import STATE_ROLE, STATES, StateDelegate
 from harness_design_studio.gui.theme import ThemeManager, mono_item_font
 
@@ -535,6 +536,7 @@ class TableView(QTableView):
         install_copy(self)
         self._widths = persist_widths(self, settings, key) if settings and key else None
         self._sized = bool(self._widths and self._widths.has_saved)
+        self.column_menu = ColumnMenu(self, settings, key) if settings and key else None
         self._fit_columns()
         model.modelReset.connect(self._fit_columns)
         theme.changed.connect(self._restyle)

@@ -45,6 +45,7 @@ def _close_the_windows_a_test_left_open() -> Iterator[None]:
     app = QApplication.instance()
     if app is None:
         return
+    _release_stray_modifiers(app)
     for widget in QApplication.topLevelWidgets():
         if widget in before:
             continue
@@ -54,3 +55,27 @@ def _close_the_windows_a_test_left_open() -> Iterator[None]:
         widget.hide()
         widget.deleteLater()
     app.sendPostedEvents(None, QEvent.Type.DeferredDelete)
+
+
+def _release_stray_modifiers(app: object) -> None:
+    """`QTest.keyClick(w, key, Ctrl|Shift)` can leave Shift (or another modifier) pressed as far as
+    `QGuiApplication.keyboardModifiers()` goes. A table with extended selection reads that state in
+    `selectRow`, so the next test's selection came out toggled or empty. Release what is left."""
+    from PySide6.QtCore import Qt
+    from PySide6.QtGui import QGuiApplication
+    from PySide6.QtTest import QTest
+    from PySide6.QtWidgets import QWidget
+
+    held = QGuiApplication.keyboardModifiers()
+    if held == Qt.KeyboardModifier.NoModifier:
+        return
+    target = QWidget()
+    for modifier, key in (
+        (Qt.KeyboardModifier.ShiftModifier, Qt.Key.Key_Shift),
+        (Qt.KeyboardModifier.ControlModifier, Qt.Key.Key_Control),
+        (Qt.KeyboardModifier.AltModifier, Qt.Key.Key_Alt),
+        (Qt.KeyboardModifier.MetaModifier, Qt.Key.Key_Meta),
+    ):
+        if held & modifier:
+            QTest.keyRelease(target, key)
+    target.deleteLater()

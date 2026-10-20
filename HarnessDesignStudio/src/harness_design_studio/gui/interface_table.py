@@ -12,20 +12,20 @@ and the selection follows the diagram both ways. Every edit goes through the con
 
 from PySide6.QtCore import (
     QAbstractTableModel,
+    QItemSelectionModel,
     QModelIndex,
     QPersistentModelIndex,
+    QSettings,
     QSortFilterProxyModel,
     Qt,
     Signal,
 )
 from PySide6.QtWidgets import (
-    QAbstractItemView,
     QComboBox,
     QHBoxLayout,
     QHeaderView,
     QLineEdit,
     QPushButton,
-    QStyledItemDelegate,
     QTableView,
     QVBoxLayout,
     QWidget,
@@ -36,10 +36,12 @@ from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import Delta, EditorController
 from harness_design_studio.gui.empty_state import attach_empty_state
 from harness_design_studio.gui.panels import format_number, parse_optional_float
+from harness_design_studio.gui.sheet import SheetDelegate, install_sheet
 from harness_design_studio.gui.theme import mono_item_font
 
 COLUMNS = strings.INTERFACE_COLUMNS
 EDITABLE = {1, 5, 6, 7}
+NUMERIC_COLUMNS = {6}  # right-aligned, the unit is in the header
 MONO_COLUMNS = {0, 7}  # ID and requirement ID read in the monospace font
 CHAINS = ["nominal", "redundant", "none"]
 
@@ -114,13 +116,18 @@ class InterfaceModel(QAbstractTableModel):
                 i.id, i.name, t.name if t else i.type_id, self._end(i, 0), self._end(i, 1), i.redundancy,
                 format_number(i.max_current_a), i.requirement_id or "",
             ][col]  # fmt: skip
+        if role == Qt.ItemDataRole.TextAlignmentRole and col in NUMERIC_COLUMNS:
+            return int(Qt.AlignmentFlag.AlignRight | Qt.AlignmentFlag.AlignVCenter)
         if role == Qt.ItemDataRole.AccessibleTextRole:
             return f"{COLUMNS[col]} of {i.id}: {self.data(index, Qt.ItemDataRole.DisplayRole)}"
         if role == Qt.ItemDataRole.FontRole and col in MONO_COLUMNS:
             return mono_item_font()  # IDs and requirement IDs
         return None
 
-    def setData(
+    def is_editable(self, column: int) -> bool:
+        return column in EDITABLE and not self.ctl.read_only
+
+    def setData(  # noqa: N802
         self,
         index: QModelIndex | QPersistentModelIndex,
         value: object,
@@ -128,29 +135,46 @@ class InterfaceModel(QAbstractTableModel):
     ) -> bool:
         if role != Qt.ItemDataRole.EditRole or index.column() not in EDITABLE:
             return False
-        iid = self.ids[index.row()]
-        text = str(value).strip()
-        col = index.column()
-        if col == 1:
-            if "\n" in text or "\r" in text:  # a name is one line (the form field cannot hold more)
-                self.ctl.message.emit(strings.NAME_ONE_LINE, False)
-                return False
-            return self.ctl.update_interface(iid, name=text)
-        if col == 5:
-            if text not in CHAINS:
-                self.ctl.message.emit(strings.CHAIN_HELP, False)
-                return False
-            return self.ctl.update_interface(iid, redundancy=text)
-        if col == 6:
-            num, err = parse_optional_float(text)
-            if err:
-                self.ctl.message.emit(err, False)
-                return False
-            current = self.ctl.project.interfaces[iid].max_current_a
-            if num == current:  # (an unchanged cell is not an edit)
-                return True
-            return self.ctl.update_interface(iid, max_current_a=num)
-        return self.ctl.update_interface(iid, requirement_id=text or None)
+        return self.set_cells([(index.row(), index.column(), str(value))])
+
+    def set_cells(self, cells: list[tuple[int, int, str]]) -> bool:
+        """Apply edits `(row, column, text)` as one undoable step. Every cell is checked first;
+        one that is not valid says why and nothing is changed."""
+        changes: dict[str, dict[str, object]] = {}
+        for row, col, raw in cells:
+            if col not in EDITABLE or not 0 <= row < len(self.ids):
+                continue
+            iid = self.ids[row]
+            text = raw.strip()
+            field = changes.setdefault(iid, {})
+            if col == 1:
+                if (
+                    "\n" in text or "\r" in text
+                ):  # a name is one line (the form field cannot hold more)
+                    self.ctl.message.emit(strings.NAME_ONE_LINE, False)
+                    return False
+                field["name"] = text
+            elif col == 5:
+                if text not in CHAINS:
+                    self.ctl.message.emit(strings.CHAIN_HELP, False)
+                    return False
+                field["redundancy"] = text
+            elif col == 6:
+                num, err = parse_optional_float(text)
+                if err:
+                    self.ctl.message.emit(err, False)
+                    return False
+                if num != self.ctl.project.interfaces[iid].max_current_a:
+                    field["max_current_a"] = num
+            else:
+                field["requirement_id"] = text or None
+        changes = {iid: f for iid, f in changes.items() if f}
+        if not changes:
+            return True  # nothing differs: not an edit
+        if len(cells) == 1:
+            iid = next(iter(changes))
+            return self.ctl.update_interface(iid, **changes[iid])
+        return self.ctl.update_interface_rows(changes, strings.STEP_PASTE.format(len(cells)))
 
 
 class _RowFilter(QSortFilterProxyModel):
@@ -172,27 +196,24 @@ class _RowFilter(QSortFilterProxyModel):
         return all(w in model.search_text(source_row) for w in self.words)
 
 
-class _ChainDelegate(QStyledItemDelegate):
-    def createEditor(
+class _ChainDelegate(SheetDelegate):
+    def createEditor(  # noqa: N802
         self, parent: QWidget, option: object, index: QModelIndex | QPersistentModelIndex
     ) -> QWidget:
         cb = QComboBox(parent)
         cb.addItems(CHAINS)
         return cb
 
-    def setEditorData(self, editor: QWidget, index: QModelIndex | QPersistentModelIndex) -> None:
-        editor.setCurrentText(str(index.data(Qt.ItemDataRole.EditRole)))  # type: ignore[attr-defined]
-
-    def setModelData(
-        self, editor: QWidget, model: object, index: QModelIndex | QPersistentModelIndex
+    def setEditorData(  # noqa: N802
+        self, editor: QWidget, index: QModelIndex | QPersistentModelIndex
     ) -> None:
-        model.setData(index, editor.currentText(), Qt.ItemDataRole.EditRole)  # type: ignore[attr-defined]
+        editor.setCurrentText(str(index.data(Qt.ItemDataRole.EditRole)))  # type: ignore[attr-defined]
 
 
 class InterfaceTable(QWidget):
     newInterfaceRequested = Signal()
 
-    def __init__(self, ctl: EditorController) -> None:
+    def __init__(self, ctl: EditorController, settings: QSettings | None = None) -> None:
         super().__init__()
         self.ctl = ctl
         self.setObjectName("interface-table")
@@ -220,8 +241,7 @@ class InterfaceTable(QWidget):
         self.view.setModel(self.proxy)
         self.view.setSortingEnabled(True)
         self.view.sortByColumn(0, Qt.SortOrder.AscendingOrder)  # IF-001 first
-        self.view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
-        self.view.setSelectionMode(QAbstractItemView.SelectionMode.SingleSelection)
+        install_sheet(self.view, settings=settings, key="interfaces", notify=self._notify)
         self.view.setItemDelegateForColumn(5, _ChainDelegate(self.view))
         header = self.view.horizontalHeader()
         header.setSectionResizeMode(QHeaderView.ResizeMode.Interactive)
@@ -277,14 +297,34 @@ class InterfaceTable(QWidget):
         if self._dirty:
             self.refresh()
 
+    def _notify(self, text: str) -> None:
+        self.ctl.message.emit(text, True)
+
+    def _selected_ids(self) -> list[str]:
+        """The interfaces that have a selected cell, in the order shown."""
+        sel = self.view.selectionModel()
+        rows = sorted({i.row() for i in sel.selectedIndexes()}) if sel else []
+        return [str(self.proxy.index(r, 0).data(Qt.ItemDataRole.DisplayRole)) for r in rows]
+
     def _row_selected(self) -> None:
         if self._busy:
             return
-        rows = self.view.selectionModel().selectedRows()
-        if rows:
-            iid = self.proxy.data(rows[0], Qt.ItemDataRole.DisplayRole)
-            self._busy = True
-            self.ctl.select("interface", str(iid))
+        ids = self._selected_ids()
+        if not ids:
+            return
+        current = self.view.currentIndex()
+        self._busy = True
+        try:
+            if len(ids) == 1:
+                self.ctl.select("interface", ids[0])
+            else:
+                head = (
+                    str(self.proxy.index(current.row(), 0).data(Qt.ItemDataRole.DisplayRole))
+                    if current.isValid() and str(self.proxy.index(current.row(), 0).data()) in ids
+                    else ids[-1]
+                )
+                self.ctl.select_many([("interface", i) for i in ids], primary=("interface", head))
+        finally:
             self._busy = False
 
     def _sync_if_visible(self) -> None:
@@ -294,12 +334,17 @@ class InterfaceTable(QWidget):
     def _sync_selection(self) -> None:
         if self._busy:
             return
-        s = self.ctl.selection
+        wanted = [x.id for x in self.ctl.selected if x.kind == "interface"]
         self._busy = True
         self.view.clearSelection()
-        if s is not None and s.kind == "interface" and s.id in self.model.ids:
-            src = self.model.index(self.model.ids.index(s.id), 0)
-            idx = self.proxy.mapFromSource(src)
-            if idx.isValid():
-                self.view.selectRow(idx.row())
+        for iid in wanted:
+            if iid in self.model.ids:
+                src = self.model.index(self.model.ids.index(iid), 0)
+                idx = self.proxy.mapFromSource(src)
+                if idx.isValid():
+                    self.view.selectionModel().select(
+                        idx,
+                        QItemSelectionModel.SelectionFlag.Select
+                        | QItemSelectionModel.SelectionFlag.Rows,
+                    )
         self._busy = False

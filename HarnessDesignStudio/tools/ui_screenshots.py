@@ -175,6 +175,9 @@ def _main_part(theme: str, shots: Shots, tmp: Path) -> None:
     win.show_interfaces()
     _settle(win)
     a("left-interfaces", lambda: shots.grab("08-left-interfaces-tab", win))
+    win.show_units()
+    _settle(win)
+    a("left-units", lambda: shots.grab("08b-left-units-tab", win))
     win.left_tabs.setCurrentIndex(win.left_tabs.index_of("tree"))
     for number, tab in ((9, "inspector"), (10, "why"), (11, "problems")):
         win.dock_right.show()

@@ -471,7 +471,7 @@ REVIEW_SUBMITTED = "{} submitted for review."
 NEW_REV_STARTED = "New revision of {} started; it can be edited again."
 WIRE_COLOURS_LABEL = "Set wire colours"
 CHAIN_HELP = "Chain must be nominal, redundant or none."
-INTERFACE_COLUMNS = ["ID", "Name", "Type", "From", "To", "Chain", "Max A", "Requirement"]
+INTERFACE_COLUMNS = ["ID", "Name", "Type", "From", "To", "Chain", "Max current (A)", "Requirement"]
 # names of the steps in the Undo / Redo menu and the toasts ("Undone: Add zone")
 STEP_ADD = "Add {}"
 STEP_DELETE = "Delete {}"
@@ -1985,3 +1985,22 @@ EMPTY_DEVICES_TITLE = "No devices yet"
 EMPTY_DEVICES_HINT = "Devices come from the library or from an import."
 EMPTY_LIST_TITLE = "Nothing to list yet"
 EMPTY_LIST_HINT = "Generate the harnesses and the list fills in."
+
+# ---- UI overhaul M4: model editors as sheets -------------------------------------------------
+SHEET_PASTED = "{0} cell(s) pasted."
+SHEET_PASTED_SKIPPED = " {0} left out (read-only column or past the end of the table)."
+SHEET_COLUMNS_MENU = "Show columns"
+TAB_UNITS = "Units"
+TAB_UNITS_TIP = (
+    "Every unit as a table: edit names and notes in place, paste from Excel (Ctrl+Shift+J)"
+)
+UNIT_TABLE = "Unit table"
+UNIT_COLUMNS = ["ID", "Name", "Subsystem", "Zone", "Chain", "Interfaces", "Connectors", "Notes"]
+STEP_PASTE = "Paste {0} cell(s)"
+EMPTY_UNITS_TITLE = "No units yet"
+EMPTY_UNITS_HINT = (
+    "Add a unit from the palette on the diagram, or import a table with File > Import."
+)
+A_GO_UNITS = "Go to Unit table"
+UNIT_FILTER_PLACEHOLDER = "Filter by ID, name, subsystem, zone or notes"
+NEW_UNIT = "New unit"

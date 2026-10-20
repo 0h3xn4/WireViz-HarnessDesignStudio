@@ -330,6 +330,8 @@ into the summary, all existing tests green (CI on Linux, Windows, macOS), golden
   benchmark (`tools.bench_gui` plus a new table benchmark); paste of 500 rows applies as one undo step; keyboard-only
   edit of a pin table works (test); every existing `devices`, `ux_*` and `gui_*` test still passes.
 
+**M4 result (2026-10-19).** Built as D-153: `gui/sheet.py` (paste from Excel, bulk edit, Enter/Esc, column menu), the Interface table on it, a new Unit table, one controller transaction per paste. Not carried out: replacing the Devices tab, inline new interface (reasons in D-153). Measured at stress size: Interface table opens in about 130 ms, Unit table in about 25 ms, paste of 500 rows is one undo step. No old test edited.
+
 **M5 Checks and Problems panel.**
 - Problems panel: severity, rule ID, object, message; filter by severity; click jumps to the object (diagram,
   table row or inspector). Checks tab: results list uses the full area; engineering values as a tab; "results are
