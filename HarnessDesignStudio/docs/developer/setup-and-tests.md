@@ -65,7 +65,7 @@ The markers (declared in `pyproject.toml`, and `--strict-markers` is on, so an u
 
 | Marker | Tests (1.3.0) | Meaning |
 | --- | --- | --- |
-| `gui` | 1,088 | Needs Qt (run with `QT_QPA_PLATFORM=offscreen`, which `conftest.py` sets). `pytest -m gui` runs only these, `pytest -m "not gui"` only the headless ones. |
+| `gui` | 1,088 | Needs Qt (run with `QT_QPA_PLATFORM=offscreen`, which `conftest.py` sets). `pytest -m gui` runs only these. |
 | `ux` | 33 | Drives the clickable prototype in a Chromium browser (playwright). |
 | `perf` | 44 | Asserts a wall-clock limit. CI runs these alone, after the parallel run. A new timing test must carry it, or `tests/test_parallel_safety.py` fails. |
 
@@ -74,7 +74,7 @@ The markers (declared in `pyproject.toml`, and `--strict-markers` is on, so an u
 | `pytest -q tests/test_docs.py tests/test_docs_links.py` | Only the tests that read the documents (a minute or less). |
 | `pytest tests/test_gui_journeys.py` | The editor journeys, driven like a user. |
 | `pytest -q tests/test_ui_*.py tests/test_theme_scan.py tests/test_tokens.py tests/test_fonts.py tests/test_output_hashes.py` | The tests of the user interface of 1.3.0 (see [The tests of the user interface](#the-tests-of-the-user-interface)). Some of them carry the `perf` marker, so add `-m "not perf"` for a loaded machine. |
-| `pytest --cov` | The tests with coverage. The gate is 90 % on `harness_design_studio.core`; the run prints `Required test coverage of 90.0% reached`. The same run had 95.7 %. The GUI is outside the measure. |
+| `pytest --cov` | The tests with coverage. The gate is 90 % on `harness_design_studio.core`; the run prints `Required test coverage of 90.0% reached` and the percentage it reached (not repeated here, it changes). The GUI is outside the measure. |
 | `pytest -m "not perf"` | Everything except the timing tests, in one process. |
 | `pytest -n auto -m "not perf"` | The suite in parallel, one worker per core (pytest-xdist, D-148). The tests that assert a wall-clock limit carry the marker `perf` and are left out, because a loaded machine makes them fail for no reason. |
 | `pytest -m perf` | Those timing tests alone, one at a time. Run it after the parallel run; the two commands together are the whole suite. Add `--cov --cov-append` to both when you want one coverage number. |

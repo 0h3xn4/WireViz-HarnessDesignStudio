@@ -31,7 +31,7 @@ harness-design-studio revise wheel-link W002 --by "A. Engineer" --comment "Add w
 New revision B of W002: done.
 ```
 
-**In the app** (GUI, not run): select `W002` in the **Releases** tab (or the **Harness** tab, where the button is **Revise…**), press **New revision…**, type your name and a comment (at least 10 characters), and press **Start new revision**. The window first says what happens (the next revision becomes a draft, the released one stays as a baseline) and lists what becomes editable, and what stays locked because another released harness uses it. A refused edit on the diagram or in the Inspector also offers **Start new revision…**. The app says "New revision of W002 started; it can be edited again."
+**In the app** (GUI, not run): select `W002` in the **Releases** tab (**Revisions** on the rail; or the **Harness** tab, where the button is **Revise…**), press **New revision…**, type your name and a comment (at least 10 characters), and press **Start new revision**. The window first says what happens (the next revision becomes a draft, the released one stays as a baseline) and lists what becomes editable, and what stays locked because another released harness uses it. A refused edit on the diagram or in the Inspector also offers **Start new revision…**. The app says "New revision of W002 started; it can be edited again."
 
 Revision B is a `draft` that you can edit. Revision A and its baseline are kept.
 
@@ -77,7 +77,7 @@ Comparing before with after: 0 added, 0 removed, 3 changed.
 
 Without `--from` and `--to` the command compares the working design with the latest baseline. The harness lines (approver, status, revision) are the release bookkeeping that a new revision resets. The wire lines are your change.
 
-**In the app**: open the **Releases** tab, pick the harness and use **Compare revision … with …** (a baseline, another revision or the working design). The differences are grouped by kind with counts; added and removed objects say "(did not exist)" and "(removed)". **Mark on diagram** marks the changed units and interfaces on the diagram; **Clear marks** removes the marks. The **Changes…** button of the **Harness plans** tab (bottom panel) opens the older window "Changes in W002" with the same marks.
+**In the app**: open the **Releases** tab (**Revisions** on the rail), pick the harness and use **Compare revision … with …** (a baseline, another revision or the working design). The differences are grouped by kind with counts, and each row is tinted by the kind of change; added and removed objects say "(did not exist)" and "(removed)". A line says what the released harness locks. **Mark on diagram** marks the changed units and interfaces on the diagram; **Clear marks** removes the marks. **Changes…** in the **More** menu of the **Harness** tab (also **Design > Show changes of harness…**) opens the window "Changes in W002" with the same marks.
 
 ## 4. Release revision B
 
@@ -89,7 +89,7 @@ harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "Seco
 ```
 
 ```
-38 files written to wheel-link/outputs (model d7c2e9a824be).
+38 files written to wheel-link/outputs (model b54d6ba4c665).
 Release W002 revision B: done.
 Outputs re-exported with the released status (38 files).
 ```
@@ -132,7 +132,7 @@ C0003 | W002 | B | new revision started | A. Engineer | 2026-10-10 | Add wire co
 C0004 | W002 | B | released | A. Engineer | 2026-10-10 | Second revision with wire colours [Released on placeholder configuration (...); ...] [...]
 ```
 
-(Long parts of the comment column are shortened here with `...`.) Add a harness ID (`harness-design-studio log wheel-link W002`) to see one harness. In the app: the timeline of the **Releases** tab, or **Change log…** in the **Harness plans** tab. The entries cannot be deleted. The outputs also have them: `system/changelog.csv` and `system/revision_report.md`.
+(Long parts of the comment column are shortened here with `...`.) Add a harness ID (`harness-design-studio log wheel-link W002`) to see one harness. In the app: the timeline of the **Releases** tab, or **Change log…** in the **More** menu of the **Harness** tab (also **Design > Show change log of harness…**). The entries cannot be deleted. The outputs also have them: `system/changelog.csv` and `system/revision_report.md`.
 
 ## Compare two copies of a project
 

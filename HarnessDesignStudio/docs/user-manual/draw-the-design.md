@@ -30,7 +30,9 @@ You can start in the app or on the command line. The result is the same: a folde
 
 1. Choose **File > New project from an example…** and pick an example (the list is the same as `harness-design-studio new --list`). Or choose **File > New project…** for an empty project.
 2. Choose an **empty folder**, then type a project name.
-3. To open a project you made earlier: **File > Open project…** (Ctrl+O).
+3. To open a project you made earlier: **File > Open project…** (Ctrl+O), or press **Open** beside it in the **Recent projects** of the **Home** page (Ctrl+7).
+
+**Home** has the same starts as buttons (**New project…**, **Open project…**, **New from an example…**, **Open the sample project**), and **Try the flatsat example** opens a copy of that example in your Documents folder.
 
 **On the command line**
 
@@ -83,7 +85,7 @@ Without a current on a power link, the wire gauge (the thickness of the wire) st
 
 ## 5. Guided or Expert
 
-Use the **Guided** and **Expert** buttons in the top bar (also in the **View** menu and under **Settings**).
+Use the **Guided** and **Expert** buttons in the top bar (also in the **View** menu and under **Settings > Editing**).
 
 - **Guided** (the default): you work with units and links. The tool chooses connectors and pins.
 - **Expert**: you also see each connector and can choose the exact connector at each end of a link.
@@ -96,10 +98,10 @@ Switching never changes your data.
 - **Click a unit or a link** and only its links stay in full colour. Press **Esc** or click the empty background to see everything again.
 - The **Show** list at the right end of the Model tab bar fades everything except one signal class, one connector or one bundle (a harness).
 - **Ctrl+K** (**Search**) lets you type a command or an ID and jump to it.
-- Zoom with **Ctrl+=** and **Ctrl+-**, or **Ctrl+wheel** at the pointer. **F** fits the whole diagram, **Shift+F** zooms to the selection and **Ctrl+0** shows 100 %. **View > Show all link labels** shows voltages and currents on every link in a dense diagram.
+- Zoom with **Ctrl+=** and **Ctrl+-**, or **Ctrl+wheel** at the pointer. **F** fits the whole diagram, **Shift+F** zooms to the selection and **Ctrl+0** shows 100 %. **View > Show all link labels** (or **Settings > Editing > Show every link label**) shows voltages and currents on every link in a dense diagram.
 - **Shift+click**, **Ctrl+click** or a drag on the background select several items; **Ctrl+A** selects all. **Ctrl+F** finds a unit or link and marks every match. **Edit > Align**, **Space evenly** and **Duplicate** (Ctrl+D) work on the selection.
 - A badge on a unit or link counts its problems, warnings and values still to enter, and a lock with *W001 A* shows what a released harness holds.
-- The **Project** tab on the left lists every unit and link as a tree, and the **Interfaces** tab beside it (Ctrl+Shift+T) lists every link as a table you can edit, and the **Units** tab (Ctrl+Shift+J) every unit. The tables work like a spreadsheet: Enter edits a cell, Esc cancels, **Ctrl+V pastes a block copied from Excel** (one Ctrl+Z undoes the whole paste), and an edit made with several rows selected applies to all of them; a right-click on the header chooses the columns. They also work with a screen reader. Shift+arrows in the tree select several units or links at once.
+- The **Project** tab on the left lists every unit and link as a tree, and the **Interfaces** tab beside it (Ctrl+Shift+T) lists every link as a table you can edit, and the **Units** tab (Ctrl+Shift+J) every unit. The tables work like a spreadsheet: Enter edits a cell, Esc cancels, **Ctrl+V pastes a block copied from Excel** (one Ctrl+Z undoes the whole paste), and an edit made with several rows selected applies to all of them; a right-click on the header chooses the columns. Paste fills the rows that exist; a new unit is added with **Add** and a new link with **Ctrl+I**. Shift+arrows in the tree select several units or links at once.
 
 ## 7. Change your mind: delete, undo, save
 

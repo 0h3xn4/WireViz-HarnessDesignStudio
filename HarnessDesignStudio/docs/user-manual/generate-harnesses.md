@@ -24,9 +24,9 @@ This page shows how to turn your units and links into harnesses (connectors, pin
 
 1. Press **Generate** in the top bar (**Design > Generate harnesses**, Ctrl+G).
 2. A window shows a **preview** of what would be added, changed and removed. Nothing changes until you press **Apply**. (**Cancel** leaves the project as it was.)
-3. The **Harness** tab opens on the result. To take it back, press **Undo** (Ctrl+Z). One Undo reverses the whole generation.
+3. The **Harness** tab (the **Drawings** area of the rail) opens on the result. To take it back, press **Undo** (Ctrl+Z). One Undo reverses the whole generation.
 
-Generate always covers every harness; the app has no way to generate only one. When the diagram changes after a generation, the status chip says *Plans out of date* and a banner offers **Generate**.
+Generate always covers every harness; the app has no way to generate only one. The **Generate** step in the top bar says what it knows: *not generated yet*, *the harness plans match the design* or *the design changed after the last generation* (hover it). In the last case the status chip says *Plans out of date* and a banner offers **Generate**.
 
 If there is nothing to generate the app says so ("There is nothing to generate yet. Add units and connect them with interfaces first." or "Harnesses are already up to date. Nothing to change."). If generation finds problems (for example an interface that has no free pins), the preview opens with the errors listed ("Some harnesses could not be generated (N problem(s)). Fix the connectors or interfaces named in the list, then generate again."). It never says "up to date" while errors are waiting. If you edit the project while the plan is being made, the plan is refused ("The project changed while the plan was being made, so nothing was applied. Press Generate again.").
 
@@ -67,7 +67,7 @@ Nothing is saved while the result holds errors (exit code 1). A naming pattern t
 
 ## 2. Check the result on its own
 
-The tool checks its own result with a second program path that shares no code with the generator. In the app the header of the **Harness** tab shows a chip, *Check passed* or *Check found n problem(s)*; the older **Harness plans** tab of the bottom panel shows "Independent check: …". On the command line:
+The tool checks its own result with a second program path that shares no code with the generator. In the app the header of the **Harness** tab shows a chip, *Check passed* or *Check found n problem(s)*; hover the chip to read "Independent check: …" and how long it took. (The **Check** step in the top bar is another check: it runs the design rules, see [read and fix problems](read-and-fix-problems.md).) On the command line:
 
 ```
 harness-design-studio verify wheel-link
@@ -81,12 +81,12 @@ Exit code 0 means no errors. 1 means the project has errors. 2 means a usage err
 
 ## 3. Read why a wire is the way it is
 
-In the app, open the **Harness** tab (Ctrl+2) and pick a harness, for example `W002`, in the list at the top left:
+In the app, open the **Harness** tab (Ctrl+2; **Drawings** on the rail) and pick a harness, for example `W002`, in the list at the top left:
 
 - **Connectors and pins** lists every pin with its signal and wire; a pin whose gauge or length is not known yet has a **Pending** chip, and one that the tool chose and nobody has reviewed an **Auto-filled** chip. Spare pins are hidden and counted under the table; **Show spare pins** shows them.
 - **Wires** shows each wire with its signal, ends, **Gauge**, **Length**, **Colour** and **Locked** (the **Colour** column in the app is not in the 0.1.0 packages).
 - **Why** names the rule behind the wire, connector or pin you select, including gauge and length. This is the tool's answer to "why is it like this?". **Show in Why panel** shows the same in the **Why** tab of the right panel.
-- **Drawing** previews the sheet that [export](export-the-outputs.md) writes: the wheel zooms, a drag pans, **Previous sheet** and **Next sheet** page through it, and hovering a wire in the drawing or the table marks it in the other.
+- **Drawing** previews the sheet that [export](export-the-outputs.md) writes. It takes the width and most of the height of the area, with the pin table, the wire table and the reasons under it. The wheel zooms, a drag pans, **Previous sheet** and **Next sheet** page through it, hovering a wire in the drawing or the table marks it in the other, and picking a wire in the drawing selects its link for the Inspector.
 
 There is no command line version of the **Why** pane. The same reasons are stored in `generated/generation.json` in the project, under `provenance`.
 

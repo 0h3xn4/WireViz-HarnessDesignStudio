@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit) and **macOS 13 or newer** (Apple Silicon and Intel). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows and macOS sections below describe the packages from 1.2.0.
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit) and **macOS 13 or newer** (Apple Silicon and Intel). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows and macOS sections below describe the packages from 1.2.0. The newest release is 1.3.0 (2026-10-20), the one with the new user interface; the file names are listed under [Get the package](#get-the-package). None of the packages is signed.
 
 ## Contents
 
@@ -45,14 +45,26 @@ You also need about 500 MB of free disk space for the program (`df -h ~` shows i
 
 You need one file, either `harness-design-studio_<version>_amd64.deb` (way A), `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B), `harness-design-studio-<version>-windows-x86_64-setup.exe` or `harness-design-studio-<version>-windows-x86_64.zip` (way D) or `harness-design-studio-<version>-macos-arm64.dmg` / `harness-design-studio-<version>-macos-x86_64.dmg` (way E). Ask your tool administrator, or take it from one of these places:
 
-- the **Releases** page of the project's repository (look for the newest version number). Version 1.0.0 has the `.deb`, the `.tar.gz` and a `SHA256SUMS` file attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed. The release record says that attaching the files to the release page is up to the repository owner (`compliance/SIGNOFF.md`, section Publication); if the page lists no `.deb` or `.tar.gz`, use one of the other two places or way C;
-- the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact is called `harness-design-studio-ubuntu-24.04` and holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file).
+- the **Releases** page of the project's repository (look for the newest version number). Version 1.3.0 (tag `v1.3.0`, published 2026-10-20) has these seven files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
+
+  | File | For | Way |
+  | --- | --- | --- |
+  | `harness-design-studio_1.3.0_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
+  | `harness-design-studio-1.3.0-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
+  | `harness-design-studio-1.3.0-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
+  | `harness-design-studio-1.3.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
+  | `harness-design-studio-1.3.0-macos-arm64.dmg` | macOS 13 or newer, Apple Silicon | E |
+  | `harness-design-studio-1.3.0-macos-x86_64.dmg` | macOS 13 or newer, Intel | E |
+  | `SHA256SUMS` | the SHA-256 checksum of each of the six packages | |
+
+  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 has the same six packages as 1.3.0. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
+- the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact `harness-design-studio-ubuntu-24.04` of the CI run holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file); the run of the workflow `harness-design-studio packages (Windows, macOS)` on a branch `pkg/...` keeps the Windows and macOS packages as the artifacts `harness-design-studio-windows-x86_64`, `harness-design-studio-macos-arm64` and `harness-design-studio-macos-x86_64`. Such a build is made again on another machine and is not the file of a release.
 
 You can also build it yourself (way C, last section). That route needs no release files at all.
 
 Copy the file to the machine. It never needs to reach the network.
 
-**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file (the `SHA256SUMS` file on the release page, one file for all packages of a release from 1.2.0, and `compliance/evidence/release_<version>_SHA256SUMS` in the repository for 0.1.0 and 1.0.0). Compare:
+**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file (the `SHA256SUMS` file on the release page, one file for all packages of a release from 1.2.0, and `compliance/evidence/release_<version>_SHA256SUMS` in the repository for every release from 0.1.0 to 1.3.0). Compare:
 
 ```
 sha256sum harness-design-studio_<version>_amd64.deb
@@ -126,7 +138,7 @@ harness-design-studio-gui --selftest    # opens the editor offscreen, makes a pr
 
 Then start **Harness Design Studio** from the application menu. The first start opens a sample project and a short tour.
 
-**What you should see:** a window with the title *Harness Design Studio*, a diagram of boxes (units) joined by lines (interfaces) in the middle, tabs such as *Problems* on the right and *Project* on the left, and the menus **File**, **Edit**, **View**, **Help**. If the window is too small or the text is hard to read, see *If the app does not start* below. **F1** opens the user guide.
+**What you should see:** a window with the title *Harness Design Studio*, a navigation rail down the left edge (*Home*, *Model*, *Checks*, *Drawings*, *Outputs*, *Revisions*, *Settings*), one row at the top with the project name and the steps *Generate*, *Check* and *Release*, a diagram of boxes (units) joined by lines (interfaces) in the middle (the *Model* area), the *Project* tree, *Units* and *Interfaces* on the left, the *Inspector*, *Why* and *Problems* tabs on the right, and the menus **File**, **Edit**, **View**, **Design**, **Go** and **Help**. A short tour opens on the first start. If the window is too small or the text is hard to read, see *If the app does not start* below. **F1** opens the user guide.
 
 ## Your first five minutes after installing
 
@@ -245,7 +257,7 @@ Settings (theme, scale, last project; no design data) are in `%APPDATA%\HarnessD
 
 **The first start of an unsigned app.** The app is not signed with a Developer ID and not notarized (see [`SECURITY.md`](SECURITY.md)), so macOS refuses a plain double-click with a message that it cannot verify the developer. Compare the checksum first (above), then do one of these once:
 
-- Open the Applications folder, **right-click** (or Control-click) the app, choose **Open**, then **Open** in the window that appears. From then on it starts normally.
+- Open the Applications folder, **right-click** (or Control-click) the app, choose **Open**, then **Open** in the window that appears. From then on it starts normally. Apple changed this in macOS 15 (Sequoia): there the right-click **Open** may no longer get past the message, and then the next way is the one to use. This was not tested here; the packages have not been run on a Mac by a person (`compliance/SIGNOFF.md`).
 - Or, in System Settings > *Privacy & Security*, press **Open Anyway** next to the message about the app (it shows for an hour after the refused start).
 - Or, in the Terminal, remove the quarantine mark that the download put on the app: `xattr -dr com.apple.quarantine "/Applications/Harness Design Studio.app"`.
 

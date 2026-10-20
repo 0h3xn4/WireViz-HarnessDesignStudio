@@ -74,6 +74,7 @@ All additions are optional with defaults, so projects saved before them load unc
 - `logical/layout.json`: ordered `zones` (diagram lanes) and one `placements` entry per unit (`id` is the unit ID, `x`/`y` in scene units). Units without a placement are placed deterministically at load (`edit.ops_autoplace`).
 - `waivers.json`: `id` is `<rule>.<object>`; `justification` is mandatory (at least 10 characters).
 - Autosave journal: the full set of project files as text in `.harness-recovery/session.json`, written (atomically) 1.5 s after the last change while a project folder is open; removed on save; offered for restore on the next open if it differs from the files on disk. Never written for the unsaved sample project, so no project content leaves the project folder.
+- Not in the project: the theme, the interface size, *Reduce motion*, the recent projects and the layout of the window (which area and tab was open, where the panels were; kept for each project) are per-user settings in the editor's settings file (`HarnessDesigner.ini`, [`INSTALL.md`](INSTALL.md#where-things-are-stored)), never in a project folder. The format did not change with the new interface of version 1.3.0: a project saved by 1.2.0 or earlier opens as it is.
 
 ## Generation additions: pins, mating, locks, generation record (schema version stays 1)
 All optional with defaults; projects saved before them load unchanged.

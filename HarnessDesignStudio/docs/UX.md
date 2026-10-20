@@ -1,6 +1,6 @@
 # UX specification (gate for M2)
 
-> **Design record of M2, partly superseded. The Carbon and IBM Plex references are historical (D-150: the UI overhaul replaced them).** This is the specification that the editor was first built from. In October 2026 the editor was rebuilt against the owner's "UX/UI Standard" (new window layout, tokens, type scale, icons, state chips, new views); sections 4, 5, 7 and 8 below describe the M2 design and are kept as the record, and the new design is in [`DESIGN.md`](DESIGN.md), with what was built per issue in [`ux-audit.md`](ux-audit.md#build-status) and a summary in [section 13](#13-redesign-against-the-uxui-standard-october-2026). Two earlier decisions changed what the diagram looks like: **D-140** replaced the one-letter chips on links by pictures (and added routing, focus and connector pictures), and **D-141** made the harness drawing a wiring diagram in which wires are drawn in their wire colour (the old rule "wire colours are text only, never drawing colours" no longer holds). The wireframes below show the earlier look. For the current behaviour read the [user guide](guide/USER_GUIDE.md); the pictures of the real editor are in [`ux/qt/`](ux/qt/02-guided-main.png) (they show the current window, not the wireframes below); the screenshots in `ux/screens/` are of the prototype (see [`ux/screens/README.md`](ux/screens/README.md)). See [`DECISIONS.md`](DECISIONS.md) for D-140 and D-141.
+> **Historical: the design record of M2, partly superseded twice.** The IBM Carbon colours, the IBM Plex fonts, the palette, the bottom tabs and the wireframes below describe the editor of 0.1.0 to 1.0.0; the UI overhaul of version 1.3.0 (D-150, published 2026-10-20) replaced the look (tokens in `gui/theme/tokens.py`, Inter and JetBrains Mono, light and dark themes) and the window (a navigation rail, one top bar, a Problems panel). **For the current design read [`DESIGN.md`](DESIGN.md), [`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md) (section 4 maps every old tab, menu and dialog to its new place) and [`ui/BEFORE_AFTER.md`](ui/BEFORE_AFTER.md); for the behaviour, the [user guide](guide/USER_GUIDE.md).** This page is the specification the editor was first built from. In October 2026 (version 1.1.0) the editor was rebuilt against the owner's "UX/UI Standard" ([section 13](#13-redesign-against-the-uxui-standard-october-2026), [`ux-audit.md`](ux-audit.md#build-status)), and in version 1.3.0 again ([section 14](#14-the-ui-overhaul-version-130-october-2026)); sections 4, 5, 7 and 8 below describe the M2 design and are kept as the record. Two earlier decisions changed what the diagram looks like: **D-140** replaced the one-letter chips on links by pictures (and added routing, focus and connector pictures), and **D-141** made the harness drawing a wiring diagram in which wires are drawn in their wire colour (the old rule "wire colours are text only, never drawing colours" no longer holds). The wireframes below show the earlier look. The pictures of the real editor in [`ux/qt/`](ux/qt/02-guided-main.png) and in [`ui/screenshots/after/`](ui/screenshots/after/) show the current window, not the wireframes; the screenshots in `ux/screens/` are of the prototype (see [`ux/screens/README.md`](ux/screens/README.md)). See [`DECISIONS.md`](DECISIONS.md) for D-140 and D-141.
 
 ## Contents
 
@@ -17,8 +17,9 @@
 - [11. Questions for you (please answer or mark "you decide")](#11-questions-for-you-please-answer-or-mark-you-decide)
 - [12. Qt editor review log (M2 implementation)](#12-qt-editor-review-log-m2-implementation)
 - [13. Redesign against the UX/UI Standard (October 2026)](#13-redesign-against-the-uxui-standard-october-2026)
+- [14. The UI overhaul (version 1.3.0, October 2026)](#14-the-ui-overhaul-version-130-october-2026)
 
-Status: **approved by the owner; the Qt editor is implemented (section 12) and was rebuilt in October 2026 (section 13).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
+Status: **approved by the owner; the Qt editor is implemented (section 12), was rebuilt in October 2026 (section 13) and again for version 1.3.0 (section 14).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
 
 This document is the contract for the editor in M2. Where the prototype and this text disagree, this text wins; tell me which is wrong.
 
@@ -45,7 +46,7 @@ This document is the contract for the editor in M2. Where the prototype and this
 
 ## 3. The ten journeys
 
-Each journey lists the steps, what the tool must do to prevent mistakes, and the success criterion. The journeys are unchanged; where they name the palette, the bottom panel or the Properties panel, the same step is now done in the project tree or the Add menu, the Checks tab or the Problems dock, and the Inspector (see section 13 and the user guide). "P" marks what the prototype demonstrates; the test name is in `tests/test_prototype.py`.
+Each journey lists the steps, what the tool must do to prevent mistakes, and the success criterion. The journeys are unchanged; where they name the palette, the bottom panel or the Properties panel, the same step is now done in the project tree or the Add menu, the Checks area or the Problems panel, and the Inspector (see sections 13 and 14 and the user guide). "P" marks what the prototype demonstrates; the test name is in `tests/test_prototype.py`.
 
 **J1. First run and tour (Dana).** Opens the app, sees a sample project (mini3) and a 5-step tour (palette, canvas, connecting, problems/to-do, generate) that she can skip or replay from Help. Success: she can name the next action without reading anything else. *P: `test_j1_*`.*
 
@@ -75,7 +76,7 @@ Each journey lists the steps, what the tool must do to prevent mistakes, and the
 
 ## 4. Information architecture
 
-This is the M2 layout. The window today has a top bar, main tabs and a project tree instead; see [section 13](#13-redesign-against-the-uxui-standard-october-2026).
+This is the M2 layout. The window today has a navigation rail, one top bar, the areas with their tabs, a project panel and a Problems panel instead; see [section 14](#14-the-ui-overhaul-version-130-october-2026) (and [section 13](#13-redesign-against-the-uxui-standard-october-2026) for the window of 1.1.0 and 1.2.0).
 
 ```
 Window
@@ -186,9 +187,9 @@ The rules still hold. Where rule 7 says a cell reads "rules pending", the editor
 
 ## 7. Design system
 
-**M2 values.** The colours, fonts, scale and icon notes in this section are the M2 design. The current values are in `gui/tokens.py` and described in [`DESIGN.md`](DESIGN.md): IBM Carbon colours (White and Gray 100), IBM Plex Sans and Mono (D-132), type scale 12 / 13 / 16 / 20 px, spacing 4 / 8 / 12 / 16 / 24 / 32 px, Lucide icons drawn in code, and the extra tokens `pending`, `not-checked`, `stale`, `paper` and `pasteboard`.
+**M2 values.** The colours, fonts, scale and icon notes in this section are the M2 design and are kept as the record; they are **not** the current values. Version 1.1.0 and 1.2.0 used IBM Carbon colours (White and Gray 100) and IBM Plex Sans and Mono (D-132) from `gui/tokens.py`. Since version 1.3.0 (D-150) the one token source is `gui/theme/tokens.py` (the files `gui/tokens.py`, `gui/theme.py` and `gui/fonts.py` are gone): Inter and JetBrains Mono (SIL OFL), a type scale of 11 / 12 / 13 / 15 / 18 / 22 px, spacing on a 4 px grid, a light and a dark theme tuned to WCAG 2.2 AA, and Lucide icons drawn in code. The current values and the reasons are in [`DESIGN.md`](DESIGN.md).
 
-Single source of truth: `src/harness_design_studio/gui/tokens.py` (no Qt import). The prototype and the real GUI both read it, and `tests/test_tokens.py` enforces the accessibility numbers below.
+Single source of truth in M2: `src/harness_design_studio/gui/tokens.py` (no Qt import; since D-150 `gui/theme/tokens.py`). The prototype and the real GUI both read it, and `tests/test_tokens.py` enforces the accessibility numbers (it now reads the current tokens, so it no longer checks the M2 table below).
 
 ### 7.1 Colour tokens (WCAG 2.2 AA, verified by tests)
 | Token | Light | Contrast on bg / surface-2 | Dark | Contrast on bg / surface-2 | Use |
@@ -245,7 +246,7 @@ An earlier hand-picked palette had a protanopia pair at dE 2.2 (indistinguishabl
 
 ## 8. Mapping to the M2 implementation (Qt)
 
-This is the M2 mapping. Since then the overview map and the legend are overlays on the canvas, tables use `tables.TableView`, and the views are the modules listed in section 13.
+This is the M2 mapping. Since then the overview map and the legend are overlays on the canvas, tables use `tables.TableView`, and the views are the modules listed in section 13 and, for the current layout of `gui/`, in [`ARCHITECTURE.md`](ARCHITECTURE.md#cli-and-gui) section 2.
 
 | UX element | Qt building block |
 | --- | --- |
@@ -333,7 +334,7 @@ Screenshots of the real editor (offscreen render) are in `docs/ux/qt/`; the jour
 
 ## 13. Redesign against the UX/UI Standard (October 2026)
 
-The owner approved an audit of the editor against the "UX/UI Standard: Harness Design Studio" ([`ux-audit.md`](ux-audit.md): 83 numbered issues) and the editor was rebuilt. What changed in the window:
+The owner approved an audit of the editor against the "UX/UI Standard: Harness Design Studio" ([`ux-audit.md`](ux-audit.md): 83 numbered issues) and the editor was rebuilt. What changed in the window (this is the window of 1.1.0 and 1.2.0; version 1.3.0 changed it again, see [section 14](#14-the-ui-overhaul-version-130-october-2026)):
 
 ```
 Window
@@ -348,3 +349,24 @@ Window
 New dialogs: Export (harness by document tree, result list, Reveal in folder), the Import wizard (parts, segment lengths, ampacity, KiCad netlist; since UI overhaul M7 interfaces use the wizard too, with the older dialog behind *Paste table text instead…*), New project (one dialog), the engineering values form (**Supply value…**), and release and new-revision dialogs that list what is locked and what becomes editable. The diagram gained multi-selection, navigation keys, state badges, locks, a legend overlay, find and context menus.
 
 The journeys of section 3 still apply; the screenshots in [`ux/qt/`](ux/qt/) and [`ux/build/`](ux/build/) show the result, and [`DESIGN.md`](DESIGN.md) has one line per design decision. What was not built, and why, is under "Build status" in the audit (for example the Fix all button, the non-modal palette, compact Guided footprints, writing a subset of the outputs).
+
+## 14. The UI overhaul (version 1.3.0, October 2026)
+
+The owner's brief ([`ui/UI_OVERHAUL.md`](ui/UI_OVERHAUL.md)) and the plan that was approved ([`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md)) led to decisions D-150 to D-159 and to version 1.3.0 (published 2026-10-20). Its milestones M1 to M9 are the overhaul's own and are not the milestones of [`PLAN.md`](PLAN.md). What changed in the window:
+
+```
+Window
+├─ Menus: File · Edit · View · Design · Go · Help
+├─ Top bar (one row): project name · saved / unsaved · revision · short model hash · Undo · Redo · Guided | Expert · Search (Ctrl+K) · Generate › Check › Release… · Export… · status chip
+├─ Navigation rail (left edge): Home · Model · Checks · Drawings · Outputs · Revisions · Settings
+├─ Banners (persistent): plans or files out of date, a failed step, "this is part of a released harness" with Start new revision
+├─ The open area: Model = tabs Diagram and Devices; Checks; Drawings = the Harness tab; Outputs = the Lists tab with the list of exported files and their SHA-256; Revisions = the Releases tab; Home and Settings are pages
+├─ Left panel: Project (the tree) · Units · Interfaces (the last two are spreadsheet-like tables)
+├─ Right panel: Inspector · Why · Problems
+├─ Bottom: the Problems panel (Ctrl+Shift+M), closed until asked for
+└─ Status bar: last check · saved and selection · counts · job indicator with Cancel · Problems · Offline marker · values pending and rules not checked · zoom
+```
+
+The three steps Generate, Check and Release show their state and what is next. There is one import wizard for every kind of import, and a settings page with Appearance (theme, interface size, reduce motion), Editing, Project, Keyboard shortcuts, About and Licences. The window no longer freezes on a large file or after an edit in a large project. The look is in [`DESIGN.md`](DESIGN.md) and the pictures are in [`ui/BEFORE_AFTER.md`](ui/BEFORE_AFTER.md) and [`ui/screenshots/after/`](ui/screenshots/after/).
+
+What did not change: the design model, the file format, the 34 design rules, the command line and every generated file (checked with `tools/output_hashes.py`). The journeys of section 3 still apply. What was not done, and why, is in [`ui/BEFORE_AFTER.md`](ui/BEFORE_AFTER.md) ("What is left, and why"); no person has used the new interface in a usability session, and the screen-reader pass of [`usability/screen_reader_pass.md`](usability/screen_reader_pass.md) has not been held (waived, `compliance/DEVIATIONS.md`).

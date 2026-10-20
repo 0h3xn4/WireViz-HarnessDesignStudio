@@ -1,11 +1,11 @@
 # Milestone plan (proposal for owner review)
 
-> **Historical.** This is the plan as it was proposed to the owner in October 2026, before the first release. Milestones M0 to M9 were done (a note for each is in [`demos/`](demos/README.md)) and 0.1.0 is released; this page was not kept up to date. For the current state read [`../CHANGELOG.md`](../CHANGELOG.md) and the [documentation index](README.md). Two items below were never built, and are marked *(not built)*: multi-drop interfaces and hierarchy, and a PDF user guide.
+> **Historical.** This is the plan as it was proposed to the owner in October 2026, before the first release. Milestones M0 to M9 were done (a note for each is in [`demos/`](demos/README.md)) and 0.1.0 was released; versions 1.0.0 to 1.3.0 have been released since (the newest, 1.3.0, on 2026-10-20). This page was not kept up to date. For the current state read [`../CHANGELOG.md`](../CHANGELOG.md) and the [documentation index](README.md). The UI overhaul of version 1.3.0 had a plan of its own with milestones M1 to M9 of its own ([`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md)); they are not the milestones below. Two items below were never built, and are marked *(not built)*: multi-drop interfaces and hierarchy, and a PDF user guide.
 
 Each milestone: tests first, ends with working tested software, a demo note in `docs/demos/` (M0 to M7 have one), and a UX self-review where a GUI exists. A milestone is done only when all its acceptance criteria pass in CI.
 
 ## M0 Foundation
-- Repo skeleton (`src/harness_design_studio/{core,cli,gui}`), `pyproject.toml` with pinned deps, `CLAUDE.md`, ruff + mypy strict + pytest in CI (planned for Windows + Linux; now Ubuntu 24.04 only, D-127).
+- Repo skeleton (`src/harness_design_studio/{core,cli,gui}`), `pyproject.toml` with pinned deps, `CLAUDE.md`, ruff + mypy strict + pytest in CI (planned for Windows + Linux; Ubuntu 24.04 only from D-127; Ubuntu 24.04, Windows 10/11 and macOS 13+ since 1.2.0, D-149).
 - Vendored/mirrored wheel set script (`tools/vendor.py`) and a reproducible-build check.
 - Offline tests: module-scan for network imports; socket-blocked smoke run of CLI and empty GUI (offscreen).
 - Empty Qt app window + `harness --version`, packaged with PyInstaller; installer/portable zip built in CI.
@@ -50,7 +50,7 @@ Each milestone: tests first, ends with working tested software, a demo note in `
 - Every artefact stamped with generator version and model hash; stale detection in GUI and CLI.
 - Verifier v2 covers all artefacts (BOM vs drawing, pinout vs wire list).
 - Golden-file tests per output type on three reference projects; print-theme checks (greyscale legibility).
-**Acceptance:** goldens stable on every supported platform (Ubuntu 24.04 and newer); verifier clean; PDFs use only bundled fonts.
+**Acceptance:** goldens stable on every supported platform (Ubuntu 24.04 and newer when this was written; Windows and macOS since 1.2.0); verifier clean; PDFs use only bundled fonts.
 
 ## M6 Change control (done; see demos/M6.md for what is open)
 - Revisions, status, release with mandatory comment (blocked by verifier errors, stale outputs, DRC errors), baselines, locks on released items, diff engine and visual diff, change log, `harness check` for post-merge consistency, on-disk change detection and safe reload.

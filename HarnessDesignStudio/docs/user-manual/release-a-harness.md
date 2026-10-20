@@ -51,7 +51,7 @@ Nothing was changed. The exit code is 1. (On a project without the demo values, 
 
 A harness is `draft`, then optionally `in_review`, then `released`.
 
-- App: open the **Releases** tab (Ctrl+5), pick the harness and press **Submit for review** (in the **Harness** tab the button is **Open in review**), confirm your name.
+- App: open the **Releases** tab (Ctrl+5; **Revisions** on the rail), pick the harness and press **Submit for review** (in the **Harness** tab the button is **Open in review**), confirm your name.
 - Command line:
 
 ```
@@ -83,7 +83,7 @@ If the re-export after the release fails (for example the disk is full), the rel
 
 **In the app**
 
-1. In the **Releases** tab (or the **Harness** tab), pick `W002` and press **Release…** (**Design > Release harness…** does the same for the harness in view).
+1. In the **Releases** tab (or the **Harness** tab), pick `W002` and press **Release…** (**Release…** in the top bar and **Design > Release harness…** do the same for the harness in view).
 2. The window **Release W002** opens. Anything that blocks the release is listed in words ("Blocked until these are fixed:"). When nothing blocks it, it says "Nothing blocks this release." Under the list is the tree **What this release locks**, headed by a sentence such as "This release locks: n wires, n pins, n interfaces, n parts, n interface types, n config files." Open a group to see each object; a config file that is still a placeholder is marked *Pending*, and a value that is not set reads "not set (pending)".
 3. Fill in **Your name**, optionally **Checked by (optional)**, and **Comment (what changed or why)**.
 4. While a config file is still a placeholder, the window shows which ones and a field **Reason for releasing on placeholder values (kept in the change log)**. While the harness uses parts that are not approved, there is a second field **Reason for releasing with parts that are not approved (kept in the change log)**. Fill in both for a practice release.
@@ -95,6 +95,7 @@ GUI, not run: the app steps are described from the program's texts and code. The
 ## 4. After the release
 
 - `W002` is now **released (locked)**. The **Releases** tab lists the release with a *Released* chip, and the **Harness** tab header says *Released · rev A*. A lock and *W002 A* appear on the objects it holds, in the **Project** tree and on the diagram. The harness, the links it carries and the pins it uses cannot be edited. The app refuses an edit and gives the reason.
+- When what you look at belongs to a released harness, a banner under the top bar says so ("Harness W002 is released (revision A) and locked. To change it, start a new revision.") and offers **Start new revision…** and **Show the revisions**. The tooltip of the **Release** step in the top bar counts the released harnesses ("1 of 2 released").
 - **A release also freezes what the harness uses**: the parts of its connectors and wires (and of the unit connectors it plugs into), the interface types of its links, and the configuration its checks and outputs read (all of `derating`, `emc`, `segregation` and `titleblock`, and eight keys of `generation`). The editor and the commands `import-parts` and `config` (including `--apply-profile` and `--ampacity-csv`) refuse a change to these, with the reason and the way out. (`harness-design-studio library`, which only records where the parts data come from, is not affected.) Example, importing the parts list after the release:
 
 ```

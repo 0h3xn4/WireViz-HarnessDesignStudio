@@ -1,6 +1,6 @@
 # Milestone notes
 
-These notes were written at the end of each development step. They are **history, not current behaviour**: numbers (tests, timings, rules, interface types), version names such as `rc1` and the platform remarks (Windows, Ubuntu 22.04) were true on the day and have since changed. For what the tool does now, read the [user guide](../guide/USER_GUIDE.md) and the [documentation index](../README.md).
+These notes were written at the end of each development step. They are **history, not current behaviour**: numbers (tests, timings, rules, interface types), version names such as `rc1` and the platform remarks (Windows, Ubuntu 22.04) were true on the day and have since changed. For what the tool does now, read the [user guide](../guide/USER_GUIDE.md) and the [documentation index](../README.md). The milestones M0 to M9 here are those of the first development; the UI overhaul of version 1.3.0 has milestones M1 to M9 of its own, recorded in [`../ui/UI_OVERHAUL_PLAN.md`](../ui/UI_OVERHAUL_PLAN.md) and the changelog, and has no notes in this folder.
 
 | Note | What it records |
 | --- | --- |

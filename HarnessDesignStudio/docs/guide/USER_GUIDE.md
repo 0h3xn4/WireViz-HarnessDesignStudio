@@ -84,7 +84,7 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 
 The status chip in the top bar says one thing: *Up to date*, *Plans out of date* (the diagram changed after Generate), *Outputs out of date* (the design changed after the last export), *Not generated*, or the running job (*Generating…*, *Exporting…*, *Checking…*). Colour is never the only sign: every state has an icon and a word, and the two states for "nothing known yet" have a pattern. **Pending** (dotted) is a value nobody has entered; **Not checked** (hatched) is a rule that could not run. Neither is a pass, and neither is empty.
 
-Panels you hide or move are remembered; **View > Reset layout** puts them back. In a small or narrow window the tool hides panels so the diagram stays large, and says so.
+Panels you hide or move are remembered for each project; **View > Reset layout** puts them back. In a small or narrow window the tool hides panels so the diagram stays large, and says so.
 
 ### Home, the three steps and the tables
 
@@ -192,7 +192,7 @@ Zoomed far out, a unit shows its ID and each kind of link its own dash pattern a
 - **Warning**: fix it, or **Waive** it with a reason of at least 10 characters. Waived warnings stay visible in the report with their reason.
 - **Note**: information, for example *not checked because a value is still a placeholder*.
 
-The quick checks run on every edit. The design rules (34 of them) run in the background a moment after you stop editing, or when you press **Check** (F5); the top bar says *Checking…* while they run and you can cancel. The **Problems** cards say when they are checking, and a header such as *34 rules: 20 passed, 2 failed, 12 not checked* says how it went.
+The quick checks run on every edit. The design rules (34 of them) run in the background a moment after you stop editing, or when you press **Check** (F5); the top bar says *Checking…* while they run, and the status bar shows the job with **Cancel**. The **Problems** cards say when they are checking, and a header such as *34 rules: 20 passed, 2 failed, 12 not checked* says how it went.
 
 The **Checks** tab (Ctrl+4) has one row for each rule:
 
@@ -219,17 +219,21 @@ The **Checks** tab (Ctrl+4) has one row for each rule:
 
 The **Lists** tab (Ctrl+3) shows the same tables on screen for one harness: **Wire list**, **Pinouts**, **BOM**, **Mass and length**, **Test tables**, **Labels** and the **System BOM**. Click a header to sort, type in the filter box, press Ctrl+C to copy the selected cells as text, and **Export table** writes the rows you see as CSV or Excel. **Only pending or not checked** keeps the rows whose value is still open.
 
+Under the lists, **Exported files** (the Outputs area) shows every file of the `outputs` folder: file, document, harness, format, size, time written, SHA-256 and a state. The state is *Matches export*, *Changed since export*, *Missing* or *Not in the export*, compared with the `manifest.json` the export wrote. The checksums are worked out in the background from the files on disk. **Open**, **Reveal in folder** and **Copy to folder…** act on the selected files; **Verify** reads the folder again. Nothing in this list changes a file.
+
 Outputs are checked independently before they are written (every cell of the tables, the pins and signals in the drawings, the PDF texts and the sheets of the workbooks are compared with the design). If that check fails, nothing is written. Export is refused for a project that is read-only or has damaged files. The PDF drawings use the Windows-1252 character set: a character outside it (for example the ohm sign) shows as `?` in the PDF, and the export warns and names each such character; the SVG keeps it. The `outputs` folder is always safe to delete and make again.
 
 ## 9. Review, release and revisions
 
 1. Make the design pass: no errors, plans current, every wire sized and measured.
 2. **Export…** and review the outputs.
-3. Open the **Releases** tab (Ctrl+5), or the **Harness** tab, and pick the harness. **Submit for review** (optional; **Open in review** in the Harness tab), then **Release…**. Type your name and a comment (at least 10 characters). Anything that blocks the release is listed in plain words, and under the form a line says what is still missing for the button to work. The window lists **What this release locks** (for example *18 wires, 198 pins, 9 interfaces, 3 parts, 1 interface type, 5 config files*) as a tree you can open; a config file that is still a placeholder is marked *Pending*. While a configuration file is still marked as a placeholder, the window also asks for a written reason (at least 10 characters); it is kept in the change log and the baseline. Once an engineer has reviewed the values and cleared the mark, no reason is asked. The same holds for the parts: while the harness uses parts that are not approved (or are example data), the window asks for a second written reason.
+3. Open the **Releases** tab (Revisions on the rail, Ctrl+5), or the **Harness** tab, and pick the harness. **Submit for review** (optional; **Open in review** in the Harness tab), then **Release…**. Type your name and a comment (at least 10 characters). Anything that blocks the release is listed in plain words, and under the form a line says what is still missing for the button to work. The window lists **What this release locks** (for example *18 wires, 198 pins, 9 interfaces, 3 parts, 1 interface type, 5 config files*) as a tree you can open; a config file that is still a placeholder is marked *Pending*. While a configuration file is still marked as a placeholder, the window also asks for a written reason (at least 10 characters); it is kept in the change log and the baseline. Once an engineer has reviewed the values and cleared the mark, no reason is asked. The same holds for the parts: while the harness uses parts that are not approved (or are example data), the window asks for a second written reason.
 4. The harness is now **Released** (locked): it, the interfaces it carries and the pins it uses cannot be edited, and neither can the parts, interface types and configuration values it uses (importing parts or applying a profile that would change them is refused). A lock shows on the diagram, in the tree and in the Inspector, and a refused change says why and offers **Start new revision…**. A baseline (frozen snapshot) and a change log entry are stored. Once you have saved a release, **Undo** is off for that step; to change the harness start a new revision.
 5. To change it: **New revision…** (Harness tab: **Revise…**). The window says what happens (the next revision becomes a draft, the released one stays as a baseline) and lists what becomes editable and what stays locked because another released harness uses it. The old revision stays available.
 
-The **Releases** tab shows one timeline of every review, release and new revision, with a filter for one harness and chips for the event and the baseline. Under it, **Compare revision … with …** lists what differs between two revisions, or a revision and the working design, grouped by kind with counts; **Mark on diagram** marks the changed units and interfaces and **Clear marks** removes the marks. The **More** menu of the **Harness** tab has **Changes…**, **Change log…** and **Delete harness** (not possible once the harness is released; a generated harness comes back the next time you generate); the same three are in the Design menu and in the context menu of a harness in the Project tree.
+The **Releases** tab shows one timeline of every review, release and new revision, with a filter for one harness and chips for the event and the baseline. Under it, **Compare revision … with …** lists what differs between two revisions, or a revision and the working design, grouped by kind with counts; **Mark on diagram** marks the changed units and interfaces and **Clear marks** removes the marks. In the differences, each row is tinted by the kind of change, and a line says what the released harness locks.
+
+The **More** menu of the **Harness** tab (Drawings) has **Changes…**, **Change log…** and **Delete harness** (not possible once the harness is released; a generated harness comes back the next time you generate); the same three are in the Design menu and in the context menu of a harness in the Project tree.
 
 Export the outputs again after a release so the drawings show *released*. The release check looks at the harness (gauges, lengths, open errors) and at whether the configuration files are still marked as placeholders. It cannot judge whether the values are right; that stays a decision for a person.
 
@@ -320,7 +324,10 @@ Example files for every one of these are in the templates folder (`harness-desig
 | Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
 | Ctrl+I | new interface |
 | Ctrl+1 to Ctrl+6 | the tabs Diagram, Harness, Lists, Checks, Releases, Devices |
-| Ctrl+Shift+T | the Interface table (left panel) |
+| Ctrl+7, Ctrl+, | Home, Settings |
+| Ctrl+Shift+T, Ctrl+Shift+J | the Interface table and the Unit table (left panel) |
+| Ctrl+Shift+M | show or hide the Problems panel |
+| Ctrl+Shift+N | add a device (the Devices tab opens) |
 | F6, Shift+F6 | next and previous panel (diagram, project panel, inspector) |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | undo, redo (the menu names the step, for example *Undo Move PDU2*) |
 | Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, zoom out, real size (100 %) |
@@ -334,11 +341,12 @@ Example files for every one of these are in the templates folder (`harness-desig
 | Shift+arrows | move the selected units |
 | Delete | delete the selected items (after showing what it affects; only in the diagram, the Interface table and the Project tree) |
 | Ctrl+C, Ctrl+Shift+C in a table | copy the selected cells as text, with the header row |
+| Enter or F2, Esc, Ctrl+V in a table | edit the cell, keep the old text, paste a block of cells |
 | `/` in the project tree | go to the filter; Enter selects, Ctrl+Enter or double-click opens |
 | Ctrl+F in Checks or Lists | filter the rules or the rows |
 | F1 | this guide |
 
-Every command is in a menu. The keys above are shown next to the items, and the tooltip of a button names its key. Tab visits every unit and link in the diagram, so use **F6** to leave it.
+Every command is in a menu. The keys above are shown next to the items, and the tooltip of a button names its key. **Settings > Keyboard shortcuts** lists every key of the window and can be filtered. Tab visits every unit and link in the diagram, so use **F6** to leave it.
 
 | Menu | Item | What it does |
 | --- | --- | --- |
@@ -347,7 +355,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | File | Open project… (Ctrl+O) | opens a project folder |
 | File | Open the sample project | opens the built-in sample (example data); **Save as…** keeps your changes |
 | File | Save (Ctrl+S), Save as… (Ctrl+Shift+S) | saves the project; save as writes a copy to a new folder |
-| File | Import | Interfaces…, Approved parts…, Segment lengths…, Engineering values: ampacity table…, KiCad netlist… (section 12) |
+| File | Import | Import interfaces… (Ctrl+Shift+I), Import approved parts…, Import segment lengths…, Import engineering values: ampacity table…, Import device pinout…, Import KiCad netlist…: the import wizard (section 12) |
 | File | Export… (Ctrl+E) | the Export outputs window (section 8) |
 | File | Quit (Ctrl+Q) | closes the app |
 | Edit | Undo, Redo | steps back and forward through your changes |
@@ -357,7 +365,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Edit | Align, Space evenly | line up or space out the selected units |
 | Edit | Add zone… | adds a lane to the diagram; asks for its name |
 | Edit | Wire colours... | chooses the wire colour of each signal (section 7) |
-| Edit | Add unit | one item for each kind of unit (computer, power unit, wheel ...) |
+| Edit | Add unit | one item for each kind of unit (computer, power unit, wheel ...), and Device… (Ctrl+Shift+N) |
 | Edit | Connect with | one item for each interface type (the arrow beside the Connect button lists the same); then click two units |
 | View | Guided, Expert | the two modes of section 5 |
 | View | Theme | Follow the system (the default), Light or Dark (also under **Settings > Appearance**) |
@@ -367,7 +375,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | View | Interface size | makes text and controls larger: 100, 125, 150 or 200 %; the first size follows your screen |
 | View | Zoom in, Zoom out, Fit all, Zoom to 100 %, Zoom to selection | zooms the diagram (Ctrl+=, Ctrl+-, F, Ctrl+0, Shift+F) |
 | View | Arrange diagram | tidies the units inside their lanes; Undo restores them |
-| View | Project, Inspector | shows or hides each panel |
+| View | Project, Inspector, Problems panel (Ctrl+Shift+M) | shows or hides each panel |
 | View | Reset layout | puts the panels back where they were at the start |
 | Design | Generate harnesses (Ctrl+G) | builds the harness plans after a preview |
 | Design | Run checks (F5), Cancel the running check | runs the design rules now |
@@ -376,16 +384,17 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Design | Show changes of harness…, Show change log of harness…, Delete harness… | the harness in view: what changed since a baseline, who changed what, delete a draft |
 | Design | Engineering values… | the window where you type the values the rules wait for (section 6) |
 | Go | Go to Diagram, Harness, Lists, Checks, Releases, Devices (Ctrl+1 to Ctrl+6) | shows that tab |
-| Go | Go to Interface table (Ctrl+Shift+T) | opens the Interfaces tab of the left panel with the keyboard in the table |
+| Go | Go to Home (Ctrl+7), Go to Settings (Ctrl+,) | opens that page |
+| Go | Go to Interface table (Ctrl+Shift+T), Go to Unit table (Ctrl+Shift+J) | opens the Interfaces or Units tab of the left panel with the keyboard in the table |
 | Go | Next panel, Previous panel (F6, Shift+F6) | moves the keyboard focus between the panels |
 | Help | User guide (F1) | opens this guide |
 | Help | Search and commands (Ctrl+K) | the command palette |
 | Help | Replay the tour | shows the short first-run tour again |
 | Help | Glossary | the list of words the tool uses |
 | Help | Show project problems | lists what could not be loaded, for a project with problems |
-| Help | About | opens **Settings > About**: the version, the Python and Qt versions and where your settings are kept |
+| Help | About | opens **Settings > About**: the version, the Python, Qt and PySide6 versions and where your settings are kept |
 
-The **Show** list at the right end of the Model tab bar fades everything except one signal class (power, data, analog, RF ...), one connector or one bundle (harness), so a large diagram can be read one piece at a time; choose *All interfaces* to see everything again. It changes nothing in the project. The **Interface table** and **Outline** tabs of the bottom panel list every interface and unit as text; they are the screen-reader friendly views of the diagram.
+The **Show** list at the right end of the Model tab bar fades everything except one signal class (power, data, analog, RF ...), one connector or one bundle (harness), so a large diagram can be read one piece at a time; choose *All interfaces* to see everything again. It changes nothing in the project. The **Interfaces** and **Units** tabs of the left panel list every interface and unit as text, and every control has an accessible name, so they are meant for a screen reader; nobody has tested the tool with a screen reader yet.
 
 ## 15. Glossary
 
