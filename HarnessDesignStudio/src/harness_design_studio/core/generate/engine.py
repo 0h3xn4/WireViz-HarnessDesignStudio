@@ -571,7 +571,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
                 mate = box.part_id
             cables[box_id] = Connector(
                 id=cid, name=cid.rsplit("-", 1)[-1], role="cable", part_id=mate, gender=_opposite(box.gender if box.gender != "unspecified" else part_gender(part)),
-                keying=box.keying, mates_with=box_id, pins=[Pin(id=pin.id, contact_size=pin.contact_size, termination=pin.termination) for pin in box.pins],
+                keying=box.keying, mates_with=box_id, label=old_cables[box_id].label if box_id in old_cables else None, pins=[Pin(id=pin.id, contact_size=pin.contact_size, termination=pin.termination, function=pin.function) for pin in box.pins],
             )  # fmt: skip
             ctx.note(
                 f"connector:{cid}",
@@ -717,7 +717,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
         connectors=sorted(cables.values(), key=lambda c: c.id), wires=sorted(wires, key=lambda x: x.id),
         shields=sorted(shields, key=lambda x: x.id), branch_points=sorted(branches, key=lambda x: x.id),
         segments=segments,
-        generated=True, group_key=group.key, interfaces=interfaces, notes=old.notes if old else "",
+        generated=True, group_key=group.key, interfaces=interfaces, notes=old.notes if old else "", label=old.label if old else None,
         author=old.author if old else None, checker=old.checker if old else None,
         approver=old.approver if old else None, released_on=old.released_on if old else None,
     )  # fmt: skip

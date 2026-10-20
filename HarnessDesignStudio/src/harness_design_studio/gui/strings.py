@@ -1609,6 +1609,7 @@ DV_COL_CLASS = "Class"
 DV_COL_WIRE = "Wire"
 DV_COL_CONTACT_SIZE = "Contact size"
 DV_COL_TERMINATION = "Termination"
+DV_COL_FUNCTION = "Function"
 DV_MODE = {"free": "Free", "fixed": "Fixed", "locked": "Locked"}
 DV_MODE_TIP = {
     "free": "Free: Generate may put a signal here; a signal typed here is kept",
@@ -2193,3 +2194,20 @@ WIRE_UNGROUP_TIP = "Take apart the group of the selected wire that you made"
 WIRE_IN_GROUP = "In {0} {1}"
 STEP_GROUP_WIRES = "Group wires"
 STEP_UNGROUP_WIRES = "Ungroup wires"
+
+# ---- 1.4.0 M3: labels of connectors and of the harness -------------------------------------------
+DV_CARD_LABEL = "Label"
+DV_CARD_LABEL_TIP = (
+    "Text for the label of this connector (labels.csv) instead of only its ID. The cable end "
+    "that plugs into it prints the same text unless you give the cable end its own."
+)
+LABELS_TITLE = "Labels"
+LABELS_HARNESS = "Harness label"
+LABELS_HARNESS_TIP = "Text for the label of the harness (labels.csv)."
+LABELS_CONNECTOR = "Cable connector"
+LABELS_CONNECTOR_TIP = "A connector of the harness, the cable end of a device connector."
+LABELS_CONNECTOR_LABEL = "Connector label"
+LABELS_CONNECTOR_LABEL_TIP = "Text for the label of this cable connector (labels.csv)."
+LABELS_APPLY = "Apply labels"
+LABELS_APPLY_TIP = "Set the harness label and the label of the chosen cable connector"
+STEP_SET_LABELS = "Set labels"

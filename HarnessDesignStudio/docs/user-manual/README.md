@@ -44,7 +44,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 7. [Import KiCad pinouts](import-kicad-pinouts.md): `harness-design-studio import-netlist` and fixed pins.
 8. [Define a device](define-a-device.md): the Devices tab, pins and signals, `import-pinout` and `export-pinout`.
 9. [Export the outputs](export-the-outputs.md): what each file is for; checking that it is current.
-10. [Set wire colours](set-wire-colours.md): *Edit > Wire colours...* and the file setting. **New in 1.0.0 (not in the 0.1.0 packages).** [Edit a wire](edit-a-wire.md): the *Edit wire* tab, wires you draw, several wires on one pin, twisting. **New in 1.4.0.**
+10. [Set wire colours](set-wire-colours.md): *Edit > Wire colours...* and the file setting. **New in 1.0.0 (not in the 0.1.0 packages).** [Edit a wire](edit-a-wire.md): the *Edit wire* tab, wires you draw, several wires on one pin, twisting, labels, pin function. **New in 1.4.0.**
 11. [Naming and title block](naming-and-title-block.md): name patterns and title block fields.
 12. [Release a harness](release-a-harness.md): review, release, the gates, the change log.
 13. [Change a released harness](change-a-released-harness.md): new revision, `diff`, `log`, `compare`.

@@ -68,8 +68,13 @@ def test_headings_are_matched_by_name_and_unstored_columns_are_named() -> None:
     }
     assert unstored_columns(t[0], m) == ["Remarks"]
     t2 = table("Pin number,Function description,Direction,Signal name\n1,Main power,in,PWR\n")
-    assert guess_mapping(t2[0]) == {"pin": 0, "signal": 3}
-    assert unstored_columns(t2[0], guess_mapping(t2[0])) == ["Function description", "Direction"]
+    # since 1.4.0 a pin has a function: "Function description" is stored, only "Direction" is not
+    assert guess_mapping(t2[0]) == {"pin": 0, "signal": 3, "function": 1}
+    assert unstored_columns(t2[0], guess_mapping(t2[0])) == ["Direction"]
+    t3 = table(
+        "Pin,Function\n1,PWR\n"
+    )  # a sheet with only a Function column: it is the signal, as before
+    assert guess_mapping(t3[0]) == {"pin": 0, "signal": 1}
 
 
 def test_a_new_connector_from_a_sheet_in_one_step() -> None:

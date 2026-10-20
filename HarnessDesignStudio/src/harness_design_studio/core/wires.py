@@ -459,3 +459,50 @@ def plan_ungroup_all(project: Project, group_ids: Iterable[str]) -> list[Op]:
         )
         for hid, ids in sorted(gone.items())
     ]
+
+
+# ---- labels of the harness and of its connectors ------------------------------------------------
+
+
+def plan_set_labels(
+    project: Project,
+    harness_id: str,
+    *,
+    harness: str | None = None,
+    connectors: Mapping[str, str] | None = None,
+) -> list[Op]:
+    """Ops that set the label of a harness (`harness`; empty clears it) and of its cable connectors
+    (`connectors`: connector ID -> label; empty clears it). None leaves a label as it is. The
+    labels are what the label list (`labels.csv`) prints; generation keeps them."""
+    h = project.harnesses.get(harness_id)
+    if h is None:
+        raise EditError(f"Harness '{harness_id}' does not exist.")
+    if h.status == "released":
+        raise EditError(_released(h))
+
+    def text(value: str, what: str) -> str | None:
+        clean = value.strip()
+        if not clean:
+            return None
+        if len(clean) > 200 or any(ord(ch) < 32 for ch in clean):
+            raise EditError(f"{what} can have 1 to 200 characters and no control characters.")
+        return clean
+
+    changes: dict[str, object] = {}
+    if harness is not None:
+        changes["label"] = text(harness, "The harness label")
+    if connectors:
+        known = {c.id: c for c in h.connectors}
+        for cid in connectors:
+            if cid not in known:
+                raise EditError(f"'{cid}' is not a connector of {h.id}.")
+        new = [
+            evolve(c, label=text(connectors[c.id], f"The label of {c.id}"))
+            if c.id in connectors
+            else c
+            for c in h.connectors
+        ]
+        if new != h.connectors:
+            changes["connectors"] = new
+    changes = {k: v for k, v in changes.items() if getattr(h, k) != v}
+    return [Put("harnesses", evolve(h, **changes))] if changes else []

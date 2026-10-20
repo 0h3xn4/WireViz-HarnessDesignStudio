@@ -14,7 +14,9 @@ ShieldKind = Literal["twisted_pair", "shielded_pair", "overall_shield", "quad", 
 ShieldEnd = Literal["backshell_360", "pigtail", "floating"]
 
 
-class Pin(Entity):
+class Pin(SparseEntity):
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"function"})
+
     id: PinId
     signal: Name | None = None
     contact_size: Name | None = None
@@ -24,9 +26,14 @@ class Pin(Entity):
     fixed: bool = (
         False  # signal fixed by the unit design (KiCad): interfaces connect to it, it never moves
     )
+    function: Name | None = (
+        None  # a person's words for what the pin does (1.4.0); no meaning to the tool
+    )
 
 
-class Connector(Entity):
+class Connector(SparseEntity):
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label"})
+
     id: Id
     name: Name
     role: Role
@@ -38,6 +45,9 @@ class Connector(Entity):
     mates_with: Id | None = None  # cable connectors: the box connector this one plugs into
     pins: list[Pin] = []
     notes: Text = ""
+    label: Name | None = (
+        None  # text for the connector's label instead of its ID (a person's, 1.4.0)
+    )
 
 
 class Wire(SparseEntity):
@@ -89,7 +99,9 @@ class Segment(Entity):
     length_m: LengthM | None = None
 
 
-class Harness(Entity):
+class Harness(SparseEntity):
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label"})
+
     id: Id
     name: Name
     revision: Name = "A"
@@ -108,3 +120,4 @@ class Harness(Entity):
     approver: Name | None = None  # who released it
     released_on: IsoDate | None = None  # date of the release (YYYY-MM-DD)
     notes: Text = ""
+    label: Name | None = None  # text for the harness label instead of its name (a person's, 1.4.0)
