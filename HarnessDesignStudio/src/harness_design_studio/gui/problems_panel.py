@@ -13,9 +13,17 @@ filled when the panel is shown and refreshed (debounced) while it is open. It re
 from collections.abc import Mapping
 from typing import Any, Final
 
-from PySide6.QtCore import QModelIndex, Qt, QTimer, Signal
-from PySide6.QtGui import QShowEvent
-from PySide6.QtWidgets import QButtonGroup, QHBoxLayout, QLabel, QToolButton, QVBoxLayout, QWidget
+from PySide6.QtCore import QModelIndex, QPoint, Qt, QTimer, Signal
+from PySide6.QtGui import QKeySequence, QShortcut, QShowEvent
+from PySide6.QtWidgets import (
+    QButtonGroup,
+    QHBoxLayout,
+    QLabel,
+    QMenu,
+    QToolButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from harness_design_studio.core.checks import Finding
 from harness_design_studio.gui import strings
@@ -60,6 +68,7 @@ def problem_row(f: Finding) -> dict[str, Any]:
 
 class ProblemsList(QWidget):
     showRequested = Signal(str)  # the ID of the object a row names
+    detailsRequested = Signal(str)  # the same, for its problems as cards in the inspector
 
     def __init__(
         self, ctl: EditorController, theme: ThemeManager, parent: QWidget | None = None
@@ -108,6 +117,11 @@ class ProblemsList(QWidget):
         outer.addWidget(self.empty)
         self.table.clicked.connect(self._clicked)
         self.table.activated.connect(self._clicked)
+        self.table.setContextMenuPolicy(Qt.ContextMenuPolicy.CustomContextMenu)
+        self.table.customContextMenuRequested.connect(self._menu)
+        details = QShortcut(QKeySequence("Shift+Return"), self.table)
+        details.setContext(Qt.ShortcutContext.WidgetShortcut)
+        details.activated.connect(lambda: self._details(self.table.currentIndex()))
         ctl.changed.connect(self._changed)
         ctl.drcStateChanged.connect(self._changed)
 
@@ -153,6 +167,31 @@ class ProblemsList(QWidget):
             if level == "all"
             else lambda row: isinstance(row, Mapping) and row.get("level") == level
         )
+
+    def _object_of(self, index: QModelIndex) -> str:
+        if not index.isValid():
+            return ""
+        row = self.model.row(self.table.proxy.mapToSource(index).row())
+        return str(row.get("object_id", "")) if isinstance(row, Mapping) else ""
+
+    def _details(self, index: QModelIndex) -> None:
+        """The inspector's Problems tab for the object: the same findings as cards, with the
+        fix and waive buttons."""
+        target = self._object_of(index)
+        if target:
+            self.detailsRequested.emit(target)
+
+    def _menu(self, pos: QPoint) -> None:
+        index = self.table.indexAt(pos)
+        target = self._object_of(index)
+        if not target:
+            return
+        menu = QMenu(self.table)
+        menu.setAccessibleName(strings.PROBLEMS_MENU)
+        menu.addAction(strings.PROBLEMS_GO_TO.format(target), lambda: self._clicked(index))
+        menu.addAction(strings.PROBLEMS_DETAILS, lambda: self._details(index))
+        menu.popup(self.table.viewport().mapToGlobal(pos))
+        self.menu = menu  # (kept for tests)
 
     def _clicked(self, index: QModelIndex) -> None:
         if not index.isValid():

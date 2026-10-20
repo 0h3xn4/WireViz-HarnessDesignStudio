@@ -83,7 +83,9 @@ def test_show_selects_units_and_switches_to_the_harness_tab(win, qtbot) -> None:
     win.show_object(h)
     assert win.main_tabs.currentWidget() is win.harness_view  # the Harness tab of the shell
     assert win.harness_view.harness_id() == h
-    win.show_object("derating")
+    win.show_object(
+        "no-such-object"
+    )  # (a value file such as "derating" now opens its window, D-154)
     assert "no place" in win.toasts.messages[-1]
 
 

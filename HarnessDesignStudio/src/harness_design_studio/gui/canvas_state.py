@@ -153,6 +153,7 @@ def _resolver(project: Project) -> Any:
     the odd composite ID, and cached, so thousands of findings stay fast."""
     wire_link: dict[str, str] | None = None
     part_units: dict[str, set[str]] | None = None
+    harness_objects: set[str] | None = None
     cache: dict[str, list[tuple[str, str]]] = {}
 
     def lazy_wires() -> dict[str, str]:
@@ -175,6 +176,37 @@ def _resolver(project: Project) -> Any:
                     part_units[c.part_id].add(c.unit_id)
         return part_units
 
+    def lazy_harness_objects() -> set[str]:
+        nonlocal harness_objects
+        if harness_objects is None:
+            harness_objects = {w.id for h in project.harnesses.values() for w in h.wires}
+            harness_objects.update(c.id for h in project.harnesses.values() for c in h.connectors)
+        return harness_objects
+
+    def canvas_place(oid: str) -> tuple[str, str] | None:
+        """What `drc.locate` answers, for the two kinds the diagram has (a unit or a link); an
+        answer that names a harness is None here. `drc.locate` scans every wire of every harness
+        for an ID that is not a unit or a link, which for 20,000 findings on 20,000 wires took
+        11 seconds on the GUI thread; a set of the harness objects answers the same at once."""
+        if oid in project.units:
+            return ("unit", oid)
+        if oid in project.interfaces:
+            return ("interface", oid)
+        if oid in project.harnesses:
+            return None
+        box = project.connectors.get(oid)
+        if box is not None and box.unit_id:
+            return ("unit", box.unit_id)
+        if oid in lazy_harness_objects():
+            return None
+        parts = oid.split(".")
+        if parts[0] in ("wire-spec", "mating-cycles") and len(parts) == 2:
+            where = drc.locate(project, oid)  # one per part: the scan is paid a few times only
+            return where if where is not None and where[0] in ("unit", "interface") else None
+        if parts[0] == "emc-class" and len(parts) > 2 and parts[2] in project.units:
+            return ("unit", parts[2])
+        return canvas_place(parts[0]) if parts[0] != oid else None
+
     def resolve(oid: str) -> list[tuple[str, str]]:
         got = cache.get(oid)
         if got is not None:
@@ -191,8 +223,8 @@ def _resolver(project: Project) -> Any:
         elif oid in project.parts:
             out = [("unit", u) for u in sorted(lazy_parts().get(oid, ()))]
         else:
-            where = drc.locate(project, oid)
-            if where is not None and where[0] in ("unit", "interface"):
+            where = canvas_place(oid)
+            if where is not None:
                 out = [where]
             else:  # a wire spec or the like: the links that run on that wire
                 head = oid.split(".")[-1]

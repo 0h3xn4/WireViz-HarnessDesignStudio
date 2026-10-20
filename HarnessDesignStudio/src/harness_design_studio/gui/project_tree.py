@@ -687,9 +687,14 @@ class ProjectTreeModel(QAbstractItemModel):
         return self._wire_owner
 
     def place(
-        self, object_id: str, memo: dict[str, tuple[str, str] | None]
+        self,
+        object_id: str,
+        memo: dict[str, tuple[str, str] | None],
+        owners: dict[str, str] | None = None,
     ) -> tuple[str, str] | None:
-        """The row a finding about `object_id` belongs to, or None when it belongs to no row."""
+        """The row a finding about `object_id` belongs to, or None when it belongs to no row.
+        `owners` is `_wire_index()`; a caller that places many findings fetches it once (looking
+        it up checks every harness, which for 80,000 findings took 5 seconds)."""
         p = self.ctl.project
         if object_id in p.units:
             return "unit", object_id
@@ -700,7 +705,7 @@ class ProjectTreeModel(QAbstractItemModel):
         box = p.connectors.get(object_id)
         if box is not None and box.unit_id in p.units:
             return "unit", box.unit_id
-        owner = self._wire_index().get(object_id)
+        owner = (owners if owners is not None else self._wire_index()).get(object_id)
         if owner is not None:
             return "harness", owner
         if object_id in p.parts:
@@ -717,15 +722,16 @@ class ProjectTreeModel(QAbstractItemModel):
         """Open findings grouped by the row they belong to: [errors, warnings, not checked]."""
         p = self.ctl.project
         memo: dict[str, tuple[str, str] | None] = {}
+        owners = self._wire_index()
         out: dict[tuple[str, str], list[int]] = {}
         for f in self.ctl.open_findings():
             if f.rule == UNCHECKED:
                 slot = 2
                 key = ("config", f.object_id) if f.object_id in p.config else ("root", "config")
             elif f.severity == "error":
-                slot, key = 0, self.place(f.object_id, memo)  # type: ignore[assignment]
+                slot, key = 0, self.place(f.object_id, memo, owners)  # type: ignore[assignment]
             elif f.severity == "warning":
-                slot, key = 1, self.place(f.object_id, memo)  # type: ignore[assignment]
+                slot, key = 1, self.place(f.object_id, memo, owners)  # type: ignore[assignment]
             else:
                 continue
             if key is None:

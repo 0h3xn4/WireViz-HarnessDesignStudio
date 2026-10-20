@@ -340,6 +340,8 @@ into the summary, all existing tests green (CI on Linux, Windows, macOS), golden
 - *Acceptance:* edit-to-stale indicator ≤ 100 ms at stress size; rule check never blocks the GUI thread > 50 ms
   (main-thread time while applying a result is measured and capped); jump-to-source test for each object kind.
 
+**M5 result (2026-10-19).** Built as D-154. The unexplained 11 s stall is explained (two per-finding scans of every wire in the GUI layer) and fixed: stress-size edits with the check on take 70 to 90 ms. Added: an *Out of date* marker in the Checks tab, Problems rows that reach parts and value files as well as units, links and harnesses, *Details and fixes* from a Problems row, tests for each object kind. Not done: engineering values as a tab (they stay a window, reason in D-154) and a 250 ms re-run (kept at 1.2 s). No old test edited.
+
 **M6 Drawing preview.**
 - Drawings area: the existing harness preview widget with theme-coloured chrome, zoom, pan, fit, sheet paging,
   click-to-select linked to the inspector where the drawing data allows it (the SVG writer's own element ids; no

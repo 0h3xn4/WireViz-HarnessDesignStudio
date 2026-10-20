@@ -729,6 +729,7 @@ class MainWindow(QMainWindow):
         self.dock_problems.setMinimumHeight(120)
         self.dock_problems.hide()
         self.problems_list.showRequested.connect(self.show_object)
+        self.problems_list.detailsRequested.connect(self._problem_details)
 
     def _dock(self, title: str, widget: QWidget, area: Qt.DockWidgetArea, name: str) -> QDockWidget:
         dock = QDockWidget(title, self)
@@ -965,6 +966,12 @@ class MainWindow(QMainWindow):
         tab (the object is already selected, so the diagram keeps showing what they are about)."""
         self.dock_right.show()
         self.inspector.show_tab("problems")
+
+    def _problem_details(self, object_id: str) -> None:
+        """Shift+Enter or "Details and fixes" in the Problems panel: go to the object and open
+        its problems as cards (fix, waive) in the inspector."""
+        self.show_object(object_id)
+        self._show_problems(object_id)
 
     def _tree_selected(self, kind: str, ident: str) -> None:
         if kind not in ("unit", "interface"):  # (those the tree selects on the canvas itself)
@@ -2991,7 +2998,8 @@ class MainWindow(QMainWindow):
     def show_object(self, object_id: str) -> None:
         place = drc.locate(self.ctl.project, object_id)
         if place is None:
-            self.toasts.show_message(strings.NOTHING_TO_SHOW, None)
+            if not self._show_other_object(object_id):
+                self.toasts.show_message(strings.NOTHING_TO_SHOW, None)
             return
         kind, target = place
         if kind == "harness":
@@ -3008,6 +3016,19 @@ class MainWindow(QMainWindow):
             self.view.focus_unit(target)
         else:
             self.view.focus_link(target)
+
+    def _show_other_object(self, object_id: str) -> bool:
+        """The things a finding can name that are not on the diagram or in a harness: a part (in
+        Devices) and an engineering value file (its window). True when it went somewhere."""
+        p = self.ctl.project
+        if object_id in p.parts:
+            self.go_to("devices")
+            self.devices_view.select_part(object_id)
+            return True
+        if object_id in p.config:
+            self.checks_panel.open_config(object_id)
+            return True
+        return False
 
     def open_commands(self) -> None:
         """Ctrl+K: the command palette, a non-modal overlay over the window (Ctrl+K again, Esc, a
