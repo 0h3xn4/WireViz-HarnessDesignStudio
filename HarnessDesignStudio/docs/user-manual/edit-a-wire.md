@@ -8,6 +8,8 @@ This page shows how to change a wire after the tool has generated it (its gauge,
 
 *The Edit wire tab (right of the wire table) on the `flatsat` example; the window is 1760 pixels wide. In a narrower window the form scrolls.*
 
+To make a whole harness yourself, with its own connectors, see [build a harness by hand](build-a-harness-by-hand.md).
+
 ## Before you start
 
 - You have a generated project with a harness that is not released. A released harness is locked: start a new revision first ([change a released harness](change-a-released-harness.md)).

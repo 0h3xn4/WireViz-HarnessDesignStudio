@@ -43,7 +43,7 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 | **Interface** | One connection of a type between two units. This is what *you* add. | `IF-002`: RS-422 from `OBC1` to `RW1` |
 | **Connector** | A plug or socket, which may carry a label (new in 1.4.0). On a unit it is a *box connector*; on a harness it is a *cable connector* that mates with a box connector. | `RW1-J02` on the wheel; `W001-P2` on the cable |
 | **Pin** | One contact of a connector. It carries one signal and may have a *function* (free text, new in 1.4.0). | pin 3 of `RW1-J02` carries `RX+`, function "Wheel command receive" |
-| **Harness** | A bundle of wires with its connectors that carries interfaces between units. **Generated**; individual wires can be edited, and wires can be added by hand (new in 1.4.0). | `W001`: `OBC1-J01` to `RW1-J02` |
+| **Harness** | A bundle of wires with its connectors that carries interfaces between units. **Generated** from interfaces, or made by hand with *New harness* (new in 1.5.0); individual wires can be edited, and wires can be added by hand (new in 1.4.0). | `W001`: `OBC1-J01` to `RW1-J02` |
 | **Wire** | One conductor between two pins, with a gauge, a part and a length, and optionally a colour, a label and a note. Two wires may share a pin. | `W001-001`: `TX+`, pin 1 to pin 3 |
 | **Segment** | A stretch of the physical route a bundle follows; wire lengths are sums of segments. | `W001-L1` |
 | **Zone** | A lane of the diagram (a panel or compartment). Units sit in zones. | `panel-A`, `panel-B` |

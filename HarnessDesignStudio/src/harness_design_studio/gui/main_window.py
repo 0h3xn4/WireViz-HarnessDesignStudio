@@ -55,7 +55,7 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio import __version__
-from harness_design_studio.core import device_library, drc, edit
+from harness_design_studio.core import device_library, drc, edit, manual_harness
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError
@@ -909,6 +909,7 @@ class MainWindow(QMainWindow):
             widget.changesRequested.connect(lambda hid: self.change_flow("changes", hid))
             widget.historyRequested.connect(lambda hid: self.change_flow("history", hid))
             widget.deleteRequested.connect(lambda hid: self.change_flow("delete", hid))
+            widget.newHarnessRequested.connect(self.new_harness_flow)
             widget.whyRequested.connect(lambda kind, ident: self._show_why(kind, ident))
             return True
         if isinstance(widget, ListsPanel):
@@ -1069,6 +1070,29 @@ class MainWindow(QMainWindow):
         self.go_to("devices")
         self.devices_view.show_unit(uid)
         self.devices_view.focus_name()
+
+    def new_harness_flow(self) -> None:
+        """Edit > New harness… (Ctrl+Shift+H): an empty harness made by hand, with no interface
+        behind it; the Harness tab opens on its Connectors tab."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        name = self.ask_text(strings.NEW_HARNESS_TITLE, strings.NEW_HARNESS_NAME, "")
+        if not name:
+            return
+        try:
+            ops, hid = manual_harness.plan_new_harness(self.ctl.project, name)
+        except edit.EditError as exc:
+            self._error(str(exc))
+            return
+        if not self.ctl.run(
+            strings.STEP_NEW_HARNESS.format(hid), ops, message=strings.HARNESS_CREATED.format(hid)
+        ):
+            return
+        self.go_to("harness")
+        self.harness_view.refresh()
+        self.harness_view.select_harness(hid)
+        self.harness_view.show_connectors()
 
     def new_part_flow(self) -> str | None:
         """New part… (a connector part, with its mating half if asked): always pending and
@@ -1370,6 +1394,10 @@ class MainWindow(QMainWindow):
             strings.A_ADD_DEVICE, self.add_device_flow, "Ctrl+Shift+N", name="act-add-device"
         )
         self.act_add_device.setToolTip(f"{strings.A_ADD_DEVICE_TIP} (Ctrl+Shift+N)")
+        self.act_new_harness = a(
+            strings.A_NEW_HARNESS, self.new_harness_flow, "Ctrl+Shift+H", name="act-new-harness"
+        )
+        self.act_new_harness.setToolTip(f"{strings.A_NEW_HARNESS_TIP} (Ctrl+Shift+H)")
         self.act_problems = a(
             strings.A_PROBLEMS, self.toggle_problems, "Ctrl+Shift+M", name="act-problems"
         )
@@ -1569,6 +1597,7 @@ class MainWindow(QMainWindow):
         for act in self.distribute_actions.values():
             spread_menu.addAction(act)
         e.addAction(self.act_add_zone)
+        e.addAction(self.act_new_harness)
         e.addAction(self.act_wire_colours)
         self.menu_add = e.addMenu(strings.M_ADD_UNIT)
         self.menu_add.addAction(self.act_add_device)
@@ -1899,6 +1928,7 @@ class MainWindow(QMainWindow):
             act.setEnabled(not ro)
         self.act_new_interface.setEnabled(not ro)
         self.act_add_device.setEnabled(not ro)
+        self.act_new_harness.setEnabled(not ro)
         self.menu_add.setEnabled(not ro)  # the ways to add a unit and to connect (the Palette's)
         self.menu_connect.setEnabled(not ro)
         self.act_generate.setEnabled(not ro)

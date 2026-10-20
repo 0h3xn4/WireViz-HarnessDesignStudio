@@ -152,6 +152,8 @@ Version 1.4.0 (the AIT feedback, D-160 to D-165) added these tests. The ones tha
 | `tests/test_gitinfo.py`, `tests/test_ui_authorship.py` | The commit reader on real repositories (loose, packed, detached, worktree, damaged, size bombs) and the line in the Revisions area. It does not start `git`. |
 | `tests/test_device_library.py`, `tests/test_device_library_cli.py`, `tests/test_ui_device_library.py` | Device library files: export, merge, read, adding with renamed IDs, parts and types kept as the project has them, files that are not libraries, the CLI commands and the Devices tab buttons. |
 | `tests/test_inventree_import.py` | An InvenTree export (CSV, TSV, JSON) in the parts import: the IPN as part ID, categories, JSON that is not a flat list. |
+| `tests/test_manual_harness.py` | A harness made by hand (1.5.0): new harness, free-standing and plugging-in connectors, pin function and termination, delete connector, naming pattern, Generate leaving it alone, released and generated harnesses refusing, undo. |
+| `tests/test_ui_from_scratch.py` | The Connectors tab, the New harness button and action, and the journey from a blank project in the window. |
 | `tests/test_ui_wire_editor.py` | The Edit wire tab: selection, apply, reset, several wires, the new wire form, groups, the labels form. |
 
 The proof that existing work is unchanged is `tests/test_output_hashes.py` (above): the 567 files of the four examples still match release 1.2.0 apart from the version stamp.

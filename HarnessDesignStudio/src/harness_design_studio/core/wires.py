@@ -60,7 +60,7 @@ def wire_part_choices(project: Project) -> list[str]:
     return sorted(p.id for p in project.parts.values() if p.category == "wire")
 
 
-def _released(h: Harness) -> str:
+def released_text(h: Harness) -> str:
     return f"{h.id} is released (revision {h.revision}); start a new revision to change it."
 
 
@@ -143,7 +143,7 @@ def _apply(project: Project, wire_ids: Sequence[str], make: Change) -> list[Op]:
         if new_wires == h.wires:
             continue
         if h.status == "released":
-            raise EditError(_released(h))
+            raise EditError(released_text(h))
         ops.append(Put("harnesses", evolve(h, wires=new_wires)))
     return ops
 
@@ -225,7 +225,7 @@ def _check_ends(project: Project, ops: list[Op], wire_id: str) -> None:
         raise EditError("A wire cannot start and end on the same pin.")
 
 
-def _used_ids(project: Project) -> set[str]:
+def used_ids(project: Project) -> set[str]:
     ids: set[str] = set(project.units) | set(project.interfaces) | set(project.connectors)
     ids |= set(project.parts) | set(project.harnesses)
     for h in project.harnesses.values():
@@ -240,7 +240,7 @@ def new_wire_id(project: Project, harness_id: str) -> str:
     from .generate.naming import namer_for
 
     namer = namer_for(project)
-    taken = _used_ids(project)
+    taken = used_ids(project)
     n = 1
     while namer.wire(harness_id, n) in taken:
         n += 1
@@ -265,7 +265,7 @@ def plan_add_wire(
     if h is None:
         raise EditError(f"Harness '{harness_id}' does not exist.")
     if h.status == "released":
-        raise EditError(_released(h))
+        raise EditError(released_text(h))
     _check_end(h, from_connector, from_pin, "From")
     _check_end(h, to_connector, to_pin, "To")
     if (from_connector, from_pin) == (to_connector, to_pin):
@@ -325,7 +325,7 @@ def plan_delete_wires(project: Project, wire_ids: Iterable[str]) -> list[Op]:
     for hid in sorted({h.id for h, _w in found.values()}):
         h = project.harnesses[hid]
         if h.status == "released":
-            raise EditError(_released(h))
+            raise EditError(released_text(h))
         gone = {wid for wid, (fh, _w) in found.items() if fh.id == hid}
         shields = []
         for s in h.shields:
@@ -370,7 +370,7 @@ def new_group_id(project: Project, harness_id: str) -> str:
     from .generate.naming import namer_for
 
     namer = namer_for(project)
-    taken = _used_ids(project)
+    taken = used_ids(project)
     n = 1
     while namer.shield(harness_id, n) in taken:
         n += 1
@@ -399,7 +399,7 @@ def plan_group_wires(project: Project, wire_ids: Iterable[str], kind: str) -> li
         raise EditError("The wires of one group must be in the same harness.")
     h = found[0][0]
     if h.status == "released":
-        raise EditError(_released(h))
+        raise EditError(released_text(h))
     low, high = GROUP_KINDS[kind]
     word = _KIND_WORDS[kind]
     if len(ids) < low or (high is not None and len(ids) > high):
@@ -447,7 +447,7 @@ def plan_ungroup_all(project: Project, group_ids: Iterable[str]) -> list[Op]:
                 "leave it."
             )
         if h.status == "released":
-            raise EditError(_released(h))
+            raise EditError(released_text(h))
         gone.setdefault(h.id, set()).add(gid)
     return [
         Put(
@@ -478,7 +478,7 @@ def plan_set_labels(
     if h is None:
         raise EditError(f"Harness '{harness_id}' does not exist.")
     if h.status == "released":
-        raise EditError(_released(h))
+        raise EditError(released_text(h))
 
     def text(value: str, what: str) -> str | None:
         clean = value.strip()

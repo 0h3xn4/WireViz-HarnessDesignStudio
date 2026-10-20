@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Added
+
+- **A harness from nothing (answer to the AIT engineers: create a project completely from scratch).** A harness no longer has to come from Generate. **New harness…** (Drawings area, Edit menu, Ctrl+Shift+H) makes an empty draft harness; the new **Connectors** tab adds its cable connectors (a part of the library, or the other half of a unit's connector with its pins, gender and keying taken from it; pin names of your own if you like), sets the function, termination and contact size of a pin, and deletes a connector that has no wires; the wires are drawn in *Edit wire* as before. From there it is a harness like any other: checked, drawn, listed, reviewed and released. Generate leaves it, its connectors and its wires as they are; a harness that Generate made takes no connector by hand. No file format change (every field existed) and no change to any generated file. See `docs/user-manual/build-a-harness-by-hand.md` and D-166.
+
 ### Documentation
 
 - **Documents brought up to 1.4.0.** The user manual (edit a wire, define a device and reuse it, import data with InvenTree files, export, Git, naming, wire colours, generate), the FAQ, glossary, concepts, cheat sheet, learning path, troubleshooting and tips, the user guide, both READMEs, the architecture, design and UX pages, the developer pages (tests of the 1.4.0 features, a picture script), the compliance records and the AIT plan now describe what 1.4.0 does; statements that were no longer true (the app has no button to lock a wire, a harness is never drawn by hand, there is no editor for interface types, the root changelog's latest version) were corrected, quoted model hashes and version stamps renewed, and two pictures added (`docs/img/edit-wire-tab.png`, `docs/img/devices-tab.png`, made by `python -m tools.tab_screenshots`). No code or output changes.
