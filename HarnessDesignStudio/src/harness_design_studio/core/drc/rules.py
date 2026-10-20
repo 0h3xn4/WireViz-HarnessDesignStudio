@@ -146,8 +146,9 @@ def _pin_shared(project: Project) -> Iterator[Hit]:
         for (cid, pid), ids in sorted(on_pin.items()):
             if len(ids) > 1:
                 yield Hit(
-                    f"{cid}.{pid}",
+                    h.id,  # the harness is found at once; a pin ID would be searched for among all wires
                     f"Pin {pid} of {cid} carries {len(ids)} wires ({', '.join(sorted(ids))})",
+                    key=f"{h.id}.{cid}.{pid}",
                 )
 
 

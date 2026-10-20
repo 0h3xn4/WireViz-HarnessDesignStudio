@@ -165,7 +165,7 @@ def test_two_wires_on_one_pin_are_pointed_out_by_a_rule(project):
         plan_add_wire(project, h.id, w.from_connector, w.from_pin, other.id, other.pins[-1].id),
     )
     found = [f for f in run(project) if f.rule == "pin-shared"]
-    assert any(f"{w.from_connector}.{w.from_pin}" in f.object_id for f in found)
+    assert any(f"Pin {w.from_pin} of {w.from_connector}" in f.title for f in found)
     assert all(f.severity == "warning" for f in found)
 
 
