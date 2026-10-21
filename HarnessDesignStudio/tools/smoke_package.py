@@ -65,13 +65,31 @@ def run(
 
 
 PYTHON_NAMES = ("python", "python3", "python.exe", "pythonw.exe", "py.exe")
+SYSTEM_FOLDERS = (
+    "/usr/bin",
+    "/bin",
+    "/usr/sbin",
+    "/sbin",
+)  # the system's own tools, stub Pythons too
+
+
+def _is_system_folder(folder: str) -> bool:
+    """A folder of the operating system itself (`/usr/bin`, `C:\\Windows\\System32`): it stays on the
+    PATH even when it holds a Python (macOS has a stub there), because the launcher scripts of a
+    package need `dirname` and the like. The self-test's *runs on its own Python* step is the proof
+    that nothing is imported from outside the package."""
+    if folder in SYSTEM_FOLDERS:
+        return True
+    root = os.environ.get("SYSTEMROOT", "")
+    return bool(root) and Path(folder).resolve().is_relative_to(Path(root).resolve())
 
 
 def clean_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     """The environment of a machine that has no Python for the package to lean on: no PYTHON*
-    variable, no virtual or conda environment, and no PATH folder that holds a Python. A package
-    that passes with this is the "just run the setup" package; with the CI runner's own
-    environment it could pass by borrowing the runner's Python."""
+    variable, no virtual or conda environment, and no PATH folder of the runner's holding a
+    Python (the system folders stay, see `_is_system_folder`). A package that passes with this is
+    the "just run the setup" package; with the CI runner's own environment it could pass by
+    borrowing the runner's Python."""
     env = {
         k: v
         for k, v in os.environ.items()
@@ -80,7 +98,8 @@ def clean_env(extra: dict[str, str] | None = None) -> dict[str, str]:
     kept = [
         d
         for d in env.get("PATH", "").split(os.pathsep)
-        if d and not any((Path(d) / name).exists() for name in PYTHON_NAMES)
+        if d
+        and (_is_system_folder(d) or not any((Path(d) / name).exists() for name in PYTHON_NAMES))
     ]
     dropped = len([d for d in env.get("PATH", "").split(os.pathsep) if d]) - len(kept)
     env["PATH"] = os.pathsep.join(kept)

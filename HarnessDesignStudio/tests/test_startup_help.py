@@ -7,6 +7,7 @@ import os
 import subprocess
 import sys
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -201,3 +202,66 @@ def test_ci_runs_the_tarball_on_the_smallest_machine_it_supports() -> None:
     # checkout cleans the workspace: it must come before the artifact is downloaded
     job = workflow[workflow.index("package-on-24-04:") :]
     assert job.index("actions/checkout") < job.index("actions/download-artifact")
+
+
+def test_the_smoke_environment_keeps_the_system_folders_even_with_a_stub_python(
+    tmp_path: Path, monkeypatch
+) -> None:
+    """macOS has a stub `python3` in /usr/bin; removing that folder took `dirname` away from the
+    launcher script of the app and failed the 1.5.0 release run."""
+    from tools import smoke_package
+
+    system = tmp_path / "usr-bin"
+    system.mkdir()
+    (system / "python3").write_text("")
+    runner = tmp_path / "runner"
+    runner.mkdir()
+    (runner / "python3").write_text("")
+    monkeypatch.setattr(smoke_package, "SYSTEM_FOLDERS", (str(system),))
+    monkeypatch.setenv("PATH", os.pathsep.join([str(system), str(runner)]))
+    env = smoke_package.clean_env()
+    assert env["PATH"] == str(system)
+
+
+def _frozen(monkeypatch, exe: Path, meipass: Path, path: list[Path]) -> Any:
+    entry = _load_gui_entry()
+    monkeypatch.setattr(sys, "frozen", True, raising=False)
+    monkeypatch.setattr(sys, "executable", str(exe))
+    monkeypatch.setattr(sys, "_MEIPASS", str(meipass), raising=False)
+    monkeypatch.setattr(sys, "path", [str(p) for p in path])
+    return entry
+
+
+def test_a_macos_app_counts_everything_inside_the_bundle_as_its_own(tmp_path, monkeypatch) -> None:
+    app = tmp_path / "Harness Design Studio.app" / "Contents"
+    for sub in ("MacOS", "Frameworks", "Resources"):
+        (app / sub).mkdir(parents=True)
+    entry = _frozen(
+        monkeypatch,
+        app / "MacOS" / "harness-design-studio-gui",
+        app / "Frameworks",
+        [
+            app / "Frameworks" / "base_library.zip",
+            app / "Frameworks" / "lib-dynload",
+            app / "Resources" / "base_library.zip",  # the same files seen through a link
+        ],
+    )
+    assert entry._runs_from_its_own_python() is True
+
+
+def test_a_package_that_imports_from_outside_itself_fails_the_check(tmp_path, monkeypatch) -> None:
+    pkg = tmp_path / "pkg"
+    (pkg / "_internal").mkdir(parents=True)
+    outside = tmp_path / "site-packages"
+    outside.mkdir()
+    entry = _frozen(
+        monkeypatch,
+        pkg / "harness-design-studio-gui",
+        pkg / "_internal",
+        [pkg / "_internal" / "base_library.zip", outside],
+    )
+    assert entry._runs_from_its_own_python() is False
+    assert _frozen(
+        monkeypatch, pkg / "x", pkg / "_internal", [pkg / "_internal" / "base_library.zip"]
+    )._runs_from_its_own_python()
+    assert not _frozen(monkeypatch, pkg / "x", pkg / "_internal", [])._runs_from_its_own_python()
