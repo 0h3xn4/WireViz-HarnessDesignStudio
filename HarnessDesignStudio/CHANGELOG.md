@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Fixed
+
+- **A blank project says where to start.** The empty diagram told the user to add a unit "from the palette on the left", which the redesign of 1.3.0 had removed. It now has the button **Add a device** (a unit with its own connectors and pins; the same as Edit > Add unit > Device…, Ctrl+Shift+N; hidden once there is a unit and in a read-only project), and the empty diagram, the empty link and unit lists, the narrow-window notice and the name of the left tab name controls that exist. No file format, rule, command line or generated file changes.
+
 ### Removed
 
 - **macOS (D-168).** The tool is supported on Ubuntu 24.04 and newer and on Windows 10 and 11 only. The workflows no longer build, test or publish anything for macOS (the release makes the `.deb`, the `.tar.gz`, the Windows setup program and `.zip`, and one `SHA256SUMS`), and `tools/build_macos.py`, `packaging/macos/`, the macOS mode of `tools/smoke_package.py`, the `.icns` of `tools/make_icons.py`, the macOS tests and the macOS parts of the documents are gone. No file format, model, rule, command line or generated file changes. The releases 1.2.0 to 1.5.0 still carry their two macOS disk images on GitHub; they are not maintained or tested any more.

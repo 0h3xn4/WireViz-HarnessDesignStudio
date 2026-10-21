@@ -66,6 +66,8 @@ The app also has **File > Open the sample project**. That is example data. Save 
 
 Each unit comes with connectors. You do not need to look at them in Guided mode.
 
+**A unit with your own connectors.** In a blank project the empty diagram has the button **Add a device** (also **Edit > Add unit > Device…**, Ctrl+Shift+N). It adds a unit with no connectors and opens the **Devices** tab, where you name it and define its connectors and pins ([define a device](define-a-device.md)). Use it when none of the kinds above fits.
+
 ## 3. Connect two units
 
 1. Open the arrow beside the **Connect** button above the diagram and pick an interface type, for example **RS-422** or **Primary power**; the type in use has a tick. (**Edit > Connect with** has the same list; the key **C** switches the connect tool on with the last type. **Ctrl+I** or **Add > Interface…** opens a form where you pick the type and both units.)

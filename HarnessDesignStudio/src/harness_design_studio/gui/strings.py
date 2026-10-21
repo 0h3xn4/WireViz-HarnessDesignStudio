@@ -4,7 +4,7 @@ APP_TITLE = "Harness Design Studio"
 EMPTY_STATE = (
     "No project open. Create a new project, start from an example or open an existing one to begin."
 )
-EMPTY_CANVAS = "Your diagram is empty.\nAdd your first unit from the palette on the left, press Ctrl+K to find a command, or bring in a table with File > Import."
+EMPTY_CANVAS = "Your diagram is empty.\nAdd your first unit with the button below, or with Add in the project panel. Press Ctrl+K to find a command, or bring in a table with File > Import."
 CANVAS = "Block diagram canvas"
 CANVAS_HELP = "Tab and Shift+Tab move between units and links, Enter shows the item in the harness plans, Space selects it, Ctrl+A selects everything, Shift+arrow keys move the selected units, Ctrl+F finds, Escape clears the selection. The Interface table tab lists every interface and is the screen-reader friendly alternative."
 MINIMAP = "Minimap: click to move the view"
@@ -358,7 +358,7 @@ NO_HISTORY = "Nothing has been recorded yet."
 CANVAS_NAME = "Block diagram: {0}, {1}"
 CANVAS_SELECTED = "Selected: {0} {1}."
 CANVAS_NONE = "Nothing selected."
-PANELS_HIDDEN = "The window is narrow, so the palette and properties are hidden. Widen the window or use the View menu to show them."
+PANELS_HIDDEN = "The window is narrow, so the project panel and properties are hidden. Widen the window or use the View menu to show them."
 PROPERTIES_HIDDEN = (
     "Properties are hidden because the window is narrow. Widen the window or use the View menu."
 )
@@ -598,7 +598,7 @@ LEGEND_TOGGLE_TIP = "Show or fold the key to the pictures (View > Show legend hi
 LEGEND_TOGGLE_NAME = "Legend, fold or unfold"
 # empty states
 EMPTY_NO_LINKS = (
-    "No links yet. Press C to connect two units, or pick an interface type in the palette."
+    "No links yet. Press C to connect two units, or use Connect in the bar above the diagram."
 )
 # context menu
 CM_OPEN_PLAN = "Show in harness plans"
@@ -1112,7 +1112,7 @@ WHY_NOTHING_CHOSEN = "nothing was chosen for you here"
 # ==== App shell (ux/shell): top bar, banners, tabs, palette, layout ===================================
 SHELL_MAIN_TABS = "Main views"
 SHELL_RIGHT_TABS = "Side panels"
-SHELL_LEFT_TABS = "Project and palette"
+SHELL_LEFT_TABS = "Project, units and interfaces"
 TAB_DIAGRAM = "Diagram"
 TAB_HARNESS = "Harness"
 TAB_LISTS = "Lists"
@@ -1999,9 +1999,7 @@ UNIT_TABLE = "Unit table"
 UNIT_COLUMNS = ["ID", "Name", "Subsystem", "Zone", "Chain", "Interfaces", "Connectors", "Notes"]
 STEP_PASTE = "Paste {0} cell(s)"
 EMPTY_UNITS_TITLE = "No units yet"
-EMPTY_UNITS_HINT = (
-    "Add a unit from the palette on the diagram, or import a table with File > Import."
-)
+EMPTY_UNITS_HINT = "Add a unit with Add in the project panel (or Edit > Add unit), or import a table with File > Import."
 A_GO_UNITS = "Go to Unit table"
 UNIT_FILTER_PLACEHOLDER = "Filter by ID, name, subsystem, zone or notes"
 NEW_UNIT = "New unit"
@@ -2302,3 +2300,7 @@ CE_TERMINATIONS = (("unspecified", "not said"), ("crimp", "crimp"), ("solder", "
 STEP_ADD_HARNESS_CONNECTOR = "Add connector to {0}"
 STEP_SET_HARNESS_PIN = "Set pin {0}"
 STEP_DELETE_HARNESS_CONNECTOR = "Delete connector {0}"
+
+# ---- 1.5.1: a blank project says where to start ---------------------------------------------------
+EMPTY_ADD_DEVICE = "Add a device"
+EMPTY_ADD_DEVICE_NAME = "Add a device to the empty diagram"

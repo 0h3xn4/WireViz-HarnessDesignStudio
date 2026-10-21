@@ -161,3 +161,58 @@ def test_pin_names_and_a_unit_connector_to_plug_into(qtbot, theme):  # noqa: F81
     ed.plugs_into.setCurrentIndex(0)
     assert not ed.add_connector()
     assert not ed.error.isHidden() and "pin name" in ed.error.text()
+
+
+def test_an_empty_diagram_offers_the_first_step_and_names_no_retired_palette(qtbot, theme):  # noqa: F811
+    """1.5.1: a blank project says where to start: a button, and text that names controls which
+    exist (the palette of the old window is gone)."""
+    ctl, view = make_view(qtbot, theme, new_project("Scratch"))
+    from harness_design_studio.gui.canvas import DiagramView
+
+    diagram = DiagramView(ctl, theme)
+    qtbot.addWidget(diagram)
+    diagram.resize(900, 600)
+    diagram.show()
+    assert diagram.empty_add.isVisible()
+    assert "palette" not in diagram.empty.text().lower()
+    with qtbot.waitSignal(diagram.addDeviceRequested, timeout=1000):
+        diagram.empty_add.click()
+    for text in (
+        strings.EMPTY_CANVAS,
+        strings.EMPTY_NO_LINKS,
+        strings.EMPTY_UNITS_HINT,
+        strings.PANELS_HIDDEN,
+        strings.SHELL_LEFT_TABS,
+    ):
+        assert "palette" not in text.lower(), text
+
+
+def test_the_start_button_goes_away_with_the_first_unit_and_in_a_read_only_project(qtbot, theme):  # noqa: F811
+    from harness_design_studio.gui.canvas import DiagramView
+
+    ctl, view = make_view(qtbot, theme, new_project("Scratch"))
+    diagram = DiagramView(ctl, theme)
+    qtbot.addWidget(diagram)
+    diagram.show()
+    assert diagram.empty_add.isVisible()
+    assert ctl.add_device() is not None
+    assert not diagram.empty_add.isVisible()
+    ctl2, _view2 = make_view(qtbot, theme, new_project("Scratch"))
+    ctl2.project.read_only = True
+    diagram2 = DiagramView(ctl2, theme)
+    qtbot.addWidget(diagram2)
+    diagram2.show()
+    assert not diagram2.empty_add.isVisible()
+
+
+def test_the_window_adds_a_device_from_the_start_button(tmp_path):
+    win = make_window(tmp_path)
+    win.ctl.new_project(tmp_path / "proj", "Scratch")
+    win.show()
+    QApplication.processEvents()
+    assert win.view.empty_add.isVisible()
+    win.view.empty_add.click()
+    QApplication.processEvents()
+    assert len(win.ctl.project.units) == 1
+    assert not win.view.empty_add.isVisible()
+    win.close()

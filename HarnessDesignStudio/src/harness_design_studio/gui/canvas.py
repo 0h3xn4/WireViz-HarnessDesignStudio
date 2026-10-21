@@ -36,6 +36,7 @@ from PySide6.QtWidgets import (
     QLabel,
     QLineEdit,
     QMenu,
+    QPushButton,
     QStyleOptionGraphicsItem,
     QToolButton,
     QToolTip,
@@ -48,7 +49,7 @@ from harness_design_studio.gui import canvas_badges as cbadges
 from harness_design_studio.gui import glyphs, strings
 from harness_design_studio.gui.canvas_state import NO_INDEX, ObjectState, StateIndex, badge_text
 from harness_design_studio.gui.controller import Delta, EditorController, Selection
-from harness_design_studio.gui.icons import draw_icon
+from harness_design_studio.gui.icons import draw_icon, icon_button
 from harness_design_studio.gui.theme import ThemeManager
 from harness_design_studio.gui.theme.tokens import CATEGORIES, style_category
 
@@ -2700,6 +2701,7 @@ class SearchBar(QFrame):
 
 class DiagramView(QGraphicsView):
     zoomChanged = Signal(float)  # the scale now (1.0 is 100 %)
+    addDeviceRequested = Signal()  # the button of the empty diagram (the window adds the device)
 
     def __init__(self, ctl: EditorController, theme: ThemeManager) -> None:
         self.ctl = ctl
@@ -2714,6 +2716,19 @@ class DiagramView(QGraphicsView):
         self.setAccessibleDescription(strings.CANVAS_HELP)
         self.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
         self.empty = EmptyHint(strings.EMPTY_CANVAS, self, theme)
+        self.empty_add = QPushButton(self)  # where to start in a project with no unit
+        self.empty_add.setObjectName("empty-add-device")
+        self.empty_add.setProperty("primary", True)
+        icon_button(
+            self.empty_add,
+            "plus",
+            theme,
+            strings.A_ADD_DEVICE_TIP,
+            "Ctrl+Shift+N",
+            text=strings.EMPTY_ADD_DEVICE,
+        )
+        self.empty_add.setAccessibleName(strings.EMPTY_ADD_DEVICE_NAME)
+        self.empty_add.clicked.connect(lambda _c=False: self.addDeviceRequested.emit())
         from harness_design_studio.gui.legend import LegendOverlay
 
         self.minimap = MiniMap(self)
@@ -2776,6 +2791,7 @@ class DiagramView(QGraphicsView):
         elif not p.interfaces:
             self.empty.setText(strings.EMPTY_NO_LINKS)
         self.empty.setVisible(not p.units or not p.interfaces)
+        self.empty_add.setVisible(not p.units and not self.ctl.read_only)
         self._layout_overlays()
         self._update_minimap_visibility()
         if getattr(delta, "full", False):
@@ -2829,6 +2845,18 @@ class DiagramView(QGraphicsView):
             self.empty.setGeometry(area.adjusted(60, 12, -60, -(area.height() - 60)))  # a top line
         else:
             self.empty.setGeometry(area.adjusted(60, 60, -60, -60))
+        # the button sits under the text, which is centred in the hint
+        box = self.empty.geometry()
+        flags = int(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
+        text_h = (
+            self.empty.fontMetrics()
+            .boundingRect(0, 0, box.width(), box.height(), flags, self.empty.text())
+            .height()
+        )
+        self.empty_add.adjustSize()
+        self.empty_add.move(
+            box.center().x() - self.empty_add.width() // 2, box.center().y() + text_h // 2 + 16
+        )
         self.minimap.move(
             r.right() - self.minimap.width() - 12, r.bottom() - self.minimap.height() - 12
         )
