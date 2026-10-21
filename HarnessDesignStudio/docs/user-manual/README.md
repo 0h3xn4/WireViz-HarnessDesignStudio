@@ -54,7 +54,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 
 ## How to read the pages
 
-- **Commands** use a practice project called `wheel-link`, made with `harness-design-studio new wheel-link --template first-steps`. Put your own folder where you see `wheel-link` or `DIR`. Output blocks are real output of the tool. Numbers such as the model hash (`9bde6217c013`) depend on the project and the tool version; yours can differ.
+- **Commands** use a practice project called `wheel-link`, made with `harness-design-studio new wheel-link --template first-steps`. Put your own folder where you see `wheel-link` or `DIR`. Output blocks are real output of the tool. Numbers such as the model hash (`f4e2ccd9c5ca`) depend on the project and the tool version; yours can differ.
 - **Command names.** The command line tool is `harness-design-studio`; `harness` is a short alias that runs the same program, so older scripts keep working. The app is `harness-design-studio-gui` (alias `harness-gui`) when started from a terminal.
 - **App steps** (menus, buttons, tabs) use the names that version 1.4.0 of the program shows. They were checked against the program's texts (`gui/strings.py`) and against the menus and buttons of the window started without a screen. Nobody watched the steps on a screen, so pages with app steps say "GUI, not run" where it matters.
 - **Where things are in the window.** The rail on the left opens an area: **Home**, **Model** (the **Diagram** and **Devices** tabs), **Checks**, **Drawings** (the **Harness** tab), **Outputs** (the **Lists** tab), **Revisions** (the **Releases** tab) and **Settings**. The pages name the tab, as the **Go** menu does (Ctrl+1 to Ctrl+6). The user guide, section 4, describes the window.
