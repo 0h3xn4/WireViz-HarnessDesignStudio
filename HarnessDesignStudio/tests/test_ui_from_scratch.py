@@ -1,6 +1,7 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """1.5.0: a harness made by hand in the Harness tab: New harness, the Connectors tab, wires between
-the new connectors, and the whole journey from a blank project in the window."""
+the new connectors, and the whole journey from a blank project in the window (REQ-HARN-01).
+The start of a blank project (the Add a device button) is REQ-GUI-06."""
 
 import pytest
 
@@ -164,7 +165,7 @@ def test_pin_names_and_a_unit_connector_to_plug_into(qtbot, theme):  # noqa: F81
 
 
 def test_an_empty_diagram_offers_the_first_step_and_names_no_retired_palette(qtbot, theme):  # noqa: F811
-    """1.5.1: a blank project says where to start: a button, and text that names controls which
+    """1.6.0: a blank project says where to start: a button, and text that names controls which
     exist (the palette of the old window is gone)."""
     ctl, view = make_view(qtbot, theme, new_project("Scratch"))
     from harness_design_studio.gui.canvas import DiagramView

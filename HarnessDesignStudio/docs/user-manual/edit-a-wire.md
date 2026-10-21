@@ -10,6 +10,20 @@ This page shows how to change a wire after the tool has generated it (its gauge,
 
 To make a whole harness yourself, with its own connectors, see [build a harness by hand](build-a-harness-by-hand.md).
 
+## Contents
+
+- [Before you start](#before-you-start)
+- [1. Pick the wires](#1-pick-the-wires)
+- [2. Change the fields](#2-change-the-fields)
+- [3. Give a wire back to generation](#3-give-a-wire-back-to-generation)
+- [What shows up in the outputs](#what-shows-up-in-the-outputs)
+- [4. Draw a wire yourself](#4-draw-a-wire-yourself)
+- [5. Several wires on one pin](#5-several-wires-on-one-pin)
+- [6. Twist or shield wires together](#6-twist-or-shield-wires-together)
+- [7. Labels on the harness and its connectors](#7-labels-on-the-harness-and-its-connectors)
+- [8. Function and soldering](#8-function-and-soldering)
+- [Common mistakes](#common-mistakes)
+
 ## Before you start
 
 - You have a generated project with a harness that is not released. A released harness is locked: start a new revision first ([change a released harness](change-a-released-harness.md)).

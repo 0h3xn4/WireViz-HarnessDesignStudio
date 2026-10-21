@@ -114,8 +114,8 @@ harness-design-studio log wheel-link W002
 
 ```
 Entry | Harness | Revision | Event | By | Date | Comment
-C0001 | W002 | A | submitted for review | A. Engineer | 2026-10-10 | 
-C0002 | W002 | A | released | A. Engineer | 2026-10-10 | First release of the wheel power harness [Released on placeholder configuration (derating, emc, generation, segmentation, segregation, titleblock); accepted by A. Engineer: Practice project: demo values only] [Released with parts that are not approved (EX-MICROD-9-M, EX-WIRE-SINGLE); accepted by A. Engineer: Practice project: example parts only]
+C0001 | W002 | A | submitted for review | A. Engineer | 2026-10-21 | 
+C0002 | W002 | A | released | A. Engineer | 2026-10-21 | First release of the wheel power harness [Released on placeholder configuration (derating, emc, generation, segmentation, segregation, titleblock); accepted by A. Engineer: Practice project: demo values only] [Released with parts that are not approved (EX-MICROD-9-M, EX-WIRE-SINGLE); accepted by A. Engineer: Practice project: example parts only]
 ```
 
 (The date is the day you run it.)

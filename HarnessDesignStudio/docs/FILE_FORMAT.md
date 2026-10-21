@@ -2,6 +2,22 @@
 
 A project is a folder of small, canonical JSON files: UTF-8, 2-space indent, sorted keys, `\n` line endings, trailing newline. The same model always produces the same bytes, so Git diffs show only real changes.
 
+## Contents
+
+- [Rules](#rules)
+- [Versions and migration](#versions-and-migration)
+- [Recovery mode](#recovery-mode)
+- [Saving](#saving)
+- [Locking](#locking)
+- [Saving: file modes and temporary files](#saving-file-modes-and-temporary-files)
+- [Number ranges](#number-ranges)
+- [Hash](#hash)
+- [Editor additions](#editor-additions-connector-use-layout-waivers-autosave-schema-version-stays-1)
+- [Generation additions](#generation-additions-pins-mating-locks-generation-record-schema-version-stays-1)
+- [Change control additions](#change-control-additions-review-release-baselines-change-log-schema-version-stays-1)
+- [Device library file](#device-library-file-140-not-part-of-a-project)
+- [Editing files by hand: JSON Schemas](#editing-files-by-hand-json-schemas)
+
 ```
 project.json                      name, description, schema_version, tool_version (last saving tool)
 config/<name>.json                segmentation, segregation, derating, generation, naming, emc, titleblock (seven files)
@@ -85,7 +101,8 @@ All optional with defaults; projects saved before them load unchanged.
 - `Pin.function`, `Connector.label` and `Harness.label` (1.4.0): free text a person gives a pin, a connector (box or cable end) and a harness. Written only when set; generation copies the function of a box pin to its cable pin and keeps the labels.
 - `Wire.manual` and `ShieldGroup.manual` (1.4.0): a wire or a twisting or shield group that a person made; generation keeps it as it is, never matches it to an interface, and says when it cannot keep it. Written only when `true`.
 - `Wire.label` and `Wire.note` (1.4.0): text for the wire labels instead of the signal name, and a remark. Written only when set; a project without them is byte-identical to one saved by 1.3.0, and 1.3.0 quarantines the fields when it opens a project that uses them.
-- `Harness.generated`, `group_key`, `interfaces`: set for generated harnesses; manual harnesses keep `generated: false`.
+- `Harness.generated`, `group_key`, `interfaces`: set for generated harnesses; a harness made by hand (*New harness*, 1.5.0) keeps `generated: false`. Releases 1.5.0 and 1.6.0 added no field: a project saved by 1.4.0 opens as it is.
+- **How the 1.4.0 fields stay out of old projects.** The fields above that say "written only when set" are the model's *sparse* fields (`OMIT_WHEN_DEFAULT` in `core/model/base.py`): `Pin.function`, `Connector.label`, `Harness.label`, `Wire.label`, `Wire.note`, `Wire.manual` and `ShieldGroup.manual`. While a field has its default value it is left out of the file, so a project that does not use the feature keeps byte-identical files and the same model hash.
 - `Part.mates_with`: library connector parts that mate with it.
 - `generated/generation.json`: the last generation record: `input_hash`, `generator_version`, `next_harness_number`, `placeholders_used`, and `provenance` (object key to list of "rule: reason" lines; the data behind Explain).
 - `config/generation.json`: generation settings (see PLACEHOLDERS.md).
@@ -108,7 +125,7 @@ The editor and the data commands (`import-parts`, `config`; `library` only recor
 
 ## Device library file (1.4.0; not part of a project)
 
-A device library (`harness-device-library`, D-165) is one JSON file that is kept outside any project. Its top level is `format` (the text `harness-device-library`), `version` (1), `devices`, `parts` and `interface_types`. A device is `{"unit": {...}, "connectors": [...]}` with the same fields as `system/units.json` and `system/connectors.json` of a project (box connectors only, every pin with its `signal`, `function`, `contact_size`, `termination` and `fixed`); `parts` and `interface_types` are the records of `library/parts.json` and `system/interface_types.json` that the connectors name. The zone of a unit and the allocations that generation made on a pin (`interface_id`, `locked`, a signal that was given for an interface) are left out. The file is written sorted by ID with two-space indent. A reader refuses a file of a higher `version`, a file over 8 MB, over 500 devices or over 64 connectors in a device. Importing never changes the project outside what the plan names; see `docs/user-manual/define-a-device.md`.
+A device library (`harness-device-library`, D-165) is one JSON file that is kept outside any project. Its top level is `format` (the text `harness-device-library`), `version` (1), `devices`, `parts` and `interface_types`. A device is `{"unit": {...}, "connectors": [...]}` with the same fields as a unit in `logical/units/<subsystem>.json` and a box connector in `physical/connectors/<subsystem>.json` of a project (box connectors only, every pin with its `signal`, `function`, `contact_size`, `termination` and `fixed`); `parts` and `interface_types` are the records of `library/<category>.json` and `logical/interface_types.json` that the connectors name. The zone of a unit and the allocations that generation made on a pin (`interface_id`, `locked`, a signal that was given for an interface) are left out. The file is written sorted by ID with two-space indent. A reader refuses a file of a higher `version`, a file over 8 MB, over 500 devices or over 64 connectors in a device. Importing never changes the project outside what the plan names; see `docs/user-manual/define-a-device.md`.
 
 ## Editing files by hand: JSON Schemas
 

@@ -1,7 +1,7 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """The Linux package must start without hassle: what the editor does when the machine lacks a
 graphics or window-system library, or has no desktop session, and the proof that a package does
-not lean on the Python of the machine (the CI smoke test runs it without one)."""
+not lean on the Python of the machine (the CI smoke test runs it without one). REQ-START-01."""
 
 import os
 import subprocess

@@ -81,7 +81,7 @@ Before you open the tool, fill in `design-worksheet.md` (get it with `harness-de
 
 Two ways, and you can mix them:
 
-- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add units (**Add** in the Project tab, or **Edit > Add unit**), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10.
+- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add units (the button **Add a device** on the empty diagram, **Add** in the Project tab, or **Edit > Add unit**), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10. To make a harness with no interface at all, see [build a harness by hand](user-manual/build-a-harness-by-hand.md).
 - **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import > Import interfaces…** (Ctrl+Shift+I). Add the units first. You can also paste a block of cells from Excel into the **Units** or **Interfaces** table to change rows that exist. Importing interfaces is app only: there is no command line command for it.
 
 **Done when:** `harness-design-studio generate my-design` finishes and `harness-design-studio check my-design` reports no errors.

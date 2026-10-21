@@ -2,7 +2,15 @@
 
 > Source of truth for the project. Decisions that resolve open questions live in `DECISIONS.md`.
 
-> **Read this as the specification of October 2026, not as a description of the editor today.** The text is kept as the owner gave it; notes added later are in italics. Where it names parts of the window (a palette on the left, properties on the right, problems at the bottom, a toolbar), the editor of version 1.3.0 is laid out differently: a navigation rail (Home, Model, Checks, Drawings, Outputs, Revisions, Settings), one top bar with the steps Generate, Check and Release, a project panel and inspector, and a Problems panel (D-150 to D-159, [`DESIGN.md`](DESIGN.md), [`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md)). The requirements the text states (offline, accessibility, performance, undo, locks, and so on) still hold and are traced in [`REQUIREMENTS.md`](REQUIREMENTS.md). The command `harness` of the examples is now `harness-design-studio` (D-147; `harness` stays as an alias), and the milestones M0 to M7 listed at the end were followed by M8 and M9 ([`PLAN.md`](PLAN.md)).
+> **Read this as the specification of October 2026, not as a description of the editor today.** The text is kept as the owner gave it; notes added later are in italics. Where it names parts of the window (a palette on the left, properties on the right, problems at the bottom, a toolbar), the editor since version 1.3.0 (the current version is 1.6.0) is laid out differently: a navigation rail (Home, Model, Checks, Drawings, Outputs, Revisions, Settings), one top bar with the steps Generate, Check and Release, a project panel and inspector, and a Problems panel (D-150 to D-159, [`DESIGN.md`](DESIGN.md), [`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md)). The requirements the text states (offline, accessibility, performance, undo, locks, and so on) still hold and are traced in [`REQUIREMENTS.md`](REQUIREMENTS.md). The command `harness` of the examples is now `harness-design-studio` (D-147; `harness` stays as an alias), and the milestones M0 to M7 listed at the end were followed by M8 and M9 ([`PLAN.md`](PLAN.md)). Versions 1.4.0 to 1.6.0 added what the AIT engineers asked for: editing a wire, wires drawn by hand, a function on every pin, a device library, and a harness made from nothing ([`../CHANGELOG.md`](../CHANGELOG.md)); the Ubuntu and Windows list below is the supported one (macOS was supported from 1.2.0 to 1.5.0 and removed by D-168).
+
+## Contents
+
+- [Part 1: Role, context and constraints](#part-1-role-context-and-constraints)
+- [Part 2: Data model and harness generation](#part-2-data-model-and-harness-generation)
+- [Part 3: Validation, outputs and usability](#part-3-validation-outputs-and-usability)
+- [Part 4: Architecture, quality and process](#part-4-architecture-quality-and-process)
+- [Open decisions](#open-decisions)
 
 ## Part 1: Role, context and constraints
 
@@ -230,3 +238,5 @@ M0 Foundation; M1 Model and files; M2 Block diagram (UX.md and prototype reviewe
 
 ## Open decisions
 See `DECISIONS.md` for how each was resolved or defaulted.
+
+Next: [`DECISIONS.md`](DECISIONS.md), [`REQUIREMENTS.md`](REQUIREMENTS.md), [`PLAN.md`](PLAN.md)

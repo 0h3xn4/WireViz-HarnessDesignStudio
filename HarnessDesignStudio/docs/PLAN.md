@@ -1,6 +1,6 @@
 # Milestone plan (proposal for owner review)
 
-> **Historical.** This is the plan as it was proposed to the owner in October 2026, before the first release. Milestones M0 to M9 were done (a note for each is in [`demos/`](demos/README.md)) and 0.1.0 was released; versions 1.0.0 to 1.3.0 have been released since (the newest, 1.3.0, on 2026-10-20). This page was not kept up to date. For the current state read [`../CHANGELOG.md`](../CHANGELOG.md) and the [documentation index](README.md). The UI overhaul of version 1.3.0 had a plan of its own with milestones M1 to M9 of its own ([`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md)); they are not the milestones below. Two items below were never built, and are marked *(not built)*: multi-drop interfaces and hierarchy, and a PDF user guide.
+> **Historical.** This is the plan as it was proposed to the owner in October 2026, before the first release. Milestones M0 to M9 were done (a note for each is in [`demos/`](demos/README.md)) and 0.1.0 was released; versions 1.0.0 to 1.6.0 have been released since (the newest, 1.6.0, on 2026-10-21). This page was not kept up to date. For the current state read [`../CHANGELOG.md`](../CHANGELOG.md) and the [documentation index](README.md). The UI overhaul of version 1.3.0 had a plan of its own with milestones M1 to M9 of its own ([`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md)), and version 1.4.0 (the feedback of the AIT engineers) one with milestones M1 to M5 ([`ait/AIT_FEEDBACK_PLAN.md`](ait/AIT_FEEDBACK_PLAN.md)); they are not the milestones below. Two items below were never built, and are marked *(not built)*: multi-drop interfaces and hierarchy, and a PDF user guide.
 
 Each milestone: tests first, ends with working tested software, a demo note in `docs/demos/` (M0 to M7 have one), and a UX self-review where a GUI exists. A milestone is done only when all its acceptance criteria pass in CI.
 
@@ -20,7 +20,7 @@ Each milestone: tests first, ends with working tested software, a demo note in `
 - Parts library with approval status and starter library (marked unverified).
 - Config loader with PLACEHOLDER-flagged defaults.
 - Transactions + undo/redo command layer.
-- CLI: `harness validate`, `harness check`.
+- CLI: `harness-design-studio validate`, `harness-design-studio check` (written `harness validate` in the proposal; `harness` is still an alias).
 - Reference project `mini3` (hand-written).
 **Acceptance:** round trip load/save is byte-identical; fuzz tests on loader never crash; corrupt-file fixtures open in recovery mode with a precise report; coverage >= 90% for `core`.
 
@@ -62,3 +62,5 @@ Each milestone: tests first, ends with working tested software, a demo note in `
 
 ## Items needing owner input (from DECISIONS.md)
 D-10 harness boundary rule (before M3), D-11 real derating/EMC numbers (before M3 results can be trusted), D-15 title-block format (before M5), D-20 qualification requirement (not needed, decided by the owner), D-14/D-19 confirmations.
+
+Next: [`SPEC.md`](SPEC.md), [`REQUIREMENTS.md`](REQUIREMENTS.md), [`demos/README.md`](demos/README.md)

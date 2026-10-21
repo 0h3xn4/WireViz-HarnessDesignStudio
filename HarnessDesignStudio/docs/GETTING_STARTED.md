@@ -355,15 +355,17 @@ Now do it yourself. Create a blank project and rebuild the wheel link:
 harness-design-studio new my-first-design --name "My first design"
 ```
 
-In the app, **File > Open project…** it, then:
+In the app, **File > Open project…** it. The empty diagram says where to start: it has the button **Add a device** (until the first unit exists) and the hint to use **Add** in the project panel. Then:
 
-1. Press **Add** in the Project tab on the left, choose **Unit…**, and add a **Power unit**, a **Computer** and an **Actuator (wheel)** (**Edit > Add unit** has the same list). Units appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in the Inspector if you want.
+1. Press **Add** in the Project tab on the left, choose **Unit…**, and add a **Power unit**, a **Computer** and an **Actuator (wheel)** (**Edit > Add unit** has the same list; **Add a device**, Ctrl+Shift+N, adds a unit whose connectors and pins you define yourself in the **Devices** tab, see [`user-manual/define-a-device.md`](user-manual/define-a-device.md)). Units appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in the Inspector if you want.
 2. Open the arrow beside **Connect** above the diagram (or **Edit > Connect with**), pick **Primary power**, click `PCDU1`, then click `RW1`. Units that cannot take this interface are greyed out, with the reason beside them.
 3. Select the new link and set **Max current (A)** to 2. Without a current, a power wire's gauge stays pending.
 4. Pick **RS-422**, click `OBC1`, then `RW1`.
 5. Look at **Problems** and its **To do** list, then **Generate**, **Apply**, **Export…**. **Ctrl+S** saves.
 
 You have now done everything the tool does, once. Add a **Create redundant copy** of the wheel (select it, press the button) and watch the tool build the backup chain and warn when something connects nominal to redundant.
+
+There is one more way in: a harness made by hand, with no interface at all. Use **New harness…** in the **Drawings** area (Ctrl+Shift+H); see [`user-manual/build-a-harness-by-hand.md`](user-manual/build-a-harness-by-hand.md).
 
 ## Where to go next
 

@@ -4,7 +4,7 @@ Files to copy and adapt. Get them with `harness-design-studio templates FOLDER`.
 
 | File | Use it for | How |
 | --- | --- | --- |
-| `interfaces.csv` | importing interfaces between units | app: **File > Import interfaces** |
+| `interfaces.csv` | importing interfaces between units | app: **File > Import > Interfaces…** |
 | `approved-parts.csv` | importing your approved parts list (five example rows: Micro-D and RJ45 parts of the starter library and one D-sub part; three are Approved, one is Review, one is Rejected) | `harness-design-studio import-parts DIR approved-parts.csv --approved Approved --pending Review --rejected Rejected` |
 | `segment-lengths.csv` | importing harness segment lengths (millimetres) | `harness-design-studio import-lengths DIR segment-lengths.csv --unit mm` |
 | `wheel-connectors.net` | a KiCad netlist for the unit connectors of `RW1` in the `first-steps` project | `harness-design-studio import-netlist DIR wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run` |

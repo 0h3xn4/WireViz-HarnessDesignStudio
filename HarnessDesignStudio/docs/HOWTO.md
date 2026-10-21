@@ -16,7 +16,7 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 
 ## 3. Add units and interfaces
 
-[Draw the design](user-manual/draw-the-design.md#2-add-units) (adding a unit opens no window; the ID and the name are given automatically) and [Redundancy and zones](user-manual/redundancy-and-zones.md).
+[Draw the design](user-manual/draw-the-design.md#2-add-units) (adding a unit opens no window; the ID and the name are given automatically; on an empty diagram the button **Add a device** adds a unit with connectors of its own) and [Redundancy and zones](user-manual/redundancy-and-zones.md).
 
 ## 4. Import interfaces from a spreadsheet
 
@@ -78,8 +78,9 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 
 - [Set wire colours](user-manual/set-wire-colours.md). It is not in the 0.1.0 packages.
 - [Naming and title block](user-manual/naming-and-title-block.md).
+- [Edit a wire](user-manual/edit-a-wire.md) (since 1.4.0) and [Build a harness by hand](user-manual/build-a-harness-by-hand.md), a harness with no interface behind it (since 1.5.0).
 - [Redundancy and zones](user-manual/redundancy-and-zones.md).
 
-Keyboard: **Ctrl+K** command palette, **Ctrl+Z** and **Ctrl+Y** undo and redo, **Ctrl+S** save, **Ctrl+=** and **Ctrl+-** zoom, **F** fit, **Ctrl+0** 100 %, **Ctrl+G** generate, **Ctrl+E** export, **F1** the user guide. The full list is in the [user guide](guide/USER_GUIDE.md) and, in the app, under **Settings > Keyboard shortcuts**.
+Keyboard: **Ctrl+K** command palette, **Ctrl+Z** and **Ctrl+Y** undo and redo, **Ctrl+S** save, **Ctrl+=** and **Ctrl+-** zoom, **F** fit, **Ctrl+0** 100 %, **Ctrl+G** generate, **Ctrl+E** export, **Ctrl+Shift+N** add a device, **Ctrl+Shift+H** new harness, **F1** the user guide. The full list is in the [user guide](guide/USER_GUIDE.md) and, in the app, under **Settings > Keyboard shortcuts**.
 
 Next: [user manual](user-manual/README.md), [`GETTING_STARTED.md`](GETTING_STARTED.md)

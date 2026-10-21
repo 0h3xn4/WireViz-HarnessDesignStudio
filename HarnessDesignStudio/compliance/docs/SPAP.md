@@ -1,6 +1,6 @@
 # Software product assurance plan (SPAP)
 
-DRD: ECSS-Q-ST-80C Annex B. Software: Harness Design Studio `0.1.0` (the plan has been applied to every release since, the latest being `1.4.0`; the owner approved it on 2026-10-08 and has not approved it again for a later version; this document was not changed for 1.0.0 to 1.4.0 except this line and the build hosts in 5.3). Criticality: C. Status: approved by the owner on 2026-10-08 (approval given in the working session; the owner is also customer and supplier, so no independent reviewer, see A-01).
+DRD: ECSS-Q-ST-80C Annex B. Software: Harness Design Studio `0.1.0` (the plan has been applied to every release since, the latest published being `1.6.0` (2026-10-21); the owner approved it on 2026-10-08 and has not approved it again for a later version; this document was not changed for 1.0.0 to 1.6.0 except this line and the build hosts in 5.3). Criticality: C. Status: approved by the owner on 2026-10-08 (approval given in the working session; the owner is also customer and supplier, so no independent reviewer, see A-01).
 
 ## 1. Introduction
 Purpose: define how product assurance is done for the harness design tool. Applicable: ECSS-Q-ST-80C Rev.2 with ECSS-E-ST-40C Rev.1, tailored for category C (Table D-2 and Table R-1, evaluated in `../requirements/`).
@@ -16,7 +16,7 @@ An offline desktop tool in which a user draws a spacecraft system (units and int
 
 ## 5. Software product assurance programme implementation
 - **5.1 Organization, 5.2 Responsibilities:** one owner (customer, supplier, approval authority), one developer assistant (writes code and documents under the owner's instruction). Independent product assurance and independent verification are **not in place** (action A-01). The assistant is not an independent party.
-- **5.3 Resources:** the repository, CI (`.github/workflows/harness-ci.yml`), Ubuntu 24.04 build host (`docs/RELEASE.md`); since 1.2.0 also the Windows build job of the release workflow and the test run on that system (macOS jobs existed from 1.2.0 to 1.5.0, removed in D-168) (`.github/workflows/harness-platforms.yml`).
+- **5.3 Resources:** the repository, CI (`.github/workflows/harness-ci.yml`), Ubuntu 24.04 build host (`docs/RELEASE.md`); since 1.2.0 also the Windows build job of the release workflow (`.github/workflows/release.yml`; `harness-packages.yml` for branches `pkg/**`) and the test run on that system (`.github/workflows/harness-platforms.yml`); macOS jobs existed from 1.2.0 to 1.5.0 and were removed in D-168.
 - **5.4 Reporting:** milestone report `SPAMR.md`, `CHANGELOG.md`, problem reports (`PROBLEM_REPORTING.md`).
 - **5.5 Quality models:** not defined (gap G-05); metrics are collected by `tools/metrics.py` (size, complexity, coverage, tests); a quality model with targets is proposed in `SVerP.md` section 6.3.
 - **5.6 Risk management:** open decisions and placeholders are the risk list (`../../docs/OPEN_DECISIONS.md`, `../../docs/PLACEHOLDERS.md`); the register is `../RISK_REGISTER.md` (started; ratings and owners are for people, action A-03).

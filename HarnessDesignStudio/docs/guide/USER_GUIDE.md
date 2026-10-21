@@ -17,7 +17,7 @@ Seven words carry most of the meaning:
 | **Unit** | A box with connectors on it: the computer `OBC1`, the power unit `PCDU1`, the wheel `RW1`. |
 | **Interface** | One connection between two units, of a type such as RS-422 or primary power. This is what you add. |
 | **Connector, pin** | A plug or socket, and one contact of it. A pin carries one signal. |
-| **Harness** | A bundle of wires with connectors that carries interfaces between units. Generated; its wires can be edited and wires of your own added. |
+| **Harness** | A bundle of wires with connectors that carries interfaces between units. Generated; its wires can be edited and wires of your own added. You can also make one by hand, with no interface (section 7). |
 | **Wire** | One conductor between two pins, with a gauge, a part and a length. |
 | **Zone** | A lane of the diagram (a panel or compartment) that units sit in. |
 | **Placeholder** | A value nobody has entered yet. The tool never invents engineering numbers. |
@@ -35,7 +35,7 @@ Other interface types and older connector parts stay in the library for projects
 
 ## 2. Install and start
 
-The steps below are for Ubuntu 24.04 or newer. From version 1.2.0 there are also packages for Windows 10 and 11; `docs/INSTALL.md` in the repository (way D) describes them.
+The steps below are for Ubuntu 24.04 or newer. There are also packages for Windows 10 and 11 (from version 1.2.0); `docs/INSTALL.md` in the repository (way D) describes them. macOS is not supported (removed in 1.6.0).
 
 1. Install the package: `sudo apt install ./harness-design-studio_<version>_amd64.deb`. Or unpack the `.tar.gz` anywhere and run `./harness-design-studio/install.sh` (no administrator rights needed; it installs for your user).
 2. Check it: `harness-design-studio --version` prints the version. If the command is not found after `install.sh`, add `~/.local/bin` to your PATH (the installer prints how).
@@ -59,7 +59,7 @@ Version 1.0.0 has five examples. If `harness-design-studio new --list` shows onl
 
 | Example | What it is |
 | --- | --- |
-| `blank` | An empty project with the starter parts and interface types. Use it for a real design. |
+| `blank` | An empty project with the starter parts and interface types and no units. Use it for a real design: the empty diagram has the button **Add a device**. |
 | `first-steps` | Three units, a power link and an RS-422 link. Nothing is generated yet: start here. |
 | `minimal-satellite` | Seven units, nominal only: power, computer, radio, wheel and sun sensor. Adapt it. |
 | `small-satellite` | 14 units with nominal and redundant chains. Generate it to see a realistic system. |
@@ -117,7 +117,7 @@ Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every sett
 
 1. Start the app. The sample project opens with a short tour; skip it or follow it. The tour leaves out a step whose panel is hidden (a small window or a high interface size), records that it was shown however you close it, and can be started again with **Help > Replay the tour**.
 2. **File > New project…** opens one window: choose an empty folder, give the project a name, and optionally pick an example (section 3; `first-steps` has three units, start there). A problem with the folder or the name is written under the field. **File > New project from an example…** is the same window with the first example ticked.
-3. Add units: press **Add** in the Project tab and choose **Unit…**, or use **Edit > Add unit**. Pick *Computer*, then add a *Power unit* and an *Actuator (wheel)*.
+3. Add units: press **Add** in the Project tab and choose **Unit…**, or use **Edit > Add unit**. Pick *Computer*, then add a *Power unit* and an *Actuator (wheel)*. In a project with no unit the empty diagram also has the button **Add a device**, which adds a unit whose connectors you define yourself (see The Devices tab).
 4. Connect them. Press **C** (or the **Connect** button above the diagram; the arrow beside it lists the interface types, as does **Edit > Connect with**), pick an interface type such as *RS-422*, then click the first unit and the second. Units that cannot take this interface are greyed out, with the reason written next to them. **Ctrl+I** (or **Add > Interface…**) opens a form for the same thing.
 5. Look at **Problems** (right panel, or the Problems panel at the bottom). Each card says what is wrong, why it matters and how to fix it. Many have a one-click **Fix**. The **Checks** tab lists all 35 design rules with their result (section 6).
 6. The top of the **Problems** tab has a **To do** list of what is left to do; a click on a line shows the unit or interface.
@@ -144,7 +144,7 @@ At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv`
 
 #### Defining a device
 
-- **Add > Device…** (Ctrl+Shift+N) adds an empty device in a free slot and opens the Devices tab with its name selected. Type the name; the subsystem and the chain are in the header.
+- **Edit > Add unit > Device…** (Ctrl+Shift+N; also **Add** in the Project tab, and the button **Add a device** on an empty diagram) adds an empty device in a free slot and opens the Devices tab with its name selected. Type the name; the subsystem and the chain are in the header.
 - Under the connector list pick a part (type to search; the first entry is **New part…**, which also makes the mating half) and press **Add connector** (Ctrl+Shift+C goes to the picker; Enter adds). The pins are numbered from the part's pin count. **Delete connector** shows what it touches first.
 - Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down; Esc cancels. A pin name is checked while you type. **Add pin** (Insert) adds a pin after the current one; Delete clears the signal of the selected pins; **Delete** (Shift+Delete) deletes pins after a line that says what they touch; Space cycles the mode (*Free*, *Fixed*, *Locked*); Ctrl+V pastes cells copied from a spreadsheet, either a column from the current cell down or a table with a header row (*Pin*, *Signal*, *Mode*, *Contact size*, *Termination*).
 - **Fill…** (Ctrl+L) puts the signals of an interface type on the selected pins in order (for example *CANH*, *CANL*). **Assign…** (Ctrl+Enter) locks the selected pins to an interface that ends on this device. Both are one undo step; **New interface type…** is in the dialog.

@@ -8,6 +8,7 @@
 [![latest release](https://img.shields.io/github/v/release/0h3xn4/WireViz-harnessdesignstudio?label=release&color=4a1fb8)](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest)
 [![harness-design-studio CI](https://github.com/0h3xn4/WireViz-harnessdesignstudio/actions/workflows/harness-ci.yml/badge.svg?branch=master)](https://github.com/0h3xn4/WireViz-harnessdesignstudio/actions/workflows/harness-ci.yml)
 [![Ubuntu 24.04 or newer](https://img.shields.io/badge/Ubuntu-24.04%2B-E95420?logo=ubuntu&logoColor=white)](HarnessDesignStudio/docs/INSTALL.md)
+[![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20and%2011-0078D4?logo=windows&logoColor=white)](HarnessDesignStudio/docs/INSTALL.md#d-windows-from-120)
 
 An offline desktop tool for designing the electrical harnesses of a spacecraft: you draw the units and the connections between them, and the tool works out the connectors, pins and wires, checks them, and writes the drawings and lists.
 
@@ -17,7 +18,7 @@ An offline desktop tool for designing the electrical harnesses of a spacecraft: 
 
 ![The whole window (picture taken with version 1.3.0) with the flatsat example: navigation rail on the left, project tree, diagram, inspector, and the steps Generate, Check and Release in the top bar](HarnessDesignStudio/docs/ui/screenshots/after/01-diagram-selected-1440x900_light.png)
 
-*The window (light theme; a dark theme is built in). Version 1.4.0 adds the Edit wire tab and the device library buttons; see the [user manual](HarnessDesignStudio/docs/user-manual/edit-a-wire.md).*
+*The window (light theme; a dark theme is built in). Later versions add the Edit wire tab and the device library buttons (1.4.0), New harness with the Connectors tab (1.5.0) and an Add a device button on a blank project (1.6.0); see the [user manual](HarnessDesignStudio/docs/user-manual/README.md).*
 
 ## Contents
 
@@ -90,6 +91,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 - **A diagram editor with views** — units and links on a diagram with marks for problems, locks and values still to enter; a project tree and spreadsheet-like tables for units and interfaces; a navigation rail (Home, Model, Checks, Drawings with pins, wires, drawing and why, Outputs with every exported file and its checksum, Revisions, Settings); the steps Generate, Check and Release in one top bar; a Problems panel; light and dark themes; an Export window and one Import wizard.
 - **Generates the harnesses** — connectors, pins, wires, shields, with a *Why is it like this?* explanation for every choice.
 - **Lets you edit them** (since 1.4.0) — the gauge, type, colour and length of a single wire, wires you draw yourself, several wires on one pin, twisted and shielded groups, a function on every pin and labels on connectors and harnesses; Generate keeps what you set.
+- **Lets you start from nothing** (since 1.5.0) — a blank project shows an **Add a device** button (since 1.6.0) for its first unit, and **New harness** in the Drawings area makes an empty harness with no interface behind it: you add its connectors in the Connectors tab and draw its wires in the Edit wire tab ([how](HarnessDesignStudio/docs/user-manual/build-a-harness-by-hand.md)). Generate leaves such a harness as it is.
 - **Checks them** against 35 design rules and says clearly which checks could not run because a number is missing.
 - **Writes the documents** — a wiring-diagram drawing per harness (SVG and PDF), wire lists, pinouts, bill of materials, test tables, labels, a block diagram and a change log.
 - **Change control** — review, release and revise a harness; a released harness, and the parts, interface types and configuration it uses, are locked, and every change is recorded; the Revisions area also shows the last Git commit of the project's repository.
@@ -122,7 +124,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 | Second tool | — | **Harness Design Studio** in [`HarnessDesignStudio/`](HarnessDesignStudio/README.md): a separate, clean-room codebase (no WireViz code is copied or imported, decision D-01). |
 | Where each one's documents are | `docs/`, `tutorial/`, `examples/` | The tool's documents are in [`HarnessDesignStudio/docs/`](HarnessDesignStudio/docs/README.md) and `HarnessDesignStudio/compliance/`. [`docs/README.md`](docs/README.md) is the index of both. |
 | README | `docs/README.md` | This file, with the original WireViz README embedded unchanged (except for relative links that had to change) below; an untouched copy is at [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md). |
-| Continuous integration | WireViz's own workflows | The same, plus [`.github/workflows/harness-ci.yml`](.github/workflows/harness-ci.yml) for the tool. |
+| Continuous integration | WireViz's own workflows | The same, plus workflows for the tool: [`harness-ci.yml`](.github/workflows/harness-ci.yml) (tests and the Ubuntu packages), [`harness-platforms.yml`](.github/workflows/harness-platforms.yml) (the tests on Windows), [`harness-packages.yml`](.github/workflows/harness-packages.yml) (the Windows packages, branches `pkg/**`) and [`release.yml`](.github/workflows/release.yml) (publishes a release when a tag is pushed). |
 | Install | `pip install wireviz` (needs GraphViz) | Separate: see the [quick start](#quick-start). The two do not need each other. |
 
 ## Related tools

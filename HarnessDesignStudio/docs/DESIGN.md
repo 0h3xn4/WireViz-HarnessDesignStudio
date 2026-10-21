@@ -115,14 +115,14 @@ Each category has its own colour, line weight and letter, so colour is not the o
 - **One index, built off the paint path.** `gui/canvas_state.py` turns the open findings, the pending values and the release locks into `ObjectState` per unit, link and box connector (`ctl.state_index()`, cached per findings key). The scene takes a new index 120 ms after an edit (at once for a new project and when check results arrive) and repaints only the objects whose entry changed; a paint is a dictionary lookup. (CV-6)
 - **Badge = icon + count, never colour alone.** Compact form of a state chip (`gui/canvas_badges.py`): the state's icon, token and border pattern (solid; dotted for pending; dashed for not checked); the word is in the tooltip and the legend. Order: problems (error), warnings, pending, not checked. (CV-6)
 - **What a count means.** Errors and warnings are open findings on the unit (also through its connectors and the parts it uses) or on the link (also through its wires); information findings and waived ones are not counted. Pending is the V and A still to enter on power links (a unit adds up its links'). Not checked is 1 on every object while the project has no check result (it never ran or it failed), so a clean card is not mistaken for a passed one; an out-of-date result keeps its marks. (CV-6, CV-8)
-- **Click a badge, see the problems.** A badge is a button: a click selects the object and emits `ctl.problemsRequested(object_id)`; the context menu has the same as "Show problems" (greyed with the reason when there is none). `StateIndex.finding_ids(kind, id)` lists the findings counted for the object. `MainWindow` does not connect `problemsRequested` yet, so today a click only selects the object. (CV-6)
+- **Click a badge, see the problems.** A badge is a button: a click selects the object and emits `ctl.problemsRequested(object_id)`; the context menu has the same as "Show problems" (greyed with the reason when there is none). `StateIndex.finding_ids(kind, id)` lists the findings counted for the object. `MainWindow` connects it (`_show_problems`): a click selects the object and opens the Problems tab of the right dock. (CV-6)
 - **Locks.** A unit, link or connector that a release locks shows a lock icon and "W001 A" (harness and revision, "+n" for more) in the `locked` colour; the card also gets a 9 % tint of the `released` colour, the legend lists it, and the tooltip says who locks it and what stays editable. On link labels the text shows when the label is drawn in full, otherwise the icon alone; on connectors (Expert) a lock sits in the port square. (CV-7)
 - **Auto-filled is marked in Guided too.** A dashed olive "3 auto" chip on the card (the legend's own key) and a dashed ring round the label of a link with an unconfirmed connector. (CV-8)
 - **A missing value is "?", not blank.** Only power links need V and A (`describe.VALUES_NEEDED`, a table): "V ? · A ?" in the pending colour and italics; data, analog and other links stay blank because there nothing applies. Where labels are not drawn (dense diagram) the pending badge says it. (CV-8)
 - **Link tooltip** is rich text from `describe.link_summary`: harness, wire count, state, what is still to enter, auto connectors, lock, and what the checks say. (CV-10)
 - **Card picture and tags.** `describe.unit_glyph` picks one of 11 pictures from the words in the unit's name, its subsystem, its link categories and its connector families (no model field); FLIGHT / GROUND is a viewer setting by zone name (`QSettings` key `canvas/zone_tags`, default none, set from the unit's menu "Tag zone ... as"); NOMINAL shows only where the project has a redundant chain. The header says "12 conn"; connector pictures that do not fit end in "+3", never silently. (CV-19)
 - **Corner chip.** Harnesses and outputs "out of date", "not generated yet", "not exported yet", "changed since export" or "up to date" as state chips on a card in the top left, read 400 ms after the last change. (CV-22)
-- **Why on the canvas.** The auto chip, a click on it, an auto connector's tooltip (Expert) and the menu entry "Why?" give the sentence "was chosen for you, the first free ... connector" plus what generation recorded (`core.generate.explain`); the canvas emits `ctl.whyRequested(kind, id)`, which `MainWindow` does not connect yet (the tooltip of the auto badge already carries the reasons, and the Why tab of the Inspector and the Harness view show them). (CV-23)
+- **Why on the canvas.** The auto chip, a click on it, an auto connector's tooltip (Expert) and the menu entry "Why?" give the sentence "was chosen for you, the first free ... connector" plus what generation recorded (`core.generate.explain`); the canvas emits `ctl.whyRequested(kind, id)`, which `MainWindow` connects (`_show_why`) to the Why tab; the tooltip of the auto badge carries the reasons as well. (CV-23)
 
 ## The window
 
@@ -131,7 +131,7 @@ Code: `gui/main_window.py`, `gui/shell.py` (slots, banners, status chip rules, `
 - **Layout (UI overhaul M2, D-151).** A **navigation rail** down the left edge (Home, Model, Checks, Drawings, Outputs, Revisions, Settings; icon above label, 20 px icons, collapsible to icons, icons only in a window shorter than 640 px), one full-width **top bar**, a banner area, then the open **area**: Model holds the tabs Diagram and Devices (Arrange and the filters sit at the right end of that tab bar), Checks the Checks tab, Drawings the Harness tab, Outputs the Lists tab, Revisions the Releases tab; Home and Settings are pages of their own. Ctrl+1 to Ctrl+6 still go to the six views (and open their area), Ctrl+7 goes Home and Ctrl+, to Settings. The left dock (the Project tree tab, the Units tab, the editable unit table, Ctrl+Shift+J, and the Interfaces tab, the editable interface table, Ctrl+Shift+T) and the right dock (Inspector, Why and Problems tabs) stay; the **Problems panel** (every open finding: severity, rule, object, message; filter; a click goes to the object) is a bottom dock that is closed until it is asked for (status bar, View menu, Ctrl+Shift+M). Code: `gui/areas.py` (the mapping, no Qt), `gui/rail.py`, `gui/pages.py`, `gui/problems_panel.py`, `gui/jobs.py`. Views plug into named slots (`MainWindow.install_view(name, widget)`: harness, lists, tree, inspector, why, problems); a slot not yet filled shows an empty state and its tab stays hidden. The Interfaces tab widens the left dock when it opens and puts it back when the Project tab returns; Connect has an arrow that lists the interface types; Add in the Project tab and Edit > Add unit add units.
 - **Settings (M9, D-158).** A section list at the left (Appearance, Editing, Project, Keyboard shortcuts, About, Licences) and the section beside it. Appearance: theme, interface size, Reduce motion (Qt's fades and slides of menus, lists and tooltips off). Editing: mode, Snap units to the grid, Show every link label. The shortcuts are a filterable table read from the window's actions (fixed, not editable). About says the version, the Python and Qt versions and where the settings file is; Licences shows the licence text of the fonts, the icons and Qt. Every control is a view of a menu action: the window stores and applies the value, and the page follows when a menu or Ctrl+K changes it. Code: `gui/settings_page.py`, `gui/licences.py`.
 - **One primary button.** Generate is the only accent-coloured button of the window (see [State badges](#state-badges-and-chips)). (SH-1, SH-24)
-- **Top bar.** One row over the whole window: project name, the save marker (*Saved* or *Unsaved changes*), the revision, the short model hash in monospace, where you are (area › view), then Undo and Redo (icons), Guided and Expert, the search button (Ctrl+K), Generate, Check, Export… and the status chip. It folds away, in this order, the breadcrumbs and the words of the save marker, the hash and the revision, then the words of Check, Export and Search when the window is narrow. (SH-1)
+- **Top bar.** One row over the whole window: project name, the save marker (*Saved* or *Unsaved changes*), the revision, the short model hash in monospace, where you are (area › view), then Undo and Redo (icons), Guided and Expert, the search button (Ctrl+K), Generate, Check, Release, Export… and the status chip. It folds away, in this order, the breadcrumbs and the words of the save marker, the hash and the revision, then the words of Check, Export and Search when the window is narrow. (SH-1)
 - **Status chip.** Words, icon and colour from the state chips: Up to date (pass), Plans up to date (nothing exported yet), Plans out of date and Outputs out of date (stale), Generating, Exporting and Checking (info), Not generated (draft). Order of precedence: a running job, then out of date (plans before files), then a running check, then up to date. (SH-2)
 - **Banners and refusals stay.** Out-of-date plans or files, and a failed generate, export or check, are banners with the buttons that fix them (Generate, Export…, Try again); the stale banner can be hidden until the design changes again, the chip never hides. A refusal because of a release stays as a toast without a timer, with "Start new revision…", until the next change goes through. (SH-2, SH-5, SH-17, SC-23)
 - **Hash and states are read once per model state**, after a pause of 250 ms that grows to at most 2 s for a design that takes long to hash (4 times what the last reading cost). The Harness and Lists views compute theirs in a worker. (SH-16, SC-24)
@@ -150,6 +150,7 @@ Code: `gui/main_window.py`, `gui/shell.py` (slots, banners, status chip rules, `
 - Whatever released data is in front of you (the harness in Drawings or Revisions, the selected unit or link) gets an info banner over the work area, "W001 revision A is released and locked", with *Start new revision* unless the project is read-only.
 - Home: the flatsat example is the primary action, recent projects are cards (name, folder, counts, how many harnesses are draft, in review, released; a missing folder is marked and can be forgotten), then the other examples. Nothing about recent projects is written into a project.
 - A table without rows says what to do (title, one line, the action if there is one); a filter that hides every row says "No row matches". Use `attach_empty_state(view, title, hint, action=..., on_action=...)`.
+- The empty diagram of a blank project has the button **Add a device** (the same as Edit > Add unit > Device…, Ctrl+Shift+N; hidden once there is a unit and in a read-only project), and its text names only controls that exist (1.6.0).
 
 ## Views
 
@@ -246,6 +247,8 @@ Every shortcut is in a menu and in the tooltip as "text (shortcut)". Keys marked
 | Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S, Ctrl+Q | New project, open, save, save as, quit |
 | Ctrl+Shift+I | Import interfaces |
 | Ctrl+I | New interface |
+| Ctrl+Shift+N | Add a device (a unit with its own connectors and pins; 1.6.0 button *Add a device* on an empty diagram) |
+| Ctrl+Shift+H | New harness (a harness made by hand; 1.5.0) |
 | Ctrl+G | Generate harnesses |
 | F5 | Run the checks |
 | Ctrl+E | Export… |
@@ -253,9 +256,12 @@ Every shortcut is in a menu and in the tooltip as "text (shortcut)". Keys marked
 | F1 | User guide |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | Undo, redo |
 | Ctrl+1 to Ctrl+6 | The main tabs: Diagram, Harness, Lists, Checks, Releases, Devices |
+| Ctrl+7, Ctrl+, | Home, Settings |
+| Ctrl+Shift+M | Show or hide the Problems panel |
 | Ctrl+Shift+T | The Interface table (Interfaces tab of the left panel) |
 | Ctrl+Shift+J | The Unit table (Units tab of the left panel) |
 | Ctrl+F in the Devices tab | Go to the pin filter |
+| Ctrl+Shift+C in the Devices tab | Add a connector while the connector list has the focus (in the pin table it copies with the header row) |
 | F6, Shift+F6 | Next and previous panel |
 | Ctrl+= , Ctrl+- , Ctrl+0 | Zoom in, zoom out, 100 % |
 | F, Shift+F (diagram) | Fit all, zoom to the selection |
@@ -275,7 +281,7 @@ Every shortcut is in a menu and in the tooltip as "text (shortcut)". Keys marked
 Decisions about the foundation, one line each (decisions of a view are in its section above):
 
 - Theme follows the OS by default, because an engineer's desktop already says light or dark; Light and Dark stay one click away. (SH-19)
-- Fixed the type scale to 12 / 13 / 16 / 20 and the spacing to 4 / 8 / 12 / 16 / 24 / 32 as the standard says; the base text is 13 px (it was 14). (SH-22)
+- Fixed the type scale and the spacing to a short list: spacing 4 / 8 / 12 / 16 / 24 / 32; the base text is 13 px. The type scale was 12 / 13 / 16 / 20 until 1.2.0 and is 11 / 12 / 13 / 15 / 18 / 22 since the UI overhaul (D-150). (SH-22)
 - One control height (32 px) set in the theme, so a toolbar button, a push button and a combo box line up at every UI scale. (SH-23)
 - Icons are drawn from Lucide path data with a small SVG path reader, not loaded as SVG, because the packaged program leaves out QtSvg. (SH-25)
 - Monospace for anything an engineer reads character by character or compares (IDs, pins, hashes, paths). (SH-21)
@@ -286,3 +292,5 @@ Decisions about the foundation, one line each (decisions of a view are in its se
 - Export writes the full output set; the choice in the dialog only filters what is listed and copied, until the core can write a subset. (SC-12)
 - A badge, chip or cell for an unknown value is never empty and never green: pending and not checked have a pattern. (SH-28, CV-8)
 - Flight and ground are a viewer setting by zone name, because the model has no such field and the redesign may not change the model. (CV-19)
+
+Next: [`UX.md`](UX.md), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`ux-audit.md`](ux-audit.md)

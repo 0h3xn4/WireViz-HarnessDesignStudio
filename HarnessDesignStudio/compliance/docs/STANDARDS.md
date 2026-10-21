@@ -1,6 +1,6 @@
 # Design, coding and tool standards
 
-Status: approved by the owner on 2026-10-08 (approval given in the working session; the owner is also customer and supplier, so no independent reviewer, see A-01). The rows Build, Platform and CI of the table below were brought up to date for 1.2.0 on 2026-10-20; the owner's approval was given for the earlier text (D-149 is the owner's decision on the platforms).
+Status: approved by the owner on 2026-10-08 (approval given in the working session; the owner is also customer and supplier, so no independent reviewer, see A-01). The rows Build, Platform and CI of the table below were brought up to date for 1.2.0 on 2026-10-20 and for 1.6.0 (macOS removed, D-168) on 2026-10-21; the owner's approval was given for the earlier text (D-149 and D-168 are the owner's decisions on the platforms).
 
 Addresses ECSS-Q-ST-80C 5.6.1.1 to 5.6.2.3, 6.3.3.2, 6.3.3.4, 6.3.4.1 to 6.3.4.5 (gap G-06). These standards already exist as practice in `CLAUDE.md`, `pyproject.toml` and the CI workflow; this document makes them one mandatory list.
 
@@ -15,7 +15,7 @@ Addresses ECSS-Q-ST-80C 5.6.1.1 to 5.6.2.3, 6.3.3.2, 6.3.3.4, 6.3.4.1 to 6.3.4.5
 | Static checks | ruff (E, F, W, I, B, UP, SIM, S), `mypy --strict` | `pyproject.toml` |
 | Build | pinned versions, reproducible wheel, PyInstaller package, `.deb`; from 1.2.0 also the Windows setup program and `.zip` (the macOS `.dmg` of 1.2.0 to 1.5.0 is no longer built, D-168) | `tools/check_reproducible.py`, `tools/build_deb.py`, `tools/build_windows.py` |
 | Platform | Ubuntu 24.04 and newer and Windows 10 and 11 (64-bit) (Windows from 1.2.0) | D-149 (supersedes D-127, Ubuntu only), D-168 (removes macOS) |
-| CI | `.github/workflows/harness-ci.yml` (at the repository root); since 1.2.0 `harness-platforms.yml` runs the suite on Windows and `release.yml` builds and tests the packages | |
+| CI | `.github/workflows/harness-ci.yml` (at the repository root: jobs `changes`, `docs`, `test` and `package-on-24-04`; a change to documents only runs the `docs` job instead of the full suite, D-138); since 1.2.0 `harness-platforms.yml` runs the suite on Windows, `harness-packages.yml` builds the Windows packages on branches `pkg/**`, and `release.yml` (on a `v*` tag) builds and tests the four packages and publishes the release page | |
 
 Suitability (5.6.1.2, 5.6.2.2): chosen because they are permissive or LGPL licensed, run offline, and allow strict static checking; every dependency is recorded with version and licence in `docs/DECISIONS.md` and the SBOM.
 
@@ -31,4 +31,4 @@ Review with the customer (6.3.4.4): this document is sent to the owner with the 
 
 ## Verification of correct use of the tools (5.6.1.3)
 
-CI runs the static checks and tests on every push; a failing run blocks merging by the owner's practice, not by a technical lock (the owner waived the protection on 2026-10-08: `../DEVIATIONS.md` T-18).
+CI runs the static checks and tests on every pull request and on every push to the default branch (a change to documents only runs the document checks, D-138); a failing run blocks merging by the owner's practice, not by a technical lock (the owner waived the protection on 2026-10-08: `../DEVIATIONS.md` T-18).

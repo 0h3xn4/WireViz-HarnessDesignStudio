@@ -121,7 +121,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 0 added, 0 changed, 2 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
-38 files written to design/outputs (model aa57ef651236).
+38 files written to design/outputs (model 85a15171aed5).
 2 interfaces and 6 wires checked: 0 error(s)
 build ok: design/outputs
 ```

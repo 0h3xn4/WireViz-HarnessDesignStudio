@@ -1,6 +1,6 @@
 # Importing outside data
 
-Everything is previewed row by row and applied as one undo step (CLI: nothing is written if any row has a problem, and `--dry-run` shows the rows without changing anything). An import that would change something a release froze is blocked: both the preview and the real run say what is blocked and exit with 1. The command line has imports for parts, segment lengths and KiCad netlists; importing interfaces is app only.
+Everything is previewed row by row and applied as one undo step (CLI: nothing is written if any row has a problem, and `--dry-run` shows the rows without changing anything). An import that would change something a release froze is blocked: both the preview and the real run say what is blocked and exit with 1. The command line has imports for parts, segment lengths, device pinouts, KiCad netlists and device library files; importing interfaces is app only. The ampacity table loads with `config --ampacity-csv`.
 
 Starting files for every import below are in the templates (`harness-design-studio templates FOLDER`): `interfaces.csv`, `approved-parts.csv`, `segment-lengths.csv`, `wheel-connectors.net`, `signal-map.csv` and `ampacity-DEMO-ONLY.csv`. They are written for the `first-steps` example (`harness-design-studio new DIR --template first-steps`), so you can try each one before using your own data. Walk-through: [`GETTING_STARTED.md`](GETTING_STARTED.md), parts 7 and 8.
 
@@ -42,6 +42,9 @@ Until the values exist, wire gauges stay "pending", the affected checks say "not
 Device pinouts from a spreadsheet: `harness-design-studio import-pinout DIR FILE --unit U [--new-device NAME] [--default-part PART] [--part J1=PART] [--column FIELD=HEADING] [--replace] [--dry-run]`, or **File > Import > Import device pinout…**. One row is one pin. The headings are matched by name (Connector, Pin, Signal, Mode or Fixed, Contact size, Termination, Part, Gender); a column the project cannot hold (a description, remarks, a voltage, a direction) is named in a warning and left out. A new connector needs a library part. A bad row stops the whole import. `harness-design-studio export-pinout DIR --unit U` writes the pinout of a device in the same shape, and its CSV and XLSX can be read back (the comment line and the About sheet of the tool's own files are skipped). User manual: [define a device](user-manual/define-a-device.md).
 
 KiCad: it is used for the electronics inside each unit, so it is where each unit connector's pinout comes from. It has no harness segment lengths; those come from a plain table as above. The connector pinouts are read from a KiCad netlist with `harness-design-studio import-netlist` (see `docs/KICAD.md`).
+
+## Devices from a device library file (1.4.0)
+`harness-design-studio export-devices DIR FILE --unit U [--unit V ...]` saves devices with their connectors, pinouts, parts and interface types to a JSON file that lives outside any project (a file that exists is added to). `harness-design-studio import-devices DIR FILE [--unit U] [--list] [--dry-run]` adds them to another project; a device never replaces one of the project (a taken ID becomes `GYRO1-2`). In the app: **Save to library…** and **Add from library…** on the Devices tab. This is not a kind of the import wizard. The file is described in [`FILE_FORMAT.md`](FILE_FORMAT.md#device-library-file-140-not-part-of-a-project); steps: [define a device](user-manual/define-a-device.md).
 
 ## Where the library data come from
 

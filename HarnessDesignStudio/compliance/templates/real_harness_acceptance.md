@@ -7,6 +7,7 @@ For action A-13 (VAL-08; ECSS-Q-ST-80C 6.3.7). The owner takes a real design thr
 - Harness(es) and revision accepted (IDs):
 - Tool version (`harness --version`), model hash (in `outputs/manifest.json` and `system/provenance.json`):
 - Date, and who performed the review:
+- Was any harness, connector or wire made or changed by hand (*New harness*, *Edit wire*, a wire you drew, a group, a label), or any device taken from a device library file? (yes / no) If yes, list them: the generator did not produce them, so check them against the source of truth one by one:
 - Is this a design with real program data? (yes / no) If yes, where the data came from: ICD, netlist (`import-netlist`), parts list (`import-parts`), lengths (`import-lengths`):
 
 ## 2. Preconditions (stop here if any is "no")
@@ -25,8 +26,8 @@ For each file, compare with the source of truth (the design, the ICD, the datash
 
 | Output | What to check | Against | Sample | Result (ok / finding) |
 | --- | --- | --- | --- | --- |
-| `wirelist.csv` | each wire: both ends, signal, gauge, colour, length | ICD or netlist | all | |
-| `pinouts.csv`, `box_pinouts.csv` | every pin: wire or spare, signal | connector drawings, ICD | all | |
+| `wirelist.csv` | each wire: both ends, signal, gauge, colour, length (and `Label`, `Note` and `Locked` where used) | ICD or netlist | all | |
+| `pinouts.csv`, `box_pinouts.csv` | every pin: wire or spare, signal (and `Function` and `Termination` where used) | connector drawings, ICD | all | |
 | Drawing (`drawing_A3.pdf`, A4) | the same connections as the wire list; title block (project, revision, status, sheet n / N); legible when printed in greyscale | wire list, a printout | every sheet | |
 | `bom.csv` | part numbers, quantities, metres of wire, wires without length, approval status | parts list | all | |
 | `mass_length.csv` | lengths and mass; what it says is missing | measured or CAD lengths, datasheet masses | all | |
