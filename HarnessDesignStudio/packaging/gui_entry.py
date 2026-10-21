@@ -157,16 +157,26 @@ def _run_steps(tmp: Path) -> list[str]:
     return [name for name, ok in results.items() if not ok]
 
 
+def _own_roots() -> list[Path]:
+    """The folders that belong to the package: the one the program starts from, the one PyInstaller
+    unpacks to, and on macOS the whole `.app` (its files sit in Contents/MacOS, Frameworks and
+    Resources, some of them links into each other)."""
+    exe = Path(sys.executable).resolve()
+    roots = [exe.parent]
+    if getattr(sys, "_MEIPASS", None):
+        roots.append(Path(sys._MEIPASS).resolve())  # type: ignore[attr-defined]
+    roots += [parent for parent in exe.parents if parent.suffix == ".app"][:1]
+    return roots
+
+
 def _runs_from_its_own_python() -> bool:
     """A package runs on the Python and Qt inside it: nothing it imports comes from outside its own
     folder. (From the source install the question does not arise.)"""
     if not getattr(sys, "frozen", False):
         return True
-    inside = Path(getattr(sys, "_MEIPASS", sys.executable)).resolve()
-    roots = {inside, Path(sys.executable).resolve().parent}
-    return all(
-        any(Path(p).resolve().is_relative_to(r) for r in roots) for p in sys.path if p
-    ) and any(Path(p).resolve().is_relative_to(inside) for p in sys.path)
+    roots = _own_roots()
+    inside = [p for p in sys.path if p and any(Path(p).resolve().is_relative_to(r) for r in roots)]
+    return bool(inside) and len(inside) == len([p for p in sys.path if p])
 
 
 def _examples_are_bundled(tmp: Path) -> bool:
