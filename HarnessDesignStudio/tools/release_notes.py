@@ -11,7 +11,7 @@ changelog section folded away, and the SHA-256 table. `--root` is the `HarnessDe
 of the tagged checkout (default: this one); the highlights file is looked for there first and then
 here, so that the notes of an older tag can be written again with a newer version of this script.
 `complete` fails unless SHA256SUMS lists a file of every kind in PACKAGES (the .deb, the .tar.gz,
-the Windows setup program and zip and the two macOS images): a release that lacks one is not made.
+and the Windows setup program and zip): a release that lacks one is not made.
 """
 
 from __future__ import annotations
@@ -101,27 +101,6 @@ PACKAGES: tuple[Package, ...] = (
             "**Windows, portable:** extract `harness-design-studio-{v}-windows-x86_64.zip` to a "
             "folder and run `harness-design-studio-gui.exe` in it; nothing is installed.",
         ),
-    ),
-    Package(
-        "mac-arm",
-        r"harness-design-studio-{v}-macos-arm64\.dmg",
-        "macOS 13 or newer, Apple Silicon (M1 and later)",
-        "Disk image",
-        "Open it and drag the app to Applications",
-        (
-            "**macOS:** open the `.dmg` and drag **Harness Design Studio** to Applications. The "
-            "app is not signed or notarized, so the first start needs a right-click on the app, "
-            "**Open**, then **Open** again. The command line tool is inside the app: "
-            "`/Applications/Harness Design Studio.app/Contents/MacOS/harness-design-studio`.",
-        ),
-    ),
-    Package(
-        "mac-intel",
-        r"harness-design-studio-{v}-macos-x86_64\.dmg",
-        "macOS 13 or newer, Intel Macs",
-        "Disk image",
-        "Open it and drag the app to Applications",
-        (),  # the steps are the ones of the Apple Silicon image
     ),
 )
 
@@ -237,8 +216,6 @@ def notes(version: str, changelog: str, sums: str, highlights: str | None = None
     commands = []
     if keys & {"deb", "tar"} or not keys:
         commands.append("`sha256sum -c SHA256SUMS` (Linux)")
-    if keys & {"mac-arm", "mac-intel"} or not keys:
-        commands.append("`shasum -a 256 -c SHA256SUMS` (macOS)")
     if keys & {"win-setup", "win-zip"} or not keys:
         commands.append("`Get-FileHash <file> -Algorithm SHA256` in PowerShell (Windows)")
     parts.append(

@@ -3,7 +3,7 @@
 You run the sessions; this kit prepares them and turns the results into a triage list. Targets (UX.md section 9): at least 90% task success, SUS of at least 80, first diagram and plans in under 15 minutes without the manual.
 
 ## Before a session
-1. Install the build under test (the packages exist for Ubuntu, Windows and macOS; write the version and the system on the result sheet). Run `python -m tools.usability_setup ~/usability` to create the task material: an empty project for T1, `icd.csv` with two bad rows (T4; import it into `t6-t7-generated`), a project with one corrupt file (T8) and a project with released and generated harnesses (T6, T7).
+1. Install the build under test (the packages exist for Ubuntu and Windows; write the version and the system on the result sheet). Run `python -m tools.usability_setup ~/usability` to create the task material: an empty project for T1, `icd.csv` with two bad rows (T4; import it into `t6-t7-generated`), a project with one corrupt file (T8) and a project with released and generated harnesses (T6, T7).
 2. 3 to 5 participants per persona (Dana: systems engineer; Sam: reviewer or AIT; Elena: harness engineer; Rui: lead). Nobody who built or reviewed the tool.
 3. Screen and audio recording only with consent. Participants must not use real program data.
 

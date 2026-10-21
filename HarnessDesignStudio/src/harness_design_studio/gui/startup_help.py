@@ -50,7 +50,7 @@ Loader = Callable[[str], object]
 def missing_libraries(load: Loader, platform: str = sys.platform) -> list[tuple[str, str]]:
     """(file, package) of each required system library that `load` cannot open. `load` is
     `ctypes.CDLL` in the program (the entry point passes it: no source file may import `ctypes`,
-    tests/test_security.py) and a stand-in in tests. Only Linux needs this: the Windows and macOS
+    tests/test_security.py) and a stand-in in tests. Only Linux needs this: the Windows
     packages bring everything but the system itself."""
     if not platform.startswith("linux"):
         return []

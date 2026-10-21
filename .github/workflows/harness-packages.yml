@@ -1,7 +1,7 @@
-name: harness-design-studio packages (Windows, macOS)
+name: harness-design-studio packages (Windows)
 
-# Builds the Windows and macOS packages and tests the finished files the way a user would use them
-# (docs/RELEASE.md, "Windows and macOS packages"). It never publishes: the packages are workflow
+# Builds the Windows packages and tests the finished files the way a user would use them
+# (docs/RELEASE.md, "Windows packages"). It never publishes: the packages are workflow
 # artifacts only. The release itself is made by release.yml, which builds the same way.
 on:
   push:
@@ -61,42 +61,3 @@ jobs:
           path: |
             HarnessDesignStudio/dist/*-setup.exe
             HarnessDesignStudio/dist/*.zip
-
-  macos:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest  # Apple Silicon
-            arch: arm64
-          - os: macos-15-intel  # Intel (the last Intel runner image)
-            arch: x86_64
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python -c "import platform; print(platform.machine())"
-      - run: python -m pip install -e ".[gui,dev]"
-      - name: Where the settings file goes
-        env:
-          QT_QPA_PLATFORM: offscreen
-        run: python -c "from PySide6.QtWidgets import QApplication; a = QApplication([]); from harness_design_studio.gui.app import make_settings; print(make_settings().fileName())"
-      - name: Which bundled fonts Qt can load (information)
-        env:
-          QT_QPA_PLATFORM: offscreen
-        run: python -c "from PySide6.QtWidgets import QApplication; a = QApplication([]); from PySide6 import __version__ as v; from PySide6.QtGui import QFontDatabase as D; from harness_design_studio.resources import fonts_path; print('PySide6', v); [print(f.name, D.addApplicationFont(str(f)), D.applicationFontFamilies(0)) for f in sorted(fonts_path().glob('*.ttf'))]"
-      - run: python -m PyInstaller --version
-      - name: Build the app and the disk image
-        run: python -m tools.build_macos
-      - run: ls -l dist
-      - name: Smoke test, disk image (mount, copy the app out, run it)
-        timeout-minutes: 20
-        run: python -m tools.smoke_package macos-dmg "dist/harness-design-studio-$(python -c 'from harness_design_studio import __version__ as v; print(v)')-macos-${{ matrix.arch }}.dmg"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: harness-design-studio-macos-${{ matrix.arch }}
-          if-no-files-found: error
-          path: HarnessDesignStudio/dist/*.dmg

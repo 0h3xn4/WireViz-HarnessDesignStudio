@@ -159,13 +159,11 @@ def _run_steps(tmp: Path) -> list[str]:
 
 def _own_roots() -> list[Path]:
     """The folders that belong to the package: the one the program starts from, the one PyInstaller
-    unpacks to, and on macOS the whole `.app` (its files sit in Contents/MacOS, Frameworks and
-    Resources, some of them links into each other)."""
+    unpacks to."""
     exe = Path(sys.executable).resolve()
     roots = [exe.parent]
     if getattr(sys, "_MEIPASS", None):
         roots.append(Path(sys._MEIPASS).resolve())  # type: ignore[attr-defined]
-    roots += [parent for parent in exe.parents if parent.suffix == ".app"][:1]
     return roots
 
 

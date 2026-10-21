@@ -16,7 +16,7 @@ An offline desktop tool in which a user draws a spacecraft system (units and int
 
 ## 5. Software product assurance programme implementation
 - **5.1 Organization, 5.2 Responsibilities:** one owner (customer, supplier, approval authority), one developer assistant (writes code and documents under the owner's instruction). Independent product assurance and independent verification are **not in place** (action A-01). The assistant is not an independent party.
-- **5.3 Resources:** the repository, CI (`.github/workflows/harness-ci.yml`), Ubuntu 24.04 build host (`docs/RELEASE.md`); since 1.2.0 also the Windows and macOS build jobs of the release workflow and the test run on those systems (`.github/workflows/harness-platforms.yml`).
+- **5.3 Resources:** the repository, CI (`.github/workflows/harness-ci.yml`), Ubuntu 24.04 build host (`docs/RELEASE.md`); since 1.2.0 also the Windows build job of the release workflow and the test run on that system (macOS jobs existed from 1.2.0 to 1.5.0, removed in D-168) (`.github/workflows/harness-platforms.yml`).
 - **5.4 Reporting:** milestone report `SPAMR.md`, `CHANGELOG.md`, problem reports (`PROBLEM_REPORTING.md`).
 - **5.5 Quality models:** not defined (gap G-05); metrics are collected by `tools/metrics.py` (size, complexity, coverage, tests); a quality model with targets is proposed in `SVerP.md` section 6.3.
 - **5.6 Risk management:** open decisions and placeholders are the risk list (`../../docs/OPEN_DECISIONS.md`, `../../docs/PLACEHOLDERS.md`); the register is `../RISK_REGISTER.md` (started; ratings and owners are for people, action A-03).

@@ -218,11 +218,11 @@ class ThemeManager(QObject):
         if not self._watching:
             self._watching = True
             QGuiApplication.styleHints().colorSchemeChanged.connect(self._os_changed)
-        # Tab reaches every control, as the system setting "full keyboard access" does on macOS
+        # Tab reaches every control, not only text fields
         QGuiApplication.styleHints().setTabFocusBehavior(Qt.TabFocusBehavior.TabFocusAllControls)
         if self._style is None:
             # one widget style on every system: the look comes from the tokens, and the native
-            # macOS and Windows styles differ in keyboard focus and in how cells are edited
+            # Windows style differs in keyboard focus and in how cells are edited
             self._style = ThemeStyle()
             app.setStyle(self._style)
         scale_changed = self._sheet_scale != self.scale

@@ -20,7 +20,7 @@ from harness_design_studio.gui.licences import LUCIDE_LICENCES as LUCIDE_LICENCE
 COMMON = Path("/usr/share/common-licenses")  # Debian and Ubuntu base-files
 BUNDLED = (
     Path(__file__).resolve().parents[1] / "packaging" / "licences"
-)  # the same texts, for Windows and macOS builds
+)  # the same texts, for Windows builds
 LICENCE_FILE = re.compile(r"(^|/)(licen[sc]e|copying|notice|authors)[^/]*$", re.IGNORECASE)
 
 
@@ -100,7 +100,7 @@ def collect(dest: Path) -> list[str]:
             if not src.is_file():
                 src = (
                     BUNDLED / name
-                )  # no Debian base-files on Windows and macOS: use the copy in the repository
+                )  # no Debian base-files on Windows: use the copy in the repository
             if not src.is_file():
                 problems.append(f"{COMMON / name} and {src} not found")
                 continue

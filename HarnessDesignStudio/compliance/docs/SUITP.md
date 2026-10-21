@@ -6,7 +6,7 @@ DRD: ECSS-E-ST-40C Annex K. Status: draft, not reviewed.
 See `SDP.md`.
 
 ## 5. Unit and integration testing
-- **Organization, schedule, resources, responsibilities:** automated, run by CI on every push (`.github/workflows/harness-ci.yml`; since 1.2.0 `harness-platforms.yml` runs the whole suite on Windows and macOS too) and by the developer before every commit.
+- **Organization, schedule, resources, responsibilities:** automated, run by CI on every push (`.github/workflows/harness-ci.yml`; since 1.2.0 `harness-platforms.yml` runs the whole suite on Windows too) and by the developer before every commit.
 - **Tools, techniques, methods:** pytest with hypothesis (property tests), pytest-qt (GUI offscreen), pytest-xdist (parallel runs in CI, D-148), fixtures in `tests/fixtures/`, golden files for outputs.
 - **Personnel and training:** none specific.
 - **Risks and contingencies:** timing tests on slow machines; limits scale with `HARNESS_TIME_FACTOR` (CI sets 3); counting tests replace timing where possible.
@@ -16,7 +16,7 @@ Failing tests block a release (`../../docs/RELEASE.md`).
 
 ## 7. Approach
 - **Strategy:** every function that holds logic has unit tests; modules are integrated in tests that run the whole chain (generate, check, export, verify), for example `tests/test_generate.py` and `tests/test_outputs.py`; the GUI journeys test the editor end to end offscreen.
-- **Items and features tested:** all of `core`, `cli`, and the editor controller and panels. **Not tested:** pixel-exact rendering, the OS integration of the installed package beyond the self-test and, since 1.2.0, the smoke tests of the release workflow on the finished Windows and macOS packages (`../../docs/RELEASE.md`).
+- **Items and features tested:** all of `core`, `cli`, and the editor controller and panels. **Not tested:** pixel-exact rendering, the OS integration of the installed package beyond the self-test and, since 1.2.0, the smoke tests of the release workflow on the finished Windows package (`../../docs/RELEASE.md`).
 - **Pass/fail criteria:** all tests pass; coverage of `core` at least 90 % (statement and branch), enforced by `pyproject.toml`.
 - **Generated code:** none.
 

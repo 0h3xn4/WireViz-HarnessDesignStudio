@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status.** Sections 1, 4, 5 and 6 are the original proposal, written before the tool was built, and were only partly re-checked since. The platform remarks in them are historical: the tool was first Ubuntu only (D-110, D-127) and has run on Ubuntu 24.04 and newer, Windows 10 and 11 and macOS 13 and newer since 1.2.0 (D-149, which supersedes both). The design rule check runs in a helper process (D-128). **Section 2 was rewritten from the source tree for version 1.3.0** (folders and module docstrings; the user interface of 1.3.0 is the one of the UI overhaul, D-150 to D-159) and is the current layout; the project folder format is in [`FILE_FORMAT.md`](FILE_FORMAT.md). The look of the editor and the rules for its code are in [`DESIGN.md`](DESIGN.md).
+> **Status.** Sections 1, 4, 5 and 6 are the original proposal, written before the tool was built, and were only partly re-checked since. The platform remarks in them are historical: the tool was first Ubuntu only (D-110, D-127) and has run on Ubuntu 24.04 and newer and Windows 10 and 11 since 1.2.0 (D-149, which supersedes both; macOS was added by D-149 and removed after 1.5.0 by D-168). The design rule check runs in a helper process (D-128). **Section 2 was rewritten from the source tree for version 1.3.0** (folders and module docstrings; the user interface of 1.3.0 is the one of the UI overhaul, D-150 to D-159) and is the current layout; the project folder format is in [`FILE_FORMAT.md`](FILE_FORMAT.md). The look of the editor and the rules for its code are in [`DESIGN.md`](DESIGN.md).
 
 ## Contents
 
@@ -134,7 +134,7 @@ pytest + hypothesis (property tests, fuzzing loaders/importers/generator), pytes
 
 1. Pin allocation is the hardest algorithm: start with a constraint-ordered greedy allocator with explicit rule list and provenance; keep it replaceable.
 2. Real derating/EMC numbers are missing (D-11); generator and DRC must run with placeholders and mark every result "uses placeholder rules" until replaced.
-3. Installer size and PyInstaller: build each package on its own operating system in CI (Ubuntu 24.04, Windows, macOS; D-149).
+3. Installer size and PyInstaller: build each package on its own operating system in CI (Ubuntu 24.04, Windows; D-149, D-168).
 4. Locked-down hosts may block unsigned executables; code signing is configurable (D-19).
 5. UX sign-off is a gate: no full editor before the prototype review (spec UX process step 2).
 

@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Removed
+
+- **macOS (D-168).** The tool is supported on Ubuntu 24.04 and newer and on Windows 10 and 11 only. The workflows no longer build, test or publish anything for macOS (the release makes the `.deb`, the `.tar.gz`, the Windows setup program and `.zip`, and one `SHA256SUMS`), and `tools/build_macos.py`, `packaging/macos/`, the macOS mode of `tools/smoke_package.py`, the `.icns` of `tools/make_icons.py`, the macOS tests and the macOS parts of the documents are gone. No file format, model, rule, command line or generated file changes. The releases 1.2.0 to 1.5.0 still carry their two macOS disk images on GitHub; they are not maintained or tested any more.
+
 ## 1.5.0 (2026-10-21; not a statement of compliance)
 
 Version 1.5.0 answers a second request of the AIT engineers, to **create a project completely from scratch**: a harness can now be made by hand, with its connectors, pins and wires, and no interface behind it (decision D-166). It also makes the Linux package say what is missing in plain words instead of failing silently, and proves in CI that no package needs a Python on the machine (D-167).

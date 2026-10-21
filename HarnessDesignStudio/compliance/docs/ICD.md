@@ -19,7 +19,7 @@ Interfaces are specified in the documents named below; this ICD lists them and t
 | IF-OUTPUTS outputs folder | write | SVG, PDF, CSV, XLSX, YAML (WireViz style), JSON, Markdown; deterministic bytes; stamp with version and model hash | `../../docs/OUTPUTS.md` |
 | IF-DRC helper process | internal | chunked pickle messages over stdin and stdout between the editor and `--drc-worker`; only the two allowed files may use it | `../../docs/ARCHITECTURE.md`, D-128, `../../docs/SECURITY.md` |
 | IF-PROFILE standard profiles | in | `config/*.json` keys, `harness config --apply-profile` | `../../docs/CONFIG.md`, D-131 |
-| IF-DELIVERY release files | out | `.deb`, `.tar.gz`, and from 1.2.0 the Windows setup program (`.exe`) and `.zip` and the macOS `.dmg` files, `scf.json`, `SHA256SUMS`, SBOM | `SCF.md`, `../../docs/RELEASE.md` |
+| IF-DELIVERY release files | out | `.deb`, `.tar.gz`, and from 1.2.0 the Windows setup program (`.exe`) and `.zip` (the macOS `.dmg` files of 1.2.0 to 1.5.0 are no longer built, D-168), `scf.json`, `SHA256SUMS`, SBOM | `SCF.md`, `../../docs/RELEASE.md` |
 
 ## 6. Validation requirements
 Each interface has tests: `tests/test_io.py`, `tests/test_cli*.py`, `tests/test_imports.py`, `tests/test_kicad.py`, `tests/test_outputs.py`, `tests/test_drc_process.py`, `tests/test_profiles.py`, `tests/test_installers.py`.

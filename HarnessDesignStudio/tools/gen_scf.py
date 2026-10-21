@@ -27,8 +27,7 @@ DELIVERABLE_SUFFIXES = (
     ".tar.gz",
     ".exe",
     ".zip",
-    ".dmg",
-)  # Linux, Windows (setup, portable), macOS
+)  # Linux, Windows (setup, portable)
 
 
 def sha256(path: Path) -> str:
@@ -97,7 +96,7 @@ def main(out: str = "dist/release-docs") -> int:
     delivered: dict[str, dict[str, object]] = scf["deliverables"]  # type: ignore[assignment]
     if not delivered:
         sys.stderr.write(
-            f"error: no package (.deb, .tar.gz, .exe, .zip or .dmg) of version {scf['version']} in dist/: build the package first\n"
+            f"error: no package (.deb, .tar.gz, .exe or .zip) of version {scf['version']} in dist/: build the package first\n"
         )
         return 1
     out_dir = ROOT / out
