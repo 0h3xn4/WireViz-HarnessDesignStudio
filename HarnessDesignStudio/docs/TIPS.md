@@ -41,6 +41,7 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+7 and Ctrl+, | Home and Settings |
 | Ctrl+Shift+M | Show or hide the Problems panel at the bottom |
 | Ctrl+Shift+N | Add a device (an empty unit named in the Devices tab) |
+| Ctrl+Shift+H | New harness... (a harness made by hand; the Drawings area, then its Connectors tab) |
 | Ctrl+Shift+T | The Interface table (the Interfaces tab of the left panel) |
 | Ctrl+Shift+J | The Unit table (the Units tab of the left panel) |
 | F6 and Shift+F6 | Move the keyboard focus to the next or previous panel |
@@ -127,7 +128,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
-38 files written to cib/outputs (model 431cd03ca16a).
+38 files written to cib/outputs (model 85a15171aed5).
 2 interfaces and 6 wires checked: 0 error(s)
 build ok: cib/outputs
 ```
@@ -179,7 +180,7 @@ Remember that the settings live **inside** `"values": {...}` in each file; a key
 | `per_unit_pair` | pair of units | 23 |
 | `per_zone_pair` | pair of zones (lanes of the diagram) | 5 |
 
-Edit the file (`"mode": "per_zone_pair"` inside `"values"`), run `harness-design-studio generate DIR`, and the report says `5 added, 0 changed, 0 unchanged, 24 removed`. Released harnesses are never touched. Which rule your company wants is an open decision of the owner (D-10, see [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md)); the default is a placeholder. The `flatsat` example ships with `per_zone_pair`.
+Edit the file (`"mode": "per_zone_pair"` inside `"values"`), run `harness-design-studio generate DIR`, and the report says `3 added, 2 changed, 0 unchanged, 22 removed` (harnesses keep their IDs where they can; five harnesses are left). Released harnesses are never touched. Which rule your company wants is an open decision of the owner (D-10, see [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md)); the default is a placeholder. The `flatsat` example ships with `per_zone_pair`.
 
 ## Wire colours
 
@@ -222,7 +223,7 @@ A warning of the design rule check can be fixed or **waived**: in the app, press
 
 ## Working with other tools
 
-**This repository contains no integration with SpaceMissionStudio, Requirements Studio, Budget Studio, AIT Logbook or ICD Studio.** The whole repository was searched, case-insensitively and with or without spaces, for all five names: the only file that contains them is the audit record [`../../docs/DOCS_AUDIT.md`](../../docs/DOCS_AUDIT.md), which says the same thing. There is no code, no format, no command and no setting for any of them. The tool also makes no network connection (a test checks it), so nothing could talk to another program behind your back.
+**This repository contains no integration with SpaceMissionStudio, Requirements Studio, Budget Studio, AIT Logbook or ICD Studio.** The whole repository was searched, case-insensitively and with or without spaces, for all five names: the only files that contain them are the audit record [`../../docs/DOCS_AUDIT.md`](../../docs/DOCS_AUDIT.md), which says the same thing, and the UI brief [`ui/UI_OVERHAUL.md`](ui/UI_OVERHAUL.md), which names SpaceMissionStudio only as a sibling product whose look this tool follows. There is no code, no format, no command and no setting for any of them. The tool also makes no network connection (a test checks it), so nothing could talk to another program behind your back.
 
 What does exist is **files**. The tool reads a few file formats in and writes several out. Anything you want to connect to another program has to go through these files, by hand or by a script you write.
 

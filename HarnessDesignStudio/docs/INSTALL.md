@@ -60,7 +60,7 @@ You can also build it yourself (way C, last section). That route needs no releas
 
 Copy the file to the machine. It never needs to reach the network.
 
-**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file (the `SHA256SUMS` file on the release page, one file for all packages of a release from 1.2.0, and `compliance/evidence/release_<version>_SHA256SUMS` in the repository for every release from 0.1.0 to 1.3.0). Compare:
+**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file (the `SHA256SUMS` file on the release page, one file for all packages of a release from 1.2.0, and `compliance/evidence/release_<version>_SHA256SUMS` in the repository for every release from 0.1.0 to 1.6.0). Compare:
 
 ```
 sha256sum harness-design-studio_<version>_amd64.deb
@@ -119,7 +119,7 @@ Other options of `install.sh`: `sudo ./install.sh --system` installs for everyon
 
 If `install.sh` says that a folder "was not installed by this installer", the install folder holds one of these names from something else (or from an older installer, which wrote no list; an install made by the 0.1.0 `install.sh` is of this kind). Choose another `--prefix`, or move that folder away first. To replace a 0.1.0 install, remove it first (run its own `uninstall.sh`, or delete `~/.local/opt/harness-design-studio` yourself), then run the new `install.sh`. Your projects are never inside the install folder.
 
-From version 1.5.0 `install.sh` also checks the machine. The package carries its own Python and Qt; what it cannot carry are the graphics and window-system basics of the computer (`libgl1`, `libegl1`, `libxcb1`), which every desktop has. If one is missing, `install.sh` ends with a **WARNING** that names it and gives the `sudo apt install` line, and the editor says the same in a small window instead of closing without a word. `harness-design-studio-gui --check-system` runs only this check.
+From version 1.5.0 `install.sh` also checks the machine. The package carries its own Python and Qt; what it cannot carry are the graphics and window-system basics of the computer (`libgl1`, `libegl1`, `libxcb1`), which every desktop has. If one is missing, `install.sh` ends with a **WARNING** that names it and gives the `sudo apt install` line, and the editor says the same in a small window instead of closing without a word. `harness-design-studio-gui --check-system` runs only this check (like `--selftest`, it exists only in the installed editor).
 
 Run `install.sh` from the **unpacked package**. Run from the source tree it refuses and prints: `This folder (...) has no built program, so there is nothing to install.`
 

@@ -16,12 +16,12 @@ Failing tests block a release (`../../docs/RELEASE.md`).
 
 ## 7. Approach
 - **Strategy:** every function that holds logic has unit tests; modules are integrated in tests that run the whole chain (generate, check, export, verify), for example `tests/test_generate.py` and `tests/test_outputs.py`; the GUI journeys test the editor end to end offscreen.
-- **Items and features tested:** all of `core`, `cli`, and the editor controller and panels. **Not tested:** pixel-exact rendering, the OS integration of the installed package beyond the self-test and, since 1.2.0, the smoke tests of the release workflow on the finished Windows package (`../../docs/RELEASE.md`).
+- **Items and features tested:** all of `core`, `cli`, and the editor controller and panels. **Not tested:** pixel-exact rendering, the OS integration of the installed package beyond the self-test and, since 1.2.0, the smoke tests of the release workflow on the finished Windows packages (`../../docs/RELEASE.md`) and the job `package-on-24-04` of `harness-ci.yml`, which runs the Linux packages on a fresh Ubuntu 24.04 runner and on a machine with no Python and three system libraries (D-167).
 - **Pass/fail criteria:** all tests pass; coverage of `core` at least 90 % (statement and branch), enforced by `pyproject.toml`.
 - **Generated code:** none.
 
 ## 8 to 10. Test design, cases, procedures
-One test function is one test case; its name and docstring state the purpose, and the requirement ID it serves where there is one. Inputs are in the test or in `tests/fixtures`; expected outputs are asserted in the test. The procedure is `pytest` (all tests) or `pytest tests/<file>`. The list of test cases is the output of `pytest --collect-only -q` (906 collected tests when this plan was written; 3,009 collected on 2026-10-20, counted with `pytest --collect-only`, not run for this note; plus the long runs `HARNESS_FUZZ_EXAMPLES=5000 pytest tests/test_fuzz.py` and `python -m tools.soak 5000 <seed>`).
+One test function is one test case; its name and docstring state the purpose, and the requirement ID it serves where there is one. Inputs are in the test or in `tests/fixtures`; expected outputs are asserted in the test. The procedure is `pytest` (all tests) or `pytest tests/<file>`. The list of test cases is the output of `pytest --collect-only -q` (906 collected tests when this plan was written; 3,009 collected on 2026-10-20 and 3,195 on 2026-10-21 for version 1.6.0, counted with `pytest --collect-only`, not all run for this note; plus the long runs `HARNESS_FUZZ_EXAMPLES=5000 pytest tests/test_fuzz.py` and `python -m tools.soak 5000 <seed>`).
 
 ## 11. Additional information
 `../traceability.csv` links requirements to the test files.

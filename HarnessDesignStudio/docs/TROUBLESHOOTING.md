@@ -60,11 +60,11 @@ bash: line 1: harness-design-studio: command not found
 - **Run from source or pip into a virtual environment (way C):** the environment is not active in this terminal. Run `. .venv/bin/activate` in the folder where you made it.
 - **Nothing installed yet:** start at [`INSTALL.md`](INSTALL.md).
 
-Check with `harness-design-studio --version`; it prints the version, for example `harness 1.4.0`.
+Check with `harness-design-studio --version`; it prints the version, for example `harness 1.6.0`.
 
 ### I am on Windows or a Mac
 
-Version 1.1.0 and older run on **Ubuntu 24.04 or newer, 64-bit x86**, and nothing else. From version 1.2.0 there are packages for **Windows 10 and 11 (64-bit)**, see [`INSTALL.md`](INSTALL.md), way D (decision D-149). They are not signed: Windows SmartScreen shows *Windows protected your PC* (**More info**, then **Run anyway**). There is no package for **macOS**: the releases 1.2.0 to 1.5.0 carry disk images that are not maintained, and later versions have none (decision D-168). Other Linux distributions and Ubuntu 22.04 and older are not supported. On Ubuntu, check your system with `lsb_release -rs` (must print 24.04 or higher).
+Version 1.6.0 is supported on **Ubuntu 24.04 or newer, 64-bit x86**, and on **Windows 10 and 11 (64-bit)**, and on nothing else. There are packages for both: see [`INSTALL.md`](INSTALL.md), way A or B for Ubuntu and way D for Windows (decision D-149). The Windows packages are not signed: Windows SmartScreen shows *Windows protected your PC* (**More info**, then **Run anyway**). **macOS was removed in version 1.6.0** (decision D-168): there is no package for it, and nothing is built, tested or supported for it. The releases 1.2.0 to 1.5.0 still carry macOS disk images on GitHub, but they are unmaintained; use them at your own risk. Version 1.1.0 and older run on Ubuntu only. Other Linux distributions and Ubuntu 22.04 and older are not supported. On Ubuntu, check your system with `lsb_release -rs` (must print 24.04 or higher).
 
 ### `E: Unable to locate package ./harness-design-studio_...` or `dpkg: dependency problems`
 
@@ -276,7 +276,7 @@ harness-design-studio generate demo-blank
 0 interfaces and 0 wires checked: 0 error(s)
 ```
 
-Not an error: the blank project has no units and no interfaces, and the command line cannot add them. Add units and interfaces in the app (see Part 10 of [`GETTING_STARTED.md`](GETTING_STARTED.md)), or start from `first-steps`.
+Not an error: the blank project has no units and no interfaces, and the command line cannot add them. Add units and interfaces in the app (the empty diagram has the button **Add a device**; see Part 10 of [`GETTING_STARTED.md`](GETTING_STARTED.md)), or start from `first-steps`.
 
 ### `Not saved: fix the errors above first.` with `[contact_overload]` or `[wire_sizing]`
 
@@ -539,7 +539,7 @@ harness-design-studio export demo
 error: there are no harnesses to export; run `harness-design-studio generate` first.
 ```
 
-Exit code 1. Outputs are written per harness, and none exists yet. Run `harness-design-studio generate demo`, then `harness-design-studio export demo`. (With the `blank` project it stays this way until you add units and interfaces in the app.)
+Exit code 1. Outputs are written per harness, and none exists yet. Run `harness-design-studio generate demo`, then `harness-design-studio export demo`. (With the `blank` project it stays this way until you add units and interfaces in the app, or make a harness by hand with **New harness…**.)
 
 ### `warning: [out_pdf_chars] These characters cannot be shown in the PDF ...`
 
@@ -548,11 +548,12 @@ harness-design-studio export demo
 ```
 
 ```
-warning: [out_pdf_chars] These characters cannot be shown in the PDF drawings of W001 and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
-38 files written to demo/outputs (model a7c0ccce1928).
+warning: [out_pdf_chars] These characters cannot be shown in the PDF of the block diagram and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
+warning: [out_pdf_chars] These characters cannot be shown in the PDF of the harness overview and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
+38 files written to demo/outputs (model 09710f8f1b03).
 ```
 
-(The model hash is from the run with 1.0.0 and depends on the project and the tool version; yours differs.)
+(Made with 1.6.0 from `first-steps`, after renaming two units to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`.)
 
 Not an error (exit code 0, the files are written). The PDF drawings use the Windows-1252 character set, so a name or note with characters outside it (the ohm sign Ω, Greek letters) prints a `?` in the PDF; the SVG drawing, the CSV files and the workbook keep the characters. The warning names every character it replaced (up to eight, then "and N more") and is repeated by `harness-design-studio verify DIR --outputs`. **Fix:** if the PDF is what you send, write the name with letters of Windows-1252 (for example "ohm"); otherwise use the SVG.
 
@@ -570,7 +571,7 @@ Exit code 1. `--outputs` checks the files in `demo/outputs`; there are none yet.
 
 ### Which file is what?
 
-See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `38 files written to demo-first-steps/outputs (model 431cd03ca16a).`
+See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `38 files written to demo-first-steps/outputs (model 85a15171aed5).`
 
 ## Releasing
 
@@ -581,7 +582,7 @@ harness-design-studio release rel W001 --by "Ada" --comment "short"
 ```
 
 ```
-blocked: [comment_short] The comment needs at least 10 characters: say what changed or why.
+blocked: [comment_short] --comment: The comment needs at least 10 characters: say what changed or why.
 blocked: [placeholder_config] These configuration files are still placeholders: derating, emc, generation, segmentation, segregation, titleblock. Have an engineer review the values and set "placeholder" to false in each file (`harness-design-studio config DIR` lists them). Or release on placeholders with a written reason (command line: --accept-placeholders REASON); the reason is kept in the change log.
 blocked: [parts_unapproved] 3 part(s) used by W001 are not approved (or are example data): EX-MICROD-21-M, EX-MICROD-25-M, EX-WIRE-TWISTED-SHIELDED. Approve them in the parts list, or release with a written reason (command line: --accept-unapproved-parts REASON); the reason is kept in the change log.
 blocked: [gauge_pending] 4 wire(s) have no gauge decided (first: W001-001). Fill in the derating values (the file config/derating.json; `harness-design-studio config DIR` lists what is missing) or set the gauge by hand.
@@ -676,7 +677,7 @@ Comparing before with after: 0 added, 0 removed, 1 changed.
 
 - Harness `W003`
   - approver: Ada -> (none)
-  - released_on: 2026-10-10 -> (none)
+  - released_on: 2026-10-21 -> (none)
   - revision: A -> B
   - status: released -> draft
 ```

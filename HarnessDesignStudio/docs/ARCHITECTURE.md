@@ -1,6 +1,6 @@
 # Architecture
 
-> **Status.** Sections 1, 4, 5 and 6 are the original proposal, written before the tool was built, and were only partly re-checked since. The platform remarks in them are historical: the tool was first Ubuntu only (D-110, D-127) and has run on Ubuntu 24.04 and newer and Windows 10 and 11 since 1.2.0 (D-149, which supersedes both; macOS was added by D-149 and removed after 1.5.0 by D-168). The design rule check runs in a helper process (D-128). **Section 2 was rewritten from the source tree for version 1.3.0** (folders and module docstrings; the user interface of 1.3.0 is the one of the UI overhaul, D-150 to D-159) and is the current layout; the project folder format is in [`FILE_FORMAT.md`](FILE_FORMAT.md). The look of the editor and the rules for its code are in [`DESIGN.md`](DESIGN.md).
+> **Status.** This page describes version 1.6.0. **Section 1 is the original proposal**, written before the tool was built (the choice it ends with, Python and PySide6, is what was built); its remarks about platforms are historical. **Section 2 was written from the source tree** (folders and module docstrings) and checked again for 1.6.0: it lists every module in `core/`, `cli/` and `gui/`. Sections 3 to 6 were checked against the code for 1.6.0 and the parts that were only a plan have been corrected or marked. The tool is supported on Ubuntu 24.04 and newer and on Windows 10 and 11 (D-149; macOS was added by D-149 and removed after 1.5.0 by D-168). The design rule check runs in a helper process (D-128). The user interface is the one of the UI overhaul (D-150 to D-159) with the editing additions of 1.4.0 to 1.6.0. The project folder format is in [`FILE_FORMAT.md`](FILE_FORMAT.md). The look of the editor and the rules for its code are in [`DESIGN.md`](DESIGN.md).
 
 ## Contents
 
@@ -9,7 +9,7 @@
 - [3. Project folder format](#3-project-folder-format)
 - [4. Key mechanisms](#4-key-mechanisms)
 - [5. Testing architecture](#5-testing-architecture)
-- [6. Risks](#6-risks)
+- [6. Risks (from the proposal)](#6-risks-from-the-proposal)
 
 ## 1. Stack comparison (the original proposal)
 
@@ -46,7 +46,7 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 
 | Module | What it does |
 | --- | --- |
-| `model/` | the model objects: `base` (base class and field types), `logical` (what must be connected), `physical` (connectors, pins, wires, shields, harnesses), `library` (parts), `config` (rule configuration, defaults are placeholders), `generation` (record of the last generation), `review` (layout and waivers), `project` (the one mutable in-memory container) |
+| `model/` | the model objects: `base` (base class and field types), `logical` (what must be connected), `physical` (connectors, pins, wires, shields, harnesses), `library` (parts), `config` (rule configuration, defaults are placeholders), `generation` (record of the last generation), `review` (layout, waivers, baselines and change log entries), `project` (the one mutable in-memory container) |
 | `commands.py` | transactions with undo and redo; all model changes are lists of operations applied atomically |
 | `edit.py` | editing operations for the block diagram (pure functions that build lists of operations) |
 | `ids.py`, `units.py`, `errors.py` | identifier rules; SI helpers (AWG with mm² alongside); explicit error types |
@@ -58,6 +58,7 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | `samples.py`, `starter.py`, `templates.py` | reference projects for tests and the first-run sample; starter library and interface types (example data only); the example projects and import templates shipped with the tool |
 | `standard_profiles.py`, `configcheck.py` | optional value profiles from the supplied standards (D-131); check and fill in the engineering configuration (D-11) |
 | `devices.py`, `pinout_import.py` | custom devices down to each pin: the plans the Devices view and the pinout import call (connectors, pins, pasted rows, the state of a device); import of a device's pinout from CSV or XLSX as a plan |
+| `manual_harness.py` | the plans for a harness made by hand (1.5.0, D-166): a new empty harness, its cable connectors (a library part, or the other half of a unit's connector) and their pins, deleting a connector that has no wires |
 | `wires.py` | the plans behind the *Edit wire* tab (1.4.0): edit a wire (gauge, type, colour, length lock it; label and note are always kept), reset, draw a wire, move its ends, delete, group (twist or shield), set the harness and connector labels (D-161 to D-163) |
 | `device_library.py` | device library files: devices with their pinouts, parts and interface types saved outside a project and added to another (D-165) |
 | `wirecolours.py`, `routing.py`, `describe.py` | the IEC 60757 wire colours; link-drawing rules that do not need Qt; plain-language captions for links and connectors, the link tooltip, the picture of a unit |
@@ -80,7 +81,7 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | Module | What it does |
 | --- | --- |
 | `cli/main.py` | the `harness-design-studio` entry point (`harness` is an alias) |
-| `cli/start.py`, `cli/data.py`, `cli/changes.py` | getting started (`new`, `templates`); outside data (`config`, `import-parts`, `import-lengths`, `import-netlist`, `import-pinout`, `import-devices`, `export-pinout`, `export-devices`); change control (`review`, `release`, `revise`, `diff`, `compare`, `log`) |
+| `cli/start.py`, `cli/data.py`, `cli/changes.py` | getting started (`new`, `templates`, `schema`); outside data (`config`, `library`, `import-parts`, `import-lengths`, `import-netlist`, `import-pinout`, `import-devices`, `export-pinout`, `export-devices`); change control (`review`, `release`, `revise`, `diff`, `compare`, `log`) |
 
 The editor (`gui/`) has these parts. The window is a navigation rail (Home, Model, Checks, Drawings, Outputs, Revisions, Settings), one top bar with the three steps Generate, Check and Release, the open area, a project panel on the left, the inspector on the right, a Problems panel at the bottom and a status bar. An area is a view onto the six main tabs (Diagram, Devices, Checks, Harness, Lists, Releases); Home and Settings are pages of their own.
 
@@ -93,12 +94,14 @@ The editor (`gui/`) has these parts. The window is a navigation rail (Home, Mode
 | `gui/controller.py` | `EditorController`: the only object that changes the project |
 | `gui/canvas.py`, `gui/glyphs.py`, `gui/legend.py`, `gui/canvas_state.py`, `gui/canvas_badges.py` | the diagram canvas (zone lanes, units, links, overview map); pictograms for links and connectors; the legend overlay; the index of problems, pending values and locks per object; the badges and the corner chip |
 | `gui/project_tree.py`, `gui/inspector.py`, `gui/why_panel.py` | the project tree, the inspector (fields, used in, lock banner) and the Why panel |
+| `gui/wire_editor.py`, `gui/connector_editor.py` | the *Edit wire* form (gauge, type, colour, length, label, note, new wire, group; 1.4.0) and the *Connectors* tab (a harness made by hand; 1.5.0) of the Harness tab; the plans behind them are in `core/wires.py` and `core/manual_harness.py` |
 | `gui/harness_view.py`, `gui/lists_panel.py`, `gui/outputs_files.py`, `gui/checks_panel.py`, `gui/releases_panel.py`, `gui/plan_table.py` | the Drawings, Outputs, Checks and Revisions views (the tabs Harness, Lists, Checks, Releases); the list of exported files with their SHA-256; the table of the generate plan |
 | `gui/devices_view.py`, `gui/devices_pin_table.py`, `gui/devices_dialogs.py` | the Devices tab: one unit down to each pin, its editable pin table and its small dialogs |
 | `gui/interface_table.py`, `gui/unit_table.py`, `gui/sheet.py`, `gui/empty_state.py` | the Interfaces and Units tables of the left panel; the spreadsheet behaviour they share (paste from Excel, bulk edit, Enter to edit); what a table without rows says |
 | `gui/export_dialog.py`, `gui/export_docs.py`, `gui/import_wizard.py`, `gui/import_kinds.py`, `gui/new_project_dialog.py`, `gui/config_dialog.py`, `gui/lock_tree.py`, `gui/notice.py` | the export window and the names of the documents it lists; the import wizard and what it can import (no Qt in the kinds); the new project window; the engineering values form; the tree of what a release locks; inline notices |
 | `gui/tables.py`, `gui/states.py`, `gui/icons.py`, `gui/background.py`, `gui/timing.py` | shared tables, state chips, icons painted in code, background jobs, the optional timing log (`HARNESS_UI_TIMING=1`) |
 | `gui/panels.py`, `gui/dialogs.py`, `gui/preview.py`, `gui/tour.py`, `gui/command_palette.py`, `gui/appicon.py` | the properties form and the inspector's problems cards (the to-do lines); other dialogs; the zoomable drawing preview; the first-run tour; the Ctrl+K overlay; the logo painted in code |
+| `gui/startup_help.py` | Linux only: finds out before Qt loads which system libraries are missing and says so in one sentence with the `sudo apt install` line (1.5.0, D-167); `harness-design-studio-gui --check-system` runs only this check |
 | `gui/drc_process.py` | runs the design rule check in a separate, long-lived process |
 | `gui/strings.py` | all user-visible text |
 | `gui/theme/` | the theme package. `tokens.py` is the one source of every colour, type size, gap, radius and duration (light and dark themes); `palette.py` maps tokens to Qt palette roles; `qss.py` is the application style sheet, which names palette roles and holds no colour; `style.py` is the widget style (Fusion, with check boxes and radio buttons drawn from the palette); `fonts.py` loads the bundled Inter and JetBrains Mono; `manager.py` is the theme manager (System, Light, Dark; interface size; reduce motion). `tests/test_theme_scan.py` fails when a colour, font family or font size is written outside this package |
@@ -116,21 +119,24 @@ The folder layout, the file shapes and the rules for IDs, saving and migration a
 ## 4. Key mechanisms
 
 - **Determinism:** generation is a pure function `(model, config, library) -> physical model + provenance`. Sorting by stable IDs everywhere; no reliance on dict/set order or timestamps; hash of canonical JSON is the `model_hash`. Property test: regenerate twice and compare bytes.
-- **Locks and overrides:** user-edited pins/wires carry `locked: true` or `override` records. Regeneration runs in "merge" mode and returns a `RegenReport` (kept / changed / conflicts) shown before applying.
-- **Explain:** every generator decision appends a provenance record `{object_id, rule_id, inputs, reason}`. The "Explain" action and the DRC fix text read these.
+- **Locks and overrides:** a pin or wire that a person set carries `locked: true`; a wire or twisting group that a person drew carries `manual: true` (1.4.0). Regeneration is a merge: it returns a `RegenReport` (added, removed, changed, unchanged, frozen, kept locks and findings) that the editor shows as a preview before applying. Released harnesses, locked pins and wires, and manual wires and groups are kept as they are.
+- **Explain:** every generator decision appends a line `rule: reason` to the provenance of the object it made (`GenerationRecord.provenance`, saved in `generated/generation.json`). The *Why* panel and the "Why is it like this?" action read these (`core/why.py`).
 - **Verifier:** `core/verify.py` (the model) and `core/outputs/verify.py` (the finished files) read only emitted artefacts (CSV/JSON/SVG data) and the model, and recomputes expected end-to-end connectivity with its own simple implementation (no shared code with `generate/` beyond model types). Release command refuses on any verifier error. The model verifier also compares each wire's signal label and its cable-side pin table with the unit connector pinout. Stale detection: each artefact stores `model_hash`; GUI/CLI compare it with the current hash.
 - **DRC process:** the background check runs in a long-lived helper process (`gui/drc_process.py` starts `core/drc/worker.py`; a packaged program is started with `--drc-worker`), because a thread shared the interpreter lock with the editor and stalled edits. The project and the findings cross the pipes in small pieces. If the helper cannot start it falls back to a thread (D-128).
-- **DRC:** each rule is a `Rule` record with `id`, `severity`, `topic`, `why`, `how` and a `check(project)` function that yields hits (`core/drc/base.py`); a rule that can be fixed automatically offers a fix label (`drc.fix_ops`). Rules and thresholds come from config. Waivers are keyed by (rule id, object id, hash of finding) with mandatory justification.
-- **Recovery mode:** loader validates per file; broken files are quarantined into a `RecoveryReport`, the rest loads; nothing is dropped silently and originals are never overwritten.
+- **DRC:** each rule is a `Rule` record with `id`, `severity`, `topic`, `why`, `how` and a `check(project)` function that yields hits (`core/drc/base.py`); a rule that can be fixed automatically offers a fix label (`drc.fix_ops`). Rules and thresholds come from config. A warning can be waived; a waiver is stored as `<rule>.<object>` with a justification of at least 10 characters (`core/model/review.py`).
+- **Recovery mode:** the loader validates per file; a broken file or object is set aside in `Project.quarantine` (and `quarantine_files`) and reported, the rest loads; nothing is dropped silently, and a project with quarantined data cannot overwrite its folder.
 - **Offline guarantee:** test 1 scans all source and imported modules for `socket`, `http`, `urllib`, `requests`, `ssl`, `QtNetwork` etc.; test 2 patches `socket.socket` to raise and runs the CLI and a GUI smoke test; GUI build excludes QtNetwork/QtWebEngine.
-- **Logging:** structured, local, allow-listed fields only (event name, error type, counts). Object names and values are never logged by default.
-- **Performance:** model holds ID indexes; DRC is incremental (re-check only affected objects); generation parallelisable per harness group; canvas uses item culling. A larger stress project is built in code (`stress_project()` in `core/samples.py`) and timed by `tools/bench_stress.py`.
+- **Logging:** the tool writes no log of design content, and it does not use Python's `logging` module (see [`SECURITY.md`](SECURITY.md)). Messages name fields, never values.
+- **Performance:** the model is a set of dictionaries keyed by ID. The design rule check is not incremental: every run checks the whole project, in the helper process, so edits do not wait for it. Generation runs in one piece (not per harness group). The canvas paints only the items inside the exposed area. The numbers are in [`ui/PERF_BASELINE.md`](ui/PERF_BASELINE.md). A larger stress project is built in code (`stress_project()` in `core/samples.py`) and timed by `tools/bench_stress.py`.
 
 ## 5. Testing architecture
 
-pytest + hypothesis (property tests, fuzzing loaders/importers/generator), pytest-cov (>= 90% core gate), mypy strict, ruff, pytest-qt for journeys (and, for the user interface of 1.3.0, tests that walk every area in both themes: `tests/test_ui_*.py`, `tests/test_theme_scan.py`, `tests/test_tokens.py`), golden-file tests per output type on the reference projects `mini3` and `sat15` (folders in `tests/fixtures/projects`; the larger `stress_project()` is built in code for performance tests), soak test (random edits/undo/redo/save/reload with invariants + verifier), offline test, migration fixtures per schema version, CI on Ubuntu 24.04, and from 1.2.0 the whole suite also on Windows and macOS runners (`harness-platforms.yml`).
+pytest + hypothesis (property tests, fuzzing loaders/importers/generator), pytest-cov (>= 90% core gate), mypy strict, ruff, pytest-qt for journeys (and, for the user interface of 1.3.0, tests that walk every area in both themes: `tests/test_ui_*.py`, `tests/test_theme_scan.py`, `tests/test_tokens.py`), golden-file tests per output type on the reference projects `mini3` and `sat15` (folders in `tests/fixtures/projects`, which also holds `custom_device`; the larger `stress_project()` is built in code for performance tests), soak test (random edits/undo/redo/save/reload with invariants + verifier), offline test, migration fixtures per schema version, CI on Ubuntu 24.04, and from 1.2.0 the whole suite also on a Windows runner (`harness-platforms.yml`; the macOS runner of 1.2.0 to 1.5.0 was removed by D-168).
 
-## 6. Risks
+## 6. Risks (from the proposal)
+
+The list below is the risk list as it was written. Where something has happened since, the line says so.
+
 
 1. Pin allocation is the hardest algorithm: start with a constraint-ordered greedy allocator with explicit rule list and provenance; keep it replaceable.
 2. Real derating/EMC numbers are missing (D-11); generator and DRC must run with placeholders and mark every result "uses placeholder rules" until replaced.

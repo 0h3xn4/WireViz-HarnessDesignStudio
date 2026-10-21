@@ -1,6 +1,6 @@
 # Software product assurance milestone report (SPAMR)
 
-DRD: ECSS-Q-ST-80C Annex C. Milestone: compliance audit, phases 0 to 4 (October 2026). Status: draft, not reviewed.
+DRD: ECSS-Q-ST-80C Annex C. Milestone: compliance audit, phases 0 to 4 (October 2026). Status: draft, not reviewed. The figures below are those of the audit milestone, except where a later figure is named; no milestone report was written for 1.0.0 to 1.6.0, whose state is in `../SUMMARY.md` and `../SIGNOFF.md`.
 
 ## 1. Introduction, 2. Reference documents, 3. Terms
 See `SPAP.md`.
@@ -10,7 +10,7 @@ See `SPAP.md`.
 - After the design-checking features: 902 passed, 1 skipped (`../evidence/after_phase2b_tests.txt`).
 - Run with coverage: 906 passed, 1 skipped, 1 timing test failed under instrumentation on the first try (`../evidence/after_phase2_coverage_run.txt`); final runs 910 passed, 1 skipped, with and without coverage (`../evidence/final_runs.md`).
 - Generated outputs compared byte for byte before and after: 592 of 595 identical, 3 differ in the rule count and citation text (`../evidence/output_comparison.md`).
-- Requirement traceability: `../traceability.csv` (89 requirements, `tools/trace.py`, test `tests/test_trace.py`).
+- Requirement traceability: `../traceability.csv` (78 requirements when this report was written; 89 on 2026-10-21 for version 1.6.0; `tools/trace.py`, test `tests/test_trace.py`).
 
 ## 5. Methods and tools
 `STANDARDS.md`.

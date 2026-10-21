@@ -17,6 +17,7 @@ You describe the **units** (computer, power unit, reaction wheel ...) and the **
 
 - **Your design is the source of truth.** Harnesses, drawings and lists are generated from it and can be regenerated at any time.
 - **You can still edit what it makes.** Set the gauge, type, colour or length of a single wire, draw a wire yourself, put several wires on one pin, twist or shield wires together, give pins a function and connectors and harnesses a label; Generate keeps all of it ([`docs/user-manual/edit-a-wire.md`](docs/user-manual/edit-a-wire.md)). A device you defined down to each pin can be saved to a device library file and added to another project.
+- **You can start from nothing.** A blank project shows an **Add a device** button for its first unit (1.6.0). **New harness…** (1.5.0) makes a harness with no interface behind it; you add its connectors in the Connectors tab and draw its wires in Edit wire, and Generate leaves it as it is ([`docs/user-manual/build-a-harness-by-hand.md`](docs/user-manual/build-a-harness-by-hand.md)).
 - **Offline.** It never uses the network (a test enforces this).
 - **Reproducible.** The same design always produces byte-identical files, so Git diffs show real changes only.
 - **Starts from the usual standards.** RS-422, RS-485 and CAN for communication, Micro-D (9 to 31 pin) for power and data, Ethernet as the alternative for high data rates, SMA for RF (what each one is: [glossary](docs/GLOSSARY.md)). Other types and connectors can be added.
@@ -54,7 +55,7 @@ That is the whole idea. [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) wal
 | --- | --- |
 | **new to the tool** | [`docs/LEARNING_PATH.md`](docs/LEARNING_PATH.md): the route in nine steps. Or directly [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md): your first harness in 45 minutes, then [`docs/CONCEPTS.md`](docs/CONCEPTS.md): how the tool thinks, in ten minutes. |
 | **installing it** | [`docs/INSTALL.md`](docs/INSTALL.md) |
-| **doing a task** (draw, generate, edit a wire, import, KiCad, devices, export, colours, release, Git, CI) | [`docs/user-manual/`](docs/user-manual/README.md): one page per task |
+| **doing a task** (draw, generate, edit a wire, build a harness by hand, import, KiCad, devices, export, colours, release, Git, CI) | [`docs/user-manual/`](docs/user-manual/README.md): one page per task |
 | **looking something up** | [`docs/CLI.md`](docs/CLI.md) (every command), [`docs/guide/USER_GUIDE.md`](docs/guide/USER_GUIDE.md) (the **user guide**, also in the app: **F1**), the one-page [`docs/CHEATSHEET.md`](docs/CHEATSHEET.md), [`docs/TIPS.md`](docs/TIPS.md), the [glossary](docs/GLOSSARY.md) |
 | **stuck** | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md) (error messages and fixes), [`docs/FAQ.md`](docs/FAQ.md) (questions) |
 | **wanting to see what changed** | [`CHANGELOG.md`](CHANGELOG.md) |

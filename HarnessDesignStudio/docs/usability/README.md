@@ -4,7 +4,7 @@ You run the sessions; this kit prepares them and turns the results into a triage
 
 ## Before a session
 1. Install the build under test (the packages exist for Ubuntu and Windows; write the version and the system on the result sheet). Run `python -m tools.usability_setup ~/usability` to create the task material: an empty project for T1, `icd.csv` with two bad rows (T4; import it into `t6-t7-generated`), a project with one corrupt file (T8) and a project with released and generated harnesses (T6, T7).
-2. 3 to 5 participants per persona (Dana: systems engineer; Sam: reviewer or AIT; Elena: harness engineer; Rui: lead). Nobody who built or reviewed the tool.
+2. 3 to 5 participants per persona (the personas of [`../UX.md`](../UX.md#2-personas): Dana, systems engineer; Sam, software engineer; Elena, harness (EE) engineer; Rui, reviewer or AIT technician). Nobody who built or reviewed the tool.
 3. Screen and audio recording only with consent. Participants must not use real program data.
 
 ## During a session (about 60 minutes)
@@ -21,3 +21,5 @@ You run the sessions; this kit prepares them and turns the results into a triage
 The numbers from this tool are only as good as the sessions: with 3 to 5 people they point at problems, they do not prove a percentage.
 
 Also in this folder: `session_schedule.md` (schedule and consent sheet) and `screen_reader_pass.md` (the manual screen-reader part of the accessibility audit).
+
+Next: [UX specification, section 9](../UX.md#9-usability-test-plan-you-run-it-findings-become-priority-bugs), [screen-reader pass](screen_reader_pass.md)

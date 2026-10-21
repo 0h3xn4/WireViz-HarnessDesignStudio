@@ -15,7 +15,7 @@ harness-design-studio verify my-design --outputs            # an independent che
 
 Run the loop again after every change. Generating twice without a change changes nothing (the second run prints "0 added").
 
-The command line cannot add units or interfaces. The loop works on a project that already has them: an example such as `first-steps`, or your own design after you added the units in the app. On a `blank` project `generate` finds 0 interfaces and `export` stops with `error: there are no harnesses to export; run harness-design-studio generate first.`
+The command line cannot add units or interfaces. The loop works on a project that already has them: an example such as `first-steps`, or your own design after you added the units in the app (on the empty diagram, the button **Add a device** or **Add** in the project panel; or make a harness with no interface at all with **New harness…**, Ctrl+Shift+H). On a `blank` project `generate` finds 0 interfaces and `export` stops with `error: there are no harnesses to export; run harness-design-studio generate first.`
 
 ## Bring in data
 

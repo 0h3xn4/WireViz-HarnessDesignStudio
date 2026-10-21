@@ -41,7 +41,7 @@ harness-design-studio export wheel-link
 ```
 0 added, 1 changed, 1 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
-38 files written to wheel-link/outputs (model 22e2531dbd61).
+38 files written to wheel-link/outputs (model 4f1c1170f308).
 ```
 
 Only the power harness changed, because the RS-422 signals have no colour yet. In `outputs/harnesses/W002/wirelist.csv` the `Colour` column now reads:

@@ -63,10 +63,11 @@ The totals in `outputs/system/mass_length.csv` after `harness-design-studio expo
 
 ## What the design rule check says
 
-`harness-design-studio drc` reports no errors. It reports warnings and notes, and they are worth reading, because they show what the tool is for:
+`harness-design-studio drc` reports no errors (35 rules run). It reports warnings and notes, and they are worth reading, because they show what the tool is for:
 
 - **Connector look-alikes.** Many units have several identical connectors (a power distribution unit has eleven identical Micro-D 9 connectors). The rule warns that two cables could be plugged into the wrong place. On a real flatsat you would key the connectors differently or label them.
 - **Unapproved parts.** Every part is an example part that nobody has approved, so each is listed. This is the example being honest.
+- **Choices made by the tool.** The tool picked the connector of every interface, so each of the 44 interfaces gets a note (*uses connectors the tool chose for you*) until a person confirms the choice.
 - **Not checked.** Rules that need numbers nobody entered (EMC classes, spare pins, shield grounding) say that they did not run. Silence would look like a pass.
 
 ## Things to try

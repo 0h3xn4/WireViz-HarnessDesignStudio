@@ -1,6 +1,6 @@
 # Requirements (seed, traceable to SPEC.md)
 
-Tests reference these IDs in their docstrings. Extended each milestone.
+This page lists the requirements of the tool itself, each with its source and the file that verifies it. Tests reference these IDs in their docstrings. It was started as a seed at milestone M0 and extended with every milestone and release up to 1.4.0 (the rows REQ-WIRE-01 to REQ-LIB-04 are the AIT feedback of that release). The table is read by `python -m tools.trace`, which writes `compliance/traceability.csv`; after a change to a row run that command, or `tests/test_trace.py` fails. The command `harness` in older rows is the short alias of `harness-design-studio`.
 
 | ID | Requirement | Source | Verified by |
 | --- | --- | --- | --- |
