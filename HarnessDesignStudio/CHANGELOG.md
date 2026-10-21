@@ -4,6 +4,12 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+## 1.5.0 (2026-10-21; not a statement of compliance)
+
+Version 1.5.0 answers a second request of the AIT engineers, to **create a project completely from scratch**: a harness can now be made by hand, with its connectors, pins and wires, and no interface behind it (decision D-166). It also makes the Linux package say what is missing in plain words instead of failing silently, and proves in CI that no package needs a Python on the machine (D-167).
+
+What did not change: the file format (schema version 1; no new field, so a project saved by 1.4.0 opens as it is and a project that uses nothing new keeps byte-identical files), the 35 design rules, the command line, and every generated file of an existing project apart from the tool version it records (checked file by file, `tools/output_hashes.py`, `tests/test_output_hashes.py`). Not done, as in earlier releases: signing the packages (so Windows SmartScreen and macOS Gatekeeper still ask once), a screen-reader pass and the clean-machine installation test (waived by the owner, `compliance/DEVIATIONS.md`). Still open: what soldering needs beyond the termination column in the lists is for the AIT engineers to say; a command line equivalent of *New harness* is not built.
+
 ### Changed
 
 - **Installers: nothing to install first, and a clear message when the machine lacks something.** The Linux, Windows and macOS packages already carry their own Python and Qt (checked: the Windows package holds `python312.dll`, the Linux one `libpython3.12`; the Linux self-test passes with no Python reachable). The CI smoke tests of the packages now run them in an environment without any Python (no `PYTHON*` variables, no PATH folder holding a Python), and the self-test has a step that fails when a package imports from outside its own folder. On Linux the editor now checks, before it starts, the three libraries it cannot carry (`libgl1`, `libegl1`, `libxcb1`) and whether there is a desktop session; if not, it says what is missing and the `sudo apt install` line, in the terminal and in a small window (zenity, kdialog or xmessage, when there is one) instead of a Python traceback or silence. `harness-design-studio-gui --check-system` runs only that check and `install.sh` runs it after installing and warns. See D-167.

@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit) and **macOS 13 or newer** (Apple Silicon and Intel). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows and macOS sections below describe the packages from 1.2.0. The newest release is 1.3.0 (2026-10-20), the one with the new user interface; the file names are listed under [Get the package](#get-the-package). None of the packages is signed.
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit) and **macOS 13 or newer** (Apple Silicon and Intel). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows and macOS sections below describe the packages from 1.2.0. The newest published release is 1.4.0 (2026-10-20), the one with wire editing and the device library; version 1.5.0 is prepared and not published yet. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
 
 ## Contents
 
@@ -95,7 +95,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.4.0
+harness 1.5.0
 ```
 
 Remove it later with `sudo apt remove harness-design-studio`. Upgrade by installing the newer `.deb` the same way.
@@ -215,7 +215,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.4.0
+harness 1.5.0
 ```
 
 You now have the command line tool `harness-design-studio` (and its short alias `harness`) and the editor `harness-design-studio-gui`. For a script or a shared machine, the setup program also runs without windows: `harness-design-studio-<version>-windows-x86_64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER /DIR="C:\Tools\Harness Design Studio"` (add `/LOG=setup.log` to keep a log). Remove it with *Settings > Apps*, or run `unins000.exe` in the install folder (`/VERYSILENT` makes that silent too). Your projects are never inside the install folder, and uninstalling does not touch them.

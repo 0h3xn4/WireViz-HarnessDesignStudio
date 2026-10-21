@@ -1,4 +1,4 @@
-# harness-design-studio 1.4.0 model 3f478ade7629
+# harness-design-studio 1.5.0 model a3603cc09f9d
 Harness,Wires,Connectors,Wire length known (m),Wires without length,Mass of wires and cable connectors (g),Margin (g),Mass with margin (g),Complete,Missing data
 W002,4,2,0,4,0,,,no,mass of connector part EX-MICROD-15-F; mass of connector part EX-MICROD-25-M; mass per metre of wire part EX-WIRE-TWISTED-SHIELDED
 TOTAL,4,2,0,4,0,,,no,totals count only what is known

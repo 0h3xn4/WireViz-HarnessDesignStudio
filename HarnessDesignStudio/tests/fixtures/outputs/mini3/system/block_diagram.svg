@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="420mm" height="297mm" viewBox="0 0 420 297" font-family="Courier New, Courier, monospace">
 <title>Block diagram: mini3 (example data)</title>
-<desc>harness-design-studio 1.4.0 model 3f478ade7629</desc>
+<desc>harness-design-studio 1.5.0 model a3603cc09f9d</desc>
 <rect x="0" y="0" width="420" height="297" fill="#ffffff"/>
 <rect x="2" y="2" width="416" height="293" fill="none" stroke="#000000" stroke-width="0.5"/>
 <text x="8" y="10" font-size="4.2" font-weight="bold" text-anchor="start" fill="#000000">Block diagram: mini3 (example data)</text>
-<text x="8" y="16" font-size="2.6" text-anchor="start" fill="#555555">harness-design-studio 1.4.0 model 3f478ade7629</text>
+<text x="8" y="16" font-size="2.6" text-anchor="start" fill="#555555">harness-design-studio 1.5.0 model a3603cc09f9d</text>
 <text x="10" y="20" font-size="2.8" text-anchor="start" fill="#555555">panel-A</text>
 <text x="80" y="20" font-size="2.8" text-anchor="start" fill="#555555">panel-B</text>
 <line x1="54" y1="40.5" x2="80" y2="23.5" stroke="#8c2d04" stroke-width="0.3"/>
