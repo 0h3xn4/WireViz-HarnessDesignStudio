@@ -123,6 +123,8 @@ Other options of `install.sh`: `sudo ./install.sh --system` installs for everyon
 
 If `install.sh` says that a folder "was not installed by this installer", the install folder holds one of these names from something else (or from an older installer, which wrote no list; an install made by the 0.1.0 `install.sh` is of this kind). Choose another `--prefix`, or move that folder away first. To replace a 0.1.0 install, remove it first (run its own `uninstall.sh`, or delete `~/.local/opt/harness-design-studio` yourself), then run the new `install.sh`. Your projects are never inside the install folder.
 
+From version 1.5.0 `install.sh` also checks the machine. The package carries its own Python and Qt; what it cannot carry are the graphics and window-system basics of the computer (`libgl1`, `libegl1`, `libxcb1`), which every desktop has. If one is missing, `install.sh` ends with a **WARNING** that names it and gives the `sudo apt install` line, and the editor says the same in a small window instead of closing without a word. `harness-design-studio-gui --check-system` runs only this check.
+
 Run `install.sh` from the **unpacked package**. Run from the source tree it refuses and prints: `This folder (...) has no built program, so there is nothing to install.`
 
 ## Check that it works
@@ -165,6 +167,8 @@ The `.deb` asks `apt` for these itself. More help: [`FAQ.md`](FAQ.md).
 | `E: Unable to locate package ./harness-design-studio_...` or `apt` cannot find the file | Run the command in the folder that holds the file, and keep the `./` in front of the name. |
 | `dpkg: dependency problems` | Run `sudo apt install -f`. It installs the missing system libraries from your normal Ubuntu sources (this is the only step that may need network). |
 | `harness: command not found` after the `.tar.gz` install | `~/.local/bin` is not on your PATH; see way B above. |
+| A window or a terminal message says `cannot start because this computer lacks system libraries` (1.5.0 and newer) | Run the `sudo apt install ...` line it gives. It names only the libraries that are really missing. |
+| A message says there is no graphical session (`no DISPLAY and no WAYLAND_DISPLAY`) | You are on a text login or an SSH session. Start the app from the desktop, or use the `harness-design-studio` command line tool. |
 | The app window is blank or the app closes at once | With way A or B, run `harness-design-studio-gui --selftest` in a terminal. If it prints an error about `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. |
 | You are connected by SSH and the app does not open | The app needs a screen. Use the `harness-design-studio` command line tool over SSH, or start the app on the machine itself. |
 | `install.sh` says `This folder (...) has no built program, so there is nothing to install.` | You ran it from the source tree. Run it from the unpacked `.tar.gz` folder. |

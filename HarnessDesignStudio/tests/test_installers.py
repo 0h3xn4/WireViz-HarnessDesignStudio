@@ -170,7 +170,7 @@ def test_the_tarball_does_not_depend_on_who_builds_it(tmp_path: Path) -> None:
 
 def test_container_recipes_are_valid_shell_and_name_the_right_base() -> None:
     cont = PK / "container"
-    for script in ("build-in-container.sh", "clean-machine-test.sh"):
+    for script in ("build-in-container.sh", "clean-machine-test.sh", "minimal-machine-test.sh"):
         assert (
             subprocess.run(
                 ["sh", "-n", str(cont / script)], capture_output=True, check=False

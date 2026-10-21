@@ -24,7 +24,73 @@ if __name__ == "__main__" and _asked("--drc-worker", sys.argv):
 
     raise SystemExit(_drc_worker())
 
-from harness_design_studio.gui.app import create_window, main  # noqa: E402
+
+def _tell(message: str) -> None:
+    """Say why the editor cannot start, where the person will see it: on the terminal, and in a
+    small window when it was started from the menu (a program started that way has no terminal).
+    The window comes from zenity, kdialog or xmessage when the machine has one."""
+    import shutil
+    import subprocess
+
+    print(message, file=sys.stderr)
+    if sys.stderr is not None and sys.stderr.isatty():
+        return
+    env = {k: v for k, v in os.environ.items() if k != "LD_LIBRARY_PATH"}
+    if "LD_LIBRARY_PATH_ORIG" in os.environ:  # the bootloader's own value: the system tools need it
+        env["LD_LIBRARY_PATH"] = os.environ["LD_LIBRARY_PATH_ORIG"]
+    title = "Harness Design Studio"
+    for tool, args in (
+        ("zenity", ["--error", "--no-markup", "--title", title, "--text", message]),
+        ("kdialog", ["--title", title, "--error", message]),
+        ("xmessage", ["-center", message]),
+    ):
+        found = shutil.which(tool, path=env.get("PATH"))
+        if found:
+            try:
+                subprocess.run([found, *args], env=env, timeout=600, check=False)  # noqa: S603
+            except (OSError, subprocess.SubprocessError):
+                continue
+            return
+
+
+def _check_system(argv: list[str]) -> int | None:
+    """The first-start check of the machine's own libraries (Linux). Returns an exit code when
+    the editor must not go on, else None. `--check-system` runs only this and says "ok"."""
+    import ctypes
+
+    from harness_design_studio.gui import startup_help
+
+    only_check = _asked("--check-system", argv)
+    if not only_check and (_asked("--selftest", argv) or os.environ.get("QT_QPA_PLATFORM")):
+        return None  # the self-test and an explicit platform (offscreen) need no window system
+    missing = startup_help.missing_libraries(ctypes.CDLL)
+    if missing:
+        _tell(startup_help.message(missing))
+        return startup_help.EXIT_CODE
+    if startup_help.no_display(os.environ) and not only_check:
+        _tell(startup_help.NO_DISPLAY_MESSAGE)
+        return startup_help.EXIT_CODE
+    if only_check:
+        print("system libraries ok")
+        return 0
+    return None
+
+
+if __name__ == "__main__":
+    _code = _check_system(sys.argv)
+    if _code is not None:
+        raise SystemExit(_code)
+
+try:
+    from harness_design_studio.gui.app import create_window, main  # noqa: E402
+except ImportError as _error:  # a library the check did not name: say which, not a traceback
+    from harness_design_studio.gui import startup_help as _help
+
+    _named = _help.from_error(str(_error))
+    if _named:
+        _tell(_help.message(_named))
+        raise SystemExit(_help.EXIT_CODE) from None
+    raise
 
 
 def _report(message: str, out: Path | None) -> None:
@@ -83,11 +149,24 @@ def _run_steps(tmp: Path) -> list[str]:
             "rule check process": _rule_check_process_works(ctl),
             "bundled examples": _examples_are_bundled(tmp),
             "bundled fonts": _fonts_are_bundled(),
+            "runs on its own Python": _runs_from_its_own_python(),
         }
     finally:
         ctl.release()
         win.settings.sync()  # the window keeps Home's recent list in them; write now, not at exit
     return [name for name, ok in results.items() if not ok]
+
+
+def _runs_from_its_own_python() -> bool:
+    """A package runs on the Python and Qt inside it: nothing it imports comes from outside its own
+    folder. (From the source install the question does not arise.)"""
+    if not getattr(sys, "frozen", False):
+        return True
+    inside = Path(getattr(sys, "_MEIPASS", sys.executable)).resolve()
+    roots = {inside, Path(sys.executable).resolve().parent}
+    return all(
+        any(Path(p).resolve().is_relative_to(r) for r in roots) for p in sys.path if p
+    ) and any(Path(p).resolve().is_relative_to(inside) for p in sys.path)
 
 
 def _examples_are_bundled(tmp: Path) -> bool:

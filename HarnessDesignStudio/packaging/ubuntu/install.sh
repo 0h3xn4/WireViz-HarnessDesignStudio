@@ -140,6 +140,20 @@ done < "$here/harness-design-studio.desktop.in"
 cp "$here/harness-design-studio.svg" "$icondir/harness-design-studio.svg"
 echo "Installed to $prefix. Start it from the application menu or run: harness-design-studio-gui"
 echo "The command line tool is harness-design-studio (the short name harness works too)."
+# The program carries its own Python and Qt; what it cannot carry is the machine's own graphics and
+# window-system libraries. Say now, in one sentence with the fix, if one is missing (the install
+# itself is fine and stays), instead of a silent failure at the first start.
+rc=0
+check=$("$prefix/harness-design-studio-gui" --check-system 2>&1) || rc=$?
+if [ "$rc" = 3 ]; then
+  echo "" >&2
+  echo "WARNING: the editor will not start yet." >&2
+  printf '%s\n' "$check" >&2
+elif [ "$rc" != 0 ]; then
+  echo "" >&2
+  echo "WARNING: the check of the system libraries ended with code $rc:" >&2
+  printf '%s\n' "$check" | tail -n 5 >&2
+fi
 case ":$PATH:" in
   *":$bindir:"*) ;;
   *)

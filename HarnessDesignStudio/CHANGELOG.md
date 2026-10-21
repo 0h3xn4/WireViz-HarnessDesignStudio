@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Changed
+
+- **Installers: nothing to install first, and a clear message when the machine lacks something.** The Linux, Windows and macOS packages already carry their own Python and Qt (checked: the Windows package holds `python312.dll`, the Linux one `libpython3.12`; the Linux self-test passes with no Python reachable). The CI smoke tests of the packages now run them in an environment without any Python (no `PYTHON*` variables, no PATH folder holding a Python), and the self-test has a step that fails when a package imports from outside its own folder. On Linux the editor now checks, before it starts, the three libraries it cannot carry (`libgl1`, `libegl1`, `libxcb1`) and whether there is a desktop session; if not, it says what is missing and the `sudo apt install` line, in the terminal and in a small window (zenity, kdialog or xmessage, when there is one) instead of a Python traceback or silence. `harness-design-studio-gui --check-system` runs only that check and `install.sh` runs it after installing and warns. See D-167.
+
 ### Added
 
 - **A harness from nothing (answer to the AIT engineers: create a project completely from scratch).** A harness no longer has to come from Generate. **New harness…** (Drawings area, Edit menu, Ctrl+Shift+H) makes an empty draft harness; the new **Connectors** tab adds its cable connectors (a part of the library, or the other half of a unit's connector with its pins, gender and keying taken from it; pin names of your own if you like), sets the function, termination and contact size of a pin, and deletes a connector that has no wires; the wires are drawn in *Edit wire* as before. From there it is a harness like any other: checked, drawn, listed, reviewed and released. Generate leaves it, its connectors and its wires as they are; a harness that Generate made takes no connector by hand. No file format change (every field existed) and no change to any generated file. See `docs/user-manual/build-a-harness-by-hand.md` and D-166.
