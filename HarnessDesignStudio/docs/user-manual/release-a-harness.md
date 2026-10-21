@@ -88,7 +88,7 @@ If the re-export after the release fails (for example the disk is full), the rel
 3. Fill in **Your name**, optionally **Checked by (optional)**, and **Comment (what changed or why)**.
 4. While a config file is still a placeholder, the window shows which ones and a field **Reason for releasing on placeholder values (kept in the change log)**. While the harness uses parts that are not approved, there is a second field **Reason for releasing with parts that are not approved (kept in the change log)**. Fill in both for a practice release.
 5. Press **Release**. The button stays greyed out until nothing blocks the release and the fields are complete; a line under the form says what is still missing (for example "write at least 10 characters in the comment (3 more to go)").
-6. The app says "W002 released. Export the outputs again so the drawings show the released status."
+6. The app says "W002 released. Export the outputs again so they show the released status."
 
 GUI, not run: the app steps are described from the program's texts and code. They have not been looked at on screen.
 

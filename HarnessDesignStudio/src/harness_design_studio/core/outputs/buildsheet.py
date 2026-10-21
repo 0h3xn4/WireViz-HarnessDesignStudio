@@ -301,7 +301,7 @@ def _start_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
     body.append([
         _cell(ws, "Ready to build", bold=True, fill=_BAND), _cell(ws, ready, bold=True,
               fill=_GREEN if ready == "yes" else _RED),
-        _cell(ws, "all the points marked TO FIX below are done" if ready == "no" else
+        _cell(ws, "some points marked TO FIX below are still open" if ready == "no" else
               "nothing marked TO FIX is open", box=False, wrap=False, colour=_GREY_TEXT),
     ])  # fmt: skip
     body.append([])

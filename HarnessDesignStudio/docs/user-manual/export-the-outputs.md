@@ -109,9 +109,9 @@ The table on **Start here** has six checks, each with a count of what is open an
 
 `Ready to build` says `yes` when no line is marked `TO FIX`. A `NOTE` does not stop it; it is shown so that you see it. Each open line says what to do (for example import the lengths, or set the colour of the signal).
 
-How the cut list is sorted: thick wires before thin ones (a smaller AWG number is a thicker wire), then by colour name, then the shorter wire first, so that the same wire is cut in one go. A wire without a gauge, colour or length comes after the others. The tick columns hold an `x` (the cell offers it in a list); a cell with an `x` turns green.
+How the cut list is sorted: thick wires before thin ones (a smaller AWG number is a thicker wire), then by colour name, then the shorter wire first, so that the same wire is cut in one go. A wire without a gauge comes last; inside a gauge, a wire without a colour comes last in its group, and a wire without a length after the others of its colour. The tick columns hold an `x` (the cell offers it in a list); a cell with an `x` turns green.
 
-On **Cut list**, **Connectors**, **Parts**, **Labels** and **Tests** the bold header row stays on screen when you scroll, and it is repeated on every printed page. These six sheets and **Start here** print on A4, landscape, with the tool version and model hash at the left of the footer, the sheet name in the middle and the page number at the right. **Cut list**, **Parts**, **Labels** and **Tests** have filters; **Start here** and **Connectors** have none. The print of **Connectors** has page breaks between the connector blocks.
+On **Cut list**, **Connectors**, **Parts**, **Labels** and **Tests** the bold header row stays on screen when you scroll, and it is repeated on every printed page. These five sheets and **Start here** print on A4, landscape, with the tool version and model hash at the left of the footer, the sheet name in the middle and the page number at the right. **Cut list**, **Parts**, **Labels** and **Tests** have filters; **Start here** and **Connectors** have none. The print of **Connectors** has page breaks between the connector blocks.
 
 ## 4. Build a harness from the workbook
 

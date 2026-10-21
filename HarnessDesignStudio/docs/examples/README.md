@@ -55,7 +55,7 @@ first-steps      Three units, a power link and an RS-422 link. Nothing is genera
 small-satellite  14 units with nominal and redundant chains. Generate it to see a realistic system.
 ```
 
-`minimal-satellite`, `flatsat` and the template `design-worksheet.md` are new in 1.0.0 and not in the 0.1.0 packages ([`CHANGELOG.md`](../../CHANGELOG.md) of the tool). Asking for them from a 0.1.0 package gives `error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.` ([`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md#creating-a-project)). The counts quoted on this page are the same on both versions for `blank`, `first-steps` and `small-satellite`; the *model hash* differs (the tool version is part of the design it covers), so a hash quoted here will not match a 0.1.0 package, or a version other than 1.6.0. The drawings also differ: the wiring-diagram drawing with wire colours is not in 0.1.0. To get 1.0.0, see [`INSTALL.md`](../INSTALL.md).
+`minimal-satellite`, `flatsat` and the template `design-worksheet.md` are new in 1.0.0 and not in the 0.1.0 packages ([`CHANGELOG.md`](../../CHANGELOG.md) of the tool). Asking for them from a 0.1.0 package gives `error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.` ([`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md#creating-a-project)). The counts of units, interfaces, harnesses, wires and findings quoted on this page are the same on both versions for `blank`, `first-steps` and `small-satellite`; the number of exported files is not (see the note under the table at the end), and the *model hash* differs (the tool version is part of the design it covers), so a hash quoted here will not match a 0.1.0 package, or a version other than 1.6.0. The drawings also differ: the wiring-diagram drawing with wire colours is not in 0.1.0. To get 1.0.0, see [`INSTALL.md`](../INSTALL.md).
 
 The same five commands work on every example: `new`, `validate`, `generate`, `drc`, `export`, and `verify --outputs`. The project's model hash and the Open line of `drc` below are printed **after** `generate`; before that the hash differs (it covers the generated harnesses too). A project created with `--name` has a different hash for the same design, because the name is part of the design.
 
@@ -123,7 +123,7 @@ harness-design-studio export my-first-steps
 ```
 
 ```
-38 files written to my-first-steps/outputs (model 431cd03ca16a).
+34 files written to my-first-steps/outputs (model 431cd03ca16a).
 ```
 
 All ten warnings say that an example part is used and nobody has approved it. The notes say which checks did not run because their numbers are missing, and which choices nobody has confirmed yet. That is the tool being honest, not a failure. **Next:** the walk-through in [`GETTING_STARTED.md`](../GETTING_STARTED.md) (about 45 minutes) or the nine steps of [`LEARNING_PATH.md`](../LEARNING_PATH.md). The tutorial quotes a different hash because it creates the project with `--name "Wheel link"`.
@@ -155,7 +155,7 @@ Model hash: `8bbad14d54f6`. Rules run: 35.
 Open: 0 error(s), 15 warning(s), 17 note(s). Waived: 0.
 ```
 
-`harness-design-studio validate` first reports `7 units, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `137 files written to my-minimal-satellite/outputs (model dc2181642352).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the units and interfaces of your own on paper first.
+`harness-design-studio validate` first reports `7 units, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `115 files written to my-minimal-satellite/outputs (model dc2181642352).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the units and interfaces of your own on paper first.
 
 ## small-satellite
 
@@ -184,7 +184,7 @@ Model hash: `5189733bf3cb`. Rules run: 35.
 Open: 0 error(s), 20 warning(s), 28 note(s). Waived: 0.
 ```
 
-`harness-design-studio validate` first reports `14 units, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `280 files written to my-small-satellite/outputs (model ab99715b5cf2).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a unit and use **Create redundant copy** on it, or read the Problems tab.
+`harness-design-studio validate` first reports `14 units, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `232 files written to my-small-satellite/outputs (model ab99715b5cf2).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a unit and use **Create redundant copy** on it, or read the Problems tab.
 
 ## flatsat
 
@@ -216,19 +216,21 @@ Model hash: `a2b89ff21bd8`. Rules run: 35.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
-`harness-design-studio export my-flatsat` writes `112 files written to my-flatsat/outputs (model a2b89ff21bd8).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
+`harness-design-studio export my-flatsat` writes `88 files written to my-flatsat/outputs (model a2b89ff21bd8).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
 
 ## Does every example run?
 
-Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.6.0. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (counts as above; the hashes differ).
+Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.6.0. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (the counts of harnesses, wires and findings as above; the hashes differ; 0.1.0 wrote the drawings and no build workbook).
 
 | Example | `validate` | `generate` | `drc` | `export` | `verify --outputs` |
 | --- | --- | --- | --- | --- | --- |
 | `blank` | 0 errors | 0 harnesses | 0, 0, 0 | refused, nothing to export | refused, no outputs |
-| `first-steps` | 0 errors | 2 added, 6 wires | 0 errors, 10 warnings, 8 notes | 38 files | 0 errors |
-| `minimal-satellite` | 0 errors | 11 added, 24 wires | 0 errors, 15 warnings, 17 notes | 137 files | 0 errors |
-| `small-satellite` | 0 errors | 24 added, 54 wires | 0 errors, 20 warnings, 28 notes | 280 files | 0 errors |
-| `flatsat` | 0 errors | 8 unchanged, 103 wires | 0 errors, 28 warnings, 47 notes | 112 files | 0 errors |
+| `first-steps` | 0 errors | 2 added, 6 wires | 0 errors, 10 warnings, 8 notes | 34 files | 0 errors |
+| `minimal-satellite` | 0 errors | 11 added, 24 wires | 0 errors, 15 warnings, 17 notes | 115 files | 0 errors |
+| `small-satellite` | 0 errors | 24 added, 54 wires | 0 errors, 20 warnings, 28 notes | 232 files | 0 errors |
+| `flatsat` | 0 errors | 8 unchanged, 103 wires | 0 errors, 28 warnings, 47 notes | 88 files | 0 errors |
+
+The file counts are those of `export` without `--drawings` (a build workbook for every harness, no harness drawings). This is on `master` and not in the latest release yet: with 1.6.0 and earlier, `export` wrote the drawings and no build workbook, and the counts were 38, 137, 280 and 112. With `export --drawings` the counts are 40, 148, 304 and 120 (the old count plus one build workbook for each harness: 2, 11, 24 and 8). `verify --outputs` ends with 0 errors in both cases.
 
 ## The 15 template files
 

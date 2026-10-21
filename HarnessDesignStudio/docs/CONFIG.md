@@ -97,7 +97,7 @@ Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limit
 | `power_signal_gap_pins` | empty pins between power and signal pins |
 | `mass_margin_fraction` | margin added to masses |
 | `shield_end_a`, `shield_end_b` | grounding concept: `backshell_360`, `pigtail` or `floating` for each end |
-| `wire_colour_by_signal` | optional, absent by default: colour of the wire for each signal name, for example `{"PWR": "red", "RTN": "black"}`. Used when a wire has no colour of its own. The harness drawing draws the wire in that colour and writes its IEC 60757 code (BK, RD, ...). The tool defines no colours of its own. **Edit > Wire colours...** in the editor sets it from a list (undoable); a wire between two different signals (labelled `TX+/RX+`) takes the colour of the first |
+| `wire_colour_by_signal` | optional, absent by default: colour of the wire for each signal name, for example `{"PWR": "red", "RTN": "black"}`. Used when a wire has no colour of its own. The build workbook shows the wire in that colour with its name and IEC 60757 code (BK, RD, ...), and the harness drawing, when it is written, draws it in that colour. The tool defines no colours of its own. **Edit > Wire colours...** in the editor sets it from a list (undoable); a wire between two different signals (labelled `TX+/RX+`) takes the colour of the first |
 | `test_continuity_max_ohm`, `test_isolation_min_mohm`, `test_isolation_voltage_v` | limits printed in the test tables |
 
 ## `emc.json`

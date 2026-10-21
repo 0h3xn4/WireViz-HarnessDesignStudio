@@ -42,7 +42,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`PLACEHOLDERS.md`](PLACEHOLDERS.md) | Which engineering values are still placeholders, who owns them |
 | [`IMPORTS.md`](IMPORTS.md) | Importing interfaces, parts, lengths, engineering values, device pinouts |
 | [`KICAD.md`](KICAD.md) | Taking unit connector pinouts from a KiCad netlist |
-| [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits |
+| [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits, and the build workbook |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed, release by release |
 | [`releases/`](releases/1.6.0.md) | The highlights of each release from 1.1.0 to 1.6.0, as the GitHub release page shows them (one file per version) |

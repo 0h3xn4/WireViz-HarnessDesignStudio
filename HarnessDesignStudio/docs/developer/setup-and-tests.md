@@ -137,13 +137,13 @@ The editor of 1.3.0 (the UI overhaul, D-150 to D-159) has its own tests. All run
 | `tests/test_ui_final.py` | Walks every area, tab, Settings section and the Problems panel in both themes: no Qt warning, an accessible name on every control, a tooltip on every icon-only button, the Tab key visits every control and returns to where it started, keyboard focus is visible. |
 | `tests/test_ui_timing.py` | The optional timing log (`HARNESS_UI_TIMING=1`). |
 | `tests/test_ui_checks_perf.py`, `test_ui_preview_perf.py`, `test_ui_sheets_perf.py`, `test_ui_state_index_scale.py` | Time limits at stress size (200 units, 2,000 interfaces, about 82,000 findings): an edit after a rule check, a frame of the drawing, a paste of 500 rows. They carry `perf`, so CI runs them alone, with `HARNESS_TIME_FACTOR=3`. |
-| `tests/test_output_hashes.py` | All 567 files the four packaged examples write have the SHA-256 they had with release 1.2.0 (`docs/ui/OUTPUT_HASHES_1.2.0.json`), apart from the version stamp: a change of the interface must not change a written file. |
+| `tests/test_output_hashes.py` | All 567 files the four packaged examples write (with the drawings on, as the reference was made) have the SHA-256 they had with release 1.2.0 (`docs/ui/OUTPUT_HASHES_1.2.0.json`), apart from the version stamp: a change of the interface must not change a written file. The build workbooks (`*_build.xlsx`, a file kind that did not exist then) are left out of the comparison. |
 
 Pictures of the result are made with `tools.ui_screenshots`, timings with `tools.ui_perf` ([`tools.md`](tools.md)).
 
 ## The tests of the 1.4.0 and later features
 
-Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made by hand, D-166, and the start check, D-167) and version 1.6.0 (the start screen of a blank project) added these tests. The ones that open the editor run offscreen and carry `gui`.
+Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made by hand, D-166, and the start check, D-167), version 1.6.0 (the start screen of a blank project) and the work towards 1.7.0 (the build workbook, D-169) added these tests. The ones that open the editor run offscreen and carry `gui`.
 
 | Tests | What they check |
 | --- | --- |
@@ -157,8 +157,9 @@ Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made 
 | `tests/test_manual_harness.py` | A harness made by hand (1.5.0): new harness, free-standing and plugging-in connectors, pin function and termination, delete connector, naming pattern, Generate leaving it alone, released and generated harnesses refusing, undo. |
 | `tests/test_ui_from_scratch.py` | The Connectors tab, the New harness button and action, the journey from a blank project in the window, and (1.6.0) the **Add a device** button of the empty diagram. |
 | `tests/test_ui_wire_editor.py` | The Edit wire tab: selection, apply, reset, several wires, the new wire form, groups, the labels form. |
+| `tests/test_build_workbook.py` | The build workbook (D-169): seven sheets, the same bytes for the same model, no formulas, text that looks like a formula stored as text, the layout, the cut order and colours, every pin in a block, the empty result columns, the readiness lines; the drawings optional (`drawings=False`), a set with the drawings of only some harnesses reported, the folder remembering whether it had drawings; a mutation test for each check of the independent verifier. |
 
-The proof that existing work is unchanged is `tests/test_output_hashes.py` (above): the 567 files of the four examples still match release 1.2.0 apart from the version stamp.
+The proof that existing work is unchanged is `tests/test_output_hashes.py` (above): the 567 files of the four examples still match release 1.2.0 apart from the version stamp (the build workbooks, new in 1.7.0, are not compared).
 
 ## 5. Golden files
 

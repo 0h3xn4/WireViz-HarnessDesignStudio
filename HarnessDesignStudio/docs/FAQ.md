@@ -44,6 +44,12 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **How do I know a printed sheet or drawing matches the design?** Every output carries the tool version and a *model hash* (12 characters); the build workbook has it in the footer of every printed sheet. `harness-design-studio verify DIR --outputs` checks the files against the design.
 
+**What do I build a harness from?** From the build workbook: `outputs/harnesses/<ID>/<ID>_build.xlsx`, one Excel file for each harness (not in the latest release yet; new in 1.7.0). Its first sheet says whether the harness is ready to build and what is missing; the others are the cut list, one block for every connector, the parts, the labels and a test sheet with empty columns for the result. Work on a copy of it, not on the file in `outputs/`. See [export the outputs](user-manual/export-the-outputs.md).
+
+**Where are the PDF drawings of the harnesses?** Since 1.7.0 `harness-design-studio export DIR` does not write them unless you add `--drawings` (in the app: tick **Include the PDF drawings** in the Export window). The block diagram and the harness overview are always written. In 1.6.0 and earlier the drawings were always written.
+
+**Does the build workbook say the strip length, the contact and the crimp tool?** No. These are not in the model yet; they are planned for 1.7.0 and not built ([what the build workbook does not hold yet](user-manual/export-the-outputs.md#what-the-build-workbook-does-not-hold-yet)).
+
 **Where is the user guide?** In the app: **F1**. As a file: [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md).
 
 **How do I get the dark theme?** Open **Settings** (Ctrl+,), section **Appearance**, and choose **Theme**: *Follow the system*, *Light* or *Dark*. **View > Theme** does the same. The window changes at once.

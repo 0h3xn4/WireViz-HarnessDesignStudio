@@ -1,6 +1,6 @@
 # Software requirements specification (SRS)
 
-DRD: ECSS-E-ST-40C Annex D. Status: draft, not reviewed. The requirements themselves live in `../../docs/REQUIREMENTS.md` (93 numbered requirements as counted on 2026-10-21 for version 1.6.0, each with its source and verifying tests) and `../../docs/SPEC.md`; this document organises them by the DRD sections and does not repeat them.
+DRD: ECSS-E-ST-40C Annex D. Status: draft, not reviewed. The requirements themselves live in `../../docs/REQUIREMENTS.md` (94 numbered requirements as counted on 2026-10-21 for version 1.6.0, each with its source and verifying tests) and `../../docs/SPEC.md`; this document organises them by the DRD sections and does not repeat them.
 
 ## 1 to 3. Introduction, references, terms
 `../../docs/SPEC.md` is the owner's statement of needs; `SPAP.md` for the rest.
@@ -13,7 +13,7 @@ DRD: ECSS-E-ST-40C Annex D. Status: draft, not reviewed. The requirements themse
 
 ## 5. Requirements
 Requirement IDs refer to `../../docs/REQUIREMENTS.md`.
-- **5.2 Functional:** REQ-GEN-01..03, REQ-HARN-01, REQ-VER-01, REQ-VER-02, REQ-DRC-01..04, REQ-OUT-01..05, REQ-CC-01..07, REQ-EDIT-01, REQ-EDIT-02, REQ-CHECK-01, REQ-IMPORT-01, REQ-STD-01..06, REQ-PROV-01, REQ-VCS-01; since 1.4.0 REQ-WIRE-01..05 (edit, draw and group wires), REQ-PIN-01, REQ-PIN-02, REQ-LABEL-01 (function, termination, labels), REQ-LIB-03, REQ-LIB-04 (device library file, InvenTree parts import).
+- **5.2 Functional:** REQ-GEN-01..03, REQ-HARN-01, REQ-VER-01, REQ-VER-02, REQ-DRC-01..04, REQ-OUT-01..06, REQ-CC-01..07, REQ-EDIT-01, REQ-EDIT-02, REQ-CHECK-01, REQ-IMPORT-01, REQ-STD-01..06, REQ-PROV-01, REQ-VCS-01; since 1.4.0 REQ-WIRE-01..05 (edit, draw and group wires), REQ-PIN-01, REQ-PIN-02, REQ-LABEL-01 (function, termination, labels), REQ-LIB-03, REQ-LIB-04 (device library file, InvenTree parts import).
 - **5.3 Performance:** REQ-PERF-01 (editor), REQ-PERF-02 (generation under 10 s).
 - **5.4 Interface:** REQ-CLI-01, REQ-GUI-01..06, REQ-IO-01 (see `ICD.md`).
 - **5.5 Operational:** REQ-JOURNAL-01, REQ-RECOVERY-01, REQ-ATOMIC-01, REQ-LOCK-01.
