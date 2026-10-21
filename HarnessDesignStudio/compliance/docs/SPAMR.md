@@ -10,7 +10,7 @@ See `SPAP.md`.
 - After the design-checking features: 902 passed, 1 skipped (`../evidence/after_phase2b_tests.txt`).
 - Run with coverage: 906 passed, 1 skipped, 1 timing test failed under instrumentation on the first try (`../evidence/after_phase2_coverage_run.txt`); final runs 910 passed, 1 skipped, with and without coverage (`../evidence/final_runs.md`).
 - Generated outputs compared byte for byte before and after: 592 of 595 identical, 3 differ in the rule count and citation text (`../evidence/output_comparison.md`).
-- Requirement traceability: `../traceability.csv` (78 requirements when this report was written; 89 on 2026-10-21 for version 1.6.0; `tools/trace.py`, test `tests/test_trace.py`).
+- Requirement traceability: `../traceability.csv` (78 requirements when this report was written; 93 on 2026-10-21 for version 1.6.0; `tools/trace.py`, test `tests/test_trace.py`).
 
 ## 5. Methods and tools
 `STANDARDS.md`.

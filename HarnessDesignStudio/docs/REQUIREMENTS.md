@@ -1,6 +1,6 @@
 # Requirements (seed, traceable to SPEC.md)
 
-This page lists the requirements of the tool itself, each with its source and the file that verifies it. Tests reference these IDs in their docstrings. It was started as a seed at milestone M0 and extended with every milestone and release up to 1.4.0 (the rows REQ-WIRE-01 to REQ-LIB-04 are the AIT feedback of that release). The table is read by `python -m tools.trace`, which writes `compliance/traceability.csv`; after a change to a row run that command, or `tests/test_trace.py` fails. The command `harness` in older rows is the short alias of `harness-design-studio`.
+This page lists the requirements of the tool itself, each with its source and the file that verifies it. Tests reference these IDs in their docstrings. It was started as a seed at milestone M0 and extended with every milestone and release up to 1.6.0 (the rows REQ-WIRE-01 to REQ-LIB-04 are the AIT feedback of 1.4.0; REQ-HARN-01, REQ-START-01, REQ-PKG-02 and REQ-GUI-06 are 1.5.0 and 1.6.0). The table is read by `python -m tools.trace`, which writes `compliance/traceability.csv`; after a change to a row run that command, or `tests/test_trace.py` fails. The command `harness` in older rows is the short alias of `harness-design-studio`.
 
 | ID | Requirement | Source | Verified by |
 | --- | --- | --- | --- |
@@ -8,7 +8,7 @@ This page lists the requirements of the tool itself, each with its source and th
 | REQ-ARCH-01 | The core has no GUI, CLI or network imports. | SPEC Part 4, Architecture | `tests/test_architecture.py` |
 | REQ-LIC-01 | Shipped dependencies are permissive or LGPL only; SBOM and licence report are produced per release. | SPEC Part 1, hard constraint 3 | `tests/test_licences.py`, `tools/gen_sbom.py` |
 | REQ-SEC-01 | The release check scans the shipped dependencies for known vulnerabilities; a scan that could not run is a failure, never a pass. | ECSS-E-ST-40C 5.9.4 | `tests/test_vulnerability_check.py`, `tools/check_vulnerabilities.py` |
-| REQ-PKG-01 | A self-contained package runs without admin rights and without internet. | SPEC Part 1, hard constraint 2 | `tools/build_installer.py`, `--selftest` in CI |
+| REQ-PKG-01 | A self-contained package (Ubuntu, and from 1.2.0 Windows) runs without admin rights and without internet. | SPEC Part 1, hard constraint 2 | `tools/build_installer.py`, `--selftest` in CI |
 | REQ-BUILD-01 | Builds are reproducible from pinned versions. | SPEC Part 1, hard constraint 3 | `tools/check_reproducible.py` |
 | REQ-I18N-01 | All UI strings live in one module. | SPEC Part 1, hard constraint 8 | `gui/strings.py` (review) |
 | REQ-MODEL-01 | IDs are safe as file names and on drawings; SI/AWG helpers. | SPEC Part 1 (7), Part 2 | `tests/test_units_ids.py` |
@@ -61,7 +61,7 @@ This page lists the requirements of the tool itself, each with its source and th
 | REQ-M7-01 | Every interactive control has an accessible name; text is at least 10 px at every UI scale; the canvas announces its content and the accessible alternative. | SPEC Part 3 (accessibility) | `tests/test_accessibility.py` |
 | REQ-M7-02 | Random editing for thousands of steps keeps every invariant (integrity, rejected steps change nothing, save and load round trip, verifier clean after generation). | PLAN M7 soak test | `tests/test_soak.py`, `tools/soak.py` |
 | REQ-M7-03 | The user guide, rule reference and configuration reference are complete and in sync with the program. | SPEC Part 5 (docs) | `tests/test_docs.py` |
-| REQ-M7-04 | Ubuntu packages: `.tar.gz` with install and uninstall scripts, and a reproducible `.deb`. | D-110 | `tests/test_installers.py`, `tools/release_check.py` |
+| REQ-M7-04 | Ubuntu packages: `.tar.gz` with install and uninstall scripts, and a reproducible `.deb` (the Windows packages are REQ-PKG-02). | D-110 | `tests/test_installers.py`, `tools/release_check.py` |
 | REQ-M7-05 | The usability kit computes SUS and success correctly and prepares the task material. | UX.md section 9 | `tests/test_usability_kit.py` |
 | REQ-NUM-01 | Sizing arithmetic (AWG diameter and area, ampacity derating, voltage drop) agrees with exact arithmetic and with the defining points of the AWG scale. | ECSS-Q-ST-80C 7.1.7 | `tests/test_numerics.py` |
 | REQ-TRACE-01 | Every tool requirement names the file that verifies it, and the traceability report is current. | ECSS-E-ST-40C 5.8.3 | `tests/test_trace.py`, `tools/trace.py` |
@@ -93,3 +93,7 @@ This page lists the requirements of the tool itself, each with its source and th
 | REQ-UX-04 | The interface takes every colour, type size and gap from one token source (`gui/theme/tokens.py`: light and dark themes, WCAG 2.2 AA contrast) and uses the bundled Inter and JetBrains Mono fonts; the font licences ship with the program; nothing is fetched. | UX/UI guidelines "Foundation" | `tests/test_fonts.py`, `tests/test_tokens.py` |
 | REQ-GUI-05 | The connector part picker shows what each part is (description, maker, pins, specification, approval, ratings) in the list tooltip and under the picker. | UX/UI guidelines "component library picker" | `tests/test_gui_journeys.py` |
 | REQ-LIB-02 | The parts library records its name, version, source and date (date entered by a person, YYYY-MM-DD, never read from a clock); `harness library` shows and sets them, `harness import-parts` records the file name and its SHA-256; provenance and the editor show them. | UX/UI guidelines "version, date and source visible" | `tests/test_library_source.py` |
+| REQ-HARN-01 | A person can make an empty draft harness (New harness), add cable connectors from library parts with pins, and draw wires between them, with no interface behind it; generation never changes such a harness, and a project that does not use it keeps byte-identical files (D-166). | AIT feedback 2026-10 (create a project completely from scratch) | `tests/test_manual_harness.py`, `tests/test_ui_from_scratch.py` |
+| REQ-START-01 | The Linux package checks for the libraries it cannot bring with it before it starts and says which one is missing and the `apt install` line that fixes it, instead of a traceback (D-167). | D-167 (installers without hassle) | `tests/test_startup_help.py` |
+| REQ-PKG-02 | A release has four packages (the `.deb`, the `.tar.gz`, the Windows setup program and the Windows `.zip`) and one `SHA256SUMS`; nothing is built for macOS (D-149, D-168). | D-149, D-168 | `tests/test_installers.py`, `tests/test_packages_windows.py`, `tools/release_check.py` |
+| REQ-GUI-06 | A blank project says where to start: the empty diagram has an Add a device button and a hint that names only controls that exist (1.6.0). | Owner question 2026-10-21 (create a blank project from scratch) | `tests/test_ui_from_scratch.py` |

@@ -1,6 +1,7 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """1.5.0: a harness made by hand in the Harness tab: New harness, the Connectors tab, wires between
-the new connectors, and the whole journey from a blank project in the window."""
+the new connectors, and the whole journey from a blank project in the window (REQ-HARN-01).
+The start of a blank project (the Add a device button) is REQ-GUI-06."""
 
 import pytest
 

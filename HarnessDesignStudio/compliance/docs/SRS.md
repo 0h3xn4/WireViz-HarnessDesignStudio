@@ -1,6 +1,6 @@
 # Software requirements specification (SRS)
 
-DRD: ECSS-E-ST-40C Annex D. Status: draft, not reviewed. The requirements themselves live in `../../docs/REQUIREMENTS.md` (89 numbered requirements as counted on 2026-10-21 for version 1.6.0, each with its source and verifying tests) and `../../docs/SPEC.md`; this document organises them by the DRD sections and does not repeat them.
+DRD: ECSS-E-ST-40C Annex D. Status: draft, not reviewed. The requirements themselves live in `../../docs/REQUIREMENTS.md` (93 numbered requirements as counted on 2026-10-21 for version 1.6.0, each with its source and verifying tests) and `../../docs/SPEC.md`; this document organises them by the DRD sections and does not repeat them.
 
 ## 1 to 3. Introduction, references, terms
 `../../docs/SPEC.md` is the owner's statement of needs; `SPAP.md` for the rest.
@@ -13,11 +13,11 @@ DRD: ECSS-E-ST-40C Annex D. Status: draft, not reviewed. The requirements themse
 
 ## 5. Requirements
 Requirement IDs refer to `../../docs/REQUIREMENTS.md`.
-- **5.2 Functional:** REQ-GEN-01..03, REQ-VER-01, REQ-VER-02, REQ-DRC-01..04, REQ-OUT-01..05, REQ-CC-01..07, REQ-EDIT-01, REQ-EDIT-02, REQ-CHECK-01, REQ-IMPORT-01, REQ-STD-01..06, REQ-PROV-01, REQ-VCS-01; since 1.4.0 REQ-WIRE-01..05 (edit, draw and group wires), REQ-PIN-01, REQ-PIN-02, REQ-LABEL-01 (function, termination, labels), REQ-LIB-03, REQ-LIB-04 (device library file, InvenTree parts import).
+- **5.2 Functional:** REQ-GEN-01..03, REQ-HARN-01, REQ-VER-01, REQ-VER-02, REQ-DRC-01..04, REQ-OUT-01..05, REQ-CC-01..07, REQ-EDIT-01, REQ-EDIT-02, REQ-CHECK-01, REQ-IMPORT-01, REQ-STD-01..06, REQ-PROV-01, REQ-VCS-01; since 1.4.0 REQ-WIRE-01..05 (edit, draw and group wires), REQ-PIN-01, REQ-PIN-02, REQ-LABEL-01 (function, termination, labels), REQ-LIB-03, REQ-LIB-04 (device library file, InvenTree parts import).
 - **5.3 Performance:** REQ-PERF-01 (editor), REQ-PERF-02 (generation under 10 s).
-- **5.4 Interface:** REQ-CLI-01, REQ-GUI-01..05, REQ-IO-01 (see `ICD.md`).
+- **5.4 Interface:** REQ-CLI-01, REQ-GUI-01..06, REQ-IO-01 (see `ICD.md`).
 - **5.5 Operational:** REQ-JOURNAL-01, REQ-RECOVERY-01, REQ-ATOMIC-01, REQ-LOCK-01.
-- **5.6 Resources:** self-contained package, no admin rights (REQ-PKG-01).
+- **5.6 Resources:** self-contained package, no admin rights (REQ-PKG-01, REQ-PKG-02, REQ-START-01).
 - **5.7 Design and implementation constraints:** REQ-ARCH-01, REQ-MODEL-01, REQ-MODEL-02, REQ-LIC-01, REQ-BUILD-01.
 - **5.8 Security and privacy:** REQ-OFFLINE-01, REQ-SEC-01; `../../docs/SECURITY.md` (no design data in logs, hostile input handling).
 - **5.9 Portability:** Ubuntu 24.04 and newer and Windows 10 and 11 (D-149, from 1.2.0; D-127, Ubuntu only, is superseded; macOS was supported from 1.2.0 to 1.5.0 and removed after it, D-168). Other systems are not supported.
@@ -28,7 +28,7 @@ Requirement IDs refer to `../../docs/REQUIREMENTS.md`.
 - **5.14 Configuration and delivery:** REQ-SCF-01, REQ-M7-04, REQ-TRACE-01, REQ-TRACE-02, REQ-MET-01.
 - **5.15 Data definition:** `../../docs/FILE_FORMAT.md`; REQ-CFG-01, REQ-LIB-01, REQ-LIB-02, REQ-SCHEMA-01.
 - **5.16 Human factors:** REQ-UX-01..04, REQ-M7-01, REQ-M7-05, REQ-LOC-01.
-- **5.17 Adaptation and installation:** `../../docs/INSTALL.md`, REQ-M7-04.
+- **5.17 Adaptation and installation:** `../../docs/INSTALL.md`, REQ-M7-04, REQ-PKG-02, REQ-START-01.
 
 ## 6. Validation requirements
 `SValP_SVS.md`.

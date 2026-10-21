@@ -1,7 +1,7 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """A harness built from nothing: a new harness, its cable connectors, pins and wires, with no
 interface behind it. Generate leaves it alone; checks, outputs, review and release work as for any
-other harness."""
+other harness (REQ-HARN-01)."""
 
 import pytest
 
