@@ -158,3 +158,19 @@ What did not change for existing work: the file format (schema version 1; no new
 | `harness-design-studio_1.5.0_amd64.deb` | `a08825b588c06a21f42b3734480b1dc4517131ec3d4a32f84e1c4bebb88806ce` |
 
 The checksums are also in `evidence/release_1.5.0_SHA256SUMS` (the same bytes as the `SHA256SUMS` file on the release page, 671 bytes, SHA-256 `4142de336c962c640770e5c04696f1a4f129f2ddc1aa56829ba42a70ac794e10`). The packages were built by the workflow on GitHub's machines; they have not been installed on a clean machine without a network by a person (the waiver T-30 stands), the screen-reader pass was not held (T-27), and no independent review took place (T-20 to T-30). The waivers and open items of the sections above are unchanged by the publication. Open for the AIT engineers to say: what soldering needs beyond the termination column of the pinout lists. Not built: a command line equivalent of *New harness*.
+
+
+## Publication of 1.6.0 (2026-10-21)
+
+Recorded from the GitHub release page and the workflow run. Version 1.6.0 removes macOS (decision D-168, the owner's instruction "please remove macOS completely and entirely, nobody needs it"; pull requests 96 and 97) and makes a blank project say where to start; its version preparation (pull request 98) was merged as commit `21f4716`. The assistant that prepared it could not push the tag from its working session (tag pushes are refused with HTTP 403, `docs/RELEASE.md` step 15). The repository owner created the tag `v1.6.0` on `21f4716` through the release page on 2026-10-21 at 18:43 UTC. The tag push started `.github/workflows/release.yml` (run 39655346536). The Linux and Windows build jobs built the packages and ran their smoke tests on the finished files (no job failed and nothing was run again); the last job wrote one `SHA256SUMS`, the notes, and attached the four packages to the release page at 18:49 UTC. This is the first release with no macOS disk image. The releases 1.2.0 to 1.5.0 still carry theirs on GitHub; they are not maintained or tested any more.
+
+What did not change for existing work: the file format (schema version 1; no new field) and the generated files. All 567 files that the four packaged examples write are identical to those of 1.2.0 apart from the tool version they record (`tools/output_hashes.py`, `docs/ui/OUTPUT_HASHES_1.2.0.json`, `tests/test_output_hashes.py`). Changed: the supported platforms are Ubuntu 24.04 and newer and Windows 10 and 11, and the empty diagram of a blank project has the button *Add a device* and no text that names the retired palette.
+
+| File | SHA-256 |
+| --- | --- |
+| `harness-design-studio-1.6.0-linux-x86_64.tar.gz` | `54ac7def9f7ea565c07bb1cf99b4a81db42e8d9ceaa8d66d0505abc02ec77130` |
+| `harness-design-studio-1.6.0-windows-x86_64-setup.exe` | `fa0f3a70fe668a91b1c728f8a8ea8d365b8ae9552d7bf1ba0003228f82863cbf` |
+| `harness-design-studio-1.6.0-windows-x86_64.zip` | `31087c36be0953c03e70adb9810ca5608dc70f2abe7a032cd9cfcc051266fa3a` |
+| `harness-design-studio_1.6.0_amd64.deb` | `e41d8669e99829cb5ae90c395c6c8f08d92ae4207051ddf8dc7a983ed4bed31b` |
+
+The checksums are also in `evidence/release_1.6.0_SHA256SUMS` (the same bytes as the `SHA256SUMS` file on the release page, 450 bytes, SHA-256 `158ee2f7e78cbc74cc515255e67fa7149bf6dc823dd8bfcb33c333a2825c02b0`). The packages were built by the workflow on GitHub's machines; they have not been installed on a clean machine without a network by a person (the waiver T-30 stands), the screen-reader pass was not held (T-27), and no independent review took place (T-20 to T-30). The waivers and open items of the sections above are unchanged by the publication. Open for the AIT engineers to say: what soldering needs beyond the termination column of the pinout lists. Not built: a command line equivalent of *New harness*.
