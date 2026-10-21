@@ -44,7 +44,8 @@ def build_parser() -> argparse.ArgumentParser:
         ("drc", "run the design rule check and print the report (waived findings included)"),
         (
             "export",
-            "write all outputs (drawings, tables, exports) to <project>/outputs and verify them",
+            "write the build workbook of every harness, the tables and exports to "
+            "<project>/outputs and verify them (add --drawings for the PDF drawings)",
         ),
         ("verify", "independently verify the generated harnesses against the interfaces"),
     ):
@@ -55,6 +56,13 @@ def build_parser() -> argparse.ArgumentParser:
                 "--outputs",
                 action="store_true",
                 help="also check <project>/outputs against the design",
+            )
+        if name == "export":
+            p.add_argument(
+                "--drawings",
+                action="store_true",
+                help="also write the PDF and SVG drawings of the harnesses (off by default: "
+                "the build workbook is the main output)",
             )
     start.register(sub)
     changes.register(sub)
@@ -126,10 +134,11 @@ def _generate(path: Path) -> int:
     return 0
 
 
-def _export(path: Path) -> int:
+def _export(path: Path, *, drawings: bool = False) -> int:
     from harness_design_studio.core.outputs.build import (
         DEFAULT_FOLDER,
         build_outputs,
+        drawings_exported,
         write_outputs,
     )
     from harness_design_studio.core.outputs.verify import verify_outputs
@@ -141,16 +150,22 @@ def _export(path: Path) -> int:
             file=sys.stderr,
         )
         return 1
-    result = build_outputs(project)
+    result = build_outputs(project, drawings=drawings)
     report = verify_outputs(project, result.files)
     for issue in report.issues:
         print(f"{issue.severity}: [{issue.code}] {issue.message}")
     if not report.ok:
         print("Not written: the outputs failed their independent check.", file=sys.stderr)
         return 1
-    write_outputs(project, path / DEFAULT_FOLDER, result)
     target = path / DEFAULT_FOLDER
+    had_drawings = drawings_exported(target)
+    write_outputs(project, target, result)
     print(f"{len(result.files)} files written to {target} (model {result.stamp.short}).")
+    if had_drawings and not drawings:
+        print(
+            "The PDF drawings of the earlier export were removed; "
+            "add --drawings to write them again."
+        )
     return 0
 
 
@@ -388,7 +403,7 @@ def _dispatch(args: argparse.Namespace) -> int:
     if args.command in changes.COMMANDS:
         return changes.run(args)
     if args.command == "export":
-        return _export(args.project)
+        return _export(args.project, drawings=args.drawings)
     if args.command == "drc":
         return _drc(args.project)
     if args.command == "verify":

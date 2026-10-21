@@ -46,7 +46,10 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio verify my-design --outputs",
     ],
     "generate": ["harness-design-studio generate my-design"],
-    "export": ["harness-design-studio export my-design"],
+    "export": [
+        "harness-design-studio export my-design",
+        "harness-design-studio export my-design --drawings",
+    ],
     "config": [
         "harness-design-studio config my-design",
         "harness-design-studio config my-design --ampacity-csv ampacity.csv",

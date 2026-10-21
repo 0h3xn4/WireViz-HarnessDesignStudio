@@ -15,7 +15,7 @@ from harness_design_studio.core.model import Harness, Project
 from harness_design_studio.core.vcs.hashing import content_hash
 from harness_design_studio.core.vcs.report import changelog_rows, revision_report
 
-from . import drawing, exports, system, tables
+from . import buildsheet, drawing, exports, system, tables
 from .canvas import SHEETS, Sheet, to_pdf, to_svg
 from .errors import OutputsError
 from .provenance import provenance_bytes
@@ -106,10 +106,15 @@ def build_outputs(
     project: Project,
     *,
     sizes: tuple[str, ...] = ("A4", "A3"),
+    drawings: bool = True,
     harness_ids: list[str] | None = None,
     cancel: Callable[[], bool] | None = None,
     progress: Callable[[float, str], None] | None = None,
 ) -> OutputSet:
+    """Every output file of the project (or of `harness_ids`). `drawings=False` leaves out the PDF
+    and SVG drawings of the harnesses (decision D-169: the build workbook is the main output and
+    the drawings are optional); the system diagrams and every other file are always written. The
+    library default is every file; the command line and the editor pass the user's choice."""
     tables.clear_cache()
     stamp = stamp_of(project)
     result = OutputSet(stamp)
@@ -145,7 +150,9 @@ def build_outputs(
             },
             stamp,
         )
-        _drawing_files(project, h, stamp, out, sizes)
+        out[f"{base}/{h.id}{buildsheet.FILE_SUFFIX}"] = buildsheet.build_workbook(project, h, stamp)
+        if drawings:
+            _drawing_files(project, h, stamp, out, sizes)
     if progress is not None:
         progress(0.92, "System outputs")
     bom_all = tables.bom(project, chosen)
@@ -256,6 +263,15 @@ def _read_manifest(root: Path) -> _Manifest | None:
         return None
 
 
+def drawings_exported(folder: Path | str) -> bool:
+    """True when the previous export in `folder` included the harness drawings (so that writing the
+    outputs again, after a release for example, keeps the same set)."""
+    old = _read_manifest(Path(folder))
+    return bool(old) and any(
+        rel.startswith("harnesses/") and "/drawing_" in rel for rel in (old.files if old else {})
+    )
+
+
 def outputs_content_state(project: Project, folder: Path | str) -> str:
     """ "none", "current" or "stale", comparing the design content (release bookkeeping ignored).
     The release gate uses this: outputs exported and reviewed before a release stay valid."""
@@ -338,6 +354,7 @@ __all__ = [
     "OutputsError",
     "OutputStatus",
     "build_outputs",
+    "drawings_exported",
     "outputs_status",
     "write_outputs",
 ]

@@ -308,7 +308,9 @@ def _harness(r: VerifyReport, project: Project, h: Harness, files: dict[str, byt
             )
     _harness_cells(r, project, h, files)
     _harness_tables(r, project, h, files)
-    _drawings(r, project, h, files)
+    _build_workbook(r, project, h, files)
+    if _has_drawings(files):  # D-169: the drawings are optional, but all or none of the harnesses
+        _drawings(r, project, h, files)
 
 
 # ---- cell-level expectations, derived from the project alone ------------------------------------
@@ -1153,6 +1155,217 @@ def _harness_tables(r: VerifyReport, project: Project, h: Harness, files: dict[s
             table = _table(files, f"{base}/{rel}")
             if table and sheets.get(name) != table:
                 r.error("out_xlsx", f"The '{name}' sheet of the workbook of {h.id} differs from {rel}.", h.id)  # fmt: skip
+
+
+def _has_drawings(files: dict[str, bytes]) -> bool:
+    """True when the set was written with the harness drawings (decision D-169 makes them optional;
+    a set either has the drawings of every harness or of none)."""
+    return any(re.fullmatch(r"harnesses/[^/]+/drawing_A3_s\d+\.svg", k) for k in files)
+
+
+# ---- the build workbook (decision D-169) --------------------------------------------------------
+
+_BUILD_SHEETS = ["Start here", "Cut list", "Connectors", "Parts", "Labels", "Tests", "About"]
+_BUILD_CUT_HEADER = [
+    "Cut (x)", "Wire", "Colour", "AWG", "Part", "Length (m)", "From", "To", "Signal or label",
+    "Shield group", "Note",
+]  # fmt: skip
+_BUILD_CONNECTOR_HEADER = [
+    "Pin", "Signal", "Function", "Wire", "Colour", "AWG", "Goes to", "Termination", "Contact size",
+    "Terminated (x)", "Inserted (x)", "Checked (x)",
+]  # fmt: skip
+_BUILD_TEST_TAIL = ["Measured", "Result", "Initials", "Date"]
+_TO_FILL = "to fill in"
+
+
+def _xlsx_values(data: bytes) -> dict[str, list[list[str]]]:
+    """Every sheet of a workbook as rows of text, read with the spreadsheet library (the build
+    workbook holds numbers and styles, which the plain reader of `_xlsx_sheets` does not see):
+    numbers are written with `repr`, an empty cell is ''."""
+    from .xlsx_env import load_workbook
+
+    out: dict[str, list[list[str]]] = {}
+    wb = load_workbook(io.BytesIO(data), read_only=True, data_only=True)
+    for ws in wb.worksheets:
+        rows = []
+        for row in ws.iter_rows(values_only=True):
+            rows.append(
+                ["" if v is None else repr(v) if isinstance(v, float) else str(v) for v in row]
+            )
+        out[ws.title] = rows
+    wb.close()
+    return out
+
+
+def _cut_key(h: Harness, w: Wire) -> tuple[int, int, str, int, float, str]:
+    """The order of the cut list: thick before thin, then colour, then length; unknown last."""
+    length = _length_of(h, w)
+    return (
+        0 if w.gauge_awg is not None else 1,
+        w.gauge_awg if w.gauge_awg is not None else 0,
+        (w.colour or "~").lower(),
+        0 if length is not None else 1,
+        length if length is not None else 0.0,
+        w.id,
+    )
+
+
+def _build_expected_checks(project: Project, h: Harness) -> dict[str, int]:
+    """The open counts of the *Start here* sheet, worked out from the model alone."""
+    used: set[tuple[str, str]] = set()
+    for w in h.wires:
+        used.add((w.from_connector, w.from_pin))
+        used.add((w.to_connector, w.to_pin))
+    parts = {c.part_id for c in h.connectors} | {w.part_id for w in h.wires if w.part_id}
+    return {
+        "Wires without a length": sum(1 for w in h.wires if _length_of(h, w) is None),
+        "Wires without a gauge": sum(1 for w in h.wires if w.gauge_awg is None),
+        "Wires without a colour": sum(1 for w in h.wires if not w.colour),
+        "Wires without a part": sum(1 for w in h.wires if not w.part_id),
+        "Pins in use without a termination": sum(
+            1
+            for c in h.connectors
+            for p in c.pins
+            if (c.id, p.id) in used and p.termination == "unspecified"
+        ),
+        "Parts that are not approved": sum(
+            1
+            for pid in parts
+            if pid not in project.parts or project.parts[pid].approval != "approved"
+        ),
+    }
+
+
+def _build_workbook(r: VerifyReport, project: Project, h: Harness, files: dict[str, bytes]) -> None:
+    """The build workbook of one harness against the design: the sheets, the cut list (every wire
+    once, in cut order, with its values), the pins of every connector, the parts, labels and tests
+    (the same rows as the CSV tables, plus empty columns to fill in) and the counts of *Start here*."""
+    rel = f"harnesses/{h.id}/{h.id}_build.xlsx"
+    data = files.get(rel)
+    if data is None:
+        r.error("out_missing", f"{rel} was not generated.", h.id)
+        return
+    what = f"The build workbook of {h.id}"
+    sheets = _xlsx_values(data)
+    if list(sheets) != _BUILD_SHEETS:
+        r.error("out_build", f"{what} does not have the sheets {', '.join(_BUILD_SHEETS)}.", h.id)
+        return
+    _build_cut(r, h, what, sheets["Cut list"])
+    _build_connectors(r, h, what, sheets["Connectors"])
+    parts = sheets["Parts"]
+    _compare_rows(r, "out_build", f"{what} (Parts)", parts, _BOM_HEADER,
+                  _bom_rows(project, [h]), (0,), h.id)  # fmt: skip
+    labels = sheets["Labels"]
+    if labels and labels[0] == ["Done (x)", *_LABEL_HEADER]:
+        _compare_rows(r, "out_build", f"{what} (Labels)", [row[1:] for row in labels], _LABEL_HEADER,
+                      _label_rows(project, h), (0,), h.id)  # fmt: skip
+        if any(row[0] for row in labels[1:]):
+            r.error("out_build", f"{what} has ticks in the Labels sheet before anything was done.", h.id)  # fmt: skip
+    else:
+        r.error("out_build", f"{what} (Labels) has the wrong column headings.", h.id)
+    tests = sheets["Tests"]
+    if tests and tests[0] == [*_TEST_HEADER, *_BUILD_TEST_TAIL]:
+        _compare_rows(r, "out_build", f"{what} (Tests)", [row[:8] for row in tests], _TEST_HEADER,
+                      _test_rows(project, h), (0,), h.id)  # fmt: skip
+        if any(any(row[8:]) for row in tests[1:]):
+            r.error("out_build", f"{what} has results in the Tests sheet before any test was run.", h.id)  # fmt: skip
+    else:
+        r.error("out_build", f"{what} (Tests) has the wrong column headings.", h.id)
+    _build_start(r, project, h, what, sheets["Start here"])
+
+
+def _build_cut(r: VerifyReport, h: Harness, what: str, rows: list[list[str]]) -> None:
+    if not rows or rows[0] != _BUILD_CUT_HEADER:
+        r.error("out_build", f"{what} (Cut list) has the wrong column headings.", h.id)
+        return
+    body = [row for row in rows[1:-1] if any(row)]
+    total_row = rows[-1] if len(rows) > 1 else []
+    order = [w.id for w in sorted(h.wires, key=lambda w: _cut_key(h, w))]
+    if [row[1] for row in body] != order:
+        r.error("out_build", f"{what} (Cut list) does not list the wires once each in cut order.", h.id)  # fmt: skip
+        return
+    shields = {wid: s.id for s in h.shields for wid in s.wire_ids}
+    by_id = {w.id: w for w in h.wires}
+    bad: list[str] = []
+    known = 0.0
+    for row in body:
+        w = by_id[row[1]]
+        length = _length_of(h, w)
+        if length is not None:
+            known += length
+        colour_ok = row[2].startswith(w.colour) if w.colour else row[2] == _TO_FILL
+        gauge_ok = row[3] == _TO_FILL if w.gauge_awg is None else row[3] == str(w.gauge_awg)
+        length_ok = row[5] == _TO_FILL if length is None else _same_number(row[5], length)
+        part_ok = row[4] == (w.part_id or _TO_FILL)
+        ends_ok = row[6] == f"{w.from_connector}.{w.from_pin}" and row[7] == f"{w.to_connector}.{w.to_pin}"  # fmt: skip
+        name_ok = row[8] == (w.label or w.signal or "")
+        extra_ok = row[9] == shields.get(w.id, "") and row[10] == w.note and row[0] == ""
+        if not (
+            colour_ok and gauge_ok and length_ok and part_ok and ends_ok and name_ok and extra_ok
+        ):
+            bad.append(w.id)
+    if bad:
+        more = f" and {len(bad) - 3} more" if len(bad) > 3 else ""
+        r.error("out_build", f"{what} (Cut list) does not match the design for {', '.join(bad[:3])}{more}.", h.id)  # fmt: skip
+    if (
+        not total_row
+        or total_row[1] != f"{len(h.wires)} wires"
+        or not _same_number(total_row[5], known)
+    ):
+        r.error("out_build", f"{what} (Cut list) has the wrong totals.", h.id)
+
+
+def _build_connectors(r: VerifyReport, h: Harness, what: str, rows: list[list[str]]) -> None:
+    if not rows or rows[0] != _BUILD_CONNECTOR_HEADER:
+        r.error("out_build", f"{what} (Connectors) has the wrong column headings.", h.id)
+        return
+    attached: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for w in h.wires:
+        attached[(w.from_connector, w.from_pin)].add(w.id)
+        attached[(w.to_connector, w.to_pin)].add(w.id)
+    blocks: dict[str, list[list[str]]] = {}
+    current: list[list[str]] | None = None
+    for row in rows[1:]:
+        if not any(row):
+            current = None
+            continue
+        head = row[0].split("   ·   ")[0] if "   ·   " in row[0] else ""
+        if head and not any(row[1:]):
+            current = blocks.setdefault(head, [])
+        elif current is not None:
+            current.append(row)
+    if set(blocks) != {c.id for c in h.connectors}:
+        r.error("out_build", f"{what} (Connectors) has different connectors than the design.", h.id)
+        return
+    for c in h.connectors:
+        pins = blocks[c.id]
+        if [row[0] for row in pins] != [p.id for p in c.pins]:
+            r.error("out_build", f"{what} (Connectors) lists different pins for {c.id}.", c.id)
+            continue
+        for row, p in zip(pins, c.pins, strict=True):
+            want = attached.get((c.id, p.id), set())
+            listed = set(filter(None, row[3].split("; "))) - {"(spare)", "(no wire)"}
+            spare = not want and not p.interface_id and not p.signal
+            marker = "(spare)" if spare else "(no wire)"
+            if listed != want or (not want and row[3] != marker):
+                r.error("out_build", f"Pin {c.id}.{p.id} lists the wrong wires in the build workbook.", c.id)  # fmt: skip
+                break
+
+
+def _build_start(
+    r: VerifyReport, project: Project, h: Harness, what: str, rows: list[list[str]]
+) -> None:
+    table = {row[0]: row for row in rows if len(row) >= 3 and row[2] in ("OK", "TO FIX", "NOTE")}
+    want = _build_expected_checks(project, h)
+    for label, open_n in want.items():
+        row = table.get(label)
+        if row is None or row[1] != str(open_n) or (row[2] == "OK") != (open_n == 0):
+            r.error("out_build", f"{what} (Start here) shows a wrong count for '{label}'.", h.id)
+            return
+    ready = next((row[1] for row in rows if row and row[0] == "Ready to build"), None)
+    blocking = sum(want[k] for k in list(want)[:4])
+    if ready != ("yes" if blocking == 0 else "no"):
+        r.error("out_build", f"{what} (Start here) shows the wrong 'Ready to build' answer.", h.id)
 
 
 def _yaml_values(r: VerifyReport, h: Harness, text: str) -> None:

@@ -9,7 +9,7 @@ The stored file `docs/ui/OUTPUT_HASHES_1.2.0.json` was made with the release 1.2
 (`tests/test_output_hashes.py`) compares the current tool with it. Every file the tool writes names the
 version of the tool in its header or title block, so a newer version differs in those bytes only: before
 hashing, the current version string is replaced by `BASE_VERSION` (both have the same length, so no
-offset of a PDF moves), and the number of design rules in the DRC report ("Rules run: 35", one rule was
+offset of a PDF moves), a file kind that did not exist then (`ADDED_AFTER_BASE`, the build workbook) is left out of the comparison, and the number of design rules in the DRC report ("Rules run: 35", one rule was
 added in 1.4.0) is given as in 1.2.0, 34. The model hash includes the version a project was saved with, so each example
 (and its generation record) is first given the version of the release the hashes were made with. Nothing else may differ.
 """
@@ -33,6 +33,9 @@ STORED = Path(__file__).resolve().parent.parent / "docs" / "ui" / "OUTPUT_HASHES
 EXAMPLES = ("first-steps", "minimal-satellite", "small-satellite", "flatsat")
 BASE_VERSION = "1.2.0"  # the release the stored hashes were made with
 BASE_RULES = 34  # the number of design rules of that release (1.4.0 added `pin-shared`)
+# Files that did not exist in the base release: the build workbook of 1.7.0 (decision D-169). A new
+# kind of file is the one thing the check lets through; every file of the base release is compared.
+ADDED_AFTER_BASE = ("_build.xlsx",)
 
 
 def as_in_base_version(data: bytes) -> bytes:
@@ -81,6 +84,8 @@ def differences(now: dict[str, dict[str, str]], then: dict[str, dict[str, str]])
         a, b = now.get(name, {}), then.get(name, {})
         for rel in sorted(set(a) | set(b)):
             if a.get(rel) != b.get(rel):
+                if rel not in b and rel.endswith(ADDED_AFTER_BASE):
+                    continue
                 what = "missing now" if rel not in a else "new" if rel not in b else "changed"
                 found.append(f"{name}/{rel}: {what}")
     return found
