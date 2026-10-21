@@ -10,7 +10,7 @@
 [![Ubuntu 24.04 or newer](https://img.shields.io/badge/Ubuntu-24.04%2B-E95420?logo=ubuntu&logoColor=white)](HarnessDesignStudio/docs/INSTALL.md)
 [![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20and%2011-0078D4?logo=windows&logoColor=white)](HarnessDesignStudio/docs/INSTALL.md#d-windows-from-120)
 
-An offline desktop tool for designing the electrical harnesses of a spacecraft: you draw the units and the connections between them, and the tool works out the connectors, pins and wires, checks them, and writes the drawings and lists.
+An offline desktop tool for designing the electrical harnesses of a spacecraft: you draw the units and the connections between them, and the tool works out the connectors, pins and wires, checks them, and writes a build workbook and lists for every harness.
 
 ![A bench of 23 flight and ground units joined by links; the legend at the bottom left of the diagram explains the pictures](HarnessDesignStudio/docs/img/flatsat-overview.png)
 
@@ -34,7 +34,7 @@ An offline desktop tool for designing the electrical harnesses of a spacecraft: 
 
 ## What is this?
 
-A **harness** is the bundle of wires and connectors that joins the boxes (the *units*) of a spacecraft. Designing it by hand means choosing connectors, giving every signal a pin and a wire, and drawing it all again whenever something changes. In Harness Design Studio you describe the units and the *interfaces* (power, data, radio) between them. The tool generates the harnesses, gives a reason for each choice, checks them against design rules, and writes the drawings, wire lists and test tables. It keeps a record of every release.
+A **harness** is the bundle of wires and connectors that joins the boxes (the *units*) of a spacecraft. Designing it by hand means choosing connectors, giving every signal a pin and a wire, and drawing it all again whenever something changes. In Harness Design Studio you describe the units and the *interfaces* (power, data, radio) between them. The tool generates the harnesses, gives a reason for each choice, checks them against design rules, and writes a build workbook for every harness (an Excel file to build it from), wire lists and test tables. It keeps a record of every release.
 
 It works offline and produces byte-identical files for the same design, so the files are friendly to Git. It never invents engineering values: until you supply them, results say *pending* or *not checked*. It is a separate program from WireViz (a different codebase, written from scratch), and it can write each harness as WireViz-style YAML.
 
@@ -64,7 +64,7 @@ harness-design-studio generate wheel-link
 harness-design-studio export wheel-link
 ```
 
-(`harness` still works as a short name for `harness-design-studio`.) You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 units, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `38 files written to wheel-link/outputs (model 431cd03ca16a).` The drawings and lists are in `wheel-link/outputs/`. To see the diagram, run `harness-gui` and open the project with **File > Open project…**.
+(`harness` still works as a short name for `harness-design-studio`.) You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 units, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `34 files written to wheel-link/outputs (model 431cd03ca16a).` The build workbook of each harness (`harnesses/W001/W001_build.xlsx`) and the lists are in `wheel-link/outputs/`. The PDF drawings are written only with `harness-design-studio export wheel-link --drawings` (the build workbook and this option are not in the latest release yet). To see the diagram, run `harness-gui` and open the project with **File > Open project…**.
 
 [`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md) has all the ways to install (package, tarball, source) and explains what to do if something fails. The full walk-through with the output of every command is [`GETTING_STARTED.md`](HarnessDesignStudio/docs/GETTING_STARTED.md).
 
@@ -93,7 +93,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 - **Lets you edit them** (since 1.4.0) — the gauge, type, colour and length of a single wire, wires you draw yourself, several wires on one pin, twisted and shielded groups, a function on every pin and labels on connectors and harnesses; Generate keeps what you set.
 - **Lets you start from nothing** (since 1.5.0) — a blank project shows an **Add a device** button (since 1.6.0) for its first unit, and **New harness** in the Drawings area makes an empty harness with no interface behind it: you add its connectors in the Connectors tab and draw its wires in the Edit wire tab ([how](HarnessDesignStudio/docs/user-manual/build-a-harness-by-hand.md)). Generate leaves such a harness as it is.
 - **Checks them** against 35 design rules and says clearly which checks could not run because a number is missing.
-- **Writes the documents** — a wiring-diagram drawing per harness (SVG and PDF), wire lists, pinouts, bill of materials, test tables, labels, a block diagram and a change log.
+- **Writes the documents** — a build workbook per harness to build it from (what is ready and what is missing, a cut list, a block per connector, parts, labels and a test sheet to fill in; not in the latest release yet, 1.7.0), wire lists, pinouts, bill of materials, test tables, labels, a block diagram and a change log, and, if you ask for them with `export --drawings`, a wiring-diagram drawing per harness (SVG and PDF).
 - **Change control** — review, release and revise a harness; a released harness, and the parts, interface types and configuration it uses, are locked, and every change is recorded; the Revisions area also shows the last Git commit of the project's repository.
 - **Starts from the usual links** — RS-422, RS-485 and CAN for communication, Micro-D (9 to 31 pins) for power and data, Ethernet for high data rates, SMA for RF. Other types and connectors can be added.
 - **Imports** interface tables (CSV or XLSX), approved parts (also an InvenTree export file), segment lengths, engineering values and KiCad netlists, and **reuses devices** across projects through device library files.
