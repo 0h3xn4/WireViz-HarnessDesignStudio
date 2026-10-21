@@ -35,7 +35,7 @@ Other interface types and older connector parts stay in the library for projects
 
 ## 2. Install and start
 
-The steps below are for Ubuntu 24.04 or newer. From version 1.2.0 there are also packages for Windows 10 and 11 and for macOS 13 or newer; `docs/INSTALL.md` in the repository (ways D and E) describes them.
+The steps below are for Ubuntu 24.04 or newer. From version 1.2.0 there are also packages for Windows 10 and 11; `docs/INSTALL.md` in the repository (way D) describes them.
 
 1. Install the package: `sudo apt install ./harness-design-studio_<version>_amd64.deb`. Or unpack the `.tar.gz` anywhere and run `./harness-design-studio/install.sh` (no administrator rights needed; it installs for your user).
 2. Check it: `harness-design-studio --version` prints the version. If the command is not found after `install.sh`, add `~/.local/bin` to your PATH (the installer prints how).

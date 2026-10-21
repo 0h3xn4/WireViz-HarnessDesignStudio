@@ -16,7 +16,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | For | What it gives you |
 | --- | --- | --- |
-| [`INSTALL.md`](INSTALL.md) | everyone | Install on Ubuntu, Windows or macOS, check it works, uninstall, build from source |
+| [`INSTALL.md`](INSTALL.md) | everyone | Install on Ubuntu or Windows, check it works, uninstall, build from source |
 | [`GETTING_STARTED.md`](GETTING_STARTED.md) | newcomers | A guided tour with real output: example project, generate, read problems, export, fill in values, release |
 | [`LEARNING_PATH.md`](LEARNING_PATH.md) | newcomers | The whole route in nine steps, with the example or template for each and how you know you are done |
 | [`CONCEPTS.md`](CONCEPTS.md) | newcomers | The words and the mental model, in ten minutes |

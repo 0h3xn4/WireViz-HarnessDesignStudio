@@ -18,7 +18,7 @@ DRD: ECSS-E-ST-40C Annex N. Status: draft, not reviewed. Reused software is thir
 | development tools (pytest, pytest-xdist, hypothesis, mypy, ruff, coverage, cyclonedx-bom, pip-licenses, playwright) | pinned in `pyproject.toml` | MIT, BSD, Apache, MPL | not shipped |
 
 ## 5. Compatibility with the project
-All run on Python 3.12+ on Ubuntu 24.04 and, from 1.2.0, on Windows 10 and 11 and macOS 13 and newer (D-149; the whole test suite runs on all three in CI). Versions are pinned and the wheel build is reproducible (`tools/check_reproducible.py`).
+All run on Python 3.12+ on Ubuntu 24.04 and, from 1.2.0, on Windows 10 and 11 (D-149; the whole test suite runs on both in CI; macOS was removed, D-168). Versions are pinned and the wheel build is reproducible (`tools/check_reproducible.py`).
 
 ## 6. Reuse analysis conclusion
 Suitable. The functional and quality fit is demonstrated by the tests that exercise them through the tool; security aspects (ECSS-Q-ST-80C 6.2.7.3 b) are covered by the hostile-input tests (`../../docs/SECURITY.md`). Not done: a review of the upstream problem lists and a vulnerability check, which need network access and a person (action A-08).

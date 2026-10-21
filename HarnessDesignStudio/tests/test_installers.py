@@ -595,26 +595,25 @@ def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
     # only the job that publishes and the job that rewrites the page text may write
     assert text.count("contents: write") == 2
     jobs = _jobs(text)
-    assert list(jobs) == ["linux", "windows", "macos", "release", "notes"]
+    assert list(jobs) == ["linux", "windows", "release", "notes"]
     assert [name for name, body in jobs.items() if "contents: write" in body] == [
         "release",
         "notes",
     ]
     # every package is built by a build job and published by the release job alone
-    for name in ("linux", "windows", "macos"):
+    for name in ("linux", "windows"):
         assert "gh release" not in jobs[name] and "upload-artifact" in jobs[name], name
         assert "if: ${{ !inputs.notes_only }}" in jobs[name], name
-    assert "needs: [linux, windows, macos]" in jobs["release"]
+    assert "needs: [linux, windows]" in jobs["release"]
+    assert "macos" not in text.lower()  # D-168: no macOS in the release workflow
     for command in (
         "python -m tools.release_notes check",
         "python -m tools.build_installer",
         "python -m tools.build_deb",
         "python -m tools.build_windows",
-        "python -m tools.build_macos",
         "--selftest",
         "tools.smoke_package windows-setup",
         "tools.smoke_package windows-zip",
-        "tools.smoke_package macos-dmg",
         "python -m tools.gen_scf dist",
         "sha256sum -c SHA256SUMS",
         "python -m tools.release_notes complete dist/SHA256SUMS",
@@ -626,7 +625,6 @@ def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
         "dist/*.deb",
         "dist/*-setup.exe",
         "dist/*.zip",
-        "dist/*.dmg",
         "dist/SHA256SUMS",
     ):
         assert command in text, command
@@ -634,8 +632,7 @@ def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
     for earlier, later in (
         ("tools.build_installer", "tools.build_deb"),
         ("tools.build_deb", "tools.build_windows"),
-        ("tools.build_windows", "tools.build_macos"),
-        ("tools.build_macos", "tools.gen_scf"),
+        ("tools.build_windows", "tools.gen_scf"),
         ("tools.gen_scf", "tools.release_notes notes"),
         ("tools.release_notes notes", "gh release create"),
     ):
@@ -668,13 +665,6 @@ def test_signing_runs_only_when_the_secrets_exist_and_is_documented() -> None:
     jobs = _jobs(RELEASE_WORKFLOW.read_text(encoding="utf-8"))
     secrets = {
         "windows": ("WINDOWS_CERT_PFX_BASE64", "WINDOWS_CERT_PASSWORD"),
-        "macos": (
-            "MACOS_CERT_P12_BASE64",
-            "MACOS_CERT_PASSWORD",
-            "MACOS_NOTARY_APPLE_ID",
-            "MACOS_NOTARY_TEAM_ID",
-            "MACOS_NOTARY_PASSWORD",
-        ),
     }
     for job, names in secrets.items():
         for name in names:
@@ -683,12 +673,10 @@ def test_signing_runs_only_when_the_secrets_exist_and_is_documented() -> None:
                 assert name in (ROOT / "docs" / doc).read_text(encoding="utf-8"), (doc, name)
     # every step that needs a certificate is skipped without one
     assert "if: ${{ env.WINDOWS_CERT_PFX_BASE64 != '' }}" in jobs["windows"]
-    assert "if: ${{ env.MACOS_CERT_P12_BASE64 != '' }}" in jobs["macos"]
     assert "secrets." not in jobs["linux"] + jobs["release"] + jobs["notes"]
     # the secrets reach the build scripts only through the environment, never through a command line
-    for script in ("build_windows.py", "build_macos.py"):
-        code = (ROOT / "tools" / script).read_text(encoding="utf-8")
-        assert "HARNESS_" in code and "secrets" not in code
+    code = (ROOT / "tools" / "build_windows.py").read_text(encoding="utf-8")
+    assert "HARNESS_" in code and "secrets" not in code
 
 
 def test_the_package_workflow_builds_and_tests_but_never_publishes() -> None:
@@ -699,15 +687,11 @@ def test_the_package_workflow_builds_and_tests_but_never_publishes() -> None:
     assert 'branches: ["pkg/**"]' in text and "workflow_dispatch:" in text
     assert "permissions:\n  contents: read" in text and "contents: write" not in text
     assert "gh release" not in text and "secrets." not in text
-    for os_label in ("windows-latest", "macos-latest", "macos-15-intel"):
-        assert f"os: {os_label}" in text or f"runs-on: {os_label}" in text, os_label
-    assert "macos-13" not in text and "macos-12" not in text  # retired runner images
+    assert "runs-on: windows-latest" in text and "macos" not in text.lower()
     for command in (
         "python -m tools.build_windows",
-        "python -m tools.build_macos",
         "tools.smoke_package windows-setup",
         "tools.smoke_package windows-zip",
-        "tools.smoke_package macos-dmg",
     ):
         assert command in text, command
     used = {ln.split("uses:")[1].strip() for ln in text.splitlines() if "uses:" in ln}
@@ -772,7 +756,7 @@ def test_the_release_notes_have_a_download_table_highlights_and_the_checksums(
     assert rn.main(["notes", "v0.0.1", str(sums), str(out)]) == 1  # the tag must fit the version
 
 
-def test_the_release_notes_list_the_windows_and_macos_packages_when_they_exist() -> None:
+def test_the_release_notes_list_the_windows_packages_when_they_exist() -> None:
     from tools import release_notes as rn
 
     v = "9.9.9"
@@ -781,8 +765,6 @@ def test_the_release_notes_list_the_windows_and_macos_packages_when_they_exist()
         f"harness-design-studio-{v}-linux-x86_64.tar.gz",
         f"harness-design-studio-{v}-windows-x86_64-setup.exe",
         f"harness-design-studio-{v}-windows-x86_64.zip",
-        f"harness-design-studio-{v}-macos-arm64.dmg",
-        f"harness-design-studio-{v}-macos-x86_64.dmg",
     ]
     sums = "".join(f"{'d' * 64}  {name}\n" for name in names)
     text = rn.notes(v, f"## {v}\n\nFirst paragraph.\n\n- a\n", sums)
@@ -790,9 +772,9 @@ def test_the_release_notes_list_the_windows_and_macos_packages_when_they_exist()
         assert f"`{name}`" in text
     assert "Other files" not in text  # every file was recognised
     assert "First paragraph." in text  # without a highlights file the first paragraph is used
-    for command in ("sha256sum -c", "shasum -a 256 -c", "Get-FileHash"):
+    for command in ("sha256sum -c", "Get-FileHash"):
         assert command in text
-    assert "SmartScreen" in text and "right-click" in text
+    assert "SmartScreen" in text and "macOS" not in text
 
 
 def test_every_release_has_a_highlights_file() -> None:

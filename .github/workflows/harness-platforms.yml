@@ -1,6 +1,6 @@
 name: harness-design-studio platforms
 
-# The test suite on Windows and macOS. The Ubuntu run (harness-ci.yml) stays the reference: it also
+# The test suite on Windows. The Ubuntu run (harness-ci.yml) stays the reference: it also
 # enforces the coverage gate and builds the packages.
 on:
   push:
@@ -25,7 +25,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        os: [windows-latest, macos-latest]
+        os: [windows-latest]
     runs-on: ${{ matrix.os }}
     timeout-minutes: 90
     env:

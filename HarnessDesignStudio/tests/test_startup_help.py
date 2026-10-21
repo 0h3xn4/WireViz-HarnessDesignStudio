@@ -41,7 +41,6 @@ def test_a_missing_library_is_named_with_its_ubuntu_package() -> None:
 def test_only_linux_is_checked() -> None:
     gone = missing_loader(*(f for f, _p in startup_help.REQUIRED))
     assert startup_help.missing_libraries(gone, "win32") == []
-    assert startup_help.missing_libraries(gone, "darwin") == []
     assert len(startup_help.missing_libraries(gone, "linux")) == len(startup_help.REQUIRED)
 
 
@@ -207,8 +206,8 @@ def test_ci_runs_the_tarball_on_the_smallest_machine_it_supports() -> None:
 def test_the_smoke_environment_keeps_the_system_folders_even_with_a_stub_python(
     tmp_path: Path, monkeypatch
 ) -> None:
-    """macOS has a stub `python3` in /usr/bin; removing that folder took `dirname` away from the
-    launcher script of the app and failed the 1.5.0 release run."""
+    """A system keeps its own `python3` in /usr/bin; removing that folder takes `dirname` and the
+    like away from the launcher scripts of a package."""
     from tools import smoke_package
 
     system = tmp_path / "usr-bin"
@@ -230,23 +229,6 @@ def _frozen(monkeypatch, exe: Path, meipass: Path, path: list[Path]) -> Any:
     monkeypatch.setattr(sys, "_MEIPASS", str(meipass), raising=False)
     monkeypatch.setattr(sys, "path", [str(p) for p in path])
     return entry
-
-
-def test_a_macos_app_counts_everything_inside_the_bundle_as_its_own(tmp_path, monkeypatch) -> None:
-    app = tmp_path / "Harness Design Studio.app" / "Contents"
-    for sub in ("MacOS", "Frameworks", "Resources"):
-        (app / sub).mkdir(parents=True)
-    entry = _frozen(
-        monkeypatch,
-        app / "MacOS" / "harness-design-studio-gui",
-        app / "Frameworks",
-        [
-            app / "Frameworks" / "base_library.zip",
-            app / "Frameworks" / "lib-dynload",
-            app / "Resources" / "base_library.zip",  # the same files seen through a link
-        ],
-    )
-    assert entry._runs_from_its_own_python() is True
 
 
 def test_a_package_that_imports_from_outside_itself_fails_the_check(tmp_path, monkeypatch) -> None:

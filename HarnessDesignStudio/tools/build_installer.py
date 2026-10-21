@@ -1,8 +1,8 @@
 """Build a self-contained, offline package with PyInstaller (one-folder) and archive it.
 
 Build on Ubuntu 24.04 (the Linux platform, D-127). Output: dist/harness-design-studio-<version>-linux-<arch>.tar.gz
-The Windows and macOS packages (D-149) are built by tools/build_windows.py and tools/build_macos.py;
-they use the pieces of this module (the program builds, the exclude list and the allow-list check).
+The Windows package (D-149) is built by tools/build_windows.py;
+it uses the pieces of this module (the program builds, the exclude list and the allow-list check).
 
 Layout of the package folder dist/harness-design-studio/ (the name of the folder, the .deb and the
 install folder stays; the programs inside it are named like the commands of a pip install):
@@ -13,7 +13,6 @@ install folder stays; the programs inside it are named like the commands of a pi
 import gzip
 import os
 import platform
-import re
 import shutil
 import subprocess
 import sys
@@ -67,44 +66,28 @@ def undeclared_files(internal: Path) -> list[str]:
         if (
             entry.name.startswith("lib")
             or entry.name == "base_library.zip"
-            or entry.name.lower().endswith((".dll", ".dylib"))  # Windows and macOS shared libraries
+            or entry.name.lower().endswith(".dll")  # Windows shared libraries
         ):
             continue  # shared libraries and the frozen standard library
         top = entry.name.split("-")[0] if entry.name.endswith(".dist-info") else entry.name
         top = top.split(".")[0]
-        if _is_python_library(entry.name, top) or _links_into_known(entry, internal):
+        if _is_python_library(top):
             continue
         if not _is_known(top):
             found.add(top)
     return sorted(found)
 
 
-def _is_python_library(name: str, top: str) -> bool:
-    """The interpreter itself: python3.13 (Linux), Python (macOS), python3__dot__12 (macOS, the
-    name PyInstaller gives a file whose name has a dot)."""
-    return (
-        top == "python3"
-        or name in ("Python", "Python.framework")
-        or re.fullmatch(r"python3__dot__\d+", name) is not None
-    )
-
-
-def _links_into_known(entry: Path, base: Path) -> bool:
-    """macOS: Qt's frameworks are linked from the top folder (QtCore -> PySide6/Qt/lib/...)."""
-    if not entry.is_symlink():
-        return False
-    try:
-        inside = entry.resolve().relative_to(base.resolve())
-    except ValueError:
-        return False
-    return len(inside.parts) > 1 and _is_known(inside.parts[0])
+def _is_python_library(top: str) -> bool:
+    """The interpreter itself: python3.13 on Linux."""
+    return top == "python3"
 
 
 def undeclared_in_build(app: Path, bases: Iterable[Path] | None = None) -> list[str]:
     """Everything in the built package, the PYZ archives included, that the allow-list does not cover.
 
     `bases` are the folders next to the archives (default: the two `_internal` folders of the Linux
-    and Windows layout; the macOS app bundle names its own)."""
+    and Windows layout)."""
     from PyInstaller.archive.readers import ZlibArchiveReader  # type: ignore[import-untyped]
 
     found: set[str] = set()
@@ -152,7 +135,7 @@ def pyinstaller_build(
     extra_args: tuple[str, ...] = (),
 ) -> int:
     """Build one program; its folder (named like the program) is made in build/dist-<name>.
-    `extra_args` are more PyInstaller options (an icon, the bundle identifier of the macOS app)."""
+    `extra_args` are more PyInstaller options (an icon)."""
     work = ROOT / "build"
     cmd = [sys.executable, "-m", "PyInstaller", "--noconfirm", "--clean",
            "--windowed" if windowed else "--console",
@@ -164,7 +147,7 @@ def pyinstaller_build(
         "--hidden-import",
         "defusedxml",
     ]  # openpyxl imports it only if present: XML bomb protection
-    sep = os.pathsep  # the separator of --add-data is ":" on Linux and macOS and ";" on Windows
+    sep = os.pathsep  # the separator of --add-data is ":" on Linux and ";" on Windows
     guide = ROOT / "src" / "harness_design_studio" / "resources" / "guide"
     cmd += ["--add-data", f"{guide}{sep}harness_design_studio/resources/guide"]
     examples = (

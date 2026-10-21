@@ -20,7 +20,7 @@ A fully offline desktop tool in which a user draws a system block diagram (units
 
 ### Hard constraints
 1. **Completely offline.** No network calls of any kind: no telemetry, analytics, crash upload, update check, licence check, CDN fonts, map tiles or remote schemas. All fonts, icons and libraries bundled. Automated test fails if any networking module is imported or a socket is opened at runtime.
-2. **Runs on locked-down workstations** without admin rights and internet. Self-contained installer or portable build. *Now: Ubuntu 24.04 and newer, and from 1.2.0 Windows 10/11 and macOS 13+ (D-149, which supersedes D-110 and D-127); the original list was Windows 10/11, RHEL/Rocky 8+ and Ubuntu LTS.*
+2. **Runs on locked-down workstations** without admin rights and internet. Self-contained installer or portable build. *Now: Ubuntu 24.04 and newer, and from 1.2.0 Windows 10/11 (D-149, which supersedes D-110 and D-127; it added macOS 13+ too, removed after 1.5.0 by D-168); the original list was Windows 10/11, RHEL/Rocky 8+ and Ubuntu LTS.*
 3. **Only permissively licensed or LGPL dependencies** allowing closed internal use. SBOM (CycloneDX or SPDX) and licence report with every release. Pin all versions; reproducible builds from a vendored or mirrored package set.
 4. **Sensitive data.** Project files may contain export-controlled information. Never write project content to logs, temp files outside the project folder, or crash dumps. Logs stay local and contain no design data by default.
 5. **Data is the source of truth, drawings are generated.** Users edit the model and regenerate.

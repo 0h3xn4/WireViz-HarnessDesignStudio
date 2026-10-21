@@ -13,9 +13,9 @@ Addresses ECSS-Q-ST-80C 5.6.1.1 to 5.6.2.3, 6.3.3.2, 6.3.3.4, 6.3.4.1 to 6.3.4.5
 | Data model | pydantic v2, strict, immutable | `core/model` |
 | Tests | pytest, hypothesis; 90 % branch and statement coverage on `core` | `pyproject.toml` |
 | Static checks | ruff (E, F, W, I, B, UP, SIM, S), `mypy --strict` | `pyproject.toml` |
-| Build | pinned versions, reproducible wheel, PyInstaller package, `.deb`; from 1.2.0 also the Windows setup program and `.zip` and the macOS `.dmg` | `tools/check_reproducible.py`, `tools/build_deb.py`, `tools/build_windows.py`, `tools/build_macos.py` |
-| Platform | Ubuntu 24.04 and newer, Windows 10 and 11 (64-bit), macOS 13 and newer (the last two from 1.2.0) | D-149 (supersedes D-127, Ubuntu only) |
-| CI | `.github/workflows/harness-ci.yml` (at the repository root); since 1.2.0 `harness-platforms.yml` runs the suite on Windows and macOS and `release.yml` builds and tests the packages | |
+| Build | pinned versions, reproducible wheel, PyInstaller package, `.deb`; from 1.2.0 also the Windows setup program and `.zip` (the macOS `.dmg` of 1.2.0 to 1.5.0 is no longer built, D-168) | `tools/check_reproducible.py`, `tools/build_deb.py`, `tools/build_windows.py` |
+| Platform | Ubuntu 24.04 and newer and Windows 10 and 11 (64-bit) (Windows from 1.2.0) | D-149 (supersedes D-127, Ubuntu only), D-168 (removes macOS) |
+| CI | `.github/workflows/harness-ci.yml` (at the repository root); since 1.2.0 `harness-platforms.yml` runs the suite on Windows and `release.yml` builds and tests the packages | |
 
 Suitability (5.6.1.2, 5.6.2.2): chosen because they are permissive or LGPL licensed, run offline, and allow strict static checking; every dependency is recorded with version and licence in `docs/DECISIONS.md` and the SBOM.
 

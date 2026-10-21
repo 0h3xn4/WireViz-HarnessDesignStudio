@@ -548,8 +548,7 @@ class TableView(QTableView):
         style_table(self, self.theme)
 
     def keyPressEvent(self, event: QKeyEvent) -> None:  # noqa: N802
-        """Enter or Return "activates" the current row on every system. Qt does it on Windows and
-        Linux only (on macOS the same key starts editing, which these tables do not do)."""
+        """Enter or Return "activates" the current row, the same as a double-click."""
         if (
             event.key() in (Qt.Key.Key_Return, Qt.Key.Key_Enter)
             and not event.modifiers()

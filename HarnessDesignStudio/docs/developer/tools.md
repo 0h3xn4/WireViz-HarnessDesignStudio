@@ -44,9 +44,8 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 | `build_installer` | Builds a self-contained, offline package with PyInstaller (one folder) and archives it; fails when the package holds code other than the standard library and the declared runtime dependencies |
 | `build_deb` | Builds the `.deb` from `dist/harness-design-studio` (run `build_installer` first) |
 | `build_windows` | On Windows: builds the editor and the command line tool with PyInstaller, the portable `.zip` and the Inno Setup installer (`packaging/windows/`); signs when `HARNESS_SIGN_PFX` is set |
-| `build_macos` | On macOS: builds `Harness Design Studio.app` (the command line tool inside) and the `.dmg` for the machine's architecture; signs and notarizes when its environment variables name a certificate |
-| `make_icons` | Draws the logo of `gui/appicon.py` offscreen into an `.ico` (Windows) or an `.icns` (macOS, needs `iconutil`) or a PNG |
-| `smoke_package` | Tests a finished Windows setup program or `.zip` or a macOS `.dmg`: install or mount, run the command line walk-through (bytes compared with the source install) and the editor's `--selftest`, uninstall |
+| `make_icons` | Draws the logo of `gui/appicon.py` offscreen into an `.ico` (Windows) or a PNG |
+| `smoke_package` | Tests a finished Windows setup program or `.zip`: install, run the command line walk-through (bytes compared with the source install) and the editor's `--selftest`, uninstall |
 | `check_reproducible` | Builds the wheel twice with a fixed `SOURCE_DATE_EPOCH` and requires identical hashes |
 | `vendor` | Downloads every pinned wheel into a local folder for offline installs (run on a connected host) |
 | `gen_sbom` | Writes a CycloneDX software bill of materials and a licence report for the runtime dependencies |

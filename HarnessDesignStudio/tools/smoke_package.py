@@ -1,10 +1,9 @@
-"""Smoke tests of a finished Windows or macOS package (D-149), used by the workflows.
+"""Smoke tests of a finished Windows package (D-149, D-168), used by the workflows.
 
 They look at the file that would be given to a user, not at the build folder:
   windows-setup FILE   install the setup program silently for the current user, run the checks,
                        uninstall it silently and check that nothing is left
   windows-zip FILE     extract the portable .zip and run the checks
-  macos-dmg FILE       mount the .dmg, copy the app out, check it and run the checks
   folder DIR           the checks only, for a program folder in the layout of the Linux and Windows
                        packages (harness-design-studio-gui[.exe] and cli/harness-design-studio[.exe])
 The checks of a program: `--version`, the first-steps walk-through through the command line tool
@@ -13,13 +12,11 @@ those of the same commands run from the source install, and the editor's `--self
 (offscreen; the Windows editor has no console, so the result is the exit code and the file of
 `--selftest-out`). On Windows the programs are blocked from the network by firewall rules while
 they run (best effort: needs administrator rights, which the CI runner has).
-Usage: python -m tools.smoke_package windows-setup|windows-zip|macos-dmg|folder PATH
+Usage: python -m tools.smoke_package windows-setup|windows-zip|folder PATH
 """
 
 import hashlib
 import os
-import platform
-import plistlib
 import re
 import shutil
 import subprocess
@@ -75,8 +72,8 @@ SYSTEM_FOLDERS = (
 
 def _is_system_folder(folder: str) -> bool:
     """A folder of the operating system itself (`/usr/bin`, `C:\\Windows\\System32`): it stays on the
-    PATH even when it holds a Python (macOS has a stub there), because the launcher scripts of a
-    package need `dirname` and the like. The self-test's *runs on its own Python* step is the proof
+    PATH even when it holds a Python (a Linux system has its own there), because the launcher
+    scripts of a package need `dirname` and the like. The self-test's *runs on its own Python* step is the proof
     that nothing is imported from outside the package."""
     if folder in SYSTEM_FOLDERS:
         return True
@@ -354,91 +351,10 @@ def windows_zip(archive: Path, work: Path) -> list[str]:
     return problems or windows_program(target, work)
 
 
-# --- macOS -----------------------------------------------------------------------------------
-
-
-def plist_problems(app: Path) -> list[str]:
-    with (app / "Contents" / "Info.plist").open("rb") as f:
-        info = plistlib.load(f)
-    want = {
-        "CFBundleIdentifier": "org.harnessdesignstudio.app",
-        "CFBundleShortVersionString": __version__,
-        "CFBundleExecutable": "harness-design-studio-gui",
-        "LSMinimumSystemVersion": "13.0",
-        "NSHighResolutionCapable": True,
-    }
-    problems = [
-        f"Info.plist {k} is {info.get(k)!r}, want {v!r}"
-        for k, v in want.items()
-        if info.get(k) != v
-    ]
-    icon = str(info.get("CFBundleIconFile", ""))
-    if (
-        not icon
-        or not (
-            app / "Contents" / "Resources" / (icon if icon.endswith(".icns") else icon + ".icns")
-        ).is_file()
-    ):
-        problems.append(f"the icon {icon!r} of Info.plist is not in Contents/Resources")
-    return problems
-
-
-def macos_app(app: Path, work: Path) -> list[str]:
-    problems = plist_problems(app)
-    macos = app / "Contents" / "MacOS"
-    gui = macos / "harness-design-studio-gui"
-    if gui.is_file():
-        archs = run(["lipo", "-archs", str(gui)]).stdout.split()
-        if platform.machine() not in archs:
-            problems.append(
-                f"the editor is built for {archs}, this machine is {platform.machine()}"
-            )
-        else:
-            say(f"ok: built for {platform.machine()}")
-    verify = run(["codesign", "--verify", "--deep", "--strict", "--verbose=2", str(app)])
-    if verify.returncode != 0:
-        problems.append("codesign --verify: " + tail(verify.stdout + verify.stderr))
-    else:
-        say("ok: the signature is valid")
-    return problems + check_program(
-        macos / "harness-design-studio", gui, work, (macos / "harness",)
-    )
-
-
-def macos_dmg(dmg: Path, work: Path) -> list[str]:
-    mount = work / "mount"
-    mount.mkdir()
-    attach = run(
-        ["hdiutil", "attach", "-nobrowse", "-readonly", "-mountpoint", str(mount), str(dmg)]
-    )
-    if attach.returncode != 0:
-        return ["hdiutil attach: " + tail(attach.stdout + attach.stderr)]
-    problems: list[str] = []
-    copied = work / f"{APP_NAME}.app"
-    try:
-        shown = sorted(p.name for p in mount.iterdir())
-        say(f"the image holds: {shown}")
-        if not (mount / "Applications").is_symlink():
-            problems.append("the image has no Applications link")
-        if not (mount / f"{APP_NAME}.app").is_dir():
-            return [*problems, f"the image has no {APP_NAME}.app"]
-        subprocess.run(["ditto", str(mount / f"{APP_NAME}.app"), str(copied)], check=True)
-    finally:
-        for attempt in range(3):
-            if (
-                run(["hdiutil", "detach", str(mount), *(["-force"] if attempt else [])]).returncode
-                == 0
-            ):
-                break
-            time.sleep(3)
-    return problems + macos_app(copied, work)
-
-
 def main(argv: list[str]) -> int:
     modes: dict[str, Callable[[Path, Path], list[str]]] = {
         "windows-setup": windows_setup,
         "windows-zip": windows_zip,
-        "macos-dmg": macos_dmg,
         "folder": lambda folder, work: check_program(
             *(
                 (

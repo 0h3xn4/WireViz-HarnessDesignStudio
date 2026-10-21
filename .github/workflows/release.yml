@@ -1,16 +1,12 @@
 name: harness-design-studio release
 
-# Pushing an annotated tag vX.Y.Z builds the packages (Linux, Windows, macOS on Apple Silicon and on
-# Intel) and publishes the GitHub release page (docs/RELEASE.md step 15). `workflow_dispatch` with
-# the tag name runs it again for an existing tag: the files and the notes of an existing release
+# Pushing an annotated tag vX.Y.Z builds the packages (Linux and Windows) and publishes the GitHub
+# release page (docs/RELEASE.md step 15). `workflow_dispatch` with the tag name runs it again for an existing tag: the files and the notes of an existing release
 # page are replaced. The build jobs only read the repository and hand their packages on as
 # artifacts; one final job, `release`, writes the checksums of all of them and publishes.
 #
 # Signing is optional and happens only when these repository secrets exist (docs/RELEASE.md):
 #   Windows: WINDOWS_CERT_PFX_BASE64 (the .pfx certificate, base64), WINDOWS_CERT_PASSWORD
-#   macOS:   MACOS_CERT_P12_BASE64 (Developer ID Application certificate, .p12, base64),
-#            MACOS_CERT_PASSWORD, and for notarization MACOS_NOTARY_APPLE_ID,
-#            MACOS_NOTARY_TEAM_ID, MACOS_NOTARY_PASSWORD (an app-specific password)
 # Without them the packages are built unsigned.
 on:
   push:
@@ -154,71 +150,12 @@ jobs:
             HarnessDesignStudio/dist/*-setup.exe
             HarnessDesignStudio/dist/*.zip
 
-  macos:
-    if: ${{ !inputs.notes_only }}
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - os: macos-latest  # Apple Silicon
-            arch: arm64
-          - os: macos-15-intel  # Intel (the last Intel runner image)
-            arch: x86_64
-    runs-on: ${{ matrix.os }}
-    timeout-minutes: 60
-    env:
-      TAG: ${{ inputs.tag || github.ref_name }}
-      MACOS_CERT_P12_BASE64: ${{ secrets.MACOS_CERT_P12_BASE64 }}
-      MACOS_CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
-      HARNESS_NOTARY_APPLE_ID: ${{ secrets.MACOS_NOTARY_APPLE_ID }}
-      HARNESS_NOTARY_TEAM_ID: ${{ secrets.MACOS_NOTARY_TEAM_ID }}
-      HARNESS_NOTARY_PASSWORD: ${{ secrets.MACOS_NOTARY_PASSWORD }}
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: refs/tags/${{ env.TAG }}
-          fetch-depth: 0
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-      - run: python -m pip install -e ".[gui,dev]"
-      - name: Developer ID certificate (only when the secret exists)
-        if: ${{ env.MACOS_CERT_P12_BASE64 != '' }}
-        run: |
-          keychain="$RUNNER_TEMP/harness-signing.keychain-db"
-          password="$(uuidgen)"
-          echo "$MACOS_CERT_P12_BASE64" | base64 --decode > "$RUNNER_TEMP/certificate.p12"
-          security create-keychain -p "$password" "$keychain"
-          security set-keychain-settings -lut 21600 "$keychain"
-          security unlock-keychain -p "$password" "$keychain"
-          security import "$RUNNER_TEMP/certificate.p12" -P "$MACOS_CERT_PASSWORD" -A -t cert -f pkcs12 -k "$keychain"
-          security set-key-partition-list -S apple-tool:,apple: -s -k "$password" "$keychain"
-          security list-keychains -d user -s "$keychain" login.keychain-db
-          identity="$(security find-identity -v -p codesigning "$keychain" | grep 'Developer ID Application' | head -1 | sed -E 's/.*"(.*)".*/\1/')"
-          test -n "$identity" || { echo "::error::no Developer ID Application certificate in the .p12"; exit 1; }
-          echo "HARNESS_MACOS_IDENTITY=$identity" >> "$GITHUB_ENV"
-      - name: Build the app and the disk image (signed and notarized when the secrets are there)
-        run: python -m tools.build_macos
-      - name: Smoke test, disk image (mount, copy the app out, run it)
-        timeout-minutes: 20
-        run: python -m tools.smoke_package macos-dmg "dist/harness-design-studio-${TAG#v}-macos-${{ matrix.arch }}.dmg"
-      - name: Check the notarization (only when the package was notarized)
-        if: ${{ env.HARNESS_NOTARY_APPLE_ID != '' && env.MACOS_CERT_P12_BASE64 != '' }}
-        run: |
-          xcrun stapler validate "dist/harness-design-studio-${TAG#v}-macos-${{ matrix.arch }}.dmg"
-          spctl --assess --type open --context context:primary-signature --verbose "dist/harness-design-studio-${TAG#v}-macos-${{ matrix.arch }}.dmg"
-      - uses: actions/upload-artifact@v4
-        with:
-          name: packages-macos-${{ matrix.arch }}
-          if-no-files-found: error
-          path: HarnessDesignStudio/dist/*.dmg
-
   release:
     # The only job that publishes: it takes the packages of the build jobs, writes one SHA256SUMS
     # over all of them and creates or edits the release page. It does not run unless every build
     # and every smoke test succeeded.
     if: ${{ !inputs.notes_only }}
-    needs: [linux, windows, macos]
+    needs: [linux, windows]
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     permissions:
@@ -245,8 +182,8 @@ jobs:
       - name: The packages of every platform are there
         run: |
           ls -l dist
-          # a .deb, a .tar.gz, the Windows setup program and zip, and the two macOS images
-          test "$(ls dist/*.deb dist/*.tar.gz dist/*-setup.exe dist/*.zip dist/*.dmg | wc -l)" = 6
+          # a .deb, a .tar.gz, and the Windows setup program and zip
+          test "$(ls dist/*.deb dist/*.tar.gz dist/*-setup.exe dist/*.zip | wc -l)" = 4
       - name: Checksums (one SHA256SUMS over all packages, names without folders)
         run: |
           python -m tools.gen_scf dist
@@ -263,13 +200,12 @@ jobs:
             HarnessDesignStudio/dist/*.tar.gz
             HarnessDesignStudio/dist/*-setup.exe
             HarnessDesignStudio/dist/*.zip
-            HarnessDesignStudio/dist/*.dmg
             HarnessDesignStudio/dist/SHA256SUMS
             HarnessDesignStudio/dist/scf.json
       - name: Publish the release page
         run: |
           title="Harness Design Studio ${TAG#v}"
-          files=(dist/*.tar.gz dist/*.deb dist/*-setup.exe dist/*.zip dist/*.dmg dist/SHA256SUMS)
+          files=(dist/*.tar.gz dist/*.deb dist/*-setup.exe dist/*.zip dist/SHA256SUMS)
           flags=()
           case "$TAG" in *rc*) flags+=(--prerelease) ;; esac
           if gh release view "$TAG" >/dev/null 2>&1; then
