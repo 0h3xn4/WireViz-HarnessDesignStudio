@@ -578,6 +578,7 @@ class MainWindow(QMainWindow):
         bar.addWidget(self.hint, 1)
         self.view = DiagramView(self.ctl, self.theme)
         self.view.setObjectName("diagram")
+        self.view.addDeviceRequested.connect(self.add_device_flow)
         self.zoom_level = ZoomIndicator(self.view)  # "100 %"; View.zoomChanged(float) feeds it
         for w in (
             self.redundant_btn,
