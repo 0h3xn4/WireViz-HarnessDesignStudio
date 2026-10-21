@@ -92,7 +92,7 @@ The command ended with exit code 134 (aborted). Why: a system library that Qt ne
 sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
 ```
 
-From version 1.5.0 the app checks for the three libraries it cannot bring with it (`libgl1`, `libegl1`, `libxcb1`) before it starts, and says which one is missing and the `sudo apt install` line, in the terminal and, when it was started from the menu, in a small window; `harness-design-studio-gui --check-system` does only this check. Messages that mention `libEGL` or `libxkbcommon` have the same fix. If you are connected over SSH, the app has no screen: use the `harness-design-studio` command line over SSH, or start the app on the machine itself. The command line never needs these libraries.
+From version 1.5.0 the app checks for the three libraries it cannot bring with it (`libgl1`, `libegl1`, `libxcb1`) before it starts, and says which one is missing and the `sudo apt install` line, in the terminal and, when it was started from the menu, in a small window; in the packaged editor, `harness-design-studio-gui --check-system` does only this check. Messages that mention `libEGL` or `libxkbcommon` have the same fix. If you are connected over SSH, the app has no screen: use the `harness-design-studio` command line over SSH, or start the app on the machine itself. The command line never needs these libraries.
 
 ### `harness-design-studio-gui --selftest` does not print `selftest ok`; it opens the app
 
