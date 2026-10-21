@@ -9,11 +9,12 @@ harness-design-studio new my-design --template first-steps  # start a project th
 harness-design-studio generate my-design                    # make harnesses, connectors, pins, wires
 harness-design-studio check my-design                       # validate, plus leftovers of Git merges and edits to released harnesses
 harness-design-studio drc my-design                         # the full design rule check, as a report
-harness-design-studio export my-design                      # drawings, wire lists, pinouts, BOM, test tables
+harness-design-studio export my-design                      # build workbook per harness, wire lists, pinouts, BOM, test tables
+harness-design-studio export my-design --drawings           # the same, and the PDF drawings of the harnesses
 harness-design-studio verify my-design --outputs            # an independent check of the exported files
 ```
 
-Run the loop again after every change. Generating twice without a change changes nothing (the second run prints "0 added").
+The build workbook, `outputs/harnesses/<ID>/<ID>_build.xlsx`, is the file to build a harness from; the PDF drawings are written only with `--drawings` (not in the latest release yet). Run the loop again after every change. Generating twice without a change changes nothing (the second run prints "0 added").
 
 The command line cannot add units or interfaces. The loop works on a project that already has them: an example such as `first-steps`, or your own design after you added the units in the app (on the empty diagram, the button **Add a device** or **Add** in the project panel; or make a harness with no interface at all with **New harness…**, Ctrl+Shift+H). On a `blank` project `generate` finds 0 interfaces and `export` stops with `error: there are no harnesses to export; run harness-design-studio generate first.`
 
@@ -96,7 +97,7 @@ my-design/
   logical/            units and interfaces (what you draw)
   physical/           connectors and harnesses (what the tool generates)
   generated/          how the last generation was made (for explanations)
-  outputs/            drawings and lists (safe to delete and regenerate)
+  outputs/            build workbooks and lists (safe to delete and regenerate)
   changelog.json      release history
   baselines/          the frozen copy of each released harness (written at release)
 ```

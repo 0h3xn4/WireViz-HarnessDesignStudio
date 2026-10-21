@@ -75,7 +75,7 @@ SHEET           1 / 1
 
 (These are the texts found in the SVG of a test run, label and value. The layout on the sheet is not shown here.)
 
-Date, author, checker and approver come from the harness itself. They show "-" until the harness has been reviewed and released ([release a harness](release-a-harness.md)).
+The title block is part of the harness drawing, which is written only with `export --drawings` ([export the outputs](export-the-outputs.md#5-the-pdf-drawings-optional)). Date, author, checker and approver come from the harness itself. They show "-" until the harness has been reviewed and released ([release a harness](release-a-harness.md)). The build workbook shows the author, checker, approver and release date on its **Start here** sheet (`not set` until then); it has no title block.
 
 ## Common mistakes
 

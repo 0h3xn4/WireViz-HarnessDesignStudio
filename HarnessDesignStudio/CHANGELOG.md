@@ -12,7 +12,7 @@ Work towards 1.7.0, the answer to the test users of 1.6.0 (plan: `docs/ait/TEST_
 
 ### Changed
 
-- **The PDF drawings are optional** (D-169). `harness-design-studio export` no longer writes `drawing_A3.pdf`, `drawing_A4.pdf` and `drawing_A3_s<n>.svg` of the harnesses; add `--drawings` to write them. The system diagrams and every other file are written as before. A release writes the outputs again with the same set the last export had. A set with the drawings of every harness or of none is valid. The existing per-harness workbook `W001.xlsx` and all CSV files are unchanged.
+- **The PDF drawings are optional** (D-169). `harness-design-studio export` no longer writes `drawing_A3.pdf`, `drawing_A4.pdf` and `drawing_A3_s<n>.svg` of the harnesses; add `--drawings` to write them. The system diagrams and every other file are written as before. A release writes the outputs again with the same set the last export had. In the editor the Export window has a check box **Include the PDF drawings**; it is checked only when the previous export in the folder had them, and the quick Export button keeps whatever the folder had. A set with the drawings of every harness or of none is valid. The existing per-harness workbook `W001.xlsx` and all CSV files are unchanged.
 
 ## 1.6.0 (2026-10-21; not a statement of compliance)
 

@@ -106,6 +106,9 @@ def test_documents_have_their_type_format_scope_and_time(qtbot, ctl, exported) -
     wl = by["harnesses/W001/wirelist.csv"]
     assert (wl["doc"], wl["format"], wl["scope"]) == ("Wire list", "CSV", "W001")
     assert by["system/bom.csv"]["scope"] == strings.EXP_SYSTEM_SCOPE
+    build = by["harnesses/W001/W001_build.xlsx"]  # the build workbook (D-169)
+    assert (build["doc"], build["format"], build["scope"]) == ("Build workbook", "XLSX", "W001")
+    assert by["harnesses/W001/W001.xlsx"]["doc"] == "Workbook (all tables)"
     assert len(wl["when"]) == len("2026-10-19 12:00") and wl["size"] > 0
 
 

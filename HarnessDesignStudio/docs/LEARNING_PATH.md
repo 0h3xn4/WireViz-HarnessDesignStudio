@@ -48,7 +48,7 @@ harness-design-studio drc wheel-link
 harness-design-studio export wheel-link
 ```
 
-**Done when:** you have opened `wheel-link/outputs/` and found the wire list, the pinout of one connector and the block diagram, and you know which of them says "pending" and why.
+**Done when:** you have opened `wheel-link/outputs/` and found the wire list, the pinout of one connector, the build workbook `harnesses/W001/W001_build.xlsx` and the block diagram, and you know which of them says "pending" or "to fill in" and why. (The harness drawings need `harness-design-studio export wheel-link --drawings`.)
 
 ## 3. A realistic small system (30 minutes)
 

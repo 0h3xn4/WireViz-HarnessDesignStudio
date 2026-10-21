@@ -42,7 +42,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **What do I commit, and what not?** Commit the whole project folder. `outputs/` can be committed (reviewers like to see it) or ignored; it is always safe to delete and regenerate.
 
-**How do I know a printed drawing matches the design?** Every output carries the tool version and a *model hash* (12 characters). `harness-design-studio verify DIR --outputs` checks the files against the design.
+**How do I know a printed sheet or drawing matches the design?** Every output carries the tool version and a *model hash* (12 characters); the build workbook has it in the footer of every printed sheet. `harness-design-studio verify DIR --outputs` checks the files against the design.
 
 **Where is the user guide?** In the app: **F1**. As a file: [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md).
 

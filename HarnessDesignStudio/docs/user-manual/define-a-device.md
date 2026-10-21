@@ -57,7 +57,7 @@ Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down
 - **Signal** is a box with the signals of the project's interface types and free text. A name no interface type has is allowed, and the notes say that nothing can connect to it.
 - **Mode**: *Fixed* means the device defines the pin; the interface connects to the pin of its signal's name, and the pin never moves. *Locked* means Generate never moves the pin. *Free* leaves it to Generate. Mind that one fixed pin with a signal makes the connector a *fixed pinout*: every signal of every interface on it then needs a pin of its own name, and pins without a name are never used. The card says so in words.
 - **Pasting.** Copy cells in the spreadsheet. A column of signals pastes from the current cell down, one pin per row. A table whose first row has headings (*Pin*, *Signal*, *Mode*, *Contact size*, *Termination*) names its pins and adds the pins that do not exist. One paste is one undo step.
-- **Contact** shows the contact size and the termination. No output or rule reads them yet.
+- **Contact** shows the contact size and the termination. No design rule reads them. The pinout tables show the termination when any pin has one, and the build workbook shows both for each pin of a cable connector (the termination reads `to fill in` for a pin in use that has none).
 
 ## 4. Put an interface on pins
 

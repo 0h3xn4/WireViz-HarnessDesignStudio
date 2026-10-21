@@ -128,7 +128,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
-38 files written to cib/outputs (model 85a15171aed5).
+34 files written to cib/outputs (model 85a15171aed5).
 2 interfaces and 6 wires checked: 0 error(s)
 build ok: cib/outputs
 ```
@@ -243,17 +243,19 @@ Units themselves cannot be imported from a table; you add them in the app. The d
 
 ### What the tool writes
 
-`harness-design-studio export DIR` writes everything into `DIR/outputs/`. For the `first-steps` example it writes 38 files; these are the names (per harness, `W001` and `W002` here):
+`harness-design-studio export DIR` writes everything into `DIR/outputs/`. For the `first-steps` example it writes 34 files (40 with `--drawings`, see below); these are the names (per harness, `W001` and `W002` here):
 
 ```
 outputs/manifest.json
-outputs/harnesses/W001/  W001.xlsx  bom.csv  drawing_A3.pdf  drawing_A3_s1.svg  drawing_A4.pdf
+outputs/harnesses/W001/  W001.xlsx  W001_build.xlsx  bom.csv
                          labels.csv  mass_length.csv  pinouts.csv  tests.csv  wirelist.csv  wireviz.yaml
 outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv  changelog.csv
                  drc_findings.csv  drc_report.md  export.json  harness_overview.pdf  harness_overview.svg
                  mass_length.csv  mating_matrix.csv  provenance.json  revision_report.md
                  system.xlsx  traceability.csv
 ```
+
+`W001_build.xlsx` is the build workbook, the file to build a harness from. The harness drawings (`drawing_A3.pdf`, `drawing_A4.pdf` and `drawing_A3_s1.svg` for each harness) are written only with `harness-design-studio export DIR --drawings` (not in the latest release yet: in 1.6.0 and earlier they were always written, and there was no build workbook). The `ci/build.sh` script does not pass `--drawings`.
 
 | Format | Files | Header (first row after the `# ...` stamp line) |
 | --- | --- | --- |
@@ -267,10 +269,12 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
 | CSV | `system/traceability.csv` | `Interface,Name,Type,From,To,Harnesses,Wires,Routed` |
 | CSV | `system/drc_findings.csv` | `Finding,Rule,Severity,Object,Statement,Waived,Justification,Requirement` |
 | CSV | `system/changelog.csv` | `Entry,Harness,Revision,Event,By,Date,Comment` |
-| XLSX | `<ID>.xlsx` per harness, `system/system.xlsx` | all tables as sheets |
+| XLSX | `<ID>_build.xlsx` per harness | the **build workbook**: the sheets *Start here*, *Cut list*, *Connectors*, *Parts*, *Labels*, *Tests* and *About* ([export the outputs](user-manual/export-the-outputs.md#3-the-build-workbook-sheet-by-sheet)) |
+| XLSX | `<ID>.xlsx` per harness, `system/system.xlsx` | all tables as sheets (data, no layout) |
 | JSON | `system/export.json` | the whole model in one file: `box_connectors`, `format`, `format_version`, `generator`, `harnesses`, `interface_types`, `interfaces`, `model_hash`, `parts`, `placeholder_config`, `project`, `units` |
 | JSON | `manifest.json`, `system/provenance.json` | the list of files with checksums; which tool version and design made them |
-| SVG and PDF | `drawing_A3_s<n>.svg` (A3 sheets), `drawing_A3.pdf`, `drawing_A4.pdf`, `system/block_diagram.*`, `system/harness_overview.*` | drawings |
+| SVG and PDF | `system/block_diagram.*`, `system/harness_overview.*` | the system diagrams, always written |
+| SVG and PDF | `drawing_A3_s<n>.svg` (A3 sheets), `drawing_A3.pdf`, `drawing_A4.pdf` per harness | the harness drawings, written only with `export DIR --drawings` |
 | YAML | `wireviz.yaml` per harness | "WireViz-style" input: `metadata`, `connectors`, `cables`, `connections`. Written by this tool; **not validated against the WireViz program**. |
 | Markdown | `system/drc_report.md`, `system/revision_report.md` | reports |
 
@@ -283,7 +287,7 @@ Each sentence below is an **idea, not a feature: not built, not tested**. It nam
 - **SpaceMissionStudio** - idea, not a feature (not built, not tested): a list of units and links could be turned into `interfaces.csv` (`id,type,from,to,redundancy`) and imported with **File > Import > Import interfaces…**, after the units have been added by hand in the app.
 - **Requirements Studio** - idea, not a feature (not built, not tested): `system/traceability.csv` (interface to harness to wires) and the `Requirement ID` of each interface in `system/export.json` could be read by a script and compared with a requirement list; note that the `Requirement` column of `drc_findings.csv` holds the IDs of the standard requirements a rule serves, not your programme's requirements.
 - **Budget Studio** - idea, not a feature (not built, not tested): `system/mass_length.csv` (known wire length, mass with margin, and whether the data is `Complete`) could feed a mass or harness-length budget; its totals count only what is known, and in the `flatsat` example they include ground-equipment harnesses.
-- **AIT Logbook** - idea, not a feature (not built, not tested): `tests.csv` (one continuity test per wire, isolation tests, limits that read `TBD (placeholder)` until set) and `labels.csv` could be used as the list of what to test and what to label; the tool has no way to read test results back.
+- **AIT Logbook** - idea, not a feature (not built, not tested): `tests.csv` (one continuity test per wire, isolation tests, limits that read `TBD (placeholder)` until set) and `labels.csv` could be used as the list of what to test and what to label (the *Tests* sheet of the build workbook has empty columns for the measured value, the result, the initials and the date); the tool has no way to read test results back.
 - **ICD Studio** - idea, not a feature (not built, not tested): `system/box_pinouts.csv`, `pinouts.csv` and `wirelist.csv` (connector, pin, signal, interface, wire) are pin-level tables that could be an input to an interface document, and `interfaces.csv` is the format the other way; the tool does not read or write an interface control document itself.
 
 If you decide that one of these exchanges is worth building, say so in an issue; until then this page describes files and nothing else.

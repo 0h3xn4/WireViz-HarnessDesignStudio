@@ -1,7 +1,7 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SC-12 / SH-27: the export dialog. One dialog: output folder, harness x document tree, progress with
 Cancel, the list of files written with Reveal / Open / a drawing picture, inline notices instead of
-pop-ups. Driven offscreen on the flatsat example (113 files)."""
+pop-ups. Driven offscreen on the flatsat example (121 files with the drawings)."""
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -120,7 +120,7 @@ def select(dlg: ExportDialog, rel: str) -> None:
 
 def test_every_written_file_is_a_known_document_and_every_document_type_occurs(done) -> None:
     files = done.res.files
-    assert done.res.count == 113 and len(files) > 100
+    assert done.res.count == 121 and len(files) > 100
     for f in files:
         assert f.doc.key in export_docs.DOCS, f.rel  # never the file name fallback
     for hid in done.ctl.project.harnesses:
@@ -198,6 +198,11 @@ def test_the_tree_offers_harness_by_document_with_everything_ticked(qtbot, tmp_p
     top = [dlg.model.item(r) for r in range(dlg.model.rowCount())]
     assert [t.data(Qt.ItemDataRole.UserRole) for t in top] == [*sorted(ctl.project.harnesses), "system"]  # fmt: skip
     assert top[0].text().startswith("W001  ")
+    assert not dlg.drawings.isChecked()  # a folder with no export yet: no drawings (D-169)
+    assert top[0].rowCount() == len(export_docs.harness_docs(False)) < len(export_docs.HARNESS_DOCS)
+    assert top[0].child(0).text() == "Build workbook"  # the first document of a harness
+    dlg.drawings.setChecked(True)
+    top = [dlg.model.item(r) for r in range(dlg.model.rowCount())]
     assert top[0].rowCount() == len(export_docs.HARNESS_DOCS)
     assert top[-1].text() == strings.EXP_SYSTEM and top[-1].rowCount() == len(
         export_docs.SYSTEM_DOCS
@@ -211,6 +216,80 @@ def test_the_tree_offers_harness_by_document_with_everything_ticked(qtbot, tmp_p
     assert not dlg.set_checked("W999", None, False)
 
 
+def test_every_file_is_a_known_document_without_the_drawings_too(done) -> None:
+    from harness_design_studio.core.outputs.build import build_outputs
+
+    for drawings in (False, True):
+        built = build_outputs(done.ctl.project, drawings=drawings)
+        want = {d.key for d in export_docs.harness_docs(drawings)}
+        for rel in built.files:
+            assert export_docs.classify(rel).key in export_docs.DOCS, rel
+        for hid in done.ctl.project.harnesses:
+            keys = {export_docs.classify(r).key for r in built.files if f"/{hid}/" in r}
+            assert keys == want, (hid, drawings)
+    assert export_docs.HARNESS_DOCS[0].key == "build"  # listed first among the harness documents
+    assert export_docs.classify("harnesses/W001/W001_build.xlsx").label == "Build workbook"
+
+
+def test_the_drawings_box_follows_the_last_export_and_the_file_set_follows_the_box(
+    qtbot, tmp_path: Path
+) -> None:
+    """D-169: the build workbook is always written, the drawings only when the box is ticked; the
+    box starts ticked when the folder's last export had drawings."""
+    ctl = flatsat_controller(tmp_path)
+
+    def rels(res: ExportResult) -> set[str]:
+        return {f.rel for f in res.files}
+
+    def drawn(res: ExportResult) -> bool:
+        return any("/drawing_" in r for r in rels(res))
+
+    dlg = ExportDialog(ctl, themed())
+    qtbot.addWidget(dlg)
+    assert dlg.drawings.text() == strings.EXP_DRAWINGS and not dlg.drawings.isChecked()
+    assert dlg.drawings.accessibleName() and dlg.drawings.toolTip() == strings.EXP_DRAWINGS_TIP
+    assert unnamed(dlg) == []
+    res = dlg.run()
+    assert res is not None and not drawn(res)
+    assert "harnesses/W001/W001_build.xlsx" in rels(res)
+    build = next(f for f in res.files if f.rel == "harnesses/W001/W001_build.xlsx")
+    assert build.doc.key == "build" and build.doc.label == "Build workbook" and build.doc.kind == "XLSX"  # fmt: skip
+    assert not any(k.startswith("drawing") for _s, k in dlg.checked_documents())
+    # a window opened later: the last export had no drawings, the box is still off
+    again = ExportDialog(ctl, themed())
+    qtbot.addWidget(again)
+    assert not again.drawings.isChecked()
+    # ticked: the drawings come back, as documents of the tree too
+    dlg.drawings.setChecked(True)
+    res = dlg.run()
+    assert res is not None and drawn(res)
+    assert {"drawing_a4", "drawing_a3", "drawing_svg"} <= {k for _s, k in dlg.checked_documents()}
+    # a window opened after an export with drawings keeps them
+    later = ExportDialog(ctl, themed())
+    qtbot.addWidget(later)
+    assert later.drawings.isChecked()
+    keep = later.run()
+    assert keep is not None and drawn(keep) and rels(keep) == rels(res)
+    # unticked on purpose: the drawings are taken out of the folder
+    later.drawings.setChecked(False)
+    gone = later.run()
+    assert gone is not None and not drawn(gone)
+    assert not any(p.name.startswith("drawing_") for p in outputs_of(ctl).rglob("*"))
+
+
+def test_the_drawings_box_is_locked_while_the_export_runs(qtbot, tmp_path: Path) -> None:
+    ctl = flatsat_controller(tmp_path)
+    dlg = ExportDialog(ctl, themed())
+    qtbot.addWidget(dlg)
+    assert dlg.drawings.isEnabled()
+    assert dlg.start()
+    assert not dlg.drawings.isEnabled()
+    dlg.cancel()
+    dlg.worker.wait()  # type: ignore[union-attr]
+    dlg._worker_done()
+    assert dlg.drawings.isEnabled()
+
+
 # ---- running and the result ---------------------------------------------------------------------
 
 
@@ -220,7 +299,7 @@ def test_the_export_writes_the_full_set_and_lists_every_file(done) -> None:
     assert isinstance(res, ExportResult) and res.folder == folder
     assert len(done.exported) == 1 and done.exported[0][0] is res
     panel = done.dlg.result_panel
-    assert panel.model.rowCount() == 113 and panel.table.proxy.rowCount() == 113
+    assert panel.model.rowCount() == 121 and panel.table.proxy.rowCount() == 121
     on_disk = sorted(p.relative_to(folder).as_posix() for p in folder.rglob("*") if p.is_file())
     assert on_disk == sorted(f.rel for f in res.files)
     for f in res.files:
@@ -229,7 +308,7 @@ def test_the_export_writes_the_full_set_and_lists_every_file(done) -> None:
     assert done.ctl.outputs_state() == "current"
     assert done.dlg.pages.currentWidget() is panel
     assert done.dlg.export_btn.text() == strings.EXP_AGAIN
-    assert "113 files written" in panel.summary.text() and res.stamp in panel.summary.text()
+    assert "121 files written" in panel.summary.text() and res.stamp in panel.summary.text()
     # columns: path, document, harness, size (a number, shown in kB)
     first = dict_rows(panel.model)[0]
     assert set(first) >= {"rel", "doc", "scope", "size"}
@@ -288,7 +367,7 @@ def test_a_drawing_shows_a_picture_and_a_table_does_not(clean) -> None:
 
 def test_the_ticks_choose_what_the_result_list_shows(clean) -> None:
     dlg, panel = clean.dlg, clean.dlg.result_panel
-    assert panel.model.rowCount() == 113 and not panel.showing.isVisible()
+    assert panel.model.rowCount() == 121 and not panel.showing.isVisible()
     dlg.set_checked("W002", None, False)
     shown = {r["rel"] for r in dict_rows(panel.model)}
     assert not any(rel.startswith("harnesses/W002/") for rel in shown)
@@ -306,7 +385,7 @@ def test_the_ticks_choose_what_the_result_list_shows(clean) -> None:
     assert {r["rel"] for r in dict_rows(panel.model)} == {"manifest.json"}
     assert dlg.selected_paths() == set()
     dlg.all_btn.click()
-    assert panel.model.rowCount() == 113 and len(dlg.selected_paths()) == 112
+    assert panel.model.rowCount() == 121 and len(dlg.selected_paths()) == 120
 
 
 def test_copy_selection_copies_the_ticked_files_byte_for_byte_without_the_manifest(clean, tmp_path) -> None:  # fmt: skip
@@ -318,7 +397,7 @@ def test_copy_selection_copies_the_ticked_files_byte_for_byte_without_the_manife
     assert dlg.copy_btn.isVisible() and dlg.copy_btn.isEnabled()
     target = tmp_path / "copy"
     n = dlg.copy_selection(target)
-    assert n == len(wanted) == 14
+    assert n == len(wanted) == 15
     copied = sorted(p.relative_to(target).as_posix() for p in target.rglob("*") if p.is_file())
     assert copied == wanted and "manifest.json" not in copied
     for rel in wanted:

@@ -52,7 +52,7 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 
 ## 12. Export outputs
 
-[Export the outputs](user-manual/export-the-outputs.md).
+[Export the outputs](user-manual/export-the-outputs.md): the build workbook of each harness (the file to build from) and the lists; add `--drawings` for the PDF drawings (not in the latest release yet).
 
 ## 13. Review and release a harness
 

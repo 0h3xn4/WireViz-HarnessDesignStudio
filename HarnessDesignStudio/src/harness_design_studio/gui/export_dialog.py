@@ -749,7 +749,9 @@ class ExportDialog(QDialog):
         scopes: dict[str, list[str]] = {}
         labels: dict[tuple[str, str], str] = {}
         if files is None:
-            for scope, docs in export_docs.planned_layout(project.harnesses, self.drawings.isChecked()):
+            for scope, docs in export_docs.planned_layout(
+                project.harnesses, self.drawings.isChecked()
+            ):
                 scopes[scope] = [d.key for d in docs]
                 for d in docs:
                     labels[(scope, d.key)] = d.label
