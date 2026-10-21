@@ -3,6 +3,7 @@ Harness Design Studio: Windows package
 
 An offline tool for designing the electrical harnesses of a spacecraft. It never uses the network,
 and nothing is downloaded when you install or run it. Python and Qt are inside the package.
+For Windows 10 and 11, 64-bit (x86-64).
 
 Programs
   harness-design-studio-gui.exe        the editor (Start menu: Harness Design Studio)

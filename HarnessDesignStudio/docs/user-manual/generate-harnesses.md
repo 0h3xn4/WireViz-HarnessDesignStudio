@@ -15,7 +15,7 @@ This page shows how to turn your units and links into harnesses (connectors, pin
 ## Before you start
 
 - You have a project with units and links. For a quick start make one: `harness-design-studio new wheel-link --template first-steps` (see [draw the design](draw-the-design.md)).
-- A **harness** is a bundle of wires with connectors that carries the links between two units. You never draw it. The tool generates it from your design, and it can generate it again at any time.
+- A **harness** is a bundle of wires with connectors that carries the links between two units. You do not draw it: the tool generates it from your design, and it can generate it again at any time. (A harness with no interface behind it you can make by hand: [build a harness by hand](build-a-harness-by-hand.md).)
 - Wire gauges (thicknesses) stay *pending* until the engineering values exist. That is normal. See [fill in the engineering values](fill-in-engineering-values.md).
 
 ## 1. Generate
@@ -133,7 +133,7 @@ This was checked on the command line with `first-steps`: a wire set to gauge 20 
 ## Common mistakes
 
 - **"there are no harnesses to export; run `harness-design-studio generate` first."** You have not generated yet, or the project has no links. Generate first.
-- **A blank project generates nothing.** The command line cannot add units. Add units and links in the app ([draw the design](draw-the-design.md)), or start from an example.
+- **A blank project generates nothing.** The command line cannot add units. Add units and links in the app ([draw the design](draw-the-design.md)), or start from an example. A harness made by hand with **New harness…** is left alone by Generate.
 - **Gauge says *pending*.** Not a fault. A value is missing: run `harness-design-studio config DIR` ([fill in the engineering values](fill-in-engineering-values.md)). The power link also needs its **Max current (A)**.
 - **"The model changed after the harness plans were generated."** You changed the design after generating. Generate again.
 

@@ -66,7 +66,7 @@ The app also has **File > Open the sample project**. That is example data. Save 
 
 Each unit comes with connectors. You do not need to look at them in Guided mode.
 
-**A unit with your own connectors.** In a blank project the empty diagram has the button **Add a device** (also **Edit > Add unit > Device…**, Ctrl+Shift+N). It adds a unit with no connectors and opens the **Devices** tab, where you name it and define its connectors and pins ([define a device](define-a-device.md)). Use it when none of the kinds above fits.
+**A unit with your own connectors.** The empty diagram of a project with no unit says "Your diagram is empty" and has the button **Add a device** (also **Edit > Add unit > Device…**, Ctrl+Shift+N). The button goes away when the first unit exists, and it is not there in a project that is open read-only. It adds a unit with no connectors and opens the **Devices** tab, where you name it and define its connectors and pins ([define a device](define-a-device.md)). Use it when none of the kinds above fits.
 
 ## 3. Connect two units
 

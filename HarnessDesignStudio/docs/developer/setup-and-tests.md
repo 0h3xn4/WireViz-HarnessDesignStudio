@@ -10,6 +10,7 @@ This page shows how to set up a place to work on Harness Design Studio, run the 
 - [3. Check the style and the types](#3-check-the-style-and-the-types)
 - [4. The tests that read the documents](#4-the-tests-that-read-the-documents)
 - [The tests of the user interface](#the-tests-of-the-user-interface)
+- [The tests of the 1.4.0 and later features](#the-tests-of-the-140-and-later-features)
 - [5. Golden files](#5-golden-files)
 - [6. What CI runs](#6-what-ci-runs)
 - [When something fails](#when-something-fails)
@@ -102,7 +103,7 @@ mypy
 ```
 526 files already formatted
 All checks passed!
-Success: no issues found in 380 source files
+Success: no issues found in 379 source files
 ```
 
 (Run on 2026-10-21 for version 1.6.0; the file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `HarnessDesignStudio/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
@@ -118,7 +119,7 @@ A change that only touches Markdown can still break a test. Know these:
 | `tests/test_examples.py` | The example projects equal what `tools.build_examples` writes; the design worksheet names only real unit kinds and interface types; the numbers in `docs/FLATSAT_EXAMPLE.md` match the `flatsat` example. |
 | `tests/test_compliance_matrix.py`, `test_trace.py`, `test_sdd_components.py`, `test_metrics.py`, `test_scf.py`, `test_family_group_mapping.py`, `test_profiles.py`, `tests/test_drc.py::test_cited_requirements_exist_in_the_extracted_lists` | The generated compliance files are current (matrix, traceability, component table), no matrix row claims compliance, every module has a docstring, and every cited requirement ID exists. |
 
-The repository's root `README.md`, `CONTRIBUTING.md` and `AUDIT.md` and `HarnessDesignStudio/compliance/**/*.md` are not in the link test. Check them with the offline link checker in [`docs-maintenance.md`](docs-maintenance.md#check-the-links).
+The repository's root `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md` and `AUDIT.md`, the Markdown files in the root `docs/` and `HarnessDesignStudio/compliance/**/*.md` are not in the link test. Check them with the offline link checker in [`docs-maintenance.md`](docs-maintenance.md#check-the-links).
 
 When only Markdown under `HarnessDesignStudio/` changes, CI runs just the `docs` job: `test_docs.py`, `test_docs_links.py` and the compliance tests above (decision D-138).
 
@@ -140,9 +141,9 @@ The editor of 1.3.0 (the UI overhaul, D-150 to D-159) has its own tests. All run
 
 Pictures of the result are made with `tools.ui_screenshots`, timings with `tools.ui_perf` ([`tools.md`](tools.md)).
 
-## The tests of the 1.4.0 features
+## The tests of the 1.4.0 and later features
 
-Version 1.4.0 (the AIT feedback, D-160 to D-165) added these tests. The ones that open the editor run offscreen and carry `gui`.
+Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made by hand, D-166, and the start check, D-167) and version 1.6.0 (the start screen of a blank project) added these tests. The ones that open the editor run offscreen and carry `gui`.
 
 | Tests | What they check |
 | --- | --- |
@@ -154,7 +155,7 @@ Version 1.4.0 (the AIT feedback, D-160 to D-165) added these tests. The ones tha
 | `tests/test_inventree_import.py` | An InvenTree export (CSV, TSV, JSON) in the parts import: the IPN as part ID, categories, JSON that is not a flat list. |
 | `tests/test_startup_help.py` | The Linux start check (missing graphics libraries, no desktop session, the message and the `sudo apt` line), `--check-system`, the `install.sh` warning, and the smoke test's environment without a Python (D-167). |
 | `tests/test_manual_harness.py` | A harness made by hand (1.5.0): new harness, free-standing and plugging-in connectors, pin function and termination, delete connector, naming pattern, Generate leaving it alone, released and generated harnesses refusing, undo. |
-| `tests/test_ui_from_scratch.py` | The Connectors tab, the New harness button and action, and the journey from a blank project in the window. |
+| `tests/test_ui_from_scratch.py` | The Connectors tab, the New harness button and action, the journey from a blank project in the window, and (1.6.0) the **Add a device** button of the empty diagram. |
 | `tests/test_ui_wire_editor.py` | The Edit wire tab: selection, apply, reset, several wires, the new wire form, groups, the labels form. |
 
 The proof that existing work is unchanged is `tests/test_output_hashes.py` (above): the 567 files of the four examples still match release 1.2.0 apart from the version stamp.

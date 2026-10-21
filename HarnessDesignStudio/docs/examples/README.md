@@ -55,13 +55,13 @@ first-steps      Three units, a power link and an RS-422 link. Nothing is genera
 small-satellite  14 units with nominal and redundant chains. Generate it to see a realistic system.
 ```
 
-`minimal-satellite`, `flatsat` and the template `design-worksheet.md` are new in 1.0.0 and not in the 0.1.0 packages ([`CHANGELOG.md`](../../CHANGELOG.md) of the tool). Asking for them from a 0.1.0 package gives `error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.` ([`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md#creating-a-project)). The counts quoted on this page are the same on both versions for `blank`, `first-steps` and `small-satellite`; the *model hash* differs (the tool version is part of the design it covers), so a hash quoted here will not match a 0.1.0 package, or a version other than 1.3.0. The drawings also differ: the wiring-diagram drawing with wire colours is not in 0.1.0. To get 1.0.0, see [`INSTALL.md`](../INSTALL.md).
+`minimal-satellite`, `flatsat` and the template `design-worksheet.md` are new in 1.0.0 and not in the 0.1.0 packages ([`CHANGELOG.md`](../../CHANGELOG.md) of the tool). Asking for them from a 0.1.0 package gives `error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.` ([`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md#creating-a-project)). The counts quoted on this page are the same on both versions for `blank`, `first-steps` and `small-satellite`; the *model hash* differs (the tool version is part of the design it covers), so a hash quoted here will not match a 0.1.0 package, or a version other than 1.6.0. The drawings also differ: the wiring-diagram drawing with wire colours is not in 0.1.0. To get 1.0.0, see [`INSTALL.md`](../INSTALL.md).
 
 The same five commands work on every example: `new`, `validate`, `generate`, `drc`, `export`, and `verify --outputs`. The project's model hash and the Open line of `drc` below are printed **after** `generate`; before that the hash differs (it covers the generated harnesses too). A project created with `--name` has a different hash for the same design, because the name is part of the design.
 
 ## blank
 
-**What it shows:** an empty project: the starter parts library (example connectors, contacts, wires), the 17 interface types, the seven configuration files (six of them placeholders), two lanes called `panel-A` and `panel-B`, and no units. It is where your own design starts. The command line cannot add units or interfaces; open the project in the app and add them (Part 10 of [`GETTING_STARTED.md`](../GETTING_STARTED.md)).
+**What it shows:** an empty project: the starter parts library (example connectors, contacts, wires), the 17 interface types, the seven configuration files (six of them placeholders), two lanes called `panel-A` and `panel-B`, and no units. It is where your own design starts. The command line cannot add units or interfaces; open the project in the app and add them (the empty diagram has an **Add a device** button since 1.6.0; see Part 10 of [`GETTING_STARTED.md`](../GETTING_STARTED.md)).
 
 ```
 harness-design-studio new my-blank --template blank
@@ -82,7 +82,7 @@ harness-design-studio drc my-blank
 0 interfaces and 0 wires checked: 0 error(s)
 # Design rule check: My project
 
-Model hash: `332acada1754`. Rules run: 35.
+Model hash: `6dd2d0fb0579`. Rules run: 35.
 Open: 0 error(s), 0 warning(s), 0 note(s). Waived: 0.
 ```
 
@@ -212,7 +212,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 44 interfaces and 103 wires checked: 0 error(s)
 # Design rule check: Flatsat (EXAMPLE numbers, not engineering data)
 
-Model hash: `bb3cdc17dfe5`. Rules run: 35.
+Model hash: `a2b89ff21bd8`. Rules run: 35.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
@@ -220,7 +220,7 @@ Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 
 ## Does every example run?
 
-Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.3.0. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (counts as above; the hashes differ).
+Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.6.0. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (counts as above; the hashes differ).
 
 | Example | `validate` | `generate` | `drc` | `export` | `verify --outputs` |
 | --- | --- | --- | --- | --- | --- |
@@ -247,7 +247,7 @@ The files are written for the `first-steps` example, so you can try each one bef
 | # | File | In short | Used with | 0.1.0 packages |
 | --- | --- | --- | --- | --- |
 | 1 | `README.md` | what the other files are | read it first | yes |
-| 2 | `interfaces.csv` | two example interface rows | app: **File > Import > Import interfaces…** | yes |
+| 2 | `interfaces.csv` | two example interface rows | app: **File > Import > Interfaces…** (Ctrl+Shift+I) | yes |
 | 3 | `approved-parts.csv` | five example part rows: three `Approved`, one `Review`, one `Rejected` | `harness-design-studio import-parts` | yes |
 | 4 | `segment-lengths.csv` | two example segment lengths (millimetres) | `harness-design-studio import-lengths` | yes |
 | 5 | `wheel-connectors.net` | a KiCad netlist for the connectors of `RW1` | `harness-design-studio import-netlist` | yes |

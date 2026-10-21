@@ -164,7 +164,7 @@ def test_pin_names_and_a_unit_connector_to_plug_into(qtbot, theme):  # noqa: F81
 
 
 def test_an_empty_diagram_offers_the_first_step_and_names_no_retired_palette(qtbot, theme):  # noqa: F811
-    """1.5.1: a blank project says where to start: a button, and text that names controls which
+    """1.6.0: a blank project says where to start: a button, and text that names controls which
     exist (the palette of the old window is gone)."""
     ctl, view = make_view(qtbot, theme, new_project("Scratch"))
     from harness_design_studio.gui.canvas import DiagramView

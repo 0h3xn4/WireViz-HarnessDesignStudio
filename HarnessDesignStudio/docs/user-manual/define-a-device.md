@@ -11,6 +11,7 @@ This page shows how to define a device of your own down to each pin: its connect
 - [4. Put an interface on pins](#4-put-an-interface-on-pins)
 - [Take the pinout from a spreadsheet](#take-the-pinout-from-a-spreadsheet)
 - [Check the result and write it out](#check-the-result-and-write-it-out)
+- [Use a device in another project](#use-a-device-in-another-project)
 - [Change a device later](#change-a-device-later)
 - [What a pin can hold](#what-a-pin-can-hold)
 - [Common mistakes](#common-mistakes)
@@ -24,7 +25,7 @@ This page shows how to define a device of your own down to each pin: its connect
 
 ## 1. Add the device
 
-1. Choose **Edit > Add unit > Device…** (Ctrl+Shift+N). An empty device appears in a free place of the diagram and the **Devices** tab opens with its name selected.
+1. Choose **Edit > Add unit > Device…** (Ctrl+Shift+N; on an empty diagram the button **Add a device** does the same). An empty device appears in a free place of the diagram and the **Devices** tab opens with its name selected.
 2. Type the name and press Enter. The **Subsystem** box takes one that exists or a new word; **Chain** says nominal, redundant or none.
 
 The state chip next to the name says **Draft** while no interface ends on the device, **In use** when one does, and **Locked** once a released harness uses it.
@@ -154,3 +155,5 @@ A pin has a name or number, a signal, a mode, a contact size, a termination, a *
 - **A signal typed a little differently** (`canh` for `CANH`): it is free text and nothing connects to it. The note says *Did you mean CANH?*.
 - **A part with no gender in its description.** The cable end cannot be checked to fit. Set the gender on the card.
 - **Changing a part of a released device.** Start a new revision first ([change a released harness](change-a-released-harness.md)).
+
+Next: [generate harnesses](generate-harnesses.md), [import data](import-data.md), [edit a wire](edit-a-wire.md)

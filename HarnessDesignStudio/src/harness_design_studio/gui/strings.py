@@ -2301,6 +2301,6 @@ STEP_ADD_HARNESS_CONNECTOR = "Add connector to {0}"
 STEP_SET_HARNESS_PIN = "Set pin {0}"
 STEP_DELETE_HARNESS_CONNECTOR = "Delete connector {0}"
 
-# ---- 1.5.1: a blank project says where to start ---------------------------------------------------
+# ---- 1.6.0: a blank project says where to start ---------------------------------------------------
 EMPTY_ADD_DEVICE = "Add a device"
 EMPTY_ADD_DEVICE_NAME = "Add a device to the empty diagram"

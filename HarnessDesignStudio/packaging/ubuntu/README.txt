@@ -1,5 +1,7 @@
 Harness Design Studio: Ubuntu package
-============================
+=====================================
+For Ubuntu 24.04 and newer, 64-bit (x86-64).
+
 Per-user install (no administrator rights):   ./install.sh
 System-wide install:                          sudo ./install.sh --system   (into /usr/local/lib/harness-design-studio)
 Remove:                                       ./uninstall.sh   (or: sudo ./uninstall.sh --system)
