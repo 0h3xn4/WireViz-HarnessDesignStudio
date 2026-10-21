@@ -60,6 +60,7 @@ def done(tmp_path_factory):
     dlg.activateWindow()
     QTest.qWaitForWindowActive(dlg)
     exported = collect(dlg.exported)
+    dlg.drawings.setChecked(True)  # the drawings are optional (D-169); these tests use them
     result = dlg.run()
     assert result is not None
     yield SimpleNamespace(ctl=ctl, dlg=dlg, res=result, opened=opened, tmp=tmp, exported=exported)

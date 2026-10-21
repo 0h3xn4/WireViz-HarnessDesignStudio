@@ -9,10 +9,13 @@ What it shows, left to right and top to bottom: the output folder (read-only: th
 the progress with Cancel and then the list of files written (path, document, harness, size) with
 Reveal in folder, Open and a picture of the selected drawing.
 
-The export ALWAYS writes the full set (`core.outputs.build.write_outputs` deletes the files that are
-not in the new set and the independent check expects every harness, see
-`tests/test_outputs_subset.py`). The tick marks in the tree therefore choose only what the result
-list shows and what "Copy selection to folder..." copies; the full set is ticked at the start.
+The export ALWAYS writes the full set of the harnesses (`core.outputs.build.write_outputs` deletes
+the files that are not in the new set and the independent check expects every harness, see
+`tests/test_outputs_subset.py`). The one choice is the check box "Include the PDF drawings" (decision
+D-169: the build workbook is the main output, the PDF and SVG drawings are optional): it is ticked
+at the start when the folder's last export had drawings (`drawings_exported`), else not, and the
+tree shows the drawing documents only while it is ticked. The tick marks in the tree choose only
+what the result list shows and what "Copy selection to folder..." copies; all are ticked at the start.
 
 The build and its independent check run in `OutputsWorker` (the window's own worker) off the UI
 thread; the files are written on the UI thread exactly as `MainWindow.export_flow` does. A failed
@@ -54,7 +57,12 @@ from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.io.fs import atomic_write_bytes
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.outputs import drawing, system
-from harness_design_studio.core.outputs.build import MANIFEST, OutputSet, write_outputs
+from harness_design_studio.core.outputs.build import (
+    MANIFEST,
+    OutputSet,
+    drawings_exported,
+    write_outputs,
+)
 from harness_design_studio.core.outputs.canvas import Sheet
 from harness_design_studio.core.outputs.stamp import Stamp
 from harness_design_studio.core.verify import VerifyReport
@@ -527,6 +535,13 @@ class ExportDialog(QDialog):
         sel_row.addWidget(self.none_btn)
         sel_row.addStretch(1)
         ll.addLayout(sel_row)
+        self.drawings = QCheckBox(strings.EXP_DRAWINGS)
+        self.drawings.setObjectName("export-drawings")
+        self.drawings.setAccessibleName(strings.EXP_DRAWINGS_NAME)
+        self.drawings.setToolTip(strings.EXP_DRAWINGS_TIP)
+        folder = self.output_folder()
+        self.drawings.setChecked(folder is not None and drawings_exported(folder))
+        ll.addWidget(self.drawings)
         split.addWidget(left)
 
         self.pages = QStackedWidget()
@@ -603,6 +618,7 @@ class ExportDialog(QDialog):
         self.close_btn.clicked.connect(self.reject)
         self.copy_btn.clicked.connect(lambda: self.copy_selection())
         self.open_after.toggled.connect(self._remember_open_after)
+        self.drawings.toggled.connect(self._drawings_toggled)
         self.refresh()
 
     # ---- the folder and what blocks an export -------------------------------------------------
@@ -683,6 +699,12 @@ class ExportDialog(QDialog):
         reason = getattr(exc, "strerror", None) or strings.FOLDER_UNUSABLE
         return strings.FILE_ERROR.format(where=where, reason=reason)
 
+    def _drawings_toggled(self, _on: bool) -> None:
+        """The drawing documents come into or leave the planned tree (the tree of a result is the
+        list of files written and stays until the next export)."""
+        if self.export_result is None:
+            self._build_tree(None)
+
     def _remember_open_after(self, on: bool) -> None:
         if self.settings is not None:
             self.settings.setValue("export/open_after", "true" if on else "false")
@@ -704,6 +726,7 @@ class ExportDialog(QDialog):
         self.copy_btn.setVisible(self.export_result is not None)
         self.copy_btn.setEnabled(self.export_result is not None and not busy)
         self.open_after.setEnabled(not busy)
+        self.drawings.setEnabled(not busy)
 
     # ---- the tree -----------------------------------------------------------------------------
 
@@ -726,7 +749,7 @@ class ExportDialog(QDialog):
         scopes: dict[str, list[str]] = {}
         labels: dict[tuple[str, str], str] = {}
         if files is None:
-            for scope, docs in export_docs.planned_layout(project.harnesses):
+            for scope, docs in export_docs.planned_layout(project.harnesses, self.drawings.isChecked()):
                 scopes[scope] = [d.key for d in docs]
                 for d in docs:
                     labels[(scope, d.key)] = d.label
@@ -870,6 +893,7 @@ class ExportDialog(QDialog):
         self._token = self.ctl.state_token
         self._project = edit.clone_with(self.ctl.project, [])
         worker = self.worker_factory(self._project)
+        worker.drawings = self.drawings.isChecked()
         self.worker = worker
         worker.progressed.connect(self._on_progress)
         worker.finished.connect(self._worker_done)

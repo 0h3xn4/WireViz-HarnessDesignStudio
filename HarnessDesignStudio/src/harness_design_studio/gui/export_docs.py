@@ -13,6 +13,8 @@ from collections.abc import Iterable
 from dataclasses import dataclass
 from typing import Final, Literal
 
+from harness_design_studio.core.outputs.buildsheet import FILE_SUFFIX as BUILD_SUFFIX
+
 MANIFEST: Final = "manifest.json"  # written beside the outputs; never part of a copy
 SYSTEM: Final = "system"  # the scope of the files that cover all harnesses together
 
@@ -24,9 +26,11 @@ class DocType:
     kind: str  # the file kind in words: "CSV", "PDF", "SVG" ...
 
 
-# Per harness, in the order build_outputs writes them. The workbook and the drawings are named
-# after the harness or the sheet size.
+# Per harness: the build workbook first (the main output, D-169), then the others in the order
+# build_outputs writes them. The workbooks and the drawings are named after the harness or the
+# sheet size.
 HARNESS_DOCS: Final[tuple[DocType, ...]] = (
+    DocType("build", "Build workbook", "XLSX"),
     DocType("wirelist", "Wire list", "CSV"),
     DocType("pinouts", "Pinouts", "CSV"),
     DocType("bom", "Bill of materials", "CSV"),
@@ -39,6 +43,7 @@ HARNESS_DOCS: Final[tuple[DocType, ...]] = (
     DocType("drawing_a3", "Drawing, A3", "PDF"),
     DocType("drawing_svg", "Drawing sheets, A3", "SVG"),
 )
+DRAWING_KEYS: Final = frozenset({"drawing_a4", "drawing_a3", "drawing_svg"})  # only with drawings
 SYSTEM_DOCS: Final[tuple[DocType, ...]] = (
     DocType("sys_bom", "Bill of materials, all harnesses", "CSV"),
     DocType("sys_mass_length", "Mass and length, all harnesses", "CSV"),
@@ -113,6 +118,8 @@ def classify(rel: str) -> Document:
         key = _HARNESS_FILES.get(name)
         if key is None and name == f"{hid}.xlsx":
             key = "workbook"
+        if key is None and name == f"{hid}{BUILD_SUFFIX}":
+            key = "build"
         if key is None and _SVG_SHEET.fullmatch(name):
             key = "drawing_svg"
         if key is not None:
@@ -126,10 +133,18 @@ def classify(rel: str) -> Document:
     return Document(rel, scope, rel, name, name.rpartition(".")[2].upper() if "." in name else "")
 
 
-def planned_layout(harness_ids: Iterable[str]) -> list[tuple[str, tuple[DocType, ...]]]:
+def harness_docs(drawings: bool = True) -> tuple[DocType, ...]:
+    """The document types of one harness; the drawings only when they are exported."""
+    return HARNESS_DOCS if drawings else tuple(d for d in HARNESS_DOCS if d.key not in DRAWING_KEYS)
+
+
+def planned_layout(
+    harness_ids: Iterable[str], drawings: bool = True
+) -> list[tuple[str, tuple[DocType, ...]]]:
     """The tree before anything is written: each harness with its document types, then the
     system documents."""
-    return [*((hid, HARNESS_DOCS) for hid in sorted(harness_ids)), (SYSTEM, SYSTEM_DOCS)]
+    docs = harness_docs(drawings)
+    return [*((hid, docs) for hid in sorted(harness_ids)), (SYSTEM, SYSTEM_DOCS)]
 
 
 SheetRef = tuple[Literal["harness"], str, str, int] | tuple[Literal["system"], str]

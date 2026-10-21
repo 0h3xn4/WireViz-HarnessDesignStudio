@@ -753,8 +753,9 @@ EXP_FOLDER_UNSAVED = "(none yet: the project has no folder)"
 EXP_FOLDER_TIP = "The outputs always go to the outputs folder of the project; the full path is shown so you can copy it."
 EXP_FULL_NOTE = (
     "Every export writes the complete set, so the outputs folder always matches the design and "
-    "the independent check can verify it. The tick marks choose what the result list shows "
-    "and what “Copy selection to folder…” copies."
+    "the independent check can verify it. The PDF and SVG drawings of the harnesses are written "
+    "only when “Include the PDF drawings” is ticked. The tick marks choose what the result list "
+    "shows and what “Copy selection to folder…” copies."
 )
 EXP_TREE_NAME = "Harnesses and documents"
 EXP_TREE_TIP = (
@@ -2304,3 +2305,12 @@ STEP_DELETE_HARNESS_CONNECTOR = "Delete connector {0}"
 # ---- 1.6.0: a blank project says where to start ---------------------------------------------------
 EMPTY_ADD_DEVICE = "Add a device"
 EMPTY_ADD_DEVICE_NAME = "Add a device to the empty diagram"
+
+# ---- D-169: the build workbook is the main output, the drawings are optional ---------------------
+EXP_DRAWINGS = "Include the PDF drawings"
+EXP_DRAWINGS_TIP = (
+    "Also write the PDF and SVG drawings of every harness. Without them the export writes the "
+    "build workbook, the tables and the system documents. Unticking this removes the drawings "
+    "an earlier export wrote to the folder."
+)
+EXP_DRAWINGS_NAME = "Include the PDF drawings in the export"
