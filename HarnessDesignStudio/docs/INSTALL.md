@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.5.0 (2026-10-21), the one with a harness made by hand. The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and later versions have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.5.0 (2026-10-21), the one with a harness made by hand; version 1.6.0 (no macOS, a clearer start for a blank project) is prepared and not published yet. The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and later versions have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
 
 ## Contents
 
@@ -91,7 +91,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.5.0
+harness 1.6.0
 ```
 
 Remove it later with `sudo apt remove harness-design-studio`. Upgrade by installing the newer `.deb` the same way.
@@ -211,7 +211,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.5.0
+harness 1.6.0
 ```
 
 You now have the command line tool `harness-design-studio` (and its short alias `harness`) and the editor `harness-design-studio-gui`. For a script or a shared machine, the setup program also runs without windows: `harness-design-studio-<version>-windows-x86_64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER /DIR="C:\Tools\Harness Design Studio"` (add `/LOG=setup.log` to keep a log). Remove it with *Settings > Apps*, or run `unins000.exe` in the install folder (`/VERYSILENT` makes that silent too). Your projects are never inside the install folder, and uninstalling does not touch them.

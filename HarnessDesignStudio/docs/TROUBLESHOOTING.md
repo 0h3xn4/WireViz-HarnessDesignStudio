@@ -570,7 +570,7 @@ Exit code 1. `--outputs` checks the files in `demo/outputs`; there are none yet.
 
 ### Which file is what?
 
-See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `38 files written to demo-first-steps/outputs (model 9bd0e6ffc051).`
+See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `38 files written to demo-first-steps/outputs (model 431cd03ca16a).`
 
 ## Releasing
 

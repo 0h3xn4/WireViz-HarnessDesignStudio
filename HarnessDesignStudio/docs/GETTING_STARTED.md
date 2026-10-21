@@ -41,7 +41,7 @@ small-satellite    14 units with nominal and redundant chains. Generate it to se
 flatsat            A complete bench: 23 flight and ground units, generated, with example numbers.
 ```
 
-**Which version do you have?** This tutorial is written for 1.5.0 (the commands work the same on 1.4.0, 1.3.0, 1.2.0, 1.1.0 and 1.0.0; the window is the one of 1.3.0 and later, so the app steps and the picture look different in 1.2.0 and earlier, which had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
+**Which version do you have?** This tutorial is written for 1.6.0 (the commands work the same on 1.5.0, 1.4.0, 1.3.0, 1.2.0, 1.1.0 and 1.0.0; the window is the one of 1.3.0 and later, so the app steps and the picture look different in 1.2.0 and earlier, which had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
 
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 
@@ -142,7 +142,7 @@ harness-design-studio drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `f4e2ccd9c5ca`. Rules run: 35.
+Model hash: `a7fa21787017`. Rules run: 35.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.
@@ -167,7 +167,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-38 files written to wheel-link/outputs (model f4e2ccd9c5ca).
+38 files written to wheel-link/outputs (model a7fa21787017).
 ```
 
 The files are checked independently before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.

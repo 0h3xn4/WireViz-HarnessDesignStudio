@@ -15,7 +15,7 @@ This page describes the five example projects and the 15 template files that shi
 - [The 15 template files](#the-15-template-files)
 - [WireViz examples in this repository](#wireviz-examples-in-this-repository)
 
-Every command below was run with the tool (version `1.5.0`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
+Every command below was run with the tool (version `1.6.0`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
 
 ## At a glance
 
@@ -31,7 +31,7 @@ In the app, **File > New project from an example…** makes a project from any o
 
 ## Which build do you have?
 
-`harness-design-studio --version` prints `harness 1.5.0` for this version (1.0.0 and later list the same five examples). If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
+`harness-design-studio --version` prints `harness 1.6.0` for this version (1.0.0 and later list the same five examples). If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
 
 ```
 harness-design-studio new --list
@@ -114,7 +114,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 interfaces and 6 wires checked: 0 error(s)
 # Design rule check: First steps: reaction wheel link
 
-Model hash: `a78ab3144e63`. Rules run: 35.
+Model hash: `431cd03ca16a`. Rules run: 35.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 ```
 
@@ -123,7 +123,7 @@ harness-design-studio export my-first-steps
 ```
 
 ```
-38 files written to my-first-steps/outputs (model a78ab3144e63).
+38 files written to my-first-steps/outputs (model 431cd03ca16a).
 ```
 
 All ten warnings say that an example part is used and nobody has approved it. The notes say which checks did not run because their numbers are missing, and which choices nobody has confirmed yet. That is the tool being honest, not a failure. **Next:** the walk-through in [`GETTING_STARTED.md`](../GETTING_STARTED.md) (about 45 minutes) or the nine steps of [`LEARNING_PATH.md`](../LEARNING_PATH.md). The tutorial quotes a different hash because it creates the project with `--name "Wheel link"`.
@@ -155,7 +155,7 @@ Model hash: `8bbad14d54f6`. Rules run: 35.
 Open: 0 error(s), 15 warning(s), 17 note(s). Waived: 0.
 ```
 
-`harness-design-studio validate` first reports `7 units, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `137 files written to my-minimal-satellite/outputs (model 8bbad14d54f6).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the units and interfaces of your own on paper first.
+`harness-design-studio validate` first reports `7 units, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `137 files written to my-minimal-satellite/outputs (model dc2181642352).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the units and interfaces of your own on paper first.
 
 ## small-satellite
 
@@ -184,7 +184,7 @@ Model hash: `5189733bf3cb`. Rules run: 35.
 Open: 0 error(s), 20 warning(s), 28 note(s). Waived: 0.
 ```
 
-`harness-design-studio validate` first reports `14 units, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `280 files written to my-small-satellite/outputs (model 5189733bf3cb).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a unit and use **Create redundant copy** on it, or read the Problems tab.
+`harness-design-studio validate` first reports `14 units, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `280 files written to my-small-satellite/outputs (model ab99715b5cf2).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a unit and use **Create redundant copy** on it, or read the Problems tab.
 
 ## flatsat
 
@@ -216,7 +216,7 @@ Model hash: `bb3cdc17dfe5`. Rules run: 35.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
-`harness-design-studio export my-flatsat` writes `112 files written to my-flatsat/outputs (model bb3cdc17dfe5).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
+`harness-design-studio export my-flatsat` writes `112 files written to my-flatsat/outputs (model a2b89ff21bd8).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
 
 ## Does every example run?
 

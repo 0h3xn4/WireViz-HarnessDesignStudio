@@ -4,6 +4,12 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+## 1.6.0 (2026-10-21; not a statement of compliance)
+
+Version 1.6.0 **removes macOS** (decision D-168, on the owner's instruction: "please remove macOS completely and entirely, nobody needs it") and makes a **blank project say where to start**. The tool is supported on Ubuntu 24.04 and newer and on Windows 10 and 11.
+
+What did not change: the file format (schema version 1; no new field, so a project saved by 1.5.0 opens as it is), the 35 design rules, the command line and every generated file of an existing project apart from the tool version it records (checked file by file, `tools/output_hashes.py`, `tests/test_output_hashes.py`). The releases 1.2.0 to 1.5.0 still carry their two macOS disk images on GitHub; they are not maintained or tested any more. Not done, as in earlier releases: signing the packages, a screen-reader pass and the clean-machine installation test (waived by the owner, `compliance/DEVIATIONS.md`). Still open: what soldering needs beyond the termination column in the lists is for the AIT engineers to say; a command line equivalent of *New harness* is not built.
+
 ### Fixed
 
 - **A blank project says where to start.** The empty diagram told the user to add a unit "from the palette on the left", which the redesign of 1.3.0 had removed. It now has the button **Add a device** (a unit with its own connectors and pins; the same as Edit > Add unit > Device…, Ctrl+Shift+N; hidden once there is a unit and in a read-only project), and the empty diagram, the empty link and unit lists, the narrow-window notice and the name of the left tab name controls that exist. No file format, rule, command line or generated file changes.
