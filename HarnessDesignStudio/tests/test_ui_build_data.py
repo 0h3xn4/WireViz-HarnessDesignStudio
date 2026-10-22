@@ -36,7 +36,6 @@ from tests.test_ux_devices_edit import (  # noqa: E402
     type_into_editor,
 )
 from tests.test_ux_devices_edit import make_view as make_devices  # noqa: E402
-from tests.test_ux_devices_edit import theme as devices_theme  # noqa: E402, F401
 from tests.test_ux_harness import make_view, theme  # noqa: E402, F401, F811
 
 CONTACT = "EX-CONTACT-22"
@@ -228,9 +227,9 @@ def device_project():
     return p, cid
 
 
-def test_the_cable_contact_column_is_edited_in_place_as_one_undo_step(qtbot, devices_theme):
+def test_the_cable_contact_column_is_edited_in_place_as_one_undo_step(qtbot, theme):  # noqa: F811
     p, cid = device_project()
-    ctl, view = make_devices(qtbot, devices_theme, p)
+    ctl, view = make_devices(qtbot, theme, p)
     m = view.pin_model
     col = m.column_index("contact_part")
     assert m.columns[col].header == "Cable contact"
@@ -255,9 +254,9 @@ def test_the_cable_contact_column_is_edited_in_place_as_one_undo_step(qtbot, dev
     QTest.keyClick(box, Qt.Key.Key_Escape)
 
 
-def test_a_wrong_cable_contact_is_checked_while_typing_and_not_committed(qtbot, devices_theme):
+def test_a_wrong_cable_contact_is_checked_while_typing_and_not_committed(qtbot, theme):  # noqa: F811
     p, cid = device_project()
-    ctl, view = make_devices(qtbot, devices_theme, p)
+    ctl, view = make_devices(qtbot, theme, p)
     view.contact_btn.click()
     go_to_cell(view, "1", "contact_part")
     QTest.keyClick(view.pin_table, Qt.Key.Key_F2)
@@ -270,9 +269,9 @@ def test_a_wrong_cable_contact_is_checked_while_typing_and_not_committed(qtbot, 
     assert ctl.history.next_undo_label is None
 
 
-def test_the_cable_contact_cells_are_off_in_a_read_only_project(qtbot, devices_theme):
+def test_the_cable_contact_cells_are_off_in_a_read_only_project(qtbot, theme):  # noqa: F811
     p, _cid = device_project()
-    ctl, view = make_devices(qtbot, devices_theme, p)
+    ctl, view = make_devices(qtbot, theme, p)
     ctl.project.read_only = True
     view.refresh()
     m = view.pin_model
@@ -283,10 +282,11 @@ def test_the_cable_contact_cells_are_off_in_a_read_only_project(qtbot, devices_t
 
 
 def test_the_bulk_action_sets_the_cable_contact_of_the_selected_pins_in_one_step(
-    qtbot, devices_theme, theme  # noqa: F811
+    qtbot,
+    theme,  # noqa: F811
 ):
     p, cid = device_project()
-    ctl, view = make_devices(qtbot, devices_theme, p)
+    ctl, view = make_devices(qtbot, theme, p)
     requests = []
     view.contactRequested.connect(lambda c, pins: requests.append((c, pins)))
     from tests.test_ux_devices_edit import select_pins
@@ -307,7 +307,10 @@ def test_the_bulk_action_sets_the_cable_contact_of_the_selected_pins_in_one_step
     assert [pin(ctl, cid, n).contact_part for n in "1234"] == [CONTACT, CONTACT, CONTACT, None]
     ctl.undo()
     assert all(pin(ctl, cid, n).contact_part is None for n in "123456")
-    assert view.pin_buttons["contact"].toolTip() and view.pin_buttons["contact"].accessibleName()
+    button = view.pin_buttons["contact"]
+    assert button.isHidden()  # it comes with the contact columns
+    view.contact_btn.click()
+    assert not button.isHidden() and button.toolTip() and button.accessibleName()
 
 
 def test_the_bulk_dialog_says_when_the_library_has_no_contact_part(qtbot, theme):  # noqa: F811
@@ -319,7 +322,7 @@ def test_the_bulk_dialog_says_when_the_library_has_no_contact_part(qtbot, theme)
     dlg = ContactDialog(None, theme, ctl.project, cid, ["1"])
     qtbot.addWidget(dlg)
     assert not dlg.ok.isEnabled()
-    assert strings.DVD_CONTACT_NO_PARTS in dlg.notice.text() or dlg.notice.isVisibleTo(dlg) is False
+    assert strings.DVD_CONTACT_NO_PARTS in dlg.notice.text()
 
 
 def test_pasted_headers_know_the_new_words_and_keep_the_old_ones():
@@ -333,9 +336,9 @@ def test_pasted_headers_know_the_new_words_and_keep_the_old_ones():
     ]
 
 
-def test_a_pasted_block_with_a_cable_contact_column_is_one_step(qtbot, devices_theme):
+def test_a_pasted_block_with_a_cable_contact_column_is_one_step(qtbot, theme):  # noqa: F811
     p, cid = device_project()
-    ctl, view = make_devices(qtbot, devices_theme, p)
+    ctl, view = make_devices(qtbot, theme, p)
     assert view.paste_text(f"Pin\tCable contact\n1\t{CONTACT}\n2\t{OTHER}")
     assert (pin(ctl, cid, "1").contact_part, pin(ctl, cid, "2").contact_part) == (CONTACT, OTHER)
     ctl.undo()
@@ -390,7 +393,9 @@ def test_contact_for_all_pins_is_one_undo_step(by_hand):
     assert all(p.contact_part is None for p in other.pins)
     assert ctl.history.next_undo_label == strings.STEP_SET_HARNESS_CONTACTS.format(cid)
     ctl.undo()
-    assert all(p.contact_part is None for c in ctl.project.harnesses[hid].connectors for p in c.pins)
+    assert all(
+        p.contact_part is None for c in ctl.project.harnesses[hid].connectors for p in c.pins
+    )
     ed.contact_part.setCurrentIndex(0)  # none clears them
     assert ed.apply_contact_to_all()
     assert ed.contact_all.accessibleName() and ed.contact_all.toolTip()
@@ -530,7 +535,7 @@ def test_accessory_table_follows_the_project_and_undo(accessories):
     ctl.undo()
     ed.set_harness(hid)
     assert ed.model.rowCount() == 0
-    assert ed.table.empty_state.isVisibleTo(ed.table.viewport()) or True
+    assert ed.table.empty_state.isVisibleTo(ed.table)
 
 
 def test_a_released_harness_and_a_read_only_project_turn_the_tab_off(accessories):

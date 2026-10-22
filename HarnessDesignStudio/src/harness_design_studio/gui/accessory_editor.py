@@ -184,7 +184,7 @@ class AccessoryEditor(QWidget):
             w.returnPressed.connect(self._enter)
         sm = self.table.selectionModel()
         if sm is not None:
-            sm.currentRowChanged.connect(lambda _c, _p: self._row_selected())
+            sm.selectionChanged.connect(lambda *_a: self._row_selected())
         self.table.activated.connect(self._activated)
         self.set_harness(None)
 

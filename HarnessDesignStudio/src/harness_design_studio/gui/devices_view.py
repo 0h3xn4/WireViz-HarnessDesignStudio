@@ -601,7 +601,7 @@ class DevicesView(QWidget):
             ("delete", "close", strings.DV_DELETE_PINS, strings.DV_DELETE_PINS_TIP, "Shift+Delete", self._request_delete_pins),
             ("fill", "interface-type", strings.DV_FILL, strings.DV_FILL_TIP, "Ctrl+L", self._request_fill),
             ("assign", "interface", strings.DV_ASSIGN, strings.DV_ASSIGN_TIP, "Ctrl+Enter", self._request_assign),
-            ("contact", "part", strings.DV_CONTACT_BULK, strings.DV_CONTACT_BULK_TIP, None, self._request_contact),
+            ("contact", "part", None, strings.DV_CONTACT_BULK_TIP, None, self._request_contact),  # (icon only)
         ):  # fmt: skip
             b = QPushButton()
             b.setObjectName(f"devices-pin-{key}")
@@ -1195,6 +1195,7 @@ class DevicesView(QWidget):
     def _contact_toggled(self, on: bool) -> None:
         for key in CONTACT_COLUMNS:
             self.pin_table.setColumnHidden(self.pin_model.column_index(key), not on)
+        self.pin_buttons["contact"].setVisible(on)  # (the bar has no room for it otherwise)
 
     def _connector_current(self, current: QModelIndex, _previous: QModelIndex) -> None:
         if self._syncing or not current.isValid():

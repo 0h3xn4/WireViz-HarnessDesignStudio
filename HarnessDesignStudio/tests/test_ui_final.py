@@ -55,6 +55,13 @@ def _views(win):
         yield key, lambda k=key: win.set_area(k)
     for tab in ("devices", "diagram", "harness", "lists", "releases", "checks"):
         yield f"tab-{tab}", lambda t=tab: win.go_to(t)
+    for i in range(
+        4
+    ):  # the right-hand tabs of the Harness tab: Why, Edit wire, Connectors, Accessories
+        yield (
+            f"harness-side-{i}",
+            lambda i=i: (win.go_to("harness"), win.harness_view.side_tabs.setCurrentIndex(i)),
+        )
     for key, _title in SECTIONS:
         yield (
             f"settings-{key}",

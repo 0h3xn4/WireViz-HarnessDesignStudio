@@ -470,6 +470,7 @@ class WireEditor(QWidget):
         self.colour.activated.connect(lambda _i: self._touch(self.colour))
         colour_edit = self.colour.lineEdit()
         if colour_edit is not None:
+            colour_edit.setAccessibleName(strings.WIRE_COLOUR)
             colour_edit.textEdited.connect(lambda _t: self._touch(self.colour))
         self.note.textChanged.connect(lambda: self._touch(self.note))
         for w in (self.gauge, self.length, self.strip_a, self.strip_b, self.label):
@@ -718,7 +719,7 @@ class WireEditor(QWidget):
         by_harness: dict[str, list[str]] = {}
         for wid in self._ids:
             by_harness.setdefault(find_wire(project, wid)[0].id, []).append(wid)
-        for hid, ids in by_harness.items():
+        for hid, ids in by_harness.items() if strip else ():
             for op in plan_set_strip(project, hid, ids, **strip):
                 ops = _merge_strip(ops, op, ids)
         return ops

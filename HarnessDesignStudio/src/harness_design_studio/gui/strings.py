@@ -2345,7 +2345,7 @@ DV_COL_CONTACT_PART_TIP = (
 DV_CONTACT_PART_NONE = "none"
 DV_CONTACT_BULK = "Cable contact…"
 DV_CONTACT_BULK_TIP = (
-    "Set the cable contact of the selected pins. Generate copies it to the cable connector."
+    "Cable contact: set it on the selected pins. Generate copies it to the cable connector."
 )
 DVD_CONTACT_TITLE = "Cable contact"
 DVD_CONTACT_PINS = "Pins: {0}"
