@@ -155,7 +155,7 @@ At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv`
 
 ## 5. Guided and Expert mode
 
-**Next step.** The first item of the rail, **Next step**, shows one page with the one thing to do now, a single button and the six steps of the work. A first run opens projects on it (*Simple* workspace); if your settings already hold values you keep the *Full* workspace. You can change this in the View menu or in the Settings page. It is separate from Guided and Expert below.
+**Next step.** The first item of the rail, **Next step**, shows one page with the one thing to do now, a single button and the six steps of the work. A first run opens projects on it (*Simple* workspace); if your settings already hold values you keep the *Full* workspace. You can change this in the View menu or in the Settings page. In the Simple workspace the side panels, the minimap, the legend and the status counts start closed or off, and the diagram tools are under one **More** menu; **Show panels** brings the tree and the inspector back. Each workspace keeps its own layout. This is separate from Guided and Expert below.
 
 - **Guided** (default): you work with units and interfaces. The tool chooses connectors and pins and marks its choices as *auto-filled* until you confirm them.
 - **Expert**: you also see each connector of a unit and can choose the exact connector for every end of an interface.

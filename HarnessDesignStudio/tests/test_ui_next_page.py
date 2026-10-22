@@ -215,7 +215,7 @@ def test_the_settings_page_and_the_menu_are_two_views_of_one_setting(qtbot, tmp_
     assert combo.currentData() == "full"
     # the two actions come first in the View menu
     view = next(m for m in w.menuBar().findChildren(type(w.menu_add)) if m.title() == strings.M_VIEW)  # fmt: skip
-    first = [a for a in view.actions() if not a.isSeparator()][:2]
+    first = [a for a in view.actions() if a.isVisible() and not a.isSeparator()][:2]
     assert [a.objectName() for a in first] == ["act-workspace-simple", "act-workspace-full"]
     assert all(a.isCheckable() and a.toolTip() for a in first)
 

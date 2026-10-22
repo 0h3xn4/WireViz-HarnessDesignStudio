@@ -2,7 +2,7 @@
 
 This page shows the **Next step** page: one page that tells you what to do now, in plain words, with one button. Use it when you are not sure what to do next.
 
-> **Not in the latest release yet.** The simple workspace is new in 1.8.0 (decision D-171). This is its first stage; the fewer-things-on-screen stage and the plain-words stage are still to come. A project from an earlier version opens as it is, and nothing that is written to disk changes.
+> **Not in the latest release yet.** The simple workspace is new in 1.8.0 (decision D-171). It has two stages so far (the Next step page, and fewer things on screen); the plain-words stage is still to come. A project from an earlier version opens as it is, and nothing that is written to disk changes.
 
 ## Contents
 
@@ -10,6 +10,7 @@ This page shows the **Next step** page: one page that tells you what to do now, 
 - [The page](#the-page)
 - [What it says, step by step](#what-it-says-step-by-step)
 - [Simple or Full](#simple-or-full)
+- [What the Simple workspace hides](#what-the-simple-workspace-hides)
 - [Where the buttons go](#where-the-buttons-go)
 
 ## What it is for
@@ -54,6 +55,26 @@ The setting **Workspace: Simple or Full** is in the **View** menu (first entries
 - Changing the setting does not move the page you are on. **Show everything** switches to Full and opens the Model area.
 
 This is separate from **Guided / Expert** in the top bar, which only changes how much the diagram shows.
+
+## What the Simple workspace hides
+
+To show less at once, the Simple workspace starts with these things closed or off. Nothing is removed: each one is still in the **View** menu with its shortcut, and in the command palette (Ctrl+K).
+
+| Thing | In Simple | In Full |
+|---|---|---|
+| Project tree and Interfaces tab (left) | closed | open |
+| Inspector (right) | closed | open |
+| Problems panel (bottom) | closed | closed until asked |
+| Minimap and legend of the diagram | off | on |
+| Status bar | the save state, the running job, *Offline* and the project path | everything, with the counts, the *Problems* button and the zoom value |
+| Tools above the diagram | **Select**, **Connect**, **Add device** and **More** | all of them |
+| Rail | Next step, Model, Checks, Drawings, Outputs, Revisions, Settings | the same and Home |
+
+- **More** holds the other tools: *Create redundant copy*, *Delete*, *Zoom out*, *Zoom in*, *Fit all*, *Arrange diagram*, and a **Show only** menu (all interfaces, by signal class, by connector, by bundle).
+- **Show panels** (a button in the top bar, and **Show side panels** first in the View menu) opens or closes the project tree and the inspector together. It is only there in Simple.
+- Home is hidden in the rail, but it is still in the Go menu, on Ctrl+7 and in the palette.
+- Selecting something with the inspector closed shows a short message once per window with a **Show panels** button. Opening a problem from the Problems panel or a check opens the inspector by itself.
+- Each workspace remembers its own layout. Switching from Simple to Full gives you back the Full layout you had; closing the window in Simple opens it in Simple next time.
 
 ## Where the buttons go
 
