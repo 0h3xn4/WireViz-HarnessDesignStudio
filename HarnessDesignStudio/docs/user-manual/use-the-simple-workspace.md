@@ -2,7 +2,7 @@
 
 This page shows the **Next step** page: one page that tells you what to do now, in plain words, with one button. Use it when you are not sure what to do next.
 
-> **Not in the latest release yet.** The simple workspace is new in 1.8.0 (decision D-171). It has two stages so far (the Next step page, and fewer things on screen); the plain-words stage is still to come. A project from an earlier version opens as it is, and nothing that is written to disk changes.
+> **Not in the latest release yet.** The simple workspace is new in 1.8.0 (decision D-171). It has two stages (the Next step page, and fewer things on screen); the words of the program are not changed by it. A project from an earlier version opens as it is, and nothing that is written to disk changes.
 
 ## Contents
 
