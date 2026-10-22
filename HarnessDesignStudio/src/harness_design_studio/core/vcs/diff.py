@@ -72,7 +72,7 @@ def _flatten_harness(flat: Flat, h: Entity) -> None:
     hid = str(data["id"])
     flat[("harness", hid)] = {k: v for k, v in data.items() if k not in _HARNESS_PARTS}
     for key, kind in _HARNESS_PARTS.items():
-        for child in data[key]:
+        for child in data.get(key, []):  # a sparse list is left out while empty
             child = dict(child)
             if kind == "cable_connector":
                 for pin in child.pop("pins"):
