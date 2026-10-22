@@ -270,13 +270,13 @@ def _contacts(project: Project) -> Callable[[Project, Cell], Result]:
         if not contact:
             raise EditError(f"Pin {pin} of {cid} has no contact in this row.")
         hid = _owner(index, cell("harness"), "Connector", cid)
-        ops: list[Op] = []
-        if tool:  # the tool is checked first: a refused tool refuses the row, nothing is half done
+        ops = build_data.plan_set_contacts(work, hid, cid, [pin], contact)
+        if (
+            tool
+        ):  # a refused tool refuses the whole row: nothing is applied before every plan is made
             if tools.get(contact, tool) != tool:
                 raise EditError(f"{contact} has the tool '{tools[contact]}' in an earlier row.")
             ops += build_data.plan_set_part_tool(work, contact, tool)
-        ops += build_data.plan_set_contacts(work, hid, cid, [pin], contact)
-        if tool:
             tools[contact] = tool
         before = next(
             p for c in work.harnesses[hid].connectors if c.id == cid for p in c.pins if p.id == pin

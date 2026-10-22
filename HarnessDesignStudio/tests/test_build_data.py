@@ -730,7 +730,7 @@ def test_the_template_rows_import_into_a_matching_project(own):
     for r in table[1:]:
         r = list(r)
         r[1] = hid
-        r[4] = {"W001-0001": wires[0], "W001-P1": conns[0]}.get(r[4], r[4])
+        r[4] = {"W001-001": wires[0], "W001-P1": conns[0]}.get(r[4], r[4])
         rows.append(r)
     plan = plan_build_data_import(own, rows)
     assert plan.bad_count == 0, [r.message for r in plan.rows]
