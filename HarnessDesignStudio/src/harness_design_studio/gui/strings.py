@@ -2411,7 +2411,9 @@ ACC_ID_TIP = (
 ACC_KIND = "Kind"
 ACC_KIND_TIP = "What it is: sleeving, heat shrink, a label, a backshell or something else."
 ACC_PART = "Part"
-ACC_PART_TIP = "The part from the library (optional). New parts are added in the Devices tab."
+ACC_PART_TIP = (
+    "The part from the library (optional). Parts come in with the parts import (import-parts)."
+)
 ACC_ON = "On"
 ACC_ON_TIP = "What it goes on: a connector or a wire of this harness, or the harness itself."
 ACC_POSITION = "Position"

@@ -770,3 +770,24 @@ def test_the_parts_json_reads_the_tool_too(tmp_path):
     plan = plan_parts_import(p, table, guess_mapping(table[0]), approved=[])
     apply_ops(p, plan.ops)
     assert p.parts["C-9"].tool == "Z"
+
+
+def test_a_device_library_file_carries_the_contact_parts_of_its_pins(generated):
+    """Found by the documents: the file named a pin's contact but not the part, so a project that
+    imported the device had a reference to a part it did not have."""
+    from harness_design_studio.core.device_library import export_devices
+
+    box = next(c for c in generated.connectors.values() if c.unit_id and c.pins)
+    pins = [evolve(box.pins[0], contact_part=CONTACT), *box.pins[1:]]
+    generated.connectors[box.id] = evolve(box, pins=pins)
+    library = export_devices(generated, [box.unit_id])
+    assert CONTACT in {part["id"] for part in library["parts"]}
+
+
+def test_a_contact_or_an_accessory_part_that_is_not_in_the_library_is_an_error(generated):
+    from harness_design_studio.core.integrity import check_integrity
+
+    box = next(c for c in generated.connectors.values() if c.pins)
+    pins = [evolve(box.pins[0], contact_part="NO-SUCH-CONTACT"), *box.pins[1:]]
+    generated.connectors[box.id] = evolve(box, pins=pins)
+    assert "unknown_part" in {i.code for i in check_integrity(generated)}
