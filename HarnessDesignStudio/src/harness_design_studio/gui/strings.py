@@ -2531,3 +2531,14 @@ SETTINGS_WORKSPACE = "Workspace"
 SETTINGS_WORKSPACE_HINT = (
     "Simple opens a project on the next step to take. Full opens it on the diagram."
 )
+
+# ---- Simple workspace, stage S2: fewer things on screen (D-171) ----
+A_SHOW_PANELS = "Show side panels"
+SHOW_PANELS_BUTTON = "Show panels"
+SHOW_PANELS_TIP = "Open or close the project tree and the properties together"
+TOOL_ADD_DEVICE = "Add device"
+TOOL_ADD_DEVICE_TIP = "Add a device to the design (Ctrl+Shift+N)"
+TOOL_MORE = "More"
+TOOL_MORE_TIP = "More tools: copy, delete, zoom, arrange and show only some connections"
+TOOL_MORE_FILTER = "Show only"
+PROPERTIES_CLOSED = "The properties are closed. Open them to see and change what you selected."

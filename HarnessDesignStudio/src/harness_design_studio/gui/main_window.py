@@ -48,6 +48,7 @@ from PySide6.QtWidgets import (
     QProgressDialog,
     QPushButton,
     QStackedWidget,
+    QMenu,
     QToolBar,
     QToolButton,
     QVBoxLayout,
@@ -137,6 +138,7 @@ from harness_design_studio.gui.next_step import (
     clean_workspace,
     default_workspace,
     next_step,
+    workspace_key,
 )
 from harness_design_studio.gui.pages import HomePage
 from harness_design_studio.gui.panels import ProblemsPanel, PropertiesPanel, category_icon
@@ -568,6 +570,21 @@ class MainWindow(QMainWindow):
         self.tool_connect.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.tool_select.clicked.connect(lambda: self.ctl.end_connect())
         self.tool_connect.clicked.connect(lambda: self.ctl.begin_connect(self.ctl.connect_type))
+        # the simple workspace shows Select, Connect and Add device, and one More menu for the rest
+        # (stage S2); both are hidden in the full workspace
+        self.tool_add_device = QToolButton()
+        self.tool_add_device.setObjectName("tool-add-device")
+        self.tool_add_device.setText(strings.TOOL_ADD_DEVICE)
+        self.tool_add_device.setToolTip(strings.TOOL_ADD_DEVICE_TIP)
+        self.tool_add_device.setAccessibleName(strings.TOOL_ADD_DEVICE)
+        self.tool_add_device.setVisible(False)
+        self.tool_more = QToolButton()
+        self.tool_more.setObjectName("tool-more")
+        self.tool_more.setText(strings.TOOL_MORE)
+        self.tool_more.setToolTip(strings.TOOL_MORE_TIP)
+        self.tool_more.setAccessibleName(strings.TOOL_MORE)
+        self.tool_more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.tool_more.setVisible(False)
         self._told_properties = False
         self.hint = QLabel("")
         self.hint.setObjectName("hint")
@@ -588,6 +605,7 @@ class MainWindow(QMainWindow):
         icon_button(self.fit_btn, "fit", self.theme, strings.FIT, "F", text=strings.FIT)
         bar.addWidget(self.tool_select)
         bar.addWidget(self.tool_connect)
+        bar.addWidget(self.tool_add_device)
         self.tool_row = bar  # Arrange and the filters join it (they only act on the diagram)
         bar.addWidget(self.hint, 1)
         self.view = DiagramView(self.ctl, self.theme)
@@ -602,6 +620,7 @@ class MainWindow(QMainWindow):
             self.fit_btn,
         ):
             bar.addWidget(w)
+        bar.addWidget(self.tool_more)
         lay.addLayout(bar)
         self.zoom_in_btn.clicked.connect(lambda: self.view.zoom_by(1.2))
         self.zoom_out_btn.clicked.connect(lambda: self.view.zoom_by(1 / 1.2))
@@ -1462,6 +1481,17 @@ class MainWindow(QMainWindow):
         self.act_reset_layout = a(
             strings.A_RESET_LAYOUT, self.reset_layout, name="act-reset-layout"
         )
+        # the way back to the side panels in the simple workspace (stage S2); it exists, hidden and
+        # disabled (so the palette skips it), in the full workspace
+        self.act_show_panels = a(
+            strings.A_SHOW_PANELS,
+            lambda: self.show_panels(self.act_show_panels.isChecked()),
+            checkable=True,
+            name="act-show-panels",
+        )
+        self.act_show_panels.setToolTip(strings.SHOW_PANELS_TIP)
+        self.act_show_panels.setEnabled(False)
+        self.act_show_panels.setVisible(False)
         self.act_next_pane = a(strings.A_NEXT_PANE, partial(self._cycle, 1), "F6", name="act-next-pane")  # fmt: skip
         self.act_prev_pane = a(strings.A_PREV_PANE, partial(self._cycle, -1), "Shift+F6", name="act-prev-pane")  # fmt: skip
         self.go_actions: dict[str, QAction] = {}
@@ -1667,6 +1697,8 @@ class MainWindow(QMainWindow):
         self._rebuild_connect_menu()
         self.tool_connect.setMenu(self.menu_connect)
         v = mb.addMenu(strings.M_VIEW)
+        v.addAction(self.act_show_panels)  # (the simple workspace only)
+        v.addSeparator()
         v.addAction(self.act_simple)
         v.addAction(self.act_full)
         v.addSeparator()
@@ -1786,6 +1818,42 @@ class MainWindow(QMainWindow):
         self.mode_expert.clicked.connect(lambda: self._pick_mode("expert"))
         self.topbar.add_mode(self.mode_guided)
         self.topbar.add_mode(self.mode_expert)
+        # "Show panels": the way back to the project tree and the properties in the simple
+        # workspace (stage S2); the button shows there only
+        self.panels_btn = QToolButton()
+        self.panels_btn.setObjectName("panels-button")
+        self.panels_btn.setDefaultAction(self.act_show_panels)
+        icon_button(
+            self.panels_btn,
+            "panel-open",
+            self.theme,
+            strings.SHOW_PANELS_TIP,
+            text=strings.SHOW_PANELS_BUTTON,
+        )
+        self.panels_btn.setAccessibleName(strings.SHOW_PANELS_BUTTON)
+        self.panels_btn.setProperty("toggle", True)
+        self.panels_btn.setVisible(False)
+        self.topbar.add_mode(self.panels_btn)
+        for dock in (self.dock_left, self.dock_right):
+            dock.visibilityChanged.connect(lambda _v=False: self._sync_panels_action())
+        # the More menu of the diagram tool row (simple workspace): every tool the row leaves out
+        self.menu_more = QMenu(self.tool_more)
+        self.menu_more.setObjectName("menu-more")
+        self.menu_more.setToolTipsVisible(True)
+        for act in (self.act_redundant, self.act_delete):
+            self.menu_more.addAction(act)
+        self.menu_more.addSeparator()
+        for act in (self.act_zoom_out, self.act_zoom_in, self.act_fit, self.act_arrange):
+            self.menu_more.addAction(act)
+        self.menu_more.addSeparator()
+        self.menu_more_filter = self.menu_more.addMenu(strings.TOOL_MORE_FILTER)
+        self.menu_more_filter.setObjectName("menu-more-filter")
+        self.menu_more_filter.aboutToShow.connect(self._rebuild_more_filter)
+        self.tool_more.setMenu(self.menu_more)
+        self.tool_add_device.clicked.connect(lambda _c=False: self.act_add_device.trigger())
+        self.act_add_device.changed.connect(
+            lambda: self.tool_add_device.setEnabled(self.act_add_device.isEnabled())
+        )
         self.arrange_btn = QToolButton()
         self.arrange_btn.setObjectName("arrange-button")
         self.arrange_btn.setDefaultAction(self.act_arrange)
@@ -1897,6 +1965,38 @@ class MainWindow(QMainWindow):
     def _filter_kind_changed(self, _index: int) -> None:
         self._refresh_filter_values()
         self._filter_changed(0)
+
+    def _set_filter(self, kind: str | None, value: str | None) -> None:
+        """Show only one signal class, connector or bundle (or all): the same as the two pickers
+        of the Model tab, which the simple workspace hides."""
+        self.filter_combo.setCurrentIndex(max(self.filter_combo.findData(kind), 0))
+        if kind and value is not None:
+            at = self.filter_value.findData(value)
+            if at >= 0:
+                self.filter_value.setCurrentIndex(at)
+
+    def _rebuild_more_filter(self) -> None:
+        """The "Show only" entries of the More menu, ticked for the filter in force."""
+        menu = self.menu_more_filter
+        menu.clear()
+        kind, value = self.filter_combo.currentData(), self.filter_value.currentData()
+        everything = menu.addAction(strings.FILTER_ALL)
+        everything.setCheckable(True)
+        everything.setChecked(not kind)
+        everything.triggered.connect(lambda _c=False: self._set_filter(None, None))
+        for title, k in (
+            (strings.FILTER_CLASS, "class"),
+            (strings.FILTER_CONNECTOR, "connector"),
+            (strings.FILTER_BUNDLE, "bundle"),
+        ):
+            sub = menu.addMenu(title)
+            options = self._filter_options(k)
+            sub.setEnabled(bool(options))
+            for text, v in options:
+                act = sub.addAction(text)
+                act.setCheckable(True)
+                act.setChecked(kind == k and value == v)
+                act.triggered.connect(lambda _c=False, k=k, v=v: self._set_filter(k, v))
 
     def _filter_changed(self, _index: int) -> None:
         kind = self.filter_combo.currentData()
@@ -2165,8 +2265,9 @@ class MainWindow(QMainWindow):
         (the top bar says it too). The job indicator, Problems, Offline, the pending-values link
         and the zoom stay."""
         eff = self.width() / self.theme.scale
-        self.status_sel.setVisible(eff >= 1400)
-        self.status_counts.setVisible(eff >= 1250)
+        counts = self.workspace != "simple"  # (the simple workspace shows no counts)
+        self.status_sel.setVisible(counts and eff >= 1400)
+        self.status_counts.setVisible(counts and eff >= 1250)
         self.status_path.setVisible(eff >= 1250)
         self.status_saved.setVisible(eff >= 1100)
 
@@ -3031,7 +3132,8 @@ class MainWindow(QMainWindow):
         self.topbar.set_crumbs(strings.CRUMB_SEPARATOR.join(parts))
         names = self.main_tabs.names()
         i = self.main_tabs.currentIndex()
-        self.diagram_tools.setVisible(0 <= i < len(names) and names[i] == "diagram")
+        on_diagram = 0 <= i < len(names) and names[i] == "diagram"
+        self.diagram_tools.setVisible(on_diagram and self.workspace != "simple")
 
     def toggle_problems(self) -> None:
         """Show or hide the Problems panel at the bottom of the window."""

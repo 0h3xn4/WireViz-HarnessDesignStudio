@@ -10,6 +10,8 @@ the person chose. Every button has an accessible name and a tooltip, so the icon
 still usable with a screen reader and by hovering.
 """
 
+from collections.abc import Collection
+
 from PySide6.QtCore import QSize, Qt, Signal
 from PySide6.QtWidgets import (
     QButtonGroup,
@@ -78,6 +80,12 @@ class NavRail(QFrame):
         button = self.buttons[key]
         self.group.setExclusive(True)
         button.setChecked(True)
+
+    def set_hidden(self, keys: Collection[str]) -> None:
+        """List every area but these (a workspace may leave some out; they stay reachable by their
+        keys and menus). The button of an area that is open stays checked."""
+        for key, button in self.buttons.items():
+            button.setVisible(key not in keys)
 
     def current(self) -> str:
         for key, button in self.buttons.items():
