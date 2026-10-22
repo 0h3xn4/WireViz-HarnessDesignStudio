@@ -104,7 +104,7 @@ def test_text_that_looks_like_a_formula_is_stored_as_text(
     data = build_workbook(p, p.harnesses[harness_id], stamp_of(p))
     cut = _sheets(data)["Cut list"]
     row = next(r for r in cut if r[1] == w.id)
-    assert row[8] == '=HYPERLINK("http://x","y")' and row[10] == "-1+2"
+    assert row[10] == '=HYPERLINK("http://x","y")' and row[12] == "-1+2"
     with zipfile.ZipFile(io.BytesIO(data)) as z:
         assert b"<f>" not in z.read("xl/worksheets/sheet2.xml")
 
@@ -248,7 +248,7 @@ def test_the_verifier_notices_a_changed_length(
 
 
 def test_the_verifier_notices_a_wrong_wire_end_a_wrong_pin_and_a_wrong_count(built: dict[str, bytes], project: Project, harness_id: str) -> None:  # fmt: skip
-    assert "out_build" in _tampered(built, project, harness_id, "Cut list", 2, 7, "X.9")
+    assert "out_build" in _tampered(built, project, harness_id, "Cut list", 2, 9, "X.9")
     assert "out_build" in _tampered(built, project, harness_id, "Connectors", 3, 4, "W999-001")
     assert "out_build" in _tampered(built, project, harness_id, "Start here", 7, 2, 99)
 

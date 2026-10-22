@@ -269,10 +269,7 @@ def readiness(project: Project, h: Harness) -> list[Check]:
         if attached.get((c.id, p.id)) and p.termination == "unspecified"
     )
     no_contact = sum(
-        1
-        for c in h.connectors
-        for p in c.pins
-        if attached.get((c.id, p.id)) and not p.contact_part
+        1 for c in h.connectors for p in c.pins if attached.get((c.id, p.id)) and not p.contact_part
     )
     parts = {c.part_id for c in h.connectors} | {w.part_id for w in wires if w.part_id}
     not_approved = sum(
@@ -548,7 +545,11 @@ def _accessories_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> N
     rows = tables.accessories(h)
     body.append(_header(ws, lay, ACCESSORY_HEADER))
     for r in rows[1:]:
-        r = [*r[:3], r[3] or HARNESS_TARGET, *r[4:]]  # the target of an accessory of the whole harness
+        r = [
+            *r[:3],
+            r[3] or HARNESS_TARGET,
+            *r[4:],
+        ]  # the target of an accessory of the whole harness
         length = float(r[5]) if r[5] else ""
         body.append([
             _cell(ws, "", centre=True), _cell(ws, r[0], bold=True), _cell(ws, r[1]), _cell(ws, r[2]),
@@ -562,6 +563,10 @@ def _accessories_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> N
     ws.auto_filter.ref = f"A1:{_letter(len(ACCESSORY_HEADER))}{len(rows)}"
     if len(rows) > 1:
         _tick_rules(ws, f"A2:A{len(rows)}")
+    for col, least in ((2, 12.0), (3, 12.0), (4, 18.0), (5, 14.0), (6, 28.0), (9, 28.0)):
+        lay.widths[col] = max(
+            lay.widths.get(col, 0.0), least
+        )  # a sheet with no rows stays readable
     lay.widths[1] = 10.0
     _finish(ws, lay, stamp, body, tab="8E44AD", freeze="B2")
 

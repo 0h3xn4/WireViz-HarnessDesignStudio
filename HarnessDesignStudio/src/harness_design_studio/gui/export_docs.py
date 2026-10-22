@@ -63,7 +63,9 @@ SYSTEM_DOCS: Final[tuple[DocType, ...]] = (
     DocType("sys_overview", "Harness overview", "SVG and PDF"),
 )
 MANIFEST_DOC: Final = DocType("manifest", "Manifest", "JSON")
-DOCS: Final[dict[str, DocType]] = {d.key: d for d in (*HARNESS_DOCS, *OPTIONAL_HARNESS_DOCS, *SYSTEM_DOCS, MANIFEST_DOC)}
+DOCS: Final[dict[str, DocType]] = {
+    d.key: d for d in (*HARNESS_DOCS, *OPTIONAL_HARNESS_DOCS, *SYSTEM_DOCS, MANIFEST_DOC)
+}
 
 _HARNESS_FILES: Final = {
     "wirelist.csv": "wirelist",

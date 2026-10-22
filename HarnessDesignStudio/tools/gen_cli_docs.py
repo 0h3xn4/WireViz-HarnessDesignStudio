@@ -24,6 +24,7 @@ GROUPS = (
             "import-netlist",
             "import-pinout",
             "import-devices",
+            "import-build-data",
         ),
     ),
     ("Write data out", ("export-pinout", "export-devices")),
@@ -66,6 +67,11 @@ EXAMPLES: dict[str, list[str]] = {
     ],
     "import-lengths": [
         "harness-design-studio import-lengths my-design lengths.csv --unit mm --dry-run"
+    ],
+    "import-build-data": [
+        "harness-design-studio import-build-data my-design strip-lengths.csv --dry-run",
+        "harness-design-studio import-build-data my-design pin-contacts.csv",
+        "harness-design-studio import-build-data my-design accessories.csv",
     ],
     "import-netlist": [
         "harness-design-studio import-netlist my-design wheel.net --unit RW1 --prefix J "
@@ -177,7 +183,7 @@ def render() -> str:
         "not stop the command: it still finishes and saves.",
         "",
         "Every command that changes a project takes the same lock as the app, so the two never write "
-        "at once. The commands that import data (`import-parts`, `import-lengths`, `import-netlist`, `import-pinout`) "
+        "at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`) "
         "accept `--dry-run`: they show what they would do and change nothing; "
         "`config --ampacity-csv` does not.",
         "",

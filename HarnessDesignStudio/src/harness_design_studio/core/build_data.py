@@ -276,8 +276,12 @@ def plan_next_accessory_id(h: Harness) -> str:
     return f"ACC-{n:03d}"
 
 
-def _accessory(project: Project, h: Harness, given: Accessory | Mapping[str, object]) -> Accessory:
-    """The accessory as the model wants it, or an EditError that says what is wrong."""
+def check_accessory(
+    project: Project, harness_id: str, given: Accessory | Mapping[str, object]
+) -> Accessory:
+    """The accessory of a harness as the model wants it (texts trimmed, an empty cell as None,
+    numbers read from text), or an EditError that says what is wrong."""
+    h = _harness(project, harness_id)
     data = given.model_dump() if isinstance(given, Accessory) else dict(given)
     unknown = sorted(set(data) - set(Accessory.model_fields))
     if unknown:
@@ -333,7 +337,7 @@ def plan_set_accessory(
     library, the length is 0 to 100,000 mm and the quantity 1 to 9,999. A mapping with the fields
     of `Accessory` is checked like an `Accessory`. The list stays sorted by ID, as it is saved."""
     h = _harness(project, harness_id)
-    new = _accessory(project, h, accessory)
+    new = check_accessory(project, harness_id, accessory)
     others = [a for a in h.accessories if a.id != new.id]
     accessories = sorted([*others, new], key=lambda a: a.id)
     return (
@@ -356,6 +360,7 @@ def plan_delete_accessory(project: Project, harness_id: str, accessory_id: str) 
 __all__ = [
     "ACCESSORY_KINDS",
     "UNSET",
+    "check_accessory",
     "plan_delete_accessory",
     "plan_next_accessory_id",
     "plan_set_accessory",
