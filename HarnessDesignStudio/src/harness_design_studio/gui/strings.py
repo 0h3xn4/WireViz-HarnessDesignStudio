@@ -1596,9 +1596,7 @@ DV_PIN_TABLE = "Pins of {}"
 DV_PIN_FILTER = "Filter pins"
 DV_PIN_FILTER_TIP = "Show the pins that contain these words in any cell"
 DV_CONTACT = "Contact"
-DV_CONTACT_TIP = (
-    "Show the contact size and the termination of each pin. No output or check uses them yet"
-)
+DV_CONTACT_TIP = "Show the contact size, the termination and the cable contact of each pin"
 DV_PIN_COUNT = "{} of {} pins"
 DV_PIN_COUNT_ALL = "{} pins"
 DV_COL_PIN = "Pin"
@@ -2314,3 +2312,142 @@ EXP_DRAWINGS_TIP = (
     "an earlier export wrote to the folder."
 )
 EXP_DRAWINGS_NAME = "Include the PDF drawings in the export"
+
+# ---- D-170: the build data (strip lengths, cable contact, accessories, crimp tool) ------------------
+WIRE_STRIP_A = "Strip A (mm)"
+WIRE_STRIP_A_TIP = (
+    "How much insulation is stripped at the From end of the wire, in millimetres, for example 6. "
+    "Empty clears it."
+)
+WIRE_STRIP_B = "Strip B (mm)"
+WIRE_STRIP_B_TIP = (
+    "How much insulation is stripped at the To end of the wire, in millimetres, for example 6. "
+    "Empty clears it."
+)
+WIRE_STRIP_NOTE = (
+    "Strip lengths do not lock the wire against Generate: they are always kept, like the note."
+)
+WIRE_STRIP_ALL = "Apply strip lengths to all wires of this harness"
+WIRE_STRIP_ALL_TIP = (
+    "Give every wire of this harness the strip lengths in the two fields above (a field that you "
+    "emptied clears it). One undo step."
+)
+WIRE_STRIP_ALL_NONE = "Type a strip length in Strip A, Strip B or both first."
+WIRE_STRIP_ALL_DONE = "Strip lengths changed on {0} of {1} wires of {2}."
+WIRE_STRIP_ALL_SAME = "All {0} wires of {1} already have these strip lengths."
+WIRE_STRIP_ALL_NO_HARNESS = "Choose a harness first."
+STEP_SET_STRIP_ALL = "Set strip lengths of all wires of {0}"
+
+DV_COL_CONTACT_PART = "Cable contact"
+DV_COL_CONTACT_PART_TIP = (
+    "The contact the cable side uses on this pin. Generate copies it to the cable connector."
+)
+DV_CONTACT_PART_NONE = "none"
+DV_CONTACT_BULK = "Cable contact…"
+DV_CONTACT_BULK_TIP = (
+    "Cable contact: set it on the selected pins. Generate copies it to the cable connector."
+)
+DVD_CONTACT_TITLE = "Cable contact"
+DVD_CONTACT_PINS = "Pins: {0}"
+DVD_CONTACT_PART = "Contact"
+DVD_CONTACT_PART_TIP = (
+    "A part of category contact from the library. Choose none to clear the cable contact of "
+    "these pins."
+)
+DVD_CONTACT_OK = "Set cable contact"
+DVD_CONTACT_NO_PARTS = (
+    "The library has no part of category contact yet. Import or add one first, then choose it here."
+)
+STEP_SET_CONTACTS = "Set cable contact of {0} on {1}"
+
+CE_CONTACT_PART = "Contact"
+CE_CONTACT_PART_TIP = (
+    "The contact (a part of category contact from the library) the wire uses on this pin. Empty "
+    "means none."
+)
+CE_CONTACT_ALL = "Contact for all pins of this connector"
+CE_CONTACT_ALL_TIP = (
+    "Give every pin of the selected connector the contact chosen in Contact (none clears them). "
+    "One undo step."
+)
+CE_CONTACT_NONE = "none"
+CE_CONTACT_GENERATED = (
+    "The contact of a pin of a generated harness is set on the pin of the unit, in the Devices "
+    "tab (column Cable contact). Generate copies it to the cable connector."
+)
+STEP_SET_HARNESS_CONTACTS = "Set contact of all pins of {0}"
+
+HV_ACCESSORIES_TAB = "Accessories"
+ACC_TABLE_NAME = "Accessories of {0}"
+ACC_COL_ID = "ID"
+ACC_COL_KIND = "Kind"
+ACC_COL_PART = "Part"
+ACC_COL_ON = "On"
+ACC_COL_POSITION = "Position"
+ACC_COL_LENGTH = "Length (mm)"
+ACC_COL_QUANTITY = "Quantity"
+ACC_COL_NOTE = "Note"
+ACC_KINDS = (
+    ("sleeving", "sleeving"),
+    ("heat_shrink", "heat shrink"),
+    ("label", "label"),
+    ("backshell", "backshell"),
+    ("other", "other"),
+)
+ACC_ON_HARNESS = "the harness"
+ACC_PART_NONE = "no part"
+ACC_EMPTY_TITLE = "No accessories yet"
+ACC_EMPTY_HINT = (
+    "Accessories are the things that go on a harness besides its wires and connectors: sleeving, "
+    "heat shrink, labels, backshells. List them here and the build sheets show them."
+)
+ACC_NO_HARNESS = "Choose a harness to list its accessories."
+ACC_RELEASED = "{0} is released. Start a new revision to change its accessories."
+ACC_ID = "ID"
+ACC_ID_TIP = (
+    "The name of the accessory in this harness, for example ACC-001. The next free one is "
+    "offered. It cannot be changed once the accessory exists."
+)
+ACC_KIND = "Kind"
+ACC_KIND_TIP = "What it is: sleeving, heat shrink, a label, a backshell or something else."
+ACC_PART = "Part"
+ACC_PART_TIP = (
+    "The part from the library (optional). Parts come in with the parts import (import-parts)."
+)
+ACC_ON = "On"
+ACC_ON_TIP = "What it goes on: a connector or a wire of this harness, or the harness itself."
+ACC_POSITION = "Position"
+ACC_POSITION_TIP = "Where it goes, in your words. Nothing is computed from it."
+ACC_POSITION_PLACEHOLDER = "for example 50 mm from the P1 end"
+ACC_LENGTH = "Length (mm)"
+ACC_LENGTH_TIP = "The length of one piece in millimetres (optional), for example 120."
+ACC_QUANTITY = "Quantity"
+ACC_QUANTITY_TIP = "How many pieces, a whole number from 1 to 9999."
+ACC_NOTE = "Note"
+ACC_NOTE_TIP = "Your remark about the accessory. It appears in the build sheets."
+ACC_ADD = "Add accessory"
+ACC_ADD_TIP = (
+    "Add the accessory in the form. When a row of the table is selected, the form is a copy of "
+    "it and the new accessory gets the next free ID."
+)
+ACC_CHANGE = "Change accessory"
+ACC_CHANGE_TIP = "Save the form into the selected accessory"
+ACC_DELETE = "Delete accessory"
+ACC_DELETE_TIP = "Delete the selected accessory from this harness"
+ACC_NEW = "New accessory"
+ACC_NEW_TIP = "Clear the form and the selection to describe a new accessory"
+ACC_NONE_SELECTED = "Select an accessory in the table first."
+ACC_ID_EXISTS = "{0} is already an accessory of this harness. Use Change accessory."
+STEP_ADD_ACCESSORY = "Add accessory {0}"
+STEP_CHANGE_ACCESSORY = "Change accessory {0}"
+STEP_DELETE_ACCESSORY = "Delete accessory {0}"
+
+INS_FACT_TOOL = "Crimp tool"
+INS_PART_TOOL = "Crimp tool"
+INS_PART_TOOL_TIP = (
+    "The crimp tool, or its setting, for this contact, in your words, for example "
+    "'Tool X, setting 4'. Empty clears it. The build sheets show it."
+)
+INS_PART_TOOL_SET = "Set tool"
+INS_PART_TOOL_SET_TIP = "Save the crimp tool of this contact part"
+STEP_SET_PART_TOOL = "Set tool of {0}"

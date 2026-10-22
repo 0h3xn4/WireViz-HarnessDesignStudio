@@ -1,5 +1,5 @@
 """Commands that bring outside data into a project (config, import-parts, import-lengths,
-import-netlist, import-pinout) and one that writes a device's pinout out (export-pinout)."""
+import-build-data, import-netlist, import-pinout) and one that writes a device's pinout out (export-pinout)."""
 
 import argparse
 import sys
@@ -7,6 +7,7 @@ from pathlib import Path
 
 from harness_design_studio.cli import blocked_text
 from harness_design_studio.core import configcheck, edit, standard_profiles
+from harness_design_studio.core.build_data_import import plan_build_data_import
 from harness_design_studio.core.commands import History, Op, SetConfig
 from harness_design_studio.core.errors import HarnessError, TransactionError
 from harness_design_studio.core.generate.lengths import plan_length_import
@@ -23,7 +24,7 @@ from harness_design_studio.core.library_import import (
 
 COMMANDS = (
     "config", "library", "import-parts", "import-lengths", "import-netlist", "import-pinout",
-    "export-pinout", "export-devices", "import-devices",
+    "export-pinout", "export-devices", "import-devices", "import-build-data",
 )  # fmt: skip
 UNITS = {"mm": 0.001, "m": 1.0, "cm": 0.01}
 
@@ -233,6 +234,14 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
         "--unit", choices=sorted(UNITS), default="mm", help="unit of the length column (default mm)"
     )
     ll.add_argument("--dry-run", action="store_true")
+    bd = sub.add_parser(
+        "import-build-data",
+        help="import strip lengths, pin contacts, accessories or crimp tools (CSV, TSV, JSON or XLSX; read by their headings)",
+        description="Import the build data of a technician from a table. The kind is told by the column headings (any case; other columns are ignored): strip lengths (Wire, Strip A (mm), Strip B (mm); Harness is optional while the wire ID is unique), pin contacts (Harness, Connector, Pin, Contact; Tool is optional and sets the crimp tool of that contact part), accessories (Harness, Kind, Part, Target, Position, Length (mm), Quantity, Note; ID is optional, else they are numbered ACC-001 ...) or part tools (Part, Tool). An empty cell leaves the value as it is. A pin of a harness made by Generate takes its contact from the unit's pin (Devices tab) and refuses the row. The preview lists every row; a row with a problem stops the whole import and nothing is changed. Templates: strip-lengths.csv, pin-contacts.csv and accessories.csv (harness-design-studio templates FOLDER).",
+    )
+    bd.add_argument("project", type=Path)
+    bd.add_argument("file", type=Path)
+    bd.add_argument("--dry-run", action="store_true", help="show the preview only")
 
 
 def _library_options(p: argparse.ArgumentParser) -> None:
@@ -289,6 +298,8 @@ def run(args: argparse.Namespace) -> int:
             return _parts(project, table, args)
         if args.command == "import-pinout":
             return _pinout(project, table, args)
+        if args.command == "import-build-data":
+            return _build_data(project, table, args)
         return _lengths(project, table, args)
     except TransactionError as exc:  # blocked (for example by a release), not misused
         print(blocked_text(exc), file=sys.stderr)
@@ -469,6 +480,37 @@ def _lengths(project, table: list[list[str]], args: argparse.Namespace) -> int: 
     History(project).execute("Import segment lengths", plan.ops)
     save_project(project, args.project)
     print("Lengths imported. Generate harnesses again to update the wire lengths.")
+    return 0
+
+
+def _build_data(project, table: list[list[str]], args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+    if len(table) < 2:
+        print(
+            "error: the file has no rows to import (headings and at least one row).",
+            file=sys.stderr,
+        )
+        return 2
+    plan = plan_build_data_import(project, table)
+    print(f"{plan.label}: {len(plan.rows)} row(s) read.")
+    for r in plan.rows:
+        print(f"row {r.row_number}: {'OK ' + r.message if r.ok else 'ERROR ' + r.message}")
+    n = plan.counts()
+    print(
+        f"{n['added']} added, {n['changed']} changed, {n['unchanged']} unchanged, "
+        f"{n['refused']} refused."
+    )
+    if n["refused"]:
+        print("Nothing was changed.")
+        return 1
+    if args.dry_run:
+        if _would_be_blocked(project, plan.label, plan.ops):
+            return 1
+        print("Dry run: nothing was changed.")
+        return 0
+    History(project).execute(plan.label, plan.ops)
+    if plan.ops:
+        save_project(project, args.project)
+    print("Build data imported. Generate keeps it; the build sheets show it.")
     return 0
 
 

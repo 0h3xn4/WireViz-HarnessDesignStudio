@@ -43,6 +43,8 @@ HARNESS_DOCS: Final[tuple[DocType, ...]] = (
     DocType("drawing_a3", "Drawing, A3", "PDF"),
     DocType("drawing_svg", "Drawing sheets, A3", "SVG"),
 )
+# Written only for a harness that has accessories (D-170), so not in the list every harness shows.
+OPTIONAL_HARNESS_DOCS: Final[tuple[DocType, ...]] = (DocType("accessories", "Accessories", "CSV"),)
 DRAWING_KEYS: Final = frozenset({"drawing_a4", "drawing_a3", "drawing_svg"})  # only with drawings
 SYSTEM_DOCS: Final[tuple[DocType, ...]] = (
     DocType("sys_bom", "Bill of materials, all harnesses", "CSV"),
@@ -61,7 +63,9 @@ SYSTEM_DOCS: Final[tuple[DocType, ...]] = (
     DocType("sys_overview", "Harness overview", "SVG and PDF"),
 )
 MANIFEST_DOC: Final = DocType("manifest", "Manifest", "JSON")
-DOCS: Final[dict[str, DocType]] = {d.key: d for d in (*HARNESS_DOCS, *SYSTEM_DOCS, MANIFEST_DOC)}
+DOCS: Final[dict[str, DocType]] = {
+    d.key: d for d in (*HARNESS_DOCS, *OPTIONAL_HARNESS_DOCS, *SYSTEM_DOCS, MANIFEST_DOC)
+}
 
 _HARNESS_FILES: Final = {
     "wirelist.csv": "wirelist",
@@ -70,6 +74,7 @@ _HARNESS_FILES: Final = {
     "mass_length.csv": "mass_length",
     "tests.csv": "tests",
     "labels.csv": "labels",
+    "accessories.csv": "accessories",
     "wireviz.yaml": "wireviz",
     "drawing_A4.pdf": "drawing_a4",
     "drawing_A3.pdf": "drawing_a3",

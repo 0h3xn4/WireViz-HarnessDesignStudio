@@ -44,12 +44,15 @@ def _box_ids(h: Harness, interfaces: list[Any]) -> set[str]:
 
 
 def used_part_ids(project: Project, h: Harness) -> set[str]:
-    """Parts a harness depends on: its connectors, its wires, the box connectors it plugs into
-    (or that carry its interfaces), and the counterpart part each connector part names."""
+    """Parts a harness depends on: its connectors, its wires, the contacts on its pins and its
+    accessories, the box connectors it plugs into (or that carry its interfaces), and the
+    counterpart part each connector part names."""
     interfaces = [
         project.interfaces[i] for i in sorted(carried_interfaces(h)) if i in project.interfaces
     ]
     ids = {c.part_id for c in h.connectors} | {w.part_id for w in h.wires if w.part_id}
+    ids |= {p.contact_part for c in h.connectors for p in c.pins if p.contact_part}  # 1.7.0
+    ids |= {a.part_id for a in h.accessories if a.part_id}  # 1.7.0
     ids |= {
         project.connectors[b].part_id for b in _box_ids(h, interfaces) if b in project.connectors
     }

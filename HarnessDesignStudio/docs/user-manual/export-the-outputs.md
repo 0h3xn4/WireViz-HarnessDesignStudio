@@ -1,8 +1,8 @@
 # Export the outputs
 
-This page shows how to write the build workbook and the lists of a design (wire lists, pinouts, parts list, test tables, labels, block diagram) into the project's `outputs` folder, how to build a harness from the workbook, how to add the PDF drawings, and how to check that the files are current.
+This page shows how to write the build workbook and the lists of a design (wire lists, pinouts, parts list, test tables, labels, block diagram) into the project's `outputs` folder, how to build a harness from the workbook, how to add the PDF drawings, and how to check that the files are current. The build data a technician needs (strip lengths, contacts, crimp tools, accessories) is entered first: [enter the build data](enter-the-build-data.md).
 
-> **Not in the latest release yet.** The build workbook (`<ID>_build.xlsx`) and the option `--drawings` are new in 1.7.0 (decision D-169). In 1.6.0 and earlier, `export` always wrote the PDF drawings and there was no build workbook; see the [changelog](../../CHANGELOG.md).
+> **Not in the latest release yet.** The build workbook (`<ID>_build.xlsx`) and the option `--drawings` are new in 1.7.0 (decision D-169). In 1.6.0 and earlier, `export` always wrote the PDF drawings and there was no build workbook; see the [changelog](../../CHANGELOG.md). The strip lengths, contacts, crimp tools and accessories in the workbook are new in 1.7.0 too (decision D-170).
 
 ## Contents
 
@@ -11,7 +11,7 @@ This page shows how to write the build workbook and the lists of a design (wire 
 - [2. What you get](#2-what-you-get)
 - [3. The build workbook, sheet by sheet](#3-the-build-workbook-sheet-by-sheet)
 - [4. Build a harness from the workbook](#4-build-a-harness-from-the-workbook)
-- [What the build workbook does not hold yet](#what-the-build-workbook-does-not-hold-yet)
+- [What the build workbook holds, and what it does not](#what-the-build-workbook-holds-and-what-it-does-not)
 - [5. The PDF drawings (optional)](#5-the-pdf-drawings-optional)
 - [6. Read a file](#6-read-a-file)
 - [7. Check that the outputs are current](#7-check-that-the-outputs-are-current)
@@ -43,7 +43,7 @@ The files are checked independently before they are written. If that check fails
 
 ## 2. What you get
 
-This is the list for the practice project. The export counts 34 files; with `manifest.json` there are 35. With `--drawings` it counts 40, and the six extra files are the lines marked below:
+This is the list for the practice project, which has no build data. The export counts 34 files; with `manifest.json` there are 35. With `--drawings` it counts 40, and the six extra files are the lines marked below. Each harness with accessories adds one file, `accessories.csv`:
 
 ```
 wheel-link/outputs/
@@ -51,6 +51,7 @@ wheel-link/outputs/
   harnesses/W001/
     W001_build.xlsx              the build workbook: the file to build the harness from
     wirelist.csv  pinouts.csv  bom.csv  mass_length.csv  tests.csv  labels.csv
+    accessories.csv              only for a harness that has accessories (1.7.0)
     wireviz.yaml                 a WireViz-style description (best effort)
     W001.xlsx                    all tables of the harness as an Excel workbook (data)
     drawing_A3.pdf  drawing_A4.pdf  drawing_A3_s1.svg   the harness drawing (only with --drawings)
@@ -65,16 +66,17 @@ wheel-link/outputs/
 
 | File | What it is for |
 | --- | --- |
-| `<ID>_build.xlsx` | The build workbook of one harness: what is ready and what is missing, the cut list, one block per connector, the parts, the labels and the test sheet ([section 3](#3-the-build-workbook-sheet-by-sheet)). |
-| `wirelist.csv` | Every wire: signal, interface, connectors, pins, gauge, part, colour, length. Two columns, *Label* and *Note*, are added only when you gave a wire one (1.4.0). |
-| `pinouts.csv`, `box_pinouts.csv` | Every pin of every cable connector, and of every connector on a unit, with the wire on it and whether it is spare. The columns *Function* and *Termination* (crimp or solder) are added only when a pin has one (1.4.0). |
-| `bom.csv` | The bill of materials ([BOM](../GLOSSARY.md)): parts and quantities, with approval status. |
+| `<ID>_build.xlsx` | The build workbook of one harness: what is ready and what is missing, the cut list, one block per connector, the parts, the accessories, the labels and the test sheet ([section 3](#3-the-build-workbook-sheet-by-sheet)). |
+| `wirelist.csv` | Every wire: signal, interface, connectors, pins, gauge, part, colour, length. Two columns, *Label* and *Note*, are added only when you gave a wire one (1.4.0), and two more, *Strip A (mm)* and *Strip B (mm)*, only when any wire of the project has a strip length (1.7.0). |
+| `pinouts.csv`, `box_pinouts.csv` | Every pin of every cable connector, and of every connector on a unit, with the wire on it and whether it is spare. The columns *Function* and *Termination* (crimp or solder) are added only when a pin has one (1.4.0), and *Contact* only when a pin has a contact part (1.7.0). |
+| `bom.csv` | The bill of materials ([BOM](../GLOSSARY.md)): parts and quantities, with approval status. Since 1.7.0 it counts the contact parts used on pins and the parts of accessories as well. |
+| `accessories.csv` | The accessories of a harness (sleeving, heat shrink, labels, backshells): kind, part, what it is on, where, length of one piece, quantity, note. Only written for a harness that has some (1.7.0, [enter the build data](enter-the-build-data.md)). |
 | `mass_length.csv` | Wire length and mass, and what is still unknown. Totals count only what is known. |
 | `tests.csv` | A continuity test for each wire and an isolation test for each wire and shield. |
 | `labels.csv` | One label for each connector and two for each wire, and one for the harness when it has a label. A label you gave (1.4.0) is printed instead of only the ID or the signal name. |
 | `mating_matrix.csv` | Which cable connector mates with which unit connector, with the gender of each. |
 | `traceability.csv` | Which interface is carried by which wires. |
-| `<ID>.xlsx` | The tables of the harness as sheets (wire list, pinouts, BOM, mass and length, tests, labels), as data. It is not the build workbook and has no layout for building. |
+| `<ID>.xlsx` | The tables of the harness as sheets (wire list, pinouts, BOM, mass and length, tests, labels, and the accessories when it has some), as data. It is not the build workbook and has no layout for building. |
 | `drc_report.md` | The same report as `harness-design-studio drc`. |
 | `changelog.csv`, `revision_report.md` | The change log and the history of each harness ([release a harness](release-a-harness.md)). |
 | `export.json` | The whole model in one JSON file, for other tools. |
@@ -84,19 +86,20 @@ Only the A3 drawing is also written as SVG; the A4 drawing is a PDF only. Full l
 
 ## 3. The build workbook, sheet by sheet
 
-`harnesses/<ID>/<ID>_build.xlsx` is made to build a harness from. It holds only what the design holds: where a value is missing, the cell says `to fill in` on an amber background, and the tool never puts a default there. It has no formulas, and the same design gives the same bytes. It is a normal Excel file. LibreOffice Calc opens it and prints it (checked by converting it to PDF); the drop-down lists and the green tick colour were not tried by hand in Excel or Calc. The seven sheets are in the order you work in:
+`harnesses/<ID>/<ID>_build.xlsx` is made to build a harness from. It holds only what the design holds: where a value is missing, the cell says `to fill in` on an amber background, and the tool never puts a default there. It has no formulas, and the same design gives the same bytes. It is a normal Excel file. LibreOffice Calc opens it and prints it (checked by converting it to PDF); the drop-down lists and the green tick colour were not tried by hand in Excel or Calc. The eight sheets are in the order you work in:
 
 | Sheet | What it holds | What to do with it |
 | --- | --- | --- |
 | **Start here** | The harness and its revision and status, `Ready to build` (yes or no), a table of checks, the author, checker, approver and release date from the design, a short guide to the sheets and a sign-off block to fill in by hand. | Read it first. If the answer is no, fix what is marked. |
-| **Cut list** | One row per wire, in cut order: AWG, part, length, from, to, signal or label, shield group and note. The colour is a coloured cell with its name and its IEC 60757 code beside it (`red (RD)`). The column **Cut (x)** is for a tick. The last row counts the wires and adds their lengths. | Cut the wires from the top to the bottom and tick each one. |
-| **Connectors** | One block for every connector: a heading row with its ID, part, gender, what it mates with and its label, then one row for each pin: signal, function, wire, colour, AWG, where the wire goes, termination, contact size, and the tick columns **Terminated (x)**, **Inserted (x)** and **Checked (x)**. A pin with no wire is grey, and says `(spare)`. | Work through one connector at a time. |
+| **Cut list** | One row per wire, in cut order: AWG, part, length, **Strip A (mm)** and **Strip B (mm)**, from, to, signal or label, shield group and note. The colour is a coloured cell with its name and its IEC 60757 code beside it (`red (RD)`). The column **Cut (x)** is for a tick. The last row counts the wires and adds their lengths. | Cut the wires from the top to the bottom and tick each one. |
+| **Connectors** | One block for every connector: a heading row with its ID, part, gender, what it mates with and its label, then one row for each pin: signal, function, wire, colour, AWG, where the wire goes, termination, contact size, **Contact** (the contact part of the pin), **Tool** (the crimp tool of that part), and the tick columns **Terminated (x)**, **Inserted (x)** and **Checked (x)**. A pin with no wire is grey, and says `(spare)`. | Work through one connector at a time. |
 | **Parts** | The bill of materials of this harness: part, category, manufacturer, part number, description, approval, quantity, unit, wires without length, and where it is used. The approval is coloured and written in words: green for approved, amber for pending, red for anything else (for example a part that is missing from the parts list). | Take the parts from stock. A part that is not approved is easy to see. |
+| **Accessories** | The accessories of the harness with the column **Done (x)**: accessory, kind, part, target (a harness-level accessory shows `(harness)`), position, length (mm), quantity and note. With none entered the sheet says `No accessories entered.` | Fit sleeving, heat shrink, labels and backshells, and tick each. |
 | **Labels** | The labels of `labels.csv` (connector labels, and a label for each end of each wire) with the column **Done (x)**. | Print and fit the labels, and tick each. |
 | **Tests** | The continuity and insulation tests of `tests.csv` with the expected value, the limit and the test voltage (they read `TBD (placeholder)` until the values are set). The columns **Measured**, **Result**, **Initials** and **Date** are empty. | Test, and write down the result. **Result** offers `Pass` and `Fail` and turns green or red. |
 | **About** | The tool version and the model hash the workbook was made from (and the full hash). | Check that it is the design you mean. |
 
-The table on **Start here** has six checks, each with a count of what is open and a status:
+The table on **Start here** has eight checks, each with a count of what is open and a status:
 
 | Check | Status when something is open |
 | --- | --- |
@@ -105,37 +108,40 @@ The table on **Start here** has six checks, each with a count of what is open an
 | Wires without a colour | `TO FIX` |
 | Wires without a part | `TO FIX` |
 | Pins in use without a termination (crimp or solder) | `NOTE` |
+| Wires without strip lengths | `NOTE` |
+| Pins in use without a contact part | `NOTE` |
 | Parts that are not approved | `NOTE` |
 
-`Ready to build` says `yes` when no line is marked `TO FIX`. A `NOTE` does not stop it; it is shown so that you see it. Each open line says what to do (for example import the lengths, or set the colour of the signal).
+`Ready to build` says `yes` when no line is marked `TO FIX`. A `NOTE` does not stop it; it is shown so that you see it. Each open line says what to do (for example import the lengths, or set the colour of the signal). *Wires without strip lengths* counts a wire that lacks the strip length at either end; *Pins in use without a contact part* counts the pins with a wire that have no contact.
 
 How the cut list is sorted: thick wires before thin ones (a smaller AWG number is a thicker wire), then by colour name, then the shorter wire first, so that the same wire is cut in one go. A wire without a gauge comes last; inside a gauge, a wire without a colour comes last in its group, and a wire without a length after the others of its colour. The tick columns hold an `x` (the cell offers it in a list); a cell with an `x` turns green.
 
-On **Cut list**, **Connectors**, **Parts**, **Labels** and **Tests** the bold header row stays on screen when you scroll, and it is repeated on every printed page. These five sheets and **Start here** print on A4, landscape, with the tool version and model hash at the left of the footer, the sheet name in the middle and the page number at the right. **Cut list**, **Parts**, **Labels** and **Tests** have filters; **Start here** and **Connectors** have none. The print of **Connectors** has page breaks between the connector blocks.
+On **Cut list**, **Connectors**, **Parts**, **Accessories**, **Labels** and **Tests** the bold header row stays on screen when you scroll, and it is repeated on every printed page. These six sheets and **Start here** print on A4, landscape, with the tool version and model hash at the left of the footer, the sheet name in the middle and the page number at the right. **Cut list**, **Parts**, **Accessories**, **Labels** and **Tests** have filters; **Start here** and **Connectors** have none. The print of **Connectors** has page breaks between the connector blocks.
 
 ## 4. Build a harness from the workbook
 
 1. **Export** the project. Open `outputs/harnesses/<ID>/<ID>_build.xlsx`.
 2. **Read Start here.** If `Ready to build` says `no`, fix the lines marked `TO FIX` in the design, for example [fill in the engineering values](fill-in-engineering-values.md), [import the lengths](import-data.md) or [set the wire colours](set-wire-colours.md), generate again and export again. Read the `NOTE` lines too and decide whether they matter for this harness.
 3. **Work on a copy.** Save a copy of the workbook outside `outputs/` (in the app, **Copy to folder…** in **Exported files**, or just copy the file) and print or fill in that copy. The next export overwrites the file in `outputs/`, and a file in `outputs/` that you typed in is reported by `harness-design-studio verify DIR --outputs` as changed (`out_modified`) and not matching the design (`out_build`).
-4. **Take the parts** listed on **Parts**, and the labels on **Labels**.
-5. **Cut** the wires in the order of **Cut list** and tick each row.
-6. **Terminate**: for each connector, go through its block on **Connectors**. Tick **Terminated**, **Inserted** and **Checked** as you go.
-7. **Test.** Write the measured value, the result, your initials and the date on **Tests**.
-8. **Sign off** on **Start here** (the five steps, with name, date and signature).
-9. If the design changes later, export again and compare the model hash in the footer with the one of the copy you built from. A different hash means a different design.
+4. **Take the parts** listed on **Parts** (the contacts and accessory parts are in it), and the labels on **Labels**.
+5. **Cut** the wires in the order of **Cut list**, strip each end by **Strip A (mm)** and **Strip B (mm)**, and tick each row.
+6. **Terminate**: for each connector, go through its block on **Connectors**. Fit the **Contact** with the **Tool** it names, and tick **Terminated**, **Inserted** and **Checked** as you go.
+7. **Fit the accessories** on **Accessories** and tick each.
+8. **Test.** Write the measured value, the result, your initials and the date on **Tests**.
+9. **Sign off** on **Start here** (the five steps, with name, date and signature).
+10. If the design changes later, export again and compare the model hash in the footer with the one of the copy you built from. A different hash means a different design.
 
 The tick columns and the sign-off block are for people. The tool never reads them back.
 
-## What the build workbook does not hold yet
+## What the build workbook holds, and what it does not
 
-The workbook shows what the design holds today and nothing else. These things a technician needs are **not in the model yet**, so they are **not in the workbook**:
+Since 1.7.0 the workbook holds the build data a technician needs, **when you have entered it** ([enter the build data](enter-the-build-data.md)):
 
-- **Strip length** of each wire end.
-- **The contact or terminal part** used on each pin, and the **crimp tool** or setting for it. A pin has a termination (crimp, solder or unspecified) and a contact size, and the parts library has the categories *contact* and *backshell*, but no pin, wire or harness refers to such a part.
-- **Sleeves, heat shrink and where a label goes.** The library has the categories *sleeving* and *label*, but nothing refers to them. The label text is in the workbook; its position is not.
+- the **strip length** of each wire end (*Strip A (mm)*, *Strip B (mm)* on **Cut list**);
+- the **contact** on each pin and the **crimp tool** for it (*Contact*, *Tool* on **Connectors**);
+- **sleeving, heat shrink, labels and backshells** with where they go in words, a length and a quantity (**Accessories**).
 
-They are planned for 1.7.0 ([the plan](../ait/TEST_USER_FEEDBACK_PLAN.md), milestone M2). They are not built yet, and a plan is not a promise. The tool will not set any of them by itself: an empty value stays empty and is shown as `to fill in`. Until then, write them on the printed copy or keep them in your own list.
+What you have not entered reads `to fill in`, and the two `NOTE` lines on **Start here** count it. The tool sets none of these values itself and checks none of them: it does not know whether a contact fits a pin, whether a strip length is sensible or which tool is right. What the lists should say about soldering beyond the termination column is still open; tell the owner what you need. Where a label goes is the *Position* of an accessory of the kind *label*, in your words; the workbook does not draw it.
 
 ## 5. The PDF drawings (optional)
 
@@ -218,4 +224,4 @@ It also finds files that were edited or deleted after the export (`[out_modified
 
 More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 
-Next: [release a harness](release-a-harness.md), [set wire colours](set-wire-colours.md)
+Next: [enter the build data](enter-the-build-data.md), [release a harness](release-a-harness.md), [set wire colours](set-wire-colours.md)

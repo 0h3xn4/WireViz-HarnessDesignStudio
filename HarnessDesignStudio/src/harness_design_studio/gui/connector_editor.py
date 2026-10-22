@@ -1,12 +1,15 @@
 """The Connectors tab of the Harness tab: add a cable connector to a harness that you made, set the
-function, termination and contact size of its pins, and delete a connector without wires.
+function, termination, contact size and contact (a part of category contact) of its pins, give all
+pins of a connector one contact, and delete a connector without wires.
 
     editor = ConnectorEditor(ctl, theme)
     editor.set_harness("W001")
 
 A harness made by Generate takes no connectors here (Generate would replace them): the tab says so
 and stays disabled. The same holds for a released harness and a read-only project. Mistakes are
-said in words under the form, never in a message box. The plans are in `core/manual_harness.py`.
+said in words under the form, never in a message box. The plans are in `core/manual_harness.py`
+and `core/build_data.py`. On a harness made by Generate the contact comes from the pin of the unit
+(Devices tab, column Cable contact), and the tab says so.
 """
 
 from PySide6.QtCore import Signal
@@ -20,6 +23,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from harness_design_studio.core.build_data import plan_set_contacts
+from harness_design_studio.core.devices import contact_part_choices
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.manual_harness import (
     plan_add_connector,
@@ -101,6 +106,7 @@ class ConnectorEditor(QWidget):
         for key, label in strings.CE_TERMINATIONS:
             self.termination.addItem(label, key)
         self.contact = QLineEdit()
+        self.contact_part = QComboBox()
         for widget, name, text, tip in (
             (self.connector, "connector-pick", strings.CE_CONNECTOR, strings.CE_CONNECTOR_TIP),
             (self.pin, "connector-pin", strings.CE_PIN, strings.CE_PIN),
@@ -112,16 +118,38 @@ class ConnectorEditor(QWidget):
                 strings.CE_TERMINATION_TIP,
             ),
             (self.contact, "connector-contact", strings.CE_CONTACT, strings.CE_CONTACT_TIP),
+            (
+                self.contact_part,
+                "connector-contact-part",
+                strings.CE_CONTACT_PART,
+                strings.CE_CONTACT_PART_TIP,
+            ),
         ):
             pin_form.addRow(text, _field(widget, name, text, tip))
         root.addLayout(pin_form)
+        self.contact_note = QLabel(strings.CE_CONTACT_GENERATED)
+        self.contact_note.setObjectName("connector-contact-note")
+        self.contact_note.setWordWrap(True)
+        self.contact_note.setProperty("muted", True)
+        self.contact_note.setVisible(False)
+        root.addWidget(self.contact_note)
         self.set_pin = QPushButton()
         self.set_pin.setObjectName("connector-set-pin")
         icon_button(self.set_pin, "pass", theme, strings.CE_SET_PIN_TIP, text=strings.CE_SET_PIN)
+        self.contact_all = QPushButton()
+        self.contact_all.setObjectName("connector-contact-all")
+        icon_button(
+            self.contact_all,
+            "pass",
+            theme,
+            strings.CE_CONTACT_ALL_TIP,
+            text=strings.CE_CONTACT_ALL,
+        )
         self.delete = QPushButton()
         self.delete.setObjectName("connector-delete")
         icon_button(self.delete, "close", theme, strings.CE_DELETE_TIP, text=strings.CE_DELETE)
         root.addWidget(self.set_pin)
+        root.addWidget(self.contact_all)
         root.addWidget(self.delete)
 
         self.error = QLabel()
@@ -138,6 +166,7 @@ class ConnectorEditor(QWidget):
         self.set_pin.clicked.connect(self.apply_pin)
         self.function.returnPressed.connect(self.apply_pin)
         self.contact.returnPressed.connect(self.apply_pin)
+        self.contact_all.clicked.connect(self.apply_contact_to_all)
         self.delete.clicked.connect(self.delete_connector)
         self.connector.activated.connect(lambda _i: self._fill_pins())
         self.pin.activated.connect(lambda _i: self._show_pin())
@@ -171,18 +200,37 @@ class ConnectorEditor(QWidget):
         if h is not None:
             self.connector.addItems(sorted(c.id for c in h.connectors))
             self.connector.setCurrentIndex(max(0, self.connector.findText(keep[2])))
+        self._fill_contacts()
         self._fill_pins()
         reason = self._reason()
         self.note.setText(reason)
         self.note.setVisible(bool(reason))
+        self.contact_note.setVisible(h is not None and h.generated)
         on = h is not None and not reason
         for w in (self.part, self.plugs_into, self.name, self.pins, self.add):
             w.setEnabled(on)
         has = on and self.connector.count() > 0
-        for w in (self.connector, self.pin, self.function, self.termination, self.contact):
+        for w in (
+            self.connector,
+            self.pin,
+            self.function,
+            self.termination,
+            self.contact,
+            self.contact_part,
+        ):
             w.setEnabled(has)
         self.set_pin.setEnabled(has)
+        self.contact_all.setEnabled(has)
         self.delete.setEnabled(has)
+
+    def _fill_contacts(self) -> None:
+        """The contact parts of the library (and none) for the Contact choice."""
+        keep = self.contact_part.currentData()
+        self.contact_part.clear()
+        self.contact_part.addItem(strings.CE_CONTACT_NONE, None)
+        for part_id in contact_part_choices(self.ctl.project):
+            self.contact_part.addItem(part_id, part_id)
+        self.contact_part.setCurrentIndex(max(0, self.contact_part.findData(keep)))
 
     def _reason(self) -> str:
         """Why nothing can be changed here ("" when something can)."""
@@ -221,6 +269,10 @@ class ConnectorEditor(QWidget):
         self.contact.setText((pin.contact_size or "") if pin is not None else "")
         i = self.termination.findData(pin.termination if pin is not None else "unspecified")
         self.termination.setCurrentIndex(max(0, i))
+        wanted = pin.contact_part if pin is not None else None
+        if wanted is not None and self.contact_part.findData(wanted) < 0:
+            self.contact_part.addItem(wanted, wanted)  # (a part that left the library: still shown)
+        self.contact_part.setCurrentIndex(max(0, self.contact_part.findData(wanted)))
 
     def _say(self, text: str) -> None:
         self.error.setText(text)
@@ -266,12 +318,28 @@ class ConnectorEditor(QWidget):
                 function=self.function.text(),
                 termination=self.termination.currentData(),
                 contact_size=self.contact.text(),
+                contact_part=self.contact_part.currentData(),
             )
         except EditError as exc:
             self._say(str(exc))
             return False
         self._say("")
         return self.ctl.run(strings.STEP_SET_HARNESS_PIN.format(f"{cid}/{pin}"), ops)
+
+    def apply_contact_to_all(self) -> bool:
+        """Give every pin of the selected connector the contact chosen in Contact."""
+        cid = self.connector.currentText()
+        if self._hid is None or not cid or not self.contact_all.isEnabled():
+            return False
+        try:
+            ops = plan_set_contacts(
+                self.ctl.project, self._hid, cid, None, self.contact_part.currentData()
+            )
+        except EditError as exc:
+            self._say(str(exc))
+            return False
+        self._say("")
+        return not ops or self.ctl.run(strings.STEP_SET_HARNESS_CONTACTS.format(cid), ops)
 
     def delete_connector(self) -> bool:
         cid = self.connector.currentText()

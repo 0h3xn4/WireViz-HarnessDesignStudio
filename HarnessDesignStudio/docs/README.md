@@ -26,7 +26,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | What it gives you |
 | --- | --- |
-| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, add redundancy and zones, generate harnesses, read and fix problems, fill in engineering values, edit a wire, build a harness by hand (no interface needed), import data, define a device (and reuse it in another project), import KiCad pinouts, export the outputs, set wire colours, change IDs and the title block, release a harness, change a released harness, use Git and CI |
+| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, add redundancy and zones, generate harnesses, read and fix problems, fill in engineering values, edit a wire, build a harness by hand (no interface needed), enter the build data (strip lengths, contacts, crimp tools, accessories), import data, define a device (and reuse it in another project), import KiCad pinouts, export the outputs, set wire colours, change IDs and the title block, release a harness, change a released harness, use Git and CI |
 | [`HOWTO.md`](HOWTO.md) | The index of the old recipes, pointing at the user manual |
 | [`TIPS.md`](TIPS.md) | Shortcuts, power-user workflows, and exchanging data with other tools |
 | [`CHEATSHEET.md`](CHEATSHEET.md) | One page: the loop, the data imports, release, shortcuts, the folder layout, the words |
@@ -40,7 +40,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`RULES.md`](RULES.md) | Every design rule: what, why, how to fix, severity (generated) |
 | [`CONFIG.md`](CONFIG.md) | Every key of `config/*.json` |
 | [`PLACEHOLDERS.md`](PLACEHOLDERS.md) | Which engineering values are still placeholders, who owns them |
-| [`IMPORTS.md`](IMPORTS.md) | Importing interfaces, parts, lengths, engineering values, device pinouts |
+| [`IMPORTS.md`](IMPORTS.md) | Importing interfaces, parts, lengths, engineering values, device pinouts and the build data |
 | [`KICAD.md`](KICAD.md) | Taking unit connector pinouts from a KiCad netlist |
 | [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits, and the build workbook |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |

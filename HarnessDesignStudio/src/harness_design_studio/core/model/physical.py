@@ -1,10 +1,12 @@
 """Physical layer: connectors, pins, wires, shields and harnesses."""
 
-from typing import ClassVar, Literal
+from typing import Annotated, ClassVar, Literal
+
+from pydantic import Field
 
 from harness_design_studio.core.ids import Id, PinId
 
-from .base import Awg, Entity, IsoDate, LengthM, Name, SparseEntity, Text
+from .base import Awg, Entity, IsoDate, LengthM, LengthMm, Name, SparseEntity, Text
 
 Gender = Literal["male", "female", "unspecified"]
 Role = Literal["box", "cable", "inline", "feedthrough", "test"]
@@ -15,7 +17,7 @@ ShieldEnd = Literal["backshell_360", "pigtail", "floating"]
 
 
 class Pin(SparseEntity):
-    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"function"})
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"function", "contact_part"})
 
     id: PinId
     signal: Name | None = None
@@ -28,6 +30,9 @@ class Pin(SparseEntity):
     )
     function: Name | None = (
         None  # a person's words for what the pin does (1.4.0); no meaning to the tool
+    )
+    contact_part: Id | None = (
+        None  # the contact (a library part of category contact) the cable side uses here (1.7.0)
     )
 
 
@@ -51,7 +56,9 @@ class Connector(SparseEntity):
 
 
 class Wire(SparseEntity):
-    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label", "note", "manual"})
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset(
+        {"label", "note", "manual", "strip_a_mm", "strip_b_mm"}
+    )
 
     id: Id
     signal: Name | None = None
@@ -68,6 +75,8 @@ class Wire(SparseEntity):
     label: Name | None = None  # text for the wire labels instead of the signal name (a person's)
     note: Text = ""  # a person's remark; generation always keeps it
     manual: bool = False  # drawn by a person: generation keeps it as it is and never matches it
+    strip_a_mm: LengthMm | None = None  # insulation stripped at the From end (a person's, 1.7.0)
+    strip_b_mm: LengthMm | None = None  # insulation stripped at the To end (a person's, 1.7.0)
 
 
 class ShieldGroup(SparseEntity):
@@ -99,8 +108,26 @@ class Segment(Entity):
     length_m: LengthM | None = None
 
 
+AccessoryKind = Literal["sleeving", "heat_shrink", "label", "backshell", "other"]
+
+
+class Accessory(Entity):
+    """Something that goes on a harness besides its wires and connectors: sleeving, heat shrink, a
+    label, a backshell (1.7.0). It says what, where (a connector or a wire of the harness, or the
+    harness itself), in words how far from where, and how much. Nothing is computed from it."""
+
+    id: Id
+    kind: AccessoryKind
+    part_id: Id | None = None  # a library part (sleeving, label, backshell ...), if there is one
+    target: Id | None = None  # a connector or a wire of this harness; None means the harness
+    position: Name | None = None  # in words: "50 mm from the P1 end"
+    length_mm: LengthMm | None = None  # for sleeving and heat shrink: the length of one piece
+    quantity: Annotated[int, Field(ge=1, le=9999)] = 1
+    note: Text = ""
+
+
 class Harness(SparseEntity):
-    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label"})
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label", "accessories"})
 
     id: Id
     name: Name
@@ -121,3 +148,4 @@ class Harness(SparseEntity):
     released_on: IsoDate | None = None  # date of the release (YYYY-MM-DD)
     notes: Text = ""
     label: Name | None = None  # text for the harness label instead of its name (a person's, 1.4.0)
+    accessories: list[Accessory] = []  # sleeving, heat shrink, labels, backshells (1.7.0)

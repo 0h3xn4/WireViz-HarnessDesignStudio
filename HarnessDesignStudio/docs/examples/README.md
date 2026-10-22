@@ -1,6 +1,6 @@
 # Examples
 
-This page describes the five example projects and the 15 template files that ship with Harness Design Studio, with the real output of each, so that you can pick one and know what to expect.
+This page describes the five example projects and the 18 template files that ship with Harness Design Studio, with the real output of each, so that you can pick one and know what to expect.
 
 ## Contents
 
@@ -12,7 +12,7 @@ This page describes the five example projects and the 15 template files that shi
 - [small-satellite](#small-satellite)
 - [flatsat](#flatsat)
 - [Does every example run?](#does-every-example-run)
-- [The 15 template files](#the-15-template-files)
+- [The 18 template files](#the-18-template-files)
 - [WireViz examples in this repository](#wireviz-examples-in-this-repository)
 
 Every command below was run with the tool (version `1.6.0`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
@@ -232,7 +232,7 @@ Every example was run through `new`, `validate`, `generate` (where it is not alr
 
 The file counts are those of `export` without `--drawings` (a build workbook for every harness, no harness drawings). This is on `master` and not in the latest release yet: with 1.6.0 and earlier, `export` wrote the drawings and no build workbook, and the counts were 38, 137, 280 and 112. With `export --drawings` the counts are 40, 148, 304 and 120 (the old count plus one build workbook for each harness: 2, 11, 24 and 8). `verify --outputs` ends with 0 errors in both cases.
 
-## The 15 template files
+## The 18 template files
 
 `harness-design-studio templates my-templates` copies the import templates, scripts and checklists to a folder that must not exist yet:
 
@@ -241,7 +241,7 @@ harness-design-studio templates my-templates
 ```
 
 ```
-15 files written to my-templates. Start with my-templates/README.md.
+18 files written to my-templates. Start with my-templates/README.md.
 ```
 
 The files are written for the `first-steps` example, so you can try each one before using your own data. The full description of each is in the [templates README](../../src/harness_design_studio/resources/examples/templates/README.md) (which is also `my-templates/README.md`); this is the list, with the build that has it. The columns of the CSV files are in [`IMPORTS.md`](../IMPORTS.md).
@@ -263,8 +263,11 @@ The files are written for the `first-steps` example, so you can try each one bef
 | 13 | `ci/github-actions.yml` | the same as a GitHub Actions workflow | copy to `.github/workflows/` | yes |
 | 14 | `design-review-checklist.md` | things to look at before a harness is released | copy next to your design | yes |
 | 15 | `design-worksheet.md` | plan units, interfaces and missing data on paper | print or copy it | **no, new in 1.0.0** |
+| 16 | `strip-lengths.csv` | two example rows: the strip length at each end of a wire (millimetres) | `harness-design-studio import-build-data` | **no, new in 1.7.0** |
+| 17 | `pin-contacts.csv` | two example rows: the contact part and crimp tool of a pin of a harness made by hand | `harness-design-studio import-build-data` | **no, new in 1.7.0** |
+| 18 | `accessories.csv` | two example rows: sleeving and heat shrink of a harness | `harness-design-studio import-build-data` | **no, new in 1.7.0** |
 
-On the 0.1.0 packages the command writes 14 files (no `design-worksheet.md`). The demo values and `ampacity-DEMO-ONLY.csv` are **not from any standard and not engineering data**; the files stay marked as placeholders. See [`PLACEHOLDERS.md`](../PLACEHOLDERS.md).
+The three build data files (16 to 18) are on `master` and not in the latest release yet; their rows are examples with example numbers, to replace with your own, and `pin-contacts.csv` names contact parts (`EX-CONTACT-22`) that the starter library does not hold: import the parts first ([enter the build data](../user-manual/enter-the-build-data.md)). On the 0.1.0 packages the command writes 14 files (no `design-worksheet.md`). The demo values and `ampacity-DEMO-ONLY.csv` are **not from any standard and not engineering data**; the files stay marked as placeholders. See [`PLACEHOLDERS.md`](../PLACEHOLDERS.md).
 
 ## WireViz examples in this repository
 

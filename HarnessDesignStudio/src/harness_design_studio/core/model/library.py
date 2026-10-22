@@ -1,12 +1,12 @@
 """Parts library: real, qualified parts the plans refer to."""
 
-from typing import Annotated, Literal
+from typing import Annotated, ClassVar, Literal
 
 from pydantic import Field
 
 from harness_design_studio.core.ids import Id
 
-from .base import MAX_PIN_COUNT, Entity, IsoDate, Name, NonNegative, Text
+from .base import MAX_PIN_COUNT, Entity, IsoDate, Name, NonNegative, SparseEntity, Text
 
 PartCategory = Literal["connector", "contact", "backshell", "wire", "sleeving", "label"]
 PART_CATEGORIES: tuple[PartCategory, ...] = (
@@ -15,7 +15,9 @@ PART_CATEGORIES: tuple[PartCategory, ...] = (
 Approval = Literal["approved", "pending", "not_approved"]
 
 
-class Part(Entity):
+class Part(SparseEntity):
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"tool"})
+
     id: Id
     category: PartCategory
     manufacturer: Name | None = None
@@ -30,6 +32,7 @@ class Part(Entity):
     mass_per_m_g: NonNegative | None = None
     ratings: dict[Name, NonNegative] = {}
     notes: Text = ""
+    tool: Name | None = None  # the crimp tool or its setting for a contact part (a person's, 1.7.0)
 
 
 class LibraryInfo(Entity):

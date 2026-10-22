@@ -26,7 +26,7 @@ from pydantic import TypeAdapter, ValidationError
 
 from .commands import Op, Put
 from .describe import part_gender
-from .devices import check_pin
+from .devices import check_contact_part, check_pin
 from .edit import EditError
 from .generate.naming import namer_for
 from .model import Connector, Harness, Pin, Project, evolve
@@ -35,7 +35,7 @@ from .model.physical import Termination
 from .wires import released_text, used_ids
 
 ROLES: tuple[str, ...] = ("cable", "inline", "feedthrough", "test")
-PIN_FIELDS: tuple[str, ...] = ("function", "termination", "contact_size")
+PIN_FIELDS: tuple[str, ...] = ("function", "termination", "contact_size", "contact_part")
 _TERMINATIONS: tuple[str, ...] = get_args(Termination)
 _NAME = TypeAdapter(Name)
 
@@ -159,6 +159,7 @@ def plan_add_connector(
                 contact_size=p.contact_size,
                 termination=p.termination,
                 function=p.function,
+                contact_part=p.contact_part,
             )
             for p in box.pins
         ]
@@ -226,8 +227,9 @@ def plan_delete_connector(project: Project, harness_id: str, connector_id: str) 
 def plan_set_pin(
     project: Project, harness_id: str, connector_id: str, pin_id: str, **changes: object
 ) -> list[Op]:
-    """Ops that set the function, termination (crimp, solder or unspecified) or contact size of a
-    pin of a cable connector of a harness that a person made. Empty text clears a value."""
+    """Ops that set the function, termination (crimp, solder or unspecified), contact size or
+    contact part (a contact part of the library) of a pin of a cable connector of a harness that a
+    person made. Empty text clears a value."""
     _writable(project)
     h = _own(project, harness_id)
     conn = next((c for c in h.connectors if c.id == connector_id), None)
@@ -246,6 +248,8 @@ def plan_set_pin(
             if value not in _TERMINATIONS:
                 raise EditError(f"A termination is one of {', '.join(_TERMINATIONS)}.")
             clean[key] = value
+        elif key == "contact_part":
+            clean[key] = check_contact_part(project, value)
         else:
             clean[key] = _text(value, "The function" if key == "function" else "The contact size")
     pins = [evolve(p, **clean) if p.id == pin_id else p for p in conn.pins]

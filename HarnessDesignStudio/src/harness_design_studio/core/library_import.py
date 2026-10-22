@@ -6,7 +6,9 @@ offline, nothing connects to a server.
 The tool does not know any program's list format, so columns are mapped by header name (with
 common aliases) and the meaning of the approval column is stated by you: values you list as
 approved, pending or rejected. A status that is not in any of your lists is an error for that
-row; the tool never guesses whether a part is approved. Preview first, apply as one undo step.
+row; the tool never guesses whether a part is approved. A column Tool or Crimp tool is read into
+the tool of a contact part (the crimp tool or its setting, 1.7.0); other categories ignore it.
+Preview first, apply as one undo step.
 """
 
 import re
@@ -28,6 +30,7 @@ FIELDS: tuple[tuple[str, str], ...] = (
     ("part_number", "Part number"), ("description", "Description"), ("specification", "Specification"),
     ("approval", "Approval status"), ("pin_count", "Pin count"), ("mass_g", "Mass (g)"),
     ("mass_per_m_g", "Mass per metre (g/m)"), ("mates_with", "Mating part ID"),
+    ("tool", "Crimp tool"),
 )  # fmt: skip
 _ALIASES = {
     "id": (
@@ -50,6 +53,7 @@ _ALIASES = {
     "mass_g": ("massg", "mass", "weightg", "weight"),
     "mass_per_m_g": ("masspermg", "gpm", "massperm", "weightperm"),
     "mates_with": ("mateswith", "mate", "mating", "matingpart"),
+    "tool": ("tool", "crimptool", "crimpingtool", "crimpsetting"),
 }
 
 
@@ -245,6 +249,8 @@ def plan_parts_import(
         for key in ("manufacturer", "part_number", "description", "specification", "mates_with"):
             if cell(key):
                 changes[key] = cell(key)
+        if cell("tool") and category == "contact":  # only a contact part is crimped
+            changes["tool"] = cell("tool")
         for key in ("mass_g", "mass_per_m_g"):
             if cell(key):
                 value = _number(cell(key))

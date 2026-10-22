@@ -44,7 +44,7 @@ from harness_design_studio.gui.states import StateDelegate
 from harness_design_studio.gui.tables import Column, DictTableModel, Row, TableView
 from harness_design_studio.gui.theme import ThemeManager
 
-EDITABLE = ("pin", "signal", "mode", "contact_size", "termination", "function")
+EDITABLE = ("pin", "signal", "mode", "contact_size", "termination", "function", "contact_part")
 Validator = Callable[[str, dict[str, Any], str], str | None]
 
 
@@ -147,7 +147,8 @@ def _set_invalid(editor: QWidget, message: str | None) -> None:
 class PinDelegate(StateDelegate):
     """Draws the state chips like every table and makes the editors of the editable cells: a text
     field for the pin and the contact size, a combo box with the signals of the project (and free
-    text) for the signal, combo boxes for the mode and the termination. While the person types,
+    text) for the signal, combo boxes for the mode and the termination, a combo box with the contact
+    parts of the library for the cable contact. While the person types,
     `validator(key, row, text)` says what is wrong and the editor is marked invalid; a value that
     is wrong is not committed."""
 
@@ -158,9 +159,11 @@ class PinDelegate(StateDelegate):
         validator: Validator,
         report: Callable[[str], None],
         parent: QObject | None = None,
+        contacts: Callable[[], list[str]] | None = None,
     ) -> None:
         super().__init__(theme, parent)  # type: ignore[arg-type]
         self._signals, self._validator, self._report = signals, validator, report
+        self._contacts = contacts or (lambda: [])
 
     def _key(self, index: QModelIndex | QPersistentModelIndex) -> str:
         source, _r, c = _source(index.model(), index)
@@ -202,6 +205,17 @@ class PinDelegate(StateDelegate):
             box.setToolTip(strings.DV_SIGNAL_EDIT_TIP)
             _line(box).textChanged.connect(lambda t: self._check(box, key, row, t))
             editor = box
+        elif key == "contact_part":
+            box = QComboBox(parent)
+            box.setEditable(True)
+            box.setInsertPolicy(QComboBox.InsertPolicy.NoInsert)  # (Enter must not add an item)
+            box.addItem("", "")
+            for part_id in self._contacts():
+                box.addItem(part_id, part_id)
+            box.setAccessibleName(strings.DV_COL_CONTACT_PART)
+            box.setToolTip(strings.DV_COL_CONTACT_PART_TIP)
+            _line(box).textChanged.connect(lambda t: self._check(box, key, row, t))
+            editor = box
         else:
             line = QLineEdit(parent)
             line.setAccessibleName(
@@ -222,8 +236,8 @@ class PinDelegate(StateDelegate):
         key = self._key(index)
         row = _row(index.model(), index)
         if isinstance(editor, QComboBox):
-            if key == "signal":
-                _line(editor).setText(str(row.get("signal") or ""))
+            if key in ("signal", "contact_part"):
+                _line(editor).setText(str(row.get(key) or ""))
             elif key == "mode":
                 editor.setCurrentIndex(max(0, editor.findData(row.get("mode_key", "free"))))
             else:
@@ -249,6 +263,8 @@ class PinDelegate(StateDelegate):
                 pos = editor.findText(_line(editor).text())
                 data = editor.itemData(pos) if pos >= 0 else None
                 value = data if isinstance(data, str) and data else text
+            elif key == "contact_part":
+                value = _line(editor).text().strip()
             else:
                 value = editor.currentData()
         elif isinstance(editor, QLineEdit):
@@ -381,12 +397,13 @@ HEADER_WORDS = {
     "pin": "pin", "pin name": "pin", "pin number": "pin", "signal": "signal", "signal name": "signal",
     "mode": "mode", "contact size": "contact_size", "contact": "contact_size", "termination": "termination",
     "function": "function", "pin function": "function",
+    "cable contact": "contact_part", "contact part": "contact_part", "cable contact part": "contact_part",
 }  # fmt: skip
 
 
 def grid_columns(first_row: Sequence[str]) -> list[str] | None:
     """The columns a pasted block names in its first row (`Pin`, `Signal`, `Mode`, `Contact size`,
-    `Termination`, any case; a name that is not one of them is left out and its cells ignored), or
+    `Termination`, `Cable contact` (also `Contact part`), any case; a name that is not one of them is left out and its cells ignored), or
     None when the first row is not a header (it holds no recognised name)."""
     names = [HEADER_WORDS.get(c.strip().casefold()) for c in first_row]
     if not any(names):

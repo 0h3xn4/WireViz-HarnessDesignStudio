@@ -16,7 +16,7 @@ Flat = dict[tuple[str, str], dict[str, Any]]
 
 _HARNESS_PARTS = {
     "connectors": "cable_connector", "wires": "wire", "splices": "splice", "shields": "shield",
-    "branch_points": "branch_point", "segments": "segment",
+    "branch_points": "branch_point", "segments": "segment", "accessories": "accessory",
 }  # fmt: skip
 
 
@@ -72,7 +72,7 @@ def _flatten_harness(flat: Flat, h: Entity) -> None:
     hid = str(data["id"])
     flat[("harness", hid)] = {k: v for k, v in data.items() if k not in _HARNESS_PARTS}
     for key, kind in _HARNESS_PARTS.items():
-        for child in data[key]:
+        for child in data.get(key, []):  # a sparse list is left out while empty
             child = dict(child)
             if kind == "cable_connector":
                 for pin in child.pop("pins"):
@@ -176,7 +176,8 @@ KIND_NAMES = {
     "unit": "Unit", "interface": "Interface", "interface_type": "Interface type", "part": "Part",
     "box_connector": "Box connector", "box_pin": "Box pin", "harness": "Harness",
     "cable_connector": "Cable connector", "cable_pin": "Cable pin", "wire": "Wire", "splice": "Splice",
-    "shield": "Shield", "branch_point": "Branch point", "segment": "Segment", "config": "Configuration",
+    "shield": "Shield", "branch_point": "Branch point", "segment": "Segment", "accessory": "Accessory",
+    "config": "Configuration",
     "waiver": "Waiver", "placement": "Diagram position", "project": "Project", "zones": "Zones",
     "library": "Parts library information", "baseline": "Baseline", "change_entry": "Change log entry",
 }  # fmt: skip

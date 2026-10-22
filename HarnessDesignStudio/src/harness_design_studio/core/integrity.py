@@ -50,6 +50,14 @@ _CACHE: dict[tuple[int, str], tuple[object, tuple[int, ...], list[Issue]]] = {}
 
 def _check_connector(project: Project, c: Connector, owner: str) -> list[Issue]:
     out: list[Issue] = []
+    for pin in c.pins:
+        if pin.contact_part is None:
+            continue
+        contact = project.parts.get(pin.contact_part)
+        if contact is None:
+            out.append(_err("unknown_part", f"Pin '{pin.id}' of connector '{c.id}' uses the contact '{pin.contact_part}', which is not in the parts library.", c.id))  # fmt: skip
+        elif contact.category != "contact":
+            out.append(_err("wrong_part_category", f"Pin '{pin.id}' of connector '{c.id}' uses '{pin.contact_part}' as its contact, which is not a contact part.", c.id))  # fmt: skip
     part = project.parts.get(c.part_id)
     if part is None:
         out.append(
@@ -165,7 +173,14 @@ def _check_harness(
         for node in (s.from_node, s.to_node):
             if node not in nodes:
                 out.append(_err("dangling_segment", f"Segment '{s.id}' in harness '{h.id}' ends at '{node}', which is not a connector or branch point of this harness.", s.id))  # fmt: skip
+    wire_or_connector = wire_ids | set(local)
+    for a in h.accessories:
+        if a.part_id is not None and a.part_id not in project.parts:
+            out.append(_err("unknown_part", f"Accessory '{a.id}' in harness '{h.id}' uses part '{a.part_id}', which is not in the parts library.", a.id))  # fmt: skip
+        if a.target is not None and a.target not in wire_or_connector:
+            out.append(_err("dangling_accessory", f"Accessory '{a.id}' in harness '{h.id}' belongs to '{a.target}', which is not a connector or a wire of this harness.", a.id))  # fmt: skip
     for kind, ids in (
+        ("accessories", [a.id for a in h.accessories]),
         ("shield groups", [s.id for s in h.shields]),
         ("splices", [s.id for s in h.splices]),
         ("segments", [s.id for s in h.segments]),

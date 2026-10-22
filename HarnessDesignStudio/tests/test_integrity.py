@@ -6,6 +6,7 @@ import pytest
 
 from harness_design_studio.core.integrity import check_integrity
 from harness_design_studio.core.model import (
+    Accessory,
     BranchPoint,
     Connector,
     Endpoint,
@@ -158,6 +159,40 @@ def case_segment_dangling(p: Project) -> None:
     )
 
 
+def case_accessory_dangling(p: Project) -> None:
+    h = _w1(p)
+    p.harnesses["W001"] = evolve(
+        h, accessories=[Accessory(id="ACC-1", kind="sleeving", target="GHOST")]
+    )
+
+
+def case_contact_unknown(p: Project) -> None:
+    box = next(c for c in p.connectors.values() if c.pins)
+    pins = [evolve(box.pins[0], contact_part="NO-SUCH-CONTACT"), *box.pins[1:]]
+    p.connectors[box.id] = evolve(box, pins=pins)
+
+
+def case_contact_wrong_category(p: Project) -> None:
+    box = next(c for c in p.connectors.values() if c.pins)
+    pins = [evolve(box.pins[0], contact_part=box.part_id), *box.pins[1:]]  # a connector part
+    p.connectors[box.id] = evolve(box, pins=pins)
+
+
+def case_accessory_unknown_part(p: Project) -> None:
+    h = _w1(p)
+    p.harnesses["W001"] = evolve(
+        h, accessories=[Accessory(id="ACC-1", kind="sleeving", part_id="NO-SUCH-PART")]
+    )
+
+
+def case_duplicate_accessory(p: Project) -> None:
+    h = _w1(p)
+    p.harnesses["W001"] = evolve(
+        h,
+        accessories=[Accessory(id="ACC-1", kind="label"), Accessory(id="ACC-1", kind="other")],
+    )
+
+
 def case_duplicate_branch(p: Project) -> None:
     h = _w1(p)
     p.harnesses["W001"] = evolve(
@@ -202,6 +237,11 @@ NEGATIVE: list[tuple[str, Callable[[Project], None], str]] = [
     ("shield_dangling", case_shield_dangling, "dangling_wire"),
     ("splice_dangling", case_splice_dangling, "dangling_wire"),
     ("segment_dangling", case_segment_dangling, "dangling_segment"),
+    ("accessory_dangling", case_accessory_dangling, "dangling_accessory"),
+    ("contact_unknown", case_contact_unknown, "unknown_part"),
+    ("contact_wrong_category", case_contact_wrong_category, "wrong_part_category"),
+    ("accessory_unknown_part", case_accessory_unknown_part, "unknown_part"),
+    ("accessory_duplicate", case_duplicate_accessory, "duplicate_id"),
     ("duplicate_branch", case_duplicate_branch, "duplicate_id"),
     ("casefold_unit", case_casefold_unit, "duplicate_id"),
     ("duplicate_connector_across", case_duplicate_connector_across, "duplicate_id"),

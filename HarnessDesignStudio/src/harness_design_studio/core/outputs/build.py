@@ -138,18 +138,20 @@ def build_outputs(
         out[f"{base}/mass_length.csv"] = csv_bytes(ml, stamp)
         out[f"{base}/tests.csv"] = csv_bytes(ts, stamp)
         out[f"{base}/labels.csv"] = csv_bytes(lb, stamp)
+        sheets = {
+            "Wire list": wl,
+            "Pinouts": po,
+            "BOM": bm,
+            "Mass and length": ml,
+            "Tests": ts,
+            "Labels": lb,
+        }
+        if h.accessories:  # a file and a sheet only for a harness that has accessories (D-170)
+            ac = tables.accessories(h)
+            out[f"{base}/accessories.csv"] = csv_bytes(ac, stamp)
+            sheets["Accessories"] = ac
         out[f"{base}/wireviz.yaml"] = exports.wireviz_yaml(project, h, stamp)
-        out[f"{base}/{h.id}.xlsx"] = exports.xlsx_bytes(
-            {
-                "Wire list": wl,
-                "Pinouts": po,
-                "BOM": bm,
-                "Mass and length": ml,
-                "Tests": ts,
-                "Labels": lb,
-            },
-            stamp,
-        )
+        out[f"{base}/{h.id}.xlsx"] = exports.xlsx_bytes(sheets, stamp)
         out[f"{base}/{h.id}{buildsheet.FILE_SUFFIX}"] = buildsheet.build_workbook(project, h, stamp)
         if drawings:
             _drawing_files(project, h, stamp, out, sizes)

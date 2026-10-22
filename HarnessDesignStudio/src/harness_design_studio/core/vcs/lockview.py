@@ -32,11 +32,13 @@ from .snapshot import (
 # "shield", "branch_point", "segment", "config".
 KINDS = (
     "harness", "interface", "unit", "box_connector", "box_pin", "wire", "cable_connector",
-    "cable_pin", "splice", "shield", "branch_point", "segment", "part", "interface_type", "config",
+    "cable_pin", "splice", "shield", "branch_point", "segment", "accessory", "part", "interface_type",
+    "config",
 )  # fmt: skip
 _CHILDREN = (
     ("cable_connector", "connectors"), ("wire", "wires"), ("splice", "splices"),
     ("shield", "shields"), ("branch_point", "branch_points"), ("segment", "segments"),
+    ("accessory", "accessories"),
 )  # fmt: skip
 # What `check_locks` compares on a box connector that is in use (besides the pins that are used).
 LOCKED_CONNECTOR_FIELDS = frozenset({"part_id", "gender", "keying"})

@@ -980,6 +980,22 @@ class EditorController(QObject):
             lambda: devices.ops_paste_rows(self.project, connector_id, rows, replace=replace),
         )
 
+    def set_pin_contacts(
+        self, connector_id: str, pin_ids: list[str], contact_part: str | None
+    ) -> bool:
+        """The cable contact of several pins of a box connector, as one undo step."""
+        name = (
+            self.project.connectors[connector_id].name
+            if connector_id in self.project.connectors
+            else connector_id
+        )
+        return self.attempt(
+            strings.STEP_SET_CONTACTS.format(
+                strings.DV_N_PINS[0 if len(pin_ids) == 1 else 1].format(len(pin_ids)), name
+            ),
+            lambda: devices.ops_set_contacts(self.project, connector_id, pin_ids, contact_part),
+        )
+
     def fill_pins(
         self, connector_id: str, pin_ids: list[str], type_id: str, *, fixed: bool
     ) -> bool:

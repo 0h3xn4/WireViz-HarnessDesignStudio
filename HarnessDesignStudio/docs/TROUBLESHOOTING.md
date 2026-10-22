@@ -232,7 +232,7 @@ harness-design-studio new old1 --template minimal-satellite
 error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.
 ```
 
-**Fix:** use `first-steps` or `small-satellite`, or install 1.0.0 (see [`INSTALL.md`](INSTALL.md)). `harness-design-studio templates DIR` also writes 14 files instead of 15 on 0.1.0 (no `design-worksheet.md`).
+**Fix:** use `first-steps` or `small-satellite`, or install 1.0.0 (see [`INSTALL.md`](INSTALL.md)). `harness-design-studio templates DIR` also writes 14 files instead of 18 on 0.1.0 (no `design-worksheet.md`, and none of the three files for the build data, which are new in 1.7.0).
 
 ### `error: demo already exists and is not an empty folder; choose a new one.`
 
@@ -395,6 +395,20 @@ ERROR   released_modified: W002 was changed after its release (revision A) (part
 
 Exit code 1. A released harness, the links it carries, the units and box connectors it uses, **and the parts, interface types and configuration values it relies on** are compared with the baseline stored at the release. The text in the second brackets says what changed (`configuration derating it depends on was changed` for a configuration file). Someone edited a file by hand (or merged one) after the release. **Fix:** undo the edit (`git checkout` the file), or `harness-design-studio revise DIR W002 --by NAME --comment TEXT`, make the change in the new revision and release it. A baseline made by version 0.1.0 holds none of the parts, interface types and configuration, so nothing of that kind is compared for it.
 
+### `ERROR dangling_accessory: Accessory 'ACC-001' in harness 'W001' belongs to ...` (new in 1.7.0; not in the latest release yet)
+
+```
+harness-design-studio validate demo
+```
+
+```
+ERROR   dangling_accessory: Accessory 'ACC-001' in harness 'W001' belongs to 'W001-P9', which is not a connector or a wire of this harness.
+INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
+3 units, 2 interfaces, 13 connectors, 2 harnesses: 1 error(s), 0 warning(s).
+```
+
+`validate` ends with exit code 1. The other commands (`drc`, `generate`, `export` and so on) refuse the project like any project with damaged files, with exit code 2 (the message is `error: the project has damaged files (first: ERROR   dangling_accessory: ...)`). **Why:** an accessory of a harness names a connector or wire (`target`) that the harness does not have, for example after a hand edit of `physical/harnesses/W001.json` or a Git merge. **Fix:** set the target to a connector or a wire of the harness, or leave it empty (the accessory then belongs to the harness), or delete the accessory, in the file; then run `validate` again. The Generate step keeps an accessory only while its connector or wire still exists, and names the one it cannot keep in a `locked_data_lost` warning.
+
 ### `harness-design-studio drc` ends with exit code 1
 
 An open **error** of the design rule check. The summary line says how many:
@@ -501,6 +515,20 @@ row 3: ERROR 'P1' is already in row 2 of this file; each part may appear once
 
 `1e3`, `1_0`, `-0` and `1,234` are refused; a pin count is 1 to 1000; a part ID may appear once. Two approval columns give `error: Two columns of the file are both about the approval status; keep only one.` (exit code 2). A stray double quote in a CSV file gives `error: Line 2: unbalanced quote. A " opens a text that is never closed, ... Nothing was imported.` and imports nothing. An Excel file is read from its first **visible** sheet, and the first output line names it (`Reading sheet 'Parts' (the first visible sheet of the workbook).`). After a release, an import that changes a part a released harness uses is blocked (see below).
 
+### `import-build-data`: `row N: ERROR ...` (new in 1.7.0; not in the latest release yet)
+
+`harness-design-studio import-build-data DIR FILE` reads strip lengths, pin contacts, accessories or part tools and finds out which from the column headings. A row with a problem stops the whole import (exit code 1, `Nothing was changed.`). The messages say what to do:
+
+```
+Import strip lengths: 2 row(s) read.
+row 2: ERROR The strip length at the To end must be a number of millimetres, for example 6.
+row 3: ERROR Wire 'W009-001' does not exist.
+0 added, 0 changed, 0 unchanged, 2 refused.
+Nothing was changed.
+```
+
+Other messages: `'EX-NOPE' is not a contact part of the library (category contact).` (import the part first, with the category *contact*); `'W001-P9' is not a connector or a wire of W001.` (the `Target` of an accessory); and, for the contact of a pin of a harness made by Generate, `W001 is made by Generate, which copies the contact from the pin of the unit. Set it on the unit's pin in the Devices tab (column Cable contact), then Generate again.` A table whose headings fit none of the kinds is refused with exit code 2 (`error: The column headings are not those of any kind of build data. Expected strip lengths: Wire, Strip A (mm), ...` and the headings the file has). All kinds, with examples: [enter the build data](user-manual/enter-the-build-data.md).
+
 ### `import-netlist`: `The file is not a KiCad netlist`
 
 ```
@@ -581,9 +609,13 @@ error: no outputs folder; run `harness-design-studio export` first.
 
 Exit code 1. `--outputs` checks the files in `demo/outputs`; there are none yet.
 
+### The build workbook says `to fill in`, or `Start here` has `NOTE` lines about strip lengths and contacts
+
+Not an error. `to fill in` (on an amber cell) marks a value the design does not have. Two `NOTE` lines of **Start here** count the build data you have not entered: **Wires without strip lengths** (a wire that lacks the strip length at either end) and **Pins in use without a contact part** (a pin with a wire and no contact). They do not stop `Ready to build`. Enter the values (strip lengths in the *Edit wire* tab, the contact in the *Devices* tab, column *Cable contact*, or by `import-build-data`), generate if needed, and export again ([enter the build data](user-manual/enter-the-build-data.md)). The tool sets none of these values itself. If the lines still show after you entered them, the export is older than the entry: export again (`harness-design-studio verify DIR --outputs` says `[out_stale]` or `[outputs_outdated]`).
+
 ### Which file is what?
 
-See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `34 files written to demo-first-steps/outputs (model 85a15171aed5).` (40 with `--drawings`.)
+See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example without build data writes `34 files written to demo-first-steps/outputs (model 85a15171aed5).` (40 with `--drawings`.)
 
 ## Releasing
 

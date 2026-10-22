@@ -1,6 +1,16 @@
 """Tables derived from the model: wire list, pinouts, BOM, mass and length, tests, labels,
 matrices. Each function returns `Table` (header row first). No design numbers are invented:
-unknown values are written as "pending", "unknown" or "TBD (placeholder)"."""
+unknown values are written as "pending", "unknown" or "TBD (placeholder)".
+
+Build data (1.7.0, decision D-170) shows only where it is used, so a project that uses none of it
+keeps byte-identical tables: the wire list gets `Strip A (mm)` and `Strip B (mm)` as its last
+columns when any wire has a strip length (after the optional EMC class, Label and Note columns);
+the pinout tables get `Contact` as their last column when any pin has a contact part (after
+`Function` and `Termination`); a harness with accessories gets `accessories.csv`. The BOM counts
+each contact part once per pin in use of the harness (unit `ea`) and each accessory part by its
+`quantity` (unit `ea`); an accessory with a length counts metres instead,
+sum(length_mm x quantity) / 1000 (unit `m`), together with the wire length of the same part. A part
+used both ways has one line per unit (`ea` first, then `m`); the key of a line is part and unit."""
 
 from collections import defaultdict
 from collections.abc import Collection, Iterator
@@ -58,6 +68,15 @@ def uses_wire_text(project: Project) -> bool:
     return any(w.label or w.note for h in project.harnesses.values() for w in h.wires)
 
 
+def uses_strip_lengths(project: Project) -> bool:
+    """True when a person gave any wire a strip length at either end (1.7.0)."""
+    return any(
+        w.strip_a_mm is not None or w.strip_b_mm is not None
+        for h in project.harnesses.values()
+        for w in h.wires
+    )
+
+
 def connector_label(project: Project, c: Connector) -> str:
     """What the label of a connector prints first: the person's label of the connector, else the one
     of the box connector it plugs into, else nothing (the ID is in the text anyway)."""
@@ -79,10 +98,12 @@ def wire_list(project: Project, h: Harness) -> Table:
     shields = shield_of(h)
     emc = uses_emc_classes(project)
     text = uses_wire_text(project)
+    strip = uses_strip_lengths(project)
     rows: Table = [[
         "Wire", "Signal", "Interface", "From connector", "From pin", "To connector", "To pin",
         "AWG", "Part", "Colour", "Length (m)", "Shield group", "Locked",
         *(["EMC class"] if emc else []), *(["Label", "Note"] if text else []),
+        *(["Strip A (mm)", "Strip B (mm)"] if strip else []),
     ]]  # fmt: skip
     for w in sorted(h.wires, key=lambda x: x.id):
         rows.append([
@@ -91,6 +112,7 @@ def wire_list(project: Project, h: Harness) -> Table:
             w.part_id or "", w.colour or "", data_num(wire_length(h, w)), shields.get(w.id, ""),
             "yes" if w.locked else "", *([emc_class_of(project, w)] if emc else []),
             *([w.label or "", w.note] if text else []),
+            *([data_num(w.strip_a_mm), data_num(w.strip_b_mm)] if strip else []),
         ])  # fmt: skip
     return rows
 
@@ -113,11 +135,21 @@ def uses_termination(project: Project) -> bool:
     return any(p.termination != "unspecified" for p in _all_pins(project))
 
 
+def uses_contact_parts(project: Project) -> bool:
+    """True when a person named a contact part for any pin (1.7.0)."""
+    return any(p.contact_part for p in _all_pins(project))
+
+
 def _pin_rows(
-    c: Connector, attached: dict[tuple[str, str], list[str]], fn: bool, term: bool
+    c: Connector,
+    attached: dict[tuple[str, str], list[str]],
+    fn: bool,
+    term: bool,
+    contact: bool = False,
 ) -> Table:
-    """The rows of one connector; `fn` and `term` say whether the Function and Termination columns
-    exist (worked out once per table, since each looks at every pin of the project)."""
+    """The rows of one connector; `fn`, `term` and `contact` say whether the Function, Termination
+    and Contact columns exist (worked out once per table, since each looks at every pin of the
+    project)."""
     rows: Table = []
     for p in c.pins:
         wires = attached.get((c.id, p.id), [])
@@ -125,6 +157,7 @@ def _pin_rows(
             c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or "", p.interface_id or "",
             ";".join(sorted(wires)), "no" if wires or p.interface_id or p.signal else "yes",
             *([p.function or ""] if fn else []), *([p.termination] if term else []),
+            *([p.contact_part or ""] if contact else []),
         ])  # fmt: skip
     return rows
 
@@ -142,13 +175,21 @@ PINOUT_HEADER = [
 ]
 
 
-def _header(fn: bool, term: bool) -> list[str]:
-    return [*PINOUT_HEADER, *(["Function"] if fn else []), *(["Termination"] if term else [])]
+def _header(fn: bool, term: bool, contact: bool = False) -> list[str]:
+    return [
+        *PINOUT_HEADER,
+        *(["Function"] if fn else []),
+        *(["Termination"] if term else []),
+        *(["Contact"] if contact else []),
+    ]
 
 
 def pinout_header(project: Project) -> list[str]:
-    """The header of the pinout tables; `Function` and `Termination` follow when a pin has one."""
-    return _header(uses_pin_function(project), uses_termination(project))
+    """The header of the pinout tables; `Function`, `Termination` and `Contact` follow when a pin
+    has one."""
+    return _header(
+        uses_pin_function(project), uses_termination(project), uses_contact_parts(project)
+    )
 
 
 def pinouts(project: Project, h: Harness) -> Table:
@@ -156,10 +197,12 @@ def pinouts(project: Project, h: Harness) -> Table:
     for w in h.wires:
         attached[(w.from_connector, w.from_pin)].append(w.id)
         attached[(w.to_connector, w.to_pin)].append(w.id)
-    fn, term = uses_pin_function(project), uses_termination(project)
-    rows = [_header(fn, term)]
+    fn, term, contact = (
+        uses_pin_function(project), uses_termination(project), uses_contact_parts(project)
+    )  # fmt: skip
+    rows = [_header(fn, term, contact)]
     for c in sorted(h.connectors, key=lambda x: x.id):
-        rows += _pin_rows(c, attached, fn, term)
+        rows += _pin_rows(c, attached, fn, term, contact)
     return rows
 
 
@@ -173,11 +216,13 @@ def box_pinouts(project: Project, connector_ids: Collection[str] | None = None) 
             for cid, pin in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
                 if mates.get(cid):
                     attached[(mates[cid] or "", pin)].append(w.id)
-    fn, term = uses_pin_function(project), uses_termination(project)
-    rows = [_header(fn, term)]
+    fn, term, contact = (
+        uses_pin_function(project), uses_termination(project), uses_contact_parts(project)
+    )  # fmt: skip
+    rows = [_header(fn, term, contact)]
     for c in sorted(project.connectors.values(), key=lambda x: x.id):
         if connector_ids is None or c.id in connector_ids:
-            rows += _pin_rows(c, attached, fn, term)
+            rows += _pin_rows(c, attached, fn, term, contact)
     return rows
 
 
@@ -187,34 +232,77 @@ BOM_HEADER = [
 ]  # fmt: skip
 
 
+def pins_in_use(h: Harness) -> set[tuple[str, str]]:
+    """The (connector, pin) pairs of the harness that have a wire attached."""
+    used: set[tuple[str, str]] = set()
+    for w in h.wires:
+        used.add((w.from_connector, w.from_pin))
+        used.add((w.to_connector, w.to_pin))
+    return used
+
+
 def bom(project: Project, harnesses: list[Harness]) -> Table:
+    """One line per part and unit: connector parts, contact parts (one per pin in use) and accessory
+    parts without a length count `ea`; wire parts and accessory parts with a length add up metres."""
     counts: dict[str, int] = defaultdict(int)
     metres: dict[str, float] = defaultdict(float)
+    metre_parts: set[str] = set()
+    wire_parts: set[str] = set()
     unknown: dict[str, int] = defaultdict(int)
     used: dict[str, set[str]] = defaultdict(set)
     for h in harnesses:
+        in_use = pins_in_use(h)
         for c in h.connectors:
             counts[c.part_id] += 1
             used[c.part_id].add(h.id)
+            for p in c.pins:
+                if p.contact_part and (c.id, p.id) in in_use:
+                    counts[p.contact_part] += 1
+                    used[p.contact_part].add(h.id)
         for w in h.wires:
             pid = w.part_id or "(no part)"
             used[pid].add(h.id)
+            wire_parts.add(pid)
             length = wire_length(h, w)
             if length is None:
                 unknown[pid] += 1
             else:
                 metres[pid] += length
-            metres.setdefault(pid, 0.0)
+        for a in h.accessories:
+            if not a.part_id:
+                continue
+            used[a.part_id].add(h.id)
+            if a.length_mm is None:
+                counts[a.part_id] += a.quantity
+            else:
+                metres[a.part_id] += a.length_mm * a.quantity / 1000
+                metre_parts.add(a.part_id)
+    metre_parts |= wire_parts
     rows = [BOM_HEADER]
-    for pid in sorted({*counts, *metres}):
+    for pid, unit in sorted({*((p, "ea") for p in counts), *((p, "m") for p in metre_parts)}):
         part = project.parts.get(pid)
-        is_wire = pid in metres
+        is_m = unit == "m"
         rows.append([
             pid, part.category if part else "unknown", (part.manufacturer or "") if part else "",
             (part.part_number or "") if part else "", (part.description or "") if part else "",
             ("missing from parts list" if part is None else part.approval + (" (example data)" if part.unverified else "")),
-            data_num(metres[pid]) if is_wire else str(counts[pid]), "m" if is_wire else "ea",
-            str(unknown[pid]) if is_wire else "", ";".join(sorted(used[pid])),
+            data_num(metres[pid]) if is_m else str(counts[pid]), unit,
+            str(unknown[pid]) if pid in wire_parts and is_m else "", ";".join(sorted(used[pid])),
+        ])  # fmt: skip
+    return rows
+
+
+ACCESSORY_HEADER = ["Accessory", "Kind", "Part", "Target", "Position", "Length (mm)", "Quantity", "Note"]  # fmt: skip
+
+
+def accessories(h: Harness) -> Table:
+    """The accessories of a harness (sleeving, heat shrink, labels, backshells), sorted by ID.
+    The file is written only for a harness that has some."""
+    rows: Table = [ACCESSORY_HEADER]
+    for a in sorted(h.accessories, key=lambda x: x.id):
+        rows.append([
+            a.id, a.kind, a.part_id or "", a.target or "", a.position or "",
+            data_num(a.length_mm), str(a.quantity), a.note,
         ])  # fmt: skip
     return rows
 

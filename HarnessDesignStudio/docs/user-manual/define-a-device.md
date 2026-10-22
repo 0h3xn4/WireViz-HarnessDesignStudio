@@ -57,7 +57,8 @@ Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down
 - **Signal** is a box with the signals of the project's interface types and free text. A name no interface type has is allowed, and the notes say that nothing can connect to it.
 - **Mode**: *Fixed* means the device defines the pin; the interface connects to the pin of its signal's name, and the pin never moves. *Locked* means Generate never moves the pin. *Free* leaves it to Generate. Mind that one fixed pin with a signal makes the connector a *fixed pinout*: every signal of every interface on it then needs a pin of its own name, and pins without a name are never used. The card says so in words.
 - **Pasting.** Copy cells in the spreadsheet. A column of signals pastes from the current cell down, one pin per row. A table whose first row has headings (*Pin*, *Signal*, *Mode*, *Contact size*, *Termination*) names its pins and adds the pins that do not exist. One paste is one undo step.
-- **Contact** shows the contact size and the termination. No design rule reads them. The pinout tables show the termination when any pin has one, and the build workbook shows both for each pin of a cable connector (the termination reads `to fill in` for a pin in use that has none).
+- **Contact** shows the contact size and the termination, and the new column **Cable contact** (between **Termination** and **Function**; new in 1.7.0). No design rule reads them. The pinout tables show the termination when any pin has one, and the build workbook shows both for each pin of a cable connector (the termination reads `to fill in` for a pin in use that has none).
+- **Cable contact** is the contact the **cable side** uses on this pin: an editable choice of the parts of the library that have the category *contact*. The tooltip says `The contact the cable side uses on this pin. Generate copies it to the cable connector.` Select pins and press **Cable contact…** (or use the entry of the context menu; both are shown while **Contact** is on) to give them all the same contact in one undo step. Pasted headers *Cable contact*, *Contact part* and *Cable contact part* fill this column; *Contact* alone still means the contact size. The contact part and its crimp tool: [enter the build data](enter-the-build-data.md).
 
 ## 4. Put an interface on pins
 
@@ -72,7 +73,7 @@ The **Direction** and **Class** columns come from the interface type of the pin'
 
 ## Take the pinout from a spreadsheet
 
-Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination*, *Function* and, if you have them, *Part* and *Gender*. A *Function* column is stored as the pin's function when the table also has a *Signal* (or *Net*) column; a table with only a *Function* column reads it as the signal, as before 1.4.0. Columns the project cannot store (a description, remarks, a voltage, a direction) are named in a warning and left out.
+Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination*, *Function*, *Cable contact* (or *Contact part*: a library part of the category *contact*) and, if you have them, *Part* and *Gender*. A *Function* column is stored as the pin's function when the table also has a *Signal* (or *Net*) column; a table with only a *Function* column reads it as the signal, as before 1.4.0. Columns the project cannot store (a description, remarks, a voltage, a direction) are named in a warning and left out.
 
 In the app: **File > Import > Import device pinout…**, pick the file, choose the device (an existing unit, or **New device…** with a name), the library part for the new connectors, and read the preview. A row with a problem is listed with its reason, and then nothing is imported. **Import** is one undo step, *Import pinout (1 connector, 6 pins)*.
 
@@ -127,7 +128,7 @@ The first line is the stamp (the tool version and the model hash, which depends 
 
 Define a device once and keep it in a **device library file**, a JSON file that you can store anywhere, share, or keep in Git.
 
-- **Save:** in the Devices tab choose the device and press **Save to library…**. Pick a file; if it exists the device is added to it (a device with the same ID is replaced, the others stay). The file holds the device, its connectors with every pin (signal, function, contact size, termination, fixed), and the parts and interface types they name. The zone, and anything that Generate allocated in this project, are not saved.
+- **Save:** in the Devices tab choose the device and press **Save to library…**. Pick a file; if it exists the device is added to it (a device with the same ID is replaced, the others stay). The file holds the device, its connectors with every pin (signal, function, contact size, termination, fixed, and the ID of the cable contact), and the connector parts and interface types they name. The contact parts themselves are not in the file: if you use a cable contact, the other project needs a part of that ID in its library (the design check does not tell you when it has none). The zone, and anything that Generate allocated in this project, are not saved.
 - **Add:** in the other project press **Add from library…** in the Devices tab, pick the file, tick the devices, and read the sentence under the list: which ID each gets, what is kept. **Add devices** is one undo step. A device that has a problem is named with its reason and the others are still added.
 - Nothing in your project is replaced. If the ID is taken the device is added as `GYRO1-2`; a part or interface type that the project already has stays as it is, and the sentence says when the file's differs. Parts that come with the file keep the approval status the file says; the tool tells you when it is not *approved*, because the file's status is not a decision of your project.
 - On the command line: `harness-design-studio export-devices DIR FILE --unit GYRO1` and `harness-design-studio import-devices DIR FILE --list`, then `--unit GYRO1 --dry-run`, then without `--dry-run`.
@@ -146,7 +147,7 @@ Where a harness made by hand (not generated) has a wire on a pin, the pin cannot
 
 ## What a pin can hold
 
-A pin has a name or number, a signal, a mode, a contact size, a termination, a **function** (free text, new in 1.4.0) and, once Generate or **Assign…** has put an interface on it, that interface. The function is your own words for what the pin does ("Battery voltage sense"); the tool carries it to the pinout tables and to the cable end of the pin and decides nothing with it. There is still **no field** for remarks, a voltage, a current or a direction of a pin, and the tool does not pretend there is. Direction and class are shown from the interface type; for the rest keep your interface control document next to the project.
+A pin has a name or number, a signal, a mode, a contact size, a termination, a **cable contact** (a library part, new in 1.7.0), a **function** (free text, new in 1.4.0) and, once Generate or **Assign…** has put an interface on it, that interface. The function is your own words for what the pin does ("Battery voltage sense"); the tool carries it to the pinout tables and to the cable end of the pin and decides nothing with it. There is still **no field** for remarks, a voltage, a current or a direction of a pin, and the tool does not pretend there is. Direction and class are shown from the interface type; for the rest keep your interface control document next to the project.
 
 ## Common mistakes
 
@@ -156,4 +157,4 @@ A pin has a name or number, a signal, a mode, a contact size, a termination, a *
 - **A part with no gender in its description.** The cable end cannot be checked to fit. Set the gender on the card.
 - **Changing a part of a released device.** Start a new revision first ([change a released harness](change-a-released-harness.md)).
 
-Next: [generate harnesses](generate-harnesses.md), [import data](import-data.md), [edit a wire](edit-a-wire.md)
+Next: [generate harnesses](generate-harnesses.md), [import data](import-data.md), [edit a wire](edit-a-wire.md), [enter the build data](enter-the-build-data.md)

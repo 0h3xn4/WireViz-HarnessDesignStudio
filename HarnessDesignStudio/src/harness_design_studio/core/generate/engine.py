@@ -571,7 +571,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
                 mate = box.part_id
             cables[box_id] = Connector(
                 id=cid, name=cid.rsplit("-", 1)[-1], role="cable", part_id=mate, gender=_opposite(box.gender if box.gender != "unspecified" else part_gender(part)),
-                keying=box.keying, mates_with=box_id, label=old_cables[box_id].label if box_id in old_cables else None, pins=[Pin(id=pin.id, contact_size=pin.contact_size, termination=pin.termination, function=pin.function) for pin in box.pins],
+                keying=box.keying, mates_with=box_id, label=old_cables[box_id].label if box_id in old_cables else None, pins=[Pin(id=pin.id, contact_size=pin.contact_size, termination=pin.termination, function=pin.function, contact_part=pin.contact_part) for pin in box.pins],
             )  # fmt: skip
             ctx.note(
                 f"connector:{cid}",
@@ -617,6 +617,9 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
     used_wires |= {w.id for w in (old.wires if old else []) if w.manual}
     wire_n = 1
     wires: list[Wire] = []
+    carried = {
+        c.id for box_id, c in old_cables.items() if box_id in cables
+    }  # kept by what they are
     skeleton = Harness(
         id=hid,
         name=group.label,
@@ -676,8 +679,16 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
                 )
             else:
                 wire = _size(ctx, wire, i, itype.category, bundle_wires)
-            if prev_w is not None and (prev_w.label or prev_w.note):
-                wire = evolve(wire, label=prev_w.label, note=prev_w.note)  # a person's, always kept
+            if prev_w is not None:
+                carried.add(wid)
+                if prev_w.label or prev_w.note or _has_strip(prev_w):
+                    wire = evolve(  # a person's, always kept
+                        wire,
+                        label=prev_w.label,
+                        note=prev_w.note,
+                        strip_a_mm=prev_w.strip_a_mm,
+                        strip_b_mm=prev_w.strip_b_mm,
+                    )
             wires.append(wire)
             ctx.note(
                 f"wire:{wid}",
@@ -697,6 +708,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
             and mw.to_pin in pins_of.get(mw.to_connector, ())
         ):
             wires.append(mw)
+            carried.add(mw.id)
     wires.sort(key=lambda w: w.id)
     mine = [s for s in (old.shields if old else []) if s.manual]
     shields = _shields(
@@ -708,6 +720,10 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
         if set(g.wire_ids) <= have and not grouped.intersection(g.wire_ids):
             shields.append(g)
     interfaces = sorted(i.id for i in ifaces)
+    accessories = sorted(  # a person's: kept while the connector or wire they sit on is kept
+        (a for a in (old.accessories if old else []) if a.target is None or a.target in carried),
+        key=lambda a: a.id,
+    )
     ctx.note(
         f"harness:{hid}",
         f"segmentation: {', '.join(interfaces)} share a harness because they have the same {_describe(group)} and chain ({group.chain or 'nominal or redundant'})",
@@ -720,6 +736,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
         generated=True, group_key=group.key, interfaces=interfaces, notes=old.notes if old else "", label=old.label if old else None,
         author=old.author if old else None, checker=old.checker if old else None,
         approver=old.approver if old else None, released_on=old.released_on if old else None,
+        accessories=accessories,
     )  # fmt: skip
     if old is not None and old.status == "in_review":
         meta = {"status", "checker", "approver", "released_on", "author"}
@@ -745,6 +762,10 @@ def _wire_keys(h: Harness | None) -> dict[str, Wire]:
         for w in h.wires
         if not w.manual  # a wire that a person drew is kept as it is, never matched
     }
+
+
+def _has_strip(w: Wire) -> bool:
+    return w.strip_a_mm is not None or w.strip_b_mm is not None
 
 
 def _wire_key(interface_id: str, signal: str, source_box: str) -> str:
@@ -779,16 +800,22 @@ def _match_renamed(
 
 
 def _warn_lost_data(ctx: _Ctx, old: Harness, new: Harness | None) -> None:
-    """Locked wires, wire labels and notes and entered segment lengths of `old` that `new` does not
-    carry over."""
+    """Locked wires, wire labels, notes and strip lengths, accessories and entered segment lengths of
+    `old` that `new` does not carry over."""
     kept_wires = _wire_keys(new)
     kept_manual = {w.id for w in new.wires if w.manual} if new else set()
     kept_segments = {(s.from_node, s.to_node) for s in new.segments} if new else set()
     lost = [
-        f"the {'locked wire' if w.locked else 'wire with a label or note'} {w.id} "
+        f"the {'locked wire' if w.locked else 'wire with a label or note' if w.label or w.note else 'wire with a strip length'} {w.id} "
         f"({w.interface_id} {w.signal})"
         for key, w in _wire_keys(old).items()
-        if (w.locked or w.label or w.note) and key not in kept_wires
+        if (w.locked or w.label or w.note or _has_strip(w)) and key not in kept_wires
+    ]
+    kept_accessories = {a.id for a in new.accessories} if new else set()
+    lost += [
+        f"the accessory {a.id} ({a.kind.replace('_', ' ')} on {a.target or 'the harness'})"
+        for a in old.accessories
+        if a.id not in kept_accessories
     ]
     lost += [
         f"the wire {w.id} that you drew ({w.from_connector}.{w.from_pin} to {w.to_connector}.{w.to_pin})"

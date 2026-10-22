@@ -44,7 +44,8 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 | **Connector** | A plug or socket, which may carry a label (new in 1.4.0). On a unit it is a *box connector*; on a harness it is a *cable connector* that mates with a box connector. | `RW1-J02` on the wheel; `W001-P2` on the cable |
 | **Pin** | One contact of a connector. It carries one signal and may have a *function* (free text, new in 1.4.0). | pin 3 of `RW1-J02` carries `RX+`, function "Wheel command receive" |
 | **Harness** | A bundle of wires with its connectors that carries interfaces between units. **Generated** from interfaces, or made by hand with *New harness* (new in 1.5.0); individual wires can be edited, and wires can be added by hand (new in 1.4.0). | `W001`: `OBC1-J01` to `RW1-J02` |
-| **Wire** | One conductor between two pins, with a gauge, a part and a length, and optionally a colour, a label and a note. Two wires may share a pin. | `W001-001`: `TX+`, pin 1 to pin 3 |
+| **Wire** | One conductor between two pins, with a gauge, a part and a length, and optionally a colour, a label, a note and the strip length at each end (new in 1.7.0). Two wires may share a pin. | `W001-001`: `TX+`, pin 1 to pin 3 |
+| **Accessory** | Something on a harness besides its wires and connectors: sleeving, heat shrink, a label, a backshell. It says what it goes on, where (in words), how long and how many (new in 1.7.0). | `ACC-001`: sleeving on `W001-001` |
 | **Segment** | A stretch of the physical route a bundle follows; wire lengths are sums of segments. | `W001-L1` |
 | **Zone** | A lane of the diagram (a panel or compartment). Units sit in zones. | `panel-A`, `panel-B` |
 | **Nominal / redundant** | The main chain of units and its backup. They never share a connector or harness. | `PCDU1` and `PCDU1-R` |
@@ -115,7 +116,7 @@ In the app the work goes in three steps, shown in the top bar: **Generate**, **C
 
 ## Outputs
 
-**Export…** writes a folder `outputs/` into the project: per harness a **build workbook** (an Excel file to build the harness from: what is ready, the cut list, one block per connector, parts, labels and a test sheet to fill in), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook of the data tables; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
+**Export…** writes a folder `outputs/` into the project: per harness a **build workbook** (an Excel file to build the harness from: what is ready, the cut list with the strip lengths, one block per connector with the contact and crimp tool of each pin, parts, accessories, labels and a test sheet to fill in), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook of the data tables; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
 
 The PDF and SVG drawings of the harnesses are optional and written only when you ask for them (`--drawings`, or the check box **Include the PDF drawings**); the build workbook is the main output (not in the latest release yet; new in 1.7.0). Outputs are checked independently before they are written. `outputs/` is always safe to delete and regenerate.
 
@@ -143,7 +144,7 @@ Files are written in a fixed format, so two people editing different parts of a 
 - It does not route cables in 3D; lengths come from you ([`IMPORTS.md`](IMPORTS.md)).
 - It does not draw electronics: KiCad does that, and the tool can read unit connector pinouts from a KiCad netlist ([`KICAD.md`](KICAD.md)).
 - It does not generate buses with more than two ends yet; such links are skipped with a warning. (You can draw such wires yourself in the *Edit wire* tab, and several wires may share a pin.)
-- It does not decide what a soldered joint needs: a pin can say *solder* or *crimp* and the lists show it, nothing more yet.
+- It does not decide what a soldered joint needs: a pin can say *solder* or *crimp* and the lists show it, nothing more yet. Likewise a pin can name its contact, a contact part its crimp tool, a wire its strip lengths and a harness its accessories (new in 1.7.0, [enter the build data](user-manual/enter-the-build-data.md)), but the tool does not choose them, does not check that a contact fits a pin or that a length is sensible, and shows `to fill in` where you have not said.
 - It never uses the network.
 
 ## Words you will meet

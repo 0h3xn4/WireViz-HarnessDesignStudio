@@ -343,6 +343,44 @@ class FillDialog(_PlannerDialog):
         return None
 
 
+# ---- the cable contact of selected pins -----------------------------------------------------------
+
+
+class ContactDialog(_PlannerDialog):
+    """Pick a contact part (or none); it becomes the cable contact of the selected pins."""
+
+    def __init__(
+        self,
+        parent: QWidget | None,
+        theme: ThemeManager,
+        project: Project,
+        connector_id: str,
+        pin_ids: Sequence[str],
+    ) -> None:
+        super().__init__(parent, theme, strings.DVD_CONTACT_TITLE, "devices-contact-dialog")
+        self.project, self.connector_id, self.pin_ids = project, connector_id, list(pin_ids)
+        self.part_box = QComboBox()
+        self.part_box.setObjectName("contact-part")
+        self.part_box.setAccessibleName(strings.DVD_CONTACT_PART)
+        self.part_box.setToolTip(strings.DVD_CONTACT_PART_TIP)
+        self.part_box.addItem(strings.DV_CONTACT_PART_NONE, "")
+        for part_id in devices.contact_part_choices(project):
+            self.part_box.addItem(part_id, part_id)
+        self.lay.addWidget(QLabel(strings.DVD_CONTACT_PINS.format(", ".join(self.pin_ids))))
+        self.lay.addWidget(self.part_box)
+        self.part_box.currentIndexChanged.connect(self.revalidate)
+        self._finish(strings.DVD_CONTACT_OK)
+
+    def part_id(self) -> str:
+        return str(self.part_box.currentData() or "")
+
+    def check(self) -> str | None:
+        if self.part_box.count() == 1:
+            return strings.DVD_CONTACT_NO_PARTS
+        devices.ops_set_contacts(self.project, self.connector_id, self.pin_ids, self.part_id())
+        return None
+
+
 # ---- an interface on selected pins ---------------------------------------------------------------
 
 

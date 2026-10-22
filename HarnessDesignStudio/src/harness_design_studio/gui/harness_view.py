@@ -71,6 +71,7 @@ from harness_design_studio.core.vcs.lockview import Locked, lock_reason, locked_
 from harness_design_studio.core.verify import verify_project
 from harness_design_studio.core.wirecolours import name_of, resolve
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.accessory_editor import AccessoryEditor
 from harness_design_studio.gui.background import Job, JobRunner
 from harness_design_studio.gui.connector_editor import ConnectorEditor
 from harness_design_studio.gui.controller import EditorController
@@ -829,12 +830,24 @@ class HarnessView(QWidget):
         cscroll.setWidget(self.connector_editor)
         side.addTab(cscroll, strings.HV_CONNECTORS_TAB)
         self.connector_scroll = cscroll
+        self.accessory_editor = AccessoryEditor(self.ctl, theme)
+        ascroll = QScrollArea()
+        ascroll.setObjectName("accessory-editor-scroll")
+        ascroll.setWidgetResizable(True)
+        ascroll.setFrameShape(QFrame.Shape.NoFrame)
+        ascroll.setWidget(self.accessory_editor)
+        side.addTab(ascroll, strings.HV_ACCESSORIES_TAB)
         self.connector_editor.connectorAdded.connect(lambda _cid: self.refresh())
-        # three tabs in a narrow box: let them shrink and elide, never grow scroll arrows
+        # four tabs in a narrow box: let them shrink and elide, never grow scroll arrows
         side.setUsesScrollButtons(False)
         side.setElideMode(Qt.TextElideMode.ElideRight)
         for i, tip in enumerate(
-            (strings.HV_WHY_TITLE, strings.HV_EDIT_TAB, strings.HV_CONNECTORS_TAB)
+            (
+                strings.HV_WHY_TITLE,
+                strings.HV_EDIT_TAB,
+                strings.HV_CONNECTORS_TAB,
+                strings.HV_ACCESSORIES_TAB,
+            )
         ):
             side.setTabToolTip(i, tip)
         self.side_tabs = side
@@ -980,6 +993,7 @@ class HarnessView(QWidget):
     def _header(self, h: Harness) -> None:
         self.wire_editor.set_harness(h.id)
         self.connector_editor.set_harness(h.id)
+        self.accessory_editor.set_harness(h.id)
         p = self.ctl.project
         state, text = release_state(p, h)
         self.release_chip.set_state(state, text)

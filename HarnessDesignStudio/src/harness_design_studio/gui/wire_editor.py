@@ -9,6 +9,10 @@ person types in it; Apply then sets only the fields that were touched, on every 
 one undo step. Gauge, type, colour and length lock the wire, so Generate keeps them; label and note
 are always kept. Mistakes are said in words under the form, never in a message box. Everything is
 disabled for a released harness and for a read-only project, with the reason shown.
+
+The strip lengths (Strip A at the From end, Strip B at the To end, 1.7.0) are in the same form: they
+are applied with the other touched fields as one undo step and never lock the wire. A button gives
+every wire of the harness the lengths in the two fields (`core/build_data.py`).
 """
 
 from collections.abc import Sequence
@@ -27,8 +31,10 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from harness_design_studio.core.build_data import plan_set_strip, plan_set_strip_all
+from harness_design_studio.core.commands import Op, Put
 from harness_design_studio.core.edit import EditError
-from harness_design_studio.core.model import ShieldGroup, Wire
+from harness_design_studio.core.model import Harness, ShieldGroup, Wire, evolve
 from harness_design_studio.core.wirecolours import COLOURS
 from harness_design_studio.core.wires import (
     find_wire,
@@ -50,6 +56,10 @@ from harness_design_studio.gui.icons import icon_button
 from harness_design_studio.gui.theme import ThemeManager
 
 FIELDS = ("gauge_awg", "part_id", "colour", "length_m", "label", "note")
+STRIP_FIELDS = (
+    "strip_a_mm",
+    "strip_b_mm",
+)  # (planned by core/build_data.py, not by plan_wire_edit)
 
 
 def _common(values: Sequence[object]) -> object | None:
@@ -333,6 +343,8 @@ class WireEditor(QWidget):
         self.colour = QComboBox()
         self.colour.setEditable(True)
         self.length = QLineEdit()
+        self.strip_a = QLineEdit()
+        self.strip_b = QLineEdit()
         self.label = QLineEdit()
         self.note = QPlainTextEdit()
         self.note.setFixedHeight(theme.px(56))
@@ -341,6 +353,8 @@ class WireEditor(QWidget):
             (self.part, "wire-type", strings.WIRE_TYPE, strings.WIRE_TYPE_TIP),
             (self.colour, "wire-colour", strings.WIRE_COLOUR, strings.WIRE_COLOUR_TIP),
             (self.length, "wire-length", strings.WIRE_LENGTH, strings.WIRE_LENGTH_TIP),
+            (self.strip_a, "wire-strip-a", strings.WIRE_STRIP_A, strings.WIRE_STRIP_A_TIP),
+            (self.strip_b, "wire-strip-b", strings.WIRE_STRIP_B, strings.WIRE_STRIP_B_TIP),
             (self.label, "wire-label", strings.WIRE_LABEL, strings.WIRE_LABEL_TIP),
             (self.note, "wire-note", strings.WIRE_NOTE, strings.WIRE_NOTE_TIP),
         ):
@@ -349,6 +363,11 @@ class WireEditor(QWidget):
             widget.setToolTip(tip)
             form.addRow(text, widget)
         root.addLayout(form)
+        strip_note = QLabel(strings.WIRE_STRIP_NOTE)
+        strip_note.setObjectName("wire-strip-note")
+        strip_note.setWordWrap(True)
+        strip_note.setProperty("muted", True)
+        root.addWidget(strip_note)
 
         self.ends = QWidget()  # the ends of a wire that you drew
         ends_form = QFormLayout(self.ends)
@@ -385,6 +404,18 @@ class WireEditor(QWidget):
         icon_button(self.reset, "unlock", theme, strings.WIRE_RESET_TIP, text=strings.WIRE_RESET)
         root.addWidget(self.apply)
         root.addWidget(self.reset)
+        self.strip_all = QPushButton()
+        self.strip_all.setObjectName("wire-strip-all")
+        icon_button(
+            self.strip_all, "pass", theme, strings.WIRE_STRIP_ALL_TIP, text=strings.WIRE_STRIP_ALL
+        )
+        root.addWidget(self.strip_all)
+        self.strip_result = QLabel()
+        self.strip_result.setObjectName("wire-strip-result")
+        self.strip_result.setWordWrap(True)
+        self.strip_result.setProperty("muted", True)
+        self.strip_result.setVisible(False)
+        root.addWidget(self.strip_result)
         self.delete = QPushButton()
         self.delete.setObjectName("wire-delete")
         icon_button(self.delete, "close", theme, strings.WIRE_DELETE_TIP, text=strings.WIRE_DELETE)
@@ -415,6 +446,7 @@ class WireEditor(QWidget):
         group_row.addWidget(self.group_btn)
         group_row.addWidget(self.ungroup_btn)
         root.addLayout(group_row)
+        self._hid: str | None = None
         self.new_form = NewWireForm(ctl, theme)
         self.new_form.wireAdded.connect(self.wireAdded)
         root.addSpacing(theme.space(8))
@@ -426,20 +458,22 @@ class WireEditor(QWidget):
 
         self.apply.clicked.connect(self.apply_changes)
         self.reset.clicked.connect(self.reset_wires)
+        self.strip_all.clicked.connect(self.apply_strip_to_all)
         self.delete.clicked.connect(self.delete_wires)
         self.group_btn.clicked.connect(self.group_wires)
         self.ungroup_btn.clicked.connect(self.ungroup_wires)
         self.from_end.changed.connect(lambda: self._touched.update({"from_connector", "from_pin"}))
         self.to_end.changed.connect(lambda: self._touched.update({"to_connector", "to_pin"}))
-        for w in (self.gauge, self.length, self.label):
+        for w in (self.gauge, self.length, self.strip_a, self.strip_b, self.label):
             w.textEdited.connect(lambda _t, w=w: self._touch(w))
         self.part.activated.connect(lambda _i: self._touch(self.part))
         self.colour.activated.connect(lambda _i: self._touch(self.colour))
         colour_edit = self.colour.lineEdit()
         if colour_edit is not None:
+            colour_edit.setAccessibleName(strings.WIRE_COLOUR)
             colour_edit.textEdited.connect(lambda _t: self._touch(self.colour))
         self.note.textChanged.connect(lambda: self._touch(self.note))
-        for w in (self.gauge, self.length, self.label):
+        for w in (self.gauge, self.length, self.strip_a, self.strip_b, self.label):
             w.returnPressed.connect(self.apply_changes)
         QShortcut(QKeySequence("Ctrl+Return"), self, self.apply_changes)
         self._names = {
@@ -447,6 +481,8 @@ class WireEditor(QWidget):
             self.part: "part_id",
             self.colour: "colour",
             self.length: "length_m",
+            self.strip_a: "strip_a_mm",
+            self.strip_b: "strip_b_mm",
             self.label: "label",
             self.note: "note",
         }
@@ -483,8 +519,10 @@ class WireEditor(QWidget):
 
     def set_harness(self, harness_id: str | None) -> None:
         """The harness whose connectors the *New wire* form offers."""
+        self._hid = harness_id
         self.new_form.set_harness(harness_id)
         self.labels_form.set_harness(harness_id)
+        self._enable_strip_all()
 
     def _selected(self) -> list[Wire]:
         return [find_wire(self.ctl.project, wid)[1] for wid in self._ids]
@@ -525,7 +563,7 @@ class WireEditor(QWidget):
         self.colour.addItems(["", *[name for name, _code, _hex in COLOURS]])
         if not wires:
             self.title.setText(strings.WIRE_EDIT_NONE)
-            for field in (self.gauge, self.length, self.label):
+            for field in (self.gauge, self.length, self.strip_a, self.strip_b, self.label):
                 field.clear()
                 field.setPlaceholderText("")
             self.part.setCurrentIndex(0)
@@ -546,6 +584,8 @@ class WireEditor(QWidget):
         for widget, attr in (
             (self.gauge, "gauge_awg"),
             (self.length, "length_m"),
+            (self.strip_a, "strip_a_mm"),
+            (self.strip_b, "strip_b_mm"),
             (self.label, "label"),
         ):
             value = _common([getattr(w, attr) for w in wires])
@@ -583,7 +623,16 @@ class WireEditor(QWidget):
                     reason = strings.WIRE_STATE_RELEASED.format(h.id, h.revision)
                     break
         on = bool(self._ids) and not reason
-        for field in (self.gauge, self.part, self.colour, self.length, self.label, self.note):
+        for field in (
+            self.gauge,
+            self.part,
+            self.colour,
+            self.length,
+            self.strip_a,
+            self.strip_b,
+            self.label,
+            self.note,
+        ):
             field.setEnabled(on)
         self.apply.setEnabled(on)
         self.reset.setEnabled(on)
@@ -594,14 +643,37 @@ class WireEditor(QWidget):
         self.from_end.set_enabled(on)
         self.to_end.set_enabled(on)
         self.new_form.set_harness(self.new_form._hid)
+        self._enable_strip_all()
         if reason:
             self.state.setText(reason)
+
+    def _enable_strip_all(self) -> None:
+        """The all-wires button needs a harness that can change; if not, it says why."""
+        h = self.ctl.project.harnesses.get(self._hid or "")
+        reason = ""
+        if self.ctl.read_only:
+            reason = strings.WIRE_STATE_READ_ONLY
+        elif h is not None and h.status == "released":
+            reason = strings.WIRE_STATE_RELEASED.format(h.id, h.revision)
+        self.strip_all.setEnabled(h is not None and not reason and bool(h.wires))
+        if not self._ids:  # no wire selected: the two fields still serve the all-wires button
+            for field in (self.strip_a, self.strip_b):
+                field.setEnabled(h is not None and not reason)
+        self.strip_all.setToolTip(reason or strings.WIRE_STRIP_ALL_TIP)
+        if reason:
+            self.strip_result.setText(reason)
+        self.strip_result.setVisible(bool(reason) or bool(self.strip_result.text()))
 
     def _touch(self, widget: QWidget) -> None:
         if not self._filling:
             self._touched.add(self._names[widget])
 
     # ---- the buttons -----------------------------------------------------------------------
+    def _strip_values(self) -> dict[str, str]:
+        """The strip lengths that were touched, as typed (a decimal comma is read by the plan)."""
+        text = {"strip_a_mm": self.strip_a.text(), "strip_b_mm": self.strip_b.text()}
+        return {k: v for k, v in text.items() if k in self._touched}
+
     def _changes(self) -> dict[str, object]:
         values: dict[str, object] = {
             "gauge_awg": self.gauge.text(),
@@ -613,7 +685,7 @@ class WireEditor(QWidget):
         }
         values["from_connector"], values["from_pin"] = self.from_end.value()
         values["to_connector"], values["to_pin"] = self.to_end.value()
-        return {k: v for k, v in values.items() if k in self._touched}
+        return {k: v for k, v in values.items() if k in self._touched and k not in STRIP_FIELDS}
 
     def _say(self, text: str) -> None:
         self.error.setText(text)
@@ -624,12 +696,12 @@ class WireEditor(QWidget):
         edit was refused, True when it was done or there was nothing to do."""
         if not self._ids or not self.apply.isEnabled():
             return False
-        changes = self._changes()
-        if not changes:
+        changes, strip = self._changes(), self._strip_values()
+        if not changes and not strip:
             self._say(strings.WIRE_NOTHING_CHANGED)
             return True
         try:
-            ops = plan_wire_edit(self.ctl.project, self._ids, changes)
+            ops = self._plan(changes, strip)
         except EditError as exc:
             self._say(str(exc))
             return False
@@ -638,6 +710,63 @@ class WireEditor(QWidget):
             return False
         self.show_wires(ids)
         return True
+
+    def _plan(self, changes: dict[str, object], strip: dict[str, str]) -> list[Op]:
+        """The ops for the touched fields: the edit and the strip lengths in one `Put` per
+        harness, so that they are one undo step."""
+        project = self.ctl.project
+        ops = plan_wire_edit(project, self._ids, changes) if changes else []
+        by_harness: dict[str, list[str]] = {}
+        for wid in self._ids:
+            by_harness.setdefault(find_wire(project, wid)[0].id, []).append(wid)
+        for hid, ids in by_harness.items() if strip else ():
+            for op in plan_set_strip(project, hid, ids, **strip):
+                ops = _merge_strip(ops, op, ids)
+        return ops
+
+    def apply_strip_to_all(self) -> bool:
+        """Give every wire of the harness the strip lengths in the two fields (a field that was
+        touched counts, empty or not; an untouched empty field is left alone)."""
+        if self._hid is None:
+            self._say_strip(strings.WIRE_STRIP_ALL_NO_HARNESS)
+            return False
+        if not self.strip_all.isEnabled():
+            return False
+        wanted = {
+            key: edit.text()
+            for key, edit in (("strip_a_mm", self.strip_a), ("strip_b_mm", self.strip_b))
+            if key in self._touched or edit.text().strip()
+        }
+        if not wanted:
+            self._say_strip(strings.WIRE_STRIP_ALL_NONE)
+            return False
+        h = self.ctl.project.harnesses[self._hid]
+        try:
+            ops = plan_set_strip_all(self.ctl.project, self._hid, **wanted)
+        except EditError as exc:
+            self._say_strip(str(exc))
+            return False
+        new = next(
+            (op.obj for op in ops if isinstance(op, Put) and isinstance(op.obj, Harness)), None
+        )
+        changed = 0 if new is None else sum(a != b for a, b in zip(h.wires, new.wires, strict=True))
+        if ops and not self.ctl.run(strings.STEP_SET_STRIP_ALL.format(h.id), ops):
+            return False
+        self._touched.difference_update(wanted)
+        ids = list(self._ids)
+        keep = set(self._touched)
+        self.show_wires(ids)
+        self._touched.update(keep)
+        self._say_strip(
+            strings.WIRE_STRIP_ALL_DONE.format(changed, len(h.wires), h.id)
+            if changed
+            else strings.WIRE_STRIP_ALL_SAME.format(len(h.wires), h.id)
+        )
+        return True
+
+    def _say_strip(self, text: str) -> None:
+        self.strip_result.setText(text)
+        self.strip_result.setVisible(bool(text))
 
     def delete_wires(self) -> bool:
         """Delete the selected wires that you drew."""
@@ -699,6 +828,28 @@ class WireEditor(QWidget):
             return False
         self.show_wires(ids)
         return True
+
+
+def _merge_strip(ops: list[Op], strip_op: Op, wire_ids: list[str]) -> list[Op]:
+    """Add the strip lengths of `strip_op` (a `Put` of a harness) to the ops: onto the `Put` of the
+    same harness if there is one, else as a new op. A `Put` replaces a whole harness, so two of them
+    for one harness would lose the first."""
+    if not (isinstance(strip_op, Put) and isinstance(strip_op.obj, Harness)):
+        return [*ops, strip_op]
+    done: Harness = strip_op.obj
+    for k, op in enumerate(ops):
+        if isinstance(op, Put) and isinstance(op.obj, Harness) and op.obj.id == done.id:
+            lengths = {w.id: w for w in done.wires}
+            wires = [
+                evolve(w, **{key: getattr(lengths[w.id], key) for key in STRIP_FIELDS})
+                if w.id in wire_ids
+                else w
+                for w in op.obj.wires
+            ]
+            merged = [*ops]
+            merged[k] = Put("harnesses", evolve(op.obj, wires=wires))
+            return merged
+    return [*ops, strip_op]
 
 
 def _text(value: object) -> str:

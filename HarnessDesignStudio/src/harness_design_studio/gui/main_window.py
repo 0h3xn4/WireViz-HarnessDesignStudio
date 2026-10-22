@@ -96,6 +96,7 @@ from harness_design_studio.gui.controller import (
 )
 from harness_design_studio.gui.devices_dialogs import (
     AssignDialog,
+    ContactDialog,
     FillDialog,
     LibraryDialog,
     NewPartDialog,
@@ -930,6 +931,7 @@ class MainWindow(QMainWindow):
             widget.reviseRequested.connect(lambda hid: self.change_flow("revise", hid))
             widget.fillRequested.connect(self.fill_pins_flow)
             widget.assignRequested.connect(self.assign_pins_flow)
+            widget.contactRequested.connect(self.contact_pins_flow)
             widget.newPartRequested.connect(self.new_part_flow)
             widget.newTypeRequested.connect(self.new_type_flow)
             return True
@@ -1132,6 +1134,12 @@ class MainWindow(QMainWindow):
             return
         if accepted:
             self.ctl.fill_pins(connector_id, pins, dlg.type_id(), fixed=dlg.fixed.isChecked())
+
+    def contact_pins_flow(self, connector_id: str, pins: list[str]) -> None:
+        """Cable contact… of the selected pins (the pin table's menu and button)."""
+        dlg = ContactDialog(self, self.theme, self.ctl.project, connector_id, pins)
+        if self.run_dialog(dlg) == QDialog.DialogCode.Accepted:
+            self.ctl.set_pin_contacts(connector_id, pins, dlg.part_id())
 
     def assign_pins_flow(self, connector_id: str, pins: list[str]) -> None:
         """Assign to interface… (Ctrl+Enter in the pin table)."""

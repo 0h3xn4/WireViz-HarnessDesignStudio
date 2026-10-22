@@ -93,8 +93,17 @@ def serialize(project: Project, *, tool_version: str | None = None) -> dict[str,
         cached = _HARNESS_CACHE.get(id(h))
         if cached is None or cached[0] is not h:  # immutable objects: identity means same content
             data = h.model_dump(mode="json")
-            for key in ("connectors", "wires", "splices", "shields", "branch_points", "segments"):
-                data[key] = sorted(data[key], key=lambda x: x["id"])
+            for key in (
+                "connectors",
+                "wires",
+                "splices",
+                "shields",
+                "branch_points",
+                "segments",
+                "accessories",
+            ):
+                if key in data:  # a sparse list (accessories) is left out while it is empty
+                    data[key] = sorted(data[key], key=lambda x: x["id"])
             cached = (h, canonical.dumps(data))
         keep[id(h)] = cached
         files[f"physical/harnesses/{h.id}.json"] = cached[1]

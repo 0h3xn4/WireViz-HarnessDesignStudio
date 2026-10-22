@@ -4,6 +4,7 @@ from .generation import GenerationRecord
 from .library import PART_CATEGORIES, LibraryInfo, Part
 from .logical import Endpoint, InterfaceInstance, InterfaceType, SignalDef, Unit
 from .physical import (
+    Accessory,
     BranchPoint,
     Connector,
     Harness,
@@ -17,6 +18,7 @@ from .project import DEFAULT_ZONES, SCHEMA_VERSION, Project, ProjectMeta, Quaran
 from .review import Baseline, ChangeEntry, Placement, Snapshot, Waiver
 
 __all__ = [
+    "Accessory",
     "CONFIG_NAMES",
     "DEFAULT_ZONES",
     "PART_CATEGORIES",

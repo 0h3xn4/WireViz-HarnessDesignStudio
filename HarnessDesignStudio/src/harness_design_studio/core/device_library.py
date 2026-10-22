@@ -168,8 +168,8 @@ def export_devices(project: Project, unit_ids: list[str]) -> dict[str, Any]:
         for c in connectors:
             c2 = evolve(c, pins=[_portable(p) for p in c.pins])
             out.append(c2.model_dump(mode="json"))
-            todo = [c.part_id]
-            while todo:  # the part and the part it mates with
+            todo = [c.part_id, *sorted({p.contact_part for p in c.pins if p.contact_part})]
+            while todo:  # the part, the part it mates with and the contacts of its pins
                 pid = todo.pop()
                 part = project.parts.get(pid)
                 if part is not None and pid not in parts:
