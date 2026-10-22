@@ -68,7 +68,7 @@ The **Direction** and **Class** columns come from the interface type of the pin'
 
 ![The Devices tab for the unit BAT1: the connector list, the card with the part, a Label field, the pin table with the Function column, and the buttons Add from library, Save to library, Duplicate and Export pinout](../img/devices-tab.png)
 
-*The Devices tab on the `flatsat` example (version 1.4.0).*
+*The Devices tab on the `flatsat` example (version 1.6.0).*
 
 ## Take the pinout from a spreadsheet
 
