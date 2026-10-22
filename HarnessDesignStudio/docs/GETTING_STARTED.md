@@ -77,7 +77,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 | Where | What it is |
 | --- | --- |
-| Rail (left edge) | **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions**, **Settings** |
+| Rail (left edge) | **Next step** (one thing to do now, in plain words; see [Use the simple workspace](user-manual/use-the-simple-workspace.md)), **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions**, **Settings** |
 | Top bar | the project name, whether it is saved, the revision, a short model hash, where you are, **Undo**, **Redo**, **Guided / Expert**, **Search** (Ctrl+K), the steps **Generate** (the one blue button), **Check** and **Release…** (each shows what is done and what is next), **Export…** and a status chip (*Up to date*, *Plans out of date* ...) |
 | Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6); each area of the rail shows its own: Model has **Diagram** and **Devices**, Drawings has **Harness**, Outputs has **Lists**, Revisions has **Releases** |
 | Middle, **Diagram** | units in lanes (*panel-A*, *panel-B*), links between them. Every kind of link has its own picture and colour; the legend (bottom left of the diagram) shows them (power is red in the light theme). Small badges show problems, values still to enter and locks |

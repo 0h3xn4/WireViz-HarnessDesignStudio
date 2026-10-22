@@ -1,9 +1,9 @@
 """The areas of the window: what the navigation rail lists and which views each one holds.
 
 No Qt here, so the mapping is tested without a display. An area is a place the person goes to
-(`Home`, `Model`, `Checks` ...); the views it holds are the tabs of the main tab widget
-(`diagram`, `devices`, `checks`, `harness`, `lists`, `releases`). Home and Settings are pages of
-their own and hold no tab. The mapping of every old tab, menu and dialog is in
+(`Next step`, `Home`, `Model`, `Checks` ...); the views it holds are the tabs of the main tab widget
+(`diagram`, `devices`, `checks`, `harness`, `lists`, `releases`). Next step, Home and Settings are
+pages of their own and hold no tab. The mapping of every old tab, menu and dialog is in
 docs/ui/UI_OVERHAUL_PLAN.md (section 4).
 """
 
@@ -23,6 +23,7 @@ class Area:
 
 
 AREAS: Final[tuple[Area, ...]] = (
+    Area("next", strings.AREA_NEXT, "nav-next", (), strings.AREA_NEXT_TIP),
     Area("home", strings.AREA_HOME, "nav-home", (), strings.AREA_HOME_TIP),
     Area("model", strings.AREA_MODEL, "nav-model", ("diagram", "devices"), strings.AREA_MODEL_TIP),
     Area("checks", strings.AREA_CHECKS, "nav-checks", ("checks",), strings.AREA_CHECKS_TIP),

@@ -131,6 +131,13 @@ from harness_design_studio.gui.new_project_dialog import (
     NewProjectDialog,
     NewProjectRequest,
 )
+from harness_design_studio.gui.next_page import NextStepPage
+from harness_design_studio.gui.next_step import (
+    NextInputs,
+    clean_workspace,
+    default_workspace,
+    next_step,
+)
 from harness_design_studio.gui.pages import HomePage
 from harness_design_studio.gui.panels import ProblemsPanel, PropertiesPanel, category_icon
 from harness_design_studio.gui.problems_panel import ProblemsList
@@ -414,6 +421,8 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.settings = settings
         self.theme = theme
+        self._settings_were_empty = not settings.allKeys()  # a first run (see `_restore_workspace`)
+        self.workspace = "full"  # "simple" | "full", set from the settings in `_restore_settings`
         self.ctl = EditorController(journal_delay_ms)
         self.setObjectName("main-window")
         # Dialog hooks (tests replace these to drive the UI without blocking).
@@ -511,6 +520,7 @@ class MainWindow(QMainWindow):
         if first_run is None:
             first_run = not self.settings.value("tour/done", False, bool)
         self.ctl.open_sample()
+        self._open_in_workspace()
         self._update_hash()
         if first_run:
             QTimer.singleShot(200, self.tour.start)
@@ -649,8 +659,24 @@ class MainWindow(QMainWindow):
             forget_recent=lambda path: self.forget_recent(path),
             open_example=lambda name: self.open_example_flow(name),
         )
+        self.next_page = NextStepPage(
+            self.theme,
+            actions={
+                "add_device": lambda: self.add_device_flow(),
+                "new_harness": lambda: self.new_harness_flow(),
+                "connect": lambda: self._next_connect(),
+                "generate": lambda: self.generate_flow(),
+                "check": lambda: self.check_flow(),
+                "fix": lambda: self._next_fix(),
+                "build_sheets": lambda: self.export_dialog_flow(),
+                "release": lambda: self._next_go("releases"),
+                "done": lambda: self._next_go("lists"),
+                "show_everything": lambda: self.show_everything(),
+            },
+        )
         self.settings_page = SettingsPage(
             self.theme,
+            set_workspace=lambda value: self.set_workspace(value),
             set_theme=lambda mode: self.set_theme_mode(mode),
             set_scale=lambda pct: self.scale_actions[pct].trigger(),
             set_reduce_motion=lambda on: self._set_checked(self.act_reduce_motion, on),
@@ -662,11 +688,13 @@ class MainWindow(QMainWindow):
             settings_file=self.settings.fileName(),
         )
         shrinkable(self.home_page)  # a page never sets the minimum size of the window
+        shrinkable(self.next_page)
         shrinkable(self.settings_page)
         self.area_stack = QStackedWidget()
         self.area_stack.setObjectName("area-stack")
         self.area_stack.addWidget(self.main_tabs)
         self.area_stack.addWidget(self.home_page)
+        self.area_stack.addWidget(self.next_page)
         self.area_stack.addWidget(self.settings_page)
         outer.addWidget(self.area_stack, 1)
         self.main_tabs.currentChanged.connect(lambda _i: self._tab_changed())
@@ -1305,6 +1333,24 @@ class MainWindow(QMainWindow):
         )
         self.act_select_tool = a(strings.TOOL_SELECT, self.ctl.end_connect, name="act-select")
         self.act_add_zone = a(strings.A_ADD_ZONE, self.add_zone_flow, name="act-add-zone")
+        self.act_simple = a(
+            strings.WORKSPACE_SIMPLE,
+            lambda: self.set_workspace("simple"),
+            checkable=True,
+            name="act-workspace-simple",
+        )
+        self.act_full = a(
+            strings.WORKSPACE_FULL,
+            lambda: self.set_workspace("full"),
+            checkable=True,
+            name="act-workspace-full",
+        )
+        self.act_simple.setToolTip(strings.WORKSPACE_SIMPLE_TIP)
+        self.act_full.setToolTip(strings.WORKSPACE_FULL_TIP)
+        wgroup = QActionGroup(self)
+        wgroup.addAction(self.act_simple)
+        wgroup.addAction(self.act_full)
+        self.act_full.setChecked(True)
         self.act_guided = a(
             strings.GUIDED, lambda: self.ctl.set_mode("guided"), checkable=True, name="act-guided"
         )
@@ -1621,6 +1667,9 @@ class MainWindow(QMainWindow):
         self._rebuild_connect_menu()
         self.tool_connect.setMenu(self.menu_connect)
         v = mb.addMenu(strings.M_VIEW)
+        v.addAction(self.act_simple)
+        v.addAction(self.act_full)
+        v.addSeparator()
         v.addAction(self.act_guided)
         v.addAction(self.act_expert)
         v.addSeparator()
@@ -2049,6 +2098,8 @@ class MainWindow(QMainWindow):
             running=self.busy,
             checking=c.drc_busy(),
             has_harnesses=bool(c.project.harnesses),
+            units=len(c.project.units),
+            interfaces=len(c.project.interfaces),
             generated_at=record.input_hash[:8] if record is not None else "",
             revision=self._revision_text(),
         )
@@ -2065,6 +2116,7 @@ class MainWindow(QMainWindow):
             "failed": summary.failed if summary else 0,
             "unchecked": (summary.not_checked + summary.pending) if summary else 0,
             "harnesses": len(statuses),
+            "hand_made": sum(1 for h in c.project.harnesses.values() if not h.generated),
             "in_review": statuses.count("in_review"),
             "released": statuses.count("released"),
         }
@@ -2079,6 +2131,7 @@ class MainWindow(QMainWindow):
         """Push the status into the top bar, the banner and the status bar."""
         status = self.shell_status(compute)
         self.topbar.apply(status)
+        self._update_next(status)
         self._update_home()
         self.status_hash.setText(status.model_hash)
         self.status_counts.setToolTip(
@@ -2816,6 +2869,7 @@ class MainWindow(QMainWindow):
             self.jobs.finish(self._last_check)
         self._update_jobs()
         self._update_problems_button()
+        self._update_next(self.shell_status(compute=False))  # the Check step may be done now
         if self._check_asked and not busy and self.ctl.drc_current:
             self._check_asked = False
             results = self.ctl.drc_rule_results()
@@ -2845,6 +2899,74 @@ class MainWindow(QMainWindow):
         self.toasts.show_message(strings.VIEW_NOT_INSTALLED.format(title), None)
         return False
 
+    # ---- the workspace and the next step -------------------------------------------------------------
+    def _restore_workspace(self) -> None:
+        """Simple for a settings file that was empty when the window started, Full for one that
+        had values (the choice is stored at once: later runs find values in the file)."""
+        fallback = default_workspace(not self._settings_were_empty)
+        value = clean_workspace(self.settings.value("ui/workspace", fallback), fallback)
+        self.settings.setValue("ui/workspace", value)
+        self._apply_workspace(value)
+
+    def _apply_workspace(self, value: str) -> None:
+        self.workspace = value
+        self.act_simple.setChecked(value == "simple")
+        self.act_full.setChecked(value == "full")
+        self.next_page.set_workspace(value)
+
+    def set_workspace(self, value: str) -> None:
+        """View > Simple / Full: store and apply the choice. The open page stays; the next project
+        that is opened shows the first page of the workspace."""
+        value = clean_workspace(value, self.workspace)
+        self.settings.setValue("ui/workspace", value)
+        self._apply_workspace(value)
+        self._sync_settings_page()
+
+    def show_everything(self) -> None:
+        """The link of the Next step page: the full workspace, on the diagram."""
+        self.set_workspace("full")
+        self.set_area(areas.DEFAULT)
+
+    def _open_in_workspace(self) -> None:
+        """A project was opened: the simple workspace starts on the next step (the full one stays
+        where it is)."""
+        if self.workspace == "simple":
+            self._show_area("next")
+
+    def _next_inputs(self, s: ShellStatus) -> NextInputs:
+        return NextInputs(
+            units=s.units,
+            interfaces=s.interfaces,
+            harnesses=s.harnesses,
+            hand_made_harnesses=s.hand_made,
+            generation=s.generation,
+            running=s.running,
+            checked=s.checked,
+            failed=s.failed,
+            unchecked=s.unchecked,
+            outputs=s.outputs,
+            in_review=s.in_review,
+            released=s.released,
+            read_only=s.read_only,
+            has_folder=self.ctl.root is not None,
+        )
+
+    def _update_next(self, status: ShellStatus) -> None:
+        self.next_page.show_next(next_step(self._next_inputs(status)))
+
+    def _next_go(self, view: str) -> None:
+        self.go_to(view)
+
+    def _next_connect(self) -> None:
+        """The Next step button "Connect two devices": the diagram with the Connect tool."""
+        self.go_to("diagram")
+        self.act_connect_tool.trigger()
+
+    def _next_fix(self) -> None:
+        """The Next step button "Show the problems": the Checks, filtered to what failed."""
+        self.go_to("checks")
+        self.checks_panel.set_result_filter("fail")
+
     # ---- areas -----------------------------------------------------------------------------------
     def area(self) -> str:
         """The key of the area that is open: home, model, checks, drawings, outputs, revisions or
@@ -2864,9 +2986,8 @@ class MainWindow(QMainWindow):
         self._switching_area = True
         self.rail.select(key)
         if not a.tabs:
-            self.area_stack.setCurrentWidget(
-                self.home_page if key == "home" else self.settings_page
-            )
+            pages = {"home": self.home_page, "next": self.next_page}
+            self.area_stack.setCurrentWidget(pages.get(key, self.settings_page))
         else:
             tabs = self.main_tabs
             tabs.set_filter(None)  # (every tab shows while one is chosen)
@@ -3246,6 +3367,7 @@ class MainWindow(QMainWindow):
         if not self._confirm_discard():
             return
         self.ctl.open_sample()
+        self._open_in_workspace()
 
     # ---- files ------------------------------------------------------------------------------
     def _ask_folder(self, title: str) -> str | None:
@@ -3325,6 +3447,7 @@ class MainWindow(QMainWindow):
             return
         if not request.is_blank and not self.open_project(folder):
             return
+        self._open_in_workspace()
         self._last_issues = []
         self.settings.setValue("project/last", str(folder))
 
@@ -3371,6 +3494,7 @@ class MainWindow(QMainWindow):
             return False
         self._last_issues = result.issues
         self._restore_project_layout()
+        self._open_in_workspace()
         self.settings.setValue("project/last", str(folder))
         if self.ctl.open_note:
             self.toasts.show_message(self.ctl.open_note, None, 10000)
@@ -3482,6 +3606,7 @@ class MainWindow(QMainWindow):
         if scale not in self.scale_actions:
             scale = 100
         mode = str(self.settings.value("ui/mode", "guided"))
+        self._restore_workspace()
         wanted = bool(self.settings.value("ui/minimap", True, bool))
         self.act_minimap.setChecked(wanted)
         self.view.set_minimap_wanted(wanted)
@@ -3508,6 +3633,7 @@ class MainWindow(QMainWindow):
         self.ctl.set_mode(mode if mode in ("guided", "expert") else "guided")
         for toggled in (self.act_snap, self.act_labels, self.act_reduce_motion):
             toggled.toggled.connect(lambda _on=False: self._sync_settings_page())
+        self.act_simple.toggled.connect(lambda _on=False: self._sync_settings_page())
         self.theme.changed.connect(self._sync_settings_page)
         self._sync_settings_page()
         geo = self.settings.value("ui/geometry")
@@ -3696,6 +3822,7 @@ class MainWindow(QMainWindow):
             theme_mode=self.theme.mode,
             scale=round(self.theme.scale * 100),
             mode=self.ctl.mode,
+            workspace=self.workspace,
             reduce_motion=self.act_reduce_motion.isChecked(),
             snap=self.act_snap.isChecked(),
             labels=self.act_labels.isChecked(),

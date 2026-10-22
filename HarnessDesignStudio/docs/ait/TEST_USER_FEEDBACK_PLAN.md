@@ -2,7 +2,7 @@
 
 This page says what the test users said, what the tool does about each point today (checked in the code of version 1.6.0), what the next versions change and in which order. It is a plan and a record, not a promise: each milestone is a pull request with tests, and what is not built yet is marked.
 
-**Status (2026-10-22).** The plan is written and the owner has answered the four open questions (below). The build workbook (1.7.0 milestone 1, D-169) is built and in review as pull request 102. Milestone 2 (the build data, D-170) is built (model, editor fields, outputs, `import-build-data`, the documents) and in review; the design is below, and *As built* after it lists where the result differs from the words of the design. What is not built is 1.8.0 (the simple workspace) and the release itself.
+**Status (2026-10-22).** The plan is written and the owner has answered the four open questions (below). The build workbook (1.7.0 milestone 1, D-169) is built and in review as pull request 102. Milestone 2 (the build data, D-170) is built (model, editor fields, outputs, `import-build-data`, the documents) and in review; the design is below, and *As built* after it lists where the result differs from the words of the design. Stage S1 of 1.8.0 (the simple workspace, D-171) is built and in review; stages S2 to S4 and the release itself are not built.
 
 ## What the test users said
 
@@ -93,11 +93,12 @@ Ways to enter them: the *Edit wire* tab (strip lengths, one wire or a selection,
 Built in stages, each one checked by the testers before the next:
 
 - **S1, one next step.** On opening a project the window shows a single page *What to do next* instead of the full workbench: the next step in plain words with one primary button (*Add a device*, *Connect them*, *Generate the harnesses*, *Fix what is marked*, *Get the build sheets*), the steps done before it, and a link *Show everything* (Expert). The steps follow the facts of the project (`gui/workflow.py` already derives the Generate, Check and Release steps).
+  **S1 as built.** A rail area **Next step** (first in the rail; a page of its own like Home) shows the heading *What to do next*, one card (the title, one sentence, the one primary button, and for an empty project the alternative *or make a harness by hand* with *New harness…*), the six steps with an icon and a word (*done*, *next*, *to do*, *not possible*), and the link *Show everything*. The texts are in the user manual page [Use the simple workspace](../user-manual/use-the-simple-workspace.md). The rules are a pure function (`gui/next_step.py`) of: devices, connections, harnesses (and how many were made by hand), whether the plans are current, a running job, whether the design was checked and how many checks failed, whether the files are up to date, how many harnesses are released and whether the project is read-only. The setting *Workspace: Simple or Full* is stored as `ui/workspace`; a settings file with no stored value gets Simple, a file that holds values keeps Full. The first-run tour still runs over the Next step page; its steps for hidden targets are skipped, and S3 rewords it. No file, rule, command or output changed.
 - **S2, fewer things on screen.** In the simple workspace the rail has four areas (Design, Check, Build, Revisions); the project tree, the inspector, the legend, the minimap, the status-bar counts and the diagram tool bar are closed until asked for; one panel opens at a time.
 - **S3, plain words.** A word list replaces jargon on the simple screens: *interface types*, *configuration*, *values pending*, *rules not checked*, *Placeholder*, *model hash* get a plain wording or move behind a *Details* link; every message says what to do next.
 - **S4, the first project.** A blank project asks for one thing at a time (the name, the first device, its connectors), instead of the empty diagram.
 
-The mode setting already exists (*Guided*, *Expert*); the simple workspace is a third state that becomes the default for a new settings file; people who already chose Expert keep it.
+The mode setting already exists (*Guided*, *Expert*; it only changes how much the diagram shows); the workspace setting (*Simple*, *Full*) is separate from it, and Simple becomes the default for a new settings file; people who already use the editor keep Full.
 
 ## How we know it worked
 

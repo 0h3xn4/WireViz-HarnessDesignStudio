@@ -107,7 +107,7 @@ The **Problems panel** (Ctrl+Shift+M, or **Problems (n)** in the status bar) lis
 Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every setting takes effect at once and is kept for the next start; the page follows the View menu and Ctrl+K, which change the same settings.
 
 - **Appearance**: **Theme** (*Follow the system*, *Light* or *Dark*), **Interface size** (100, 125, 150 or 200 %; it takes about a second to apply) and **Reduce motion**, which turns off the fades and slides of menus, lists and tooltips. The interface uses the bundled fonts Inter and JetBrains Mono.
-- **Editing**: **Mode** (*Guided* or *Expert*), **Snap units to the grid** and **Show every link label**.
+- **Editing**: **Workspace** (*Simple* or *Full*), **Mode** (*Guided* or *Expert*), **Snap units to the grid** and **Show every link label**.
 - **Project**: **Open the engineering values…**, the window of section 6.
 - **Keyboard shortcuts**: every key of the window, with a box **Filter the shortcuts…**. They are fixed and cannot be changed.
 - **About**: the version, the Python, Qt and PySide6 versions, and where your settings are kept. **Help > About** opens this section.
@@ -154,6 +154,8 @@ At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv`
 - A part or interface type made here is marked *pending* or *unverified*. The tool never approves a part. A released device shows a banner with **Start new revision…**; its spare pins stay editable, its pin names and count do not.
 
 ## 5. Guided and Expert mode
+
+**Next step.** The first item of the rail, **Next step**, shows one page with the one thing to do now, a single button and the six steps of the work. A first run opens projects on it (*Simple* workspace); if your settings already hold values you keep the *Full* workspace. You can change this in the View menu or in the Settings page. It is separate from Guided and Expert below.
 
 - **Guided** (default): you work with units and interfaces. The tool chooses connectors and pins and marks its choices as *auto-filled* until you confirm them.
 - **Expert**: you also see each connector of a unit and can choose the exact connector for every end of an interface.
@@ -392,6 +394,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Edit | Wire colours... | chooses the wire colour of each signal (section 7) |
 | Edit | Add unit | one item for each kind of unit (computer, power unit, wheel ...), and Device… (Ctrl+Shift+N); **New harness…** (Ctrl+Shift+H) is an item of the Edit menu |
 | Edit | Connect with | one item for each interface type (the arrow beside the Connect button lists the same); then click two units |
+| View | Simple workspace, Full workspace | where a project opens: on **Next step** (one thing to do, in plain words) or where it opened before |
 | View | Guided, Expert | the two modes of section 5 |
 | View | Theme | Follow the system (the default), Light or Dark (also under **Settings > Appearance**) |
 | View | Show overview map, Show legend, Snap to grid | overlays and the grid |

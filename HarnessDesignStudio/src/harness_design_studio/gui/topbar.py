@@ -53,6 +53,9 @@ class ShellStatus:
     harnesses: int = 0
     in_review: int = 0
     released: int = 0
+    units: int = 0  # devices in the project
+    interfaces: int = 0  # connections in the project
+    hand_made: int = 0  # harnesses a person made (generated=False)
 
 
 _RUNNING = {

@@ -2451,3 +2451,83 @@ INS_PART_TOOL_TIP = (
 INS_PART_TOOL_SET = "Set tool"
 INS_PART_TOOL_SET_TIP = "Save the crimp tool of this contact part"
 STEP_SET_PART_TOOL = "Set tool of {0}"
+
+# ---- 1.8.0 S1: the simple workspace, one next step (D-171) ---------------------------------------
+AREA_NEXT = "Next step"
+AREA_NEXT_TIP = "Next step: what to do now, in plain words, with one button"
+NEXT_TITLE = "What to do next"
+NEXT_STEPS_HEADING = "The steps"
+NEXT_STEPS_NAME = "The steps of the work and where you are"
+NEXT_STEP_ADD = "Add your devices"
+NEXT_STEP_CONNECT = "Connect them"
+NEXT_STEP_GENERATE = "Generate the harnesses"
+NEXT_STEP_CHECK = "Check the design"
+NEXT_STEP_SHEETS = "Get the build sheets"
+NEXT_STEP_RELEASE = "Review and release"
+NEXT_STATE_DONE = "done"
+NEXT_STATE_NEXT = "next"
+NEXT_STATE_TODO = "to do"
+NEXT_STATE_BLOCKED = "not possible"
+NEXT_STEP_LINE = "{0}: {1}"
+NEXT_SHOW_EVERYTHING = "Show everything"
+NEXT_SHOW_EVERYTHING_TIP = (
+    "Switch to the full workspace, with every panel and tab. You can switch back in the View menu."
+)
+NEXT_BUSY_TITLE = "Working…"
+NEXT_BUSY_WHY = "Please wait. This takes a moment."
+NEXT_READ_ONLY_TITLE = "You can only look at this project"
+NEXT_READ_ONLY_WHY = "It was saved by a newer version, or it is open in another window, so nothing can be changed here."
+NEXT_ADD_TITLE = "Start with a device"
+NEXT_ADD_WHY = "A device is a box in your design, such as a computer or a battery."
+NEXT_ADD_BUTTON = "Add a device"
+NEXT_ADD_ALTERNATIVE = "or make a harness by hand"
+NEXT_ADD_ALTERNATIVE_BUTTON = "New harness…"
+NEXT_CONNECT_TITLE = "Connect your devices"
+NEXT_CONNECT_WHY = "Draw a connection from one device to another. Each connection becomes wires."
+NEXT_CONNECT_BUTTON = "Connect two devices"
+NEXT_GENERATE_TITLE = "Generate the harnesses"
+NEXT_GENERATE_WHY = "The program makes the harnesses from your connections."
+NEXT_GENERATE_AGAIN_TITLE = "Generate the harnesses again"
+NEXT_GENERATE_AGAIN_WHY = "You changed the design, so the harness plans are out of date."
+NEXT_GENERATE_BUTTON = "Generate the harnesses"
+NEXT_CHECK_TITLE = "Check the design"
+NEXT_CHECK_WHY = "The check looks for mistakes in the design and marks them."
+NEXT_CHECK_BUTTON = "Check the design"
+NEXT_FIX_TITLE = "Fix what is marked"
+NEXT_FIX_WHY_ONE = "1 check failed. It is marked with what to do."
+NEXT_FIX_WHY_MANY = "{0} checks failed. Each one is marked with what to do."
+NEXT_FIX_BUTTON = "Show the problems"
+NEXT_SHEETS_TITLE = "Get the build sheets"
+NEXT_SHEETS_WHY = (
+    "The workbook of every harness has the cut list, the connector blocks and the test sheet."
+)
+NEXT_SHEETS_WAIT = "Some checks wait for engineering values, and the sheets will say so."
+NEXT_SHEETS_FOLDER = "You will choose a folder for the files."
+NEXT_SHEETS_BUTTON = "Export the build sheets"
+NEXT_RELEASE_TITLE = "Review and release"
+NEXT_RELEASE_WHY = (
+    "Release each harness when it is final. A released harness cannot be changed by accident."
+)
+NEXT_RELEASE_BUTTON = "Go to Releases"
+NEXT_DONE_TITLE = "Everything is released"
+NEXT_DONE_WHY = "Every harness is released and the files are up to date."
+NEXT_DONE_BUTTON = "Open the Outputs"
+NEXT_BUTTON_TIPS = {
+    "add_device": "Add a device to the design and name it (Ctrl+Shift+N)",
+    "new_harness": "Make a harness by hand, without devices or connections (Ctrl+Shift+H)",
+    "connect": "Open the diagram with the Connect tool, then click two devices (C)",
+    "generate": "Make the harnesses from the connections of the design (Ctrl+G)",
+    "check": "Look for mistakes in the design (F5)",
+    "fix": "Open the Checks, which list what failed and what to do",
+    "build_sheets": "Write the build workbook and the other files of every harness (Ctrl+E)",
+    "release": "Open the Revisions, where a harness is reviewed and released",
+    "done": "Open the Outputs: the lists and the exported files",
+}
+WORKSPACE_SIMPLE = "Simple"
+WORKSPACE_FULL = "Full"
+WORKSPACE_SIMPLE_TIP = "Simple workspace: the project opens on the next step, in plain words"
+WORKSPACE_FULL_TIP = "Full workspace: the project opens on the diagram, with every panel and tab"
+SETTINGS_WORKSPACE = "Workspace"
+SETTINGS_WORKSPACE_HINT = (
+    "Simple opens a project on the next step to take. Full opens it on the diagram."
+)

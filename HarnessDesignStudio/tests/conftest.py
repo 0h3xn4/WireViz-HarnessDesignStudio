@@ -26,6 +26,16 @@ def pytest_unconfigure(config: object) -> None:
 
 
 @pytest.fixture(autouse=True)
+def _full_workspace_for_a_new_settings_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A settings file with no values gets the simple workspace (D-171), which opens a project on
+    the Next step page. The tests written for the full workspace (the diagram, the tabs) build their
+    windows on a new file, so they get Full unless a test asks for the real default."""
+    from harness_design_studio.gui import next_step
+
+    monkeypatch.setattr(next_step, "FIRST_RUN_WORKSPACE", "full")
+
+
+@pytest.fixture(autouse=True)
 def _close_the_windows_a_test_left_open() -> Iterator[None]:
     """Delete the top-level widgets a test created and did not close (most GUI tests build a
     window and walk away). Each one kept its timers and its child widgets alive for the rest of

@@ -1,0 +1,62 @@
+# Use the simple workspace
+
+This page shows the **Next step** page: one page that tells you what to do now, in plain words, with one button. Use it when you are not sure what to do next.
+
+> **Not in the latest release yet.** The simple workspace is new in 1.8.0 (decision D-171). This is its first stage; the fewer-things-on-screen stage and the plain-words stage are still to come. A project from an earlier version opens as it is, and nothing that is written to disk changes.
+
+## Contents
+
+- [What it is for](#what-it-is-for)
+- [The page](#the-page)
+- [What it says, step by step](#what-it-says-step-by-step)
+- [Simple or Full](#simple-or-full)
+- [Where the buttons go](#where-the-buttons-go)
+
+## What it is for
+
+The test users of version 1.6.0 said the editor showed too much at once and that they did not know what to do. The Next step page looks at your project and names **one** thing to do. You press the button, the program opens the right place, and the page then names the next thing.
+
+## The page
+
+Open it with **Next step**, the first item of the rail on the left. It works the same in the Simple and in the Full workspace. It has:
+
+- the heading **What to do next**;
+- one card with a short title, one sentence that says why, and **one** main button; on an empty project the card also offers *or make a harness by hand* with the button **New harness…**;
+- the six steps of the work, each with an icon **and** a word: *done*, *next*, *to do*, and *not possible* when the project is read-only;
+- the link **Show everything**, which switches to the Full workspace (only shown in Simple).
+
+## What it says, step by step
+
+The page names the first step that is not done. The rules run in this order.
+
+| What is true of the project | Title | Button |
+|---|---|---|
+| A job is running | Working… | none; please wait |
+| The project is read-only (saved by a newer version, or open in another window) | You can only look at this project | none; **Save a copy** is in the banner |
+| No device and no harness | Start with a device | **Add a device** |
+| No connection and no harness | Connect your devices | **Connect two devices** |
+| No harness yet, or the plans are out of date (not for a project whose harnesses were all made by hand) | Generate the harnesses (again) | **Generate the harnesses** |
+| The design was not checked | Check the design | **Check the design** |
+| Checks failed | Fix what is marked | **Show the problems** |
+| The files are not up to date | Get the build sheets | **Export the build sheets** |
+| A harness is not released | Review and release | **Go to Releases** |
+| Everything is released | Everything is released | **Open the Outputs** |
+
+When some checks wait for engineering values, the *Get the build sheets* card says so in one sentence; it never blocks you, because the build workbook marks what is still open.
+
+## Simple or Full
+
+The setting **Workspace: Simple or Full** is in the **View** menu (first entries) and at the top of the Editing section of the **Settings** page; the two follow each other.
+
+- **Simple** opens a project on the Next step page.
+- **Full** opens a project where it opened before.
+- **A first run** (a settings file with nothing stored yet) gets Simple. A settings file that already holds values gets **Full**, so nobody who already uses the editor is surprised; they can switch to Simple in the View menu.
+- Changing the setting does not move the page you are on. **Show everything** switches to Full and opens the Model area.
+
+This is separate from **Guided / Expert** in the top bar, which only changes how much the diagram shows.
+
+## Where the buttons go
+
+Each button opens something that already exists: **Add a device** and **New harness…** open the same windows as in the Model area; **Connect two devices** opens the diagram with the Connect tool; **Generate the harnesses**, **Check the design** and **Export the build sheets** do what their menu entries do; **Show the problems** opens the Checks area with the failed rules; **Go to Releases** and **Open the Outputs** open those areas.
+
+Next: [generate harnesses](generate-harnesses.md), [read and fix problems](read-and-fix-problems.md), [export the outputs](export-the-outputs.md).

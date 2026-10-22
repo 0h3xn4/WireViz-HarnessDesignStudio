@@ -50,7 +50,7 @@ def win(qtbot, tmp_path):
 
 def _views(win):
     """Every place the window can show, as (name, show it): the areas, the tabs of a few of them,
-    the sections of Settings, the Problems panel."""
+    the sections of Settings, the Problems panel, the Next step page in both workspaces."""
     for key in areas.KEYS:
         yield key, lambda k=key: win.set_area(k)
     for tab in ("devices", "diagram", "harness", "lists", "releases", "checks"):
@@ -68,6 +68,9 @@ def _views(win):
             lambda k=key: (win.set_area("settings"), win.settings_page.show_section(k)),
         )
     yield "problems-panel", lambda: (win.set_area("model"), win.toggle_problems())
+    # the Next step page in both workspaces (the link to the full one shows only in Simple)
+    yield "next-simple", lambda: (win.set_workspace("simple"), win.set_area("next"))
+    yield "next-full", lambda: (win.set_workspace("full"), win.set_area("next"))
 
 
 def _settle() -> None:
