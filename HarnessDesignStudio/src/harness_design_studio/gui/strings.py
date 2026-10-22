@@ -2452,7 +2452,7 @@ INS_PART_TOOL_SET = "Set tool"
 INS_PART_TOOL_SET_TIP = "Save the crimp tool of this contact part"
 STEP_SET_PART_TOOL = "Set tool of {0}"
 
-# ---- 1.8.0 S1: the simple workspace, one next step (D-171) ---------------------------------------
+# ---- 1.7.0 S1: the simple workspace, one next step (D-171) ---------------------------------------
 AREA_NEXT = "Next step"
 AREA_NEXT_TIP = "Next step: what to do now, in plain words, with one button"
 NEXT_TITLE = "What to do next"
