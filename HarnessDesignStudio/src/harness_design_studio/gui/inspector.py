@@ -24,6 +24,7 @@ from PySide6.QtGui import QResizeEvent, QShowEvent
 from PySide6.QtWidgets import (
     QComboBox,
     QFrame,
+    QHBoxLayout,
     QHeaderView,
     QLabel,
     QLineEdit,
@@ -35,6 +36,8 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio.core import configcheck, describe
+from harness_design_studio.core.build_data import plan_set_part_tool
+from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.usedby import KINDS as USED_KINDS
 from harness_design_studio.core.usedby import Use, used_by
@@ -206,6 +209,8 @@ def _part_facts(p: Project, oid: str) -> list[dict[str, Any]]:
         _fact(L["pins"], str(part.pin_count) if part.pin_count else ""),
         _fact(L["approval"], "", strings.APPROVAL[part.approval], approval),
     ]
+    if part.category == "contact":
+        rows.append(_fact(strings.INS_FACT_TOOL, part.tool or ""))
     if part.unverified:
         rows.insert(
             0,
@@ -388,6 +393,41 @@ class Inspector(QWidget):
             QHeaderView.ResizeMode.ResizeToContents
         )
         facts_lay.addWidget(self.facts_table, 1)
+        # the crimp tool of a contact part (the one part field a person edits here)
+        self.tool_box = QWidget()
+        tool_lay = QVBoxLayout(self.tool_box)
+        tool_lay.setContentsMargins(theme.space(8), 0, theme.space(8), 0)
+        tool_lay.setSpacing(theme.space(4))
+        self.tool_label = QLabel(strings.INS_PART_TOOL)
+        self.tool_label.setProperty("heading", True)
+        self.tool_edit = QLineEdit()
+        self.tool_edit.setObjectName("part-tool")
+        self.tool_edit.setAccessibleName(strings.INS_PART_TOOL)
+        self.tool_edit.setToolTip(strings.INS_PART_TOOL_TIP)
+        self.tool_set = QPushButton()
+        self.tool_set.setObjectName("part-tool-set")
+        icon_button(
+            self.tool_set,
+            "pass",
+            theme,
+            strings.INS_PART_TOOL_SET_TIP,
+            text=strings.INS_PART_TOOL_SET,
+        )
+        self.tool_error = QLabel()
+        self.tool_error.setObjectName("part-tool-error")
+        self.tool_error.setWordWrap(True)
+        self.tool_error.setProperty("error", True)
+        self.tool_error.setVisible(False)
+        tool_row = QHBoxLayout()
+        tool_row.addWidget(self.tool_edit, 1)
+        tool_row.addWidget(self.tool_set)
+        tool_lay.addWidget(self.tool_label)
+        tool_lay.addLayout(tool_row)
+        tool_lay.addWidget(self.tool_error)
+        self.tool_box.setVisible(False)
+        self.tool_edit.returnPressed.connect(self.apply_tool)
+        self.tool_set.clicked.connect(self.apply_tool)
+        facts_lay.addWidget(self.tool_box)
         self.stack.addWidget(facts_page)
         page_lay.addWidget(self.stack, 1)
         self.used_box = QWidget()
@@ -563,13 +603,45 @@ class Inspector(QWidget):
         )
         self.facts_table.set_rows(facts_for(self.ctl.project, kind, oid))
         self.stack.setCurrentIndex(1)
+        self._show_tool(kind, oid, reload=True)
         self._fit_tables()
+
+    def _show_tool(self, kind: str, oid: str, *, reload: bool) -> None:
+        """The crimp tool field: only for a part of category contact; off for a read-only project."""
+        part = self.ctl.project.parts.get(oid) if kind == "part" else None
+        show = part is not None and part.category == "contact"
+        self.tool_box.setVisible(show)
+        if not show or part is None:
+            return
+        if reload and not self.tool_edit.hasFocus():
+            self.tool_edit.setText(part.tool or "")
+        self.tool_edit.setEnabled(not self.ctl.read_only)
+        self.tool_set.setEnabled(not self.ctl.read_only)
+        self.tool_edit.setToolTip(
+            strings.WHY_READ_ONLY if self.ctl.read_only else strings.INS_PART_TOOL_TIP
+        )
+
+    def apply_tool(self) -> bool:
+        """Save the crimp tool of the part shown; a refusal (a released harness uses the part) is
+        said under the field."""
+        cur = self.current()
+        if cur is None or cur[0] != "part" or not self.tool_set.isEnabled():
+            return False
+        try:
+            ops = plan_set_part_tool(self.ctl.project, cur[1], self.tool_edit.text())
+        except EditError as exc:
+            self.tool_error.setText(str(exc))
+            self.tool_error.setVisible(True)
+            return False
+        self.tool_error.setVisible(False)
+        return not ops or self.ctl.run(strings.STEP_SET_PART_TOOL.format(cur[1]), ops)
 
     def _refresh_lists(self) -> None:
         cur = self.current()
         project = self.ctl.project
         if cur is not None and cur[0] in FACT_KINDS and self._exists(project, *cur):
             self.facts_table.set_rows(facts_for(project, *cur))
+            self._show_tool(*cur, reload=True)
         uses = used_by(project, *cur) if cur is not None and cur[0] in USED_KINDS else []
         applicable = cur is not None and cur[0] in USED_KINDS and self._exists(project, *cur)
         self.used_box.setVisible(applicable)

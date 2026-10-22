@@ -129,6 +129,7 @@ def pin_rows_for_table(
                 "contact_size": r.contact_size,
                 "termination": strings.DV_TERMINATION[r.termination],
                 "termination_key": r.termination,
+                "contact_part": r.contact_part,
                 "state_key": key,
                 "state": word,
                 "state_tip": tip,
@@ -158,13 +159,17 @@ PIN_COLUMNS = [
     Column("wire", strings.DV_COL_WIRE, mono=True, width=96),
     Column("contact_size", strings.DV_COL_CONTACT_SIZE, mono=True, width=96),
     Column("termination", strings.DV_COL_TERMINATION, width=96),
+    Column(
+        "contact_part", strings.DV_COL_CONTACT_PART, mono=True, width=120,
+        tooltip=lambda _r: strings.DV_COL_CONTACT_PART_TIP,
+    ),
     Column("function", strings.DV_COL_FUNCTION, width=140),
     Column(
         "state", strings.DV_COL_STATE, state=lambda r: _field(r, "state_key"), tooltip=_tip("state_tip"),
         width=130,
     ),
 ]  # fmt: skip
-CONTACT_COLUMNS = ("contact_size", "termination")
+CONTACT_COLUMNS = ("contact_size", "termination", "contact_part")
 
 CONNECTOR_COLUMNS = [
     Column("name", strings.DV_COL_CONNECTOR, mono=True, width=80),
@@ -190,7 +195,7 @@ class DevicesView(QWidget):
     Signals (the window runs the flows): `addRequested()` (the empty state's button),
     `duplicateRequested(unit_id)`, `exportPinoutRequested(unit_id)` (the window asks for a file
     name and calls `export_to`), `whyRequested(kind, id)` for a pin ("pin", "connector.pin"),
-    `reviseRequested(harness_id)`, `fillRequested(connector_id, pins)`,
+    `reviseRequested(harness_id)`, `fillRequested(connector_id, pins)`, `contactRequested(connector_id, pins)`,
     `assignRequested(connector_id, pins)`, `newPartRequested()`, `newTypeRequested()`,
     `deviceChanged(unit_id)` and `connectorChanged(connector_id)`.
     """
@@ -203,6 +208,7 @@ class DevicesView(QWidget):
     whyRequested = Signal(str, str)
     reviseRequested = Signal(str)
     fillRequested = Signal(str, list)
+    contactRequested = Signal(str, list)
     assignRequested = Signal(str, list)
     newPartRequested = Signal()
     newTypeRequested = Signal()
@@ -595,6 +601,7 @@ class DevicesView(QWidget):
             ("delete", "close", strings.DV_DELETE_PINS, strings.DV_DELETE_PINS_TIP, "Shift+Delete", self._request_delete_pins),
             ("fill", "interface-type", strings.DV_FILL, strings.DV_FILL_TIP, "Ctrl+L", self._request_fill),
             ("assign", "interface", strings.DV_ASSIGN, strings.DV_ASSIGN_TIP, "Ctrl+Enter", self._request_assign),
+            ("contact", "part", strings.DV_CONTACT_BULK, strings.DV_CONTACT_BULK_TIP, None, self._request_contact),
         ):  # fmt: skip
             b = QPushButton()
             b.setObjectName(f"devices-pin-{key}")
@@ -632,6 +639,7 @@ class DevicesView(QWidget):
                 self._validate_cell,
                 self._show_error,
                 self.pin_table,
+                contacts=lambda: devices.contact_part_choices(self.ctl.project),
             )
         )
         self.pin_table.activated.connect(self._pin_activated)
@@ -1501,6 +1509,11 @@ class DevicesView(QWidget):
             return None
         if key in ("signal", "contact_size") and len(text) > 200:
             return strings.DV_TEXT_TOO_LONG
+        if key == "contact_part":
+            try:
+                devices.check_contact_part(self.ctl.project, text)
+            except EditError as exc:
+                return str(exc)
         return None
 
     def _cell_edited(self, row_no: int, key: str, value: object) -> None:
@@ -1597,6 +1610,11 @@ class DevicesView(QWidget):
         if cid is not None and pins and not self.ctl.read_only:
             self.fillRequested.emit(cid, pins)
 
+    def _request_contact(self) -> None:
+        cid, pins = self._cid, self.selected_pins()
+        if cid is not None and pins and not self.ctl.read_only:
+            self.contactRequested.emit(cid, pins)
+
     def _request_assign(self) -> None:
         cid, pins = self._cid, self.selected_pins()
         if cid is not None and pins and not self.ctl.read_only:
@@ -1637,6 +1655,7 @@ class DevicesView(QWidget):
             (strings.DV_ADD_PIN, self._insert_pin),
             (strings.DV_DELETE_PINS, self._request_delete_pins),
             (strings.DV_FILL, self._request_fill),
+            (strings.DV_CONTACT_BULK, self._request_contact),
             (strings.DV_ASSIGN, self._request_assign),
             (strings.DV_UNASSIGN, self._unassign),
             (strings.DV_PASTE, self._paste),

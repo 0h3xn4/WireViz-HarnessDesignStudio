@@ -1,4 +1,4 @@
-"""The build data in the outputs (decision D-170): strip lengths, contact parts, tools and
+"""REQ-OUT-07 (decision D-170): the build data in the outputs: strip lengths, contact parts, tools and
 accessories show in the tables only where they are used, always in the build workbook, and the
 independent verifier checks each of them (one mutation test per check). A project that uses none
 of them keeps its tables and files as they were (`tools.output_hashes` proves that for the

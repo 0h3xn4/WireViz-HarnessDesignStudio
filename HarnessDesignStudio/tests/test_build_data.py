@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
-"""1.7.0 M2 (D-170): the build data a technician needs (strip lengths, contacts, accessories, crimp
+"""REQ-WIRE-06, REQ-PIN-03, REQ-ACC-01 (1.7.0 M2, D-170): the build data a technician needs (strip lengths, contacts, accessories, crimp
 tools): the edit plans, what generation keeps, the Devices pin edit, the import and the parts
 import column."""
 
