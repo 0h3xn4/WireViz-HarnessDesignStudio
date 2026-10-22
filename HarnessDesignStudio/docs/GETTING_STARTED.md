@@ -71,7 +71,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 ## Part 2: look around
 
-![The main window of version 1.3.0: the navigation rail on the left, the top bar with Generate, Check and Release, the diagram in the middle, the project panel on the left and the Inspector on the right](ux/qt/02-guided-main.png)
+![The main window of version 1.6.0: the navigation rail on the left, the top bar with Generate, Check and Release, the diagram in the middle, the project panel on the left and the Inspector on the right](ux/qt/02-guided-main.png)
 
 *(The screenshot shows the app's built-in sample, which uses slightly different IDs such as `OBC` and `IF-PWR-RW1`; the layout is the same.)*
 
@@ -198,7 +198,7 @@ harness-design-studio export wheel-link --drawings
 40 files written to wheel-link/outputs (model a7fa21787017).
 ```
 
-The six new files are `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` and the same three for `W002`. A later `export` without `--drawings` removes them again and says so. The harness drawing, with a title block and the model hash at the bottom (the picture was made with an older version, so its version and hash differ from the ones your tool prints), needs `export --drawings`:
+The six new files are `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` and the same three for `W002`. A later `export` without `--drawings` removes them again and says so. The harness drawing (it needs `export --drawings`), with a title block and the model hash at the bottom (the picture is the `W001` sheet of the first export of this tutorial, made with 1.6.0, so the version and the model hash at the bottom are the ones your tool prints; with another version they differ):
 
 ![A harness drawing](img/w001-drawing.png)
 
