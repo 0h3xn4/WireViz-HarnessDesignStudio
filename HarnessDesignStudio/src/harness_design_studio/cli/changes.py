@@ -178,13 +178,15 @@ def _restamp(path: Path) -> int:
     from harness_design_studio.core.outputs.build import (
         DEFAULT_FOLDER,
         build_outputs,
+        drawings_exported,
         write_outputs,
     )
     from harness_design_studio.core.outputs.verify import verify_outputs
 
     try:
         project = load_project(path).project
-        built = build_outputs(project)
+        # the same set as the export before the release: with the drawings only if it had them
+        built = build_outputs(project, drawings=drawings_exported(path / DEFAULT_FOLDER))
         if not verify_outputs(project, built.files).ok:
             print(
                 "error: the re-exported outputs failed their independent check; nothing was written.",

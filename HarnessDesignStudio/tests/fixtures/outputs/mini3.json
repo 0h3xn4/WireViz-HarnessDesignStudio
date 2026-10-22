@@ -1,5 +1,6 @@
 {
  "harnesses/W001/W001.xlsx": "1734f1f67f3c4eca5db390a5c60c54c1d6152214258270732b489d8bf24a9227",
+ "harnesses/W001/W001_build.xlsx": "2817c11e4f08fb39697120b509a1b2234b791c51716e8735c33b2999ae2f2c1e",
  "harnesses/W001/bom.csv": "8835fcb761c8dcc7a811b91f20ef3d92947d85cc154daca5c7976ece949f5a84",
  "harnesses/W001/drawing_A3.pdf": "67a733c836cf4a2b11265bae10e5cf62c17dc1579a36799f0aed8e9bb616fb5d",
  "harnesses/W001/drawing_A3_s1.svg": "d4b7ceafb1847353b784862a0abe21696cd44b53dc46644aa2049b9162e7fd2a",
@@ -11,6 +12,7 @@
  "harnesses/W001/wirelist.csv": "89d73315577cc3685f4cfd7bc120fd5fd4dd1858a44139efd927a53a8de2f821",
  "harnesses/W001/wireviz.yaml": "ce16d9b5a1ca3edeccde160b5c1910626310f690b87f793ee87bf48815a462db",
  "harnesses/W002/W002.xlsx": "743a48b80cf9a65b5f5b3a715b14324d2debf764243d8e3da00e5dfce72fcd89",
+ "harnesses/W002/W002_build.xlsx": "8ce6b52fc7153b5d44676171bb36f3e6964d2358c8ec1ff08035ffeead01645e",
  "harnesses/W002/bom.csv": "d78481e5f1f72b2a1217bc5bc6a9c5d1995bcd6b14c99f34f8c982a202498576",
  "harnesses/W002/drawing_A3.pdf": "6f788b88936aa6edc5ab3521841ddff7276bcac0d3b127ed160dcd0063732cbd",
  "harnesses/W002/drawing_A3_s1.svg": "5e2b72f54076c1faa4b6066e19a0d38ed640f2515672867a0e9b4de5a021ed36",

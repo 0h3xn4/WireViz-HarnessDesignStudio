@@ -135,8 +135,17 @@ def _xlsx_bytes(sheets: dict[str, Table], stamp: Stamp) -> bytes:
             ws.append(cells(ws, row))
     raw = io.BytesIO()
     wb.save(raw)
+    return normalise_xlsx(raw.getvalue())
+
+
+def normalise_xlsx(raw: bytes) -> bytes:
+    """The same workbook with its zip rewritten: entries in name order, fixed timestamps, and the
+    creation and modification time pinned, so equal input gives equal bytes."""
     out = io.BytesIO()
-    with zipfile.ZipFile(raw) as src, zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst:
+    with (
+        zipfile.ZipFile(io.BytesIO(raw)) as src,
+        zipfile.ZipFile(out, "w", zipfile.ZIP_DEFLATED) as dst,
+    ):
         for name in sorted(src.namelist()):
             info = zipfile.ZipInfo(name, date_time=(1980, 1, 1, 0, 0, 0))
             info.compress_type = zipfile.ZIP_DEFLATED

@@ -12,6 +12,7 @@ from harness_design_studio.core.commands import Put  # noqa: E402
 from harness_design_studio.core.generate.engine import generate_project  # noqa: E402
 from harness_design_studio.core.io.saver import save_project  # noqa: E402
 from harness_design_studio.core.model import evolve  # noqa: E402
+from harness_design_studio.core.outputs.build import write_outputs  # noqa: E402
 from harness_design_studio.core.samples import new_project, sat15  # noqa: E402
 from tests.gui_helpers import DialogScript, make_window  # noqa: E402
 
@@ -39,6 +40,24 @@ def test_export_writes_outputs_and_the_harness_tab_status_turns_current(win, tmp
     assert (folder / "manifest.json").is_file()
     assert view.wait_idle()
     assert view.outputs_chip.state() == "pass" and "up to date" in view.outputs_chip.toolTip()
+    assert "files written" in win.toasts.messages[-1]
+
+
+def test_the_quick_export_follows_the_last_export_in_the_folder(win, tmp_path) -> None:  # type: ignore[no-untyped-def]
+    """D-169: no drawings unless the folder's last export had them; then they are kept."""
+    folder = tmp_path / "proj" / "outputs"
+
+    def has_drawings() -> bool:
+        return any(p.name.startswith("drawing_") for p in folder.rglob("*"))
+
+    win.export_flow()
+    assert not has_drawings() and (folder / "harnesses" / "W001" / "W001_build.xlsx").is_file()
+    win.export_flow()
+    assert not has_drawings()
+    write_outputs(win.ctl.project, folder)  # an export with the drawings (the library default)
+    assert has_drawings()
+    win.export_flow()
+    assert has_drawings()
     assert "files written" in win.toasts.messages[-1]
 
 

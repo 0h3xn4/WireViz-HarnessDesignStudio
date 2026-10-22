@@ -70,6 +70,7 @@ from harness_design_studio.core.outputs.build import (
     OutputsCancelled,
     OutputSet,
     build_outputs,
+    drawings_exported,
     write_outputs,
 )
 from harness_design_studio.core.outputs.verify import verify_outputs
@@ -239,9 +240,10 @@ class OutputsWorker(QThread):
 
     progressed = Signal(float, str)
 
-    def __init__(self, project: Project) -> None:
+    def __init__(self, project: Project, drawings: bool = True) -> None:
         super().__init__()
         self._project = project
+        self.drawings = drawings  # the PDF and SVG drawings of the harnesses (D-169)
         self._cancelled = False
         self.result: OutputSet | None = None
         self.report: VerifyReport | None = None
@@ -254,6 +256,7 @@ class OutputsWorker(QThread):
         try:
             self.result = build_outputs(
                 self._project,
+                drawings=self.drawings,
                 cancel=lambda: self._cancelled,
                 progress=lambda f, t: self.progressed.emit(f, t),
             )
@@ -3080,7 +3083,9 @@ class MainWindow(QMainWindow):
         )
 
     def _compute_outputs(self) -> "tuple[OutputSet, VerifyReport] | None":
-        worker = OutputsWorker(edit.clone_with(self.ctl.project, []))
+        folder = self.ctl.outputs_folder()  # the same set as the last export there (D-169)
+        had = folder is not None and drawings_exported(folder)
+        worker = OutputsWorker(edit.clone_with(self.ctl.project, []), drawings=had)
         self._run_worker(worker, strings.EXPORT_RUNNING, "export-progress")
         self.job_error = worker.error
         return (

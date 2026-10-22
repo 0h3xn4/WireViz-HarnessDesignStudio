@@ -107,12 +107,12 @@ At the bottom of the **Edit wire** tab, **Labels** has a **Harness label**, a li
 ## 8. Function and soldering
 
 - A **function** is your own words for what a pin does; type it in the **Function** column of the pin table in the **Devices** tab (see [define a device](define-a-device.md)). It appears as a column in the pinout tables.
-- The **Termination** of a pin (crimp or solder) is a column of the same table, hidden until you press **Contact**. When any pin has one, the pinout tables get a **Termination** column too. What more the lists should say about soldering is still open; tell the owner what you need.
+- The **Termination** of a pin (crimp or solder) is a column of the same table, hidden until you press **Contact**. When any pin has one, the pinout tables get a **Termination** column too, and the build workbook shows it for every pin in use (`to fill in` while it is not set). What more the lists should say about soldering is still open; tell the owner what you need.
 
 ## Common mistakes
 
 - **Typing a gauge and finding the wire "locked".** That is intended: a value you type is yours. Use **Reset to generated** to hand it back.
-- **Expecting a label to change the drawing.** The label is for the wire labels and the lists; the drawing shows the signal name.
+- **Expecting a label to change the drawing.** The label is for the wire labels and the lists (the column *Signal or label* of the build workbook's cut list shows it); the drawing shows the signal name.
 - **Looking for the pins of a generated wire.** They follow the interface; change them in the **Devices** tab, or draw a wire of your own.
 - **Editing a wire of a released harness.** The form is off and says why. Start a new revision.
 

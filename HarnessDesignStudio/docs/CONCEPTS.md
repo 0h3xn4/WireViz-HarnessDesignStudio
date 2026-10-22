@@ -22,7 +22,7 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 ```
  YOU DRAW                      THE TOOL MAKES                    THE TOOL WRITES
  ────────                      ──────────────                    ───────────────
- units                         harnesses                         drawings (PDF, SVG)
+ units                         harnesses                         build workbook (xlsx)
  interfaces between them  ──►  connectors, pins, wires    ──►    wire lists, pinouts, BOM
  (and some engineering         (with a reason for each           test tables, labels
   values you decide)            choice)                          block diagram, change log
@@ -115,9 +115,9 @@ In the app the work goes in three steps, shown in the top bar: **Generate**, **C
 
 ## Outputs
 
-**Export…** writes a folder `outputs/` into the project: per harness a drawing (SVG for the A3 sheets, PDF for A3 and A4), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
+**Export…** writes a folder `outputs/` into the project: per harness a **build workbook** (an Excel file to build the harness from: what is ready, the cut list, one block per connector, parts, labels and a test sheet to fill in), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook of the data tables; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
 
-Outputs are checked independently before they are written. `outputs/` is always safe to delete and regenerate.
+The PDF and SVG drawings of the harnesses are optional and written only when you ask for them (`--drawings`, or the check box **Include the PDF drawings**); the build workbook is the main output (not in the latest release yet; new in 1.7.0). Outputs are checked independently before they are written. `outputs/` is always safe to delete and regenerate.
 
 ## What is on disk
 

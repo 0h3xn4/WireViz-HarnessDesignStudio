@@ -19,6 +19,6 @@ harness-design-studio drc "$DIR" > "$REPORT" || {
     exit 1
 }
 rm -f "$REPORT"
-harness-design-studio export "$DIR"      # drawings, tables and exports, verified before they are written
+harness-design-studio export "$DIR"      # build workbooks, tables and exports, verified before they are written
 harness-design-studio verify "$DIR" --outputs
 echo "build ok: $DIR/outputs"

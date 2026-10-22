@@ -4,6 +4,16 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+Work towards 1.7.0, the answer to the test users of 1.6.0 (plan: `docs/ait/TEST_USER_FEEDBACK_PLAN.md`, decision D-169). They did not like the harness plan PDFs and asked for a clear, actionable spreadsheet to build production harnesses from; they also said the tool felt overwhelming (planned for 1.8.0, D-171).
+
+### Added
+
+- **A build workbook for every harness** (D-169). `outputs/harnesses/W001/W001_build.xlsx`, a document to build from: **Start here** (ready to build yes or no, what is open: wires without length, gauge, colour or part are marked TO FIX, pins in use without a termination and parts that are not approved are marked NOTE; who authored, checked and approved the design; a sign-off block), **Cut list** (one row per wire in cut order, thick before thin, then colour, then length; the colour as a coloured cell with its name and code beside it; a value the model does not have is shown as *to fill in*), **Connectors** (one block per connector, pin by pin: signal, function, wire, colour, gauge, where it goes, termination, and tick columns for terminated, inserted and checked), **Parts** (with the approval state), **Labels**, **Tests** (the continuity and insulation tests with empty columns for the measured value, the result, the initials and the date) and **About**. Header rows stay on screen, the tables have filters, every sheet prints on A4 landscape with the version and model stamp in the footer; there are no formulas; the same design gives the same bytes. The independent output check reads the workbook cell by cell (`out_build`).
+
+### Changed
+
+- **The PDF drawings are optional** (D-169). `harness-design-studio export` no longer writes `drawing_A3.pdf`, `drawing_A4.pdf` and `drawing_A3_s<n>.svg` of the harnesses; add `--drawings` to write them. The system diagrams and every other file are written as before. A release writes the outputs again with the same set the last export had. In the editor the Export window has a check box **Include the PDF drawings**; it is checked only when the previous export in the folder had them, and the quick Export button keeps whatever the folder had. A set with the drawings of every harness or of none is valid. The existing per-harness workbook `W001.xlsx` and all CSV files are unchanged.
+
 ## 1.6.0 (2026-10-21; not a statement of compliance)
 
 Version 1.6.0 **removes macOS** (decision D-168, on the owner's instruction: "please remove macOS completely and entirely, nobody needs it") and makes a **blank project say where to start**. The tool is supported on Ubuntu 24.04 and newer and on Windows 10 and 11.

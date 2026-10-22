@@ -170,18 +170,20 @@ harness-design-studio generate my-design
 
 ### harness-design-studio export
 
-write all outputs (drawings, tables, exports) to <project>/outputs and verify them
+write the build workbook of every harness, the tables and exports to <project>/outputs and verify them (add --drawings for the PDF drawings)
 
-`harness-design-studio export project`
+`harness-design-studio export project [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
+| `--drawings` | also write the PDF and SVG drawings of the harnesses (off by default: the build workbook is the main output) |
 
 Examples:
 
 ```
 harness-design-studio export my-design
+harness-design-studio export my-design --drawings
 ```
 
 ## Bring in data

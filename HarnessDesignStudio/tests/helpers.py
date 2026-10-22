@@ -46,11 +46,13 @@ def output_digests(files: dict[str, bytes]) -> dict[str, str]:
     import hashlib
     import json
 
-    from harness_design_studio.core.outputs.verify import _xlsx_sheets
+    from harness_design_studio.core.outputs.verify import _xlsx_sheets, _xlsx_values
 
     out = {}
     for rel, data in sorted(files.items()):
-        if rel.endswith(".xlsx"):
+        if rel.endswith("_build.xlsx"):  # numbers and all sheets, read with the spreadsheet library
+            data = json.dumps(_xlsx_values(data), sort_keys=True).encode()
+        elif rel.endswith(".xlsx"):
             data = json.dumps(_xlsx_sheets(data), sort_keys=True).encode()
         out[rel] = hashlib.sha256(data).hexdigest()
     return out

@@ -426,6 +426,8 @@ error: [out_stamp] harnesses/W001/W001.xlsx does not carry the current generator
 error: [out_modified] system/bom.csv was changed after it was exported.
 ```
 
+If you filled in the build workbook in `outputs/` (ticks, measured values), `verify --outputs` also prints `error: [out_build] The build workbook of W001 (Cut list) does not match the design for W001-001.` (the sheet and the wire it names depend on what you typed). Work on a copy of the workbook instead.
+
 Exit code 1. **Fix:** never edit files in `outputs/`; they are made from the design and are safe to delete. Run `harness-design-studio generate DIR`, then `harness-design-studio export DIR`, then `harness-design-studio verify DIR --outputs`.
 
 ## Importing
@@ -550,12 +552,22 @@ harness-design-studio export demo
 ```
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the block diagram and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the harness overview and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
-38 files written to demo/outputs (model 09710f8f1b03).
+34 files written to demo/outputs (model 09710f8f1b03).
 ```
 
-(Made with 1.6.0 from `first-steps`, after renaming two units to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`.)
+(Made with 1.6.0 from `first-steps`, after renaming two units to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`; the harness drawings are written only with `export --drawings`, so that line appears only then.)
 
 Not an error (exit code 0, the files are written). The PDF drawings use the Windows-1252 character set, so a name or note with characters outside it (the ohm sign Ω, Greek letters) prints a `?` in the PDF; the SVG drawing, the CSV files and the workbook keep the characters. The warning names every character it replaced (up to eight, then "and N more") and is repeated by `harness-design-studio verify DIR --outputs`. **Fix:** if the PDF is what you send, write the name with letters of Windows-1252 (for example "ohm"); otherwise use the SVG.
+
+### The drawing PDFs are missing from `outputs/`
+
+Since 1.7.0 (not in the latest release yet) `harness-design-studio export DIR` writes no harness drawings: no `drawing_A3.pdf`, `drawing_A4.pdf` or `drawing_A3_s<n>.svg`. The build workbook is the main output. Add `--drawings` to write them (in the app, tick **Include the PDF drawings** in the Export window):
+
+```
+harness-design-studio export demo --drawings
+```
+
+An export without `--drawings` into a folder whose last export had the drawings removes them and prints `The PDF drawings of the earlier export were removed; add --drawings to write them again.` The system diagrams (`system/block_diagram.pdf` and the others) are always written.
 
 ### No outputs folder
 
@@ -571,7 +583,7 @@ Exit code 1. `--outputs` checks the files in `demo/outputs`; there are none yet.
 
 ### Which file is what?
 
-See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `38 files written to demo-first-steps/outputs (model 85a15171aed5).`
+See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example writes `34 files written to demo-first-steps/outputs (model 85a15171aed5).` (40 with `--drawings`.)
 
 ## Releasing
 
@@ -610,7 +622,7 @@ A release that rests on placeholders or example parts teaches the flow and nothi
 
 ```
 Release W003 revision A: done.
-Outputs re-exported with the released status (112 files).
+Outputs re-exported with the released status (88 files).
 ```
 
 Other release messages:
@@ -696,7 +708,7 @@ demo/
   logical/                units, interface types, interfaces, diagram layout
   physical/               connectors (and, after generating, harnesses/)
   generated/              the record of the last generation (after generating)
-  outputs/                drawings, tables, exports (after harness-design-studio export)
+  outputs/                build workbooks, tables, exports (after harness-design-studio export)
   baselines/, changelog.json   written when you release
   waivers.json            written when you waive a finding
   .gitignore              written once; lists files that Git should ignore
@@ -707,7 +719,7 @@ The files are plain text (JSON), so a project folder can be copied, zipped, e-ma
 | What | Where |
 | --- | --- |
 | Your design | the project folder you named |
-| Drawings, wire lists, BOM, exports | `<project>/outputs/` (made by `harness-design-studio export`; safe to delete and make again) |
+| Build workbooks, wire lists, BOM, exports (and the drawings, with `--drawings`) | `<project>/outputs/` (made by `harness-design-studio export`; safe to delete and make again) |
 | Autosave of the app | `<project>/.harness-recovery/` (offered for restore after a crash; ignored by Git) |
 | App settings (theme, scale, last project) | `~/.config/HarnessDesigner/HarnessDesigner.ini` (no design data) |
 | Lock file while a project is open | `<project>/.harness.lock` (removed when closed); beside it an empty `.harness.lock.takeover` stays (no data, ignored by Git, safe to delete when the project is closed) |

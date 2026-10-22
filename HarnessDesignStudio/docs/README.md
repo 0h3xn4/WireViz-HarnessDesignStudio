@@ -42,7 +42,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`PLACEHOLDERS.md`](PLACEHOLDERS.md) | Which engineering values are still placeholders, who owns them |
 | [`IMPORTS.md`](IMPORTS.md) | Importing interfaces, parts, lengths, engineering values, device pinouts |
 | [`KICAD.md`](KICAD.md) | Taking unit connector pinouts from a KiCad netlist |
-| [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits |
+| [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits, and the build workbook |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed, release by release |
 | [`releases/`](releases/1.6.0.md) | The highlights of each release from 1.1.0 to 1.6.0, as the GitHub release page shows them (one file per version) |
@@ -81,6 +81,7 @@ These explain how the tool was specified and checked; you do not need them to us
 | [`DESIGN.md`](DESIGN.md) | The design system of the editor: tokens, type and spacing, themes, icons, state chips, tables, the diagram, the window, the views, shortcuts, decisions |
 | [`ui/BEFORE_AFTER.md`](ui/BEFORE_AFTER.md), [`ui/UI_OVERHAUL.md`](ui/UI_OVERHAUL.md), [`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md), [`ui/PERF_BASELINE.md`](ui/PERF_BASELINE.md) | The new user interface of version 1.3.0: the window before and after, the brief, the plan and the timing numbers (decisions D-150 to D-159) |
 | [`ait/AIT_FEEDBACK_PLAN.md`](ait/AIT_FEEDBACK_PLAN.md) | The feedback of the AIT engineers (ten requirements), what the tool did about each before 1.4.0, what version 1.4.0 built and in which milestone (decisions D-160 to D-165), and the later request to start a project from scratch, answered in 1.5.0 (D-166) |
+| [`ait/TEST_USER_FEEDBACK_PLAN.md`](ait/TEST_USER_FEEDBACK_PLAN.md) | The feedback of the test users on 1.6.0 (a build spreadsheet instead of the PDF plans; the tool felt overwhelming), what the tool does about each, the decisions taken with the owner and the plan for 1.7.0 and 1.8.0 |
 | [`ux-audit.md`](ux-audit.md) | The October 2026 audit of the editor against the UX/UI Standard (83 numbered issues) and, at the end, what was built for each one |
 | [`ux-custom-devices-audit.md`](ux-custom-devices-audit.md) | Audit and design proposal for custom devices (approved on 14 October 2026 and built as the Devices tab; the owner's decisions are at its end): what the tool does today for a device of your own (unit, connectors, pins, interfaces on pins, pinout import), the gaps, and a Devices tab with a pin table; pictures in [`ux/custom-devices/`](ux/custom-devices/) |
 | [`DECISIONS.md`](DECISIONS.md), [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | What was decided, and what still needs an owner |

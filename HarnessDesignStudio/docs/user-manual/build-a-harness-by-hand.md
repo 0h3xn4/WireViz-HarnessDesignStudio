@@ -20,7 +20,7 @@ This page shows how to make a harness from nothing: no interface, no Generate. Y
 ## When to build by hand
 
 - You design a harness that has no units and interfaces yet (a test cable, a heater harness, a breakout).
-- You describe an existing harness and want its lists and drawings.
+- You describe an existing harness and want its build workbook and lists.
 - You want the whole design in the tool, from a blank project, before any interface table exists.
 
 When the system is described by units and interfaces, let Generate make the harnesses ([generate harnesses](generate-harnesses.md)) and use [edit a wire](edit-a-wire.md) for the changes you need.
@@ -70,7 +70,7 @@ Draw wires as in [edit a wire](edit-a-wire.md), section 4: **New wire** in the *
 ## 6. Check, list and release
 
 - **Checks** shows the design checks. A harness by hand has no interface, so the checks that need one (a link's current, signal directions) have nothing to say; the rest apply. With no gauge, the gauge stays *pending*: the tool never guesses.
-- **Outputs** writes the wire list, pinouts, bill of materials, labels, tests and drawings for it, like any harness. `harness-design-studio verify DIR --outputs` compares them with the design.
+- **Outputs** writes the build workbook, wire list, pinouts, bill of materials, labels and tests for it, like any harness (and the drawings, if you ask for them: [export the outputs](export-the-outputs.md#5-the-pdf-drawings-optional)). `harness-design-studio verify DIR --outputs` compares them with the design.
 - **Review**, **Release** and **Revise** work as for a harness from Generate ([release a harness](release-a-harness.md)).
 
 ## What Generate does with it

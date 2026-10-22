@@ -6,9 +6,9 @@ New here? Read sections 1 to 4 (about fifteen minutes). Section 3 gives you a re
 
 ## 1. What the tool does
 
-You draw units (computer, power unit, wheels ...) and the interfaces between them. The tool turns that into harnesses: which wires, on which pins, in which connectors. It checks the result, writes the drawings and lists, and keeps a record of every release.
+You draw units (computer, power unit, wheels ...) and the interfaces between them. The tool turns that into harnesses: which wires, on which pins, in which connectors. It checks the result, writes a build workbook and lists for every harness, and keeps a record of every release.
 
-Your design is the source of truth. Everything else (harnesses, drawings, lists) is generated from it and can be generated again at any time.
+Your design is the source of truth. Everything else (harnesses, build workbooks, lists, drawings) is generated from it and can be generated again at any time.
 
 Seven words carry most of the meaning:
 
@@ -124,7 +124,7 @@ Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every sett
 7. Press **Generate** in the top bar (**Generate harnesses**, Ctrl+G). A preview shows what will be added; nothing changes until you press **Apply**. **Undo** takes it all back. The **Harness** tab opens (the Drawings area).
 8. In the **Harness** tab pick a harness: its connectors and pins, its wires, a drawing (zoom with the wheel, change sheet with **Previous sheet** and **Next sheet**) and *Why* for the selected wire, connector or pin. The **Lists** tab (the Outputs area) shows the wire list, pinouts, BOM and test tables.
 9. Save with **Ctrl+S**.
-10. Press **Export…** in the top bar (Ctrl+E): choose what to look at and press **Export** to write drawings and lists into the project's `outputs` folder (section 8).
+10. Press **Export…** in the top bar (Ctrl+E): choose what to look at and press **Export** to write the build workbooks and lists into the project's `outputs` folder (section 8). Tick **Include the PDF drawings** if you also want the harness drawings.
 
 On a power interface set **Max current (A)** in the Inspector; without it the wire gauge stays pending.
 
@@ -218,9 +218,15 @@ The **Checks** tab (Ctrl+4) has one row for each rule:
 
 ## 8. Outputs
 
-`outputs/` contains, for every harness: drawing (SVG for the A3 sheets, PDF for A3 and A4), wire list, pinouts, BOM, mass and length, continuity and isolation tests, labels, a WireViz-style YAML file and an Excel workbook. For the whole system: block diagram, harness overview, BOM, mating and traceability matrices, DRC report, change log, revision report, and one JSON file with the whole model. Every file carries the tool version and a model hash. The status chip in the top bar and the header of the **Harness** tab show whether the outputs are up to date. Details are in `docs/OUTPUTS.md` in the repository (it is not installed with the app).
+`outputs/` contains, for every harness: the build workbook (`<ID>_build.xlsx`, see below), wire list, pinouts, BOM, mass and length, continuity and isolation tests, labels, a WireViz-style YAML file and an Excel workbook of the data tables. The PDF and SVG drawings of the harnesses (SVG for the A3 sheets, PDF for A3 and A4) are written only when you ask for them.
 
-**Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window. It shows the output folder, a tree of harnesses and documents, and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied. A problem found by the independent check, or a write error, stays in a notice in the window and nothing is written. The project must be saved to a folder first.
+For the whole system: block diagram, harness overview, BOM, mating and traceability matrices, DRC report, change log, revision report, and one JSON file with the whole model. Every file carries the tool version and a model hash. The status chip in the top bar and the header of the **Harness** tab show whether the outputs are up to date. Details are in `docs/OUTPUTS.md` in the repository (it is not installed with the app).
+
+The **build workbook** is the file to build a harness from. **Start here** says whether the harness is ready to build and what is missing; **Cut list** lists the wires in cut order, with their colours; **Connectors** has one block per connector, pin by pin, with tick columns; **Parts**, **Labels** and **Tests** follow, with empty columns for the result; **About** names the version and design. A missing value reads *to fill in*. Work on a copy: a changed file in `outputs/` fails the output check.
+
+**Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window. It shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied.
+
+The harness drawings are written only while **Include the PDF drawings** is ticked; it starts ticked when the last export into the folder had them. A problem found by the independent check, or a write error, stays in a notice in the window and nothing is written. The project must be saved to a folder first.
 
 The **Lists** tab (Ctrl+3) shows the same tables on screen for one harness: **Wire list**, **Pinouts**, **BOM**, **Mass and length**, **Test tables**, **Labels** and the **System BOM**. Click a header to sort, type in the filter box, press Ctrl+C to copy the selected cells as text, and **Export table** writes the rows you see as CSV or Excel. **Only pending or not checked** keeps the rows whose value is still open.
 
@@ -242,7 +248,7 @@ The **Releases** tab shows one timeline of every review, release and new revisio
 
 The **More** menu of the **Harness** tab (Drawings) has **Changes…**, **Change log…** and **Delete harness** (not possible once the harness is released; a generated harness comes back the next time you generate); the same three are in the Design menu and in the context menu of a harness in the Project tree.
 
-Export the outputs again after a release so the drawings show *released*. The release check looks at the harness (gauges, lengths, open errors) and at whether the configuration files are still marked as placeholders. It cannot judge whether the values are right; that stays a decision for a person.
+Export the outputs again after a release so the build workbook (and the drawings, if you export them) show *released*. The release check looks at the harness (gauges, lengths, open errors) and at whether the configuration files are still marked as placeholders. It cannot judge whether the values are right; that stays a decision for a person.
 
 ## 10. Command line
 
@@ -260,7 +266,7 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio generate DIR` | generate harnesses and save (not saved if errors) |
 | `harness-design-studio verify DIR [--outputs]` | independent check of the harnesses, and of `outputs/` |
 | `harness-design-studio drc DIR` | design rule report (Markdown); exit 1 on unwaived errors |
-| `harness-design-studio export DIR` | write and verify all outputs |
+| `harness-design-studio export DIR [--drawings]` | write and verify all outputs; the PDF and SVG drawings of the harnesses only with `--drawings` |
 | `harness-design-studio review DIR HARNESS --by NAME` | submit a draft for review |
 | `harness-design-studio release DIR HARNESS --by NAME --comment TEXT [--checker NAME] [--accept-placeholders REASON] [--accept-unapproved-parts REASON]` | release (blocked while checks fail, or while values are placeholders or parts are not approved and no reason is given) and re-export |
 | `harness-design-studio revise DIR HARNESS --by NAME --comment TEXT` | start a new revision |
@@ -419,4 +425,6 @@ The **Show** list at the right end of the Model tab bar fades everything except 
 - **Waiver**: a recorded decision to accept a warning, with a reason.
 - **Placeholder**: a value nobody has entered yet; the tool never invents one.
 - **Model hash**: a fingerprint of the design; every output carries it.
+- **Build workbook**: the Excel file `<ID>_build.xlsx` of a harness, to build it from: what is ready, the cut list, one block per connector, parts, labels and tests.
+- **Cut list**: the sheet that lists the wires in the order they are cut, with a column to tick.
 - **Fixed pin**: a pin whose signal the unit itself defines (imported from KiCad); generation never moves it.

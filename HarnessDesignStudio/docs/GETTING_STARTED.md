@@ -1,6 +1,6 @@
 # Getting started: your first harness in 45 minutes
 
-You will start from a small example, look at what the tool makes of it, fix a finding, export the drawings and lists, and (optionally) see what a release looks like. Every step shows what you should see, and what to do if you do not.
+You will start from a small example, look at what the tool makes of it, fix a finding, export the build workbook and lists, and (optionally) see what a release looks like. Every step shows what you should see, and what to do if you do not.
 
 ## Contents
 
@@ -9,7 +9,7 @@ You will start from a small example, look at what the tool makes of it, fix a fi
 - [Part 3: generate the harnesses](#part-3-generate-the-harnesses)
 - [Part 4: read what the tool made](#part-4-read-what-the-tool-made)
 - [Part 5: read and answer the Problems](#part-5-read-and-answer-the-problems)
-- [Part 6: export drawings and lists](#part-6-export-drawings-and-lists)
+- [Part 6: export the build workbook and lists](#part-6-export-the-build-workbook-and-lists)
 - [Part 7: fill in values, and see wires get sized](#part-7-fill-in-values-and-see-wires-get-sized)
 - [Part 8: bring in your own data](#part-8-bring-in-your-own-data)
 - [Optional: give the wires a colour](#optional-give-the-wires-a-colour)
@@ -127,7 +127,7 @@ In the app open the **Harness** tab (Ctrl+2, the **Drawings** area) and pick `W0
 
 - **Wires** shows the two wires `PWR` and `RTN`, and **Connectors and pins** shows every pin and the wire on it. The **Lists** tab has the same as tables you can sort, filter and copy.
 - **Why** says, for the wire, connector or pin you select, the rule that decided it. Read a few. This is the tool's answer to "why is it like this?".
-- **Drawing** previews the sheet that export will write; use the wheel to zoom and the buttons to change sheet.
+- **Drawing** previews the drawing sheet; use the wheel to zoom and the buttons to change sheet. Export writes it as a PDF only when you ask for the drawings (Part 6).
 
 Notice the wire gauge says **pending**. That is deliberate and is the subject of Part 7.
 
@@ -158,37 +158,51 @@ The **notes** say *not checked*: EMC separation, shield grounding and so on are 
 
 The **To do** list at the top of the **Problems** tab shows what is left, including *N auto-filled connector assignments to review*: the connectors on `IF-001` and `IF-002` were chosen by the tool, and a person should confirm them. In the app, select an interface and press **Confirm auto-filled connectors** in the Inspector.
 
-## Part 6: export drawings and lists
+## Part 6: export the build workbook and lists
 
-**In the app:** press **Export…** in the top bar (Ctrl+E) and then **Export** in the window that opens; it also lists the files written. Afterwards the **Lists** tab (Outputs) shows **Exported files** with the SHA-256 of each file and whether it still matches the export. **On the command line:**
+The main output of an export is a **build workbook** for every harness: an Excel file to build the harness from, with a cut list, a block for every connector, the parts, the labels and a test sheet. The PDF drawings are optional (see below). The build workbook and the `--drawings` option are not in the latest release (1.6.0) yet; they come with 1.7.0.
+
+**In the app:** press **Export…** in the top bar (Ctrl+E) and then **Export** in the window that opens; it also lists the files written. The check box **Include the PDF drawings** in that window is not ticked the first time. Afterwards the **Lists** tab (Outputs) shows **Exported files** with the SHA-256 of each file and whether it still matches the export. **On the command line:**
 
 ```
 harness-design-studio export wheel-link
 ```
 
 ```
-38 files written to wheel-link/outputs (model a7fa21787017).
+34 files written to wheel-link/outputs (model a7fa21787017).
 ```
 
 The files are checked independently before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.
 
 | File (main files only) | What it is |
 | --- | --- |
-| `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` | the harness drawing |
+| `harnesses/W001/W001_build.xlsx` | the **build workbook**: the document to build the harness from |
 | `harnesses/W001/wirelist.csv` | every wire: signal, interface, connectors, pins, gauge, part, length |
 | `harnesses/W001/pinouts.csv` | every connector pin and the wire on it |
 | `harnesses/W001/bom.csv`, `mass_length.csv` | parts list; mass and length with what is still unknown |
 | `harnesses/W001/tests.csv`, `labels.csv` | continuity and isolation tests; wire labels |
-| `harnesses/W001/wireviz.yaml`, `W001.xlsx` | a WireViz-style description; an Excel workbook |
+| `harnesses/W001/wireviz.yaml`, `W001.xlsx` | a WireViz-style description; all tables of the harness as an Excel workbook (data, not a build document) |
 | `system/block_diagram.pdf` | the units and their links |
 | `system/harness_overview.pdf`, `box_pinouts.csv`, `mating_matrix.csv`, `traceability.csv` | all harnesses at a glance; the pinout of every unit connector; which cable mates with which unit; which interface is carried by which wires |
 | `system/drc_report.md`, `changelog.csv`, `revision_report.md`, `export.json` | the Problems report; the change log; the revision report; the whole model as one JSON |
 
-The harness drawing, with a title block and the model hash at the bottom (the picture is the `W001` sheet of the first export of this tutorial, made with 1.6.0, so the version and the model hash at the bottom are the ones your tool prints; with another version they differ):
+Open `harnesses/W001/W001_build.xlsx` in Excel or LibreOffice Calc. The first sheet, **Start here**, says `Ready to build: no` and lists what is open: the four wires have no length, no gauge and no colour (marked `TO FIX`), and some pins have no termination and the example parts are not approved (marked `NOTE`). The **Cut list** shows `to fill in` on an amber cell wherever the design has no value. These are the same open questions the tool called `pending` and `n/a` in the lists. Gauge and length are answered in the next two parts; the optional step after Part 8 gives the wires a colour. The workbook is explained sheet by sheet in [`user-manual/export-the-outputs.md`](user-manual/export-the-outputs.md).
+
+**The PDF drawings (optional).** `export` writes no harness drawings. Add `--drawings` to write them as well (in the app: tick **Include the PDF drawings**):
+
+```
+harness-design-studio export wheel-link --drawings
+```
+
+```
+40 files written to wheel-link/outputs (model a7fa21787017).
+```
+
+The six new files are `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` and the same three for `W002`. A later `export` without `--drawings` removes them again and says so. The harness drawing (it needs `export --drawings`), with a title block and the model hash at the bottom (the picture is the `W001` sheet of the first export of this tutorial, made with 1.6.0, so the version and the model hash at the bottom are the ones your tool prints; with another version they differ):
 
 ![A harness drawing](img/w001-drawing.png)
 
-The block diagram:
+The block diagram (`system/block_diagram.pdf`) is always written:
 
 ![The block diagram](img/block-diagram.png)
 
@@ -248,7 +262,7 @@ wire-sizing: voltage drop: AWG 22 gives 0.211345 V over 2 conductor(s), limit 0.
 contact-check: not done for PCDU1-J01 (contact rating or derating factor is a placeholder)
 ```
 
-The smallest gauge in the table that carries 2 A after derating (0.8 for the bundle times 0.9 for temperature), then checked for voltage drop over the imported length. The last line shows the tool still refusing to check what it has no number for. Open `config/derating.json` to see where each number came from. `tests.csv` now carries the test limits from the demo values too.
+The smallest gauge in the table that carries 2 A after derating (0.8 for the bundle times 0.9 for temperature), then checked for voltage drop over the imported length. The last line shows the tool still refusing to check what it has no number for. Open `config/derating.json` to see where each number came from. `tests.csv` now carries the test limits from the demo values too. Open `harnesses/W002/W002_build.xlsx` again: the cut list has the gauge and the length, and on *Start here* only the colour of the two wires is still marked `TO FIX`.
 
 > **Important.** The files stay marked `"placeholder": true`, so every result built on them still says it rests on placeholders. For a real design your programme's values replace the demo values, and you set `"placeholder": false` only after an engineer reviewed them. Never release a real design with demo values.
 
@@ -317,7 +331,7 @@ harness-design-studio generate wheel-link
 harness-design-studio export wheel-link
 ```
 
-The wire list now has the colour in its *Colour* column (`red`, `black`), and the harness drawing draws the wires in those colours with the IEC 60757 code written as text. A wire between two different signals (`TX+/RX+`) takes the colour of the first.
+The wire list now has the colour in its *Colour* column (`red`, `black`), and the harness drawing (if you export it with `--drawings`) draws the wires in those colours with the IEC 60757 code written as text. A wire between two different signals (`TX+/RX+`) takes the colour of the first. In the build workbook the *Colour* cell of the cut list is now filled with the colour and holds its name and code (`red (RD)`), and *Start here* of `W002` says `Ready to build: yes`.
 
 ## Part 9 (optional, practice only): release a harness
 
@@ -340,10 +354,10 @@ harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "Firs
 
 ```
 Release W002 revision A: done.
-Outputs re-exported with the released status (38 files).
+Outputs re-exported with the released status (34 files).
 ```
 
-`W002` is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited, nor can the parts, interface types and configuration values it uses (a later `harness-design-studio import-parts` or `harness-design-studio config --apply-profile` that would change them ends with `This change was blocked because it touches released items`), a baseline and a change log entry are stored, and the drawing says *released*. To change it you start a revision with `harness-design-studio revise wheel-link W002 --by NAME --comment "..."`; `harness-design-studio log wheel-link` prints the history, including the reasons for releasing on placeholders and with unapproved parts. In the app the same steps are **Release…** (also a step in the top bar) and **New revision…** in the **Releases** tab (or the **Harness** tab), and **Change log…** in the **More** menu of the **Harness** tab; the release window lists what the release locks and asks for the reason when placeholders remain.
+`W002` is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited, nor can the parts, interface types and configuration values it uses (a later `harness-design-studio import-parts` or `harness-design-studio config --apply-profile` that would change them ends with `This change was blocked because it touches released items`), a baseline and a change log entry are stored, and the build workbook (and the drawing, if the last export had drawings) says *released*. The release writes the outputs again with the same set of files as the last export, so the drawings are written again only if that export had them. To change it you start a revision with `harness-design-studio revise wheel-link W002 --by NAME --comment "..."`; `harness-design-studio log wheel-link` prints the history, including the reasons for releasing on placeholders and with unapproved parts. In the app the same steps are **Release…** (also a step in the top bar) and **New revision…** in the **Releases** tab (or the **Harness** tab), and **Change log…** in the **More** menu of the **Harness** tab; the release window lists what the release locks and asks for the reason when placeholders remain.
 
 Do this only in the practice project. Releasing on placeholders and example parts teaches the flow and nothing more: the change log records that the release rested on them.
 
