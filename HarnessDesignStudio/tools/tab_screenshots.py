@@ -188,6 +188,9 @@ def _workspace_pictures(out: Path) -> None:
     win.harness_view.side_tabs.setCurrentIndex(3)  # the Accessories tab
     win.harness_view.splitter.setSizes([160, 640])  # room for the table and the form of the tab
     win.harness_view.left_splitter.setSizes([260, 260, 1150])
+    table = win.harness_view.accessory_editor.table
+    table.setColumnWidth(4, 300)  # Position
+    table.setColumnWidth(5, 120)  # Length (mm)
     shots._wait(800)
     _save(win, out / "accessories-tab.png")
     win.close()

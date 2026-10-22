@@ -2,7 +2,7 @@
 
 This page shows how to change a wire after the tool has generated it (its gauge, type, colour, length, the strip length at each end, a label for the wire labels, and a note), how to draw a wire of your own, how to put several wires on one pin, how to twist or shield wires together, and how to label the harness and its connectors.
 
-> **New in 1.4.0.** Before 1.4.0 the app had no way to change or draw a single wire (only the colour of a whole signal, see [set wire colours](set-wire-colours.md)). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
+> **Since 1.4.0.** Before 1.4.0 the app had no way to change or draw a single wire (only the colour of a whole signal, see [set wire colours](set-wire-colours.md)). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
 
 ![The Drawings area with the Edit wire tab beside Why: wire W001-003 is selected and its gauge, type, colour and length are filled in](../img/edit-wire-tab.png)
 
@@ -32,9 +32,9 @@ To make a whole harness yourself, with its own connectors, see [build a harness 
 
 ## 1. Pick the wires
 
-1. Choose **Drawings** on the rail, then the harness.
+1. Choose **Drawings** on the rail (in the Simple workspace too), then the harness.
 2. Click a wire in the **Wires** table or on the drawing. To change several wires at once, select several rows (Ctrl or Shift and click).
-3. Open the **Edit wire** tab beside **Why**. It names the wire and the two pins it joins. For several wires it says how many are selected, and a field that differs between them is empty and says *various*.
+3. Open the **Edit wire** tab beside **Why** (the tabs are **Why**, **Edit wire**, **Connectors** and **Accessories**). It names the wire and the two pins it joins. For several wires it says how many are selected, and a field that differs between them is empty and says *various*.
 
 ## 2. Change the fields
 
@@ -44,8 +44,8 @@ To make a whole harness yourself, with its own connectors, see [build a harness 
 | **Type** | A wire part of the project's parts library. | Yes: the wire is locked. |
 | **Colour** | A colour of the IEC 60757 list (black, brown, red, ...) or your own text. A colour the tool does not know is drawn grey. | Yes: the wire is locked. |
 | **Length (m)** | The length in metres, for example `1.5` (a comma works too). | Yes: the wire is locked. |
-| **Strip A (mm)** | Insulation stripped at the **From** end, in millimetres, for example `6` (a comma works too). **New in 1.7.0.** | Always: it does not lock the wire. |
-| **Strip B (mm)** | The same at the **To** end. **New in 1.7.0.** | Always: it does not lock the wire. |
+| **Strip A (mm)** | Insulation stripped at the **From** end, in millimetres, for example `6` (a comma works too). Since 1.7.0. | Always: it does not lock the wire. |
+| **Strip B (mm)** | The same at the **To** end. Since 1.7.0. | Always: it does not lock the wire. |
 | **Label** | Text that the wire labels print instead of the signal name. | Always. |
 | **Note** | Your remark. It appears in the wire list. | Always. |
 
@@ -74,7 +74,7 @@ You cannot clear a gauge, type, colour or length on one wire; use **Reset to gen
 
 Generation makes the wires the interfaces need. For a wire that no interface asks for (a heater supply, a test wire, a jumper), draw it:
 
-1. In the **Edit wire** tab, find **New wire** at the bottom.
+1. In the **Edit wire** tab, find **New wire**, below the **Group** controls.
 2. Under **From** and **To** choose a connector of the harness and a pin of that connector, and type a **Signal** name if you like.
 3. Press **Add wire**. The wire gets the next free wire ID, is marked as yours and is selected, so you can now set its gauge, colour and the rest as above.
 
@@ -93,7 +93,7 @@ You may put two wires on one pin: draw the second wire to a pin that already has
 
 ## 6. Twist or shield wires together
 
-Select the wires, choose a kind under **Group** and press **Group**:
+Select the wires, choose a kind in **Kind of group** and press **Group**:
 
 | Kind | Wires |
 | --- | --- |

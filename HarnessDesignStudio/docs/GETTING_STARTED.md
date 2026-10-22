@@ -71,7 +71,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 ## Part 2: look around
 
-![The main window of version 1.6.0: the navigation rail on the left, the top bar with Generate, Check and Release, the diagram in the middle, the project panel on the left and the Inspector on the right](ux/qt/02-guided-main.png)
+![The main window of version 1.7.0 in the Full workspace: the navigation rail on the left with Next step first, the top bar with Generate, Check and Release, the project panel on the left, the diagram in the middle and the Inspector on the right](ux/qt/02-guided-main.png)
 
 *(The screenshot shows the app's built-in sample, which uses slightly different IDs such as `OBC` and `IF-PWR-RW1`; the layout is the same.)*
 

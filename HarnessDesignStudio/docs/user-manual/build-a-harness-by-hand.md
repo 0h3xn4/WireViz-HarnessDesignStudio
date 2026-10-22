@@ -2,7 +2,7 @@
 
 This page shows how to make a harness from nothing: no interface, no Generate. You make the harness, add its connectors, and draw its wires. From there it is a harness like any other: it is checked, drawn, listed, reviewed and released.
 
-> **New in 1.5.0.** Before, a harness could only come from Generate. The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
+> **Since 1.5.0.** Before, a harness could only come from Generate. The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
 
 ## Contents
 
@@ -34,7 +34,7 @@ When the system is described by units and interfaces, let Generate make the harn
 ## 1. Start with nothing
 
 1. **File > New project…**, choose an empty folder, type a name, keep the example *blank*.
-2. Choose **Drawings** on the rail. The Harness tab says *No harnesses yet* and offers **New harness…**.
+2. Choose **Drawings** on the rail. The Harness tab says *No harnesses yet* and offers **New harness…**. (On an empty project the Next step page of the Simple workspace offers *or make a harness by hand* with the same button.)
 
 ## 2. Make the harness
 

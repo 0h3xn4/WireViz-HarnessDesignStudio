@@ -28,7 +28,7 @@ The data flow, from left to right:
 project folder (JSON) -> load -> model -> commands (edit, undo, redo)
                                        -> generate -> harnesses, with a reason for each choice
                                        -> checks and design rules -> findings
-                                       -> outputs (SVG, PDF, CSV, XLSX, YAML, JSON), then an independent verifier
+                                       -> outputs (build workbook, CSV, XLSX, YAML, JSON; SVG and PDF drawings on request), then an independent verifier
 ```
 
 The project folder is the source of truth. Everything generated can be generated again.

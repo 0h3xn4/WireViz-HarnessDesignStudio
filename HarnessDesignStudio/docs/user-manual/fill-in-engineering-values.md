@@ -39,11 +39,11 @@ Waiting for an owner decision: config/titleblock.json is a placeholder until the
 
 The command exits with 1 while values are missing. It lists every missing value, what depends on it, and any value that is set but invalid (for example `INVALID config/derating.json: bundle_derating must be a number above 0 and at most 1.`). Use it as your hand-over checklist. The full list of files and keys is in [`CONFIG.md`](../CONFIG.md) and [`PLACEHOLDERS.md`](../PLACEHOLDERS.md).
 
-**In the app** (GUI, not run here): the status bar says how many values are pending, for example "4 values pending · 12 rules not checked"; pressing it opens the **Checks** tab filtered to the rules that could not run. Press **Supply value…** on one of them, or choose **Design > Engineering values…** (or **Open the engineering values…** under **Settings > Project**), to open the **Engineering values** window. It lists every value by config file with its unit and what it is needed for. Type the values you have and press **Apply** (Ctrl+Enter): all of them are set as one undo step and the checks run again. A refused value is explained under its field, and a value that a released harness locks is disabled with the reason. The window changes the same files as the steps below.
+**In the app** (GUI, not run here): the status bar says how many values are pending, for example "4 values pending · 12 rules not checked"; pressing it opens the **Checks** tab filtered to the rules that could not run (the Simple workspace leaves this link out of its status bar; open **Checks** in the rail instead). Press **Supply value…** on one of them, or choose **Design > Engineering values…** (or **Open the engineering values…** under **Settings > Project**), to open the **Engineering values** window. It lists every value by config file with its unit and what it is needed for. Type the values you have and press **Apply** (Ctrl+Enter): all of them are set as one undo step and the checks run again. A refused value is explained under its field, and a value that a released harness locks is disabled with the reason. The window changes the same files as the steps below.
 
 ## The shape of a config file
 
-Every file in the project's `config/` folder has the same three keys: `name`, `placeholder` and `values`. The numbers go **inside `values`**:
+Every file in the project's `config/` folder has the same three keys: `name`, `placeholder` and `values`. The numbers go **inside `values`**. This is `config/derating.json` as the tool writes it:
 
 ```
 {
@@ -51,13 +51,13 @@ Every file in the project's `config/` folder has the same three keys: `name`, `p
   "placeholder": true,
   "values": {
     "ampacity_a_by_awg": null,
-    "bundle_derating": 0.8,
+    "bundle_derating": null,
     "contact_current_factor": null,
     "contact_rating_key": "contact_current_a",
     "max_ambient_temperature_c": null,
     "max_voltage_drop_v": null,
     "spare_pin_fraction": null,
-    "temperature_derating": 0.9
+    "temperature_derating": null
   }
 }
 ```
@@ -171,7 +171,10 @@ harness-design-studio config wheel-link --apply-profile ecss-q-st-30-11c
 ```
 set derating.contact_current_factor = 0.5  (ECSS-Q-ST-30-11_0140051: Table 6-10 current 50 %)
 ...
-Profile ecss-q-st-30-11c: 11 value(s) set, 0 kept. These values come from the supplied standard and still need an engineer's review; the files stay "placeholder": true until you set it to false.
+Profile ecss-q-st-30-11c: 11 value(s) set, 0 kept. These values come from the supplied standard and still need an engineer's review.
+Files marked "placeholder": true now: config/derating.json, config/emc.json, config/generation.json, config/segmentation.json, config/segregation.json, config/titleblock.json. Set it to false in a file when its values have been reviewed.
+Engineering values: 1 of 17 set.
+...
 ```
 
 Only values that are still unset are filled; each is printed with the requirement it comes from. The other profile is `ecss-e-st-20-07c`. Applying a profile does not make a design compliant with anything, and it does not fill the current-by-gauge table.
