@@ -21,7 +21,7 @@ Failing tests block a release (`../../docs/RELEASE.md`).
 - **Generated code:** none.
 
 ## 8 to 10. Test design, cases, procedures
-One test function is one test case; its name and docstring state the purpose, and the requirement ID it serves where there is one. Inputs are in the test or in `tests/fixtures`; expected outputs are asserted in the test. The procedure is `pytest` (all tests) or `pytest tests/<file>`. The list of test cases is the output of `pytest --collect-only -q` (906 collected tests when this plan was written; 3,009 collected on 2026-10-20 and 3,195 on 2026-10-21 for version 1.6.0, counted with `pytest --collect-only`, not all run for this note; plus the long runs `HARNESS_FUZZ_EXAMPLES=5000 pytest tests/test_fuzz.py` and `python -m tools.soak 5000 <seed>`).
+One test function is one test case; its name and docstring state the purpose, and the requirement ID it serves where there is one. Inputs are in the test or in `tests/fixtures`; expected outputs are asserted in the test. The procedure is `pytest` (all tests) or `pytest tests/<file>`. The list of test cases is the output of `pytest --collect-only -q` (906 collected tests when this plan was written; 3,009 collected on 2026-10-20, 3,195 on 2026-10-21 for version 1.6.0 and 3,429 on 2026-10-22 for version 1.7.0, counted with `pytest --collect-only`, not all run for this note; plus the long runs `HARNESS_FUZZ_EXAMPLES=5000 pytest tests/test_fuzz.py` and `python -m tools.soak 5000 <seed>`).
 
 ## 11. Additional information
 `../traceability.csv` links requirements to the test files.

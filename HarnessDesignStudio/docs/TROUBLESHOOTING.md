@@ -18,7 +18,7 @@ This page lists the error messages you are most likely to meet, with the exact t
 
 ## How this page was made
 
-Every message below was produced on purpose with the tool (version `0.1.0`, installed into a clean Python virtual environment on Ubuntu 24.04) and pasted as the tool printed it. The messages that 1.0.0 added or reworded (the release freeze, damaged projects, number ranges, the lock, the PDF character warning, import errors) were produced again with 1.0.0 from the source tree. Others may be worded a little differently; the [changelog](../CHANGELOG.md) names the changes. Project folder names such as `demo` are the ones used in the commands. Some things were **not** run, and the page says so where they appear: the `.deb` and `.tar.gz` installs and the packaged `--selftest` (text quoted from [`INSTALL.md`](INSTALL.md)), and anything that needs the app window (text quoted from the program's own message list). Messages about the examples of the released 0.1.0 packages were produced from the source of the `v0.1.0` tag.
+Every message below was produced on purpose with the tool (version `0.1.0`, installed into a clean Python virtual environment on Ubuntu 24.04) and pasted as the tool printed it. The messages that 1.0.0 added or reworded (the release freeze, damaged projects, number ranges, the lock, the PDF character warning, import errors) were produced again with 1.0.0 from the source tree. Others may be worded a little differently; the [changelog](../CHANGELOG.md) names the changes. Project folder names such as `demo` are the ones used in the commands. Some things were **not** run, and the page says so where they appear: the `.deb` and `.tar.gz` installs and the packaged `--selftest` (text quoted from [`INSTALL.md`](INSTALL.md)), and anything that needs the app window (text quoted from the program's own message list). Messages about the examples of the released 0.1.0 packages were produced from the source of the `v0.1.0` tag. The messages that 1.7.0 added (the build data import, a dangling accessory, the option `--drawings`, the build workbook) and the model hashes and file counts quoted below were produced again with 1.7.0.
 
 Questions that are not errors ("which example should I start with?", "does it use the internet?") are answered in [`FAQ.md`](FAQ.md). Words you do not know are explained in [`GLOSSARY.md`](GLOSSARY.md).
 
@@ -107,6 +107,10 @@ and then kept running until it was stopped after 15 seconds. To check a source i
 ### The window is blank, tiny, or closes at once
 
 Run `harness-design-studio-gui --selftest` in a terminal (packaged install) and read the message; if it names `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. If the window is tiny or the text too small, use **Settings > Appearance > Interface size** (or **View > Interface size**). The settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini` on Ubuntu (**Settings > About** names the file on every system); delete it to reset the scale, theme and last project (it holds no design data).
+
+### The app opens on "What to do next" and the tree, the Inspector and the Problems panel are not there
+
+Not an error. Since 1.7.0 a first run starts in the **Simple workspace**: the window opens on the **Next step** page and the project tree, the Inspector and the Problems panel start closed (the rail has no *Home*, either). **Show panels** in the top bar opens the tree and the Inspector, **Show everything** on the page or **View > Full** gives the whole editor, and **View > Simple** goes back; the choice is also in **Settings** (*Workspace*). A settings file made by an older version keeps the Full workspace. The Problems panel is **Ctrl+Shift+M**, and *Home* is **Go > Go to Home** (Ctrl+7). See [use the simple workspace](user-manual/use-the-simple-workspace.md).
 
 ### A banner says "Read-only: this project was saved by a newer version of the tool, or is open in another window"
 
@@ -580,7 +584,7 @@ harness-design-studio export demo
 ```
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the block diagram and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the harness overview and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
-34 files written to demo/outputs (model a161bf5faa85).
+34 files written to demo/outputs (model b45c6856e08b).
 ```
 
 (Made with 1.7.0 from `first-steps`, after renaming two units to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`; the harness drawings are written only with `export --drawings`, so that line appears only then.)

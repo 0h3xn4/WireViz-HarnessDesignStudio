@@ -1,6 +1,6 @@
 # Software verification report (SVR)
 
-DRD: ECSS-E-ST-40C Annex M. Covers the compliance audit (October 2026); no verification report was written again for 1.0.0 to 1.6.0 (their checks are the CI and release workflow runs, `../SIGNOFF.md`, and the release reports are kept in `../evidence/` only up to 0.1.0). Status: draft, not reviewed; produced by the developer assistant, **not independent** (action A-01).
+DRD: ECSS-E-ST-40C Annex M. Covers the compliance audit (October 2026); no verification report was written again for 1.0.0 to 1.7.0 (their checks are the CI and release workflow runs, `../SIGNOFF.md`, and the release reports are kept in `../evidence/` only up to 0.1.0). Status: draft, not reviewed; produced by the developer assistant, **not independent** (action A-01).
 
 ## 1 to 3. Introduction, references, terms
 `SVerP.md`.
@@ -13,7 +13,7 @@ Evidence is stored in `../evidence/`. Dates are not recorded in generated data; 
 The owner's needs are in `../../docs/SPEC.md`. The system-level requirement baseline (SSS) does not exist; verification not possible (G-01, A-02).
 
 ### 4.3 Requirements and architecture engineering
-- 4.3.1 Traceability: `../traceability.csv`, 78 requirements when the audit was done and 98 on 2026-10-21 (version 1.6.0 with the build workbook and the build data); each names verifying files; on 2026-10-21 56 are named in at least one test, 41 are verified by file only and one by review (`REQ-I18N-01`); `tests/test_trace.py` fails if a requirement has neither a file that exists nor a review. A trace from requirement to design component exists since the audit (`../sdd_components.csv`, A-10 done) and is complete only where the table names a requirement (`SDD.md` section 6).
+- 4.3.1 Traceability: `../traceability.csv`, 78 requirements when the audit was done and 99 on 2026-10-22 (version 1.7.0, with the build workbook and the build data); each names verifying files; on 2026-10-22 56 are named in at least one test, 42 are verified by file only and one by review (`REQ-I18N-01`); `tests/test_trace.py` fails if a requirement has neither a file that exists nor a review. A trace from requirement to design component exists since the audit (`../sdd_components.csv`, A-10 done) and is complete only where the table names a requirement (`SDD.md` section 6).
 - 4.3.2 Feasibility: demonstrated by the working tool.
 
 ### 4.4 Design and implementation engineering

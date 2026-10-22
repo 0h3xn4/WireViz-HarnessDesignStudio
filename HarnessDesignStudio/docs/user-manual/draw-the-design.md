@@ -20,6 +20,8 @@ This page shows how to start a project and draw its units and the interfaces bet
 - You know what a **unit** (a box with connectors on it, such as the on-board computer) and an **interface** (one connection between two units, such as a data link) are. If not, read [`CONCEPTS.md`](../CONCEPTS.md) first (ten minutes) or look the word up in the [glossary](../GLOSSARY.md).
 - Here you draw units and interfaces, and the tool makes the connectors, pins and wires from them ([generate harnesses](generate-harnesses.md)). To make a harness yourself, with no interfaces, see [build a harness by hand](build-a-harness-by-hand.md).
 
+**Where you work.** At a first run the editor is in the **Simple** workspace and opens a project on the **Next step** page. To draw, press **Model** in the rail on the left (or Ctrl+1, **Go > Go to Diagram**). In the **Full** workspace a project opens where it opened before, usually on the diagram. Simple keeps the **Project** tab and the **Inspector** closed; press **Show panels** in the top bar when a step below needs them ([use the simple workspace](use-the-simple-workspace.md)). Which workspace you are in does not change the data.
+
 Steps in the app are described from the program's own texts and code. They have not been run on a screen (GUI, not run).
 
 ## 1. Start a project
@@ -30,7 +32,7 @@ You can start in the app or on the command line. The result is the same: a folde
 
 1. Choose **File > New project from an example…** and pick an example (the list is the same as `harness-design-studio new --list`). Or choose **File > New project…** for an empty project.
 2. Choose an **empty folder**, then type a project name.
-3. To open a project you made earlier: **File > Open project…** (Ctrl+O), or press **Open** beside it in the **Recent projects** of the **Home** page (Ctrl+7).
+3. To open a project you made earlier: **File > Open project…** (Ctrl+O), or press **Open** beside it in the **Recent projects** of the **Home** page (Ctrl+7; in the Simple workspace Home is not in the rail, but Ctrl+7 and **Go > Go to Home** open it).
 
 **Home** has the same starts as buttons (**New project…**, **Open project…**, **New from an example…**, **Open the sample project**), and **Try the flatsat example** opens a copy of that example in your Documents folder.
 
@@ -38,6 +40,17 @@ You can start in the app or on the command line. The result is the same: a folde
 
 ```
 harness-design-studio new --list
+```
+
+```
+blank              An empty project: starter parts and interface types, no units.
+first-steps        Three units, a power link and an RS-422 link. Nothing is generated yet: start here.
+minimal-satellite  Seven units, nominal only: power, computer, radio, wheel and sun sensor. Adapt it.
+small-satellite    14 units with nominal and redundant chains. Generate it to see a realistic system.
+flatsat            A complete bench: 23 flight and ground units, generated, with example numbers.
+```
+
+```
 harness-design-studio new wheel-link --template first-steps --name "Wheel link"
 ```
 
@@ -61,12 +74,12 @@ The app also has **File > Open the sample project**. That is example data. Save 
 
 1. Choose **Edit > Add unit** and pick one of the kinds: **Computer**, **Power unit**, **Actuator (wheel)**, **Sensor (star tracker)**, **Payload**, **Transceiver**, **Pyro unit**, **Computer (many interfaces)**, **Power distribution unit**, **Battery**, **Solar array**, **Sun sensor**, **Magnetorquer** or **Heater panel**. **Add > Unit…** in the **Project** tab on the left shows the same list, and so does the command palette (Ctrl+K, type "add").
 2. The unit appears at once. No window opens. The ID and the name are given automatically, for example `PCDU1` and "Power unit 1", `OBC1` and "Computer 1", `RW1` and "Actuator (wheel) 1".
-3. To change the ID or the name, select the unit and edit **ID** or **Name** in the **Inspector** on the right.
+3. To change the ID or the name, select the unit and edit **ID** or **Name** in the **Inspector** on the right (in the Simple workspace the Inspector opens when you press **Show panels** in the message that appears after you select).
 4. Drag the unit to move it. A unit cannot be dragged past the top or left edge of the diagram, and the diagram grows to the right and downwards to hold a unit you place far out (switching to **Expert** grows it too). The lane it sits in is its **zone** (a panel or compartment of the spacecraft). A blank project has two lanes, `panel-A` and `panel-B`. **Edit > Add zone…** adds a lane: type a zone name.
 
 Each unit comes with connectors. You do not need to look at them in Guided mode.
 
-**A unit with your own connectors.** The empty diagram of a project with no unit says "Your diagram is empty" and has the button **Add a device** (also **Edit > Add unit > Device…**, Ctrl+Shift+N). The button goes away when the first unit exists, and it is not there in a project that is open read-only. It adds a unit with no connectors and opens the **Devices** tab, where you name it and define its connectors and pins ([define a device](define-a-device.md)). Use it when none of the kinds above fits.
+**A unit with your own connectors.** The empty diagram of a project with no unit says "Your diagram is empty" and has the button **Add a device** (also **Edit > Add unit > Device…**, Ctrl+Shift+N). The button goes away when the first unit exists, and it is not there in a project that is open read-only. In the Simple workspace the tool row above the diagram has the same thing as **Add device**. It adds a unit with no connectors and opens the **Devices** tab, where you name it and define its connectors and pins ([define a device](define-a-device.md)). Use it when none of the kinds above fits.
 
 ## 3. Connect two units
 
@@ -75,7 +88,7 @@ Each unit comes with connectors. You do not need to look at them in Guided mode.
 3. A link is drawn. It gets an ID (`IF-001`) and a name such as "Primary power PCDU1 to RW1". The tool picks the connectors and marks them **auto-filled** until you confirm them (see [read and fix problems](read-and-fix-problems.md)).
 4. The connect tool stays on, so you can draw more links. Press **Esc**, or the **Select** button above the diagram, to stop. While the connect tool is on, dragging a unit moves nothing (it is not a move tool); if the first unit you clicked is deleted or its link is undone, the tool forgets that first click.
 
-To make a backup chain, select a unit and press **Create redundant copy** (above the diagram, in the **Inspector** or in the **Edit** menu). The tool adds the twin unit (`PCDU1-R`) and copies its links to it. See [redundancy and zones](redundancy-and-zones.md).
+To make a backup chain, select a unit and press **Create redundant copy** (above the diagram, in the **Inspector** or in the **Edit** menu; in the Simple workspace it is under **More** above the diagram). The tool adds the twin unit (`PCDU1-R`) and copies its links to it. See [redundancy and zones](redundancy-and-zones.md).
 
 ## 4. Set the current and voltage of a link
 
@@ -87,7 +100,7 @@ Without a current on a power link, the wire gauge (the thickness of the wire) st
 
 ## 5. Guided or Expert
 
-Use the **Guided** and **Expert** buttons in the top bar (also in the **View** menu and under **Settings > Editing**).
+Use the **Guided** and **Expert** buttons in the top bar (also in the **View** menu and under **Settings > Editing**). This is not the **Simple** or **Full** workspace: that choice sits in the same places but decides what is on screen, not what the diagram shows.
 
 - **Guided** (the default): you work with units and links. The tool chooses connectors and pins.
 - **Expert**: you also see each connector and can choose the exact connector at each end of a link.
@@ -98,7 +111,7 @@ Switching never changes your data.
 
 - **View > Arrange diagram** puts the units in order and gives each one room. **Undo** restores the old positions.
 - **Click a unit or a link** and only its links stay in full colour. Press **Esc** or click the empty background to see everything again.
-- The **Show** list at the right end of the Model tab bar fades everything except one signal class, one connector or one bundle (a harness).
+- The **Show** list at the right end of the Model tab bar fades everything except one signal class, one connector or one bundle (a harness). In the Simple workspace the same choices are under **More > Show only** above the diagram.
 - **Ctrl+K** (**Search**) lets you type a command or an ID and jump to it.
 - Zoom with **Ctrl+=** and **Ctrl+-**, or **Ctrl+wheel** at the pointer. **F** fits the whole diagram, **Shift+F** zooms to the selection and **Ctrl+0** shows 100 %. **View > Show all link labels** (or **Settings > Editing > Show every link label**) shows voltages and currents on every link in a dense diagram.
 - **Shift+click**, **Ctrl+click** or a drag on the background select several items; **Ctrl+A** selects all. **Ctrl+F** finds a unit or link and marks every match. **Edit > Align**, **Space evenly** and **Duplicate** (Ctrl+D) work on the selection.

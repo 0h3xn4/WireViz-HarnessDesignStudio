@@ -35,6 +35,8 @@ If you have not installed the tool yet, start with [`INSTALL.md`](INSTALL.md).
 
 Read [`CONCEPTS.md`](CONCEPTS.md). You should be able to say, in your own words, what a **unit**, an **interface**, a **harness**, a **wire** and a **project** are, and why the tool generates harnesses instead of asking you to draw them.
 
+If you want to see how the window is meant to be used, read [use the simple workspace](user-manual/use-the-simple-workspace.md) (five minutes): since 1.7.0 the app starts on a **Next step** page that names one thing to do at a time.
+
 **Done when:** you can explain why a wire has a "Why is it like this?" text.
 
 ## 2. Your first harness (45 minutes)
@@ -60,10 +62,10 @@ harness-design-studio generate mini
 harness-design-studio drc mini
 ```
 
-Open it in the app (**File > Open project...**). Try these four things, in this order:
+Open it in the app (**File > Open project...**). A first run starts in the Simple workspace; click **Show everything** first (or choose **View > Full**) to get the diagram and the side panels. Try these four things, in this order:
 
 1. Click a wire of the power link from the power distribution unit (`PCDU1`) to the computer. Read **Why is it like this?**
-2. Open the **Problems** tab (right panel) or the Problems panel (Ctrl+Shift+M). Most entries say that a value is *pending* or *not checked*. That is the tool being honest: nobody has supplied the derating values yet.
+2. Open the **Problems** tab (right panel) or the Problems panel (Ctrl+Shift+M); in Simple, **Show panels** opens the right panel. Most entries say that a value is *pending* or *not checked*. That is the tool being honest: nobody has supplied the derating values yet.
 3. Use the **Show** list at the right end of the Model tab bar to look at the power interfaces only, then at the data interfaces.
 4. Delete a unit, then press **Ctrl+Z**, to see that nothing is lost.
 
@@ -92,7 +94,8 @@ Do this when the data exists; the tool works without it and says so.
 
 - **Parts list:** `approved-parts.csv`, then `harness-design-studio import-parts` (a CSV, TSV, JSON or XLSX file; an InvenTree export works as it is, see [`IMPORTS.md`](IMPORTS.md)). Only approved parts make a harness releasable without a written reason.
 - **Segment lengths:** `segment-lengths.csv`, then `harness-design-studio import-lengths`. Wire lengths, mass and voltage drop depend on them.
-- **Build data** (strip lengths, the contact on each pin and its crimp tool, sleeving, heat shrink, labels and backshells): the fields in the app, or `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv` with `harness-design-studio import-build-data` (new in 1.7.0). The build workbook shows what you entered and marks the rest `to fill in`; nothing is computed from it. See [enter the build data](user-manual/enter-the-build-data.md).- **Engineering values** (derating, ampacity, EMC classes): [`CONFIG.md`](CONFIG.md). The files in `config-demo-values/` are **for learning only**; they stay marked as placeholders. Never copy demo values into a real design.
+- **Build data** (strip lengths, the contact on each pin and its crimp tool, sleeving, heat shrink, labels and backshells): the fields in the app, or `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv` with `harness-design-studio import-build-data` (new in 1.7.0). The build workbook shows what you entered and marks the rest `to fill in`; nothing is computed from it. See [enter the build data](user-manual/enter-the-build-data.md).
+- **Engineering values** (derating, ampacity, EMC classes): [`CONFIG.md`](CONFIG.md). The files in `config-demo-values/` are **for learning only**; they stay marked as placeholders. Never copy demo values into a real design.
 - **Unit connector pinouts from KiCad:** [`KICAD.md`](KICAD.md).
 - **A device you defined before:** save it once with **Save to library…** in the Devices tab (or `harness-design-studio export-devices`) and add it to the next project with **Add from library…** ([define a device](user-manual/define-a-device.md#use-a-device-in-another-project)).
 

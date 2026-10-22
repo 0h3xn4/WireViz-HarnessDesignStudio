@@ -8,6 +8,7 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 - [The things in a design](#the-things-in-a-design)
 - [The standards the tool starts from](#the-standards-the-tool-starts-from)
 - [Guided and Expert](#guided-and-expert)
+- [Simple and Full](#simple-and-full)
 - [From design to harness: generation](#from-design-to-harness-generation)
 - [Problems, rules and waivers](#problems-rules-and-waivers)
 - [Placeholders: what the tool does not know](#placeholders-what-the-tool-does-not-know)
@@ -70,6 +71,10 @@ Other interface types (SpaceWire, MIL-STD-1553B, LVDS, I2C, analog, discrete, py
 
 Switching never changes data. Start in Guided.
 
+## Simple and Full
+
+This is a second, separate choice (since 1.7.0): how much of the window is on screen. In the **Simple** workspace the window opens on the **Next step** page, which says in plain words what to do now and has one button; the project tree, the Inspector and the Problems panel start closed, and the rail has no *Home*. In the **Full** workspace you see the whole editor. A first run starts in Simple; someone who already had a settings file starts in Full. **Show everything** (on the Next step page) or **View > Full** switches to Full, **View > Simple** switches back, **Show panels** opens the tree and the Inspector in Simple. Nothing is removed and no file changes: every hidden thing is still in a menu, with its shortcut, and in the command palette (Ctrl+K). Guided and Expert change what the diagram shows; Simple and Full change how much of the window is there.
+
 ## From design to harness: generation
 
 Pressing **Generate** (or `harness-design-studio generate DIR`) does four things:
@@ -112,7 +117,7 @@ A harness has a **status**: `draft`, then optionally `in_review`, then `released
 
 The release check looks at the harness itself and at the placeholder mark of the configuration files. It cannot tell whether the values are right; that stays your decision and your responsibility.
 
-In the app the work goes in three steps, shown in the top bar: **Generate**, **Check** (the design rules) and **Release…**. Each shows what is done and what is next, and a step that has to wait says what to do first.
+In the app the work goes in three steps, shown in the top bar: **Generate**, **Check** (the design rules) and **Release…**. Each shows what is done and what is next, and a step that has to wait says what to do first. The **Next step** page names the next one of the six steps of the work (add devices, connect them, generate, check, get the build sheets, review and release) with one button.
 
 ## Outputs
 

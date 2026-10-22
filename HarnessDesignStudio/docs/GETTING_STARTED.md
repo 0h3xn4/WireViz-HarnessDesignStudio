@@ -41,7 +41,7 @@ small-satellite    14 units with nominal and redundant chains. Generate it to se
 flatsat            A complete bench: 23 flight and ground units, generated, with example numbers.
 ```
 
-**Which version do you have?** This tutorial is written for 1.7.0 (the commands work the same on 1.6.0, 1.5.0, 1.4.0, 1.3.0, 1.2.0, 1.1.0 and 1.0.0; the window is the one of 1.3.0 and later, so the app steps and the picture look different in 1.2.0 and earlier, which had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
+**Which version do you have?** This tutorial is written for 1.7.0. The commands work the same on 1.6.0 and earlier, except that `export` there writes the harness drawings and no build workbook (Part 6); the window is the one of 1.3.0 and later, and the Simple workspace and the Next step page are new in 1.7.0, so the app steps and the picture look different in 1.6.0 and earlier (1.2.0 and earlier had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
 
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 
@@ -67,7 +67,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 0 errors is what you want. The INFO line is normal: it says the engineering values are not filled in yet (Part 7).
 
-**In the app:** start **Harness Design Studio**, choose **File > Open project…** and pick the `wheel-link` folder. The app also opens a built-in sample the first time and offers a short tour; **Skip tour** or follow it. To start a new practice project inside the app, use **File > New project from an example…** (the same examples) or **File > New project…** (an empty one); both open one window where you choose the folder, the name and the example.
+**In the app:** start **Harness Design Studio**, choose **File > Open project…** and pick the `wheel-link` folder. The app also opens a built-in sample the first time and offers a short tour; **Skip tour** or follow it. A project opens on the **Next step** page (*What to do next*) when the workspace is Simple, as it is on a first run; see Part 2. To start a new practice project inside the app, use **File > New project from an example…** (the same examples) or **File > New project…** (an empty one); both open one window where you choose the folder, the name and the example.
 
 ## Part 2: look around
 
@@ -75,17 +75,19 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 *(The screenshot shows the app's built-in sample, which uses slightly different IDs such as `OBC` and `IF-PWR-RW1`; the layout is the same.)*
 
+**Simple and Full.** The picture and the table below show the **Full workspace**, the whole editor. Since 1.7.0 a first run starts in the **Simple workspace** instead: the window opens on the **Next step** page, which says in plain words what to do now and has one button; the project tree, the Inspector and the Problems panel are closed and there is no *Home* in the rail. Everything in this tutorial works in both. To follow Part 2 as written, click **Show everything** on the Next step page, or choose **View > Full**. If you stay in Simple, **Show panels** in the top bar opens the project tree and the Inspector. Anyone who already had a settings file starts in Full. This choice is separate from **Guided / Expert** in the top bar. The details are in [use the simple workspace](user-manual/use-the-simple-workspace.md).
+
 | Where | What it is |
 | --- | --- |
-| Rail (left edge) | **Next step** (one thing to do now, in plain words; see [Use the simple workspace](user-manual/use-the-simple-workspace.md)), **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions**, **Settings** |
+| Rail (left edge) | **Next step** (one thing to do now, in plain words; see [Use the simple workspace](user-manual/use-the-simple-workspace.md)), **Home** (not in the Simple workspace; **Go > Go to Home**, Ctrl+7), **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions**, **Settings** |
 | Top bar | the project name, whether it is saved, the revision, a short model hash, where you are, **Undo**, **Redo**, **Guided / Expert**, **Search** (Ctrl+K), the steps **Generate** (the one blue button), **Check** and **Release…** (each shows what is done and what is next), **Export…** and a status chip (*Up to date*, *Plans out of date* ...) |
 | Tabs | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6); each area of the rail shows its own: Model has **Diagram** and **Devices**, Drawings has **Harness**, Outputs has **Lists**, Revisions has **Releases** |
 | Middle, **Diagram** | units in lanes (*panel-A*, *panel-B*), links between them. Every kind of link has its own picture and colour; the legend (bottom left of the diagram) shows them (power is red in the light theme). Small badges show problems, values still to enter and locks |
 | Left, **Project** | a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports; **Add** adds a unit or an interface |
 | Left, **Units** and **Interfaces** | every unit and every interface as a table you can sort, filter, edit with the keyboard and paste into from Excel (Ctrl+Shift+J, Ctrl+Shift+T) |
 | Right, **Inspector** | the selected unit or interface: names, **Max current (A)**, notes, and where it is used. The tabs **Why** and **Problems** (with a **To do** list above the problem cards) are beside it |
-| Bottom | the status bar (the running job with **Cancel**, **Problems (n)**, *Offline*, the zoom) and, when you open it (Ctrl+Shift+M), the Problems panel with every open problem |
-| Above the diagram | **Select** and **Connect** (the arrow beside **Connect** lists the interface types), **Delete**, zoom |
+| Bottom | the status bar (the running job with **Cancel**, **Problems (n)**, *Offline*, the zoom; the Simple workspace shows less) and, when you open it (Ctrl+Shift+M), the Problems panel with every open problem |
+| Above the diagram | **Select** and **Connect** (the arrow beside **Connect** lists the interface types), **Delete**, zoom (in Simple: **Select**, **Connect**, **Add device** and a **More** menu with the rest) |
 | Right end of the Model tab bar | **Arrange diagram** and the **Show** list (all interfaces, one class, one connector, one bundle) |
 
 Try this:
@@ -133,7 +135,7 @@ Notice the wire gauge says **pending**. That is deliberate and is the subject of
 
 ## Part 5: read and answer the Problems
 
-Open the **Problems** tab (right panel) or the Problems panel at the bottom (Ctrl+Shift+M), or the **Checks** tab for all 35 rules and their result, or run:
+Open the **Problems** tab (right panel; in Simple press **Show panels** first) or the Problems panel at the bottom (Ctrl+Shift+M), or the **Checks** tab (the button **Show the problems** of the Next step page opens it) for all 35 rules and their result, or run:
 
 ```
 harness-design-studio drc wheel-link
@@ -162,7 +164,7 @@ The **To do** list at the top of the **Problems** tab shows what is left, includ
 
 The main output of an export is a **build workbook** for every harness: an Excel file to build the harness from, with a cut list, a block for every connector, the parts, the labels and a test sheet. The PDF drawings are optional (see below). The build workbook and the `--drawings` option are new in 1.7.0.
 
-**In the app:** press **Export…** in the top bar (Ctrl+E) and then **Export** in the window that opens; it also lists the files written. The check box **Include the PDF drawings** in that window is not ticked the first time. Afterwards the **Lists** tab (Outputs) shows **Exported files** with the SHA-256 of each file and whether it still matches the export. **On the command line:**
+**In the app:** press **Export…** in the top bar (Ctrl+E; the Next step page has the same as **Export the build sheets**) and then **Export** in the window that opens; it also lists the files written. The check box **Include the PDF drawings** in that window is not ticked the first time. Afterwards the **Lists** tab (Outputs) shows **Exported files** with the SHA-256 of each file and whether it still matches the export. **On the command line:**
 
 ```
 harness-design-studio export wheel-link
@@ -198,7 +200,7 @@ harness-design-studio export wheel-link --drawings
 40 files written to wheel-link/outputs (model 5e6bcbd63d91).
 ```
 
-The six new files are `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` and the same three for `W002`. A later `export` without `--drawings` removes them again and says so. The harness drawing (it needs `export --drawings`), with a title block and the model hash at the bottom (the picture is the `W001` sheet of the first export of this tutorial, made with 1.6.0, so the version and the model hash at the bottom are the ones your tool prints; with another version they differ):
+The six new files are `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` and the same three for `W002`. A later `export` without `--drawings` removes them again and says so. The harness drawing (it needs `export --drawings`), with a title block and the model hash at the bottom (the picture is the `W001` sheet of the first export of this tutorial; the version and the model hash at the bottom of your own drawing are those of your tool and your project, so they can differ from the picture):
 
 ![A harness drawing](img/w001-drawing.png)
 
@@ -371,7 +373,7 @@ harness-design-studio new my-first-design --name "My first design"
 
 In the app, **File > Open project…** it. The empty diagram says where to start: it has the button **Add a device** (until the first unit exists) and the hint to use **Add** in the project panel. Then:
 
-1. Press **Add** in the Project tab on the left, choose **Unit…**, and add a **Power unit**, a **Computer** and an **Actuator (wheel)** (**Edit > Add unit** has the same list; **Add a device**, Ctrl+Shift+N, adds a unit whose connectors and pins you define yourself in the **Devices** tab, see [`user-manual/define-a-device.md`](user-manual/define-a-device.md)). Units appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in the Inspector if you want.
+1. Press **Add** in the Project tab on the left (in Simple, press **Show panels** first), choose **Unit…**, and add a **Power unit**, a **Computer** and an **Actuator (wheel)** (**Edit > Add unit** has the same list; **Add a device**, Ctrl+Shift+N, adds a unit whose connectors and pins you define yourself in the **Devices** tab, see [`user-manual/define-a-device.md`](user-manual/define-a-device.md)). Units appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in the Inspector if you want.
 2. Open the arrow beside **Connect** above the diagram (or **Edit > Connect with**), pick **Primary power**, click `PCDU1`, then click `RW1`. Units that cannot take this interface are greyed out, with the reason beside them.
 3. Select the new link and set **Max current (A)** to 2. Without a current, a power wire's gauge stays pending.
 4. Pick **RS-422**, click `OBC1`, then `RW1`.

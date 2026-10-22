@@ -183,7 +183,7 @@ def render() -> str:
         "not stop the command: it still finishes and saves.",
         "",
         "Every command that changes a project takes the same lock as the app, so the two never write "
-        "at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`) "
+        "at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) "
         "accept `--dry-run`: they show what they would do and change nothing; "
         "`config --ampacity-csv` does not.",
         "",
