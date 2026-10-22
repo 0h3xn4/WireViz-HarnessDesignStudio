@@ -31,13 +31,14 @@ The command line cannot add units or interfaces. The loop works on a project tha
 | a device's pinout as a file | `harness-design-studio export-pinout DIR --unit GYRO1 -o gyro.xlsx` |
 | a device from another project (a device library file) | `harness-design-studio import-devices DIR devices.json --list`, then `--unit GYRO1 --dry-run` |
 | a device to keep for other projects | `harness-design-studio export-devices DIR devices.json --unit GYRO1` (or **Save to library…** in the Devices tab) |
+| strip lengths, pin contacts, accessories or crimp tools (not in the latest release yet) | `harness-design-studio import-build-data DIR strip-lengths.csv --dry-run` (the kind is read from the headings; templates `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv`) |
 | engineering values | edit `config/*.json`, see [`CONFIG.md`](CONFIG.md); `harness-design-studio config DIR` lists what is missing |
 
 Add `--dry-run` to any import to see what it would do first. Other commands (`compare`, `schema`, `library`, `migrate`, and options such as `config --ampacity-csv`) are in [`CLI.md`](CLI.md).
 
 ## Edit what was generated (app, since 1.4.0)
 
-In the **Drawings** area, select a harness and open the **Edit wire** tab beside *Why*: set the gauge, type, colour, length, label and note of the selected wires (the first four lock the wire, so Generate keeps them), **New wire** draws a wire between two pins, **Group** twists or shields selected wires, **Labels** names the harness and its cable connectors. In the **Devices** tab: a pin's *Function*, a connector's *Label*, **Save to library…** and **Add from library…**. Details: [`user-manual/edit-a-wire.md`](user-manual/edit-a-wire.md), [`user-manual/define-a-device.md`](user-manual/define-a-device.md).
+In the **Drawings** area, select a harness and open the **Edit wire** tab beside *Why*: set the gauge, type, colour, length, strip lengths (**Strip A (mm)**, **Strip B (mm)**), label and note of the selected wires (gauge, type, colour and length lock the wire, so Generate keeps them; the rest it keeps anyway), **New wire** draws a wire between two pins, **Group** twists or shields selected wires, **Labels** names the harness and its cable connectors. In the **Devices** tab: a pin's *Function*, its *Cable contact* (press **Contact** to show the column), a connector's *Label*, **Save to library…** and **Add from library…**. The **Accessories** tab of the Harness view lists sleeving, heat shrink, labels and backshells. Details: [`user-manual/edit-a-wire.md`](user-manual/edit-a-wire.md), [`user-manual/define-a-device.md`](user-manual/define-a-device.md), [`user-manual/enter-the-build-data.md`](user-manual/enter-the-build-data.md) (strip lengths, contacts, crimp tools and accessories; new in 1.7.0).
 
 ## Release and change
 
@@ -115,6 +116,7 @@ Put the folder in Git. Everything except `outputs/` is meant to be reviewed as t
 | *not checked* | a rule could not run because its numbers are not supplied |
 | placeholder | a configuration file nobody has reviewed yet |
 | baseline | the frozen copy stored at release |
+| accessory | sleeving, heat shrink, a label or a backshell on a harness (1.7.0) |
 
 More: [`CONCEPTS.md`](CONCEPTS.md) and the glossary in the user guide.
 

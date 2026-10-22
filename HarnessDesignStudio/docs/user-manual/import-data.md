@@ -1,6 +1,6 @@
 # Import data
 
-This page shows how to bring data you already have into a project: a list of interfaces, your approved parts list and the lengths of the routes, always with a preview first.
+This page shows how to bring data you already have into a project: a list of interfaces, your approved parts list, the lengths of the routes and (since 1.7.0) the build data of a technician, always with a preview first.
 
 ## Contents
 
@@ -8,6 +8,7 @@ This page shows how to bring data you already have into a project: a list of int
 - [Interfaces from a table (app only)](#interfaces-from-a-table-app-only)
 - [Approved parts list](#approved-parts-list)
 - [Segment lengths](#segment-lengths)
+- [Build data: strip lengths, contacts, accessories](#build-data-strip-lengths-contacts-accessories)
 - [Other imports](#other-imports)
 - [Where the library data come from](#where-the-library-data-come-from)
 - [Common mistakes](#common-mistakes)
@@ -22,10 +23,10 @@ harness-design-studio templates my-templates
 ```
 
 ```
-15 files written to my-templates. Start with my-templates/README.md.
+18 files written to my-templates. Start with my-templates/README.md.
 ```
 
-(On a 0.1.0 package there is one file fewer: `design-worksheet.md` is not in the 0.1.0 packages.)
+(On a 0.1.0 package the command writes 14 files: `design-worksheet.md` is not in the 0.1.0 packages. The three files for the build data, `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv`, are new in 1.7.0 and not in the latest release yet.)
 
 - Every import shows what it would do. In the app, **File > Import** starts one wizard for six kinds of file (interfaces, approved parts, segment lengths, the ampacity table, a device pinout and a KiCad netlist): choose the file, match the columns, read every row with its reason, then import. On the command line add `--dry-run`: the rows are listed and nothing changes. Run the command again without it to apply.
 - Files can be CSV or TSV (commas, semicolons or tabs between columns; UTF-8), JSON (a list of flat records, as an export of a parts program writes it; since 1.4.0) or Excel (`.xlsx`, the first **visible** sheet, not the one that was active when the file was saved; the import says `Reading sheet 'Parts' (the first visible sheet of the workbook).`). A number with a decimal comma needs quotes (`"1,5"`) when commas separate the columns. At most 20,000 rows and 8 MB. Details: [`IMPORTS.md`](../IMPORTS.md).
@@ -83,7 +84,7 @@ Imported 5 part(s). Project parts library (version 0), source: approved-parts.cs
 
 (That is the last line. The five `row ...: OK` lines come before it.)
 
-- Columns are matched by heading: part number, manufacturer, description, category, specification, approval status, pin count, mass, mass per metre, mating part.
+- Columns are matched by heading: part number, manufacturer, description, category, specification, approval status, pin count, mass, mass per metre, mating part, and (since 1.7.0) `Tool` or `Crimp tool`, the crimp tool of a part of the category *contact* ([enter the build data](enter-the-build-data.md#2-contacts-and-crimp-tools)).
 - Every row needs a category: a `category` column, or `--category connector` for the whole file.
 - A value that is in none of your lists is an error for that row, and then **nothing** is written:
 
@@ -171,6 +172,24 @@ Nothing was changed.
 
 To find the segment IDs, open the generated harness in the **Harness** tab, or look in `physical/harnesses/W001.json` under `segments`.
 
+## Build data: strip lengths, contacts, accessories
+
+*Not in the latest release yet (1.7.0).* `harness-design-studio import-build-data DIR FILE` reads a table of the data a technician needs. The kind of table is found from the column headings (any case, other columns are ignored): strip lengths (`Wire`, `Strip A (mm)`, `Strip B (mm)`, optional `Harness`), pin contacts (`Harness`, `Connector`, `Pin`, `Contact`, optional `Tool`), accessories (`Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity`, `Note`, optional `ID`) and the crimp tool of parts (`Part`, `Tool`). It works as the other imports do: one line per row, the summary, `--dry-run` to write nothing, and a refused row means exit code 1 and nothing is changed. An empty cell leaves a value alone, and the same file imported twice changes nothing. The templates `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv` hold example rows.
+
+```
+harness-design-studio import-build-data wheel-link my-templates/strip-lengths.csv --dry-run
+```
+
+```
+Import strip lengths: 2 row(s) read.
+row 2: OK strip A 6 mm, strip B 6 mm
+row 3: OK strip A 6 mm, strip B 5 mm
+2 added, 0 changed, 0 unchanged, 0 refused.
+Dry run: nothing was changed.
+```
+
+(The rows of the template are examples with example numbers; `Comment` is ignored.) There is no window for this import in the app; the values have their own fields there. Every case, with its output: [enter the build data](enter-the-build-data.md).
+
 ## Other imports
 
 | You have | Do |
@@ -178,6 +197,7 @@ To find the segment IDs, open the generated harness in the **Harness** tab, or l
 | A current-by-gauge table | **File > Import > Import engineering values: ampacity table…**, or `harness-design-studio config DIR --ampacity-csv FILE` ([fill in the engineering values](fill-in-engineering-values.md#2-load-the-current-by-gauge-table)) |
 | A unit's connector pinout in KiCad | **File > Import > Import KiCad netlist…**, or `harness-design-studio import-netlist` ([import KiCad pinouts](import-kicad-pinouts.md)) |
 | A device's pinout as a table | **File > Import > Import device pinout…**, or `harness-design-studio import-pinout` ([define a device](define-a-device.md#take-the-pinout-from-a-spreadsheet)) |
+| Strip lengths, contacts, accessories or crimp tools as a table | `harness-design-studio import-build-data DIR FILE` (command line only; [enter the build data](enter-the-build-data.md)) |
 | A device from another project | **Add from library…** in the Devices tab, or `harness-design-studio import-devices` ([define a device](define-a-device.md#use-a-device-in-another-project)) |
 | Values from a standard | `harness-design-studio config DIR --apply-profile NAME` ([fill in the engineering values](fill-in-engineering-values.md#values-from-a-standard-profiles)) |
 
@@ -210,4 +230,4 @@ The editor shows the same line under the part picker, and every export carries i
 
 More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 
-Next: [import KiCad pinouts](import-kicad-pinouts.md), [fill in the engineering values](fill-in-engineering-values.md), [export the outputs](export-the-outputs.md)
+Next: [import KiCad pinouts](import-kicad-pinouts.md), [fill in the engineering values](fill-in-engineering-values.md), [enter the build data](enter-the-build-data.md), [export the outputs](export-the-outputs.md)

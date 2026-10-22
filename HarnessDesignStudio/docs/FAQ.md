@@ -20,7 +20,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **Can I edit a generated harness by hand?** Not in the sense of editing a drawing. You change the design (units, interfaces, connectors, values) and generate again. To keep a wire's gauge, type, colour or length, set it in the **Edit wire** tab (Drawings area; [edit a wire](user-manual/edit-a-wire.md), new in 1.4.0): it locks the wire and generation keeps it. Before 1.4.0 this needed `"locked": true` in the harness file (`physical/harnesses/<ID>.json`). A pin choice is kept by locking the pin in the **Devices** tab. A harness that is released is locked; start a new revision to change it.
 
-**What happens when I generate again?** IDs, locked wires and locked pins are kept, so are the wires you drew or edited in the **Edit wire** tab, your wire, connector and harness labels and the groups you made; released harnesses are never touched, and a report says what was added, changed and removed (and, as *locked_data_lost*, anything it could not keep because its interface is gone). Generating twice gives the same result.
+**What happens when I generate again?** IDs, locked wires and locked pins are kept, so are the wires you drew or edited in the **Edit wire** tab, your wire, connector and harness labels, strip lengths, accessories (while the connector or wire they sit on is kept), the cable contact of a unit's pin and the groups you made; released harnesses are never touched, and a report says what was added, changed and removed (and, as *locked_data_lost*, anything it could not keep because its interface is gone). Generating twice gives the same result.
 
 **Can two wires go to one pin?** Yes, since 1.4.0: draw the wire in the **Edit wire** tab. The design rule *Several wires on one pin* (`pin-shared`, a warning) names each such pin so a reviewer sees it, and the independent check says *pin_shared* (a warning) instead of failing when a wire you drew is one of them ([edit a wire](user-manual/edit-a-wire.md)).
 
@@ -48,7 +48,11 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **Where are the PDF drawings of the harnesses?** Since 1.7.0 `harness-design-studio export DIR` does not write them unless you add `--drawings` (in the app: tick **Include the PDF drawings** in the Export window). The block diagram and the harness overview are always written. In 1.6.0 and earlier the drawings were always written.
 
-**Does the build workbook say the strip length, the contact and the crimp tool?** No. These are not in the model yet; they are planned for 1.7.0 and not built ([what the build workbook does not hold yet](user-manual/export-the-outputs.md#what-the-build-workbook-does-not-hold-yet)).
+**Does the build workbook say the strip length, the contact and the crimp tool?** Yes, when you have entered them (not in the latest release yet; new in 1.7.0): the strip length of each wire end on the cut list, the contact and the crimp tool of each pin on the connector blocks, and a sheet *Accessories* for sleeving, heat shrink, labels and backshells. What is not entered reads `to fill in`. The tool sets none of them itself and checks none ([enter the build data](user-manual/enter-the-build-data.md), [what the workbook holds](user-manual/export-the-outputs.md#what-the-build-workbook-holds-and-what-it-does-not)).
+
+**How do I enter strip lengths for many wires?** Select the wires in the *Edit wire* tab and type **Strip A (mm)** and **Strip B (mm)**, or press **Apply strip lengths to all wires of this harness**; or import a table with `harness-design-studio import-build-data DIR strip-lengths.csv --dry-run` ([enter the build data](user-manual/enter-the-build-data.md#1-strip-lengths)).
+
+**Why is the contact of a pin of a generated harness greyed out?** Generate copies it from the pin of the unit. Set it in the *Devices* tab, column *Cable contact* (press **Contact** to show it), and generate again. On a harness you made by hand you set it on the cable connector's own pin.
 
 **Where is the user guide?** In the app: **F1**. As a file: [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md).
 

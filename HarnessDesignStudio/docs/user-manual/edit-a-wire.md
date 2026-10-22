@@ -1,6 +1,6 @@
 # Edit a wire
 
-This page shows how to change a wire after the tool has generated it (its gauge, type, colour, length, a label for the wire labels, and a note), how to draw a wire of your own, how to put several wires on one pin, how to twist or shield wires together, and how to label the harness and its connectors.
+This page shows how to change a wire after the tool has generated it (its gauge, type, colour, length, the strip length at each end, a label for the wire labels, and a note), how to draw a wire of your own, how to put several wires on one pin, how to twist or shield wires together, and how to label the harness and its connectors.
 
 > **New in 1.4.0.** Before 1.4.0 the app had no way to change or draw a single wire (only the colour of a whole signal, see [set wire colours](set-wire-colours.md)). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
 
@@ -44,6 +44,8 @@ To make a whole harness yourself, with its own connectors, see [build a harness 
 | **Type** | A wire part of the project's parts library. | Yes: the wire is locked. |
 | **Colour** | A colour of the IEC 60757 list (black, brown, red, ...) or your own text. A colour the tool does not know is drawn grey. | Yes: the wire is locked. |
 | **Length (m)** | The length in metres, for example `1.5` (a comma works too). | Yes: the wire is locked. |
+| **Strip A (mm)** | Insulation stripped at the **From** end, in millimetres, for example `6` (a comma works too). **New in 1.7.0.** | Always: it does not lock the wire. |
+| **Strip B (mm)** | The same at the **To** end. **New in 1.7.0.** | Always: it does not lock the wire. |
 | **Label** | Text that the wire labels print instead of the signal name. | Always. |
 | **Note** | Your remark. It appears in the wire list. | Always. |
 
@@ -51,7 +53,9 @@ Only the fields you touch change; the others stay as they are on every selected 
 
 A mistake is said in words under the form (a gauge that is not a whole number, a length that is not a number, a type that is not a wire part of the library) and nothing is changed.
 
-Gauge, type, colour and length lock the wire, so the **Locked** column of the wire table shows it and the line under the fields says *Your values*. A label or a note alone does not lock the wire.
+For **Strip A (mm)** and **Strip B (mm)** a field that differs between the selected wires says *various*, and an empty field clears the value. **Apply strip lengths to all wires of this harness** gives every wire of the harness the two values in the fields and says, for example, `Strip lengths changed on 4 of 4 wires of W001.` (one undo step). The form says it too: `Strip lengths do not lock the wire against Generate: they are always kept, like the note.` Strip lengths can also be read from a table ([enter the build data](enter-the-build-data.md)).
+
+Gauge, type, colour and length lock the wire, so the **Locked** column of the wire table shows it and the line under the fields says *Your values*. A label, a note or a strip length alone does not lock the wire.
 
 ## 3. Give a wire back to generation
 
@@ -62,6 +66,7 @@ You cannot clear a gauge, type, colour or length on one wire; use **Reset to gen
 ## What shows up in the outputs
 
 - The **wire list** gets two columns, **Label** and **Note**, as soon as any wire in the project has one. A project without labels and notes keeps the wire list it had before.
+- The wire list gets **Strip A (mm)** and **Strip B (mm)** as soon as any wire in the project has a strip length, and the **Cut list** of the build workbook always shows them (`to fill in` while a wire has none).
 - The **wire labels** (`labels.csv`) print the label in place of the signal name: `W001-0003 Heater supply to J2.4`.
 - The independent check (`harness-design-studio verify DIR --outputs`) compares both with the design.
 
@@ -107,7 +112,7 @@ At the bottom of the **Edit wire** tab, **Labels** has a **Harness label**, a li
 ## 8. Function and soldering
 
 - A **function** is your own words for what a pin does; type it in the **Function** column of the pin table in the **Devices** tab (see [define a device](define-a-device.md)). It appears as a column in the pinout tables.
-- The **Termination** of a pin (crimp or solder) is a column of the same table, hidden until you press **Contact**. When any pin has one, the pinout tables get a **Termination** column too, and the build workbook shows it for every pin in use (`to fill in` while it is not set). What more the lists should say about soldering is still open; tell the owner what you need.
+- The **Termination** of a pin (crimp or solder) is a column of the same table, hidden until you press **Contact**, and so is **Cable contact**, the contact part the cable side uses on the pin ([enter the build data](enter-the-build-data.md)). When any pin has one, the pinout tables get a **Termination** column too, and the build workbook shows it for every pin in use (`to fill in` while it is not set). What more the lists should say about soldering is still open; tell the owner what you need.
 
 ## Common mistakes
 
@@ -118,4 +123,4 @@ At the bottom of the **Edit wire** tab, **Labels** has a **Harness label**, a li
 
 More: [`FILE_FORMAT.md`](../FILE_FORMAT.md) (the fields `Wire.label` and `Wire.note`), [`OUTPUTS.md`](../OUTPUTS.md).
 
-Next: [set wire colours](set-wire-colours.md), [export the outputs](export-the-outputs.md)
+Next: [enter the build data](enter-the-build-data.md), [set wire colours](set-wire-colours.md), [export the outputs](export-the-outputs.md)

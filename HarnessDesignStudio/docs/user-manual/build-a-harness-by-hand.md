@@ -49,7 +49,7 @@ The harness is a draft. Undo (Ctrl+Z) takes it away again.
 In the **Connectors** tab, under **Add connector**:
 
 - **Part**: a connector part of the library. The connector gets its pins `1` to the part's pin count, and its gender from the part's description.
-- **Plugs into**: choose a connector of a unit, and the new connector is the other half of it. The tool takes the mating part from the library (else the same part), the opposite gender, the keying and all the pins of the unit's connector, with their function, contact size and termination. Choose *nothing (free-standing)* for a connector that plugs into no unit.
+- **Plugs into**: choose a connector of a unit, and the new connector is the other half of it. The tool takes the mating part from the library (else the same part), the opposite gender, the keying and all the pins of the unit's connector, with their function, contact size, termination and cable contact. Choose *nothing (free-standing)* for a connector that plugs into no unit.
 - **Name**: optional. Left empty, the next free one (`P1`, `P2`, …) is used.
 - **Pins**: optional, the pin names separated by commas (`A1, A2, B1`). Left empty, the pins are those described above. Fill it in for a part that has no pin count, or to name the pins yourself.
 
@@ -57,7 +57,7 @@ Press **Add connector**. Add the second connector the same way. Each connector g
 
 ## 4. Say what each pin does
 
-Under **Pin of a connector**, choose the connector and the pin, then type a **Function** (your words, for example `HEATER +`), choose the **Termination** (crimp, solder, or not said) and a **Contact size**, and press **Set pin**. The function and the termination appear in the pinout tables, and the labels print the function.
+Under **Pin of a connector**, choose the connector and the pin, then type a **Function** (your words, for example `HEATER +`), choose the **Termination** (crimp, solder, or not said), a **Contact size** and a **Contact**, and press **Set pin**. The function and the termination appear in the pinout tables, and the labels print the function. **Contact** is a part of the library with the category *contact*: the contact this wire uses on the pin (`Contact` appears in the pinout tables and in the build workbook). **Contact for all pins of this connector** gives the contact chosen in **Contact** to every pin of the connector in one undo step. The crimp tool belongs to the contact part, not to the pin ([enter the build data](enter-the-build-data.md)). On a connector of a harness that Generate made these controls are off, because the contact is set on the pin of the unit.
 
 **Delete connector** removes the chosen connector, if it has no wires. If it has, the form names them: delete the wires first.
 
@@ -70,6 +70,7 @@ Draw wires as in [edit a wire](edit-a-wire.md), section 4: **New wire** in the *
 ## 6. Check, list and release
 
 - **Checks** shows the design checks. A harness by hand has no interface, so the checks that need one (a link's current, signal directions) have nothing to say; the rest apply. With no gauge, the gauge stays *pending*: the tool never guesses.
+- **Strip lengths and accessories** are entered as for any harness: the strip lengths in the **Edit wire** tab, the sleeving, heat shrink, labels and backshells in the **Accessories** tab ([enter the build data](enter-the-build-data.md)). `harness-design-studio import-build-data` can read the contacts of this harness from a table.
 - **Outputs** writes the build workbook, wire list, pinouts, bill of materials, labels and tests for it, like any harness (and the drawings, if you ask for them: [export the outputs](export-the-outputs.md#5-the-pdf-drawings-optional)). `harness-design-studio verify DIR --outputs` compares them with the design.
 - **Review**, **Release** and **Revise** work as for a harness from Generate ([release a harness](release-a-harness.md)).
 
@@ -84,4 +85,4 @@ Nothing. **Generate** leaves a harness you made, its connectors and its wires ex
 - **A connector with no pins.** The pins come from the part's pin count. A part without one gets none: type the names in **Pins**.
 - **A released harness.** It is locked; start a new revision ([change a released harness](change-a-released-harness.md)).
 
-Next: [edit a wire](edit-a-wire.md), [export the outputs](export-the-outputs.md)
+Next: [edit a wire](edit-a-wire.md), [enter the build data](enter-the-build-data.md), [export the outputs](export-the-outputs.md)
