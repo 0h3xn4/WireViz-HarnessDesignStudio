@@ -28,6 +28,7 @@ def stylesheet(scale: float = 1.0, mono: str = "monospace") -> str:
         px(TYPE_SCALE["caption"]),
     )
     section = px(TYPE_SCALE["section"])
+    display = px(TYPE_SCALE["display"])
     s4, s8, s16 = px(4), px(8), px(16)
     r_ctl, r_panel = px(RADIUS_CONTROL), px(RADIUS_PANEL)
     ring = px(FOCUS_RING)
@@ -114,6 +115,7 @@ QCheckBox:focus, QRadioButton:focus {{ border: {ring} solid {c("focus")}; }}
 QLabel[muted="true"] {{ color: {c("text.secondary")}; }}
 QLabel[error="true"] {{ color: {c("status.critical")}; }}
 QLabel[title="true"] {{ font-size: {section}; font-weight: 600; }}
+QLabel[display="true"] {{ font-size: {display}; font-weight: 600; }}
 QLabel[dirty="true"] {{ color: {c("status.caution")}; font-weight: 600; }}
 QLabel#checks-stale {{ color: palette(tooltip-text); font-weight: 600; }}
 QLabel[heading="true"] {{ color: {c("text.secondary")}; font-size: {caption}; font-weight: 600; }}

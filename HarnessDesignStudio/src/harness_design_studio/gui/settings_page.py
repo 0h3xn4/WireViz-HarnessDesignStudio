@@ -1,9 +1,9 @@
 """The Settings area: appearance, editing, the project's values, keyboard shortcuts, About, Licences.
 
-    page = SettingsPage(theme, set_theme=..., set_scale=..., set_reduce_motion=..., set_mode=...,
+    page = SettingsPage(theme, set_workspace=..., set_theme=..., set_scale=..., set_reduce_motion=..., set_mode=...,
                         set_snap=..., set_labels=..., open_values=..., shortcut_rows=...,
                         settings_file="...")
-    page.sync(theme_mode="dark", scale=125, mode="expert", reduce_motion=False, snap=True, labels=False)
+    page.sync(theme_mode="dark", scale=125, mode="expert", workspace="full", reduce_motion=False, snap=True, labels=False)
 
 The page only shows and calls back; the window changes the setting, stores it and applies it at once
 (`MainWindow.set_theme_mode`, `set_scale`, `set_reduce_motion` ...). Every control here has a twin in
@@ -46,6 +46,7 @@ THEMES = (
     ("dark", strings.SETTINGS_THEME_DARK),
 )
 MODES = (("guided", strings.GUIDED), ("expert", strings.EXPERT))
+WORKSPACES = (("simple", strings.WORKSPACE_SIMPLE), ("full", strings.WORKSPACE_FULL))
 SECTIONS = (
     ("appearance", strings.SETTINGS_SECTION_APPEARANCE),
     ("editing", strings.SETTINGS_SECTION_EDITING),
@@ -102,6 +103,7 @@ class SettingsPage(QWidget):
         self,
         theme: ThemeManager,
         *,
+        set_workspace: Callable[[str], None],
         set_theme: Callable[[str], None],
         set_scale: Callable[[int], None],
         set_reduce_motion: Callable[[bool], None],
@@ -164,6 +166,19 @@ class SettingsPage(QWidget):
 
         # ---- editing
         page, col = self._add("editing")
+        self.workspace_combo = QComboBox()
+        self.workspace_combo.setObjectName("settings-workspace")
+        self.workspace_combo.setAccessibleName(strings.SETTINGS_WORKSPACE)
+        self.workspace_combo.setToolTip(strings.SETTINGS_WORKSPACE_HINT)
+        for key, text in WORKSPACES:
+            self.workspace_combo.addItem(text, key)
+        self.workspace_combo.activated.connect(
+            lambda i: set_workspace(str(self.workspace_combo.itemData(i)))
+        )
+        workspace_form = QFormLayout()
+        workspace_form.addRow(strings.SETTINGS_WORKSPACE, self.workspace_combo)
+        col.addLayout(workspace_form)
+        col.addWidget(_muted(strings.SETTINGS_WORKSPACE_HINT))
         self.mode_combo = QComboBox()
         self.mode_combo.setObjectName("settings-mode")
         self.mode_combo.setAccessibleName(strings.SETTINGS_MODE)
@@ -331,12 +346,13 @@ class SettingsPage(QWidget):
         theme_mode: str,
         scale: int,
         mode: str,
+        workspace: str,
         reduce_motion: bool,
         snap: bool,
         labels: bool,
     ) -> None:
         """Show what the window has now (it changes through the menus, the palette and here)."""
-        for combo, value in ((self.theme_combo, theme_mode), (self.scale_combo, scale), (self.mode_combo, mode)):  # fmt: skip
+        for combo, value in ((self.theme_combo, theme_mode), (self.scale_combo, scale), (self.mode_combo, mode), (self.workspace_combo, workspace)):  # fmt: skip
             i = combo.findData(value)
             if i >= 0 and combo.currentIndex() != i:
                 combo.blockSignals(True)
