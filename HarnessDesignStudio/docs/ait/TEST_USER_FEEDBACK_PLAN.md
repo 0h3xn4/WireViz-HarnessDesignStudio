@@ -2,7 +2,7 @@
 
 This page says what the test users said, what the tool does about each point today (checked in the code of version 1.6.0), what the next versions change and in which order. It is a plan and a record, not a promise: each milestone is a pull request with tests, and what is not built yet is marked.
 
-**Status (2026-10-21).** The plan is written and the owner has answered the four open questions (below). Nothing is built yet.
+**Status (2026-10-22).** The plan is written and the owner has answered the four open questions (below). The build workbook (1.7.0 milestone 1, D-169) is built and in review as pull request 102. Milestone 2 (the build data, D-170) is being built; the design is below.
 
 ## What the test users said
 
@@ -64,6 +64,27 @@ These become decisions D-169 (workbook and optional PDFs), D-170 (build data fie
   - Edit plans in `core/wires.py` and a new `core/build_data.py` (set strip length for one wire, a selection or the whole harness; set a contact for a pin, a connector or all pins of one part; add and remove an accessory), the *Edit wire* and *Connectors* tabs get the fields, the pinout import and the wire import read the new columns, `harness-design-studio` gets matching options, and the workbook shows the columns and the accessory list only when used (the *Start here* sheet lists what is still empty).
   - Generation keeps a person's values (rule 4).
 - **Release 1.7.0**: version, changelog, highlights, regenerated examples and goldens, documents (user manual page *Build sheets*, the output reference, the file format, the glossary, the guide), screenshots, the output proof.
+
+#### The design of milestone 2 (decision D-170)
+
+Model (all optional and sparse: not written while empty, so a project that does not use them keeps byte-identical files and outputs; `core/model/physical.py`, `library.py`):
+
+| Field | Meaning |
+| --- | --- |
+| `Wire.strip_a_mm`, `Wire.strip_b_mm` | insulation stripped at the From end and the To end, in mm (a person's value; 0 to 100,000 as a guard against a typing slip, not a design limit) |
+| `Pin.contact_part` | the library part (category *contact*) the **cable side** uses on this pin. Like `termination` and `function` it is set on the **unit's pin** (Devices tab) and copied to the cable connector's pin by Generate; on a harness made by hand it is set on the cable connector's own pin |
+| `Part.tool` | the crimp tool or its setting for a contact part (free text, a person's) |
+| `Harness.accessories` | a list of `Accessory`: `id`, `kind` (*sleeving*, *heat_shrink*, *label*, *backshell*, *other*), `part_id` (a library part or none), `target` (a connector or a wire of the harness, or none for the harness), `position` (in words: "50 mm from the P1 end"), `length_mm` (one piece), `quantity` (1 to 9999), `note` |
+
+Rules: an accessory whose target is not a connector or a wire of its harness is an integrity error (`dangling_accessory`). Generation keeps what a person entered: strip lengths of a wire it carries over (like label and note), accessories whose target still exists (and reports the ones it cannot keep), and copies `contact_part` from the unit's pin to the cable pin. A released harness is locked, accessories included (`vcs/lockview.py`, `vcs/diff.py`). Nothing is computed from these values: the tool does not check that a contact fits a pin or that a strip length is sensible.
+
+Where the values show:
+
+- **Tables, only when used** (so existing projects keep byte-identical tables): `wirelist.csv` gets the columns *Strip A (mm)* and *Strip B (mm)* when any wire has one; `pinouts.csv` and `box_pinouts.csv` get *Contact* when any pin has one; a new `accessories.csv` per harness when it has accessories; `bom.csv` counts the contact parts used on pins (each pin in use, one each, unit *ea*) and the accessory parts (the quantity, unit *ea*; or, when a length is given, the length times the quantity in metres, unit *m*).
+- **The build workbook always shows them** (it is a new file, and an empty cell is a to-do): *Cut list* gets *Strip A (mm)* and *Strip B (mm)*; *Connectors* gets *Contact* and *Tool*; a new sheet **Accessories** between *Parts* and *Labels* (*none entered* when there are none); *Start here* gets the notes *Wires without strip lengths* and *Pins in use without a contact*.
+- The independent verifier checks every new column, sheet and BOM line.
+
+Ways to enter them: the *Edit wire* tab (strip lengths, one wire or a selection, and *All wires of this harness*), the Devices tab pin table (a *Cable contact* column and the *Fill…* bulk action) and the *Connectors* tab of a harness made by hand, a new *Accessories* tab beside them (a table with add, change, delete), the part card for *Tool*; on the command line `harness-design-studio import-build-data DIR FILE` (a CSV, TSV, JSON or XLSX table read by its column headings: *Wire* with *Strip A (mm)* and *Strip B (mm)*; or *Connector*, *Pin* and *Contact* (and *Tool* for the part); or *Harness*, *Kind*, *Part*, *Target*, *Position*, *Length (mm)*, *Quantity*, *Note*), with templates in `resources/examples/templates/`.
 
 ### 1.8.0, the simple workspace (decision D-171)
 

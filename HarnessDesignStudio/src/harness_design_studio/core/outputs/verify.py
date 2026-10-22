@@ -345,8 +345,17 @@ def _length_of(h: Harness, w: Wire) -> float | None:
 def _saved_order(h: Harness) -> dict[str, Any]:
     """A harness as the JSON export shows it: its lists in ID order (as in the saved files)."""
     data = h.model_dump(mode="json")
-    for key in ("connectors", "wires", "splices", "shields", "branch_points", "segments"):
-        data[key] = sorted(data[key], key=lambda x: x["id"])
+    for key in (
+        "connectors",
+        "wires",
+        "splices",
+        "shields",
+        "branch_points",
+        "segments",
+        "accessories",
+    ):
+        if key in data:  # a sparse list (accessories) is left out while it is empty
+            data[key] = sorted(data[key], key=lambda x: x["id"])
     return data
 
 

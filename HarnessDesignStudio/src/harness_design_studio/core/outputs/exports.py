@@ -63,8 +63,17 @@ def json_export(project: Project, stamp: Stamp) -> bytes:
     def harness_dump(h: Harness) -> dict[str, Any]:
         """As saved: the lists of a harness are in ID order, whatever order it was built in."""
         data = h.model_dump(mode="json")
-        for key in ("connectors", "wires", "splices", "shields", "branch_points", "segments"):
-            data[key] = sorted(data[key], key=lambda x: x["id"])
+        for key in (
+            "connectors",
+            "wires",
+            "splices",
+            "shields",
+            "branch_points",
+            "segments",
+            "accessories",
+        ):
+            if key in data:  # a sparse list (accessories) is left out while it is empty
+                data[key] = sorted(data[key], key=lambda x: x["id"])
         return data
 
     doc = {
