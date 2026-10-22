@@ -211,6 +211,7 @@ class PendingValuesLink(QPushButton):
     def __init__(self, ctl: EditorController, theme: ThemeManager) -> None:
         super().__init__()
         self.ctl, self.theme = ctl, theme
+        self.suppressed = False  # the simple workspace keeps the status bar free of counts
         self.setObjectName("pending-values-link")
         self.setFlat(True)
         self.setCursor(Qt.CursorShape.PointingHandCursor)
@@ -237,7 +238,12 @@ class PendingValuesLink(QPushButton):
         self.setAccessibleName(
             f"{strings.PENDING_LINK_NAME}: {text}" if text else strings.PENDING_LINK_NAME
         )
-        self.setVisible(bool(text))
+        self.setVisible(bool(text) and not self.suppressed)
+
+    def set_suppressed(self, suppressed: bool) -> None:
+        """Hide the link whatever it says (the simple workspace), or let it show again."""
+        self.suppressed = suppressed
+        self.update_text()
 
 
 # ---- the details of one rule ------------------------------------------------------------------------

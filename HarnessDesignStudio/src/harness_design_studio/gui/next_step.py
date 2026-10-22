@@ -26,7 +26,8 @@ The words are plain on purpose: this stage exists because testers found the tool
 window maps each key to an existing flow (`gui/next_page.py` only shows and calls back).
 
 The workspace setting (Simple or Full) is here too: `default_workspace` says which one a settings
-file gets when the person never chose.
+file gets when the person never chose, and `workspace_key` the settings key under which the layout of
+a workspace is remembered (stage S2: Full keeps the keys it always had, Simple has keys of its own).
 """
 
 from dataclasses import dataclass
@@ -130,6 +131,16 @@ def clean_workspace(value: object, fallback: str) -> str:
     """A stored value as one of `WORKSPACES` (a hand-edited file may say anything)."""
     text = str(value)
     return text if text in WORKSPACES else fallback
+
+
+def workspace_key(key: str, workspace: str) -> str:
+    """The settings key for a part of the layout that is remembered per workspace. Full keeps the
+    key as it is (people who already use the editor lose nothing); Simple gets a key of its own
+    next to it: `ui/state` becomes `ui/simple/state`, `layout/ab12/area` `layout/ab12/simple/area`."""
+    if workspace != "simple":
+        return key
+    head, _, tail = key.rpartition("/")
+    return f"{head}/simple/{tail}" if head else f"simple/{tail}"
 
 
 def stage(f: NextInputs) -> str:

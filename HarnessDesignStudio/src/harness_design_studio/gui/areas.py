@@ -35,6 +35,7 @@ AREAS: Final[tuple[Area, ...]] = (
 KEYS: Final[tuple[str, ...]] = tuple(a.key for a in AREAS)
 PAGES: Final[tuple[str, ...]] = tuple(a.key for a in AREAS if not a.tabs)  # not backed by a tab
 DEFAULT: Final[str] = "model"
+SIMPLE_HIDDEN: Final[tuple[str, ...]] = ("home",)  # the simple workspace has Next step instead
 
 
 def area(key: str) -> Area:
@@ -54,3 +55,9 @@ def area_of_tab(tab: str) -> str:
 
 def tabs_of(key: str) -> tuple[str, ...]:
     return area(key).tabs
+
+
+def hidden_in(workspace: str) -> tuple[str, ...]:
+    """The areas the rail does not list in a workspace. They still exist: the View and Go menus,
+    their keys and the command palette reach them."""
+    return SIMPLE_HIDDEN if workspace == "simple" else ()

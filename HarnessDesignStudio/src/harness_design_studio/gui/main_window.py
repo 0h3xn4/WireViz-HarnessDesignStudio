@@ -44,6 +44,7 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QLabel,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QProgressDialog,
     QPushButton,
@@ -137,6 +138,7 @@ from harness_design_studio.gui.next_step import (
     clean_workspace,
     default_workspace,
     next_step,
+    workspace_key,
 )
 from harness_design_studio.gui.pages import HomePage
 from harness_design_studio.gui.panels import ProblemsPanel, PropertiesPanel, category_icon
@@ -568,6 +570,21 @@ class MainWindow(QMainWindow):
         self.tool_connect.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.tool_select.clicked.connect(lambda: self.ctl.end_connect())
         self.tool_connect.clicked.connect(lambda: self.ctl.begin_connect(self.ctl.connect_type))
+        # the simple workspace shows Select, Connect and Add device, and one More menu for the rest
+        # (stage S2); both are hidden in the full workspace
+        self.tool_add_device = QToolButton()
+        self.tool_add_device.setObjectName("tool-add-device")
+        self.tool_add_device.setText(strings.TOOL_ADD_DEVICE)
+        self.tool_add_device.setToolTip(strings.TOOL_ADD_DEVICE_TIP)
+        self.tool_add_device.setAccessibleName(strings.TOOL_ADD_DEVICE)
+        self.tool_add_device.setVisible(False)
+        self.tool_more = QToolButton()
+        self.tool_more.setObjectName("tool-more")
+        self.tool_more.setText(strings.TOOL_MORE)
+        self.tool_more.setToolTip(strings.TOOL_MORE_TIP)
+        self.tool_more.setAccessibleName(strings.TOOL_MORE)
+        self.tool_more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.tool_more.setVisible(False)
         self._told_properties = False
         self.hint = QLabel("")
         self.hint.setObjectName("hint")
@@ -588,6 +605,7 @@ class MainWindow(QMainWindow):
         icon_button(self.fit_btn, "fit", self.theme, strings.FIT, "F", text=strings.FIT)
         bar.addWidget(self.tool_select)
         bar.addWidget(self.tool_connect)
+        bar.addWidget(self.tool_add_device)
         self.tool_row = bar  # Arrange and the filters join it (they only act on the diagram)
         bar.addWidget(self.hint, 1)
         self.view = DiagramView(self.ctl, self.theme)
@@ -602,6 +620,7 @@ class MainWindow(QMainWindow):
             self.fit_btn,
         ):
             bar.addWidget(w)
+        bar.addWidget(self.tool_more)
         lay.addLayout(bar)
         self.zoom_in_btn.clicked.connect(lambda: self.view.zoom_by(1.2))
         self.zoom_out_btn.clicked.connect(lambda: self.view.zoom_by(1 / 1.2))
@@ -1462,6 +1481,17 @@ class MainWindow(QMainWindow):
         self.act_reset_layout = a(
             strings.A_RESET_LAYOUT, self.reset_layout, name="act-reset-layout"
         )
+        # the way back to the side panels in the simple workspace (stage S2); it exists, hidden and
+        # disabled (so the palette skips it), in the full workspace
+        self.act_show_panels = a(
+            strings.A_SHOW_PANELS,
+            lambda: self.show_panels(self.act_show_panels.isChecked()),
+            checkable=True,
+            name="act-show-panels",
+        )
+        self.act_show_panels.setToolTip(strings.SHOW_PANELS_TIP)
+        self.act_show_panels.setEnabled(False)
+        self.act_show_panels.setVisible(False)
         self.act_next_pane = a(strings.A_NEXT_PANE, partial(self._cycle, 1), "F6", name="act-next-pane")  # fmt: skip
         self.act_prev_pane = a(strings.A_PREV_PANE, partial(self._cycle, -1), "Shift+F6", name="act-prev-pane")  # fmt: skip
         self.go_actions: dict[str, QAction] = {}
@@ -1667,6 +1697,8 @@ class MainWindow(QMainWindow):
         self._rebuild_connect_menu()
         self.tool_connect.setMenu(self.menu_connect)
         v = mb.addMenu(strings.M_VIEW)
+        v.addAction(self.act_show_panels)  # (the simple workspace only)
+        v.addSeparator()
         v.addAction(self.act_simple)
         v.addAction(self.act_full)
         v.addSeparator()
@@ -1786,6 +1818,45 @@ class MainWindow(QMainWindow):
         self.mode_expert.clicked.connect(lambda: self._pick_mode("expert"))
         self.topbar.add_mode(self.mode_guided)
         self.topbar.add_mode(self.mode_expert)
+        # "Show panels": the way back to the project tree and the properties in the simple
+        # workspace (stage S2); the button shows there only
+        self.panels_btn = QToolButton()
+        self.panels_btn.setObjectName("panels-button")
+        self.panels_btn.setCheckable(True)
+        self.panels_btn.clicked.connect(
+            lambda _c=False: self.show_panels(self.panels_btn.isChecked())
+        )
+        icon_button(
+            self.panels_btn,
+            "panel-open",
+            self.theme,
+            strings.SHOW_PANELS_TIP,
+            text=strings.SHOW_PANELS_BUTTON,
+        )
+        self.panels_btn.setAccessibleName(strings.SHOW_PANELS_BUTTON)
+        self.panels_btn.setProperty("toggle", True)
+        self.panels_btn.setVisible(False)
+        self.topbar.add_mode(self.panels_btn)
+        for dock in (self.dock_left, self.dock_right):
+            dock.visibilityChanged.connect(lambda _v=False: self._sync_panels_action())
+        # the More menu of the diagram tool row (simple workspace): every tool the row leaves out
+        self.menu_more = QMenu(self.tool_more)
+        self.menu_more.setObjectName("menu-more")
+        self.menu_more.setToolTipsVisible(True)
+        for act in (self.act_redundant, self.act_delete):
+            self.menu_more.addAction(act)
+        self.menu_more.addSeparator()
+        for act in (self.act_zoom_out, self.act_zoom_in, self.act_fit, self.act_arrange):
+            self.menu_more.addAction(act)
+        self.menu_more.addSeparator()
+        self.menu_more_filter = self.menu_more.addMenu(strings.TOOL_MORE_FILTER)
+        self.menu_more_filter.setObjectName("menu-more-filter")
+        self.menu_more_filter.aboutToShow.connect(self._rebuild_more_filter)
+        self.tool_more.setMenu(self.menu_more)
+        self.tool_add_device.clicked.connect(lambda _c=False: self.act_add_device.trigger())
+        self.act_add_device.changed.connect(
+            lambda: self.tool_add_device.setEnabled(self.act_add_device.isEnabled())
+        )
         self.arrange_btn = QToolButton()
         self.arrange_btn.setObjectName("arrange-button")
         self.arrange_btn.setDefaultAction(self.act_arrange)
@@ -1897,6 +1968,38 @@ class MainWindow(QMainWindow):
     def _filter_kind_changed(self, _index: int) -> None:
         self._refresh_filter_values()
         self._filter_changed(0)
+
+    def _set_filter(self, kind: str | None, value: str | None) -> None:
+        """Show only one signal class, connector or bundle (or all): the same as the two pickers
+        of the Model tab, which the simple workspace hides."""
+        self.filter_combo.setCurrentIndex(max(self.filter_combo.findData(kind), 0))
+        if kind and value is not None:
+            at = self.filter_value.findData(value)
+            if at >= 0:
+                self.filter_value.setCurrentIndex(at)
+
+    def _rebuild_more_filter(self) -> None:
+        """The "Show only" entries of the More menu, ticked for the filter in force."""
+        menu = self.menu_more_filter
+        menu.clear()
+        kind, value = self.filter_combo.currentData(), self.filter_value.currentData()
+        everything = menu.addAction(strings.FILTER_ALL)
+        everything.setCheckable(True)
+        everything.setChecked(not kind)
+        everything.triggered.connect(lambda _c=False: self._set_filter(None, None))
+        for title, k in (
+            (strings.FILTER_CLASS, "class"),
+            (strings.FILTER_CONNECTOR, "connector"),
+            (strings.FILTER_BUNDLE, "bundle"),
+        ):
+            sub = menu.addMenu(title)
+            options = self._filter_options(k)
+            sub.setEnabled(bool(options))
+            for text, v in options:
+                act = sub.addAction(text)
+                act.setCheckable(True)
+                act.setChecked(kind == k and value == v)
+                act.triggered.connect(lambda _c=False, k=k, v=v: self._set_filter(k, v))
 
     def _filter_changed(self, _index: int) -> None:
         kind = self.filter_combo.currentData()
@@ -2165,8 +2268,9 @@ class MainWindow(QMainWindow):
         (the top bar says it too). The job indicator, Problems, Offline, the pending-values link
         and the zoom stay."""
         eff = self.width() / self.theme.scale
-        self.status_sel.setVisible(eff >= 1400)
-        self.status_counts.setVisible(eff >= 1250)
+        counts = self.workspace != "simple"  # (the simple workspace shows no counts)
+        self.status_sel.setVisible(counts and eff >= 1400)
+        self.status_counts.setVisible(counts and eff >= 1250)
         self.status_path.setVisible(eff >= 1250)
         self.status_saved.setVisible(eff >= 1100)
 
@@ -2371,7 +2475,15 @@ class MainWindow(QMainWindow):
             self.view.reveal(s.id)
         if s is not None and not self.dock_right.isVisibleTo(self) and not self._told_properties:
             self._told_properties = True
-            self.toasts.show_message(strings.PROPERTIES_HIDDEN, None)
+            if self.workspace == "simple":
+                self.toasts.show_message(
+                    strings.PROPERTIES_CLOSED,
+                    None,
+                    8000,
+                    action=(strings.SHOW_PANELS_BUTTON, lambda: self.show_panels(True)),
+                )
+            else:
+                self.toasts.show_message(strings.PROPERTIES_HIDDEN, None)
         self._update_selection_actions()
 
     def _update_selection_actions(self) -> None:
@@ -2909,18 +3021,113 @@ class MainWindow(QMainWindow):
         self._apply_workspace(value)
 
     def _apply_workspace(self, value: str) -> None:
+        """What the workspace decides at once: the checked actions, the rail, the tool row of the
+        diagram, the status bar and the way back to the panels (the panels, minimap and legend
+        come from the layout memory, `_load_workspace_layout`)."""
         self.workspace = value
-        self.act_simple.setChecked(value == "simple")
+        simple = value == "simple"
+        self.act_simple.setChecked(simple)
         self.act_full.setChecked(value == "full")
         self.next_page.set_workspace(value)
+        self.rail.set_hidden(areas.hidden_in(value))
+        for w in (self.redundant_btn, self.delete_btn, self.zoom_out_btn, self.zoom_in_btn):
+            w.setVisible(not simple)
+        self.fit_btn.setVisible(not simple)
+        self.tool_add_device.setVisible(simple)
+        self.tool_more.setVisible(simple)
+        self.problems_btn.setVisible(not simple)
+        self.zoom_level.setVisible(not simple)
+        self.pending_link.set_suppressed(simple)
+        self.act_show_panels.setVisible(simple)
+        self.act_show_panels.setEnabled(simple)
+        self.panels_btn.setVisible(simple)
+        self._sync_panels_action()
+        self._update_crumbs()  # (Arrange and the filters of the Model tab)
+        self._fit_status()
 
     def set_workspace(self, value: str) -> None:
-        """View > Simple / Full: store and apply the choice. The open page stays; the next project
-        that is opened shows the first page of the workspace."""
+        """View > Simple / Full: store and apply the choice, and with it that workspace's own
+        layout (panels, minimap, legend), at once. The layout of the workspace that is left is
+        saved first, under its own keys. The open page stays; the next project that is opened
+        shows the first page of the workspace."""
         value = clean_workspace(value, self.workspace)
-        self.settings.setValue("ui/workspace", value)
-        self._apply_workspace(value)
+        if value != self.workspace:
+            self._save_settings()  # the layout of the workspace being left
+            self.settings.setValue("ui/workspace", value)
+            self._apply_workspace(value)
+            self._load_workspace_layout()
+            self._restore_project_layout(with_area=False)
+        else:
+            self.settings.setValue("ui/workspace", value)
+            self._apply_workspace(value)
         self._sync_settings_page()
+
+    def _wkey(self, key: str) -> str:
+        """A settings key of the layout, for the workspace that is open: Full keeps the keys it
+        always had, Simple has keys of its own (a layout saved in one never overwrites the other)."""
+        return workspace_key(key, self.workspace)
+
+    def _load_workspace_layout(self, *, initial: bool = False) -> None:
+        """Minimap, legend and the panels of the workspace that is open: what was saved for it, or
+        its start state (Full: the usual panels for the window width; Simple: every panel closed,
+        minimap and legend off). `initial` is the call from the constructor."""
+        simple = self.workspace == "simple"
+        for act, apply, key in (
+            (self.act_minimap, self.view.set_minimap_wanted, "ui/minimap"),
+            (self.act_legend, self.view.set_legend_wanted, "ui/legend"),
+        ):
+            wanted = bool(self.settings.value(self._wkey(key), not simple, bool))
+            act.setChecked(wanted)
+            apply(wanted)
+        state = self.settings.value(self._wkey("ui/state"))
+        try:  # a saved dock layout from a version with other docks is ignored
+            restored = isinstance(state, QByteArray) and self.restoreState(state, STATE_VERSION)
+        except TypeError:
+            restored = False
+        self._have_saved_state = restored
+        if not restored:
+            if not initial:
+                self.restoreState(self._default_state, STATE_VERSION)
+                for dock in (self.dock_left, self.dock_right):
+                    dock.setFloating(False)
+            if simple:
+                self._close_panels()
+        if self._shown:
+            if simple or restored:
+                self._layout_class = self._layout_class_now()
+            else:
+                self._layout_class = None
+                self.auto_layout()
+        self._sync_panels_action()
+
+    def _close_panels(self) -> None:
+        """Every dock closed: the start state of the simple workspace."""
+        for dock in (self.dock_left, self.dock_right, self.dock_problems):
+            dock.hide()
+
+    def _panels_open(self) -> bool:
+        return self.dock_left.isVisibleTo(self) or self.dock_right.isVisibleTo(self)
+
+    def show_panels(self, on: bool) -> None:
+        """Open or close the project tree and the inspector together (the Show panels toggle of
+        the simple workspace; the Problems panel is its own toggle)."""
+        self.dock_left.setVisible(on)
+        self.dock_right.setVisible(on)
+        self._sync_panels_action()
+
+    def _sync_panels_action(self) -> None:
+        """Show panels is ticked while the tree or the inspector is open (also when the person
+        opened or closed one with its own control)."""
+        on = self._panels_open()
+        self.act_show_panels.setChecked(on)
+        self.panels_btn.setChecked(on)
+
+    def _need_inspector(self) -> None:
+        """A person went to an object to look at it or change it. The simple workspace keeps the
+        side panels closed until asked for, so this is the asking: the inspector opens. The full
+        workspace is left alone."""
+        if self.workspace == "simple" and not self.dock_right.isVisibleTo(self):
+            self.dock_right.show()
 
     def show_everything(self) -> None:
         """The link of the Next step page: the full workspace, on the diagram."""
@@ -3031,7 +3238,8 @@ class MainWindow(QMainWindow):
         self.topbar.set_crumbs(strings.CRUMB_SEPARATOR.join(parts))
         names = self.main_tabs.names()
         i = self.main_tabs.currentIndex()
-        self.diagram_tools.setVisible(0 <= i < len(names) and names[i] == "diagram")
+        on_diagram = 0 <= i < len(names) and names[i] == "diagram"
+        self.diagram_tools.setVisible(on_diagram and self.workspace != "simple")
 
     def toggle_problems(self) -> None:
         """Show or hide the Problems panel at the bottom of the window."""
@@ -3273,6 +3481,7 @@ class MainWindow(QMainWindow):
             "diagram"
         )  # (from the Checks tab the object is shown on the diagram)
         self.ctl.select(kind, target)
+        self._need_inspector()
         if kind == "unit":
             self.view.focus_unit(target)
         else:
@@ -3607,12 +3816,6 @@ class MainWindow(QMainWindow):
             scale = 100
         mode = str(self.settings.value("ui/mode", "guided"))
         self._restore_workspace()
-        wanted = bool(self.settings.value("ui/minimap", True, bool))
-        self.act_minimap.setChecked(wanted)
-        self.view.set_minimap_wanted(wanted)
-        legend = bool(self.settings.value("ui/legend", True, bool))
-        self.act_legend.setChecked(legend)
-        self.view.set_legend_wanted(legend)
         snap = bool(self.settings.value("ui/snap", True, bool))
         self.act_snap.setChecked(snap)
         self.view.set_snap(snap)
@@ -3643,13 +3846,7 @@ class MainWindow(QMainWindow):
             restored = False
         if not restored:
             self.resize(self._first_size())
-        state = self.settings.value("ui/state")
-        try:  # a saved dock layout from a version with other docks is ignored
-            self._have_saved_state = isinstance(state, QByteArray) and self.restoreState(
-                state, STATE_VERSION
-            )
-        except TypeError:
-            self._have_saved_state = False
+        self._load_workspace_layout(initial=True)  # minimap, legend and docks of the workspace
 
     def _screen_scale(self) -> int:
         screen = QGuiApplication.primaryScreen()
@@ -3670,7 +3867,7 @@ class MainWindow(QMainWindow):
 
     def _save_settings(self) -> None:
         self.settings.setValue("ui/geometry", self.saveGeometry())
-        self.settings.setValue("ui/state", self.saveState(STATE_VERSION))
+        self.settings.setValue(self._wkey("ui/state"), self.saveState(STATE_VERSION))
         self._save_project_layout()
 
     def _layout_group(self) -> str | None:
@@ -3689,34 +3886,41 @@ class MainWindow(QMainWindow):
             return
         names = self.main_tabs.names()
         i = self.main_tabs.currentIndex()
-        self.settings.setValue(f"{group}/state", self.saveState(STATE_VERSION))
-        self.settings.setValue(f"{group}/area", self._area)
-        self.settings.setValue(f"{group}/tab", names[i] if 0 <= i < len(names) else "")
-        self.settings.setValue(f"{group}/rail", self.rail.collapsed)
+        self.settings.setValue(self._wkey(f"{group}/state"), self.saveState(STATE_VERSION))
+        self.settings.setValue(self._wkey(f"{group}/area"), self._area)
+        self.settings.setValue(self._wkey(f"{group}/tab"), names[i] if 0 <= i < len(names) else "")
+        self.settings.setValue(self._wkey(f"{group}/rail"), self.rail.collapsed)
 
-    def _restore_project_layout(self) -> None:
+    def _restore_project_layout(self, *, with_area: bool = True) -> None:
+        """The panels, the open area and the rail of this project in the workspace that is open
+        (`with_area` False: the panels only, for a switch of workspace, which leaves the page)."""
         group = self._layout_group()
-        if group is None or not self.settings.contains(f"{group}/area"):
+        if group is None or not self.settings.contains(self._wkey(f"{group}/area")):
             return
-        state = self.settings.value(f"{group}/state")
+        state = self.settings.value(self._wkey(f"{group}/state"))
         try:  # a layout from a version with other docks is ignored
             if isinstance(state, QByteArray):
                 self.restoreState(state, STATE_VERSION)
         except TypeError:
             pass
-        self.rail.set_collapsed(bool(self.settings.value(f"{group}/rail", False, bool)))
-        area = str(self.settings.value(f"{group}/area", areas.DEFAULT))
-        tab = str(self.settings.value(f"{group}/tab", "")) or None
+        self._sync_panels_action()
+        if not with_area:
+            return
+        self.rail.set_collapsed(bool(self.settings.value(self._wkey(f"{group}/rail"), False, bool)))
+        area = str(self.settings.value(self._wkey(f"{group}/area"), areas.DEFAULT))
+        tab = str(self.settings.value(self._wkey(f"{group}/tab"), "")) or None
         if area in areas.KEYS:
             self._show_area(area, tab=tab if tab in self.main_tabs.names() else None)
 
     def reset_layout(self) -> None:
         """View > Reset layout: the panels back where they start, the saved layout forgotten."""
-        self.settings.remove("ui/state")
+        self.settings.remove(self._wkey("ui/state"))
         self._have_saved_state = False
         self.restoreState(self._default_state, STATE_VERSION)
         for dock in (self.dock_left, self.dock_right):
             dock.setFloating(False)
+        if self.workspace == "simple":
+            self._close_panels()
         self.main_tabs.show_slot("diagram")
         self._layout_class = None
         self.auto_layout()
@@ -3792,11 +3996,11 @@ class MainWindow(QMainWindow):
 
     def _toggle_minimap(self) -> None:
         self.view.set_minimap_wanted(self.act_minimap.isChecked())
-        self.settings.setValue("ui/minimap", self.act_minimap.isChecked())
+        self.settings.setValue(self._wkey("ui/minimap"), self.act_minimap.isChecked())
 
     def _toggle_legend(self) -> None:
         self.view.set_legend_wanted(self.act_legend.isChecked())
-        self.settings.setValue("ui/legend", self.act_legend.isChecked())
+        self.settings.setValue(self._wkey("ui/legend"), self.act_legend.isChecked())
 
     def _toggle_snap(self) -> None:
         self.view.set_snap(self.act_snap.isChecked())
@@ -3886,6 +4090,9 @@ class MainWindow(QMainWindow):
         when the scale changes."""
         scale = self.theme.scale
         wide, medium = self._layout_class = self._layout_class_now()
+        if self.workspace == "simple":  # (it closes what no longer fits, never opens a panel)
+            wide = wide and self.dock_right.isVisibleTo(self)
+            medium = medium and self.dock_left.isVisibleTo(self)
         was = (self.dock_left.isVisibleTo(self), self.dock_right.isVisibleTo(self))
         self.dock_right.setVisible(wide)
         self.dock_left.setVisible(medium)
