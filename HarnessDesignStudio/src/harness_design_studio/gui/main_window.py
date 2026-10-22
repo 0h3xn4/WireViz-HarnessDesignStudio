@@ -44,11 +44,11 @@ from PySide6.QtWidgets import (
     QInputDialog,
     QLabel,
     QMainWindow,
+    QMenu,
     QMessageBox,
     QProgressDialog,
     QPushButton,
     QStackedWidget,
-    QMenu,
     QToolBar,
     QToolButton,
     QVBoxLayout,
@@ -1822,7 +1822,10 @@ class MainWindow(QMainWindow):
         # workspace (stage S2); the button shows there only
         self.panels_btn = QToolButton()
         self.panels_btn.setObjectName("panels-button")
-        self.panels_btn.setDefaultAction(self.act_show_panels)
+        self.panels_btn.setCheckable(True)
+        self.panels_btn.clicked.connect(
+            lambda _c=False: self.show_panels(self.panels_btn.isChecked())
+        )
         icon_button(
             self.panels_btn,
             "panel-open",
@@ -2472,7 +2475,15 @@ class MainWindow(QMainWindow):
             self.view.reveal(s.id)
         if s is not None and not self.dock_right.isVisibleTo(self) and not self._told_properties:
             self._told_properties = True
-            self.toasts.show_message(strings.PROPERTIES_HIDDEN, None)
+            if self.workspace == "simple":
+                self.toasts.show_message(
+                    strings.PROPERTIES_CLOSED,
+                    None,
+                    8000,
+                    action=(strings.SHOW_PANELS_BUTTON, lambda: self.show_panels(True)),
+                )
+            else:
+                self.toasts.show_message(strings.PROPERTIES_HIDDEN, None)
         self._update_selection_actions()
 
     def _update_selection_actions(self) -> None:
@@ -3010,18 +3021,113 @@ class MainWindow(QMainWindow):
         self._apply_workspace(value)
 
     def _apply_workspace(self, value: str) -> None:
+        """What the workspace decides at once: the checked actions, the rail, the tool row of the
+        diagram, the status bar and the way back to the panels (the panels, minimap and legend
+        come from the layout memory, `_load_workspace_layout`)."""
         self.workspace = value
-        self.act_simple.setChecked(value == "simple")
+        simple = value == "simple"
+        self.act_simple.setChecked(simple)
         self.act_full.setChecked(value == "full")
         self.next_page.set_workspace(value)
+        self.rail.set_hidden(areas.hidden_in(value))
+        for w in (self.redundant_btn, self.delete_btn, self.zoom_out_btn, self.zoom_in_btn):
+            w.setVisible(not simple)
+        self.fit_btn.setVisible(not simple)
+        self.tool_add_device.setVisible(simple)
+        self.tool_more.setVisible(simple)
+        self.problems_btn.setVisible(not simple)
+        self.zoom_level.setVisible(not simple)
+        self.pending_link.set_suppressed(simple)
+        self.act_show_panels.setVisible(simple)
+        self.act_show_panels.setEnabled(simple)
+        self.panels_btn.setVisible(simple)
+        self._sync_panels_action()
+        self._update_crumbs()  # (Arrange and the filters of the Model tab)
+        self._fit_status()
 
     def set_workspace(self, value: str) -> None:
-        """View > Simple / Full: store and apply the choice. The open page stays; the next project
-        that is opened shows the first page of the workspace."""
+        """View > Simple / Full: store and apply the choice, and with it that workspace's own
+        layout (panels, minimap, legend), at once. The layout of the workspace that is left is
+        saved first, under its own keys. The open page stays; the next project that is opened
+        shows the first page of the workspace."""
         value = clean_workspace(value, self.workspace)
-        self.settings.setValue("ui/workspace", value)
-        self._apply_workspace(value)
+        if value != self.workspace:
+            self._save_settings()  # the layout of the workspace being left
+            self.settings.setValue("ui/workspace", value)
+            self._apply_workspace(value)
+            self._load_workspace_layout()
+            self._restore_project_layout(with_area=False)
+        else:
+            self.settings.setValue("ui/workspace", value)
+            self._apply_workspace(value)
         self._sync_settings_page()
+
+    def _wkey(self, key: str) -> str:
+        """A settings key of the layout, for the workspace that is open: Full keeps the keys it
+        always had, Simple has keys of its own (a layout saved in one never overwrites the other)."""
+        return workspace_key(key, self.workspace)
+
+    def _load_workspace_layout(self, *, initial: bool = False) -> None:
+        """Minimap, legend and the panels of the workspace that is open: what was saved for it, or
+        its start state (Full: the usual panels for the window width; Simple: every panel closed,
+        minimap and legend off). `initial` is the call from the constructor."""
+        simple = self.workspace == "simple"
+        for act, apply, key in (
+            (self.act_minimap, self.view.set_minimap_wanted, "ui/minimap"),
+            (self.act_legend, self.view.set_legend_wanted, "ui/legend"),
+        ):
+            wanted = bool(self.settings.value(self._wkey(key), not simple, bool))
+            act.setChecked(wanted)
+            apply(wanted)
+        state = self.settings.value(self._wkey("ui/state"))
+        try:  # a saved dock layout from a version with other docks is ignored
+            restored = isinstance(state, QByteArray) and self.restoreState(state, STATE_VERSION)
+        except TypeError:
+            restored = False
+        self._have_saved_state = restored
+        if not restored:
+            if not initial:
+                self.restoreState(self._default_state, STATE_VERSION)
+                for dock in (self.dock_left, self.dock_right):
+                    dock.setFloating(False)
+            if simple:
+                self._close_panels()
+        if self._shown:
+            if simple or restored:
+                self._layout_class = self._layout_class_now()
+            else:
+                self._layout_class = None
+                self.auto_layout()
+        self._sync_panels_action()
+
+    def _close_panels(self) -> None:
+        """Every dock closed: the start state of the simple workspace."""
+        for dock in (self.dock_left, self.dock_right, self.dock_problems):
+            dock.hide()
+
+    def _panels_open(self) -> bool:
+        return self.dock_left.isVisibleTo(self) or self.dock_right.isVisibleTo(self)
+
+    def show_panels(self, on: bool) -> None:
+        """Open or close the project tree and the inspector together (the Show panels toggle of
+        the simple workspace; the Problems panel is its own toggle)."""
+        self.dock_left.setVisible(on)
+        self.dock_right.setVisible(on)
+        self._sync_panels_action()
+
+    def _sync_panels_action(self) -> None:
+        """Show panels is ticked while the tree or the inspector is open (also when the person
+        opened or closed one with its own control)."""
+        on = self._panels_open()
+        self.act_show_panels.setChecked(on)
+        self.panels_btn.setChecked(on)
+
+    def _need_inspector(self) -> None:
+        """A person went to an object to look at it or change it. The simple workspace keeps the
+        side panels closed until asked for, so this is the asking: the inspector opens. The full
+        workspace is left alone."""
+        if self.workspace == "simple" and not self.dock_right.isVisibleTo(self):
+            self.dock_right.show()
 
     def show_everything(self) -> None:
         """The link of the Next step page: the full workspace, on the diagram."""
@@ -3375,6 +3481,7 @@ class MainWindow(QMainWindow):
             "diagram"
         )  # (from the Checks tab the object is shown on the diagram)
         self.ctl.select(kind, target)
+        self._need_inspector()
         if kind == "unit":
             self.view.focus_unit(target)
         else:
@@ -3709,12 +3816,6 @@ class MainWindow(QMainWindow):
             scale = 100
         mode = str(self.settings.value("ui/mode", "guided"))
         self._restore_workspace()
-        wanted = bool(self.settings.value("ui/minimap", True, bool))
-        self.act_minimap.setChecked(wanted)
-        self.view.set_minimap_wanted(wanted)
-        legend = bool(self.settings.value("ui/legend", True, bool))
-        self.act_legend.setChecked(legend)
-        self.view.set_legend_wanted(legend)
         snap = bool(self.settings.value("ui/snap", True, bool))
         self.act_snap.setChecked(snap)
         self.view.set_snap(snap)
@@ -3745,13 +3846,7 @@ class MainWindow(QMainWindow):
             restored = False
         if not restored:
             self.resize(self._first_size())
-        state = self.settings.value("ui/state")
-        try:  # a saved dock layout from a version with other docks is ignored
-            self._have_saved_state = isinstance(state, QByteArray) and self.restoreState(
-                state, STATE_VERSION
-            )
-        except TypeError:
-            self._have_saved_state = False
+        self._load_workspace_layout(initial=True)  # minimap, legend and docks of the workspace
 
     def _screen_scale(self) -> int:
         screen = QGuiApplication.primaryScreen()
@@ -3772,7 +3867,7 @@ class MainWindow(QMainWindow):
 
     def _save_settings(self) -> None:
         self.settings.setValue("ui/geometry", self.saveGeometry())
-        self.settings.setValue("ui/state", self.saveState(STATE_VERSION))
+        self.settings.setValue(self._wkey("ui/state"), self.saveState(STATE_VERSION))
         self._save_project_layout()
 
     def _layout_group(self) -> str | None:
@@ -3791,34 +3886,41 @@ class MainWindow(QMainWindow):
             return
         names = self.main_tabs.names()
         i = self.main_tabs.currentIndex()
-        self.settings.setValue(f"{group}/state", self.saveState(STATE_VERSION))
-        self.settings.setValue(f"{group}/area", self._area)
-        self.settings.setValue(f"{group}/tab", names[i] if 0 <= i < len(names) else "")
-        self.settings.setValue(f"{group}/rail", self.rail.collapsed)
+        self.settings.setValue(self._wkey(f"{group}/state"), self.saveState(STATE_VERSION))
+        self.settings.setValue(self._wkey(f"{group}/area"), self._area)
+        self.settings.setValue(self._wkey(f"{group}/tab"), names[i] if 0 <= i < len(names) else "")
+        self.settings.setValue(self._wkey(f"{group}/rail"), self.rail.collapsed)
 
-    def _restore_project_layout(self) -> None:
+    def _restore_project_layout(self, *, with_area: bool = True) -> None:
+        """The panels, the open area and the rail of this project in the workspace that is open
+        (`with_area` False: the panels only, for a switch of workspace, which leaves the page)."""
         group = self._layout_group()
-        if group is None or not self.settings.contains(f"{group}/area"):
+        if group is None or not self.settings.contains(self._wkey(f"{group}/area")):
             return
-        state = self.settings.value(f"{group}/state")
+        state = self.settings.value(self._wkey(f"{group}/state"))
         try:  # a layout from a version with other docks is ignored
             if isinstance(state, QByteArray):
                 self.restoreState(state, STATE_VERSION)
         except TypeError:
             pass
-        self.rail.set_collapsed(bool(self.settings.value(f"{group}/rail", False, bool)))
-        area = str(self.settings.value(f"{group}/area", areas.DEFAULT))
-        tab = str(self.settings.value(f"{group}/tab", "")) or None
+        self._sync_panels_action()
+        if not with_area:
+            return
+        self.rail.set_collapsed(bool(self.settings.value(self._wkey(f"{group}/rail"), False, bool)))
+        area = str(self.settings.value(self._wkey(f"{group}/area"), areas.DEFAULT))
+        tab = str(self.settings.value(self._wkey(f"{group}/tab"), "")) or None
         if area in areas.KEYS:
             self._show_area(area, tab=tab if tab in self.main_tabs.names() else None)
 
     def reset_layout(self) -> None:
         """View > Reset layout: the panels back where they start, the saved layout forgotten."""
-        self.settings.remove("ui/state")
+        self.settings.remove(self._wkey("ui/state"))
         self._have_saved_state = False
         self.restoreState(self._default_state, STATE_VERSION)
         for dock in (self.dock_left, self.dock_right):
             dock.setFloating(False)
+        if self.workspace == "simple":
+            self._close_panels()
         self.main_tabs.show_slot("diagram")
         self._layout_class = None
         self.auto_layout()
@@ -3894,11 +3996,11 @@ class MainWindow(QMainWindow):
 
     def _toggle_minimap(self) -> None:
         self.view.set_minimap_wanted(self.act_minimap.isChecked())
-        self.settings.setValue("ui/minimap", self.act_minimap.isChecked())
+        self.settings.setValue(self._wkey("ui/minimap"), self.act_minimap.isChecked())
 
     def _toggle_legend(self) -> None:
         self.view.set_legend_wanted(self.act_legend.isChecked())
-        self.settings.setValue("ui/legend", self.act_legend.isChecked())
+        self.settings.setValue(self._wkey("ui/legend"), self.act_legend.isChecked())
 
     def _toggle_snap(self) -> None:
         self.view.set_snap(self.act_snap.isChecked())
@@ -3988,6 +4090,9 @@ class MainWindow(QMainWindow):
         when the scale changes."""
         scale = self.theme.scale
         wide, medium = self._layout_class = self._layout_class_now()
+        if self.workspace == "simple":  # (it closes what no longer fits, never opens a panel)
+            wide = wide and self.dock_right.isVisibleTo(self)
+            medium = medium and self.dock_left.isVisibleTo(self)
         was = (self.dock_left.isVisibleTo(self), self.dock_right.isVisibleTo(self))
         self.dock_right.setVisible(wide)
         self.dock_left.setVisible(medium)
