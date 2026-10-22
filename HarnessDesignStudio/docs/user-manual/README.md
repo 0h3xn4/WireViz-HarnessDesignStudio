@@ -22,6 +22,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 | change a wire, draw a wire of my own, put two wires on one pin, or twist wires | [Edit a wire](edit-a-wire.md) |
 | make a harness from nothing, with no interfaces: its connectors, pins and wires | [Build a harness by hand](build-a-harness-by-hand.md) |
 | enter the strip lengths, the contact on each pin and its crimp tool, and the sleeving, heat shrink and labels of a harness | [Enter the build data](enter-the-build-data.md) |
+| be told what to do next, one step at a time | [Use the simple workspace](use-the-simple-workspace.md) |
 | load my interface table, approved parts list, segment lengths or build data | [Import data](import-data.md) |
 | define a device of my own down to each pin, or load its pinout from a spreadsheet | [Define a device](define-a-device.md) |
 | take a unit's pinout from KiCad | [Import KiCad pinouts](import-kicad-pinouts.md) |
@@ -53,6 +54,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 14. [Use Git and CI](use-git-and-ci.md): Git habits, `harness-design-studio check`, a build script, a workflow.
 15. [Build a harness by hand](build-a-harness-by-hand.md): *New harness*, the *Connectors* tab, pin function and termination, wires between the new connectors. **New in 1.5.0.**
 16. [Enter the build data](enter-the-build-data.md): strip lengths, the contact on each pin and its crimp tool, accessories; in the app and with `harness-design-studio import-build-data`; what the build workbook then shows. **New in 1.7.0 (not in the latest release yet).**
+17. [Use the simple workspace](use-the-simple-workspace.md): the Next step page, one thing to do at a time (new in 1.8.0, not in a release yet)
 
 ## How to read the pages
 
