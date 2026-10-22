@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
-"""1.8.0 S1 (D-171): the Next step page and the Simple / Full setting."""
+"""1.7.0 S1 (D-171): the Next step page and the Simple / Full setting."""
 
 import pytest
 

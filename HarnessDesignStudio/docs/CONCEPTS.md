@@ -118,7 +118,7 @@ In the app the work goes in three steps, shown in the top bar: **Generate**, **C
 
 **Export…** writes a folder `outputs/` into the project: per harness a **build workbook** (an Excel file to build the harness from: what is ready, the cut list with the strip lengths, one block per connector with the contact and crimp tool of each pin, parts, accessories, labels and a test sheet to fill in), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook of the data tables; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
 
-The PDF and SVG drawings of the harnesses are optional and written only when you ask for them (`--drawings`, or the check box **Include the PDF drawings**); the build workbook is the main output (not in the latest release yet; new in 1.7.0). Outputs are checked independently before they are written. `outputs/` is always safe to delete and regenerate.
+The PDF and SVG drawings of the harnesses are optional and written only when you ask for them (`--drawings`, or the check box **Include the PDF drawings**); the build workbook is the main output (new in 1.7.0). Outputs are checked independently before they are written. `outputs/` is always safe to delete and regenerate.
 
 ## What is on disk
 

@@ -2,7 +2,7 @@
 
 This page shows how to enter what a technician needs to build a harness and the model does not get from the design: the strip length at each end of a wire, the contact on each pin and the crimp tool for it, and the sleeving, heat shrink, labels and backshells; it shows how to do it in the app and from a file, and what the build workbook then shows.
 
-> **Not in the latest release yet.** The build data is new in 1.7.0 (decision D-170). A project made by 1.6.0 or earlier opens as it is and keeps byte-identical files and outputs until you enter one of these values. The steps in the app are described from the program's texts and its tests; the program was not watched on a screen while this page was written. The commands were run, and the output is what they printed.
+> **New in 1.7.0.** The build data is new in 1.7.0 (decision D-170). A project made by 1.6.0 or earlier opens as it is and keeps byte-identical files and outputs until you enter one of these values. The steps in the app are described from the program's texts and its tests; the program was not watched on a screen while this page was written. The commands were run, and the output is what they printed.
 
 ## Contents
 
@@ -266,7 +266,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-35 files written to wheel-link/outputs (model 348e5ad1162e).
+35 files written to wheel-link/outputs (model 74a760581bd9).
 ```
 
 (The model hash depends on the project and the tool version; yours differs.)

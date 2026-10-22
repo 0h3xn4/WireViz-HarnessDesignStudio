@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,has-type"
-"""1.8.0 S2 (D-171): the simple workspace shows less until the person asks."""
+"""1.7.0 S2 (D-171): the simple workspace shows less until the person asks."""
 
 import pytest
 

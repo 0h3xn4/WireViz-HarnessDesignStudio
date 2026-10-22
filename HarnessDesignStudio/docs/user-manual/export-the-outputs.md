@@ -2,7 +2,7 @@
 
 This page shows how to write the build workbook and the lists of a design (wire lists, pinouts, parts list, test tables, labels, block diagram) into the project's `outputs` folder, how to build a harness from the workbook, how to add the PDF drawings, and how to check that the files are current. The build data a technician needs (strip lengths, contacts, crimp tools, accessories) is entered first: [enter the build data](enter-the-build-data.md).
 
-> **Not in the latest release yet.** The build workbook (`<ID>_build.xlsx`) and the option `--drawings` are new in 1.7.0 (decision D-169). In 1.6.0 and earlier, `export` always wrote the PDF drawings and there was no build workbook; see the [changelog](../../CHANGELOG.md). The strip lengths, contacts, crimp tools and accessories in the workbook are new in 1.7.0 too (decision D-170).
+> **New in 1.7.0.** The build workbook (`<ID>_build.xlsx`) and the option `--drawings` are new in 1.7.0 (decision D-169). In 1.6.0 and earlier, `export` always wrote the PDF drawings and there was no build workbook; see the [changelog](../../CHANGELOG.md). The strip lengths, contacts, crimp tools and accessories in the workbook are new in 1.7.0 too (decision D-170).
 
 ## Contents
 
@@ -25,7 +25,7 @@ This page shows how to write the build workbook and the lists of a design (wire 
 
 ## 1. Export
 
-**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…**, Ctrl+E). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and the button **Export**. The project must be saved to a folder first (the window says so and offers **Save project…**). The check box is ticked only when the previous export into this folder had drawings; the first time it is not ticked, and the tree then lists no drawing documents ([section 5](#5-the-pdf-drawings-optional)). When the export is done the window lists the files written ("34 files written to …") and the app says "34 files written to the outputs folder (design a7fa21787017)." (your numbers will differ). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The same files, with their checksums, are listed afterwards under **Exported files** in the Outputs area ([section 7](#7-check-that-the-outputs-are-current)). The export always writes the whole set of the harnesses; the check box is the only choice. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
+**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…**, Ctrl+E). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and the button **Export**. The project must be saved to a folder first (the window says so and offers **Save project…**). The check box is ticked only when the previous export into this folder had drawings; the first time it is not ticked, and the tree then lists no drawing documents ([section 5](#5-the-pdf-drawings-optional)). When the export is done the window lists the files written ("34 files written to …") and the app says "34 files written to the outputs folder (design 5e6bcbd63d91)." (your numbers will differ). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The same files, with their checksums, are listed afterwards under **Exported files** in the Outputs area ([section 7](#7-check-that-the-outputs-are-current)). The export always writes the whole set of the harnesses; the check box is the only choice. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
 
 **On the command line**:
 
@@ -34,7 +34,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-34 files written to wheel-link/outputs (model a7fa21787017).
+34 files written to wheel-link/outputs (model 5e6bcbd63d91).
 ```
 
 With `--drawings` the PDF drawings are written too ([section 5](#5-the-pdf-drawings-optional)).
@@ -154,7 +154,7 @@ harness-design-studio export wheel-link --drawings
 ```
 
 ```
-40 files written to wheel-link/outputs (model a7fa21787017).
+40 files written to wheel-link/outputs (model 5e6bcbd63d91).
 ```
 
 An export without `--drawings` into a folder that holds the drawings of an earlier export removes them and says so: `The PDF drawings of the earlier export were removed; add --drawings to write them again.`
@@ -170,7 +170,7 @@ The independent check accepts a set with the drawings of every harness and a set
 Every file carries the tool version and a **model hash** (a short fingerprint of the design): CSV and YAML files start with a comment line, for example
 
 ```
-# harness-design-studio 1.6.0 model a7fa21787017
+# harness-design-studio 1.7.0 model 5e6bcbd63d91
 ```
 
 A program that reads the CSV must skip lines that start with `# `. The Excel workbooks carry the same stamp on their **About** sheet, and the build workbook also in the footer of every printed sheet and on **Start here**. A printed sheet can be traced to the exact design it came from by that hash.

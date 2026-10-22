@@ -1,8 +1,8 @@
-# Plan for versions 1.7.0 and 1.8.0: the feedback of the test users on version 1.6.0
+# Plan for version 1.7.0: the feedback of the test users on version 1.6.0
 
-This page says what the test users said, what the tool does about each point today (checked in the code of version 1.6.0), what the next versions change and in which order. It is a plan and a record, not a promise: each milestone is a pull request with tests, and what is not built yet is marked.
+This page says what the test users said, what the tool does about each point today (checked in the code of version 1.6.0), what version 1.7.0 changes and in which order. It is a plan and a record, not a promise: each milestone is a pull request with tests, and what is not built yet is marked.
 
-**Status (2026-10-22).** The plan is written and the owner has answered the four open questions (below). The build workbook (1.7.0 milestone 1, D-169) is built and in review as pull request 102. Milestone 2 (the build data, D-170) is built (model, editor fields, outputs, `import-build-data`, the documents) and in review; the design is below, and *As built* after it lists where the result differs from the words of the design. Stages S1 and S2 of 1.8.0 (the simple workspace, D-171) are built and in review; stages S4 and the release itself are not built; S3 was discarded by the owner (2026-10-22).
+**Status (2026-10-22).** The plan is written and the owner has answered the four open questions (below). The build workbook (1.7.0 milestone 1, D-169) is built and merged (pull request 102). Milestone 2 (the build data, D-170) is built (model, editor fields, outputs, `import-build-data`, the documents) and merged (pull request 103); the design is below, and *As built* after it lists where the result differs from the words of the design. Stages S1 and S2 of the simple workspace (D-171) are built and merged (pull requests 104 and 105). The owner decided on 2026-10-22 that all of this ships as one release, version 1.7.0 (the number 1.8.0 will not be used for this work): version 1.7.0 carries the workbook, the build data and stages S1 and S2 of the simple workspace. Stage S3 was discarded by the owner (2026-10-22); stage S4 and the measurement with the testers are not built: S4 remains open and would go in a later version.
 
 ## What the test users said
 
@@ -26,7 +26,7 @@ We have no notes of what exactly they tried and where they stuck. The plan below
 | 1 | What happens to the PDFs? | **The workbook is the main output; the PDF drawings stay available but are off unless asked for** (`export --drawings`, a check box in the export window). Nothing is removed. |
 | 2 | What must the build sheet carry beyond today's data? | All four: **strip length per wire end; contact or terminal part and crimp tool; sleeves, heat shrink and label position; a test sheet with measured values and sign-off.** |
 | 3 | How is "too much" handled? | **A simple workspace is the default, Expert stays as today.** One next step at a time, plain words, everything else shown only when asked for. |
-| 4 | Order | **The workbook first (1.7.0), then the simple workspace in stages (1.8.0), with the testers checking each.** |
+| 4 | Order | **The workbook first, then the simple workspace in stages, with the testers checking each.** (Since 2026-10-22 everything built ships as one release, version 1.7.0.) |
 
 These become decisions D-169 (workbook and optional PDFs), D-170 (build data fields) and D-171 (simple workspace) in [`../DECISIONS.md`](../DECISIONS.md) as each is built.
 
@@ -39,7 +39,7 @@ These become decisions D-169 (workbook and optional PDFs), D-170 (build data fie
 5. **Released harnesses stay locked**; every edit goes through `History.execute` and `check_locks`.
 6. **No engineering value is invented.** The tool sets no strip length, no contact and no tool of its own; an empty cell stays empty and is shown as *to fill in*, never as a default.
 7. **Deterministic**: the same model gives the same bytes (no dates, sorted rows, a fixed zip), and the independent verifier (`core/outputs/verify.py`) learns every new file.
-8. **UI changes leave every written file alone** (this applies to 1.8.0 and to the screens of 1.7.0).
+8. **UI changes leave every written file alone** (this applies to the simple workspace and to the screens of the workbook and the build data).
 
 ## Milestones
 
@@ -88,9 +88,9 @@ Ways to enter them: the *Edit wire* tab (strip lengths, one wire or a selection,
 
 **As built.** The bulk action in the Devices tab is the button and context-menu entry **Cable contact…** (the column is hidden until the **Contact** toggle is on). The crimp tool is set on the part page of the Inspector (click a part of the category contact in the project tree; **Crimp tool**, **Set tool**). The notes of *Start here* are *Wires without strip lengths* (a wire that lacks either end) and *Pins in use without a contact part*; the sheet with none says `No accessories entered.` The pin contact can also be named by `import-pinout` (column *Cable contact*), and `import-build-data` refuses the contact of a pin of a generated harness. The workbook has eight sheets. User manual: [`../user-manual/enter-the-build-data.md`](../user-manual/enter-the-build-data.md).
 
-### 1.8.0, the simple workspace (decision D-171)
+### Stages S1 and S2 of the simple workspace, in 1.7.0 (decision D-171)
 
-Built in stages, each one checked by the testers before the next:
+Built in stages, each one meant to be checked by the testers before the next. Stages S1 and S2 are in version 1.7.0; S4 remains open and would go in a later version:
 
 - **S1, one next step.** On opening a project the window shows a single page *What to do next* instead of the full workbench: the next step in plain words with one primary button (*Add a device*, *Connect them*, *Generate the harnesses*, *Fix what is marked*, *Get the build sheets*), the steps done before it, and a link *Show everything* (Expert). The steps follow the facts of the project (`gui/workflow.py` already derives the Generate, Check and Release steps).
   **S1 as built.** A rail area **Next step** (first in the rail; a page of its own like Home) shows the heading *What to do next*, one card (the title, one sentence, the one primary button, and for an empty project the alternative *or make a harness by hand* with *New harness…*), the six steps with an icon and a word (*done*, *next*, *to do*, *not possible*), and the link *Show everything*. The texts are in the user manual page [Use the simple workspace](../user-manual/use-the-simple-workspace.md). The rules are a pure function (`gui/next_step.py`) of: devices, connections, harnesses (and how many were made by hand), whether the plans are current, a running job, whether the design was checked and how many checks failed, whether the files are up to date, how many harnesses are released and whether the project is read-only. The setting *Workspace: Simple or Full* is stored as `ui/workspace`; a settings file with no stored value gets Simple, a file that holds values keeps Full. The first-run tour still runs over the Next step page; its steps for hidden targets are skipped (S3, which would have reworded it, is discarded). No file, rule, command or output changed.
@@ -104,7 +104,7 @@ The mode setting already exists (*Guided*, *Expert*; it only changes how much th
 ## How we know it worked
 
 - After M1 the testers get the sample workbook and a task: *build harness W003 from this file alone*. We record what they ask for that is not there.
-- After each stage of 1.8.0 the usability kit ([`../usability/`](../usability/README.md): tasks, SUS questionnaire, `tools/usability_setup.py`, `tools/usability_summary.py`) is run with the same tasks as before the change, and the SUS score and the time to the first generated harness are compared. Nothing in this plan claims that the tool is easier to use until that result exists.
+- After each stage of the simple workspace the usability kit ([`../usability/`](../usability/README.md): tasks, SUS questionnaire, `tools/usability_setup.py`, `tools/usability_summary.py`) is run with the same tasks as before the change, and the SUS score and the time to the first generated harness are compared. Nothing in this plan claims that the tool is easier to use until that result exists.
 
 ## What is not planned
 

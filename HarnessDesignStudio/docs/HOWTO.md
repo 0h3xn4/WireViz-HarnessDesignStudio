@@ -52,7 +52,7 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 
 ## 12. Export outputs
 
-[Export the outputs](user-manual/export-the-outputs.md): the build workbook of each harness (the file to build from) and the lists; add `--drawings` for the PDF drawings (not in the latest release yet).
+[Export the outputs](user-manual/export-the-outputs.md): the build workbook of each harness (the file to build from) and the lists; add `--drawings` for the PDF drawings (new in 1.7.0).
 
 ## 13. Review and release a harness
 
@@ -80,7 +80,7 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 - [Naming and title block](user-manual/naming-and-title-block.md).
 - [Edit a wire](user-manual/edit-a-wire.md) (since 1.4.0) and [Build a harness by hand](user-manual/build-a-harness-by-hand.md), a harness with no interface behind it (since 1.5.0).
 - [Redundancy and zones](user-manual/redundancy-and-zones.md).
-- [Enter the build data](user-manual/enter-the-build-data.md): strip lengths, contacts, crimp tools and accessories, in the app and from a file (not in the latest release yet; new in 1.7.0).
+- [Enter the build data](user-manual/enter-the-build-data.md): strip lengths, contacts, crimp tools and accessories, in the app and from a file (new in 1.7.0).
 
 Keyboard: **Ctrl+K** command palette, **Ctrl+Z** and **Ctrl+Y** undo and redo, **Ctrl+S** save, **Ctrl+=** and **Ctrl+-** zoom, **F** fit, **Ctrl+0** 100 %, **Ctrl+G** generate, **Ctrl+E** export, **Ctrl+Shift+N** add a device, **Ctrl+Shift+H** new harness, **F1** the user guide. The full list is in the [user guide](guide/USER_GUIDE.md) and, in the app, under **Settings > Keyboard shortcuts**.
 

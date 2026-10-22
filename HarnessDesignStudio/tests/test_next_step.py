@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,arg-type,operator,var-annotated"
-"""1.8.0 S1 (D-171): the one next step of the simple workspace, over every combination of facts.
+"""1.7.0 S1 (D-171): the one next step of the simple workspace, over every combination of facts.
 No Qt, no display."""
 
 import itertools

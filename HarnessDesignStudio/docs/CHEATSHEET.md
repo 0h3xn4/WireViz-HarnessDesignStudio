@@ -14,7 +14,7 @@ harness-design-studio export my-design --drawings           # the same, and the 
 harness-design-studio verify my-design --outputs            # an independent check of the exported files
 ```
 
-The build workbook, `outputs/harnesses/<ID>/<ID>_build.xlsx`, is the file to build a harness from; the PDF drawings are written only with `--drawings` (not in the latest release yet). Run the loop again after every change. Generating twice without a change changes nothing (the second run prints "0 added").
+The build workbook, `outputs/harnesses/<ID>/<ID>_build.xlsx`, is the file to build a harness from; the PDF drawings are written only with `--drawings` (new in 1.7.0). Run the loop again after every change. Generating twice without a change changes nothing (the second run prints "0 added").
 
 The command line cannot add units or interfaces. The loop works on a project that already has them: an example such as `first-steps`, or your own design after you added the units in the app (on the empty diagram, the button **Add a device** or **Add** in the project panel; or make a harness with no interface at all with **New harness…**, Ctrl+Shift+H). On a `blank` project `generate` finds 0 interfaces and `export` stops with `error: there are no harnesses to export; run harness-design-studio generate first.`
 
@@ -31,7 +31,7 @@ The command line cannot add units or interfaces. The loop works on a project tha
 | a device's pinout as a file | `harness-design-studio export-pinout DIR --unit GYRO1 -o gyro.xlsx` |
 | a device from another project (a device library file) | `harness-design-studio import-devices DIR devices.json --list`, then `--unit GYRO1 --dry-run` |
 | a device to keep for other projects | `harness-design-studio export-devices DIR devices.json --unit GYRO1` (or **Save to library…** in the Devices tab) |
-| strip lengths, pin contacts, accessories or crimp tools (not in the latest release yet) | `harness-design-studio import-build-data DIR strip-lengths.csv --dry-run` (the kind is read from the headings; templates `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv`) |
+| strip lengths, pin contacts, accessories or crimp tools (new in 1.7.0) | `harness-design-studio import-build-data DIR strip-lengths.csv --dry-run` (the kind is read from the headings; templates `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv`) |
 | engineering values | edit `config/*.json`, see [`CONFIG.md`](CONFIG.md); `harness-design-studio config DIR` lists what is missing |
 
 Add `--dry-run` to any import to see what it would do first. Other commands (`compare`, `schema`, `library`, `migrate`, and options such as `config --ampacity-csv`) are in [`CLI.md`](CLI.md).
