@@ -6,6 +6,7 @@ import pytest
 
 from harness_design_studio.core.integrity import check_integrity
 from harness_design_studio.core.model import (
+    Accessory,
     BranchPoint,
     Connector,
     Endpoint,
@@ -158,6 +159,21 @@ def case_segment_dangling(p: Project) -> None:
     )
 
 
+def case_accessory_dangling(p: Project) -> None:
+    h = _w1(p)
+    p.harnesses["W001"] = evolve(
+        h, accessories=[Accessory(id="ACC-1", kind="sleeving", target="GHOST")]
+    )
+
+
+def case_duplicate_accessory(p: Project) -> None:
+    h = _w1(p)
+    p.harnesses["W001"] = evolve(
+        h,
+        accessories=[Accessory(id="ACC-1", kind="label"), Accessory(id="ACC-1", kind="other")],
+    )
+
+
 def case_duplicate_branch(p: Project) -> None:
     h = _w1(p)
     p.harnesses["W001"] = evolve(
@@ -202,6 +218,8 @@ NEGATIVE: list[tuple[str, Callable[[Project], None], str]] = [
     ("shield_dangling", case_shield_dangling, "dangling_wire"),
     ("splice_dangling", case_splice_dangling, "dangling_wire"),
     ("segment_dangling", case_segment_dangling, "dangling_segment"),
+    ("accessory_dangling", case_accessory_dangling, "dangling_accessory"),
+    ("accessory_duplicate", case_duplicate_accessory, "duplicate_id"),
     ("duplicate_branch", case_duplicate_branch, "duplicate_id"),
     ("casefold_unit", case_casefold_unit, "duplicate_id"),
     ("duplicate_connector_across", case_duplicate_connector_across, "duplicate_id"),
