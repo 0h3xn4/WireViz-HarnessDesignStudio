@@ -12,7 +12,7 @@ on the tutorial project (`first-steps`, generated): `next-step-new-project.png` 
 `next-step-fix-problems.png` (one check fails), `next-step-export.png` (its parts approved, so
 every check passes or waits for a value), `simple-workspace.png` and `full-workspace.png` (the
 checked project in each workspace), `export-window.png` and `export-window-done.png` (the Export
-window before and after an export with the PDF drawings). Last, with three accessories added,
+window before and after an export with the PDF drawings). Last, with two accessories added,
 `accessories-tab.png` (1760 x 1000). The time of the last check, which the status bar shows, is
 cleared before each picture. Usage:
 
@@ -167,18 +167,17 @@ def _workspace_pictures(out: Path) -> None:
     h = win.ctl.project.harnesses[hid]
     wire = h.wires[0].id
     connector = h.connectors[0].id
-    for acc in (
+    for acc in (  # the two rows of the accessories file in the manual
         {"id": "ACC-001", "kind": "sleeving", "target": wire, "position": "whole wire"},
         {
             "id": "ACC-002",
             "kind": "heat_shrink",
             "target": connector,
-            "position": "50 mm from the connector",
+            "position": "50 mm from the P1 end",
             "length_mm": 30,
             "quantity": 2,
             "note": "part not chosen yet",
         },
-        {"id": "ACC-003", "kind": "label", "position": "on the harness, near the first connector"},
     ):
         win.ctl.run("step", plan_set_accessory(win.ctl.project, hid, acc))
     win.go_to("harness")

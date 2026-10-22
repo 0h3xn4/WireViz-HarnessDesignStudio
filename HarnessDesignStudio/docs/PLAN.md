@@ -32,7 +32,7 @@ Each milestone: tests first, ends with working tested software, a demo note in `
 - pytest-qt tests for journeys J1 to J4; screenshots via offscreen; UX issue list.
 **Acceptance:** 5-unit diagram can be built from the sample project tour; no direct model mutation outside commands; UX high-severity issues fixed.
 
-## M3 Generation (done; spare-pin fraction and a length-import screen are open)
+## M3 Generation (done; the spare-pin fraction is open; the length-import screen came with the import wizard of 1.3.0, D-156)
 - Segmentation (configurable), deterministic IDs and naming schemes.
 - Pin allocator with rules, locks, spare pins, provenance.
 - Wire sizing (config-driven derating, voltage drop), lengths from routing segments, mass with margin.
@@ -45,7 +45,7 @@ Each milestone: tests first, ends with working tested software, a demo note in `
 - All rules listed in spec, each with plain-language what/why/fix and positive and negative tests; waivers with justification; background and on-demand runs; problems panel with click-to-select and one-click fixes where feasible.
 **Acceptance:** 100% rules have both tests; waivers persist and show in report; incremental DRC keeps edits < 100 ms on the stress project. *As built: incremental checking was not built. Each run checks the whole project, in a helper process since D-128, so that an edit does not wait for it; `ARCHITECTURE.md` section 4 says the same.*
 
-## M5 Outputs (done; geometric branch drawing and dates/authors are open, see demos/M5.md)
+## M5 Outputs (done; a geometric branch drawing is not built, see demos/M5.md; dates and authors came with M6)
 - Harness drawing (SVG + PDF, A4/A3 multi-sheet, title block), wire list, pinouts, BOM, mass/length, continuity and isolation tests, labels, DRC report; system diagrams and matrices; XLSX/CSV; WireViz YAML and documented JSON export.
 - Every artefact stamped with generator version and model hash; stale detection in GUI and CLI.
 - *Later (1.7.0, D-169): the main output of a harness became its build workbook `<ID>_build.xlsx`; the PDF and SVG drawings above are written only when asked for (`export --drawings`).*

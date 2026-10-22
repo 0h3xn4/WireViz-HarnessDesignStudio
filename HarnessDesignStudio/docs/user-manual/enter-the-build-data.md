@@ -223,6 +223,8 @@ An accessory is something that goes on a harness besides its wires and connector
 
 **In the app** (GUI, not run): in the **Drawings** area, choose the harness and open the **Accessories** tab, the fourth tab on the right of the harness view after **Connectors**. A table lists the accessories (ID, Kind, Part, On, Position, Length (mm), Quantity, Note), and a form with the same fields is below it. An empty harness shows `No accessories yet` and says what accessories are for.
 
+![The Drawings area with the Accessories tab open: a table of two accessories of harness W001, a sleeving on a wire and a heat shrink on a connector, and below it the form with ID, Kind, Part, On, Position, Length, Quantity and Note, and the buttons Add accessory and Change accessory](../img/accessories-tab.png)
+
 - **Add accessory** adds the form as a new accessory. Its **ID** is filled in with the next free one (`ACC-001`, `ACC-002`, ...).
 - Select a row to see it in the form, change the form and press **Change accessory**.
 - **Delete accessory** removes the selected row. **New accessory** clears the form and the selection.

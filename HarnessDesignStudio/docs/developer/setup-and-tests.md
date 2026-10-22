@@ -101,7 +101,7 @@ mypy
 ```
 
 ```
-542 files already formatted
+543 files already formatted
 All checks passed!
 Success: no issues found in 392 source files
 ```

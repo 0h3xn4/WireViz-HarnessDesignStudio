@@ -10,3 +10,5 @@
 | T6 | Lock one pin, change a connector, generate again. | 10 min | Lock kept; understands the report |
 | T7 | Release a harness. Then change the design. What happens, and can you release again? | 10 min | Understands "locked" or "out of date" and names the next step |
 | T8 | Open `corrupt/`. Save what you can without touching the original. | 8 min | Salvaged copy saved; original untouched |
+
+The cards name no buttons. In the Simple workspace (the first-run default of 1.7.0) a project opens on the Next step page and the Project tab, the Inspector and the Interfaces and Units tables are closed until **Show panels** (T5 uses one of them; Ctrl+Shift+T opens the Interfaces table). Do not tell the participant where things are; note what they do about it. The material for the tasks is made by `python -m tools.usability_setup` (README).
