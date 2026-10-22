@@ -14,6 +14,7 @@ A project is a folder of small, canonical JSON files: UTF-8, 2-space indent, sor
 - [Hash](#hash)
 - [Editor additions](#editor-additions-connector-use-layout-waivers-autosave-schema-version-stays-1)
 - [Generation additions](#generation-additions-pins-mating-locks-generation-record-schema-version-stays-1)
+- [Build data additions](#build-data-additions-170-schema-version-stays-1)
 - [Change control additions](#change-control-additions-review-release-baselines-change-log-schema-version-stays-1)
 - [Device library file](#device-library-file-140-not-part-of-a-project)
 - [Editing files by hand: JSON Schemas](#editing-files-by-hand-json-schemas)
@@ -29,7 +30,7 @@ waivers.json                      {"waivers": [...]}  written only when a findin
 logical/units/<subsystem>.json    {"units": [...]}
 logical/interfaces/<subsystem>.json  {"interfaces": [...]}   grouped by the subsystem of the first endpoint
 physical/connectors/<subsystem>.json {"connectors": [...]}   box connectors, grouped by their unit's subsystem
-physical/harnesses/<id>.json      one harness with its connectors, wires, splices, shields, branch points, segments
+physical/harnesses/<id>.json      one harness with its connectors, wires, splices, shields, branch points, segments, accessories
 generated/generation.json         the last generation record (provenance for Explain)
 outputs/                          written by `harness-design-studio export` (see OUTPUTS.md); safe to delete and regenerate
 changelog.json                    the change log (append-only; entries cannot be deleted)
@@ -72,7 +73,7 @@ Each file is written to a temp file, flushed, `fsync`ed and renamed; the previou
 New files get the mode `0666` minus the user's umask (an existing file keeps its mode). A file that is a link is replaced by the new file and has no `.bak`; saving never reads through a link. Temporary files of a save are `.<file>.<8 characters>.tmp`; a later save removes the ones a killed save left behind (only names of that form in the project folder and the managed folders). The upgrade of an old project keeps its original files in `.migration-backup-vN/`, built as `.migration-backup-vN.partial` and renamed when complete; if that name already exists as anything but a real folder the upgrade is refused.
 
 ## Number ranges
-The loader sets aside (reports, keeps in `quarantine.json`) an object with a number outside these ranges, and the editor refuses such an edit: wire gauge (AWG) 0 to 40, whole numbers; `length_m` of a wire or segment 0 to 10000; `max_current_a`, `voltage_v`, `impedance_ohm` above 0; part `pin_count` 1 to 1000; `mass_g`, `mass_per_m_g` and each `ratings` value 0 or more; `default_gauge_awg` 0 to 40; `next_harness_number` 1 or more; `schema_version` 1 or more. A missing value (`null`) is still allowed everywhere it was. What you see when a value is set aside on load (here a wire with gauge 99 and a length of -3 in a harness file):
+The loader sets aside (reports, keeps in `quarantine.json`) an object with a number outside these ranges, and the editor refuses such an edit: wire gauge (AWG) 0 to 40, whole numbers; `length_m` of a wire or segment 0 to 10000; `strip_a_mm`, `strip_b_mm` of a wire and `length_mm` of an accessory 0 to 100000 (millimetres; a guard against a typing slip, not a design limit); `quantity` of an accessory a whole number from 1 to 9999; `max_current_a`, `voltage_v`, `impedance_ohm` above 0; part `pin_count` 1 to 1000; `mass_g`, `mass_per_m_g` and each `ratings` value 0 or more; `default_gauge_awg` 0 to 40; `next_harness_number` 1 or more; `schema_version` 1 or more. A missing value (`null`) is still allowed everywhere it was. What you see when a value is set aside on load (here a wire with gauge 99 and a length of -3 in a harness file):
 
 ```
 ERROR   quarantined: A harness could not be loaded and was set aside: wires.0.gauge_awg: Input should be less than or equal to 40; wires.1.length_m: Input should be greater than or equal to 0 (line 452) [physical/harnesses/W001.json]
@@ -107,6 +108,23 @@ All optional with defaults; projects saved before them load unchanged.
 - `generated/generation.json`: the last generation record: `input_hash`, `generator_version`, `next_harness_number`, `placeholders_used`, and `provenance` (object key to list of "rule: reason" lines; the data behind Explain).
 - `config/generation.json`: generation settings (see PLACEHOLDERS.md).
 
+## Build data additions (1.7.0; schema version stays 1)
+Every field is optional and *sparse*: it is left out of the file while it is empty, so a project that does not use the build data keeps byte-identical files and the same model hash. They are a person's values: the tool sets none and computes nothing from them.
+- `Wire.strip_a_mm`, `Wire.strip_b_mm`: the insulation stripped at the From end and at the To end, in millimetres. Generation keeps them, like the label and the note (they do not lock the wire).
+- `Pin.contact_part`: the ID of a library part of the category `contact`, the contact the cable side uses on that pin. A person sets it on the pin of a unit (`physical/connectors/`), and generation copies it to the pin of the cable connector; on a harness made by hand it is set on the cable connector's own pin. A device library file carries it with the pin but not the contact part itself.
+- `Part.tool`: the crimp tool, or its setting, of a part (free text; meant for a contact part), in `library/<category>.json`.
+- `Harness.accessories`: a list of accessories, in the harness file, sorted by `id`. An accessory has `id`, `kind` (`sleeving`, `heat_shrink`, `label`, `backshell` or `other`), `part_id` (a library part or `null`), `target` (a connector or a wire of this harness, or `null` for the harness itself), `position` (words), `length_mm` (one piece), `quantity` (1 to 9999, default 1) and `note`. Generation keeps the accessories whose target still exists and names the others in a `locked_data_lost` warning.
+- **Integrity.** An accessory whose `target` is not a connector or a wire of its harness is an error, `dangling_accessory`; two accessories with one ID in a harness are `duplicate_id`. Accessories are part of their harness for change control: a released harness is locked with them, and a release freezes the contact parts of its pins and the parts of its accessories like any part it uses (see "What a release freezes").
+- Older tools: 1.6.0 and earlier do not know these fields; they set the fields aside and say so when they open a project that uses them (decision D-170), as for the fields of 1.4.0.
+
+```
+"accessories": [
+  {"id": "ACC-002", "kind": "heat_shrink", "length_mm": 30.0, "note": "part not chosen yet", "part_id": null, "position": "50 mm from the P1 end", "quantity": 2, "target": "W001-P1"}
+]
+```
+
+(One accessory of the practice project, as `physical/harnesses/W001.json` holds it, shown on one line here; the file itself has one key per line.) How to enter the values: [`user-manual/enter-the-build-data.md`](user-manual/enter-the-build-data.md).
+
 ## Change control additions: review, release, baselines, change log (schema version stays 1)
 - `Harness.author`, `checker`, `approver`, `released_on` (all optional): who put the harness into review, who checked and released it, and the release date (YYYY-MM-DD). `status` is `draft`, `in_review` or `released`; `revision` is letters.
 - `baselines/<harness ID>/<baseline ID>.json`: `id` (`<harness>.<revision>`), `harness_id`, `revision`, `released_on`, `by`, `comment`, `content_hash`, `snapshot` (`units`, `interfaces`, `connectors` = box connectors, `harnesses` = the released harness, and the records listed below). Written once at release; never edited by the tool.
@@ -114,7 +132,7 @@ All optional with defaults; projects saved before them load unchanged.
 
 ### What a release freezes
 A released harness locks, besides itself: the design fields of the interfaces it carries (not name, notes, requirement), the units those interfaces connect (not name, notes, zone), the box connectors it plugs into or that carry its interfaces (part, gender, keying and the pins of its interfaces), and, new in this version:
-- **parts it uses**: the part of each of its connectors, the part of each wire, the part of the box connectors above, and the counterpart named in `mates_with` of those parts. Every field but `notes` is frozen (approval, mass, `pin_count`, `unverified`, ratings, part number, ...).
+- **parts it uses**: the part of each of its connectors, the part of each wire, the contact part of each of its pins and the part of each of its accessories (1.7.0), the part of the box connectors above, and the counterpart named in `mates_with` of those parts. Every field but `notes` is frozen (approval, mass, `pin_count`, `unverified`, ratings, part number, ...).
 - **interface types** of the interfaces it carries (every field but `name` and `notes`).
 - **configuration its checks and outputs read**: all values of `derating`, `emc`, `segregation` and `titleblock`, and in `generation` the keys `conductor_resistivity_ohm_m`, `mass_margin_fraction`, `power_return_gap_pins`, `shield_end_a`, `shield_end_b`, `test_continuity_max_ohm`, `test_isolation_min_mohm` and `test_isolation_voltage_v`. These apply to every harness, so they are frozen while any harness is released. `segmentation`, `naming`, the other `generation` keys (which only decide how new harnesses are made) and the `placeholder` flags stay editable.
 - **waivers** that name the harness or one of its objects are recorded in the baseline but not locked: a waiver can be added or changed after a release (the change log and `harness-design-studio compare` show it).
@@ -125,7 +143,7 @@ The editor and the data commands (`import-parts`, `config`; `library` only recor
 
 ## Device library file (1.4.0; not part of a project)
 
-A device library (`harness-device-library`, D-165) is one JSON file that is kept outside any project. Its top level is `format` (the text `harness-device-library`), `version` (1), `devices`, `parts` and `interface_types`. A device is `{"unit": {...}, "connectors": [...]}` with the same fields as a unit in `logical/units/<subsystem>.json` and a box connector in `physical/connectors/<subsystem>.json` of a project (box connectors only, every pin with its `signal`, `function`, `contact_size`, `termination` and `fixed`); `parts` and `interface_types` are the records of `library/<category>.json` and `logical/interface_types.json` that the connectors name. The zone of a unit and the allocations that generation made on a pin (`interface_id`, `locked`, a signal that was given for an interface) are left out. The file is written sorted by ID with two-space indent. A reader refuses a file of a higher `version`, a file over 8 MB, over 500 devices or over 64 connectors in a device. Importing never changes the project outside what the plan names; see `docs/user-manual/define-a-device.md`.
+A device library (`harness-device-library`, D-165) is one JSON file that is kept outside any project. Its top level is `format` (the text `harness-device-library`), `version` (1), `devices`, `parts` and `interface_types`. A device is `{"unit": {...}, "connectors": [...]}` with the same fields as a unit in `logical/units/<subsystem>.json` and a box connector in `physical/connectors/<subsystem>.json` of a project (box connectors only, every pin with its `signal`, `function`, `contact_size`, `termination`, `fixed` and, since 1.7.0, `contact_part`; the contact parts themselves are not in the file); `parts` and `interface_types` are the records of `library/<category>.json` and `logical/interface_types.json` that the connectors name. The zone of a unit and the allocations that generation made on a pin (`interface_id`, `locked`, a signal that was given for an interface) are left out. The file is written sorted by ID with two-space indent. A reader refuses a file of a higher `version`, a file over 8 MB, over 500 devices or over 64 connectors in a device. Importing never changes the project outside what the plan names; see `docs/user-manual/define-a-device.md`.
 
 ## Editing files by hand: JSON Schemas
 

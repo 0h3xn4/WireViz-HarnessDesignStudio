@@ -120,7 +120,7 @@ sh my-templates/ci/build.sh cib
 ```
 
 ```
-15 files written to my-templates. Start with my-templates/README.md.
+18 files written to my-templates. Start with my-templates/README.md.
 Project 'First steps: reaction wheel link' created in cib (3 units, 2 interfaces).
 Next: harness-design-studio validate cib   or open it in the app (File > Open project).
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.

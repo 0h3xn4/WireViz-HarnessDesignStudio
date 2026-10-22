@@ -38,7 +38,7 @@ harness-design-studio generate wheel-link
 ```
 
 - Starting files for the three kinds of table are in the templates (`strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv`; run `harness-design-studio templates my-templates`, see [import data](import-data.md#before-you-start)). Their rows are **examples with example numbers**: replace them with your own values.
-- A contact or an accessory names a **part of the library**. The library must hold the part first ([import data](import-data.md#approved-parts-list), or the parts list in the app).
+- A contact or an accessory names a **part of the library**. The library must hold the part first: a contact part comes in with the parts import ([import data](import-data.md#approved-parts-list); the starter library has none).
 
 ## 1. Strip lengths
 
@@ -307,7 +307,7 @@ For `W001` of the practice project, whose four wires have strip lengths and whos
 | Wires without strip lengths | 2 | `NOTE` | Enter the strip length at both ends in the Edit wire tab (or with import-build-data). |
 | Pins in use without a contact part | 4 | `NOTE` | Name the contact part of each pin (Devices tab, or Connectors tab of a harness made by hand). |
 
-The independent check reads the new columns, the sheet and the file cell by cell. A file that was changed after the export is reported as before (`out_modified`); a wrong `accessories.csv` is `out_accessories`.
+The independent check reads the new columns, the sheet and the file cell by cell. A file that was changed after the export is reported as before (`out_modified`); a wrong `accessories.csv`, or one for a harness without accessories, is `out_accessories`.
 
 ## What Generate does with it
 

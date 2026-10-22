@@ -2,7 +2,7 @@
 
 This page says what the test users said, what the tool does about each point today (checked in the code of version 1.6.0), what the next versions change and in which order. It is a plan and a record, not a promise: each milestone is a pull request with tests, and what is not built yet is marked.
 
-**Status (2026-10-22).** The plan is written and the owner has answered the four open questions (below). The build workbook (1.7.0 milestone 1, D-169) is built and in review as pull request 102. Milestone 2 (the build data, D-170) is being built; the design is below.
+**Status (2026-10-22).** The plan is written and the owner has answered the four open questions (below). The build workbook (1.7.0 milestone 1, D-169) is built and in review as pull request 102. Milestone 2 (the build data, D-170) is built (model, editor fields, outputs, `import-build-data`, the documents) and in review; the design is below, and *As built* after it lists where the result differs from the words of the design. What is not built is 1.8.0 (the simple workspace) and the release itself.
 
 ## What the test users said
 
@@ -85,6 +85,8 @@ Where the values show:
 - The independent verifier checks every new column, sheet and BOM line.
 
 Ways to enter them: the *Edit wire* tab (strip lengths, one wire or a selection, and *All wires of this harness*), the Devices tab pin table (a *Cable contact* column and the *Fill…* bulk action) and the *Connectors* tab of a harness made by hand, a new *Accessories* tab beside them (a table with add, change, delete), the part card for *Tool*; on the command line `harness-design-studio import-build-data DIR FILE` (a CSV, TSV, JSON or XLSX table read by its column headings: *Wire* with *Strip A (mm)* and *Strip B (mm)*; or *Connector*, *Pin* and *Contact* (and *Tool* for the part); or *Harness*, *Kind*, *Part*, *Target*, *Position*, *Length (mm)*, *Quantity*, *Note*), with templates in `resources/examples/templates/`.
+
+**As built.** The bulk action in the Devices tab is the button and context-menu entry **Cable contact…** (the column is hidden until the **Contact** toggle is on). The crimp tool is set on the part page of the Inspector (click a part of the category contact in the project tree; **Crimp tool**, **Set tool**). The notes of *Start here* are *Wires without strip lengths* (a wire that lacks either end) and *Pins in use without a contact part*; the sheet with none says `No accessories entered.` The pin contact can also be named by `import-pinout` (column *Cable contact*), and `import-build-data` refuses the contact of a pin of a generated harness. The workbook has eight sheets. User manual: [`../user-manual/enter-the-build-data.md`](../user-manual/enter-the-build-data.md).
 
 ### 1.8.0, the simple workspace (decision D-171)
 
