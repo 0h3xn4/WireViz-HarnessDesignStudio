@@ -2,8 +2,10 @@
 
 Where the other tables are data, this file is a document: a first sheet that says what is ready and
 what is still missing, a cut list in the order a wire is cut, one build block per connector, the
-parts, the labels and a test sheet with columns for the result. It holds only what the model holds;
-an empty cell is shown as *to fill in* and nothing is invented. All values are worked out here, the
+parts, the accessories (sleeving, heat shrink, labels, backshells), the labels and a test sheet with
+columns for the result. It holds only what the model holds; an empty cell is shown as *to fill in*
+and nothing is invented. Strip lengths, contact parts and crimp tools (decision D-170) are always
+columns here, because an empty cell is a to-do for the person who fills in the design. All values are worked out here, the
 workbook has no formulas, and the same model gives the same bytes (`exports.normalise_xlsx`).
 """
 
@@ -24,16 +26,21 @@ from .xlsx_env import ILLEGAL_CHARACTERS_RE, Workbook, WriteOnlyCell
 
 FILE_SUFFIX = "_build.xlsx"
 
-SHEETS = ("Start here", "Cut list", "Connectors", "Parts", "Labels", "Tests", "About")
+SHEETS = (
+    "Start here", "Cut list", "Connectors", "Parts", "Accessories", "Labels", "Tests", "About"
+)  # fmt: skip
 
 CUT_HEADER = [
-    "Cut (x)", "Wire", "Colour", "AWG", "Part", "Length (m)", "From", "To", "Signal or label",
-    "Shield group", "Note",
+    "Cut (x)", "Wire", "Colour", "AWG", "Part", "Length (m)", "Strip A (mm)", "Strip B (mm)", "From",
+    "To", "Signal or label", "Shield group", "Note",
 ]  # fmt: skip
 CONNECTOR_HEADER = [
     "Pin", "Signal", "Function", "Wire", "Colour", "AWG", "Goes to", "Termination", "Contact size",
-    "Terminated (x)", "Inserted (x)", "Checked (x)",
+    "Contact", "Tool", "Terminated (x)", "Inserted (x)", "Checked (x)",
 ]  # fmt: skip
+ACCESSORY_HEADER = ["Done (x)", *tables.ACCESSORY_HEADER]
+NO_ACCESSORIES = "No accessories entered."
+HARNESS_TARGET = "(harness)"  # an accessory with no target belongs to the harness as a whole
 LABEL_HEADER = ["Done (x)", "Label", "Kind", "Text", "Quantity"]
 TEST_HEADER = [
     "Test", "Type", "From", "To", "Expected", "Limit", "Test voltage", "Wire", "Measured",
@@ -261,6 +268,12 @@ def readiness(project: Project, h: Harness) -> list[Check]:
         for p in c.pins
         if attached.get((c.id, p.id)) and p.termination == "unspecified"
     )
+    no_contact = sum(
+        1
+        for c in h.connectors
+        for p in c.pins
+        if attached.get((c.id, p.id)) and not p.contact_part
+    )
     parts = {c.part_id for c in h.connectors} | {w.part_id for w in wires if w.part_id}
     not_approved = sum(
         1 for pid in parts if pid not in project.parts or project.parts[pid].approval != "approved"
@@ -276,6 +289,11 @@ def readiness(project: Project, h: Harness) -> list[Check]:
               "Choose the wire part in the Edit wire tab."),
         Check("Pins in use without a termination", used_pins, False,
               "Say crimp or solder for the pins in the Devices tab; the build sheet shows it."),
+        Check("Wires without strip lengths",
+              sum(1 for w in wires if w.strip_a_mm is None or w.strip_b_mm is None), False,
+              "Enter the strip length at both ends in the Edit wire tab (or with import-build-data)."),
+        Check("Pins in use without a contact part", no_contact, False,
+              "Name the contact part of each pin (Devices tab, or Connectors tab of a harness made by hand)."),
         Check("Parts that are not approved", not_approved, False,
               "Approve the parts in the parts list (import-parts) when they have been reviewed."),
     ]  # fmt: skip
@@ -329,6 +347,7 @@ def _start_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
         ("Cut list", "cut the wires in this order; tick each when done"),
         ("Connectors", "one block per connector: the pins, the wire for each and the steps"),
         ("Parts", "what to take from stock and whether each part is approved"),
+        ("Accessories", "sleeving, heat shrink, labels and backshells to fit; tick each when done"),
         ("Labels", "the labels to print and fit"),
         ("Tests", "continuity and insulation tests; write down the result"),
         ("About", "which version of the tool and which design this was made from"),
@@ -352,6 +371,11 @@ def _start_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
     _finish(ws, lay, stamp, body, tab="1F7A3A", header_row=None, one_page=True)
 
 
+def _strip(v: float | None) -> float | str:
+    """A strip length for a cell: the number, or *to fill in*."""
+    return round(v, 9) + 0.0 if v is not None else TO_FILL
+
+
 def _cut_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
     ws = wb.create_sheet("Cut list")
     lay = _Layout({})
@@ -367,6 +391,7 @@ def _cut_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
         values = [
             "", w.id, w.colour or TO_FILL, w.gauge_awg if w.gauge_awg is not None else TO_FILL,
             w.part_id or TO_FILL, round(length, 9) + 0.0 if length is not None else TO_FILL,
+            _strip(w.strip_a_mm), _strip(w.strip_b_mm),
             f"{w.from_connector}.{w.from_pin}", f"{w.to_connector}.{w.to_pin}", tables.wire_name(w),
             shields.get(w.id, ""), w.note,
         ]  # fmt: skip
@@ -375,8 +400,10 @@ def _cut_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
             _cell(ws, values[3], fill=_AMBER if w.gauge_awg is None else None, centre=True),
             _cell(ws, values[4], fill=_AMBER if not w.part_id else None),
             _cell(ws, values[5], fill=_AMBER if length is None else None, centre=True),
-            _cell(ws, values[6]), _cell(ws, values[7]), _cell(ws, values[8]),
-            _cell(ws, values[9]), _cell(ws, values[10]),
+            _cell(ws, values[6], fill=_AMBER if w.strip_a_mm is None else None, centre=True),
+            _cell(ws, values[7], fill=_AMBER if w.strip_b_mm is None else None, centre=True),
+            _cell(ws, values[8]), _cell(ws, values[9]), _cell(ws, values[10]),
+            _cell(ws, values[11]), _cell(ws, values[12]),
         ])  # fmt: skip
         for n, v in enumerate(values, start=1):
             lay.see(n, _colour_text(w.colour) if n == 3 and w.colour else str(v))
@@ -385,7 +412,7 @@ def _cut_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
         _cell(ws, "", fill=_BAND), _cell(ws, f"{len(wires)} wires", bold=True, fill=_BAND),
         *[_cell(ws, "", fill=_BAND) for _ in range(3)],
         _cell(ws, round(total, 9) + 0.0, bold=True, fill=_BAND, centre=True),
-        *[_cell(ws, "", fill=_BAND) for _ in range(5)],
+        *[_cell(ws, "", fill=_BAND) for _ in range(7)],
     ])  # fmt: skip
     ws.auto_filter.ref = f"A1:{_letter(len(CUT_HEADER))}{last}"
     if wires:
@@ -395,7 +422,12 @@ def _cut_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
 
 
 def _pin_rows(
-    ws: Any, c: Connector, h: Harness, attached: dict[tuple[str, str], list[Wire]], lay: _Layout
+    ws: Any,
+    project: Project,
+    c: Connector,
+    h: Harness,
+    attached: dict[tuple[str, str], list[Wire]],
+    lay: _Layout,
 ) -> list[list[Any]]:
     rows: list[list[Any]] = []
     for p in c.pins:
@@ -409,6 +441,9 @@ def _pin_rows(
             wire_ids, goes = ("(spare)" if spare else "(no wire)"), ""
         gauge = "; ".join(str(w.gauge_awg) for w in wires if w.gauge_awg is not None)
         term = p.termination if p.termination != "unspecified" else (TO_FILL if wires else "")
+        contact = p.contact_part or (TO_FILL if wires else "")
+        part = project.parts.get(p.contact_part or "")
+        tool = (part.tool or "") if part is not None else ""
         cells = [
             _cell(ws, p.id, bold=True, fill=grey), _cell(ws, p.signal or "", fill=grey),
             _cell(ws, p.function or "", fill=grey),
@@ -418,6 +453,8 @@ def _pin_rows(
             _cell(ws, gauge, fill=grey, centre=True), _cell(ws, goes, fill=grey),
             _cell(ws, term, fill=_AMBER if term == TO_FILL else grey),
             _cell(ws, p.contact_size or "", fill=grey),
+            _cell(ws, contact, fill=_AMBER if contact == TO_FILL else grey),
+            _cell(ws, tool, fill=grey),
             *[_cell(ws, "", fill=grey, centre=True) for _ in range(3)],
         ]  # fmt: skip
         if not wires:
@@ -429,7 +466,7 @@ def _pin_rows(
             else "; ".join(w.colour or "?" for w in wires)
         )
         for n, v in enumerate(
-            (p.id, p.signal or "", p.function or "", wire_ids, shown_colour, gauge, goes, term, p.contact_size or ""),
+            (p.id, p.signal or "", p.function or "", wire_ids, shown_colour, gauge, goes, term, p.contact_size or "", contact, tool),
             start=1,
         ):  # fmt: skip
             lay.see(n, v)
@@ -462,7 +499,7 @@ def _connector_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> Non
             *[_cell(ws, "", fill=_NAVY, box=False) for _ in range(len(CONNECTOR_HEADER) - 1)],
         ])  # fmt: skip
         row += 1
-        rows = _pin_rows(ws, c, h, attached, lay)
+        rows = _pin_rows(ws, project, c, h, attached, lay)
         first = row + 1
         for cells in rows:
             body.append(cells)
@@ -473,7 +510,7 @@ def _connector_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> Non
         row += 1
         since_break += block
     for first, last in ticks:
-        _tick_rules(ws, f"{_letter(10)}{first}:{_letter(12)}{last}")
+        _tick_rules(ws, f"{_letter(12)}{first}:{_letter(14)}{last}")
     lay.widths[1] = max(lay.widths.get(1, 0), 8.0)
     _finish(ws, lay, stamp, body, tab="B5651D", freeze="A2")
 
@@ -502,6 +539,31 @@ def _parts_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
             lay.see(n, v)
     ws.auto_filter.ref = f"A1:{_letter(len(PARTS_HEADER))}{len(rows)}"
     _finish(ws, lay, stamp, body, tab="7A4EB0", freeze="B2")
+
+
+def _accessories_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
+    ws = wb.create_sheet("Accessories")
+    lay = _Layout({})
+    body: list[list[Any]] = []
+    rows = tables.accessories(h)
+    body.append(_header(ws, lay, ACCESSORY_HEADER))
+    for r in rows[1:]:
+        r = [*r[:3], r[3] or HARNESS_TARGET, *r[4:]]  # the target of an accessory of the whole harness
+        length = float(r[5]) if r[5] else ""
+        body.append([
+            _cell(ws, "", centre=True), _cell(ws, r[0], bold=True), _cell(ws, r[1]), _cell(ws, r[2]),
+            _cell(ws, r[3]), _cell(ws, r[4]), _cell(ws, length, centre=True),
+            _cell(ws, int(r[6]), centre=True), _cell(ws, r[7]),
+        ])  # fmt: skip
+        for n, v in enumerate(r, start=2):
+            lay.see(n, v)
+    if len(rows) == 1:  # no accessories: keep the header, say so in one line
+        body.append([_cell(ws, NO_ACCESSORIES, box=False, wrap=False, colour=_GREY_TEXT)])
+    ws.auto_filter.ref = f"A1:{_letter(len(ACCESSORY_HEADER))}{len(rows)}"
+    if len(rows) > 1:
+        _tick_rules(ws, f"A2:A{len(rows)}")
+    lay.widths[1] = 10.0
+    _finish(ws, lay, stamp, body, tab="8E44AD", freeze="B2")
 
 
 def _labels_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
@@ -572,6 +634,7 @@ def build_workbook(project: Project, h: Harness, stamp: Stamp) -> bytes:
     _cut_sheet(wb, project, h, stamp)
     _connector_sheet(wb, project, h, stamp)
     _parts_sheet(wb, project, h, stamp)
+    _accessories_sheet(wb, project, h, stamp)
     _labels_sheet(wb, project, h, stamp)
     _tests_sheet(wb, project, h, stamp)
     _about_sheet(wb, stamp)
@@ -589,8 +652,9 @@ def cut_rows(project: Project, h: Harness) -> Table:
         length = wire_length(h, w)
         rows.append([
             w.id, w.colour or "", "" if w.gauge_awg is None else str(w.gauge_awg), w.part_id or "",
-            tables.data_num(length), f"{w.from_connector}.{w.from_pin}",
-            f"{w.to_connector}.{w.to_pin}", tables.wire_name(w), shields.get(w.id, ""), w.note,
+            tables.data_num(length), tables.data_num(w.strip_a_mm), tables.data_num(w.strip_b_mm),
+            f"{w.from_connector}.{w.from_pin}", f"{w.to_connector}.{w.to_pin}",
+            tables.wire_name(w), shields.get(w.id, ""), w.note,
         ])  # fmt: skip
     return rows
 

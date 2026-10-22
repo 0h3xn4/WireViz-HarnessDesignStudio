@@ -33,7 +33,7 @@ HARNESS_FILES = (
     "tests.csv",
     "labels.csv",
     "wireviz.yaml",
-)
+)  # plus accessories.csv for a harness that has accessories (D-170)
 SYSTEM_FILES = (
     "bom.csv", "mass_length.csv", "mating_matrix.csv", "traceability.csv", "box_pinouts.csv",
     "drc_findings.csv", "drc_report.md", "changelog.csv", "revision_report.md", "export.json", "provenance.json", "system.xlsx",
@@ -194,6 +194,10 @@ def _harness(r: VerifyReport, project: Project, h: Harness, files: dict[str, byt
     for name in HARNESS_FILES:
         if f"{base}/{name}" not in files:
             r.error("out_missing", f"{base}/{name} was not generated.", h.id)
+    if h.accessories and f"{base}/accessories.csv" not in files:
+        r.error("out_missing", f"{base}/accessories.csv was not generated.", h.id)
+    if not h.accessories and f"{base}/accessories.csv" in files:
+        r.error("out_accessories", f"{h.id} has no accessories but a file lists some.", h.id)
     wl = _table(files, f"{base}/wirelist.csv")
     if wl:
         expected = {w.id: w for w in h.wires}
@@ -260,23 +264,6 @@ def _harness(r: VerifyReport, project: Project, h: Harness, files: dict[str, byt
                     h.id,
                 )
                 break
-    bm = _table(files, f"{base}/bom.csv")
-    if bm:
-        conns = Counter(c.part_id for c in h.connectors)
-        bom_rows = {row[0]: row for row in bm[1:]}
-        for pid, n in sorted(conns.items()):
-            if pid not in bom_rows or bom_rows[pid][6] != str(n):
-                r.error("out_bom", f"The BOM of {h.id} has the wrong quantity for {pid}.", h.id)
-        metres: dict[str, float] = defaultdict(float)
-        for w in h.wires:
-            length = _length_of(h, w)
-            if w.part_id and length is not None:
-                metres[w.part_id] += length
-        for pid, total in sorted(metres.items()):
-            if pid not in bom_rows or abs(float(bom_rows[pid][6] or 0) - total) > 1e-5 * max(
-                1.0, total
-            ):
-                r.error("out_bom", f"The BOM of {h.id} has the wrong wire length for {pid}.", h.id)
     ts = _table(files, f"{base}/tests.csv")
     if ts:
         cont = [row for row in ts[1:] if row[1] == "continuity"]
@@ -399,18 +386,36 @@ def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[st
     wl = _table(files, f"{base}/wirelist.csv")
     if wl:
         by_id = {w.id: w for w in h.wires}
+        has_strip = any(
+            x.strip_a_mm is not None or x.strip_b_mm is not None
+            for g in project.harnesses.values()
+            for x in g.wires
+        )
+        if (len(wl[0]) >= 2 and wl[0][-2:] == _STRIP_HEADER) != has_strip:
+            r.error(
+                "out_wire_differs",
+                f"The wire list of {h.id} has the wrong columns for the strip lengths.",
+                h.id,
+            )
         for row in wl[1:]:
             w = by_id.get(row[0])
             if w is None or len(row) < 13:
                 continue
             wrong = []
             has_emc = any(t.emc_class for t in project.interface_types.values())
+            has_text = any(x.label or x.note for g in project.harnesses.values() for x in g.wires)
+            if has_strip:
+                at = 13 + (1 if has_emc else 0) + (2 if has_text else 0)
+                if len(row) < at + 2 or not (
+                    _same_number(row[at], w.strip_a_mm) and _same_number(row[at + 1], w.strip_b_mm)
+                ):
+                    wrong.append("strip length")
             if has_emc:
                 i = project.interfaces.get(w.interface_id or "")
                 t = project.interface_types.get(i.type_id) if i else None
                 if len(row) < 14 or row[13] != ((t.emc_class if t else None) or ""):
                     wrong.append("EMC class")
-            if any(x.label or x.note for g in project.harnesses.values() for x in g.wires):
+            if has_text:
                 at = 13 + (1 if has_emc else 0)
                 if len(row) < at + 2 or (row[at], row[at + 1]) != (w.label or "", w.note):
                     wrong.append("label or note")
@@ -747,7 +752,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
     bm = _table(files, "system/bom.csv")
     if bm:
         _compare_rows(r, "out_bom", "The system BOM", bm, _BOM_HEADER,
-                      _bom_rows(project, harnesses), (0,), "bom")  # fmt: skip
+                      _bom_rows(project, harnesses), (0, 7), "bom")  # fmt: skip
     mm = _table(files, "system/mating_matrix.csv")
     if mm:
         boxes = {row[0] for row in mm[1:]}
@@ -789,7 +794,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
                         attached[(mates[cid] or "", pin)].append(w.id)
         boxes_sorted = sorted(project.connectors.values(), key=lambda c: c.id)
         _compare_rows(r, "out_box_pinouts", "The box connector pinouts", bp, _pinout_header(project),
-                      _pin_rows(boxes_sorted, attached, _uses_function(project), _uses_termination(project)), (0, 4), "box_pinouts")  # fmt: skip
+                      _pin_rows(boxes_sorted, attached, _uses_function(project), _uses_termination(project), _uses_contact(project)), (0, 4), "box_pinouts")  # fmt: skip
     _system_workbook(r, project, files)
     ex = files.get("system/export.json")
     if ex is not None:
@@ -927,6 +932,7 @@ def _compare_rows(
         r.error(code, f"{what} differs from the design: {'; '.join(problems[:3])}{more}.", obj)
 
 
+_STRIP_HEADER = ["Strip A (mm)", "Strip B (mm)"]
 _PINOUT_HEADER = [
     "Connector", "Role", "Mates with", "Part", "Pin", "Signal", "Interface", "Wires", "Spare",
 ]  # fmt: skip
@@ -937,6 +943,7 @@ def _pinout_header(project: Project) -> list[str]:
         *_PINOUT_HEADER,
         *(["Function"] if _uses_function(project) else []),
         *(["Termination"] if _uses_termination(project) else []),
+        *(["Contact"] if _uses_contact(project) else []),
     ]
 
 
@@ -954,11 +961,16 @@ def _uses_termination(project: Project) -> bool:
     return any(p.termination != "unspecified" for p in _all_pins(project))
 
 
+def _uses_contact(project: Project) -> bool:
+    return any(p.contact_part for p in _all_pins(project))
+
+
 def _pin_rows(
     connectors: list[Connector],
     attached: dict[tuple[str, str], list[str]],
     function: bool = False,
     termination: bool = False,
+    contact: bool = False,
 ) -> list[list[Cell]]:
     rows: list[list[Cell]] = []
     for c in connectors:
@@ -970,6 +982,7 @@ def _pin_rows(
                 "no" if wires or p.interface_id or p.signal else "yes",
                 *([p.function or ""] if function else []),
                 *([p.termination] if termination else []),
+                *([p.contact_part or ""] if contact else []),
             ])  # fmt: skip
     return rows
 
@@ -989,15 +1002,26 @@ _BOM_HEADER = [
 
 
 def _bom_rows(project: Project, harnesses: list[Harness]) -> list[list[Cell]]:
+    """One line per part and unit. Connector parts, the contact part of each pin in use (one per
+    pin) and accessory parts without a length count `ea` (an accessory by its quantity); wire parts
+    and accessory parts with a length add up metres (length_mm x quantity / 1000)."""
     counts: Counter[str] = Counter()
     metres: dict[str, float] = defaultdict(float)
     unknown: Counter[str] = Counter()
     used: dict[str, set[str]] = defaultdict(set)
     wire_parts: set[str] = set()
+    acc_parts: set[str] = set()
     for h in harnesses:
+        pins_used: set[tuple[str, str]] = set()
+        for w in h.wires:
+            pins_used |= {(w.from_connector, w.from_pin), (w.to_connector, w.to_pin)}
         for c in h.connectors:
             counts[c.part_id] += 1
             used[c.part_id].add(h.id)
+            for p in c.pins:
+                if p.contact_part and (c.id, p.id) in pins_used:
+                    counts[p.contact_part] += 1
+                    used[p.contact_part].add(h.id)
         for w in h.wires:
             pid = w.part_id or "(no part)"
             wire_parts.add(pid)
@@ -1007,10 +1031,18 @@ def _bom_rows(project: Project, harnesses: list[Harness]) -> list[list[Cell]]:
                 unknown[pid] += 1
             else:
                 metres[pid] += length
+        for a in h.accessories:
+            if a.part_id:
+                used[a.part_id].add(h.id)
+                if a.length_mm is None:
+                    counts[a.part_id] += a.quantity
+                else:
+                    acc_parts.add(a.part_id)
+                    metres[a.part_id] += a.length_mm * a.quantity / 1000
+    lines = sorted({*((p, "ea") for p in counts), *((p, "m") for p in wire_parts | acc_parts)})
     rows: list[list[Cell]] = []
-    for pid in sorted({*counts, *wire_parts}):
+    for pid, unit in lines:
         part = project.parts.get(pid)
-        is_wire = pid in wire_parts
         approval = (
             "missing from parts list"
             if part is None
@@ -1019,10 +1051,24 @@ def _bom_rows(project: Project, harnesses: list[Harness]) -> list[list[Cell]]:
         rows.append([
             pid, part.category if part else "unknown", (part.manufacturer or "") if part else "",
             (part.part_number or "") if part else "", (part.description or "") if part else "",
-            approval, metres[pid] if is_wire else str(counts[pid]), "m" if is_wire else "ea",
-            str(unknown[pid]) if is_wire else "", ";".join(sorted(used[pid])),
+            approval, metres[pid] if unit == "m" else str(counts[pid]), unit,
+            str(unknown[pid]) if unit == "m" and pid in wire_parts else "",
+            ";".join(sorted(used[pid])),
         ])  # fmt: skip
     return rows
+
+
+_ACCESSORY_HEADER = [
+    "Accessory", "Kind", "Part", "Target", "Position", "Length (mm)", "Quantity", "Note",
+]  # fmt: skip
+
+
+def _accessory_rows(h: Harness) -> list[list[Cell]]:
+    return [
+        [a.id, a.kind, a.part_id or "", a.target or "", a.position or "", a.length_mm,
+         str(a.quantity), a.note]
+        for a in h.accessories
+    ]  # fmt: skip
 
 
 def _limit(project: Project, key: str, unit: str) -> str:
@@ -1138,11 +1184,17 @@ def _harness_tables(r: VerifyReport, project: Project, h: Harness, files: dict[s
     if po:
         conns = sorted(h.connectors, key=lambda c: c.id)
         _compare_rows(r, "out_pinout", f"The pinout table of {h.id}", po, _pinout_header(project),
-                      _pin_rows(conns, _harness_attached(h), _uses_function(project), _uses_termination(project)), (0, 4), h.id)  # fmt: skip
+                      _pin_rows(conns, _harness_attached(h), _uses_function(project), _uses_termination(project), _uses_contact(project)), (0, 4), h.id)  # fmt: skip
     bm = _table(files, f"{base}/bom.csv")
     if bm:
         _compare_rows(r, "out_bom", f"The BOM of {h.id}", bm, _BOM_HEADER,
-                      _bom_rows(project, [h]), (0,), h.id)  # fmt: skip
+                      _bom_rows(project, [h]), (0, 7), h.id)  # fmt: skip
+    ac = _table(files, f"{base}/accessories.csv")
+    if ac:
+        if [row[0] for row in ac[1:]] != sorted(a.id for a in h.accessories):
+            r.error("out_accessories", f"The accessories of {h.id} are not in ID order.", h.id)
+        _compare_rows(r, "out_accessories", f"The accessories of {h.id}", ac, _ACCESSORY_HEADER,
+                      _accessory_rows(h), (0,), h.id)  # fmt: skip
     ts = _table(files, f"{base}/tests.csv")
     if ts:
         _compare_rows(r, "out_tests", f"The test list of {h.id}", ts, _TEST_HEADER,
@@ -1159,11 +1211,13 @@ def _harness_tables(r: VerifyReport, project: Project, h: Harness, files: dict[s
         sheets = _xlsx_sheets(x)
         for name, rel in (
             ("Pinouts", "pinouts.csv"), ("BOM", "bom.csv"), ("Mass and length", "mass_length.csv"),
-            ("Tests", "tests.csv"), ("Labels", "labels.csv"),
+            ("Tests", "tests.csv"), ("Labels", "labels.csv"), ("Accessories", "accessories.csv"),
         ):  # fmt: skip
             table = _table(files, f"{base}/{rel}")
             if table and sheets.get(name) != table:
                 r.error("out_xlsx", f"The '{name}' sheet of the workbook of {h.id} differs from {rel}.", h.id)  # fmt: skip
+        if ("Accessories" in sheets) != bool(h.accessories):
+            r.error("out_xlsx", f"The workbook of {h.id} has an Accessories sheet only when the harness has accessories.", h.id)  # fmt: skip
 
 
 def _has_drawings(files: dict[str, bytes]) -> bool:
@@ -1174,15 +1228,19 @@ def _has_drawings(files: dict[str, bytes]) -> bool:
 
 # ---- the build workbook (decision D-169) --------------------------------------------------------
 
-_BUILD_SHEETS = ["Start here", "Cut list", "Connectors", "Parts", "Labels", "Tests", "About"]
+_BUILD_SHEETS = [
+    "Start here", "Cut list", "Connectors", "Parts", "Accessories", "Labels", "Tests", "About"
+]  # fmt: skip
 _BUILD_CUT_HEADER = [
-    "Cut (x)", "Wire", "Colour", "AWG", "Part", "Length (m)", "From", "To", "Signal or label",
-    "Shield group", "Note",
+    "Cut (x)", "Wire", "Colour", "AWG", "Part", "Length (m)", "Strip A (mm)", "Strip B (mm)",
+    "From", "To", "Signal or label", "Shield group", "Note",
 ]  # fmt: skip
 _BUILD_CONNECTOR_HEADER = [
     "Pin", "Signal", "Function", "Wire", "Colour", "AWG", "Goes to", "Termination", "Contact size",
-    "Terminated (x)", "Inserted (x)", "Checked (x)",
+    "Contact", "Tool", "Terminated (x)", "Inserted (x)", "Checked (x)",
 ]  # fmt: skip
+_BUILD_NO_ACCESSORIES = "No accessories entered."
+_BUILD_HARNESS_TARGET = "(harness)"
 _BUILD_TEST_TAIL = ["Measured", "Result", "Initials", "Date"]
 _TO_FILL = "to fill in"
 
@@ -1237,6 +1295,12 @@ def _build_expected_checks(project: Project, h: Harness) -> dict[str, int]:
             for p in c.pins
             if (c.id, p.id) in used and p.termination == "unspecified"
         ),
+        "Wires without strip lengths": sum(
+            1 for w in h.wires if w.strip_a_mm is None or w.strip_b_mm is None
+        ),
+        "Pins in use without a contact part": sum(
+            1 for c in h.connectors for p in c.pins if (c.id, p.id) in used and not p.contact_part
+        ),
         "Parts that are not approved": sum(
             1
             for pid in parts
@@ -1260,10 +1324,11 @@ def _build_workbook(r: VerifyReport, project: Project, h: Harness, files: dict[s
         r.error("out_build", f"{what} does not have the sheets {', '.join(_BUILD_SHEETS)}.", h.id)
         return
     _build_cut(r, h, what, sheets["Cut list"])
-    _build_connectors(r, h, what, sheets["Connectors"])
+    _build_connectors(r, project, h, what, sheets["Connectors"])
     parts = sheets["Parts"]
     _compare_rows(r, "out_build", f"{what} (Parts)", parts, _BOM_HEADER,
-                  _bom_rows(project, [h]), (0,), h.id)  # fmt: skip
+                  _bom_rows(project, [h]), (0, 7), h.id)  # fmt: skip
+    _build_accessories(r, h, what, sheets["Accessories"])
     labels = sheets["Labels"]
     if labels and labels[0] == ["Done (x)", *_LABEL_HEADER]:
         _compare_rows(r, "out_build", f"{what} (Labels)", [row[1:] for row in labels], _LABEL_HEADER,
@@ -1303,15 +1368,20 @@ def _build_cut(r: VerifyReport, h: Harness, what: str, rows: list[list[str]]) ->
         if length is not None:
             known += length
         colour_ok = row[2].startswith(w.colour) if w.colour else row[2] == _TO_FILL
+        strip_ok = all(
+            (cell == _TO_FILL) if v is None else _same_number(cell, v)
+            for cell, v in ((row[6], w.strip_a_mm), (row[7], w.strip_b_mm))
+        )
         gauge_ok = row[3] == _TO_FILL if w.gauge_awg is None else row[3] == str(w.gauge_awg)
         length_ok = row[5] == _TO_FILL if length is None else _same_number(row[5], length)
         part_ok = row[4] == (w.part_id or _TO_FILL)
-        ends_ok = row[6] == f"{w.from_connector}.{w.from_pin}" and row[7] == f"{w.to_connector}.{w.to_pin}"  # fmt: skip
-        name_ok = row[8] == (w.label or w.signal or "")
-        extra_ok = row[9] == shields.get(w.id, "") and row[10] == w.note and row[0] == ""
+        ends_ok = row[8] == f"{w.from_connector}.{w.from_pin}" and row[9] == f"{w.to_connector}.{w.to_pin}"  # fmt: skip
+        name_ok = row[10] == (w.label or w.signal or "")
+        extra_ok = row[11] == shields.get(w.id, "") and row[12] == w.note and row[0] == ""
         if not (
-            colour_ok and gauge_ok and length_ok and part_ok and ends_ok and name_ok and extra_ok
-        ):
+            colour_ok and gauge_ok and length_ok and strip_ok and part_ok and ends_ok and name_ok
+            and extra_ok
+        ):  # fmt: skip
             bad.append(w.id)
     if bad:
         more = f" and {len(bad) - 3} more" if len(bad) > 3 else ""
@@ -1324,7 +1394,9 @@ def _build_cut(r: VerifyReport, h: Harness, what: str, rows: list[list[str]]) ->
         r.error("out_build", f"{what} (Cut list) has the wrong totals.", h.id)
 
 
-def _build_connectors(r: VerifyReport, h: Harness, what: str, rows: list[list[str]]) -> None:
+def _build_connectors(
+    r: VerifyReport, project: Project, h: Harness, what: str, rows: list[list[str]]
+) -> None:
     if not rows or rows[0] != _BUILD_CONNECTOR_HEADER:
         r.error("out_build", f"{what} (Connectors) has the wrong column headings.", h.id)
         return
@@ -1359,6 +1431,35 @@ def _build_connectors(r: VerifyReport, h: Harness, what: str, rows: list[list[st
             if listed != want or (not want and row[3] != marker):
                 r.error("out_build", f"Pin {c.id}.{p.id} lists the wrong wires in the build workbook.", c.id)  # fmt: skip
                 break
+            part = project.parts.get(p.contact_part or "")
+            want_contact = p.contact_part or (_TO_FILL if want else "")
+            want_tool = (part.tool or "") if part is not None else ""
+            if (row[9], row[10]) != (want_contact, want_tool):
+                r.error("out_build", f"Pin {c.id}.{p.id} shows the wrong contact or tool in the build workbook.", c.id)  # fmt: skip
+                break
+
+
+def _build_accessories(r: VerifyReport, h: Harness, what: str, rows: list[list[str]]) -> None:
+    """The Accessories sheet: a tick column and the rows of accessories.csv; with none, the header
+    and one line that says so."""
+    if not rows or rows[0] != ["Done (x)", *_ACCESSORY_HEADER]:
+        r.error("out_build", f"{what} (Accessories) has the wrong column headings.", h.id)
+        return
+    body = rows[1:]
+    if not h.accessories:
+        if len(body) != 1 or body[0][0] != _BUILD_NO_ACCESSORIES or any(body[0][1:]):
+            r.error("out_build", f"{what} (Accessories) should say that none are entered.", h.id)
+        return
+    want = [
+        [*row[:3], row[3] or _BUILD_HARNESS_TARGET, *row[4:]]
+        for row in sorted(_accessory_rows(h), key=lambda row: str(row[0]))
+    ]
+    _compare_rows(r, "out_build", f"{what} (Accessories)", [row[1:] for row in rows], _ACCESSORY_HEADER,
+                  want, (0,), h.id)  # fmt: skip
+    if [row[1] for row in body] != [str(row[0]) for row in want]:
+        r.error("out_build", f"{what} (Accessories) is not in ID order.", h.id)
+    if any(row[0] for row in body):
+        r.error("out_build", f"{what} has ticks in the Accessories sheet before anything was done.", h.id)  # fmt: skip
 
 
 def _build_start(

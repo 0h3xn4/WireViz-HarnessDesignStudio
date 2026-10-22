@@ -49,7 +49,9 @@ from .vcs.snapshot import carried_interfaces
 
 PinMode = Literal["free", "fixed", "locked"]
 PIN_MODES: tuple[PinMode, ...] = get_args(PinMode)
-PIN_FIELDS = frozenset({"signal", "contact_size", "termination", "fixed", "locked", "function"})
+PIN_FIELDS = frozenset(
+    {"signal", "contact_size", "termination", "fixed", "locked", "function", "contact_part"}
+)
 CONNECTOR_FIELDS = frozenset({"name", "gender", "keying", "carries", "notes", "label"})
 _GENDERS: tuple[str, ...] = get_args(Gender)
 _TERMINATIONS: tuple[str, ...] = get_args(Termination)
@@ -91,6 +93,21 @@ def _text(value: object, what: str) -> str | None:
         return _NAME.validate_python(text, strict=True)
     except ValidationError as exc:
         raise EditError(f"{what} can have 1 to 200 characters and no control characters.") from exc
+
+
+def contact_part_choices(project: Project) -> list[str]:
+    """The IDs of the contact parts of the project library, sorted: the choices for a pin's contact."""
+    return sorted(p.id for p in project.parts.values() if p.category == "contact")
+
+
+def check_contact_part(project: Project, value: object, what: str = "A contact") -> str | None:
+    """The ID of a library part of category contact, or None for an empty cell; else an EditError."""
+    text = _text(value, what)
+    if text is not None:
+        part = project.parts.get(text)
+        if part is None or part.category != "contact":
+            raise EditError(f"'{text}' is not a contact part of the library (category contact).")
+    return text
 
 
 def check_pin(pin_id: str) -> str:
@@ -360,6 +377,7 @@ def _pin_is_empty(p: Pin) -> bool:
         and not p.locked
         and p.contact_size is None
         and p.function is None
+        and p.contact_part is None
         and p.termination == "unspecified"
     )
 
@@ -515,9 +533,10 @@ def _find_pin(c: Connector, pin_id: str) -> tuple[int, Pin]:
     raise EditError(f"{c.id} has no pin '{pin_id}'.")
 
 
-def _edit_pin(pin: Pin, changes: Mapping[str, object]) -> Pin:
+def _edit_pin(pin: Pin, changes: Mapping[str, object], project: Project | None = None) -> Pin:
     """The pin with these fields changed (`mode` stands for fixed and locked). Retyping the signal
-    of a pin that was allocated to an interface takes the pin over: the assignment goes."""
+    of a pin that was allocated to an interface takes the pin over: the assignment goes. A
+    `contact_part` is checked against the library of `project`."""
     bad = set(changes) - PIN_FIELDS - {"mode"}
     if bad:
         raise EditError(f"These pin fields cannot be changed here: {', '.join(sorted(bad))}.")
@@ -536,6 +555,12 @@ def _edit_pin(pin: Pin, changes: Mapping[str, object]) -> Pin:
             if value not in _TERMINATIONS:
                 raise EditError(f"A termination is one of {', '.join(_TERMINATIONS)}.")
             new[key] = value
+        elif key == "contact_part":
+            new[key] = (
+                check_contact_part(project, value)
+                if project is not None
+                else _text(value, "A contact")
+            )
         else:
             if not isinstance(value, bool):
                 raise EditError(f"'{key}' is yes or no.")
@@ -547,19 +572,46 @@ def _edit_pin(pin: Pin, changes: Mapping[str, object]) -> Pin:
 
 
 def ops_set_pin(project: Project, connector_id: str, pin_id: str, **changes: object) -> list[Op]:
-    """Change one pin: `signal`, `contact_size`, `termination`, `fixed`, `locked`, or `mode`
-    ("free", "fixed", "locked") for the last two together. Refused for a pin that carries an
-    interface of a released harness. Nothing to do gives no ops."""
+    """Change one pin: `signal`, `contact_size`, `termination`, `function`, `contact_part` (a
+    contact part of the library), `fixed`, `locked`, or `mode` ("free", "fixed", "locked") for the
+    last two together. Refused for a pin that carries an interface of a released harness. Nothing
+    to do gives no ops."""
     _writable(project)
     c = _box(project, connector_id)
     k, pin = _find_pin(c, pin_id)
-    new = _edit_pin(pin, changes)
+    new = _edit_pin(pin, changes, project)
     if new is pin:
         return []
     if why := pin_lock_reason(project, connector_id, pin_id):
         raise EditError(f"Pin {pin_id} of {connector_id} cannot change. {why}")
     pins = list(c.pins)
     pins[k] = new
+    return [Put("connectors", c.model_copy(update={"pins": pins}))]
+
+
+def ops_set_contacts(
+    project: Project, connector_id: str, pin_ids: Collection[str], contact_part: str | None
+) -> list[Op]:
+    """Set the contact part of several pins of a box connector in one `Put` (the bulk fill of the
+    *Cable contact* column); None or an empty text clears it. The part must be a contact part of
+    the library. A pin that carries an interface of a released harness refuses the change."""
+    _writable(project)
+    c = _box(project, connector_id)
+    part = check_contact_part(project, contact_part)
+    wanted = list(dict.fromkeys(pin_ids))
+    if not wanted:
+        raise EditError("No pin is selected.")
+    for pid in wanted:
+        _find_pin(c, pid)
+    pins = []
+    for p in c.pins:
+        if p.id in wanted and p.contact_part != part:
+            if why := pin_lock_reason(project, connector_id, p.id):
+                raise EditError(f"Pin {p.id} of {connector_id} cannot change. {why}")
+            p = evolve(p, contact_part=part)
+        pins.append(p)
+    if pins == c.pins:
+        return []
     return [Put("connectors", c.model_copy(update={"pins": pins}))]
 
 
@@ -748,7 +800,7 @@ def ops_set_pinout(project: Project, connector_id: str, pins: Sequence[Pin]) -> 
 
 # ---- rows from a spreadsheet (paste and import) ------------------------------------------------
 
-ROW_COLUMNS = ("pin", "signal", "mode", "contact_size", "termination", "function")
+ROW_COLUMNS = ("pin", "signal", "mode", "contact_size", "termination", "function", "contact_part")
 
 
 @dataclass(frozen=True)
@@ -836,6 +888,8 @@ def plan_pin_rows(
                 changes["contact_size"] = row["contact_size"]
             if "function" in row:
                 changes["function"] = row["function"]
+            if "contact_part" in row:
+                changes["contact_part"] = row["contact_part"]
             if "mode" in row:
                 word = _MODE_WORDS.get(row["mode"].strip().casefold(), "?")
                 if word == "?":
@@ -850,7 +904,7 @@ def plan_pin_rows(
                     )
                 changes["termination"] = word2
             base = by_id.get(pid) or Pin(id=pid)
-            new = _edit_pin(base, changes)
+            new = _edit_pin(base, changes, project)
         except EditError as exc:
             issues.append(RowIssue(n, pid, str(exc).rstrip(".")))
             continue
@@ -1010,6 +1064,7 @@ class PinRow:
     lock: str | None  # why the pin cannot be edited (a released interface uses it)
     severity: Severity | None  # the worst inline problem about this pin
     function: str = ""  # a person's words for what the pin does
+    contact_part: str = ""  # the contact the cable side uses here (a library part)
 
 
 _RANK: dict[Severity, int] = {"error": 0, "warning": 1, "info": 2}
@@ -1066,6 +1121,7 @@ def pin_rows(
                 frozen.get(p.id),
                 worst.get(p.id),
                 p.function or "",
+                p.contact_part or "",
             )
         )
     return out
@@ -1803,8 +1859,10 @@ __all__ = [
     "PinRow",
     "PinRowsPlan",
     "RowIssue",
+    "check_contact_part",
     "check_pin",
     "connector_delete_impact",
+    "contact_part_choices",
     "derive_meaning",
     "device_state",
     "fill_from_type",
@@ -1834,6 +1892,7 @@ __all__ = [
     "ops_delete_pins",
     "ops_paste_rows",
     "ops_rename_pin",
+    "ops_set_contacts",
     "ops_set_pin",
     "ops_set_pinout",
     "ops_update_connector",

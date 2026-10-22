@@ -1,7 +1,9 @@
 """Import a device's pinout from a spreadsheet (CSV or XLSX) as a plan: nothing changes until the
 person confirms. One row of the sheet is one pin: the connector it belongs to, its name or number,
-the signal on it, whether the device fixes it, a contact size, a termination and a function
-(free text; a sheet with only a Function column and no Signal column reads it as the signal, as before).
+the signal on it, whether the device fixes it, a contact size, a termination, a function (free text;
+a sheet with only a Function column and no Signal column reads it as the signal, as before) and the
+contact part the cable side uses (a part of category contact; the heading `Cable contact`, or
+`Contact` next to a Pin heading).
 
 The tool knows no program's table format: columns are matched by their headings (with common
 aliases), the way the parts import does. Columns it cannot store (remarks,
@@ -32,6 +34,7 @@ FIELDS: tuple[tuple[str, str], ...] = (
     ("contact_size", "Contact size"),
     ("termination", "Termination"),
     ("function", "Function"),
+    ("contact_part", "Cable contact"),
     ("part", "Part"),
     ("gender", "Gender"),
 )
@@ -47,6 +50,8 @@ _ALIASES = {
         "pinfunction",
         "functiondescription",
     ),  # "function" alone means the signal
+    # "contact" alone is the pin when the sheet has no other pin heading (as it always was)
+    "contact_part": ("cablecontact", "contactpart", "cablecontactpart", "contact"),
     "part": ("part", "partid", "partnumber", "connectorpart"),
     "gender": ("gender", "sex"),
 }
