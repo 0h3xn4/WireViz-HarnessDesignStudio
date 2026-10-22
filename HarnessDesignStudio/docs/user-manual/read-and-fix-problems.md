@@ -7,9 +7,11 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 - [Before you start](#before-you-start)
 - [1. The three kinds of finding](#1-the-three-kinds-of-finding)
 - [2. In the app](#2-in-the-app)
+- [2a. The Checks tab](#2a-the-checks-tab)
 - [3. On the command line](#3-on-the-command-line)
 - [4. Fix one, waive one](#4-fix-one-waive-one)
 - [What the notes mean](#what-the-notes-mean)
+- [Good to know](#good-to-know)
 - [Common mistakes](#common-mistakes)
 
 ## Before you start

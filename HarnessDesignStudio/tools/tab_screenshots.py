@@ -31,7 +31,7 @@ from PySide6.QtCore import QItemSelectionModel
 from PySide6.QtWidgets import QApplication
 
 from harness_design_studio.core.build_data import plan_set_accessory
-from harness_design_studio.core.commands import Put
+from harness_design_studio.core.commands import Op, Put
 from harness_design_studio.core.generate.engine import plan_generation
 from harness_design_studio.core.manual_harness import (
     plan_add_connector,
@@ -111,7 +111,7 @@ def _generated(
     win = _window(name, "first-steps", workspace, size)
     if approve:
         parts = win.ctl.project.parts
-        ops = [
+        ops: list[Op] = [
             Put(
                 "parts",
                 evolve(

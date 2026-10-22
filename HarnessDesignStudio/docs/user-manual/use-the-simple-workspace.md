@@ -78,7 +78,7 @@ The same project in the Full workspace, with the project tree on the left, the I
 
 ## What the Simple workspace hides
 
-To show less at once, the Simple workspace starts with these things closed or off. Nothing is removed: each one is still in the **View** menu with its shortcut, and in the command palette (Ctrl+K).
+To show less at once, the Simple workspace starts with these things closed or off. Nothing is removed: each one is still in the **View** menu (with its shortcut where it has one, for example Ctrl+Shift+M for the Problems panel), and in the command palette (Ctrl+K).
 
 | Thing | In Simple | In Full |
 |---|---|---|

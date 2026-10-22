@@ -230,4 +230,4 @@ It also finds files that were edited or deleted after the export (`[out_modified
 
 More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 
-Next: [enter the build data](enter-the-build-data.md), [release a harness](release-a-harness.md), [set wire colours](set-wire-colours.md)
+Next: [naming and title block](naming-and-title-block.md), [release a harness](release-a-harness.md), [set wire colours](set-wire-colours.md)

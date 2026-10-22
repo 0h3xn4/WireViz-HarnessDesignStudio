@@ -123,4 +123,4 @@ At the bottom of the **Edit wire** tab, **Labels** has a **Harness label**, a li
 
 More: [`FILE_FORMAT.md`](../FILE_FORMAT.md) (the fields `Wire.label` and `Wire.note`), [`OUTPUTS.md`](../OUTPUTS.md).
 
-Next: [enter the build data](enter-the-build-data.md), [set wire colours](set-wire-colours.md), [export the outputs](export-the-outputs.md)
+Next: [set wire colours](set-wire-colours.md), [build a harness by hand](build-a-harness-by-hand.md), [enter the build data](enter-the-build-data.md)

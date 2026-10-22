@@ -74,7 +74,7 @@ The app also has **File > Open the sample project**. That is example data. Save 
 
 1. Choose **Edit > Add unit** and pick one of the kinds: **Computer**, **Power unit**, **Actuator (wheel)**, **Sensor (star tracker)**, **Payload**, **Transceiver**, **Pyro unit**, **Computer (many interfaces)**, **Power distribution unit**, **Battery**, **Solar array**, **Sun sensor**, **Magnetorquer** or **Heater panel**. **Add > Unit…** in the **Project** tab on the left shows the same list, and so does the command palette (Ctrl+K, type "add").
 2. The unit appears at once. No window opens. The ID and the name are given automatically, for example `PCDU1` and "Power unit 1", `OBC1` and "Computer 1", `RW1` and "Actuator (wheel) 1".
-3. To change the ID or the name, select the unit and edit **ID** or **Name** in the **Inspector** on the right (in the Simple workspace the Inspector opens when you press **Show panels** in the message that appears after you select).
+3. To change the ID or the name, select the unit and edit **ID** or **Name** in the **Inspector** on the right (the Simple workspace keeps the Inspector closed: press **Show panels** in the top bar).
 4. Drag the unit to move it. A unit cannot be dragged past the top or left edge of the diagram, and the diagram grows to the right and downwards to hold a unit you place far out (switching to **Expert** grows it too). The lane it sits in is its **zone** (a panel or compartment of the spacecraft). A blank project has two lanes, `panel-A` and `panel-B`. **Edit > Add zone…** adds a lane: type a zone name.
 
 Each unit comes with connectors. You do not need to look at them in Guided mode.
@@ -135,4 +135,4 @@ Switching never changes your data.
 - **"Read-only" banner.** The project was saved by a newer tool, it is open in another window, or its folder cannot be locked for editing (read-only media). See [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 - **The folder is refused.** `harness-design-studio new` and **New project…** need a folder that does not exist yet or is empty. Nothing is ever overwritten.
 
-Next: [generate the harnesses](generate-harnesses.md), [redundancy and zones](redundancy-and-zones.md)
+Next: [redundancy and zones](redundancy-and-zones.md), [generate the harnesses](generate-harnesses.md)
