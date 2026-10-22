@@ -41,7 +41,7 @@ small-satellite    14 units with nominal and redundant chains. Generate it to se
 flatsat            A complete bench: 23 flight and ground units, generated, with example numbers.
 ```
 
-**Which version do you have?** This tutorial is written for 1.6.0 (the commands work the same on 1.5.0, 1.4.0, 1.3.0, 1.2.0, 1.1.0 and 1.0.0; the window is the one of 1.3.0 and later, so the app steps and the picture look different in 1.2.0 and earlier, which had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
+**Which version do you have?** This tutorial is written for 1.7.0 (the commands work the same on 1.6.0, 1.5.0, 1.4.0, 1.3.0, 1.2.0, 1.1.0 and 1.0.0; the window is the one of 1.3.0 and later, so the app steps and the picture look different in 1.2.0 and earlier, which had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
 
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 
@@ -142,7 +142,7 @@ harness-design-studio drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `a7fa21787017`. Rules run: 35.
+Model hash: `5e6bcbd63d91`. Rules run: 35.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.
@@ -160,7 +160,7 @@ The **To do** list at the top of the **Problems** tab shows what is left, includ
 
 ## Part 6: export the build workbook and lists
 
-The main output of an export is a **build workbook** for every harness: an Excel file to build the harness from, with a cut list, a block for every connector, the parts, the labels and a test sheet. The PDF drawings are optional (see below). The build workbook and the `--drawings` option are not in the latest release (1.6.0) yet; they come with 1.7.0.
+The main output of an export is a **build workbook** for every harness: an Excel file to build the harness from, with a cut list, a block for every connector, the parts, the labels and a test sheet. The PDF drawings are optional (see below). The build workbook and the `--drawings` option are new in 1.7.0.
 
 **In the app:** press **Export…** in the top bar (Ctrl+E) and then **Export** in the window that opens; it also lists the files written. The check box **Include the PDF drawings** in that window is not ticked the first time. Afterwards the **Lists** tab (Outputs) shows **Exported files** with the SHA-256 of each file and whether it still matches the export. **On the command line:**
 
@@ -169,7 +169,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-34 files written to wheel-link/outputs (model a7fa21787017).
+34 files written to wheel-link/outputs (model 5e6bcbd63d91).
 ```
 
 The files are checked independently before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.
@@ -195,7 +195,7 @@ harness-design-studio export wheel-link --drawings
 ```
 
 ```
-40 files written to wheel-link/outputs (model a7fa21787017).
+40 files written to wheel-link/outputs (model 5e6bcbd63d91).
 ```
 
 The six new files are `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` and the same three for `W002`. A later `export` without `--drawings` removes them again and says so. The harness drawing (it needs `export --drawings`), with a title block and the model hash at the bottom (the picture is the `W001` sheet of the first export of this tutorial, made with 1.6.0, so the version and the model hash at the bottom are the ones your tool prints; with another version they differ):

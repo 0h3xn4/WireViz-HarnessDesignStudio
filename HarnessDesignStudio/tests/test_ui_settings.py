@@ -133,8 +133,9 @@ def test_the_page_follows_the_menus_and_the_palette(win) -> None:
     assert strings.SETTINGS_REDUCE_MOTION in names  # reachable with Ctrl+K as well
 
 
-def test_reduce_motion_turns_qt_effects_off_and_puts_them_back(monkeypatch) -> None:
-    """(The offscreen platform allows no effects, so Qt's switches are replaced by a dictionary.)"""
+def test_reduce_motion_turns_qt_effects_off_and_puts_them_back(qapp, monkeypatch) -> None:
+    """(The offscreen platform allows no effects, so Qt's switches are replaced by a dictionary.
+    The test needs the application object: without one, `set_reduce_motion` changes nothing.)"""
     from harness_design_studio.gui.theme.manager import MOTION_EFFECTS
 
     state = {e: True for e in MOTION_EFFECTS}

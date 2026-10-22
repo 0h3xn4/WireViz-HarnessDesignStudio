@@ -17,7 +17,7 @@ This page collects shortcuts and habits that save time once you have finished [`
 - [Small habits](#small-habits)
 - [Working with other tools](#working-with-other-tools)
 
-Every command on this page was run with the tool before it was written down (first with version `1.0.0`; the quoted model hash and the version stamp were renewed with `1.6.0`, which changes no generated file except the version it records). Some of the options need examples that are not in the 0.1.0 packages; the page says so where it matters (see [`examples/README.md`](examples/README.md)).
+Every command on this page was run with the tool before it was written down (first with version `1.0.0`; the quoted model hash and the version stamp were renewed with `1.7.0`). Some of the options need examples that are not in the 0.1.0 packages; the page says so where it matters (see [`examples/README.md`](examples/README.md)).
 
 ## Keyboard shortcuts
 
@@ -128,7 +128,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
-34 files written to cib/outputs (model 85a15171aed5).
+34 files written to cib/outputs (model afd8bd1502d7).
 2 interfaces and 6 wires checked: 0 error(s)
 build ok: cib/outputs
 ```
@@ -219,7 +219,7 @@ A warning of the design rule check can be fixed or **waived**: in the app, press
 - **Look at the Why tab:** select a wire and read *Why is it like this?* before you override a choice.
 - **Lock what you decided:** a wire or pin you set by hand and lock is kept by every later generation. For a wire, set its gauge, type, colour or length in the **Edit wire** tab (since 1.4.0); for a pin, use the *Mode* column of the **Devices** tab; both can also be set in the harness file (`"locked": true`). See [`user-manual/generate-harnesses.md`](user-manual/generate-harnesses.md#keep-a-choice-of-your-own).
 - **Verify before you send:** `harness-design-studio verify DIR --outputs` re-reads the exported files and compares them with the design; the 12-character model hash in every file tells you which design printed it.
-- **Enter the build data once, import it again:** strip lengths, contacts and accessories with an `ID` can be imported again and again; the same file changes nothing the second time (`import-build-data`, not in the latest release yet).
+- **Enter the build data once, import it again:** strip lengths, contacts and accessories with an `ID` can be imported again and again; the same file changes nothing the second time (`import-build-data`, new in 1.7.0).
 - **Plan on paper first** with `design-worksheet.md` from the templates (not in the 0.1.0 packages).
 
 ## Working with other tools
@@ -237,7 +237,7 @@ What does exist is **files**. The tool reads a few file formats in and writes se
 | Segment lengths | CSV or XLSX | `harness,segment,length`, read **by position** (this order); default unit millimetres; `--unit` can be `mm`, `cm` or `m`. | `harness-design-studio import-lengths DIR FILE` |
 | Unit connector pinouts | KiCad netlist (`.net`, S-expression or XML) | Components whose reference starts with the prefix (default `J`); the symbol fields `HarnessConnector` (connector ID) and `HarnessPart` (part); net names become signal names, optionally renamed with a signal map with the columns `net,signal`. | `harness-design-studio import-netlist DIR FILE --unit UNIT ...` ([`KICAD.md`](KICAD.md)) |
 | One device's connectors and pins | CSV or XLSX | One pin per row. The columns are found by heading: *Connector*, *Pin*, *Signal*, *Mode*, *Contact size*, *Termination*, *Function*, *Cable contact* and, if you have them, *Part* and *Gender*. | `harness-design-studio import-pinout DIR FILE --unit UNIT ...`, or **File > Import > Import device pinout…** ([define a device](user-manual/define-a-device.md#take-the-pinout-from-a-spreadsheet)) |
-| Strip lengths, pin contacts, accessories, crimp tools (not in the latest release yet) | CSV, TSV, JSON or XLSX | The kind is found from the headings (any case, other columns ignored): `Wire`, `Strip A (mm)`, `Strip B (mm)` (and `Harness`); or `Harness`, `Connector`, `Pin`, `Contact` (and `Tool`); or `Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity`, `Note` (and `ID`); or `Part`, `Tool`. | `harness-design-studio import-build-data DIR FILE` ([enter the build data](user-manual/enter-the-build-data.md)). Starting files: `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv` |
+| Strip lengths, pin contacts, accessories, crimp tools (new in 1.7.0) | CSV, TSV, JSON or XLSX | The kind is found from the headings (any case, other columns ignored): `Wire`, `Strip A (mm)`, `Strip B (mm)` (and `Harness`); or `Harness`, `Connector`, `Pin`, `Contact` (and `Tool`); or `Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity`, `Note` (and `ID`); or `Part`, `Tool`. | `harness-design-studio import-build-data DIR FILE` ([enter the build data](user-manual/enter-the-build-data.md)). Starting files: `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv` |
 | Current by wire gauge | CSV | `gauge,amperes` (header optional) | `harness-design-studio config DIR --ampacity-csv FILE` |
 | Other engineering values | the JSON files in `config/` | see [`CONFIG.md`](CONFIG.md) | edit by hand, check with `harness-design-studio config DIR` |
 
@@ -257,7 +257,7 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
                  system.xlsx  traceability.csv
 ```
 
-`W001_build.xlsx` is the build workbook, the file to build a harness from. A harness with accessories also gets `accessories.csv` (not in this project, which has none; [enter the build data](user-manual/enter-the-build-data.md)). The harness drawings (`drawing_A3.pdf`, `drawing_A4.pdf` and `drawing_A3_s1.svg` for each harness) are written only with `harness-design-studio export DIR --drawings` (not in the latest release yet: in 1.6.0 and earlier they were always written, and there was no build workbook). The `ci/build.sh` script does not pass `--drawings`.
+`W001_build.xlsx` is the build workbook, the file to build a harness from. A harness with accessories also gets `accessories.csv` (not in this project, which has none; [enter the build data](user-manual/enter-the-build-data.md)). The harness drawings (`drawing_A3.pdf`, `drawing_A4.pdf` and `drawing_A3_s1.svg` for each harness) are written only with `harness-design-studio export DIR --drawings` (new in 1.7.0: in 1.6.0 and earlier they were always written, and there was no build workbook). The `ci/build.sh` script does not pass `--drawings`.
 
 | Format | Files | Header (first row after the `# ...` stamp line) |
 | --- | --- | --- |
@@ -280,7 +280,7 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
 | YAML | `wireviz.yaml` per harness | "WireViz-style" input: `metadata`, `connectors`, `cables`, `connections`. Written by this tool; **not validated against the WireViz program**. |
 | Markdown | `system/drc_report.md`, `system/revision_report.md` | reports |
 
-Every CSV starts with a comment line (`# harness-design-studio 1.6.0 model <hash>`, with the version that made it) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The Inspector of an interface in the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
+Every CSV starts with a comment line (`# harness-design-studio 1.7.0 model <hash>`, with the version that made it) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The Inspector of an interface in the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
 
 ### Ideas, not features
 

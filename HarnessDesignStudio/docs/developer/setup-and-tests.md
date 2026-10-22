@@ -47,7 +47,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.6.0
+harness 1.7.0
 ```
 
 Start the editor with `harness-design-studio-gui`.
@@ -60,13 +60,13 @@ The prototype tests drive a Chromium browser. `playwright` is installed by `dev`
 pytest
 ```
 
-The whole suite has 3,195 tests in 173 files (`pytest --collect-only -q`, counted on 2026-10-21 for version 1.6.0). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
+The whole suite has 3,428 tests in 180 files (`pytest --collect-only -q`, counted on 2026-10-22 for version 1.7.0). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
 
 The markers (declared in `pyproject.toml`, and `--strict-markers` is on, so an unknown one is an error):
 
-| Marker | Tests (1.6.0) | Meaning |
+| Marker | Tests (1.7.0) | Meaning |
 | --- | --- | --- |
-| `gui` | 1,127 | Needs Qt (run with `QT_QPA_PLATFORM=offscreen`, which `conftest.py` sets). `pytest -m gui` runs only these. |
+| `gui` | 1,219 | Needs Qt (run with `QT_QPA_PLATFORM=offscreen`, which `conftest.py` sets). `pytest -m gui` runs only these. |
 | `ux` | 33 | Drives the clickable prototype in a Chromium browser (playwright). |
 | `perf` | 44 | Asserts a wall-clock limit. CI runs these alone, after the parallel run. A new timing test must carry it, or `tests/test_parallel_safety.py` fails. |
 
@@ -101,12 +101,12 @@ mypy
 ```
 
 ```
-526 files already formatted
+542 files already formatted
 All checks passed!
-Success: no issues found in 379 source files
+Success: no issues found in 392 source files
 ```
 
-(Run on 2026-10-21 for version 1.6.0; the file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `HarnessDesignStudio/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
+(Run on 2026-10-22 for version 1.7.0; the file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `HarnessDesignStudio/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
 
 ## 4. The tests that read the documents
 
@@ -143,7 +143,7 @@ Pictures of the result are made with `tools.ui_screenshots`, timings with `tools
 
 ## The tests of the 1.4.0 and later features
 
-Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made by hand, D-166, and the start check, D-167), version 1.6.0 (the start screen of a blank project) and the work towards 1.7.0 (the build workbook, D-169) added these tests. The ones that open the editor run offscreen and carry `gui`.
+Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made by hand, D-166, and the start check, D-167), version 1.6.0 (the start screen of a blank project) and version 1.7.0 (the build workbook, D-169; the build data, D-170; the simple workspace, D-171) added these tests. The ones that open the editor run offscreen and carry `gui`.
 
 | Tests | What they check |
 | --- | --- |

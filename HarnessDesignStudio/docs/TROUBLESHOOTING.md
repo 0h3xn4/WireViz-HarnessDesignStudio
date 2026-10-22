@@ -60,11 +60,11 @@ bash: line 1: harness-design-studio: command not found
 - **Run from source or pip into a virtual environment (way C):** the environment is not active in this terminal. Run `. .venv/bin/activate` in the folder where you made it.
 - **Nothing installed yet:** start at [`INSTALL.md`](INSTALL.md).
 
-Check with `harness-design-studio --version`; it prints the version, for example `harness 1.6.0`.
+Check with `harness-design-studio --version`; it prints the version, for example `harness 1.7.0`.
 
 ### I am on Windows or a Mac
 
-Version 1.6.0 is supported on **Ubuntu 24.04 or newer, 64-bit x86**, and on **Windows 10 and 11 (64-bit)**, and on nothing else. There are packages for both: see [`INSTALL.md`](INSTALL.md), way A or B for Ubuntu and way D for Windows (decision D-149). The Windows packages are not signed: Windows SmartScreen shows *Windows protected your PC* (**More info**, then **Run anyway**). **macOS was removed in version 1.6.0** (decision D-168): there is no package for it, and nothing is built, tested or supported for it. The releases 1.2.0 to 1.5.0 still carry macOS disk images on GitHub, but they are unmaintained; use them at your own risk. Version 1.1.0 and older run on Ubuntu only. Other Linux distributions and Ubuntu 22.04 and older are not supported. On Ubuntu, check your system with `lsb_release -rs` (must print 24.04 or higher).
+Version 1.7.0 is supported on **Ubuntu 24.04 or newer, 64-bit x86**, and on **Windows 10 and 11 (64-bit)**, and on nothing else. There are packages for both: see [`INSTALL.md`](INSTALL.md), way A or B for Ubuntu and way D for Windows (decision D-149). The Windows packages are not signed: Windows SmartScreen shows *Windows protected your PC* (**More info**, then **Run anyway**). **macOS was removed in version 1.6.0** (decision D-168): there is no package for it, and nothing is built, tested or supported for it. The releases 1.2.0 to 1.5.0 still carry macOS disk images on GitHub, but they are unmaintained; use them at your own risk. Version 1.1.0 and older run on Ubuntu only. Other Linux distributions and Ubuntu 22.04 and older are not supported. On Ubuntu, check your system with `lsb_release -rs` (must print 24.04 or higher).
 
 ### `E: Unable to locate package ./harness-design-studio_...` or `dpkg: dependency problems`
 
@@ -395,7 +395,7 @@ ERROR   released_modified: W002 was changed after its release (revision A) (part
 
 Exit code 1. A released harness, the links it carries, the units and box connectors it uses, **and the parts, interface types and configuration values it relies on** are compared with the baseline stored at the release. The text in the second brackets says what changed (`configuration derating it depends on was changed` for a configuration file). Someone edited a file by hand (or merged one) after the release. **Fix:** undo the edit (`git checkout` the file), or `harness-design-studio revise DIR W002 --by NAME --comment TEXT`, make the change in the new revision and release it. A baseline made by version 0.1.0 holds none of the parts, interface types and configuration, so nothing of that kind is compared for it.
 
-### `ERROR dangling_accessory: Accessory 'ACC-001' in harness 'W001' belongs to ...` (new in 1.7.0; not in the latest release yet)
+### `ERROR dangling_accessory: Accessory 'ACC-001' in harness 'W001' belongs to ...` (new in 1.7.0)
 
 ```
 harness-design-studio validate demo
@@ -515,7 +515,7 @@ row 3: ERROR 'P1' is already in row 2 of this file; each part may appear once
 
 `1e3`, `1_0`, `-0` and `1,234` are refused; a pin count is 1 to 1000; a part ID may appear once. Two approval columns give `error: Two columns of the file are both about the approval status; keep only one.` (exit code 2). A stray double quote in a CSV file gives `error: Line 2: unbalanced quote. A " opens a text that is never closed, ... Nothing was imported.` and imports nothing. An Excel file is read from its first **visible** sheet, and the first output line names it (`Reading sheet 'Parts' (the first visible sheet of the workbook).`). After a release, an import that changes a part a released harness uses is blocked (see below).
 
-### `import-build-data`: `row N: ERROR ...` (new in 1.7.0; not in the latest release yet)
+### `import-build-data`: `row N: ERROR ...` (new in 1.7.0)
 
 `harness-design-studio import-build-data DIR FILE` reads strip lengths, pin contacts, accessories or part tools and finds out which from the column headings. A row with a problem stops the whole import (exit code 1, `Nothing was changed.`). The messages say what to do:
 
@@ -580,16 +580,16 @@ harness-design-studio export demo
 ```
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the block diagram and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the harness overview and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
-34 files written to demo/outputs (model 09710f8f1b03).
+34 files written to demo/outputs (model a161bf5faa85).
 ```
 
-(Made with 1.6.0 from `first-steps`, after renaming two units to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`; the harness drawings are written only with `export --drawings`, so that line appears only then.)
+(Made with 1.7.0 from `first-steps`, after renaming two units to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`; the harness drawings are written only with `export --drawings`, so that line appears only then.)
 
 Not an error (exit code 0, the files are written). The PDF drawings use the Windows-1252 character set, so a name or note with characters outside it (the ohm sign Ω, Greek letters) prints a `?` in the PDF; the SVG drawing, the CSV files and the workbook keep the characters. The warning names every character it replaced (up to eight, then "and N more") and is repeated by `harness-design-studio verify DIR --outputs`. **Fix:** if the PDF is what you send, write the name with letters of Windows-1252 (for example "ohm"); otherwise use the SVG.
 
 ### The drawing PDFs are missing from `outputs/`
 
-Since 1.7.0 (not in the latest release yet) `harness-design-studio export DIR` writes no harness drawings: no `drawing_A3.pdf`, `drawing_A4.pdf` or `drawing_A3_s<n>.svg`. The build workbook is the main output. Add `--drawings` to write them (in the app, tick **Include the PDF drawings** in the Export window):
+Since 1.7.0 `harness-design-studio export DIR` writes no harness drawings: no `drawing_A3.pdf`, `drawing_A4.pdf` or `drawing_A3_s<n>.svg`. The build workbook is the main output. Add `--drawings` to write them (in the app, tick **Include the PDF drawings** in the Export window):
 
 ```
 harness-design-studio export demo --drawings
@@ -615,7 +615,7 @@ Not an error. `to fill in` (on an amber cell) marks a value the design does not 
 
 ### Which file is what?
 
-See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example without build data writes `34 files written to demo-first-steps/outputs (model 85a15171aed5).` (40 with `--drawings`.)
+See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example without build data writes `34 files written to demo-first-steps/outputs (model afd8bd1502d7).` (40 with `--drawings`.)
 
 ## Releasing
 

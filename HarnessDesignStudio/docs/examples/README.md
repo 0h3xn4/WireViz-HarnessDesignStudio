@@ -15,7 +15,7 @@ This page describes the five example projects and the 18 template files that shi
 - [The 18 template files](#the-18-template-files)
 - [WireViz examples in this repository](#wireviz-examples-in-this-repository)
 
-Every command below was run with the tool (version `1.6.0`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
+Every command below was run with the tool (version `1.7.0`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
 
 ## At a glance
 
@@ -31,7 +31,7 @@ In the app, **File > New project from an example…** makes a project from any o
 
 ## Which build do you have?
 
-`harness-design-studio --version` prints `harness 1.6.0` for this version (1.0.0 and later list the same five examples). If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
+`harness-design-studio --version` prints `harness 1.7.0` for this version (1.0.0 and later list the same five examples). If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
 
 ```
 harness-design-studio new --list
@@ -82,7 +82,7 @@ harness-design-studio drc my-blank
 0 interfaces and 0 wires checked: 0 error(s)
 # Design rule check: My project
 
-Model hash: `6dd2d0fb0579`. Rules run: 35.
+Model hash: `e70383e5ae84`. Rules run: 35.
 Open: 0 error(s), 0 warning(s), 0 note(s). Waived: 0.
 ```
 
@@ -114,7 +114,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 interfaces and 6 wires checked: 0 error(s)
 # Design rule check: First steps: reaction wheel link
 
-Model hash: `431cd03ca16a`. Rules run: 35.
+Model hash: `afd8bd1502d7`. Rules run: 35.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 ```
 
@@ -123,7 +123,7 @@ harness-design-studio export my-first-steps
 ```
 
 ```
-34 files written to my-first-steps/outputs (model 431cd03ca16a).
+34 files written to my-first-steps/outputs (model afd8bd1502d7).
 ```
 
 All ten warnings say that an example part is used and nobody has approved it. The notes say which checks did not run because their numbers are missing, and which choices nobody has confirmed yet. That is the tool being honest, not a failure. **Next:** the walk-through in [`GETTING_STARTED.md`](../GETTING_STARTED.md) (about 45 minutes) or the nine steps of [`LEARNING_PATH.md`](../LEARNING_PATH.md). The tutorial quotes a different hash because it creates the project with `--name "Wheel link"`.
@@ -151,11 +151,11 @@ harness-design-studio drc my-minimal-satellite
 11 interfaces and 24 wires checked: 0 error(s)
 # Design rule check: Minimal satellite
 
-Model hash: `8bbad14d54f6`. Rules run: 35.
+Model hash: `360573b88208`. Rules run: 35.
 Open: 0 error(s), 15 warning(s), 17 note(s). Waived: 0.
 ```
 
-`harness-design-studio validate` first reports `7 units, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `115 files written to my-minimal-satellite/outputs (model dc2181642352).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the units and interfaces of your own on paper first.
+`harness-design-studio validate` first reports `7 units, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `115 files written to my-minimal-satellite/outputs (model 360573b88208).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the units and interfaces of your own on paper first.
 
 ## small-satellite
 
@@ -180,11 +180,11 @@ harness-design-studio drc my-small-satellite
 24 interfaces and 54 wires checked: 0 error(s)
 # Design rule check: Small satellite (reference)
 
-Model hash: `5189733bf3cb`. Rules run: 35.
+Model hash: `7d5c42c98f4f`. Rules run: 35.
 Open: 0 error(s), 20 warning(s), 28 note(s). Waived: 0.
 ```
 
-`harness-design-studio validate` first reports `14 units, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `232 files written to my-small-satellite/outputs (model ab99715b5cf2).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a unit and use **Create redundant copy** on it, or read the Problems tab.
+`harness-design-studio validate` first reports `14 units, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `232 files written to my-small-satellite/outputs (model 7d5c42c98f4f).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a unit and use **Create redundant copy** on it, or read the Problems tab.
 
 ## flatsat
 
@@ -212,15 +212,15 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 44 interfaces and 103 wires checked: 0 error(s)
 # Design rule check: Flatsat (EXAMPLE numbers, not engineering data)
 
-Model hash: `a2b89ff21bd8`. Rules run: 35.
+Model hash: `2ff3df68f87e`. Rules run: 35.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
-`harness-design-studio export my-flatsat` writes `88 files written to my-flatsat/outputs (model a2b89ff21bd8).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
+`harness-design-studio export my-flatsat` writes `88 files written to my-flatsat/outputs (model 2ff3df68f87e).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 units, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
 
 ## Does every example run?
 
-Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.6.0. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (the counts of harnesses, wires and findings as above; the hashes differ; 0.1.0 wrote the drawings and no build workbook).
+Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.7.0. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (the counts of harnesses, wires and findings as above; the hashes differ; 0.1.0 wrote the drawings and no build workbook).
 
 | Example | `validate` | `generate` | `drc` | `export` | `verify --outputs` |
 | --- | --- | --- | --- | --- | --- |
@@ -230,7 +230,7 @@ Every example was run through `new`, `validate`, `generate` (where it is not alr
 | `small-satellite` | 0 errors | 24 added, 54 wires | 0 errors, 20 warnings, 28 notes | 232 files | 0 errors |
 | `flatsat` | 0 errors | 8 unchanged, 103 wires | 0 errors, 28 warnings, 47 notes | 88 files | 0 errors |
 
-The file counts are those of `export` without `--drawings` (a build workbook for every harness, no harness drawings). This is on `master` and not in the latest release yet: with 1.6.0 and earlier, `export` wrote the drawings and no build workbook, and the counts were 38, 137, 280 and 112. With `export --drawings` the counts are 40, 148, 304 and 120 (the old count plus one build workbook for each harness: 2, 11, 24 and 8). `verify --outputs` ends with 0 errors in both cases.
+The file counts are those of `export` without `--drawings` (a build workbook for every harness, no harness drawings). This is new in 1.7.0: with 1.6.0 and earlier, `export` wrote the drawings and no build workbook, and the counts were 38, 137, 280 and 112. With `export --drawings` the counts are 40, 148, 304 and 120 (the old count plus one build workbook for each harness: 2, 11, 24 and 8). `verify --outputs` ends with 0 errors in both cases.
 
 ## The 18 template files
 
@@ -267,7 +267,7 @@ The files are written for the `first-steps` example, so you can try each one bef
 | 17 | `pin-contacts.csv` | two example rows: the contact part and crimp tool of a pin of a harness made by hand | `harness-design-studio import-build-data` | **no, new in 1.7.0** |
 | 18 | `accessories.csv` | two example rows: sleeving and heat shrink of a harness | `harness-design-studio import-build-data` | **no, new in 1.7.0** |
 
-The three build data files (16 to 18) are on `master` and not in the latest release yet; their rows are examples with example numbers, to replace with your own, and `pin-contacts.csv` names contact parts (`EX-CONTACT-22`) that the starter library does not hold: import the parts first ([enter the build data](../user-manual/enter-the-build-data.md)). On the 0.1.0 packages the command writes 14 files (no `design-worksheet.md`). The demo values and `ampacity-DEMO-ONLY.csv` are **not from any standard and not engineering data**; the files stay marked as placeholders. See [`PLACEHOLDERS.md`](../PLACEHOLDERS.md).
+The three build data files (16 to 18) are new in 1.7.0; their rows are examples with example numbers, to replace with your own, and `pin-contacts.csv` names contact parts (`EX-CONTACT-22`) that the starter library does not hold: import the parts first ([enter the build data](../user-manual/enter-the-build-data.md)). On the 0.1.0 packages the command writes 14 files (no `design-worksheet.md`). The demo values and `ampacity-DEMO-ONLY.csv` are **not from any standard and not engineering data**; the files stay marked as placeholders. See [`PLACEHOLDERS.md`](../PLACEHOLDERS.md).
 
 ## WireViz examples in this repository
 
