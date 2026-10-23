@@ -22,7 +22,7 @@ This page shows how to turn your units and links into harnesses (connectors, pin
 
 **In the app** (GUI, not run)
 
-1. Press **Generate** in the top bar (**Design > Generate harnesses**, Ctrl+G).
+1. Press **Generate** in the top bar (**Design > Generate harnesses**, Ctrl+G). On the Next step page of the Simple workspace the button is **Generate the harnesses**; it does the same.
 2. A window shows a **preview** of what would be added, changed and removed. Nothing changes until you press **Apply**. (**Cancel** leaves the project as it was.)
 3. The **Harness** tab (the **Drawings** area of the rail) opens on the result. To take it back, press **Undo** (Ctrl+Z). One Undo reverses the whole generation.
 
@@ -81,12 +81,14 @@ Exit code 0 means no errors. 1 means the project has errors. 2 means a usage err
 
 ## 3. Read why a wire is the way it is
 
-In the app, open the **Harness** tab (Ctrl+2; **Drawings** on the rail) and pick a harness, for example `W002`, in the list at the top left:
+In the app, open the **Harness** tab (Ctrl+2; **Drawings** on the rail) and pick a harness, for example `W002`, in the list at the top left.:
 
 - **Connectors and pins** lists every pin with its signal and wire; a pin whose gauge or length is not known yet has a **Pending** chip, and one that the tool chose and nobody has reviewed an **Auto-filled** chip. Spare pins are hidden and counted under the table; **Show spare pins** shows them.
 - **Wires** shows each wire with its signal, ends, **Gauge**, **Length**, **Colour** and **Locked** (the **Colour** column in the app is not in the 0.1.0 packages).
 - **Why** names the rule behind the wire, connector or pin you select, including gauge and length. This is the tool's answer to "why is it like this?". **Show in Why panel** shows the same in the **Why** tab of the right panel.
 - **Drawing** previews the drawing sheet. [Export](export-the-outputs.md) writes it as a PDF only when you ask for the drawings (the check box **Include the PDF drawings**, or `--drawings`). It takes the width and most of the height of the area, with the pin table, the wire table and the reasons under it. The wheel zooms, a drag pans, **Previous sheet** and **Next sheet** page through it, hovering a wire in the drawing or the table marks it in the other, and picking a wire in the drawing selects its link for the Inspector.
+
+Beside **Why** are the tabs **Edit wire**, **Connectors** and **Accessories**, which change the harness: [edit a wire](edit-a-wire.md), [build a harness by hand](build-a-harness-by-hand.md), [enter the build data](enter-the-build-data.md).
 
 There is no command line version of the **Why** pane. The same reasons are stored in `generated/generation.json` in the project, under `provenance`.
 

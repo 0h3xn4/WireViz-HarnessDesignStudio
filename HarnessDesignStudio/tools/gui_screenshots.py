@@ -1,7 +1,7 @@
 # mypy: allow-untyped-calls, no-warn-unused-ignores
 """Render screenshots of the real Qt editor (offscreen) into docs/ux/qt for the docs and the UX review.
 Files 01 to 13 show the built-in sample; 14 and up show the views and dialogs of the editor on the
-flatsat example (project tree, Harness, Lists, Checks, Releases, engineering values, export, import
+flatsat example, in the Full workspace (project tree, Harness, Lists, Checks, Releases, engineering values, export, import
 wizard, release dialog, new project, stale banner). Usage: python -m tools.gui_screenshots"""
 
 import shutil
@@ -33,12 +33,15 @@ def main() -> int:
     settings = QSettings(str(Path(tempfile.mkdtemp()) / "ui.ini"), QSettings.Format.IniFormat)
     win = MainWindow(settings, ThemeManager(), first_run=False)
     win.ask_choice = lambda t, x, b: 1  # type: ignore[assignment]
+    win.set_workspace("full")  # an empty settings file opens the Simple workspace (1.7.0)
     win.resize(1440, 900)
     win.show()
+    win.go_to("diagram")  # (a project opens on the Next step page in the Simple workspace)
 
     def shot(name: str, widget: object = None) -> None:
         if widget is None:
             _settle(win)  # the check has finished, so the pictures do not depend on timing
+        win.jobs.finish("")  # not the time of the last check: it differs on every run
         app.processEvents()
         (widget or win).grab().save(str(OUT / f"{name}.png"))  # type: ignore[attr-defined]
         print(name)
@@ -156,6 +159,7 @@ def _settle(win: MainWindow, ms: int = 400, timeout: int = 30000) -> None:
 
 
 def _grab(win: MainWindow, name: str, widget: Any = None) -> None:
+    win.jobs.finish("")  # not the time of the last check: it differs on every run
     QApplication.processEvents()
     (widget or win).grab().save(str(OUT / f"{name}.png"))
     print(name)
@@ -173,6 +177,7 @@ def views() -> None:
     settings = QSettings(str(tmp / "ui.ini"), QSettings.Format.IniFormat)
     win = MainWindow(settings, ThemeManager(), first_run=False)
     win.ask_choice = lambda t, x, b: 1  # type: ignore[assignment]
+    win.set_workspace("full")
     win.resize(1440, 900)
     win.show()
     assert win.open_project(tmp / "flatsat")
@@ -277,6 +282,7 @@ def wizard_and_release() -> None:
     parts = tmp / "my-templates" / "approved-parts.csv"
     settings = QSettings(str(tmp / "ui.ini"), QSettings.Format.IniFormat)
     win = MainWindow(settings, ThemeManager(), first_run=False)
+    win.set_workspace("full")
     win.resize(1440, 900)
     win.show()
     assert win.open_project(tmp / "flatsat")

@@ -2,7 +2,7 @@
 
 For ECSS-Q-ST-80C 5.3.1 (risk management by cross-reference to the project risk policy, ECSS-M-ST-80, not supplied) and 5.3.2. It starts from the risks the repository already documents. **Likelihood, severity and the owner of each risk are empty on purpose**: they are judgements for the owner (and, for the safety items, the analysis of A-07). A risk is "closed" only when a person writes why.
 
-**As of 1.6.0 (2026-10-21):** the register was updated for the platforms (macOS removed after 1.5.0, D-168; R-05, R-14); no rating or owner was set, no risk was closed, and no risk was added for the features of 1.4.0 to 1.6.0 (wires and groups drawn by hand, a harness made by hand, a device library): a person has to say whether they need one.
+**As of 1.7.0 (2026-10-22):** the register was updated for the platforms (macOS removed after 1.5.0, D-168; R-05, R-14) and not again for 1.7.0; no rating or owner was set, no risk was closed, and no risk was added for the features of 1.4.0 to 1.7.0 (wires and groups drawn by hand, a harness made by hand, a device library, a build workbook that people build harnesses from, build data entered by hand, a simple workspace): a person has to say whether they need one.
 
 Scales to use until the project's own risk policy is known (the owner may replace them): likelihood 1 (unlikely) to 5 (expected); severity 1 (cosmetic) to 5 (a wrong output reaches a built harness unnoticed, matching severity levels 4 to 1 of `docs/PROBLEM_REPORTING.md`).
 

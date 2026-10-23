@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.6.0 (2026-10-21), the one without macOS; version 1.7.0 (a build workbook for every harness, the build data, a simple workspace) is prepared and not published yet. The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and later versions have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.7.0 (2026-10-22: a build workbook for every harness, the build data, a simple workspace). The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
 
 ## Contents
 
@@ -43,32 +43,41 @@ You also need about 500 MB of free disk space for the program (`df -h ~` shows i
 
 You need one file, either `harness-design-studio_<version>_amd64.deb` (way A), `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B), `harness-design-studio-<version>-windows-x86_64-setup.exe` or `harness-design-studio-<version>-windows-x86_64.zip` (way D). Ask your tool administrator, or take it from one of these places:
 
-- the **Releases** page of the project's repository (look for the newest version number). Version 1.6.0 (tag `v1.6.0`, published 2026-10-21) has these files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
+- the **Releases** page of the project's repository (look for the newest version number). Version 1.7.0 (tag `v1.7.0`, published 2026-10-22) has these files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
 
   | File | For | Way |
   | --- | --- | --- |
-  | `harness-design-studio_1.6.0_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
-  | `harness-design-studio-1.6.0-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
-  | `harness-design-studio-1.6.0-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
-  | `harness-design-studio-1.6.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
+  | `harness-design-studio_1.7.0_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
+  | `harness-design-studio-1.7.0-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
+  | `harness-design-studio-1.7.0-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
+  | `harness-design-studio-1.7.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
   | `SHA256SUMS` | the SHA-256 checksum of each package | |
 
-  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 and two macOS disk images that are not maintained any more (D-168). The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
+  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 and 1.7.0 and two macOS disk images that are not maintained any more (D-168); 1.6.0 has the same four packages and `SHA256SUMS` as 1.7.0. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
 - the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact `harness-design-studio-ubuntu-24.04` of the CI run holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file); the run of the workflow `harness-design-studio packages (Windows)` on a branch `pkg/...` keeps the Windows packages as the artifact `harness-design-studio-windows-x86_64`. Such a build is made again on another machine and is not the file of a release.
 
 You can also build it yourself (way C, last section). That route needs no release files at all.
 
 Copy the file to the machine. It never needs to reach the network.
 
-**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file (the `SHA256SUMS` file on the release page, one file for all packages of a release from 1.2.0, and `compliance/evidence/release_<version>_SHA256SUMS` in the repository for every release from 0.1.0 to 1.6.0). Compare:
+**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file: the `SHA256SUMS` file on the release page (one file for all the packages of a release from 1.2.0) and `compliance/evidence/release_<version>_SHA256SUMS` in the repository (every release from 0.1.0 to 1.7.0). For 1.7.0 they are:
+
+| File | SHA-256 |
+| --- | --- |
+| `harness-design-studio_1.7.0_amd64.deb` | `d1b840873b006deacb04b3320ea0ceca966471eefe1c17686f8cbae53d59aca3` |
+| `harness-design-studio-1.7.0-linux-x86_64.tar.gz` | `014ea04ca8642f5abeec8fda52a549911aaeada3615e6aca90aab9528ae714e0` |
+| `harness-design-studio-1.7.0-windows-x86_64-setup.exe` | `5f7b237f48265e8dee7f68212e8c148661613d94fef04a694f54598ace77826f` |
+| `harness-design-studio-1.7.0-windows-x86_64.zip` | `49ecb3d2ba4d25a7452d827eef190e57afd88ae352dd9cbe9dfbbd61ba926616` |
+
+On Linux, put the package you downloaded and `SHA256SUMS` in one folder and run:
 
 ```
-sha256sum harness-design-studio_<version>_amd64.deb
+sha256sum -c SHA256SUMS --ignore-missing
 ```
 
-(On Windows: `Get-FileHash <file> -Algorithm SHA256` in PowerShell.)
+It prints `<file>: OK` for the file you have (`--ignore-missing` skips the packages you did not download). To compare by hand, run `sha256sum <file>` and read the value against the table. On Windows: `Get-FileHash <file> -Algorithm SHA256` in PowerShell.
 
-The printed value must be the same as the one in the list. If it differs, do not install the file. The packages are not signed (this is a recorded deviation, `compliance/DEVIATIONS.md` T-19), so the checksum is the only check you have. A package built by CI is built again on another machine, so its checksum can differ from the recorded one. For such a package compute the checksum yourself (`sha256sum`) on the machine that built it and compare it with the file you received; the recorded list applies to the packages named in it.
+If a value differs, do not install the file. The packages are not signed (this is a recorded deviation, `compliance/DEVIATIONS.md` T-19), so the checksum is the only check you have. A package built by CI is built again on another machine, so its checksum can differ from the recorded one. For such a package compute the checksum yourself (`sha256sum`) on the machine that built it and compare it with the file you received; the recorded list applies to the packages named in it.
 
 ## A. The `.deb` package (recommended)
 
@@ -76,7 +85,7 @@ The printed value must be the same as the one in the list. If it differs, do not
 sudo apt install ./harness-design-studio_<version>_amd64.deb
 ```
 
-(Use `./` in front of the name; without it `apt` looks in its online lists.) This installs the program into `/opt/harness-design-studio` and puts three commands on your path:
+(Use `./` in front of the name; without it `apt` looks in its online lists. Double-clicking the file in the file manager also works, as the release page says.) This installs the program into `/opt/harness-design-studio` and puts three commands on your path:
 
 - `harness-design-studio-gui`: the app (also in the application menu as **Harness Design Studio**).
 - `harness-design-studio`: the command line tool.
@@ -134,9 +143,11 @@ harness-design-studio-gui --selftest    # opens the editor offscreen, makes a pr
 
 `--selftest` exists only in the installed editor (`harness-design-studio-gui` of the `.deb` and the `.tar.gz`). When you run from source (way C) the app command is also called `harness-design-studio-gui` (and `harness-gui`), but that one does not know the flag and simply starts the app. From source, check with `harness-design-studio --version`, then the five-minute check below, and `pytest` if you installed the `dev` extras.
 
-Then start **Harness Design Studio** from the application menu. The first start opens a sample project and a short tour.
+Then start **Harness Design Studio** from the application menu. The first start opens a built-in sample project on the **Next step** page and a short tour.
 
-**What you should see:** a window with the title *Harness Design Studio*, a navigation rail down the left edge (*Home*, *Model*, *Checks*, *Drawings*, *Outputs*, *Revisions*, *Settings*), one row at the top with the project name and the steps *Generate*, *Check* and *Release*, a diagram of boxes (units) joined by lines (interfaces) in the middle (the *Model* area), the *Project* tree, *Units* and *Interfaces* on the left, the *Inspector*, *Why* and *Problems* tabs on the right, and the menus **File**, **Edit**, **View**, **Design**, **Go** and **Help**. A short tour opens on the first start. If the window is too small or the text is hard to read, see *If the app does not start* below. **F1** opens the user guide.
+**What you should see:** a window with the title *Harness Design Studio* (with the name of the project in front of it), a navigation rail down the left edge (*Next step*, *Model*, *Checks*, *Drawings*, *Outputs*, *Revisions*, *Settings*), one row at the top with the project name, **Undo** and **Redo**, **Guided** and **Expert**, **Show panels**, **Search**, the steps *Generate*, *Check* and *Release…*, **Export…** and a status chip, and the menus **File**, **Edit**, **View**, **Design**, **Go** and **Help**. The page itself is headed *What to do next*: one card with one button, the six steps of the work with *done*, *next* or *to do* beside each, and a link **Show everything**. This is the **Simple workspace**, which a first run starts in: the project tree, the Inspector and the Problems panel are closed, and the rail has no *Home*.
+
+To see the whole editor (a diagram of boxes joined by lines, the *Project* tree, *Units* and *Interfaces* on the left, the *Inspector*, *Why* and *Problems* tabs on the right, *Home* in the rail), click **Show everything**, or choose **View > Full**. **Show panels** opens only the tree and the Inspector. **View > Simple** goes back; see [use the simple workspace](user-manual/use-the-simple-workspace.md). A person who already had a settings file (an older version) starts in the Full workspace. If the window is too small or the text is hard to read, see *If the app does not start* below. **F1** opens the user guide.
 
 ## Your first five minutes after installing
 
@@ -244,14 +255,14 @@ Then start **Harness Design Studio** from the Start menu and continue with [Your
 | The editor does not appear, or a black or empty window shows | Update the graphics driver, then run the self-test above to see whether the program itself is intact. |
 | Your company blocks programs in `%LOCALAPPDATA%` | Ask for an exception for the install folder, or run the portable `.zip` from a folder that is allowed. |
 
-Settings (theme, scale, last project; no design data) are in `%APPDATA%\HarnessDesigner\HarnessDesigner.ini`.
+Settings (theme, scale, Simple or Full workspace, last project; no design data) are in `%APPDATA%\HarnessDesigner\HarnessDesigner.ini`.
 
 ## Where things are stored
 
 | What | Where |
 | --- | --- |
 | Your projects | wherever you saved them (a folder per project) |
-| App settings (theme, scale, last project) | Linux: `~/.config/HarnessDesigner/HarnessDesigner.ini`; Windows: `%APPDATA%\HarnessDesigner\HarnessDesigner.ini` (no design data) |
+| App settings (theme, scale, Simple or Full workspace, last project) | Linux: `~/.config/HarnessDesigner/HarnessDesigner.ini`; Windows: `%APPDATA%\HarnessDesigner\HarnessDesigner.ini` (no design data) |
 | Autosave of an open project | `<project>/.harness-recovery/` (offered for restore after a crash; ignored by Git) |
 
 Next: [`GETTING_STARTED.md`](GETTING_STARTED.md).

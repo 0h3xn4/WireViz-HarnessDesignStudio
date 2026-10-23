@@ -2,7 +2,7 @@
 
 This page shows how to write the build workbook and the lists of a design (wire lists, pinouts, parts list, test tables, labels, block diagram) into the project's `outputs` folder, how to build a harness from the workbook, how to add the PDF drawings, and how to check that the files are current. The build data a technician needs (strip lengths, contacts, crimp tools, accessories) is entered first: [enter the build data](enter-the-build-data.md).
 
-> **New in 1.7.0.** The build workbook (`<ID>_build.xlsx`) and the option `--drawings` are new in 1.7.0 (decision D-169). In 1.6.0 and earlier, `export` always wrote the PDF drawings and there was no build workbook; see the [changelog](../../CHANGELOG.md). The strip lengths, contacts, crimp tools and accessories in the workbook are new in 1.7.0 too (decision D-170).
+> **Since 1.7.0.** The build workbook (`<ID>_build.xlsx`) and the option `--drawings` are part of 1.7.0 (decision D-169). In 1.6.0 and earlier, `export` always wrote the PDF drawings and there was no build workbook; see the [changelog](../../CHANGELOG.md). The strip lengths, contacts, crimp tools and accessories in the workbook are from 1.7.0 too (decision D-170).
 
 ## Contents
 
@@ -25,7 +25,9 @@ This page shows how to write the build workbook and the lists of a design (wire 
 
 ## 1. Export
 
-**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…**, Ctrl+E). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and the button **Export**. The project must be saved to a folder first (the window says so and offers **Save project…**). The check box is ticked only when the previous export into this folder had drawings; the first time it is not ticked, and the tree then lists no drawing documents ([section 5](#5-the-pdf-drawings-optional)). When the export is done the window lists the files written ("34 files written to …") and the app says "34 files written to the outputs folder (design 5e6bcbd63d91)." (your numbers will differ). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The same files, with their checksums, are listed afterwards under **Exported files** in the Outputs area ([section 7](#7-check-that-the-outputs-are-current)). The export always writes the whole set of the harnesses; the check box is the only choice. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
+**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…** or **Design > Export…**, Ctrl+E; on the Next step page of the Simple workspace the button is **Export the build sheets**, which opens the same window). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and the button **Export**. The project must be saved to a folder first (the window says so and offers **Save project…**). The check box is ticked only when the previous export into this folder had drawings; the first time it is not ticked, and the tree then lists no drawing documents ([section 5](#5-the-pdf-drawings-optional)). When the export is done the window lists the files written ("35 files written to …") and the app says "35 files written to the outputs folder (design 5e6bcbd63d91)." (your numbers will differ; the app counts `manifest.json`, the command line below does not, so it says 34 for the same files). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The same files, with their checksums, are listed afterwards under **Exported files** in the Outputs area ([section 7](#7-check-that-the-outputs-are-current)). The export always writes the whole set of the harnesses; the check box is the only choice. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
+
+![The Export outputs window before an export: the output folder, the tree of harnesses and documents with the build workbook of each harness, the check box Include the PDF drawings not ticked, and the Export button](../img/export-window.png)
 
 **On the command line**:
 
@@ -161,6 +163,10 @@ An export without `--drawings` into a folder that holds the drawings of an earli
 
 **In the app** (GUI, not run), tick **Include the PDF drawings** in the **Export outputs** window before you press **Export**. The box is ticked at the start only when the previous export into this folder had drawings. While it is ticked, the tree lists the drawing documents. Unticking it and exporting removes the drawings an earlier export wrote.
 
+![The Export outputs window after an export with Include the PDF drawings ticked: 41 files written, the list of files with their sizes, and the drawing documents in the tree of each harness](../img/export-window-done.png)
+
+The window above is for the practice project (a generated `first-steps` project with its parts approved): the 41 files are the 40 of the command line plus `manifest.json`.
+
 **After a release** the outputs are written again with the same set as the export before it: with the drawings if that export had them, without if it had not ([release a harness](release-a-harness.md)).
 
 The independent check accepts a set with the drawings of every harness and a set with none.
@@ -224,4 +230,4 @@ It also finds files that were edited or deleted after the export (`[out_modified
 
 More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 
-Next: [enter the build data](enter-the-build-data.md), [release a harness](release-a-harness.md), [set wire colours](set-wire-colours.md)
+Next: [naming and title block](naming-and-title-block.md), [release a harness](release-a-harness.md), [set wire colours](set-wire-colours.md)

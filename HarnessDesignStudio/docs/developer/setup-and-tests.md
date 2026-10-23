@@ -60,7 +60,7 @@ The prototype tests drive a Chromium browser. `playwright` is installed by `dev`
 pytest
 ```
 
-The whole suite has 3,428 tests in 180 files (`pytest --collect-only -q`, counted on 2026-10-22 for version 1.7.0). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
+The whole suite has 3,429 tests in 180 files (`pytest --collect-only -q`, counted on 2026-10-22 for version 1.7.0, the tagged commit `e5d8b1e`). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
 
 The markers (declared in `pyproject.toml`, and `--strict-markers` is on, so an unknown one is an error):
 
@@ -101,7 +101,7 @@ mypy
 ```
 
 ```
-542 files already formatted
+543 files already formatted
 All checks passed!
 Success: no issues found in 392 source files
 ```
@@ -158,6 +158,11 @@ Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made 
 | `tests/test_ui_from_scratch.py` | The Connectors tab, the New harness button and action, the journey from a blank project in the window, and (1.6.0) the **Add a device** button of the empty diagram. |
 | `tests/test_ui_wire_editor.py` | The Edit wire tab: selection, apply, reset, several wires, the new wire form, groups, the labels form. |
 | `tests/test_build_workbook.py` | The build workbook (D-169): eight sheets, the same bytes for the same model, no formulas, text that looks like a formula stored as text, the layout, the cut order and colours, every pin in a block, the empty result columns, the readiness lines; the drawings optional (`drawings=False`), a set with the drawings of only some harnesses reported, the folder remembering whether it had drawings; a mutation test for each check of the independent verifier. |
+| `tests/test_build_data.py` | The build data (D-170): the plans for strip lengths, contacts, crimp tools and accessories (a released harness refuses, a value outside its range is refused), what generation keeps and what it reports as lost, the Devices pin edit, `import-build-data` (the kind found from the headings, a refused row stops the whole import, `--dry-run`, the shipped templates) and the parts import column *Tool*. |
+| `tests/test_build_data_outputs.py` | The build data in the outputs: optional table columns and `accessories.csv` only where used, always in the build workbook, the BOM lines of contacts and accessories, and a mutation test for each check of the independent verifier. |
+| `tests/test_ui_build_data.py` | The build data in the editor: strip lengths in *Edit wire*, the *Cable contact* column of the Devices tab, the contact in the *Connectors* tab, the *Accessories* tab and the crimp tool in the Inspector; one undo step each, controls off with the reason for a released harness or a read-only project. |
+| `tests/test_next_step.py` | The one next step of the simple workspace (D-171, stage S1) over every combination of facts, and the workspace setting helpers. No Qt. |
+| `tests/test_ui_next_page.py`, `tests/test_ui_simple_workspace.py` | The Next step page and the Simple / Full setting (S1); the Simple workspace showing less until the person asks: rail without Home, closed panels, reduced tool row, *Show panels*, a layout kept for each workspace (S2). |
 
 The proof that existing work is unchanged is `tests/test_output_hashes.py` (above): the 567 files of the four examples still match release 1.2.0 apart from the version stamp (the build workbooks, new in 1.7.0, are not compared).
 

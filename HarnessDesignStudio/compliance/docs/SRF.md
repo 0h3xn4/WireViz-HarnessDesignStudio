@@ -1,6 +1,6 @@
 # Software reuse file (SRF)
 
-DRD: ECSS-E-ST-40C Annex N. Status: draft, not reviewed; the versions below were compared with `pyproject.toml` and the development environment on 2026-10-21 (version 1.6.0). Reused software is third-party open-source software used as libraries; there is no earlier project software and no software reused from a previous development of the owner. WireViz (GPL-3.0, in the same repository at `../src/wireviz`) is **not** used, copied or imported (clean-room rule; WireViz YAML is an export format only).
+DRD: ECSS-E-ST-40C Annex N. Status: draft, not reviewed; the versions below were compared with `pyproject.toml` and the development environment on 2026-10-21 (version 1.6.0; the dependencies in `pyproject.toml` did not change in 1.7.0, checked by diff against the tag `v1.6.0`, and the versions of the Python packages of the table equal those of the development environment on 2026-10-22). Reused software is third-party open-source software used as libraries; there is no earlier project software and no software reused from a previous development of the owner. WireViz (GPL-3.0, in the same repository at `../src/wireviz`) is **not** used, copied or imported (clean-room rule; WireViz YAML is an export format only).
 
 ## 1 to 3. Introduction, references, terms
 `../../docs/DECISIONS.md` (D-31 to D-42, D-73, D-125) records each choice. `../../dist/release-docs/licence-report.md` and `sbom.cdx.json` are produced by `python -m tools.gen_sbom` for each release.

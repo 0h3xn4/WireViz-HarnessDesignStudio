@@ -66,7 +66,7 @@ Comparing before with after: 0 added, 0 removed, 3 changed.
 - Harness `W002`
   - approver: A. Engineer -> (none)
   - checker: B. Checker -> (none)
-  - released_on: 2026-10-21 -> (none)
+  - released_on: 2026-10-22 -> (none)
   - revision: A -> B
   - status: released -> draft
 - Wire `W002-001`
@@ -89,7 +89,7 @@ harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "Seco
 ```
 
 ```
-34 files written to wheel-link/outputs (model 2727c9492701).
+34 files written to wheel-link/outputs (model 0bf2c18b7fef).
 Release W002 revision B: done.
 Outputs re-exported with the released status (34 files).
 ```
@@ -126,10 +126,10 @@ harness-design-studio log wheel-link
 
 ```
 Entry | Harness | Revision | Event | By | Date | Comment
-C0001 | W002 | A | submitted for review | A. Engineer | 2026-10-21 | 
-C0002 | W002 | A | released | A. Engineer | 2026-10-21 | First release of the wheel power harness [Released on placeholder configuration (...); accepted by A. Engineer: Practice project: demo values only] [...]
-C0003 | W002 | B | new revision started | A. Engineer | 2026-10-21 | Add wire colours for the second revision
-C0004 | W002 | B | released | A. Engineer | 2026-10-21 | Second revision with wire colours [Released on placeholder configuration (...); ...] [...]
+C0001 | W002 | A | submitted for review | A. Engineer | 2026-10-22 | 
+C0002 | W002 | A | released | A. Engineer | 2026-10-22 | First release of the wheel power harness [Released on placeholder configuration (...); accepted by A. Engineer: Practice project: demo values only] [...]
+C0003 | W002 | B | new revision started | A. Engineer | 2026-10-22 | Add wire colours for the second revision
+C0004 | W002 | B | released | A. Engineer | 2026-10-22 | Second revision with wire colours [Released on placeholder configuration (...); ...] [...]
 ```
 
 (Long parts of the comment column are shortened here with `...`.) Add a harness ID (`harness-design-studio log wheel-link W002`) to see one harness. In the app: the timeline of the **Releases** tab, or **Change log…** in the **More** menu of the **Harness** tab (also **Design > Show change log of harness…**). The entries cannot be deleted. The outputs also have them: `system/changelog.csv` and `system/revision_report.md`.

@@ -28,7 +28,7 @@ The data flow, from left to right:
 project folder (JSON) -> load -> model -> commands (edit, undo, redo)
                                        -> generate -> harnesses, with a reason for each choice
                                        -> checks and design rules -> findings
-                                       -> outputs (SVG, PDF, CSV, XLSX, YAML, JSON), then an independent verifier
+                                       -> outputs (build workbook, CSV, XLSX, YAML, JSON; SVG and PDF drawings on request), then an independent verifier
 ```
 
 The project folder is the source of truth. Everything generated can be generated again.
@@ -46,14 +46,15 @@ The full, current layout of `core/` is in [`../ARCHITECTURE.md`](../ARCHITECTURE
 | `core/generate/` | Segmentation, wiring, pin allocation, sizing, lengths, mass, naming, explanations, the engine. |
 | `core/verify.py` | The independent check of a generation. |
 | `core/drc/` | The design rules and their report. |
-| `core/outputs/` | The writers and the independent output verifier. |
+| `core/outputs/` | The writers and the independent output verifier. `buildsheet.py` writes the build workbook of a harness (1.7.0, D-169); the harness drawings are written only on request. |
 | `core/vcs/` | Release, revisions, baselines, diff, change log, and `gitinfo` (the last commit of the repository, read without running Git). |
 | `core/kicad.py`, `core/library_import.py`, `core/imports.py`, `core/pinout_import.py` | The importers. |
 | `core/devices.py`, `core/device_library.py` | Custom devices down to each pin: the plans behind the Devices tab; device library files that carry a device to another project (1.4.0). |
 | `core/wires.py` | The plans behind the Edit wire tab: edit, draw, move, delete and group wires, labels (1.4.0). |
 | `core/manual_harness.py` | A harness made by hand: new harness, cable connectors (free-standing or plugging into a unit's connector), pin function and termination, delete connector; Generate leaves such a harness alone (1.5.0, D-166). |
+| `core/build_data.py`, `core/build_data_import.py` | The build data a technician needs: strip lengths, the contact on a pin, the crimp tool of a contact part, the accessories of a harness; their plans and the import of them from a table (1.7.0, D-170). |
 | `cli/` | One module per group of commands; `main.py` builds the parser. |
-| `gui/` | `controller.py` (the only thing that changes the project), `main_window.py` and `shell.py` (the window), `areas.py` and `rail.py` (the navigation rail: Home, Model, Checks, Drawings, Outputs, Revisions, Settings), `topbar.py` and `workflow.py` (the steps Generate, Check, Release), `canvas.py`, the views (`project_tree.py`, `inspector.py`, `harness_view.py` (with `wire_editor.py`, the Edit wire tab, and `connector_editor.py`, the Connectors tab), `lists_panel.py`, `outputs_files.py`, `checks_panel.py`, `releases_panel.py`, `devices_view.py`, `problems_panel.py`), the pages (`pages.py` for Home, `settings_page.py`), the dialogs (`export_dialog.py`, `import_wizard.py`, `new_project_dialog.py`, `config_dialog.py`), the shared parts (`tables.py`, `sheet.py`, `states.py`, `icons.py`), `panels.py`, `dialogs.py`, `strings.py` (all UI text). [`../DESIGN.md`](../DESIGN.md) says how they fit and [`../ARCHITECTURE.md`](../ARCHITECTURE.md), section 2, lists every module. |
+| `gui/` | `controller.py` (the only thing that changes the project), `main_window.py` and `shell.py` (the window), `areas.py` and `rail.py` (the navigation rail: Next step, Home, Model, Checks, Drawings, Outputs, Revisions, Settings), `topbar.py` and `workflow.py` (the steps Generate, Check, Release), `next_step.py` and `next_page.py` (the Next step page of the simple workspace, 1.7.0), `canvas.py`, the views (`project_tree.py`, `inspector.py`, `harness_view.py` (with `wire_editor.py`, the Edit wire tab, `connector_editor.py`, the Connectors tab, and `accessory_editor.py`, the Accessories tab), `lists_panel.py`, `outputs_files.py`, `checks_panel.py`, `releases_panel.py`, `devices_view.py`, `problems_panel.py`), the pages (`pages.py` for Home, `settings_page.py`), the dialogs (`export_dialog.py`, `import_wizard.py`, `new_project_dialog.py`, `config_dialog.py`), the shared parts (`tables.py`, `sheet.py`, `states.py`, `icons.py`), `panels.py`, `dialogs.py`, `strings.py` (all UI text). [`../DESIGN.md`](../DESIGN.md) says how they fit and [`../ARCHITECTURE.md`](../ARCHITECTURE.md), section 2, lists every module. |
 | `gui/theme/` | The theme package, the one source of how the editor looks: `tokens.py` (every colour, type size, gap, radius and duration, light and dark), `palette.py`, `qss.py`, `style.py`, `fonts.py` (the bundled Inter and JetBrains Mono) and `manager.py` (System, Light, Dark; interface size; reduce motion). Nothing outside this folder names a colour, a font family or a font size; `tests/test_theme_scan.py` checks it. |
 | `resources/` | The offline user guide (HTML), the example projects, the templates, fonts. |
 | `tools/` | Maintenance scripts, outside the package ([`tools.md`](tools.md)). |

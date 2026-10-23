@@ -96,11 +96,22 @@ GUI, not run: the app steps are described from the program's texts and code. The
 
 - `W002` is now **released (locked)**. The **Releases** tab lists the release with a *Released* chip, and the **Harness** tab header says *Released · rev A*. A lock and *W002 A* appear on the objects it holds, in the **Project** tree and on the diagram. The harness, the links it carries and the pins it uses cannot be edited. The app refuses an edit and gives the reason.
 - When what you look at belongs to a released harness, a banner under the top bar says so ("Harness W002 is released (revision A) and locked. To change it, start a new revision.") and offers **Start new revision…** and **Show the revisions**. The tooltip of the **Release** step in the top bar counts the released harnesses ("1 of 2 released").
-- **A release also freezes what the harness uses**: the parts of its connectors and wires (and, since 1.7.0, the contact parts on its pins and the parts of its accessories), and of the unit connectors it plugs into, the interface types of its links, and the configuration its checks and outputs read (all of `derating`, `emc`, `segregation` and `titleblock`, and eight keys of `generation`). The editor and the commands `import-parts` and `config` (including `--apply-profile` and `--ampacity-csv`) refuse a change to these, with the reason and the way out. (`harness-design-studio library`, which only records where the parts data come from, is not affected.) Example, importing the parts list after the release:
+- **A release also freezes what the harness uses**: the parts of its connectors and wires (and, since 1.7.0, the contact parts on its pins and the parts of its accessories), and of the unit connectors it plugs into, the interface types of its links, and the configuration its checks and outputs read (all of `derating`, `emc`, `segregation` and `titleblock`, and eight keys of `generation`). The editor and the commands `import-parts` and `config` (including `--apply-profile` and `--ampacity-csv`) refuse a change to these, with the reason and the way out. (`harness-design-studio library`, which only records where the parts data come from, is not affected.) Example, importing the parts list of [import data](import-data.md#approved-parts-list) after the release:
 
 ```
+harness-design-studio import-parts wheel-link my-templates/approved-parts.csv --approved Approved --pending Review --rejected Rejected
+```
+
+```
+row 2: OK updated EX-MICROD-9-F
+row 3: OK updated EX-MICROD-9-M
+row 4: OK updated EX-MICROD-15-F
+row 5: OK updated EX-RJ45-F
+row 6: OK updated EX-DSUB-9-F
+5 part(s) ready, 0 row(s) with problems.
 error: This change was blocked because it touches released items.
   - Part EX-MICROD-9-F is used by W002, which is released. W002 is released (revision A); start a new revision to change it.
+  - Part EX-MICROD-9-M is used by W002, which is released. W002 is released (revision A); start a new revision to change it.
 ```
 
 The exit code is 1, and `--dry-run` says the same ("Dry run: this import would be blocked. Nothing was changed."). What stays open: new parts, parts and interface types that no released harness uses, notes and names, and the `segmentation`, `naming` and other `generation` settings. The configuration applies to every harness, so while any harness is released a change to it needs a new revision of each released harness. The complete list is in [`FILE_FORMAT.md`](../FILE_FORMAT.md#what-a-release-freezes). A release of the 0.1.0 tool froze less; its baselines are still read and are not flagged.
@@ -114,8 +125,8 @@ harness-design-studio log wheel-link W002
 
 ```
 Entry | Harness | Revision | Event | By | Date | Comment
-C0001 | W002 | A | submitted for review | A. Engineer | 2026-10-21 | 
-C0002 | W002 | A | released | A. Engineer | 2026-10-21 | First release of the wheel power harness [Released on placeholder configuration (derating, emc, generation, segmentation, segregation, titleblock); accepted by A. Engineer: Practice project: demo values only] [Released with parts that are not approved (EX-MICROD-9-M, EX-WIRE-SINGLE); accepted by A. Engineer: Practice project: example parts only]
+C0001 | W002 | A | submitted for review | A. Engineer | 2026-10-22 | 
+C0002 | W002 | A | released | A. Engineer | 2026-10-22 | First release of the wheel power harness [Released on placeholder configuration (derating, emc, generation, segmentation, segregation, titleblock); accepted by A. Engineer: Practice project: demo values only] [Released with parts that are not approved (EX-MICROD-9-M, EX-WIRE-SINGLE); accepted by A. Engineer: Practice project: example parts only]
 ```
 
 (The date is the day you run it.)

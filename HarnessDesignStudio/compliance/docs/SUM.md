@@ -1,6 +1,6 @@
 # Software user manual (SUM)
 
-DRD: ECSS-E-ST-40C Annex H. Status: the manual exists; this file maps it to the DRD. Not reviewed. Brought up to version 1.6.0 (2026-10-21): the user manual `../../docs/user-manual/` (one how-to page for each job, from drawing the design to editing a wire, defining a device and building a harness by hand) was added to the map.
+DRD: ECSS-E-ST-40C Annex H. Status: the manual exists; this file maps it to the DRD. Not reviewed. Brought up to version 1.7.0 (2026-10-22): the user manual `../../docs/user-manual/` (one how-to page for each job, from drawing the design to editing a wire, defining a device, building a harness by hand, entering the build data and using the simple workspace) is in the map.
 
 | DRD section | Where in the documentation |
 | --- | --- |

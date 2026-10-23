@@ -6,6 +6,10 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **Where do I start?** Install it ([`INSTALL.md`](INSTALL.md)), then follow [`LEARNING_PATH.md`](LEARNING_PATH.md): nine short steps, each with the example or template to use and how you know you are done. A one-page summary of commands and keys is in [`CHEATSHEET.md`](CHEATSHEET.md).
 
+**Why does the app open on "What to do next" and show so little? Where are the project tree and the Inspector?** Since 1.7.0 a first run starts in the **Simple workspace**: the **Next step** page names one thing to do, with one button, and the project tree, the Inspector and the Problems panel start closed. Press **Show panels** in the top bar to open the tree and the Inspector, **Show everything** on the page (or **View > Full**) for the whole editor, **View > Simple** to go back. If you updated from an older version, your settings keep the Full workspace. Nothing is removed ([use the simple workspace](user-manual/use-the-simple-workspace.md)).
+
+**Where did Home go?** The rail of the Simple workspace does not list *Home*, because the Next step page does its job. It is still in **Go > Go to Home** (Ctrl+7), and the Full workspace lists it.
+
 **Which example should I start with?** `first-steps` for the tutorial (three units). `minimal-satellite` to see a small but realistic spacecraft and as a starting point to adapt. `small-satellite` to see redundancy and a larger diagram. `flatsat` for a complete bench setup with ground equipment, already generated ([`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md)). `blank` for your own design. `harness-design-studio new --list` shows them all. `minimal-satellite`, `flatsat` and the `design-worksheet.md` template are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): the list shows five examples on 1.0.0, three (`blank`, `first-steps`, `small-satellite`) on 0.1.0.
 
 **I have no data yet. Can I still use the tool?** Yes. Fill in `design-worksheet.md` from the templates (`harness-design-studio templates my-templates`) to decide your units and interfaces on paper, then enter them. Every missing number shows up as *pending* or *not checked* until you supply it; nothing is invented.
@@ -60,7 +64,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **The animations bother me.** Tick **Reduce motion** under **Settings > Appearance** (or **View > Reduce motion**). Menus, lists and tooltips then stop fading and sliding.
 
-**Can I paste from Excel?** Yes, into the **Units** and **Interfaces** tables of the left panel (Ctrl+Shift+J, Ctrl+Shift+T): select the first cell, press Ctrl+V. The block fills the rows that exist and is one undo step. A new unit or interface does not come from a paste: use the **Add** button, **Ctrl+I**, or **File > Import > Import interfaces…**.
+**Can I paste from Excel?** Yes, into the **Units** and **Interfaces** tables of the left panel (Ctrl+Shift+J, Ctrl+Shift+T; in the Simple workspace they open the panel): select the first cell, press Ctrl+V. The block fills the rows that exist and is one undo step. A new unit or interface does not come from a paste: use the **Add** button, **Ctrl+I**, or **File > Import > Import interfaces…**.
 
 **What does "Offline" in the status bar mean?** The program works offline: nothing leaves this computer, and there is no account and no update check.
 

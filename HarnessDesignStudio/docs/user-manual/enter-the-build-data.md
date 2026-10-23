@@ -2,7 +2,7 @@
 
 This page shows how to enter what a technician needs to build a harness and the model does not get from the design: the strip length at each end of a wire, the contact on each pin and the crimp tool for it, and the sleeving, heat shrink, labels and backshells; it shows how to do it in the app and from a file, and what the build workbook then shows.
 
-> **New in 1.7.0.** The build data is new in 1.7.0 (decision D-170). A project made by 1.6.0 or earlier opens as it is and keeps byte-identical files and outputs until you enter one of these values. The steps in the app are described from the program's texts and its tests; the program was not watched on a screen while this page was written. The commands were run, and the output is what they printed.
+> **Since 1.7.0.** The build data is part of 1.7.0 (decision D-170). A project made by 1.6.0 or earlier opens as it is and keeps byte-identical files and outputs until you enter one of these values. The steps in the app are described from the program's texts and its tests; the program was not watched on a screen while this page was written. The commands were run, and the output is what they printed.
 
 ## Contents
 
@@ -42,7 +42,7 @@ harness-design-studio generate wheel-link
 
 ## 1. Strip lengths
 
-**In the app** (GUI, not run): choose **Drawings** on the rail, select a wire (or several) and open the **Edit wire** tab. It has two fields, **Strip A (mm)** for the From end and **Strip B (mm)** for the To end.
+**In the app** (GUI, not run): choose **Drawings** on the rail (it is in the Simple workspace too), select a wire (or several) and open the **Edit wire** tab. It has two fields, **Strip A (mm)** for the From end and **Strip B (mm)** for the To end.
 
 - For several wires a field that differs between them is empty and says *various*; an empty field clears the value. A decimal comma is accepted.
 - **Apply** sets them together with any other field you touched, as one undo step.
@@ -118,7 +118,7 @@ Imported 2 part(s). Project parts library (version 0), source: contact-parts.csv
 
 **Which pin gets the contact depends on who made the harness.**
 
-- **A harness made by Generate** takes the contact from the pin of the **unit**, as it takes the termination and the function. In the app (GUI, not run), open **Model** > **Devices**, press **Contact** to show the columns, and fill the new column **Cable contact** (between **Termination** and **Function**): an editable choice of the contact parts of the library. The tooltip says `The contact the cable side uses on this pin. Generate copies it to the cable connector.` To give the same contact to several pins, select them and press **Cable contact…** (also in the context menu); that is one undo step. Pasted headers work as well: `Cable contact`, `Contact part` and `Cable contact part` mean this column, while `Contact` alone still means the contact size.
+- **A harness made by Generate** takes the contact from the pin of the **unit**, as it takes the termination and the function. In the app (GUI, not run), open **Model** > **Devices** (Ctrl+6), press **Contact** to show the columns, and fill the new column **Cable contact** (between **Termination** and **Function**): an editable choice of the contact parts of the library. The tooltip says `The contact the cable side uses on this pin. Generate copies it to the cable connector.` To give the same contact to several pins, select them and press **Cable contact…** (also in the context menu); that is one undo step. Pasted headers work as well: `Cable contact`, `Contact part` and `Cable contact part` mean this column, while `Contact` alone still means the contact size.
 - **A harness you made by hand** ([build a harness by hand](build-a-harness-by-hand.md)) has no unit pin to copy from. In the **Connectors** tab the pin form has **Contact**, and **Contact for all pins of this connector** gives the chosen contact to every pin of the selected connector.
 
 In the **Connectors** tab of a generated harness the controls are off. They say why: `The contact of a pin of a generated harness is set on the pin of the unit, in the Devices tab (column Cable contact). Generate copies it to the cable connector.`
@@ -186,7 +186,7 @@ row 3: ERROR W001 is made by Generate, which copies the contact from the pin of 
 Nothing was changed.
 ```
 
-**The crimp tool.** In the app (GUI, not run), click a part of the category contact in the project tree. The **Inspector** shows the part page with **Crimp tool**; type the tool or its setting (`Tool X, setting 4` is the kind of text meant) and press **Set tool**. Parts cannot be edited anywhere else. From a file, a table with the headings `Part` and `Tool` sets it (`part-tools.csv`):
+**The crimp tool.** In the app (GUI, not run), click a part of the category contact in the project tree (in the Simple workspace press **Show panels** first). The **Inspector** shows the part page with **Crimp tool**; type the tool or its setting (`Tool X, setting 4` is the kind of text meant) and press **Set tool**. Parts cannot be edited anywhere else. From a file, a table with the headings `Part` and `Tool` sets it (`part-tools.csv`):
 
 ```
 Part,Tool
@@ -222,6 +222,8 @@ An accessory is something that goes on a harness besides its wires and connector
 | **Note** | Your remark. |
 
 **In the app** (GUI, not run): in the **Drawings** area, choose the harness and open the **Accessories** tab, the fourth tab on the right of the harness view after **Connectors**. A table lists the accessories (ID, Kind, Part, On, Position, Length (mm), Quantity, Note), and a form with the same fields is below it. An empty harness shows `No accessories yet` and says what accessories are for.
+
+![The Drawings area with the Accessories tab open: a table of two accessories of harness W001, a sleeving on a wire and a heat shrink on a connector, and below it the form with ID, Kind, Part, On, Position, Length, Quantity and Note, and the buttons Add accessory and Change accessory](../img/accessories-tab.png)
 
 - **Add accessory** adds the form as a new accessory. Its **ID** is filled in with the next free one (`ACC-001`, `ACC-002`, ...).
 - Select a row to see it in the form, change the form and press **Change accessory**.
@@ -266,7 +268,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-35 files written to wheel-link/outputs (model 74a760581bd9).
+35 files written to wheel-link/outputs (model 75ac89ce46da).
 ```
 
 (The model hash depends on the project and the tool version; yours differs.)

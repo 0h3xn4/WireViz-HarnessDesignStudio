@@ -40,6 +40,7 @@ What the options mean:
 - `--connector J1=RW1-J01` says which connector of the unit a KiCad reference becomes. A field called `HarnessConnector` on the KiCad symbol does the same; the practice netlist has it, so `--connector` is optional there.
 - `--part J1=PART-ID` chooses the library part of a new connector. A KiCad field `HarnessPart` does the same.
 - `--signal-map` renames KiCad net names to the signal names of the interface type. Either pairs (`--signal-map CAN_H=CANH --signal-map CAN_L=CANL`) or a file of pairs (`--signal-map my-templates/signal-map.csv`). Names that match nothing are listed. They are never guessed.
+- `--pin-function` takes the pin names of the symbol (for example `CAN_H`) as the signals, in place of the net names.
 
 ## 3. Read the rows, then apply
 
@@ -97,4 +98,4 @@ Fix the netlist (or the signal map), import again, generate again.
 
 More: [`KICAD.md`](../KICAD.md), [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 
-Next: [import data](import-data.md), [generate harnesses](generate-harnesses.md)
+Next: [define a device](define-a-device.md), [generate harnesses](generate-harnesses.md), [import data](import-data.md)

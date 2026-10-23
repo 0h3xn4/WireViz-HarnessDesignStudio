@@ -3,9 +3,10 @@
 You run the sessions; this kit prepares them and turns the results into a triage list. Targets (UX.md section 9): at least 90% task success, SUS of at least 80, first diagram and plans in under 15 minutes without the manual.
 
 ## Before a session
-1. Install the build under test (the packages exist for Ubuntu and Windows; write the version and the system on the result sheet). Run `python -m tools.usability_setup ~/usability` to create the task material: an empty project for T1, `icd.csv` with two bad rows (T4; import it into `t6-t7-generated`), a project with one corrupt file (T8) and a project with released and generated harnesses (T6, T7).
-2. 3 to 5 participants per persona (the personas of [`../UX.md`](../UX.md#2-personas): Dana, systems engineer; Sam, software engineer; Elena, harness (EE) engineer; Rui, reviewer or AIT technician). Nobody who built or reviewed the tool.
-3. Screen and audio recording only with consent. Participants must not use real program data.
+1. Install the build under test (the packages exist for Ubuntu and Windows; write the version and the system on the result sheet). Run `python -m tools.usability_setup ~/usability` to create the task material: an empty project for T1, `icd.csv` with two bad rows (T4; import it into `t6-t7-generated`), a project with one corrupt file (T8) and a project with generated harnesses, none of them released yet (T6, T7).
+2. Write down which workspace each participant used (next to the build in `session_schedule.md`). A first run of version 1.7.0 or later opens the **Simple** workspace (the Next step page, fewer things on screen); a settings file that already holds values keeps **Full**. To start a participant in the other one use **View > Simple** or **View > Full**. Nobody has run the tasks in both workspaces yet, and version 1.7.0 has not been measured with test users, so no result here says that the Simple workspace is easier.
+3. 3 to 5 participants per persona (the personas of [`../UX.md`](../UX.md#2-personas): Dana, systems engineer; Sam, software engineer; Elena, harness (EE) engineer; Rui, reviewer or AIT technician). Nobody who built or reviewed the tool.
+4. Screen and audio recording only with consent. Participants must not use real program data.
 
 ## During a session (about 60 minutes)
 1. Say: "We test the tool, not you. Think aloud. I will not help; if you are stuck, say so and we move on."

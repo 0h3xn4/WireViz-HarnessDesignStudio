@@ -1,5 +1,7 @@
 # UI overhaul: HarnessDesignStudio
 
+> **Historical.** This is the brief the owner gave for the UI overhaul that was built and published as version 1.3.0 (2026-10-20; plan [`UI_OVERHAUL_PLAN.md`](UI_OVERHAUL_PLAN.md), result [`BEFORE_AFTER.md`](BEFORE_AFTER.md)). Its text, including the sentence that the GUI "currently follows IBM Carbon", describes the editor of version 1.2.0 and is kept as it was written; the design rules it added are in `CLAUDE.md`.
+
 > **How to use:** save this file as `docs/ui/UI_OVERHAUL.md` in the repository, start Claude Code in plan mode (Shift+Tab) and send: *"Read docs/ui/UI_OVERHAUL.md and follow it. Do Phase 1 only, then stop for my review."* After approving the plan, run one milestone per session: *"Implement milestone M1 from docs/ui/UI_OVERHAUL_PLAN.md. Stop when its acceptance criteria pass."*
 
 ## Role and goal

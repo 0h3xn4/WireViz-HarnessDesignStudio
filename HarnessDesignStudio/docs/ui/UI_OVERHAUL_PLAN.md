@@ -1,6 +1,6 @@
 # UI overhaul plan (Phase 1: audit and plan, no GUI code changed)
 
-Status: **for the owner's review. Nothing in this plan is implemented.** Brief: `UI_OVERHAUL.md`.
+Status: **historical. This was the plan of Phase 1, written for the owner's review on 2026-10-19 ("nothing in this plan is implemented" was true then).** All nine milestones and the final milestone were built (D-150 to D-159) and published in version 1.3.0 on 2026-10-20; the result of each, and where it differs from the plan, is written under the milestone below, and the comparison with 1.2.0 is [`BEFORE_AFTER.md`](BEFORE_AFTER.md). Section 4 is still the mapping of the old tabs, menus and dialogs to the new places; the window has changed since by editing features (1.4.0 to 1.6.0) and, in 1.7.0, a first rail area *Next step* and a Simple workspace ([`../UX.md`](../UX.md) section 17). Brief: `UI_OVERHAUL.md`.
 Date: 2026-10-19. Base: `master` 6a04874, version 1.2.0. Tool folder: `HarnessDesignStudio/`.
 
 What Phase 1 added to the repository: this plan, `PERF_BASELINE.md`, `screenshots/before/` (87 pictures: every

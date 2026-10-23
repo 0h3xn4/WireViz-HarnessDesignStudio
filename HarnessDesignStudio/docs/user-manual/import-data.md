@@ -26,7 +26,7 @@ harness-design-studio templates my-templates
 18 files written to my-templates. Start with my-templates/README.md.
 ```
 
-(On a 0.1.0 package the command writes 14 files: `design-worksheet.md` is not in the 0.1.0 packages. The three files for the build data, `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv`, are new in 1.7.0.)
+(On a 0.1.0 package the command writes 14 files: `design-worksheet.md` is not in the 0.1.0 packages. The three files for the build data, `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv`, have been in the templates since 1.7.0.)
 
 - Every import shows what it would do. In the app, **File > Import** starts one wizard for six kinds of file (interfaces, approved parts, segment lengths, the ampacity table, a device pinout and a KiCad netlist): choose the file, match the columns, read every row with its reason, then import. On the command line add `--dry-run`: the rows are listed and nothing changes. Run the command again without it to apply.
 - Files can be CSV or TSV (commas, semicolons or tabs between columns; UTF-8), JSON (a list of flat records, as an export of a parts program writes it; since 1.4.0) or Excel (`.xlsx`, the first **visible** sheet, not the one that was active when the file was saved; the import says `Reading sheet 'Parts' (the first visible sheet of the workbook).`). A number with a decimal comma needs quotes (`"1,5"`) when commas separate the columns. At most 20,000 rows and 8 MB. Details: [`IMPORTS.md`](../IMPORTS.md).
@@ -37,7 +37,7 @@ harness-design-studio templates my-templates
 
 Importing interfaces works in the app. There is no command for it. (GUI, not run: the steps are described from the program's code. The column names and messages are the program's.)
 
-1. Open the project. Choose **File > Import > Import interfaces…** (Ctrl+Shift+I), or press Enter on **Interfaces** under **Imports** in the **Project** tab. The **Import data** wizard opens with *Interfaces* chosen. It is the same wizard for the other kinds of file ([other imports](#other-imports)).
+1. Open the project. Choose **File > Import > Import interfaces…** (Ctrl+Shift+I), or press Enter on **Interfaces** under **Imports** in the **Project** tab (the Simple workspace keeps that tab closed: use the menu, or **Show panels**). The **Import data** wizard opens with *Interfaces* chosen. It is the same wizard for the other kinds of file ([other imports](#other-imports)).
 2. Press **Choose file…** and pick a `.csv`, `.tsv`, `.json` or `.xlsx` file. To import text instead, press **Paste table text instead…**: the older window opens, with a box for CSV text. Try `my-templates/interfaces.csv`:
 
 ```
@@ -174,7 +174,7 @@ To find the segment IDs, open the generated harness in the **Harness** tab, or l
 
 ## Build data: strip lengths, contacts, accessories
 
-*New in 1.7.0.* `harness-design-studio import-build-data DIR FILE` reads a table of the data a technician needs. The kind of table is found from the column headings (any case, other columns are ignored): strip lengths (`Wire`, `Strip A (mm)`, `Strip B (mm)`, optional `Harness`), pin contacts (`Harness`, `Connector`, `Pin`, `Contact`, optional `Tool`), accessories (`Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity`, `Note`, optional `ID`) and the crimp tool of parts (`Part`, `Tool`). It works as the other imports do: one line per row, the summary, `--dry-run` to write nothing, and a refused row means exit code 1 and nothing is changed. An empty cell leaves a value alone, and the same file imported twice changes nothing. The templates `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv` hold example rows.
+*Since 1.7.0.* `harness-design-studio import-build-data DIR FILE` reads a table of the data a technician needs. The kind of table is found from the column headings (any case, other columns are ignored): strip lengths (`Wire`, `Strip A (mm)`, `Strip B (mm)`, optional `Harness`), pin contacts (`Harness`, `Connector`, `Pin`, `Contact`, optional `Tool`), accessories (`Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity`, `Note`, optional `ID`) and the crimp tool of parts (`Part`, `Tool`). It works as the other imports do: one line per row, the summary, `--dry-run` to write nothing, and a refused row means exit code 1 and nothing is changed. An empty cell leaves a value alone, and the same file imported twice changes nothing. The templates `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv` hold example rows.
 
 ```
 harness-design-studio import-build-data wheel-link my-templates/strip-lengths.csv --dry-run

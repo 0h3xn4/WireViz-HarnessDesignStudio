@@ -26,6 +26,18 @@ Open it with **Next step**, the first item of the rail on the left. It works the
 - the six steps of the work, each with an icon **and** a word: *done*, *next*, *to do*, and *not possible* when the project is read-only;
 - the link **Show everything**, which switches to the Full workspace (only shown in Simple).
 
+The page of a new, empty project: the card says *Start with a device* and offers **Add a device**, and *or make a harness by hand* with **New harness…**. The six steps below it show *next* on the first one and *to do* on the others:
+
+![The Next step page of an empty project in the Simple workspace: the card Start with a device with the buttons Add a device and New harness, the six steps with the first one marked next, and the link Show everything](../img/next-step-new-project.png)
+
+When checks fail, the card says *Fix what is marked*, how many failed, and offers **Show the problems**. This is the tutorial project after Generate, with one check that fails because its parts are not approved yet:
+
+![The Next step page of a generated project whose design has one failed check: the card Fix what is marked with the button Show the problems, and the step Check the design marked next](../img/next-step-fix-problems.png)
+
+When the design is checked and nothing fails, the card says *Get the build sheets* and offers **Export the build sheets**. Some checks still wait for engineering values, and the card says so in one sentence:
+
+![The Next step page of a checked project: the card Get the build sheets with the button Export the build sheets and a sentence that some checks wait for engineering values, and the first four steps marked done](../img/next-step-export.png)
+
 ## What it says, step by step
 
 The page names the first step that is not done. The rules run in this order.
@@ -56,9 +68,17 @@ The setting **Workspace: Simple or Full** is in the **View** menu (first entries
 
 This is separate from **Guided / Expert** in the top bar, which only changes how much the diagram shows.
 
+The same project in the Simple workspace, with the side panels, the minimap, the legend and the status counts left out, and **Select**, **Connect**, **Add device** and **More** above the diagram. **Show panels** is in the top bar:
+
+![The tutorial project in the Simple workspace: the rail without Home, the top bar with a Show panels button, the diagram of three devices with the tools Select, Connect, Add device and More above it, and a short status bar](../img/simple-workspace.png)
+
+The same project in the Full workspace, with the project tree on the left, the Inspector on the right, the full tool row, the legend and the minimap of the diagram, and the counts in the status bar:
+
+![The tutorial project in the Full workspace: the rail with Home, the project tree on the left, the diagram of three devices with the legend and the minimap, the Inspector on the right, and the status bar with the Problems button and the counts](../img/full-workspace.png)
+
 ## What the Simple workspace hides
 
-To show less at once, the Simple workspace starts with these things closed or off. Nothing is removed: each one is still in the **View** menu with its shortcut, and in the command palette (Ctrl+K).
+To show less at once, the Simple workspace starts with these things closed or off. Nothing is removed: each one is still in the **View** menu (with its shortcut where it has one, for example Ctrl+Shift+M for the Problems panel), and in the command palette (Ctrl+K).
 
 | Thing | In Simple | In Full |
 |---|---|---|

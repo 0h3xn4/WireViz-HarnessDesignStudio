@@ -56,4 +56,16 @@ Part ratings: `ratings.contact_current_a` on connector parts (key name set by `d
 | `titleblock.json` | `fields` (order and choice of title block fields; D-15) | default field list; date, author, checker, approver show "-" until a release records them |
 | library | `mass_g`, `mass_per_m_g` on parts | mass tables say which data is missing |
 
+## Build data (1.7.0): empty until a person enters it
+These are not placeholder values in a config file; they are optional fields of the design that the tool never fills in or computes. While one is empty, the build workbook shows `to fill in` on an amber cell and its *Start here* sheet counts what is open, and the tables leave the column out when nothing in the project uses it.
+
+| Where | Field | Needed for |
+| --- | --- | --- |
+| `physical/harnesses/<ID>.json`, a wire | `strip_a_mm`, `strip_b_mm` (the insulation stripped at each end) | the strip columns of the cut list and the wire list |
+| `physical/connectors/<unit>.json`, a pin of a unit (copied to the cable pin by Generate; on a harness made by hand, the pin of the cable connector) | `contact_part` (a library part of the category `contact`) | the *Contact* column of the connector blocks and the pinouts, and the contact lines of the BOM |
+| `library/contact.json`, a part | `tool` (the crimp tool or its setting) | the *Tool* column of the connector blocks |
+| `physical/harnesses/<ID>.json` | `accessories` (sleeving, heat shrink, labels, backshells) | the *Accessories* sheet, `accessories.csv` and the BOM lines of accessory parts |
+
+How to enter them: [enter the build data](user-manual/enter-the-build-data.md).
+
 Next: [`CONFIG.md`](CONFIG.md), [fill in engineering values](user-manual/fill-in-engineering-values.md).

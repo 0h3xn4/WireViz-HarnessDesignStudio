@@ -1,6 +1,6 @@
 # Milestone plan (proposal for owner review)
 
-> **Historical.** This is the plan as it was proposed to the owner in October 2026, before the first release. Milestones M0 to M9 were done (a note for each is in [`demos/`](demos/README.md)) and 0.1.0 was released; versions 1.0.0 to 1.6.0 have been released since (the newest, 1.6.0, on 2026-10-21). This page was not kept up to date. For the current state read [`../CHANGELOG.md`](../CHANGELOG.md) and the [documentation index](README.md). The UI overhaul of version 1.3.0 had a plan of its own with milestones M1 to M9 of its own ([`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md)), and version 1.4.0 (the feedback of the AIT engineers) one with milestones M1 to M5 ([`ait/AIT_FEEDBACK_PLAN.md`](ait/AIT_FEEDBACK_PLAN.md)); they are not the milestones below. Two items below were never built, and are marked *(not built)*: multi-drop interfaces and hierarchy, and a PDF user guide.
+> **Historical.** This is the plan as it was proposed to the owner in October 2026, before the first release. Milestones M0 to M9 were done (a note for each is in [`demos/`](demos/README.md)) and 0.1.0 was released; versions 1.0.0 to 1.7.0 have been released since (the newest, 1.7.0, on 2026-10-22). This page was not kept up to date. For the current state read [`../CHANGELOG.md`](../CHANGELOG.md) and the [documentation index](README.md). The UI overhaul of version 1.3.0 had a plan of its own with milestones M1 to M9 of its own ([`ui/UI_OVERHAUL_PLAN.md`](ui/UI_OVERHAUL_PLAN.md)), version 1.4.0 (the feedback of the AIT engineers) one with milestones M1 to M5 ([`ait/AIT_FEEDBACK_PLAN.md`](ait/AIT_FEEDBACK_PLAN.md)) and version 1.7.0 (the feedback of the test users: the build workbook, the build data and the simple workspace) one of its own ([`ait/TEST_USER_FEEDBACK_PLAN.md`](ait/TEST_USER_FEEDBACK_PLAN.md)); they are not the milestones below. Two items below were never built, and are marked *(not built)*: multi-drop interfaces and hierarchy, and a PDF user guide.
 
 Each milestone: tests first, ends with working tested software, a demo note in `docs/demos/` (M0 to M7 have one), and a UX self-review where a GUI exists. A milestone is done only when all its acceptance criteria pass in CI.
 
@@ -32,7 +32,7 @@ Each milestone: tests first, ends with working tested software, a demo note in `
 - pytest-qt tests for journeys J1 to J4; screenshots via offscreen; UX issue list.
 **Acceptance:** 5-unit diagram can be built from the sample project tour; no direct model mutation outside commands; UX high-severity issues fixed.
 
-## M3 Generation (done; spare-pin fraction and a length-import screen are open)
+## M3 Generation (done; the spare-pin fraction is open; the length-import screen came with the import wizard of 1.3.0, D-156)
 - Segmentation (configurable), deterministic IDs and naming schemes.
 - Pin allocator with rules, locks, spare pins, provenance.
 - Wire sizing (config-driven derating, voltage drop), lengths from routing segments, mass with margin.
@@ -41,13 +41,14 @@ Each milestone: tests first, ends with working tested software, a demo note in `
 - Independent verifier v1 (connectivity, pin uniqueness) runs after generation.
 **Acceptance:** byte-identical regeneration (property test); verifier clean on `mini3` and `sat15`; stress project regenerates < 10 s on reference laptop or a profiling note explains the gap.
 
-## M4 DRC (done; incremental per-rule caching is open, see demos/M4.md)
+## M4 DRC (done; the check is not incremental, see demos/M4.md)
 - All rules listed in spec, each with plain-language what/why/fix and positive and negative tests; waivers with justification; background and on-demand runs; problems panel with click-to-select and one-click fixes where feasible.
-**Acceptance:** 100% rules have both tests; waivers persist and show in report; incremental DRC keeps edits < 100 ms on the stress project.
+**Acceptance:** 100% rules have both tests; waivers persist and show in report; incremental DRC keeps edits < 100 ms on the stress project. *As built: incremental checking was not built. Each run checks the whole project, in a helper process since D-128, so that an edit does not wait for it; `ARCHITECTURE.md` section 4 says the same.*
 
-## M5 Outputs (done; geometric branch drawing and dates/authors are open, see demos/M5.md)
+## M5 Outputs (done; a geometric branch drawing is not built, see demos/M5.md; dates and authors came with M6)
 - Harness drawing (SVG + PDF, A4/A3 multi-sheet, title block), wire list, pinouts, BOM, mass/length, continuity and isolation tests, labels, DRC report; system diagrams and matrices; XLSX/CSV; WireViz YAML and documented JSON export.
 - Every artefact stamped with generator version and model hash; stale detection in GUI and CLI.
+- *Later (1.7.0, D-169): the main output of a harness became its build workbook `<ID>_build.xlsx`; the PDF and SVG drawings above are written only when asked for (`export --drawings`).*
 - Verifier v2 covers all artefacts (BOM vs drawing, pinout vs wire list).
 - Golden-file tests per output type on three reference projects; print-theme checks (greyscale legibility).
 **Acceptance:** goldens stable on every supported platform (Ubuntu 24.04 and newer when this was written; Windows since 1.2.0); verifier clean; PDFs use only bundled fonts.
