@@ -13,6 +13,7 @@ pin that carries a released interface. `check_locks` itself is not changed.
 from __future__ import annotations
 
 import re
+import unicodedata
 from collections import defaultdict
 from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
@@ -1345,6 +1346,49 @@ def default_subsystem(project: Project) -> str:
     return sorted(counts, key=lambda k: (-counts[k], k))[0] if counts else "general"
 
 
+def suggest_device_id(project: Project, name: str) -> str:
+    """A short upper-case ID for a new device named `name`: the letters and digits of its first
+    word plus the first number that is free in the project ("Star tracker" gives STAR1, then
+    STAR2; a word that ends in a digit is used as it is when it is free). Empty while the name has no letter or digit to start from."""
+    folded = unicodedata.normalize("NFKD", name or "")
+    words = [re.sub(r"[^A-Za-z0-9]", "", w) for w in folded.split()]
+    stem = ""
+    for word in words:
+        word = word.lstrip("0123456789")
+        if word:
+            stem = word[:8].upper()
+            break
+    if not stem:
+        return ""
+    taken = edit._taken(set(project.units)) | edit._connector_owners(project)
+    if stem[-1].isdigit() and stem.casefold() not in taken:
+        return stem  # ("Gyro 3" is GYRO3, not GYRO31)
+    return edit.next_unit_id(project, stem)[0]
+
+
+def check_new_device(project: Project, unit_id: str, name: str) -> str:
+    """Why a device cannot be added with this ID and name, in a plain sentence, or "" when it
+    can: the sentence the new-device dialog shows under its fields."""
+    if not (name or "").strip():
+        return "A device needs a name."
+    try:
+        _text(name, "A device name")
+    except EditError as exc:
+        return str(exc)
+    uid = (unit_id or "").strip()
+    if not uid:
+        return "A device needs an ID."
+    try:
+        edit._check_new_id(uid)
+    except EditError as exc:
+        return str(exc)
+    if uid.casefold() in edit._taken(set(project.units)):
+        return f"ID {uid} is already used by another device."
+    if uid.casefold() in edit._connector_owners(project):
+        return f"ID {uid} is already used as the start of connector IDs."
+    return ""
+
+
 def ops_add_device(
     project: Project,
     *,
@@ -1872,8 +1916,10 @@ __all__ = [
     "PART_FIELDS",
     "TYPE_FIELDS",
     "SignalSpec",
+    "check_new_device",
     "default_subsystem",
     "ops_add_device",
+    "suggest_device_id",
     "ops_update_device",
     "ops_assign_pins",
     "ops_unassign_pins",

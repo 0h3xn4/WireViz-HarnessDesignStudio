@@ -1599,6 +1599,8 @@ class DiagramScene(QGraphicsScene):
         # what the objects say about themselves (problems, pending, locks ...): an index built by
         # the controller, read by the items; it is replaced a moment after a change, never in paint
         self.states: StateIndex = NO_INDEX
+        self.problem_notices = True  # View > Show problem notices: the badges follow it
+        self._quiet: tuple[StateIndex, StateIndex] | None = None  # (index of the controller, quiet)
         self.zone_tags = cbadges.ZoneTags()  # FLIGHT / GROUND tags by zone name (a viewer setting)
         self.zone_names: list[str] = []
         self.theme_epoch = 0  # counts theme changes: cached layouts of the marks depend on fonts
@@ -1713,6 +1715,10 @@ class DiagramScene(QGraphicsScene):
         (Called by a short timer after an edit, when the check results arrive, and by tests.)"""
         self._state_timer.stop()
         new = self.ctl.state_index()
+        if not self.problem_notices:  # only the locks and the auto marks are drawn
+            if self._quiet is None or self._quiet[0] is not new:
+                self._quiet = (new, new.quiet())
+            new = self._quiet[1]
         old = self.states
         if new is old:
             return
@@ -2806,6 +2812,14 @@ class DiagramView(QGraphicsView):
         self.minimap_wanted = wanted
         self._update_minimap_visibility()
 
+    def set_problem_notices(self, on: bool) -> None:
+        """View > Show problem notices: the badges of problems, warnings, values still to enter and
+        "not checked" on cards and links, and the chips of the corner. Only the objects whose marks
+        change are repainted (see `DiagramScene.refresh_states`)."""
+        self.dscene.problem_notices = on
+        self.dscene.refresh_states()
+        self.status.set_wanted(on)
+
     def set_legend_wanted(self, wanted: bool) -> None:
         self.legend_wanted = wanted
         self._layout_overlays()
@@ -3209,7 +3223,9 @@ class DiagramView(QGraphicsView):
         """Show problems (Problems list filtered to the object) and Why? (why the tool chose what it
         chose); a unit also gets the flight / ground tag of its zone."""
         ctl = self.ctl
-        st = self.dscene.states.of(kind, ident)
+        shown = self.dscene
+        # asked for: the notices switch does not apply (a quiet diagram still has the problems)
+        st = (shown.states if shown.problem_notices else ctl.state_index()).of(kind, ident)
         nothing = "" if st.badges() else strings.WHY_NOTHING_TO_SHOW
         self._entry(menu, strings.CM_SHOW_PROBLEMS, lambda: ctl.request_problems(ident), nothing)
         if connector:

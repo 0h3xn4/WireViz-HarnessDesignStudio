@@ -104,6 +104,65 @@ class _PlannerDialog(QDialog):
             self.ok.setEnabled(problem is None)
 
 
+# ---- a new device --------------------------------------------------------------------------------
+
+
+class NewDeviceDialog(_PlannerDialog):
+    """The name of a new device, asked before it exists. The ID follows the name until the person
+    edits it; the subsystem is optional (the project's most used one is the default). The reason
+    a device cannot be added shows under the fields; OK stays off until it can."""
+
+    def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
+        super().__init__(parent, theme, strings.NEWDEV_TITLE, "devices-new-device-dialog")
+        self.project = project
+        self._suggested = ""
+        form = QFormLayout()
+        self.name = _field(
+            QLineEdit(), strings.NEWDEV_NAME, strings.NEWDEV_NAME_TIP, strings.NEWDEV_NAME_HINT
+        )
+        self.name.setObjectName("new-device-name")
+        self.device_id = _field(QLineEdit(), strings.NEWDEV_ID, strings.NEWDEV_ID_TIP)
+        self.device_id.setObjectName("new-device-id")
+        self.subsystem = QComboBox()
+        self.subsystem.setObjectName("new-device-subsystem")
+        self.subsystem.setEditable(True)
+        self.subsystem.setAccessibleName(strings.NEWDEV_SUBSYSTEM)
+        self.subsystem.setToolTip(strings.NEWDEV_SUBSYSTEM_TIP)
+        default = devices.default_subsystem(project)
+        self.subsystem.addItems(sorted({u.subsystem for u in project.units.values()} | {default}))
+        self.subsystem.setCurrentText(default)
+        form.addRow(strings.NEWDEV_NAME, self.name)
+        form.addRow(strings.NEWDEV_ID, self.device_id)
+        form.addRow(strings.NEWDEV_SUBSYSTEM, self.subsystem)
+        self.lay.addLayout(form)
+        note = QLabel(strings.NEWDEV_NOTE)
+        note.setProperty("muted", True)
+        note.setWordWrap(True)
+        self.lay.addWidget(note)
+        self.name.textChanged.connect(self._name_changed)
+        self.device_id.textChanged.connect(self.revalidate)
+        self._finish(strings.NEWDEV_OK)
+        self.name.setFocus()
+
+    def _name_changed(self, text: str) -> None:
+        """The ID follows the name while it still holds what the name suggested."""
+        if self.device_id.text() == self._suggested:
+            self._suggested = devices.suggest_device_id(self.project, text)
+            self.device_id.setText(self._suggested)
+        self.revalidate()
+
+    def values(self) -> dict[str, Any]:
+        return {
+            "name": self.name.text().strip(),
+            "unit_id": self.device_id.text().strip(),
+            "subsystem": self.subsystem.currentText().strip() or None,
+        }
+
+    def check(self) -> str | None:
+        v = self.values()
+        return devices.check_new_device(self.project, v["unit_id"], v["name"]) or None
+
+
 # ---- a new connector part ------------------------------------------------------------------------
 
 

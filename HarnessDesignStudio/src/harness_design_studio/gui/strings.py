@@ -2502,7 +2502,7 @@ NEXT_SHEETS_WHY = (
     "The workbook of every harness has the cut list, the connector blocks and the test sheet."
 )
 NEXT_SHEETS_WAIT = "Some checks wait for engineering values, and the sheets will say so."
-NEXT_SHEETS_FOLDER = "You will choose a folder for the files."
+NEXT_SHEETS_FOLDER = "Export first asks where to save the project."
 NEXT_SHEETS_BUTTON = "Export the build sheets"
 NEXT_RELEASE_TITLE = "Review and release"
 NEXT_RELEASE_WHY = (
@@ -2542,3 +2542,37 @@ TOOL_MORE = "More"
 TOOL_MORE_TIP = "More tools: copy, delete, zoom, arrange and show only some connections"
 TOOL_MORE_FILTER = "Show only"
 PROPERTIES_CLOSED = "The properties are closed. Open them to see and change what you selected."
+
+# ---- Workshop feedback M1 (D-172): a device asks for its name, problem notices on request, export in one step ----
+NEWDEV_TITLE = "Add device"
+NEWDEV_NAME = "Name"
+NEWDEV_NAME_TIP = "What the device is called, for example Star tracker. The ID is made from it."
+NEWDEV_NAME_HINT = "for example Star tracker"
+NEWDEV_ID = "ID"
+NEWDEV_ID_TIP = "The short ID of the device (letters and digits). It is made from the name; type another one to keep it."
+NEWDEV_SUBSYSTEM = "Subsystem"
+NEWDEV_SUBSYSTEM_TIP = "The subsystem of this device (optional): pick one or type a new one"
+NEWDEV_NOTE = "You can change the name, the ID and the subsystem later in the Devices tab."
+NEWDEV_OK = "Add device"
+A_PROBLEM_NOTICES = "Show problem notices"
+A_PROBLEM_NOTICES_TIP = (
+    "Show or hide the notices that appear without being asked for: the Problems button and "
+    "its count, the count on the inspector tab, the status chip of the top bar, the chip and "
+    "the badges on the diagram, the pending-values link and the out-of-date banner. "
+    "The Check button, the Checks, the Problems panel and the read-only, locked and sample "
+    "banners always stay."
+)
+SETTINGS_PROBLEM_NOTICES = "Show problem notices"
+SETTINGS_PROBLEM_NOTICES_TIP = (
+    "Show the Problems count, the status chips, the badges on the diagram and the out-of-date "
+    "banner without being asked. Off: they stay hidden; the Check button and the Checks still work. "
+    "Each workspace remembers its own choice (Simple starts with them off)."
+)
+EXPORT_SAVE_AS_FOLDER = (
+    "Choose an empty folder to save the project in. The files are then exported next to it"
+)
+EXP_DAMAGED_MORE = "and {} more"
+HV_EXPORT_READ_ONLY = "Read-only: save a copy first"
+HV_EXPORT_SAVES_FIRST = "Asks where to save first"
+HV_EXPORT_SAVES_FIRST_TIP = "This project has no folder yet, so you first choose where to save it; the files are then exported next to it"
+HV_EXPORT_REASON_NAME = "Why Export may not work"

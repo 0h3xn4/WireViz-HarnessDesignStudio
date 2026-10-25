@@ -122,18 +122,19 @@ def test_cd_j1_a_device_from_scratch_in_a_handful_of_steps(qtbot, tmp_path: Path
     qtbot.waitUntil(win.isActiveWindow)
     script = DialogScript(win, accept=True)
     dv = win.devices_view
-    # 1. Ctrl+Shift+N: a draft device in a free slot, the Devices tab, its name focused
+
+    # 1. Ctrl+Shift+N asks for the name first: a draft device in a free slot, the Devices tab
+    def name_it(dlg):
+        dlg.name.setText("Gyro unit")
+        dlg.device_id.setText("DEV1")
+        dlg.subsystem.setCurrentText("aocs")
+
+    script.fn = name_it
     assert win.act_add_device.shortcut().toString() == "Ctrl+Shift+N"
     win.act_add_device.trigger()
     assert win.main_tabs.currentWidget() is dv and dv.unit_id() == "DEV1" and dv.name.hasFocus()
     assert dv.state_chip.state() == "draft" and "DEV1" in win.ctl.project.placements
-    # 2. type the name and the subsystem
-    QTest.keyClicks(dv.name, "Gyro unit")
-    QTest.keyClick(dv.name, Qt.Key.Key_Return)
-    dv.subsystem.setFocus()
-    dv.subsystem.lineEdit().selectAll()
-    QTest.keyClicks(dv.subsystem.lineEdit(), "aocs")
-    QTest.keyClick(dv.subsystem.lineEdit(), Qt.Key.Key_Return)
+    # 2. the name and the subsystem are already there
     unit = win.ctl.project.units["DEV1"]
     assert (unit.name, unit.subsystem) == ("Gyro unit", "aocs")
     # 3. Ctrl+Shift+C: the part picker; choose a part; Enter adds the connector
@@ -183,7 +184,7 @@ def test_cd_j1_a_device_from_scratch_in_a_handful_of_steps(qtbot, tmp_path: Path
     assert names[:2] == ["Edit DEV1-J01", "Fill pins 3, 4 from can"]
     assert names[2] == "Fill pins A1, A2 from power_primary"
     assert names[3:5] == ["Rename pin DEV1-J01.2 to A2", "Rename pin DEV1-J01.1 to A1"]
-    assert names[5:] == ["Add connector DEV1-J01", "Edit DEV1", "Edit DEV1", "Add device DEV1"]
+    assert names[5:] == ["Add connector DEV1-J01", "Add device DEV1"]
 
 
 # ---- cells edited in place ----------------------------------------------------------------------

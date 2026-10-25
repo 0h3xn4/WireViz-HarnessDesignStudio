@@ -110,6 +110,7 @@ class SettingsPage(QWidget):
         set_mode: Callable[[str], None],
         set_snap: Callable[[bool], None],
         set_labels: Callable[[bool], None],
+        set_problem_notices: Callable[[bool], None],
         open_values: Callable[[], None],
         shortcut_rows: Callable[[], list[tuple[str, str]]],
         settings_file: str = "",
@@ -194,10 +195,18 @@ class SettingsPage(QWidget):
             strings.SETTINGS_LABELS, strings.SETTINGS_LABELS_TIP, "settings-labels"
         )
         self.labels_box.clicked.connect(lambda on: set_labels(bool(on)))
+        self.notices_box = _check(
+            strings.SETTINGS_PROBLEM_NOTICES,
+            strings.SETTINGS_PROBLEM_NOTICES_TIP,
+            "settings-problem-notices",
+        )
+        self.notices_box.clicked.connect(lambda on: set_problem_notices(bool(on)))
         col.addWidget(self.snap_box)
         col.addWidget(_muted(strings.SETTINGS_SNAP_TIP))
         col.addWidget(self.labels_box)
         col.addWidget(_muted(strings.SETTINGS_LABELS_TIP))
+        col.addWidget(self.notices_box)
+        col.addWidget(_muted(strings.SETTINGS_PROBLEM_NOTICES_TIP))
         col.addStretch(1)
 
         # ---- project
@@ -350,6 +359,7 @@ class SettingsPage(QWidget):
         reduce_motion: bool,
         snap: bool,
         labels: bool,
+        problem_notices: bool = True,
     ) -> None:
         """Show what the window has now (it changes through the menus, the palette and here)."""
         for combo, value in ((self.theme_combo, theme_mode), (self.scale_combo, scale), (self.mode_combo, mode), (self.workspace_combo, workspace)):  # fmt: skip
@@ -358,7 +368,7 @@ class SettingsPage(QWidget):
                 combo.blockSignals(True)
                 combo.setCurrentIndex(i)
                 combo.blockSignals(False)
-        for box, value in ((self.motion_box, reduce_motion), (self.snap_box, snap), (self.labels_box, labels)):  # fmt: skip
+        for box, value in ((self.motion_box, reduce_motion), (self.snap_box, snap), (self.labels_box, labels), (self.notices_box, problem_notices)):  # fmt: skip
             if box.isChecked() != value:
                 box.blockSignals(True)
                 box.setChecked(value)

@@ -340,6 +340,11 @@ class TopBar(QWidget):
         finally:
             self._fitting = False
 
+    def set_notices(self, on: bool) -> None:
+        """Show or hide the status chip (View > Show problem notices). The workflow buttons and
+        their states stay: they are the steps the person takes, not a notice."""
+        self.chip.setVisible(on)
+
     def update_status(self, **changes: object) -> None:
         """Change some fields of the current status and show the result."""
         self.apply(replace(self.status, **changes))  # type: ignore[arg-type]

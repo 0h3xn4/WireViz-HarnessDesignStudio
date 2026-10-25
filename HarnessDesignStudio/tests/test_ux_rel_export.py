@@ -174,7 +174,7 @@ def test_read_only_damaged_and_empty_projects_say_why(qtbot, tmp_path: Path) -> 
     ctl.project.read_only = False
     ctl.project.quarantine_files = {"x.json": b"{"}
     dlg.refresh()
-    assert dlg.notice.text() == strings.EXPORT_DAMAGED
+    assert dlg.notice.text().startswith(strings.EXPORT_DAMAGED) and "x.json" in dlg.notice.text()
     ctl.project.quarantine_files = {}
     dlg.refresh()
     assert not dlg.notice.isVisible() and dlg.export_btn.isEnabled()

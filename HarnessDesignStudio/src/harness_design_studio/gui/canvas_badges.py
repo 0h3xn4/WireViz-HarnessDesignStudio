@@ -220,6 +220,7 @@ class CornerStatus(QFrame):
         self.ctl = ctl
         self.theme = theme
         self._chips: list[StateChip] = []
+        self._wanted = True  # View > Show problem notices
         lay = QHBoxLayout(self)
         lay.setContentsMargins(4, 3, 4, 3)
         lay.setSpacing(4)
@@ -238,6 +239,11 @@ class CornerStatus(QFrame):
         manifest cost real time there)."""
         big = len(self.ctl.project.interfaces) > BIG_PROJECT  # type: ignore[attr-defined]
         self._timer.start(CORNER_BIG_DELAY_MS if big else CORNER_DELAY_MS)
+
+    def set_wanted(self, on: bool) -> None:
+        """Show the chips (True) or keep the corner empty (View > Show problem notices)."""
+        self._wanted = on
+        self.setVisible(on and any(not c.isHidden() for c in self._chips))
 
     def states(self) -> list[tuple[str, str]]:
         """(state, text) of the chips now shown."""
@@ -262,5 +268,5 @@ class CornerStatus(QFrame):
                 chip.show()
             else:
                 chip.hide()
-        self.setVisible(bool(want))
+        self.setVisible(bool(want) and self._wanted)
         self.adjustSize()

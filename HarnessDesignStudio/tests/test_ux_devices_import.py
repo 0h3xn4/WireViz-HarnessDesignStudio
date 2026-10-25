@@ -137,12 +137,13 @@ def test_a_new_device_is_named_on_the_page(qtbot, tmp_path: Path) -> None:
     next_(w)
     finish(w)
     assert (
-        c.project.units["DEV1"].name == "Camera" and c.project.units["DEV1"].subsystem == "payload"
+        c.project.units["CAMERA1"].name == "Camera"
+        and c.project.units["CAMERA1"].subsystem == "payload"
     )
-    assert len(c.project.connectors["DEV1-J01"].pins) == 5
+    assert len(c.project.connectors["CAMERA1-J01"].pins) == 5
     assert c.history.next_undo_label == "Import pinout (1 connector, 5 pins)"
     c.undo()
-    assert "DEV1" not in c.project.units  # the new device goes with it
+    assert "CAMERA1" not in c.project.units  # the new device goes with it
 
 
 def test_rows_with_problems_stop_the_import_with_the_exact_reason(

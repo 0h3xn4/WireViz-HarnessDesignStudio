@@ -1302,8 +1302,8 @@ class DevicesView(QWidget):
 
     # ---- internals: editing the header ---------------------------------------------------------
     def _name_edited(self) -> None:
-        if self._syncing or self._unit is None:
-            return
+        if self._syncing or self._unit is None or self._unit not in self.ctl.project.units:
+            return  # (the device is gone: for example the add was undone while the name had focus)
         text = self.name.text().strip()
         if text != self.ctl.project.units[self._unit].name:
             if self._do(self.ctl.update_device, self._unit, name=text):
@@ -1312,7 +1312,7 @@ class DevicesView(QWidget):
                 self.name.setText(self.ctl.project.units[self._unit].name)
 
     def _subsystem_edited(self) -> None:
-        if self._syncing or self._unit is None:
+        if self._syncing or self._unit is None or self._unit not in self.ctl.project.units:
             return
         text = self.subsystem.currentText().strip()
         if text != self.ctl.project.units[self._unit].subsystem and not self._do(

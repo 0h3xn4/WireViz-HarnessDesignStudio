@@ -37,7 +37,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import devices
+from harness_design_studio.core import describe, devices
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.states import StateDelegate
@@ -122,7 +122,11 @@ class PinModel(DictTableModel):
         self, index: QModelIndex | QPersistentModelIndex, role: int = Qt.ItemDataRole.DisplayRole
     ) -> Any:
         if role == Qt.ItemDataRole.ToolTipRole and index.isValid():
-            why = self.why_not_editable(index)
+            why = self.why_not_editable(index) or super().data(index, role)
+            if self.columns[index.column()].key == "signal":
+                meaning = describe.signal_meaning(str(super().data(index) or ""))
+                if meaning:  # what the name stands for first, then what the cell already said
+                    return f"{meaning}\n{why}" if why else meaning
             if why:
                 return why
         return super().data(index, role)

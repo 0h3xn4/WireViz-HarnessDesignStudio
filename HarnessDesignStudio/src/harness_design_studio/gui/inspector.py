@@ -452,6 +452,7 @@ class Inspector(QWidget):
         self.tabs.addTab(self.why, strings.INS_TAB_WHY)
         self.tabs.setTabToolTip(1, strings.WHY_TAB_TIP)
         # ---- Problems tab
+        self._show_counts = True
         self._problems_host = QWidget()
         self._problems_lay = QVBoxLayout(self._problems_host)
         self._problems_lay.setContentsMargins(0, 0, 0, 0)
@@ -522,10 +523,16 @@ class Inspector(QWidget):
         self._later.stop()
         self._refresh_lists()
 
+    def set_problem_counts(self, on: bool) -> None:
+        """Whether the Problems tab title carries the number (View > Show problem notices)."""
+        if on != self._show_counts:
+            self._show_counts = on
+            self.refresh_badges()
+
     def refresh_badges(self) -> None:
         """Put the number of errors and warnings on the Problems tab."""
         counts = getattr(self._problems, "counts", None)
-        n = sum(counts()) if callable(counts) else 0
+        n = sum(counts()) if callable(counts) and self._show_counts else 0
         self.tabs.setTabText(
             2, strings.INS_TAB_PROBLEMS_N.format(n) if n else strings.INS_TAB_PROBLEMS
         )
