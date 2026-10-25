@@ -42,7 +42,7 @@ from harness_design_studio.core.imports import (
 )
 from harness_design_studio.core.issues import Issue
 from harness_design_studio.core.model import Project
-from harness_design_studio.core.vcs.diff import KIND_NAMES, Diff
+from harness_design_studio.core.vcs.diff import SCREEN_KIND_NAMES, Diff
 from harness_design_studio.core.vcs.lockview import ReleaseLocks, release_locks
 from harness_design_studio.core.vcs.release import ReleaseError, next_revision
 from harness_design_studio.core.wirecolours import COLOURS, name_of
@@ -854,7 +854,9 @@ class DiffDialog(QDialog):
         self.list.clear()
         sym = {"added": "+", "removed": "−", "changed": "~"}
         for c in diff.changes:
-            QListWidgetItem(f"{sym[c.change]} {KIND_NAMES.get(c.kind, c.kind)} {c.id}", self.list)
+            QListWidgetItem(
+                f"{sym[c.change]} {SCREEN_KIND_NAMES.get(c.kind, c.kind)} {c.id}", self.list
+            )
             for f in c.fields:
                 QListWidgetItem(f"      {f.name}: {f.before} → {f.after}", self.list)
 

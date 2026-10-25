@@ -118,7 +118,7 @@ def test_diff_groups_follow_the_kind_order_and_hold_all_rows() -> None:
     assert [g.kind for g in groups] == [
         k for k in vd.KIND_NAMES if k in {"unit", "harness", "wire"}
     ]
-    assert [g.name for g in groups] == ["Unit", "Harness", "Wire"]
+    assert [g.name for g in groups] == ["Device", "Harness", "Wire"]
     wire = groups[-1]
     assert [r.id for r in wire.rows] == ["W1-001", "W1-002"]
     assert wire.rows[0].before == "(none)" and wire.rows[0].after == "red"

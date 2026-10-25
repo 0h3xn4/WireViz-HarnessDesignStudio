@@ -74,24 +74,24 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio import-build-data my-design accessories.csv",
     ],
     "import-netlist": [
-        "harness-design-studio import-netlist my-design wheel.net --unit RW1 --prefix J "
+        "harness-design-studio import-netlist my-design wheel.net --device RW1 --prefix J "
         "--connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run",
     ],
     "import-pinout": [
-        "harness-design-studio import-pinout my-design gyro-pinout.csv --unit GYRO1 --default-part MY-HD-9-F --dry-run",
-        'harness-design-studio import-pinout my-design icd.xlsx --unit CAM1 --new-device "Camera" --part J1=MY-HD-9-F --part J2=MY-HD-15-M',
+        "harness-design-studio import-pinout my-design gyro-pinout.csv --device GYRO1 --default-part MY-HD-9-F --dry-run",
+        'harness-design-studio import-pinout my-design icd.xlsx --device CAM1 --new-device "Camera" --part J1=MY-HD-9-F --part J2=MY-HD-15-M',
     ],
     "export-pinout": [
-        "harness-design-studio export-pinout my-design --unit GYRO1",
-        "harness-design-studio export-pinout my-design --unit GYRO1 -o gyro-pinout.xlsx",
+        "harness-design-studio export-pinout my-design --device GYRO1",
+        "harness-design-studio export-pinout my-design --device GYRO1 -o gyro-pinout.xlsx",
     ],
     "export-devices": [
-        "harness-design-studio export-devices my-design device-library.json --unit GYRO1",
-        "harness-design-studio export-devices my-design device-library.json --unit OBC1 --unit PCU1",
+        "harness-design-studio export-devices my-design device-library.json --device GYRO1",
+        "harness-design-studio export-devices my-design device-library.json --device OBC1 --device PCU1",
     ],
     "import-devices": [
         "harness-design-studio import-devices my-design device-library.json --list",
-        "harness-design-studio import-devices my-design device-library.json --unit GYRO1 --dry-run",
+        "harness-design-studio import-devices my-design device-library.json --device GYRO1 --dry-run",
     ],
     "review": ['harness-design-studio review my-design W001 --by "A. Engineer"'],
     "release": [

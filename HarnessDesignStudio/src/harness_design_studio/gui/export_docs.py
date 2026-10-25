@@ -51,7 +51,7 @@ SYSTEM_DOCS: Final[tuple[DocType, ...]] = (
     DocType("sys_mass_length", "Mass and length, all harnesses", "CSV"),
     DocType("sys_mating", "Mating matrix", "CSV"),
     DocType("sys_traceability", "Traceability", "CSV"),
-    DocType("sys_box_pinouts", "Unit connector pinouts", "CSV"),
+    DocType("sys_box_pinouts", "Device connector pinouts", "CSV"),
     DocType("sys_drc_findings", "Design rule findings", "CSV"),
     DocType("sys_drc_report", "Design rule report", "Markdown"),
     DocType("sys_changelog", "Change log", "CSV"),

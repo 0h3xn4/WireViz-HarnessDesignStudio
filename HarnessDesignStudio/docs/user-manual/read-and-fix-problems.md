@@ -17,7 +17,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 ## Before you start
 
 - You have a project. The examples use `wheel-link` from `harness-design-studio new wheel-link --template first-steps`, generated with `harness-design-studio generate wheel-link` ([generate harnesses](generate-harnesses.md)).
-- The tool checks the design at two speeds. **Quick checks** run on every edit (a link without a connector, a unit with no link, connectors chosen by the tool and not confirmed, a link between the nominal and the redundant chain). The **design rules** (35 of them, all listed in [`RULES.md`](../RULES.md)) run in the background a moment after you stop editing.
+- The tool checks the design at two speeds. **Quick checks** run on every edit (a link without a connector, a device with no link, connectors chosen by the tool and not confirmed, a link between the nominal and the redundant chain). The **design rules** (35 of them, all listed in [`RULES.md`](../RULES.md)) run in the background a moment after you stop editing.
 
 ## 1. The three kinds of finding
 
@@ -31,7 +31,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 1. Open the **Problems** tab (in the right panel; in the Simple workspace the right panel is closed, so press **Show panels** in the top bar first, or press **Show the problems** on the Next step page, which opens the **Checks** area with the failed rules). The tab title shows how many open errors and warnings there are, for example "Problems (10)". While the design rules run, the status line says "Design rules: checking…" and then, for example, "Design rules: 35 rules, 20 passed, 2 failed, 12 not checked." A rule that could not run because a value is missing counts as *not checked*, never as passed. The **Checks** tab (Ctrl+4) lists all 35 rules with a result for each; see [section 2a](#2a-the-checks-tab).
 2. Each finding is a card. (GUI, not run: described from the program's texts and code.) It says what is wrong and why it matters. Many cards have a button that fixes it in one click. The cards have these buttons:
-   - **Show** jumps to the unit, link or harness it is about.
+   - **Show** jumps to the device, link or harness it is about.
    - A fix button, named after the fix, for example **Choose connectors automatically**, **Confirm connectors** or **Connect to a redundant copy of OBC1**.
    - **Waive…** (warnings only).
 3. Three or more errors or notes of the same rule about the same object are shown as one card with a list. (Warnings always get a card each, because each one can be waived on its own.)
@@ -40,7 +40,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 Click a card or a to-do line to jump to the item.
 
-**The Problems panel.** Press **Problems (n)** in the status bar, or Ctrl+Shift+M (**View > Problems panel**; the Simple workspace has no **Problems (n)** button in its status bar), to open a list of every open problem at the bottom of the window. It has the columns Severity, Rule, Object and Message, and the filters **All**, **Error** and **Warning**. Click a row to go to the object, whether it is a unit, a link, a harness, a parts file or a value file. **Details and fixes** (right-click a row, or press Shift+Enter) shows the problem as a card in the Inspector. The panel counts findings and the Problems tab counts groups of to-do lines, so the two numbers can differ.
+**The Problems panel.** Press **Problems (n)** in the status bar, or Ctrl+Shift+M (**View > Problems panel**; the Simple workspace has no **Problems (n)** button in its status bar), to open a list of every open problem at the bottom of the window. It has the columns Severity, Rule, Object and Message, and the filters **All**, **Error** and **Warning**. Click a row to go to the object, whether it is a device, a link, a harness, a parts file or a value file. **Details and fixes** (right-click a row, or press Shift+Enter) shows the problem as a card in the Inspector. The panel counts findings and the Problems tab counts groups of to-do lines, so the two numbers can differ.
 
 ## 2a. The Checks tab
 
@@ -78,7 +78,7 @@ harness-design-studio validate wheel-link
 
 ```
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 2 interfaces, 13 connectors, 2 harnesses: 0 error(s), 0 warning(s).
+3 devices, 2 interfaces, 13 connectors, 2 harnesses: 0 error(s), 0 warning(s).
 ```
 
 The INFO line is normal until an engineer has reviewed the engineering values ([fill in the engineering values](fill-in-engineering-values.md)).

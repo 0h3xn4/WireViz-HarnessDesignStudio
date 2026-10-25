@@ -59,7 +59,7 @@ wheel-link/outputs/
     drawing_A3.pdf  drawing_A4.pdf  drawing_A3_s1.svg   the harness drawing (only with --drawings)
   harnesses/W002/ ...            the same for each further harness
   system/
-    block_diagram.pdf  block_diagram.svg      the units and their links
+    block_diagram.pdf  block_diagram.svg      the devices and their links
     harness_overview.pdf  harness_overview.svg
     bom.csv  mass_length.csv  box_pinouts.csv  mating_matrix.csv  traceability.csv
     drc_report.md  drc_findings.csv  changelog.csv  revision_report.md
@@ -70,13 +70,13 @@ wheel-link/outputs/
 | --- | --- |
 | `<ID>_build.xlsx` | The build workbook of one harness: what is ready and what is missing, the cut list, one block per connector, the parts, the accessories, the labels and the test sheet ([section 3](#3-the-build-workbook-sheet-by-sheet)). |
 | `wirelist.csv` | Every wire: signal, interface, connectors, pins, gauge, part, colour, length. Two columns, *Label* and *Note*, are added only when you gave a wire one (1.4.0), and two more, *Strip A (mm)* and *Strip B (mm)*, only when any wire of the project has a strip length (1.7.0). |
-| `pinouts.csv`, `box_pinouts.csv` | Every pin of every cable connector, and of every connector on a unit, with the wire on it and whether it is spare. The columns *Function* and *Termination* (crimp or solder) are added only when a pin has one (1.4.0), and *Contact* only when a pin has a contact part (1.7.0). |
+| `pinouts.csv`, `box_pinouts.csv` | Every pin of every cable connector, and of every connector on a device, with the wire on it and whether it is spare. The columns *Function* and *Termination* (crimp or solder) are added only when a pin has one (1.4.0), and *Contact* only when a pin has a contact part (1.7.0). |
 | `bom.csv` | The bill of materials ([BOM](../GLOSSARY.md)): parts and quantities, with approval status. Since 1.7.0 it counts the contact parts used on pins and the parts of accessories as well. |
 | `accessories.csv` | The accessories of a harness (sleeving, heat shrink, labels, backshells): kind, part, what it is on, where, length of one piece, quantity, note. Only written for a harness that has some (1.7.0, [enter the build data](enter-the-build-data.md)). |
 | `mass_length.csv` | Wire length and mass, and what is still unknown. Totals count only what is known. |
 | `tests.csv` | A continuity test for each wire and an isolation test for each wire and shield. |
 | `labels.csv` | One label for each connector and two for each wire, and one for the harness when it has a label. A label you gave (1.4.0) is printed instead of only the ID or the signal name. |
-| `mating_matrix.csv` | Which cable connector mates with which unit connector, with the gender of each. |
+| `mating_matrix.csv` | Which cable connector mates with which device connector, with the gender of each. |
 | `traceability.csv` | Which interface is carried by which wires. |
 | `<ID>.xlsx` | The tables of the harness as sheets (wire list, pinouts, BOM, mass and length, tests, labels, and the accessories when it has some), as data. It is not the build workbook and has no layout for building. |
 | `drc_report.md` | The same report as `harness-design-studio drc`. |
@@ -192,7 +192,7 @@ W002-P1,cable,PCDU1-J01,EX-MICROD-9-M,3,,,,yes
 
 The harness drawing (written only with `--drawings`, [section 5](#5-the-pdf-drawings-optional)) is a wiring diagram. The connectors are tables left and right, with every used pin and its signal. The wires run between them. In between, each cable has a block that lists its wires with the number of wires, the gauge ("pending" when undecided) and the length. A title block closes the sheet. Wire colours are drawn only if you set them ([set wire colours](set-wire-colours.md)); unset wires are grey. The wiring-diagram drawing is not in the 0.1.0 packages (see the [changelog](../../CHANGELOG.md)); the 0.1.0 drawing is the older wire-by-wire sheet.
 
-The title block of the drawing shows the author, checker, approver and date as "-" until the harness has been reviewed and released. Its fields come from `config/titleblock.json` ([naming and title block](naming-and-title-block.md)); `sheet` may be left out. A pin ID is drawn whole (smaller, or in a wider pin column), a connector or wire ID of up to 64 characters is drawn in a smaller font instead of being cut, and a shield keeps its end A on every sheet. The harness overview draws every pair of units that a harness joins.
+The title block of the drawing shows the author, checker, approver and date as "-" until the harness has been reviewed and released. Its fields come from `config/titleblock.json` ([naming and title block](naming-and-title-block.md)); `sheet` may be left out. A pin ID is drawn whole (smaller, or in a wider pin column), a connector or wire ID of up to 64 characters is drawn in a smaller font instead of being cut, and a shield keeps its end A on every sheet. The harness overview draws every pair of devices that a harness joins.
 
 Numbers in the tables and the YAML keep all their digits (a length of 1234.567 mm is written as it is); only the text on the drawings is rounded. A CSV cell that starts with `=`, `+`, `-` or `@` and is not a plain number is written with a leading `'` so a spreadsheet program does not run it as a formula (`+5V` appears as `'+5V`; `-12` stays `-12`); the guard can be undone exactly, so such a signal exports and verifies. The Excel files are written without lxml, so the same design gives identical bytes on every machine.
 

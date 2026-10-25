@@ -167,7 +167,7 @@ def check_locks(project: Project, ops: list[Op]) -> None:
             old_u = project.units.get(key)
             if not isinstance(new, Unit) or old_u is None or unit_design(new) != unit_design(old_u):
                 problems.append(
-                    f"Unit {key} is used by {unit_owner[key]}, which is released. "
+                    f"Device {key} is used by {unit_owner[key]}, which is released. "
                     + why(unit_owner[key])
                 )
         elif op.collection == "connectors":

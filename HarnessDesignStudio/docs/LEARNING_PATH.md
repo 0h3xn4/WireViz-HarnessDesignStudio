@@ -24,7 +24,7 @@ If you have not installed the tool yet, start with [`INSTALL.md`](INSTALL.md).
 | 1. Look around | what the tool is for | 10 min | [`CONCEPTS.md`](CONCEPTS.md) |
 | 2. Your first harness | generate, check and export | 45 min | example `first-steps`, [`GETTING_STARTED.md`](GETTING_STARTED.md) |
 | 3. A realistic small system | read a whole design | 30 min | example `minimal-satellite` |
-| 4. Plan your own design | decide units and interfaces before you click | 30 min | template `design-worksheet.md` |
+| 4. Plan your own design | decide devices and interfaces before you click | 30 min | template `design-worksheet.md` |
 | 5. Enter your design | build it in the app or import it | 1 to 2 h | `blank`, template `interfaces.csv` |
 | 6. Bring in real data | parts, lengths, engineering values | as needed | templates `approved-parts.csv`, `segment-lengths.csv`, [`CONFIG.md`](CONFIG.md) |
 | 7. Check and review | read every problem, decide what is a real issue | 30 min | template `design-review-checklist.md` |
@@ -33,7 +33,7 @@ If you have not installed the tool yet, start with [`INSTALL.md`](INSTALL.md).
 
 ## 1. Look around (10 minutes)
 
-Read [`CONCEPTS.md`](CONCEPTS.md). You should be able to say, in your own words, what a **unit**, an **interface**, a **harness**, a **wire** and a **project** are, and why the tool generates harnesses instead of asking you to draw them.
+Read [`CONCEPTS.md`](CONCEPTS.md). You should be able to say, in your own words, what a **device**, an **interface**, a **harness**, a **wire** and a **project** are, and why the tool generates harnesses instead of asking you to draw them.
 
 If you want to see how the window is meant to be used, read [use the simple workspace](user-manual/use-the-simple-workspace.md) (five minutes): since 1.7.0 the app starts on a **Next step** page that names one thing to do at a time.
 
@@ -41,7 +41,7 @@ If you want to see how the window is meant to be used, read [use the simple work
 
 ## 2. Your first harness (45 minutes)
 
-Follow [`GETTING_STARTED.md`](GETTING_STARTED.md) from Part 1 to Part 6. It uses the example `first-steps` (three units, two interfaces) and shows the real output of every command.
+Follow [`GETTING_STARTED.md`](GETTING_STARTED.md) from Part 1 to Part 6. It uses the example `first-steps` (three devices, two interfaces) and shows the real output of every command.
 
 ```
 harness-design-studio new wheel-link --template first-steps
@@ -54,7 +54,7 @@ harness-design-studio export wheel-link
 
 ## 3. A realistic small system (30 minutes)
 
-`minimal-satellite` has seven units without redundancy: solar array, battery, power distribution unit (`PCDU1`), on-board computer, transceiver, one reaction wheel and a sun sensor. It is the smallest example that looks like a real spacecraft.
+`minimal-satellite` has seven devices without redundancy: solar array, battery, power distribution unit (`PCDU1`), on-board computer, transceiver, one reaction wheel and a sun sensor. It is the smallest example that looks like a real spacecraft.
 
 ```
 harness-design-studio new mini --template minimal-satellite
@@ -67,24 +67,24 @@ Open it in the app (**File > Open project...**). A first run starts in the Simpl
 1. Click a wire of the power link from the power distribution unit (`PCDU1`) to the computer. Read **Why is it like this?**
 2. Open the **Problems** tab (right panel) or the Problems panel (Ctrl+Shift+M); in Simple, **Show panels** opens the right panel. Most entries say that a value is *pending* or *not checked*. That is the tool being honest: nobody has supplied the derating values yet.
 3. Use the **Show** list at the right end of the Model tab bar to look at the power interfaces only, then at the data interfaces.
-4. Delete a unit, then press **Ctrl+Z**, to see that nothing is lost.
+4. Delete a device, then press **Ctrl+Z**, to see that nothing is lost.
 
 **Done when:** you can find, for any wire, which interface it belongs to and which two connector pins it joins.
 
-The 14-unit example `small-satellite` has redundant chains; use it once you are comfortable with `minimal-satellite`. When you want to see a complete system with ground equipment, harness bundles between panels, example numbers and everything generated, take the `flatsat` example and read [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md).
+The 14-device example `small-satellite` has redundant chains; use it once you are comfortable with `minimal-satellite`. When you want to see a complete system with ground equipment, harness bundles between panels, example numbers and everything generated, take the `flatsat` example and read [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md).
 
 ## 4. Plan your own design (30 minutes)
 
-Before you open the tool, fill in `design-worksheet.md` (get it with `harness-design-studio templates my-templates`). It asks for the units, the interfaces between them, which of them need redundancy, and which numbers you do not have yet. A filled worksheet is half of the data entry.
+Before you open the tool, fill in `design-worksheet.md` (get it with `harness-design-studio templates my-templates`). It asks for the devices, the interfaces between them, which of them need redundancy, and which numbers you do not have yet. A filled worksheet is half of the data entry.
 
-**Done when:** every interface on the worksheet has two units, a type and (for power) a maximum current.
+**Done when:** every interface on the worksheet has two devices, a type and (for power) a maximum current.
 
 ## 5. Enter your design (1 to 2 hours)
 
 Two ways, and you can mix them:
 
-- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add units (the button **Add a device** on the empty diagram, **Add** in the Project tab, or **Edit > Add unit**), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10. To make a harness with no interface at all, see [build a harness by hand](user-manual/build-a-harness-by-hand.md).
-- **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import > Import interfaces…** (Ctrl+Shift+I). Add the units first. You can also paste a block of cells from Excel into the **Units** or **Interfaces** table to change rows that exist. Importing interfaces is app only: there is no command line command for it.
+- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add devices (the button **Add a device** on the empty diagram, **Add** in the Project tab, or **Edit > Add device**), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10. To make a harness with no interface at all, see [build a harness by hand](user-manual/build-a-harness-by-hand.md).
+- **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import > Import interfaces…** (Ctrl+Shift+I). Add the devices first. You can also paste a block of cells from Excel into the **Device list** or **Interfaces** table to change rows that exist. Importing interfaces is app only: there is no command line command for it.
 
 **Done when:** `harness-design-studio generate my-design` finishes and `harness-design-studio check my-design` reports no errors.
 
@@ -96,7 +96,7 @@ Do this when the data exists; the tool works without it and says so.
 - **Segment lengths:** `segment-lengths.csv`, then `harness-design-studio import-lengths`. Wire lengths, mass and voltage drop depend on them.
 - **Build data** (strip lengths, the contact on each pin and its crimp tool, sleeving, heat shrink, labels and backshells): the fields in the app, or `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv` with `harness-design-studio import-build-data` (new in 1.7.0). The build workbook shows what you entered and marks the rest `to fill in`; nothing is computed from it. See [enter the build data](user-manual/enter-the-build-data.md).
 - **Engineering values** (derating, ampacity, EMC classes): [`CONFIG.md`](CONFIG.md). The files in `config-demo-values/` are **for learning only**; they stay marked as placeholders. Never copy demo values into a real design.
-- **Unit connector pinouts from KiCad:** [`KICAD.md`](KICAD.md).
+- **Device connector pinouts from KiCad:** [`KICAD.md`](KICAD.md).
 - **A device you defined before:** save it once with **Save to library…** in the Devices tab (or `harness-design-studio export-devices`) and add it to the next project with **Add from library…** ([define a device](user-manual/define-a-device.md#use-a-device-in-another-project)).
 
 **Done when:** `harness-design-studio config my-design` lists no missing value you are responsible for.

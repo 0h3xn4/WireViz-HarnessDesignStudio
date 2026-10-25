@@ -144,7 +144,7 @@ def test_a_connector_that_plugs_into_a_unit_copies_its_side():
         assert c.gender == flip
     with pytest.raises(EditError, match="has a connector for"):
         plan_add_connector(p, hid, mates_with=box.id)
-    with pytest.raises(EditError, match="not a connector of a unit"):
+    with pytest.raises(EditError, match="not a connector of a device"):
         plan_add_connector(p, hid, mates_with="nope")
     with pytest.raises(EditError, match="Only a cable connector"):
         plan_add_connector(p, hid, mates_with=box.id, role="inline")

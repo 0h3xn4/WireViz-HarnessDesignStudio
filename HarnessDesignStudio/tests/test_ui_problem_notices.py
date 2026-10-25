@@ -243,6 +243,7 @@ def test_the_out_of_date_banner_goes_and_comes_back(win) -> None:
     assert win.alerts.is_showing("stale")
 
 
+@pytest.mark.perf
 def test_switching_it_is_quick_and_repaints_only_what_changed(win) -> None:
     scene = win.view.dscene
     painted: list[object] = []

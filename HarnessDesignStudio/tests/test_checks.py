@@ -31,7 +31,7 @@ def test_isolated_unit_info() -> None:
     p = two_unit_project()
     assert {f.object_id for f in checks.open_findings(p) if f.rule == "isolated"} == {"OBC1", "RW1"}
     todo = checks.todos(p)
-    assert todo[0].text == "2 units are not connected to anything" and todo[0].kind == "unit"
+    assert todo[0].text == "2 devices are not connected to anything" and todo[0].kind == "unit"
 
 
 def test_unconfirmed_then_confirm_fix() -> None:

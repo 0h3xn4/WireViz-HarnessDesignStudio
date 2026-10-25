@@ -193,7 +193,7 @@ def todos_from(all_findings: list[Finding]) -> list[Todo]:
         n = len(isolated)
         out.append(
             Todo(
-                f"{n} unit{'s are' if n > 1 else ' is'} not connected to anything",
+                f"{n} device{'s are' if n > 1 else ' is'} not connected to anything",
                 "unit",
                 isolated[0].object_id,
             )

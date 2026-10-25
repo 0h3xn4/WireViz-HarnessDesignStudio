@@ -70,7 +70,7 @@ def _writable(project: Project) -> None:
 def _box(project: Project, connector_id: str) -> Connector:
     c = project.connectors.get(connector_id)
     if c is None or c.role != "box" or c.unit_id is None:
-        raise EditError(f"'{connector_id}' is not a connector of a unit.")
+        raise EditError(f"'{connector_id}' is not a connector of a device.")
     return c
 
 
@@ -310,7 +310,7 @@ def ops_add_connector(
     is the one the part's description says unless given."""
     _writable(project)
     if unit_id not in project.units:
-        raise EditError(f"Unit '{unit_id}' does not exist.")
+        raise EditError(f"Device '{unit_id}' does not exist.")
     part = _connector_part(project, part_id)
     cid, default_name = next_connector_name(project, unit_id)
     cname = _check_connector_name(project, unit_id, name, None) if name else default_name
@@ -1146,7 +1146,7 @@ def _frozen_pins(project: Project, c: Connector) -> dict[str, str]:
 def pinout_table(project: Project, unit_id: str) -> Table:
     """The rows `system/box_pinouts.csv` will hold for this device, header first."""
     if unit_id not in project.units:
-        raise EditError(f"Unit '{unit_id}' does not exist.")
+        raise EditError(f"Device '{unit_id}' does not exist.")
     return box_pinouts(project, {c.id for c in unit_connectors(project, unit_id)})
 
 
@@ -1284,7 +1284,7 @@ def device_state(project: Project, unit_id: str) -> DeviceState:
     from the project each time; the file holds no state."""
     unit = project.units.get(unit_id)
     if unit is None:
-        raise EditError(f"Unit '{unit_id}' does not exist.")
+        raise EditError(f"Device '{unit_id}' does not exist.")
     conns = {c.id for c in unit_connectors(project, unit_id)}
     ifs = tuple(
         sorted(
@@ -1433,7 +1433,7 @@ def ops_update_device(project: Project, unit_id: str, **changes: object) -> list
     _writable(project)
     unit = project.units.get(unit_id)
     if unit is None:
-        raise EditError(f"Unit '{unit_id}' does not exist.")
+        raise EditError(f"Device '{unit_id}' does not exist.")
     bad = set(changes) - DEVICE_FIELDS
     if bad:
         raise EditError(f"These device fields cannot be changed here: {', '.join(sorted(bad))}.")

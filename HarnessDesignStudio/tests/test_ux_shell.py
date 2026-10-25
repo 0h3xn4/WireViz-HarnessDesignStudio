@@ -176,14 +176,14 @@ def test_history_names_the_step_a_redo_would_run() -> None:
 
 
 def test_palette_ranks_prefix_first_and_has_no_cap() -> None:
-    entries = [PaletteEntry(f"Go to unit U{i}", lambda: None) for i in range(60)]
+    entries = [PaletteEntry(f"Go to device U{i}", lambda: None) for i in range(60)]
     entries.insert(10, PaletteEntry("Regenerate everything", lambda: None))
     entries.append(PaletteEntry("Generate harnesses", lambda: None))
     ranked = [e.label for e in rank_entries(entries, "gene")]
     assert ranked[0] == "Generate harnesses"  # a label that starts with the text comes first
     assert ranked[1] == "Regenerate everything"
     assert len(rank_entries(entries, "")) == 62  # nothing is cut off at 14
-    assert len(rank_entries(entries, "go to unit")) == 60
+    assert len(rank_entries(entries, "go to device")) == 60
 
 
 def test_palette_finds_every_command(flat) -> None:

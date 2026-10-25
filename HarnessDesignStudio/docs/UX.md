@@ -41,7 +41,7 @@ This document is the contract for the editor in M2. Where the prototype and this
 
 | | Dana, systems engineer | Sam, software engineer | Elena, harness (EE) engineer | Rui, reviewer / AIT technician |
 | --- | --- | --- | --- | --- |
-| Goal | Define units and interfaces, get a harness plan she can trust without learning pin allocation | See which buses and discretes reach which unit, with exact signal names | Own the physical truth: connectors, pins, wires, shields; release drawings | Check plans against the design; use them for continuity and isolation tests |
+| Goal | Define devices and interfaces, get a harness plan she can trust without learning pin allocation | See which buses and discretes reach which device, with exact signal names | Own the physical truth: connectors, pins, wires, shields; release drawings | Check plans against the design; use them for continuity and isolation tests |
 | Knows | The architecture, ICDs in spreadsheets | Protocols and signal names; not wire gauges | Everything physical; wants speed and control | Reads drawings; knows test procedures |
 | Fears | Making a wiring mistake she cannot see | Stale or wrong documents | Tool hides or overrides her decisions | Printed sheet differs from the model |
 | Mode | Guided | Guided, table view | Expert | Read-only views, outputs |
@@ -53,21 +53,21 @@ Each journey lists the steps, what the tool must do to prevent mistakes, and the
 
 **J1. First run and tour (Dana).** Opens the app, sees a sample project (mini3) and a 5-step tour (palette, canvas, connecting, problems/to-do, generate) that she can skip or replay from Help. Success: she can name the next action without reading anything else. *P: `test_j1_*`.*
 
-**J2. Build the diagram (Dana).** Adds five units from the palette (computer, power unit, wheel, star tracker, transceiver), drags them into panel A or B (zone follows position), renames them. New units never land on top of others; IDs and names validate as typed (duplicates, format); empty state says "Add your first unit from the palette on the left." Success: 5 units in under 5 minutes. *P: `test_j2_*`, `test_new_units_never_overlap_*`, `test_live_validation_of_ids`, `test_dragging_a_unit_changes_zone`.*
+**J2. Build the diagram (Dana).** Adds five devices from the palette (computer, power unit, wheel, star tracker, transceiver), drags them into panel A or B (zone follows position), renames them. New devices never land on top of others; IDs and names validate as typed (duplicates, format); empty state says "Add your first device from the palette on the left." Success: 5 devices in under 5 minutes. *P: `test_j2_*`, `test_new_units_never_overlap_*`, `test_live_validation_of_ids`, `test_dragging_a_unit_changes_zone`.*
 
-**J3. Connect units safely (Dana, Guided mode).** Picks an interface type, clicks the first unit (it is marked FROM), then the second. Units that cannot take that type are greyed out and say why in visible text under the unit ("No free CAN connector"), not only in a tooltip; if no unit can, the hint says so. The tool picks the connectors and marks them "Auto" until confirmed. Success: wrong connections are impossible, not just reported. *P: `test_j3_*`, `test_connect_mode_marks_source_*`.*
+**J3. Connect devices safely (Dana, Guided mode).** Picks an interface type, clicks the first device (it is marked FROM), then the second. Devices that cannot take that type are greyed out and say why in visible text under the device ("No free CAN connector"), not only in a tooltip; if no device can, the hint says so. The tool picks the connectors and marks them "Auto" until confirmed. Success: wrong connections are impossible, not just reported. *P: `test_j3_*`, `test_connect_mode_marks_source_*`.*
 
 **J4. ICD table and import (Dana, Sam).** Switches to the table view (always in sync with the canvas), edits names, chain, current, requirement ID inline, filters by text. Imports a CSV/XLSX with column mapping and a preview that lists every row's status; nothing changes until she confirms; the import is one undo step. Success: 6 rows with 4 problems show exactly which rows fail and why. *P: `test_j4_*`, `test_import_*`.*
 
-**J5. Redundant chain (Dana).** Selects a unit, clicks "Create redundant copy": a copy appears with mirrored names (`-R`), dashed lines and a REDUNDANT label. Where it would connect to a nominal unit (a cross-strap), a warning appears with a one-click fix ("Connect to a redundant copy of PCDU-A") or a waiver that needs a written justification. Success: two clicks produce a clean redundant chain. *P: `test_j5_*`, `test_cross_strap_fix_*`.*
+**J5. Redundant chain (Dana).** Selects a device, clicks "Create redundant copy": a copy appears with mirrored names (`-R`), dashed lines and a REDUNDANT label. Where it would connect to a nominal device (a cross-strap), a warning appears with a one-click fix ("Connect to a redundant copy of PCDU-A") or a waiver that needs a written justification. Success: two clicks produce a clean redundant chain. *P: `test_j5_*`, `test_cross_strap_fix_*`.*
 
-**J6. Problems, to-do and Explain (Dana, Rui).** The bottom panel shows Problems (what is wrong, why it matters, how to fix, one-click fix when safe) and a to-do list ("1 unit is not connected", "2 auto-filled assignments to review", "plans out of date"), each item clickable. Every generated item has a plain-language "Explain". Success: she can reach "no problems, plans verified" by following the list alone. *P: `test_j7_*`, explain dialogs.*
+**J6. Problems, to-do and Explain (Dana, Rui).** The bottom panel shows Problems (what is wrong, why it matters, how to fix, one-click fix when safe) and a to-do list ("1 device is not connected", "2 auto-filled assignments to review", "plans out of date"), each item clickable. Every generated item has a plain-language "Explain". Success: she can reach "no problems, plans verified" by following the list alone. *P: `test_j7_*`, explain dialogs.*
 
 **J7. Generate, verify, regenerate (Dana, Elena).** "Generate" first shows what will be created; progress is cancellable and cancelling leaves nothing behind; an independent check runs and its result and the model hash are shown. Editing the model afterwards marks the plans Outdated and blocks release. Regeneration first reports "keeps N locked pins, changes M plans" and applies nothing until confirmed. *P: `test_j10_*`, `test_regeneration_report_*`, `test_generate_can_be_cancelled_*`.*
 
-**J8. Expert refinement (Elena).** Switches to Expert mode (data is unchanged): connectors appear on the units, ports face the gap between panels, parts are chosen from the library list, auto-filled values are confirmed, pins are locked. Only valid ports are selectable; busy or wrong-type ports say why. Success: she completes a manual connector assignment without leaving the canvas. *P: `test_j3_expert_*`, `test_j9_modes_*`.*
+**J8. Expert refinement (Elena).** Switches to Expert mode (data is unchanged): connectors appear on the devices, ports face the gap between panels, parts are chosen from the library list, auto-filled values are confirmed, pins are locked. Only valid ports are selectable; busy or wrong-type ports say why. Success: she completes a manual connector assignment without leaving the canvas. *P: `test_j3_expert_*`, `test_j9_modes_*`.*
 
-**J9. Software engineer: what reaches my unit? (Sam).** Searches an ID with Ctrl+K, filters the table by unit or type, selects an interface and sees its signals, both ends and requirement ID; selection highlights across canvas, table and harness list. Success: answers "which signals reach OBC-A.J01?" in under 30 seconds. *P: partly (`test_j8_command_palette`, table filter); cross-highlighting is specified in section 5 and built in M2.*
+**J9. Software engineer: what reaches my device? (Sam).** Searches an ID with Ctrl+K, filters the table by device or type, selects an interface and sees its signals, both ends and requirement ID; selection highlights across canvas, table and harness list. Success: answers "which signals reach OBC-A.J01?" in under 30 seconds. *P: partly (`test_j8_command_palette`, table filter); cross-highlighting is specified in section 5 and built in M2.*
 
 **J10. Release, change log, diff (Elena, Rui).** Releasing asks for a mandatory comment, is blocked while plans are outdated or the verifier reports errors, locks the harness (greyed controls, lock badge) and stores a baseline. Rui sees status, revision and model hash on every sheet. Success: a released plan cannot be edited by accident. *P: release dialog and locking in `test_j10_*`; diff view is specified in section 5 and built in M6.*
 
@@ -181,12 +181,12 @@ The rules still hold. Where rule 7 says a cell reads "rules pending", the editor
 2. **Auto-filled values are visibly marked** (dashed amber outline + "Auto" badge) until a person confirms them; the to-do list counts them.
 3. **Messages have three parts:** what is wrong, why it matters, how to fix it (with a button when the fix is safe). No codes in the headline; the rule ID is in "Details".
 4. **Destructive actions** (delete, regenerate over edits, release) show their exact impact first; Cancel is the default; all are undoable except release (which is reversible only by a new revision).
-5. **Free text is validated as typed** (ID format, duplicates, numbers with units) and the field keeps its value until valid; nothing is saved invalid.
+5. **Free text is validated as typed** (ID format, duplicates, numbers with devices) and the field keeps its value until valid; nothing is saved invalid.
 6. **Long work** shows progress and a Cancel; cancelling leaves no partial result.
 7. **Placeholders are loud.** Anywhere a value depends on unfilled rule configuration (e.g. wire gauge), the cell says "rules pending" and explains why, instead of showing a number.
-8. **One-click fixes must make engineering sense.** The prototype review found a "fix" that made a redundant unit nominal (defeating its purpose); fixes are only offered if a reviewer would agree with them.
+8. **One-click fixes must make engineering sense.** The prototype review found a "fix" that made a redundant device nominal (defeating its purpose); fixes are only offered if a reviewer would agree with them.
 9. **Cross-highlighting:** selecting a wire, signal or connector highlights it in the canvas, harness list, wire list and pinout at once (M2 for canvas, table and properties; M3 onward for plans).
-10. **Terminology** is fixed: *unit*, *interface*, *connector*, *pin*, *wire*, *harness*, *chain* (nominal/redundant), *plan* for the generated documents. The glossary and tooltips carry the domain terms.
+10. **Terminology** is fixed: *device*, *interface*, *connector*, *pin*, *wire*, *harness*, *chain* (nominal/redundant), *plan* for the generated documents. The glossary and tooltips carry the domain terms.
 
 ## 7. Design system
 
@@ -271,7 +271,7 @@ M2 scope: canvas editor, interface types, table view, CSV/XLSX import, propertie
 | Task | Persona | Success criterion |
 | --- | --- | --- |
 | T1 Build a 5-unit diagram with 4 interfaces and generate plans | Dana | Under 15 minutes, no manual |
-| T2 Connect a unit that has no free connector of the type | Dana | Understands why it is greyed, finds the fix |
+| T2 Connect a device that has no free connector of the type | Dana | Understands why it is greyed, finds the fix |
 | T3 Create a redundant chain and clear its warnings | Dana | Clean, or a justified waiver |
 | T4 Import the team's ICD CSV with 2 bad rows | Dana, Sam | Finds and understands both errors; one undo reverts |
 | T5 Find every signal that reaches one connector | Sam | Under 30 seconds |
@@ -287,27 +287,27 @@ I rendered every screen and walked every journey. Found, fixed, and covered by a
 
 | # | Issue | Severity | Status |
 | --- | --- | --- | --- |
-| 1 | A newly added unit was placed exactly on top of an existing one | High | Fixed (`test_new_units_never_overlap_*`) |
+| 1 | A newly added device was placed exactly on top of an existing one | High | Fixed (`test_new_units_never_overlap_*`) |
 | 2 | Hover overrode the pressed/primary button styles, making "Connect" and "Waive" unreadable | High | Fixed (`test_pressed_and_primary_*`) |
-| 3 | In connect mode the chosen source unit was greyed ("cannot connect to itself"); reasons for greyed units were hover-only; no message when nothing was valid | High | Fixed: FROM marker, inline reasons, warning hint |
-| 4 | The cross-strap "fix" made the redundant unit nominal, defeating its purpose | High | Fixed: "Connect to a redundant copy of X" (`test_cross_strap_fix_*`) |
+| 3 | In connect mode the chosen source device was greyed ("cannot connect to itself"); reasons for greyed devices were hover-only; no message when nothing was valid | High | Fixed: FROM marker, inline reasons, warning hint |
+| 4 | The cross-strap "fix" made the redundant device nominal, defeating its purpose | High | Fixed: "Connect to a redundant copy of X" (`test_cross_strap_fix_*`) |
 | 5 | At 150 to 200% the header wrapped over most of the screen and the canvas collapsed to nothing | High | Fixed: compact header, auto-collapsing panels (`test_panels_collapse_*`) |
-| 6 | Redundant copy overlapped its neighbours; links between units in the same lane drew as degenerate loops; both links entered a unit at one point | Medium | Fixed: free-slot placement, ports on the side facing the gap, offset anchors |
+| 6 | Redundant copy overlapped its neighbours; links between devices in the same lane drew as degenerate loops; both links entered a device at one point | Medium | Fixed: free-slot placement, ports on the side facing the gap, offset anchors |
 | 7 | Toasts covered the Problems buttons; the tour card covered the element it explained | Medium | Fixed: toasts over the canvas, tour card placed beside its target (`test_tour_card_*`) |
 | 8 | Dark theme showed bright white native checkboxes | Low | Fixed (`color-scheme`) |
 | 9 | Link labels can still overlap in dense diagrams; no automatic layout | Medium | Closed later: labels slide along their link (Q11, M7); **Arrange diagram** exists (M8); D-140 added routing |
 | 10 | Wire list shows only two rows in the default bottom panel height | Low | Mitigated ("Taller" button); real tab gets a split view |
 | 11 | When Properties is auto-hidden (narrow window) selecting an item shows nothing | Low | Closed later: a message says so (Q14, M7) |
-| 12 | No minimap, no keyboard-only way to draw a link other than Tab and Enter on units | Medium | Closed later: the overview map exists (View > Show overview map); in the editor the Connect tool starts with **C** and Enter picks a unit |
+| 12 | No minimap, no keyboard-only way to draw a link other than Tab and Enter on devices | Medium | Closed later: the overview map exists (View > Show overview map); in the editor the Connect tool starts with **C** and Enter picks a device |
 | 13 | Prototype data is mock: pins, gauges and the "independent check" are simulated | Info | By design; the real verifier is M3 |
 
 ## 11. Questions for you (please answer or mark "you decide")
 
 1. **Mode default:** should the app start in Guided for everyone (my proposal) or remember the last mode per user?
-2. **Zones as lanes:** is "zone = which vertical lane the unit sits in" acceptable, or do you want free-form zones that can be named and drawn as boxes (more flexible, more UI)?
+2. **Zones as lanes:** is "zone = which vertical lane the device sits in" acceptable, or do you want free-form zones that can be named and drawn as boxes (more flexible, more UI)?
 3. **One harness per interface** is only the prototype's mock rule (DECISIONS D-10). Which real rule should the "Why does this harness exist?" text describe?
 4. **Cross-strap fix:** is "create a redundant copy of the nominal end" the right default, or should the first suggestion always be "waive with justification"?
-5. **Unit templates** in the palette (computer, power unit, wheel, ...): which units does your organisation use most? Do you want to import your own list (CSV) in M2?
+5. **Device templates** in the palette (computer, power unit, wheel, ...): which devices does your organisation use most? Do you want to import your own list (CSV) in M2?
 6. **Title block / drawing standard** (D-15) and whether sheet size defaults to A3.
 7. **Language of the glossary:** the 10 terms in the prototype are my wording. Please correct any definition your reviewers would dispute.
 8. **Prototype sign-off:** which of the open issues (9, 11, 12; all closed since) block you from approving M2 implementation?
@@ -319,21 +319,21 @@ Screenshots of the real editor (offscreen render) are in `docs/ux/qt/`; the jour
 | # | Issue | Severity | Status |
 | --- | --- | --- | --- |
 | Q1 | Problems cards collapsed into blank bars when several findings were listed (word-wrapped labels were squeezed instead of the panel scrolling) | High | Fixed (scrolling bodies that size to content) |
-| Q2 | Units saved without positions (any M1 project) stacked in one slot | High | Fixed: deterministic auto-placement at load (`test_autoplace.py`) |
-| Q3 | Selection was lost after renaming a unit | High | Fixed (`test_j2_id_validation_*`) |
+| Q2 | Devices saved without positions (any M1 project) stacked in one slot | High | Fixed: deterministic auto-placement at load (`test_autoplace.py`) |
+| Q3 | Selection was lost after renaming a device | High | Fixed (`test_j2_id_validation_*`) |
 | Q4 | Saving a copy to a folder that does not exist yet failed (the project lock needs the folder) | High | Fixed (`test_sample_save_as_*`) |
 | Q5 | Edits and selection took 350 to 650 ms at stress size | High | Fixed to about 20 ms (select) and 100 to 125 ms (edit); see M2 demo note |
 | Q6 | At 150% scale palette labels were truncated and the bottom panel was capped so the table was unusable | High | Fixed: docks scale with the UI, no height cap |
 | Q7 | After a theme change the palette collapsed into overlapping slivers | Medium | Fixed (layout invalidated on rebuild) |
-| Q8 | Table filter for "rs422" found nothing because the column shows "RS-422" | Medium | Fixed: the filter matches ID, name, type name and ID, units, requirement |
+| Q8 | Table filter for "rs422" found nothing because the column shows "RS-422" | Medium | Fixed: the filter matches ID, name, type name and ID, devices, requirement |
 | Q9 | Table column widths reset on every refresh; names truncated | Medium | Fixed |
-| Q10 | Link chips truncated long IDs; the Properties panel showed its message twice (deleted widgets lingered); import preview put the long status in the middle and cut off "To"; "Create redundant copy" enabled for a redundant unit; new units off-screen after selection | Medium | Fixed |
-| Q11 | Interface chips can still overlap in dense diagrams | Medium | Mostly fixed in M7: labels slide along their link to free space (placement grid); a test limits overlaps on `sat15`; automatic unit layout is still lane placement |
+| Q10 | Link chips truncated long IDs; the Properties panel showed its message twice (deleted widgets lingered); import preview put the long status in the middle and cut off "To"; "Create redundant copy" enabled for a redundant device; new devices off-screen after selection | Medium | Fixed |
+| Q11 | Interface chips can still overlap in dense diagrams | Medium | Mostly fixed in M7: labels slide along their link to free space (placement grid); a test limits overlaps on `sat15`; automatic device layout is still lane placement |
 | Q12 | The connect hint wraps and makes the toolbar jump | Low | Fixed in M7: the hint reserves two lines (`test_connect_hint_has_a_fixed_height...`) |
 | Q13 | At 150% and above the legend wraps and the canvas is small | Low | Improved in M8: the bottom panel is capped at 45% of the window height and toasts use the room available. The canvas at 150% on a 1440x900 window is about 250 px high; the legend still wraps; the diagram does not scale with the UI scale (zoom and Fit do that) |
 | Q14 | Properties and palette auto-hide on narrow windows without a hint | Low | Fixed in M7: a message says so once, and again when Properties is needed |
-| Q15 | The canvas is not exposed to screen readers (Qt graphics items) | Medium | Partly fixed in M7: the canvas announces unit and interface counts and the selection and names the Interface table as the accessible alternative; items are still not individually exposed. A test audit (`tests/test_accessibility.py`) found and fixed unnamed fields in the release dialog and the harness tables. A manual screen-reader pass (Orca) is still needed |
-| Q16 | An edit at stress size costs about 120 ms (target 100 ms); undo about 250 ms | Medium | Improved in M7: integrity results are cached per object (a generated 20,000-wire project: 110 ms to 22 ms per check). Measured now: rename about 100 ms, move about 100 ms, undo about 200 ms. Measured again on 2026-10-09 (`python -m tools.bench_gui`, three whole add / undo / redo cycles, software rendering, 200 units, 2,000 interfaces): select under 20 ms, rename and move 25 to 60 ms, add unit 60 to 90 ms, **undo 46 to 59 ms**, redo 11 to 26 ms. All inside the 100 ms target. The earlier "undo about 200 ms" was the first undo after start-up, which pays for one-off work (about 100 to 200 ms once); the benchmark took a single sample and so reported that one. It now times whole cycles. **Closed** |
+| Q15 | The canvas is not exposed to screen readers (Qt graphics items) | Medium | Partly fixed in M7: the canvas announces device and interface counts and the selection and names the Interface table as the accessible alternative; items are still not individually exposed. A test audit (`tests/test_accessibility.py`) found and fixed unnamed fields in the release dialog and the harness tables. A manual screen-reader pass (Orca) is still needed |
+| Q16 | An edit at stress size costs about 120 ms (target 100 ms); undo about 250 ms | Medium | Improved in M7: integrity results are cached per object (a generated 20,000-wire project: 110 ms to 22 ms per check). Measured now: rename about 100 ms, move about 100 ms, undo about 200 ms. Measured again on 2026-10-09 (`python -m tools.bench_gui`, three whole add / undo / redo cycles, software rendering, 200 devices, 2,000 interfaces): select under 20 ms, rename and move 25 to 60 ms, add device 60 to 90 ms, **undo 46 to 59 ms**, redo 11 to 26 ms. All inside the 100 ms target. The earlier "undo about 200 ms" was the first undo after start-up, which pays for one-off work (about 100 to 200 ms once); the benchmark took a single sample and so reported that one. It now times whole cycles. **Closed** |
 
 ## 13. Redesign against the UX/UI Standard (October 2026)
 
@@ -394,8 +394,8 @@ The window of section 14 is unchanged apart from the points below (decisions D-1
 
 | Where | What is new |
 | --- | --- |
-| Drawings area, Harness tab | **New harness…** (also in the Edit menu, Ctrl+Shift+H) makes an empty draft harness; the button also shows in the empty state of the tab, which no longer waits for interfaces. A third tab, *Connectors*, beside *Why* and *Edit wire* adds cable connectors to such a harness (a library part, or the other half of a unit's connector), sets the function, termination and contact size of a pin and deletes a connector that has no wires. For a harness that Generate made, a released harness or a read-only project it is off, and a note says why. The wires are drawn in *Edit wire* as before. |
-| Model area, empty diagram | The blank project says what to do: the button **Add a device** (the same as Edit > Add unit > Device…, Ctrl+Shift+N) is shown until there is a unit and is hidden in a read-only project. The texts of the empty diagram, the empty link and unit lists and the narrow-window notice name only controls that exist (the palette of the M2 design was removed in 1.3.0). |
+| Drawings area, Harness tab | **New harness…** (also in the Edit menu, Ctrl+Shift+H) makes an empty draft harness; the button also shows in the empty state of the tab, which no longer waits for interfaces. A third tab, *Connectors*, beside *Why* and *Edit wire* adds cable connectors to such a harness (a library part, or the other half of a device's connector), sets the function, termination and contact size of a pin and deletes a connector that has no wires. For a harness that Generate made, a released harness or a read-only project it is off, and a note says why. The wires are drawn in *Edit wire* as before. |
+| Model area, empty diagram | The blank project says what to do: the button **Add a device** (the same as Edit > Add device > Device…, Ctrl+Shift+N) is shown until there is a device and is hidden in a read-only project. The texts of the empty diagram, the empty link and device lists and the narrow-window notice name only controls that exist (the palette of the M2 design was removed in 1.3.0). |
 | Starting the editor on Linux | If the machine lacks a library the package cannot carry (`libgl1`, `libegl1`, `libxcb1`) or has no desktop session, the editor says what is missing and the `sudo apt install` line, in the terminal and, when one is installed, in a small window (zenity, kdialog or xmessage), instead of a Python traceback. `harness-design-studio-gui --check-system` runs only that check. |
 
 The interaction rules of section 6 apply as before: a change is one undo step, a released harness refuses with the reason, and the tool never fills in an engineering value by itself. Nothing in the file format or in any generated file changed in these two releases.
@@ -408,7 +408,7 @@ The feedback of the test users of 1.6.0 (plan and status in [`ait/TEST_USER_FEED
 | --- | --- |
 | Navigation rail | **Next step** is the first area, a page of its own like Home: the heading *What to do next*, one card with the next step in plain words and its one button (an empty project also offers *or make a harness by hand*, *New harness…*), the six steps below it (*Add your devices*, *Connect them*, *Generate the harnesses*, *Check the design*, *Get the build sheets*, *Review and release*) each with an icon and a word (*done*, *next*, *to do*, *not possible*), and the link *Show everything*. The rules are a pure function of the facts of the project (`gui/next_step.py`, `gui/next_page.py` only shows and calls back). |
 | View > Simple / Full, Settings | The workspace setting `ui/workspace`. A settings file with no stored value starts in **Simple** and opens a project on *Next step*; a settings file that holds values keeps **Full**, which is the window of sections 14 to 16 plus the Next step area. |
-| The Simple workspace (stage S2) | The rail does not list Home (Next step does its job; Ctrl+7 and the Go menu still reach it). The project tree, the inspector, the Problems panel, the minimap, the legend and the counts of the status bar are closed or off until asked for; the diagram tool row shows *Select*, *Connect*, *Add device* and **More**. One switch, *Show panels* (View menu and a button), opens and closes the tree and the inspector together. Full and Simple remember their own layout, so one never overwrites the other. Open point: a click on a unit or link does not open the inspector in Simple (a toast with *Show panels* says so once per window); going to an object with *Show* (from a list of problems) does open it. |
+| The Simple workspace (stage S2) | The rail does not list Home (Next step does its job; Ctrl+7 and the Go menu still reach it). The project tree, the inspector, the Problems panel, the minimap, the legend and the counts of the status bar are closed or off until asked for; the diagram tool row shows *Select*, *Connect*, *Add device* and **More**. One switch, *Show panels* (View menu and a button), opens and closes the tree and the inspector together. Full and Simple remember their own layout, so one never overwrites the other. Open point: a click on a device or link does not open the inspector in Simple (a toast with *Show panels* says so once per window); going to an object with *Show* (from a list of problems) does open it. |
 | Drawings area, Harness tab | A fourth tab, *Accessories*, beside *Why*, *Edit wire* and *Connectors*: a table of the sleeving, heat shrink, labels and backshells of the harness and a form to add, change and delete one (one undo step each). *Edit wire* gets the strip lengths (the selected wires, or all wires of the harness). Off for a released harness and a read-only project, with the reason shown. |
 | Model area, Devices tab | A *Cable contact* column in the pin table (hidden until the **Contact** toggle is on) and the bulk action **Cable contact…**. Generate copies the contact to the cable pin. |
 | Inspector | The page of a part of the category contact has **Crimp tool** and **Set tool**. |

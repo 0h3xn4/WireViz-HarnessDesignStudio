@@ -1,8 +1,8 @@
-# KiCad import (unit connector pinouts)
+# KiCad import (device connector pinouts)
 
-KiCad is used only for the electronics inside each unit. The pinout of a unit's external connectors (which signal sits on which pin) is defined there, so the tool reads it instead of asking you to retype it.
+KiCad is used only for the electronics inside each device. The pinout of a device's external connectors (which signal sits on which pin) is defined there, so the tool reads it instead of asking you to retype it.
 
-**Status: checked against one real file.** The S-expression netlist of a KiCad 10.0.6 project (59 components, 248 pins on nets) was read correctly: connector pins, net names and pin numbers match the schematic. Tests use small hand-made fixtures in the same style (`tests/fixtures/kicad/unit.net`, `unit.net.xml`). One real file is not proof for every project: check the printed rows on each unit.
+**Status: checked against one real file.** The S-expression netlist of a KiCad 10.0.6 project (59 components, 248 pins on nets) was read correctly: connector pins, net names and pin numbers match the schematic. Tests use small hand-made fixtures in the same style (`tests/fixtures/kicad/unit.net`, `unit.net.xml`). One real file is not proof for every project: check the printed rows on each device.
 
 ## Input
 
@@ -14,7 +14,7 @@ The templates (`harness-design-studio templates FOLDER`) contain `wheel-connecto
 
     harness-design-studio new wheel-link --template first-steps
     harness-design-studio templates my-templates
-    harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J \
+    harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.net --device RW1 --prefix J \
         --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run
 
 It prints one line per connector (`J1: OK updated RW1-J01 (2 signal pin(s))`, `J2: OK updated RW1-J02 (4 signal pin(s))`) and `Dry run: nothing was changed.` When the rows look right, run the same command again **without** `--dry-run`. It ends with `Imported 2 connector(s). Generate harnesses again to connect interfaces to the fixed pins.` Then connect the interfaces to those pins:
@@ -25,7 +25,7 @@ The result is `2 added, 0 changed, ...` and `2 interfaces and 6 wires checked: 0
 
 ## Command
 
-    harness-design-studio import-netlist DIR FILE --unit OBC [--ref J7 ...] [--prefix J]
+    harness-design-studio import-netlist DIR FILE --device OBC [--ref J7 ...] [--prefix J]
                            [--connector J1=OBC-J01] [--part J1=PART-ID]
                            [--signal-map NET=SIGNAL | FILE] [--pin-function] [--dry-run]
 
@@ -45,7 +45,7 @@ Generation connects each interface signal to the fixed pin with the same name an
 
 ## Open questions (owner)
 
-1. How KiCad connector references map to the unit connectors in this tool (today: by prefix, `--connector`, or the symbol field).
+1. How KiCad connector references map to the device connectors in this tool (today: by prefix, `--connector`, or the symbol field).
 2. The signal-name mapping (today: optional `--signal-map`).
 3. Hierarchical sheets and multi-unit symbols have not been tried on a real project.
 

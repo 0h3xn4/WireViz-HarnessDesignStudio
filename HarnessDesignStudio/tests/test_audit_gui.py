@@ -102,7 +102,7 @@ def test_the_overview_map_can_be_switched_off_and_hides_in_small_views(win) -> N
 
 
 def test_counts_use_proper_singular_and_follow_edits_at_once(win) -> None:  # type: ignore[no-untyped-def]
-    assert strings.units_text(1) == "1 unit" and strings.units_text(3) == "3 units"
+    assert strings.units_text(1) == "1 device" and strings.units_text(3) == "3 devices"
     assert strings.interfaces_text(1) == "1 interface"
     win.ctl.new_project  # noqa: B018
     ops, _uid = edit.ops_add_unit(win.ctl.project, "computer")

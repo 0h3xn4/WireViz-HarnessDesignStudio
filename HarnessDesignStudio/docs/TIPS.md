@@ -40,48 +40,48 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+1 to Ctrl+6 | The tabs Diagram, Harness, Lists, Checks, Releases, Devices |
 | Ctrl+7 and Ctrl+, | Home and Settings (the rail of the Simple workspace does not list Home, but Ctrl+7 and **Go > Go to Home** open it) |
 | Ctrl+Shift+M | Show or hide the Problems panel at the bottom |
-| Ctrl+Shift+N | Add a device (an empty unit named in the Devices tab) |
+| Ctrl+Shift+N | Add a device (an empty device named in the Devices tab) |
 | Ctrl+Shift+H | New harness... (a harness made by hand; the Drawings area, then its Connectors tab) |
 | Ctrl+Shift+T | The Interface table (the Interfaces tab of the left panel) |
-| Ctrl+Shift+J | The Unit table (the Units tab of the left panel) |
+| Ctrl+Shift+J | The Device list (the Device list tab of the left panel) |
 | F6 and Shift+F6 | Move the keyboard focus to the next or previous panel |
 | Delete | Delete the selection (it first shows what else goes with it); in the diagram, the Interface table and the Project tree |
-| C | Start the Connect tool; then click the two units to add an interface |
-| Esc | Back to the Select tool; also clears the selection and ends the focus on a unit or link |
+| C | Start the Connect tool; then click the two devices to add an interface |
+| Esc | Back to the Select tool; also clears the selection and ends the focus on a device or link |
 | Ctrl+= and Ctrl+- | Zoom in and out |
 | F | Fit the whole diagram in the window (diagram has the focus) |
 | Shift+F | Zoom to the selection (diagram has the focus) |
 | Ctrl+0 | Zoom to 100 % |
 | Ctrl+wheel | Zoom at the pointer; the wheel alone scrolls, Shift+wheel scrolls sideways, middle button or Space and drag pans |
-| Ctrl+A, Ctrl+D, Ctrl+F | Select all, duplicate the selected units, find in the diagram (diagram has the focus) |
+| Ctrl+A, Ctrl+D, Ctrl+F | Select all, duplicate the selected devices, find in the diagram (diagram has the focus) |
 | Ctrl+Shift+L | Arrange the diagram |
 | Ctrl+K | Search and commands (the command palette, next section) |
 | F1 | The user guide |
-| Tab | Move between units and links with the keyboard (F6 leaves the diagram) |
-| Enter or Space | Select the unit or link that has the keyboard focus (with the Connect tool active, a unit with the focus is picked) |
-| Shift+arrow keys | Move the focused unit by one grid step (10 diagram units), in the Select tool, when the project is not read-only |
+| Tab | Move between devices and links with the keyboard (F6 leaves the diagram) |
+| Enter or Space | Select the device or link that has the keyboard focus (with the Connect tool active, a device with the focus is picked) |
+| Shift+arrow keys | Move the focused device by one grid step (10 diagram devices), in the Select tool, when the project is not read-only |
 | Ctrl+C in a table | Copy the selected cells as tab-separated text (Ctrl+Shift+C adds the header row) |
 | Enter or F2, Esc, Ctrl+V in a table | Edit the selected cell, keep the old text, paste a block of cells copied from a spreadsheet (one undo step) |
 
-Everything else is in the menus: **View > Arrange diagram** tidies the units (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** (also **Settings > Appearance**) follows the system or is Light or Dark, **View > Reduce motion** turns off the fades and slides, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data. **View > Simple** and **View > Full** (since 1.7.0) choose how much of the window is on screen; **View > Show side panels** (Simple only) opens or closes the project tree and the Inspector. Everything the Simple workspace hides is still in a menu and in the command palette.
+Everything else is in the menus: **View > Arrange diagram** tidies the devices (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** (also **Settings > Appearance**) follows the system or is Light or Dark, **View > Reduce motion** turns off the fades and slides, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data. **View > Simple** and **View > Full** (since 1.7.0) choose how much of the window is on screen; **View > Show side panels** (Simple only) opens or closes the project tree and the Inspector. Everything the Simple workspace hides is still in a menu and in the command palette.
 
 ## The command palette (Ctrl+K)
 
 Press **Ctrl+K**, type a few letters, press **Enter**. The list is one searchable collection of:
 
 - every menu action that is enabled, with its shortcut written beside it;
-- **Add unit: ...** for each kind of unit;
+- **Add device: ...** for each kind of device;
 - **Connect with ...** for each interface type (17 ship with the tool);
-- **Go to unit** `OBC1 (Computer 1)` for every unit, and **Go to interface** `IF-002 (...)` for every interface.
+- **Go to device** `OBC1 (Computer 1)` for every device, and **Go to interface** `IF-002 (...)` for every interface.
 
-Type several words and every word must match, in any order (`go rw1` finds *Go to unit RW1*). A name that starts with what you typed comes first. **Up** and **Down** move through the list, which has no length limit; keep typing to narrow it. The palette floats over the window instead of blocking it: **Esc**, a click anywhere else or **Ctrl+K** again closes it. The commands include Generate, Run checks, Export, Release, Start new revision, the imports, Engineering values and Reset layout. It is the quickest way to jump to one object in a project with dozens of units.
+Type several words and every word must match, in any order (`go rw1` finds *Go to device RW1*). A name that starts with what you typed comes first. **Up** and **Down** move through the list, which has no length limit; keep typing to narrow it. The palette floats over the window instead of blocking it: **Esc**, a click anywhere else or **Ctrl+K** again closes it. The commands include Generate, Run checks, Export, Release, Start new revision, the imports, Engineering values and Reset layout. It is the quickest way to jump to one object in a project with dozens of devices.
 
 ## Reading a busy diagram
 
-- **Click a unit or a link**: its links stay in colour and everything else fades. Click the empty background or press **Esc** to see everything again.
+- **Click a device or a link**: its links stay in colour and everything else fades. Click the empty background or press **Esc** to see everything again.
 - **Show** (the list at the right end of the Model tab bar) fades everything except one *signal class*, one *connector* or one *bundle (harness)*: choose **All interfaces**, **By signal class**, **By connector** or **By bundle (harness)**, then the value. It changes the picture only, never the project.
-- The **Interfaces** tab (left panel, Ctrl+Shift+T) lists every interface as an editable table, and the **Project** tab beside it is a tree of every unit, interface and more, with a filter (press `/`); Shift+arrows in the tree select several units at once. They are the screen-reader friendly views, and also the fastest way to find one row in a large design.
-- **Ctrl+F** finds units and links by ID, name, connector or type and marks every match; **Shift+click**, **Ctrl+click** and a drag on the background select several items.
+- The **Interfaces** tab (left panel, Ctrl+Shift+T) lists every interface as an editable table, and the **Project** tab beside it is a tree of every device, interface and more, with a filter (press `/`); Shift+arrows in the tree select several devices at once. They are the screen-reader friendly views, and also the fastest way to find one row in a large design.
+- **Ctrl+F** finds devices and links by ID, name, connector or type and marks every match; **Shift+click**, **Ctrl+click** and a drag on the background select several items.
 - Small marks tell the state: a badge with an icon and a count is a problem, a warning, a value still to enter or *not checked*; a lock with *W001 A* means a released harness holds the object.
 - A voltage or current shows next to a link only when it was entered; **View > Show all link labels** shows them all.
 
@@ -121,10 +121,10 @@ sh my-templates/ci/build.sh cib
 
 ```
 18 files written to my-templates. Start with my-templates/README.md.
-Project 'First steps: reaction wheel link' created in cib (3 units, 2 interfaces).
+Project 'First steps: reaction wheel link' created in cib (3 devices, 2 interfaces).
 Next: harness-design-studio validate cib   or open it in the app (File > Open project).
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 2 interfaces, 9 connectors, 0 harnesses: 0 error(s), 0 warning(s).
+3 devices, 2 interfaces, 9 connectors, 0 harnesses: 0 error(s), 0 warning(s).
 2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
@@ -161,7 +161,7 @@ For a harness you have released, `harness-design-studio diff DIR W001` shows wha
 
 `harness-design-studio config DIR` is the hand-over checklist: which engineering values are still missing, what depends on each, and which values that are set are invalid. It ends with exit code 1 while anything is missing, so it can also be a gate in a script. Its first line counts the values that are set; a new project says `Engineering values: 0 of 17 set.`
 
-In the app, press **Supply value…** on a rule marked *Not checked* in the **Checks** tab, or choose **Design > Engineering values…**: one window lists every value by config file with its unit, and **Apply** sets them as one undo step.
+In the app, press **Supply value…** on a rule marked *Not checked* in the **Checks** tab, or choose **Design > Engineering values…**: one window lists every value by config file with its device, and **Apply** sets them as one undo step.
 
 Two command-line shortcuts fill values in:
 
@@ -172,12 +172,12 @@ Remember that the settings live **inside** `"values": {...}` in each file; a key
 
 ## Choose how interfaces are grouped into harnesses
 
-`config/segmentation.json` has one setting, `"mode"`. It decides what one harness (one drawing, one cable bundle) contains. The same `small-satellite` example (14 units, 24 interfaces) gave:
+`config/segmentation.json` has one setting, `"mode"`. It decides what one harness (one drawing, one cable bundle) contains. The same `small-satellite` example (14 devices, 24 interfaces) gave:
 
 | `"mode"` | One harness per... | Harnesses |
 | --- | --- | --- |
-| `per_connector_pair` (default) | pair of unit connectors | 24 |
-| `per_unit_pair` | pair of units | 23 |
+| `per_connector_pair` (default) | pair of device connectors | 24 |
+| `per_unit_pair` | pair of devices | 23 |
 | `per_zone_pair` | pair of zones (lanes of the diagram) | 5 |
 
 Edit the file (`"mode": "per_zone_pair"` inside `"values"`), run `harness-design-studio generate DIR`, and the report says `3 added, 2 changed, 0 unchanged, 22 removed` (harnesses keep their IDs where they can; five harnesses are left). Released harnesses are never touched. Which rule your company wants is an open decision of the owner (D-10, see [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md)); the default is a placeholder. The `flatsat` example ships with `per_zone_pair`.
@@ -233,16 +233,16 @@ What does exist is **files**. The tool reads a few file formats in and writes se
 
 | What | File type | Exact columns or fields | How |
 | --- | --- | --- | --- |
-| Interfaces between units | CSV or XLSX (first sheet) | `id`, `type`, `from`, `to`, `redundancy` (the last is optional). Headers are matched by name; `from` is also read from `from unit`, `source` or `a`; `to` from `to unit`, `destination`, `target` or `b`; the type from `interface type`, `kind` or `protocol`. The units must already exist; `type` is the name or ID of an interface type. | App only: **File > Import > Import interfaces…** (Ctrl+Shift+I, the import wizard; no `harness-design-studio` command). Starting file: `interfaces.csv` |
+| Interfaces between devices | CSV or XLSX (first sheet) | `id`, `type`, `from`, `to`, `redundancy` (the last is optional). Headers are matched by name; `from` is also read from `from device` (or `from unit`), `source` or `a`; `to` from `to device` (or `to unit`), `destination`, `target` or `b`; the type from `interface type`, `kind` or `protocol`. The devices must already exist; `type` is the name or ID of an interface type. | App only: **File > Import > Import interfaces…** (Ctrl+Shift+I, the import wizard; no `harness-design-studio` command). Starting file: `interfaces.csv` |
 | Approved parts list | CSV, TSV, JSON or XLSX (also the export of InvenTree) | Matched by header: part ID or part number, manufacturer, description, category, specification, approval status, pin count, mass (g), mass per metre (g/m), mating part, and (since 1.7.0) `Tool` or `Crimp tool` for a contact part. The template has `part number,manufacturer,description,category,pin count,approval status`. You say what the approval values mean with `--approved`, `--pending` and `--rejected`. | `harness-design-studio import-parts DIR FILE ...` |
 | Segment lengths | CSV or XLSX | `harness,segment,length`, read **by position** (this order); default unit millimetres; `--unit` can be `mm`, `cm` or `m`. | `harness-design-studio import-lengths DIR FILE` |
-| Unit connector pinouts | KiCad netlist (`.net`, S-expression or XML) | Components whose reference starts with the prefix (default `J`); the symbol fields `HarnessConnector` (connector ID) and `HarnessPart` (part); net names become signal names, optionally renamed with a signal map with the columns `net,signal`. | `harness-design-studio import-netlist DIR FILE --unit UNIT ...` ([`KICAD.md`](KICAD.md)) |
-| One device's connectors and pins | CSV or XLSX | One pin per row. The columns are found by heading: *Connector*, *Pin*, *Signal*, *Mode*, *Contact size*, *Termination*, *Function*, *Cable contact* and, if you have them, *Part* and *Gender*. | `harness-design-studio import-pinout DIR FILE --unit UNIT ...`, or **File > Import > Import device pinout…** ([define a device](user-manual/define-a-device.md#take-the-pinout-from-a-spreadsheet)) |
+| Device connector pinouts | KiCad netlist (`.net`, S-expression or XML) | Components whose reference starts with the prefix (default `J`); the symbol fields `HarnessConnector` (connector ID) and `HarnessPart` (part); net names become signal names, optionally renamed with a signal map with the columns `net,signal`. | `harness-design-studio import-netlist DIR FILE --device UNIT ...` ([`KICAD.md`](KICAD.md)) |
+| One device's connectors and pins | CSV or XLSX | One pin per row. The columns are found by heading: *Connector*, *Pin*, *Signal*, *Mode*, *Contact size*, *Termination*, *Function*, *Cable contact* and, if you have them, *Part* and *Gender*. | `harness-design-studio import-pinout DIR FILE --device UNIT ...`, or **File > Import > Import device pinout…** ([define a device](user-manual/define-a-device.md#take-the-pinout-from-a-spreadsheet)) |
 | Strip lengths, pin contacts, accessories, crimp tools (new in 1.7.0) | CSV, TSV, JSON or XLSX | The kind is found from the headings (any case, other columns ignored): `Wire`, `Strip A (mm)`, `Strip B (mm)` (and `Harness`); or `Harness`, `Connector`, `Pin`, `Contact` (and `Tool`); or `Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity`, `Note` (and `ID`); or `Part`, `Tool`. | `harness-design-studio import-build-data DIR FILE` ([enter the build data](user-manual/enter-the-build-data.md)). Starting files: `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv` |
 | Current by wire gauge | CSV | `gauge,amperes` (header optional) | `harness-design-studio config DIR --ampacity-csv FILE` |
 | Other engineering values | the JSON files in `config/` | see [`CONFIG.md`](CONFIG.md) | edit by hand, check with `harness-design-studio config DIR` |
 
-Units themselves cannot be imported from a table; you add them in the app. The details of every column are in [`IMPORTS.md`](IMPORTS.md).
+Devices themselves cannot be imported from a table; you add them in the app. The details of every column are in [`IMPORTS.md`](IMPORTS.md).
 
 ### What the tool writes
 
@@ -287,7 +287,7 @@ Every CSV starts with a comment line (`# harness-design-studio 1.7.0 model <hash
 
 Each sentence below is an **idea, not a feature: not built, not tested**. It names which of the files above could carry data to or from one of your other tools, *if* that tool can read or write that kind of file. Nothing here has been tried, and nothing in this repository knows the formats of those tools.
 
-- **SpaceMissionStudio** - idea, not a feature (not built, not tested): a list of units and links could be turned into `interfaces.csv` (`id,type,from,to,redundancy`) and imported with **File > Import > Import interfaces…**, after the units have been added by hand in the app.
+- **SpaceMissionStudio** - idea, not a feature (not built, not tested): a list of devices and links could be turned into `interfaces.csv` (`id,type,from,to,redundancy`) and imported with **File > Import > Import interfaces…**, after the devices have been added by hand in the app.
 - **Requirements Studio** - idea, not a feature (not built, not tested): `system/traceability.csv` (interface to harness to wires) and the `Requirement ID` of each interface in `system/export.json` could be read by a script and compared with a requirement list; note that the `Requirement` column of `drc_findings.csv` holds the IDs of the standard requirements a rule serves, not your programme's requirements.
 - **Budget Studio** - idea, not a feature (not built, not tested): `system/mass_length.csv` (known wire length, mass with margin, and whether the data is `Complete`) could feed a mass or harness-length budget; its totals count only what is known, and in the `flatsat` example they include ground-equipment harnesses.
 - **AIT Logbook** - idea, not a feature (not built, not tested): `tests.csv` (one continuity test per wire, isolation tests, limits that read `TBD (placeholder)` until set) and `labels.csv` could be used as the list of what to test and what to label (the *Tests* sheet of the build workbook has empty columns for the measured value, the result, the initials and the date); the tool has no way to read test results back.

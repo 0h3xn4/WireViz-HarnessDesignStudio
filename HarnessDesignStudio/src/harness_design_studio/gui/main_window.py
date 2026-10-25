@@ -776,9 +776,10 @@ class MainWindow(QMainWindow):
             Qt.DockWidgetArea.RightDockWidgetArea,
             "dock-properties",
         )
-        self.dock_left.setMinimumWidth(240)
+        # (280 px: the three tabs Project, Device list and Interfaces fit in a row, without arrows)
+        self.dock_left.setMinimumWidth(280)
         self.dock_right.setMinimumWidth(260)
-        self.resizeDocks([self.dock_left, self.dock_right], [250, 310], Qt.Orientation.Horizontal)
+        self.resizeDocks([self.dock_left, self.dock_right], [280, 310], Qt.Orientation.Horizontal)
         # bottom: the Problems panel, closed until it is asked for (status bar, View menu, Ctrl+Shift+M)
         self.problems_list = ProblemsList(self.ctl, self.theme)
         self.dock_problems = self._dock(
@@ -2661,13 +2662,13 @@ class MainWindow(QMainWindow):
         gone = {i for u in units for i in self.ctl.delete_impact(u).interfaces}
         every = sorted(gone | set(links))
         items = "".join(
-            f"<li><b>{u}</b> (unit {project.units[u].name})</li>" for u in sorted(units)
+            f"<li><b>{u}</b> (device {project.units[u].name})</li>" for u in sorted(units)
         )
         for iid in sorted(set(links) - gone):
             impact = edit.interface_impact(project, iid)
             items += f"<li><b>{iid}</b> ({impact.type_name}, {' to '.join(impact.ends)})</li>"
         if gone:
-            items += f"<li>{strings.interfaces_text(len(gone))} of the units: {', '.join(sorted(gone))}</li>"
+            items += f"<li>{strings.interfaces_text(len(gone))} of the devices: {', '.join(sorted(gone))}</li>"
         n = len(self.ctl.selected)
         return strings.DELETE_MANY_TITLE.format(n), strings.DELETE_MANY_BODY.format(
             items=items, plans=self._plan_lines(every)
@@ -4170,9 +4171,9 @@ class MainWindow(QMainWindow):
             self.toasts.show_message(strings.PANELS_HIDDEN, None)  # never hide panels silently
         self.interface_table.scale_factor = scale
         self.unit_table.scale_factor = scale
-        self.dock_left.setMinimumWidth(self.theme.px(240))
+        self.dock_left.setMinimumWidth(self.theme.px(280))
         self.dock_right.setMinimumWidth(self.theme.px(260))
-        self.resizeDocks([self.dock_left], [self.theme.px(250)], Qt.Orientation.Horizontal)
+        self.resizeDocks([self.dock_left], [self.theme.px(280)], Qt.Orientation.Horizontal)
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)

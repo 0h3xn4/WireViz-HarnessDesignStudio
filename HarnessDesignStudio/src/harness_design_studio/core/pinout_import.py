@@ -190,7 +190,7 @@ def plan_pinout_import(
     if unit_id not in work.units:
         if not new_unit_name:
             raise ImportError_(
-                f"Unit '{unit_id}' does not exist. Name the new device to create it."
+                f"Device '{unit_id}' does not exist. Name the new device to create it."
             )
         unit_ops, _ = devices.ops_add_device(
             work, unit_id=unit_id, name=new_unit_name, subsystem=subsystem

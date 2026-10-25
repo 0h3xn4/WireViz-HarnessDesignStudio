@@ -10,9 +10,9 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **Where did Home go?** The rail of the Simple workspace does not list *Home*, because the Next step page does its job. It is still in **Go > Go to Home** (Ctrl+7), and the Full workspace lists it.
 
-**Which example should I start with?** `first-steps` for the tutorial (three units). `minimal-satellite` to see a small but realistic spacecraft and as a starting point to adapt. `small-satellite` to see redundancy and a larger diagram. `flatsat` for a complete bench setup with ground equipment, already generated ([`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md)). `blank` for your own design. `harness-design-studio new --list` shows them all. `minimal-satellite`, `flatsat` and the `design-worksheet.md` template are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): the list shows five examples on 1.0.0, three (`blank`, `first-steps`, `small-satellite`) on 0.1.0.
+**Which example should I start with?** `first-steps` for the tutorial (three devices). `minimal-satellite` to see a small but realistic spacecraft and as a starting point to adapt. `small-satellite` to see redundancy and a larger diagram. `flatsat` for a complete bench setup with ground equipment, already generated ([`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md)). `blank` for your own design. `harness-design-studio new --list` shows them all. `minimal-satellite`, `flatsat` and the `design-worksheet.md` template are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): the list shows five examples on 1.0.0, three (`blank`, `first-steps`, `small-satellite`) on 0.1.0.
 
-**I have no data yet. Can I still use the tool?** Yes. Fill in `design-worksheet.md` from the templates (`harness-design-studio templates my-templates`) to decide your units and interfaces on paper, then enter them. Every missing number shows up as *pending* or *not checked* until you supply it; nothing is invented.
+**I have no data yet. Can I still use the tool?** Yes. Fill in `design-worksheet.md` from the templates (`harness-design-studio templates my-templates`) to decide your devices and interfaces on paper, then enter them. Every missing number shows up as *pending* or *not checked* until you supply it; nothing is invented.
 
 **Do I need to know how the tool works inside?** No. [`CONCEPTS.md`](CONCEPTS.md) is enough, and [`GETTING_STARTED.md`](GETTING_STARTED.md) walks you through it.
 
@@ -20,11 +20,11 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **Can I just use the demo values?** For learning, yes (`harness-design-studio templates DIR` copies them, see [`GETTING_STARTED.md`](GETTING_STARTED.md) part 7). They are not engineering data. Never release a real design with them. A release is refused while the configuration files are marked as placeholders unless you give a written reason, which is kept in the change log.
 
-**Can I create a project completely from scratch, with no example and no interface table?** Yes. **File > New project…** with the example *blank* gives an empty project with starter parts and no unit. The empty diagram says where to start: press **Add a device** (Ctrl+Shift+N), or **Add** in the project panel, or pick a kind of unit under **Edit > Add unit**. Then connect the units ([draw the design](user-manual/draw-the-design.md)), define devices down to each pin ([define a device](user-manual/define-a-device.md)), or, since 1.5.0, make a harness with no interface at all: **New harness…** (Ctrl+Shift+H), its connectors in the **Connectors** tab and its wires in **Edit wire** ([build a harness by hand](user-manual/build-a-harness-by-hand.md)). Generate leaves a harness you made alone.
+**Can I create a project completely from scratch, with no example and no interface table?** Yes. **File > New project…** with the example *blank* gives an empty project with starter parts and no device. The empty diagram says where to start: press **Add a device** (Ctrl+Shift+N), or **Add** in the project panel, or pick a kind of device under **Edit > Add device**. Then connect the devices ([draw the design](user-manual/draw-the-design.md)), define devices down to each pin ([define a device](user-manual/define-a-device.md)), or, since 1.5.0, make a harness with no interface at all: **New harness…** (Ctrl+Shift+H), its connectors in the **Connectors** tab and its wires in **Edit wire** ([build a harness by hand](user-manual/build-a-harness-by-hand.md)). Generate leaves a harness you made alone.
 
-**Can I edit a generated harness by hand?** Not in the sense of editing a drawing. You change the design (units, interfaces, connectors, values) and generate again. To keep a wire's gauge, type, colour or length, set it in the **Edit wire** tab (Drawings area; [edit a wire](user-manual/edit-a-wire.md), new in 1.4.0): it locks the wire and generation keeps it. Before 1.4.0 this needed `"locked": true` in the harness file (`physical/harnesses/<ID>.json`). A pin choice is kept by locking the pin in the **Devices** tab. A harness that is released is locked; start a new revision to change it.
+**Can I edit a generated harness by hand?** Not in the sense of editing a drawing. You change the design (devices, interfaces, connectors, values) and generate again. To keep a wire's gauge, type, colour or length, set it in the **Edit wire** tab (Drawings area; [edit a wire](user-manual/edit-a-wire.md), new in 1.4.0): it locks the wire and generation keeps it. Before 1.4.0 this needed `"locked": true` in the harness file (`physical/harnesses/<ID>.json`). A pin choice is kept by locking the pin in the **Devices** tab. A harness that is released is locked; start a new revision to change it.
 
-**What happens when I generate again?** IDs, locked wires and locked pins are kept, so are the wires you drew or edited in the **Edit wire** tab, your wire, connector and harness labels, strip lengths, accessories (while the connector or wire they sit on is kept), the cable contact of a unit's pin and the groups you made; released harnesses are never touched, and a report says what was added, changed and removed (and, as *locked_data_lost*, anything it could not keep because its interface is gone). Generating twice gives the same result.
+**What happens when I generate again?** IDs, locked wires and locked pins are kept, so are the wires you drew or edited in the **Edit wire** tab, your wire, connector and harness labels, strip lengths, accessories (while the connector or wire they sit on is kept), the cable contact of a device's pin and the groups you made; released harnesses are never touched, and a report says what was added, changed and removed (and, as *locked_data_lost*, anything it could not keep because its interface is gone). Generating twice gives the same result.
 
 **Can two wires go to one pin?** Yes, since 1.4.0: draw the wire in the **Edit wire** tab. The design rule *Several wires on one pin* (`pin-shared`, a warning) names each such pin so a reviewer sees it, and the independent check says *pin_shared* (a warning) instead of failing when a wire you drew is one of them ([edit a wire](user-manual/edit-a-wire.md)).
 
@@ -38,7 +38,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **Which connectors does the tool use?** Micro-D 9, 15, 21, 25 and 31 pin for power and data, RJ45 for Ethernet and SMA for RF (see "The standards the tool starts from" in [`CONCEPTS.md`](CONCEPTS.md)). They are example parts; import your approved list to replace them. Older D-sub, MDM, circular and TNC parts stay in the library.
 
-**Can two or more units share one link (a bus)?** Not yet. A link between more than two units is skipped with a warning (D-116 in [`DECISIONS.md`](DECISIONS.md)).
+**Can two or more devices share one link (a bus)?** Not yet. A link between more than two devices is skipped with a warning (D-116 in [`DECISIONS.md`](DECISIONS.md)).
 
 **Does it use the internet?** Never. A test checks it.
 
@@ -56,7 +56,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **How do I enter strip lengths for many wires?** Select the wires in the *Edit wire* tab and type **Strip A (mm)** and **Strip B (mm)**, or press **Apply strip lengths to all wires of this harness**; or import a table with `harness-design-studio import-build-data DIR strip-lengths.csv --dry-run` ([enter the build data](user-manual/enter-the-build-data.md#1-strip-lengths)).
 
-**Why is the contact of a pin of a generated harness greyed out?** Generate copies it from the pin of the unit. Set it in the *Devices* tab, column *Cable contact* (press **Contact** to show it), and generate again. On a harness you made by hand you set it on the cable connector's own pin.
+**Why is the contact of a pin of a generated harness greyed out?** Generate copies it from the pin of the device. Set it in the *Devices* tab, column *Cable contact* (press **Contact** to show it), and generate again. On a harness you made by hand you set it on the cable connector's own pin.
 
 **Where is the user guide?** In the app: **F1**. As a file: [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md).
 
@@ -64,7 +64,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **The animations bother me.** Tick **Reduce motion** under **Settings > Appearance** (or **View > Reduce motion**). Menus, lists and tooltips then stop fading and sliding.
 
-**Can I paste from Excel?** Yes, into the **Units** and **Interfaces** tables of the left panel (Ctrl+Shift+J, Ctrl+Shift+T; in the Simple workspace they open the panel): select the first cell, press Ctrl+V. The block fills the rows that exist and is one undo step. A new unit or interface does not come from a paste: use the **Add** button, **Ctrl+I**, or **File > Import > Import interfaces…**.
+**Can I paste from Excel?** Yes, into the **Device list** and **Interfaces** tables of the left panel (Ctrl+Shift+J, Ctrl+Shift+T; in the Simple workspace they open the panel): select the first cell, press Ctrl+V. The block fills the rows that exist and is one undo step. A new device or interface does not come from a paste: use the **Add** button, **Ctrl+I**, or **File > Import > Import interfaces…**.
 
 **What does "Offline" in the status bar mean?** The program works offline: nothing leaves this computer, and there is no account and no update check.
 
@@ -95,6 +95,6 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 ## Still stuck
 
-Run `harness-design-studio validate DIR` and `harness-design-studio drc DIR` and read the messages: each says what is wrong and how to fix it. Include their output when you ask for help, and check it first if the project is confidential: the messages name units, interfaces and parts.
+Run `harness-design-studio validate DIR` and `harness-design-studio drc DIR` and read the messages: each says what is wrong and how to fix it. Include their output when you ask for help, and check it first if the project is confidential: the messages name devices, interfaces and parts.
 
 Next: [`TROUBLESHOOTING.md`](TROUBLESHOOTING.md), [`GLOSSARY.md`](GLOSSARY.md), [user manual](user-manual/README.md).

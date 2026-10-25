@@ -46,11 +46,11 @@ IF-010,RS-422,OBC1,PCDU1,nominal
 IF-011,Primary power,PCDU1,OBC1,nominal
 ```
 
-3. Press **Next**. Page 2, **Match the columns and check the first rows**, shows the **column matching** (Interface ID, Interface type, From unit, To unit, Redundancy). The tool guesses it from the headings; change a choice if it guessed wrong, and the rows are read again. `redundancy` is optional. A file of more than 1,500 rows is read in the background, with a progress line and **Cancel**, so the window does not stop.
-4. Press **Next**. Page 3, **Conflicts and placeholders**, lists every row with its result and the reason, for example "Skipped: Unit 'RW9' does not exist", and says, for example, "1 of 2 rows can be imported; 1 have problems. Rows with a problem are skipped; the others are imported." **Only rows that need attention** hides the rows that are fine.
+3. Press **Next**. Page 2, **Match the columns and check the first rows**, shows the **column matching** (Interface ID, Interface type, From device, To device, Redundancy). The tool guesses it from the headings; change a choice if it guessed wrong, and the rows are read again. `redundancy` is optional. A file of more than 1,500 rows is read in the background, with a progress line and **Cancel**, so the window does not stop.
+4. Press **Next**. Page 3, **Conflicts and placeholders**, lists every row with its result and the reason, for example "Skipped: Device 'RW9' does not exist", and says, for example, "1 of 2 rows can be imported; 1 have problems. Rows with a problem are skipped; the others are imported." **Only rows that need attention** hides the rows that are fine.
 5. Press **Next**. Page 4, **Import**, says what will be imported. Press the button named after the import, for example **Import 1 row**. Rows with problems are skipped and the good rows are applied, as one undo step: **Undo** takes all of them back at once. For an Excel file the wizard names the sheet it read.
 
-Rules for a row: the two units must exist already; `type` is the name or ID of an interface type (for example `RS-422`); each unit needs a free connector that can carry the type.
+Rules for a row: the two devices must exist already; `type` is the name or ID of an interface type (for example `RS-422`); each device needs a free connector that can carry the type.
 
 ## Approved parts list
 
@@ -195,7 +195,7 @@ Dry run: nothing was changed.
 | You have | Do |
 | --- | --- |
 | A current-by-gauge table | **File > Import > Import engineering values: ampacity table…**, or `harness-design-studio config DIR --ampacity-csv FILE` ([fill in the engineering values](fill-in-engineering-values.md#2-load-the-current-by-gauge-table)) |
-| A unit's connector pinout in KiCad | **File > Import > Import KiCad netlist…**, or `harness-design-studio import-netlist` ([import KiCad pinouts](import-kicad-pinouts.md)) |
+| A device's connector pinout in KiCad | **File > Import > Import KiCad netlist…**, or `harness-design-studio import-netlist` ([import KiCad pinouts](import-kicad-pinouts.md)) |
 | A device's pinout as a table | **File > Import > Import device pinout…**, or `harness-design-studio import-pinout` ([define a device](define-a-device.md#take-the-pinout-from-a-spreadsheet)) |
 | Strip lengths, contacts, accessories or crimp tools as a table | `harness-design-studio import-build-data DIR FILE` (command line only; [enter the build data](enter-the-build-data.md)) |
 | A device from another project | **Add from library…** in the Devices tab, or `harness-design-studio import-devices` ([define a device](define-a-device.md#use-a-device-in-another-project)) |

@@ -1,3 +1,3 @@
 Harness,Connector,Pin,Contact,Tool,Comment
 W010,W010-P1,1,EX-CONTACT-22,EXAMPLE crimp tool and setting,EXAMPLE row: the contact must be a part of category contact in your library
-W010,W010-P1,2,EX-CONTACT-22,EXAMPLE crimp tool and setting,EXAMPLE row: for a harness you made by hand (a harness made by Generate takes the contact from the unit's pin)
+W010,W010-P1,2,EX-CONTACT-22,EXAMPLE crimp tool and setting,EXAMPLE row: for a harness you made by hand (a harness made by Generate takes the contact from the device's pin)

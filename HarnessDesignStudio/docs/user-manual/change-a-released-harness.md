@@ -77,7 +77,7 @@ Comparing before with after: 0 added, 0 removed, 3 changed.
 
 Without `--from` and `--to` the command compares the working design with the latest baseline. The harness lines (approver, status, revision) are the release bookkeeping that a new revision resets. The wire lines are your change.
 
-**In the app**: open the **Releases** tab (**Revisions** on the rail), pick the harness and use **Compare revision … with …** (a baseline, another revision or the working design). The differences are grouped by kind with counts, and each row is tinted by the kind of change; added and removed objects say "(did not exist)" and "(removed)". A line says what the released harness locks. **Mark on diagram** marks the changed units and interfaces on the diagram; **Clear marks** removes the marks. **Changes…** in the **More** menu of the **Harness** tab (also **Design > Show changes of harness…**) opens the window "Changes in W002" with the same marks.
+**In the app**: open the **Releases** tab (**Revisions** on the rail), pick the harness and use **Compare revision … with …** (a baseline, another revision or the working design). The differences are grouped by kind with counts, and each row is tinted by the kind of change; added and removed objects say "(did not exist)" and "(removed)". A line says what the released harness locks. **Mark on diagram** marks the changed devices and interfaces on the diagram; **Clear marks** removes the marks. **Changes…** in the **More** menu of the **Harness** tab (also **Design > Show changes of harness…**) opens the window "Changes in W002" with the same marks.
 
 ## 4. Release revision B
 
@@ -167,7 +167,7 @@ Comparing wheel-link-A with wheel-link: 3 added, 0 removed, 4 changed.
 Not compared: the generation record, the contents of baselines (only their revision, date, name, comment and hash), and the files of the outputs folders.
 ```
 
-It does not change either folder. It compares the units, interfaces, connectors, harnesses, wires, parts, interface types, configuration, waivers, the project name and description, the zones, the library information, the diagram positions, the baselines and the change log, and it ends with a line that names what it does not compare. Equal folders print `No differences.` followed by that line. See [use Git and CI](use-git-and-ci.md).
+It does not change either folder. It compares the devices, interfaces, connectors, harnesses, wires, parts, interface types, configuration, waivers, the project name and description, the zones, the library information, the diagram positions, the baselines and the change log, and it ends with a line that names what it does not compare. Equal folders print `No differences.` followed by that line. See [use Git and CI](use-git-and-ci.md).
 
 ## Common mistakes
 

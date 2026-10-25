@@ -310,7 +310,7 @@ def test_used_in_lists_where_an_interface_is_used(ctl, theme, qtbot) -> None:
     uses = used_by(ctl.project, "interface", "IF-010")
     rows = rows_of(w.used_table)
     assert [r["id"] for r in rows] == [u.id for u in uses]
-    assert {r["kind"] for r in rows} >= {"Unit", "Harness", "Wire"}
+    assert {r["kind"] for r in rows} >= {"Device", "Harness", "Wire"}
     assert w.used_title.text() == f"USED IN ({len(uses)})"
     assert w.used_table.isVisibleTo(w) and not w.used_none.isVisibleTo(w)
 

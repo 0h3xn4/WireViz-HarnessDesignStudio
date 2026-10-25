@@ -2,7 +2,7 @@
 
 A tour of the biggest example that ships with the tool: a **flatsat**. It shows what a real system looks like when every part of the tool is used, and it is a starting point you can copy and change.
 
-A flatsat is the electronics of a spacecraft laid out on a bench, connected with test harnesses, so that the software and the electrical interfaces can be tested before the spacecraft is built. Besides the flight units it contains **ground equipment** that drives them: a checkout system, a power supply and RF test equipment. The example has both.
+A flatsat is the electronics of a spacecraft laid out on a bench, connected with test harnesses, so that the software and the electrical interfaces can be tested before the spacecraft is built. Besides the flight devices it contains **ground equipment** that drives them: a checkout system, a power supply and RF test equipment. The example has both.
 
 ```
 harness-design-studio new flatsat-bench --template flatsat
@@ -12,13 +12,13 @@ harness-design-studio new flatsat-bench --template flatsat
 
 Open it in the app (**File > Open project...**, or **Try the flatsat example** on the **Home** page, which opens a copy in your Documents folder; in the Simple workspace the rail has no Home, so use **Go > Go to Home**, Ctrl+7, or **View > Full**) or read on first. Everything in this page is what the project really contains; a test checks the numbers.
 
-> **Not engineering data.** The units, parts, currents, lengths and the derating, ampacity and mass numbers are invented for learning. The configuration files stay marked as placeholders and the parts are the tool's example parts (`EX-...`), so the results say so, and a release of this project would need written reasons (`docs/RELEASE.md`). Do not copy the numbers into a real design.
+> **Not engineering data.** The devices, parts, currents, lengths and the derating, ampacity and mass numbers are invented for learning. The configuration files stay marked as placeholders and the parts are the tool's example parts (`EX-...`), so the results say so, and a release of this project would need written reasons (`docs/RELEASE.md`). Do not copy the numbers into a real design.
 
 ## What it contains
 
-23 units, 44 interfaces, 8 harnesses, 103 wires. It ships **already generated**, with example numbers filled in, so that every output has content from the first minute. The project has four lanes (zones), left to right in the diagram:
+23 devices, 44 interfaces, 8 harnesses, 103 wires. It ships **already generated**, with example numbers filled in, so that every output has content from the first minute. The project has four lanes (zones), left to right in the diagram:
 
-| Lane | Units | What it is |
+| Lane | Devices | What it is |
 | --- | --- | --- |
 | **egse** (ground) | `SCOE1` checkout system, `GPSU1` ground power supply, `RFSU1` RF test equipment | Equipment that never flies. It sends commands and records telemetry, replaces the launch umbilical and closes the RF link by cable. Their subsystem is `egse`. |
 | **bus** | `OBC1` on-board computer, `RIU1` remote interface unit, `PCDU1` main power distribution, `BAT1` battery, `SA1` solar array simulator, `TRX1` S-band transceiver | The heart of the spacecraft. |
@@ -29,7 +29,7 @@ The design is a single string (no redundant chains), as a flatsat usually is. Fo
 
 ![The flatsat in the editor, all 44 interfaces at once](img/flatsat-overview.png)
 
-That is the whole system at once, and it is busy by nature. Click a unit and only its links stay in colour:
+That is the whole system at once, and it is busy by nature. Click a device and only its links stay in colour:
 
 ![The same diagram with PDU2 selected: its links stay in colour, everything else fades](img/flatsat-focus.png)
 
@@ -39,7 +39,7 @@ That is the whole system at once, and it is busy by nature. Click a unit and onl
 
 - **Power.** The ground supply, the solar array simulator and the battery all feed `PCDU1`. `PCDU1` feeds the computer, the remote interface unit, the transceiver, the payload, the pyro unit and the AOCS distribution unit `PDU2`. `PDU2` feeds the four wheels, the star trackers, the sun sensors and the magnetorquer. Two heater lines (`PCDU1` to `HTR1`, `PDU2` to `HTR2`) have their own type. Every power interface has a maximum current, chosen so that the sums add up: what `PDU2` feeds is what it receives.
 - **Data from the computer.** CAN to `PCDU1`, `PDU2`, the four wheels and the remote interface unit; RS-422 to the transceiver and the two star trackers; Ethernet to the payload.
-- **Signals through the remote interface unit.** `RIU1` collects the analog sun sensor signals, the discrete drive of the magnetorquer and the pyro unit, the thermistors of the two heater panels and of the solar array, and the battery's CAN monitoring. A real spacecraft does this so that the computer needs fewer connectors; here it is also what makes the example fit the connectors of the starter units.
+- **Signals through the remote interface unit.** `RIU1` collects the analog sun sensor signals, the discrete drive of the magnetorquer and the pyro unit, the thermistors of the two heater panels and of the solar array, and the battery's CAN monitoring. A real spacecraft does this so that the computer needs fewer connectors; here it is also what makes the example fit the connectors of the starter devices.
 - **Ground equipment.** `SCOE1` talks to the computer over Ethernet, to the ground power supply and to the payload over RS-422, and to the RF equipment over Ethernet. `TRX1` and `RFSU1` are joined by an RF cable.
 
 ## What the tool generated
@@ -65,7 +65,7 @@ The totals in `outputs/system/mass_length.csv` after `harness-design-studio expo
 
 `harness-design-studio drc` reports no errors (35 rules run). It reports warnings and notes, and they are worth reading, because they show what the tool is for:
 
-- **Connector look-alikes.** Many units have several identical connectors (a power distribution unit has eleven identical Micro-D 9 connectors). The rule warns that two cables could be plugged into the wrong place. On a real flatsat you would key the connectors differently or label them.
+- **Connector look-alikes.** Many devices have several identical connectors (a power distribution unit has eleven identical Micro-D 9 connectors). The rule warns that two cables could be plugged into the wrong place. On a real flatsat you would key the connectors differently or label them.
 - **Unapproved parts.** Every part is an example part that nobody has approved, so each is listed. This is the example being honest.
 - **Choices made by the tool.** The tool picked the connector of every interface, so each of the 44 interfaces gets a note (*uses connectors the tool chose for you*) until a person confirms the choice.
 - **Not checked.** Rules that need numbers nobody entered (EMC classes, spare pins, shield grounding) say that they did not run. Silence would look like a pass.
@@ -75,13 +75,13 @@ The totals in `outputs/system/mass_length.csv` after `harness-design-studio expo
 1. **Read the diagram.** With 44 interfaces the whole picture is busy, by nature. Open the project (in the Simple workspace choose **Model** in the rail for the diagram) and click `PDU2`: only its links stay in colour and everything else fades. Click the empty background to see everything again, then try `OBC1`, then a single link. Use the **Show** list at the right end of the Model tab bar to look at power only, then at data only, then at one connector. Select a wire and read **Why is it like this?**
 2. **Check the outputs.** `harness-design-studio export flatsat-bench`, then open `outputs/system/block_diagram.pdf` and `harness_overview.pdf`, and the build workbook of a harness, `outputs/harnesses/W001/W001_build.xlsx`. On its *Start here* sheet `W001` says `Ready to build: yes` (its 18 wires have a length, gauge, colour and part), with a note that 36 pins in use have no termination and 2 parts are not approved. The other seven harnesses say `no`: some of their wires have no gauge or colour in the example (`W002`: 24 without a gauge, 13 without a colour). A harness drawing is written only with `harness-design-studio export flatsat-bench --drawings`. `harness-design-studio verify flatsat-bench --outputs` re-reads the files independently.
 3. **Change a number and watch.** In the app, select the interface *Feed of the AOCS distribution unit* and set its Max current to 8 A, then generate again. The generation reports wire sizing errors that name the wires: no listed gauge carries 8 A after derating. Set it back to 5 A.
-4. **Use the spare connectors.** The computer has one free data connector and `PCDU1` has one spare power connector. Add a unit from the *sensor* template, an RS-422 interface from `OBC1` to it and a power interface from `PCDU1` to it, then generate. The new wires appear in the harness between the lanes of the two units. Undo restores everything.
-5. **Run out of connectors.** Now add one more unit that needs power and data. The tool tells you that no free connector is left and offers Expert mode, where you add connectors by hand. That is the moment a real design asks for another distribution unit.
-6. **Try a different segmentation.** Edit `config/segmentation.json` and set `"mode": "per_unit_pair"`, then regenerate. Compare the number of harnesses. The shipped mode `per_zone_pair` gives 8 harnesses; `per_unit_pair` gives 43; `per_connector_pair` gives one harness for each pair of unit connectors (here 44, one for every interface, because no two interfaces share a pair of connectors). Put the mode back to `per_zone_pair` afterwards.
+4. **Use the spare connectors.** The computer has one free data connector and `PCDU1` has one spare power connector. Add a device from the *sensor* template, an RS-422 interface from `OBC1` to it and a power interface from `PCDU1` to it, then generate. The new wires appear in the harness between the lanes of the two devices. Undo restores everything.
+5. **Run out of connectors.** Now add one more device that needs power and data. The tool tells you that no free connector is left and offers Expert mode, where you add connectors by hand. That is the moment a real design asks for another distribution unit.
+6. **Try a different segmentation.** Edit `config/segmentation.json` and set `"mode": "per_unit_pair"`, then regenerate. Compare the number of harnesses. The shipped mode `per_zone_pair` gives 8 harnesses; `per_unit_pair` gives 43; `per_connector_pair` gives one harness for each pair of device connectors (here 44, one for every interface, because no two interfaces share a pair of connectors). Put the mode back to `per_zone_pair` afterwards.
 7. **Practise a release.** Part 9 of [`GETTING_STARTED.md`](GETTING_STARTED.md) shows it on a practice project; this example needs the written reasons for the placeholder configuration and for the unapproved parts. Do it on a copy.
 
 ## Where it came from
 
-The project is built by a script (`tools/build_examples.py`, function `_flatsat`) from the tool's own editing functions, so it is valid by construction. The unit list and the interface list are in that script, one row each, if you want to see how it was made or adapt it. The tool version and model hash are in `outputs/system/provenance.json` after an export.
+The project is built by a script (`tools/build_examples.py`, function `_flatsat`) from the tool's own editing functions, so it is valid by construction. The device list and the interface list are in that script, one row each, if you want to see how it was made or adapt it. The tool version and model hash are in `outputs/system/provenance.json` after an export.
 
 Next: [`LEARNING_PATH.md`](LEARNING_PATH.md) places this example in the whole route; [`CONCEPTS.md`](CONCEPTS.md) explains the words.

@@ -40,7 +40,7 @@ echo $?
 
 ```
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 2 interfaces, 9 connectors, 0 harnesses: 0 error(s), 0 warning(s).
+3 devices, 2 interfaces, 9 connectors, 0 harnesses: 0 error(s), 0 warning(s).
 0
 ```
 
@@ -131,7 +131,7 @@ Nothing was changed. Three causes:
    ```
    INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
    WARNING newer_version: This project was saved by a newer version of the tool (format 99; this tool understands up to 1). It is opened read-only. [project.json]
-   3 units, 2 interfaces, 9 connectors, 0 harnesses: 0 error(s), 1 warning(s).
+   3 devices, 2 interfaces, 9 connectors, 0 harnesses: 0 error(s), 1 warning(s).
    ```
 
    ```
@@ -168,7 +168,7 @@ The app's wording for the banner:
 Parts of this project could not be loaded. Everything else was loaded. The original folder is protected.
 ```
 
-and in the window: *Some parts could not be loaded. Everything else was loaded. The original folder is protected: it cannot be overwritten.* One or more files are damaged. The app shows what it could read. **Fix:** press **Save salvaged copy…** to write a clean copy to a new folder (the parts that could not be loaded are kept word for word in `quarantine.json` and `quarantine/files/` beside it, so nothing is lost), and repair or restore the original from Git. On the command line the same damage looks like this (a unit file cut off in the middle, made for the test):
+and in the window: *Some parts could not be loaded. Everything else was loaded. The original folder is protected: it cannot be overwritten.* One or more files are damaged. The app shows what it could read. **Fix:** press **Save salvaged copy…** to write a clean copy to a new folder (the parts that could not be loaded are kept word for word in `quarantine.json` and `quarantine/files/` beside it, so nothing is lost), and repair or restore the original from Git. On the command line the same damage looks like this (a device file cut off in the middle, made for the test):
 
 ```
 harness-design-studio validate dmg
@@ -176,13 +176,13 @@ harness-design-studio validate dmg
 
 ```
 ERROR   invalid_json: The file is not valid JSON at line 2, column 11: Expecting value. [logical/units/aocs.json]
-ERROR   unknown_unit: Box connector 'RW1-J01' does not belong to an existing unit.
-ERROR   unknown_unit: Box connector 'RW1-J02' does not belong to an existing unit.
-ERROR   unknown_unit: Interface 'IF-001' refers to unit 'RW1', which does not exist.
-ERROR   unknown_unit: Interface 'IF-002' refers to unit 'RW1', which does not exist.
+ERROR   unknown_unit: Box connector 'RW1-J01' does not belong to an existing device.
+ERROR   unknown_unit: Box connector 'RW1-J02' does not belong to an existing device.
+ERROR   unknown_unit: Interface 'IF-001' refers to device 'RW1', which does not exist.
+ERROR   unknown_unit: Interface 'IF-002' refers to device 'RW1', which does not exist.
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-WARNING orphan_placement: A diagram position exists for 'RW1', which is not a unit.
-2 units, 2 interfaces, 9 connectors, 0 harnesses: 5 error(s), 1 warning(s).
+WARNING orphan_placement: A diagram position exists for 'RW1', which is not a device.
+2 devices, 2 interfaces, 9 connectors, 0 harnesses: 5 error(s), 1 warning(s).
 ```
 
 Read the **first** error: it names the file and the line and column. The other errors follow from it (the wheel is missing, so everything that mentions it is wrong). The message never prints the content of the file, because it may be confidential. Fix the file (a JSON-aware editor shows the position; `git diff` shows what changed) and run `harness-design-studio validate` again. `harness-design-studio generate` on a project with errors changes nothing; after two `warning: [interface_skipped]` lines it ends with (exit code 1):
@@ -223,9 +223,9 @@ harness-design-studio new --list
 ```
 
 ```
-blank            An empty project: starter parts and interface types, no units.
-first-steps      Three units, a power link and an RS-422 link. Nothing is generated yet: start here.
-small-satellite  14 units with nominal and redundant chains. Generate it to see a realistic system.
+blank            An empty project: starter parts and interface types, no devices.
+first-steps      Three devices, a power link and an RS-422 link. Nothing is generated yet: start here.
+small-satellite  14 devices with nominal and redundant chains. Generate it to see a realistic system.
 ```
 
 ```
@@ -280,7 +280,7 @@ harness-design-studio generate demo-blank
 0 interfaces and 0 wires checked: 0 error(s)
 ```
 
-Not an error: the blank project has no units and no interfaces, and the command line cannot add them. Add units and interfaces in the app (the empty diagram has the button **Add a device**; see Part 10 of [`GETTING_STARTED.md`](GETTING_STARTED.md)), or start from `first-steps`.
+Not an error: the blank project has no devices and no interfaces, and the command line cannot add them. Add devices and interfaces in the app (the empty diagram has the button **Add a device**; see Part 10 of [`GETTING_STARTED.md`](GETTING_STARTED.md)), or start from `first-steps`.
 
 ### `Not saved: fix the errors above first.` with `[contact_overload]` or `[wire_sizing]`
 
@@ -337,7 +337,7 @@ harness-design-studio validate q
 ERROR   quarantined: A configuration could not be loaded and was set aside: bundle_derating: Extra inputs are not permitted [config/derating.json]
 INFO    config_defaulted: Configuration 'derating' is missing or unreadable; the built-in placeholder is used. [config/derating.json]
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 2 interfaces, 9 connectors, 0 harnesses: 1 error(s), 0 warning(s).
+3 devices, 2 interfaces, 9 connectors, 0 harnesses: 1 error(s), 0 warning(s).
 ```
 
 Exit code 1. **Fix:** move the key into `"values"`:
@@ -370,7 +370,7 @@ harness-design-studio check mc
 ```
 ERROR   merge_conflict: The file contains unresolved Git merge conflict markers. Resolve the conflict first. [logical/interfaces/power.json]
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 1 interfaces, 9 connectors, 0 harnesses: 1 error(s), 0 warning(s).
+3 devices, 1 interfaces, 9 connectors, 0 harnesses: 1 error(s), 0 warning(s).
 ```
 
 A Git merge left `<<<<<<<`, `=======` and `>>>>>>>` lines in a project file. Open the file named in brackets, decide which side to keep, delete the three marker lines, and run `harness-design-studio check` again. Use `check` rather than `validate` after a merge: `check` also finds these markers and released harnesses that were edited.
@@ -397,7 +397,7 @@ harness-design-studio check rel
 ERROR   released_modified: W002 was changed after its release (revision A) (part EX-MICROD-9-M it uses was changed); it no longer matches its baseline. Undo the change, or start a new revision of the harness and make it there.
 ```
 
-Exit code 1. A released harness, the links it carries, the units and box connectors it uses, **and the parts, interface types and configuration values it relies on** are compared with the baseline stored at the release. The text in the second brackets says what changed (`configuration derating it depends on was changed` for a configuration file). Someone edited a file by hand (or merged one) after the release. **Fix:** undo the edit (`git checkout` the file), or `harness-design-studio revise DIR W002 --by NAME --comment TEXT`, make the change in the new revision and release it. A baseline made by version 0.1.0 holds none of the parts, interface types and configuration, so nothing of that kind is compared for it.
+Exit code 1. A released harness, the links it carries, the devices and box connectors it uses, **and the parts, interface types and configuration values it relies on** are compared with the baseline stored at the release. The text in the second brackets says what changed (`configuration derating it depends on was changed` for a configuration file). Someone edited a file by hand (or merged one) after the release. **Fix:** undo the edit (`git checkout` the file), or `harness-design-studio revise DIR W002 --by NAME --comment TEXT`, make the change in the new revision and release it. A baseline made by version 0.1.0 holds none of the parts, interface types and configuration, so nothing of that kind is compared for it.
 
 ### `ERROR dangling_accessory: Accessory 'ACC-001' in harness 'W001' belongs to ...` (new in 1.7.0)
 
@@ -408,7 +408,7 @@ harness-design-studio validate demo
 ```
 ERROR   dangling_accessory: Accessory 'ACC-001' in harness 'W001' belongs to 'W001-P9', which is not a connector or a wire of this harness.
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 2 interfaces, 13 connectors, 2 harnesses: 1 error(s), 0 warning(s).
+3 devices, 2 interfaces, 13 connectors, 2 harnesses: 1 error(s), 0 warning(s).
 ```
 
 `validate` ends with exit code 1. The other commands (`drc`, `generate`, `export` and so on) refuse the project like any project with damaged files, with exit code 2 (the message is `error: the project has damaged files (first: ERROR   dangling_accessory: ...)`). **Why:** an accessory of a harness names a connector or wire (`target`) that the harness does not have, for example after a hand edit of `physical/harnesses/W001.json` or a Git merge. **Fix:** set the target to a connector or a wire of the harness, or leave it empty (the accessory then belongs to the harness), or delete the accessory, in the file; then run `validate` again. The Generate step keeps an accessory only while its connector or wire still exists, and names the one it cannot keep in a `locked_data_lost` warning.
@@ -425,7 +425,7 @@ Errors cannot be waived; fix them. Read the `## Errors` section of the report (`
 
 ### `harness-design-studio verify DIR` or `--outputs` prints `[outputs_outdated]`, `[out_stale]`, `[out_stamp]` or `[out_modified]`
 
-You changed the design (here: renamed a unit in a project that was already generated and exported) or edited an exported file:
+You changed the design (here: renamed a device in a project that was already generated and exported) or edited an exported file:
 
 ```
 harness-design-studio verify so --outputs
@@ -531,12 +531,12 @@ row 3: ERROR Wire 'W009-001' does not exist.
 Nothing was changed.
 ```
 
-Other messages: `'EX-NOPE' is not a contact part of the library (category contact).` (import the part first, with the category *contact*); `'W001-P9' is not a connector or a wire of W001.` (the `Target` of an accessory); and, for the contact of a pin of a harness made by Generate, `W001 is made by Generate, which copies the contact from the pin of the unit. Set it on the unit's pin in the Devices tab (column Cable contact), then Generate again.` A table whose headings fit none of the kinds is refused with exit code 2 (`error: The column headings are not those of any kind of build data. Expected strip lengths: Wire, Strip A (mm), ...` and the headings the file has). All kinds, with examples: [enter the build data](user-manual/enter-the-build-data.md).
+Other messages: `'EX-NOPE' is not a contact part of the library (category contact).` (import the part first, with the category *contact*); `'W001-P9' is not a connector or a wire of W001.` (the `Target` of an accessory); and, for the contact of a pin of a harness made by Generate, `W001 is made by Generate, which copies the contact from the pin of the device. Set it on the device's pin in the Devices tab (column Cable contact), then Generate again.` A table whose headings fit none of the kinds is refused with exit code 2 (`error: The column headings are not those of any kind of build data. Expected strip lengths: Wire, Strip A (mm), ...` and the headings the file has). All kinds, with examples: [enter the build data](user-manual/enter-the-build-data.md).
 
 ### `import-netlist`: `The file is not a KiCad netlist`
 
 ```
-harness-design-studio import-netlist imp bad.kicad_sch --unit RW1
+harness-design-studio import-netlist imp bad.kicad_sch --device RW1
 ```
 
 ```
@@ -546,10 +546,10 @@ error: The file is not a KiCad netlist (no (export ...) at the top).
 Exit code 2. The tool reads the **netlist** that KiCad exports (File, Export, Netlist), not the schematic file `.kicad_sch`. See [`KICAD.md`](KICAD.md). Other messages:
 
 ```
--: ERROR Unit 'RW9' does not exist
+-: ERROR Device 'RW9' does not exist
 ```
 
-The `--unit` must be a unit of the project (check the ID in the app or in `logical/units/`).
+The `--device` must be a device of the project (check the ID in the app or in `logical/units/`).
 
 ```
 J1: ERROR Connector RW1-J77 has no library part: set the field HarnessPart or use --part J1=PART
@@ -559,7 +559,7 @@ J1: ERROR Connector RW1-J77 has no library part: set the field HarnessPart or us
 
 ### Interfaces: a row cannot be placed
 
-Importing interfaces (**File > Import > Import interfaces…**, Ctrl+Shift+I, CSV or XLSX) is done in the app only; there is no `harness-design-studio` command for it. Page 3 of the import wizard lists each row; a row that cannot be placed is marked *Skipped* with the reason (a unit that does not exist, no free connector on a unit that can carry the type), the other rows are still imported, and the summary says how many were skipped. Nothing is applied until you press the import button on page 4. See [`IMPORTS.md`](IMPORTS.md). The messages were not run for this page because they need the app window.
+Importing interfaces (**File > Import > Import interfaces…**, Ctrl+Shift+I, CSV or XLSX) is done in the app only; there is no `harness-design-studio` command for it. Page 3 of the import wizard lists each row; a row that cannot be placed is marked *Skipped* with the reason (a device that does not exist, no free connector on a device that can carry the type), the other rows are still imported, and the summary says how many were skipped. Nothing is applied until you press the import button on page 4. See [`IMPORTS.md`](IMPORTS.md). The messages were not run for this page because they need the app window.
 
 ## Exporting
 
@@ -573,7 +573,7 @@ harness-design-studio export demo
 error: there are no harnesses to export; run `harness-design-studio generate` first.
 ```
 
-Exit code 1. Outputs are written per harness, and none exists yet. Run `harness-design-studio generate demo`, then `harness-design-studio export demo`. (With the `blank` project it stays this way until you add units and interfaces in the app, or make a harness by hand with **New harness…**.)
+Exit code 1. Outputs are written per harness, and none exists yet. Run `harness-design-studio generate demo`, then `harness-design-studio export demo`. (With the `blank` project it stays this way until you add devices and interfaces in the app, or make a harness by hand with **New harness…**.)
 
 ### `warning: [out_pdf_chars] These characters cannot be shown in the PDF ...`
 
@@ -587,7 +587,7 @@ warning: [out_pdf_chars] These characters cannot be shown in the PDF of the harn
 34 files written to demo/outputs (model b45c6856e08b).
 ```
 
-(Made with 1.7.0 from `first-steps`, after renaming two units to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`; the harness drawings are written only with `export --drawings`, so that line appears only then.)
+(Made with 1.7.0 from `first-steps`, after renaming two devices to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`; the harness drawings are written only with `export --drawings`, so that line appears only then.)
 
 Not an error (exit code 0, the files are written). The PDF drawings use the Windows-1252 character set, so a name or note with characters outside it (the ohm sign Ω, Greek letters) prints a `?` in the PDF; the SVG drawing, the CSV files and the workbook keep the characters. The warning names every character it replaced (up to eight, then "and N more") and is repeated by `harness-design-studio verify DIR --outputs`. **Fix:** if the PDF is what you send, write the name with letters of Windows-1252 (for example "ohm"); otherwise use the SVG.
 
@@ -741,7 +741,7 @@ demo/
   project.json            name and the tool version that last saved it
   config/                 seven rule files (derating.json, generation.json, ...)
   library/                the parts list
-  logical/                units, interface types, interfaces, diagram layout
+  logical/                units (the devices), interface types, interfaces, diagram layout
   physical/               connectors (and, after generating, harnesses/)
   generated/              the record of the last generation (after generating)
   outputs/                build workbooks, tables, exports (after harness-design-studio export)
@@ -776,6 +776,6 @@ The files are plain text (JSON), so a project folder can be copied, zipped, e-ma
 - *Undo a mistake in the app:* **Ctrl+Z**. A released harness is locked; start a new revision with `harness-design-studio revise` instead of editing it.
 - *Two copies to try different ideas:* copy the folder (`cp -r demo demo-try`); `harness-design-studio compare demo demo-try` shows the differences.
 
-Still stuck? Run `harness-design-studio validate DIR` and `harness-design-studio drc DIR` and read the messages: each says what is wrong and how to fix it. Check the output first before you send it to anyone if the project is confidential: the messages name units, interfaces and parts. More answers: [`FAQ.md`](FAQ.md).
+Still stuck? Run `harness-design-studio validate DIR` and `harness-design-studio drc DIR` and read the messages: each says what is wrong and how to fix it. Check the output first before you send it to anyone if the project is confidential: the messages name devices, interfaces and parts. More answers: [`FAQ.md`](FAQ.md).
 
 Next: [`FAQ.md`](FAQ.md), [`GLOSSARY.md`](GLOSSARY.md)

@@ -57,7 +57,7 @@ def a_wire(ctl) -> str:
 def test_with_nothing_selected_it_says_what_to_select(ctl, theme, qtbot) -> None:
     panel = make(ctl, theme, qtbot)
     assert panel.shown() is None and panel.rows == []
-    assert any("Select a unit" in t for t in texts(panel))
+    assert any("Select a device" in t for t in texts(panel))
 
 
 def test_it_follows_the_selection_of_a_unit_and_of_a_link(ctl, theme, qtbot) -> None:

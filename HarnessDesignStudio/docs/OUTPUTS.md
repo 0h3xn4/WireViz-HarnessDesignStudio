@@ -2,6 +2,8 @@
 
 `harness-design-studio export DIR` (or **Export…** in the top bar of the app) writes everything below into `DIR/outputs/`. The files are produced from the model only: the same model gives the same bytes. Nothing in them is typed in by hand; edit the model and export again.
 
+The screen says *device*, the files say *unit*: the written files keep the word *unit* in their headings and texts (for example the *Unit* column of `mating_matrix.csv`), so that a file made now has the same bytes as one made by version 1.7.0. (The *Unit* column of the bill of materials is a unit of measure.) This page keeps the words of the files.
+
 ## Contents
 
 - [Build workbook](#build-workbook)

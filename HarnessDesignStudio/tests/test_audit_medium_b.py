@@ -380,7 +380,7 @@ def test_edit_operations_with_bad_input_raise_edit_error() -> None:
     for index in (-1, 5):
         with pytest.raises(edit.EditError, match="no end number"):
             edit.ops_set_endpoint_connector(p, iid, index, "OBC-J01")
-    assert edit.unit_compat(p, "rs422", "GHOST").short == "Unknown unit"
+    assert edit.unit_compat(p, "rs422", "GHOST").short == "Unknown device"
     free = [c.id for c in edit.free_connectors(p, "PCDU", "rs422")]
     with pytest.raises(edit.EditError, match="not a connector of OBC"):
         edit.ops_add_interface(p, "rs422", "OBC", "RW1", free[0] if free else "PCDU-J01", None)

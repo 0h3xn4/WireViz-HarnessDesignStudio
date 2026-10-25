@@ -110,7 +110,7 @@ Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limit
 | Key | Default | Meaning |
 | --- | --- | --- |
 | `harness` | `W{n:03d}` | name of a harness (`W001`) |
-| `box_connector` | `{unit}-J{n:02d}` | in the shipped file, but the generator does not read it: a unit's connectors are always named `<unit>-Jnn` (`RW1-J01`) |
+| `box_connector` | `{unit}-J{n:02d}` | in the shipped file, but the generator does not read it: a device's connectors are always named `<unit>-Jnn` (`RW1-J01`) |
 | `cable_connector` | `{harness}-P{n}` | cable connector of a harness (`W001-P1`) |
 | `wire` | `{harness}-{n:03d}` | wire (`W001-001`) |
 | `shield` | `{harness}-S{n}` | shield (`W001-S1`) |
@@ -148,7 +148,7 @@ None of these is set by default. `harness-design-studio config DIR --apply-profi
 | Key | Meaning |
 | --- | --- |
 | `shield_bonding` | `both_ends_backshell`: every shield must be bonded at both ends through a 360 degree backshell (ECSS-E-ST-20-07_0080041, 0080042) |
-| `same_class_one_bundle` | `true`: interfaces of one EMC class between two units should run in one harness (ECSS-E-ST-20-07_0080035) |
+| `same_class_one_bundle` | `true`: interfaces of one EMC class between two devices should run in one harness (ECSS-E-ST-20-07_0080035) |
 
 ### Part ratings used by the rules (keys of `ratings` in the parts library)
 `rated_voltage_v`, `dielectric_withstand_v`, `max_temp_c`, `mating_cycles` (connectors and wires as stated above). A part without the rating the rule needs is listed under *not checked*. The part fields `manufacturer` and `specification` are used by the rules `connector-manufacturer` and `wire-specification`.

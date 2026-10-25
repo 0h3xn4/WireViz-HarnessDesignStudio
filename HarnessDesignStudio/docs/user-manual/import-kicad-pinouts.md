@@ -1,16 +1,16 @@
 # Import KiCad pinouts
 
-This page shows how to read the connector pinout of a unit (which signal is on which pin) from a KiCad netlist, so that you do not type it again.
+This page shows how to read the connector pinout of a device (which signal is on which pin) from a KiCad netlist, so that you do not type it again.
 
 ## Before you start
 
-- **KiCad** is a program for drawing electronics. Here it is used only for the electronics inside each unit. It knows which signal is on which pin of the unit's connectors ([glossary: pinout](../GLOSSARY.md)).
+- **KiCad** is a program for drawing electronics. Here it is used only for the electronics inside each device. It knows which signal is on which pin of the device's connectors ([glossary: pinout](../GLOSSARY.md)).
 - You need a **netlist** from KiCad, in one of two forms:
   - the S-expression `.net` file that the schematic editor writes by default (in KiCad's schematic editor, the netlist export; the menu name depends on the KiCad version and was not checked here), or
   - the XML file: `kicad-cli sch export netlist --format kicadxml -o unit.net.xml unit.kicad_sch` (the input file goes last).
 - A `.kicad_sch` schematic file is **not** accepted. The tool reads KiCad's own computed connections, not the drawing.
 - KiCad is not needed to follow this page. The templates contain a small netlist to practice with. The KiCad commands above were not run for this page; the netlist import was checked with the template file.
-- The unit must exist in your project and have the connectors you import into.
+- The device must exist in your project and have the connectors you import into.
 
 ## 1. Get the practice files
 
@@ -24,7 +24,7 @@ harness-design-studio templates my-templates
 ## 2. Try it without changing anything
 
 ```
-harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run
+harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.net --device RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02 --dry-run
 ```
 
 ```
@@ -35,9 +35,9 @@ Dry run: nothing was changed.
 
 What the options mean:
 
-- `--unit RW1` is the unit the connectors belong to.
+- `--device RW1` is the device the connectors belong to.
 - `--prefix J` says that KiCad parts whose reference starts with `J` are connectors. (Or name them one by one with `--ref J1 --ref J2`.)
-- `--connector J1=RW1-J01` says which connector of the unit a KiCad reference becomes. A field called `HarnessConnector` on the KiCad symbol does the same; the practice netlist has it, so `--connector` is optional there.
+- `--connector J1=RW1-J01` says which connector of the device a KiCad reference becomes. A field called `HarnessConnector` on the KiCad symbol does the same; the practice netlist has it, so `--connector` is optional there.
 - `--part J1=PART-ID` chooses the library part of a new connector. A KiCad field `HarnessPart` does the same.
 - `--signal-map` renames KiCad net names to the signal names of the interface type. Either pairs (`--signal-map CAN_H=CANH --signal-map CAN_L=CANL`) or a file of pairs (`--signal-map my-templates/signal-map.csv`). Names that match nothing are listed. They are never guessed.
 - `--pin-function` takes the pin names of the symbol (for example `CAN_H`) as the signals, in place of the net names.
@@ -49,7 +49,7 @@ Read each line. It names the connector and how many pins got a signal. Net names
 Run the same command without `--dry-run`:
 
 ```
-harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.net --unit RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02
+harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.net --device RW1 --prefix J --connector J1=RW1-J01 --connector J2=RW1-J02
 ```
 
 ```
@@ -60,7 +60,7 @@ Imported 2 connector(s). Generate harnesses again to connect interfaces to the f
 
 The import is all or nothing: a netlist with a problem changes nothing.
 
-**In the app** (GUI, not run): choose **File > Import > Import KiCad netlist…**. The import wizard opens with *KiCad netlist* chosen. Choose the file, then on page 2 choose **Unit the connectors belong to**; the optional fields are **References that mark connectors**, **Only these references**, **Connector IDs** (one `REF=ID` per line, for example `J1=RW1-J01`), **Part for each connector** (one `REF=PART` per line) and **Net name to signal**. Page 3 lists each connector with its reason, and page 4 imports them as one undo step. The fields are the options of the command above.
+**In the app** (GUI, not run): choose **File > Import > Import KiCad netlist…**. The import wizard opens with *KiCad netlist* chosen. Choose the file, then on page 2 choose **Device the connectors belong to**; the optional fields are **References that mark connectors**, **Only these references**, **Connector IDs** (one `REF=ID` per line, for example `J1=RW1-J01`), **Part for each connector** (one `REF=PART` per line) and **Net name to signal**. Page 3 lists each connector with its reason, and page 4 imports them as one undo step. The fields are the options of the command above.
 
 Now generate:
 
@@ -91,10 +91,10 @@ Fix the netlist (or the signal map), import again, generate again.
 ## Common mistakes
 
 - **"The file is not a KiCad netlist (no (export ...) at the top)."** You gave it a `.kicad_sch` file. Export a netlist from the schematic editor.
-- **`--unit` missing.** The command needs it: `error: the following arguments are required: --unit`.
+- **`--device` missing.** The command needs it: `error: the following arguments are required: --device/--unit` (`--unit` is the older name of the same option).
 - **A connector with more pins in KiCad than in the library part.** It is refused. Choose a bigger part with `--part`.
 - **`kicad-cli` fails to load a library.** That is a KiCad install problem. Export the netlist from the schematic editor instead.
-- **Trusting the import blindly.** The reader was checked against one real KiCad 10.0.6 file and small hand-made ones. Hierarchical sheets and multi-unit symbols were not tried on a real project. Check the printed rows for each unit.
+- **Trusting the import blindly.** The reader was checked against one real KiCad 10.0.6 file and small hand-made ones. Hierarchical sheets and multi-unit symbols were not tried on a real project. Check the printed rows for each device.
 
 More: [`KICAD.md`](../KICAD.md), [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 

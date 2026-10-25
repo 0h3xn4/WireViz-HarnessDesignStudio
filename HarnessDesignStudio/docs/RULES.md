@@ -48,10 +48,10 @@ Rules that need numbers from your standards (see PLACEHOLDERS.md) check nothing 
 
 | Rule | Severity | What | Why | How to fix |
 | --- | --- | --- | --- | --- |
-| `cross-strap` | warning | A nominal unit is connected to a redundant one. | One failure could affect both chains. | Connect to a redundant copy, or waive with a reason. |
+| `cross-strap` | warning | A nominal device is connected to a redundant one. | One failure could affect both chains. | Connect to a redundant copy, or waive with a reason. |
 | `no-connector` | info | An interface has no connector chosen on an end. | Without connectors it cannot become wires. | Choose connectors (automatic fix available). |
 | `unconfirmed` | info | Connectors were chosen by the tool and not confirmed. | Nobody should assume auto-filled choices were reviewed. | Confirm them (fix available). |
-| `isolated` | info | A unit has no interfaces. | It will not appear in any harness. | Connect it, or ignore. |
+| `isolated` | info | A device has no interfaces. | It will not appear in any harness. | Connect it, or ignore. |
 
 ## Also reported as errors
 

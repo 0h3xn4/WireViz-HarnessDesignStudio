@@ -10,7 +10,7 @@ from typing import Any, NamedTuple
 
 from harness_design_studio.core.model import Connector, Harness, Project
 
-from .diff import KIND_NAMES
+from .diff import SCREEN_KIND_NAMES
 from .locks import (
     COSMETIC_INTERFACE_FIELDS,
     COSMETIC_PART_FIELDS,
@@ -42,7 +42,7 @@ _CHILDREN = (
 )  # fmt: skip
 # What `check_locks` compares on a box connector that is in use (besides the pins that are used).
 LOCKED_CONNECTOR_FIELDS = frozenset({"part_id", "gender", "keying"})
-KIND_LABELS = {**KIND_NAMES, "config": "Configuration file"}
+KIND_LABELS = {**SCREEN_KIND_NAMES, "config": "Configuration file"}
 
 
 class LockRef(NamedTuple):
@@ -136,7 +136,7 @@ def lock_reason(
             + _why(ref)
         )
     if kind == "unit":
-        return f"Unit {object_id} is used by {ref.harness_id}, which is released. " + _why(ref)
+        return f"Device {object_id} is used by {ref.harness_id}, which is released. " + _why(ref)
     if kind in ("box_connector", "box_pin"):
         box = object_id.split(".", 1)[0]
         return f"Connector {box} is used by {ref.harness_id}, which is released. " + _why(ref)

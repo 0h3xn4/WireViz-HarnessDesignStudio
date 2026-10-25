@@ -200,7 +200,7 @@ def plan_set_contacts(
     if h.generated:
         raise EditError(
             f"{harness_id} is made by Generate, which copies the contact from the pin of the "
-            "unit. Set it on the unit's pin in the Devices tab (column Cable contact), then "
+            "device. Set it on the device's pin in the Devices tab (column Cable contact), then "
             "Generate again."
         )
     conn = next((c for c in h.connectors if c.id == connector_id), None)

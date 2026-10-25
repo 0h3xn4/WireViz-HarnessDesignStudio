@@ -32,7 +32,7 @@ CAVEAT = (
 )
 INTRO = (
     "**Harness Design Studio** is an offline tool for designing the electrical harnesses of a "
-    "spacecraft. You describe the units and the interfaces between them; the tool generates the "
+    "spacecraft. You describe the devices and the interfaces between them; the tool generates the "
     "harnesses, checks them against design rules and writes the drawings, wire lists and test "
     "tables. It never uses the network, and the same design always gives byte-identical files."
 )

@@ -19,11 +19,11 @@ This page shows how to make a harness from nothing: no interface, no Generate. Y
 
 ## When to build by hand
 
-- You design a harness that has no units and interfaces yet (a test cable, a heater harness, a breakout).
+- You design a harness that has no devices and interfaces yet (a test cable, a heater harness, a breakout).
 - You describe an existing harness and want its build workbook and lists.
 - You want the whole design in the tool, from a blank project, before any interface table exists.
 
-When the system is described by units and interfaces, let Generate make the harnesses ([generate harnesses](generate-harnesses.md)) and use [edit a wire](edit-a-wire.md) for the changes you need.
+When the system is described by devices and interfaces, let Generate make the harnesses ([generate harnesses](generate-harnesses.md)) and use [edit a wire](edit-a-wire.md) for the changes you need.
 
 ## Before you start
 
@@ -49,7 +49,7 @@ The harness is a draft. Undo (Ctrl+Z) takes it away again.
 In the **Connectors** tab, under **Add connector**:
 
 - **Part**: a connector part of the library. The connector gets its pins `1` to the part's pin count, and its gender from the part's description.
-- **Plugs into**: choose a connector of a unit, and the new connector is the other half of it. The tool takes the mating part from the library (else the same part), the opposite gender, the keying and all the pins of the unit's connector, with their function, contact size, termination and cable contact. Choose *nothing (free-standing)* for a connector that plugs into no unit.
+- **Plugs into**: choose a connector of a device, and the new connector is the other half of it. The tool takes the mating part from the library (else the same part), the opposite gender, the keying and all the pins of the device's connector, with their function, contact size, termination and cable contact. Choose *nothing (free-standing)* for a connector that plugs into no device.
 - **Name**: optional. Left empty, the next free one (`P1`, `P2`, …) is used.
 - **Pins**: optional, the pin names separated by commas (`A1, A2, B1`). Left empty, the pins are those described above. Fill it in for a part that has no pin count, or to name the pins yourself.
 
@@ -57,7 +57,7 @@ Press **Add connector**. Add the second connector the same way. Each connector g
 
 ## 4. Say what each pin does
 
-Under **Pin of a connector**, choose the connector and the pin, then type a **Function** (your words, for example `HEATER +`), choose the **Termination** (crimp, solder, or not said), a **Contact size** and a **Contact**, and press **Set pin**. The function and the termination appear in the pinout tables, and the labels print the function. **Contact** is a part of the library with the category *contact*: the contact this wire uses on the pin (`Contact` appears in the pinout tables and in the build workbook). **Contact for all pins of this connector** gives the contact chosen in **Contact** to every pin of the connector in one undo step. The crimp tool belongs to the contact part, not to the pin ([enter the build data](enter-the-build-data.md)). On a connector of a harness that Generate made these controls are off, because the contact is set on the pin of the unit.
+Under **Pin of a connector**, choose the connector and the pin, then type a **Function** (your words, for example `HEATER +`), choose the **Termination** (crimp, solder, or not said), a **Contact size** and a **Contact**, and press **Set pin**. The function and the termination appear in the pinout tables, and the labels print the function. **Contact** is a part of the library with the category *contact*: the contact this wire uses on the pin (`Contact` appears in the pinout tables and in the build workbook). **Contact for all pins of this connector** gives the contact chosen in **Contact** to every pin of the connector in one undo step. The crimp tool belongs to the contact part, not to the pin ([enter the build data](enter-the-build-data.md)). On a connector of a harness that Generate made these controls are off, because the contact is set on the pin of the device.
 
 **Delete connector** removes the chosen connector, if it has no wires. If it has, the form names them: delete the wires first.
 

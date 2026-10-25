@@ -151,7 +151,7 @@ def test_update_connector() -> None:
     assert p.connectors[cid].keying is None
     assert "cannot be changed here" in refused(devices.ops_update_connector, p, cid, part_id="X")
     assert "does not exist" in refused(devices.ops_update_connector, p, cid, carries=["zz"])
-    assert "is not a connector of a unit" in refused(devices.ops_update_connector, p, "NOPE")
+    assert "is not a connector of a device" in refused(devices.ops_update_connector, p, "NOPE")
 
 
 def test_changing_the_part_resizes_the_pins_and_sets_the_gender() -> None:
@@ -219,7 +219,7 @@ def test_delete_connector_detaches_its_interfaces_and_refuses_hand_made_wires() 
         wires=[Wire(id="HX-W1", from_connector="HX-P1", from_pin="1", to_connector="HX-P1", to_pin="2")],
     )  # fmt: skip
     assert "made by hand" in refused(devices.ops_delete_connector, p, other)
-    assert "is not a connector of a unit" in refused(devices.ops_delete_connector, p, "NOPE")
+    assert "is not a connector of a device" in refused(devices.ops_delete_connector, p, "NOPE")
 
 
 # ---- pins (CD-C4, CD-C5) -----------------------------------------------------------------------

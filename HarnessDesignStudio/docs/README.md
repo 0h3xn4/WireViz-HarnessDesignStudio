@@ -41,7 +41,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`CONFIG.md`](CONFIG.md) | Every key of `config/*.json` |
 | [`PLACEHOLDERS.md`](PLACEHOLDERS.md) | Which engineering values are still placeholders, who owns them |
 | [`IMPORTS.md`](IMPORTS.md) | Importing interfaces, parts, lengths, engineering values, device pinouts and the build data |
-| [`KICAD.md`](KICAD.md) | Taking unit connector pinouts from a KiCad netlist |
+| [`KICAD.md`](KICAD.md) | Taking device connector pinouts from a KiCad netlist |
 | [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits, and the build workbook |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed, release by release |

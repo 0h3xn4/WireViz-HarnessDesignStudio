@@ -1,6 +1,7 @@
 """CD-B6: the commands `import-pinout` and `export-pinout` (the same planner as the wizard) and
 the round trip between them."""
 
+import contextlib
 from pathlib import Path
 
 import pytest
@@ -197,6 +198,27 @@ def test_a_released_harness_blocks_the_import(
     assert cli_main(["import-pinout", str(p), str(f), "--unit", unit or "", "--dry-run"]) == 1
     out = capsys.readouterr().out
     assert hid in out and "released" in out and "Nothing was changed." in out
+
+
+def test_the_option_is_called_device_and_unit_stays_as_the_older_name(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    proj, cid = with_connector()
+    History(proj).execute("fill", devices.fill_from_type(proj, cid, ["3", "4"], "can"))
+    p = folder(tmp_path, proj)
+    assert cli_main(["export-pinout", str(p), "--device", "GYRO1"]) == 0
+    by_device = capsys.readouterr().out
+    assert cli_main(["export-pinout", str(p), "--unit", "GYRO1"]) == 0
+    assert capsys.readouterr().out == by_device and "GYRO1-J01,box" in by_device
+    assert cli_main(["export-pinout", str(p), "--device", "NOPE"]) == 2
+    err = capsys.readouterr().err
+    assert "does not exist" in err and "unit" not in err.lower()
+    assert cli_main(["export-pinout", str(p)]) == 2  # the option is required: the message names it
+    assert "--device" in capsys.readouterr().err
+    with contextlib.suppress(SystemExit):
+        cli_main(["export-pinout", "--help"])
+    help_text = capsys.readouterr().out
+    assert "--device" in help_text and "--unit" in help_text
 
 
 def test_export_pinout_to_the_screen_and_to_files(
