@@ -41,7 +41,7 @@ small-satellite    14 devices with nominal and redundant chains. Generate it to 
 flatsat            A complete bench: 23 flight and ground devices, generated, with example numbers.
 ```
 
-**Which version do you have?** This tutorial is written for 1.7.0. The commands work the same on 1.6.0 and earlier, except that `export` there writes the harness drawings and no build workbook (Part 6); the window is the one of 1.3.0 and later, and the Next step page is new in 1.7.0 and the two roles (Systems engineer and Electrical / AIT engineer) are newer still, not in a release yet, so the app steps and the picture look different in 1.6.0 and earlier (1.2.0 and earlier had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
+**Which version do you have?** This tutorial is written for 1.8.0. The commands work the same on 1.7.0, 1.6.0 and earlier, except that `export` there writes the harness drawings and no build workbook (Part 6); the window is the one of 1.3.0 and later, and the Next step page is new in 1.7.0 and the two roles (Systems engineer and Electrical / AIT engineer) are newer still (1.8.0), so the app steps and the picture look different in 1.7.0 and earlier (1.2.0 and earlier had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
 
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 
@@ -71,7 +71,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 ## Part 2: look around
 
-![The main window of version 1.7.0 in the Electrical / AIT engineer role: the navigation rail on the left with Next step first, the top bar with Generate, Check and Release, the project panel on the left, the diagram in the middle and the Inspector on the right](ux/qt/02-guided-main.png)
+![The main window of version 1.8.0 in the Electrical / AIT engineer role: the navigation rail on the left with Next step first, the top bar with Generate, Check and Release, the project panel on the left, the diagram in the middle and the Inspector on the right](ux/qt/02-guided-main.png)
 
 *(The screenshot shows the app's built-in sample, which uses slightly different IDs such as `OBC` and `IF-PWR-RW1`; the layout is the same.)*
 
@@ -144,7 +144,7 @@ harness-design-studio drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `5e6bcbd63d91`. Rules run: 39.
+Model hash: `4780a7655706`. Rules run: 39.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.
@@ -171,7 +171,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-34 files written to wheel-link/outputs (model 5e6bcbd63d91).
+34 files written to wheel-link/outputs (model 4780a7655706).
 ```
 
 The files are checked independently before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.
@@ -197,7 +197,7 @@ harness-design-studio export wheel-link --drawings
 ```
 
 ```
-40 files written to wheel-link/outputs (model 5e6bcbd63d91).
+40 files written to wheel-link/outputs (model 4780a7655706).
 ```
 
 The six new files are `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` and the same three for `W002`. A later `export` without `--drawings` removes them again and says so. The harness drawing (it needs `export --drawings`), with a title block and the model hash at the bottom (the picture is the `W001` sheet of the first export of this tutorial; the version and the model hash at the bottom of your own drawing are those of your tool and your project, so they can differ from the picture):
@@ -381,7 +381,7 @@ In the app, **File > Open project…** it. The empty diagram says where to start
 
 You have now done everything the tool does, once. Add a **Create redundant copy** of the wheel (select it, press the button) and watch the tool build the backup chain and warn when something connects nominal to redundant.
 
-There are two more ways in. One starts from the pins: name the pins of two devices in the **Devices** tab, press **Connect** (or Ctrl+Shift+K) and click the two devices, and the program proposes the pairs from the signal names; **Design > Check my connections** reviews them and **Create harness** makes a harness only when you ask (after 1.7.0, not in the latest release yet; [`user-manual/connect-two-connectors.md`](user-manual/connect-two-connectors.md)). The other is a harness made by hand, with no interface at all. Use **New harness…** in the **Drawings** area (Ctrl+Shift+H); see [`user-manual/build-a-harness-by-hand.md`](user-manual/build-a-harness-by-hand.md).
+There are two more ways in. One starts from the pins: name the pins of two devices in the **Devices** tab, press **Connect** (or Ctrl+Shift+K) and click the two devices, and the program proposes the pairs from the signal names; **Design > Check my connections** reviews them and **Create harness** makes a harness only when you ask (new in 1.8.0; [`user-manual/connect-two-connectors.md`](user-manual/connect-two-connectors.md)). The other is a harness made by hand, with no interface at all. Use **New harness…** in the **Drawings** area (Ctrl+Shift+H); see [`user-manual/build-a-harness-by-hand.md`](user-manual/build-a-harness-by-hand.md).
 
 ## Where to go next
 
@@ -396,7 +396,7 @@ There are two more ways in. One starts from the pins: name the pins of two devic
 | to try a large system with redundancy | `harness-design-studio new sat --template small-satellite`, then generate it |
 | to see a complete bench setup with ground equipment | `harness-design-studio new bench --template flatsat`, then [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md) |
 | to plan a design on paper first | `design-worksheet.md` in the templates (`harness-design-studio templates my-templates`) |
-| to keep devices and subsystems in a folder your team shares (after 1.7.0) | [`user-manual/use-the-library.md`](user-manual/use-the-library.md) |
+| to keep devices and subsystems in a folder your team shares (new in 1.8.0) | [`user-manual/use-the-library.md`](user-manual/use-the-library.md) |
 | something went wrong | [`FAQ.md`](FAQ.md) |
 | what the examples and templates contain | [`../src/harness_design_studio/resources/examples/templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) |
 

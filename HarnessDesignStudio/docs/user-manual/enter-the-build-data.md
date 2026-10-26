@@ -268,7 +268,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-35 files written to wheel-link/outputs (model 75ac89ce46da).
+35 files written to wheel-link/outputs (model d91cc55d8a47).
 ```
 
 (The model hash depends on the project and the tool version; yours differs.)

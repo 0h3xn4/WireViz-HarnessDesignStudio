@@ -30,7 +30,7 @@ The command line cannot add devices or interfaces. The loop works on a project t
 | a device's pins from a table | `harness-design-studio import-pinout DIR gyro.csv --device GYRO1 --new-device "Gyro unit" --default-part MY-HD-9-F --dry-run` |
 | a device's pinout as a file | `harness-design-studio export-pinout DIR --device GYRO1 -o gyro.xlsx` |
 | a device from another project (a device library file) | `harness-design-studio import-devices DIR devices.json --list`, then `--device GYRO1 --dry-run` |
-| a subsystem (devices and their connections) to keep for other projects (after 1.7.0) | `harness-design-studio export-subsystem DIR wheel-drive.json --device OBC1 --device RW1 --name "Wheel drive"`; added with `import-subsystem DIR wheel-drive.json --dry-run` or **File > Library…** (Ctrl+Shift+O) |
+| a subsystem (devices and their connections) to keep for other projects (new in 1.8.0) | `harness-design-studio export-subsystem DIR wheel-drive.json --device OBC1 --device RW1 --name "Wheel drive"`; added with `import-subsystem DIR wheel-drive.json --dry-run` or **File > Library…** (Ctrl+Shift+O) |
 | a device to keep for other projects | `harness-design-studio export-devices DIR devices.json --device GYRO1` (or **Save to library…** in the Devices tab) |
 | strip lengths, pin contacts, accessories or crimp tools (new in 1.7.0) | `harness-design-studio import-build-data DIR strip-lengths.csv --dry-run` (the kind is read from the headings; templates `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv`) |
 | engineering values | edit `config/*.json`, see [`CONFIG.md`](CONFIG.md); `harness-design-studio config DIR` lists what is missing |

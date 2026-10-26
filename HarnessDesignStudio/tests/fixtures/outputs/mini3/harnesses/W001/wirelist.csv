@@ -1,4 +1,4 @@
-# harness-design-studio 1.7.0 model 1f7bff1b986e
+# harness-design-studio 1.8.0 model de021d5c7c7c
 Wire,Signal,Interface,From connector,From pin,To connector,To pin,AWG,Part,Colour,Length (m),Shield group,Locked
 W001-001,PWR,IF-PWR-RW1,W001-P1,1,W001-P2,1,pending,,,,,
 W001-002,RTN,IF-PWR-RW1,W001-P1,2,W001-P2,2,pending,,,,,

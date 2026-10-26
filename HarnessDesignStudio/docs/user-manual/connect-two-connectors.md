@@ -2,7 +2,7 @@
 
 This page shows how to join a connector of one device to a connector of another, pin by pin, starting from the names you gave the pins. The program proposes which pins go together, you look at the pairs and change them, and the program reviews the result and makes a harness only when you ask it to.
 
-> **After 1.7.0, not in the latest release yet.** This is milestone M2 of the workshop feedback (decision D-173). Connecting by interface type, as before, is still there ([draw the design](draw-the-design.md), step 3). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
+> **New in 1.8.0.** This is milestone M2 of the workshop feedback (decision D-173). Connecting by interface type, as before, is still there ([draw the design](draw-the-design.md), step 3). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
 
 ## Contents
 
