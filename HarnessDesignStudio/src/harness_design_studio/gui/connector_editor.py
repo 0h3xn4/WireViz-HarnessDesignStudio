@@ -583,7 +583,7 @@ class ConnectorEditor(QWidget):
             self._say(str(exc))
             return False
         self._say("")
-        return not ops or self._run(strings.STEP_RENAME_PIN.format(f"{cid}/{pin}"), ops)
+        return not ops or self._run(strings.CE_STEP_RENAME_PIN.format(f"{cid}/{pin}"), ops)
 
     def delete_pin(self) -> bool:
         """Delete the selected pin (it must have no wires)."""

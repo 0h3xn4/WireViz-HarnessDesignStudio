@@ -2770,7 +2770,7 @@ CE_PINS_FROM_DEVICE = (
 )
 STEP_EDIT_CONNECTOR = "Edit connector {0}"
 STEP_ADD_PINS = "Add pins to {0}"
-STEP_RENAME_PIN = "Rename pin {0}"
+CE_STEP_RENAME_PIN = "Rename pin {0}"
 STEP_DELETE_PIN = "Delete pin {0}"
 STEP_RESET_CONNECTOR = "Give {0} back to Generate"
 
