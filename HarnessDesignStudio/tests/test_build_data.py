@@ -225,7 +225,7 @@ def test_a_contact_is_set_on_pins_of_a_harness_a_person_made(own):
 
 def test_a_generated_harness_says_to_set_the_contact_on_the_unit_pin(generated):
     h = first_harness(generated)
-    with pytest.raises(EditError, match="unit's pin in the Devices tab"):
+    with pytest.raises(EditError, match="device's pin in the Devices tab"):
         build_data.plan_set_contacts(generated, h.id, h.connectors[0].id, ["1"], CONTACT)
 
 
@@ -636,7 +636,7 @@ def test_a_contact_row_of_a_generated_harness_is_refused_with_the_reason(
     p = folder(tmp_path, generated)
     f = write(tmp_path / "c.csv", f"Harness,Connector,Pin,Contact\n{h.id},{h.connectors[0].id},1,{CONTACT}\n")  # fmt: skip
     assert cli_main(["import-build-data", str(p), str(f)]) == 1
-    assert "unit's pin in the Devices tab" in capsys.readouterr().out
+    assert "device's pin in the Devices tab" in capsys.readouterr().out
 
 
 def test_two_tools_for_one_contact_in_a_file_are_refused(tmp_path, capsys, own):

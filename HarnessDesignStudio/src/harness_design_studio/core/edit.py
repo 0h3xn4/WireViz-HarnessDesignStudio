@@ -212,7 +212,7 @@ def position_of(project: Project, unit_id: str) -> tuple[float, float]:
     p = project.placements.get(unit_id)
     if p is not None:
         return p.x, p.y
-    return free_slot(project, _known(project.units, unit_id, "Unit").zone)
+    return free_slot(project, _known(project.units, unit_id, "Device").zone)
 
 
 def ops_autoplace(project: Project) -> list[Op]:
@@ -322,7 +322,7 @@ def free_slot(
             ):
                 return x, y
             y += SLOT_STEP
-    raise EditError("There is no room left in the diagram for another unit.")
+    raise EditError("There is no room left in the diagram for another device.")
 
 
 # ---- compatibility (prevent errors instead of reporting them) -----------------------------------
@@ -396,15 +396,15 @@ def unit_compat(
             False, "Unknown interface type", f"Interface type '{type_id}' does not exist."
         )
     if unit_id not in project.units:
-        return Compat(False, "Unknown unit", f"Unit '{unit_id}' does not exist.")
+        return Compat(False, "Unknown device", f"Device '{unit_id}' does not exist.")
     if source_unit == unit_id:
-        return Compat(False, "Same unit", "A unit cannot be connected to itself.")
+        return Compat(False, "Same device", "A device cannot be connected to itself.")
     if not free_connectors(project, unit_id, type_id):
         name = _type_name(project, type_id)
         return Compat(
             False,
             f"No free {name} connector",
-            f'{unit_id} has no free {name} connector. Use a unit template that has one (for example "Computer (many interfaces)").',
+            f'{unit_id} has no free {name} connector. Use a device template that has one (for example "Computer (many interfaces)").',
         )
     return Compat(True)
 
@@ -416,10 +416,10 @@ def connector_compat(
     c = project.connectors.get(connector_id)
     if c is None or c.role != "box" or c.unit_id is None:
         return Compat(
-            False, "Not a unit connector", f"'{connector_id}' is not a connector of a unit."
+            False, "Not a device connector", f"'{connector_id}' is not a connector of a device."
         )
     if source_unit == c.unit_id:
-        return Compat(False, "Same unit", "A unit cannot be connected to itself.")
+        return Compat(False, "Same device", "A device cannot be connected to itself.")
     used = interface_using(project, connector_id)
     if used is not None:
         return Compat(
@@ -451,7 +451,7 @@ def ops_add_unit(
     `unit_id` is given (it must be free); `name` replaces the generated name."""
     tpl = TEMPLATES.get(template_id)
     if tpl is None:
-        raise EditError(f"Unknown unit template '{template_id}'.")
+        raise EditError(f"Unknown device template '{template_id}'.")
     missing = sorted({c.part_id for c in tpl.connectors} - set(project.parts))
     if missing:
         raise EditError(
@@ -532,7 +532,7 @@ def delete_impact(project: Project, unit_id: str) -> DeleteImpact:
 
 def ops_delete_unit(project: Project, unit_id: str) -> list[Op]:
     if unit_id not in project.units:
-        raise EditError(f"Unit '{unit_id}' does not exist.")
+        raise EditError(f"Device '{unit_id}' does not exist.")
     impact = delete_impact(project, unit_id)
     if impact.blocked_by_harnesses:
         raise EditError(
@@ -602,7 +602,7 @@ def ops_delete_harness(project: Project, harness_id: str) -> list[Op]:
 
 
 def ops_move_unit(project: Project, unit_id: str, x: float, y: float) -> list[Op]:
-    unit = _known(project.units, unit_id, "Unit")
+    unit = _known(project.units, unit_id, "Device")
     ops: list[Op] = [Put("placements", Placement(id=unit_id, x=x, y=y))]
     zone = zone_of_x(project, x) or None
     if zone is not None and unit.zone != zone:
@@ -627,7 +627,7 @@ def ops_add_zone(project: Project, name: str) -> list[Op]:
 
 def ops_rename_unit(project: Project, old: str, new: str) -> list[Op]:
     if old not in project.units:
-        raise EditError(f"Unit '{old}' does not exist.")
+        raise EditError(f"Device '{old}' does not exist.")
     if new == old:
         return []
     if new.casefold() in _taken(set(project.units) - {old}):
@@ -676,7 +676,7 @@ def ops_add_interface(
         raise EditError(f"ID {interface_id} is already used.")
     for unit_id, conn_id in ((from_unit, from_connector), (to_unit, to_connector)):
         if unit_id not in project.units:
-            raise EditError(f"Unit '{unit_id}' does not exist.")
+            raise EditError(f"Device '{unit_id}' does not exist.")
         if conn_id is None:
             compat = unit_compat(
                 project, type_id, unit_id, from_unit if unit_id == to_unit else None
@@ -735,7 +735,7 @@ def ops_redundant_copy(project: Project, unit_id: str) -> RedundantCopy:
     """Copy a nominal unit as its redundant twin and mirror its interfaces (names end in -R)."""
     unit = project.units.get(unit_id)
     if unit is None:
-        raise EditError(f"Unit '{unit_id}' does not exist.")
+        raise EditError(f"Device '{unit_id}' does not exist.")
     if unit.side == "redundant":
         raise EditError(f"{unit_id} is already on the redundant chain.")
     tid = twin_id(unit_id)
@@ -935,8 +935,8 @@ def ops_update_unit(project: Project, unit_id: str, **changes: object) -> list[O
     allowed = {"name", "side", "notes", "mass_relevant"}
     bad = set(changes) - allowed
     if bad:
-        raise EditError(f"These unit fields cannot be changed here: {', '.join(sorted(bad))}.")
-    return [Put("units", evolve(_known(project.units, unit_id, "Unit"), **changes))]
+        raise EditError(f"These device fields cannot be changed here: {', '.join(sorted(bad))}.")
+    return [Put("units", evolve(_known(project.units, unit_id, "Device"), **changes))]
 
 
 def signal_names(project: Project) -> list[str]:
@@ -990,7 +990,7 @@ def _unit_boxes(
     room = unit_footprints(project)
     boxes: dict[str, tuple[float, float, float]] = {}
     for uid in unit_ids:
-        _known(project.units, uid, "Unit")
+        _known(project.units, uid, "Device")
         x, y = position_of(project, uid)
         h = heights[uid] if heights is not None and uid in heights else room[uid]
         boxes[uid] = (x, y, h)
@@ -1011,7 +1011,7 @@ def _move_ops(project: Project, positions: Mapping[str, tuple[float, float]]) ->
 def ops_move_units(project: Project, positions: Mapping[str, tuple[float, float]]) -> list[Op]:
     """Move several units in one step (a drag of a selection)."""
     for uid in positions:
-        _known(project.units, uid, "Unit")
+        _known(project.units, uid, "Device")
     return _move_ops(project, positions)
 
 
@@ -1027,7 +1027,7 @@ def ops_align(
         raise EditError(f"Unknown way to align: {mode}.")
     ids = sorted(set(unit_ids))
     if len(ids) < 2:
-        raise EditError("Select at least two units to align them.")
+        raise EditError("Select at least two devices to align them.")
     boxes = _unit_boxes(project, ids, heights)
     xs = [b[0] for b in boxes.values()]
     ys = [b[1] for b in boxes.values()]
@@ -1062,7 +1062,7 @@ def ops_distribute(
         raise EditError(f"Unknown way to distribute: {axis}.")
     ids = sorted(set(unit_ids))
     if len(ids) < 3:
-        raise EditError("Select at least three units to space them evenly.")
+        raise EditError("Select at least three devices to space them evenly.")
     boxes = _unit_boxes(project, ids, heights)
     horizontal = axis == "horizontal"
     order = sorted(ids, key=lambda u: (boxes[u][0] if horizontal else boxes[u][1], u))
@@ -1071,7 +1071,7 @@ def ops_distribute(
     last = boxes[order[-1]][0 if horizontal else 1] + size[order[-1]]
     gap = (last - first - sum(size.values())) / (len(order) - 1)
     if gap < 0:
-        raise EditError("The units are too close together to be spread out evenly.")
+        raise EditError("The devices are too close together to be spread out evenly.")
     target: dict[str, tuple[float, float]] = {}
     at = first
     for uid in order:
@@ -1086,7 +1086,7 @@ def ops_duplicate_unit(project: Project, unit_id: str) -> tuple[list[Op], str]:
     belong to the original), a new ID built from the original's, placed in the same lane."""
     import re
 
-    unit = _known(project.units, unit_id, "Unit")
+    unit = _known(project.units, unit_id, "Device")
     prefix = re.sub(r"\d+$", "", unit.id) or "U"
     new_id, _n = next_unit_id(project, prefix)
     _check_new_id(new_id)

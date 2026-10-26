@@ -108,7 +108,7 @@ def segment(project: Project) -> Segmentation:
             continue
         if len(i.endpoints) > 2:
             result.skipped.append(
-                Skipped(i.id, "multi-drop interfaces (more than two units) are not generated yet")
+                Skipped(i.id, "multi-drop interfaces (more than two devices) are not generated yet")
             )
             continue
         if len(i.endpoints) != 2:
@@ -130,7 +130,7 @@ def segment(project: Project) -> Segmentation:
             continue
         a, b = i.endpoints
         if any(e.unit_id not in project.units for e in i.endpoints):
-            result.skipped.append(Skipped(i.id, "a unit of this interface does not exist"))
+            result.skipped.append(Skipped(i.id, "a device of this interface does not exist"))
             continue
         if a.connector_id is None or b.connector_id is None:
             result.skipped.append(Skipped(i.id, "a connector has not been chosen on every end"))
@@ -178,7 +178,7 @@ def segment(project: Project) -> Segmentation:
             parts = "; ".join(f"{c}: {', '.join(ids)}" for c, ids in sorted(classes[key].items()))
             result.notes.append(
                 f"{labels[key]} mixes interface classes ({parts}). In this mode they share a "
-                "harness because they use the same pair of unit connectors; give the separated "
-                "class its own connector, or segment per unit pair or per zone pair."
+                "harness because they use the same pair of device connectors; give the separated "
+                "class its own connector, or segment per device pair or per zone pair."
             )
     return result

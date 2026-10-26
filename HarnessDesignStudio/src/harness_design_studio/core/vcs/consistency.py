@@ -48,7 +48,7 @@ def release_integrity(project: Project) -> list[Issue]:
             (unit_now := project.units.get(u.id)) is None or unit_design(unit_now) != unit_design(u)
             for u in b.snapshot.units
         ):
-            out.append(_modified(h, "a unit it connects to was changed"))
+            out.append(_modified(h, "a device it connects to was changed"))
         elif _box_connector_changed(project, b.snapshot):
             out.append(_modified(h, "a box connector it plugs into was changed"))
         elif changed := _used_data_changed(project, b.snapshot):

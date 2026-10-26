@@ -118,12 +118,12 @@ Imported 2 part(s). Project parts library (version 0), source: contact-parts.csv
 
 **Which pin gets the contact depends on who made the harness.**
 
-- **A harness made by Generate** takes the contact from the pin of the **unit**, as it takes the termination and the function. In the app (GUI, not run), open **Model** > **Devices** (Ctrl+6), press **Contact** to show the columns, and fill the new column **Cable contact** (between **Termination** and **Function**): an editable choice of the contact parts of the library. The tooltip says `The contact the cable side uses on this pin. Generate copies it to the cable connector.` To give the same contact to several pins, select them and press **Cable contact…** (also in the context menu); that is one undo step. Pasted headers work as well: `Cable contact`, `Contact part` and `Cable contact part` mean this column, while `Contact` alone still means the contact size.
-- **A harness you made by hand** ([build a harness by hand](build-a-harness-by-hand.md)) has no unit pin to copy from. In the **Connectors** tab the pin form has **Contact**, and **Contact for all pins of this connector** gives the chosen contact to every pin of the selected connector.
+- **A harness made by Generate** takes the contact from the pin of the **device**, as it takes the termination and the function. In the app (GUI, not run), open **Model** > **Devices** (Ctrl+6), press **Contact** to show the columns, and fill the new column **Cable contact** (between **Termination** and **Function**): an editable choice of the contact parts of the library. The tooltip says `The contact the cable side uses on this pin. Generate copies it to the cable connector.` To give the same contact to several pins, select them and press **Cable contact…** (also in the context menu); that is one undo step. Pasted headers work as well: `Cable contact`, `Contact part` and `Cable contact part` mean this column, while `Contact` alone still means the contact size.
+- **A harness you made by hand** ([build a harness by hand](build-a-harness-by-hand.md)) has no device pin to copy from. In the **Connectors** tab the pin form has **Contact**, and **Contact for all pins of this connector** gives the chosen contact to every pin of the selected connector.
 
-In the **Connectors** tab of a generated harness the controls are off. They say why: `The contact of a pin of a generated harness is set on the pin of the unit, in the Devices tab (column Cable contact). Generate copies it to the cable connector.`
+In the **Connectors** tab of a generated harness the controls are off. They say why: `The contact of a pin of a generated harness is set on the pin of the device, in the Devices tab (column Cable contact). Generate copies it to the cable connector.`
 
-**From a file, for a generated harness**, name the contact on the unit's pins. The pinout import of a device reads the column `Cable contact` (see [define a device](define-a-device.md#take-the-pinout-from-a-spreadsheet)):
+**From a file, for a generated harness**, name the contact on the device's pins. The pinout import of a device reads the column `Cable contact` (see [define a device](define-a-device.md#take-the-pinout-from-a-spreadsheet)):
 
 ```
 Connector,Pin,Cable contact
@@ -136,8 +136,8 @@ OBC1-J01,4,EX-CONTACT-22
 A second file, `unit-contacts-rw1.csv`, does the same for the pins 1 to 4 of `RW1-J02` (the other end of `W001`) with `EX-CONTACT-24`. Then generate again:
 
 ```
-harness-design-studio import-pinout wheel-link unit-contacts.csv --unit OBC1
-harness-design-studio import-pinout wheel-link unit-contacts-rw1.csv --unit RW1
+harness-design-studio import-pinout wheel-link unit-contacts.csv --device OBC1
+harness-design-studio import-pinout wheel-link unit-contacts-rw1.csv --device RW1
 harness-design-studio generate wheel-link
 ```
 
@@ -180,8 +180,8 @@ Dry run: nothing was changed.
 
 ```
 Import pin contacts: 2 row(s) read.
-row 2: ERROR W001 is made by Generate, which copies the contact from the pin of the unit. Set it on the unit's pin in the Devices tab (column Cable contact), then Generate again.
-row 3: ERROR W001 is made by Generate, which copies the contact from the pin of the unit. Set it on the unit's pin in the Devices tab (column Cable contact), then Generate again.
+row 2: ERROR W001 is made by Generate, which copies the contact from the pin of the device. Set it on the device's pin in the Devices tab (column Cable contact), then Generate again.
+row 3: ERROR W001 is made by Generate, which copies the contact from the pin of the device. Set it on the device's pin in the Devices tab (column Cable contact), then Generate again.
 0 added, 0 changed, 0 unchanged, 2 refused.
 Nothing was changed.
 ```
@@ -314,13 +314,13 @@ The independent check reads the new columns, the sheet and the file cell by cell
 ## What Generate does with it
 
 - **Strip lengths** are always kept, like a label or a note. They do not lock the wire.
-- **The contact** is copied from the unit's pin to the cable connector's pin. On a harness made by hand, Generate leaves the harness alone.
+- **The contact** is copied from the device's pin to the cable connector's pin. On a harness made by hand, Generate leaves the harness alone.
 - **Accessories** are kept while the connector or wire they sit on is kept. If Generate cannot keep one, it says so in the finding `locked_data_lost` before you apply, for example `the accessory ACC-001 (sleeving on W001-001)`.
 - **A release** locks the harness with its accessories, and freezes the contact and accessory parts like any part it uses ([release a harness](release-a-harness.md)).
 
 ## Common mistakes
 
-- **Importing the contacts of a generated harness.** It is refused. Set the contact on the unit's pin (Devices tab, or `import-pinout` with a `Cable contact` column) and generate again.
+- **Importing the contacts of a generated harness.** It is refused. Set the contact on the device's pin (Devices tab, or `import-pinout` with a `Cable contact` column) and generate again.
 - **A part that is not a contact.** A contact must be a part of the category *contact*. Import the part first.
 - **Expecting a clear from an empty cell.** An empty cell leaves a value as it is. Clear it in the app.
 - **An accessory on something that is not there.** A project whose accessory names a connector or wire that its harness does not have (for example after a hand edit of a file or a Git merge) is an error, `dangling_accessory`, and `harness-design-studio validate` ends with exit code 1: `Accessory 'ACC-001' in harness 'W001' belongs to 'W001-P9', which is not a connector or a wire of this harness.` Change the target in the **Accessories** tab or the file, or delete the accessory ([troubleshooting](../TROUBLESHOOTING.md)).

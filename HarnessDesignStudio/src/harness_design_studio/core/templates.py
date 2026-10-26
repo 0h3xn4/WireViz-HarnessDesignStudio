@@ -30,27 +30,27 @@ class TemplateInfo:
 # Names and one-line descriptions; the folders are built by tools/build_examples.py.
 TEMPLATES = (
     TemplateInfo(
-        "blank", "My project", "An empty project: starter parts and interface types, no units."
+        "blank", "My project", "An empty project: starter parts and interface types, no devices."
     ),
     TemplateInfo(
         "first-steps",
         "First steps: reaction wheel link",
-        "Three units, a power link and an RS-422 link. Nothing is generated yet: start here.",
+        "Three devices, a power link and an RS-422 link. Nothing is generated yet: start here.",
     ),
     TemplateInfo(
         "minimal-satellite",
         "Minimal satellite",
-        "Seven units, nominal only: power, computer, radio, wheel and sun sensor. Adapt it.",
+        "Seven devices, nominal only: power, computer, radio, wheel and sun sensor. Adapt it.",
     ),
     TemplateInfo(
         "small-satellite",
         "Small satellite (reference)",
-        "14 units with nominal and redundant chains. Generate it to see a realistic system.",
+        "14 devices with nominal and redundant chains. Generate it to see a realistic system.",
     ),
     TemplateInfo(
         "flatsat",
         "Flatsat (EXAMPLE numbers, not engineering data)",
-        "A complete bench: 23 flight and ground units, generated, with example numbers.",
+        "A complete bench: 23 flight and ground devices, generated, with example numbers.",
     ),
 )
 

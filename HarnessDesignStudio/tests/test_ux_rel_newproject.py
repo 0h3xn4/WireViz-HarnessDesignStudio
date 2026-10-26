@@ -123,7 +123,7 @@ def test_browse_uses_the_folder_chooser(qtbot, tmp_path: Path) -> None:
 
 def test_choosing_an_example_changes_the_request_and_the_summary(qtbot, tmp_path: Path) -> None:
     dlg = make(qtbot, start_folder=tmp_path / "proj", template="flatsat")
-    assert dlg.template() == "flatsat" and "23 flight and ground units" in dlg.summary.text()
+    assert dlg.template() == "flatsat" and "23 flight and ground devices" in dlg.summary.text()
     assert dlg.request() == NewProjectRequest(tmp_path / "proj", "proj", "flatsat")
     assert dlg.select_template("first-steps") and dlg.request().template == "first-steps"  # type: ignore[union-attr]
     assert not dlg.select_template("nope")

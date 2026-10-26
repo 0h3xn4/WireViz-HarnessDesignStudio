@@ -100,6 +100,7 @@ from harness_design_studio.gui.devices_dialogs import (
     ContactDialog,
     FillDialog,
     LibraryDialog,
+    NewDeviceDialog,
     NewPartDialog,
     NewTypeDialog,
 )
@@ -702,6 +703,7 @@ class MainWindow(QMainWindow):
             set_mode=lambda mode: self._pick_mode(mode),
             set_snap=lambda on: self._set_checked(self.act_snap, on),
             set_labels=lambda on: self._set_checked(self.act_labels, on),
+            set_problem_notices=lambda on: self._set_checked(self.act_problem_notices, on),
             open_values=lambda: self.values_flow(),
             shortcut_rows=self.shortcut_rows,
             settings_file=self.settings.fileName(),
@@ -774,9 +776,10 @@ class MainWindow(QMainWindow):
             Qt.DockWidgetArea.RightDockWidgetArea,
             "dock-properties",
         )
-        self.dock_left.setMinimumWidth(240)
+        # (280 px: the three tabs Project, Device list and Interfaces fit in a row, without arrows)
+        self.dock_left.setMinimumWidth(280)
         self.dock_right.setMinimumWidth(260)
-        self.resizeDocks([self.dock_left, self.dock_right], [250, 310], Qt.Orientation.Horizontal)
+        self.resizeDocks([self.dock_left, self.dock_right], [280, 310], Qt.Orientation.Horizontal)
         # bottom: the Problems panel, closed until it is asked for (status bar, View menu, Ctrl+Shift+M)
         self.problems_list = ProblemsList(self.ctl, self.theme)
         self.dock_problems = self._dock(
@@ -1112,12 +1115,15 @@ class MainWindow(QMainWindow):
 
     # ---- devices: a new device, parts, interface types, pins from a type or an interface -----------
     def add_device_flow(self) -> None:
-        """Add > Device… (Ctrl+Shift+N): an empty device in a free slot, and the Devices tab with
-        its name selected (no dialog)."""
+        """Add > Device… (Ctrl+Shift+N): asks for the name (and the ID and subsystem), then adds
+        an empty device in a free slot as one undo step and opens it in the Devices tab."""
         if self.ctl.read_only:
             self.ctl.refuse_read_only()
             return
-        uid = self.ctl.add_device()
+        dlg = NewDeviceDialog(self, self.theme, self.ctl.project)
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
+            return
+        uid = self.ctl.add_device(**dlg.values())
         if uid is None:
             return
         self.go_to("devices")
@@ -1407,6 +1413,14 @@ class MainWindow(QMainWindow):
             name="act-reduce-motion",
         )
         self.act_minimap.setChecked(True)
+        self.act_problem_notices = a(
+            strings.A_PROBLEM_NOTICES,
+            self._toggle_problem_notices,
+            checkable=True,
+            name="act-problem-notices",
+        )
+        self.act_problem_notices.setToolTip(strings.A_PROBLEM_NOTICES_TIP)
+        self.act_problem_notices.setChecked(True)
         self.scale_actions: dict[int, QAction] = {}
         sgroup = QActionGroup(self)
         for pct in SCALES:
@@ -1701,6 +1715,8 @@ class MainWindow(QMainWindow):
         v.addSeparator()
         v.addAction(self.act_simple)
         v.addAction(self.act_full)
+        v.addSeparator()
+        v.addAction(self.act_problem_notices)
         v.addSeparator()
         v.addAction(self.act_guided)
         v.addAction(self.act_expert)
@@ -2356,7 +2372,12 @@ class MainWindow(QMainWindow):
         plans = status.generation == "stale"
         files = status.has_harnesses and status.outputs in ("stale", "modified", "unreadable")
         key = (plans, files, status.model_hash)
-        if self.ctl.read_only or not (plans or files) or self._dismissed_alert == key:
+        if (
+            self.ctl.read_only
+            or not (plans or files)
+            or self._dismissed_alert == key
+            or not self.problem_notices_on()
+        ):
             self.alerts.clear("stale")
             return
         if plans and files:
@@ -2641,13 +2662,13 @@ class MainWindow(QMainWindow):
         gone = {i for u in units for i in self.ctl.delete_impact(u).interfaces}
         every = sorted(gone | set(links))
         items = "".join(
-            f"<li><b>{u}</b> (unit {project.units[u].name})</li>" for u in sorted(units)
+            f"<li><b>{u}</b> (device {project.units[u].name})</li>" for u in sorted(units)
         )
         for iid in sorted(set(links) - gone):
             impact = edit.interface_impact(project, iid)
             items += f"<li><b>{iid}</b> ({impact.type_name}, {' to '.join(impact.ends)})</li>"
         if gone:
-            items += f"<li>{strings.interfaces_text(len(gone))} of the units: {', '.join(sorted(gone))}</li>"
+            items += f"<li>{strings.interfaces_text(len(gone))} of the devices: {', '.join(sorted(gone))}</li>"
         n = len(self.ctl.selected)
         return strings.DELETE_MANY_TITLE.format(n), strings.DELETE_MANY_BODY.format(
             items=items, plans=self._plan_lines(every)
@@ -3035,14 +3056,13 @@ class MainWindow(QMainWindow):
         self.fit_btn.setVisible(not simple)
         self.tool_add_device.setVisible(simple)
         self.tool_more.setVisible(simple)
-        self.problems_btn.setVisible(not simple)
         self.zoom_level.setVisible(not simple)
-        self.pending_link.set_suppressed(simple)
         self.act_show_panels.setVisible(simple)
         self.act_show_panels.setEnabled(simple)
         self.panels_btn.setVisible(simple)
         self._sync_panels_action()
         self._update_crumbs()  # (Arrange and the filters of the Model tab)
+        self._load_problem_notices()  # (each workspace has its own default and its own key)
         self._fit_status()
 
     def set_workspace(self, value: str) -> None:
@@ -3279,7 +3299,18 @@ class MainWindow(QMainWindow):
     # ---- export, import, new project ----------------------------------------------------------------
     def export_dialog_flow(self) -> None:
         """Export: one dialog to choose, run and read the result (the old `export_flow` stays for
-        callers that bring their own worker)."""
+        callers that bring their own worker). A project with no folder (the sample, a project that
+        was never saved) first asks where to save it, and goes on to the dialog once it is saved;
+        a cancelled chooser stops there."""
+        p = self.ctl.project
+        needs_folder = (
+            self.ctl.outputs_folder() is None
+            and bool(p.harnesses)
+            and not self.ctl.read_only
+            and not p.recovered
+        )
+        if needs_folder and not self.save_as_flow(strings.EXPORT_SAVE_AS_FOLDER):
+            return
         dlg = ExportDialog(
             self.ctl,
             self.theme,
@@ -3735,8 +3766,8 @@ class MainWindow(QMainWindow):
         self.toasts.show_message(strings.SAVED, None, 2500)
         return True
 
-    def save_as_flow(self) -> bool:
-        folder = self.ask_folder(strings.SAVE_AS_FOLDER)
+    def save_as_flow(self, title: str | None = None) -> bool:
+        folder = self.ask_folder(title or strings.SAVE_AS_FOLDER)
         if not folder:
             return False
         try:
@@ -3834,7 +3865,12 @@ class MainWindow(QMainWindow):
         self._sync_theme_actions()
         self.theme.changed.connect(self._sync_theme_actions)
         self.ctl.set_mode(mode if mode in ("guided", "expert") else "guided")
-        for toggled in (self.act_snap, self.act_labels, self.act_reduce_motion):
+        for toggled in (
+            self.act_snap,
+            self.act_labels,
+            self.act_reduce_motion,
+            self.act_problem_notices,
+        ):
             toggled.toggled.connect(lambda _on=False: self._sync_settings_page())
         self.act_simple.toggled.connect(lambda _on=False: self._sync_settings_page())
         self.theme.changed.connect(self._sync_settings_page)
@@ -4002,6 +4038,39 @@ class MainWindow(QMainWindow):
         self.view.set_legend_wanted(self.act_legend.isChecked())
         self.settings.setValue(self._wkey("ui/legend"), self.act_legend.isChecked())
 
+    def problem_notices_on(self) -> bool:
+        """Whether the notices nobody asked for are shown (View > Show problem notices): the
+        Problems button and its count, the count on the inspector tab, the status chip of the top
+        bar, the chips and badges of the diagram, the pending-values link and the out-of-date
+        banner. The Check button, the Checks area, the Problems panel and the banners that say why
+        something cannot be done never look at it."""
+        return self.act_problem_notices.isChecked()
+
+    def _load_problem_notices(self) -> None:
+        """The value of the open workspace: stored under its own key, Full on and Simple off until
+        the person says otherwise."""
+        wanted = bool(
+            self.settings.value(self._wkey("ui/problem_notices"), self.workspace != "simple", bool)
+        )
+        self.act_problem_notices.setChecked(wanted)
+        self._apply_problem_notices()
+
+    def _toggle_problem_notices(self) -> None:
+        self.settings.setValue(self._wkey("ui/problem_notices"), self.problem_notices_on())
+        self._apply_problem_notices()
+
+    def _apply_problem_notices(self) -> None:
+        """Show or hide every unrequested notice at once: a visibility change on each, one repaint
+        of the diagram's marks that changed (no rebuild of the scene)."""
+        on = self.problem_notices_on()
+        self.problems_btn.setVisible(on)
+        self.pending_link.set_suppressed(not on)
+        self.topbar.set_notices(on)
+        self.inspector.set_problem_counts(on)
+        self.view.set_problem_notices(on)
+        self._update_alerts(self.shell_status(compute=False))
+        self._sync_settings_page()
+
     def _toggle_snap(self) -> None:
         self.view.set_snap(self.act_snap.isChecked())
         self.settings.setValue("ui/snap", self.act_snap.isChecked())
@@ -4030,6 +4099,7 @@ class MainWindow(QMainWindow):
             reduce_motion=self.act_reduce_motion.isChecked(),
             snap=self.act_snap.isChecked(),
             labels=self.act_labels.isChecked(),
+            problem_notices=self.act_problem_notices.isChecked(),
         )
 
     def shortcut_rows(self) -> list[tuple[str, str]]:
@@ -4101,9 +4171,9 @@ class MainWindow(QMainWindow):
             self.toasts.show_message(strings.PANELS_HIDDEN, None)  # never hide panels silently
         self.interface_table.scale_factor = scale
         self.unit_table.scale_factor = scale
-        self.dock_left.setMinimumWidth(self.theme.px(240))
+        self.dock_left.setMinimumWidth(self.theme.px(280))
         self.dock_right.setMinimumWidth(self.theme.px(260))
-        self.resizeDocks([self.dock_left], [self.theme.px(250)], Qt.Orientation.Horizontal)
+        self.resizeDocks([self.dock_left], [self.theme.px(280)], Qt.Orientation.Horizontal)
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)

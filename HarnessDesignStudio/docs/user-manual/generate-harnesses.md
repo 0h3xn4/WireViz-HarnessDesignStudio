@@ -1,6 +1,6 @@
 # Generate harnesses
 
-This page shows how to turn your units and links into harnesses (connectors, pins and wires), check the result, and read why the tool made each choice.
+This page shows how to turn your devices and links into harnesses (connectors, pins and wires), check the result, and read why the tool made each choice.
 
 ## Contents
 
@@ -14,8 +14,8 @@ This page shows how to turn your units and links into harnesses (connectors, pin
 
 ## Before you start
 
-- You have a project with units and links. For a quick start make one: `harness-design-studio new wheel-link --template first-steps` (see [draw the design](draw-the-design.md)).
-- A **harness** is a bundle of wires with connectors that carries the links between two units. You do not draw it: the tool generates it from your design, and it can generate it again at any time. (A harness with no interface behind it you can make by hand: [build a harness by hand](build-a-harness-by-hand.md).)
+- You have a project with devices and links. For a quick start make one: `harness-design-studio new wheel-link --template first-steps` (see [draw the design](draw-the-design.md)).
+- A **harness** is a bundle of wires with connectors that carries the links between two devices. You do not draw it: the tool generates it from your design, and it can generate it again at any time. (A harness with no interface behind it you can make by hand: [build a harness by hand](build-a-harness-by-hand.md).)
 - Wire gauges (thicknesses) stay *pending* until the engineering values exist. That is normal. See [fill in the engineering values](fill-in-engineering-values.md).
 
 ## 1. Generate
@@ -28,7 +28,7 @@ This page shows how to turn your units and links into harnesses (connectors, pin
 
 Generate always covers every harness; the app has no way to generate only one. The **Generate** step in the top bar says what it knows: *not generated yet*, *the harness plans match the design* or *the design changed after the last generation* (hover it). In the last case the status chip says *Plans out of date* and a banner offers **Generate**.
 
-If there is nothing to generate the app says so ("There is nothing to generate yet. Add units and connect them with interfaces first." or "Harnesses are already up to date. Nothing to change."). If generation finds problems (for example an interface that has no free pins), the preview opens with the errors listed ("Some harnesses could not be generated (N problem(s)). Fix the connectors or interfaces named in the list, then generate again."). It never says "up to date" while errors are waiting. If you edit the project while the plan is being made, the plan is refused ("The project changed while the plan was being made, so nothing was applied. Press Generate again.").
+If there is nothing to generate the app says so ("There is nothing to generate yet. Add devices and connect them with interfaces first." or "Harnesses are already up to date. Nothing to change."). If generation finds problems (for example an interface that has no free pins), the preview opens with the errors listed ("Some harnesses could not be generated (N problem(s)). Fix the connectors or interfaces named in the list, then generate again."). It never says "up to date" while errors are waiting. If you edit the project while the plan is being made, the plan is refused ("The project changed while the plan was being made, so nothing was applied. Press Generate again.").
 
 **On the command line**
 
@@ -63,7 +63,7 @@ error: [config_invalid] config/generation.json: default_gauge_awg must be a whol
 Not saved: fix the errors above first.
 ```
 
-Nothing is saved while the result holds errors (exit code 1). A naming pattern that fails, gives a reserved name such as `COM1` or repeats a name is replaced by the default with a warning (`warning: [naming] ...`, see [naming and title block](naming-and-title-block.md)). An interface whose two ends are on one connector, that has fewer than two ends, or whose type repeats a signal name is skipped with a finding (`interface_skipped`) instead of being wired onto one pin. A locked wire or an entered segment length that cannot be carried over to the new plan is named in a warning (`locked_data_lost: W002: W002-001 cannot be carried over and will be lost.`); read it before you apply. A manual harness (one you made by hand, `generated: false`) that takes over an interface makes the generation status *stale*, and deleting a unit that a manual harness plugs into is refused.
+Nothing is saved while the result holds errors (exit code 1). A naming pattern that fails, gives a reserved name such as `COM1` or repeats a name is replaced by the default with a warning (`warning: [naming] ...`, see [naming and title block](naming-and-title-block.md)). An interface whose two ends are on one connector, that has fewer than two ends, or whose type repeats a signal name is skipped with a finding (`interface_skipped`) instead of being wired onto one pin. A locked wire or an entered segment length that cannot be carried over to the new plan is named in a warning (`locked_data_lost: W002: W002-001 cannot be carried over and will be lost.`); read it before you apply. A manual harness (one you made by hand, `generated: false`) that takes over an interface makes the generation status *stale*, and deleting a device that a manual harness plugs into is refused.
 
 ## 2. Check the result on its own
 
@@ -94,7 +94,7 @@ There is no command line version of the **Why** pane. The same reasons are store
 
 ## How links become harnesses
 
-By default one harness is made for each pair of unit connectors. The setting is in `config/segmentation.json`:
+By default one harness is made for each pair of device connectors. The setting is in `config/segmentation.json`:
 
 ```
 {
@@ -108,17 +108,17 @@ By default one harness is made for each pair of unit connectors. The setting is 
 
 | `mode` | One harness for each ... |
 | --- | --- |
-| `per_connector_pair` (default) | pair of unit connectors |
-| `per_unit_pair` | pair of units |
+| `per_connector_pair` (default) | pair of device connectors |
+| `per_unit_pair` | pair of devices |
 | `per_zone_pair` | pair of zones (links between the same two lanes) |
 
-With the `minimal-satellite` example (11 links), the default makes 11 harnesses. After changing `mode` to `per_unit_pair` and running `harness-design-studio generate` again, the report is `1 added, 9 changed, 0 unchanged, 2 removed`: ten harnesses replace the eleven. Harnesses that keep a pair of units keep their IDs (here `W001`, `W002` and `W005` to `W011`, nine of them changed), the new one gets the next free ID (`W012`), and the files of the old ones stay in `physical/harnesses/` with the ending `.json.bak`. A second run changes nothing. (`minimal-satellite` is not in the 0.1.0 packages; see the [changelog](../../CHANGELOG.md).)
+With the `minimal-satellite` example (11 links), the default makes 11 harnesses. After changing `mode` to `per_unit_pair` and running `harness-design-studio generate` again, the report is `1 added, 9 changed, 0 unchanged, 2 removed`: ten harnesses replace the eleven. Harnesses that keep a pair of devices keep their IDs (here `W001`, `W002` and `W005` to `W011`, nine of them changed), the new one gets the next free ID (`W012`), and the files of the old ones stay in `physical/harnesses/` with the ending `.json.bak`. A second run changes nothing. (`minimal-satellite` is not in the 0.1.0 packages; see the [changelog](../../CHANGELOG.md).)
 
 Whatever the mode:
 
 - Nominal and redundant chains never share a harness, and pyro lines (firing circuits) never share a harness with other lines.
 - This rule is a placeholder until the owner decides it (decision D-10 in [`DECISIONS.md`](../DECISIONS.md)). The file keeps `"placeholder": true`.
-- A link between **more than two units** (a bus) is not generated yet (D-116). It is skipped with the note "multi-drop interfaces (more than two units) are not generated yet".
+- A link between **more than two devices** (a bus) is not generated yet (D-116). It is skipped with the note "multi-drop interfaces (more than two devices) are not generated yet".
 
 The file has a wrapper: the setting is under `values`. A key at the top level is refused. See [fill in the engineering values](fill-in-engineering-values.md#the-shape-of-a-config-file).
 
@@ -126,16 +126,16 @@ The file has a wrapper: the setting is under `values`. A key at the top level is
 
 Generation may change a wire or a pin you edited. To keep a value, lock it.
 
-- **A wire, in the app (since 1.4.0):** select it in the **Drawings** area and set its gauge, type, colour or length in the **Edit wire** tab. That locks the wire: Generate keeps those values, and **Reset to generated** hands it back. A label, a note and the strip lengths are always kept (they do not lock the wire), a wire you draw yourself is kept as it is, and so are the groups you make ([edit a wire](edit-a-wire.md)). If Generate cannot keep something (its interface is gone) it says so with the finding `locked_data_lost`. The same holds for the accessories of a harness (kept while the connector or wire they sit on is kept) and the contact of a pin, which Generate copies from the pin of the unit to the cable connector ([enter the build data](enter-the-build-data.md)).
+- **A wire, in the app (since 1.4.0):** select it in the **Drawings** area and set its gauge, type, colour or length in the **Edit wire** tab. That locks the wire: Generate keeps those values, and **Reset to generated** hands it back. A label, a note and the strip lengths are always kept (they do not lock the wire), a wire you draw yourself is kept as it is, and so are the groups you make ([edit a wire](edit-a-wire.md)). If Generate cannot keep something (its interface is gone) it says so with the finding `locked_data_lost`. The same holds for the accessories of a harness (kept while the connector or wire they sit on is kept) and the contact of a pin, which Generate copies from the pin of the device to the cable connector ([enter the build data](enter-the-build-data.md)).
 - **A pin, in the app:** the *Mode* column of the **Devices** tab: *locked* keeps the pin where it is, *fixed* also fixes its signal. The report counts them: "0 locked pin(s) kept".
-- **In the file:** a wire's entry in `physical/harnesses/<ID>.json` with `"locked": true` does the same as the Edit wire tab; a pin's entry with `"locked": true` the same as the Devices tab. A locked pin that already carries a signal stays where it is on a connector with a fixed pinout, and a locked fixed pin keeps its interface. In `per_unit_pair` mode a renamed unit keeps its harness IDs, locked wires and lengths when the interfaces stay the same.
+- **In the file:** a wire's entry in `physical/harnesses/<ID>.json` with `"locked": true` does the same as the Edit wire tab; a pin's entry with `"locked": true` the same as the Devices tab. A locked pin that already carries a signal stays where it is on a connector with a fixed pinout, and a locked fixed pin keeps its interface. In `per_unit_pair` mode a renamed device keeps its harness IDs, locked wires and lengths when the interfaces stay the same.
 
 This was checked on the command line with `first-steps`: a wire set to gauge 20 and colour `red` with `"locked": true` kept both after `harness-design-studio generate`, and a wire set to gauge 20 without the lock went back to the tool's own value (here no gauge, because the derating values are still placeholders). Edit the file only while the project is not open in the app. If it is open, the app reports "Project changed on disk" and offers to reload.
 
 ## Common mistakes
 
 - **"there are no harnesses to export; run `harness-design-studio generate` first."** You have not generated yet, or the project has no links. Generate first.
-- **A blank project generates nothing.** The command line cannot add units. Add units and links in the app ([draw the design](draw-the-design.md)), or start from an example. A harness made by hand with **New harness…** is left alone by Generate.
+- **A blank project generates nothing.** The command line cannot add devices. Add devices and links in the app ([draw the design](draw-the-design.md)), or start from an example. A harness made by hand with **New harness…** is left alone by Generate.
 - **Gauge says *pending*.** Not a fault. A value is missing: run `harness-design-studio config DIR` ([fill in the engineering values](fill-in-engineering-values.md)). The power link also needs its **Max current (A)**.
 - **"The model changed after the harness plans were generated."** You changed the design after generating. Generate again.
 

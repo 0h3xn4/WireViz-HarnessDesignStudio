@@ -299,8 +299,9 @@ def test_actions_emit_their_signals_and_have_icons_and_tips(qtbot, theme, tmp_pa
 
 def test_disabled_actions_say_why(qtbot, theme, tmp_path) -> None:
     ctl, view = make_view(qtbot, theme)  # not saved: no outputs folder
-    assert not view.action_buttons["export"].isEnabled()
-    assert strings.EXPORT_SAVE_FIRST in view.action_buttons["export"].toolTip()
+    assert view.action_buttons["export"].isEnabled()  # (it asks where to save the project first)
+    assert strings.HV_EXPORT_SAVES_FIRST_TIP in view.action_buttons["export"].toolTip()
+    assert view.export_reason.text() == strings.HV_EXPORT_SAVES_FIRST
     ctl.root = tmp_path
     ctl.sample = False
     ctl._read_only = True  # type: ignore[attr-defined]

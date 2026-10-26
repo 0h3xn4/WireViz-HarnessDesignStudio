@@ -32,7 +32,7 @@ These points cannot be checked by the tool. The requirement IDs are in `complian
 - [ ] Wire parts cite the detail specification they are procured to, and materials evidence comes from the manufacturer (ESCC 3901 4.4, 4.5).
 
 ## Drawings and lists
-- [ ] Drawing: connectors, pins and signals match the unit documents.
+- [ ] Drawing: connectors, pins and signals match the device documents.
 - [ ] Wire list, pinouts and BOM agree with the drawing.
 - [ ] Mass and length tables look plausible.
 - [ ] Test tables list the limits your programme requires.

@@ -8,7 +8,7 @@ from typing import Any
 
 from harness_design_studio.core.model import Project
 
-from .diff import KIND_NAMES, Diff, ObjectChange, _show, diff_snapshots
+from .diff import SCREEN_KIND_NAMES, Diff, ObjectChange, _show, diff_snapshots
 from .release import ReleaseError
 from .report import EVENTS, baselines_of, one_line, working_diff
 
@@ -124,7 +124,7 @@ class DiffRow:
 
 
 def _rows(c: ObjectChange) -> list[DiffRow]:
-    name = KIND_NAMES.get(c.kind, c.kind)
+    name = SCREEN_KIND_NAMES.get(c.kind, c.kind)
     if not c.fields:
         return [DiffRow(c.change, c.kind, name, c.id, "", "", "", "")]
     return [
@@ -158,8 +158,9 @@ def diff_groups(diff: Diff) -> list[DiffGroup]:
     """The rows grouped by kind of object, in the order of `KIND_NAMES`; kinds it does not know
     follow, sorted."""
     rows = diff_rows(diff)
-    kinds = [k for k in KIND_NAMES if any(r.kind == k for r in rows)]
-    kinds += sorted({r.kind for r in rows} - set(KIND_NAMES))
+    kinds = [k for k in SCREEN_KIND_NAMES if any(r.kind == k for r in rows)]
+    kinds += sorted({r.kind for r in rows} - set(SCREEN_KIND_NAMES))
     return [
-        DiffGroup(k, KIND_NAMES.get(k, k), tuple(r for r in rows if r.kind == k)) for k in kinds
+        DiffGroup(k, SCREEN_KIND_NAMES.get(k, k), tuple(r for r in rows if r.kind == k))
+        for k in kinds
     ]

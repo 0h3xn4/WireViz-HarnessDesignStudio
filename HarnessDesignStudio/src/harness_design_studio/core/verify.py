@@ -127,7 +127,7 @@ def _check_wire_ends(
                 elif h.generated:
                     rep.error(
                         "mate_missing",
-                        f"Cable connector {cid} does not plug into an existing unit connector.",
+                        f"Cable connector {cid} does not plug into an existing device connector.",
                         cid,
                     )
         if h.generated:
@@ -248,7 +248,7 @@ def verify_project(project: Project) -> VerifyReport:
     cables = _cable_index(project)
     cable_use, box_use = _check_wire_ends(project, rep, cables)
     drawn = {w.id for h in project.harnesses.values() for w in h.wires if w.manual}
-    for label, use in (("", cable_use), ("unit connector ", box_use)):
+    for label, use in (("", cable_use), ("device connector ", box_use)):
         for (cid, pid), users in sorted(use.items()):
             if len(users) > 1:
                 text = (

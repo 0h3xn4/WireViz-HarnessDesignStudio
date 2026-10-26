@@ -11,7 +11,7 @@ from tests.helpers import MINI3, copy_project, edit_json
 def test_validate_clean_project(capsys: pytest.CaptureFixture[str]) -> None:
     assert main(["validate", str(MINI3)]) == 0
     out = capsys.readouterr().out
-    assert "3 units" in out and "0 error(s)" in out and "placeholder" in out.lower()
+    assert "3 devices" in out and "0 error(s)" in out and "placeholder" in out.lower()
 
 
 def test_validate_reports_errors_exit_1(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:

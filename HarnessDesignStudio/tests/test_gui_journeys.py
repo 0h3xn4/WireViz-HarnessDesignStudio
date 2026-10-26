@@ -78,7 +78,7 @@ def test_sample_project_opens_with_banner(win) -> None:  # type: ignore[no-untyp
 
 def test_j2_empty_state_and_adding_units(win) -> None:  # type: ignore[no-untyped-def]
     win.ctl._install(new_project(), None, None)  # an empty project
-    assert win.view.empty.isVisible() and "Add your first unit" in win.view.empty.text()
+    assert win.view.empty.isVisible() and "Add your first device" in win.view.empty.text()
     add_unit(win, "computer")
     # the "diagram is empty" words go; a diagram of units without links says what comes next
     assert "Add your first unit" not in win.view.empty.text() and "OBC1" in win.ctl.project.units
@@ -161,7 +161,7 @@ def test_j3_guided_connect_prevents_invalid_and_marks_auto(win) -> None:  # type
     click_unit(win, "OBC")  # OBC-J03 carries CAN and is free
     assert ctl.connect_from and ctl.connect_from.unit_id == "OBC"
     assert unit_item(win, "OBC")._compat_reason()[0] == "from"
-    assert "No other unit has a free CAN connector" in win.hint.text()
+    assert "No other device has a free CAN connector" in win.hint.text()
     ctl.end_connect()
     n = len(ctl.project.interfaces)
     pick_connect_type(win, "rs422")
@@ -258,7 +258,7 @@ def test_j4_new_interface_dialog_disables_unusable_units_with_reason(win) -> Non
     win.new_interface_flow()
     disabled = [t for t in seen["items"] if not t[1]]
     assert any(
-        "PCDU" in t[0] and "No free CAN connector" in t[0] and "unit template" in t[2]
+        "PCDU" in t[0] and "No free CAN connector" in t[0] and "device template" in t[2]
         for t in disabled
     )
     assert len(win.ctl.project.interfaces) == n + 1  # accepted: added with the chosen valid units
@@ -466,7 +466,7 @@ def test_command_palette_runs_commands_and_finds_ids(win) -> None:  # type: igno
     palette.input.setText("expert")
     palette._run_current()
     assert win.ctl.mode == "expert" and not palette.isVisible()
-    assert any(x.startswith("Go to unit RW1") for x in labels) and any(
+    assert any(x.startswith("Go to device RW1") for x in labels) and any(
         x == "Connect with CAN" for x in labels
     )
     win.open_commands()

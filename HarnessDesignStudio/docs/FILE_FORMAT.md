@@ -2,6 +2,8 @@
 
 A project is a folder of small, canonical JSON files: UTF-8, 2-space indent, sorted keys, `\n` line endings, trailing newline. The same model always produces the same bytes, so Git diffs show only real changes.
 
+The screen says *device*, the files say *unit*: what the program shows as a device is stored as a `unit` (the folder `logical/units/`, the key `units`, the field `unit_id`). Version 1.7.0 and earlier called it a unit on the screen too. This page keeps the words of the files.
+
 ## Contents
 
 - [Rules](#rules)

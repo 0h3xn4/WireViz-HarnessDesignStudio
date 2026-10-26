@@ -19,7 +19,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Final
 
-from harness_design_studio.core import configcheck, edit
+from harness_design_studio.core import configcheck, devices, edit
 from harness_design_studio.core.commands import History, Op, Put, SetConfig
 from harness_design_studio.core.errors import HarnessError, TransactionError
 from harness_design_studio.core.generate.lengths import plan_length_import
@@ -535,7 +535,10 @@ def _plan_pinout(project: Project, source: Source, options: Options) -> ImportPl
     if not options.device and not options.new_device_name.strip():
         view.problem = strings.IMP_PIN_NEEDS_DEVICE
         return view
-    unit_id = options.device or edit.next_unit_id(project, "DEV")[0]
+    unit_id = options.device or (
+        devices.suggest_device_id(project, options.new_device_name)
+        or edit.next_unit_id(project, "DEV")[0]
+    )
     plan = plan_pinout_import(
         project, table, mapping, unit_id=unit_id,
         new_unit_name=None if options.device else options.new_device_name.strip(),

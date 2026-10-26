@@ -131,6 +131,16 @@ class StateIndex:
         out |= {k for k in old._states if k not in self._states}
         return out
 
+    def quiet(self) -> "StateIndex":
+        """The same index without the notices that nobody asked for: problems, warnings, values
+        still to enter and "not checked" are zero; the locks and the auto marks stay."""
+        quiet = {
+            k: ObjectState(auto=v.auto, locks=v.locks)
+            for k, v in self._states.items()
+            if v.auto or v.locks
+        }
+        return StateIndex(quiet, self._findings, checked=self.checked)
+
     def present(self) -> tuple[bool, bool, bool, bool, bool]:
         """(a problem, a warning, a pending value, a lock, an unchecked object) somewhere: what the
         legend lists."""

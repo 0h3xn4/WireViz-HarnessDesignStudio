@@ -25,15 +25,15 @@ MAX_COLUMNS = 200
 FIELDS: tuple[tuple[str, str], ...] = (
     ("id", "Interface ID"),
     ("type", "Interface type"),
-    ("from", "From unit"),
-    ("to", "To unit"),
+    ("from", "From device"),
+    ("to", "To device"),
     ("redundancy", "Redundancy"),
 )
 _ALIASES = {
     "id": ("interface", "id", "interfaceid", "ifid", "name"),
     "type": ("type", "interfacetype", "kind", "protocol"),
-    "from": ("from", "fromunit", "source", "src", "a"),
-    "to": ("to", "tounit", "destination", "dest", "target", "b"),
+    "from": ("from", "fromdevice", "fromunit", "source", "src", "a"),
+    "to": ("to", "todevice", "tounit", "destination", "dest", "target", "b"),
     "redundancy": ("redundancy", "chain", "side", "redundant"),
 }
 
@@ -315,11 +315,11 @@ def plan_interface_import(project: Project, table: Table, mapping: dict[str, int
         elif tid is None:
             error = f"Unknown interface type '{ty}'"
         elif ua is None:
-            error = f"Unit '{a}' does not exist"
+            error = f"Device '{a}' does not exist"
         elif ub is None:
-            error = f"Unit '{b}' does not exist"
+            error = f"Device '{b}' does not exist"
         elif ua == ub:
-            error = "A unit cannot be connected to itself"
+            error = "A device cannot be connected to itself"
         elif red and red.casefold() not in ("nominal", "redundant", "none"):
             error = f"Redundancy must be nominal, redundant or none, not '{red}'"
         if not error and tid is not None and ua is not None and ub is not None:

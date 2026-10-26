@@ -277,7 +277,7 @@ harness-design-studio import-lengths my-design lengths.csv --unit mm --dry-run
 
 ### harness-design-studio import-netlist
 
-Create or update the box connectors of one unit from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The user guide has a chapter on it.
+Create or update the box connectors of one device from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The user guide has a chapter on it.
 
 `harness-design-studio import-netlist project netlist [options]`
 
@@ -285,10 +285,10 @@ Create or update the box connectors of one unit from a KiCad netlist (the .net f
 | --- | --- |
 | `project` | the project folder |
 | `netlist` | the netlist file to read |
-| `--unit UNIT` | the unit these connectors belong to, for example OBC1 |
+| `--device, --unit DEVICE` | the device these connectors belong to, for example OBC1 (--unit is the older name) |
 | `--ref REF` | reference of a connector in the netlist, for example J1 (repeat; default: every component starting with --prefix) (repeatable) |
 | `--prefix PREFIX` | reference prefix that marks connectors (default J) |
-| `--connector REF=ID` | connector ID for a reference, for example J1=OBC1-J01 (default: the symbol field HarnessConnector, else <unit>-<ref>) (repeatable) |
+| `--connector REF=ID` | connector ID for a reference, for example J1=OBC1-J01 (default: the symbol field HarnessConnector, else <device>-<ref>) (repeatable) |
 | `--part REF=PART` | library part for a new connector (default: the symbol field HarnessPart, or the existing connector's part) (repeatable) |
 | `--signal-map NAME=SIGNAL|FILE` | translate a KiCad net name to an interface signal name (repeatable), or a CSV (net name, signal) or JSON object file of such pairs (repeatable) |
 | `--pin-function` | use the pin names of the symbol instead of the net names as signals |
@@ -297,12 +297,12 @@ Create or update the box connectors of one unit from a KiCad netlist (the .net f
 Examples:
 
 ```
-harness-design-studio import-netlist my-design wheel.net --unit RW1 --prefix J --connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run
+harness-design-studio import-netlist my-design wheel.net --device RW1 --prefix J --connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run
 ```
 
 ### harness-design-studio import-pinout
 
-Create or update the box connectors of one unit from a table: one row per pin with the connector, the pin, the signal, whether the device fixes it, a contact size and a termination. Columns are matched by their headings (Connector, Pin, Signal, Mode or Fixed, Contact size, Termination, Part, Gender); columns the project cannot store, such as a description or a voltage, are named in a warning and left out. A row with a problem stops the whole import; nothing is changed then. A new connector needs a library part (a Part column, --part J1=PART or --default-part). The user guide has a chapter on it.
+Create or update the box connectors of one device from a table: one row per pin with the connector, the pin, the signal, whether the device fixes it, a contact size and a termination. Columns are matched by their headings (Connector, Pin, Signal, Mode or Fixed, Contact size, Termination, Part, Gender); columns the project cannot store, such as a description or a voltage, are named in a warning and left out. A row with a problem stops the whole import; nothing is changed then. A new connector needs a library part (a Part column, --part J1=PART or --default-part). The user guide has a chapter on it.
 
 `harness-design-studio import-pinout project file [options]`
 
@@ -310,8 +310,8 @@ Create or update the box connectors of one unit from a table: one row per pin wi
 | --- | --- |
 | `project` | the project folder |
 | `file` | the file to read |
-| `--unit UNIT` | the unit the connectors belong to, for example GYRO1 |
-| `--new-device NAME` | make the unit as a new device with this name when it does not exist |
+| `--device, --unit DEVICE` | the device the connectors belong to, for example GYRO1 (--unit is the older name) |
+| `--new-device NAME` | create the device with this name when it does not exist |
 | `--subsystem SUBSYSTEM` | subsystem of a new device (default: the most used one) |
 | `--part REF=PART` | library part for a new connector, for example J1=MY-HD-9-F (repeat) (repeatable) |
 | `--default-part DEFAULT_PART` | library part for new connectors that have none |
@@ -324,8 +324,8 @@ Create or update the box connectors of one unit from a table: one row per pin wi
 Examples:
 
 ```
-harness-design-studio import-pinout my-design gyro-pinout.csv --unit GYRO1 --default-part MY-HD-9-F --dry-run
-harness-design-studio import-pinout my-design icd.xlsx --unit CAM1 --new-device "Camera" --part J1=MY-HD-9-F --part J2=MY-HD-15-M
+harness-design-studio import-pinout my-design gyro-pinout.csv --device GYRO1 --default-part MY-HD-9-F --dry-run
+harness-design-studio import-pinout my-design icd.xlsx --device CAM1 --new-device "Camera" --part J1=MY-HD-9-F --part J2=MY-HD-15-M
 ```
 
 ### harness-design-studio import-devices
@@ -338,7 +338,7 @@ Add the devices of a device library file with their connectors, pinouts, parts a
 | --- | --- |
 | `project` | the project folder |
 | `file` | the file to read |
-| `--unit UNIT` | a device of the file to add (repeat; default: all) (repeatable) |
+| `--device, --unit DEVICE` | a device of the file to add (repeat; default: all; --unit is the older name) (repeatable) |
 | `--list` | list the devices of the file and stop |
 | `--dry-run` | show the preview only |
 
@@ -346,12 +346,12 @@ Examples:
 
 ```
 harness-design-studio import-devices my-design device-library.json --list
-harness-design-studio import-devices my-design device-library.json --unit GYRO1 --dry-run
+harness-design-studio import-devices my-design device-library.json --device GYRO1 --dry-run
 ```
 
 ### harness-design-studio import-build-data
 
-Import the build data of a technician from a table. The kind is told by the column headings (any case; other columns are ignored): strip lengths (Wire, Strip A (mm), Strip B (mm); Harness is optional while the wire ID is unique), pin contacts (Harness, Connector, Pin, Contact; Tool is optional and sets the crimp tool of that contact part), accessories (Harness, Kind, Part, Target, Position, Length (mm), Quantity, Note; ID is optional, else they are numbered ACC-001 ...) or part tools (Part, Tool). An empty cell leaves the value as it is. A pin of a harness made by Generate takes its contact from the unit's pin (Devices tab) and refuses the row. The preview lists every row; a row with a problem stops the whole import and nothing is changed. Templates: strip-lengths.csv, pin-contacts.csv and accessories.csv (harness-design-studio templates FOLDER).
+Import the build data of a technician from a table. The kind is told by the column headings (any case; other columns are ignored): strip lengths (Wire, Strip A (mm), Strip B (mm); Harness is optional while the wire ID is unique), pin contacts (Harness, Connector, Pin, Contact; Tool is optional and sets the crimp tool of that contact part), accessories (Harness, Kind, Part, Target, Position, Length (mm), Quantity, Note; ID is optional, else they are numbered ACC-001 ...) or part tools (Part, Tool). An empty cell leaves the value as it is. A pin of a harness made by Generate takes its contact from the device's pin (Devices tab) and refuses the row. The preview lists every row; a row with a problem stops the whole import and nothing is changed. Templates: strip-lengths.csv, pin-contacts.csv and accessories.csv (harness-design-studio templates FOLDER).
 
 `harness-design-studio import-build-data project file [options]`
 
@@ -373,26 +373,26 @@ harness-design-studio import-build-data my-design accessories.csv
 
 ### harness-design-studio export-pinout
 
-Write the rows of system/box_pinouts.csv that belong to one unit (connector, pin, signal, interface, wires, spare) to a file, or to the screen as CSV. The format follows the file name (.csv or .xlsx). The rows are the ones export writes, so the file compares with an interface control document.
+Write the rows of system/box_pinouts.csv that belong to one device (connector, pin, signal, interface, wires, spare) to a file, or to the screen as CSV. The format follows the file name (.csv or .xlsx). The rows are the ones export writes, so the file compares with an interface control document.
 
 `harness-design-studio export-pinout project [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | the project folder |
-| `--unit UNIT` | the unit to write, for example GYRO1 |
+| `--device, --unit DEVICE` | the device to write, for example GYRO1 (--unit is the older name) |
 | `--output, -o OUTPUT` | the file to write (default: CSV on the screen) |
 
 Examples:
 
 ```
-harness-design-studio export-pinout my-design --unit GYRO1
-harness-design-studio export-pinout my-design --unit GYRO1 -o gyro-pinout.xlsx
+harness-design-studio export-pinout my-design --device GYRO1
+harness-design-studio export-pinout my-design --device GYRO1 -o gyro-pinout.xlsx
 ```
 
 ### harness-design-studio export-devices
 
-Write one or more units, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to: a device with the same ID is replaced, the others stay. What generation allocated in this project does not travel.
+Write one or more devices, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to: a device with the same ID is replaced, the others stay. What generation allocated in this project does not travel.
 
 `harness-design-studio export-devices project file [options]`
 
@@ -400,13 +400,13 @@ Write one or more units, their box connectors with every pin (signal, function, 
 | --- | --- |
 | `project` | the project folder |
 | `file` | the device library file to write or add to |
-| `--unit UNIT` | a unit to save, for example GYRO1 (repeat for more) (repeatable) |
+| `--device, --unit DEVICE` | a device to save, for example GYRO1 (repeat for more; --unit is the older name) (repeatable) |
 
 Examples:
 
 ```
-harness-design-studio export-devices my-design device-library.json --unit GYRO1
-harness-design-studio export-devices my-design device-library.json --unit OBC1 --unit PCU1
+harness-design-studio export-devices my-design device-library.json --device GYRO1
+harness-design-studio export-devices my-design device-library.json --device OBC1 --device PCU1
 ```
 
 ## Review, release and change

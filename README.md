@@ -10,9 +10,9 @@
 [![Ubuntu 24.04 or newer](https://img.shields.io/badge/Ubuntu-24.04%2B-E95420?logo=ubuntu&logoColor=white)](HarnessDesignStudio/docs/INSTALL.md)
 [![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20and%2011-0078D4?logo=windows&logoColor=white)](HarnessDesignStudio/docs/INSTALL.md#d-windows-from-120)
 
-An offline desktop tool for designing the electrical harnesses of a spacecraft: you draw the units and the connections between them, and the tool works out the connectors, pins and wires, checks them, and writes a build workbook and lists for every harness.
+An offline desktop tool for designing the electrical harnesses of a spacecraft: you draw the devices and the connections between them, and the tool works out the connectors, pins and wires, checks them, and writes a build workbook and lists for every harness.
 
-![A bench of 23 flight and ground units joined by links; the legend at the bottom left of the diagram explains the pictures](HarnessDesignStudio/docs/img/flatsat-overview.png)
+![A bench of 23 flight and ground devices joined by links; the legend at the bottom left of the diagram explains the pictures](HarnessDesignStudio/docs/img/flatsat-overview.png)
 
 *The `flatsat` example, one of the five projects that come with the tool.*
 
@@ -34,7 +34,7 @@ An offline desktop tool for designing the electrical harnesses of a spacecraft: 
 
 ## What is this?
 
-A **harness** is the bundle of wires and connectors that joins the boxes (the *units*) of a spacecraft. Designing it by hand means choosing connectors, giving every signal a pin and a wire, and drawing it all again whenever something changes. In Harness Design Studio you describe the units and the *interfaces* (power, data, radio) between them. The tool generates the harnesses, gives a reason for each choice, checks them against design rules, and writes a build workbook for every harness (an Excel file to build it from), wire lists and test tables. It keeps a record of every release.
+A **harness** is the bundle of wires and connectors that joins the boxes (the *devices*) of a spacecraft. Designing it by hand means choosing connectors, giving every signal a pin and a wire, and drawing it all again whenever something changes. In Harness Design Studio you describe the devices and the *interfaces* (power, data, radio) between them. The tool generates the harnesses, gives a reason for each choice, checks them against design rules, and writes a build workbook for every harness (an Excel file to build it from), wire lists and test tables. It keeps a record of every release.
 
 It works offline and produces byte-identical files for the same design, so the files are friendly to Git. It never invents engineering values: until you supply them, results say *pending* or *not checked*. It is a separate program from WireViz (a different codebase, written from scratch), and it can write each harness as WireViz-style YAML.
 
@@ -64,7 +64,7 @@ harness-design-studio generate wheel-link
 harness-design-studio export wheel-link
 ```
 
-(`harness` still works as a short name for `harness-design-studio`.) You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 units, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `34 files written to wheel-link/outputs (model afd8bd1502d7).` The build workbook of each harness (`harnesses/W001/W001_build.xlsx`) and the lists are in `wheel-link/outputs/`. The PDF drawings are written only with `harness-design-studio export wheel-link --drawings` (the build workbook and this option are new in 1.7.0). To see the diagram, run `harness-gui` and open the project with **File > Open project…**; the app opens it on the *Next step* page, and the diagram is in the *Model* area.
+(`harness` still works as a short name for `harness-design-studio`.) You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 devices, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `34 files written to wheel-link/outputs (model afd8bd1502d7).` The build workbook of each harness (`harnesses/W001/W001_build.xlsx`) and the lists are in `wheel-link/outputs/`. The PDF drawings are written only with `harness-design-studio export wheel-link --drawings` (the build workbook and this option are new in 1.7.0). To see the diagram, run `harness-gui` and open the project with **File > Open project…**; the app opens it on the *Next step* page, and the diagram is in the *Model* area.
 
 [`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md) has all the ways to install (package, tarball, source) and explains what to do if something fails. The full walk-through with the output of every command is [`GETTING_STARTED.md`](HarnessDesignStudio/docs/GETTING_STARTED.md).
 
@@ -88,10 +88,10 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 ## Features
 
 - **Your design is the source of truth.** Harnesses, drawings and lists are generated from it and can be regenerated at any time.
-- **A diagram editor with views** — units and links on a diagram with marks for problems, locks and values still to enter; a project tree and spreadsheet-like tables for units and interfaces; a navigation rail (Next step, Home in the Full workspace, Model, Checks, Drawings with pins, wires, drawing and why, Outputs with every exported file and its checksum, Revisions, Settings); the steps Generate, Check and Release in one top bar; a Problems panel; light and dark themes; an Export window and one Import wizard.
+- **A diagram editor with views** — devices and links on a diagram with marks for problems, locks and values still to enter; a project tree and spreadsheet-like tables for devices and interfaces; a navigation rail (Next step, Home in the Full workspace, Model, Checks, Drawings with pins, wires, drawing and why, Outputs with every exported file and its checksum, Revisions, Settings); the steps Generate, Check and Release in one top bar; a Problems panel; light and dark themes; an Export window and one Import wizard.
 - **Generates the harnesses** — connectors, pins, wires, shields, with a *Why is it like this?* explanation for every choice.
 - **Lets you edit them** (since 1.4.0) — the gauge, type, colour and length of a single wire, wires you draw yourself, several wires on one pin, twisted and shielded groups, a function on every pin and labels on connectors and harnesses; Generate keeps what you set.
-- **Lets you start from nothing** (since 1.5.0) — a blank project shows an **Add a device** button (since 1.6.0) for its first unit, and **New harness** in the Drawings area makes an empty harness with no interface behind it: you add its connectors in the Connectors tab and draw its wires in the Edit wire tab ([how](HarnessDesignStudio/docs/user-manual/build-a-harness-by-hand.md)). Generate leaves such a harness as it is.
+- **Lets you start from nothing** (since 1.5.0) — a blank project shows an **Add a device** button (since 1.6.0) for its first device, and **New harness** in the Drawings area makes an empty harness with no interface behind it: you add its connectors in the Connectors tab and draw its wires in the Edit wire tab ([how](HarnessDesignStudio/docs/user-manual/build-a-harness-by-hand.md)). Generate leaves such a harness as it is.
 - **Can show less** (since 1.7.0) — in the Simple workspace a *Next step* page names one thing to do at a time and the tree, the inspector and the Problems panel start closed; the Full workspace is the editor as it was ([how](HarnessDesignStudio/docs/user-manual/use-the-simple-workspace.md)).
 - **Checks them** against 35 design rules and says clearly which checks could not run because a number is missing.
 - **Writes the documents** — a build workbook per harness to build it from (what is ready and what is missing, a cut list with the strip lengths, a block per connector with the contact and crimp tool of each pin, parts, accessories such as sleeving and heat shrink, labels and a test sheet to fill in; the workbook and the build data are new in 1.7.0), wire lists, pinouts, bill of materials, test tables, labels, a block diagram and a change log, and, if you ask for them with `export --drawings`, a wiring-diagram drawing per harness (SVG and PDF).
@@ -131,7 +131,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 ## Related tools
 
 - **[WireViz](https://github.com/wireviz/WireViz)** draws single cables and harnesses from YAML. Harness Design Studio can export each harness as WireViz-style YAML (best effort, not checked with the WireViz program).
-- **[KiCad](https://www.kicad.org/)**: connector pinouts of a unit can be imported from a KiCad netlist ([how](HarnessDesignStudio/docs/KICAD.md)).
+- **[KiCad](https://www.kicad.org/)**: connector pinouts of a device can be imported from a KiCad netlist ([how](HarnessDesignStudio/docs/KICAD.md)).
 - Moving data between this tool and other engineering tools is described, with what does and does not exist, in [Tips: working with other tools](HarnessDesignStudio/docs/TIPS.md).
 
 Next: [install it](HarnessDesignStudio/docs/INSTALL.md), then [getting started](HarnessDesignStudio/docs/GETTING_STARTED.md).

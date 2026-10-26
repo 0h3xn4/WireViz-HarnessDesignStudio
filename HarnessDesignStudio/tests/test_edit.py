@@ -58,7 +58,7 @@ def test_add_units_never_overlap_and_ids_are_unique() -> None:
 
 def test_add_unit_errors() -> None:
     p = new_project()
-    with pytest.raises(edit.EditError, match="Unknown unit template"):
+    with pytest.raises(edit.EditError, match="Unknown device template"):
         edit.ops_add_unit(p, "nope")
     p.parts.clear()
     with pytest.raises(edit.EditError, match="lacks"):
@@ -118,7 +118,7 @@ def test_compat_rules_unit_level() -> None:
     c = edit.unit_compat(p, "rs422", "OBC", source_unit="OBC")
     assert not c.ok and "itself" in c.why
     c = edit.unit_compat(p, "can", "PCDU")  # PCDU connectors carry power and discrete/rs422
-    assert not c.ok and c.short == "No free CAN connector" and "unit template" in c.why
+    assert not c.ok and c.short == "No free CAN connector" and "device template" in c.why
     c = edit.unit_compat(p, "rs422", "RW1")  # RW1-J02 already carries IF-TM-RW1
     assert not c.ok
 

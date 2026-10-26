@@ -181,6 +181,9 @@ KIND_NAMES = {
     "waiver": "Waiver", "placement": "Diagram position", "project": "Project", "zones": "Zones",
     "library": "Parts library information", "baseline": "Baseline", "change_entry": "Change log entry",
 }  # fmt: skip
+# What the screen calls the kinds: a "unit" of the files is a "device" (the reports written to disk
+# keep `KIND_NAMES`, so a wording change never changes a generated file).
+SCREEN_KIND_NAMES = {**KIND_NAMES, "unit": "Device"}
 
 
 def _show(v: Any) -> str:

@@ -6,11 +6,11 @@ An offline desktop tool for designing the electrical harnesses of a spacecraft.
 >
 > **Based in the WireViz repository.** This repository is a fork of [WireViz](https://github.com/wireviz/WireViz). Harness Design Studio is a separate, clean-room codebase inside it: no WireViz code is copied or imported (D-01 in [`docs/DECISIONS.md`](docs/DECISIONS.md)), and WireViz is an export target (WireViz-style YAML, best effort). The original WireViz documentation is in the [repository README](../README.md#original-wireviz-readme); [`../docs/README.md`](../docs/README.md) is the index of all documents.
 
-You describe the **units** (computer, power unit, reaction wheel ...) and the **interfaces** between them. The tool generates the harnesses (connectors, pins, wires), checks them, writes a build workbook and lists for every harness (and the PDF drawings, if you ask for them), and keeps a change-controlled record of every release. A harness is the bundle of wires and connectors that joins the units; words you do not know are in the [glossary](docs/GLOSSARY.md).
+You describe the **devices** (computer, power unit, reaction wheel ...) and the **interfaces** between them. The tool generates the harnesses (connectors, pins, wires), checks them, writes a build workbook and lists for every harness (and the PDF drawings, if you ask for them), and keeps a change-controlled record of every release. A harness is the bundle of wires and connectors that joins the devices; words you do not know are in the [glossary](docs/GLOSSARY.md).
 
 ```
  you draw                      the tool makes                  the tool writes
- units + interfaces   ──►      harnesses: connectors,   ──►    build workbook, wire lists,
+ devices + interfaces ──►      harnesses: connectors,   ──►    build workbook, wire lists,
                                pins, wires, with a             pinouts, BOM, test tables,
                                reason for each choice          labels, block diagram, change log
 ```
@@ -18,7 +18,7 @@ You describe the **units** (computer, power unit, reaction wheel ...) and the **
 - **Your design is the source of truth.** Harnesses, drawings and lists are generated from it and can be regenerated at any time.
 - **You can still edit what it makes.** Set the gauge, type, colour or length of a single wire, draw a wire yourself, put several wires on one pin, twist or shield wires together, give pins a function and connectors and harnesses a label; Generate keeps all of it ([`docs/user-manual/edit-a-wire.md`](docs/user-manual/edit-a-wire.md)). A device you defined down to each pin can be saved to a device library file and added to another project.
 - **You can start with less on screen.** In the Simple workspace (a first run starts in it; since 1.7.0) a **Next step** page names one thing to do at a time, with one button, and the project tree, the inspector and the Problems panel start closed; **Show everything** or **View > Full** gives the whole editor ([`docs/user-manual/use-the-simple-workspace.md`](docs/user-manual/use-the-simple-workspace.md)).
-- **You can start from nothing.** A blank project shows an **Add a device** button for its first unit (1.6.0). **New harness…** (1.5.0) makes a harness with no interface behind it; you add its connectors in the Connectors tab and draw its wires in Edit wire, and Generate leaves it as it is ([`docs/user-manual/build-a-harness-by-hand.md`](docs/user-manual/build-a-harness-by-hand.md)).
+- **You can start from nothing.** A blank project shows an **Add a device** button for its first device (1.6.0). **New harness…** (1.5.0) makes a harness with no interface behind it; you add its connectors in the Connectors tab and draw its wires in Edit wire, and Generate leaves it as it is ([`docs/user-manual/build-a-harness-by-hand.md`](docs/user-manual/build-a-harness-by-hand.md)).
 - **Offline.** It never uses the network (a test enforces this).
 - **Reproducible.** The same design always produces byte-identical files, so Git diffs show real changes only.
 - **Starts from the usual standards.** RS-422, RS-485 and CAN for communication, Micro-D (9 to 31 pin) for power and data, Ethernet as the alternative for high data rates, SMA for RF (what each one is: [glossary](docs/GLOSSARY.md)). Other types and connectors can be added.
@@ -73,10 +73,10 @@ That is the whole idea. [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) wal
 | Example | What it is |
 | --- | --- |
 | `blank` | An empty project with the starter parts and interface types. Start a real design here. |
-| `first-steps` | Three units, a power link and an RS-422 link. Nothing generated yet. Start here. |
-| `minimal-satellite` | Seven units, nominal only: solar array, battery, power unit, computer, radio, wheel and sun sensor. A small but realistic starting point. |
-| `small-satellite` | 14 units with redundant chains. Generate it to see a realistic system. |
-| `flatsat` | A complete bench: 23 flight and ground units, generated, with example numbers. Read [`docs/FLATSAT_EXAMPLE.md`](docs/FLATSAT_EXAMPLE.md) for a tour. |
+| `first-steps` | Three devices, a power link and an RS-422 link. Nothing generated yet. Start here. |
+| `minimal-satellite` | Seven devices, nominal only: solar array, battery, power unit, computer, radio, wheel and sun sensor. A small but realistic starting point. |
+| `small-satellite` | 14 devices with redundant chains. Generate it to see a realistic system. |
+| `flatsat` | A complete bench: 23 flight and ground devices, generated, with example numbers. Read [`docs/FLATSAT_EXAMPLE.md`](docs/FLATSAT_EXAMPLE.md) for a tour. |
 
 `harness-design-studio templates my-templates` copies templates for your own data: CSV files for interfaces, approved parts and segment lengths, example rows for the build data (strip lengths, pin contacts, accessories; new in 1.7.0), a KiCad netlist, a CI script, a GitHub Actions workflow, a **design worksheet** to plan a design on paper, a design review checklist and *demo* engineering values for learning (not engineering data). What each file is for: [`src/harness_design_studio/resources/examples/templates/README.md`](src/harness_design_studio/resources/examples/templates/README.md).
 

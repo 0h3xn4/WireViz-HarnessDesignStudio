@@ -19,6 +19,19 @@ def _num(value: float) -> str:
     return f"{value:g}"
 
 
+_SIGNAL_MEANING = {
+    "RTN": "Return line: where the current of the signal comes back",
+    "GND": "Ground",
+}
+
+
+def signal_meaning(name: str) -> str:
+    """What a well-known signal name stands for, in one sentence ("" for any other name): RTN is
+    the return line of a power or signal pair (the starter interface types PWR and SIG), GND is
+    ground. Only the two names the starter types use are explained; nothing is guessed."""
+    return _SIGNAL_MEANING.get((name or "").strip().upper(), "")
+
+
 def link_caption(project: Project, interface_id: str) -> str:
     """ "CAN", or "Primary power · 28 V · 5 A" when the voltage and the current are set."""
     i = project.interfaces.get(interface_id)

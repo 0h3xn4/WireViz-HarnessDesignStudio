@@ -12,7 +12,7 @@ LOGICAL = [
     (
         "cross-strap",
         "warning",
-        "A nominal unit is connected to a redundant one.",
+        "A nominal device is connected to a redundant one.",
         "One failure could affect both chains.",
         "Connect to a redundant copy, or waive with a reason.",
     ),
@@ -33,7 +33,7 @@ LOGICAL = [
     (
         "isolated",
         "info",
-        "A unit has no interfaces.",
+        "A device has no interfaces.",
         "It will not appear in any harness.",
         "Connect it, or ignore.",
     ),

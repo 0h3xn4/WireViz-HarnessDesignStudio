@@ -136,10 +136,10 @@ def plan_add_connector(
     box: Connector | None = None
     if mates_with is not None:
         if role != "cable":
-            raise EditError("Only a cable connector plugs into the connector of a unit.")
+            raise EditError("Only a cable connector plugs into the connector of a device.")
         box = project.connectors.get(mates_with)
         if box is None or box.role != "box":
-            raise EditError(f"'{mates_with}' is not a connector of a unit.")
+            raise EditError(f"'{mates_with}' is not a connector of a device.")
         if any(c.mates_with == mates_with for c in h.connectors):
             raise EditError(f"{harness_id} has a connector for {mates_with} already.")
         box_part = project.parts.get(box.part_id)
@@ -147,7 +147,7 @@ def plan_add_connector(
             declared = box_part.mates_with if box_part is not None else None
             part_id = declared if declared in project.parts else box.part_id
     if part_id is None:
-        raise EditError("Choose the connector part, or the connector of a unit it plugs into.")
+        raise EditError("Choose the connector part, or the connector of a device it plugs into.")
     part = project.parts.get(part_id)
     if part is None or part.category != "connector":
         raise EditError(f"'{part_id}' is not a connector part in the library.")

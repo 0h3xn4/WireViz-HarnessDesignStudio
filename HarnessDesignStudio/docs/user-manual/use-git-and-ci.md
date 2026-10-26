@@ -81,11 +81,11 @@ Before the conflict is resolved, this prints:
 ERROR   merge_conflict: The file contains unresolved Git merge conflict markers. Resolve the conflict first. [logical/units/aocs.json]
 ```
 
-and exits with 1. Other errors may follow, because the broken file could not be read (for example unknown units). After the fix:
+and exits with 1. Other errors may follow, because the broken file could not be read (for example unknown devices). After the fix:
 
 ```
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 2 interfaces, 13 connectors, 2 harnesses: 0 error(s), 0 warning(s).
+3 devices, 2 interfaces, 13 connectors, 2 harnesses: 0 error(s), 0 warning(s).
 ```
 
 `harness-design-studio check` does everything `harness-design-studio validate` does, and also finds merge markers and released harnesses that were edited after their release (`released_modified`).
@@ -117,7 +117,7 @@ sh my-templates/ci/build.sh design
 
 ```
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 2 interfaces, 13 connectors, 2 harnesses: 0 error(s), 0 warning(s).
+3 devices, 2 interfaces, 13 connectors, 2 harnesses: 0 error(s), 0 warning(s).
 0 added, 0 changed, 2 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)

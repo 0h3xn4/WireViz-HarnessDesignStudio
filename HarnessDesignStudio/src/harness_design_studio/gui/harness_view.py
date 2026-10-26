@@ -53,7 +53,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import edit
+from harness_design_studio.core import describe, edit
 from harness_design_studio.core.generate.explain import (
     explain_connector,
     explain_harness,
@@ -250,10 +250,17 @@ def _length_tip(row: Row) -> str | None:
     )
 
 
+def _signal_tip(row: Row) -> str | None:
+    """What a signal name such as RTN or GND stands for (nothing for other names)."""
+    if not isinstance(row, dict):
+        return None
+    return describe.signal_meaning(str(row.get("signal") or "")) or None
+
+
 PIN_COLUMNS = [
     Column("connector", strings.HV_COL_CONNECTOR, mono=True, width=92),
     Column("pin", strings.HV_COL_PIN, mono=True, width=44),
-    Column("signal", strings.HV_COL_SIGNAL, width=72),
+    Column("signal", strings.HV_COL_SIGNAL, tooltip=_signal_tip, width=72),
     Column("wire", strings.HV_COL_WIRE, mono=True, width=92),
     Column("gauge", strings.HV_COL_GAUGE, unit="AWG", numeric=True, state="gauge_state",
            fmt=_gauge_text, tooltip=_gauge_tip, width=110),
@@ -264,7 +271,7 @@ PIN_COLUMNS = [
 ]  # fmt: skip
 WIRE_COLUMNS = [
     Column("id", strings.HV_COL_WIRE, mono=True, width=92),
-    Column("signal", strings.HV_COL_SIGNAL, width=72),
+    Column("signal", strings.HV_COL_SIGNAL, tooltip=_signal_tip, width=72),
     Column("from", strings.HV_COL_FROM, mono=True, width=92),
     Column("to", strings.HV_COL_TO, mono=True, width=92),
     Column("gauge", strings.HV_COL_GAUGE, unit="AWG", numeric=True, state="gauge_state",
@@ -689,6 +696,13 @@ class HarnessView(QWidget):
         self.more_button.setMenu(self.more_menu)
         row3.addWidget(self.more_button)
         row3.addStretch(1)
+        self.export_reason = QLabel()
+        self.export_reason.setObjectName("harness-export-reason")
+        self.export_reason.setProperty("muted", True)
+        self.export_reason.setAccessibleName(strings.HV_EXPORT_REASON_NAME)
+        self.export_reason.setWordWrap(False)
+        self.export_reason.hide()
+        row3.insertWidget(row3.indexOf(self.action_buttons["export"]) + 1, self.export_reason)
         self.action_buttons["regenerate"].clicked.connect(self.generateRequested)
         self.action_buttons["export"].clicked.connect(self.exportRequested)
         self.action_buttons["review"].clicked.connect(lambda: self._emit_for(self.reviewRequested))
@@ -1085,9 +1099,11 @@ class HarnessView(QWidget):
         specs: dict[str, tuple[bool, str, str]] = {
             "regenerate": (not ro, strings.WHY_READ_ONLY, strings.HV_REGENERATE_TIP),
             "export": (
-                not ro and ctl.root is not None,
-                strings.WHY_READ_ONLY if ro else strings.EXPORT_SAVE_FIRST,
-                strings.EXPORT_TIP,
+                not ro,
+                strings.HV_EXPORT_READ_ONLY,
+                strings.EXPORT_TIP
+                if ctl.root is not None
+                else f"{strings.EXPORT_TIP}. {strings.HV_EXPORT_SAVES_FIRST_TIP}",
             ),
             "review": (True, "", strings.HV_REVIEW_TIP.format(h.id)),
             "release": (
@@ -1113,6 +1129,16 @@ class HarnessView(QWidget):
             # a disabled button says why; an enabled one says what it does
             b.setToolTip(tip if on else f"{b.text()}: {why}")
             b.setAccessibleDescription(tip if on else why)
+        # the reason sits beside the button (a tooltip alone is easy to miss)
+        reason = (
+            strings.HV_EXPORT_READ_ONLY
+            if ro
+            else strings.HV_EXPORT_SAVES_FIRST
+            if ctl.root is None
+            else ""
+        )
+        self.export_reason.setText(reason)
+        self.export_reason.setVisible(bool(reason))
 
     def _emit_for(self, signal: Any) -> None:
         if self._hid:

@@ -78,7 +78,7 @@ def _print_report(result: LoadResult, extra: list[Issue]) -> int:
     n_warn = sum(i.severity == "warning" for i in issues)
     p = result.project
     print(
-        f"{len(p.units)} units, {len(p.interfaces)} interfaces, "
+        f"{len(p.units)} devices, {len(p.interfaces)} interfaces, "
         f"{len(p.all_connectors())} connectors, {len(p.harnesses)} harnesses: "
         f"{n_err} error(s), {n_warn} warning(s)."
     )

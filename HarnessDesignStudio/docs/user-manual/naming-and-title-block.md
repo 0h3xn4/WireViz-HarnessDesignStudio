@@ -36,7 +36,7 @@ The shipped file:
 | `branch` | a branch point | `{harness}-B{n}` |
 | `segment` | a routing segment | `{harness}-L{n}` |
 
-Add `shield`, `branch` or `segment` to the file if you want to change them. The key `box_connector` is in the file, but the program does not read it: connectors on a unit are always named like `OBC1-J01`.
+Add `shield`, `branch` or `segment` to the file if you want to change them. The key `box_connector` is in the file, but the program does not read it: connectors on a device are always named like `OBC1-J01`.
 
 Example. Set `"harness": "HN-{n:02d}"` and generate:
 

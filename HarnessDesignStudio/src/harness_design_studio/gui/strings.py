@@ -4,19 +4,19 @@ APP_TITLE = "Harness Design Studio"
 EMPTY_STATE = (
     "No project open. Create a new project, start from an example or open an existing one to begin."
 )
-EMPTY_CANVAS = "Your diagram is empty.\nAdd your first unit with the button below, or with Add in the project panel. Press Ctrl+K to find a command, or bring in a table with File > Import."
+EMPTY_CANVAS = "Your diagram is empty.\nAdd your first device with the button below, or with Add in the project panel. Press Ctrl+K to find a command, or bring in a table with File > Import."
 CANVAS = "Block diagram canvas"
-CANVAS_HELP = "Tab and Shift+Tab move between units and links, Enter shows the item in the harness plans, Space selects it, Ctrl+A selects everything, Shift+arrow keys move the selected units, Ctrl+F finds, Escape clears the selection. The Interface table tab lists every interface and is the screen-reader friendly alternative."
+CANVAS_HELP = "Tab and Shift+Tab move between devices and links, Enter shows the item in the harness plans, Space selects it, Ctrl+A selects everything, Shift+arrow keys move the selected devices, Ctrl+F finds, Escape clears the selection. The Interface table tab lists every interface and is the screen-reader friendly alternative."
 MINIMAP = "Minimap: click to move the view"
 
 GLOSSARY: list[tuple[str, str]] = [
     (
         "Harness",
-        "A bundle of wires with connectors at the ends that carries signals between units. Every harness gets its own drawing and wire list.",
+        "A bundle of wires with connectors at the ends that carries signals between devices. Every harness gets its own drawing and wire list.",
     ),
     (
         "Interface",
-        "A logical connection between two units, such as RS-422 between the computer and a wheel. The tool turns interfaces into wires.",
+        "A logical connection between two devices, such as RS-422 between the computer and a wheel. The tool turns interfaces into wires.",
     ),
     (
         "Nominal / redundant",
@@ -43,22 +43,22 @@ GLOSSARY: list[tuple[str, str]] = [
     ),
     (
         "Zone",
-        "A place on the spacecraft (a panel or deck). Units in different zones usually need different harnesses.",
+        "A place on the spacecraft (a panel or deck). Devices in different zones usually need different harnesses.",
     ),
 ]
 
 TOUR_STEPS: list[tuple[str, str]] = [
     (
         "add",
-        "Start here: press Add in the project panel and pick Unit. Each unit is a box in your system, like a computer or a wheel.",
+        "Start here: press Add in the project panel and pick Device. Each device is a box in your system, like a computer or a wheel.",
     ),
     (
         "canvas",
-        "This is your block diagram. Drag units to move them. The lane a unit sits in is its zone.",
+        "This is your block diagram. Drag devices to move them. The lane a device sits in is its zone.",
     ),
     (
         "types",
-        "To connect two units, open the arrow next to Connect and pick an interface type, then click the two units. Only valid choices light up.",
+        "To connect two devices, open the arrow next to Connect and pick an interface type, then click the two devices. Only valid choices light up.",
     ),
     (
         "problems",
@@ -72,7 +72,7 @@ TOUR_STEPS: list[tuple[str, str]] = [
 
 PROPERTIES = "Properties"
 NOTHING_SELECTED = (
-    "Select a unit or an interface to see its details. The rest of the diagram fades, so you can "
+    "Select a device or an interface to see its details. The rest of the diagram fades, so you can "
     "follow its links."
 )
 UNIT = "Unit"
@@ -81,7 +81,7 @@ FIELD_ID = "ID"
 FIELD_NAME = "Name"
 FIELD_CHAIN = "Chain (nominal / redundant)"
 CHAIN_TIP = "Nominal is the main chain, redundant is the backup"
-FIELD_ZONE_AUTO = "Zone (set by where you place the unit)"
+FIELD_ZONE_AUTO = "Zone (set by where you place the device)"
 FIELD_SUBSYSTEM = "Subsystem"
 FIELD_MAX_A = "Max current (A)"
 FIELD_VOLTAGE = "Voltage (V)"
@@ -115,7 +115,7 @@ SEV_INFO = "ⓘ Info:"
 SHOW = "Show"
 REQUIREMENT_LABEL = "Requirement: {}"
 WAIVE = "Waive…"
-FILTER_PLACEHOLDER = "Filter by ID, unit or type"
+FILTER_PLACEHOLDER = "Filter by ID, device or type"
 NEW_INTERFACE = "＋ Interface…"
 NO_PLANS_TITLE = "No harness plans yet."
 
@@ -127,14 +127,14 @@ WAIVE_PROMPT = "Justification (required, shown in reports)"
 WAIVE_OK = "Waive with justification"
 WAIVE_TOO_SHORT = "Please explain why this is acceptable (at least 10 characters)."
 NEW_INTERFACE_TITLE = "New interface"
-NEW_INTERFACE_NOTE = "Connectors are chosen for you and marked Auto until you confirm them. Units that cannot take this type are shown disabled with the reason."
+NEW_INTERFACE_NOTE = "Connectors are chosen for you and marked Auto until you confirm them. Devices that cannot take this type are shown disabled with the reason."
 FIELD_TYPE = "Interface type"
 IMPORT_TITLE = "Import interfaces"
 IMPORT_STEPS = "Step 1: open a .csv or .xlsx file, or paste CSV text. Step 2: check the column matching. Step 3: read the preview. Nothing changes until you confirm."
 OPEN_FILE = "Open file…"
 NO_FILE = "No file chosen"
 CSV_CONTENT = "CSV content"
-CSV_PLACEHOLDER = "Interface,Type,From unit,To unit,Redundancy\nIF-010,RS-422,OBC,RW1,nominal"
+CSV_PLACEHOLDER = "Interface,Type,From device,To device,Redundancy\nIF-010,RS-422,OBC,RW1,nominal"
 IMPORT_PREVIEW = "Import preview"
 NOT_MAPPED = "(not used)"
 IMPORT_SUMMARY = "{} of {} rows can be imported; {} have errors and will be skipped."
@@ -163,7 +163,7 @@ EXPERT_TIP = "Expert mode: all physical details (connectors, pins, parts)."
 TOOL_SELECT = "Select"
 TOOL_CONNECT = "Connect"
 TOOL_SELECT_TIP = "Select and move (Esc)"
-TOOL_CONNECT_TIP = "Connect two units (C). The arrow next to it lists the interface types: pick one, then click the first and the second unit."
+TOOL_CONNECT_TIP = "Connect two devices (C). The arrow next to it lists the interface types: pick one, then click the first and the second device."
 HINT = "Hint"
 ZOOM_IN = "Zoom in"
 ZOOM_OUT = "Zoom out"
@@ -220,7 +220,7 @@ UNSAVED = "Unsaved changes (autosaved to the recovery journal)"
 
 
 def units_text(n: int) -> str:
-    return f"{n} unit" if n == 1 else f"{n} units"
+    return f"{n} device" if n == 1 else f"{n} devices"
 
 
 def interfaces_text(n: int) -> str:
@@ -257,15 +257,15 @@ M_FILE = "&File"
 M_EDIT = "&Edit"
 M_VIEW = "&View"
 M_HELP = "&Help"
-M_ADD_UNIT = "Add unit"
+M_ADD_UNIT = "Add device"
 M_CONNECT_WITH = "Connect with"
-ADD_UNIT_PREFIX = "Add unit:"
+ADD_UNIT_PREFIX = "Add device:"
 CONNECT_PREFIX = "Connect with"
-GO_TO_UNIT = "Go to unit"
+GO_TO_UNIT = "Go to device"
 GO_TO_INTERFACE = "Go to interface"
 ZONE_NAME = "Zone name"
 DELETE_TITLE = "Delete {}?"
-DELETE_BODY = "<p>This will also remove:</p><ul><li>{n} interface{s}{ifs}</li><li>{c} connector(s) of the unit</li></ul><p>You can undo this with Ctrl+Z.</p>"
+DELETE_BODY = "<p>This will also remove:</p><ul><li>{n} interface{s}{ifs}</li><li>{c} connector(s) of the device</li></ul><p>You can undo this with Ctrl+Z.</p>"
 BANNER_READ_ONLY = "Read-only: this project was saved by a newer version of the tool, or is open in another window. You cannot change it here."
 BANNER_RECOVERED = "Parts of this project could not be loaded. Everything else was loaded. The original folder is protected."
 BANNER_SAMPLE = "This is the sample project (example data). Save a copy to keep your changes."
@@ -373,7 +373,7 @@ PREVIEW_PAGE = "Sheet {0} of {1} (preview: what the export will draw)"
 PREVIEW_NONE = "Select a harness to see its drawing."
 TAB_WHY = "Why"
 A_ARRANGE = "Arrange diagram"
-ARRANGE_DONE = "Diagram arranged: units stay in their lanes, ordered to shorten links. Undo restores the old positions."
+ARRANGE_DONE = "Diagram arranged: devices stay in their lanes, ordered to shorten links. Undo restores the old positions."
 ARRANGE_NOTHING = "The diagram is already arranged."
 
 TOAST_CLOSE = "Close this message"
@@ -385,13 +385,13 @@ SAVE_BAD_TEXT = "Nothing was saved: the project contains text that cannot be wri
 A_MINIMAP = "Show overview map"
 WHY_READ_ONLY = "This project is read-only."
 WHY_NO_SELECTION = "Select something in the diagram first."
-WHY_SELECT_UNIT = "Select a unit first."
-WHY_IS_REDUNDANT = "This unit is already a redundant copy."
-WHY_HAS_REDUNDANT = "This unit already has a redundant copy: {0}."
-REDUNDANT_TIP = "Make a redundant copy of the selected unit"
+WHY_SELECT_UNIT = "Select a device first."
+WHY_IS_REDUNDANT = "This device is already a redundant copy."
+WHY_HAS_REDUNDANT = "This device already has a redundant copy: {0}."
+REDUNDANT_TIP = "Make a redundant copy of the selected device"
 DELETE_TIP = "Delete the selected item (shows what it affects first)"
 GEN_NO_INTERFACES = (
-    "There is nothing to generate yet. Add units and connect them with interfaces first."
+    "There is nothing to generate yet. Add devices and connect them with interfaces first."
 )
 DELETE_HARNESS = "Delete harness"
 DELETE_HARNESS_TIP = "Delete the selected harness (not possible once it is released). A generated one comes back the next time you generate."
@@ -414,7 +414,7 @@ WIRE_COLOURS_COLUMN = "Colour"
 WIRE_COLOURS_NO_SIGNALS = "The project has no interface types with signals yet."
 WIRE_COLOURS_SET = "Wire colours saved. Generate the harnesses to apply them."
 
-CONNECTOR_AT_END = "Connector at the {} end, unit {}"
+CONNECTOR_AT_END = "Connector at the {} end, device {}"
 COMMANDS_LIST = "Matching commands"
 LEGEND_NAME = "Key to the pictures in the diagram"
 LEGEND_GENDER = "solid: male (pins) · outline: female (sockets) · dashed: not set"
@@ -430,10 +430,10 @@ CONNECTOR_WORD = "connector"
 UNIT_WORD = "unit"
 CONNECT_FIRST = "Click the first {} for {}."
 CONNECT_NONE_FREE = (
-    "No other unit has a free {} connector. Pick another type, or add a unit that supports it."
+    "No other device has a free {} connector. Pick another type, or add a device that supports it."
 )
 CONNECT_SECOND = "Now click the second {}. Valid ones are highlighted."
-CLICK_CONNECTOR = "Click a connector (the small square) on the unit."
+CLICK_CONNECTOR = "Click a connector (the small square) on the device."
 PICK_TYPE_SHORT = "Pick a type"
 PICK_TYPE_FIRST = "Pick an interface type first."
 IF_ADDED = "Interface {} added."
@@ -488,7 +488,7 @@ STEP_ADD_ZONE = "Add zone"
 STEP_ADD_INTERFACE = "Add interface"
 STEP_GENERATE = "Generate harnesses"
 STEP_IMPORT = "Import {} interfaces"
-# words on the unit pictures and in the lists
+# words on the device pictures and in the lists
 TAG_FROM = "FROM"
 TAG_NOMINAL = "NOMINAL"
 TAG_REDUNDANT = "REDUNDANT"
@@ -534,11 +534,11 @@ READ_ONLY_REFUSAL = (
 )
 STEP_DELETE_MANY = "Delete {} items"
 DELETED_MANY = "Deleted {} items."
-STEP_MOVE_MANY = "Move {} units"
-STEP_ALIGN = "Align units"
-STEP_DISTRIBUTE = "Space units evenly"
+STEP_MOVE_MANY = "Move {} devices"
+STEP_ALIGN = "Align devices"
+STEP_DISTRIBUTE = "Space devices evenly"
 STEP_DUPLICATE = "Duplicate {}"
-STEP_DUPLICATE_MANY = "Duplicate {} units"
+STEP_DUPLICATE_MANY = "Duplicate {} devices"
 DUPLICATED = "Copied as {}. The copy has the connectors of the original but none of its links."
 STEP_EDIT_MANY = "Edit {} items"
 CANVAS_SELECTED_MANY = "{} items selected."
@@ -565,26 +565,26 @@ DISTRIBUTE_NAMES = {
     "horizontal": "Space evenly, side by side",
     "vertical": "Space evenly, one above the other",
 }
-WHY_NEED_TWO_UNITS = "Select at least two units."
-WHY_NEED_THREE_UNITS = "Select at least three units."
-WHY_NEED_UNIT_SELECTED = "Select a unit first."
+WHY_NEED_TWO_UNITS = "Select at least two devices."
+WHY_NEED_THREE_UNITS = "Select at least three devices."
+WHY_NEED_UNIT_SELECTED = "Select a device first."
 WHY_SELECT_NO_ROOM = "There is no free room for a copy."
-DUPLICATE_TIP = "Copy the selected units with their connectors (Ctrl+D)"
-SELECT_ALL_TIP = "Select every unit and link in the diagram (Ctrl+A)"
-FIND_TIP = "Find a unit or link by ID, name, connector or type (Ctrl+F)"
+DUPLICATE_TIP = "Copy the selected devices with their connectors (Ctrl+D)"
+SELECT_ALL_TIP = "Select every device and link in the diagram (Ctrl+A)"
+FIND_TIP = "Find a device or link by ID, name, connector or type (Ctrl+F)"
 FIT_TIP = "Show the whole diagram (F)"
 ZOOM_IN_TIP = "Zoom in (Ctrl+=)"
 ZOOM_OUT_TIP = "Zoom out (Ctrl+-)"
 ZOOM_100_TIP = "Real size, 100 % (Ctrl+0)"
 ZOOM_SELECTION_TIP = "Fill the view with the selection (Shift+F)"
-ARRANGE_TIP = "Tidy the diagram: order the units to shorten and uncross links (Ctrl+Shift+L)"
+ARRANGE_TIP = "Tidy the diagram: order the devices to shorten and uncross links (Ctrl+Shift+L)"
 ZOOM_LEVEL_NAME = "Zoom level"
 ZOOM_LEVEL_TIP = "Zoom level of the diagram. Click to go back to 100 % (Ctrl+0)."
 ZOOM_PERCENT = "{} %"
 ARRANGING = "Arranging the diagram"
 # find in diagram
 SEARCH_NAME = "Find in diagram"
-SEARCH_PLACEHOLDER = "Find unit, link, connector or type"
+SEARCH_PLACEHOLDER = "Find device, link, connector or type"
 SEARCH_TIP = "Type to mark every match. Enter goes to the next one, Shift+Enter to the one before, Escape closes."
 SEARCH_COUNT_NAME = "Number of matches"
 SEARCH_PREV = "Previous match (Shift+Enter)"
@@ -598,12 +598,12 @@ LEGEND_TOGGLE_TIP = "Show or fold the key to the pictures (View > Show legend hi
 LEGEND_TOGGLE_NAME = "Legend, fold or unfold"
 # empty states
 EMPTY_NO_LINKS = (
-    "No links yet. Press C to connect two units, or use Connect in the bar above the diagram."
+    "No links yet. Press C to connect two devices, or use Connect in the bar above the diagram."
 )
 # context menu
 CM_OPEN_PLAN = "Show in harness plans"
 CM_CONNECT_FROM = "Connect from here with"
-CM_ADD_HERE = "Add unit here"
+CM_ADD_HERE = "Add device here"
 NOT_GENERATED = "Not generated yet: {} is not in any harness plan. Generate the harnesses first."
 # deleting
 DELETE_MANY_TITLE = "Delete {} items?"
@@ -614,9 +614,9 @@ DELETE_IF_TITLE = "Delete {}?"
 DELETE_IF_BODY = "<p><b>{iid}</b> ({type}) connects <b>{a}</b> and <b>{b}</b>.</p>{plans}<p>You can undo this with Ctrl+Z.</p>"
 DELETE_IF_PLAN = "<p>In harness <b>{h}</b>, {n} wire(s) belong to it. They become out of date and come back, or go, the next time you generate.</p>"
 # properties of several items
-MULTI_UNITS = "{} units"
+MULTI_UNITS = "{} devices"
 MULTI_LINKS = "{} links"
-MULTI_MIXED = "{} units and {} links"
+MULTI_MIXED = "{} devices and {} links"
 MULTI_HEAD = "Selection"
 MULTI_HELP = "Fields shown here change every selected item at once. A field that reads (different) holds different values; leave it alone to keep them."
 MULTI_DIFFERENT = "(different)"
@@ -630,7 +630,7 @@ LOCK_GROUP_WIRES = "Wires"
 LOCK_GROUP_PINS = "Pins"
 LOCK_GROUP_INTERFACES = "Interfaces"
 LOCK_GROUP_CONNECTORS = "Connectors"
-LOCK_GROUP_UNITS = "Units"
+LOCK_GROUP_UNITS = "Devices"
 LOCK_GROUP_PARTS = "Parts"
 LOCK_GROUP_TYPES = "Interface types"
 LOCK_GROUP_CONFIG = "Config files"
@@ -644,7 +644,7 @@ LOCK_NOT_SET_NOTE = (
 LOCK_PLACEHOLDER = "placeholder values"
 LOCK_PLACEHOLDER_NOTE = "This file is still marked as a placeholder: its numbers were never reviewed, and the release freezes them as they are."
 LOCK_PIN_CABLE = "cable"
-LOCK_PIN_UNIT = "unit connector"
+LOCK_PIN_UNIT = "device connector"
 LOCK_ALSO = "also locked by {}"
 LOCK_TREE_HEADER = "Locked object"
 # release and revise dialogs
@@ -743,7 +743,7 @@ REL_DIFF_COLUMNS = {
     "before": "Before",
     "after": "After",
 }
-REL_MARK_TIP = "Mark the units, interfaces and harnesses that changed on the diagram"
+REL_MARK_TIP = "Mark the devices, interfaces and harnesses that changed on the diagram"
 REL_CLEAR_TIP = "Remove the marks from the diagram"
 # export dialog (gui/export_dialog.py)
 EXP_TITLE = "Export outputs"
@@ -828,9 +828,7 @@ IMP_STEP_CHECK = "3  Conflicts and placeholders"
 IMP_STEP_APPLY = "4  Import"
 IMP_KIND_PROMPT = "What do you want to import?"
 IMP_KIND_INTERFACES = "Interfaces"
-IMP_KIND_INTERFACES_TIP = (
-    "A table (CSV or XLSX) with one interface per row: ID, type, the two units and the redundancy."
-)
+IMP_KIND_INTERFACES_TIP = "A table (CSV or XLSX) with one interface per row: ID, type, the two devices and the redundancy."
 IMP_KIND_PARTS = "Approved parts"
 IMP_KIND_PARTS_TIP = "A parts list (CSV or XLSX) with an approval status per part. You say what the status values mean; nothing is guessed."
 IMP_KIND_LENGTHS = "Segment lengths"
@@ -838,7 +836,7 @@ IMP_KIND_LENGTHS_TIP = "Lengths from the mechanical design (CSV or XLSX). The co
 IMP_KIND_VALUES = "Engineering values: ampacity table"
 IMP_KIND_VALUES_TIP = "A CSV or XLSX with two columns: wire gauge (AWG) and the ampere value. It replaces the ampacity table of the derating values."
 IMP_KIND_NETLIST = "KiCad netlist"
-IMP_KIND_NETLIST_TIP = "The .net file exported from KiCad: creates or updates the connectors of one unit, with fixed signals on their pins."
+IMP_KIND_NETLIST_TIP = "The .net file exported from KiCad: creates or updates the connectors of one device, with fixed signals on their pins."
 IMP_FILE_LABEL = "File"
 IMP_FILE_NAME = "Import file"
 IMP_FILE_BROWSE = "Choose file…"
@@ -866,13 +864,13 @@ IMP_LENGTHS_NOTE = (
     "The columns are read by position, not by their headings: harness, segment, length."
 )
 IMP_VALUES_NOTE = "Two columns: wire gauge (AWG) and ampacity (A). The table replaces the one in the derating values."
-IMP_NET_UNIT = "Unit the connectors belong to"
-IMP_NET_UNIT_NONE = "(choose a unit)"
+IMP_NET_UNIT = "Device the connectors belong to"
+IMP_NET_UNIT_NONE = "(choose a device)"
 IMP_NET_PREFIX = "References that mark connectors"
 IMP_NET_REFS = "Only these references"
 IMP_NET_REFS_TIP = "Optional: references separated by commas, for example J1, J2. Empty means every component that starts with the prefix."
 IMP_NET_IDS = "Connector IDs"
-IMP_NET_IDS_TIP = "Optional: one REF=ID per line, for example J1=OBC1-J01. Otherwise the symbol field HarnessConnector, else the unit and the reference."
+IMP_NET_IDS_TIP = "Optional: one REF=ID per line, for example J1=OBC1-J01. Otherwise the symbol field HarnessConnector, else the device and the reference."
 IMP_NET_PARTS = "Part for each connector"
 IMP_NET_PARTS_TIP = "One REF=PART per line, for example J1=MD-9S. Needed when the symbol has no field HarnessPart and the connector is new."
 IMP_NET_SIGNALS = "Net name to signal"
@@ -922,7 +920,7 @@ IMP_HINT_PART = "enter {0}=PART in “Part for each connector”"
 IMP_HINT_ID = "enter {0}=ID in “Connector IDs”"
 IMP_HINT_REF = "Name the connectors in “Only these references”"
 IMP_HINT_MAP = "map it in “Net name to signal”"
-IMP_NO_UNIT = "Choose the unit these connectors belong to."
+IMP_NO_UNIT = "Choose the device these connectors belong to."
 IMP_NO_DERATING = "This project has no derating configuration to put the table in."
 IMP_NEED_ID_COLUMN = "No column looks like a part ID or part number; choose one."
 IMP_BAD_PAIR = "{0} “{1}” must look like REF=VALUE"
@@ -1086,9 +1084,9 @@ AUTO_COUNT = "{} auto"
 AUTO_CHIP_TIP = "{n} connector(s) chosen for you and not confirmed yet."
 AUTO_CHIP_MORE = "More: right-click and choose Why?"
 CONN_COUNT = "{} conn"
-CONN_COUNT_TIP = "{} connectors on this unit"
+CONN_COUNT_TIP = "{} connectors on this device"
 CONN_MORE = "+{}"
-CONN_MORE_TIP = "{} more connectors; the unit's properties list them all"
+CONN_MORE_TIP = "{} more connectors; the device's properties list them all"
 TAG_FLIGHT = "FLIGHT"
 TAG_GROUND = "GROUND"
 TAG_NOMINAL_TIP = "On the nominal chain; this project also has a redundant one"
@@ -1113,7 +1111,7 @@ WHY_NOTHING_CHOSEN = "nothing was chosen for you here"
 # ==== App shell (ux/shell): top bar, banners, tabs, palette, layout ===================================
 SHELL_MAIN_TABS = "Main views"
 SHELL_RIGHT_TABS = "Side panels"
-SHELL_LEFT_TABS = "Project, units and interfaces"
+SHELL_LEFT_TABS = "Project, devices and interfaces"
 TAB_DIAGRAM = "Diagram"
 TAB_HARNESS = "Harness"
 TAB_LISTS = "Lists"
@@ -1127,8 +1125,8 @@ TAB_TIP = "{} (Ctrl+{})"
 EMPTY_VIEW_TITLE = "{} is not available yet"
 EMPTY_VIEW_HARNESS = "Pick a harness in the project tree, or double-click a link in the diagram, to see its connectors, pins, wires and drawing. Generate harnesses first if there are none."
 EMPTY_VIEW_LISTS = "The wire list, pinouts, bill of materials and test tables appear here once harnesses are generated."
-EMPTY_VIEW_TREE = "The project tree lists units, interfaces, harnesses, parts, interface types, configuration and imports."
-EMPTY_VIEW_INSPECTOR = "Select a unit or a link on the diagram to see and edit its fields."
+EMPTY_VIEW_TREE = "The project tree lists devices, interfaces, harnesses, parts, interface types, configuration and imports."
+EMPTY_VIEW_INSPECTOR = "Select a device or a link on the diagram to see and edit its fields."
 EMPTY_VIEW_WHY = "Select a connector, pin or wire to read why it is like this."
 EMPTY_VIEW_PROBLEMS = "Design problems for the selection appear here."
 # top bar
@@ -1394,12 +1392,12 @@ HV_DRAWING_BUSY = "Drawing the sheets…"
 # ==== UX tree and inspector (gui/project_tree.py, gui/inspector.py, gui/why_panel.py) ==============
 TREE_NAME = "Project tree"
 TREE_HELP = (
-    "Units, interfaces, harnesses, parts, interface types, configuration and imports. Arrow keys "
+    "Devices, interfaces, harnesses, parts, interface types, configuration and imports. Arrow keys "
     "move, Enter selects, Ctrl+Enter opens, Right and Left open and close a group, typing jumps "
     "to a name, / filters."
 )
 TREE_ROOTS = {
-    "units": "Units",
+    "units": "Devices",
     "interfaces": "Interfaces",
     "harnesses": "Harnesses",
     "parts": "Parts",
@@ -1408,7 +1406,7 @@ TREE_ROOTS = {
     "imports": "Imports",
 }
 TREE_EMPTY = {
-    "units": "No units yet. Add one with the Add button.",
+    "units": "No devices yet. Add one with the Add button.",
     "interfaces": "No interfaces yet. Add one with Ctrl+I or import a table.",
     "harnesses": "No harnesses yet. Generate them from the interfaces.",
     "parts": "No parts yet. Import an approved parts list.",
@@ -1429,7 +1427,7 @@ TREE_FILTER_TIP = "Filter the project tree by ID or name (press / in the tree)"
 TREE_NO_MATCH = "Nothing matches “{}”."
 TREE_ADD = "Add"
 TREE_ADD_TIP = "Add something to the project"
-TREE_ADD_ENTRIES = {"unit": "Unit…", "interface": "Interface…"}
+TREE_ADD_ENTRIES = {"unit": "Device…", "interface": "Interface…"}
 TREE_ADD_IN = "Add {}…"
 TREE_MENU_SELECT = "Select on the diagram"
 TREE_MENU_OPEN = "Open"
@@ -1441,7 +1439,7 @@ TREE_N_WARNINGS = ("{} warning", "{} warnings")
 TREE_N_NOT_CHECKED = ("{} not checked", "{} not checked")
 TREE_CONFIG_PLACEHOLDER = "Placeholder"
 TREE_CONFIG_PENDING = "{} pending"
-TREE_TIP_UNIT = "Unit {}: {}. Subsystem {}, zone {}, chain {}."
+TREE_TIP_UNIT = "Device {}: {}. Subsystem {}, zone {}, chain {}."
 TREE_TIP_INTERFACE = "Interface {}: {} ({})."
 TREE_TIP_HARNESS = "Harness {}: {}. Revision {}, {}."
 TREE_TIP_PART = "Part {}: {} ({})."
@@ -1455,10 +1453,10 @@ TREE_NO_ZONE = "none yet"
 TREE_VALUE_WORD = ("value", "values")
 WHY_NAME = "Why"
 WHY_TAB_TIP = "Why the selected object is the way it is"
-WHY_EMPTY = "Select a unit, link, harness, wire, connector or pin to see why it is the way it is."
+WHY_EMPTY = "Select a device, link, harness, wire, connector or pin to see why it is the way it is."
 WHY_TITLE = "Why: {} {}"
 WHY_KIND = {
-    "unit": "unit",
+    "unit": "device",
     "interface": "link",
     "harness": "harness",
     "wire": "wire",
@@ -1494,7 +1492,7 @@ INS_USED_IN = "Used in"
 INS_USED_IN_N = "Used in ({})"
 INS_USED_NONE = "Not used anywhere yet."
 INS_USED_COLUMNS = ("Kind", "ID", "How")
-INS_USED_KINDS = {"interface": "Link", "harness": "Harness", "wire": "Wire", "unit": "Unit"}
+INS_USED_KINDS = {"interface": "Link", "harness": "Harness", "wire": "Wire", "unit": "Device"}
 INS_USED_TIP = "Double-click or press Enter to show it on the diagram"
 INS_FACTS_NAME = "Properties of {} {}"
 INS_FACT_COLUMNS = ("Property", "Value", "Status")
@@ -1533,7 +1531,7 @@ INS_FACT_LABELS = {
 INS_FACT_REVIEWED = "Reviewed"
 INS_FACT_PLACEHOLDER = "Placeholder: not reviewed yet"
 INS_NOTHING = (
-    "Nothing selected. Pick a unit or a link on the diagram, or a row in the project tree."
+    "Nothing selected. Pick a device or a link on the diagram, or a row in the project tree."
 )
 TREE_FILTER_CLEAR = "Clear the filter"
 LISTS_EXPORT_TITLE = "Export table"
@@ -1544,16 +1542,14 @@ LISTS_EXPORTED = "Saved {}."
 # ---- Devices view (custom devices, docs/ux-custom-devices-audit.md) -------------------------------
 TAB_DEVICES = "Devices"
 A_GO_DEVICES = "Go to Devices"
-DV_ACCESSIBLE = "Devices: connectors and pins of a unit"
-EMPTY_VIEW_DEVICES = "The connectors and pins of a unit appear here: pick a unit on the diagram or in the project tree."
+DV_ACCESSIBLE = "Devices: connectors and pins of a device"
+EMPTY_VIEW_DEVICES = "The connectors and pins of a device appear here: pick a device on the diagram or in the project tree."
 DV_EMPTY_TITLE = "No devices yet"
-DV_EMPTY_BODY = (
-    "A device is a unit with its connectors and pins. Add a unit to see its pinout here."
-)
-DV_ADD = "Add a unit…"
-DV_ADD_TIP = "Add a unit to the project"
+DV_EMPTY_BODY = "A device is a box in your system (a computer, a battery, a wheel) with its connectors and pins. Add a device to see its pinout here."
+DV_ADD = "Add a device…"
+DV_ADD_TIP = "Add a device to the project"
 DV_DEVICE = "Device"
-DV_DEVICE_TIP = "The unit whose connectors and pins are shown. A unit picked on the diagram or in the project tree is shown here."
+DV_DEVICE_TIP = "The device whose connectors and pins are shown. A device picked on the diagram or in the project tree is shown here."
 DV_SUBSYSTEM = "Subsystem {}"
 DV_CHAIN = {"nominal": "Nominal chain", "redundant": "Redundant chain", "none": "No chain"}
 DV_STATE_TIP = "{}"
@@ -1562,7 +1558,7 @@ DV_STATE_IN_USE = "In use"
 DV_STATE_LOCKED = "Locked"
 DV_STATE_READ_ONLY = "Read-only"
 DV_DUPLICATE = "Duplicate"
-DV_DUPLICATE_TIP = "Copy this unit with its connectors and pins (not its links)"
+DV_DUPLICATE_TIP = "Copy this device with its connectors and pins (not its links)"
 DV_EXPORT = "Export pinout…"
 DV_EXPORT_TIP = "Save the pinout below as a CSV file or an Excel workbook, to compare with the interface control document"
 DV_EXPORT_TITLE = "Export pinout"
@@ -1573,13 +1569,13 @@ DV_N_PINS = ("{} pin", "{} pins")
 DV_N_SIGNALS = ("{} signal", "{} signals")
 DV_N_INTERFACES = ("{} interface", "{} interfaces")
 DV_CONNECTORS = "Connectors"
-DV_CONNECTORS_TIP = "The box connectors of this unit"
+DV_CONNECTORS_TIP = "The box connectors of this device"
 DV_COL_CONNECTOR = "Connector"
 DV_COL_PART = "Part"
 DV_COL_PINS = "Pins"
 DV_COL_GENDER = "Gender"
 DV_COL_STATE = "State"
-DV_NO_CONNECTORS = "This unit has no connectors yet."
+DV_NO_CONNECTORS = "This device has no connectors yet."
 DV_CARD_PART = "Part"
 DV_CARD_GENDER = "Gender"
 DV_CARD_KEYING = "Keying"
@@ -1635,7 +1631,7 @@ DV_COL_NOTE = "Note"
 DV_PREVIEW = "Pinout as exported"
 DV_PREVIEW_TABLE = "Pinout as exported"
 DV_PREVIEW_HINT = (
-    "These are the rows of system/box_pinouts.csv for this unit: what you see is what you ship."
+    "These are the rows of system/box_pinouts.csv for this device: what you see is what you ship."
 )
 DV_WHY_TIP = "Double-click or press Enter to see why the pin is the way it is"
 DV_EXPORT_FILTER = "CSV files (*.csv);;Excel workbooks (*.xlsx)"
@@ -1659,7 +1655,7 @@ STEP_UNASSIGN_PINS = "Unassign pins {} of {}"
 STEP_ADD_PART = "Add part {}"
 STEP_ADD_TYPE = "Add interface type {}"
 A_ADD_DEVICE = "Device…"
-A_ADD_DEVICE_TIP = "Add a device: a unit with its own connectors and pins, named in the Devices tab"
+A_ADD_DEVICE_TIP = "Add a device: a box with its own connectors and pins, named in the Devices tab"
 DV_NAME = "Device name"
 DV_NAME_TIP = "The name of this device. Press Enter to keep it"
 DV_SUBSYSTEM_LABEL = "Subsystem"
@@ -1793,7 +1789,7 @@ IMP_KIND_PINOUT = "Device pinout"
 IMP_KIND_PINOUT_TIP = "A pinout table (CSV or XLSX) with one pin per row: connector, pin, signal, mode, contact size, termination. Creates or updates the connectors of one device; columns the project cannot store are left out."
 IMP_NEXT_PINOUT = "Generate harnesses again to connect interfaces to the pins; signals that no interface type has stay free text."
 IMP_PIN_DEVICE = "Device"
-IMP_PIN_DEVICE_TIP = "The unit whose connectors the table defines, or a new device"
+IMP_PIN_DEVICE_TIP = "The device whose connectors the table defines, or a new device"
 IMP_PIN_DEVICE_NEW = "New device…"
 IMP_PIN_NEW_NAME = "Name of the new device"
 IMP_PIN_NEW_NAME_TIP = "Needed when the device is new; its ID is the next free DEV number"
@@ -1851,7 +1847,7 @@ AREA_REVISIONS = "Revisions"
 AREA_SETTINGS = "Settings"
 AREA_HOME_TIP = "Home: your project, new and recent projects, the examples"
 AREA_MODEL_TIP = (
-    "Model: the diagram of units and interfaces, and the devices with their connectors and pins"
+    "Model: the diagram of devices and interfaces, and the devices with their connectors and pins"
 )
 AREA_CHECKS_TIP = "Checks: the design rules, what passed, what failed and what could not be checked"
 AREA_DRAWINGS_TIP = "Drawings: the harness drawings with their connectors, pins and wires"
@@ -1879,7 +1875,7 @@ HOME_NEW = "New project…"
 HOME_OPEN = "Open project…"
 HOME_EXAMPLE = "New from an example…"
 HOME_SAMPLE = "Open the sample project"
-HOME_SUMMARY = "{} units, {} interfaces, {} harnesses"
+HOME_SUMMARY = "{} devices, {} interfaces, {} harnesses"
 SETTINGS_TITLE = "Settings"
 SETTINGS_APPEARANCE = "Appearance"
 SETTINGS_THEME = "Theme"
@@ -1964,9 +1960,9 @@ HOME_OPEN_BTN = "Open"
 HOME_REMOVE = "Remove from the list"
 HOME_MISSING = "The folder is gone: {}"
 HOME_EXAMPLE_FLATSAT = "Try the flatsat example"
-HOME_EXAMPLE_FLATSAT_TIP = "Open a copy of the 23-unit flatsat example (example numbers, not engineering data) in your Documents folder"
+HOME_EXAMPLE_FLATSAT_TIP = "Open a copy of the 23-device flatsat example (example numbers, not engineering data) in your Documents folder"
 HOME_EXAMPLE_OPEN = "Open this example"
-HOME_COUNTS = "{} units · {} interfaces · {} harnesses"
+HOME_COUNTS = "{} devices · {} interfaces · {} harnesses"
 HOME_DRAFT = "{} draft"
 HOME_IN_REVIEW = "{} in review"
 HOME_RELEASED = "{} released"
@@ -1990,18 +1986,18 @@ EMPTY_LIST_HINT = "Generate the harnesses and the list fills in."
 SHEET_PASTED = "{0} cell(s) pasted."
 SHEET_PASTED_SKIPPED = " {0} left out (read-only column or past the end of the table)."
 SHEET_COLUMNS_MENU = "Show columns"
-TAB_UNITS = "Units"
+TAB_UNITS = "Device list"
 TAB_UNITS_TIP = (
-    "Every unit as a table: edit names and notes in place, paste from Excel (Ctrl+Shift+J)"
+    "Every device as a table: edit names and notes in place, paste from Excel (Ctrl+Shift+J)"
 )
-UNIT_TABLE = "Unit table"
+UNIT_TABLE = "Device list"
 UNIT_COLUMNS = ["ID", "Name", "Subsystem", "Zone", "Chain", "Interfaces", "Connectors", "Notes"]
 STEP_PASTE = "Paste {0} cell(s)"
-EMPTY_UNITS_TITLE = "No units yet"
-EMPTY_UNITS_HINT = "Add a unit with Add in the project panel (or Edit > Add unit), or import a table with File > Import."
-A_GO_UNITS = "Go to Unit table"
+EMPTY_UNITS_TITLE = "No devices yet"
+EMPTY_UNITS_HINT = "Add a device with Add in the project panel (or Edit > Add device), or import a table with File > Import."
+A_GO_UNITS = "Go to Device list"
 UNIT_FILTER_PLACEHOLDER = "Filter by ID, name, subsystem, zone or notes"
-NEW_UNIT = "New unit"
+NEW_UNIT = "New device"
 
 # ---- UI overhaul M5: Checks and Problems ------------------------------------------------------
 CHECKS_STALE = "Out of date"
@@ -2053,9 +2049,9 @@ OUT_EMPTY_TITLE = "Nothing exported yet"
 OUT_EMPTY_HINT = "Export the outputs (Export…) and the files appear here with their checksums."
 REL_LOCKS = "{0} revision {1} is released and locks {2}. Start a new revision to change them."
 REL_LOCK_KINDS = {
-    "unit": "{0} unit(s)",
+    "unit": "{0} device(s)",
     "interface": "{0} link(s)",
-    "box_connector": "{0} unit connector(s)",
+    "box_connector": "{0} device connector(s)",
     "config": "{0} configuration file(s)",
 }
 
@@ -2070,8 +2066,8 @@ SETTINGS_SECTION_LICENCES = "Licences"
 SETTINGS_REDUCE_MOTION = "Reduce motion"
 SETTINGS_REDUCE_MOTION_TIP = "Turn off the fades and slides of menus, lists and tooltips"
 SETTINGS_SCALE_HINT = "Changes the size of text and controls at once. 100 % is the usual size."
-SETTINGS_SNAP = "Snap units to the grid"
-SETTINGS_SNAP_TIP = "Units jump to the grid while you drag them (hold Alt to drag freely)"
+SETTINGS_SNAP = "Snap devices to the grid"
+SETTINGS_SNAP_TIP = "Devices jump to the grid while you drag them (hold Alt to drag freely)"
 SETTINGS_LABELS = "Show every link label"
 SETTINGS_LABELS_TIP = "Name every link in the diagram, however many there are"
 SETTINGS_SHORTCUTS_TEXT = (
@@ -2088,7 +2084,7 @@ SHORTCUTS_EXTRA = (
     ("Table: keep the old text of a cell", "Esc"),
     ("Table: paste a block of cells", "Ctrl+V"),
     ("Table: copy the selected cells", "Ctrl+C"),
-    ("Diagram: place a unit without snapping", "Alt while dragging"),
+    ("Diagram: place a device without snapping", "Alt while dragging"),
     ("Diagram: pan", "Middle button, or Space, and drag"),
     ("Dialog: go to the next control", "Tab"),
 )
@@ -2267,7 +2263,7 @@ CE_PART = "Part"
 CE_PART_TIP = "The connector part from the parts library. New parts are added in the Devices tab."
 CE_PLUGS_INTO = "Plugs into"
 CE_PLUGS_INTO_TIP = (
-    "A connector of a unit this connector plugs into: the mating part, the opposite gender, the "
+    "A connector of a device this connector plugs into: the mating part, the opposite gender, the "
     "keying and the pins are taken from it. Choose nothing for a free-standing connector."
 )
 CE_NOTHING = "nothing (free-standing)"
@@ -2276,11 +2272,11 @@ CE_NAME_TIP = "The name of the connector in the harness, for example P1. Left em
 CE_PINS = "Pins"
 CE_PINS_TIP = (
     "The names of the pins, separated by commas, for example A1, A2, B1. Left empty, the pins are "
-    "1 to the pin count of the part, or those of the unit's connector it plugs into."
+    "1 to the pin count of the part, or those of the device's connector it plugs into."
 )
 CE_ADD = "Add connector"
-CE_ADD_TIP = "Add the connector to the harness. The pins are those of the part, or of the unit's connector it plugs into."
-CE_NO_PART = "Choose a connector part, or the connector of a unit it plugs into."
+CE_ADD_TIP = "Add the connector to the harness. The pins are those of the part, or of the device's connector it plugs into."
+CE_NO_PART = "Choose a connector part, or the connector of a device it plugs into."
 CE_PIN_TITLE = "Pin of a connector"
 CE_CONNECTOR = "Connector"
 CE_CONNECTOR_TIP = "A connector of this harness"
@@ -2372,7 +2368,7 @@ CE_CONTACT_ALL_TIP = (
 )
 CE_CONTACT_NONE = "none"
 CE_CONTACT_GENERATED = (
-    "The contact of a pin of a generated harness is set on the pin of the unit, in the Devices "
+    "The contact of a pin of a generated harness is set on the pin of the device, in the Devices "
     "tab (column Cable contact). Generate copies it to the cable connector."
 )
 STEP_SET_HARNESS_CONTACTS = "Set contact of all pins of {0}"
@@ -2502,7 +2498,7 @@ NEXT_SHEETS_WHY = (
     "The workbook of every harness has the cut list, the connector blocks and the test sheet."
 )
 NEXT_SHEETS_WAIT = "Some checks wait for engineering values, and the sheets will say so."
-NEXT_SHEETS_FOLDER = "You will choose a folder for the files."
+NEXT_SHEETS_FOLDER = "Export first asks where to save the project."
 NEXT_SHEETS_BUTTON = "Export the build sheets"
 NEXT_RELEASE_TITLE = "Review and release"
 NEXT_RELEASE_WHY = (
@@ -2542,3 +2538,37 @@ TOOL_MORE = "More"
 TOOL_MORE_TIP = "More tools: copy, delete, zoom, arrange and show only some connections"
 TOOL_MORE_FILTER = "Show only"
 PROPERTIES_CLOSED = "The properties are closed. Open them to see and change what you selected."
+
+# ---- Workshop feedback M1 (D-172): a device asks for its name, problem notices on request, export in one step ----
+NEWDEV_TITLE = "Add device"
+NEWDEV_NAME = "Name"
+NEWDEV_NAME_TIP = "What the device is called, for example Star tracker. The ID is made from it."
+NEWDEV_NAME_HINT = "for example Star tracker"
+NEWDEV_ID = "ID"
+NEWDEV_ID_TIP = "The short ID of the device (letters and digits). It is made from the name; type another one to keep it."
+NEWDEV_SUBSYSTEM = "Subsystem"
+NEWDEV_SUBSYSTEM_TIP = "The subsystem of this device (optional): pick one or type a new one"
+NEWDEV_NOTE = "You can change the name, the ID and the subsystem later in the Devices tab."
+NEWDEV_OK = "Add device"
+A_PROBLEM_NOTICES = "Show problem notices"
+A_PROBLEM_NOTICES_TIP = (
+    "Show or hide the notices that appear without being asked for: the Problems button and "
+    "its count, the count on the inspector tab, the status chip of the top bar, the chip and "
+    "the badges on the diagram, the pending-values link and the out-of-date banner. "
+    "The Check button, the Checks, the Problems panel and the read-only, locked and sample "
+    "banners always stay."
+)
+SETTINGS_PROBLEM_NOTICES = "Show problem notices"
+SETTINGS_PROBLEM_NOTICES_TIP = (
+    "Show the Problems count, the status chips, the badges on the diagram and the out-of-date "
+    "banner without being asked. Off: they stay hidden; the Check button and the Checks still work. "
+    "Each workspace remembers its own choice (Simple starts with them off)."
+)
+EXPORT_SAVE_AS_FOLDER = (
+    "Choose an empty folder to save the project in. The files are then exported next to it"
+)
+EXP_DAMAGED_MORE = "and {} more"
+HV_EXPORT_READ_ONLY = "Read-only: save a copy first"
+HV_EXPORT_SAVES_FIRST = "Asks where to save first"
+HV_EXPORT_SAVES_FIRST_TIP = "This project has no folder yet, so you first choose where to save it; the files are then exported next to it"
+HV_EXPORT_REASON_NAME = "Why Export may not work"

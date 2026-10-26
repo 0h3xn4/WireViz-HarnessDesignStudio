@@ -86,7 +86,7 @@ def _check_connector(project: Project, c: Connector, owner: str) -> list[Issue]:
             out.append(
                 _err(
                     "unknown_unit",
-                    f"Box connector '{c.id}' does not belong to an existing unit.",
+                    f"Box connector '{c.id}' does not belong to an existing device.",
                     c.id,
                 )
             )
@@ -94,7 +94,7 @@ def _check_connector(project: Project, c: Connector, owner: str) -> list[Issue]:
             out.append(_err("box_in_harness", f"Box connector '{c.id}' is stored inside harness '{owner}'.", c.id))  # fmt: skip
     else:
         if c.unit_id is not None:
-            out.append(_err("cable_connector_has_unit", f"Connector '{c.id}' is not a box connector but names a unit.", c.id))  # fmt: skip
+            out.append(_err("cable_connector_has_unit", f"Connector '{c.id}' is not a box connector but names a device.", c.id))  # fmt: skip
         if owner == "project":
             out.append(_err("cable_connector_outside_harness", f"Connector '{c.id}' is a cable/in-line connector and must belong to a harness.", c.id))  # fmt: skip
     if c.mates_with is not None and c.mates_with not in project.connectors:
@@ -247,19 +247,19 @@ def check_integrity(project: Project) -> list[Issue]:
         if i.type_id not in project.interface_types:
             out.append(_err("unknown_interface_type", f"Interface '{i.id}' uses interface type '{i.type_id}', which does not exist.", i.id))  # fmt: skip
         if len(i.endpoints) < 2:
-            out.append(_err("too_few_endpoints", f"Interface '{i.id}' connects fewer than two units.", i.id))  # fmt: skip
+            out.append(_err("too_few_endpoints", f"Interface '{i.id}' connects fewer than two devices.", i.id))  # fmt: skip
         for e in i.endpoints:
             if e.unit_id not in project.units:
-                out.append(_err("unknown_unit", f"Interface '{i.id}' refers to unit '{e.unit_id}', which does not exist.", i.id))  # fmt: skip
+                out.append(_err("unknown_unit", f"Interface '{i.id}' refers to device '{e.unit_id}', which does not exist.", i.id))  # fmt: skip
             if e.connector_id is not None:
                 conn = project.connectors.get(e.connector_id)
                 if conn is None or conn.unit_id != e.unit_id:
-                    out.append(_err("bad_endpoint_connector", f"Interface '{i.id}' uses connector '{e.connector_id}', which is not a connector of unit '{e.unit_id}'.", i.id))  # fmt: skip
+                    out.append(_err("bad_endpoint_connector", f"Interface '{i.id}' uses connector '{e.connector_id}', which is not a connector of device '{e.unit_id}'.", i.id))  # fmt: skip
     out.extend(
         Issue(
             "warning",
             "orphan_placement",
-            f"A diagram position exists for '{pid}', which is not a unit.",
+            f"A diagram position exists for '{pid}', which is not a device.",
             None,
             pid,
         )

@@ -5,7 +5,7 @@ One page. Every command is explained in [`CLI.md`](CLI.md); `harness-design-stud
 ## The loop
 
 ```
-harness-design-studio new my-design --template first-steps  # start a project that has units (harness-design-studio new --list shows the examples)
+harness-design-studio new my-design --template first-steps  # start a project that has devices (harness-design-studio new --list shows the examples)
 harness-design-studio generate my-design                    # make harnesses, connectors, pins, wires
 harness-design-studio check my-design                       # validate, plus leftovers of Git merges and edits to released harnesses
 harness-design-studio drc my-design                         # the full design rule check, as a report
@@ -16,7 +16,7 @@ harness-design-studio verify my-design --outputs            # an independent che
 
 The build workbook, `outputs/harnesses/<ID>/<ID>_build.xlsx`, is the file to build a harness from; the PDF drawings are written only with `--drawings` (new in 1.7.0). Run the loop again after every change. Generating twice without a change changes nothing (the second run prints "0 added").
 
-The command line cannot add units or interfaces. The loop works on a project that already has them: an example such as `first-steps`, or your own design after you added the units in the app (on the empty diagram, the button **Add a device** or **Add** in the project panel; or make a harness with no interface at all with **New harness…**, Ctrl+Shift+H). On a `blank` project `generate` finds 0 interfaces and `export` stops with ``error: there are no harnesses to export; run `harness-design-studio generate` first.``
+The command line cannot add devices or interfaces. The loop works on a project that already has them: an example such as `first-steps`, or your own design after you added the devices in the app (on the empty diagram, the button **Add a device**, which asks for the name first, or **Add** in the project panel; or make a harness with no interface at all with **New harness…**, Ctrl+Shift+H). On a `blank` project `generate` finds 0 interfaces and `export` stops with ``error: there are no harnesses to export; run `harness-design-studio generate` first.``
 
 ## Bring in data
 
@@ -26,11 +26,11 @@ The command line cannot add units or interfaces. The loop works on a project tha
 | interfaces in a table | app only: **File > Import > Import interfaces…** |
 | a parts list (CSV, TSV, JSON or XLSX; also an InvenTree export) | `harness-design-studio import-parts DIR parts.csv --approved Approved` |
 | segment lengths | `harness-design-studio import-lengths DIR lengths.csv --unit mm` |
-| unit connectors in KiCad | `harness-design-studio import-netlist DIR file.net --unit RW1 --prefix J --connector J1=RW1-J01 --dry-run` |
-| a device's pins from a table | `harness-design-studio import-pinout DIR gyro.csv --unit GYRO1 --new-device "Gyro unit" --default-part MY-HD-9-F --dry-run` |
-| a device's pinout as a file | `harness-design-studio export-pinout DIR --unit GYRO1 -o gyro.xlsx` |
-| a device from another project (a device library file) | `harness-design-studio import-devices DIR devices.json --list`, then `--unit GYRO1 --dry-run` |
-| a device to keep for other projects | `harness-design-studio export-devices DIR devices.json --unit GYRO1` (or **Save to library…** in the Devices tab) |
+| device connectors in KiCad | `harness-design-studio import-netlist DIR file.net --device RW1 --prefix J --connector J1=RW1-J01 --dry-run` |
+| a device's pins from a table | `harness-design-studio import-pinout DIR gyro.csv --device GYRO1 --new-device "Gyro unit" --default-part MY-HD-9-F --dry-run` |
+| a device's pinout as a file | `harness-design-studio export-pinout DIR --device GYRO1 -o gyro.xlsx` |
+| a device from another project (a device library file) | `harness-design-studio import-devices DIR devices.json --list`, then `--device GYRO1 --dry-run` |
+| a device to keep for other projects | `harness-design-studio export-devices DIR devices.json --device GYRO1` (or **Save to library…** in the Devices tab) |
 | strip lengths, pin contacts, accessories or crimp tools (new in 1.7.0) | `harness-design-studio import-build-data DIR strip-lengths.csv --dry-run` (the kind is read from the headings; templates `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv`) |
 | engineering values | edit `config/*.json`, see [`CONFIG.md`](CONFIG.md); `harness-design-studio config DIR` lists what is missing |
 
@@ -58,7 +58,7 @@ The comment must have at least 10 characters. A release is blocked while checks 
 
 ## In the app
 
-The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M). That is the **Full** workspace. A first run starts in the **Simple** workspace (since 1.7.0): it opens on the **Next step** page (one thing to do, one button), the tree, the Inspector and the Problems panel are closed, and the rail has no Home. **View > Full** or **Show everything** gives the full window, **View > Simple** goes back, **Show panels** (top bar) opens the tree and the Inspector. **Settings** holds the theme, the interface size, Reduce motion, the list of all keys, About and the licences.
+The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip, which **View > Show problem notices** can hide), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M). That is the **Full** workspace. A first run starts in the **Simple** workspace (since 1.7.0): it opens on the **Next step** page (one thing to do, one button), the tree, the Inspector and the Problems panel are closed, and the rail has no Home. **View > Full** or **Show everything** gives the full window, **View > Simple** goes back, **Show panels** (top bar) opens the tree and the Inspector. **View > Show problem notices** (also in **Settings > Editing**) shows or hides the Problems count, the status chip, the badges and the *out of date* banner; it is on in Full and off in Simple. **Settings** holds the theme, the interface size, Reduce motion, the list of all keys, About and the licences.
 
 | Keys | Action |
 | --- | --- |
@@ -71,9 +71,9 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 | Ctrl+7, Ctrl+, | Home (also in Simple, where the rail does not list it), Settings |
 | Ctrl+Shift+M | show or hide the Problems panel |
 | Ctrl+Shift+H | new harness by hand (Drawings area: then add its connectors in the Connectors tab) |
-| Ctrl+Shift+N | add a device (Devices tab: F2 or Enter edits a cell, Insert adds a pin, Shift+Delete deletes pins, Ctrl+L fills from an interface type, Ctrl+Enter assigns to an interface) |
+| Ctrl+Shift+N | add a device (the window **Add device** asks for the name, the ID and the subsystem first; then in the Devices tab: F2 or Enter edits a cell, Insert adds a pin, Shift+Delete deletes pins, Ctrl+L fills from an interface type, Ctrl+Enter assigns to an interface) |
 | Ctrl+Shift+T | the Interface table |
-| Ctrl+Shift+J | the Unit table |
+| Ctrl+Shift+J | the Device list |
 | F6, Shift+F6 | next and previous panel |
 | Ctrl+Q | quit |
 | Ctrl+K | Search and commands (the command palette): type a command or an ID |
@@ -83,8 +83,8 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 | F, Shift+F | fit everything, zoom to the selection |
 | Ctrl+A, Ctrl+D, Ctrl+F | select all, duplicate, find (in the diagram) |
 | C, Esc | start the Connect tool, back to Select (Esc also clears the selection) |
-| Tab, Enter or Space | move between units and links, select |
-| Shift+arrows | move the selected unit |
+| Tab, Enter or Space | move between devices and links, select |
+| Shift+arrows | move the selected device |
 | Delete | delete the selected item (after showing what it affects) |
 | F1 | the user guide |
 
@@ -95,7 +95,7 @@ my-design/
   project.json        name and description
   config/             engineering values (rules you or your programme supply)
   library/            parts and interface types
-  logical/            units and interfaces (what you draw)
+  logical/            units (the devices) and interfaces (what you draw)
   physical/           connectors and harnesses (what the tool generates)
   generated/          how the last generation was made (for explanations)
   outputs/            build workbooks and lists (safe to delete and regenerate)
@@ -109,8 +109,8 @@ Put the folder in Git. Everything except `outputs/` is meant to be reviewed as t
 
 | Word | Meaning |
 | --- | --- |
-| unit | a box: computer, power unit, wheel, sensor |
-| interface | a connection need between two units: power, RS-422, CAN, ... |
+| device | a box: computer, power unit, wheel, sensor |
+| interface | a connection need between two devices: power, RS-422, CAN, ... |
 | harness | a bundle of wires with connectors that carries interfaces |
 | *pending* | a value is missing; nothing was invented |
 | *not checked* | a rule could not run because its numbers are not supplied |

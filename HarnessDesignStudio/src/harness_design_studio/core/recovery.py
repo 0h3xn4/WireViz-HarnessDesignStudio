@@ -20,6 +20,13 @@ JOURNAL_DIR = ".harness-recovery"
 JOURNAL_FILE = "session.json"
 
 
+def damaged_files(project: Project) -> list[str]:
+    """The files (relative paths, sorted) that could not be loaded: a whole file that did not
+    parse, and the files that hold an item that was set aside. Empty for a complete project."""
+    names = {q.file for q in project.quarantine if q.file} | set(project.quarantine_files)
+    return sorted(names)
+
+
 def journal_path(root: Path | str) -> Path:
     return long_path(Path(root)) / JOURNAL_DIR / JOURNAL_FILE
 

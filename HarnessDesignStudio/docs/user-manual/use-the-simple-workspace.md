@@ -68,9 +68,9 @@ The setting **Workspace: Simple or Full** is in the **View** menu (first entries
 
 This is separate from **Guided / Expert** in the top bar, which only changes how much the diagram shows.
 
-The same project in the Simple workspace, with the side panels, the minimap, the legend and the status counts left out, and **Select**, **Connect**, **Add device** and **More** above the diagram. **Show panels** is in the top bar:
+The same project in the Simple workspace, with the side panels, the minimap, the legend, the status counts and the problem notices (the status chip of the top bar and the badges on the diagram) left out, and **Select**, **Connect**, **Add device** and **More** above the diagram. **Show panels** is in the top bar:
 
-![The tutorial project in the Simple workspace: the rail without Home, the top bar with a Show panels button, the diagram of three devices with the tools Select, Connect, Add device and More above it, and a short status bar](../img/simple-workspace.png)
+![The tutorial project in the Simple workspace: the rail without Home, the top bar with a Show panels button and no status chip, the diagram of three devices without problem badges and with the tools Select, Connect, Add device and More above it, and a short status bar](../img/simple-workspace.png)
 
 The same project in the Full workspace, with the project tree on the left, the Inspector on the right, the full tool row, the legend and the minimap of the diagram, and the counts in the status bar:
 
@@ -85,8 +85,9 @@ To show less at once, the Simple workspace starts with these things closed or of
 | Project tree and Interfaces tab (left) | closed | open |
 | Inspector (right) | closed | open |
 | Problems panel (bottom) | closed | closed until asked |
+| Problem notices: the **Problems** button and count, the count on the inspector tab, the top-bar status chip, the chip and the badges on the diagram, the pending-values link, the *out of date* banner | off | on |
 | Minimap and legend of the diagram | off | on |
-| Status bar | the save state, the running job, *Offline* and the project path | everything, with the counts, the *Problems* button and the zoom value |
+| Status bar | the save state, the running job, *Offline* and the project path | everything, with the counts, the *Problems* button (while the problem notices are on) and the zoom value |
 | Tools above the diagram | **Select**, **Connect**, **Add device** and **More** | all of them |
 | Rail | Next step, Model, Checks, Drawings, Outputs, Revisions, Settings | the same and Home |
 
@@ -94,10 +95,19 @@ To show less at once, the Simple workspace starts with these things closed or of
 - **Show panels** (a button in the top bar, and **Show side panels** first in the View menu) opens or closes the project tree and the inspector together. It is only there in Simple.
 - Home is hidden in the rail, but it is still in the Go menu, on Ctrl+7 and in the palette.
 - Selecting something with the inspector closed shows a short message once per window with a **Show panels** button. Opening a problem from the Problems panel or a check opens the inspector by itself.
+- **Problem notices are off in Simple.** Without them the window does not show a problem count, a status chip or badges until you ask: press **Check** (F5), open the **Checks** area (**Show the problems** on the Next step page does it) or the Problems panel (Ctrl+Shift+M). To see them anyway, choose **View > Show problem notices**; each workspace remembers its own choice, so this does not change the Full workspace. What says why something cannot be done (read-only, locked, damaged files, the sample project) is not a problem notice and stays. See [read and fix problems](read-and-fix-problems.md#turn-the-problem-notices-off).
 - Each workspace remembers its own layout. Switching from Simple to Full gives you back the Full layout you had; closing the window in Simple opens it in Simple next time.
+
+To see the problem notices in the Simple workspace, tick **Show problem notices** in the **View** menu (the picture is the View menu of the Full workspace, where it is ticked):
+
+![The View menu with Show problem notices ticked, between the workspace choice and Guided and Expert](../img/problem-notices-setting.png)
 
 ## Where the buttons go
 
-Each button opens something that already exists: **Add a device** and **New harness…** open the same windows as in the Model area; **Connect two devices** opens the diagram with the Connect tool; **Generate the harnesses**, **Check the design** and **Export the build sheets** do what their menu entries do; **Show the problems** opens the Checks area with the failed rules; **Go to Releases** and **Open the Outputs** open those areas.
+Each button opens something that already exists: **Add a device** opens the window **Add device**, which asks for the name first (the same as **Edit > Add device > Device…**, with the picture in [define a device](define-a-device.md#1-add-the-device)), and **New harness…** opens the same window as in the Drawings area; **Connect two devices** opens the diagram with the Connect tool; **Generate the harnesses**, **Check the design** and **Export the build sheets** do what their menu entries do (for a project that has no folder yet, **Export** first asks where to save it: the note on the page says *Export first asks where to save the project.*); **Show the problems** opens the Checks area with the failed rules; **Go to Releases** and **Open the Outputs** open those areas.
+
+The window that **Add a device** opens (also the **Add device** tool above the diagram of the Simple workspace), with a name typed and the ID suggested from it:
+
+![The Add device window: Name Star tracker, ID STAR1, Subsystem aocs, the note that all three can be changed later in the Devices tab, and the buttons Cancel and Add device](../img/add-device-dialog.png)
 
 Next: [generate harnesses](generate-harnesses.md), [read and fix problems](read-and-fix-problems.md), [export the outputs](export-the-outputs.md).

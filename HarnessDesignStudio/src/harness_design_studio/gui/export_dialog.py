@@ -52,7 +52,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import edit
+from harness_design_studio.core import edit, recovery
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.io.fs import atomic_write_bytes
 from harness_design_studio.core.model import Project
@@ -121,6 +121,9 @@ def reveal_url(path: Path) -> QUrl:
 def open_url(path: Path) -> QUrl:
     """The URL that opens `path` with the program the system uses for it."""
     return QUrl.fromLocalFile(str(path))
+
+
+_DAMAGED_SHOWN = 5  # file names the notice for a damaged project lists
 
 
 @dataclass(frozen=True)
@@ -668,6 +671,12 @@ class ExportDialog(QDialog):
                 tooltip=strings.EXP_SAVE_PROJECT_TIP,
                 callback=self._save_clicked,
             )
+        elif reason == strings.EXPORT_DAMAGED:
+            files = recovery.damaged_files(self.ctl.project)
+            details = [*files[:_DAMAGED_SHOWN]]
+            if len(files) > _DAMAGED_SHOWN:
+                details.append(strings.EXP_DAMAGED_MORE.format(len(files) - _DAMAGED_SHOWN))
+            self.notice.show_notice("warning", reason, details=details)
         else:
             self.notice.show_notice("warning", reason)
 

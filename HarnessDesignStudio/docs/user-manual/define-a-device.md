@@ -19,14 +19,23 @@ This page shows how to define a device of your own down to each pin: its connect
 ## Before you start
 
 - You have a project (for example `harness-design-studio new wheel-link --template first-steps`). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written. In the Simple workspace press **Model** in the rail (or Ctrl+6) to reach the Devices tab; **Show panels** opens the **Project** tab.
-- A **device** is a unit with connectors of its own. The **Devices** tab (Ctrl+6; in the **Model** area, beside **Diagram**) shows one unit at a time: the unit you select on the diagram or in the project tree is the one shown.
+- A **device** is a device with connectors of its own. The **Devices** tab (Ctrl+6; in the **Model** area, beside **Diagram**) shows one device at a time: the device you select on the diagram or in the project tree is the one shown.
 - The tool never decides what is approved. A connector part or an interface type that you make here is marked *pending* or *unverified*, and a harness that uses it says so when it is released.
 - Everything you do is one undo step with a name, for example *Undo Edit pin GYRO1-J01.A2*.
 
 ## 1. Add the device
 
-1. Choose **Edit > Add unit > Device…** (Ctrl+Shift+N; on an empty diagram the button **Add a device** does the same). An empty device appears in a free place of the diagram and the **Devices** tab opens with its name selected.
-2. Type the name and press Enter. The **Subsystem** box takes one that exists or a new word; **Chain** says nominal, redundant or none.
+1. Choose **Edit > Add device > Device…** (Ctrl+Shift+N; on an empty diagram the button **Add a device** does the same, and so do the button of the **Next step** page and the **Add device** tool of the Simple workspace). A small window, **Add device**, asks for the device first:
+
+   ![The Add device window with the name Star tracker typed and the ID STAR1 suggested](../img/add-device-dialog.png)
+
+   - **Name** is required. The hint says *for example Star tracker*.
+   - **ID** is suggested as soon as you type the name: the first word, letters and digits only, in upper case, at most 8 characters, followed by the first number that is free. *Star tracker* gives `STAR1`, and the next device with that name gives `STAR2`; *Gyro 3* gives `GYRO3`. You can type another ID. Once you have edited the ID it no longer follows the name.
+   - **Subsystem** offers the subsystems the project already has (a new project offers *general*); you can also type a new word.
+   - A line under the fields says why the device cannot be added yet, for example *A device needs a name.*, *A device needs an ID.* or *ID STAR1 is already used by another device.* The button **Add device** stays off until there is no such line.
+2. Press **Add device**. The device appears in a free place of the diagram, as one undo step, and the **Devices** tab opens with its name selected. The window says *You can change the name, the ID and the subsystem later in the Devices tab*: there the name is edited by pressing Enter after typing; the **Chain** box says nominal, redundant or none.
+
+The kinds in **Edit > Add device** (computer, power unit and so on, [draw the design](draw-the-design.md#2-add-devices)) do not ask: they add a device at once with an ID and name of their own.
 
 The state chip next to the name says **Draft** while no interface ends on the device, **In use** when one does, and **Locked** once a released harness uses it.
 
@@ -36,7 +45,7 @@ The state chip next to the name says **Draft** while no interface ends on the de
 2. Press Enter, or **Add connector**. The connector appears with pins `1` to `N`, the number the part has, and its gender is the one the part says.
 3. On the connector's card you can change the **part** (a part with another number of pins asks, on one line, whether to resize the pins and set the gender; both happen in one step), the **gender**, the **keying** and what it **Carries**. If the pins already carry every signal of an interface type, the card offers *Complete for: CAN*.
 
-**Delete connector** shows first what it touches. An interface that ends on the connector keeps its unit and loses the connector.
+**Delete connector** shows first what it touches. An interface that ends on the connector keeps its device and loses the connector.
 
 ## 3. Name the pins and give them signals
 
@@ -67,7 +76,7 @@ Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down
 
 The **Direction** and **Class** columns come from the interface type of the pin's signal. They are empty, with the reason in the tooltip, when nothing can be said. They are never guessed.
 
-![The Devices tab for the unit BAT1: the connector list, the card with the part, a Label field, the pin table with the Function column, and the buttons Add from library, Save to library, Duplicate and Export pinout](../img/devices-tab.png)
+![The Devices tab for the device BAT1: the connector list, the card with the part, a Label field, the pin table with the Function column, and the buttons Add from library, Save to library, Duplicate and Export pinout](../img/devices-tab.png)
 
 *The Devices tab on the `flatsat` example (version 1.7.0).*
 
@@ -75,12 +84,12 @@ The **Direction** and **Class** columns come from the interface type of the pin'
 
 Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination*, *Function*, *Cable contact* (or *Contact part*: a library part of the category *contact*) and, if you have them, *Part* and *Gender*. A *Function* column is stored as the pin's function when the table also has a *Signal* (or *Net*) column; a table with only a *Function* column reads it as the signal, as before 1.4.0. Columns the project cannot store (a description, remarks, a voltage, a direction) are named in a warning and left out.
 
-In the app: **File > Import > Import device pinout…**, pick the file, choose the device (an existing unit, or **New device…** with a name), the library part for the new connectors, and read the preview. A row with a problem is listed with its reason, and then nothing is imported. **Import** is one undo step, *Import pinout (1 connector, 6 pins)*.
+In the app: **File > Import > Import device pinout…**, pick the file, choose the device (an existing device, or **New device…** with a name), the library part for the new connectors, and read the preview. A row with a problem is listed with its reason, and then nothing is imported. **Import** is one undo step, *Import pinout (1 connector, 6 pins)*.
 
 On the command line (the same planner):
 
 ```
-harness-design-studio import-pinout wheel-link gyro-pinout.csv --unit GYRO1 --new-device "Gyro unit" --default-part EX-MICROD-9-F --dry-run
+harness-design-studio import-pinout wheel-link gyro-pinout.csv --device GYRO1 --new-device "Gyro unit" --default-part EX-MICROD-9-F --dry-run
 ```
 
 ```
@@ -103,10 +112,10 @@ Signals that match no interface type stay as free text; they are listed so that 
 ## Check the result and write it out
 
 - Under the pin table the **notes** list what is odd about the connector, each with the pin it is about: a pin name that is the same ignoring case, fewer pins than the part has, a signal on two pins, a signal no interface type has, an interface type that is only half there on a fixed pinout (for example `CANH` without `CANL`), a locked pin whose interface does not end on this connector, a gender that nobody states. They are notes, not design rules: nothing here changes the design rules or what Generate does.
-- **Pinout as exported** shows exactly the rows of `system/box_pinouts.csv` for this unit. **Export pinout…** saves them as CSV or Excel, to compare with the interface control document. The command line does the same:
+- **Pinout as exported** shows exactly the rows of `system/box_pinouts.csv` for this device. **Export pinout…** saves them as CSV or Excel, to compare with the interface control document. The command line does the same:
 
 ```
-harness-design-studio export-pinout wheel-link --unit GYRO1
+harness-design-studio export-pinout wheel-link --device GYRO1
 ```
 
 ```
@@ -131,7 +140,7 @@ Define a device once and keep it in a **device library file**, a JSON file that 
 - **Save:** in the Devices tab choose the device and press **Save to library…**. Pick a file; if it exists the device is added to it (a device with the same ID is replaced, the others stay). The file holds the device, its connectors with every pin (signal, function, contact size, termination, fixed, and the ID of the cable contact), and the connector parts and interface types they name. The contact parts themselves are not in the file: if you use a cable contact, the other project needs a part of that ID in its library (the design check does not tell you when it has none). The zone, and anything that Generate allocated in this project, are not saved.
 - **Add:** in the other project press **Add from library…** in the Devices tab, pick the file, tick the devices, and read the sentence under the list: which ID each gets, what is kept. **Add devices** is one undo step. A device that has a problem is named with its reason and the others are still added.
 - Nothing in your project is replaced. If the ID is taken the device is added as `GYRO1-2`; a part or interface type that the project already has stays as it is, and the sentence says when the file's differs. Parts that come with the file keep the approval status the file says; the tool tells you when it is not *approved*, because the file's status is not a decision of your project.
-- On the command line: `harness-design-studio export-devices DIR FILE --unit GYRO1` and `harness-design-studio import-devices DIR FILE --list`, then `--unit GYRO1 --dry-run`, then without `--dry-run`.
+- On the command line: `harness-design-studio export-devices DIR FILE --device GYRO1` and `harness-design-studio import-devices DIR FILE --list`, then `--device GYRO1 --dry-run`, then without `--dry-run`.
 
 Then connect the device as usual and **Generate**.
 

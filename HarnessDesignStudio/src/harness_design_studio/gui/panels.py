@@ -25,7 +25,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import checks, edit, why
+from harness_design_studio.core import checks, describe, edit, why
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.library_import import describe_library
 from harness_design_studio.core.model import InterfaceInstance, Part
@@ -586,7 +586,11 @@ class PropertiesPanel(QScrollArea):
             b.clicked.connect(lambda: ctl.confirm_interface(iid))
             self._editable(b)
             self.lay.addWidget(b)
-        self.lay.addWidget(muted(strings.SIGNALS.format(", ".join(s.name for s in t.signals))))
+        signal_line = muted(strings.SIGNALS.format(", ".join(s.name for s in t.signals)))
+        meanings = [f"{s.name}: {m}" for s in t.signals if (m := describe.signal_meaning(s.name))]
+        if meanings:
+            signal_line.setToolTip("\n".join(meanings))
+        self.lay.addWidget(signal_line)
 
     def _end_row(self, i: InterfaceInstance, k: int) -> QWidget:
         ctl, p = self.ctl, self.ctl.project

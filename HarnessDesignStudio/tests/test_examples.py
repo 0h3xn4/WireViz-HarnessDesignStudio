@@ -121,7 +121,7 @@ def test_the_flatsat_walkthrough_matches_the_example() -> None:
         encoding="utf-8"
     )
     wires = sum(len(h.wires) for h in project.harnesses.values())
-    assert f"{len(project.units)} units, {len(project.interfaces)} interfaces, " in text
+    assert f"{len(project.units)} devices, {len(project.interfaces)} interfaces, " in text
     assert f"{len(project.harnesses)} harnesses, {wires} wires" in text
     for h in project.harnesses.values():
         row = re.search(rf"\| `{h.id}` \| [^|]+ \| (\d+) \|", text)

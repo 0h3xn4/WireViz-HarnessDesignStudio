@@ -8,7 +8,7 @@ The tool never invents numbers from standards. These shipped values are placehol
 | `emc.json` | EMC classes and their rules (`null`) | EMC engineer | the EMC separation checks |
 | `generation.json` | conductor resistivity, service loop, mass margin, pin gaps, shield ends, test limits (all `null`); the wire parts are example parts | EE | wire sizing, lengths, mass, shield checks and the test tables |
 | `segregation.json` | which category pairs must be separated (`null`); the nominal/redundant and pyro rules are on by default | EE | the separation checks |
-| `segmentation.json` | confirm the harness boundary rule (default `per_connector_pair`: one harness for each pair of unit connectors; `per_unit_pair` and `per_zone_pair` group more interfaces into one harness) | Owner (DECISIONS D-10) | how interfaces are grouped into harnesses |
+| `segmentation.json` | confirm the harness boundary rule (default `per_connector_pair`: one harness for each pair of device connectors; `per_unit_pair` and `per_zone_pair` group more interfaces into one harness) | Owner (DECISIONS D-10) | how interfaces are grouped into harnesses |
 | `titleblock.json` | company title block layout | Owner (D-15) | the title block of the drawings |
 
 `naming.json` is not in the table: it ships with `"placeholder": false`, because the name patterns are a style choice and not an engineering value. That is why `harness-design-studio validate` lists six placeholder files, not seven.
@@ -62,7 +62,7 @@ These are not placeholder values in a config file; they are optional fields of t
 | Where | Field | Needed for |
 | --- | --- | --- |
 | `physical/harnesses/<ID>.json`, a wire | `strip_a_mm`, `strip_b_mm` (the insulation stripped at each end) | the strip columns of the cut list and the wire list |
-| `physical/connectors/<unit>.json`, a pin of a unit (copied to the cable pin by Generate; on a harness made by hand, the pin of the cable connector) | `contact_part` (a library part of the category `contact`) | the *Contact* column of the connector blocks and the pinouts, and the contact lines of the BOM |
+| `physical/connectors/<unit>.json`, a pin of a device (copied to the cable pin by Generate; on a harness made by hand, the pin of the cable connector) | `contact_part` (a library part of the category `contact`) | the *Contact* column of the connector blocks and the pinouts, and the contact lines of the BOM |
 | `library/contact.json`, a part | `tool` (the crimp tool or its setting) | the *Tool* column of the connector blocks |
 | `physical/harnesses/<ID>.json` | `accessories` (sleeving, heat shrink, labels, backshells) | the *Accessories* sheet, `accessories.csv` and the BOM lines of accessory parts |
 

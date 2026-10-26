@@ -39,7 +39,7 @@ The full, current layout of `core/` is in [`../ARCHITECTURE.md`](../ARCHITECTURE
 
 | Folder or file | What is in it |
 | --- | --- |
-| `core/model/` | The model objects (units, interfaces, connectors, wires, harnesses, parts, config). Immutable and strict. |
+| `core/model/` | The model objects (devices, interfaces, connectors, wires, harnesses, parts, config). Immutable and strict. |
 | `core/commands.py` | `History`: every change is a list of operations run as one transaction, with undo and redo. |
 | `core/edit.py` | Pure functions that build those lists of operations for the diagram. |
 | `core/io/` | Load, save (atomic writes), migrate. A damaged file is set aside and the rest of the project still loads. |
@@ -51,7 +51,7 @@ The full, current layout of `core/` is in [`../ARCHITECTURE.md`](../ARCHITECTURE
 | `core/kicad.py`, `core/library_import.py`, `core/imports.py`, `core/pinout_import.py` | The importers. |
 | `core/devices.py`, `core/device_library.py` | Custom devices down to each pin: the plans behind the Devices tab; device library files that carry a device to another project (1.4.0). |
 | `core/wires.py` | The plans behind the Edit wire tab: edit, draw, move, delete and group wires, labels (1.4.0). |
-| `core/manual_harness.py` | A harness made by hand: new harness, cable connectors (free-standing or plugging into a unit's connector), pin function and termination, delete connector; Generate leaves such a harness alone (1.5.0, D-166). |
+| `core/manual_harness.py` | A harness made by hand: new harness, cable connectors (free-standing or plugging into a device's connector), pin function and termination, delete connector; Generate leaves such a harness alone (1.5.0, D-166). |
 | `core/build_data.py`, `core/build_data_import.py` | The build data a technician needs: strip lengths, the contact on a pin, the crimp tool of a contact part, the accessories of a harness; their plans and the import of them from a table (1.7.0, D-170). |
 | `cli/` | One module per group of commands; `main.py` builds the parser. |
 | `gui/` | `controller.py` (the only thing that changes the project), `main_window.py` and `shell.py` (the window), `areas.py` and `rail.py` (the navigation rail: Next step, Home, Model, Checks, Drawings, Outputs, Revisions, Settings), `topbar.py` and `workflow.py` (the steps Generate, Check, Release), `next_step.py` and `next_page.py` (the Next step page of the simple workspace, 1.7.0), `canvas.py`, the views (`project_tree.py`, `inspector.py`, `harness_view.py` (with `wire_editor.py`, the Edit wire tab, `connector_editor.py`, the Connectors tab, and `accessory_editor.py`, the Accessories tab), `lists_panel.py`, `outputs_files.py`, `checks_panel.py`, `releases_panel.py`, `devices_view.py`, `problems_panel.py`), the pages (`pages.py` for Home, `settings_page.py`), the dialogs (`export_dialog.py`, `import_wizard.py`, `new_project_dialog.py`, `config_dialog.py`), the shared parts (`tables.py`, `sheet.py`, `states.py`, `icons.py`), `panels.py`, `dialogs.py`, `strings.py` (all UI text). [`../DESIGN.md`](../DESIGN.md) says how they fit and [`../ARCHITECTURE.md`](../ARCHITECTURE.md), section 2, lists every module. |

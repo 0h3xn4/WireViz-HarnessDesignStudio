@@ -84,13 +84,18 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     _library_options(pp)
     nn = sub.add_parser(
         "import-netlist",
-        help="read unit connector pinouts from a KiCad netlist",
-        description="Create or update the box connectors of one unit from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The user guide has a chapter on it.",
+        help="read device connector pinouts from a KiCad netlist",
+        description="Create or update the box connectors of one device from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The user guide has a chapter on it.",
     )
     nn.add_argument("project", type=Path)
     nn.add_argument("netlist", type=Path)
     nn.add_argument(
-        "--unit", required=True, help="the unit these connectors belong to, for example OBC1"
+        "--device",
+        "--unit",
+        dest="unit",
+        metavar="DEVICE",
+        required=True,
+        help="the device these connectors belong to, for example OBC1 (--unit is the older name)",
     )
     nn.add_argument(
         "--ref",
@@ -106,7 +111,7 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
         action="append",
         default=[],
         metavar="REF=ID",
-        help="connector ID for a reference, for example J1=OBC1-J01 (default: the symbol field HarnessConnector, else <unit>-<ref>)",
+        help="connector ID for a reference, for example J1=OBC1-J01 (default: the symbol field HarnessConnector, else <device>-<ref>)",
     )
     nn.add_argument(
         "--part",
@@ -131,18 +136,23 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     pn = sub.add_parser(
         "import-pinout",
         help="import a device's pinout from a spreadsheet (CSV or XLSX)",
-        description="Create or update the box connectors of one unit from a table: one row per pin with the connector, the pin, the signal, whether the device fixes it, a contact size and a termination. Columns are matched by their headings (Connector, Pin, Signal, Mode or Fixed, Contact size, Termination, Part, Gender); columns the project cannot store, such as a description or a voltage, are named in a warning and left out. A row with a problem stops the whole import; nothing is changed then. A new connector needs a library part (a Part column, --part J1=PART or --default-part). The user guide has a chapter on it.",
+        description="Create or update the box connectors of one device from a table: one row per pin with the connector, the pin, the signal, whether the device fixes it, a contact size and a termination. Columns are matched by their headings (Connector, Pin, Signal, Mode or Fixed, Contact size, Termination, Part, Gender); columns the project cannot store, such as a description or a voltage, are named in a warning and left out. A row with a problem stops the whole import; nothing is changed then. A new connector needs a library part (a Part column, --part J1=PART or --default-part). The user guide has a chapter on it.",
     )
     pn.add_argument("project", type=Path)
     pn.add_argument("file", type=Path)
     pn.add_argument(
-        "--unit", required=True, help="the unit the connectors belong to, for example GYRO1"
+        "--device",
+        "--unit",
+        dest="unit",
+        metavar="DEVICE",
+        required=True,
+        help="the device the connectors belong to, for example GYRO1 (--unit is the older name)",
     )
     pn.add_argument(
         "--new-device",
         default=None,
         metavar="NAME",
-        help="make the unit as a new device with this name when it does not exist",
+        help="create the device with this name when it does not exist",
     )
     pn.add_argument(
         "--subsystem", default=None, help="subsystem of a new device (default: the most used one)"
@@ -184,10 +194,17 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     xp = sub.add_parser(
         "export-pinout",
         help="write one device's pinout as CSV or XLSX",
-        description="Write the rows of system/box_pinouts.csv that belong to one unit (connector, pin, signal, interface, wires, spare) to a file, or to the screen as CSV. The format follows the file name (.csv or .xlsx). The rows are the ones export writes, so the file compares with an interface control document.",
+        description="Write the rows of system/box_pinouts.csv that belong to one device (connector, pin, signal, interface, wires, spare) to a file, or to the screen as CSV. The format follows the file name (.csv or .xlsx). The rows are the ones export writes, so the file compares with an interface control document.",
     )
     xp.add_argument("project", type=Path)
-    xp.add_argument("--unit", required=True, help="the unit to write, for example GYRO1")
+    xp.add_argument(
+        "--device",
+        "--unit",
+        dest="unit",
+        metavar="DEVICE",
+        required=True,
+        help="the device to write, for example GYRO1 (--unit is the older name)",
+    )
     xp.add_argument(
         "--output",
         "-o",
@@ -198,15 +215,18 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     xd = sub.add_parser(
         "export-devices",
         help="save devices with their connectors and pinouts to a device library file",
-        description="Write one or more units, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to: a device with the same ID is replaced, the others stay. What generation allocated in this project does not travel.",
+        description="Write one or more devices, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to: a device with the same ID is replaced, the others stay. What generation allocated in this project does not travel.",
     )
     xd.add_argument("project", type=Path)
     xd.add_argument("file", type=Path, help="the device library file to write or add to")
     xd.add_argument(
+        "--device",
         "--unit",
+        dest="unit",
+        metavar="DEVICE",
         action="append",
         required=True,
-        help="a unit to save, for example GYRO1 (repeat for more)",
+        help="a device to save, for example GYRO1 (repeat for more; --unit is the older name)",
     )
     idv = sub.add_parser(
         "import-devices",
@@ -216,10 +236,13 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     idv.add_argument("project", type=Path)
     idv.add_argument("file", type=Path)
     idv.add_argument(
+        "--device",
         "--unit",
+        dest="unit",
+        metavar="DEVICE",
         action="append",
         default=[],
-        help="a device of the file to add (repeat; default: all)",
+        help="a device of the file to add (repeat; default: all; --unit is the older name)",
     )
     idv.add_argument("--list", action="store_true", help="list the devices of the file and stop")
     idv.add_argument("--dry-run", action="store_true", help="show the preview only")
@@ -237,7 +260,7 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     bd = sub.add_parser(
         "import-build-data",
         help="import strip lengths, pin contacts, accessories or crimp tools (CSV, TSV, JSON or XLSX; read by their headings)",
-        description="Import the build data of a technician from a table. The kind is told by the column headings (any case; other columns are ignored): strip lengths (Wire, Strip A (mm), Strip B (mm); Harness is optional while the wire ID is unique), pin contacts (Harness, Connector, Pin, Contact; Tool is optional and sets the crimp tool of that contact part), accessories (Harness, Kind, Part, Target, Position, Length (mm), Quantity, Note; ID is optional, else they are numbered ACC-001 ...) or part tools (Part, Tool). An empty cell leaves the value as it is. A pin of a harness made by Generate takes its contact from the unit's pin (Devices tab) and refuses the row. The preview lists every row; a row with a problem stops the whole import and nothing is changed. Templates: strip-lengths.csv, pin-contacts.csv and accessories.csv (harness-design-studio templates FOLDER).",
+        description="Import the build data of a technician from a table. The kind is told by the column headings (any case; other columns are ignored): strip lengths (Wire, Strip A (mm), Strip B (mm); Harness is optional while the wire ID is unique), pin contacts (Harness, Connector, Pin, Contact; Tool is optional and sets the crimp tool of that contact part), accessories (Harness, Kind, Part, Target, Position, Length (mm), Quantity, Note; ID is optional, else they are numbered ACC-001 ...) or part tools (Part, Tool). An empty cell leaves the value as it is. A pin of a harness made by Generate takes its contact from the device's pin (Devices tab) and refuses the row. The preview lists every row; a row with a problem stops the whole import and nothing is changed. Templates: strip-lengths.csv, pin-contacts.csv and accessories.csv (harness-design-studio templates FOLDER).",
     )
     bd.add_argument("project", type=Path)
     bd.add_argument("file", type=Path)
@@ -716,7 +739,7 @@ def _export_pinout(project, args: argparse.Namespace) -> int:  # type: ignore[no
 
     table = devices.pinout_table(project, args.unit)
     if len(table) < 2:
-        print(f"error: unit '{args.unit}' has no connectors to write.", file=sys.stderr)
+        print(f"error: device '{args.unit}' has no connectors to write.", file=sys.stderr)
         return 1
     stamp = stamp_of(project)
     if args.output is None:

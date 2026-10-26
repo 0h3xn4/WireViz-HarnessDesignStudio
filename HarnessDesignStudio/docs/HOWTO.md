@@ -14,9 +14,9 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 
 [Draw the design](user-manual/draw-the-design.md#1-start-a-project): `harness-design-studio new`, **File > New project…**, **File > New project from an example…**.
 
-## 3. Add units and interfaces
+## 3. Add devices and interfaces
 
-[Draw the design](user-manual/draw-the-design.md#2-add-units) (adding a unit opens no window; the ID and the name are given automatically; on an empty diagram the button **Add a device** adds a unit with connectors of its own) and [Redundancy and zones](user-manual/redundancy-and-zones.md).
+[Draw the design](user-manual/draw-the-design.md#2-add-devices) (a kind from **Edit > Add device** is added at once with an ID and name of its own; **Device…**, Ctrl+Shift+N, and the button **Add a device** of an empty diagram ask for the name first and suggest the ID, and add a device with connectors of your own to define) and [Redundancy and zones](user-manual/redundancy-and-zones.md).
 
 ## 4. Import interfaces from a spreadsheet
 

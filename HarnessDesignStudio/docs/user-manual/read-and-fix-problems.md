@@ -8,6 +8,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 - [1. The three kinds of finding](#1-the-three-kinds-of-finding)
 - [2. In the app](#2-in-the-app)
 - [2a. The Checks tab](#2a-the-checks-tab)
+- [Turn the problem notices off](#turn-the-problem-notices-off)
 - [3. On the command line](#3-on-the-command-line)
 - [4. Fix one, waive one](#4-fix-one-waive-one)
 - [What the notes mean](#what-the-notes-mean)
@@ -17,7 +18,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 ## Before you start
 
 - You have a project. The examples use `wheel-link` from `harness-design-studio new wheel-link --template first-steps`, generated with `harness-design-studio generate wheel-link` ([generate harnesses](generate-harnesses.md)).
-- The tool checks the design at two speeds. **Quick checks** run on every edit (a link without a connector, a unit with no link, connectors chosen by the tool and not confirmed, a link between the nominal and the redundant chain). The **design rules** (35 of them, all listed in [`RULES.md`](../RULES.md)) run in the background a moment after you stop editing.
+- The tool checks the design at two speeds. **Quick checks** run on every edit (a link without a connector, a device with no link, connectors chosen by the tool and not confirmed, a link between the nominal and the redundant chain). The **design rules** (35 of them, all listed in [`RULES.md`](../RULES.md)) run in the background a moment after you stop editing.
 
 ## 1. The three kinds of finding
 
@@ -31,7 +32,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 1. Open the **Problems** tab (in the right panel; in the Simple workspace the right panel is closed, so press **Show panels** in the top bar first, or press **Show the problems** on the Next step page, which opens the **Checks** area with the failed rules). The tab title shows how many open errors and warnings there are, for example "Problems (10)". While the design rules run, the status line says "Design rules: checking…" and then, for example, "Design rules: 35 rules, 20 passed, 2 failed, 12 not checked." A rule that could not run because a value is missing counts as *not checked*, never as passed. The **Checks** tab (Ctrl+4) lists all 35 rules with a result for each; see [section 2a](#2a-the-checks-tab).
 2. Each finding is a card. (GUI, not run: described from the program's texts and code.) It says what is wrong and why it matters. Many cards have a button that fixes it in one click. The cards have these buttons:
-   - **Show** jumps to the unit, link or harness it is about.
+   - **Show** jumps to the device, link or harness it is about.
    - A fix button, named after the fix, for example **Choose connectors automatically**, **Confirm connectors** or **Connect to a redundant copy of OBC1**.
    - **Waive…** (warnings only).
 3. Three or more errors or notes of the same rule about the same object are shown as one card with a list. (Warnings always get a card each, because each one can be waived on its own.)
@@ -40,7 +41,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 Click a card or a to-do line to jump to the item.
 
-**The Problems panel.** Press **Problems (n)** in the status bar, or Ctrl+Shift+M (**View > Problems panel**; the Simple workspace has no **Problems (n)** button in its status bar), to open a list of every open problem at the bottom of the window. It has the columns Severity, Rule, Object and Message, and the filters **All**, **Error** and **Warning**. Click a row to go to the object, whether it is a unit, a link, a harness, a parts file or a value file. **Details and fixes** (right-click a row, or press Shift+Enter) shows the problem as a card in the Inspector. The panel counts findings and the Problems tab counts groups of to-do lines, so the two numbers can differ.
+**The Problems panel.** Press **Problems (n)** in the status bar, or Ctrl+Shift+M (**View > Problems panel**; there is no **Problems (n)** button while the problem notices are off, which is the case in the Simple workspace until you turn them on, see [below](#turn-the-problem-notices-off)), to open a list of every open problem at the bottom of the window. It has the columns Severity, Rule, Object and Message, and the filters **All**, **Error** and **Warning**. Click a row to go to the object, whether it is a device, a link, a harness, a parts file or a value file. **Details and fixes** (right-click a row, or press Shift+Enter) shows the problem as a card in the Inspector. The panel counts findings and the Problems tab counts groups of to-do lines, so the two numbers can differ.
 
 ## 2a. The Checks tab
 
@@ -50,6 +51,16 @@ The **Checks** tab has one row for each design rule: its ID, name, severity, a *
 - Select a rule to read what it found, what it needs and the requirements it serves. **Enter** or a double-click on an offending object shows it on the diagram.
 - A rule that is *not checked* names the value it waits for and has **Supply value…**. It opens **Engineering values**, where you type the values (see [fill in the engineering values](fill-in-engineering-values.md)); **Apply** sets them as one undo step and the checks run again.
 - **Check** in the top bar (F5) runs the rules now; they also run by themselves a moment after you stop editing. When the design changes, the tab says *Out of date* until the rules have run again (**Check again** runs them now).
+
+## Turn the problem notices off
+
+The tool shows some problem signs without being asked: the **Problems (n)** button and its count in the status bar, the count on the **Problems** tab of the inspector, the status chip of the top bar, the chip in the corner of the diagram, the badges for problems, warnings, values still to enter and *not checked* on the devices and links, the link *n values pending · n rules not checked* and the banner that says the plans or the outputs are *out of date*. They are called **problem notices**. If they bother you, choose **View > Show problem notices** (or tick **Show problem notices** in **Settings > Editing**) to switch them all off at once.
+
+![The View menu with Show problem notices ticked](../img/problem-notices-setting.png)
+
+- **Each workspace keeps its own choice.** The notices are on in the Full workspace and off in the Simple workspace until you say otherwise.
+- **Turning them off hides nothing you ask for.** The **Check** button (F5) and its result, the **Checks** area, the **Problems** panel (**View > Problems panel**, Ctrl+Shift+M), the **Next step** page and the error texts in windows stay. So do the banners that say why something cannot be done: read-only, locked, damaged files and the sample project.
+- **Turn them on again** with the same menu entry. The picture above is the View menu of the Full workspace (made from the real window; the Simple workspace has one more entry at the top, **Show side panels**).
 
 ## 3. On the command line
 
@@ -78,7 +89,7 @@ harness-design-studio validate wheel-link
 
 ```
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-3 units, 2 interfaces, 13 connectors, 2 harnesses: 0 error(s), 0 warning(s).
+3 devices, 2 interfaces, 13 connectors, 2 harnesses: 0 error(s), 0 warning(s).
 ```
 
 The INFO line is normal until an engineer has reviewed the engineering values ([fill in the engineering values](fill-in-engineering-values.md)).

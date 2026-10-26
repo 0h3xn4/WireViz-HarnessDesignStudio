@@ -6,7 +6,7 @@ New here? Read sections 1 to 4 (about fifteen minutes). Section 3 gives you a re
 
 ## 1. What the tool does
 
-You draw units (computer, power unit, wheels ...) and the interfaces between them. The tool turns that into harnesses: which wires, on which pins, in which connectors. It checks the result, writes a build workbook and lists for every harness, and keeps a record of every release.
+You draw devices (computer, power unit, wheels ...) and the interfaces between them. The tool turns that into harnesses: which wires, on which pins, in which connectors. It checks the result, writes a build workbook and lists for every harness, and keeps a record of every release.
 
 Your design is the source of truth. Everything else (harnesses, build workbooks, lists, drawings) is generated from it and can be generated again at any time.
 
@@ -14,12 +14,12 @@ Seven words carry most of the meaning:
 
 | Word | What it is |
 | --- | --- |
-| **Unit** | A box with connectors on it: the computer `OBC1`, the power unit `PCDU1`, the wheel `RW1`. |
-| **Interface** | One connection between two units, of a type such as RS-422 or primary power. This is what you add. |
+| **Device** | A box with connectors on it: the computer `OBC1`, the power unit `PCDU1`, the wheel `RW1`. |
+| **Interface** | One connection between two devices, of a type such as RS-422 or primary power. This is what you add. |
 | **Connector, pin** | A plug or socket, and one contact of it. A pin carries one signal. |
-| **Harness** | A bundle of wires with connectors that carries interfaces between units. Generated; its wires can be edited and wires of your own added. You can also make one by hand, with no interface (section 7). |
+| **Harness** | A bundle of wires with connectors that carries interfaces between devices. Generated; its wires can be edited and wires of your own added. You can also make one by hand, with no interface (section 7). |
 | **Wire** | One conductor between two pins, with a gauge, a part and a length. |
-| **Zone** | A lane of the diagram (a panel or compartment) that units sit in. |
+| **Zone** | A lane of the diagram (a panel or compartment) that devices sit in. |
 | **Placeholder** | A value nobody has entered yet. The tool never invents engineering numbers. |
 
 The starter library follows one baseline:
@@ -59,11 +59,11 @@ Version 1.0.0 has five examples. If `harness-design-studio new --list` shows onl
 
 | Example | What it is |
 | --- | --- |
-| `blank` | An empty project with the starter parts and interface types and no units. Use it for a real design: the empty diagram has the button **Add a device**. |
-| `first-steps` | Three units, a power link and an RS-422 link. Nothing is generated yet: start here. |
-| `minimal-satellite` | Seven units, nominal only: power, computer, radio, wheel and sun sensor. Adapt it. |
-| `small-satellite` | 14 units with nominal and redundant chains. Generate it to see a realistic system. |
-| `flatsat` | A complete bench: 23 flight and ground units, generated, with example numbers. |
+| `blank` | An empty project with the starter parts and interface types and no devices. Use it for a real design: the empty diagram has the button **Add a device**. |
+| `first-steps` | Three devices, a power link and an RS-422 link. Nothing is generated yet: start here. |
+| `minimal-satellite` | Seven devices, nominal only: power, computer, radio, wheel and sun sensor. Adapt it. |
+| `small-satellite` | 14 devices with nominal and redundant chains. Generate it to see a realistic system. |
+| `flatsat` | A complete bench: 23 flight and ground devices, generated, with example numbers. |
 
 `harness-design-studio templates my-templates` copies templates for your own data: CSV files for interfaces, parts and lengths, a KiCad netlist, a CI script and a review checklist. The demo engineering values in it are for learning only.
 
@@ -77,12 +77,14 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 | **Top bar** | The project name, *Saved* or *Unsaved changes*, the revision, a short model hash, where you are, **Undo** and **Redo**, **Guided** and **Expert**, **Show panels** (Simple workspace only), **Search** (Ctrl+K), the three steps **Generate** (the one blue button), **Check** and **Release…**, then **Export…** and a status chip. The tooltip of a step says what is done and what comes next. |
 | **Banner** | Appears under the top bar when something needs you: the plans or the exported files are out of date (buttons **Generate** and **Export…**), or a generate, export or check failed (**Try again**). A change that is refused because a harness is released stays on screen as a message over the diagram, with **Start new revision…**, until the next change goes through. |
 | **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6). Each area shows its own: Model has Diagram and Devices; Checks, Drawings (the Harness tab), Outputs (the Lists tab) and Revisions (the Releases tab) have one each. |
-| **Left panel** | Closed in the Simple workspace until you press **Show panels**. The **Project** tab: a tree of units, interfaces, harnesses, parts, interface types, configuration files and imports, with a filter and an **Add** button. The **Units** tab (Ctrl+Shift+J) and the **Interfaces** tab (Ctrl+Shift+T): every unit and every interface as a table that works like a spreadsheet (see below). |
+| **Left panel** | Closed in the Simple workspace until you press **Show panels**. The **Project** tab: a tree of devices, interfaces, harnesses, parts, interface types, configuration files and imports, with a filter and an **Add** button. The **Device list** tab (Ctrl+Shift+J) and the **Interfaces** tab (Ctrl+Shift+T): every device and every interface as a table that works like a spreadsheet (see below). |
 | **Right panel** | Closed in the Simple workspace too. **Inspector** (the fields of what you selected, and where it is used), **Why** (the reasons for a choice) and **Problems** (the problem cards, with a **To do** list above them). |
-| **Problems panel** | Closed until you press **Problems (n)** in the status bar (or Ctrl+Shift+M, **View > Problems panel**): every open problem with its severity, rule, object and message; click one to go to the object. |
-| **Status bar** | What runs in the background (with **Cancel**) or the last check, the project folder, **Problems (n)**, *Offline*, a link *n values pending · n rules not checked*, and the zoom level. The model hash, the rule count and *Generated at model …* are in the tooltip of the counts. The Simple workspace shows only the save state, the running job, *Offline* and the project path. |
+| **Problems panel** | Closed until you press **Problems (n)** in the status bar (when that button is shown) or choose **View > Problems panel** (Ctrl+Shift+M): every open problem with its severity, rule, object and message; click one to go to the object. |
+| **Status bar** | What runs in the background (with **Cancel**) or the last check, the project folder, **Problems (n)**, *Offline*, a link *n values pending · n rules not checked*, and the zoom level (the button, the count and the link are problem notices, see below). The model hash, the rule count and *Generated at model …* are in the tooltip of the counts. The Simple workspace shows only the save state, the running job, *Offline* and the project path. |
 
 The status chip in the top bar says one thing: *Up to date*, *Plans out of date* (the diagram changed after Generate), *Outputs out of date* (the design changed after the last export), *Not generated*, or the running job (*Generating…*, *Exporting…*, *Checking…*). Colour is never the only sign: every state has an icon and a word, and the two states for "nothing known yet" have a pattern. **Pending** (dotted) is a value nobody has entered; **Not checked** (hatched) is a rule that could not run. Neither is a pass, and neither is empty.
+
+**Show problem notices** (View menu, and Settings > Editing) switches off, in one step, what shows problems without being asked: **Problems (n)**, the count on the Problems tab, the status chip, the chip and badges on the diagram, the pending-values link and the *out of date* banner. It is on in Full and off in Simple, for each workspace. **Check**, the Checks tab, the Problems panel and the read-only, locked, damaged-file and sample banners always stay.
 
 Panels you hide or move are remembered for each project; **View > Reset layout** puts them back. In a small or narrow window the tool hides panels so the diagram stays large, and says so.
 
@@ -92,7 +94,7 @@ Panels you hide or move are remembered for each project; **View > Reset layout**
 
 The three steps in the top bar go in order. **Generate** builds the harnesses, **Check** (F5) runs the design rules, **Release…** locks a harness as a numbered revision. A step that has to wait says what to do first, for example *generate the harnesses first* or *check the design first*. When you look at part of a released harness, a banner says so and offers **Start new revision…** and **Show the revisions**.
 
-The **Units** and **Interfaces** tables work like a spreadsheet:
+The **Device list** and **Interfaces** tables work like a spreadsheet:
 
 - **Enter** or **F2** edits the selected cell, **Esc** keeps the old text, and **Ctrl+C** copies the selected cells.
 - **Ctrl+V** pastes a block of cells copied from Excel. It is one undo step; cells that cannot take a value (a read-only column, or past the end of the table) are left out and counted in the message.
@@ -107,7 +109,7 @@ The **Problems panel** (Ctrl+Shift+M, or **Problems (n)** in the status bar) lis
 Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every setting takes effect at once and is kept for the next start; the page follows the View menu and Ctrl+K, which change the same settings.
 
 - **Appearance**: **Theme** (*Follow the system*, *Light* or *Dark*), **Interface size** (100, 125, 150 or 200 %; it takes about a second to apply) and **Reduce motion**, which turns off the fades and slides of menus, lists and tooltips. The interface uses the bundled fonts Inter and JetBrains Mono.
-- **Editing**: **Workspace** (*Simple* or *Full*), **Mode** (*Guided* or *Expert*), **Snap units to the grid** and **Show every link label**.
+- **Editing**: **Workspace** (*Simple* or *Full*), **Mode** (*Guided* or *Expert*), **Snap devices to the grid** and **Show every link label**.
 - **Project**: **Open the engineering values…**, the window of section 6.
 - **Keyboard shortcuts**: every key of the window, with a box **Filter the shortcuts…**. They are fixed and cannot be changed.
 - **About**: the version, the Python, Qt and PySide6 versions, and where your settings are kept. **Help > About** opens this section.
@@ -118,11 +120,11 @@ Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every sett
 At a first run the editor is in the Simple workspace and a project opens on the **Next step** page (section 5). Press **Model** in the rail (or Ctrl+1) to get to the diagram, and **Show panels** in the top bar for the Project tab and the Inspector. The steps below work in both workspaces.
 
 1. Start the app. The sample project opens with a short tour; skip it or follow it. The tour leaves out a step whose panel is hidden (a small window or a high interface size), records that it was shown however you close it, and can be started again with **Help > Replay the tour**.
-2. **File > New project…** opens one window: choose an empty folder, give the project a name, and optionally pick an example (section 3; `first-steps` has three units, start there). A problem with the folder or the name is written under the field. **File > New project from an example…** is the same window with the first example ticked.
-3. Add units: press **Add** in the Project tab and choose **Unit…**, or use **Edit > Add unit** (the Project tab is closed in the Simple workspace, so use the menu there). Pick *Computer*, then add a *Power unit* and an *Actuator (wheel)*. In a project with no unit the empty diagram also has the button **Add a device**, which adds a unit whose connectors you define yourself (see The Devices tab).
-4. Connect them. Press **C** (or the **Connect** button above the diagram; the arrow beside it lists the interface types, as does **Edit > Connect with**), pick an interface type such as *RS-422*, then click the first unit and the second. Units that cannot take this interface are greyed out, with the reason written next to them. **Ctrl+I** (or **Add > Interface…**) opens a form for the same thing.
+2. **File > New project…** opens one window: choose an empty folder, give the project a name, and optionally pick an example (section 3; `first-steps` has three devices, start there). A problem with the folder or the name is written under the field. **File > New project from an example…** is the same window with the first example ticked.
+3. Add devices: press **Add** in the Project tab, or use **Edit > Add device** (the Project tab is closed in the Simple workspace, so use the menu there). Pick *Computer*, then add a *Power unit* and an *Actuator (wheel)*. In a project with no device the empty diagram also has the button **Add a device**, which asks for a name first and adds a device whose connectors you define yourself (see The Devices tab).
+4. Connect them. Press **C** (or the **Connect** button above the diagram; the arrow beside it lists the interface types, as does **Edit > Connect with**), pick an interface type such as *RS-422*, then click the first device and the second. Devices that cannot take this interface are greyed out, with the reason written next to them. **Ctrl+I** (or **Add > Interface…**) opens a form for the same thing.
 5. Look at **Problems** (right panel, or the Problems panel at the bottom, Ctrl+Shift+M). Each card says what is wrong, why it matters and how to fix it. Many have a one-click **Fix**. The **Checks** tab lists all 35 design rules with their result (section 6).
-6. The top of the **Problems** tab has a **To do** list of what is left to do; a click on a line shows the unit or interface.
+6. The top of the **Problems** tab has a **To do** list of what is left to do; a click on a line shows the device or interface.
 7. Press **Generate** in the top bar (**Generate harnesses**, Ctrl+G). A preview shows what will be added; nothing changes until you press **Apply**. **Undo** takes it all back. The **Harness** tab opens (the Drawings area).
 8. In the **Harness** tab pick a harness: its connectors and pins, its wires, a drawing (zoom with the wheel, change sheet with **Previous sheet** and **Next sheet**) and *Why* for the selected wire, connector or pin. The **Lists** tab (the Outputs area) shows the wire list, pinouts, BOM and test tables.
 9. Save with **Ctrl+S**.
@@ -132,9 +134,9 @@ On a power interface set **Max current (A)** in the Inspector; without it the wi
 
 ### The Devices tab
 
-The **Devices** tab (Ctrl+6) shows one unit down to each pin. Pick the unit on the diagram or in the project tree, or in the box at the top of the tab. The header gives its state (*Draft*: no interface ends on it, *In use*, *Locked* by a released harness, or *Read-only*), the number of connectors, pins and signals, and two buttons: **Duplicate** (the same as Edit > Duplicate) and **Export pinout…**.
+The **Devices** tab (Ctrl+6) shows one device down to each pin. Pick the device on the diagram or in the project tree, or in the box at the top of the tab. The header gives its state (*Draft*: no interface ends on it, *In use*, *Locked* by a released harness, or *Read-only*), the number of connectors, pins and signals, and two buttons: **Duplicate** (the same as Edit > Duplicate) and **Export pinout…**.
 
-Left, the list of the unit's connectors; right, the connector's part, gender, keying and what it carries, and how its pins are allocated: *Automatic* (Generate puts the signals on free pins) or *Fixed pinout* (the signals go to the pins of their own name).
+Left, the list of the device's connectors; right, the connector's part, gender, keying and what it carries, and how its pins are allocated: *Automatic* (Generate puts the signals on free pins) or *Fixed pinout* (the signals go to the pins of their own name).
 
 Below, the pin table: pin, signal, mode (*Free*, *Fixed*, *Locked*), interface, direction and class (taken from the interface type of the signal, empty when no type has that signal), the wire and a state. The *Function* column is free text for what the pin does (since 1.4.0). **Contact** adds the contact size and the termination (*crimp* or *solder*). The connector card has a *Label* field: text that `labels.csv` prints for the connector.
 
@@ -142,13 +144,13 @@ With **Contact** on there is one more column, **Cable contact** (since 1.7.0): t
 
 Under it the notes about the connector, for example a signal that no interface type has, or *CANH* without *CANL* on a fixed pinout; a double-click selects the pin the note is about.
 
-At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv` for this unit; **Export pinout…** saves them as a CSV file or an Excel workbook.
+At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv` for this device; **Export pinout…** saves them as a CSV file or an Excel workbook.
 
-**Save to library…** writes the unit with its connectors, pinouts, parts and interface types to a *device library file* (JSON; an existing file is added to), and **Add from library…** adds devices from such a file to this project (since 1.4.0). Nothing in the project is replaced: a taken ID gets the next free one (`GYRO1-2`), and a part or interface type the project already has stays as it is. Adding is one undo step.
+**Save to library…** writes the device with its connectors, pinouts, parts and interface types to a *device library file* (JSON; an existing file is added to), and **Add from library…** adds devices from such a file to this project (since 1.4.0). Nothing in the project is replaced: a taken ID gets the next free one (`GYRO1-2`), and a part or interface type the project already has stays as it is. Adding is one undo step.
 
 #### Defining a device
 
-- **Edit > Add unit > Device…** (Ctrl+Shift+N; also **Add** in the Project tab, and the button **Add a device** on an empty diagram) adds an empty device in a free slot and opens the Devices tab with its name selected. Type the name; the subsystem and the chain are in the header.
+- **Edit > Add device > Device…** (Ctrl+Shift+N; also **Add** in the Project tab, and the button **Add a device** on an empty diagram) opens the window **Add device**: type the **Name** (for example *Star tracker*), accept or change the **ID** it suggests (`STAR1`; once you edit it, it stops following the name) and pick the **Subsystem**. **Add device** adds an empty device in a free slot and opens the Devices tab. The kinds in **Edit > Add device** need no name.
 - Under the connector list pick a part (type to search; the first entry is **New part…**, which also makes the mating half) and press **Add connector** (Ctrl+Shift+C goes to the picker; Enter adds). The pins are numbered from the part's pin count. **Delete connector** shows what it touches first.
 - Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down; Esc cancels. A pin name is checked while you type. **Add pin** (Insert) adds a pin after the current one; Delete clears the signal of the selected pins; **Delete** (Shift+Delete) deletes pins after a line that says what they touch; Space cycles the mode (*Free*, *Fixed*, *Locked*); Ctrl+V pastes cells copied from a spreadsheet, either a column from the current cell down or a table with a header row (*Pin*, *Signal*, *Mode*, *Contact size*, *Termination*, *Cable contact*).
 - **Fill…** (Ctrl+L) puts the signals of an interface type on the selected pins in order (for example *CANH*, *CANL*). **Assign…** (Ctrl+Enter) locks the selected pins to an interface that ends on this device. Both are one undo step; **New interface type…** is in the dialog.
@@ -161,44 +163,44 @@ At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv`
 
 **Simple or Full.** The workspace is a setting in the View menu and under **Settings > Editing**. A first run (a settings file with nothing stored yet) gets *Simple*, which opens a project on the Next step page. A settings file that already holds values keeps *Full*, which opens a project where it opened before.
 
-Simple shows less. The project tree, the inspector and the Problems panel start closed (**Show panels** in the top bar opens the tree and the inspector together), the minimap and the legend are off, the status bar keeps the save state, the running job, *Offline* and the path, and the tools above the diagram are **Select**, **Connect**, **Add device** and **More**. **Home** is not in the rail. Nothing is removed: each item keeps its menu entry (and its shortcut, where it has one), and Ctrl+K finds it. Each workspace keeps its own layout.
+Simple shows less. The project tree, the inspector and the Problems panel start closed (**Show panels** in the top bar opens the tree and the inspector together), the minimap and the legend are off, the status bar keeps the save state, the running job, *Offline* and the path, and the tools above the diagram are **Select**, **Connect**, **Add device** and **More**. **Home** is not in the rail. Nothing is removed: each item keeps its menu entry (and its shortcut, where it has one), and Ctrl+K finds it. Each workspace keeps its own layout. The problem notices are off in Simple.
 
 The workspace is not the mode. Guided and Expert change only how much the diagram shows:
 
-- **Guided** (default): you work with units and interfaces. The tool chooses connectors and pins and marks its choices as *auto-filled* until you confirm them.
-- **Expert**: you also see each connector of a unit and can choose the exact connector for every end of an interface.
+- **Guided** (default): you work with devices and interfaces. The tool chooses connectors and pins and marks its choices as *auto-filled* until you confirm them.
+- **Expert**: you also see each connector of a device and can choose the exact connector for every end of an interface.
 
 Switching modes never changes your data.
 
 ### Reading a dense diagram
 
-A system with many units has many links. The editor makes them readable in these ways:
+A system with many devices has many links. The editor makes them readable in these ways:
 
 - **Pictures tell the kinds apart.** A link carries the picture of its kind: a bolt for power, a ground symbol, a bus with end stops for CAN, two arrows for a differential pair (RS-422, LVDS), a bus with drops for RS-485, a node with branches for SpaceWire, two boxes for Ethernet, a sine wave for an analog signal, a square wave for a discrete signal, a spark for a pyro line, a ring for RF coax. A link with twisted-pair signals is drawn as two lines, a redundant link is dashed. The legend (button at the bottom left of the diagram; **View > Show legend**) shows the pictures the project uses.
-- **Connectors are drawn as they look**: a flange with screw holes and the shell in front of it: a tapered D for a D-sub, a rounded block for a Micro-D, a round shell, an RJ45 plug, a coax ring. The size and the dots follow the pin count, which is also written as a number. **Gender is black or white**: a male connector (pins) is drawn solid, a female connector (sockets) as an outline, and a connector whose gender is not set with a dashed outline; the legend says so. The harness drawings and the mating matrix state the gender of every cable connector in words. In Expert mode a dashed line splits the unit into a left side and a darker right side (ports sit on the edge of their side), and every port reads from its edge inwards: the designator (J01), the connector picture and the pin count. In Guided mode a unit shows its connectors as small pictures. What a link carries is drawn on the link.
+- **Connectors are drawn as they look**: a flange with screw holes and the shell in front of it: a tapered D for a D-sub, a rounded block for a Micro-D, a round shell, an RJ45 plug, a coax ring. The size and the dots follow the pin count, which is also written as a number. **Gender is black or white**: a male connector (pins) is drawn solid, a female connector (sockets) as an outline, and a connector whose gender is not set with a dashed outline; the legend says so. The harness drawings and the mating matrix state the gender of every cable connector in words. In Expert mode a dashed line splits the device into a left side and a darker right side (ports sit on the edge of their side), and every port reads from its edge inwards: the designator (J01), the connector picture and the pin count. In Guided mode a device shows its connectors as small pictures. What a link carries is drawn on the link.
 - **Numbers appear when they exist.** A power link shows e.g. `28 V · 5 A` beside its picture, but only what somebody entered; nothing is filled in. In a diagram of more than 30 links the numbers show for the selected, focused or hovered link; *View > Show all link labels* shows them everywhere. Hover a link to read its name, type, values and ends in words.
-- **Click a unit or a link.** Only its links stay in full colour; everything else fades. Click the empty background or press Escape to see everything again. This is the quickest way to answer "what is connected to this?".
+- **Click a device or a link.** Only its links stay in full colour; everything else fades. Click the empty background or press Escape to see everything again. This is the quickest way to answer "what is connected to this?".
 - **Show** (the list at the right end of the Model tab bar, *All interfaces* by default; **More > Show only** in the Simple workspace) fades everything except one signal class, one connector or one bundle. It can be combined with a selection.
-- **Links run in lines.** Each link leaves on the edge that faces the unit at its other end, goes sideways into the gutter between lanes, runs up or down in its own track, and enters the other unit sideways. Links between the same two lanes run side by side, ordered so that they cross as little as possible.
-- **Arrange diagram** (View menu, Ctrl+Shift+L, or the button at the right end of the Model tab bar; **More** in the Simple workspace) puts the units in order and keeps room for each one: a unit with many connectors is tall in Expert mode, and the units around it make way. One undo step restores the old positions.
+- **Links run in lines.** Each link leaves on the edge that faces the device at its other end, goes sideways into the gutter between lanes, runs up or down in its own track, and enters the other device sideways. Links between the same two lanes run side by side, ordered so that they cross as little as possible.
+- **Arrange diagram** (View menu, Ctrl+Shift+L, or the button at the right end of the Model tab bar; **More** in the Simple workspace) puts the devices in order and keeps room for each one: a device with many connectors is tall in Expert mode, and the devices around it make way. One undo step restores the old positions.
 
-Zoomed far out, a unit shows its ID and each kind of link its own dash pattern and a small picture; zoom in to see pictures and numbers.
+Zoomed far out, a device shows its ID and each kind of link its own dash pattern and a small picture; zoom in to see pictures and numbers.
 
 ### Marks on the diagram
 
-- **Problems, warnings, values to enter, not checked.** A unit or link that has open findings shows a small badge with an icon and a count: problems, warnings, values still to enter (*V ? · A ?* on a power link), and *not checked*. Click a badge to select the object; its problems are in the Problems list. Hover a badge to read what it counts. Before the first check has finished every object shows *not checked*, so a clean card is never mistaken for a passed one.
+- **Problems, warnings, values to enter, not checked.** A device or link that has open findings shows a small badge with an icon and a count: problems, warnings, values still to enter (*V ? · A ?* on a power link), and *not checked*. Click a badge to select the object; its problems are in the Problems list. Hover a badge to read what it counts. Before the first check has finished every object shows *not checked*, so a clean card is never mistaken for a passed one.
 - **Locks.** An object that a released harness holds shows a lock and the harness and revision (*W001 A*), and a faint tint. The tooltip says who locks it and what stays editable.
 - **Auto-filled.** A card with connectors the tool chose shows a dashed *n auto* chip, in Guided mode too; hover it to read why they were chosen and that nobody has confirmed them yet.
 - **State of the harnesses.** A chip in the top left of the diagram says *Harnesses out of date*, *not generated yet*, *Outputs out of date*, *not exported yet* or *up to date*.
-- **Card pictures and tags.** A card shows a picture of its kind of unit and the number of connectors (*12 conn*). FLIGHT or GROUND tags are a viewer setting: right-click a unit and choose **Tag zone … as**; they are not saved in the project.
+- **Card pictures and tags.** A card shows a picture of its kind of device and the number of connectors (*12 conn*). FLIGHT or GROUND tags are a viewer setting: right-click a device and choose **Tag zone … as**; they are not saved in the project.
 
 ### Moving around and selecting
 
-- **Click** selects one item. **Shift+click** or **Ctrl+click** adds or removes, a **drag on the background** draws a rectangle, **Ctrl+A** selects all. With several units selected the Inspector shows what they have in common; **Delete**, **Duplicate** (Ctrl+D), **Align** and **Space evenly** (Edit menu) act on all of them as one undo step.
+- **Click** selects one item. **Shift+click** or **Ctrl+click** adds or removes, a **drag on the background** draws a rectangle, **Ctrl+A** selects all. With several devices selected the Inspector shows what they have in common; **Delete**, **Duplicate** (Ctrl+D), **Align** and **Space evenly** (Edit menu) act on all of them as one undo step.
 - **Ctrl+wheel** zooms at the pointer, the wheel scrolls, **Shift+wheel** scrolls sideways, the **middle button** or **Space** with a drag pans. **F** fits everything, **Shift+F** zooms to the selection, **Ctrl+0** shows 100 %. The zoom level is at the right of the status bar.
-- **Ctrl+F** finds a unit or link by ID, name, connector or type and marks every match; Enter goes to the next. **Double-click** a link or unit (or press Enter on it) opens it in the **Harness** tab.
+- **Ctrl+F** finds a device or link by ID, name, connector or type and marks every match; Enter goes to the next. **Double-click** a link or device (or press Enter on it) opens it in the **Harness** tab.
 - **Right-click** shows a menu with the same actions as the menus; an entry that cannot be used stays in the menu, greyed out, with the reason.
-- **View > Show legend**, **Show overview map** and **Snap to grid** switch overlays and the grid; hold **Alt** while dragging to place a unit freely.
+- **View > Show legend**, **Show overview map** and **Snap to grid** switch overlays and the grid; hold **Alt** while dragging to place a device freely.
 
 ## 6. Problems, checks and waivers
 
@@ -214,20 +216,20 @@ The **Checks** tab (Ctrl+4) has one row for each rule:
 - **Result** is a chip with an icon and a word: *Pass*, *Fail*, *Not checked* (the rule could not run) or *Pending*. *Pass (placeholder values)* means the rule passed on values nobody has reviewed. Click the **Result** header to put the worst first.
 - **Fix all (n)** (top right of the tab) applies the one-click fix of every open problem that has one, as one undo step; n is how many there are, and its tooltip says which kinds of fix (for example *Choose connectors automatically (2)*). It never confirms a connector the tool chose: confirming says that a person looked at it, so those stay open for you (the *Confirm connectors* button on the problem itself does it). It is greyed out, with the reason in its tooltip, when n is 0 or the project is read-only. A fix that a released harness locks is left out and named in the message; the rest are done. Connectors the tool chooses this way are marked *auto* until you confirm them.
 - Select a rule to see what it found, what it needs, and the requirement IDs it serves. Press Enter on an offending object, or double-click it, to show it on the diagram. Ctrl+F filters the rules.
-- A rule that is *not checked* names the value it waits for and has **Supply value…**. It opens **Engineering values**: every value the rules need, grouped by config file, with its unit, a *placeholder* toggle and the reason when a value is refused. **Apply** (Ctrl+Enter) sets all your changes as one undo step and the checks run again. Values locked by a released harness are shown disabled with the reason. The tool never supplies a number itself. **Design > Engineering values…** opens the same window.
+- A rule that is *not checked* names the value it waits for and has **Supply value…**. It opens **Engineering values**: every value the rules need, grouped by config file, with its device, a *placeholder* toggle and the reason when a value is refused. **Apply** (Ctrl+Enter) sets all your changes as one undo step and the checks run again. Values locked by a released harness are shown disabled with the reason. The tool never supplies a number itself. **Design > Engineering values…** opens the same window.
 
 ## 7. Generating harnesses
 
 - **Wire colours**: *Edit > Wire colours...* sets one colour for each signal (PWR, RTN, CANH ...), from the IEC 60757 colours. The wires take them the next time you generate, the *Colour* column of the wire table in the **Harness** tab and of the wire list in **Lists** shows them, and the drawings draw them with the colour code as text. Nothing is preset: a signal with no colour is drawn grey. A wire between two different signals (`TX+/RX+`) takes the colour of the first.
 
-- By default one harness is made for each pair of unit connectors. Nominal and redundant chains, and pyro lines, never share a harness.
+- By default one harness is made for each pair of device connectors. Nominal and redundant chains, and pyro lines, never share a harness.
 - Pins are chosen by rules (power first, pairs side by side, pins you locked in the harness file never moved). **Why is it like this?** shows the reason for each choice.
 - Generating again keeps IDs, the wires you edited and the pins you locked, never touches released harnesses, and shows a report of what was added, changed and removed.
 - **Edit wire** (since 1.4.0): in the **Drawings** area pick one or several wires and open the **Edit wire** tab beside **Why**. It sets the gauge, type (a wire part of the library), colour and length, the strip length at each end (**Strip A (mm)**, **Strip B (mm)**; since 1.7.0), a label that the wire labels print instead of the signal name, and a note. **Apply** (Ctrl+Enter) changes only the fields you touched; gauge, type, colour and length lock the wire so Generate keeps them, strip lengths, label and note are always kept. **Reset to generated** gives the wires back to generation. The same tab draws wires of your own (**New wire**: a connector and pin at each end; Generate keeps them, and you can move their ends or delete them), allows several wires on one pin (the design rule *Several wires on one pin* names them) and twists or shields selected wires together (**Group**: twisted pair, shielded pair, quad, coax or overall shield; **Ungroup** takes a group you made apart). At the bottom the **Labels** section gives the harness and a cable connector a label for `labels.csv` (a box connector has a **Label** field on its card in the **Devices** tab), and the **Devices** pin table has a **Function** column for your own words about what a pin does. A released harness cannot be edited.
 
-- **New harness** (since 1.5.0): a harness needs no interface. In the **Drawings** area press **New harness…** (or Edit > New harness…, Ctrl+Shift+H) and type a name. The **Connectors** tab beside the drawing adds its cable connectors (a part of the library, optionally plugging into a connector of a unit, optionally with pin names of your own), sets the function, termination, contact size and contact of a pin, and deletes a connector that has no wires. Draw its wires in **Edit wire**. Generate leaves such a harness as it is; one that Generate made takes no connector here.
+- **New harness** (since 1.5.0): a harness needs no interface. In the **Drawings** area press **New harness…** (or Edit > New harness…, Ctrl+Shift+H) and type a name. The **Connectors** tab beside the drawing adds its cable connectors (a part of the library, optionally plugging into a connector of a device, optionally with pin names of your own), sets the function, termination, contact size and contact of a pin, and deletes a connector that has no wires. Draw its wires in **Edit wire**. Generate leaves such a harness as it is; one that Generate made takes no connector here.
 
-- **Build data** (since 1.7.0): what a technician needs and the design does not give. The strip length of each wire end is in the **Edit wire** tab; **Apply strip lengths to all wires of this harness** fills a whole harness. The contact on a pin of a generated harness is set on the unit's pin (**Devices** tab, **Cable contact**); on a harness made by hand it is the **Contact** of the pin form in the **Connectors** tab (**Contact for all pins of this connector** sets a whole connector). The crimp tool belongs to a contact part: click the part in the project tree and use **Crimp tool** and **Set tool** in the Inspector.
+- **Build data** (since 1.7.0): what a technician needs and the design does not give. The strip length of each wire end is in the **Edit wire** tab; **Apply strip lengths to all wires of this harness** fills a whole harness. The contact on a pin of a generated harness is set on the device's pin (**Devices** tab, **Cable contact**); on a harness made by hand it is the **Contact** of the pin form in the **Connectors** tab (**Contact for all pins of this connector** sets a whole connector). The crimp tool belongs to a contact part: click the part in the project tree and use **Crimp tool** and **Set tool** in the Inspector.
 - The **Accessories** tab (right of **Connectors**) lists the sleeving, heat shrink, labels and backshells of a harness with ID, kind, part, what they go on, position in words, length of one piece, quantity and note. **Add accessory** takes the next free ID (ACC-001, ...); **Change accessory**, **Delete accessory** and **New accessory** do what they say. It is off for a released harness. Nothing is computed from any of these values and the tool sets none of its own; `harness-design-studio import-build-data` reads them from a table.
 - A wire gauge stays **pending** until the derating values exist and the lengths are known (section 11, What an engineer must fill in). The tool never guesses an engineering value.
 
@@ -241,7 +243,7 @@ The **build workbook** is the file to build a harness from. **Start here** says 
 
 The build data shows in the tables only where it is used: the wire list gets *Strip A (mm)* and *Strip B (mm)*, the pinouts get *Contact*, a harness with accessories gets `accessories.csv`, and the bill of materials counts the contacts used on pins and the accessory parts (pieces as *ea*, parts with a length as metres *m*).
 
-**Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window. It shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied.
+**Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window; a project that has harnesses but no folder yet first asks where to save it, with a folder chooser. The window shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied.
 
 The harness drawings are written only while **Include the PDF drawings** is ticked; it starts ticked when the last export into the folder had them. A problem found by the independent check, or a write error, stays in a notice in the window and nothing is written. The project must be saved to a folder first.
 
@@ -261,7 +263,7 @@ Outputs are checked independently before they are written (every cell of the tab
 
 Who changed the design last: when the project folder is inside a Git repository, a line under the buttons names the last commit of that repository (who, when, its first line, short id and branch). The tool reads it from the repository's files; it does not run Git, needs no network and keeps no e-mail address. It is the last commit of the whole repository, and changes made since are not shown.
 
-The **Releases** tab shows one timeline of every review, release and new revision, with a filter for one harness and chips for the event and the baseline. Under it, **Compare revision … with …** lists what differs between two revisions, or a revision and the working design, grouped by kind with counts; **Mark on diagram** marks the changed units and interfaces and **Clear marks** removes the marks. In the differences, each row is tinted by the kind of change, and a line says what the released harness locks.
+The **Releases** tab shows one timeline of every review, release and new revision, with a filter for one harness and chips for the event and the baseline. Under it, **Compare revision … with …** lists what differs between two revisions, or a revision and the working design, grouped by kind with counts; **Mark on diagram** marks the changed devices and interfaces and **Clear marks** removes the marks. In the differences, each row is tinted by the kind of change, and a line says what the released harness locks.
 
 The **More** menu of the **Harness** tab (Drawings) has **Changes…**, **Change log…** and **Delete harness** (not possible once the harness is released; a generated harness comes back the next time you generate); the same three are in the Design menu and in the context menu of a harness in the Project tree.
 
@@ -293,12 +295,12 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio config DIR [--ampacity-csv FILE] [--apply-profile NAME]` | list missing or invalid engineering values; load a current-by-gauge table; fill unset values from a standard profile |
 | `harness-design-studio import-parts DIR FILE --approved VALUE ...` | import an approved-parts list; you say what the approval values mean |
 | `harness-design-studio import-lengths DIR FILE [--unit mm]` | import routing segment lengths from a table |
-| `harness-design-studio import-netlist DIR FILE --unit U [--prefix J] [--connector J1=ID] [--part J1=PART] [--signal-map NAME=SIGNAL\|FILE]` | read connector pinouts of a unit from a KiCad netlist (.net or .xml); the pins become fixed |
+| `harness-design-studio import-netlist DIR FILE --device D [--prefix J] [--connector J1=ID] [--part J1=PART] [--signal-map NAME=SIGNAL\|FILE]` | read connector pinouts of a device from a KiCad netlist (.net or .xml); the pins become fixed |
 | `harness-design-studio import-build-data DIR FILE [--dry-run]` | import strip lengths, pin contacts, accessories or the crimp tool of parts from a table (CSV, TSV, JSON or XLSX); the kind is told by the column headings; one refused row stops the whole import (exit 1, nothing changed) |
-| `harness-design-studio import-pinout DIR FILE --unit U [--new-device NAME] [--default-part PART] [--part J1=PART] [--column FIELD=HEADING] [--replace]` | define the connectors and pins of a device from a table (CSV or XLSX), one pin per row |
-| `harness-design-studio export-pinout DIR --unit U [-o FILE]` | write one device's pinout (the rows of `system/box_pinouts.csv` for it) as CSV on the screen, or to a .csv or .xlsx file |
-| `harness-design-studio export-devices DIR FILE --unit U [--unit U2 ...]` | save devices with their connectors, pinouts, parts and interface types to a device library file (added to when it exists) |
-| `harness-design-studio import-devices DIR FILE [--unit U] [--list] [--dry-run]` | add devices from a device library file; a taken ID gets the next free one, nothing in the project is replaced |
+| `harness-design-studio import-pinout DIR FILE --device D [--new-device NAME] [--default-part PART] [--part J1=PART] [--column FIELD=HEADING] [--replace]` | define the connectors and pins of a device from a table (CSV or XLSX), one pin per row |
+| `harness-design-studio export-pinout DIR --device D [-o FILE]` | write one device's pinout (the rows of `system/box_pinouts.csv` for it) as CSV on the screen, or to a .csv or .xlsx file |
+| `harness-design-studio export-devices DIR FILE --device D [--device D2 ...]` | save devices with their connectors, pinouts, parts and interface types to a device library file (added to when it exists) |
+| `harness-design-studio import-devices DIR FILE [--device D] [--list] [--dry-run]` | add devices from a device library file; a taken ID gets the next free one, nothing in the project is replaced |
 
 A script that builds everything: `harness-design-studio check DIR`, `harness-design-studio generate DIR`, `harness-design-studio verify DIR`, `harness-design-studio drc DIR`, `harness-design-studio export DIR`. `harness-design-studio templates FOLDER` copies the templates, and `ci/build.sh` in that folder is this script.
 
@@ -324,7 +326,7 @@ Every import first shows what it would do. A bad row stops the whole import, so 
 | An approved-parts list (CSV, TSV, JSON or XLSX; an InvenTree export file works too: its `IPN` column is the part ID) | **File > Import > Import approved parts…**, or `harness-design-studio import-parts`, saying what your approval values mean |
 | Segment lengths | **File > Import > Import segment lengths…**, or `harness-design-studio import-lengths`, then generate again |
 | A device's pinout as a table (connector, pin, signal ...) | **File > Import > Import device pinout…**, or `harness-design-studio import-pinout`; a new connector needs a library part; a column the project cannot store is named and left out |
-| A unit's connector pinout in KiCad | export a netlist, then **File > Import > Import KiCad netlist…**, or `harness-design-studio import-netlist`; the pins become fixed |
+| A device's connector pinout in KiCad | export a netlist, then **File > Import > Import KiCad netlist…**, or `harness-design-studio import-netlist`; the pins become fixed |
 | A current-by-gauge table | **File > Import > Import engineering values: ampacity table…**, or `harness-design-studio config DIR --ampacity-csv FILE` |
 | Strip lengths, pin contacts, accessories or crimp tools as a table | `harness-design-studio import-build-data` (command line only; templates `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv`) |
 
@@ -359,21 +361,21 @@ The build data (last row) has no window: it is read with the command line (secti
 | Ctrl+I | new interface |
 | Ctrl+1 to Ctrl+6 | the tabs Diagram, Harness, Lists, Checks, Releases, Devices |
 | Ctrl+7, Ctrl+, | Home, Settings |
-| Ctrl+Shift+T, Ctrl+Shift+J | the Interface table and the Unit table (left panel) |
+| Ctrl+Shift+T, Ctrl+Shift+J | the Interface table and the Device list (left panel) |
 | Ctrl+Shift+M | show or hide the Problems panel |
 | Ctrl+Shift+H | new harness by hand (the Connectors tab opens) |
-| Ctrl+Shift+N | add a device (the Devices tab opens) |
+| Ctrl+Shift+N | add a device (asks for its name first; then the Devices tab opens) |
 | F6, Shift+F6 | next and previous panel (diagram, project panel, inspector) |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | undo, redo (the menu names the step, for example *Undo Move PDU2*) |
 | Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, zoom out, real size (100 %) |
 | F, Shift+F | fit the whole diagram, zoom to the selection (when the diagram has the keyboard focus) |
 | Ctrl+wheel | zoom at the pointer; the wheel alone scrolls (Shift+wheel sideways); middle button or Space and drag pan |
-| Ctrl+A, Ctrl+D, Ctrl+F | select everything, duplicate the selected units, find in the diagram (in the diagram) |
+| Ctrl+A, Ctrl+D, Ctrl+F | select everything, duplicate the selected devices, find in the diagram (in the diagram) |
 | Ctrl+Shift+L | arrange the diagram |
 | C, Esc | start the Connect tool, back to Select (Esc also clears the selection) |
-| Tab, Enter or Space | move between units and links; Space selects, Enter also shows the item in the Harness tab |
-| Shift+click, Ctrl+click, drag on the background | add to the selection, take out of it, rubber band (the Project tree takes Shift and Ctrl too: Shift+arrows select several units or interfaces without the mouse) |
-| Shift+arrows | move the selected units |
+| Tab, Enter or Space | move between devices and links; Space selects, Enter also shows the item in the Harness tab |
+| Shift+click, Ctrl+click, drag on the background | add to the selection, take out of it, rubber band (the Project tree takes Shift and Ctrl too: Shift+arrows select several devices or interfaces without the mouse) |
+| Shift+arrows | move the selected devices |
 | Delete | delete the selected items (after showing what it affects; only in the diagram, the Interface table and the Project tree) |
 | Ctrl+C, Ctrl+Shift+C in a table | copy the selected cells as text, with the header row |
 | Enter or F2, Esc, Ctrl+V in a table | edit the cell, keep the old text, paste a block of cells |
@@ -381,7 +383,7 @@ The build data (last row) has no window: it is read with the command line (secti
 | Ctrl+F in Checks or Lists | filter the rules or the rows |
 | F1 | this guide |
 
-Every command is in a menu. The keys above are shown next to the items, and the tooltip of a button names its key. **Settings > Keyboard shortcuts** lists every key of the window and can be filtered. Tab visits every unit and link in the diagram, so use **F6** to leave it.
+Every command is in a menu. The keys above are shown next to the items, and the tooltip of a button names its key. **Settings > Keyboard shortcuts** lists every key of the window and can be filtered. Tab visits every device and link in the diagram, so use **F6** to leave it.
 
 | Menu | Item | What it does |
 | --- | --- | --- |
@@ -394,16 +396,17 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | File | Export… (Ctrl+E) | the Export outputs window (section 8) |
 | File | Quit (Ctrl+Q) | closes the app |
 | Edit | Undo, Redo | steps back and forward through your changes |
-| Edit | Select all, Duplicate, Delete, Find in diagram | work on the selection; Duplicate copies a unit with its connectors but not its links; Delete shows what else goes with it |
-| Edit | Create redundant copy | builds a redundant (backup) copy of the selected unit and its chain |
+| Edit | Select all, Duplicate, Delete, Find in diagram | work on the selection; Duplicate copies a device with its connectors but not its links; Delete shows what else goes with it |
+| Edit | Create redundant copy | builds a redundant (backup) copy of the selected device and its chain |
 | Edit | New interface… (Ctrl+I), Connect (C) | a form for a new interface; the Connect tool |
-| Edit | Align, Space evenly | line up or space out the selected units |
+| Edit | Align, Space evenly | line up or space out the selected devices |
 | Edit | Add zone… | adds a lane to the diagram; asks for its name |
 | Edit | Wire colours... | chooses the wire colour of each signal (section 7) |
-| Edit | Add unit | one item for each kind of unit (computer, power unit, wheel ...), and Device… (Ctrl+Shift+N); **New harness…** (Ctrl+Shift+H) is an item of the Edit menu |
-| Edit | Connect with | one item for each interface type (the arrow beside the Connect button lists the same); then click two units |
+| Edit | Add device | one item for each kind of device (computer, power unit, wheel ...), and Device… (Ctrl+Shift+N); **New harness…** (Ctrl+Shift+H) is an item of the Edit menu |
+| Edit | Connect with | one item for each interface type (the arrow beside the Connect button lists the same); then click two devices |
 | View | Show side panels (Simple workspace only) | opens or closes the Project tab and the Inspector together (the **Show panels** button of the top bar) |
 | View | Simple, Full | the workspace (section 5): a project opens on **Next step** and less is on screen, or it opens where it opened before and everything is there |
+| View | Show problem notices | shows or hides the Problems count, status chip, badges and *out of date* banner; on in Full, off in Simple |
 | View | Guided, Expert | the two modes of section 5 |
 | View | Theme | Follow the system (the default), Light or Dark (also under **Settings > Appearance**) |
 | View | Show overview map, Show legend, Snap to grid | overlays and the grid |
@@ -411,7 +414,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | View | Show all link labels | shows the values (such as `28 V · 5 A`) on every link, not only on the selected one |
 | View | Interface size | makes text and controls larger: 100, 125, 150 or 200 %; the first size follows your screen |
 | View | Zoom in, Zoom out, Fit all, Zoom to 100 %, Zoom to selection | zooms the diagram (Ctrl+=, Ctrl+-, F, Ctrl+0, Shift+F) |
-| View | Arrange diagram | tidies the units inside their lanes; Undo restores them |
+| View | Arrange diagram | tidies the devices inside their lanes; Undo restores them |
 | View | Project, Inspector, Problems panel (Ctrl+Shift+M) | shows or hides each panel |
 | View | Reset layout | puts the panels back where they were at the start |
 | Design | Generate harnesses (Ctrl+G) | builds the harness plans after a preview |
@@ -422,7 +425,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Design | Engineering values… | the window where you type the values the rules wait for (section 6) |
 | Go | Go to Diagram, Harness, Lists, Checks, Releases, Devices (Ctrl+1 to Ctrl+6) | shows that tab |
 | Go | Go to Home (Ctrl+7), Go to Settings (Ctrl+,) | opens that page |
-| Go | Go to Interface table (Ctrl+Shift+T), Go to Unit table (Ctrl+Shift+J) | opens the Interfaces or Units tab of the left panel with the keyboard in the table |
+| Go | Go to Interface table (Ctrl+Shift+T), Go to Device list (Ctrl+Shift+J) | opens the Interfaces or Device list tab of the left panel with the keyboard in the table |
 | Go | Next panel, Previous panel (F6, Shift+F6) | moves the keyboard focus between the panels |
 | Help | User guide (F1) | opens this guide |
 | Help | Search and commands (Ctrl+K) | the command palette |
@@ -431,12 +434,12 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Help | Show project problems | lists what could not be loaded, for a project with problems |
 | Help | About | opens **Settings > About**: the version, the Python, Qt and PySide6 versions and where your settings are kept |
 
-The **Show** list at the right end of the Model tab bar (**More > Show only** in the Simple workspace) fades everything except one signal class (power, data, analog, RF ...), one connector or one bundle (harness), so a large diagram can be read one piece at a time; choose *All interfaces* to see everything again. It changes nothing in the project. The **Interfaces** and **Units** tabs of the left panel list every interface and unit as text, and every control has an accessible name, so they are meant for a screen reader; nobody has tested the tool with a screen reader yet.
+The **Show** list at the right end of the Model tab bar (**More > Show only** in the Simple workspace) fades everything except one signal class (power, data, analog, RF ...), one connector or one bundle (harness), so a large diagram can be read one piece at a time; choose *All interfaces* to see everything again. It changes nothing in the project. The **Interfaces** and **Device list** tabs of the left panel list every interface and device as text, and every control has an accessible name, so they are meant for a screen reader; nobody has tested the tool with a screen reader yet.
 
 ## 15. Glossary
 
-- **Harness**: a bundle of wires with connectors that carries signals between units.
-- **Interface**: a logical connection between two units, for example RS-422 from the computer to a wheel.
+- **Harness**: a bundle of wires with connectors that carries signals between devices.
+- **Interface**: a logical connection between two devices, for example RS-422 from the computer to a wheel.
 - **Nominal / redundant**: the main chain and its backup. They never share a connector or harness.
 - **Auto-filled**: a connector the tool chose; unconfirmed until a person looks at it.
 - **Pending**: a value nobody has entered yet, for example a wire gauge that waits for a derating value. Shown with a dotted chip, never as a number.
@@ -450,4 +453,4 @@ The **Show** list at the right end of the Model tab bar (**More > Show only** in
 - **Cut list**: the sheet that lists the wires in the order they are cut, with their strip lengths and a column to tick.
 - **Accessory**: sleeving, heat shrink, a label or a backshell on a harness, with where it goes in words, a length and a quantity (since 1.7.0).
 - **Contact part** and **crimp tool**: the library part (category contact) a pin uses, and the tool or setting for crimping it, in your words. The tool does not check either.
-- **Fixed pin**: a pin whose signal the unit itself defines (imported from KiCad); generation never moves it.
+- **Fixed pin**: a pin whose signal the device itself defines (imported from KiCad); generation never moves it.

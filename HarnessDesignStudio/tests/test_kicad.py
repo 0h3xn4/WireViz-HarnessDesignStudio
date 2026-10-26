@@ -112,7 +112,7 @@ def test_errors_per_row_and_unit() -> None:
         .message
     )
     assert (
-        "belongs to another unit"
+        "belongs to another device"
         in plan_netlist_import(p, n, "RW1", refs=["J1"], connector_ids={"J1": "OBC-J01"})
         .rows[0]
         .message

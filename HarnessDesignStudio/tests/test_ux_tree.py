@@ -109,7 +109,7 @@ class Spy:
 def test_the_roots_are_the_seven_groups_in_order(ctl, theme, qtbot) -> None:
     tree = make(ctl, theme, qtbot)
     assert root_labels(tree) == [
-        "Units",
+        "Devices",
         "Interfaces",
         "Harnesses",
         "Parts",
@@ -676,7 +676,7 @@ def test_the_context_menu_has_the_provider_actions_after_its_own(flat, theme, qt
     assert asked == [("unit", uid)]
     assert texts[-1] == "Do my thing" and "Copy ID" in texts and "Select on the diagram" in texts
     root_menu = tree.build_menu("root", "units")
-    assert "Add unit…" in [a.text() for a in root_menu.actions()]
+    assert "Add device…" in [a.text() for a in root_menu.actions()]
     next(a for a in menu.actions() if a.text() == "Copy ID").trigger()
     assert QApplication.clipboard().text() == uid
 
@@ -701,7 +701,7 @@ def test_the_controls_have_names_and_the_rows_read_out_what_they_are(flat, theme
     uid = tree.child_ids("units")[0]
     idx = tree.index_for("unit", uid)
     text = idx.data(Qt.ItemDataRole.AccessibleTextRole)
-    assert uid in text and "Unit" in text
+    assert uid in text and "Device" in text
     hid = tree.child_ids("harnesses")[0]
     htext = tree.index_for("harness", hid).data(Qt.ItemDataRole.AccessibleTextRole)
     assert "Draft" in htext  # the state is in words for a screen reader

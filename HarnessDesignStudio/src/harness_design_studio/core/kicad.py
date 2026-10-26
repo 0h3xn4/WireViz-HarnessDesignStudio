@@ -322,7 +322,7 @@ def plan_netlist_import(
     component whose reference starts with `prefix`). Nothing is applied here."""
     plan = NetlistPlan()
     if unit_id not in project.units:
-        plan.rows.append(RowResult("", False, f"Unit '{unit_id}' does not exist"))
+        plan.rows.append(RowResult("", False, f"Device '{unit_id}' does not exist"))
         return plan
     chosen = (
         refs
@@ -369,7 +369,7 @@ def plan_netlist_import(
         old = project.connectors.get(cid)
         if old is not None and old.unit_id != unit_id:
             plan.rows.append(
-                RowResult(ref, False, f"'{cid}' belongs to another unit ({old.unit_id})", cid)
+                RowResult(ref, False, f"'{cid}' belongs to another device ({old.unit_id})", cid)
             )
             continue
         part_id = (

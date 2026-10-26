@@ -13,7 +13,7 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 from harness_design_studio.core.generate.engine import generate_project  # noqa: E402
 from harness_design_studio.core.samples import new_project, sat15  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
-from tests.gui_helpers import action_named, make_window  # noqa: E402
+from tests.gui_helpers import DialogScript, action_named, make_window  # noqa: E402
 from tests.test_ux_harness import make_view, theme  # noqa: E402, F401, F811
 
 
@@ -212,8 +212,9 @@ def test_the_window_adds_a_device_from_the_start_button(tmp_path):
     win.show()
     QApplication.processEvents()
     assert win.view.empty_add.isVisible()
+    DialogScript(win, lambda dlg: dlg.name.setText("Star tracker"))  # (it asks for the name)
     win.view.empty_add.click()
     QApplication.processEvents()
-    assert len(win.ctl.project.units) == 1
+    assert list(win.ctl.project.units) == ["STAR1"]
     assert not win.view.empty_add.isVisible()
     win.close()

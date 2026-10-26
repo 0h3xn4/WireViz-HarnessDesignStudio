@@ -15,6 +15,7 @@ from harness_design_studio.gui.next_page import NextStepPage  # noqa: E402
 from harness_design_studio.gui.next_step import Next, NextInputs  # noqa: E402
 from harness_design_studio.gui.next_step import next_step as step_for  # noqa: E402
 from harness_design_studio.gui.theme import ThemeManager  # noqa: E402
+from tests.gui_helpers import DialogScript  # noqa: E402
 from tests.ux_rel import app, themed  # noqa: E402
 
 # ---- the page alone ----------------------------------------------------------------------------
@@ -295,7 +296,9 @@ def test_the_page_follows_the_project(qtbot, tmp_path, first_run_default, monkey
     page = w.next_page
     assert page.key() == "add_device" and page.button.text() == "Add a device"
     assert page.alternative_row.isVisibleTo(page)
-    # the button runs the real flow: a device appears, and the next step is to connect
+    # the button runs the real flow (it asks for the name first): a device appears, and the next
+    # step is to connect
+    DialogScript(w, lambda dlg: dlg.name.setText("Camera"))
     page.button.click()
     QApplication.processEvents()
     assert len(w.ctl.project.units) == 1
