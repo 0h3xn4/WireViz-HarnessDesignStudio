@@ -6,15 +6,17 @@ Accessories tab and the Export window.
 Opens the real Qt editor offscreen (light theme, Simple workspace) on the flatsat example in a
 1760 x 1000 window, where the tabs have room to show their names, and saves `edit-wire-tab.png`
 (Drawings area, a wire selected, the Edit wire tab open) and `devices-tab.png` (the Devices tab of
-the first unit). Then it starts a project from nothing, makes a harness by hand with two connectors
+the first device). Then it starts a project from nothing, makes a harness by hand with two connectors
 and three wires, and saves `connectors-tab.png` (the Connectors tab). Then, in a 1440 x 900 window
 on the tutorial project (`first-steps`, generated): `next-step-new-project.png` (an empty project),
 `next-step-fix-problems.png` (one check fails), `next-step-export.png` (its parts approved, so
 every check passes or waits for a value), `simple-workspace.png` and `full-workspace.png` (the
 checked project in each workspace), `export-window.png` and `export-window-done.png` (the Export
-window before and after an export with the PDF drawings). Last, with two accessories added,
-`accessories-tab.png` (1760 x 1000). The time of the last check, which the status bar shows, is
-cleared before each picture. Usage:
+window before and after an export with the PDF drawings). With two accessories added,
+`accessories-tab.png` (1760 x 1000). Last, on the tutorial project, `add-device-dialog.png` (the
+Add device dialog with Star tracker typed and the ID STAR1 suggested) and
+`problem-notices-setting.png` (the View menu with Show problem notices). The time of the last
+check, which the status bar shows, is cleared before each picture. Usage:
 
     QT_QPA_PLATFORM=offscreen python -m tools.tab_screenshots [OUTPUT_FOLDER]   (default: docs/img)
 """
@@ -27,8 +29,8 @@ import tempfile
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QItemSelectionModel
-from PySide6.QtWidgets import QApplication
+from PySide6.QtCore import QItemSelectionModel, QPoint
+from PySide6.QtWidgets import QApplication, QMenu
 
 from harness_design_studio.core.build_data import plan_set_accessory
 from harness_design_studio.core.commands import Op, Put
@@ -40,6 +42,7 @@ from harness_design_studio.core.manual_harness import (
 )
 from harness_design_studio.core.model import evolve
 from harness_design_studio.core.wires import plan_add_wire
+from harness_design_studio.gui.devices_dialogs import NewDeviceDialog
 from harness_design_studio.gui.main_window import MainWindow
 from tools import ui_screenshots as shots
 
@@ -78,6 +81,7 @@ def main(out: Path = DEFAULT_OUT) -> int:
     win.close()
     _next_step_pictures(out)
     _workspace_pictures(out)
+    _workshop_pictures(out)
     print(f"wrote the pictures of the tabs, workspaces and windows to {out}")
     return 0
 
@@ -192,6 +196,28 @@ def _workspace_pictures(out: Path) -> None:
     table.setColumnWidth(5, 120)  # Length (mm)
     shots._wait(800)
     _save(win, out / "accessories-tab.png")
+    win.close()
+
+
+def _workshop_pictures(out: Path) -> None:
+    """The Add device dialog (a name typed, the ID suggested) and the View menu with the setting
+    Show problem notices, both in the Full workspace on the tutorial project."""
+    win = _generated("harness-add-device", "full", MAIN)
+    dlg = NewDeviceDialog(win, win.theme, win.ctl.project)
+    dlg.show()
+    dlg.resize(460, dlg.sizeHint().height())
+    dlg.name.setText("Star tracker")  # the ID follows: STAR1
+    shots._wait(500)
+    _save(dlg, out / "add-device-dialog.png")
+    dlg.close()
+    menu = next(m for m in win.menuBar().findChildren(QMenu) if m.title() == "&View")
+    menu.popup(win.mapToGlobal(QPoint(380, 40)))
+    shots._wait(500)
+    win.jobs.finish("")
+    win._last_check = ""
+    menu.grab().save(str(out / "problem-notices-setting.png"))
+    print("problem-notices-setting.png")
+    menu.close()
     win.close()
 
 

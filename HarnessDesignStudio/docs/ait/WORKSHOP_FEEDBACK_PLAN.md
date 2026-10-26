@@ -1,6 +1,6 @@
 # Plan for the workshop feedback (October 2026)
 
-**Status (2026-10-25).** Feedback received on 2026-10-23 from a workshop with a systems engineer, an AIT engineer and an electrical engineer. The investigation of what version 1.7.0 does today is done (below). The owner answered the four decisions on 2026-10-25 (section *Decisions of the owner*); the work starts with milestone M1. Nothing is built yet.
+**Status (2026-10-25).** Feedback received on 2026-10-23 from a workshop with a systems engineer, an AIT engineer and an electrical engineer. The investigation of what version 1.7.0 does today is done (below). The owner answered the four decisions on 2026-10-25 (section *Decisions of the owner*); milestone M1 is built (below, *M1 as built*); M2 to M5 are not built.
 
 ## The feedback, in the owner's words, grouped
 
@@ -51,6 +51,22 @@ Themes: **A** small fixes, **B** harness and connector editing, **C** the connec
 3. **M3, harness and connector editing.** Edit a harness connector (part, gender, keying, pins), change a group's kind and ends, bulk edit of gauge, colour and length for all wires of a harness, connectors shown at the link ends in the Diagram and the harness path on request.
 4. **M4, the library.** A library window (non-modal) with devices and subsystems (a set of devices with the links between them), a shared library folder that anyone can point to (a folder on a shared drive or in a repository; no network code in the tool), blank projects without subsystems; redundancy by number of devices.
 5. **M5, roles.** A choice of role at the first start (systems engineer, electrical/AIT engineer) that decides rail, tabs and defaults.
+
+## M1 as built (2026-10-25)
+
+Milestone M1 is built on `master` and not released. What a person sees:
+
+- **A new device asks for its name first (point 1).** *Edit > Add device > Device…* (Ctrl+Shift+N), the button of the empty diagram, the Next step button and the *Add device* tool of the Simple workspace open the dialog **Add device**: **Name** (required; hint *for example Star tracker*), **ID**, **Subsystem** (the subsystems of the project). The ID is suggested as soon as the name is typed: the first word, letters and digits, upper case, at most 8 characters, plus the first free number (*Star tracker* gives `STAR1`, then `STAR2`; *Gyro 3* gives `GYRO3`); it can be edited, and once edited it no longer follows the name. Reasons show under the fields (*A device needs a name.*, *A device needs an ID.*, *ID X is already used by another device.*), the button *Add device* stays off until the device can be added, and a note says *You can change the name, the ID and the subsystem later in the Devices tab.* The *New device…* of the pinout import wizard makes its ID from the name typed. The kinds of *Edit > Add device* (computer, power unit …) add a device at once as before.
+- **The word device (point 2).** On screen, in the command line (`--device`; `--unit` is kept as another name) and in the documents *unit* is now *device*; the files keep `unit`. The left-panel tab *Units* is the **Device list**.
+- **Show problem notices (point 3).** A check box in *View* (menu action `act-problem-notices`) and in *Settings > Editing*, stored per workspace; on by default in the Full workspace, off in the Simple workspace. Off hides the status-bar Problems button and count, the count on the inspector tab, the top-bar status chip, the diagram's corner chip, the problem, warning, pending and not-checked badges on the diagram, the pending-values link and the dismissible *out of date* banner. It never hides the read-only, locked, damaged-file and sample banners, the Check button and its result, the Checks area, the Problems panel (*View > Problems panel*, Ctrl+Shift+M), the Next step page and the error texts of dialogs: what explains why something cannot be done stays.
+- **Export asks where to save first (point 4).** With harnesses and a project that has no folder yet (the sample held in memory, an unsaved project), Export (menu, top bar, Harness tab, Next step button, banner) first opens a folder chooser (*Choose an empty folder to save the project in. The files are then exported next to it*) and then the Export window opens on the new outputs folder. The damaged-files notice lists up to 5 file names (*and N more*). The Harness tab's Export button shows *Read-only: save a copy first* or *Asks where to save first* beside it. The Next step note says *Export first asks where to save the project.* How the failure of the workshop was reached is still not known; the two causes found in the code (the unsaved sample, damaged files) are now explained on screen.
+- **RTN (point 5).** The pin cell of a signal named `RTN` has the tooltip *Return line: where the current of the signal comes back* (`GND`: *Ground*) in the Devices pin table and the Harness pin table; the glossary has the entry.
+
+Open points of M1:
+
+- The finding texts that reach a written output file still say *unit* (the cross-strap, isolated and look-alike findings and the descriptions of the design rules), because changing them would change generated files, which the rules below forbid.
+- The left dock is 40 pixels wider than before, because the tab *Device list* is longer than *Units*.
+- The tests of M1 are `tests/test_ui_new_device.py`, `tests/test_devices_new.py`, `tests/test_ui_problem_notices.py`, `tests/test_ui_export_flow.py` and `tests/test_pinout_cli.py`; the requirements are REQ-GUI-08, REQ-GUI-09, REQ-OUT-08 and REQ-GUI-10 in `docs/REQUIREMENTS.md`. The written files did not change (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json`).
 
 ## Decisions of the owner (2026-10-25, decision D-172)
 

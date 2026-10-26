@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined"
-"""Workshop feedback M1: export is clear and one step. A project with no folder first asks where to
+"""REQ-OUT-08. Workshop feedback M1: export is clear and one step. A project with no folder first asks where to
 save it and goes straight on to the export dialog; every blocker says what it is, inline; the
 Harness tab shows its reason beside the Export button."""
 

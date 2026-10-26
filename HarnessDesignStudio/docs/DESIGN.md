@@ -151,7 +151,7 @@ Code: `gui/main_window.py`, `gui/shell.py` (slots, banners, status chip rules, `
 - Whatever released data is in front of you (the harness in Drawings or Revisions, the selected device or link) gets an info banner over the work area, "W001 revision A is released and locked", with *Start new revision* unless the project is read-only.
 - Home: the flatsat example is the primary action, recent projects are cards (name, folder, counts, how many harnesses are draft, in review, released; a missing folder is marked and can be forgotten), then the other examples. Nothing about recent projects is written into a project.
 - A table without rows says what to do (title, one line, the action if there is one); a filter that hides every row says "No row matches". Use `attach_empty_state(view, title, hint, action=..., on_action=...)`.
-- The empty diagram of a blank project has the button **Add a device** (the same as Edit > Add device > Device…, Ctrl+Shift+N; hidden once there is a device and in a read-only project), and its text names only controls that exist (1.6.0).
+- The empty diagram of a blank project has the button **Add a device** (the same as Edit > Add device > Device…, Ctrl+Shift+N; hidden once there is a device and in a read-only project), and its text names only controls that exist (1.6.0). Since M1 of D-172 it opens the dialog *Add device* (name, ID suggested from the name, subsystem) and not an unnamed device.
 
 ## Views
 
@@ -249,7 +249,7 @@ Every shortcut is in a menu and in the tooltip as "text (shortcut)". Keys marked
 | Ctrl+N, Ctrl+O, Ctrl+S, Ctrl+Shift+S, Ctrl+Q | New project, open, save, save as, quit |
 | Ctrl+Shift+I | Import interfaces |
 | Ctrl+I | New interface |
-| Ctrl+Shift+N | Add a device (a device with its own connectors and pins; 1.6.0 button *Add a device* on an empty diagram) |
+| Ctrl+Shift+N | Add a device (a device with its own connectors and pins, named in a dialog first; 1.6.0 button *Add a device* on an empty diagram) |
 | Ctrl+Shift+H | New harness (a harness made by hand; 1.5.0) |
 | Ctrl+G | Generate harnesses |
 | F5 | Run the checks |

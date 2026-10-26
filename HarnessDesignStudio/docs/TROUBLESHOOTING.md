@@ -108,6 +108,10 @@ and then kept running until it was stopped after 15 seconds. To check a source i
 
 Run `harness-design-studio-gui --selftest` in a terminal (packaged install) and read the message; if it names `xcb`, `libEGL` or `libxkbcommon`, install the libraries above. If the window is tiny or the text too small, use **Settings > Appearance > Interface size** (or **View > Interface size**). The settings file is `~/.config/HarnessDesigner/HarnessDesigner.ini` on Ubuntu (**Settings > About** names the file on every system); delete it to reset the scale, theme and last project (it holds no design data).
 
+### The app shows problems everywhere, or no problems at all
+
+Not an error. The status-bar button **Problems (n)**, the count on the inspector's **Problems** tab, the status chip of the top bar, the chip and the badges on the diagram, the link to pending values and the *out of date* banner are **problem notices**. **View > Show problem notices** (also **Settings > Editing**) switches them all off or on, separately for each workspace: they are on in the Full workspace and off in the Simple workspace. With them off, the **Check** button, the **Checks** area and the Problems panel (**View > Problems panel**, Ctrl+Shift+M) still show every problem when you ask. Banners that say why something cannot be done (read-only, locked, damaged files, sample project) stay. Not in the 1.7.0 packages. See [read and fix problems](user-manual/read-and-fix-problems.md#turn-the-problem-notices-off).
+
 ### The app opens on "What to do next" and the tree, the Inspector and the Problems panel are not there
 
 Not an error. Since 1.7.0 a first run starts in the **Simple workspace**: the window opens on the **Next step** page and the project tree, the Inspector and the Problems panel start closed (the rail has no *Home*, either). **Show panels** in the top bar opens the tree and the Inspector, **Show everything** on the page or **View > Full** gives the whole editor, and **View > Simple** goes back; the choice is also in **Settings** (*Workspace*). A settings file made by an older version keeps the Full workspace. The Problems panel is **Ctrl+Shift+M**, and *Home* is **Go > Go to Home** (Ctrl+7). See [use the simple workspace](user-manual/use-the-simple-workspace.md).
@@ -574,6 +578,17 @@ error: there are no harnesses to export; run `harness-design-studio generate` fi
 ```
 
 Exit code 1. Outputs are written per harness, and none exists yet. Run `harness-design-studio generate demo`, then `harness-design-studio export demo`. (With the `blank` project it stays this way until you add devices and interfaces in the app, or make a harness by hand with **New harness…**.)
+
+### In the app: Export opens a folder chooser, or does nothing
+
+Not run on a screen; checked in an offscreen window of the editor (not in the 1.7.0 packages: it is listed under `## Unreleased` in the changelog). **Export…** (top bar, **File** menu, Ctrl+E, the **Harness** tab or the **Next step** button) behaves in four ways:
+
+- **A folder chooser opens first**, titled *Choose an empty folder to save the project in. The files are then exported next to it*. The project has harnesses but no folder yet: it is the built-in sample, or a project you never saved. Choose an empty folder; the project is saved there and the Export window opens on its new `outputs` folder. If you cancel, nothing is exported and nothing else happens: that is the "does nothing" case.
+- **The window says *There are no harnesses yet. Generate harnesses first.*** Press **Generate** first. A blank project has none until you add devices and links (or make a harness by hand).
+- **The window says the project is read-only.** Nothing can be written into it. The **Export** button of the **Harness** tab says *Read-only: save a copy first*; save a copy to a new folder.
+- **The window says *Parts of this project could not be loaded, so nothing was exported*,** and lists up to five of the damaged files, then *and N more*. Open the files named, or press **Save salvaged copy…** ([this project has problems](#this-project-has-problems-the-recovery-view)).
+
+On the **Harness** tab, *Asks where to save first* beside the button means the first case.
 
 ### `warning: [out_pdf_chars] These characters cannot be shown in the PDF ...`
 

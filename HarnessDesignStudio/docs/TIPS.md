@@ -40,7 +40,7 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+1 to Ctrl+6 | The tabs Diagram, Harness, Lists, Checks, Releases, Devices |
 | Ctrl+7 and Ctrl+, | Home and Settings (the rail of the Simple workspace does not list Home, but Ctrl+7 and **Go > Go to Home** open it) |
 | Ctrl+Shift+M | Show or hide the Problems panel at the bottom |
-| Ctrl+Shift+N | Add a device (an empty device named in the Devices tab) |
+| Ctrl+Shift+N | Add a device (asks for its name and ID first, then an empty device is opened in the Devices tab) |
 | Ctrl+Shift+H | New harness... (a harness made by hand; the Drawings area, then its Connectors tab) |
 | Ctrl+Shift+T | The Interface table (the Interfaces tab of the left panel) |
 | Ctrl+Shift+J | The Device list (the Device list tab of the left panel) |

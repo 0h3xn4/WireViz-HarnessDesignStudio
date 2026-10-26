@@ -79,10 +79,12 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 | **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6). Each area shows its own: Model has Diagram and Devices; Checks, Drawings (the Harness tab), Outputs (the Lists tab) and Revisions (the Releases tab) have one each. |
 | **Left panel** | Closed in the Simple workspace until you press **Show panels**. The **Project** tab: a tree of devices, interfaces, harnesses, parts, interface types, configuration files and imports, with a filter and an **Add** button. The **Device list** tab (Ctrl+Shift+J) and the **Interfaces** tab (Ctrl+Shift+T): every device and every interface as a table that works like a spreadsheet (see below). |
 | **Right panel** | Closed in the Simple workspace too. **Inspector** (the fields of what you selected, and where it is used), **Why** (the reasons for a choice) and **Problems** (the problem cards, with a **To do** list above them). |
-| **Problems panel** | Closed until you press **Problems (n)** in the status bar (or Ctrl+Shift+M, **View > Problems panel**): every open problem with its severity, rule, object and message; click one to go to the object. |
-| **Status bar** | What runs in the background (with **Cancel**) or the last check, the project folder, **Problems (n)**, *Offline*, a link *n values pending · n rules not checked*, and the zoom level. The model hash, the rule count and *Generated at model …* are in the tooltip of the counts. The Simple workspace shows only the save state, the running job, *Offline* and the project path. |
+| **Problems panel** | Closed until you press **Problems (n)** in the status bar (when that button is shown) or choose **View > Problems panel** (Ctrl+Shift+M): every open problem with its severity, rule, object and message; click one to go to the object. |
+| **Status bar** | What runs in the background (with **Cancel**) or the last check, the project folder, **Problems (n)**, *Offline*, a link *n values pending · n rules not checked*, and the zoom level (the button, the count and the link are problem notices, see below). The model hash, the rule count and *Generated at model …* are in the tooltip of the counts. The Simple workspace shows only the save state, the running job, *Offline* and the project path. |
 
 The status chip in the top bar says one thing: *Up to date*, *Plans out of date* (the diagram changed after Generate), *Outputs out of date* (the design changed after the last export), *Not generated*, or the running job (*Generating…*, *Exporting…*, *Checking…*). Colour is never the only sign: every state has an icon and a word, and the two states for "nothing known yet" have a pattern. **Pending** (dotted) is a value nobody has entered; **Not checked** (hatched) is a rule that could not run. Neither is a pass, and neither is empty.
+
+**Show problem notices** (View menu, and Settings > Editing) switches off, in one step, what shows problems without being asked: **Problems (n)**, the count on the Problems tab, the status chip, the chip and badges on the diagram, the pending-values link and the *out of date* banner. It is on in Full and off in Simple, for each workspace. **Check**, the Checks tab, the Problems panel and the read-only, locked, damaged-file and sample banners always stay.
 
 Panels you hide or move are remembered for each project; **View > Reset layout** puts them back. In a small or narrow window the tool hides panels so the diagram stays large, and says so.
 
@@ -119,7 +121,7 @@ At a first run the editor is in the Simple workspace and a project opens on the 
 
 1. Start the app. The sample project opens with a short tour; skip it or follow it. The tour leaves out a step whose panel is hidden (a small window or a high interface size), records that it was shown however you close it, and can be started again with **Help > Replay the tour**.
 2. **File > New project…** opens one window: choose an empty folder, give the project a name, and optionally pick an example (section 3; `first-steps` has three devices, start there). A problem with the folder or the name is written under the field. **File > New project from an example…** is the same window with the first example ticked.
-3. Add devices: press **Add** in the Project tab and choose **Device…**, or use **Edit > Add device** (the Project tab is closed in the Simple workspace, so use the menu there). Pick *Computer*, then add a *Power unit* and an *Actuator (wheel)*. In a project with no device the empty diagram also has the button **Add a device**, which adds a device whose connectors you define yourself (see The Devices tab).
+3. Add devices: press **Add** in the Project tab, or use **Edit > Add device** (the Project tab is closed in the Simple workspace, so use the menu there). Pick *Computer*, then add a *Power unit* and an *Actuator (wheel)*. In a project with no device the empty diagram also has the button **Add a device**, which asks for a name first and adds a device whose connectors you define yourself (see The Devices tab).
 4. Connect them. Press **C** (or the **Connect** button above the diagram; the arrow beside it lists the interface types, as does **Edit > Connect with**), pick an interface type such as *RS-422*, then click the first device and the second. Devices that cannot take this interface are greyed out, with the reason written next to them. **Ctrl+I** (or **Add > Interface…**) opens a form for the same thing.
 5. Look at **Problems** (right panel, or the Problems panel at the bottom, Ctrl+Shift+M). Each card says what is wrong, why it matters and how to fix it. Many have a one-click **Fix**. The **Checks** tab lists all 35 design rules with their result (section 6).
 6. The top of the **Problems** tab has a **To do** list of what is left to do; a click on a line shows the device or interface.
@@ -148,7 +150,7 @@ At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv`
 
 #### Defining a device
 
-- **Edit > Add device > Device…** (Ctrl+Shift+N; also **Add** in the Project tab, and the button **Add a device** on an empty diagram) adds an empty device in a free slot and opens the Devices tab with its name selected. Type the name; the subsystem and the chain are in the header.
+- **Edit > Add device > Device…** (Ctrl+Shift+N; also **Add** in the Project tab, and the button **Add a device** on an empty diagram) opens the window **Add device**: type the **Name** (for example *Star tracker*), accept or change the **ID** it suggests (`STAR1`; once you edit it, it stops following the name) and pick the **Subsystem**. **Add device** adds an empty device in a free slot and opens the Devices tab. The kinds in **Edit > Add device** need no name.
 - Under the connector list pick a part (type to search; the first entry is **New part…**, which also makes the mating half) and press **Add connector** (Ctrl+Shift+C goes to the picker; Enter adds). The pins are numbered from the part's pin count. **Delete connector** shows what it touches first.
 - Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down; Esc cancels. A pin name is checked while you type. **Add pin** (Insert) adds a pin after the current one; Delete clears the signal of the selected pins; **Delete** (Shift+Delete) deletes pins after a line that says what they touch; Space cycles the mode (*Free*, *Fixed*, *Locked*); Ctrl+V pastes cells copied from a spreadsheet, either a column from the current cell down or a table with a header row (*Pin*, *Signal*, *Mode*, *Contact size*, *Termination*, *Cable contact*).
 - **Fill…** (Ctrl+L) puts the signals of an interface type on the selected pins in order (for example *CANH*, *CANL*). **Assign…** (Ctrl+Enter) locks the selected pins to an interface that ends on this device. Both are one undo step; **New interface type…** is in the dialog.
@@ -161,7 +163,7 @@ At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv`
 
 **Simple or Full.** The workspace is a setting in the View menu and under **Settings > Editing**. A first run (a settings file with nothing stored yet) gets *Simple*, which opens a project on the Next step page. A settings file that already holds values keeps *Full*, which opens a project where it opened before.
 
-Simple shows less. The project tree, the inspector and the Problems panel start closed (**Show panels** in the top bar opens the tree and the inspector together), the minimap and the legend are off, the status bar keeps the save state, the running job, *Offline* and the path, and the tools above the diagram are **Select**, **Connect**, **Add device** and **More**. **Home** is not in the rail. Nothing is removed: each item keeps its menu entry (and its shortcut, where it has one), and Ctrl+K finds it. Each workspace keeps its own layout.
+Simple shows less. The project tree, the inspector and the Problems panel start closed (**Show panels** in the top bar opens the tree and the inspector together), the minimap and the legend are off, the status bar keeps the save state, the running job, *Offline* and the path, and the tools above the diagram are **Select**, **Connect**, **Add device** and **More**. **Home** is not in the rail. Nothing is removed: each item keeps its menu entry (and its shortcut, where it has one), and Ctrl+K finds it. Each workspace keeps its own layout. The problem notices are off in Simple.
 
 The workspace is not the mode. Guided and Expert change only how much the diagram shows:
 
@@ -241,7 +243,7 @@ The **build workbook** is the file to build a harness from. **Start here** says 
 
 The build data shows in the tables only where it is used: the wire list gets *Strip A (mm)* and *Strip B (mm)*, the pinouts get *Contact*, a harness with accessories gets `accessories.csv`, and the bill of materials counts the contacts used on pins and the accessory parts (pieces as *ea*, parts with a length as metres *m*).
 
-**Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window. It shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied.
+**Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window; a project that has harnesses but no folder yet first asks where to save it, with a folder chooser. The window shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied.
 
 The harness drawings are written only while **Include the PDF drawings** is ticked; it starts ticked when the last export into the folder had them. A problem found by the independent check, or a write error, stays in a notice in the window and nothing is written. The project must be saved to a folder first.
 
@@ -362,7 +364,7 @@ The build data (last row) has no window: it is read with the command line (secti
 | Ctrl+Shift+T, Ctrl+Shift+J | the Interface table and the Device list (left panel) |
 | Ctrl+Shift+M | show or hide the Problems panel |
 | Ctrl+Shift+H | new harness by hand (the Connectors tab opens) |
-| Ctrl+Shift+N | add a device (the Devices tab opens) |
+| Ctrl+Shift+N | add a device (asks for its name first; then the Devices tab opens) |
 | F6, Shift+F6 | next and previous panel (diagram, project panel, inspector) |
 | Ctrl+Z, Ctrl+Y or Ctrl+Shift+Z | undo, redo (the menu names the step, for example *Undo Move PDU2*) |
 | Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, zoom out, real size (100 %) |
@@ -404,6 +406,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Edit | Connect with | one item for each interface type (the arrow beside the Connect button lists the same); then click two devices |
 | View | Show side panels (Simple workspace only) | opens or closes the Project tab and the Inspector together (the **Show panels** button of the top bar) |
 | View | Simple, Full | the workspace (section 5): a project opens on **Next step** and less is on screen, or it opens where it opened before and everything is there |
+| View | Show problem notices | shows or hides the Problems count, status chip, badges and *out of date* banner; on in Full, off in Simple |
 | View | Guided, Expert | the two modes of section 5 |
 | View | Theme | Follow the system (the default), Light or Dark (also under **Settings > Appearance**) |
 | View | Show overview map, Show legend, Snap to grid | overlays and the grid |

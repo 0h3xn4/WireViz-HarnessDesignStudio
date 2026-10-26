@@ -1,4 +1,4 @@
-"""Workshop feedback M1: the helpers behind the new-device dialog, the meaning of RTN, the list of
+"""REQ-GUI-08. Workshop feedback M1: the helpers behind the new-device dialog, the meaning of RTN, the list of
 damaged files. No Qt."""
 
 from harness_design_studio.core import describe, devices, recovery

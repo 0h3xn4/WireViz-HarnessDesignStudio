@@ -203,6 +203,7 @@ def test_a_released_harness_blocks_the_import(
 def test_the_option_is_called_device_and_unit_stays_as_the_older_name(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
+    """REQ-GUI-10: `--device` is the option; `--unit` stays as the older name."""
     proj, cid = with_connector()
     History(proj).execute("fill", devices.fill_from_type(proj, cid, ["3", "4"], "can"))
     p = folder(tmp_path, proj)

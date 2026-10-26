@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr"
-"""Workshop feedback M1: a new device asks for its name (and ID and subsystem) before it exists."""
+"""REQ-GUI-08. Workshop feedback M1: a new device asks for its name (and ID and subsystem) before it exists."""
 
 from pathlib import Path
 

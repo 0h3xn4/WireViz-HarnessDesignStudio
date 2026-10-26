@@ -75,7 +75,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 *(The screenshot shows the app's built-in sample, which uses slightly different IDs such as `OBC` and `IF-PWR-RW1`; the layout is the same.)*
 
-**Simple and Full.** The picture and the table below show the **Full workspace**, the whole editor. Since 1.7.0 a first run starts in the **Simple workspace** instead: the window opens on the **Next step** page, which says in plain words what to do now and has one button; the project tree, the Inspector and the Problems panel are closed and there is no *Home* in the rail. Everything in this tutorial works in both. To follow Part 2 as written, click **Show everything** on the Next step page, or choose **View > Full**. If you stay in Simple, **Show panels** in the top bar opens the project tree and the Inspector. Anyone who already had a settings file starts in Full. This choice is separate from **Guided / Expert** in the top bar. The details are in [use the simple workspace](user-manual/use-the-simple-workspace.md).
+**Simple and Full.** The picture and the table below show the **Full workspace**, the whole editor. Since 1.7.0 a first run starts in the **Simple workspace** instead: the window opens on the **Next step** page, which says in plain words what to do now and has one button; the project tree, the Inspector and the Problems panel are closed and there is no *Home* in the rail. Everything in this tutorial works in both. To follow Part 2 as written, click **Show everything** on the Next step page, or choose **View > Full**. If you stay in Simple, **Show panels** in the top bar opens the project tree and the Inspector. Anyone who already had a settings file starts in Full. In the Simple workspace the **problem notices** are off (no status chip in the top bar, no Problems count, no badges on the diagram): they are the signs of problems that appear without being asked for, and **View > Show problem notices** switches them on or off for each workspace. The **Check** button, the **Checks** area and the Problems panel work in both. This choice is separate from **Guided / Expert** in the top bar. The details are in [use the simple workspace](user-manual/use-the-simple-workspace.md).
 
 | Where | What it is |
 | --- | --- |
@@ -86,7 +86,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 | Left, **Project** | a tree of devices, interfaces, harnesses, parts, interface types, configuration files and imports; **Add** adds a device or an interface |
 | Left, **Device list** and **Interfaces** | every device and every interface as a table you can sort, filter, edit with the keyboard and paste into from Excel (Ctrl+Shift+J, Ctrl+Shift+T) |
 | Right, **Inspector** | the selected device or interface: names, **Max current (A)**, notes, and where it is used. The tabs **Why** and **Problems** (with a **To do** list above the problem cards) are beside it |
-| Bottom | the status bar (the running job with **Cancel**, **Problems (n)**, *Offline*, the zoom; the Simple workspace shows less) and, when you open it (Ctrl+Shift+M), the Problems panel with every open problem |
+| Bottom | the status bar (the running job with **Cancel**, **Problems (n)** while the problem notices are on, *Offline*, the zoom; the Simple workspace shows less) and, when you open it (Ctrl+Shift+M), the Problems panel with every open problem |
 | Above the diagram | **Select** and **Connect** (the arrow beside **Connect** lists the interface types), **Delete**, zoom (in Simple: **Select**, **Connect**, **Add device** and a **More** menu with the rest) |
 | Right end of the Model tab bar | **Arrange diagram** and the **Show** list (all interfaces, one class, one connector, one bundle) |
 
@@ -135,7 +135,7 @@ Notice the wire gauge says **pending**. That is deliberate and is the subject of
 
 ## Part 5: read and answer the Problems
 
-Open the **Problems** tab (right panel; in Simple press **Show panels** first) or the Problems panel at the bottom (Ctrl+Shift+M), or the **Checks** tab (the button **Show the problems** of the Next step page opens it) for all 35 rules and their result, or run:
+Open the **Problems** tab (right panel; in Simple press **Show panels** first) or the Problems panel at the bottom (Ctrl+Shift+M, or **View > Problems panel**; the button **Problems (n)** in the status bar is one of the problem notices and is not there while they are off, as in Simple), or the **Checks** tab (the button **Show the problems** of the Next step page opens it) for all 35 rules and their result, or run:
 
 ```
 harness-design-studio drc wheel-link
@@ -164,7 +164,7 @@ The **To do** list at the top of the **Problems** tab shows what is left, includ
 
 The main output of an export is a **build workbook** for every harness: an Excel file to build the harness from, with a cut list, a block for every connector, the parts, the labels and a test sheet. The PDF drawings are optional (see below). The build workbook and the `--drawings` option are new in 1.7.0.
 
-**In the app:** press **Export…** in the top bar (Ctrl+E; the Next step page has the same as **Export the build sheets**) and then **Export** in the window that opens; it also lists the files written. The check box **Include the PDF drawings** in that window is not ticked the first time. Afterwards the **Lists** tab (Outputs) shows **Exported files** with the SHA-256 of each file and whether it still matches the export. **On the command line:**
+**In the app:** press **Export…** in the top bar (Ctrl+E; the Next step page has the same as **Export the build sheets**) and then **Export** in the window that opens (the tutorial project was made by `harness-design-studio new`, so it already has a folder and the window opens at once; for a project that has harnesses but no folder yet, such as the built-in sample, **Export…** first opens a folder chooser, *Choose an empty folder to save the project in. The files are then exported next to it*, saves the project there and then opens the window; if you cancel the chooser nothing is exported); it also lists the files written. The check box **Include the PDF drawings** in that window is not ticked the first time. Afterwards the **Lists** tab (Outputs) shows **Exported files** with the SHA-256 of each file and whether it still matches the export. **On the command line:**
 
 ```
 harness-design-studio export wheel-link
@@ -373,11 +373,11 @@ harness-design-studio new my-first-design --name "My first design"
 
 In the app, **File > Open project…** it. The empty diagram says where to start: it has the button **Add a device** (until the first device exists) and the hint to use **Add** in the project panel. Then:
 
-1. Press **Add** in the Project tab on the left (in Simple, press **Show panels** first), choose **Device…**, and add a **Power unit**, a **Computer** and an **Actuator (wheel)** (**Edit > Add device** has the same list; **Add a device**, Ctrl+Shift+N, adds a device whose connectors and pins you define yourself in the **Devices** tab, see [`user-manual/define-a-device.md`](user-manual/define-a-device.md)). Devices appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in the Inspector if you want.
+1. Press **Add** in the Project tab on the left (in Simple, press **Show panels** first) and add a **Power unit**, a **Computer** and an **Actuator (wheel)** from the list that opens (**Edit > Add device** has the same list; the kinds are added at once and need no name; **Device…** at the top of the list, Ctrl+Shift+N and the button **Add a device** open the window **Add device**, where you type a name such as *Star tracker*, get the ID `STAR1` suggested and press **Add device**, and then define the connectors and pins of that device yourself in the **Devices** tab, see [`user-manual/define-a-device.md`](user-manual/define-a-device.md)). Devices appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in the Inspector if you want.
 2. Open the arrow beside **Connect** above the diagram (or **Edit > Connect with**), pick **Primary power**, click `PCDU1`, then click `RW1`. Devices that cannot take this interface are greyed out, with the reason beside them.
 3. Select the new link and set **Max current (A)** to 2. Without a current, a power wire's gauge stays pending.
 4. Pick **RS-422**, click `OBC1`, then `RW1`.
-5. Look at **Problems** and its **To do** list, then **Generate**, **Apply**, **Export…**. **Ctrl+S** saves.
+5. Look at **Problems** and its **To do** list, then **Generate**, **Apply**, **Export…**. **Ctrl+S** saves. The project already has a folder (`harness-design-studio new` made it), so **Export…** does not ask where to save.
 
 You have now done everything the tool does, once. Add a **Create redundant copy** of the wheel (select it, press the button) and watch the tool build the backup chain and warn when something connects nominal to redundant.
 

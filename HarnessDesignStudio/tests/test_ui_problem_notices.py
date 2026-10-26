@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined"
-"""Workshop feedback M1: View > Show problem notices. Off, the notices nobody asked for are gone
+"""REQ-GUI-09. Workshop feedback M1: View > Show problem notices. Off, the notices nobody asked for are gone
 (Problems button and count, count on the inspector tab, top-bar chip, corner chip, badges, the
 pending-values link, the out-of-date banner); the banners that say why something cannot be done,
 the Check button, the Checks, the Problems panel and the error text of dialogs always stay."""

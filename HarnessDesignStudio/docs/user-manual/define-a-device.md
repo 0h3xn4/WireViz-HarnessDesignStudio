@@ -25,8 +25,17 @@ This page shows how to define a device of your own down to each pin: its connect
 
 ## 1. Add the device
 
-1. Choose **Edit > Add device > Device…** (Ctrl+Shift+N; on an empty diagram the button **Add a device** does the same). An empty device appears in a free place of the diagram and the **Devices** tab opens with its name selected.
-2. Type the name and press Enter. The **Subsystem** box takes one that exists or a new word; **Chain** says nominal, redundant or none.
+1. Choose **Edit > Add device > Device…** (Ctrl+Shift+N; on an empty diagram the button **Add a device** does the same, and so do the button of the **Next step** page and the **Add device** tool of the Simple workspace). A small window, **Add device**, asks for the device first:
+
+   ![The Add device window with the name Star tracker typed and the ID STAR1 suggested](../img/add-device-dialog.png)
+
+   - **Name** is required. The hint says *for example Star tracker*.
+   - **ID** is suggested as soon as you type the name: the first word, letters and digits only, in upper case, at most 8 characters, followed by the first number that is free. *Star tracker* gives `STAR1`, and the next device with that name gives `STAR2`; *Gyro 3* gives `GYRO3`. You can type another ID. Once you have edited the ID it no longer follows the name.
+   - **Subsystem** offers the subsystems the project already has (a new project offers *general*); you can also type a new word.
+   - A line under the fields says why the device cannot be added yet, for example *A device needs a name.*, *A device needs an ID.* or *ID STAR1 is already used by another device.* The button **Add device** stays off until there is no such line.
+2. Press **Add device**. The device appears in a free place of the diagram, as one undo step, and the **Devices** tab opens with its name selected. The window says *You can change the name, the ID and the subsystem later in the Devices tab*: there the name is edited by pressing Enter after typing; the **Chain** box says nominal, redundant or none.
+
+The kinds in **Edit > Add device** (computer, power unit and so on, [draw the design](draw-the-design.md#2-add-devices)) do not ask: they add a device at once with an ID and name of their own.
 
 The state chip next to the name says **Draft** while no interface ends on the device, **In use** when one does, and **Locked** once a released harness uses it.
 
