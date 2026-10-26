@@ -35,7 +35,7 @@ If you have not installed the tool yet, start with [`INSTALL.md`](INSTALL.md).
 
 Read [`CONCEPTS.md`](CONCEPTS.md). You should be able to say, in your own words, what a **device**, an **interface**, a **harness**, a **wire** and a **project** are, and why the tool generates harnesses instead of asking you to draw them.
 
-If you want to see how the window is meant to be used, read [use the simple workspace](user-manual/use-the-simple-workspace.md) (five minutes): since 1.7.0 the app starts on a **Next step** page that names one thing to do at a time.
+If you want to see how the window is meant to be used, read [choose your role](user-manual/choose-your-role.md) (five minutes): since 1.7.0 the app starts on a **Next step** page that names one thing to do at a time.
 
 **Done when:** you can explain why a wire has a "Why is it like this?" text.
 
@@ -62,10 +62,10 @@ harness-design-studio generate mini
 harness-design-studio drc mini
 ```
 
-Open it in the app (**File > Open project...**). A first run starts in the Simple workspace; click **Show everything** first (or choose **View > Full**) to get the diagram and the side panels. Try these four things, in this order:
+Open it in the app (**File > Open project...**). Choose **View > Role > Electrical / AIT engineer** first (a Systems engineer sees less; **Show everything** on the Next step page does the same) to get the diagram and the side panels. Try these four things, in this order:
 
 1. Click a wire of the power link from the power distribution unit (`PCDU1`) to the computer. Read **Why is it like this?**
-2. Open the **Problems** tab (right panel) or the Problems panel (Ctrl+Shift+M); in Simple, **Show panels** opens the right panel. Most entries say that a value is *pending* or *not checked*. That is the tool being honest: nobody has supplied the derating values yet.
+2. Open the **Problems** tab (right panel) or the Problems panel (Ctrl+Shift+M); as a Systems engineer, **Show panels** opens the right panel. Most entries say that a value is *pending* or *not checked*. That is the tool being honest: nobody has supplied the derating values yet.
 3. Use the **Show** list at the right end of the Model tab bar to look at the power interfaces only, then at the data interfaces.
 4. Delete a device, then press **Ctrl+Z**, to see that nothing is lost.
 
@@ -83,7 +83,7 @@ Before you open the tool, fill in `design-worksheet.md` (get it with `harness-de
 
 Two ways, and you can mix them:
 
-- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add devices (the button **Add a device** on the empty diagram, **Add** in the Project tab, or **Edit > Add device**), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10. To make a harness with no interface at all, see [build a harness by hand](user-manual/build-a-harness-by-hand.md).
+- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add devices (the button **Add a device** on the empty diagram, **Add** in the Project tab, or **Edit > Add device**), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10. To join two connectors pin by pin from the names on the pins (the pinout first, no interface type; after 1.7.0, not in the latest release yet), see [connect two connectors](user-manual/connect-two-connectors.md). To make a harness with no interface at all, see [build a harness by hand](user-manual/build-a-harness-by-hand.md).
 - **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import > Import interfaces…** (Ctrl+Shift+I). Add the devices first. You can also paste a block of cells from Excel into the **Device list** or **Interfaces** table to change rows that exist. Importing interfaces is app only: there is no command line command for it.
 
 **Done when:** `harness-design-studio generate my-design` finishes and `harness-design-studio check my-design` reports no errors.
@@ -97,6 +97,7 @@ Do this when the data exists; the tool works without it and says so.
 - **Build data** (strip lengths, the contact on each pin and its crimp tool, sleeving, heat shrink, labels and backshells): the fields in the app, or `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv` with `harness-design-studio import-build-data` (new in 1.7.0). The build workbook shows what you entered and marks the rest `to fill in`; nothing is computed from it. See [enter the build data](user-manual/enter-the-build-data.md).
 - **Engineering values** (derating, ampacity, EMC classes): [`CONFIG.md`](CONFIG.md). The files in `config-demo-values/` are **for learning only**; they stay marked as placeholders. Never copy demo values into a real design.
 - **Device connector pinouts from KiCad:** [`KICAD.md`](KICAD.md).
+- **A folder your team shares (after 1.7.0):** devices and subsystems (devices with their connections) live in a library folder on a shared drive or in a Git repository; choose it with **File > Library folder…**, open it with **File > Library…** and add what you need ([use the library](user-manual/use-the-library.md)). A blank project holds no subsystem.
 - **A device you defined before:** save it once with **Save to library…** in the Devices tab (or `harness-design-studio export-devices`) and add it to the next project with **Add from library…** ([define a device](user-manual/define-a-device.md#use-a-device-in-another-project)).
 
 **Done when:** `harness-design-studio config my-design` lists no missing value you are responsible for.

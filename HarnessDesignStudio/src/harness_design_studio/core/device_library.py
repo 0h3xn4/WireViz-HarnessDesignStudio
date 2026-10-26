@@ -220,6 +220,9 @@ class DeviceRow:
     new_id: str = ""  # the ID in the project
     connectors: int = 0
     pins: int = 0
+    connector_ids: dict[str, str] = field(
+        default_factory=dict
+    )  # ID in the file -> ID in the project
 
 
 @dataclass
@@ -382,6 +385,7 @@ def plan_device_import(
         ops.extend(Put("connectors", c) for c in new_conns)
         row.ok = True
         row.connectors = len(new_conns)
+        row.connector_ids = {old.id: new.id for old, new in zip(conns, new_conns, strict=True)}
         row.pins = sum(len(c.pins) for c in new_conns)
 
     if wanted is not None:

@@ -219,11 +219,50 @@ def _check_parts_and_records(project: Project) -> list[Issue]:
     return out
 
 
+def _check_links(project: Project) -> list[Issue]:
+    """Links (M2): both connectors exist and belong to two different devices, every paired pin
+    exists, no pin is paired twice (in the link or in another link), the harness exists."""
+    out: list[Issue] = []
+    used: dict[tuple[str, str], str] = {}  # (connector, pin) -> the first link that pairs it
+    for link in sorted(project.links.values(), key=lambda x: x.id):
+        ends = {"a": project.connectors.get(link.a_connector), "b": project.connectors.get(link.b_connector)}  # fmt: skip
+        for side, cid in (("a", link.a_connector), ("b", link.b_connector)):
+            conn = ends[side]
+            if conn is None or conn.role != "box":
+                out.append(_err("dangling_link", f"Link '{link.id}' joins connector '{cid}', which is not a connector of a device in this project. Delete the link or choose another connector.", link.id))  # fmt: skip
+        a, b = ends["a"], ends["b"]
+        if link.a_connector == link.b_connector or (
+            a is not None and b is not None and a.unit_id is not None and a.unit_id == b.unit_id
+        ):
+            out.append(_err("link_same_device", f"Link '{link.id}' joins two connectors of the same device. A link joins connectors of two different devices.", link.id))  # fmt: skip
+        pins = {
+            "a": {p.id for p in a.pins} if a is not None else None,
+            "b": {p.id for p in b.pins} if b is not None else None,
+        }
+        mine: set[tuple[str, str]] = set()
+        for pair in link.pairs:
+            for side, cid, pid in (("a", link.a_connector, pair.a_pin), ("b", link.b_connector, pair.b_pin)):  # fmt: skip
+                known = pins[side]
+                if known is not None and pid not in known:
+                    out.append(_err("link_pin_missing", f"Link '{link.id}' pairs pin '{pid}' of connector '{cid}', but that pin does not exist. Change the pairing or add the pin.", link.id))  # fmt: skip
+                key = (cid, pid)
+                if key in mine:
+                    out.append(_err("link_pin_reused", f"Link '{link.id}' pairs pin '{pid}' of connector '{cid}' more than once. A pin belongs to one pair.", link.id))  # fmt: skip
+                elif key in used and used[key] != link.id:
+                    out.append(_err("link_pin_reused", f"Pin '{pid}' of connector '{cid}' is paired in link '{used[key]}' and in link '{link.id}'. A pin belongs to one link.", link.id))  # fmt: skip
+                mine.add(key)
+        for key in mine:
+            used.setdefault(key, link.id)
+        if link.harness_id and link.harness_id not in project.harnesses:
+            out.append(_err("unknown_harness", f"Link '{link.id}' says it made harness '{link.harness_id}', which does not exist. Clear the harness of the link.", link.id))  # fmt: skip
+    return out
+
+
 def check_integrity(project: Project) -> list[Issue]:
     """Return every consistency problem; an empty list means the model is internally consistent."""
     out: list[Issue] = []
     for kind, ids in (
-        ("units", project.units), ("interfaces", project.interfaces),
+        ("units", project.units), ("interfaces", project.interfaces), ("links", project.links),
         ("interface types", project.interface_types), ("parts", project.parts),
         ("harnesses", project.harnesses), ("baselines", project.baselines),
     ):  # fmt: skip
@@ -265,6 +304,8 @@ def check_integrity(project: Project) -> list[Issue]:
         )
         for pid in sorted(set(project.placements) - set(project.units))
     )
+    if project.links:
+        out.extend(_check_links(project))
     wire_counts = Counter(w.id for h in project.harnesses.values() for w in h.wires)
     # Results per connector and harness are reused while the objects (immutable) and everything
     # they are checked against are unchanged; this keeps an edit at stress size well under 100 ms.

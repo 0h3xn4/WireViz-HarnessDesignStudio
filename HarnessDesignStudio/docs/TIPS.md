@@ -38,15 +38,17 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+E | Export... (the Export outputs window) |
 | Ctrl+I | New interface... |
 | Ctrl+1 to Ctrl+6 | The tabs Diagram, Harness, Lists, Checks, Releases, Devices |
-| Ctrl+7 and Ctrl+, | Home and Settings (the rail of the Simple workspace does not list Home, but Ctrl+7 and **Go > Go to Home** open it) |
+| Ctrl+7 and Ctrl+, | Home and Settings (the rail of the Systems engineer role does not list Home, Drawings or Outputs, but Ctrl+7, **Go > Go to Home** and the other **Go** entries open them) |
 | Ctrl+Shift+M | Show or hide the Problems panel at the bottom |
 | Ctrl+Shift+N | Add a device (asks for its name and ID first, then an empty device is opened in the Devices tab) |
 | Ctrl+Shift+H | New harness... (a harness made by hand; the Drawings area, then its Connectors tab) |
+| Ctrl+Shift+B | Edit all wires of the harness... (the same gauge, type, colour and length on many wires) |
 | Ctrl+Shift+T | The Interface table (the Interfaces tab of the left panel) |
 | Ctrl+Shift+J | The Device list (the Device list tab of the left panel) |
 | F6 and Shift+F6 | Move the keyboard focus to the next or previous panel |
 | Delete | Delete the selection (it first shows what else goes with it); in the diagram, the Interface table and the Project tree |
-| C | Start the Connect tool; then click the two devices to add an interface |
+| C | Start the Connect tool; then click the two devices: the window Link connectors joins two connectors pin by pin |
+| Ctrl+Shift+K | Link connectors… (the same window, without clicking the devices first) |
 | Esc | Back to the Select tool; also clears the selection and ends the focus on a device or link |
 | Ctrl+= and Ctrl+- | Zoom in and out |
 | F | Fit the whole diagram in the window (diagram has the focus) |
@@ -63,7 +65,7 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+C in a table | Copy the selected cells as tab-separated text (Ctrl+Shift+C adds the header row) |
 | Enter or F2, Esc, Ctrl+V in a table | Edit the selected cell, keep the old text, paste a block of cells copied from a spreadsheet (one undo step) |
 
-Everything else is in the menus: **View > Arrange diagram** tidies the devices (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** (also **Settings > Appearance**) follows the system or is Light or Dark, **View > Reduce motion** turns off the fades and slides, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data. **View > Simple** and **View > Full** (since 1.7.0) choose how much of the window is on screen; **View > Show side panels** (Simple only) opens or closes the project tree and the Inspector. Everything the Simple workspace hides is still in a menu and in the command palette.
+Everything else is in the menus: **View > Arrange diagram** tidies the devices (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** (also **Settings > Appearance**) follows the system or is Light or Dark, **View > Reduce motion** turns off the fades and slides, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data. **View > Role** (Systems engineer or Electrical / AIT engineer, after 1.7.0) chooses how much of the window is on screen; **View > Show side panels** (Systems engineer only) opens or closes the project tree and the Inspector. Everything the Systems engineer role hides is still in a menu and in the command palette.
 
 ## The command palette (Ctrl+K)
 
@@ -219,7 +221,7 @@ A warning of the design rule check can be fixed or **waived**: in the app, press
 - **Look at the Why tab:** select a wire and read *Why is it like this?* before you override a choice.
 - **Lock what you decided:** a wire or pin you set by hand and lock is kept by every later generation. For a wire, set its gauge, type, colour or length in the **Edit wire** tab (since 1.4.0); for a pin, use the *Mode* column of the **Devices** tab; both can also be set in the harness file (`"locked": true`). See [`user-manual/generate-harnesses.md`](user-manual/generate-harnesses.md#keep-a-choice-of-your-own).
 - **Verify before you send:** `harness-design-studio verify DIR --outputs` re-reads the exported files and compares them with the design; the 12-character model hash in every file tells you which design printed it.
-- **Too much on screen?** Choose **View > Simple**: the window then opens on the **Next step** page, which names one thing to do, and the side panels start closed (**Show panels** opens them). **Show everything** on that page, or **View > Full**, brings the whole editor back; each workspace remembers its own layout ([use the simple workspace](user-manual/use-the-simple-workspace.md), since 1.7.0).
+- **Too much on screen?** Choose **View > Role > Systems engineer**: the window then opens on the **Next step** page, which names one thing to do, and the side panels start closed (**Show panels** opens them). **Show everything** on that page, or **View > Role > Electrical / AIT engineer**, brings every area and panel back; each role remembers its own layout ([choose your role](user-manual/choose-your-role.md)).
 - **Enter the build data once, import it again:** strip lengths, contacts and accessories with an `ID` can be imported again and again; the same file changes nothing the second time (`import-build-data`, new in 1.7.0).
 - **Plan on paper first** with `design-worksheet.md` from the templates (not in the 0.1.0 packages).
 

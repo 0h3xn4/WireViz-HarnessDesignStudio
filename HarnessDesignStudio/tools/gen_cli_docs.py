@@ -24,10 +24,11 @@ GROUPS = (
             "import-netlist",
             "import-pinout",
             "import-devices",
+            "import-subsystem",
             "import-build-data",
         ),
     ),
-    ("Write data out", ("export-pinout", "export-devices")),
+    ("Write data out", ("export-pinout", "export-devices", "export-subsystem")),
     ("Review, release and change", ("review", "release", "revise", "diff", "log", "compare")),
     ("Maintenance", ("migrate",)),
 )
@@ -92,6 +93,13 @@ EXAMPLES: dict[str, list[str]] = {
     "import-devices": [
         "harness-design-studio import-devices my-design device-library.json --list",
         "harness-design-studio import-devices my-design device-library.json --device GYRO1 --dry-run",
+    ],
+    "export-subsystem": [
+        'harness-design-studio export-subsystem my-design wheel-drive.json --device OBC1 --device RW1 --name "Wheel drive"',
+    ],
+    "import-subsystem": [
+        "harness-design-studio import-subsystem my-design wheel-drive.json --show",
+        "harness-design-studio import-subsystem my-design wheel-drive.json --dry-run",
     ],
     "review": ['harness-design-studio review my-design W001 --by "A. Engineer"'],
     "release": [

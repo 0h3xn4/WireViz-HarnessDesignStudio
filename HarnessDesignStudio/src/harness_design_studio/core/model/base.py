@@ -89,6 +89,9 @@ Name = Annotated[
     StringConstraints(min_length=1, max_length=200),
     AfterValidator(_no_control_chars),
 ]
+Label = Annotated[
+    str, StringConstraints(max_length=200), AfterValidator(_no_control_chars)
+]  # a name that may be empty
 IsoDate = Annotated[str, AfterValidator(_iso_date)]
 Text = Annotated[str, StringConstraints(max_length=5000), AfterValidator(_no_control_chars)]
 

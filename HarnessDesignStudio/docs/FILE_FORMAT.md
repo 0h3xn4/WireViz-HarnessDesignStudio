@@ -17,8 +17,10 @@ The screen says *device*, the files say *unit*: what the program shows as a devi
 - [Editor additions](#editor-additions-connector-use-layout-waivers-autosave-schema-version-stays-1)
 - [Generation additions](#generation-additions-pins-mating-locks-generation-record-schema-version-stays-1)
 - [Build data additions](#build-data-additions-170-schema-version-stays-1)
+- [Links and pin roles](#links-and-pin-roles-m2-schema-version-stays-1)
 - [Change control additions](#change-control-additions-review-release-baselines-change-log-schema-version-stays-1)
 - [Device library file](#device-library-file-140-not-part-of-a-project)
+- [Subsystem library file](#subsystem-library-file-m4-not-part-of-a-project)
 - [Editing files by hand: JSON Schemas](#editing-files-by-hand-json-schemas)
 
 ```
@@ -31,6 +33,7 @@ logical/layout.json               {"zones": [...], "placements": [{id, x, y}]}  
 waivers.json                      {"waivers": [...]}  written only when a finding has been waived
 logical/units/<subsystem>.json    {"units": [...]}
 logical/interfaces/<subsystem>.json  {"interfaces": [...]}   grouped by the subsystem of the first endpoint
+logical/links.json                {"links": [...]}  pin-to-pin links of two device connectors; written only when there is a link
 physical/connectors/<subsystem>.json {"connectors": [...]}   box connectors, grouped by their unit's subsystem
 physical/harnesses/<id>.json      one harness with its connectors, wires, splices, shields, branch points, segments, accessories
 generated/generation.json         the last generation record (provenance for Explain)
@@ -104,8 +107,9 @@ All optional with defaults; projects saved before them load unchanged.
 - `Pin.function`, `Connector.label` and `Harness.label` (1.4.0): free text a person gives a pin, a connector (box or cable end) and a harness. Written only when set; generation copies the function of a box pin to its cable pin and keeps the labels.
 - `Wire.manual` and `ShieldGroup.manual` (1.4.0): a wire or a twisting or shield group that a person made; generation keeps it as it is, never matches it to an interface, and says when it cannot keep it. Written only when `true`.
 - `Wire.label` and `Wire.note` (1.4.0): text for the wire labels instead of the signal name, and a remark. Written only when set; a project without them is byte-identical to one saved by 1.3.0, and 1.3.0 quarantines the fields when it opens a project that uses them.
+- `Connector.locked` (workshop milestone M3, D-174): on a cable connector of a harness that Generate made, a person edited its part, gender, keying or pin details (the *Connectors* tab); generation keeps those values (the pins' IDs, their number and their contacts still follow the device connector) and names the connector in `locked_data_lost` when it cannot keep it. Written only when `true`; a project with no edited connector is byte-identical to one saved before.
 - `Harness.generated`, `group_key`, `interfaces`: set for generated harnesses; a harness made by hand (*New harness*, 1.5.0) keeps `generated: false`. Releases 1.5.0 and 1.6.0 added no field: a project saved by 1.4.0 opens as it is.
-- **How the 1.4.0 fields stay out of old projects.** The fields above that say "written only when set" are the model's *sparse* fields (`OMIT_WHEN_DEFAULT` in `core/model/base.py`): `Pin.function`, `Connector.label`, `Harness.label`, `Wire.label`, `Wire.note`, `Wire.manual` and `ShieldGroup.manual`. While a field has its default value it is left out of the file, so a project that does not use the feature keeps byte-identical files and the same model hash.
+- **How the 1.4.0 fields stay out of old projects.** The fields above that say "written only when set" are the model's *sparse* fields (`OMIT_WHEN_DEFAULT` in `core/model/base.py`): `Pin.function`, `Connector.label`, `Harness.label`, `Wire.label`, `Wire.note`, `Wire.manual` and `ShieldGroup.manual` (and, since the workshop milestone M3, `Connector.locked`). While a field has its default value it is left out of the file, so a project that does not use the feature keeps byte-identical files and the same model hash.
 - `Part.mates_with`: library connector parts that mate with it.
 - `generated/generation.json`: the last generation record: `input_hash`, `generator_version`, `next_harness_number`, `placeholders_used`, and `provenance` (object key to list of "rule: reason" lines; the data behind Explain).
 - `config/generation.json`: generation settings (see PLACEHOLDERS.md).
@@ -127,6 +131,19 @@ Every field is optional and *sparse*: it is left out of the file while it is emp
 
 (One accessory of the practice project, as `physical/harnesses/W001.json` holds it, shown on one line here; the file itself has one key per line.) How to enter the values: [`user-manual/enter-the-build-data.md`](user-manual/enter-the-build-data.md).
 
+## Links and pin roles (M2; schema version stays 1)
+A *link* joins a connector of one device to a connector of another, pin to pin. The pinout is the truth: the tool proposes the pairs from the signal names on the pins and a person accepts or changes them. Everything here is optional and left out of the files while empty, so a project that uses none of it keeps byte-identical files, the same model hash and the same outputs. An older tool (1.7.0 and earlier) does not know `logical/links.json` and `Pin.role`; it sets them aside and says so when it opens a project that uses them, as for the earlier optional fields.
+- `logical/links.json`: `{"links": [...]}`, sorted by `id`, **written only when the project has at least one link** (the file is removed again when the last link is deleted). A link has `id` (`L1`, `L2` ... unless a person chose another), `a_connector` and `b_connector` (IDs of box connectors, of two different devices), `pairs` (a list of `{"a_pin": ..., "b_pin": ...}`, the pin of the first connector and the pin of the second; the order is the order a person saw) and, only when used, `name` (a label), `harness_id` (the harness made from the link with *Create harness*) and `note`. A connector can be in several links; a pin can be in one pair of one link only.
+- `Pin.role` (in `physical/connectors/`): `power`, `return`, `ground`, `signal`, `shield` or `spare`. Empty (and then left out) means *derived from the signal name*: `power` for a signal of an interface type of the power category (RTN excepted), `return` for RTN, `ground` for GND or the ground category, `signal` for any other signal. A person sets it where the name does not say it (a heater return, a spare pin).
+- What a link carries (CAN, power ...) is **not stored**: it is worked out from the pins when it is shown (`core/links.py`, `derived_interfaces`).
+- **Integrity.** `dangling_link` (a connector of the link is not a connector of a device), `link_pin_missing` (a paired pin does not exist), `link_pin_reused` (a pin in two pairs of a link, or in two links), `link_same_device` (both connectors on one device), and `unknown_harness` when `harness_id` names a harness that does not exist; all errors. The design rules `link-unpaired`, `link-direction`, `link-signal-mismatch` and `link-power-return` review the pairing; a project without links gives them nothing to report.
+- **Change control.** A link is an object of the diff (`link`, its pairs read `1-3, 2-4`). A link whose `harness_id` is a released harness is locked with it: the change or deletion is refused with the reason, and a new link cannot name a released harness. The baseline of a harness made from a link records the link in `snapshot.links` (left out when the harness has none), and `harness-design-studio check` reports a hand edit of it as `released_modified`. Deleting a device deletes its links; deleting the harness clears `harness_id`; a pin that a link pairs cannot be deleted or renamed before the link changes.
+- `system/export.json` has a `links` key only when the project has links.
+
+```
+{"links": [{"a_connector": "OBC-J01", "b_connector": "RW1-J02", "id": "L1", "pairs": [{"a_pin": "1", "b_pin": "3"}, {"a_pin": "3", "b_pin": "1"}]}]}
+```
+
 ## Change control additions: review, release, baselines, change log (schema version stays 1)
 - `Harness.author`, `checker`, `approver`, `released_on` (all optional): who put the harness into review, who checked and released it, and the release date (YYYY-MM-DD). `status` is `draft`, `in_review` or `released`; `revision` is letters.
 - `baselines/<harness ID>/<baseline ID>.json`: `id` (`<harness>.<revision>`), `harness_id`, `revision`, `released_on`, `by`, `comment`, `content_hash`, `snapshot` (`units`, `interfaces`, `connectors` = box connectors, `harnesses` = the released harness, and the records listed below). Written once at release; never edited by the tool.
@@ -146,6 +163,39 @@ The editor and the data commands (`import-parts`, `config`; `library` only recor
 ## Device library file (1.4.0; not part of a project)
 
 A device library (`harness-device-library`, D-165) is one JSON file that is kept outside any project. Its top level is `format` (the text `harness-device-library`), `version` (1), `devices`, `parts` and `interface_types`. A device is `{"unit": {...}, "connectors": [...]}` with the same fields as a unit in `logical/units/<subsystem>.json` and a box connector in `physical/connectors/<subsystem>.json` of a project (box connectors only, every pin with its `signal`, `function`, `contact_size`, `termination`, `fixed` and, since 1.7.0, `contact_part`; the contact parts themselves are not in the file); `parts` and `interface_types` are the records of `library/<category>.json` and `logical/interface_types.json` that the connectors name. The zone of a unit and the allocations that generation made on a pin (`interface_id`, `locked`, a signal that was given for an interface) are left out. The file is written sorted by ID with two-space indent. A reader refuses a file of a higher `version`, a file over 8 MB, over 500 devices or over 64 connectors in a device. Importing never changes the project outside what the plan names; see `docs/user-manual/define-a-device.md`.
+
+## Subsystem library file (M4; not part of a project)
+
+A subsystem library (`harness-subsystem-library`, D-175) is one JSON file that holds **one subsystem**: a set of devices with the connections between them. It is kept outside any project, in the **library folder** that a team shares (a shared drive or a Git checkout) next to the device library files. The tool tells the two kinds apart by `format`; any other `.json` file in the folder is ignored. The top level is:
+
+| Field | Meaning |
+| --- | --- |
+| `format` | the text `harness-subsystem-library` |
+| `version` | `1`; a reader refuses a higher number and says so |
+| `name` | the name of the subsystem (1 to 200 characters, no control characters); it becomes the `subsystem` of every device that is added |
+| `description` | one or two lines for whoever finds it in the library (may be empty) |
+| `notes` | optional notes for whoever adds it |
+| `devices` | the devices, each `{"unit": {...}, "connectors": [...]}` exactly as in the [device library file](#device-library-file-140-not-part-of-a-project); at least one, at most 100 |
+| `parts`, `interface_types` | the records that the connectors of the devices name, as in the device library file |
+| `connections` | the links of `logical/links.json` between connectors of the devices: `{"id", "name", "a_connector", "b_connector", "pairs": [{"a_pin", "b_pin"}], "note"}`; at most 2000 |
+
+The connection ends are the **connector IDs of the file** (the `id` of a connector under `devices`), so a connection keeps its meaning when the devices get other IDs in a project: the planner maps the connector IDs of the file to the new ones. A connection with an end on a device that is not in the file is left out when the file is written, and a connection whose end is not a connector of the file makes the whole subsystem refuse to be added. `harness_id` is never written (a harness belongs to a project). The file is written with two-space indent and a final new line; a reader refuses a file over 8 MB.
+
+```
+{
+  "format": "harness-subsystem-library",
+  "version": 1,
+  "name": "Wheel drive",
+  "description": "OBC and a reaction wheel",
+  "notes": "",
+  "devices": [{"unit": {"id": "OBC", ...}, "connectors": [{"id": "OBC-J01", ...}]}, {"unit": {"id": "RW1", ...}, "connectors": [...]}],
+  "parts": [...],
+  "interface_types": [...],
+  "connections": [{"id": "L1", "a_connector": "OBC-J01", "b_connector": "RW1-J02", "pairs": [{"a_pin": "1", "b_pin": "1"}]}]
+}
+```
+
+Adding a subsystem (`plan_subsystem_import`, `import-subsystem`, the library window) adds the devices (a taken ID gets the next free one: `OBC` becomes `OBC-2`, and its connectors follow), sets `Unit.subsystem` of each to the `name`, adds the connections between the new connectors (a taken connection ID gets the next free `L<n>`), puts the devices in a free place of one lane, and does all of it as one undo step. It is all or nothing and never changes an object that the project has. The file name that the tool writes is `subsystem-<name made safe>.json`; the tool never replaces a file of that name. Nothing is added to a project file that does not use the library: no field of the model changed.
 
 ## Editing files by hand: JSON Schemas
 

@@ -11,6 +11,7 @@ from dataclasses import dataclass
 from typing import Final
 
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.roles import SYSTEMS
 
 
 @dataclass(frozen=True)
@@ -35,7 +36,9 @@ AREAS: Final[tuple[Area, ...]] = (
 KEYS: Final[tuple[str, ...]] = tuple(a.key for a in AREAS)
 PAGES: Final[tuple[str, ...]] = tuple(a.key for a in AREAS if not a.tabs)  # not backed by a tab
 DEFAULT: Final[str] = "model"
-SIMPLE_HIDDEN: Final[tuple[str, ...]] = ("home",)  # the simple workspace has Next step instead
+# the Systems engineer role has Next step instead of Home and leaves out the detail areas (the
+# harness drawings and the outputs); the Electrical / AIT engineer role lists every area
+SYSTEMS_HIDDEN: Final[tuple[str, ...]] = ("home", "drawings", "outputs")
 
 
 def area(key: str) -> Area:
@@ -57,7 +60,8 @@ def tabs_of(key: str) -> tuple[str, ...]:
     return area(key).tabs
 
 
-def hidden_in(workspace: str) -> tuple[str, ...]:
-    """The areas the rail does not list in a workspace. They still exist: the View and Go menus,
-    their keys and the command palette reach them."""
-    return SIMPLE_HIDDEN if workspace == "simple" else ()
+def hidden_in(role: str) -> tuple[str, ...]:
+    """The areas the rail does not list for a role. They still exist: the View and Go menus,
+    their keys, the buttons of the Next step page and the command palette reach them, and the
+    rail lists the one that is open."""
+    return SYSTEMS_HIDDEN if role == SYSTEMS else ()

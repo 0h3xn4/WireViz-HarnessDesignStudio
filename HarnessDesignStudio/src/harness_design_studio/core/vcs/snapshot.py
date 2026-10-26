@@ -2,7 +2,7 @@
 
 from typing import Any
 
-from harness_design_studio.core.model import ConfigFile, Harness, Project, Snapshot, evolve
+from harness_design_studio.core.model import ConfigFile, Harness, Link, Project, Snapshot, evolve
 
 # What a release freezes, besides the harness itself (docs/FILE_FORMAT.md, "What a release freezes").
 # Configuration that checks and outputs of an existing harness read; the rest (segmentation,
@@ -117,7 +117,13 @@ def snapshot_for(project: Project, h: Harness) -> Snapshot:
             for _, w in sorted(project.waivers.items())
             if w.object_id in related or w.object_id.split(".")[0] in related
         ],
+        links=links_of(project, h) or None,  # None (left out of the file) when it has none
     )
+
+
+def links_of(project: Project, h: Harness) -> list[Link]:
+    """The links the harness was made from (M2), by ID."""
+    return [x for _, x in sorted(project.links.items()) if x.harness_id == h.id]
 
 
 def related_ids(project: Project, h: Harness) -> set[str]:

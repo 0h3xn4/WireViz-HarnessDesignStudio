@@ -11,8 +11,10 @@ from harness_design_studio.core.model import (
     Connector,
     Endpoint,
     Harness,
+    Link,
     Part,
     Pin,
+    PinPair,
     Project,
     Segment,
     ShieldGroup,
@@ -215,7 +217,55 @@ def case_duplicate_signal(p: Project) -> None:
     p.interface_types["rs422"] = evolve(t, signals=[t.signals[0], t.signals[0]])
 
 
+# REQ-DRC-05: the integrity codes of links (dangling_link, link_pin_missing, link_pin_reused,
+# link_same_device) each have a negative case below.
+def _link(p: Project, **kw: object) -> None:
+    fields: dict[str, object] = {
+        "id": "L1",
+        "a_connector": "OBC-J01",
+        "b_connector": "RW1-J02",
+        "pairs": [PinPair(a_pin="1", b_pin="1")],
+    }
+    p.links["L1"] = Link(**{**fields, **kw})  # type: ignore[arg-type]
+
+
+def case_dangling_link(p: Project) -> None:
+    _link(p, b_connector="NOPE-J01")
+
+
+def case_link_pin_missing(p: Project) -> None:
+    _link(p, pairs=[PinPair(a_pin="1", b_pin="99")])
+
+
+def case_link_pin_reused(p: Project) -> None:
+    _link(p, pairs=[PinPair(a_pin="1", b_pin="1"), PinPair(a_pin="1", b_pin="2")])
+
+
+def case_link_pin_reused_across_links(p: Project) -> None:
+    _link(p)
+    p.links["L2"] = Link(
+        id="L2",
+        a_connector="OBC-J01",
+        b_connector="PCDU-J03",
+        pairs=[PinPair(a_pin="1", b_pin="1")],
+    )
+
+
+def case_link_same_device(p: Project) -> None:
+    _link(p, b_connector="OBC-J02")
+
+
+def case_link_harness_missing(p: Project) -> None:
+    _link(p, harness_id="W404")
+
+
 NEGATIVE: list[tuple[str, Callable[[Project], None], str]] = [
+    ("dangling_link", case_dangling_link, "dangling_link"),
+    ("link_pin_missing", case_link_pin_missing, "link_pin_missing"),
+    ("link_pin_reused", case_link_pin_reused, "link_pin_reused"),
+    ("link_pin_reused_across", case_link_pin_reused_across_links, "link_pin_reused"),
+    ("link_same_device", case_link_same_device, "link_same_device"),
+    ("link_harness_missing", case_link_harness_missing, "unknown_harness"),
     ("unknown_interface_type", case_unknown_interface_type, "unknown_interface_type"),
     ("unknown_unit", case_unknown_unit, "unknown_unit"),
     ("too_few_endpoints", case_too_few_endpoints, "too_few_endpoints"),

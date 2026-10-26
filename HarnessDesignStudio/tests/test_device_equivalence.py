@@ -2,7 +2,7 @@
 projects are saved and compared byte for byte, and with the committed fixture
 `tests/fixtures/projects/custom_device` (device written without the editor, then generated); a
 second Generate has nothing to do, the verifier and the design rules find nothing new, and the
-rule count stays 35. Rebuild the fixture on purpose with
+rule count stays 39. Rebuild the fixture on purpose with
 `python -c "from tests.test_device_equivalence import write_fixture; write_fixture()"` and review
 the diff."""
 
@@ -143,7 +143,7 @@ def test_verify_and_rules_find_nothing_the_hand_written_device_does_not() -> Non
     generate_project(b)
     assert verify_project(b).errors == verify_project(a).errors == []
     assert [(f.rule, f.object_id) for f in run(b)] == [(f.rule, f.object_id) for f in run(a)]
-    assert len(RULES) == 35
+    assert len(RULES) == 39
 
 
 def test_editor_made_connectors_are_a_single_put_each() -> None:

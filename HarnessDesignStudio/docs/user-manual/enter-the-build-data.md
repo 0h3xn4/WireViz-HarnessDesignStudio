@@ -42,7 +42,7 @@ harness-design-studio generate wheel-link
 
 ## 1. Strip lengths
 
-**In the app** (GUI, not run): choose **Drawings** on the rail (it is in the Simple workspace too), select a wire (or several) and open the **Edit wire** tab. It has two fields, **Strip A (mm)** for the From end and **Strip B (mm)** for the To end.
+**In the app** (GUI, not run): choose **Drawings** on the rail (a Systems engineer's rail does not list it: use **Go > Go to Harness**), select a wire (or several) and open the **Edit wire** tab. It has two fields, **Strip A (mm)** for the From end and **Strip B (mm)** for the To end.
 
 - For several wires a field that differs between them is empty and says *various*; an empty field clears the value. A decimal comma is accepted.
 - **Apply** sets them together with any other field you touched, as one undo step.
@@ -186,7 +186,7 @@ row 3: ERROR W001 is made by Generate, which copies the contact from the pin of 
 Nothing was changed.
 ```
 
-**The crimp tool.** In the app (GUI, not run), click a part of the category contact in the project tree (in the Simple workspace press **Show panels** first). The **Inspector** shows the part page with **Crimp tool**; type the tool or its setting (`Tool X, setting 4` is the kind of text meant) and press **Set tool**. Parts cannot be edited anywhere else. From a file, a table with the headings `Part` and `Tool` sets it (`part-tools.csv`):
+**The crimp tool.** In the app (GUI, not run), click a part of the category contact in the project tree (as a Systems engineer press **Show panels** first). The **Inspector** shows the part page with **Crimp tool**; type the tool or its setting (`Tool X, setting 4` is the kind of text meant) and press **Set tool**. Parts cannot be edited anywhere else. From a file, a table with the headings `Part` and `Tool` sets it (`part-tools.csv`):
 
 ```
 Part,Tool

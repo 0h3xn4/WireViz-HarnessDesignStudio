@@ -88,6 +88,13 @@ def _flatten_box(flat: Flat, c: Entity) -> None:
         flat[("box_pin", f"{data['id']}.{pin['id']}")] = pin
 
 
+def _flatten_link(flat: Flat, link: Entity) -> None:
+    data = _dump(link)
+    # the pairs read "1-3, 2-4" in a report instead of two dictionaries each
+    data["pairs"] = [f"{p['a_pin']}-{p['b_pin']}" for p in data.get("pairs", [])]
+    flat[("link", str(data["id"]))] = data
+
+
 def flatten_snapshot(s: Snapshot) -> Flat:
     flat: Flat = {}
     for u in s.units:
@@ -98,6 +105,8 @@ def flatten_snapshot(s: Snapshot) -> Flat:
         _flatten_box(flat, c)
     for h in s.harnesses:
         _flatten_harness(flat, h)
+    for link in s.links or []:
+        _flatten_link(flat, link)
     return flat
 
 
@@ -109,6 +118,8 @@ def flatten_project(p: Project) -> Flat:
         flat[("interface_type", t.id)] = _dump(t)
     for i in p.interfaces.values():
         flat[("interface", i.id)] = _dump(i)
+    for link in p.links.values():
+        _flatten_link(flat, link)
     for part in p.parts.values():
         flat[("part", part.id)] = _dump(part)
     for c in p.connectors.values():
@@ -173,7 +184,7 @@ def diff_projects(before: Project, after: Project) -> Diff:
 # ---- readable reports ------------------------------------------------------------------------------
 
 KIND_NAMES = {
-    "unit": "Unit", "interface": "Interface", "interface_type": "Interface type", "part": "Part",
+    "unit": "Unit", "interface": "Interface", "link": "Link", "interface_type": "Interface type", "part": "Part",
     "box_connector": "Box connector", "box_pin": "Box pin", "harness": "Harness",
     "cable_connector": "Cable connector", "cable_pin": "Cable pin", "wire": "Wire", "splice": "Splice",
     "shield": "Shield", "branch_point": "Branch point", "segment": "Segment", "accessory": "Accessory",

@@ -14,7 +14,7 @@ from pathlib import Path
 from pydantic import ValidationError
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from harness_design_studio.core import checks, devices, drc, edit
+from harness_design_studio.core import checks, copies, devices, drc, edit, links
 from harness_design_studio.core.commands import Delete, History, Op, Put, SetZones, apply_ops
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, SaveError, TransactionError
@@ -80,6 +80,7 @@ class Delta:
 
     units: set[str] = field(default_factory=set)
     interfaces: set[str] = field(default_factory=set)
+    links: set[str] = field(default_factory=set)  # connections of two connectors (core/links.py)
     followers: set[str] = field(default_factory=set)  # in `interfaces` only because a unit moved
     full: bool = False
     tables: bool = True
@@ -119,6 +120,8 @@ class EditorController(QObject):
     drcStateChanged = Signal()  # checking started or finished
     marksChanged = Signal()  # diff marks on the diagram changed
     openRequested = Signal(str, str)  # kind ("unit" | "interface"), id: show it in the plans view
+    linkRequested = Signal(str, str, str, str)  # device A, connector A or "", device B, connector B
+    linkSelectionChanged = Signal()  # the connection picked in the tree or on the diagram changed
 
     def __init__(
         self, journal_delay_ms: int = JOURNAL_DELAY_MS, drc_delay_ms: int = DRC_DELAY_MS
@@ -134,6 +137,7 @@ class EditorController(QObject):
         self.tool = "select"
         self.connect_type: str | None = None
         self.connect_from: ConnectFrom | None = None
+        self.selected_link: str | None = None  # the connection (a core.links.Link) picked
         self._lock: ProjectLock | None = None
         self._fingerprint: str | None = None
         self._saved_revision = 0
@@ -392,6 +396,9 @@ class EditorController(QObject):
         self._clear_stale_connect()
         delta = self._delta_of(ops)
         self._prune_selection()
+        if self.selected_link is not None and self.selected_link not in self.project.links:
+            self.selected_link = None
+            self.linkSelectionChanged.emit()
         self.changed.emit(delta)
         self.stateChanged.emit()
         self._schedule_journal()
@@ -443,6 +450,8 @@ class EditorController(QObject):
                 d.units.add(e.unit_id)
             if isinstance(op, Put):
                 d.units.update(e.unit_id for e in op.obj.endpoints)  # type: ignore[attr-defined]
+        elif op.collection == "links":
+            d.links.add(key)
         elif op.collection == "connectors":
             unit = op.obj.unit_id if isinstance(op, Put) else self._owners.get(key)  # type: ignore[attr-defined]
             if unit:
@@ -527,6 +536,9 @@ class EditorController(QObject):
     def _set_selection(self, items: tuple[Selection, ...], primary: Selection | None) -> None:
         if items != self._selected or primary != self._primary:
             self._selected, self._primary = items, primary
+            if items and self.selected_link is not None:  # one thing is picked at a time
+                self.selected_link = None
+                self.linkSelectionChanged.emit()
             self.selectionChanged.emit()
 
     def request_open(self, kind: str, id_: str) -> None:
@@ -542,6 +554,19 @@ class EditorController(QObject):
             type_id = None  # a type that is not in this project (stale menu entry)
         self.tool = "connect"
         self.connect_type = type_id
+        self.connect_from = None
+        self.connectChanged.emit()
+
+    @property
+    def linking(self) -> bool:
+        """The Connect tool is on and joins two connectors (the way of the pinout); with an
+        interface type chosen it makes an interface instead."""
+        return self.tool == "connect" and self.connect_type is None
+
+    def begin_link(self) -> None:
+        """Connect tool, the pinout way: click a device, then a second one."""
+        self.tool = "connect"
+        self.connect_type = None
         self.connect_from = None
         self.connectChanged.emit()
 
@@ -581,7 +606,9 @@ class EditorController(QObject):
         if self.tool != "connect":
             return "", False
         if self.connect_type is None:
-            return strings.CONNECT_PICK_TYPE, False
+            if self.connect_from is None:
+                return strings.LINK_HINT_FIRST, False
+            return strings.LINK_HINT_SECOND.format(self.connect_from.unit_id), False
         itype = self.project.interface_types.get(self.connect_type)
         if itype is None:  # a type that is not in this project (cannot normally happen)
             return strings.CONNECT_PICK_TYPE, False
@@ -595,7 +622,11 @@ class EditorController(QObject):
         return strings.CONNECT_SECOND.format(thing), False
 
     def pick(self, unit_id: str, connector_id: str | None = None) -> None:
-        """Connect tool: first pick sets the source, second pick creates the interface."""
+        """Connect tool: first pick sets the source, second pick creates the interface (or, with
+        no interface type, asks the window to link the connectors of the two devices)."""
+        if self.linking:
+            self._pick_link(unit_id, connector_id)
+            return
         if self.read_only or self.connect_type is None:
             return
         self._clear_stale_connect()
@@ -629,6 +660,23 @@ class EditorController(QObject):
             self.connect_from = None
             self.select("interface", iid)
             self.connectChanged.emit()
+
+    def _pick_link(self, unit_id: str, connector_id: str | None) -> None:
+        if self.read_only:
+            self.refuse_read_only()
+            return
+        self._clear_stale_connect()
+        if self.connect_from is None:
+            self.connect_from = ConnectFrom(unit_id, connector_id)
+            self.connectChanged.emit()
+            return
+        src = self.connect_from
+        if src.unit_id == unit_id:
+            self.message.emit(strings.LINK_SAME_DEVICE.format(unit_id), False)
+            return
+        self.connect_from = None  # (before the window opens its dialog)
+        self.connectChanged.emit()
+        self.linkRequested.emit(src.unit_id, src.connector_id or "", unit_id, connector_id or "")
 
     # ---- high-level edits --------------------------------------------------------------------
 
@@ -896,17 +944,46 @@ class EditorController(QObject):
         )
 
     # ---- devices: custom devices down to each pin (one undo step each, named) -------------------
-    def add_device(self, **fields: object) -> str | None:
-        """Add an empty device in a free slot and select it; returns its ID (None: refused)."""
+    def add_device(self, *, count: int = 1, **fields: object) -> str | None:
+        """Add an empty device in a free slot and select it; returns its ID (None: refused). With
+        `count` above 1 the device is made in that number (`core.copies`: ID, ID-R, ID-3 ...) in
+        the same undo step."""
         try:
             ops, uid = devices.ops_add_device(self.project, **fields)  # type: ignore[arg-type]
+            extra = ""
+            if count > 1:
+                more = copies.plan_copies(edit.clone_with(self.project, ops), uid, count)
+                ops += more.ops
+                extra = ", ".join(more.new_ids)
         except (HarnessError, ValidationError) as exc:
             self.message.emit(_plain(exc), False)
             return None
-        if not self.run(strings.STEP_ADD_DEVICE.format(uid), ops):
+        label = strings.STEP_ADD_DEVICE.format(uid)
+        if count > 1:
+            label = strings.STEP_COPIES.format(count, uid)
+        message = strings.COPIES_DONE.format(f"{uid}, {extra}", "") if extra else None
+        if not self.run(label, ops, message=message):
             return None
         self.select("unit", uid)
         return uid
+
+    def make_copies(self, unit_id: str, count: int) -> bool:
+        """Bring the number of these devices up to `count` (one undo step; `core.copies`)."""
+        try:
+            plan = copies.plan_copies(self.project, unit_id, count)
+        except HarnessError as exc:
+            self.message.emit(str(exc), False)
+            return False
+        extra = (
+            strings.REDUNDANT_SKIPPED.format(len(plan.skipped), ", ".join(plan.skipped))
+            if plan.skipped
+            else ""
+        )
+        return self.run(
+            strings.STEP_COPIES.format(count, unit_id),
+            plan.ops,
+            message=strings.COPIES_DONE.format(", ".join(plan.new_ids), extra),
+        )
 
     def update_device(self, unit_id: str, **changes: object) -> bool:
         return self.attempt(
@@ -1395,6 +1472,90 @@ class EditorController(QObject):
     def request_why(self, kind: str, ident: str) -> None:
         """ "Why?" on the canvas: ask the window to show why this link, unit or connector is so."""
         self.whyRequested.emit(kind, ident)
+
+    # ==== Connections (M2 of the workshop feedback): two connectors joined pin to pin ===========
+
+    def select_link(self, link_id: str | None) -> None:
+        """Pick a connection (the tree and the diagram show it); None puts it down. Picking a
+        device or an interface puts the connection down, and the other way round."""
+        if link_id is not None and link_id not in self.project.links:
+            link_id = None
+        if link_id is not None:
+            self._set_selection((), None)
+        if link_id != self.selected_link:
+            self.selected_link = link_id
+            self.linkSelectionChanged.emit()
+
+    def add_link(
+        self,
+        a_connector: str,
+        b_connector: str,
+        pairs: list[tuple[str, str]],
+        name: str = "",
+        roles: Mapping[tuple[str, str], str] | None = None,
+    ) -> str | None:
+        """Join two connectors with these pairs (and give pins their roles) as one undo step.
+        Returns the link ID, or None when it was refused (the reason is a message)."""
+        try:
+            ops, lid = links.plan_add_link(self.project, a_connector, b_connector, pairs, name)
+            ops = [*links.plan_set_roles(self.project, roles or {}), *ops]
+        except (HarnessError, ValidationError) as exc:
+            self.message.emit(_plain(exc), False)
+            return None
+        text = strings.LINK_ADDED.format(lid, f"{a_connector} - {b_connector}")
+        if not self.run(strings.STEP_ADD_LINK.format(lid), ops, message=text):
+            return None
+        self.select_link(lid)
+        return lid
+
+    def edit_link(
+        self,
+        link_id: str,
+        pairs: list[tuple[str, str]],
+        name: str,
+        roles: Mapping[tuple[str, str], str] | None = None,
+    ) -> bool:
+        """Change the pairs, the name and the pin roles of a connection (one undo step)."""
+
+        def build() -> list[Op]:
+            return [
+                *links.plan_set_roles(self.project, roles or {}),
+                *links.plan_set_pairs(self.project, link_id, pairs),
+                *links.plan_rename_link(self.project, link_id, name),
+            ]
+
+        return self.attempt(
+            strings.STEP_EDIT_LINK.format(link_id),
+            build,
+            message=strings.LINK_CHANGED.format(link_id),
+        )
+
+    def rename_link(self, link_id: str, name: str) -> bool:
+        return self.attempt(
+            strings.STEP_RENAME_LINK.format(link_id),
+            lambda: links.plan_rename_link(self.project, link_id, name),
+            message=strings.LINK_CHANGED.format(link_id),
+        )
+
+    def delete_link(self, link_id: str) -> bool:
+        return self.attempt(
+            strings.STEP_DELETE_LINK.format(link_id),
+            lambda: links.plan_delete_link(self.project, link_id),
+            message=strings.LINK_DELETED.format(link_id),
+        )
+
+    def create_harness_from_link(self, link_id: str) -> str | None:
+        """The one button that makes a harness from a connection (one undo step). Returns the
+        harness ID, or None when it was refused."""
+        try:
+            ops, hid = links.plan_create_harness(self.project, link_id)
+        except (HarnessError, ValidationError) as exc:
+            self.message.emit(_plain(exc), False)
+            return None
+        text = strings.LINK_HARNESS_MADE.format(hid, link_id)
+        if not self.run(strings.STEP_LINK_HARNESS.format(link_id), ops, message=text):
+            return None
+        return hid
 
 
 def reason_of(exc: BaseException) -> str:

@@ -18,14 +18,14 @@ This page shows how to define a device of your own down to each pin: its connect
 
 ## Before you start
 
-- You have a project (for example `harness-design-studio new wheel-link --template first-steps`). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written. In the Simple workspace press **Model** in the rail (or Ctrl+6) to reach the Devices tab; **Show panels** opens the **Project** tab.
+- You have a project (for example `harness-design-studio new wheel-link --template first-steps`). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written. As a Systems engineer press **Model** in the rail (or Ctrl+6) to reach the Devices tab; **Show panels** opens the **Project** tab.
 - A **device** is a device with connectors of its own. The **Devices** tab (Ctrl+6; in the **Model** area, beside **Diagram**) shows one device at a time: the device you select on the diagram or in the project tree is the one shown.
 - The tool never decides what is approved. A connector part or an interface type that you make here is marked *pending* or *unverified*, and a harness that uses it says so when it is released.
 - Everything you do is one undo step with a name, for example *Undo Edit pin GYRO1-J01.A2*.
 
 ## 1. Add the device
 
-1. Choose **Edit > Add device > Device…** (Ctrl+Shift+N; on an empty diagram the button **Add a device** does the same, and so do the button of the **Next step** page and the **Add device** tool of the Simple workspace). A small window, **Add device**, asks for the device first:
+1. Choose **Edit > Add device > Device…** (Ctrl+Shift+N; on an empty diagram the button **Add a device** does the same, and so do the button of the **Next step** page and the **Add device** tool of the Systems engineer role). A small window, **Add device**, asks for the device first:
 
    ![The Add device window with the name Star tracker typed and the ID STAR1 suggested](../img/add-device-dialog.png)
 
@@ -141,6 +141,8 @@ Define a device once and keep it in a **device library file**, a JSON file that 
 - **Add:** in the other project press **Add from library…** in the Devices tab, pick the file, tick the devices, and read the sentence under the list: which ID each gets, what is kept. **Add devices** is one undo step. A device that has a problem is named with its reason and the others are still added.
 - Nothing in your project is replaced. If the ID is taken the device is added as `GYRO1-2`; a part or interface type that the project already has stays as it is, and the sentence says when the file's differs. Parts that come with the file keep the approval status the file says; the tool tells you when it is not *approved*, because the file's status is not a decision of your project.
 - On the command line: `harness-design-studio export-devices DIR FILE --device GYRO1` and `harness-design-studio import-devices DIR FILE --list`, then `--device GYRO1 --dry-run`, then without `--dry-run`.
+
+A whole folder of devices, and sets of devices with their connections (subsystems), are in the library window: [use the library](use-the-library.md).
 
 Then connect the device as usual and **Generate**.
 

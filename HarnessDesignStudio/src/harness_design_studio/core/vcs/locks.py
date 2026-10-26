@@ -9,6 +9,7 @@ from harness_design_studio.core.model import (
     Harness,
     InterfaceInstance,
     InterfaceType,
+    Link,
     Part,
     Project,
     Unit,
@@ -110,6 +111,7 @@ def check_locks(project: Project, ops: list[Op]) -> None:
                 part_owner[pid] = rid
             for tid in used_interface_type_ids(project, released[rid]):
                 type_owner[tid] = rid
+    link_owner = {x.id: x.harness_id for x in project.links.values() if x.harness_id in released}
     problems: list[str] = []
 
     def why(hid: str) -> str:
@@ -144,6 +146,14 @@ def check_locks(project: Project, ops: list[Op]) -> None:
                 problems.append(
                     f"Interface {key} is carried by {owner[key]}, which is released. "
                     + why(owner[key])
+                )
+        elif op.collection == "links":
+            old_l = project.links.get(key)
+            claims = new.harness_id if isinstance(new, Link) and new.harness_id in released else ""
+            owner_id = link_owner.get(key) or (claims if new != old_l else "")
+            if owner_id:
+                problems.append(
+                    f"Link {key} belongs to {owner_id}, which is released. " + why(owner_id)
                 )
         elif op.collection == "parts" and key in part_owner:
             old_p = project.parts.get(key)

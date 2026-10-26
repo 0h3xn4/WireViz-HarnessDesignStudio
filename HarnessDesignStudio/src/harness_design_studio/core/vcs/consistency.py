@@ -74,6 +74,9 @@ def _used_data_changed(project: Project, snapshot: Snapshot) -> str:
     ]
     if types:
         return f"interface type {_list(types)} it uses was changed"
+    links = [x.id for x in snapshot.links or [] if project.links.get(x.id) != x]
+    if links:
+        return f"link {_list(links)} it was made from was changed"
     if snapshot.config is not None:
         now_c = frozen_config(project)
         files = sorted(

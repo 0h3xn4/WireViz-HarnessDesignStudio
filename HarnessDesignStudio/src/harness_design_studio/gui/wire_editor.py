@@ -15,12 +15,13 @@ are applied with the other touched fields as one undo step and never lock the wi
 every wire of the harness the lengths in the two fields (`core/build_data.py`).
 """
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QComboBox,
+    QDialog,
     QFormLayout,
     QHBoxLayout,
     QLabel,
@@ -52,6 +53,7 @@ from harness_design_studio.core.wires import (
 )
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.harness_edit_dialogs import BulkWireDialog, ChangeGroupDialog
 from harness_design_studio.gui.icons import icon_button
 from harness_design_studio.gui.theme import ThemeManager
 
@@ -322,10 +324,12 @@ class WireEditor(QWidget):
     def __init__(self, ctl: EditorController, theme: ThemeManager) -> None:
         super().__init__()
         self.ctl = ctl
+        self.theme = theme
         self.setObjectName("wire-editor")
         self._ids: list[str] = []
         self._touched: set[str] = set()
         self._filling = False
+        self.run_dialog: Callable[[QDialog], int] = lambda dlg: dlg.exec()  # (the window sets it)
 
         root = QVBoxLayout(self)
         root.setContentsMargins(0, 0, 0, 0)
@@ -416,6 +420,10 @@ class WireEditor(QWidget):
         self.strip_result.setProperty("muted", True)
         self.strip_result.setVisible(False)
         root.addWidget(self.strip_result)
+        self.bulk_btn = QPushButton()
+        self.bulk_btn.setObjectName("wire-bulk")
+        icon_button(self.bulk_btn, "pass", theme, strings.WIRE_BULK_TIP, text=strings.WIRE_BULK)
+        root.addWidget(self.bulk_btn)
         self.delete = QPushButton()
         self.delete.setObjectName("wire-delete")
         icon_button(self.delete, "close", theme, strings.WIRE_DELETE_TIP, text=strings.WIRE_DELETE)
@@ -446,6 +454,17 @@ class WireEditor(QWidget):
         group_row.addWidget(self.group_btn)
         group_row.addWidget(self.ungroup_btn)
         root.addLayout(group_row)
+        self.change_group_btn = QPushButton()
+        self.change_group_btn.setObjectName("wire-change-group")
+        icon_button(
+            self.change_group_btn,
+            "harness",
+            theme,
+            strings.WIRE_CHANGE_GROUP_TIP,
+            text=strings.WIRE_CHANGE_GROUP,
+        )
+        self.change_group_btn.setVisible(False)
+        root.addWidget(self.change_group_btn)
         self._hid: str | None = None
         self.new_form = NewWireForm(ctl, theme)
         self.new_form.wireAdded.connect(self.wireAdded)
@@ -462,6 +481,8 @@ class WireEditor(QWidget):
         self.delete.clicked.connect(self.delete_wires)
         self.group_btn.clicked.connect(self.group_wires)
         self.ungroup_btn.clicked.connect(self.ungroup_wires)
+        self.change_group_btn.clicked.connect(self.change_group)
+        self.bulk_btn.clicked.connect(self.bulk_edit)
         self.from_end.changed.connect(lambda: self._touched.update({"from_connector", "from_pin"}))
         self.to_end.changed.connect(lambda: self._touched.update({"to_connector", "to_pin"}))
         for w in (self.gauge, self.length, self.strip_a, self.strip_b, self.label):
@@ -543,6 +564,7 @@ class WireEditor(QWidget):
         self.delete.setVisible(manual)
         groups = self._groups(wires)
         self.ungroup_btn.setVisible(any(g.manual for g in groups))
+        self.change_group_btn.setVisible(len(groups) == 1 and groups[0].manual)
         self.group_label.setText(
             ", ".join(strings.WIRE_IN_GROUP.format(g.kind.replace("_", " "), g.id) for g in groups)
         )
@@ -640,6 +662,7 @@ class WireEditor(QWidget):
         self.group_btn.setEnabled(on)
         self.group_kind.setEnabled(on)
         self.ungroup_btn.setEnabled(on)
+        self.change_group_btn.setEnabled(on)
         self.from_end.set_enabled(on)
         self.to_end.set_enabled(on)
         self.new_form.set_harness(self.new_form._hid)
@@ -656,6 +679,8 @@ class WireEditor(QWidget):
         elif h is not None and h.status == "released":
             reason = strings.WIRE_STATE_RELEASED.format(h.id, h.revision)
         self.strip_all.setEnabled(h is not None and not reason and bool(h.wires))
+        self.bulk_btn.setEnabled(h is not None and not reason and bool(h.wires))
+        self.bulk_btn.setToolTip(reason or strings.WIRE_BULK_TIP)
         if not self._ids:  # no wire selected: the two fields still serve the all-wires button
             for field in (self.strip_a, self.strip_b):
                 field.setEnabled(h is not None and not reason)
@@ -812,6 +837,42 @@ class WireEditor(QWidget):
         ids = list(self._ids)
         if not ops or not self.ctl.run(strings.STEP_UNGROUP_WIRES, ops):
             return False
+        self.show_wires(ids)
+        return True
+
+    def change_group(self) -> bool:
+        """Change the kind, the wires and the shield ends of the group, that you made, of the
+        selected wire (a window asks; one undo step)."""
+        if not self._ids or not self.change_group_btn.isEnabled():
+            return False
+        groups = [g for g in self._groups(self._selected()) if g.manual]
+        if len(groups) != 1:
+            return False
+        dlg = ChangeGroupDialog(self, self.theme, self.ctl.project, groups[0].id)
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted or not dlg.ops():
+            return False
+        ids = list(self._ids)
+        if not self.ctl.run(strings.STEP_CHANGE_GROUP.format(groups[0].id), dlg.ops()):
+            return False
+        self._say("")
+        self.show_wires(ids)
+        return True
+
+    def bulk_edit(self) -> bool:
+        """Edit all wires of the harness, the selected ones or those of one signal (a window asks;
+        one undo step; the wires become locked like an edited wire)."""
+        if self._hid is None:
+            self._say(strings.BULK_NO_HARNESS)
+            return False
+        if not self.bulk_btn.isEnabled():
+            return False
+        dlg = BulkWireDialog(self, self.theme, self.ctl.project, self._hid, self._ids)
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted or not dlg.ops():
+            return False
+        ids = list(self._ids)
+        if not self.ctl.run(strings.STEP_BULK_WIRES.format(dlg.wire_count(), self._hid), dlg.ops()):
+            return False
+        self._say("")
         self.show_wires(ids)
         return True
 

@@ -5,6 +5,8 @@ person draws between two pins.
     ops = plan_wire_reset(project, ["W001-0001"])          # give the wire back to generation
     ops = plan_add_wire(project, "W001", "W001-J1", "3", "W001-J2", "5", signal="HEATER")
     ops = plan_delete_wire(project, "W001-0099")           # only a wire that a person drew
+    ops = plan_bulk_wire_edit(project, "W001", {"gauge_awg": 22})      # all wires of a harness
+    ops = plan_regroup(project, "S001", kind="shielded_pair", end_a="pigtail")   # a group of yours
 
 Wires are generated, and generation puts them back the way the design says. A person's choice
 stays when it is typed here: gauge, type, colour and length lock the wire (`Wire.locked`, which
@@ -383,6 +385,15 @@ def _group_end(project: Project, key: str) -> str:
     return value if value in ("backshell_360", "pigtail", "floating") else "floating"
 
 
+def _check_count(kind: str, n: int) -> None:
+    low, high = GROUP_KINDS[kind]
+    if n < low or (high is not None and n > high):
+        need = f"{low}" if low == high else f"{low} or more" if high is None else f"{low} to {high}"
+        raise EditError(
+            f"A {_KIND_WORDS[kind]} is made of {need} wire{'s' if low != 1 else ''}, not {n}."
+        )
+
+
 def plan_group_wires(project: Project, wire_ids: Iterable[str], kind: str) -> list[Op]:
     """Ops that twist or shield wires together as one group (`kind` is a key of `GROUP_KINDS`). The
     wires must be in one harness and in no group yet. The shield ends are those of the
@@ -400,13 +411,7 @@ def plan_group_wires(project: Project, wire_ids: Iterable[str], kind: str) -> li
     h = found[0][0]
     if h.status == "released":
         raise EditError(released_text(h))
-    low, high = GROUP_KINDS[kind]
-    word = _KIND_WORDS[kind]
-    if len(ids) < low or (high is not None and len(ids) > high):
-        need = f"{low}" if low == high else f"{low} or more" if high is None else f"{low} to {high}"
-        raise EditError(
-            f"A {word} is made of {need} wire{'s' if low != 1 else ''}, not {len(ids)}."
-        )
+    _check_count(kind, len(ids))
     for wid in ids:
         other = group_of(h, wid)
         if other is not None:
@@ -459,6 +464,210 @@ def plan_ungroup_all(project: Project, group_ids: Iterable[str]) -> list[Op]:
         )
         for hid, ids in sorted(gone.items())
     ]
+
+
+SHIELD_ENDS: tuple[str, ...] = ("backshell_360", "pigtail", "floating")
+_END_WORDS = {
+    "backshell_360": "360 degree backshell",
+    "pigtail": "pigtail",
+    "floating": "floating",
+}
+
+
+def _manual_group(project: Project, group_id: str) -> tuple[Harness, ShieldGroup]:
+    """The harness and the group of a person's, if it may change: it exists, the harness is not
+    released and the group was made by a person."""
+    owner = next(
+        ((h, s) for h in project.harnesses.values() for s in h.shields if s.id == group_id), None
+    )
+    if owner is None:
+        raise EditError(f"Group '{group_id}' does not exist.")
+    h, s = owner
+    if not s.manual:
+        raise EditError(
+            f"{group_id} comes from the construction of the interface type. Change the type, or "
+            "leave it."
+        )
+    if h.status == "released":
+        raise EditError(released_text(h))
+    return h, s
+
+
+def _end(value: object, which: str) -> str:
+    if value not in SHIELD_ENDS:
+        raise EditError(
+            f"The shield end {which} is one of: {', '.join(_END_WORDS[e] for e in SHIELD_ENDS)}."
+        )
+    return str(value)
+
+
+def plan_regroup(
+    project: Project,
+    group_id: str,
+    *,
+    kind: str | None = None,
+    wire_ids: Iterable[str] | None = None,
+    end_a: str | None = None,
+    end_b: str | None = None,
+) -> list[Op]:
+    """Ops that change a group that a person made: its `kind` (a key of `GROUP_KINDS`), its wires
+    (`wire_ids`, all of one harness and in no other group) and how its shield ends (`end_a`,
+    `end_b`: backshell_360, pigtail or floating). A value left None stays. The number of wires must
+    fit the kind. Generation keeps the group as it is; a group made from an interface type is
+    refused. A change that changes nothing returns no ops."""
+    h, s = _manual_group(project, group_id)
+    new_kind = s.kind if kind is None else kind
+    if new_kind not in GROUP_KINDS:
+        raise EditError(f"A group is one of: {', '.join(_KIND_WORDS.values())}.")
+    ids = list(dict.fromkeys(s.wire_ids if wire_ids is None else wire_ids))
+    have = {w.id for w in h.wires}
+    for wid in ids:
+        if wid not in have:
+            raise EditError(
+                f"Wire '{wid}' is not in {h.id}; the wires of a group are in one harness."
+            )
+        other = group_of(h, wid)
+        if other is not None and other.id != group_id:
+            raise EditError(
+                f"Wire {wid} is already in {_KIND_WORDS.get(other.kind, other.kind)} {other.id}. "
+                "Take it out of that group first."
+            )
+    _check_count(new_kind, len(ids))
+    new = evolve(
+        s,
+        kind=new_kind,
+        wire_ids=sorted(ids),
+        end_a=s.end_a if end_a is None else _end(end_a, "A"),
+        end_b=s.end_b if end_b is None else _end(end_b, "B"),
+    )
+    if new == s:
+        return []
+    return [
+        Put("harnesses", evolve(h, shields=[new if x.id == group_id else x for x in h.shields]))
+    ]
+
+
+def plan_set_group_ends(
+    project: Project,
+    group_ids: Iterable[str],
+    *,
+    end_a: str | None = None,
+    end_b: str | None = None,
+) -> list[Op]:
+    """Ops that set how the shield of each group that a person made ends (`end_a`, `end_b`:
+    backshell_360, pigtail or floating; None leaves an end as it is), one `Put` for each harness."""
+    ids = list(dict.fromkeys(group_ids))
+    if not ids:
+        raise EditError("No group is selected.")
+    if end_a is None and end_b is None:
+        raise EditError("Say how the shield ends: end A, end B or both.")
+    changed: dict[str, dict[str, ShieldGroup]] = {}
+    for gid in ids:
+        h, s = _manual_group(project, gid)
+        new = evolve(
+            s,
+            end_a=s.end_a if end_a is None else _end(end_a, "A"),
+            end_b=s.end_b if end_b is None else _end(end_b, "B"),
+        )
+        if new != s:
+            changed.setdefault(h.id, {})[gid] = new
+    return [
+        Put(
+            "harnesses",
+            evolve(
+                project.harnesses[hid],
+                shields=[news.get(s.id, s) for s in project.harnesses[hid].shields],
+            ),
+        )
+        for hid, news in sorted(changed.items())
+    ]
+
+
+# ---- the same change on many wires --------------------------------------------------------------
+
+BULK_FIELDS: tuple[str, ...] = ("gauge_awg", "part_id", "colour", "length_m")
+
+
+def signals_of(project: Project, harness_id: str) -> list[str]:
+    """The signal names of the wires of a harness, sorted, each once (for the one-signal choice)."""
+    h = project.harnesses.get(harness_id)
+    if h is None:
+        raise EditError(f"Harness '{harness_id}' does not exist.")
+    return sorted({w.signal for w in h.wires if w.signal})
+
+
+def bulk_targets(
+    project: Project,
+    harness_id: str,
+    *,
+    wire_ids: Iterable[str] | None = None,
+    signal: str | None = None,
+) -> list[str]:
+    """The IDs of the wires a bulk edit reaches, sorted: those of `wire_ids` (which must be wires
+    of the harness), else those with this `signal`, else every wire of the harness."""
+    h = project.harnesses.get(harness_id)
+    if h is None:
+        raise EditError(f"Harness '{harness_id}' does not exist.")
+    mine = {w.id: w for w in h.wires}
+    if wire_ids is not None:
+        ids = list(dict.fromkeys(wire_ids))
+        for wid in ids:
+            if wid not in mine:
+                raise EditError(f"Wire '{wid}' is not a wire of {harness_id}.")
+        return sorted(ids)
+    if signal is not None:
+        found = sorted(w.id for w in h.wires if w.signal == signal)
+        if not found:
+            raise EditError(f"{harness_id} has no wire with the signal '{signal}'.")
+        return found
+    return sorted(mine)
+
+
+class _FillEmpty(Change):
+    """Set only the fields a wire has no value for; a wire that has them all is left alone."""
+
+    def __call__(self, w: Wire) -> Wire:
+        return Change({k: v for k, v in self.changes.items() if getattr(w, k) is None})(w)
+
+
+def plan_bulk_wire_edit(
+    project: Project,
+    harness_id: str,
+    changes: Mapping[str, object],
+    *,
+    wire_ids: Iterable[str] | None = None,
+    signal: str | None = None,
+    only_empty: bool = False,
+) -> list[Op]:
+    """Ops that set the same gauge (`gauge_awg`), type (`part_id`), colour and length (`length_m`)
+    on many wires of one harness in one `Put`: the selected `wire_ids`, else every wire with this
+    `signal`, else all wires (`bulk_targets`). The values are checked like a single edit and lock
+    the wires against generation exactly as it does (`Wire.locked`); `only_empty` sets a field only
+    on the wires that have no value for it yet. A field left out stays; nothing changes when the
+    wires have the values already (no ops)."""
+    unknown = sorted(set(changes) - set(BULK_FIELDS))
+    if unknown:
+        raise EditError(
+            f"All wires can take {', '.join(BULK_FIELDS)}, not '{unknown[0]}'; the label, the note "
+            "and the ends are set on one wire."
+        )
+    if not changes:
+        raise EditError("Enter a gauge, a type, a colour or a length to set.")
+    clean = {k: _clean(project, k, v) for k, v in changes.items()}
+    ids = bulk_targets(project, harness_id, wire_ids=wire_ids, signal=signal)
+    if not ids:
+        raise EditError(f"{harness_id} has no wires.")
+    return _apply(project, ids, (_FillEmpty if only_empty else Change)(clean))
+
+
+def wires_changed(project: Project, ops: Sequence[Op]) -> int:
+    """How many wires the `Put`s of harnesses in `ops` change (for the sentence before it)."""
+    n = 0
+    for op in ops:
+        if isinstance(op, Put) and isinstance(op.obj, Harness):
+            old = {w.id: w for w in project.harnesses[op.obj.id].wires}
+            n += sum(old.get(w.id) != w for w in op.obj.wires)
+    return n
 
 
 # ---- labels of the harness and of its connectors ------------------------------------------------

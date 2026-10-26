@@ -12,6 +12,7 @@ This page shows how to make a harness from nothing: no interface, no Generate. Y
 - [2. Make the harness](#2-make-the-harness)
 - [3. Add its connectors](#3-add-its-connectors)
 - [4. Say what each pin does](#4-say-what-each-pin-does)
+- [Change a connector and its pins](#change-a-connector-and-its-pins)
 - [5. Draw the wires](#5-draw-the-wires)
 - [6. Check, list and release](#6-check-list-and-release)
 - [What Generate does with it](#what-generate-does-with-it)
@@ -34,7 +35,7 @@ When the system is described by devices and interfaces, let Generate make the ha
 ## 1. Start with nothing
 
 1. **File > New project…**, choose an empty folder, type a name, keep the example *blank*.
-2. Choose **Drawings** on the rail. The Harness tab says *No harnesses yet* and offers **New harness…**. (On an empty project the Next step page of the Simple workspace offers *or make a harness by hand* with the same button.)
+2. Choose **Drawings** on the rail. The Harness tab says *No harnesses yet* and offers **New harness…**. (On an empty project the Next step page of the Systems engineer role offers *or make a harness by hand* with the same button.)
 
 ## 2. Make the harness
 
@@ -61,6 +62,19 @@ Under **Pin of a connector**, choose the connector and the pin, then type a **Fu
 
 **Delete connector** removes the chosen connector, if it has no wires. If it has, the form names them: delete the wires first.
 
+## Change a connector and its pins
+
+Everything you set when you added a connector can be changed later (since the workshop milestone M3). In the **Connectors** tab, under **Edit connector**, choose the connector, then change:
+
+- **Part**: another connector part of the library. When the part's description says male or female, **Gender** follows it (change it if it is wrong). The pins are **not** touched; a part with another number of pins is said under the fields (*The part has 15 pins and the connector 9. Add or delete pins below.*) and shows in the rule **Mating halves**.
+- **Gender**: male, female or *not said*. The design rule **Mating halves** (`mate-mismatch`: both ends of a mated pair of one gender, the keying differing, the pin count differing) reads it.
+- **Keying**: the key or coding, in words.
+- **Name**: the name in the harness (`P1`); two connectors of one harness cannot have the same name.
+
+Press **Apply to connector** (one undo step; a mistake is said under the form and nothing changes). Under **Pin of a connector** the pin form also has a **Signal** (what the pin carries, printed on the pinout) and a **Role** (power, return, ground, signal, shield or spare; it is kept in the file, nothing is computed from it on a cable pin). **Pin ID** with **Add pin** (several IDs separated by commas, as many as the part's pin count allows), **Rename pin** (the wires on the pin follow) and **Delete pin** (refused while a wire uses it, naming the wires) change the pins themselves.
+
+**A connector of a harness that Generate made** can be edited too, but only in part. The Connectors tab says *made by Generate* and adds no connector, yet **Part**, **Gender**, **Keying**, the **Signal**, **Role**, **Function**, **Termination** and **Contact size** of its pins can be set. Such an edit makes the connector *yours*: Generate keeps the part, gender, keying and those pin details, the way it keeps the gauge of a locked wire, and the tab says *Edited by you* with the button **Give back to Generate** (the next Generate takes everything from the device again). What stays with the device, because the wires depend on it: the connector's name, its pins (their IDs and how many) and the contact of each pin. Add, rename or delete a pin on the device, in the **Devices** tab. If the device connector goes away, Generate names the edited connector in the warning `locked_data_lost`.
+
 ## 5. Draw the wires
 
 Draw wires as in [edit a wire](edit-a-wire.md), section 4: **New wire** in the **Edit wire** tab, choose the connector and pin at each end, type a signal name, press **Add wire**. Then set gauge, type, colour and length, or twist wires together ([edit a wire](edit-a-wire.md), sections 2 and 6).
@@ -80,7 +94,8 @@ Nothing. **Generate** leaves a harness you made, its connectors and its wires ex
 
 ## Common mistakes
 
-- **The Connectors tab is grey and says *made by Generate*.** That harness takes its connectors from the design. Make a new one with **New harness**, or change the design.
+- **The Connectors tab says *made by Generate* and adds nothing.** That harness takes its connectors from the design. Make a new one with **New harness**, or change the design; a connector of it can still be edited (see above).
+- **Name, pins or contact are grey on a generated harness.** They follow the device: change them in the **Devices** tab.
 - **A wire cannot be drawn.** A wire joins two pins of the connectors of its harness; add the connectors first.
 - **A connector with no pins.** The pins come from the part's pin count. A part without one gets none: type the names in **Pins**.
 - **A released harness.** It is locked; start a new revision ([change a released harness](change-a-released-harness.md)).

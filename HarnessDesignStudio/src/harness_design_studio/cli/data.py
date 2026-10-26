@@ -25,6 +25,7 @@ from harness_design_studio.core.library_import import (
 COMMANDS = (
     "config", "library", "import-parts", "import-lengths", "import-netlist", "import-pinout",
     "export-pinout", "export-devices", "import-devices", "import-build-data",
+    "export-subsystem", "import-subsystem",
 )  # fmt: skip
 UNITS = {"mm": 0.001, "m": 1.0, "cm": 0.01}
 
@@ -246,6 +247,35 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     )
     idv.add_argument("--list", action="store_true", help="list the devices of the file and stop")
     idv.add_argument("--dry-run", action="store_true", help="show the preview only")
+    xs = sub.add_parser(
+        "export-subsystem",
+        help="save devices and the connections between them as a subsystem library file",
+        description="Write devices with their connectors and pinouts, and the connections between them, to a subsystem library file (JSON), so the set can be added to another project in one step. A connection with an end on a device that is not chosen is left out. A file that exists is never replaced unless you say --replace.",
+    )
+    xs.add_argument("project", type=Path)
+    xs.add_argument("file", type=Path, help="the subsystem library file to write")
+    xs.add_argument(
+        "--device",
+        "--unit",
+        dest="unit",
+        metavar="DEVICE",
+        action="append",
+        required=True,
+        help="a device of the subsystem, for example OBC1 (repeat for more; --unit is the older name)",
+    )
+    xs.add_argument("--name", required=True, help="the name of the subsystem")
+    xs.add_argument("--description", default="", help="what the subsystem is (optional)")
+    xs.add_argument("--notes", default="", help="notes for whoever adds it (optional)")
+    xs.add_argument("--replace", action="store_true", help="replace the file when it exists")
+    isub = sub.add_parser(
+        "import-subsystem",
+        help="add a subsystem (devices and their connections) from a subsystem library file",
+        description="Add the devices of a subsystem library file with their connectors and pinouts, and the connections between them, as one step. The subsystem of every added device becomes the name of the subsystem. Nothing of the project is replaced: a taken device ID gets the next free one (OBC1 becomes OBC1-2) and the connections follow. It is all or nothing: when one device or connection cannot be added, nothing is. Use --show to see what the file holds.",
+    )
+    isub.add_argument("project", type=Path)
+    isub.add_argument("file", type=Path)
+    isub.add_argument("--show", action="store_true", help="show what the file holds and stop")
+    isub.add_argument("--dry-run", action="store_true", help="show the preview only")
     ll = sub.add_parser(
         "import-lengths",
         help="import routing segment lengths (CSV or XLSX: harness, segment, length, in this order)",
@@ -300,6 +330,8 @@ def run(args: argparse.Namespace) -> int:
             return _export_pinout(project, args)
         if args.command == "export-devices":
             return _export_devices(project, args)
+        if args.command == "export-subsystem":
+            return _export_subsystem(project, args)
         if project.read_only:
             print(
                 "error: this project is read-only (saved by a newer tool version).", file=sys.stderr
@@ -309,6 +341,8 @@ def run(args: argparse.Namespace) -> int:
             return _netlist(project, args)
         if args.command == "import-devices":
             return _import_devices(project, args)
+        if args.command == "import-subsystem":
+            return _import_subsystem(project, args)
         if args.command == "import-pinout":
             from harness_design_studio.core.pinout_import import read_pinout_table
 
@@ -691,6 +725,66 @@ def _export_devices(project, args: argparse.Namespace) -> int:  # type: ignore[n
     dl.write_library(args.file, dl.merge_library(existing, data))
     n = sum(len(d["connectors"]) for d in data["devices"])
     print(f"Saved {len(args.unit)} device(s) ({n} connector(s)) to {args.file}.")
+    return 0
+
+
+def _export_subsystem(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+    from harness_design_studio.core import subsystem_library as sl
+
+    if args.file.exists() and not args.replace:
+        print(
+            f"error: {args.file} exists already. Choose another file or say --replace.",
+            file=sys.stderr,
+        )
+        return 2
+    data = sl.export_subsystem(project, args.unit, args.name, args.description, args.notes)
+    sl.write_subsystem(args.file, data)
+    n_dev, n_conn, n_links = sl.subsystem_summary(data)
+    print(
+        f"Saved subsystem '{data['name']}' ({n_dev} device(s), {n_conn} connector(s), "
+        f"{n_links} connection(s)) to {args.file}."
+    )
+    return 0
+
+
+def _import_subsystem(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+    from harness_design_studio.core import subsystem_library as sl
+
+    data = sl.read_subsystem(args.file)
+    if args.show:
+        n_dev, n_conn, n_links = sl.subsystem_summary(data)
+        print(f"{data['name']}: {n_dev} device(s), {n_conn} connector(s), {n_links} connection(s)")
+        if data.get("description"):
+            print(data["description"])
+        for rec in data["devices"]:
+            unit = rec.get("unit", {})
+            print(f"{unit.get('id', '')}: {unit.get('name', '')}")
+        return 0
+    plan = sl.plan_subsystem_import(project, data)
+    for r in plan.rows:
+        print(
+            f"{r.unit_id}: "
+            + (
+                f"OK as {r.new_id} ({r.connectors} connector(s), {r.pins} pin(s))"
+                if r.ok
+                else f"ERROR {r.message}"
+            )  # fmt: skip
+        )
+    for note in plan.notes:
+        print(f"note: {note}")
+    if not plan.ok:
+        print(f"error: {plan.problem}", file=sys.stderr)
+        print("Nothing was changed.")
+        return 1
+    print(f"{plan.connections} connection(s) between the new devices.")
+    if args.dry_run and _would_be_blocked(project, "Add a subsystem from a library file", plan.ops):
+        return 1
+    if args.dry_run:
+        print("Dry run: nothing was changed.")
+        return 0
+    History(project).execute("Add a subsystem from a library file", plan.ops)
+    save_project(project, args.project)
+    print(f"Added subsystem '{plan.name}': {plan.device_count} device(s), {plan.connections} connection(s).")  # fmt: skip
     return 0
 
 

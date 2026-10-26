@@ -143,7 +143,7 @@ Pictures of the result are made with `tools.ui_screenshots`, timings with `tools
 
 ## The tests of the 1.4.0 and later features
 
-Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made by hand, D-166, and the start check, D-167), version 1.6.0 (the start screen of a blank project) and version 1.7.0 (the build workbook, D-169; the build data, D-170; the simple workspace, D-171) added these tests. The ones that open the editor run offscreen and carry `gui`.
+Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made by hand, D-166, and the start check, D-167), version 1.6.0 (the start screen of a blank project) and version 1.7.0 (the build workbook, D-169; the build data, D-170; the simple workspace, D-171) added these tests, and the workshop feedback after it (D-172 to D-176) more. The ones that open the editor run offscreen and carry `gui`.
 
 | Tests | What they check |
 | --- | --- |
@@ -161,8 +161,10 @@ Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made 
 | `tests/test_build_data.py` | The build data (D-170): the plans for strip lengths, contacts, crimp tools and accessories (a released harness refuses, a value outside its range is refused), what generation keeps and what it reports as lost, the Devices pin edit, `import-build-data` (the kind found from the headings, a refused row stops the whole import, `--dry-run`, the shipped templates) and the parts import column *Tool*. |
 | `tests/test_build_data_outputs.py` | The build data in the outputs: optional table columns and `accessories.csv` only where used, always in the build workbook, the BOM lines of contacts and accessories, and a mutation test for each check of the independent verifier. |
 | `tests/test_ui_build_data.py` | The build data in the editor: strip lengths in *Edit wire*, the *Cable contact* column of the Devices tab, the contact in the *Connectors* tab, the *Accessories* tab and the crimp tool in the Inspector; one undo step each, controls off with the reason for a released harness or a read-only project. |
-| `tests/test_next_step.py` | The one next step of the simple workspace (D-171, stage S1) over every combination of facts, and the workspace setting helpers. No Qt. |
-| `tests/test_ui_next_page.py`, `tests/test_ui_simple_workspace.py` | The Next step page and the Simple / Full setting (S1); the Simple workspace showing less until the person asks: rail without Home, closed panels, reduced tool row, *Show panels*, a layout kept for each workspace (S2). |
+| `tests/test_next_step.py` | The one next step of the Next step page (D-171, stage S1) over every combination of facts. No Qt. |
+| `tests/test_roles.py` | The two roles (D-176, REQ-GUI-14, REQ-GUI-15), pure logic: `default_role`, the carry-over of the 1.7.0 workspace, stored value cleaning, the keys of the layout, the rail of each role. No Qt. |
+| `tests/test_ui_next_page.py`, `tests/test_ui_role_layout.py` | The Next step page and the role setting (S1); the Systems engineer role showing less until the person asks: rail without Home, Drawings and Outputs, closed panels, reduced tool row, *Show panels*, a layout kept for each role (S2; `test_ui_role_layout.py` was `test_ui_simple_workspace.py` before milestone M5). |
+| `tests/test_ui_roles.py` | The roles on screen (D-176, REQ-GUI-14, REQ-GUI-15): the question of the first start (only without stored values and without the hook), the silent role of an existing user, switching in both directions with each role's layout kept, every area the rail leaves out still reachable, both themes, names and tooltips. |
 
 The proof that existing work is unchanged is `tests/test_output_hashes.py` (above): the 567 files of the four examples still match release 1.2.0 apart from the version stamp (the build workbooks, new in 1.7.0, are not compared).
 

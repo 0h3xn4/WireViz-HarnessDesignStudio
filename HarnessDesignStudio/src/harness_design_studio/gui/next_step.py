@@ -1,4 +1,4 @@
-"""The one next step the simple workspace shows (decision D-171, stage S1).
+"""The one next step the Next step page shows (decisions D-171 stage S1 and D-176).
 
 No Qt here, so every combination is tested without a display. `next_step(facts)` takes the facts
 of the project (`NextInputs`) and returns what to do now (`Next`): a short title, one plain
@@ -13,9 +13,11 @@ The rules run in this order, the first that fits wins:
     busy         a job runs                                   no button
     read_only    the project cannot be changed                no button
     add_device   no devices and no harness                    (or: make a harness by hand)
-    connect      no connection and no harness
+    connect      no connection (an interface or a link of two connectors) and no harness
+    make_harness connections of connectors but no harness and no interface: the one button
+                 "Create harness" makes it (the tool never makes a harness on its own)
     generate     no harness, or no plans, or plans out of date (a project whose harnesses were all
-                 made by hand skips this step)
+                 made by hand skips this step, so does one whose harness was made from a link)
     check        the design was not checked
     fix          checks failed
     build_sheets the files are not up to date
@@ -25,9 +27,8 @@ The rules run in this order, the first that fits wins:
 The words are plain on purpose: this stage exists because testers found the tool confusing. The
 window maps each key to an existing flow (`gui/next_page.py` only shows and calls back).
 
-The workspace setting (Simple or Full) is here too: `default_workspace` says which one a settings
-file gets when the person never chose, and `workspace_key` the settings key under which the layout of
-a workspace is remembered (stage S2: Full keeps the keys it always had, Simple has keys of its own).
+The page opens first for the Systems engineer role and is reachable for the Electrical / AIT engineer
+role (`gui/roles.py` holds the roles).
 """
 
 from dataclasses import dataclass
@@ -36,13 +37,12 @@ from typing import Final, Literal
 from harness_design_studio.gui import strings
 
 StepState = Literal["done", "next", "todo", "blocked"]
-WORKSPACES: Final = ("simple", "full")
-FIRST_RUN_WORKSPACE: Final = "simple"  # a settings file with no stored values at all (tests set it)
 KEYS: Final = (
     "busy",
     "read_only",
     "add_device",
     "connect",
+    "make_harness",
     "generate",
     "check",
     "fix",
@@ -62,6 +62,7 @@ STEP_LABELS: Final = (
 _STEP_OF: Final = {
     "add_device": 0,
     "connect": 1,
+    "make_harness": 2,
     "generate": 2,
     "check": 3,
     "fix": 3,
@@ -75,6 +76,7 @@ _STEP_OF: Final = {
 class NextInputs:
     units: int = 0
     interfaces: int = 0
+    links: int = 0  # connections of two connectors (core/links.py)
     harnesses: int = 0
     hand_made_harnesses: int = 0  # harnesses a person made (generated=False)
     generation: str = "none"  # none | current | stale
@@ -121,34 +123,14 @@ class Next:
         )
 
 
-def default_workspace(has_stored_values: bool) -> str:
-    """Simple for a settings file that holds nothing yet; Full for one that does (people who
-    already use the editor keep what they have and can switch in the View menu)."""
-    return "full" if has_stored_values else FIRST_RUN_WORKSPACE
-
-
-def clean_workspace(value: object, fallback: str) -> str:
-    """A stored value as one of `WORKSPACES` (a hand-edited file may say anything)."""
-    text = str(value)
-    return text if text in WORKSPACES else fallback
-
-
-def workspace_key(key: str, workspace: str) -> str:
-    """The settings key for a part of the layout that is remembered per workspace. Full keeps the
-    key as it is (people who already use the editor lose nothing); Simple gets a key of its own
-    next to it: `ui/state` becomes `ui/simple/state`, `layout/ab12/area` `layout/ab12/simple/area`."""
-    if workspace != "simple":
-        return key
-    head, _, tail = key.rpartition("/")
-    return f"{head}/simple/{tail}" if head else f"simple/{tail}"
-
-
 def stage(f: NextInputs) -> str:
     """The key of the first step that is not done, whatever runs and whatever may be edited."""
     if f.units == 0 and f.harnesses == 0:
         return "add_device"
-    if f.interfaces == 0 and f.harnesses == 0:
+    if f.interfaces == 0 and f.links == 0 and f.harnesses == 0:
         return "connect"
+    if f.interfaces == 0 and f.harnesses == 0:
+        return "make_harness"
     by_hand = f.harnesses > 0 and f.hand_made_harnesses == f.harnesses
     if not by_hand and (f.harnesses == 0 or f.generation in ("none", "stale")):
         return "generate"
@@ -208,6 +190,14 @@ def next_step(f: NextInputs) -> Next:
             strings.NEXT_CONNECT_TITLE,
             strings.NEXT_CONNECT_WHY,
             strings.NEXT_CONNECT_BUTTON,
+            steps,
+        )
+    if key == "make_harness":
+        return Next(
+            key,
+            strings.NEXT_MAKE_TITLE,
+            strings.NEXT_MAKE_WHY,
+            strings.NEXT_MAKE_BUTTON,
             steps,
         )
     if key == "generate":

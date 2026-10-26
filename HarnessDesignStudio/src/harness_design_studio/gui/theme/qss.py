@@ -79,6 +79,7 @@ QPushButton[step="attention"] {{ border-bottom: {px(3)} solid {c("status.caution
 QPushButton[step="running"] {{ border-bottom: {px(3)} solid {c("status.standby")}; }}
 QPushButton[step="blocked"] {{ color: {c("text.muted")}; }}
 QPushButton[align="left"] {{ text-align: left; }}
+QPushButton[choice="true"] {{ min-height: {px(72)}; max-height: {px(160)}; text-align: left; padding: 0; }}  /* the big buttons of the role question */
 QToolButton:checked, QPushButton:checked {{ background: {c("accent")}; color: {c("accent.text")}; border-color: {c("accent")}; }}
 QToolButton[toggle="true"]:checked, QPushButton[toggle="true"]:checked {{ background: {c("bg.selected")}; color: {c("text.primary")}; border: 1px solid {c("accent")}; font-weight: 600; }}
 QPushButton:focus, QToolButton:focus, QLineEdit:focus, QComboBox:focus, QTextEdit:focus, QPlainTextEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus {{ border: {ring} solid {c("focus")}; }}

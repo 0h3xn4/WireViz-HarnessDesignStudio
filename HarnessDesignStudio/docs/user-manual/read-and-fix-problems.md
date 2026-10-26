@@ -18,7 +18,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 ## Before you start
 
 - You have a project. The examples use `wheel-link` from `harness-design-studio new wheel-link --template first-steps`, generated with `harness-design-studio generate wheel-link` ([generate harnesses](generate-harnesses.md)).
-- The tool checks the design at two speeds. **Quick checks** run on every edit (a link without a connector, a device with no link, connectors chosen by the tool and not confirmed, a link between the nominal and the redundant chain). The **design rules** (35 of them, all listed in [`RULES.md`](../RULES.md)) run in the background a moment after you stop editing.
+- The tool checks the design at two speeds. **Quick checks** run on every edit (a link without a connector, a device with no link, connectors chosen by the tool and not confirmed, a link between the nominal and the redundant chain). The **design rules** (39 of them, all listed in [`RULES.md`](../RULES.md)) run in the background a moment after you stop editing.
 
 ## 1. The three kinds of finding
 
@@ -30,7 +30,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 ## 2. In the app
 
-1. Open the **Problems** tab (in the right panel; in the Simple workspace the right panel is closed, so press **Show panels** in the top bar first, or press **Show the problems** on the Next step page, which opens the **Checks** area with the failed rules). The tab title shows how many open errors and warnings there are, for example "Problems (10)". While the design rules run, the status line says "Design rules: checking…" and then, for example, "Design rules: 35 rules, 20 passed, 2 failed, 12 not checked." A rule that could not run because a value is missing counts as *not checked*, never as passed. The **Checks** tab (Ctrl+4) lists all 35 rules with a result for each; see [section 2a](#2a-the-checks-tab).
+1. Open the **Problems** tab (in the right panel; as a Systems engineer the right panel is closed, so press **Show panels** in the top bar first, or press **Show the problems** on the Next step page, which opens the **Checks** area with the failed rules). The tab title shows how many open errors and warnings there are, for example "Problems (10)". While the design rules run, the status line says "Design rules: checking…" and then, for example, "Design rules: 39 rules, 20 passed, 2 failed, 12 not checked." A rule that could not run because a value is missing counts as *not checked*, never as passed. The **Checks** tab (Ctrl+4) lists all 39 rules with a result for each; see [section 2a](#2a-the-checks-tab).
 2. Each finding is a card. (GUI, not run: described from the program's texts and code.) It says what is wrong and why it matters. Many cards have a button that fixes it in one click. The cards have these buttons:
    - **Show** jumps to the device, link or harness it is about.
    - A fix button, named after the fix, for example **Choose connectors automatically**, **Confirm connectors** or **Connect to a redundant copy of OBC1**.
@@ -41,7 +41,9 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 Click a card or a to-do line to jump to the item.
 
-**The Problems panel.** Press **Problems (n)** in the status bar, or Ctrl+Shift+M (**View > Problems panel**; there is no **Problems (n)** button while the problem notices are off, which is the case in the Simple workspace until you turn them on, see [below](#turn-the-problem-notices-off)), to open a list of every open problem at the bottom of the window. It has the columns Severity, Rule, Object and Message, and the filters **All**, **Error** and **Warning**. Click a row to go to the object, whether it is a device, a link, a harness, a parts file or a value file. **Details and fixes** (right-click a row, or press Shift+Enter) shows the problem as a card in the Inspector. The panel counts findings and the Problems tab counts groups of to-do lines, so the two numbers can differ.
+**The Problems panel.** Press **Problems (n)** in the status bar, or Ctrl+Shift+M (**View > Problems panel**; there is no **Problems (n)** button while the problem notices are off, which is the case as a Systems engineer until you turn them on, see [below](#turn-the-problem-notices-off)), to open a list of every open problem at the bottom of the window. It has the columns Severity, Rule, Object and Message, and the filters **All**, **Error**, **Warning** and **Connections** (after 1.7.0: only what the check says about the connections between connectors; **Design > Check my connections** opens the panel with this filter on). Click a row to go to the object, whether it is a device, a link, a harness, a parts file or a value file. **Details and fixes** (right-click a row, or press Shift+Enter) shows the problem as a card in the Inspector. The panel counts findings and the Problems tab counts groups of to-do lines, so the two numbers can differ.
+
+**Connections.** Four design rules read the connections between connectors ([connect two connectors](connect-two-connectors.md)), and they say nothing in a project that has none: `link-unpaired` (a warning: a pin with a signal that no pair of the connection uses; set its role to Spare if it is not used), `link-direction` (an error: two outputs, or two inputs, on one pair), `link-signal-mismatch` (a warning: the two names of a pair differ) and `link-power-return` (a warning: a power pair and no return pair; pair the return pin, or set its role to Return). A connection whose connector or pin is gone, a pin in two pairs or both connectors on one device are errors of the quick checks. The **Show** button of such a card jumps to the connection on the diagram. **Design > Check my connections** reviews all connections and changes nothing.
 
 ## 2a. The Checks tab
 
@@ -58,9 +60,9 @@ The tool shows some problem signs without being asked: the **Problems (n)** butt
 
 ![The View menu with Show problem notices ticked](../img/problem-notices-setting.png)
 
-- **Each workspace keeps its own choice.** The notices are on in the Full workspace and off in the Simple workspace until you say otherwise.
+- **Each role keeps its own choice.** The notices are on in the Electrical / AIT engineer role and off as a Systems engineer until you say otherwise.
 - **Turning them off hides nothing you ask for.** The **Check** button (F5) and its result, the **Checks** area, the **Problems** panel (**View > Problems panel**, Ctrl+Shift+M), the **Next step** page and the error texts in windows stay. So do the banners that say why something cannot be done: read-only, locked, damaged files and the sample project.
-- **Turn them on again** with the same menu entry. The picture above is the View menu of the Full workspace (made from the real window; the Simple workspace has one more entry at the top, **Show side panels**).
+- **Turn them on again** with the same menu entry. The picture above is the View menu of the Electrical / AIT engineer role (made from the real window; the Systems engineer role has one more entry at the top, **Show side panels**).
 
 ## 3. On the command line
 
@@ -71,7 +73,7 @@ harness-design-studio drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `5e6bcbd63d91`. Rules run: 35.
+Model hash: `5e6bcbd63d91`. Rules run: 39.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.
@@ -141,7 +143,7 @@ The notes also name what could not be checked on a wire or a harness instead of 
 
 ## Good to know
 
-- **A design rule check that fails is shown as failed.** If the background check cannot run, the status line says "Design rule check failed: ..." and the Problems panel adds an error finding. It never says "all 35 rules checked" then. A check that does not answer within three minutes is stopped and run again inside the editor.
+- **A design rule check that fails is shown as failed.** If the background check cannot run, the status line says "Design rule check failed: ..." and the Problems panel adds an error finding. It never says "all 39 rules checked" then. A check that does not answer within three minutes is stopped and run again inside the editor.
 - **Each problem has its own ID.** If one object has several problems (the two ends of a dangling wire, several problems of one connector), each finding has its own ID, so a waiver covers one problem only. A waiver made in an earlier version for a *model-inconsistent* warning no longer matches and shows as stale; waive the finding again.
 - **Routing segments must form a tree.** The error `segment-loop` means two routes join twice, so a wire's route (and its length) is not unique. Remove or merge a segment ([`RULES.md`](../RULES.md)).
 - **A wire from a pin to itself** is an error that `harness-design-studio validate` reports (`wire_to_itself`); the independent check calls it `wire_same_pin`.

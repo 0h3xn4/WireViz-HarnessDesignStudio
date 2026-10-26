@@ -20,9 +20,12 @@
 - [14. The UI overhaul (version 1.3.0, October 2026)](#14-the-ui-overhaul-version-130-october-2026)
 - [15. The AIT feedback (version 1.4.0, October 2026)](#15-the-ait-feedback-version-140-october-2026)
 - [16. A harness from nothing, and a blank project that says where to start (versions 1.5.0 and 1.6.0)](#16-a-harness-from-nothing-and-a-blank-project-that-says-where-to-start-versions-150-and-160)
-- [17. Build sheets, build data and the simple workspace (version 1.7.0)](#17-build-sheets-build-data-and-the-simple-workspace-version-170)
+- [17. Build sheets, build data and the simple workspace (version 1.7.0; the roles after it)](#17-build-sheets-build-data-and-the-simple-workspace-version-170-the-roles-after-it)
+- [18. Connections between connectors (after 1.7.0, not released)](#18-connections-between-connectors-after-170-not-released)
+- [19. Editing connectors and harnesses (after 1.7.0, not released)](#19-editing-connectors-and-harnesses-after-170-not-released)
+- [20. The library (after 1.7.0, not released)](#20-the-library-after-170-not-released)
 
-Status: **approved by the owner; the Qt editor is implemented (section 12), was rebuilt in October 2026 (section 13) and again for version 1.3.0 (section 14), and gained the editing features of versions 1.4.0 to 1.6.0 (sections 15 and 16) and the build data and the simple workspace of version 1.7.0 (section 17).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
+Status: **approved by the owner; the Qt editor is implemented (section 12), was rebuilt in October 2026 (section 13) and again for version 1.3.0 (section 14), and gained the editing features of versions 1.4.0 to 1.6.0 (sections 15 and 16) the build data and the simple workspace of version 1.7.0 (section 17, whose two workspaces became the two roles after it) and, after 1.7.0 and not released, the connections between connectors (section 18), the editing of connectors and harnesses (section 19) and the library (section 20).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
 
 This document is the contract for the editor in M2. Where the prototype and this text disagree, this text wins; tell me which is wrong.
 
@@ -400,15 +403,15 @@ The window of section 14 is unchanged apart from the points below (decisions D-1
 
 The interaction rules of section 6 apply as before: a change is one undo step, a released harness refuses with the reason, and the tool never fills in an engineering value by itself. Nothing in the file format or in any generated file changed in these two releases.
 
-## 17. Build sheets, build data and the simple workspace (version 1.7.0)
+## 17. Build sheets, build data and the simple workspace (version 1.7.0; the roles after it)
 
 The feedback of the test users of 1.6.0 (plan and status in [`ait/TEST_USER_FEEDBACK_PLAN.md`](ait/TEST_USER_FEEDBACK_PLAN.md), decisions D-169, D-170 and D-171) changed the window in these places. Stage S3 of the plan (plain words) was discarded by the owner and stage S4 (a blank project that asks for one thing at a time) is not built; nothing here claims that the tool is easier to use, because the testers have not repeated the tasks.
 
 | Where | What is new |
 | --- | --- |
 | Navigation rail | **Next step** is the first area, a page of its own like Home: the heading *What to do next*, one card with the next step in plain words and its one button (an empty project also offers *or make a harness by hand*, *New harness…*), the six steps below it (*Add your devices*, *Connect them*, *Generate the harnesses*, *Check the design*, *Get the build sheets*, *Review and release*) each with an icon and a word (*done*, *next*, *to do*, *not possible*), and the link *Show everything*. The rules are a pure function of the facts of the project (`gui/next_step.py`, `gui/next_page.py` only shows and calls back). |
-| View > Simple / Full, Settings | The workspace setting `ui/workspace`. A settings file with no stored value starts in **Simple** and opens a project on *Next step*; a settings file that holds values keeps **Full**, which is the window of sections 14 to 16 plus the Next step area. |
-| The Simple workspace (stage S2) | The rail does not list Home (Next step does its job; Ctrl+7 and the Go menu still reach it). The project tree, the inspector, the Problems panel, the minimap, the legend and the counts of the status bar are closed or off until asked for; the diagram tool row shows *Select*, *Connect*, *Add device* and **More**. One switch, *Show panels* (View menu and a button), opens and closes the tree and the inspector together. Full and Simple remember their own layout, so one never overwrites the other. Open point: a click on a device or link does not open the inspector in Simple (a toast with *Show panels* says so once per window); going to an object with *Show* (from a list of problems) does open it. |
+| View > Role, Settings | **After 1.7.0, not released (milestone M5, D-176): the two roles replace the Simple and Full workspaces of 1.7.0.** The setting `ui/role` (`systems` or `electrical`; the setting `ui/workspace` of 1.7.0 is read once to carry a choice over). A first start (a settings file with no stored value) asks once, *Who are you working as?*, in a small window with two big buttons; a settings file that holds values and no role becomes **Electrical / AIT engineer** without a question, and one that held `ui/workspace` = `simple` becomes **Systems engineer**. **Electrical / AIT engineer** is the window of sections 14 to 16 plus the Next step area. **Systems engineer** is the Simple workspace of 1.7.0 with the rail also leaving out Drawings and Outputs; the library and the Connections group of the tree stay one step away. Neither role locks anything and no role is stored in a project. |
+| The Systems engineer role (stage S2, the Simple workspace of 1.7.0) | The rail lists Next step, Model, Checks, Revisions and Settings; Home, Drawings and Outputs are not listed (Next step does the job of Home; Ctrl+7, the Go menu, the buttons of the Next step page and the command palette still reach them, and the rail lists the area that is open). The project tree, the inspector, the Problems panel, the minimap, the legend and the counts of the status bar are closed or off until asked for; the diagram tool row shows *Select*, *Connect*, *Add device* and **More**. One switch, *Show panels* (View menu and a button), opens and closes the tree and the inspector together. The two roles remember their own layout, so one never overwrites the other. The Next step page has two link buttons for this role, *Library…* and *Show everything* (the switch to the Electrical / AIT engineer). Open point: a click on a device or link does not open the inspector for a Systems engineer (a toast with *Show panels* says so once per window); going to an object with *Show* (from a list of problems) does open it. |
 | Drawings area, Harness tab | A fourth tab, *Accessories*, beside *Why*, *Edit wire* and *Connectors*: a table of the sleeving, heat shrink, labels and backshells of the harness and a form to add, change and delete one (one undo step each). *Edit wire* gets the strip lengths (the selected wires, or all wires of the harness). Off for a released harness and a read-only project, with the reason shown. |
 | Model area, Devices tab | A *Cable contact* column in the pin table (hidden until the **Contact** toggle is on) and the bulk action **Cable contact…**. Generate copies the contact to the cable pin. |
 | Inspector | The page of a part of the category contact has **Crimp tool** and **Set tool**. |
@@ -416,5 +419,50 @@ The feedback of the test users of 1.6.0 (plan and status in [`ait/TEST_USER_FEED
 | Command line | `export --drawings` and `import-build-data` ([`CLI.md`](CLI.md)); the same plans as the window use. |
 
 The interaction rules of section 6 apply as before: a change is one undo step, a released harness refuses with the reason, a mistake is said inline, and the tool never fills in an engineering value by itself (an empty strip length, contact or tool stays empty and reads *to fill in* in the build workbook). The look and the code are in [`DESIGN.md`](DESIGN.md).
+
+## 18. Connections between connectors (after 1.7.0, not released)
+
+Milestone M2 of the workshop feedback (decision D-173, plan and status in [`ait/WORKSHOP_FEEDBACK_PLAN.md`](ait/WORKSHOP_FEEDBACK_PLAN.md), "M2 as built"): the pinout is the truth, the tool proposes and checks. The user's page is [`user-manual/connect-two-connectors.md`](user-manual/connect-two-connectors.md).
+
+| Where | What is new |
+| --- | --- |
+| Window *Link connectors* (Edit > Link connectors…, Ctrl+Shift+K; the Connect tool and C after two devices; right-click on the Connections group or on a device) | A dialog of 760 pixels or more: an optional **Name**; a device and a connector on each side; the table *Pairs of pins* (pin, signal and role of the first connector beside pin, signal and role of the second), proposed by signal name and editable (**Add pair**, **Change pair**, **Remove pair**, the role of a pin: Automatic, Power, Return, Ground, Signal, Shield, Spare); under the table the notes of the proposal, the pins not paired and the review in plain words (an inline notice, never a message box). **Link connectors** is off only when the connection cannot be made (the same device twice, no pair, a pin in two pairs); a warning does not forbid it. One undo step. The same window with the connectors fixed edits the pairs (**Save the pairs**). |
+| Model area, diagram | A connection is a dash-dotted line (an interface is solid) between the two devices, or between the two connectors in Expert mode, with the two connector names and, under them, what the pairs carry (derived, never stored). Click selects it. |
+| Project tree | The group **Connections** (L1 - OBC-J01 - RW1-J02 ...) with the actions *Edit the pairs…*, *Rename…*, *Create harness*, *Delete connection*; double-click edits the pairs; the tooltip names the pairs, the harness and the checks. |
+| Edit menu | **Link connectors…**, **Connect** (C), **Connect with an interface type…** (the older, interface-first way, also the arrow beside the Connect button) and **Selected connection**. |
+| Design menu, Problems panel | **Check my connections** opens the Problems panel on the new filter **Connections** and says how many things there are to look at; it changes nothing. Four design rules (39 in all). |
+| Create harness | A window that says *This adds the harness … with N cable connectors and M wires, one wire for each pair of …* and makes it only on **Create harness**; one undo step; the Harness tab then opens on it. The tool never creates a harness on its own. |
+| Next step page | A connection counts as *Connect* done; with connections and no harness and no interface the card is *Make the harness of your connection* with the button **Create harness**. |
+
+The interaction rules of section 6 apply as before: a change is one undo step, a released harness locks its connection with the reason, a mistake is said inline, and nothing is invented (a wire made from a connection has no length, gauge or colour until the person enters them).
+
+## 19. Editing connectors and harnesses (after 1.7.0, not released)
+
+Milestone M3 of the workshop feedback (decision D-174, plan and status in [`ait/WORKSHOP_FEEDBACK_PLAN.md`](ait/WORKSHOP_FEEDBACK_PLAN.md), "M3 as built"): "should be able to edit the connector", "more editing of the harness itself", "more harness features (like add length, gauge)", "see the connector also on the harness itself, when in diagram view". The user's pages are [`user-manual/build-a-harness-by-hand.md`](user-manual/build-a-harness-by-hand.md#change-a-connector-and-its-pins), [`user-manual/edit-a-wire.md`](user-manual/edit-a-wire.md) (sections 9 and 10) and [`user-manual/connect-two-connectors.md`](user-manual/connect-two-connectors.md).
+
+| Where | What is new |
+| --- | --- |
+| Drawings area, Harness tab, *Connectors* tab | The section **Edit connector** (connector, **Part**, **Gender**, **Keying**, **Name**, **Apply to connector**; a line says when the part has another number of pins) above **Pin of a connector**, which gains **Signal** and **Role**; **Pin ID** with **Add pin**, **Rename pin** and **Delete pin**. On a harness made by Generate the tab still adds no connector, but part, gender, keying and the pin details can be set; the connector is then *Edited by you* and **Give back to Generate** appears. Name, pins and contacts are grey there and say why. |
+| *Edit wire* tab | **Change group…** (visible for a group you made: kind, wires, shield ends A and B in a window) and **Edit all wires…** (the same gauge, type, colour and length on all wires, the selected wires or one signal, in a window that says in one line what will change). Both windows say a mistake in a line under the fields and keep their button off until the plan is valid. |
+| Edit menu | **Edit all wires of the harness…** (Ctrl+Shift+B) opens the Harness tab and the window. |
+| Model area, diagram | **View > Show connectors on connections** (also a box on the Settings page, remembered): a small box at each end of a connection line with the connector name and *4 of 5 pins* (always in Expert mode). The tooltip of a line adds the **Path** through the harness made from it. The right-click menu of a line now lists its actions (edit the pairs, create harness, **Show the harness**, delete); before, it was empty. |
+| Edit > Selected connection, project tree | **Show the harness**: opens the Harness tab on the harness made from the connection (off, with the reason, until there is one). |
+
+The interaction rules of section 6 apply as before: a change is one undo step, a released harness refuses with the reason, a mistake is said inline, and nothing is invented.
+
+## 20. The library (after 1.7.0, not released)
+
+Milestone M4 of the workshop feedback (decision D-175, plan and status in [`ait/WORKSHOP_FEEDBACK_PLAN.md`](ait/WORKSHOP_FEEDBACK_PLAN.md), "M4 as built"): "subsystems should be in a library, not visible in a blank project", "instead of nominal chain redundant chain rather give number of those devices", "need a separate library interface, basically opens a new window", "library should be accessible to everyone (e.g. via a shared drive)". The user's page is [`user-manual/use-the-library.md`](user-manual/use-the-library.md).
+
+| Where | What is new |
+| --- | --- |
+| File menu, Home page | **Library…** (Ctrl+Shift+O; Ctrl+Shift+L is Arrange) opens the library window; **Library folder…** chooses the folder; Settings > Project shows the folder with **Choose…**, **Clear** and **Open the library…**. |
+| The library window (`library-window`, not modal, its own size and place) | Folder line with **Change…** and **Refresh** (F5); a search field (Ctrl+F) and a filter *Devices and subsystems / Devices / Subsystems*; the list (Kind, ID, Name, Contents); the preview (connectors and pins, or devices and connections); **Number of these devices**, **Save selection to library…**, **Add to project** (Enter in the list), **Close** (Esc). A folder that is missing, unreadable or empty, and a file that is damaged, are said in words in the window. |
+| The window Save to library | Devices, or a subsystem with a name and a description; a name that is taken is said under the fields and **Save** stays off; a line says how many connections are saved or left out. |
+| Add device window, Devices tab | **Number of these devices** (the tab adds **Add copies**). **Create redundant copy** and the *Chain* field stay. |
+
+The interaction rules of section 6 apply as before: an addition is one undo step, a mistake is said inline, nothing of the project is replaced, and nothing is written into the library folder until the person saves.
+
+![The library window](img/library-window.png)
 
 Next: [`DESIGN.md`](DESIGN.md), [`ux-audit.md`](ux-audit.md), [`usability/README.md`](usability/README.md)

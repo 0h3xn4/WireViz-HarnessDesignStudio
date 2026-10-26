@@ -40,3 +40,11 @@ Id = Annotated[str, AfterValidator(check_id), Field(json_schema_extra={"pattern"
 PinId = Annotated[
     str, AfterValidator(check_pin_id), Field(json_schema_extra={"pattern": PIN_RE.pattern})
 ]
+
+
+def _maybe_id(value: str) -> str:
+    return check_id(value) if value else value
+
+
+# An ID that may be empty (an optional reference that is left out of the files while empty).
+MaybeId = Annotated[str, AfterValidator(_maybe_id)]

@@ -30,6 +30,7 @@ The command line cannot add devices or interfaces. The loop works on a project t
 | a device's pins from a table | `harness-design-studio import-pinout DIR gyro.csv --device GYRO1 --new-device "Gyro unit" --default-part MY-HD-9-F --dry-run` |
 | a device's pinout as a file | `harness-design-studio export-pinout DIR --device GYRO1 -o gyro.xlsx` |
 | a device from another project (a device library file) | `harness-design-studio import-devices DIR devices.json --list`, then `--device GYRO1 --dry-run` |
+| a subsystem (devices and their connections) to keep for other projects (after 1.7.0) | `harness-design-studio export-subsystem DIR wheel-drive.json --device OBC1 --device RW1 --name "Wheel drive"`; added with `import-subsystem DIR wheel-drive.json --dry-run` or **File > Library…** (Ctrl+Shift+O) |
 | a device to keep for other projects | `harness-design-studio export-devices DIR devices.json --device GYRO1` (or **Save to library…** in the Devices tab) |
 | strip lengths, pin contacts, accessories or crimp tools (new in 1.7.0) | `harness-design-studio import-build-data DIR strip-lengths.csv --dry-run` (the kind is read from the headings; templates `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv`) |
 | engineering values | edit `config/*.json`, see [`CONFIG.md`](CONFIG.md); `harness-design-studio config DIR` lists what is missing |
@@ -58,7 +59,7 @@ The comment must have at least 10 characters. A release is blocked while checks 
 
 ## In the app
 
-The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip, which **View > Show problem notices** can hide), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M). That is the **Full** workspace. A first run starts in the **Simple** workspace (since 1.7.0): it opens on the **Next step** page (one thing to do, one button), the tree, the Inspector and the Problems panel are closed, and the rail has no Home. **View > Full** or **Show everything** gives the full window, **View > Simple** goes back, **Show panels** (top bar) opens the tree and the Inspector. **View > Show problem notices** (also in **Settings > Editing**) shows or hides the Problems count, the status chip, the badges and the *out of date* banner; it is on in Full and off in Simple. **Settings** holds the theme, the interface size, Reduce motion, the list of all keys, About and the licences.
+The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip, which **View > Show problem notices** can hide), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M). That is the window of the **Electrical / AIT engineer** role. A **Systems engineer** (the other role; the first start asks which you are) has a leaner window: it opens on the **Next step** page (one thing to do, one button), the tree, the Inspector and the Problems panel are closed, and the rail lists only Next step, Model, Checks, Revisions and Settings. **View > Role** switches at once; **Show everything** on the Next step page gives the Electrical / AIT engineer window, **Show panels** (top bar) opens the tree and the Inspector. **View > Show problem notices** (also in **Settings > Editing**) shows or hides the Problems count, the status chip, the badges and the *out of date* banner; it is on for the Electrical / AIT engineer and off for the Systems engineer. **Settings** holds the role, the theme, the interface size, Reduce motion, the list of all keys, About and the licences.
 
 | Keys | Action |
 | --- | --- |
@@ -68,9 +69,10 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 | Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
 | Ctrl+I | new interface |
 | Ctrl+1 to Ctrl+6 | the tabs: Diagram, Harness, Lists, Checks, Releases, Devices |
-| Ctrl+7, Ctrl+, | Home (also in Simple, where the rail does not list it), Settings |
+| Ctrl+7, Ctrl+, | Home (also for the Systems engineer, whose rail does not list it), Settings |
 | Ctrl+Shift+M | show or hide the Problems panel |
 | Ctrl+Shift+H | new harness by hand (Drawings area: then add its connectors in the Connectors tab) |
+| Ctrl+Shift+B | Edit all wires of the harness… (the same gauge, type, colour and length on many wires) |
 | Ctrl+Shift+N | add a device (the window **Add device** asks for the name, the ID and the subsystem first; then in the Devices tab: F2 or Enter edits a cell, Insert adds a pin, Shift+Delete deletes pins, Ctrl+L fills from an interface type, Ctrl+Enter assigns to an interface) |
 | Ctrl+Shift+T | the Interface table |
 | Ctrl+Shift+J | the Device list |
@@ -82,7 +84,9 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 | Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, out, 100 % |
 | F, Shift+F | fit everything, zoom to the selection |
 | Ctrl+A, Ctrl+D, Ctrl+F | select all, duplicate, find (in the diagram) |
-| C, Esc | start the Connect tool, back to Select (Esc also clears the selection) |
+| C, Esc | start the Connect tool (click two devices to link their connectors), back to Select (Esc also clears the selection) |
+| Ctrl+Shift+K | Link connectors… (join two connectors pin by pin) |
+| Ctrl+Shift+O | Library… (the library window: devices and subsystems of your team's folder) |
 | Tab, Enter or Space | move between devices and links, select |
 | Shift+arrows | move the selected device |
 | Delete | delete the selected item (after showing what it affects) |

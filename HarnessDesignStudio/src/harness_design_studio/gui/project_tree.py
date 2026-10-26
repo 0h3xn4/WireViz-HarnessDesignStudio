@@ -67,6 +67,7 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio.core import configcheck, describe, drc
 from harness_design_studio.core.drc.by_rule import UNCHECKED
+from harness_design_studio.core.links import derived_interfaces, link_caption
 from harness_design_studio.core.vcs.lockview import lock_reason, locked_objects
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import LIST_DELAY_MS, Delta, EditorController
@@ -78,6 +79,7 @@ from harness_design_studio.gui.theme.tokens import CATEGORIES, style_category
 
 ROOT_ORDER: Final = (
     "units",
+    "links",
     "interfaces",
     "harnesses",
     "parts",
@@ -85,13 +87,14 @@ ROOT_ORDER: Final = (
     "config",
     "imports",
 )
-OBJECT_KINDS: Final = ("unit", "interface", "harness", "part", "interface_type", "config")
+OBJECT_KINDS: Final = ("unit", "link", "interface", "harness", "part", "interface_type", "config")
 IMPORT_KINDS: Final = tuple(
     strings.TREE_IMPORTS
 )  # interfaces, parts, lengths, engineering, netlist
 CANVAS_KINDS: Final = ("unit", "interface")  # the kinds `ctl.select` knows
 _CHILD_KIND: Final = {
     "units": "unit",
+    "links": "link",
     "interfaces": "interface",
     "harnesses": "harness",
     "parts": "part",
@@ -101,6 +104,7 @@ _CHILD_KIND: Final = {
 }
 _ROOT_ICON: Final = {
     "units": "unit",
+    "links": "link",
     "interfaces": "interface",
     "harnesses": "harness",
     "parts": "part",
@@ -110,6 +114,7 @@ _ROOT_ICON: Final = {
 }
 _KIND_ICON: Final = {
     "unit": "unit",
+    "link": "link",
     "interface": "interface",
     "harness": "harness",
     "part": "part",
@@ -117,7 +122,7 @@ _KIND_ICON: Final = {
     "config": "config",
     "import": "import",
 }
-_EXPANDED_BY_DEFAULT: Final = ("units", "interfaces", "harnesses", "config")
+_EXPANDED_BY_DEFAULT: Final = ("units", "links", "interfaces", "harnesses", "config")
 BULK = 40  # more changes than this (and most of a root) are applied as one block
 
 _UR = int(Qt.ItemDataRole.UserRole)
@@ -337,6 +342,8 @@ class ProjectTreeModel(QAbstractItemModel):
                     u.id, u.name, u.subsystem, u.zone or strings.TREE_NO_ZONE, u.side
                 )
             )
+        elif node.kind == "link" and node.id in p.links:
+            lines.append(self._link_tip(node.id))
         elif node.kind == "interface" and node.id in p.interfaces:
             i = p.interfaces[node.id]
             ends = " - ".join(e.unit_id for e in i.endpoints)
@@ -386,6 +393,20 @@ class ProjectTreeModel(QAbstractItemModel):
         if node.lock:
             lines.append(node.lock)
         return "\n".join(lines)
+
+    def _link_tip(self, link_id: str) -> str:
+        p = self.ctl.project
+        link = p.links[link_id]
+        carries = "; ".join(d.label for d in derived_interfaces(p) if d.link_id == link_id)
+        parts = [strings.TREE_TIP_LINK.format(link.id, link_caption(link), len(link.pairs))]
+        if carries:
+            parts.append(carries + ".")
+        parts.append(
+            strings.TREE_TIP_LINK_HARNESS.format(link.harness_id)
+            if link.harness_id
+            else strings.TREE_TIP_LINK_NO_HARNESS
+        )
+        return " ".join(parts)
 
     def _config_tip(self, name: str) -> str:
         p = self.ctl.project
@@ -440,6 +461,7 @@ class ProjectTreeModel(QAbstractItemModel):
         p = self.ctl.project
         found: dict[str, Mapping[str, Any]] = {
             "units": p.units,
+            "links": p.links,
             "interfaces": p.interfaces,
             "harnesses": p.harnesses,
             "parts": p.parts,
@@ -460,6 +482,8 @@ class ProjectTreeModel(QAbstractItemModel):
             node.name = f"{obj.name}{side}"
         elif kind in ("interface", "interface_type"):
             node.name = obj.name
+        elif kind == "link":
+            node.name = link_caption(obj) + (f" ({obj.name})" if obj.name else "")
         elif kind == "harness":
             node.name = obj.name
             node.state = describe.harness_state(obj)
@@ -700,6 +724,8 @@ class ProjectTreeModel(QAbstractItemModel):
             return "unit", object_id
         if object_id in p.interfaces:
             return "interface", object_id
+        if object_id in p.links:
+            return "link", object_id
         if object_id in p.harnesses:
             return "harness", object_id
         box = p.connectors.get(object_id)
@@ -1159,6 +1185,7 @@ class ProjectTree(QWidget):
         self._project = ctl.project
         ctl.changed.connect(self._on_changed)
         ctl.selectionChanged.connect(self._sync_selection)
+        ctl.linkSelectionChanged.connect(self._sync_selection)
         ctl.stateChanged.connect(self.model.refresh_read_only)
         ctl.stateChanged.connect(self._read_only_changed)
         ctl.drcChanged.connect(self._schedule_counts)
@@ -1270,6 +1297,7 @@ class ProjectTree(QWidget):
             self.model.sync_all()
         else:
             self.model.sync_keys("units", delta.units)
+            self.model.sync_keys("links", delta.links)
             self.model.sync_keys("interfaces", delta.interfaces)
             for root in ("harnesses", "parts", "interface_types", "config"):
                 self.model.sync_root(root)
@@ -1291,7 +1319,12 @@ class ProjectTree(QWidget):
             return
         s = self.ctl.selection
         chosen = [(c.kind, c.id) for c in self.ctl.selected]
-        if s is None:
+        if s is None and self.ctl.selected_link is not None:
+            self._syncing = True
+            self.view.clearSelection()
+            self._syncing = False
+            self.select("link", self.ctl.selected_link)
+        elif s is None:
             self._syncing = True
             self.view.setCurrentIndex(QModelIndex())
             self.view.clearSelection()
@@ -1354,7 +1387,7 @@ class ProjectTree(QWidget):
 
     def _delete(self, index: QModelIndex) -> None:
         node = self._node_at(index)
-        if node.kind in CANVAS_KINDS and not self.ctl.read_only:
+        if node.kind in (*CANVAS_KINDS, "link") and not self.ctl.read_only:
             self.deleteRequested.emit(node.kind, node.id)
 
     def _restyle(self) -> None:
@@ -1372,6 +1405,8 @@ class ProjectTree(QWidget):
             return
         if node.kind in CANVAS_KINDS:
             self.ctl.select(node.kind, node.id)
+        elif node.kind == "link":
+            self.ctl.select_link(node.id)
         self.selectionRequested.emit(node.kind, node.id)
 
     def _select_kind(self, kind: str, id_: str) -> None:
@@ -1434,6 +1469,10 @@ class ProjectTree(QWidget):
                         menu.addAction(a)
         elif kind == "root":
             add_kind = _CHILD_KIND.get(id_)
+            if add_kind == "link":
+                menu.addAction(strings.TREE_ADD_LINK).triggered.connect(
+                    lambda _=False: self.addRequested.emit("link")
+                )
             if add_kind in strings.TREE_ADD_ENTRIES:
                 label = strings.TREE_ADD_IN.format(strings.TREE_ROOTS[id_].lower().rstrip("s"))
                 menu.addAction(label).triggered.connect(

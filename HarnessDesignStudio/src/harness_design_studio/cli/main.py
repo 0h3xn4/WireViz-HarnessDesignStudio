@@ -323,12 +323,13 @@ NOTHING_DONE = {
     "import-parts": "imported", "import-lengths": "imported", "import-netlist": "imported",
     "import-pinout": "imported", "export-pinout": "exported",
     "export-devices": "exported", "import-devices": "imported", "import-build-data": "imported",
+    "export-subsystem": "exported", "import-subsystem": "imported",
 }  # fmt: skip
 
 MUTATING = {
     "generate", "export", "migrate", "review", "release", "revise",
     "import-parts", "import-lengths", "import-netlist", "import-pinout", "import-devices",
-    "import-build-data",
+    "import-build-data", "import-subsystem",
 }  # fmt: skip
 
 

@@ -61,3 +61,23 @@ def output_digests(files: dict[str, bytes]) -> dict[str, str]:
 def time_limit(seconds: float) -> float:
     """Performance limit; shared CI runners are slower, so HARNESS_TIME_FACTOR (CI sets 3) scales it."""
     return seconds * float(os.environ.get("HARNESS_TIME_FACTOR", "1"))
+
+
+def pinout_project() -> Any:  # a Project
+    """mini3 with labelled pins on four device connectors (example data, no engineering values):
+    RS-422 on OBC-J01 and RW1-J02 (pins 1 to 4: TX+, TX-, RX+, RX-; pin 5 has no signal) and power
+    on PCDU-J02 and OBC-J02 (pins 1 and 2: PWR, RTN; pin 3 has no signal). No link yet."""
+    from harness_design_studio.core.model import Pin
+    from harness_design_studio.core.samples import mini3
+
+    p = mini3()
+    data = ("TX+", "TX-", "RX+", "RX-")
+    for cid in ("OBC-J01", "RW1-J02"):
+        c = p.connectors[cid]
+        pins = [Pin(id=str(k + 1), signal=s) for k, s in enumerate(data)] + [Pin(id="5")]
+        p.connectors[cid] = c.model_copy(update={"pins": pins})
+    for cid in ("PCDU-J02", "OBC-J02"):
+        c = p.connectors[cid]
+        pins = [Pin(id="1", signal="PWR"), Pin(id="2", signal="RTN"), Pin(id="3")]
+        p.connectors[cid] = c.model_copy(update={"pins": pins})
+    return p

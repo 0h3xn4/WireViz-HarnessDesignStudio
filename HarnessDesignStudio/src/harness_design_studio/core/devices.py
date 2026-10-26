@@ -42,7 +42,7 @@ from .model import (
 )
 from .model.base import MAX_PIN_COUNT, Name
 from .model.logical import Category, Construction, Direction, Shielding, Side
-from .model.physical import Gender, Termination
+from .model.physical import Gender, PinRole, Termination
 from .outputs.stamp import Table
 from .outputs.tables import box_pinouts
 from .vcs.lockview import LockRef, field_lock_reason, lock_reason, locked_objects
@@ -51,11 +51,12 @@ from .vcs.snapshot import carried_interfaces
 PinMode = Literal["free", "fixed", "locked"]
 PIN_MODES: tuple[PinMode, ...] = get_args(PinMode)
 PIN_FIELDS = frozenset(
-    {"signal", "contact_size", "termination", "fixed", "locked", "function", "contact_part"}
+    {"signal", "contact_size", "termination", "fixed", "locked", "function", "contact_part", "role"}
 )
 CONNECTOR_FIELDS = frozenset({"name", "gender", "keying", "carries", "notes", "label"})
 _GENDERS: tuple[str, ...] = get_args(Gender)
 _TERMINATIONS: tuple[str, ...] = get_args(Termination)
+PIN_ROLES: tuple[str, ...] = get_args(PinRole)
 _NAME = TypeAdapter(Name)
 
 
@@ -246,6 +247,29 @@ def _outdated_harnesses(project: Project, connector_id: str) -> tuple[str, ...]:
     )
 
 
+def _links_on(
+    project: Project, connector_id: str, pin_ids: Collection[str] | None = None
+) -> list[str]:
+    """The links (M2) that join this box connector, or that pair one of `pin_ids` of it."""
+    found = []
+    for link in sorted(project.links.values(), key=lambda x: x.id):
+        for cid, pins in (
+            (link.a_connector, [p.a_pin for p in link.pairs]),
+            (link.b_connector, [p.b_pin for p in link.pairs]),
+        ):
+            if cid == connector_id and (pin_ids is None or set(pins) & set(pin_ids)):
+                found.append(link.id)
+                break
+    return found
+
+
+def _pairing_text(links: Sequence[str]) -> str:
+    return (
+        f"it is paired in {'link' if len(links) == 1 else 'links'} {', '.join(links)}. "
+        "Change the pairing of the link first."
+    )
+
+
 def _blocked_by_text(hids: Sequence[str]) -> str:
     return (
         f"{', '.join(hids)} (made by hand or released) has wires on it. "
@@ -379,6 +403,7 @@ def _pin_is_empty(p: Pin) -> bool:
         and p.contact_size is None
         and p.function is None
         and p.contact_part is None
+        and p.role == ""
         and p.termination == "unspecified"
     )
 
@@ -519,6 +544,7 @@ def ops_delete_connector(project: Project, connector_id: str) -> list[Op]:
             for e in i.endpoints
         ]
         ops.append(Put("interfaces", evolve(i, endpoints=eps)))
+    ops += [Delete("links", lid) for lid in _links_on(project, connector_id)]
     ops += _waiver_deletes(project, {connector_id})
     ops.append(Delete("connectors", connector_id))
     return ops
@@ -562,6 +588,14 @@ def _edit_pin(pin: Pin, changes: Mapping[str, object], project: Project | None =
                 if project is not None
                 else _text(value, "A contact")
             )
+        elif key == "role":
+            text = "" if value is None else value
+            if text not in PIN_ROLES:
+                raise EditError(
+                    "A pin role is one of power, return, ground, signal, shield, spare, "
+                    "or empty (taken from the signal name)."
+                )
+            new[key] = text
         else:
             if not isinstance(value, bool):
                 raise EditError(f"'{key}' is yes or no.")
@@ -574,7 +608,8 @@ def _edit_pin(pin: Pin, changes: Mapping[str, object], project: Project | None =
 
 def ops_set_pin(project: Project, connector_id: str, pin_id: str, **changes: object) -> list[Op]:
     """Change one pin: `signal`, `contact_size`, `termination`, `function`, `contact_part` (a
-    contact part of the library), `fixed`, `locked`, or `mode` ("free", "fixed", "locked") for the
+    contact part of the library), `role` (power, return, ground, signal, shield, spare, or empty:
+    taken from the signal name), `fixed`, `locked`, or `mode` ("free", "fixed", "locked") for the
     last two together. Refused for a pin that carries an interface of a released harness. Nothing
     to do gives no ops."""
     _writable(project)
@@ -724,6 +759,11 @@ def ops_delete_pins(project: Project, connector_id: str, pin_ids: Collection[str
             f"Pin {', '.join(impact.pin_ids)} cannot be deleted: "
             f"{_blocked_by_text(impact.blocked_by_harnesses)}"
         )
+    if links := _links_on(project, connector_id, pin_ids):
+        raise EditError(
+            f"Pin {', '.join(sorted(set(pin_ids)))} of {connector_id} cannot be deleted: "
+            + _pairing_text(links)
+        )
     pins = [p for p in c.pins if p.id not in pin_ids]
     return [Put("connectors", c.model_copy(update={"pins": pins}))]
 
@@ -750,6 +790,8 @@ def ops_rename_pin(project: Project, connector_id: str, old: str, new: str) -> l
         raise EditError(
             f"Pin {old} cannot be renamed: {_blocked_by_text(impact.blocked_by_harnesses)}"
         )
+    if links := _links_on(project, connector_id, {old}):
+        raise EditError(f"Pin {old} of {connector_id} cannot be renamed: " + _pairing_text(links))
     pins = list(c.pins)
     pins[k] = evolve(pin, id=new)
     return [Put("connectors", c.model_copy(update={"pins": pins}))]
@@ -787,6 +829,10 @@ def ops_set_pinout(project: Project, connector_id: str, pins: Sequence[Pin]) -> 
             and (why := pin_lock_reason(project, connector_id, p.id))
         ):
             raise EditError(f"Pin {p.id} of {connector_id} cannot change. {why}")
+    if gone and (links := _links_on(project, connector_id, gone)):
+        raise EditError(
+            f"Pin {', '.join(gone)} of {connector_id} cannot be removed: " + _pairing_text(links)
+        )
     if gone:
         impact = pin_impact(project, connector_id, gone)
         if impact.locked:
@@ -1893,6 +1939,7 @@ __all__ = [
     "CONNECTOR_FIELDS",
     "PIN_FIELDS",
     "PIN_MODES",
+    "PIN_ROLES",
     "ROW_COLUMNS",
     "ConnectorImpact",
     "DeviceState",

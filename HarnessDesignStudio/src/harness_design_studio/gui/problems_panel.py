@@ -34,7 +34,9 @@ from harness_design_studio.gui.theme import ThemeManager
 _SEVERITY_STATE: Final = {"error": "fail", "warning": "warning", "info": "info"}
 _ORDER: Final = {"error": 0, "warning": 1, "info": 2}
 FILTERS: Final = (("all", strings.PROBLEMS_FILTER_ALL), ("error", strings.CHECKS_SEVERITY["error"]),
-                  ("warning", strings.CHECKS_SEVERITY["warning"]))  # fmt: skip
+                  ("warning", strings.CHECKS_SEVERITY["warning"]),
+                  ("links", strings.PROBLEMS_FILTER_LINKS))  # fmt: skip
+LINK_RULE_PREFIX: Final = "link-"  # the rules of the review of connections (core/links.py)
 
 COLUMNS: Final = (
     Column(
@@ -100,6 +102,8 @@ class ProblemsList(QWidget):
             self.filters[key] = b
             b.clicked.connect(lambda _c=False, k=key: self._filter(k))
         self.filters["all"].setChecked(True)
+        self.filters["links"].setToolTip(strings.PROBLEMS_FILTER_LINKS_TIP)
+        self.filters["links"].setVisible(bool(ctl.project.links))
         self.count = QLabel()
         self.count.setObjectName("problems-count")
         self.count.setProperty("muted", True)
@@ -145,6 +149,7 @@ class ProblemsList(QWidget):
         )
         self.model.update_rows([problem_row(f) for f in found])
         self.count.setText(strings.PROBLEMS_BUTTON.format(len(found)))
+        self.filters["links"].setVisible(bool(self.ctl.project.links) or self._level == "links")
         self.empty.setVisible(not found)
         self.table.setVisible(bool(found))
         self._apply_filter()
@@ -160,8 +165,23 @@ class ProblemsList(QWidget):
         self._level = key
         self._apply_filter()
 
+    def show_filter(self, key: str) -> None:
+        """Choose a filter from outside (Check my connections shows the connections)."""
+        if key in self.filters:
+            self.filters[key].setVisible(True)
+            self.filters[key].setChecked(True)
+            self._filter(key)
+
     def _apply_filter(self) -> None:
         level = self._level
+        if level == "links":
+            self.table.proxy.set_predicate(
+                lambda row: (
+                    isinstance(row, Mapping)
+                    and str(row.get("rule", "")).startswith(LINK_RULE_PREFIX)
+                )
+            )
+            return
         self.table.proxy.set_predicate(
             None
             if level == "all"

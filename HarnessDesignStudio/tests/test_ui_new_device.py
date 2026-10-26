@@ -173,14 +173,14 @@ def test_every_way_to_add_a_device_asks_for_the_name(qtbot, tmp_path: Path, way:
         win.view.setFocus()
         QTest.keyClick(win, Qt.Key.Key_N, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)  # fmt: skip
     elif way == "tool":
-        win.set_workspace("simple")
+        win.set_role("systems")
         win.set_area("model")
         win.tool_add_device.click()
     elif way == "empty":
         assert win.view.empty_add.isVisibleTo(win.view)
         win.view.empty_add.click()
     elif way == "next":
-        win.set_workspace("simple")
+        win.set_role("systems")
         win.set_area("next")
         assert win.next_page.key() == "add_device"
         win.next_page.button.click()

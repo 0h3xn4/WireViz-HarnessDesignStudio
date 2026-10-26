@@ -27,7 +27,7 @@ Every command below was run with the tool (version `1.7.0`) in an empty folder, 
 | [`small-satellite`](#small-satellite) | 14 | 24 | no | redundancy (main and backup chains) and a larger diagram | yes |
 | [`flatsat`](#flatsat) | 23 | 44 | yes (8 harnesses) | a whole bench setup with ground equipment | **no, new in 1.0.0** |
 
-In the app, **File > New project from an example…** makes a project from any of them, and the **Home** page lists the examples (**Open this example**; **Try the flatsat example** opens a copy in your Documents folder). The rail of the Simple workspace, where a first run starts, does not list *Home*: open it with **Go > Go to Home** (Ctrl+7), or choose **View > Full**. If a word here is new to you, see [`GLOSSARY.md`](../GLOSSARY.md). Every example uses the tool's **example parts** (their part numbers start with `EX-`), and every configuration file except `naming.json` is still marked `"placeholder": true`. None of the examples is engineering data, and none is a statement that anything complies with a standard.
+In the app, **File > New project from an example…** makes a project from any of them, and the **Home** page lists the examples (**Open this example**; **Try the flatsat example** opens a copy in your Documents folder). The rail of the Systems engineer role does not list *Home*: open it with **Go > Go to Home** (Ctrl+7), or choose **View > Role > Electrical / AIT engineer**. If a word here is new to you, see [`GLOSSARY.md`](../GLOSSARY.md). Every example uses the tool's **example parts** (their part numbers start with `EX-`), and every configuration file except `naming.json` is still marked `"placeholder": true`. None of the examples is engineering data, and none is a statement that anything complies with a standard.
 
 ## Which build do you have?
 
@@ -61,7 +61,7 @@ The same five commands work on every example: `new`, `validate`, `generate`, `dr
 
 ## blank
 
-**What it shows:** an empty project: the starter parts library (example connectors, contacts, wires), the 17 interface types, the seven configuration files (six of them placeholders), two lanes called `panel-A` and `panel-B`, and no devices. It is where your own design starts. The command line cannot add devices or interfaces; open the project in the app and add them (the empty diagram has an **Add a device** button since 1.6.0, and the Next step page of the Simple workspace opens with *Start with a device* and the same button, since 1.7.0; see Part 10 of [`GETTING_STARTED.md`](../GETTING_STARTED.md)).
+**What it shows:** an empty project: the starter parts library (example connectors, contacts, wires), the 17 interface types, the seven configuration files (six of them placeholders), two lanes called `panel-A` and `panel-B`, and no devices. It is where your own design starts. The command line cannot add devices or interfaces; open the project in the app and add them (the empty diagram has an **Add a device** button since 1.6.0, and the Next step page of the Systems engineer role opens with *Start with a device* and the same button, since 1.7.0; see Part 10 of [`GETTING_STARTED.md`](../GETTING_STARTED.md)).
 
 ```
 harness-design-studio new my-blank --template blank
@@ -82,7 +82,7 @@ harness-design-studio drc my-blank
 0 interfaces and 0 wires checked: 0 error(s)
 # Design rule check: My project
 
-Model hash: `e70383e5ae84`. Rules run: 35.
+Model hash: `e70383e5ae84`. Rules run: 39.
 Open: 0 error(s), 0 warning(s), 0 note(s). Waived: 0.
 ```
 
@@ -114,7 +114,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 interfaces and 6 wires checked: 0 error(s)
 # Design rule check: First steps: reaction wheel link
 
-Model hash: `afd8bd1502d7`. Rules run: 35.
+Model hash: `afd8bd1502d7`. Rules run: 39.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 ```
 
@@ -151,7 +151,7 @@ harness-design-studio drc my-minimal-satellite
 11 interfaces and 24 wires checked: 0 error(s)
 # Design rule check: Minimal satellite
 
-Model hash: `360573b88208`. Rules run: 35.
+Model hash: `360573b88208`. Rules run: 39.
 Open: 0 error(s), 15 warning(s), 17 note(s). Waived: 0.
 ```
 
@@ -180,7 +180,7 @@ harness-design-studio drc my-small-satellite
 24 interfaces and 54 wires checked: 0 error(s)
 # Design rule check: Small satellite (reference)
 
-Model hash: `7d5c42c98f4f`. Rules run: 35.
+Model hash: `7d5c42c98f4f`. Rules run: 39.
 Open: 0 error(s), 20 warning(s), 28 note(s). Waived: 0.
 ```
 
@@ -212,7 +212,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 44 interfaces and 103 wires checked: 0 error(s)
 # Design rule check: Flatsat (EXAMPLE numbers, not engineering data)
 
-Model hash: `2ff3df68f87e`. Rules run: 35.
+Model hash: `2ff3df68f87e`. Rules run: 39.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 

@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.7.0 (2026-10-22: a build workbook for every harness, the build data, a simple workspace). The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.7.0 (2026-10-22: a build workbook for every harness, the build data, a simple workspace, which later became the two roles of the next version). The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
 
 ## Contents
 
@@ -145,9 +145,9 @@ harness-design-studio-gui --selftest    # opens the editor offscreen, makes a pr
 
 Then start **Harness Design Studio** from the application menu. The first start opens a built-in sample project on the **Next step** page and a short tour.
 
-**What you should see:** a window with the title *Harness Design Studio* (with the name of the project in front of it), a navigation rail down the left edge (*Next step*, *Model*, *Checks*, *Drawings*, *Outputs*, *Revisions*, *Settings*), one row at the top with the project name, **Undo** and **Redo**, **Guided** and **Expert**, **Show panels**, **Search**, the steps *Generate*, *Check* and *Release…*, **Export…** and a status chip, and the menus **File**, **Edit**, **View**, **Design**, **Go** and **Help**. The page itself is headed *What to do next*: one card with one button, the six steps of the work with *done*, *next* or *to do* beside each, and a link **Show everything**. This is the **Simple workspace**, which a first run starts in: the project tree, the Inspector and the Problems panel are closed, and the rail has no *Home*.
+**What you should see:** a window with the title *Harness Design Studio* (with the name of the project in front of it), a navigation rail down the left edge (*Next step*, *Home*, *Model*, *Checks*, *Drawings*, *Outputs*, *Revisions*, *Settings*; fewer for a Systems engineer), one row at the top with the project name, **Undo** and **Redo**, **Guided** and **Expert**, **Show panels**, **Search**, the steps *Generate*, *Check* and *Release…*, **Export…** and a status chip, and the menus **File**, **Edit**, **View**, **Design**, **Go** and **Help**. The page itself is headed *What to do next*: one card with one button, the six steps of the work with *done*, *next* or *to do* beside each, and, for a Systems engineer, the links **Library…** and **Show everything**. A first start asks *Who are you working as?* first. This is the window of the **Systems engineer**: the project tree, the Inspector and the Problems panel are closed, and the rail lists only *Next step*, *Model*, *Checks*, *Revisions* and *Settings*.
 
-To see the whole editor (a diagram of boxes joined by lines, the *Project* tree, *Device list* and *Interfaces* on the left, the *Inspector*, *Why* and *Problems* tabs on the right, *Home* in the rail), click **Show everything**, or choose **View > Full**. **Show panels** opens only the tree and the Inspector. **View > Simple** goes back; see [use the simple workspace](user-manual/use-the-simple-workspace.md). A person who already had a settings file (an older version) starts in the Full workspace. If the window is too small or the text is hard to read, see *If the app does not start* below. **F1** opens the user guide.
+To see the whole editor (a diagram of boxes joined by lines, the *Project* tree, *Device list* and *Interfaces* on the left, the *Inspector*, *Why* and *Problems* tabs on the right, *Home* in the rail), click **Show everything**, or choose **View > Role > Electrical / AIT engineer**. **Show panels** opens only the tree and the Inspector. **View > Role > Systems engineer** goes back; see [choose your role](user-manual/choose-your-role.md). A person who already had a settings file (an older version) starts as an Electrical / AIT engineer, without being asked. If the window is too small or the text is hard to read, see *If the app does not start* below. **F1** opens the user guide.
 
 ## Your first five minutes after installing
 
@@ -255,14 +255,14 @@ Then start **Harness Design Studio** from the Start menu and continue with [Your
 | The editor does not appear, or a black or empty window shows | Update the graphics driver, then run the self-test above to see whether the program itself is intact. |
 | Your company blocks programs in `%LOCALAPPDATA%` | Ask for an exception for the install folder, or run the portable `.zip` from a folder that is allowed. |
 
-Settings (theme, scale, Simple or Full workspace, last project; no design data) are in `%APPDATA%\HarnessDesigner\HarnessDesigner.ini`.
+Settings (theme, scale, role, last project; no design data) are in `%APPDATA%\HarnessDesigner\HarnessDesigner.ini`.
 
 ## Where things are stored
 
 | What | Where |
 | --- | --- |
 | Your projects | wherever you saved them (a folder per project) |
-| App settings (theme, scale, Simple or Full workspace, last project) | Linux: `~/.config/HarnessDesigner/HarnessDesigner.ini`; Windows: `%APPDATA%\HarnessDesigner\HarnessDesigner.ini` (no design data) |
+| App settings (theme, scale, role, last project) | Linux: `~/.config/HarnessDesigner/HarnessDesigner.ini`; Windows: `%APPDATA%\HarnessDesigner\HarnessDesigner.ini` (no design data) |
 | Autosave of an open project | `<project>/.harness-recovery/` (offered for restore after a crash; ignored by Git) |
 
 Next: [`GETTING_STARTED.md`](GETTING_STARTED.md).

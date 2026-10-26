@@ -582,6 +582,13 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
                     else f"{box.part_id} has no mating part in the library, so the same part is used"
                 ),
             )
+            kept_edit = old_cables.get(box_id)
+            if kept_edit is not None and kept_edit.locked:
+                cables[box_id] = _keep_edited_connector(cables[box_id], kept_edit)
+                ctx.note(
+                    f"connector:{cid}",
+                    "override: the connector is yours, so its part, gender, keying and pin details were kept",
+                )
     # ---- routing: branch points and segments, keeping user-entered lengths
     old_len = {(s.from_node, s.to_node): s.length_m for s in (old.segments if old else [])}
     branches: list[BranchPoint] = []
@@ -751,6 +758,23 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
     return built
 
 
+def _keep_edited_connector(new: Connector, prev: Connector) -> Connector:
+    """The cable connector a person edited (`Connector.locked`) keeps its part, gender, keying and the
+    details of its pins (signal, role, function, termination, contact size); the pins themselves
+    (their IDs) and the contact of each pin still follow the device connector."""
+    kept = {p.id: p for p in prev.pins}
+    return evolve(
+        new,
+        part_id=prev.part_id,
+        gender=prev.gender,
+        keying=prev.keying,
+        locked=True,
+        pins=[
+            evolve(kept[p.id], contact_part=p.contact_part) if p.id in kept else p for p in new.pins
+        ],
+    )
+
+
 def _wire_keys(h: Harness | None) -> dict[str, Wire]:
     """The wires of a harness by what they carry: interface, signal and the box the wire starts at
     (the cable connector's name changes with the harness, the box does not)."""
@@ -821,6 +845,12 @@ def _warn_lost_data(ctx: _Ctx, old: Harness, new: Harness | None) -> None:
         f"the wire {w.id} that you drew ({w.from_connector}.{w.from_pin} to {w.to_connector}.{w.to_pin})"
         for w in old.wires
         if w.manual and w.id not in kept_manual
+    ]
+    kept_cables = {c.id for c in new.connectors if c.locked} if new else set()
+    lost += [
+        f"the edited connector {c.id} (part {c.part_id})"
+        for c in old.connectors
+        if c.locked and c.id not in kept_cables
     ]
     kept_groups = {s.id for s in new.shields if s.manual} if new else set()
     lost += [

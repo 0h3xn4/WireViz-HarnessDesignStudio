@@ -804,6 +804,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
                 doc["model_hash"] == model_hash(project)
                 and len(doc["units"]) == len(project.units)
                 and len(doc["interfaces"]) == len(project.interfaces)
+                and ("links" in doc) == bool(project.links)
                 and sum(len(h["wires"]) for h in doc["harnesses"]) == len(wires)
                 and {h["id"]: h for h in doc["harnesses"]}
                 == {h.id: _saved_order(h) for h in project.harnesses.values()}
@@ -816,6 +817,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
                         ("interfaces", project.interfaces.values()),
                         ("box_connectors", project.connectors.values()),
                         ("parts", project.parts.values()),
+                        *((("links", project.links.values()),) if project.links else ()),
                     )
                 )
             )

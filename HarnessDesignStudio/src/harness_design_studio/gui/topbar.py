@@ -55,6 +55,7 @@ class ShellStatus:
     released: int = 0
     units: int = 0  # devices in the project
     interfaces: int = 0  # connections in the project
+    links: int = 0  # connections of two connectors (pin to pin)
     hand_made: int = 0  # harnesses a person made (generated=False)
 
 

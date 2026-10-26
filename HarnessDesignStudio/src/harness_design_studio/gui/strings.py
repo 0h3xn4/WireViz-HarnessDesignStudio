@@ -68,6 +68,10 @@ TOUR_STEPS: list[tuple[str, str]] = [
         "generate",
         "Generate harnesses builds the harness plans from this diagram. You see a preview first, and one Undo takes it back.",
     ),
+    (
+        "role",
+        "The bar on the left lists the areas of the program. What it lists depends on your role: change the role any time in View > Role.",
+    ),
 ]
 
 PROPERTIES = "Properties"
@@ -163,7 +167,7 @@ EXPERT_TIP = "Expert mode: all physical details (connectors, pins, parts)."
 TOOL_SELECT = "Select"
 TOOL_CONNECT = "Connect"
 TOOL_SELECT_TIP = "Select and move (Esc)"
-TOOL_CONNECT_TIP = "Connect two devices (C). The arrow next to it lists the interface types: pick one, then click the first and the second device."
+TOOL_CONNECT_TIP = "Connect two devices pin by pin (C): click the first device, then the second. The arrow next to it is the older way, by interface type."
 HINT = "Hint"
 ZOOM_IN = "Zoom in"
 ZOOM_OUT = "Zoom out"
@@ -388,7 +392,7 @@ WHY_NO_SELECTION = "Select something in the diagram first."
 WHY_SELECT_UNIT = "Select a device first."
 WHY_IS_REDUNDANT = "This device is already a redundant copy."
 WHY_HAS_REDUNDANT = "This device already has a redundant copy: {0}."
-REDUNDANT_TIP = "Make a redundant copy of the selected device"
+REDUNDANT_TIP = "Make a redundant copy of the selected device (the same as setting the number of these devices to 2 in the Devices tab)"
 DELETE_TIP = "Delete the selected item (shows what it affects first)"
 GEN_NO_INTERFACES = (
     "There is nothing to generate yet. Add devices and connect them with interfaces first."
@@ -2448,7 +2452,7 @@ INS_PART_TOOL_SET = "Set tool"
 INS_PART_TOOL_SET_TIP = "Save the crimp tool of this contact part"
 STEP_SET_PART_TOOL = "Set tool of {0}"
 
-# ---- 1.7.0 S1: the simple workspace, one next step (D-171) ---------------------------------------
+# ---- 1.7.0 S1: the one next step (D-171) ---------------------------------------
 AREA_NEXT = "Next step"
 AREA_NEXT_TIP = "Next step: what to do now, in plain words, with one button"
 NEXT_TITLE = "What to do next"
@@ -2467,7 +2471,12 @@ NEXT_STATE_BLOCKED = "not possible"
 NEXT_STEP_LINE = "{0}: {1}"
 NEXT_SHOW_EVERYTHING = "Show everything"
 NEXT_SHOW_EVERYTHING_TIP = (
-    "Switch to the full workspace, with every panel and tab. You can switch back in the View menu."
+    "Switch to the role Electrical / AIT engineer, which shows every area, panel and tab. "
+    "You can switch back in View > Role."
+)
+NEXT_LIBRARY = "Library…"
+NEXT_LIBRARY_TIP = (
+    "Open the library window (Ctrl+Shift+O): devices and subsystems your team has saved"
 )
 NEXT_BUSY_TITLE = "Working…"
 NEXT_BUSY_WHY = "Please wait. This takes a moment."
@@ -2479,7 +2488,7 @@ NEXT_ADD_BUTTON = "Add a device"
 NEXT_ADD_ALTERNATIVE = "or make a harness by hand"
 NEXT_ADD_ALTERNATIVE_BUTTON = "New harness…"
 NEXT_CONNECT_TITLE = "Connect your devices"
-NEXT_CONNECT_WHY = "Draw a connection from one device to another. Each connection becomes wires."
+NEXT_CONNECT_WHY = "Join a connector of one device to a connector of another. The program proposes the pairs of pins."
 NEXT_CONNECT_BUTTON = "Connect two devices"
 NEXT_GENERATE_TITLE = "Generate the harnesses"
 NEXT_GENERATE_WHY = "The program makes the harnesses from your connections."
@@ -2511,7 +2520,7 @@ NEXT_DONE_BUTTON = "Open the Outputs"
 NEXT_BUTTON_TIPS = {
     "add_device": "Add a device to the design and name it (Ctrl+Shift+N)",
     "new_harness": "Make a harness by hand, without devices or connections (Ctrl+Shift+H)",
-    "connect": "Open the diagram with the Connect tool, then click two devices (C)",
+    "connect": "Open the diagram with the Connect tool, then click two devices (C). A window then shows which pins go together",
     "generate": "Make the harnesses from the connections of the design (Ctrl+G)",
     "check": "Look for mistakes in the design (F5)",
     "fix": "Open the Checks, which list what failed and what to do",
@@ -2519,16 +2528,7 @@ NEXT_BUTTON_TIPS = {
     "release": "Open the Revisions, where a harness is reviewed and released",
     "done": "Open the Outputs: the lists and the exported files",
 }
-WORKSPACE_SIMPLE = "Simple"
-WORKSPACE_FULL = "Full"
-WORKSPACE_SIMPLE_TIP = "Simple workspace: the project opens on the next step, in plain words"
-WORKSPACE_FULL_TIP = "Full workspace: the project opens on the diagram, with every panel and tab"
-SETTINGS_WORKSPACE = "Workspace"
-SETTINGS_WORKSPACE_HINT = (
-    "Simple opens a project on the next step to take. Full opens it on the diagram."
-)
-
-# ---- Simple workspace, stage S2: fewer things on screen (D-171) ----
+# ---- The Systems engineer role (the Simple workspace of 1.7.0, stage S2): fewer things on screen (D-171, D-176) ----
 A_SHOW_PANELS = "Show side panels"
 SHOW_PANELS_BUTTON = "Show panels"
 SHOW_PANELS_TIP = "Open or close the project tree and the properties together"
@@ -2562,7 +2562,7 @@ SETTINGS_PROBLEM_NOTICES = "Show problem notices"
 SETTINGS_PROBLEM_NOTICES_TIP = (
     "Show the Problems count, the status chips, the badges on the diagram and the out-of-date "
     "banner without being asked. Off: they stay hidden; the Check button and the Checks still work. "
-    "Each workspace remembers its own choice (Simple starts with them off)."
+    "Each role remembers its own choice (the Systems engineer starts with them off)."
 )
 EXPORT_SAVE_AS_FOLDER = (
     "Choose an empty folder to save the project in. The files are then exported next to it"
@@ -2572,3 +2572,409 @@ HV_EXPORT_READ_ONLY = "Read-only: save a copy first"
 HV_EXPORT_SAVES_FIRST = "Asks where to save first"
 HV_EXPORT_SAVES_FIRST_TIP = "This project has no folder yet, so you first choose where to save it; the files are then exported next to it"
 HV_EXPORT_REASON_NAME = "Why Export may not work"
+
+# ---- Workshop feedback M2b (D-173): connections, the pinout first. Two connectors joined pin by pin ----
+M_CONNECT_WITH_TYPE = "Connect with an interface type…"
+M_CONNECTION = "Selected connection"
+A_LINK = "Link connectors…"
+A_LINK_EDIT = "Edit the pairs…"
+A_LINK_RENAME = "Rename…"
+A_LINK_HARNESS = "Create harness"
+A_LINK_DELETE = "Delete connection"
+A_CHECK_CONNECTIONS = "Check my connections"
+CM_LINK_FROM = "Link connectors from here…"
+STEP_ADD_LINK = "Link connectors {}"
+STEP_EDIT_LINK = "Change connection {}"
+STEP_RENAME_LINK = "Rename connection {}"
+STEP_DELETE_LINK = "Delete connection {}"
+STEP_LINK_HARNESS = "Create harness from connection {}"
+LINK_ADDED = "Connection {} made between {}."
+LINK_CHANGED = "Connection {} changed."
+LINK_DELETED = "Connection {} deleted. A harness made from it stays."
+LINK_HARNESS_MADE = (
+    "Harness {} created from connection {}. Enter the lengths and wires' details in Edit wire."
+)
+LINK_NEED_TWO = "Add a second device first. A connection joins two devices."
+LINK_PICK_ONE = "Pick a connection first (in the project tree or on the diagram)."
+LINK_SAME_DEVICE = "Pick a device other than {}. A connection joins two different devices."
+LINK_HINT_FIRST = "Click the first device. A window then shows which pins go together."
+LINK_HINT_SECOND = "Now click the second device ({} is the first)."
+LINK_NO_CONNECTOR_SHORT = "No connector yet"
+LINK_NO_CONNECTOR = "Device {} has no connector yet. Add one in the Devices tab first."
+LINK_NO_PAIRS = "Pair at least one pin of the first connector with a pin of the second."
+LINK_NO_PAIRS_YET = "Nothing is paired yet. Pick a pin on each side and press Add pair."
+LINK_TITLE = "Link connectors"
+LINK_EDIT_TITLE = "Edit the pairs of a connection"
+LINK_INTRO = (
+    "Pick a connector on each device. The program proposes which pins go together from the "
+    "signal names on the pins, never from their position. Look at the pairs and change what is wrong."
+)
+LINK_EDIT_INTRO = "The two connectors stay as they are. Change the pairs and the roles of the pins."
+LINK_NAME = "Name"
+LINK_NAME_TIP = (
+    "A name for this connection (optional). Without one it is called after its two connectors."
+)
+LINK_NAME_HINT = "optional"
+LINK_FIRST = "First device"
+LINK_SECOND = "Second device"
+LINK_JOINED = "joined to"
+LINK_DEVICE = "Device"
+LINK_DEVICE_TIP = "The device whose connector is joined"
+LINK_CONNECTOR = "Connector"
+LINK_CONNECTOR_TIP = (
+    "The connector of the device. Every connector can be joined to a connector of another device."
+)
+LINK_ENDS_FIXED = (
+    "The connectors of a connection cannot change. Delete it and link again to use others."
+)
+LINK_TABLE_NAME = "Pairs of pins"
+LINK_COL_PIN_A = "Pin (first)"
+LINK_COL_SIGNAL_A = "Signal (first)"
+LINK_COL_ROLE_A = "Role (first)"
+LINK_COL_PIN_B = "Pin (second)"
+LINK_COL_SIGNAL_B = "Signal (second)"
+LINK_COL_ROLE_B = "Role (second)"
+LINK_NO_SIGNAL = "no signal"
+LINK_PIN_A = "Pin of the first connector"
+LINK_PIN_B = "Pin of the second connector"
+LINK_PIN_TIP = "A pin of the connector with its signal name"
+LINK_ROLE_A = "Role of that pin of the first connector"
+LINK_ROLE_B = "Role of that pin of the second connector"
+LINK_ROLE_TIP = "What the pin is for. Automatic takes it from the signal name."
+LINK_ROLE_NAMES = {
+    "": "Automatic",
+    "power": "Power",
+    "return": "Return",
+    "ground": "Ground",
+    "signal": "Signal",
+    "shield": "Shield",
+    "spare": "Spare",
+}
+LINK_ROLE_HELP = (
+    "Roles: Power carries the supply. Return is the line the current of a signal comes back on. "
+    "Ground is the common reference. Signal carries data. Shield is the screen of a cable. "
+    "Spare is a pin nobody uses, so it is not asked about. Automatic takes the role from the signal name."
+)
+LINK_ADD_PAIR = "Add pair"
+LINK_ADD_TIP = "Pair the two pins chosen above"
+LINK_CHANGE_PAIR = "Change pair"
+LINK_CHANGE_TIP = "Replace the pair picked in the table by the two pins chosen above"
+LINK_REMOVE_PAIR = "Remove pair"
+LINK_REMOVE_TIP = "Take the pair picked in the table out"
+LINK_UNPAIRED_LINE = "Not paired on {}: {}."
+LINK_ALL_PAIRED = "Every pin that has a signal is paired."
+LINK_REVIEW_ERRORS = (
+    "Something looks wrong. You can still make the connection; the check keeps asking."
+)
+LINK_REVIEW_WARNINGS = "Please have a look. You can still make the connection."
+LINK_OK = "Link connectors"
+LINK_SAVE = "Save the pairs"
+LINK_OK_TIP = "Join the two connectors with these pairs (you can undo it)"
+LINK_RENAME_TITLE = "Rename connection"
+LINK_HARNESS_TITLE = "Create harness"
+LINK_HARNESS_PREVIEW = (
+    "This adds the harness {name} with {connectors} cable connectors and {wires} wires, "
+    "one wire for each pair of {caption}."
+)
+LINK_HARNESS_NOTE = "Lengths, gauges and colours stay empty until you enter them. The program never makes a harness on its own, and you can undo this."
+LINK_HARNESS_OK = "Create harness"
+LINK_HARNESS_OK_TIP = "Make the harness now (you can undo it)"
+LINK_CHECK_NONE = "There is no connection to check yet. Use Link connectors first."
+LINK_CHECK_CLEAN = "Every connection looks fine."
+LINK_CHECK_FOUND = (
+    "1 thing to look at in your connections. It is listed under Problems.",
+    "{} things to look at in your connections. They are listed under Problems.",
+)
+LINK_TIP_ENDS = "Joins"
+LINK_TIP_PAIRS = "Pairs"
+LINK_TIP_CARRIES = "Carries"
+LINK_TIP_HARNESS = "Harness"
+LINK_TIP_NO_HARNESS = "none yet (Create harness makes it)"
+LINK_TIP_CHECKS = "Checks"
+LINK_TIP_OPEN = "Double-click to change the pairs."
+TREE_ROOTS["links"] = "Connections"
+TREE_EMPTY["links"] = "No connections yet. Use Link connectors, or the Connect tool on the diagram."
+TREE_ADD_LINK = "Link connectors…"
+TREE_TIP_LINK = "Connection {}: {}, {} pairs."
+TREE_TIP_LINK_HARNESS = "Harness {} was made from it."
+TREE_TIP_LINK_NO_HARNESS = "No harness yet."
+PROBLEMS_FILTER_LINKS = "Connections"
+PROBLEMS_FILTER_LINKS_TIP = "Show only what the check says about connections"
+NEXT_MAKE_TITLE = "Make the harness of your connection"
+NEXT_MAKE_WHY = "Your connection says which pins go together. One button makes a harness with a wire for each pair."
+NEXT_MAKE_BUTTON = "Create harness"
+NEXT_BUTTON_TIPS["make_harness"] = (
+    "Show what the harness will contain, then make it. Nothing is made before you agree"
+)
+
+# ---- Workshop feedback M3 (D-174): edit a connector, change a group, edit all wires, connectors on the connections ----
+CE_EDIT_TITLE = "Edit connector"
+CE_EDIT_PART_TIP = (
+    "The part of this connector, from the parts library. The pins stay as they are; "
+    "a part with another number of pins shows in the checks."
+)
+CE_GENDER = "Gender"
+CE_GENDER_TIP = "Male or female, as the part says it. Not said: the checks cannot tell if it fits."
+CE_GENDERS = (("unspecified", "not said"), ("male", "male"), ("female", "female"))
+CE_KEYING = "Keying"
+CE_KEYING_TIP = (
+    "The key or coding of the connector, in words, for example A. It must match the device end."
+)
+CE_EDIT_NAME_TIP = "The name of the connector in the harness, for example P1"
+CE_EDIT_NAME_FIXED = "The name of a connector of a generated harness comes from its ID."
+CE_EDIT_APPLY = "Apply to connector"
+CE_EDIT_APPLY_TIP = (
+    "Set the part, gender, keying and name of the selected connector (you can undo it)"
+)
+CE_EDIT_NOTHING = "Nothing to change: the connector has these values already."
+CE_EDIT_STATE_MINE = (
+    "Edited by you: Generate keeps the part, gender, keying and pin details of this connector. "
+    "Its pins and their contacts still follow the device."
+)
+CE_EDIT_STATE_GENERATED = (
+    "Generate gives this connector the part, gender and keying of the device it plugs into. "
+    "If you change them or a pin here, the connector becomes yours and Generate keeps them."
+)
+CE_RESET = "Give back to Generate"
+CE_RESET_TIP = "Let Generate set the part, gender, keying and pins from the device again, the next time you generate"
+CE_PIN_COUNT = "The part has {0} pins and the connector {1}."
+CE_PIN_COUNT_ADD = " Add or delete pins below."
+CE_SIGNAL = "Signal"
+CE_SIGNAL_TIP = (
+    "The name of what this pin carries, for example HEATER +. It is printed on the pinout."
+)
+CE_ROLE = "Role"
+CE_ROLE_TIP = (
+    "What the pin is for: power, return, ground, signal, shield or spare. Empty means not said."
+)
+CE_ROLES = (
+    ("", "not said"),
+    ("power", "power"),
+    ("return", "return"),
+    ("ground", "ground"),
+    ("signal", "signal"),
+    ("shield", "shield"),
+    ("spare", "spare"),
+)
+CE_PIN_ID = "Pin ID"
+CE_PIN_ID_TIP = "The ID of a pin: letters, digits, _ - . (up to 16). Add takes a list separated by commas; Rename takes one."
+CE_PIN_ADD = "Add pin"
+CE_PIN_ADD_TIP = "Add the pins in Pin ID to this connector"
+CE_PIN_RENAME = "Rename pin"
+CE_PIN_RENAME_TIP = "Give the selected pin the ID in Pin ID. The wires on it follow."
+CE_PIN_DELETE = "Delete pin"
+CE_PIN_DELETE_TIP = "Delete the selected pin. It must have no wires."
+CE_PINS_FROM_DEVICE = (
+    "The pins of a generated harness follow the device: add, rename or delete them on the "
+    "device, in the Devices tab."
+)
+STEP_EDIT_CONNECTOR = "Edit connector {0}"
+STEP_ADD_PINS = "Add pins to {0}"
+CE_STEP_RENAME_PIN = "Rename pin {0}"
+STEP_DELETE_PIN = "Delete pin {0}"
+STEP_RESET_CONNECTOR = "Give {0} back to Generate"
+
+WIRE_CHANGE_GROUP = "Change group…"
+WIRE_CHANGE_GROUP_TIP = (
+    "Change the kind, the wires or the shield ends of the group of the selected wire that you made"
+)
+STEP_CHANGE_GROUP = "Change group {0}"
+GD_TITLE = "Change group {0}"
+GD_INTRO = "A group that you made: change how the wires run together and how its shield ends. Generate keeps it while its wires exist."
+GD_KIND = "Kind"
+GD_KIND_TIP = (
+    "How the wires run together: twisted pair, shielded pair, quad, coax or overall shield"
+)
+GD_END_A = "Shield end A"
+GD_END_A_TIP = "How the shield ends at the From end of the wires"
+GD_END_B = "Shield end B"
+GD_END_B_TIP = "How the shield ends at the To end of the wires"
+GD_ENDS = (
+    ("backshell_360", "360 degree backshell"),
+    ("pigtail", "pigtail"),
+    ("floating", "floating"),
+)
+GD_WIRES = "Wires of the group"
+GD_WIRES_TIP = "Tick the wires that belong to the group. A wire of another group is not offered."
+GD_OK = "Change group"
+GD_OK_TIP = "Change the group now (you can undo it)"
+GD_READY = "{0} of {1} wires: this is a {2}."
+GD_SAME = "The group has these values already, so nothing changes."
+
+WIRE_BULK = "Edit all wires…"
+WIRE_BULK_TIP = "Set the gauge, type, colour and length of all wires of this harness, the selected wires or the wires of one signal in one step"
+A_BULK_WIRES = "Edit all wires of the harness…"
+A_BULK_WIRES_TIP = "Set the gauge, type, colour and length of many wires of the open harness in one step (Harness tab)"
+STEP_BULK_WIRES = "Edit {0} wires of {1}"
+BULK_TITLE = "Edit all wires of {0}"
+BULK_INTRO = "Fill in what the wires should have. A field left empty stays as it is. The wires become yours: Generate keeps their gauge, type, colour and length."
+BULK_SCOPE = "Wires"
+BULK_SCOPE_TIP = "Which wires get the values"
+BULK_SCOPE_ALL = "All {0} wires of {1}"
+BULK_SCOPE_SELECTED = "The {0} selected wires"
+BULK_SCOPE_SIGNAL = "All wires of one signal"
+BULK_SIGNAL = "Signal"
+BULK_SIGNAL_TIP = "The signal name; every wire of this harness that carries it gets the values"
+BULK_ONLY_EMPTY = "Only wires that have no value yet"
+BULK_ONLY_EMPTY_TIP = "Leave a wire alone when it has its own gauge, type, colour or length: each field is filled in only where it is empty"
+BULK_OK = "Apply to wires"
+BULK_OK_TIP = "Set the values on the wires now (one undo step)"
+BULK_NOTHING = "Fill in at least one of gauge, type, colour and length."
+BULK_SAME = "The wires have these values already, so nothing changes."
+BULK_READY = "{0} on {1} of {2} wires."
+BULK_NO_HARNESS = "Open a harness first."
+
+A_CONNECTION_ENDS = "Show connectors on connections"
+A_CONNECTION_ENDS_TIP = "Draw the connector and its number of pins at both ends of every connection in the Diagram. The Expert mode always shows them."
+SETTINGS_CONNECTION_ENDS = "Show connectors on connections"
+SETTINGS_CONNECTION_ENDS_TIP = "Draw the connector and its number of pins at both ends of every connection in the Diagram. The Expert mode always shows them."
+LINK_END_PINS = ("{0} of 1 pin", "{0} of {1} pins")
+LINK_TIP_PATH = "Path"
+A_LINK_SHOW_HARNESS = "Show the harness"
+A_LINK_SHOW_HARNESS_TIP = "Open the harness that was made from this connection in the Harness tab"
+A_LINK_SHOW_HARNESS_NONE = "No harness has been made from this connection yet"
+
+# ---- the library (workshop M4, D-175) ----------------------------------------------------------
+A_LIBRARY = "Library…"
+A_LIBRARY_TIP = "Open the library window: the devices and subsystems in your team's library folder, to add to this project (Ctrl+Shift+O)"
+A_LIBRARY_FOLDER = "Library folder…"
+A_LIBRARY_FOLDER_TIP = "Choose the folder that holds your team's device and subsystem library files (a shared drive or a Git checkout)"
+LIB_FOLDER_TITLE = "Choose the library folder"
+LIB_TITLE = "Library"
+LIB_FOLDER_LABEL = "Library folder"
+LIB_FOLDER_NONE = "No folder chosen"
+LIB_FOLDER_TIP = "The folder this window reads. It is only read, and written to only when you save to the library."
+LIB_CHANGE = "Change…"
+LIB_CHANGE_TIP = "Choose another library folder"
+LIB_REFRESH = "Refresh"
+LIB_REFRESH_TIP = "Read the folder again, for example after a colleague added to it"
+LIB_SEARCH_NAME = "Search the library"
+LIB_SEARCH_PLACEHOLDER = "Search by name, ID or description"
+LIB_SEARCH_TIP = "Type words; only the entries that contain all of them stay (Ctrl+F)"
+LIB_KIND_NAME = "Show"
+LIB_KIND_TIP = "Show devices, subsystems or both"
+LIB_KIND_ALL = "Devices and subsystems"
+LIB_KIND_DEVICES = "Devices"
+LIB_KIND_SUBSYSTEMS = "Subsystems"
+LIB_LIST_NAME = "Library contents"
+LIB_LIST_TIP = "The devices and subsystems of the library folder. Press Enter to add the chosen one to the project."
+LIB_COLUMNS = ["Kind", "ID", "Name", "Contents"]
+LIB_KIND_DEVICE = "Device"
+LIB_KIND_SUBSYSTEM = "Subsystem"
+LIB_N_CONNECTORS = ("{} connector", "{} connectors")
+LIB_N_PINS = ("{} pin", "{} pins")
+LIB_N_DEVICES = ("{} device", "{} devices")
+LIB_N_CONNECTIONS = ("{} connection", "{} connections")
+LIB_EMPTY_NO_FOLDER = "No library folder is chosen yet"
+LIB_EMPTY_NO_FOLDER_HINT = "Choose the folder your team shares, for example on a shared drive or in a Git checkout. Until then the library is empty and your project is not touched."
+LIB_EMPTY_CHOOSE = "Choose library folder…"
+LIB_EMPTY_FOLDER = "This folder has no devices or subsystems yet"
+LIB_EMPTY_FOLDER_HINT = "Select devices in your project and press Save selection to library…"
+LIB_EMPTY_UNREADABLE = "The library cannot be read"
+LIB_EMPTY_NOMATCH = "Nothing matches"
+LIB_EMPTY_NOMATCH_HINT = "Clear the search, or show devices and subsystems."
+LIB_DAMAGED = "{} file(s) in the folder could not be used and are not listed."
+LIB_SKIPPED = "{} other .json file(s) in the folder are not library files and were ignored."
+LIB_PREVIEW_NAME = "Preview of the chosen entry"
+LIB_PREVIEW_NONE = "Choose a device or a subsystem to see what is in it."
+LIB_PREVIEW_PIN_COLUMNS = ["Connector", "Pin", "Signal", "Function"]
+LIB_PREVIEW_SUB_COLUMNS = ["Kind", "Item", "Detail"]
+LIB_PREVIEW_TABLE_PINS = "Connectors and pins of the chosen device"
+LIB_PREVIEW_TABLE_SUB = "Devices and connections of the chosen subsystem"
+LIB_FILE = "File: {}"
+LIB_PREVIEW_ERROR = "This entry cannot be read: {}"
+LIB_PREVIEW_LOADING = "Reading the file…"
+LIB_NUMBER = "Number of these devices"
+LIB_NUMBER_TIP = "How many of this device to add. 1 adds the device. 2 adds it and a copy named ID-R on the redundant chain, 3 a further copy ID-3, and so on."
+LIB_NUMBER_SUBSYSTEM = "A subsystem is added once; set the number of a device after adding it"
+LIB_ADD = "Add to project"
+LIB_ADD_TIP = "Add the chosen device or subsystem to the open project in one step that you can undo. Nothing of the project is replaced. (Enter)"
+LIB_ADD_NONE = "Choose a device or a subsystem first"
+LIB_ADD_READ_ONLY = "This project is read-only, so nothing can be added to it"
+LIB_SAVE = "Save selection to library…"
+LIB_SAVE_TIP = "Save the devices that are selected in the project to the library folder, as devices or as a subsystem"
+LIB_SAVE_NONE = "Select one or more devices in the diagram or in the project tree first"
+LIB_SAVE_NO_FOLDER = "Choose a library folder first"
+LIB_CLOSE = "Close"
+LIB_CLOSE_TIP = "Close this window (Esc); your project stays as it is"
+LIB_ADDED = "Added {}."
+LIB_ADDED_SUBSYSTEM = "Added the subsystem {}: {}, {}."
+STEP_LIB_ADD_DEVICE = "Add {} from the library"
+STEP_LIB_ADD_SUBSYSTEM = "Add the subsystem {} from the library"
+LIB_SAVE_TITLE = "Save to library"
+LIB_SAVE_AS = "Save as"
+LIB_SAVE_AS_DEVICES = "Devices (each one is added on its own)"
+LIB_SAVE_AS_DEVICES_TIP = "Save every selected device with its connectors and pins in a device file; a device with the same ID in that file is replaced"
+LIB_SAVE_AS_SUBSYSTEM = "A subsystem (the devices and the connections between them, added together)"
+LIB_SAVE_AS_SUBSYSTEM_TIP = (
+    "Save the selected devices and the connections between them as one subsystem file"
+)
+LIB_SAVE_NAME = "Subsystem name"
+LIB_SAVE_NAME_TIP = "What the subsystem is called in the library; it becomes the subsystem of every device that is added"
+LIB_SAVE_DESCRIPTION = "Description"
+LIB_SAVE_DESCRIPTION_TIP = "One or two lines for whoever finds it in the library (optional)"
+LIB_SAVE_SELECTED = "Selected devices: {}"
+LIB_SAVE_KEPT = "{} saved with them."
+LIB_SAVE_LEFT_OUT = "{} to devices that are not selected are left out."
+LIB_SAVE_FILE = "File: {} in {}"
+LIB_SAVE_NEEDS_NAME = "A subsystem needs a name."
+LIB_SAVE_EXISTS = "The library has a subsystem file {} already. Choose another name, or delete that file if it is out of date."
+LIB_SAVE_OK = "Save"
+LIB_SAVE_OK_TIP = "Write the file into the library folder"
+LIB_SAVED_DEVICES = "Saved {} to {}."
+LIB_SAVED_SUBSYSTEM = "Saved the subsystem {} to {}."
+SETTINGS_LIBRARY_FOLDER = "Library folder"
+SETTINGS_LIBRARY_TEXT = "The folder that holds your team's device and subsystem library files, for example on a shared drive or in a Git checkout. The program only reads it, and writes into it only when you save to the library. It is kept for you on this computer."
+SETTINGS_LIBRARY_CHOOSE = "Choose…"
+SETTINGS_LIBRARY_CLEAR = "Clear"
+SETTINGS_LIBRARY_CLEAR_TIP = "Stop using a library folder"
+SETTINGS_LIBRARY_OPEN = "Open the library…"
+SETTINGS_LIBRARY_NONE = "No folder chosen"
+HOME_LIBRARY = "Library…"
+HOME_LIBRARY_TIP = (
+    "Open the library window (Ctrl+Shift+O): devices and subsystems your team has saved"
+)
+NEWDEV_NUMBER = "Number of these devices"
+NEWDEV_NUMBER_TIP = "1 adds one device. 2 adds it and a copy named ID-R on the redundant chain, 3 a further copy ID-3, and so on."
+NEWDEV_NUMBER_NOTE = "{} devices: {}."
+DV_NUMBER = "Number of these devices"
+DV_NUMBER_TIP = (
+    "How many of this device the project has. Raise it and press Add copies to add the others."
+)
+DV_NUMBER_COPY = "This device is a copy; set the number on the device it was copied from"
+DV_COPIES = "Add copies"
+DV_COPIES_TIP = "Add the missing devices so that there are this many: the second is named ID-R, the next ID-3 and so on, with the same connectors and the links mirrored (one undo step; to have fewer, delete a copy)"
+DV_COPIES_SAME = "Raise the number to add copies"
+STEP_COPIES = "Make {} of {}"
+COPIES_DONE = "Added {}.{}"
+
+# ---- Workshop feedback M5 (D-176): the role replaces Simple and Full ----
+ROLE_SYSTEMS = "Systems engineer"
+ROLE_ELECTRICAL = "Electrical / AIT engineer"
+ROLE_SYSTEMS_TIP = (
+    "Systems engineer: devices, connections between devices, subsystems, the library and the "
+    "checks. The project opens on the next step and the screen shows less"
+)
+ROLE_ELECTRICAL_TIP = (
+    "Electrical / AIT engineer: connectors, pinouts, harnesses, wires, build sheets and tests. "
+    "Every area, panel and tab is shown and the project opens on the diagram"
+)
+M_ROLE = "Role"
+SETTINGS_ROLE = "Role"
+SETTINGS_ROLE_HINT = (
+    "Who you are working as. The Systems engineer sees less and starts on the next step; the "
+    "Electrical / AIT engineer sees every area. It only changes what is shown: nothing is "
+    "locked and nothing is stored in the project."
+)
+ROLE_DIALOG_TITLE = "Who are you working as?"
+ROLE_DIALOG_TEXT = "Pick the one that fits your work. It decides what the screen shows first."
+ROLE_DIALOG_SYSTEMS = "Systems engineer"
+ROLE_DIALOG_SYSTEMS_TEXT = (
+    "I think in devices, the connections between them, subsystems and the library."
+)
+ROLE_DIALOG_ELECTRICAL = "Electrical / AIT engineer"
+ROLE_DIALOG_ELECTRICAL_TEXT = (
+    "I work with connectors, pinouts, harnesses, wires, build sheets and tests."
+)
+ROLE_DIALOG_LATER = "You can change this later in View > Role."
+ROLE_DIALOG_NAME = "Choose your role"

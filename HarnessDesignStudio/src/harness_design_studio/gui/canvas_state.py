@@ -101,8 +101,8 @@ def badge_text(count: int, state: str) -> str:
 
 
 class StateIndex:
-    """`of(kind, id)` for kind "unit", "interface" or "connector" (a unit's box connector, which
-    carries a lock only)."""
+    """`of(kind, id)` for kind "unit", "interface", "link" (a connection of two connectors, which
+    shows problems only) or "connector" (a unit's box connector, which carries a lock only)."""
 
     def __init__(
         self,
@@ -226,6 +226,8 @@ def _resolver(project: Project) -> Any:
             out = [("unit", oid)]
         elif oid in project.interfaces:
             out = [("interface", oid)]
+        elif oid in project.links:
+            out = [("link", oid)]
         elif (c := project.connectors.get(oid)) is not None and c.unit_id:
             out = [("unit", c.unit_id)]
         elif oid in lazy_wires():
@@ -291,7 +293,7 @@ def build_index(
             errors=errors.get(key, 0),
             warnings=warnings.get(key, 0),
             locks=lock_of.get(key, ()),
-            not_checked=not_checked if key[0] != "connector" else 0,
+            not_checked=not_checked if key[0] not in ("connector", "link") else 0,
             **kw,
         )
         if not s.clear:
@@ -301,6 +303,8 @@ def build_index(
         put(("unit", uid), pending=pending_unit.get(uid, 0), auto=auto_unit.get(uid, 0))
     for iid in project.interfaces:
         put(("interface", iid), pending=pending_link[iid], auto=auto_link[iid])
+    for lid in project.links:  # (a connection shows the problems of its review)
+        put(("link", lid))
     for key in lock_of:
         if key[0] == "connector":
             put(key)

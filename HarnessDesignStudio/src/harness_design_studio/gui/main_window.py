@@ -9,6 +9,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
+import shiboken6
 from pydantic import ValidationError
 from PySide6.QtCore import (
     QByteArray,
@@ -57,6 +58,7 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio import __version__
 from harness_design_studio.core import device_library, drc, edit, manual_harness
+from harness_design_studio.core import links as core_links
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError
@@ -127,6 +129,9 @@ from harness_design_studio.gui.import_wizard import ImportWizard
 from harness_design_studio.gui.inspector import Inspector
 from harness_design_studio.gui.interface_table import InterfaceTable
 from harness_design_studio.gui.jobs import JobStatus
+from harness_design_studio.gui.library_window import SETTINGS_FOLDER as LIBRARY_FOLDER_KEY
+from harness_design_studio.gui.library_window import LibraryWindow
+from harness_design_studio.gui.link_dialog import CreateHarnessDialog, LinkDialog, harness_preview
 from harness_design_studio.gui.lists_panel import ListsPanel
 from harness_design_studio.gui.new_project_dialog import (
     BLANK,
@@ -134,19 +139,21 @@ from harness_design_studio.gui.new_project_dialog import (
     NewProjectRequest,
 )
 from harness_design_studio.gui.next_page import NextStepPage
-from harness_design_studio.gui.next_step import (
-    NextInputs,
-    clean_workspace,
-    default_workspace,
-    next_step,
-    workspace_key,
-)
+from harness_design_studio.gui.next_step import NextInputs, next_step
 from harness_design_studio.gui.pages import HomePage
 from harness_design_studio.gui.panels import ProblemsPanel, PropertiesPanel, category_icon
 from harness_design_studio.gui.problems_panel import ProblemsList
 from harness_design_studio.gui.project_tree import ProjectTree
 from harness_design_studio.gui.rail import NavRail
 from harness_design_studio.gui.releases_panel import ReleasesPanel
+from harness_design_studio.gui.role_dialog import RoleDialog
+from harness_design_studio.gui.roles import (
+    ELECTRICAL,
+    SYSTEMS,
+    clean_role,
+    default_role,
+    role_key,
+)
 from harness_design_studio.gui.settings_page import SCALES, SettingsPage
 from harness_design_studio.gui.shell import (
     BannerStack,
@@ -424,8 +431,12 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.settings = settings
         self.theme = theme
-        self._settings_were_empty = not settings.allKeys()  # a first run (see `_restore_workspace`)
-        self.workspace = "full"  # "simple" | "full", set from the settings in `_restore_settings`
+        self._settings_were_empty = not settings.allKeys()  # a first run (see `_restore_role`)
+        # `first_run=False` says this is not a first start: no tour and no question about the role
+        self._first_start = first_run is not False
+        self._role_to_ask = False  # a first start with no role set by the hook: ask once
+        # "systems" | "electrical", set from the settings in `_restore_settings`
+        self.role = ELECTRICAL
         self.ctl = EditorController(journal_delay_ms)
         self.setObjectName("main-window")
         # Dialog hooks (tests replace these to drive the UI without blocking).
@@ -466,6 +477,7 @@ class MainWindow(QMainWindow):
         self._area = areas.DEFAULT
         self._switching_area = False
         self.examples_folder: Callable[[], Path] = self._examples_folder  # (tests replace it)
+        self.library_window: LibraryWindow | None = None  # made when first opened
         self._recent_shown: list[recent.RecentEntry] | None = None
         self._active_worker: PlanWorker | OutputsWorker | ArrangeWorker | None = None
         self._last_check = ""
@@ -492,6 +504,8 @@ class MainWindow(QMainWindow):
         self.ctl.whyRequested.connect(self._show_why)
         self.props.deleteRequested.connect(self.delete_flow)
         self.ctl.connectChanged.connect(self._on_connect)
+        self.ctl.linkRequested.connect(self.link_flow)
+        self.ctl.linkSelectionChanged.connect(self._on_link_selection)
         self.ctl.modeChanged.connect(self._on_mode)
         self.interface_table.newInterfaceRequested.connect(self.new_interface_flow)
         self.unit_table.newUnitRequested.connect(lambda: self.menu_add.exec(QCursor.pos()))
@@ -523,10 +537,13 @@ class MainWindow(QMainWindow):
         if first_run is None:
             first_run = not self.settings.value("tour/done", False, bool)
         self.ctl.open_sample()
-        self._open_in_workspace()
+        self._open_for_role()
         self._update_hash()
-        if first_run:
+        if self._role_to_ask:
+            pass  # the question comes first, when the window shows (`showEvent`); the tour after it
+        elif first_run:
             QTimer.singleShot(200, self.tour.start)
+        self._tour_wanted = bool(first_run)
 
     # ---- construction ------------------------------------------------------------------------
     def _build_center(self) -> None:
@@ -570,9 +587,9 @@ class MainWindow(QMainWindow):
         # the arrow next to it lists the interface types (it was the palette's job)
         self.tool_connect.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.tool_select.clicked.connect(lambda: self.ctl.end_connect())
-        self.tool_connect.clicked.connect(lambda: self.ctl.begin_connect(self.ctl.connect_type))
-        # the simple workspace shows Select, Connect and Add device, and one More menu for the rest
-        # (stage S2); both are hidden in the full workspace
+        self.tool_connect.clicked.connect(lambda: self.ctl.begin_link())
+        # the Systems engineer role shows Select, Connect and Add device, and one More menu for the
+        # rest (stage S2); both are hidden for the Electrical / AIT engineer role
         self.tool_add_device = QToolButton()
         self.tool_add_device.setObjectName("tool-add-device")
         self.tool_add_device.setText(strings.TOOL_ADD_DEVICE)
@@ -675,6 +692,7 @@ class MainWindow(QMainWindow):
             open_=lambda: self.act_open.trigger(),
             example=lambda: self.act_new_example.trigger(),
             sample=lambda: self.act_sample.trigger(),
+            library=lambda: self.open_library_flow(),
             open_recent=lambda path: self.open_recent_flow(path),
             forget_recent=lambda path: self.forget_recent(path),
             open_example=lambda name: self.open_example_flow(name),
@@ -685,6 +703,7 @@ class MainWindow(QMainWindow):
                 "add_device": lambda: self.add_device_flow(),
                 "new_harness": lambda: self.new_harness_flow(),
                 "connect": lambda: self._next_connect(),
+                "make_harness": lambda: self._next_make_harness(),
                 "generate": lambda: self.generate_flow(),
                 "check": lambda: self.check_flow(),
                 "fix": lambda: self._next_fix(),
@@ -692,19 +711,24 @@ class MainWindow(QMainWindow):
                 "release": lambda: self._next_go("releases"),
                 "done": lambda: self._next_go("lists"),
                 "show_everything": lambda: self.show_everything(),
+                "library": lambda: self.open_library_flow(),
             },
         )
         self.settings_page = SettingsPage(
             self.theme,
-            set_workspace=lambda value: self.set_workspace(value),
+            set_role=lambda value: self.set_role(value),
             set_theme=lambda mode: self.set_theme_mode(mode),
             set_scale=lambda pct: self.scale_actions[pct].trigger(),
             set_reduce_motion=lambda on: self._set_checked(self.act_reduce_motion, on),
             set_mode=lambda mode: self._pick_mode(mode),
             set_snap=lambda on: self._set_checked(self.act_snap, on),
             set_labels=lambda on: self._set_checked(self.act_labels, on),
+            set_connection_ends=lambda on: self._set_checked(self.act_connection_ends, on),
             set_problem_notices=lambda on: self._set_checked(self.act_problem_notices, on),
             open_values=lambda: self.values_flow(),
+            choose_library_folder=lambda: self.choose_library_folder_flow(),
+            clear_library_folder=lambda: self.set_library_folder(""),
+            open_library=lambda: self.open_library_flow(),
             shortcut_rows=self.shortcut_rows,
             settings_file=self.settings.fileName(),
         )
@@ -1001,6 +1025,7 @@ class MainWindow(QMainWindow):
         """Plug in the views: Harness, Lists, the project tree and the inspector (with its Why and
         Problems tabs; the Problems tab holds the problems list with the to-do items)."""
         self.harness_view = HarnessView(self.ctl, self.theme, self.settings)
+        self.harness_view.wire_editor.run_dialog = lambda dlg: self.run_dialog(dlg)
         self.lists_panel = ListsPanel(self.ctl, self.theme, self.settings)
         self.lists_panel.files.ask_folder = lambda title: self.ask_folder(title)
         self.project_tree = ProjectTree(self.ctl, self.theme, self.settings)
@@ -1058,12 +1083,14 @@ class MainWindow(QMainWindow):
         self._show_problems(object_id)
 
     def _tree_selected(self, kind: str, ident: str) -> None:
-        if kind not in ("unit", "interface"):  # (those the tree selects on the canvas itself)
+        if kind not in ("unit", "interface", "link"):  # (those the tree selects on the canvas)
             self.inspector.show_object(kind, ident)
 
     def _tree_opened(self, kind: str, ident: str) -> None:
         if kind in ("unit", "interface"):
             self.ctl.request_open(kind, ident)
+        elif kind == "link":
+            self.edit_link_flow(ident)
         elif kind == "harness":
             self._go_to_harness(ident)
         else:
@@ -1071,6 +1098,8 @@ class MainWindow(QMainWindow):
 
     def _tree_actions(self, kind: str, ident: str) -> list[QAction]:
         """The change-control steps of a harness row in the tree's context menu."""
+        if kind == "link":
+            return self._link_actions(ident)
         h = self.ctl.project.harnesses.get(ident)
         if kind != "harness" or h is None:
             return []
@@ -1096,6 +1125,9 @@ class MainWindow(QMainWindow):
     def _tree_delete(self, kind: str, ident: str) -> None:
         """Delete pressed in the project tree on a unit or an interface: what is deleted is the
         row with the cursor (and the rest of a multiple selection made in the tree)."""
+        if kind == "link":
+            self.delete_link_flow(ident)
+            return
         chosen = {(s.kind, s.id) for s in self.ctl.selected}
         if (kind, ident) not in chosen:
             self.ctl.select(kind, ident)
@@ -1110,8 +1142,196 @@ class MainWindow(QMainWindow):
     def _tree_add(self, kind: str) -> None:
         if kind == "interface":
             self.new_interface_flow()
+        elif kind == "link":
+            self.link_flow()
         else:
             self.menu_add.exec(QCursor.pos())  # which kind of unit
+
+    # ---- connections: two connectors joined pin to pin (M2 of the workshop feedback) ----------------
+    def link_flow(
+        self, a_unit: str = "", a_connector: str = "", b_unit: str = "", b_connector: str = ""
+    ) -> None:
+        """Edit > Link connectors… (Ctrl+Shift+K), or the Connect tool after two devices: the
+        window proposes the pairs by signal name; OK joins the connectors as one undo step."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        if len(self.ctl.project.units) < 2:
+            self.toasts.show_message(strings.LINK_NEED_TWO, None)
+            return
+        dlg = LinkDialog(
+            self,
+            self.theme,
+            self.ctl.project,
+            a_unit=a_unit,
+            a_connector=a_connector,
+            b_unit=b_unit,
+            b_connector=b_connector,
+        )
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
+            return
+        lid = self.ctl.add_link(
+            dlg.a_connector_id(), dlg.b_connector_id(), dlg.pairs(), dlg.name(), dlg.roles()
+        )
+        if lid:
+            self.view.focus_connection(lid)
+
+    def _chosen_link(self, link_id: str | None) -> str | None:
+        lid = link_id or self.ctl.selected_link
+        if lid is None or lid not in self.ctl.project.links:
+            self.toasts.show_message(strings.LINK_PICK_ONE, None)
+            return None
+        return lid
+
+    def edit_link_flow(self, link_id: str | None = None) -> None:
+        """Edit the pairs, the name and the pin roles of a connection."""
+        lid = self._chosen_link(link_id)
+        if lid is None:
+            return
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        dlg = LinkDialog(self, self.theme, self.ctl.project, link_id=lid)
+        if self.run_dialog(dlg) == QDialog.DialogCode.Accepted:
+            self.ctl.edit_link(lid, dlg.pairs(), dlg.name(), dlg.roles())
+
+    def rename_link_flow(self, link_id: str | None = None) -> None:
+        lid = self._chosen_link(link_id)
+        if lid is None:
+            return
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        name = self.ask_text(
+            strings.LINK_RENAME_TITLE, strings.LINK_NAME, self.ctl.project.links[lid].name
+        )
+        if name is not None:
+            self.ctl.rename_link(lid, name)
+
+    def delete_link_flow(self, link_id: str | None = None) -> None:
+        lid = self._chosen_link(link_id)
+        if lid is None:
+            return
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        self.ctl.delete_link(lid)
+
+    def create_harness_flow(self, link_id: str | None = None) -> None:
+        """The one button that makes a harness from a connection: it says what will be added,
+        asks once, and makes it as one undo step. Nothing makes a harness on its own."""
+        lid = self._chosen_link(link_id)
+        if lid is None:
+            return
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        try:
+            sentence = harness_preview(self.ctl.project, lid)
+        except edit.EditError as exc:
+            self._error(str(exc))
+            return
+        if (
+            self.run_dialog(CreateHarnessDialog(self, self.theme, sentence))
+            != QDialog.DialogCode.Accepted
+        ):
+            return
+        hid = self.ctl.create_harness_from_link(lid)
+        if hid is None:
+            return
+        self.go_to("harness")
+        self.harness_view.refresh()
+        self.harness_view.select_harness(hid)
+
+    def check_connections_flow(self) -> None:
+        """Check my connections: the review of every connection, without changing anything. The
+        findings are the cards of the Problems panel (filtered to the connections), where each
+        one shows the connection on the diagram."""
+        if not self.ctl.project.links:
+            self.toasts.show_message(strings.LINK_CHECK_NONE, None)
+            return
+        found = core_links.check_links(self.ctl.project)
+        self.dock_problems.show()
+        self.problems_list.show_filter("links")
+        self.ctl.check_now()
+        text = (
+            strings.LINK_CHECK_FOUND[0 if len(found) == 1 else 1].format(len(found))
+            if found
+            else strings.LINK_CHECK_CLEAN
+        )
+        self.toasts.show_message(text, None, 8000)
+
+    def show_link_harness_flow(self, link_id: str | None = None) -> None:
+        """Show the harness that was made from a connection: the Harness tab opens on it."""
+        lid = self._chosen_link(link_id)
+        if lid is None:
+            return
+        hid = self.ctl.project.links[lid].harness_id
+        if not hid or hid not in self.ctl.project.harnesses:
+            self.toasts.show_message(strings.A_LINK_SHOW_HARNESS_NONE, None)
+            return
+        self._go_to_harness(hid)
+
+    def bulk_wires_flow(self) -> None:
+        """Edit > Edit all wires of the harness… (Ctrl+Shift+B): the Harness tab opens on the harness
+        shown there and a window asks for the gauge, type, colour and length."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        if not self.ctl.project.harnesses:
+            self.toasts.show_message(strings.BULK_NO_HARNESS, None)
+            return
+        self.go_to("harness")
+        self.harness_view.refresh()
+        self.harness_view.wire_editor.bulk_edit()
+
+    def _link_actions(self, link_id: str) -> list[QAction]:
+        """The entries of a connection's row in the project tree."""
+        link = self.ctl.project.links.get(link_id)
+        if link is None:
+            return []
+        ro = self.ctl.read_only
+        out: list[QAction] = []
+        for name, text, slot, enabled in (
+            ("edit", strings.A_LINK_EDIT, self.edit_link_flow, not ro),
+            ("rename", strings.A_LINK_RENAME, self.rename_link_flow, not ro),
+            (
+                "harness",
+                strings.A_LINK_HARNESS,
+                self.create_harness_flow,
+                not ro and not link.harness_id and bool(link.pairs),
+            ),
+            (
+                "show-harness",
+                strings.A_LINK_SHOW_HARNESS,
+                self.show_link_harness_flow,
+                bool(link.harness_id) and link.harness_id in self.ctl.project.harnesses,
+            ),
+            ("delete", strings.A_LINK_DELETE, self.delete_link_flow, not ro),
+        ):
+            act = QAction(text, self)
+            act.setObjectName(f"tree-link-{name}")
+            act.setEnabled(enabled)
+            act.triggered.connect(lambda _c=False, f=slot: f(link_id))
+            out.append(act)
+        return out
+
+    def _on_link_selection(self) -> None:
+        """The Edit > Selected connection actions follow the connection that is picked."""
+        c = self.ctl
+        link = c.project.links.get(c.selected_link or "")
+        have = link is not None and not c.read_only
+        for act in (self.act_link_edit, self.act_link_rename, self.act_link_delete):
+            act.setEnabled(have)
+        self.act_link_harness.setEnabled(
+            have and link is not None and not link.harness_id and bool(link.pairs)
+        )
+        made = link is not None and bool(link.harness_id) and link.harness_id in c.project.harnesses
+        self.act_link_show_harness.setEnabled(made)
+        self.act_link_show_harness.setToolTip(
+            strings.A_LINK_SHOW_HARNESS_TIP if made else strings.A_LINK_SHOW_HARNESS_NONE
+        )
+        self.menu_connection.setEnabled(link is not None)
 
     # ---- devices: a new device, parts, interface types, pins from a type or an interface -----------
     def add_device_flow(self) -> None:
@@ -1123,7 +1343,7 @@ class MainWindow(QMainWindow):
         dlg = NewDeviceDialog(self, self.theme, self.ctl.project)
         if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
             return
-        uid = self.ctl.add_device(**dlg.values())
+        uid = self.ctl.add_device(count=dlg.count(), **dlg.values())
         if uid is None:
             return
         self.go_to("devices")
@@ -1245,6 +1465,41 @@ class MainWindow(QMainWindow):
             return
         self.toasts.show_message(strings.DV_LIB_SAVED.format(unit_id, target.name), None)
 
+    # ---- the library window and its folder (workshop M4, D-175) -------------------------------------
+    def library_folder(self) -> str:
+        """The library folder of this person ('' while none is chosen); kept in the settings."""
+        return str(self.settings.value(LIBRARY_FOLDER_KEY, "") or "")
+
+    def set_library_folder(self, folder: str) -> None:
+        """Use this folder as the library ('' for none): stored, shown on the Settings page and read
+        by the library window if it is open. Nothing is written into the folder."""
+        folder = folder.strip()
+        if folder:
+            self.settings.setValue(LIBRARY_FOLDER_KEY, folder)
+        else:
+            self.settings.remove(LIBRARY_FOLDER_KEY)
+        self.settings_page.show_library_folder(folder)
+        if self.library_window is not None:
+            self.library_window.set_folder(folder)
+
+    def choose_library_folder_flow(self) -> None:
+        """File > Library folder…: ask for the folder and use it."""
+        path = self.ask_folder(strings.LIB_FOLDER_TITLE)
+        if path:
+            self.set_library_folder(path)
+
+    def open_library_flow(self) -> None:
+        """File > Library… (Ctrl+Shift+O): the library window, beside the editor, not modal."""
+        win = self.library_window
+        if win is None:
+            win = LibraryWindow(self.ctl, self.theme, self.settings, self)
+            win.run_dialog = lambda dlg: self.run_dialog(dlg)
+            win.folderChangeRequested.connect(self.choose_library_folder_flow)
+            self.library_window = win
+        win.show()
+        win.raise_()
+        win.activateWindow()
+
     def add_from_library_flow(self) -> None:
         """ "Add from library…" of the Devices tab: choose a file, tick the devices, add them as
         one undo step."""
@@ -1334,6 +1589,14 @@ class MainWindow(QMainWindow):
         self.act_import = a(
             strings.A_IMPORT, self.import_interfaces_flow, "Ctrl+Shift+I", name="act-import"
         )
+        self.act_library = a(
+            strings.A_LIBRARY, self.open_library_flow, "Ctrl+Shift+O", name="act-library"
+        )
+        self.act_library.setToolTip(strings.A_LIBRARY_TIP)
+        self.act_library_folder = a(
+            strings.A_LIBRARY_FOLDER, self.choose_library_folder_flow, name="act-library-folder"
+        )
+        self.act_library_folder.setToolTip(strings.A_LIBRARY_FOLDER_TIP)
         self.act_quit = a(strings.A_QUIT, self._quit, "Ctrl+Q", name="act-quit")
         self.act_undo = a(strings.UNDO, self.ctl.undo, "Ctrl+Z", name="act-undo")
         self.act_redo = a(strings.REDO, self.ctl.redo, "Ctrl+Y", name="act-redo")
@@ -1351,31 +1614,49 @@ class MainWindow(QMainWindow):
             strings.REDUNDANT_COPY, self._redundant_selected, name="act-redundant"
         )
         self.act_connect_tool = a(
-            strings.TOOL_CONNECT,
-            lambda: self.ctl.begin_connect(self.ctl.connect_type),
-            "C",
-            name="act-connect",
+            strings.TOOL_CONNECT, self.ctl.begin_link, "C", name="act-connect"
+        )  # the pinout way; the interface types are in Edit > Connect with an interface type
+        self.act_link_connectors = a(
+            strings.A_LINK, self.link_flow, "Ctrl+Shift+K", name="act-link-connectors"
+        )
+        self.act_link_edit = a(strings.A_LINK_EDIT, self.edit_link_flow, name="act-link-edit")
+        self.act_link_rename = a(
+            strings.A_LINK_RENAME, self.rename_link_flow, name="act-link-rename"
+        )
+        self.act_link_harness = a(
+            strings.A_LINK_HARNESS, self.create_harness_flow, name="act-link-harness"
+        )
+        self.act_link_show_harness = a(
+            strings.A_LINK_SHOW_HARNESS, self.show_link_harness_flow, name="act-link-show-harness"
+        )
+        self.act_link_show_harness.setToolTip(strings.A_LINK_SHOW_HARNESS_TIP)
+        self.act_link_delete = a(
+            strings.A_LINK_DELETE, self.delete_link_flow, name="act-link-delete"
+        )
+        self.act_check_connections = a(
+            strings.A_CHECK_CONNECTIONS, self.check_connections_flow, name="act-check-connections"
         )
         self.act_select_tool = a(strings.TOOL_SELECT, self.ctl.end_connect, name="act-select")
         self.act_add_zone = a(strings.A_ADD_ZONE, self.add_zone_flow, name="act-add-zone")
-        self.act_simple = a(
-            strings.WORKSPACE_SIMPLE,
-            lambda: self.set_workspace("simple"),
+        # the two roles (D-176): exclusive, checkable; View > Role and Settings are views of them
+        self.act_role_systems = a(
+            strings.ROLE_SYSTEMS,
+            lambda: self.set_role(SYSTEMS),
             checkable=True,
-            name="act-workspace-simple",
+            name="act-role-systems",
         )
-        self.act_full = a(
-            strings.WORKSPACE_FULL,
-            lambda: self.set_workspace("full"),
+        self.act_role_electrical = a(
+            strings.ROLE_ELECTRICAL,
+            lambda: self.set_role(ELECTRICAL),
             checkable=True,
-            name="act-workspace-full",
+            name="act-role-electrical",
         )
-        self.act_simple.setToolTip(strings.WORKSPACE_SIMPLE_TIP)
-        self.act_full.setToolTip(strings.WORKSPACE_FULL_TIP)
-        wgroup = QActionGroup(self)
-        wgroup.addAction(self.act_simple)
-        wgroup.addAction(self.act_full)
-        self.act_full.setChecked(True)
+        self.act_role_systems.setToolTip(strings.ROLE_SYSTEMS_TIP)
+        self.act_role_electrical.setToolTip(strings.ROLE_ELECTRICAL_TIP)
+        rgroup = QActionGroup(self)
+        rgroup.addAction(self.act_role_systems)
+        rgroup.addAction(self.act_role_electrical)
+        self.act_role_electrical.setChecked(True)
         self.act_guided = a(
             strings.GUIDED, lambda: self.ctl.set_mode("guided"), checkable=True, name="act-guided"
         )
@@ -1406,6 +1687,13 @@ class MainWindow(QMainWindow):
         self.act_labels = a(
             strings.A_LABELS, self._toggle_labels, checkable=True, name="act-labels"
         )
+        self.act_connection_ends = a(
+            strings.A_CONNECTION_ENDS,
+            self._toggle_connection_ends,
+            checkable=True,
+            name="act-connection-ends",
+        )
+        self.act_connection_ends.setToolTip(strings.A_CONNECTION_ENDS_TIP)
         self.act_reduce_motion = a(
             strings.SETTINGS_REDUCE_MOTION,
             self._toggle_reduce_motion,
@@ -1489,14 +1777,18 @@ class MainWindow(QMainWindow):
             strings.A_NEW_HARNESS, self.new_harness_flow, "Ctrl+Shift+H", name="act-new-harness"
         )
         self.act_new_harness.setToolTip(f"{strings.A_NEW_HARNESS_TIP} (Ctrl+Shift+H)")
+        self.act_bulk_wires = a(
+            strings.A_BULK_WIRES, self.bulk_wires_flow, "Ctrl+Shift+B", name="act-bulk-wires"
+        )
+        self.act_bulk_wires.setToolTip(f"{strings.A_BULK_WIRES_TIP} (Ctrl+Shift+B)")
         self.act_problems = a(
             strings.A_PROBLEMS, self.toggle_problems, "Ctrl+Shift+M", name="act-problems"
         )
         self.act_reset_layout = a(
             strings.A_RESET_LAYOUT, self.reset_layout, name="act-reset-layout"
         )
-        # the way back to the side panels in the simple workspace (stage S2); it exists, hidden and
-        # disabled (so the palette skips it), in the full workspace
+        # the way back to the side panels in the Systems engineer role (stage S2); it exists, hidden
+        # and disabled (so the palette skips it), in the Electrical / AIT engineer role
         self.act_show_panels = a(
             strings.A_SHOW_PANELS,
             lambda: self.show_panels(self.act_show_panels.isChecked()),
@@ -1601,6 +1893,10 @@ class MainWindow(QMainWindow):
             "zoom100": self.act_zoom_100,
             "zoom_selection": self.act_zoom_selection,
             "arrange": self.act_arrange,
+            "link_edit": self.act_link_edit,
+            "link_harness": self.act_link_harness,
+            "link_show_harness": self.act_link_show_harness,
+            "link_delete": self.act_link_delete,
             "distribute_h": self.distribute_actions["horizontal"],
             "distribute_v": self.distribute_actions["vertical"],
             **{f"align_{m}": act for m, act in self.align_actions.items()},
@@ -1677,6 +1973,9 @@ class MainWindow(QMainWindow):
             self.menu_import.addAction(act)
         f.addAction(self.act_export)
         f.addSeparator()
+        f.addAction(self.act_library)
+        f.addAction(self.act_library_folder)
+        f.addSeparator()
         f.addAction(self.act_quit)
         e = mb.addMenu(strings.M_EDIT)
         for act in (
@@ -1691,6 +1990,7 @@ class MainWindow(QMainWindow):
             e.addAction(act)
         e.addSeparator()
         e.addAction(self.act_new_interface)
+        e.addAction(self.act_link_connectors)
         e.addAction(self.act_connect_tool)
         align_menu = e.addMenu(strings.A_ALIGN)
         for act in self.align_actions.values():
@@ -1700,6 +2000,7 @@ class MainWindow(QMainWindow):
             spread_menu.addAction(act)
         e.addAction(self.act_add_zone)
         e.addAction(self.act_new_harness)
+        e.addAction(self.act_bulk_wires)
         e.addAction(self.act_wire_colours)
         self.menu_add = e.addMenu(strings.M_ADD_UNIT)
         self.menu_add.addAction(self.act_add_device)
@@ -1707,14 +2008,25 @@ class MainWindow(QMainWindow):
         for tid, tpl in edit.TEMPLATES.items():
             act = self._act(tpl.label, partial(self._add_unit, tid), name=f"menu-add-{tid}")
             self.menu_add.addAction(act)
-        self.menu_connect = e.addMenu(strings.M_CONNECT_WITH)
+        self.menu_connect = e.addMenu(strings.M_CONNECT_WITH_TYPE)  # the older, interface-first way
+        self.menu_connection = e.addMenu(strings.M_CONNECTION)
+        for act in (
+            self.act_link_edit,
+            self.act_link_rename,
+            self.act_link_harness,
+            self.act_link_show_harness,
+            self.act_link_delete,
+        ):
+            self.menu_connection.addAction(act)
         self._rebuild_connect_menu()
         self.tool_connect.setMenu(self.menu_connect)
         v = mb.addMenu(strings.M_VIEW)
-        v.addAction(self.act_show_panels)  # (the simple workspace only)
+        v.addAction(self.act_show_panels)  # (the Systems engineer role only)
         v.addSeparator()
-        v.addAction(self.act_simple)
-        v.addAction(self.act_full)
+        self.menu_role = v.addMenu(strings.M_ROLE)
+        self.menu_role.setObjectName("menu-role")
+        self.menu_role.addAction(self.act_role_systems)
+        self.menu_role.addAction(self.act_role_electrical)
         v.addSeparator()
         v.addAction(self.act_problem_notices)
         v.addSeparator()
@@ -1728,6 +2040,7 @@ class MainWindow(QMainWindow):
         v.addAction(self.act_legend)
         v.addAction(self.act_snap)
         v.addAction(self.act_labels)
+        v.addAction(self.act_connection_ends)
         v.addAction(self.act_reduce_motion)
         scale_menu = v.addMenu(strings.A_SCALE)
         for act in self.scale_actions.values():
@@ -1751,6 +2064,7 @@ class MainWindow(QMainWindow):
         self.menu_design = d
         for act in (self.act_generate, self.act_check, self.act_cancel_check, self.act_export):
             d.addAction(act)
+        d.addAction(self.act_check_connections)
         d.addSeparator()
         for act in (
             self.act_review,
@@ -1834,8 +2148,8 @@ class MainWindow(QMainWindow):
         self.mode_expert.clicked.connect(lambda: self._pick_mode("expert"))
         self.topbar.add_mode(self.mode_guided)
         self.topbar.add_mode(self.mode_expert)
-        # "Show panels": the way back to the project tree and the properties in the simple
-        # workspace (stage S2); the button shows there only
+        # "Show panels": the way back to the project tree and the properties in the
+        # Systems engineer role (stage S2); the button shows there only
         self.panels_btn = QToolButton()
         self.panels_btn.setObjectName("panels-button")
         self.panels_btn.setCheckable(True)
@@ -1855,7 +2169,7 @@ class MainWindow(QMainWindow):
         self.topbar.add_mode(self.panels_btn)
         for dock in (self.dock_left, self.dock_right):
             dock.visibilityChanged.connect(lambda _v=False: self._sync_panels_action())
-        # the More menu of the diagram tool row (simple workspace): every tool the row leaves out
+        # the More menu of the diagram tool row (Systems engineer role): every tool the row leaves out
         self.menu_more = QMenu(self.tool_more)
         self.menu_more.setObjectName("menu-more")
         self.menu_more.setToolTipsVisible(True)
@@ -1987,7 +2301,7 @@ class MainWindow(QMainWindow):
 
     def _set_filter(self, kind: str | None, value: str | None) -> None:
         """Show only one signal class, connector or bundle (or all): the same as the two pickers
-        of the Model tab, which the simple workspace hides."""
+        of the Model tab, which the Systems engineer role hides."""
         self.filter_combo.setCurrentIndex(max(self.filter_combo.findData(kind), 0))
         if kind and value is not None:
             at = self.filter_value.findData(value)
@@ -2065,6 +2379,7 @@ class MainWindow(QMainWindow):
             "types": self.tool_connect,
             "problems": self.side_tabs,
             "generate": self.generate_btn,
+            "role": self.rail,
         }
 
     # ---- state reactions ---------------------------------------------------------------------
@@ -2109,8 +2424,11 @@ class MainWindow(QMainWindow):
         self.act_new_interface.setEnabled(not ro)
         self.act_add_device.setEnabled(not ro)
         self.act_new_harness.setEnabled(not ro)
+        self.act_bulk_wires.setEnabled(not ro)
         self.menu_add.setEnabled(not ro)  # the ways to add a unit and to connect (the Palette's)
         self.menu_connect.setEnabled(not ro)
+        self.act_link_connectors.setEnabled(not ro)
+        self._on_link_selection()
         self.act_generate.setEnabled(not ro)
         self.act_wire_colours.setEnabled(not ro)
         unsaved = strings.UNSAVED if c.autosaves else strings.UNSAVED_NO_JOURNAL
@@ -2219,6 +2537,7 @@ class MainWindow(QMainWindow):
             has_harnesses=bool(c.project.harnesses),
             units=len(c.project.units),
             interfaces=len(c.project.interfaces),
+            links=len(c.project.links),
             generated_at=record.input_hash[:8] if record is not None else "",
             revision=self._revision_text(),
         )
@@ -2284,7 +2603,7 @@ class MainWindow(QMainWindow):
         (the top bar says it too). The job indicator, Problems, Offline, the pending-values link
         and the zoom stay."""
         eff = self.width() / self.theme.scale
-        counts = self.workspace != "simple"  # (the simple workspace shows no counts)
+        counts = self.role != SYSTEMS  # (the Systems engineer role shows no counts)
         self.status_sel.setVisible(counts and eff >= 1400)
         self.status_counts.setVisible(counts and eff >= 1250)
         self.status_path.setVisible(eff >= 1250)
@@ -2496,7 +2815,7 @@ class MainWindow(QMainWindow):
             self.view.reveal(s.id)
         if s is not None and not self.dock_right.isVisibleTo(self) and not self._told_properties:
             self._told_properties = True
-            if self.workspace == "simple":
+            if self.role == SYSTEMS:
                 self.toasts.show_message(
                     strings.PROPERTIES_CLOSED,
                     None,
@@ -2702,6 +3021,9 @@ class MainWindow(QMainWindow):
 
     def _open_requested(self, kind: str, ident: str) -> None:
         """Double-click or Enter on a unit or link: show it in the harness plans."""
+        if kind == "link":  # a connection of two connectors: its pairs
+            self.edit_link_flow(ident)
+            return
         found = self._harness_for(kind, ident)
         if found is None:
             self.toasts.show_message(
@@ -3032,66 +3354,102 @@ class MainWindow(QMainWindow):
         self.toasts.show_message(strings.VIEW_NOT_INSTALLED.format(title), None)
         return False
 
-    # ---- the workspace and the next step -------------------------------------------------------------
-    def _restore_workspace(self) -> None:
-        """Simple for a settings file that was empty when the window started, Full for one that
-        had values (the choice is stored at once: later runs find values in the file)."""
-        fallback = default_workspace(not self._settings_were_empty)
-        value = clean_workspace(self.settings.value("ui/workspace", fallback), fallback)
-        self.settings.setValue("ui/workspace", value)
-        self._apply_workspace(value)
+    # ---- the role and the next step -------------------------------------------------------------------
+    def _restore_role(self) -> None:
+        """The role of this settings file. A stored role stands. Without one: a file that has values
+        is an existing user (the choice of 1.7.0 carries over, anybody else is an Electrical / AIT
+        engineer) and gets its role silently; a file with nothing stored gets the role the hook
+        `roles.FIRST_RUN_ROLE` names, and with no hook the window asks once, when it shows
+        (`ask_role_flow`) and starts as an Electrical / AIT engineer until the person answers."""
+        stored = clean_role(self.settings.value("ui/role", ""), "")
+        if stored:
+            self._apply_role(stored)
+            return
+        value = default_role(not self._settings_were_empty, self.settings.value("ui/workspace"))
+        if value is None:
+            self._role_to_ask = self._first_start
+            self._apply_role(ELECTRICAL)  # (not stored: the answer is)
+            return
+        self.settings.setValue("ui/role", value)
+        self._apply_role(value)
 
-    def _apply_workspace(self, value: str) -> None:
-        """What the workspace decides at once: the checked actions, the rail, the tool row of the
+    def _apply_role(self, value: str) -> None:
+        """What the role decides at once: the checked actions, the rail, the tool row of the
         diagram, the status bar and the way back to the panels (the panels, minimap and legend
-        come from the layout memory, `_load_workspace_layout`)."""
-        self.workspace = value
-        simple = value == "simple"
-        self.act_simple.setChecked(simple)
-        self.act_full.setChecked(value == "full")
-        self.next_page.set_workspace(value)
+        come from the layout memory, `_load_role_layout`)."""
+        self.role = value
+        systems = value == SYSTEMS
+        self.act_role_systems.setChecked(systems)
+        self.act_role_electrical.setChecked(not systems)
+        self.next_page.set_role(value)
         self.rail.set_hidden(areas.hidden_in(value))
         for w in (self.redundant_btn, self.delete_btn, self.zoom_out_btn, self.zoom_in_btn):
-            w.setVisible(not simple)
-        self.fit_btn.setVisible(not simple)
-        self.tool_add_device.setVisible(simple)
-        self.tool_more.setVisible(simple)
-        self.zoom_level.setVisible(not simple)
-        self.act_show_panels.setVisible(simple)
-        self.act_show_panels.setEnabled(simple)
-        self.panels_btn.setVisible(simple)
+            w.setVisible(not systems)
+        self.fit_btn.setVisible(not systems)
+        self.tool_add_device.setVisible(systems)
+        self.tool_more.setVisible(systems)
+        self.zoom_level.setVisible(not systems)
+        self.act_show_panels.setVisible(systems)
+        self.act_show_panels.setEnabled(systems)
+        self.panels_btn.setVisible(systems)
         self._sync_panels_action()
         self._update_crumbs()  # (Arrange and the filters of the Model tab)
-        self._load_problem_notices()  # (each workspace has its own default and its own key)
+        self._load_problem_notices()  # (each role has its own default and its own key)
         self._fit_status()
 
-    def set_workspace(self, value: str) -> None:
-        """View > Simple / Full: store and apply the choice, and with it that workspace's own
-        layout (panels, minimap, legend), at once. The layout of the workspace that is left is
-        saved first, under its own keys. The open page stays; the next project that is opened
-        shows the first page of the workspace."""
-        value = clean_workspace(value, self.workspace)
-        if value != self.workspace:
-            self._save_settings()  # the layout of the workspace being left
-            self.settings.setValue("ui/workspace", value)
-            self._apply_workspace(value)
-            self._load_workspace_layout()
+    def set_role(self, value: str, *, save_left: bool = True) -> None:
+        """View > Role: store and apply the choice, and with it that role's own layout (panels,
+        minimap, legend), at once. The layout of the role that is left is saved first, under its
+        own keys (`save_left` False: nothing was set up yet, as at the first start). The open page
+        stays; the next project that is opened shows the first page of the role."""
+        value = clean_role(value, self.role)
+        if value != self.role:
+            if save_left:
+                self._save_settings()  # the layout of the role being left
+            self.settings.setValue("ui/role", value)
+            self._apply_role(value)
+            self._load_role_layout()
             self._restore_project_layout(with_area=False)
         else:
-            self.settings.setValue("ui/workspace", value)
-            self._apply_workspace(value)
+            self.settings.setValue("ui/role", value)
+            self._apply_role(value)
         self._sync_settings_page()
 
-    def _wkey(self, key: str) -> str:
-        """A settings key of the layout, for the workspace that is open: Full keeps the keys it
-        always had, Simple has keys of its own (a layout saved in one never overwrites the other)."""
-        return workspace_key(key, self.workspace)
+    def ask_role_flow(self) -> str:
+        """The question of the first start: *Who are you working as?* (a small modal window with
+        two big buttons). The answer is stored and its layout applied at once; closing the window
+        without choosing means Electrical / AIT engineer, which shows everything. A person who
+        picks Systems engineer lands on the Next step page."""
+        dlg = RoleDialog(self, self.theme)
+        self.run_dialog(dlg)
+        value = dlg.choice or ELECTRICAL
+        self._role_to_ask = False
+        self.set_role(value, save_left=False)
+        if value == SYSTEMS:
+            self._show_area("next")
+        return value
 
-    def _load_workspace_layout(self, *, initial: bool = False) -> None:
-        """Minimap, legend and the panels of the workspace that is open: what was saved for it, or
-        its start state (Full: the usual panels for the window width; Simple: every panel closed,
-        minimap and legend off). `initial` is the call from the constructor."""
-        simple = self.workspace == "simple"
+    def _first_start_flow(self) -> None:
+        """The first time the window shows: the question about the role, then the tour."""
+        if not shiboken6.isValid(self):
+            return
+        if self._role_to_ask:
+            self.ask_role_flow()
+        if self._tour_wanted:
+            QTimer.singleShot(200, self.tour.start)
+
+    def _wkey(self, key: str) -> str:
+        """A settings key of the layout, for the role that is open: the Electrical / AIT engineer
+        keeps the keys the Full workspace had, the Systems engineer has keys of its own (the
+        Simple workspace's; a layout saved in one never overwrites the other)."""
+        return role_key(key, self.role)
+
+    def _load_role_layout(self, *, initial: bool = False) -> None:
+        """Minimap, legend and the panels of the role that is open: what was saved for it, or its
+        start state (Electrical / AIT engineer: the usual panels for the window width; Systems
+        engineer: every panel closed, minimap and legend off). `initial` is the call from the
+        constructor."""
+        simple = self.role == SYSTEMS
         for act, apply, key in (
             (self.act_minimap, self.view.set_minimap_wanted, "ui/minimap"),
             (self.act_legend, self.view.set_legend_wanted, "ui/legend"),
@@ -3121,7 +3479,7 @@ class MainWindow(QMainWindow):
         self._sync_panels_action()
 
     def _close_panels(self) -> None:
-        """Every dock closed: the start state of the simple workspace."""
+        """Every dock closed: the start state of the Systems engineer role."""
         for dock in (self.dock_left, self.dock_right, self.dock_problems):
             dock.hide()
 
@@ -3130,7 +3488,7 @@ class MainWindow(QMainWindow):
 
     def show_panels(self, on: bool) -> None:
         """Open or close the project tree and the inspector together (the Show panels toggle of
-        the simple workspace; the Problems panel is its own toggle)."""
+        the Systems engineer role; the Problems panel is its own toggle)."""
         self.dock_left.setVisible(on)
         self.dock_right.setVisible(on)
         self._sync_panels_action()
@@ -3143,27 +3501,28 @@ class MainWindow(QMainWindow):
         self.panels_btn.setChecked(on)
 
     def _need_inspector(self) -> None:
-        """A person went to an object to look at it or change it. The simple workspace keeps the
-        side panels closed until asked for, so this is the asking: the inspector opens. The full
-        workspace is left alone."""
-        if self.workspace == "simple" and not self.dock_right.isVisibleTo(self):
+        """A person went to an object to look at it or change it. The Systems engineer role keeps
+        the side panels closed until asked for, so this is the asking: the inspector opens. The
+        Electrical / AIT engineer role is left alone."""
+        if self.role == SYSTEMS and not self.dock_right.isVisibleTo(self):
             self.dock_right.show()
 
     def show_everything(self) -> None:
-        """The link of the Next step page: the full workspace, on the diagram."""
-        self.set_workspace("full")
+        """The link of the Next step page: the Electrical / AIT engineer role, on the diagram."""
+        self.set_role(ELECTRICAL)
         self.set_area(areas.DEFAULT)
 
-    def _open_in_workspace(self) -> None:
-        """A project was opened: the simple workspace starts on the next step (the full one stays
-        where it is)."""
-        if self.workspace == "simple":
+    def _open_for_role(self) -> None:
+        """A project was opened: the Systems engineer role starts on the next step (the other one
+        stays where it is)."""
+        if self.role == SYSTEMS:
             self._show_area("next")
 
     def _next_inputs(self, s: ShellStatus) -> NextInputs:
         return NextInputs(
             units=s.units,
             interfaces=s.interfaces,
+            links=s.links,
             harnesses=s.harnesses,
             hand_made_harnesses=s.hand_made,
             generation=s.generation,
@@ -3188,6 +3547,13 @@ class MainWindow(QMainWindow):
         """The Next step button "Connect two devices": the diagram with the Connect tool."""
         self.go_to("diagram")
         self.act_connect_tool.trigger()
+
+    def _next_make_harness(self) -> None:
+        """The Next step button "Create harness": the first connection that has no harness."""
+        p = self.ctl.project
+        todo = [lid for lid in sorted(p.links) if not p.links[lid].harness_id]
+        if todo:
+            self.create_harness_flow(todo[0])
 
     def _next_fix(self) -> None:
         """The Next step button "Show the problems": the Checks, filtered to what failed."""
@@ -3259,7 +3625,7 @@ class MainWindow(QMainWindow):
         names = self.main_tabs.names()
         i = self.main_tabs.currentIndex()
         on_diagram = 0 <= i < len(names) and names[i] == "diagram"
-        self.diagram_tools.setVisible(on_diagram and self.workspace != "simple")
+        self.diagram_tools.setVisible(on_diagram and self.role != SYSTEMS)
 
     def toggle_problems(self) -> None:
         """Show or hide the Problems panel at the bottom of the window."""
@@ -3496,6 +3862,11 @@ class MainWindow(QMainWindow):
             self.ctl.apply_import(dlg.plan)
 
     def show_object(self, object_id: str) -> None:
+        if object_id in self.ctl.project.links:  # a connection: on the diagram, picked
+            self.main_tabs.show_slot("diagram")
+            self.ctl.select_link(object_id)
+            self.view.focus_connection(object_id)
+            return
         place = drc.locate(self.ctl.project, object_id)
         if place is None:
             if not self._show_other_object(object_id):
@@ -3607,7 +3978,7 @@ class MainWindow(QMainWindow):
         if not self._confirm_discard():
             return
         self.ctl.open_sample()
-        self._open_in_workspace()
+        self._open_for_role()
 
     # ---- files ------------------------------------------------------------------------------
     def _ask_folder(self, title: str) -> str | None:
@@ -3687,7 +4058,7 @@ class MainWindow(QMainWindow):
             return
         if not request.is_blank and not self.open_project(folder):
             return
-        self._open_in_workspace()
+        self._open_for_role()
         self._last_issues = []
         self.settings.setValue("project/last", str(folder))
 
@@ -3734,7 +4105,7 @@ class MainWindow(QMainWindow):
             return False
         self._last_issues = result.issues
         self._restore_project_layout()
-        self._open_in_workspace()
+        self._open_for_role()
         self.settings.setValue("project/last", str(folder))
         if self.ctl.open_note:
             self.toasts.show_message(self.ctl.open_note, None, 10000)
@@ -3827,6 +4198,8 @@ class MainWindow(QMainWindow):
         if not self._confirm_discard():
             event.ignore()
             return
+        if self.library_window is not None:
+            self.library_window.close()  # keeps its own size and place, ends its helper thread
         self.ctl.release()
         self._save_settings()
         event.accept()
@@ -3846,13 +4219,16 @@ class MainWindow(QMainWindow):
         if scale not in self.scale_actions:
             scale = 100
         mode = str(self.settings.value("ui/mode", "guided"))
-        self._restore_workspace()
+        self._restore_role()
         snap = bool(self.settings.value("ui/snap", True, bool))
         self.act_snap.setChecked(snap)
         self.view.set_snap(snap)
         labels = bool(self.settings.value("ui/labels", False, bool))
         self.act_labels.setChecked(labels)
         self.view.dscene.show_all_labels = labels
+        ends = bool(self.settings.value("ui/connection_ends", False, bool))
+        self.act_connection_ends.setChecked(ends)
+        self.view.set_connection_ends(ends)
         reduce = bool(self.settings.value("ui/reduce_motion", False, bool))
         self.act_reduce_motion.setChecked(reduce)
         self.theme.set_reduce_motion(reduce)
@@ -3868,11 +4244,12 @@ class MainWindow(QMainWindow):
         for toggled in (
             self.act_snap,
             self.act_labels,
+            self.act_connection_ends,
             self.act_reduce_motion,
             self.act_problem_notices,
         ):
             toggled.toggled.connect(lambda _on=False: self._sync_settings_page())
-        self.act_simple.toggled.connect(lambda _on=False: self._sync_settings_page())
+        self.act_role_systems.toggled.connect(lambda _on=False: self._sync_settings_page())
         self.theme.changed.connect(self._sync_settings_page)
         self._sync_settings_page()
         geo = self.settings.value("ui/geometry")
@@ -3882,7 +4259,7 @@ class MainWindow(QMainWindow):
             restored = False
         if not restored:
             self.resize(self._first_size())
-        self._load_workspace_layout(initial=True)  # minimap, legend and docks of the workspace
+        self._load_role_layout(initial=True)  # minimap, legend and docks of the role
 
     def _screen_scale(self) -> int:
         screen = QGuiApplication.primaryScreen()
@@ -3928,8 +4305,8 @@ class MainWindow(QMainWindow):
         self.settings.setValue(self._wkey(f"{group}/rail"), self.rail.collapsed)
 
     def _restore_project_layout(self, *, with_area: bool = True) -> None:
-        """The panels, the open area and the rail of this project in the workspace that is open
-        (`with_area` False: the panels only, for a switch of workspace, which leaves the page)."""
+        """The panels, the open area and the rail of this project in the role that is open
+        (`with_area` False: the panels only, for a switch of role, which leaves the page)."""
         group = self._layout_group()
         if group is None or not self.settings.contains(self._wkey(f"{group}/area")):
             return
@@ -3955,7 +4332,7 @@ class MainWindow(QMainWindow):
         self.restoreState(self._default_state, STATE_VERSION)
         for dock in (self.dock_left, self.dock_right):
             dock.setFloating(False)
-        if self.workspace == "simple":
+        if self.role == SYSTEMS:
             self._close_panels()
         self.main_tabs.show_slot("diagram")
         self._layout_class = None
@@ -4047,10 +4424,10 @@ class MainWindow(QMainWindow):
         return self.act_problem_notices.isChecked()
 
     def _load_problem_notices(self) -> None:
-        """The value of the open workspace: stored under its own key, Full on and Simple off until
-        the person says otherwise."""
+        """The value of the open role: stored under its own key, on for the Electrical / AIT
+        engineer and off for the Systems engineer until the person says otherwise."""
         wanted = bool(
-            self.settings.value(self._wkey("ui/problem_notices"), self.workspace != "simple", bool)
+            self.settings.value(self._wkey("ui/problem_notices"), self.role != SYSTEMS, bool)
         )
         self.act_problem_notices.setChecked(wanted)
         self._apply_problem_notices()
@@ -4080,6 +4457,10 @@ class MainWindow(QMainWindow):
         self.settings.setValue("ui/labels", self.act_labels.isChecked())
         self.view.viewport().update()
 
+    def _toggle_connection_ends(self) -> None:
+        self.view.set_connection_ends(self.act_connection_ends.isChecked())
+        self.settings.setValue("ui/connection_ends", self.act_connection_ends.isChecked())
+
     def _toggle_reduce_motion(self) -> None:
         self.theme.set_reduce_motion(self.act_reduce_motion.isChecked())
         self.settings.setValue("ui/reduce_motion", self.act_reduce_motion.isChecked())
@@ -4095,12 +4476,14 @@ class MainWindow(QMainWindow):
             theme_mode=self.theme.mode,
             scale=round(self.theme.scale * 100),
             mode=self.ctl.mode,
-            workspace=self.workspace,
+            role=self.role,
             reduce_motion=self.act_reduce_motion.isChecked(),
             snap=self.act_snap.isChecked(),
             labels=self.act_labels.isChecked(),
+            connection_ends=self.act_connection_ends.isChecked(),
             problem_notices=self.act_problem_notices.isChecked(),
         )
+        self.settings_page.show_library_folder(self.library_folder())
 
     def shortcut_rows(self) -> list[tuple[str, str]]:
         """Every action of the window that has a key: (name, key), by name."""
@@ -4160,7 +4543,7 @@ class MainWindow(QMainWindow):
         when the scale changes."""
         scale = self.theme.scale
         wide, medium = self._layout_class = self._layout_class_now()
-        if self.workspace == "simple":  # (it closes what no longer fits, never opens a panel)
+        if self.role == SYSTEMS:  # (it closes what no longer fits, never opens a panel)
             wide = wide and self.dock_right.isVisibleTo(self)
             medium = medium and self.dock_left.isVisibleTo(self)
         was = (self.dock_left.isVisibleTo(self), self.dock_right.isVisibleTo(self))
@@ -4179,6 +4562,8 @@ class MainWindow(QMainWindow):
         super().showEvent(event)
         if not self._shown:
             self._shown = True
+            if self._role_to_ask:  # the first start: the question, then the tour
+                QTimer.singleShot(0, self._first_start_flow)
             if self._have_saved_state:  # the person's own layout stands
                 self._layout_class = self._layout_class_now()
             else:

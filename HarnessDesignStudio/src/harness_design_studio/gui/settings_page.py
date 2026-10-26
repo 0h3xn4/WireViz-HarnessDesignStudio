@@ -1,9 +1,9 @@
 """The Settings area: appearance, editing, the project's values, keyboard shortcuts, About, Licences.
 
-    page = SettingsPage(theme, set_workspace=..., set_theme=..., set_scale=..., set_reduce_motion=..., set_mode=...,
+    page = SettingsPage(theme, set_role=..., set_theme=..., set_scale=..., set_reduce_motion=..., set_mode=...,
                         set_snap=..., set_labels=..., open_values=..., shortcut_rows=...,
                         settings_file="...")
-    page.sync(theme_mode="dark", scale=125, mode="expert", workspace="full", reduce_motion=False, snap=True, labels=False)
+    page.sync(theme_mode="dark", scale=125, mode="expert", role="electrical", reduce_motion=False, snap=True, labels=False)
 
 The page only shows and calls back; the window changes the setting, stores it and applies it at once
 (`MainWindow.set_theme_mode`, `set_scale`, `set_reduce_motion` ...). Every control here has a twin in
@@ -46,7 +46,7 @@ THEMES = (
     ("dark", strings.SETTINGS_THEME_DARK),
 )
 MODES = (("guided", strings.GUIDED), ("expert", strings.EXPERT))
-WORKSPACES = (("simple", strings.WORKSPACE_SIMPLE), ("full", strings.WORKSPACE_FULL))
+ROLES = (("systems", strings.ROLE_SYSTEMS), ("electrical", strings.ROLE_ELECTRICAL))
 SECTIONS = (
     ("appearance", strings.SETTINGS_SECTION_APPEARANCE),
     ("editing", strings.SETTINGS_SECTION_EDITING),
@@ -103,7 +103,7 @@ class SettingsPage(QWidget):
         self,
         theme: ThemeManager,
         *,
-        set_workspace: Callable[[str], None],
+        set_role: Callable[[str], None],
         set_theme: Callable[[str], None],
         set_scale: Callable[[int], None],
         set_reduce_motion: Callable[[bool], None],
@@ -111,7 +111,11 @@ class SettingsPage(QWidget):
         set_snap: Callable[[bool], None],
         set_labels: Callable[[bool], None],
         set_problem_notices: Callable[[bool], None],
+        set_connection_ends: Callable[[bool], None] = lambda _on: None,
         open_values: Callable[[], None],
+        choose_library_folder: Callable[[], None] = lambda: None,
+        clear_library_folder: Callable[[], None] = lambda: None,
+        open_library: Callable[[], None] = lambda: None,
         shortcut_rows: Callable[[], list[tuple[str, str]]],
         settings_file: str = "",
     ) -> None:
@@ -167,19 +171,17 @@ class SettingsPage(QWidget):
 
         # ---- editing
         page, col = self._add("editing")
-        self.workspace_combo = QComboBox()
-        self.workspace_combo.setObjectName("settings-workspace")
-        self.workspace_combo.setAccessibleName(strings.SETTINGS_WORKSPACE)
-        self.workspace_combo.setToolTip(strings.SETTINGS_WORKSPACE_HINT)
-        for key, text in WORKSPACES:
-            self.workspace_combo.addItem(text, key)
-        self.workspace_combo.activated.connect(
-            lambda i: set_workspace(str(self.workspace_combo.itemData(i)))
-        )
-        workspace_form = QFormLayout()
-        workspace_form.addRow(strings.SETTINGS_WORKSPACE, self.workspace_combo)
-        col.addLayout(workspace_form)
-        col.addWidget(_muted(strings.SETTINGS_WORKSPACE_HINT))
+        self.role_combo = QComboBox()
+        self.role_combo.setObjectName("settings-role")
+        self.role_combo.setAccessibleName(strings.SETTINGS_ROLE)
+        self.role_combo.setToolTip(strings.SETTINGS_ROLE_HINT)
+        for key, text in ROLES:
+            self.role_combo.addItem(text, key)
+        self.role_combo.activated.connect(lambda i: set_role(str(self.role_combo.itemData(i))))
+        role_form = QFormLayout()
+        role_form.addRow(strings.SETTINGS_ROLE, self.role_combo)
+        col.addLayout(role_form)
+        col.addWidget(_muted(strings.SETTINGS_ROLE_HINT))
         self.mode_combo = QComboBox()
         self.mode_combo.setObjectName("settings-mode")
         self.mode_combo.setAccessibleName(strings.SETTINGS_MODE)
@@ -201,10 +203,18 @@ class SettingsPage(QWidget):
             "settings-problem-notices",
         )
         self.notices_box.clicked.connect(lambda on: set_problem_notices(bool(on)))
+        self.ends_box = _check(
+            strings.SETTINGS_CONNECTION_ENDS,
+            strings.SETTINGS_CONNECTION_ENDS_TIP,
+            "settings-connection-ends",
+        )
+        self.ends_box.clicked.connect(lambda on: set_connection_ends(bool(on)))
         col.addWidget(self.snap_box)
         col.addWidget(_muted(strings.SETTINGS_SNAP_TIP))
         col.addWidget(self.labels_box)
         col.addWidget(_muted(strings.SETTINGS_LABELS_TIP))
+        col.addWidget(self.ends_box)
+        col.addWidget(_muted(strings.SETTINGS_CONNECTION_ENDS_TIP))
         col.addWidget(self.notices_box)
         col.addWidget(_muted(strings.SETTINGS_PROBLEM_NOTICES_TIP))
         col.addStretch(1)
@@ -217,6 +227,39 @@ class SettingsPage(QWidget):
         self.values_btn.setAccessibleName(strings.SETTINGS_PROJECT_BUTTON.rstrip("…"))
         self.values_btn.clicked.connect(lambda _c=False: open_values())
         col.addWidget(self.values_btn, 0, Qt.AlignmentFlag.AlignLeft)
+        # the library folder (per person; the library window reads it)
+        library_title = QLabel(strings.SETTINGS_LIBRARY_FOLDER)
+        library_title.setProperty("heading", True)
+        col.addWidget(library_title)
+        col.addWidget(_muted(strings.SETTINGS_LIBRARY_TEXT))
+        self.library_path = QLineEdit()
+        self.library_path.setObjectName("settings-library-folder")
+        self.library_path.setAccessibleName(strings.SETTINGS_LIBRARY_FOLDER)
+        self.library_path.setToolTip(strings.LIB_FOLDER_TIP)
+        self.library_path.setReadOnly(True)
+        self.library_path.setPlaceholderText(strings.SETTINGS_LIBRARY_NONE)
+        mark_mono(self.library_path)
+        col.addWidget(self.library_path)
+        library_row = QHBoxLayout()
+        self.library_choose = QPushButton(strings.SETTINGS_LIBRARY_CHOOSE)
+        self.library_choose.setObjectName("settings-library-choose")
+        self.library_choose.setAccessibleName(strings.A_LIBRARY_FOLDER.rstrip("…"))
+        self.library_choose.setToolTip(strings.A_LIBRARY_FOLDER_TIP)
+        self.library_choose.clicked.connect(lambda _c=False: choose_library_folder())
+        self.library_clear = QPushButton(strings.SETTINGS_LIBRARY_CLEAR)
+        self.library_clear.setObjectName("settings-library-clear")
+        self.library_clear.setAccessibleName(strings.SETTINGS_LIBRARY_CLEAR)
+        self.library_clear.setToolTip(strings.SETTINGS_LIBRARY_CLEAR_TIP)
+        self.library_clear.clicked.connect(lambda _c=False: clear_library_folder())
+        self.library_open = QPushButton(strings.SETTINGS_LIBRARY_OPEN)
+        self.library_open.setObjectName("settings-library-open")
+        self.library_open.setAccessibleName(strings.SETTINGS_LIBRARY_OPEN.rstrip("…"))
+        self.library_open.setToolTip(strings.A_LIBRARY_TIP)
+        self.library_open.clicked.connect(lambda _c=False: open_library())
+        for b in (self.library_choose, self.library_clear, self.library_open):
+            library_row.addWidget(b)
+        library_row.addStretch(1)
+        col.addLayout(library_row)
         col.addStretch(1)
 
         # ---- shortcuts
@@ -349,26 +392,33 @@ class SettingsPage(QWidget):
         self.licence_text.setPlainText(licences.text_of(key))
 
     # ---- follow the window ----------------------------------------------------------------------
+    def show_library_folder(self, folder: str) -> None:
+        """Show the library folder the window uses ('' for none)."""
+        if self.library_path.text() != folder:
+            self.library_path.setText(folder)
+        self.library_clear.setEnabled(bool(folder))
+
     def sync(
         self,
         *,
         theme_mode: str,
         scale: int,
         mode: str,
-        workspace: str,
+        role: str,
         reduce_motion: bool,
         snap: bool,
         labels: bool,
         problem_notices: bool = True,
+        connection_ends: bool = False,
     ) -> None:
         """Show what the window has now (it changes through the menus, the palette and here)."""
-        for combo, value in ((self.theme_combo, theme_mode), (self.scale_combo, scale), (self.mode_combo, mode), (self.workspace_combo, workspace)):  # fmt: skip
+        for combo, value in ((self.theme_combo, theme_mode), (self.scale_combo, scale), (self.mode_combo, mode), (self.role_combo, role)):  # fmt: skip
             i = combo.findData(value)
             if i >= 0 and combo.currentIndex() != i:
                 combo.blockSignals(True)
                 combo.setCurrentIndex(i)
                 combo.blockSignals(False)
-        for box, value in ((self.motion_box, reduce_motion), (self.snap_box, snap), (self.labels_box, labels), (self.notices_box, problem_notices)):  # fmt: skip
+        for box, value in ((self.motion_box, reduce_motion), (self.snap_box, snap), (self.labels_box, labels), (self.notices_box, problem_notices), (self.ends_box, connection_ends)):  # fmt: skip
             if box.isChecked() != value:
                 box.blockSignals(True)
                 box.setChecked(value)

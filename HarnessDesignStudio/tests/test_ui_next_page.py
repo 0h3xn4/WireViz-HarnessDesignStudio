@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
-"""1.7.0 S1 (D-171): the Next step page and the Simple / Full setting."""
+"""1.7.0 S1 (D-171) and M5 (D-176): the Next step page and the role setting."""
 
 import pytest
 
@@ -9,7 +9,7 @@ pytestmark = pytest.mark.gui
 from PySide6.QtCore import QSettings, Qt  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
-from harness_design_studio.gui import areas, next_step, strings  # noqa: E402
+from harness_design_studio.gui import areas, roles, strings  # noqa: E402
 from harness_design_studio.gui.main_window import MainWindow  # noqa: E402
 from harness_design_studio.gui.next_page import NextStepPage  # noqa: E402
 from harness_design_studio.gui.next_step import Next, NextInputs  # noqa: E402
@@ -45,7 +45,10 @@ CASES = {
 def page(qtbot):
     app()
     calls: list[str] = []
-    actions = {k: (lambda k=k: calls.append(k)) for k in (*CASES, "new_harness", "show_everything")}
+    actions = {
+        k: (lambda k=k: calls.append(k))
+        for k in (*CASES, "new_harness", "show_everything", "library")
+    }
     p = NextStepPage(themed(), actions=actions)
     p.calls = calls  # type: ignore[attr-defined]
     qtbot.addWidget(p)
@@ -124,13 +127,16 @@ def test_every_control_is_named_and_has_a_tooltip(page) -> None:
     assert page.button.objectName() == "next-button"
 
 
-def test_the_link_to_everything_is_for_the_simple_workspace(page) -> None:
-    page.set_workspace("simple")
+def test_the_two_links_are_for_the_systems_engineer(page) -> None:
+    page.set_role("systems")
     assert page.everything.isVisibleTo(page) and page.everything.text() == "Show everything"
+    assert page.library.isVisibleTo(page) and page.library.text() == "Library…"
+    assert page.library.accessibleName() and page.library.toolTip()
     page.everything.click()
-    assert page.calls == ["show_everything"]
-    page.set_workspace("full")
-    assert not page.everything.isVisibleTo(page)
+    page.library.click()
+    assert page.calls == ["show_everything", "library"]
+    page.set_role("electrical")
+    assert not page.everything.isVisibleTo(page) and not page.library.isVisibleTo(page)
 
 
 # ---- the window --------------------------------------------------------------------------------
@@ -150,8 +156,9 @@ def make(qtbot, tmp_path, name: str = "ui.ini") -> MainWindow:
 
 @pytest.fixture
 def first_run_default(monkeypatch):
-    """The real default of a settings file with no values (conftest gives the other tests Full)."""
-    monkeypatch.setattr(next_step, "FIRST_RUN_WORKSPACE", "simple")
+    """A settings file with no values that gets the Systems engineer role through the hook (conftest
+    gives the other tests the Electrical / AIT engineer role)."""
+    monkeypatch.setattr(roles, "FIRST_RUN_ROLE", "systems")
 
 
 def test_the_next_step_is_the_first_area_of_the_rail_and_a_page_of_its_own() -> None:
@@ -160,27 +167,27 @@ def test_the_next_step_is_the_first_area_of_the_rail_and_a_page_of_its_own() -> 
     assert a.title == "Next step" and a.tabs == () and a.icon == "nav-next" and a.tip
 
 
-def test_a_new_settings_file_starts_in_the_simple_workspace(qtbot, tmp_path, first_run_default):
-    w = make(qtbot, tmp_path)
-    assert w.workspace == "simple"
-    assert w.area() == "next" and w.rail.current() == "next"
-    assert w.area_stack.currentWidget() is w.next_page
-    assert w.act_simple.isChecked() and not w.act_full.isChecked()
-    assert w.settings.value("ui/workspace") == "simple"  # stored at once
-    assert w.next_page.everything.isVisibleTo(w.next_page)
-    assert w.settings_page.workspace_combo.currentData() == "simple"
-
-
-def test_a_settings_file_with_values_starts_in_the_full_workspace(
+def test_a_new_settings_file_with_the_systems_role_starts_on_the_next_step(
     qtbot, tmp_path, first_run_default
 ):
+    w = make(qtbot, tmp_path)
+    assert w.role == "systems"
+    assert w.area() == "next" and w.rail.current() == "next"
+    assert w.area_stack.currentWidget() is w.next_page
+    assert w.act_role_systems.isChecked() and not w.act_role_electrical.isChecked()
+    assert w.settings.value("ui/role") == "systems"  # stored at once
+    assert w.next_page.everything.isVisibleTo(w.next_page)
+    assert w.settings_page.role_combo.currentData() == "systems"
+
+
+def test_a_settings_file_with_values_is_an_electrical_engineer(qtbot, tmp_path, first_run_default):
     s = QSettings(str(tmp_path / "ui.ini"), QSettings.Format.IniFormat)
     s.setValue("ui/theme", "dark")  # somebody who used the editor before
     s.sync()
     w = make(qtbot, tmp_path)
-    assert w.workspace == "full"
+    assert w.role == "electrical"
     assert w.area() == "model" and w.rail.current() == "model"
-    assert w.act_full.isChecked() and w.settings.value("ui/workspace") == "full"
+    assert w.act_role_electrical.isChecked() and w.settings.value("ui/role") == "electrical"
     assert not w.next_page.everything.isVisibleTo(w.next_page)
     # the Next step page is still there, through the rail
     w.rail.buttons["next"].click()
@@ -189,48 +196,48 @@ def test_a_settings_file_with_values_starts_in_the_full_workspace(
 
 def test_the_choice_is_kept_by_the_second_window(qtbot, tmp_path, first_run_default):
     first = make(qtbot, tmp_path)
-    assert first.workspace == "simple"
-    first.act_full.trigger()  # View > Full
-    assert first.workspace == "full" and first.settings.value("ui/workspace") == "full"
-    assert first.settings_page.workspace_combo.currentData() == "full"
+    assert first.role == "systems"
+    first.act_role_electrical.trigger()  # View > Role > Electrical / AIT engineer
+    assert first.role == "electrical" and first.settings.value("ui/role") == "electrical"
+    assert first.settings_page.role_combo.currentData() == "electrical"
     first.settings.sync()
     second = make(qtbot, tmp_path)
-    assert second.workspace == "full" and second.act_full.isChecked()
+    assert second.role == "electrical" and second.act_role_electrical.isChecked()
     assert second.area() == "model"
-    second.act_simple.trigger()
+    second.act_role_systems.trigger()
     second.settings.sync()
     third = make(qtbot, tmp_path)
-    assert third.workspace == "simple" and third.area() == "next"
-    assert third.act_simple.isChecked() and not third.act_full.isChecked()
+    assert third.role == "systems" and third.area() == "next"
+    assert third.act_role_systems.isChecked() and not third.act_role_electrical.isChecked()
 
 
 def test_the_settings_page_and_the_menu_are_two_views_of_one_setting(qtbot, tmp_path):
     w = make(qtbot, tmp_path)
-    combo = w.settings_page.workspace_combo
-    assert combo.accessibleName() == "Workspace" and combo.toolTip()
-    combo.setCurrentIndex(combo.findData("simple"))
+    combo = w.settings_page.role_combo
+    assert combo.accessibleName() == "Role" and combo.toolTip()
+    combo.setCurrentIndex(combo.findData("systems"))
     combo.activated.emit(combo.currentIndex())
-    assert w.workspace == "simple" and w.act_simple.isChecked()
-    assert w.settings.value("ui/workspace") == "simple"
-    w.act_full.trigger()
-    assert combo.currentData() == "full"
-    # the two actions come first in the View menu
-    view = next(m for m in w.menuBar().findChildren(type(w.menu_add)) if m.title() == strings.M_VIEW)  # fmt: skip
-    first = [a for a in view.actions() if a.isVisible() and not a.isSeparator()][:2]
-    assert [a.objectName() for a in first] == ["act-workspace-simple", "act-workspace-full"]
+    assert w.role == "systems" and w.act_role_systems.isChecked()
+    assert w.settings.value("ui/role") == "systems"
+    w.act_role_electrical.trigger()
+    assert combo.currentData() == "electrical"
+    # the two actions are in the submenu View > Role
+    first = w.menu_role.actions()
+    assert [a.objectName() for a in first] == ["act-role-systems", "act-role-electrical"]
     assert all(a.isCheckable() and a.toolTip() for a in first)
+    assert [a.text() for a in first] == ["Systems engineer", "Electrical / AIT engineer"]
 
 
 def test_a_hand_edited_value_falls_back(qtbot, tmp_path):
     s = QSettings(str(tmp_path / "ui.ini"), QSettings.Format.IniFormat)
-    s.setValue("ui/workspace", "pink")
+    s.setValue("ui/role", "pink")
     s.sync()
     w = make(qtbot, tmp_path)
-    assert w.workspace in ("simple", "full")
-    assert w.settings.value("ui/workspace") == w.workspace
+    assert w.role in ("systems", "electrical")
+    assert w.settings.value("ui/role") == w.role
 
 
-def test_the_simple_workspace_opens_a_project_on_the_next_step(qtbot, tmp_path, first_run_default):
+def test_the_systems_role_opens_a_project_on_the_next_step(qtbot, tmp_path, first_run_default):
     from tests.ux_rel import flatsat_controller
 
     ctl = flatsat_controller(tmp_path)
@@ -240,19 +247,19 @@ def test_the_simple_workspace_opens_a_project_on_the_next_step(qtbot, tmp_path, 
     w.set_area("model")
     assert root is not None and w.open_project(root)
     assert w.area() == "next" and w.next_page.isVisibleTo(w)
-    w.act_full.trigger()
+    w.act_role_electrical.trigger()
     w.set_area("checks")
-    assert w.area() == "checks"  # switching the workspace does not move the person
+    assert w.area() == "checks"  # switching the role does not move the person
 
 
-def test_the_full_workspace_opens_a_project_where_it_does_today(qtbot, tmp_path):
+def test_the_electrical_role_opens_a_project_where_it_does_today(qtbot, tmp_path):
     from tests.ux_rel import flatsat_controller
 
     ctl = flatsat_controller(tmp_path)
     root = ctl.root
     ctl.release()
     w = make(qtbot, tmp_path)
-    assert w.workspace == "full"
+    assert w.role == "electrical"
     w.set_area("checks")
     assert root is not None and w.open_project(root)
     assert w.area() != "next"
@@ -262,9 +269,12 @@ def test_show_everything_switches_to_the_diagram(qtbot, tmp_path, first_run_defa
     w = make(qtbot, tmp_path)
     assert w.area() == "next"
     w.next_page.everything.click()
-    assert w.workspace == "full" and w.area() == "model"
-    assert w.settings.value("ui/workspace") == "full"
-    assert w.act_full.isChecked() and w.settings_page.workspace_combo.currentData() == "full"
+    assert w.role == "electrical" and w.area() == "model"
+    assert w.settings.value("ui/role") == "electrical"
+    assert (
+        w.act_role_electrical.isChecked()
+        and w.settings_page.role_combo.currentData() == "electrical"
+    )
 
 
 def test_the_first_run_tour_still_runs_over_the_next_step_page(qtbot, tmp_path, first_run_default):
@@ -292,7 +302,7 @@ def test_the_page_follows_the_project(qtbot, tmp_path, first_run_default, monkey
     calls: list[str] = []
     w.ctl.new_project(tmp_path / "blank", "Blank")
     QApplication.processEvents()
-    w._open_in_workspace()
+    w._open_for_role()
     page = w.next_page
     assert page.key() == "add_device" and page.button.text() == "Add a device"
     assert page.alternative_row.isVisibleTo(page)

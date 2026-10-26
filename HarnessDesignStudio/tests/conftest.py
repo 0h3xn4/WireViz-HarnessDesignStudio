@@ -26,13 +26,15 @@ def pytest_unconfigure(config: object) -> None:
 
 
 @pytest.fixture(autouse=True)
-def _full_workspace_for_a_new_settings_file(monkeypatch: pytest.MonkeyPatch) -> None:
-    """A settings file with no values gets the simple workspace (D-171), which opens a project on
-    the Next step page. The tests written for the full workspace (the diagram, the tabs) build their
-    windows on a new file, so they get Full unless a test asks for the real default."""
-    from harness_design_studio.gui import next_step
+def _electrical_role_for_a_new_settings_file(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A settings file with no values asks who the person is working as (D-176), and a window that
+    is shown waits for the answer. The tests build their windows on a new file, so they get the
+    Electrical / AIT engineer role (every area, the diagram first) through the hook the program
+    has for this, and no question, unless a test asks for the real default (`roles.FIRST_RUN_ROLE`
+    None)."""
+    from harness_design_studio.gui import roles
 
-    monkeypatch.setattr(next_step, "FIRST_RUN_WORKSPACE", "full")
+    monkeypatch.setattr(roles, "FIRST_RUN_ROLE", "electrical")
 
 
 @pytest.fixture(autouse=True)

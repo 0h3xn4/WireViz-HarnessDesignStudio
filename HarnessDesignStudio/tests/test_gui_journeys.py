@@ -52,17 +52,17 @@ def test_j1_tour_starts_on_first_run_and_can_be_skipped_and_replayed(qtbot, tmp_
     w = make_window(tmp_path, first_run=True)
     qtbot.addWidget(w)
     qtbot.waitUntil(lambda: w.tour.card.isVisible(), timeout=2000)
-    assert "Step 1 of 5" in w.tour.title.text()
+    assert "Step 1 of 6" in w.tour.title.text()
     # the card never covers the area it explains
     card, target = w.tour.card.geometry(), w.tour.highlight.target
     assert not card.intersects(target)
     button(w, "tour-next").click()
-    assert "Step 2 of 5" in w.tour.title.text()
+    assert "Step 2 of 6" in w.tour.title.text()
     button(w, "tour-skip").click()
     assert not w.tour.card.isVisible()
     w.act_tour.trigger()
-    assert w.tour.card.isVisible() and "Step 1 of 5" in w.tour.title.text()
-    for _ in range(5):
+    assert w.tour.card.isVisible() and "Step 1 of 6" in w.tour.title.text()
+    for _ in range(6):
         button(w, "tour-next").click()
     assert not w.tour.card.isVisible()
 

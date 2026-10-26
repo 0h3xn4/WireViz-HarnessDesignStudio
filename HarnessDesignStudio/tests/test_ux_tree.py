@@ -106,10 +106,11 @@ class Spy:
 # ---- the roots -----------------------------------------------------------------------------------
 
 
-def test_the_roots_are_the_seven_groups_in_order(ctl, theme, qtbot) -> None:
+def test_the_roots_are_the_eight_groups_in_order(ctl, theme, qtbot) -> None:
     tree = make(ctl, theme, qtbot)
     assert root_labels(tree) == [
         "Devices",
+        "Connections",
         "Interfaces",
         "Harnesses",
         "Parts",
@@ -142,7 +143,7 @@ def test_an_empty_project_says_what_to_do_in_each_empty_group(ctl, theme, qtbot)
     ]
     assert tree.child_ids("interfaces") == []  # the hint is not an object
     assert tree.counts("root", "interfaces") == (0, 0, 0)
-    for root in ("units", "harnesses"):
+    for root in ("units", "links", "harnesses"):
         assert tree.model.roots[root].placeholder is not None
 
 
@@ -634,7 +635,7 @@ def test_the_filter_shows_only_matching_rows_and_restores_the_groups(flat, theme
     assert target in shown and len(shown) < len(all_units)
     tree.set_filter("")
     assert {r for r in project_tree.ROOT_ORDER if tree.is_expanded(r)} == opened
-    assert tree.view.model().rowCount() == 7 and tree.view.model() is tree.model
+    assert tree.view.model().rowCount() == 8 and tree.view.model() is tree.model
 
 
 def test_the_filter_matches_names_and_ids_case_insensitively(flat, theme, qtbot) -> None:

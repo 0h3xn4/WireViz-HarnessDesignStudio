@@ -8,7 +8,7 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 - [The things in a design](#the-things-in-a-design)
 - [The standards the tool starts from](#the-standards-the-tool-starts-from)
 - [Guided and Expert](#guided-and-expert)
-- [Simple and Full](#simple-and-full)
+- [Your role](#your-role)
 - [From design to harness: generation](#from-design-to-harness-generation)
 - [Problems, rules and waivers](#problems-rules-and-waivers)
 - [Placeholders: what the tool does not know](#placeholders-what-the-tool-does-not-know)
@@ -42,6 +42,8 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 | **Device** | A box in the spacecraft with connectors on it. | `OBC1` (on-board computer), `PCDU1` (power unit), `RW1` (reaction wheel) |
 | **Interface type** | A kind of connection and its signals. The tool ships 17 (RS-422, RS-485, CAN, Ethernet, primary power, ...). | *RS-422* has the signals `TX+`, `TX-`, `RX+`, `RX-` |
 | **Interface** | One connection of a type between two devices. This is what *you* add. | `IF-002`: RS-422 from `OBC1` to `RW1` |
+| **Connection (link)** | Two connectors of two devices joined pin by pin: a list of pairs of pins. You name the pins, the program proposes the pairs from the signal names (never by position), you confirm them, and *Check my connections* reviews them. It needs no interface type; what it carries is worked out from the pins. The tool never makes a harness from it unless you press **Create harness**. After 1.7.0, not in the latest release yet. | `OBC-J01` to `RW1-J02`: pin 1 (`TX+`) with pin 3 (`RX+`) |
+| **Pin role** | What a pin is for: power, return, ground, signal, shield or spare. It follows the signal name (`PWR`, `RTN`, `GND`) unless you set it. *Return* is the line the current comes back on. | `RTN` is a return |
 | **Connector** | A plug or socket, which may carry a label (new in 1.4.0). On a device it is a *box connector*; on a harness it is a *cable connector* that mates with a box connector. | `RW1-J02` on the wheel; `W001-P2` on the cable |
 | **Pin** | One contact of a connector. It carries one signal and may have a *function* (free text, new in 1.4.0). | pin 3 of `RW1-J02` carries `RX+`, function "Wheel command receive" |
 | **Harness** | A bundle of wires with its connectors that carries interfaces between devices. **Generated** from interfaces, or made by hand with *New harness* (new in 1.5.0); individual wires can be edited, and wires can be added by hand (new in 1.4.0). | `W001`: `OBC1-J01` to `RW1-J02` |
@@ -49,7 +51,9 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 | **Accessory** | Something on a harness besides its wires and connectors: sleeving, heat shrink, a label, a backshell. It says what it goes on, where (in words), how long and how many (new in 1.7.0). | `ACC-001`: sleeving on `W001-001` |
 | **Segment** | A stretch of the physical route a bundle follows; wire lengths are sums of segments. | `W001-L1` |
 | **Zone** | A lane of the diagram (a panel or compartment). Devices sit in zones. | `panel-A`, `panel-B` |
-| **Nominal / redundant** | The main chain of devices and its backup. They never share a connector or harness. | `PCDU1` and `PCDU1-R` |
+| **Nominal / redundant** | The main chain of devices and its backup. They never share a connector or harness. Since the library milestone you can simply say **how many** of a device there are (*Number of these devices*): two give `PCDU1` and `PCDU1-R`, three add `PCDU1-3`. | `PCDU1` and `PCDU1-R` |
+| **Subsystem** | A set of devices with the connections between them, kept in the **library** and added to a project in one step. In a project the *subsystem* of a device is a name that groups devices; a blank project has none. After 1.7.0. | the subsystem *Wheel drive*: `OBC` and `RW1` with their connection |
+| **Library** | A folder that your team shares (a drive or a Git checkout) with device files and subsystem files. You choose it in **File > Library folder…**, look at it in **File > Library…**, and the program only reads it until you press *Save to library*. After 1.7.0. See [use the library](user-manual/use-the-library.md). | `/mnt/team/harness-library` |
 
 ## The standards the tool starts from
 
@@ -71,9 +75,9 @@ Other interface types (SpaceWire, MIL-STD-1553B, LVDS, I2C, analog, discrete, py
 
 Switching never changes data. Start in Guided.
 
-## Simple and Full
+## Your role
 
-This is a second, separate choice (since 1.7.0): how much of the window is on screen. In the **Simple** workspace the window opens on the **Next step** page, which says in plain words what to do now and has one button; the project tree, the Inspector and the Problems panel start closed, and the rail has no *Home*. In the **Full** workspace you see the whole editor. A first run starts in Simple; someone who already had a settings file starts in Full. **Show everything** (on the Next step page) or **View > Full** switches to Full, **View > Simple** switches back, **Show panels** opens the tree and the Inspector in Simple. Nothing is removed and no file changes: every hidden thing is still in a menu, with its shortcut, and in the command palette (Ctrl+K). Guided and Expert change what the diagram shows; Simple and Full change how much of the window is there.
+Your **role** is a second, separate choice: who you are working as, which decides how much of the window is on screen and where a project opens. A **Systems engineer** thinks in devices, the connections between them, subsystems and the library: the window opens on the **Next step** page, which says in plain words what to do now and has one button; the project tree, the Inspector and the Problems panel start closed, and the rail lists only Next step, Model, Checks, Revisions and Settings. An **Electrical / AIT engineer** thinks in connectors, pinouts, harnesses, wires, build sheets and tests: every area and panel is there. The first start asks which you are; someone who already had a settings file is an Electrical / AIT engineer. **View > Role** (or **Settings**) switches at once; **Show everything** (on the Next step page) switches to Electrical / AIT engineer; **Show panels** opens the tree and the Inspector for a Systems engineer. The role replaces the *Simple* and *Full* workspaces of 1.7.0. Nothing is removed, no role locks anything and no file changes: every hidden thing is still in a menu, with its shortcut, and in the command palette (Ctrl+K). Guided and Expert change what the diagram shows; the role changes how much of the window is there ([choose your role](user-manual/choose-your-role.md)).
 
 ## From design to harness: generation
 
@@ -86,6 +90,8 @@ Pressing **Generate** (or `harness-design-studio generate DIR`) does four things
 
 You always see a **preview** first; nothing changes until you **Apply**, and **Undo** takes it back. Generating again keeps IDs, locked choices, the wires you edited or drew, and your labels, and never touches a released harness. The same design always gives byte-identical results, so Git diffs show real changes only.
 
+**Pinout first (after 1.7.0, not in the latest release yet).** Generate starts from interfaces and chooses the pins. The other way starts from the pins you named: a *connection* joins two connectors pin by pin, the program proposes the pairs from the signal names, you confirm them, and **Create harness** makes a harness with one wire for each pair, only when you press it. Generate leaves such a harness, and your pinout, alone. See [connect two connectors](user-manual/connect-two-connectors.md).
+
 Every choice has a reason. Open the **Harness** tab (the Drawings area), pick a harness, select a wire, connector or pin, and read the rule behind it in **Why** (gauge and length included).
 
 ## Problems, rules and waivers
@@ -93,7 +99,7 @@ Every choice has a reason. Open the **Harness** tab (the Drawings area), pick a 
 The tool checks your design all the time, in two layers:
 
 - **Quick checks** run instantly on every edit (an interface with no connector, an isolated device, ...).
-- **Design rules** (35 of them, listed in [`RULES.md`](RULES.md)) run in the background a moment after you stop editing: connector look-alikes, unapproved parts, pin reuse, separation, current limits, and more.
+- **Design rules** (39 of them, listed in [`RULES.md`](RULES.md)) run in the background a moment after you stop editing: connector look-alikes, unapproved parts, pin reuse, separation, current limits, and more.
 
 Each finding is an **error** (must be fixed), a **warning** (fix it, or **waive** it with a written reason of at least 10 characters), or a **note** (information). Waived warnings stay in the report with their reason, so a reviewer sees them.
 
@@ -161,5 +167,6 @@ Files are written in a fixed format, so two people editing different parts of a 
 - **Released (locked)**: a harness that can no longer be edited; start a new revision.
 - **DRC**: design rule check, the background rules listed in [`RULES.md`](RULES.md).
 - **Fixed pin**: a pin whose signal is defined by the device itself (imported from KiCad); generation never moves it.
+- **Library**: the folder of device files and subsystem files that a team shares; see [use the library](user-manual/use-the-library.md).
 
 Next: do it yourself in [`GETTING_STARTED.md`](GETTING_STARTED.md).

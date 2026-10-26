@@ -78,6 +78,7 @@ class HomePage(QScrollArea):
         open_: Callable[[], None],
         example: Callable[[], None],
         sample: Callable[[], None],
+        library: Callable[[], None] = lambda: None,
         open_recent: Callable[[str], None] | None = None,
         forget_recent: Callable[[str], None] | None = None,
         open_example: Callable[[str], None] | None = None,
@@ -115,10 +116,13 @@ class HomePage(QScrollArea):
             ("open", strings.HOME_OPEN, open_),
             ("example", strings.HOME_EXAMPLE, example),
             ("sample", strings.HOME_SAMPLE, sample),
+            ("library", strings.HOME_LIBRARY, library),
         ):
             b = QPushButton(text)
             b.setObjectName(f"home-{key}")
             b.setAccessibleName(text.rstrip("…"))
+            if key == "library":
+                b.setToolTip(strings.HOME_LIBRARY_TIP)
             b.clicked.connect(lambda _c=False, cb=callback: cb())
             row.addWidget(b)
             self.buttons[key] = b
