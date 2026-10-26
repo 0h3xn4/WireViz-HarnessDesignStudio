@@ -60,7 +60,7 @@ def _read_exactly(stream: IO[bytes], n: int) -> bytes | None:
 # pickle call, which holds the sender's interpreter lock; small messages let the editor's thread
 # (in the same process as the sender) run in between.
 CHUNKS = {
-    "parts": 300, "interface_types": 300, "units": 300, "interfaces": 300, "connectors": 300,
+    "parts": 300, "interface_types": 300, "units": 300, "interfaces": 300, "links": 300, "connectors": 300,
     "harnesses": 10, "placements": 300, "waivers": 300, "baselines": 50, "changelog": 300,
 }  # fmt: skip
 FINDING_CHUNK = 1000

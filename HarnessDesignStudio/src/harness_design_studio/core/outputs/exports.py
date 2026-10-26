@@ -92,6 +92,10 @@ def json_export(project: Project, stamp: Stamp) -> bytes:
         ],
         "parts": dump(project.parts.values()),
     }
+    if (
+        project.links
+    ):  # a key only when the project has links (M2): other projects stay as they were
+        doc["links"] = dump(project.links.values())
     return (json.dumps(doc, indent=1, sort_keys=True, ensure_ascii=False) + "\n").encode()
 
 

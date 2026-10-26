@@ -13,7 +13,7 @@ from harness_design_studio.core.ids import Id
 
 from .base import Entity, IsoDate, Name, Text, _no_control_chars
 from .library import Part
-from .logical import InterfaceInstance, InterfaceType, Unit
+from .logical import InterfaceInstance, InterfaceType, Link, Unit
 from .physical import Connector, Harness
 
 Justification = Annotated[
@@ -56,11 +56,14 @@ class Snapshot(Entity):
     interface_types: list[InterfaceType] | None = None  # types of the interfaces it carries
     config: dict[str, dict[str, Any]] | None = None  # configuration it depends on, by file name
     waivers: list[Waiver] | None = None  # waivers that applied to it (recorded, not locked)
+    links: list[Link] | None = (
+        None  # the link the harness was made from (M2); none when it has none
+    )
 
     @model_serializer(mode="wrap")
     def _leave_out_unrecorded(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
         data: dict[str, Any] = handler(self)
-        for name in ("parts", "interface_types", "config", "waivers"):
+        for name in ("parts", "interface_types", "config", "waivers", "links"):
             if data.get(name) is None:
                 data.pop(name, None)
         return data

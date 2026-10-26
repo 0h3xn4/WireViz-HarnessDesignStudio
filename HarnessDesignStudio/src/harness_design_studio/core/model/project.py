@@ -9,7 +9,7 @@ from .base import Entity, Name, Text
 from .config import ConfigFile, default_configs
 from .generation import GenerationRecord
 from .library import LibraryInfo, Part
-from .logical import InterfaceInstance, InterfaceType, Unit
+from .logical import InterfaceInstance, InterfaceType, Link, Unit
 from .physical import Connector, Harness
 from .review import Baseline, ChangeEntry, Placement, Waiver
 
@@ -42,6 +42,7 @@ class Project:
     interface_types: dict[str, InterfaceType] = field(default_factory=dict)
     units: dict[str, Unit] = field(default_factory=dict)
     interfaces: dict[str, InterfaceInstance] = field(default_factory=dict)
+    links: dict[str, Link] = field(default_factory=dict)  # pin-to-pin links of device connectors
     connectors: dict[str, Connector] = field(default_factory=dict)  # box connectors only
     harnesses: dict[str, Harness] = field(default_factory=dict)
     zones: list[str] = field(default_factory=lambda: list(DEFAULT_ZONES))

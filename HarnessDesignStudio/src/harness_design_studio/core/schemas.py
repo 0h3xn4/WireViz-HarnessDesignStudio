@@ -23,6 +23,7 @@ from harness_design_studio.core.model import (
     InterfaceInstance,
     InterfaceType,
     LibraryInfo,
+    Link,
     Part,
     Placement,
     ProjectMeta,
@@ -57,6 +58,7 @@ def _kinds() -> list[tuple[str, str, type[BaseModel]]]:
             _list_file("InterfaceTypesFile", "interface_types", InterfaceType),
         ),  # fmt: skip
         ("layout", "logical/layout.json", _layout_file()),
+        ("links", "logical/links.json", _list_file("LinksFile", "links", Link)),
         ("units", "logical/units/*.json", _list_file("UnitsFile", "units", Unit)),
         (
             "interfaces",

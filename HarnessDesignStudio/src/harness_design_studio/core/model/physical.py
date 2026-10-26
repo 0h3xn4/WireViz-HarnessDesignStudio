@@ -14,10 +14,11 @@ Termination = Literal["crimp", "solder", "unspecified"]
 HarnessStatus = Literal["draft", "in_review", "released"]
 ShieldKind = Literal["twisted_pair", "shielded_pair", "overall_shield", "quad", "coax"]
 ShieldEnd = Literal["backshell_360", "pigtail", "floating"]
+PinRole = Literal["", "power", "return", "ground", "signal", "shield", "spare"]
 
 
 class Pin(SparseEntity):
-    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"function", "contact_part"})
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"function", "contact_part", "role"})
 
     id: PinId
     signal: Name | None = None
@@ -34,6 +35,7 @@ class Pin(SparseEntity):
     contact_part: Id | None = (
         None  # the contact (a library part of category contact) the cable side uses here (1.7.0)
     )
+    role: PinRole = ""  # what the pin is for; empty = derived from the signal name (M2)
 
 
 class Connector(SparseEntity):

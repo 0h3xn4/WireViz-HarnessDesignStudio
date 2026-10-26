@@ -457,7 +457,38 @@ def pos_emc_class_split() -> Project:
     return p
 
 
+def _linked(a: str, b: str, pairs: list[tuple[str, str]]) -> Project:
+    from harness_design_studio.core.model import Link, PinPair
+    from tests.helpers import pinout_project
+
+    p: Project = pinout_project()
+    p.links["L1"] = Link(
+        id="L1", a_connector=a, b_connector=b, pairs=[PinPair(a_pin=x, b_pin=y) for x, y in pairs]
+    )
+    return p
+
+
+def pos_link_unpaired() -> Project:
+    return _linked("OBC-J01", "RW1-J02", [("2", "4"), ("3", "1"), ("4", "2")])  # TX+ left out
+
+
+def pos_link_direction() -> Project:
+    return _linked("OBC-J01", "RW1-J02", [("1", "1"), ("2", "4"), ("3", "1")])  # TX+ with TX+
+
+
+def pos_link_signal_mismatch() -> Project:
+    return _linked("OBC-J01", "RW1-J02", [("1", "2")])  # TX+ with TX-
+
+
+def pos_link_power_return() -> Project:
+    return _linked("PCDU-J02", "OBC-J02", [("1", "1")])  # PWR and no RTN
+
+
 POSITIVE: dict[str, Callable[[], Project]] = {
+    "link-unpaired": pos_link_unpaired,
+    "link-direction": pos_link_direction,
+    "link-signal-mismatch": pos_link_signal_mismatch,
+    "link-power-return": pos_link_power_return,
     "duplicate-id": pos_duplicate_id,
     "wire-dangling": pos_wire_dangling,
     "model-inconsistent": pos_model_inconsistent,

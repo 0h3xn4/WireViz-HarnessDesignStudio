@@ -17,6 +17,7 @@ The screen says *device*, the files say *unit*: what the program shows as a devi
 - [Editor additions](#editor-additions-connector-use-layout-waivers-autosave-schema-version-stays-1)
 - [Generation additions](#generation-additions-pins-mating-locks-generation-record-schema-version-stays-1)
 - [Build data additions](#build-data-additions-170-schema-version-stays-1)
+- [Links and pin roles](#links-and-pin-roles-m2-schema-version-stays-1)
 - [Change control additions](#change-control-additions-review-release-baselines-change-log-schema-version-stays-1)
 - [Device library file](#device-library-file-140-not-part-of-a-project)
 - [Editing files by hand: JSON Schemas](#editing-files-by-hand-json-schemas)
@@ -31,6 +32,7 @@ logical/layout.json               {"zones": [...], "placements": [{id, x, y}]}  
 waivers.json                      {"waivers": [...]}  written only when a finding has been waived
 logical/units/<subsystem>.json    {"units": [...]}
 logical/interfaces/<subsystem>.json  {"interfaces": [...]}   grouped by the subsystem of the first endpoint
+logical/links.json                {"links": [...]}  pin-to-pin links of two device connectors; written only when there is a link
 physical/connectors/<subsystem>.json {"connectors": [...]}   box connectors, grouped by their unit's subsystem
 physical/harnesses/<id>.json      one harness with its connectors, wires, splices, shields, branch points, segments, accessories
 generated/generation.json         the last generation record (provenance for Explain)
@@ -126,6 +128,19 @@ Every field is optional and *sparse*: it is left out of the file while it is emp
 ```
 
 (One accessory of the practice project, as `physical/harnesses/W001.json` holds it, shown on one line here; the file itself has one key per line.) How to enter the values: [`user-manual/enter-the-build-data.md`](user-manual/enter-the-build-data.md).
+
+## Links and pin roles (M2; schema version stays 1)
+A *link* joins a connector of one device to a connector of another, pin to pin. The pinout is the truth: the tool proposes the pairs from the signal names on the pins and a person accepts or changes them. Everything here is optional and left out of the files while empty, so a project that uses none of it keeps byte-identical files, the same model hash and the same outputs. An older tool (1.7.0 and earlier) does not know `logical/links.json` and `Pin.role`; it sets them aside and says so when it opens a project that uses them, as for the earlier optional fields.
+- `logical/links.json`: `{"links": [...]}`, sorted by `id`, **written only when the project has at least one link** (the file is removed again when the last link is deleted). A link has `id` (`L1`, `L2` ... unless a person chose another), `a_connector` and `b_connector` (IDs of box connectors, of two different devices), `pairs` (a list of `{"a_pin": ..., "b_pin": ...}`, the pin of the first connector and the pin of the second; the order is the order a person saw) and, only when used, `name` (a label), `harness_id` (the harness made from the link with *Create harness*) and `note`. A connector can be in several links; a pin can be in one pair of one link only.
+- `Pin.role` (in `physical/connectors/`): `power`, `return`, `ground`, `signal`, `shield` or `spare`. Empty (and then left out) means *derived from the signal name*: `power` for a signal of an interface type of the power category (RTN excepted), `return` for RTN, `ground` for GND or the ground category, `signal` for any other signal. A person sets it where the name does not say it (a heater return, a spare pin).
+- What a link carries (CAN, power ...) is **not stored**: it is worked out from the pins when it is shown (`core/links.py`, `derived_interfaces`).
+- **Integrity.** `dangling_link` (a connector of the link is not a connector of a device), `link_pin_missing` (a paired pin does not exist), `link_pin_reused` (a pin in two pairs of a link, or in two links), `link_same_device` (both connectors on one device), and `unknown_harness` when `harness_id` names a harness that does not exist; all errors. The design rules `link-unpaired`, `link-direction`, `link-signal-mismatch` and `link-power-return` review the pairing; a project without links gives them nothing to report.
+- **Change control.** A link is an object of the diff (`link`, its pairs read `1-3, 2-4`). A link whose `harness_id` is a released harness is locked with it: the change or deletion is refused with the reason, and a new link cannot name a released harness. The baseline of a harness made from a link records the link in `snapshot.links` (left out when the harness has none), and `harness-design-studio check` reports a hand edit of it as `released_modified`. Deleting a device deletes its links; deleting the harness clears `harness_id`; a pin that a link pairs cannot be deleted or renamed before the link changes.
+- `system/export.json` has a `links` key only when the project has links.
+
+```
+{"links": [{"a_connector": "OBC-J01", "b_connector": "RW1-J02", "id": "L1", "pairs": [{"a_pin": "1", "b_pin": "3"}, {"a_pin": "3", "b_pin": "1"}]}]}
+```
 
 ## Change control additions: review, release, baselines, change log (schema version stays 1)
 - `Harness.author`, `checker`, `approver`, `released_on` (all optional): who put the harness into review, who checked and released it, and the release date (YYYY-MM-DD). `status` is `draft`, `in_review` or `released`; `revision` is letters.

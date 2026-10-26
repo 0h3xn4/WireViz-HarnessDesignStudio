@@ -19,6 +19,7 @@ from .model import (
     Connector,
     Endpoint,
     InterfaceInstance,
+    Link,
     Pin,
     Placement,
     Project,
@@ -530,6 +531,15 @@ def delete_impact(project: Project, unit_id: str) -> DeleteImpact:
     return DeleteImpact(tuple(ifs), tuple(sorted(conns)), tuple(blocked))
 
 
+def links_of_connectors(project: Project, connector_ids: set[str]) -> list[Link]:
+    """The links (M2) that join one of these box connectors, by ID."""
+    return [
+        x
+        for x in sorted(project.links.values(), key=lambda x: x.id)
+        if x.a_connector in connector_ids or x.b_connector in connector_ids
+    ]
+
+
 def ops_delete_unit(project: Project, unit_id: str) -> list[Op]:
     if unit_id not in project.units:
         raise EditError(f"Device '{unit_id}' does not exist.")
@@ -539,6 +549,7 @@ def ops_delete_unit(project: Project, unit_id: str) -> list[Op]:
             f"{unit_id} cannot be deleted: {_blocked_text(project, impact.blocked_by_harnesses)}"
         )
     ops: list[Op] = [Delete("interfaces", i) for i in impact.interfaces]
+    ops += [Delete("links", x.id) for x in links_of_connectors(project, set(impact.connectors))]
     ops += [Delete("connectors", c) for c in impact.connectors]
     gone = {unit_id, *impact.interfaces, *impact.connectors}
     ops += _waiver_deletes(project, gone)
@@ -598,7 +609,13 @@ def ops_delete_harness(project: Project, harness_id: str) -> list[Op]:
         raise EditError(
             f"{harness_id} is released and cannot be deleted. Start a new revision to change it."
         )
-    return [Delete("harnesses", harness_id)]
+    # a link that made this harness no longer has one
+    ops: list[Op] = [
+        Put("links", evolve(x, harness_id=""))
+        for x in sorted(project.links.values(), key=lambda x: x.id)
+        if x.harness_id == harness_id
+    ]
+    return [*ops, Delete("harnesses", harness_id)]
 
 
 def ops_move_unit(project: Project, unit_id: str, x: float, y: float) -> list[Op]:
@@ -862,6 +879,7 @@ def clone_with(project: Project, ops: list[Op]) -> Project:
         "units",
         "interface_types",
         "interfaces",
+        "links",
         "connectors",
         "harnesses",
         "parts",

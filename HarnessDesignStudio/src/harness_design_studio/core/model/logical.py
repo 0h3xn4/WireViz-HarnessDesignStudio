@@ -1,10 +1,10 @@
 """Logical layer: what must be connected, independent of pins and wires."""
 
-from typing import Literal
+from typing import ClassVar, Literal
 
-from harness_design_studio.core.ids import Id
+from harness_design_studio.core.ids import Id, MaybeId, PinId
 
-from .base import Awg, Entity, Name, Positive, Text
+from .base import Awg, Entity, Label, Name, Positive, SparseEntity, Text
 
 Side = Literal["nominal", "redundant", "none"]
 Category = Literal[
@@ -64,3 +64,27 @@ class InterfaceInstance(Entity):
     voltage_v: Positive | None = None
     requirement_id: Name | None = None
     notes: Text = ""
+
+
+class PinPair(Entity):
+    """Two pins that a link joins: a pin of its first connector and a pin of its second one."""
+
+    a_pin: PinId
+    b_pin: PinId
+
+
+class Link(SparseEntity):
+    """Two connectors of two devices that are joined pin to pin (M2, the pinout first). The pairs
+    are a person's decision, proposed from the signal names and saved only when accepted; what the
+    link carries (CAN, power ...) is derived from the pins, never stored. A harness made from the
+    link is named in `harness_id`. Left out of the files while a project has no link."""
+
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"name", "harness_id", "note"})
+
+    id: Id
+    name: Label = ""  # a label; empty means the ends are the name
+    a_connector: Id
+    b_connector: Id
+    pairs: list[PinPair] = []
+    harness_id: MaybeId = ""  # the harness made from this link, if any
+    note: Text = ""

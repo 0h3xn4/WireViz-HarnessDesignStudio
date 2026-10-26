@@ -25,6 +25,7 @@ from harness_design_studio.core.model import (
     InterfaceInstance,
     InterfaceType,
     LibraryInfo,
+    Link,
     Part,
     Placement,
     Project,
@@ -289,6 +290,8 @@ def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None
             b.items(rel, data, "waivers", "waiver", Waiver, project.waivers)
         elif rel == "logical/layout.json":
             _layout(b, rel, data)
+        elif rel == "logical/links.json":
+            b.items(rel, data, "links", "link", Link, project.links)
         elif rel.startswith("logical/units/"):
             b.items(rel, data, "units", "unit", Unit, project.units)
         elif rel.startswith("logical/interfaces/"):

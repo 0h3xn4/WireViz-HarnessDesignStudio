@@ -23,6 +23,7 @@ from .snapshot import (
     FROZEN_GENERATION_KEYS,
     carried_interfaces,
     frozen_values,
+    links_of,
     used_interface_type_ids,
     used_part_ids,
 )
@@ -31,7 +32,7 @@ from .snapshot import (
 # "part", "box_connector", "box_pin", "harness", "cable_connector", "cable_pin", "wire", "splice",
 # "shield", "branch_point", "segment", "config".
 KINDS = (
-    "harness", "interface", "unit", "box_connector", "box_pin", "wire", "cable_connector",
+    "harness", "interface", "link", "unit", "box_connector", "box_pin", "wire", "cable_connector",
     "cable_pin", "splice", "shield", "branch_point", "segment", "accessory", "part", "interface_type",
     "config",
 )  # fmt: skip
@@ -86,6 +87,8 @@ def locked_objects(project: Project) -> dict[tuple[str, str], list[LockRef]]:
                 if kind == "cable_connector":
                     for pin in child.pins:
                         add("cable_pin", f"{child.id}.{pin.id}")
+        for link in links_of(project, h):
+            add("link", link.id)
         ifaces = sorted(i for i in carried_interfaces(h) if i in project.interfaces)
         for iid in ifaces:
             add("interface", iid)
@@ -128,6 +131,8 @@ def lock_reason(
         return f"Interface {object_id} is carried by {ref.harness_id}, which is released. " + _why(
             ref
         )
+    if kind == "link":
+        return f"Link {object_id} belongs to {ref.harness_id}, which is released. " + _why(ref)
     if kind == "part":
         return f"Part {object_id} is used by {ref.harness_id}, which is released. " + _why(ref)
     if kind == "interface_type":
@@ -216,6 +221,7 @@ class ReleaseLocks:
     parts: tuple[str, ...]
     interface_types: tuple[str, ...]
     config_files: tuple[ConfigLock, ...]
+    links: tuple[str, ...] = ()  # the links the harness was made from (M2)
 
     @property
     def placeholder_files(self) -> tuple[str, ...]:
@@ -266,4 +272,5 @@ def release_locks(project: Project, harness_id: str) -> ReleaseLocks:
         parts=tuple(sorted(used_part_ids(project, h))),
         interface_types=tuple(sorted(used_interface_type_ids(project, h))),
         config_files=tuple(config),
+        links=tuple(x.id for x in links_of(project, h)),
     )

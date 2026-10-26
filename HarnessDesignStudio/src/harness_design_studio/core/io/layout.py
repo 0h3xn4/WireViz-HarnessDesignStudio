@@ -17,7 +17,7 @@ from .fs import slug
 
 MANAGED_RE = re.compile(
     r"^(project\.json|waivers\.json|logical/layout\.json|generated/generation\.json|config/[^/]+\.json|library/[^/]+\.json|logical/interface_types\.json"
-    r"|logical/(units|interfaces)/[^/]+\.json|physical/(connectors|harnesses)/[^/]+\.json|changelog\.json|baselines/[^/]+/[^/]+\.json)$"
+    r"|logical/links\.json|logical/(units|interfaces)/[^/]+\.json|physical/(connectors|harnesses)/[^/]+\.json|changelog\.json|baselines/[^/]+/[^/]+\.json)$"
 )
 # Serialized harness files by object identity (harnesses are immutable); keeps hashing cheap.
 _HARNESS_CACHE: dict[int, tuple[Any, bytes]] = {}
@@ -72,6 +72,10 @@ def serialize(project: Project, *, tool_version: str | None = None) -> dict[str,
         # named by the baseline ID (unique, ASCII): revision names can differ only in characters
         # that a file name cannot hold, and two baselines must never share a file
         files[f"baselines/{b.harness_id}/{b.id}.json"] = canonical.dumps(b.model_dump(mode="json"))
+    if project.links:  # left out while the project has no link (M2)
+        files["logical/links.json"] = canonical.dumps(
+            {"links": _dump(list(project.links.values()))}
+        )
     if project.waivers:
         files["waivers.json"] = canonical.dumps({"waivers": _dump(list(project.waivers.values()))})
     files.update(_grouped(project.units, "logical/units", "units", lambda u: u.subsystem))

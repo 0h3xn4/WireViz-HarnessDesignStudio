@@ -135,7 +135,7 @@ Notice the wire gauge says **pending**. That is deliberate and is the subject of
 
 ## Part 5: read and answer the Problems
 
-Open the **Problems** tab (right panel; in Simple press **Show panels** first) or the Problems panel at the bottom (Ctrl+Shift+M, or **View > Problems panel**; the button **Problems (n)** in the status bar is one of the problem notices and is not there while they are off, as in Simple), or the **Checks** tab (the button **Show the problems** of the Next step page opens it) for all 35 rules and their result, or run:
+Open the **Problems** tab (right panel; in Simple press **Show panels** first) or the Problems panel at the bottom (Ctrl+Shift+M, or **View > Problems panel**; the button **Problems (n)** in the status bar is one of the problem notices and is not there while they are off, as in Simple), or the **Checks** tab (the button **Show the problems** of the Next step page opens it) for all 39 rules and their result, or run:
 
 ```
 harness-design-studio drc wheel-link
@@ -144,7 +144,7 @@ harness-design-studio drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `5e6bcbd63d91`. Rules run: 35.
+Model hash: `5e6bcbd63d91`. Rules run: 39.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.

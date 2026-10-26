@@ -259,6 +259,37 @@ def _direction_conflict(project: Project) -> Iterator[Hit]:
                 yield Hit(w.id, f"Wire {w.id} joins {what}")
 
 
+# ---- links (M2): the review of the pairing of two connectors, see core/links.py ------------------
+
+
+def _link_hits(project: Project, code: str) -> Iterator[Hit]:
+    if not project.links:
+        return
+    from harness_design_studio.core.links import (
+        check_links,
+    )  # local: links builds on devices, which reach the rules
+
+    for f in check_links(project):
+        if f.code == code:
+            yield Hit(f.link_id, f.message, key=f"{f.link_id}.{f.pin or ''}")
+
+
+def _link_unpaired(project: Project) -> Iterator[Hit]:
+    return _link_hits(project, "link_pin_unpaired")
+
+
+def _link_direction(project: Project) -> Iterator[Hit]:
+    return _link_hits(project, "link_direction_conflict")
+
+
+def _link_signal_mismatch(project: Project) -> Iterator[Hit]:
+    return _link_hits(project, "link_signal_mismatch")
+
+
+def _link_power_return(project: Project) -> Iterator[Hit]:
+    return _link_hits(project, "link_power_without_return")
+
+
 # ---- ratings ---------------------------------------------------------------------------------------
 
 
@@ -736,6 +767,18 @@ RULES: tuple[Rule, ...] = (
          "Only approved parts may be built into flight hardware.",
          "Approve the part in the parts list, or choose an approved one.", _unapproved_parts, sources=("ESCC3901-4.4",)),
     *STANDARD_RULES,
+    Rule("link-unpaired", "warning", "Unpaired pins of a link",
+         "A pin with a signal that no pair of the link uses looks connected in the pinout but carries nothing.",
+         "Pair the pin, or set its role to Spare if it is not used.", _link_unpaired),
+    Rule("link-direction", "error", "Directions across a link",
+         "Two outputs on one pair drive against each other, and two inputs have nothing to drive them.",
+         "Pair the pin with one that fits, or correct the signal.", _link_direction),
+    Rule("link-signal-mismatch", "warning", "Signal names across a link",
+         "A pair whose two signal names differ may join the wrong pins.",
+         "Check the pairing, or rename a signal.", _link_signal_mismatch),
+    Rule("link-power-return", "warning", "Power and return of a link",
+         "A power pair with no return pair on the same link leaves the current no path back.",
+         "Pair the return pin, or set the role of the return pin to Return.", _link_power_return),
     Rule("config-invalid", "error", "Engineering values",
          "A value outside its possible range (a factor above 1, a table that falls as the wire grows) would silently produce wrong gauges and checks.",
          "Correct the value in config/*.json; `harness-design-studio config DIR` lists what is missing or invalid.", _config_invalid),
