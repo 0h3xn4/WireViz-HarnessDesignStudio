@@ -286,6 +286,15 @@ def test_a_connection_is_drawn_between_its_devices_and_follows_them(tmp_path) ->
     assert "L1" in scene.connection_items
 
 
+def test_the_empty_hint_goes_when_a_connection_exists(tmp_path) -> None:
+    win = window(tmp_path)
+    assert not win.view.empty.isHidden() and win.view.empty.text() == strings.EMPTY_NO_LINKS
+    link_up(win)
+    assert win.view.empty.isHidden()
+    win.ctl.undo()
+    assert not win.view.empty.isHidden()
+
+
 def test_picking_a_connection_on_the_diagram_selects_it(tmp_path) -> None:
     win = window(tmp_path)
     assert link_up(win) == "L1"

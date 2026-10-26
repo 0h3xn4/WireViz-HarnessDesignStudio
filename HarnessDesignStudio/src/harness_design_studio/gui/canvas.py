@@ -2853,9 +2853,9 @@ class DiagramView(QGraphicsView):
         self.legend.set_project(p)
         if not p.units:
             self.empty.setText(strings.EMPTY_CANVAS)
-        elif not p.interfaces:
+        elif not p.interfaces and not p.links:
             self.empty.setText(strings.EMPTY_NO_LINKS)
-        self.empty.setVisible(not p.units or not p.interfaces)
+        self.empty.setVisible(not p.units or (not p.interfaces and not p.links))
         self.empty_add.setVisible(not p.units and not self.ctl.read_only)
         self._layout_overlays()
         self._update_minimap_visibility()

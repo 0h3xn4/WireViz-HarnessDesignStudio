@@ -269,9 +269,6 @@ def _connection_pictures(out: Path) -> None:
     win.view.fit()
     shots._settle(win, 700)
     win.ctl.select_link("L1")
-    win.view.empty.setVisible(
-        False
-    )  # its hint still says "No links yet" while only interfaces count
     shots._wait(500)
     _save(win, out / "connections-diagram.png")
     win.close()
