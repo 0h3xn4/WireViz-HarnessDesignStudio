@@ -19,7 +19,7 @@ This page walks through releasing a new version of Harness Design Studio in plai
 | Part | Who | Where it is described |
 | --- | --- | --- |
 | Steps 1 to 11 (with 7a, 8a and 11a): version, lint, verifiers, performance, fuzzing, soak, tests, SBOM, vulnerability scan, reproducible build, packages, checksums | The release check program, run by a developer | `python -m tools.release_check` |
-| Steps 12 to 14: a test on a clean machine, usability sessions, the owner's sign-off | People. The owner waived 12 and 13 for 0.1.0 (T-30, T-27) and waived the condition of 14 (T-31); the publication records of 1.0.0 to 1.7.0 in `compliance/SIGNOFF.md` say that these waivers stand, and nobody has signed off 1.1.0 to 1.7.0 as the owner. | [`../RELEASE.md`](../RELEASE.md), [`../../compliance/DEVIATIONS.md`](../../compliance/DEVIATIONS.md) |
+| Steps 12 to 14: a test on a clean machine, usability sessions, the owner's sign-off | People. The owner waived 12 and 13 for 0.1.0 (T-30, T-27) and waived the condition of 14 (T-31); the publication records of 1.0.0 to 1.8.0 in `compliance/SIGNOFF.md` say that these waivers stand, and nobody has signed off 1.1.0 to 1.8.0 as the owner. | [`../RELEASE.md`](../RELEASE.md), [`../../compliance/DEVIATIONS.md`](../../compliance/DEVIATIONS.md) |
 | Step 15: tag the merge commit | A person | [`../RELEASE.md`](../RELEASE.md) step 15 |
 | Building the packages and publishing the release page | The workflow `.github/workflows/release.yml`, started by pushing the tag | [`../RELEASE.md`](../RELEASE.md) step 15 |
 
@@ -70,7 +70,7 @@ Read `release-report.md`. It lists each step with its result and keeps the numbe
 
 ## 4. After the release
 
-- Copy the checksum list that is on the release page into `compliance/evidence/` as `release_X.Y.Z_SHA256SUMS` (for 1.0.0 to 1.7.0 that is the only evidence file that was kept; the release report `release_X.Y.Z_report.md` and the vulnerability report `release_X.Y.Z_vulnerability_report.txt` exist for 0.1.0 and its candidates, and for 1.7.0 the full `release_check` was not run: its section in `SIGNOFF.md` says that the checks were those of the pull requests and of the workflow run). Add a section *Publication of X.Y.Z* to [`../../compliance/SIGNOFF.md`](../../compliance/SIGNOFF.md) that says who made the tag and when, which run built the packages, and the checksums. It is a record, not a statement of compliance.
+- Copy the checksum list that is on the release page into `compliance/evidence/` as `release_X.Y.Z_SHA256SUMS` (for 1.0.0 to 1.8.0 that is the only evidence file that was kept; the release report `release_X.Y.Z_report.md` and the vulnerability report `release_X.Y.Z_vulnerability_report.txt` exist for 0.1.0 and its candidates, for 1.7.0 the full `release_check` was not run (its section in `SIGNOFF.md` says that the checks were those of the pull requests and of the workflow run), and for 1.8.0 the repository does not say whether it was run). Add a section *Publication of X.Y.Z* to [`../../compliance/SIGNOFF.md`](../../compliance/SIGNOFF.md) that says who made the tag and when, which run built the packages, and the checksums. It is a record, not a statement of compliance.
 - Keep the empty `## Unreleased` section at the top of `CHANGELOG.md` for the next changes.
 - Check that the install page ([`../INSTALL.md`](../INSTALL.md)) still names the right place to get the packages.
 
