@@ -1,6 +1,6 @@
 # Plan for the workshop feedback (October 2026)
 
-**Status (2026-10-25).** Feedback received on 2026-10-23 from a workshop with a systems engineer, an AIT engineer and an electrical engineer. The investigation of what version 1.7.0 does today is done (below). The owner answered the four decisions on 2026-10-25 (section *Decisions of the owner*); milestone M1 is built (below, *M1 as built*), M2 (*M2 as built*), M3 (*M3 as built*) and M4 (*M4 as built*) are built; M5 is not built.
+**Status (2026-10-26).** Feedback received on 2026-10-23 from a workshop with a systems engineer, an AIT engineer and an electrical engineer. The investigation of what version 1.7.0 does today is done (below). The owner answered the four decisions on 2026-10-25 (section *Decisions of the owner*); milestone M1 is built (below, *M1 as built*), M2 (*M2 as built*), M3 (*M3 as built*), M4 (*M4 as built*) and M5 (*M5 as built*) are built; all five milestones are built and none is released (*What is left* at the end lists what is open).
 
 ## The feedback, in the owner's words, grouped
 
@@ -148,6 +148,64 @@ Open points of M4:
 - The number of devices has no command-line equivalent, and a subsystem is added once (no number).
 - The shortcut asked for, Ctrl+Shift+L, is taken by Arrange; the library uses Ctrl+Shift+O.
 - The tests are `tests/test_subsystem_library.py`, `tests/test_subsystem_cli.py` (no Qt) and `tests/test_ui_library_window.py`; the requirements are REQ-LIB-05, REQ-LIB-06 and REQ-EDIT-03 in `docs/REQUIREMENTS.md`. How-to: `docs/user-manual/use-the-library.md`. Pictures: `docs/img/library-window.png`, `docs/img/library-save-window.png` (`tools/tab_screenshots.py`, `_library_pictures`).
+
+## M5 as built (2026-10-26)
+
+Milestone M5 is built on the branch `feat/m5-roles` (from `feat/m4-library`) and not released; decision D-176. Points 22 and 23 of the feedback. The design points that the plan left open were settled the simplest plain way; each is said here. What a person sees:
+
+- **Two roles replace Simple and Full (point 23).** **Systems engineer** (devices, the connections between devices, subsystems, the library, the checks and the Next step page; no pinout, wire or build detail first) and **Electrical / AIT engineer** (connectors, pinouts, harnesses, wires, build sheets and tests; sees everything). The words *Simple*, *Full* and *workspace* are gone from the screen (the View menu, Settings, the Next step page, the tour, the tooltips) and from the documents and pictures. A role is a view of the program: it locks nothing, is never stored in a project (a test compares the project files after a switch) and the command line has no role.
+- **What each role shows (point 22, "too overcrowded").** The **Systems engineer** has what the Simple workspace had (the side panels closed, the minimap, legend, status counts and problem notices off, the tools above the diagram reduced to *Select*, *Connect*, *Add device* and *More*, a project that opens on the Next step page) and a **rail of five areas**: Next step, Model, Checks, Revisions, Settings. *Home*, *Drawings* and *Outputs* are left out of it (the Simple workspace left out only *Home*); the harness drawings and the output files are the electrical engineer's detail. What M2 and M4 added for a systems engineer is there: the **Connections** group of the project tree, the Connect tool, *Check my connections*, **File > Library…** and, because Home is not in the rail, a **Library…** button on the Next step page next to **Show everything**. The **Electrical / AIT engineer** has what Full had: all eight areas, the panels open, the problem notices on, the diagram tools, a project that opens where it opened before; the Next step page is in the rail, not first.
+- **Nothing is hidden for good.** Every area the rail leaves out is in the Go menu (Home Ctrl+7, *Go to Harness*, *Go to Lists*), on its key (Ctrl+1 to Ctrl+6), in the command palette (Ctrl+K) and in the buttons of the Next step page (**Go to Releases**, **Open the Outputs**); the rail also lists the area that is open, so the person sees where they are, and takes it off again when they leave. The sub-tabs of the side panels (project tree, device list, interfaces, inspector, why, problems) are **not** filtered by role: the plan named them as a place that decides what is shown, but the panels start closed for the Systems engineer, and filtering them would have hidden the Connections group and the device list that the role needs. The tabs of the areas follow the rail (an area a role leaves out is not listed, its tabs are not either).
+- **View > Role and Settings (point 23).** **View > Role** is a submenu with two exclusive checkable actions, `act-role-systems` and `act-role-electrical`; the Settings page has a row **Role** (`settings-role`, a view of the same actions, so the menu, the page and the command palette follow each other). The switch is **at once**, with no restart, as the workspace switch was: the layout of the role that is left is saved under its own keys, the new one is loaded (panels, minimap, legend, problem notices), the open page stays and the next project that is opened starts on the first page of the role. The workspace switch had no keyboard shortcut, so none was kept.
+- **The first start asks once.** A settings file with nothing stored shows a small modal window, **Who are you working as?**, before the tour: two big buttons, *Systems engineer* (*I think in devices, the connections between them, subsystems and the library.*) and *Electrical / AIT engineer* (*I work with connectors, pinouts, harnesses, wires, build sheets and tests.*), and the line *You can change this later in View > Role.* The answer is stored and its layout applied at once (a Systems engineer lands on the Next step page); closing the window without choosing means Electrical / AIT engineer. Tests and CI set a role through the hook `roles.FIRST_RUN_ROLE` (the successor of `FIRST_RUN_WORKSPACE`; `tests/conftest.py` sets `electrical`), and then no window asks; a window built with `first_run=False` (the screenshot and benchmark tools) never asks either.
+- **Existing users keep working.** A settings file that already holds values and no role becomes **Electrical / AIT engineer** with no dialog. One that held the setting `ui/workspace` of 1.7.0 with the value `simple` becomes **Systems engineer**, because that was a person's choice (the old key is read once and left alone). The layout memory reuses the keys of the old workspaces (`ui/state`, `layout/<hash>/area` for the Electrical / AIT engineer; `ui/simple/state`, `layout/<hash>/simple/area` for the Systems engineer), so nobody loses a layout.
+- **The tour** has a last step that points at the rail and says that what it lists depends on the role.
+- **Files.** Nothing written changes: no model field, file, rule, command-line option or output (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` stays *identical*, no golden changed).
+- **Code names.** The code says role, systems and electrical (`gui/roles.py`: `default_role`, `clean_role`, `role_key`; `gui/role_dialog.py`: `RoleDialog`; `MainWindow.set_role`, `_apply_role`, `ask_role_flow`; `areas.SYSTEMS_HIDDEN`). The one thing that keeps the old word is the layout key, `ui/simple/...`, on purpose.
+
+Open points of M5:
+
+- The screens were checked offscreen in the tests and in screenshots of the real window; they were not watched on a real display by a person, and nobody measured whether the two roles make the tool easier to use.
+- The Systems engineer's rail leaves out Drawings and Outputs on the plan's reading of "no pinout, wire or build detail"; the owner may want one of them back in the rail, or a different split. The list is one line, `areas.SYSTEMS_HIDDEN`.
+- **Show everything** on the Next step page switches the role, which is not quite what the name says; it is the owner's "switch that shows everything" in its simplest form. A switch that shows all areas without changing the role would need a setting of its own.
+- The role question has no *skip for now*: closing it is the answer Electrical / AIT engineer.
+- A role is a setting of the person on this computer; there is no way for a team to preset it.
+- The tests are `tests/test_roles.py` (no Qt), `tests/test_ui_roles.py` and `tests/test_ui_role_layout.py` (this file was `tests/test_ui_simple_workspace.py`), and the updated `tests/test_ui_next_page.py`, `tests/test_ui_problem_notices.py`, `tests/test_ui_links.py`, `tests/test_ui_final.py`, `tests/test_ui_new_device.py`, `tests/test_audit_gui2.py` and `tests/conftest.py`; the requirements are REQ-GUI-14 and REQ-GUI-15 in `docs/REQUIREMENTS.md`, which also revised REQ-GUI-07 and REQ-GUI-09. How-to: `docs/user-manual/choose-your-role.md` (the old `use-the-simple-workspace.md`). Pictures: `docs/img/role-question.png`, `role-menu.png`, `systems-engineer.png`, `electrical-engineer.png` (and the three Next step pictures and `problem-notices-setting.png`, redone) by `tools/tab_screenshots.py` (`python -m tools.tab_screenshots OUT roles`).
+
+## What is left (2026-10-26)
+
+All five milestones are built on a chain of branches (`feat/m2-links`, `feat/m3-harness-editing`, `feat/m4-library`, `feat/m5-roles`; M1 is in pull request 111), with a pull request pending for each; nothing of M2 to M5 is released, the owner has not signed off any of it, and no screen was watched on a real display by a person. The open points of the five milestones, together:
+
+**Not built, or asked and not answered**
+
+- Points 21 ("feed Sam's tool into Claude") and 19's word "kladow", and how the export failure of point 4 was reached: still not clear (*Not clear yet*, below). M1 explains the two causes found in the code (the unsaved sample, damaged files).
+- S4 of D-171 (a blank project that asks one thing at a time) and a measurement of the roles and of the Next step page with test users: not built; nothing claims that the tool is easier to use.
+- Point 22's wish "create harnesses simply and quickly" is served by the Next step page, *Create harness* and the roles, and was not measured.
+
+**Command line**
+
+- No command makes a connection or reads one back (M2); no command-line way to edit a connector, a group or all wires (M3); a number of devices has none and a subsystem is added once (M4); the CLI has no role and needs none (M5).
+- The finding texts of the design rules that reach a written file still say *unit* (M1), because changing them would change generated files.
+
+**Connections (M2)**
+
+- The pairing knows only equal names and the TX/RX-type counterparts; other names are paired by equal name and the person adds the rest.
+
+**Editing (M3)**
+
+- The lock of an edited connector is the whole connector, not each pin; per-pin locks and renaming pins of a generated connector are not built; a group's number of wires per kind is fixed.
+
+**Library (M4)**
+
+- Two people saving into one shared folder at the same time can overwrite each other's device file (no lock, no index; the drive or Git decides); a subsystem cannot be replaced from the window and has no version; Ctrl+Shift+L, the shortcut asked for, is Arrange, so the library is on Ctrl+Shift+O; the Devices tab buttons *Save to library…* and *Add from library…* were not rewired to the window.
+
+**Roles (M5)**
+
+- The split of the rail between the roles (Drawings and Outputs left out for the Systems engineer), the meaning of *Show everything*, a role question without *skip*, and a role that a team cannot preset: see *Open points of M5*.
+
+**Release**
+
+- The version number, the release notes, the signing and the owner's sign-off for the next version are not done; the changelog has the lines under *Unreleased*, and `docs/RELEASE.md` is the checklist.
 
 ## Not clear yet
 

@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,arg-type,operator,var-annotated"
-"""1.7.0 S1 (D-171): the one next step of the simple workspace, over every combination of facts.
+"""1.7.0 S1 (D-171): the one next step of the Next step page, over every combination of facts.
 No Qt, no display."""
 
 import itertools
@@ -271,16 +271,3 @@ def test_the_exact_texts() -> None:
     )
     assert next_step(NextInputs(units=2)).button == "Connect two devices"
     assert next_step(replace(RELEASABLE, checked=False)).button == "Check the design"
-
-
-def test_the_workspace_default_depends_on_what_the_settings_file_holds(monkeypatch) -> None:  # type: ignore[no-untyped-def]
-    monkeypatch.setattr(
-        ns, "FIRST_RUN_WORKSPACE", "simple"
-    )  # (conftest sets Full for the other tests)
-    assert ns.default_workspace(False) == ns.FIRST_RUN_WORKSPACE == "simple"
-    assert ns.default_workspace(True) == "full"
-    assert ns.clean_workspace("simple", "full") == "simple"
-    assert ns.clean_workspace("full", "simple") == "full"
-    assert ns.clean_workspace("pink", "full") == "full"
-    assert ns.clean_workspace(None, "simple") == "simple"
-    assert ns.WORKSPACES == ("simple", "full")

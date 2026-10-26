@@ -81,7 +81,7 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 - [Edit a wire](user-manual/edit-a-wire.md) (since 1.4.0) and [Build a harness by hand](user-manual/build-a-harness-by-hand.md), a harness with no interface behind it (since 1.5.0).
 - [Redundancy and zones](user-manual/redundancy-and-zones.md).
 - [Enter the build data](user-manual/enter-the-build-data.md): strip lengths, contacts, crimp tools and accessories, in the app and from a file (new in 1.7.0).
-- [Use the simple workspace](user-manual/use-the-simple-workspace.md): the Next step page and fewer things on screen (new in 1.7.0).
+- [Choose your role](user-manual/choose-your-role.md): Systems engineer or Electrical / AIT engineer, and the Next step page (the Next step page is new in 1.7.0, the roles come after it).
 
 Keyboard: **Ctrl+K** command palette, **Ctrl+Z** and **Ctrl+Y** undo and redo, **Ctrl+S** save, **Ctrl+=** and **Ctrl+-** zoom, **F** fit, **Ctrl+0** 100 %, **Ctrl+G** generate, **Ctrl+E** export, **Ctrl+Shift+N** add a device, **Ctrl+Shift+H** new harness, **F1** the user guide. The full list is in the [user guide](guide/USER_GUIDE.md) and, in the app, under **Settings > Keyboard shortcuts**.
 

@@ -27,7 +27,7 @@ Every command below was run with the tool (version `1.7.0`) in an empty folder, 
 | [`small-satellite`](#small-satellite) | 14 | 24 | no | redundancy (main and backup chains) and a larger diagram | yes |
 | [`flatsat`](#flatsat) | 23 | 44 | yes (8 harnesses) | a whole bench setup with ground equipment | **no, new in 1.0.0** |
 
-In the app, **File > New project from an example…** makes a project from any of them, and the **Home** page lists the examples (**Open this example**; **Try the flatsat example** opens a copy in your Documents folder). The rail of the Simple workspace, where a first run starts, does not list *Home*: open it with **Go > Go to Home** (Ctrl+7), or choose **View > Full**. If a word here is new to you, see [`GLOSSARY.md`](../GLOSSARY.md). Every example uses the tool's **example parts** (their part numbers start with `EX-`), and every configuration file except `naming.json` is still marked `"placeholder": true`. None of the examples is engineering data, and none is a statement that anything complies with a standard.
+In the app, **File > New project from an example…** makes a project from any of them, and the **Home** page lists the examples (**Open this example**; **Try the flatsat example** opens a copy in your Documents folder). The rail of the Systems engineer role does not list *Home*: open it with **Go > Go to Home** (Ctrl+7), or choose **View > Role > Electrical / AIT engineer**. If a word here is new to you, see [`GLOSSARY.md`](../GLOSSARY.md). Every example uses the tool's **example parts** (their part numbers start with `EX-`), and every configuration file except `naming.json` is still marked `"placeholder": true`. None of the examples is engineering data, and none is a statement that anything complies with a standard.
 
 ## Which build do you have?
 
@@ -61,7 +61,7 @@ The same five commands work on every example: `new`, `validate`, `generate`, `dr
 
 ## blank
 
-**What it shows:** an empty project: the starter parts library (example connectors, contacts, wires), the 17 interface types, the seven configuration files (six of them placeholders), two lanes called `panel-A` and `panel-B`, and no devices. It is where your own design starts. The command line cannot add devices or interfaces; open the project in the app and add them (the empty diagram has an **Add a device** button since 1.6.0, and the Next step page of the Simple workspace opens with *Start with a device* and the same button, since 1.7.0; see Part 10 of [`GETTING_STARTED.md`](../GETTING_STARTED.md)).
+**What it shows:** an empty project: the starter parts library (example connectors, contacts, wires), the 17 interface types, the seven configuration files (six of them placeholders), two lanes called `panel-A` and `panel-B`, and no devices. It is where your own design starts. The command line cannot add devices or interfaces; open the project in the app and add them (the empty diagram has an **Add a device** button since 1.6.0, and the Next step page of the Systems engineer role opens with *Start with a device* and the same button, since 1.7.0; see Part 10 of [`GETTING_STARTED.md`](../GETTING_STARTED.md)).
 
 ```
 harness-design-studio new my-blank --template blank

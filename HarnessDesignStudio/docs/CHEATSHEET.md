@@ -59,7 +59,7 @@ The comment must have at least 10 characters. A release is blocked while checks 
 
 ## In the app
 
-The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip, which **View > Show problem notices** can hide), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M). That is the **Full** workspace. A first run starts in the **Simple** workspace (since 1.7.0): it opens on the **Next step** page (one thing to do, one button), the tree, the Inspector and the Problems panel are closed, and the rail has no Home. **View > Full** or **Show everything** gives the full window, **View > Simple** goes back, **Show panels** (top bar) opens the tree and the Inspector. **View > Show problem notices** (also in **Settings > Editing**) shows or hides the Problems count, the status chip, the badges and the *out of date* banner; it is on in Full and off in Simple. **Settings** holds the theme, the interface size, Reduce motion, the list of all keys, About and the licences.
+The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip, which **View > Show problem notices** can hide), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M). That is the window of the **Electrical / AIT engineer** role. A **Systems engineer** (the other role; the first start asks which you are) has a leaner window: it opens on the **Next step** page (one thing to do, one button), the tree, the Inspector and the Problems panel are closed, and the rail lists only Next step, Model, Checks, Revisions and Settings. **View > Role** switches at once; **Show everything** on the Next step page gives the Electrical / AIT engineer window, **Show panels** (top bar) opens the tree and the Inspector. **View > Show problem notices** (also in **Settings > Editing**) shows or hides the Problems count, the status chip, the badges and the *out of date* banner; it is on for the Electrical / AIT engineer and off for the Systems engineer. **Settings** holds the role, the theme, the interface size, Reduce motion, the list of all keys, About and the licences.
 
 | Keys | Action |
 | --- | --- |
@@ -69,7 +69,7 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 | Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
 | Ctrl+I | new interface |
 | Ctrl+1 to Ctrl+6 | the tabs: Diagram, Harness, Lists, Checks, Releases, Devices |
-| Ctrl+7, Ctrl+, | Home (also in Simple, where the rail does not list it), Settings |
+| Ctrl+7, Ctrl+, | Home (also for the Systems engineer, whose rail does not list it), Settings |
 | Ctrl+Shift+M | show or hide the Problems panel |
 | Ctrl+Shift+H | new harness by hand (Drawings area: then add its connectors in the Connectors tab) |
 | Ctrl+Shift+B | Edit all wires of the harness… (the same gauge, type, colour and length on many wires) |

@@ -22,7 +22,7 @@ This page shows how to turn your devices and links into harnesses (connectors, p
 
 **In the app** (GUI, not run)
 
-1. Press **Generate** in the top bar (**Design > Generate harnesses**, Ctrl+G). On the Next step page of the Simple workspace the button is **Generate the harnesses**; it does the same.
+1. Press **Generate** in the top bar (**Design > Generate harnesses**, Ctrl+G). On the Next step page of the Systems engineer role the button is **Generate the harnesses**; it does the same.
 2. A window shows a **preview** of what would be added, changed and removed. Nothing changes until you press **Apply**. (**Cancel** leaves the project as it was.)
 3. The **Harness** tab (the **Drawings** area of the rail) opens on the result. To take it back, press **Undo** (Ctrl+Z). One Undo reverses the whole generation.
 

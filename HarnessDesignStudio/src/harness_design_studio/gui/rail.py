@@ -38,6 +38,7 @@ class NavRail(QFrame):
         self.theme = theme
         self.collapsed = False  # the person's choice
         self.compact = False  # a short window: icons only, whatever the choice
+        self._hidden: tuple[str, ...] = ()  # the areas the role leaves out (see `set_hidden`)
         self.setObjectName("nav-rail")
         self.setProperty("rail", True)
         self.setAccessibleName(strings.RAIL_NAME)
@@ -80,12 +81,15 @@ class NavRail(QFrame):
         button = self.buttons[key]
         self.group.setExclusive(True)
         button.setChecked(True)
+        self.set_hidden(self._hidden)  # (the area that is open is always listed)
 
     def set_hidden(self, keys: Collection[str]) -> None:
-        """List every area but these (a workspace may leave some out; they stay reachable by their
-        keys and menus). The button of an area that is open stays checked."""
+        """List every area but these (a role may leave some out; they stay reachable by their keys,
+        menus and the palette). The area that is open is always listed, so the person sees where
+        they are; it goes again when they leave it."""
+        self._hidden = tuple(keys)
         for key, button in self.buttons.items():
-            button.setVisible(key not in keys)
+            button.setVisible(key not in self._hidden or button.isChecked())
 
     def current(self) -> str:
         for key, button in self.buttons.items():

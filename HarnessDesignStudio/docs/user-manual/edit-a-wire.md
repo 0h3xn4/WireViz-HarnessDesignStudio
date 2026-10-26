@@ -34,7 +34,7 @@ To make a whole harness yourself, with its own connectors, see [build a harness 
 
 ## 1. Pick the wires
 
-1. Choose **Drawings** on the rail (in the Simple workspace too), then the harness.
+1. Choose **Drawings** on the rail (a Systems engineer's rail does not list it: use **Go > Go to Harness**, or Ctrl+2), then the harness.
 2. Click a wire in the **Wires** table or on the drawing. To change several wires at once, select several rows (Ctrl or Shift and click).
 3. Open the **Edit wire** tab beside **Why** (the tabs are **Why**, **Edit wire**, **Connectors** and **Accessories**). It names the wire and the two pins it joins. For several wires it says how many are selected, and a field that differs between them is empty and says *various*.
 

@@ -23,10 +23,10 @@ from harness_design_studio.gui.theme import ThemeManager  # noqa: E402
 from tests.ux_rel import flatsat_controller, release_all  # noqa: E402
 
 
-def window(qtbot, tmp_path: Path, *, workspace: str | None = None, name: str = "ui.ini"):
+def window(qtbot, tmp_path: Path, *, role: str | None = None, name: str = "ui.ini"):
     settings = QSettings(str(tmp_path / name), QSettings.Format.IniFormat)
-    if workspace is not None:
-        settings.setValue("ui/workspace", workspace)
+    if role is not None:
+        settings.setValue("ui/role", role)
         settings.sync()
     w = MainWindow(settings, ThemeManager(), first_run=False)
     w.ask_choice = lambda t, x, b: 1  # type: ignore[assignment]
@@ -83,42 +83,42 @@ def test_the_action_is_checkable_named_and_in_the_view_menu(win) -> None:
     assert win.problem_notices_on() is True
 
 
-def test_full_starts_with_the_notices_on_and_simple_with_them_off(qtbot, tmp_path) -> None:
-    full = window(qtbot, tmp_path, workspace="full", name="full.ini")
-    assert full.problem_notices_on() and full.problems_btn.isVisibleTo(full)
-    simple = window(qtbot, tmp_path, workspace="simple", name="simple.ini")
-    assert not simple.problem_notices_on()
-    assert not simple.act_problem_notices.isChecked()
-    assert not simple.problems_btn.isVisibleTo(simple)
-    assert not simple.topbar.chip.isVisibleTo(simple)
-    assert not simple.pending_link.isVisibleTo(simple)
+def test_electrical_starts_with_the_notices_on_and_systems_with_them_off(qtbot, tmp_path) -> None:
+    electrical = window(qtbot, tmp_path, role="electrical", name="electrical.ini")
+    assert electrical.problem_notices_on() and electrical.problems_btn.isVisibleTo(electrical)
+    systems = window(qtbot, tmp_path, role="systems", name="systems.ini")
+    assert not systems.problem_notices_on()
+    assert not systems.act_problem_notices.isChecked()
+    assert not systems.problems_btn.isVisibleTo(systems)
+    assert not systems.topbar.chip.isVisibleTo(systems)
+    assert not systems.pending_link.isVisibleTo(systems)
 
 
-def test_each_workspace_keeps_its_own_choice_under_its_own_key(qtbot, tmp_path) -> None:
-    w = window(qtbot, tmp_path, workspace="full")
-    w.act_problem_notices.trigger()  # Full: off
+def test_each_role_keeps_its_own_choice_under_its_own_key(qtbot, tmp_path) -> None:
+    w = window(qtbot, tmp_path, role="electrical")
+    w.act_problem_notices.trigger()  # Electrical: off
     assert w.settings.value("ui/problem_notices", None, bool) is False
-    w.set_workspace("simple")
-    assert not w.problem_notices_on()  # (Simple has its own default, off)
-    w.act_problem_notices.trigger()  # Simple: on
+    w.set_role("systems")
+    assert not w.problem_notices_on()  # (Systems has its own default, off)
+    w.act_problem_notices.trigger()  # Systems: on
     assert w.settings.value("ui/simple/problem_notices", None, bool) is True
     assert w.problems_btn.isVisibleTo(w)
-    w.set_workspace("full")
+    w.set_role("electrical")
     assert not w.problem_notices_on() and not w.problems_btn.isVisibleTo(w)
-    w.set_workspace("simple")
+    w.set_role("systems")
     assert w.problem_notices_on() and w.problems_btn.isVisibleTo(w)
 
 
 def test_a_second_window_on_the_same_settings_file_restores_it(qtbot, tmp_path) -> None:
-    a = window(qtbot, tmp_path, workspace="full")
+    a = window(qtbot, tmp_path, role="electrical")
     a.act_problem_notices.trigger()
     a.settings.sync()
-    b = window(qtbot, tmp_path, workspace="full")
+    b = window(qtbot, tmp_path, role="electrical")
     assert not b.problem_notices_on() and not b.problems_btn.isVisibleTo(b)
     assert not b.settings_page.notices_box.isChecked()
     b.act_problem_notices.trigger()
     b.settings.sync()
-    c = window(qtbot, tmp_path, workspace="full")
+    c = window(qtbot, tmp_path, role="electrical")
     assert c.problem_notices_on() and c.problems_btn.isVisibleTo(c)
 
 

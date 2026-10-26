@@ -129,14 +129,14 @@ def test_the_tour_skips_steps_whose_target_is_not_on_screen(win) -> None:  # typ
         assert target.isVisibleTo(win), key
         seen.append(key)
         win.tour.next.click()
-    assert seen == ["canvas", "types", "problems", "generate"]  # the "add" step points at the dock
+    assert seen == ["canvas", "types", "problems", "generate", "role"]  # ("add" points at the dock)
     assert not win.tour.active
 
 
 def test_the_tour_counts_only_the_steps_it_shows(win) -> None:  # type: ignore[no-untyped-def]
     win.dock_left.hide()
     win.tour.start()
-    assert "Step 1 of 4" in win.tour.title.text()
+    assert "Step 1 of 5" in win.tour.title.text()
     win.tour.skip.click()
 
 

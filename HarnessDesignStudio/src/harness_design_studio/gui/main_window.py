@@ -9,6 +9,7 @@ from functools import partial
 from pathlib import Path
 from typing import Any
 
+import shiboken6
 from pydantic import ValidationError
 from PySide6.QtCore import (
     QByteArray,
@@ -138,19 +139,21 @@ from harness_design_studio.gui.new_project_dialog import (
     NewProjectRequest,
 )
 from harness_design_studio.gui.next_page import NextStepPage
-from harness_design_studio.gui.next_step import (
-    NextInputs,
-    clean_workspace,
-    default_workspace,
-    next_step,
-    workspace_key,
-)
+from harness_design_studio.gui.next_step import NextInputs, next_step
 from harness_design_studio.gui.pages import HomePage
 from harness_design_studio.gui.panels import ProblemsPanel, PropertiesPanel, category_icon
 from harness_design_studio.gui.problems_panel import ProblemsList
 from harness_design_studio.gui.project_tree import ProjectTree
 from harness_design_studio.gui.rail import NavRail
 from harness_design_studio.gui.releases_panel import ReleasesPanel
+from harness_design_studio.gui.role_dialog import RoleDialog
+from harness_design_studio.gui.roles import (
+    ELECTRICAL,
+    SYSTEMS,
+    clean_role,
+    default_role,
+    role_key,
+)
 from harness_design_studio.gui.settings_page import SCALES, SettingsPage
 from harness_design_studio.gui.shell import (
     BannerStack,
@@ -428,8 +431,12 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.settings = settings
         self.theme = theme
-        self._settings_were_empty = not settings.allKeys()  # a first run (see `_restore_workspace`)
-        self.workspace = "full"  # "simple" | "full", set from the settings in `_restore_settings`
+        self._settings_were_empty = not settings.allKeys()  # a first run (see `_restore_role`)
+        # `first_run=False` says this is not a first start: no tour and no question about the role
+        self._first_start = first_run is not False
+        self._role_to_ask = False  # a first start with no role set by the hook: ask once
+        # "systems" | "electrical", set from the settings in `_restore_settings`
+        self.role = ELECTRICAL
         self.ctl = EditorController(journal_delay_ms)
         self.setObjectName("main-window")
         # Dialog hooks (tests replace these to drive the UI without blocking).
@@ -530,10 +537,13 @@ class MainWindow(QMainWindow):
         if first_run is None:
             first_run = not self.settings.value("tour/done", False, bool)
         self.ctl.open_sample()
-        self._open_in_workspace()
+        self._open_for_role()
         self._update_hash()
-        if first_run:
+        if self._role_to_ask:
+            pass  # the question comes first, when the window shows (`showEvent`); the tour after it
+        elif first_run:
             QTimer.singleShot(200, self.tour.start)
+        self._tour_wanted = bool(first_run)
 
     # ---- construction ------------------------------------------------------------------------
     def _build_center(self) -> None:
@@ -578,8 +588,8 @@ class MainWindow(QMainWindow):
         self.tool_connect.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.tool_select.clicked.connect(lambda: self.ctl.end_connect())
         self.tool_connect.clicked.connect(lambda: self.ctl.begin_link())
-        # the simple workspace shows Select, Connect and Add device, and one More menu for the rest
-        # (stage S2); both are hidden in the full workspace
+        # the Systems engineer role shows Select, Connect and Add device, and one More menu for the
+        # rest (stage S2); both are hidden for the Electrical / AIT engineer role
         self.tool_add_device = QToolButton()
         self.tool_add_device.setObjectName("tool-add-device")
         self.tool_add_device.setText(strings.TOOL_ADD_DEVICE)
@@ -701,11 +711,12 @@ class MainWindow(QMainWindow):
                 "release": lambda: self._next_go("releases"),
                 "done": lambda: self._next_go("lists"),
                 "show_everything": lambda: self.show_everything(),
+                "library": lambda: self.open_library_flow(),
             },
         )
         self.settings_page = SettingsPage(
             self.theme,
-            set_workspace=lambda value: self.set_workspace(value),
+            set_role=lambda value: self.set_role(value),
             set_theme=lambda mode: self.set_theme_mode(mode),
             set_scale=lambda pct: self.scale_actions[pct].trigger(),
             set_reduce_motion=lambda on: self._set_checked(self.act_reduce_motion, on),
@@ -1627,24 +1638,25 @@ class MainWindow(QMainWindow):
         )
         self.act_select_tool = a(strings.TOOL_SELECT, self.ctl.end_connect, name="act-select")
         self.act_add_zone = a(strings.A_ADD_ZONE, self.add_zone_flow, name="act-add-zone")
-        self.act_simple = a(
-            strings.WORKSPACE_SIMPLE,
-            lambda: self.set_workspace("simple"),
+        # the two roles (D-176): exclusive, checkable; View > Role and Settings are views of them
+        self.act_role_systems = a(
+            strings.ROLE_SYSTEMS,
+            lambda: self.set_role(SYSTEMS),
             checkable=True,
-            name="act-workspace-simple",
+            name="act-role-systems",
         )
-        self.act_full = a(
-            strings.WORKSPACE_FULL,
-            lambda: self.set_workspace("full"),
+        self.act_role_electrical = a(
+            strings.ROLE_ELECTRICAL,
+            lambda: self.set_role(ELECTRICAL),
             checkable=True,
-            name="act-workspace-full",
+            name="act-role-electrical",
         )
-        self.act_simple.setToolTip(strings.WORKSPACE_SIMPLE_TIP)
-        self.act_full.setToolTip(strings.WORKSPACE_FULL_TIP)
-        wgroup = QActionGroup(self)
-        wgroup.addAction(self.act_simple)
-        wgroup.addAction(self.act_full)
-        self.act_full.setChecked(True)
+        self.act_role_systems.setToolTip(strings.ROLE_SYSTEMS_TIP)
+        self.act_role_electrical.setToolTip(strings.ROLE_ELECTRICAL_TIP)
+        rgroup = QActionGroup(self)
+        rgroup.addAction(self.act_role_systems)
+        rgroup.addAction(self.act_role_electrical)
+        self.act_role_electrical.setChecked(True)
         self.act_guided = a(
             strings.GUIDED, lambda: self.ctl.set_mode("guided"), checkable=True, name="act-guided"
         )
@@ -1775,8 +1787,8 @@ class MainWindow(QMainWindow):
         self.act_reset_layout = a(
             strings.A_RESET_LAYOUT, self.reset_layout, name="act-reset-layout"
         )
-        # the way back to the side panels in the simple workspace (stage S2); it exists, hidden and
-        # disabled (so the palette skips it), in the full workspace
+        # the way back to the side panels in the Systems engineer role (stage S2); it exists, hidden
+        # and disabled (so the palette skips it), in the Electrical / AIT engineer role
         self.act_show_panels = a(
             strings.A_SHOW_PANELS,
             lambda: self.show_panels(self.act_show_panels.isChecked()),
@@ -2009,10 +2021,12 @@ class MainWindow(QMainWindow):
         self._rebuild_connect_menu()
         self.tool_connect.setMenu(self.menu_connect)
         v = mb.addMenu(strings.M_VIEW)
-        v.addAction(self.act_show_panels)  # (the simple workspace only)
+        v.addAction(self.act_show_panels)  # (the Systems engineer role only)
         v.addSeparator()
-        v.addAction(self.act_simple)
-        v.addAction(self.act_full)
+        self.menu_role = v.addMenu(strings.M_ROLE)
+        self.menu_role.setObjectName("menu-role")
+        self.menu_role.addAction(self.act_role_systems)
+        self.menu_role.addAction(self.act_role_electrical)
         v.addSeparator()
         v.addAction(self.act_problem_notices)
         v.addSeparator()
@@ -2134,8 +2148,8 @@ class MainWindow(QMainWindow):
         self.mode_expert.clicked.connect(lambda: self._pick_mode("expert"))
         self.topbar.add_mode(self.mode_guided)
         self.topbar.add_mode(self.mode_expert)
-        # "Show panels": the way back to the project tree and the properties in the simple
-        # workspace (stage S2); the button shows there only
+        # "Show panels": the way back to the project tree and the properties in the
+        # Systems engineer role (stage S2); the button shows there only
         self.panels_btn = QToolButton()
         self.panels_btn.setObjectName("panels-button")
         self.panels_btn.setCheckable(True)
@@ -2155,7 +2169,7 @@ class MainWindow(QMainWindow):
         self.topbar.add_mode(self.panels_btn)
         for dock in (self.dock_left, self.dock_right):
             dock.visibilityChanged.connect(lambda _v=False: self._sync_panels_action())
-        # the More menu of the diagram tool row (simple workspace): every tool the row leaves out
+        # the More menu of the diagram tool row (Systems engineer role): every tool the row leaves out
         self.menu_more = QMenu(self.tool_more)
         self.menu_more.setObjectName("menu-more")
         self.menu_more.setToolTipsVisible(True)
@@ -2287,7 +2301,7 @@ class MainWindow(QMainWindow):
 
     def _set_filter(self, kind: str | None, value: str | None) -> None:
         """Show only one signal class, connector or bundle (or all): the same as the two pickers
-        of the Model tab, which the simple workspace hides."""
+        of the Model tab, which the Systems engineer role hides."""
         self.filter_combo.setCurrentIndex(max(self.filter_combo.findData(kind), 0))
         if kind and value is not None:
             at = self.filter_value.findData(value)
@@ -2365,6 +2379,7 @@ class MainWindow(QMainWindow):
             "types": self.tool_connect,
             "problems": self.side_tabs,
             "generate": self.generate_btn,
+            "role": self.rail,
         }
 
     # ---- state reactions ---------------------------------------------------------------------
@@ -2588,7 +2603,7 @@ class MainWindow(QMainWindow):
         (the top bar says it too). The job indicator, Problems, Offline, the pending-values link
         and the zoom stay."""
         eff = self.width() / self.theme.scale
-        counts = self.workspace != "simple"  # (the simple workspace shows no counts)
+        counts = self.role != SYSTEMS  # (the Systems engineer role shows no counts)
         self.status_sel.setVisible(counts and eff >= 1400)
         self.status_counts.setVisible(counts and eff >= 1250)
         self.status_path.setVisible(eff >= 1250)
@@ -2800,7 +2815,7 @@ class MainWindow(QMainWindow):
             self.view.reveal(s.id)
         if s is not None and not self.dock_right.isVisibleTo(self) and not self._told_properties:
             self._told_properties = True
-            if self.workspace == "simple":
+            if self.role == SYSTEMS:
                 self.toasts.show_message(
                     strings.PROPERTIES_CLOSED,
                     None,
@@ -3339,66 +3354,102 @@ class MainWindow(QMainWindow):
         self.toasts.show_message(strings.VIEW_NOT_INSTALLED.format(title), None)
         return False
 
-    # ---- the workspace and the next step -------------------------------------------------------------
-    def _restore_workspace(self) -> None:
-        """Simple for a settings file that was empty when the window started, Full for one that
-        had values (the choice is stored at once: later runs find values in the file)."""
-        fallback = default_workspace(not self._settings_were_empty)
-        value = clean_workspace(self.settings.value("ui/workspace", fallback), fallback)
-        self.settings.setValue("ui/workspace", value)
-        self._apply_workspace(value)
+    # ---- the role and the next step -------------------------------------------------------------------
+    def _restore_role(self) -> None:
+        """The role of this settings file. A stored role stands. Without one: a file that has values
+        is an existing user (the choice of 1.7.0 carries over, anybody else is an Electrical / AIT
+        engineer) and gets its role silently; a file with nothing stored gets the role the hook
+        `roles.FIRST_RUN_ROLE` names, and with no hook the window asks once, when it shows
+        (`ask_role_flow`) and starts as an Electrical / AIT engineer until the person answers."""
+        stored = clean_role(self.settings.value("ui/role", ""), "")
+        if stored:
+            self._apply_role(stored)
+            return
+        value = default_role(not self._settings_were_empty, self.settings.value("ui/workspace"))
+        if value is None:
+            self._role_to_ask = self._first_start
+            self._apply_role(ELECTRICAL)  # (not stored: the answer is)
+            return
+        self.settings.setValue("ui/role", value)
+        self._apply_role(value)
 
-    def _apply_workspace(self, value: str) -> None:
-        """What the workspace decides at once: the checked actions, the rail, the tool row of the
+    def _apply_role(self, value: str) -> None:
+        """What the role decides at once: the checked actions, the rail, the tool row of the
         diagram, the status bar and the way back to the panels (the panels, minimap and legend
-        come from the layout memory, `_load_workspace_layout`)."""
-        self.workspace = value
-        simple = value == "simple"
-        self.act_simple.setChecked(simple)
-        self.act_full.setChecked(value == "full")
-        self.next_page.set_workspace(value)
+        come from the layout memory, `_load_role_layout`)."""
+        self.role = value
+        systems = value == SYSTEMS
+        self.act_role_systems.setChecked(systems)
+        self.act_role_electrical.setChecked(not systems)
+        self.next_page.set_role(value)
         self.rail.set_hidden(areas.hidden_in(value))
         for w in (self.redundant_btn, self.delete_btn, self.zoom_out_btn, self.zoom_in_btn):
-            w.setVisible(not simple)
-        self.fit_btn.setVisible(not simple)
-        self.tool_add_device.setVisible(simple)
-        self.tool_more.setVisible(simple)
-        self.zoom_level.setVisible(not simple)
-        self.act_show_panels.setVisible(simple)
-        self.act_show_panels.setEnabled(simple)
-        self.panels_btn.setVisible(simple)
+            w.setVisible(not systems)
+        self.fit_btn.setVisible(not systems)
+        self.tool_add_device.setVisible(systems)
+        self.tool_more.setVisible(systems)
+        self.zoom_level.setVisible(not systems)
+        self.act_show_panels.setVisible(systems)
+        self.act_show_panels.setEnabled(systems)
+        self.panels_btn.setVisible(systems)
         self._sync_panels_action()
         self._update_crumbs()  # (Arrange and the filters of the Model tab)
-        self._load_problem_notices()  # (each workspace has its own default and its own key)
+        self._load_problem_notices()  # (each role has its own default and its own key)
         self._fit_status()
 
-    def set_workspace(self, value: str) -> None:
-        """View > Simple / Full: store and apply the choice, and with it that workspace's own
-        layout (panels, minimap, legend), at once. The layout of the workspace that is left is
-        saved first, under its own keys. The open page stays; the next project that is opened
-        shows the first page of the workspace."""
-        value = clean_workspace(value, self.workspace)
-        if value != self.workspace:
-            self._save_settings()  # the layout of the workspace being left
-            self.settings.setValue("ui/workspace", value)
-            self._apply_workspace(value)
-            self._load_workspace_layout()
+    def set_role(self, value: str, *, save_left: bool = True) -> None:
+        """View > Role: store and apply the choice, and with it that role's own layout (panels,
+        minimap, legend), at once. The layout of the role that is left is saved first, under its
+        own keys (`save_left` False: nothing was set up yet, as at the first start). The open page
+        stays; the next project that is opened shows the first page of the role."""
+        value = clean_role(value, self.role)
+        if value != self.role:
+            if save_left:
+                self._save_settings()  # the layout of the role being left
+            self.settings.setValue("ui/role", value)
+            self._apply_role(value)
+            self._load_role_layout()
             self._restore_project_layout(with_area=False)
         else:
-            self.settings.setValue("ui/workspace", value)
-            self._apply_workspace(value)
+            self.settings.setValue("ui/role", value)
+            self._apply_role(value)
         self._sync_settings_page()
 
-    def _wkey(self, key: str) -> str:
-        """A settings key of the layout, for the workspace that is open: Full keeps the keys it
-        always had, Simple has keys of its own (a layout saved in one never overwrites the other)."""
-        return workspace_key(key, self.workspace)
+    def ask_role_flow(self) -> str:
+        """The question of the first start: *Who are you working as?* (a small modal window with
+        two big buttons). The answer is stored and its layout applied at once; closing the window
+        without choosing means Electrical / AIT engineer, which shows everything. A person who
+        picks Systems engineer lands on the Next step page."""
+        dlg = RoleDialog(self, self.theme)
+        self.run_dialog(dlg)
+        value = dlg.choice or ELECTRICAL
+        self._role_to_ask = False
+        self.set_role(value, save_left=False)
+        if value == SYSTEMS:
+            self._show_area("next")
+        return value
 
-    def _load_workspace_layout(self, *, initial: bool = False) -> None:
-        """Minimap, legend and the panels of the workspace that is open: what was saved for it, or
-        its start state (Full: the usual panels for the window width; Simple: every panel closed,
-        minimap and legend off). `initial` is the call from the constructor."""
-        simple = self.workspace == "simple"
+    def _first_start_flow(self) -> None:
+        """The first time the window shows: the question about the role, then the tour."""
+        if not shiboken6.isValid(self):
+            return
+        if self._role_to_ask:
+            self.ask_role_flow()
+        if self._tour_wanted:
+            QTimer.singleShot(200, self.tour.start)
+
+    def _wkey(self, key: str) -> str:
+        """A settings key of the layout, for the role that is open: the Electrical / AIT engineer
+        keeps the keys the Full workspace had, the Systems engineer has keys of its own (the
+        Simple workspace's; a layout saved in one never overwrites the other)."""
+        return role_key(key, self.role)
+
+    def _load_role_layout(self, *, initial: bool = False) -> None:
+        """Minimap, legend and the panels of the role that is open: what was saved for it, or its
+        start state (Electrical / AIT engineer: the usual panels for the window width; Systems
+        engineer: every panel closed, minimap and legend off). `initial` is the call from the
+        constructor."""
+        simple = self.role == SYSTEMS
         for act, apply, key in (
             (self.act_minimap, self.view.set_minimap_wanted, "ui/minimap"),
             (self.act_legend, self.view.set_legend_wanted, "ui/legend"),
@@ -3428,7 +3479,7 @@ class MainWindow(QMainWindow):
         self._sync_panels_action()
 
     def _close_panels(self) -> None:
-        """Every dock closed: the start state of the simple workspace."""
+        """Every dock closed: the start state of the Systems engineer role."""
         for dock in (self.dock_left, self.dock_right, self.dock_problems):
             dock.hide()
 
@@ -3437,7 +3488,7 @@ class MainWindow(QMainWindow):
 
     def show_panels(self, on: bool) -> None:
         """Open or close the project tree and the inspector together (the Show panels toggle of
-        the simple workspace; the Problems panel is its own toggle)."""
+        the Systems engineer role; the Problems panel is its own toggle)."""
         self.dock_left.setVisible(on)
         self.dock_right.setVisible(on)
         self._sync_panels_action()
@@ -3450,21 +3501,21 @@ class MainWindow(QMainWindow):
         self.panels_btn.setChecked(on)
 
     def _need_inspector(self) -> None:
-        """A person went to an object to look at it or change it. The simple workspace keeps the
-        side panels closed until asked for, so this is the asking: the inspector opens. The full
-        workspace is left alone."""
-        if self.workspace == "simple" and not self.dock_right.isVisibleTo(self):
+        """A person went to an object to look at it or change it. The Systems engineer role keeps
+        the side panels closed until asked for, so this is the asking: the inspector opens. The
+        Electrical / AIT engineer role is left alone."""
+        if self.role == SYSTEMS and not self.dock_right.isVisibleTo(self):
             self.dock_right.show()
 
     def show_everything(self) -> None:
-        """The link of the Next step page: the full workspace, on the diagram."""
-        self.set_workspace("full")
+        """The link of the Next step page: the Electrical / AIT engineer role, on the diagram."""
+        self.set_role(ELECTRICAL)
         self.set_area(areas.DEFAULT)
 
-    def _open_in_workspace(self) -> None:
-        """A project was opened: the simple workspace starts on the next step (the full one stays
-        where it is)."""
-        if self.workspace == "simple":
+    def _open_for_role(self) -> None:
+        """A project was opened: the Systems engineer role starts on the next step (the other one
+        stays where it is)."""
+        if self.role == SYSTEMS:
             self._show_area("next")
 
     def _next_inputs(self, s: ShellStatus) -> NextInputs:
@@ -3574,7 +3625,7 @@ class MainWindow(QMainWindow):
         names = self.main_tabs.names()
         i = self.main_tabs.currentIndex()
         on_diagram = 0 <= i < len(names) and names[i] == "diagram"
-        self.diagram_tools.setVisible(on_diagram and self.workspace != "simple")
+        self.diagram_tools.setVisible(on_diagram and self.role != SYSTEMS)
 
     def toggle_problems(self) -> None:
         """Show or hide the Problems panel at the bottom of the window."""
@@ -3927,7 +3978,7 @@ class MainWindow(QMainWindow):
         if not self._confirm_discard():
             return
         self.ctl.open_sample()
-        self._open_in_workspace()
+        self._open_for_role()
 
     # ---- files ------------------------------------------------------------------------------
     def _ask_folder(self, title: str) -> str | None:
@@ -4007,7 +4058,7 @@ class MainWindow(QMainWindow):
             return
         if not request.is_blank and not self.open_project(folder):
             return
-        self._open_in_workspace()
+        self._open_for_role()
         self._last_issues = []
         self.settings.setValue("project/last", str(folder))
 
@@ -4054,7 +4105,7 @@ class MainWindow(QMainWindow):
             return False
         self._last_issues = result.issues
         self._restore_project_layout()
-        self._open_in_workspace()
+        self._open_for_role()
         self.settings.setValue("project/last", str(folder))
         if self.ctl.open_note:
             self.toasts.show_message(self.ctl.open_note, None, 10000)
@@ -4168,7 +4219,7 @@ class MainWindow(QMainWindow):
         if scale not in self.scale_actions:
             scale = 100
         mode = str(self.settings.value("ui/mode", "guided"))
-        self._restore_workspace()
+        self._restore_role()
         snap = bool(self.settings.value("ui/snap", True, bool))
         self.act_snap.setChecked(snap)
         self.view.set_snap(snap)
@@ -4198,7 +4249,7 @@ class MainWindow(QMainWindow):
             self.act_problem_notices,
         ):
             toggled.toggled.connect(lambda _on=False: self._sync_settings_page())
-        self.act_simple.toggled.connect(lambda _on=False: self._sync_settings_page())
+        self.act_role_systems.toggled.connect(lambda _on=False: self._sync_settings_page())
         self.theme.changed.connect(self._sync_settings_page)
         self._sync_settings_page()
         geo = self.settings.value("ui/geometry")
@@ -4208,7 +4259,7 @@ class MainWindow(QMainWindow):
             restored = False
         if not restored:
             self.resize(self._first_size())
-        self._load_workspace_layout(initial=True)  # minimap, legend and docks of the workspace
+        self._load_role_layout(initial=True)  # minimap, legend and docks of the role
 
     def _screen_scale(self) -> int:
         screen = QGuiApplication.primaryScreen()
@@ -4254,8 +4305,8 @@ class MainWindow(QMainWindow):
         self.settings.setValue(self._wkey(f"{group}/rail"), self.rail.collapsed)
 
     def _restore_project_layout(self, *, with_area: bool = True) -> None:
-        """The panels, the open area and the rail of this project in the workspace that is open
-        (`with_area` False: the panels only, for a switch of workspace, which leaves the page)."""
+        """The panels, the open area and the rail of this project in the role that is open
+        (`with_area` False: the panels only, for a switch of role, which leaves the page)."""
         group = self._layout_group()
         if group is None or not self.settings.contains(self._wkey(f"{group}/area")):
             return
@@ -4281,7 +4332,7 @@ class MainWindow(QMainWindow):
         self.restoreState(self._default_state, STATE_VERSION)
         for dock in (self.dock_left, self.dock_right):
             dock.setFloating(False)
-        if self.workspace == "simple":
+        if self.role == SYSTEMS:
             self._close_panels()
         self.main_tabs.show_slot("diagram")
         self._layout_class = None
@@ -4373,10 +4424,10 @@ class MainWindow(QMainWindow):
         return self.act_problem_notices.isChecked()
 
     def _load_problem_notices(self) -> None:
-        """The value of the open workspace: stored under its own key, Full on and Simple off until
-        the person says otherwise."""
+        """The value of the open role: stored under its own key, on for the Electrical / AIT
+        engineer and off for the Systems engineer until the person says otherwise."""
         wanted = bool(
-            self.settings.value(self._wkey("ui/problem_notices"), self.workspace != "simple", bool)
+            self.settings.value(self._wkey("ui/problem_notices"), self.role != SYSTEMS, bool)
         )
         self.act_problem_notices.setChecked(wanted)
         self._apply_problem_notices()
@@ -4425,7 +4476,7 @@ class MainWindow(QMainWindow):
             theme_mode=self.theme.mode,
             scale=round(self.theme.scale * 100),
             mode=self.ctl.mode,
-            workspace=self.workspace,
+            role=self.role,
             reduce_motion=self.act_reduce_motion.isChecked(),
             snap=self.act_snap.isChecked(),
             labels=self.act_labels.isChecked(),
@@ -4492,7 +4543,7 @@ class MainWindow(QMainWindow):
         when the scale changes."""
         scale = self.theme.scale
         wide, medium = self._layout_class = self._layout_class_now()
-        if self.workspace == "simple":  # (it closes what no longer fits, never opens a panel)
+        if self.role == SYSTEMS:  # (it closes what no longer fits, never opens a panel)
             wide = wide and self.dock_right.isVisibleTo(self)
             medium = medium and self.dock_left.isVisibleTo(self)
         was = (self.dock_left.isVisibleTo(self), self.dock_right.isVisibleTo(self))
@@ -4511,6 +4562,8 @@ class MainWindow(QMainWindow):
         super().showEvent(event)
         if not self._shown:
             self._shown = True
+            if self._role_to_ask:  # the first start: the question, then the tour
+                QTimer.singleShot(0, self._first_start_flow)
             if self._have_saved_state:  # the person's own layout stands
                 self._layout_class = self._layout_class_now()
             else:

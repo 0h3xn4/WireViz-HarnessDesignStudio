@@ -35,7 +35,7 @@ If you have not installed the tool yet, start with [`INSTALL.md`](INSTALL.md).
 
 Read [`CONCEPTS.md`](CONCEPTS.md). You should be able to say, in your own words, what a **device**, an **interface**, a **harness**, a **wire** and a **project** are, and why the tool generates harnesses instead of asking you to draw them.
 
-If you want to see how the window is meant to be used, read [use the simple workspace](user-manual/use-the-simple-workspace.md) (five minutes): since 1.7.0 the app starts on a **Next step** page that names one thing to do at a time.
+If you want to see how the window is meant to be used, read [choose your role](user-manual/choose-your-role.md) (five minutes): since 1.7.0 the app starts on a **Next step** page that names one thing to do at a time.
 
 **Done when:** you can explain why a wire has a "Why is it like this?" text.
 
@@ -62,10 +62,10 @@ harness-design-studio generate mini
 harness-design-studio drc mini
 ```
 
-Open it in the app (**File > Open project...**). A first run starts in the Simple workspace; click **Show everything** first (or choose **View > Full**) to get the diagram and the side panels. Try these four things, in this order:
+Open it in the app (**File > Open project...**). Choose **View > Role > Electrical / AIT engineer** first (a Systems engineer sees less; **Show everything** on the Next step page does the same) to get the diagram and the side panels. Try these four things, in this order:
 
 1. Click a wire of the power link from the power distribution unit (`PCDU1`) to the computer. Read **Why is it like this?**
-2. Open the **Problems** tab (right panel) or the Problems panel (Ctrl+Shift+M); in Simple, **Show panels** opens the right panel. Most entries say that a value is *pending* or *not checked*. That is the tool being honest: nobody has supplied the derating values yet.
+2. Open the **Problems** tab (right panel) or the Problems panel (Ctrl+Shift+M); as a Systems engineer, **Show panels** opens the right panel. Most entries say that a value is *pending* or *not checked*. That is the tool being honest: nobody has supplied the derating values yet.
 3. Use the **Show** list at the right end of the Model tab bar to look at the power interfaces only, then at the data interfaces.
 4. Delete a device, then press **Ctrl+Z**, to see that nothing is lost.
 

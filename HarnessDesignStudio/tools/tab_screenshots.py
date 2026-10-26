@@ -1,17 +1,18 @@
 # mypy: allow-untyped-calls, no-warn-unused-ignores, disable-error-code=misc
 """Pictures of the editor for the user manual: the Edit wire tab, the Devices tab (1.4.0), the
-Connectors tab (1.5.0) and, since 1.7.0, the Next step page, the Simple and the Full workspace, the
+Connectors tab (1.5.0) and, since 1.7.0, the Next step page, the two roles (the Systems engineer and
+the Electrical / AIT engineer, which replaced the Simple and Full workspaces in milestone M5), the
 Accessories tab and the Export window.
 
-Opens the real Qt editor offscreen (light theme, Simple workspace) on the flatsat example in a
+Opens the real Qt editor offscreen (light theme, Systems engineer role) on the flatsat example in a
 1760 x 1000 window, where the tabs have room to show their names, and saves `edit-wire-tab.png`
 (Drawings area, a wire selected, the Edit wire tab open) and `devices-tab.png` (the Devices tab of
 the first device). Then it starts a project from nothing, makes a harness by hand with two connectors
 and three wires, and saves `connectors-tab.png` (the Connectors tab). Then, in a 1440 x 900 window
 on the tutorial project (`first-steps`, generated): `next-step-new-project.png` (an empty project),
 `next-step-fix-problems.png` (one check fails), `next-step-export.png` (its parts approved, so
-every check passes or waits for a value), `simple-workspace.png` and `full-workspace.png` (the
-checked project in each workspace), `export-window.png` and `export-window-done.png` (the Export
+every check passes or waits for a value), `systems-engineer.png` and `electrical-engineer.png` (the
+checked project in each role), `export-window.png` and `export-window-done.png` (the Export
 window before and after an export with the PDF drawings). With two accessories added,
 `accessories-tab.png` (1760 x 1000). Then, on the tutorial project, `add-device-dialog.png` (the
 Add device dialog with Star tracker typed and the ID STAR1 suggested) and
@@ -23,6 +24,9 @@ the project tree). Since milestone M3: `edit-all-wires-window.png` (the window E
 gauge and a colour typed) and `connections-ends.png` (a connection in the Guided mode with the
 connector boxes at its ends). Since milestone M4: `library-window.png` (the library window with a
 subsystem chosen) and `library-save-window.png` (the window Save to library with a name typed).
+Since milestone M5: `role-question.png` (the question of the first start), `role-menu.png` (View >
+Role open) and the pictures that show a role (the three Next step pictures, `systems-engineer.png`,
+`electrical-engineer.png`, `problem-notices-setting.png`).
 The time of the last check, which the status bar shows, is cleared
 before each picture. Usage:
 
@@ -31,6 +35,8 @@ before each picture. Usage:
         (only connectors-tab.png, which has the Edit connector section now, and the two M3 pictures)
     QT_QPA_PLATFORM=offscreen python -m tools.tab_screenshots [OUTPUT_FOLDER] library
         (only the two library pictures)
+    QT_QPA_PLATFORM=offscreen python -m tools.tab_screenshots [OUTPUT_FOLDER] roles
+        (only the pictures of the roles listed above)
 """
 
 from __future__ import annotations
@@ -62,6 +68,7 @@ from harness_design_studio.gui.harness_edit_dialogs import BulkWireDialog
 from harness_design_studio.gui.library_window import SaveToLibraryDialog
 from harness_design_studio.gui.link_dialog import LinkDialog
 from harness_design_studio.gui.main_window import MainWindow
+from harness_design_studio.gui.role_dialog import RoleDialog
 from tools import ui_screenshots as shots
 
 DEFAULT_OUT = Path(__file__).resolve().parents[1] / "docs" / "img"
@@ -77,14 +84,18 @@ def main(out: Path = DEFAULT_OUT, only: str = "") -> int:
         _library_pictures(out)
         print(f"wrote the pictures of the library to {out}")
         return 0
+    if only == "roles":
+        _role_pictures(out)
+        print(f"wrote the pictures of the roles to {out}")
+        return 0
     if only == "editing":
-        win = _window("harness-tab-shots", "flatsat", "simple", (WIDTH, HEIGHT))
+        win = _window("harness-tab-shots", "flatsat", "systems", (WIDTH, HEIGHT))
         _by_hand(win, out)
         win.close()
         _editing_pictures(out)
         print(f"wrote the pictures of the editing windows to {out}")
         return 0
-    win = _window("harness-tab-shots", "flatsat", "simple", (WIDTH, HEIGHT))
+    win = _window("harness-tab-shots", "flatsat", "systems", (WIDTH, HEIGHT))
     win.go_to("harness")
     shots._settle(win)
     view = win.harness_view
@@ -108,21 +119,22 @@ def main(out: Path = DEFAULT_OUT, only: str = "") -> int:
     _save(win, out / "devices-tab.png")
     _by_hand(win, out)
     win.close()
-    _next_step_pictures(out)
-    _workspace_pictures(out)
+    _role_pictures(out)
+    _export_and_accessories_pictures(out)
     _workshop_pictures(out)
     _connection_pictures(out)
     _editing_pictures(out)
     _library_pictures(out)
-    print(f"wrote the pictures of the tabs, workspaces and windows to {out}")
+    print(f"wrote the pictures of the tabs, roles and windows to {out}")
     return 0
 
 
-def _window(name: str, example: str, workspace: str, size: tuple[int, int]) -> MainWindow:
-    """The editor on an example, in a fixed folder (the status bar shows the path), in the Full or
-    the Simple workspace. A fresh settings file would give Simple, so the choice is made here."""
+def _window(name: str, example: str, role: str, size: tuple[int, int]) -> MainWindow:
+    """The editor on an example, in a fixed folder (the status bar shows the path), as the
+    Systems engineer or the Electrical / AIT engineer. A fresh settings file has no role yet, so
+    the choice is made here."""
     win = shots._fresh(Path(tempfile.gettempdir()) / name, "light", example)
-    win.set_workspace(workspace)
+    win.set_role(role)
     win.resize(*size)
     shots._settle(win)
     return win
@@ -138,13 +150,11 @@ def _save(win: object, path: Path) -> None:
     print(path.name)
 
 
-def _generated(
-    name: str, workspace: str, size: tuple[int, int], approve: bool = True
-) -> MainWindow:
-    """The tutorial project (`first-steps`), generated and checked, in the given workspace. With
+def _generated(name: str, role: str, size: tuple[int, int], approve: bool = True) -> MainWindow:
+    """The tutorial project (`first-steps`), generated and checked, in the given role. With
     `approve` its parts are approved first, as the tutorial does with a parts file, so no check
     fails; without it the check of the approved parts list fails, as it does in the tutorial."""
-    win = _window(name, "first-steps", workspace, size)
+    win = _window(name, "first-steps", role, size)
     if approve:
         parts = win.ctl.project.parts
         ops: list[Op] = [
@@ -177,28 +187,89 @@ def _show_next(win: MainWindow, out: Path, name: str) -> None:
 
 def _next_step_pictures(out: Path) -> None:
     """The Next step page: an empty project, a project whose checks fail, a checked one."""
-    win = _window("harness-next-new", "blank", "simple", MAIN)
+    win = _window("harness-next-new", "blank", "systems", MAIN)
     _show_next(win, out, "next-step-new-project.png")
     win.close()
-    win = _generated("harness-next-fix", "simple", MAIN, approve=False)
+    win = _generated("harness-next-fix", "systems", MAIN, approve=False)
     _show_next(win, out, "next-step-fix-problems.png")
     win.close()
-    win = _generated("harness-next-export", "simple", MAIN)
+    win = _generated("harness-next-export", "systems", MAIN)
     _show_next(win, out, "next-step-export.png")
     win.close()
 
 
-def _workspace_pictures(out: Path) -> None:
-    """The same project in both workspaces, then the Accessories tab and the Export window."""
-    for workspace in ("simple", "full"):
-        win = _generated("harness-workspace", workspace, MAIN)
+def _role_pictures(out: Path) -> None:
+    """The Next step pages, the same project in both roles, the question of the first start and
+    the View menu with the Role submenu."""
+    _next_step_pictures(out)
+    for role, name in (("systems", "systems-engineer"), ("electrical", "electrical-engineer")):
+        win = _generated("harness-role", role, MAIN)
         win.view.fit()
-        _save(win, out / f"{workspace}-workspace.png")
+        _save(win, out / f"{name}.png")
         win.close()
-    win = _generated("harness-export", "simple", MAIN)
+    win = _generated("harness-role-menu", "electrical", MAIN)
+    view = next(m for m in win.menuBar().findChildren(QMenu) if m.title() == "&View")
+    view.popup(win.mapToGlobal(QPoint(20, 40)))  # (at the left, so the submenu has room beside it)
+    shots._wait(400)
+    row = view.actionGeometry(win.menu_role.menuAction())
+    win.menu_role.popup(view.mapToGlobal(QPoint(view.width(), row.top())))
+    shots._wait(500)
+    win.jobs.finish("")
+    win._last_check = ""
+    _grab_menus(win, view, win.menu_role, out / "role-menu.png")
+    view.close()
+    win.menu_role.close()
+    win.close()
+    win = _window("harness-role-question", "blank", "electrical", MAIN)
+    dlg = RoleDialog(win, win.theme)
+    dlg.show()
+    dlg.resize(dlg.sizeHint())
+    shots._wait(500)
+    _save(dlg, out / "role-question.png")
+    dlg.close()
+    win.close()
+    problem = _generated("harness-notices", "electrical", MAIN)
+    _notices_menu(problem, out)
+    problem.close()
+
+
+def _grab_menus(win: MainWindow, view: QMenu, sub: QMenu, path: Path) -> None:
+    """One picture of the View menu with its Role submenu open beside it."""
+    from PySide6.QtCore import QRect
+    from PySide6.QtGui import QPainter, QPixmap
+
+    a, b = view.grab(), sub.grab()
+    ga = QRect(view.mapToGlobal(QPoint(0, 0)), view.size())
+    gb = QRect(sub.mapToGlobal(QPoint(0, 0)), sub.size())
+    both = ga.united(gb)
+    canvas = QPixmap(both.size())
+    canvas.fill(win.palette().window().color())
+    painter = QPainter(canvas)
+    painter.drawPixmap(ga.topLeft() - both.topLeft(), a)
+    painter.drawPixmap(gb.topLeft() - both.topLeft(), b)
+    painter.end()
+    canvas.save(str(path))
+    print(path.name)
+
+
+def _notices_menu(win: MainWindow, out: Path) -> None:
+    """The View menu with Show problem notices (it sits below the Role entry)."""
+    menu = next(m for m in win.menuBar().findChildren(QMenu) if m.title() == "&View")
+    menu.popup(win.mapToGlobal(QPoint(380, 40)))
+    shots._wait(500)
+    win.jobs.finish("")
+    win._last_check = ""
+    menu.grab().save(str(out / "problem-notices-setting.png"))
+    print("problem-notices-setting.png")
+    menu.close()
+
+
+def _export_and_accessories_pictures(out: Path) -> None:
+    """The Export window and the Accessories tab."""
+    win = _generated("harness-export", "systems", MAIN)
     _export_pictures(win, out)  # (before the accessories, so the counts are the manual's)
     win.close()
-    win = _generated("harness-accessories", "simple", (WIDTH, HEIGHT))
+    win = _generated("harness-accessories", "systems", (WIDTH, HEIGHT))
     hid = sorted(win.ctl.project.harnesses)[0]
     h = win.ctl.project.harnesses[hid]
     wire = h.wires[0].id
@@ -232,9 +303,9 @@ def _workspace_pictures(out: Path) -> None:
 
 
 def _workshop_pictures(out: Path) -> None:
-    """The Add device dialog (a name typed, the ID suggested) and the View menu with the setting
-    Show problem notices, both in the Full workspace on the tutorial project."""
-    win = _generated("harness-add-device", "full", MAIN)
+    """The Add device dialog (a name typed, the ID suggested), as the Electrical / AIT engineer on
+    the tutorial project. (The View menu with Show problem notices is in `_role_pictures`.)"""
+    win = _generated("harness-add-device", "electrical", MAIN)
     dlg = NewDeviceDialog(win, win.theme, win.ctl.project)
     dlg.show()
     dlg.resize(460, dlg.sizeHint().height())
@@ -242,14 +313,6 @@ def _workshop_pictures(out: Path) -> None:
     shots._wait(500)
     _save(dlg, out / "add-device-dialog.png")
     dlg.close()
-    menu = next(m for m in win.menuBar().findChildren(QMenu) if m.title() == "&View")
-    menu.popup(win.mapToGlobal(QPoint(380, 40)))
-    shots._wait(500)
-    win.jobs.finish("")
-    win._last_check = ""
-    menu.grab().save(str(out / "problem-notices-setting.png"))
-    print("problem-notices-setting.png")
-    menu.close()
     win.close()
 
 

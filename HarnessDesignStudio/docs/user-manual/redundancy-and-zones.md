@@ -8,7 +8,7 @@ This page shows how to add a backup (redundant) chain to a design, what the tool
 - **Nominal** is the main chain of devices. **Redundant** is its backup. The tool keeps them apart: a nominal and a redundant chain never share a connector or a harness, so one failure cannot take out both ([glossary](../GLOSSARY.md)).
 - A **zone** is a place on the spacecraft, for example a panel or a compartment. In the diagram a zone is a vertical **lane** ([glossary](../GLOSSARY.md)).
 
-The steps below use the app. In the Simple workspace press **Model** in the rail to reach the diagram, and **Show panels** in the top bar when a step needs the **Inspector** or the **Project** tab ([draw the design](draw-the-design.md#before-you-start)). They are described from the program's texts and code and have not been run on a screen (GUI, not run). The numbers and messages below were reproduced with the same program code and the command line.
+The steps below use the app. As a Systems engineer press **Model** in the rail to reach the diagram, and **Show panels** in the top bar when a step needs the **Inspector** or the **Project** tab ([draw the design](draw-the-design.md#before-you-start)). They are described from the program's texts and code and have not been run on a screen (GUI, not run). The numbers and messages below were reproduced with the same program code and the command line.
 
 ## Say how many: the number of devices (after 1.7.0)
 
@@ -17,7 +17,7 @@ The simplest way to ask for redundancy is to say how many of a device the design
 ## 1. Make a redundant copy of a device
 
 1. Select a device, for example `PCDU1`.
-2. Press **Create redundant copy** above the diagram (or in the **Inspector**), or choose **Edit > Create redundant copy**. (In the Simple workspace the button is under **More** above the diagram.) (The button is greyed out for a device that already is a redundant copy or already has one.)
+2. Press **Create redundant copy** above the diagram (or in the **Inspector**), or choose **Edit > Create redundant copy**. (As a Systems engineer the button is under **More** above the diagram.) (The button is greyed out for a device that already is a redundant copy or already has one.)
 3. A twin appears in the next lane: `PCDU1-R`, named "Power unit 1 (redundant)", with the same connectors (`PCDU1-R-J01`, ...). The tool then copies the links of the device (their IDs end in `-R`).
 
 A copied link needs a free connector of the right type at the other end. In `first-steps`, `RW1` has one power connector and it is used, so copying `PCDU1` first copies no link. A message says so ("1 interface(s) could not be mirrored (no free connector): IF-001"). Copy `RW1` next: `IF-001-R` then joins `PCDU1-R` and `RW1-R`.
@@ -26,7 +26,7 @@ If the device at the other end has no twin yet but has a free connector, the cop
 
 ## 2. Fix a link between the two chains
 
-This is the usual result when you copy several devices one after the other. With `first-steps`, copy `PCDU1`, then `RW1`, then `OBC1`. The **Problems** tab (right panel; in the Simple workspace press **Show panels** first) then shows:
+This is the usual result when you copy several devices one after the other. With `first-steps`, copy `PCDU1`, then `RW1`, then `OBC1`. The **Problems** tab (right panel; as a Systems engineer press **Show panels** first) then shows:
 
 ```
 IF-002-R connects the nominal chain to the redundant chain

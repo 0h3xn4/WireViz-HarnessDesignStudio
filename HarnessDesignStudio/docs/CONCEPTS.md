@@ -8,7 +8,7 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 - [The things in a design](#the-things-in-a-design)
 - [The standards the tool starts from](#the-standards-the-tool-starts-from)
 - [Guided and Expert](#guided-and-expert)
-- [Simple and Full](#simple-and-full)
+- [Your role](#your-role)
 - [From design to harness: generation](#from-design-to-harness-generation)
 - [Problems, rules and waivers](#problems-rules-and-waivers)
 - [Placeholders: what the tool does not know](#placeholders-what-the-tool-does-not-know)
@@ -75,9 +75,9 @@ Other interface types (SpaceWire, MIL-STD-1553B, LVDS, I2C, analog, discrete, py
 
 Switching never changes data. Start in Guided.
 
-## Simple and Full
+## Your role
 
-This is a second, separate choice (since 1.7.0): how much of the window is on screen. In the **Simple** workspace the window opens on the **Next step** page, which says in plain words what to do now and has one button; the project tree, the Inspector and the Problems panel start closed, and the rail has no *Home*. In the **Full** workspace you see the whole editor. A first run starts in Simple; someone who already had a settings file starts in Full. **Show everything** (on the Next step page) or **View > Full** switches to Full, **View > Simple** switches back, **Show panels** opens the tree and the Inspector in Simple. Nothing is removed and no file changes: every hidden thing is still in a menu, with its shortcut, and in the command palette (Ctrl+K). Guided and Expert change what the diagram shows; Simple and Full change how much of the window is there.
+Your **role** is a second, separate choice: who you are working as, which decides how much of the window is on screen and where a project opens. A **Systems engineer** thinks in devices, the connections between them, subsystems and the library: the window opens on the **Next step** page, which says in plain words what to do now and has one button; the project tree, the Inspector and the Problems panel start closed, and the rail lists only Next step, Model, Checks, Revisions and Settings. An **Electrical / AIT engineer** thinks in connectors, pinouts, harnesses, wires, build sheets and tests: every area and panel is there. The first start asks which you are; someone who already had a settings file is an Electrical / AIT engineer. **View > Role** (or **Settings**) switches at once; **Show everything** (on the Next step page) switches to Electrical / AIT engineer; **Show panels** opens the tree and the Inspector for a Systems engineer. The role replaces the *Simple* and *Full* workspaces of 1.7.0. Nothing is removed, no role locks anything and no file changes: every hidden thing is still in a menu, with its shortcut, and in the command palette (Ctrl+K). Guided and Expert change what the diagram shows; the role changes how much of the window is there ([choose your role](user-manual/choose-your-role.md)).
 
 ## From design to harness: generation
 

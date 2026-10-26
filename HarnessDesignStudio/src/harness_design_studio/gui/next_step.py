@@ -1,4 +1,4 @@
-"""The one next step the simple workspace shows (decision D-171, stage S1).
+"""The one next step the Next step page shows (decisions D-171 stage S1 and D-176).
 
 No Qt here, so every combination is tested without a display. `next_step(facts)` takes the facts
 of the project (`NextInputs`) and returns what to do now (`Next`): a short title, one plain
@@ -27,9 +27,8 @@ The rules run in this order, the first that fits wins:
 The words are plain on purpose: this stage exists because testers found the tool confusing. The
 window maps each key to an existing flow (`gui/next_page.py` only shows and calls back).
 
-The workspace setting (Simple or Full) is here too: `default_workspace` says which one a settings
-file gets when the person never chose, and `workspace_key` the settings key under which the layout of
-a workspace is remembered (stage S2: Full keeps the keys it always had, Simple has keys of its own).
+The page opens first for the Systems engineer role and is reachable for the Electrical / AIT engineer
+role (`gui/roles.py` holds the roles).
 """
 
 from dataclasses import dataclass
@@ -38,8 +37,6 @@ from typing import Final, Literal
 from harness_design_studio.gui import strings
 
 StepState = Literal["done", "next", "todo", "blocked"]
-WORKSPACES: Final = ("simple", "full")
-FIRST_RUN_WORKSPACE: Final = "simple"  # a settings file with no stored values at all (tests set it)
 KEYS: Final = (
     "busy",
     "read_only",
@@ -124,28 +121,6 @@ class Next:
             self.alternative_button,
             *(s.label for s in self.steps),
         )
-
-
-def default_workspace(has_stored_values: bool) -> str:
-    """Simple for a settings file that holds nothing yet; Full for one that does (people who
-    already use the editor keep what they have and can switch in the View menu)."""
-    return "full" if has_stored_values else FIRST_RUN_WORKSPACE
-
-
-def clean_workspace(value: object, fallback: str) -> str:
-    """A stored value as one of `WORKSPACES` (a hand-edited file may say anything)."""
-    text = str(value)
-    return text if text in WORKSPACES else fallback
-
-
-def workspace_key(key: str, workspace: str) -> str:
-    """The settings key for a part of the layout that is remembered per workspace. Full keeps the
-    key as it is (people who already use the editor lose nothing); Simple gets a key of its own
-    next to it: `ui/state` becomes `ui/simple/state`, `layout/ab12/area` `layout/ab12/simple/area`."""
-    if workspace != "simple":
-        return key
-    head, _, tail = key.rpartition("/")
-    return f"{head}/simple/{tail}" if head else f"simple/{tail}"
 
 
 def stage(f: NextInputs) -> str:

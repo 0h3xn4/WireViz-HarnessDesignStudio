@@ -34,11 +34,11 @@ def bare_project():
     return p
 
 
-def window(tmp_path, workspace: str | None = None):
+def window(tmp_path, role: str | None = None):
     win = make_window(tmp_path)
     win.ctl._install(bare_project(), None, None)
-    if workspace:
-        win.set_workspace(workspace)
+    if role:
+        win.set_role(role)
     QApplication.processEvents()
     return win
 
@@ -418,10 +418,10 @@ def test_connections_count_as_connected() -> None:
     assert "connector" in strings.NEXT_CONNECT_WHY
 
 
-def test_the_next_page_follows_the_connections_in_both_workspaces(tmp_path) -> None:
-    for workspace in ("simple", "full"):
-        win = window(tmp_path / workspace, workspace)
-        win.ctl.new_project(tmp_path / f"blank-{workspace}", "Blank")
+def test_the_next_page_follows_the_connections_in_both_roles(tmp_path) -> None:
+    for role in ("systems", "electrical"):
+        win = window(tmp_path / role, role)
+        win.ctl.new_project(tmp_path / f"blank-{role}", "Blank")
         a, b = win.ctl.add_unit("computer"), win.ctl.add_unit("power")
         QApplication.processEvents()
         page = win.next_page
@@ -435,12 +435,12 @@ def test_the_next_page_follows_the_connections_in_both_workspaces(tmp_path) -> N
         page.button.click()
         QApplication.processEvents()
         assert len(win.ctl.project.harnesses) == 1
-        assert page.key() == "check", (workspace, page.key())
+        assert page.key() == "check", (role, page.key())
         assert a and b
 
 
-def test_the_connect_tool_works_in_the_simple_workspace(tmp_path) -> None:
-    win = window(tmp_path, "simple")
+def test_the_connect_tool_works_in_the_systems_role(tmp_path) -> None:
+    win = window(tmp_path, "systems")
     seen: list[QDialog] = []
     DialogScript(win, seen.append, accept=False)
     win.act_connect_tool.trigger()

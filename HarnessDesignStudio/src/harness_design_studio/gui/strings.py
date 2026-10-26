@@ -68,6 +68,10 @@ TOUR_STEPS: list[tuple[str, str]] = [
         "generate",
         "Generate harnesses builds the harness plans from this diagram. You see a preview first, and one Undo takes it back.",
     ),
+    (
+        "role",
+        "The bar on the left lists the areas of the program. What it lists depends on your role: change the role any time in View > Role.",
+    ),
 ]
 
 PROPERTIES = "Properties"
@@ -2448,7 +2452,7 @@ INS_PART_TOOL_SET = "Set tool"
 INS_PART_TOOL_SET_TIP = "Save the crimp tool of this contact part"
 STEP_SET_PART_TOOL = "Set tool of {0}"
 
-# ---- 1.7.0 S1: the simple workspace, one next step (D-171) ---------------------------------------
+# ---- 1.7.0 S1: the one next step (D-171) ---------------------------------------
 AREA_NEXT = "Next step"
 AREA_NEXT_TIP = "Next step: what to do now, in plain words, with one button"
 NEXT_TITLE = "What to do next"
@@ -2467,7 +2471,12 @@ NEXT_STATE_BLOCKED = "not possible"
 NEXT_STEP_LINE = "{0}: {1}"
 NEXT_SHOW_EVERYTHING = "Show everything"
 NEXT_SHOW_EVERYTHING_TIP = (
-    "Switch to the full workspace, with every panel and tab. You can switch back in the View menu."
+    "Switch to the role Electrical / AIT engineer, which shows every area, panel and tab. "
+    "You can switch back in View > Role."
+)
+NEXT_LIBRARY = "Library…"
+NEXT_LIBRARY_TIP = (
+    "Open the library window (Ctrl+Shift+O): devices and subsystems your team has saved"
 )
 NEXT_BUSY_TITLE = "Working…"
 NEXT_BUSY_WHY = "Please wait. This takes a moment."
@@ -2519,16 +2528,7 @@ NEXT_BUTTON_TIPS = {
     "release": "Open the Revisions, where a harness is reviewed and released",
     "done": "Open the Outputs: the lists and the exported files",
 }
-WORKSPACE_SIMPLE = "Simple"
-WORKSPACE_FULL = "Full"
-WORKSPACE_SIMPLE_TIP = "Simple workspace: the project opens on the next step, in plain words"
-WORKSPACE_FULL_TIP = "Full workspace: the project opens on the diagram, with every panel and tab"
-SETTINGS_WORKSPACE = "Workspace"
-SETTINGS_WORKSPACE_HINT = (
-    "Simple opens a project on the next step to take. Full opens it on the diagram."
-)
-
-# ---- Simple workspace, stage S2: fewer things on screen (D-171) ----
+# ---- The Systems engineer role (the Simple workspace of 1.7.0, stage S2): fewer things on screen (D-171, D-176) ----
 A_SHOW_PANELS = "Show side panels"
 SHOW_PANELS_BUTTON = "Show panels"
 SHOW_PANELS_TIP = "Open or close the project tree and the properties together"
@@ -2562,7 +2562,7 @@ SETTINGS_PROBLEM_NOTICES = "Show problem notices"
 SETTINGS_PROBLEM_NOTICES_TIP = (
     "Show the Problems count, the status chips, the badges on the diagram and the out-of-date "
     "banner without being asked. Off: they stay hidden; the Check button and the Checks still work. "
-    "Each workspace remembers its own choice (Simple starts with them off)."
+    "Each role remembers its own choice (the Systems engineer starts with them off)."
 )
 EXPORT_SAVE_AS_FOLDER = (
     "Choose an empty folder to save the project in. The files are then exported next to it"
@@ -2947,3 +2947,34 @@ DV_COPIES_TIP = "Add the missing devices so that there are this many: the second
 DV_COPIES_SAME = "Raise the number to add copies"
 STEP_COPIES = "Make {} of {}"
 COPIES_DONE = "Added {}.{}"
+
+# ---- Workshop feedback M5 (D-176): the role replaces Simple and Full ----
+ROLE_SYSTEMS = "Systems engineer"
+ROLE_ELECTRICAL = "Electrical / AIT engineer"
+ROLE_SYSTEMS_TIP = (
+    "Systems engineer: devices, connections between devices, subsystems, the library and the "
+    "checks. The project opens on the next step and the screen shows less"
+)
+ROLE_ELECTRICAL_TIP = (
+    "Electrical / AIT engineer: connectors, pinouts, harnesses, wires, build sheets and tests. "
+    "Every area, panel and tab is shown and the project opens on the diagram"
+)
+M_ROLE = "Role"
+SETTINGS_ROLE = "Role"
+SETTINGS_ROLE_HINT = (
+    "Who you are working as. The Systems engineer sees less and starts on the next step; the "
+    "Electrical / AIT engineer sees every area. It only changes what is shown: nothing is "
+    "locked and nothing is stored in the project."
+)
+ROLE_DIALOG_TITLE = "Who are you working as?"
+ROLE_DIALOG_TEXT = "Pick the one that fits your work. It decides what the screen shows first."
+ROLE_DIALOG_SYSTEMS = "Systems engineer"
+ROLE_DIALOG_SYSTEMS_TEXT = (
+    "I think in devices, the connections between them, subsystems and the library."
+)
+ROLE_DIALOG_ELECTRICAL = "Electrical / AIT engineer"
+ROLE_DIALOG_ELECTRICAL_TEXT = (
+    "I work with connectors, pinouts, harnesses, wires, build sheets and tests."
+)
+ROLE_DIALOG_LATER = "You can change this later in View > Role."
+ROLE_DIALOG_NAME = "Choose your role"

@@ -6,8 +6,10 @@
 
 One big card (the step, one sentence, the one primary button), the six steps below it, each with an
 icon and a word for its state (never colour alone), and a small link-style button that switches the
-workspace to Full. It only shows and calls back: `actions` maps the key of a `Next` (and
-`new_harness`, `show_everything`) to a flow of the window. The logic is in `gui/next_step.py`.
+role to Electrical / AIT engineer, and one that opens the library (both for the Systems engineer
+role, whose rail has neither Home nor the detail areas). It only shows and calls back: `actions`
+maps the key of a `Next` (and `new_harness`, `show_everything`, `library`) to a flow of the window.
+The logic is in `gui/next_step.py`.
 """
 
 from collections.abc import Callable, Mapping
@@ -26,6 +28,7 @@ from PySide6.QtWidgets import (
 from harness_design_studio.gui import icons, strings
 from harness_design_studio.gui.next_step import Next, StepLine
 from harness_design_studio.gui.pages import _card, _page
+from harness_design_studio.gui.roles import SYSTEMS
 from harness_design_studio.gui.theme import ThemeManager
 
 ICON_PX = 16
@@ -150,14 +153,26 @@ class NextStepPage(QScrollArea):
             self.rows.append(r)
         column.addWidget(steps_card)
 
-        # the way out to the full workspace
+        # the library, and the way out to the Electrical / AIT engineer role (Systems engineer only)
+        self.links = QWidget()
+        links = QHBoxLayout(self.links)
+        links.setContentsMargins(0, 0, 0, 0)
+        self.library = QPushButton(strings.NEXT_LIBRARY)
+        self.library.setObjectName("next-library")
+        self.library.setProperty("ghost", True)
+        self.library.setAccessibleName(strings.NEXT_LIBRARY)
+        self.library.setToolTip(strings.NEXT_LIBRARY_TIP)
+        self.library.clicked.connect(lambda _c=False: self._call("library"))
         self.everything = QPushButton(strings.NEXT_SHOW_EVERYTHING)
         self.everything.setObjectName("next-everything")
         self.everything.setProperty("ghost", True)
         self.everything.setAccessibleName(strings.NEXT_SHOW_EVERYTHING)
         self.everything.setToolTip(strings.NEXT_SHOW_EVERYTHING_TIP)
         self.everything.clicked.connect(lambda _c=False: self._call("show_everything"))
-        column.addWidget(self.everything, 0, Qt.AlignmentFlag.AlignLeft)
+        links.addWidget(self.library)
+        links.addWidget(self.everything)
+        links.addStretch(1)
+        column.addWidget(self.links, 0, Qt.AlignmentFlag.AlignLeft)
         column.addStretch(1)
         self.show_next_placeholder()
 
@@ -174,9 +189,9 @@ class NextStepPage(QScrollArea):
         self.button.hide()
         self.alternative_row.hide()
 
-    def set_workspace(self, workspace: str) -> None:
-        """The link to the full workspace is for the simple one."""
-        self.everything.setVisible(workspace == "simple")
+    def set_role(self, role: str) -> None:
+        """The two links are for the Systems engineer role."""
+        self.links.setVisible(role == SYSTEMS)
 
     def shown(self) -> Next | None:
         return self._shown

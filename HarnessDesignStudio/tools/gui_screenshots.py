@@ -1,7 +1,7 @@
 # mypy: allow-untyped-calls, no-warn-unused-ignores
 """Render screenshots of the real Qt editor (offscreen) into docs/ux/qt for the docs and the UX review.
 Files 01 to 13 show the built-in sample; 14 and up show the views and dialogs of the editor on the
-flatsat example, in the Full workspace (project tree, Harness, Lists, Checks, Releases, engineering values, export, import
+flatsat example, as the Electrical / AIT engineer (project tree, Harness, Lists, Checks, Releases, engineering values, export, import
 wizard, release dialog, new project, stale banner). Usage: python -m tools.gui_screenshots"""
 
 import shutil
@@ -33,10 +33,10 @@ def main() -> int:
     settings = QSettings(str(Path(tempfile.mkdtemp()) / "ui.ini"), QSettings.Format.IniFormat)
     win = MainWindow(settings, ThemeManager(), first_run=False)
     win.ask_choice = lambda t, x, b: 1  # type: ignore[assignment]
-    win.set_workspace("full")  # an empty settings file opens the Simple workspace (1.7.0)
+    win.set_role("electrical")
     win.resize(1440, 900)
     win.show()
-    win.go_to("diagram")  # (a project opens on the Next step page in the Simple workspace)
+    win.go_to("diagram")  # (a project opens on the Next step page for the Systems engineer)
 
     def shot(name: str, widget: object = None) -> None:
         if widget is None:
@@ -177,7 +177,7 @@ def views() -> None:
     settings = QSettings(str(tmp / "ui.ini"), QSettings.Format.IniFormat)
     win = MainWindow(settings, ThemeManager(), first_run=False)
     win.ask_choice = lambda t, x, b: 1  # type: ignore[assignment]
-    win.set_workspace("full")
+    win.set_role("electrical")
     win.resize(1440, 900)
     win.show()
     assert win.open_project(tmp / "flatsat")
@@ -282,7 +282,7 @@ def wizard_and_release() -> None:
     parts = tmp / "my-templates" / "approved-parts.csv"
     settings = QSettings(str(tmp / "ui.ini"), QSettings.Format.IniFormat)
     win = MainWindow(settings, ThemeManager(), first_run=False)
-    win.set_workspace("full")
+    win.set_role("electrical")
     win.resize(1440, 900)
     win.show()
     assert win.open_project(tmp / "flatsat")

@@ -31,7 +31,7 @@ When you would rather say only *what* must be connected (an RS-422 link, a power
 
 - A project with two devices, and on each device the connector you want to join, with its pins named (a signal on each pin you use). Add the devices and connectors, and type the signal names, in the **Devices** tab ([define a device](define-a-device.md)), or load the pinouts from a spreadsheet ([define a device](define-a-device.md#take-the-pinout-from-a-spreadsheet)). A pin with no signal is never proposed and never asked about.
 - The example below is two devices: a computer `OBC` with the connector `OBC-J01` (pins 1 to 4 named `TX+`, `TX-`, `RX+`, `RX-`) and a reaction wheel `RW1` with `RW1-J02` (the same four names). The names are example data.
-- In the Simple workspace the tree and the inspector are closed; **Show panels** in the top bar opens them. The steps below work in both workspaces.
+- As a Systems engineer the tree and the inspector are closed; **Show panels** in the top bar opens them. The steps below work in both roles.
 
 ## 1. Link the connectors
 
