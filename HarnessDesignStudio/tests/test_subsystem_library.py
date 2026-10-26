@@ -5,6 +5,7 @@ damaged file named in words, files byte-identical while nothing of it is used.""
 
 import json
 import os
+import sys
 from pathlib import Path
 
 import pytest
@@ -295,7 +296,9 @@ def test_a_folder_that_cannot_be_used_says_why(tmp_path: Path):
     assert not scan.error and not scan.entries
 
 
-@pytest.mark.skipif(os.geteuid() == 0, reason="root can read every folder")
+@pytest.mark.skipif(
+    sys.platform == "win32" or os.geteuid() == 0, reason="root can read every folder"
+)
 def test_an_unreadable_folder_says_so(tmp_path: Path):
     locked = tmp_path / "locked"
     locked.mkdir()
@@ -364,7 +367,9 @@ def test_saving_needs_a_usable_folder_and_never_replaces_a_subsystem(project, tm
     assert ids == ["OBC", "PCDU", "RW1"]
 
 
-@pytest.mark.skipif(os.geteuid() == 0, reason="root can write everywhere")
+@pytest.mark.skipif(
+    sys.platform == "win32" or os.geteuid() == 0, reason="root can write everywhere"
+)
 def test_a_folder_that_cannot_be_written_says_so(project, tmp_path: Path):
     lib = tmp_path / "ro"
     lib.mkdir()
