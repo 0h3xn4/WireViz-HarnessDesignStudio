@@ -110,7 +110,7 @@ Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every sett
 
 - **Appearance**: **Theme** (*Follow the system*, *Light* or *Dark*), **Interface size** (100, 125, 150 or 200 %; it takes about a second to apply) and **Reduce motion**, which turns off the fades and slides of menus, lists and tooltips. The interface uses the bundled fonts Inter and JetBrains Mono.
 - **Editing**: **Workspace** (*Simple* or *Full*), **Mode** (*Guided* or *Expert*), **Snap devices to the grid**, **Show every link label** and **Show connectors on connections**.
-- **Project**: **Open the engineering values…**, the window of section 6.
+- **Project**: **Open the engineering values…**, the window of section 6, and the **Library folder** (after 1.7.0: **Choose…**, **Clear** and **Open the library…**; the folder that your team shares, see "The library" below).
 - **Keyboard shortcuts**: every key of the window, with a box **Filter the shortcuts…**. They are fixed and cannot be changed.
 - **About**: the version, the Python, Qt and PySide6 versions, and where your settings are kept. **Help > About** opens this section.
 - **Licences**: the fonts, the icons and Qt, with their licence texts.
@@ -151,6 +151,18 @@ Under it the notes about the connector, for example a signal that no interface t
 At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv` for this device; **Export pinout…** saves them as a CSV file or an Excel workbook.
 
 **Save to library…** writes the device with its connectors, pinouts, parts and interface types to a *device library file* (JSON; an existing file is added to), and **Add from library…** adds devices from such a file to this project (since 1.4.0). Nothing in the project is replaced: a taken ID gets the next free one (`GYRO1-2`), and a part or interface type the project already has stays as it is. Adding is one undo step.
+
+#### The library (after 1.7.0)
+
+The **library** is a folder that your team shares, on a shared drive or in a Git repository. It holds **device files** (the *device library file* above) and **subsystem files**: a subsystem is a set of devices with the connections between them, added to a project in one step. A blank project holds no subsystem. The program only reads the folder, never uses a network, and writes into it only when you press **Save**.
+
+- **File > Library folder…** (also **Settings > Project**) chooses the folder. It is a setting of you, on this computer.
+- **File > Library…** (Ctrl+Shift+O, also **Library…** on the Home page) opens the **library window**, a window of its own beside the editor that does not block it. On the left a search field (Ctrl+F) and a filter *Devices and subsystems / Devices / Subsystems* over the list; on the right a preview, the connectors and pins of a device or the devices and connections of a subsystem. **Refresh** (F5) reads the folder again. A folder that is missing or cannot be read, and a file that is damaged, are said in words in the window.
+- **Add to project** (or Enter in the list) adds the chosen device or subsystem as one undo step. Nothing of the project is replaced: a taken ID gets the next free one (`OBC-2`), a subsystem sets the subsystem of each device to its name and adds the connections between them, and it is all or nothing. **Number of these devices** beside it adds a device in that number (see below).
+- **Save selection to library…** saves the devices selected in the project, as devices or as a subsystem with a name and a description. A subsystem file is never replaced: a name that is taken is refused under the field. A connection with one end on a device that is not selected is left out, and the window says how many.
+- On the command line: `export-subsystem` and `import-subsystem` (section 10).
+
+**A number of the same device** (after 1.7.0). *Number of these devices* in the **Add device** window and in the **Devices** tab (with **Add copies**) says how many of a device the design has, in place of choosing a nominal and a redundant chain. Two are `ID` and `ID-R`, exactly what **Create redundant copy** makes (so a project does not change whichever way you did it); three add `ID-3`, and so on up to 10, each with the connectors of the device and its links mirrored where the other end has a free connector. It is one undo step. The number is counted from the devices that exist: it only grows, so to have fewer you delete a copy.
 
 #### Defining a device
 
@@ -305,6 +317,8 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio export-pinout DIR --device D [-o FILE]` | write one device's pinout (the rows of `system/box_pinouts.csv` for it) as CSV on the screen, or to a .csv or .xlsx file |
 | `harness-design-studio export-devices DIR FILE --device D [--device D2 ...]` | save devices with their connectors, pinouts, parts and interface types to a device library file (added to when it exists) |
 | `harness-design-studio import-devices DIR FILE [--device D] [--list] [--dry-run]` | add devices from a device library file; a taken ID gets the next free one, nothing in the project is replaced |
+| `harness-design-studio export-subsystem DIR FILE --device D [--device D2 ...] --name NAME [--description TEXT] [--replace]` | save devices and the connections between them as a subsystem library file (a file that exists is replaced only with `--replace`) |
+| `harness-design-studio import-subsystem DIR FILE [--show] [--dry-run]` | add a subsystem from a subsystem library file in one step: the devices (a taken ID gets the next free one) and their connections; all or nothing |
 
 A script that builds everything: `harness-design-studio check DIR`, `harness-design-studio generate DIR`, `harness-design-studio verify DIR`, `harness-design-studio drc DIR`, `harness-design-studio export DIR`. `harness-design-studio templates FOLDER` copies the templates, and `ci/build.sh` in that folder is this script.
 
@@ -359,6 +373,7 @@ The build data (last row) has no window: it is read with the command line (secti
 | Ctrl+N, Ctrl+O | new project, open project |
 | Ctrl+S, Ctrl+Shift+S | save, save as |
 | Ctrl+Shift+I | import interfaces from a table |
+| Ctrl+Shift+O | open the library window (after 1.7.0) |
 | Ctrl+Q | quit |
 | Ctrl+K | command palette (it floats over the window; Esc or a click elsewhere closes it): type a command, an ID or a name; every command of the menus is in it |
 | Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
@@ -399,6 +414,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | File | Save (Ctrl+S), Save as… (Ctrl+Shift+S) | saves the project; save as writes a copy to a new folder |
 | File | Import | Import interfaces… (Ctrl+Shift+I), Import approved parts…, Import segment lengths…, Import engineering values: ampacity table…, Import device pinout…, Import KiCad netlist…: the import wizard (section 12) |
 | File | Export… (Ctrl+E) | the Export outputs window (section 8) |
+| File | Library… (Ctrl+Shift+O), Library folder… | the library window and the choice of the library folder (section 4, "The library") |
 | File | Quit (Ctrl+Q) | closes the app |
 | Edit | Undo, Redo | steps back and forward through your changes |
 | Edit | Select all, Duplicate, Delete, Find in diagram | work on the selection; Duplicate copies a device with its connectors but not its links; Delete shows what else goes with it |

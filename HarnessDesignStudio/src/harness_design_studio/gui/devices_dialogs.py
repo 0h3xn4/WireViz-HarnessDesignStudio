@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import devices
+from harness_design_studio.core import copies, devices
 from harness_design_studio.core.device_library import DevicePlan, device_names, plan_device_import
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.errors import HarnessError
@@ -134,6 +134,13 @@ class NewDeviceDialog(_PlannerDialog):
         form.addRow(strings.NEWDEV_NAME, self.name)
         form.addRow(strings.NEWDEV_ID, self.device_id)
         form.addRow(strings.NEWDEV_SUBSYSTEM, self.subsystem)
+        self.number = QSpinBox()
+        self.number.setObjectName("new-device-number")
+        self.number.setAccessibleName(strings.NEWDEV_NUMBER)
+        self.number.setToolTip(strings.NEWDEV_NUMBER_TIP)
+        self.number.setRange(1, copies.MAX_DEVICES)
+        self.number.setValue(1)
+        form.addRow(strings.NEWDEV_NUMBER, self.number)
         self.lay.addLayout(form)
         note = QLabel(strings.NEWDEV_NOTE)
         note.setProperty("muted", True)
@@ -141,6 +148,7 @@ class NewDeviceDialog(_PlannerDialog):
         self.lay.addWidget(note)
         self.name.textChanged.connect(self._name_changed)
         self.device_id.textChanged.connect(self.revalidate)
+        self.number.valueChanged.connect(self.revalidate)
         self._finish(strings.NEWDEV_OK)
         self.name.setFocus()
 
@@ -158,9 +166,21 @@ class NewDeviceDialog(_PlannerDialog):
             "subsystem": self.subsystem.currentText().strip() or None,
         }
 
+    def count(self) -> int:
+        """The number of these devices (1: just the one)."""
+        return int(self.number.value())
+
     def check(self) -> str | None:
         v = self.values()
-        return devices.check_new_device(self.project, v["unit_id"], v["name"]) or None
+        problem = devices.check_new_device(self.project, v["unit_id"], v["name"])
+        if not problem and self.count() > 1:
+            taken = [
+                c for c in copies.copy_ids(v["unit_id"], self.count())
+                if c.casefold() in {u.casefold() for u in self.project.units}
+            ]  # fmt: skip
+            if taken:
+                return f"ID {taken[0]} is already used by another device."
+        return problem or None
 
 
 # ---- a new connector part ------------------------------------------------------------------------

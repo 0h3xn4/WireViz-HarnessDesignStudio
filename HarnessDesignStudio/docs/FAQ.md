@@ -36,6 +36,10 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **Can I give a pin a name for what it does, and put a label on a connector or a harness?** Yes, since 1.4.0. A pin has a free-text *function* (Devices tab, column *Function*; the pinout import reads a *Function* column). A box connector has a *Label* on its card in the Devices tab; the harness and its cable connectors have one in the *Labels* section of the **Edit wire** tab. `labels.csv` prints them; the pinout lists get *Function* and *Termination* columns only when a pin has one.
 
+**Where do the subsystems of my team go?** Into the library, a folder on a shared drive or in a Git repository that everybody chooses with **File > Library folder…** (after 1.7.0). A subsystem is a set of devices with the connections between them; **File > Library…** (Ctrl+Shift+O) adds it to a project in one undo step, and a blank project holds none ([use the library](user-manual/use-the-library.md)).
+
+**How do I ask for a redundant device?** Say how many of it there are: **Number of these devices** in the Add device window or the Devices tab (after 1.7.0). Two give `ID` and `ID-R`, three add `ID-3` ([use the library](user-manual/use-the-library.md#4-a-number-of-the-same-device)).
+
 **Can I reuse a device in another project?** Yes, since 1.4.0. In the **Devices** tab, **Save to library…** writes the device with its connectors, pinouts, parts and interface types to a device library file (JSON); **Add from library…** in the other project adds it, never replacing anything (a taken ID gets the next free one, `GYRO1-2`). On the command line: `export-devices` and `import-devices` ([define a device](user-manual/define-a-device.md#use-a-device-in-another-project)).
 
 **Can I load a parts list exported from InvenTree?** Yes, as a file: the parts import reads the `.csv`, `.tsv`, `.json` or `.xlsx` export of InvenTree (the `IPN` column becomes the part ID). There is no live connection to a server; the tool never uses the network. You still say what the approval values mean ([import data](user-manual/import-data.md)).

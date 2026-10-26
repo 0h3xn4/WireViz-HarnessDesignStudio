@@ -142,6 +142,8 @@ Define a device once and keep it in a **device library file**, a JSON file that 
 - Nothing in your project is replaced. If the ID is taken the device is added as `GYRO1-2`; a part or interface type that the project already has stays as it is, and the sentence says when the file's differs. Parts that come with the file keep the approval status the file says; the tool tells you when it is not *approved*, because the file's status is not a decision of your project.
 - On the command line: `harness-design-studio export-devices DIR FILE --device GYRO1` and `harness-design-studio import-devices DIR FILE --list`, then `--device GYRO1 --dry-run`, then without `--dry-run`.
 
+A whole folder of devices, and sets of devices with their connections (subsystems), are in the library window: [use the library](use-the-library.md).
+
 Then connect the device as usual and **Generate**.
 
 ## Change a device later

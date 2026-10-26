@@ -14,7 +14,7 @@ from pathlib import Path
 from pydantic import ValidationError
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from harness_design_studio.core import checks, devices, drc, edit, links
+from harness_design_studio.core import checks, copies, devices, drc, edit, links
 from harness_design_studio.core.commands import Delete, History, Op, Put, SetZones, apply_ops
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, SaveError, TransactionError
@@ -944,17 +944,46 @@ class EditorController(QObject):
         )
 
     # ---- devices: custom devices down to each pin (one undo step each, named) -------------------
-    def add_device(self, **fields: object) -> str | None:
-        """Add an empty device in a free slot and select it; returns its ID (None: refused)."""
+    def add_device(self, *, count: int = 1, **fields: object) -> str | None:
+        """Add an empty device in a free slot and select it; returns its ID (None: refused). With
+        `count` above 1 the device is made in that number (`core.copies`: ID, ID-R, ID-3 ...) in
+        the same undo step."""
         try:
             ops, uid = devices.ops_add_device(self.project, **fields)  # type: ignore[arg-type]
+            extra = ""
+            if count > 1:
+                more = copies.plan_copies(edit.clone_with(self.project, ops), uid, count)
+                ops += more.ops
+                extra = ", ".join(more.new_ids)
         except (HarnessError, ValidationError) as exc:
             self.message.emit(_plain(exc), False)
             return None
-        if not self.run(strings.STEP_ADD_DEVICE.format(uid), ops):
+        label = strings.STEP_ADD_DEVICE.format(uid)
+        if count > 1:
+            label = strings.STEP_COPIES.format(count, uid)
+        message = strings.COPIES_DONE.format(f"{uid}, {extra}", "") if extra else None
+        if not self.run(label, ops, message=message):
             return None
         self.select("unit", uid)
         return uid
+
+    def make_copies(self, unit_id: str, count: int) -> bool:
+        """Bring the number of these devices up to `count` (one undo step; `core.copies`)."""
+        try:
+            plan = copies.plan_copies(self.project, unit_id, count)
+        except HarnessError as exc:
+            self.message.emit(str(exc), False)
+            return False
+        extra = (
+            strings.REDUNDANT_SKIPPED.format(len(plan.skipped), ", ".join(plan.skipped))
+            if plan.skipped
+            else ""
+        )
+        return self.run(
+            strings.STEP_COPIES.format(count, unit_id),
+            plan.ops,
+            message=strings.COPIES_DONE.format(", ".join(plan.new_ids), extra),
+        )
 
     def update_device(self, unit_id: str, **changes: object) -> bool:
         return self.attempt(

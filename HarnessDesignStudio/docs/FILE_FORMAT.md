@@ -20,6 +20,7 @@ The screen says *device*, the files say *unit*: what the program shows as a devi
 - [Links and pin roles](#links-and-pin-roles-m2-schema-version-stays-1)
 - [Change control additions](#change-control-additions-review-release-baselines-change-log-schema-version-stays-1)
 - [Device library file](#device-library-file-140-not-part-of-a-project)
+- [Subsystem library file](#subsystem-library-file-m4-not-part-of-a-project)
 - [Editing files by hand: JSON Schemas](#editing-files-by-hand-json-schemas)
 
 ```
@@ -162,6 +163,39 @@ The editor and the data commands (`import-parts`, `config`; `library` only recor
 ## Device library file (1.4.0; not part of a project)
 
 A device library (`harness-device-library`, D-165) is one JSON file that is kept outside any project. Its top level is `format` (the text `harness-device-library`), `version` (1), `devices`, `parts` and `interface_types`. A device is `{"unit": {...}, "connectors": [...]}` with the same fields as a unit in `logical/units/<subsystem>.json` and a box connector in `physical/connectors/<subsystem>.json` of a project (box connectors only, every pin with its `signal`, `function`, `contact_size`, `termination`, `fixed` and, since 1.7.0, `contact_part`; the contact parts themselves are not in the file); `parts` and `interface_types` are the records of `library/<category>.json` and `logical/interface_types.json` that the connectors name. The zone of a unit and the allocations that generation made on a pin (`interface_id`, `locked`, a signal that was given for an interface) are left out. The file is written sorted by ID with two-space indent. A reader refuses a file of a higher `version`, a file over 8 MB, over 500 devices or over 64 connectors in a device. Importing never changes the project outside what the plan names; see `docs/user-manual/define-a-device.md`.
+
+## Subsystem library file (M4; not part of a project)
+
+A subsystem library (`harness-subsystem-library`, D-175) is one JSON file that holds **one subsystem**: a set of devices with the connections between them. It is kept outside any project, in the **library folder** that a team shares (a shared drive or a Git checkout) next to the device library files. The tool tells the two kinds apart by `format`; any other `.json` file in the folder is ignored. The top level is:
+
+| Field | Meaning |
+| --- | --- |
+| `format` | the text `harness-subsystem-library` |
+| `version` | `1`; a reader refuses a higher number and says so |
+| `name` | the name of the subsystem (1 to 200 characters, no control characters); it becomes the `subsystem` of every device that is added |
+| `description` | one or two lines for whoever finds it in the library (may be empty) |
+| `notes` | optional notes for whoever adds it |
+| `devices` | the devices, each `{"unit": {...}, "connectors": [...]}` exactly as in the [device library file](#device-library-file-140-not-part-of-a-project); at least one, at most 100 |
+| `parts`, `interface_types` | the records that the connectors of the devices name, as in the device library file |
+| `connections` | the links of `logical/links.json` between connectors of the devices: `{"id", "name", "a_connector", "b_connector", "pairs": [{"a_pin", "b_pin"}], "note"}`; at most 2000 |
+
+The connection ends are the **connector IDs of the file** (the `id` of a connector under `devices`), so a connection keeps its meaning when the devices get other IDs in a project: the planner maps the connector IDs of the file to the new ones. A connection with an end on a device that is not in the file is left out when the file is written, and a connection whose end is not a connector of the file makes the whole subsystem refuse to be added. `harness_id` is never written (a harness belongs to a project). The file is written with two-space indent and a final new line; a reader refuses a file over 8 MB.
+
+```
+{
+  "format": "harness-subsystem-library",
+  "version": 1,
+  "name": "Wheel drive",
+  "description": "OBC and a reaction wheel",
+  "notes": "",
+  "devices": [{"unit": {"id": "OBC", ...}, "connectors": [{"id": "OBC-J01", ...}]}, {"unit": {"id": "RW1", ...}, "connectors": [...]}],
+  "parts": [...],
+  "interface_types": [...],
+  "connections": [{"id": "L1", "a_connector": "OBC-J01", "b_connector": "RW1-J02", "pairs": [{"a_pin": "1", "b_pin": "1"}]}]
+}
+```
+
+Adding a subsystem (`plan_subsystem_import`, `import-subsystem`, the library window) adds the devices (a taken ID gets the next free one: `OBC` becomes `OBC-2`, and its connectors follow), sets `Unit.subsystem` of each to the `name`, adds the connections between the new connectors (a taken connection ID gets the next free `L<n>`), puts the devices in a free place of one lane, and does all of it as one undo step. It is all or nothing and never changes an object that the project has. The file name that the tool writes is `subsystem-<name made safe>.json`; the tool never replaces a file of that name. Nothing is added to a project file that does not use the library: no field of the model changed.
 
 ## Editing files by hand: JSON Schemas
 

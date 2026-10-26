@@ -97,6 +97,7 @@ Do this when the data exists; the tool works without it and says so.
 - **Build data** (strip lengths, the contact on each pin and its crimp tool, sleeving, heat shrink, labels and backshells): the fields in the app, or `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv` with `harness-design-studio import-build-data` (new in 1.7.0). The build workbook shows what you entered and marks the rest `to fill in`; nothing is computed from it. See [enter the build data](user-manual/enter-the-build-data.md).
 - **Engineering values** (derating, ampacity, EMC classes): [`CONFIG.md`](CONFIG.md). The files in `config-demo-values/` are **for learning only**; they stay marked as placeholders. Never copy demo values into a real design.
 - **Device connector pinouts from KiCad:** [`KICAD.md`](KICAD.md).
+- **A folder your team shares (after 1.7.0):** devices and subsystems (devices with their connections) live in a library folder on a shared drive or in a Git repository; choose it with **File > Library folder…**, open it with **File > Library…** and add what you need ([use the library](user-manual/use-the-library.md)). A blank project holds no subsystem.
 - **A device you defined before:** save it once with **Save to library…** in the Devices tab (or `harness-design-studio export-devices`) and add it to the next project with **Add from library…** ([define a device](user-manual/define-a-device.md#use-a-device-in-another-project)).
 
 **Done when:** `harness-design-studio config my-design` lists no missing value you are responsible for.

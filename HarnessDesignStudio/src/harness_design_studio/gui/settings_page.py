@@ -113,6 +113,9 @@ class SettingsPage(QWidget):
         set_problem_notices: Callable[[bool], None],
         set_connection_ends: Callable[[bool], None] = lambda _on: None,
         open_values: Callable[[], None],
+        choose_library_folder: Callable[[], None] = lambda: None,
+        clear_library_folder: Callable[[], None] = lambda: None,
+        open_library: Callable[[], None] = lambda: None,
         shortcut_rows: Callable[[], list[tuple[str, str]]],
         settings_file: str = "",
     ) -> None:
@@ -226,6 +229,39 @@ class SettingsPage(QWidget):
         self.values_btn.setAccessibleName(strings.SETTINGS_PROJECT_BUTTON.rstrip("…"))
         self.values_btn.clicked.connect(lambda _c=False: open_values())
         col.addWidget(self.values_btn, 0, Qt.AlignmentFlag.AlignLeft)
+        # the library folder (per person; the library window reads it)
+        library_title = QLabel(strings.SETTINGS_LIBRARY_FOLDER)
+        library_title.setProperty("heading", True)
+        col.addWidget(library_title)
+        col.addWidget(_muted(strings.SETTINGS_LIBRARY_TEXT))
+        self.library_path = QLineEdit()
+        self.library_path.setObjectName("settings-library-folder")
+        self.library_path.setAccessibleName(strings.SETTINGS_LIBRARY_FOLDER)
+        self.library_path.setToolTip(strings.LIB_FOLDER_TIP)
+        self.library_path.setReadOnly(True)
+        self.library_path.setPlaceholderText(strings.SETTINGS_LIBRARY_NONE)
+        mark_mono(self.library_path)
+        col.addWidget(self.library_path)
+        library_row = QHBoxLayout()
+        self.library_choose = QPushButton(strings.SETTINGS_LIBRARY_CHOOSE)
+        self.library_choose.setObjectName("settings-library-choose")
+        self.library_choose.setAccessibleName(strings.A_LIBRARY_FOLDER.rstrip("…"))
+        self.library_choose.setToolTip(strings.A_LIBRARY_FOLDER_TIP)
+        self.library_choose.clicked.connect(lambda _c=False: choose_library_folder())
+        self.library_clear = QPushButton(strings.SETTINGS_LIBRARY_CLEAR)
+        self.library_clear.setObjectName("settings-library-clear")
+        self.library_clear.setAccessibleName(strings.SETTINGS_LIBRARY_CLEAR)
+        self.library_clear.setToolTip(strings.SETTINGS_LIBRARY_CLEAR_TIP)
+        self.library_clear.clicked.connect(lambda _c=False: clear_library_folder())
+        self.library_open = QPushButton(strings.SETTINGS_LIBRARY_OPEN)
+        self.library_open.setObjectName("settings-library-open")
+        self.library_open.setAccessibleName(strings.SETTINGS_LIBRARY_OPEN.rstrip("…"))
+        self.library_open.setToolTip(strings.A_LIBRARY_TIP)
+        self.library_open.clicked.connect(lambda _c=False: open_library())
+        for b in (self.library_choose, self.library_clear, self.library_open):
+            library_row.addWidget(b)
+        library_row.addStretch(1)
+        col.addLayout(library_row)
         col.addStretch(1)
 
         # ---- shortcuts
@@ -358,6 +394,12 @@ class SettingsPage(QWidget):
         self.licence_text.setPlainText(licences.text_of(key))
 
     # ---- follow the window ----------------------------------------------------------------------
+    def show_library_folder(self, folder: str) -> None:
+        """Show the library folder the window uses ('' for none)."""
+        if self.library_path.text() != folder:
+            self.library_path.setText(folder)
+        self.library_clear.setEnabled(bool(folder))
+
     def sync(
         self,
         *,

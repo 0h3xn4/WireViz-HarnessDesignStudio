@@ -22,8 +22,8 @@ The examples show the form of each command with example names. They do not all w
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
 - Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export)
-- Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-build-data`](#harness-design-studio-import-build-data)
-- Write data out: [`export-pinout`](#harness-design-studio-export-pinout), [`export-devices`](#harness-design-studio-export-devices)
+- Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data)
+- Write data out: [`export-pinout`](#harness-design-studio-export-pinout), [`export-devices`](#harness-design-studio-export-devices), [`export-subsystem`](#harness-design-studio-export-subsystem)
 - Review, release and change: [`review`](#harness-design-studio-review), [`release`](#harness-design-studio-release), [`revise`](#harness-design-studio-revise), [`diff`](#harness-design-studio-diff), [`log`](#harness-design-studio-log), [`compare`](#harness-design-studio-compare)
 - Maintenance: [`migrate`](#harness-design-studio-migrate)
 
@@ -349,6 +349,26 @@ harness-design-studio import-devices my-design device-library.json --list
 harness-design-studio import-devices my-design device-library.json --device GYRO1 --dry-run
 ```
 
+### harness-design-studio import-subsystem
+
+Add the devices of a subsystem library file with their connectors and pinouts, and the connections between them, as one step. The subsystem of every added device becomes the name of the subsystem. Nothing of the project is replaced: a taken device ID gets the next free one (OBC1 becomes OBC1-2) and the connections follow. It is all or nothing: when one device or connection cannot be added, nothing is. Use --show to see what the file holds.
+
+`harness-design-studio import-subsystem project file [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | the project folder |
+| `file` | the file to read |
+| `--show` | show what the file holds and stop |
+| `--dry-run` | show the preview only |
+
+Examples:
+
+```
+harness-design-studio import-subsystem my-design wheel-drive.json --show
+harness-design-studio import-subsystem my-design wheel-drive.json --dry-run
+```
+
 ### harness-design-studio import-build-data
 
 Import the build data of a technician from a table. The kind is told by the column headings (any case; other columns are ignored): strip lengths (Wire, Strip A (mm), Strip B (mm); Harness is optional while the wire ID is unique), pin contacts (Harness, Connector, Pin, Contact; Tool is optional and sets the crimp tool of that contact part), accessories (Harness, Kind, Part, Target, Position, Length (mm), Quantity, Note; ID is optional, else they are numbered ACC-001 ...) or part tools (Part, Tool). An empty cell leaves the value as it is. A pin of a harness made by Generate takes its contact from the device's pin (Devices tab) and refuses the row. The preview lists every row; a row with a problem stops the whole import and nothing is changed. Templates: strip-lengths.csv, pin-contacts.csv and accessories.csv (harness-design-studio templates FOLDER).
@@ -407,6 +427,28 @@ Examples:
 ```
 harness-design-studio export-devices my-design device-library.json --device GYRO1
 harness-design-studio export-devices my-design device-library.json --device OBC1 --device PCU1
+```
+
+### harness-design-studio export-subsystem
+
+Write devices with their connectors and pinouts, and the connections between them, to a subsystem library file (JSON), so the set can be added to another project in one step. A connection with an end on a device that is not chosen is left out. A file that exists is never replaced unless you say --replace.
+
+`harness-design-studio export-subsystem project file [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | the project folder |
+| `file` | the subsystem library file to write |
+| `--device, --unit DEVICE` | a device of the subsystem, for example OBC1 (repeat for more; --unit is the older name) (repeatable) |
+| `--name NAME` | the name of the subsystem |
+| `--description DESCRIPTION` | what the subsystem is (optional) (default ) |
+| `--notes NOTES` | notes for whoever adds it (optional) (default ) |
+| `--replace` | replace the file when it exists |
+
+Examples:
+
+```
+harness-design-studio export-subsystem my-design wheel-drive.json --device OBC1 --device RW1 --name "Wheel drive"
 ```
 
 ## Review, release and change

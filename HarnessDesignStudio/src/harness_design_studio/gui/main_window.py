@@ -128,6 +128,8 @@ from harness_design_studio.gui.import_wizard import ImportWizard
 from harness_design_studio.gui.inspector import Inspector
 from harness_design_studio.gui.interface_table import InterfaceTable
 from harness_design_studio.gui.jobs import JobStatus
+from harness_design_studio.gui.library_window import SETTINGS_FOLDER as LIBRARY_FOLDER_KEY
+from harness_design_studio.gui.library_window import LibraryWindow
 from harness_design_studio.gui.link_dialog import CreateHarnessDialog, LinkDialog, harness_preview
 from harness_design_studio.gui.lists_panel import ListsPanel
 from harness_design_studio.gui.new_project_dialog import (
@@ -468,6 +470,7 @@ class MainWindow(QMainWindow):
         self._area = areas.DEFAULT
         self._switching_area = False
         self.examples_folder: Callable[[], Path] = self._examples_folder  # (tests replace it)
+        self.library_window: LibraryWindow | None = None  # made when first opened
         self._recent_shown: list[recent.RecentEntry] | None = None
         self._active_worker: PlanWorker | OutputsWorker | ArrangeWorker | None = None
         self._last_check = ""
@@ -679,6 +682,7 @@ class MainWindow(QMainWindow):
             open_=lambda: self.act_open.trigger(),
             example=lambda: self.act_new_example.trigger(),
             sample=lambda: self.act_sample.trigger(),
+            library=lambda: self.open_library_flow(),
             open_recent=lambda path: self.open_recent_flow(path),
             forget_recent=lambda path: self.forget_recent(path),
             open_example=lambda name: self.open_example_flow(name),
@@ -711,6 +715,9 @@ class MainWindow(QMainWindow):
             set_connection_ends=lambda on: self._set_checked(self.act_connection_ends, on),
             set_problem_notices=lambda on: self._set_checked(self.act_problem_notices, on),
             open_values=lambda: self.values_flow(),
+            choose_library_folder=lambda: self.choose_library_folder_flow(),
+            clear_library_folder=lambda: self.set_library_folder(""),
+            open_library=lambda: self.open_library_flow(),
             shortcut_rows=self.shortcut_rows,
             settings_file=self.settings.fileName(),
         )
@@ -1325,7 +1332,7 @@ class MainWindow(QMainWindow):
         dlg = NewDeviceDialog(self, self.theme, self.ctl.project)
         if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
             return
-        uid = self.ctl.add_device(**dlg.values())
+        uid = self.ctl.add_device(count=dlg.count(), **dlg.values())
         if uid is None:
             return
         self.go_to("devices")
@@ -1447,6 +1454,41 @@ class MainWindow(QMainWindow):
             return
         self.toasts.show_message(strings.DV_LIB_SAVED.format(unit_id, target.name), None)
 
+    # ---- the library window and its folder (workshop M4, D-175) -------------------------------------
+    def library_folder(self) -> str:
+        """The library folder of this person ('' while none is chosen); kept in the settings."""
+        return str(self.settings.value(LIBRARY_FOLDER_KEY, "") or "")
+
+    def set_library_folder(self, folder: str) -> None:
+        """Use this folder as the library ('' for none): stored, shown on the Settings page and read
+        by the library window if it is open. Nothing is written into the folder."""
+        folder = folder.strip()
+        if folder:
+            self.settings.setValue(LIBRARY_FOLDER_KEY, folder)
+        else:
+            self.settings.remove(LIBRARY_FOLDER_KEY)
+        self.settings_page.show_library_folder(folder)
+        if self.library_window is not None:
+            self.library_window.set_folder(folder)
+
+    def choose_library_folder_flow(self) -> None:
+        """File > Library folder…: ask for the folder and use it."""
+        path = self.ask_folder(strings.LIB_FOLDER_TITLE)
+        if path:
+            self.set_library_folder(path)
+
+    def open_library_flow(self) -> None:
+        """File > Library… (Ctrl+Shift+O): the library window, beside the editor, not modal."""
+        win = self.library_window
+        if win is None:
+            win = LibraryWindow(self.ctl, self.theme, self.settings, self)
+            win.run_dialog = lambda dlg: self.run_dialog(dlg)
+            win.folderChangeRequested.connect(self.choose_library_folder_flow)
+            self.library_window = win
+        win.show()
+        win.raise_()
+        win.activateWindow()
+
     def add_from_library_flow(self) -> None:
         """ "Add from library…" of the Devices tab: choose a file, tick the devices, add them as
         one undo step."""
@@ -1536,6 +1578,14 @@ class MainWindow(QMainWindow):
         self.act_import = a(
             strings.A_IMPORT, self.import_interfaces_flow, "Ctrl+Shift+I", name="act-import"
         )
+        self.act_library = a(
+            strings.A_LIBRARY, self.open_library_flow, "Ctrl+Shift+O", name="act-library"
+        )
+        self.act_library.setToolTip(strings.A_LIBRARY_TIP)
+        self.act_library_folder = a(
+            strings.A_LIBRARY_FOLDER, self.choose_library_folder_flow, name="act-library-folder"
+        )
+        self.act_library_folder.setToolTip(strings.A_LIBRARY_FOLDER_TIP)
         self.act_quit = a(strings.A_QUIT, self._quit, "Ctrl+Q", name="act-quit")
         self.act_undo = a(strings.UNDO, self.ctl.undo, "Ctrl+Z", name="act-undo")
         self.act_redo = a(strings.REDO, self.ctl.redo, "Ctrl+Y", name="act-redo")
@@ -1910,6 +1960,9 @@ class MainWindow(QMainWindow):
         for act in self.import_actions.values():
             self.menu_import.addAction(act)
         f.addAction(self.act_export)
+        f.addSeparator()
+        f.addAction(self.act_library)
+        f.addAction(self.act_library_folder)
         f.addSeparator()
         f.addAction(self.act_quit)
         e = mb.addMenu(strings.M_EDIT)
@@ -4094,6 +4147,8 @@ class MainWindow(QMainWindow):
         if not self._confirm_discard():
             event.ignore()
             return
+        if self.library_window is not None:
+            self.library_window.close()  # keeps its own size and place, ends its helper thread
         self.ctl.release()
         self._save_settings()
         event.accept()
@@ -4377,6 +4432,7 @@ class MainWindow(QMainWindow):
             connection_ends=self.act_connection_ends.isChecked(),
             problem_notices=self.act_problem_notices.isChecked(),
         )
+        self.settings_page.show_library_folder(self.library_folder())
 
     def shortcut_rows(self) -> list[tuple[str, str]]:
         """Every action of the window that has a key: (name, key), by name."""

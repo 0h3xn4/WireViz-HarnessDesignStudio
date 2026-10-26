@@ -37,6 +37,7 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMenu,
     QPushButton,
+    QSpinBox,
     QSplitter,
     QStackedWidget,
     QToolButton,
@@ -44,8 +45,9 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import devices, edit
+from harness_design_studio.core import copies, devices, edit
 from harness_design_studio.core.edit import EditError
+from harness_design_studio.core.model import Project
 from harness_design_studio.core.outputs import exports
 from harness_design_studio.core.outputs.stamp import Table, csv_bytes, stamp_of
 from harness_design_studio.core.vcs.lockview import field_lock_reason
@@ -381,12 +383,28 @@ class DevicesView(QWidget):
             self.lib_add_btn, "unit", theme, strings.DV_LIB_ADD_TIP, text=strings.DV_LIB_ADD
         )
         self.lib_add_btn.clicked.connect(self.addFromLibraryRequested.emit)
+        self.number = QSpinBox()
+        self.number.setObjectName("devices-number")
+        self.number.setAccessibleName(strings.DV_NUMBER)
+        self.number.setToolTip(strings.DV_NUMBER_TIP)
+        self.number.setRange(1, copies.MAX_DEVICES)
+        self.number.valueChanged.connect(self._number_changed)
+        self.copies_btn = QPushButton()
+        self.copies_btn.setObjectName("devices-copies")
+        icon_button(self.copies_btn, "plus", theme, strings.DV_COPIES_TIP, text=strings.DV_COPIES)
+        self.copies_btn.clicked.connect(self._make_copies)
         row2.addWidget(self.counts, 1)
         row2.addWidget(self.lib_add_btn)
         row2.addWidget(self.lib_save_btn)
         row2.addWidget(self.duplicate_btn)
         row2.addWidget(self.export_btn)
         box.addLayout(row2)
+        row3 = QHBoxLayout()  # the number of these devices (a row of its own keeps the tab narrow)
+        row3.addWidget(QLabel(strings.DV_NUMBER))
+        row3.addWidget(self.number)
+        row3.addWidget(self.copies_btn)
+        row3.addStretch(1)
+        box.addLayout(row3)
         return box
 
     def _build_banner(self, theme: ThemeManager) -> None:
@@ -950,6 +968,7 @@ class DevicesView(QWidget):
             )
         )
         self.duplicate_btn.setEnabled(not ro)
+        self._show_number(p, uid, ro)
         self._banner_for(state)
         self._fill_parts()
         self.part_picker.setEnabled(not ro)
@@ -994,6 +1013,35 @@ class DevicesView(QWidget):
         self.preview_model.set_rows([tuple(r) for r in body])
         self.export_btn.setEnabled(bool(body))
         self._show_connector(problems.get(self._cid or "", []))
+
+    def _show_number(self, p: Project, uid: str, ro: bool) -> None:
+        """The number of these devices the project has; a copy has none of its own."""
+        have = copies.device_count(p, uid)
+        is_copy = copies.is_copy(p, uid)
+        self.number.blockSignals(True)
+        try:
+            if not self.number.hasFocus() or is_copy:
+                self.number.setValue(max(1, have))
+        finally:
+            self.number.blockSignals(False)
+        self.number.setEnabled(not ro and not is_copy)
+        self.number.setToolTip(strings.DV_NUMBER_COPY if is_copy else strings.DV_NUMBER_TIP)
+        self._number_changed()
+
+    def _number_changed(self, _value: int = 0) -> None:
+        p = self.ctl.project
+        uid = self._unit
+        if uid is None or uid not in p.units:
+            self.copies_btn.setEnabled(False)
+            return
+        more = self.number.value() > copies.device_count(p, uid)
+        self.copies_btn.setEnabled(more and self.number.isEnabled() and not self.ctl.read_only)
+        self.copies_btn.setToolTip(strings.DV_COPIES_TIP if more else strings.DV_COPIES_SAME)
+
+    def _make_copies(self) -> None:
+        uid = self._unit
+        if uid is not None and self.ctl.make_copies(uid, self.number.value()):
+            self._show_number(self.ctl.project, uid, self.ctl.read_only)
 
     def _fill_subsystems(self, current: str) -> None:
         names = sorted({u.subsystem for u in self.ctl.project.units.values()} | {current})

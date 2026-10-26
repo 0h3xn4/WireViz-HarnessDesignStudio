@@ -396,6 +396,7 @@ There are two more ways in. One starts from the pins: name the pins of two devic
 | to try a large system with redundancy | `harness-design-studio new sat --template small-satellite`, then generate it |
 | to see a complete bench setup with ground equipment | `harness-design-studio new bench --template flatsat`, then [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md) |
 | to plan a design on paper first | `design-worksheet.md` in the templates (`harness-design-studio templates my-templates`) |
+| to keep devices and subsystems in a folder your team shares (after 1.7.0) | [`user-manual/use-the-library.md`](user-manual/use-the-library.md) |
 | something went wrong | [`FAQ.md`](FAQ.md) |
 | what the examples and templates contain | [`../src/harness_design_studio/resources/examples/templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) |
 

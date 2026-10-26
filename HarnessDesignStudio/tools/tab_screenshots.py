@@ -21,12 +21,16 @@ window Link connectors with the pairs proposed by signal name for the computer a
 wheel) and `connections-diagram.png` (two connections on the diagram, the Connections group in
 the project tree). Since milestone M3: `edit-all-wires-window.png` (the window Edit all wires, a
 gauge and a colour typed) and `connections-ends.png` (a connection in the Guided mode with the
-connector boxes at its ends). The time of the last check, which the status bar shows, is cleared
+connector boxes at its ends). Since milestone M4: `library-window.png` (the library window with a
+subsystem chosen) and `library-save-window.png` (the window Save to library with a name typed).
+The time of the last check, which the status bar shows, is cleared
 before each picture. Usage:
 
     QT_QPA_PLATFORM=offscreen python -m tools.tab_screenshots [OUTPUT_FOLDER]   (default: docs/img)
     QT_QPA_PLATFORM=offscreen python -m tools.tab_screenshots [OUTPUT_FOLDER] editing
         (only connectors-tab.png, which has the Edit connector section now, and the two M3 pictures)
+    QT_QPA_PLATFORM=offscreen python -m tools.tab_screenshots [OUTPUT_FOLDER] library
+        (only the two library pictures)
 """
 
 from __future__ import annotations
@@ -41,8 +45,10 @@ from PySide6.QtCore import QItemSelectionModel, QPoint
 from PySide6.QtWidgets import QApplication, QMenu
 
 from harness_design_studio.core.build_data import plan_set_accessory
-from harness_design_studio.core.commands import Op, Put
+from harness_design_studio.core.commands import Op, Put, apply_ops
 from harness_design_studio.core.generate.engine import plan_generation
+from harness_design_studio.core.library_folder import save_devices, save_subsystem
+from harness_design_studio.core.links import plan_add_link
 from harness_design_studio.core.manual_harness import (
     plan_add_connector,
     plan_new_harness,
@@ -53,6 +59,7 @@ from harness_design_studio.core.samples import mini3
 from harness_design_studio.core.wires import plan_add_wire
 from harness_design_studio.gui.devices_dialogs import NewDeviceDialog
 from harness_design_studio.gui.harness_edit_dialogs import BulkWireDialog
+from harness_design_studio.gui.library_window import SaveToLibraryDialog
 from harness_design_studio.gui.link_dialog import LinkDialog
 from harness_design_studio.gui.main_window import MainWindow
 from tools import ui_screenshots as shots
@@ -66,6 +73,10 @@ WIRE_ROW = 2  # a wire of the first harness that has a gauge, a type and a colou
 def main(out: Path = DEFAULT_OUT, only: str = "") -> int:
     _ = QApplication.instance() or QApplication([])
     out.mkdir(parents=True, exist_ok=True)
+    if only == "library":
+        _library_pictures(out)
+        print(f"wrote the pictures of the library to {out}")
+        return 0
     if only == "editing":
         win = _window("harness-tab-shots", "flatsat", "simple", (WIDTH, HEIGHT))
         _by_hand(win, out)
@@ -102,6 +113,7 @@ def main(out: Path = DEFAULT_OUT, only: str = "") -> int:
     _workshop_pictures(out)
     _connection_pictures(out)
     _editing_pictures(out)
+    _library_pictures(out)
     print(f"wrote the pictures of the tabs, workspaces and windows to {out}")
     return 0
 
@@ -314,6 +326,55 @@ def _editing_pictures(out: Path) -> None:
     win.ctl.select_link("L1")
     shots._wait(500)
     _save(win, out / "connections-ends.png")
+    win.close()
+
+
+def _library_pictures(out: Path) -> None:
+    """The library window on a folder with two devices and a subsystem (the subsystem chosen), and
+    the window Save to library with the computer and the reaction wheel selected."""
+    folder = Path(tempfile.gettempdir()) / "harness-library"
+    shutil.rmtree(folder, ignore_errors=True)
+    folder.mkdir(parents=True)
+    source = _pinout_project()
+    ops, _ = plan_add_link(
+        source, "OBC-J01", "RW1-J02", [("1", "3"), ("2", "4"), ("3", "1"), ("4", "2")]
+    )
+    apply_ops(source, ops)
+    ops, _ = plan_add_link(source, "PCDU-J01", "RW1-J01", [("1", "1"), ("2", "2")])
+    apply_ops(source, ops)
+    save_devices(folder, source, ["PCDU"])
+    save_devices(folder, source, ["RW1"])
+    save_subsystem(
+        folder,
+        source,
+        ["OBC", "RW1", "PCDU"],
+        "Wheel drive",
+        "The computer, the power unit and a reaction wheel, with the two connections between them",
+    )  # noqa: E501
+    win = _window("harness-library", "blank", "full", MAIN)
+    win.set_library_folder(str(folder))
+    win.open_library_flow()
+    lib = win.library_window
+    if lib is None:
+        raise RuntimeError("the library window did not open")
+    lib.resize(1160, 600)
+    lib.jobs.wait_idle()
+    sub = next(e for e in lib._shown if e.kind == "subsystem")
+    lib.select_entry(sub.key)
+    lib.jobs.wait_idle()
+    shots._wait(500)
+    _save(lib, out / "library-window.png")
+    lib.close()
+    win.ctl._install(source, None, None)
+    win.ctl.select_many([("unit", "OBC"), ("unit", "RW1"), ("unit", "PCDU")])
+    dlg = SaveToLibraryDialog(win, win.theme, source, ["OBC", "RW1", "PCDU"], str(folder))
+    dlg.show()
+    dlg.name.setText("Wheel drive 2")
+    dlg.description.setText("The same three devices, saved again under another name")
+    dlg.resize(max(dlg.width(), 560), dlg.sizeHint().height())
+    shots._wait(500)
+    _save(dlg, out / "library-save-window.png")
+    dlg.close()
     win.close()
 
 

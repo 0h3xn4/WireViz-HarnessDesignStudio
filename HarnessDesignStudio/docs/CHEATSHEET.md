@@ -30,6 +30,7 @@ The command line cannot add devices or interfaces. The loop works on a project t
 | a device's pins from a table | `harness-design-studio import-pinout DIR gyro.csv --device GYRO1 --new-device "Gyro unit" --default-part MY-HD-9-F --dry-run` |
 | a device's pinout as a file | `harness-design-studio export-pinout DIR --device GYRO1 -o gyro.xlsx` |
 | a device from another project (a device library file) | `harness-design-studio import-devices DIR devices.json --list`, then `--device GYRO1 --dry-run` |
+| a subsystem (devices and their connections) to keep for other projects (after 1.7.0) | `harness-design-studio export-subsystem DIR wheel-drive.json --device OBC1 --device RW1 --name "Wheel drive"`; added with `import-subsystem DIR wheel-drive.json --dry-run` or **File > Library…** (Ctrl+Shift+O) |
 | a device to keep for other projects | `harness-design-studio export-devices DIR devices.json --device GYRO1` (or **Save to library…** in the Devices tab) |
 | strip lengths, pin contacts, accessories or crimp tools (new in 1.7.0) | `harness-design-studio import-build-data DIR strip-lengths.csv --dry-run` (the kind is read from the headings; templates `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv`) |
 | engineering values | edit `config/*.json`, see [`CONFIG.md`](CONFIG.md); `harness-design-studio config DIR` lists what is missing |
@@ -85,6 +86,7 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 | Ctrl+A, Ctrl+D, Ctrl+F | select all, duplicate, find (in the diagram) |
 | C, Esc | start the Connect tool (click two devices to link their connectors), back to Select (Esc also clears the selection) |
 | Ctrl+Shift+K | Link connectors… (join two connectors pin by pin) |
+| Ctrl+Shift+O | Library… (the library window: devices and subsystems of your team's folder) |
 | Tab, Enter or Space | move between devices and links, select |
 | Shift+arrows | move the selected device |
 | Delete | delete the selected item (after showing what it affects) |

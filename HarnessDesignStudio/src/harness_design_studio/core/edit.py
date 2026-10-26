@@ -737,8 +737,10 @@ def ops_confirm_interface(project: Project, interface_id: str) -> list[Op]:
     return [Put("interfaces", evolve(i, endpoints=[evolve(e, auto=False) for e in i.endpoints]))]
 
 
-def twin_id(unit_id: str) -> str:
-    return f"{unit_id}-R"
+def twin_id(unit_id: str, suffix: str = "R") -> str:
+    """The ID of a copy: `-R` for the redundant twin (the second device of a pair), `-3`, `-4` ...
+    for further copies (see `core.copies`)."""
+    return f"{unit_id}-{suffix}"
 
 
 @dataclass(frozen=True)
@@ -748,17 +750,19 @@ class RedundantCopy:
     skipped: tuple[str, ...]  # interfaces that could not be mirrored (no free connector)
 
 
-def ops_redundant_copy(project: Project, unit_id: str) -> RedundantCopy:
-    """Copy a nominal unit as its redundant twin and mirror its interfaces (names end in -R)."""
+def ops_redundant_copy(project: Project, unit_id: str, suffix: str = "R") -> RedundantCopy:
+    """Copy a nominal unit as its redundant twin and mirror its interfaces (names end in -R).
+    `suffix` is `R` for the twin; `core.copies` passes `3`, `4` ... for the further copies of a
+    device that is made in a number (the copy then ends in that number, and so do its links)."""
     unit = project.units.get(unit_id)
     if unit is None:
         raise EditError(f"Device '{unit_id}' does not exist.")
     if unit.side == "redundant":
         raise EditError(f"{unit_id} is already on the redundant chain.")
-    tid = twin_id(unit_id)
+    tid = twin_id(unit_id, suffix)
     if tid.casefold() in _taken(set(project.units)):
         raise EditError(f"{unit_id} already has a redundant copy ({tid}).")
-    ops = _twin_unit_ops(project, unit)
+    ops = _twin_unit_ops(project, unit, suffix)
     # Work on a scratch view so mirrored interfaces see the twin's connectors.
     scratch = clone_with(project, ops)
     skipped: list[str] = []
@@ -769,14 +773,16 @@ def ops_redundant_copy(project: Project, unit_id: str) -> RedundantCopy:
         if other is None:
             continue
         other_twin = (
-            twin_id(other.unit_id) if twin_id(other.unit_id) in scratch.units else other.unit_id
+            twin_id(other.unit_id, suffix)
+            if twin_id(other.unit_id, suffix) in scratch.units
+            else other.unit_id
         )
         mine = next(e for e in i.endpoints if e.unit_id == unit_id)
         from_a = i.endpoints[0].unit_id == unit_id
         f_unit, t_unit = (tid, other_twin) if from_a else (other_twin, tid)
         f_conn = _twin_connector(mine, tid) if from_a else None
         t_conn = None if from_a else _twin_connector(mine, tid)
-        iid = f"{i.id}-R"
+        iid = f"{i.id}-{suffix}"
         try:
             new_ops, _ = ops_add_interface(
                 scratch,
@@ -804,8 +810,8 @@ def _twin_connector(endpoint: Endpoint, tid: str) -> str | None:
     return f"{tid}-{suffix}"
 
 
-def _twin_unit_ops(project: Project, unit: Unit) -> list[Op]:
-    tid = twin_id(unit.id)
+def _twin_unit_ops(project: Project, unit: Unit, suffix: str = "R") -> list[Op]:
+    tid = twin_id(unit.id, suffix)
     lane = lane_index_of_x(project, position_of(project, unit.id)[0])
     zones = effective_zones(project)
     target_zone = (
@@ -815,7 +821,7 @@ def _twin_unit_ops(project: Project, unit: Unit) -> list[Op]:
     twin = evolve(
         unit,
         id=tid,
-        name=f"{unit.name} (redundant)",
+        name=f"{unit.name} (redundant)" if suffix == "R" else f"{unit.name} (copy {suffix})",
         side="redundant",
         zone=zone_of_x(project, x) or None,
     )

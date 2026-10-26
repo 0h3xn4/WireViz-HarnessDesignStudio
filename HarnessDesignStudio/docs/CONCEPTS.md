@@ -51,7 +51,9 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 | **Accessory** | Something on a harness besides its wires and connectors: sleeving, heat shrink, a label, a backshell. It says what it goes on, where (in words), how long and how many (new in 1.7.0). | `ACC-001`: sleeving on `W001-001` |
 | **Segment** | A stretch of the physical route a bundle follows; wire lengths are sums of segments. | `W001-L1` |
 | **Zone** | A lane of the diagram (a panel or compartment). Devices sit in zones. | `panel-A`, `panel-B` |
-| **Nominal / redundant** | The main chain of devices and its backup. They never share a connector or harness. | `PCDU1` and `PCDU1-R` |
+| **Nominal / redundant** | The main chain of devices and its backup. They never share a connector or harness. Since the library milestone you can simply say **how many** of a device there are (*Number of these devices*): two give `PCDU1` and `PCDU1-R`, three add `PCDU1-3`. | `PCDU1` and `PCDU1-R` |
+| **Subsystem** | A set of devices with the connections between them, kept in the **library** and added to a project in one step. In a project the *subsystem* of a device is a name that groups devices; a blank project has none. After 1.7.0. | the subsystem *Wheel drive*: `OBC` and `RW1` with their connection |
+| **Library** | A folder that your team shares (a drive or a Git checkout) with device files and subsystem files. You choose it in **File > Library folder…**, look at it in **File > Library…**, and the program only reads it until you press *Save to library*. After 1.7.0. See [use the library](user-manual/use-the-library.md). | `/mnt/team/harness-library` |
 
 ## The standards the tool starts from
 
@@ -165,5 +167,6 @@ Files are written in a fixed format, so two people editing different parts of a 
 - **Released (locked)**: a harness that can no longer be edited; start a new revision.
 - **DRC**: design rule check, the background rules listed in [`RULES.md`](RULES.md).
 - **Fixed pin**: a pin whose signal is defined by the device itself (imported from KiCad); generation never moves it.
+- **Library**: the folder of device files and subsystem files that a team shares; see [use the library](user-manual/use-the-library.md).
 
 Next: do it yourself in [`GETTING_STARTED.md`](GETTING_STARTED.md).

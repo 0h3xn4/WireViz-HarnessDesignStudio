@@ -22,8 +22,10 @@
 - [16. A harness from nothing, and a blank project that says where to start (versions 1.5.0 and 1.6.0)](#16-a-harness-from-nothing-and-a-blank-project-that-says-where-to-start-versions-150-and-160)
 - [17. Build sheets, build data and the simple workspace (version 1.7.0)](#17-build-sheets-build-data-and-the-simple-workspace-version-170)
 - [18. Connections between connectors (after 1.7.0, not released)](#18-connections-between-connectors-after-170-not-released)
+- [19. Editing connectors and harnesses (after 1.7.0, not released)](#19-editing-connectors-and-harnesses-after-170-not-released)
+- [20. The library (after 1.7.0, not released)](#20-the-library-after-170-not-released)
 
-Status: **approved by the owner; the Qt editor is implemented (section 12), was rebuilt in October 2026 (section 13) and again for version 1.3.0 (section 14), and gained the editing features of versions 1.4.0 to 1.6.0 (sections 15 and 16) the build data and the simple workspace of version 1.7.0 (section 17) and, after 1.7.0 and not released, the connections between connectors (section 18).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
+Status: **approved by the owner; the Qt editor is implemented (section 12), was rebuilt in October 2026 (section 13) and again for version 1.3.0 (section 14), and gained the editing features of versions 1.4.0 to 1.6.0 (sections 15 and 16) the build data and the simple workspace of version 1.7.0 (section 17) and, after 1.7.0 and not released, the connections between connectors (section 18), the editing of connectors and harnesses (section 19) and the library (section 20).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
 
 This document is the contract for the editor in M2. Where the prototype and this text disagree, this text wins; tell me which is wrong.
 
@@ -447,5 +449,20 @@ Milestone M3 of the workshop feedback (decision D-174, plan and status in [`ait/
 | Edit > Selected connection, project tree | **Show the harness**: opens the Harness tab on the harness made from the connection (off, with the reason, until there is one). |
 
 The interaction rules of section 6 apply as before: a change is one undo step, a released harness refuses with the reason, a mistake is said inline, and nothing is invented.
+
+## 20. The library (after 1.7.0, not released)
+
+Milestone M4 of the workshop feedback (decision D-175, plan and status in [`ait/WORKSHOP_FEEDBACK_PLAN.md`](ait/WORKSHOP_FEEDBACK_PLAN.md), "M4 as built"): "subsystems should be in a library, not visible in a blank project", "instead of nominal chain redundant chain rather give number of those devices", "need a separate library interface, basically opens a new window", "library should be accessible to everyone (e.g. via a shared drive)". The user's page is [`user-manual/use-the-library.md`](user-manual/use-the-library.md).
+
+| Where | What is new |
+| --- | --- |
+| File menu, Home page | **Library…** (Ctrl+Shift+O; Ctrl+Shift+L is Arrange) opens the library window; **Library folder…** chooses the folder; Settings > Project shows the folder with **Choose…**, **Clear** and **Open the library…**. |
+| The library window (`library-window`, not modal, its own size and place) | Folder line with **Change…** and **Refresh** (F5); a search field (Ctrl+F) and a filter *Devices and subsystems / Devices / Subsystems*; the list (Kind, ID, Name, Contents); the preview (connectors and pins, or devices and connections); **Number of these devices**, **Save selection to library…**, **Add to project** (Enter in the list), **Close** (Esc). A folder that is missing, unreadable or empty, and a file that is damaged, are said in words in the window. |
+| The window Save to library | Devices, or a subsystem with a name and a description; a name that is taken is said under the fields and **Save** stays off; a line says how many connections are saved or left out. |
+| Add device window, Devices tab | **Number of these devices** (the tab adds **Add copies**). **Create redundant copy** and the *Chain* field stay. |
+
+The interaction rules of section 6 apply as before: an addition is one undo step, a mistake is said inline, nothing of the project is replaced, and nothing is written into the library folder until the person saves.
+
+![The library window](img/library-window.png)
 
 Next: [`DESIGN.md`](DESIGN.md), [`ux-audit.md`](ux-audit.md), [`usability/README.md`](usability/README.md)
