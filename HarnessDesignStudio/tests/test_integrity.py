@@ -217,6 +217,8 @@ def case_duplicate_signal(p: Project) -> None:
     p.interface_types["rs422"] = evolve(t, signals=[t.signals[0], t.signals[0]])
 
 
+# REQ-DRC-05: the integrity codes of links (dangling_link, link_pin_missing, link_pin_reused,
+# link_same_device) each have a negative case below.
 def _link(p: Project, **kw: object) -> None:
     fields: dict[str, object] = {
         "id": "L1",

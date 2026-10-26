@@ -47,7 +47,8 @@ The page names the first step that is not done. The rules run in this order.
 | A job is running | Working… | none; please wait |
 | The project is read-only (saved by a newer version, or open in another window) | You can only look at this project | none; **Save a copy** is in the banner |
 | No device and no harness | Start with a device | **Add a device** |
-| No connection and no harness | Connect your devices | **Connect two devices** |
+| No connection (an interface, or two connectors joined pin by pin) and no harness | Connect your devices | **Connect two devices** |
+| Connections between connectors, but no harness and no interface (after 1.7.0, not in the latest release yet) | Make the harness of your connection | **Create harness** |
 | No harness yet, or the plans are out of date (not for a project whose harnesses were all made by hand) | Generate the harnesses (again) | **Generate the harnesses** |
 | The design was not checked | Check the design | **Check the design** |
 | Checks failed | Fix what is marked | **Show the problems** |
@@ -104,7 +105,7 @@ To see the problem notices in the Simple workspace, tick **Show problem notices*
 
 ## Where the buttons go
 
-Each button opens something that already exists: **Add a device** opens the window **Add device**, which asks for the name first (the same as **Edit > Add device > Device…**, with the picture in [define a device](define-a-device.md#1-add-the-device)), and **New harness…** opens the same window as in the Drawings area; **Connect two devices** opens the diagram with the Connect tool; **Generate the harnesses**, **Check the design** and **Export the build sheets** do what their menu entries do (for a project that has no folder yet, **Export** first asks where to save it: the note on the page says *Export first asks where to save the project.*); **Show the problems** opens the Checks area with the failed rules; **Go to Releases** and **Open the Outputs** open those areas.
+Each button opens something that already exists: **Add a device** opens the window **Add device**, which asks for the name first (the same as **Edit > Add device > Device…**, with the picture in [define a device](define-a-device.md#1-add-the-device)), and **New harness…** opens the same window as in the Drawings area; **Connect two devices** opens the diagram with the Connect tool, which opens the window **Link connectors** after two devices ([connect two connectors](connect-two-connectors.md)); **Create harness** shows what the harness will contain and makes it only when you agree, for the first connection that has no harness yet; **Generate the harnesses**, **Check the design** and **Export the build sheets** do what their menu entries do (for a project that has no folder yet, **Export** first asks where to save it: the note on the page says *Export first asks where to save the project.*); **Show the problems** opens the Checks area with the failed rules; **Go to Releases** and **Open the Outputs** open those areas.
 
 The window that **Add a device** opens (also the **Add device** tool above the diagram of the Simple workspace), with a name typed and the ID suggested from it:
 

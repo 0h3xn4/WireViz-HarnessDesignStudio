@@ -457,6 +457,8 @@ def pos_emc_class_split() -> Project:
     return p
 
 
+# REQ-DRC-05: the four rules that review connections (link-unpaired, link-direction,
+# link-signal-mismatch, link-power-return) have a positive case here and stay quiet on a clean project.
 def _linked(a: str, b: str, pairs: list[tuple[str, str]]) -> Project:
     from harness_design_studio.core.model import Link, PinPair
     from tests.helpers import pinout_project

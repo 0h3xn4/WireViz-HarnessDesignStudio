@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
-"""Workshop feedback M2b: connections, the pinout first. The Link connectors window, the
+"""REQ-GUI-11, REQ-GUI-12. Workshop feedback M2b: connections, the pinout first. The Link connectors window, the
 Connect tool, the project tree, the diagram, Create harness, Check my connections and the Next step
 page."""
 

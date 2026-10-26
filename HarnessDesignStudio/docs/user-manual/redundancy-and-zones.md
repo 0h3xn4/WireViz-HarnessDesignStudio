@@ -47,7 +47,7 @@ harness-design-studio drc red2
 
 (`red2` is whatever folder you made with `harness-design-studio new red2 --template first-steps`. The second line comes from `harness-design-studio generate`; `harness-design-studio drc` prints the whole design rule report.) The design rule report no longer lists a `cross-strap` warning.
 
-You can also draw a link by hand: under **Connect with**, pick the type, click `OBC1-R`, then `RW1-R`. The tool sets the **Chain** of that link to *redundant* by itself, because both ends are redundant.
+You can also draw a link by hand: under **Edit > Connect with an interface type…** (or the arrow beside **Connect**), pick the type, click `OBC1-R`, then `RW1-R`. The tool sets the **Chain** of that link to *redundant* by itself, because both ends are redundant.
 
 ## 3. Zones and lanes
 

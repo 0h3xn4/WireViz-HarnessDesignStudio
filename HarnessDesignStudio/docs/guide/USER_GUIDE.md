@@ -122,7 +122,7 @@ At a first run the editor is in the Simple workspace and a project opens on the 
 1. Start the app. The sample project opens with a short tour; skip it or follow it. The tour leaves out a step whose panel is hidden (a small window or a high interface size), records that it was shown however you close it, and can be started again with **Help > Replay the tour**.
 2. **File > New project…** opens one window: choose an empty folder, give the project a name, and optionally pick an example (section 3; `first-steps` has three devices, start there). A problem with the folder or the name is written under the field. **File > New project from an example…** is the same window with the first example ticked.
 3. Add devices: press **Add** in the Project tab, or use **Edit > Add device** (the Project tab is closed in the Simple workspace, so use the menu there). Pick *Computer*, then add a *Power unit* and an *Actuator (wheel)*. In a project with no device the empty diagram also has the button **Add a device**, which asks for a name first and adds a device whose connectors you define yourself (see The Devices tab).
-4. Connect them. Press **C** (or the **Connect** button above the diagram; the arrow beside it lists the interface types, as does **Edit > Connect with**), pick an interface type such as *RS-422*, then click the first device and the second. Devices that cannot take this interface are greyed out, with the reason written next to them. **Ctrl+I** (or **Add > Interface…**) opens a form for the same thing.
+4. Connect them. Press **C** (or the **Connect** button above the diagram), then click the first device and the second: the window **Link connectors** proposes which pins go together from the signal names on the pins (see below). The older way, by interface type, is in the arrow beside **Connect** and under **Edit > Connect with an interface type…**: pick a type such as *RS-422*, then click two devices; devices that cannot take it are greyed out, with the reason beside them. **Ctrl+I** (or **Add > Interface…**) opens a form for that way.
 5. Look at **Problems** (right panel, or the Problems panel at the bottom, Ctrl+Shift+M). Each card says what is wrong, why it matters and how to fix it. Many have a one-click **Fix**. The **Checks** tab lists all 39 design rules with their result (section 6).
 6. The top of the **Problems** tab has a **To do** list of what is left to do; a click on a line shows the device or interface.
 7. Press **Generate** in the top bar (**Generate harnesses**, Ctrl+G). A preview shows what will be added; nothing changes until you press **Apply**. **Undo** takes it all back. The **Harness** tab opens (the Drawings area).
@@ -131,6 +131,10 @@ At a first run the editor is in the Simple workspace and a project opens on the 
 10. Press **Export…** in the top bar (Ctrl+E): choose what to look at and press **Export** to write the build workbooks and lists into the project's `outputs` folder (section 8). Tick **Include the PDF drawings** if you also want the harness drawings.
 
 On a power interface set **Max current (A)** in the Inspector; without it the wire gauge stays pending.
+
+**Connecting by the pinout** (after 1.7.0). **Edit > Link connectors…** (Ctrl+Shift+K), or **Connect** and two devices, opens **Link connectors**. The program pairs the pins by signal name, never by position (`TX+` meets `RX+`, `PWR` meets `PWR`; an output is not paired with an output); you change, add or remove pairs and give a pin a role (Power, Return, Ground, Signal, Shield, Spare), then press **Link connectors**.
+
+The connection is a dash-dotted line on the diagram and an entry under **Connections** in the Project tab. **Design > Check my connections** reviews them and changes nothing. **Create harness** makes a harness with one wire for each pair, only when you press it and agree; the program never makes one on its own.
 
 ### The Devices tab
 
@@ -208,7 +212,7 @@ Zoomed far out, a device shows its ID and each kind of link its own dash pattern
 - **Warning**: fix it, or **Waive** it with a reason of at least 10 characters. Waived warnings stay visible in the report with their reason.
 - **Note**: information, for example *not checked because a value is still a placeholder*.
 
-The quick checks run on every edit. The design rules (39 of them) run in the background a moment after you stop editing, or when you press **Check** (F5); the top bar says *Checking…* while they run, and the status bar shows the job with **Cancel**. The **Problems** cards say when they are checking, and a header such as *39 rules: 20 passed, 2 failed, 12 not checked* says how it went.
+The quick checks run on every edit. The design rules (39 of them, four of which review the connections between connectors: **Design > Check my connections** shows only those) run in the background a moment after you stop editing, or when you press **Check** (F5); the top bar says *Checking…* while they run, and the status bar shows the job with **Cancel**. The **Problems** cards say when they are checking, and a header such as *39 rules: 20 passed, 2 failed, 12 not checked* says how it went.
 
 The **Checks** tab (Ctrl+4) has one row for each rule:
 
@@ -398,12 +402,13 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Edit | Undo, Redo | steps back and forward through your changes |
 | Edit | Select all, Duplicate, Delete, Find in diagram | work on the selection; Duplicate copies a device with its connectors but not its links; Delete shows what else goes with it |
 | Edit | Create redundant copy | builds a redundant (backup) copy of the selected device and its chain |
-| Edit | New interface… (Ctrl+I), Connect (C) | a form for a new interface; the Connect tool |
+| Edit | New interface… (Ctrl+I), Link connectors… (Ctrl+Shift+K), Connect (C) | a form for a new interface; the window that joins two connectors pin by pin; the Connect tool, which opens that window after two devices |
 | Edit | Align, Space evenly | line up or space out the selected devices |
 | Edit | Add zone… | adds a lane to the diagram; asks for its name |
 | Edit | Wire colours... | chooses the wire colour of each signal (section 7) |
 | Edit | Add device | one item for each kind of device (computer, power unit, wheel ...), and Device… (Ctrl+Shift+N); **New harness…** (Ctrl+Shift+H) is an item of the Edit menu |
-| Edit | Connect with | one item for each interface type (the arrow beside the Connect button lists the same); then click two devices |
+| Edit | Connect with an interface type… | one item for each interface type (the arrow beside the Connect button lists the same); then click two devices |
+| Edit | Selected connection | Edit the pairs…, Rename…, Create harness, Delete connection: for the connection picked in the Project tab or on the diagram |
 | View | Show side panels (Simple workspace only) | opens or closes the Project tab and the Inspector together (the **Show panels** button of the top bar) |
 | View | Simple, Full | the workspace (section 5): a project opens on **Next step** and less is on screen, or it opens where it opened before and everything is there |
 | View | Show problem notices | shows or hides the Problems count, status chip, badges and *out of date* banner; on in Full, off in Simple |
@@ -419,6 +424,7 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | View | Reset layout | puts the panels back where they were at the start |
 | Design | Generate harnesses (Ctrl+G) | builds the harness plans after a preview |
 | Design | Run checks (F5), Cancel the running check | runs the design rules now |
+| Design | Check my connections | reviews every connection (four design rules) and changes nothing; the Problems panel shows only the connections |
 | Design | Export… (Ctrl+E) | the Export outputs window |
 | Design | Submit harness for review…, Release harness…, Start new revision… | change control for the harness in view (section 9) |
 | Design | Show changes of harness…, Show change log of harness…, Delete harness… | the harness in view: what changed since a baseline, who changed what, delete a draft |
@@ -440,6 +446,8 @@ The **Show** list at the right end of the Model tab bar (**More > Show only** in
 
 - **Harness**: a bundle of wires with connectors that carries signals between devices.
 - **Interface**: a logical connection between two devices, for example RS-422 from the computer to a wheel.
+- **Connection**: two connectors joined pin by pin, with the pairs proposed from the signal names on the pins and confirmed by you (after 1.7.0). It needs no interface type.
+- **Pin role**: what a pin is for: Power, Return, Ground, Signal, Shield or Spare. *Return* (`RTN`) is the line the current comes back on.
 - **Nominal / redundant**: the main chain and its backup. They never share a connector or harness.
 - **Auto-filled**: a connector the tool chose; unconfirmed until a person looks at it.
 - **Pending**: a value nobody has entered yet, for example a wire gauge that waits for a derating value. Shown with a dotted chip, never as a number.

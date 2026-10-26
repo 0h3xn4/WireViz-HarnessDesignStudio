@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
-"""M2a: links, the pinout first. Pairing by signal name, the planners and their refusals, what a link
+"""REQ-GUI-11, REQ-GUI-12, REQ-DRC-05. M2a: links, the pinout first. Pairing by signal name, the planners and their refusals, what a link
 carries, the review, the harness made from a link, and the save/load round trip. No Qt."""
 
 import random

@@ -13,10 +13,14 @@ on the tutorial project (`first-steps`, generated): `next-step-new-project.png` 
 every check passes or waits for a value), `simple-workspace.png` and `full-workspace.png` (the
 checked project in each workspace), `export-window.png` and `export-window-done.png` (the Export
 window before and after an export with the PDF drawings). With two accessories added,
-`accessories-tab.png` (1760 x 1000). Last, on the tutorial project, `add-device-dialog.png` (the
+`accessories-tab.png` (1760 x 1000). Then, on the tutorial project, `add-device-dialog.png` (the
 Add device dialog with Star tracker typed and the ID STAR1 suggested) and
-`problem-notices-setting.png` (the View menu with Show problem notices). The time of the last
-check, which the status bar shows, is cleared before each picture. Usage:
+`problem-notices-setting.png` (the View menu with Show problem notices). Last, on a small project
+of three devices with named pins (no interface, no harness), `link-connectors-window.png` (the
+window Link connectors with the pairs proposed by signal name for the computer and the reaction
+wheel) and `connections-diagram.png` (two connections on the diagram, the Connections group in
+the project tree). The time of the last check, which the status bar shows, is cleared before each
+picture. Usage:
 
     QT_QPA_PLATFORM=offscreen python -m tools.tab_screenshots [OUTPUT_FOLDER]   (default: docs/img)
 """
@@ -40,9 +44,11 @@ from harness_design_studio.core.manual_harness import (
     plan_new_harness,
     plan_set_pin,
 )
-from harness_design_studio.core.model import evolve
+from harness_design_studio.core.model import Pin, Project, evolve
+from harness_design_studio.core.samples import mini3
 from harness_design_studio.core.wires import plan_add_wire
 from harness_design_studio.gui.devices_dialogs import NewDeviceDialog
+from harness_design_studio.gui.link_dialog import LinkDialog
 from harness_design_studio.gui.main_window import MainWindow
 from tools import ui_screenshots as shots
 
@@ -82,6 +88,7 @@ def main(out: Path = DEFAULT_OUT) -> int:
     _next_step_pictures(out)
     _workspace_pictures(out)
     _workshop_pictures(out)
+    _connection_pictures(out)
     print(f"wrote the pictures of the tabs, workspaces and windows to {out}")
     return 0
 
@@ -218,6 +225,55 @@ def _workshop_pictures(out: Path) -> None:
     menu.grab().save(str(out / "problem-notices-setting.png"))
     print("problem-notices-setting.png")
     menu.close()
+    win.close()
+
+
+def _pinout_project() -> Project:
+    """Three devices (a computer, a power unit and a reaction wheel) with named pins and no
+    interface and no harness: the data connectors carry TX+, TX-, RX+, RX- and the power connectors
+    PWR and RTN. Example data, no engineering values."""
+    p = mini3()
+    p.harnesses, p.interfaces, p.baselines = {}, {}, {}
+    p.meta = evolve(p.meta, name="Wheel link", description="Example data.")
+    data = [Pin(id=str(k + 1), signal=s) for k, s in enumerate(("TX+", "TX-", "RX+", "RX-"))]
+    power = [Pin(id="1", signal="PWR"), Pin(id="2", signal="RTN")]
+    for cid, pins in (
+        ("OBC-J01", [*data, Pin(id="5")]),  # a pin with no signal is not asked about
+        ("RW1-J02", [*data, Pin(id="5")]),
+        ("PCDU-J01", power),
+        ("RW1-J01", power),
+    ):
+        p.connectors[cid] = evolve(p.connectors[cid], pins=pins)
+    for uid, x, y in (("OBC", 30.0, 40.0), ("PCDU", 30.0, 380.0), ("RW1", 470.0, 150.0)):
+        p.placements[uid] = evolve(p.placements[uid], x=x, y=y)  # room for the labels of the lines
+    return p
+
+
+def _connection_pictures(out: Path) -> None:
+    """The window Link connectors with the pairs proposed for the computer and the reaction wheel,
+    and the diagram with two connections beside the Connections group of the project tree."""
+    win = _window("harness-links", "blank", "full", MAIN)
+    win.ctl._install(_pinout_project(), None, None)
+    shots._settle(win)
+    dlg = LinkDialog(win, win.theme, win.ctl.project, a_unit="OBC", b_unit="RW1")
+    dlg.show()
+    dlg.resize(dlg.width(), dlg.sizeHint().height())
+    shots._wait(500)
+    _save(dlg, out / "link-connectors-window.png")
+    dlg.close()
+    win.ctl.add_link("OBC-J01", "RW1-J02", [("1", "3"), ("2", "4"), ("3", "1"), ("4", "2")])
+    win.ctl.add_link("PCDU-J01", "RW1-J01", [("1", "1"), ("2", "2")])
+    win.go_to("diagram")
+    win.act_expert.trigger()  # the lines then end at the connectors they join
+    win.left_tabs.setCurrentIndex(win.left_tabs.index_of("tree"))
+    win.view.fit()
+    shots._settle(win, 700)
+    win.ctl.select_link("L1")
+    win.view.empty.setVisible(
+        False
+    )  # its hint still says "No links yet" while only interfaces count
+    shots._wait(500)
+    _save(win, out / "connections-diagram.png")
     win.close()
 
 

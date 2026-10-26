@@ -46,7 +46,8 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+Shift+J | The Device list (the Device list tab of the left panel) |
 | F6 and Shift+F6 | Move the keyboard focus to the next or previous panel |
 | Delete | Delete the selection (it first shows what else goes with it); in the diagram, the Interface table and the Project tree |
-| C | Start the Connect tool; then click the two devices to add an interface |
+| C | Start the Connect tool; then click the two devices: the window Link connectors joins two connectors pin by pin |
+| Ctrl+Shift+K | Link connectors… (the same window, without clicking the devices first) |
 | Esc | Back to the Select tool; also clears the selection and ends the focus on a device or link |
 | Ctrl+= and Ctrl+- | Zoom in and out |
 | F | Fit the whole diagram in the window (diagram has the focus) |

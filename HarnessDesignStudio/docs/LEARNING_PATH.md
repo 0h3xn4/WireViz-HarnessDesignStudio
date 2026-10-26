@@ -83,7 +83,7 @@ Before you open the tool, fill in `design-worksheet.md` (get it with `harness-de
 
 Two ways, and you can mix them:
 
-- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add devices (the button **Add a device** on the empty diagram, **Add** in the Project tab, or **Edit > Add device**), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10. To make a harness with no interface at all, see [build a harness by hand](user-manual/build-a-harness-by-hand.md).
+- **In the app.** Start a project from `blank` (`harness-design-studio new my-design`), add devices (the button **Add a device** on the empty diagram, **Add** in the Project tab, or **Edit > Add device**), then draw the interfaces. See [`GETTING_STARTED.md`](GETTING_STARTED.md), Part 10. To join two connectors pin by pin from the names on the pins (the pinout first, no interface type; after 1.7.0, not in the latest release yet), see [connect two connectors](user-manual/connect-two-connectors.md). To make a harness with no interface at all, see [build a harness by hand](user-manual/build-a-harness-by-hand.md).
 - **From a table.** Copy `interfaces.csv` from the templates, replace the rows with yours and import it with **File > Import > Import interfaces…** (Ctrl+Shift+I). Add the devices first. You can also paste a block of cells from Excel into the **Device list** or **Interfaces** table to change rows that exist. Importing interfaces is app only: there is no command line command for it.
 
 **Done when:** `harness-design-studio generate my-design` finishes and `harness-design-studio check my-design` reports no errors.

@@ -83,7 +83,9 @@ Each device comes with connectors. You do not need to look at them in Guided mod
 
 ## 3. Connect two devices
 
-1. Open the arrow beside the **Connect** button above the diagram and pick an interface type, for example **RS-422** or **Primary power**; the type in use has a tick. (**Edit > Connect with** has the same list; the key **C** switches the connect tool on with the last type. **Ctrl+I** or **Add > Interface…** opens a form where you pick the type and both devices.)
+> **Two ways to connect.** The **Connect** button and the key **C** now join two *connectors* pin by pin from the names on the pins, in the window **Link connectors** (after 1.7.0; [connect two connectors](connect-two-connectors.md)). This step is the older way, by interface type; the program then chooses the connectors and pins when it generates.
+
+1. Open the arrow beside the **Connect** button above the diagram and pick an interface type, for example **RS-422** or **Primary power**; the type in use has a tick. (**Edit > Connect with an interface type…** has the same list; the key **C** starts the pin-by-pin way, not this one. **Ctrl+I** or **Add > Interface…** opens a form where you pick the type and both devices.)
 2. Click the first device, then the second device. Devices that cannot take that type are greyed out, with the reason next to them.
 3. A link is drawn. It gets an ID (`IF-001`) and a name such as "Primary power PCDU1 to RW1". The tool picks the connectors and marks them **auto-filled** until you confirm them (see [read and fix problems](read-and-fix-problems.md)).
 4. The connect tool stays on, so you can draw more links. Press **Esc**, or the **Select** button above the diagram, to stop. While the connect tool is on, dragging a device moves nothing (it is not a move tool); if the first device you clicked is deleted or its link is undone, the tool forgets that first click.

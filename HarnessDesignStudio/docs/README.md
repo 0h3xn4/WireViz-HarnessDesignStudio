@@ -26,7 +26,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | What it gives you |
 | --- | --- |
-| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, add redundancy and zones, generate harnesses, read and fix problems, fill in engineering values, edit a wire, build a harness by hand (no interface needed), enter the build data (strip lengths, contacts, crimp tools, accessories), use the simple workspace (the Next step page), import data, define a device (and reuse it in another project), import KiCad pinouts, export the outputs, set wire colours, change IDs and the title block, release a harness, change a released harness, use Git and CI |
+| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, add redundancy and zones, generate harnesses, read and fix problems, fill in engineering values, connect two connectors pin by pin (the pinout first, after 1.7.0), edit a wire, build a harness by hand (no interface needed), enter the build data (strip lengths, contacts, crimp tools, accessories), use the simple workspace (the Next step page), import data, define a device (and reuse it in another project), import KiCad pinouts, export the outputs, set wire colours, change IDs and the title block, release a harness, change a released harness, use Git and CI |
 | [`HOWTO.md`](HOWTO.md) | The index of the old recipes, pointing at the user manual |
 | [`TIPS.md`](TIPS.md) | Shortcuts, power-user workflows, and exchanging data with other tools |
 | [`CHEATSHEET.md`](CHEATSHEET.md) | One page: the loop, the data imports, release, shortcuts, the folder layout, the words |

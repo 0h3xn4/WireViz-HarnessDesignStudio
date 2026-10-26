@@ -42,6 +42,8 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 | **Device** | A box in the spacecraft with connectors on it. | `OBC1` (on-board computer), `PCDU1` (power unit), `RW1` (reaction wheel) |
 | **Interface type** | A kind of connection and its signals. The tool ships 17 (RS-422, RS-485, CAN, Ethernet, primary power, ...). | *RS-422* has the signals `TX+`, `TX-`, `RX+`, `RX-` |
 | **Interface** | One connection of a type between two devices. This is what *you* add. | `IF-002`: RS-422 from `OBC1` to `RW1` |
+| **Connection (link)** | Two connectors of two devices joined pin by pin: a list of pairs of pins. You name the pins, the program proposes the pairs from the signal names (never by position), you confirm them, and *Check my connections* reviews them. It needs no interface type; what it carries is worked out from the pins. The tool never makes a harness from it unless you press **Create harness**. After 1.7.0, not in the latest release yet. | `OBC-J01` to `RW1-J02`: pin 1 (`TX+`) with pin 3 (`RX+`) |
+| **Pin role** | What a pin is for: power, return, ground, signal, shield or spare. It follows the signal name (`PWR`, `RTN`, `GND`) unless you set it. *Return* is the line the current comes back on. | `RTN` is a return |
 | **Connector** | A plug or socket, which may carry a label (new in 1.4.0). On a device it is a *box connector*; on a harness it is a *cable connector* that mates with a box connector. | `RW1-J02` on the wheel; `W001-P2` on the cable |
 | **Pin** | One contact of a connector. It carries one signal and may have a *function* (free text, new in 1.4.0). | pin 3 of `RW1-J02` carries `RX+`, function "Wheel command receive" |
 | **Harness** | A bundle of wires with its connectors that carries interfaces between devices. **Generated** from interfaces, or made by hand with *New harness* (new in 1.5.0); individual wires can be edited, and wires can be added by hand (new in 1.4.0). | `W001`: `OBC1-J01` to `RW1-J02` |
@@ -85,6 +87,8 @@ Pressing **Generate** (or `harness-design-studio generate DIR`) does four things
 4. **Checks itself** with a separate verifier that does not share code with the generator.
 
 You always see a **preview** first; nothing changes until you **Apply**, and **Undo** takes it back. Generating again keeps IDs, locked choices, the wires you edited or drew, and your labels, and never touches a released harness. The same design always gives byte-identical results, so Git diffs show real changes only.
+
+**Pinout first (after 1.7.0, not in the latest release yet).** Generate starts from interfaces and chooses the pins. The other way starts from the pins you named: a *connection* joins two connectors pin by pin, the program proposes the pairs from the signal names, you confirm them, and **Create harness** makes a harness with one wire for each pair, only when you press it. Generate leaves such a harness, and your pinout, alone. See [connect two connectors](user-manual/connect-two-connectors.md).
 
 Every choice has a reason. Open the **Harness** tab (the Drawings area), pick a harness, select a wire, connector or pin, and read the rule behind it in **Why** (gauge and length included).
 

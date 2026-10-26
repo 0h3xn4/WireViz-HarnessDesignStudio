@@ -82,7 +82,8 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 | Ctrl+=, Ctrl+-, Ctrl+0 | zoom in, out, 100 % |
 | F, Shift+F | fit everything, zoom to the selection |
 | Ctrl+A, Ctrl+D, Ctrl+F | select all, duplicate, find (in the diagram) |
-| C, Esc | start the Connect tool, back to Select (Esc also clears the selection) |
+| C, Esc | start the Connect tool (click two devices to link their connectors), back to Select (Esc also clears the selection) |
+| Ctrl+Shift+K | Link connectors… (join two connectors pin by pin) |
 | Tab, Enter or Space | move between devices and links, select |
 | Shift+arrows | move the selected device |
 | Delete | delete the selected item (after showing what it affects) |

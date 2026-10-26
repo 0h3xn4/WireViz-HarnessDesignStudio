@@ -21,8 +21,9 @@
 - [15. The AIT feedback (version 1.4.0, October 2026)](#15-the-ait-feedback-version-140-october-2026)
 - [16. A harness from nothing, and a blank project that says where to start (versions 1.5.0 and 1.6.0)](#16-a-harness-from-nothing-and-a-blank-project-that-says-where-to-start-versions-150-and-160)
 - [17. Build sheets, build data and the simple workspace (version 1.7.0)](#17-build-sheets-build-data-and-the-simple-workspace-version-170)
+- [18. Connections between connectors (after 1.7.0, not released)](#18-connections-between-connectors-after-170-not-released)
 
-Status: **approved by the owner; the Qt editor is implemented (section 12), was rebuilt in October 2026 (section 13) and again for version 1.3.0 (section 14), and gained the editing features of versions 1.4.0 to 1.6.0 (sections 15 and 16) and the build data and the simple workspace of version 1.7.0 (section 17).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
+Status: **approved by the owner; the Qt editor is implemented (section 12), was rebuilt in October 2026 (section 13) and again for version 1.3.0 (section 14), and gained the editing features of versions 1.4.0 to 1.6.0 (sections 15 and 16) the build data and the simple workspace of version 1.7.0 (section 17) and, after 1.7.0 and not released, the connections between connectors (section 18).** The prototype below was the review gate. The clickable prototype (`prototype/index.html`, open it in any browser, offline) implements the journeys below with mock data, and automated browser tests (`tests/test_prototype.py`) verify that the journeys really work. Screenshots of the prototype are in `docs/ux/screens/`.
 
 This document is the contract for the editor in M2. Where the prototype and this text disagree, this text wins; tell me which is wrong.
 
@@ -416,5 +417,21 @@ The feedback of the test users of 1.6.0 (plan and status in [`ait/TEST_USER_FEED
 | Command line | `export --drawings` and `import-build-data` ([`CLI.md`](CLI.md)); the same plans as the window use. |
 
 The interaction rules of section 6 apply as before: a change is one undo step, a released harness refuses with the reason, a mistake is said inline, and the tool never fills in an engineering value by itself (an empty strip length, contact or tool stays empty and reads *to fill in* in the build workbook). The look and the code are in [`DESIGN.md`](DESIGN.md).
+
+## 18. Connections between connectors (after 1.7.0, not released)
+
+Milestone M2 of the workshop feedback (decision D-173, plan and status in [`ait/WORKSHOP_FEEDBACK_PLAN.md`](ait/WORKSHOP_FEEDBACK_PLAN.md), "M2 as built"): the pinout is the truth, the tool proposes and checks. The user's page is [`user-manual/connect-two-connectors.md`](user-manual/connect-two-connectors.md).
+
+| Where | What is new |
+| --- | --- |
+| Window *Link connectors* (Edit > Link connectors…, Ctrl+Shift+K; the Connect tool and C after two devices; right-click on the Connections group or on a device) | A dialog of 760 pixels or more: an optional **Name**; a device and a connector on each side; the table *Pairs of pins* (pin, signal and role of the first connector beside pin, signal and role of the second), proposed by signal name and editable (**Add pair**, **Change pair**, **Remove pair**, the role of a pin: Automatic, Power, Return, Ground, Signal, Shield, Spare); under the table the notes of the proposal, the pins not paired and the review in plain words (an inline notice, never a message box). **Link connectors** is off only when the connection cannot be made (the same device twice, no pair, a pin in two pairs); a warning does not forbid it. One undo step. The same window with the connectors fixed edits the pairs (**Save the pairs**). |
+| Model area, diagram | A connection is a dash-dotted line (an interface is solid) between the two devices, or between the two connectors in Expert mode, with the two connector names and, under them, what the pairs carry (derived, never stored). Click selects it. |
+| Project tree | The group **Connections** (L1 - OBC-J01 - RW1-J02 ...) with the actions *Edit the pairs…*, *Rename…*, *Create harness*, *Delete connection*; double-click edits the pairs; the tooltip names the pairs, the harness and the checks. |
+| Edit menu | **Link connectors…**, **Connect** (C), **Connect with an interface type…** (the older, interface-first way, also the arrow beside the Connect button) and **Selected connection**. |
+| Design menu, Problems panel | **Check my connections** opens the Problems panel on the new filter **Connections** and says how many things there are to look at; it changes nothing. Four design rules (39 in all). |
+| Create harness | A window that says *This adds the harness … with N cable connectors and M wires, one wire for each pair of …* and makes it only on **Create harness**; one undo step; the Harness tab then opens on it. The tool never creates a harness on its own. |
+| Next step page | A connection counts as *Connect* done; with connections and no harness and no interface the card is *Make the harness of your connection* with the button **Create harness**. |
+
+The interaction rules of section 6 apply as before: a change is one undo step, a released harness locks its connection with the reason, a mistake is said inline, and nothing is invented (a wire made from a connection has no length, gauge or colour until the person enters them).
 
 Next: [`DESIGN.md`](DESIGN.md), [`ux-audit.md`](ux-audit.md), [`usability/README.md`](usability/README.md)

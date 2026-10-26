@@ -1,4 +1,4 @@
-"""M2a: the files of a project with links. `logical/links.json` is there only when a link is, the
+"""REQ-IO-02. M2a: the files of a project with links. `logical/links.json` is there only when a link is, the
 hash follows the link, the command line reads such a project, and a project that uses no link or
 role is written exactly as before (FILE_FORMAT.md, "Links")."""
 

@@ -87,7 +87,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 | Left, **Device list** and **Interfaces** | every device and every interface as a table you can sort, filter, edit with the keyboard and paste into from Excel (Ctrl+Shift+J, Ctrl+Shift+T) |
 | Right, **Inspector** | the selected device or interface: names, **Max current (A)**, notes, and where it is used. The tabs **Why** and **Problems** (with a **To do** list above the problem cards) are beside it |
 | Bottom | the status bar (the running job with **Cancel**, **Problems (n)** while the problem notices are on, *Offline*, the zoom; the Simple workspace shows less) and, when you open it (Ctrl+Shift+M), the Problems panel with every open problem |
-| Above the diagram | **Select** and **Connect** (the arrow beside **Connect** lists the interface types), **Delete**, zoom (in Simple: **Select**, **Connect**, **Add device** and a **More** menu with the rest) |
+| Above the diagram | **Select** and **Connect** (the button joins two connectors pin by pin; the arrow beside it lists the interface types), **Delete**, zoom (in Simple: **Select**, **Connect**, **Add device** and a **More** menu with the rest) |
 | Right end of the Model tab bar | **Arrange diagram** and the **Show** list (all interfaces, one class, one connector, one bundle) |
 
 Try this:
@@ -374,14 +374,14 @@ harness-design-studio new my-first-design --name "My first design"
 In the app, **File > Open project…** it. The empty diagram says where to start: it has the button **Add a device** (until the first device exists) and the hint to use **Add** in the project panel. Then:
 
 1. Press **Add** in the Project tab on the left (in Simple, press **Show panels** first) and add a **Power unit**, a **Computer** and an **Actuator (wheel)** from the list that opens (**Edit > Add device** has the same list; the kinds are added at once and need no name; **Device…** at the top of the list, Ctrl+Shift+N and the button **Add a device** open the window **Add device**, where you type a name such as *Star tracker*, get the ID `STAR1` suggested and press **Add device**, and then define the connectors and pins of that device yourself in the **Devices** tab, see [`user-manual/define-a-device.md`](user-manual/define-a-device.md)). Devices appear in the lanes; drag them where you like. Each gets an ID (`PCDU1`, `OBC1`, `RW1`) and some connectors. Rename them in the Inspector if you want.
-2. Open the arrow beside **Connect** above the diagram (or **Edit > Connect with**), pick **Primary power**, click `PCDU1`, then click `RW1`. Devices that cannot take this interface are greyed out, with the reason beside them.
+2. Open the arrow beside **Connect** above the diagram (or **Edit > Connect with an interface type…**), pick **Primary power**, click `PCDU1`, then click `RW1`. Devices that cannot take this interface are greyed out, with the reason beside them.
 3. Select the new link and set **Max current (A)** to 2. Without a current, a power wire's gauge stays pending.
 4. Pick **RS-422**, click `OBC1`, then `RW1`.
 5. Look at **Problems** and its **To do** list, then **Generate**, **Apply**, **Export…**. **Ctrl+S** saves. The project already has a folder (`harness-design-studio new` made it), so **Export…** does not ask where to save.
 
 You have now done everything the tool does, once. Add a **Create redundant copy** of the wheel (select it, press the button) and watch the tool build the backup chain and warn when something connects nominal to redundant.
 
-There is one more way in: a harness made by hand, with no interface at all. Use **New harness…** in the **Drawings** area (Ctrl+Shift+H); see [`user-manual/build-a-harness-by-hand.md`](user-manual/build-a-harness-by-hand.md).
+There are two more ways in. One starts from the pins: name the pins of two devices in the **Devices** tab, press **Connect** (or Ctrl+Shift+K) and click the two devices, and the program proposes the pairs from the signal names; **Design > Check my connections** reviews them and **Create harness** makes a harness only when you ask (after 1.7.0, not in the latest release yet; [`user-manual/connect-two-connectors.md`](user-manual/connect-two-connectors.md)). The other is a harness made by hand, with no interface at all. Use **New harness…** in the **Drawings** area (Ctrl+Shift+H); see [`user-manual/build-a-harness-by-hand.md`](user-manual/build-a-harness-by-hand.md).
 
 ## Where to go next
 
