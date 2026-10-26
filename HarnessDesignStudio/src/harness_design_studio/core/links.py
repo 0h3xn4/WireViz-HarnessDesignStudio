@@ -21,13 +21,13 @@ person draws), and the pairing rules read only the names and directions the proj
 
 import re
 from collections import defaultdict
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from pydantic import TypeAdapter, ValidationError
 
 from .commands import Delete, Op, Put, apply_ops
-from .devices import derive_meaning
+from .devices import derive_meaning, ops_set_pin
 from .edit import EditError, clone_with
 from .ids import check_id
 from .issues import Severity
@@ -133,6 +133,12 @@ def effective_role(pin: Pin, project: Project, connector: Connector | None = Non
 
 def _pin_ref(connector_id: str, pin_id: str) -> str:
     return f"{connector_id}.{pin_id}"
+
+
+def link_caption(link: Link) -> str:
+    """How a link is named on screen: its two connectors, "OBC-J01 - RW1-J02" (the same text in
+    the project tree, on the diagram and in the windows)."""
+    return f"{link.a_connector} - {link.b_connector}"
 
 
 def pins_in_links(
@@ -411,6 +417,20 @@ def plan_delete_link(project: Project, link_id: str) -> list[Op]:
     return [Delete("links", link_id)]
 
 
+def plan_set_roles(project: Project, roles: Mapping[tuple[str, str], str]) -> list[Op]:
+    """Ops that give pins a role, `{(connector, pin): role}` ("" takes it from the signal name
+    again). Each pin is planned on a copy that has the earlier ones, so several pins of one
+    connector make one change each without undoing one another. Pins that already have the role
+    make no op."""
+    scratch = clone_with(project, [])
+    out: list[Op] = []
+    for (cid, pid), role in sorted(roles.items(), key=lambda kv: (kv[0][0], natural_key(kv[0][1]))):
+        ops = ops_set_pin(scratch, cid, pid, role=role)
+        apply_ops(scratch, ops)
+        out.extend(ops)
+    return out
+
+
 def _wire_signal(a: Pin, b: Pin) -> str | None:
     """The signal of a wire between two pins, written as Generate writes it: one name when both
     pins have it, "TX+/RX+" when they differ, the one that is there when only one has a name."""
@@ -678,6 +698,7 @@ __all__ = [
     "check_links",
     "derived_interfaces",
     "effective_role",
+    "link_caption",
     "links_of_connector",
     "name_relation",
     "natural_key",
@@ -687,5 +708,6 @@ __all__ = [
     "plan_delete_link",
     "plan_rename_link",
     "plan_set_pairs",
+    "plan_set_roles",
     "propose_pairs",
 ]

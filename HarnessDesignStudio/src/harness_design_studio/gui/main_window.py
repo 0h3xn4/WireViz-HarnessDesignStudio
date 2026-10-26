@@ -57,6 +57,7 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio import __version__
 from harness_design_studio.core import device_library, drc, edit, manual_harness
+from harness_design_studio.core import links as core_links
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError
@@ -127,6 +128,7 @@ from harness_design_studio.gui.import_wizard import ImportWizard
 from harness_design_studio.gui.inspector import Inspector
 from harness_design_studio.gui.interface_table import InterfaceTable
 from harness_design_studio.gui.jobs import JobStatus
+from harness_design_studio.gui.link_dialog import CreateHarnessDialog, LinkDialog, harness_preview
 from harness_design_studio.gui.lists_panel import ListsPanel
 from harness_design_studio.gui.new_project_dialog import (
     BLANK,
@@ -492,6 +494,8 @@ class MainWindow(QMainWindow):
         self.ctl.whyRequested.connect(self._show_why)
         self.props.deleteRequested.connect(self.delete_flow)
         self.ctl.connectChanged.connect(self._on_connect)
+        self.ctl.linkRequested.connect(self.link_flow)
+        self.ctl.linkSelectionChanged.connect(self._on_link_selection)
         self.ctl.modeChanged.connect(self._on_mode)
         self.interface_table.newInterfaceRequested.connect(self.new_interface_flow)
         self.unit_table.newUnitRequested.connect(lambda: self.menu_add.exec(QCursor.pos()))
@@ -570,7 +574,7 @@ class MainWindow(QMainWindow):
         # the arrow next to it lists the interface types (it was the palette's job)
         self.tool_connect.setPopupMode(QToolButton.ToolButtonPopupMode.MenuButtonPopup)
         self.tool_select.clicked.connect(lambda: self.ctl.end_connect())
-        self.tool_connect.clicked.connect(lambda: self.ctl.begin_connect(self.ctl.connect_type))
+        self.tool_connect.clicked.connect(lambda: self.ctl.begin_link())
         # the simple workspace shows Select, Connect and Add device, and one More menu for the rest
         # (stage S2); both are hidden in the full workspace
         self.tool_add_device = QToolButton()
@@ -685,6 +689,7 @@ class MainWindow(QMainWindow):
                 "add_device": lambda: self.add_device_flow(),
                 "new_harness": lambda: self.new_harness_flow(),
                 "connect": lambda: self._next_connect(),
+                "make_harness": lambda: self._next_make_harness(),
                 "generate": lambda: self.generate_flow(),
                 "check": lambda: self.check_flow(),
                 "fix": lambda: self._next_fix(),
@@ -1058,12 +1063,14 @@ class MainWindow(QMainWindow):
         self._show_problems(object_id)
 
     def _tree_selected(self, kind: str, ident: str) -> None:
-        if kind not in ("unit", "interface"):  # (those the tree selects on the canvas itself)
+        if kind not in ("unit", "interface", "link"):  # (those the tree selects on the canvas)
             self.inspector.show_object(kind, ident)
 
     def _tree_opened(self, kind: str, ident: str) -> None:
         if kind in ("unit", "interface"):
             self.ctl.request_open(kind, ident)
+        elif kind == "link":
+            self.edit_link_flow(ident)
         elif kind == "harness":
             self._go_to_harness(ident)
         else:
@@ -1071,6 +1078,8 @@ class MainWindow(QMainWindow):
 
     def _tree_actions(self, kind: str, ident: str) -> list[QAction]:
         """The change-control steps of a harness row in the tree's context menu."""
+        if kind == "link":
+            return self._link_actions(ident)
         h = self.ctl.project.harnesses.get(ident)
         if kind != "harness" or h is None:
             return []
@@ -1096,6 +1105,9 @@ class MainWindow(QMainWindow):
     def _tree_delete(self, kind: str, ident: str) -> None:
         """Delete pressed in the project tree on a unit or an interface: what is deleted is the
         row with the cursor (and the rest of a multiple selection made in the tree)."""
+        if kind == "link":
+            self.delete_link_flow(ident)
+            return
         chosen = {(s.kind, s.id) for s in self.ctl.selected}
         if (kind, ident) not in chosen:
             self.ctl.select(kind, ident)
@@ -1110,8 +1122,161 @@ class MainWindow(QMainWindow):
     def _tree_add(self, kind: str) -> None:
         if kind == "interface":
             self.new_interface_flow()
+        elif kind == "link":
+            self.link_flow()
         else:
             self.menu_add.exec(QCursor.pos())  # which kind of unit
+
+    # ---- connections: two connectors joined pin to pin (M2 of the workshop feedback) ----------------
+    def link_flow(
+        self, a_unit: str = "", a_connector: str = "", b_unit: str = "", b_connector: str = ""
+    ) -> None:
+        """Edit > Link connectors… (Ctrl+Shift+K), or the Connect tool after two devices: the
+        window proposes the pairs by signal name; OK joins the connectors as one undo step."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        if len(self.ctl.project.units) < 2:
+            self.toasts.show_message(strings.LINK_NEED_TWO, None)
+            return
+        dlg = LinkDialog(
+            self,
+            self.theme,
+            self.ctl.project,
+            a_unit=a_unit,
+            a_connector=a_connector,
+            b_unit=b_unit,
+            b_connector=b_connector,
+        )
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
+            return
+        lid = self.ctl.add_link(
+            dlg.a_connector_id(), dlg.b_connector_id(), dlg.pairs(), dlg.name(), dlg.roles()
+        )
+        if lid:
+            self.view.focus_connection(lid)
+
+    def _chosen_link(self, link_id: str | None) -> str | None:
+        lid = link_id or self.ctl.selected_link
+        if lid is None or lid not in self.ctl.project.links:
+            self.toasts.show_message(strings.LINK_PICK_ONE, None)
+            return None
+        return lid
+
+    def edit_link_flow(self, link_id: str | None = None) -> None:
+        """Edit the pairs, the name and the pin roles of a connection."""
+        lid = self._chosen_link(link_id)
+        if lid is None:
+            return
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        dlg = LinkDialog(self, self.theme, self.ctl.project, link_id=lid)
+        if self.run_dialog(dlg) == QDialog.DialogCode.Accepted:
+            self.ctl.edit_link(lid, dlg.pairs(), dlg.name(), dlg.roles())
+
+    def rename_link_flow(self, link_id: str | None = None) -> None:
+        lid = self._chosen_link(link_id)
+        if lid is None:
+            return
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        name = self.ask_text(
+            strings.LINK_RENAME_TITLE, strings.LINK_NAME, self.ctl.project.links[lid].name
+        )
+        if name is not None:
+            self.ctl.rename_link(lid, name)
+
+    def delete_link_flow(self, link_id: str | None = None) -> None:
+        lid = self._chosen_link(link_id)
+        if lid is None:
+            return
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        self.ctl.delete_link(lid)
+
+    def create_harness_flow(self, link_id: str | None = None) -> None:
+        """The one button that makes a harness from a connection: it says what will be added,
+        asks once, and makes it as one undo step. Nothing makes a harness on its own."""
+        lid = self._chosen_link(link_id)
+        if lid is None:
+            return
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        try:
+            sentence = harness_preview(self.ctl.project, lid)
+        except edit.EditError as exc:
+            self._error(str(exc))
+            return
+        if (
+            self.run_dialog(CreateHarnessDialog(self, self.theme, sentence))
+            != QDialog.DialogCode.Accepted
+        ):
+            return
+        hid = self.ctl.create_harness_from_link(lid)
+        if hid is None:
+            return
+        self.go_to("harness")
+        self.harness_view.refresh()
+        self.harness_view.select_harness(hid)
+
+    def check_connections_flow(self) -> None:
+        """Check my connections: the review of every connection, without changing anything. The
+        findings are the cards of the Problems panel (filtered to the connections), where each
+        one shows the connection on the diagram."""
+        if not self.ctl.project.links:
+            self.toasts.show_message(strings.LINK_CHECK_NONE, None)
+            return
+        found = core_links.check_links(self.ctl.project)
+        self.dock_problems.show()
+        self.problems_list.show_filter("links")
+        self.ctl.check_now()
+        text = (
+            strings.LINK_CHECK_FOUND[0 if len(found) == 1 else 1].format(len(found))
+            if found
+            else strings.LINK_CHECK_CLEAN
+        )
+        self.toasts.show_message(text, None, 8000)
+
+    def _link_actions(self, link_id: str) -> list[QAction]:
+        """The entries of a connection's row in the project tree."""
+        link = self.ctl.project.links.get(link_id)
+        if link is None:
+            return []
+        ro = self.ctl.read_only
+        out: list[QAction] = []
+        for name, text, slot, enabled in (
+            ("edit", strings.A_LINK_EDIT, self.edit_link_flow, not ro),
+            ("rename", strings.A_LINK_RENAME, self.rename_link_flow, not ro),
+            (
+                "harness",
+                strings.A_LINK_HARNESS,
+                self.create_harness_flow,
+                not ro and not link.harness_id and bool(link.pairs),
+            ),
+            ("delete", strings.A_LINK_DELETE, self.delete_link_flow, not ro),
+        ):
+            act = QAction(text, self)
+            act.setObjectName(f"tree-link-{name}")
+            act.setEnabled(enabled)
+            act.triggered.connect(lambda _c=False, f=slot: f(link_id))
+            out.append(act)
+        return out
+
+    def _on_link_selection(self) -> None:
+        """The Edit > Selected connection actions follow the connection that is picked."""
+        c = self.ctl
+        link = c.project.links.get(c.selected_link or "")
+        have = link is not None and not c.read_only
+        for act in (self.act_link_edit, self.act_link_rename, self.act_link_delete):
+            act.setEnabled(have)
+        self.act_link_harness.setEnabled(
+            have and link is not None and not link.harness_id and bool(link.pairs)
+        )
+        self.menu_connection.setEnabled(have)
 
     # ---- devices: a new device, parts, interface types, pins from a type or an interface -----------
     def add_device_flow(self) -> None:
@@ -1351,10 +1516,23 @@ class MainWindow(QMainWindow):
             strings.REDUNDANT_COPY, self._redundant_selected, name="act-redundant"
         )
         self.act_connect_tool = a(
-            strings.TOOL_CONNECT,
-            lambda: self.ctl.begin_connect(self.ctl.connect_type),
-            "C",
-            name="act-connect",
+            strings.TOOL_CONNECT, self.ctl.begin_link, "C", name="act-connect"
+        )  # the pinout way; the interface types are in Edit > Connect with an interface type
+        self.act_link_connectors = a(
+            strings.A_LINK, self.link_flow, "Ctrl+Shift+K", name="act-link-connectors"
+        )
+        self.act_link_edit = a(strings.A_LINK_EDIT, self.edit_link_flow, name="act-link-edit")
+        self.act_link_rename = a(
+            strings.A_LINK_RENAME, self.rename_link_flow, name="act-link-rename"
+        )
+        self.act_link_harness = a(
+            strings.A_LINK_HARNESS, self.create_harness_flow, name="act-link-harness"
+        )
+        self.act_link_delete = a(
+            strings.A_LINK_DELETE, self.delete_link_flow, name="act-link-delete"
+        )
+        self.act_check_connections = a(
+            strings.A_CHECK_CONNECTIONS, self.check_connections_flow, name="act-check-connections"
         )
         self.act_select_tool = a(strings.TOOL_SELECT, self.ctl.end_connect, name="act-select")
         self.act_add_zone = a(strings.A_ADD_ZONE, self.add_zone_flow, name="act-add-zone")
@@ -1691,6 +1869,7 @@ class MainWindow(QMainWindow):
             e.addAction(act)
         e.addSeparator()
         e.addAction(self.act_new_interface)
+        e.addAction(self.act_link_connectors)
         e.addAction(self.act_connect_tool)
         align_menu = e.addMenu(strings.A_ALIGN)
         for act in self.align_actions.values():
@@ -1707,7 +1886,15 @@ class MainWindow(QMainWindow):
         for tid, tpl in edit.TEMPLATES.items():
             act = self._act(tpl.label, partial(self._add_unit, tid), name=f"menu-add-{tid}")
             self.menu_add.addAction(act)
-        self.menu_connect = e.addMenu(strings.M_CONNECT_WITH)
+        self.menu_connect = e.addMenu(strings.M_CONNECT_WITH_TYPE)  # the older, interface-first way
+        self.menu_connection = e.addMenu(strings.M_CONNECTION)
+        for act in (
+            self.act_link_edit,
+            self.act_link_rename,
+            self.act_link_harness,
+            self.act_link_delete,
+        ):
+            self.menu_connection.addAction(act)
         self._rebuild_connect_menu()
         self.tool_connect.setMenu(self.menu_connect)
         v = mb.addMenu(strings.M_VIEW)
@@ -1751,6 +1938,7 @@ class MainWindow(QMainWindow):
         self.menu_design = d
         for act in (self.act_generate, self.act_check, self.act_cancel_check, self.act_export):
             d.addAction(act)
+        d.addAction(self.act_check_connections)
         d.addSeparator()
         for act in (
             self.act_review,
@@ -2111,6 +2299,8 @@ class MainWindow(QMainWindow):
         self.act_new_harness.setEnabled(not ro)
         self.menu_add.setEnabled(not ro)  # the ways to add a unit and to connect (the Palette's)
         self.menu_connect.setEnabled(not ro)
+        self.act_link_connectors.setEnabled(not ro)
+        self._on_link_selection()
         self.act_generate.setEnabled(not ro)
         self.act_wire_colours.setEnabled(not ro)
         unsaved = strings.UNSAVED if c.autosaves else strings.UNSAVED_NO_JOURNAL
@@ -2219,6 +2409,7 @@ class MainWindow(QMainWindow):
             has_harnesses=bool(c.project.harnesses),
             units=len(c.project.units),
             interfaces=len(c.project.interfaces),
+            links=len(c.project.links),
             generated_at=record.input_hash[:8] if record is not None else "",
             revision=self._revision_text(),
         )
@@ -2702,6 +2893,9 @@ class MainWindow(QMainWindow):
 
     def _open_requested(self, kind: str, ident: str) -> None:
         """Double-click or Enter on a unit or link: show it in the harness plans."""
+        if kind == "link":  # a connection of two connectors: its pairs
+            self.edit_link_flow(ident)
+            return
         found = self._harness_for(kind, ident)
         if found is None:
             self.toasts.show_message(
@@ -3164,6 +3358,7 @@ class MainWindow(QMainWindow):
         return NextInputs(
             units=s.units,
             interfaces=s.interfaces,
+            links=s.links,
             harnesses=s.harnesses,
             hand_made_harnesses=s.hand_made,
             generation=s.generation,
@@ -3188,6 +3383,13 @@ class MainWindow(QMainWindow):
         """The Next step button "Connect two devices": the diagram with the Connect tool."""
         self.go_to("diagram")
         self.act_connect_tool.trigger()
+
+    def _next_make_harness(self) -> None:
+        """The Next step button "Create harness": the first connection that has no harness."""
+        p = self.ctl.project
+        todo = [lid for lid in sorted(p.links) if not p.links[lid].harness_id]
+        if todo:
+            self.create_harness_flow(todo[0])
 
     def _next_fix(self) -> None:
         """The Next step button "Show the problems": the Checks, filtered to what failed."""
@@ -3496,6 +3698,11 @@ class MainWindow(QMainWindow):
             self.ctl.apply_import(dlg.plan)
 
     def show_object(self, object_id: str) -> None:
+        if object_id in self.ctl.project.links:  # a connection: on the diagram, picked
+            self.main_tabs.show_slot("diagram")
+            self.ctl.select_link(object_id)
+            self.view.focus_connection(object_id)
+            return
         place = drc.locate(self.ctl.project, object_id)
         if place is None:
             if not self._show_other_object(object_id):

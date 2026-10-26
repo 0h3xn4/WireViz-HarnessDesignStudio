@@ -130,6 +130,7 @@ def test_the_steps_follow_the_key() -> None:
     expect = {
         "add_device": ["next", "todo", "todo", "todo", "todo", "todo"],
         "connect": ["done", "next", "todo", "todo", "todo", "todo"],
+        "make_harness": ["done", "done", "next", "todo", "todo", "todo"],
         "generate": ["done", "done", "next", "todo", "todo", "todo"],
         "check": ["done", "done", "done", "next", "todo", "todo"],
         "fix": ["done", "done", "done", "next", "todo", "todo"],
@@ -140,6 +141,7 @@ def test_the_steps_follow_the_key() -> None:
     cases = {
         "add_device": NextInputs(),
         "connect": NextInputs(units=2),
+        "make_harness": NextInputs(units=2, links=1),
         "generate": NextInputs(units=2, interfaces=1),
         "check": replace(RELEASABLE, checked=False),
         "fix": replace(RELEASABLE, failed=2),
@@ -193,16 +195,17 @@ def test_there_is_exactly_one_next_step_unless_all_is_done() -> None:
 
 
 def _all_facts():  # type: ignore[no-untyped-def]
-    for (units, interfaces, harnesses, hand, generation, running, checked, failed, unchecked,
-         outputs, released, read_only, has_folder) in itertools.product(
-        (0, 2), (0, 1), (0, 2), (0, 1, 2), ("none", "current", "stale"), (None, "generate"),
+    for (units, interfaces, links, harnesses, hand, generation, running, checked, failed,
+         unchecked, outputs, released, read_only, has_folder) in itertools.product(
+        (0, 2), (0, 1), (0, 1), (0, 2), (0, 1, 2), ("none", "current", "stale"), (None, "generate"),
         (False, True), (0, 2), (0, 3), ("none", "current", "stale"), (0, 1, 2), (False, True),
         (False, True),
     ):  # fmt: skip
         if hand > harnesses or released > harnesses:
             continue
         yield NextInputs(
-            units=units, interfaces=interfaces, harnesses=harnesses, hand_made_harnesses=hand,
+            units=units, interfaces=interfaces, links=links, harnesses=harnesses,
+            hand_made_harnesses=hand,
             generation=generation, running=running, checked=checked, failed=failed,
             unchecked=unchecked, outputs=outputs, released=released, read_only=read_only,
             has_folder=has_folder,

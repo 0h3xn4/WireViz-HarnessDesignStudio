@@ -13,9 +13,11 @@ The rules run in this order, the first that fits wins:
     busy         a job runs                                   no button
     read_only    the project cannot be changed                no button
     add_device   no devices and no harness                    (or: make a harness by hand)
-    connect      no connection and no harness
+    connect      no connection (an interface or a link of two connectors) and no harness
+    make_harness connections of connectors but no harness and no interface: the one button
+                 "Create harness" makes it (the tool never makes a harness on its own)
     generate     no harness, or no plans, or plans out of date (a project whose harnesses were all
-                 made by hand skips this step)
+                 made by hand skips this step, so does one whose harness was made from a link)
     check        the design was not checked
     fix          checks failed
     build_sheets the files are not up to date
@@ -43,6 +45,7 @@ KEYS: Final = (
     "read_only",
     "add_device",
     "connect",
+    "make_harness",
     "generate",
     "check",
     "fix",
@@ -62,6 +65,7 @@ STEP_LABELS: Final = (
 _STEP_OF: Final = {
     "add_device": 0,
     "connect": 1,
+    "make_harness": 2,
     "generate": 2,
     "check": 3,
     "fix": 3,
@@ -75,6 +79,7 @@ _STEP_OF: Final = {
 class NextInputs:
     units: int = 0
     interfaces: int = 0
+    links: int = 0  # connections of two connectors (core/links.py)
     harnesses: int = 0
     hand_made_harnesses: int = 0  # harnesses a person made (generated=False)
     generation: str = "none"  # none | current | stale
@@ -147,8 +152,10 @@ def stage(f: NextInputs) -> str:
     """The key of the first step that is not done, whatever runs and whatever may be edited."""
     if f.units == 0 and f.harnesses == 0:
         return "add_device"
-    if f.interfaces == 0 and f.harnesses == 0:
+    if f.interfaces == 0 and f.links == 0 and f.harnesses == 0:
         return "connect"
+    if f.interfaces == 0 and f.harnesses == 0:
+        return "make_harness"
     by_hand = f.harnesses > 0 and f.hand_made_harnesses == f.harnesses
     if not by_hand and (f.harnesses == 0 or f.generation in ("none", "stale")):
         return "generate"
@@ -208,6 +215,14 @@ def next_step(f: NextInputs) -> Next:
             strings.NEXT_CONNECT_TITLE,
             strings.NEXT_CONNECT_WHY,
             strings.NEXT_CONNECT_BUTTON,
+            steps,
+        )
+    if key == "make_harness":
+        return Next(
+            key,
+            strings.NEXT_MAKE_TITLE,
+            strings.NEXT_MAKE_WHY,
+            strings.NEXT_MAKE_BUTTON,
             steps,
         )
     if key == "generate":

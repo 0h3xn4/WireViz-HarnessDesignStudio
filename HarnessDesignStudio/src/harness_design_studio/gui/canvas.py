@@ -47,6 +47,7 @@ from harness_design_studio.core import describe, edit, routing
 from harness_design_studio.core.model import Project
 from harness_design_studio.gui import canvas_badges as cbadges
 from harness_design_studio.gui import glyphs, strings
+from harness_design_studio.gui.canvas_links import ConnectionItem, derived_texts
 from harness_design_studio.gui.canvas_state import NO_INDEX, ObjectState, StateIndex, badge_text
 from harness_design_studio.gui.controller import Delta, EditorController, Selection
 from harness_design_studio.gui.icons import draw_icon, icon_button
@@ -267,6 +268,12 @@ class UnitItem(QGraphicsItem):
     def _compat_reason(self) -> tuple[str, str]:
         """(state, reason): state is 'from', 'ok', 'no' or '' when the connect tool is idle."""
         ctl = self.ctl
+        if ctl.linking:  # the Connect tool of the pinout way: any device with a connector
+            if ctl.connect_from and ctl.connect_from.unit_id == self.unit_id:
+                return "from", ""
+            if not self.connectors():
+                return "no", strings.LINK_NO_CONNECTOR_SHORT
+            return "ok", ""
         if ctl.tool != "connect" or ctl.connect_type is None:
             return "", ""
         if ctl.connect_from and ctl.connect_from.unit_id == self.unit_id:
@@ -1614,6 +1621,7 @@ class DiagramScene(QGraphicsScene):
         self._state_timer.timeout.connect(self.refresh_states)
         self.unit_items: dict[str, UnitItem] = {}
         self.link_items: dict[str, LinkItem] = {}
+        self.connection_items: dict[str, ConnectionItem] = {}  # core.links.Link lines
         self._chips: dict[tuple[int, int], list[tuple[str, QRectF]]] = {}
         self._chip_rects: dict[str, QRectF] = {}
         self._segments: dict[tuple[int, int], list[tuple[str, QRectF]]] = {}  # route pieces
@@ -1651,6 +1659,7 @@ class DiagramScene(QGraphicsScene):
         ctl.selectionChanged.connect(self._on_selection)
         ctl.marksChanged.connect(self.refresh_all)
         ctl.connectChanged.connect(self._repaint_units)
+        ctl.linkSelectionChanged.connect(self._repaint_connections)
         ctl.modeChanged.connect(self.refresh_all)
         theme.changed.connect(self._theme_changed)
         self.rebuild()
@@ -1733,6 +1742,10 @@ class DiagramScene(QGraphicsScene):
                 if link is not None:
                     link.refresh_chip()  # (a lock text widens the label)
                     link.update()
+            elif kind == "link":
+                line = self.connection_items.get(ident)
+                if line is not None:
+                    line.update()
         self.statesChanged.emit(new)
 
     def pen(self, token: str, width: float, style: Qt.PenStyle = Qt.PenStyle.SolidLine) -> QPen:
@@ -2188,6 +2201,7 @@ class DiagramScene(QGraphicsScene):
         self.clear()
         self.unit_items.clear()
         self.link_items.clear()
+        self.connection_items.clear()
         self._chips.clear()
         self._chip_rects.clear()
         self._slots.clear()
@@ -2205,6 +2219,9 @@ class DiagramScene(QGraphicsScene):
         self._routes = None
         for iid in sorted(project.interfaces):
             self._add_link(iid)
+        for lid in sorted(project.links):
+            self._add_connection(lid)
+        self._refresh_connections()
         self._update_extent()
         if self.filter is not None or self.ctl.selected:
             self._apply_filter()
@@ -2246,6 +2263,43 @@ class DiagramScene(QGraphicsScene):
         self.addItem(link)
         self.link_items[iid] = link
         link.update_path()
+
+    def _add_connection(self, lid: str) -> None:
+        item = ConnectionItem(self, lid, W)
+        self.addItem(item)
+        self.connection_items[lid] = item
+        item.update_path()
+
+    def _apply_connections(self, delta: Delta) -> None:
+        """Add, drop and redraw the lines of connections (few; drawn apart from the routed
+        interfaces)."""
+        project = self.ctl.project
+        for lid in delta.links:
+            item = self.connection_items.get(lid)
+            if lid in project.links:
+                if item is None:
+                    self._add_connection(lid)
+                else:
+                    item.update()
+            elif item is not None:
+                self.removeItem(item)
+                del self.connection_items[lid]
+        self._refresh_connections()
+
+    def _refresh_connections(self) -> None:
+        """Every line follows its devices; the texts follow the pins."""
+        if not self.connection_items:
+            return
+        texts = derived_texts(self.ctl.project)
+        for lid, item in self.connection_items.items():
+            item.update_path()
+            if item.text != texts.get(lid, ""):
+                item.text = texts.get(lid, "")
+            item.update()
+
+    def _repaint_connections(self) -> None:
+        for item in self.connection_items.values():
+            item.update()
 
     def _sync_zones(self) -> None:
         zones = edit.effective_zones(self.ctl.project)
@@ -2311,6 +2365,8 @@ class DiagramScene(QGraphicsScene):
             link = self.link_items.get(iid)
             if link is not None and iid not in delta.followers:
                 link.refresh_chip()
+        if delta.links or self.connection_items:
+            self._apply_connections(delta)
         self._update_extent()
         if self.filter is not None or self.ctl.selected:
             self._apply_filter()
@@ -2358,6 +2414,8 @@ class DiagramScene(QGraphicsScene):
         run differently, so all routes are worked out again; only changed links are redrawn.
         While units are being dragged only straight preview lines are drawn (at most once per
         METRICS.drag_preview_ms); the routes are worked out when the mouse is released."""
+        for line in self.connection_items.values():  # (a few straight-sided lines: cheap)
+            line.update_path()
         if self._drag_units:
             self._schedule_preview()
             return
@@ -2372,6 +2430,7 @@ class DiagramScene(QGraphicsScene):
             it.update()
         for link in self.link_items.values():
             link.update_path()
+        self._refresh_connections()
         self._update_extent()  # (expert units are taller)
         self.update()
 
@@ -3127,11 +3186,14 @@ class DiagramView(QGraphicsView):
         if isinstance(item, UnitItem):
             kind, ident = "unit", item.unit_id
             connector = item.port_at(item.mapFromScene(at))  # (a connector row, in Expert mode)
+        elif isinstance(item, ConnectionItem):
+            kind, ident = "link", item.link_id
+            self.ctl.select_link(ident)
         else:
             link = item if isinstance(item, LinkItem) else self.dscene.chip_at(at)
             if link is not None:
                 kind, ident = "interface", link.interface_id
-        if kind and ident and not self.ctl.is_selected(kind, ident):
+        if kind and ident and kind != "link" and not self.ctl.is_selected(kind, ident):
             self.ctl.select(kind, ident)  # the menu is about what was clicked
         menu = self.build_context_menu(kind, ident, at, connector=connector)
         self.last_menu = menu
@@ -3185,6 +3247,12 @@ class DiagramView(QGraphicsView):
             menu.addSeparator()
             self._mirror(menu, "duplicate")
             self._mirror(menu, "redundant")
+            self._entry(
+                menu,
+                strings.CM_LINK_FROM,
+                partial(self._link_from, ident),
+                strings.WHY_READ_ONLY if ctl.read_only else "",
+            )
             types = menu.addMenu(strings.CM_CONNECT_FROM)
             types.setToolTipsVisible(True)
             if ro:
@@ -3195,6 +3263,9 @@ class DiagramView(QGraphicsView):
             self._align_menus(menu)
             menu.addSeparator()
             self._mirror(menu, "delete")
+        elif kind == "link" and ident:
+            for name in ("link_edit", "link_harness", "link_delete"):
+                self._mirror(menu, name)
         elif kind == "interface" and ident:
             self._entry(menu, strings.CM_OPEN_PLAN, lambda: ctl.request_open("interface", ident))
             self._state_entries(menu, "interface", ident)
@@ -3304,6 +3375,11 @@ class DiagramView(QGraphicsView):
             for name in names:
                 self._mirror(sub, name)
 
+    def _link_from(self, unit_id: str) -> None:
+        ctl = self.ctl
+        ctl.begin_link()
+        ctl.pick(unit_id)
+
     def _connect_from(self, type_id: str, unit_id: str) -> None:
         ctl = self.ctl
         ctl.begin_connect(type_id)
@@ -3409,6 +3485,11 @@ class DiagramView(QGraphicsView):
             if unit is not None:
                 self.centerOn(unit)
             return
+        if kind == "link":
+            line = scene.connection_items.get(ident)
+            if line is not None and line.poly:
+                self.centerOn(line._label_spot())
+            return
         link = scene.link_items.get(ident)
         if link is not None:
             chip = scene.chip_rect(ident)
@@ -3420,6 +3501,13 @@ class DiagramView(QGraphicsView):
         item = self.dscene.unit_items.get(unit_id)
         if item is not None:
             self.center_on_object("unit", unit_id)
+            item.setFocus()
+
+    def focus_connection(self, link_id: str) -> None:
+        """Show a connection (a core.links.Link) in the middle of the view."""
+        item = self.dscene.connection_items.get(link_id)
+        if item is not None:
+            self.center_on_object("link", link_id)
             item.setFocus()
 
     def focus_link(self, interface_id: str) -> None:

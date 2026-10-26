@@ -163,7 +163,7 @@ EXPERT_TIP = "Expert mode: all physical details (connectors, pins, parts)."
 TOOL_SELECT = "Select"
 TOOL_CONNECT = "Connect"
 TOOL_SELECT_TIP = "Select and move (Esc)"
-TOOL_CONNECT_TIP = "Connect two devices (C). The arrow next to it lists the interface types: pick one, then click the first and the second device."
+TOOL_CONNECT_TIP = "Connect two devices pin by pin (C): click the first device, then the second. The arrow next to it is the older way, by interface type."
 HINT = "Hint"
 ZOOM_IN = "Zoom in"
 ZOOM_OUT = "Zoom out"
@@ -2479,7 +2479,7 @@ NEXT_ADD_BUTTON = "Add a device"
 NEXT_ADD_ALTERNATIVE = "or make a harness by hand"
 NEXT_ADD_ALTERNATIVE_BUTTON = "New harness…"
 NEXT_CONNECT_TITLE = "Connect your devices"
-NEXT_CONNECT_WHY = "Draw a connection from one device to another. Each connection becomes wires."
+NEXT_CONNECT_WHY = "Join a connector of one device to a connector of another. The program proposes the pairs of pins."
 NEXT_CONNECT_BUTTON = "Connect two devices"
 NEXT_GENERATE_TITLE = "Generate the harnesses"
 NEXT_GENERATE_WHY = "The program makes the harnesses from your connections."
@@ -2511,7 +2511,7 @@ NEXT_DONE_BUTTON = "Open the Outputs"
 NEXT_BUTTON_TIPS = {
     "add_device": "Add a device to the design and name it (Ctrl+Shift+N)",
     "new_harness": "Make a harness by hand, without devices or connections (Ctrl+Shift+H)",
-    "connect": "Open the diagram with the Connect tool, then click two devices (C)",
+    "connect": "Open the diagram with the Connect tool, then click two devices (C). A window then shows which pins go together",
     "generate": "Make the harnesses from the connections of the design (Ctrl+G)",
     "check": "Look for mistakes in the design (F5)",
     "fix": "Open the Checks, which list what failed and what to do",
@@ -2572,3 +2572,137 @@ HV_EXPORT_READ_ONLY = "Read-only: save a copy first"
 HV_EXPORT_SAVES_FIRST = "Asks where to save first"
 HV_EXPORT_SAVES_FIRST_TIP = "This project has no folder yet, so you first choose where to save it; the files are then exported next to it"
 HV_EXPORT_REASON_NAME = "Why Export may not work"
+
+# ---- Workshop feedback M2b (D-173): connections, the pinout first. Two connectors joined pin by pin ----
+M_CONNECT_WITH_TYPE = "Connect with an interface type…"
+M_CONNECTION = "Selected connection"
+A_LINK = "Link connectors…"
+A_LINK_EDIT = "Edit the pairs…"
+A_LINK_RENAME = "Rename…"
+A_LINK_HARNESS = "Create harness"
+A_LINK_DELETE = "Delete connection"
+A_CHECK_CONNECTIONS = "Check my connections"
+CM_LINK_FROM = "Link connectors from here…"
+STEP_ADD_LINK = "Link connectors {}"
+STEP_EDIT_LINK = "Change connection {}"
+STEP_RENAME_LINK = "Rename connection {}"
+STEP_DELETE_LINK = "Delete connection {}"
+STEP_LINK_HARNESS = "Create harness from connection {}"
+LINK_ADDED = "Connection {} made between {}."
+LINK_CHANGED = "Connection {} changed."
+LINK_DELETED = "Connection {} deleted. A harness made from it stays."
+LINK_HARNESS_MADE = (
+    "Harness {} created from connection {}. Enter the lengths and wires' details in Edit wire."
+)
+LINK_NEED_TWO = "Add a second device first. A connection joins two devices."
+LINK_PICK_ONE = "Pick a connection first (in the project tree or on the diagram)."
+LINK_SAME_DEVICE = "Pick a device other than {}. A connection joins two different devices."
+LINK_HINT_FIRST = "Click the first device. A window then shows which pins go together."
+LINK_HINT_SECOND = "Now click the second device ({} is the first)."
+LINK_NO_CONNECTOR_SHORT = "No connector yet"
+LINK_NO_CONNECTOR = "Device {} has no connector yet. Add one in the Devices tab first."
+LINK_NO_PAIRS = "Pair at least one pin of the first connector with a pin of the second."
+LINK_NO_PAIRS_YET = "Nothing is paired yet. Pick a pin on each side and press Add pair."
+LINK_TITLE = "Link connectors"
+LINK_EDIT_TITLE = "Edit the pairs of a connection"
+LINK_INTRO = (
+    "Pick a connector on each device. The program proposes which pins go together from the "
+    "signal names on the pins, never from their position. Look at the pairs and change what is wrong."
+)
+LINK_EDIT_INTRO = "The two connectors stay as they are. Change the pairs and the roles of the pins."
+LINK_NAME = "Name"
+LINK_NAME_TIP = (
+    "A name for this connection (optional). Without one it is called after its two connectors."
+)
+LINK_NAME_HINT = "optional"
+LINK_FIRST = "First device"
+LINK_SECOND = "Second device"
+LINK_JOINED = "joined to"
+LINK_DEVICE = "Device"
+LINK_DEVICE_TIP = "The device whose connector is joined"
+LINK_CONNECTOR = "Connector"
+LINK_CONNECTOR_TIP = (
+    "The connector of the device. Every connector can be joined to a connector of another device."
+)
+LINK_ENDS_FIXED = (
+    "The connectors of a connection cannot change. Delete it and link again to use others."
+)
+LINK_TABLE_NAME = "Pairs of pins"
+LINK_COL_PIN_A = "Pin (first)"
+LINK_COL_SIGNAL_A = "Signal (first)"
+LINK_COL_ROLE_A = "Role (first)"
+LINK_COL_PIN_B = "Pin (second)"
+LINK_COL_SIGNAL_B = "Signal (second)"
+LINK_COL_ROLE_B = "Role (second)"
+LINK_NO_SIGNAL = "no signal"
+LINK_PIN_A = "Pin of the first connector"
+LINK_PIN_B = "Pin of the second connector"
+LINK_PIN_TIP = "A pin of the connector with its signal name"
+LINK_ROLE_A = "Role of that pin of the first connector"
+LINK_ROLE_B = "Role of that pin of the second connector"
+LINK_ROLE_TIP = "What the pin is for. Automatic takes it from the signal name."
+LINK_ROLE_NAMES = {
+    "": "Automatic",
+    "power": "Power",
+    "return": "Return",
+    "ground": "Ground",
+    "signal": "Signal",
+    "shield": "Shield",
+    "spare": "Spare",
+}
+LINK_ROLE_HELP = (
+    "Roles: Power carries the supply. Return is the line the current of a signal comes back on. "
+    "Ground is the common reference. Signal carries data. Shield is the screen of a cable. "
+    "Spare is a pin nobody uses, so it is not asked about. Automatic takes the role from the signal name."
+)
+LINK_ADD_PAIR = "Add pair"
+LINK_ADD_TIP = "Pair the two pins chosen above"
+LINK_CHANGE_PAIR = "Change pair"
+LINK_CHANGE_TIP = "Replace the pair picked in the table by the two pins chosen above"
+LINK_REMOVE_PAIR = "Remove pair"
+LINK_REMOVE_TIP = "Take the pair picked in the table out"
+LINK_UNPAIRED_LINE = "Not paired on {}: {}."
+LINK_ALL_PAIRED = "Every pin that has a signal is paired."
+LINK_REVIEW_ERRORS = (
+    "Something looks wrong. You can still make the connection; the check keeps asking."
+)
+LINK_REVIEW_WARNINGS = "Please have a look. You can still make the connection."
+LINK_OK = "Link connectors"
+LINK_SAVE = "Save the pairs"
+LINK_OK_TIP = "Join the two connectors with these pairs (you can undo it)"
+LINK_RENAME_TITLE = "Rename connection"
+LINK_HARNESS_TITLE = "Create harness"
+LINK_HARNESS_PREVIEW = (
+    "This adds the harness {name} with {connectors} cable connectors and {wires} wires, "
+    "one wire for each pair of {caption}."
+)
+LINK_HARNESS_NOTE = "Lengths, gauges and colours stay empty until you enter them. The program never makes a harness on its own, and you can undo this."
+LINK_HARNESS_OK = "Create harness"
+LINK_HARNESS_OK_TIP = "Make the harness now (you can undo it)"
+LINK_CHECK_NONE = "There is no connection to check yet. Use Link connectors first."
+LINK_CHECK_CLEAN = "Every connection looks fine."
+LINK_CHECK_FOUND = (
+    "1 thing to look at in your connections. It is listed under Problems.",
+    "{} things to look at in your connections. They are listed under Problems.",
+)
+LINK_TIP_ENDS = "Joins"
+LINK_TIP_PAIRS = "Pairs"
+LINK_TIP_CARRIES = "Carries"
+LINK_TIP_HARNESS = "Harness"
+LINK_TIP_NO_HARNESS = "none yet (Create harness makes it)"
+LINK_TIP_CHECKS = "Checks"
+LINK_TIP_OPEN = "Double-click to change the pairs."
+TREE_ROOTS["links"] = "Connections"
+TREE_EMPTY["links"] = "No connections yet. Use Link connectors, or the Connect tool on the diagram."
+TREE_ADD_LINK = "Link connectors…"
+TREE_TIP_LINK = "Connection {}: {}, {} pairs."
+TREE_TIP_LINK_HARNESS = "Harness {} was made from it."
+TREE_TIP_LINK_NO_HARNESS = "No harness yet."
+PROBLEMS_FILTER_LINKS = "Connections"
+PROBLEMS_FILTER_LINKS_TIP = "Show only what the check says about connections"
+NEXT_MAKE_TITLE = "Make the harness of your connection"
+NEXT_MAKE_WHY = "Your connection says which pins go together. One button makes a harness with a wire for each pair."
+NEXT_MAKE_BUTTON = "Create harness"
+NEXT_BUTTON_TIPS["make_harness"] = (
+    "Show what the harness will contain, then make it. Nothing is made before you agree"
+)
