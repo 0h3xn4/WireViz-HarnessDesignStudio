@@ -1,6 +1,6 @@
 # Plan for the workshop feedback (October 2026)
 
-**Status (2026-10-26).** Feedback received on 2026-10-23 from a workshop with a systems engineer, an AIT engineer and an electrical engineer. The investigation of what version 1.7.0 does today is done (below). The owner answered the four decisions on 2026-10-25 (section *Decisions of the owner*); milestone M1 is built (below, *M1 as built*), M2 (*M2 as built*), M3 (*M3 as built*), M4 (*M4 as built*) and M5 (*M5 as built*) are built; all five milestones are built and are part of version 1.8.0, which is prepared and not published yet (*What is left* at the end lists what is open).
+**Status (2026-10-26).** Feedback received on 2026-10-23 from a workshop with a systems engineer, an AIT engineer and an electrical engineer. The investigation of what version 1.7.0 does today is done (below). The owner answered the four decisions on 2026-10-25 (section *Decisions of the owner*); milestone M1 is built (below, *M1 as built*), M2 (*M2 as built*), M3 (*M3 as built*), M4 (*M4 as built*) and M5 (*M5 as built*) are built; all five milestones are built and are part of version 1.8.0, published 2026-10-26 as tag v1.8.0 on 1f7431e with the Linux and Windows packages, release workflow run 40390285619; not signed off by the owner (*What is left* at the end lists what is open).
 
 ## The feedback, in the owner's words, grouped
 
@@ -174,7 +174,7 @@ Open points of M5:
 
 ## What is left (2026-10-26)
 
-All five milestones are built and on `master` (M1 with pull request 111, M2 to M5 together with pull request 113, both merged on 2026-10-26); all of it is part of version 1.8.0, prepared and not published yet, the owner has not signed off any of it, and no screen was watched on a real display by a person. The open points of the five milestones, together:
+All five milestones are built and on `master` (M1 with pull request 111, M2 to M5 together with pull request 113, both merged on 2026-10-26); all of it is part of version 1.8.0, published 2026-10-26 as tag v1.8.0 on 1f7431e with the Linux and Windows packages, release workflow run 40390285619; not signed off by the owner (the owner has not signed off any of it), and no screen was watched on a real display by a person. The open points of the five milestones, together:
 
 **Not built, or asked and not answered**
 
@@ -205,7 +205,7 @@ All five milestones are built and on `master` (M1 with pull request 111, M2 to M
 
 **Release**
 
-- Version 1.8.0 is prepared (the version number, the changelog section, `docs/releases/1.8.0.md` and the regenerated files, on the branch `release/1.8.0`). Not done: the tag, the publication record, the signing of the packages and the owner's sign-off; `docs/RELEASE.md` is the checklist.
+- Version 1.8.0 is published (2026-10-26 as tag v1.8.0 on 1f7431e with the Linux and Windows packages, release workflow run 40390285619; not signed off by the owner); the publication record and the checksums are in `compliance/SIGNOFF.md` and `compliance/evidence/release_1.8.0_SHA256SUMS`. Not done: the signing of the packages and the owner's sign-off; `docs/RELEASE.md` is the checklist.
 
 ## Not clear yet
 
