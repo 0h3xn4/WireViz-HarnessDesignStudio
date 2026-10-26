@@ -494,6 +494,50 @@ def plan_create_harness(project: Project, link_id: str) -> tuple[list[Op], str]:
     ], hid
 
 
+@dataclass(frozen=True)
+class LinkEnd:
+    """One end of a link for the diagram: the device connector, its name, its number of pins and how
+    many of them the link pairs."""
+
+    connector_id: str
+    name: str
+    pins: int
+    used: int
+
+
+def link_ends(project: Project, link: Link) -> tuple[LinkEnd, LinkEnd]:
+    """The two ends of a link, A then B (display only). A connector that is gone shows its ID and
+    no pins."""
+
+    def end(connector_id: str, pins_used: set[str]) -> LinkEnd:
+        c = project.connectors.get(connector_id)
+        if c is None:
+            return LinkEnd(connector_id, connector_id, 0, 0)
+        return LinkEnd(connector_id, c.name, len(c.pins), len(pins_used & {p.id for p in c.pins}))
+
+    return (
+        end(link.a_connector, {p.a_pin for p in link.pairs}),
+        end(link.b_connector, {p.b_pin for p in link.pairs}),
+    )
+
+
+def link_path(project: Project, link: Link) -> list[str]:
+    """The way a link runs once a harness was made from it: the connector of the first device, the
+    cable connector that plugs into it, the cable connector at the other end, the connector of the
+    second device. Empty while no harness exists. A cable connector that is not found (it was
+    deleted) is left out; the result keeps the order."""
+    h = project.harnesses.get(link.harness_id or "")
+    if h is None:
+        return []
+    path = [link.a_connector]
+    for box in (link.a_connector, link.b_connector):
+        cable = next((c.id for c in h.connectors if c.mates_with == box), None)
+        if cable is not None:
+            path.append(cable)
+    path.append(link.b_connector)
+    return path
+
+
 # ---- what a link carries (display only) --------------------------------------------------------
 
 
@@ -692,6 +736,7 @@ def check_links(project: Project) -> list[LinkFinding]:
 __all__ = [
     "COUNTERPARTS",
     "DerivedInterface",
+    "LinkEnd",
     "LinkFinding",
     "Proposal",
     "check_link",
@@ -699,6 +744,8 @@ __all__ = [
     "derived_interfaces",
     "effective_role",
     "link_caption",
+    "link_ends",
+    "link_path",
     "links_of_connector",
     "name_relation",
     "natural_key",

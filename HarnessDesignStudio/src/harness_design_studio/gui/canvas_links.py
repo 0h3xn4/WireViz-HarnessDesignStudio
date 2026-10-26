@@ -7,6 +7,11 @@ the second to the edge of the second, with a label that reads the two connectors
 `core.links.derived_interfaces`). It is its own small item and does not take part in the routing
 of the interfaces, so a diagram without connections is drawn exactly as before.
 
+With View > Show connectors on connections, or in the Expert mode, a small box at each end of the
+line names the connector and how many of its pins the connection pairs (`core.links.link_ends`);
+the tooltip also names the way through the harness once one was made from the connection
+(`core.links.link_path`). Nothing is drawn or computed for the boxes while they are off.
+
 `connection_route` needs no Qt state and is tested on its own.
 """
 
@@ -24,8 +29,13 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio.core import routing
-from harness_design_studio.core.links import derived_interfaces, link_caption
-from harness_design_studio.core.model import Project
+from harness_design_studio.core.links import (
+    derived_interfaces,
+    link_caption,
+    link_ends,
+    link_path,
+)
+from harness_design_studio.core.model import Link, Project
 from harness_design_studio.gui import strings
 
 if TYPE_CHECKING:
@@ -35,6 +45,7 @@ OUT = 36.0  # how far a line leaves a device before it turns
 HIT_WIDTH = 12.0  # how wide a click on the line still counts
 CHIP_PAD_X = 8.0
 CHIP_PAD_Y = 3.0
+END_GAP = 4.0  # between the edge of a device and the box of its connector
 
 
 def connection_route(
@@ -83,6 +94,7 @@ class ConnectionItem(QGraphicsPathItem):
         self.poly: list[tuple[float, float]] = []
         self.text = ""  # what the pairs carry, "CAN, 2 wires"
         self._chip = QRectF()
+        self._end_rects: list[QRectF] = []  # the connector boxes at the two ends (when shown)
         self._hover = False
         self.setZValue(1.2)
         self.setAcceptHoverEvents(True)
@@ -150,6 +162,8 @@ class ConnectionItem(QGraphicsPathItem):
         path = stroker.createStroke(self.path())
         if not self._chip.isEmpty():
             path.addRect(self._chip)
+        for rect in self._end_rects:
+            path.addRect(rect)
         return path
 
     # ---- painting ---------------------------------------------------------------------------
@@ -177,6 +191,7 @@ class ConnectionItem(QGraphicsPathItem):
         painter.drawPath(self.path())
         lod = option.levelOfDetailFromTransform(painter.worldTransform())
         if lod < 0.35 and not selected and not self._hover:
+            self._end_rects = []
             return  # from far away the line alone says enough
         font = sc.px_font(th.type("small"))
         painter.setFont(font)
@@ -199,10 +214,53 @@ class ConnectionItem(QGraphicsPathItem):
                 int(Qt.AlignmentFlag.AlignCenter),
                 t,
             )
+        self._paint_ends(painter, link, token, selected)
         if self.hasFocus():
             painter.setPen(sc.pen("focus", 3))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRoundedRect(self._chip.adjusted(-3, -3, 3, 3), 8, 8)
+
+    def ends_shown(self) -> bool:
+        """The connector boxes are drawn in the Expert mode and when View > Show connectors on
+        connections is on."""
+        return self.dscene.connection_ends or self.dscene.ctl.mode == "expert"
+
+    def _paint_ends(self, painter: QPainter, link: Link, token: str, selected: bool) -> None:
+        """A small box at each end of the line: the connector name, and how many of its pins the
+        connection pairs. Drawn beside the edge of the device the line leaves."""
+        if not self.ends_shown():
+            self._end_rects = []
+            return
+        sc = self.dscene
+        th = sc.theme
+        font = sc.px_font(th.type("small"))
+        painter.setFont(font)
+        line_h = painter.fontMetrics().height()
+        rects: list[QRectF] = []
+        for end, (x, y), toward in zip(
+            link_ends(sc.ctl.project, link),
+            (self.poly[0], self.poly[-1]),
+            (self.poly[1], self.poly[-2]),
+            strict=True,
+        ):
+            pins = end.pins
+            second = strings.LINK_END_PINS[0 if pins == 1 else 1].format(end.used, pins)
+            text_w = max(sc.text_width(font, end.name), sc.text_width(font, second))
+            w, h = text_w + 2 * CHIP_PAD_X, 2 * line_h + 2 * CHIP_PAD_Y
+            right = toward[0] >= x  # the line leaves towards the right: the box sits to its right
+            rect = QRectF(x + END_GAP if right else x - END_GAP - w, y - h / 2, w, h)
+            rects.append(rect)
+            painter.setBrush(QBrush(th.color("bg")))
+            painter.setPen(sc.pen(token, 3 if selected else 1.5))
+            painter.drawRoundedRect(rect, 4, 4)
+            for k, t in enumerate((end.name, second)):
+                painter.setPen(th.color("text" if k == 0 else "text-muted"))
+                painter.drawText(
+                    QRectF(rect.x(), rect.y() + CHIP_PAD_Y + k * line_h, w, line_h),
+                    int(Qt.AlignmentFlag.AlignCenter),
+                    t,
+                )
+        self._end_rects = rects
 
     # ---- the pointer ------------------------------------------------------------------------
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
@@ -250,6 +308,9 @@ class ConnectionItem(QGraphicsPathItem):
                 link.harness_id or strings.LINK_TIP_NO_HARNESS,
             )
         )
+        path = link_path(project, link)
+        if path:
+            rows.append((strings.LINK_TIP_PATH, " - ".join(path)))
         says = st.sentence()
         if says:
             rows.append((strings.LINK_TIP_CHECKS, says))

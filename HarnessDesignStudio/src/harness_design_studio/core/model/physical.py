@@ -39,7 +39,7 @@ class Pin(SparseEntity):
 
 
 class Connector(SparseEntity):
-    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label"})
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label", "locked"})
 
     id: Id
     name: Name
@@ -54,6 +54,10 @@ class Connector(SparseEntity):
     notes: Text = ""
     label: Name | None = (
         None  # text for the connector's label instead of its ID (a person's, 1.4.0)
+    )
+    locked: bool = (
+        False  # a cable connector of a generated harness that a person edited: generation keeps
+        # its part, gender, keying and pin details (workshop M3)
     )
 
 

@@ -1,6 +1,6 @@
 # Edit a wire
 
-This page shows how to change a wire after the tool has generated it (its gauge, type, colour, length, the strip length at each end, a label for the wire labels, and a note), how to draw a wire of your own, how to put several wires on one pin, how to twist or shield wires together, and how to label the harness and its connectors.
+This page shows how to change a wire after the tool has generated it (its gauge, type, colour, length, the strip length at each end, a label for the wire labels, and a note), how to draw a wire of your own, how to put several wires on one pin, how to twist or shield wires together and change such a group, how to set the same values on many wires at once, and how to label the harness and its connectors. To change a connector of a harness or its pins see [build a harness by hand](build-a-harness-by-hand.md#change-a-connector-and-its-pins).
 
 > **Since 1.4.0.** Before 1.4.0 the app had no way to change or draw a single wire (only the colour of a whole signal, see [set wire colours](set-wire-colours.md)). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
 
@@ -22,6 +22,8 @@ To make a whole harness yourself, with its own connectors, see [build a harness 
 - [6. Twist or shield wires together](#6-twist-or-shield-wires-together)
 - [7. Labels on the harness and its connectors](#7-labels-on-the-harness-and-its-connectors)
 - [8. Function and soldering](#8-function-and-soldering)
+- [9. Change a group](#9-change-a-group)
+- [10. Edit all wires](#10-edit-all-wires)
 - [Common mistakes](#common-mistakes)
 
 ## Before you start
@@ -103,7 +105,7 @@ Select the wires, choose a kind in **Kind of group** and press **Group**:
 | Coax | exactly 1 |
 | Overall shield | 2 or more |
 
-The wires must be in one harness and in no group yet (a generated twisted pair is a group too). The group gets the next free shield ID, shows in the **Shield group** column of the wire list and as a sleeve in the drawing, and is kept by **Generate**. Its shield ends are those of the generation settings (floating while they are still placeholders, which the rule **Shield termination** then points out). To take a group apart select one of its wires and press **Ungroup**; only groups you made can be taken apart, because a generated group follows the construction of the interface type.
+The wires must be in one harness and in no group yet (a generated twisted pair is a group too). The group gets the next free shield ID, shows in the **Shield group** column of the wire list and as a sleeve in the drawing, and is kept by **Generate**. Its shield ends are those of the generation settings (floating while they are still placeholders, which the rule **Shield termination** then points out). To take a group apart select one of its wires and press **Ungroup**; only groups you made can be taken apart, because a generated group follows the construction of the interface type. To change a group (its kind, its wires, its shield ends) press **Change group…** ([section 9](#9-change-a-group)).
 
 ## 7. Labels on the harness and its connectors
 
@@ -113,6 +115,28 @@ At the bottom of the **Edit wire** tab, **Labels** has a **Harness label**, a li
 
 - A **function** is your own words for what a pin does; type it in the **Function** column of the pin table in the **Devices** tab (see [define a device](define-a-device.md)). It appears as a column in the pinout tables.
 - The **Termination** of a pin (crimp or solder) is a column of the same table, hidden until you press **Contact**, and so is **Cable contact**, the contact part the cable side uses on the pin ([enter the build data](enter-the-build-data.md)). When any pin has one, the pinout tables get a **Termination** column too, and the build workbook shows it for every pin in use (`to fill in` while it is not set). What more the lists should say about soldering is still open; tell the owner what you need.
+
+## 9. Change a group
+
+For a group you made ([section 6](#6-twist-or-shield-wires-together)): select one of its wires and press **Change group…** (the button shows only for a group of yours). A window opens with:
+
+- **Kind**: twisted pair, shielded pair, quad, coax or overall shield.
+- **Shield end A** and **Shield end B**: how the shield ends at the From and the To end of the wires, *360 degree backshell*, *pigtail* or *floating*. The design rule **Shield termination** and the standard rules read them.
+- **Wires of the group**: a tick for each wire of the harness (a wire of another group is not offered). Tick or untick to move wires in and out.
+
+A line under the fields says what is wrong (*A quad is made of 4 wires, not 2.*) and the button **Change group** stays off until the group is valid and different. One undo step; **Generate** keeps the group as it is. A generated group follows the interface type, so the button does not show for it: change the type, or **Group** wires of your own. Nothing in the files changes until you change a group.
+
+## 10. Edit all wires
+
+To give many wires the same gauge, type, colour or length, press **Edit all wires…** in the **Edit wire** tab (or **Edit > Edit all wires of the harness…**, Ctrl+Shift+B, which opens the Harness tab first). The window has:
+
+- **Wires**: *The N selected wires* (offered first when you selected two or more), *All N wires of W001*, or *All wires of one signal* with the signal to choose.
+- **Gauge (AWG)**, **Type**, **Colour**, **Length (m)**: fill in what the wires should have; a field left empty stays as it is on every wire.
+- **Only wires that have no value yet**: a field is filled in only on the wires that have nothing there, so a wire with its own value is left alone.
+
+![The window Edit all wires of W001: all 4 wires, a gauge of 22 and the colour red typed, and the line under the fields saying gauge, colour on 4 of 4 wires](../img/edit-all-wires-window.png)
+
+A line under the fields says what will happen (*gauge, colour on 4 of 4 wires.*) or what is wrong, in the words of the single edit (*The wire gauge (AWG) must be a whole number, for example 22.*). **Apply to wires** is one undo step. The wires become yours exactly as after an edit of one wire: **Locked** shows in the table, **Generate** keeps the gauge, type, colour and length, **Reset to generated** gives them back. Label, note and ends are set on one wire, not here; the strip lengths have their own button ([section 2](#2-change-the-fields)).
 
 ## Common mistakes
 

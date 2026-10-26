@@ -708,6 +708,7 @@ class MainWindow(QMainWindow):
             set_mode=lambda mode: self._pick_mode(mode),
             set_snap=lambda on: self._set_checked(self.act_snap, on),
             set_labels=lambda on: self._set_checked(self.act_labels, on),
+            set_connection_ends=lambda on: self._set_checked(self.act_connection_ends, on),
             set_problem_notices=lambda on: self._set_checked(self.act_problem_notices, on),
             open_values=lambda: self.values_flow(),
             shortcut_rows=self.shortcut_rows,
@@ -1006,6 +1007,7 @@ class MainWindow(QMainWindow):
         """Plug in the views: Harness, Lists, the project tree and the inspector (with its Why and
         Problems tabs; the Problems tab holds the problems list with the to-do items)."""
         self.harness_view = HarnessView(self.ctl, self.theme, self.settings)
+        self.harness_view.wire_editor.run_dialog = lambda dlg: self.run_dialog(dlg)
         self.lists_panel = ListsPanel(self.ctl, self.theme, self.settings)
         self.lists_panel.files.ask_folder = lambda title: self.ask_folder(title)
         self.project_tree = ProjectTree(self.ctl, self.theme, self.settings)
@@ -1241,6 +1243,30 @@ class MainWindow(QMainWindow):
         )
         self.toasts.show_message(text, None, 8000)
 
+    def show_link_harness_flow(self, link_id: str | None = None) -> None:
+        """Show the harness that was made from a connection: the Harness tab opens on it."""
+        lid = self._chosen_link(link_id)
+        if lid is None:
+            return
+        hid = self.ctl.project.links[lid].harness_id
+        if not hid or hid not in self.ctl.project.harnesses:
+            self.toasts.show_message(strings.A_LINK_SHOW_HARNESS_NONE, None)
+            return
+        self._go_to_harness(hid)
+
+    def bulk_wires_flow(self) -> None:
+        """Edit > Edit all wires of the harness… (Ctrl+Shift+B): the Harness tab opens on the harness
+        shown there and a window asks for the gauge, type, colour and length."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        if not self.ctl.project.harnesses:
+            self.toasts.show_message(strings.BULK_NO_HARNESS, None)
+            return
+        self.go_to("harness")
+        self.harness_view.refresh()
+        self.harness_view.wire_editor.bulk_edit()
+
     def _link_actions(self, link_id: str) -> list[QAction]:
         """The entries of a connection's row in the project tree."""
         link = self.ctl.project.links.get(link_id)
@@ -1256,6 +1282,12 @@ class MainWindow(QMainWindow):
                 strings.A_LINK_HARNESS,
                 self.create_harness_flow,
                 not ro and not link.harness_id and bool(link.pairs),
+            ),
+            (
+                "show-harness",
+                strings.A_LINK_SHOW_HARNESS,
+                self.show_link_harness_flow,
+                bool(link.harness_id) and link.harness_id in self.ctl.project.harnesses,
             ),
             ("delete", strings.A_LINK_DELETE, self.delete_link_flow, not ro),
         ):
@@ -1276,7 +1308,12 @@ class MainWindow(QMainWindow):
         self.act_link_harness.setEnabled(
             have and link is not None and not link.harness_id and bool(link.pairs)
         )
-        self.menu_connection.setEnabled(have)
+        made = link is not None and bool(link.harness_id) and link.harness_id in c.project.harnesses
+        self.act_link_show_harness.setEnabled(made)
+        self.act_link_show_harness.setToolTip(
+            strings.A_LINK_SHOW_HARNESS_TIP if made else strings.A_LINK_SHOW_HARNESS_NONE
+        )
+        self.menu_connection.setEnabled(link is not None)
 
     # ---- devices: a new device, parts, interface types, pins from a type or an interface -----------
     def add_device_flow(self) -> None:
@@ -1528,6 +1565,10 @@ class MainWindow(QMainWindow):
         self.act_link_harness = a(
             strings.A_LINK_HARNESS, self.create_harness_flow, name="act-link-harness"
         )
+        self.act_link_show_harness = a(
+            strings.A_LINK_SHOW_HARNESS, self.show_link_harness_flow, name="act-link-show-harness"
+        )
+        self.act_link_show_harness.setToolTip(strings.A_LINK_SHOW_HARNESS_TIP)
         self.act_link_delete = a(
             strings.A_LINK_DELETE, self.delete_link_flow, name="act-link-delete"
         )
@@ -1584,6 +1625,13 @@ class MainWindow(QMainWindow):
         self.act_labels = a(
             strings.A_LABELS, self._toggle_labels, checkable=True, name="act-labels"
         )
+        self.act_connection_ends = a(
+            strings.A_CONNECTION_ENDS,
+            self._toggle_connection_ends,
+            checkable=True,
+            name="act-connection-ends",
+        )
+        self.act_connection_ends.setToolTip(strings.A_CONNECTION_ENDS_TIP)
         self.act_reduce_motion = a(
             strings.SETTINGS_REDUCE_MOTION,
             self._toggle_reduce_motion,
@@ -1667,6 +1715,10 @@ class MainWindow(QMainWindow):
             strings.A_NEW_HARNESS, self.new_harness_flow, "Ctrl+Shift+H", name="act-new-harness"
         )
         self.act_new_harness.setToolTip(f"{strings.A_NEW_HARNESS_TIP} (Ctrl+Shift+H)")
+        self.act_bulk_wires = a(
+            strings.A_BULK_WIRES, self.bulk_wires_flow, "Ctrl+Shift+B", name="act-bulk-wires"
+        )
+        self.act_bulk_wires.setToolTip(f"{strings.A_BULK_WIRES_TIP} (Ctrl+Shift+B)")
         self.act_problems = a(
             strings.A_PROBLEMS, self.toggle_problems, "Ctrl+Shift+M", name="act-problems"
         )
@@ -1779,6 +1831,10 @@ class MainWindow(QMainWindow):
             "zoom100": self.act_zoom_100,
             "zoom_selection": self.act_zoom_selection,
             "arrange": self.act_arrange,
+            "link_edit": self.act_link_edit,
+            "link_harness": self.act_link_harness,
+            "link_show_harness": self.act_link_show_harness,
+            "link_delete": self.act_link_delete,
             "distribute_h": self.distribute_actions["horizontal"],
             "distribute_v": self.distribute_actions["vertical"],
             **{f"align_{m}": act for m, act in self.align_actions.items()},
@@ -1879,6 +1935,7 @@ class MainWindow(QMainWindow):
             spread_menu.addAction(act)
         e.addAction(self.act_add_zone)
         e.addAction(self.act_new_harness)
+        e.addAction(self.act_bulk_wires)
         e.addAction(self.act_wire_colours)
         self.menu_add = e.addMenu(strings.M_ADD_UNIT)
         self.menu_add.addAction(self.act_add_device)
@@ -1892,6 +1949,7 @@ class MainWindow(QMainWindow):
             self.act_link_edit,
             self.act_link_rename,
             self.act_link_harness,
+            self.act_link_show_harness,
             self.act_link_delete,
         ):
             self.menu_connection.addAction(act)
@@ -1915,6 +1973,7 @@ class MainWindow(QMainWindow):
         v.addAction(self.act_legend)
         v.addAction(self.act_snap)
         v.addAction(self.act_labels)
+        v.addAction(self.act_connection_ends)
         v.addAction(self.act_reduce_motion)
         scale_menu = v.addMenu(strings.A_SCALE)
         for act in self.scale_actions.values():
@@ -2297,6 +2356,7 @@ class MainWindow(QMainWindow):
         self.act_new_interface.setEnabled(not ro)
         self.act_add_device.setEnabled(not ro)
         self.act_new_harness.setEnabled(not ro)
+        self.act_bulk_wires.setEnabled(not ro)
         self.menu_add.setEnabled(not ro)  # the ways to add a unit and to connect (the Palette's)
         self.menu_connect.setEnabled(not ro)
         self.act_link_connectors.setEnabled(not ro)
@@ -4060,6 +4120,9 @@ class MainWindow(QMainWindow):
         labels = bool(self.settings.value("ui/labels", False, bool))
         self.act_labels.setChecked(labels)
         self.view.dscene.show_all_labels = labels
+        ends = bool(self.settings.value("ui/connection_ends", False, bool))
+        self.act_connection_ends.setChecked(ends)
+        self.view.set_connection_ends(ends)
         reduce = bool(self.settings.value("ui/reduce_motion", False, bool))
         self.act_reduce_motion.setChecked(reduce)
         self.theme.set_reduce_motion(reduce)
@@ -4075,6 +4138,7 @@ class MainWindow(QMainWindow):
         for toggled in (
             self.act_snap,
             self.act_labels,
+            self.act_connection_ends,
             self.act_reduce_motion,
             self.act_problem_notices,
         ):
@@ -4287,6 +4351,10 @@ class MainWindow(QMainWindow):
         self.settings.setValue("ui/labels", self.act_labels.isChecked())
         self.view.viewport().update()
 
+    def _toggle_connection_ends(self) -> None:
+        self.view.set_connection_ends(self.act_connection_ends.isChecked())
+        self.settings.setValue("ui/connection_ends", self.act_connection_ends.isChecked())
+
     def _toggle_reduce_motion(self) -> None:
         self.theme.set_reduce_motion(self.act_reduce_motion.isChecked())
         self.settings.setValue("ui/reduce_motion", self.act_reduce_motion.isChecked())
@@ -4306,6 +4374,7 @@ class MainWindow(QMainWindow):
             reduce_motion=self.act_reduce_motion.isChecked(),
             snap=self.act_snap.isChecked(),
             labels=self.act_labels.isChecked(),
+            connection_ends=self.act_connection_ends.isChecked(),
             problem_notices=self.act_problem_notices.isChecked(),
         )
 

@@ -71,6 +71,7 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 | Ctrl+7, Ctrl+, | Home (also in Simple, where the rail does not list it), Settings |
 | Ctrl+Shift+M | show or hide the Problems panel |
 | Ctrl+Shift+H | new harness by hand (Drawings area: then add its connectors in the Connectors tab) |
+| Ctrl+Shift+B | Edit all wires of the harness… (the same gauge, type, colour and length on many wires) |
 | Ctrl+Shift+N | add a device (the window **Add device** asks for the name, the ID and the subsystem first; then in the Devices tab: F2 or Enter edits a cell, Insert adds a pin, Shift+Delete deletes pins, Ctrl+L fills from an interface type, Ctrl+Enter assigns to an interface) |
 | Ctrl+Shift+T | the Interface table |
 | Ctrl+Shift+J | the Device list |

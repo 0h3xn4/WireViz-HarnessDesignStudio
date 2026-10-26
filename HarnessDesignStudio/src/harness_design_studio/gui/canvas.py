@@ -2000,6 +2000,7 @@ class DiagramScene(QGraphicsScene):
     FADED_UNIT = 0.4
     LABEL_LIMIT = 30  # a diagram with more links shows a link's label only when it matters
     show_all_labels = False  # view setting (View menu): labels on every link, however many
+    connection_ends = False  # view setting (View menu): connector boxes at the ends of connections
 
     def label_full(self, interface_id: str, hovered: bool) -> bool:
         """The numbers (voltage, current) beside a link's picture: always on a diagram that is not
@@ -2879,6 +2880,13 @@ class DiagramView(QGraphicsView):
         self.dscene.refresh_states()
         self.status.set_wanted(on)
 
+    def set_connection_ends(self, on: bool) -> None:
+        """View > Show connectors on connections: the boxes at the two ends of every connection
+        line. Only the connection lines are repainted."""
+        self.dscene.connection_ends = on
+        for item in self.dscene.connection_items.values():
+            item.update()
+
     def set_legend_wanted(self, wanted: bool) -> None:
         self.legend_wanted = wanted
         self._layout_overlays()
@@ -3264,7 +3272,7 @@ class DiagramView(QGraphicsView):
             menu.addSeparator()
             self._mirror(menu, "delete")
         elif kind == "link" and ident:
-            for name in ("link_edit", "link_harness", "link_delete"):
+            for name in ("link_edit", "link_harness", "link_show_harness", "link_delete"):
                 self._mirror(menu, name)
         elif kind == "interface" and ident:
             self._entry(menu, strings.CM_OPEN_PLAN, lambda: ctl.request_open("interface", ident))

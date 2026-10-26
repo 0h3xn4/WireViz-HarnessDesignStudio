@@ -89,7 +89,11 @@ Each pin has a **role**, shown in the table and set with **Role (first)** and **
 
 - **On the diagram.** A connection is a dash-dotted line between the two devices (an interface is a solid line). The label on the line is the two connectors, and under it what the pairs carry, worked out from the pins and never stored: for example *Ethernet or RS-422, 4 wires* (when two interface types have the same signals the label names both) or *CAN, 2 wires*. You never had to include an interface. In Expert mode the line ends at the connectors it joins. Click a line to select it.
 - **In the project tree.** The group **Connections** lists them. Double-click one to change its pairs; right-click for the actions; the tooltip shows the pairs, the harness (or *No harness yet*) and what the check says.
-- **Edit > Selected connection** has the same actions for the connection you selected: **Edit the pairs…**, **Rename…**, **Create harness**, **Delete connection**.
+- **Edit > Selected connection** has the same actions for the connection you selected: **Edit the pairs…**, **Rename…**, **Create harness**, **Show the harness**, **Delete connection**. The same entries are in the right-click menu of a line.
+- **The connectors at the ends (since the workshop milestone M3).** In **Expert** mode, and in Guided mode when **View > Show connectors on connections** is ticked (also a box on the Settings page, remembered), a small box at each end of the line names the connector and says how many of its pins the connection pairs, for example `J01` and `4 of 5 pins`. A click on a box picks the connection. The boxes are not drawn at all while both are off.
+- **The harness path.** Once a harness was made from a connection, hovering the line adds a row **Path**: `OBC-J01 - W001-P1 - W001-P2 - RW1-J02` (device connector, cable connector, cable connector, device connector). **Show the harness** (the right-click menu of the line, **Edit > Selected connection**, or the project tree) opens the Harness tab on that harness; it is off, and says *No harness has been made from this connection yet*, until there is one.
+
+![The diagram in Guided mode with View > Show connectors on connections ticked: the connection L1 between OBC-J01 and RW1-J02 has a box at each end, J01 with 4 of 5 pins and J02 with 4 of 5 pins](../img/connections-ends.png)
 
 ![The diagram in Expert mode with two connections drawn as dash-dotted lines, OBC-J01 to RW1-J02 (Ethernet or RS-422, 4 wires) and PCDU-J01 to RW1-J01 (Primary power or Secondary power, 2 wires), and the project tree with its group Connections listing L1 and L2](../img/connections-diagram.png)
 
@@ -116,7 +120,7 @@ The connection says which pins go together. It is not yet a harness. When you wa
 2. Press **Create harness**. The harness is made as one undo step and the Harness tab opens on it.
 3. Enter the lengths, gauges and colours in **Edit wire** ([edit a wire](edit-a-wire.md)); the wires have no length, gauge or colour until you do ([enter the build data](enter-the-build-data.md)). The harness is yours: **Generate** leaves it alone, and it is checked, listed, exported and released like any other ([build a harness by hand](build-a-harness-by-hand.md#what-generate-does-with-it)).
 
-The button says why it cannot when it cannot: no pairs yet, or the connection has a harness already. A connection whose harness is released is locked with it ([change a released harness](change-a-released-harness.md)).
+The button says why it cannot when it cannot: no pairs yet, or the connection has a harness already. To see the harness again later, use **Show the harness** (section 4). A connection whose harness is released is locked with it ([change a released harness](change-a-released-harness.md)).
 
 ## Change, rename or delete a connection
 

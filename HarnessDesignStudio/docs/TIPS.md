@@ -42,6 +42,7 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+Shift+M | Show or hide the Problems panel at the bottom |
 | Ctrl+Shift+N | Add a device (asks for its name and ID first, then an empty device is opened in the Devices tab) |
 | Ctrl+Shift+H | New harness... (a harness made by hand; the Drawings area, then its Connectors tab) |
+| Ctrl+Shift+B | Edit all wires of the harness... (the same gauge, type, colour and length on many wires) |
 | Ctrl+Shift+T | The Interface table (the Interfaces tab of the left panel) |
 | Ctrl+Shift+J | The Device list (the Device list tab of the left panel) |
 | F6 and Shift+F6 | Move the keyboard focus to the next or previous panel |

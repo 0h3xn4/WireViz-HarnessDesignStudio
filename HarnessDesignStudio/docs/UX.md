@@ -434,4 +434,18 @@ Milestone M2 of the workshop feedback (decision D-173, plan and status in [`ait/
 
 The interaction rules of section 6 apply as before: a change is one undo step, a released harness locks its connection with the reason, a mistake is said inline, and nothing is invented (a wire made from a connection has no length, gauge or colour until the person enters them).
 
+## 19. Editing connectors and harnesses (after 1.7.0, not released)
+
+Milestone M3 of the workshop feedback (decision D-174, plan and status in [`ait/WORKSHOP_FEEDBACK_PLAN.md`](ait/WORKSHOP_FEEDBACK_PLAN.md), "M3 as built"): "should be able to edit the connector", "more editing of the harness itself", "more harness features (like add length, gauge)", "see the connector also on the harness itself, when in diagram view". The user's pages are [`user-manual/build-a-harness-by-hand.md`](user-manual/build-a-harness-by-hand.md#change-a-connector-and-its-pins), [`user-manual/edit-a-wire.md`](user-manual/edit-a-wire.md) (sections 9 and 10) and [`user-manual/connect-two-connectors.md`](user-manual/connect-two-connectors.md).
+
+| Where | What is new |
+| --- | --- |
+| Drawings area, Harness tab, *Connectors* tab | The section **Edit connector** (connector, **Part**, **Gender**, **Keying**, **Name**, **Apply to connector**; a line says when the part has another number of pins) above **Pin of a connector**, which gains **Signal** and **Role**; **Pin ID** with **Add pin**, **Rename pin** and **Delete pin**. On a harness made by Generate the tab still adds no connector, but part, gender, keying and the pin details can be set; the connector is then *Edited by you* and **Give back to Generate** appears. Name, pins and contacts are grey there and say why. |
+| *Edit wire* tab | **Change group…** (visible for a group you made: kind, wires, shield ends A and B in a window) and **Edit all wires…** (the same gauge, type, colour and length on all wires, the selected wires or one signal, in a window that says in one line what will change). Both windows say a mistake in a line under the fields and keep their button off until the plan is valid. |
+| Edit menu | **Edit all wires of the harness…** (Ctrl+Shift+B) opens the Harness tab and the window. |
+| Model area, diagram | **View > Show connectors on connections** (also a box on the Settings page, remembered): a small box at each end of a connection line with the connector name and *4 of 5 pins* (always in Expert mode). The tooltip of a line adds the **Path** through the harness made from it. The right-click menu of a line now lists its actions (edit the pairs, create harness, **Show the harness**, delete); before, it was empty. |
+| Edit > Selected connection, project tree | **Show the harness**: opens the Harness tab on the harness made from the connection (off, with the reason, until there is one). |
+
+The interaction rules of section 6 apply as before: a change is one undo step, a released harness refuses with the reason, a mistake is said inline, and nothing is invented.
+
 Next: [`DESIGN.md`](DESIGN.md), [`ux-audit.md`](ux-audit.md), [`usability/README.md`](usability/README.md)

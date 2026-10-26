@@ -2706,3 +2706,130 @@ NEXT_MAKE_BUTTON = "Create harness"
 NEXT_BUTTON_TIPS["make_harness"] = (
     "Show what the harness will contain, then make it. Nothing is made before you agree"
 )
+
+# ---- Workshop feedback M3 (D-174): edit a connector, change a group, edit all wires, connectors on the connections ----
+CE_EDIT_TITLE = "Edit connector"
+CE_EDIT_PART_TIP = (
+    "The part of this connector, from the parts library. The pins stay as they are; "
+    "a part with another number of pins shows in the checks."
+)
+CE_GENDER = "Gender"
+CE_GENDER_TIP = "Male or female, as the part says it. Not said: the checks cannot tell if it fits."
+CE_GENDERS = (("unspecified", "not said"), ("male", "male"), ("female", "female"))
+CE_KEYING = "Keying"
+CE_KEYING_TIP = (
+    "The key or coding of the connector, in words, for example A. It must match the device end."
+)
+CE_EDIT_NAME_TIP = "The name of the connector in the harness, for example P1"
+CE_EDIT_NAME_FIXED = "The name of a connector of a generated harness comes from its ID."
+CE_EDIT_APPLY = "Apply to connector"
+CE_EDIT_APPLY_TIP = (
+    "Set the part, gender, keying and name of the selected connector (you can undo it)"
+)
+CE_EDIT_NOTHING = "Nothing to change: the connector has these values already."
+CE_EDIT_STATE_MINE = (
+    "Edited by you: Generate keeps the part, gender, keying and pin details of this connector. "
+    "Its pins and their contacts still follow the device."
+)
+CE_EDIT_STATE_GENERATED = (
+    "Generate gives this connector the part, gender and keying of the device it plugs into. "
+    "If you change them or a pin here, the connector becomes yours and Generate keeps them."
+)
+CE_RESET = "Give back to Generate"
+CE_RESET_TIP = "Let Generate set the part, gender, keying and pins from the device again, the next time you generate"
+CE_PIN_COUNT = "The part has {0} pins and the connector {1}."
+CE_PIN_COUNT_ADD = " Add or delete pins below."
+CE_SIGNAL = "Signal"
+CE_SIGNAL_TIP = (
+    "The name of what this pin carries, for example HEATER +. It is printed on the pinout."
+)
+CE_ROLE = "Role"
+CE_ROLE_TIP = (
+    "What the pin is for: power, return, ground, signal, shield or spare. Empty means not said."
+)
+CE_ROLES = (
+    ("", "not said"),
+    ("power", "power"),
+    ("return", "return"),
+    ("ground", "ground"),
+    ("signal", "signal"),
+    ("shield", "shield"),
+    ("spare", "spare"),
+)
+CE_PIN_ID = "Pin ID"
+CE_PIN_ID_TIP = "The ID of a pin: letters, digits, _ - . (up to 16). Add takes a list separated by commas; Rename takes one."
+CE_PIN_ADD = "Add pin"
+CE_PIN_ADD_TIP = "Add the pins in Pin ID to this connector"
+CE_PIN_RENAME = "Rename pin"
+CE_PIN_RENAME_TIP = "Give the selected pin the ID in Pin ID. The wires on it follow."
+CE_PIN_DELETE = "Delete pin"
+CE_PIN_DELETE_TIP = "Delete the selected pin. It must have no wires."
+CE_PINS_FROM_DEVICE = (
+    "The pins of a generated harness follow the device: add, rename or delete them on the "
+    "device, in the Devices tab."
+)
+STEP_EDIT_CONNECTOR = "Edit connector {0}"
+STEP_ADD_PINS = "Add pins to {0}"
+STEP_RENAME_PIN = "Rename pin {0}"
+STEP_DELETE_PIN = "Delete pin {0}"
+STEP_RESET_CONNECTOR = "Give {0} back to Generate"
+
+WIRE_CHANGE_GROUP = "Change group…"
+WIRE_CHANGE_GROUP_TIP = (
+    "Change the kind, the wires or the shield ends of the group of the selected wire that you made"
+)
+STEP_CHANGE_GROUP = "Change group {0}"
+GD_TITLE = "Change group {0}"
+GD_INTRO = "A group that you made: change how the wires run together and how its shield ends. Generate keeps it while its wires exist."
+GD_KIND = "Kind"
+GD_KIND_TIP = (
+    "How the wires run together: twisted pair, shielded pair, quad, coax or overall shield"
+)
+GD_END_A = "Shield end A"
+GD_END_A_TIP = "How the shield ends at the From end of the wires"
+GD_END_B = "Shield end B"
+GD_END_B_TIP = "How the shield ends at the To end of the wires"
+GD_ENDS = (
+    ("backshell_360", "360 degree backshell"),
+    ("pigtail", "pigtail"),
+    ("floating", "floating"),
+)
+GD_WIRES = "Wires of the group"
+GD_WIRES_TIP = "Tick the wires that belong to the group. A wire of another group is not offered."
+GD_OK = "Change group"
+GD_OK_TIP = "Change the group now (you can undo it)"
+GD_READY = "{0} of {1} wires: this is a {2}."
+GD_SAME = "The group has these values already, so nothing changes."
+
+WIRE_BULK = "Edit all wires…"
+WIRE_BULK_TIP = "Set the gauge, type, colour and length of all wires of this harness, the selected wires or the wires of one signal in one step"
+A_BULK_WIRES = "Edit all wires of the harness…"
+A_BULK_WIRES_TIP = "Set the gauge, type, colour and length of many wires of the open harness in one step (Harness tab)"
+STEP_BULK_WIRES = "Edit {0} wires of {1}"
+BULK_TITLE = "Edit all wires of {0}"
+BULK_INTRO = "Fill in what the wires should have. A field left empty stays as it is. The wires become yours: Generate keeps their gauge, type, colour and length."
+BULK_SCOPE = "Wires"
+BULK_SCOPE_TIP = "Which wires get the values"
+BULK_SCOPE_ALL = "All {0} wires of {1}"
+BULK_SCOPE_SELECTED = "The {0} selected wires"
+BULK_SCOPE_SIGNAL = "All wires of one signal"
+BULK_SIGNAL = "Signal"
+BULK_SIGNAL_TIP = "The signal name; every wire of this harness that carries it gets the values"
+BULK_ONLY_EMPTY = "Only wires that have no value yet"
+BULK_ONLY_EMPTY_TIP = "Leave a wire alone when it has its own gauge, type, colour or length: each field is filled in only where it is empty"
+BULK_OK = "Apply to wires"
+BULK_OK_TIP = "Set the values on the wires now (one undo step)"
+BULK_NOTHING = "Fill in at least one of gauge, type, colour and length."
+BULK_SAME = "The wires have these values already, so nothing changes."
+BULK_READY = "{0} on {1} of {2} wires."
+BULK_NO_HARNESS = "Open a harness first."
+
+A_CONNECTION_ENDS = "Show connectors on connections"
+A_CONNECTION_ENDS_TIP = "Draw the connector and its number of pins at both ends of every connection in the Diagram. The Expert mode always shows them."
+SETTINGS_CONNECTION_ENDS = "Show connectors on connections"
+SETTINGS_CONNECTION_ENDS_TIP = "Draw the connector and its number of pins at both ends of every connection in the Diagram. The Expert mode always shows them."
+LINK_END_PINS = ("{0} of 1 pin", "{0} of {1} pins")
+LINK_TIP_PATH = "Path"
+A_LINK_SHOW_HARNESS = "Show the harness"
+A_LINK_SHOW_HARNESS_TIP = "Open the harness that was made from this connection in the Harness tab"
+A_LINK_SHOW_HARNESS_NONE = "No harness has been made from this connection yet"

@@ -19,10 +19,14 @@ Add device dialog with Star tracker typed and the ID STAR1 suggested) and
 of three devices with named pins (no interface, no harness), `link-connectors-window.png` (the
 window Link connectors with the pairs proposed by signal name for the computer and the reaction
 wheel) and `connections-diagram.png` (two connections on the diagram, the Connections group in
-the project tree). The time of the last check, which the status bar shows, is cleared before each
-picture. Usage:
+the project tree). Since milestone M3: `edit-all-wires-window.png` (the window Edit all wires, a
+gauge and a colour typed) and `connections-ends.png` (a connection in the Guided mode with the
+connector boxes at its ends). The time of the last check, which the status bar shows, is cleared
+before each picture. Usage:
 
     QT_QPA_PLATFORM=offscreen python -m tools.tab_screenshots [OUTPUT_FOLDER]   (default: docs/img)
+    QT_QPA_PLATFORM=offscreen python -m tools.tab_screenshots [OUTPUT_FOLDER] editing
+        (only connectors-tab.png, which has the Edit connector section now, and the two M3 pictures)
 """
 
 from __future__ import annotations
@@ -48,6 +52,7 @@ from harness_design_studio.core.model import Pin, Project, evolve
 from harness_design_studio.core.samples import mini3
 from harness_design_studio.core.wires import plan_add_wire
 from harness_design_studio.gui.devices_dialogs import NewDeviceDialog
+from harness_design_studio.gui.harness_edit_dialogs import BulkWireDialog
 from harness_design_studio.gui.link_dialog import LinkDialog
 from harness_design_studio.gui.main_window import MainWindow
 from tools import ui_screenshots as shots
@@ -58,9 +63,16 @@ MAIN = (1440, 900)  # the size of docs/ux/qt/02-guided-main.png
 WIRE_ROW = 2  # a wire of the first harness that has a gauge, a type and a colour
 
 
-def main(out: Path = DEFAULT_OUT) -> int:
+def main(out: Path = DEFAULT_OUT, only: str = "") -> int:
     _ = QApplication.instance() or QApplication([])
     out.mkdir(parents=True, exist_ok=True)
+    if only == "editing":
+        win = _window("harness-tab-shots", "flatsat", "simple", (WIDTH, HEIGHT))
+        _by_hand(win, out)
+        win.close()
+        _editing_pictures(out)
+        print(f"wrote the pictures of the editing windows to {out}")
+        return 0
     win = _window("harness-tab-shots", "flatsat", "simple", (WIDTH, HEIGHT))
     win.go_to("harness")
     shots._settle(win)
@@ -89,6 +101,7 @@ def main(out: Path = DEFAULT_OUT) -> int:
     _workspace_pictures(out)
     _workshop_pictures(out)
     _connection_pictures(out)
+    _editing_pictures(out)
     print(f"wrote the pictures of the tabs, workspaces and windows to {out}")
     return 0
 
@@ -274,6 +287,36 @@ def _connection_pictures(out: Path) -> None:
     win.close()
 
 
+def _editing_pictures(out: Path) -> None:
+    """The window Edit all wires on a generated harness of the tutorial project (a gauge and a
+    colour typed), and a connection with the connector boxes at its ends (Guided mode)."""
+    win = _generated("harness-bulk-edit", "full", MAIN)
+    hid = sorted(win.ctl.project.harnesses)[0]
+    dlg = BulkWireDialog(win, win.theme, win.ctl.project, hid)
+    dlg.show()
+    dlg.gauge.setText("22")
+    dlg.colour.setCurrentText("red")
+    dlg.resize(dlg.width(), dlg.sizeHint().height())
+    shots._wait(500)
+    _save(dlg, out / "edit-all-wires-window.png")
+    dlg.close()
+    win.close()
+    win = _window("harness-links", "blank", "full", MAIN)
+    win.ctl._install(_pinout_project(), None, None)
+    shots._settle(win)
+    win.ctl.add_link("OBC-J01", "RW1-J02", [("1", "3"), ("2", "4"), ("3", "1"), ("4", "2")])
+    win.ctl.create_harness_from_link("L1")
+    win.go_to("diagram")
+    win.act_connection_ends.trigger()  # View > Show connectors on connections
+    win.left_tabs.setCurrentIndex(win.left_tabs.index_of("tree"))
+    win.view.fit()
+    shots._settle(win, 700)
+    win.ctl.select_link("L1")
+    shots._wait(500)
+    _save(win, out / "connections-ends.png")
+    win.close()
+
+
 def _export_pictures(win: MainWindow, out: Path) -> None:
     """The Export window before and after an export with the PDF drawings."""
 
@@ -334,4 +377,9 @@ def _by_hand(win, out: Path) -> None:  # type: ignore[no-untyped-def]
 
 
 if __name__ == "__main__":
-    raise SystemExit(main(Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_OUT))
+    raise SystemExit(
+        main(
+            Path(sys.argv[1]) if len(sys.argv) > 1 else DEFAULT_OUT,
+            sys.argv[2] if len(sys.argv) > 2 else "",
+        )
+    )
