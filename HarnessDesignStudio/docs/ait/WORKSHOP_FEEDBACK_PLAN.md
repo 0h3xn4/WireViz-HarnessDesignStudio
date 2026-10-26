@@ -79,6 +79,20 @@ Open points of M1:
 
 Rules for all milestones: a field added to the model is optional and left out of the files while it is empty (so a project that does not use it keeps byte-identical files and outputs, proof `python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json`); the file format stays compatible (`Unit`, `units`, `logical/units/` stay in the files even where the screen says *device*); generated files do not change because of a wording change in the interface; a decision that reverses D-10 or D-166 gets its own decision row when it is built.
 
+## M2 design: the pinout is the truth (decided 2026-10-26)
+
+Answers of the owner: (1) the tool **proposes the pairing of pins by signal name** (never by position), the person sees and edits it before it is saved; (2) the interface-first way **stays, behind the new one**: *Connect* now links two connectors, the signal-type Connect stays in the Connect menu for projects that use interfaces and for the examples, and Generate keeps working for them; (3) **one button, Create harness**: the tool never creates a harness on its own.
+
+**The model (all optional, left out of the files while empty).** A new object `Link` (file `logical/links.json`, key `links`; absent while the project has no link): `id`, `name` (a label), `a_connector` and `b_connector` (ids of device connectors; each belongs to a device), `pairs` (a list of `PinPair`: `a_pin`, `b_pin`), `harness_id` (set when the harness was created from the link), `note`. A pin gets an optional `role` (`power`, `return`, `ground`, `signal`, `shield`, `spare`; empty means *derived from the signal name*), so that power and return on a pin are visible and checkable. Interfaces are **derived** for display (`core/links.py` `derived_interfaces`: the pairs of a link grouped by the interface type their signals belong to, for example *CAN, 2 wires*); they are not stored, and the person never includes an interface.
+
+**Pairing by signal name** (`propose_pairs`): two pins pair when their signal names are equal or the usual counterparts (`TX`/`RX`, `TXD`/`RXD`, `TX+`/`RX+`, `TX-`/`RX-`, `PWR`/`PWR`, `RTN`/`RTN`), and their directions fit (out to in, bidirectional and passive with anything; out to out and in to in do not pair); pins without a signal or without a counterpart are listed as *unpaired*; a pin is used once.
+
+**Review, without changing anything** (`check_link` and rules): pin left unpaired on either side, direction conflict (out to out), signal names that differ across a pair (a warning), a power pair without a return pair on the same link, a pin used twice, a pair whose pin does not exist, a link whose connector is gone. Integrity codes `dangling_link`, `link_pin_missing`, `link_pin_reused` each get a negative test; the design rules get a positive case each.
+
+**Create harness** (`plan_create_harness`): a harness a person owns (`generated=False`), with cable connectors that mate with the two device connectors (the existing `manual_harness` plans) and one wire per pair (`manual=True`, signal from the pin); length, gauge and colour follow in *Edit wire*; the link records `harness_id`; Generate leaves it alone. A link whose harness is released is locked with it (change control: links are diffable objects).
+
+**Stages.** M2a: the model, the files, integrity, change control, `core/links.py` (pairing, planners, derivation, review, create harness), tests, no screen. M2b: the screens: *Link connectors* window (the two pin lists side by side with the proposed pairing), the Connect tool in both modes, the link list in the project tree, the link in the Diagram (between the connectors, labelled with the derived interface), *Create harness* on the link, *Check my connections* (the Checks area filtered to the link rules), the Next step page counts links as *Connect them* done. M2c: documents, pictures, requirements. The command line gets `links` and `add-link` later if the owner asks.
+
 ## Not clear yet
 
 "kladow" (what it is), "Sam's tool" (what it is and where the files are), and how the export failure was reached.
