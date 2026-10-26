@@ -26,7 +26,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | What it gives you |
 | --- | --- |
-| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, add redundancy and zones, generate harnesses, read and fix problems, fill in engineering values, connect two connectors pin by pin (the pinout first, after 1.7.0), edit a wire, build a harness by hand (no interface needed), enter the build data (strip lengths, contacts, crimp tools, accessories), choose your role (Systems engineer or Electrical / AIT engineer, and the Next step page), import data, define a device (and reuse it in another project), use the library (a folder your team shares with devices and subsystems, and a number of the same device, after 1.7.0), import KiCad pinouts, export the outputs, set wire colours, change IDs and the title block, release a harness, change a released harness, use Git and CI |
+| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, add redundancy and zones, generate harnesses, read and fix problems, fill in engineering values, connect two connectors pin by pin (the pinout first, since 1.8.0), edit a wire, build a harness by hand (no interface needed), enter the build data (strip lengths, contacts, crimp tools, accessories), choose your role (Systems engineer or Electrical / AIT engineer, and the Next step page), import data, define a device (and reuse it in another project), use the library (a folder your team shares with devices and subsystems, and a number of the same device, since 1.8.0), import KiCad pinouts, export the outputs, set wire colours, change IDs and the title block, release a harness, change a released harness, use Git and CI |
 | [`HOWTO.md`](HOWTO.md) | The index of the old recipes, pointing at the user manual |
 | [`TIPS.md`](TIPS.md) | Shortcuts, power-user workflows, and exchanging data with other tools |
 | [`CHEATSHEET.md`](CHEATSHEET.md) | One page: the loop, the data imports, release, shortcuts, the folder layout, the words |
@@ -45,7 +45,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits, and the build workbook |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed, release by release |
-| [`releases/`](releases/1.7.0.md) | The highlights of each release from 1.1.0 to 1.7.0, as the GitHub release page shows them (one file per version) |
+| [`releases/`](releases/1.8.0.md) | The highlights of each release from 1.1.0 to 1.8.0, as the GitHub release page shows them (one file per version) |
 
 ## Examples and templates
 

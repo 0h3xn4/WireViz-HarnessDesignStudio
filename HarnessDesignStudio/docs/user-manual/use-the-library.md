@@ -2,7 +2,7 @@
 
 This page shows how a team keeps its devices and subsystems in one **library folder**, how to save a device or a subsystem to it, how to add one to a project, and how to say how many of a device a project has.
 
-> **After 1.7.0, not in the latest release yet.** This is milestone M4 of the workshop feedback (decision D-175). The steps in the app are described from the program's code and its tests, and the two pictures are of the real window started without a screen; nobody has watched the steps on a real screen yet (GUI, not run). The command lines were run, and their output is real.
+> **New in 1.8.0.** This is milestone M4 of the workshop feedback (decision D-175). The steps in the app are described from the program's code and its tests, and the two pictures are of the real window started without a screen; nobody has watched the steps on a real screen yet (GUI, not run). The command lines were run, and their output is real.
 
 ## Contents
 

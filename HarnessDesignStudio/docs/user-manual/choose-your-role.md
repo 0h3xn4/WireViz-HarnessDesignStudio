@@ -2,7 +2,7 @@
 
 The editor has two **roles**. A role says who you are working as, and it decides what the window shows first: which areas the rail lists, whether the side panels are open, which page a project opens on and whether problem notices appear. This page describes the two roles and the **Next step** page, one page that tells you what to do now, in plain words, with one button.
 
-> **New in the workshop milestone M5 (decision D-176; not in a release yet).** The two roles **replace** the *Simple* and *Full* workspaces of version 1.7.0 (decision D-171): the *Simple* workspace is now the **Systems engineer** role and the *Full* workspace is the **Electrical / AIT engineer** role, and nothing on screen says *Simple*, *Full* or *workspace* any more. A project from an earlier version opens as it is, and nothing that is written to disk changes: a role is a view of the program, never a permission, and it is never stored in a project.
+> **New in the workshop milestone M5 (decision D-176, version 1.8.0).** The two roles **replace** the *Simple* and *Full* workspaces of version 1.7.0 (decision D-171): the *Simple* workspace is now the **Systems engineer** role and the *Full* workspace is the **Electrical / AIT engineer** role, and nothing on screen says *Simple*, *Full* or *workspace* any more. A project from an earlier version opens as it is, and nothing that is written to disk changes: a role is a view of the program, never a permission, and it is never stored in a project.
 
 ## Contents
 
@@ -116,7 +116,7 @@ The page names the first step that is not done. The rules run in this order.
 | The project is read-only (saved by a newer version, or open in another window) | You can only look at this project | none; **Save a copy** is in the banner |
 | No device and no harness | Start with a device | **Add a device** |
 | No connection (an interface, or two connectors joined pin by pin) and no harness | Connect your devices | **Connect two devices** |
-| Connections between connectors, but no harness and no interface (after 1.7.0, not in the latest release yet) | Make the harness of your connection | **Create harness** |
+| Connections between connectors, but no harness and no interface (new in 1.8.0) | Make the harness of your connection | **Create harness** |
 | No harness yet, or the plans are out of date (not for a project whose harnesses were all made by hand) | Generate the harnesses (again) | **Generate the harnesses** |
 | The design was not checked | Check the design | **Check the design** |
 | Checks failed | Fix what is marked | **Show the problems** |

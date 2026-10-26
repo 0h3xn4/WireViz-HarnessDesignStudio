@@ -17,7 +17,7 @@ This page collects shortcuts and habits that save time once you have finished [`
 - [Small habits](#small-habits)
 - [Working with other tools](#working-with-other-tools)
 
-Every command on this page was run with the tool before it was written down (first with version `1.0.0`; the quoted model hash and the version stamp were renewed with `1.7.0`). Some of the options need examples that are not in the 0.1.0 packages; the page says so where it matters (see [`examples/README.md`](examples/README.md)).
+Every command on this page was run with the tool before it was written down (first with version `1.0.0`; the quoted model hash and the version stamp were renewed with `1.8.0`). Some of the options need examples that are not in the 0.1.0 packages; the page says so where it matters (see [`examples/README.md`](examples/README.md)).
 
 ## Keyboard shortcuts
 
@@ -65,7 +65,7 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+C in a table | Copy the selected cells as tab-separated text (Ctrl+Shift+C adds the header row) |
 | Enter or F2, Esc, Ctrl+V in a table | Edit the selected cell, keep the old text, paste a block of cells copied from a spreadsheet (one undo step) |
 
-Everything else is in the menus: **View > Arrange diagram** tidies the devices (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** (also **Settings > Appearance**) follows the system or is Light or Dark, **View > Reduce motion** turns off the fades and slides, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data. **View > Role** (Systems engineer or Electrical / AIT engineer, after 1.7.0) chooses how much of the window is on screen; **View > Show side panels** (Systems engineer only) opens or closes the project tree and the Inspector. Everything the Systems engineer role hides is still in a menu and in the command palette.
+Everything else is in the menus: **View > Arrange diagram** tidies the devices (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** (also **Settings > Appearance**) follows the system or is Light or Dark, **View > Reduce motion** turns off the fades and slides, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data. **View > Role** (Systems engineer or Electrical / AIT engineer, since 1.8.0) chooses how much of the window is on screen; **View > Show side panels** (Systems engineer only) opens or closes the project tree and the Inspector. Everything the Systems engineer role hides is still in a menu and in the command palette.
 
 ## The command palette (Ctrl+K)
 
@@ -130,7 +130,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
-34 files written to cib/outputs (model afd8bd1502d7).
+34 files written to cib/outputs (model 54e36f209aec).
 2 interfaces and 6 wires checked: 0 error(s)
 build ok: cib/outputs
 ```
@@ -283,7 +283,7 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
 | YAML | `wireviz.yaml` per harness | "WireViz-style" input: `metadata`, `connectors`, `cables`, `connections`. Written by this tool; **not validated against the WireViz program**. |
 | Markdown | `system/drc_report.md`, `system/revision_report.md` | reports |
 
-Every CSV starts with a comment line (`# harness-design-studio 1.7.0 model <hash>`, with the version that made it) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The Inspector of an interface in the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
+Every CSV starts with a comment line (`# harness-design-studio 1.8.0 model <hash>`, with the version that made it) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The Inspector of an interface in the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
 
 ### Ideas, not features
 

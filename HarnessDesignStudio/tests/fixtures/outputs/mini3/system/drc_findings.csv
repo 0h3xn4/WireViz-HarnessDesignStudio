@@ -1,4 +1,4 @@
-# harness-design-studio 1.7.0 model 1f7bff1b986e
+# harness-design-studio 1.8.0 model de021d5c7c7c
 Finding,Rule,Severity,Object,Statement,Waived,Justification,Requirement
 part-unapproved.EX-MICROD-15-F,part-unapproved,warning,EX-MICROD-15-F,Part EX-MICROD-15-F is not approved yet but is used (3 place(s)),,,ESCC3901-4.4
 part-unapproved.EX-MICROD-15-M,part-unapproved,warning,EX-MICROD-15-M,Part EX-MICROD-15-M is not approved yet but is used (1 place(s)),,,ESCC3901-4.4

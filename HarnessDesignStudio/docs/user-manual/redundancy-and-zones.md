@@ -10,7 +10,7 @@ This page shows how to add a backup (redundant) chain to a design, what the tool
 
 The steps below use the app. As a Systems engineer press **Model** in the rail to reach the diagram, and **Show panels** in the top bar when a step needs the **Inspector** or the **Project** tab ([draw the design](draw-the-design.md#before-you-start)). They are described from the program's texts and code and have not been run on a screen (GUI, not run). The numbers and messages below were reproduced with the same program code and the command line.
 
-## Say how many: the number of devices (after 1.7.0)
+## Say how many: the number of devices (new in 1.8.0)
 
 The simplest way to ask for redundancy is to say how many of a device the design has. In the **Devices** tab choose the device, raise **Number of these devices** (for example from 1 to 2) and press **Add copies**; in the **Add device** window the same field makes the device in that number at once. With 2 the program adds the twin `PCDU1-R` that the next section describes; with 3 it adds `PCDU1-3` as well, and so on, each with the connectors of the device and the links of the device mirrored where the other end has a free connector. It is one undo step. [Use the library](use-the-library.md#4-a-number-of-the-same-device) has the details. The rest of this page is the older way, a copy made on the redundant chain, which stays and gives the same result for the second device.
 

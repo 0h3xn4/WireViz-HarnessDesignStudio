@@ -41,7 +41,7 @@ This page shows how to read the tool's findings (errors, warnings and notes), fi
 
 Click a card or a to-do line to jump to the item.
 
-**The Problems panel.** Press **Problems (n)** in the status bar, or Ctrl+Shift+M (**View > Problems panel**; there is no **Problems (n)** button while the problem notices are off, which is the case as a Systems engineer until you turn them on, see [below](#turn-the-problem-notices-off)), to open a list of every open problem at the bottom of the window. It has the columns Severity, Rule, Object and Message, and the filters **All**, **Error**, **Warning** and **Connections** (after 1.7.0: only what the check says about the connections between connectors; **Design > Check my connections** opens the panel with this filter on). Click a row to go to the object, whether it is a device, a link, a harness, a parts file or a value file. **Details and fixes** (right-click a row, or press Shift+Enter) shows the problem as a card in the Inspector. The panel counts findings and the Problems tab counts groups of to-do lines, so the two numbers can differ.
+**The Problems panel.** Press **Problems (n)** in the status bar, or Ctrl+Shift+M (**View > Problems panel**; there is no **Problems (n)** button while the problem notices are off, which is the case as a Systems engineer until you turn them on, see [below](#turn-the-problem-notices-off)), to open a list of every open problem at the bottom of the window. It has the columns Severity, Rule, Object and Message, and the filters **All**, **Error**, **Warning** and **Connections** (since 1.8.0: only what the check says about the connections between connectors; **Design > Check my connections** opens the panel with this filter on). Click a row to go to the object, whether it is a device, a link, a harness, a parts file or a value file. **Details and fixes** (right-click a row, or press Shift+Enter) shows the problem as a card in the Inspector. The panel counts findings and the Problems tab counts groups of to-do lines, so the two numbers can differ.
 
 **Connections.** Four design rules read the connections between connectors ([connect two connectors](connect-two-connectors.md)), and they say nothing in a project that has none: `link-unpaired` (a warning: a pin with a signal that no pair of the connection uses; set its role to Spare if it is not used), `link-direction` (an error: two outputs, or two inputs, on one pair), `link-signal-mismatch` (a warning: the two names of a pair differ) and `link-power-return` (a warning: a power pair and no return pair; pair the return pin, or set its role to Return). A connection whose connector or pin is gone, a pin in two pairs or both connectors on one device are errors of the quick checks. The **Show** button of such a card jumps to the connection on the diagram. **Design > Check my connections** reviews all connections and changes nothing.
 
@@ -73,7 +73,7 @@ harness-design-studio drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `5e6bcbd63d91`. Rules run: 39.
+Model hash: `4780a7655706`. Rules run: 39.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.

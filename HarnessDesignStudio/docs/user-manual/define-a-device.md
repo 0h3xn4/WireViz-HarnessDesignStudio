@@ -78,7 +78,7 @@ The **Direction** and **Class** columns come from the interface type of the pin'
 
 ![The Devices tab for the device BAT1: the connector list, the card with the part, a Label field, the pin table with the Function column, and the buttons Add from library, Save to library, Duplicate and Export pinout](../img/devices-tab.png)
 
-*The Devices tab on the `flatsat` example (version 1.7.0).*
+*The Devices tab on the `flatsat` example (version 1.8.0).*
 
 ## Take the pinout from a spreadsheet
 
@@ -119,7 +119,7 @@ harness-design-studio export-pinout wheel-link --device GYRO1
 ```
 
 ```
-# harness-design-studio 1.7.0 model <hash>
+# harness-design-studio 1.8.0 model <hash>
 Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare
 GYRO1-J01,box,,EX-MICROD-9-F,A1,PWR,,,no
 GYRO1-J01,box,,EX-MICROD-9-F,A2,RTN,,,no

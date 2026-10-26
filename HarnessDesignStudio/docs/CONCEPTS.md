@@ -42,7 +42,7 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 | **Device** | A box in the spacecraft with connectors on it. | `OBC1` (on-board computer), `PCDU1` (power unit), `RW1` (reaction wheel) |
 | **Interface type** | A kind of connection and its signals. The tool ships 17 (RS-422, RS-485, CAN, Ethernet, primary power, ...). | *RS-422* has the signals `TX+`, `TX-`, `RX+`, `RX-` |
 | **Interface** | One connection of a type between two devices. This is what *you* add. | `IF-002`: RS-422 from `OBC1` to `RW1` |
-| **Connection (link)** | Two connectors of two devices joined pin by pin: a list of pairs of pins. You name the pins, the program proposes the pairs from the signal names (never by position), you confirm them, and *Check my connections* reviews them. It needs no interface type; what it carries is worked out from the pins. The tool never makes a harness from it unless you press **Create harness**. After 1.7.0, not in the latest release yet. | `OBC-J01` to `RW1-J02`: pin 1 (`TX+`) with pin 3 (`RX+`) |
+| **Connection (link)** | Two connectors of two devices joined pin by pin: a list of pairs of pins. You name the pins, the program proposes the pairs from the signal names (never by position), you confirm them, and *Check my connections* reviews them. It needs no interface type; what it carries is worked out from the pins. The tool never makes a harness from it unless you press **Create harness**. New in 1.8.0. | `OBC-J01` to `RW1-J02`: pin 1 (`TX+`) with pin 3 (`RX+`) |
 | **Pin role** | What a pin is for: power, return, ground, signal, shield or spare. It follows the signal name (`PWR`, `RTN`, `GND`) unless you set it. *Return* is the line the current comes back on. | `RTN` is a return |
 | **Connector** | A plug or socket, which may carry a label (new in 1.4.0). On a device it is a *box connector*; on a harness it is a *cable connector* that mates with a box connector. | `RW1-J02` on the wheel; `W001-P2` on the cable |
 | **Pin** | One contact of a connector. It carries one signal and may have a *function* (free text, new in 1.4.0). | pin 3 of `RW1-J02` carries `RX+`, function "Wheel command receive" |
@@ -52,8 +52,8 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 | **Segment** | A stretch of the physical route a bundle follows; wire lengths are sums of segments. | `W001-L1` |
 | **Zone** | A lane of the diagram (a panel or compartment). Devices sit in zones. | `panel-A`, `panel-B` |
 | **Nominal / redundant** | The main chain of devices and its backup. They never share a connector or harness. Since the library milestone you can simply say **how many** of a device there are (*Number of these devices*): two give `PCDU1` and `PCDU1-R`, three add `PCDU1-3`. | `PCDU1` and `PCDU1-R` |
-| **Subsystem** | A set of devices with the connections between them, kept in the **library** and added to a project in one step. In a project the *subsystem* of a device is a name that groups devices; a blank project has none. After 1.7.0. | the subsystem *Wheel drive*: `OBC` and `RW1` with their connection |
-| **Library** | A folder that your team shares (a drive or a Git checkout) with device files and subsystem files. You choose it in **File > Library folder…**, look at it in **File > Library…**, and the program only reads it until you press *Save to library*. After 1.7.0. See [use the library](user-manual/use-the-library.md). | `/mnt/team/harness-library` |
+| **Subsystem** | A set of devices with the connections between them, kept in the **library** and added to a project in one step. In a project the *subsystem* of a device is a name that groups devices; a blank project has none. New in 1.8.0. | the subsystem *Wheel drive*: `OBC` and `RW1` with their connection |
+| **Library** | A folder that your team shares (a drive or a Git checkout) with device files and subsystem files. You choose it in **File > Library folder…**, look at it in **File > Library…**, and the program only reads it until you press *Save to library*. New in 1.8.0. See [use the library](user-manual/use-the-library.md). | `/mnt/team/harness-library` |
 
 ## The standards the tool starts from
 
@@ -90,7 +90,7 @@ Pressing **Generate** (or `harness-design-studio generate DIR`) does four things
 
 You always see a **preview** first; nothing changes until you **Apply**, and **Undo** takes it back. Generating again keeps IDs, locked choices, the wires you edited or drew, and your labels, and never touches a released harness. The same design always gives byte-identical results, so Git diffs show real changes only.
 
-**Pinout first (after 1.7.0, not in the latest release yet).** Generate starts from interfaces and chooses the pins. The other way starts from the pins you named: a *connection* joins two connectors pin by pin, the program proposes the pairs from the signal names, you confirm them, and **Create harness** makes a harness with one wire for each pair, only when you press it. Generate leaves such a harness, and your pinout, alone. See [connect two connectors](user-manual/connect-two-connectors.md).
+**Pinout first (new in 1.8.0).** Generate starts from interfaces and chooses the pins. The other way starts from the pins you named: a *connection* joins two connectors pin by pin, the program proposes the pairs from the signal names, you confirm them, and **Create harness** makes a harness with one wire for each pair, only when you press it. Generate leaves such a harness, and your pinout, alone. See [connect two connectors](user-manual/connect-two-connectors.md).
 
 Every choice has a reason. Open the **Harness** tab (the Drawings area), pick a harness, select a wire, connector or pin, and read the rule behind it in **Why** (gauge and length included).
 

@@ -110,7 +110,7 @@ Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every sett
 
 - **Appearance**: **Theme** (*Follow the system*, *Light* or *Dark*), **Interface size** (100, 125, 150 or 200 %; it takes about a second to apply) and **Reduce motion**, which turns off the fades and slides of menus, lists and tooltips. The interface uses the bundled fonts Inter and JetBrains Mono.
 - **Editing**: **Role** (*Systems engineer* or *Electrical / AIT engineer*), **Mode** (*Guided* or *Expert*), **Snap devices to the grid**, **Show every link label** and **Show connectors on connections**.
-- **Project**: **Open the engineering values…**, the window of section 6, and the **Library folder** (after 1.7.0: **Choose…**, **Clear** and **Open the library…**; the folder that your team shares, see "The library" below).
+- **Project**: **Open the engineering values…**, the window of section 6, and the **Library folder** (since 1.8.0: **Choose…**, **Clear** and **Open the library…**; the folder that your team shares, see "The library" below).
 - **Keyboard shortcuts**: every key of the window, with a box **Filter the shortcuts…**. They are fixed and cannot be changed.
 - **About**: the version, the Python, Qt and PySide6 versions, and where your settings are kept. **Help > About** opens this section.
 - **Licences**: the fonts, the icons and Qt, with their licence texts.
@@ -132,7 +132,7 @@ As a Systems engineer a project opens on the **Next step** page (section 5); as 
 
 On a power interface set **Max current (A)** in the Inspector; without it the wire gauge stays pending.
 
-**Connecting by the pinout** (after 1.7.0). **Edit > Link connectors…** (Ctrl+Shift+K), or **Connect** and two devices, opens **Link connectors**. The program pairs the pins by signal name, never by position (`TX+` meets `RX+`, `PWR` meets `PWR`; an output is not paired with an output); you change, add or remove pairs and give a pin a role (Power, Return, Ground, Signal, Shield, Spare), then press **Link connectors**.
+**Connecting by the pinout** (new in 1.8.0). **Edit > Link connectors…** (Ctrl+Shift+K), or **Connect** and two devices, opens **Link connectors**. The program pairs the pins by signal name, never by position (`TX+` meets `RX+`, `PWR` meets `PWR`; an output is not paired with an output); you change, add or remove pairs and give a pin a role (Power, Return, Ground, Signal, Shield, Spare), then press **Link connectors**.
 
 The connection is a dash-dotted line on the diagram and an entry under **Connections** in the Project tab. **Design > Check my connections** reviews them and changes nothing. **Create harness** makes a harness with one wire for each pair, only when you press it and agree; the program never makes one on its own. In Expert mode, or with **View > Show connectors on connections**, a small box at each end of the line names the connector and the pins the connection pairs; the tooltip names the way through the harness once one exists, and **Show the harness** (right-click on the line) opens the Harness tab on it.
 
@@ -152,7 +152,7 @@ At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv`
 
 **Save to library…** writes the device with its connectors, pinouts, parts and interface types to a *device library file* (JSON; an existing file is added to), and **Add from library…** adds devices from such a file to this project (since 1.4.0). Nothing in the project is replaced: a taken ID gets the next free one (`GYRO1-2`), and a part or interface type the project already has stays as it is. Adding is one undo step.
 
-#### The library (after 1.7.0)
+#### The library (new in 1.8.0)
 
 The **library** is a folder that your team shares, on a shared drive or in a Git repository. It holds **device files** (the *device library file* above) and **subsystem files**: a subsystem is a set of devices with the connections between them, added to a project in one step. A blank project holds no subsystem. The program only reads the folder, never uses a network, and writes into it only when you press **Save**.
 
@@ -162,7 +162,7 @@ The **library** is a folder that your team shares, on a shared drive or in a Git
 - **Save selection to library…** saves the devices selected in the project, as devices or as a subsystem with a name and a description. A subsystem file is never replaced: a name that is taken is refused under the field. A connection with one end on a device that is not selected is left out, and the window says how many.
 - On the command line: `export-subsystem` and `import-subsystem` (section 10).
 
-**A number of the same device** (after 1.7.0). *Number of these devices* in the **Add device** window and in the **Devices** tab (with **Add copies**) says how many of a device the design has, in place of choosing a nominal and a redundant chain. Two are `ID` and `ID-R`, exactly what **Create redundant copy** makes (so a project does not change whichever way you did it); three add `ID-3`, and so on up to 10, each with the connectors of the device and its links mirrored where the other end has a free connector. It is one undo step. The number is counted from the devices that exist: it only grows, so to have fewer you delete a copy.
+**A number of the same device** (new in 1.8.0). *Number of these devices* in the **Add device** window and in the **Devices** tab (with **Add copies**) says how many of a device the design has, in place of choosing a nominal and a redundant chain. Two are `ID` and `ID-R`, exactly what **Create redundant copy** makes (so a project does not change whichever way you did it); three add `ID-3`, and so on up to 10, each with the connectors of the device and its links mirrored where the other end has a free connector. It is one undo step. The number is counted from the devices that exist: it only grows, so to have fewer you delete a copy.
 
 #### Defining a device
 
@@ -377,7 +377,7 @@ The build data (last row) has no window: it is read with the command line (secti
 | Ctrl+N, Ctrl+O | new project, open project |
 | Ctrl+S, Ctrl+Shift+S | save, save as |
 | Ctrl+Shift+I | import interfaces from a table |
-| Ctrl+Shift+O | open the library window (after 1.7.0) |
+| Ctrl+Shift+O | open the library window (new in 1.8.0) |
 | Ctrl+Q | quit |
 | Ctrl+K | command palette (it floats over the window; Esc or a click elsewhere closes it): type a command, an ID or a name; every command of the menus is in it |
 | Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
@@ -468,7 +468,7 @@ The **Show** list at the right end of the Model tab bar (**More > Show only** fo
 
 - **Harness**: a bundle of wires with connectors that carries signals between devices.
 - **Interface**: a logical connection between two devices, for example RS-422 from the computer to a wheel.
-- **Connection**: two connectors joined pin by pin, with the pairs proposed from the signal names on the pins and confirmed by you (after 1.7.0). It needs no interface type.
+- **Connection**: two connectors joined pin by pin, with the pairs proposed from the signal names on the pins and confirmed by you (new in 1.8.0). It needs no interface type.
 - **Pin role**: what a pin is for: Power, Return, Ground, Signal, Shield or Spare. *Return* (`RTN`) is the line the current comes back on.
 - **Nominal / redundant**: the main chain and its backup. They never share a connector or harness.
 - **Auto-filled**: a connector the tool chose; unconfirmed until a person looks at it.
