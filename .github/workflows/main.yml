@@ -8,9 +8,10 @@ jobs:
       max-parallel: 6
       matrix:
         # ubuntu-22.04 supports Python 3.7-3.12
-        # ubuntu-24.04 (currently latest & preferred) supports Python 3.9-3.12
+        # ubuntu-24.04 supports Python 3.9-3.12. It is named here and not as ubuntu-latest:
+        # ubuntu-latest moved to 26.04 in October 2026, which has no Python 3.9.
         # More details: https://github.com/actions/runner-images/issues/10636
-        os: [ubuntu-latest]
+        os: [ubuntu-24.04]
         python-version: ["3.9", "3.10", "3.11", "3.12"]
         include:
           - os: ubuntu-22.04
