@@ -174,7 +174,7 @@ Open points of M5:
 
 ## What is left (2026-10-26)
 
-All five milestones are built on a chain of branches (`feat/m2-links`, `feat/m3-harness-editing`, `feat/m4-library`, `feat/m5-roles`; M1 is in pull request 111), with a pull request pending for each; nothing of M2 to M5 is released, the owner has not signed off any of it, and no screen was watched on a real display by a person. The open points of the five milestones, together:
+All five milestones are built and on `master` (M1 with pull request 111, M2 to M5 together with pull request 113, both merged on 2026-10-26); nothing of them is released, the owner has not signed off any of it, and no screen was watched on a real display by a person. The open points of the five milestones, together:
 
 **Not built, or asked and not answered**
 
