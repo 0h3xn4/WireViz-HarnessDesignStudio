@@ -140,7 +140,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-34 files written to wheel-link/outputs (model 9b8927f0601b).
+34 files written to wheel-link/outputs (model ce97837c64ee).
 ```
 
 (The model hash depends on the project; yours may differ.) After two header lines, the first two wires in `outputs/harnesses/W002/wirelist.csv` read:

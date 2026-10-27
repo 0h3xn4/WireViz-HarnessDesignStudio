@@ -1,4 +1,4 @@
-# harness-design-studio 1.8.0 model de021d5c7c7c
+# harness-design-studio 1.8.1 model 25d61b78dd08
 Part,Category,Manufacturer,Part number,Description,Approval,Quantity,Unit,Wires without length,Used in
 (no part),unknown,,,,missing from parts list,0,m,2,W001
 EX-MICROD-15-F,connector,,,"Micro-D 15-pin, female (example, baseline power and data)",pending (example data),1,ea,,W002

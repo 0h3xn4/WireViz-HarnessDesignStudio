@@ -18,7 +18,7 @@ This page lists the error messages you are most likely to meet, with the exact t
 
 ## How this page was made
 
-Every message below was produced on purpose with the tool (version `0.1.0`, installed into a clean Python virtual environment on Ubuntu 24.04) and pasted as the tool printed it. The messages that 1.0.0 added or reworded (the release freeze, damaged projects, number ranges, the lock, the PDF character warning, import errors) were produced again with 1.0.0 from the source tree. Others may be worded a little differently; the [changelog](../CHANGELOG.md) names the changes. Project folder names such as `demo` are the ones used in the commands. Some things were **not** run, and the page says so where they appear: the `.deb` and `.tar.gz` installs and the packaged `--selftest` (text quoted from [`INSTALL.md`](INSTALL.md)), and anything that needs the app window (text quoted from the program's own message list). Messages about the examples of the released 0.1.0 packages were produced from the source of the `v0.1.0` tag. The messages that 1.7.0 added (the build data import, a dangling accessory, the option `--drawings`, the build workbook) and the model hashes and file counts quoted below were produced again with 1.8.0.
+Every message below was produced on purpose with the tool (version `0.1.0`, installed into a clean Python virtual environment on Ubuntu 24.04) and pasted as the tool printed it. The messages that 1.0.0 added or reworded (the release freeze, damaged projects, number ranges, the lock, the PDF character warning, import errors) were produced again with 1.0.0 from the source tree. Others may be worded a little differently; the [changelog](../CHANGELOG.md) names the changes. Project folder names such as `demo` are the ones used in the commands. Some things were **not** run, and the page says so where they appear: the `.deb` and `.tar.gz` installs and the packaged `--selftest` (text quoted from [`INSTALL.md`](INSTALL.md)), and anything that needs the app window (text quoted from the program's own message list). Messages about the examples of the released 0.1.0 packages were produced from the source of the `v0.1.0` tag. The messages that 1.7.0 added (the build data import, a dangling accessory, the option `--drawings`, the build workbook) and the model hashes and file counts quoted below were produced again with 1.8.1.
 
 Questions that are not errors ("which example should I start with?", "does it use the internet?") are answered in [`FAQ.md`](FAQ.md). Words you do not know are explained in [`GLOSSARY.md`](GLOSSARY.md).
 
@@ -60,11 +60,11 @@ bash: line 1: harness-design-studio: command not found
 - **Run from source or pip into a virtual environment (way C):** the environment is not active in this terminal. Run `. .venv/bin/activate` in the folder where you made it.
 - **Nothing installed yet:** start at [`INSTALL.md`](INSTALL.md).
 
-Check with `harness-design-studio --version`; it prints the version, for example `harness 1.8.0`.
+Check with `harness-design-studio --version`; it prints the version, for example `harness 1.8.1`.
 
 ### I am on Windows or a Mac
 
-Version 1.8.0 is supported on **Ubuntu 24.04 or newer, 64-bit x86**, and on **Windows 10 and 11 (64-bit)**, and on nothing else. There are packages for both: see [`INSTALL.md`](INSTALL.md), way A or B for Ubuntu and way D for Windows (decision D-149). The Windows packages are not signed: Windows SmartScreen shows *Windows protected your PC* (**More info**, then **Run anyway**). **macOS was removed in version 1.6.0** (decision D-168): there is no package for it, and nothing is built, tested or supported for it. The releases 1.2.0 to 1.5.0 still carry macOS disk images on GitHub, but they are unmaintained; use them at your own risk. Version 1.1.0 and older run on Ubuntu only. Other Linux distributions and Ubuntu 22.04 and older are not supported. On Ubuntu, check your system with `lsb_release -rs` (must print 24.04 or higher).
+Version 1.8.1 is supported on **Ubuntu 24.04 or newer, 64-bit x86**, and on **Windows 10 and 11 (64-bit)**, and on nothing else. There are packages for both: see [`INSTALL.md`](INSTALL.md), way A or B for Ubuntu and way D for Windows (decision D-149). The Windows packages are not signed: Windows SmartScreen shows *Windows protected your PC* (**More info**, then **Run anyway**). **macOS was removed in version 1.6.0** (decision D-168): there is no package for it, and nothing is built, tested or supported for it. The releases 1.2.0 to 1.5.0 still carry macOS disk images on GitHub, but they are unmaintained; use them at your own risk. Version 1.1.0 and older run on Ubuntu only. Other Linux distributions and Ubuntu 22.04 and older are not supported. On Ubuntu, check your system with `lsb_release -rs` (must print 24.04 or higher).
 
 ### `E: Unable to locate package ./harness-design-studio_...` or `dpkg: dependency problems`
 
@@ -599,10 +599,10 @@ harness-design-studio export demo
 ```
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the block diagram and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the harness overview and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
-34 files written to demo/outputs (model ca198c2ceead).
+34 files written to demo/outputs (model 10fdeab515a8).
 ```
 
-(Made with 1.7.0 from `first-steps`, after renaming two devices to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`; the harness drawings are written only with `export --drawings`, so that line appears only then.)
+(Made with 1.8.1 from `first-steps`, after renaming two devices to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`; the harness drawings are written only with `export --drawings`, so that line appears only then.)
 
 Not an error (exit code 0, the files are written). The PDF drawings use the Windows-1252 character set, so a name or note with characters outside it (the ohm sign Ω, Greek letters) prints a `?` in the PDF; the SVG drawing, the CSV files and the workbook keep the characters. The warning names every character it replaced (up to eight, then "and N more") and is repeated by `harness-design-studio verify DIR --outputs`. **Fix:** if the PDF is what you send, write the name with letters of Windows-1252 (for example "ohm"); otherwise use the SVG.
 
@@ -634,7 +634,7 @@ Not an error. `to fill in` (on an amber cell) marks a value the design does not 
 
 ### Which file is what?
 
-See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example without build data writes `34 files written to demo-first-steps/outputs (model 54e36f209aec).` (40 with `--drawings`.)
+See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example without build data writes `34 files written to demo-first-steps/outputs (model de1c4eded002).` (40 with `--drawings`.)
 
 ## Releasing
 

@@ -4,6 +4,8 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+## 1.8.1 (2026-10-27; not a statement of compliance)
+
 Fixes from the audit of 1.8.0 (`docs/AUDIT_1.8.0.md`, decision D-177): no new feature, no file-format change, the design rules stay 39, and the files and outputs of a project that does not meet one of these cases are unchanged (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` prints *identical*). The one written text that changes for projects on placeholder configuration is the line *Ready to build* of the build workbook.
 
 ### Fixed

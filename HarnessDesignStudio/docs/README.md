@@ -45,7 +45,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits, and the build workbook |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed, release by release |
-| [`releases/`](releases/1.8.0.md) | The highlights of each release from 1.1.0 to 1.8.0, as the GitHub release page shows them (one file per version) |
+| [`releases/`](releases/1.8.1.md) | The highlights of each release from 1.1.0 to 1.8.1, as the GitHub release page shows them (one file per version) |
 
 ## Examples and templates
 
