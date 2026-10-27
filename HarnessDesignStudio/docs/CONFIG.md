@@ -11,7 +11,7 @@ Rules live in `config/*.json` inside the project, not in code. There are seven f
 - [`derating.json`](#deratingjson)
 - [`generation.json`](#generationjson)
 - [`emc.json`](#emcjson)
-- [`naming.json`](#namingjson), with [`signal_counterparts`](#signal_counterparts-since-190)
+- [`naming.json`](#namingjson), with [`signal_counterparts`](#the-words-for-the-two-ends-of-a-line-since-190)
 - [`titleblock.json`](#titleblockjson)
 - [Optional values from the supplied standards (D-131)](#optional-values-from-the-supplied-standards-d-131)
 
@@ -118,7 +118,7 @@ Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limit
 | `branch` | `{harness}-B{n}` | branch point |
 | `segment` | `{harness}-L{n}` | routing segment |
 
-### `signal_counterparts` (since 1.9.0)
+### The words for the two ends of a line (since 1.9.0)
 
 Not a name pattern but a style choice of the same kind: the words that are the two ends of one line. The review of connections and the pairing proposal split a signal name into words (`UART_TX` is UART, TX; `SPW_DOUT+` is SPW, DOUT, +) and pair a transmit word with its receive word when everything else in the two names is the same, with or without a prefix (`UART_TX` and `RX`, `SPW_DOUT+` and `SPW_DIN+`, `MOSI` and `MISO`). Two equal names that both carry a transmit word (or both a receive word) are never paired by the proposal and are warned about in the review.
 
