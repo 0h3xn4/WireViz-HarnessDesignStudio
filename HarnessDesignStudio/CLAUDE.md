@@ -27,7 +27,7 @@ M0 to M9 done (`docs/demos/`), then the October audit (`docs/AUDIT.md`) and the 
 - Deterministic everywhere: sort by stable IDs, no timestamps in generated data, canonical JSON.
 - Never invent standard values (derating, current ratings, mass). Use `PLACEHOLDER` config values and list them for the owner.
 - No design data in logs. UI strings in one module.
-- The screen says *device*, the files say *unit* (`Unit`, `units`, `logical/units/`, `unit_id`, and the finding texts that reach a written output file); the command line has `--device` and keeps `--unit`; a wording change on screen must not change a generated file (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json`).
+- The screen says *device*, the files say *unit* (`Unit`, `units`, `logical/units/`, `unit_id`, and the finding texts that reach a written output file); the command line has `--device` and keeps `--unit`; the one exception is the connection list (`system/connections.csv` and `.xlsx`, new in 1.9), whose headings say *device* (owner decision); a wording change on screen must not change a generated file (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json`).
 - Every new dependency: record name, version, licence in `docs/DECISIONS.md`.
 - Tests first; every bug fix gets a regression test.
 - End each session with: done, tested, next, UX targets met/open.
