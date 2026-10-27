@@ -800,7 +800,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
                         attached[(mates[cid] or "", pin)].append(w.id)
         boxes_sorted = sorted(project.connectors.values(), key=lambda c: c.id)
         _compare_rows(r, "out_box_pinouts", "The box connector pinouts", bp, _pinout_header(project),
-                      _pin_rows(boxes_sorted, attached, _uses_function(project), _uses_termination(project), _uses_contact(project)), (0, 4), "box_pinouts")  # fmt: skip
+                      _pin_rows(boxes_sorted, attached, _uses_function(project), _uses_termination(project), _uses_contact(project), _uses_direction(project)), (0, 4), "box_pinouts")  # fmt: skip
     _system_workbook(r, project, files)
     ex = files.get("system/export.json")
     if ex is not None:
@@ -952,6 +952,7 @@ def _pinout_header(project: Project) -> list[str]:
         *(["Function"] if _uses_function(project) else []),
         *(["Termination"] if _uses_termination(project) else []),
         *(["Contact"] if _uses_contact(project) else []),
+        *(["Direction"] if _uses_direction(project) else []),
     ]
 
 
@@ -973,12 +974,20 @@ def _uses_contact(project: Project) -> bool:
     return any(p.contact_part for p in _all_pins(project))
 
 
+def _uses_direction(project: Project) -> bool:
+    return any(p.direction for p in _all_pins(project))
+
+
+_DIRECTION_TEXT = {"": "", "in": "in", "out": "out", "bidir": "bidirectional"}
+
+
 def _pin_rows(
     connectors: list[Connector],
     attached: dict[tuple[str, str], list[str]],
     function: bool = False,
     termination: bool = False,
     contact: bool = False,
+    direction: bool = False,
 ) -> list[list[Cell]]:
     rows: list[list[Cell]] = []
     for c in connectors:
@@ -991,6 +1000,7 @@ def _pin_rows(
                 *([p.function or ""] if function else []),
                 *([p.termination] if termination else []),
                 *([p.contact_part or ""] if contact else []),
+                *([_DIRECTION_TEXT[p.direction]] if direction else []),
             ])  # fmt: skip
     return rows
 
@@ -1192,7 +1202,7 @@ def _harness_tables(r: VerifyReport, project: Project, h: Harness, files: dict[s
     if po:
         conns = sorted(h.connectors, key=lambda c: c.id)
         _compare_rows(r, "out_pinout", f"The pinout table of {h.id}", po, _pinout_header(project),
-                      _pin_rows(conns, _harness_attached(h), _uses_function(project), _uses_termination(project), _uses_contact(project)), (0, 4), h.id)  # fmt: skip
+                      _pin_rows(conns, _harness_attached(h), _uses_function(project), _uses_termination(project), _uses_contact(project), _uses_direction(project)), (0, 4), h.id)  # fmt: skip
     bm = _table(files, f"{base}/bom.csv")
     if bm:
         _compare_rows(r, "out_bom", f"The BOM of {h.id}", bm, _BOM_HEADER,

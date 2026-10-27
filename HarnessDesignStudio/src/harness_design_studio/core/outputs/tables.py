@@ -140,16 +140,22 @@ def uses_contact_parts(project: Project) -> bool:
     return any(p.contact_part for p in _all_pins(project))
 
 
+def uses_pin_direction(project: Project) -> bool:
+    """True when a person set the direction of any pin (1.9.0)."""
+    return any(p.direction for p in _all_pins(project))
+
+
 def _pin_rows(
     c: Connector,
     attached: dict[tuple[str, str], list[str]],
     fn: bool,
     term: bool,
     contact: bool = False,
+    direction: bool = False,
 ) -> Table:
-    """The rows of one connector; `fn`, `term` and `contact` say whether the Function, Termination
-    and Contact columns exist (worked out once per table, since each looks at every pin of the
-    project)."""
+    """The rows of one connector; `fn`, `term`, `contact` and `direction` say whether the Function,
+    Termination, Contact and Direction columns exist (worked out once per table, since each looks
+    at every pin of the project)."""
     rows: Table = []
     for p in c.pins:
         wires = attached.get((c.id, p.id), [])
@@ -158,6 +164,7 @@ def _pin_rows(
             ";".join(sorted(wires)), "no" if wires or p.interface_id or p.signal else "yes",
             *([p.function or ""] if fn else []), *([p.termination] if term else []),
             *([p.contact_part or ""] if contact else []),
+            *([_DIRECTION_WORD[p.direction]] if direction else []),
         ])  # fmt: skip
     return rows
 
@@ -175,12 +182,17 @@ PINOUT_HEADER = [
 ]
 
 
-def _header(fn: bool, term: bool, contact: bool = False) -> list[str]:
+# How the Direction column of a pinout table writes the direction of a pin (an empty cell: not set)
+_DIRECTION_WORD = {"": "", "in": "in", "out": "out", "bidir": "bidirectional"}
+
+
+def _header(fn: bool, term: bool, contact: bool = False, direction: bool = False) -> list[str]:
     return [
         *PINOUT_HEADER,
         *(["Function"] if fn else []),
         *(["Termination"] if term else []),
         *(["Contact"] if contact else []),
+        *(["Direction"] if direction else []),
     ]
 
 
@@ -189,12 +201,13 @@ def pinouts(project: Project, h: Harness) -> Table:
     for w in h.wires:
         attached[(w.from_connector, w.from_pin)].append(w.id)
         attached[(w.to_connector, w.to_pin)].append(w.id)
-    fn, term, contact = (
-        uses_pin_function(project), uses_termination(project), uses_contact_parts(project)
+    fn, term, contact, direction = (
+        uses_pin_function(project), uses_termination(project), uses_contact_parts(project),
+        uses_pin_direction(project),
     )  # fmt: skip
-    rows = [_header(fn, term, contact)]
+    rows = [_header(fn, term, contact, direction)]
     for c in sorted(h.connectors, key=lambda x: x.id):
-        rows += _pin_rows(c, attached, fn, term, contact)
+        rows += _pin_rows(c, attached, fn, term, contact, direction)
     return rows
 
 
@@ -208,13 +221,14 @@ def box_pinouts(project: Project, connector_ids: Collection[str] | None = None) 
             for cid, pin in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
                 if mates.get(cid):
                     attached[(mates[cid] or "", pin)].append(w.id)
-    fn, term, contact = (
-        uses_pin_function(project), uses_termination(project), uses_contact_parts(project)
+    fn, term, contact, direction = (
+        uses_pin_function(project), uses_termination(project), uses_contact_parts(project),
+        uses_pin_direction(project),
     )  # fmt: skip
-    rows = [_header(fn, term, contact)]
+    rows = [_header(fn, term, contact, direction)]
     for c in sorted(project.connectors.values(), key=lambda x: x.id):
         if connector_ids is None or c.id in connector_ids:
-            rows += _pin_rows(c, attached, fn, term, contact)
+            rows += _pin_rows(c, attached, fn, term, contact, direction)
     return rows
 
 
