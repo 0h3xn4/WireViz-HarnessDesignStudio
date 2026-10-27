@@ -554,8 +554,11 @@ def _drawings(r: VerifyReport, project: Project, h: Harness, files: dict[str, by
     for size in ("A3", "A4"):
         pdf = files.get(f"{base}/drawing_{size}.pdf")
         if pdf is not None:
+            wired = {(w.from_connector) for w in h.wires} | {w.to_connector for w in h.wires}
             for c in h.connectors:
-                if b"(" + c.id.encode() + b") Tj" not in pdf:
+                # a connector with no wire is not drawn as a box: its pins are in the spare-pin line
+                needle = b"(" + c.id.encode() + b") Tj" if c.id in wired else c.id.encode()
+                if needle not in pdf:
                     r.error("out_drawing", f"Connector {c.id} is missing from the {size} PDF of {h.id}.", c.id)  # fmt: skip
                     break
     if a3 is not None:

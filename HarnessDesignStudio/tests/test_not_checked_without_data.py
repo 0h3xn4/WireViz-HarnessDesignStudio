@@ -141,3 +141,29 @@ def test_hand_made_wires_get_the_note_even_while_values_are_placeholders() -> No
 def test_wires_with_interfaces_raise_no_such_note() -> None:
     assert not [f for f in drc.run(ready(base())) if "have no interface" in f.title]
     assert len(drc.RULES) == 39
+
+
+# ---- B-16: a harness with a connector and no wires can be exported with its drawings ------------
+
+
+def test_a_harness_with_a_connector_and_no_wires_exports_with_drawings() -> None:
+    from harness_design_studio.core.model import Connector, Harness, Pin, Unit
+    from harness_design_studio.core.outputs.build import build_outputs
+    from harness_design_studio.core.outputs.verify import verify_outputs
+    from harness_design_studio.core.samples import new_project
+
+    p = new_project("zero")
+    p.units["A"] = Unit(id="A", name="A", subsystem="s", side="nominal")
+    pins = [Pin(id=str(i)) for i in range(1, 10)]
+    p.connectors["A-J01"] = Connector(
+        id="A-J01", name="J01", role="box", part_id="EX-MICROD-9-F", unit_id="A",
+        gender="female", pins=list(pins),
+    )  # fmt: skip
+    cable = Connector(
+        id="W001-P1", name="P1", role="cable", part_id="EX-MICROD-9-M", gender="male",
+        mates_with="A-J01", pins=list(pins),
+    )  # fmt: skip
+    p.harnesses["W001"] = Harness(id="W001", name="empty harness", connectors=[cable])
+    files = build_outputs(p, drawings=True).files
+    issues = [i for i in verify_outputs(p, files).issues if i.code == "out_drawing"]
+    assert issues == []
