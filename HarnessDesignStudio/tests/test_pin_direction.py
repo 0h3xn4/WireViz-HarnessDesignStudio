@@ -206,3 +206,22 @@ def test_a_sheet_with_a_direction_column_imports_it_and_a_bad_word_refuses_the_r
     refused = plan_pinout_import(p, bad, guess_mapping(bad[0]), unit_id="GYRO1", connector="J01")
     assert not refused.importable
     assert "in, out, bidirectional" in refused.rows[0].message
+
+
+def test_a_device_library_file_keeps_the_directions():
+    from harness_design_studio.core.device_library import (
+        check_library,
+        export_devices,
+        plan_device_import,
+    )
+    from harness_design_studio.core.model import Project
+
+    p, cid = with_connector()
+    apply_ops(p, devices.ops_set_pin(p, cid, "1", signal="PWR", direction="in"))
+    data = export_devices(p, ["GYRO1"])
+    check_library(data)
+    pins = data["devices"][0]["connectors"][0]["pins"]
+    assert pins[0]["direction"] == "in" and "direction" not in pins[1]  # sparse in the file too
+    fresh = Project()
+    apply_ops(fresh, plan_device_import(fresh, data).ops)
+    assert [x.direction for x in fresh.connectors[cid].pins][:2] == ["in", ""]

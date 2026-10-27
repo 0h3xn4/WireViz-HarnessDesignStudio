@@ -1989,6 +1989,7 @@ def ops_update_interface_type(project: Project, type_id: str, **changes: object)
 
 __all__ = [
     "CONNECTOR_FIELDS",
+    "PIN_DIRECTIONS",
     "PIN_FIELDS",
     "PIN_MODES",
     "PIN_ROLES",
@@ -2049,6 +2050,7 @@ __all__ = [
     "pinout_problems",
     "pinout_table",
     "plan_change_part",
+    "parse_pin_direction",
     "plan_pin_rows",
     "suggest_carries",
     "wire_index",
