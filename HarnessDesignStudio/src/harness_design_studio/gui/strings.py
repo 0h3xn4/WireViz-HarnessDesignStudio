@@ -2480,6 +2480,9 @@ NEWDEV_ID_TIP = "The short ID of the device (letters and digits). It is made fro
 NEWDEV_SUBSYSTEM = "Subsystem"
 NEWDEV_SUBSYSTEM_TIP = "The subsystem of this device (optional): pick one or type a new one"
 NEWDEV_NOTE = "You can change the name, the ID and the subsystem later in the Devices tab."
+NEWDEV_CONNECTOR = (
+    "First connector (optional). Its pins are numbered; you name them later or pair them by number."
+)
 NEWDEV_OK = "Add device"
 A_PROBLEM_NOTICES = "Show problem notices"
 A_PROBLEM_NOTICES_TIP = (
@@ -2531,7 +2534,7 @@ LINK_SAME_DEVICE = "Pick a device other than {}. A connection joins two differen
 LINK_HINT_FIRST = "Click the first device. A window then shows which pins go together."
 LINK_HINT_SECOND = "Now click the second device ({} is the first)."
 LINK_NO_CONNECTOR_SHORT = "No connector yet"
-LINK_NO_CONNECTOR = "Device {} has no connector yet. Add one in the Devices tab first."
+LINK_NO_CONNECTOR = "Device {} has no connector yet. Press Add a connector under it."
 LINK_NO_PAIRS = "Pair at least one pin of the first connector with a pin of the second."
 LINK_NO_PAIRS_YET = "Nothing is paired yet. Pick a pin on each side and press Add pair."
 LINK_TITLE = "Link connectors"
@@ -2953,3 +2956,44 @@ CHIP_BY_HAND_TIP = (
     "The harnesses were made from connections or by hand. Nothing is generated from the diagram."
 )
 HV_MADE_BY_HAND = "Made by hand"
+
+# ---- 1.9 W1: the Systems engineer path (first connector, pairing, Next step, problem counts) -------
+CPICK_FAMILY = "Connector"
+CPICK_FAMILY_TIP = "The kind of connector. The list comes from the connector parts of the library."
+CPICK_NONE = "No connector yet"
+CPICK_PINS = "Pins"
+CPICK_PINS_TIP = "How many pins the connector has"
+CPICK_GENDER = "Gender"
+CPICK_GENDER_TIP = "Male has pins, female has sockets. Not set means the part does not say."
+
+LINK_ADDCONN = "Add a connector…"
+LINK_ADDCONN_TIP = "Add a connector to this device now (it is made when you link the connectors)"
+LINK_ADDCONN_TITLE = "Add a connector"
+LINK_ADDCONN_INTRO = "Pick the kind of connector to add to {}. Its pins are numbered 1, 2, 3 and so on, with no signal names."
+LINK_ADDCONN_NAME = "Name"
+LINK_ADDCONN_NAME_TIP = "The name of the connector on the device, for example J01. Left empty, the next free one is used."
+LINK_ADDCONN_OK = "Add connector"
+LINK_ADDCONN_NO_PART = (
+    "There is no connector part to pick. Add a connector part in the Devices tab first."
+)
+LINK_BY_NUMBER = "Pair by pin number"
+LINK_BY_NUMBER_TIP = "Propose pin 1 to pin 1, pin 2 to pin 2 and so on. You see the proposal first and accept it or not."
+LINK_PASTE = "Paste a pairing…"
+LINK_PASTE_BUTTON_TIP = "Paste two columns from a table (a pin of the first connector, a pin of the second). You see the proposal first and accept it or not."
+LINK_PASTE_TITLE = "Paste a pairing"
+LINK_PASTE_INTRO = (
+    "Paste two columns from a table: a pin of {0}, a tab, a pin of {1}. One line is one pair."
+)
+LINK_PASTE_NAME = "The pairing to paste"
+LINK_PASTE_TIP = "One line per pair: a pin of the first connector, a tab, a pin of the second"
+LINK_PASTE_HINT = "1\t3\n2\t4"
+LINK_PASTE_OK = "Show the proposal"
+LINK_OFFER_TABLE = "Proposed pairs"
+LINK_OFFER_BY_NUMBER = "Pairing by pin number"
+LINK_OFFER_PASTED = "Pasted pairing"
+LINK_OFFER_TITLE = "{0}: {1} proposed. Nothing is paired until you accept."
+LINK_N_PAIRS = ("{0} pair", "{0} pairs")
+LINK_OFFER_ACCEPT = "Accept the pairs"
+LINK_OFFER_ACCEPT_TIP = "Put the proposed pairs into the table above (the connection is saved when you press the button below)"
+LINK_OFFER_DISCARD = "Discard"
+LINK_OFFER_DISCARD_TIP = "Forget this proposal"

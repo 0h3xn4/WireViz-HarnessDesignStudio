@@ -35,6 +35,7 @@ from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.model.logical import Category
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.connector_picker import ConnectorPicker
 from harness_design_studio.gui.notice import InlineNotice
 from harness_design_studio.gui.tables import Column, DictTableModel, TableView
 from harness_design_studio.gui.theme import ThemeManager
@@ -142,6 +143,14 @@ class NewDeviceDialog(_PlannerDialog):
         self.number.setValue(1)
         form.addRow(strings.NEWDEV_NUMBER, self.number)
         self.lay.addLayout(form)
+        head = QLabel(strings.NEWDEV_CONNECTOR)
+        head.setProperty("muted", True)
+        self.connector = ConnectorPicker(project, optional=True)
+        self.connector.setObjectName("new-device-connector")
+        self.lay.addWidget(head)
+        self.lay.addWidget(self.connector)
+        head.setVisible(self.connector.available())
+        self.connector.setVisible(self.connector.available())
         note = QLabel(strings.NEWDEV_NOTE)
         note.setProperty("muted", True)
         note.setWordWrap(True)
@@ -165,6 +174,10 @@ class NewDeviceDialog(_PlannerDialog):
             "unit_id": self.device_id.text().strip(),
             "subsystem": self.subsystem.currentText().strip() or None,
         }
+
+    def connector_part(self) -> str:
+        """The part of the first connector, or "" for a device with no connector yet."""
+        return self.connector.part_id()
 
     def count(self) -> int:
         """The number of these devices (1: just the one)."""

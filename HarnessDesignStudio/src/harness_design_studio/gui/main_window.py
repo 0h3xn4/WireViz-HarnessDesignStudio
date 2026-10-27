@@ -1172,7 +1172,12 @@ class MainWindow(QMainWindow):
         if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
             return
         lid = self.ctl.add_link(
-            dlg.a_connector_id(), dlg.b_connector_id(), dlg.pairs(), dlg.name(), dlg.roles()
+            dlg.a_connector_id(),
+            dlg.b_connector_id(),
+            dlg.pairs(),
+            dlg.name(),
+            dlg.roles(),
+            first=dlg.extra_ops,
         )
         if lid:
             self.view.focus_connection(lid)
@@ -1344,12 +1349,15 @@ class MainWindow(QMainWindow):
         dlg = NewDeviceDialog(self, self.theme, self.ctl.project)
         if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
             return
-        uid = self.ctl.add_device(count=dlg.count(), **dlg.values())
+        uid = self.ctl.add_device(
+            count=dlg.count(), connector_part=dlg.connector_part(), **dlg.values()
+        )
         if uid is None:
             return
-        self.go_to("devices")
         self.devices_view.show_unit(uid)
-        self.devices_view.focus_name()
+        if not self._stays_on_the_path():
+            self.go_to("devices")
+            self.devices_view.focus_name()
 
     def new_harness_flow(self) -> None:
         """Edit > New harness… (Ctrl+Shift+H): an empty harness made by hand, with no interface
@@ -3519,6 +3527,16 @@ class MainWindow(QMainWindow):
         Electrical / AIT engineer role is left alone."""
         if self.role == SYSTEMS and not self.dock_right.isVisibleTo(self):
             self.dock_right.show()
+
+    def _stays_on_the_path(self) -> bool:
+        """True for the Systems engineer role: after a step (a device added, a connection made, the
+        harnesses generated) the person stays on the Next step page or the diagram instead of being
+        sent into a detail tab. From any other place the Next step page opens."""
+        if self.role != SYSTEMS:
+            return False
+        if self._area not in ("next", "model"):
+            self._show_area("next")
+        return True
 
     def show_everything(self) -> None:
         """The link of the Next step page: the Electrical / AIT engineer role, on the diagram."""

@@ -6,7 +6,7 @@ small `Delta` so they redraw only what changed.
 """
 
 import json
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -14,7 +14,7 @@ from pathlib import Path
 from pydantic import ValidationError
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from harness_design_studio.core import checks, copies, devices, drc, edit, links
+from harness_design_studio.core import checks, copies, devices, drc, edit, first_connector, links
 from harness_design_studio.core.commands import Delete, History, Op, Put, SetZones, apply_ops
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, SaveError, TransactionError
@@ -944,12 +944,17 @@ class EditorController(QObject):
         )
 
     # ---- devices: custom devices down to each pin (one undo step each, named) -------------------
-    def add_device(self, *, count: int = 1, **fields: object) -> str | None:
-        """Add an empty device in a free slot and select it; returns its ID (None: refused). With
-        `count` above 1 the device is made in that number (`core.copies`: ID, ID-R, ID-3 ...) in
-        the same undo step."""
+    def add_device(
+        self, *, count: int = 1, connector_part: str = "", **fields: object
+    ) -> str | None:
+        """Add a device in a free slot and select it; returns its ID (None: refused). It is empty
+        unless `connector_part` names a connector part: then it gets a first connector of that part
+        (pins 1 to N, no signals). With `count` above 1 the device is made in that number
+        (`core.copies`: ID, ID-R, ID-3 ...) in the same undo step."""
         try:
-            ops, uid = devices.ops_add_device(self.project, **fields)  # type: ignore[arg-type]
+            ops, uid, _cid = first_connector.plan_device_with_connector(
+                self.project, connector_part or None, **fields
+            )
             extra = ""
             if count > 1:
                 more = copies.plan_copies(edit.clone_with(self.project, ops), uid, count)
@@ -1493,12 +1498,15 @@ class EditorController(QObject):
         pairs: list[tuple[str, str]],
         name: str = "",
         roles: Mapping[tuple[str, str], str] | None = None,
+        first: Sequence[Op] = (),
     ) -> str | None:
         """Join two connectors with these pairs (and give pins their roles) as one undo step.
+        `first` are operations that come before (connectors added in the connection window).
         Returns the link ID, or None when it was refused (the reason is a message)."""
         try:
-            ops, lid = links.plan_add_link(self.project, a_connector, b_connector, pairs, name)
-            ops = [*links.plan_set_roles(self.project, roles or {}), *ops]
+            base = edit.clone_with(self.project, list(first)) if first else self.project
+            ops, lid = links.plan_add_link(base, a_connector, b_connector, pairs, name)
+            ops = [*first, *links.plan_set_roles(base, roles or {}), *ops]
         except (HarnessError, ValidationError) as exc:
             self.message.emit(_plain(exc), False)
             return None

@@ -15,24 +15,27 @@ step. The same window edits the pairs of a connection that exists (the connector
     CreateHarnessDialog(parent, theme, harness_preview(project, "L1"))
 """
 
-from collections.abc import Sequence
+from collections.abc import Callable, Sequence
 
 from PySide6.QtCore import Qt
+from PySide6.QtGui import QGuiApplication
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QComboBox,
     QDialog,
     QFormLayout,
+    QFrame,
     QHBoxLayout,
     QLabel,
     QLineEdit,
+    QPlainTextEdit,
     QPushButton,
     QVBoxLayout,
     QWidget,
 )
 
-from harness_design_studio.core import edit
-from harness_design_studio.core.commands import Put, apply_ops
+from harness_design_studio.core import devices, edit
+from harness_design_studio.core.commands import Op, Put, apply_ops
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.links import (
@@ -48,7 +51,9 @@ from harness_design_studio.core.links import (
     propose_pairs,
 )
 from harness_design_studio.core.model import Connector, Pin, Project
+from harness_design_studio.core.pairing import pair_by_number, parse_pairing
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.connector_picker import ConnectorPicker
 from harness_design_studio.gui.notice import InlineNotice, Severity
 from harness_design_studio.gui.tables import Column, DictTableModel, TableView
 from harness_design_studio.gui.theme import ThemeManager
@@ -110,6 +115,97 @@ class CreateHarnessDialog(QDialog):
         lay.addLayout(row)
 
 
+class AddConnectorDialog(QDialog):
+    """Add a connector to a device from the connection window: the kind (family, pins, gender)
+    and, when wanted, a name. Nothing is added to the project before the connection is saved."""
+
+    def __init__(
+        self, parent: QWidget | None, theme: ThemeManager, project: Project, unit_id: str
+    ) -> None:
+        super().__init__(parent)
+        self.project, self.unit_id = project, unit_id
+        self.setObjectName("link-add-connector-dialog")
+        self.setWindowTitle(strings.LINK_ADDCONN_TITLE)
+        self.setAccessibleName(strings.LINK_ADDCONN_TITLE)
+        lay = QVBoxLayout(self)
+        intro = QLabel(strings.LINK_ADDCONN_INTRO.format(unit_id))
+        intro.setWordWrap(True)
+        lay.addWidget(intro)
+        self.picker = ConnectorPicker(project)
+        lay.addWidget(self.picker)
+        form = QFormLayout()
+        self.name_edit = QLineEdit()
+        self.name_edit.setObjectName("link-add-connector-name")
+        self.name_edit.setAccessibleName(strings.LINK_ADDCONN_NAME)
+        self.name_edit.setToolTip(strings.LINK_ADDCONN_NAME_TIP)
+        self.name_edit.setPlaceholderText(devices.next_connector_name(project, unit_id)[1])
+        form.addRow(strings.LINK_ADDCONN_NAME, self.name_edit)
+        lay.addLayout(form)
+        self.notice = InlineNotice(theme)
+        lay.addWidget(self.notice)
+        self.ok, row = _buttons(self, strings.LINK_ADDCONN_OK)
+        lay.addLayout(row)
+        self.picker.changed.connect(self._check)
+        self.name_edit.textChanged.connect(lambda _t: self._check())
+        self._check()
+
+    def plan(self) -> tuple[list[Op], str]:
+        """The operations that add the connector and its ID (raises `EditError` with the reason)."""
+        return devices.ops_add_connector(
+            self.project,
+            self.unit_id,
+            part_id=self.picker.part_id(),
+            name=self.name_edit.text().strip() or None,
+        )
+
+    def _check(self) -> None:
+        problem = ""
+        if not self.picker.available() or not self.picker.part_id():
+            problem = strings.LINK_ADDCONN_NO_PART
+        else:
+            try:
+                self.plan()
+            except (EditError, HarnessError, ValueError) as exc:
+                problem = str(exc)
+        if problem:
+            self.notice.show_notice("error", problem)
+        else:
+            self.notice.clear()
+        self.ok.setEnabled(not problem)
+
+
+class PastePairingDialog(QDialog):
+    """A pairing pasted from a table (two columns). Only the text is asked for here; the window
+    turns it into a proposal and the person accepts it there."""
+
+    def __init__(self, parent: QWidget | None, theme: ThemeManager, a_id: str, b_id: str) -> None:
+        super().__init__(parent)
+        self.setObjectName("link-paste-dialog")
+        self.setWindowTitle(strings.LINK_PASTE_TITLE)
+        self.setAccessibleName(strings.LINK_PASTE_TITLE)
+        self.setMinimumWidth(theme.px(420))
+        lay = QVBoxLayout(self)
+        intro = QLabel(strings.LINK_PASTE_INTRO.format(a_id, b_id))
+        intro.setWordWrap(True)
+        lay.addWidget(intro)
+        self.text = QPlainTextEdit()
+        self.text.setObjectName("link-paste-text")
+        self.text.setAccessibleName(strings.LINK_PASTE_NAME)
+        self.text.setToolTip(strings.LINK_PASTE_TIP)
+        self.text.setPlaceholderText(strings.LINK_PASTE_HINT)
+        lay.addWidget(self.text, 1)
+        clip = QGuiApplication.clipboard().text() if QGuiApplication.clipboard() else ""
+        if "\t" in clip:  # a table copied from a spreadsheet is already here
+            self.text.setPlainText(clip)
+        self.ok, row = _buttons(self, strings.LINK_PASTE_OK)
+        lay.addLayout(row)
+        self.text.textChanged.connect(lambda: self.ok.setEnabled(bool(self.text.toPlainText().strip())))  # fmt: skip
+        self.ok.setEnabled(bool(self.text.toPlainText().strip()))
+
+    def pasted(self) -> str:
+        return self.text.toPlainText()
+
+
 def _device_label(project: Project, uid: str) -> str:
     u = project.units[uid]
     return f"{uid}  {u.name}" if u.name and u.name != uid else uid
@@ -117,6 +213,9 @@ def _device_label(project: Project, uid: str) -> str:
 
 class LinkDialog(QDialog):
     """Link connectors: two connectors, the pairs between their pins, the role of a pin."""
+
+    add_a_connector: QPushButton
+    add_b_connector: QPushButton
 
     def __init__(
         self,
@@ -140,7 +239,13 @@ class LinkDialog(QDialog):
         self._pairs: list[tuple[str, str]] = []
         self._roles: dict[tuple[str, str], str] = {}
         self._proposal: Proposal | None = None
+        self._offer: Proposal | None = None  # a proposal shown and not yet accepted
+        self._offer_how = ""
         self._loading = False
+        # connectors added in this window: they are made when the connection is saved
+        self.extra_ops: list[Op] = []
+        self.ask_connector: Callable[[str], tuple[list[Op], str] | None] = self._ask_connector
+        self.ask_paste: Callable[[], str | None] = self._ask_paste
         lay = QVBoxLayout(self)
         intro = QLabel(strings.LINK_EDIT_INTRO if link_id else strings.LINK_INTRO)
         intro.setWordWrap(True)
@@ -213,10 +318,19 @@ class LinkDialog(QDialog):
         self.remove_pair = self._button(
             "link-remove-pair", strings.LINK_REMOVE_PAIR, strings.LINK_REMOVE_TIP
         )
+        self.pair_numbers = self._button(
+            "link-pair-by-number", strings.LINK_BY_NUMBER, strings.LINK_BY_NUMBER_TIP
+        )
+        self.paste_pairs = self._button(
+            "link-paste-pairs", strings.LINK_PASTE, strings.LINK_PASTE_BUTTON_TIP
+        )
         for b in (self.add_pair, self.change_pair, self.remove_pair):
             buttons.addWidget(b)
         buttons.addStretch(1)
+        buttons.addWidget(self.pair_numbers)
+        buttons.addWidget(self.paste_pairs)
         lay.addLayout(buttons)
+        lay.addWidget(self._build_offer(theme))
         help_ = QLabel(strings.LINK_ROLE_HELP)
         help_.setObjectName("link-role-help")
         help_.setWordWrap(True)
@@ -247,6 +361,55 @@ class LinkDialog(QDialog):
         self._wire()
         self._ends_changed()
 
+    def _build_offer(self, theme: ThemeManager) -> QFrame:
+        """The proposal of Pair by pin number or Paste a pairing: the pairs, what was left out, and
+        two buttons. Nothing joins the table before Accept."""
+        box = QFrame()
+        box.setObjectName("link-offer")
+        box.setProperty("card", True)
+        lay = QVBoxLayout(box)
+        self.offer_title = QLabel()
+        self.offer_title.setObjectName("link-offer-title")
+        self.offer_title.setWordWrap(True)
+        lay.addWidget(self.offer_title)
+        self.offer_model = DictTableModel(
+            [
+                Column("a_pin", strings.LINK_COL_PIN_A, mono=True, width=70),
+                Column("a_signal", strings.LINK_COL_SIGNAL_A, width=110),
+                Column("b_pin", strings.LINK_COL_PIN_B, mono=True, width=70),
+                Column("b_signal", strings.LINK_COL_SIGNAL_B, width=110),
+            ],
+            (),
+            theme,
+        )
+        self.offer_table = TableView(self.offer_model, theme, name=strings.LINK_OFFER_TABLE)
+        self.offer_table.setObjectName("link-offer-pairs")
+        self.offer_table.setSortingEnabled(False)
+        self.offer_table.setMaximumHeight(theme.px(130))
+        lay.addWidget(self.offer_table)
+        self.offer_notes = QLabel()
+        self.offer_notes.setObjectName("link-offer-notes")
+        self.offer_notes.setWordWrap(True)
+        self.offer_notes.setProperty("muted", True)
+        lay.addWidget(self.offer_notes)
+        row = QHBoxLayout()
+        row.addStretch(1)
+        self.offer_discard = self._button(
+            "link-offer-discard", strings.LINK_OFFER_DISCARD, strings.LINK_OFFER_DISCARD_TIP
+        )
+        self.offer_accept = self._button(
+            "link-offer-accept", strings.LINK_OFFER_ACCEPT, strings.LINK_OFFER_ACCEPT_TIP
+        )
+        self.offer_accept.setProperty("primary", True)
+        row.addWidget(self.offer_discard)
+        row.addWidget(self.offer_accept)
+        lay.addLayout(row)
+        self.offer_discard.clicked.connect(lambda _c=False: self._set_offer(None))
+        self.offer_accept.clicked.connect(lambda _c=False: self.accept_offer())
+        self.offer_box = box
+        box.hide()
+        return box
+
     # ---- building ---------------------------------------------------------------------------
     def _end(self, title: str, key: str, row: QHBoxLayout) -> tuple[QComboBox, QComboBox]:
         col = QVBoxLayout()
@@ -260,7 +423,12 @@ class LinkDialog(QDialog):
             f"{title}: {strings.LINK_CONNECTOR}",
             strings.LINK_CONNECTOR_TIP,
         )
-        for w in (head, device, conn):
+        add = self._button(
+            f"link-{key}-add-connector", strings.LINK_ADDCONN, strings.LINK_ADDCONN_TIP
+        )
+        add.clicked.connect(lambda _c=False, k=key: self._add_connector(k))
+        setattr(self, f"add_{key}_connector", add)
+        for w in (head, device, conn, add):
             col.addWidget(w)
         row.addLayout(col, 1)
         return device, conn
@@ -311,6 +479,9 @@ class LinkDialog(QDialog):
             for w in (self.a_device, self.a_conn, self.b_device, self.b_conn):
                 w.setEnabled(False)
                 w.setToolTip(strings.LINK_ENDS_FIXED)
+            for button in (self.add_a_connector, self.add_b_connector):
+                button.setEnabled(False)
+                button.setToolTip(strings.LINK_ENDS_FIXED)
 
     def _best_connectors(
         self, a_unit: str, a_conn: str, b_unit: str, b_conn: str
@@ -361,6 +532,8 @@ class LinkDialog(QDialog):
         self.add_pair.clicked.connect(self._add)
         self.change_pair.clicked.connect(self._change)
         self.remove_pair.clicked.connect(self._remove)
+        self.pair_numbers.clicked.connect(lambda _c=False: self.offer_by_number())
+        self.paste_pairs.clicked.connect(lambda _c=False: self.offer_pasted())
 
     # ---- the values -------------------------------------------------------------------------
     def a_connector_id(self) -> str:
@@ -413,6 +586,7 @@ class LinkDialog(QDialog):
             box.blockSignals(False)
             self._pin_chosen(side)
         self._proposal = None
+        self._set_offer(None)
         if self.link_id is None:
             self._pairs = []
             if a is not None and b is not None:
@@ -422,6 +596,136 @@ class LinkDialog(QDialog):
                 except EditError:
                     self._proposal = None
         self._refresh()
+
+    # ---- a connector added here, a pairing proposed by number or pasted ---------------------------
+    def _ask_connector(self, unit_id: str) -> tuple[list[Op], str] | None:
+        dlg = AddConnectorDialog(self, self.theme, self.project, unit_id)
+        if dlg.exec() != QDialog.DialogCode.Accepted:
+            return None
+        return dlg.plan()
+
+    def _add_connector(self, side: str) -> None:
+        """Add a connector to the device picked on this side. It joins the project when the
+        connection is saved (`extra_ops`); until then it exists in this window only."""
+        device, conn = (self.a_device, self.a_conn) if side == "a" else (self.b_device, self.b_conn)
+        uid = str(device.currentData() or "")
+        if not uid or self.link_id:
+            return
+        try:
+            planned = self.ask_connector(uid)
+            if planned is None:
+                return
+            ops, cid = planned
+            self.project = edit.clone_with(self.project, ops)
+        except (EditError, HarnessError, ValueError) as exc:
+            self.problem.show_notice("error", str(exc))
+            return
+        self.extra_ops += ops
+        self._load_connectors(device, conn, cid)
+        self._ends_changed()
+
+    def _ask_paste(self) -> str | None:
+        dlg = PastePairingDialog(
+            self, self.theme, self.a_connector_id() or "?", self.b_connector_id() or "?"
+        )
+        return dlg.pasted() if dlg.exec() == QDialog.DialogCode.Accepted else None
+
+    def _skipped(self) -> tuple[set[str], set[str]]:
+        """The pins already in the table (a proposal never offers them again)."""
+        return {p[0] for p in self._pairs}, {p[1] for p in self._pairs}
+
+    def _ready_to_pair(self) -> bool:
+        a, b = self._connector("a"), self._connector("b")
+        return a is not None and b is not None and a.unit_id != b.unit_id
+
+    def offer_by_number(self) -> Proposal | None:
+        """Pair by pin number: show pin 1 to pin 1, 2 to 2 ... as a proposal. Nothing joins the
+        table until Accept."""
+        if not self._ready_to_pair():
+            return None
+        skip_a, skip_b = self._skipped()
+        try:
+            found = pair_by_number(
+                self.project,
+                self.a_connector_id(),
+                self.b_connector_id(),
+                skip_a=skip_a,
+                skip_b=skip_b,
+            )
+        except (EditError, HarnessError) as exc:
+            self.problem.show_notice("error", str(exc))
+            return None
+        self._set_offer(found, strings.LINK_OFFER_BY_NUMBER)
+        return found
+
+    def offer_pasted(self, text: str | None = None) -> Proposal | None:
+        """Paste a pairing: two columns, a pin of the first connector and a pin of the second.
+        `text` is what was pasted (asked for when not given)."""
+        if not self._ready_to_pair():
+            return None
+        if text is None:
+            text = self.ask_paste()
+            if text is None:
+                return None
+        skip_a, skip_b = self._skipped()
+        try:
+            found = parse_pairing(
+                self.project,
+                self.a_connector_id(),
+                self.b_connector_id(),
+                text,
+                skip_a=skip_a,
+                skip_b=skip_b,
+            )
+        except (EditError, HarnessError) as exc:
+            self.problem.show_notice("error", str(exc))
+            return None
+        self._set_offer(found, strings.LINK_OFFER_PASTED)
+        return found
+
+    def offer(self) -> Proposal | None:
+        """The proposal that waits for Accept (None: there is none)."""
+        return self._offer
+
+    def _set_offer(self, found: Proposal | None, how: str = "") -> None:
+        self._offer, self._offer_how = found, how
+        if found is None:
+            self.offer_box.hide()
+            return
+        a, b = self._connector("a"), self._connector("b")
+        rows = []
+        for a_pin, b_pin in ((p.a_pin, p.b_pin) for p in found.pairs):
+            pa = self._pin(a, a_pin) if a else None
+            pb = self._pin(b, b_pin) if b else None
+            rows.append(
+                {
+                    "a_pin": a_pin,
+                    "a_signal": (pa.signal if pa and pa.signal else "") or strings.LINK_NO_SIGNAL,
+                    "b_pin": b_pin,
+                    "b_signal": (pb.signal if pb and pb.signal else "") or strings.LINK_NO_SIGNAL,
+                }
+            )
+        self.offer_model.set_rows(rows)
+        for k, w in enumerate((100, 120, 104, 120)):
+            self.offer_table.setColumnWidth(k, self.theme.px(w))
+        n = len(found.pairs)
+        self.offer_title.setText(
+            strings.LINK_OFFER_TITLE.format(how, strings.LINK_N_PAIRS[0 if n == 1 else 1].format(n))
+        )
+        self.offer_notes.setText("\n".join(found.notes))
+        self.offer_notes.setVisible(bool(found.notes))
+        self.offer_accept.setEnabled(n > 0)
+        self.offer_box.show()
+
+    def accept_offer(self) -> None:
+        """The person accepts the proposal: its pairs join the table (nothing is saved yet)."""
+        found = self._offer
+        if found is None:
+            return
+        have = set(self._pairs)
+        self._pairs += [(p.a_pin, p.b_pin) for p in found.pairs if (p.a_pin, p.b_pin) not in have]
+        self._set_offer(None)
+        self._refresh(select=len(self._pairs) - 1)
 
     def _pin_chosen(self, side: str) -> None:
         conn = self._connector(side)
@@ -469,6 +773,9 @@ class LinkDialog(QDialog):
         self.change_pair.setEnabled(chosen)
         self.remove_pair.setEnabled(chosen)
         self.add_pair.setEnabled(bool(self.a_pin.currentData() and self.b_pin.currentData()))
+        ready = self._ready_to_pair()
+        self.pair_numbers.setEnabled(ready)
+        self.paste_pairs.setEnabled(ready)
 
     def _current_pair(self) -> tuple[str, str] | None:
         a, b = self.a_pin.currentData(), self.b_pin.currentData()
@@ -602,4 +909,10 @@ class LinkDialog(QDialog):
         return self._rows()
 
 
-__all__ = ["CreateHarnessDialog", "LinkDialog", "harness_preview"]
+__all__ = [
+    "AddConnectorDialog",
+    "CreateHarnessDialog",
+    "LinkDialog",
+    "PastePairingDialog",
+    "harness_preview",
+]
