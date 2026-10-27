@@ -312,7 +312,7 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio diff DIR HARNESS [--from REV] [--to REV]` | what changed since a baseline |
 | `harness-design-studio compare OLD NEW` | compare two project folders (for example two Git checkouts); the last line names what is not compared |
 | `harness-design-studio log DIR [HARNESS]` | print the change log |
-| `harness-design-studio config DIR [--ampacity-csv FILE] [--apply-profile NAME]` | list missing or invalid engineering values; load a current-by-gauge table; fill unset values from a standard profile |
+| `harness-design-studio config DIR [--ampacity-csv FILE] [--apply-profile NAME] [--counterparts WORDS]` | list missing or invalid engineering values; load a current-by-gauge table; fill unset values from a standard profile; set the transmit and receive words of the connection review (`TX=RX, MOSI=MISO`) |
 | `harness-design-studio import-parts DIR FILE --approved VALUE ...` | import an approved-parts list; you say what the approval values mean |
 | `harness-design-studio import-lengths DIR FILE [--unit mm]` | import routing segment lengths from a table |
 | `harness-design-studio import-netlist DIR FILE --device D [--prefix J] [--connector J1=ID] [--part J1=PART] [--signal-map NAME=SIGNAL\|FILE]` | read connector pinouts of a device from a KiCad netlist (.net or .xml); the pins become fixed |
