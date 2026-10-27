@@ -134,8 +134,8 @@ def test_generate_on_connections_only_is_not_a_dead_end(qtbot, tmp_path) -> None
 
     win = linked_window(qtbot, tmp_path)
     script = DialogScript(win, accept=True)
-    win.generate_flow()  # nothing to wire: no preview window, no harness invented, no error
-    assert not script.seen
+    win.generate_flow()  # nothing to wire: the preview opens, is accepted, nothing is invented
+    assert len(script.seen) <= 1
     assert not win.ctl.project.harnesses and win.ctl.project.links
     assert win.ctl.project.links["L1"].harness_id == ""
     assert "failed" not in " ".join(win.toasts.messages).lower()

@@ -137,7 +137,7 @@ This was checked on the command line with `first-steps`: a wire set to gauge 20 
 
 ## Common mistakes
 
-- **"there are no harnesses to export; run `harness-design-studio generate` first."** You have not generated yet, or the project has no links. Generate first.
+- **"there are no harnesses to export; run `harness-design-studio generate` first."** You have not generated yet, or the project has no links. Generate first. (A project whose connections were made with **Link connectors…** exports without a harness: it gets the connection list, `system/connections.csv` and `.xlsx`.)
 - **A blank project generates nothing.** The command line has no command to draw a single device or link by hand (devices come in from a file with `import-pinout --new-device`, `import-devices` or `import-subsystem`). Draw devices and links in the app ([draw the design](draw-the-design.md)), or start from an example. A harness made by hand with **New harness…** is left alone by Generate.
 - **Gauge says *pending*.** Not a fault. A value is missing: run `harness-design-studio config DIR` ([fill in the engineering values](fill-in-engineering-values.md)). The power link also needs its **Max current (A)**.
 - **"The model changed after the harness plans were generated."** You changed the design after generating. Generate again.

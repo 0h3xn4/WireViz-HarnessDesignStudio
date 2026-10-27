@@ -73,6 +73,7 @@ Window (`gui/main_window.py`): the navigation rail (Next step, Home, Model, Chec
 - `build_outputs` is pure and deterministic: no dates, sorted rows, uncompressed PDF, XLSX re-zipped with fixed timestamps. Keep it that way; goldens depend on it.
 - `core` must not import modules that import network code at import time (`xml.sax.saxutils` does; use `canvas.escape`). The offline test catches this.
 - `core/outputs/verify.py` must stay independent of `tables.py`/`drawing.py`: derive expectations from the project.
+- Connection list (release 1.9, W2, REQ-OUT-09): `core/outputs/connections.py` builds `system/connections.csv` and `system/connections.xlsx` (styled like the build workbook, deterministic), written by `build_outputs` **only when `project.links` is not empty**, so a project without links keeps byte-identical files. Links are also edges (tagged with the link ID) in `system.block_diagram` and rows (with a `Kind` column, header `Interface or connection`) in `tables.traceability`, again only with links. `verify.py` re-derives every cell of these on its own (`_connections`, `_trace_rows`; the interface cell is checked to be possible, not rebuilt). `export` (CLI and the Export window) needs a harness **or** a link. `tables.py` cannot import `core.links` at module level (import cycle through `core.devices`).
 - Adding an output file: build it in `build_outputs`, add its check to `verify.py` with a mutation test, regenerate goldens, document it in `docs/OUTPUTS.md`.
 
 ## Editing wires (1.4.0 M1)

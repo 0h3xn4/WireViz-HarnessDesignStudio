@@ -15,6 +15,7 @@ This page shows how to join a connector of one device to a connector of another,
 - [4. See your connections](#4-see-your-connections)
 - [5. Check my connections](#5-check-my-connections)
 - [6. Create the harness](#6-create-the-harness)
+- [7. Hand over the connection list](#7-hand-over-the-connection-list)
 - [Change, rename or delete a connection](#change-rename-or-delete-a-connection)
 - [What the program never does](#what-the-program-never-does)
 - [Common mistakes](#common-mistakes)
@@ -123,6 +124,15 @@ The connection says which pins go together. It is not yet a harness. When you wa
 3. Enter the lengths, gauges and colours in **Edit wire** ([edit a wire](edit-a-wire.md)); the wires have no length, gauge or colour until you do ([enter the build data](enter-the-build-data.md)). The harness is yours: **Generate** leaves it alone, and it is checked, listed, exported and released like any other ([build a harness by hand](build-a-harness-by-hand.md#what-generate-does-with-it)). One limit: the wires carry no interface, so the current, voltage-drop and bundle checks do not run on them, and a gauge you type is not checked against a current; the Checks area says so with a note (*Current, voltage-drop and bundle checks did not run for … wires … they have no interface*).
 
 The button says why it cannot when it cannot: no pairs yet, or the connection has a harness already. To see the harness again later, use **Show the harness** (section 4). A connection whose harness is released is locked with it ([change a released harness](change-a-released-harness.md)).
+
+## 7. Hand over the connection list
+
+The connections are an output of their own, and they need no harness. **Export…** (Ctrl+E, or **Export the connection list…** in the empty Outputs area) writes `system/connections.csv` and `system/connections.xlsx` into the `outputs` folder next to the project (a project that was never saved first asks where to save it). The command line does the same: `harness-design-studio export DIR` (add `generate` first only for a project that also has interfaces).
+
+- **One row for each pair of pins.** Connection, name, then for each end the device, connector, pin, signal and role; then the interface type the pair belongs to (*CAN*; *RS-422 or Ethernet* when two fit equally; empty when none does), the harness made from the connection and its note.
+- **The workbook** `connections.xlsx` has the same rows as a sheet ready to print or send, a **Summary** with one line for each connection (*Pairs*, *Carries* such as *CAN, 2 wires*) and the stamp of the design it was made from.
+- **The same connections** are drawn with their IDs in `system/block_diagram` and listed in `system/traceability.csv` (with the wires of the harness once there is one).
+- The files are checked independently before they are written, like the others, and they are written only for a project that has connections: a project without any keeps the files it had. Columns and rules: [`OUTPUTS.md`](../OUTPUTS.md#connection-list-systemconnectionscsv-and-xlsx).
 
 ## Change, rename or delete a connection
 

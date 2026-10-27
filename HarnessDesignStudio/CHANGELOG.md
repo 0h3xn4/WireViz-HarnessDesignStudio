@@ -4,6 +4,15 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Added
+
+- **A connection list as output (release 1.9, W2; audit findings F-02 and F-08).** A project that has connections (the links made with **Link connectors…**) now writes two more files, `system/connections.csv` and `system/connections.xlsx`, in the style of an interface control document:
+  - One row for each pair of pins: connection, name, and for each end the device, connector, pin, signal and role (`power`, `return`, `ground`, `signal`, `shield`, `spare`), then the interface type the pair belongs to, the harness made from the connection and its note. The workbook has the same rows as a printable sheet, a **Summary** sheet with a line for each connection, and the stamp. Columns: `docs/OUTPUTS.md`, *Connection list*.
+  - The connections are drawn with their IDs in `system/block_diagram` and listed in `system/traceability.csv`, whose first heading then reads *Interface or connection* and which gets a last column *Kind*.
+  - **They need no harness.** `harness-design-studio export` no longer stops with "there are no harnesses to export" for a project that has connections, the Export window opens on it and plans the connection list in its tree (a project that was never saved first asks where to save it), the empty Outputs area offers **Export the connection list…**, and the banner *Outputs out of date* also shows for a project that only has connections. A project with neither a harness nor a connection still cannot be exported.
+  - The independent output check reads the new files cell by cell (`out_connections`), checks that they exist exactly when the project has connections, that the block diagram shows every connection and that the traceability matrix lists them; the manifest and the checksums list them.
+  - A project without connections writes none of this: every file keeps its bytes (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` prints *identical*). No design rule and no field was added.
+
 ## 1.8.1 (2026-10-27; not a statement of compliance)
 
 Fixes from the audit of 1.8.0 (`docs/AUDIT_1.8.0.md`, decision D-177): no new feature, no file-format change, the design rules stay 39, and the files and outputs of a project that does not meet one of these cases are unchanged (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` prints *identical*). The one written text that changes for projects on placeholder configuration is the line *Ready to build* of the build workbook.
