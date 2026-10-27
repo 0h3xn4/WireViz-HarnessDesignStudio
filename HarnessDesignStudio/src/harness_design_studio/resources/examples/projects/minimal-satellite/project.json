@@ -2,5 +2,5 @@
   "description": "A small spacecraft without redundancy: solar array, battery, power control unit, on-board computer, transceiver, one reaction wheel and a sun sensor. Copy it, then rename, add and remove units to describe your own spacecraft.",
   "name": "Minimal satellite",
   "schema_version": 1,
-  "tool_version": "1.8.0"
+  "tool_version": "1.8.1"
 }

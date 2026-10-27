@@ -15,7 +15,7 @@ This page describes the five example projects and the 18 template files that shi
 - [The 18 template files](#the-18-template-files)
 - [WireViz examples in this repository](#wireviz-examples-in-this-repository)
 
-Every command below was run with the tool (version `1.8.0`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
+Every command below was run with the tool (version `1.8.1`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
 
 ## At a glance
 
@@ -31,7 +31,7 @@ In the app, **File > New project from an example…** makes a project from any o
 
 ## Which build do you have?
 
-`harness-design-studio --version` prints `harness 1.8.0` for this version (1.0.0 and later list the same five examples). If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
+`harness-design-studio --version` prints `harness 1.8.1` for this version (1.0.0 and later list the same five examples). If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
 
 ```
 harness-design-studio new --list
@@ -55,7 +55,7 @@ first-steps      Three devices, a power link and an RS-422 link. Nothing is gene
 small-satellite  14 devices with nominal and redundant chains. Generate it to see a realistic system.
 ```
 
-`minimal-satellite`, `flatsat` and the template `design-worksheet.md` are new in 1.0.0 and not in the 0.1.0 packages ([`CHANGELOG.md`](../../CHANGELOG.md) of the tool). Asking for them from a 0.1.0 package gives `error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.` ([`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md#creating-a-project)). The counts of devices, interfaces, harnesses, wires and findings quoted on this page are the same on both versions for `blank`, `first-steps` and `small-satellite`; the number of exported files is not (see the note under the table at the end), and the *model hash* differs (the tool version is part of the design it covers), so a hash quoted here will not match a 0.1.0 package, or a version other than 1.8.0. The drawings also differ: the wiring-diagram drawing with wire colours is not in 0.1.0. To get 1.0.0, see [`INSTALL.md`](../INSTALL.md).
+`minimal-satellite`, `flatsat` and the template `design-worksheet.md` are new in 1.0.0 and not in the 0.1.0 packages ([`CHANGELOG.md`](../../CHANGELOG.md) of the tool). Asking for them from a 0.1.0 package gives `error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.` ([`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md#creating-a-project)). The counts of devices, interfaces, harnesses, wires and findings quoted on this page are the same on both versions for `blank`, `first-steps` and `small-satellite`; the number of exported files is not (see the note under the table at the end), and the *model hash* differs (the tool version is part of the design it covers), so a hash quoted here will not match a 0.1.0 package, or a version other than 1.8.1. The drawings also differ: the wiring-diagram drawing with wire colours is not in 0.1.0. To get 1.0.0, see [`INSTALL.md`](../INSTALL.md).
 
 The same five commands work on every example: `new`, `validate`, `generate`, `drc`, `export`, and `verify --outputs`. The project's model hash and the Open line of `drc` below are printed **after** `generate`; before that the hash differs (it covers the generated harnesses too). A project created with `--name` has a different hash for the same design, because the name is part of the design.
 
@@ -82,7 +82,7 @@ harness-design-studio drc my-blank
 0 interfaces and 0 wires checked: 0 error(s)
 # Design rule check: My project
 
-Model hash: `3dfbf244624f`. Rules run: 39.
+Model hash: `e1270ae05efb`. Rules run: 39.
 Open: 0 error(s), 0 warning(s), 0 note(s). Waived: 0.
 ```
 
@@ -114,7 +114,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 interfaces and 6 wires checked: 0 error(s)
 # Design rule check: First steps: reaction wheel link
 
-Model hash: `54e36f209aec`. Rules run: 39.
+Model hash: `de1c4eded002`. Rules run: 39.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 ```
 
@@ -123,7 +123,7 @@ harness-design-studio export my-first-steps
 ```
 
 ```
-34 files written to my-first-steps/outputs (model 54e36f209aec).
+34 files written to my-first-steps/outputs (model de1c4eded002).
 ```
 
 All ten warnings say that an example part is used and nobody has approved it. The notes say which checks did not run because their numbers are missing, and which choices nobody has confirmed yet. That is the tool being honest, not a failure. **Next:** the walk-through in [`GETTING_STARTED.md`](../GETTING_STARTED.md) (about 45 minutes) or the nine steps of [`LEARNING_PATH.md`](../LEARNING_PATH.md). The tutorial quotes a different hash because it creates the project with `--name "Wheel link"`.
@@ -151,11 +151,11 @@ harness-design-studio drc my-minimal-satellite
 11 interfaces and 24 wires checked: 0 error(s)
 # Design rule check: Minimal satellite
 
-Model hash: `906040f1ef2f`. Rules run: 39.
+Model hash: `4b555b943743`. Rules run: 39.
 Open: 0 error(s), 15 warning(s), 17 note(s). Waived: 0.
 ```
 
-`harness-design-studio validate` first reports `7 devices, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `115 files written to my-minimal-satellite/outputs (model 906040f1ef2f).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the devices and interfaces of your own on paper first.
+`harness-design-studio validate` first reports `7 devices, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `115 files written to my-minimal-satellite/outputs (model 4b555b943743).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the devices and interfaces of your own on paper first.
 
 ## small-satellite
 
@@ -180,11 +180,11 @@ harness-design-studio drc my-small-satellite
 24 interfaces and 54 wires checked: 0 error(s)
 # Design rule check: Small satellite (reference)
 
-Model hash: `7b038026982c`. Rules run: 39.
+Model hash: `6fbecfd96171`. Rules run: 39.
 Open: 0 error(s), 20 warning(s), 28 note(s). Waived: 0.
 ```
 
-`harness-design-studio validate` first reports `14 devices, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `232 files written to my-small-satellite/outputs (model 7b038026982c).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a device and use **Create redundant copy** on it, or read the Problems tab.
+`harness-design-studio validate` first reports `14 devices, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `232 files written to my-small-satellite/outputs (model 6fbecfd96171).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a device and use **Create redundant copy** on it, or read the Problems tab.
 
 ## flatsat
 
@@ -212,15 +212,15 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 44 interfaces and 103 wires checked: 0 error(s)
 # Design rule check: Flatsat (EXAMPLE numbers, not engineering data)
 
-Model hash: `7fa7d128655b`. Rules run: 39.
+Model hash: `1794d7c05db2`. Rules run: 39.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
-`harness-design-studio export my-flatsat` writes `88 files written to my-flatsat/outputs (model 7fa7d128655b).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 devices, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
+`harness-design-studio export my-flatsat` writes `88 files written to my-flatsat/outputs (model 1794d7c05db2).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 devices, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
 
 ## Does every example run?
 
-Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.8.0. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (the counts of harnesses, wires and findings as above; the hashes differ; 0.1.0 wrote the drawings and no build workbook).
+Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.8.1. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (the counts of harnesses, wires and findings as above; the hashes differ; 0.1.0 wrote the drawings and no build workbook).
 
 | Example | `validate` | `generate` | `drc` | `export` | `verify --outputs` |
 | --- | --- | --- | --- | --- | --- |
