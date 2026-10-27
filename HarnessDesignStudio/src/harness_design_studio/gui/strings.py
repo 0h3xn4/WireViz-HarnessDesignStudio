@@ -2943,7 +2943,9 @@ SHEET_TAB_TIP = (
 HV_EMPTY_HAS_LINKS = (
     "The project has connections and no harness yet. Select a connection and press Create harness."
 )
-LP_EMPTY_HAS_LINKS = "The lists are made from harnesses. Select a connection and press Create harness, and its lists appear here."
+LP_EMPTY_HAS_LINKS = "The lists are made from harnesses. Select a connection and press Create harness, and its lists appear here. The connection list (which pin of which device joins which) does not need a harness: Export writes it now."
+LP_EMPTY_EXPORT = "Export the connection list…"
+LP_EMPTY_EXPORT_TIP = "Write the connection list (CSV and Excel) and the other outputs of this project to its outputs folder; harness lists come after Create harness"
 TREE_EMPTY_HAS_LINKS = {
     "interfaces": "No interfaces. The connections are listed under Connections.",
     "harnesses": "No harnesses yet. Select a connection and press Create harness.",

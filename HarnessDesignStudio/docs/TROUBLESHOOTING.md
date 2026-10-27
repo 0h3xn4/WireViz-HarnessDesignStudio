@@ -577,14 +577,14 @@ harness-design-studio export demo
 error: there are no harnesses to export; run `harness-design-studio generate` first.
 ```
 
-Exit code 1. Outputs are written per harness, and none exists yet. Run `harness-design-studio generate demo`, then `harness-design-studio export demo`. (With the `blank` project it stays this way until you add devices and interfaces in the app, or make a harness by hand with **New harness…**.)
+Exit code 1. The project has no harness and no connection (a project whose connections were made with **Link connectors…** does export, without a harness: it gets the connection list). Outputs are written per harness, and none exists yet. Run `harness-design-studio generate demo`, then `harness-design-studio export demo`. (With the `blank` project it stays this way until you add devices and interfaces in the app, or make a harness by hand with **New harness…**.)
 
 ### In the app: Export opens a folder chooser, or does nothing
 
 Not run on a screen; checked in an offscreen window of the editor (new in 1.8.0). **Export…** (top bar, **File** menu, Ctrl+E, the **Harness** tab or the **Next step** button) behaves in four ways:
 
 - **A folder chooser opens first**, titled *Choose an empty folder to save the project in. The files are then exported next to it*. The project has harnesses but no folder yet: it is the built-in sample, or a project you never saved. Choose an empty folder; the project is saved there and the Export window opens on its new `outputs` folder. If you cancel, nothing is exported and nothing else happens: that is the "does nothing" case.
-- **The window says *There are no harnesses yet. Generate harnesses first.*** Press **Generate** first. A blank project has none until you add devices and links (or make a harness by hand).
+- **The window says *There are no harnesses yet. Generate harnesses first.*** The project has no harness and no connection. Press **Generate** first, or join two connectors with **Link connectors…**: a project with connections exports the connection list without a harness. A blank project has neither until you add devices and links (or make a harness by hand).
 - **The window says the project is read-only.** Nothing can be written into it. The **Export** button of the **Harness** tab says *Read-only: save a copy first*; save a copy to a new folder.
 - **The window says *Parts of this project could not be loaded, so nothing was exported*,** and lists up to five of the damaged files, then *and N more*. Open the files named, or press **Save salvaged copy…** ([this project has problems](#this-project-has-problems-the-recovery-view)).
 

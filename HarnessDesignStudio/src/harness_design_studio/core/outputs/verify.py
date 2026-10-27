@@ -19,7 +19,7 @@ from typing import Any
 from harness_design_studio import __version__
 from harness_design_studio.core import checks, configcheck, drc
 from harness_design_studio.core.io.layout import model_hash
-from harness_design_studio.core.model import Connector, Harness, Pin, Project, Wire
+from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
 from harness_design_studio.core.verify import VerifyReport, link_issues
 
 from .stamp import parse_csv
@@ -40,6 +40,7 @@ SYSTEM_FILES = (
     "block_diagram.svg",
     "block_diagram.pdf", "harness_overview.svg", "harness_overview.pdf",
 )  # fmt: skip
+CONNECTION_FILES = ("connections.csv", "connections.xlsx")  # only for a project with links (W2)
 
 
 def read_folder(folder: Path | str) -> dict[str, bytes]:
@@ -735,6 +736,12 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
     for name in SYSTEM_FILES:
         if f"system/{name}" not in files:
             r.error("out_missing", f"system/{name} was not generated.", name)
+    for name in CONNECTION_FILES:
+        there = f"system/{name}" in files
+        if project.links and not there:
+            r.error("out_missing", f"system/{name} was not generated.", name)
+        elif there and not project.links:
+            r.error("out_connections", f"system/{name} is written only for a project that has connections.", name)  # fmt: skip
     wires = [w for h in project.harnesses.values() for w in h.wires]
     _provenance(r, project, files)
     ml = _table(files, "system/mass_length.csv")
@@ -778,17 +785,32 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
     tr = _table(files, "system/traceability.csv")
     if tr:
         routed = {w.interface_id for w in wires if w.interface_id}
-        if {row[0] for row in tr[1:]} != set(project.interfaces):
+        kinds = [row[-1] if project.links and row else "interface" for row in tr[1:]]
+        shown = [row for row, kind in zip(tr[1:], kinds, strict=True) if kind == "interface"]
+        if {row[0] for row in shown} != set(project.interfaces):
             r.error(
                 "out_trace",
                 "The traceability matrix does not list exactly the interfaces.",
                 "traceability",
             )
-        for row in tr[1:]:
-            if (row[7] == "yes") != (row[0] in routed):
+        if project.links and {
+            row[0] for row, kind in zip(tr[1:], kinds, strict=True) if kind == "connection"
+        } != set(project.links):
+            r.error(
+                "out_trace",
+                "The traceability matrix does not list exactly the connections.",
+                "traceability",
+            )
+        for row in shown:
+            if len(row) > 7 and (row[7] == "yes") != (row[0] in routed):
                 r.error("out_trace", f"{row[0]} is marked wrongly as routed or not routed.", row[0])
-        _compare_rows(r, "out_trace", "The traceability matrix", tr, _TRACE_HEADER,
-                      _trace_rows(project), (0,), "traceability")  # fmt: skip
+        if project.links:
+            given = {row[0]: row[2] for row in tr[1:] if len(row) > 2 and row[-1] == "connection"}
+            _compare_rows(r, "out_trace", "The traceability matrix", tr, _TRACE_HEADER_LINKS,
+                          _trace_rows(project, given), (0, 8), "traceability")  # fmt: skip
+        else:
+            _compare_rows(r, "out_trace", "The traceability matrix", tr, _TRACE_HEADER,
+                          _trace_rows(project, {}), (0,), "traceability")  # fmt: skip
     bp = _table(files, "system/box_pinouts.csv")
     if bp:
         attached: dict[tuple[str, str], list[str]] = defaultdict(list)
@@ -802,6 +824,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
         _compare_rows(r, "out_box_pinouts", "The box connector pinouts", bp, _pinout_header(project),
                       _pin_rows(boxes_sorted, attached, _uses_function(project), _uses_termination(project), _uses_contact(project), _uses_direction(project)), (0, 4), "box_pinouts")  # fmt: skip
     _system_workbook(r, project, files)
+    _connections(r, project, files)
     ex = files.get("system/export.json")
     if ex is not None:
         try:
@@ -846,6 +869,10 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
                     f"The {name.replace('_', ' ')} is missing {what} {missing[0]}.",
                     name,
                 )
+            if name == "block_diagram":  # a connection between two devices is drawn with its ID
+                unseen = [i for i in _drawn_links(project) if i not in words]
+                if unseen:
+                    r.error("out_diagram", f"The block diagram does not show connection {unseen[0]}.", name)  # fmt: skip
     fd = _table(files, "system/drc_findings.csv")
     if fd:
         found = [*checks.find(project), *drc.run(project)]
@@ -1177,12 +1204,17 @@ def _mating_rows(project: Project) -> list[list[Cell]]:
     return rows
 
 
-def _trace_rows(project: Project) -> list[list[Cell]]:
+def _trace_rows(project: Project, given_types: dict[str, str]) -> list[list[Cell]]:
+    """The rows of the traceability matrix. A connection's Type cannot be worked out here without
+    repeating the builder's grouping, so what is written is checked to be possible (every ID is an
+    interface type that holds the signals of a pair of the connection, and the cell is empty only
+    when no type does) and then taken as it stands (`given_types`: connection -> written cell)."""
     carried: dict[str, list[tuple[str, str]]] = defaultdict(list)
     for h in project.harnesses.values():
         for w in h.wires:
             if w.interface_id:
                 carried[w.interface_id].append((h.id, w.id))
+    kind: list[Cell] = ["interface"] if project.links else []
     rows: list[list[Cell]] = []
     for i in project.interfaces.values():
         ends = [f"{e.unit_id}/{e.connector_id or '-'}" for e in i.endpoints]
@@ -1190,9 +1222,207 @@ def _trace_rows(project: Project) -> list[list[Cell]]:
         rows.append([
             i.id, i.name, i.type_id, ends[0] if ends else "", ends[1] if len(ends) > 1 else "",
             ";".join(sorted({hid for hid, _w in carried.get(i.id, [])})), ";".join(wires),
-            "yes" if wires else "no",
+            "yes" if wires else "no", *kind,
+        ])  # fmt: skip
+    for link in project.links.values():
+        possible = {t for pair in _pair_types(project, link).values() for t in pair}
+        cell = given_types.get(link.id, "")
+        ids = cell.split(";") if cell else []
+        sound = set(ids) <= possible and bool(ids) == bool(possible) and ids == sorted(set(ids))
+        wires = _link_wires(project, link)
+        h_id = link.harness_id if link.harness_id in project.harnesses else ""
+        rows.append([
+            link.id, link.name or f"{link.a_connector} - {link.b_connector}",
+            cell if sound else "?",
+            f"{_device(project, link.a_connector) or '-'}/{link.a_connector}",
+            f"{_device(project, link.b_connector) or '-'}/{link.b_connector}", h_id,
+            ";".join(wires), "yes" if wires else "no", "connection",
         ])  # fmt: skip
     return rows
+
+
+# ---- connections (W2): the connection list, its workbook, the links in other files -----------
+
+_CONN_HEADER = [
+    "Connection", "Name", "From device", "From connector", "From pin", "From signal", "From role",
+    "To device", "To connector", "To pin", "To signal", "To role", "Interface", "Harness", "Note",
+]  # fmt: skip
+_CONN_SUMMARY_HEADER = [
+    "Connection", "Name", "From device", "From connector", "To device", "To connector", "Pairs",
+    "Carries", "Harness", "Note",
+]  # fmt: skip
+_CONN_SHEETS = ["Connections", "Summary", "About"]
+
+
+def _device(project: Project, connector_id: str) -> str:
+    c = project.connectors.get(connector_id)
+    return (c.unit_id or "") if c is not None else ""
+
+
+def _pin_role(project: Project, c: Connector, pin: Pin) -> str:
+    """What a pin is for: the role a person gave it, else "return" for RTN, "ground" for GND, the
+    category of the interface type its signal belongs to ("power", "ground"), else "signal"; ""
+    for a pin without a signal. Worked out here from the pin and the interface types."""
+    if pin.role:
+        return pin.role
+    if not pin.signal:
+        return ""
+    name = pin.signal.strip().upper()
+    if name in ("RTN", "GND"):
+        return "return" if name == "RTN" else "ground"
+    iface = project.interfaces.get(pin.interface_id or "")
+    if iface is not None and iface.type_id in project.interface_types:
+        types = [project.interface_types[iface.type_id]]
+    else:
+        types = [
+            t
+            for t in project.interface_types.values()
+            if any(s.name == pin.signal for s in t.signals)  # fmt: skip
+        ]
+        if c.carries:
+            types = [t for t in types if t.id in c.carries] or types
+    meanings = {
+        (s.direction, t.category)
+        for t in types
+        for s in [next((x for x in t.signals if x.name == pin.signal), None)]
+        if s is not None
+    }
+    if len(meanings) == 1:
+        category = next(iter(meanings))[1]
+        if category in ("power", "ground"):
+            return category
+    return "signal"
+
+
+def _pair_types(project: Project, link: Link) -> dict[tuple[str, str], list[str]]:
+    """(pin, pin) -> the interface types whose signals include both signals of the pair."""
+    a, b = project.connectors.get(link.a_connector), project.connectors.get(link.b_connector)
+    out: dict[tuple[str, str], list[str]] = {}
+    for pair in link.pairs:
+        pa = next((p for p in a.pins if p.id == pair.a_pin), None) if a else None
+        pb = next((p for p in b.pins if p.id == pair.b_pin), None) if b else None
+        fits: list[str] = []
+        if pa is not None and pb is not None and pa.signal and pb.signal:
+            fits = sorted(
+                t.id
+                for t in project.interface_types.values()
+                if {pa.signal, pb.signal} <= {s.name for s in t.signals}
+            )
+        out[(pair.a_pin, pair.b_pin)] = fits
+    return out
+
+
+def _link_wires(project: Project, link: Link) -> list[str]:
+    """The wires of the link's harness that run between the two cable connectors plugged into
+    the link's device connectors."""
+    h = project.harnesses.get(link.harness_id or "")
+    if h is None:
+        return []
+    plug: dict[str, str | None] = {link.a_connector: None, link.b_connector: None}
+    for c in h.connectors:
+        if c.mates_with in plug:
+            plug[c.mates_with] = c.id
+    ends = set(plug.values())
+    if None in ends or len(ends) != 2:
+        return []
+    return sorted(w.id for w in h.wires if {w.from_connector, w.to_connector} == ends)
+
+
+def _drawn_links(project: Project) -> list[str]:
+    """The connections the block diagram must show: those between two different devices."""
+    out = []
+    for link in sorted(project.links):
+        a = _device(project, project.links[link].a_connector)
+        b = _device(project, project.links[link].b_connector)
+        if a and b and a != b and a in project.units and b in project.units:
+            out.append(link)
+    return out
+
+
+def _connection_rows(project: Project, given: dict[tuple[str, str, str], str]) -> list[list[Cell]]:
+    """The rows the connection list must have. The Interface cell is checked to be possible and
+    then taken as written (see `_trace_rows`)."""
+    rows: list[list[Cell]] = []
+    for link in project.links.values():
+        a, b = project.connectors.get(link.a_connector), project.connectors.get(link.b_connector)
+        fits = _pair_types(project, link)
+        head: list[Cell] = [link.id, link.name, _device(project, link.a_connector), link.a_connector]  # fmt: skip
+        mid: list[Cell] = [_device(project, link.b_connector), link.b_connector]
+        tail: list[Cell] = [link.harness_id or "", link.note]
+        if not link.pairs:
+            rows.append([*head, "", "", "", *mid, "", "", "", "", *tail])
+        for pair in link.pairs:
+            pa = next((p for p in a.pins if p.id == pair.a_pin), None) if a else None
+            pb = next((p for p in b.pins if p.id == pair.b_pin), None) if b else None
+            names = {project.interface_types[t].name for t in fits[(pair.a_pin, pair.b_pin)]}
+            cell = given.get((link.id, pair.a_pin, pair.b_pin), "")
+            parts = cell.split(" or ") if cell else []
+            sound = bool(parts) == bool(names) and set(parts) <= names
+            rows.append([
+                *head, pair.a_pin, (pa.signal or "") if pa else "",
+                _pin_role(project, a, pa) if a and pa else "",
+                *mid, pair.b_pin, (pb.signal or "") if pb else "",
+                _pin_role(project, b, pb) if b and pb else "", cell if sound else "?", *tail,
+            ])  # fmt: skip
+    return rows
+
+
+def _summary_rows(project: Project, carries: dict[str, str]) -> list[list[Cell]]:
+    """One line for each link. What it carries is taken as written once its counts add up: the
+    wires of all the groups must equal the pairs whose pins exist."""
+    rows: list[list[Cell]] = []
+    for link in project.links.values():
+        a, b = project.connectors.get(link.a_connector), project.connectors.get(link.b_connector)
+        pins_ok = sum(
+            1
+            for p in link.pairs
+            if a
+            and b
+            and any(x.id == p.a_pin for x in a.pins)
+            and any(x.id == p.b_pin for x in b.pins)  # fmt: skip
+        )
+        cell = carries.get(link.id, "")
+        counts = [
+            int(m.group(1))
+            for part in cell.split("; ")
+            if (m := re.search(r", (\d+) wires?$", part))  # fmt: skip
+        ]
+        rows.append([
+            link.id, link.name, _device(project, link.a_connector), link.a_connector,
+            _device(project, link.b_connector), link.b_connector, str(len(link.pairs)),
+            cell if sum(counts) == pins_ok else "?", link.harness_id or "", link.note,
+        ])  # fmt: skip
+    return rows
+
+
+def _connections(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
+    """The connection list and its workbook against the links of the project: every pair of pins
+    once with its devices, connectors, signals and roles; one summary line for each link; the
+    workbook sheets equal to the CSV rows."""
+    csv_rows = _table(files, "system/connections.csv")
+    if csv_rows:
+        if [row[0] for row in csv_rows[1:]] != sorted(row[0] for row in csv_rows[1:]):
+            r.error("out_connections", "The connection list is not in the order of the connection IDs.", "connections")  # fmt: skip
+        given: dict[tuple[str, str, str], str] = {}
+        for row in csv_rows[1:]:
+            if len(row) == len(_CONN_HEADER):
+                given[(row[0], row[4], row[9])] = row[12]
+        want = _connection_rows(project, given)
+        _compare_rows(r, "out_connections", "The connection list", csv_rows, _CONN_HEADER,
+                      want, (0, 4, 9), "connections")  # fmt: skip
+    x = files.get("system/connections.xlsx")
+    if x is None:
+        return
+    sheets = _xlsx_values(x)
+    if list(sheets) != _CONN_SHEETS:
+        r.error("out_connections", f"The connection workbook does not have the sheets {', '.join(_CONN_SHEETS)}.", "connections.xlsx")  # fmt: skip
+        return
+    if csv_rows and sheets["Connections"] != csv_rows:
+        r.error("out_connections", "The 'Connections' sheet of the workbook differs from connections.csv.", "connections.xlsx")  # fmt: skip
+    summary = sheets["Summary"]
+    carries = {row[0]: row[7] for row in summary[1:] if len(row) == len(_CONN_SUMMARY_HEADER)}
+    _compare_rows(r, "out_connections", "The 'Summary' sheet of the connection workbook", summary,
+                  _CONN_SUMMARY_HEADER, _summary_rows(project, carries), (0,), "connections.xlsx")  # fmt: skip
 
 
 def _harness_tables(r: VerifyReport, project: Project, h: Harness, files: dict[str, bytes]) -> None:
@@ -1578,6 +1808,7 @@ _MATING_HEADER = [
     "Harness",
 ]  # fmt: skip
 _TRACE_HEADER = ["Interface", "Name", "Type", "From", "To", "Harnesses", "Wires", "Routed"]
+_TRACE_HEADER_LINKS = ["Interface or connection", *_TRACE_HEADER[1:], "Kind"]
 _FINDING_HEADER = [
     "Finding", "Rule", "Severity", "Object", "Statement", "Waived", "Justification", "Requirement",
 ]  # fmt: skip

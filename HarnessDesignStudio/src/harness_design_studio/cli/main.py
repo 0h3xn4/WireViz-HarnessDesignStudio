@@ -135,6 +135,11 @@ def _generate(path: Path) -> int:
         print("Not saved: fix the errors above first.", file=sys.stderr)
         return 1
     save_project(project, path)
+    if project.links and not project.interfaces:  # connections are exported as they are
+        print(
+            f"{len(project.links)} connection(s) and no interface: Generate wires interfaces "
+            "only. `export` writes the connection list without a harness."
+        )
     return 0
 
 
@@ -148,7 +153,7 @@ def _export(path: Path, *, drawings: bool = False) -> int:
     from harness_design_studio.core.outputs.verify import verify_outputs
 
     project = load_project(path).project
-    if not project.harnesses:
+    if not project.harnesses and not project.links:  # connections alone are enough (W2)
         print(
             "error: there are no harnesses to export; run `harness-design-studio generate` first.",
             file=sys.stderr,
