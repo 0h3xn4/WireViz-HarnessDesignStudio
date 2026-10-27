@@ -125,13 +125,13 @@ class StateIndex:
     def keys(self) -> Iterable[tuple[str, str]]:
         return self._states.keys()
 
-    def changed_from(self, old: "StateIndex") -> set[tuple[str, str]]:
+    def changed_from(self, old: StateIndex) -> set[tuple[str, str]]:
         """The objects whose entry differs from `old`'s: the only ones that need repainting."""
         out = {k for k, v in self._states.items() if old._states.get(k, EMPTY) != v}
         out |= {k for k in old._states if k not in self._states}
         return out
 
-    def quiet(self) -> "StateIndex":
+    def quiet(self) -> StateIndex:
         """The same index without the notices that nobody asked for: problems, warnings, values
         still to enter and "not checked" are zero; the locks and the auto marks stay."""
         quiet = {

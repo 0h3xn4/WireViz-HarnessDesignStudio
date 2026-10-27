@@ -671,7 +671,7 @@ class ThemedIconEngine(QIconEngine):
         side = min(size.width(), size.height())
         return QSize(side, side)
 
-    def clone(self) -> "ThemedIconEngine":
+    def clone(self) -> ThemedIconEngine:
         return ThemedIconEngine(self.name, self.theme, self.role, self.checked_role)
 
 

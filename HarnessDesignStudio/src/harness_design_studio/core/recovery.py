@@ -70,7 +70,7 @@ def journal_differs_from_disk(root: Path | str) -> bool:
         base = Path(root)
         disk = serialize(load_from_files(_read_files(base)).project)
         return {k: v.encode() for k, v in payload["files"].items()} != disk
-    except (OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError, SaveError):
+    except OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError, SaveError:
         return False
 
 
@@ -87,7 +87,7 @@ def read_journal(root: Path | str) -> LoadResult | None:
     try:
         payload = json.loads(path.read_text(encoding="utf-8"))
         files = {rel: json.loads(text) for rel, text in payload["files"].items()}
-    except (OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError):
+    except OSError, ValueError, KeyError, TypeError, AttributeError, RecursionError:
         return None
     result = load_from_files(files)
     try:
@@ -98,6 +98,6 @@ def read_journal(root: Path | str) -> LoadResult | None:
         result.project.quarantine_files.update(
             {n: base64.b64decode(raw) for n, raw in payload.get("quarantine_files", {}).items()}
         )
-    except (KeyError, TypeError, ValueError, AttributeError):
+    except KeyError, TypeError, ValueError, AttributeError:
         return None
     return result

@@ -36,7 +36,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: "3.14"
       - run: python -m pip install -e ".[gui,dev]"
       # a test that hangs becomes a failure with the stack of every thread, not a silent wait
       - run: python -m pip install pytest-timeout

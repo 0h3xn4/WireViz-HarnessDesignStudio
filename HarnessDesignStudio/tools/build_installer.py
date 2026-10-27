@@ -79,7 +79,7 @@ def undeclared_files(internal: Path) -> list[str]:
 
 
 def _is_python_library(top: str) -> bool:
-    """The interpreter itself: python3.13 on Linux."""
+    """The interpreter itself: python3.14 on Linux."""
     return top == "python3"
 
 

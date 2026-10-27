@@ -10,11 +10,11 @@ def _project() -> dict[str, object]:
     return tomllib.loads(PYPROJECT.read_text(encoding="utf-8"))["project"]  # type: ignore[no-any-return]
 
 
-def test_the_classifiers_name_python_3_12_and_3_13() -> None:
+def test_the_classifiers_name_python_3_14_only() -> None:
     classifiers = _project()["classifiers"]
-    assert "Programming Language :: Python :: 3.12" in classifiers  # type: ignore[operator]
-    assert "Programming Language :: Python :: 3.13" in classifiers  # type: ignore[operator]
-    assert _project()["requires-python"] == ">=3.12"
+    versions = [c for c in classifiers if c.startswith("Programming Language :: Python :: 3.")]  # type: ignore[attr-defined, union-attr]
+    assert versions == ["Programming Language :: Python :: 3.14"]
+    assert _project()["requires-python"] == ">=3.14"
 
 
 def test_the_dev_extra_pins_pytest_timeout_like_the_other_tools() -> None:

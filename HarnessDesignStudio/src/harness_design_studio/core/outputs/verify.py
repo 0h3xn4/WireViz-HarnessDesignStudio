@@ -119,7 +119,7 @@ def _manifest(r: VerifyReport, files: dict[str, bytes], current: str) -> None:
     try:
         doc = json.loads(raw)
         listed = {f["path"]: (f["sha256"], f["bytes"]) for f in doc["files"]}
-    except (ValueError, KeyError, TypeError):
+    except ValueError, KeyError, TypeError:
         r.error("out_manifest", "The manifest cannot be read.", MANIFEST)
         return
     if doc.get("model_hash") != current:
@@ -827,7 +827,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
                     )
                 )
             )
-        except (ValueError, KeyError, TypeError):
+        except ValueError, KeyError, TypeError:
             same = False
         if not same:
             r.error("out_json", "The JSON export does not match the design.", "export.json")

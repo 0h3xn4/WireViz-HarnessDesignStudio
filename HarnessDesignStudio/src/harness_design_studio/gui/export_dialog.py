@@ -90,7 +90,7 @@ _LAST = {
 MAX_DETAILS = 6  # problems of a failed check listed in the notice
 
 
-def default_worker(project: Project) -> "OutputsWorker":
+def default_worker(project: Project) -> OutputsWorker:
     """The window's `OutputsWorker` (imported late: the main window imports this module)."""
     from harness_design_studio.gui.main_window import OutputsWorker
 
@@ -179,7 +179,7 @@ def sheet_of(project: Project, stamp: Stamp, ref: export_docs.SheetRef) -> Sheet
         if ref[1] == "block_diagram":
             return system.block_diagram(project, stamp)
         return system.harness_overview(project, stamp)
-    except (KeyError, IndexError, ValueError):
+    except KeyError, IndexError, ValueError:
         return None
 
 
@@ -476,7 +476,7 @@ class ExportDialog(QDialog):
         parent: QWidget | None = None,
         *,
         settings: QSettings | None = None,
-        worker_factory: "Callable[[Project], OutputsWorker] | None" = None,
+        worker_factory: Callable[[Project], OutputsWorker] | None = None,
         ask_folder: AskFolder | None = None,
         opener: Opener | None = None,
     ) -> None:

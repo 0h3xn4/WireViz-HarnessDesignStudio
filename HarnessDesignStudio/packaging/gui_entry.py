@@ -48,7 +48,7 @@ def _tell(message: str) -> None:
         if found:
             try:
                 subprocess.run([found, *args], env=env, timeout=600, check=False)  # noqa: S603
-            except (OSError, subprocess.SubprocessError):
+            except OSError, subprocess.SubprocessError:
                 continue
             return
 

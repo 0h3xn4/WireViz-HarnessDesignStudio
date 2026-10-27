@@ -144,7 +144,7 @@ class CardLayout:
 
 
 class UnitItem(QGraphicsItem):
-    def __init__(self, scene: "DiagramScene", unit_id: str) -> None:
+    def __init__(self, scene: DiagramScene, unit_id: str) -> None:
         super().__init__()
         self.dscene = scene
         self.unit_id = unit_id
@@ -1035,7 +1035,7 @@ COMPACT_H = METRICS.chip_compact_h
 
 
 class LinkItem(QGraphicsPathItem):
-    def __init__(self, scene: "DiagramScene", interface_id: str) -> None:
+    def __init__(self, scene: DiagramScene, interface_id: str) -> None:
         super().__init__()
         self.dscene = scene
         self.interface_id = interface_id
@@ -1562,7 +1562,7 @@ class LinkItem(QGraphicsPathItem):
 
 
 class ZoneItem(QGraphicsItem):
-    def __init__(self, scene: "DiagramScene", index: int) -> None:
+    def __init__(self, scene: DiagramScene, index: int) -> None:
         super().__init__()
         self.dscene = scene
         self.index = index
@@ -1799,14 +1799,14 @@ class DiagramScene(QGraphicsScene):
         return self._highlight.get((kind, id_), "")
 
     # ---- dragging units: a group moves together; links of moved units are straight previews ----
-    def begin_group_drag(self, item: "UnitItem") -> None:
+    def begin_group_drag(self, item: UnitItem) -> None:
         ids = self.ctl.selected_ids("unit")
         if item.unit_id not in ids:
             ids = [item.unit_id]
         self._group = {u: QPointF(self.unit_items[u].pos()) for u in ids if u in self.unit_items}
         self._drag_units = set(self._group)
 
-    def drag_group_with(self, item: "UnitItem") -> None:
+    def drag_group_with(self, item: UnitItem) -> None:
         start = self._group.get(item.unit_id)
         if start is None or len(self._group) < 2:
             return
@@ -1816,7 +1816,7 @@ class DiagramScene(QGraphicsScene):
             if other is not None and other is not item and other.pos() != origin + delta:
                 other.setPos(origin + delta)
 
-    def end_group_drag(self, item: "UnitItem") -> dict[str, tuple[float, float]]:
+    def end_group_drag(self, item: UnitItem) -> dict[str, tuple[float, float]]:
         """The drag is over: full routing again, and where each unit that moved now is."""
         moved = {
             uid: (it.pos().x(), it.pos().y())
@@ -1875,7 +1875,7 @@ class DiagramScene(QGraphicsScene):
     def connector_link(self, connector_id: str) -> str | None:
         return self._conn_link.get(connector_id)
 
-    def partner_item(self, unit_id: str, interface_id: str) -> "UnitItem | None":
+    def partner_item(self, unit_id: str, interface_id: str) -> UnitItem | None:
         other = routing.partner(self.ctl.project, interface_id, unit_id)
         return self.unit_items.get(other) if other is not None else None
 
@@ -2018,7 +2018,7 @@ class DiagramScene(QGraphicsScene):
         focus = self.focus_sets()
         return focus is not None and interface_id in focus[0]
 
-    def set_filter(self, kind: str | None, value: "str | Iterable[str] | None" = None) -> None:
+    def set_filter(self, kind: str | None, value: str | Iterable[str] | None = None) -> None:
         """Show only what matches and fade the rest: `kind` is "class" (a style category such as
         "power"), "connector" (a box connector ID) or "bundle" (a harness ID); `value` is one of
         them or several (anything that matches one is kept); None shows everything.
@@ -2453,7 +2453,7 @@ class DiagramScene(QGraphicsScene):
         """Where the label of a link was placed, or None (not placed yet, or being dragged)."""
         return self._chip_rects.get(interface_id)
 
-    def chip_at(self, pos: QPointF) -> "LinkItem | None":
+    def chip_at(self, pos: QPointF) -> LinkItem | None:
         """The link whose label lies under a scene point (a label is part of its link)."""
         for cell in self._cells(QRectF(pos, pos)):
             for iid, rect in self._chips.get(cell, ()):
@@ -2479,7 +2479,7 @@ class MiniMap(QWidget):
     It draws plain boxes and lines straight from the item positions instead of showing the scene a
     second time: painting 2,200 real items in a tiny view cost about 300 ms at stress size."""
 
-    def __init__(self, main: "DiagramView") -> None:
+    def __init__(self, main: DiagramView) -> None:
         super().__init__(main)
         self.main = main
         self.setFixedSize(*METRICS.minimap_size)
@@ -2492,7 +2492,7 @@ class MiniMap(QWidget):
         main.scene().changed.connect(self._scene_changed)
         main.scene().sceneRectChanged.connect(lambda _r: self.update())
 
-    def viewport(self) -> "MiniMap":
+    def viewport(self) -> MiniMap:
         return self  # (the earlier version was a graphics view; callers update its viewport)
 
     def refit(self) -> None:
@@ -2575,7 +2575,7 @@ class ZoomIndicator(QToolButton):
     """The zoom level of a view as a percentage; a click returns to 100 %. Place it anywhere (the
     window puts it between the zoom buttons)."""
 
-    def __init__(self, view: "DiagramView") -> None:
+    def __init__(self, view: DiagramView) -> None:
         super().__init__()
         self.view = view
         self.setObjectName("zoom-level")
@@ -2669,7 +2669,7 @@ class SearchBar(QFrame):
     """Ctrl+F in the diagram: every unit and link that matches is marked, Enter goes to the next
     one (the view centres on it), Shift+Enter to the one before, Escape closes the bar."""
 
-    def __init__(self, view: "DiagramView") -> None:
+    def __init__(self, view: DiagramView) -> None:
         super().__init__(view)
         self.view = view
         self.setObjectName("diagram-search")

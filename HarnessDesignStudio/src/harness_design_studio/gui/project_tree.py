@@ -184,7 +184,7 @@ class _Node:
         "state_text",
     )
 
-    def __init__(self, kind: str, id_: str, parent: "_Node | None") -> None:
+    def __init__(self, kind: str, id_: str, parent: _Node | None) -> None:
         self.kind, self.id, self.parent = kind, id_, parent
         self.row = 0
         self.children: list[_Node] = []

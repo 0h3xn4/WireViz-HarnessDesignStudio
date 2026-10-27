@@ -137,7 +137,7 @@ def _quarantine_message(kind: str, reason: str) -> str:
     return f"A {kind} could not be loaded and was set aside: {reason}"
 
 
-def _add_lines(root: Path, result: "LoadResult") -> None:
+def _add_lines(root: Path, result: LoadResult) -> None:
     """Tell where in its file each set-aside object starts (line numbers help hand repair)."""
     base = long_path(root)
     by_file: dict[str, dict[str, int | None]] = {}  # each file is read and scanned once
@@ -214,7 +214,7 @@ def _zone_name_ok(text: str) -> bool:
     return True
 
 
-def _layout(b: "_Builder", rel: str, data: Any) -> None:
+def _layout(b: _Builder, rel: str, data: Any) -> None:
     ok = isinstance(data, dict) and set(data) == {"zones", "placements"}
     if not ok or not isinstance(data["zones"], list) or not isinstance(data["placements"], list):
         b.quarantine(rel, "file", "expected an object with 'zones' and 'placements' lists", data)

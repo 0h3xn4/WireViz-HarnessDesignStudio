@@ -86,7 +86,7 @@ def sides(lane_a: int, lane_b: int, lanes: int, default_a: str, default_b: str) 
 class ConnectionItem(QGraphicsPathItem):
     """The drawn line and label of one `Link`."""
 
-    def __init__(self, scene: "DiagramScene", link_id: str, unit_w: float) -> None:
+    def __init__(self, scene: DiagramScene, link_id: str, unit_w: float) -> None:
         super().__init__()
         self.dscene = scene
         self.link_id = link_id
@@ -101,7 +101,7 @@ class ConnectionItem(QGraphicsPathItem):
         self.setFlag(QGraphicsItem.GraphicsItemFlag.ItemIsFocusable)
 
     # ---- geometry ---------------------------------------------------------------------------
-    def _ends(self) -> tuple["UnitItem", "UnitItem", str, str] | None:
+    def _ends(self) -> tuple[UnitItem, UnitItem, str, str] | None:
         sc = self.dscene
         link = sc.ctl.project.links.get(self.link_id)
         if link is None:
@@ -116,7 +116,7 @@ class ConnectionItem(QGraphicsPathItem):
             return None
         return ua, ub, ca.id, cb.id
 
-    def _anchor(self, unit: "UnitItem", connector_id: str, side: str) -> tuple[float, float]:
+    def _anchor(self, unit: UnitItem, connector_id: str, side: str) -> tuple[float, float]:
         x = unit.pos().x() + (self.unit_w if side == "right" else 0.0)
         ids = [c.id for c in unit.connectors()]
         if self.dscene.ctl.mode == "expert" and connector_id in ids:

@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Changed
+
+- **Python 3.14 or newer only.** The tool and the WireViz program at the repository root no longer support older Python versions (`requires-python = ">=3.14"`, `python_requires=">=3.14"`). The packages (`.deb`, `.tar.gz`, Windows setup and `.zip`) bring their own Python, so nothing changes for people who install those; installing from source needs Python 3.14 (Ubuntu 24.04 does not have it in its archive). CI, the release workflow and the build container use 3.14 only; `ruff` and `mypy` target 3.14, the code is modernised with `ruff` (`UP` rules; quoted annotations, `Optional`/`Union`/`List`, the `# -*- coding` lines), and the development tool `pip-audit` moves from 2.9.0 to 2.10.1 because 2.9.0 needs a version of `lxml` that has no 3.14 wheel. No file format, rule, output or behaviour changes; `python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` still prints *identical*.
+
 ## 1.8.1 (2026-10-27; not a statement of compliance)
 
 Fixes from the audit of 1.8.0 (`docs/AUDIT_1.8.0.md`, decision D-177): no new feature, no file-format change, the design rules stay 39, and the files and outputs of a project that does not meet one of these cases are unchanged (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` prints *identical*). The one written text that changes for projects on placeholder configuration is the line *Ready to build* of the build workbook.

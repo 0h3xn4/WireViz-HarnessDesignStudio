@@ -77,7 +77,7 @@ class LockItem:
     text: str
     state: str | None = None
     note: str = ""  # the tooltip
-    children: tuple["LockItem", ...] = ()
+    children: tuple[LockItem, ...] = ()
 
 
 @dataclass(frozen=True)

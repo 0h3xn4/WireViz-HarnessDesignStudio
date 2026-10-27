@@ -5,7 +5,7 @@ set -eu
 cd /src
 git config --global --add safe.directory /src   # the mounted source belongs to another user
 export HARNESS_REQUIRE_BROWSER=1                  # no Chromium: fail, do not skip
-python3 -m venv /tmp/venv
+python3.14 -m venv /tmp/venv
 . /tmp/venv/bin/activate
 pip install -e ".[gui,dev]"
 export QT_QPA_PLATFORM=offscreen

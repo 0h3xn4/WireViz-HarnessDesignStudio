@@ -76,7 +76,7 @@ def find_git_dir(start: Path) -> tuple[Path, Path] | None:
             if cf.is_file():
                 common = (git_dir / cf.read_text(encoding="utf-8").strip()[:4096]).resolve()
             return git_dir, common
-        except (OSError, UnicodeError):
+        except OSError, UnicodeError:
             return None
     return None
 
@@ -93,7 +93,7 @@ def last_commit(start: Path) -> CommitInfo | None:
         branch, sha = _head(git_dir, common)
         raw = _read_object(common, sha)
         return _parse_commit(sha, raw, branch)
-    except (_Unreadable, OSError, zlib.error, ValueError, IndexError, UnicodeError):
+    except _Unreadable, OSError, zlib.error, ValueError, IndexError, UnicodeError:
         return None
 
 
@@ -184,7 +184,7 @@ def _pack_offset(idx: Path, raw: bytes) -> int | None:
     return None
 
 
-def _inflate(f: "object", limit: int = MAX_OBJECT) -> bytes:
+def _inflate(f: object, limit: int = MAX_OBJECT) -> bytes:
     d = zlib.decompressobj()
     out = bytearray()
     while not d.eof:

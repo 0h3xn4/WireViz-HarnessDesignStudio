@@ -174,7 +174,7 @@ def _validate_ampacity(n: Need, v: object) -> list[Issue]:
     for k, a in v.items():
         try:
             gauge = int(k)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return err(f"has '{k}' as a gauge; gauges are whole numbers such as 20")
         amps = _num(a)
         if not 0 <= gauge <= 40 or amps is None or amps <= 0:

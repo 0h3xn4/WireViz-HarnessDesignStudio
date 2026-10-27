@@ -569,7 +569,7 @@ class ChangeDialog(QDialog):
         unapproved_parts: list[str] | None = None,
         locks: ReleaseLocks | None = None,
         explain: str | None = None,
-        unlocks: "lock_tree.RevisionUnlocks | None" = None,
+        unlocks: lock_tree.RevisionUnlocks | None = None,
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
@@ -687,7 +687,7 @@ class ChangeDialog(QDialog):
         blockers: list[str],
         placeholders: list[str] | None = None,
         unapproved_parts: list[str] | None = None,
-    ) -> "ChangeDialog":
+    ) -> ChangeDialog:
         """The release dialog: asks the questions and lists everything the release will lock."""
         return cls(
             parent,
@@ -704,7 +704,7 @@ class ChangeDialog(QDialog):
     @classmethod
     def for_revise(
         cls, parent: QWidget | None, project: Project, harness_id: str, title: str, *, by: str
-    ) -> "ChangeDialog":
+    ) -> ChangeDialog:
         """The new-revision dialog: explains what happens and what becomes editable."""
         unlocks = lock_tree.revision_unlocks(project, harness_id)
         h = project.harnesses.get(harness_id)
@@ -738,7 +738,7 @@ class ChangeDialog(QDialog):
         self.locks_summary.setText(text)
         self._fill_tree(groups, theme, strings.RELEASE_LOCKS_TREE)
 
-    def _show_unlocks(self, unlocks: "lock_tree.RevisionUnlocks", theme: ThemeManager) -> None:
+    def _show_unlocks(self, unlocks: lock_tree.RevisionUnlocks, theme: ThemeManager) -> None:
         groups = list(unlocks.editable)
         head = (
             strings.REVISE_EDITABLE_HEAD.format(
@@ -806,7 +806,7 @@ class DiffDialog(QDialog):
     markRequested = Signal(object)  # dict[str, str]
 
     def __init__(
-        self, parent: QWidget | None, title: str, diff: "Diff", baselines: list[str], current: str
+        self, parent: QWidget | None, title: str, diff: Diff, baselines: list[str], current: str
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
@@ -848,7 +848,7 @@ class DiffDialog(QDialog):
         row.addWidget(close)
         lay.addLayout(row)
 
-    def set_diff(self, diff: "Diff") -> None:
+    def set_diff(self, diff: Diff) -> None:
         self.diff = diff
         self.summary.setText(diff.summary() if not diff.empty else strings.NO_DIFF)
         self.list.clear()

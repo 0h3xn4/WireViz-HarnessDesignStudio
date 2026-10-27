@@ -1,11 +1,8 @@
-# -*- coding: utf-8 -*-
-
 import re
-from collections import Counter
 from dataclasses import dataclass
 from itertools import zip_longest
 from pathlib import Path
-from typing import Any, List, Union
+from typing import Any
 
 from graphviz import Graph
 from wireviz import APP_NAME, APP_URL, __version__, wv_colors
@@ -25,7 +22,6 @@ from wireviz.wv_bom import (
     HEADER_PN,
     HEADER_SPN,
     bom_list,
-    component_table_entry,
     generate_bom,
     get_additional_component_table,
     pn_info_string,
@@ -44,8 +40,6 @@ from wireviz.wv_gv_html import (
 from wireviz.wv_helper import (
     awg_equiv,
     file_write_text,
-    flatten2d,
-    is_arrow,
     mm2_equiv,
     tuplelist2tsv,
 )

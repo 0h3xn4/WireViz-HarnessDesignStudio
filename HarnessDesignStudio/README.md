@@ -113,7 +113,7 @@ macOS support was removed on 2026-10-21 (decision D-168): the tool runs on Ubunt
 Clean-room project: never copy code from `../src/wireviz` (GPL-3.0). Start with [`../CONTRIBUTING.md`](../CONTRIBUTING.md) and [`docs/developer/`](docs/developer/README.md), then [`CLAUDE.md`](CLAUDE.md) (commands, layout, conventions), [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md), [`docs/DECISIONS.md`](docs/DECISIONS.md) and [`docs/SECURITY.md`](docs/SECURITY.md). Release procedure: [`docs/RELEASE.md`](docs/RELEASE.md).
 
 ```
-python3 -m venv .venv && . .venv/bin/activate && pip install -e ".[gui,dev]"
+python3.14 -m venv .venv && . .venv/bin/activate && pip install -e ".[gui,dev]"
 pytest --cov      # tests; the 90% core coverage gate applies with --cov
 pytest -n auto -m "not perf" && pytest -m perf   # the same in parallel (pytest-xdist), timing tests last and alone
 ruff format . && ruff check . && mypy

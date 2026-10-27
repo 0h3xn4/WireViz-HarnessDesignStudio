@@ -87,7 +87,7 @@ def _table(model: DictTableModel, theme: ThemeManager, name: str, key: str, obje
 class FilePage(QWizardPage):
     """What to import and from which file."""
 
-    def __init__(self, wizard: "ImportWizard") -> None:
+    def __init__(self, wizard: ImportWizard) -> None:
         super().__init__(wizard)
         self.wiz = wizard
         self.setTitle(strings.IMP_STEP_FILE)
@@ -162,7 +162,7 @@ class GridForm:
         for c in range(columns):
             self.grid.setColumnStretch(c * 2 + 1, 1)
 
-    def addRow(self, first: "str | QWidget", field: QWidget | None = None) -> None:  # noqa: N802
+    def addRow(self, first: str | QWidget, field: QWidget | None = None) -> None:  # noqa: N802
         if field is None:
             widget = first if isinstance(first, QWidget) else QLabel(first)
             self._n += (-self._n) % self.columns  # finish the row
@@ -184,7 +184,7 @@ class GridForm:
 class MapPage(QWizardPage):
     """Match columns, choose units and words, and see the first rows as they will be read."""
 
-    def __init__(self, wizard: "ImportWizard") -> None:
+    def __init__(self, wizard: ImportWizard) -> None:
         super().__init__(wizard)
         self.wiz = wizard
         self.setTitle(strings.IMP_STEP_MAP)
@@ -257,7 +257,7 @@ class MapPage(QWizardPage):
         self._build(kind, source, options)
         self._set_columns(kind)
 
-    def _form(self) -> tuple[QWidget, "GridForm"]:
+    def _form(self) -> tuple[QWidget, GridForm]:
         w = QWidget()
         form = GridForm(w, columns=3)
         self.stack.addWidget(w)
@@ -521,7 +521,7 @@ class MapPage(QWizardPage):
 class CheckPage(QWizardPage):
     """Every row with its exact reason, and what stays pending."""
 
-    def __init__(self, wizard: "ImportWizard") -> None:
+    def __init__(self, wizard: ImportWizard) -> None:
         super().__init__(wizard)
         self.wiz = wizard
         self.setTitle(strings.IMP_STEP_CHECK)
@@ -630,7 +630,7 @@ class CheckPage(QWizardPage):
 class ApplyPage(QWizardPage):
     """The last look: what will be imported, as one undo step."""
 
-    def __init__(self, wizard: "ImportWizard") -> None:
+    def __init__(self, wizard: ImportWizard) -> None:
         super().__init__(wizard)
         self.wiz = wizard
         self.setTitle(strings.IMP_STEP_APPLY)

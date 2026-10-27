@@ -18,7 +18,7 @@ This page shows how to set up a place to work on Harness Design Studio, run the 
 ## What you need
 
 - Ubuntu 24.04 or newer, 64-bit, for development and the release check. The tool itself also runs on Windows 10/11 from 1.2.0 (decision D-149 in [`DECISIONS.md`](../DECISIONS.md); macOS was removed after 1.5.0, D-168); the package and the tests for it run on GitHub's Windows runner (`harness-packages.yml`, `harness-platforms.yml`).
-- Python 3.12 or newer (`python3 --version`), with `python3-venv`, and Git.
+- Python 3.14 or newer (`python3.14 --version`; Ubuntu 24.04 does not have it in its archive, `uv python install 3.14` is one way to get it), and Git.
 - For Qt, the system libraries `libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0`. CI installs a few more (`libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0`) and `poppler-utils`. On a machine without a screen the tests use Qt's `offscreen` mode, so no display is needed. The apt line was copied from `CLAUDE.md` and the CI file. It was not run for this page, because the libraries were already present on the machine used.
 - Work in the `HarnessDesignStudio/` folder. The WireViz code at the repository root is a separate program ([`CONTRIBUTING.md`](../../../CONTRIBUTING.md)).
 
@@ -26,7 +26,7 @@ This page shows how to set up a place to work on Harness Design Studio, run the 
 
 ```
 cd HarnessDesignStudio
-python3 -m venv .venv && . .venv/bin/activate
+python3.14 -m venv .venv && . .venv/bin/activate
 pip install -e ".[gui,dev]"
 ```
 
@@ -183,7 +183,7 @@ A golden file is a stored, reviewed result that a test compares with a fresh one
 
 ## 6. What CI runs
 
-`.github/workflows/harness-ci.yml` runs on Ubuntu 24.04 with Python 3.12. After the Qt libraries and `pip install -e ".[gui,dev]"` and Chromium, it runs `ruff check .`, `ruff format --check .`, `mypy`, `pytest -n auto -m "not perf" --cov` and then `pytest -m perf --cov --cov-append` (the timing tests alone; the 90 % gate is applied by the second step), `python -m tools.check_reproducible`, `python -m tools.build_installer`, `python -m tools.build_deb`, the self-test of the frozen program (`dist/harness-design-studio/harness-design-studio-gui --selftest`) and `python -m tools.gen_sbom`. It uploads the packages and the SBOM as an artifact. When only Markdown under `HarnessDesignStudio/` changed, only the `docs` job runs (end of section 4). A second job (`package-on-24-04`) installs the packages on a fresh machine without the source tree. From 1.2.0 two more workflows exist: `harness-platforms.yml` runs the whole suite on `windows-latest` (offscreen, `HARNESS_TIME_FACTOR=8`, a time limit per test so that a hang names the test), and `harness-packages.yml` builds and smoke-tests the Windows packages on branches `pkg/**` (it never publishes); `release.yml` builds and publishes all packages when a tag is pushed ([`release.md`](release.md)). `python -m tools.release_check --quick` runs only the first three checks locally (versions, lint and types, the verifiers); it is not a release check ([`release.md`](release.md)).
+`.github/workflows/harness-ci.yml` runs on Ubuntu 24.04 with Python 3.14. After the Qt libraries and `pip install -e ".[gui,dev]"` and Chromium, it runs `ruff check .`, `ruff format --check .`, `mypy`, `pytest -n auto -m "not perf" --cov` and then `pytest -m perf --cov --cov-append` (the timing tests alone; the 90 % gate is applied by the second step), `python -m tools.check_reproducible`, `python -m tools.build_installer`, `python -m tools.build_deb`, the self-test of the frozen program (`dist/harness-design-studio/harness-design-studio-gui --selftest`) and `python -m tools.gen_sbom`. It uploads the packages and the SBOM as an artifact. When only Markdown under `HarnessDesignStudio/` changed, only the `docs` job runs (end of section 4). A second job (`package-on-24-04`) installs the packages on a fresh machine without the source tree. From 1.2.0 two more workflows exist: `harness-platforms.yml` runs the whole suite on `windows-latest` (offscreen, `HARNESS_TIME_FACTOR=8`, a time limit per test so that a hang names the test), and `harness-packages.yml` builds and smoke-tests the Windows packages on branches `pkg/**` (it never publishes); `release.yml` builds and publishes all packages when a tag is pushed ([`release.md`](release.md)). `python -m tools.release_check --quick` runs only the first three checks locally (versions, lint and types, the verifiers); it is not a release check ([`release.md`](release.md)).
 
 ## When something fails
 

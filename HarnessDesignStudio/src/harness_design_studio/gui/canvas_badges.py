@@ -211,7 +211,7 @@ class CornerStatus(QFrame):
     generated, not exported, or all current (CV-22). It reads `ctl.generation_status()` and
     `ctl.outputs_state()` a moment after the last change, not on every edit."""
 
-    def __init__(self, ctl: "object", theme: ThemeManager, parent: QWidget) -> None:
+    def __init__(self, ctl: object, theme: ThemeManager, parent: QWidget) -> None:
         super().__init__(parent)
         self.setObjectName("canvas-status")
         self.setProperty(

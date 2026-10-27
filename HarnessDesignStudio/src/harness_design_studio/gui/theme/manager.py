@@ -37,10 +37,10 @@ BASE_PX = TYPE_SCALE["base"]
 MODES = ("system", "light", "dark")  # what the person chooses; "system" follows the OS scheme
 
 
-_current: "ThemeManager | None" = None
+_current: ThemeManager | None = None
 
 
-def current_theme() -> "ThemeManager":
+def current_theme() -> ThemeManager:
     """The theme manager that was applied last (a default light one before any), for widgets built
     without a reference to the main window's. Connect to its `changed` signal to follow it."""
     global _current

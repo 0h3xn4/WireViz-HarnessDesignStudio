@@ -26,7 +26,7 @@ OPTIONS = {
 }  # fmt: skip
 
 
-def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None:
+def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     def add(name: str, text: str, *, harness: bool = True) -> argparse.ArgumentParser:
         p = sub.add_parser(name, help=text, description=text)
         p.add_argument("project", type=Path, help="project folder")
@@ -209,7 +209,7 @@ def _why(exc: Exception) -> str:
     return str(exc).rstrip(".")
 
 
-def _diff(project: "object", args: argparse.Namespace) -> int:
+def _diff(project: object, args: argparse.Namespace) -> int:
     from harness_design_studio.core.model import Project
 
     assert isinstance(project, Project)  # noqa: S101 - narrowing for the type checker

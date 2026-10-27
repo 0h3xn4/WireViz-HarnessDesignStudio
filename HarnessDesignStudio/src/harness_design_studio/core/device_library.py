@@ -389,7 +389,7 @@ def _normal(rec: dict[str, Any]) -> tuple[dict[str, Any], dict[str, dict[str, An
     try:
         u = Unit.model_validate(unit).model_dump(mode="json")
         cs = {c.id: c.model_dump(mode="json") for c in map(Connector.model_validate, conns)}
-    except (ValidationError, ValueError):
+    except ValidationError, ValueError:
         u, cs = unit, {str(c.get("id", i)): c for i, c in enumerate(conns)}
     return u, cs
 

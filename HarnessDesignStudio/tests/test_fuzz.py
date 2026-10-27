@@ -93,7 +93,7 @@ def corrupted_files(draw: Any) -> dict[str, Any]:
         path = draw(st.sampled_from(paths(files[rel])))
         try:
             files[rel] = mutate(files[rel], path, how, draw(json_value))
-        except (KeyError, IndexError, TypeError):
+        except KeyError, IndexError, TypeError:
             continue
     if draw(st.booleans()):  # sometimes a whole file is dropped or replaced
         files[draw(st.sampled_from(sorted(files)))] = draw(json_value)

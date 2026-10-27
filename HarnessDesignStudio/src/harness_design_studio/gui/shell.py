@@ -197,7 +197,7 @@ class SlotTabs(QTabWidget):
     def _shows(self, name: str, installed: bool) -> bool:
         return installed and (self._filter is None or name in self._filter)
 
-    def set_filter(self, names: "Sequence[str] | None") -> None:
+    def set_filter(self, names: Sequence[str] | None) -> None:
         """Show only the tabs of an area (None shows every installed tab again). The current tab
         is left alone: a test or a caller may still select a tab of another area."""
         self._filter = None if names is None else frozenset(names)
