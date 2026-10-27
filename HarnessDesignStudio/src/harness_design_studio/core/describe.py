@@ -8,7 +8,7 @@ import re
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 
-from harness_design_studio.core.model import Harness, Part
+from harness_design_studio.core.model import Connector, Harness, Part
 from harness_design_studio.core.model.physical import Gender
 from harness_design_studio.core.model.project import Project
 
@@ -68,10 +68,18 @@ def link_values(project: Project, interface_id: str) -> str:
     return " · ".join(parts)
 
 
-def connector_family(project: Project, connector_id: str) -> tuple[str, int, str]:
+def connector_family(
+    project: Project, connector_id: str, connectors: Mapping[str, Connector] | None = None
+) -> tuple[str, int, str]:
     """(family, pin count, gender) for drawing a connector: family is one of "dsub", "microd",
-    "circular", "rj45", "coax" or "generic". It is read from the part's description."""
-    c = project.connectors.get(connector_id) or project.all_connectors().get(connector_id)
+    "circular", "rj45", "coax" or "generic". It is read from the part's description.
+
+    A harness's own connector is not in `project.connectors`; it is then looked up in
+    `connectors` (`project.all_connectors()`). A caller that asks about many connectors builds
+    that map once and passes it: building it is a pass over every connector of every harness."""
+    c = project.connectors.get(connector_id)
+    if c is None:
+        c = (connectors if connectors is not None else project.all_connectors()).get(connector_id)
     if c is None:
         return "generic", 0, ""
     part = project.parts.get(c.part_id)
