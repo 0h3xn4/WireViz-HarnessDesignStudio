@@ -14,7 +14,16 @@ from pathlib import Path
 from pydantic import ValidationError
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from harness_design_studio.core import checks, copies, devices, drc, edit, first_connector, links
+from harness_design_studio.core import (
+    checks,
+    copies,
+    devices,
+    drc,
+    edit,
+    first_connector,
+    links,
+    part_approval,
+)
 from harness_design_studio.core.commands import Delete, History, Op, Put, SetZones, apply_ops
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, SaveError, TransactionError
@@ -41,6 +50,7 @@ from harness_design_studio.core.vcs.release import ReleasePlan
 from . import strings
 from .canvas_state import StateIndex, build_index
 from .drc_process import abort_check, run_check
+from .release_text import plain_blocker
 
 JOURNAL_DELAY_MS = 1500
 DRC_DELAY_MS = 1200  # run only after the user pauses (the check itself runs in another process)
@@ -884,6 +894,14 @@ class EditorController(QObject):
             message=strings.WAIVED_TOAST,
         )
 
+    def approve_part(self, part_id: str) -> bool:
+        """A person approved a part (the Next step page asked first): one undo step."""
+        return self.attempt(
+            strings.STEP_APPROVE_PART.format(part_id),
+            lambda: part_approval.ops_approve_part(self.project, part_id),
+            message=strings.PART_APPROVED.format(part_id),
+        )
+
     def confirm_interface(self, interface_id: str) -> None:
         self.attempt(
             strings.STEP_CONFIRM, lambda: edit.ops_confirm_interface(self.project, interface_id)
@@ -1162,7 +1180,7 @@ class EditorController(QObject):
     def apply_change(self, plan: ReleasePlan, message: str) -> bool:
         """Run a review, release or new-revision plan as one undoable step."""
         if not plan.ok:
-            self.message.emit(plan.blockers[0].message, False)
+            self.message.emit(plain_blocker(plan.blockers[0].message), False)
             return False
         return self.run(plan.label, plan.ops, message=message)
 

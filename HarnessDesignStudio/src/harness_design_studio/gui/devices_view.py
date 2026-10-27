@@ -47,6 +47,7 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio.core import copies, devices, edit
 from harness_design_studio.core.edit import EditError
+from harness_design_studio.core.links import effective_role
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.outputs import exports
 from harness_design_studio.core.outputs.stamp import Table, csv_bytes, stamp_of
@@ -102,12 +103,23 @@ def pin_state(row: devices.PinRow, notes: list[devices.PinProblem]) -> tuple[str
     return None, "", ""
 
 
+def role_cell(stored: str, effective: str) -> str:
+    """The Role cell: the role a person gave, or the one taken from the signal name with "(auto)"."""
+    if stored:
+        return strings.LINK_ROLE_NAMES.get(stored, stored)
+    if effective:
+        return strings.DV_ROLE_AUTO.format(strings.LINK_ROLE_NAMES.get(effective, effective))
+    return ""
+
+
 def pin_rows_for_table(
     rows: list[devices.PinRow],
     problems: list[devices.PinProblem],
     frozen: str | None = None,
+    roles: Mapping[str, tuple[str, str]] | None = None,
 ) -> list[dict[str, Any]]:
-    """The pin table's rows (dicts) for `PIN_COLUMNS`."""
+    """The pin table's rows (dicts) for `PIN_COLUMNS`. `roles` maps a pin to (the role a person
+    gave, the role it has: given or taken from the signal name)."""
     by_pin: dict[str, list[devices.PinProblem]] = {}
     for pr in problems:
         if pr.pin_id is not None:
@@ -119,6 +131,8 @@ def pin_rows_for_table(
             {
                 "pin": r.pin,
                 "signal": r.signal,
+                "role": role_cell(*(roles or {}).get(r.pin, ("", ""))),
+                "role_key": (roles or {}).get(r.pin, ("", ""))[0],
                 "mode": strings.DV_MODE[r.mode],
                 "mode_key": r.mode,
                 "mode_tip": strings.DV_MODE_TIP[r.mode],
@@ -154,6 +168,7 @@ def _field(row: Row, key: str) -> Any:
 PIN_COLUMNS = [
     Column("pin", strings.DV_COL_PIN, mono=True, width=56),
     Column("signal", strings.DV_COL_SIGNAL, mono=True, width=104),
+    Column("role", strings.DV_COL_ROLE, tooltip=lambda _r: strings.DV_COL_ROLE_TIP, width=96),
     Column("mode", strings.DV_COL_MODE, tooltip=_tip("mode_tip"), width=64),
     Column("interface", strings.DV_COL_INTERFACE, mono=True, width=80),
     Column("direction", strings.DV_COL_DIRECTION, tooltip=_tip("meaning_tip"), width=76),
@@ -1176,7 +1191,8 @@ class DevicesView(QWidget):
         self.card.style().polish(self.card)
         self.card.setToolTip(frozen or "")
         rows = devices.pin_rows(p, cid, problems=problems)
-        data = pin_rows_for_table(rows, problems, frozen)
+        roles = {x.id: (x.role, effective_role(x, p, c)) for x in c.pins}
+        data = pin_rows_for_table(rows, problems, frozen, roles)
         self._pin_index = {r.pin: k for k, r in enumerate(rows)}
         self.pins_caption.setText(strings.DV_PIN_TABLE.format(c.name))
         self.pin_table.setAccessibleName(strings.DV_PIN_TABLE.format(c.id))
@@ -1580,7 +1596,9 @@ class DevicesView(QWidget):
                 self._want_pin = new
             self._cell_done(ok)
             return
-        old_key = {"mode": "mode_key", "termination": "termination_key"}.get(key, key)
+        old_key = {"mode": "mode_key", "termination": "termination_key", "role": "role_key"}.get(
+            key, key
+        )
         if str(value) == str(row.get(old_key) or ""):
             return
         self._cell_done(self._do(self.ctl.set_pin, cid, pin, **{key: value}))

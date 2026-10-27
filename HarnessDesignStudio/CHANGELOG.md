@@ -4,6 +4,23 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Added
+
+- **The Systems engineer path in the screens (release 1.9, W1; audit of 1.8.0, section 3.2).** No new design rule and no file-format change: a project that does not use these features writes the same files, and `python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` prints *identical*.
+  - **A first connector when you add a device.** The window *Add device* has an optional *First connector* (family, number of pins, gender, from the connector parts of the library). *No connector yet* stays the default.
+  - **Add a connector inside Link connectors.** Under each device of the window; the connector is made with the connection in one undo step, and not at all if the window is cancelled.
+  - **Pair by pin number** and **Paste a pairing…** (two columns from a table) in the window *Link connectors*. Both show a proposal with what was left out, and wait for *Accept the pairs*; the pairs join the table, never replace it, and nothing is saved before *Link connectors*.
+  - **A card with the first open problem on the Next step page**: what is wrong, one sentence on what to do, *Show it*, *Waive…* (where the check allows a waiver) and *Approve …* for an unapproved part (after a question that says what approving means; one undo step; refused for a part marked *not approved* or locked by a release).
+  - **The Devices tab shows the Role of each pin** (the role you gave, or the one taken from the signal name marked *(auto)*) and you can change it in the table.
+  - **A tour of its own for the Systems engineer role** (the Next step page, the first button, Connect, the bar on the left).
+
+### Changed
+
+- **A warning no longer holds the Next step page** on *Fix what is marked*. Only a failed check that is an error does; with warnings left the page goes on to the next step and says *n warnings are left. They do not stop you.* (before, a new project with starter parts stayed on *Fix what is marked* for good and offered no fix).
+- **The Systems engineer role stays on the Next step page or the diagram** after adding a device, generating, creating a harness from a connection or adding library devices, and its menus leave out the engineering entries (wire, harness, zone and alignment tools, the interface-first way, diagram drawing options, revisions of a harness, engineering values, the detail views). Every one is still in the command palette (Ctrl+K) and on its key; the Electrical / AIT engineer role lists them all.
+- **Wording that follows what the project has.** A release blocker on the screen names the place in the program instead of a command-line command (the command line keeps its own words); Generate is the primary button only when the project has interfaces; the status bar says *Made by hand* for a project of connections or hand-made harnesses, not *Not generated*; the tour step about connecting mentions pin numbers and accepting; the message for a device with no connector says *Press Add a connector under it*.
+- **Problem counts agree.** The Problems list says *Problems (14 of 24)* while a filter hides some, the Problems tab of the inspector explains in its tooltip why its number is smaller, and the chip of the independent check in the Harness tab says *Independent check passed* (and *Independent check passed; n design checks failed* while a design check fails) instead of a bare *Check passed*.
+
 ## 1.8.1 (2026-10-27; not a statement of compliance)
 
 Fixes from the audit of 1.8.0 (`docs/AUDIT_1.8.0.md`, decision D-177): no new feature, no file-format change, the design rules stay 39, and the files and outputs of a project that does not meet one of these cases are unchanged (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` prints *identical*). The one written text that changes for projects on placeholder configuration is the line *Ready to build* of the build workbook.

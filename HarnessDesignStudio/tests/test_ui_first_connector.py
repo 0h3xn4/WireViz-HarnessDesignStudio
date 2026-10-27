@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
-"""REQ-GUI-13. Release 1.9 W1: the first connector in Add device, Add a connector inside the
+"""REQ-GUI-16. Release 1.9 W1: the first connector in Add device, Add a connector inside the
 connection window, Pair by pin number and Paste a pairing (the person accepts every proposal)."""
 
 from pathlib import Path

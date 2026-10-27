@@ -1,4 +1,4 @@
-"""REQ-GUI-13. Release 1.9 W1: the first connector of a device, pairing by pin number and a pasted
+"""REQ-GUI-16. Release 1.9 W1: the first connector of a device, pairing by pin number and a pasted
 pairing. The planners propose; they change nothing."""
 
 import pytest

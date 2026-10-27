@@ -19,7 +19,8 @@ The rules run in this order, the first that fits wins:
     generate     no harness, or no plans, or plans out of date (a project whose harnesses were all
                  made by hand skips this step, so does one whose harness was made from a link)
     check        the design was not checked
-    fix          checks failed
+    fix          checks failed (errors; a warning alone never holds the page: it is listed on a
+                 card under the step, with Waive or Approve when they apply, and the page goes on)
     build_sheets the files are not up to date
     release      a harness is not released
     done         everything is released
@@ -31,7 +32,7 @@ The page opens first for the Systems engineer role and is reachable for the Elec
 role (`gui/roles.py` holds the roles).
 """
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from typing import Final, Literal
 
 from harness_design_studio.gui import strings
@@ -73,6 +74,38 @@ _STEP_OF: Final = {
 
 
 @dataclass(frozen=True)
+class NextProblem:
+    """The first open problem, shown on a card of the Next step page: what is wrong, in one
+    sentence what to do, and the buttons that apply. The ids let the window find the finding
+    again; nothing here is a statement about the design."""
+
+    finding_id: str
+    rule: str
+    severity: str  # error | warning | info
+    title: str  # what is wrong with this one object
+    todo: str  # one plain sentence: what to do
+    can_waive: bool = False
+    approve: str = ""  # the ID of a part that the Approve button would approve ("" when none)
+    more: int = 0  # other open problems besides this one
+
+
+_FIX_MARK = "To fix it: "
+
+
+def todo_sentence(why: str, fix_label: str | None = None) -> str:
+    """The "what to do" sentence of a finding: the text after "To fix it:" of its explanation,
+    else the label of its automatic fix, else a pointer to the Checks."""
+    _head, mark, tail = why.partition(_FIX_MARK)
+    text = tail.strip() if mark else ""
+    if not text and fix_label:
+        text = fix_label.strip()
+    if not text:
+        return strings.NEXT_PROBLEM_TODO_FALLBACK
+    text = text[0].upper() + text[1:]
+    return text if text.endswith((".", "!", "?")) else text + "."
+
+
+@dataclass(frozen=True)
 class NextInputs:
     units: int = 0
     interfaces: int = 0
@@ -82,7 +115,9 @@ class NextInputs:
     generation: str = "none"  # none | current | stale
     running: str | None = None  # a job runs: generate | export | arrange
     checked: bool = False  # a rule check result is current
-    failed: int = 0  # rules that failed
+    failed: int = 0  # rules that failed with an error (a warning does not count: see `warned`)
+    warned: int = 0  # rules that failed with a warning or a note; they never hold the page
+    problem: NextProblem | None = None  # the first open problem, for the card (None: none)
     unchecked: int = 0  # rules not checked or waiting for a value
     outputs: str = "none"  # none | unsaved | current | stale | modified | unreadable
     in_review: int = 0
@@ -108,6 +143,7 @@ class Next:
     alternative: str = ""  # "or make a harness by hand"
     alternative_key: str = ""
     alternative_button: str = ""
+    problem: NextProblem | None = None  # the card under the step ("" texts: see NextProblem)
 
     @property
     def texts(self) -> tuple[str, ...]:
@@ -160,6 +196,17 @@ def _steps(index: int, *, blocked: bool = False) -> tuple[StepLine, ...]:
 
 
 def next_step(f: NextInputs) -> Next:
+    n = _next_step(f)
+    if n.key in ("fix", "build_sheets", "release", "done"):
+        note = n.note
+        if f.warned and n.key != "fix":
+            warned = strings.NEXT_WARNED_ONE if f.warned == 1 else strings.NEXT_WARNED_MANY.format(f.warned)  # fmt: skip
+            note = f"{note} {warned}".strip()
+        return replace(n, note=note, problem=f.problem)
+    return n
+
+
+def _next_step(f: NextInputs) -> Next:
     key = stage(f)
     index = _STEP_OF[key]
     if f.running:

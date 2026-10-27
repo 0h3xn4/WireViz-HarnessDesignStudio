@@ -67,7 +67,7 @@ Nothing is saved while the result holds errors (exit code 1). A naming pattern t
 
 ## 2. Check the result on its own
 
-The tool checks its own result with a second program path that shares no code with the generator. In the app the header of the **Harness** tab shows a chip, *Check passed* or *Check found n problem(s)*; hover the chip to read "Independent check: …" and how long it took. (The **Check** step in the top bar is another check: it runs the design rules, see [read and fix problems](read-and-fix-problems.md).) On the command line:
+The tool checks its own result with a second program path that shares no code with the generator. In the app the header of the **Harness** tab shows a chip, *Independent check passed* or *Independent check found n problem(s)* (when design checks failed the chip says so: *Independent check passed; n design checks failed*); hover the chip to read "Independent check: …" and how long it took. (The **Check** step in the top bar is another check: it runs the design rules, see [read and fix problems](read-and-fix-problems.md).) On the command line:
 
 ```
 harness-design-studio verify wheel-link

@@ -55,7 +55,7 @@ TOUR_STEPS: list[tuple[str, str]] = [
     ),
     (
         "types",
-        "To connect two devices, press Connect and click the two devices. The Link connectors window opens and pairs their pins by name. To connect by interface type instead, use the arrow next to Connect, or Edit > Connect with an interface type.",
+        "To connect two devices, press Connect and click the two devices. The Link connectors window opens and proposes the pairs of pins by name; you can also pair by pin number or paste a pairing, and nothing is paired until you accept it. To connect by interface type instead, use the arrow next to Connect, or Edit > Connect with an interface type.",
     ),
     (
         "problems",
@@ -1282,8 +1282,9 @@ HV_CHECKING = "Checking…"
 HV_CHECKING_TIP = (
     "The independent check and the outputs state are being worked out in the background."
 )
-HV_VERIFY_OK = "Check passed"
-HV_VERIFY_BAD = "Check found {} problem(s)"
+HV_VERIFY_OK = "Independent check passed"
+HV_VERIFY_OK_RULES = "Independent check passed; {0} design checks failed"
+HV_VERIFY_BAD = "Independent check found {} problem(s)"
 HV_VERIFY_FAILED = "Could not check: {}"
 HV_VERIFIED_IN = "Checked in {} ms in the background; this view refreshed in {} ms."
 HV_REGENERATE = "Regenerate"
@@ -2997,3 +2998,59 @@ LINK_OFFER_ACCEPT = "Accept the pairs"
 LINK_OFFER_ACCEPT_TIP = "Put the proposed pairs into the table above (the connection is saved when you press the button below)"
 LINK_OFFER_DISCARD = "Discard"
 LINK_OFFER_DISCARD_TIP = "Forget this proposal"
+
+NEXT_PROBLEM_TODO_FALLBACK = "Open it in the Checks to see what to do."
+NEXT_WARNED_ONE = "1 warning is left. It does not stop you."
+NEXT_WARNED_MANY = "{0} warnings are left. They do not stop you."
+NEXT_PROBLEM_NAME = "The first problem and what to do about it"
+NEXT_PROBLEM_HEAD = {
+    "error": "Start with this one",
+    "warning": "A warning to look at. It does not stop you.",
+    "info": "A note to look at. It does not stop you.",
+}
+NEXT_PROBLEM_TODO = "What to do: {0}"
+NEXT_PROBLEM_MORE = ("1 more is listed in the Checks.", "{0} more are listed in the Checks.")
+NEXT_PROBLEM_SHOW = "Show it"
+NEXT_PROBLEM_SHOW_TIP = "Go to the thing this is about"
+NEXT_PROBLEM_WAIVE = "Waive…"
+NEXT_PROBLEM_WAIVE_TIP = "Accept this problem and write down why. It is kept in the change log."
+NEXT_PROBLEM_APPROVE_PLAIN = "Approve the part…"
+NEXT_PROBLEM_APPROVE = "Approve {0}…"
+NEXT_PROBLEM_APPROVE_TIP = (
+    "Mark this part as approved. Only do this for a part you or your team have checked."
+)
+NEXT_PROBLEM_APPROVE_TITLE = "Approve part"
+NEXT_PROBLEM_APPROVE_ASK = (
+    "Approve part {0}?\n\nThis says the part is approved for use and is no longer example data. "
+    "Do it only if you own the parts list or have checked the part. You can undo it."
+)
+NEXT_PROBLEM_APPROVE_YES = "Approve"
+STEP_APPROVE_PART = "Approve part {0}"
+PART_APPROVED = "Part {0} is approved."
+RELEASE_TEXT_GAUGE = "Fill in the engineering values (Engineering values, in the Checks area) or set the gauge by hand."
+RELEASE_TEXT_LENGTHS = "Enter the routing segment lengths in the Harness tab, or load them from a table with File > Import > Segment lengths."
+
+# the tour of the Systems engineer role: the Next step page, the first button, Connect, the rail
+TOUR_STEPS_SYSTEMS: list[tuple[str, str]] = [
+    (
+        "next",
+        "This is the Next step page. It says what to do now, in one sentence, and it stays here after each step. The steps of the work are listed below it.",
+    ),
+    (
+        "next_button",
+        "This button does the next step. At the start it is Add a device: give the device a name and, if you like, its first connector. Later it connects two devices, generates, checks and exports.",
+    ),
+    (
+        "connect",
+        "To connect two devices, press Connect and click both. A window proposes the pairs of pins, by name or by pin number, or you paste a pairing. Nothing is paired until you accept it.",
+    ),
+    (
+        "role",
+        "The bar on the left lists the areas of the program. What it lists depends on your role: change the role any time in View > Role. Every command is still in the search (Ctrl+K).",
+    ),
+]
+PROBLEMS_BUTTON_OF = "Problems ({0} of {1})"
+INS_TAB_PROBLEMS_TIP = "{0} errors and warnings of the {1} open items. The Problems list at the bottom of the window shows all of them, notes included."
+DV_COL_ROLE = "Role"
+DV_COL_ROLE_TIP = "What the pin is for: power, return, ground, signal, shield or spare. Automatic takes it from the signal name."
+DV_ROLE_AUTO = "{0} (auto)"
