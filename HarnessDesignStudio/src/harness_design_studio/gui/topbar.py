@@ -244,6 +244,13 @@ class TopBar(QWidget):
             self.generate_btn.setToolTip(strings.TB_GENERATE_READ_ONLY)
         else:
             self.generate_btn.setToolTip(tooltip_text(strings.GENERATE_TIP, "Ctrl+G"))
+        # Generate builds harnesses from interfaces: it is the one primary button only while the
+        # project has some (a project of connections makes its harnesses with Create harness)
+        primary = s.interfaces > 0
+        if bool(self.generate_btn.property("primary")) != primary:
+            self.generate_btn.setProperty("primary", primary)
+            self.generate_btn.style().unpolish(self.generate_btn)
+            self.generate_btn.style().polish(self.generate_btn)
         self.check_btn.setEnabled(not busy)
         self.export_btn.setEnabled(not busy)
         self.release_btn.setEnabled(not busy and not s.read_only and s.harnesses > 0)

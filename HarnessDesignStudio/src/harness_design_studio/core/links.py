@@ -21,12 +21,14 @@ person draws), and the pairing rules read only the names and directions the proj
 
 import re
 from collections import defaultdict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Collection, Iterable, Mapping, Sequence
 from dataclasses import dataclass
 
 from pydantic import TypeAdapter, ValidationError
 
+from . import counterparts
 from .commands import Delete, Op, Put, apply_ops
+from .counterparts import Counterparts
 from .devices import derive_meaning, derive_meaning_types, ops_set_pin
 from .edit import EditError, clone_with
 from .ids import check_id
@@ -37,43 +39,13 @@ from .model import Connector, InterfaceType, Link, Pin, PinPair, Project, evolve
 from .model.base import Label
 from .vcs.lockview import lock_reason
 from .verify import direction_judged, passthrough_signals
-from .wires import plan_add_wire, used_ids
+from .wires import plan_add_wires, used_ids
 
-# Signal names that are the two ends of one line: a transmit pin meets a receive pin. Compared
-# ignoring case, both orders. Equal names pair as well (PWR/PWR, RTN/RTN, CANH/CANH).
-COUNTERPARTS: tuple[tuple[str, str], ...] = (
-    ("TX", "RX"),
-    ("TXD", "RXD"),
-    ("TX+", "RX+"),
-    ("TX-", "RX-"),
-    ("TXP", "RXP"),
-    ("TXN", "RXN"),
-)
-_COUNTER: dict[str, str] = {}
-for _x, _y in COUNTERPARTS:
-    _COUNTER[_x.casefold()] = _y.casefold()
-    _COUNTER[_y.casefold()] = _x.casefold()
-
-# Names are also split into words (UART_TX -> UART, TX; SPW_DOUT+ -> SPW, DOUT, +; TX_P -> TX, P).
-# A word of the transmit family meets the matching word of the receive family when everything else
-# in the two names is the same (a prefix such as UART_ or SPW_ may be missing on one side). Two EQUAL
-# names with a transmit word (or two with a receive word) are never paired by the proposal: they
-# look like transmit to transmit.
-_TX_RX_WORDS: tuple[tuple[str, str], ...] = (
-    ("tx", "rx"),
-    ("txd", "rxd"),
-    ("txp", "rxp"),
-    ("txn", "rxn"),
-    ("dout", "din"),
-    ("mosi", "miso"),
-    ("sdo", "sdi"),
-)
-_WORD_COUNTER: dict[str, str] = {}
-_WORD_SIDE: dict[str, str] = {}
-for _x, _y in _TX_RX_WORDS:
-    _WORD_COUNTER[_x], _WORD_COUNTER[_y] = _y, _x
-    _WORD_SIDE[_x], _WORD_SIDE[_y] = "transmit", "receive"
-_WORDS = re.compile(r"[a-z]+|\d+|[+-]")
+# The words that are the two ends of one line (TX and RX, MOSI and MISO ...) are a setting of the
+# project, `config/naming.json` `signal_counterparts`; the table the tool ships with is in
+# `counterparts.py`. Two EQUAL names with a transmit word (or two with a receive word) are never
+# paired by the proposal: they look like transmit to transmit. Equal names pair as well (PWR/PWR,
+# RTN/RTN, CANH/CANH).
 
 _LABEL = TypeAdapter(Label)
 _ANY_CONNECTOR = Connector(id="any", name="any", role="box", part_id="any")
@@ -92,48 +64,48 @@ def _name(signal: str | None) -> str:
     return (signal or "").strip().casefold()
 
 
-def _split_name(name: str) -> tuple[tuple[str, ...], str, tuple[str, ...]] | None:
-    """(words before, transmit/receive word, words after) of a name in lower case, or None when
-    the name has no word of the transmit or receive family."""
-    words = _WORDS.findall(name)
-    for k, w in enumerate(words):
-        if w in _WORD_SIDE:
-            return tuple(words[:k]), w, tuple(words[k + 1 :])
-    return None
+def counterparts_of(project: Project) -> Counterparts:
+    """The table of words that are the two ends of one line for this project:
+    `signal_counterparts` of `config/naming.json` when it is set and valid, else the table the
+    tool ships with (`counterparts.DEFAULT_COUNTERPARTS`)."""
+    cfg = project.config.get(counterparts.CONFIG_FILE)
+    return counterparts.from_config(cfg.values if cfg is not None else None)
 
 
-def name_relation(a: str | None, b: str | None) -> str:
+def name_relation(a: str | None, b: str | None, table: Counterparts | None = None) -> str:
     """ "equal" when two signal names are the same, "counterpart" when they are the two ends of one
     line (TX and RX, UART_TX and UART_RX, SPW_DOUT+ and SPW_DIN+, TX_P and RX_P, MOSI and MISO),
-    else "". Case is ignored; an empty name matches nothing."""
+    else "". Case is ignored; an empty name matches nothing. `table` is the project's table of
+    counterpart words (`counterparts_of`); without it the table the tool ships with is used."""
     x, y = _name(a), _name(b)
     if not x or not y:
         return ""
     if x == y:
         return "equal"
-    if _COUNTER.get(x) == y:
-        return "counterpart"
-    sx, sy = _split_name(x), _split_name(y)
-    if (
-        sx
-        and sy
-        and _WORD_COUNTER[sx[1]] == sy[1]
-        and sx[2] == sy[2]
-        and (sx[0] == sy[0] or not sx[0] or not sy[0])  # the same prefix, or none on one side
-    ):
+    if (table or counterparts.DEFAULT).are_counterparts(x, y):
         return "counterpart"
     return ""
 
 
-def same_side(a: str | None, b: str | None) -> str:
+def same_side(a: str | None, b: str | None, table: Counterparts | None = None) -> str:
     """ "transmit" or "receive" when two EQUAL signal names both carry a transmit word (TX, TXD,
     DOUT, MOSI ...) or both a receive word (RX, RXD, DIN, MISO ...): joined, they would put a
     transmitter on a transmitter. "" otherwise."""
     x, y = _name(a), _name(b)
     if not x or x != y:
         return ""
-    parts = _split_name(x)
-    return _WORD_SIDE[parts[1]] if parts else ""
+    t = table or counterparts.DEFAULT
+    parts = t.split(x)
+    return t.side[parts[1]] if parts else ""
+
+
+def _pair_side(a: Pin, b: Pin, table: Counterparts) -> str:
+    """`same_side` of two pins, unless both have a direction of their own: then the names are not
+    guessed from, the directions decide (a vendor that names every pin from its own point of view
+    gives TX on both sides and says `out` on one and `in` on the other)."""
+    if a.direction and b.direction:
+        return ""
+    return same_side(a.signal, b.signal, table)
 
 
 def _signal_index(project: Project) -> dict[str, list[InterfaceType]]:
@@ -150,11 +122,14 @@ def _direction(
     pin: Pin,
     index: dict[str, list[InterfaceType]],
 ) -> str:
-    """out, in, bidir or passive from the interface types, or "" when it is not known. It is also
-    "" where the design rule `direction-conflict` does not judge the directions: a signal of a
-    one-directional type (analog SIG+/SIG-, discrete SIG, LVDS D+/D-, pyro FIRE+/FIRE-, I2C SCL
-    list `out` at both ends) and a directional signal with no partner in its type (it runs straight
-    through to the same name)."""
+    """out, in, bidir or passive from the pin, else from the interface types, or "" when it is not
+    known. The direction a person set on the pin (`Pin.direction`) wins over everything else: it is
+    never guessed from a name and never exempted. Otherwise it is "" where the design rule
+    `direction-conflict` does not judge the directions: a signal of a one-directional type (analog
+    SIG+/SIG-, discrete SIG, LVDS D+/D-, pyro FIRE+/FIRE-, I2C SCL list `out` at both ends) and a
+    directional signal with no partner in its type (it runs straight through to the same name)."""
+    if pin.direction:
+        return pin.direction
     direction, _category, _note, types = derive_meaning_types(project, connector, pin, index)
     if direction not in ("out", "in"):
         return direction
@@ -175,12 +150,18 @@ def _conflict(da: str, db: str) -> str:
     return ""
 
 
-def effective_role(pin: Pin, project: Project, connector: Connector | None = None) -> str:
+def effective_role(
+    pin: Pin,
+    project: Project,
+    connector: Connector | None = None,
+    index: Mapping[str, list[InterfaceType]] | None = None,
+) -> str:
     """What a pin is for: the role a person gave it, else the one derived from the signal name.
     "power" for a signal of an interface type of the power category (not RTN), "return" for RTN,
     "ground" for GND or a type of the ground category, "signal" for any other signal, and "" for a
     pin with no signal. Pass the connector when it is known (the types it carries narrow the
-    meaning of a name)."""
+    meaning of a name), and `index` (signal name -> interface types) when many pins are asked in a
+    row, so the types are not indexed again for each."""
     if pin.role:
         return pin.role
     if not pin.signal:
@@ -190,7 +171,7 @@ def effective_role(pin: Pin, project: Project, connector: Connector | None = Non
         return "return"
     if name == "GND":
         return "ground"
-    category = derive_meaning(project, connector or _ANY_CONNECTOR, pin)[1]
+    category = derive_meaning(project, connector or _ANY_CONNECTOR, pin, index)[1]
     if category == "power":
         return "power"
     if category == "ground":
@@ -208,20 +189,42 @@ def link_caption(link: Link) -> str:
     return f"{link.a_connector} - {link.b_connector}"
 
 
+LinkPins = dict[str, dict[str, list[str]]]  # connector -> pin -> the links that pair it (first two)
+
+
+def link_pin_index(project: Project, connectors: Collection[str] | None = None) -> LinkPins:
+    """For each connector (only `connectors` when given) the pins that links pair, each with the
+    IDs of the links that pair it, by link ID (the first two are kept: the first link that is not
+    the one being looked at is all that is ever asked). One pass over the links, however many
+    connectors are asked about."""
+    out: LinkPins = {}
+    for link in sorted(project.links.values(), key=lambda x: x.id):
+        for conn, side in ((link.a_connector, "a"), (link.b_connector, "b")):
+            if connectors is not None and conn not in connectors:
+                continue
+            owners = out.setdefault(conn, {})
+            for pair in link.pairs:
+                found = owners.setdefault(pair.a_pin if side == "a" else pair.b_pin, [])
+                if link.id not in found and len(found) < 2:
+                    found.append(link.id)
+    return out
+
+
+def _taken(index: LinkPins, connector_id: str, except_link: str | None = None) -> dict[str, str]:
+    """Pin of a connector -> the first link (by ID) that pairs it, leaving `except_link` out."""
+    out: dict[str, str] = {}
+    for pin, ids in index.get(connector_id, {}).items():
+        first = next((i for i in ids if i != except_link), None)
+        if first is not None:
+            out[pin] = first
+    return out
+
+
 def pins_in_links(
     project: Project, connector_id: str, *, except_link: str | None = None
 ) -> dict[str, str]:
     """Pin of a connector -> the first link (by ID) that pairs it."""
-    taken: dict[str, str] = {}
-    for link in sorted(project.links.values(), key=lambda x: x.id):
-        if link.id == except_link:
-            continue
-        for pair in link.pairs:
-            if link.a_connector == connector_id:
-                taken.setdefault(pair.a_pin, link.id)
-            if link.b_connector == connector_id:
-                taken.setdefault(pair.b_pin, link.id)
-    return taken
+    return _taken(link_pin_index(project, {connector_id}), connector_id, except_link)
 
 
 def links_of_connector(project: Project, connector_id: str) -> list[Link]:
@@ -273,27 +276,67 @@ class Proposal:
     notes: tuple[str, ...]
 
 
+class _NameIndex:
+    """The free pins of one connector looked up by what their names say, so a pin of the other
+    connector finds its candidates without being compared with every pin: `equal` (name -> the
+    positions of the pins with that name) and `ends` ((the word that would meet it, the words
+    after it) -> the positions of the pins whose name has that word, with the words before it).
+    Positions are indexes into the list the index was made from, in reading order."""
+
+    def __init__(self, pins: Sequence[Pin], table: Counterparts) -> None:
+        self.equal: dict[str, list[int]] = defaultdict(list)
+        self.ends: dict[tuple[str, tuple[str, ...]], list[tuple[int, tuple[str, ...]]]] = (
+            defaultdict(list)
+        )
+        for k, pin in enumerate(pins):
+            name = _name(pin.signal)
+            if not name:
+                continue
+            self.equal[name].append(k)
+            if (parts := table.split(name)) is not None:
+                self.ends[(parts[1], parts[2])].append((k, parts[0]))
+
+    def related(self, name: str, table: Counterparts, kind: str) -> list[int]:
+        """Positions, in reading order, of the pins whose name is `kind` ("equal" or
+        "counterpart") to `name` (in lower case)."""
+        if kind == "equal":
+            return self.equal.get(name, [])
+        parts = table.split(name)
+        if parts is None:
+            return []
+        before, word, after = parts
+        found = self.ends.get((table.counter[word], after), [])
+        return [k for k, other in found if before == other or not before or not other]
+
+
 def propose_pairs(project: Project, a_connector_id: str, b_connector_id: str) -> Proposal:
     """Pair the pins of two device connectors by signal name only: equal names, or the two ends of
     one line (TX and RX, TXD and RXD, TX+ and RX+, TX_P and RX_P, DOUT and DIN, MOSI and MISO, SDO
-    and SDI, with or without a prefix such as UART_ or SPW_, in both orders). Two equal names that
+    and SDI, with or without a prefix such as UART_ or SPW_, in both orders; the words are the
+    project's table, `config/naming.json` `signal_counterparts`). Two equal names that
     both look like transmit (TX, DOUT, MOSI ...) or both like receive are never paired: they are
     left unpaired and named in the notes, because a transmitter on a transmitter is the mistake a
-    vendor's own-point-of-view names hide. The directions of the interface types decide where they are known: an output goes to
-    an input, bidirectional and passive pins go with anything, output against output and input
+    vendor's own-point-of-view names hide. A direction a person set on a pin (`Pin.direction`)
+    decides before any name does, also for two equal names; where it is not set the directions of
+    the interface types decide where they are known: an output goes to an
+    input, bidirectional and passive pins go with anything, output against output and input
     against input are not paired and are named in the notes. A pin is used once; a pin with no
     signal is left unpaired; a pin another link pairs is not offered. The result depends only on
-    the pins (taken in reading order), so it is the same every time."""
+    the pins (taken in reading order), so it is the same every time. The pins are looked up by
+    name, so the work grows with the number of pins, not with its square."""
     a, b = _two_devices(project, a_connector_id, b_connector_id)
     index = _signal_index(project)
+    table = counterparts_of(project)
     notes: list[str] = []
     free: dict[str, list[Pin]] = {}
+    owners = link_pin_index(project, {a.id, b.id})
     for conn in (a, b):
-        taken = pins_in_links(project, conn.id)
+        taken = _taken(owners, conn.id)
         if taken:
+            have = {p.id for p in conn.pins}
             by_link: dict[str, list[str]] = defaultdict(list)
             for pid in sorted(taken, key=natural_key):
-                if any(p.id == pid for p in conn.pins):
+                if pid in have:
                     by_link[taken[pid]].append(pid)
             for lid, pids in sorted(by_link.items()):
                 notes.append(
@@ -314,29 +357,39 @@ def propose_pairs(project: Project, a_connector_id: str, b_connector_id: str) ->
     dirs = {
         (conn.id, p.id): _direction(project, conn, p, index) for conn in (a, b) for p in conn.pins
     }
-    used_a: set[str] = set()
-    used_b: set[str] = set()
-    pairs: list[PinPair] = []
+    fa, fb = free[a.id], free[b.id]
+    names_b = _NameIndex(fb, table)
+    used_a: set[int] = set()
+    used_b: set[int] = set()
+    pairs: list[tuple[int, int]] = []
     for wanted in ("counterpart", "equal"):  # TX to RX first, then the same name
-        for pa in free[a.id]:
-            if pa.id in used_a or not pa.signal:
+        for ka, pa in enumerate(fa):
+            if ka in used_a or not pa.signal:
                 continue
-            for pb in free[b.id]:
-                if pb.id in used_b or not pb.signal:
+            for kb in names_b.related(_name(pa.signal), table, wanted):
+                pb = fb[kb]
+                if kb in used_b:
                     continue
-                if name_relation(pa.signal, pb.signal) != wanted:
-                    continue
-                if same_side(pa.signal, pb.signal):
+                if _pair_side(pa, pb, table):
                     continue  # transmit to transmit (or receive to receive): left to a person
                 if _conflict(dirs[(a.id, pa.id)], dirs[(b.id, pb.id)]):
                     continue
-                pairs.append(PinPair(a_pin=pa.id, b_pin=pb.id))
-                used_a.add(pa.id)
-                used_b.add(pb.id)
+                pairs.append((ka, kb))
+                used_a.add(ka)
+                used_b.add(kb)
                 break
-    for pa in free[a.id]:  # names that fit, stopped by what they look like or by the directions
-        for pb in free[b.id]:
-            if pa.id in used_a or pb.id in used_b or not name_relation(pa.signal, pb.signal):
+    for ka, pa in enumerate(
+        fa
+    ):  # names that fit, stopped by what they look like or by the directions
+        if ka in used_a or not pa.signal:
+            continue
+        name = _name(pa.signal)
+        fits = sorted(
+            {*names_b.related(name, table, "equal"), *names_b.related(name, table, "counterpart")}
+        )
+        for kb in fits:
+            pb = fb[kb]
+            if kb in used_b:
                 continue
             where = (
                 f"{pa.signal} on pin {pa.id} of {a.id} and {pb.signal} on pin {pb.id} of "
@@ -344,16 +397,19 @@ def propose_pairs(project: Project, a_connector_id: str, b_connector_id: str) ->
             )
             if why := _conflict(dirs[(a.id, pa.id)], dirs[(b.id, pb.id)]):
                 notes.append(f"{where}{why}.")
-            elif side := same_side(pa.signal, pb.signal):
+            elif side := _pair_side(pa, pb, table):
                 notes.append(
                     f"{where}they look like {side} to {side}. If one device names its pins "
                     "from the other's point of view, pair them yourself."
                 )
-    pairs.sort(key=lambda p: natural_key(p.a_pin))
+    chosen = sorted(
+        (PinPair(a_pin=fa[ka].id, b_pin=fb[kb].id) for ka, kb in pairs),
+        key=lambda p: natural_key(p.a_pin),
+    )
     return Proposal(
-        tuple(pairs),
-        tuple(p.id for p in free[a.id] if p.id not in used_a),
-        tuple(p.id for p in free[b.id] if p.id not in used_b),
+        tuple(chosen),
+        tuple(p.id for k, p in enumerate(fa) if k not in used_a),
+        tuple(p.id for k, p in enumerate(fb) if k not in used_b),
         tuple(notes),
     )
 
@@ -385,8 +441,9 @@ def _check_pairs(
     """A pin exists, belongs to one pair, and is in no other link."""
     have_a = {p.id for p in a.pins}
     have_b = {p.id for p in b.pins}
-    other_a = pins_in_links(project, a.id, except_link=link_id)
-    other_b = pins_in_links(project, b.id, except_link=link_id)
+    owners = link_pin_index(project, {a.id, b.id})
+    other_a = _taken(owners, a.id, link_id)
+    other_b = _taken(owners, b.id, link_id)
     seen_a: set[str] = set()
     seen_b: set[str] = set()
     for pair in pairs:
@@ -558,7 +615,8 @@ def plan_create_harness(project: Project, link_id: str) -> tuple[list[Op], str]:
     they stay pending, as for any wire a person draws. One undo step. Refused when the link has
     no pairs, has a harness already, does not pass its review for a missing connector or pin, or when
     a device connector of the link has a cable plug of another harness on it, or a paired pin is
-    allocated to an interface."""
+    allocated to an interface. Done in one pass: the review reads the links once and the wires are
+    added together, so a link of 1,000 pairs takes seconds less than one wire after the other."""
     _writable(project)
     link = _known_link(project, link_id)
     if link.harness_id:
@@ -589,17 +647,21 @@ def plan_create_harness(project: Project, link_id: str) -> tuple[list[Op], str]:
         cable[box.id] = cid
     pins_a = {p.id: p for p in a.pins}
     pins_b = {p.id: p for p in b.pins}
-    for pair in link.pairs:
-        ops = plan_add_wire(
-            scratch,
-            hid,
-            cable[a.id],
-            pair.a_pin,
-            cable[b.id],
-            pair.b_pin,
-            signal=_wire_signal(pins_a[pair.a_pin], pins_b[pair.b_pin]),
-        )
-        apply_ops(scratch, ops)
+    ops = plan_add_wires(  # all the wires in one pass, with the IDs one after the other would get
+        scratch,
+        hid,
+        [
+            (
+                cable[a.id],
+                pair.a_pin,
+                cable[b.id],
+                pair.b_pin,
+                _wire_signal(pins_a[pair.a_pin], pins_b[pair.b_pin]),
+            )
+            for pair in link.pairs
+        ],
+    )
+    apply_ops(scratch, ops)
     return [
         Put("harnesses", scratch.harnesses[hid]),
         Put("links", evolve(link, harness_id=hid)),
@@ -772,6 +834,22 @@ def _is_power_loop(
     return False
 
 
+@dataclass(frozen=True)
+class _Review:
+    """What the review of any link needs, worked out once for all of them: the interface types by
+    signal name, the project's table of counterpart words, and the links that pair each pin."""
+
+    types: dict[str, list[InterfaceType]]
+    table: Counterparts
+    owners: LinkPins
+
+
+def _review_of(project: Project, connectors: Collection[str] | None) -> _Review:
+    return _Review(
+        _signal_index(project), counterparts_of(project), link_pin_index(project, connectors)
+    )
+
+
 def check_link(project: Project, link: Link) -> list[LinkFinding]:
     """Review a link without changing anything. The codes:
     `link_dangling` (error: a connector or pin of the link is gone), `link_pin_reused` (error: a pin
@@ -780,7 +858,13 @@ def check_link(project: Project, link: Link) -> list[LinkFinding]:
     the two ends of one line), `link_pin_unpaired` (warning: a pin with a signal that no pair of
     this link or of another link uses), `link_power_without_return` (warning: a power pair and no
     return pair on the link; a heater pair, HTR+ and HTR-, is a two-wire loop and has its own
-    return). A pin with the role "spare" is never reported as unpaired."""
+    return). A pin with the role "spare" is never reported as unpaired. The directions a person set on
+    pins (`Pin.direction`) decide `link_direction_conflict` before the interface types do, and
+    two pins that both have one are not warned about for equal transmit or receive names."""
+    return _check_link(project, link, _review_of(project, {link.a_connector, link.b_connector}))
+
+
+def _check_link(project: Project, link: Link, review: _Review) -> list[LinkFinding]:
     out: list[LinkFinding] = []
     lid = link.id
     ends = [
@@ -795,11 +879,11 @@ def check_link(project: Project, link: Link) -> list[LinkFinding]:
         return out
     pa = {p.id: p for p in a.pins}
     pb = {p.id: p for p in b.pins}
-    index = _signal_index(project)
+    index, table = review.types, review.table
     seen_a: set[str] = set()
     seen_b: set[str] = set()
-    other_a = pins_in_links(project, a.id, except_link=lid)
-    other_b = pins_in_links(project, b.id, except_link=lid)
+    other_a = _taken(review.owners, a.id, lid)
+    other_b = _taken(review.owners, b.id, lid)
     good: list[PinPair] = []
     for pair in link.pairs:
         missing = False
@@ -825,10 +909,10 @@ def check_link(project: Project, link: Link) -> list[LinkFinding]:
             which = (x, a) if not x.signal else (y, b)
             named = x if x.signal else y
             out.append(LinkFinding("link_signal_mismatch", "warning", f"Link {lid} pairs {where}, but pin {which[0].id} of {which[1].id} has no signal while the other is named {named.signal}. Name the pin, or change the pairing.", lid, _pin_ref(a.id, x.id)))  # fmt: skip
-        elif x.signal and y.signal and not name_relation(x.signal, y.signal):
+        elif x.signal and y.signal and not name_relation(x.signal, y.signal, table):
             out.append(LinkFinding("link_signal_mismatch", "warning", f"Link {lid} pairs {where}, but their signals differ ({x.signal} and {y.signal}). Check the pairing, or rename a signal.", lid, _pin_ref(a.id, x.id)))  # fmt: skip
         dx, dy = _direction(project, a, x, index), _direction(project, b, y, index)
-        if (side := same_side(x.signal, y.signal)) and not _conflict(dx, dy):
+        if (side := _pair_side(x, y, table)) and not _conflict(dx, dy):
             out.append(LinkFinding("link_signal_mismatch", "warning", f"Link {lid} pairs {where}, and both are named {x.signal}, which looks like {side} to {side}. A transmit pin should meet a receive pin. Check the pairing, or the names.", lid, _pin_ref(a.id, x.id)))  # fmt: skip
         if why := _conflict(dx, dy):
             fight = (
@@ -849,12 +933,15 @@ def check_link(project: Project, link: Link) -> list[LinkFinding]:
                 pin.signal
                 and pid not in paired
                 and pid not in other
-                and effective_role(pin, project, conn) != "spare"
+                and effective_role(pin, project, conn, index) != "spare"
             ):
                 far = b if conn is a else a
                 out.append(LinkFinding("link_pin_unpaired", "warning", f"Pin {pid} of {conn.id} is named {pin.signal} but is not paired in link {lid}. Pair it with a pin of {far.id}, or set its role to Spare if it is not used.", lid, _pin_ref(conn.id, pid)))  # fmt: skip
     roles = [
-        {effective_role(pa[p.a_pin], project, a), effective_role(pb[p.b_pin], project, b)}
+        {
+            effective_role(pa[p.a_pin], project, a, index),
+            effective_role(pb[p.b_pin], project, b, index),
+        }
         for p in good
     ]
     powered = [p for p, r in zip(good, roles, strict=True) if "power" in r]
@@ -869,22 +956,27 @@ def check_link(project: Project, link: Link) -> list[LinkFinding]:
 
 
 def check_links(project: Project) -> list[LinkFinding]:
-    """The review of every link, by link ID."""
-    return [f for x in sorted(project.links.values(), key=lambda x: x.id) for f in check_link(project, x)]  # fmt: skip
+    """The review of every link, by link ID (the interface types, the counterpart table and the
+    pins the links pair are worked out once, not for each link)."""
+    if not project.links:
+        return []
+    review = _review_of(project, None)
+    return [f for x in sorted(project.links.values(), key=lambda x: x.id) for f in _check_link(project, x, review)]  # fmt: skip
 
 
 __all__ = [
-    "COUNTERPARTS",
     "DerivedInterface",
     "LinkEnd",
     "LinkFinding",
     "Proposal",
     "check_link",
     "check_links",
+    "counterparts_of",
     "derived_interfaces",
     "effective_role",
     "link_caption",
     "link_ends",
+    "link_pin_index",
     "link_path",
     "links_of_connector",
     "name_relation",

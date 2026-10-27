@@ -15,10 +15,13 @@ HarnessStatus = Literal["draft", "in_review", "released"]
 ShieldKind = Literal["twisted_pair", "shielded_pair", "overall_shield", "quad", "coax"]
 ShieldEnd = Literal["backshell_360", "pigtail", "floating"]
 PinRole = Literal["", "power", "return", "ground", "signal", "shield", "spare"]
+PinDirection = Literal["", "in", "out", "bidir"]  # "" = not set: the name and the type decide
 
 
 class Pin(SparseEntity):
-    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"function", "contact_part", "role"})
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset(
+        {"function", "contact_part", "role", "direction"}
+    )
 
     id: PinId
     signal: Name | None = None
@@ -36,6 +39,10 @@ class Pin(SparseEntity):
         None  # the contact (a library part of category contact) the cable side uses here (1.7.0)
     )
     role: PinRole = ""  # what the pin is for; empty = derived from the signal name (M2)
+    direction: PinDirection = (
+        ""  # which way the signal runs at this pin, seen from the device (1.9.0); empty = not set:
+        # the link checks and the pairing proposal then take it from the interface types
+    )
 
 
 class Connector(SparseEntity):

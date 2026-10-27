@@ -674,8 +674,8 @@ class ExportDialog(QDialog):
             return strings.EXPORT_DAMAGED
         if self.output_folder() is None:
             return "unsaved"
-        if not self.ctl.project.harnesses:
-            return strings.EXPORT_NO_HARNESSES
+        if not self.ctl.project.harnesses and not self.ctl.project.links:
+            return strings.EXPORT_NO_HARNESSES  # connections alone give the connection list
         return None
 
     def refresh(self) -> None:
@@ -793,7 +793,7 @@ class ExportDialog(QDialog):
         labels: dict[tuple[str, str], str] = {}
         if files is None:
             for scope, docs in export_docs.planned_layout(
-                project.harnesses, self.drawings.isChecked()
+                project.harnesses, self.drawings.isChecked(), bool(project.links)
             ):
                 scopes[scope] = [d.key for d in docs]
                 for d in docs:
@@ -807,7 +807,7 @@ class ExportDialog(QDialog):
             order = [*sorted(project.harnesses), export_docs.SYSTEM]
             known = [s for s in order if any(s == k[0] for k in counts)]
             extra = sorted({k[0] for k in counts} - set(order))
-            planned = {key: i for i, key in enumerate(d.key for d in (*export_docs.HARNESS_DOCS, *export_docs.SYSTEM_DOCS))}  # fmt: skip
+            planned = {key: i for i, key in enumerate(d.key for d in (*export_docs.HARNESS_DOCS, *export_docs.SYSTEM_DOCS, *export_docs.CONNECTION_DOCS))}  # fmt: skip
             for scope in [*known, *extra]:
                 keys = sorted((k[1] for k in counts if k[0] == scope), key=lambda k: (planned.get(k, 10_000), k))  # fmt: skip
                 scopes[scope] = keys
