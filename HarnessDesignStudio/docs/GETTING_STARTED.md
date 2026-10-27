@@ -292,7 +292,7 @@ harness-design-studio drc wheel-link
 ```
 
 ```
-Open: 1 error(s), 7 warning(s), 5 note(s). Waived: 0.
+Open: 1 error(s), 7 warning(s), 6 note(s). Waived: 0.
 ```
 
 One **error**: *The model changed after the harness plans were generated. Generate again before releasing.* Approving parts changed the design's library, so the plans and outputs are out of date. That is exactly what the check is for. Make the plans and outputs current:
@@ -307,7 +307,7 @@ harness-design-studio drc wheel-link
 ```
 
 ```
-Open: 0 error(s), 7 warning(s), 5 note(s). Waived: 0.
+Open: 0 error(s), 7 warning(s), 6 note(s). Waived: 0.
 ```
 
 0 errors, and 7 warnings: the three parts you approved no longer warn. Other imports work the same way:
