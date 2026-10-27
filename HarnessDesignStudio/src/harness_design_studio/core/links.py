@@ -27,14 +27,16 @@ from dataclasses import dataclass
 from pydantic import TypeAdapter, ValidationError
 
 from .commands import Delete, Op, Put, apply_ops
-from .devices import derive_meaning, ops_set_pin
+from .devices import derive_meaning, derive_meaning_types, ops_set_pin
 from .edit import EditError, clone_with
 from .ids import check_id
+from .integrity import mating_plugs
 from .issues import Severity
 from .manual_harness import plan_add_connector, plan_new_harness
 from .model import Connector, InterfaceType, Link, Pin, PinPair, Project, evolve
 from .model.base import Label
 from .vcs.lockview import lock_reason
+from .verify import direction_judged, passthrough_signals
 from .wires import plan_add_wire, used_ids
 
 # Signal names that are the two ends of one line: a transmit pin meets a receive pin. Compared
@@ -51,6 +53,27 @@ _COUNTER: dict[str, str] = {}
 for _x, _y in COUNTERPARTS:
     _COUNTER[_x.casefold()] = _y.casefold()
     _COUNTER[_y.casefold()] = _x.casefold()
+
+# Names are also split into words (UART_TX -> UART, TX; SPW_DOUT+ -> SPW, DOUT, +; TX_P -> TX, P).
+# A word of the transmit family meets the matching word of the receive family when everything else
+# in the two names is the same (a prefix such as UART_ or SPW_ may be missing on one side). Two EQUAL
+# names with a transmit word (or two with a receive word) are never paired by the proposal: they
+# look like transmit to transmit.
+_TX_RX_WORDS: tuple[tuple[str, str], ...] = (
+    ("tx", "rx"),
+    ("txd", "rxd"),
+    ("txp", "rxp"),
+    ("txn", "rxn"),
+    ("dout", "din"),
+    ("mosi", "miso"),
+    ("sdo", "sdi"),
+)
+_WORD_COUNTER: dict[str, str] = {}
+_WORD_SIDE: dict[str, str] = {}
+for _x, _y in _TX_RX_WORDS:
+    _WORD_COUNTER[_x], _WORD_COUNTER[_y] = _y, _x
+    _WORD_SIDE[_x], _WORD_SIDE[_y] = "transmit", "receive"
+_WORDS = re.compile(r"[a-z]+|\d+|[+-]")
 
 _LABEL = TypeAdapter(Label)
 _ANY_CONNECTOR = Connector(id="any", name="any", role="box", part_id="any")
@@ -69,15 +92,48 @@ def _name(signal: str | None) -> str:
     return (signal or "").strip().casefold()
 
 
+def _split_name(name: str) -> tuple[tuple[str, ...], str, tuple[str, ...]] | None:
+    """(words before, transmit/receive word, words after) of a name in lower case, or None when
+    the name has no word of the transmit or receive family."""
+    words = _WORDS.findall(name)
+    for k, w in enumerate(words):
+        if w in _WORD_SIDE:
+            return tuple(words[:k]), w, tuple(words[k + 1 :])
+    return None
+
+
 def name_relation(a: str | None, b: str | None) -> str:
     """ "equal" when two signal names are the same, "counterpart" when they are the two ends of one
-    line (TX and RX), else "". Case is ignored; an empty name matches nothing."""
+    line (TX and RX, UART_TX and UART_RX, SPW_DOUT+ and SPW_DIN+, TX_P and RX_P, MOSI and MISO),
+    else "". Case is ignored; an empty name matches nothing."""
     x, y = _name(a), _name(b)
     if not x or not y:
         return ""
     if x == y:
         return "equal"
-    return "counterpart" if _COUNTER.get(x) == y else ""
+    if _COUNTER.get(x) == y:
+        return "counterpart"
+    sx, sy = _split_name(x), _split_name(y)
+    if (
+        sx
+        and sy
+        and _WORD_COUNTER[sx[1]] == sy[1]
+        and sx[2] == sy[2]
+        and (sx[0] == sy[0] or not sx[0] or not sy[0])  # the same prefix, or none on one side
+    ):
+        return "counterpart"
+    return ""
+
+
+def same_side(a: str | None, b: str | None) -> str:
+    """ "transmit" or "receive" when two EQUAL signal names both carry a transmit word (TX, TXD,
+    DOUT, MOSI ...) or both a receive word (RX, RXD, DIN, MISO ...): joined, they would put a
+    transmitter on a transmitter. "" otherwise."""
+    x, y = _name(a), _name(b)
+    if not x or x != y:
+        return ""
+    parts = _split_name(x)
+    return _WORD_SIDE[parts[1]] if parts else ""
 
 
 def _signal_index(project: Project) -> dict[str, list[InterfaceType]]:
@@ -94,8 +150,19 @@ def _direction(
     pin: Pin,
     index: dict[str, list[InterfaceType]],
 ) -> str:
-    """out, in, bidir or passive from the interface types, or "" when it is not known."""
-    return derive_meaning(project, connector, pin, index)[0]
+    """out, in, bidir or passive from the interface types, or "" when it is not known. It is also
+    "" where the design rule `direction-conflict` does not judge the directions: a signal of a
+    one-directional type (analog SIG+/SIG-, discrete SIG, LVDS D+/D-, pyro FIRE+/FIRE-, I2C SCL
+    list `out` at both ends) and a directional signal with no partner in its type (it runs straight
+    through to the same name)."""
+    direction, _category, _note, types = derive_meaning_types(project, connector, pin, index)
+    if direction not in ("out", "in"):
+        return direction
+    for t in types:
+        pairs = [(s.name, s.direction) for s in t.signals]
+        if direction_judged(pairs) and (pin.signal or "") not in passthrough_signals(pairs):
+            return direction
+    return ""
 
 
 def _conflict(da: str, db: str) -> str:
@@ -208,8 +275,11 @@ class Proposal:
 
 def propose_pairs(project: Project, a_connector_id: str, b_connector_id: str) -> Proposal:
     """Pair the pins of two device connectors by signal name only: equal names, or the two ends of
-    one line (TX and RX, TXD and RXD, TX+ and RX+, TX- and RX-, TXP and RXP, TXN and RXN, in both
-    orders). The directions of the interface types decide where they are known: an output goes to
+    one line (TX and RX, TXD and RXD, TX+ and RX+, TX_P and RX_P, DOUT and DIN, MOSI and MISO, SDO
+    and SDI, with or without a prefix such as UART_ or SPW_, in both orders). Two equal names that
+    both look like transmit (TX, DOUT, MOSI ...) or both like receive are never paired: they are
+    left unpaired and named in the notes, because a transmitter on a transmitter is the mistake a
+    vendor's own-point-of-view names hide. The directions of the interface types decide where they are known: an output goes to
     an input, bidirectional and passive pins go with anything, output against output and input
     against input are not paired and are named in the notes. A pin is used once; a pin with no
     signal is left unpaired; a pin another link pairs is not offered. The result depends only on
@@ -230,8 +300,16 @@ def propose_pairs(project: Project, a_connector_id: str, b_connector_id: str) ->
                     f"Pin{'s' if len(pids) > 1 else ''} {', '.join(pids)} of {conn.id} "
                     f"{'are' if len(pids) > 1 else 'is'} already paired in link {lid}."
                 )
+        wired = [p for p in conn.pins if p.interface_id and p.id not in taken]
+        if wired:
+            notes.append(
+                f"Pin{'s' if len(wired) > 1 else ''} {', '.join(p.id for p in sorted(wired, key=lambda p: natural_key(p.id)))} of "
+                f"{conn.id} {'are' if len(wired) > 1 else 'is'} used by an interface that "
+                "Generate wires, so not offered."
+            )
         free[conn.id] = sorted(
-            (p for p in conn.pins if p.id not in taken), key=lambda p: natural_key(p.id)
+            (p for p in conn.pins if p.id not in taken and not p.interface_id),
+            key=lambda p: natural_key(p.id),
         )
     dirs = {
         (conn.id, p.id): _direction(project, conn, p, index) for conn in (a, b) for p in conn.pins
@@ -248,21 +326,28 @@ def propose_pairs(project: Project, a_connector_id: str, b_connector_id: str) ->
                     continue
                 if name_relation(pa.signal, pb.signal) != wanted:
                     continue
+                if same_side(pa.signal, pb.signal):
+                    continue  # transmit to transmit (or receive to receive): left to a person
                 if _conflict(dirs[(a.id, pa.id)], dirs[(b.id, pb.id)]):
                     continue
                 pairs.append(PinPair(a_pin=pa.id, b_pin=pb.id))
                 used_a.add(pa.id)
                 used_b.add(pb.id)
                 break
-    for pa in free[a.id]:  # names that fit, stopped by the directions
+    for pa in free[a.id]:  # names that fit, stopped by what they look like or by the directions
         for pb in free[b.id]:
             if pa.id in used_a or pb.id in used_b or not name_relation(pa.signal, pb.signal):
                 continue
-            why = _conflict(dirs[(a.id, pa.id)], dirs[(b.id, pb.id)])
-            if why:
+            where = (
+                f"{pa.signal} on pin {pa.id} of {a.id} and {pb.signal} on pin {pb.id} of "
+                f"{b.id} were not paired: "
+            )
+            if why := _conflict(dirs[(a.id, pa.id)], dirs[(b.id, pb.id)]):
+                notes.append(f"{where}{why}.")
+            elif side := same_side(pa.signal, pb.signal):
                 notes.append(
-                    f"{pa.signal} on pin {pa.id} of {a.id} and {pb.signal} on pin {pb.id} of "
-                    f"{b.id} were not paired: {why}."
+                    f"{where}they look like {side} to {side}. If one device names its pins "
+                    "from the other's point of view, pair them yourself."
                 )
     pairs.sort(key=lambda p: natural_key(p.a_pin))
     return Proposal(
@@ -353,6 +438,29 @@ def _unlocked(project: Project, link_id: str) -> None:
         raise EditError(f"Link {link_id} cannot change. {why}")
 
 
+def _refuse_if_built(
+    project: Project, a: Connector, b: Connector, pairs: Sequence[PinPair]
+) -> None:
+    """A link must not meet something that is already built: a cable plug of another harness on
+    one of its device connectors, or a pin that an interface allocated (Generate wires it)."""
+    plugs = mating_plugs(project.harnesses.values())
+    for conn in (a, b):
+        if found := plugs.get(conn.id):
+            hid, cid = found[0]
+            raise EditError(
+                f"{conn.id} has a cable plug on it already: {cid} of harness {hid}. A connector "
+                "takes one plug. Open that harness, or delete it first."
+            )
+    for conn, ids in ((a, [x.a_pin for x in pairs]), (b, [x.b_pin for x in pairs])):
+        pins = {p.id: p for p in conn.pins}
+        for pid in ids:
+            if (pin := pins.get(pid)) is not None and pin.interface_id:
+                raise EditError(
+                    f"Pin {pid} of {conn.id} is used by interface {pin.interface_id}, which "
+                    "Generate wires. Pair another pin, or change that interface first."
+                )
+
+
 def plan_add_link(
     project: Project,
     a_connector: str,
@@ -372,6 +480,7 @@ def plan_add_link(
         else _as_pairs(pairs)
     )
     _check_pairs(project, a, b, chosen, None)
+    _refuse_if_built(project, a, b, chosen)
     if link_id is None:
         lid = _next_link_id(project)
     else:
@@ -447,7 +556,9 @@ def plan_create_harness(project: Project, link_id: str) -> tuple[list[Op], str]:
     `manual_harness.plan_add_connector` makes them), one wire drawn by hand for each pair with the
     signal of the pins, and the link now names the harness. No length, gauge or colour is set;
     they stay pending, as for any wire a person draws. One undo step. Refused when the link has
-    no pairs, has a harness already, or does not pass its review for a missing connector or pin."""
+    no pairs, has a harness already, does not pass its review for a missing connector or pin, or when
+    a device connector of the link has a cable plug of another harness on it, or a paired pin is
+    allocated to an interface."""
     _writable(project)
     link = _known_link(project, link_id)
     if link.harness_id:
@@ -461,6 +572,7 @@ def plan_create_harness(project: Project, link_id: str) -> tuple[list[Op], str]:
         if f.code in ("link_dangling", "link_pin_reused"):
             raise EditError(f.message)
     a, b = _two_devices(project, link.a_connector, link.b_connector)
+    _refuse_if_built(project, a, b, link.pairs)
     title = link.name or f"{a.unit_id} to {b.unit_id}"
     names = {h.name.casefold() for h in project.harnesses.values()}
     unique, n = title, 1
@@ -639,6 +751,27 @@ def _words(direction: str) -> str:
     return "an output" if direction == "out" else "an input"
 
 
+def _is_power_loop(
+    project: Project, powered: Sequence[PinPair], pa: Mapping[str, Pin], pb: Mapping[str, Pin]
+) -> bool:
+    """True when the power pairs of a link are a two-wire loop that carries its own return: both
+    signals of an interface type of the power category that has no RTN or GND (a heater pair,
+    HTR+ and HTR-) are paired, at both ends. Such a pair needs no extra return pin."""
+    names_a = {_name(pa[p.a_pin].signal) for p in powered}
+    names_b = {_name(pb[p.b_pin].signal) for p in powered}
+    for t in project.interface_types.values():
+        sig = {_name(s.name) for s in t.signals}
+        if (
+            t.category == "power"
+            and len(sig) >= 2
+            and not sig & {"rtn", "gnd"}
+            and sig <= names_a
+            and sig <= names_b
+        ):
+            return True
+    return False
+
+
 def check_link(project: Project, link: Link) -> list[LinkFinding]:
     """Review a link without changing anything. The codes:
     `link_dangling` (error: a connector or pin of the link is gone), `link_pin_reused` (error: a pin
@@ -646,7 +779,8 @@ def check_link(project: Project, link: Link) -> list[LinkFinding]:
     input against input), `link_signal_mismatch` (warning: the names on a pair differ and are not
     the two ends of one line), `link_pin_unpaired` (warning: a pin with a signal that no pair of
     this link or of another link uses), `link_power_without_return` (warning: a power pair and no
-    return pair on the link). A pin with the role "spare" is never reported as unpaired."""
+    return pair on the link; a heater pair, HTR+ and HTR-, is a two-wire loop and has its own
+    return). A pin with the role "spare" is never reported as unpaired."""
     out: list[LinkFinding] = []
     lid = link.id
     ends = [
@@ -694,6 +828,8 @@ def check_link(project: Project, link: Link) -> list[LinkFinding]:
         elif x.signal and y.signal and not name_relation(x.signal, y.signal):
             out.append(LinkFinding("link_signal_mismatch", "warning", f"Link {lid} pairs {where}, but their signals differ ({x.signal} and {y.signal}). Check the pairing, or rename a signal.", lid, _pin_ref(a.id, x.id)))  # fmt: skip
         dx, dy = _direction(project, a, x, index), _direction(project, b, y, index)
+        if (side := same_side(x.signal, y.signal)) and not _conflict(dx, dy):
+            out.append(LinkFinding("link_signal_mismatch", "warning", f"Link {lid} pairs {where}, and both are named {x.signal}, which looks like {side} to {side}. A transmit pin should meet a receive pin. Check the pairing, or the names.", lid, _pin_ref(a.id, x.id)))  # fmt: skip
         if why := _conflict(dx, dy):
             fight = (
                 "Two outputs drive against each other."
@@ -722,7 +858,11 @@ def check_link(project: Project, link: Link) -> list[LinkFinding]:
         for p in good
     ]
     powered = [p for p, r in zip(good, roles, strict=True) if "power" in r]
-    if powered and not any("return" in r for r in roles):
+    if (
+        powered
+        and not any("return" in r for r in roles)
+        and not _is_power_loop(project, powered, pa, pb)
+    ):
         shown = ", ".join(f"{p.a_pin}-{p.b_pin}" for p in powered[:4])
         out.append(LinkFinding("link_power_without_return", "warning", f"Link {lid} pairs power (pins {shown}) but no return. Pair the return pin (RTN), or set the role of the return pin to Return.", lid, _pin_ref(a.id, powered[0].a_pin)))  # fmt: skip
     return out

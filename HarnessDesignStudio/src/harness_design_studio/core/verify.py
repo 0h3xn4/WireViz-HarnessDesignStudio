@@ -10,6 +10,7 @@ choices, see the design rules). It never raises.
 """
 
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass, field
 
 from .generation_status import generation_status
@@ -49,7 +50,7 @@ class VerifyReport:
         self.issues.append(Issue("warning", code, message, None, obj))
 
 
-def _pairing(signals: list[tuple[str, str]]) -> tuple[list[str], list[str], set[str]]:
+def _pairing(signals: Sequence[tuple[str, str]]) -> tuple[list[str], list[str], set[str]]:
     """Outputs, inputs and the directional signals that pass straight through (no partner)."""
     outs = [n for n, d in signals if d == "out"]
     ins = [n for n, d in signals if d == "in"]
@@ -57,13 +58,21 @@ def _pairing(signals: list[tuple[str, str]]) -> tuple[list[str], list[str], set[
     return outs[:paired], ins[:paired], {*outs[paired:], *ins[paired:]}
 
 
-def passthrough_signals(signals: list[tuple[str, str]]) -> set[str]:
+def passthrough_signals(signals: Sequence[tuple[str, str]]) -> set[str]:
     """Unpaired directional signals (more outputs than inputs or the reverse): they connect to
     the same name at the other end. The design rules use this too, so both agree."""
     return _pairing(signals)[2]
 
 
-def expected_connections(signals: list[tuple[str, str]]) -> Counter[Connection]:
+def direction_judged(signals: Sequence[tuple[str, str]]) -> bool:
+    """True when the directions of an interface type can be judged: it has outputs and inputs.
+    A one-directional type (analog SIG+/SIG-, discrete SIG, LVDS D+/D-, pyro FIRE+/FIRE-, I2C SCL
+    with no input) lists its signals as `out` at both ends, so two outputs on a wire are right.
+    The design rules `direction-conflict` and `link-direction` both use this."""
+    return {"out", "in"} <= {d for _, d in signals}
+
+
+def expected_connections(signals: Sequence[tuple[str, str]]) -> Counter[Connection]:
     """Connections an interface of this type needs, as unordered pairs of (end, signal).
 
     End 0/1 are the interface's first/second endpoint. An `out` signal at one end connects to the
@@ -243,6 +252,77 @@ def _check_shields(project: Project, rep: VerifyReport) -> None:
                 )
 
 
+def _expected_signal(x: str | None, y: str | None) -> set[str | None]:
+    """The signal label a wire between two pins may carry: one name when both pins have it,
+    "x/y" (or "y/x") when they differ, the one that is there when only one has a name."""
+    a, b = (x or "").strip(), (y or "").strip()
+    if a and b and a != b:
+        return {f"{a}/{b}"[:200], f"{b}/{a}"[:200]}
+    return {a or b or None}
+
+
+def link_issues(project: Project) -> list[Issue]:
+    """Errors for a harness made from a link that no longer carries what the link pairs: the pins
+    through the two cable connectors and the signals must be the link's. Only links that name a
+    harness are checked (`Link.harness_id`); a link with no harness has nothing to compare. It
+    reads the link, the harness and the device pins as saved, and shares no code with the planner
+    that made the harness."""
+    out: list[Issue] = []
+    for link in sorted(project.links.values(), key=lambda x: x.id):
+        h = project.harnesses.get(link.harness_id or "")
+        if h is None:
+            continue  # no harness named, or a harness that is gone (the integrity check says so)
+        ends = (link.a_connector, link.b_connector)
+        cable = [next((c.id for c in h.connectors if c.mates_with == box), None) for box in ends]
+        if cable[0] is None or cable[1] is None:
+            lacking = ends[0] if cable[0] is None else ends[1]
+            out.append(
+                Issue(
+                    "error", "link_wire_mismatch",
+                    f"Link {link.id} says harness {h.id} was made from it, but {h.id} has no cable connector that plugs into {lacking}. Make the harness again from the link, or delete the link.",
+                    None, link.id,
+                )
+            )  # fmt: skip
+            continue
+        ca, cb = cable
+        want = Counter((p.a_pin, p.b_pin) for p in link.pairs)
+        found: Counter[tuple[str, str]] = Counter()
+        wire_of: dict[tuple[str, str], list[Wire]] = {}
+        for w in h.wires:
+            if (w.from_connector, w.to_connector) == (ca, cb):
+                key = (w.from_pin, w.to_pin)
+            elif (w.from_connector, w.to_connector) == (cb, ca):
+                key = (w.to_pin, w.from_pin)
+            else:
+                continue
+            found[key] += 1
+            wire_of.setdefault(key, []).append(w)
+        a, b = (project.connectors.get(box) for box in ends)
+        pins_a = {p.id: p for p in a.pins} if a is not None else {}
+        pins_b = {p.id: p for p in b.pins} if b is not None else {}
+        for key in sorted(set(want) | set(found)):
+            n_want, n_have = want.get(key, 0), found.get(key, 0)
+            where = f"pin {key[0]} of {ends[0]} with pin {key[1]} of {ends[1]}"
+            between = f"pin {key[0]} of {ends[0]} and pin {key[1]} of {ends[1]}"
+            if n_want > n_have:
+                text = f"Link {link.id} pairs {where}, but harness {h.id} has no wire between those pins. Add the wire, or change the pairing of the link."  # fmt: skip
+            elif n_have > n_want:
+                ids = ", ".join(w.id for w in wire_of[key])
+                text = f"Harness {h.id} has {'a wire' if n_have == 1 else 'wires'} {ids} between {between}, which link {link.id} does not pair. Remove the wire, or add the pair to the link."  # fmt: skip
+            else:
+                if key[0] in pins_a and key[1] in pins_b:
+                    ok = _expected_signal(pins_a[key[0]].signal, pins_b[key[1]].signal)
+                    bad = [w for w in wire_of[key] if w.signal not in ok]
+                else:
+                    bad = []
+                if not bad:
+                    continue
+                shown = bad[0].signal or "no signal"
+                text = f"Wire {bad[0].id} of harness {h.id} carries {shown} between {between}, which does not match the signals of the pins in link {link.id}. Correct the wire, or the signal of the pin."  # fmt: skip
+            out.append(Issue("error", "link_wire_mismatch", text, None, link.id))
+    return out
+
+
 def verify_project(project: Project) -> VerifyReport:
     rep = VerifyReport()
     cables = _cable_index(project)
@@ -304,6 +384,7 @@ def verify_project(project: Project) -> VerifyReport:
                 i.id,
             )
     _check_shields(project, rep)
+    rep.issues.extend(link_issues(project))
     for iid in sorted(set(by_interface) - set(project.interfaces)):
         rep.warning("wire_orphan", f"Wires trace to interface {iid}, which no longer exists.", iid)
 

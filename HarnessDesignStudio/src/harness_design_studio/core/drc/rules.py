@@ -21,7 +21,7 @@ from harness_design_studio.core.generate.sizing import (
 from harness_design_studio.core.integrity import check_integrity
 from harness_design_studio.core.model import Connector, Harness, InterfaceInstance, Project, Wire
 from harness_design_studio.core.vcs.consistency import release_integrity
-from harness_design_studio.core.verify import passthrough_signals
+from harness_design_studio.core.verify import direction_judged, passthrough_signals
 
 from .base import Hit, Rule, cfg, flag, number
 from .standard_rules import STANDARD_RULES
@@ -240,7 +240,9 @@ def _direction_conflict(project: Project) -> Iterator[Hit]:
         for w in h.wires:
             i = project.interfaces.get(w.interface_id or "")
             itype = project.interface_types.get(i.type_id) if i else None
-            if itype is None or not {"out", "in"} <= {s.direction for s in itype.signals}:
+            if itype is None or not direction_judged(
+                [(s.name, s.direction) for s in itype.signals]
+            ):
                 continue  # one-directional types (analog, discrete) cannot be judged by direction
             dirs = {s.name: s.direction for s in itype.signals}
             na = _end_signal(project, h, w.from_connector, w.from_pin) or ""
