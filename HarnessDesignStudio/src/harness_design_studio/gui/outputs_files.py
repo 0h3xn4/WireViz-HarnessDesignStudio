@@ -63,7 +63,7 @@ def read_listed(folder: Path) -> dict[str, str]:
     try:
         doc = json.loads((folder / MANIFEST).read_text(encoding="utf-8"))
         return {str(f["path"]): str(f["sha256"]) for f in doc["files"]}
-    except (OSError, ValueError, KeyError, TypeError, AttributeError):
+    except OSError, ValueError, KeyError, TypeError, AttributeError:
         return {}
 
 
@@ -71,7 +71,7 @@ def read_stamp(folder: Path) -> str:
     """The short model hash the files were made from ("" when the manifest cannot be read)."""
     try:
         return str(json.loads((folder / MANIFEST).read_text(encoding="utf-8"))["model_hash"])
-    except (OSError, ValueError, KeyError, TypeError):
+    except OSError, ValueError, KeyError, TypeError:
         return ""
 
 

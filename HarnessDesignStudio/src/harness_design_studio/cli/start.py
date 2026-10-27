@@ -10,7 +10,7 @@ from harness_design_studio.core import templates
 COMMANDS = ("new", "templates", "schema")
 
 
-def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None:
+def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     n = sub.add_parser(
         "new",
         help="create a new project from an example (blank, first-steps, minimal-satellite, small-satellite, flatsat)",

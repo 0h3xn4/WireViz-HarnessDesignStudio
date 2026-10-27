@@ -60,7 +60,7 @@ def commit(root: Path) -> str:
             text=True,
             check=True,
         )
-    except (OSError, subprocess.CalledProcessError):
+    except OSError, subprocess.CalledProcessError:
         return "unknown"
     return done.stdout.strip()
 

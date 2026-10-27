@@ -78,7 +78,11 @@ def test_the_ci_job_runs_both_halves_of_the_suite_and_keeps_the_coverage_gate() 
     commands = [ln.split("run:", 1)[1].strip() for ln in job.splitlines() if "run: pytest" in ln]
     assert len(commands) == 2, commands
     parallel, alone = commands
-    assert "-n auto" in parallel and '-m "not perf"' in parallel and "--cov " in parallel
+    # a pull request leaves out the timing tests and the `slow` ones; every other run (master) only the
+    # timing tests, so `slow` still runs before a release
+    assert "-n auto" in parallel and "--cov " in parallel
+    assert "'not perf and not slow'" in parallel and "|| 'not perf'" in parallel
+    assert "github.event_name == 'pull_request'" in parallel
     assert "--cov-fail-under=0" in parallel  # a subset of the tests cannot judge the gate
     assert "-n " not in alone and "-m perf" in alone and "--cov-append" in alone
     assert "fail-under" not in alone  # pyproject.toml's 90 applies to the combined number

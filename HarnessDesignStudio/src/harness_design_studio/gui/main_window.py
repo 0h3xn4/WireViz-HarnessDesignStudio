@@ -2570,11 +2570,11 @@ class MainWindow(QMainWindow):
             digest = "--------"
         try:
             generation = c.generation_status()
-        except (ValueError, HarnessError):
+        except ValueError, HarnessError:
             generation = "none"
         try:
             outputs = c.outputs_state()
-        except (ValueError, HarnessError, OSError):
+        except ValueError, HarnessError, OSError:
             outputs = "none"
         self._facts_key, self._facts = key, (digest, generation, outputs)
         self._facts_token = c.state_token
@@ -3176,7 +3176,7 @@ class MainWindow(QMainWindow):
         return worker.plan
 
     def _run_worker(
-        self, worker: "PlanWorker | OutputsWorker | ArrangeWorker", label: str, name: str
+        self, worker: PlanWorker | OutputsWorker | ArrangeWorker, label: str, name: str
     ) -> None:
         self._active_worker = worker
         self._set_busy(
@@ -3212,7 +3212,7 @@ class MainWindow(QMainWindow):
             self.jobs.finish()
 
     def _run_worker_loop(
-        self, worker: "PlanWorker | OutputsWorker | ArrangeWorker", label: str, name: str
+        self, worker: PlanWorker | OutputsWorker | ArrangeWorker, label: str, name: str
     ) -> None:
         progress = QProgressDialog(label, strings.CANCEL, 0, 100, self)
         progress.setObjectName(name)
@@ -3246,7 +3246,7 @@ class MainWindow(QMainWindow):
             import getpass
 
             return getpass.getuser()
-        except (OSError, KeyError, ImportError):
+        except OSError, KeyError, ImportError:
             return ""
 
     def change_flow(self, action: str, hid: str) -> None:
@@ -3995,7 +3995,7 @@ class MainWindow(QMainWindow):
             strings.EXPORT_DONE.format(len(built.files), built.stamp.short), None
         )
 
-    def _compute_outputs(self) -> "tuple[OutputSet, VerifyReport] | None":
+    def _compute_outputs(self) -> tuple[OutputSet, VerifyReport] | None:
         folder = self.ctl.outputs_folder()  # the same set as the last export there (D-169)
         had = folder is not None and drawings_exported(folder)
         worker = OutputsWorker(edit.clone_with(self.ctl.project, []), drawings=had)

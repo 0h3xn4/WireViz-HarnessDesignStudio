@@ -123,7 +123,7 @@ def _new_file_mode() -> int:
         for line in Path("/proc/self/status").read_text(encoding="ascii").splitlines():
             if line.startswith("Umask:"):
                 return 0o666 & ~int(line.split()[1], 8)
-    except (OSError, ValueError, IndexError):
+    except OSError, ValueError, IndexError:
         pass
     if sys.platform == "win32":
         return 0o666  # Windows keeps no permission bits beyond read-only
@@ -172,7 +172,7 @@ def escapes_root(root: Path, path: Path) -> bool:
     """True if `path` (after following links) is not inside `root`, e.g. a linked project folder."""
     try:
         return not path.resolve().is_relative_to(root.resolve())
-    except (OSError, RuntimeError):
+    except OSError, RuntimeError:
         return True
 
 
@@ -205,7 +205,7 @@ def _start_time(pid: int) -> str | None:
     try:
         text = Path(f"/proc/{pid}/stat").read_text(encoding="ascii", errors="replace")
         return text.rsplit(")", 1)[1].split()[19]  # field 22; the name (field 2) may hold spaces
-    except (OSError, IndexError):
+    except OSError, IndexError:
         return None
 
 
@@ -338,7 +338,7 @@ class ProjectLock:
     def _pid_in_file(self) -> int | str:
         try:
             return int(json.loads(self.path.read_text(encoding="utf-8"))["pid"])
-        except (OSError, ValueError, KeyError, TypeError):
+        except OSError, ValueError, KeyError, TypeError:
             return "?"
 
     def _held_message(self, pid: int | str) -> str:
@@ -400,7 +400,7 @@ class ProjectLock:
         try:
             info = json.loads(self.path.read_text(encoding="utf-8"))
             pid, host = int(info["pid"]), str(info["host"])
-        except (OSError, ValueError, KeyError, TypeError):
+        except OSError, ValueError, KeyError, TypeError:
             return None  # unreadable lock: treat as stale
         boot, start = info.get("boot"), info.get("start")
         ours = _boot_id()
@@ -429,7 +429,7 @@ class ProjectLock:
             self.path.unlink(missing_ok=True)
             self._held = False
 
-    def __enter__(self) -> "ProjectLock":
+    def __enter__(self) -> ProjectLock:
         self.acquire()
         return self
 

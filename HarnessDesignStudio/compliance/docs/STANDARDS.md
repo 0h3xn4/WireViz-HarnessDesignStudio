@@ -8,7 +8,7 @@ Addresses ECSS-Q-ST-80C 5.6.1.1 to 5.6.2.3, 6.3.3.2, 6.3.3.4, 6.3.4.1 to 6.3.4.5
 
 | Item | Choice | Where fixed |
 | --- | --- | --- |
-| Language | Python 3.12 or newer | `pyproject.toml` |
+| Language | Python 3.14 or newer | `pyproject.toml` |
 | GUI toolkit | PySide6 (LGPL) | `pyproject.toml`, `docs/DECISIONS.md` |
 | Data model | pydantic v2, strict, immutable | `core/model` |
 | Tests | pytest, hypothesis; 90 % branch and statement coverage on `core` | `pyproject.toml` |

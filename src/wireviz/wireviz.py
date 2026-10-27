@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-# -*- coding: utf-8 -*-
 
 import platform
 import sys
 from pathlib import Path
-from typing import Any, Dict, List, Tuple, Union
+from typing import Any
 
 import yaml
 
@@ -25,12 +24,12 @@ from . import APP_NAME
 
 
 def parse(
-    inp: Union[Path, str, Dict],
-    return_types: Union[None, str, Tuple[str]] = None,
-    output_formats: Union[None, str, Tuple[str]] = None,
-    output_dir: Union[str, Path] = None,
-    output_name: Union[None, str] = None,
-    image_paths: Union[Path, str, List] = [],
+    inp: Path | str | dict,
+    return_types: None | str | tuple[str] = None,
+    output_formats: None | str | tuple[str] = None,
+    output_dir: str | Path = None,
+    output_name: None | str = None,
+    image_paths: Path | str | list = [],
 ) -> Any:
     """
     This function takes an input, parses it as a WireViz Harness file,
@@ -402,9 +401,9 @@ def parse(
         return tuple(returns) if len(returns) != 1 else returns[0]
 
 
-def _get_yaml_data_and_path(inp: Union[str, Path, Dict]) -> (Dict, Path):
+def _get_yaml_data_and_path(inp: str | Path | dict) -> (dict, Path):
     # determine whether inp is a file path, a YAML string, or a Dict
-    if not isinstance(inp, Dict):  # received a str or a Path
+    if not isinstance(inp, dict):  # received a str or a Path
         try:
             yaml_path = Path(inp).expanduser().resolve(strict=True)
             # if no FileNotFoundError exception happens, get file contents

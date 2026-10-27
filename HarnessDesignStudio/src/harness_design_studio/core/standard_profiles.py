@@ -135,7 +135,7 @@ def _table_ok(v: object, numeric_keys: bool, upper: float = 2) -> bool:
             try:
                 if int(k) < 1:
                     return False
-            except (TypeError, ValueError):
+            except TypeError, ValueError:
                 return False
         if not isinstance(x, int | float) or isinstance(x, bool) or not 0 < x <= upper:
             return False

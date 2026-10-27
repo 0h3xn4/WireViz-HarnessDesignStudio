@@ -2,6 +2,7 @@
 the change log and its outputs."""
 
 import json
+from collections.abc import Iterator
 from pathlib import Path
 
 import pytest
@@ -42,6 +43,7 @@ from harness_design_studio.core.vcs.report import (
     revision_report,
     working_diff,
 )
+from tests._state_cache import copy_state
 
 WHEN = "2026-03-01"
 _BASE: Project | None = None
@@ -65,8 +67,35 @@ def releasable(p: Project) -> str:
     )
 
 
+_FACTORY: pytest.TempPathFactory | None = None
+_EXPORT: Path | None = None
+
+
+@pytest.fixture(scope="module", autouse=True)
+def _export_template(tmp_path_factory: pytest.TempPathFactory) -> Iterator[None]:
+    """The outputs of the unchanged sat15_full project are written once per module (on first use,
+    into a folder of this module's own) and each test copies them; the template is never changed."""
+    global _FACTORY, _EXPORT
+    _FACTORY, _EXPORT = tmp_path_factory, None
+    yield
+    _FACTORY, _EXPORT = None, None
+
+
+def _export_of_the_base() -> Path:
+    global _EXPORT
+    if _EXPORT is None:
+        assert _FACTORY is not None
+        _EXPORT = _FACTORY.mktemp("export-template") / "outputs"
+        write_outputs(full(), _EXPORT)
+    return _EXPORT
+
+
 def exported(p: Project, tmp: Path) -> Path:
+    """Write the outputs of `p` into tmp/outputs. A project that equals the unchanged base gets a
+    copy of the outputs written once (they depend on the project alone); any other is written."""
     folder = tmp / "outputs"
+    if _FACTORY is not None and _BASE is not None and not folder.exists() and p == _BASE:
+        return copy_state(_export_of_the_base(), folder)
     write_outputs(p, folder)
     return folder
 
@@ -739,6 +768,7 @@ def test_empty_revision_report() -> None:
 # ---- CLI ------------------------------------------------------------------------------------------
 
 
+@pytest.mark.slow
 def test_cli_full_change_control_cycle(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     p = full()
     hid = releasable(p)

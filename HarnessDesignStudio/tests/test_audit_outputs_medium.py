@@ -17,7 +17,7 @@ from typing import Any
 import pytest
 
 from harness_design_studio.cli.main import main as cli_main
-from harness_design_studio.core import configcheck
+from harness_design_studio.core import configcheck, edit
 from harness_design_studio.core.commands import Put, SetConfig, apply_ops
 from harness_design_studio.core.generate.engine import generate_project
 from harness_design_studio.core.io.saver import save_project
@@ -404,10 +404,23 @@ CELL_MUTATIONS = [
 ]
 
 
+_PRISTINE_CODES: dict[str, set[str]] = {}
+
+
+def pristine_codes(name: str) -> set[str]:
+    """The error codes the verifier gives for the unchanged output set of a reference project.
+    The set is the same for every test, and the verifier needs about a second for it, so it is
+    worked out once per process (the files and the project are never changed here)."""
+    if name not in _PRISTINE_CODES:
+        p, files = project_and_files(name)
+        _PRISTINE_CODES[name] = codes(p, files)
+    return set(_PRISTINE_CODES[name])
+
+
 @pytest.mark.parametrize(("name", "rel", "row", "col", "code"), CELL_MUTATIONS)
 def test_changing_one_cell_is_caught(name: str, rel: str, row: int, col: int, code: str) -> None:
     p, files = project_and_files(name)
-    assert code not in codes(p, files)
+    assert code not in pristine_codes(name)
 
     def change(t: list[list[str]]) -> None:
         t[row][col] = ZZ
@@ -699,6 +712,20 @@ TRIGGERS = ("=", "+", "-", "@", "\t", "\r")
 FORMULA_NAMES = ["=1+1", "+cmd|' /C calc'!A0", "-2+3", "@SUM(1+1)", "\t=1+1", "'=x", "-x"]
 
 
+_FORMULA_BUILT: dict[str, tuple[Project, dict[str, bytes]]] = {}
+
+
+def _formula_built(name: str) -> tuple[Project, dict[str, bytes]]:
+    """The project of `_formula_project(name)` and its output set, built once per process: two
+    tests read the same set (building it takes about 3.5 s). The caller gets its own copy of the
+    project and of the file table; the bytes are immutable."""
+    if name not in _FORMULA_BUILT:
+        p = _formula_project(name)
+        _FORMULA_BUILT[name] = (p, build_outputs(p).files)
+    p, files = _FORMULA_BUILT[name]
+    return edit.clone_with(p, []), dict(files)
+
+
 def _formula_project(name: str) -> Project:
     p = sat15_full()
     unit = next(iter(p.units.values()))
@@ -727,8 +754,7 @@ def _plain_number(cell: str) -> bool:
 
 @pytest.mark.parametrize("name", FORMULA_NAMES)
 def test_no_cell_of_any_output_can_run_as_a_formula(name: str) -> None:
-    p = _formula_project(name)
-    files = build_outputs(p).files
+    _, files = _formula_built(name)
     seen_guarded = 0
     for rel, data in files.items():
         if rel.endswith(".csv"):
@@ -756,10 +782,10 @@ def test_workbook_cells_with_formula_characters_are_stored_as_text(name: str) ->
     assert cell.data_type != "f" and cell.value == name
 
 
+@pytest.mark.slow
 def test_every_csv_cell_of_the_hostile_names_reads_back() -> None:
     for name in FORMULA_NAMES:
-        p = _formula_project(name)
-        files = build_outputs(p).files
+        p, files = _formula_built(name)
         for rel, data in files.items():
             if rel.endswith(".csv"):
                 table = parse_csv(data)

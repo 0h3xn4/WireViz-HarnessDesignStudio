@@ -182,12 +182,12 @@ The `.deb` asks `apt` for these itself. More help: [`FAQ.md`](FAQ.md).
 
 ## C. Run from source (developers)
 
-You need Python 3.12 or newer (Ubuntu 24.04 has it) and the Qt libraries above.
+You need Python 3.14 or newer (Ubuntu 24.04 does not have it in its archive; `uv python install 3.14` is one way to get it) and the Qt libraries above.
 
 ```
-sudo apt install python3-venv git libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
+sudo apt install git libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
 git clone <the repository> && cd <the repository>/HarnessDesignStudio
-python3 -m venv .venv
+python3.14 -m venv .venv
 . .venv/bin/activate
 pip install -e ".[gui,dev]"
 ```

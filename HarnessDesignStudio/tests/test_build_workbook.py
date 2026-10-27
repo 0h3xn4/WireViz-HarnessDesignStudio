@@ -14,6 +14,7 @@ import pytest
 from harness_design_studio.core.commands import Put, apply_ops
 from harness_design_studio.core.model import Harness, Project, evolve
 from harness_design_studio.core.outputs.build import (
+    OutputSet,
     build_outputs,
     drawings_exported,
     outputs_status,
@@ -32,9 +33,27 @@ def project() -> Project:
 
 
 @pytest.fixture(scope="module")
-def built(project: Project) -> dict[str, bytes]:
-    """The output set without the drawings (quick to build, and all the workbook tests need)."""
-    return build_outputs(project, drawings=False).files
+def built_set(project: Project) -> OutputSet:
+    """The output set without the drawings (quick to build, and all the workbook tests need),
+    built once per module. A test that needs it as an object takes a copy with `_copy_of`."""
+    return build_outputs(project, drawings=False)
+
+
+@pytest.fixture(scope="module")
+def built(built_set: OutputSet) -> dict[str, bytes]:
+    return built_set.files
+
+
+@pytest.fixture(scope="module")
+def drawn_set(project: Project) -> OutputSet:
+    """The complete output set, with the drawings, built once per module (about 4 s). A test that
+    needs it as an object takes a copy with `_copy_of`."""
+    return build_outputs(project)
+
+
+def _copy_of(result: OutputSet) -> OutputSet:
+    """A set of its own with the same stamp and the same files (the bytes are immutable)."""
+    return OutputSet(result.stamp, dict(result.files))
 
 
 @pytest.fixture(scope="module")
@@ -199,8 +218,8 @@ def test_a_wire_without_length_or_gauge_stops_the_harness_being_ready(project: P
 # ---- the export ----------------------------------------------------------------------------------
 
 
-def test_the_drawings_are_optional_and_everything_else_stays(project: Project, built: dict[str, bytes]) -> None:  # fmt: skip
-    with_d = build_outputs(project).files
+def test_the_drawings_are_optional_and_everything_else_stays(project: Project, built: dict[str, bytes], drawn_set: OutputSet) -> None:  # fmt: skip
+    with_d = _copy_of(drawn_set).files
     without = built
     gone = set(with_d) - set(without)
     assert gone and all(re.search(r"/drawing_(A3|A4)(_s\d+)?\.(pdf|svg)$", k) for k in gone)
@@ -208,22 +227,22 @@ def test_the_drawings_are_optional_and_everything_else_stays(project: Project, b
     assert verify_outputs(project, without).ok and verify_outputs(project, with_d).ok
 
 
-def test_a_set_with_drawings_for_only_some_harnesses_is_reported(project: Project) -> None:
-    files = dict(build_outputs(project).files)
+def test_a_set_with_drawings_for_only_some_harnesses_is_reported(project: Project, drawn_set: OutputSet) -> None:  # fmt: skip
+    files = dict(drawn_set.files)
     first = sorted(project.harnesses)[0]
     for k in [k for k in files if k.startswith(f"harnesses/{first}/drawing_")]:
         del files[k]
     assert "out_missing" in _codes(project, files)
 
 
-def test_the_folder_remembers_whether_it_has_drawings(project: Project, tmp_path: Path) -> None:
+def test_the_folder_remembers_whether_it_has_drawings(project: Project, tmp_path: Path, built_set: OutputSet, drawn_set: OutputSet) -> None:  # fmt: skip
     folder = tmp_path / "outputs"
-    write_outputs(project, folder, build_outputs(project, drawings=False))
+    write_outputs(project, folder, _copy_of(built_set))
     assert drawings_exported(folder) is False
-    write_outputs(project, folder, build_outputs(project))
+    write_outputs(project, folder, _copy_of(drawn_set))
     assert drawings_exported(folder) is True
     assert outputs_status(project, folder, deep=True).state == "current"
-    write_outputs(project, folder, build_outputs(project, drawings=False))
+    write_outputs(project, folder, _copy_of(built_set))
     assert not list(folder.rglob("drawing_*"))  # the drawings of the earlier export are removed
     assert verify_outputs(project, read_folder(folder)).ok
 

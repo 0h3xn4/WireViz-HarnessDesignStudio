@@ -19,7 +19,14 @@ from harness_design_studio.core.recovery import write_journal
 from harness_design_studio.core.samples import mini3
 from harness_design_studio.core.vcs.consistency import release_integrity
 from harness_design_studio.core.vcs.release import plan_new_revision
-from tests.test_change_control import WHEN, do_release, exported, full, releasable
+from tests.test_change_control import (  # noqa: F401  (the fixture is used by every test)
+    WHEN,
+    _export_template,
+    do_release,
+    exported,
+    full,
+    releasable,
+)
 
 # ---- A-2: undo must not erase a saved release ---------------------------------------------------
 

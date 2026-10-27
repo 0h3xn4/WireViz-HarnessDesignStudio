@@ -236,7 +236,7 @@ def _utf8_streams() -> None:
                 reconfigure(errors="replace")
             else:
                 reconfigure(encoding="utf-8", errors="replace")
-        except (OSError, ValueError):  # a stream that cannot be changed stays as it is
+        except OSError, ValueError:  # a stream that cannot be changed stays as it is
             pass
 
 
@@ -323,7 +323,7 @@ def _run(args: argparse.Namespace) -> int:
     except ValueError as exc:  # includes validation errors of the data model and bad encodings
         print(f"error: {_plain(exc)}", file=sys.stderr)
         return 2
-    except (LookupError, RecursionError):
+    except LookupError, RecursionError:
         print("error: the input is not in a form the tool can read.", file=sys.stderr)
         return 2
 
@@ -337,7 +337,7 @@ def _plain(exc: ValueError) -> str:
                 f"{'.'.join(str(p) for p in e['loc']) or 'value'}: {e['msg']}" for e in errors()
             ]
             return "; ".join(parts[:3]) + (f" (+{len(parts) - 3} more)" if len(parts) > 3 else "")
-        except (TypeError, KeyError):
+        except TypeError, KeyError:
             pass
     return str(exc).splitlines()[0][:200] if str(exc) else "a value is not acceptable."
 

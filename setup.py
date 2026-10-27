@@ -18,7 +18,7 @@ setup(
     description="Easily document cables and wiring harnesses",
     long_description=README_PATH.read_text(encoding="utf-8"),
     long_description_content_type="text/markdown",
-    python_requires=">=3.7",
+    python_requires=">=3.14",
     install_requires=[
         "click",
         "pyyaml",
@@ -40,8 +40,7 @@ setup(
         "Development Status :: 4 - Beta",
         "Environment :: Console",
         "Programming Language :: Python :: 3",
-        "Programming Language :: Python :: 3.7",
-        "Programming Language :: Python :: 3.8",
+        "Programming Language :: Python :: 3.14",
         "Topic :: Utilities",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
     ],

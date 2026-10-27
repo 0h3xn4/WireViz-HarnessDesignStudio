@@ -13,7 +13,7 @@ from pathlib import Path
 from harness_design_studio import __version__
 
 ROOT = Path(__file__).resolve().parents[1]
-# libc6: the bundled libpython (Python 3.12/3.13 of the 24.04 build host) needs GLIBC_2.38 and the
+# libc6: the bundled libpython (Python 3.14 of the build host) needs GLIBC_2.38 and the
 # build host has glibc 2.39; the supported system is Ubuntu 24.04 or newer
 DEPENDS = (
     "libc6 (>= 2.39), libegl1, libgl1, libxkbcommon0, libxkbcommon-x11-0, libfontconfig1, "

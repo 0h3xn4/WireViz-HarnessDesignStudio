@@ -31,7 +31,10 @@ EXCLUDES = ["PySide6.QtNetwork", "PySide6.QtWebEngineCore", "PySide6.QtWebEngine
             "pkg_resources", "attr", "attrs", "pip",
             # pydantic imports rich (and through it pygments, markdown_it, mdurl, chardet, toml)
             # only to pretty-print its own debug output; their licences are not shipped
-            "rich", "pygments", "markdown_it", "mdurl", "chardet", "toml"]  # fmt: skip
+            "rich", "pygments", "markdown_it", "mdurl", "chardet", "toml",
+            # pydantic.v1.mypy (and PySide6's project tools) import tomli, which pip-audit pulls into
+            # the build environment; the program reads no TOML
+            "tomli"]  # fmt: skip
 FORBIDDEN = {"mypy", "hypothesis", "pytest", "_pytest", "lxml", "setuptools", "pip", "ruff"}
 # The only third-party code that may be in the package: the declared runtime dependencies (and what
 # they need), PySide6 with shiboken6, and the app. Everything else must be the standard library.
@@ -79,7 +82,7 @@ def undeclared_files(internal: Path) -> list[str]:
 
 
 def _is_python_library(top: str) -> bool:
-    """The interpreter itself: python3.13 on Linux."""
+    """The interpreter itself: python3.14 on Linux."""
     return top == "python3"
 
 

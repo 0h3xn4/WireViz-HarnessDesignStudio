@@ -38,7 +38,7 @@ def _missing_folder(file: Path) -> str:
     return f"error: the folder {file.parent} does not exist; make it first or choose another place."
 
 
-def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None:
+def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     c = sub.add_parser(
         "config",
         help="list missing or invalid engineering values; optionally load an ampacity table",

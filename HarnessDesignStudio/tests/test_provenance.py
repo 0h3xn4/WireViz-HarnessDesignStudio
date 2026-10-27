@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import json
 
+import pytest
+
 from harness_design_studio.core.generate.engine import generate_project
 from harness_design_studio.core.outputs.build import build_outputs
 from harness_design_studio.core.outputs.verify import verify_outputs
@@ -21,6 +23,7 @@ def test_provenance_names_tool_design_library_and_settings() -> None:
     assert "WireViz is not used" in doc["export_notes"]
 
 
+@pytest.mark.slow
 def test_provenance_is_deterministic_and_follows_the_settings() -> None:
     p = sat15()
     generate_project(p)

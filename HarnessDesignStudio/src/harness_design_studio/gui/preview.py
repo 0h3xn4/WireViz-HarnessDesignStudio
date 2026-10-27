@@ -123,7 +123,7 @@ class _SheetItem(QGraphicsItem):
     """The paper and everything drawn on it, painted straight from the sheet description (only
     what is in the exposed part, text only when it is big enough to read)."""
 
-    def __init__(self, view: "SheetView") -> None:
+    def __init__(self, view: SheetView) -> None:
         super().__init__()
         self._view = view
         self._pens: dict[tuple[str, float, tuple[float, float] | None, float], QPen] = {}
@@ -194,7 +194,7 @@ class _Overlay(QGraphicsItem):
     """The hovered and the selected objects drawn again on top: the selection with a thick
     solid outline, the hover with a dashed one, so they differ without colour."""
 
-    def __init__(self, view: "SheetView") -> None:
+    def __init__(self, view: SheetView) -> None:
         super().__init__()
         self._view = view
         self.setZValue(1)

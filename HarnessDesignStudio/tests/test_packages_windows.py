@@ -147,7 +147,7 @@ def test_the_package_check_ignores_shared_libraries_of_windows(tmp_path: Path) -
     internal = tmp_path / "_internal"
     internal.mkdir()
     for name in (
-        "python312.dll",
+        "python314.dll",
         "VCRUNTIME140.dll",
         "api-ms-win-core-file-l1-1-0.dll",
     ):
@@ -156,7 +156,7 @@ def test_the_package_check_ignores_shared_libraries_of_windows(tmp_path: Path) -
         (internal / name).mkdir()
     assert undeclared_files(internal) == []
     (internal / "chardet").mkdir()
-    (internal / "stray.cp312-win_amd64.pyd").write_text("x")  # an extension module is code
+    (internal / "stray.cp314-win_amd64.pyd").write_text("x")  # an extension module is code
     assert undeclared_files(internal) == ["chardet", "stray"]
 
 

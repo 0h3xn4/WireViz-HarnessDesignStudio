@@ -29,7 +29,7 @@ def run(project: Project) -> list[Finding]:
 
 def run_by_rule(
     project: Project, findings: list[Finding] | None = None
-) -> "list[by_rule.RuleResult]":
+) -> list[by_rule.RuleResult]:
     """A pass / fail / not checked / pending result for each rule (see `drc.by_rule`). Pass the
     findings of a check that already ran to avoid running the rules again."""
     from . import by_rule

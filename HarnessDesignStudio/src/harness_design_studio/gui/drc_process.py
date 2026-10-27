@@ -120,7 +120,7 @@ class DrcProcess:
             finally:
                 self._lock.release()
 
-    def _ensure(self) -> "subprocess.Popen[bytes]":
+    def _ensure(self) -> subprocess.Popen[bytes]:
         if not self.alive:
             self._kill()
             self._proc = subprocess.Popen(  # noqa: S603 (our own program, fixed arguments)

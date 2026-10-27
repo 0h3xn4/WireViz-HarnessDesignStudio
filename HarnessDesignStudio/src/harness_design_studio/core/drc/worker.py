@@ -94,7 +94,7 @@ def main() -> int:
     while True:
         try:
             msg = receive(stdin)
-        except (ValueError, pickle.UnpicklingError, EOFError):
+        except ValueError, pickle.UnpicklingError, EOFError:
             return 1
         if msg is None:
             return 0

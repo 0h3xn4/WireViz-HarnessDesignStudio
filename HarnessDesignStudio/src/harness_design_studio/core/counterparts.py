@@ -40,7 +40,7 @@ class Counterparts:
     side: Mapping[str, str]
 
     @classmethod
-    def of(cls, pairs: tuple[tuple[str, str], ...] | list[list[str]]) -> "Counterparts":
+    def of(cls, pairs: tuple[tuple[str, str], ...] | list[list[str]]) -> Counterparts:
         counter: dict[str, str] = {}
         side: dict[str, str] = {}
         for x, y in pairs:

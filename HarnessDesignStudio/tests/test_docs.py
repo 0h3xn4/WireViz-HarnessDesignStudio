@@ -241,6 +241,7 @@ def _run_document(
     return results
 
 
+@pytest.mark.slow
 def test_getting_started_commands_work_in_order(tmp_path: Path) -> None:
     """The tutorial is run word for word, so it cannot drift from the program."""
     doc = ROOT / "docs" / "GETTING_STARTED.md"
@@ -328,6 +329,7 @@ def _run_example(name: str, tmp: Path) -> str:
     return "\n".join(out)
 
 
+@pytest.mark.slow
 def test_the_examples_readme_quotes_what_the_tool_prints(tmp_path: Path) -> None:
     """The counts and output lines on docs/examples/README.md are those of a real run."""
     doc = ROOT / "docs" / "examples" / "README.md"

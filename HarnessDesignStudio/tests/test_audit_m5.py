@@ -103,6 +103,7 @@ def obc_project() -> Project:
 # ---- E-6: data commands and the release lock -----------------------------------------------------
 
 
+@pytest.mark.slow
 def test_a_data_command_blocked_by_a_release_says_so_in_the_preview_and_the_real_run(
     released: Path, tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

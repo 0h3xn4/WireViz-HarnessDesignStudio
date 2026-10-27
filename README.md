@@ -54,10 +54,10 @@ That installs the `harness-design-studio` command line tool (`harness` works as 
 **From the source code.** These commands install the command line tool in a private Python environment and make a practice project:
 
 ```
-sudo apt install python3-venv git
+sudo apt install git
 git clone https://github.com/0h3xn4/WireViz-harnessdesignstudio.git
 cd WireViz-harnessdesignstudio/HarnessDesignStudio
-python3 -m venv .venv && . .venv/bin/activate
+python3.14 -m venv .venv && . .venv/bin/activate
 pip install ".[gui]"
 harness-design-studio new wheel-link --template first-steps
 harness-design-studio generate wheel-link
@@ -107,7 +107,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 | | |
 | --- | --- |
 | System | Ubuntu 24.04 or newer, 64-bit PC (x86-64). From version 1.2.0 also Windows 10 and 11 (64-bit). macOS is not supported (the releases 1.2.0 to 1.5.0 carry disk images that are not maintained, D-168). Other Linux systems are not supported. |
-| Python | 3.12 or newer, only if you install from source (the `.deb` brings its own). |
+| Python | 3.14 or newer, only if you install from source (the `.deb` and the Windows packages bring their own). Ubuntu 24.04 does not have it in its archive; `uv python install 3.14` is one way to get it. |
 | Disk and screen | About 500 MB; a screen of at least 1280 × 720 for the app (the command line needs no screen). |
 | Network | None to run it. Installing from source downloads the Python packages once. |
 
@@ -258,11 +258,11 @@ See the [tutorial page](tutorial/readme.md) for sample code, as well as the [exa
 
 ##### Requirements
 
-WireViz requires Python 3.7 or later.
+WireViz requires Python 3.14 or later.
 
 WireWiz requires GraphViz to be installed in order to work. See the [GraphViz download page](https://graphviz.org/download/) for OS-specific instructions.
 
-_Note_: Ubuntu 18.04 LTS users in particular may need to separately install Python 3.7 or above, as that comes with Python 3.6 as the included system Python install.
+_Note_: Ubuntu 24.04 LTS users in particular need to separately install Python 3.14 or above, as that comes with Python 3.12 as the included system Python install (for example with `uv python install 3.14`).
 
 ##### Installing the latest release
 

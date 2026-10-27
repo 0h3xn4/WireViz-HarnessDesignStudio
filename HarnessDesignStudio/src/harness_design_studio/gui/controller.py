@@ -353,7 +353,7 @@ class EditorController(QObject):
             self.message.emit(message, undo)
         return True
 
-    def attempt(self, label: str, build: "object", *, message: str | None = None) -> bool:
+    def attempt(self, label: str, build: object, *, message: str | None = None) -> bool:
         """Build ops with a function that may raise EditError, then run them."""
         try:
             ops = build()  # type: ignore[operator]
@@ -1310,7 +1310,7 @@ class EditorController(QObject):
         try:
             payload = json.loads(journal_path(self.root).read_text(encoding="utf-8"))
             base = payload.get("base_fingerprint")
-        except (OSError, ValueError, AttributeError):
+        except OSError, ValueError, AttributeError:
             return False
         return isinstance(base, str) and base != self._fingerprint
 

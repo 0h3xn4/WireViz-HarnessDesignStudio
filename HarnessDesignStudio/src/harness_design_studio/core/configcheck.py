@@ -175,7 +175,7 @@ def _validate_ampacity(n: Need, v: object) -> list[Issue]:
     for k, a in v.items():
         try:
             gauge = int(k)
-        except (TypeError, ValueError):
+        except TypeError, ValueError:
             return err(f"has '{k}' as a gauge; gauges are whole numbers such as 20")
         amps = _num(a)
         if not 0 <= gauge <= 40 or amps is None or amps <= 0:
@@ -326,7 +326,7 @@ def validate_counterparts(project: Project) -> list[Issue]:
     ]
 
 
-def plan_set_counterparts(project: Project, value: object) -> "ValuePlan":
+def plan_set_counterparts(project: Project, value: object) -> ValuePlan:
     """The ops that set the table of counterpart words (`naming.json` `signal_counterparts`), or
     why not. `value` is a list of pairs, or the text of one: `TX=RX, MOSI=MISO` (a word on each
     side of `=`, `:` or `/`, pairs separated by commas, semicolons or lines); `none` or `[]` is a

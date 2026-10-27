@@ -504,11 +504,11 @@ def test_the_package_check_covers_files_next_to_the_archive(tmp_path: Path) -> N
     from tools.build_installer import undeclared_files
 
     internal = tmp_path / "_internal"
-    for name in ("libQt6Core.so.6", "base_library.zip", "pydantic_core", "PySide6", "python3.13",
+    for name in ("libQt6Core.so.6", "base_library.zip", "pydantic_core", "PySide6", "python3.14",
                  "pydantic-2.13.5.dist-info", "harness_design_studio"):  # fmt: skip
         (internal / name).mkdir(parents=True)
     assert undeclared_files(internal) == []
-    for name in ("chardet", "7cf47097c39cf1afcee8__mypyc.cpython-313-x86_64-linux-gnu.so",
+    for name in ("chardet", "7cf47097c39cf1afcee8__mypyc.cpython-314-x86_64-linux-gnu.so",
                  "rich-15.0.0.dist-info"):  # fmt: skip
         (internal / name).mkdir()
     assert undeclared_files(internal) == [
@@ -567,7 +567,7 @@ def test_the_root_setup_describes_the_package_with_the_upstream_readme() -> None
     upstream = (root / "docs" / "upstream" / "README.upstream.md").read_text(encoding="utf-8")
     assert meta["long_description"] == upstream and upstream.startswith("# WireViz")
     assert meta["long_description_content_type"] == "text/markdown"
-    assert meta["python_requires"] == ">=3.7"
+    assert meta["python_requires"] == ">=3.14"
     # a wheel built from the source distribution needs the file too
     assert "docs/upstream/README.upstream.md" in (root / "MANIFEST.in").read_text(encoding="utf-8")
 
