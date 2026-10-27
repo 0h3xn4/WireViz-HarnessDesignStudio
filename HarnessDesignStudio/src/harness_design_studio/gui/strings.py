@@ -55,7 +55,7 @@ TOUR_STEPS: list[tuple[str, str]] = [
     ),
     (
         "types",
-        "To connect two devices, open the arrow next to Connect and pick an interface type, then click the two devices. Only valid choices light up.",
+        "To connect two devices, press Connect and click the two devices. The Link connectors window opens and pairs their pins by name. To connect by interface type instead, use the arrow next to Connect, or Edit > Connect with an interface type.",
     ),
     (
         "problems",
@@ -76,7 +76,7 @@ NOTHING_SELECTED = (
     "Select a device or an interface to see its details. The rest of the diagram fades, so you can "
     "follow its links."
 )
-UNIT = "Unit"
+UNIT = "Device"
 INTERFACE = "Interface"
 FIELD_ID = "ID"
 FIELD_NAME = "Name"
@@ -420,7 +420,7 @@ UNDONE = "Undone: {}"
 REDONE = "Redone: {}"
 CONNECT_PICK_TYPE = "Pick an interface type on the left."
 CONNECTOR_WORD = "connector"
-UNIT_WORD = "unit"
+UNIT_WORD = "device"
 CONNECT_FIRST = "Click the first {} for {}."
 CONNECT_NONE_FREE = (
     "No other device has a free {} connector. Pick another type, or add a device that supports it."
@@ -1295,7 +1295,7 @@ HV_REVISE = "Revise…"
 HV_WHY_NOT_RELEASED = "Only a released harness can be revised."
 HV_WHY_RELEASE_NOT_DRAFT = "Only a draft or a harness in review can be released."
 HV_EMPTY_TITLE = "No harnesses yet"
-HV_EMPTY_NO_INTERFACES = "Add interfaces on the diagram or import a table (Ctrl+Shift+I). Then press Generate to build the harnesses."
+HV_EMPTY_NO_INTERFACES = "Add interfaces on the diagram or import a table (Ctrl+Shift+I). Then press Generate to build the harnesses. Or join two devices with Connect and press Create harness on the connection."
 HV_EMPTY_READY = "The diagram has {} interface(s) and no harnesses yet. Press Generate to build them. You see a preview first and Undo reverts it."
 HV_GENERATE_NOW = "Generate harnesses"
 HV_WHY_HARNESS = "Harness {}"
@@ -1334,7 +1334,7 @@ LP_STALE = "The diagram changed after the harnesses were generated, so these lis
 LP_STALE_CHIP = "Out of date"
 LP_REGENERATE_TIP = "Generate all harnesses again from the diagram (a preview comes first)"
 LP_EMPTY_TITLE = "No lists yet"
-LP_EMPTY_NO_INTERFACES = "The lists are made from generated harnesses. Add interfaces on the diagram or import a table (Ctrl+Shift+I), then press Generate."
+LP_EMPTY_NO_INTERFACES = "The lists are made from harnesses. Add interfaces on the diagram or import a table (Ctrl+Shift+I), then press Generate. Or join two devices with Connect and press Create harness on the connection."
 LP_EMPTY_READY = "The lists are made from generated harnesses. Press Generate to build them; you see a preview first."
 LP_APPROVAL_MISSING = "The part is not in the parts list."
 
@@ -1378,7 +1378,7 @@ TREE_ROOTS = {
 TREE_EMPTY = {
     "units": "No devices yet. Add one with the Add button.",
     "interfaces": "No interfaces yet. Add one with Ctrl+I or import a table.",
-    "harnesses": "No harnesses yet. Generate them from the interfaces.",
+    "harnesses": "No harnesses yet. Generate them from the interfaces, or press Create harness on a connection.",
     "parts": "No parts yet. Import an approved parts list.",
     "interface_types": "No interface types yet.",
 }
@@ -2912,3 +2912,18 @@ SHEET_TAB_TIP = (
     "Tab moves to the next cell. Ctrl+Tab leaves the table for the next control, "
     "Ctrl+Shift+Tab for the one before. Ctrl+C copies the selected cells."
 )
+
+# ---- 1.8.1: wording that follows what the project has (connections first, or interfaces first) -----
+HV_EMPTY_HAS_LINKS = (
+    "The project has connections and no harness yet. Select a connection and press Create harness."
+)
+LP_EMPTY_HAS_LINKS = "The lists are made from harnesses. Select a connection and press Create harness, and its lists appear here."
+TREE_EMPTY_HAS_LINKS = {
+    "interfaces": "No interfaces. The connections are listed under Connections.",
+    "harnesses": "No harnesses yet. Select a connection and press Create harness.",
+}
+CHIP_BY_HAND = "Made by hand"
+CHIP_BY_HAND_TIP = (
+    "The harnesses were made from connections or by hand. Nothing is generated from the diagram."
+)
+HV_MADE_BY_HAND = "Made by hand"

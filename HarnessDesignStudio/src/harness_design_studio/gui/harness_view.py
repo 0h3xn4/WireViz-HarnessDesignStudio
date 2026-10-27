@@ -974,10 +974,13 @@ class HarnessView(QWidget):
     def _show_empty(self) -> None:
         p = self.ctl.project
         n = len(p.interfaces)
-        self.empty_body.setText(
-            (strings.HV_EMPTY_READY.format(n) if n else strings.HV_EMPTY_NO_INTERFACES)
-            + strings.HV_EMPTY_BY_HAND
-        )
+        if n:
+            body = strings.HV_EMPTY_READY.format(n)
+        elif p.links:  # connections first: a harness is made from a connection, not generated
+            body = strings.HV_EMPTY_HAS_LINKS
+        else:
+            body = strings.HV_EMPTY_NO_INTERFACES
+        self.empty_body.setText(body + strings.HV_EMPTY_BY_HAND)
         show = bool(n) and not self.ctl.read_only
         self.empty_generate.setVisible(show)  # no row of disabled buttons without a harness
         self.empty_new.setVisible(not self.ctl.read_only)
@@ -1020,7 +1023,10 @@ class HarnessView(QWidget):
         )
         gen = p.generation
         if gen is None:
-            self.hash_label.set_full(strings.HV_NOT_GENERATED)
+            # a harness made from a connection or by hand is never generated: say so
+            self.hash_label.set_full(
+                strings.HV_NOT_GENERATED if h.generated else strings.HV_MADE_BY_HAND
+            )
         else:
             self.hash_label.set_full(
                 strings.HV_GENERATED_FROM.format(gen.input_hash[:12]),

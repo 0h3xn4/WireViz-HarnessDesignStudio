@@ -1,4 +1,4 @@
-# mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
+# mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type,no-any-return"
 """D9 of the 1.8.0 audit: an edit took 250 ms at 150 devices because the legend asked
 `describe.connector_family` for every harness connector, and each ask built the dictionary of every
 connector again (`Project.all_connectors`), so the cost grew with the square of the project.

@@ -278,12 +278,17 @@ class ConnectionItem(QGraphicsPathItem):
             self.dscene.ctl.request_open("link", self.link_id)
         event.accept()
 
+    def activate(self, *, open_plan: bool = False) -> None:
+        """Enter or Space on the focused line: select the connection (Enter also asks for the Link
+        connectors window). The view calls this when Space is let go."""
+        self.dscene.ctl.select_link(self.link_id)
+        if open_plan:
+            self.dscene.ctl.request_open("link", self.link_id)
+
     def keyPressEvent(self, event: object) -> None:
         key = event.key()  # type: ignore[attr-defined]
         if key in (Qt.Key.Key_Return, Qt.Key.Key_Enter, Qt.Key.Key_Space):
-            self.dscene.ctl.select_link(self.link_id)
-            if key != Qt.Key.Key_Space:
-                self.dscene.ctl.request_open("link", self.link_id)
+            self.activate(open_plan=key != Qt.Key.Key_Space)
             event.accept()  # type: ignore[attr-defined]
             return
         super().keyPressEvent(event)  # type: ignore[arg-type]
