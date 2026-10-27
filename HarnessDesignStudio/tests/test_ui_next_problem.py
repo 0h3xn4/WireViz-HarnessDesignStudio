@@ -164,3 +164,62 @@ def test_no_card_while_nothing_failed_or_before_the_check(qtbot, tmp_path) -> No
     win.set_area("next")
     QApplication.processEvents()
     assert win.next_page.key() == "add_device" and not win.next_page.problem_card.isVisibleTo(win.next_page)  # fmt: skip
+
+
+# ---- the Systems engineer stays on the Next step page after each step ------------------------------
+
+
+def bare_links_project():
+    """Two linked devices and no harness yet."""
+    p = pinout_project()
+    p.harnesses, p.interfaces, p.baselines = {}, {}, {}
+    ops, _lid = links.plan_add_link(p, "OBC-J01", "RW1-J02", [("1", "3"), ("2", "4")])
+    History(p).execute("link", ops)
+    return p
+
+
+def test_create_harness_keeps_the_systems_engineer_on_the_next_step_page(qtbot, tmp_path) -> None:
+    win = make_window(tmp_path)
+    qtbot.addWidget(win)
+    win.ctl._install(bare_links_project(), None, None)
+    win.set_role("systems")
+    win.set_area("next")
+    QApplication.processEvents()
+    assert win.next_page.key() == "make_harness"
+    DialogScript(win)
+    win.next_page.button.click()
+    QApplication.processEvents()
+    assert win.ctl.project.harnesses and win.area() == "next"
+    win.set_role("electrical")
+    win.ctl.undo()
+    win.set_area("model")
+    DialogScript(win)
+    win.create_harness_flow("L1")
+    assert win.area() == "drawings"  # (the other role goes to the harness, as before)
+
+
+def test_generate_keeps_the_systems_engineer_where_they_are(qtbot, tmp_path) -> None:
+    from harness_design_studio.core.samples import mini3
+
+    p = mini3()
+    p.harnesses, p.generation = {}, None
+    win = make_window(tmp_path)
+    qtbot.addWidget(win)
+    win.ctl._install(p, None, None)
+    win.set_role("systems")
+    win.set_area("next")
+    DialogScript(win)
+    win.generate_flow()
+    QApplication.processEvents()
+    assert win.ctl.project.harnesses and win.area() == "next"
+
+
+def test_from_another_area_the_next_step_page_opens(qtbot, tmp_path) -> None:
+    win = make_window(tmp_path)
+    qtbot.addWidget(win)
+    win.ctl._install(bare_links_project(), None, None)
+    win.set_role("systems")
+    win.set_area("checks")
+    DialogScript(win)
+    win.create_harness_flow("L1")
+    assert win.area() == "next"
