@@ -15,7 +15,13 @@ from harness_design_studio.core.io.saver import save_project
 from harness_design_studio.core.model import ConfigFile, Part, Project, evolve
 from harness_design_studio.core.vcs.consistency import release_integrity
 from harness_design_studio.core.vcs.snapshot import used_interface_type_ids, used_part_ids
-from tests.test_change_control import do_release, exported, full, releasable
+from tests.test_change_control import (  # noqa: F401  (the fixture is used by every test)
+    _export_template,
+    do_release,
+    exported,
+    full,
+    releasable,
+)
 
 
 def released(tmp: Path) -> tuple[Project, str, History]:

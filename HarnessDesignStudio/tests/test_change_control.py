@@ -94,7 +94,7 @@ def exported(p: Project, tmp: Path) -> Path:
     """Write the outputs of `p` into tmp/outputs. A project that equals the unchanged base gets a
     copy of the outputs written once (they depend on the project alone); any other is written."""
     folder = tmp / "outputs"
-    if _BASE is not None and not folder.exists() and p == _BASE:
+    if _FACTORY is not None and _BASE is not None and not folder.exists() and p == _BASE:
         return copy_state(_export_of_the_base(), folder)
     write_outputs(p, folder)
     return folder
