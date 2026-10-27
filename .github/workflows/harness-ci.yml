@@ -99,8 +99,9 @@ jobs:
       # assert a wall-clock limit (marker `perf`) would fail on a loaded machine, so they run alone,
       # after the parallel run; the two selections together are the whole suite. The first step
       # collects coverage without judging it, the second adds its own and applies the 90% gate on core.
+      # Tests marked `slow` (about 10 s or more each) are left out of pull requests and run on master.
       - name: Tests in parallel (all but the timing tests)
-        run: pytest -n auto --dist worksteal -m "not perf" --cov --cov-report= --cov-fail-under=0
+        run: pytest -n auto --dist worksteal -m "${{ github.event_name == 'pull_request' && 'not perf and not slow' || 'not perf' }}" --cov --cov-report= --cov-fail-under=0
       - name: Timing tests, one at a time
         run: pytest -m perf --cov --cov-append --cov-report=term-missing
       - run: python -m tools.check_reproducible

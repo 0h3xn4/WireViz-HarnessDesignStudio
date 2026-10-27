@@ -41,7 +41,7 @@ testpaths = ["tests"]
 pythonpath = ["."]
 addopts = "-ra --strict-markers"
 filterwarnings = ["error"]
-markers = ["gui: needs Qt (run with QT_QPA_PLATFORM=offscreen)", "ux: drives the clickable prototype in a browser", "perf: asserts a wall-clock limit (CI runs these alone, after the parallel run)"]
+markers = ["gui: needs Qt (run with QT_QPA_PLATFORM=offscreen)", "ux: drives the clickable prototype in a browser", "perf: asserts a wall-clock limit (CI runs these alone, after the parallel run)", "slow: needs about 10 s or more on its own (pull requests skip these with -m \"not slow\"; the master run, the Windows run on master and the release check run them)"]
 
 [tool.coverage.run]
 source = ["harness_design_studio.core"]
