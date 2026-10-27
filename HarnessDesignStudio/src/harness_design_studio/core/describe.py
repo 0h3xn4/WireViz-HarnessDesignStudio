@@ -12,8 +12,6 @@ from harness_design_studio.core.model import Harness, Part
 from harness_design_studio.core.model.physical import Gender
 from harness_design_studio.core.model.project import Project
 
-_GENDER = {"male": "M", "female": "F"}
-
 
 def _num(value: float) -> str:
     return f"{value:g}"
@@ -68,19 +66,6 @@ def link_values(project: Project, interface_id: str) -> str:
     if i.max_current_a is not None:
         parts.append(f"{_num(i.max_current_a)} A")
     return " · ".join(parts)
-
-
-def connector_kind(project: Project, connector_id: str) -> str:
-    """Short connector type: "D-sub 15-pin F" (from the part description and the gender)."""
-    c = project.connectors.get(connector_id)
-    if c is None:
-        return ""
-    part = project.parts.get(c.part_id)
-    text = (part.description or part.part_number or part.id) if part is not None else c.part_id
-    text = re.sub(r"\s*\([^)]*\)", "", text)  # "(example)" and the like
-    text = re.sub(r",?\s*\b(fe)?male\b", "", text, flags=re.IGNORECASE).strip(" ,")
-    gender = _GENDER.get(c.gender, "")
-    return f"{text} {gender}".strip()
 
 
 def connector_family(project: Project, connector_id: str) -> tuple[str, int, str]:

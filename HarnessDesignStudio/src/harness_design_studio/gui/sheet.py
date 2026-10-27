@@ -19,7 +19,7 @@ import csv
 import io
 import json
 from collections.abc import Callable, Sequence
-from typing import Any, Protocol
+from typing import Any
 
 from PySide6.QtCore import (
     QAbstractItemModel,
@@ -41,11 +41,6 @@ from PySide6.QtWidgets import (
 )
 
 from . import strings
-
-
-class SheetModel(Protocol):
-    def is_editable(self, column: int) -> bool: ...
-    def set_cells(self, cells: list[tuple[int, int, str]]) -> bool: ...
 
 
 def parse_tsv(text: str) -> list[list[str]]:

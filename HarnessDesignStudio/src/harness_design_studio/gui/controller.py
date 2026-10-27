@@ -881,7 +881,7 @@ class EditorController(QObject):
         return self.run(
             strings.STEP_WAIVE.format(finding.id),
             [op],
-            message=strings.WAIVED,
+            message=strings.WAIVED_TOAST,
         )
 
     def confirm_interface(self, interface_id: str) -> None:
