@@ -26,6 +26,10 @@ PAIRS = (("OBC-J01", "RW1-J02"), ("PCDU-J02", "OBC-J02"), ("PCDU-J01", "RW1-J01"
 def with_harnesses(count: int = 2) -> Project:
     """The pinout project with `count` connections, each with a harness of its own."""
     p = pinout_project()
+    p.harnesses, p.interfaces, p.baselines = {}, {}, {}  # a connector takes one plug (1.8.1)
+    for cid, c in list(p.connectors.items()):  # and a pin an interface uses is not offered
+        pins = [pin.model_copy(update={"interface_id": None}) for pin in c.pins]
+        p.connectors[cid] = c.model_copy(update={"pins": pins})
     for a, b in PAIRS[:count]:
         ops, lid = plan_add_link(p, a, b)
         apply_ops(p, ops)
