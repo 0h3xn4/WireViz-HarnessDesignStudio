@@ -138,14 +138,15 @@ def test_pin_table_columns_and_derived_meaning(qtbot, theme) -> None:
     assert [c.header for c in m.columns][:8] == [
         "Pin",
         "Signal",
+        "Role",
         "Mode",
         "Interface",
         "Direction",
         "Class",
         "Wire",
-        "Contact size",
     ]
     assert m.rowCount() == 6
+    assert cell(view, 0, "role") == "Power (auto)"  # (the role the signal name gives, marked auto)
     assert [cell(view, r, "pin") for r in range(6)] == ["A1", "A2", "3", "4", "5", "6"]
     assert (cell(view, 0, "signal"), cell(view, 0, "mode")) == ("PWR", "Fixed")
     assert (cell(view, 0, "direction"), cell(view, 0, "class")) == ("passive", "power")

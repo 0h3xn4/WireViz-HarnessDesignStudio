@@ -231,6 +231,7 @@ class ListsPanel(QWidget):
     """
 
     generateRequested = Signal()
+    exportRequested = Signal()  # the empty state's Export (a project with connections only)
     exportTableRequested = Signal(str, str)
 
     def __init__(
@@ -285,9 +286,22 @@ class ListsPanel(QWidget):
             text=strings.HV_GENERATE_NOW,
         )
         self.empty_generate.clicked.connect(self.generateRequested)
+        self.empty_export = QPushButton()  # connections and no harness: the connection list
+        self.empty_export.setObjectName("lists-empty-export")
+        self.empty_export.setProperty("primary", True)
+        icon_button(
+            self.empty_export,
+            "export",
+            theme,
+            strings.LP_EMPTY_EXPORT_TIP,
+            "Ctrl+E",
+            text=strings.LP_EMPTY_EXPORT,
+        )
+        self.empty_export.clicked.connect(self.exportRequested)
         e.addWidget(title)
         e.addWidget(self.empty_body)
         e.addWidget(self.empty_generate, 0, Qt.AlignmentFlag.AlignHCenter)
+        e.addWidget(self.empty_export, 0, Qt.AlignmentFlag.AlignHCenter)
         e.addStretch(2)
         self.stack.addWidget(self.empty)
 
@@ -449,6 +463,7 @@ class ListsPanel(QWidget):
                 body = strings.LP_EMPTY_NO_INTERFACES
             self.empty_body.setText(body)
             self.empty_generate.setVisible(bool(n) and not self.ctl.read_only)
+            self.empty_export.setVisible(bool(p.links) and not self.ctl.read_only)
             self._set_stale(False)
             return
         self._fill_selector(ids)

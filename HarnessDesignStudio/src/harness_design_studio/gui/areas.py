@@ -41,6 +41,29 @@ DEFAULT: Final[str] = "model"
 SYSTEMS_HIDDEN: Final[tuple[str, ...]] = ("home", "drawings", "outputs")
 
 
+# The menu entries the Systems engineer role does not list (Release 1.9, W1). The names are the
+# object names of the actions; "menu:" names a submenu by its title. They are only hidden: every
+# one stays in the command palette (Ctrl+K) and keeps its shortcut, and the Electrical / AIT
+# engineer role lists all of them. A role is a view of the program, never a permission.
+SYSTEMS_HIDDEN_ACTIONS: Final[tuple[str, ...]] = (
+    # File > Import: the lists of wires, lengths and values, and the interface-first import
+    "act-import", "act-import-lengths", "act-import-values", "act-import-netlist",
+    # Edit: the diagram tools, the harness and wire tools, the interface-first way
+    "act-select-all", "act-duplicate", "act-redundant", "act-new-interface",
+    "act-add-zone", "act-new-harness", "act-bulk-wires", "act-wire-colours",
+    "act-align-left", "act-align-hcenter", "act-align-right", "act-align-top",
+    "act-align-vmiddle", "act-align-bottom", "act-distribute-horizontal",
+    "act-distribute-vertical", "menu:align", "menu:distribute", "menu:connect-with-type",
+    # View: the diagram's drawing options
+    "act-guided", "act-expert", "act-minimap", "act-legend", "act-snap", "act-labels",
+    "act-connection-ends", "act-zoom-100", "act-zoom-selection", "act-arrange",
+    # Design: revisions of a harness and the engineering values
+    "act-revise", "act-changes", "act-history", "act-delete-harness", "act-values",
+    # Go: the detail views and the two lists the side panels hold
+    "act-go-harness", "act-go-lists", "act-go-interfaces", "act-go-units",
+)  # fmt: skip
+
+
 def area(key: str) -> Area:
     for a in AREAS:
         if a.key == key:
@@ -58,6 +81,11 @@ def area_of_tab(tab: str) -> str:
 
 def tabs_of(key: str) -> tuple[str, ...]:
     return area(key).tabs
+
+
+def hidden_actions_in(role: str) -> tuple[str, ...]:
+    """The menu entries a role does not list (see `SYSTEMS_HIDDEN_ACTIONS`)."""
+    return SYSTEMS_HIDDEN_ACTIONS if role == SYSTEMS else ()
 
 
 def hidden_in(role: str) -> tuple[str, ...]:

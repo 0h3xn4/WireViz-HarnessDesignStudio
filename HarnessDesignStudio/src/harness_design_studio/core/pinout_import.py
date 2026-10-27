@@ -3,11 +3,12 @@ person confirms. One row of the sheet is one pin: the connector it belongs to, i
 the signal on it, whether the device fixes it, a contact size, a termination, a function (free text;
 a sheet with only a Function column and no Signal column reads it as the signal, as before) and the
 contact part the cable side uses (a part of category contact; the heading `Cable contact`, or
-`Contact` next to a Pin heading).
+`Contact` next to a Pin heading) and a direction (`Direction`: in, out or bidirectional; empty
+leaves it unset, 1.9.0).
 
 The tool knows no program's table format: columns are matched by their headings (with common
 aliases), the way the parts import does. Columns it cannot store (remarks,
-a voltage, a direction) are named in a warning and left out; the file format has no field for them.
+a voltage) are named in a warning and left out; the file format has no field for them.
 Every row gets a result with its exact reason, a sheet with a bad row is not imported at all, and
 what is imported is one `History` step ("Import pinout (2 connectors, 36 pins)").
 """
@@ -35,6 +36,7 @@ FIELDS: tuple[tuple[str, str], ...] = (
     ("termination", "Termination"),
     ("function", "Function"),
     ("contact_part", "Cable contact"),
+    ("direction", "Direction"),
     ("part", "Part"),
     ("gender", "Gender"),
 )
@@ -52,6 +54,7 @@ _ALIASES = {
     ),  # "function" alone means the signal
     # "contact" alone is the pin when the sheet has no other pin heading (as it always was)
     "contact_part": ("cablecontact", "contactpart", "cablecontactpart", "contact"),
+    "direction": ("direction", "pindirection", "dir", "iomode"),
     "part": ("part", "partid", "partnumber", "connectorpart"),
     "gender": ("gender", "sex"),
 }
@@ -59,7 +62,7 @@ _ALIASES = {
 _UNSTORED = frozenset(
     {
         "description", "remarks", "remark", "notes", "note", "comment",
-        "comments", "direction", "dir", "voltage", "current", "class", "iomode",
+        "comments", "voltage", "current", "class",
     }
 )  # fmt: skip
 _YES = frozenset({"yes", "y", "true", "x", "1", "fixed"})

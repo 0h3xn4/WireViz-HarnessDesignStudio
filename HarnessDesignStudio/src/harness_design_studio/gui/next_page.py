@@ -142,6 +142,54 @@ class NextStepPage(QScrollArea):
         lay.addWidget(self.alternative_row)
         column.addWidget(card)
 
+        # the first problem: what to do, and Waive or Approve where they apply
+        self.problem_card = QFrame()
+        self.problem_card.setObjectName("next-problem")
+        self.problem_card.setProperty("card", True)
+        self.problem_card.setAccessibleName(strings.NEXT_PROBLEM_NAME)
+        play = QVBoxLayout(self.problem_card)
+        play.setContentsMargins(theme.space(16), theme.space(16), theme.space(16), theme.space(16))
+        play.setSpacing(theme.space(8))
+        self.problem_head = QLabel()
+        self.problem_head.setObjectName("next-problem-head")
+        self.problem_head.setProperty("muted", True)
+        self.problem_title = QLabel()
+        self.problem_title.setObjectName("next-problem-title")
+        self.problem_title.setWordWrap(True)
+        self.problem_todo = QLabel()
+        self.problem_todo.setObjectName("next-problem-todo")
+        self.problem_todo.setWordWrap(True)
+        self.problem_more = QLabel()
+        self.problem_more.setObjectName("next-problem-more")
+        self.problem_more.setProperty("muted", True)
+        prow = QHBoxLayout()
+        self.problem_show = self._problem_button(
+            "next-problem-show",
+            strings.NEXT_PROBLEM_SHOW,
+            strings.NEXT_PROBLEM_SHOW_TIP,
+            "problem_show",
+        )
+        self.problem_waive = self._problem_button(
+            "next-problem-waive",
+            strings.NEXT_PROBLEM_WAIVE,
+            strings.NEXT_PROBLEM_WAIVE_TIP,
+            "problem_waive",
+        )
+        self.problem_approve = self._problem_button(
+            "next-problem-approve",
+            strings.NEXT_PROBLEM_APPROVE_PLAIN,
+            strings.NEXT_PROBLEM_APPROVE_TIP,
+            "problem_approve",
+        )
+        for button in (self.problem_show, self.problem_waive, self.problem_approve):
+            prow.addWidget(button)
+        prow.addStretch(1)
+        for label in (self.problem_head, self.problem_title, self.problem_todo, self.problem_more):
+            play.addWidget(label)
+        play.addLayout(prow)
+        column.addWidget(self.problem_card)
+        self.problem_card.hide()
+
         # the six steps
         steps_card, steps_lay = _card(theme, strings.NEXT_STEPS_HEADING)
         steps_card.setObjectName("next-steps")
@@ -176,6 +224,31 @@ class NextStepPage(QScrollArea):
         column.addStretch(1)
         self.show_next_placeholder()
 
+    def _problem_button(self, name: str, text: str, tip: str, key: str) -> QPushButton:
+        b = QPushButton(text)
+        b.setObjectName(name)
+        b.setAccessibleName(text.rstrip("…"))
+        b.setToolTip(tip)
+        b.clicked.connect(lambda _c=False: self._call(key))
+        return b
+
+    def _show_problem(self, n: Next) -> None:
+        p = n.problem
+        self.problem_card.setVisible(p is not None)
+        if p is None:
+            return
+        self.problem_head.setText(strings.NEXT_PROBLEM_HEAD.get(p.severity, strings.NEXT_PROBLEM_HEAD["error"]))  # fmt: skip
+        self.problem_title.setText(p.title)
+        self.problem_todo.setText(strings.NEXT_PROBLEM_TODO.format(p.todo))
+        self.problem_more.setText(strings.NEXT_PROBLEM_MORE[0 if p.more == 1 else 1].format(p.more) if p.more else "")  # fmt: skip
+        self.problem_more.setVisible(bool(p.more))
+        self.problem_waive.setVisible(p.can_waive)
+        self.problem_approve.setVisible(bool(p.approve))
+        if p.approve:
+            text = strings.NEXT_PROBLEM_APPROVE.format(p.approve)
+            self.problem_approve.setText(text)
+            self.problem_approve.setAccessibleName(text.rstrip("…"))
+
     def _call(self, key: str) -> None:
         action = self._actions.get(key)
         if action is not None:
@@ -188,6 +261,7 @@ class NextStepPage(QScrollArea):
         self.note.hide()
         self.button.hide()
         self.alternative_row.hide()
+        self.problem_card.hide()
 
     def set_role(self, role: str) -> None:
         """The two links are for the Systems engineer role."""
@@ -223,5 +297,6 @@ class NextStepPage(QScrollArea):
         if n.alternative_key:
             self.alternative_button.setAccessibleName(n.alternative_button.rstrip("…"))
             self.alternative_button.setToolTip(strings.NEXT_BUTTON_TIPS[n.alternative_key])
+        self._show_problem(n)
         for row, line in zip(self.rows, n.steps, strict=True):
             row.show_line(line)

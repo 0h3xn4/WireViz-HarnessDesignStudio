@@ -134,6 +134,8 @@ On a power interface set **Max current (A)** in the Inspector; without it the wi
 
 **Connecting by the pinout** (new in 1.8.0). **Edit > Link connectors…** (Ctrl+Shift+K), or **Connect** and two devices, opens **Link connectors**. The program pairs the pins by signal name, never by position (`TX+` meets `RX+`, `PWR` meets `PWR`; an output is not paired with an output); you change, add or remove pairs and give a pin a role (Power, Return, Ground, Signal, Shield, Spare), then press **Link connectors**.
 
+Since 1.9 the window also has **Add a connector…** under each device (for a device with no connector yet; it is made together with the connection), **Pair by pin number** and **Paste a pairing…** (two columns from a table). Each shows a proposal and waits for **Accept the pairs**; nothing is paired before you accept it.
+
 The connection is a dash-dotted line on the diagram and an entry under **Connections** in the Project tab. **Design > Check my connections** reviews them and changes nothing. **Create harness** makes a harness with one wire for each pair, only when you press it and agree; the program never makes one on its own. In Expert mode, or with **View > Show connectors on connections**, a small box at each end of the line names the connector and the pins the connection pairs; the tooltip names the way through the harness once one exists, and **Show the harness** (right-click on the line) opens the Harness tab on it.
 
 ### The Devices tab
@@ -166,7 +168,7 @@ The **library** is a folder that your team shares, on a shared drive or in a Git
 
 #### Defining a device
 
-- **Edit > Add device > Device…** (Ctrl+Shift+N; also **Add** in the Project tab, and the button **Add a device** on an empty diagram) opens the window **Add device**: type the **Name** (for example *Star tracker*), accept or change the **ID** it suggests (`STAR1`; once you edit it, it stops following the name) and pick the **Subsystem**. **Add device** adds an empty device in a free slot and opens the Devices tab. The kinds in **Edit > Add device** need no name.
+- **Edit > Add device > Device…** (Ctrl+Shift+N; also **Add** in the Project tab, and the button **Add a device** on an empty diagram) opens the window **Add device**: type the **Name** (for example *Star tracker*), accept or change the **ID** it suggests (`STAR1`; once you edit it, it stops following the name) and pick the **Subsystem**, and optionally a **First connector** (kind, pins, gender). **Add device** adds the device in a free slot and opens the Devices tab (the Systems engineer stays on the Next step page or the diagram). The kinds in **Edit > Add device** need no name.
 - Under the connector list pick a part (type to search; the first entry is **New part…**, which also makes the mating half) and press **Add connector** (Ctrl+Shift+C goes to the picker; Enter adds). The pins are numbered from the part's pin count. **Delete connector** shows what it touches first.
 - Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down; Esc cancels. A pin name is checked while you type. **Add pin** (Insert) adds a pin after the current one; Delete clears the signal of the selected pins; **Delete** (Shift+Delete) deletes pins after a line that says what they touch; Space cycles the mode (*Free*, *Fixed*, *Locked*); Ctrl+V pastes cells copied from a spreadsheet, either a column from the current cell down or a table with a header row (*Pin*, *Signal*, *Mode*, *Contact size*, *Termination*, *Cable contact*).
 - **Fill…** (Ctrl+L) puts the signals of an interface type on the selected pins in order (for example *CANH*, *CANL*). **Assign…** (Ctrl+Enter) locks the selected pins to an interface that ends on this device. Both are one undo step; **New interface type…** is in the dialog.
@@ -175,7 +177,7 @@ The **library** is a folder that your team shares, on a shared drive or in a Git
 
 ## 5. Guided and Expert mode
 
-**Next step.** The first item of the rail, **Next step**, shows one page, *What to do next*: one card with one button, and the six steps of the work, each with an icon and a word (*done*, *next*, *to do*). It looks at the project and names the first step that is not done. For the Systems engineer there are two link buttons, **Library…** and **Show everything**, which switches to the Electrical / AIT engineer role.
+**Next step.** The first item of the rail, **Next step**, shows one page, *What to do next*: one card with one button, and the six steps of the work, each with an icon and a word (*done*, *next*, *to do*). It looks at the project and names the first step that is not done. When a check fails, a second card shows the first open problem with what to do and the buttons that apply (**Show it**, **Waive…**, **Approve …** for an unapproved part); a warning never holds the page. For the Systems engineer there are two link buttons, **Library…** and **Show everything**, which switches to the Electrical / AIT engineer role.
 
 **Your role.** The editor has two roles: *Systems engineer* (devices, the connections between them, subsystems, the library, the checks) and *Electrical / AIT engineer* (connectors, pinouts, harnesses, wires, build sheets, tests). They replace the *Simple* and *Full* workspaces of version 1.7.0. The first start asks once, *Who are you working as?*; after that the role is a setting in **View > Role** and under **Settings > Editing**, and it takes effect at once.
 
@@ -183,7 +185,7 @@ A settings file that already holds values and no role is an *Electrical / AIT en
 
 The Systems engineer sees less. The project tree, the inspector and the Problems panel start closed (**Show panels** in the top bar opens the tree and the inspector together), the minimap and the legend are off, the status bar keeps the save state, the running job, *Offline* and the path, and the tools above the diagram are **Select**, **Connect**, **Add device** and **More**. The rail lists **Next step**, **Model**, **Checks**, **Revisions** and **Settings**; **Home**, **Drawings** and **Outputs** are not listed (the area you are in always is).
 
-Nothing is removed: each item keeps its menu entry (and its shortcut, where it has one), and Ctrl+K finds it. Each role keeps its own layout. The problem notices are off for the Systems engineer.
+The Systems engineer's menus leave out the entries for wires, harnesses, zones, alignment, the interface-first way, the diagram's drawing options, revisions of a harness and the engineering values. Nothing is removed: each item keeps its shortcut, and Ctrl+K finds it. Each role keeps its own layout. The problem notices are off for the Systems engineer.
 
 The role is not the mode. Guided and Expert change only how much the diagram shows:
 
@@ -257,13 +259,17 @@ The **Checks** tab (Ctrl+4) has one row for each rule:
 
 `outputs/` contains, for every harness: the build workbook (`<ID>_build.xlsx`, see below), wire list, pinouts, BOM, mass and length, continuity and isolation tests, labels, a WireViz-style YAML file and an Excel workbook of the data tables. The PDF and SVG drawings of the harnesses (SVG for the A3 sheets, PDF for A3 and A4) are written only when you ask for them.
 
-For the whole system: block diagram, harness overview, BOM, mating and traceability matrices, DRC report, change log, revision report, and one JSON file with the whole model. Every file carries the tool version and a model hash. The status chip in the top bar and the header of the **Harness** tab show whether the outputs are up to date. Details are in `docs/OUTPUTS.md` in the repository (it is not installed with the app).
+For the whole system: block diagram, harness overview, BOM, mating and traceability matrices, DRC report, change log, revision report, and one JSON file with the whole model.
+
+Every file carries the tool version and a model hash. The status chip in the top bar and the header of the **Harness** tab show whether the outputs are up to date. Details are in `docs/OUTPUTS.md` in the repository (it is not installed with the app).
+
+A project that has connections (**Link connectors…**) also gets the **connection list** (`system/connections.csv` and `connections.xlsx`: one row for each pair of pins, with the device, connector, pin, signal and role at both ends, the interface type, the harness and a note); the connections are drawn with their IDs in the block diagram and listed in the traceability matrix. The list needs no harness: **Export…** works for a project with connections and no harness.
 
 The **build workbook** is the file to build a harness from. **Start here** says whether the harness is ready to build and what is missing; **Cut list** lists the wires in cut order, with their colours and strip lengths; **Connectors** has one block per connector, pin by pin, with the contact, the crimp tool and tick columns; **Parts**, **Accessories**, **Labels** and **Tests** follow, with empty columns for the result; **About** names the version and design. A missing value reads *to fill in*. Work on a copy: a changed file in `outputs/` fails the output check.
 
 The build data shows in the tables only where it is used: the wire list gets *Strip A (mm)* and *Strip B (mm)*, the pinouts get *Contact*, a harness with accessories gets `accessories.csv`, and the bill of materials counts the contacts used on pins and the accessory parts (pieces as *ea*, parts with a length as metres *m*).
 
-**Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window; a project that has harnesses but no folder yet first asks where to save it, with a folder chooser. The window shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied.
+**Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window; a project that has harnesses or connections but no folder yet first asks where to save it, with a folder chooser. The window shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied.
 
 The harness drawings are written only while **Include the PDF drawings** is ticked; it starts ticked when the last export into the folder had them. A problem found by the independent check, or a write error, stays in a notice in the window and nothing is written. The project must be saved to a folder first.
 
@@ -312,7 +318,7 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio diff DIR HARNESS [--from REV] [--to REV]` | what changed since a baseline |
 | `harness-design-studio compare OLD NEW` | compare two project folders (for example two Git checkouts); the last line names what is not compared |
 | `harness-design-studio log DIR [HARNESS]` | print the change log |
-| `harness-design-studio config DIR [--ampacity-csv FILE] [--apply-profile NAME]` | list missing or invalid engineering values; load a current-by-gauge table; fill unset values from a standard profile |
+| `harness-design-studio config DIR [--ampacity-csv FILE] [--apply-profile NAME] [--counterparts WORDS]` | list missing or invalid engineering values; load a current-by-gauge table; fill unset values from a standard profile; set the transmit and receive words of the connection review (`TX=RX, MOSI=MISO`) |
 | `harness-design-studio import-parts DIR FILE --approved VALUE ...` | import an approved-parts list; you say what the approval values mean |
 | `harness-design-studio import-lengths DIR FILE [--unit mm]` | import routing segment lengths from a table |
 | `harness-design-studio import-netlist DIR FILE --device D [--prefix J] [--connector J1=ID] [--part J1=PART] [--signal-map NAME=SIGNAL\|FILE]` | read connector pinouts of a device from a KiCad netlist (.net or .xml); the pins become fixed |
@@ -469,7 +475,7 @@ The **Show** list at the right end of the Model tab bar (**More > Show only** fo
 - **Harness**: a bundle of wires with connectors that carries signals between devices.
 - **Interface**: a logical connection between two devices, for example RS-422 from the computer to a wheel.
 - **Connection**: two connectors joined pin by pin, with the pairs proposed from the signal names on the pins and confirmed by you (new in 1.8.0). It needs no interface type.
-- **Pin role**: what a pin is for: Power, Return, Ground, Signal, Shield or Spare. *Return* (`RTN`) is the line the current comes back on.
+- **Pin role**: what a pin is for: Power, Return, Ground, Signal, Shield or Spare. *Return* (`RTN`) is the line the current comes back on. The **Role** column of the Devices tab shows it and changes it (*Power (auto)* is taken from the signal name; *Automatic* gives that back).
 - **Nominal / redundant**: the main chain and its backup. They never share a connector or harness.
 - **Auto-filled**: a connector the tool chose; unconfirmed until a person looks at it.
 - **Pending**: a value nobody has entered yet, for example a wire gauge that waits for a derating value. Shown with a dotted chip, never as a number.

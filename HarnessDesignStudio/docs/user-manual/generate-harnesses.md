@@ -67,7 +67,7 @@ Nothing is saved while the result holds errors (exit code 1). A naming pattern t
 
 ## 2. Check the result on its own
 
-The tool checks its own result with a second program path that shares no code with the generator. In the app the header of the **Harness** tab shows a chip, *Check passed* or *Check found n problem(s)*; hover the chip to read "Independent check: …" and how long it took. (The **Check** step in the top bar is another check: it runs the design rules, see [read and fix problems](read-and-fix-problems.md).) On the command line:
+The tool checks its own result with a second program path that shares no code with the generator. In the app the header of the **Harness** tab shows a chip, *Independent check passed* or *Independent check found n problem(s)* (when design checks failed the chip says so: *Independent check passed; n design checks failed*); hover the chip to read "Independent check: …" and how long it took. (The **Check** step in the top bar is another check: it runs the design rules, see [read and fix problems](read-and-fix-problems.md).) On the command line:
 
 ```
 harness-design-studio verify wheel-link
@@ -137,7 +137,7 @@ This was checked on the command line with `first-steps`: a wire set to gauge 20 
 
 ## Common mistakes
 
-- **"there are no harnesses to export; run `harness-design-studio generate` first."** You have not generated yet, or the project has no links. Generate first.
+- **"there are no harnesses to export; run `harness-design-studio generate` first."** You have not generated yet, or the project has no links. Generate first. (A project whose connections were made with **Link connectors…** exports without a harness: it gets the connection list, `system/connections.csv` and `.xlsx`.)
 - **A blank project generates nothing.** The command line has no command to draw a single device or link by hand (devices come in from a file with `import-pinout --new-device`, `import-devices` or `import-subsystem`). Draw devices and links in the app ([draw the design](draw-the-design.md)), or start from an example. A harness made by hand with **New harness…** is left alone by Generate.
 - **Gauge says *pending*.** Not a fault. A value is missing: run `harness-design-studio config DIR` ([fill in the engineering values](fill-in-engineering-values.md)). The power link also needs its **Max current (A)**.
 - **"The model changed after the harness plans were generated."** You changed the design after generating. Generate again.

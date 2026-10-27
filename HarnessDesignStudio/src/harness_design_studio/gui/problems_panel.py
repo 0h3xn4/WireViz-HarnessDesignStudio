@@ -148,11 +148,20 @@ class ProblemsList(QWidget):
             key=lambda f: (_ORDER.get(f.severity, 3), f.rule, f.object_id),
         )
         self.model.update_rows([problem_row(f) for f in found])
-        self.count.setText(strings.PROBLEMS_BUTTON.format(len(found)))
         self.filters["links"].setVisible(bool(self.ctl.project.links) or self._level == "links")
         self.empty.setVisible(not found)
         self.table.setVisible(bool(found))
         self._apply_filter()
+
+    def _show_count(self) -> None:
+        """ "Problems (24)", and "Problems (14 of 24)" while a filter hides some: the number in the
+        window's Problems button is the whole list, so the two always agree."""
+        total, shown = self.model.rowCount(), self.table.proxy.rowCount()
+        self.count.setText(
+            strings.PROBLEMS_BUTTON.format(total)
+            if shown == total
+            else strings.PROBLEMS_BUTTON_OF.format(shown, total)
+        )
 
     def total(self) -> int:
         return self.model.rowCount()
@@ -181,12 +190,13 @@ class ProblemsList(QWidget):
                     and str(row.get("rule", "")).startswith(LINK_RULE_PREFIX)
                 )
             )
-            return
-        self.table.proxy.set_predicate(
-            None
-            if level == "all"
-            else lambda row: isinstance(row, Mapping) and row.get("level") == level
-        )
+        else:
+            self.table.proxy.set_predicate(
+                None
+                if level == "all"
+                else lambda row: isinstance(row, Mapping) and row.get("level") == level
+            )
+        self._show_count()
 
     def _object_of(self, index: QModelIndex) -> str:
         if not index.isValid():

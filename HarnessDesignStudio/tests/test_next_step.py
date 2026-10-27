@@ -271,3 +271,52 @@ def test_the_exact_texts() -> None:
     )
     assert next_step(NextInputs(units=2)).button == "Connect two devices"
     assert next_step(replace(RELEASABLE, checked=False)).button == "Check the design"
+
+
+# ---- 1.9 W1: a warning never holds the page; the first problem is on a card ---------------------
+
+
+def problem(**kw: object) -> ns.NextProblem:
+    return ns.NextProblem(
+        "part-unapproved.P1",
+        "part-unapproved",
+        "warning",
+        "Part P1 is not approved yet",
+        "Approve the part.",
+        **kw,
+    )  # type: ignore[arg-type]
+
+
+def test_warnings_alone_do_not_hold_the_page() -> None:
+    f = replace(RELEASABLE, outputs="stale", warned=3, problem=problem(can_waive=True))
+    n = next_step(f)
+    assert n.key == "build_sheets" and n.button == "Export the build sheets"
+    assert "3 warnings are left" in n.note and "do not stop you" in n.note
+    assert n.problem is not None and n.problem.can_waive
+    one = next_step(replace(f, warned=1))
+    assert "1 warning is left" in one.note
+    assert next_step(replace(RELEASABLE, warned=2)).key == "release"
+    assert next_step(replace(RELEASABLE, warned=2, released=2)).key == "done"
+
+
+def test_errors_still_hold_the_page_and_show_the_card() -> None:
+    f = replace(RELEASABLE, failed=2, warned=1, problem=problem())
+    n = next_step(f)
+    assert n.key == "fix" and n.problem == problem()
+    assert "warning" not in n.note  # (the sentence counts the failed checks only)
+
+
+def test_no_problem_card_before_the_check_or_before_the_harnesses() -> None:
+    for f in (NextInputs(), NextInputs(units=2), replace(RELEASABLE, checked=False)):
+        assert next_step(replace(f, problem=problem())).problem is None
+
+
+def test_the_todo_sentence_is_the_text_after_to_fix_it() -> None:
+    assert ns.todo_sentence("Only approved parts may be built. To fix it: approve the part in the parts list, or choose an approved one.") == "Approve the part in the parts list, or choose an approved one."  # fmt: skip
+    assert ns.todo_sentence("Why only.", "Fix all") == "Fix all."
+    assert ns.todo_sentence("Why only.") == strings.NEXT_PROBLEM_TODO_FALLBACK
+
+
+def test_the_texts_of_the_new_sentences_use_plain_words() -> None:
+    for text in (strings.NEXT_WARNED_ONE, strings.NEXT_WARNED_MANY, strings.NEXT_PROBLEM_TODO_FALLBACK, strings.NEXT_PROBLEM_APPROVE_ASK):  # fmt: skip
+        assert not any(w in text.lower() for w in ("drc", "rule", "interface", "generation"))

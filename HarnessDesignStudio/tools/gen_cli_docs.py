@@ -56,6 +56,7 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio config my-design",
         "harness-design-studio config my-design --ampacity-csv ampacity.csv",
         "harness-design-studio config my-design --apply-profile ecss-q-st-30-11c",
+        'harness-design-studio config my-design --counterparts "TX=RX, MOSI=MISO, OUT=IN"',
     ],
     "library": [
         "harness-design-studio library my-design",

@@ -58,7 +58,14 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio import __version__
-from harness_design_studio.core import device_library, drc, edit, manual_harness
+from harness_design_studio.core import (
+    checks,
+    device_library,
+    drc,
+    edit,
+    manual_harness,
+    part_approval,
+)
 from harness_design_studio.core import links as core_links
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.drc import by_rule
@@ -140,12 +147,13 @@ from harness_design_studio.gui.new_project_dialog import (
     NewProjectRequest,
 )
 from harness_design_studio.gui.next_page import NextStepPage
-from harness_design_studio.gui.next_step import NextInputs, next_step
+from harness_design_studio.gui.next_step import NextInputs, NextProblem, next_step, todo_sentence
 from harness_design_studio.gui.pages import HomePage
 from harness_design_studio.gui.panels import ProblemsPanel, PropertiesPanel, category_icon
 from harness_design_studio.gui.problems_panel import ProblemsList
 from harness_design_studio.gui.project_tree import ProjectTree
 from harness_design_studio.gui.rail import NavRail
+from harness_design_studio.gui.release_text import plain_blocker
 from harness_design_studio.gui.releases_panel import ReleasesPanel
 from harness_design_studio.gui.role_dialog import RoleDialog
 from harness_design_studio.gui.roles import (
@@ -438,6 +446,8 @@ class MainWindow(QMainWindow):
         self._role_to_ask = False  # a first start with no role set by the hook: ask once
         # "systems" | "electrical", set from the settings in `_restore_settings`
         self.role = ELECTRICAL
+        self._role_menus: dict[str, QMenu] = {}  # submenus the Systems engineer role hides
+        self._role_removed: list[tuple[QMenu, QAction, QAction | None]] = []  # taken out of menus
         self.ctl = EditorController(journal_delay_ms)
         self.setObjectName("main-window")
         # Dialog hooks (tests replace these to drive the UI without blocking).
@@ -469,6 +479,7 @@ class MainWindow(QMainWindow):
         self._outputs_epoch = 0  # bumped when files were written, to read the outputs state again
         self._dismissed_alert: tuple[bool, bool, str] | None = None
         self._check_asked = False  # the person pressed Check: say when it has finished
+        self._next_finding: checks.Finding | None = None  # the problem on the Next step card
         self._shown = False
         self._have_saved_state = False
         self._layout_class: tuple[bool, bool] | None = None
@@ -492,7 +503,14 @@ class MainWindow(QMainWindow):
         self._register_slots()
         self._install_default_views()
         self._show_area(areas.DEFAULT)
-        self.tour = Tour(self, theme, self._tour_targets(), self._tour_reveals())
+        self.tour = Tour(
+            self,
+            theme,
+            self._tour_targets(),
+            self._tour_reveals(),
+            steps=self._tour_steps,
+            brought=frozenset({"next", "next_button", "connect"}),
+        )
         self.tour.on_stop = lambda: self.settings.setValue("tour/done", True)
 
         self.ctl.message.connect(self._on_message)
@@ -708,6 +726,9 @@ class MainWindow(QMainWindow):
                 "generate": lambda: self.generate_flow(),
                 "check": lambda: self.check_flow(),
                 "fix": lambda: self._next_fix(),
+                "problem_show": lambda: self._next_problem_show(),
+                "problem_waive": lambda: self._next_problem_waive(),
+                "problem_approve": lambda: self._next_problem_approve(),
                 "build_sheets": lambda: self.export_dialog_flow(),
                 "release": lambda: self._next_go("releases"),
                 "done": lambda: self._next_go("lists"),
@@ -994,6 +1015,7 @@ class MainWindow(QMainWindow):
             return True
         if isinstance(widget, ListsPanel):
             widget.generateRequested.connect(self.act_generate.trigger)
+            widget.exportRequested.connect(self.act_export.trigger)
             widget.exportTableRequested.connect(lambda name, fmt: self.export_table_flow(name, fmt))
             return True
         if isinstance(widget, DevicesView):
@@ -1172,7 +1194,12 @@ class MainWindow(QMainWindow):
         if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
             return
         lid = self.ctl.add_link(
-            dlg.a_connector_id(), dlg.b_connector_id(), dlg.pairs(), dlg.name(), dlg.roles()
+            dlg.a_connector_id(),
+            dlg.b_connector_id(),
+            dlg.pairs(),
+            dlg.name(),
+            dlg.roles(),
+            first=dlg.extra_ops,
         )
         if lid:
             self.view.focus_connection(lid)
@@ -1240,7 +1267,8 @@ class MainWindow(QMainWindow):
         hid = self.ctl.create_harness_from_link(lid)
         if hid is None:
             return
-        self.go_to("harness")
+        if not self._stays_on_the_path():
+            self.go_to("harness")
         self.harness_view.refresh()
         self.harness_view.select_harness(hid)
 
@@ -1344,12 +1372,15 @@ class MainWindow(QMainWindow):
         dlg = NewDeviceDialog(self, self.theme, self.ctl.project)
         if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
             return
-        uid = self.ctl.add_device(count=dlg.count(), **dlg.values())
+        uid = self.ctl.add_device(
+            count=dlg.count(), connector_part=dlg.connector_part(), **dlg.values()
+        )
         if uid is None:
             return
-        self.go_to("devices")
         self.devices_view.show_unit(uid)
-        self.devices_view.focus_name()
+        if not self._stays_on_the_path():
+            self.go_to("devices")
+            self.devices_view.focus_name()
 
     def new_harness_flow(self) -> None:
         """Edit > New harness… (Ctrl+Shift+H): an empty harness made by hand, with no interface
@@ -1531,7 +1562,8 @@ class MainWindow(QMainWindow):
         if not plan.ops or not self.ctl.run(strings.STEP_ADD_DEVICES, plan.ops):
             return
         added = [r.new_id for r in plan.rows if r.ok]
-        self.go_to("devices")
+        if not self._stays_on_the_path():
+            self.go_to("devices")
         self.devices_view.show_unit(added[0])
         self.toasts.show_message(strings.DV_LIB_ADDED.format(len(added), Path(path).name), None)
 
@@ -2008,6 +2040,7 @@ class MainWindow(QMainWindow):
         spread_menu = e.addMenu(strings.A_DISTRIBUTE)
         for act in self.distribute_actions.values():
             spread_menu.addAction(act)
+        self._role_menus = {"align": align_menu, "distribute": spread_menu}
         e.addAction(self.act_add_zone)
         e.addAction(self.act_new_harness)
         e.addAction(self.act_bulk_wires)
@@ -2019,6 +2052,7 @@ class MainWindow(QMainWindow):
             act = self._act(tpl.label, partial(self._add_unit, tid), name=f"menu-add-{tid}")
             self.menu_add.addAction(act)
         self.menu_connect = e.addMenu(strings.M_CONNECT_WITH_TYPE)  # the older, interface-first way
+        self._role_menus["connect-with-type"] = self.menu_connect
         self.menu_connection = e.addMenu(strings.M_CONNECTION)
         for act in (
             self.act_link_edit,
@@ -2380,7 +2414,23 @@ class MainWindow(QMainWindow):
         def problems() -> None:
             self.inspector.show_tab("problems")
 
-        return {"add": tree, "problems": problems}
+        def next_page() -> None:
+            self._show_area("next")
+
+        def diagram() -> None:
+            self._show_area("model", tab="diagram")
+
+        return {
+            "add": tree,
+            "problems": problems,
+            "next": next_page,
+            "next_button": next_page,
+            "connect": diagram,
+        }
+
+    def _tour_steps(self) -> list[tuple[str, str]]:
+        """The Systems engineer role has a tour of its own: the Next step page, not the panels."""
+        return strings.TOUR_STEPS_SYSTEMS if self.role == SYSTEMS else strings.TOUR_STEPS
 
     def _tour_targets(self) -> dict[str, QWidget]:
         return {
@@ -2390,6 +2440,9 @@ class MainWindow(QMainWindow):
             "problems": self.side_tabs,
             "generate": self.generate_btn,
             "role": self.rail,
+            "next": self.next_page,
+            "next_button": self.next_page.button,
+            "connect": self.tool_connect,
         }
 
     # ---- state reactions ---------------------------------------------------------------------
@@ -2594,6 +2647,11 @@ class MainWindow(QMainWindow):
         if status.generated_at:
             self.status_generated.setText(strings.STATUS_GENERATED.format(status.generated_at))
             self.status_generated.setToolTip(strings.STATUS_GENERATED_TIP)
+        elif status.interfaces == 0 and (
+            status.links or (status.harnesses and status.hand_made == status.harnesses)
+        ):  # connections and hand-made harnesses are not generated: they are not "not generated"
+            self.status_generated.setText(strings.CHIP_BY_HAND)
+            self.status_generated.setToolTip(strings.CHIP_BY_HAND_TIP)
         else:
             self.status_generated.setText(strings.STATUS_NOT_GENERATED)
             self.status_generated.setToolTip(strings.STATUS_NOT_GENERATED_TIP)
@@ -2699,7 +2757,11 @@ class MainWindow(QMainWindow):
         buttons that fix it."""
         self._update_lock_banner()
         plans = status.generation == "stale"
-        files = status.has_harnesses and status.outputs in ("stale", "modified", "unreadable")
+        files = (status.has_harnesses or status.links > 0) and status.outputs in (
+            "stale",
+            "modified",
+            "unreadable",
+        )  # (connections alone are exported too)
         key = (plans, files, status.model_hash)
         if (
             self.ctl.read_only
@@ -2775,7 +2837,8 @@ class MainWindow(QMainWindow):
             status = self.shell_status()
             self._dismissed_alert = (
                 status.generation == "stale",
-                status.has_harnesses and status.outputs in ("stale", "modified", "unreadable"),
+                (status.has_harnesses or status.links > 0)
+                and status.outputs in ("stale", "modified", "unreadable"),
                 status.model_hash,
             )
 
@@ -3084,7 +3147,8 @@ class MainWindow(QMainWindow):
         accepted = self.run_dialog(GeneratePreviewDialog(self, plan)) == QDialog.DialogCode.Accepted
         if accepted and self.ctl.apply_generation(plan, token):
             self._job_succeeded()
-            self.show_harness_view()
+            if not self._stays_on_the_path():
+                self.show_harness_view()
 
     def _apply_record_only(self, plan: GenerationPlan, token: tuple[int, int]) -> bool:
         """A plan that changes no harness. When the design did change since the last generation
@@ -3223,7 +3287,7 @@ class MainWindow(QMainWindow):
                 hid,
                 strings.RELEASE_TITLE.format(hid),
                 by=self._user_name(),
-                blockers=[b.message for b in blockers],
+                blockers=[plain_blocker(b.message) for b in blockers],
                 placeholders=project.placeholder_configs(),
                 unapproved_parts=unapproved_parts(project, project.harnesses[hid]),
             )
@@ -3406,9 +3470,45 @@ class MainWindow(QMainWindow):
         self.act_show_panels.setEnabled(systems)
         self.panels_btn.setVisible(systems)
         self._sync_panels_action()
+        self._hide_menu_entries(value)
         self._update_crumbs()  # (Arrange and the filters of the Model tab)
         self._load_problem_notices()  # (each role has its own default and its own key)
         self._fit_status()
+
+    def _hide_menu_entries(self, role: str) -> None:
+        """The Systems engineer role does not list the engineering entries of the menus
+        (`areas.SYSTEMS_HIDDEN_ACTIONS`). They are taken out of the menus, not disabled or made
+        invisible (Qt switches the shortcut of an invisible action off): the actions stay on the
+        window, so the command palette (Ctrl+K) still lists and runs each one and the shortcuts
+        work. The other role puts them back where they were."""
+        for menu, act, before in reversed(self._role_removed):
+            if before is None:
+                menu.addAction(act)
+            else:
+                menu.insertAction(before, act)
+        self._role_removed = []
+        hidden = set(areas.hidden_actions_in(role))
+        if not hidden:
+            return
+        submenus = [m.menuAction() for n, m in self._role_menus.items() if f"menu:{n}" in hidden]
+        menus: list[QMenu] = []
+        for top in self.menuBar().actions():
+            m = top.menu()
+            if isinstance(m, QMenu):
+                menus.append(m)
+        for menu in menus:  # (the submenus are found while the list grows)
+            for a in menu.actions():
+                sub = a.menu()
+                if isinstance(sub, QMenu) and sub not in menus:
+                    menus.append(sub)
+        for menu in menus:
+            entries = menu.actions()
+            for k, act in enumerate(entries):
+                if act.objectName() in hidden or act in submenus:
+                    before = entries[k + 1] if k + 1 < len(entries) else None
+                    self._role_removed.append((menu, act, before))
+        for menu, act, _before in self._role_removed:
+            menu.removeAction(act)
 
     def set_role(self, value: str, *, save_left: bool = True) -> None:
         """View > Role: store and apply the choice, and with it that role's own layout (panels,
@@ -3520,6 +3620,16 @@ class MainWindow(QMainWindow):
         if self.role == SYSTEMS and not self.dock_right.isVisibleTo(self):
             self.dock_right.show()
 
+    def _stays_on_the_path(self) -> bool:
+        """True for the Systems engineer role: after a step (a device added, a connection made, the
+        harnesses generated) the person stays on the Next step page or the diagram instead of being
+        sent into a detail tab. From any other place the Next step page opens."""
+        if self.role != SYSTEMS:
+            return False
+        if self._area not in ("next", "model"):
+            self._show_area("next")
+        return True
+
     def show_everything(self) -> None:
         """The link of the Next step page: the Electrical / AIT engineer role, on the diagram."""
         self.set_role(ELECTRICAL)
@@ -3531,7 +3641,63 @@ class MainWindow(QMainWindow):
         if self.role == SYSTEMS:
             self._show_area("next")
 
+    def _next_problem_facts(self) -> dict[str, Any]:
+        """What the Next step page needs of the checks: how many rules failed with an error (they
+        hold the page), how many with a warning or a note (they never do), and the first open
+        problem for the card, errors first. The finding is kept in `_next_finding` so the buttons
+        of the card can act on it."""
+        c = self.ctl
+        self._next_finding = None
+        results = c.drc_rule_results() if c.drc_current else []
+        failing = [r for r in results if r.status == "fail"]
+        order = {"error": 0, "warning": 1, "info": 2}
+        failing.sort(key=lambda r: order.get(r.severity, 3))
+        errors = sum(1 for r in failing if r.severity == "error")
+        facts: dict[str, Any] = {"failed": errors, "warned": len(failing) - errors, "problem": None}
+        for r in failing:
+            f = next((x for x in r.findings if x.waiver is None), None)
+            if f is None:
+                continue
+            self._next_finding = f
+            approve = ""
+            if f.rule == "part-unapproved" and not part_approval.approval_blocker(c.project, f.object_id):  # fmt: skip
+                approve = f.object_id
+            facts["problem"] = NextProblem(
+                f.id, f.rule, f.severity, f.title, todo_sentence(f.why, f.fix_label), f.can_waive,
+                approve, max(0, sum(x.count for x in failing) - 1),
+            )  # fmt: skip
+            break
+        return facts
+
+    def _next_problem_show(self) -> None:
+        f = self._next_finding
+        if f is not None and f.object_id:
+            self.show_object(f.object_id)
+        else:
+            self._next_fix()
+
+    def _next_problem_waive(self) -> None:
+        f = self._next_finding
+        if f is not None and f.can_waive and not self.ctl.read_only:
+            self.waive_flow(f)
+
+    def _next_problem_approve(self) -> None:
+        """Approve the part of the first problem, after saying what that means. A person presses
+        it; the program never approves a part by itself."""
+        f = self._next_finding
+        if f is None or f.rule != "part-unapproved" or self.ctl.read_only:
+            return
+        pid = f.object_id
+        choice = self.ask_choice(
+            strings.NEXT_PROBLEM_APPROVE_TITLE,
+            strings.NEXT_PROBLEM_APPROVE_ASK.format(pid),
+            [strings.NEXT_PROBLEM_APPROVE_YES, strings.CANCEL],
+        )
+        if choice == 0:
+            self.ctl.approve_part(pid)
+
     def _next_inputs(self, s: ShellStatus) -> NextInputs:
+        facts = self._next_problem_facts()
         return NextInputs(
             units=s.units,
             interfaces=s.interfaces,
@@ -3541,13 +3707,13 @@ class MainWindow(QMainWindow):
             generation=s.generation,
             running=s.running,
             checked=s.checked,
-            failed=s.failed,
             unchecked=s.unchecked,
             outputs=s.outputs,
             in_review=s.in_review,
             released=s.released,
             read_only=s.read_only,
             has_folder=self.ctl.root is not None,
+            **facts,
         )
 
     def _update_next(self, status: ShellStatus) -> None:
@@ -3684,7 +3850,7 @@ class MainWindow(QMainWindow):
         p = self.ctl.project
         needs_folder = (
             self.ctl.outputs_folder() is None
-            and bool(p.harnesses)
+            and bool(p.harnesses or p.links)
             and not self.ctl.read_only
             and not p.recovered
         )
@@ -3791,7 +3957,7 @@ class MainWindow(QMainWindow):
         if folder is None:
             self.toasts.show_message(strings.EXPORT_SAVE_FIRST, None)
             return
-        if not self.ctl.project.harnesses:
+        if not self.ctl.project.harnesses and not self.ctl.project.links:
             self.toasts.show_message(strings.EXPORT_NO_HARNESSES, None)
             return
         self.job_error = None

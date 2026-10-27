@@ -297,6 +297,67 @@ def plan_add_wire(
     return [Put("harnesses", evolve(h, wires=[*h.wires, wire]))]
 
 
+def plan_add_wires(
+    project: Project,
+    harness_id: str,
+    ends: Sequence[tuple[str, str, str, str, str | None]],
+) -> list[Op]:
+    """Ops that add many wires to a harness at once, `(from_connector, from_pin, to_connector,
+    to_pin, signal)` for each: the same wires, with the same IDs in the same order, as calling
+    `plan_add_wire` for each of them one after the other, but in one pass (the harness is checked
+    and rebuilt once, the naming pattern and the taken IDs are read once), so the cost grows with
+    the number of wires, not with its square. One `Put`; no ops for no wires."""
+    h = project.harnesses.get(harness_id)
+    if h is None:
+        raise EditError(f"Harness '{harness_id}' does not exist.")
+    if h.status == "released":
+        raise EditError(released_text(h))
+    if not ends:
+        return []
+    from .generate.naming import namer_for
+
+    pins = {c.id: {p.id for p in c.pins} for c in h.connectors}
+
+    def check(what: str, cid: str, pid: str) -> None:
+        if cid not in pins:
+            raise EditError(f"{what}: '{cid}' is not a connector of {h.id}.")
+        if pid not in pins[cid]:
+            raise EditError(f"{what}: connector {cid} has no pin '{pid}'.")
+
+    namer = namer_for(project)
+    taken = used_ids(project)
+    n = 0
+    wires: list[Wire] = []
+    for fc, fp, tc, tp, signal in ends:
+        check("From", fc, fp)
+        check("To", tc, tp)
+        if (fc, fp) == (tc, tp):
+            raise EditError("A wire cannot start and end on the same pin.")
+        n += 1
+        while namer.wire(harness_id, n) in taken:
+            n += 1
+        wid = namer.wire(harness_id, n)
+        taken.add(wid)
+        sig = signal.strip() if isinstance(signal, str) and signal.strip() else None
+        try:
+            wires.append(
+                Wire(
+                    id=wid,
+                    signal=sig,
+                    from_connector=fc,
+                    from_pin=fp,
+                    to_connector=tc,
+                    to_pin=tp,
+                    manual=True,
+                )  # fmt: skip
+            )
+        except ValidationError as exc:
+            raise EditError(
+                f"The wire is not valid: {exc.errors()[0].get('msg', 'not valid')}."
+            ) from exc
+    return [Put("harnesses", evolve(h, wires=[*h.wires, *wires]))]
+
+
 def _clean_new(project: Project, field: str, value: object) -> object:
     """Like `_clean`, but an empty value of a field the new wire does not need is just left out."""
     if value is None or (isinstance(value, str) and not value.strip()):

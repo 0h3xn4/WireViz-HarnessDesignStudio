@@ -52,6 +52,14 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         help="CSV with a gauge column and an amperes column; sets derating.ampacity_a_by_awg",
     )
     c.add_argument(
+        "--counterparts",
+        default=None,
+        metavar="WORDS",
+        help="the words that are the two ends of one line, for the link review and the pairing, "
+        "for example 'TX=RX, MOSI=MISO' (sets naming.signal_counterparts); 'default' goes back "
+        "to the table the tool ships with, 'none' pairs equal names only",
+    )
+    c.add_argument(
         "--apply-profile",
         default=None,
         metavar="NAME",
@@ -387,7 +395,11 @@ def run(args: argparse.Namespace) -> int:
 def _changes_project(args: argparse.Namespace) -> bool:
     """Whether `config` or `library` was asked to change something (not only to report)."""
     if args.command == "config":
-        return args.ampacity_csv is not None or args.apply_profile is not None
+        return (
+            args.ampacity_csv is not None
+            or args.apply_profile is not None
+            or args.counterparts is not None
+        )
     if args.command == "library":
         return any(
             getattr(args, k, None) is not None
@@ -428,6 +440,20 @@ def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untype
         save_project(project, args.project)
         print(
             f'Loaded {len(table)} gauges into config/derating.json. Review it, then set "placeholder": false when the file is complete.'
+        )
+    if args.counterparts is not None:
+        words = configcheck.plan_set_counterparts(project, args.counterparts)
+        if not words.ok:
+            print(f"error: {words.error}", file=sys.stderr)
+            print("Nothing was changed.", file=sys.stderr)
+            return 1
+        History(project).execute("Set counterpart words", words.ops)
+        save_project(project, args.project)
+        n = len(words.value) if isinstance(words.value, list) else 0
+        print(
+            "Counterpart words: the table the tool ships with is used again."
+            if words.value is None
+            else f"Counterpart words: {n} pair{'s' if n != 1 else ''} set in config/naming.json."
         )
     if args.apply_profile is not None:
         try:

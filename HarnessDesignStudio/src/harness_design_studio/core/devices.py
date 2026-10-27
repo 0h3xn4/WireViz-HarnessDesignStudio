@@ -42,7 +42,7 @@ from .model import (
 )
 from .model.base import MAX_PIN_COUNT, Name
 from .model.logical import Category, Construction, Direction, Shielding, Side
-from .model.physical import Gender, PinRole, Termination
+from .model.physical import Gender, PinDirection, PinRole, Termination
 from .outputs.stamp import Table
 from .outputs.tables import box_pinouts
 from .vcs.lockview import LockRef, field_lock_reason, lock_reason, locked_objects
@@ -51,12 +51,41 @@ from .vcs.snapshot import carried_interfaces
 PinMode = Literal["free", "fixed", "locked"]
 PIN_MODES: tuple[PinMode, ...] = get_args(PinMode)
 PIN_FIELDS = frozenset(
-    {"signal", "contact_size", "termination", "fixed", "locked", "function", "contact_part", "role"}
-)
+    {
+        "signal", "contact_size", "termination", "fixed", "locked", "function", "contact_part",
+        "role", "direction",
+    }
+)  # fmt: skip
 CONNECTOR_FIELDS = frozenset({"name", "gender", "keying", "carries", "notes", "label"})
 _GENDERS: tuple[str, ...] = get_args(Gender)
 _TERMINATIONS: tuple[str, ...] = get_args(Termination)
 PIN_ROLES: tuple[str, ...] = get_args(PinRole)
+PIN_DIRECTIONS: tuple[str, ...] = get_args(PinDirection)  # "", "in", "out", "bidir"
+# What a person may type for the direction of a pin (a sheet, a paste, the command line); the
+# stored words are "in", "out" and "bidir", and "" for not set.
+_DIRECTION_WORDS = {
+    "": "", "unset": "", "unspecified": "", "none": "", "-": "", "n/a": "", "na": "",
+    "passive": "",
+    "in": "in", "input": "in", "i": "in",
+    "out": "out", "output": "out", "o": "out",
+    "bidir": "bidir", "bidirectional": "bidir", "inout": "bidir", "in/out": "bidir",
+    "in-out": "bidir", "io": "bidir", "i/o": "bidir", "both": "bidir",
+}  # fmt: skip
+
+
+def parse_pin_direction(value: object) -> str:
+    """The stored direction ("", "in", "out" or "bidir") for what a person wrote, or an EditError.
+    "Input", "OUT", "bidirectional" and "I/O" are understood; an empty text means not set."""
+    word = "" if value is None else str(value).strip().casefold()
+    found = _DIRECTION_WORDS.get(word)
+    if found is None:
+        raise EditError(
+            "A pin direction is in, out, bidirectional, or empty (not set: taken from the "
+            "interface types)."
+        )
+    return found
+
+
 _NAME = TypeAdapter(Name)
 
 
@@ -404,6 +433,7 @@ def _pin_is_empty(p: Pin) -> bool:
         and p.function is None
         and p.contact_part is None
         and p.role == ""
+        and p.direction == ""
         and p.termination == "unspecified"
     )
 
@@ -588,6 +618,8 @@ def _edit_pin(pin: Pin, changes: Mapping[str, object], project: Project | None =
                 if project is not None
                 else _text(value, "A contact")
             )
+        elif key == "direction":
+            new[key] = parse_pin_direction(value)
         elif key == "role":
             text = "" if value is None else value
             if text not in PIN_ROLES:
@@ -847,7 +879,9 @@ def ops_set_pinout(project: Project, connector_id: str, pins: Sequence[Pin]) -> 
 
 # ---- rows from a spreadsheet (paste and import) ------------------------------------------------
 
-ROW_COLUMNS = ("pin", "signal", "mode", "contact_size", "termination", "function", "contact_part")
+ROW_COLUMNS = (
+    "pin", "signal", "mode", "contact_size", "termination", "function", "contact_part", "direction",
+)  # fmt: skip
 
 
 @dataclass(frozen=True)
@@ -937,6 +971,8 @@ def plan_pin_rows(
                 changes["function"] = row["function"]
             if "contact_part" in row:
                 changes["contact_part"] = row["contact_part"]
+            if "direction" in row:
+                changes["direction"] = row["direction"]
             if "mode" in row:
                 word = _MODE_WORDS.get(row["mode"].strip().casefold(), "?")
                 if word == "?":
@@ -1123,6 +1159,7 @@ class PinRow:
     severity: Severity | None  # the worst inline problem about this pin
     function: str = ""  # a person's words for what the pin does
     contact_part: str = ""  # the contact the cable side uses here (a library part)
+    direction_set: bool = False  # `direction` is the one set on the pin, not the derived one
 
 
 _RANK: dict[Severity, int] = {"error": 0, "warning": 1, "info": 2}
@@ -1162,6 +1199,8 @@ def pin_rows(
     for p in c.pins:
         wires = tuple(sorted(attached.get((c.id, p.id), [])))
         direction, category, note = derive_meaning(project, c, p, index)
+        if p.direction:  # a person said which way it runs: that beats the interface types
+            direction, note = p.direction, f"Direction set on the pin. {note}".rstrip()
         out.append(
             PinRow(
                 p.id,
@@ -1180,6 +1219,7 @@ def pin_rows(
                 worst.get(p.id),
                 p.function or "",
                 p.contact_part or "",
+                bool(p.direction),
             )
         )
     return out
@@ -1614,7 +1654,8 @@ def ops_unassign_pins(project: Project, connector_id: str, pin_ids: Sequence[str
 
 # ---- pasted cells (CD-C6) ----------------------------------------------------------------------
 
-GRID_COLUMNS = ROW_COLUMNS  # the columns a pasted block can fill
+# the columns a pasted block can fill (the Devices tab has no Direction column to paste into yet)
+GRID_COLUMNS = ROW_COLUMNS[:-1]
 
 
 def rows_from_grid(
@@ -1948,6 +1989,7 @@ def ops_update_interface_type(project: Project, type_id: str, **changes: object)
 
 __all__ = [
     "CONNECTOR_FIELDS",
+    "PIN_DIRECTIONS",
     "PIN_FIELDS",
     "PIN_MODES",
     "PIN_ROLES",
@@ -2008,6 +2050,7 @@ __all__ = [
     "pinout_problems",
     "pinout_table",
     "plan_change_part",
+    "parse_pin_direction",
     "plan_pin_rows",
     "suggest_carries",
     "wire_index",
