@@ -74,7 +74,7 @@ def read_pinout_table(path: Path | str) -> tuple[Table, str | None]:
     docs/OUTPUTS.md); it is skipped. In a workbook written by this tool the first sheet is the
     "About" sheet; it is passed over, so what `export-pinout` writes can be read back."""
     p = Path(path)
-    if p.suffix.lower() == ".csv":
+    if p.suffix.lower() in (".csv", ".tsv"):
         try:
             raw = p.read_bytes()[: MAX_BYTES + 1]
             text = raw.decode("utf-8-sig")
@@ -131,6 +131,7 @@ class PinoutPlan:
     ops: list[Op] = field(default_factory=list)
     connectors: list[str] = field(default_factory=list)  # connector IDs that are added or changed
     added: list[str] = field(default_factory=list)  # ... of which new
+    unchanged: list[str] = field(default_factory=list)  # connectors the table leaves as they are
     pins: int = 0
     unmatched_signals: dict[str, list[str]] = field(default_factory=dict)  # signal -> "J01.A1"
     warnings: list[str] = field(default_factory=list)
@@ -283,22 +284,25 @@ def plan_pinout_import(
         except (EditError, HarnessError) as exc:
             plan.rows += [PinoutRow(n, False, str(exc), name, r.get("pin", "")) for n, r in rows]
             continue
+        same = not is_new and not set_ops  # the table says what the connector already holds
         ops += set_ops
         work = edit.clone_with(work, set_ops)
         plan.ops += ops
-        plan.connectors.append(cid)
+        if same:
+            plan.unchanged.append(cid)
+        else:
+            plan.connectors.append(cid)
+            plan.pins += len(rows)
         if is_new:
             plan.added.append(cid)
-        plan.pins += len(rows)
         known = {s.name for t in work.interface_types.values() for s in t.signals}
         for _n, r in rows:
             sig = r.get("signal", "")
             if sig and sig not in known:
                 plan.unmatched_signals.setdefault(sig, []).append(f"{cid} pin {r['pin']}")
         for n, r in rows:
-            seen_rows.append(
-                (n, PinoutRow(n, True, "added" if is_new else "updated", cid, r["pin"]))
-            )
+            word = "added" if is_new else "unchanged" if same else "updated"
+            seen_rows.append((n, PinoutRow(n, True, word, cid, r["pin"])))
     plan.rows += [r for _n, r in seen_rows]
     plan.rows.sort(key=lambda r: r.row_number)
     if plan.bad_count:

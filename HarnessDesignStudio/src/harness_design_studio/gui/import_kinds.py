@@ -295,6 +295,13 @@ _HINTS = (
 )
 
 
+def _will(action: str) -> str:
+    """What the preview says a row will do."""
+    if action == "unchanged":
+        return strings.IMP_WILL_KEEP
+    return strings.IMP_WILL_UPDATE if action == "updated" else strings.IMP_WILL_ADD
+
+
 def plain(message: str) -> str:
     """A planner message with the command-line option names turned into the wizard's own words
     ("use --part J1=PART" -> "enter J1=PART in “Part for each connector”")."""
@@ -388,7 +395,7 @@ def _plan_parts(project: Project, source: Source, options: Options) -> ImportPla
     for r in plan.rows:
         row = table[r.row_number - 1]
         name = r.part_id or "(no ID)"
-        result = (strings.IMP_WILL_UPDATE if r.action == "updated" else strings.IMP_WILL_ADD) if r.ok else strings.IMP_SKIPPED  # fmt: skip
+        result = _will(r.action) if r.ok else strings.IMP_SKIPPED  # fmt: skip
         view.rows.append(PlanRow(str(r.row_number), name, "pass" if r.ok else "fail", result, r.message))  # fmt: skip
         view.preview.append([str(r.row_number), cell(row, wanted[0]) or cell(row, "part_number"), *(cell(row, k) for k in wanted[1:])])  # fmt: skip
         if r.ok and r.part_id in pending_ids:
@@ -508,7 +515,7 @@ def _plan_netlist(project: Project, source: Source, options: Options) -> ImportP
     view.total_rows = len(plan.rows)
     for r in plan.rows:
         item = f"{r.ref or '-'} → {r.connector_id}" if r.connector_id else (r.ref or "-")
-        result = (strings.IMP_WILL_UPDATE if r.action == "updated" else strings.IMP_WILL_ADD) if r.ok else strings.IMP_SKIPPED  # fmt: skip
+        result = _will(r.action) if r.ok else strings.IMP_SKIPPED  # fmt: skip
         view.rows.append(PlanRow(r.ref or "-", item, "pass" if r.ok else "fail", result, plain(r.message)))  # fmt: skip
         view.preview.append([r.ref or "-", r.connector_id, f"{r.pins} signal pin(s)" if r.ok else ""])  # fmt: skip
     for w in plan.warnings:
@@ -556,13 +563,7 @@ def _plan_pinout(project: Project, source: Source, options: Options) -> ImportPl
 
     for r in plan.rows:
         row = table[r.row_number - 1] if 0 < r.row_number <= len(table) else []
-        result = (
-            strings.IMP_SKIPPED
-            if not r.ok
-            else strings.IMP_WILL_UPDATE
-            if r.message == "updated"
-            else strings.IMP_WILL_ADD
-        )
+        result = strings.IMP_SKIPPED if not r.ok else _will(r.message)
         item = f"{r.connector} / {r.pin}" if r.pin else r.connector or "(empty row)"
         view.rows.append(
             PlanRow(str(r.row_number), item, "pass" if r.ok else "fail", result, "" if r.ok else r.message)

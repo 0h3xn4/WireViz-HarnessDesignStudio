@@ -51,12 +51,12 @@ def _unsafe(cell: str) -> str:
     return cell[1:] if cell[:1] == "'" and cell.lstrip("'")[:1] in _TRIGGERS else cell
 
 
-def csv_bytes(table: Table, stamp: Stamp) -> bytes:
-    """CSV with LF line endings. The first line is a comment `# <stamp>`; readers skip lines
-    starting with `#` (documented in docs/OUTPUTS.md)."""
+def csv_bytes(table: Table, stamp: Stamp, delimiter: str = ",") -> bytes:
+    """CSV with LF line endings (`delimiter` "\\t" for a .tsv file). The first line is a comment
+    `# <stamp>`; readers skip lines starting with `#` (documented in docs/OUTPUTS.md)."""
     buf = io.StringIO()
     buf.write(f"# {stamp.line}\n")
-    w = csv.writer(buf, lineterminator="\n")
+    w = csv.writer(buf, lineterminator="\n", delimiter=delimiter)
     w.writerows([[_safe(c) for c in row] for row in table])
     return buf.getvalue().encode()
 

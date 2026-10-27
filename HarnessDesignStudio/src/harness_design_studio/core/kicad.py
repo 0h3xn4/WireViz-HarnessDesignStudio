@@ -286,7 +286,7 @@ class RowResult:
     ok: bool
     message: str
     connector_id: str = ""
-    action: str = ""  # "added" | "updated"
+    action: str = ""  # "added" | "updated" | "unchanged"
     pins: int = 0
 
 
@@ -477,10 +477,9 @@ def plan_netlist_import(
                 pins=merged,
             )
         taken[cid] = ref
-        plan.ops.append(Put("connectors", conn))
-        plan.rows.append(
-            RowResult(
-                ref, True, "", cid, "updated" if old else "added", sum(1 for p in merged if p.fixed)
-            )
-        )
+        same = old is not None and conn == old  # the netlist says what the connector already holds
+        if not same:
+            plan.ops.append(Put("connectors", conn))
+        action = "unchanged" if same else "updated" if old else "added"
+        plan.rows.append(RowResult(ref, True, "", cid, action, sum(1 for p in merged if p.fixed)))
     return plan

@@ -123,6 +123,19 @@ def open_url(path: Path) -> QUrl:
     return QUrl.fromLocalFile(str(path))
 
 
+# The only kinds of file the program writes to an outputs folder. Open hands a file to the system,
+# which would run a script or a shortcut that someone put in a shared project.
+OPENABLE_SUFFIXES = frozenset(
+    {".csv", ".xlsx", ".pdf", ".svg", ".md", ".json", ".yaml", ".txt", ".png"}
+)
+
+
+def may_open(path: Path, *, listed: bool = True) -> bool:
+    """Whether Open may hand `path` to the system: the manifest lists it (`listed`) and it is one of
+    the kinds above. A file that only sits in the folder is never opened."""
+    return listed and path.suffix.lower() in OPENABLE_SUFFIXES
+
+
 _DAMAGED_SHOWN = 5  # file names the notice for a damaged project lists
 
 
@@ -174,7 +187,10 @@ class ExportResultPanel(QWidget):
     """The files an export wrote, with Reveal in folder, Open and a picture of the selected drawing.
 
     `set_result` fills it; `set_filter` shows only some files (the ticked documents). Reveal and
-    Open hand a URL to `opener` (`QDesktopServices.openUrl` unless a test replaces it)."""
+    Open hand a URL to `opener` (`QDesktopServices.openUrl` unless a test replaces it). Open refuses a
+    file of a kind the program does not write and says so with `not_opened`."""
+
+    not_opened = Signal(str)
 
     def __init__(
         self,
@@ -403,6 +419,11 @@ class ExportResultPanel(QWidget):
         files = self.selected_files()
         if not files:
             return None
+        if not may_open(files[0].path):
+            self.not_opened.emit(
+                strings.OUT_NOT_OPENED
+            )  # the dialog shows it with the folder offered
+            return None
         url = open_url(files[0].path)
         self.opener(url)
         return url
@@ -577,6 +598,7 @@ class ExportDialog(QDialog):
         rl.addStretch(1)
         self.pages.addWidget(run)
         self.result_panel = ExportResultPanel(theme, settings=settings, opener=self._open)
+        self.result_panel.not_opened.connect(self._show_not_opened)
         self.pages.addWidget(self.result_panel)
         split.addWidget(self.pages)
         split.setStretchFactor(0, 1)
@@ -628,6 +650,18 @@ class ExportDialog(QDialog):
 
     def _open(self, url: QUrl) -> bool:
         return self.opener(url)
+
+    def _show_not_opened(self, text: str) -> None:
+        def folder() -> None:
+            self.result_panel.reveal_folder()
+
+        self.notice.show_notice(
+            "warning",
+            text,
+            button=strings.EXP_REVEAL_FOLDER,
+            tooltip=strings.EXP_REVEAL_FOLDER_TIP,
+            callback=folder,
+        )
 
     def output_folder(self) -> Path | None:
         return self.ctl.outputs_folder()

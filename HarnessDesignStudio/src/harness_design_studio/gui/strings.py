@@ -2999,3 +2999,9 @@ LIB_CONFLICT_NEW_TIP = (
 LIB_CONFLICT_DIALOG = "Library conflict"
 LIB_SAVE_TARGET = "The devices are saved in the file {} in the library folder."
 LIB_SAVED_AS_NEW = "Saved {} to {} as {}."
+
+# 1.8.1 (G5): command-line and Outputs-list trust fixes
+IMP_WILL_KEEP = "No change"
+OUT_NOT_OPENED = (
+    "That file is not one the program wrote, so it is not opened. Open the folder instead."
+)
