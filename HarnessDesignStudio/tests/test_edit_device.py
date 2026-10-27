@@ -896,7 +896,7 @@ def test_a_cell_edit_takes_under_100_ms_at_1000_pins_and_100_units() -> None:
     import time
 
     from harness_design_studio.core.samples import stress_project
-    from tests.helpers import time_limit
+    from tests.helpers import time_limit, within
 
     p = stress_project(units=100, interfaces=600)
     p.parts["BIG-1000"] = Part(id="BIG-1000", category="connector", pin_count=1000)
@@ -912,7 +912,7 @@ def test_a_cell_edit_takes_under_100_ms_at_1000_pins_and_100_units() -> None:
     assert worst < time_limit(0.1), worst
     start = time.perf_counter()
     devices.pin_rows(p, cid)
-    assert time.perf_counter() - start < time_limit(0.1)
+    within(time.perf_counter() - start, 0.1, "the pin rows of a device, s")
 
 
 # ---- a new device, interface on pins, pasted cells, parts and interface types ---------------------

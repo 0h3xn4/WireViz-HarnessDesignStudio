@@ -58,3 +58,18 @@ def test_a_missing_standard_pdf_is_found_before_any_list_is_rewritten(
     monkeypatch.setattr(er, "write", not_called)
     assert er.main(str(folder)) == 2
     assert capsys.readouterr().err.count("missing:") == len(er.STANDARDS) - 1
+
+
+def test_the_output_counts_the_requirements_verified_by_file_only_separately(
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """E-F8: 'named by a test' must not hide that some requirements are checked only by the
+    existence of a file; pass/fail does not change."""
+    rows = trace.build()
+    by_file = sum(r[5] == "verified-by-file-only" for r in rows)
+    traced = sum(r[5] == "traced" for r in rows)
+    assert by_file > 0
+    text = trace.summary(rows)
+    assert f"{traced} named by a test" in text and f"{by_file} verified by file only" in text
+    assert trace.main() == 0
+    assert text in capsys.readouterr().out

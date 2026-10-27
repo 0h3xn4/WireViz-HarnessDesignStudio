@@ -61,7 +61,7 @@ The same five commands work on every example: `new`, `validate`, `generate`, `dr
 
 ## blank
 
-**What it shows:** an empty project: the starter parts library (example connectors, contacts, wires), the 17 interface types, the seven configuration files (six of them placeholders), two lanes called `panel-A` and `panel-B`, and no devices. It is where your own design starts. The command line cannot add devices or interfaces; open the project in the app and add them (the empty diagram has an **Add a device** button since 1.6.0, and the Next step page of the Systems engineer role opens with *Start with a device* and the same button, since 1.7.0; see Part 10 of [`GETTING_STARTED.md`](../GETTING_STARTED.md)).
+**What it shows:** an empty project: the starter parts library (example connectors, contacts, wires), the 17 interface types, the seven configuration files (six of them placeholders), two lanes called `panel-A` and `panel-B`, and no devices. It is where your own design starts. The command line has no command to draw a single device or interface by hand (devices come in from a file with `import-pinout --new-device`, `import-devices` or `import-subsystem`); to draw the design, open the project in the app and add them (the empty diagram has an **Add a device** button since 1.6.0, and the Next step page of the Systems engineer role opens with *Start with a device* and the same button, since 1.7.0; see Part 10 of [`GETTING_STARTED.md`](../GETTING_STARTED.md)).
 
 ```
 harness-design-studio new my-blank --template blank

@@ -22,7 +22,7 @@ from harness_design_studio.core.model import (
 )
 from harness_design_studio.core.model.config import ConfigFile
 from harness_design_studio.core.samples import sat15, stress_project
-from tests.helpers import time_limit
+from tests.helpers import within
 
 _BASE: Project | None = None
 
@@ -672,7 +672,7 @@ def test_drc_on_the_stress_project_is_fast_enough_for_background_runs() -> None:
     generate_project(p)
     t0 = time.perf_counter()
     found = drc.run(p)
-    assert time.perf_counter() - t0 < time_limit(5)
+    within(time.perf_counter() - t0, 5, "the design rule check of the stress project, s")
     assert not [f for f in found if f.severity == "error"]
 
 

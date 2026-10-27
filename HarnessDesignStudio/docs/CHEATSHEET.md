@@ -16,7 +16,7 @@ harness-design-studio verify my-design --outputs            # an independent che
 
 The build workbook, `outputs/harnesses/<ID>/<ID>_build.xlsx`, is the file to build a harness from; the PDF drawings are written only with `--drawings` (new in 1.7.0). Run the loop again after every change. Generating twice without a change changes nothing (the second run prints "0 added").
 
-The command line cannot add devices or interfaces. The loop works on a project that already has them: an example such as `first-steps`, or your own design after you added the devices in the app (on the empty diagram, the button **Add a device**, which asks for the name first, or **Add** in the project panel; or make a harness with no interface at all with **New harness…**, Ctrl+Shift+H). On a `blank` project `generate` finds 0 interfaces and `export` stops with ``error: there are no harnesses to export; run `harness-design-studio generate` first.``
+The command line has no command to draw a single device or interface by hand; devices come in from a file (`import-pinout --new-device`, `import-devices`, and `import-subsystem`, which brings its connections too; see [`CLI.md`](CLI.md)). The loop works on a project that already has interfaces: an example such as `first-steps`, or your own design after you added the devices in the app (on the empty diagram, the button **Add a device**, which asks for the name first, or **Add** in the project panel; or make a harness with no interface at all with **New harness…**, Ctrl+Shift+H). On a `blank` project `generate` finds 0 interfaces and `export` stops with ``error: there are no harnesses to export; run `harness-design-studio generate` first.``
 
 ## Bring in data
 
@@ -98,8 +98,8 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 my-design/
   project.json        name and description
   config/             engineering values (rules you or your programme supply)
-  library/            parts and interface types
-  logical/            units (the devices) and interfaces (what you draw)
+  library/            parts (connectors, wires, sleeving, labels)
+  logical/            units (the devices), interfaces (what you draw) and interface_types.json
   physical/           connectors and harnesses (what the tool generates)
   generated/          how the last generation was made (for explanations)
   outputs/            build workbooks and lists (safe to delete and regenerate)

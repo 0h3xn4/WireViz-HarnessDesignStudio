@@ -7,6 +7,11 @@ name = "harness-design-studio"
 version = "1.8.0"
 description = "Offline spacecraft harness design tool"
 requires-python = ">=3.12"
+classifiers = [
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+]
 license = "LicenseRef-Proprietary"
 dependencies = ["pydantic==2.13.5", "openpyxl==3.1.5", "defusedxml==0.7.1"]
 
@@ -15,7 +20,7 @@ gui = ["PySide6-Essentials==6.11.2"]
 dev = [
   "pytest==9.1.1", "pytest-cov==7.1.0", "pytest-qt==4.5.0", "pytest-xdist==3.8.0", "hypothesis==6.168.5",
   "mypy==2.4.0", "ruff==0.16.10", "cyclonedx-bom==7.5.0", "pip-licenses==5.5.5", "pip-audit==2.9.0",
-  "pyinstaller==6.22.3", "playwright==1.63.0",
+  "pyinstaller==6.22.3", "playwright==1.63.0", "pytest-timeout==2.4.0",
 ]
 
 [project.scripts]

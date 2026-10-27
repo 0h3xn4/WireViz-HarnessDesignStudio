@@ -2,7 +2,6 @@
 accept data (and then every later stage copes with it) or set it aside with a clear message.
 `HARNESS_FUZZ_EXAMPLES=5000 pytest tests/test_fuzz.py` runs the long version (tools/fuzz.py)."""
 
-import contextlib
 import copy
 import json
 import os
@@ -32,7 +31,7 @@ from harness_design_studio.core.outputs.build import build_outputs, outputs_stat
 from harness_design_studio.core.outputs.verify import verify_outputs
 from harness_design_studio.core.samples import mini3
 from harness_design_studio.core.verify import verify_project
-from tests.helpers import time_limit
+from tests.helpers import within
 
 pytestmark = pytest.mark.filterwarnings(
     "ignore::hypothesis.errors.HypothesisWarning"
@@ -186,8 +185,10 @@ def test_xlsx_import_rejects_random_bytes_politely(raw: bytes) -> None:
     with tempfile.TemporaryDirectory() as tmp:
         f = Path(tmp) / "x.xlsx"
         f.write_bytes(raw)
-        with contextlib.suppress(ImportError_):
+        with pytest.raises(ImportError_) as caught:  # random bytes are never a workbook
             read_table(f)
+    # the refusal is a plain sentence, not a library error or a traceback
+    assert str(caught.value) == "The file is not a valid .xlsx workbook."
 
 
 @pytest.mark.perf
@@ -209,7 +210,7 @@ def test_zip_bomb_workbook_is_refused_quickly(tmp_path: Path) -> None:
     t = time.perf_counter()
     with pytest.raises(ImportError_):
         read_table(f)
-    assert time.perf_counter() - t < time_limit(5)
+    within(time.perf_counter() - t, 5, "reading a hostile table, s")
 
 
 @FUZZ

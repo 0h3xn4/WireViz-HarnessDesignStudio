@@ -16,7 +16,7 @@ This page shows how to keep a project in Git, how to check it after a merge, and
 ## Before you start
 
 - Git is installed (`sudo apt install git`).
-- A project is a **folder of small JSON files**, written in a fixed format (sorted keys, the same bytes for the same design). So two people can edit different parts and merge cleanly, and a Git diff shows only real changes. The format is in [`FILE_FORMAT.md`](../FILE_FORMAT.md).
+- A project is a **folder of small JSON files**, written in a fixed format (sorted keys, the same bytes for the same design). So two people who edit different parts of the design (different devices, different parts, different config files) get a clean merge of those files, and a Git diff shows only real changes. The one file that does not merge cleanly is `generated/generation.json`, the record of the last Generate: it holds a hash of the whole design, so when both people ran Generate it conflicts every time ([how to resolve it](#when-generatedgenerationjson-conflicts)). The format is in [`FILE_FORMAT.md`](../FILE_FORMAT.md).
 
 ## 1. Put a project in Git
 
@@ -78,7 +78,7 @@ harness-design-studio check design
 Before the conflict is resolved, this prints:
 
 ```
-ERROR   merge_conflict: The file contains unresolved Git merge conflict markers. Resolve the conflict first. [logical/units/aocs.json]
+ERROR   merge_conflict: The file contains unresolved Git merge conflict markers. Resolve the conflict first. [generated/generation.json]
 ```
 
 and exits with 1. Other errors may follow, because the broken file could not be read (for example unknown devices). After the fix:
@@ -89,6 +89,24 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 ```
 
 `harness-design-studio check` does everything `harness-design-studio validate` does, and also finds merge markers and released harnesses that were edited after their release (`released_modified`).
+
+### When `generated/generation.json` conflicts
+
+When two people each pressed Generate on their own branch, the merge stops on `generated/generation.json` (the line `"input_hash"`), although the files they edited merged without a conflict. Nobody should edit that file by hand. The way out is to take either side and let the tool write the record again for the merged design:
+
+```
+git checkout --ours design/generated/generation.json
+harness-design-studio generate design
+harness-design-studio check design
+git add -A
+git commit
+```
+
+(`--theirs` works as well; which side you take does not matter, because `generate` writes the record again.) When the merged design needs no new harness, `generate` changes only the record and prints `0 added, 0 changed, ... unchanged`; `check` must then end with `0 error(s)`. If the merged design needs a new harness, `generate` builds it and you commit those files too.
+
+Another way is to keep `generated/` out of Git (a line `generated/` in the `.gitignore` of the repository) and to run `generate` after every checkout. Then the record can never conflict, but it also holds the reasons that the Why tab shows and the number of the next harness, so each checkout starts those from what `generate` finds.
+
+By design, a few other files can conflict when two people change them on two branches: `changelog.json` and `baselines/` when two people release (keep both entries), `layout.json` (all positions of the diagram are in one file), and the number of a new harness (two new interfaces get the same harness number on two branches; run `generate` after the merge and read what it says).
 
 In the app, a project that changes on disk (for example after a `git pull`) shows "Project changed on disk" with **Reload** and **Keep my version**.
 

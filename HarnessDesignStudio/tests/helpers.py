@@ -58,9 +58,28 @@ def output_digests(files: dict[str, bytes]) -> dict[str, str]:
     return out
 
 
+DEFAULT_TIME_FACTOR = 2.0  # a limit is met on an idle workstation with room to spare (E-F1)
+
+
+def time_factor() -> float:
+    """The factor that scales every wall-clock limit: HARNESS_TIME_FACTOR (CI sets 3, the Windows
+    job 8), or 2 when it is not set, so `pytest -m perf` alone is green on an idle machine."""
+    return float(os.environ.get("HARNESS_TIME_FACTOR", str(DEFAULT_TIME_FACTOR)))
+
+
 def time_limit(seconds: float) -> float:
-    """Performance limit; shared CI runners are slower, so HARNESS_TIME_FACTOR (CI sets 3) scales it."""
-    return seconds * float(os.environ.get("HARNESS_TIME_FACTOR", "1"))
+    """Performance limit; shared CI runners are slower, so HARNESS_TIME_FACTOR scales it."""
+    return seconds * time_factor()
+
+
+def within(measured: float, limit: float, what: str = "") -> None:
+    """Assert that `measured` is under `limit` (both in the unit the test works in), and say both
+    numbers and the factor when it is not, so a slow machine can be told from a slowdown."""
+    allowed = time_limit(limit)
+    assert measured < allowed, (
+        f"{what + ': ' if what else ''}measured {measured:.4g}, limit {allowed:.4g} "
+        f"({limit:g} x HARNESS_TIME_FACTOR {time_factor():g})"
+    )
 
 
 def pinout_project() -> Any:  # a Project

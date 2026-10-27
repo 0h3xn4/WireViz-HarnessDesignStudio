@@ -23,7 +23,7 @@ from harness_design_studio.gui.controller import EditorController  # noqa: E402
 from harness_design_studio.gui.import_wizard import LARGE_ROWS, PAGE_MAP, ImportWizard  # noqa: E402
 from harness_design_studio.gui.main_window import MainWindow  # noqa: E402
 from harness_design_studio.gui.theme import ThemeManager  # noqa: E402
-from tests.helpers import time_limit  # noqa: E402
+from tests.helpers import within  # noqa: E402
 
 
 @pytest.fixture
@@ -250,7 +250,7 @@ def test_a_20000_row_file_keeps_the_window_responsive(qtbot, folders, tmp_path) 
     QApplication.processEvents()
     timer.stop()
     assert w.plan is not None and len(w.plan.rows) == 20_000
-    assert max(gaps) < time_limit(300), max(gaps)
+    within(max(gaps), 300, "longest pause of the window, ms")
     ctl.release()
 
 

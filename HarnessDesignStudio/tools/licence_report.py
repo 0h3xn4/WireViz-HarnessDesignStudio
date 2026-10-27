@@ -18,7 +18,7 @@ REJECTED_RE = re.compile(r"(?<![a-z])(a?gpl)|general public license", re.IGNOREC
 OWN = {"harness-design-studio"}
 DEV_ONLY = OWN | {
     "pip-licenses", "pyinstaller", "cyclonedx-bom", "pytest", "pytest-cov", "pytest-qt",
-    "pytest-xdist", "execnet", "hypothesis", "mypy", "ruff",
+    "pytest-xdist", "pytest-timeout", "execnet", "hypothesis", "mypy", "ruff",
 }  # fmt: skip
 
 

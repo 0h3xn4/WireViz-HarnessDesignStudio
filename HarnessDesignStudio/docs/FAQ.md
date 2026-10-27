@@ -24,7 +24,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **Do I need to know how the tool works inside?** No. [`CONCEPTS.md`](CONCEPTS.md) is enough, and [`GETTING_STARTED.md`](GETTING_STARTED.md) walks you through it.
 
-**Why does it say "pending" and "not checked" everywhere?** Because the tool contains no engineering numbers. Derating factors, wire ratings, EMC rules and part approvals come from your programme; until they are entered, results say so instead of guessing. `harness-design-studio config DIR` lists what is missing. See "Placeholders" in [`CONCEPTS.md`](CONCEPTS.md).
+**Why does it say "pending" and "not checked" everywhere?** Because a new project ships no engineering numbers in its configuration (the optional `config --apply-profile` writes ECSS table values, still marked placeholder until reviewed). Derating factors, wire ratings, EMC rules and part approvals come from your programme; until they are entered, results say so instead of guessing. `harness-design-studio config DIR` lists what is missing. See "Placeholders" in [`CONCEPTS.md`](CONCEPTS.md).
 
 **Can I just use the demo values?** For learning, yes (`harness-design-studio templates DIR` copies them, see [`GETTING_STARTED.md`](GETTING_STARTED.md) part 7). They are not engineering data. Never release a real design with them. A release is refused while the configuration files are marked as placeholders unless you give a written reason, which is kept in the change log.
 

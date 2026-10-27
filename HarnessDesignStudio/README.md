@@ -1,5 +1,17 @@
 # Harness Design Studio
 
+## In five minutes
+
+Harness Design Studio is an offline desktop tool for the electrical harnesses of a spacecraft, made for systems engineers and for electrical / AIT engineers. You describe the devices and the interfaces between them; it generates the harnesses, checks them and writes the build workbook and lists. Try it on a practice project (these are the commands of Parts 1 to 3 and 6 of [`GETTING_STARTED.md`](docs/GETTING_STARTED.md)):
+
+    harness-design-studio new wheel-link --template first-steps
+    harness-design-studio validate wheel-link
+    harness-design-studio generate wheel-link
+    harness-design-studio verify wheel-link
+    harness-design-studio export wheel-link
+
+The files are in `wheel-link/outputs/`. The full 45-minute tutorial is [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md). **Honest limits:** the tool was written mainly by an AI and no other person has reviewed it independently, no engineering values are supplied until your project enters them (results say *pending* or *not checked*), and the owner has not signed any release off (see the notes below).
+
 An offline desktop tool for designing the electrical harnesses of a spacecraft.
 
 > **Created mainly by an AI.** Harness Design Studio was written mainly by Claude, Anthropic's AI assistant, used through Claude Code; the repository owner set the requirements and approved the decisions and releases. No other person has reviewed it independently (waived by the owner, see [`compliance/DEVIATIONS.md`](compliance/DEVIATIONS.md)), and no compliance with any standard is claimed. Check its results before relying on them.
@@ -48,7 +60,7 @@ Runs on **Ubuntu 24.04 or newer**; packages for **Windows 10 and 11** are built 
 
    (`harness` still works as a short name for `harness-design-studio`.)
 
-3. **Look at the result**: the build workbook of each harness (`harnesses/W001/W001_build.xlsx`, an Excel file to build the harness from) and the lists are in `wheel-link/outputs/`; the PDF drawings are written only with `harness-design-studio export wheel-link --drawings` (the build workbook and this option are new in 1.7.0). Open the project in the app (**Harness Design Studio** in the application menu, then **File > Open project…**): it opens on the *Next step* page, which names what to do next; the diagram is in the *Model* area, the checks in *Checks* and, in the *Drawings* area, the *Why* explanation of every wire.
+3. **Look at the result**: the build workbook of each harness (`harnesses/W001/W001_build.xlsx`, an Excel file to build the harness from) and the lists are in `wheel-link/outputs/`; the PDF drawings are written only with `harness-design-studio export wheel-link --drawings` (the build workbook and this option are new in 1.7.0). Open the project in the app (**Harness Design Studio** in the application menu, then **File > Open project…**): as a Systems engineer it opens on the *Next step* page, which names what to do next, and as an Electrical / AIT engineer it opens on the diagram (the first start asks which you are; **View > Role** changes it). The diagram is in the *Model* area, the checks in *Checks* and, in the *Drawings* area of the Electrical / AIT engineer, the *Why* explanation of every wire.
 
 That is the whole idea. [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) walks through it step by step with the real output of every command.
 

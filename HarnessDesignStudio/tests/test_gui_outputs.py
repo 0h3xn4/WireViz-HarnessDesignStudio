@@ -140,9 +140,10 @@ def test_a_toast_that_expires_after_the_window_is_gone_does_not_raise(qtbot, tmp
     w = make_window(tmp_path)
     host = w.toasts
     host.show_message("hello", None, ms=10)
-    w.close()
-    w.deleteLater()
-    QApplication.processEvents()
-    # the expiry timer fires after the window was deleted; pytest-qt fails the test if the event
-    # loop raised, so reaching the next line is the check
-    qtbot.wait(60)
+    with qtbot.capture_exceptions() as raised:
+        w.close()
+        w.deleteLater()
+        QApplication.processEvents()
+        # the expiry timer fires after the window was deleted
+        qtbot.wait(60)
+    assert raised == [], raised  # nothing was raised in the Qt event loop

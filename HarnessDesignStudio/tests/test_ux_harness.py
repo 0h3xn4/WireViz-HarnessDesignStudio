@@ -36,7 +36,7 @@ from harness_design_studio.gui.harness_view import HarnessView  # noqa: E402
 from harness_design_studio.gui.states import STATE_ROLE, chip_size  # noqa: E402
 from harness_design_studio.gui.theme import ThemeManager  # noqa: E402
 from harness_design_studio.resources import examples_path  # noqa: E402
-from tests.helpers import time_limit  # noqa: E402
+from tests.helpers import time_limit, within  # noqa: E402
 
 
 def flatsat() -> Project:
@@ -812,7 +812,7 @@ def test_edits_in_the_main_window_are_not_blocked_by_the_view(qtbot, theme) -> N
     unit = next(iter(ctl.project.units.values()))
     t = time.perf_counter()
     ctl.run("rename", [Put("units", evolve(unit, name="Renamed unit"))])
-    assert (time.perf_counter() - t) * 1000 < time_limit(100)
+    within((time.perf_counter() - t) * 1000, 100, "a rename, ms")
     assert view._dirty  # refresh waits for the short timer
     view.wait_idle()
     qtbot.waitUntil(lambda: not view._dirty, timeout=2000)

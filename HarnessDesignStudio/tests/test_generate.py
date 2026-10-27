@@ -23,7 +23,7 @@ from harness_design_studio.core.io.saver import save_project
 from harness_design_studio.core.model import Harness, evolve
 from harness_design_studio.core.samples import mini3, sat15, stress_project
 from harness_design_studio.core.verify import verify_project
-from tests.helpers import time_limit
+from tests.helpers import within
 
 
 def generated(project):
@@ -247,7 +247,7 @@ def test_stress_generates_fast():
     plan = plan_generation(p)
     apply_ops(p, plan.ops)
     report = verify_project(p)
-    assert time.perf_counter() - t0 < time_limit(10)
+    within(time.perf_counter() - t0, 10, "generate and verify the stress project, s")
     assert report.ok
     assert report.wires_checked >= 10_000
 

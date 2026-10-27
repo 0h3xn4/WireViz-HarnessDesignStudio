@@ -262,9 +262,10 @@ Gauge 22 and length 1 m. The **Why** pane of the **Harness** tab now explains it
 wire-sizing: ampacity: AWG 22 carries 2.16 A derated (factor 0.72) for 2 A
 wire-sizing: voltage drop: AWG 22 gives 0.211345 V over 2 conductor(s), limit 0.5 V
 contact-check: not done for PCDU1-J01 (contact rating or derating factor is a placeholder)
+contact-check: not done for RW1-J01 (contact rating or derating factor is a placeholder)
 ```
 
-The smallest gauge in the table that carries 2 A after derating (0.8 for the bundle times 0.9 for temperature), then checked for voltage drop over the imported length. The last line shows the tool still refusing to check what it has no number for. Open `config/derating.json` to see where each number came from. `tests.csv` now carries the test limits from the demo values too. Open `harnesses/W002/W002_build.xlsx` again: the cut list has the gauge and the length, and on *Start here* only the colour of the two wires is still marked `TO FIX`.
+The smallest gauge in the table that carries 2 A after derating (0.8 for the bundle times 0.9 for temperature), then checked for voltage drop over the imported length. The last two lines show the tool still refusing to check what it has no number for (the contacts of both connectors the wire ends on). Open `config/derating.json` to see where each number came from. `tests.csv` now carries the test limits from the demo values too. Open `harnesses/W002/W002_build.xlsx` again: the cut list has the gauge and the length, and on *Start here* only the colour of the two wires is still marked `TO FIX`.
 
 > **Important.** The files stay marked `"placeholder": true`, so every result built on them still says it rests on placeholders. For a real design your programme's values replace the demo values, and you set `"placeholder": false` only after an engineer reviewed them. Never release a real design with demo values.
 

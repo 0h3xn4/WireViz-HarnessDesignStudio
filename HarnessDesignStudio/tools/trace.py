@@ -58,6 +58,19 @@ def build() -> list[list[str]]:
     return rows
 
 
+def summary(rows: list[list[str]]) -> str:
+    """The counts by status. `verified-by-file-only` is a count of its own: for those requirements
+    the check is that the listed file exists, not that a test names the requirement (E-F8)."""
+    count = {
+        s: sum(r[5] == s for r in rows) for s in ("traced", "verified-by-file-only", "review-only")
+    }
+    return (
+        f"{len(rows)} requirements: {count['traced']} named by a test, "
+        f"{count['verified-by-file-only']} verified by file only (the listed file exists, "
+        f"no test names the requirement), {count['review-only']} by review"
+    )
+
+
 def main() -> int:
     rows = build()
     out = ROOT / "compliance" / "traceability.csv"
@@ -69,7 +82,7 @@ def main() -> int:
     bad = [r for r in rows if r[5] not in ("traced", "verified-by-file-only", "review-only")]
     for r in bad:
         print(f"{r[0]}: {r[5]}")
-    print(f"{len(rows)} requirements, {sum(r[5] == 'traced' for r in rows)} named by a test")
+    print(summary(rows))
     return 1 if bad else 0
 
 
