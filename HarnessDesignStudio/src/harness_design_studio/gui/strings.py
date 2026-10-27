@@ -2906,3 +2906,9 @@ ROLE_DIALOG_ELECTRICAL_TEXT = (
 )
 ROLE_DIALOG_LATER = "You can change this later in View > Role."
 ROLE_DIALOG_NAME = "Choose your role"
+
+# ---- 1.8.1 trust fixes ----------------------------------------------------------------------------
+SHEET_TAB_TIP = (
+    "Tab moves to the next cell. Ctrl+Tab leaves the table for the next control, "
+    "Ctrl+Shift+Tab for the one before. Ctrl+C copies the selected cells."
+)

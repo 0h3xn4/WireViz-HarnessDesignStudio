@@ -154,6 +154,31 @@ class SheetDelegate(QStyledItemDelegate):
         return str(value if value is not None else "")
 
 
+def leave_on_ctrl_tab(view: QTableView, event: QKeyEvent) -> bool:
+    """A table whose Tab key moves from cell to cell (a spreadsheet) must still let a keyboard
+    user out: Ctrl+Tab goes to the next control, Ctrl+Shift+Tab to the one before. True when the
+    key was one of them (and focus moved)."""
+    mods = event.modifiers()
+    if not mods & Qt.KeyboardModifier.ControlModifier or mods & Qt.KeyboardModifier.AltModifier:
+        return False
+    key = event.key()
+    shift = bool(mods & Qt.KeyboardModifier.ShiftModifier)
+    if key == Qt.Key.Key_Tab and not shift:
+        forward = True
+    elif key == Qt.Key.Key_Backtab or (key == Qt.Key.Key_Tab and shift):
+        forward = False
+    else:
+        return False
+    # An editable table with Tab navigation answers "next control" with "next cell": switch it
+    # off for this one move.
+    view.setTabKeyNavigation(False)
+    try:
+        view.focusNextChild() if forward else view.focusPreviousChild()
+    finally:
+        view.setTabKeyNavigation(True)
+    return True
+
+
 class _SheetKeys(QObject):
     """Return or Enter edits the current cell (the arrow keys move; Esc closes the editor and keeps the
     old value); Ctrl+V pastes."""
@@ -179,6 +204,14 @@ class _SheetKeys(QObject):
             )
 
     def eventFilter(self, obj: QObject, event: QEvent) -> bool:  # noqa: N802
+        if (
+            obj is self.view
+            and isinstance(event, QKeyEvent)
+            and event.type() == QEvent.Type.KeyPress
+            and self.view.state() != QAbstractItemView.State.EditingState
+            and leave_on_ctrl_tab(self.view, event)
+        ):
+            return True
         if (
             obj is self.view
             and isinstance(event, QKeyEvent)
@@ -274,6 +307,9 @@ def install_sheet(
     caller may hand to `setItemDelegateForColumn` for special columns it subclasses."""
     view.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectItems)
     view.setSelectionMode(QAbstractItemView.SelectionMode.ExtendedSelection)
+    view.setTabKeyNavigation(True)  # a spreadsheet: Tab moves between cells, Ctrl+Tab leaves
+    if not view.toolTip():
+        view.setToolTip(strings.SHEET_TAB_TIP)
     view.setEditTriggers(
         QAbstractItemView.EditTrigger.DoubleClicked
         | QAbstractItemView.EditTrigger.EditKeyPressed

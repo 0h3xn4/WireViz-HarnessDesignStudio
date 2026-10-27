@@ -40,6 +40,7 @@ from PySide6.QtWidgets import (
 from harness_design_studio.core import describe, devices
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.sheet import leave_on_ctrl_tab
 from harness_design_studio.gui.states import StateDelegate
 from harness_design_studio.gui.tables import Column, DictTableModel, Row, TableView
 from harness_design_studio.gui.theme import ThemeManager
@@ -331,7 +332,8 @@ class PinTable(TableView):
             QAbstractItemView.EditTrigger.DoubleClicked
             | QAbstractItemView.EditTrigger.EditKeyPressed
         )
-        self.setTabKeyNavigation(True)
+        self.setTabKeyNavigation(True)  # a spreadsheet: Tab moves between cells ...
+        self.setToolTip(strings.SHEET_TAB_TIP)  # ... and Ctrl+Tab leaves the table
 
     def _restyle(self) -> None:
         super()._restyle()  # (the shared look turns editing off)
@@ -341,6 +343,8 @@ class PinTable(TableView):
         key = event.key()
         mods = event.modifiers()
         editing = self.state() == QAbstractItemView.State.EditingState
+        if not editing and leave_on_ctrl_tab(self, event):
+            return
         if not editing:
             if key == Qt.Key.Key_Insert and not mods:
                 self.insertRequested.emit()
