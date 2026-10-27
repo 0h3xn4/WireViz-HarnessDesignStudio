@@ -548,7 +548,15 @@ def test_rule_fires_on_a_violation(rule_id: str) -> None:
 
 @pytest.mark.parametrize("rule_id", [r.id for r in RULES])
 def test_rule_stays_quiet_on_a_clean_project(rule_id: str) -> None:
-    assert fire(rule_id, neg_all_clean(rule_id)) == [], rule_id
+    found = fire(rule_id, neg_all_clean(rule_id))
+    if rule_id == "unchecked-config":
+        # 1.8.1: this project has no currents, voltages or EMC classes, and now says so
+        found = [
+            f
+            for f in found
+            if not f.object_id.startswith(("no-current-", "no-voltage-", "no-emc-"))
+        ]
+    assert found == [], rule_id
 
 
 def test_clean_negative_cases_do_not_mask_other_rules() -> None:

@@ -110,6 +110,8 @@ Four design rules read connections (they are in the list of rules like the other
 | `link-signal-mismatch` | warning (waivable) | A pair whose signal names differ and are not the two ends of one line, or where one pin has no name. | Check the pairing, or rename a signal. |
 | `link-power-return` | warning (waivable) | A power pair and no return pair on the same connection. | Pair the return pin, or set the role of the return pin to Return. |
 
+*Check my connections* looks at the pairing only. It does not check a current: a harness made from a connection has wires without an interface, and the current checks do not run on those wires (section 6).
+
 The integrity checks add what cannot be right at all: a connection whose connector or pin no longer exists, a pin in two pairs, both connectors on one device. They are errors and are named in the Problems panel too.
 
 ## 6. Create the harness
@@ -118,7 +120,7 @@ The connection says which pins go together. It is not yet a harness. When you wa
 
 1. A window says exactly what will be added: *This adds the harness … with 2 cable connectors and 4 wires, one wire for each pair of OBC-J01 - RW1-J02.* A note says that lengths, gauges and colours stay empty until you enter them.
 2. Press **Create harness**. The harness is made as one undo step and the Harness tab opens on it.
-3. Enter the lengths, gauges and colours in **Edit wire** ([edit a wire](edit-a-wire.md)); the wires have no length, gauge or colour until you do ([enter the build data](enter-the-build-data.md)). The harness is yours: **Generate** leaves it alone, and it is checked, listed, exported and released like any other ([build a harness by hand](build-a-harness-by-hand.md#what-generate-does-with-it)).
+3. Enter the lengths, gauges and colours in **Edit wire** ([edit a wire](edit-a-wire.md)); the wires have no length, gauge or colour until you do ([enter the build data](enter-the-build-data.md)). The harness is yours: **Generate** leaves it alone, and it is checked, listed, exported and released like any other ([build a harness by hand](build-a-harness-by-hand.md#what-generate-does-with-it)). One limit: the wires carry no interface, so the current, voltage-drop and bundle checks do not run on them, and a gauge you type is not checked against a current; the Checks area says so with a note (*Current, voltage-drop and bundle checks did not run for … wires … they have no interface*).
 
 The button says why it cannot when it cannot: no pairs yet, or the connection has a harness already. To see the harness again later, use **Show the harness** (section 4). A connection whose harness is released is locked with it ([change a released harness](change-a-released-harness.md)).
 
