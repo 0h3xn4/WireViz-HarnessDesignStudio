@@ -41,6 +41,11 @@ _MISMATCH_WHY = (
     "The wires do not match the interfaces they should implement, so the harness would "
     "not carry the intended signals. To fix it: regenerate the harnesses, or correct the wiring by hand."
 )
+_LINK_WHY = (
+    "The harness was made from a connection (link) and no longer carries what the link pairs, so "
+    "the wires would not match the pinout that was agreed. To fix it: correct the wires of the "
+    "harness, or change the pairing of the link, so that both say the same."
+)
 _OUTDATED_WHY = (
     "The design changed after the harness plans were generated, so the plans and outputs may no "
     "longer describe it. To fix it: generate the harnesses again, then export again."
@@ -67,8 +72,9 @@ def _verifier_findings(project: Project) -> list[Finding]:
             Finding(
                 finding_id("verify-mismatch", obj), "verify-mismatch", "error", issue.object_id or obj,
                 issue.message,
-                _OUTDATED_WHY if issue.code == "outputs_outdated" else _MISMATCH_WHY,
-                "Regenerate harnesses", False,
+                _OUTDATED_WHY if issue.code == "outputs_outdated"
+                else _LINK_WHY if issue.code == "link_wire_mismatch" else _MISMATCH_WHY,
+                None if issue.code == "link_wire_mismatch" else "Regenerate harnesses", False,
             )
         )  # fmt: skip
     return out

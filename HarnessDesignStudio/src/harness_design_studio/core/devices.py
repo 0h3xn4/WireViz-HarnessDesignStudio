@@ -1066,29 +1066,40 @@ def derive_meaning(
     interface decides when it has one; otherwise the signal name must belong to the interface
     types this connector carries (all types when it carries none) and they must agree. When
     nothing can be said, direction and category are empty and the note says why."""
+    direction, category, note, _types = derive_meaning_types(project, connector, pin, index)
+    return direction, category, note
+
+
+def derive_meaning_types(
+    project: Project,
+    connector: Connector,
+    pin: Pin,
+    index: Mapping[str, list[InterfaceType]] | None = None,
+) -> tuple[str, str, str, list[InterfaceType]]:
+    """`derive_meaning` and the interface types it was taken from (empty when nothing can be said)."""
     if not pin.signal:
-        return "", "", "No signal on this pin."
+        return "", "", "No signal on this pin.", []
     iface = project.interfaces.get(pin.interface_id) if pin.interface_id else None
     if iface is not None and iface.type_id in project.interface_types:
         t = project.interface_types[iface.type_id]
         for s in t.signals:
             if s.name == pin.signal:
-                return s.direction, t.category, f"From {t.name} ({iface.id})."
-        return "", "", f"{pin.signal} is not a signal of {t.name}, the type of {iface.id}."
+                return s.direction, t.category, f"From {t.name} ({iface.id}).", [t]
+        return "", "", f"{pin.signal} is not a signal of {t.name}, the type of {iface.id}.", []
     index = index if index is not None else _types_with_signal(project)
     types = index.get(pin.signal, [])
     if connector.carries:
         narrowed = [t for t in types if t.id in connector.carries]
         types = narrowed or types
     if not types:
-        return "", "", f"No interface type has a signal called '{pin.signal}'."
+        return "", "", f"No interface type has a signal called '{pin.signal}'.", []
     meanings = {
         (next(s.direction for s in t.signals if s.name == pin.signal), t.category) for t in types
     }
     if len(meanings) > 1:
-        return "", "", f"Several interface types use '{pin.signal}' with different meanings."
+        return "", "", f"Several interface types use '{pin.signal}' with different meanings.", []
     direction, category = next(iter(meanings))
-    return direction, category, f"From {', '.join(sorted(t.name for t in types))}."
+    return direction, category, f"From {', '.join(sorted(t.name for t in types))}.", list(types)
 
 
 # ---- the pin table as the view reads it --------------------------------------------------------

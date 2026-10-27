@@ -109,6 +109,10 @@ def _validate(path: Path, *, merge_check: bool) -> int:
         from harness_design_studio.core.vcs.consistency import release_integrity
 
         extra.extend(release_integrity(result.project))
+    if not result.project.recovered:
+        from harness_design_studio.core.verify import link_issues
+
+        extra.extend(link_issues(result.project))  # a harness made from a link must match it
     return _print_report(result, extra)
 
 

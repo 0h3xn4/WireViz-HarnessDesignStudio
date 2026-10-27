@@ -20,7 +20,7 @@ from harness_design_studio import __version__
 from harness_design_studio.core import checks, configcheck, drc
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Connector, Harness, Pin, Project, Wire
-from harness_design_studio.core.verify import VerifyReport
+from harness_design_studio.core.verify import VerifyReport, link_issues
 
 from .stamp import parse_csv
 
@@ -106,6 +106,9 @@ def verify_outputs(project: Project, files: dict[str, bytes]) -> VerifyReport:
     for h in sorted(project.harnesses.values(), key=lambda x: x.id):
         _guard(r, f"harnesses/{h.id}", lambda h=h: _harness(r, project, h, files))  # type: ignore[misc]
     _guard(r, "system", lambda: _system(r, project, files))
+    # a harness made from a link must still carry the link's pairs: outputs of a harness that
+    # drifted from its link would describe something else than the agreed pinout
+    r.issues.extend(link_issues(project))
     return r
 
 

@@ -21,6 +21,7 @@ from harness_design_studio.core.edit import clone_with
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.generation_status import generation_status as generation_status
 from harness_design_studio.core.generation_status import input_hash as input_hash
+from harness_design_studio.core.integrity import mating_plugs
 from harness_design_studio.core.model import (
     BranchPoint,
     Connector,
@@ -288,6 +289,8 @@ def plan_generation(
         if h is not None:
             new_harnesses[h.id] = h
 
+    _warn_shared_connectors(ctx, new_harnesses, frozen)
+
     # report: frozen, removed, added/changed/unchanged
     for g in seg.groups:
         old = old_by_key.get(g.key)
@@ -362,6 +365,26 @@ def plan_generation(
         )
     )
     return GenerationPlan(ops, report, record, new_harnesses)
+
+
+def _warn_shared_connectors(ctx: _Ctx, new_harnesses: dict[str, Harness], frozen: set[str]) -> None:
+    """Report (only report: what is built does not change) a device connector that more than one
+    harness plugs into, when one of the plugs is built now: the harnesses a person draws, the
+    released ones and the ones made now count together."""
+    kept = [h for h in ctx.project.harnesses.values() if not h.generated or h.id in frozen]
+    plugs = mating_plugs([*kept, *new_harnesses.values()])
+    for box_id, found in plugs.items():
+        if len(found) < 2 or not any(hid in new_harnesses for hid, _ in found):
+            continue
+        names = ", ".join(f"{cid} ({hid})" for hid, cid in found)
+        ctx.finding(
+            "warning",
+            "box_connector_shared",
+            f"{box_id} has more than one cable plug on it: {names}. A connector takes one plug; "
+            "two harnesses cannot both plug into it. Give the interfaces that share it one "
+            "harness, or use different connectors.",
+            box_id,
+        )
 
 
 def _frozen_provenance(
