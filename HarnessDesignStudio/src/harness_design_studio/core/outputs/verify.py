@@ -554,8 +554,11 @@ def _drawings(r: VerifyReport, project: Project, h: Harness, files: dict[str, by
     for size in ("A3", "A4"):
         pdf = files.get(f"{base}/drawing_{size}.pdf")
         if pdf is not None:
+            wired = {(w.from_connector) for w in h.wires} | {w.to_connector for w in h.wires}
             for c in h.connectors:
-                if b"(" + c.id.encode() + b") Tj" not in pdf:
+                # a connector with no wire is not drawn as a box: its pins are in the spare-pin line
+                needle = b"(" + c.id.encode() + b") Tj" if c.id in wired else c.id.encode()
+                if needle not in pdf:
                     r.error("out_drawing", f"Connector {c.id} is missing from the {size} PDF of {h.id}.", c.id)  # fmt: skip
                     break
     if a3 is not None:
@@ -1476,7 +1479,14 @@ def _build_start(
             return
     ready = next((row[1] for row in rows if row and row[0] == "Ready to build"), None)
     blocking = sum(want[k] for k in list(want)[:4])
-    if ready != ("yes" if blocking == 0 else "no"):
+    names = sorted(n for n, c in project.config.items() if c.placeholder)  # worked out here
+    want_ready = "no" if blocking else "yes"
+    if want_ready == "yes" and names:
+        want_ready = f"yes (values rest on placeholder configuration: {', '.join(names)})"
+        listed = next((row[1] for row in rows if row and row[0] == "Placeholder files"), None)
+        if listed != ", ".join(f"config/{n}.json" for n in names):
+            r.error("out_build", f"{what} (Start here) does not list the placeholder files.", h.id)
+    if ready != want_ready:
         r.error("out_build", f"{what} (Start here) shows the wrong 'Ready to build' answer.", h.id)
 
 

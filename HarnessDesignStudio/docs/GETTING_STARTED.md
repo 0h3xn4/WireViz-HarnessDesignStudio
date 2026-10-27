@@ -293,7 +293,7 @@ harness-design-studio drc wheel-link
 ```
 
 ```
-Open: 1 error(s), 7 warning(s), 5 note(s). Waived: 0.
+Open: 1 error(s), 7 warning(s), 6 note(s). Waived: 0.
 ```
 
 One **error**: *The model changed after the harness plans were generated. Generate again before releasing.* Approving parts changed the design's library, so the plans and outputs are out of date. That is exactly what the check is for. Make the plans and outputs current:
@@ -308,7 +308,7 @@ harness-design-studio drc wheel-link
 ```
 
 ```
-Open: 0 error(s), 7 warning(s), 5 note(s). Waived: 0.
+Open: 0 error(s), 7 warning(s), 6 note(s). Waived: 0.
 ```
 
 0 errors, and 7 warnings: the three parts you approved no longer warn. Other imports work the same way:
@@ -334,7 +334,7 @@ harness-design-studio generate wheel-link
 harness-design-studio export wheel-link
 ```
 
-The wire list now has the colour in its *Colour* column (`red`, `black`), and the harness drawing (if you export it with `--drawings`) draws the wires in those colours with the IEC 60757 code written as text. A wire between two different signals (`TX+/RX+`) takes the colour of the first. In the build workbook the *Colour* cell of the cut list is now filled with the colour and holds its name and code (`red (RD)`), and *Start here* of `W002` says `Ready to build: yes`.
+The wire list now has the colour in its *Colour* column (`red`, `black`), and the harness drawing (if you export it with `--drawings`) draws the wires in those colours with the IEC 60757 code written as text. A wire between two different signals (`TX+/RX+`) takes the colour of the first. In the build workbook the *Colour* cell of the cut list is now filled with the colour and holds its name and code (`red (RD)`), and *Start here* of `W002` says `Ready to build: yes (values rest on placeholder configuration: …)`: it is ready, and the values behind it are still the example's placeholders.
 
 ## Part 9 (optional, practice only): release a harness
 

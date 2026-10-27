@@ -83,7 +83,7 @@ Draw wires as in [edit a wire](edit-a-wire.md), section 4: **New wire** in the *
 
 ## 6. Check, list and release
 
-- **Checks** shows the design checks. A harness by hand has no interface, so the checks that need one (a link's current, signal directions) have nothing to say; the rest apply. With no gauge, the gauge stays *pending*: the tool never guesses.
+- **Checks** shows the design checks. A harness by hand has no interface, so the checks that need one (a link's current, signal directions) have nothing to say, and a note says that the current, voltage-drop and bundle checks did not run for those wires; the rest apply. With no gauge, the gauge stays *pending*: the tool never guesses.
 - **Strip lengths and accessories** are entered as for any harness: the strip lengths in the **Edit wire** tab, the sleeving, heat shrink, labels and backshells in the **Accessories** tab ([enter the build data](enter-the-build-data.md)). `harness-design-studio import-build-data` can read the contacts of this harness from a table.
 - **Outputs** writes the build workbook, wire list, pinouts, bill of materials, labels and tests for it, like any harness (and the drawings, if you ask for them: [export the outputs](export-the-outputs.md#5-the-pdf-drawings-optional)). `harness-design-studio verify DIR --outputs` compares them with the design.
 - **Review**, **Release** and **Revise** work as for a harness from Generate ([release a harness](release-a-harness.md)).
