@@ -1,6 +1,7 @@
 """Regression tests for the rule, output and change-control findings of the October audit."""
 
 import json
+import shutil
 from pathlib import Path
 
 import pytest
@@ -31,6 +32,22 @@ def _codes(blockers: list) -> set[str]:  # type: ignore[type-arg]
     return {b.code for b in blockers}
 
 
+@pytest.fixture(scope="module")
+def written_full(tmp_path_factory: pytest.TempPathFactory) -> Path:
+    """The output set of the sample `full()` written to a folder once per module (building and
+    writing it takes about 4 s). A test never works in this folder: `exported_full` gives it a copy."""
+    folder = tmp_path_factory.mktemp("written_full") / "outputs"
+    write_outputs(full(), folder)
+    return folder
+
+
+def exported_full(written: Path, tmp: Path) -> Path:
+    """What `exported(full(), tmp)` returns: the written set of the sample in a folder of its own."""
+    folder = tmp / "outputs"
+    shutil.copytree(written, folder)
+    return folder
+
+
 def test_the_release_gate_sees_current_over_contact_errors(tmp_path: Path) -> None:
     p = sat15_full()
     hid = releasable(p)
@@ -43,10 +60,12 @@ def test_the_release_gate_sees_current_over_contact_errors(tmp_path: Path) -> No
     assert any(b.code == "rule_error" for b in blockers)
 
 
-def test_the_outputs_gate_checks_the_files_not_just_the_manifest(tmp_path: Path) -> None:
+def test_the_outputs_gate_checks_the_files_not_just_the_manifest(
+    tmp_path: Path, written_full: Path
+) -> None:
     p = full()
     hid = releasable(p)
-    folder = exported(p, tmp_path)
+    folder = exported_full(written_full, tmp_path)
 
     def blockers() -> set[str]:
         return _codes(
@@ -83,7 +102,7 @@ def test_a_subset_export_does_not_satisfy_the_gate(tmp_path: Path) -> None:
 @pytest.mark.parametrize(
     "when", ["2026-02-30", "0000-00-00", "2026-13-45", "２０２６-０１-０１", "2026-03-01\n"]
 )
-def test_impossible_dates_block_a_release(when: str, tmp_path: Path) -> None:
+def test_impossible_dates_block_a_release(when: str, tmp_path: Path, written_full: Path) -> None:
     p = full()
     hid = releasable(p)
     got = _codes(
@@ -93,7 +112,7 @@ def test_impossible_dates_block_a_release(when: str, tmp_path: Path) -> None:
             by="Ada",
             comment="long enough text",
             when=when,
-            outputs_folder=exported(p, tmp_path),
+            outputs_folder=exported_full(written_full, tmp_path),
         )
     )
     assert "bad_date" in got
@@ -166,8 +185,18 @@ def test_segment_lengths_count_in_mass_the_release_gate_and_the_tables(tmp_path:
 # ---- the output verifier now compares values ----------------------------------------------------
 
 
-def _files(p: Project) -> dict[str, bytes]:
-    return dict(build_outputs(p).files)
+_SAMPLE_FILES: dict[str, tuple[Project, dict[str, bytes]]] = {}
+
+
+def _sample_files(name: str) -> tuple[Project, dict[str, bytes]]:
+    """A sample project and its output set. Each is built once per process (the set of `sat15_full`
+    takes about 4 s and eleven tests read it); a caller gets its own copy of the project and of the
+    file table, the bytes are immutable."""
+    if name not in _SAMPLE_FILES:
+        p = {"mini3": mini3, "sat15": sat15, "full": sat15_full}[name]()
+        _SAMPLE_FILES[name] = (p, build_outputs(p).files)
+    p, files = _SAMPLE_FILES[name]
+    return edit.clone_with(p, []), dict(files)
 
 
 def _mutate(files: dict[str, bytes], rel: str, old: str, new: str) -> dict[str, bytes]:
@@ -179,9 +208,9 @@ def _mutate(files: dict[str, bytes], rel: str, old: str, new: str) -> dict[str, 
 
 
 def test_the_verifier_is_quiet_on_every_sample() -> None:
-    for make in (mini3, sat15, sat15_full):
-        p = make()
-        assert verify_outputs(p, _files(p)).ok
+    for name in ("mini3", "sat15", "full"):
+        p, files = _sample_files(name)
+        assert verify_outputs(p, files).ok
 
 
 @pytest.mark.parametrize(
@@ -202,14 +231,13 @@ def test_the_verifier_is_quiet_on_every_sample() -> None:
     ],
 )
 def test_changed_cells_are_caught_by_the_output_verifier(rel: str, old: str, new: str) -> None:
-    p = sat15_full()
-    files = _mutate(_files(p), rel, old, new)
+    p, built = _sample_files("full")
+    files = _mutate(built, rel, old, new)
     assert not verify_outputs(p, files).ok, (rel, old, new)
 
 
 def test_a_workbook_that_differs_from_its_wire_list_is_caught() -> None:
-    p = sat15_full()
-    files = _files(p)
+    p, files = _sample_files("full")
     rel = "harnesses/W001/wirelist.csv"
     files[rel] = files[rel].replace(
         b",20,", b",18,", 1
@@ -218,8 +246,7 @@ def test_a_workbook_that_differs_from_its_wire_list_is_caught() -> None:
 
 
 def test_the_json_export_must_match_every_harness() -> None:
-    p = sat15_full()
-    files = _files(p)
+    p, files = _sample_files("full")
     doc = json.loads(files["system/export.json"])
     doc["harnesses"][0]["wires"][0]["gauge_awg"] = 99
     files["system/export.json"] = json.dumps(doc).encode()
