@@ -114,3 +114,17 @@ def test_the_suite_step_fails_on_a_refused_skip_and_requires_the_browser(
     ok, detail = rc.run_suite([])
     assert seen["HARNESS_REQUIRE_BROWSER"] == "1"
     assert not ok and "1 skipped" in detail and "poppler" in detail
+
+
+def test_the_release_check_runs_the_slow_tests_too(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Pull requests leave out the tests marked `slow`; the release check must not."""
+    seen: list[list[str]] = []
+
+    def fake_suite(extra: list[str]) -> tuple[bool, str]:
+        seen.append(extra)
+        return True, ""
+
+    monkeypatch.setattr(rc, "run_suite", fake_suite)
+    rc.tests()
+    rc.tests_plain()
+    assert len(seen) == 2 and all("-m" not in extra and "slow" not in extra for extra in seen)

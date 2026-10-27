@@ -768,6 +768,7 @@ def test_empty_revision_report() -> None:
 # ---- CLI ------------------------------------------------------------------------------------------
 
 
+@pytest.mark.slow
 def test_cli_full_change_control_cycle(tmp_path: Path, capsys: pytest.CaptureFixture[str]) -> None:
     p = full()
     hid = releasable(p)

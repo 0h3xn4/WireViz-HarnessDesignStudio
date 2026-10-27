@@ -102,6 +102,7 @@ def corrupted_files(draw: Any) -> dict[str, Any]:
     return files
 
 
+@pytest.mark.slow
 @FUZZ
 @given(corrupted_files())
 def test_any_accepted_project_survives_every_later_stage(files: dict[str, Any]) -> None:

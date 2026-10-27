@@ -8,6 +8,7 @@ import pytest
 from tools.soak import run_soak
 
 
+@pytest.mark.slow
 @pytest.mark.parametrize("seed", [11, 12])
 def test_random_editing_keeps_every_invariant(seed: int, tmp_path) -> None:  # type: ignore[no-untyped-def]
     r = run_soak(400, seed, tmp_path)

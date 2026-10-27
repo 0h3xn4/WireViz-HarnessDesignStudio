@@ -782,6 +782,7 @@ def test_workbook_cells_with_formula_characters_are_stored_as_text(name: str) ->
     assert cell.data_type != "f" and cell.value == name
 
 
+@pytest.mark.slow
 def test_every_csv_cell_of_the_hostile_names_reads_back() -> None:
     for name in FORMULA_NAMES:
         p, files = _formula_built(name)

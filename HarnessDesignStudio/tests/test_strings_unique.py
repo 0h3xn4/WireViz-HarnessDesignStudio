@@ -10,6 +10,8 @@ import collections
 import re
 from pathlib import Path
 
+import pytest
+
 ROOT = Path(__file__).resolve().parents[1]
 STRINGS = ROOT / "src" / "harness_design_studio" / "gui" / "strings.py"
 
@@ -46,6 +48,7 @@ def test_the_waived_heading_and_the_waived_toast_are_two_names() -> None:
     assert strings.STEP_GENERATE == "Generate"
 
 
+@pytest.mark.slow
 def test_every_string_constant_is_used_somewhere() -> None:
     names = _top_level_names()
     texts: list[str] = []

@@ -206,6 +206,7 @@ def test_totals_do_not_show_floating_point_noise() -> None:
     assert "0.30000000000000004" not in mass
 
 
+@pytest.mark.slow
 def test_a_cad_length_in_millimetres_survives_the_round_trip(tmp_path: Path) -> None:
     from harness_design_studio.core.generate.engine import generate_project
     from harness_design_studio.core.io.loader import load_project
