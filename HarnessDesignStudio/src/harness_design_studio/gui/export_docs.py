@@ -62,9 +62,16 @@ SYSTEM_DOCS: Final[tuple[DocType, ...]] = (
     DocType("sys_block_diagram", "Block diagram", "SVG and PDF"),
     DocType("sys_overview", "Harness overview", "SVG and PDF"),
 )
+# Written only for a project that has connections (release 1.9): a project without them keeps its
+# files as they were, so these are not in the list every project shows.
+CONNECTION_DOCS: Final[tuple[DocType, ...]] = (
+    DocType("sys_connections", "Connection list", "CSV"),
+    DocType("sys_connections_xlsx", "Connection list workbook", "XLSX"),
+)
 MANIFEST_DOC: Final = DocType("manifest", "Manifest", "JSON")
 DOCS: Final[dict[str, DocType]] = {
-    d.key: d for d in (*HARNESS_DOCS, *OPTIONAL_HARNESS_DOCS, *SYSTEM_DOCS, MANIFEST_DOC)
+    d.key: d
+    for d in (*HARNESS_DOCS, *OPTIONAL_HARNESS_DOCS, *SYSTEM_DOCS, *CONNECTION_DOCS, MANIFEST_DOC)
 }
 
 _HARNESS_FILES: Final = {
@@ -92,6 +99,8 @@ _SYSTEM_FILES: Final = {
     "export.json": "sys_export",
     "provenance.json": "sys_provenance",
     "system.xlsx": "sys_workbook",
+    "connections.csv": "sys_connections",
+    "connections.xlsx": "sys_connections_xlsx",
     "block_diagram.svg": "sys_block_diagram",
     "block_diagram.pdf": "sys_block_diagram",
     "harness_overview.svg": "sys_overview",
@@ -144,12 +153,13 @@ def harness_docs(drawings: bool = True) -> tuple[DocType, ...]:
 
 
 def planned_layout(
-    harness_ids: Iterable[str], drawings: bool = True
+    harness_ids: Iterable[str], drawings: bool = True, connections: bool = False
 ) -> list[tuple[str, tuple[DocType, ...]]]:
     """The tree before anything is written: each harness with its document types, then the
-    system documents."""
+    system documents (with the connection list when the project has connections)."""
     docs = harness_docs(drawings)
-    return [*((hid, docs) for hid in sorted(harness_ids)), (SYSTEM, SYSTEM_DOCS)]
+    system = (*SYSTEM_DOCS, *CONNECTION_DOCS) if connections else SYSTEM_DOCS
+    return [*((hid, docs) for hid in sorted(harness_ids)), (SYSTEM, system)]
 
 
 SheetRef = tuple[Literal["harness"], str, str, int] | tuple[Literal["system"], str]

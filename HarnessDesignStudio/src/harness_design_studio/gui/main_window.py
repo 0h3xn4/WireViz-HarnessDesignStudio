@@ -994,6 +994,7 @@ class MainWindow(QMainWindow):
             return True
         if isinstance(widget, ListsPanel):
             widget.generateRequested.connect(self.act_generate.trigger)
+            widget.exportRequested.connect(self.act_export.trigger)
             widget.exportTableRequested.connect(lambda name, fmt: self.export_table_flow(name, fmt))
             return True
         if isinstance(widget, DevicesView):
@@ -2699,7 +2700,11 @@ class MainWindow(QMainWindow):
         buttons that fix it."""
         self._update_lock_banner()
         plans = status.generation == "stale"
-        files = status.has_harnesses and status.outputs in ("stale", "modified", "unreadable")
+        files = (status.has_harnesses or status.links > 0) and status.outputs in (
+            "stale",
+            "modified",
+            "unreadable",
+        )  # (connections alone are exported too)
         key = (plans, files, status.model_hash)
         if (
             self.ctl.read_only
@@ -2775,7 +2780,8 @@ class MainWindow(QMainWindow):
             status = self.shell_status()
             self._dismissed_alert = (
                 status.generation == "stale",
-                status.has_harnesses and status.outputs in ("stale", "modified", "unreadable"),
+                (status.has_harnesses or status.links > 0)
+                and status.outputs in ("stale", "modified", "unreadable"),
                 status.model_hash,
             )
 
@@ -3684,7 +3690,7 @@ class MainWindow(QMainWindow):
         p = self.ctl.project
         needs_folder = (
             self.ctl.outputs_folder() is None
-            and bool(p.harnesses)
+            and bool(p.harnesses or p.links)
             and not self.ctl.read_only
             and not p.recovered
         )
@@ -3791,7 +3797,7 @@ class MainWindow(QMainWindow):
         if folder is None:
             self.toasts.show_message(strings.EXPORT_SAVE_FIRST, None)
             return
-        if not self.ctl.project.harnesses:
+        if not self.ctl.project.harnesses and not self.ctl.project.links:
             self.toasts.show_message(strings.EXPORT_NO_HARNESSES, None)
             return
         self.job_error = None
