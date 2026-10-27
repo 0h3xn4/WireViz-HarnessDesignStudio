@@ -19,7 +19,13 @@ from harness_design_studio.core.vcs.snapshot import (
     carried_interfaces,
     used_part_ids,
 )
-from tests.test_change_control import do_release, exported, full, releasable
+from tests.test_change_control import (  # noqa: F401  (the fixture is used by every test)
+    _export_template,
+    do_release,
+    exported,
+    full,
+    releasable,
+)
 
 
 def released(tmp_path: Path) -> tuple[Project, str]:

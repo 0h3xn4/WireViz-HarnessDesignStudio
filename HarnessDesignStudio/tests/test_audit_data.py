@@ -11,7 +11,13 @@ from harness_design_studio.core.errors import TransactionError
 from harness_design_studio.core.model import Project, evolve
 from harness_design_studio.core.samples import mini3, sat15
 from harness_design_studio.core.vcs.consistency import release_integrity
-from tests.test_change_control import do_release, exported, full, releasable
+from tests.test_change_control import (  # noqa: F401  (the fixture is used by every test)
+    _export_template,
+    do_release,
+    exported,
+    full,
+    releasable,
+)
 
 
 def test_a_new_unit_never_reuses_the_id_of_a_renamed_units_connectors() -> None:
