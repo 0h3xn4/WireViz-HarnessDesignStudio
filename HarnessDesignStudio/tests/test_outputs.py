@@ -21,6 +21,7 @@ from harness_design_studio.core.model import Project, evolve
 from harness_design_studio.core.outputs import exports, system
 from harness_design_studio.core.outputs.build import (
     MANIFEST,
+    OutputSet,
     build_outputs,
     outputs_status,
     write_outputs,
@@ -39,7 +40,7 @@ from harness_design_studio.core.outputs.stamp import csv_bytes, parse_csv, stamp
 from harness_design_studio.core.outputs.verify import read_folder, verify_outputs
 from harness_design_studio.core.samples import mini3, sat15, sat15_full
 
-_CACHE: dict[str, tuple[Project, dict[str, bytes]]] = {}
+_CACHE: dict[str, tuple[Project, OutputSet]] = {}
 
 
 def project_and_files(name: str) -> tuple[Project, dict[str, bytes]]:
@@ -47,11 +48,20 @@ def project_and_files(name: str) -> tuple[Project, dict[str, bytes]]:
         p = {"mini3": mini3, "sat15": sat15, "full": sat15_full}[name]()
         if name != "full":
             generate_project(p)
-        _CACHE[name] = (p, build_outputs(p).files)
-    p, files = _CACHE[name]
+        _CACHE[name] = (p, build_outputs(p))
+    p, result = _CACHE[name]
     from harness_design_studio.core import edit
 
-    return edit.clone_with(p, []), dict(files)
+    return edit.clone_with(p, []), dict(result.files)
+
+
+def output_set(name: str) -> OutputSet:
+    """The output set of a reference project, built once per process (it is the one
+    `project_and_files` takes its files from), as a set of its own: a test may hand it to
+    `write_outputs` instead of building the same files again."""
+    project_and_files(name)
+    result = _CACHE[name][1]
+    return OutputSet(result.stamp, dict(result.files))
 
 
 PROJECTS = ["mini3", "sat15", "full"]
@@ -259,7 +269,7 @@ def test_write_status_and_stale_detection(tmp_path: Path) -> None:
     p, _ = project_and_files("sat15")
     folder = tmp_path / "outputs"
     assert outputs_status(p, folder).state == "none"  # type: ignore[arg-type]
-    write_outputs(p, folder)  # type: ignore[arg-type]
+    write_outputs(p, folder, output_set("sat15"))  # type: ignore[arg-type]
     assert outputs_status(p, folder).state == "current"  # type: ignore[arg-type]
     assert verify_outputs(p, read_folder(folder)).ok  # type: ignore[arg-type]
     (folder / "system" / "bom.csv").write_bytes(b"# tampered\n")
@@ -275,7 +285,7 @@ def test_write_status_and_stale_detection(tmp_path: Path) -> None:
 def test_write_keeps_foreign_files_and_removes_retired_ones(tmp_path: Path) -> None:
     p, _ = project_and_files("sat15")
     folder = tmp_path / "outputs"
-    write_outputs(p, folder)  # type: ignore[arg-type]
+    write_outputs(p, folder, output_set("sat15"))  # type: ignore[arg-type]
     (folder / "my-notes.txt").write_text("keep me")
     gone = sorted(p.harnesses)[-1]  # type: ignore[attr-defined]
     from harness_design_studio.core.commands import Delete
@@ -292,7 +302,7 @@ def test_write_keeps_foreign_files_and_removes_retired_ones(tmp_path: Path) -> N
 def test_unreadable_manifest_is_reported(tmp_path: Path) -> None:
     p, _ = project_and_files("mini3")
     folder = tmp_path / "o"
-    write_outputs(p, folder)  # type: ignore[arg-type]
+    write_outputs(p, folder, output_set("mini3"))  # type: ignore[arg-type]
     (folder / MANIFEST).write_text("{not json")
     assert outputs_status(p, folder).state == "unreadable"  # type: ignore[arg-type]
     assert "out_manifest" in {i.code for i in verify_outputs(p, read_folder(folder)).errors}  # type: ignore[arg-type]
@@ -437,7 +447,7 @@ def test_detects_system_level_problems() -> None:
 def test_detects_modified_and_unlisted_files_in_a_folder(tmp_path: Path) -> None:
     p, _ = project_and_files("mini3")
     folder = tmp_path / "o"
-    write_outputs(p, folder)  # type: ignore[arg-type]
+    write_outputs(p, folder, output_set("mini3"))  # type: ignore[arg-type]
     (folder / "system" / "bom.csv").write_bytes(
         (folder / "system" / "bom.csv").read_bytes() + b"x,y\n"
     )
