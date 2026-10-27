@@ -23,6 +23,15 @@ def project():
     return p
 
 
+@pytest.fixture(scope="module")
+def unchanged_files():
+    """The output set of the generated sample as it comes, built once per module (about 3.5 s);
+    two tests start from it. A test takes a copy of the table (`dict(...)`); the bytes are immutable."""
+    p = sat15()
+    generate_project(p)
+    return build_outputs(p).files
+
+
 def a_box_pin(p):
     c = next(c for c in sorted(p.connectors.values(), key=lambda c: c.id) if c.pins)
     return c.id, c.pins[0].id
@@ -76,8 +85,8 @@ def test_generation_copies_the_function_to_the_cable_pin(project):
     assert next(p for p in cable.pins if p.id == pid).function == "Command input"
 
 
-def test_the_pinout_tables_get_a_function_column_only_when_used(project):
-    files = dict(build_outputs(project).files)
+def test_the_pinout_tables_get_a_function_column_only_when_used(project, unchanged_files):
+    files = dict(unchanged_files)
     head = files["system/box_pinouts.csv"].decode().splitlines()[1]  # [0] is the provenance line
     assert not head.endswith("Function")
     cid, pid = a_box_pin(project)
@@ -195,8 +204,8 @@ def test_label_fields_are_not_written_while_empty(project):
 # ---- soldering: the termination in the pinout tables -------------------------------------------
 
 
-def test_the_pinout_tables_say_crimp_or_solder_only_when_a_pin_does(project):
-    files = dict(build_outputs(project).files)
+def test_the_pinout_tables_say_crimp_or_solder_only_when_a_pin_does(project, unchanged_files):
+    files = dict(unchanged_files)
     assert not files["system/box_pinouts.csv"].decode().splitlines()[1].endswith("Termination")
     cid, pid = a_box_pin(project)
     apply_ops(project, devices.ops_set_pin(project, cid, pid, termination="solder"))
