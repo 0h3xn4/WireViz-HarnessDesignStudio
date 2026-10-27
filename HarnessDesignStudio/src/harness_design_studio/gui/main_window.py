@@ -130,7 +130,7 @@ from harness_design_studio.gui.inspector import Inspector
 from harness_design_studio.gui.interface_table import InterfaceTable
 from harness_design_studio.gui.jobs import JobStatus
 from harness_design_studio.gui.library_window import SETTINGS_FOLDER as LIBRARY_FOLDER_KEY
-from harness_design_studio.gui.library_window import LibraryWindow
+from harness_design_studio.gui.library_window import LibraryWindow, save_devices_asking
 from harness_design_studio.gui.link_dialog import CreateHarnessDialog, LinkDialog, harness_preview
 from harness_design_studio.gui.lists_panel import ListsPanel
 from harness_design_studio.gui.new_project_dialog import (
@@ -1456,14 +1456,23 @@ class MainWindow(QMainWindow):
         if not path:
             return
         target = Path(path)
+        project = self.ctl.project
         try:
-            data = device_library.export_devices(self.ctl.project, [unit_id])
-            existing = device_library.read_library(target) if target.exists() else None
-            device_library.write_library(target, device_library.merge_library(existing, data))
+            done = save_devices_asking(
+                self,
+                self.run_dialog,
+                lambda **kw: device_library.save_devices_to_file(target, project, [unit_id], **kw),
+            )
         except (HarnessError, OSError) as exc:
             self._error(self._explain(exc, target.parent))
             return
-        self.toasts.show_message(strings.DV_LIB_SAVED.format(unit_id, target.name), None)
+        if done is None:  # cancelled at the question: nothing was written
+            return
+        if done.new_ids:
+            message = strings.LIB_SAVED_AS_NEW.format(unit_id, target.name, done.new_ids[unit_id])
+        else:
+            message = strings.DV_LIB_SAVED.format(unit_id, target.name)
+        self.toasts.show_message(" ".join([message, *done.notes]), None)
 
     # ---- the library window and its folder (workshop M4, D-175) -------------------------------------
     def library_folder(self) -> str:

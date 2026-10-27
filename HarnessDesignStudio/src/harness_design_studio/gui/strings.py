@@ -2223,7 +2223,8 @@ REL_AUTHOR_NAME = "Last commit of the project folder"
 DV_LIB_SAVE = "Save to library…"
 DV_LIB_SAVE_TIP = (
     "Save this device with its connectors, pinouts, parts and interface types to a device library "
-    "file, to use it in another project. A file that exists is added to."
+    "file, to use it in another project. A file that exists is added to; if it has a different "
+    "device with the same ID you are asked before it is replaced."
 )
 DV_LIB_ADD = "Add from library…"
 DV_LIB_ADD_TIP = (
@@ -2873,8 +2874,8 @@ LIB_EMPTY_FOLDER_HINT = "Select devices in your project and press Save selection
 LIB_EMPTY_UNREADABLE = "The library cannot be read"
 LIB_EMPTY_NOMATCH = "Nothing matches"
 LIB_EMPTY_NOMATCH_HINT = "Clear the search, or show devices and subsystems."
-LIB_DAMAGED = "{} file(s) in the folder could not be used and are not listed."
-LIB_SKIPPED = "{} other .json file(s) in the folder are not library files and were ignored."
+LIB_DAMAGED = "{} files in the folder could not be used and are not listed."
+LIB_SKIPPED = "{} other .json files in the folder are not library files and were ignored."
 LIB_PREVIEW_NAME = "Preview of the chosen entry"
 LIB_PREVIEW_NONE = "Choose a device or a subsystem to see what is in it."
 LIB_PREVIEW_PIN_COLUMNS = ["Connector", "Pin", "Signal", "Function"]
@@ -2904,7 +2905,7 @@ STEP_LIB_ADD_SUBSYSTEM = "Add the subsystem {} from the library"
 LIB_SAVE_TITLE = "Save to library"
 LIB_SAVE_AS = "Save as"
 LIB_SAVE_AS_DEVICES = "Devices (each one is added on its own)"
-LIB_SAVE_AS_DEVICES_TIP = "Save every selected device with its connectors and pins in a device file; a device with the same ID in that file is replaced"
+LIB_SAVE_AS_DEVICES_TIP = "Save every selected device with its connectors and pins in a device file; if that file has a different device with the same ID you are asked before it is replaced"
 LIB_SAVE_AS_SUBSYSTEM = "A subsystem (the devices and the connections between them, added together)"
 LIB_SAVE_AS_SUBSYSTEM_TIP = (
     "Save the selected devices and the connections between them as one subsystem file"
@@ -2978,3 +2979,23 @@ ROLE_DIALOG_ELECTRICAL_TEXT = (
 )
 ROLE_DIALOG_LATER = "You can change this later in View > Role."
 ROLE_DIALOG_NAME = "Choose your role"
+
+# ---- 1.8.1: the library never replaces a different device without asking (D4, D18) ----
+LIB_DAMAGED_ONE = "1 file in the folder could not be used and is not listed."
+LIB_SKIPPED_ONE = "1 other .json file in the folder is not a library file and was ignored."
+LIB_COLUMN_FILE = "File"
+LIB_EMPTY_UNREADABLE_HINT = "Check that the drive is connected and that you may open the folder, then press Refresh, or choose another folder."
+LIB_CONFLICT_TITLE = "Already in the library"
+LIB_CONFLICT_ONE = "{id} is in the library already (in {file}) and differs in {how}."
+LIB_CONFLICT_MANY = "These devices are in the library already (in {file}) and differ: {what}."
+LIB_CONFLICT_ASK = "Replace the library's version, keep both under a new ID, or cancel?"
+LIB_CONFLICT_REPLACE = "Replace"
+LIB_CONFLICT_REPLACE_TIP = "Overwrite the device in the library file with the one of this project"
+LIB_CONFLICT_NEW_ONE = "Save as {}"
+LIB_CONFLICT_NEW_MANY = "Save under new IDs"
+LIB_CONFLICT_NEW_TIP = (
+    "Keep the library's device as it is and add this one next to it with a new ID"
+)
+LIB_CONFLICT_DIALOG = "Library conflict"
+LIB_SAVE_TARGET = "The devices are saved in the file {} in the library folder."
+LIB_SAVED_AS_NEW = "Saved {} to {} as {}."

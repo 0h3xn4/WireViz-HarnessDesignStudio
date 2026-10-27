@@ -216,7 +216,7 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     xd = sub.add_parser(
         "export-devices",
         help="save devices with their connectors and pinouts to a device library file",
-        description="Write one or more devices, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to: a device with the same ID is replaced, the others stay. What generation allocated in this project does not travel.",
+        description="Write one or more devices, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to and the other devices in it stay. A device with the same ID in the file that differs is NOT replaced unless you say --replace; a part never gets a lower approval than the file has. What generation allocated in this project does not travel.",
     )
     xd.add_argument("project", type=Path)
     xd.add_argument("file", type=Path, help="the device library file to write or add to")
@@ -228,6 +228,11 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
         action="append",
         required=True,
         help="a device to save, for example GYRO1 (repeat for more; --unit is the older name)",
+    )
+    xd.add_argument(
+        "--replace",
+        action="store_true",
+        help="replace a device of the same ID in the file that differs (without it that is refused)",
     )
     idv = sub.add_parser(
         "import-devices",
@@ -720,11 +725,26 @@ def _pinout(project, table: list[list[str]], args: argparse.Namespace) -> int:  
 def _export_devices(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
     from harness_design_studio.core import device_library as dl
 
+    notes: list[str] = []
+    try:
+        dl.save_devices_to_file(args.file, project, args.unit, replace=args.replace, notes=notes)
+    except dl.LibraryConflict as exc:
+        for c in exc.conflicts:
+            print(
+                f"error: {exc.file} has the device {c.unit_id} already and it differs "
+                f"({c.differs_in()}).",
+                file=sys.stderr,
+            )
+        print(
+            "Nothing was changed. Say --replace to replace it, or save it to another file.",
+            file=sys.stderr,
+        )
+        return 2
     data = dl.export_devices(project, args.unit)
-    existing = dl.read_library(args.file) if args.file.exists() else None
-    dl.write_library(args.file, dl.merge_library(existing, data))
     n = sum(len(d["connectors"]) for d in data["devices"])
     print(f"Saved {len(args.unit)} device(s) ({n} connector(s)) to {args.file}.")
+    for note in notes:
+        print(f"Note: {note}")
     return 0
 
 

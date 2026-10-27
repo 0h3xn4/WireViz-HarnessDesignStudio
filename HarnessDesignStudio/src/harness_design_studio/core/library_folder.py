@@ -14,7 +14,6 @@ not stop the others: it is listed in `LibraryScan.problems` with a plain sentenc
 is not one of the two library formats (a `package.json` next to them) is skipped without a word.
 """
 
-import json
 import os
 import stat
 from dataclasses import dataclass, field
@@ -23,10 +22,14 @@ from typing import Any, Literal
 
 from harness_design_studio.core import device_library as dl
 from harness_design_studio.core import subsystem_library as sl
+from harness_design_studio.core.device_library import DeviceConflict, LibraryConflict
 from harness_design_studio.core.errors import HarnessError
+from harness_design_studio.core.io import canonical
 from harness_design_studio.core.model import Project
 
 __all__ = [
+    "DeviceConflict",
+    "LibraryConflict",
     "LibraryEntry",
     "LibraryError",
     "LibraryProblem",
@@ -143,55 +146,65 @@ def scan_folder(folder: Path | str) -> LibraryScan:
     for path in files:
         rel = path.relative_to(root).as_posix()
         try:
-            kind = _kind_of(path)
+            _scan_file(scan, path, rel)
         except HarnessError as exc:
             scan.problems.append(LibraryProblem(rel, str(exc)))
-            continue
         except (OSError, ValueError, UnicodeError, RecursionError) as exc:
             scan.problems.append(LibraryProblem(rel, _read_words(exc)))
-            continue
-        if kind is None:
-            scan.skipped += 1
-            continue
-        try:
-            if kind == "device":
-                scan.entries += _device_entries(rel, dl.read_library(path))
-            else:
-                scan.entries.append(_subsystem_entry(rel, sl.read_subsystem(path)))
-        except HarnessError as exc:
-            scan.problems.append(LibraryProblem(rel, str(exc)))
+        except Exception:  # noqa: BLE001  (a promise: one bad file never hides the good ones)
+            scan.problems.append(LibraryProblem(rel, "The file has a form that cannot be read."))
     scan.entries.sort(key=lambda e: (e.kind, e.name.casefold(), e.id.casefold(), e.file))
     return scan
+
+
+def _scan_file(scan: LibraryScan, path: Path, rel: str) -> None:
+    """Read one file (once) and add its entries, its skip or its problems to the scan."""
+    data = _read_json(path)
+    fmt = data.get("format") if isinstance(data, dict) else None
+    if fmt == dl.FORMAT:
+        entries, problems = _device_entries(rel, dl.check_library(data))
+        scan.entries += entries
+        scan.problems += [LibraryProblem(rel, text) for text in problems]
+    elif fmt == sl.FORMAT:
+        scan.entries.append(_subsystem_entry(rel, sl.check_subsystem(data)))
+    else:
+        scan.skipped += 1
 
 
 def _read_words(exc: Exception) -> str:
     if isinstance(exc, OSError):
         return f"The file could not be read ({exc.strerror})."
-    return f"The file is not valid JSON text ({type(exc).__name__})."
+    return dl.json_problem(exc)
 
 
-def _kind_of(path: Path) -> Kind | None:
-    """Which library file kind this is, from its `format` field; None for any other JSON."""
+def _read_json(path: Path) -> Any:
+    """The content of a JSON file: strict (a key twice is refused), size checked."""
     info = path.stat()
     if info.st_size > dl.MAX_BYTES:
         raise LibraryError("The file is too large to read (limit 8 MB).")
-    data = json.loads(path.read_bytes().decode("utf-8-sig"))
-    fmt = data.get("format") if isinstance(data, dict) else None
-    if fmt == dl.FORMAT:
-        return "device"
-    if fmt == sl.FORMAT:
-        return "subsystem"
-    return None
+    return canonical.loads_strict(path.read_bytes())
 
 
-def _device_entries(rel: str, data: dict[str, Any]) -> list[LibraryEntry]:
-    out = []
+def _device_entries(rel: str, data: dict[str, Any]) -> tuple[list[LibraryEntry], list[str]]:
+    """(the devices of a checked device file, a sentence for each device that cannot be listed)."""
+    out: list[LibraryEntry] = []
+    problems: list[str] = []
+    seen: set[str] = set()
     for rec in data.get("devices", []):
         unit = rec.get("unit", {}) if isinstance(rec, dict) else {}
         if not isinstance(unit, dict) or not unit.get("id"):
+            problems.append("A device of the file has no usable 'unit' record with an ID.")
             continue
-        conns = [c for c in rec.get("connectors", []) if isinstance(c, dict)]
         uid = str(unit["id"])
+        bad = dl.record_problem(rec)
+        if bad:
+            problems.append(f"The device {uid} is not listed: {bad}")
+            continue
+        if uid in seen:
+            problems.append(f"The device {uid} is in the file twice; only the first is listed.")
+            continue
+        seen.add(uid)
+        conns = rec.get("connectors", [])
         out.append(
             LibraryEntry(
                 "device",
@@ -207,7 +220,7 @@ def _device_entries(rel: str, data: dict[str, Any]) -> list[LibraryEntry]:
                 str(unit.get("subsystem", "")),
             )
         )
-    return out
+    return out, problems
 
 
 def _subsystem_entry(rel: str, data: dict[str, Any]) -> LibraryEntry:
@@ -243,26 +256,32 @@ def load_entry(folder: Path | str, entry: LibraryEntry) -> dict[str, Any]:
 # ---- the preview ------------------------------------------------------------------------------
 
 
+def _records(value: object) -> list[dict[str, Any]]:
+    return [v for v in value if isinstance(v, dict)] if isinstance(value, list) else []
+
+
 def describe_entry(data: dict[str, Any], entry: LibraryEntry) -> list[dict[str, str]]:
     """Rows for the preview of an entry. A device gives one row for each pin (connector, pin,
     signal, function); a subsystem gives one row for each device and for each connection (kind,
-    item, detail). Plain strings, so a table can show them as they are."""
+    item, detail). Plain strings, so a table can show them as they are. A record of a form that
+    is not expected is left out, never an error."""
     if entry.kind == "device":
         return _device_rows(data, entry.id)
     rows: list[dict[str, str]] = []
-    for rec in data.get("devices", []):
+    for rec in _records(data.get("devices", [])):
         unit = rec.get("unit", {})
-        conns = rec.get("connectors", [])
+        unit = unit if isinstance(unit, dict) else {}
+        conns = _records(rec.get("connectors", []))
         rows.append(
             {
                 "kind": "Device",
                 "item": f"{unit.get('id', '')}  {unit.get('name', '')}".strip(),
                 "detail": f"{len(conns)} connector(s), "
-                f"{sum(len(c.get('pins', [])) for c in conns)} pin(s)",
+                f"{sum(len(_records(c.get('pins', []))) for c in conns)} pin(s)",
             }
         )
-    for rec in data.get("connections", []):
-        n = len(rec.get("pairs", []))
+    for rec in _records(data.get("connections", [])):
+        n = len(_records(rec.get("pairs", [])))
         rows.append(
             {
                 "kind": "Connection",
@@ -275,15 +294,16 @@ def describe_entry(data: dict[str, Any], entry: LibraryEntry) -> list[dict[str, 
 
 def _device_rows(data: dict[str, Any], unit_id: str) -> list[dict[str, str]]:
     rows: list[dict[str, str]] = []
-    for rec in data.get("devices", []):
-        if rec.get("unit", {}).get("id") != unit_id:
+    for rec in _records(data.get("devices", [])):
+        unit = rec.get("unit", {})
+        if not isinstance(unit, dict) or unit.get("id") != unit_id:
             continue
-        for c in rec.get("connectors", []):
-            pins = c.get("pins", [])
+        for c in _records(rec.get("connectors", [])):
+            pins = _records(c.get("pins", []))
             if not pins:
                 rows.append(
                     {
-                        "connector": c.get("name", c.get("id", "")),
+                        "connector": str(c.get("name", c.get("id", ""))),
                         "pin": "",
                         "signal": "",
                         "function": "",
@@ -312,17 +332,26 @@ def _writable_folder(folder: Path) -> None:
         raise LibraryError(f"You may not write in the folder {folder}. Ask who owns the library.")
 
 
-def save_devices(folder: Path | str, project: Project, unit_ids: list[str]) -> Path:
+def save_devices(
+    folder: Path | str,
+    project: Project,
+    unit_ids: list[str],
+    *,
+    replace: bool = False,
+    new_ids: dict[str, str] | None = None,
+    notes: list[str] | None = None,
+) -> Path:
     """Add the devices to a device library file in the folder (`GYRO1.json` for one device,
-    `devices.json` for several); a device with the same ID in that file is replaced. Returns the
-    path."""
+    `devices.json` for several). A device with the same ID in that file that differs is not
+    replaced: `LibraryConflict` says which and how much differs (`replace=True` replaces it,
+    `new_ids={"GYRO1": "GYRO1-2"}` saves it under another ID). A part never gets a lower
+    approval than the file has; what was kept is added to `notes`. Returns the path."""
     root = Path(folder)
     _writable_folder(root)
-    data = dl.export_devices(project, unit_ids)
     path = root / dl.default_file_name(unit_ids)
-    existing = dl.read_library(path) if path.exists() else None
-    dl.write_library(path, dl.merge_library(existing, data))
-    return path
+    return dl.save_devices_to_file(
+        path, project, unit_ids, replace=replace, new_ids=new_ids, notes=notes
+    )
 
 
 def save_subsystem(
