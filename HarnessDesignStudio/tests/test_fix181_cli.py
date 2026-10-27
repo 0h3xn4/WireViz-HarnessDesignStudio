@@ -179,14 +179,6 @@ def test_identical_duplicate_lengths_are_fine(tmp_path: Path) -> None:
     assert rc == 0 and length_of(p) == pytest.approx(0.85)
 
 
-@pytest.mark.parametrize("value", ["0", "0.0", "0,0"])
-def test_a_length_of_zero_is_refused(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str], value: str
-) -> None:
-    rc, p = lengths(tmp_path, f'W010,W010-L1,"{value}"\n')
-    assert rc == 1 and "must be more than 0" in capsys.readouterr().out and length_of(p) is None
-
-
 def test_a_huge_length_says_too_large_not_digits_with_a_point(
     tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:

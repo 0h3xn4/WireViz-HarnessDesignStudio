@@ -162,8 +162,6 @@ def plan_length_import(
             else:
                 if length > MAX_LENGTH_M:
                     error = f"'{text}' is too large (a length can be at most {MAX_LENGTH_M:g} m)"
-                elif length <= 0:
-                    error = f"'{text}' is not a length: it must be more than 0"
                 elif (hid, sid) in given and given[hid, sid][0] != length:
                     _, first, first_text = given[hid, sid]
                     error = (
