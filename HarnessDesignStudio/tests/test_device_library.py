@@ -178,7 +178,7 @@ def test_unreadable_files_are_refused_in_words(tmp_path: Path):
     with pytest.raises(DeviceLibraryError, match="not valid JSON"):
         read_library(bad)
     bad.write_bytes(b"\xff\xfe\x00")
-    with pytest.raises(DeviceLibraryError, match="not valid JSON"):
+    with pytest.raises(DeviceLibraryError, match="not valid UTF-8"):
         read_library(bad)
 
 

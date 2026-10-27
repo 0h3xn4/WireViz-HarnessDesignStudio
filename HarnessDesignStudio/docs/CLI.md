@@ -412,7 +412,7 @@ harness-design-studio export-pinout my-design --device GYRO1 -o gyro-pinout.xlsx
 
 ### harness-design-studio export-devices
 
-Write one or more devices, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to: a device with the same ID is replaced, the others stay. What generation allocated in this project does not travel.
+Write one or more devices, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to and the other devices in it stay. A device with the same ID in the file that differs is NOT replaced unless you say --replace; a part never gets a lower approval than the file has. What generation allocated in this project does not travel.
 
 `harness-design-studio export-devices project file [options]`
 
@@ -421,6 +421,7 @@ Write one or more devices, their box connectors with every pin (signal, function
 | `project` | the project folder |
 | `file` | the device library file to write or add to |
 | `--device, --unit DEVICE` | a device to save, for example GYRO1 (repeat for more; --unit is the older name) (repeatable) |
+| `--replace` | replace a device of the same ID in the file that differs (without it that is refused) |
 
 Examples:
 
