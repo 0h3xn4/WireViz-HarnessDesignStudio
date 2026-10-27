@@ -1476,7 +1476,14 @@ def _build_start(
             return
     ready = next((row[1] for row in rows if row and row[0] == "Ready to build"), None)
     blocking = sum(want[k] for k in list(want)[:4])
-    if ready != ("yes" if blocking == 0 else "no"):
+    names = sorted(n for n, c in project.config.items() if c.placeholder)  # worked out here
+    want_ready = "no" if blocking else "yes"
+    if want_ready == "yes" and names:
+        want_ready = f"yes (values rest on placeholder configuration: {', '.join(names)})"
+        listed = next((row[1] for row in rows if row and row[0] == "Placeholder files"), None)
+        if listed != ", ".join(f"config/{n}.json" for n in names):
+            r.error("out_build", f"{what} (Start here) does not list the placeholder files.", h.id)
+    if ready != want_ready:
         r.error("out_build", f"{what} (Start here) shows the wrong 'Ready to build' answer.", h.id)
 
 
