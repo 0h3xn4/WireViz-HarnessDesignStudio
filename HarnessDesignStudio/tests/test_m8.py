@@ -16,7 +16,7 @@ from harness_design_studio.core.outputs.drawing import (
 from harness_design_studio.core.outputs.stamp import Stamp
 from harness_design_studio.core.outputs.verify import verify_outputs
 from harness_design_studio.core.samples import sat15, sat15_full, stress_project
-from tests.helpers import time_limit
+from tests.helpers import within
 
 
 def with_branch(p: Project, hid: str = "W010") -> Harness:
@@ -246,4 +246,5 @@ def test_arrange_is_fast_at_stress_size() -> None:
     generate_project(p)
     t = time.perf_counter()
     ops = edit.ops_arrange(p)
-    assert time.perf_counter() - t < time_limit(2.0) and ops
+    within(time.perf_counter() - t, 2.0, "arranging the stress project, s")
+    assert ops

@@ -39,6 +39,7 @@ from harness_design_studio.core.edit import (
     zone_of_x,
 )
 from harness_design_studio.core.errors import HarnessError
+from harness_design_studio.core.io import canonical
 from harness_design_studio.core.io.fs import atomic_write_bytes, slug
 from harness_design_studio.core.links import plan_add_link
 from harness_design_studio.core.model import Link, Placement, Project, Unit, evolve
@@ -91,9 +92,11 @@ def read_subsystem(path: Path | str) -> dict[str, Any]:
     if info.st_size > MAX_BYTES:
         raise SubsystemError("The file is too large to read (limit 8 MB).")
     try:
-        data = json.loads(path.read_bytes().decode("utf-8-sig"))
-    except (OSError, UnicodeError, ValueError, RecursionError) as exc:
-        raise SubsystemError(f"The file is not valid JSON text ({type(exc).__name__}).") from exc
+        data = canonical.loads_strict(path.read_bytes())
+    except OSError as exc:
+        raise SubsystemError(f"The file could not be read ({exc.strerror}).") from exc
+    except (ValueError, RecursionError) as exc:
+        raise SubsystemError(dl.json_problem(exc)) from exc
     return check_subsystem(data)
 
 
@@ -134,6 +137,17 @@ def check_subsystem(data: object) -> dict[str, Any]:
             raise SubsystemError(f"The file has more than {cap} entries in '{key}'.")
     if not data.get("devices"):
         raise SubsystemError("The subsystem has no devices.")
+    for rec in data["devices"]:
+        problem = dl.record_problem(rec)
+        if problem:
+            unit = rec.get("unit")
+            who = str(unit.get("id", "")) if isinstance(unit, dict) else ""
+            raise SubsystemError(f"The device {who or '(without an ID)'} cannot be read: {problem}")
+    for rec in data.get("connections", []):
+        if not isinstance(rec.get("pairs", []), list):
+            raise SubsystemError(
+                f"The connection {rec.get('id', '')} cannot be read: 'pairs' must be a list."
+            )
     return data
 
 
@@ -157,7 +171,11 @@ def _why(exc: ValidationError) -> str:
 def subsystem_summary(data: dict[str, Any]) -> tuple[int, int, int]:
     """(devices, connectors, connections) of a checked subsystem."""
     devices = data.get("devices", [])
-    connectors = sum(len(d.get("connectors", [])) for d in devices if isinstance(d, dict))
+    connectors = sum(
+        len(d.get("connectors", [])) if isinstance(d.get("connectors", []), list) else 0
+        for d in devices
+        if isinstance(d, dict)
+    )
     return len(devices), connectors, len(data.get("connections", []))
 
 

@@ -36,7 +36,10 @@ def test_a_lock_written_before_a_reboot_is_stale(tmp_path: Path) -> None:
         tmp_path, pid=os.getpid(), host=platform.node(), since=0, boot="an-older-boot", start="1"
     )
     with ProjectLock(tmp_path):  # our own pid is alive, but the lock is from another boot
-        pass
+        info = json.loads((tmp_path / ".harness.lock").read_text())
+        # the stale lock was replaced: the file now says this process, this boot, and a real time
+        assert info["pid"] == os.getpid() and info["boot"] == fs._boot_id()
+        assert info["start"] == fs._start_time(os.getpid()) and info["since"] > 0
 
 
 @LINUX
@@ -44,7 +47,9 @@ def test_a_reused_process_number_is_stale(tmp_path: Path) -> None:
     boot = fs._boot_id()
     _write_lock(tmp_path, pid=os.getpid(), host=platform.node(), since=0, boot=boot, start="1")
     with ProjectLock(tmp_path):
-        pass
+        info = json.loads((tmp_path / ".harness.lock").read_text())
+        assert info["start"] == fs._start_time(os.getpid()) != "1"  # replaced, not kept
+        assert info["pid"] == os.getpid() and info["since"] > 0
 
 
 @LINUX
@@ -69,7 +74,11 @@ def test_a_renamed_computer_is_recognised_by_the_boot_id(tmp_path: Path) -> None
         start="1",
     )
     with ProjectLock(tmp_path):  # same running system, process gone: stale
-        pass
+        info = json.loads((tmp_path / ".harness.lock").read_text())
+        assert (
+            info["pid"] == os.getpid() and info["host"] == platform.node()
+        )  # this process holds it
+        assert info["host"] != "the-old-name" and info["pid"] != 999999999
 
 
 def test_a_lock_of_another_computer_is_kept_and_says_how_to_remove_it(tmp_path: Path) -> None:

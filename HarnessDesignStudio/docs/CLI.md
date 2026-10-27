@@ -7,13 +7,13 @@ Generated from the program by `python -m tools.gen_cli_docs`; do not edit by han
 | Code | Meaning |
 | --- | --- |
 | 0 | success (warnings are allowed) |
-| 1 | the project has errors, or a step is blocked (for example a release, or an import or `config` that found problems and changed nothing) |
+| 1 | the project has errors, or a step is blocked (for example a release, or an import or `config` that found problems and changed nothing, or an import of a file with nothing in it) |
 | 2 | usage error, or a project or file that could not be read |
 | 130 | interrupted with Ctrl-C |
 
 A project with damaged files (a file that is not valid, a link, over 64 MB or unreadable) is refused with exit 2 and the damaged file named by every command that reports on it or changes it: `drc`, `verify`, `export`, `generate`, `config`, `library`, `log`, `diff`, `compare`, `review`, `release`, `revise`, `migrate` and the imports. Only `validate` and `check` read it and list the damage (exit 1), so you can see what to repair. With Ctrl-C a command prints `interrupted` and ends with 130 (if it was saving, run `harness-design-studio validate`). A reader that closes the pipe (`harness-design-studio generate | head -1`) does not stop the command: it still finishes and saves.
 
-Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not.
+An import whose file says what the project already holds changes nothing, prints `Already up to date.` and ends with 0, so it can run again on every build. Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not.
 
 The examples show the form of each command with example names. They do not all work on any project: `release` is blocked until its conditions are met (placeholder configuration, unapproved parts, missing gauges and lengths; see [`GETTING_STARTED.md`](GETTING_STARTED.md)), and `revise` works only on a released harness.
 
@@ -393,7 +393,7 @@ harness-design-studio import-build-data my-design accessories.csv
 
 ### harness-design-studio export-pinout
 
-Write the rows of system/box_pinouts.csv that belong to one device (connector, pin, signal, interface, wires, spare) to a file, or to the screen as CSV. The format follows the file name (.csv or .xlsx). The rows are the ones export writes, so the file compares with an interface control document.
+Write the rows of system/box_pinouts.csv that belong to one device (connector, pin, signal, interface, wires, spare) to a file, or to the screen as CSV. The format follows the file name (.csv, .tsv or .xlsx; another ending is refused). The rows are the ones export writes, so the file compares with an interface control document.
 
 `harness-design-studio export-pinout project [options]`
 
@@ -412,7 +412,7 @@ harness-design-studio export-pinout my-design --device GYRO1 -o gyro-pinout.xlsx
 
 ### harness-design-studio export-devices
 
-Write one or more devices, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to: a device with the same ID is replaced, the others stay. What generation allocated in this project does not travel.
+Write one or more devices, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to and the other devices in it stay. A device with the same ID in the file that differs is NOT replaced unless you say --replace; a part never gets a lower approval than the file has. What generation allocated in this project does not travel. The folder of the file must exist.
 
 `harness-design-studio export-devices project file [options]`
 
@@ -421,6 +421,7 @@ Write one or more devices, their box connectors with every pin (signal, function
 | `project` | the project folder |
 | `file` | the device library file to write or add to |
 | `--device, --unit DEVICE` | a device to save, for example GYRO1 (repeat for more; --unit is the older name) (repeatable) |
+| `--replace` | replace a device of the same ID in the file that differs (without it that is refused) |
 
 Examples:
 
@@ -431,7 +432,7 @@ harness-design-studio export-devices my-design device-library.json --device OBC1
 
 ### harness-design-studio export-subsystem
 
-Write devices with their connectors and pinouts, and the connections between them, to a subsystem library file (JSON), so the set can be added to another project in one step. A connection with an end on a device that is not chosen is left out. A file that exists is never replaced unless you say --replace.
+Write devices with their connectors and pinouts, and the connections between them, to a subsystem library file (JSON), so the set can be added to another project in one step. A connection with an end on a device that is not chosen is left out. A file that exists is never replaced unless you say --replace. The folder of the file must exist.
 
 `harness-design-studio export-subsystem project file [options]`
 

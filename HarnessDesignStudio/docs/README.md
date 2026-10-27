@@ -87,6 +87,7 @@ These explain how the tool was specified and checked; you do not need them to us
 | [`DECISIONS.md`](DECISIONS.md), [`OPEN_DECISIONS.md`](OPEN_DECISIONS.md) | What was decided, and what still needs an owner |
 | [`PLAN.md`](PLAN.md), [`demos/`](demos/README.md) | The plan and the note from each milestone |
 | [`AUDIT.md`](AUDIT.md) | The October audit |
+| [`AUDIT_1.8.0.md`](AUDIT_1.8.0.md) | The audit of version 1.8.0: ratings, findings, the plan for 1.8.1 to 2.0 |
 | [`../compliance/README.md`](../compliance/README.md) | The ECSS/ESCC self-assessment: matrix, gaps, deviations, sign-off, open actions, risks. No claim of compliance. |
 | [`usability/`](usability/README.md) | The usability test kit |
 | [`../../docs/DOCS_AUDIT.md`](../../docs/DOCS_AUDIT.md) | The audit of these documents |

@@ -17,7 +17,7 @@ This page shows how to supply the numbers the tool does not invent (derating fac
 
 ## Before you start
 
-- Out of the box the tool holds **no engineering numbers**. Your programme decides them. (Optional profiles can fill in values from a standard; see [the end of this page](#values-from-a-standard-profiles). They still need an engineer's review.) Until you enter them they are **placeholders**: wire gauges stay *pending*, and checks that need a number say *not checked* instead of passing silently ([glossary](../GLOSSARY.md)).
+- Out of the box a project's configuration holds **no engineering numbers**. Your programme decides them. (Optional profiles, `config --apply-profile`, write the ECSS-Q-ST-30-11C or ECSS-E-ST-20-07C table values into the unset values; see [the end of this page](#values-from-a-standard-profiles). The files stay placeholders until an engineer has reviewed them.) Until you enter them they are **placeholders**: wire gauges stay *pending*, and checks that need a number say *not checked* instead of passing silently ([glossary](../GLOSSARY.md)).
 - Who supplies the numbers: an engineer on your programme, for example from your programme's derating standard (*derating* means using a wire or contact below its maximum for safety; see the [glossary](../GLOSSARY.md)). This page does not tell you which numbers to use.
 - You have a generated project, for example `harness-design-studio new wheel-link --template first-steps` then `harness-design-studio generate wheel-link`.
 
@@ -156,9 +156,10 @@ Gauge 22 and length 1 m. In the app, the **Why** pane of the **Harness** tab for
 wire-sizing: ampacity: AWG 22 carries 2.16 A derated (factor 0.72) for 2 A
 wire-sizing: voltage drop: AWG 22 gives 0.211345 V over 2 conductor(s), limit 0.5 V
 contact-check: not done for PCDU1-J01 (contact rating or derating factor is a placeholder)
+contact-check: not done for RW1-J01 (contact rating or derating factor is a placeholder)
 ```
 
-The files stay marked `"placeholder": true`, so every result built on them still says so. The last line shows the tool still refusing to check what it has no number for.
+The files stay marked `"placeholder": true`, so every result built on them still says so. The last two lines show the tool still refusing to check what it has no number for (the contacts of both connectors the wire ends on).
 
 ## Values from a standard (profiles)
 

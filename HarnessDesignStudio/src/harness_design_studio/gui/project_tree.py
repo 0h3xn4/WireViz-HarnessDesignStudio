@@ -68,6 +68,7 @@ from PySide6.QtWidgets import (
 from harness_design_studio.core import configcheck, describe, drc
 from harness_design_studio.core.drc.by_rule import UNCHECKED
 from harness_design_studio.core.links import derived_interfaces, link_caption
+from harness_design_studio.core.model import Project
 from harness_design_studio.core.vcs.lockview import lock_reason, locked_objects
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import LIST_DELAY_MS, Delta, EditorController
@@ -202,6 +203,14 @@ class _Node:
     @property
     def real_children(self) -> int:
         return len(self.sorts)
+
+
+def empty_text(root_id: str, project: Project) -> str:
+    """The line shown in an empty group. A project with connections is told to press Create
+    harness on one, not to Generate from interfaces it does not have."""
+    if root_id in strings.TREE_EMPTY_HAS_LINKS and project.links:
+        return strings.TREE_EMPTY_HAS_LINKS[root_id]
+    return strings.TREE_EMPTY[root_id]
 
 
 class ProjectTreeModel(QAbstractItemModel):
@@ -506,11 +515,22 @@ class ProjectTreeModel(QAbstractItemModel):
         for k in range(start, len(owner.children)):
             owner.children[k].row = k
 
+    def refresh_placeholders(self) -> None:
+        """The empty-group lines of Interfaces and Harnesses follow what the project has: with
+        connections they say so instead of pointing at Generate."""
+        for key in ("interfaces", "harnesses"):
+            node = self.roots[key].placeholder
+            text = empty_text(key, self.ctl.project)
+            if node is not None and node.name != text:
+                node.name, node.search = text, text.lower()
+                idx = self.index_of(node)
+                self.dataChanged.emit(idx, idx)
+
     def _ensure_placeholder(self, root: _Node, *, notify: bool = True) -> None:
         """An empty root shows one row that says what to do; a root with objects shows none."""
         if root.real_children == 0 and root.placeholder is None and root.id in strings.TREE_EMPTY:
             node = _Node("empty", root.id, root)
-            node.name = strings.TREE_EMPTY[root.id]
+            node.name = empty_text(root.id, self.ctl.project)
             node.search = node.name.lower()
             if notify:
                 self.beginInsertRows(self.index_of(root), 0, 0)
@@ -1301,6 +1321,7 @@ class ProjectTree(QWidget):
             self.model.sync_keys("interfaces", delta.interfaces)
             for root in ("harnesses", "parts", "interface_types", "config"):
                 self.model.sync_root(root)
+        self.model.refresh_placeholders()
         self.model.refresh_locks()
         if self.ctl.findings_are_many():
             self._schedule_counts()

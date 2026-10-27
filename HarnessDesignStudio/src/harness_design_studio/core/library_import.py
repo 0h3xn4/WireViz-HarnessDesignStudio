@@ -63,7 +63,7 @@ class PartRow:
     ok: bool
     message: str
     part_id: str = ""
-    action: str = ""  # "added" | "updated"
+    action: str = ""  # "added" | "updated" | "unchanged"
 
 
 @dataclass
@@ -279,7 +279,8 @@ def plan_parts_import(
         seen[pid] = part
         first_row[pid] = n
         by_fold.setdefault(pid.casefold(), pid)
-        plan.rows.append(PartRow(n, True, "", pid, "updated" if pid in project.parts else "added"))
+        action = "added" if old is None else "unchanged" if old == part else "updated"
+        plan.rows.append(PartRow(n, True, "", pid, action))
     for k, prow in enumerate(plan.rows):  # a mating part must exist (now or after this import)
         cand = seen.get(prow.part_id or "") if prow.ok else None
         if cand is not None and cand.mates_with and cand.mates_with not in {*project.parts, *seen}:
@@ -289,7 +290,7 @@ def plan_parts_import(
                 f"Mating part '{cand.mates_with}' is not in the library or in this file",
                 prow.part_id,
             )
-    good = {r.part_id for r in plan.rows if r.ok}
+    good = {r.part_id for r in plan.rows if r.ok and r.action != "unchanged"}
     plan.ops = [Put("parts", part) for part in seen.values() if part.id in good]
     return plan
 

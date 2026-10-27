@@ -22,7 +22,7 @@ from harness_design_studio.core.model import (
 )
 from harness_design_studio.core.model.config import ConfigFile
 from harness_design_studio.core.samples import sat15, stress_project
-from tests.helpers import time_limit
+from tests.helpers import within
 
 _BASE: Project | None = None
 
@@ -548,7 +548,15 @@ def test_rule_fires_on_a_violation(rule_id: str) -> None:
 
 @pytest.mark.parametrize("rule_id", [r.id for r in RULES])
 def test_rule_stays_quiet_on_a_clean_project(rule_id: str) -> None:
-    assert fire(rule_id, neg_all_clean(rule_id)) == [], rule_id
+    found = fire(rule_id, neg_all_clean(rule_id))
+    if rule_id == "unchecked-config":
+        # 1.8.1: this project has no currents, voltages or EMC classes, and now says so
+        found = [
+            f
+            for f in found
+            if not f.object_id.startswith(("no-current-", "no-voltage-", "no-emc-"))
+        ]
+    assert found == [], rule_id
 
 
 def test_clean_negative_cases_do_not_mask_other_rules() -> None:
@@ -672,7 +680,7 @@ def test_drc_on_the_stress_project_is_fast_enough_for_background_runs() -> None:
     generate_project(p)
     t0 = time.perf_counter()
     found = drc.run(p)
-    assert time.perf_counter() - t0 < time_limit(5)
+    within(time.perf_counter() - t0, 5, "the design rule check of the stress project, s")
     assert not [f for f in found if f.severity == "error"]
 
 

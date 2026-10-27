@@ -276,3 +276,60 @@ def test_the_verifier_notices_a_workbook_of_another_design(built: dict[str, byte
     wb.save(raw)
     files[f"harnesses/{harness_id}/{harness_id}_build.xlsx"] = raw.getvalue()
     assert {"out_stamp", "out_build"} <= _codes(project, files)
+
+
+# ---- placeholders (audit F-06, 1.8.1) -----------------------------------------------------------
+
+
+def _ready(project: Project, hid: str) -> Project:
+    """The project with harness `hid` ready to build (every wire given a colour)."""
+    h = project.harnesses[hid]
+    return _with_harness(project, evolve(h, wires=[evolve(w, colour="red") for w in h.wires]))
+
+
+def _ready_row(project: Project, hid: str) -> list[object]:
+    rows = _sheets(build_workbook(project, project.harnesses[hid], stamp_of(project)))
+    return next(r for r in rows["Start here"] if r and r[0] == "Ready to build")
+
+
+def _no_placeholders(project: Project) -> Project:
+    p = copy.deepcopy(project)
+    for name, c in list(p.config.items()):
+        p.config[name] = evolve(c, placeholder=False)
+    return p
+
+
+def test_a_yes_that_rests_on_placeholders_says_so_and_lists_the_files(
+    project: Project, harness_id: str
+) -> None:
+    p = _ready(project, harness_id)
+    names = p.placeholder_configs()
+    assert names
+    want = f"yes (values rest on placeholder configuration: {', '.join(names)})"
+    assert _ready_row(p, harness_id)[1] == want
+    rows = _sheets(build_workbook(p, p.harnesses[harness_id], stamp_of(p)))
+    line = next(r for r in rows["Start here"] if r and r[0] == "Placeholder files")
+    assert line[1] == ", ".join(f"config/{n}.json" for n in names)
+
+
+def test_without_placeholders_the_answer_is_the_bare_word_and_there_is_no_extra_line(
+    project: Project, harness_id: str
+) -> None:
+    p = _no_placeholders(_ready(project, harness_id))
+    assert _ready_row(p, harness_id)[1] == "yes"
+    rows = _sheets(build_workbook(p, p.harnesses[harness_id], stamp_of(p)))
+    assert not [r for r in rows["Start here"] if r and r[0] == "Placeholder files"]
+
+
+def test_a_no_stays_a_bare_no_on_placeholders(project: Project, harness_id: str) -> None:
+    assert project.placeholder_configs()
+    assert _ready_row(project, harness_id)[1] == "no"  # the example wires have no colour
+
+
+def test_the_verifier_notices_a_yes_that_hides_the_placeholders(
+    project: Project, harness_id: str
+) -> None:
+    p = _ready(project, harness_id)
+    files = build_outputs(p, drawings=False).files
+    assert "out_build" not in _codes(p, files)
+    assert "out_build" in _tampered(files, p, harness_id, "Start here", 4, 2, "yes")

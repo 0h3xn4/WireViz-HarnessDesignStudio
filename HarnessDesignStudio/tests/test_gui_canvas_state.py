@@ -30,7 +30,7 @@ from harness_design_studio.gui.canvas import (  # noqa: E402
 )
 from harness_design_studio.gui.canvas_state import NO_INDEX  # noqa: E402
 from tests.gui_helpers import make_window  # noqa: E402
-from tests.helpers import time_limit  # noqa: E402
+from tests.helpers import within  # noqa: E402
 from tests.ux_rel import collect, flatsat_controller, release_all  # noqa: E402
 
 LEFT = Qt.MouseButton.LeftButton
@@ -810,10 +810,10 @@ def test_marks_stay_inside_the_edit_budget_at_100_units_and_800_links(qtbot, tmp
         QApplication.processEvents()
         return (time.perf_counter() - t) * 1000
 
-    assert min(edit_ms() for _ in range(3)) < time_limit(100)  # the edit itself
+    within(min(edit_ms() for _ in range(3)), 100, "the edit itself, ms")
     t = time.perf_counter()
     scene.refresh_states()  # what the timer runs a moment later
-    assert (time.perf_counter() - t) * 1000 < time_limit(100)
+    within((time.perf_counter() - t) * 1000, 100, "refresh of the states, ms")
 
 
 @pytest.mark.perf
@@ -822,7 +822,7 @@ def test_a_full_repaint_with_marks_costs_little_at_100_units(qtbot, tmp_path) ->
     w.view.grab()  # warm
     t = time.perf_counter()
     w.view.grab()
-    assert (time.perf_counter() - t) * 1000 < time_limit(2500)
+    within((time.perf_counter() - t) * 1000, 2500, "grab of the view, ms")
 
 
 def test_the_state_marks_of_a_unit_are_laid_out_once_not_on_every_paint(win, monkeypatch) -> None:

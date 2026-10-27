@@ -571,8 +571,11 @@ def test_a_dry_run_writes_nothing_and_prints_the_counts(tmp_path, capsys, genera
     assert "1 added, 0 changed, 0 unchanged, 0 refused." in out and "Dry run" in out
     assert model_hash(load_project(p).project) == before
     assert cli_main(["import-build-data", str(p), str(f)]) == 0
+    capsys.readouterr()
     assert cli_main(["import-build-data", str(p), str(f)]) == 0
-    assert "0 added, 0 changed, 1 unchanged, 0 refused." in capsys.readouterr().out
+    out = capsys.readouterr().out
+    assert "0 added, 0 changed, 1 unchanged, 0 refused." in out
+    assert "Already up to date." in out and "Build data imported" not in out  # C-5
     write(f, f"Wire,Strip A (mm)\n{wid},7\n")
     assert cli_main(["import-build-data", str(p), str(f), "--dry-run"]) == 0
     assert "0 added, 1 changed" in capsys.readouterr().out

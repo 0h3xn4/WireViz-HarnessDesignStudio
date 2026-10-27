@@ -91,10 +91,14 @@ def test_waive_op_reports_a_short_reason_in_plain_words() -> None:
 
 
 def _length_rows(*texts: str) -> list[tuple[bool, str]]:
-    p = project_with_segments()
-    table = [["harness", "segment", "length"], *[["W010", "W010-L1", t] for t in texts]]
-    plan = plan_length_import(p, table, scale=1.0)
-    return [(r.ok, r.message) for r in plan.rows]
+    # one import per value: two rows for one segment with different lengths are refused (1.8.1)
+    out: list[tuple[bool, str]] = []
+    for t in texts:
+        p = project_with_segments()
+        table = [["harness", "segment", "length"], ["W010", "W010-L1", t]]
+        plan = plan_length_import(p, table, scale=1.0)
+        out.extend((r.ok, r.message) for r in plan.rows)
+    return out
 
 
 def test_a_segment_length_of_zero_is_accepted() -> None:
@@ -107,7 +111,7 @@ def test_a_segment_length_is_accepted_up_to_exactly_10000_metres() -> None:
     assert _length_rows("10000", "9999.999") == [(True, ""), (True, "")]
     over = _length_rows("10000.001", "10001")
     assert [ok for ok, _ in over] == [False, False]
-    assert all("is not a length" in m for _, m in over)
+    assert all("is too large" in m for _, m in over)
 
 
 def test_lengths_in_millimetres_reach_the_limit_after_conversion() -> None:

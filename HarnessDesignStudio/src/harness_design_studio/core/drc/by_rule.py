@@ -217,6 +217,15 @@ NOTES: dict[str, Note] = {
     "thermal-analysis": (("temperature-margin",), "analysis", None),
     "bundle-separation": (("emc-class-split", "shield-bonding"), "analysis", None),
     "partial-load": (("bundle-current",), "analysis", None),
+    "wire-interface": (("current-over-wire", "voltage-drop", "bundle-current"), "data", None),
+    "no-current-contact": (("current-over-contact",), "data", None),
+    "no-current-wire": (("current-over-wire",), "data", None),
+    "no-current-bundle": (("bundle-current",), "data", None),
+    "no-current-drop": (("voltage-drop",), "data", None),
+    "no-voltage-connector": (("connector-voltage",), "data", None),
+    "no-voltage-wire": (("wire-voltage",), "data", None),
+    "no-emc-class": (("emc-mixed",), "data", None),
+    "no-emc-class-split": (("emc-class-split",), "data", None),
 }  # fmt: skip
 _GATE_NOTES = frozenset(
     {"derating", "voltage-drop", "grounding", "separation", "emc", "spare-pins", "temperature"}

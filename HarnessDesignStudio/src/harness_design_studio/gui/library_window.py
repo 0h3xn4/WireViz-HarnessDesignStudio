@@ -16,6 +16,7 @@ The headless logic is in `core.library_folder`, `core.subsystem_library` and `co
 """
 
 from collections.abc import Callable
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
@@ -43,7 +44,7 @@ from harness_design_studio.core import subsystem_library as sl
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.edit import EditError, clone_with
 from harness_design_studio.core.errors import HarnessError
-from harness_design_studio.core.library_folder import LibraryEntry, LibraryScan
+from harness_design_studio.core.library_folder import LibraryConflict, LibraryEntry, LibraryScan
 from harness_design_studio.core.model import Project
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.background import Job, JobRunner
@@ -79,6 +80,96 @@ def contents_of(entry: LibraryEntry) -> str:
         f"{_n('devices', entry.devices)}, {_n('connectors', entry.connectors)}, "
         f"{_n('connections', entry.connections)}"
     )
+
+
+# ---- a device of the same ID is in the file already -------------------------------------------
+
+
+class LibraryConflictDialog(QDialog):
+    """ "RW1 is in the library already (in RW1.json) and differs in 2 pins": Replace, Save as RW1-2,
+    or Cancel. `choice` is "replace", "new" or "cancel" (also when the window is closed)."""
+
+    def __init__(self, parent: QWidget | None, conflict: LibraryConflict) -> None:
+        super().__init__(parent)
+        self.conflict = conflict
+        self.choice = "cancel"
+        self.setObjectName("library-conflict-dialog")
+        self.setWindowTitle(strings.LIB_CONFLICT_TITLE)
+        self.setAccessibleName(strings.LIB_CONFLICT_DIALOG)
+        found = conflict.conflicts
+        if len(found) == 1:
+            c = found[0]
+            text = strings.LIB_CONFLICT_ONE.format(
+                id=c.unit_id, file=conflict.file, how=c.differs_in()
+            )
+            new_text = strings.LIB_CONFLICT_NEW_ONE.format(c.suggested_id)
+        else:
+            what = ", ".join(f"{c.unit_id} ({c.differs_in()})" for c in found)
+            text = strings.LIB_CONFLICT_MANY.format(file=conflict.file, what=what)
+            new_text = strings.LIB_CONFLICT_NEW_MANY
+        lay = QVBoxLayout(self)
+        self.text = QLabel(f"{text}\n{strings.LIB_CONFLICT_ASK}")
+        self.text.setObjectName("library-conflict-text")
+        self.text.setWordWrap(True)
+        lay.addWidget(self.text)
+        row = QHBoxLayout()
+        row.addStretch(1)
+        self.replace_btn = QPushButton(strings.LIB_CONFLICT_REPLACE)
+        self.replace_btn.setObjectName("library-conflict-replace")
+        self.replace_btn.setAccessibleName(strings.LIB_CONFLICT_REPLACE)
+        self.replace_btn.setToolTip(strings.LIB_CONFLICT_REPLACE_TIP)
+        self.new_btn = QPushButton(new_text)
+        self.new_btn.setObjectName("library-conflict-new")
+        self.new_btn.setAccessibleName(new_text)
+        self.new_btn.setToolTip(strings.LIB_CONFLICT_NEW_TIP)
+        self.cancel_btn = QPushButton(strings.CANCEL)
+        self.cancel_btn.setObjectName("library-conflict-cancel")
+        self.cancel_btn.setAccessibleName(strings.CANCEL)
+        self.cancel_btn.setDefault(True)  # (the safe answer is the one Enter gives)
+        for btn in (self.replace_btn, self.new_btn, self.cancel_btn):
+            row.addWidget(btn)
+        lay.addLayout(row)
+        self.replace_btn.clicked.connect(lambda: self._answer("replace"))
+        self.new_btn.clicked.connect(lambda: self._answer("new"))
+        self.cancel_btn.clicked.connect(self.reject)
+
+    def _answer(self, choice: str) -> None:
+        self.choice = choice
+        self.accept()
+
+
+@dataclass
+class DeviceSave:
+    """What `save_devices_asking` did: the file, what was kept on the way, the new IDs when the
+    devices were saved under others (`{"RW1": "RW1-2"}`)."""
+
+    path: Path
+    notes: list[str] = field(default_factory=list)
+    new_ids: dict[str, str] = field(default_factory=dict)
+
+
+def save_devices_asking(
+    parent: QWidget | None,
+    run_dialog: Callable[[QDialog], int],
+    save: Callable[..., Path],
+) -> DeviceSave | None:
+    """Save devices with `save(replace=..., new_ids=..., notes=...)`. When the file has a different
+    device of the same ID, ask first (Replace / Save as new ID / Cancel). None when the person
+    cancelled: nothing was written. Other errors are raised for the caller to show."""
+    notes: list[str] = []
+    try:
+        return DeviceSave(save(notes=notes), notes)
+    except LibraryConflict as conflict:
+        dlg = LibraryConflictDialog(parent, conflict)
+        run_dialog(dlg)
+        choice = dlg.choice
+        dlg.deleteLater()
+        if choice == "replace":
+            return DeviceSave(save(replace=True, notes=notes), notes)
+        if choice == "new":
+            ids = {c.unit_id: c.suggested_id for c in conflict.conflicts}
+            return DeviceSave(save(new_ids=ids, notes=notes), notes, ids)
+        return None
 
 
 # ---- save to the library --------------------------------------------------------------------
@@ -151,6 +242,8 @@ class SaveToLibraryDialog(_PlannerDialog):
             lines.append(strings.LIB_SAVE_KEPT.format(_n("connections", kept)))
         if left:
             lines.append(strings.LIB_SAVE_LEFT_OUT.format(_n("connections", left)))
+        if not subsystem:
+            lines.append(strings.LIB_SAVE_TARGET.format(dl.default_file_name(self.unit_ids)))
         if subsystem and self.name.text().strip():
             lines.append(
                 strings.LIB_SAVE_FILE.format(
@@ -276,7 +369,8 @@ class LibraryWindow(QWidget):
                 Column("kind", strings.LIB_COLUMNS[0], width=80),
                 Column("id", strings.LIB_COLUMNS[1], mono=True, width=70),
                 Column("name", strings.LIB_COLUMNS[2], width=160),
-                Column("contents", strings.LIB_COLUMNS[3]),
+                Column("contents", strings.LIB_COLUMNS[3], width=190),
+                Column("file", strings.LIB_COLUMN_FILE, mono=True),
             ],
             [],
             theme,
@@ -463,9 +557,10 @@ class LibraryWindow(QWidget):
         if scan.error:
             self.folder_notice.show_notice("error", scan.error)
         elif scan.problems:
+            n = len(scan.problems)
             self.folder_notice.show_notice(
                 "warning",
-                strings.LIB_DAMAGED.format(len(scan.problems)),
+                strings.LIB_DAMAGED_ONE if n == 1 else strings.LIB_DAMAGED.format(n),
                 details=[str(p) for p in scan.problems[:8]]
                 + ([f"… +{len(scan.problems) - 8}"] if len(scan.problems) > 8 else []),
             )
@@ -501,6 +596,7 @@ class LibraryWindow(QWidget):
                 "id": e.id,
                 "name": e.name,
                 "contents": contents_of(e),
+                "file": e.file,
                 "key": e.key,
             }
             for e in wanted
@@ -519,7 +615,9 @@ class LibraryWindow(QWidget):
                     strings.LIB_EMPTY_NO_FOLDER, strings.LIB_EMPTY_NO_FOLDER_HINT, True
                 )
             elif scan.error:
-                self._show_empty(strings.LIB_EMPTY_UNREADABLE, scan.error, True)
+                self._show_empty(
+                    strings.LIB_EMPTY_UNREADABLE, strings.LIB_EMPTY_UNREADABLE_HINT, True
+                )
             elif scan.entries:
                 self._show_empty(strings.LIB_EMPTY_NOMATCH, strings.LIB_EMPTY_NOMATCH_HINT, False)
             else:
@@ -713,6 +811,7 @@ class LibraryWindow(QWidget):
         dlg = SaveToLibraryDialog(self, self.theme, self.ctl.project, selected, self.folder)
         if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
             return
+        notes: list[str] = []
         try:
             if dlg.is_subsystem():
                 name = dlg.name.text().strip()
@@ -721,14 +820,27 @@ class LibraryWindow(QWidget):
                 )
                 message = strings.LIB_SAVED_SUBSYSTEM.format(name, path.name)
             else:
-                path = library_folder.save_devices(self.folder, self.ctl.project, selected)
-                message = strings.LIB_SAVED_DEVICES.format(", ".join(selected), path.name)
+                folder, project = self.folder, self.ctl.project
+                done = save_devices_asking(
+                    self,
+                    self.run_dialog,
+                    lambda **kw: library_folder.save_devices(folder, project, selected, **kw),
+                )
+                if done is None:  # cancelled: nothing was written
+                    return
+                path, notes = done.path, done.notes
+                if done.new_ids:
+                    message = strings.LIB_SAVED_AS_NEW.format(
+                        ", ".join(done.new_ids), path.name, ", ".join(done.new_ids.values())
+                    )
+                else:
+                    message = strings.LIB_SAVED_DEVICES.format(", ".join(selected), path.name)
         except (HarnessError, OSError) as exc:
             text = str(exc) if isinstance(exc, HarnessError) else str(exc.strerror or exc)
             self.result_notice.show_notice("error", text)
             return
         self.refresh()
-        self.result_notice.show_notice("info", message)
+        self.result_notice.show_notice("info", message, details=notes or None)
 
     # ---- the window's own place ---------------------------------------------------------------------
     def showEvent(self, event: QShowEvent) -> None:  # noqa: N802

@@ -4,6 +4,42 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+Fixes from the audit of 1.8.0 (`docs/AUDIT_1.8.0.md`, decision D-177): no new feature, no file-format change, the design rules stay 39, and the files and outputs of a project that does not meet one of these cases are unchanged (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` prints *identical*). The one written text that changes for projects on placeholder configuration is the line *Ready to build* of the build workbook.
+
+### Fixed
+
+- **Connections.**
+  - Connections between analog, discrete, LVDS, pyro and I2C clock pins are no longer reported as "two outputs drive against each other", and the pairing proposal now pairs them.
+  - The pairing proposal recognises vendor-style names (`UART_TX` and `UART_RX`, `SPW_DOUT+` and `SPW_DIN+`, `TX_P` and `RX_P`, `MOSI` and `MISO`). It never pairs two equal transmit names or two equal receive names; a pair of that kind that you make yourself gets a warning.
+  - A harness made from a connection is now checked against it: if a wire is moved, added, removed or relabelled, `validate`, `check`, `verify`, the design rules and `export` stop with a plain message.
+  - A device connector with two cable plugs on it, or a pin wired by two harnesses, is reported when you check the project, and Generate reports a second plug. Making a connection or harness onto a connector that already has a plug, or onto a pin an interface uses, is refused with a reason.
+  - A device joined only by a connection is no longer reported as "not connected to anything yet", and a heater connection (`HTR+`, `HTR-`) is no longer reported as "power without return".
+- **Silence is not a pass.**
+  - A design rule that is ready to run but has nothing to look at (no interface with a current or voltage, no EMC class) now says "not checked" with a plain note instead of "pass".
+  - Wires that have no interface (harnesses drawn by hand or made from a connection) get a note saying that the current, voltage-drop and bundle checks did not run for them; the manual says so too.
+  - The build workbook no longer says a bare "Ready to build: yes" when the values rest on placeholder configuration: it says "yes (values rest on placeholder configuration: ...)" and lists the placeholder files.
+  - `export --drawings` no longer fails for a harness that has a connector and no wires.
+- **Library.**
+  - A device whose pins use a cable contact part can be added from the library (and as part of a subsystem), and a renamed device can be saved and added again.
+  - One damaged or hand-edited file in the library folder no longer hides the others; it is listed with a plain sentence, with line and column for JSON errors. A key that appears twice in a library file is refused.
+  - "Save to library" no longer replaces a different device of the same ID without asking: Replace, Save as a new ID or Cancel. `export-devices` refuses unless `--replace` is given. A part's approval in the library is never lowered.
+  - The library list shows the file of each entry, and the counts of damaged files use words instead of "(s)".
+- **Keyboard and screen.**
+  - Tab now leaves every table. Before, a keyboard user with a row selected in the pair table of the Link connectors window, in the library list or in the main-window tables could not reach the buttons below. Tables where Tab moves from cell to cell (Devices pins, Units, Interfaces) keep that and leave with Ctrl+Tab.
+  - Connection lines on the diagram can be reached with Tab, Space selects them and Enter opens the Link connectors window.
+  - Editing in a project with many devices is faster: the diagram legend no longer rebuilds the list of all connectors for every harness connector (about 30 % faster per edit at 150 devices, over 40 % at 300).
+  - The Problems panel heading reads "Waived" again, not the long toast sentence; `gui/strings.py` no longer defines a name twice (a test guards it), and 67 unused texts and 4 unused functions are gone.
+  - The Inspector heading says "Device", not "Unit". Words that told people with connections to "Press Generate" now fit what the project has: the first-start tour, the empty Harness and Lists views and the project tree. A harness made from a connection or by hand is no longer labelled "Not generated".
+- **Command line and files.**
+  - The command line writes UTF-8 when its output is redirected or piped, so `drc project > report.md` no longer fails on names with characters such as Ω or ✓ on Windows.
+  - Importing data the project already holds (pinouts, parts, KiCad netlists, build data) says "unchanged", prints "Already up to date." and exits 0, so a build can import the same file every time. A file with nothing in it is still an error.
+  - `import-lengths` refuses two rows that give the same segment different lengths, and says "too large" for a huge value.
+  - Open in the Outputs list and in the export window opens only files the program wrote and of a known kind; any other file is not opened, and the folder is offered instead.
+  - A command on an empty or wrong folder no longer leaves a hidden lock file there. `export-pinout` writes tab-separated text for `.tsv` and refuses endings it does not know; `export-devices` and `export-subsystem` no longer make a missing folder; `config` and `library` on a read-only project exit with 2 like the other commands; paths with spaces are quoted in the "Next:" hint; a device named like `A<B and C>D` is shown as typed in the delete question.
+- **Documents and tests.**
+  - Six stale statements are corrected: interface types are in `logical/interface_types.json`, not `library/`; a new project ships no engineering numbers but `config --apply-profile` writes the ECSS table values; two people editing different parts merge cleanly except for `generated/generation.json` (the manual now gives the way out); the README says which role opens on the Next step page; the Getting Started "Why" excerpt shows the real four lines; the command line can add devices through the import commands.
+  - The speed tests use a time factor of 2 by default, so they pass on an idle machine, and a slow run prints the measured value, the limit and the factor. Seven tests that asserted nothing now assert; the README quick-start test now runs its commands (it ran none before). `tools.trace` reports the requirements verified by file only as a separate count. The package metadata names Python 3.12 and 3.13, and the dev extra includes pytest-timeout.
+
 ## 1.8.0 (2026-10-26; not a statement of compliance)
 
 Version 1.8.0 answers the workshop of 2026-10-23, where a systems engineer, an AIT engineer and an electrical engineer used the tool (milestones M1 to M5 of decision D-172; plan `docs/ait/WORKSHOP_FEEDBACK_PLAN.md`; decision D-173 pinout first, D-174 harness and connector editing, D-175 the library, D-176 the roles). The tool now starts from the pinout: two connectors are joined pin by pin (**Link connectors**), **Check my connections** reviews them and **Create harness** makes a harness only when you press it. A connector, a group and all wires of a harness can be edited. The library can be a folder on a shared drive with devices and subsystems, and a device can be asked for in a number. Two **roles**, Systems engineer and Electrical / AIT engineer, replace the Simple and Full workspaces of 1.7.0. The quick fixes of the first milestone are in too: a new device asks for its name, the screen says *device* instead of *unit*, problem notices can be switched off, export asks where to save, RTN is explained.

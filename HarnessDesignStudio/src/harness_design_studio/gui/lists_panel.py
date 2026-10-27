@@ -441,7 +441,13 @@ class ListsPanel(QWidget):
             self._hid = None
             self._combo_ids = []
             n = len(p.interfaces)
-            self.empty_body.setText(strings.LP_EMPTY_READY if n else strings.LP_EMPTY_NO_INTERFACES)
+            if n:
+                body = strings.LP_EMPTY_READY
+            elif p.links:  # connections first: harnesses are made from connections
+                body = strings.LP_EMPTY_HAS_LINKS
+            else:
+                body = strings.LP_EMPTY_NO_INTERFACES
+            self.empty_body.setText(body)
             self.empty_generate.setVisible(bool(n) and not self.ctl.read_only)
             self._set_stale(False)
             return

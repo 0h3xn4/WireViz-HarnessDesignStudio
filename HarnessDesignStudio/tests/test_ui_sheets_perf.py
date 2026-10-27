@@ -6,7 +6,7 @@ import time
 
 import pytest
 
-from tests.helpers import time_limit
+from tests.helpers import time_limit, within
 
 pytest.importorskip("PySide6")
 pytestmark = [pytest.mark.gui, pytest.mark.perf]
@@ -40,14 +40,14 @@ def test_the_interface_table_opens_within_200_ms(stress) -> None:
     elapsed_ms(stress.show_units)  # warm up the widgets
     t = elapsed_ms(stress.show_interfaces)
     assert stress.interface_table.proxy.rowCount() == 2000
-    assert t < time_limit(200), t
+    within(t, 200, "opening a table, ms")
 
 
 def test_the_unit_table_opens_within_200_ms(stress) -> None:
     elapsed_ms(stress.show_interfaces)
     t = elapsed_ms(stress.show_units)
     assert stress.unit_table.proxy.rowCount() == 200
-    assert t < time_limit(200), t
+    within(t, 200, "opening a table, ms")
 
 
 def test_pasting_500_rows_is_one_undo_step_and_fast(stress) -> None:

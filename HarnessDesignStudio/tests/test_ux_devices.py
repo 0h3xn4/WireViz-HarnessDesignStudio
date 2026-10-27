@@ -395,7 +395,7 @@ def test_a_connector_with_1000_pins_in_a_100_unit_project_refreshes_fast(qtbot, 
 
     from harness_design_studio.core.model import Part
     from harness_design_studio.core.samples import stress_project
-    from tests.helpers import time_limit
+    from tests.helpers import within
 
     p = stress_project(units=100, interfaces=600)
     p.parts["BIG-1000"] = Part(id="BIG-1000", category="connector", pin_count=1000)
@@ -408,7 +408,7 @@ def test_a_connector_with_1000_pins_in_a_100_unit_project_refreshes_fast(qtbot, 
     start = time.perf_counter()
     ctl.run("edit", devices.ops_set_pin(p, cid, "500", signal="PWR"))
     view.refresh()
-    assert time.perf_counter() - start < time_limit(0.5)
+    within(time.perf_counter() - start, 0.5, "a pin edit and refresh, s")
     QApplication.processEvents()
     assert cell(view, 499, "signal") == "PWR"
 

@@ -3452,15 +3452,17 @@ class DiagramView(QGraphicsView):
         return super().focusNextPrevChild(next)
 
     def focus_order(self) -> list[QGraphicsItem]:
-        """The items Tab visits: units by lane, then top to bottom, then links by ID. (Qt only
-        tab-chains widgets, never plain graphics items, so the view does it.)"""
+        """The items Tab visits: units by lane, then top to bottom, then interface lines by ID,
+        then connection lines by ID. (Qt only tab-chains widgets, never plain graphics items, so
+        the view does it.)"""
         scene = self.dscene
         units = sorted(
             scene.unit_items.values(),
             key=lambda it: (it.lane(), it.pos().y(), it.unit_id),
         )
         links = [scene.link_items[k] for k in sorted(scene.link_items)]
-        return [*units, *links]
+        connections = [scene.connection_items[k] for k in sorted(scene.connection_items)]
+        return [*units, *links, *connections]
 
     def step_focus(self, *, backwards: bool = False) -> bool:
         """Move the focus to the next (or previous) unit or link and scroll it into view. Returns

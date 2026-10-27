@@ -135,17 +135,20 @@ def test_cli_examples_name_real_commands_and_options() -> None:
     from tools.gen_cli_docs import EXAMPLES
 
     parser = build_parser()
+    checked = 0
     for lines in EXAMPLES.values():
         for line in lines:
             argv = shlex.split(line.split(" > ")[0])[1:]
             parser.parse_args(argv)
+            checked += 1
+    assert checked >= len(EXAMPLES), f"only {checked} example lines for {len(EXAMPLES)} commands"
 
 
 def _fenced_blocks(markdown: Path) -> list[list[str]]:
     blocks: list[list[str]] = []
     inside = False
     for line in markdown.read_text().splitlines():
-        if line.startswith("```"):
+        if line.lstrip().startswith("```"):  # a fence inside a list item is indented
             inside = not inside
             if inside:
                 blocks.append([])
@@ -155,7 +158,7 @@ def _fenced_blocks(markdown: Path) -> list[list[str]]:
 
 
 def _is_command(line: str) -> bool:
-    return line.startswith(tuple(f"{p} " for p in PROGRAMS) + ("cp ",))
+    return line.lstrip().startswith(tuple(f"{p} " for p in PROGRAMS) + ("cp ",))
 
 
 def _commands_in(markdown: Path) -> list[str]:
@@ -277,10 +280,28 @@ def test_getting_started_commands_work_in_order(tmp_path: Path) -> None:
     assert f"Model hash: `{printed.group(1)}`" in doc.read_text()
     assert (tmp_path / "wheel-link" / "outputs" / "manifest.json").is_file()
     assert (tmp_path / "my-first-design" / "project.json").is_file()
+    # the "Why" excerpt of Part 7 (and of the user manual page) is the recorded reasons of W002-001
+    import json
+
+    record = json.loads((tmp_path / "wheel-link" / "generated" / "generation.json").read_text())
+    reasons = record["provenance"]["gauge:W002-001"]
+    assert len(reasons) == 4, reasons
+    manual = ROOT / "docs" / "user-manual" / "fill-in-engineering-values.md"
+    for text in (doc.read_text(), manual.read_text()):
+        assert "\n".join(reasons) + "\n" in text, "the Why excerpt is not the real record"
 
 
 def test_readme_quick_start_commands_work(tmp_path: Path) -> None:
-    _run_document(ROOT / "README.md", tmp_path, {})
+    # the block after the export is the developer setup, not output of the export
+    results = _run_document(
+        ROOT / "README.md",
+        tmp_path,
+        {},
+        not_output=frozenset({"harness-design-studio export wheel-link#0"}),
+    )
+    # the helper returns one (command, output) pair per command it ran; none may be skipped
+    assert len(results) == len(_commands_in(ROOT / "README.md")) > 0
+    assert any(cmd.startswith("harness-design-studio generate") for cmd, _ in results)
 
 
 def _run_example(name: str, tmp: Path) -> str:

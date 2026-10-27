@@ -21,7 +21,7 @@ from harness_design_studio.core.generate.sizing import (
 from harness_design_studio.core.integrity import check_integrity
 from harness_design_studio.core.model import Connector, Harness, InterfaceInstance, Project, Wire
 from harness_design_studio.core.vcs.consistency import release_integrity
-from harness_design_studio.core.verify import passthrough_signals
+from harness_design_studio.core.verify import direction_judged, passthrough_signals
 
 from .base import Hit, Rule, cfg, flag, number
 from .standard_rules import STANDARD_RULES
@@ -240,7 +240,9 @@ def _direction_conflict(project: Project) -> Iterator[Hit]:
         for w in h.wires:
             i = project.interfaces.get(w.interface_id or "")
             itype = project.interface_types.get(i.type_id) if i else None
-            if itype is None or not {"out", "in"} <= {s.direction for s in itype.signals}:
+            if itype is None or not direction_judged(
+                [(s.name, s.direction) for s in itype.signals]
+            ):
                 continue  # one-directional types (analog, discrete) cannot be judged by direction
             dirs = {s.name: s.direction for s in itype.signals}
             na = _end_signal(project, h, w.from_connector, w.from_pin) or ""
@@ -620,6 +622,59 @@ def _voltage_drop_gaps(project: Project) -> Iterator[Hit]:
         yield Hit("voltage-drop-wires", f"Voltage drop was not checked for {' and '.join(parts)}")
 
 
+def _wires_without_interface(project: Project) -> Iterator[Hit]:
+    """Wires that name no interface (drawn by hand, or made from a link) carry no current or
+    voltage, so the checks that read an interface skip them. Say so, once for the project."""
+    short = []
+    for h in sorted(project.harnesses.values(), key=lambda x: x.id):
+        n = sum(1 for w in h.wires if w.interface_id not in project.interfaces)
+        if n:
+            short.append(f"{n} wire(s) of harness {h.id}")
+    if short:
+        yield Hit(
+            "wire-interface",
+            f"Current, voltage-drop and bundle checks did not run for {', '.join(short)}: "
+            "they have no interface to take a current from",
+        )
+
+
+def _nothing_to_evaluate(project: Project) -> Iterator[Hit]:
+    """A rule that is ready to run but found nothing to look at must not read as a pass: no
+    interface has a current or voltage, or no interface type has an EMC class. Each note is
+    raised only when the rule's own values are set; until then the rule is pending anyway."""
+    d = cfg(project, "derating")
+    has_design = bool(project.interfaces) or any(h.wires for h in project.harnesses.values())
+    if has_design and not any(i.max_current_a is not None for i in project.interfaces.values()):
+        sentence = "No interface has a current yet, so the {} did not run"
+        table = ampacity_table(d.get("ampacity_a_by_awg"))
+        if number(d.get("contact_current_factor")) is not None:
+            yield Hit("no-current-contact", sentence.format("contact current check"))
+        if _derated_limit_ready(project):
+            yield Hit("no-current-wire", sentence.format("wire current check"))
+        if table is not None and _bundle_table_given(d):
+            yield Hit("no-current-bundle", sentence.format("bundle current check"))
+        if (
+            number(d.get("max_voltage_drop_v")) is not None
+            and number(cfg(project, "generation").get("conductor_resistivity_ohm_m")) is not None
+        ):
+            yield Hit("no-current-drop", sentence.format("voltage drop check"))
+    if has_design and not any(i.voltage_v is not None for i in project.interfaces.values()):
+        sentence = "No interface has a voltage yet, so the {} did not run"
+        if (
+            number(d.get("connector_voltage_factor_withstand")) is not None
+            or number(d.get("connector_voltage_factor_rated")) is not None
+        ):
+            yield Hit("no-voltage-connector", sentence.format("connector voltage check"))
+        if number(d.get("wire_voltage_factor")) is not None:
+            yield Hit("no-voltage-wire", sentence.format("wire voltage check"))
+    if project.harnesses and not any(t.emc_class for t in project.interface_types.values()):
+        sentence = "No interface type has an EMC class yet, so the {} did not run"
+        if _emc_pairs(project):
+            yield Hit("no-emc-class", sentence.format("EMC class check"))
+        if cfg(project, "emc").get("same_class_one_bundle") is True:
+            yield Hit("no-emc-class-split", sentence.format("one-bundle-per-class check"))
+
+
 def _unchecked(project: Project) -> Iterator[Hit]:
     d, g = cfg(project, "derating"), cfg(project, "generation")
     has_current = any(i.max_current_a is not None for i in project.interfaces.values())
@@ -699,6 +754,8 @@ def _unchecked(project: Project) -> Iterator[Hit]:
             "spare-pins",
             "Spare pins were not checked: the required fraction is still a placeholder",
         )
+    yield from _wires_without_interface(project)
+    yield from _nothing_to_evaluate(project)
     yield from standard_unchecked(project)
 
 

@@ -856,7 +856,7 @@ def test_persist_widths_waits_for_a_model_that_fills_later(theme, qtbot, tmp_pat
 def test_big_tables_stay_fast(theme, qtbot) -> None:
     import time
 
-    from tests.helpers import time_limit
+    from tests.helpers import within
 
     rows = [{"id": f"W{i}", "signal": "s", "gauge": i % 30, "state": "pending" if i % 7 == 0 else None}
             for i in range(5000)]  # fmt: skip
@@ -869,7 +869,7 @@ def test_big_tables_stay_fast(theme, qtbot) -> None:
     view.set_rows(rows)
     view.sortByColumn(2, Qt.SortOrder.DescendingOrder)
     view.proxy.set_text("w49")
-    assert time.perf_counter() - t0 < time_limit(2.0)
+    within(time.perf_counter() - t0, 2.0, "sort and filter of a table, s")
 
 
 # ---- the host --------------------------------------------------------------------------------

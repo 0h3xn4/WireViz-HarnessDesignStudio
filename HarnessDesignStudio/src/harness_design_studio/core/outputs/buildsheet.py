@@ -299,6 +299,14 @@ def readiness(project: Project, h: Harness) -> list[Check]:
 # ---- the sheets ------------------------------------------------------------------------------
 
 
+def ready_text(answer: str, placeholders: list[str]) -> str:
+    """The answer to *Ready to build*. A yes that rests on placeholder configuration says so
+    (audit F-06); a no, or a project without placeholders, is the bare word as before."""
+    if answer != "yes" or not placeholders:
+        return answer
+    return f"yes (values rest on placeholder configuration: {', '.join(placeholders)})"
+
+
 def _start_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
     ws = wb.create_sheet("Start here")
     lay = _Layout({})
@@ -313,8 +321,12 @@ def _start_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
     checks = readiness(project, h)
     blocking = sum(1 for c in checks if c.status == TO_FIX)
     ready = "yes" if blocking == 0 else "no"
+    placeholders = project.placeholder_configs()
+    shown = ready_text(ready, placeholders)
+    if shown != ready:
+        lay.see(2, shown)  # a long answer gets a wider column, not a tall row
     body.append([
-        _cell(ws, "Ready to build", bold=True, fill=_BAND), _cell(ws, ready, bold=True,
+        _cell(ws, "Ready to build", bold=True, fill=_BAND), _cell(ws, shown, bold=True,
               fill=_GREEN if ready == "yes" else _RED),
         _cell(ws, "some points marked TO FIX below are still open" if ready == "no" else
               "nothing marked TO FIX is open", box=False, wrap=False, colour=_GREY_TEXT),
@@ -338,6 +350,11 @@ def _start_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
     ):  # fmt: skip
         body.append([_cell(ws, label, fill=_BAND), _cell(ws, value or "not set")])
         lay.see(1, label)
+    if placeholders:  # the files behind the answer above (audit F-06)
+        files = ", ".join(f"config/{n}.json" for n in placeholders)
+        body.append([_cell(ws, "Placeholder files", fill=_BAND), _cell(ws, files)])
+        lay.see(1, "Placeholder files")
+        lay.see(2, files)
     body.append([])
     body.append([_cell(ws, "How to use this workbook", bold=True, box=False, wrap=False)])
     for name, what in (
@@ -664,4 +681,6 @@ def cut_rows(project: Project, h: Harness) -> Table:
     return rows
 
 
-__all__ = ["FILE_SUFFIX", "SHEETS", "Check", "build_workbook", "cut_rows", "readiness"]
+__all__ = [
+    "FILE_SUFFIX", "SHEETS", "Check", "build_workbook", "cut_rows", "readiness", "ready_text",
+]  # fmt: skip

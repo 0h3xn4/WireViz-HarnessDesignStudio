@@ -105,6 +105,11 @@ def find(project: Project) -> list[Finding]:
                     "Confirm connectors",
                 )
             )  # fmt: skip
+    for link in project.links.values():  # a connection between two connectors joins the devices
+        for cid in (link.a_connector, link.b_connector):
+            c = project.connectors.get(cid)
+            if c is not None and c.unit_id:
+                connected.add(c.unit_id)
     for u in project.units.values():
         if u.id not in connected:
             out.append(

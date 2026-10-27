@@ -1,9 +1,6 @@
 """All user-visible UI strings live here so translation is possible later."""
 
 APP_TITLE = "Harness Design Studio"
-EMPTY_STATE = (
-    "No project open. Create a new project, start from an example or open an existing one to begin."
-)
 EMPTY_CANVAS = "Your diagram is empty.\nAdd your first device with the button below, or with Add in the project panel. Press Ctrl+K to find a command, or bring in a table with File > Import."
 CANVAS = "Block diagram canvas"
 CANVAS_HELP = "Tab and Shift+Tab move between devices and links, Enter shows the item in the harness plans, Space selects it, Ctrl+A selects everything, Shift+arrow keys move the selected devices, Ctrl+F finds, Escape clears the selection. The Interface table tab lists every interface and is the screen-reader friendly alternative."
@@ -58,7 +55,7 @@ TOUR_STEPS: list[tuple[str, str]] = [
     ),
     (
         "types",
-        "To connect two devices, open the arrow next to Connect and pick an interface type, then click the two devices. Only valid choices light up.",
+        "To connect two devices, press Connect and click the two devices. The Link connectors window opens and pairs their pins by name. To connect by interface type instead, use the arrow next to Connect, or Edit > Connect with an interface type.",
     ),
     (
         "problems",
@@ -79,7 +76,7 @@ NOTHING_SELECTED = (
     "Select a device or an interface to see its details. The rest of the diagram fades, so you can "
     "follow its links."
 )
-UNIT = "Unit"
+UNIT = "Device"
 INTERFACE = "Interface"
 FIELD_ID = "ID"
 FIELD_NAME = "Name"
@@ -121,7 +118,6 @@ REQUIREMENT_LABEL = "Requirement: {}"
 WAIVE = "Waive…"
 FILTER_PLACEHOLDER = "Filter by ID, device or type"
 NEW_INTERFACE = "＋ Interface…"
-NO_PLANS_TITLE = "No harness plans yet."
 
 CANCEL = "Cancel"
 CLOSE = "Close"
@@ -235,13 +231,10 @@ def problems_text(n: int) -> str:
     return f"{n} problem" if n == 1 else f"{n} problems"
 
 
-STATUS_COUNTS = "{} · {} · model {}"
 SELECTED = "Selected: {}"
 NOTHING_SEL = "Nothing selected"
 A_NEW = "New project…"
 A_NEW_EXAMPLE = "New project from an example…"
-EXAMPLE_TITLE = "Start from an example"
-EXAMPLE_TEXT = "Choose what to start from:"
 A_OPEN = "Open project…"
 A_SAVE = "Save"
 A_SAVE_AS = "Save as…"
@@ -262,7 +255,6 @@ M_EDIT = "&Edit"
 M_VIEW = "&View"
 M_HELP = "&Help"
 M_ADD_UNIT = "Add device"
-M_CONNECT_WITH = "Connect with"
 ADD_UNIT_PREFIX = "Add device:"
 CONNECT_PREFIX = "Connect with"
 GO_TO_UNIT = "Go to device"
@@ -280,8 +272,6 @@ UNSAVED_BODY = "The project has changes that are not saved to its files."
 SAVE = "Save"
 DISCARD = "Discard changes"
 NEW_FOLDER = "Choose an empty folder for the new project"
-NEW_NAME_TITLE = "New project"
-NEW_NAME = "Project name"
 OPEN_FOLDER = "Open a project folder"
 SAVE_AS_FOLDER = "Choose an empty folder for the copy"
 LOCKED_TITLE = "Project already open"
@@ -299,7 +289,6 @@ CHANGED_BODY = "The project files changed outside this window (for example after
 RELOAD = "Reload"
 KEEP_MINE = "Keep my version"
 KEEP_MINE_NOTE = "Keeping your version. Saving will be refused until you reload or save a copy, so nobody's changes are overwritten."
-ABOUT_TEXT = "Harness Design Studio {}\nOffline spacecraft harness design tool. No data ever leaves this computer."
 MORE_PROBLEMS = "…and {} more. Resolve the ones above first."
 
 DRC_CHECKING = "Design rules: checking…"
@@ -431,7 +420,7 @@ UNDONE = "Undone: {}"
 REDONE = "Redone: {}"
 CONNECT_PICK_TYPE = "Pick an interface type on the left."
 CONNECTOR_WORD = "connector"
-UNIT_WORD = "unit"
+UNIT_WORD = "device"
 CONNECT_FIRST = "Click the first {} for {}."
 CONNECT_NONE_FREE = (
     "No other device has a free {} connector. Pick another type, or add a device that supports it."
@@ -446,7 +435,7 @@ DELETED = "Deleted {}."
 NOW_IN_ZONE = "{} is now in {}."
 REDUNDANT_SKIPPED = " {} interface(s) could not be mirrored (no free connector): {}."
 REDUNDANT_DONE = "Created {} and mirrored its interfaces (names end in -R).{}"
-WAIVED = "Waived. The justification will appear in the DRC report."
+WAIVED_TOAST = "Waived. The justification will appear in the DRC report."
 ZONE_ADDED = "Zone {} added."
 IMPORTED = "Imported {} interface{} in one step."
 CHOOSE_EMPTY_NEW = "Choose an empty folder for the new project."
@@ -490,7 +479,6 @@ STEP_CHOOSE_CONNECTOR = "Choose connector"
 STEP_CHANGE_PART = "Change connector part"
 STEP_ADD_ZONE = "Add zone"
 STEP_ADD_INTERFACE = "Add interface"
-STEP_GENERATE = "Generate harnesses"
 STEP_IMPORT = "Import {} interfaces"
 # words on the device pictures and in the lists
 TAG_FROM = "FROM"
@@ -529,7 +517,6 @@ STATE_LABELS = {
 # tables (gui/tables.py)
 TABLE_HEADER_UNIT = "{} ({})"
 TABLE_COPY_TIP = "Ctrl+C copies the selected cells (tab separated)"
-TABLE_COPIED = "Copied {} cells"
 STATUS_HASH = "Model hash"
 
 # ---- diagram canvas: selection, navigation, search, menus (block appended for the canvas work) ----
@@ -572,13 +559,10 @@ DISTRIBUTE_NAMES = {
 WHY_NEED_TWO_UNITS = "Select at least two devices."
 WHY_NEED_THREE_UNITS = "Select at least three devices."
 WHY_NEED_UNIT_SELECTED = "Select a device first."
-WHY_SELECT_NO_ROOM = "There is no free room for a copy."
 DUPLICATE_TIP = "Copy the selected devices with their connectors (Ctrl+D)"
 SELECT_ALL_TIP = "Select every device and link in the diagram (Ctrl+A)"
 FIND_TIP = "Find a device or link by ID, name, connector or type (Ctrl+F)"
 FIT_TIP = "Show the whole diagram (F)"
-ZOOM_IN_TIP = "Zoom in (Ctrl+=)"
-ZOOM_OUT_TIP = "Zoom out (Ctrl+-)"
 ZOOM_100_TIP = "Real size, 100 % (Ctrl+0)"
 ZOOM_SELECTION_TIP = "Fill the view with the selection (Shift+F)"
 ARRANGE_TIP = "Tidy the diagram: order the devices to shorten and uncross links (Ctrl+Shift+L)"
@@ -625,7 +609,6 @@ MULTI_HEAD = "Selection"
 MULTI_HELP = "Fields shown here change every selected item at once. A field that reads (different) holds different values; leave it alone to keep them."
 MULTI_DIFFERENT = "(different)"
 MULTI_DELETE = "Delete selection"
-MULTI_ONLY_SOME = "These fields apply to {} only."
 SELECTED_MANY = "Selected: {} items"
 EMPTY_HINT_NAME = "What to do next"
 # ==== UX release / export / import wave (ux/rel): releases panel, release dialogs, export, import wizard, new project ====
@@ -679,7 +662,6 @@ HINT_BLOCKERS = "fix what is listed above first"
 HINT_OK = "Ready: everything needed is filled in."
 COMMENT_MIN = 10
 # releases panel (gui/releases_panel.py)
-REL_TITLE = "Releases"
 REL_ACCESSIBLE = "Releases and change control"
 REL_HARNESS = "Harness"
 REL_ALL = "All harnesses"
@@ -788,7 +770,6 @@ EXP_CHECK_FAILED = (
     "The independent check found {0} problem(s) in the outputs, so nothing was written:"
 )
 EXP_WRITE_FAILED = "The outputs could not be written. {0}"
-EXP_BANNER_DISMISS = "Dismiss"
 EXP_BANNER_DISMISS_TIP = "Hide this message"
 EXP_RESULT_HEAD = "{0} files written to {1}. Design {2}."
 EXP_SHOWING = "Showing {0} of {1} files by your selection."
@@ -1065,7 +1046,6 @@ CONFIG_LABEL_MANY = "Set {} engineering values"
 CONFIG_DONE_ONE = "Set {}."
 CONFIG_DONE_MANY = "Set {} engineering values."
 CONFIG_FIELD_NAME = "{label} ({unit})"
-CONFIG_PAIRS_HINT_TIP = "{hint}"
 CONFIG_REFUSED = "The change was refused. The message at the bottom of the window says why."
 
 # ==== Canvas state marks (ux/cstate): CV-6 to CV-23 ==============================================
@@ -1090,7 +1070,6 @@ AUTO_CHIP_MORE = "More: right-click and choose Why?"
 CONN_COUNT = "{} conn"
 CONN_COUNT_TIP = "{} connectors on this device"
 CONN_MORE = "+{}"
-CONN_MORE_TIP = "{} more connectors; the device's properties list them all"
 TAG_FLIGHT = "FLIGHT"
 TAG_GROUND = "GROUND"
 TAG_NOMINAL_TIP = "On the nominal chain; this project also has a redundant one"
@@ -1126,11 +1105,9 @@ TAB_PROBLEMS = "Problems"
 TAB_PROJECT = "Project"
 TAB_TIP = "{} (Ctrl+{})"
 # empty states of views that are not installed yet
-EMPTY_VIEW_TITLE = "{} is not available yet"
 EMPTY_VIEW_HARNESS = "Pick a harness in the project tree, or double-click a link in the diagram, to see its connectors, pins, wires and drawing. Generate harnesses first if there are none."
 EMPTY_VIEW_LISTS = "The wire list, pinouts, bill of materials and test tables appear here once harnesses are generated."
 EMPTY_VIEW_TREE = "The project tree lists devices, interfaces, harnesses, parts, interface types, configuration and imports."
-EMPTY_VIEW_INSPECTOR = "Select a device or a link on the diagram to see and edit its fields."
 EMPTY_VIEW_WHY = "Select a connector, pin or wire to read why it is like this."
 EMPTY_VIEW_PROBLEMS = "Design problems for the selection appear here."
 # top bar
@@ -1183,7 +1160,6 @@ BN_EXPORT = "Export…"
 BN_DISMISS = "Hide this notice until the design changes again"
 BN_RETRY = "Try again"
 BN_START_REVISION = "Start new revision…"
-BN_REFUSAL_NAME = "Change refused"
 # status bar
 STATUS_PATH_NONE = "Not saved to a folder yet"
 STATUS_PATH_SAMPLE = "Sample project (not saved)"
@@ -1216,18 +1192,13 @@ A_GO_HARNESS_ID = "Go to harness"
 A_VALUES = "Engineering values…"
 A_VALUES_TIP = "Supply the values the design rules are waiting for"
 M_IMPORT = "Import"
-A_IMPORT_INTERFACES = "Interfaces…"
 A_IMPORT_PREFIX = "Import"
 M_GO = "&Go"
-M_PANELS = "Panels"
 UNDO_LABELLED = "Undo {}"
 REDO_LABELLED = "Redo {}"
-UNDO_NOTHING = "Nothing to undo"
-REDO_NOTHING = "Nothing to redo"
 NO_HARNESS_FOR_ACTION = "Choose a harness first (there is more than one)."
 NO_HARNESSES_FOR_ACTION = "There are no harnesses yet. Generate harnesses first."
 VIEW_NOT_INSTALLED = "{} is not available in this version yet."
-CHECK_STARTED = "Checking the design rules…"
 CHECK_FINISHED = "Checks finished: {failed} failed · {unchecked} not checked."
 CHECK_FINISHED_CLEAN = "Checks finished: nothing failed · {unchecked} not checked."
 CHECK_SHOW = "Show checks"
@@ -1321,12 +1292,10 @@ HV_EXPORT = "Export"
 HV_REVIEW = "Open in review"
 HV_REVIEW_TIP = "Open {} in the review view"
 HV_REVISE = "Revise…"
-HV_WHY_NO_HARNESS = "Select a harness first."
-HV_WHY_RELEASED = "{} is released. Revise it to make changes."
 HV_WHY_NOT_RELEASED = "Only a released harness can be revised."
 HV_WHY_RELEASE_NOT_DRAFT = "Only a draft or a harness in review can be released."
 HV_EMPTY_TITLE = "No harnesses yet"
-HV_EMPTY_NO_INTERFACES = "Add interfaces on the diagram or import a table (Ctrl+Shift+I). Then press Generate to build the harnesses."
+HV_EMPTY_NO_INTERFACES = "Add interfaces on the diagram or import a table (Ctrl+Shift+I). Then press Generate to build the harnesses. Or join two devices with Connect and press Create harness on the connection."
 HV_EMPTY_READY = "The diagram has {} interface(s) and no harnesses yet. Press Generate to build them. You see a preview first and Undo reverts it."
 HV_GENERATE_NOW = "Generate harnesses"
 HV_WHY_HARNESS = "Harness {}"
@@ -1365,11 +1334,8 @@ LP_STALE = "The diagram changed after the harnesses were generated, so these lis
 LP_STALE_CHIP = "Out of date"
 LP_REGENERATE_TIP = "Generate all harnesses again from the diagram (a preview comes first)"
 LP_EMPTY_TITLE = "No lists yet"
-LP_EMPTY_NO_INTERFACES = "The lists are made from generated harnesses. Add interfaces on the diagram or import a table (Ctrl+Shift+I), then press Generate."
+LP_EMPTY_NO_INTERFACES = "The lists are made from harnesses. Add interfaces on the diagram or import a table (Ctrl+Shift+I), then press Generate. Or join two devices with Connect and press Create harness on the connection."
 LP_EMPTY_READY = "The lists are made from generated harnesses. Press Generate to build them; you see a preview first."
-LP_NO_ROWS = "This list has no rows."
-LP_EXPORT_NONE = "There is nothing to export: this list has no rows."
-LP_EXPORT_DONE = "Saved {} rows to {}"
 LP_APPROVAL_MISSING = "The part is not in the parts list."
 
 # Generate plan table (gui/plan_table.py)
@@ -1412,7 +1378,7 @@ TREE_ROOTS = {
 TREE_EMPTY = {
     "units": "No devices yet. Add one with the Add button.",
     "interfaces": "No interfaces yet. Add one with Ctrl+I or import a table.",
-    "harnesses": "No harnesses yet. Generate them from the interfaces.",
+    "harnesses": "No harnesses yet. Generate them from the interfaces, or press Create harness on a connection.",
     "parts": "No parts yet. Import an approved parts list.",
     "interface_types": "No interface types yet.",
 }
@@ -1428,7 +1394,6 @@ TREE_IMPORT_READ_ONLY = "This project is read-only, so nothing can be imported."
 TREE_FILTER_NAME = "Filter the project tree"
 TREE_FILTER_PLACEHOLDER = "Filter"
 TREE_FILTER_TIP = "Filter the project tree by ID or name (press / in the tree)"
-TREE_NO_MATCH = "Nothing matches “{}”."
 TREE_ADD = "Add"
 TREE_ADD_TIP = "Add something to the project"
 TREE_ADD_ENTRIES = {"unit": "Device…", "interface": "Interface…"}
@@ -1500,7 +1465,6 @@ INS_USED_KINDS = {"interface": "Link", "harness": "Harness", "wire": "Wire", "un
 INS_USED_TIP = "Double-click or press Enter to show it on the diagram"
 INS_FACTS_NAME = "Properties of {} {}"
 INS_FACT_COLUMNS = ("Property", "Value", "Status")
-INS_VALUES_NAME = "Engineering values of {}"
 INS_STATUS_NOT_SET = "Not set"
 INS_STATUS_UNREVIEWED = "Unreviewed"
 INS_STATUS_UNREVIEWED_TIP = "{} is still a placeholder file: nobody has reviewed this value."
@@ -1534,9 +1498,6 @@ INS_FACT_LABELS = {
 }
 INS_FACT_REVIEWED = "Reviewed"
 INS_FACT_PLACEHOLDER = "Placeholder: not reviewed yet"
-INS_NOTHING = (
-    "Nothing selected. Pick a device or a link on the diagram, or a row in the project tree."
-)
 TREE_FILTER_CLEAR = "Clear the filter"
 LISTS_EXPORT_TITLE = "Export table"
 LISTS_EXPORT_FILTER = {"csv": "CSV files (*.csv)", "xlsx": "Excel workbooks (*.xlsx)"}
@@ -1554,9 +1515,7 @@ DV_ADD = "Add a device…"
 DV_ADD_TIP = "Add a device to the project"
 DV_DEVICE = "Device"
 DV_DEVICE_TIP = "The device whose connectors and pins are shown. A device picked on the diagram or in the project tree is shown here."
-DV_SUBSYSTEM = "Subsystem {}"
 DV_CHAIN = {"nominal": "Nominal chain", "redundant": "Redundant chain", "none": "No chain"}
-DV_STATE_TIP = "{}"
 DV_STATE_DRAFT = "Draft"
 DV_STATE_IN_USE = "In use"
 DV_STATE_LOCKED = "Locked"
@@ -1577,7 +1536,6 @@ DV_CONNECTORS_TIP = "The box connectors of this device"
 DV_COL_CONNECTOR = "Connector"
 DV_COL_PART = "Part"
 DV_COL_PINS = "Pins"
-DV_COL_GENDER = "Gender"
 DV_COL_STATE = "State"
 DV_NO_CONNECTORS = "This device has no connectors yet."
 DV_CARD_PART = "Part"
@@ -1585,7 +1543,6 @@ DV_CARD_GENDER = "Gender"
 DV_CARD_KEYING = "Keying"
 DV_CARD_CARRIES = "Carries"
 DV_CARD_ALLOCATION = "Pin allocation"
-DV_CARD_NOTES = "Notes"
 DV_CARD_ANY = "any interface type"
 DV_CARD_NONE = "not set"
 DV_GENDER = {"male": "male", "female": "female", "unspecified": "not set"}
@@ -1624,7 +1581,6 @@ DV_STATE_ERROR = "Error"
 DV_STATE_WARNING = "Warning"
 DV_STATE_NOTE = "Note"
 DV_NOTES = "Notes on this connector"
-DV_NOTES_TABLE = "Notes on {}"
 DV_NOTES_NONE = "No notes: every check passes."
 DV_NOTES_COUNT = ("{} note", "{} notes")
 DV_NOTES_TIP = "Double-click or press Enter to select the pin the note is about"
@@ -1637,7 +1593,6 @@ DV_PREVIEW_TABLE = "Pinout as exported"
 DV_PREVIEW_HINT = (
     "These are the rows of system/box_pinouts.csv for this device: what you see is what you ship."
 )
-DV_WHY_TIP = "Double-click or press Enter to see why the pin is the way it is"
 DV_EXPORT_FILTER = "CSV files (*.csv);;Excel workbooks (*.xlsx)"
 
 
@@ -1863,12 +1818,8 @@ RAIL_COLLAPSE = "Show icons only"
 RAIL_EXPAND = "Show the names"
 CRUMB_SEPARATOR = "  ›  "
 CRUMBS_NAME = "Where you are"
-TB_REVISION_NONE = ""
 TB_REVISION = "Revision {}"
 TB_REVISION_TIP = "The revision of the released harnesses ({})"
-TB_SAVE_SAVED = "Saved"
-TB_SAVE_UNSAVED = "Unsaved changes"
-TB_SAVE_DRAFT = "Not saved to a folder yet"
 GO_HOME = "Go to Home"
 GO_SETTINGS = "Go to Settings"
 HOME_TITLE = "Home"
@@ -1881,15 +1832,12 @@ HOME_EXAMPLE = "New from an example…"
 HOME_SAMPLE = "Open the sample project"
 HOME_SUMMARY = "{} devices, {} interfaces, {} harnesses"
 SETTINGS_TITLE = "Settings"
-SETTINGS_APPEARANCE = "Appearance"
 SETTINGS_THEME = "Theme"
 SETTINGS_THEME_SYSTEM = "Follow the system"
 SETTINGS_THEME_LIGHT = "Light"
 SETTINGS_THEME_DARK = "Dark"
 SETTINGS_SCALE = "Interface size"
-SETTINGS_EDITOR = "Editing"
 SETTINGS_MODE = "Mode"
-SETTINGS_PROJECT = "Project"
 SETTINGS_PROJECT_TEXT = (
     "The project's configuration files and engineering values are edited under Checks."
 )
@@ -1900,15 +1848,12 @@ JOB_RUNNING = "{}…"
 JOB_CANCEL = "Cancel"
 JOB_CANCEL_TIP = "Cancel the running job"
 JOB_LAST_CHECK = "Last check: {}"
-JOB_LAST_CHECK_NONE = "No check yet"
 OFFLINE_TEXT = "Offline"
 OFFLINE_TIP = (
     "This program works offline: nothing leaves this computer, no account, no update check."
 )
 PROBLEMS_PANEL_TITLE = "Problems"
 PROBLEMS_PANEL_NAME = "Problems of the project"
-PROBLEMS_SHOW = "Show the problems panel"
-PROBLEMS_HIDE = "Hide the problems panel"
 PROBLEMS_BUTTON = "Problems ({})"
 PROBLEMS_EMPTY = "No problems. Every rule that could be checked passed."
 PROBLEMS_COL_SEVERITY = "Severity"
@@ -1918,7 +1863,6 @@ PROBLEMS_COL_MESSAGE = "Message"
 PROBLEMS_FILTER_ALL = "All"
 
 PANE_PROBLEMS = "Problems panel"
-SHELL_RESET_DONE = "The window layout is back to the default."
 TB_REVISION_NAME = "Revision"
 JOB_GENERATING = "Generating harnesses"
 JOB_EXPORTING = "Exporting outputs"
@@ -1948,7 +1892,6 @@ STEP_RELEASE_ALL = "all {} harness(es) released"
 STEP_RELEASE_COUNT = "{} of {} released"
 TB_RELEASE = "Release…"
 TB_RELEASE_TIP = "Release a harness: lock its data and outputs as a numbered revision"
-TB_STEPS_NAME = "Workflow: generate, check, release"
 LOCK_BANNER_ONE = (
     "Harness {} is released (revision {}) and locked. To change it, start a new revision."
 )
@@ -1956,7 +1899,6 @@ LOCK_BANNER_MANY = (
     "{} harnesses are released and locked. To change one, start a new revision of it."
 )
 LOCK_BANNER_ACTION = "Start new revision…"
-LOCK_BANNER_SHOW = "Show the revisions"
 HOME_RECENT = "Recent projects"
 HOME_RECENT_NONE = "No recent projects yet. Create one or open an example below."
 HOME_EXAMPLES = "Examples"
@@ -1977,12 +1919,6 @@ EMPTY_FILTERED_HINT = "Change or clear the filter to see the rows again."
 EMPTY_INTERFACES_TITLE = "No interfaces yet"
 EMPTY_INTERFACES_HINT = "An interface is a pair of connectors with a signal between them. Add one, or import a table with File > Import."
 EMPTY_INTERFACES_ACTION = "New interface"
-EMPTY_RELEASES_TITLE = "Nothing reviewed or released yet"
-EMPTY_RELEASES_HINT = "Submit a draft for review or release it, and the step appears here."
-EMPTY_CHECKS_TITLE = "Nothing was found"
-EMPTY_CHECKS_HINT = "The rule check found no open problems. Run it again after the next change."
-EMPTY_DEVICES_TITLE = "No devices yet"
-EMPTY_DEVICES_HINT = "Devices come from the library or from an import."
 EMPTY_LIST_TITLE = "Nothing to list yet"
 EMPTY_LIST_HINT = "Generate the harnesses and the list fills in."
 
@@ -2103,7 +2039,6 @@ ABOUT_LICENCE_PROJECT = (
 LICENCES_TEXT = (
     "The fonts and icons that are part of the interface, and the library the windows are made with."
 )
-LICENCES_PICK = "Component"
 LICENCES_TABLE_NAME = "Licences of the interface components"
 LICENCES_TEXT_NAME = "Licence text"
 LICENCE_COLUMNS = ("Component", "Licence", "Used for")
@@ -2148,12 +2083,9 @@ WIRE_STATE_RELEASED = "{0} is released (revision {1}). Start a new revision to c
 WIRE_STATE_READ_ONLY = "This project is read-only."
 STEP_EDIT_WIRES = "Edit wires"
 STEP_RESET_WIRES = "Reset wires"
-WIRE_APPLIED = "Changed {0}."
-WIRE_RESET_DONE = "Reset {0}; Generate sets their values."
 WIRE_NOTHING_CHANGED = "Nothing to change."
 
 # ---- 1.4.0 M2: wires that a person draws ----------------------------------------------------------
-WIRE_ENDS = "Ends"
 WIRE_FROM = "From"
 WIRE_TO = "To"
 WIRE_CONNECTOR = "Connector"
@@ -2223,7 +2155,8 @@ REL_AUTHOR_NAME = "Last commit of the project folder"
 DV_LIB_SAVE = "Save to library…"
 DV_LIB_SAVE_TIP = (
     "Save this device with its connectors, pinouts, parts and interface types to a device library "
-    "file, to use it in another project. A file that exists is added to."
+    "file, to use it in another project. A file that exists is added to; if it has a different "
+    "device with the same ID you are asked before it is replaced."
 )
 DV_LIB_ADD = "Add from library…"
 DV_LIB_ADD_TIP = (
@@ -2240,7 +2173,6 @@ DV_LIB_LIST_TIP = "Tick the devices to add"
 DV_LIB_ITEM = "{0}: {1}"
 DV_LIB_NONE = "Tick at least one device."
 DV_LIB_ADD_BUTTON = "Add devices"
-DV_LIB_NOTES = "What will happen: {0}"
 DV_LIB_ROW_OK = "{0} will be added as {1} ({2} connectors, {3} pins)."
 STEP_ADD_DEVICES = "Add devices from a library file"
 
@@ -2280,7 +2212,6 @@ CE_PINS_TIP = (
 )
 CE_ADD = "Add connector"
 CE_ADD_TIP = "Add the connector to the harness. The pins are those of the part, or of the device's connector it plugs into."
-CE_NO_PART = "Choose a connector part, or the connector of a device it plugs into."
 CE_PIN_TITLE = "Pin of a connector"
 CE_CONNECTOR = "Connector"
 CE_CONNECTOR_TIP = "A connector of this harness"
@@ -2873,8 +2804,7 @@ LIB_EMPTY_FOLDER_HINT = "Select devices in your project and press Save selection
 LIB_EMPTY_UNREADABLE = "The library cannot be read"
 LIB_EMPTY_NOMATCH = "Nothing matches"
 LIB_EMPTY_NOMATCH_HINT = "Clear the search, or show devices and subsystems."
-LIB_DAMAGED = "{} file(s) in the folder could not be used and are not listed."
-LIB_SKIPPED = "{} other .json file(s) in the folder are not library files and were ignored."
+LIB_DAMAGED = "{} files in the folder could not be used and are not listed."
 LIB_PREVIEW_NAME = "Preview of the chosen entry"
 LIB_PREVIEW_NONE = "Choose a device or a subsystem to see what is in it."
 LIB_PREVIEW_PIN_COLUMNS = ["Connector", "Pin", "Signal", "Function"]
@@ -2904,7 +2834,7 @@ STEP_LIB_ADD_SUBSYSTEM = "Add the subsystem {} from the library"
 LIB_SAVE_TITLE = "Save to library"
 LIB_SAVE_AS = "Save as"
 LIB_SAVE_AS_DEVICES = "Devices (each one is added on its own)"
-LIB_SAVE_AS_DEVICES_TIP = "Save every selected device with its connectors and pins in a device file; a device with the same ID in that file is replaced"
+LIB_SAVE_AS_DEVICES_TIP = "Save every selected device with its connectors and pins in a device file; if that file has a different device with the same ID you are asked before it is replaced"
 LIB_SAVE_AS_SUBSYSTEM = "A subsystem (the devices and the connections between them, added together)"
 LIB_SAVE_AS_SUBSYSTEM_TIP = (
     "Save the selected devices and the connections between them as one subsystem file"
@@ -2936,7 +2866,6 @@ HOME_LIBRARY_TIP = (
 )
 NEWDEV_NUMBER = "Number of these devices"
 NEWDEV_NUMBER_TIP = "1 adds one device. 2 adds it and a copy named ID-R on the redundant chain, 3 a further copy ID-3, and so on."
-NEWDEV_NUMBER_NOTE = "{} devices: {}."
 DV_NUMBER = "Number of these devices"
 DV_NUMBER_TIP = (
     "How many of this device the project has. Raise it and press Add copies to add the others."
@@ -2978,3 +2907,49 @@ ROLE_DIALOG_ELECTRICAL_TEXT = (
 )
 ROLE_DIALOG_LATER = "You can change this later in View > Role."
 ROLE_DIALOG_NAME = "Choose your role"
+
+# ---- 1.8.1: the library never replaces a different device without asking (D4, D18) ----
+LIB_DAMAGED_ONE = "1 file in the folder could not be used and is not listed."
+LIB_COLUMN_FILE = "File"
+LIB_EMPTY_UNREADABLE_HINT = "Check that the drive is connected and that you may open the folder, then press Refresh, or choose another folder."
+LIB_CONFLICT_TITLE = "Already in the library"
+LIB_CONFLICT_ONE = "{id} is in the library already (in {file}) and differs in {how}."
+LIB_CONFLICT_MANY = "These devices are in the library already (in {file}) and differ: {what}."
+LIB_CONFLICT_ASK = "Replace the library's version, keep both under a new ID, or cancel?"
+LIB_CONFLICT_REPLACE = "Replace"
+LIB_CONFLICT_REPLACE_TIP = "Overwrite the device in the library file with the one of this project"
+LIB_CONFLICT_NEW_ONE = "Save as {}"
+LIB_CONFLICT_NEW_MANY = "Save under new IDs"
+LIB_CONFLICT_NEW_TIP = (
+    "Keep the library's device as it is and add this one next to it with a new ID"
+)
+LIB_CONFLICT_DIALOG = "Library conflict"
+LIB_SAVE_TARGET = "The devices are saved in the file {} in the library folder."
+LIB_SAVED_AS_NEW = "Saved {} to {} as {}."
+
+# 1.8.1 (G5): command-line and Outputs-list trust fixes
+IMP_WILL_KEEP = "No change"
+OUT_NOT_OPENED = (
+    "That file is not one the program wrote, so it is not opened. Open the folder instead."
+)
+
+# ---- 1.8.1 trust fixes ----------------------------------------------------------------------------
+SHEET_TAB_TIP = (
+    "Tab moves to the next cell. Ctrl+Tab leaves the table for the next control, "
+    "Ctrl+Shift+Tab for the one before. Ctrl+C copies the selected cells."
+)
+
+# ---- 1.8.1: wording that follows what the project has (connections first, or interfaces first) -----
+HV_EMPTY_HAS_LINKS = (
+    "The project has connections and no harness yet. Select a connection and press Create harness."
+)
+LP_EMPTY_HAS_LINKS = "The lists are made from harnesses. Select a connection and press Create harness, and its lists appear here."
+TREE_EMPTY_HAS_LINKS = {
+    "interfaces": "No interfaces. The connections are listed under Connections.",
+    "harnesses": "No harnesses yet. Select a connection and press Create harness.",
+}
+CHIP_BY_HAND = "Made by hand"
+CHIP_BY_HAND_TIP = (
+    "The harnesses were made from connections or by hand. Nothing is generated from the diagram."
+)
+HV_MADE_BY_HAND = "Made by hand"

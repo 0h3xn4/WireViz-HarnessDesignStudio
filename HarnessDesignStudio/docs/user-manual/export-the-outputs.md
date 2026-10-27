@@ -114,7 +114,7 @@ The table on **Start here** has eight checks, each with a count of what is open 
 | Pins in use without a contact part | `NOTE` |
 | Parts that are not approved | `NOTE` |
 
-`Ready to build` says `yes` when no line is marked `TO FIX`. A `NOTE` does not stop it; it is shown so that you see it. Each open line says what to do (for example import the lengths, or set the colour of the signal). *Wires without strip lengths* counts a wire that lacks the strip length at either end; *Pins in use without a contact part* counts the pins with a wire that have no contact.
+`Ready to build` says `yes` when no line is marked `TO FIX`. While the configuration files are still placeholders it says `yes (values rest on placeholder configuration: …)` and a line *Placeholder files* under *From the design* lists them: the gauges and limits then rest on values nobody has reviewed. A `NOTE` does not stop it; it is shown so that you see it. Each open line says what to do (for example import the lengths, or set the colour of the signal). *Wires without strip lengths* counts a wire that lacks the strip length at either end; *Pins in use without a contact part* counts the pins with a wire that have no contact.
 
 How the cut list is sorted: thick wires before thin ones (a smaller AWG number is a thicker wire), then by colour name, then the shorter wire first, so that the same wire is cut in one go. A wire without a gauge comes last; inside a gauge, a wire without a colour comes last in its group, and a wire without a length after the others of its colour. The tick columns hold an `x` (the cell offers it in a list); a cell with an `x` turns green.
 

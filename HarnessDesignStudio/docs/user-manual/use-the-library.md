@@ -42,7 +42,7 @@ The program looks for `.json` files in the folder and in the folders two levels 
 2. In the project, select the devices to save, in the diagram or in the project tree (Ctrl+click for more).
 3. Press **Save selection to library…** in the window. It stays off until a folder is chosen and a device is selected; the tooltip says which.
 4. Choose how to save:
-   - **Devices**: each device is saved with its connectors and pins, and is added on its own later. One device is saved as `<ID>.json`, several as `devices.json`; a device with the same ID in that file is replaced and the others stay.
+   - **Devices**: each device is saved with its connectors and pins, and is added on its own later. One device is saved as `<ID>.json`, several as `devices.json`; a device with the same ID in that file that is different is never replaced without asking: you choose **Replace**, **Save as** a new ID or **Cancel**, and a part never gets a lower approval than the file has. The list shows the file of each entry, so two devices with the same ID can be told apart.
    - **A subsystem**: the devices **and the connections between them**, added together later. Give it a **Subsystem name** and, if you like, a **Description**. A connection with one end on a device that you did not select is left out (the window says how many). The file is `subsystem-<name>.json`.
 5. Press **Save**. The window reads the folder again and the new entry is in the list.
 
@@ -106,7 +106,7 @@ Saved subsystem 'Wheel drive' (2 device(s), 5 connector(s), 0 connection(s)) to 
 Saved 1 device(s) (4 connector(s)) to library/devices.json.
 ```
 
-(This project has no connection yet, because `first-steps` joins its devices with interfaces; a project with connections gives a number above 0.) A file that exists is not replaced unless you say `--replace`. In another project:
+(This project has no connection yet, because `first-steps` joins its devices with interfaces; a project with connections gives a number above 0.) A subsystem file that exists is not replaced unless you say `--replace`; `export-devices` adds to a device file, and needs `--replace` only to replace a device of the same ID that differs. In another project:
 
 ```
 harness-design-studio new second --template blank

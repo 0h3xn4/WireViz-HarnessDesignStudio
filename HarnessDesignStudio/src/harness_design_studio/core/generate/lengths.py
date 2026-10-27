@@ -138,6 +138,9 @@ def plan_length_import(
         )
         return plan
     pending: dict[str, Harness] = {}
+    given: dict[
+        tuple[str, str], tuple[float, int, str]
+    ] = {}  # (harness, segment) -> (metres, row, text)
     for n, row in enumerate(table[1:], start=2):
         vals = tuple(row[c].strip() if c < len(row) else "" for c in columns)
         hid, sid, text = vals
@@ -154,11 +157,20 @@ def plan_length_import(
                 if not _NUMBER.fullmatch(text.strip()):
                     raise ValueError
                 length = round(float(text.strip().replace(",", ".")) * scale, 9)
-                if not 0 <= length <= MAX_LENGTH_M:
-                    raise ValueError
             except ValueError:
                 error = f"'{text}' is not a length (digits with a decimal point or comma)"
+            else:
+                if length > MAX_LENGTH_M:
+                    error = f"'{text}' is too large (a length can be at most {MAX_LENGTH_M:g} m)"
+                elif (hid, sid) in given and given[hid, sid][0] != length:
+                    _, first, first_text = given[hid, sid]
+                    error = (
+                        f"Segment '{sid}' of harness '{hid}' is given again with another "
+                        f"length (row {first} says '{first_text}', this row says '{text}'); "
+                        "keep one of the rows"
+                    )
         if not error and h is not None:
+            given.setdefault((hid, sid), (length, n, text))
             segs = [evolve(s, length_m=length) if s.id == sid else s for s in h.segments]
             pending[hid] = evolve(h, segments=segs)
         plan.rows.append(LengthRow(n, not error, error, vals))

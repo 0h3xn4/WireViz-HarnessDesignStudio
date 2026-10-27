@@ -262,9 +262,10 @@ Gauge 22 and length 1 m. The **Why** pane of the **Harness** tab now explains it
 wire-sizing: ampacity: AWG 22 carries 2.16 A derated (factor 0.72) for 2 A
 wire-sizing: voltage drop: AWG 22 gives 0.211345 V over 2 conductor(s), limit 0.5 V
 contact-check: not done for PCDU1-J01 (contact rating or derating factor is a placeholder)
+contact-check: not done for RW1-J01 (contact rating or derating factor is a placeholder)
 ```
 
-The smallest gauge in the table that carries 2 A after derating (0.8 for the bundle times 0.9 for temperature), then checked for voltage drop over the imported length. The last line shows the tool still refusing to check what it has no number for. Open `config/derating.json` to see where each number came from. `tests.csv` now carries the test limits from the demo values too. Open `harnesses/W002/W002_build.xlsx` again: the cut list has the gauge and the length, and on *Start here* only the colour of the two wires is still marked `TO FIX`.
+The smallest gauge in the table that carries 2 A after derating (0.8 for the bundle times 0.9 for temperature), then checked for voltage drop over the imported length. The last two lines show the tool still refusing to check what it has no number for (the contacts of both connectors the wire ends on). Open `config/derating.json` to see where each number came from. `tests.csv` now carries the test limits from the demo values too. Open `harnesses/W002/W002_build.xlsx` again: the cut list has the gauge and the length, and on *Start here* only the colour of the two wires is still marked `TO FIX`.
 
 > **Important.** The files stay marked `"placeholder": true`, so every result built on them still says it rests on placeholders. For a real design your programme's values replace the demo values, and you set `"placeholder": false` only after an engineer reviewed them. Never release a real design with demo values.
 
@@ -292,7 +293,7 @@ harness-design-studio drc wheel-link
 ```
 
 ```
-Open: 1 error(s), 7 warning(s), 5 note(s). Waived: 0.
+Open: 1 error(s), 7 warning(s), 6 note(s). Waived: 0.
 ```
 
 One **error**: *The model changed after the harness plans were generated. Generate again before releasing.* Approving parts changed the design's library, so the plans and outputs are out of date. That is exactly what the check is for. Make the plans and outputs current:
@@ -307,7 +308,7 @@ harness-design-studio drc wheel-link
 ```
 
 ```
-Open: 0 error(s), 7 warning(s), 5 note(s). Waived: 0.
+Open: 0 error(s), 7 warning(s), 6 note(s). Waived: 0.
 ```
 
 0 errors, and 7 warnings: the three parts you approved no longer warn. Other imports work the same way:
@@ -333,7 +334,7 @@ harness-design-studio generate wheel-link
 harness-design-studio export wheel-link
 ```
 
-The wire list now has the colour in its *Colour* column (`red`, `black`), and the harness drawing (if you export it with `--drawings`) draws the wires in those colours with the IEC 60757 code written as text. A wire between two different signals (`TX+/RX+`) takes the colour of the first. In the build workbook the *Colour* cell of the cut list is now filled with the colour and holds its name and code (`red (RD)`), and *Start here* of `W002` says `Ready to build: yes`.
+The wire list now has the colour in its *Colour* column (`red`, `black`), and the harness drawing (if you export it with `--drawings`) draws the wires in those colours with the IEC 60757 code written as text. A wire between two different signals (`TX+/RX+`) takes the colour of the first. In the build workbook the *Colour* cell of the cut list is now filled with the colour and holds its name and code (`red (RD)`), and *Start here* of `W002` says `Ready to build: yes (values rest on placeholder configuration: …)`: it is ready, and the values behind it are still the example's placeholders.
 
 ## Part 9 (optional, practice only): release a harness
 

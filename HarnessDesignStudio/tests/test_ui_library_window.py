@@ -245,7 +245,7 @@ def test_a_damaged_file_is_named_and_the_others_are_listed(qtbot, tmp_path: Path
     win, lib = opened(qtbot, tmp_path, library)
     assert lib.list_model.rowCount() == 3
     text = lib.folder_notice.text()
-    assert "1 file(s)" in text and "broken.json" in text and "not valid JSON" in text
+    assert "1 file in the folder" in text and "broken.json" in text and "not valid JSON" in text
 
 
 def test_refresh_sees_what_a_colleague_added(qtbot, tmp_path: Path, library: Path):

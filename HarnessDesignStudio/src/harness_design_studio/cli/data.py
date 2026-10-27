@@ -28,6 +28,14 @@ COMMANDS = (
     "export-subsystem", "import-subsystem",
 )  # fmt: skip
 UNITS = {"mm": 0.001, "m": 1.0, "cm": 0.01}
+PINOUT_FORMATS = (".csv", ".tsv", ".xlsx")
+
+
+def _missing_folder(file: Path) -> str:
+    """The error text when the folder of a file to write does not exist (none is made), else ''."""
+    if file.parent.is_dir():
+        return ""
+    return f"error: the folder {file.parent} does not exist; make it first or choose another place."
 
 
 def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None:
@@ -194,8 +202,8 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     pn.add_argument("--dry-run", action="store_true", help="show the preview only")
     xp = sub.add_parser(
         "export-pinout",
-        help="write one device's pinout as CSV or XLSX",
-        description="Write the rows of system/box_pinouts.csv that belong to one device (connector, pin, signal, interface, wires, spare) to a file, or to the screen as CSV. The format follows the file name (.csv or .xlsx). The rows are the ones export writes, so the file compares with an interface control document.",
+        help="write one device's pinout as CSV, TSV or XLSX",
+        description="Write the rows of system/box_pinouts.csv that belong to one device (connector, pin, signal, interface, wires, spare) to a file, or to the screen as CSV. The format follows the file name (.csv, .tsv or .xlsx; another ending is refused). The rows are the ones export writes, so the file compares with an interface control document.",
     )
     xp.add_argument("project", type=Path)
     xp.add_argument(
@@ -216,7 +224,7 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     xd = sub.add_parser(
         "export-devices",
         help="save devices with their connectors and pinouts to a device library file",
-        description="Write one or more devices, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to: a device with the same ID is replaced, the others stay. What generation allocated in this project does not travel.",
+        description="Write one or more devices, their box connectors with every pin (signal, function, contact size, termination), and the parts and interface types they name to a device library file (JSON). A file that exists is added to and the other devices in it stay. A device with the same ID in the file that differs is NOT replaced unless you say --replace; a part never gets a lower approval than the file has. What generation allocated in this project does not travel. The folder of the file must exist.",
     )
     xd.add_argument("project", type=Path)
     xd.add_argument("file", type=Path, help="the device library file to write or add to")
@@ -228,6 +236,11 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
         action="append",
         required=True,
         help="a device to save, for example GYRO1 (repeat for more; --unit is the older name)",
+    )
+    xd.add_argument(
+        "--replace",
+        action="store_true",
+        help="replace a device of the same ID in the file that differs (without it that is refused)",
     )
     idv = sub.add_parser(
         "import-devices",
@@ -250,7 +263,7 @@ def register(sub: "argparse._SubParsersAction[argparse.ArgumentParser]") -> None
     xs = sub.add_parser(
         "export-subsystem",
         help="save devices and the connections between them as a subsystem library file",
-        description="Write devices with their connectors and pinouts, and the connections between them, to a subsystem library file (JSON), so the set can be added to another project in one step. A connection with an end on a device that is not chosen is left out. A file that exists is never replaced unless you say --replace.",
+        description="Write devices with their connectors and pinouts, and the connections between them, to a subsystem library file (JSON), so the set can be added to another project in one step. A connection with an end on a device that is not chosen is left out. A file that exists is never replaced unless you say --replace. The folder of the file must exist.",
     )
     xs.add_argument("project", type=Path)
     xs.add_argument("file", type=Path, help="the subsystem library file to write")
@@ -322,6 +335,11 @@ def _library_options(p: argparse.ArgumentParser) -> None:
 def run(args: argparse.Namespace) -> int:
     try:
         project = load_project(args.project).project
+        if project.read_only and _changes_project(args):
+            print(
+                "error: this project is read-only (saved by a newer tool version).", file=sys.stderr
+            )
+            return 2
         if args.command == "config":
             return _config(project, args)
         if args.command == "library":
@@ -364,6 +382,18 @@ def run(args: argparse.Namespace) -> int:
     except (HarnessError, ImportError_) as exc:
         print(f"error: {exc}", file=sys.stderr)
         return 2
+
+
+def _changes_project(args: argparse.Namespace) -> bool:
+    """Whether `config` or `library` was asked to change something (not only to report)."""
+    if args.command == "config":
+        return args.ampacity_csv is not None or args.apply_profile is not None
+    if args.command == "library":
+        return any(
+            getattr(args, k, None) is not None
+            for k in ("library_name", "library_version", "library_source", "library_date")
+        )
+    return False
 
 
 def _would_be_blocked(project, label: str, ops: list[Op]) -> bool:  # type: ignore[no-untyped-def]
@@ -478,6 +508,9 @@ def _parts(project, table: list[list[str]], args: argparse.Namespace) -> int:  #
             date=args.library_date,
         ),
     ]
+    if not ops:  # every row is as the library holds it already
+        print("Already up to date.")
+        return 0
     if args.dry_run:
         if _would_be_blocked(project, "Import parts", ops):
             return 1
@@ -559,6 +592,9 @@ def _build_data(project, table: list[list[str]], args: argparse.Namespace) -> in
     if n["refused"]:
         print("Nothing was changed.")
         return 1
+    if not plan.ops and n["unchanged"]:  # every row is as the project holds it already
+        print("Already up to date.")
+        return 0
     if args.dry_run:
         if _would_be_blocked(project, plan.label, plan.ops):
             return 1
@@ -648,6 +684,9 @@ def _netlist(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyp
         and _would_be_blocked(project, "Import connector pinouts from KiCad", plan.ops)
     ):
         return 1
+    if not bad and not plan.ops and any(r.action == "unchanged" for r in plan.rows):
+        print("Already up to date.")
+        return 0
     if args.dry_run or bad or not plan.ops:
         print(
             "Nothing was changed."
@@ -685,8 +724,8 @@ def _pinout(project, table: list[list[str]], args: argparse.Namespace) -> int:  
     for r in plan.rows:
         if not r.ok:
             print(f"row {r.row_number}: ERROR {r.message}")
-    for cid in plan.connectors:
-        verb = "added" if cid in plan.added else "updated"
+    for cid in [*plan.connectors, *plan.unchanged]:
+        verb = "added" if cid in plan.added else "unchanged" if cid in plan.unchanged else "updated"
         n = sum(1 for r in plan.rows if r.ok and r.connector == cid)
         print(f"{cid}: OK {verb} ({n} pin(s))")
     for w in plan.warnings:
@@ -701,6 +740,9 @@ def _pinout(project, table: list[list[str]], args: argparse.Namespace) -> int:  
         print("Nothing was changed.")
         return 1
     if not plan.ops:
+        if plan.unchanged:  # the file says what the project already holds
+            print("Already up to date.")
+            return 0
         print("Nothing to import.")
         return 1
     if args.dry_run:
@@ -710,21 +752,38 @@ def _pinout(project, table: list[list[str]], args: argparse.Namespace) -> int:  
         return 0
     History(project).execute(plan.label, plan.ops)
     save_project(project, args.project)
-    print(
-        f"Imported {len(plan.connectors)} connector(s), {plan.pins} pin(s). "
-        "Generate harnesses again to connect interfaces to the pins."
-    )
+    hint = " Generate harnesses again to connect interfaces to the pins."
+    # the hint is only true when the project has interfaces to connect
+    print(f"Imported {len(plan.connectors)} connector(s), {plan.pins} pin(s)." + (hint if project.interfaces else ""))  # fmt: skip
     return 0
 
 
 def _export_devices(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
     from harness_design_studio.core import device_library as dl
 
+    if missing := _missing_folder(args.file):
+        print(missing, file=sys.stderr)
+        return 2
+    notes: list[str] = []
+    try:
+        dl.save_devices_to_file(args.file, project, args.unit, replace=args.replace, notes=notes)
+    except dl.LibraryConflict as exc:
+        for c in exc.conflicts:
+            print(
+                f"error: {exc.file} has the device {c.unit_id} already and it differs "
+                f"({c.differs_in()}).",
+                file=sys.stderr,
+            )
+        print(
+            "Nothing was changed. Say --replace to replace it, or save it to another file.",
+            file=sys.stderr,
+        )
+        return 2
     data = dl.export_devices(project, args.unit)
-    existing = dl.read_library(args.file) if args.file.exists() else None
-    dl.write_library(args.file, dl.merge_library(existing, data))
     n = sum(len(d["connectors"]) for d in data["devices"])
     print(f"Saved {len(args.unit)} device(s) ({n} connector(s)) to {args.file}.")
+    for note in notes:
+        print(f"Note: {note}")
     return 0
 
 
@@ -736,6 +795,9 @@ def _export_subsystem(project, args: argparse.Namespace) -> int:  # type: ignore
             f"error: {args.file} exists already. Choose another file or say --replace.",
             file=sys.stderr,
         )
+        return 2
+    if missing := _missing_folder(args.file):
+        print(missing, file=sys.stderr)
         return 2
     data = sl.export_subsystem(project, args.unit, args.name, args.description, args.notes)
     sl.write_subsystem(args.file, data)
@@ -835,14 +897,26 @@ def _export_pinout(project, args: argparse.Namespace) -> int:  # type: ignore[no
     if len(table) < 2:
         print(f"error: device '{args.unit}' has no connectors to write.", file=sys.stderr)
         return 1
+    if args.output is not None and args.output.suffix.lower() not in PINOUT_FORMATS:
+        print(
+            f"error: the format follows the file name, and '{args.output.suffix or args.output.name}' "
+            f"is not one of {', '.join(PINOUT_FORMATS)}.",
+            file=sys.stderr,
+        )
+        return 2
     stamp = stamp_of(project)
     if args.output is None:
         sys.stdout.write(csv_bytes(table, stamp).decode("utf-8"))
         return 0
     if args.output.suffix.lower() == ".xlsx":
         data = exports.xlsx_bytes({"Pinout": table}, stamp)
+    elif args.output.suffix.lower() == ".tsv":
+        data = csv_bytes(table, stamp, delimiter="\t")
     else:
         data = csv_bytes(table, stamp)
+    if missing := _missing_folder(args.output):
+        print(missing, file=sys.stderr)
+        return 2
     try:
         args.output.write_bytes(data)
     except OSError as exc:

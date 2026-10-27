@@ -2,6 +2,7 @@
 
 import contextlib
 import hashlib
+import html
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, replace
@@ -130,7 +131,7 @@ from harness_design_studio.gui.inspector import Inspector
 from harness_design_studio.gui.interface_table import InterfaceTable
 from harness_design_studio.gui.jobs import JobStatus
 from harness_design_studio.gui.library_window import SETTINGS_FOLDER as LIBRARY_FOLDER_KEY
-from harness_design_studio.gui.library_window import LibraryWindow
+from harness_design_studio.gui.library_window import LibraryWindow, save_devices_asking
 from harness_design_studio.gui.link_dialog import CreateHarnessDialog, LinkDialog, harness_preview
 from harness_design_studio.gui.lists_panel import ListsPanel
 from harness_design_studio.gui.new_project_dialog import (
@@ -1456,14 +1457,23 @@ class MainWindow(QMainWindow):
         if not path:
             return
         target = Path(path)
+        project = self.ctl.project
         try:
-            data = device_library.export_devices(self.ctl.project, [unit_id])
-            existing = device_library.read_library(target) if target.exists() else None
-            device_library.write_library(target, device_library.merge_library(existing, data))
+            done = save_devices_asking(
+                self,
+                self.run_dialog,
+                lambda **kw: device_library.save_devices_to_file(target, project, [unit_id], **kw),
+            )
         except (HarnessError, OSError) as exc:
             self._error(self._explain(exc, target.parent))
             return
-        self.toasts.show_message(strings.DV_LIB_SAVED.format(unit_id, target.name), None)
+        if done is None:  # cancelled at the question: nothing was written
+            return
+        if done.new_ids:
+            message = strings.LIB_SAVED_AS_NEW.format(unit_id, target.name, done.new_ids[unit_id])
+        else:
+            message = strings.DV_LIB_SAVED.format(unit_id, target.name)
+        self.toasts.show_message(" ".join([message, *done.notes]), None)
 
     # ---- the library window and its folder (workshop M4, D-175) -------------------------------------
     def library_folder(self) -> str:
@@ -2705,11 +2715,12 @@ class MainWindow(QMainWindow):
             text = strings.BN_PLANS_STALE
         else:
             text = strings.BN_OUTPUTS_STALE
-        details = [
-            strings.BN_DETAIL_GENERATED.format(status.generated_at)
-            if status.generated_at
-            else strings.BN_DETAIL_NOT_GENERATED
-        ]
+        details = []
+        if status.generated_at:
+            details.append(strings.BN_DETAIL_GENERATED.format(status.generated_at))
+        elif not (status.harnesses and status.hand_made == status.harnesses):
+            # (harnesses made from connections or by hand are never generated: no such line)
+            details.append(strings.BN_DETAIL_NOT_GENERATED)
         actions: list[tuple[str, Callable[[], None]]] = []
         if plans:
             actions.append((strings.BN_GENERATE, self.act_generate.trigger))
@@ -2981,13 +2992,15 @@ class MainWindow(QMainWindow):
         gone = {i for u in units for i in self.ctl.delete_impact(u).interfaces}
         every = sorted(gone | set(links))
         items = "".join(
-            f"<li><b>{u}</b> (device {project.units[u].name})</li>" for u in sorted(units)
-        )
+            f"<li><b>{html.escape(u)}</b> (device {html.escape(project.units[u].name)})</li>"
+            for u in sorted(units)
+        )  # names are free text and the body is rich text: a name must not be read as markup
         for iid in sorted(set(links) - gone):
             impact = edit.interface_impact(project, iid)
-            items += f"<li><b>{iid}</b> ({impact.type_name}, {' to '.join(impact.ends)})</li>"
+            ends = html.escape(" to ".join(impact.ends))
+            items += f"<li><b>{html.escape(iid)}</b> ({html.escape(impact.type_name)}, {ends})</li>"
         if gone:
-            items += f"<li>{strings.interfaces_text(len(gone))} of the devices: {', '.join(sorted(gone))}</li>"
+            items += f"<li>{strings.interfaces_text(len(gone))} of the devices: {html.escape(', '.join(sorted(gone)))}</li>"  # fmt: skip
         n = len(self.ctl.selected)
         return strings.DELETE_MANY_TITLE.format(n), strings.DELETE_MANY_BODY.format(
             items=items, plans=self._plan_lines(every)

@@ -11,7 +11,7 @@ from pathlib import Path
 import pytest
 
 HERE = Path(__file__).parent
-CLOCKS = ("time_limit(", "perf_counter")  # a limit measured on the wall clock
+CLOCKS = ("time_limit(", "within(", "perf_counter")  # a limit measured on the wall clock
 
 
 def _marked(node: ast.FunctionDef, module_marked: bool) -> bool:

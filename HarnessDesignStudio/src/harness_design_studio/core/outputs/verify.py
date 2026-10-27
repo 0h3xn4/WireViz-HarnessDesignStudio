@@ -20,7 +20,7 @@ from harness_design_studio import __version__
 from harness_design_studio.core import checks, configcheck, drc
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Connector, Harness, Pin, Project, Wire
-from harness_design_studio.core.verify import VerifyReport
+from harness_design_studio.core.verify import VerifyReport, link_issues
 
 from .stamp import parse_csv
 
@@ -106,6 +106,9 @@ def verify_outputs(project: Project, files: dict[str, bytes]) -> VerifyReport:
     for h in sorted(project.harnesses.values(), key=lambda x: x.id):
         _guard(r, f"harnesses/{h.id}", lambda h=h: _harness(r, project, h, files))  # type: ignore[misc]
     _guard(r, "system", lambda: _system(r, project, files))
+    # a harness made from a link must still carry the link's pairs: outputs of a harness that
+    # drifted from its link would describe something else than the agreed pinout
+    r.issues.extend(link_issues(project))
     return r
 
 
@@ -554,8 +557,11 @@ def _drawings(r: VerifyReport, project: Project, h: Harness, files: dict[str, by
     for size in ("A3", "A4"):
         pdf = files.get(f"{base}/drawing_{size}.pdf")
         if pdf is not None:
+            wired = {(w.from_connector) for w in h.wires} | {w.to_connector for w in h.wires}
             for c in h.connectors:
-                if b"(" + c.id.encode() + b") Tj" not in pdf:
+                # a connector with no wire is not drawn as a box: its pins are in the spare-pin line
+                needle = b"(" + c.id.encode() + b") Tj" if c.id in wired else c.id.encode()
+                if needle not in pdf:
                     r.error("out_drawing", f"Connector {c.id} is missing from the {size} PDF of {h.id}.", c.id)  # fmt: skip
                     break
     if a3 is not None:
@@ -1476,7 +1482,14 @@ def _build_start(
             return
     ready = next((row[1] for row in rows if row and row[0] == "Ready to build"), None)
     blocking = sum(want[k] for k in list(want)[:4])
-    if ready != ("yes" if blocking == 0 else "no"):
+    names = sorted(n for n, c in project.config.items() if c.placeholder)  # worked out here
+    want_ready = "no" if blocking else "yes"
+    if want_ready == "yes" and names:
+        want_ready = f"yes (values rest on placeholder configuration: {', '.join(names)})"
+        listed = next((row[1] for row in rows if row and row[0] == "Placeholder files"), None)
+        if listed != ", ".join(f"config/{n}.json" for n in names):
+            r.error("out_build", f"{what} (Start here) does not list the placeholder files.", h.id)
+    if ready != want_ready:
         r.error("out_build", f"{what} (Start here) shows the wrong 'Ready to build' answer.", h.id)
 
 

@@ -78,9 +78,9 @@ The markers (declared in `pyproject.toml`, and `--strict-markers` is on, so an u
 | `pytest --cov` | The tests with coverage. The gate is 90 % on `harness_design_studio.core`; the run prints `Required test coverage of 90.0% reached` and the percentage it reached (not repeated here, it changes). The GUI is outside the measure. |
 | `pytest -m "not perf"` | Everything except the timing tests, in one process. |
 | `pytest -n auto -m "not perf"` | The suite in parallel, one worker per core (pytest-xdist, D-148). The tests that assert a wall-clock limit carry the marker `perf` and are left out, because a loaded machine makes them fail for no reason. |
-| `pytest -m perf` | Those timing tests alone, one at a time. Run it after the parallel run; the two commands together are the whole suite. Add `--cov --cov-append` to both when you want one coverage number. |
+| `pytest -m perf` | Those timing tests alone, one at a time, with the default time factor of 2 (each limit twice what the test says; on an idle machine they pass, and on a slow or busy one set `HARNESS_TIME_FACTOR`, see below). Run it after the parallel run; the two commands together are the whole suite. Add `--cov --cov-append` to both when you want one coverage number. |
 | `pytest -k wire_colours` | Only tests whose name matches. |
-| `HARNESS_TIME_FACTOR=3 pytest tests/test_gui_perf.py` | The speed tests with limits three times as generous. On a slow or shared machine one or two of them can fail without the factor. CI sets 3. |
+| `HARNESS_TIME_FACTOR=3 pytest tests/test_gui_perf.py` | The speed tests with limits three times as generous. Without the variable every limit is already twice what is written in the test (the factor is 2 by default, so `pytest -m perf` alone passes on an idle machine); on a slow or shared machine raise it. CI sets 3. A failing speed test prints the measured value, the limit and the factor. |
 | `HARNESS_FUZZ_EXAMPLES=5000 pytest tests/test_fuzz.py` | The long fuzzing run (the default is 40 examples). |
 | `HARNESS_REQUIRE_BROWSER=1 pytest tests/test_prototype.py` | Fail instead of skipping when no Chromium is found. CI sets it. |
 
@@ -188,7 +188,7 @@ A golden file is a stored, reviewed result that a test compares with a fresh one
 ## When something fails
 
 - **`qt.qpa.plugin: Could not load the Qt platform plugin "xcb"`**: a Qt system library is missing. Install the apt line above, or use `QT_QPA_PLATFORM=offscreen`.
-- **A speed test fails** but nothing else: use `HARNESS_TIME_FACTOR=3`, and run it alone (`pytest -m perf`), not next to parallel workers.
+- **A speed test fails** but nothing else: run it alone (`pytest -m perf`), not next to parallel workers; the message names the measured value, the limit and the factor (2 unless `HARNESS_TIME_FACTOR` is set). On a slow machine use `HARNESS_TIME_FACTOR=3`; if it still fails by a wide margin, that is a real slowdown.
 - **A test about a generated file fails** ("run: python -m tools.gen_..."): run the generator the message names, then read the diff before you commit.
 - **`test_docs_links.py` fails**: the message names the file, the link and whether the file or the heading is missing.
 - **The suite is slow**: run only the file you changed, then the whole suite once before you push (`pytest -n auto -m "not perf"` uses all cores).

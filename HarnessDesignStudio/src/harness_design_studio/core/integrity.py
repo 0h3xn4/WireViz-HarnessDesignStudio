@@ -8,6 +8,10 @@ from .issues import Issue
 from .model import Connector, Harness, Project
 
 
+def _warn(code: str, message: str, object_id: str | None = None) -> Issue:
+    return Issue("warning", code, message, None, object_id)
+
+
 def _err(code: str, message: str, object_id: str | None = None) -> Issue:
     return Issue("error", code, message, None, object_id)
 
@@ -192,6 +196,49 @@ def _check_harness(
     return out
 
 
+def mating_plugs(harnesses: Iterable[Harness]) -> dict[str, list[tuple[str, str]]]:
+    """Box connector ID -> the cable connectors that plug into it, as (harness ID, cable connector
+    ID), sorted. One entry per box connector; more than one plug on it is a mistake."""
+    out: dict[str, list[tuple[str, str]]] = {}
+    for h in harnesses:
+        for c in h.connectors:
+            if c.mates_with is not None:
+                out.setdefault(c.mates_with, []).append((h.id, c.id))
+    return {box: sorted(plugs) for box, plugs in sorted(out.items())}
+
+
+def _words_list(items: list[str]) -> str:
+    return items[0] if len(items) == 1 else f"{', '.join(items[:-1])} and {items[-1]}"
+
+
+def _check_mating(project: Project) -> list[Issue]:
+    """A connector of a device takes one cable plug, and a pin of it is wired by one harness
+    (warnings: the project still loads, nothing is blocked; they are about what would be built)."""
+    out: list[Issue] = []
+    for box_id, plugs in mating_plugs(project.harnesses.values()).items():
+        if len(plugs) < 2 or box_id not in project.connectors:
+            continue
+        names = [f"{cid} (harness {hid})" for hid, cid in plugs]
+        out.append(_warn("box_connector_mated_twice", f"The device connector {box_id} has {len(plugs)} cable plugs on it: {_words_list(names)}. A connector takes one plug. Keep one harness for it, or join the wires into one harness with a branch.", box_id))  # fmt: skip
+        by_cable = {cid: hid for hid, cid in plugs}
+        users: dict[str, set[str]] = {}
+        for h in project.harnesses.values():
+            for w in h.wires:
+                for cid, pin in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
+                    if by_cable.get(cid) == h.id:
+                        users.setdefault(pin, set()).add(h.id)
+        shared = sorted((p for p, hs in users.items() if len(hs) > 1), key=_pin_key)
+        if shared:
+            who = sorted({h for p in shared for h in users[p]})
+            shown = ", ".join(shared[:6]) + (" ..." if len(shared) > 6 else "")
+            out.append(_warn("box_pin_wired_twice", f"Pin{'s' if len(shared) > 1 else ''} {shown} of {box_id} {'are' if len(shared) > 1 else 'is'} wired by two harnesses ({_words_list(who)}). A pin carries one wire. Keep the wire in one harness.", box_id))  # fmt: skip
+    return out
+
+
+def _pin_key(pin_id: str) -> tuple[int, str]:
+    return (0, pin_id.zfill(8)) if pin_id.isdigit() else (1, pin_id)
+
+
 def _check_parts_and_records(project: Project) -> list[Issue]:
     """Parts that mate with nothing real, and release records that belong to no harness."""
     out: list[Issue] = []
@@ -224,6 +271,7 @@ def _check_links(project: Project) -> list[Issue]:
     exists, no pin is paired twice (in the link or in another link), the harness exists."""
     out: list[Issue] = []
     used: dict[tuple[str, str], str] = {}  # (connector, pin) -> the first link that pairs it
+    claimed: dict[str, str] = {}  # harness -> the first link that says it made it
     for link in sorted(project.links.values(), key=lambda x: x.id):
         ends = {"a": project.connectors.get(link.a_connector), "b": project.connectors.get(link.b_connector)}  # fmt: skip
         for side, cid in (("a", link.a_connector), ("b", link.b_connector)):
@@ -255,6 +303,15 @@ def _check_links(project: Project) -> list[Issue]:
             used.setdefault(key, link.id)
         if link.harness_id and link.harness_id not in project.harnesses:
             out.append(_err("unknown_harness", f"Link '{link.id}' says it made harness '{link.harness_id}', which does not exist. Clear the harness of the link.", link.id))  # fmt: skip
+        elif link.harness_id:
+            h = project.harnesses[link.harness_id]
+            if link.harness_id in claimed:
+                out.append(_warn("link_harness_shared", f"Links '{claimed[link.harness_id]}' and '{link.id}' both say they made harness '{link.harness_id}'. A harness is made from one link; delete one of the links.", link.id))  # fmt: skip
+            claimed.setdefault(link.harness_id, link.id)
+            plugged = {c.mates_with for c in h.connectors}
+            lacking = [box for box in (link.a_connector, link.b_connector) if box not in plugged]
+            if lacking:
+                out.append(_warn("link_harness_not_mated", f"Link '{link.id}' says it made harness '{h.id}', but {h.id} has no cable connector that plugs into {_words_list(lacking)}. Make the harness again from the link, or delete the link.", link.id))  # fmt: skip
     return out
 
 
@@ -306,6 +363,8 @@ def check_integrity(project: Project) -> list[Issue]:
     )
     if project.links:
         out.extend(_check_links(project))
+    if project.harnesses:
+        out.extend(_check_mating(project))
     wire_counts = Counter(w.id for h in project.harnesses.values() for w in h.wires)
     # Results per connector and harness are reused while the objects (immutable) and everything
     # they are checked against are unchanged; this keeps an edit at stress size well under 100 ms.

@@ -105,7 +105,7 @@ Each finding is an **error** (must be fixed), a **warning** (fix it, or **waive*
 
 ## Placeholders: what the tool does not know
 
-The tool contains **no engineering numbers from any standard**: no derating factors, no wire current ratings, no EMC rules, no part masses. Your programme decides those. Until you enter them they are *placeholders*:
+A new project ships **no engineering numbers** in its configuration: no derating factors, no wire current ratings, no EMC rules, no part masses. Your programme decides those. (The one place the tool holds values from standards is the optional `harness-design-studio config DIR --apply-profile`, which writes the table values of ECSS-Q-ST-30-11C or ECSS-E-ST-20-07C into the values that are still unset, and marks those files as placeholders until an engineer has reviewed them.) Until you enter or review them they are *placeholders*:
 
 - Wire gauges stay **pending**.
 - Checks that need a number say **not checked** instead of silently passing.
@@ -147,7 +147,7 @@ my-project/
   outputs/                everything exported (safe to delete)
 ```
 
-Files are written in a fixed format, so two people editing different parts of a design merge cleanly. Details: [`FILE_FORMAT.md`](FILE_FORMAT.md).
+Files are written in a fixed format, so two people editing different parts of a design get a clean merge of those files. The exception is `generated/generation.json`: when both people ran Generate it always conflicts; take either side, run `generate`, then `check` ([how](user-manual/use-git-and-ci.md#when-generatedgenerationjson-conflicts)). Details: [`FILE_FORMAT.md`](FILE_FORMAT.md).
 
 ## What the tool does not do
 
