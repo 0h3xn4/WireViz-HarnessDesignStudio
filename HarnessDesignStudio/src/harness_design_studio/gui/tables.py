@@ -533,6 +533,9 @@ class TableView(QTableView):
         self.setAccessibleName(name)
         self.setToolTip(strings.TABLE_COPY_TIP)
         self.setSortingEnabled(True)
+        # Tab leaves the table (D3): Qt's default moves between cells and never lets go. The
+        # spreadsheet-style `PinTable` turns it back on and offers Ctrl+Tab instead.
+        self.setTabKeyNavigation(False)
         self.sortByColumn(-1, Qt.SortOrder.AscendingOrder)  # rows in the order given until a click
         style_table(self, theme)
         self.setItemDelegate(StateDelegate(theme, self))

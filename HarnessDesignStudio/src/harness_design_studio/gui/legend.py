@@ -1,6 +1,7 @@
 """The key to the diagram: every kind of link and connector the project uses, drawn. It is an
 overlay in a corner of the canvas that can be switched off (View > Show legend) or folded."""
 
+from collections.abc import Sequence
 from typing import cast
 
 from PySide6.QtCore import QRect, QRectF, Qt
@@ -27,6 +28,10 @@ class LegendBar(QWidget):
         self.project: Project | None = None
         self._signature: object = None
         self._present: tuple[bool, bool, bool, bool, bool] = (False,) * 5
+        # worked out once per `set_project`, not on every `_entries` call (D9: asking for the
+        # family of each harness connector rebuilt the map of every connector each time)
+        self._families: list[str] = []
+        self._extras_now: tuple[bool, bool, bool] = (False, False, False)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setAccessibleName(strings.LEGEND_NAME)
         theme.changed.connect(self.update)
@@ -42,27 +47,35 @@ class LegendBar(QWidget):
 
     def set_project(self, project: Project) -> None:
         """Remember the project and redraw only when the kinds shown changed."""
+        connectors = project.all_connectors()  # once: every lookup below reads this map
+        found = [describe.connector_family(project, cid, connectors) for cid in connectors]
+        extras = self._extras(project, found)
         sig = (
             sorted((t.id, t.name, t.category) for t in project.interface_types.values()),
-            sorted(describe.connector_family(project, cid)[0] for cid in project.all_connectors()),
+            sorted(family for family, _pins, _gender in found),
             sorted({i.type_id for i in project.interfaces.values()}),  # the kinds drawn
-            self._extras(project),
+            extras,
         )
         self.project = project
+        self._families = sorted(
+            {family for family, _pins, _gender in found}, key=list(describe.FAMILY_LABEL).index
+        )
+        self._extras_now = extras
         if sig != self._signature:
             self._signature = sig
             self._layout(self.width())
             self.update()
 
     @staticmethod
-    def _extras(p: Project) -> tuple[bool, bool, bool]:
+    def _extras(p: Project, families: Sequence[tuple[str, int, str]]) -> tuple[bool, bool, bool]:
         """(a redundant chain is drawn, a connector was filled in by the tool, genders are known):
-        the entries that only mean something when the diagram shows them."""
+        the entries that only mean something when the diagram shows them. `families` is
+        `describe.connector_family` of every connector of the project."""
         redundant = any(i.redundancy == "redundant" for i in p.interfaces.values()) or any(
             u.side == "redundant" for u in p.units.values()
         )
         auto = any(e.auto for i in p.interfaces.values() for e in i.endpoints)
-        genders = any(describe.connector_family(p, cid)[2] for cid in p.all_connectors())
+        genders = any(gender for _family, _pins, gender in families)
         return redundant, auto, genders
 
     # ---- entries: (kind, payload, label), laid out in rows ------------------------------------
@@ -76,12 +89,8 @@ class LegendBar(QWidget):
         types = [t for t in p.interface_types.values() if t.id in used_types]
         types.sort(key=lambda t: (order.index(style_category(t.category)), t.name))
         out += [("link", (t.id, t.category), t.name) for t in types]
-        families = sorted(
-            {describe.connector_family(p, cid)[0] for cid in p.all_connectors()},
-            key=list(describe.FAMILY_LABEL).index,
-        )
-        out += [("conn", f, describe.FAMILY_LABEL[f]) for f in families]
-        redundant, auto, genders = self._extras(p)
+        out += [("conn", f, describe.FAMILY_LABEL[f]) for f in self._families]
+        redundant, auto, genders = self._extras_now
         if redundant:  # nominal and redundant lines mean nothing without a redundant chain
             out += [
                 ("line", "nominal", strings.NOMINAL),

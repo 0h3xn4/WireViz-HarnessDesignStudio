@@ -76,11 +76,6 @@ STATES: Final[dict[str, StateSpec]] = {
 }
 
 
-def spec_of(state: str) -> StateSpec:
-    """The look of a state; an unknown key is a programming error."""
-    return STATES[state]
-
-
 def _hatch(painter: QPainter, rect: QRectF, colour: QColor, pattern: Pattern) -> None:
     painter.save()
     painter.setClipRect(rect)

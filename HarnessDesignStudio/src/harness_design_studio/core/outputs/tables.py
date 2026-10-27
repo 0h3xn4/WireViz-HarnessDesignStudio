@@ -184,14 +184,6 @@ def _header(fn: bool, term: bool, contact: bool = False) -> list[str]:
     ]
 
 
-def pinout_header(project: Project) -> list[str]:
-    """The header of the pinout tables; `Function`, `Termination` and `Contact` follow when a pin
-    has one."""
-    return _header(
-        uses_pin_function(project), uses_termination(project), uses_contact_parts(project)
-    )
-
-
 def pinouts(project: Project, h: Harness) -> Table:
     attached: dict[tuple[str, str], list[str]] = defaultdict(list)
     for w in h.wires:

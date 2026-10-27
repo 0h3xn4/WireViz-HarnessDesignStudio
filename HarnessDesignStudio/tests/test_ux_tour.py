@@ -38,7 +38,8 @@ def test_the_tour_points_at_the_connect_tool_and_its_type_arrow(qtbot, tmp_path:
     _step(w, "types")
     assert w.tour.targets["types"] is w.tool_connect
     assert w.tool_connect.menu() is w.menu_connect  # the arrow lists the interface types
-    assert "arrow next to Connect" in w.tour.text.text()
+    assert "Link connectors" in w.tour.text.text()  # Connect opens that window now
+    assert "arrow next to Connect" in w.tour.text.text()  # the older way, by type
     w.tour.skip.click()
 
 

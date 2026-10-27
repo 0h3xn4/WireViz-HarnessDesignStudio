@@ -2715,11 +2715,12 @@ class MainWindow(QMainWindow):
             text = strings.BN_PLANS_STALE
         else:
             text = strings.BN_OUTPUTS_STALE
-        details = [
-            strings.BN_DETAIL_GENERATED.format(status.generated_at)
-            if status.generated_at
-            else strings.BN_DETAIL_NOT_GENERATED
-        ]
+        details = []
+        if status.generated_at:
+            details.append(strings.BN_DETAIL_GENERATED.format(status.generated_at))
+        elif not (status.harnesses and status.hand_made == status.harnesses):
+            # (harnesses made from connections or by hand are never generated: no such line)
+            details.append(strings.BN_DETAIL_NOT_GENERATED)
         actions: list[tuple[str, Callable[[], None]]] = []
         if plans:
             actions.append((strings.BN_GENERATE, self.act_generate.trigger))

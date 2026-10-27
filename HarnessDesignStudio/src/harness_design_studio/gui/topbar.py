@@ -75,7 +75,8 @@ def chip_for(s: ShellStatus) -> tuple[str, str, str]:
         return "info", _RUNNING.get(s.running, strings.CHIP_GENERATING), strings.CHIP_RUNNING_TIP
     if s.generation == "stale":
         return "stale", strings.CHIP_PLANS_STALE, strings.CHIP_PLANS_STALE_TIP
-    if s.generation == "none":
+    by_hand = s.harnesses > 0 and s.hand_made == s.harnesses  # made from connections or by hand
+    if s.generation == "none" and not by_hand:
         if s.checking:
             return "info", strings.CHIP_CHECKING, strings.CHIP_CHECKING_TIP
         return "draft", strings.CHIP_NOT_GENERATED, strings.CHIP_NOT_GENERATED_TIP
@@ -87,6 +88,8 @@ def chip_for(s: ShellStatus) -> tuple[str, str, str]:
         return "info", strings.CHIP_CHECKING, strings.CHIP_CHECKING_TIP
     if s.has_harnesses and s.outputs == "current":
         return "pass", strings.CHIP_UP_TO_DATE, strings.CHIP_UP_TO_DATE_TIP
+    if by_hand and s.generation == "none":
+        return "pass", strings.CHIP_BY_HAND, strings.CHIP_BY_HAND_TIP
     return "pass", strings.CHIP_PLANS_CURRENT, strings.CHIP_PLANS_CURRENT_TIP
 
 
