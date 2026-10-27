@@ -4,6 +4,7 @@ import argparse
 import sys
 from pathlib import Path
 
+from harness_design_studio.cli import quoted
 from harness_design_studio.core import templates
 
 COMMANDS = ("new", "templates", "schema")
@@ -59,7 +60,7 @@ def run(args: argparse.Namespace) -> int:
     print(
         f"Project '{project.meta.name}' created in {args.folder} "
         f"({len(project.units)} devices, {len(project.interfaces)} interfaces).\n"
-        f"Next: harness-design-studio validate {args.folder}   or open it in the app (File > Open project)."
+        f"Next: harness-design-studio validate {quoted(args.folder)}   or open it in the app (File > Open project)."
     )
     return 0
 

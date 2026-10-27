@@ -2,6 +2,7 @@
 
 import contextlib
 import hashlib
+import html
 import time
 from collections.abc import Callable
 from dataclasses import dataclass, replace
@@ -2981,13 +2982,15 @@ class MainWindow(QMainWindow):
         gone = {i for u in units for i in self.ctl.delete_impact(u).interfaces}
         every = sorted(gone | set(links))
         items = "".join(
-            f"<li><b>{u}</b> (device {project.units[u].name})</li>" for u in sorted(units)
-        )
+            f"<li><b>{html.escape(u)}</b> (device {html.escape(project.units[u].name)})</li>"
+            for u in sorted(units)
+        )  # names are free text and the body is rich text: a name must not be read as markup
         for iid in sorted(set(links) - gone):
             impact = edit.interface_impact(project, iid)
-            items += f"<li><b>{iid}</b> ({impact.type_name}, {' to '.join(impact.ends)})</li>"
+            ends = html.escape(" to ".join(impact.ends))
+            items += f"<li><b>{html.escape(iid)}</b> ({html.escape(impact.type_name)}, {ends})</li>"
         if gone:
-            items += f"<li>{strings.interfaces_text(len(gone))} of the devices: {', '.join(sorted(gone))}</li>"
+            items += f"<li>{strings.interfaces_text(len(gone))} of the devices: {html.escape(', '.join(sorted(gone)))}</li>"  # fmt: skip
         n = len(self.ctl.selected)
         return strings.DELETE_MANY_TITLE.format(n), strings.DELETE_MANY_BODY.format(
             items=items, plans=self._plan_lines(every)

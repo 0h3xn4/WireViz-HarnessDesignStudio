@@ -212,7 +212,27 @@ def _verify(path: Path, outputs: bool = False) -> int:
     return 0 if report.ok else 1
 
 
+def _utf8_streams() -> None:
+    """Redirected or piped output is UTF-8 on every platform (Windows would use the ANSI code page
+    and fail on a name like `Sensor Ω ≤ 5 V ✓`). A real console keeps its own encoding but never fails."""
+    for stream in (sys.stdout, sys.stderr):
+        reconfigure = getattr(stream, "reconfigure", None)
+        if reconfigure is None:
+            continue
+        name = str(getattr(stream, "encoding", "") or "").lower().replace("-", "").replace("_", "")
+        try:
+            if name == "utf8":
+                continue
+            if stream.isatty():
+                reconfigure(errors="replace")
+            else:
+                reconfigure(encoding="utf-8", errors="replace")
+        except (OSError, ValueError):  # a stream that cannot be changed stays as it is
+            pass
+
+
 def main(argv: Sequence[str] | None = None) -> int:
+    _utf8_streams()
     parser = build_parser()
     try:
         args = parser.parse_args(argv)
@@ -359,6 +379,7 @@ def _project_lock(args: argparse.Namespace) -> Iterator[None]:
         or getattr(args, "dry_run", False)
         or not isinstance(path, Path)
         or not path.is_dir()
+        or not (path / "project.json").is_file()  # an empty or wrong folder gets no lock file
     ):
         yield
         return

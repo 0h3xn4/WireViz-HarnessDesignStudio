@@ -2978,3 +2978,10 @@ ROLE_DIALOG_ELECTRICAL_TEXT = (
 )
 ROLE_DIALOG_LATER = "You can change this later in View > Role."
 ROLE_DIALOG_NAME = "Choose your role"
+
+
+# 1.8.1 (G5): command-line and Outputs-list trust fixes
+IMP_WILL_KEEP = "No change"
+OUT_NOT_OPENED = (
+    "That file is not one the program wrote, so it is not opened. Open the folder instead."
+)

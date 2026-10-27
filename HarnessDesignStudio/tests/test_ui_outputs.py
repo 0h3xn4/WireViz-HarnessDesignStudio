@@ -149,6 +149,29 @@ def test_open_reveal_and_copy_act_on_the_selected_files(qtbot, ctl, exported, tm
     assert not (dest / MANIFEST).exists()
 
 
+def test_open_hands_only_listed_files_of_a_known_kind_to_the_system(qtbot, ctl, exported) -> None:
+    """C-7: a received project can carry outputs/x.bat; one click must not run it."""
+    from harness_design_studio.gui.export_dialog import may_open
+
+    (exported / "x.bat").write_text("echo hi")
+    (exported / "notes.csv").write_text("a,b\n1,2\n")  # a known kind, but the manifest lacks it
+    opened: list[QUrl] = []
+    panel = make_files(qtbot, ctl, opened)
+    for rel in ("x.bat", "notes.csv"):
+        assert panel.select_file(rel)
+        assert panel.open_selected() is None
+        assert panel.notice.isVisibleTo(panel)
+        assert panel.notice.label.text() == strings.OUT_NOT_OPENED
+        panel.notice.action.click()  # the folder is offered instead
+        assert Path(opened.pop().toLocalFile()) == (exported / rel).parent
+        panel.notice.clear()
+    assert opened == []
+    assert panel.select_file("harnesses/W001/wirelist.csv")
+    assert panel.open_selected() is not None and len(opened) == 1
+    assert may_open(exported / "a.PDF") and not may_open(exported / "a.lnk")
+    assert not may_open(exported / "a.csv", listed=False)
+
+
 def test_the_manifest_is_never_copied(qtbot, ctl, exported, tmp_path) -> None:
     panel = make_files(qtbot, ctl)
     assert panel.select_file(MANIFEST)

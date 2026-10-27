@@ -38,7 +38,7 @@ from harness_design_studio.core.outputs.build import MANIFEST
 from harness_design_studio.gui import export_docs, icons, strings
 from harness_design_studio.gui.controller import EditorController
 from harness_design_studio.gui.empty_state import attach_empty_state
-from harness_design_studio.gui.export_dialog import human_size, open_url, reveal_url
+from harness_design_studio.gui.export_dialog import human_size, may_open, open_url, reveal_url
 from harness_design_studio.gui.notice import InlineNotice
 from harness_design_studio.gui.tables import Column, DictTableModel, TableView
 from harness_design_studio.gui.theme import ThemeManager
@@ -352,7 +352,21 @@ class OutputsFiles(QWidget):
         files = self.selected_facts()
         if not files or self.folder is None:
             return None
-        url = open_url(self.folder / files[0].rel)
+        path = self.folder / files[0].rel
+        if not may_open(path, listed=files[0].listed != ""):
+
+            def folder() -> None:
+                self.opener(reveal_url(path.parent))
+
+            self.notice.show_notice(
+                "warning",
+                strings.OUT_NOT_OPENED,
+                button=strings.EXP_REVEAL_FOLDER,
+                tooltip=strings.EXP_REVEAL_FOLDER_TIP,
+                callback=folder,
+            )
+            return None
+        url = open_url(path)
         self.opener(url)
         return url
 

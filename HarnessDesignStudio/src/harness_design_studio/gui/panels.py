@@ -1,5 +1,6 @@
 """Dock panels: the properties form and the problems list (with its to-do lines), and the helpers other panels use."""
 
+import html
 from collections.abc import Callable
 from decimal import Decimal
 from functools import partial
@@ -482,7 +483,7 @@ class PropertiesPanel(QScrollArea):
             card.setProperty("severity", "info")
             lay = QVBoxLayout(card)
             row = QHBoxLayout()
-            row.addWidget(QLabel(f"<b>{c.name}</b>"))
+            row.addWidget(QLabel(f"<b>{html.escape(c.name)}</b>"))
             if c.id in auto_by_conn:
                 badge = QLabel(strings.AUTO)
                 badge.setToolTip(self._auto_tip(c.id))

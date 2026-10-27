@@ -177,7 +177,7 @@ def render() -> str:
         "| Code | Meaning |",
         "| --- | --- |",
         "| 0 | success (warnings are allowed) |",
-        "| 1 | the project has errors, or a step is blocked (for example a release, or an import or `config` that found problems and changed nothing) |",
+        "| 1 | the project has errors, or a step is blocked (for example a release, or an import or `config` that found problems and changed nothing, or an import of a file with nothing in it) |",
         "| 2 | usage error, or a project or file that could not be read |",
         "| 130 | interrupted with Ctrl-C |",
         "",
@@ -190,6 +190,8 @@ def render() -> str:
         "`harness-design-studio validate`). A reader that closes the pipe (`harness-design-studio generate | head -1`) does "
         "not stop the command: it still finishes and saves.",
         "",
+        "An import whose file says what the project already holds changes nothing, prints "
+        "`Already up to date.` and ends with 0, so it can run again on every build. "
         "Every command that changes a project takes the same lock as the app, so the two never write "
         "at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) "
         "accept `--dry-run`: they show what they would do and change nothing; "
