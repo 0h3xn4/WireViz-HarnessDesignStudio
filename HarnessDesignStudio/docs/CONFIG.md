@@ -11,7 +11,7 @@ Rules live in `config/*.json` inside the project, not in code. There are seven f
 - [`derating.json`](#deratingjson)
 - [`generation.json`](#generationjson)
 - [`emc.json`](#emcjson)
-- [`naming.json`](#namingjson)
+- [`naming.json`](#namingjson), with [`signal_counterparts`](#signal_counterparts-since-190)
 - [`titleblock.json`](#titleblockjson)
 - [Optional values from the supplied standards (D-131)](#optional-values-from-the-supplied-standards-d-131)
 
@@ -60,6 +60,7 @@ Keys that are left out stay unset (`null`). `harness-design-studio validate` acc
 | `classes` (emc) | a list of non-empty class names |
 | `contact_rating_key` | the name of a part rating |
 | `titleblock.fields` | known field names, each at most once, written as text (see below) |
+| `signal_counterparts` (naming) | a list of pairs of two different words made of letters, no word in two pairs; an empty list is allowed (see below) |
 
 Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limits of the project data itself (a wire gauge 0 to 40, a length 0 to 10000 m, a pin count 1 to 1000, ...) are in [`FILE_FORMAT.md`](FILE_FORMAT.md#number-ranges). While a harness is released, most of these files are frozen: see [`FILE_FORMAT.md`](FILE_FORMAT.md#what-a-release-freezes).
 
@@ -116,6 +117,16 @@ Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limit
 | `shield` | `{harness}-S{n}` | shield (`W001-S1`) |
 | `branch` | `{harness}-B{n}` | branch point |
 | `segment` | `{harness}-L{n}` | routing segment |
+
+### `signal_counterparts` (since 1.9.0)
+
+Not a name pattern but a style choice of the same kind: the words that are the two ends of one line. The review of connections and the pairing proposal split a signal name into words (`UART_TX` is UART, TX; `SPW_DOUT+` is SPW, DOUT, +) and pair a transmit word with its receive word when everything else in the two names is the same, with or without a prefix (`UART_TX` and `RX`, `SPW_DOUT+` and `SPW_DIN+`, `MOSI` and `MISO`). Two equal names that both carry a transmit word (or both a receive word) are never paired by the proposal and are warned about in the review.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `signal_counterparts` | not set: `[["TX","RX"], ["TXD","RXD"], ["TXP","RXP"], ["TXN","RXN"], ["DOUT","DIN"], ["MOSI","MISO"], ["SDO","SDI"]]` | a list of pairs of words; the first word of a pair is the transmit word, the second the receive word; case does not matter |
+
+Example for a program that also names its lines `OUT` and `IN`: `"signal_counterparts": [["TX","RX"], ["MOSI","MISO"], ["OUT","IN"]]` (a list replaces the default table, so repeat the pairs you still want). Each word is made of letters only (digits and signs such as `+`, `-` and `_` are separators in a name, not parts of a word), and a word is in one pair only. An empty list `[]` means no counterparts at all: only equal names are paired. The key is left out of new projects and out of the shipped file, so the files of an existing project do not change. A value that is not valid is an error of the check (`config/naming.json: signal_counterparts ...`, rule `config-invalid`, also reported by generation) and the default table is used until it is corrected. `harness-design-studio config DIR --counterparts "TX=RX, MOSI=MISO, OUT=IN"` writes it (`default` takes the key out again, `none` writes `[]`); `config DIR` then lists it. A pin can also say which way it runs (`Pin.direction`, [`FILE_FORMAT.md`](FILE_FORMAT.md#links-and-pin-roles-m2-schema-version-stays-1)); where it does, the directions decide before the names.
 
 The shipped file lists only the first four keys; `shield`, `branch` and `segment` use the defaults above until you add them. A pattern that does not give a different valid ID for every number (tried up to 200; a reserved name such as COM1 is not valid) is reported and the default is used. IDs are stable once released.
 

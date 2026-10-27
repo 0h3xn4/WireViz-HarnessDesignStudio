@@ -4,6 +4,15 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Added
+
+- **A direction on a pin.** A pin can say which way its signal runs (`in`, `out` or `bidirectional`; empty means not set). It is optional and left out of the files while empty, so an existing project is written exactly as before. Where it is set it decides before any name does: the connection review reports output against output and input against input from the two directions (also for analog, discrete, LVDS, pyro and I2C clock signals, which the review otherwise leaves alone), and the pairing proposal pairs two equal `TX` names when the pins say `out` and `in`. The pinout tables and `export-pinout` get a last column *Direction* only while some pin has one; `import-pinout` reads a *Direction* column (a word that is not in, out or bidirectional stops the import and names the row; `n/a` and `passive` leave it unset). The JSON Schema of the connector files lists it. The Devices tab shows it (the edit column comes with the screens of this release).
+- **The transmit and receive words are a setting.** The table of word pairs the connection review and the pairing proposal use (`TX`/`RX`, `MOSI`/`MISO`, `DOUT`/`DIN` ...) is the key `signal_counterparts` of `config/naming.json`; while it is not set the table of 1.8.1 is used, so nothing changes for an existing project. It is checked like the other configuration values (rule `config-invalid`, `config`, generation), and `harness-design-studio config DIR --counterparts "TX=RX, OUT=IN"` sets it (`default` clears it, `none` pairs equal names only). See `docs/CONFIG.md`.
+
+### Changed
+
+- **Making a harness from a connection, the pairing proposal and the review of all connections work in one pass.** A harness from a connection of 1,000 pairs took 31.7 s in 1.8.1 (each wire read every ID of the project and rebuilt the harness) and now takes about 0.1 s; the review of all connections no longer reads every connection again for each one, and the proposal finds the candidates of a pin by name instead of comparing every pair of pins. The results are the same as in 1.8.1: tests compare them with a copy of the 1.8.1 code on generated projects.
+
 ## 1.8.1 (2026-10-27; not a statement of compliance)
 
 Fixes from the audit of 1.8.0 (`docs/AUDIT_1.8.0.md`, decision D-177): no new feature, no file-format change, the design rules stay 39, and the files and outputs of a project that does not meet one of these cases are unchanged (`python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` prints *identical*). The one written text that changes for projects on placeholder configuration is the line *Ready to build* of the build workbook.

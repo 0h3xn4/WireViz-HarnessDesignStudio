@@ -198,6 +198,7 @@ Hand-over checklist for the engineering values (derating, grounding, test limits
 | --- | --- |
 | `project` | the project folder |
 | `--ampacity-csv AMPACITY_CSV` | CSV with a gauge column and an amperes column; sets derating.ampacity_a_by_awg |
+| `--counterparts WORDS` | the words that are the two ends of one line, for the link review and the pairing, for example 'TX=RX, MOSI=MISO' (sets naming.signal_counterparts); 'default' goes back to the table the tool ships with, 'none' pairs equal names only |
 | `--apply-profile NAME` | fill the unset values from a standard profile (ecss-q-st-30-11c, ecss-e-st-20-07c); values you already set are kept; the files stay placeholders until you review them |
 
 Examples:
@@ -206,6 +207,7 @@ Examples:
 harness-design-studio config my-design
 harness-design-studio config my-design --ampacity-csv ampacity.csv
 harness-design-studio config my-design --apply-profile ecss-q-st-30-11c
+harness-design-studio config my-design --counterparts "TX=RX, MOSI=MISO, OUT=IN"
 ```
 
 ### harness-design-studio library

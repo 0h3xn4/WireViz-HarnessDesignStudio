@@ -11,7 +11,7 @@ import math
 import re
 from dataclasses import dataclass
 
-from harness_design_studio.core import standard_profiles
+from harness_design_studio.core import counterparts, standard_profiles
 from harness_design_studio.core.commands import Op, SetConfig
 from harness_design_studio.core.issues import Issue
 from harness_design_studio.core.model import Project
@@ -156,6 +156,7 @@ def validate(project: Project) -> list[Issue]:
         elif n.key == "ampacity_a_by_awg":
             out.extend(_validate_ampacity(n, v))
     out.extend(validate_titleblock(project))
+    out.extend(validate_counterparts(project))
     out.extend(standard_profiles.validate(project))
     return out
 
@@ -229,6 +230,14 @@ def report(project: Project) -> tuple[str, bool]:
     """The hand-over checklist as text, and whether every value is set and valid."""
     todo, problems = missing(project), validate(project)
     lines = [f"Engineering values: {len(NEEDS) - len(todo)} of {len(NEEDS)} set."]
+    table = _cfg(project, counterparts.CONFIG_FILE).get(counterparts.CONFIG_KEY)
+    if table is not None and counterparts.check_pairs(table) is None:  # only when a project sets it
+        count = len(table) if isinstance(table, list) else 0
+        lines.append(
+            f"Signal counterparts: {count} pair{'s' if count != 1 else ''} of words set in "
+            f"config/{counterparts.CONFIG_FILE}.json ({counterparts.CONFIG_KEY}); the link review "
+            "and the pairing read them instead of the table the tool ships with."
+        )
     for n in todo:
         lines.append(f"- MISSING config/{n.file}.json {n.key}: {n.what}. Needed for: {n.used_by}.")
     lines += [f"- INVALID {i.message}" for i in problems]
@@ -296,6 +305,75 @@ def validate_titleblock(project: Project) -> list[Issue]:
     if twice:
         return err(f"lists '{twice[0]}' more than once")
     return []
+
+
+def validate_counterparts(project: Project) -> list[Issue]:
+    """`naming.json` `signal_counterparts` (1.9.0) must be a list of pairs of two different words
+    of letters, no word in two pairs. Not set (or null) is not a problem: the table the tool ships
+    with is used. An empty list is allowed: then only equal names are paired."""
+    raw = _cfg(project, counterparts.CONFIG_FILE).get(counterparts.CONFIG_KEY)
+    if raw is None or (why := counterparts.check_pairs(raw)) is None:
+        return []
+    where = f"config/{counterparts.CONFIG_FILE}.json"
+    return [
+        Issue(
+            "error",
+            "config_invalid",
+            f"{where}: {counterparts.CONFIG_KEY} {why}.",
+            where,
+            f"{counterparts.CONFIG_FILE}.{counterparts.CONFIG_KEY}",
+        )
+    ]
+
+
+def plan_set_counterparts(project: Project, value: object) -> "ValuePlan":
+    """The ops that set the table of counterpart words (`naming.json` `signal_counterparts`), or
+    why not. `value` is a list of pairs, or the text of one: `TX=RX, MOSI=MISO` (a word on each
+    side of `=`, `:` or `/`, pairs separated by commas, semicolons or lines); `none` or `[]` is a
+    table with no pairs (only equal names pair); empty text, `default` or None clears the key, so
+    the table the tool ships with is used. A release that froze the file refuses it."""
+    from harness_design_studio.core.errors import TransactionError
+    from harness_design_studio.core.vcs.locks import check_locks
+
+    parsed: object
+    if value is None or (isinstance(value, str) and value.strip().casefold() in ("", "default")):
+        parsed = None
+    elif isinstance(value, str):
+        if value.strip().casefold() == "none":
+            parsed = []
+        else:
+            pairs: list[list[str]] = []
+            for item in re.split(r"[,;\n]", value):
+                if not item.strip():
+                    continue
+                words = [w.strip() for w in re.split(r"[=:/]", item)]
+                if len(words) != 2 or not all(words):
+                    return _fail(
+                        f"'{item.strip()[:30]}' is not a pair of words. Write them like TX=RX, MOSI=MISO."
+                    )
+                pairs.append(words)
+            parsed = pairs
+    else:
+        parsed = value
+    if parsed is not None and (why := counterparts.check_pairs(parsed)) is not None:
+        return _fail(f"Counterpart words {why}.")
+    old = project.config.get(counterparts.CONFIG_FILE)
+    base = (
+        old
+        if old is not None
+        else ConfigFile(name=counterparts.CONFIG_FILE, placeholder=False, values={})
+    )
+    values = {k: v for k, v in base.values.items() if k != counterparts.CONFIG_KEY}
+    if parsed is not None:
+        values[counterparts.CONFIG_KEY] = parsed
+    ops: list[Op] = [
+        SetConfig(ConfigFile(name=base.name, placeholder=base.placeholder, values=values))
+    ]
+    try:
+        check_locks(project, ops)
+    except TransactionError as exc:
+        return _fail(exc.problems[0] if exc.problems else str(exc))
+    return ValuePlan(ops, None, parsed)
 
 
 def titleblock_fields(project: Project) -> list[str]:
