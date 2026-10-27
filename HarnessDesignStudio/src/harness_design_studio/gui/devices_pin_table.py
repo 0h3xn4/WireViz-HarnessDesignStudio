@@ -45,7 +45,9 @@ from harness_design_studio.gui.states import StateDelegate
 from harness_design_studio.gui.tables import Column, DictTableModel, Row, TableView
 from harness_design_studio.gui.theme import ThemeManager
 
-EDITABLE = ("pin", "signal", "mode", "contact_size", "termination", "function", "contact_part")
+EDITABLE = (
+    "pin", "signal", "role", "mode", "contact_size", "termination", "function", "contact_part",
+)  # fmt: skip
 Validator = Callable[[str, dict[str, Any], str], str | None]
 
 
@@ -192,6 +194,13 @@ class PinDelegate(StateDelegate):
                 box.addItem(word, mode)
             box.setAccessibleName(strings.DV_COL_MODE)
             editor = box
+        elif key == "role":
+            box = QComboBox(parent)
+            for role, word in strings.LINK_ROLE_NAMES.items():
+                box.addItem(word, role)
+            box.setAccessibleName(strings.DV_COL_ROLE)
+            box.setToolTip(strings.DV_COL_ROLE_TIP)
+            editor = box
         elif key == "termination":
             box = QComboBox(parent)
             box.addItem("", "unspecified")
@@ -245,6 +254,8 @@ class PinDelegate(StateDelegate):
                 _line(editor).setText(str(row.get(key) or ""))
             elif key == "mode":
                 editor.setCurrentIndex(max(0, editor.findData(row.get("mode_key", "free"))))
+            elif key == "role":
+                editor.setCurrentIndex(max(0, editor.findData(row.get("role_key", ""))))
             else:
                 editor.setCurrentIndex(
                     max(0, editor.findData(row.get("termination_key", "unspecified")))

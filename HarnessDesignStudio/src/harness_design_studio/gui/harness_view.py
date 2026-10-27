@@ -609,6 +609,7 @@ class HarnessView(QWidget):
 
         ctl.changed.connect(lambda _d: self._invalidate())
         ctl.stateChanged.connect(self._read_only_changed)
+        ctl.drcChanged.connect(self._rules_changed)
         theme.changed.connect(self._retitle)
         self.refresh()
 
@@ -1257,10 +1258,25 @@ class HarnessView(QWidget):
         elif not self.ctl.project.harnesses:
             self.verify_chip.set_state("not-checked", strings.HV_CHECKING)
         elif st.verify_ok:
-            self.verify_chip.set_state("pass", strings.HV_VERIFY_OK)
+            failed = self._failed_rules()
+            if failed:  # never "passed" next to a design rule that failed
+                self.verify_chip.set_state("warning", strings.HV_VERIFY_OK_RULES.format(failed))
+            else:
+                self.verify_chip.set_state("pass", strings.HV_VERIFY_OK)
         else:
             self.verify_chip.set_state("fail", strings.HV_VERIFY_BAD.format(st.errors))
         self._update_verify_tip()
+
+    def _failed_rules(self) -> int:
+        """Design rules that failed in the last finished check (0 while none is current)."""
+        if not self.ctl.drc_current:
+            return 0
+        return sum(r.status == "fail" for r in self.ctl.drc_rule_results())
+
+    def _rules_changed(self) -> None:
+        """A check finished: the chip of the independent check may need its words changed."""
+        if self._status is not None and self.verify_chip.state() != "pending":
+            self._show_status(self._status[1])
 
     def _update_verify_tip(self) -> None:
         if self._status is None or self.verify_chip.state() == "pending":

@@ -536,6 +536,10 @@ class Inspector(QWidget):
         self.tabs.setTabText(
             2, strings.INS_TAB_PROBLEMS_N.format(n) if n else strings.INS_TAB_PROBLEMS
         )
+        total = len(self.ctl.open_findings()) if n else 0
+        self.tabs.setTabToolTip(
+            2, strings.INS_TAB_PROBLEMS_TIP.format(n, total) if n and total != n else ""
+        )
 
     def refresh(self) -> None:
         """Bring the banner, the stack, the lists and the locks in line with the project."""

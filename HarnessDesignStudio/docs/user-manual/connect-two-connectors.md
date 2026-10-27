@@ -11,6 +11,7 @@ This page shows how to join a connector of one device to a connector of another,
 - [1. Link the connectors](#1-link-the-connectors)
 - [2. How the pairs are proposed](#2-how-the-pairs-are-proposed)
 - [3. Look at the pairs and change them](#3-look-at-the-pairs-and-change-them)
+- [Add a connector, pair by pin number and paste a pairing](#pair-by-pin-number-and-paste-a-pairing)
 - [What a pin is for: power, return and ground](#what-a-pin-is-for-power-return-and-ground)
 - [4. See your connections](#4-see-your-connections)
 - [5. Check my connections](#5-check-my-connections)
@@ -70,6 +71,16 @@ The proposal is the same every time for the same pins. It is a proposal only: no
 - **Remove pair:** pick a row and press **Remove pair**.
 - A pin in two pairs, no pair at all, or the same device twice is refused at once, in words under the table, and the button stays off until you fix it. That is all that stops you; the program does not forbid what only looks odd.
 - **What looks wrong** is written under the table while you work, in plain words: two outputs on one pair, names that differ across a pair, a pin that is named but not paired, power with no return. The same review is *Check my connections* (step 5). You may still make the connection; the review keeps asking until you have fixed it or accepted it.
+
+## Pair by pin number and paste a pairing
+
+Pins that have no signal names, as on a connector that was just added to a device, get no proposal by name. Three buttons in the window help (since 1.9). Each shows what it would do and waits for you.
+
+- **Add a connector…** sits under each device. Use it when the device has no connector yet (the window says *Device … has no connector yet. Press Add a connector under it.*) or has the wrong one. Pick the kind of connector (family, pins, gender) and, if you like, its name; the pins are numbered `1` to `N` with no signal names. The connector is made together with the connection, as part of the same undo step, and not at all if you cancel the window. It is not available when you change the pairs of a connection that exists.
+- **Pair by pin number** proposes pin 1 with pin 1, pin 2 with pin 2 and so on (the same pin number or name on both connectors, case ignored). Pins that have no partner are listed as left over.
+- **Paste a pairing…** takes two columns from a table (a pin of the first connector, a tab, a pin of the second; one line is one pair; a heading line is skipped). Commas, semicolons and spaces work too, and more columns are ignored. A line that cannot be used (a pin that does not exist, a pin used twice) is named and skipped; the other lines are proposed.
+
+A proposal appears in a box under the buttons with the pairs and the notes (what was left out and why). **Nothing is paired until you press Accept the pairs**; **Discard** forgets it. Accepted pairs join the table above, never replace it, and a pin that is in the table already or in another connection is not offered again. Changing a device or a connector drops a proposal that waits. Then check the table and press **Link connectors** as usual. The program proposes, you decide.
 
 ## What a pin is for: power, return and ground
 
@@ -153,7 +164,7 @@ The connections are an output of their own, and they need no harness. **Export�
 
 - **No pairs are proposed.** The pins have no signal names, or the names have no counterpart on the other side (`SIGNAL-A` and `SIGNAL-B`), or the pins are paired in another connection already. Name the pins in the **Devices** tab, or add the pairs by hand.
 - **The two devices are the same.** A connection joins two different devices; pick the second one.
-- **A device has no connector.** The window says *Device … has no connector yet. Add one in the Devices tab first.*
+- **A device has no connector.** The window says *Device … has no connector yet. Press Add a connector under it.* Press **Add a connector…** (or add one in the **Devices** tab first).
 - **Create harness does nothing.** Read the line at the button: the connection may have no pairs, or a harness already. Open that harness, or delete it first.
 - **Power is reported without a return.** Pair the `RTN` pin, or set the return pin's role to **Return** if its name does not say so.
 - **I cannot find the older way.** It is under **Edit > Connect with an interface type…** and in the arrow next to the **Connect** button.

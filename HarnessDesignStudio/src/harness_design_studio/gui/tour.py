@@ -5,7 +5,15 @@ from collections.abc import Callable
 import shiboken6
 from PySide6.QtCore import QRect, Qt
 from PySide6.QtGui import QPainter, QPen
-from PySide6.QtWidgets import QFrame, QHBoxLayout, QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import (
+    QApplication,
+    QFrame,
+    QHBoxLayout,
+    QLabel,
+    QPushButton,
+    QVBoxLayout,
+    QWidget,
+)
 
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.theme import ThemeManager
@@ -34,8 +42,12 @@ class Tour:
         theme: ThemeManager,
         targets: dict[str, QWidget],
         reveals: dict[str, Callable[[], None]] | None = None,
+        steps: Callable[[], list[tuple[str, str]]] | None = None,
+        brought: frozenset[str] = frozenset(),
     ) -> None:
         self.window, self.theme, self.targets = window, theme, targets
+        self.steps = steps or (lambda: strings.TOUR_STEPS)  # (the role decides which tour)
+        self.brought = brought  # steps whose reveal always brings the target into view
         self.reveals = reveals or {}  # what to bring to the front before a step points at it
         self.index = -1
         self.on_stop: Callable[[], None] | None = None
@@ -84,9 +96,9 @@ class Tour:
     def _shown_steps(self) -> list[int]:
         """The steps whose target is on screen now (a high UI scale or a small window hides docks)."""
         out = []
-        for k, (key, _text) in enumerate(strings.TOUR_STEPS):
+        for k, (key, _text) in enumerate(self.steps()):
             target = self.targets[key]
-            if target.isVisibleTo(self.window) and not target.size().isEmpty():
+            if key in self.brought or (target.isVisibleTo(self.window) and not target.size().isEmpty()):  # fmt: skip
                 out.append(k)
         return out
 
@@ -99,7 +111,7 @@ class Tour:
             self.on_stop()  # skipping or finishing both count: the tour is not shown again
 
     def show_step(self, i: int) -> None:
-        steps = strings.TOUR_STEPS
+        steps = self.steps()
         if i < 0:
             return
         shown = self._shown_steps()
@@ -116,6 +128,8 @@ class Tour:
         key, text = steps[i]
         if key in self.reveals:
             self.reveals[key]()
+            if key in self.brought:  # the page it brought needs its layout before it is pointed at
+                QApplication.processEvents()
         target = self.targets[key]
         self.title.setText(f"<b>{strings.TOUR_STEP.format(shown.index(i) + 1, len(shown))}</b>")
         self.text.setText(text)

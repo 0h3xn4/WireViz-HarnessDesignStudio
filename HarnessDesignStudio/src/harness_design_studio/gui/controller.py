@@ -6,7 +6,7 @@ small `Delta` so they redraw only what changed.
 """
 
 import json
-from collections.abc import Callable, Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
@@ -14,7 +14,16 @@ from pathlib import Path
 from pydantic import ValidationError
 from PySide6.QtCore import QObject, QThread, QTimer, Signal
 
-from harness_design_studio.core import checks, copies, devices, drc, edit, links
+from harness_design_studio.core import (
+    checks,
+    copies,
+    devices,
+    drc,
+    edit,
+    first_connector,
+    links,
+    part_approval,
+)
 from harness_design_studio.core.commands import Delete, History, Op, Put, SetZones, apply_ops
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, SaveError, TransactionError
@@ -41,6 +50,7 @@ from harness_design_studio.core.vcs.release import ReleasePlan
 from . import strings
 from .canvas_state import StateIndex, build_index
 from .drc_process import abort_check, run_check
+from .release_text import plain_blocker
 
 JOURNAL_DELAY_MS = 1500
 DRC_DELAY_MS = 1200  # run only after the user pauses (the check itself runs in another process)
@@ -884,6 +894,14 @@ class EditorController(QObject):
             message=strings.WAIVED_TOAST,
         )
 
+    def approve_part(self, part_id: str) -> bool:
+        """A person approved a part (the Next step page asked first): one undo step."""
+        return self.attempt(
+            strings.STEP_APPROVE_PART.format(part_id),
+            lambda: part_approval.ops_approve_part(self.project, part_id),
+            message=strings.PART_APPROVED.format(part_id),
+        )
+
     def confirm_interface(self, interface_id: str) -> None:
         self.attempt(
             strings.STEP_CONFIRM, lambda: edit.ops_confirm_interface(self.project, interface_id)
@@ -944,12 +962,17 @@ class EditorController(QObject):
         )
 
     # ---- devices: custom devices down to each pin (one undo step each, named) -------------------
-    def add_device(self, *, count: int = 1, **fields: object) -> str | None:
-        """Add an empty device in a free slot and select it; returns its ID (None: refused). With
-        `count` above 1 the device is made in that number (`core.copies`: ID, ID-R, ID-3 ...) in
-        the same undo step."""
+    def add_device(
+        self, *, count: int = 1, connector_part: str = "", **fields: object
+    ) -> str | None:
+        """Add a device in a free slot and select it; returns its ID (None: refused). It is empty
+        unless `connector_part` names a connector part: then it gets a first connector of that part
+        (pins 1 to N, no signals). With `count` above 1 the device is made in that number
+        (`core.copies`: ID, ID-R, ID-3 ...) in the same undo step."""
         try:
-            ops, uid = devices.ops_add_device(self.project, **fields)  # type: ignore[arg-type]
+            ops, uid, _cid = first_connector.plan_device_with_connector(
+                self.project, connector_part or None, **fields
+            )
             extra = ""
             if count > 1:
                 more = copies.plan_copies(edit.clone_with(self.project, ops), uid, count)
@@ -1157,7 +1180,7 @@ class EditorController(QObject):
     def apply_change(self, plan: ReleasePlan, message: str) -> bool:
         """Run a review, release or new-revision plan as one undoable step."""
         if not plan.ok:
-            self.message.emit(plan.blockers[0].message, False)
+            self.message.emit(plain_blocker(plan.blockers[0].message), False)
             return False
         return self.run(plan.label, plan.ops, message=message)
 
@@ -1493,12 +1516,15 @@ class EditorController(QObject):
         pairs: list[tuple[str, str]],
         name: str = "",
         roles: Mapping[tuple[str, str], str] | None = None,
+        first: Sequence[Op] = (),
     ) -> str | None:
         """Join two connectors with these pairs (and give pins their roles) as one undo step.
+        `first` are operations that come before (connectors added in the connection window).
         Returns the link ID, or None when it was refused (the reason is a message)."""
         try:
-            ops, lid = links.plan_add_link(self.project, a_connector, b_connector, pairs, name)
-            ops = [*links.plan_set_roles(self.project, roles or {}), *ops]
+            base = edit.clone_with(self.project, list(first)) if first else self.project
+            ops, lid = links.plan_add_link(base, a_connector, b_connector, pairs, name)
+            ops = [*first, *links.plan_set_roles(base, roles or {}), *ops]
         except (HarnessError, ValidationError) as exc:
             self.message.emit(_plain(exc), False)
             return None

@@ -134,6 +134,8 @@ On a power interface set **Max current (A)** in the Inspector; without it the wi
 
 **Connecting by the pinout** (new in 1.8.0). **Edit > Link connectors…** (Ctrl+Shift+K), or **Connect** and two devices, opens **Link connectors**. The program pairs the pins by signal name, never by position (`TX+` meets `RX+`, `PWR` meets `PWR`; an output is not paired with an output); you change, add or remove pairs and give a pin a role (Power, Return, Ground, Signal, Shield, Spare), then press **Link connectors**.
 
+Since 1.9 the window also has **Add a connector…** under each device (for a device with no connector yet; it is made together with the connection), **Pair by pin number** and **Paste a pairing…** (two columns from a table). Each shows a proposal and waits for **Accept the pairs**; nothing is paired before you accept it.
+
 The connection is a dash-dotted line on the diagram and an entry under **Connections** in the Project tab. **Design > Check my connections** reviews them and changes nothing. **Create harness** makes a harness with one wire for each pair, only when you press it and agree; the program never makes one on its own. In Expert mode, or with **View > Show connectors on connections**, a small box at each end of the line names the connector and the pins the connection pairs; the tooltip names the way through the harness once one exists, and **Show the harness** (right-click on the line) opens the Harness tab on it.
 
 ### The Devices tab
@@ -166,7 +168,7 @@ The **library** is a folder that your team shares, on a shared drive or in a Git
 
 #### Defining a device
 
-- **Edit > Add device > Device…** (Ctrl+Shift+N; also **Add** in the Project tab, and the button **Add a device** on an empty diagram) opens the window **Add device**: type the **Name** (for example *Star tracker*), accept or change the **ID** it suggests (`STAR1`; once you edit it, it stops following the name) and pick the **Subsystem**. **Add device** adds an empty device in a free slot and opens the Devices tab. The kinds in **Edit > Add device** need no name.
+- **Edit > Add device > Device…** (Ctrl+Shift+N; also **Add** in the Project tab, and the button **Add a device** on an empty diagram) opens the window **Add device**: type the **Name** (for example *Star tracker*), accept or change the **ID** it suggests (`STAR1`; once you edit it, it stops following the name) and pick the **Subsystem**, and optionally a **First connector** (kind, pins, gender). **Add device** adds the device in a free slot and opens the Devices tab (the Systems engineer stays on the Next step page or the diagram). The kinds in **Edit > Add device** need no name.
 - Under the connector list pick a part (type to search; the first entry is **New part…**, which also makes the mating half) and press **Add connector** (Ctrl+Shift+C goes to the picker; Enter adds). The pins are numbered from the part's pin count. **Delete connector** shows what it touches first.
 - Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down; Esc cancels. A pin name is checked while you type. **Add pin** (Insert) adds a pin after the current one; Delete clears the signal of the selected pins; **Delete** (Shift+Delete) deletes pins after a line that says what they touch; Space cycles the mode (*Free*, *Fixed*, *Locked*); Ctrl+V pastes cells copied from a spreadsheet, either a column from the current cell down or a table with a header row (*Pin*, *Signal*, *Mode*, *Contact size*, *Termination*, *Cable contact*).
 - **Fill…** (Ctrl+L) puts the signals of an interface type on the selected pins in order (for example *CANH*, *CANL*). **Assign…** (Ctrl+Enter) locks the selected pins to an interface that ends on this device. Both are one undo step; **New interface type…** is in the dialog.
@@ -175,7 +177,7 @@ The **library** is a folder that your team shares, on a shared drive or in a Git
 
 ## 5. Guided and Expert mode
 
-**Next step.** The first item of the rail, **Next step**, shows one page, *What to do next*: one card with one button, and the six steps of the work, each with an icon and a word (*done*, *next*, *to do*). It looks at the project and names the first step that is not done. For the Systems engineer there are two link buttons, **Library…** and **Show everything**, which switches to the Electrical / AIT engineer role.
+**Next step.** The first item of the rail, **Next step**, shows one page, *What to do next*: one card with one button, and the six steps of the work, each with an icon and a word (*done*, *next*, *to do*). It looks at the project and names the first step that is not done. When a check fails, a second card shows the first open problem with what to do and the buttons that apply (**Show it**, **Waive…**, **Approve …** for an unapproved part); a warning never holds the page. For the Systems engineer there are two link buttons, **Library…** and **Show everything**, which switches to the Electrical / AIT engineer role.
 
 **Your role.** The editor has two roles: *Systems engineer* (devices, the connections between them, subsystems, the library, the checks) and *Electrical / AIT engineer* (connectors, pinouts, harnesses, wires, build sheets, tests). They replace the *Simple* and *Full* workspaces of version 1.7.0. The first start asks once, *Who are you working as?*; after that the role is a setting in **View > Role** and under **Settings > Editing**, and it takes effect at once.
 
@@ -183,7 +185,7 @@ A settings file that already holds values and no role is an *Electrical / AIT en
 
 The Systems engineer sees less. The project tree, the inspector and the Problems panel start closed (**Show panels** in the top bar opens the tree and the inspector together), the minimap and the legend are off, the status bar keeps the save state, the running job, *Offline* and the path, and the tools above the diagram are **Select**, **Connect**, **Add device** and **More**. The rail lists **Next step**, **Model**, **Checks**, **Revisions** and **Settings**; **Home**, **Drawings** and **Outputs** are not listed (the area you are in always is).
 
-Nothing is removed: each item keeps its menu entry (and its shortcut, where it has one), and Ctrl+K finds it. Each role keeps its own layout. The problem notices are off for the Systems engineer.
+The Systems engineer's menus leave out the entries for wires, harnesses, zones, alignment, the interface-first way, the diagram's drawing options, revisions of a harness and the engineering values. Nothing is removed: each item keeps its shortcut, and Ctrl+K finds it. Each role keeps its own layout. The problem notices are off for the Systems engineer.
 
 The role is not the mode. Guided and Expert change only how much the diagram shows:
 
@@ -473,7 +475,7 @@ The **Show** list at the right end of the Model tab bar (**More > Show only** fo
 - **Harness**: a bundle of wires with connectors that carries signals between devices.
 - **Interface**: a logical connection between two devices, for example RS-422 from the computer to a wheel.
 - **Connection**: two connectors joined pin by pin, with the pairs proposed from the signal names on the pins and confirmed by you (new in 1.8.0). It needs no interface type.
-- **Pin role**: what a pin is for: Power, Return, Ground, Signal, Shield or Spare. *Return* (`RTN`) is the line the current comes back on.
+- **Pin role**: what a pin is for: Power, Return, Ground, Signal, Shield or Spare. *Return* (`RTN`) is the line the current comes back on. The **Role** column of the Devices tab shows it and changes it (*Power (auto)* is taken from the signal name; *Automatic* gives that back).
 - **Nominal / redundant**: the main chain and its backup. They never share a connector or harness.
 - **Auto-filled**: a connector the tool chose; unconfirmed until a person looks at it.
 - **Pending**: a value nobody has entered yet, for example a wire gauge that waits for a derating value. Shown with a dotted chip, never as a number.
