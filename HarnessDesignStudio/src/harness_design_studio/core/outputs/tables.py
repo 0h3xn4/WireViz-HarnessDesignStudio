@@ -18,7 +18,7 @@ from decimal import Decimal
 
 from harness_design_studio.core.generate.lengths import clear_length_cache, wire_length
 from harness_design_studio.core.generate.mass import harness_mass
-from harness_design_studio.core.model import Connector, Harness, Pin, Project, Wire
+from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
 
 from .stamp import Table
 
@@ -423,16 +423,66 @@ def mating_matrix(project: Project) -> Table:
     return rows
 
 
+def device_of(project: Project, connector_id: str) -> str:
+    """The device a connector belongs to ("" when the connector or its device is gone)."""
+    c = project.connectors.get(connector_id)
+    return (c.unit_id or "") if c is not None else ""
+
+
+def carried_types(project: Project) -> dict[str, list[str]]:
+    """Link -> the IDs of the interface types its pairs belong to (`links.derived_interfaces`;
+    sorted, without repeats). A link whose pairs no type explains is not in the result."""
+    from harness_design_studio.core.links import derived_interfaces  # (links imports this module)
+
+    out: dict[str, set[str]] = {}
+    for di in derived_interfaces(project):
+        if di.type_id:
+            out.setdefault(di.link_id, set()).update(di.alternatives or (di.type_id,))
+    return {link: sorted(ids) for link, ids in out.items()}
+
+
+def link_wires(project: Project, link: Link) -> list[str]:
+    """The wires of the link's harness that join its two cable connectors (the ones that plug into
+    the link's device connectors), by ID. Empty while no harness was made from the link."""
+    h = project.harnesses.get(link.harness_id or "")
+    if h is None:
+        return []
+    cable = {c.mates_with: c.id for c in h.connectors if c.mates_with}
+    ends = {cable.get(link.a_connector), cable.get(link.b_connector)}
+    if None in ends or len(ends) != 2:
+        return []
+    return sorted(w.id for w in h.wires if {w.from_connector, w.to_connector} == ends)
+
+
+TRACE_HEADER = ["Interface", "Name", "Type", "From", "To", "Harnesses", "Wires", "Routed"]
+# A project with connections lists them under the interfaces: the first column then holds either
+# an interface or a connection (its ID), and the last column says which. Projects without
+# connections keep the eight columns above, byte for byte.
+TRACE_HEADER_LINKS = ["Interface or connection", *TRACE_HEADER[1:], "Kind"]
+
+
 def traceability(project: Project) -> Table:
     carried: dict[str, list[tuple[str, str]]] = defaultdict(list)
     for h in project.harnesses.values():
         for w in h.wires:
             if w.interface_id:
                 carried[w.interface_id].append((h.id, w.id))
-    rows: Table = [["Interface", "Name", "Type", "From", "To", "Harnesses", "Wires", "Routed"]]
+    rows: Table = [list(TRACE_HEADER_LINKS if project.links else TRACE_HEADER)]
+    kind = ["interface"] if project.links else []
     for i in sorted(project.interfaces.values(), key=lambda x: x.id):
         ends = [f"{e.unit_id}/{e.connector_id or '-'}" for e in i.endpoints]
         hs = sorted({h for h, _ in carried.get(i.id, [])})
         ws = sorted(w for _, w in carried.get(i.id, []))
-        rows.append([i.id, i.name, i.type_id, ends[0] if ends else "", ends[1] if len(ends) > 1 else "", ";".join(hs), ";".join(ws), "yes" if ws else "no"])  # fmt: skip
+        rows.append([i.id, i.name, i.type_id, ends[0] if ends else "", ends[1] if len(ends) > 1 else "", ";".join(hs), ";".join(ws), "yes" if ws else "no", *kind])  # fmt: skip
+    types = carried_types(project)
+    for link in sorted(project.links.values(), key=lambda x: x.id):
+        wires = link_wires(project, link)
+        rows.append([
+            link.id, link.name or f"{link.a_connector} - {link.b_connector}",
+            ";".join(types.get(link.id, [])),
+            f"{device_of(project, link.a_connector) or '-'}/{link.a_connector}",
+            f"{device_of(project, link.b_connector) or '-'}/{link.b_connector}",
+            link.harness_id if link.harness_id in project.harnesses else "", ";".join(wires),
+            "yes" if wires else "no", "connection",
+        ])  # fmt: skip
     return rows

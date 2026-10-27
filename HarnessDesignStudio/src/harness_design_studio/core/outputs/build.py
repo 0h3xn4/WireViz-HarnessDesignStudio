@@ -15,7 +15,7 @@ from harness_design_studio.core.model import Harness, Project
 from harness_design_studio.core.vcs.hashing import content_hash
 from harness_design_studio.core.vcs.report import changelog_rows, revision_report
 
-from . import buildsheet, drawing, exports, system, tables
+from . import buildsheet, connections, drawing, exports, system, tables
 from .canvas import SHEETS, Sheet, to_pdf, to_svg
 from .errors import OutputsError
 from .provenance import provenance_bytes
@@ -169,6 +169,9 @@ def build_outputs(
     out["system/mating_matrix.csv"] = csv_bytes(mating, stamp)
     out["system/traceability.csv"] = csv_bytes(trace, stamp)
     out["system/box_pinouts.csv"] = csv_bytes(boxes, stamp)
+    if project.links:  # the connection list (ICD style): only a project with connections has it
+        out[connections.CONNECTIONS_CSV] = csv_bytes(connections.connection_rows(project), stamp)
+        out[connections.CONNECTIONS_XLSX] = connections.connections_workbook(project, stamp)
     findings = findings_table(project)
     out["system/drc_findings.csv"] = csv_bytes(findings, stamp)
     out["system/drc_report.md"] = (f"<!-- {stamp.line} -->\n" + render_markdown(project)).encode()
