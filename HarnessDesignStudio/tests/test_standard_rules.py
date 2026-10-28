@@ -7,6 +7,8 @@ from __future__ import annotations
 
 from typing import Any
 
+import pytest
+
 from harness_design_studio.core import drc
 from harness_design_studio.core.commands import Put, apply_ops
 from harness_design_studio.core.drc import standard_rules as sr
@@ -429,3 +431,57 @@ def test_parts_without_a_maximum_temperature_are_named_as_not_checked() -> None:
     assert "Temperature margin was not checked for connector part(s)" in text
     assert f"Temperature margin was not checked for wire part(s) {w.part_id}" in text
     assert "no max_temp_c rating" in text
+
+
+def _bundle_case(temperature: float | None, amps: float) -> tuple[Project, str]:
+    """AWG 20 with 5 A, K 0.5 for the 2 wires of the harness, the power wire carrying `amps`."""
+    p = t.pos_bundle_current()
+    t.set_cfg(p, "derating", temperature_derating=temperature)
+    h, w = t.wire_of(p, "power")
+    i = p.interfaces[w.interface_id or ""]
+    apply_ops(p, [Put("interfaces", evolve(i, max_current_a=amps))])
+    assert len(h.wires) == 2
+    return p, w.id
+
+
+def test_bundle_current_and_wire_current_use_one_limit_with_the_temperature_factor() -> None:
+    """5 A x K 0.5 x temperature 0.5 = 1.25 A for both rules (`bundle-current` used to leave the
+    temperature factor out: 2.5 A, so 2 A passed there and failed in `current-over-wire`)."""
+    for amps, fires in ((2.0, True), (1.25, False), (1.2, False)):
+        p, wid = _bundle_case(0.5, amps)
+        assert (wid in hits("bundle-current", p)) is fires, amps
+        assert (wid in hits("current-over-wire", p)) is fires, amps
+    p, wid = _bundle_case(0.5, 2.0)
+    (bundle,) = [f for f in t.fire("bundle-current", p) if f.object_id == wid]
+    (wire,) = [f for f in t.fire("current-over-wire", p) if f.object_id == wid]
+    assert "allows 1.25 A" in bundle.title and "allows 1.25 A" in wire.title
+    assert "temperature factor 0.5" in bundle.title
+
+
+def test_bundle_current_still_runs_without_a_temperature_factor() -> None:
+    """The temperature factor is not needed for the bundle check: unset, it counts as 1 there
+    (`current-over-wire` stays silent without it, as before)."""
+    p, wid = _bundle_case(None, 4.0)
+    assert hits("current-over-wire", p) == []
+    (found,) = [f for f in t.fire("bundle-current", p) if f.object_id == wid]
+    assert "allows 2.5 A" in found.title and "temperature" not in found.title
+    p, wid = _bundle_case(None, 2.5)
+    assert hits("bundle-current", p) == []
+
+
+def test_the_wire_current_limit_is_one_function() -> None:
+    from harness_design_studio.core.generate.sizing import wire_current_limit
+
+    der: dict[str, object] = {
+        "ampacity_a_by_awg": {"20": 5.0},
+        "bundle_derating": 0.8,
+        "temperature_derating": 0.5,
+        "bundle_factor_by_count": {"1": 1.0, "10": 0.5},
+    }
+    assert wire_current_limit(der, 20, 5) == pytest.approx(1.25)  # the table replaces 0.8
+    assert wire_current_limit(der, 20, None) == pytest.approx(2.0)  # no bundle size: single factor
+    assert wire_current_limit(der, 20, 11) is None  # larger than the table lists
+    assert wire_current_limit(der, 22, 5) is None  # gauge not in the ampacity table
+    der["temperature_derating"] = None
+    assert wire_current_limit(der, 20, 5) is None
+    assert wire_current_limit(der, 20, 5, temperature_optional=True) == pytest.approx(2.5)
