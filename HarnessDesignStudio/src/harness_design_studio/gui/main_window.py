@@ -90,9 +90,11 @@ from harness_design_studio.core.vcs.release import (
     plan_release,
     plan_submit_review,
     release_blockers,
+    role_blockers,
     unapproved_parts,
 )
 from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, working_diff
+from harness_design_studio.core.vcs.roles import default_name, distinct_roles_on
 from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import areas, recent, strings
 from harness_design_studio.gui.canvas import DiagramView, ZoomIndicator
@@ -3238,8 +3240,15 @@ class MainWindow(QMainWindow):
         progress.reset()
         progress.deleteLater()
 
+    def _git_name(self) -> str:
+        """The name Git has for this person, when the project requires different people in a
+        release (config/naming.json release_distinct_roles) and no name was saved here; else ''."""
+        if str(self.settings.value("ui/user", "") or ""):
+            return ""
+        return default_name(self.ctl.project, self.ctl.root) or ""
+
     def _user_name(self) -> str:
-        saved = str(self.settings.value("ui/user", "") or "")
+        saved = str(self.settings.value("ui/user", "") or "") or self._git_name()
         if saved:
             return saved
         try:
@@ -3274,13 +3283,17 @@ class MainWindow(QMainWindow):
                 blockers=[],
                 ask_comment=False,
                 ok_text=strings.REVIEW_CONFIRM,
+                rule_note=strings.ROLES_REVIEW_NOTE if distinct_roles_on(project) else "",
+                by_tip=strings.NAME_FROM_GIT_TIP if self._git_name() else "",
             )
         elif action == "release":
             # the dialog asks for the reason itself, so a stand-in keeps that blocker out of the list
             blockers = release_blockers(
                 project, hid, by="x", comment="x" * 10, when=today, outputs_folder=folder,
                 accept_placeholders="x" * 10, accept_unapproved_parts="x" * 10,
+                check_roles=False,  # the names are asked for in the dialog, which checks them
             )  # fmt: skip
+            harness = project.harnesses[hid]
             dlg = ChangeDialog.for_release(
                 self,
                 project,
@@ -3290,6 +3303,16 @@ class MainWindow(QMainWindow):
                 blockers=[plain_blocker(b.message) for b in blockers],
                 placeholders=project.placeholder_configs(),
                 unapproved_parts=unapproved_parts(project, project.harnesses[hid]),
+                roles_check=(
+                    (
+                        lambda by, checker: [
+                            b.message for b in role_blockers(project, harness, by or None, checker)
+                        ]
+                    )  # fmt: skip
+                    if distinct_roles_on(project)
+                    else None
+                ),
+                by_tip=strings.NAME_FROM_GIT_TIP if self._git_name() else "",
             )
         else:
             dlg = ChangeDialog.for_revise(

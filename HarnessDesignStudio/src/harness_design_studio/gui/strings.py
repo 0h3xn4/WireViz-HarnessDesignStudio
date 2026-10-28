@@ -335,6 +335,18 @@ REVIEW_TITLE = "Submit {0} for review"
 NEW_REV_TITLE = "New revision of {0}"
 YOUR_NAME = "Your name"
 CHECKED_BY = "Checked by (optional)"
+CHECKED_BY_REQUIRED = "Checked by (required: someone other than the author and you)"
+ROLES_RELEASE_NOTE = (
+    "This project requires three different people: the author, the person who checked it "
+    "and you, who release it."
+)
+ROLES_REVIEW_NOTE = (
+    "This project requires three different people. The name you enter here is the author; "
+    "someone else checks the harness and a third person releases it."
+)
+NAME_FROM_GIT_TIP = (
+    "Taken from Git (user.name) because no name was saved here. Change it if it is not you."
+)
 COMMENT = "Comment (what changed or why)"
 BLOCKED = "Blocked until these are fixed:"
 READY_TO_RELEASE = "Nothing blocks this release."
