@@ -2214,7 +2214,7 @@ class MainWindow(QMainWindow):
         self.panels_btn.setVisible(False)
         self.topbar.add_mode(self.panels_btn)
         for dock in (self.dock_left, self.dock_right):
-            dock.visibilityChanged.connect(lambda _v=False: self._sync_panels_action())
+            dock.visibilityChanged.connect(self._on_dock_visibility)
         # the More menu of the diagram tool row (Systems engineer role): every tool the row leaves out
         self.menu_more = QMenu(self.tool_more)
         self.menu_more.setObjectName("menu-more")
@@ -3627,6 +3627,11 @@ class MainWindow(QMainWindow):
         the Systems engineer role; the Problems panel is its own toggle)."""
         self.dock_left.setVisible(on)
         self.dock_right.setVisible(on)
+        self._sync_panels_action()
+
+    def _on_dock_visibility(self, _visible: bool = False) -> None:
+        # a bound method, not a lambda: Qt drops the connection when the window is deleted, so a dock
+        # that is hidden while the program ends no longer calls into a window that is gone
         self._sync_panels_action()
 
     def _sync_panels_action(self) -> None:

@@ -5,6 +5,7 @@ project inconsistent), undoable, autosaved to the recovery journal, and reported
 small `Delta` so they redraw only what changed.
 """
 
+import atexit
 import json
 import threading
 from collections.abc import Callable, Iterable, Mapping, Sequence
@@ -156,6 +157,33 @@ class NeedSaveAs(HarnessError):
 
 RELEASE_WAIT_MS = 5000  # how long closing the window waits for a check that cannot be stopped
 _ABANDONED: list[QThread] = []  # checks still running at exit: kept alive so Qt does not abort
+_STARTED: list[QThread] = []  # workers started and not yet seen finished (see `_start_worker`)
+
+
+def _is_running(worker: QThread) -> bool:
+    try:
+        return worker.isRunning()
+    except RuntimeError:  # the C++ object is already gone
+        return False
+
+
+def _start_worker(worker: QThread) -> None:
+    """Start a background worker and remember it until it has finished, so that `_finish_workers`
+    can wait for it when the program ends without the window being closed."""
+    _STARTED[:] = [w for w in _STARTED if _is_running(w)]
+    _STARTED.append(worker)
+    worker.start()
+
+
+@atexit.register
+def _finish_workers() -> None:
+    """Qt aborts the whole process ("QThread: Destroyed while thread is still running") when the
+    interpreter ends while a worker is still writing the autosave journal or checking the design.
+    Closing the window waits for them (`Controller.release`); this covers every other way out."""
+    for worker in [*_STARTED, *_ABANDONED]:
+        if _is_running(worker):
+            worker.wait(RELEASE_WAIT_MS)
+
 
 MANY_FINDINGS = 1000  # above this, panels listing findings refresh on a short timer
 LIST_DELAY_MS = 60
@@ -283,7 +311,7 @@ class EditorController(QObject):
         worker = DrcWorker(edit.clone_with(self.project, []), token)
         worker.finished.connect(self._drc_done)
         self._drc_worker = worker
-        worker.start()
+        _start_worker(worker)
 
     def _drc_done(self) -> None:
         self._retired = [w for w in self._retired if not w.wait(0)]
@@ -1489,7 +1517,7 @@ class EditorController(QObject):
         )
         worker.finished.connect(self._journal_done)
         self._journal_worker = worker
-        worker.start()
+        _start_worker(worker)
 
     def _journal_done(self) -> None:
         worker = self._journal_worker
