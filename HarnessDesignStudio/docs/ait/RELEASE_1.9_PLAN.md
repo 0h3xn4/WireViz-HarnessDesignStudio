@@ -68,3 +68,5 @@ ends.
 See `docs/AUDIT_1.8.0.md` section 8 (kladow, Sam's tool, the workshop export failure, deliverable
 per role, standards, variants, licence and signing, who tests, role defaults). The two role defaults
 stay as built in 1.8.0 until the owner answers.
+
+*Answered on 2026-10-28 (D-181): kladow, Sam's tool and the export failure are discarded; the deliverable per role follows the recommendation; the test with people is later. The role defaults stay.*

@@ -249,6 +249,8 @@ About 55 verifiable claims checked, **6 wrong or stale**, none dangerous: CHEATS
 7. **Who tests?** Nobody has watched the GUI on a real display, and nothing measures ease of use; every claim about points 22 and 23 depends on it.
 8. Two earlier role defaults: should the Systems rail hide Home, Drawings and Outputs, and should a stored 1.7.0 Simple choice become Systems engineer?
 
+*Answered by the owner on 2026-10-28 (D-181): questions 1 and 2 are discarded, question 3 follows the recommendation (Systems engineer: connection list; Electrical / AIT engineer: build workbook, drawings and lists), question 7 is later. Questions 4, 5, 6 and 8 are still open.*
+
 ---
 
 ## 9 What this audit could not check

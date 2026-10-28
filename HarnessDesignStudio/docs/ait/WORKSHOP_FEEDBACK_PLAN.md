@@ -210,3 +210,5 @@ All five milestones are built and on `master` (M1 with pull request 111, M2 to M
 ## Not clear yet
 
 "kladow" (what it is), "Sam's tool" (what it is and where the files are), and how the export failure was reached.
+
+*Closed by the owner on 2026-10-28 (D-181): all three are discarded; nothing more is built for them.*
