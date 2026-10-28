@@ -46,7 +46,7 @@ from .model.physical import Gender, PinDirection, PinRole, Termination
 from .outputs.stamp import Table
 from .outputs.tables import box_pinouts
 from .vcs.lockview import LockRef, field_lock_reason, lock_reason, locked_objects
-from .vcs.snapshot import carried_interfaces
+from .vcs.snapshot import carried_interfaces, wire_pins
 
 PinMode = Literal["free", "fixed", "locked"]
 PIN_MODES: tuple[PinMode, ...] = get_args(PinMode)
@@ -233,15 +233,17 @@ def pin_set_frozen(project: Project, connector_id: str) -> str | None:
 
 
 def pin_lock_reason(project: Project, connector_id: str, pin_id: str) -> str | None:
-    """Why this one pin cannot be edited at all (it carries an interface of a released harness),
-    or None. A spare pin of a frozen connector stays editable; only its name and existence are
-    frozen (`pin_set_frozen`)."""
+    """Why this one pin cannot be edited at all (it carries an interface of a released harness, or
+    a wire of a released harness ends on it: 1.9.0), or None. A spare pin of a frozen connector
+    stays editable; only its name and existence are frozen (`pin_set_frozen`)."""
     c = project.connectors.get(connector_id)
     pin = next((p for p in c.pins if p.id == pin_id), None) if c is not None else None
-    if pin is None or pin.interface_id is None:
+    if pin is None:
         return None
     for h in _released(project):
-        if pin.interface_id in carried_interfaces(h):
+        if (pin.interface_id is not None and pin.interface_id in carried_interfaces(h)) or (
+            pin_id in wire_pins(h).get(connector_id, ())
+        ):
             key = ("box_pin", f"{connector_id}.{pin_id}")
             return lock_reason(project, "box_pin", f"{connector_id}.{pin_id}", {key: _ref(h)})
     return None

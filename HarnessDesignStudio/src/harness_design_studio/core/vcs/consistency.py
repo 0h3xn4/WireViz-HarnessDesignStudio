@@ -4,7 +4,7 @@ from harness_design_studio.core.issues import Issue
 from harness_design_studio.core.model import Harness, Project, Snapshot
 
 from .locks import _pins_equal, interface_design, part_design, type_design, unit_design
-from .snapshot import frozen_config, normalize
+from .snapshot import frozen_config, normalize, wire_pins
 
 
 def release_integrity(project: Project) -> list[Issue]:
@@ -49,7 +49,7 @@ def release_integrity(project: Project) -> list[Issue]:
             for u in b.snapshot.units
         ):
             out.append(_modified(h, "a device it connects to was changed"))
-        elif _box_connector_changed(project, b.snapshot):
+        elif _box_connector_changed(project, b.snapshot, b.snapshot.harnesses[0]):
             out.append(_modified(h, "a box connector it plugs into was changed"))
         elif changed := _used_data_changed(project, b.snapshot):
             out.append(_modified(h, changed, REVISE))
@@ -91,12 +91,14 @@ def _list(ids: list[str]) -> str:
     return ", ".join(ids[:3]) + (f" and {len(ids) - 3} more" if len(ids) > 3 else "")
 
 
-def _box_connector_changed(project: Project, snapshot: Snapshot) -> bool:
-    """A stored box connector is gone, or its part, gender, keying or the pins that carry the
-    harness's interfaces differ (other pins and labels may change)."""
+def _box_connector_changed(project: Project, snapshot: Snapshot, harness: Harness) -> bool:
+    """A stored box connector is gone, or its part, gender, keying, the pins that carry the
+    harness's interfaces or the pins its wires reach differ (other pins and labels may change)."""
     carried = {i.id for i in snapshot.interfaces}
+    used = wire_pins(harness)
     return any(
-        (now := project.connectors.get(c.id)) is None or not _pins_equal(c, now, carried)
+        (now := project.connectors.get(c.id)) is None
+        or not _pins_equal(c, now, carried, used.get(c.id, set()))
         for c in snapshot.connectors
     )
 

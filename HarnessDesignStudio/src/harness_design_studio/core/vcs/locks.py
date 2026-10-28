@@ -18,6 +18,7 @@ from harness_design_studio.core.model import (
 from .snapshot import (
     carried_interfaces,
     frozen_values,
+    locked_pins,
     used_interface_type_ids,
     used_part_ids,
 )
@@ -43,8 +44,12 @@ def _is_new_revision(old: Harness, new: Harness) -> bool:
     )
 
 
-def _pins_equal(a: Connector, b: Connector, locked: set[str]) -> bool:
-    ap = {p.id: p for p in a.pins if p.interface_id in locked}
+def _pins_equal(
+    a: Connector, b: Connector, locked: set[str], pins: frozenset[str] | set[str] = frozenset()
+) -> bool:
+    """Are the frozen pins the same in both? Frozen are the pins allocated to an interface of
+    `locked` and the pins whose IDs are in `pins` (the pins that wires of a harness reach)."""
+    ap = {p.id: p for p in a.pins if p.interface_id in locked or p.id in pins}
     bp = {p.id: p for p in b.pins if p.id in ap}
     return ap == bp and (a.part_id, a.gender, a.keying) == (b.part_id, b.gender, b.keying)
 
@@ -91,9 +96,14 @@ def check_locks(project: Project, ops: list[Op]) -> None:
     if not released:
         return
     owner = {i: h.id for h in released.values() for i in carried_interfaces(h)}
-    box_owner = {
-        c.mates_with: h.id for h in released.values() for c in h.connectors if c.mates_with
-    }
+    box_owner: dict[str, str] = {}  # box connector -> the first released harness (by ID) on it
+    box_pins: dict[str, set[str]] = {}  # box connector -> its pins that wires of those reach
+    for rid in sorted(released, reverse=True):
+        for c in released[rid].connectors:
+            if c.mates_with:
+                box_owner[c.mates_with] = rid
+        for box, ids in locked_pins(project, released[rid]).items():
+            box_pins.setdefault(box, set()).update(ids)
     locked_ifaces = set(owner)
     unit_owner = {
         e.unit_id: owner[i]
@@ -187,7 +197,8 @@ def check_locks(project: Project, ops: list[Op]) -> None:
             mine = {p.interface_id for p in old_c.pins if p.interface_id in locked_ifaces}
             hid = box_owner.get(key) or next((owner[i] for i in mine if i), None)
             if hid and not (
-                isinstance(new, Connector) and _pins_equal(old_c, new, {i for i in mine if i})
+                isinstance(new, Connector)
+                and _pins_equal(old_c, new, {i for i in mine if i}, box_pins.get(key, set()))
             ):
                 problems.append(f"Connector {key} is used by {hid}, which is released. " + why(hid))
     if problems:
