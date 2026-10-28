@@ -128,3 +128,25 @@ Change the UI scale: 1,100 to 1,200 ms (unchanged; 1.06 s of it is Qt's `QApplic
 | Full repaint | 1,044 / 759 / 35 ms | 103 / 95 / 32 ms |
 
 From the milestones (their own tests carry the limits): the Interfaces table of the stress project opens in about 130 ms and the Units table in about 25 ms (M4); a result of 82,549 findings is taken in on the GUI thread in 132 ms (M5); the drawing preview zooms, pans and fits in 3 to 6 ms a frame (M6); with a 20,000-row import file the longest pause of the window is about 110 ms (was 530) and the check page fills in 30 ms (was 283) (M7).
+
+## After release 1.9, round two (R3: incremental integrity check, autosave journal, export styles, undo steps)
+
+`python -m tools.bench_incremental` (new in this round), a project of 200 devices: the stress project of `tools.bench_stress` (2,000 interfaces, 150 harnesses, 20,000 wires) plus two more connectors of 40 named pins on every device and a connection from every device to the next. Linux container with 4 shared vCPUs, Python 3.14, offscreen. Median of three runs of the script, five repeats inside each (the "before" runs are the same script on `a4431e2`). Read the ratios: other workloads ran on the machine.
+
+| What | Before | After |
+|---|---|---|
+| `History.execute`, rename a device | 37.8 ms | 1.9 ms |
+| `History.execute`, edit a device connector | 83.8 ms | 13.7 ms (the connection check runs again: 200 connections of 20 pairs) |
+| `History.execute`, edit one wire of 20,000 | 42.9 ms | 2.5 ms |
+| First edit after a project is opened | 90 to 140 ms | 115 to 175 ms (one full check either way) |
+| Full integrity check of the project, nothing changed | 19.5 ms | 19.0 ms (unchanged; used by load and save) |
+| Autosave journal, GUI thread, after the pause that follows an edit | 414 ms | 0.4 ms |
+| Autosave journal, GUI thread, the first one after opening | 792 ms | 0.7 ms |
+| Journal on disk (worker thread, 14 MB) after the pause | 459 ms | 46 ms |
+| `serialize(project)` after one edit (save, model hash, journal) | 215 ms | 6.5 ms |
+| Export of the flatsat example without drawings (`build_outputs`) | 3.73 s | 1.84 s |
+| openpyxl font objects made by that export | 28,726 | 24 |
+| Memory kept by one undo step (a wire note edited), flatsat harness of 26 wires | 682 kB | 7 kB |
+| The same on the 200-device project (harness of 133 wires) | 15 kB | 7 kB |
+
+What was left as it is: the connection check (`_check_links`) still runs as a whole when a connector that a connection names changes (a connection checks its pins against the pins of every other connection); the first `History.execute` after opening a project pays for one full check; the full `check_integrity` that load, save and the design rule check run is unchanged; the export of the other examples and of drawings is unchanged apart from the build workbooks. Per-harness incremental export is not possible without changing bytes: every file carries the model hash of the whole project.

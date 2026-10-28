@@ -53,7 +53,7 @@ Rules: `gui` and `cli` depend on `core`; `core` depends on nothing in `gui` or `
 | `integrity.py` | referential integrity of a project; runs on every load, save and transaction |
 | `issues.py` | findings reported by loading, integrity checking and `harness-design-studio validate` / `check` |
 | `checks.py` | logical-layer findings shown in the Problems tab (with its to-do list) |
-| `recovery.py` | autosave journal of an open project, kept inside the project folder |
+| `recovery.py` | autosave journal of an open project, kept inside the project folder (the text is built from the files that changed since the last journal; the editor writes it in a worker thread) |
 | `schemas.py` | JSON Schemas of the project files, made from the model itself |
 | `samples.py`, `starter.py`, `templates.py` | reference projects for tests and the first-run sample; starter library and interface types (example data only); the example projects and import templates shipped with the tool |
 | `standard_profiles.py`, `configcheck.py` | optional value profiles from the supplied standards (D-131); check and fill in the engineering configuration (D-11) |
