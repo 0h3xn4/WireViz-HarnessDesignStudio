@@ -14,6 +14,7 @@ GROUPS = (
     ("Start", ("new", "templates", "schema")),
     ("Check", ("validate", "check", "drc", "verify")),
     ("Generate and export", ("generate", "export")),
+    ("Team use with Git", ("merge-fix",)),
     (
         "Bring in data",
         (
@@ -117,6 +118,7 @@ EXAMPLES: dict[str, list[str]] = {
     "log": ["harness-design-studio log my-design", "harness-design-studio log my-design W001"],
     "compare": ["harness-design-studio compare old-checkout new-checkout"],
     "migrate": ["harness-design-studio migrate my-design"],
+    "merge-fix": ["harness-design-studio merge-fix my-design"],
 }
 
 

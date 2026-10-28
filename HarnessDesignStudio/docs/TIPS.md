@@ -89,7 +89,7 @@ Type several words and every word must match, in any order (`go rw1` finds *Go t
 
 ## Keep a project in Git
 
-A project is a folder of small, plain JSON files in a fixed format (sorted keys, two-space indent, lists sorted by ID), so a Git diff shows real changes only. Commit the whole folder. `harness-design-studio new` writes a `.gitignore` that already leaves out lock files, backups and the app's autosave. `outputs/` can be committed or ignored; it is always safe to delete and make again. The format is in [`FILE_FORMAT.md`](FILE_FORMAT.md).
+A project is a folder of small, plain JSON files in a fixed format (sorted keys, two-space indent, lists sorted by ID), so a Git diff shows real changes only. Commit the whole folder. `harness-design-studio new` writes a `.gitignore` that already leaves out lock files, backups and the app's autosave, and a `.gitattributes` that keeps Git from writing conflict markers into `generated/generation.json`; if two people both pressed Generate, `harness-design-studio merge-fix DIR` resolves that one conflict. `outputs/` can be committed or ignored; it is always safe to delete and make again. The format is in [`FILE_FORMAT.md`](FILE_FORMAT.md).
 
 After a merge or a pull, run:
 

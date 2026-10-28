@@ -41,6 +41,7 @@ outputs/                          written by `harness-design-studio export` (see
 changelog.json                    the change log (append-only; entries cannot be deleted)
 baselines/<harness ID>/<baseline ID>.json   frozen snapshot made at each release
 .gitignore                        written once: *.bak, lock files, temp files, .harness-recovery/, .migration-backup-v*/
+.gitattributes                    written once by `harness-design-studio new` (not by a save): Git treats generated/generation.json as binary (no conflict markers), see merge-fix; not part of the project format
 .harness-recovery/session.json    autosave journal of an open project (not part of the project; ignore in Git)
 ```
 

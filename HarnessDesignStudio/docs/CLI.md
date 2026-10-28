@@ -22,6 +22,7 @@ The examples show the form of each command with example names. They do not all w
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
 - Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export)
+- Team use with Git: [`merge-fix`](#harness-design-studio-merge-fix)
 - Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data)
 - Write data out: [`export-pinout`](#harness-design-studio-export-pinout), [`export-devices`](#harness-design-studio-export-devices), [`export-subsystem`](#harness-design-studio-export-subsystem)
 - Review, release and change: [`review`](#harness-design-studio-review), [`release`](#harness-design-studio-release), [`revise`](#harness-design-studio-revise), [`diff`](#harness-design-studio-diff), [`log`](#harness-design-studio-log), [`compare`](#harness-design-studio-compare)
@@ -184,6 +185,24 @@ Examples:
 ```
 harness-design-studio export my-design
 harness-design-studio export my-design --drawings
+```
+
+## Team use with Git
+
+### harness-design-studio merge-fix
+
+After a Git merge in which two people each pressed Generate, `generated/generation.json` conflicts. This command keeps this branch's version of that one file, then runs `generate` (which writes the record again for the merged design) and `check`. It refuses, and changes nothing, when any other file of the project is in conflict, and it writes nothing itself apart from that record and what `generate` writes. Commit the result afterwards.
+
+`harness-design-studio merge-fix project`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+
+Examples:
+
+```
+harness-design-studio merge-fix my-design
 ```
 
 ## Bring in data

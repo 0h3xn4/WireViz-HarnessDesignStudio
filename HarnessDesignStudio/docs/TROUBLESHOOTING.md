@@ -377,7 +377,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 3 devices, 1 interfaces, 9 connectors, 0 harnesses: 1 error(s), 0 warning(s).
 ```
 
-A Git merge left `<<<<<<<`, `=======` and `>>>>>>>` lines in a project file. Open the file named in brackets, decide which side to keep, delete the three marker lines, and run `harness-design-studio check` again. Use `check` rather than `validate` after a merge: `check` also finds these markers and released harnesses that were edited. If the file named is `generated/generation.json`, do not edit it: take either side of the conflict, run `generate`, then `check` ([how](user-manual/use-git-and-ci.md#when-generatedgenerationjson-conflicts)).
+A Git merge left `<<<<<<<`, `=======` and `>>>>>>>` lines in a project file. Open the file named in brackets, decide which side to keep, delete the three marker lines, and run `harness-design-studio check` again. Use `check` rather than `validate` after a merge: `check` also finds these markers and released harnesses that were edited. If the file named is `generated/generation.json`, do not edit it: run `harness-design-studio merge-fix DIR`, which keeps one side, runs `generate` and then `check` (it refuses and changes nothing when another file is in conflict too; [how](user-manual/use-git-and-ci.md#when-generatedgenerationjson-conflicts)).
 
 ### `error: the project has damaged files (first: ...)`, exit code 2
 

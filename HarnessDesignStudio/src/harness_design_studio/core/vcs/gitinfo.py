@@ -21,7 +21,7 @@ from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
-__all__ = ["CommitInfo", "find_git_dir", "last_commit"]
+__all__ = ["CommitInfo", "find_git_dir", "find_work_tree", "last_commit"]
 
 MAX_OBJECT = 1 << 20  # a commit larger than 1 MiB is not read
 MAX_DELTA_DEPTH = 64
@@ -52,6 +52,13 @@ def find_git_dir(start: Path) -> tuple[Path, Path] | None:
     """(git dir, common dir) of the repository that contains `start`, or None. A `.git` file
     (a linked worktree or a submodule) points to the git dir; objects and refs of a linked
     worktree live in the common dir."""
+    found = find_work_tree(start)
+    return None if found is None else (found[1], found[2])
+
+
+def find_work_tree(start: Path) -> tuple[Path, Path, Path] | None:
+    """(work tree, git dir, common dir) of the repository that contains `start`, or None. The work
+    tree is the folder that holds `.git`; the paths in the index are relative to it."""
     try:
         here = start.resolve()
     except OSError:
@@ -75,7 +82,7 @@ def find_git_dir(start: Path) -> tuple[Path, Path] | None:
             cf = git_dir / "commondir"
             if cf.is_file():
                 common = (git_dir / cf.read_text(encoding="utf-8").strip()[:4096]).resolve()
-            return git_dir, common
+            return folder, git_dir, common
         except OSError, UnicodeError:
             return None
     return None

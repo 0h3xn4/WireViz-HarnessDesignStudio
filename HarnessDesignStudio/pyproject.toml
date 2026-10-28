@@ -34,7 +34,7 @@ harness-gui = "harness_design_studio.gui.app:main"  # short alias, kept so exist
 where = ["src"]
 
 [tool.setuptools.package-data]
-"harness_design_studio.resources" = ["guide/*.html", "examples/**/*", "examples/**/.gitignore", "fonts/*"]  # ** skips dotfiles
+"harness_design_studio.resources" = ["guide/*.html", "examples/**/*", "examples/**/.gitignore", "examples/**/.gitattributes", "fonts/*"]  # ** skips dotfiles
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]

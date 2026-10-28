@@ -65,6 +65,13 @@ def test_the_merge_claims_name_the_generation_record() -> None:
     assert "git checkout --ours design/generated/generation.json" in git
     assert "generate design" in git.split("git checkout --ours", 1)[1][:200]
     assert "check design" in git.split("git checkout --ours", 1)[1][:300]
+    # the command that does it, and the file that keeps markers out of the record (1.9)
+    troubleshooting = _text(DOCS / "TROUBLESHOOTING.md")
+    for text in (concepts, git, troubleshooting):
+        assert "merge-fix" in text
+    assert "harness-design-studio merge-fix design" in git
+    assert ".gitattributes" in git and "ci/gitattributes" in git
+    assert "logical/links.json" in git  # the other files that conflict by design
 
 
 def test_two_generated_branches_really_conflict_only_in_the_record(tmp_path: Path) -> None:
@@ -86,6 +93,9 @@ def test_two_generated_branches_really_conflict_only_in_the_record(tmp_path: Pat
     assert run("init", "-q", "-b", "main").returncode == 0
     assert main(["new", str(tmp_path / "design"), "--template", "first-steps"]) == 0
     assert main(["generate", str(tmp_path / "design")]) == 0
+    # a project made before 1.9 has no .gitattributes; with it the file has no markers (see
+    # tests/test_merge_fix.py)
+    (tmp_path / "design" / ".gitattributes").unlink()
     run("add", "-A")
     assert run("commit", "-qm", "start").returncode == 0
 
