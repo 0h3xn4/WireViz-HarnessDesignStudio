@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.8.1; version 1.9.0 (the Systems engineer path, a connection list as output, `merge-fix`, faster edits in big projects; it needs Python 3.14 only for an install from source) is prepared and not published yet. Version 1.8.1 (2026-10-28: fixes from the audit of 1.8.0: links, "not checked", the library, the keyboard, the command line, the documents; tag `v1.8.1` on commit `6b7d70b`, release workflow run 40681169961; not signed off by the owner); 1.8.0 (2026-10-26: connections pin by pin, editing connectors and wires, a shared library, two roles instead of the simple workspace; tag `v1.8.0` on commit `1f7431e`) came before it. The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.9.0 (2026-10-28: the Systems engineer path, a connection list as output, `merge-fix`, faster edits in big projects; it needs Python 3.14 only for an install from source; tag `v1.9.0` on commit `ae8a8f9`, release workflow run 40718549384; not signed off by the owner); 1.8.1 (2026-10-28: fixes from the audit of 1.8.0: links, "not checked", the library, the keyboard, the command line, the documents; tag `v1.8.1` on commit `6b7d70b`, release workflow run 40681169961; not signed off by the owner); 1.8.0 (2026-10-26: connections pin by pin, editing connectors and wires, a shared library, two roles instead of the simple workspace; tag `v1.8.0` on commit `1f7431e`) came before it. The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
 
 ## Contents
 
@@ -43,31 +43,31 @@ You also need about 500 MB of free disk space for the program (`df -h ~` shows i
 
 You need one file, either `harness-design-studio_<version>_amd64.deb` (way A), `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B), `harness-design-studio-<version>-windows-x86_64-setup.exe` or `harness-design-studio-<version>-windows-x86_64.zip` (way D). Ask your tool administrator, or take it from one of these places:
 
-- the **Releases** page of the project's repository (look for the newest version number). Version 1.8.1 (tag `v1.8.1`, published 2026-10-28) has these files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
+- the **Releases** page of the project's repository (look for the newest version number). Version 1.9.0 (tag `v1.9.0`, published 2026-10-28) has these files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
 
   | File | For | Way |
   | --- | --- | --- |
-  | `harness-design-studio_1.8.1_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
-  | `harness-design-studio-1.8.1-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
-  | `harness-design-studio-1.8.1-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
-  | `harness-design-studio-1.8.1-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
+  | `harness-design-studio_1.9.0_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
+  | `harness-design-studio-1.9.0-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
+  | `harness-design-studio-1.9.0-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
+  | `harness-design-studio-1.9.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
   | `SHA256SUMS` | the SHA-256 checksum of each package | |
 
-  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 to 1.8.1 and two macOS disk images that are not maintained any more (D-168); 1.6.0, 1.7.0 and 1.8.0 have the same four packages and `SHA256SUMS` as 1.8.1. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
+  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 to 1.9.0 and two macOS disk images that are not maintained any more (D-168); 1.6.0, 1.7.0, 1.8.0 and 1.8.1 have the same four packages and `SHA256SUMS` as 1.9.0. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
 - the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact `harness-design-studio-ubuntu-24.04` of the CI run holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file); the run of the workflow `harness-design-studio packages (Windows)` on a branch `pkg/...` keeps the Windows packages as the artifact `harness-design-studio-windows-x86_64`. Such a build is made again on another machine and is not the file of a release.
 
 You can also build it yourself (way C, last section). That route needs no release files at all.
 
 Copy the file to the machine. It never needs to reach the network.
 
-**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file: the `SHA256SUMS` file on the release page (one file for all the packages of a release from 1.2.0) and `compliance/evidence/release_<version>_SHA256SUMS` in the repository (every release from 0.1.0 to 1.8.1). For 1.8.1 they are:
+**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file: the `SHA256SUMS` file on the release page (one file for all the packages of a release from 1.2.0) and `compliance/evidence/release_<version>_SHA256SUMS` in the repository (every release from 0.1.0 to 1.9.0). For 1.9.0 they are:
 
 | File | SHA-256 |
 | --- | --- |
-| `harness-design-studio_1.8.1_amd64.deb` | `3268acf1b982b2b5bf90fb4faf74bc26fe584104ffd47edd99ac42349080d4ff` |
-| `harness-design-studio-1.8.1-linux-x86_64.tar.gz` | `33398b453df487a17e6bcf8b342be6e82c1f2704c96ce552541ea77958d634dd` |
-| `harness-design-studio-1.8.1-windows-x86_64-setup.exe` | `eb6b72038e2fcb4218a4aaece30251f058b3f3406360ef851cf756d08399a081` |
-| `harness-design-studio-1.8.1-windows-x86_64.zip` | `0e970186d15c7227c62f3201ae5d540ce30ffdc0282f7a092524955e63d9d180` |
+| `harness-design-studio_1.9.0_amd64.deb` | `19244d4229f08ccb5df8860d7155bde45001ca5527e3cd6f61b2f0d9a28ae5ce` |
+| `harness-design-studio-1.9.0-linux-x86_64.tar.gz` | `b5d199137921071b20516a72500a6f4aa8f3a5c74c7765e0d253c8d21547247b` |
+| `harness-design-studio-1.9.0-windows-x86_64-setup.exe` | `522aa05d8df9e2648db41f954bf46571734bd9f3c6b04c050dc05deeba29004e` |
+| `harness-design-studio-1.9.0-windows-x86_64.zip` | `bdd4b82db8f02fb0bd7198da152e90614f493cc9e0fa719a4bed6deb86e646de` |
 
 On Linux, put the package you downloaded and `SHA256SUMS` in one folder and run:
 
