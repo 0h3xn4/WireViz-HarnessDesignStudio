@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Fixed
+
+- **The program no longer aborts when it ends while the autosave journal is still being written.** Since 1.9.0 the journal is written by a background thread; a process that ended without closing the window (a script, a test, any other way out) could end with signal 6 and the message `QThread: Destroyed while thread '' is still running` when the writer was slow. Ending the program now waits for the autosave writer and for a running design check (at most five seconds each, as closing the window does). The same exit no longer prints `Internal C++ object (MainWindow) already deleted` when a panel is hidden while the window is being deleted. Closing the window was not affected. `tests/test_exit_with_worker.py`.
+
 ## 1.9.0 (2026-10-28; not a statement of compliance)
 
 ### Added
