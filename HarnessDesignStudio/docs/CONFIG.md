@@ -165,7 +165,7 @@ None of these is set by default. `harness-design-studio config DIR --apply-profi
 | `rf_power_factor` | RF power as a fraction of the rating (0.75); recorded, no rule yet (no RF power on interfaces) | ECSS-Q-ST-30-11_0140058 |
 | `wire_voltage_factor` | working voltage as a fraction of the wire's rated voltage (0.5) | ECSS-Q-ST-30-11_0140213 |
 | `wire_temperature_margin_c` | degrees below the manufacturer's maximum for the wire surface (50); only the ambient part is checked (`max_ambient_temperature_c`), self-heating needs a thermal analysis | ECSS-Q-ST-30-11_0140213 |
-| `bundle_factor_by_count` | table: number of wires to factor K (above 0, at most 1, not rising with the count). A bundle uses the next listed count; replaces `bundle_derating` in sizing and in the rule `bundle-current`. The single wire current is your `ampacity_a_by_awg`. | ECSS-Q-ST-30-11_0140218 |
+| `bundle_factor_by_count` | table: number of wires to factor K (above 0, at most 1, not rising with the count). A bundle uses the next listed count; replaces `bundle_derating` in sizing and in the rules `current-over-wire` and `bundle-current`, which use one limit (the ampacity times K times `temperature_derating`; `bundle-current` takes an unset `temperature_derating` as 1). The single wire current is your `ampacity_a_by_awg`. | ECSS-Q-ST-30-11_0140218 |
 | `partial_load_factor` | table L for partly loaded bundles; recorded, not applied (the report says so) | ECSS-Q-ST-30-11_0140220 |
 | `max_mating_cycles` | mating cycles a connector may be used for (50) | ECSS-Q-ST-30-11_0140056 |
 

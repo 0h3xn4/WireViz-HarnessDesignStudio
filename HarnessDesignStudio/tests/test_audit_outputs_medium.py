@@ -261,6 +261,44 @@ def test_a_shield_end_stays_on_the_same_side_on_every_sheet() -> None:
     assert len(sides) >= 3 and len(set(sides)) == 1
 
 
+def test_a_shield_end_a_is_the_from_end_of_its_lowest_wire_in_any_order() -> None:
+    """End A of a shield is the From connector of its lowest wire ID: not the order of the wire
+    list, not the order of `wire_ids`, not which connector the drawing puts on the left."""
+
+    def end_a_side(h: Harness) -> str:
+        (sheet,) = sheets_of(h, "A4")
+        words = [i for i in sheet.items if isinstance(i, Text) and i.s in ("backshell 360",)]
+        (word,) = words
+        return "left" if word.anchor == "start" else "right"
+
+    def harness(wires: list[Wire], ids: list[str]) -> Harness:
+        return Harness(
+            id="H1",
+            name="h",
+            connectors=[conn("A", ["1", "2"]), conn("B", ["1", "2"])],
+            wires=wires,
+            shields=[
+                ShieldGroup(
+                    id="S1",
+                    kind="overall_shield",
+                    wire_ids=ids,
+                    end_a="backshell_360",
+                    end_b="floating",
+                )  # fmt: skip
+            ],
+        )
+
+    w1, w2 = wire("W001", "A", "1", "B", "1"), wire("W002", "B", "2", "A", "2")
+    sides = {
+        end_a_side(harness(list(ws), list(ids)))
+        for ws in ((w1, w2), (w2, w1))
+        for ids in (["W001", "W002"], ["W002", "W001"])
+    }
+    assert len(sides) == 1
+    flipped = harness([wire("W001", "B", "1", "A", "1"), w2], ["W001", "W002"])
+    assert end_a_side(flipped) != sides.pop()  # the From end of the lowest wire decides
+
+
 # ---- D-8: the order of the harnesses does not change the bytes ---------------------------------------
 
 
