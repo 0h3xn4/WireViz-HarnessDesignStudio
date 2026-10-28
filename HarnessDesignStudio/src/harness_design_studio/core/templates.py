@@ -1,7 +1,8 @@
 """Starting points shipped with the tool: example projects and import templates.
 
 `create_project` makes a new project folder from an example (so a beginner can start from
-something that works); `copy_import_templates` copies the CSV, netlist and script templates.
+something that works) with a `.gitattributes` for teams that use Git; `copy_import_templates`
+copies the CSV, netlist and script templates.
 Both only read the bundled files and write where the caller says; nothing is overwritten.
 """
 
@@ -12,6 +13,7 @@ from pathlib import Path
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
+from harness_design_studio.core.mergefix import write_gitattributes
 from harness_design_studio.core.model import Project, evolve
 from harness_design_studio.resources import examples_path
 
@@ -85,6 +87,7 @@ def create_project(dest: Path, template: str, name: str | None = None) -> Projec
     if name is not None:
         project.meta = evolve(project.meta, name=name.strip())
     save_project(project, dest)
+    write_gitattributes(dest)  # so that two people who both press Generate can merge (merge-fix)
     return project
 
 

@@ -308,6 +308,7 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio validate DIR` | check a project for errors |
 | `harness-design-studio check DIR` | validate, plus problems left by Git merges (including released harnesses that were edited) |
 | `harness-design-studio migrate DIR` | upgrade an old-format project (originals are kept) |
+| `harness-design-studio merge-fix DIR` | after a Git merge stopped on `generated/generation.json` (two people both pressed Generate): keep this side, run `generate` and `check`; refuses, and changes nothing, when another file is in conflict too |
 | `harness-design-studio generate DIR` | generate harnesses and save (not saved if errors) |
 | `harness-design-studio verify DIR [--outputs]` | independent check of the harnesses, and of `outputs/` |
 | `harness-design-studio drc DIR` | design rule report (Markdown); exit 1 on unwaived errors |

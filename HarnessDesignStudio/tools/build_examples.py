@@ -13,6 +13,7 @@ from pathlib import Path
 from harness_design_studio.core import drc, edit
 from harness_design_studio.core.commands import History
 from harness_design_studio.core.io.saver import save_project
+from harness_design_studio.core.mergefix import write_gitattributes
 from harness_design_studio.core.model import Project, evolve
 from harness_design_studio.core.samples import new_project, sat15
 
@@ -297,6 +298,7 @@ def build(target: Path = TARGET) -> None:
             shutil.rmtree(fresh)
         try:
             save_project(make(), fresh)
+            write_gitattributes(fresh)  # as `new` does
             for stray in fresh.rglob("*.bak"):
                 stray.unlink()
             if folder.exists():

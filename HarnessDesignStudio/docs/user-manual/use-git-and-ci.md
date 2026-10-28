@@ -16,7 +16,7 @@ This page shows how to keep a project in Git, how to check it after a merge, and
 ## Before you start
 
 - Git is installed (`sudo apt install git`).
-- A project is a **folder of small JSON files**, written in a fixed format (sorted keys, the same bytes for the same design). So two people who edit different parts of the design (different devices, different parts, different config files) get a clean merge of those files, and a Git diff shows only real changes. The one file that does not merge cleanly is `generated/generation.json`, the record of the last Generate: it holds a hash of the whole design, so when both people ran Generate it conflicts every time ([how to resolve it](#when-generatedgenerationjson-conflicts)). The format is in [`FILE_FORMAT.md`](../FILE_FORMAT.md).
+- A project is a **folder of small JSON files**, written in a fixed format (sorted keys, the same bytes for the same design). So two people who edit different parts of the design (different devices, different parts, different config files) get a clean merge of those files, and a Git diff shows only real changes. The one file that does not merge cleanly is `generated/generation.json`, the record of the last Generate: it holds a hash of the whole design, so when both people ran Generate it conflicts every time. The command `harness-design-studio merge-fix` resolves exactly that conflict ([how](#when-generatedgenerationjson-conflicts)). The format is in [`FILE_FORMAT.md`](../FILE_FORMAT.md).
 
 ## 1. Put a project in Git
 
@@ -31,6 +31,8 @@ git commit -m "Start from first-steps"
 ```
 
 The tool wrote a `.gitignore` inside the project (`design/.gitignore`). It ignores backup files (`*.bak`), lock files, temporary files and the recovery folders. It does not ignore `outputs/`. Decide for yourself whether the exports belong in the repository; the folder can always be made again. To leave them out, add `outputs/` to your own `.gitignore`.
+
+`harness-design-studio new` also wrote a `.gitattributes` (`design/.gitattributes`, since version 1.9). It has one effect: Git treats `generated/generation.json` as a binary file, so a merge in which two people both pressed Generate stops on that file without writing conflict markers into it ([why and what to do](#when-generatedgenerationjson-conflicts)). Every other file stays text and merges line by line. A project made before 1.9 does not have the file: copy `ci/gitattributes` from the templates (`harness-design-studio templates my-templates`) to `design/.gitattributes`.
 
 Work as usual, then commit. Generate once and commit the result:
 
@@ -92,7 +94,19 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 
 ### When `generated/generation.json` conflicts
 
-When two people each pressed Generate on their own branch, the merge stops on `generated/generation.json` (the line `"input_hash"`), although the files they edited merged without a conflict. Nobody should edit that file by hand. The way out is to take either side and let the tool write the record again for the merged design:
+When two people each pressed Generate on their own branch, the merge stops on `generated/generation.json` (the line `"input_hash"`), although the files they edited merged without a conflict. Nobody should edit that file by hand. One command lets the tool write the record again for the merged design:
+
+```
+harness-design-studio merge-fix design
+git add -A
+git commit
+```
+
+`merge-fix` first looks at which files of the project are in conflict, the files with conflict markers and the files Git still lists as unmerged (it reads the repository's own files; it does not start `git`). If the record is the only one, it keeps this branch's version of it, runs `generate` and then `check`, and prints what they print. If any other file is in conflict (for example both people changed the same line of a device), it refuses, names the files and changes nothing; resolve those yourself, then run it again. It writes nothing itself except that record; `generate` then writes what it always writes, and a harness that a person made by hand is never touched. If `generate` or `check` is blocked, the record is put back as it was found. When the merged design needs no new harness, `generate` prints `0 added, 0 changed, ... unchanged`; if it does, `generate` builds it and you commit those files too. `git add -A` is still yours to run: `merge-fix` does not change the Git index.
+
+With the `.gitattributes` of a new project, the record is a valid JSON file during the conflict (our side, no markers), so `check` and the app can read the project and `verify` says that the record is out of date. Without it, the file holds the markers and `check` reports `merge_conflict` until `merge-fix` has run. `merge-fix` works the same way in both cases.
+
+The same by hand (this is what `merge-fix` does):
 
 ```
 git checkout --ours design/generated/generation.json
@@ -102,11 +116,11 @@ git add -A
 git commit
 ```
 
-(`--theirs` works as well; which side you take does not matter, because `generate` writes the record again.) When the merged design needs no new harness, `generate` changes only the record and prints `0 added, 0 changed, ... unchanged`; `check` must then end with `0 error(s)`. If the merged design needs a new harness, `generate` builds it and you commit those files too.
+(`--theirs` works as well. Which side you keep hardly matters, because `generate` writes the record again from the merged design: it takes over only the *Why* texts of released harnesses and the number of the next harness from the side you keep.) `check` must end with `0 error(s)`.
 
 Another way is to keep `generated/` out of Git (a line `generated/` in the `.gitignore` of the repository) and to run `generate` after every checkout. Then the record can never conflict, but it also holds the reasons that the Why tab shows and the number of the next harness, so each checkout starts those from what `generate` finds.
 
-By design, a few other files can conflict when two people change them on two branches: `changelog.json` and `baselines/` when two people release (keep both entries), `layout.json` (all positions of the diagram are in one file), and the number of a new harness (two new interfaces get the same harness number on two branches; run `generate` after the merge and read what it says).
+By design, a few other files can conflict when two people change them on two branches, and `merge-fix` leaves them to you: `changelog.json` and `baselines/` when two people release (keep both entries), `layout.json` (all positions of the diagram are in one file), `logical/links.json` (one file for all connections, numbered `L1`, `L2` ...: two people who each add a connection on their own branch both create the next number, so after the merge one of the two must be renumbered by hand), and the number of a new harness (two new interfaces get the same harness number on two branches; run `generate` after the merge and read what it says). Files in `outputs/`, if you keep them in Git, are made from the design: after a merge run `export` again, or leave the folder out of Git.
 
 In the app, a project that changes on disk (for example after a `git pull`) shows "Project changed on disk" with **Reload** and **Keep my version**.
 

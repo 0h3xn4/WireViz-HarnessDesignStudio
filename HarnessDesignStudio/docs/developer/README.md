@@ -24,6 +24,7 @@ This page is the map of the documents for people who work on the code or the doc
 | Page | What it is for |
 | --- | --- |
 | [`../../CLAUDE.md`](../../CLAUDE.md) | Commands, layout and conventions, written for the AI assistant that builds the tool. Accurate and detailed; read it for the conventions per area of the code. |
+| [`CLAUDE_HISTORY.md`](CLAUDE_HISTORY.md) | The status paragraph that used to stand in `CLAUDE.md`, moved here word for word |
 | [`../DECISIONS.md`](../DECISIONS.md) | Every decision (D-01, D-02 ...) with its reason. New dependencies are recorded here with their licence. |
 | [`../DESIGN.md`](../DESIGN.md) | The design system of the editor: tokens (`gui/theme/tokens.py`), type, themes, icons, state chips, tables, the window and its areas, shortcuts |
 | [`../ui/UI_OVERHAUL_PLAN.md`](../ui/UI_OVERHAUL_PLAN.md), [`../ui/BEFORE_AFTER.md`](../ui/BEFORE_AFTER.md), [`../ui/PERF_BASELINE.md`](../ui/PERF_BASELINE.md) | The UI overhaul of version 1.3.0: the plan with the mapping of every old tab, menu and dialog to its new place, the before and after pictures, the timings |

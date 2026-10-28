@@ -147,7 +147,7 @@ my-project/
   outputs/                everything exported (safe to delete)
 ```
 
-Files are written in a fixed format, so two people editing different parts of a design get a clean merge of those files. The exception is `generated/generation.json`: when both people ran Generate it always conflicts; take either side, run `generate`, then `check` ([how](user-manual/use-git-and-ci.md#when-generatedgenerationjson-conflicts)). Details: [`FILE_FORMAT.md`](FILE_FORMAT.md).
+Files are written in a fixed format, so two people editing different parts of a design get a clean merge of those files. The exception is `generated/generation.json`: when both people ran Generate it always conflicts. A new project has a `.gitattributes` that keeps Git from writing markers into it, and `harness-design-studio merge-fix` keeps one side, runs `generate` and `check` ([how](user-manual/use-git-and-ci.md#when-generatedgenerationjson-conflicts)). Details: [`FILE_FORMAT.md`](FILE_FORMAT.md).
 
 ## What the tool does not do
 
