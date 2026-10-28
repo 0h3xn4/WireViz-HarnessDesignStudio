@@ -199,6 +199,7 @@ Hand-over checklist for the engineering values (derating, grounding, test limits
 | `project` | the project folder |
 | `--ampacity-csv AMPACITY_CSV` | CSV with a gauge column and an amperes column; sets derating.ampacity_a_by_awg |
 | `--counterparts WORDS` | the words that are the two ends of one line, for the link review and the pairing, for example 'TX=RX, MOSI=MISO' (sets naming.signal_counterparts); 'default' goes back to the table the tool ships with, 'none' pairs equal names only |
+| `--distinct-roles DISTINCT_ROLES` | on: a release needs an author, a checker and a person who releases that are three different people, a date that is not earlier than the project's change log and not more than a day ahead, and takes a missing name from Git (sets naming.release_distinct_roles); off: the setting is taken out again (the default) (one of off, on) |
 | `--apply-profile NAME` | fill the unset values from a standard profile (ecss-q-st-30-11c, ecss-e-st-20-07c); values you already set are kept; the files stay placeholders until you review them |
 
 Examples:
@@ -466,7 +467,7 @@ submit a draft harness for review
 | --- | --- |
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
-| `--by BY` | your name (recorded in the change log) |
+| `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
 
 Examples:
@@ -485,10 +486,10 @@ release a harness: baseline, change log entry and lock (blocked while checks fai
 | --- | --- |
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
-| `--by BY` | your name (recorded in the change log) |
+| `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
 | `--comment COMMENT` | what changed or why (at least 10 characters) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
-| `--checker CHECKER` | who checked it (title block) |
+| `--checker CHECKER` | who checked it (title block; required in a project that requires different people) |
 | `--accept-placeholders REASON` | release although configuration files are still placeholders: the reason (at least 10 characters) is kept in the change log and the baseline |
 | `--accept-unapproved-parts REASON` | release although the harness uses parts that are not approved (or are example data): the reason (at least 10 characters) is kept in the change log and the baseline |
 
@@ -508,7 +509,7 @@ start a new revision of a released harness
 | --- | --- |
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
-| `--by BY` | your name (recorded in the change log) |
+| `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
 | `--comment COMMENT` | what changed or why (at least 10 characters) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
 

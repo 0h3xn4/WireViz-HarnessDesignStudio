@@ -1,9 +1,8 @@
-"""REQ-CC-04, A-2 (audit 1.8.0, 1.9.0): the box pins that the wires of a released harness reach are
+"""REQ-CC-09, REQ-CC-02, A-2 (audit 1.8.0, 1.9.0): the box pins that the wires of a released harness reach are
 frozen with the release, also for a harness made from a link or by hand (it has no interface to
 say which pins it uses). The edit that would change one is refused with the harness named; the
 other pins of the same connector stay editable."""
 
-import json
 from pathlib import Path
 
 import pytest
@@ -13,7 +12,7 @@ from harness_design_studio.core import links
 from harness_design_studio.core.commands import Delete, History, Put, apply_ops
 from harness_design_studio.core.errors import TransactionError
 from harness_design_studio.core.io.saver import save_project
-from harness_design_studio.core.model import Pin, Project, evolve
+from harness_design_studio.core.model import Connector, Pin, Project, evolve
 from harness_design_studio.core.outputs.build import write_outputs
 from harness_design_studio.core.vcs import lockview
 from harness_design_studio.core.vcs.consistency import release_integrity
@@ -53,8 +52,7 @@ def released(tmp_path: Path) -> tuple[Project, str, History]:
     return p, hid, hist
 
 
-def with_pin(c: object, pin_id: str, **changes: object) -> object:
-    assert hasattr(c, "pins")
+def with_pin(c: Connector, pin_id: str, **changes: object) -> Connector:
     pins = [evolve(x, **changes) if x.id == pin_id else x for x in c.pins]
     return evolve(c, pins=pins)
 
@@ -77,7 +75,13 @@ def test_the_signal_of_a_pin_a_released_wire_uses_cannot_change(tmp_path: Path) 
 @pytest.mark.parametrize("field", ["signal", "function", "role", "direction", "contact_size"])
 def test_every_field_of_a_used_pin_is_frozen(tmp_path: Path, field: str) -> None:
     p, _hid, _hist = released(tmp_path)
-    value = {"signal": "X", "function": "f", "role": "power", "direction": "in", "contact_size": "20"}
+    value = {
+        "signal": "X",
+        "function": "f",
+        "role": "power",
+        "direction": "in",
+        "contact_size": "20",
+    }
     with pytest.raises(TransactionError):
         check_locks(p, [Put("connectors", with_pin(p.connectors[A], "2", **{field: value[field]}))])
 
@@ -96,7 +100,7 @@ def test_the_other_pins_of_the_same_connector_stay_editable(tmp_path: Path) -> N
     p, _hid, hist = released(tmp_path)
     c = p.connectors[A]
     for pin_id in ("3", "5"):  # pin 3 has a signal, pin 5 none; neither is reached by a wire
-        c = with_pin(c, pin_id, signal="FREE", function="free text")  # type: ignore[assignment]
+        c = with_pin(c, pin_id, signal="FREE", function="free text")
     c = evolve(c, pins=[*c.pins, Pin(id="6", signal="NEW")])
     hist.execute("edit other pins", [Put("connectors", c)])
     assert p.connectors[A].pins[-1].id == "6"

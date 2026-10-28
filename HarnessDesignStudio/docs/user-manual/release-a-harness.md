@@ -10,6 +10,7 @@ This page shows how to review and release a harness, which freezes it: it, the l
 - [1. Make the design ready](#1-make-the-design-ready)
 - [2. Submit for review (optional)](#2-submit-for-review-optional)
 - [3. Release](#3-release)
+- [Optional: three different people](#optional-three-different-people)
 - [4. After the release](#4-after-the-release)
 - [Common mistakes](#common-mistakes)
 
@@ -92,11 +93,27 @@ If the re-export after the release fails (for example the disk is full), the rel
 
 GUI, not run: the app steps are described from the program's texts and code. They have not been looked at on screen.
 
+## Optional: three different people
+
+By default one name can submit, check and release a harness, and the tool does not mind which date you give (it only refuses a date earlier than the last entry of the same harness). A project that wants the four-eyes principle can switch it on once:
+
+```
+harness-design-studio config wheel-link --distinct-roles on
+```
+
+From then on, in that project:
+
+- The **author** is the person who submitted the harness for review (step 2 is no longer optional), the **checker** is named in `--checker` (**Checked by** in the window, which now says *required*), and the person who releases is a third person. Two of them with the same name are refused in words, for example `blocked: [same_person] --by: The checker and the person who releases it must be different people, but both are 'B. Checker'.` In the window the button stays off and the line under the form says which two are the same. Capital letters and extra spaces do not make a different person.
+- A review, release or new revision may not be dated earlier than the latest entry of the change log or the latest baseline of **any** harness of the project, and not more than one day after today. The messages say which date to use.
+- If you leave `--by` out, the name that Git has for you (`git config user.name`) is used, and the command says so. In the window, **Your name** starts with it when you have not saved a name there before. The tool reads the name from the Git files; it does not start Git, and when Git has no name it makes none up: `--by` is required as before.
+
+`--distinct-roles off` takes the setting out again, and the file `config/naming.json` is then exactly what it was. The names are only text: the tool cannot tell that `A. Engineer` and `a.engineer@example.org` are one person, so agree in the team on how to write a name. More: [`CONFIG.md`](../CONFIG.md#different-people-in-a-release-since-190).
+
 ## 4. After the release
 
 - `W002` is now **released (locked)**. The **Releases** tab lists the release with a *Released* chip, and the **Harness** tab header says *Released · rev A*. A lock and *W002 A* appear on the objects it holds, in the **Project** tree and on the diagram. The harness, the links it carries and the pins it uses cannot be edited. The app refuses an edit and gives the reason.
 - When what you look at belongs to a released harness, a banner under the top bar says so ("Harness W002 is released (revision A) and locked. To change it, start a new revision.") and offers **Start new revision…** and **Show the revisions**. The tooltip of the **Release** step in the top bar counts the released harnesses ("1 of 2 released").
-- **A release also freezes what the harness uses**: the parts of its connectors and wires (and, since 1.7.0, the contact parts on its pins and the parts of its accessories), and of the device connectors it plugs into, the interface types of its links, and the configuration its checks and outputs read (all of `derating`, `emc`, `segregation` and `titleblock`, and eight keys of `generation`). The editor and the commands `import-parts` and `config` (including `--apply-profile` and `--ampacity-csv`) refuse a change to these, with the reason and the way out. (`harness-design-studio library`, which only records where the parts data come from, is not affected.) Example, importing the parts list of [import data](import-data.md#approved-parts-list) after the release:
+- **A release also freezes what the harness uses**: the pins of the device connectors that its wires end on (since 1.9.0, also for a harness made from a connection or by hand; the other pins of the same connector stay editable and `import-pinout --replace` refuses a change to a used pin with the harness named), the parts of its connectors and wires (and, since 1.7.0, the contact parts on its pins and the parts of its accessories), and of the device connectors it plugs into, the interface types of its links, and the configuration its checks and outputs read (all of `derating`, `emc`, `segregation` and `titleblock`, and eight keys of `generation`). The editor and the commands `import-parts` and `config` (including `--apply-profile` and `--ampacity-csv`) refuse a change to these, with the reason and the way out. (`harness-design-studio library`, which only records where the parts data come from, is not affected.) Example, importing the parts list of [import data](import-data.md#approved-parts-list) after the release:
 
 ```
 harness-design-studio import-parts wheel-link my-templates/approved-parts.csv --approved Approved --pending Review --rejected Rejected

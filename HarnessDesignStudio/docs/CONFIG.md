@@ -11,7 +11,7 @@ Rules live in `config/*.json` inside the project, not in code. There are seven f
 - [`derating.json`](#deratingjson)
 - [`generation.json`](#generationjson)
 - [`emc.json`](#emcjson)
-- [`naming.json`](#namingjson), with [`signal_counterparts`](#the-words-for-the-two-ends-of-a-line-since-190)
+- [`naming.json`](#namingjson), with [`signal_counterparts`](#the-words-for-the-two-ends-of-a-line-since-190) and [`release_distinct_roles`](#different-people-in-a-release-since-190)
 - [`titleblock.json`](#titleblockjson)
 - [Optional values from the supplied standards (D-131)](#optional-values-from-the-supplied-standards-d-131)
 
@@ -61,6 +61,7 @@ Keys that are left out stay unset (`null`). `harness-design-studio validate` acc
 | `contact_rating_key` | the name of a part rating |
 | `titleblock.fields` | known field names, each at most once, written as text (see below) |
 | `signal_counterparts` (naming) | a list of pairs of two different words made of letters, no word in two pairs; an empty list is allowed (see below) |
+| `release_distinct_roles` (naming) | `true` or `false` (see below) |
 
 Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limits of the project data itself (a wire gauge 0 to 40, a length 0 to 10000 m, a pin count 1 to 1000, ...) are in [`FILE_FORMAT.md`](FILE_FORMAT.md#number-ranges). While a harness is released, most of these files are frozen: see [`FILE_FORMAT.md`](FILE_FORMAT.md#what-a-release-freezes).
 
@@ -129,6 +130,22 @@ Not a name pattern but a style choice of the same kind: the words that are the t
 Example for a program that also names its lines `OUT` and `IN`: `"signal_counterparts": [["TX","RX"], ["MOSI","MISO"], ["OUT","IN"]]` (a list replaces the default table, so repeat the pairs you still want). Each word is made of letters only (digits and signs such as `+`, `-` and `_` are separators in a name, not parts of a word), and a word is in one pair only. An empty list `[]` means no counterparts at all: only equal names are paired. The key is left out of new projects and out of the shipped file, so the files of an existing project do not change. A value that is not valid is an error of the check (`config/naming.json: signal_counterparts ...`, rule `config-invalid`, also reported by generation) and the default table is used until it is corrected. `harness-design-studio config DIR --counterparts "TX=RX, MOSI=MISO, OUT=IN"` writes it (`default` takes the key out again, `none` writes `[]`); `config DIR` then lists it. A pin can also say which way it runs (`Pin.direction`, [`FILE_FORMAT.md`](FILE_FORMAT.md#links-and-pin-roles-m2-schema-version-stays-1)); where it does, the directions decide before the names.
 
 The shipped file lists only the first four keys; `shield`, `branch` and `segment` use the defaults above until you add them. A pattern that does not give a different valid ID for every number (tried up to 200; a reserved name such as COM1 is not valid) is reported and the default is used. IDs are stable once released.
+
+### Different people in a release (since 1.9.0)
+
+Off unless a project switches it on, and then a release works exactly as it did: one name can author, check and release a harness, and the dates are only compared with the last entry of the same harness. The setting is for a project that wants the four-eyes principle of change control written down.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `release_distinct_roles` | not set (the same as `false`) | `true`: the author, the checker and the person who releases a harness are three different people |
+
+While it is `true`:
+
+- **Three different people.** The author is the person who put the harness into review (`harness-design-studio review`, **Submit for review** in the editor); a harness that was never submitted has no author and is refused with the sentence *Nobody is recorded as the author of W001 ...*. The checker (`--checker`, *Checked by*) must be named. The person who releases (`--by`, *Your name*) is the approver. Two of the three with the same name are refused with *The checker and the person who releases it must be different people, but both are 'Z'.* Names are compared without regard to letter case, width and extra spaces (`ada  LOVELACE` is `Ada Lovelace`); the tool cannot know that two different spellings are one person, so a team that wants more must agree on one spelling.
+- **The date.** The date of a review, a release and a new revision may not be earlier than the latest date in the change log or in a baseline of the **whole project** (not only of the same harness: `The date 2026-03-01 is earlier than the latest entry of the project's change log (2026-03-05, W002). Use that date or a later one.`), and not more than one day after today (a day, because two places do not have the same clock: `The date 2027-01-01 is more than 1 day after today (2026-10-28). Use today's date.`). The rule that a date may not be earlier than the last entry of the same harness holds with or without the setting. The other two parts of the rule are not applied without the setting, because a project may have recorded its releases in another order or may state a release date in the future on purpose.
+- **The name from Git.** When `--by` is left out, the name that Git has for the person (`user.name`) is used and the command says so (`Name taken from Git (user.name): Ann Author.`); in the editor it is the name the dialog starts with when none was saved before. The `git` program is not started: the tool reads `user.name` from the Git configuration files, in this order, the last one winning: `$XDG_CONFIG_HOME/git/config` (or `~/.config/git/config`), `~/.gitconfig`, and the `config` of the repository around the project folder (`GIT_CONFIG_GLOBAL` replaces the first two, as it does for Git). `include` lines, the system file and the environment variable `GIT_AUTHOR_NAME` are not read. When Git has no name, nothing is made up and `--by` is required as before.
+
+`harness-design-studio config DIR --distinct-roles on` writes the key and `--distinct-roles off` takes it out again, so a project that switches it on and off again has its file back byte for byte; `config DIR` lists it while it is on. `naming.json` is not frozen by a release, so the setting can be switched at any time; it never changes a harness that is released already. It does not make the harness plans out of date. A value that is not `true` or `false` is an error of the check (`config/naming.json: release_distinct_roles must be true or false.`, rule `config-invalid`) and the setting stays off. The editor has no switch for it yet: in the editor the dialogs follow the file, and the file is edited with the command or by hand.
 
 ## `titleblock.json`
 | Key | Meaning |
