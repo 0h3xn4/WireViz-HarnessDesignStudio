@@ -7,6 +7,8 @@ in `<project>/.harness-recovery/` (never outside the project folder, never in lo
 import base64
 import contextlib
 import json
+import re
+import secrets
 from pathlib import Path
 
 from .errors import SaveError
@@ -31,13 +33,22 @@ def journal_path(root: Path | str) -> Path:
     return long_path(Path(root)) / JOURNAL_DIR / JOURNAL_FILE
 
 
-def write_journal(
-    project: Project, root: Path | str, *, base_fingerprint: str | None = None
-) -> None:
-    files = {rel: data.decode("utf-8") for rel, data in serialize(project).items()}
+# The JSON text of each file's bytes, by the identity of the bytes object. `serialize` hands out the
+# same bytes object for a file that did not change, so only an edited file is encoded again.
+_FRAGMENTS: dict[int, tuple[bytes, bytes]] = {}
+
+
+def journal_bytes(project: Project, *, base_fingerprint: str | None = None) -> bytes:
+    """The journal text of `project`: what `canonical.dumps` makes of the payload below. The files
+    that did not change since the last call are not encoded again (audit A-9: 14 MB of text were
+    escaped from scratch after every edit); the result is the same bytes either way."""
+    global _FRAGMENTS
+    files = serialize(project)
+    names = sorted(files)
+    token = f"fragment-{secrets.token_hex(8)}-"
     payload = {
         "base_fingerprint": base_fingerprint,
-        "files": files,
+        "files": {rel: f"{token}{n}" for n, rel in enumerate(names)},
         # what could not be loaded must survive a restore, or the restored project would look
         # complete and could overwrite the original folder
         "quarantine": [
@@ -49,7 +60,33 @@ def write_journal(
             for name, raw in project.quarantine_files.items()
         },
     }
-    atomic_write_bytes(journal_path(root), dumps(payload), backup=False)
+    frame = dumps(payload)  # short: a placeholder stands where each file goes
+    keep: dict[int, tuple[bytes, bytes]] = {}
+    fragments: list[bytes] = []
+    for rel in names:
+        data = files[rel]
+        hit = _FRAGMENTS.get(id(data))
+        if hit is None or hit[0] is not data:
+            hit = (data, json.dumps(data.decode("utf-8"), ensure_ascii=False).encode("utf-8"))
+        keep[id(data)] = hit
+        fragments.append(hit[1])
+    _FRAGMENTS = keep
+    pieces = re.split(rb'"' + token.encode("ascii") + rb'(\d+)"', frame)
+    out = [pieces[0]]
+    for k in range(1, len(pieces), 2):
+        out.append(fragments[int(pieces[k])])
+        out.append(pieces[k + 1])
+    return b"".join(out)
+
+
+def write_journal_bytes(root: Path | str, data: bytes) -> None:
+    atomic_write_bytes(journal_path(root), data, backup=False)
+
+
+def write_journal(
+    project: Project, root: Path | str, *, base_fingerprint: str | None = None
+) -> None:
+    write_journal_bytes(root, journal_bytes(project, base_fingerprint=base_fingerprint))
 
 
 def clear_journal(root: Path | str) -> None:
