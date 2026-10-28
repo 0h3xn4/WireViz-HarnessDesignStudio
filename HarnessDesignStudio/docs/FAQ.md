@@ -103,7 +103,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 | `import-netlist` says a file is not a netlist | It must be KiCad's `.net` (S-expression) or XML export, not a `.kicad_sch`. |
 | `kicad-cli` cannot load a library | A KiCad installation problem. Export the netlist from the schematic editor instead (File > Export > Netlist). |
 | An import says *row N* has a problem | Nothing was applied. Fix the row; the message says what is wrong. Use `--dry-run` to check first. |
-| Merge conflict in a project file | Open the file, resolve the markers like in any text file, then `harness-design-studio check DIR` finds leftovers. |
+| Merge conflict in a project file | Open the file, resolve the markers like in any text file, then `harness-design-studio check DIR` finds leftovers. If the file is `generated/generation.json` (two people both pressed Generate), run `harness-design-studio merge-fix DIR` instead. |
 | Exit code 2 from `harness-design-studio` | A usage error, or an unreadable project (including a project with damaged files: `harness-design-studio validate DIR` lists them). The message says which. Exit 1 means the project has errors or a step is blocked; 0 is success; 130 means you pressed Ctrl-C. |
 
 ## Still stuck

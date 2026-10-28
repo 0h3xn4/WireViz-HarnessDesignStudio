@@ -107,7 +107,7 @@ my-design/
   baselines/          the frozen copy of each released harness (written at release)
 ```
 
-Put the folder in Git. Everything except `outputs/` is meant to be reviewed as text.
+Put the folder in Git. Everything except `outputs/` is meant to be reviewed as text. After a merge, `harness-design-studio check my-design`; if the merge stopped on `generated/generation.json` (two people both pressed Generate), `harness-design-studio merge-fix my-design`.
 
 ## Words you will meet
 

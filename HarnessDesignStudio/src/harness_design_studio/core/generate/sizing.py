@@ -74,6 +74,32 @@ def bundle_k(raw: object, count: int) -> float | None:
     return None
 
 
+def wire_current_limit(
+    derating: dict[str, object],
+    awg: int | None,
+    bundle_wires: int | None,
+    *,
+    temperature_optional: bool = False,
+) -> float | None:
+    """The current a wire of this gauge may carry after derating: the ampacity table times the
+    bundle factor times the temperature factor. When the table of bundle factors is set it
+    replaces the single factor (as in `size_wire`). None while a value is missing, or the bundle is
+    larger than the table lists. `temperature_optional` takes an unset temperature factor as 1.
+
+    The one limit of the rules `current-over-wire` and `bundle-current`, so they cannot disagree."""
+    table = ampacity_table(derating.get("ampacity_a_by_awg"))
+    bundle = _num(derating.get("bundle_derating"))
+    temp = _num(derating.get("temperature_derating"))
+    by_count = derating.get("bundle_factor_by_count")
+    if isinstance(by_count, dict) and by_count and bundle_wires is not None:
+        bundle = bundle_k(by_count, bundle_wires)
+    if temp is None and temperature_optional:
+        temp = 1.0
+    if table is None or bundle is None or temp is None or awg is None or awg not in table:
+        return None
+    return derated_limit(table[awg], bundle, temp)
+
+
 def size_wire(
     derating: dict[str, object],
     generation: dict[str, object],

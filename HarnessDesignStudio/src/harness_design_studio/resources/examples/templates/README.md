@@ -16,6 +16,7 @@ Files to copy and adapt. Get them with `harness-design-studio templates FOLDER`.
 | `ampacity-DEMO-ONLY.csv` | **learning only**: a current-by-gauge table in the format `harness-design-studio config --ampacity-csv` reads | `harness-design-studio config DIR --ampacity-csv ampacity-DEMO-ONLY.csv` |
 | `ci/build.sh` | a script that validates, generates, checks and exports a project, with the exit codes | `sh ci/build.sh DIR` |
 | `ci/github-actions.yml` | the same steps as `build.sh` (including `harness-design-studio drc`) as a GitHub Actions workflow for a design repository | copy to `.github/workflows/` |
+| `ci/gitattributes` | the `.gitattributes` that `harness-design-studio new` writes into a new project: it makes Git treat `generated/generation.json` as binary, so two people who both pressed Generate get a conflict without markers in it, and `harness-design-studio merge-fix DIR` resolves it. For a project made before 1.9 | copy to `DIR/.gitattributes` (the file is named `gitattributes` here so that it is not hidden) |
 | `design-worksheet.md` | planning a design on paper before using the tool: devices, interfaces, and the data you do not have yet | print it or copy it next to your design and fill it in |
 | `design-review-checklist.md` | a list of things to look at before a harness is released | copy next to your design |
 

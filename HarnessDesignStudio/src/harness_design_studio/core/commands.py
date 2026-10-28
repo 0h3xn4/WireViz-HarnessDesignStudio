@@ -1,11 +1,10 @@
 """Transactions with undo/redo. All model changes are lists of operations applied atomically."""
 
-from collections import Counter
 from dataclasses import dataclass, field
 from typing import Literal
 
 from .errors import TransactionError
-from .integrity import check_integrity
+from .integrity import IntegrityTracker, check_integrity
 from .issues import errors
 from .model import (
     Baseline,
@@ -182,6 +181,13 @@ class History:
     _redo: list[_Step] = field(default_factory=list)
     revision: int = 0  # increases with every applied change, undo or redo
     last_ops: list[Op] = field(default_factory=list)  # what the latest call applied
+    _integrity: IntegrityTracker | None = field(default=None, repr=False, compare=False)
+
+    def _tracker(self) -> IntegrityTracker:
+        tracker = self._integrity
+        if tracker is None or tracker.project is not self.project:
+            tracker = self._integrity = IntegrityTracker(self.project)
+        return tracker
 
     def execute(self, label: str, ops: list[Op]) -> None:
         if self.project.read_only:
@@ -192,18 +198,22 @@ class History:
 
         check_locks(self.project, ops)
         # Always measured now: generation and autoplace change the project without going through
-        # here, so a remembered result could be out of date and cancel or let through an edit.
-        before = Counter(i.key() for i in errors(check_integrity(self.project)))
+        # here, so a remembered result could be out of date and cancel or let through an edit. The
+        # tracker looks at what differs from the state it last saw, so "now" costs only what
+        # changed since (the previous edit, normally nothing) and "after" only what this edit
+        # touched; the whole check runs only to word the refusal.
+        tracker = self._tracker()
+        before = tracker.errors()
         backward = apply_ops(self.project, ops)
-        after_issues = errors(check_integrity(self.project))
-        after = Counter(i.key() for i in after_issues)
+        after = tracker.errors()
         # a second error with the same code and object counts as new
         new = {k for k, n in after.items() if n > before.get(k, 0)}
         if new:
+            messages = [i.message for i in errors(check_integrity(self.project)) if i.key() in new]
             apply_ops(self.project, backward)
             raise TransactionError(
                 f"'{label}' was cancelled because it would leave the project inconsistent.",
-                [i.message for i in after_issues if i.key() in new],
+                messages,
             )
         self._undo.append(_Step(label, list(ops), backward))
         del self._undo[:-MAX_UNDO_STEPS]  # the oldest steps go first

@@ -64,6 +64,7 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 | `output_hashes` | The SHA-256 of every file the tool writes for each of the four packaged examples (a workbook by its members), to show that a change of the interface left the written files alone: `--check docs/ui/OUTPUT_HASHES_1.2.0.json` compares with release 1.2.0 (apart from the version stamp), `--write FILE` stores, no argument prints. It writes the examples with the harness drawings on (as the reference was made) and leaves out of the comparison a file kind that did not exist in 1.2.0, the build workbook `*_build.xlsx`. `tests/test_output_hashes.py` runs the comparison. Run it after any change in `gui/` that could reach a writer |
 | `bench_stress` | Times load, save, integrity check and transactions on a stress-size project (200 devices, 2,000 interfaces) |
 | `bench_generate` | Times generation on the stress project (target: under 10 seconds) |
+| `bench_incremental` | What one edit costs on a project of 200 devices (`History.execute`, with the integrity checks it runs), what the autosave journal costs the GUI thread and how long it takes to reach the disk, the export of the flatsat example and the memory an undo step keeps. Medians of `--repeat` runs (default 5); run it three times on a shared machine. The numbers of release 1.9 are in [`../ui/PERF_BASELINE.md`](../ui/PERF_BASELINE.md) |
 | `soak` | Soak test: thousands of random editing steps through the command layer, checking the invariants all the way |
 
 ## Compliance records

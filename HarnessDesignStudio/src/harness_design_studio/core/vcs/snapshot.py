@@ -38,9 +38,38 @@ def carried_interfaces(h: Harness) -> set[str]:
     return {w.interface_id for w in h.wires if w.interface_id} | set(h.interfaces)
 
 
+def wire_pins(h: Harness) -> dict[str, set[str]]:
+    """Box connector ID -> the IDs of its pins that the wires of the harness reach (1.9.0). A
+    wire ends on a cable connector of the harness; that connector plugs into a box connector
+    (`mates_with`) and its pin has the same ID as the box pin. A hand-made harness or one made
+    from a link has no interface to say which pins it uses, so its wires say it."""
+    plug = {c.id: c.mates_with for c in h.connectors if c.mates_with}
+    out: dict[str, set[str]] = {}
+    for w in h.wires:
+        for connector, pin in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
+            if connector in plug:
+                out.setdefault(plug[connector], set()).add(pin)
+    return out
+
+
 def _box_ids(h: Harness, interfaces: list[Any]) -> set[str]:
     boxes = {c.mates_with for c in h.connectors if c.mates_with}
     return boxes | {e.connector_id for i in interfaces for e in i.endpoints if e.connector_id}
+
+
+def locked_pins(project: Project, h: Harness) -> dict[str, set[str]]:
+    """Box connector ID -> its pins that a release of `h` freezes: the pins that carry an
+    interface of the harness (allocated by Generate) and the pins its wires reach (1.9.0)."""
+    carried = carried_interfaces(h)
+    out = {
+        c.id: {p.id for p in c.pins if p.interface_id in carried}
+        for c in project.connectors.values()
+        if any(p.interface_id in carried for p in c.pins)
+    }
+    for box, ids in wire_pins(h).items():
+        if box in project.connectors:
+            out.setdefault(box, set()).update(ids)
+    return out
 
 
 def used_part_ids(project: Project, h: Harness) -> set[str]:

@@ -6,13 +6,14 @@ small `Delta` so they redraw only what changed.
 """
 
 import json
+import threading
 from collections.abc import Callable, Iterable, Mapping, Sequence
 from dataclasses import dataclass, field
 from datetime import date
 from pathlib import Path
 
 from pydantic import ValidationError
-from PySide6.QtCore import QObject, QThread, QTimer, Signal
+from PySide6.QtCore import QCoreApplication, QElapsedTimer, QObject, QThread, QTimer, Signal
 
 from harness_design_studio.core import (
     checks,
@@ -38,10 +39,12 @@ from harness_design_studio.core.outputs.build import DEFAULT_FOLDER, outputs_sta
 from harness_design_studio.core.recovery import (
     clear_journal,
     has_journal,
+    journal_bytes,
     journal_differs_from_disk,
     journal_path,
     read_journal,
     write_journal,
+    write_journal_bytes,
 )
 from harness_design_studio.core.samples import mini3, new_project
 from harness_design_studio.core.vcs import lockview
@@ -79,6 +82,45 @@ class DrcWorker(QThread):
         try:
             self.found = run_check(self.snapshot, lambda: self._cancelled)
         except Exception as exc:  # never let it escape the thread: that would read as "no problems"
+            self.error = reason_of(exc)
+        finally:
+            self.completed = True
+
+
+class JournalWorker(QThread):
+    """Writes the autosave journal of a private copy of the project off the GUI thread (audit A-9:
+    on the GUI thread it took 0.3 s at 200 devices after every pause, 0.6 s the first time). The
+    copy is cheap because entities are immutable. The controller bumps `generation` when the
+    journal must not be written any more (a save, a discard, another project); the check and the
+    write happen under `lock`, so a write that has begun is finished before the journal is
+    cleared, and one that has not begun never happens."""
+
+    def __init__(
+        self,
+        snapshot: Project,
+        root: Path,
+        fingerprint: str | None,
+        lock: threading.Lock,
+        generation: int,
+        current: Callable[[], int],
+    ) -> None:
+        super().__init__()
+        self.snapshot, self.root, self.fingerprint = snapshot, root, fingerprint
+        self.lock, self.generation, self.current = lock, generation, current
+        self.error: str | None = None  # why the journal could not be written
+        self.completed = False  # set by run(), before the thread's `finished` signal
+
+    def run(self) -> None:
+        try:
+            data = journal_bytes(self.snapshot, base_fingerprint=self.fingerprint)
+            with self.lock:
+                if self.current() == self.generation:
+                    write_journal_bytes(self.root, data)
+        except HarnessError as exc:
+            self.error = str(exc)
+        except ValueError:  # text that cannot be encoded
+            self.error = strings.SAVE_BAD_TEXT
+        except Exception as exc:  # never let it escape the thread
             self.error = reason_of(exc)
         finally:
             self.completed = True
@@ -154,6 +196,10 @@ class EditorController(QObject):
         self._kept_fingerprint: str | None = None  # "Keep my version": the disk state we ignore
         self.open_note: str | None = None  # why the last open_path was not a normal open
         self.journal_error_shown = False
+        self._journal_worker: JournalWorker | None = None
+        self._journal_again = False  # a change came while a write ran: write once more
+        self._journal_generation = 0  # a write for an older generation is not made
+        self._journal_lock = threading.Lock()
         self._findings_cache: tuple[object, list[checks.Finding]] | None = None
         self._open_cache: list[checks.Finding] | None = None
         self._counts_cache: tuple[object, tuple[int, int]] | None = None
@@ -177,7 +223,7 @@ class EditorController(QObject):
         self._timer = QTimer(self)
         self._timer.setSingleShot(True)
         self._timer.setInterval(journal_delay_ms)
-        self._timer.timeout.connect(self.write_journal_now)
+        self._timer.timeout.connect(self._journal_tick)
 
     # ---- state ------------------------------------------------------------------------------
 
@@ -1231,6 +1277,8 @@ class EditorController(QObject):
         if self._lock is not None and self._lock is not lock:
             self._lock.release()
         self._installs += 1
+        self._journal_generation += 1  # a write still waiting belongs to the project left behind
+        self._journal_again = False
         self.project = project
         apply_ops(project, edit.ops_autoplace(project))  # positions for units saved without any
         self.history = History(project)
@@ -1329,7 +1377,7 @@ class EditorController(QObject):
 
     def discard_journal(self) -> None:
         if self.root is not None and self._lock is not None:  # only our own; not another window's
-            self._timer.stop()  # a pending autosave would write the discarded changes again
+            self.stop_journal()  # a pending autosave would write the discarded changes again
             clear_journal(self.root)
 
     def save(self) -> None:
@@ -1359,6 +1407,7 @@ class EditorController(QObject):
         if self._lock:
             self._lock.release()
         if self.root is not None and owned:  # a read-only copy must not delete the other's journal
+            self.stop_journal()
             clear_journal(self.root)
         self._lock, self.root, self.sample = lock, folder, False
         self._after_save()
@@ -1368,6 +1417,7 @@ class EditorController(QObject):
         self._kept_fingerprint = None
         self._saved_revision = self.history.revision
         if self.root is not None:
+            self.stop_journal()
             clear_journal(self.root)
         self.stateChanged.emit()
 
@@ -1393,9 +1443,13 @@ class EditorController(QObject):
         return result
 
     def release(self) -> None:
-        self._timer.stop()
+        self.stop_journal()
         self._drc_timer.stop()
         self.wait_drc()
+        worker = self._journal_worker
+        if worker is not None and not worker.wait(RELEASE_WAIT_MS):
+            _ABANDONED.append(worker)  # never destroy a live thread
+        self._journal_worker = None
         for w in self._retired:  # the helper is dead; this ends at once unless the check runs here
             w.wait(RELEASE_WAIT_MS)
         _ABANDONED.extend(w for w in self._retired if w.isRunning())  # never destroy a live thread
@@ -1410,17 +1464,83 @@ class EditorController(QObject):
         if self.root is not None and not self.read_only:
             self._timer.start()
 
-    def write_journal_now(self) -> None:
-        if self.root is None or self.read_only or not self.dirty:
+    def _journal_wanted(self) -> bool:
+        return self.root is not None and not self.read_only and self.dirty
+
+    def _journal_tick(self) -> None:
+        """The pause after an edit is over: write the journal in the background (one write at a
+        time; an edit that comes meanwhile asks for one more when it ends)."""
+        root = self.root
+        if root is None or not self._journal_wanted():
             return
-        try:
-            write_journal(self.project, self.root, base_fingerprint=self._fingerprint)
-        except (HarnessError, ValueError) as exc:  # ValueError: text that cannot be encoded
-            if not self.journal_error_shown:
-                self.journal_error_shown = True
-                why = str(exc) if isinstance(exc, HarnessError) else strings.SAVE_BAD_TEXT
-                self.message.emit(strings.AUTOSAVE_FAILED.format(why), False)
-                self.stateChanged.emit()  # the status line stops promising an autosave
+        if self._journal_worker is not None:
+            self._journal_again = True
+            return
+        snapshot = edit.clone_with(self.project, [])
+        snapshot.quarantine = list(self.project.quarantine)
+        snapshot.quarantine_files = dict(self.project.quarantine_files)
+        worker = JournalWorker(
+            snapshot,
+            root,
+            self._fingerprint,
+            self._journal_lock,
+            self._journal_generation,
+            lambda: self._journal_generation,
+        )
+        worker.finished.connect(self._journal_done)
+        self._journal_worker = worker
+        worker.start()
+
+    def _journal_done(self) -> None:
+        worker = self._journal_worker
+        if worker is None or not worker.completed:
+            return
+        self._journal_worker = None
+        worker.wait()
+        if worker.error is not None:
+            self._journal_failed(worker.error)
+        if self._journal_again:
+            self._journal_again = False
+            self._journal_tick()
+
+    def _journal_failed(self, why: str) -> None:
+        if not self.journal_error_shown:
+            self.journal_error_shown = True
+            self.message.emit(strings.AUTOSAVE_FAILED.format(why), False)
+            self.stateChanged.emit()  # the status line stops promising an autosave
+
+    def stop_journal(self) -> None:
+        """No journal write begins from now on, and one that has begun is finished: call it before
+        the journal is cleared, or a late write would bring back what was saved or discarded."""
+        self._timer.stop()
+        self._journal_again = False
+        self._journal_generation += 1
+        with self._journal_lock:
+            pass
+
+    def write_journal_now(self) -> None:
+        """Write the journal here and now (the editor itself lets `_journal_tick` do it in the
+        background; tests and a caller that needs the file at once use this)."""
+        root = self.root
+        if root is None or not self._journal_wanted():
+            return
+        self._journal_generation += 1  # a write for an earlier state must not come after this one
+        with self._journal_lock:
+            try:
+                write_journal(self.project, root, base_fingerprint=self._fingerprint)
+            except (HarnessError, ValueError) as exc:  # ValueError: text that cannot be encoded
+                self._journal_failed(str(exc) if isinstance(exc, HarnessError) else strings.SAVE_BAD_TEXT)  # fmt: skip
+
+    def wait_journal(self, timeout_ms: int = 10000) -> bool:
+        """Wait, keeping the event loop going, until the journal write that is running (and the
+        one it asked for) is over. For tests and benchmarks; the window never needs it."""
+        clock = QElapsedTimer()
+        clock.start()
+        while self._journal_worker is not None and clock.elapsed() < timeout_ms:
+            self._journal_worker.wait(5)
+            QCoreApplication.processEvents()
+        QCoreApplication.processEvents()
+        return self._journal_worker is None
 
     # ==== Checks view support (ux/checks): added methods only, nothing above changes ==============
 

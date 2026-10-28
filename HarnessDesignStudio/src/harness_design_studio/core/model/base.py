@@ -44,13 +44,17 @@ class SparseEntity(Entity):
 
 
 def evolve[E: Entity](obj: E, **changes: Any) -> E:
-    """Return a re-validated copy of `obj` with some fields replaced."""
-    data = obj.model_dump()
-    unknown = set(changes) - set(type(obj).model_fields)
+    """Return a re-validated copy of `obj` with some fields replaced. The fields that are not
+    replaced keep their objects (entities are immutable), so a copy of a harness shares the wires
+    and connectors that the change did not touch: an undo step holds the changed part, not a second
+    copy of the whole harness (audit A-12, +1.4 MB per step before)."""
+    cls = type(obj)
+    unknown = set(changes) - set(cls.model_fields)
     if unknown:
-        raise TypeError(f"{type(obj).__name__} has no field(s) {sorted(unknown)}")
+        raise TypeError(f"{cls.__name__} has no field(s) {sorted(unknown)}")
+    data = {name: getattr(obj, name) for name in cls.model_fields if name not in changes}
     data.update(changes)
-    return type(obj).model_validate(data)
+    return cls.model_validate(data)
 
 
 # Characters that are not control characters but break lines or hide in text: line and paragraph

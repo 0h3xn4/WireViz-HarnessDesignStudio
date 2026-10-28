@@ -1,0 +1,9 @@
+# Written by Harness Design Studio (harness-design-studio new). Safe to edit or delete.
+#
+# generated/generation.json is the record of the last Generate. It holds a hash of the whole
+# design, so when two people each ran Generate on their own branch it conflicts at every
+# merge, whatever else they changed. Git treats it as a binary file: it writes no conflict
+# markers into it (the file stays valid JSON) and keeps the version of the branch you are
+# on. After the merge run:  harness-design-studio merge-fix PROJECT_FOLDER
+# Every other file of the project is text and merges line by line.
+generated/generation.json merge=binary linguist-generated=true

@@ -570,10 +570,14 @@ class ChangeDialog(QDialog):
         locks: ReleaseLocks | None = None,
         explain: str | None = None,
         unlocks: lock_tree.RevisionUnlocks | None = None,
+        rule_note: str = "",
+        roles_check: Callable[[str, str], list[str]] | None = None,
+        by_tip: str = "",
     ) -> None:
         super().__init__(parent)
         self.setWindowTitle(title)
         self.setObjectName("change-dialog")
+        self._roles_check = roles_check
         self._comment_needed = ask_comment
         self._placeholders = placeholders or []
         self._unapproved = unapproved_parts or []
@@ -595,6 +599,12 @@ class ChangeDialog(QDialog):
         else:
             self.status.setText(strings.READY_TO_RELEASE if ask_comment else "")
         lay.addWidget(self.status)
+        # the project requires different people (setting release_distinct_roles): say so
+        self.rule_note = QLabel(rule_note)
+        self.rule_note.setObjectName("change-roles-note")
+        self.rule_note.setWordWrap(True)
+        self.rule_note.setVisible(bool(rule_note))
+        lay.addWidget(self.rule_note)
         # what the step locks (release) or unlocks (new revision)
         self.locks_summary = QLabel()
         self.locks_summary.setObjectName("change-locks-summary")
@@ -621,13 +631,16 @@ class ChangeDialog(QDialog):
         lay.addWidget(QLabel(strings.YOUR_NAME))
         self.by = QLineEdit(by)
         self.by.setObjectName("change-by")
+        self.by.setToolTip(by_tip)
         lay.addWidget(self.by)
         self.by.setAccessibleName(strings.YOUR_NAME)
         self.checker = QLineEdit()
         self.checker.setObjectName("change-checker")
         self.checker.setAccessibleName(strings.CHECKED_BY)
         if ask_checker:
-            lay.addWidget(QLabel(strings.CHECKED_BY))
+            lay.addWidget(
+                QLabel(strings.CHECKED_BY if roles_check is None else strings.CHECKED_BY_REQUIRED)
+            )
             lay.addWidget(self.checker)
         self.comment = QPlainTextEdit()
         self.comment.setObjectName("change-comment")
@@ -667,6 +680,7 @@ class ChangeDialog(QDialog):
         self.ok, self.cancel, row = _buttons(self, ok_text, danger=False, primary=True)
         lay.addLayout(row)
         self.by.textChanged.connect(self._validate)
+        self.checker.textChanged.connect(self._validate)
         self.comment.textChanged.connect(self._validate)
         self.placeholder_reason.textChanged.connect(self._validate)
         self.parts_reason.textChanged.connect(self._validate)
@@ -687,8 +701,12 @@ class ChangeDialog(QDialog):
         blockers: list[str],
         placeholders: list[str] | None = None,
         unapproved_parts: list[str] | None = None,
+        roles_check: Callable[[str, str], list[str]] | None = None,
+        by_tip: str = "",
     ) -> ChangeDialog:
-        """The release dialog: asks the questions and lists everything the release will lock."""
+        """The release dialog: asks the questions and lists everything the release will lock.
+        `roles_check(by, checker)` is given when the project requires different people: it returns
+        the sentences that still stop the release (checked again at every key stroke)."""
         return cls(
             parent,
             title,
@@ -699,6 +717,9 @@ class ChangeDialog(QDialog):
             placeholders=placeholders,
             unapproved_parts=unapproved_parts,
             locks=release_locks(project, harness_id),
+            rule_note=strings.ROLES_RELEASE_NOTE if roles_check is not None else "",
+            roles_check=roles_check,
+            by_tip=by_tip,
         )
 
     @classmethod
@@ -775,6 +796,9 @@ class ChangeDialog(QDialog):
             todo.append(strings.HINT_PLACEHOLDER_REASON)
         if self._unapproved and len(self.parts_reason.text().strip()) < strings.COMMENT_MIN:
             todo.append(strings.HINT_PARTS_REASON)
+        if self._roles_check is not None:
+            by, checker = self.by.text().strip(), self.checker.text().strip()
+            todo.extend(t.rstrip(".") for t in self._roles_check(by, checker))
         return todo
 
     def _validate(self) -> None:

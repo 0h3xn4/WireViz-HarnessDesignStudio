@@ -60,6 +60,15 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "to the table the tool ships with, 'none' pairs equal names only",
     )
     c.add_argument(
+        "--distinct-roles",
+        choices=("on", "off"),
+        default=None,
+        help="on: a release needs an author, a checker and a person who releases that are three "
+        "different people, a date that is not earlier than the project's change log and not "
+        "more than a day ahead, and takes a missing name from Git (sets "
+        "naming.release_distinct_roles); off: the setting is taken out again (the default)",
+    )
+    c.add_argument(
         "--apply-profile",
         default=None,
         metavar="NAME",
@@ -399,6 +408,7 @@ def _changes_project(args: argparse.Namespace) -> bool:
             args.ampacity_csv is not None
             or args.apply_profile is not None
             or args.counterparts is not None
+            or args.distinct_roles is not None
         )
     if args.command == "library":
         return any(
@@ -454,6 +464,19 @@ def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untype
             "Counterpart words: the table the tool ships with is used again."
             if words.value is None
             else f"Counterpart words: {n} pair{'s' if n != 1 else ''} set in config/naming.json."
+        )
+    if args.distinct_roles is not None:
+        roles_plan = configcheck.plan_set_distinct_roles(project, args.distinct_roles)
+        if not roles_plan.ok:
+            print(f"error: {roles_plan.error}", file=sys.stderr)
+            print("Nothing was changed.", file=sys.stderr)
+            return 1
+        History(project).execute("Set different people in a release", roles_plan.ops)
+        save_project(project, args.project)
+        print(
+            "Different people in a release: on (config/naming.json, release_distinct_roles)."
+            if roles_plan.value
+            else "Different people in a release: off (the setting is taken out of config/naming.json)."
         )
     if args.apply_profile is not None:
         try:

@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from harness_design_studio import __version__
-from harness_design_studio.cli import blocked_text, changes, data, start
+from harness_design_studio.cli import blocked_text, changes, data, merge, start
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError, TransactionError
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, load_project, non_canonical_files
@@ -65,6 +65,7 @@ def build_parser() -> argparse.ArgumentParser:
                 "the build workbook is the main output)",
             )
     start.register(sub)
+    merge.register(sub)
     changes.register(sub)
     data.register(sub)
     return parser
@@ -356,7 +357,7 @@ NOTHING_DONE = {
 }  # fmt: skip
 
 MUTATING = {
-    "generate", "export", "migrate", "review", "release", "revise",
+    "generate", "export", "migrate", "review", "release", "revise", "merge-fix",
     "import-parts", "import-lengths", "import-netlist", "import-pinout", "import-devices",
     "import-build-data", "import-subsystem",
 }  # fmt: skip
@@ -403,6 +404,8 @@ def _project_lock(args: argparse.Namespace) -> Iterator[None]:
 def _dispatch(args: argparse.Namespace) -> int:
     if args.command in start.COMMANDS:
         return start.run(args)
+    if args.command in merge.COMMANDS:  # reads a project with conflict markers, so no damage check
+        return merge.run(args)
     if args.command in NOTHING_DONE:
         for folder in (args.old, args.new) if args.command == "compare" else (args.project,):
             loaded = load_project(folder)

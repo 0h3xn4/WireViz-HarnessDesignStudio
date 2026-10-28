@@ -10,7 +10,9 @@ workbook has no formulas, and the same model gives the same bytes (`exports.norm
 """
 
 import contextlib
+import functools
 import io
+import weakref
 from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
@@ -22,7 +24,7 @@ from harness_design_studio.core.wirecolours import resolve
 from . import tables
 from .exports import _FIXED, normalise_xlsx
 from .stamp import Stamp, Table
-from .xlsx_env import ILLEGAL_CHARACTERS_RE, Workbook, WriteOnlyCell
+from .xlsx_env import ILLEGAL_CHARACTERS_RE, Cell, Workbook, WriteOnlyCell
 
 FILE_SUFFIX = "_build.xlsx"
 
@@ -74,6 +76,7 @@ class _Layout:
 
 def _styles() -> dict[str, Any]:
     from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
+    from openpyxl.styles.cell_style import StyleArray
 
     thin = Side(style="thin", color="B7B7B7")
     box = Border(left=thin, right=thin, top=thin, bottom=thin)
@@ -83,6 +86,7 @@ def _styles() -> dict[str, Any]:
 
     return {
         "Font": Font, "Alignment": Alignment, "Border": Border, "Side": Side, "fill": fill,
+        "StyleArray": StyleArray,
         "box": box, "wrap": Alignment(wrap_text=True, vertical="top"),
         "centre": Alignment(horizontal="center", vertical="top"),
         "flat": Alignment(wrap_text=False, vertical="top"),
@@ -94,6 +98,28 @@ _S = _styles()
 
 def _text(value: object) -> str:
     return str(ILLEGAL_CHARACTERS_RE.sub("", str(value)))
+
+
+@functools.cache
+def _font(bold: bool, italic: bool, colour: str, size: float) -> Any:
+    return _S["Font"](bold=bold, italic=italic, color=colour, size=size)
+
+
+@functools.cache
+def _fill(rgb: str) -> Any:
+    return _S["fill"](rgb)
+
+
+# Per workbook: the cell style (the numbers of its font, fill, border and alignment in the
+# workbook's tables) of every combination `_cell` was asked for. A sheet has a few dozen
+# combinations and tens of thousands of cells; making the font, fill and alignment objects for each
+# cell and finding them in the tables again (the library hashes every object each time) cost 70 %
+# of the time of an export (audit B-08, 28,693 fonts for the flatsat). The first cell of a
+# combination goes the long way, so the tables fill in the same order and the file is the same.
+_CELL_STYLES: weakref.WeakKeyDictionary[Any, dict[tuple[Any, ...], Any]] = (
+    weakref.WeakKeyDictionary()
+)
+_REUSE_STYLES = True  # the tests switch it off to compare the bytes with the long way
 
 
 def _cell(
@@ -111,15 +137,25 @@ def _cell(
 ) -> Any:
     """One styled cell. Text that a spreadsheet program would run as a formula (= + - @) is stored
     as text; numbers stay numbers."""
-    c = WriteOnlyCell(ws, value=value if isinstance(value, int | float) else _text(value))
+    text = value if isinstance(value, int | float) else _text(value)
+    key = (bold, italic, colour or _INK, size or 10, fill or "", box, centre, wrap)
+    known = _CELL_STYLES.get(ws.parent, {}) if _REUSE_STYLES else {}
+    style = known.get(key)
+    if style is not None:
+        c = Cell(ws, 1, 1, text, style_array=style)
+    else:
+        c = WriteOnlyCell(ws, value=text)
     if isinstance(value, str) and value[:1] in ("=", "+", "-", "@", "\t", "\r"):
         c.data_type = "s"
-    c.font = _S["Font"](bold=bold, italic=italic, color=colour or _INK, size=size or 10)
-    if fill:
-        c.fill = _S["fill"](fill)
-    if box:
-        c.border = _S["box"]
-    c.alignment = _S["centre"] if centre else _S["wrap"] if wrap else _S["flat"]
+    if style is None:
+        c.font = _font(bold, italic, colour or _INK, size or 10)
+        if fill:
+            c.fill = _fill(fill)
+        if box:
+            c.border = _S["box"]
+        c.alignment = _S["centre"] if centre else _S["wrap"] if wrap else _S["flat"]
+        if _REUSE_STYLES and getattr(c, "_style", None) is not None:
+            _CELL_STYLES.setdefault(ws.parent, {})[key] = _S["StyleArray"](c._style)
     return c
 
 

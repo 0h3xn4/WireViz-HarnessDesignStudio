@@ -24,6 +24,7 @@ from .snapshot import (
     carried_interfaces,
     frozen_values,
     links_of,
+    locked_pins,
     used_interface_type_ids,
     used_part_ids,
 )
@@ -60,13 +61,12 @@ def _released(project: Project) -> list[Harness]:
 
 
 def _locked_pins(project: Project, h: Harness) -> dict[str, list[str]]:
-    """Box connector ID -> its pins that carry an interface of the harness (those are locked)."""
-    carried = carried_interfaces(h)
-    return {
-        c.id: [p.id for p in c.pins if p.interface_id in carried]
-        for c in project.connectors.values()
-        if any(p.interface_id in carried for p in c.pins)
-    }
+    """Box connector ID -> its pins that are locked: those that carry an interface of the harness
+    and those its wires reach (1.9.0). Only pins the connector has; in the order of the pins."""
+    out: dict[str, list[str]] = {}
+    for box, ids in locked_pins(project, h).items():
+        out[box] = [p.id for p in project.connectors[box].pins if p.id in ids]
+    return {box: ids for box, ids in out.items() if ids}
 
 
 def locked_objects(project: Project) -> dict[tuple[str, str], list[LockRef]]:

@@ -105,7 +105,10 @@ READS: dict[str, tuple[tuple[str, str], ...]] = {
     "shield-parts": (("emc", "shield_bonding"),),
     "emc-class-split": (("emc", "same_class_one_bundle"),),
     "power-return-adjacent": (("generation", "power_return_gap_pins"),),
-    "bundle-current": (("derating", "ampacity_a_by_awg"), ("derating", "bundle_factor_by_count")),
+    "bundle-current": (
+        ("derating", "ampacity_a_by_awg"), ("derating", "bundle_factor_by_count"),
+        ("derating", "temperature_derating"),
+    ),
 }  # fmt: skip
 
 

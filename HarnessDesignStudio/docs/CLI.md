@@ -22,6 +22,7 @@ The examples show the form of each command with example names. They do not all w
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
 - Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export)
+- Team use with Git: [`merge-fix`](#harness-design-studio-merge-fix)
 - Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data)
 - Write data out: [`export-pinout`](#harness-design-studio-export-pinout), [`export-devices`](#harness-design-studio-export-devices), [`export-subsystem`](#harness-design-studio-export-subsystem)
 - Review, release and change: [`review`](#harness-design-studio-review), [`release`](#harness-design-studio-release), [`revise`](#harness-design-studio-revise), [`diff`](#harness-design-studio-diff), [`log`](#harness-design-studio-log), [`compare`](#harness-design-studio-compare)
@@ -186,6 +187,24 @@ harness-design-studio export my-design
 harness-design-studio export my-design --drawings
 ```
 
+## Team use with Git
+
+### harness-design-studio merge-fix
+
+After a Git merge in which two people each pressed Generate, `generated/generation.json` conflicts. This command keeps this branch's version of that one file, then runs `generate` (which writes the record again for the merged design) and `check`. It refuses, and changes nothing, when any other file of the project is in conflict, and it writes nothing itself apart from that record and what `generate` writes. Commit the result afterwards.
+
+`harness-design-studio merge-fix project`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+
+Examples:
+
+```
+harness-design-studio merge-fix my-design
+```
+
 ## Bring in data
 
 ### harness-design-studio config
@@ -199,6 +218,7 @@ Hand-over checklist for the engineering values (derating, grounding, test limits
 | `project` | the project folder |
 | `--ampacity-csv AMPACITY_CSV` | CSV with a gauge column and an amperes column; sets derating.ampacity_a_by_awg |
 | `--counterparts WORDS` | the words that are the two ends of one line, for the link review and the pairing, for example 'TX=RX, MOSI=MISO' (sets naming.signal_counterparts); 'default' goes back to the table the tool ships with, 'none' pairs equal names only |
+| `--distinct-roles DISTINCT_ROLES` | on: a release needs an author, a checker and a person who releases that are three different people, a date that is not earlier than the project's change log and not more than a day ahead, and takes a missing name from Git (sets naming.release_distinct_roles); off: the setting is taken out again (the default) (one of off, on) |
 | `--apply-profile NAME` | fill the unset values from a standard profile (ecss-q-st-30-11c, ecss-e-st-20-07c); values you already set are kept; the files stay placeholders until you review them |
 
 Examples:
@@ -466,7 +486,7 @@ submit a draft harness for review
 | --- | --- |
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
-| `--by BY` | your name (recorded in the change log) |
+| `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
 
 Examples:
@@ -485,10 +505,10 @@ release a harness: baseline, change log entry and lock (blocked while checks fai
 | --- | --- |
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
-| `--by BY` | your name (recorded in the change log) |
+| `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
 | `--comment COMMENT` | what changed or why (at least 10 characters) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
-| `--checker CHECKER` | who checked it (title block) |
+| `--checker CHECKER` | who checked it (title block; required in a project that requires different people) |
 | `--accept-placeholders REASON` | release although configuration files are still placeholders: the reason (at least 10 characters) is kept in the change log and the baseline |
 | `--accept-unapproved-parts REASON` | release although the harness uses parts that are not approved (or are example data): the reason (at least 10 characters) is kept in the change log and the baseline |
 
@@ -508,7 +528,7 @@ start a new revision of a released harness
 | --- | --- |
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
-| `--by BY` | your name (recorded in the change log) |
+| `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
 | `--comment COMMENT` | what changed or why (at least 10 characters) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
 

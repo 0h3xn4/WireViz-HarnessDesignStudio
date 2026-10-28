@@ -28,6 +28,7 @@ from harness_design_studio.core.verify import verify_project
 
 from .consistency import release_integrity
 from .hashing import content_hash
+from .roles import date_problem, distinct_roles_on, same_person
 from .snapshot import carried_interfaces, normalize, related_ids, snapshot_for
 
 MIN_COMMENT = 10
@@ -44,6 +45,11 @@ def valid_date(text: str) -> bool:
     except ValueError:
         return False
     return True
+
+
+def _today() -> date:
+    """Today, for the one rule that looks at the clock (`roles.date_problem`); tests replace it."""
+    return date.today()
 
 
 class ReleaseError(HarnessError):
@@ -166,6 +172,53 @@ def _common(project: Project, hid: str, by: str, comment: str | None, when: str)
                     about="date",
                 )
             )
+        elif problem := date_problem(project, when, _today()):  # only with the setting on
+            out.append(Blocker(problem[0], problem[1], about="date"))
+    return out
+
+
+def role_blockers(
+    project: Project, h: Harness, by: str | None, checker: str | None
+) -> list[Blocker]:
+    """With the setting `release_distinct_roles` on (`roles.py`): the author, the checker and the
+    person who releases are three named, different people. `by` or `checker` of None leaves out
+    the check of that name (a dialog that has not asked for it yet). Nothing without the setting."""
+    if not distinct_roles_on(project):
+        return []
+    out: list[Blocker] = []
+    author = (h.author or "").strip()
+    if not author:
+        out.append(
+            Blocker(
+                "author_missing",
+                f"Nobody is recorded as the author of {h.id}, and this project requires three "
+                "different people. Submit it for review under the author's name first; someone "
+                "else releases it.",
+                h.id,
+            )
+        )
+    if checker is not None and not checker.strip():
+        out.append(
+            Blocker(
+                "checker_missing",
+                "Name the person who checked it: this project requires an author, a checker and "
+                "a person who releases, all different.",
+                about="checker",
+            )
+        )
+    people = [("author", author, "by"), ("checker", (checker or "").strip(), "checker"),
+              ("person who releases it", (by or "").strip(), "by")]  # fmt: skip
+    for i, (role_a, name_a, _) in enumerate(people):
+        for role_b, name_b, about in people[i + 1 :]:
+            if same_person(name_a, name_b):
+                out.append(
+                    Blocker(
+                        "same_person",
+                        f"The {role_a} and the {role_b} must be different people, but both are "
+                        f"'{name_a[:60]}'.",
+                        about=about,
+                    )
+                )
     return out
 
 
@@ -276,11 +329,14 @@ def release_blockers(
     accept_placeholders: str | None = None,
     accept_unapproved_parts: str | None = None,
     checker: str | None = None,
+    check_roles: bool = True,
 ) -> list[Blocker]:
     out = _common(project, hid, by, comment, when)
     h = project.harnesses.get(hid)
     if h is None:
         return out
+    if check_roles:  # a dialog that asks for the names itself leaves this to the dialog
+        out.extend(role_blockers(project, h, by, checker or ""))
     out.extend(placeholder_blockers(project, accept_placeholders))
     out.extend(part_blockers(project, h, accept_unapproved_parts))
     notes = placeholder_note(project, by, accept_placeholders) + part_note(
@@ -549,5 +605,6 @@ __all__ = [
     "plan_submit_review",
     "release_blockers",
     "release_integrity",
+    "role_blockers",
     "unapproved_parts",
 ]

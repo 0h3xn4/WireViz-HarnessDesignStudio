@@ -17,8 +17,15 @@ if "openpyxl.xml" in sys.modules and sys.modules["openpyxl.xml"].LXML:
 import openpyxl.xml  # noqa: E402  (after the variable is set, on purpose)
 from openpyxl import Workbook, load_workbook  # noqa: E402
 from openpyxl.cell import WriteOnlyCell  # noqa: E402
-from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE  # noqa: E402
+from openpyxl.cell.cell import ILLEGAL_CHARACTERS_RE, Cell  # noqa: E402
 
 PLAIN_WRITER: bool = openpyxl.xml.LXML is False
 
-__all__ = ["ILLEGAL_CHARACTERS_RE", "PLAIN_WRITER", "Workbook", "WriteOnlyCell", "load_workbook"]
+__all__ = [
+    "ILLEGAL_CHARACTERS_RE",
+    "PLAIN_WRITER",
+    "Cell",
+    "Workbook",
+    "WriteOnlyCell",
+    "load_workbook",
+]
