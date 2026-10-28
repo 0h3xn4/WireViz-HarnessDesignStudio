@@ -47,7 +47,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.8.1
+harness 1.9.0
 ```
 
 Start the editor with `harness-design-studio-gui`.
@@ -60,15 +60,15 @@ The prototype tests drive a Chromium browser. `playwright` is installed by `dev`
 pytest
 ```
 
-The whole suite has 3,963 tests in 214 files (`pytest --collect-only -q`, counted on 2026-10-27 for version 1.8.1). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
+The whole suite has 4,737 tests in 236 files (`pytest --collect-only -q`, counted on 2026-10-28 for version 1.9.0). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
 
 The markers (declared in `pyproject.toml`, and `--strict-markers` is on, so an unknown one is an error):
 
-| Marker | Tests (1.8.1) | Meaning |
+| Marker | Tests (1.9.0) | Meaning |
 | --- | --- | --- |
-| `gui` | 1,425 | Needs Qt (run with `QT_QPA_PLATFORM=offscreen`, which `conftest.py` sets). `pytest -m gui` runs only these. |
+| `gui` | 1,491 | Needs Qt (run with `QT_QPA_PLATFORM=offscreen`, which `conftest.py` sets). `pytest -m gui` runs only these. |
 | `ux` | 33 | Drives the clickable prototype in a Chromium browser (playwright). |
-| `perf` | 49 | Asserts a wall-clock limit. CI runs these alone, after the parallel run. A new timing test must carry it, or `tests/test_parallel_safety.py` fails. |
+| `perf` | 53 | Asserts a wall-clock limit. CI runs these alone, after the parallel run. A new timing test must carry it, or `tests/test_parallel_safety.py` fails. |
 | `slow` | 11 | Needs about 10 s or more on its own (measured on a loaded machine). Pull requests leave these out (`-m "not perf and not slow"`); the run on `master`, the Windows run on `master` and `python -m tools.release_check` run them. Mark a test that takes this long with `@pytest.mark.slow`; a test that is quick on its own does not need it. |
 
 | Command | What it does |
@@ -103,12 +103,12 @@ mypy
 ```
 
 ```
-595 files already formatted
+639 files already formatted
 All checks passed!
-Success: no issues found in 437 source files
+Success: no issues found in 477 source files
 ```
 
-(Run on 2026-10-27 for version 1.8.1; the file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `HarnessDesignStudio/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
+(Run on 2026-10-28 for version 1.9.0; the file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `HarnessDesignStudio/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
 
 ## 4. The tests that read the documents
 

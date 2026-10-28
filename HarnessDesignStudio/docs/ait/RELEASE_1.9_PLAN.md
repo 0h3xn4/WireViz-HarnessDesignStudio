@@ -1,6 +1,6 @@
 # Release 1.9 plan: make the Systems engineer role work and give every role an output
 
-Status: plan, written 2026-10-27 on top of 1.8.1 (published 2026-10-28). Source:
+Status: plan, written 2026-10-27 on top of 1.8.1 (published 2026-10-28). Carried out as 1.9.0 (prepared, not yet published; D-179 and D-180). Source:
 `docs/AUDIT_1.8.0.md` section 3.2 and section 4 "1.9". Decisions from D-178.
 
 ## Aim

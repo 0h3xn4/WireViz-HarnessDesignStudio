@@ -41,7 +41,7 @@ small-satellite    14 devices with nominal and redundant chains. Generate it to 
 flatsat            A complete bench: 23 flight and ground devices, generated, with example numbers.
 ```
 
-**Which version do you have?** This tutorial is written for 1.8.1. The commands work the same on 1.7.0, 1.6.0 and earlier, except that `export` there writes the harness drawings and no build workbook (Part 6); the window is the one of 1.3.0 and later, and the Next step page is new in 1.7.0 and the two roles (Systems engineer and Electrical / AIT engineer) are newer still (1.8.0), so the app steps and the picture look different in 1.7.0 and earlier (1.2.0 and earlier had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
+**Which version do you have?** This tutorial is written for 1.9.0. The commands work the same on 1.7.0, 1.6.0 and earlier, except that `export` there writes the harness drawings and no build workbook (Part 6); the window is the one of 1.3.0 and later, and the Next step page is new in 1.7.0 and the two roles (Systems engineer and Electrical / AIT engineer) are newer still (1.8.0), so the app steps and the picture look different in 1.7.0 and earlier (1.2.0 and earlier had tabs along the top). The five examples, the `design-worksheet.md` template, the wiring-diagram drawing with wire colours and *Edit > Wire colours...* are not in the 0.1.0 packages (see [`CHANGELOG.md`](../CHANGELOG.md)): check with the command above, 1.0.0 lists five examples, 0.1.0 lists three (`blank`, `first-steps` and `small-satellite`). With a 0.1.0 package the tutorial still works from `first-steps`, but the drawings and the optional colour step differ.
 
 Create a practice project from `first-steps`. Pick a folder that does not exist yet:
 
@@ -144,7 +144,7 @@ harness-design-studio drc wheel-link
 ```
 # Design rule check: Wheel link
 
-Model hash: `55f35af414c5`. Rules run: 39.
+Model hash: `1a2dbf04e4fc`. Rules run: 39.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
 
 Placeholder configuration in use: derating, emc, generation, segmentation, segregation, titleblock. Results that depend on it are marked as not checked.
@@ -171,7 +171,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-34 files written to wheel-link/outputs (model 55f35af414c5).
+34 files written to wheel-link/outputs (model 1a2dbf04e4fc).
 ```
 
 The files are checked independently before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.
@@ -197,7 +197,7 @@ harness-design-studio export wheel-link --drawings
 ```
 
 ```
-40 files written to wheel-link/outputs (model 55f35af414c5).
+40 files written to wheel-link/outputs (model 1a2dbf04e4fc).
 ```
 
 The six new files are `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` and the same three for `W002`. A later `export` without `--drawings` removes them again and says so. The harness drawing (it needs `export --drawings`), with a title block and the model hash at the bottom (the picture is the `W001` sheet of the first export of this tutorial; the version and the model hash at the bottom of your own drawing are those of your tool and your project, so they can differ from the picture):
