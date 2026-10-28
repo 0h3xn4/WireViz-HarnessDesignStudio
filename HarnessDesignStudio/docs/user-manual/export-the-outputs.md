@@ -25,7 +25,7 @@ This page shows how to write the build workbook and the lists of a design (wire 
 
 ## 1. Export
 
-**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…** or **Design > Export…**, Ctrl+E; on the Next step page of the Systems engineer role the button is **Export the build sheets**, which opens the same window). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and the button **Export**. A project that has harnesses or connections but no folder yet (the built-in sample, or a project you never saved) first asks where to save: a folder chooser opens with the title *Choose an empty folder to save the project in. The files are then exported next to it*; the project is saved there and the window then opens on the new `outputs` folder. If you cancel the chooser, nothing else happens. A project that is open read-only or has damaged files cannot be exported: the window says why and, for a damaged project, lists up to five of the files that could not be loaded and says *and N more* for the rest (save a copy to a new folder, or repair the files). A project with neither a harness nor a connection says *There are no harnesses yet. Generate harnesses first.* (a project with connections and no harness can be exported: the tree then shows the system documents only, with the connection list). The check box is ticked only when the previous export into this folder had drawings; the first time it is not ticked, and the tree then lists no drawing documents ([section 5](#5-the-pdf-drawings-optional)). When the export is done the window lists the files written ("35 files written to …") and the app says "35 files written to the outputs folder (design 55f35af414c5)." (your numbers will differ; the app counts `manifest.json`, the command line below does not, so it says 34 for the same files). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The same files, with their checksums, are listed afterwards under **Exported files** in the Outputs area ([section 7](#7-check-that-the-outputs-are-current)). The export always writes the whole set of the harnesses; the check box is the only choice. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
+**In the app** (GUI, not run): press **Export…** in the top bar (or **File > Export…** or **Design > Export…**, Ctrl+E; on the Next step page of the Systems engineer role the button is **Export the build sheets**, which opens the same window). The **Export outputs** window opens. It shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and the button **Export**. A project that has harnesses or connections but no folder yet (the built-in sample, or a project you never saved) first asks where to save: a folder chooser opens with the title *Choose an empty folder to save the project in. The files are then exported next to it*; the project is saved there and the window then opens on the new `outputs` folder. If you cancel the chooser, nothing else happens. A project that is open read-only or has damaged files cannot be exported: the window says why and, for a damaged project, lists up to five of the files that could not be loaded and says *and N more* for the rest (save a copy to a new folder, or repair the files). A project with neither a harness nor a connection says *There are no harnesses yet. Generate harnesses first.* (a project with connections and no harness can be exported: the tree then shows the system documents only, with the connection list). The check box is ticked only when the previous export into this folder had drawings; the first time it is not ticked, and the tree then lists no drawing documents ([section 5](#5-the-pdf-drawings-optional)). When the export is done the window lists the files written ("35 files written to …") and the app says "35 files written to the outputs folder (design 1a2dbf04e4fc)." (your numbers will differ; the app counts `manifest.json`, the command line below does not, so it says 34 for the same files). In the list, **Open** opens the selected file, **Reveal in folder** shows it in the file manager, and selecting a drawing shows a picture of it. The same files, with their checksums, are listed afterwards under **Exported files** in the Outputs area ([section 7](#7-check-that-the-outputs-are-current)). The export always writes the whole set of the harnesses; the check box is the only choice. The ticks in the tree choose which files the list shows and which ones **Copy selection to folder…** copies.
 
 ![The Export outputs window before an export: the output folder, the tree of harnesses and documents with the build workbook of each harness, the check box Include the PDF drawings not ticked, and the Export button](../img/export-window.png)
 
@@ -36,7 +36,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-34 files written to wheel-link/outputs (model 55f35af414c5).
+34 files written to wheel-link/outputs (model 1a2dbf04e4fc).
 ```
 
 With `--drawings` the PDF drawings are written too ([section 5](#5-the-pdf-drawings-optional)).
@@ -158,7 +158,7 @@ harness-design-studio export wheel-link --drawings
 ```
 
 ```
-40 files written to wheel-link/outputs (model 55f35af414c5).
+40 files written to wheel-link/outputs (model 1a2dbf04e4fc).
 ```
 
 An export without `--drawings` into a folder that holds the drawings of an earlier export removes them and says so: `The PDF drawings of the earlier export were removed; add --drawings to write them again.`
@@ -178,7 +178,7 @@ The independent check accepts a set with the drawings of every harness and a set
 Every file carries the tool version and a **model hash** (a short fingerprint of the design): CSV and YAML files start with a comment line, for example
 
 ```
-# harness-design-studio 1.8.1 model 55f35af414c5
+# harness-design-studio 1.9.0 model 1a2dbf04e4fc
 ```
 
 A program that reads the CSV must skip lines that start with `# `. The Excel workbooks carry the same stamp on their **About** sheet, and the build workbook also in the footer of every printed sheet and on **Start here**. A printed sheet can be traced to the exact design it came from by that hash.

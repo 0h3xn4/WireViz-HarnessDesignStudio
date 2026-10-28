@@ -1,4 +1,4 @@
-# harness-design-studio 1.8.1 model 25d61b78dd08
+# harness-design-studio 1.9.0 model 0889e43d6125
 Wire,Signal,Interface,From connector,From pin,To connector,To pin,AWG,Part,Colour,Length (m),Shield group,Locked
 W002-001,TX+/RX+,IF-TM-RW1,W002-P1,1,W002-P2,3,pending,EX-WIRE-TWISTED-SHIELDED,,,W002-S1,
 W002-002,TX+/RX+,IF-TM-RW1,W002-P2,1,W002-P1,3,pending,EX-WIRE-TWISTED-SHIELDED,,,W002-S2,

@@ -4,6 +4,8 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+## 1.9.0 (2026-10-28; not a statement of compliance)
+
 ### Added
 
 - **A direction on a pin.** A pin can say which way its signal runs (`in`, `out` or `bidirectional`; empty means not set). It is optional and left out of the files while empty, so an existing project is written exactly as before. Where it is set it decides before any name does: the connection review reports output against output and input against input from the two directions (also for analog, discrete, LVDS, pyro and I2C clock signals, which the review otherwise leaves alone), and the pairing proposal pairs two equal `TX` names when the pins say `out` and `in`. The pinout tables and `export-pinout` get a last column *Direction* only while some pin has one; `import-pinout` reads a *Direction* column (a word that is not in, out or bidirectional stops the import and names the row; `n/a` and `passive` leave it unset). The JSON Schema of the connector files lists it. The Devices tab shows it (the edit column comes with the screens of this release).
