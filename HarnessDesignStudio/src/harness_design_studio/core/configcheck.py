@@ -16,6 +16,7 @@ from harness_design_studio.core.commands import Op, SetConfig
 from harness_design_studio.core.issues import Issue
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.model.config import ConfigFile
+from harness_design_studio.core.vcs import roles
 
 Table = list[list[str]]
 SHIELD_ENDS = ("backshell_360", "pigtail", "floating")
@@ -157,6 +158,7 @@ def validate(project: Project) -> list[Issue]:
             out.extend(_validate_ampacity(n, v))
     out.extend(validate_titleblock(project))
     out.extend(validate_counterparts(project))
+    out.extend(validate_distinct_roles(project))
     out.extend(standard_profiles.validate(project))
     return out
 
@@ -237,6 +239,11 @@ def report(project: Project) -> tuple[str, bool]:
             f"Signal counterparts: {count} pair{'s' if count != 1 else ''} of words set in "
             f"config/{counterparts.CONFIG_FILE}.json ({counterparts.CONFIG_KEY}); the link review "
             "and the pairing read them instead of the table the tool ships with."
+        )
+    if roles.distinct_roles_on(project):  # only when a project sets it
+        lines.append(
+            "Release roles: the author, the checker and the person who releases must be three "
+            f"different people (config/{roles.CONFIG_FILE}.json, {roles.CONFIG_KEY})."
         )
     for n in todo:
         lines.append(f"- MISSING config/{n.file}.json {n.key}: {n.what}. Needed for: {n.used_by}.")
@@ -324,6 +331,57 @@ def validate_counterparts(project: Project) -> list[Issue]:
             f"{counterparts.CONFIG_FILE}.{counterparts.CONFIG_KEY}",
         )
     ]
+
+
+def validate_distinct_roles(project: Project) -> list[Issue]:
+    """`naming.json` `release_distinct_roles` (1.9.0) must be true or false. Not set (or null) is
+    not a problem: it is the same as false, today's behaviour."""
+    raw = _cfg(project, roles.CONFIG_FILE).get(roles.CONFIG_KEY)
+    if raw is None or isinstance(raw, bool):
+        return []
+    where = f"config/{roles.CONFIG_FILE}.json"
+    return [
+        Issue(
+            "error",
+            "config_invalid",
+            f"{where}: {roles.CONFIG_KEY} must be true or false.",
+            where,
+            f"{roles.CONFIG_FILE}.{roles.CONFIG_KEY}",
+        )
+    ]
+
+
+def plan_set_distinct_roles(project: Project, value: object) -> ValuePlan:
+    """The ops that switch `naming.json` `release_distinct_roles` on or off, or why not. `value` is
+    a bool or the text on/yes/true or off/no/false (anything else is refused). Off takes the key
+    out of the file, so a project that never used the setting keeps its file as it was. A release
+    does not freeze `naming.json`, so this works at any time; the check of locks is made all the same."""
+    from harness_design_studio.core.errors import TransactionError
+    from harness_design_studio.core.vcs.locks import check_locks
+
+    if isinstance(value, bool):
+        on = value
+    elif isinstance(value, str) and value.strip().casefold() in ("on", "yes", "true"):
+        on = True
+    elif isinstance(value, str) and value.strip().casefold() in ("off", "no", "false"):
+        on = False
+    else:
+        return _fail("Different people in a release: say on or off.")
+    old = project.config.get(roles.CONFIG_FILE)
+    base = (
+        old if old is not None else ConfigFile(name=roles.CONFIG_FILE, placeholder=False, values={})
+    )
+    values = {k: v for k, v in base.values.items() if k != roles.CONFIG_KEY}
+    if on:
+        values[roles.CONFIG_KEY] = True
+    ops: list[Op] = [
+        SetConfig(ConfigFile(name=base.name, placeholder=base.placeholder, values=values))
+    ]
+    try:
+        check_locks(project, ops)
+    except TransactionError as exc:
+        return _fail(exc.problems[0] if exc.problems else str(exc))
+    return ValuePlan(ops, None, on)
 
 
 def plan_set_counterparts(project: Project, value: object) -> ValuePlan:

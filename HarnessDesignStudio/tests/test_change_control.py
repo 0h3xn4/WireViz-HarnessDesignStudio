@@ -4,6 +4,7 @@ the change log and its outputs."""
 import json
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 import pytest
 from hypothesis import given, settings
@@ -119,7 +120,7 @@ def do_release(
 
 
 def codes(p: Project, hid: str, folder: Path | None, **kw: str) -> set[str]:
-    args = {
+    args: dict[str, Any] = {
         "by": "Ada", "comment": "a long enough comment", "when": WHEN,
         "accept_placeholders": REASON, "accept_unapproved_parts": REASON,
     }  # fmt: skip

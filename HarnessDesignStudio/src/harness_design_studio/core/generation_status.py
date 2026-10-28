@@ -5,7 +5,19 @@ import hashlib
 import json
 from typing import Any
 
-from .model import Project
+from .model import ConfigFile, Project
+from .vcs.roles import CONFIG_FILE as ROLES_FILE
+from .vcs.roles import CONFIG_KEY as ROLES_KEY
+
+
+def _config_dump(c: ConfigFile) -> dict[str, Any]:
+    """One config file as generation reads it. The setting `release_distinct_roles` (who may
+    release, 1.9.0) is not read by generation, so switching it on or off does not make the harness
+    plans out of date; without the key the dump is what it always was."""
+    d = c.model_dump(mode="json")
+    if c.name == ROLES_FILE and ROLES_KEY in c.values:
+        d["values"] = {k: v for k, v in d["values"].items() if k != ROLES_KEY}
+    return d
 
 
 def input_hash(project: Project) -> str:
@@ -33,7 +45,7 @@ def input_hash(project: Project) -> str:
         "interface_types": dump(project.interface_types.values()),
         "parts": dump(project.parts.values()),
         "zones": list(project.zones),
-        "config": {n: c.model_dump(mode="json") for n, c in sorted(project.config.items())},
+        "config": {n: _config_dump(c) for n, c in sorted(project.config.items())},
         "box_connectors": boxes,
         "locked_wires": sorted(
             (w.model_dump(mode="json") for h in generated for w in h.wires if w.locked),

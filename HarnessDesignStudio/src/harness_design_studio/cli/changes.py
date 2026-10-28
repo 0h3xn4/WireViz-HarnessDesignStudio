@@ -18,6 +18,7 @@ from harness_design_studio.core.vcs.release import (
     plan_submit_review,
 )
 from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, working_diff
+from harness_design_studio.core.vcs.roles import CONFIG_KEY, default_name
 
 COMMANDS = ("review", "release", "revise", "diff", "compare", "log")
 OPTIONS = {
@@ -26,16 +27,26 @@ OPTIONS = {
 }  # fmt: skip
 
 
+_PARSERS: dict[str, argparse.ArgumentParser] = {}
+
+
 def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     def add(name: str, text: str, *, harness: bool = True) -> argparse.ArgumentParser:
         p = sub.add_parser(name, help=text, description=text)
+        _PARSERS[name] = p
         p.add_argument("project", type=Path, help="project folder")
         if harness:
             p.add_argument("harness", help="harness ID, for example W001")
         return p
 
     def who(p: argparse.ArgumentParser, comment: bool) -> None:
-        p.add_argument("--by", required=True, help="your name (recorded in the change log)")
+        p.add_argument(
+            "--by",
+            default=None,
+            help="your name (recorded in the change log; required, except in a project that "
+            f"requires different people ({CONFIG_KEY}): there the name from Git, "
+            "`user.name`, is used when you leave it out and Git has one)",
+        )
         if comment:
             p.add_argument(
                 "--comment", required=True, help="what changed or why (at least 10 characters)"
@@ -48,7 +59,11 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "release a harness: baseline, change log entry and lock (blocked while checks fail)",
     )
     who(r, True)
-    r.add_argument("--checker", default=None, help="who checked it (title block)")
+    r.add_argument(
+        "--checker",
+        default=None,
+        help="who checked it (title block; required in a project that requires different people)",
+    )
     r.add_argument(
         "--accept-placeholders",
         metavar="REASON",
@@ -134,15 +149,21 @@ def run(args: argparse.Namespace) -> int:
     if project.read_only:
         print("error: this project is read-only (saved by a newer tool version).", file=sys.stderr)
         return 2
+    by = args.by
+    if by is None:
+        by = default_name(project, args.project)
+        if by is None:  # as when the option was required: the usual message of the parser
+            _PARSERS[cmd].error("the following arguments are required: --by")
+        print(f"Name taken from Git (user.name): {by}.")
     when = _today(args.date)
     folder = args.project / "outputs"
     if cmd == "review":
-        plan = plan_submit_review(project, args.harness, by=args.by, when=when)
+        plan = plan_submit_review(project, args.harness, by=by, when=when)
     elif cmd == "release":
         plan = plan_release(
             project,
             args.harness,
-            by=args.by,
+            by=by,
             checker=args.checker,
             comment=args.comment,
             when=when,
@@ -151,7 +172,7 @@ def run(args: argparse.Namespace) -> int:
             accept_unapproved_parts=args.accept_unapproved_parts,
         )
     else:
-        plan = plan_new_revision(project, args.harness, by=args.by, comment=args.comment, when=when)
+        plan = plan_new_revision(project, args.harness, by=by, comment=args.comment, when=when)
     blocked = _apply(args.project, plan)
     if blocked:
         return blocked
