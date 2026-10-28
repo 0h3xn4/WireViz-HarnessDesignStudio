@@ -193,7 +193,9 @@ def test_the_readme_tour_names_screens_that_exist_and_quotes_real_output(tmp_pat
         not_output=frozenset({"harness-design-studio export wheel-link#0"}),
     )
     assert len(results) == len(_commands_in(ROOT / "README.md")) == 8
-    printed = "\n".join(out for _cmd, out in results)
+    printed = "\n".join(out for _cmd, out in results).replace(
+        "\\", "/"
+    )  # Windows prints paths with a backslash
     quoted = re.findall(r"`([^`]*(?:added,|files written to)[^`]*)`", tour)
     assert len(quoted) == 3, quoted
     for line in quoted:
