@@ -42,11 +42,11 @@ It works offline and produces byte-identical files for the same design, so the f
 
 You need Ubuntu 24.04 or newer on a 64-bit PC (see [Requirements](#requirements)); the Windows packages (from version 1.2.0) are described in [`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md), way D.
 
-**Easiest: the ready-made package.** Download `harness-design-studio_1.8.0_amd64.deb` and `SHA256SUMS` from the [latest release](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest), then in the folder with the files:
+**Easiest: the ready-made package.** Download `harness-design-studio_1.8.1_amd64.deb` and `SHA256SUMS` from the [latest release](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest), then in the folder with the files:
 
 ```
 sha256sum -c SHA256SUMS --ignore-missing
-sudo apt install ./harness-design-studio_1.8.0_amd64.deb
+sudo apt install ./harness-design-studio_1.8.1_amd64.deb
 ```
 
 That installs the `harness-design-studio` command line tool (`harness` works as a short alias) and the `harness-design-studio-gui` app; the packages are not signed, so the checksum check is the only proof that the download is intact. The release page also has a `.tar.gz` with an `install.sh` that needs no administrator rights.
@@ -113,7 +113,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/REA
 
 ## Licence and status
 
-- **Status and releases.** The latest published release is version `1.8.0` (2026-10-26); version `1.8.1` (fixes from the audit of 1.8.0, decision D-177) is prepared and has not been published. Apart from the release decision for 1.0.0, no release has been signed off by the owner as a compliance record ([`HarnessDesignStudio/compliance/SIGNOFF.md`](HarnessDesignStudio/compliance/SIGNOFF.md)), and the packages are not signed. Every version with its date, tag, commit and content: [`HarnessDesignStudio/docs/STATUS.md`](HarnessDesignStudio/docs/STATUS.md) and the [changelog](HarnessDesignStudio/CHANGELOG.md).
+- **Status and releases.** The latest published release is version `1.8.1` (2026-10-28; fixes from the audit of 1.8.0, decision D-177); version `1.8.0` was published on 2026-10-26. Apart from the release decision for 1.0.0, no release has been signed off by the owner as a compliance record ([`HarnessDesignStudio/compliance/SIGNOFF.md`](HarnessDesignStudio/compliance/SIGNOFF.md)), and the packages are not signed. Every version with its date, tag, commit and content: [`HarnessDesignStudio/docs/STATUS.md`](HarnessDesignStudio/docs/STATUS.md) and the [changelog](HarnessDesignStudio/CHANGELOG.md).
 - **Created mainly by an AI.** Harness Design Studio was written mainly by Claude (Anthropic's AI assistant, used through Claude Code); the owner set the requirements and approved the decisions and releases. No other person has reviewed it independently, and it makes no claim of compliance with any standard. Check its results before relying on them. The records are in [`HarnessDesignStudio/compliance/`](HarnessDesignStudio/compliance/README.md).
 - **Older packages:** some things described in these pages (the `minimal-satellite` and `flatsat` examples, the wiring-diagram drawing with wire colours, *Edit > Wire colours*) are not in the 0.1.0 packages. `harness-design-studio new --list` shows three examples on 0.1.0 and five on 1.0.0 and later. The [changelog](HarnessDesignStudio/CHANGELOG.md) lists what is new.
 - **Licence.** The [`LICENSE`](LICENSE) file in this repository is the GPL-3.0 licence of WireViz. The licence of the code in `HarnessDesignStudio/` has not been decided (decision D-02 in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md), kept open for 1.0.0 in D-143; the package metadata says `LicenseRef-Proprietary`; the copyright holder is the repository owner, GitHub account `0h3xn4`). No licence has been granted for it yet.
