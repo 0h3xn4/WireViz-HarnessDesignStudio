@@ -183,7 +183,11 @@ def object_row(f: Finding) -> dict[str, Any]:
         "object": f.object_id or strings.CHECKS_WHOLE_DESIGN,
         "message": f.title,
         "severity": strings.CHECKS_SEVERITY.get(f.severity, f.severity),
-        "waiver": f.waiver.justification if f.waiver is not None else "",
+        "waiver": f.waiver.justification
+        if f.waiver is not None
+        else strings.CHECKS_WAIVER_CHANGED
+        if f.waiver_changed
+        else "",
         "object_id": f.object_id,
         "finding": f,
     }
