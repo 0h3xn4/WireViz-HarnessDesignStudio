@@ -1,6 +1,6 @@
 # Release 1.10 plan: four small, owner-chosen changes
 
-Status: plan, written 2026-10-28 on top of 1.9.0 (published the same day). Nothing in this plan is built.
+Status: plan, written 2026-10-28 on top of 1.9.0 (published the same day); built in release 1.10.0 (D-182 to D-185), published on 2026-10-29. Where the build differs from the plan, `W2 as built` below and D-184 say how.
 Source: the open choices of D-179 and the owner's "go" of 2026-10-28 for shield ends, the cable-pin
 Signal column, requirement IDs in the outputs and the split of `CLAUDE.md`. Decision D-182.
 The facts below were read from the code on 2026-10-28 (file and line references are to that tree).
@@ -142,7 +142,7 @@ shown and explained in the pull request; the shield rules' documents (`docs/RULE
 
 W2 goes last because it is the only one that moves the baseline; W1 and W3 can be reviewed independently.
 Version: **1.10.0** (minor: outputs change). Preparation and publication follow `docs/RELEASE.md` as for 1.9.0;
-the tag stays the owner's step.
+the tag stays the owner's step. Published on 2026-10-29 as the tag `v1.10.0` on commit `6f87980` (release workflow run 40920309052; `compliance/SIGNOFF.md`).
 
 ## Questions for the owner (defaults in bold; the plan is built on the defaults)
 
