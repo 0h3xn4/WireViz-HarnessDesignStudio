@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.9.0 (2026-10-28: the Systems engineer path, a connection list as output, `merge-fix`, faster edits in big projects; it needs Python 3.14 only for an install from source; tag `v1.9.0` on commit `ae8a8f9`, release workflow run 40718549384; not signed off by the owner); 1.8.1 (2026-10-28: fixes from the audit of 1.8.0: links, "not checked", the library, the keyboard, the command line, the documents; tag `v1.8.1` on commit `6b7d70b`, release workflow run 40681169961; not signed off by the owner); 1.8.0 (2026-10-26: connections pin by pin, editing connectors and wires, a shared library, two roles instead of the simple workspace; tag `v1.8.0` on commit `1f7431e`) came before it. The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. Version 1.10.0 is prepared and not published yet. The newest published release is 1.9.0 (2026-10-28: the Systems engineer path, a connection list as output, `merge-fix`, faster edits in big projects; it needs Python 3.14 only for an install from source; tag `v1.9.0` on commit `ae8a8f9`, release workflow run 40718549384; not signed off by the owner); 1.8.1 (2026-10-28: fixes from the audit of 1.8.0: links, "not checked", the library, the keyboard, the command line, the documents; tag `v1.8.1` on commit `6b7d70b`, release workflow run 40681169961; not signed off by the owner); 1.8.0 (2026-10-26: connections pin by pin, editing connectors and wires, a shared library, two roles instead of the simple workspace; tag `v1.8.0` on commit `1f7431e`) came before it. The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
 
 ## Contents
 
@@ -100,7 +100,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.9.0
+harness 1.10.0
 ```
 
 Remove it later with `sudo apt remove harness-design-studio`. Upgrade by installing the newer `.deb` the same way.
@@ -222,7 +222,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.9.0
+harness 1.10.0
 ```
 
 You now have the command line tool `harness-design-studio` (and its short alias `harness`) and the editor `harness-design-studio-gui`. For a script or a shared machine, the setup program also runs without windows: `harness-design-studio-<version>-windows-x86_64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER /DIR="C:\Tools\Harness Design Studio"` (add `/LOG=setup.log` to keep a log). Remove it with *Settings > Apps*, or run `unins000.exe` in the install folder (`/VERYSILENT` makes that silent too). Your projects are never inside the install folder, and uninstalling does not touch them.

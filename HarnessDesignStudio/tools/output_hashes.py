@@ -37,7 +37,7 @@ from harness_design_studio.core.outputs.build import build_outputs
 
 STORED = Path(__file__).resolve().parent.parent / "docs" / "ui" / "OUTPUT_HASHES_BASELINE.json"
 EXAMPLES = ("first-steps", "minimal-satellite", "small-satellite", "flatsat")
-BASE_VERSION = "1.9.0"  # the version of the tool that wrote the stored hashes
+BASE_VERSION = "1.10.0"  # the version of the tool that wrote the stored hashes
 BASE_RULES = 39  # the number of design rules then; a rule added later is given as in the baseline
 # A new kind of file is the one thing the check lets through (none now); every file of the baseline is compared.
 ADDED_AFTER_BASE: tuple[str, ...] = ()
