@@ -427,8 +427,8 @@ def _shield_wrong_end(project: Project) -> Iterator[Hit]:
         return
     for h in sorted(project.harnesses.values(), key=lambda x: x.id):
         for s in h.shields:
-            if s.kind == "twisted_pair":
-                continue  # a twisted pair has no shield to ground
+            if s.kind in ("twisted_pair", "coax"):
+                continue  # a twisted pair has no shield to ground; a coax is bonded at both ends
             if (s.end_a, s.end_b) != want:
                 yield Hit(
                     f"{h.id}.{s.id}",

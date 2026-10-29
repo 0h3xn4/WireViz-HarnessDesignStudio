@@ -511,7 +511,7 @@
     },
     {
       "end_a": "backshell_360",
-      "end_b": "floating",
+      "end_b": "backshell_360",
       "id": "W005-S4",
       "kind": "coax",
       "wire_ids": [

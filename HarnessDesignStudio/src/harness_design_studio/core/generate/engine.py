@@ -36,6 +36,7 @@ from harness_design_studio.core.model import (
     evolve,
 )
 from harness_design_studio.core.model.base import Name
+from harness_design_studio.core.model.physical import COAX_SHIELD_END
 from harness_design_studio.core.vcs.snapshot import carried_interfaces
 
 from .lengths import path_length
@@ -1046,8 +1047,8 @@ def _shields(
                     id=ctx.namer.shield(hid, n),
                     kind=cast(Any, kind),
                     wire_ids=sorted(w.id for w in members),
-                    end_a=a,
-                    end_b=b,
+                    end_a=COAX_SHIELD_END if kind == "coax" else a,
+                    end_b=COAX_SHIELD_END if kind == "coax" else b,
                 )
             )
             n += 1

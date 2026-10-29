@@ -29,6 +29,7 @@ from .commands import Op, Put
 from .edit import EditError
 from .model import Harness, Project, ShieldGroup, Wire
 from .model.base import evolve
+from .model.physical import COAX_SHIELD_END
 
 EDITABLE: tuple[str, ...] = ("gauge_awg", "part_id", "colour", "length_m", "label", "note")
 ENDS: tuple[str, ...] = (
@@ -458,8 +459,9 @@ def _check_count(kind: str, n: int) -> None:
 def plan_group_wires(project: Project, wire_ids: Iterable[str], kind: str) -> list[Op]:
     """Ops that twist or shield wires together as one group (`kind` is a key of `GROUP_KINDS`). The
     wires must be in one harness and in no group yet. The shield ends are those of the
-    generation settings (floating while they are a placeholder); the rule `shield-unterminated`
-    says so. Generation keeps the group while its wires exist."""
+    generation settings (floating while they are a placeholder; the rule `shield-unterminated`
+    says so), except for a coax, whose outer conductor is bonded at both ends
+    (`COAX_SHIELD_END`). Generation keeps the group while its wires exist."""
     if kind not in GROUP_KINDS:
         raise EditError(f"A group is one of: {', '.join(_KIND_WORDS.values())}.")
     ids = list(dict.fromkeys(wire_ids))
@@ -484,8 +486,8 @@ def plan_group_wires(project: Project, wire_ids: Iterable[str], kind: str) -> li
         id=new_group_id(project, h.id),
         kind=kind,  # type: ignore[arg-type]
         wire_ids=sorted(ids),
-        end_a=_group_end(project, "shield_end_a"),  # type: ignore[arg-type]
-        end_b=_group_end(project, "shield_end_b"),  # type: ignore[arg-type]
+        end_a=COAX_SHIELD_END if kind == "coax" else _group_end(project, "shield_end_a"),  # type: ignore[arg-type]
+        end_b=COAX_SHIELD_END if kind == "coax" else _group_end(project, "shield_end_b"),  # type: ignore[arg-type]
         manual=True,
     )
     return [Put("harnesses", evolve(h, shields=[*h.shields, group]))]

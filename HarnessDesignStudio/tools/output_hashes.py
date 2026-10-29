@@ -1,17 +1,23 @@
 """SHA-256 of every file the tool writes (a workbook by its members) for each packaged example, to show that a change of the user
-interface left the written files alone (UI overhaul M6; the brief: SVG and PDF byte-identical to 1.2.0).
+interface (or of anything else that must not touch the written files) left them alone.
 
     python -m tools.output_hashes                       # print the hashes as JSON
     python -m tools.output_hashes --write FILE          # store them
     python -m tools.output_hashes --check FILE          # compare with a stored file; exit 1 on a difference
 
-The stored file `docs/ui/OUTPUT_HASHES_1.2.0.json` was made with the release 1.2.0 (tag v1.2.0); a test
+The stored file `docs/ui/OUTPUT_HASHES_BASELINE.json` is the baseline; a test
 (`tests/test_output_hashes.py`) compares the current tool with it. Every file the tool writes names the
 version of the tool in its header or title block, so a newer version differs in those bytes only: before
 hashing, the current version string is replaced by `BASE_VERSION` (both have the same length, so no
-offset of a PDF moves), a file kind that did not exist then (`ADDED_AFTER_BASE`, the build workbook) is left out of the comparison, and the number of design rules in the DRC report ("Rules run: 35", one rule was
-added in 1.4.0) is given as in 1.2.0, 34. The model hash includes the version a project was saved with, so each example
-(and its generation record) is first given the version of the release the hashes were made with. Nothing else may differ.
+offset of a PDF moves). The model hash includes the version a project was saved with, so each example
+(and its generation record) is first given `BASE_VERSION`. Nothing else may differ.
+
+The baseline is renewed on purpose, with a reviewed reason in `CHANGELOG.md` and `docs/DECISIONS.md`, when a
+release changes a written file for good (release 1.10, D-182: the shield ends of a coax, the cable-pin
+Signal cells, the Requirement column), and when the version string changes its length (1.9.x to 1.10.0,
+1.99.x to 1.100.0): write it again with this tool and set `BASE_VERSION` to the version then current. The
+file `docs/ui/OUTPUT_HASHES_1.2.0.json` is the baseline of releases 1.2.0 to 1.9.0, kept as the record of
+what those releases wrote; nothing compares with it any more.
 """
 
 import hashlib
@@ -29,13 +35,12 @@ from harness_design_studio.core.generate.engine import generate_project
 from harness_design_studio.core.model import evolve
 from harness_design_studio.core.outputs.build import build_outputs
 
-STORED = Path(__file__).resolve().parent.parent / "docs" / "ui" / "OUTPUT_HASHES_1.2.0.json"
+STORED = Path(__file__).resolve().parent.parent / "docs" / "ui" / "OUTPUT_HASHES_BASELINE.json"
 EXAMPLES = ("first-steps", "minimal-satellite", "small-satellite", "flatsat")
-BASE_VERSION = "1.2.0"  # the release the stored hashes were made with
-BASE_RULES = 34  # the number of design rules of that release (1.4.0 added `pin-shared`)
-# Files that did not exist in the base release: the build workbook of 1.7.0 (decision D-169). A new
-# kind of file is the one thing the check lets through; every file of the base release is compared.
-ADDED_AFTER_BASE = ("_build.xlsx",)
+BASE_VERSION = "1.9.0"  # the version of the tool that wrote the stored hashes
+BASE_RULES = 39  # the number of design rules then; a rule added later is given as in the baseline
+# A new kind of file is the one thing the check lets through (none now); every file of the baseline is compared.
+ADDED_AFTER_BASE: tuple[str, ...] = ()
 
 
 def as_in_base_version(data: bytes) -> bytes:

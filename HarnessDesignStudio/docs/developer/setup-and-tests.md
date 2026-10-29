@@ -139,7 +139,7 @@ The editor of 1.3.0 (the UI overhaul, D-150 to D-159) has its own tests. All run
 | `tests/test_ui_final.py` | Walks every area, tab, Settings section and the Problems panel in both themes: no Qt warning, an accessible name on every control, a tooltip on every icon-only button, the Tab key visits every control and returns to where it started, keyboard focus is visible. |
 | `tests/test_ui_timing.py` | The optional timing log (`HARNESS_UI_TIMING=1`). |
 | `tests/test_ui_checks_perf.py`, `test_ui_preview_perf.py`, `test_ui_sheets_perf.py`, `test_ui_state_index_scale.py` | Time limits at stress size (200 devices, 2,000 interfaces, about 82,000 findings): an edit after a rule check, a frame of the drawing, a paste of 500 rows. They carry `perf`, so CI runs them alone, with `HARNESS_TIME_FACTOR=3`. |
-| `tests/test_output_hashes.py` | All 567 files the four packaged examples write (with the drawings on, as the reference was made) have the SHA-256 they had with release 1.2.0 (`docs/ui/OUTPUT_HASHES_1.2.0.json`), apart from the version stamp: a change of the interface must not change a written file. The build workbooks (`*_build.xlsx`, a file kind that did not exist then) are left out of the comparison. |
+| `tests/test_output_hashes.py` | All 612 files the four packaged examples write (with the drawings on, as the reference was made) have the SHA-256 in the baseline (`docs/ui/OUTPUT_HASHES_BASELINE.json`; until 1.9.0 the files of release 1.2.0), apart from the version stamp: a change of the interface must not change a written file. The baseline is renewed on purpose when a release changes a written file for good (D-183). |
 
 Pictures of the result are made with `tools.ui_screenshots`, timings with `tools.ui_perf` ([`tools.md`](tools.md)).
 
@@ -168,7 +168,7 @@ Version 1.4.0 (the AIT feedback, D-160 to D-165), version 1.5.0 (a harness made 
 | `tests/test_ui_next_page.py`, `tests/test_ui_role_layout.py` | The Next step page and the role setting (S1); the Systems engineer role showing less until the person asks: rail without Home, Drawings and Outputs, closed panels, reduced tool row, *Show panels*, a layout kept for each role (S2; `test_ui_role_layout.py` was `test_ui_simple_workspace.py` before milestone M5). |
 | `tests/test_ui_roles.py` | The roles on screen (D-176, REQ-GUI-14, REQ-GUI-15): the question of the first start (only without stored values and without the hook), the silent role of an existing user, switching in both directions with each role's layout kept, every area the rail leaves out still reachable, both themes, names and tooltips. |
 
-The proof that existing work is unchanged is `tests/test_output_hashes.py` (above): the 567 files of the four examples still match release 1.2.0 apart from the version stamp (the build workbooks, new in 1.7.0, are not compared).
+The proof that existing work is unchanged is `tests/test_output_hashes.py` (above): the 612 files of the four examples still match the baseline apart from the version stamp (until 1.9.0 the baseline was release 1.2.0; since 1.10 it is renewed on purpose, D-183).
 
 ## 5. Golden files
 
