@@ -7,7 +7,7 @@ Every finding says what is wrong, why it matters and (when safe) offers a fix.
 import hashlib
 import re
 from collections.abc import Iterable
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 
 from . import edit
 from .commands import Op, Put
@@ -27,6 +27,7 @@ class Finding:
     can_waive: bool = False
     waiver: Waiver | None = None  # set when the finding has been waived
     sources: tuple[str, ...] = ()  # IDs of the standard requirements the rule serves
+    waiver_changed: bool = False  # a waiver exists but the finding changed since: it does not apply
 
     @property
     def why_cited(self) -> str:
@@ -48,6 +49,23 @@ def safe_id(text: str) -> str:
     if cleaned == text:
         return text
     return cleaned[:52] + "." + hashlib.sha256(text.encode()).hexdigest()[:8]
+
+
+def finding_hash(finding: Finding) -> str:
+    """A short hash of what a finding says (its rule and its statement of this one problem), kept in
+    a waiver so that a finding that changes later is not silently still waived."""
+    return hashlib.sha256(f"{finding.rule}\n{finding.title}".encode()).hexdigest()[:12]
+
+
+def with_waiver(project: Project, finding: Finding) -> Finding:
+    """`finding` with its waiver set, when one exists and still fits the finding. A waiver that
+    records a `finding_hash` which no longer matches does not apply (`waiver_changed` is set)."""
+    waiver = project.waivers.get(finding.id)
+    if waiver is None or not finding.can_waive:
+        return finding
+    if waiver.finding_hash is not None and waiver.finding_hash != finding_hash(finding):
+        return replace(finding, waiver_changed=True)
+    return replace(finding, waiver=waiver)
 
 
 def finding_id(rule: str, object_id: str) -> str:
@@ -84,7 +102,7 @@ def find(project: Project) -> list[Finding]:
                     "One unit is nominal and the other redundant. A cross-strap like this means one failure "
                     "could affect both chains, so reviewers will ask about it.",
                     f"Connect to a redundant copy of {nominal}" if nominal else None,
-                    True, project.waivers.get(fid),
+                    True, None,
                 )
             )  # fmt: skip
         if any(e.connector_id is None for e in i.endpoints):
@@ -120,7 +138,7 @@ def find(project: Project) -> list[Finding]:
                 )
             )  # fmt: skip
     order = {"error": 0, "warning": 1, "info": 2}
-    return sorted(out, key=lambda f: (order[f.severity], f.id))
+    return sorted((with_waiver(project, f) for f in out), key=lambda f: (order[f.severity], f.id))
 
 
 def open_findings(project: Project) -> list[Finding]:
@@ -178,6 +196,7 @@ def waive_op(finding: Finding, justification: str) -> Op:
             rule=finding.rule,
             object_id=safe_id(finding.object_id),
             justification=justification.strip(),
+            finding_hash=finding_hash(finding),
         )
     except ValueError as exc:  # a justification that is too short or too long, for example
         raise edit.EditError(

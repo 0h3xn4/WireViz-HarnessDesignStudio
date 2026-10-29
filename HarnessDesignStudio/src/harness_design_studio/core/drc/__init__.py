@@ -1,9 +1,8 @@
 """Design rule check (DRC): `run(project)` returns every finding with waivers applied."""
 
-from dataclasses import replace
 from typing import TYPE_CHECKING
 
-from harness_design_studio.core.checks import Finding
+from harness_design_studio.core.checks import Finding, with_waiver
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.model import Project
 
@@ -16,7 +15,7 @@ _ORDER = {"error": 0, "warning": 1, "info": 2}
 
 
 def apply_waivers(project: Project, findings: list[Finding]) -> list[Finding]:
-    return [replace(f, waiver=project.waivers.get(f.id)) if f.can_waive else f for f in findings]
+    return [with_waiver(project, f) for f in findings]
 
 
 def run(project: Project) -> list[Finding]:
