@@ -6,6 +6,7 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ### Changed
 
+- **A waiver is tied to the finding it was made for (release 1.11, D-187).** A waiver now records `finding_hash`, a short hash of the rule and the statement of the finding. While the finding says the same, nothing changes. When it says something else (a number or a name in its text changed), the waiver no longer applies: the finding is open again, and the DRC report lists it under *Waivers that no longer fit* with the old reason, so a changed problem is not silently still accepted. Waiving it again records the new hash. A waiver without the field (made before, or written by hand) applies as before, and the field is left out of the file while empty, so projects that have no waiver, and waivers made earlier, are written exactly as before. `tests/test_waiver_finding_hash.py`.
 - **The documents no longer quote a model hash (D-186).** The transcripts in the tutorial, the manual, the examples page and the troubleshooting page show `<hash>`: the hash changes with the tool version, so every quoted value was stale after each release (four manual pages still showed 1.8.1 values). Nothing changes in the program or its files.
 
 ## 1.10.0 (2026-10-29; not a statement of compliance)

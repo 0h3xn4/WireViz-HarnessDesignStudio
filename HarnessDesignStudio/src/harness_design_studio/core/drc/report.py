@@ -17,6 +17,11 @@ def stale_waivers(project: Project, findings: list[Finding]) -> list[str]:
     return sorted(w for w in project.waivers if w not in live)
 
 
+def changed_waivers(findings: list[Finding]) -> list[Finding]:
+    """Findings that have a waiver which no longer fits: the finding changed after it was waived."""
+    return [f for f in findings if f.waiver_changed]
+
+
 def render_markdown(project: Project, findings: list[Finding] | None = None) -> str:
     from harness_design_studio.core.checks import find as logical
 
@@ -63,6 +68,20 @@ def render_markdown(project: Project, findings: list[Finding] | None = None) -> 
         for f in waived:
             if f.waiver is not None:
                 lines.append(f"- **{f.title}** (`{f.id}`): “{f.waiver.justification}”")
+    changed = changed_waivers(found)
+    if changed:
+        lines += [
+            "",
+            "## Waivers that no longer fit",
+            "",
+            "These findings were waived, but the finding has changed since. They are open again; "
+            "read them and waive them again if the reason still holds.",
+            "",
+        ]
+        lines += [
+            f"- **{f.title}** (`{f.id}`): was “{project.waivers[f.id].justification}”"
+            for f in changed
+        ]
     stale = stale_waivers(project, found)
     if stale:
         lines += [

@@ -1,6 +1,6 @@
 """Layout (where things sit in the diagram) and review records (waivers)."""
 
-from typing import Annotated, Any, Literal
+from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import (
     AfterValidator,
@@ -11,7 +11,7 @@ from pydantic import (
 
 from harness_design_studio.core.ids import Id
 
-from .base import Entity, IsoDate, Name, Text, _no_control_chars
+from .base import Entity, IsoDate, Name, SparseEntity, Text, _no_control_chars
 from .library import Part
 from .logical import InterfaceInstance, InterfaceType, Link, Unit
 from .physical import Connector, Harness
@@ -29,14 +29,23 @@ class Placement(Entity):
     y: float
 
 
-class Waiver(Entity):
-    """A recorded decision to accept a finding. The justification is mandatory."""
+FindingHash = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{12}$")]
+
+
+class Waiver(SparseEntity):
+    """A recorded decision to accept a finding. The justification is mandatory. `finding_hash` ties
+    the waiver to the statement of the finding it was made for (release 1.11, D-187): if the
+    statement changes, the waiver no longer applies. A waiver without it (made before, or by hand)
+    applies as it always did."""
+
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"finding_hash"})
 
     id: Id  # "<rule>.<object>" so it is stable across sessions
     rule: Name
     object_id: Id
     justification: Justification
     notes: Text = ""
+    finding_hash: FindingHash | None = None
 
 
 __all__ = ["Justification", "Placement", "Waiver"]

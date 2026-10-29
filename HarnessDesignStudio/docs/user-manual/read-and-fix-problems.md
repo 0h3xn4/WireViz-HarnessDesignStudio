@@ -153,6 +153,7 @@ The notes also name what could not be checked on a wire or a harness instead of 
 ## Common mistakes
 
 - **Waiving everything.** A waiver says "a person accepted this". Reviewers read the reasons. Waive only what you have judged.
+- **A waiver that stops applying.** A waiver remembers a short fingerprint of the finding it was made for (since 1.11). If the finding later says something else (a value or a name in its text changed), the waiver no longer applies: the finding is open again and the report lists it under *Waivers that no longer fit* with the old reason. Read it and waive it again if the reason still holds. A waiver made before 1.11 has no fingerprint and applies as it always did.
 - **Reading "0 errors" as "correct".** The tool checks what it has numbers for. The notes list what it did not check.
 - **Using the wrong word for a waiver.** In the compliance records, "waived by the owner" means something else: the owner accepts that a process requirement is not met. See the [glossary](../GLOSSARY.md).
 - **Errors after an import.** The library changed, so the plans are out of date. Generate and export again.
