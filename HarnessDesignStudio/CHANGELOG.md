@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Changed
+
+- **The documents no longer quote a model hash (D-186).** The transcripts in the tutorial, the manual, the examples page and the troubleshooting page show `<hash>`: the hash changes with the tool version, so every quoted value was stale after each release (four manual pages still showed 1.8.1 values). Nothing changes in the program or its files.
+
 ## 1.10.0 (2026-10-29; not a statement of compliance)
 
 ### Changed

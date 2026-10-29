@@ -89,7 +89,7 @@ harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "Seco
 ```
 
 ```
-34 files written to wheel-link/outputs (model eeb448865d2b).
+34 files written to wheel-link/outputs (model <hash>).
 Release W002 revision B: done.
 Outputs re-exported with the released status (34 files).
 ```

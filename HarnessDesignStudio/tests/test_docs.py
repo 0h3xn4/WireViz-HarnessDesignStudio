@@ -269,16 +269,14 @@ def test_getting_started_commands_work_in_order(tmp_path: Path) -> None:
     ).read_text()
     shown = [ln for ln in doc.read_text().splitlines() if ln.startswith("W002-00")]
     assert shown and all(ln in wirelist for ln in shown), shown
-    # the model hash quoted in the text is the one the first export prints
+    # the text never quotes a model hash (it depends on the tool version, D-186): it shows <hash>
     first_export = next(
         out for cmd, out in results if cmd == "harness-design-studio export wheel-link"
     )
-    printed = re.search(r"model ([0-9a-f]{12})", first_export)
-    assert printed and f"(model {printed.group(1)})" in doc.read_text(), (
-        "the model hash in docs/GETTING_STARTED.md is out of date: "
-        f"{printed.group(1) if printed else '?'}"
-    )
-    assert f"Model hash: `{printed.group(1)}`" in doc.read_text()
+    assert re.search(r"model ([0-9a-f]{12})", first_export), "the export prints a model hash"
+    text = doc.read_text()
+    assert "(model <hash>)" in text and "Model hash: `<hash>`" in text
+    assert not re.search(r"model [0-9a-f]{12}", text), "docs/GETTING_STARTED.md quotes a model hash"
     assert (tmp_path / "wheel-link" / "outputs" / "manifest.json").is_file()
     assert (tmp_path / "my-first-design" / "project.json").is_file()
     # the "Why" excerpt of Part 7 (and of the user manual page) is the recorded reasons of W002-001
