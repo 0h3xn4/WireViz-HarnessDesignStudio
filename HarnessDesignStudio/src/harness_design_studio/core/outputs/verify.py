@@ -401,6 +401,13 @@ def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[st
                 f"The wire list of {h.id} has the wrong columns for the strip lengths.",
                 h.id,
             )
+        has_req = _uses_requirements(project)
+        if ("Requirement" in wl[0]) != has_req:
+            r.error(
+                "out_wire_differs",
+                f"The wire list of {h.id} has the wrong columns for the requirement IDs.",
+                h.id,
+            )
         for row in wl[1:]:
             w = by_id.get(row[0])
             if w is None or len(row) < 13:
@@ -408,8 +415,13 @@ def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[st
             wrong = []
             has_emc = any(t.emc_class for t in project.interface_types.values())
             has_text = any(x.label or x.note for g in project.harnesses.values() for x in g.wires)
+            if has_req:
+                i = project.interfaces.get(w.interface_id or "")
+                at = 13 + (1 if has_emc else 0)
+                if len(row) <= at or row[at] != ((i.requirement_id if i else None) or ""):
+                    wrong.append("requirement")
             if has_strip:
-                at = 13 + (1 if has_emc else 0) + (2 if has_text else 0)
+                at = 13 + (1 if has_emc else 0) + (1 if has_req else 0) + (2 if has_text else 0)
                 if len(row) < at + 2 or not (
                     _same_number(row[at], w.strip_a_mm) and _same_number(row[at + 1], w.strip_b_mm)
                 ):
@@ -420,7 +432,7 @@ def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[st
                 if len(row) < 14 or row[13] != ((t.emc_class if t else None) or ""):
                     wrong.append("EMC class")
             if has_text:
-                at = 13 + (1 if has_emc else 0)
+                at = 13 + (1 if has_emc else 0) + (1 if has_req else 0)
                 if len(row) < at + 2 or (row[at], row[at + 1]) != (w.label or "", w.note):
                     wrong.append("label or note")
             if row[1] != (w.signal or ""):
@@ -804,12 +816,13 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
         for row in shown:
             if len(row) > 7 and (row[7] == "yes") != (row[0] in routed):
                 r.error("out_trace", f"{row[0]} is marked wrongly as routed or not routed.", row[0])
+        head = _trace_header(project)
         if project.links:
             given = {row[0]: row[2] for row in tr[1:] if len(row) > 2 and row[-1] == "connection"}
-            _compare_rows(r, "out_trace", "The traceability matrix", tr, _TRACE_HEADER_LINKS,
-                          _trace_rows(project, given), (0, 8), "traceability")  # fmt: skip
+            _compare_rows(r, "out_trace", "The traceability matrix", tr, head,
+                          _trace_rows(project, given), (0, len(head) - 1), "traceability")  # fmt: skip
         else:
-            _compare_rows(r, "out_trace", "The traceability matrix", tr, _TRACE_HEADER,
+            _compare_rows(r, "out_trace", "The traceability matrix", tr, head,
                           _trace_rows(project, {}), (0,), "traceability")  # fmt: skip
     bp = _table(files, "system/box_pinouts.csv")
     if bp:
@@ -1015,14 +1028,16 @@ def _pin_rows(
     termination: bool = False,
     contact: bool = False,
     direction: bool = False,
+    carried: dict[tuple[str, str], tuple[str, str]] | None = None,
 ) -> list[list[Cell]]:
     rows: list[list[Cell]] = []
     for c in connectors:
         for p in c.pins:
             wires = sorted(attached.get((c.id, p.id), []))
+            sig, itf = (carried or {}).get((c.id, p.id), ("", ""))
             rows.append([
-                c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or "",
-                p.interface_id or "", ";".join(wires),
+                c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or sig,
+                p.interface_id or itf, ";".join(wires),
                 "no" if wires or p.interface_id or p.signal else "yes",
                 *([p.function or ""] if function else []),
                 *([p.termination] if termination else []),
@@ -1030,6 +1045,23 @@ def _pin_rows(
                 *([_DIRECTION_TEXT[p.direction]] if direction else []),
             ])  # fmt: skip
     return rows
+
+
+def _harness_carried(h: Harness) -> dict[tuple[str, str], tuple[str, str]]:
+    """(connector, pin) -> the signals and the interfaces of the wires that end there (sorted,
+    different, non-empty values joined with `;`): what a cable pin without a signal of its own shows."""
+    signals: dict[tuple[str, str], set[str]] = defaultdict(set)
+    interfaces: dict[tuple[str, str], set[str]] = defaultdict(set)
+    for w in h.wires:
+        for end in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
+            if w.signal:
+                signals[end].add(w.signal)
+            if w.interface_id:
+                interfaces[end].add(w.interface_id)
+    return {
+        end: (";".join(sorted(signals.get(end, ()))), ";".join(sorted(interfaces.get(end, ()))))
+        for end in set(signals) | set(interfaces)
+    }
 
 
 def _harness_attached(h: Harness) -> dict[tuple[str, str], list[str]]:
@@ -1215,6 +1247,7 @@ def _trace_rows(project: Project, given_types: dict[str, str]) -> list[list[Cell
             if w.interface_id:
                 carried[w.interface_id].append((h.id, w.id))
     kind: list[Cell] = ["interface"] if project.links else []
+    req = _uses_requirements(project)
     rows: list[list[Cell]] = []
     for i in project.interfaces.values():
         ends = [f"{e.unit_id}/{e.connector_id or '-'}" for e in i.endpoints]
@@ -1222,7 +1255,7 @@ def _trace_rows(project: Project, given_types: dict[str, str]) -> list[list[Cell
         rows.append([
             i.id, i.name, i.type_id, ends[0] if ends else "", ends[1] if len(ends) > 1 else "",
             ";".join(sorted({hid for hid, _w in carried.get(i.id, [])})), ";".join(wires),
-            "yes" if wires else "no", *kind,
+            "yes" if wires else "no", *([i.requirement_id or ""] if req else []), *kind,
         ])  # fmt: skip
     for link in project.links.values():
         possible = {t for pair in _pair_types(project, link).values() for t in pair}
@@ -1236,7 +1269,7 @@ def _trace_rows(project: Project, given_types: dict[str, str]) -> list[list[Cell
             cell if sound else "?",
             f"{_device(project, link.a_connector) or '-'}/{link.a_connector}",
             f"{_device(project, link.b_connector) or '-'}/{link.b_connector}", h_id,
-            ";".join(wires), "yes" if wires else "no", "connection",
+            ";".join(wires), "yes" if wires else "no", *([""] if req else []), "connection",
         ])  # fmt: skip
     return rows
 
@@ -1432,7 +1465,7 @@ def _harness_tables(r: VerifyReport, project: Project, h: Harness, files: dict[s
     if po:
         conns = sorted(h.connectors, key=lambda c: c.id)
         _compare_rows(r, "out_pinout", f"The pinout table of {h.id}", po, _pinout_header(project),
-                      _pin_rows(conns, _harness_attached(h), _uses_function(project), _uses_termination(project), _uses_contact(project), _uses_direction(project)), (0, 4), h.id)  # fmt: skip
+                      _pin_rows(conns, _harness_attached(h), _uses_function(project), _uses_termination(project), _uses_contact(project), _uses_direction(project), _harness_carried(h)), (0, 4), h.id)  # fmt: skip
     bm = _table(files, f"{base}/bom.csv")
     if bm:
         _compare_rows(r, "out_bom", f"The BOM of {h.id}", bm, _BOM_HEADER,
@@ -1809,6 +1842,21 @@ _MATING_HEADER = [
 ]  # fmt: skip
 _TRACE_HEADER = ["Interface", "Name", "Type", "From", "To", "Harnesses", "Wires", "Routed"]
 _TRACE_HEADER_LINKS = ["Interface or connection", *_TRACE_HEADER[1:], "Kind"]
+
+
+def _uses_requirements(project: Project) -> bool:
+    return any(i.requirement_id for i in project.interfaces.values())
+
+
+def _trace_header(project: Project) -> list[str]:
+    """The header the matrix must have: a Requirement column after Routed (before Kind) while any
+    interface has a requirement ID."""
+    head = list(_TRACE_HEADER_LINKS if project.links else _TRACE_HEADER)
+    if _uses_requirements(project):
+        head.insert(8, "Requirement")
+    return head
+
+
 _FINDING_HEADER = [
     "Finding", "Rule", "Severity", "Object", "Statement", "Waived", "Justification", "Requirement",
 ]  # fmt: skip

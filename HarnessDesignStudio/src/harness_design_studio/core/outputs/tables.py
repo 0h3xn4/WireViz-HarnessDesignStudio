@@ -63,6 +63,18 @@ def uses_emc_classes(project: Project) -> bool:
     return any(t.emc_class for t in project.interface_types.values())
 
 
+def requirement_of(project: Project, w: Wire) -> str:
+    """Requirement ID of the interface a wire carries (empty for a wire with no interface)."""
+    i = project.interfaces.get(w.interface_id or "")
+    return (i.requirement_id or "") if i else ""
+
+
+def uses_requirements(project: Project) -> bool:
+    """True when any interface carries a requirement ID (release 1.10): the wire list and the
+    traceability matrix then get a Requirement column; a project without one keeps its files."""
+    return any(i.requirement_id for i in project.interfaces.values())
+
+
 def uses_wire_text(project: Project) -> bool:
     """True when a person gave any wire a label or a note (1.4.0)."""
     return any(w.label or w.note for h in project.harnesses.values() for w in h.wires)
@@ -92,17 +104,19 @@ def wire_name(w: Wire) -> str:
 
 
 def wire_list(project: Project, h: Harness) -> Table:
-    """The EMC class column exists only when the project defines EMC classes, and the Label and
-    Note columns only when a person gave a wire one, so projects that do not use them keep
-    byte-identical wire lists."""
+    """The EMC class column exists only when the project defines EMC classes, the Requirement
+    column only when an interface has a requirement ID, and the Label and Note columns only when a
+    person gave a wire one, so projects that do not use them keep byte-identical wire lists."""
     shields = shield_of(h)
     emc = uses_emc_classes(project)
+    req = uses_requirements(project)
     text = uses_wire_text(project)
     strip = uses_strip_lengths(project)
     rows: Table = [[
         "Wire", "Signal", "Interface", "From connector", "From pin", "To connector", "To pin",
         "AWG", "Part", "Colour", "Length (m)", "Shield group", "Locked",
-        *(["EMC class"] if emc else []), *(["Label", "Note"] if text else []),
+        *(["EMC class"] if emc else []), *(["Requirement"] if req else []),
+        *(["Label", "Note"] if text else []),
         *(["Strip A (mm)", "Strip B (mm)"] if strip else []),
     ]]  # fmt: skip
     for w in sorted(h.wires, key=lambda x: x.id):
@@ -111,6 +125,7 @@ def wire_list(project: Project, h: Harness) -> Table:
             w.to_connector, w.to_pin, PENDING if w.gauge_awg is None else str(w.gauge_awg),
             w.part_id or "", w.colour or "", data_num(wire_length(h, w)), shields.get(w.id, ""),
             "yes" if w.locked else "", *([emc_class_of(project, w)] if emc else []),
+            *([requirement_of(project, w)] if req else []),
             *([w.label or "", w.note] if text else []),
             *([data_num(w.strip_a_mm), data_num(w.strip_b_mm)] if strip else []),
         ])  # fmt: skip
@@ -152,15 +167,20 @@ def _pin_rows(
     term: bool,
     contact: bool = False,
     direction: bool = False,
+    carried: dict[tuple[str, str], tuple[str, str]] | None = None,
 ) -> Table:
     """The rows of one connector; `fn`, `term`, `contact` and `direction` say whether the Function,
     Termination, Contact and Direction columns exist (worked out once per table, since each looks
-    at every pin of the project)."""
+    at every pin of the project). `carried` (cable connectors, release 1.10) gives the signal and
+    the interface of the wires at a pin, which fill the Signal and Interface cells of a pin that
+    has none of its own."""
     rows: Table = []
     for p in c.pins:
         wires = attached.get((c.id, p.id), [])
+        sig, itf = (carried or {}).get((c.id, p.id), ("", ""))
         rows.append([
-            c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or "", p.interface_id or "",
+            c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or sig,
+            p.interface_id or itf,
             ";".join(sorted(wires)), "no" if wires or p.interface_id or p.signal else "yes",
             *([p.function or ""] if fn else []), *([p.termination] if term else []),
             *([p.contact_part or ""] if contact else []),
@@ -196,18 +216,32 @@ def _header(fn: bool, term: bool, contact: bool = False, direction: bool = False
     ]
 
 
+def wire_signals(h: Harness) -> dict[tuple[str, str], tuple[str, str]]:
+    """(connector, pin) -> (signals, interfaces) of the wires that end there, each a sorted list of
+    the different non-empty values joined with `;` (the way the Wires column joins wire IDs)."""
+    found: dict[tuple[str, str], tuple[set[str], set[str]]] = defaultdict(lambda: (set(), set()))
+    for w in h.wires:
+        for end in ((w.from_connector, w.from_pin), (w.to_connector, w.to_pin)):
+            if w.signal:
+                found[end][0].add(w.signal)
+            if w.interface_id:
+                found[end][1].add(w.interface_id)
+    return {k: (";".join(sorted(s)), ";".join(sorted(i))) for k, (s, i) in found.items()}
+
+
 def pinouts(project: Project, h: Harness) -> Table:
     attached: dict[tuple[str, str], list[str]] = defaultdict(list)
     for w in h.wires:
         attached[(w.from_connector, w.from_pin)].append(w.id)
         attached[(w.to_connector, w.to_pin)].append(w.id)
+    carried = wire_signals(h)
     fn, term, contact, direction = (
         uses_pin_function(project), uses_termination(project), uses_contact_parts(project),
         uses_pin_direction(project),
     )  # fmt: skip
     rows = [_header(fn, term, contact, direction)]
     for c in sorted(h.connectors, key=lambda x: x.id):
-        rows += _pin_rows(c, attached, fn, term, contact, direction)
+        rows += _pin_rows(c, attached, fn, term, contact, direction, carried)
     return rows
 
 
@@ -471,7 +505,8 @@ def link_wires(project: Project, link: Link) -> list[str]:
 TRACE_HEADER = ["Interface", "Name", "Type", "From", "To", "Harnesses", "Wires", "Routed"]
 # A project with connections lists them under the interfaces: the first column then holds either
 # an interface or a connection (its ID), and the last column says which. Projects without
-# connections keep the eight columns above, byte for byte.
+# connections keep the eight columns above, byte for byte. A project in which an interface has a
+# requirement ID gets a column Requirement after Routed (before Kind); a connection has none.
 TRACE_HEADER_LINKS = ["Interface or connection", *TRACE_HEADER[1:], "Kind"]
 
 
@@ -481,13 +516,17 @@ def traceability(project: Project) -> Table:
         for w in h.wires:
             if w.interface_id:
                 carried[w.interface_id].append((h.id, w.id))
-    rows: Table = [list(TRACE_HEADER_LINKS if project.links else TRACE_HEADER)]
+    head = list(TRACE_HEADER_LINKS if project.links else TRACE_HEADER)
+    req = uses_requirements(project)
+    if req:
+        head.insert(8, "Requirement")
+    rows: Table = [head]
     kind = ["interface"] if project.links else []
     for i in sorted(project.interfaces.values(), key=lambda x: x.id):
         ends = [f"{e.unit_id}/{e.connector_id or '-'}" for e in i.endpoints]
         hs = sorted({h for h, _ in carried.get(i.id, [])})
         ws = sorted(w for _, w in carried.get(i.id, []))
-        rows.append([i.id, i.name, i.type_id, ends[0] if ends else "", ends[1] if len(ends) > 1 else "", ";".join(hs), ";".join(ws), "yes" if ws else "no", *kind])  # fmt: skip
+        rows.append([i.id, i.name, i.type_id, ends[0] if ends else "", ends[1] if len(ends) > 1 else "", ";".join(hs), ";".join(ws), "yes" if ws else "no", *([i.requirement_id or ""] if req else []), *kind])  # fmt: skip
     types = carried_types(project)
     for link in sorted(project.links.values(), key=lambda x: x.id):
         wires = link_wires(project, link)
@@ -497,6 +536,6 @@ def traceability(project: Project) -> Table:
             f"{device_of(project, link.a_connector) or '-'}/{link.a_connector}",
             f"{device_of(project, link.b_connector) or '-'}/{link.b_connector}",
             link.harness_id if link.harness_id in project.harnesses else "", ";".join(wires),
-            "yes" if wires else "no", "connection",
+            "yes" if wires else "no", *([""] if req else []), "connection",
         ])  # fmt: skip
     return rows
