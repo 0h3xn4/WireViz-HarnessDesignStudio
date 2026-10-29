@@ -2387,6 +2387,8 @@ STEP_CHANGE_ACCESSORY = "Change accessory {0}"
 STEP_DELETE_ACCESSORY = "Delete accessory {0}"
 
 INS_FACT_TOOL = "Crimp tool"
+INS_FACT_CONDUCTORS = "Conductors in one metre"
+PART_CONDUCTORS = "{n} conductors"
 INS_PART_TOOL = "Crimp tool"
 INS_PART_TOOL_TIP = (
     "The crimp tool, or its setting, for this contact, in your words, for example "

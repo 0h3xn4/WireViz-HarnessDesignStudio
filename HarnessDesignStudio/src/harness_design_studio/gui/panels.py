@@ -71,6 +71,8 @@ def part_summary(part: Part) -> str:
         bits.append(part.manufacturer)
     if part.pin_count:
         bits.append(f"{part.pin_count} pins")
+    if part.conductors > 1:
+        bits.append(strings.PART_CONDUCTORS.format(n=part.conductors))
     if part.specification:
         bits.append(part.specification)
     bits.append(strings.APPROVAL.get(part.approval, part.approval))

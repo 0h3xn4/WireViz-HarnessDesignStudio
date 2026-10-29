@@ -34,7 +34,7 @@ def harness_mass(project: Project, h: Harness) -> MassReport:
         elif (length := wire_length(h, w)) is None:
             r.missing.append(f"length of wire {w.id}")
         else:
-            r.total_g += part.mass_per_m_g * length
+            r.total_g += part.mass_per_m_g * length / part.conductors
     r.missing = sorted(set(r.missing))
     r.complete = not r.missing
     margin = (

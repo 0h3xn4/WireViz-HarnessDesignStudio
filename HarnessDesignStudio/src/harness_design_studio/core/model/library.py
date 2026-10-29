@@ -16,7 +16,7 @@ Approval = Literal["approved", "pending", "not_approved"]
 
 
 class Part(SparseEntity):
-    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"tool"})
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"tool", "conductors"})
 
     id: Id
     category: PartCategory
@@ -33,6 +33,10 @@ class Part(SparseEntity):
     ratings: dict[Name, NonNegative] = {}
     notes: Text = ""
     tool: Name | None = None  # the crimp tool or its setting for a contact part (a person's, 1.7.0)
+    # Wire parts: how many conductors one metre of the part carries (a twisted pair is 2). Every
+    # wire that names the part is one conductor of it, so the bill of materials and the mass count
+    # the sum of their lengths divided by this number: the metres of the cable (1.11, D-188).
+    conductors: Annotated[int, Field(ge=1, le=64)] = 1
 
 
 class LibraryInfo(Entity):
