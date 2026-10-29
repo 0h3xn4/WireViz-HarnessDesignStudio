@@ -77,7 +77,7 @@ These come from [`../../CLAUDE.md`](../../CLAUDE.md) and the decisions in [`../D
 11. **Tests first.** Every bug fix gets a regression test.
 12. **Speed.** Keep edits under 100 ms at stress size; use the change delta, never rebuild the whole scene for a local change (`tests/test_gui_perf.py`). Nothing longer than about 50 ms on the GUI thread: long work goes to a worker with progress and Cancel. Measure with `python -m tools.ui_perf` and `python -m tools.bench_gui`.
 13. **Say what is open.** Do not make the examples look reviewed; demo values stay `"placeholder": true` (D-129). Never claim compliance with a standard.
-14. **A change of the interface leaves the written files alone.** `python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_1.2.0.json` (and `tests/test_output_hashes.py`) compares every file the four example projects write with release 1.2.0, apart from the version stamp.
+14. **A change of the interface leaves the written files alone.** `python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_BASELINE.json` (and `tests/test_output_hashes.py`) compares every file the four example projects write with the baseline, apart from the version stamp. The baseline is renewed on purpose when a release changes a written file for good (D-183).
 
 ## Adding things
 

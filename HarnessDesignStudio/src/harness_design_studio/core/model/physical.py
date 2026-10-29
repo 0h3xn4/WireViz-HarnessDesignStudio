@@ -14,6 +14,9 @@ Termination = Literal["crimp", "solder", "unspecified"]
 HarnessStatus = Literal["draft", "in_review", "released"]
 ShieldKind = Literal["twisted_pair", "shielded_pair", "overall_shield", "quad", "coax"]
 ShieldEnd = Literal["backshell_360", "pigtail", "floating"]
+# The outer conductor of a coax carries the signal return, so it is bonded at both ends whatever the
+# grounding concept of the project says about other shields (release 1.10, D-182).
+COAX_SHIELD_END: ShieldEnd = "backshell_360"
 PinRole = Literal["", "power", "return", "ground", "signal", "shield", "spare"]
 PinDirection = Literal["", "in", "out", "bidir"]  # "" = not set: the name and the type decide
 

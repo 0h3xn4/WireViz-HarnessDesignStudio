@@ -54,7 +54,7 @@ Keys that are left out stay unset (`null`). `harness-design-studio validate` acc
 | `default_gauge_awg` | a whole number from 0 to 40 |
 | `max_mating_cycles` | a whole number, 1 or more |
 | `max_ambient_temperature_c` | a temperature in degC above -273.15 |
-| `shield_end_a`, `shield_end_b` | `backshell_360`, `pigtail` or `floating` |
+| `shield_end_a`, `shield_end_b` | `backshell_360`, `pigtail` or `floating` (not for a coax: its outer conductor is always bonded at both ends, `backshell_360`, since 1.10) |
 | `category_pairs_to_separate`, `conflicting_class_pairs` | a list of pairs of two different names, each pair once (`["A","B"]` and `["B","A"]` are the same pair) |
 | `forbid_nominal_with_redundant`, `forbid_pyro_with_other` | `true` or `false` |
 | `classes` (emc) | a list of non-empty class names |
@@ -98,7 +98,7 @@ Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limit
 | `conductor_resistivity_ohm_m` | for the voltage drop calculation |
 | `power_signal_gap_pins` | empty pins between power and signal pins |
 | `mass_margin_fraction` | margin added to masses |
-| `shield_end_a`, `shield_end_b` | grounding concept: `backshell_360`, `pigtail` or `floating` for each end |
+| `shield_end_a`, `shield_end_b` | grounding concept: `backshell_360`, `pigtail` or `floating` for each end (a coax is the exception: its outer conductor is bonded at both ends, so the rule `shield-wrong-end` does not compare it with the concept) |
 | `wire_colour_by_signal` | optional, absent by default: colour of the wire for each signal name, for example `{"PWR": "red", "RTN": "black"}`. Used when a wire has no colour of its own. The build workbook shows the wire in that colour with its name and IEC 60757 code (BK, RD, ...), and the harness drawing, when it is written, draws it in that colour. The tool defines no colours of its own. **Edit > Wire colours...** in the editor sets it from a list (undoable); a wire between two different signals (labelled `TX+/RX+`) takes the colour of the first |
 | `test_continuity_max_ohm`, `test_isolation_min_mohm`, `test_isolation_voltage_v` | limits printed in the test tables |
 
