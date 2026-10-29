@@ -154,3 +154,10 @@ the tag stays the owner's step.
    the labels?
 4. The baseline: **new stored baseline from 1.10 (option b)** or more exceptions to the 1.2.0 file (option a)?
 5. Twisted pairs: **leave the saved ends alone**; print "no shield" in the drawing instead of the ends, **yes**?
+
+## W2 as built
+
+Built as planned with three small differences, recorded in D-184: values are joined with `;` (not ` / `); the
+`Requirement` column sits after `EMC class` in the wire list and after `Routed` in the traceability matrix (not
+last); the shipped examples have no requirement IDs, so only their pinout tables and per-harness workbooks changed
+(90 of 612 files), and the baseline `OUTPUT_HASHES_BASELINE.json` was renewed from the finished tool.
