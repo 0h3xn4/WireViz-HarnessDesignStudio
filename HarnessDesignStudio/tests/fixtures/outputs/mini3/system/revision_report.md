@@ -1,4 +1,4 @@
-<!-- harness-design-studio 1.9.0 model 0889e43d6125 -->
+<!-- harness-design-studio 1.10.0 model 30d69f260094 -->
 # Revision report: mini3 (example data)
 
 No harness has been put into review or released yet.
