@@ -11,7 +11,9 @@ import time
 from collections.abc import Iterator
 from contextlib import contextmanager
 
-SLOW_MS = 50  # the longest a step may take on the GUI thread (CLAUDE.md, UI design rules)
+SLOW_MS = (
+    50  # the longest a step may take on the GUI thread (docs/developer/agent/ui-design-rules.md)
+)
 
 
 def enabled() -> bool:

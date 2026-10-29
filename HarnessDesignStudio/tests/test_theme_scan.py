@@ -1,7 +1,7 @@
 """D-150: no colour, font family or font size is written in the GUI code outside `gui/theme/`.
 
 Every value comes from the tokens (`theme.color`, `theme.type`, `theme.font`), so a theme change and
-the design rules of CLAUDE.md reach every widget. Plain AST scan, no display needed."""
+the design rules of docs/developer/agent/ui-design-rules.md reach every widget. Plain AST scan, no display needed."""
 
 import ast
 import re
