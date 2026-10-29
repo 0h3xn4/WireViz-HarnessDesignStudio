@@ -177,8 +177,8 @@ A golden file is a stored, reviewed result that a test compares with a fresh one
 | Golden | Where | Regenerate on purpose |
 | --- | --- | --- |
 | Digests of every output file for `mini3`, `sat15`, `sat15_full`, and the readable `mini3` text outputs | `tests/fixtures/outputs/` | `PYTHONPATH=. python -m tools.gen_output_goldens`, then review the diff |
-| The `mini3` project (made by hand) | `tests/fixtures/projects/mini3` | the command in `CLAUDE.md` ("Core layout") |
-| The `sat15` project (generated) | `tests/fixtures/projects/sat15` | the command in `CLAUDE.md` ("Generation layout"); delete the folder first |
+| The `mini3` project (made by hand) | `tests/fixtures/projects/mini3` | the command in [`agent/core.md`](agent/core.md) ("Core layout") |
+| The `sat15` project (generated) | `tests/fixtures/projects/sat15` | the command in [`agent/core.md`](agent/core.md) ("Generation layout"); delete the folder first |
 | The `sat15` design rule report | `tests/fixtures/drc/sat15.md` | `python -m harness_design_studio.cli.main drc tests/fixtures/projects/sat15 > tests/fixtures/drc/sat15.md` |
 | The example projects | `src/harness_design_studio/resources/examples/projects/` | `python -m tools.build_examples` |
 | The tutorial's model hash | `docs/GETTING_STARTED.md` | edit the hash when the first export prints a new one |

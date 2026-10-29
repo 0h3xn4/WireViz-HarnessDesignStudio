@@ -153,7 +153,9 @@ def test_releasing_a_harness_does_not_make_the_status_stale() -> None:
     generate_project(p)
     h = next(iter(p.harnesses.values()))
     apply_ops(p, [Put("harnesses", evolve(h, status="released"))])
-    assert generation_status(p) == "current"  # release bookkeeping is not an input (CLAUDE.md)
+    assert (
+        generation_status(p) == "current"
+    )  # release bookkeeping is not an input (docs/developer/agent/core.md)
 
 
 # ---- B-9: locked wires and entered lengths are not lost silently ---------------------------------
