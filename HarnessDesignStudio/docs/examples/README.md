@@ -15,7 +15,7 @@ This page describes the five example projects and the 18 template files that shi
 - [The 18 template files](#the-18-template-files)
 - [WireViz examples in this repository](#wireviz-examples-in-this-repository)
 
-Every command below was run with the tool (version `1.10.0`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
+Every command below was run with the tool (version `1.11.0`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
 
 ## At a glance
 
@@ -31,7 +31,7 @@ In the app, **File > New project from an example…** makes a project from any o
 
 ## Which build do you have?
 
-`harness-design-studio --version` prints `harness 1.10.0` for this version (1.0.0 and later list the same five examples). If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
+`harness-design-studio --version` prints `harness 1.11.0` for this version (1.0.0 and later list the same five examples). If you still have the 0.1.0 packages, you can tell them by the examples they have. Ask the tool:
 
 ```
 harness-design-studio new --list
@@ -220,7 +220,7 @@ Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 
 ## Does every example run?
 
-Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.10.0. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (the counts of harnesses, wires and findings as above; the hashes differ; 0.1.0 wrote the drawings and no build workbook).
+Every example was run through `new`, `validate`, `generate` (where it is not already generated), `drc`, `export` and `verify --outputs`, one after the other, with version 1.11.0. All steps ended with exit code 0 and `0 error(s)`, except one that is expected: `blank` has no harnesses, so `export` and `verify --outputs` refuse (exit code 1, see above). `blank`, `first-steps` and `small-satellite` were also run (`new`, `generate`, `drc`, `export`, `verify --outputs`) from the source of the `v0.1.0` tag and ended the same way (the counts of harnesses, wires and findings as above; the hashes differ; 0.1.0 wrote the drawings and no build workbook).
 
 | Example | `validate` | `generate` | `drc` | `export` | `verify --outputs` |
 | --- | --- | --- | --- | --- | --- |

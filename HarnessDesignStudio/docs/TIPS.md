@@ -283,7 +283,7 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
 | YAML | `wireviz.yaml` per harness | "WireViz-style" input: `metadata`, `connectors`, `cables`, `connections`. Written by this tool; **not validated against the WireViz program**. |
 | Markdown | `system/drc_report.md`, `system/revision_report.md` | reports |
 
-Every CSV starts with a comment line (`# harness-design-studio 1.10.0 model <hash>`, with the version that made it) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The Inspector of an interface in the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
+Every CSV starts with a comment line (`# harness-design-studio 1.11.0 model <hash>`, with the version that made it) that a reader must skip. Details and limits: [`OUTPUTS.md`](OUTPUTS.md). The Inspector of an interface in the app has a field *Requirement ID (for traceability)*; its value is part of the interface in `system/export.json`.
 
 ### Ideas, not features
 

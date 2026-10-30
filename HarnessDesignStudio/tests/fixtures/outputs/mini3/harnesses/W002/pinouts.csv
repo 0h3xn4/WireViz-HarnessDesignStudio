@@ -1,4 +1,4 @@
-# harness-design-studio 1.10.0 model ab67e80c76d0
+# harness-design-studio 1.11.0 model 5aa5314bc10a
 Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare
 W002-P1,cable,OBC-J01,EX-MICROD-25-M,1,TX+/RX+,IF-TM-RW1,W002-001,no
 W002-P1,cable,OBC-J01,EX-MICROD-25-M,2,TX-/RX-,IF-TM-RW1,W002-003,no

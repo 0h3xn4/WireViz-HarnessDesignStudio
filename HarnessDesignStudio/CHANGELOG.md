@@ -4,6 +4,8 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+## 1.11.0 (2026-10-30; not a statement of compliance)
+
 ### Changed
 
 - **A twisted pair is counted once in the bill of materials and the mass (release 1.11, D-188).** A wire part can say how many conductors one metre of it carries (`conductors`, 2 for a twisted pair; the parts import reads a *Conductors* column). Every wire that names the part is one conductor of it, so the BOM and the mass now count the sum of the wire lengths divided by that number: the metres of the cable. Before, a pair of two 3 m wires showed 6 m of cable (and 2× the mass). A part without the field counts as before, and the field is left out of the files while it is 1. The starter part `EX-WIRE-TWISTED-SHIELDED` has `conductors` 2; a `quad` made from that part counts two pairs. **In your own projects** set `conductors` on your pair parts (a *Conductors* column in the parts import) — the tool does not guess it. Of the files the shipped examples write, only the BOM, the mass table and `export.json` change (7 BOM files and 7 mass tables, system and harness level); every other file differs only in the model hash, which includes the parts. `tests/test_pair_part_counts.py`.

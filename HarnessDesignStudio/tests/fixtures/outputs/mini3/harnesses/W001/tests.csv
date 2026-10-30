@@ -1,4 +1,4 @@
-# harness-design-studio 1.10.0 model ab67e80c76d0
+# harness-design-studio 1.11.0 model 5aa5314bc10a
 Test,Type,From,To,Expected,Limit,Test voltage,Wire
 T001,continuity,W001-P1.1,W001-P2.1,continuous,TBD (placeholder),,W001-001
 T002,continuity,W001-P1.2,W001-P2.2,continuous,TBD (placeholder),,W001-002

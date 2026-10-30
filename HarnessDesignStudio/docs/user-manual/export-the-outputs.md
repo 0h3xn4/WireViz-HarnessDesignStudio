@@ -178,7 +178,7 @@ The independent check accepts a set with the drawings of every harness and a set
 Every file carries the tool version and a **model hash** (a short fingerprint of the design): CSV and YAML files start with a comment line, for example
 
 ```
-# harness-design-studio 1.10.0 model <hash>
+# harness-design-studio 1.11.0 model <hash>
 ```
 
 A program that reads the CSV must skip lines that start with `# `. The Excel workbooks carry the same stamp on their **About** sheet, and the build workbook also in the footer of every printed sheet and on **Start here**. A printed sheet can be traced to the exact design it came from by that hash.
