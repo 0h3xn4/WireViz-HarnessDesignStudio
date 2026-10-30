@@ -30,7 +30,7 @@ FIELDS: tuple[tuple[str, str], ...] = (
     ("part_number", "Part number"), ("description", "Description"), ("specification", "Specification"),
     ("approval", "Approval status"), ("pin_count", "Pin count"), ("mass_g", "Mass (g)"),
     ("mass_per_m_g", "Mass per metre (g/m)"), ("mates_with", "Mating part ID"),
-    ("tool", "Crimp tool"),
+    ("tool", "Crimp tool"), ("conductors", "Conductors"),
 )  # fmt: skip
 _ALIASES = {
     "id": (
@@ -54,6 +54,7 @@ _ALIASES = {
     "mass_per_m_g": ("masspermg", "gpm", "massperm", "weightperm"),
     "mates_with": ("mateswith", "mate", "mating", "matingpart"),
     "tool": ("tool", "crimptool", "crimpingtool", "crimpsetting"),
+    "conductors": ("conductors", "conductorcount", "cores", "numberofconductors"),
 }
 
 
@@ -265,6 +266,12 @@ def plan_parts_import(
                 problem = problem or (
                     f"Pin count '{text}' is not a whole number from 1 to {MAX_PIN_COUNT}"
                 )
+        if cell("conductors") and category == "wire":  # only a wire part has conductors
+            text = cell("conductors")
+            if _WHOLE.fullmatch(text) and 1 <= float(text) <= 64:
+                changes["conductors"] = int(float(text))
+            else:
+                problem = problem or f"Conductors '{text}' is not a whole number from 1 to 64"
         if problem:
             plan.rows.append(PartRow(n, False, problem, pid))
             continue

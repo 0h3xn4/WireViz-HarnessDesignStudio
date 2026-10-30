@@ -1260,7 +1260,7 @@
    "voltage_v": null
   }
  ],
- "model_hash": "30d69f260094ae2012708972dc95c7a6d24293bf2c36d8eaa26d64c315d4f0df",
+ "model_hash": "ab67e80c76d0b157397275c4399b92684a1b60f5ab4722ab5430003e7505eb21",
  "parts": [
   {
    "approval": "pending",
@@ -1697,6 +1697,7 @@
   {
    "approval": "pending",
    "category": "wire",
+   "conductors": 2,
    "description": "Twisted shielded pair (example)",
    "id": "EX-WIRE-TWISTED-SHIELDED",
    "manufacturer": null,

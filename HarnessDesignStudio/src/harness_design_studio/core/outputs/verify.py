@@ -374,7 +374,7 @@ def _mass(project: Project, h: Harness) -> tuple[float, bool]:
         if part is None or part.mass_per_m_g is None or length is None:
             complete = False
         else:
-            total += part.mass_per_m_g * length
+            total += part.mass_per_m_g * length / part.conductors
     return total, complete
 
 
@@ -1107,7 +1107,8 @@ def _bom_rows(project: Project, harnesses: list[Harness]) -> list[list[Cell]]:
             if length is None:
                 unknown[pid] += 1
             else:
-                metres[pid] += length
+                wire_part = project.parts.get(pid)
+                metres[pid] += length / (wire_part.conductors if wire_part else 1)
         for a in h.accessories:
             if a.part_id:
                 used[a.part_id].add(h.id)

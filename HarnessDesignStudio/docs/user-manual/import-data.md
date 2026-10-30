@@ -84,7 +84,7 @@ Imported 5 part(s). Project parts library (version 0), source: approved-parts.cs
 
 (That is the last line. The five `row ...: OK` lines come before it.)
 
-- Columns are matched by heading: part number, manufacturer, description, category, specification, approval status, pin count, mass, mass per metre, mating part, and (since 1.7.0) `Tool` or `Crimp tool`, the crimp tool of a part of the category *contact* ([enter the build data](enter-the-build-data.md#2-contacts-and-crimp-tools)).
+- Columns are matched by heading: part number, manufacturer, description, category, specification, approval status, pin count, mass, mass per metre, mating part, and (since 1.7.0) `Tool` or `Crimp tool`, the crimp tool of a part of the category *contact* ([enter the build data](enter-the-build-data.md#2-contacts-and-crimp-tools)) and, since 1.11, `Conductors`, how many conductors one metre of a wire part carries (2 for a twisted pair), so that the bill of materials counts the metres of the cable and not of every wire.
 - Every row needs a category: a `category` column, or `--category connector` for the whole file.
 - A value that is in none of your lists is an error for that row, and then **nothing** is written:
 

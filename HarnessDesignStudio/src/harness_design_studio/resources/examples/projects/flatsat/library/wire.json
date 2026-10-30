@@ -19,6 +19,7 @@
     {
       "approval": "pending",
       "category": "wire",
+      "conductors": 2,
       "description": "Twisted shielded pair (example)",
       "id": "EX-WIRE-TWISTED-SHIELDED",
       "manufacturer": null,

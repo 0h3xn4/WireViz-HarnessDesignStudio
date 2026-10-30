@@ -307,7 +307,8 @@ def bom(project: Project, harnesses: list[Harness]) -> Table:
             if length is None:
                 unknown[pid] += 1
             else:
-                metres[pid] += length
+                part = project.parts.get(pid)
+                metres[pid] += length / (part.conductors if part else 1)
         for a in h.accessories:
             if not a.part_id:
                 continue

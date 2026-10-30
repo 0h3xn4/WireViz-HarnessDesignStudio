@@ -211,6 +211,8 @@ def _part_facts(p: Project, oid: str) -> list[dict[str, Any]]:
     ]
     if part.category == "contact":
         rows.append(_fact(strings.INS_FACT_TOOL, part.tool or ""))
+    if part.category == "wire" and part.conductors > 1:
+        rows.append(_fact(strings.INS_FACT_CONDUCTORS, str(part.conductors)))
     if part.unverified:
         rows.insert(
             0,

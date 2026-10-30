@@ -110,6 +110,7 @@ def starter_parts() -> list[Part]:
             unverified=True,
             pin_count=pins,
             mates_with=mates.get(pid),
+            conductors=2 if pid == "EX-WIRE-TWISTED-SHIELDED" else 1,
         )
         for pid, cat, desc, pins in spec
     ]

@@ -20,7 +20,7 @@ The file can be `.csv`, `.tsv`, `.json` (a list of records) or `.xlsx`, and can 
 `harness-design-studio import-parts DIR FILE --approved A --approved Yes --pending Review --rejected X [--category connector] [--dry-run]`
 
 - Every row needs a category (a `category` column or `--category`); a row without one is refused ("Category '(empty)' is not one of ...").
-- Columns are matched by header: part ID or part number, manufacturer, description, category, specification, approval status, pin count, mass (g), mass per metre (g/m), mating part, and (since 1.7.0) `Tool` or `Crimp tool` (the crimp tool of a part of the category *contact*).
+- Columns are matched by header: part ID or part number, manufacturer, description, category, specification, approval status, pin count, mass (g), mass per metre (g/m), mating part, and (since 1.7.0) `Tool` or `Crimp tool` (the crimp tool of a part of the category *contact*) and (since 1.11) `Conductors` (a whole number from 1 to 64: how many conductors one metre of a *wire* part carries, 2 for a twisted pair; the bill of materials and the mass count the metres of the cable, not of every conductor).
 - **You say what the approval values mean** with `--approved`, `--pending`, `--rejected` (repeat for several values). A value in none of the lists is an error for that row. The tool never decides that something is approved.
 - Numbers are plain: digits with a point (`12.5`), or one decimal comma (`1,5`). `1e3`, `1_0`, `-0` and `1,234` (thousands or decimals?) are refused with a message to write them with a point. The pin count is a whole number from 1 to 1000.
 - A part ID may appear once in the file; a second row with the same ID is an error row. Two columns that both look like the approval status are refused.
