@@ -116,6 +116,10 @@ SEV_INFO = "ⓘ Info:"
 SHOW = "Show"
 REQUIREMENT_LABEL = "Requirement: {}"
 WAIVE = "Waive…"
+WAIVER_CHANGED = (
+    "A waiver was made for an earlier version of this problem, so it no longer applies. "
+    "Read it again and waive it again if the reason still holds. The earlier reason: “{reason}”"
+)
 FILTER_PLACEHOLDER = "Filter by ID, device or type"
 NEW_INTERFACE = "＋ Interface…"
 
@@ -1019,6 +1023,7 @@ CHECKS_OBJ_OBJECT = "Object"
 CHECKS_OBJ_MESSAGE = "Message"
 CHECKS_OBJ_SEVERITY = "Severity"
 CHECKS_OBJ_WAIVER = "Waiver"
+CHECKS_WAIVER_CHANGED = "Waiver no longer fits"
 CHECKS_SHOW_TIP = "Show the selected object on the diagram (Enter)"
 CHECKS_WHOLE_DESIGN = "(whole design)"
 CHECKS_DETAILS = "Rule details"

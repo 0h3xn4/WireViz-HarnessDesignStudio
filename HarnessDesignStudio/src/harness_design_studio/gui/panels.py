@@ -852,7 +852,9 @@ class ProblemsPanel(QScrollArea):
                         )
                     )
                 continue
-            cards.append((("finding", f.id, f.title, f.severity), partial(self._card, f)))
+            cards.append(
+                (("finding", f.id, f.title, f.severity, f.waiver_changed), partial(self._card, f))
+            )
         return cards, total
 
     def _group_card(self, fs: list[checks.Finding], count: int) -> QFrame:
@@ -893,6 +895,11 @@ class ProblemsPanel(QScrollArea):
         title.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.MinimumExpanding)
         lay.addWidget(title)
         lay.addWidget(muted(f.why))
+        if f.waiver_changed:  # waived once, but the problem says something else now
+            old = self.ctl.project.waivers.get(f.id)
+            changed = muted(strings.WAIVER_CHANGED.format(reason=old.justification if old else ""))
+            changed.setObjectName("finding-waiver-changed")
+            lay.addWidget(changed)
         if f.sources:  # the requirement the rule serves, as text so it can be read and searched
             ref = QLabel(strings.REQUIREMENT_LABEL.format(", ".join(f.sources)))
             ref.setObjectName("finding-requirement")

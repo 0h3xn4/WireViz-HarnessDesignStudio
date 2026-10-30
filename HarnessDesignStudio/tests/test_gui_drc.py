@@ -131,3 +131,25 @@ def test_a_finding_card_shows_the_requirement_it_serves(win, qtbot) -> None:  # 
     ]
     assert any(cited[0].sources[0] in text for text in labels)
     assert "Requirement:" not in cited[0].why  # the explanation itself stays clean
+
+
+def test_a_finding_whose_waiver_no_longer_fits_says_so_on_its_card(win, qtbot) -> None:  # type: ignore[no-untyped-def]
+    """D-187: the waiver is tied to the finding it was made for; when the finding changes, the card
+    is open again and names the earlier reason."""
+    from PySide6.QtWidgets import QLabel
+
+    wait_for_drc(qtbot, win)
+    f = next(x for x in win.ctl.open_findings() if x.rule == "connector-lookalike")
+    assert win.ctl.waive(f, "Keyed by cable clamps, see ICD 4.2")
+    waiver = win.ctl.project.waivers[f.id]
+    win.ctl.run("tamper", [Put("waivers", evolve(waiver, finding_hash="0" * 12))])
+    wait_for_drc(qtbot, win)
+    again = next(x for x in win.ctl.open_findings() if x.id == f.id)
+    assert again.waiver is None and again.waiver_changed
+    show_problems(win)
+    notes = [
+        lab.text()
+        for lab in win.problems.findChildren(QLabel)
+        if lab.objectName() == "finding-waiver-changed"
+    ]
+    assert notes and "Keyed by cable clamps" in notes[0] and "no longer applies" in notes[0]
