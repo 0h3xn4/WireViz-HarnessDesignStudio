@@ -45,9 +45,9 @@ Use any of these. They open the same window.
 
 The window **Link connectors** opens:
 
-![The window Link connectors: OBC and RW1 with their connectors OBC-J01 and RW1-J02, four pairs proposed (TX+ with RX+, TX- with RX-, RX+ with TX+, RX- with TX-), the roles Signal, and the line Every pin that has a signal is paired](../img/link-connectors-window.png)
+![The window Link connectors: OBC and RW1 with their connectors OBC-J01 and RW1-J02, four pairs proposed (TX+ with RX+, TX- with RX-, RX+ with TX+, RX- with TX-), the roles Signal, the buttons Add a connector…, Pair by pin number and Paste a pairing…, and the line Every pin that has a signal is paired](../img/link-connectors-window.png)
 
-1. Pick the **First device** and its **Connector**, then the **Second device** and its connector. A connection joins two **different** devices; the window says so if you pick one device twice. A connector can be in several connections, but a pin in one pair of one connection only.
+1. Pick the **First device** and its **Connector**, then the **Second device** and its connector. A connection joins two **different** devices; the window says so if you pick one device twice. A connector can be in several connections, but a pin in one pair of one connection only. A connector that already has the cable plug of a harness on it, and a pin that an interface uses (Generate wires it), are refused with the reason in words (since 1.8.1).
 2. The table **Pairs of pins** shows what the program proposes: the pin, its signal and its role on the first connector, beside the pin, signal and role on the second.
 3. **Name** is optional. Without a name the connection is called after its two connectors, `OBC-J01 - RW1-J02`.
 4. Press **Link connectors**. The connection is made as one undo step (Ctrl+Z takes it back) and the diagram shows it.
@@ -58,8 +58,9 @@ The program reads the **signal names** on the pins. It never pairs by position: 
 
 - **The same name goes with the same name.** `PWR` with `PWR`, `RTN` with `RTN`, `CANH` with `CANH`.
 - **The two ends of one line cross over.** A transmit pin meets a receive pin: `TX` with `RX`, `TXD` with `RXD`, `TX+` with `RX+`, `TX-` with `RX-`, `TXP` with `RXP`, `TXN` with `RXN`, whichever device has which. In the picture pin 1 (`TX+`) of the computer is paired with pin 3 (`RX+`) of the wheel. Case does not matter.
-- **The directions must fit.** Where an interface type tells which way a signal goes, an output is paired with an input, and with a pin that goes both ways or that has no direction. An output is **not** paired with an output, nor an input with an input; the notes under the table say which names were left out and why.
-- **A pin is used once.** A pin that another connection already pairs is not offered again, and the notes say so.
+- **Two equal transmit names are not paired.** `TX` on both connectors, or `MOSI` on both, looks like a transmitter on a transmitter, which is the mistake a vendor's own-point-of-view names hide. The pair is left out and the notes say so (*they look like transmit to transmit*); pair the two pins yourself if the names are from the other device's point of view. Two equal receive names are left out the same way.
+- **The directions must fit.** A direction that a person has set on a pin (*in*, *out* or *bidirectional*, since 1.9; [define a device](define-a-device.md#take-the-pinout-from-a-spreadsheet)) decides before any name does, also for two equal names: `TX` with `out` on one connector and `TX` with `in` on the other are paired. Where a pin has no direction of its own and an interface type tells which way a signal goes, an output is paired with an input, and with a pin that goes both ways or that has no direction. An output is **not** paired with an output, nor an input with an input; the notes under the table say which names were left out and why.
+- **A pin is used once.** A pin that another connection already pairs, or that an interface uses, is not offered again, and the notes say so.
 - **A pin with no counterpart is left out, and listed.** The line under the table names the pins that have a signal and no pair: *Not paired on OBC-J01: 4.* A pin with no signal is never proposed and never listed. A pin you do not use can be given the role Spare, and then it is not listed either.
 
 The proposal is the same every time for the same pins. It is a proposal only: nothing is saved until you press **Link connectors**.
@@ -70,11 +71,11 @@ The proposal is the same every time for the same pins. It is a proposal only: no
 - **Add pair:** choose a pin on each side and press **Add pair**.
 - **Remove pair:** pick a row and press **Remove pair**.
 - A pin in two pairs, no pair at all, or the same device twice is refused at once, in words under the table, and the button stays off until you fix it. That is all that stops you; the program does not forbid what only looks odd.
-- **What looks wrong** is written under the table while you work, in plain words: two outputs on one pair, names that differ across a pair, a pin that is named but not paired, power with no return. The same review is *Check my connections* (step 5). You may still make the connection; the review keeps asking until you have fixed it or accepted it.
+- **What looks wrong** is written under the table while you work, in plain words: two outputs or two inputs on one pair (from the directions set on the pins, or else from the interface types), names that differ across a pair, a pin that is named but not paired, power with no return. The same review is *Check my connections* (step 5). You may still make the connection; the review keeps asking until you have fixed it or accepted it.
 
 ## Pair by pin number and paste a pairing
 
-Pins that have no signal names, as on a connector that was just added to a device, get no proposal by name. Three buttons in the window help (since 1.9). Each shows what it would do and waits for you.
+Pins that have no signal names, as on a connector that was just added to a device, get no proposal by name. Three buttons in the window help (since 1.9; the picture in step 1 shows them). Each shows what it would do and waits for you.
 
 - **Add a connector…** sits under each device. Use it when the device has no connector yet (the window says *Device … has no connector yet. Press Add a connector under it.*) or has the wrong one. Pick the kind of connector (family, pins, gender) and, if you like, its name; the pins are numbered `1` to `N` with no signal names. The connector is made together with the connection, as part of the same undo step, and not at all if you cancel the window. It is not available when you change the pairs of a connection that exists.
 - **Pair by pin number** proposes pin 1 with pin 1, pin 2 with pin 2 and so on (the same pin number or name on both connectors, case ignored). Pins that have no partner are listed as left over.
@@ -118,7 +119,7 @@ Four design rules read connections (they are in the list of rules like the other
 | Rule | Kind | What it finds | What you do |
 | --- | --- | --- | --- |
 | `link-unpaired` | warning (waivable) | A pin with a signal that no pair of the connection uses. | Pair the pin, or set its role to Spare. |
-| `link-direction` | error | Two outputs on one pair, or two inputs. | Pair the pin with one that fits, or correct the signal. |
+| `link-direction` | error | Two outputs on one pair, or two inputs. A direction set on a pin decides before the interface type does, also for analog, discrete, LVDS, pyro and I2C clock signals, which are otherwise left alone. | Pair the pin with one that fits, or correct the signal or the direction. |
 | `link-signal-mismatch` | warning (waivable) | A pair whose signal names differ and are not the two ends of one line, or where one pin has no name. | Check the pairing, or rename a signal. |
 | `link-power-return` | warning (waivable) | A power pair and no return pair on the same connection. | Pair the return pin, or set the role of the return pin to Return. |
 

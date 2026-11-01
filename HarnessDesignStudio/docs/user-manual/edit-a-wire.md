@@ -105,7 +105,7 @@ Select the wires, choose a kind in **Kind of group** and press **Group**:
 | Coax | exactly 1 |
 | Overall shield | 2 or more |
 
-The wires must be in one harness and in no group yet (a generated twisted pair is a group too). The group gets the next free shield ID, shows in the **Shield group** column of the wire list and as a sleeve in the drawing, and is kept by **Generate**. Its shield ends are those of the generation settings (floating while they are still placeholders, which the rule **Shield termination** then points out). To take a group apart select one of its wires and press **Ungroup**; only groups you made can be taken apart, because a generated group follows the construction of the interface type. To change a group (its kind, its wires, its shield ends) press **Change group…** ([section 9](#9-change-a-group)).
+The wires must be in one harness and in no group yet (a generated twisted pair is a group too). The group gets the next free shield ID, shows in the **Shield group** column of the wire list and as a sleeve in the drawing, and is kept by **Generate**. Its shield ends are those of the generation settings (floating while they are still placeholders, which the rule **Shield termination** then points out); a coax is the exception: it gets a 360 degree backshell at both ends, whatever the settings say (since 1.10). To take a group apart select one of its wires and press **Ungroup**; only groups you made can be taken apart, because a generated group follows the construction of the interface type. To change a group (its kind, its wires, its shield ends) press **Change group…** ([section 9](#9-change-a-group)).
 
 ## 7. Labels on the harness and its connectors
 

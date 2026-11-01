@@ -1,6 +1,6 @@
 # Examples
 
-This page describes the five example projects and the 18 template files that ship with Harness Design Studio, with the real output of each, so that you can pick one and know what to expect.
+This page describes the five example projects and the 19 template files that ship with Harness Design Studio, with the real output of each, so that you can pick one and know what to expect.
 
 ## Contents
 
@@ -12,7 +12,7 @@ This page describes the five example projects and the 18 template files that shi
 - [small-satellite](#small-satellite)
 - [flatsat](#flatsat)
 - [Does every example run?](#does-every-example-run)
-- [The 18 template files](#the-18-template-files)
+- [The 19 template files](#the-19-template-files)
 - [WireViz examples in this repository](#wireviz-examples-in-this-repository)
 
 Every command below was run with the tool (version `1.11.0`) in an empty folder, one project per example, and the output is pasted as printed. The names `my-blank`, `my-first-steps` and so on are the folder names used in the commands; use your own.
@@ -55,7 +55,7 @@ first-steps      Three devices, a power link and an RS-422 link. Nothing is gene
 small-satellite  14 devices with nominal and redundant chains. Generate it to see a realistic system.
 ```
 
-`minimal-satellite`, `flatsat` and the template `design-worksheet.md` are new in 1.0.0 and not in the 0.1.0 packages ([`CHANGELOG.md`](../../CHANGELOG.md) of the tool). Asking for them from a 0.1.0 package gives `error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.` ([`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md#creating-a-project)). The counts of devices, interfaces, harnesses, wires and findings quoted on this page are the same on both versions for `blank`, `first-steps` and `small-satellite`; the number of exported files is not (see the note under the table at the end), and the *model hash* differs (the tool version is part of the design it covers), so a hash quoted here will not match a 0.1.0 package, or a version other than 1.9.0. The drawings also differ: the wiring-diagram drawing with wire colours is not in 0.1.0. To get 1.0.0, see [`INSTALL.md`](../INSTALL.md).
+`minimal-satellite`, `flatsat` and the template `design-worksheet.md` are new in 1.0.0 and not in the 0.1.0 packages ([`CHANGELOG.md`](../../CHANGELOG.md) of the tool). Asking for them from a 0.1.0 package gives `error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.` ([`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md#creating-a-project)). The counts of devices, interfaces, harnesses, wires and findings quoted on this page are the same on both versions for `blank`, `first-steps` and `small-satellite`; the number of exported files is not (see the note under the table at the end), and the *model hash* differs (the tool version is part of the design it covers), so the hash you see depends on the version you run (this page writes `<hash>`). The drawings also differ: the wiring-diagram drawing with wire colours is not in 0.1.0. To get 1.0.0, see [`INSTALL.md`](../INSTALL.md).
 
 The same five commands work on every example: `new`, `validate`, `generate`, `drc`, `export`, and `verify --outputs`. The project's model hash and the Open line of `drc` below are printed **after** `generate`; before that the hash differs (it covers the generated harnesses too). A project created with `--name` has a different hash for the same design, because the name is part of the design.
 
@@ -216,7 +216,7 @@ Model hash: `<hash>`. Rules run: 39.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
-`harness-design-studio export my-flatsat` writes `88 files written to my-flatsat/outputs (model <hash>).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 devices, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.6 kg in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
+`harness-design-studio export my-flatsat` writes `88 files written to my-flatsat/outputs (model <hash>).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 devices, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.25 kg with margin in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
 
 ## Does every example run?
 
@@ -232,7 +232,7 @@ Every example was run through `new`, `validate`, `generate` (where it is not alr
 
 The file counts are those of `export` without `--drawings` (a build workbook for every harness, no harness drawings). This is new in 1.7.0: with 1.6.0 and earlier, `export` wrote the drawings and no build workbook, and the counts were 38, 137, 280 and 112. With `export --drawings` the counts are 40, 148, 304 and 120 (the old count plus one build workbook for each harness: 2, 11, 24 and 8). `verify --outputs` ends with 0 errors in both cases.
 
-## The 18 template files
+## The 19 template files
 
 `harness-design-studio templates my-templates` copies the import templates, scripts and checklists to a folder that must not exist yet:
 
@@ -241,7 +241,7 @@ harness-design-studio templates my-templates
 ```
 
 ```
-18 files written to my-templates. Start with my-templates/README.md.
+19 files written to my-templates. Start with my-templates/README.md.
 ```
 
 The files are written for the `first-steps` example, so you can try each one before using your own data. The full description of each is in the [templates README](../../src/harness_design_studio/resources/examples/templates/README.md) (which is also `my-templates/README.md`); this is the list, with the build that has it. The columns of the CSV files are in [`IMPORTS.md`](../IMPORTS.md).
@@ -249,7 +249,7 @@ The files are written for the `first-steps` example, so you can try each one bef
 | # | File | In short | Used with | 0.1.0 packages |
 | --- | --- | --- | --- | --- |
 | 1 | `README.md` | what the other files are | read it first | yes |
-| 2 | `interfaces.csv` | two example interface rows | app: **File > Import > Interfaces…** (Ctrl+Shift+I) | yes |
+| 2 | `interfaces.csv` | two example interface rows | app: **File > Import > Import interfaces…** (Ctrl+Shift+I) | yes |
 | 3 | `approved-parts.csv` | five example part rows: three `Approved`, one `Review`, one `Rejected` | `harness-design-studio import-parts` | yes |
 | 4 | `segment-lengths.csv` | two example segment lengths (millimetres) | `harness-design-studio import-lengths` | yes |
 | 5 | `wheel-connectors.net` | a KiCad netlist for the connectors of `RW1` | `harness-design-studio import-netlist` | yes |
@@ -266,6 +266,7 @@ The files are written for the `first-steps` example, so you can try each one bef
 | 16 | `strip-lengths.csv` | two example rows: the strip length at each end of a wire (millimetres) | `harness-design-studio import-build-data` | **no, new in 1.7.0** |
 | 17 | `pin-contacts.csv` | two example rows: the contact part and crimp tool of a pin of a harness made by hand | `harness-design-studio import-build-data` | **no, new in 1.7.0** |
 | 18 | `accessories.csv` | two example rows: sleeving and heat shrink of a harness | `harness-design-studio import-build-data` | **no, new in 1.7.0** |
+| 19 | `ci/gitattributes` | the `.gitattributes` that `harness-design-studio new` writes into a new project: Git treats `generated/generation.json` as binary, and `harness-design-studio merge-fix DIR` resolves a merge that stopped on it; for a project made before 1.9 | copy to `DIR/.gitattributes` (named `gitattributes` here so that it is not hidden) | **no, new in 1.9.0** |
 
 The three build data files (16 to 18) are new in 1.7.0; their rows are examples with example numbers, to replace with your own, and `pin-contacts.csv` names contact parts (`EX-CONTACT-22`) that the starter library does not hold: import the parts first ([enter the build data](../user-manual/enter-the-build-data.md)). On the 0.1.0 packages the command writes 14 files (no `design-worksheet.md`). The demo values and `ampacity-DEMO-ONLY.csv` are **not from any standard and not engineering data**; the files stay marked as placeholders. See [`PLACEHOLDERS.md`](../PLACEHOLDERS.md).
 

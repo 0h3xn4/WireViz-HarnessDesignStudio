@@ -38,6 +38,8 @@ The shipped file:
 
 Add `shield`, `branch` or `segment` to the file if you want to change them. The key `box_connector` is in the file, but the program does not read it: connectors on a device are always named like `OBC1-J01`.
 
+The same file can also hold two settings that are not name patterns and are not in the shipped file (both since 1.9.0): `signal_counterparts`, the words that pair a transmit pin with a receive pin, and `release_distinct_roles`, which asks for three different people as author, checker and person who releases. The command `harness-design-studio config DIR --counterparts` and `--distinct-roles` set them; see [`CONFIG.md`](../CONFIG.md#namingjson).
+
 Example. Set `"harness": "HN-{n:02d}"` and generate:
 
 ```
@@ -63,7 +65,7 @@ The shipped file lists all ten fields, in order:
            "author", "checker", "approver", "sheet", "status"]
 ```
 
-Remove a field to hide it (the sheet number too: the output check then does not look for it), or reorder them. A name that is not in the list, a name twice, or anything that is not text is reported as a configuration error (`harness-design-studio validate` and `harness-design-studio config` show it, for example `config/titleblock.json: fields names a field that does not exist ('sheet2'). The fields are: project, harness_id, ...`) and the default fields (`project`, `harness_id`, `title`, `revision`, `status`, `sheet`) are drawn until it is fixed. An empty list also means the default. After a release the title block fields are frozen with the rest of the configuration ([change a released harness](change-a-released-harness.md)). With `["project", "harness_id", "revision", "status", "sheet"]` the title block of `HN-01` shows:
+Remove a field to hide it (the sheet number too: the output check then does not look for it), or reorder them. A name that is not in the list, a name twice, or anything that is not text is reported as a configuration error (`harness-design-studio config` and `harness-design-studio drc` show it, for example `config/titleblock.json: fields names a field that does not exist ('sheet2'). The fields are: project, harness_id, ...`; `validate` and `check` did not report it when this page was checked, and `generate` stops with the same text, `error: [config_invalid] ...`, and does not save) and the default fields (`project`, `harness_id`, `title`, `revision`, `status`, `sheet`) are drawn by `export --drawings` until it is fixed. An empty list also means the default. After a release the title block fields are frozen with the rest of the configuration ([change a released harness](change-a-released-harness.md)). With `["project", "harness_id", "revision", "status", "sheet"]` the title block of `HN-01` shows:
 
 ```
 PROJECT         First steps: reaction wheel link

@@ -64,6 +64,7 @@ These are not placeholder values in a config file; they are optional fields of t
 | `physical/harnesses/<ID>.json`, a wire | `strip_a_mm`, `strip_b_mm` (the insulation stripped at each end) | the strip columns of the cut list and the wire list |
 | `physical/connectors/<unit>.json`, a pin of a device (copied to the cable pin by Generate; on a harness made by hand, the pin of the cable connector) | `contact_part` (a library part of the category `contact`) | the *Contact* column of the connector blocks and the pinouts, and the contact lines of the BOM |
 | `library/contact.json`, a part | `tool` (the crimp tool or its setting) | the *Tool* column of the connector blocks |
+| `library/wire.json`, a part | `conductors` (1.11; how many conductors one metre of the part carries, 2 for a twisted pair; 1 while not set) | the `m` lines of the BOM and the wire mass, which count the metres of the cable |
 | `physical/harnesses/<ID>.json` | `accessories` (sleeving, heat shrink, labels, backshells) | the *Accessories* sheet, `accessories.csv` and the BOM lines of accessory parts |
 
 How to enter them: [enter the build data](user-manual/enter-the-build-data.md).

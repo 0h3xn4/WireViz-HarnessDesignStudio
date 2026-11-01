@@ -52,7 +52,7 @@ Click a card or a to-do line to jump to the item.
 The **Checks** tab has one row for each design rule: its ID, name, severity, a **Result** chip and how many findings are open or waived.
 
 - The result is **Pass**, **Fail**, **Not checked** or **Pending**, each with an icon and a word; **Pass (placeholder values)** means the rule passed on values nobody has reviewed. A strip above the table counts the results; each count is a button that filters the table.
-- Select a rule to read what it found, what it needs and the requirements it serves. **Enter** or a double-click on an offending object shows it on the diagram.
+- Select a rule to read what it found, what it needs and the requirements it serves. **Enter** or a double-click on an offending object shows it on the diagram. The table of offending objects has a *Waiver* column: it shows the reason of a waived finding, and reads "Waiver no longer fits" when the finding changed after it was waived (since 1.11; see [common mistakes](#common-mistakes)).
 - A rule that is *not checked* names the value it waits for and has **Supply value…**. It opens **Engineering values**, where you type the values (see [fill in the engineering values](fill-in-engineering-values.md)); **Apply** sets them as one undo step and the checks run again.
 - **Check** in the top bar (F5) runs the rules now; they also run by themselves a moment after you stop editing. When the design changes, the tab says *Out of date* until the rules have run again (**Check again** runs them now).
 
@@ -73,7 +73,7 @@ harness-design-studio drc wheel-link
 ```
 
 ```
-# Design rule check: Wheel link
+# Design rule check: First steps: reaction wheel link
 
 Model hash: `<hash>`. Rules run: 39.
 Open: 0 error(s), 10 warning(s), 8 note(s). Waived: 0.
@@ -153,7 +153,7 @@ The notes also name what could not be checked on a wire or a harness instead of 
 ## Common mistakes
 
 - **Waiving everything.** A waiver says "a person accepted this". Reviewers read the reasons. Waive only what you have judged.
-- **A waiver that stops applying.** A waiver remembers a short fingerprint of the finding it was made for (since 1.11). If the finding later says something else (a value or a name in its text changed), the waiver no longer applies: the finding is open again, its card says that the waiver no longer applies and shows the old reason, and the report lists it under *Waivers that no longer fit*. Read it and waive it again if the reason still holds. A waiver made before 1.11 has no fingerprint and applies as it always did.
+- **A waiver that stops applying.** A waiver remembers a short fingerprint of the finding it was made for (since 1.11). If the finding later says something else (a value or a name in its text changed), the waiver no longer applies: the finding is open again, its card says that the waiver no longer applies and shows the old reason, and the report (`harness-design-studio drc`) lists it under *Waivers that no longer fit*, and the *Waiver* column of the **Checks** tab reads "Waiver no longer fits". Read it and waive it again if the reason still holds. A waiver made before 1.11 has no fingerprint and applies as it always did.
 - **Reading "0 errors" as "correct".** The tool checks what it has numbers for. The notes list what it did not check.
 - **Using the wrong word for a waiver.** In the compliance records, "waived by the owner" means something else: the owner accepts that a process requirement is not met. See the [glossary](../GLOSSARY.md).
 - **Errors after an import.** The library changed, so the plans are out of date. Generate and export again.

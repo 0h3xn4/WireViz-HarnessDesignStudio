@@ -44,6 +44,7 @@ Read this once, in ten minutes, and the rest of the documentation will make sens
 | **Interface** | One connection of a type between two devices. This is what *you* add. | `IF-002`: RS-422 from `OBC1` to `RW1` |
 | **Connection (link)** | Two connectors of two devices joined pin by pin: a list of pairs of pins. You name the pins, the program proposes the pairs from the signal names (never by position), you confirm them, and *Check my connections* reviews them. It needs no interface type; what it carries is worked out from the pins. The tool never makes a harness from it unless you press **Create harness**. New in 1.8.0. | `OBC-J01` to `RW1-J02`: pin 1 (`TX+`) with pin 3 (`RX+`) |
 | **Pin role** | What a pin is for: power, return, ground, signal, shield or spare. It follows the signal name (`PWR`, `RTN`, `GND`) unless you set it. *Return* is the line the current comes back on. | `RTN` is a return |
+| **Pin direction** | Which way the signal runs at a pin: `in`, `out` or `bidirectional`; optional, empty means not set. Where it is set it decides before any name does when connections are reviewed and paired. New in 1.9.0. | pin 1 of `OBC-J01` is `out`, pin 3 of `RW1-J02` is `in` |
 | **Connector** | A plug or socket, which may carry a label (new in 1.4.0). On a device it is a *box connector*; on a harness it is a *cable connector* that mates with a box connector. | `RW1-J02` on the wheel; `W001-P2` on the cable |
 | **Pin** | One contact of a connector. It carries one signal and may have a *function* (free text, new in 1.4.0). | pin 3 of `RW1-J02` carries `RX+`, function "Wheel command receive" |
 | **Harness** | A bundle of wires with its connectors that carries interfaces between devices. **Generated** from interfaces, or made by hand with *New harness* (new in 1.5.0); individual wires can be edited, and wires can be added by hand (new in 1.4.0). | `W001`: `OBC1-J01` to `RW1-J02` |
@@ -90,7 +91,7 @@ Pressing **Generate** (or `harness-design-studio generate DIR`) does four things
 
 You always see a **preview** first; nothing changes until you **Apply**, and **Undo** takes it back. Generating again keeps IDs, locked choices, the wires you edited or drew, and your labels, and never touches a released harness. The same design always gives byte-identical results, so Git diffs show real changes only.
 
-**Pinout first (new in 1.8.0).** Generate starts from interfaces and chooses the pins. The other way starts from the pins you named: a *connection* joins two connectors pin by pin, the program proposes the pairs from the signal names, you confirm them, and **Create harness** makes a harness with one wire for each pair, only when you press it. Generate leaves such a harness, and your pinout, alone. See [connect two connectors](user-manual/connect-two-connectors.md).
+**Pinout first (new in 1.8.0).** Generate starts from interfaces and chooses the pins. The other way starts from the pins you named: a *connection* joins two connectors pin by pin, the program proposes the pairs from the signal names, you confirm them, and **Create harness** makes a harness with one wire for each pair, only when you press it. Generate leaves such a harness, and your pinout, alone. A project that has connections needs no harness to be exported: it gets a connection list, one row for each pair of pins (since 1.9.0, [`OUTPUTS.md`](OUTPUTS.md#connection-list-systemconnectionscsv-and-xlsx)). See [connect two connectors](user-manual/connect-two-connectors.md).
 
 Every choice has a reason. Open the **Harness** tab (the Drawings area), pick a harness, select a wire, connector or pin, and read the rule behind it in **Why** (gauge and length included).
 
@@ -101,7 +102,7 @@ The tool checks your design all the time, in two layers:
 - **Quick checks** run instantly on every edit (an interface with no connector, an isolated device, ...).
 - **Design rules** (39 of them, listed in [`RULES.md`](RULES.md)) run in the background a moment after you stop editing: connector look-alikes, unapproved parts, pin reuse, separation, current limits, and more.
 
-Each finding is an **error** (must be fixed), a **warning** (fix it, or **waive** it with a written reason of at least 10 characters), or a **note** (information). Waived warnings stay in the report with their reason, so a reviewer sees them.
+Each finding is an **error** (must be fixed), a **warning** (fix it, or **waive** it with a written reason of at least 10 characters), or a **note** (information). Waived warnings stay in the report with their reason, so a reviewer sees them. A waiver is tied to the finding it was made for: if the finding says something else later (a number or a name in its text changed), the waiver no longer applies, the finding is open again and the report lists it under *Waivers that no longer fit* with the old reason (new in 1.11.0).
 
 ## Placeholders: what the tool does not know
 
@@ -118,6 +119,7 @@ The files that hold these values are in the project's `config/` folder and are d
 A harness has a **status**: `draft`, then optionally `in_review`, then `released`.
 
 - **Release** needs a person's name and a comment (at least 10 characters). It is blocked while something is missing (a wire without a gauge or length, unresolved errors) and the reasons are listed in plain words. It is also blocked while a configuration file is still marked `"placeholder": true`, unless you give a written reason (`--accept-placeholders`), which is kept in the change log and the baseline. The same goes for parts: a release is blocked while the harness uses a part that is not approved (or is example data), unless you give a written reason (`--accept-unapproved-parts`).
+- A project can require that the author, the checker and the person who releases are three different people (`harness-design-studio config DIR --distinct-roles on`, off by default; [`CONFIG.md`](CONFIG.md)). This is about people in change control, not the *role* of the window.
 - A released harness is **locked**: it, the interfaces it carries and the pins it uses cannot be edited, and neither can the parts, interface types and configuration values it uses. A **baseline** (frozen snapshot) and a **change log** entry are stored.
 - To change it you start a new **revision** (A, B, C ...). The old revision stays.
 
@@ -127,7 +129,7 @@ In the app the work goes in three steps, shown in the top bar: **Generate**, **C
 
 ## Outputs
 
-**Export…** writes a folder `outputs/` into the project: per harness a **build workbook** (an Excel file to build the harness from: what is ready, the cut list with the strip lengths, one block per connector with the contact and crimp tool of each pin, parts, accessories, labels and a test sheet to fill in), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook of the data tables; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
+**Export…** writes a folder `outputs/` into the project: per harness a **build workbook** (an Excel file to build the harness from: what is ready, the cut list with the strip lengths, one block per connector with the contact and crimp tool of each pin, parts, accessories, labels and a test sheet to fill in), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook of the data tables; for the system a block diagram, harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model; a project that has connections also gets a connection list (`connections.csv` and `connections.xlsx`). A wire part that says it carries two conductors (a twisted pair) is counted once, as the metres of the cable, in the BOM and the mass. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
 
 The PDF and SVG drawings of the harnesses are optional and written only when you ask for them (`--drawings`, or the check box **Include the PDF drawings**); the build workbook is the main output (new in 1.7.0). Outputs are checked independently before they are written. `outputs/` is always safe to delete and regenerate.
 
@@ -140,10 +142,11 @@ my-project/
   project.json            name and format version
   config/                 the engineering values (placeholders until you fill them in)
   library/                parts: connectors, wires, sleeving, labels
-  logical/                interface types, units (the devices), interfaces, diagram layout
+  logical/                interface types, units (the devices), interfaces, connections (links.json, only while there are any), diagram layout
   physical/               box connectors, generated harnesses
   generated/              the record of the last generation (the reasons for the Why tab)
   baselines/  changelog.json   written at release; never edit by hand
+  waivers.json            the warnings you waived (written when you waive one)
   outputs/                everything exported (safe to delete)
 ```
 

@@ -15,7 +15,7 @@ Seven words carry most of the meaning:
 | Word | What it is |
 | --- | --- |
 | **Device** | A box with connectors on it: the computer `OBC1`, the power unit `PCDU1`, the wheel `RW1`. |
-| **Interface** | One connection between two devices, of a type such as RS-422 or primary power. This is what you add. |
+| **Interface** | One connection between two devices, of a type such as RS-422 or primary power. You can add one, or join two connectors pin by pin without a type (a connection, section 4). |
 | **Connector, pin** | A plug or socket, and one contact of it. A pin carries one signal. |
 | **Harness** | A bundle of wires with connectors that carries interfaces between devices. Generated; its wires can be edited and wires of your own added. You can also make one by hand, with no interface (section 7). |
 | **Wire** | One conductor between two pins, with a gauge, a part and a length. |
@@ -53,7 +53,7 @@ harness-design-studio new --list
 harness-design-studio new wheel-link --template first-steps
 ```
 
-Then **File > Open project…** and pick the folder. You cannot break anything: it is your own copy. At a first run the editor opens it on the **Next step** page (section 5); press **Model** in the rail on the left to see the diagram.
+Then **File > Open project…** and pick the folder. You cannot break anything: it is your own copy. As a Systems engineer the editor opens it on the **Next step** page (section 5); as an Electrical / AIT engineer it stays where the window was. Press **Model** in the rail on the left to see the diagram.
 
 Version 1.0.0 has five examples. If `harness-design-studio new --list` shows only `blank`, `first-steps` and `small-satellite`, you have the 0.1.0 packages, which have those three; `minimal-satellite`, `flatsat` and the wire colours of section 7 came with 1.0.0.
 
@@ -73,7 +73,7 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 
 | Part | What it holds |
 | --- | --- |
-| **Navigation rail** | Down the left edge: **Next step**, **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions** and, at the bottom, **Settings**. It opens the area you choose; the button at its foot shows icons only. **Next step**, **Home** and **Settings** are pages of their own. The Systems engineer role (section 5) lists only Next step, Model, Checks, Revisions and Settings; Ctrl+7, **Go > Go to Home** and the other **Go** entries still open the areas it leaves out (Home, Drawings and Outputs). |
+| **Navigation rail** | Down the left edge: **Next step**, **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions** and, at the bottom, **Settings**. It opens the area you choose; the button at its foot shows icons only. **Next step**, **Home** and **Settings** are pages of their own. The Systems engineer role (section 5) lists only Next step, Model, Checks, Revisions and Settings; Ctrl+7 and **Go > Go to Home** still open Home, and the keys (Ctrl+2 and Ctrl+3) and Ctrl+K still open the Harness and Lists tabs of Drawings and Outputs. |
 | **Top bar** | The project name, *Saved* or *Unsaved changes*, the revision, a short model hash, where you are, **Undo** and **Redo**, **Guided** and **Expert**, **Show panels** (Systems engineer only), **Search** (Ctrl+K), the three steps **Generate** (the one blue button), **Check** and **Release…**, then **Export…** and a status chip. The tooltip of a step says what is done and what comes next. |
 | **Banner** | Appears under the top bar when something needs you: the plans or the exported files are out of date (buttons **Generate** and **Export…**), or a generate, export or check failed (**Try again**). A change that is refused because a harness is released stays on screen as a message over the diagram, with **Start new revision…**, until the next change goes through. |
 | **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6). Each area shows its own: Model has Diagram and Devices; Checks, Drawings (the Harness tab), Outputs (the Lists tab) and Revisions (the Releases tab) have one each. |
@@ -82,7 +82,7 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 | **Problems panel** | Closed until you press **Problems (n)** in the status bar (when that button is shown) or choose **View > Problems panel** (Ctrl+Shift+M): every open problem with its severity, rule, object and message; click one to go to the object. |
 | **Status bar** | What runs in the background (with **Cancel**) or the last check, the project folder, **Problems (n)**, *Offline*, a link *n values pending · n rules not checked*, and the zoom level (the button, the count and the link are problem notices, see below). The model hash, the rule count and *Generated at model …* are in the tooltip of the counts. The Systems engineer role shows only the save state, the running job, *Offline* and the project path. |
 
-The status chip in the top bar says one thing: *Up to date*, *Plans out of date* (the diagram changed after Generate), *Outputs out of date* (the design changed after the last export), *Not generated*, or the running job (*Generating…*, *Exporting…*, *Checking…*). Colour is never the only sign: every state has an icon and a word, and the two states for "nothing known yet" have a pattern. **Pending** (dotted) is a value nobody has entered; **Not checked** (hatched) is a rule that could not run. Neither is a pass, and neither is empty.
+The status chip in the top bar says one thing: *Up to date*, *Plans out of date* (the diagram changed after Generate), *Outputs out of date* (the design changed after the last export), *Outputs changed* (files in `outputs` were changed outside the tool), *Not generated*, *Made by hand* (harnesses from connections or by hand), or the running job (*Generating…*, *Exporting…*, *Checking…*). Colour is never the only sign: every state has an icon and a word, and the two states for "nothing known yet" have a pattern. **Pending** (dotted) is a value nobody has entered; **Not checked** (hatched) is a rule that could not run. Neither is a pass, and neither is empty.
 
 **Show problem notices** (View menu, and Settings > Editing) switches off, in one step, what shows problems without being asked: **Problems (n)**, the count on the Problems tab, the status chip, the chip and badges on the diagram, the pending-values link and the *out of date* banner. It is on for the Electrical / AIT engineer and off for the Systems engineer, for each role. **Check**, the Checks tab, the Problems panel and the read-only, locked, damaged-file and sample banners always stay.
 
@@ -92,7 +92,7 @@ Panels you hide or move are remembered for each project; **View > Reset layout**
 
 **Home** (Ctrl+7; not in the rail of the Systems engineer role) shows the open project with its counts, four buttons (**New project…**, **Open project…**, **New from an example…**, **Open the sample project**), your **Recent projects** with how many harnesses are draft, in review or released (**Open**, **Remove from the list**) and the **Examples**. **Try the flatsat example** opens a copy of that example in your Documents folder.
 
-The three steps in the top bar go in order. **Generate** builds the harnesses, **Check** (F5) runs the design rules, **Release…** locks a harness as a numbered revision. A step that has to wait says what to do first, for example *generate the harnesses first* or *check the design first*. When you look at part of a released harness, a banner says so and offers **Start new revision…** and **Show the revisions**.
+The three steps in the top bar go in order. **Generate** builds the harnesses, **Check** (F5) runs the design rules, **Release…** locks a harness as a numbered revision. A step that has to wait says what to do first, for example *generate the harnesses first* or *check the design first*. When you look at part of a released harness, a banner says so and offers **Start new revision…**.
 
 The **Device list** and **Interfaces** tables work like a spreadsheet:
 
@@ -148,6 +148,8 @@ Below, the pin table: pin, signal, mode (*Free*, *Fixed*, *Locked*), interface, 
 
 With **Contact** on there is one more column, **Cable contact** (since 1.7.0): the contact part of the library that the cable side uses on this pin. Generate copies it to the cable connector. **Cable contact…** (also in the context menu) sets it for the selected pins in one undo step. Pasted headers *Cable contact*, *Contact part* and *Cable contact part* fill it; *Contact* alone is still the contact size.
 
+A pin can also say which way its signal runs (`in`, `out` or `bidirectional`; since 1.9.0): `import-pinout` reads a *Direction* column for it. Where it is set, **Check my connections** and the pairing proposal use it before any name. The *Direction* column of the table above is still the one of the interface type.
+
 Under it the notes about the connector, for example a signal that no interface type has, or *CANH* without *CANL* on a fixed pinout; a double-click selects the pin the note is about.
 
 At the bottom, **Pinout as exported** shows the rows of `system/box_pinouts.csv` for this device; **Export pinout…** saves them as a CSV file or an Excel workbook.
@@ -179,13 +181,15 @@ The **library** is a folder that your team shares, on a shared drive or in a Git
 
 **Next step.** The first item of the rail, **Next step**, shows one page, *What to do next*: one card with one button, and the six steps of the work, each with an icon and a word (*done*, *next*, *to do*). It looks at the project and names the first step that is not done. When a check fails, a second card shows the first open problem with what to do and the buttons that apply (**Show it**, **Waive…**, **Approve …** for an unapproved part); a warning never holds the page. For the Systems engineer there are two link buttons, **Library…** and **Show everything**, which switches to the Electrical / AIT engineer role.
 
+A project that has connections between connectors but no harness and no interface is offered **Create harness** (it shows what it will add and asks first, see section 4); a project with no device is also offered **New harness…**, to make a harness by hand.
+
 **Your role.** The editor has two roles: *Systems engineer* (devices, the connections between them, subsystems, the library, the checks) and *Electrical / AIT engineer* (connectors, pinouts, harnesses, wires, build sheets, tests). They replace the *Simple* and *Full* workspaces of version 1.7.0. The first start asks once, *Who are you working as?*; after that the role is a setting in **View > Role** and under **Settings > Editing**, and it takes effect at once.
 
 A settings file that already holds values and no role is an *Electrical / AIT engineer*, which opens a project where it opened before and shows everything. A role is a view, never a permission: it locks nothing and is not stored in the project.
 
 The Systems engineer sees less. The project tree, the inspector and the Problems panel start closed (**Show panels** in the top bar opens the tree and the inspector together), the minimap and the legend are off, the status bar keeps the save state, the running job, *Offline* and the path, and the tools above the diagram are **Select**, **Connect**, **Add device** and **More**. The rail lists **Next step**, **Model**, **Checks**, **Revisions** and **Settings**; **Home**, **Drawings** and **Outputs** are not listed (the area you are in always is).
 
-The Systems engineer's menus leave out the entries for wires, harnesses, zones, alignment, the interface-first way, the diagram's drawing options, revisions of a harness and the engineering values. Nothing is removed: each item keeps its shortcut, and Ctrl+K finds it. Each role keeps its own layout. The problem notices are off for the Systems engineer.
+The Systems engineer's menus leave out the entries for wires, harnesses, zones, alignment, the interface-first way (with the import of interfaces), the imports of segment lengths, the ampacity table and KiCad netlists, the diagram's drawing options, revisions of a harness, the engineering values, and the Go entries for the Harness, Lists, Interface table and Device list. Nothing is removed: each item keeps its shortcut, and Ctrl+K finds it. Each role keeps its own layout. The problem notices are off for the Systems engineer.
 
 The role is not the mode. Guided and Expert change only how much the diagram shows:
 
@@ -220,14 +224,14 @@ Zoomed far out, a device shows its ID and each kind of link its own dash pattern
 
 - **Click** selects one item. **Shift+click** or **Ctrl+click** adds or removes, a **drag on the background** draws a rectangle, **Ctrl+A** selects all. With several devices selected the Inspector shows what they have in common; **Delete**, **Duplicate** (Ctrl+D), **Align** and **Space evenly** (Edit menu) act on all of them as one undo step.
 - **Ctrl+wheel** zooms at the pointer, the wheel scrolls, **Shift+wheel** scrolls sideways, the **middle button** or **Space** with a drag pans. **F** fits everything, **Shift+F** zooms to the selection, **Ctrl+0** shows 100 %. The zoom level is at the right of the status bar.
-- **Ctrl+F** finds a device or link by ID, name, connector or type and marks every match; Enter goes to the next. **Double-click** a link or device (or press Enter on it) opens it in the **Harness** tab.
+- **Ctrl+F** finds a device or link by ID, name, connector or type and marks every match; Enter goes to the next. **Double-click** a link or device (or press Enter on it) opens it in the **Harness** tab; a connection line opens the window to edit its pairs.
 - **Right-click** shows a menu with the same actions as the menus; an entry that cannot be used stays in the menu, greyed out, with the reason.
 - **View > Show legend**, **Show overview map** and **Snap to grid** switch overlays and the grid; hold **Alt** while dragging to place a device freely.
 
 ## 6. Problems, checks and waivers
 
 - **Error**: must be fixed. Errors cannot be waived.
-- **Warning**: fix it, or **Waive** it with a reason of at least 10 characters. Waived warnings stay visible in the report with their reason.
+- **Warning**: fix it, or **Waive** it with a reason of at least 10 characters. Waived warnings stay visible in the report with their reason. A waiver belongs to the finding it was made for (since 1.11.0): if that finding later says something else, the waiver no longer applies and the problem is open again. Its card names the earlier reason, the *Waiver* column of the **Checks** tab reads *Waiver no longer fits*, and the DRC report lists it under *Waivers that no longer fit*. Waive it again if the reason still holds.
 - **Note**: information, for example *not checked because a value is still a placeholder*.
 
 The quick checks run on every edit. The design rules (39 of them, four of which review the connections between connectors: **Design > Check my connections** shows only those) run in the background a moment after you stop editing, or when you press **Check** (F5); the top bar says *Checking…* while they run, and the status bar shows the job with **Cancel**. The **Problems** cards say when they are checking, and a header such as *39 rules: 20 passed, 2 failed, 12 not checked* says how it went.
@@ -244,6 +248,8 @@ The **Checks** tab (Ctrl+4) has one row for each rule:
 
 - **Wire colours**: *Edit > Wire colours...* sets one colour for each signal (PWR, RTN, CANH ...), from the IEC 60757 colours. The wires take them the next time you generate, the *Colour* column of the wire table in the **Harness** tab and of the wire list in **Lists** shows them, and the drawings draw them with the colour code as text. Nothing is preset: a signal with no colour is drawn grey. A wire between two different signals (`TX+/RX+`) takes the colour of the first.
 
+- **Shield ends** (since 1.10.0): a coax group gets a 360 degree backshell at both ends, whatever the grounding concept says, also when you group wires as a coax. Twisted pairs, shielded pairs, quads and overall shields follow the concept (`shield_end_a`, `shield_end_b`).
+
 - By default one harness is made for each pair of device connectors. Nominal and redundant chains, and pyro lines, never share a harness.
 - Pins are chosen by rules (power first, pairs side by side, pins you locked in the harness file never moved). **Why is it like this?** shows the reason for each choice.
 - Generating again keeps IDs, the wires you edited and the pins you locked, never touches released harnesses, and shows a report of what was added, changed and removed.
@@ -259,7 +265,7 @@ The **Checks** tab (Ctrl+4) has one row for each rule:
 
 `outputs/` contains, for every harness: the build workbook (`<ID>_build.xlsx`, see below), wire list, pinouts, BOM, mass and length, continuity and isolation tests, labels, a WireViz-style YAML file and an Excel workbook of the data tables. The PDF and SVG drawings of the harnesses (SVG for the A3 sheets, PDF for A3 and A4) are written only when you ask for them.
 
-For the whole system: block diagram, harness overview, BOM, mating and traceability matrices, DRC report, change log, revision report, and one JSON file with the whole model.
+For the whole system: block diagram, harness overview, BOM and mass and length, box pinouts, mating and traceability matrices, DRC report and findings, change log, revision report, a system workbook, and one JSON file with the whole model.
 
 Every file carries the tool version and a model hash. The status chip in the top bar and the header of the **Harness** tab show whether the outputs are up to date. Details are in `docs/OUTPUTS.md` in the repository (it is not installed with the app).
 
@@ -268,6 +274,10 @@ A project that has connections (**Link connectors…**) also gets the **connecti
 The **build workbook** is the file to build a harness from. **Start here** says whether the harness is ready to build and what is missing; **Cut list** lists the wires in cut order, with their colours and strip lengths; **Connectors** has one block per connector, pin by pin, with the contact, the crimp tool and tick columns; **Parts**, **Accessories**, **Labels** and **Tests** follow, with empty columns for the result; **About** names the version and design. A missing value reads *to fill in*. Work on a copy: a changed file in `outputs/` fails the output check.
 
 The build data shows in the tables only where it is used: the wire list gets *Strip A (mm)* and *Strip B (mm)*, the pinouts get *Contact*, a harness with accessories gets `accessories.csv`, and the bill of materials counts the contacts used on pins and the accessory parts (pieces as *ea*, parts with a length as metres *m*).
+
+In the pinouts, a cable pin with no signal of its own shows the *Signal* and *Interface* of the wires that end on it (different values joined with `;`; since 1.10.0). While any interface has a requirement ID, the wire list gets a *Requirement* column and so does the traceability matrix.
+
+A wire part can say how many conductors one metre of it carries (`conductors`, 2 for a twisted pair; the *Conductors* column of the parts import). The BOM and the mass then count the metres of the cable, not of every wire (since 1.11.0). The tool does not guess it: set it on your pair parts.
 
 **Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window; a project that has harnesses or connections but no folder yet first asks where to save it, with a folder chooser. The window shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied.
 
@@ -289,6 +299,8 @@ Outputs are checked independently before they are written (every cell of the tab
 
 Who changed the design last: when the project folder is inside a Git repository, a line under the buttons names the last commit of that repository (who, when, its first line, short id and branch). The tool reads it from the repository's files; it does not run Git, needs no network and keeps no e-mail address. It is the last commit of the whole repository, and changes made since are not shown.
 
+A project can require three different people for a release: the author, the checker and the person who releases it. It is off unless you switch it on with `harness-design-studio config DIR --distinct-roles on` (the editor has no switch for it). The review and release windows then say so and ask for the checker.
+
 The **Releases** tab shows one timeline of every review, release and new revision, with a filter for one harness and chips for the event and the baseline. Under it, **Compare revision … with …** lists what differs between two revisions, or a revision and the working design, grouped by kind with counts; **Mark on diagram** marks the changed devices and interfaces and **Clear marks** removes the marks. In the differences, each row is tinted by the kind of change, and a line says what the released harness locks.
 
 The **More** menu of the **Harness** tab (Drawings) has **Changes…**, **Change log…** and **Delete harness** (not possible once the harness is released; a generated harness comes back the next time you generate); the same three are in the Design menu and in the context menu of a harness in the Project tree.
@@ -303,7 +315,7 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | --- | --- |
 | `harness-design-studio new FOLDER [--template NAME] [--name TEXT]` | create a project from an example (`harness-design-studio new --list` shows them) |
 | `harness-design-studio templates FOLDER` | copy the import templates, CI scripts and the review checklist to a new folder |
-| `harness-design-studio library DIR [--library-version V] [--library-source TEXT] [--library-date YYYY-MM-DD]` | show or record where the parts library comes from |
+| `harness-design-studio library DIR [--library-name NAME] [--library-version V] [--library-source TEXT] [--library-date YYYY-MM-DD]` | show or record where the parts library comes from |
 | `harness-design-studio schema FOLDER` | write JSON Schemas of the project files for editors that complete and check JSON |
 | `harness-design-studio validate DIR` | check a project for errors |
 | `harness-design-studio check DIR` | validate, plus problems left by Git merges (including released harnesses that were edited) |
@@ -319,14 +331,14 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio diff DIR HARNESS [--from REV] [--to REV]` | what changed since a baseline |
 | `harness-design-studio compare OLD NEW` | compare two project folders (for example two Git checkouts); the last line names what is not compared |
 | `harness-design-studio log DIR [HARNESS]` | print the change log |
-| `harness-design-studio config DIR [--ampacity-csv FILE] [--apply-profile NAME] [--counterparts WORDS]` | list missing or invalid engineering values; load a current-by-gauge table; fill unset values from a standard profile; set the transmit and receive words of the connection review (`TX=RX, MOSI=MISO`) |
+| `harness-design-studio config DIR [--ampacity-csv FILE] [--apply-profile NAME] [--counterparts WORDS] [--distinct-roles on\|off]` | list missing or invalid engineering values; load a current-by-gauge table; fill unset values from a standard profile; set the transmit and receive words of the connection review (`TX=RX, MOSI=MISO`); require three different people for a release (`on`) or take the setting out (`off`) |
 | `harness-design-studio import-parts DIR FILE --approved VALUE ...` | import an approved-parts list; you say what the approval values mean |
 | `harness-design-studio import-lengths DIR FILE [--unit mm]` | import routing segment lengths from a table |
 | `harness-design-studio import-netlist DIR FILE --device D [--prefix J] [--connector J1=ID] [--part J1=PART] [--signal-map NAME=SIGNAL\|FILE]` | read connector pinouts of a device from a KiCad netlist (.net or .xml); the pins become fixed |
 | `harness-design-studio import-build-data DIR FILE [--dry-run]` | import strip lengths, pin contacts, accessories or the crimp tool of parts from a table (CSV, TSV, JSON or XLSX); the kind is told by the column headings; one refused row stops the whole import (exit 1, nothing changed) |
 | `harness-design-studio import-pinout DIR FILE --device D [--new-device NAME] [--default-part PART] [--part J1=PART] [--column FIELD=HEADING] [--replace]` | define the connectors and pins of a device from a table (CSV or XLSX), one pin per row |
 | `harness-design-studio export-pinout DIR --device D [-o FILE]` | write one device's pinout (the rows of `system/box_pinouts.csv` for it) as CSV on the screen, or to a .csv or .xlsx file |
-| `harness-design-studio export-devices DIR FILE --device D [--device D2 ...]` | save devices with their connectors, pinouts, parts and interface types to a device library file (added to when it exists) |
+| `harness-design-studio export-devices DIR FILE --device D [--device D2 ...] [--replace]` | save devices with their connectors, pinouts, parts and interface types to a device library file (added to when it exists; a different device of the same ID in the file is replaced only with `--replace`) |
 | `harness-design-studio import-devices DIR FILE [--device D] [--list] [--dry-run]` | add devices from a device library file; a taken ID gets the next free one, nothing in the project is replaced |
 | `harness-design-studio export-subsystem DIR FILE --device D [--device D2 ...] --name NAME [--description TEXT] [--replace]` | save devices and the connections between them as a subsystem library file (a file that exists is replaced only with `--replace`) |
 | `harness-design-studio import-subsystem DIR FILE [--show] [--dry-run]` | add a subsystem from a subsystem library file in one step: the devices (a taken ID gets the next free one) and their connections; all or nothing |
@@ -374,6 +386,7 @@ The build data (last row) has no window: it is read with the command line (secti
 | *Project changed on disk* | Someone (or Git) changed the files. Reload to see them, or keep your version (asked once per state of the files). A project that was deleted while open is reported when you return to the window. |
 | *Outputs out of date* (status chip or banner) | The design changed since the last export. Export again. |
 | *Blocked because it touches released items* | The harness is released, and so are the parts, interface types and configuration values it uses. Start a new revision. |
+| A Git merge stopped on `generated/generation.json` | Two people both pressed Generate. Run `harness-design-studio merge-fix DIR` (section 10), then commit. It changes nothing if another file is in conflict too. |
 | A wire gauge says *pending* | A value is missing: `harness-design-studio config DIR` says which. A gauge also needs the interface's Max current and the segment lengths. |
 | `harness-design-studio` is not found | `~/.local/bin` is not on your PATH. Add it, or log out and in. |
 
@@ -389,6 +402,7 @@ The build data (last row) has no window: it is read with the command line (secti
 | Ctrl+K | command palette (it floats over the window; Esc or a click elsewhere closes it): type a command, an ID or a name; every command of the menus is in it |
 | Ctrl+G, F5, Ctrl+E | generate harnesses, run the checks, export |
 | Ctrl+I | new interface |
+| Ctrl+Shift+K | Link connectors (join two connectors pin by pin; new in 1.8.0) |
 | Ctrl+1 to Ctrl+6 | the tabs Diagram, Harness, Lists, Checks, Releases, Devices |
 | Ctrl+7, Ctrl+, | Home, Settings |
 | Ctrl+Shift+T, Ctrl+Shift+J | the Interface table and the Device list (left panel) |
@@ -404,7 +418,7 @@ The build data (last row) has no window: it is read with the command line (secti
 | Ctrl+A, Ctrl+D, Ctrl+F | select everything, duplicate the selected devices, find in the diagram (in the diagram) |
 | Ctrl+Shift+L | arrange the diagram |
 | C, Esc | start the Connect tool, back to Select (Esc also clears the selection) |
-| Tab, Enter or Space | move between devices and links; Space selects, Enter also shows the item in the Harness tab |
+| Tab, Enter or Space | move between devices and links; Space selects, Enter also shows the item in the Harness tab (on a connection line, Enter opens the window to edit its pairs) |
 | Shift+click, Ctrl+click, drag on the background | add to the selection, take out of it, rubber band (the Project tree takes Shift and Ctrl too: Shift+arrows select several devices or interfaces without the mouse) |
 | Shift+arrows | move the selected devices |
 | Delete | delete the selected items (after showing what it affects; only in the diagram, the Interface table and the Project tree) |

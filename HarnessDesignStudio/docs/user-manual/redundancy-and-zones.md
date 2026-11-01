@@ -35,7 +35,7 @@ IF-002-R connects the nominal chain to the redundant chain
 The card explains that one failure could affect both chains. It has a **Show** button, a **Waive…** button and a fix button called **Connect to a redundant copy of OBC1**.
 
 - Press the fix button. The nominal end moves onto the twin (`OBC1-R`). Both ends are then on the redundant chain, and the warning goes.
-- Or press **Waive…** and write a reason of at least 10 characters if the link between the chains is wanted. The reason stays in the report.
+- Or press **Waive…** and write a reason of at least 10 characters if the link between the chains is wanted. The reason stays in the report. A waiver is tied to the finding it was made for: if the finding later says something else, the waiver no longer applies and the card says so (since 1.11; [read and fix problems](read-and-fix-problems.md#common-mistakes)).
 
 After the fix, the project has six devices and four links. Save with Ctrl+S. Then on the command line:
 

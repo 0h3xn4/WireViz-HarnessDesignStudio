@@ -30,7 +30,8 @@ A release is blocked until all of these hold. The tool lists what is missing, in
 | An open error | Fix it ([read and fix problems](read-and-fix-problems.md)). |
 | `gauge_pending`: a wire has no gauge | Fill in the derating values ([fill in the engineering values](fill-in-engineering-values.md)), or set the gauge by hand. |
 | `length_unknown`: a wire has no length | Import the segment lengths ([import data](import-data.md#segment-lengths)). |
-| `outputs_missing` / `outputs_stale` | Export, then release ([export the outputs](export-the-outputs.md)). |
+| `generation_stale`: the harness plans are out of date | Generate again ([generate harnesses](generate-harnesses.md)). |
+| `outputs_missing` / `outputs_stale` / `outputs_modified` | Export, then release ([export the outputs](export-the-outputs.md)). `outputs_modified` means a file in `outputs/` was changed or removed after the export. |
 | `outputs_linked`: the `outputs` folder (or a folder in it) is a link, or cannot be written | Replace the link with a real folder, make the folder writable, and export again. The release is blocked up front because the released status could not be written into the outputs. |
 | `placeholder_config`: a config file is still marked `"placeholder": true` | An engineer reviews the values and sets `"placeholder": false` in each file. Or release with a written reason (below). |
 | `parts_unapproved`: the harness uses a part that is not approved, or is example data | Import your approved parts list ([import data](import-data.md#approved-parts-list)). Or release with a written reason (below). |
@@ -112,7 +113,7 @@ From then on, in that project:
 ## 4. After the release
 
 - `W002` is now **released (locked)**. The **Releases** tab lists the release with a *Released* chip, and the **Harness** tab header says *Released · rev A*. A lock and *W002 A* appear on the objects it holds, in the **Project** tree and on the diagram. The harness, the links it carries and the pins it uses cannot be edited. The app refuses an edit and gives the reason.
-- When what you look at belongs to a released harness, a banner under the top bar says so ("Harness W002 is released (revision A) and locked. To change it, start a new revision.") and offers **Start new revision…** and **Show the revisions**. The tooltip of the **Release** step in the top bar counts the released harnesses ("1 of 2 released").
+- When what you look at belongs to a released harness, a banner under the top bar says so ("Harness W002 is released (revision A) and locked. To change it, start a new revision.") and offers **Start new revision…**. The tooltip of the **Release** step in the top bar counts the released harnesses ("1 of 2 released").
 - **A release also freezes what the harness uses**: the pins of the device connectors that its wires end on (since 1.9.0, also for a harness made from a connection or by hand; the other pins of the same connector stay editable and `import-pinout --replace` refuses a change to a used pin with the harness named), the parts of its connectors and wires (and, since 1.7.0, the contact parts on its pins and the parts of its accessories), and of the device connectors it plugs into, the interface types of its links, and the configuration its checks and outputs read (all of `derating`, `emc`, `segregation` and `titleblock`, and eight keys of `generation`). The editor and the commands `import-parts` and `config` (including `--apply-profile` and `--ampacity-csv`) refuse a change to these, with the reason and the way out. (`harness-design-studio library`, which only records where the parts data come from, is not affected.) Example, importing the parts list of [import data](import-data.md#approved-parts-list) after the release:
 
 ```

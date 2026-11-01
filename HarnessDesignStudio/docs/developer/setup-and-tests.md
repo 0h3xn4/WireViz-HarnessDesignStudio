@@ -36,7 +36,7 @@ This took about 40 seconds with a network connection and ended without errors. T
 | --- | --- |
 | (none) | The program and its libraries: `pydantic`, `openpyxl`, `defusedxml`. This is all the command line needs. |
 | `gui` | `PySide6-Essentials` (Qt), for the editor. |
-| `dev` | Test and build tools: `pytest`, `pytest-cov`, `pytest-qt`, `pytest-xdist`, `hypothesis`, `mypy`, `ruff`, `cyclonedx-bom`, `pip-licenses`, `pip-audit`, `pyinstaller`, `playwright`. |
+| `dev` | Test and build tools: `pytest`, `pytest-cov`, `pytest-qt`, `pytest-xdist`, `hypothesis`, `mypy`, `ruff`, `cyclonedx-bom`, `pip-licenses`, `pip-audit`, `pyinstaller`, `playwright`, `pytest-timeout`. |
 
 Versions are pinned in `pyproject.toml`. A new dependency needs its name, version and licence recorded in [`DECISIONS.md`](../DECISIONS.md).
 
@@ -117,13 +117,13 @@ A change that only touches Markdown can still break a test. Know these:
 | Test file | What it enforces |
 | --- | --- |
 | `tests/test_docs_links.py` | Every relative link and every `#anchor` in the listed files resolves. The list: `HarnessDesignStudio/README.md`, `CLAUDE.md`, `CHANGELOG.md`, every Markdown file under `docs/` **including all sub-folders** (`user-manual/`, `developer/`, `guide/`, `examples/`, `ui/`, `releases/`, ...) and the templates `README.md`. Links inside code fences are not checked. The anchor rule is GitHub's. |
-| `tests/test_docs.py` | The in-app guide (`resources/guide/index.html`) equals what `tools.build_guide` makes from `docs/guide/USER_GUIDE.md`; every `harness-design-studio` command is named in the guide; the buttons the guide names exist in `gui/strings.py`; no paragraph of the guide is longer than 700 characters; `docs/RULES.md` and `docs/CLI.md` equal what their generators write; every config key is in `docs/CONFIG.md`; the commands of `docs/GETTING_STARTED.md` and of `HarnessDesignStudio/README.md` are run in order in a scratch folder with the expected exit codes; the counts and output lines quoted in `docs/examples/README.md` are those of a real run; the model hash quoted in `GETTING_STARTED.md` equals the one the first `export` prints; the **F1** key opens the guide. |
+| `tests/test_docs.py` | The in-app guide (`resources/guide/index.html`) equals what `tools.build_guide` makes from `docs/guide/USER_GUIDE.md`; every `harness-design-studio` command is named in the guide; the buttons the guide names exist in `gui/strings.py`; no paragraph of the guide is longer than 700 characters; `docs/RULES.md` and `docs/CLI.md` equal what their generators write; every config key is in `docs/CONFIG.md`; the commands of `docs/GETTING_STARTED.md` and of `HarnessDesignStudio/README.md` are run in order in a scratch folder with the expected exit codes; the counts and output lines quoted in `docs/examples/README.md` are those of a real run; `GETTING_STARTED.md` shows `<hash>` and quotes no real model hash (D-186), and the first `export` does print one; the **F1** key opens the guide. |
 | `tests/test_examples.py` | The example projects equal what `tools.build_examples` writes; the design worksheet names only real device kinds and interface types; the numbers in `docs/FLATSAT_EXAMPLE.md` match the `flatsat` example. |
 | `tests/test_compliance_matrix.py`, `test_trace.py`, `test_sdd_components.py`, `test_metrics.py`, `test_scf.py`, `test_family_group_mapping.py`, `test_profiles.py`, `tests/test_drc.py::test_cited_requirements_exist_in_the_extracted_lists` | The generated compliance files are current (matrix, traceability, component table), no matrix row claims compliance, every module has a docstring, and every cited requirement ID exists. |
 
 The repository's root `README.md`, `CONTRIBUTING.md`, `CHANGELOG.md` and `AUDIT.md`, the Markdown files in the root `docs/` and `HarnessDesignStudio/compliance/**/*.md` are not in the link test. Check them with the offline link checker in [`docs-maintenance.md`](docs-maintenance.md#check-the-links).
 
-When only Markdown under `HarnessDesignStudio/` changes, CI runs just the `docs` job: `test_docs.py`, `test_docs_links.py` and the compliance tests above (decision D-138).
+When only Markdown under `HarnessDesignStudio/` changes, CI runs just the `docs` job: `test_docs.py`, `test_docs_links.py`, the compliance tests above and `tests/test_examples.py::test_the_flatsat_walkthrough_matches_the_example` (decision D-138).
 
 ## The tests of the user interface
 
@@ -181,7 +181,6 @@ A golden file is a stored, reviewed result that a test compares with a fresh one
 | The `sat15` project (generated) | `tests/fixtures/projects/sat15` | the command in [`agent/core.md`](agent/core.md) ("Generation layout"); delete the folder first |
 | The `sat15` design rule report | `tests/fixtures/drc/sat15.md` | `python -m harness_design_studio.cli.main drc tests/fixtures/projects/sat15 > tests/fixtures/drc/sat15.md` |
 | The example projects | `src/harness_design_studio/resources/examples/projects/` | `python -m tools.build_examples` |
-| The tutorial's model hash | `docs/GETTING_STARTED.md` | edit the hash when the first export prints a new one |
 
 ## 6. What CI runs
 

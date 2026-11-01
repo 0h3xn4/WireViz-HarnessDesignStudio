@@ -179,6 +179,6 @@ None of these is set by default. `harness-design-studio config DIR --apply-profi
 | `same_class_one_bundle` | `true`: interfaces of one EMC class between two devices should run in one harness (ECSS-E-ST-20-07_0080035) |
 
 ### Part ratings used by the rules (keys of `ratings` in the parts library)
-`rated_voltage_v`, `dielectric_withstand_v`, `max_temp_c`, `mating_cycles` (connectors and wires as stated above). A part without the rating the rule needs is listed under *not checked*. The part fields `manufacturer` and `specification` are used by the rules `connector-manufacturer` and `wire-specification`.
+`rated_voltage_v`, `dielectric_withstand_v`, `max_temp_c`, `mating_cycles` (connectors and wires as stated above), and for the rule `shield-parts` `conductive_finish` (connector parts) and `shield_insulated` (wire parts), each 1 for yes. A part without the rating the rule needs is listed under *not checked*. The part fields `manufacturer` and `specification` are used by the rules `connector-manufacturer` and `wire-specification`.
 
 Next: [`PLACEHOLDERS.md`](PLACEHOLDERS.md), [fill in engineering values](user-manual/fill-in-engineering-values.md).

@@ -18,7 +18,7 @@ This page lists the error messages you are most likely to meet, with the exact t
 
 ## How this page was made
 
-Every message below was produced on purpose with the tool (version `0.1.0`, installed into a clean Python virtual environment on Ubuntu 24.04) and pasted as the tool printed it. The messages that 1.0.0 added or reworded (the release freeze, damaged projects, number ranges, the lock, the PDF character warning, import errors) were produced again with 1.0.0 from the source tree. Others may be worded a little differently; the [changelog](../CHANGELOG.md) names the changes. Project folder names such as `demo` are the ones used in the commands. Some things were **not** run, and the page says so where they appear: the `.deb` and `.tar.gz` installs and the packaged `--selftest` (text quoted from [`INSTALL.md`](INSTALL.md)), and anything that needs the app window (text quoted from the program's own message list). Messages about the examples of the released 0.1.0 packages were produced from the source of the `v0.1.0` tag. The messages that 1.7.0 added (the build data import, a dangling accessory, the option `--drawings`, the build workbook) and the model hashes and file counts quoted below were produced again with 1.8.1.
+Every message below was produced on purpose with the tool (version `0.1.0`, installed into a clean Python virtual environment on Ubuntu 24.04) and pasted as the tool printed it. The messages that 1.0.0 added or reworded (the release freeze, damaged projects, number ranges, the lock, the PDF character warning, import errors) were produced again with 1.0.0 from the source tree. Others may be worded a little differently; the [changelog](../CHANGELOG.md) names the changes. Project folder names such as `demo` are the ones used in the commands. Some things were **not** run, and the page says so where they appear: the `.deb` and `.tar.gz` installs and the packaged `--selftest` (text quoted from [`INSTALL.md`](INSTALL.md)), and anything that needs the app window (text quoted from the program's own message list). Messages about the examples of the released 0.1.0 packages were produced from the source of the `v0.1.0` tag. The messages that 1.7.0 added (the build data import, a dangling accessory, the option `--drawings`, the build workbook) and the file counts quoted below were produced again with 1.11.0, as were the exit codes, the creating, generating, checking, importing, exporting and releasing transcripts (the `diff` transcript was run with a project made on the day, so its dates differ) and the files listed at the end; a model hash is written `<hash>`, because it changes with every version.
 
 Questions that are not errors ("which example should I start with?", "does it use the internet?") are answered in [`FAQ.md`](FAQ.md). Words you do not know are explained in [`GLOSSARY.md`](GLOSSARY.md).
 
@@ -179,7 +179,7 @@ harness-design-studio validate dmg
 ```
 
 ```
-ERROR   invalid_json: The file is not valid JSON at line 2, column 11: Expecting value. [logical/units/aocs.json]
+ERROR   invalid_json: The file is not valid JSON at line 6, column 15: Unterminated string starting at. [logical/units/aocs.json]
 ERROR   unknown_unit: Box connector 'RW1-J01' does not belong to an existing device.
 ERROR   unknown_unit: Box connector 'RW1-J02' does not belong to an existing device.
 ERROR   unknown_unit: Interface 'IF-001' refers to device 'RW1', which does not exist.
@@ -189,11 +189,10 @@ WARNING orphan_placement: A diagram position exists for 'RW1', which is not a de
 2 devices, 2 interfaces, 9 connectors, 0 harnesses: 5 error(s), 1 warning(s).
 ```
 
-Read the **first** error: it names the file and the line and column. The other errors follow from it (the wheel is missing, so everything that mentions it is wrong). The message never prints the content of the file, because it may be confidential. Fix the file (a JSON-aware editor shows the position; `git diff` shows what changed) and run `harness-design-studio validate` again. `harness-design-studio generate` on a project with errors changes nothing; after two `warning: [interface_skipped]` lines it ends with (exit code 1):
+Read the **first** error: it names the file and the line and column. The other errors follow from it (the wheel is missing, so everything that mentions it is wrong). The message never prints the content of the file, because it may be confidential. Fix the file (a JSON-aware editor shows the position; `git diff` shows what changed) and run `harness-design-studio validate` again. `harness-design-studio generate` on a project with damaged files changes nothing and, like the other commands, refuses it (exit code 2):
 
 ```
-2 interfaces and 0 wires checked: 6 error(s)
-Not saved: fix the errors above first.
+error: the project has damaged files (first: ERROR   invalid_json: The file is not valid JSON at line 6, column 15: Unterminated string starting at. [logical/units/aocs.json]); nothing was generated. Run `harness-design-studio validate` to see them.
 ```
 
 ### "Unsaved changes found" at start
@@ -240,7 +239,7 @@ harness-design-studio new old1 --template minimal-satellite
 error: Unknown template 'minimal-satellite'. Choose one of: blank, first-steps, small-satellite.
 ```
 
-**Fix:** use `first-steps` or `small-satellite`, or install 1.0.0 (see [`INSTALL.md`](INSTALL.md)). `harness-design-studio templates DIR` also writes 14 files instead of 18 on 0.1.0 (no `design-worksheet.md`, and none of the three files for the build data, which are new in 1.7.0).
+**Fix:** use `first-steps` or `small-satellite`, or install 1.0.0 (see [`INSTALL.md`](INSTALL.md)). `harness-design-studio templates DIR` also writes 14 files instead of 19 on 0.1.0 (no `design-worksheet.md`, none of the three files for the build data, which are new in 1.7.0, and no `ci/gitattributes`, which is new in 1.9.0).
 
 ### `error: demo already exists and is not an empty folder; choose a new one.`
 
@@ -363,7 +362,7 @@ Exit code 1. **Fix:** move the key into `"values"`:
 }
 ```
 
-Then `harness-design-studio validate` is clean again and `harness-design-studio config DIR` counts the value as set (it said `Engineering values: 1 of 17 set.` after this change). A misspelled key **inside** `values` is not reported: `harness-design-studio validate` stays quiet and the key is ignored, so `harness-design-studio config DIR` still lists the correct key as `MISSING`. Run `harness-design-studio config DIR` after every edit of a configuration file and check that the count of set values went up. Set `"placeholder": false` only after an engineer has reviewed the whole file. To get a file back to its starting state, copy it from a fresh project: `harness-design-studio new fresh --template blank`, then copy `fresh/config/derating.json` over yours.
+Then `harness-design-studio validate` is clean again and `harness-design-studio config DIR` counts the value as set (it said `Engineering values: 1 of 17 set.` after this change). A misspelled key **inside** `values` is not reported: `harness-design-studio validate` stays quiet and the key is ignored, so `harness-design-studio config DIR` still lists the correct key as `MISSING`. Run `harness-design-studio config DIR` after every edit of a configuration file and check that the count of set values went up. Set `"placeholder": false` only after an engineer has reviewed the whole file. The same kind of message for a library part (`A library part could not be loaded and was set aside: conductors: Extra inputs are not permitted ... [library/wire.json]`) appears when an older tool opens a project whose wire parts carry `conductors` (new in 1.11.0; the field is left out of the file while it is 1). Open such a project with 1.11.0 or newer. To get a file back to its starting state, copy it from a fresh project: `harness-design-studio new fresh --template blank`, then copy `fresh/config/derating.json` over yours.
 
 ### `ERROR merge_conflict: The file contains unresolved Git merge conflict markers.`
 
@@ -416,6 +415,20 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 ```
 
 `validate` ends with exit code 1. The other commands (`drc`, `generate`, `export` and so on) refuse the project like any project with damaged files, with exit code 2 (the message is `error: the project has damaged files (first: ERROR   dangling_accessory: ...)`). **Why:** an accessory of a harness names a connector or wire (`target`) that the harness does not have, for example after a hand edit of `physical/harnesses/W001.json` or a Git merge. **Fix:** set the target to a connector or a wire of the harness, or leave it empty (the accessory then belongs to the harness), or delete the accessory, in the file; then run `validate` again. The Generate step keeps an accessory only while its connector or wire still exists, and names the one it cannot keep in a `locked_data_lost` warning.
+
+### A waived problem is open again, or the report lists "Waivers that no longer fit"
+
+Not an error. A waiver records a short hash of the rule and the statement of the finding it was made for (`finding_hash` in `waivers.json`, new in 1.11.0). When the finding says something else later (a number or a name in its text changed), the waiver no longer applies and the finding is open again. `harness-design-studio drc DIR` lists it under its own heading with the reason you gave:
+
+```
+## Waivers that no longer fit
+
+These findings were waived, but the finding has changed since. They are open again; read them and waive them again if the reason still holds.
+
+- **Part EX-MICROD-15-F is not approved yet but is used (2 place(s))** (`part-unapproved.EX-MICROD-15-F`): was “Example part, practice project only”
+```
+
+(Made with 1.11.0 by giving the waiver of the [tips](TIPS.md#waivers) a `finding_hash` that does not match.) In the app, the card in the Problems panel says *A waiver was made for an earlier version of this problem, so it no longer applies* and names the earlier reason, and the *Waiver* column of the Checks panel reads *Waiver no longer fits*. **Fix:** read the finding; if the reason still holds, waive it again (that records the new hash). A waiver without the field applies as before.
 
 ### `harness-design-studio drc` ends with exit code 1
 
@@ -661,6 +674,7 @@ blocked: [outputs_missing] Outputs have not been exported yet. Export them, revi
 | `gauge_pending` | A wire has no gauge. | Enter the derating and ampacity values (`harness-design-studio config DIR`), the interface currents, and generate again. |
 | `length_unknown` | A wire has no length. | `harness-design-studio import-lengths DIR FILE`, then `harness-design-studio generate DIR`. |
 | `outputs_missing` | You have not exported yet. | `harness-design-studio export DIR`. (`outputs_stale` and `outputs_modified` mean the outputs no longer match the design; export again.) |
+| `author_missing`, `same_person` | Only while the project requires different people in a release (`harness-design-studio config DIR --distinct-roles on`, new in 1.9.0): nobody is recorded as the author, or two of the author, the checker (`--checker`) and the person who releases (`--by`) are the same. | Submit the harness for review under the author's name (`harness-design-studio review`), then release with a different `--checker` and `--by`. See [`CONFIG.md`](CONFIG.md). |
 
 The two reasons for placeholders and unapproved parts need at least 10 characters too:
 
@@ -763,6 +777,7 @@ demo/
   baselines/, changelog.json   written when you release
   waivers.json            written when you waive a finding
   .gitignore              written once; lists files that Git should ignore
+  .gitattributes          written once; keeps Git from writing conflict markers into generated/generation.json
 ```
 
 The files are plain text (JSON), so a project folder can be copied, zipped, e-mailed or kept in Git. The format is in [`FILE_FORMAT.md`](FILE_FORMAT.md).
