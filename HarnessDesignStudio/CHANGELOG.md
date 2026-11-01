@@ -4,6 +4,14 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+## 1.11.1 (2026-11-01; not a statement of compliance)
+
+### Changed
+
+- **The documents were brought up to date with the program (release 1.11.1, D-190; pull request 139).** A page-by-page check of the hand-written documents against the code and against real runs of the commands they show. Wrong or stale statements were corrected: the package names in the root README, the menus and navigation rail of the Systems engineer role, a menu path, the number of files `templates` writes (19, not 18), the mass of the flatsat example (2.25 kg since the pair-part count of 1.11.0), buttons that the program does not have, and sample outputs that no longer matched (`pinouts.csv`, `config_invalid`, `invalid_json`, the refusal for a damaged project). Features of 1.8.0 to 1.11.0 that pages left out were added: pin direction, the connection list, `conductors` in the BOM and the mass, a waiver tied to its finding, the coax rule, `release_distinct_roles`, the Requirement and Signal/Interface columns, *Number of these devices* and *First connector*, the library and subsystem commands. The reference pages (file format, imports, outputs, configuration, architecture, requirements) and the notes for developers were checked against the code. Fifteen pictures of the manual were made again with `tools.tab_screenshots`; the Add device window, the Link connectors window, the Devices tab and the Next step page now show the fields and buttons that the old pictures lacked. Nobody looked at the program on a real display: steps in the app were checked against the program's texts, and the pictures are drawn without a screen.
+- **The guide in the program (F1) says what the program does now.** The guide is built from `docs/guide/USER_GUIDE.md` and is inside the packages, so it is the one document that a user of 1.11.0 cannot get from the repository. Fifteen corrections: which role opens on the Next step page, the menu entries the Systems engineer role hides, a button that does not exist, the status chips *Outputs changed* and *Made by hand*, the files the export writes, the new columns of the pinout tables and the wire list, the coax rule, waivers that no longer fit, `release_distinct_roles`, three command options and the `merge-fix` entry under *When something goes wrong*.
+- **No change to what the program does.** The program, the file format, the design rules (still 39) and the written files are as in 1.11.0, apart from the tool version in the stamp and the model hash that follows from it. `docs/ui/OUTPUT_HASHES_BASELINE.json` is not written again (`1.11.0` and `1.11.1` have the same length; the check prints *identical*). A docstring of `tools/tab_screenshots.py` was corrected.
+
 ## 1.11.0 (2026-10-30; not a statement of compliance)
 
 ### Changed
