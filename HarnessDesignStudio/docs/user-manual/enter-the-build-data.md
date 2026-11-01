@@ -75,7 +75,7 @@ row 5: OK strip A 6 mm, strip B 5 mm
 Dry run: nothing was changed.
 ```
 
-Run it again without `--dry-run` to apply. The last line is then `Build data imported. Generate keeps it; the build sheets show it.` The summary line counts the rows: *added* is a value that was empty, *changed* a value that was different, *unchanged* a value that was already there. The same file imported twice changes nothing; the second time every row reads `(as it was)` and the summary says `0 added, 0 changed, 4 unchanged, 0 refused.`
+Run it again without `--dry-run` to apply. The last line is then `Build data imported. Generate keeps it; the build sheets show it.` The summary line counts the rows: *added* is a value that was empty, *changed* a value that was different, *unchanged* a value that was already there. The same file imported twice changes nothing; the second time every row reads `(as it was)`, the summary says `0 added, 0 changed, 4 unchanged, 0 refused.` and the last line is `Already up to date.` (exit code 0, so a build can import the same file every time).
 
 An empty cell **leaves the value alone** (it never clears one). To clear a strip length use the app.
 
@@ -288,7 +288,7 @@ ACC-001,sleeving,EX-SLEEVE,W001-001,whole wire,,1,
 ACC-002,heat_shrink,,W001-P1,50 mm from the P1 end,30,2,part not chosen yet
 ```
 
-The bill of materials has one line per part **and unit**. `ea` counts the connector parts, each contact part once for every pin that has a wire attached, and the accessory parts that have no length (their quantities added). `m` counts the wire parts and the accessory parts that have a length (length in mm times quantity, added, divided by 1000). A part used both ways gets two lines, `ea` first. An accessory with no part adds no line, so `ACC-002` above is in `accessories.csv` and not in the BOM. With one more sleeving of 100 mm, quantity 3, on a wire, the BOM of `W001` holds:
+The bill of materials has one line per part **and unit**. `ea` counts the connector parts, each contact part once for every pin that has a wire attached, and the accessory parts that have no length (their quantities added). `m` counts the wire parts and the accessory parts that have a length (length in mm times quantity, added, divided by 1000). A wire part that says it carries 2 conductors in a metre (`conductors`, a twisted pair; since 1.11) counts the sum of its wire lengths divided by 2, the metres of the cable. A part used both ways gets two lines, `ea` first. An accessory with no part adds no line, so `ACC-002` above is in `accessories.csv` and not in the BOM. With one more sleeving of 100 mm, quantity 3, on a wire, the BOM of `W001` holds:
 
 ```
 EX-SLEEVE,sleeving,,,Braided sleeving (example),pending (example data),1,ea,,W001

@@ -27,11 +27,12 @@ This page shows how to define a device of your own down to each pin: its connect
 
 1. Choose **Edit > Add device > Device…** (Ctrl+Shift+N; on an empty diagram the button **Add a device** does the same, and so do the button of the **Next step** page and the **Add device** tool of the Systems engineer role). A small window, **Add device**, asks for the device first:
 
-   ![The Add device window with the name Star tracker typed and the ID STAR1 suggested](../img/add-device-dialog.png)
+   ![The Add device window with the name Star tracker typed, the ID STAR1 suggested, the number of devices and the optional first connector](../img/add-device-dialog.png)
 
    - **Name** is required. The hint says *for example Star tracker*.
    - **ID** is suggested as soon as you type the name: the first word, letters and digits only, in upper case, at most 8 characters, followed by the first number that is free. *Star tracker* gives `STAR1`, and the next device with that name gives `STAR2`; *Gyro 3* gives `GYRO3`. You can type another ID. Once you have edited the ID it no longer follows the name.
    - **Subsystem** offers the subsystems the project already has (a new project offers *general*); you can also type a new word.
+   - **Number of these devices** (since 1.8.0) is 1 by default. With 2 the window makes the device and its redundant twin `STAR1-R`, with more also `STAR1-3` and so on, in one undo step ([use the library](use-the-library.md#4-a-number-of-the-same-device)).
    - **First connector** (since 1.9) is optional. Pick the kind (the families come from the connector parts of the library, for example *Micro-D* or *D-sub*), the number of pins and, where the library has both halves, the gender. The device then starts with a connector whose pins are numbered `1` to `N` and have no signal names yet; you name them in the **Devices** tab or pair them by number when you connect the device ([connect two connectors](connect-two-connectors.md#pair-by-pin-number-and-paste-a-pairing)). *No connector yet* is the default, and a connector can always be added later (section 2).
    - A line under the fields says why the device cannot be added yet, for example *A device needs a name.*, *A device needs an ID.* or *ID STAR1 is already used by another device.* The button **Add device** stays off until there is no such line.
 2. Press **Add device**. The device (and its first connector, if you picked one) appears in a free place of the diagram, as one undo step. As an Electrical / AIT engineer the **Devices** tab opens with its name selected; as a Systems engineer you stay on the Next step page or the diagram. The window says *You can change the name, the ID and the subsystem later in the Devices tab*: there the name is edited by pressing Enter after typing; the **Chain** box says nominal, redundant or none.
@@ -65,6 +66,7 @@ Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down
 | Ctrl+Enter | assign the selected pins to an interface |
 
 - **Signal** is a box with the signals of the project's interface types and free text. A name no interface type has is allowed, and the notes say that nothing can connect to it.
+- **Role** (since 1.9) is what the pin is for: *Power*, *Return*, *Ground*, *Signal*, *Shield* or *Spare*. The cell shows the role you gave, or the one taken from the signal name with *(auto)* after it; *Automatic* in the cell's list gives the choice back to the name. The connection review reads it ([connect two connectors](connect-two-connectors.md#what-a-pin-is-for-power-return-and-ground)).
 - **Mode**: *Fixed* means the device defines the pin; the interface connects to the pin of its signal's name, and the pin never moves. *Locked* means Generate never moves the pin. *Free* leaves it to Generate. Mind that one fixed pin with a signal makes the connector a *fixed pinout*: every signal of every interface on it then needs a pin of its own name, and pins without a name are never used. The card says so in words.
 - **Pasting.** Copy cells in the spreadsheet. A column of signals pastes from the current cell down, one pin per row. A table whose first row has headings (*Pin*, *Signal*, *Mode*, *Contact size*, *Termination*) names its pins and adds the pins that do not exist. One paste is one undo step.
 - **Contact** shows the contact size and the termination, and the new column **Cable contact** (between **Termination** and **Function**; since 1.7.0). No design rule reads them. The pinout tables show the termination when any pin has one, and the build workbook shows both for each pin of a cable connector (the termination reads `to fill in` for a pin in use that has none).
@@ -75,19 +77,29 @@ Click a cell and type, or press F2 or Enter. Enter keeps the value and goes down
 - **Fill…** (Ctrl+L): select the pins, choose an interface type, check the preview, press **Fill pins**. The signals of the type go on the pins in order (`CANH`, `CANL`), and the pins become *Fixed*. If the type you need is not there, **New interface type…** in the dialog makes one (one line per signal: name, direction `out`, `in`, `bidir` or `passive`, and a pair name for twisted signals); it is marked *unverified*.
 - **Assign…** (Ctrl+Enter): select the pins, choose an interface that ends on this device, pick the pin for each signal, press **Assign pins**. The pins become *Locked* to that interface with its signals. An interface end that has no connector yet gets this one in the same step.
 
-The **Direction** and **Class** columns come from the interface type of the pin's signal. They are empty, with the reason in the tooltip, when nothing can be said. They are never guessed.
+The **Direction** and **Class** columns come from the interface type of the pin's signal. They are empty, with the reason in the tooltip, when nothing can be said. They are never guessed. A pin can also carry a direction of its own (*in*, *out* or *bidirectional*, since 1.9): the **Direction** column then shows that one and the tooltip says *Direction set on the pin.* The table has no cell to edit it; it comes from the spreadsheet import below. Where a pin has one, it decides before any signal name does when connectors are paired and checked ([connect two connectors](connect-two-connectors.md#2-how-the-pairs-are-proposed)).
 
-![The Devices tab for the device BAT1: the connector list, the card with the part, a Label field, the pin table with the Function column, and the buttons Add from library, Save to library, Duplicate and Export pinout](../img/devices-tab.png)
+![The Devices tab for the device BAT1: the connector list, the card with the part, a Label field, the pin table with the columns Signal, Role, Mode, Interface, Direction, Class, Wire, Function and State, Number of these devices with Add copies, and the buttons Add from library, Save to library, Duplicate and Export pinout](../img/devices-tab.png)
 
 *The Devices tab on the `flatsat` example (version 1.8.0).*
 
 ## Take the pinout from a spreadsheet
 
-Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination*, *Function*, *Cable contact* (or *Contact part*: a library part of the category *contact*) and, if you have them, *Part* and *Gender*. A *Function* column is stored as the pin's function when the table also has a *Signal* (or *Net*) column; a table with only a *Function* column reads it as the signal, as before 1.4.0. Columns the project cannot store (a description, remarks, a voltage, a direction) are named in a warning and left out.
+Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination*, *Function*, *Cable contact* (or *Contact part*: a library part of the category *contact*), *Direction* (since 1.9) and, if you have them, *Part* and *Gender*. A *Function* column is stored as the pin's function when the table also has a *Signal* (or *Net*) column; a table with only a *Function* column reads it as the signal, as before 1.4.0. *Direction* takes *in*, *out* or *bidirectional* (also *input*, *output*, *I/O*); an empty cell, *n/a* or *passive* leaves the direction unset, and any other word stops the import and names the row. Columns the project cannot store (a description, remarks, a voltage) are named in a warning and left out.
 
 In the app: **File > Import > Import device pinout…**, pick the file, choose the device (an existing device, or **New device…** with a name), the library part for the new connectors, and read the preview. A row with a problem is listed with its reason, and then nothing is imported. **Import** is one undo step, *Import pinout (1 connector, 6 pins)*.
 
-On the command line (the same planner):
+On the command line (the same planner). The examples use this file, `gyro-pinout.csv`, with a *Remarks* column that the project cannot store:
+
+```
+Connector,Pin,Signal,Remarks
+J01,A1,PWR,main
+J01,A2,RTN,
+J01,3,CANH,
+J01,4,CANL,
+J01,5,HEATER_ENABLE,
+J01,6,,
+```
 
 ```
 harness-design-studio import-pinout wheel-link gyro-pinout.csv --device GYRO1 --new-device "Gyro unit" --default-part EX-MICROD-9-F --dry-run
@@ -101,10 +113,16 @@ Signals that match no interface type (nothing can connect to them until a type h
 Dry run: nothing was changed.
 ```
 
-Run it again without `--dry-run` to apply. `--part J1=PART` gives a part per connector, `--column pin=Contact` says which column is which when the headings are not recognised, and `--replace` drops the pins of an existing connector that the table does not name. A bad row stops the whole import:
+Run it again without `--dry-run` to apply. `--part J1=PART` gives a part per connector, `--column pin=Contact` says which column is which when the headings are not recognised, and `--replace` drops the pins of an existing connector that the table does not name. A bad row stops the whole import. Here the same command without `--default-part` names the problem on every row of the connector, and nothing is changed:
 
 ```
 row 2: ERROR No part for the new connector J01: give one for it (--part J01=PART) or one for all
+row 3: ERROR No part for the new connector J01: give one for it (--part J01=PART) or one for all
+row 4: ERROR No part for the new connector J01: give one for it (--part J01=PART) or one for all
+row 5: ERROR No part for the new connector J01: give one for it (--part J01=PART) or one for all
+row 6: ERROR No part for the new connector J01: give one for it (--part J01=PART) or one for all
+row 7: ERROR No part for the new connector J01: give one for it (--part J01=PART) or one for all
+warning: Column 'Remarks' is not imported: a pin has no field for it.
 Nothing was changed.
 ```
 
@@ -130,7 +148,7 @@ GYRO1-J01,box,,EX-MICROD-9-F,5,HEATER_ENABLE,,,no
 GYRO1-J01,box,,EX-MICROD-9-F,6,,,,yes
 ```
 
-The first line is the stamp (the tool version and the model hash, which depends on the project). `-o file.csv` or `-o file.xlsx` writes a file. A file written this way can be imported again with `import-pinout`.
+The first line is the stamp (the tool version and the model hash, which depends on the project). `-o file.csv` or `-o file.xlsx` writes a file. A file written this way can be imported again with `import-pinout`. While some pin of the table has a direction (since 1.9), the table gets a last column *Direction* (`in`, `out` or `bidirectional`, empty for a pin without one); a table whose pins have none is written as above.
 
 - Then connect the device to others as usual (**Ctrl+I**) and **Generate**. The pins you defined are used as you defined them; a second Generate changes nothing.
 
@@ -138,7 +156,7 @@ The first line is the stamp (the tool version and the model hash, which depends 
 
 Define a device once and keep it in a **device library file**, a JSON file that you can store anywhere, share, or keep in Git.
 
-- **Save:** in the Devices tab choose the device and press **Save to library…**. Pick a file; if it exists the device is added to it and the others stay. If the file has a different device with the same ID you are asked first: **Replace**, **Save as** a new ID (for example `RW1-2`), or **Cancel**; the same device again is not asked about. The file holds the device, its connectors with every pin (signal, function, contact size, termination, fixed, and the ID of the cable contact), and the connector parts and interface types they name. The contact parts of the pins are in the file too, so the device can be added to a project that does not have them; a part the project has already is kept as the project has it. The zone, and anything that Generate allocated in this project, are not saved.
+- **Save:** in the Devices tab choose the device and press **Save to library…**. Pick a file; if it exists the device is added to it and the others stay. If the file has a different device with the same ID you are asked first: **Replace**, **Save as** a new ID (for example `RW1-2`), or **Cancel**; the same device again is not asked about. The file holds the device, its connectors with every pin (signal, function, contact size, termination, fixed, the ID of the cable contact and, where set, the role and the direction), and the connector parts and interface types they name. The contact parts of the pins are in the file too, so the device can be added to a project that does not have them; a part the project has already is kept as the project has it. The zone, and anything that Generate allocated in this project, are not saved.
 - **Add:** in the other project press **Add from library…** in the Devices tab, pick the file, tick the devices, and read the sentence under the list: which ID each gets, what is kept. **Add devices** is one undo step. A device that has a problem is named with its reason and the others are still added.
 - Nothing in your project is replaced. If the ID is taken the device is added as `GYRO1-2`; a part or interface type that the project already has stays as it is, and the sentence says when the file's differs. Parts that come with the file keep the approval status the file says; the tool tells you when it is not *approved*, because the file's status is not a decision of your project.
 - On the command line: `harness-design-studio export-devices DIR FILE --device GYRO1` and `harness-design-studio import-devices DIR FILE --list`, then `--device GYRO1 --dry-run`, then without `--dry-run`.
@@ -159,7 +177,7 @@ Where a harness made by hand (not generated) has a wire on a pin, the pin cannot
 
 ## What a pin can hold
 
-A pin has a name or number, a signal, a mode, a contact size, a termination, a **cable contact** (a library part, since 1.7.0), a **function** (free text, since 1.4.0) and, once Generate or **Assign…** has put an interface on it, that interface. The function is your own words for what the pin does ("Battery voltage sense"); the tool carries it to the pinout tables and to the cable end of the pin and decides nothing with it. There is still **no field** for remarks, a voltage, a current or a direction of a pin, and the tool does not pretend there is. Direction and class are shown from the interface type; for the rest keep your interface control document next to the project.
+A pin has a name or number, a signal, a mode, a contact size, a termination, a **cable contact** (a library part, since 1.7.0), a **function** (free text, since 1.4.0) and, once Generate or **Assign…** has put an interface on it, that interface. The function is your own words for what the pin does ("Battery voltage sense"); the tool carries it to the pinout tables and to the cable end of the pin and decides nothing with it. A pin also has a **role** (since 1.8.0; empty means: taken from the signal name) and an optional **direction** (since 1.9: *in*, *out* or *bidirectional*; empty means not set, and the field is left out of the files while it is empty). There is still **no field** for remarks, a voltage or a current of a pin, and the tool does not pretend there is. Where a pin has no direction of its own, direction and class are shown from the interface type; for the rest keep your interface control document next to the project.
 
 ## Common mistakes
 

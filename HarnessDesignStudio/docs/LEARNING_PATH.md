@@ -35,7 +35,7 @@ If you have not installed the tool yet, start with [`INSTALL.md`](INSTALL.md).
 
 Read [`CONCEPTS.md`](CONCEPTS.md). You should be able to say, in your own words, what a **device**, an **interface**, a **harness**, a **wire** and a **project** are, and why the tool generates harnesses instead of asking you to draw them.
 
-If you want to see how the window is meant to be used, read [choose your role](user-manual/choose-your-role.md) (five minutes): since 1.7.0 the app starts on a **Next step** page that names one thing to do at a time.
+If you want to see how the window is meant to be used, read [choose your role](user-manual/choose-your-role.md) (five minutes): since 1.7.0 the app has a **Next step** page that names one thing to do at a time (since 1.8.0 a Systems engineer's window opens on it and an Electrical / AIT engineer's on the diagram).
 
 **Done when:** you can explain why a wire has a "Why is it like this?" text.
 

@@ -35,7 +35,7 @@ When the system is described by devices and interfaces, let Generate make the ha
 ## 1. Start with nothing
 
 1. **File > New project…**, choose an empty folder, type a name, keep the example *blank*.
-2. Choose **Drawings** on the rail. The Harness tab says *No harnesses yet* and offers **New harness…**. (On an empty project the Next step page of the Systems engineer role offers *or make a harness by hand* with the same button.)
+2. Choose **Drawings** on the rail (Ctrl+2). The Harness tab says *No harnesses yet* and offers **New harness…**. (The Systems engineer's rail does not list Drawings, and that role's **Go** and **Edit** menus leave out **Go to Harness** and **New harness…**; on an empty project its Next step page offers *or make a harness by hand* with the same button, and the keys Ctrl+2 and Ctrl+Shift+H and the command palette, Ctrl+K, still work.)
 
 ## 2. Make the harness
 
@@ -58,7 +58,7 @@ Press **Add connector**. Add the second connector the same way. Each connector g
 
 ## 4. Say what each pin does
 
-Under **Pin of a connector**, choose the connector and the pin, then type a **Function** (your words, for example `HEATER +`), choose the **Termination** (crimp, solder, or not said), a **Contact size** and a **Contact**, and press **Set pin**. The function and the termination appear in the pinout tables, and the labels print the function. **Contact** is a part of the library with the category *contact*: the contact this wire uses on the pin (`Contact` appears in the pinout tables and in the build workbook). **Contact for all pins of this connector** gives the contact chosen in **Contact** to every pin of the connector in one undo step. The crimp tool belongs to the contact part, not to the pin ([enter the build data](enter-the-build-data.md)). On a connector of a harness that Generate made these controls are off, because the contact is set on the pin of the device.
+Under **Pin of a connector**, choose the connector and the pin, then type a **Function** (your words, for example `HEATER +`), choose the **Termination** (crimp, solder, or not said), a **Contact size** and a **Contact**, and press **Set pin**. The function and the termination appear in the pinout tables, and the labels print the function. **Contact** is a part of the library with the category *contact*: the contact this wire uses on the pin (`Contact` appears in the pinout tables and in the build workbook). **Contact for all pins of this connector** gives the contact chosen in **Contact** to every pin of the connector in one undo step. The crimp tool belongs to the contact part, not to the pin ([enter the build data](enter-the-build-data.md)). On a connector of a harness that Generate made these controls are off, because the contact is set on the pin of the device. A cable pin that has no signal of its own shows, in `pinouts.csv`, the signal and the interface of the wires that end on it (since 1.10; different values are sorted and joined with `;`), so the wire's signal name is read there too.
 
 **Delete connector** removes the chosen connector, if it has no wires. If it has, the form names them: delete the wires first.
 
@@ -85,7 +85,7 @@ Draw wires as in [edit a wire](edit-a-wire.md), section 4: **New wire** in the *
 
 - **Checks** shows the design checks. A harness by hand has no interface, so the checks that need one (a link's current, signal directions) have nothing to say, and a note says that the current, voltage-drop and bundle checks did not run for those wires; the rest apply. With no gauge, the gauge stays *pending*: the tool never guesses.
 - **Strip lengths and accessories** are entered as for any harness: the strip lengths in the **Edit wire** tab, the sleeving, heat shrink, labels and backshells in the **Accessories** tab ([enter the build data](enter-the-build-data.md)). `harness-design-studio import-build-data` can read the contacts of this harness from a table.
-- **Outputs** writes the build workbook, wire list, pinouts, bill of materials, labels and tests for it, like any harness (and the drawings, if you ask for them: [export the outputs](export-the-outputs.md#5-the-pdf-drawings-optional)). `harness-design-studio verify DIR --outputs` compares them with the design.
+- **Outputs** writes the build workbook, wire list, pinouts, bill of materials, labels and tests for it, like any harness (and the drawings, if you ask for them: [export the outputs](export-the-outputs.md#5-the-pdf-drawings-optional)). `harness-design-studio verify DIR --outputs` compares them with the design. A wire part that is a twisted pair has `conductors` 2 (the starter part `EX-WIRE-TWISTED-SHIELDED` does): the bill of materials and the mass then count the metres of the cable, the sum of the lengths of its wires divided by 2, and not the metres of every wire (since 1.11). Give your own pair parts a *Conductors* column in the parts import ([import data](import-data.md)).
 - **Review**, **Release** and **Revise** work as for a harness from Generate ([release a harness](release-a-harness.md)).
 
 ## What Generate does with it

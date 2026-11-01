@@ -19,7 +19,7 @@ This page walks through releasing a new version of Harness Design Studio in plai
 | Part | Who | Where it is described |
 | --- | --- | --- |
 | Steps 1 to 11 (with 7a, 8a and 11a): version, lint, verifiers, performance, fuzzing, soak, tests, SBOM, vulnerability scan, reproducible build, packages, checksums | The release check program, run by a developer | `python -m tools.release_check` |
-| Steps 12 to 14: a test on a clean machine, usability sessions, the owner's sign-off | People. The owner waived 12 and 13 for 0.1.0 (T-30, T-27) and waived the condition of 14 (T-31); the publication records of 1.0.0 to 1.8.0 in `compliance/SIGNOFF.md` say that these waivers stand, and nobody has signed off 1.1.0 to 1.8.0 as the owner. | [`../RELEASE.md`](../RELEASE.md), [`../../compliance/DEVIATIONS.md`](../../compliance/DEVIATIONS.md) |
+| Steps 12 to 14: a test on a clean machine, usability sessions, the owner's sign-off | People. The owner waived 12 and 13 for 0.1.0 (T-30, T-27) and waived the condition of 14 (T-31); the publication records of 1.0.0 to 1.11.0 in `compliance/SIGNOFF.md` say that these waivers stand, and nobody has signed off 1.1.0 to 1.11.0 as the owner. | [`../RELEASE.md`](../RELEASE.md), [`../../compliance/DEVIATIONS.md`](../../compliance/DEVIATIONS.md) |
 | Step 15: tag the merge commit | A person | [`../RELEASE.md`](../RELEASE.md) step 15 |
 | Building the packages and publishing the release page | The workflow `.github/workflows/release.yml`, started by pushing the tag | [`../RELEASE.md`](../RELEASE.md) step 15 |
 

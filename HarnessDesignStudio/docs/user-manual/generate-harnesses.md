@@ -60,6 +60,8 @@ Generating again keeps the IDs, never touches a released harness, and gives the 
 
 ```
 error: [config_invalid] config/generation.json: default_gauge_awg must be a whole number from 0 to 40.
+0 added, 0 changed, 2 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
+2 interfaces and 6 wires checked: 0 error(s)
 Not saved: fix the errors above first.
 ```
 

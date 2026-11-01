@@ -17,7 +17,7 @@ This page collects shortcuts and habits that save time once you have finished [`
 - [Small habits](#small-habits)
 - [Working with other tools](#working-with-other-tools)
 
-Every command on this page was run with the tool before it was written down (first with version `1.0.0`; the quoted model hash and the version stamp were renewed with `1.10.0`). Some of the options need examples that are not in the 0.1.0 packages; the page says so where it matters (see [`examples/README.md`](examples/README.md)).
+Every command on this page was run with the tool before it was written down (first with version `1.0.0`; the commands with quoted output, the file counts and the headers were run again with `1.11.0`, and the model hash is written `<hash>` because it changes with every version). Some of the options need examples that are not in the 0.1.0 packages; the page says so where it matters (see [`examples/README.md`](examples/README.md)).
 
 ## Keyboard shortcuts
 
@@ -40,6 +40,7 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+1 to Ctrl+6 | The tabs Diagram, Harness, Lists, Checks, Releases, Devices |
 | Ctrl+7 and Ctrl+, | Home and Settings (the rail of the Systems engineer role does not list Home, Drawings or Outputs, but Ctrl+7, **Go > Go to Home** and the other **Go** entries open them) |
 | Ctrl+Shift+M | Show or hide the Problems panel at the bottom |
+| Ctrl+Shift+O | Library… (the library window beside the editor: add devices and subsystems of your team's folder, or save to it) |
 | Ctrl+Shift+N | Add a device (asks for its name and ID first, then an empty device is opened in the Devices tab) |
 | Ctrl+Shift+H | New harness... (a harness made by hand; the Drawings area, then its Connectors tab) |
 | Ctrl+Shift+B | Edit all wires of the harness... (the same gauge, type, colour and length on many wires) |
@@ -106,7 +107,7 @@ harness-design-studio schema my-design/schemas
 ```
 
 ```
-14 schemas written to my-design/schemas. In VS Code, copy the "json.schemas" entry of my-design/schemas/editor-settings.json into the .vscode/settings.json of the project (the schemas folder must sit inside the project folder as schemas/).
+15 schemas written to my-design/schemas. In VS Code, copy the "json.schemas" entry of my-design/schemas/editor-settings.json into the .vscode/settings.json of the project (the schemas folder must sit inside the project folder as schemas/).
 ```
 
 The folder must not exist yet or must be empty.
@@ -122,7 +123,7 @@ sh my-templates/ci/build.sh cib
 ```
 
 ```
-18 files written to my-templates. Start with my-templates/README.md.
+19 files written to my-templates. Start with my-templates/README.md.
 Project 'First steps: reaction wheel link' created in cib (3 devices, 2 interfaces).
 Next: harness-design-studio validate cib   or open it in the app (File > Open project).
 INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
@@ -212,7 +213,7 @@ A warning of the design rule check can be fixed or **waived**: in the app, press
 }
 ```
 
-`harness-design-studio drc` then counts it (`Open: 0 error(s), 9 warning(s), 8 note(s). Waived: 1.`) and lists it in a section *Waived findings*, with the reason, so a reviewer still sees it. The id is `<rule>.<object>`. (The app writes this file; the copy above was typed by hand to see what `harness-design-studio drc` does with it.) Do not confuse this with *waived by the owner* in the compliance documents; the words differ in meaning (see [`GLOSSARY.md`](GLOSSARY.md#words-that-mean-two-things-here)).
+`harness-design-studio drc` then counts it (`Open: 0 error(s), 9 warning(s), 8 note(s). Waived: 1.`) and lists it in a section *Waived findings*, with the reason, so a reviewer still sees it. The id is `<rule>.<object>`. (The app writes this file; the copy above was typed by hand to see what `harness-design-studio drc` does with it.) The app also records a `finding_hash` in each waiver: a short hash of the rule and the statement of the finding. While the finding says the same, nothing changes. When it says something else (a number or a name in its text changed), the waiver no longer applies and the finding is open again; `drc` lists it under *Waivers that no longer fit* with the old reason, and the Problems panel names that reason and says the waiver no longer applies. Waive it again if the reason still holds. A waiver without the field, such as the copy above, applies as before. Do not confuse this with *waived by the owner* in the compliance documents; the words differ in meaning (see [`GLOSSARY.md`](GLOSSARY.md#words-that-mean-two-things-here)).
 
 ## Small habits
 
@@ -238,13 +239,13 @@ What does exist is **files**. The tool reads a few file formats in and writes se
 | Interfaces between devices | CSV or XLSX (first sheet) | `id`, `type`, `from`, `to`, `redundancy` (the last is optional). Headers are matched by name; `from` is also read from `from device` (or `from unit`), `source` or `a`; `to` from `to device` (or `to unit`), `destination`, `target` or `b`; the type from `interface type`, `kind` or `protocol`. The devices must already exist; `type` is the name or ID of an interface type. | App only: **File > Import > Import interfaces…** (Ctrl+Shift+I, the import wizard; no `harness-design-studio` command). Starting file: `interfaces.csv` |
 | Approved parts list | CSV, TSV, JSON or XLSX (also the export of InvenTree) | Matched by header: part ID or part number, manufacturer, description, category, specification, approval status, pin count, mass (g), mass per metre (g/m), mating part, and (since 1.7.0) `Tool` or `Crimp tool` for a contact part. The template has `part number,manufacturer,description,category,pin count,approval status`. You say what the approval values mean with `--approved`, `--pending` and `--rejected`. | `harness-design-studio import-parts DIR FILE ...` |
 | Segment lengths | CSV or XLSX | `harness,segment,length`, read **by position** (this order); default unit millimetres; `--unit` can be `mm`, `cm` or `m`. | `harness-design-studio import-lengths DIR FILE` |
-| Device connector pinouts | KiCad netlist (`.net`, S-expression or XML) | Components whose reference starts with the prefix (default `J`); the symbol fields `HarnessConnector` (connector ID) and `HarnessPart` (part); net names become signal names, optionally renamed with a signal map with the columns `net,signal`. | `harness-design-studio import-netlist DIR FILE --device UNIT ...` ([`KICAD.md`](KICAD.md)) |
-| One device's connectors and pins | CSV or XLSX | One pin per row. The columns are found by heading: *Connector*, *Pin*, *Signal*, *Mode*, *Contact size*, *Termination*, *Function*, *Cable contact* and, if you have them, *Part* and *Gender*. | `harness-design-studio import-pinout DIR FILE --device UNIT ...`, or **File > Import > Import device pinout…** ([define a device](user-manual/define-a-device.md#take-the-pinout-from-a-spreadsheet)) |
+| Device connector pinouts | KiCad netlist (`.net`, S-expression or XML) | Components whose reference starts with the prefix (default `J`); the symbol fields `HarnessConnector` (connector ID) and `HarnessPart` (part); net names become signal names, optionally renamed with a signal map with the columns `net,signal`. | `harness-design-studio import-netlist DIR FILE --device DEVICE ...` ([`KICAD.md`](KICAD.md)) |
+| One device's connectors and pins | CSV or XLSX | One pin per row. The columns are found by heading: *Connector*, *Pin*, *Signal*, *Mode*, *Contact size*, *Termination*, *Function*, *Cable contact*, *Direction* (`in`, `out` or `bidirectional`; since 1.9.0) and, if you have them, *Part* and *Gender*. | `harness-design-studio import-pinout DIR FILE --device DEVICE ...`, or **File > Import > Import device pinout…** ([define a device](user-manual/define-a-device.md#take-the-pinout-from-a-spreadsheet)) |
 | Strip lengths, pin contacts, accessories, crimp tools (new in 1.7.0) | CSV, TSV, JSON or XLSX | The kind is found from the headings (any case, other columns ignored): `Wire`, `Strip A (mm)`, `Strip B (mm)` (and `Harness`); or `Harness`, `Connector`, `Pin`, `Contact` (and `Tool`); or `Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity`, `Note` (and `ID`); or `Part`, `Tool`. | `harness-design-studio import-build-data DIR FILE` ([enter the build data](user-manual/enter-the-build-data.md)). Starting files: `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv` |
 | Current by wire gauge | CSV | `gauge,amperes` (header optional) | `harness-design-studio config DIR --ampacity-csv FILE` |
 | Other engineering values | the JSON files in `config/` | see [`CONFIG.md`](CONFIG.md) | edit by hand, check with `harness-design-studio config DIR` |
 
-Devices themselves cannot be imported from a table; you add them in the app. The details of every column are in [`IMPORTS.md`](IMPORTS.md).
+A device can come from a pinout table (`import-pinout --new-device NAME`) or from a device library file (`import-devices`, `import-subsystem`); otherwise you add devices in the app. The details of every column are in [`IMPORTS.md`](IMPORTS.md).
 
 ### What the tool writes
 
@@ -264,14 +265,15 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
 
 | Format | Files | Header (first row after the `# ...` stamp line) |
 | --- | --- | --- |
-| CSV | `wirelist.csv` | `Wire,Signal,Interface,From connector,From pin,To connector,To pin,AWG,Part,Colour,Length (m),Shield group,Locked` (then `EMC class`, `Label`, `Note`, `Strip A (mm)` and `Strip B (mm)` only where the project uses them) |
-| CSV | `pinouts.csv`, `system/box_pinouts.csv` | `Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare` |
+| CSV | `wirelist.csv` | `Wire,Signal,Interface,From connector,From pin,To connector,To pin,AWG,Part,Colour,Length (m),Shield group,Locked` (then `EMC class`, `Requirement`, `Label`, `Note`, `Strip A (mm)` and `Strip B (mm)` only where the project uses them) |
+| CSV | `pinouts.csv`, `system/box_pinouts.csv` | `Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare` (then `Function`, `Termination`, `Contact` and `Direction` only where a pin uses them). A cable pin without a signal of its own shows the signal and interface of the wires that end on it |
 | CSV | `bom.csv` (per harness and `system/`) | `Part,Category,Manufacturer,Part number,Description,Approval,Quantity,Unit,Wires without length,Used in` |
-| CSV | `mass_length.csv` (per harness and `system/`) | `Harness,Wires,Connectors,Wire length known (m),Wires without length,Mass of wires and cable connectors (g),Margin (g),Mass with margin (g),Complete,Missing data` |
+| CSV | `mass_length.csv` (per harness and `system/`) | `Harness,Wires,Connectors,Wire length known (m),Wires without length,Mass of wires and cable connectors (g),Margin (g),Mass with margin (g),Complete,Missing data` (a wire part with `conductors` of 2 or more is counted once for the pair in the mass and in the `m` lines of `bom.csv`) |
 | CSV | `tests.csv` | `Test,Type,From,To,Expected,Limit,Test voltage,Wire` |
 | CSV | `labels.csv` | `Label,Kind,Text,Quantity` |
 | CSV | `system/mating_matrix.csv` | `Box connector,Unit,Part,Gender,Cable connector,Cable part,Cable gender,Harness` |
-| CSV | `system/traceability.csv` | `Interface,Name,Type,From,To,Harnesses,Wires,Routed` |
+| CSV | `system/traceability.csv` | `Interface,Name,Type,From,To,Harnesses,Wires,Routed` (a project with connections: the first heading is `Interface or connection` and a last column `Kind` is added; `Requirement` comes after `Routed` while any interface has a requirement ID) |
+| CSV, XLSX | `system/connections.csv`, `system/connections.xlsx` | only a project with connections: `Connection,Name,From device,From connector,From pin,From signal,From role,To device,To connector,To pin,To signal,To role,Interface,Harness,Note` ([`OUTPUTS.md`](OUTPUTS.md#connection-list-systemconnectionscsv-and-xlsx)) |
 | CSV | `system/drc_findings.csv` | `Finding,Rule,Severity,Object,Statement,Waived,Justification,Requirement` |
 | CSV | `system/changelog.csv` | `Entry,Harness,Revision,Event,By,Date,Comment` |
 | XLSX | `<ID>_build.xlsx` per harness | the **build workbook**: the sheets *Start here*, *Cut list*, *Connectors*, *Parts*, *Accessories*, *Labels*, *Tests* and *About* ([export the outputs](user-manual/export-the-outputs.md#3-the-build-workbook-sheet-by-sheet)) |

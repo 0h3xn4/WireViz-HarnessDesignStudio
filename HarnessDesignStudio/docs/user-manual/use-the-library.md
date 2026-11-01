@@ -97,6 +97,7 @@ The library is files, so any way of sharing files shares it.
 The same planners are on the command line ([`CLI.md`](../CLI.md)). With the practice project `wheel-link` (`harness-design-studio new wheel-link --template first-steps`):
 
 ```
+mkdir library
 harness-design-studio export-subsystem wheel-link library/wheel-drive.json --device PCDU1 --device RW1 --name "Wheel drive" --description "A power unit and a reaction wheel"
 harness-design-studio export-devices wheel-link library/devices.json --device OBC1
 ```
@@ -106,7 +107,7 @@ Saved subsystem 'Wheel drive' (2 device(s), 5 connector(s), 0 connection(s)) to 
 Saved 1 device(s) (4 connector(s)) to library/devices.json.
 ```
 
-(This project has no connection yet, because `first-steps` joins its devices with interfaces; a project with connections gives a number above 0.) A subsystem file that exists is not replaced unless you say `--replace`; `export-devices` adds to a device file, and needs `--replace` only to replace a device of the same ID that differs. In another project:
+(The folder of the file must exist: the commands stop with *the folder library does not exist; make it first or choose another place* otherwise, so make it first. This project has no connection yet, because `first-steps` joins its devices with interfaces; a project with connections gives a number above 0.) A subsystem file that exists is not replaced unless you say `--replace`; `export-devices` adds to a device file, and needs `--replace` only to replace a device of the same ID that differs. In another project:
 
 ```
 harness-design-studio new second --template blank

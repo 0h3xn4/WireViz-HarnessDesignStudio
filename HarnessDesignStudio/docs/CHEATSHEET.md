@@ -51,7 +51,7 @@ harness-design-studio diff    DIR W001                                          
 harness-design-studio log     DIR                                                   # the change log
 ```
 
-The comment must have at least 10 characters. A release is blocked while checks fail, while a configuration file is a placeholder, or while the harness uses parts that are not approved. You can release anyway with `--accept-placeholders REASON` and `--accept-unapproved-parts REASON`; the reason is kept in the change log.
+The comment must have at least 10 characters. A release is blocked while checks fail, while a configuration file is a placeholder, or while the harness uses parts that are not approved. You can release anyway with `--accept-placeholders REASON` and `--accept-unapproved-parts REASON`; the reason is kept in the change log. In a project that has `harness-design-studio config DIR --distinct-roles on`, a release also needs `--checker NAME`, and the author, the checker and the person who releases must be three different people.
 
 ## Exit codes
 
@@ -97,9 +97,10 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 ```
 my-design/
   project.json        name and description
+  .gitattributes      makes Git treat generated/generation.json as a binary file in a merge (see merge-fix below)
   config/             engineering values (rules you or your programme supply)
   library/            parts (connectors, wires, sleeving, labels)
-  logical/            units (the devices), interfaces (what you draw) and interface_types.json
+  logical/            units (the devices), interfaces (what you draw), interface_types.json and, when you have joined connectors, links.json
   physical/           connectors and harnesses (what the tool generates)
   generated/          how the last generation was made (for explanations)
   outputs/            build workbooks and lists (safe to delete and regenerate)

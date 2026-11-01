@@ -10,7 +10,7 @@ Opens the real Qt editor offscreen (light theme, Systems engineer role) on the f
 the first device). Then it starts a project from nothing, makes a harness by hand with two connectors
 and three wires, and saves `connectors-tab.png` (the Connectors tab). Then, in a 1440 x 900 window
 on the tutorial project (`first-steps`, generated): `next-step-new-project.png` (an empty project),
-`next-step-fix-problems.png` (one check fails), `next-step-export.png` (its parts approved, so
+`next-step-fix-problems.png` (its parts are not approved: a warning, shown as the first open problem), `next-step-export.png` (its parts approved, so
 every check passes or waits for a value), `systems-engineer.png` and `electrical-engineer.png` (the
 checked project in each role), `export-window.png` and `export-window-done.png` (the Export
 window before and after an export with the PDF drawings). With two accessories added,
@@ -153,7 +153,7 @@ def _save(win: object, path: Path) -> None:
 def _generated(name: str, role: str, size: tuple[int, int], approve: bool = True) -> MainWindow:
     """The tutorial project (`first-steps`), generated and checked, in the given role. With
     `approve` its parts are approved first, as the tutorial does with a parts file, so no check
-    fails; without it the check of the approved parts list fails, as it does in the tutorial."""
+    fails; without it the check of the approved parts list gives a warning, as it does in the tutorial."""
     win = _window(name, "first-steps", role, size)
     if approve:
         parts = win.ctl.project.parts
@@ -186,7 +186,7 @@ def _show_next(win: MainWindow, out: Path, name: str) -> None:
 
 
 def _next_step_pictures(out: Path) -> None:
-    """The Next step page: an empty project, a project whose checks fail, a checked one."""
+    """The Next step page: an empty project, a project whose parts are not approved (a warning), a checked one."""
     win = _window("harness-next-new", "blank", "systems", MAIN)
     _show_next(win, out, "next-step-new-project.png")
     win.close()

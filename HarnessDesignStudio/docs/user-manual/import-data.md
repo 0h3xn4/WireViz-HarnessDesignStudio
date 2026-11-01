@@ -23,7 +23,7 @@ harness-design-studio templates my-templates
 ```
 
 ```
-18 files written to my-templates. Start with my-templates/README.md.
+19 files written to my-templates. Start with my-templates/README.md.
 ```
 
 (On a 0.1.0 package the command writes 14 files: `design-worksheet.md` is not in the 0.1.0 packages. The three files for the build data, `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv`, have been in the templates since 1.7.0.)
@@ -174,7 +174,7 @@ To find the segment IDs, open the generated harness in the **Harness** tab, or l
 
 ## Build data: strip lengths, contacts, accessories
 
-*Since 1.7.0.* `harness-design-studio import-build-data DIR FILE` reads a table of the data a technician needs. The kind of table is found from the column headings (any case, other columns are ignored): strip lengths (`Wire`, `Strip A (mm)`, `Strip B (mm)`, optional `Harness`), pin contacts (`Harness`, `Connector`, `Pin`, `Contact`, optional `Tool`), accessories (`Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity`, `Note`, optional `ID`) and the crimp tool of parts (`Part`, `Tool`). It works as the other imports do: one line per row, the summary, `--dry-run` to write nothing, and a refused row means exit code 1 and nothing is changed. An empty cell leaves a value alone, and the same file imported twice changes nothing. The templates `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv` hold example rows.
+*Since 1.7.0.* `harness-design-studio import-build-data DIR FILE` reads a table of the data a technician needs. The kind of table is found from the column headings (any case, other columns are ignored): strip lengths (`Wire`, `Strip A (mm)`, `Strip B (mm)`, optional `Harness`), pin contacts (`Harness`, `Connector`, `Pin`, `Contact`, optional `Tool`), accessories (`Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity`, `Note`, optional `ID`) and the crimp tool of parts (`Part`, `Tool`). It works as the other imports do: one line per row, the summary, `--dry-run` to write nothing, and a refused row means exit code 1 and nothing is changed. An empty cell leaves a value alone, and the same file imported twice changes nothing (it prints `Already up to date.` and ends with exit code 0). The templates `strip-lengths.csv`, `pin-contacts.csv` and `accessories.csv` hold example rows.
 
 ```
 harness-design-studio import-build-data wheel-link my-templates/strip-lengths.csv --dry-run
