@@ -80,3 +80,5 @@ The design rules `current-over-wire` and `voltage-drop` use exactly these number
 - It does not offer another method (a different drop model, a bundle defined by the loaded wires). These are planned as selectable models, with today's behaviour as the default.
 
 Next: [the models](README.md), [the design rules](../RULES.md), [the configuration](../CONFIG.md)
+
+The length that the voltage drop uses is explained on the [wire length](wire-length.md) page.

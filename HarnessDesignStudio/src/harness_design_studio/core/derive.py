@@ -7,16 +7,17 @@ generator and the design rules call (`sizing.wire_current_limit`, `sizing.voltag
 `lengths.wire_length`), so a derivation cannot disagree with the number it explains. The steps are
 for the reader and are formatted, never fed back.
 
-Two derivations exist so far, both for a wire: the derated current limit and the voltage drop.
-Length, mass, the bill of materials, readiness and the limits of the other rules follow.
+Three derivations exist so far, all for a wire: its length, the derated current limit and the
+voltage drop. Mass, the bill of materials, readiness and the limits of the other rules follow.
 """
 
+import math
 from dataclasses import dataclass, field
 from typing import Any
 
 from harness_design_studio.core.assumptions import describe
 from harness_design_studio.core.drc.base import cfg, number
-from harness_design_studio.core.generate.lengths import wire_length
+from harness_design_studio.core.generate.lengths import path_trail, wire_length
 from harness_design_studio.core.generate.sizing import (
     ampacity_table,
     bundle_k,
@@ -350,11 +351,107 @@ def wire_voltage_drop_derivation(project: Project, h: Harness, w: Wire) -> Deriv
     )  # fmt: skip
 
 
+def wire_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
+    """Where the length of the wire comes from: the routing segments of its path and the service
+    loops generation added, or a length stored on the wire itself."""
+    generation = cfg(project, "generation")
+    loop = number(generation.get("service_loop_m"))
+    subject = f"Wire {w.id}"
+    equation = "L = sum of the routing segments between its connectors + 2 × service loop"
+    assumptions = ("A-PATH-UNIQUE", "A-SERVICE-LOOP")
+    length = wire_length(h, w)
+    trail = path_trail(h, w.from_connector, w.to_connector) if h.segments else None
+    known = trail is not None and all(x is not None for _, x in trail)
+    seg_sum = float(sum(x for _, x in trail if x is not None)) if trail and known else None
+    if w.length_m is None and length is None:
+        missing = [
+            "the length of the wire (enter routing segment lengths, or set a length on the wire)"
+        ]
+        if not h.segments:
+            missing = [
+                "the length of the wire: the harness has no routing segments, and the wire has no length of its own"
+            ]
+        elif trail is None:
+            missing = [
+                "a unique path between the connectors of the wire (the segments form a loop or do not connect them: see the rule segment-loop)"
+            ]
+        elif not known:
+            missing = [
+                "the length of every routing segment on the path: "
+                + ", ".join(sid for sid, x in trail if x is None)
+            ]
+        return Derivation(
+            "wire-length", subject, "Length", None, "m", equation,
+            assumptions=assumptions, missing=tuple(missing),
+        )  # fmt: skip
+    if (
+        length is None
+    ):  # a length is stored but the wire function disagrees: never happens, kept honest
+        return Derivation(
+            "wire-length", subject, "Length", None, "m", equation, assumptions=assumptions
+        )
+    inputs: list[Input] = []
+    steps: list[Step] = []
+    if trail is not None and known and seg_sum is not None:
+        for sid, x in trail:
+            inputs.append(
+                Input(f"Segment {sid}", x, "m", f"routing segment {sid} of harness {h.id}")
+            )
+        inputs.append(
+            Input(
+                "Service loop",
+                loop,
+                "m",
+                "config/generation.json: service_loop_m"
+                if loop is not None
+                else "config/generation.json: service_loop_m is not set (0 used)",
+            )
+        )
+        steps.append(
+            Step(
+                "Path through the segments",
+                " + ".join(_g(x) for _, x in trail if x is not None) or "0",
+                seg_sum,
+                "m",
+            )
+        )
+        extra = 2 * (loop or 0.0)
+        steps.append(Step("Service loops, one at each end", f"2 × {_g(loop or 0.0)}", extra, "m"))
+        steps.append(Step("Generated length", f"{_g(seg_sum)} + {_g(extra)}", seg_sum + extra, "m"))
+    if w.length_m is None:
+        basis = "the routing segments of its path (no length is stored on the wire; no service loop is added here)"
+        value = length
+        if seg_sum is not None:
+            steps = steps[:1]
+    elif seg_sum is not None and math.isclose(
+        w.length_m, seg_sum + 2 * (loop or 0.0), rel_tol=0, abs_tol=1e-9
+    ):
+        basis = "generated: the path through the segments plus two service loops"
+        value = w.length_m
+    else:
+        basis = (
+            "entered by hand and locked, so generation keeps it"
+            if w.locked
+            else "a length stored on the wire that does not equal its path plus two service loops (entered, imported, or the segments changed since)"
+        )
+        value = w.length_m
+        inputs.insert(0, Input("Length stored on the wire", w.length_m, "m", f"wire {w.id}"))
+    steps.append(Step("Length used by the tables, mass and rules", basis, value, "m"))
+    return Derivation(
+        "wire-length", subject, "Length", value, "m", equation,
+        tuple(inputs), tuple(steps), None, assumptions,
+        "Segment lengths are entered or imported by the engineer (the project records no source "
+        "for them). The service loop is the project's own value; the tool adds no bend radius, "
+        "tolerance or allowance for the connector.",
+    )  # fmt: skip
+
+
 def explain_wire(project: Project, wire_id: str) -> list[Derivation]:
-    """Every derivation that exists for the wire, in the order a reader asks: how much current may
-    it carry, then how much voltage does it drop."""
+    """Every derivation that exists for the wire, in the order a reader asks: how long is it, how
+    much current may it carry, then how much voltage does it drop."""
     h, w = find_wire(project, wire_id)
     return [
+        wire_length_derivation(project, h, w),
         wire_current_limit_derivation(project, h, w),
         wire_voltage_drop_derivation(project, h, w),
     ]
