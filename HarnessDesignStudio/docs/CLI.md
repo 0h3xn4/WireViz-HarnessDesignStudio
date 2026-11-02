@@ -156,20 +156,21 @@ harness-design-studio verify my-design --outputs
 
 ### harness-design-studio explain
 
-Show how the numbers of one wire were made: its length, the current its gauge may carry after derating and the voltage drop over it. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. Nothing is changed or written. `--json` prints the same as data.
+Show how the numbers of one wire or one harness were made. For a wire: its length, the current its gauge may carry after derating, the voltage drop over it and its share of the mass. For a harness: its mass. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. Nothing is changed or written. `--json` prints the same as data.
 
-`harness-design-studio explain project wire [options]`
+`harness-design-studio explain project OBJECT [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
-| `wire` | the wire, for example W001-001 |
+| `OBJECT` | a wire (W001-001) or a harness (W001) |
 | `--json` | print the derivations as JSON |
 
 Examples:
 
 ```
 harness-design-studio explain wheel-link W001-001
+harness-design-studio explain wheel-link W001
 harness-design-studio explain wheel-link W001-001 --json
 ```
 

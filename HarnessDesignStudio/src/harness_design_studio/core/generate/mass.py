@@ -19,6 +19,13 @@ class MassReport:
         return None if self.margin_g is None else self.total_g + self.margin_g
 
 
+def wire_mass_g(mass_per_m_g: float, length_m: float, conductors: int) -> float:
+    """The mass of one wire: the mass per metre of its part times its length, divided by the
+    conductors of the part (a twisted pair part carries 2 wires: each is one conductor of it).
+    The one place that does this sum (the harness mass and the derivation of the mass call it)."""
+    return mass_per_m_g * length_m / conductors
+
+
 def harness_mass(project: Project, h: Harness) -> MassReport:
     r = MassReport()
     for c in h.connectors:
@@ -34,7 +41,7 @@ def harness_mass(project: Project, h: Harness) -> MassReport:
         elif (length := wire_length(h, w)) is None:
             r.missing.append(f"length of wire {w.id}")
         else:
-            r.total_g += part.mass_per_m_g * length / part.conductors
+            r.total_g += wire_mass_g(part.mass_per_m_g, length, part.conductors)
     r.missing = sorted(set(r.missing))
     r.complete = not r.missing
     margin = (

@@ -5,7 +5,7 @@ import json
 import sys
 from pathlib import Path
 
-from harness_design_studio.core.derive import explain_wire, render
+from harness_design_studio.core.derive import explain_object, render
 from harness_design_studio.core.io.loader import load_project
 
 COMMANDS = ("explain",)
@@ -14,22 +14,23 @@ COMMANDS = ("explain",)
 def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     p = sub.add_parser(
         "explain",
-        help="explain how the numbers of a wire were made: its length, current limit and voltage drop, with equation, inputs with units and sources, steps",
-        description="Show how the numbers of one wire were made: its length, the current its gauge may "
-        "carry after derating and the voltage drop over it. For each: the equation, the inputs with "
+        help="explain how the numbers of a wire or a harness were made: equation, inputs with units and sources, steps",
+        description="Show how the numbers of one wire or one harness were made. For a wire: its length, "
+        "the current its gauge may carry after derating, the voltage drop over it and its share of "
+        "the mass. For a harness: its mass. For each: the equation, the inputs with "
         "their units and where each comes from (a key of config/*.json, a field of the design or "
         "the program), the intermediate results, what the result is checked against, and the "
         "assumptions built into the program that it rests on. The numbers are the ones `generate` "
         "and `drc` use. Nothing is changed or written. `--json` prints the same as data.",
     )
     p.add_argument("project", type=Path, help="project folder")
-    p.add_argument("wire", help="the wire, for example W001-001")
+    p.add_argument("object", metavar="OBJECT", help="a wire (W001-001) or a harness (W001)")
     p.add_argument("--json", action="store_true", help="print the derivations as JSON")
 
 
 def run(args: argparse.Namespace) -> int:
     project = load_project(args.project).project
-    found = explain_wire(project, args.wire)
+    found = explain_object(project, args.object)
     if args.json:
         print(json.dumps([d.to_dict() for d in found], indent=2, ensure_ascii=False))
         return 0

@@ -229,7 +229,8 @@ def test_the_calculation_closes_when_another_object_is_chosen(ctl, theme, qtbot)
     assert panel.explain_button is not None
     panel.explain_button.click()
     assert panel.explain_texts
-    panel.show_object("harness", "W001")
+    cable = ctl.project.harnesses["W001"].connectors[0].id
+    panel.show_object("connector", cable)
     assert panel.explain_button is None and panel.explain_texts == []
     panel.show_object("wire", a_wire(ctl))
     assert panel.explain_texts == []
@@ -239,3 +240,17 @@ def test_nothing_to_explain_for_a_wire_that_no_longer_exists(ctl, theme, qtbot) 
     panel = make(ctl, theme, qtbot)
     panel.show_object("wire", "W999-999")
     assert panel.explain_button is None
+
+
+def test_a_harness_offers_its_mass_calculation(ctl, theme, qtbot) -> None:
+    from harness_design_studio.core.derive import explain_harness, render
+
+    panel = make(ctl, theme, qtbot)
+    panel.show_object("harness", "W001")
+    assert panel.explain_button is not None and panel.explain_texts == []
+    panel.explain_button.click()
+    QApplication.processEvents()
+    assert [t.text() for t in panel.explain_texts] == [
+        render(d) for d in explain_harness(ctl.project, "W001")
+    ]
+    assert "Mass" in panel.explain_texts[0].text()

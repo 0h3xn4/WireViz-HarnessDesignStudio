@@ -9,7 +9,7 @@ panel adds nothing of its own. Below them it says what is still *pending* for th
 which placeholder configuration the result rests on, with the same chips as everywhere else.
 The first lines show at once and "Show all" opens the rest.
 
-For a wire, "Show the calculation" opens below them how its numbers were made (`core.derive`, the
+For a wire or a harness, "Show the calculation" opens below them how its numbers were made (`core.derive`, the
 same text as `harness-design-studio explain`): the equation, each input with its unit and where it
 comes from, the steps, what it is checked against and the assumptions built into the program that
 it rests on. It is closed until asked for, so the panel stays short.
@@ -19,7 +19,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget
 
 from harness_design_studio.core import why
-from harness_design_studio.core.derive import Derivation, explain_wire, render
+from harness_design_studio.core.derive import Derivation, explain_harness, explain_wire, render
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import EditorController
@@ -119,12 +119,14 @@ class WhyPanel(QScrollArea):
         )
 
     def _derivations(self) -> list[Derivation]:
-        """How the numbers of the selected wire were made; none for anything else."""
-        if self._target is None or self._target[0] != "wire":
+        """How the numbers of the selected wire or harness were made; none for anything else."""
+        if self._target is None or self._target[0] not in ("wire", "harness"):
             return []
+        kind, oid = self._target
         try:
-            return explain_wire(self.ctl.project, self._target[1])
-        except EditError:  # the wire is gone (a regeneration or an undo): nothing to explain
+            explain = explain_wire if kind == "wire" else explain_harness
+            return explain(self.ctl.project, oid)
+        except EditError:  # the object is gone (a regeneration or an undo): nothing to explain
             return []
 
     def refresh(self) -> None:

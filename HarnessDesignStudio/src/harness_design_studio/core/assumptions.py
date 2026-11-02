@@ -88,6 +88,25 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "built in",
             "core/generate/lengths.py (path_trail)",
         ),
+        Assumption(
+            "A-MASS-SCOPE",
+            "The mass of a harness is its connectors and its wires",
+            "The mass counts the mass of each connector part of the harness and the mass of each "
+            "wire. It does not count contacts, backshells, accessories (sleeving, heat shrink, "
+            "labels), splices, solder or shield terminations, and a part without a mass is named as "
+            "missing, never replaced by a guess. The margin is added to the total only.",
+            "built in",
+            "core/generate/mass.py (harness_mass)",
+        ),
+        Assumption(
+            "A-MASS-CONDUCTORS",
+            "A wire carries its share of a multi-conductor part",
+            "The mass of a wire is the mass per metre of its part times its length divided by the "
+            "number of conductors of the part: a twisted pair part (2 conductors) counts half of "
+            "its mass for each of its two wires, so that the cable is counted once.",
+            "built in",
+            "core/generate/mass.py (wire_mass_g)",
+        ),
     )
 }
 

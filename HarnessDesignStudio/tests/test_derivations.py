@@ -17,11 +17,18 @@ import pytest
 from harness_design_studio.cli.main import main
 from harness_design_studio.core import templates
 from harness_design_studio.core.assumptions import ASSUMPTIONS
-from harness_design_studio.core.derive import Derivation, explain_wire, render
+from harness_design_studio.core.derive import (
+    Derivation,
+    explain_harness,
+    explain_object,
+    explain_wire,
+    render,
+)
 from harness_design_studio.core.drc import run as run_drc
 from harness_design_studio.core.drc.base import cfg
 from harness_design_studio.core.generate.engine import generate_project
 from harness_design_studio.core.generate.lengths import wire_length
+from harness_design_studio.core.generate.mass import harness_mass, wire_mass_g
 from harness_design_studio.core.generate.sizing import (
     derated_limit,
     voltage_drop_v,
@@ -71,7 +78,7 @@ def test_the_derived_numbers_are_the_numbers_of_sizing_and_the_rules(
         derating = cfg(project, "derating")
         for h in project.harnesses.values():
             for w in h.wires:
-                _length, current, drop = explain_wire(project, w.id)
+                _length, current, drop, _mass = explain_wire(project, w.id)
                 assert current.id == "wire-current-limit" and drop.id == "wire-voltage-drop"
                 expected = wire_current_limit(derating, w.gauge_awg, len(h.wires))
                 assert current.value == expected, (name, w.id)
@@ -103,7 +110,7 @@ def test_the_verdict_of_a_derivation_is_the_verdict_of_the_rule(
         failing = {(f.rule, f.object_id) for f in run_drc(project) if f.severity == "error"}
         for h in project.harnesses.values():
             for w in h.wires:
-                _length, current, drop = explain_wire(project, w.id)
+                _length, current, drop, _mass = explain_wire(project, w.id)
                 if current.check is not None:
                     assert (not current.check.passes) == (("current-over-wire", w.id) in failing), (
                         name,
@@ -134,7 +141,7 @@ def test_a_table_of_ones_own_is_named_as_such_in_the_reference(
 def test_what_is_not_set_is_named_and_no_number_is_made_up(projects: dict[str, Project]) -> None:
     first = projects["first-steps"]
     wire = first.harnesses["W001"].wires[0].id
-    length, current, drop = explain_wire(first, wire)
+    length, current, drop, mass = explain_wire(first, wire)
     assert current.value is None and current.missing
     assert any("derating." in m or "gauge" in m for m in current.missing)
     assert drop.value is None and drop.missing
@@ -163,7 +170,12 @@ def test_explain_prints_the_numbers_the_tool_stored(
     assert "config/derating.json: ampacity_a_by_awg" in out and "A-ROUND-TRIP" in out
     assert main(["explain", str(tmp_path / "flat"), "W001-001", "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
-    assert [d["id"] for d in data] == ["wire-length", "wire-current-limit", "wire-voltage-drop"]
+    assert [d["id"] for d in data] == [
+        "wire-length",
+        "wire-current-limit",
+        "wire-voltage-drop",
+        "wire-mass",
+    ]
     assert math.isclose(data[2]["value"], 0.458359, rel_tol=1e-6) and data[0]["value"] == 3.45
     assert main(["explain", str(tmp_path / "flat"), "NO-SUCH-WIRE"]) == 2
     assert "does not exist" in capsys.readouterr().err
@@ -221,3 +233,72 @@ def test_a_missing_segment_length_is_named(projects: dict[str, Project]) -> None
         assert any("routing segment" in m for m in length.missing)
     finally:
         project.harnesses["W001"] = h
+
+
+def test_the_mass_of_a_harness_is_the_mass_of_the_tables(projects: dict[str, Project]) -> None:
+    seen = 0
+    for name, project in projects.items():
+        for h in project.harnesses.values():
+            report = harness_mass(project, h)
+            (d,) = explain_harness(project, h.id)
+            assert d.id == "harness-mass" and d.value == report.total_g, (name, h.id)
+            assert list(d.missing) == report.missing
+            # the steps the reader sees add up to the number
+            parts = [s.value for s in d.steps if s.label.startswith(("Connectors", "Wires of"))]
+            assert math.isclose(sum(parts), report.total_g, rel_tol=1e-9, abs_tol=1e-9)
+            for s in d.steps:
+                if s.label == "With margin":
+                    assert report.with_margin_g is not None
+                    assert math.isclose(s.value, report.with_margin_g, rel_tol=1e-9)
+            seen += report.total_g > 0
+    assert seen >= 5
+
+
+def test_the_mass_of_a_wire_is_the_share_the_harness_counts(projects: dict[str, Project]) -> None:
+    project = projects["flatsat"]
+    for h in project.harnesses.values():
+        total = 0.0
+        for w in h.wires:
+            mass = explain_wire(project, w.id)[3]
+            assert mass.id == "wire-mass"
+            part = project.parts[w.part_id or ""]
+            length = wire_length(h, w)
+            assert length is not None and part.mass_per_m_g is not None
+            assert mass.value == wire_mass_g(part.mass_per_m_g, length, part.conductors)
+            total += mass.value or 0.0
+        connectors = sum(project.parts[c.part_id].mass_g or 0.0 for c in h.connectors)
+        assert math.isclose(total + connectors, harness_mass(project, h).total_g, rel_tol=1e-9)
+
+
+def test_what_a_mass_leaves_out_is_said_and_a_missing_mass_is_named(
+    projects: dict[str, Project],
+) -> None:
+    from harness_design_studio.core.model import evolve
+
+    project = projects["flatsat"]
+    text = render(explain_harness(project, "W001")[0])
+    assert "A-MASS-SCOPE" in text and "accessories" in text and "A-MASS-CONDUCTORS" in text
+    h = project.harnesses["W001"]
+    part_id = h.wires[0].part_id or ""
+    original = project.parts[part_id]
+    project.parts[part_id] = evolve(original, mass_per_m_g=None)
+    try:
+        (d,) = explain_harness(project, "W001")
+        assert any("mass per metre" in m for m in d.missing)
+        assert d.quantity.startswith("Mass (total of what is known)")
+        wire_mass = explain_wire(project, h.wires[0].id)[3]
+        assert wire_mass.value is None and wire_mass.missing
+    finally:
+        project.parts[part_id] = original
+
+
+def test_explain_takes_a_wire_or_a_harness(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    templates.create_project(tmp_path / "flat", "flatsat")
+    assert main(["explain", str(tmp_path / "flat"), "W001"]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("Harness W001. Mass:") and "Connector W001-P1" in out
+    project = templates.create_project(tmp_path / "again", "flatsat")
+    assert [d.id for d in explain_object(project, "W001")] == ["harness-mass"]
+    assert main(["explain", str(tmp_path / "flat"), "NOPE"]) == 2

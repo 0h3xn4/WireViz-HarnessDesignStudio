@@ -7,8 +7,9 @@ generator and the design rules call (`sizing.wire_current_limit`, `sizing.voltag
 `lengths.wire_length`), so a derivation cannot disagree with the number it explains. The steps are
 for the reader and are formatted, never fed back.
 
-Three derivations exist so far, all for a wire: its length, the derated current limit and the
-voltage drop. Mass, the bill of materials, readiness and the limits of the other rules follow.
+Four derivations exist so far: for a wire, its length, the derated current limit, the voltage drop
+and its share of the mass; for a harness, its mass. The bill of materials, readiness and the limits
+of the other rules follow.
 """
 
 import math
@@ -17,7 +18,9 @@ from typing import Any
 
 from harness_design_studio.core.assumptions import describe
 from harness_design_studio.core.drc.base import cfg, number
+from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.generate.lengths import path_trail, wire_length
+from harness_design_studio.core.generate.mass import harness_mass, wire_mass_g
 from harness_design_studio.core.generate.sizing import (
     ampacity_table,
     bundle_k,
@@ -446,6 +449,151 @@ def wire_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
     )  # fmt: skip
 
 
+def wire_mass_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
+    """The mass of the wire: its part's mass per metre times its length, over the part's conductors."""
+    subject = f"Wire {w.id}"
+    equation = "m = mass per metre of the wire part × L / conductors of the part"
+    assumptions = ("A-MASS-CONDUCTORS", "A-MASS-SCOPE")
+    part = project.parts.get(w.part_id) if w.part_id else None
+    length = wire_length(h, w)
+    missing: list[str] = []
+    if part is None:
+        missing.append(f"the wire part of wire {w.id} (set its type)")
+    elif part.mass_per_m_g is None:
+        missing.append(f"the mass per metre of wire part {part.id}")
+    if length is None:
+        missing.append(f"the length of wire {w.id}")
+    if missing or part is None or part.mass_per_m_g is None or length is None:
+        return Derivation(
+            "wire-mass", subject, "Mass", None, "g", equation,
+            assumptions=assumptions, missing=tuple(missing),
+        )  # fmt: skip
+    value = wire_mass_g(part.mass_per_m_g, length, part.conductors)
+    inputs = (
+        Input("Mass per metre", part.mass_per_m_g, "g/m", f"wire part {part.id}: mass_per_m_g"),
+        Input("Length L", length, "m", "see the derivation of the length"),
+        Input("Conductors of the part", part.conductors, "", f"wire part {part.id}: conductors"),
+    )
+    steps = (
+        Step(
+            "Mass of this wire",
+            f"{_g(part.mass_per_m_g)} × {_g(length)} / {part.conductors}",
+            value, "g",
+        ),
+    )  # fmt: skip
+    return Derivation(
+        "wire-mass", subject, "Mass", value, "g", equation, inputs, steps, None, assumptions,
+        "The masses are those of the project's parts library; the project records no source "
+        "for a mass unless the part's note says so.",
+    )  # fmt: skip
+
+
+def harness_mass_derivation(project: Project, h: Harness) -> Derivation:
+    """The mass of a harness: every connector, the wires by part, the margin."""
+    report = harness_mass(project, h)
+    subject = f"Harness {h.id}"
+    equation = (
+        "m = sum of the connector masses + sum over wires of (mass per metre × L / conductors)"
+    )
+    assumptions = ("A-MASS-SCOPE", "A-MASS-CONDUCTORS")
+    inputs: list[Input] = []
+    steps: list[Step] = []
+    conn_sum = 0.0
+    for c in h.connectors:
+        part = project.parts.get(c.part_id)
+        inputs.append(
+            Input(
+                f"Connector {c.id}",
+                None if part is None else part.mass_g,
+                "g",
+                f"part {c.part_id}: mass_g",
+            )
+        )
+        if part is not None and part.mass_g is not None:
+            conn_sum += part.mass_g
+    steps.append(
+        Step(f"Connectors ({len(h.connectors)})", "sum of the connector masses", conn_sum, "g")
+    )
+    by_part: dict[str, tuple[int, float, float]] = {}
+    unknown = 0
+    for w in h.wires:
+        part = project.parts.get(w.part_id) if w.part_id else None
+        length = wire_length(h, w)
+        if part is None or part.mass_per_m_g is None or length is None:
+            unknown += 1
+            continue
+        n, total_len, mass = by_part.get(part.id, (0, 0.0, 0.0))
+        by_part[part.id] = (
+            n + 1, total_len + length, mass + wire_mass_g(part.mass_per_m_g, length, part.conductors),
+        )  # fmt: skip
+    wire_sum = 0.0
+    for pid in sorted(by_part):
+        n, total_len, mass = by_part[pid]
+        part = project.parts[pid]
+        inputs.append(
+            Input(
+                f"Wire part {pid}: {n} wires, {_g(total_len)} m in all",
+                part.mass_per_m_g, "g/m",
+                f"part {pid}: mass_per_m_g (conductors {part.conductors})",
+            )
+        )  # fmt: skip
+        steps.append(
+            Step(
+                f"Wires of part {pid} ({n})",
+                f"sum of mass per metre × L / {part.conductors}",
+                mass,
+                "g",
+            )
+        )
+        wire_sum += mass
+    steps.append(Step("Total of what is known", "connectors + wires", conn_sum + wire_sum, "g"))
+    margin = None
+    if "generation" in project.config:
+        value = project.config["generation"].values.get("mass_margin_fraction")
+        if isinstance(value, int | float) and not isinstance(value, bool):
+            margin = float(value)
+    inputs.append(
+        Input(
+            "Mass margin fraction", margin, "",
+            "config/generation.json: mass_margin_fraction" if margin is not None else "config/generation.json: mass_margin_fraction is not set",
+        )
+    )  # fmt: skip
+    if margin is not None:
+        steps.append(Step("Margin", f"total × {_g(margin)}", report.total_g * margin, "g"))
+        steps.append(
+            Step(
+                "With margin", f"{_g(report.total_g)} + margin", report.total_g * (1 + margin), "g"
+            )
+        )
+    missing = tuple(report.missing)
+    note = (
+        "A part has no mass or a wire no length: the total counts only what is known."
+        if missing
+        else ""
+    )
+    return Derivation(
+        "harness-mass", subject, "Mass (total of what is known)" if missing else "Mass", report.total_g, "g",
+        equation, tuple(inputs), tuple(steps), None, assumptions,
+        ("The masses are those of the project's parts library. " + note).strip(),
+        missing,
+    )  # fmt: skip
+
+
+def explain_harness(project: Project, harness_id: str) -> list[Derivation]:
+    """Every derivation that exists for the harness."""
+    h = project.harnesses.get(harness_id)
+    if h is None:
+        raise EditError(f"Harness '{harness_id}' does not exist.")
+    return [harness_mass_derivation(project, h)]
+
+
+def explain_object(project: Project, object_id: str) -> list[Derivation]:
+    """A wire or a harness, by its ID."""
+    if object_id in project.harnesses:
+        return explain_harness(project, object_id)
+    return explain_wire(project, object_id)
+
+
 def explain_wire(project: Project, wire_id: str) -> list[Derivation]:
     """Every derivation that exists for the wire, in the order a reader asks: how long is it, how
     much current may it carry, then how much voltage does it drop."""
@@ -454,4 +602,5 @@ def explain_wire(project: Project, wire_id: str) -> list[Derivation]:
         wire_length_derivation(project, h, w),
         wire_current_limit_derivation(project, h, w),
         wire_voltage_drop_derivation(project, h, w),
+        wire_mass_derivation(project, h, w),
     ]

@@ -64,4 +64,4 @@ A length is never made up. The derivation names what is missing: that the harnes
 - It does not measure the harness: the segment lengths are yours, or from your CAD export.
 - It does not give a service loop per wire or per end: one value, doubled.
 
-Next: [wire sizing](wire-sizing.md), [the models](README.md), [changes to results](../changes.md)
+Next: [mass](mass.md), [wire sizing](wire-sizing.md), [the models](README.md), [changes to results](../changes.md)
