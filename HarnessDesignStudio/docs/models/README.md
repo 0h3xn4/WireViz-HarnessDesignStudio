@@ -1,0 +1,27 @@
+# Models of the tool
+
+This folder explains, for engineers, every calculation the tool makes: the equation, the inputs and where each comes from, the assumptions built into the program, what it is checked against, and a worked example you can repeat. It grows with the transparency work (decision D-191): a page is written for a model when its derivation is shown by the tool.
+
+## Contents
+
+- [How to use these pages](#how-to-use-these-pages)
+- [The models](#the-models)
+- [The assumptions built into the program](#the-assumptions-built-into-the-program)
+
+## How to use these pages
+
+Every page follows the same order: what the tool decides, the equation, the inputs (with unit and source), what it rests on, a worked example from a packaged project, and what the model does not do. The worked examples are real: the numbers were produced with `harness-design-studio explain` on the `flatsat` example, and the command prints the same derivation for your own wire.
+
+## The models
+
+| Page | What it covers | Shown by the tool as |
+| --- | --- | --- |
+| [Wire sizing](wire-sizing.md) | The gauge of a wire: the current it may carry after derating, and its voltage drop | `harness-design-studio explain DIR WIRE` |
+
+Still to come, in the order of the plan: wire length, mass and the bill of materials, the limits of the other design rules, pin allocation and segmentation, the test limits and "Ready to build".
+
+## The assumptions built into the program
+
+Some of what a calculation rests on is not a number you type into `config/*.json` but a choice built into the program. Each has an ID, and a derivation names the ones it uses. Today they are: A-ROUND-TRIP, A-DC-SOLID, A-BUNDLE-ALL (built in), and A-TEMP-FACTOR and A-AMPACITY-AWG (a value of the configuration, but one single number or table with no model behind it). They are described on the [wire sizing page](wire-sizing.md#the-assumptions-it-rests-on). The aim of the work is that every built-in choice becomes a visible, documented setting; until then it is listed, not hidden.
+
+Next: [wire sizing](wire-sizing.md), [changes to results](../changes.md), [the configuration](../CONFIG.md)

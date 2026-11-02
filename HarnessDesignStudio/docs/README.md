@@ -43,6 +43,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`IMPORTS.md`](IMPORTS.md) | Importing interfaces, parts, lengths, engineering values, device pinouts and the build data |
 | [`KICAD.md`](KICAD.md) | Taking device connector pinouts from a KiCad netlist |
 | [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits, and the build workbook |
+| [`models/`](models/README.md) | The models of the tool for engineers: the equation, the inputs and their sources, the assumptions built in, a worked example. Wire sizing first |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed, release by release |
 | [`STATUS.md`](STATUS.md) | The status of the tool and its release history (latest published release, tags, commits), moved from the README |
@@ -90,6 +91,7 @@ These explain how the tool was specified and checked; you do not need them to us
 | [`AUDIT.md`](AUDIT.md) | The October audit |
 | [`AUDIT_1.8.0.md`](AUDIT_1.8.0.md) | The audit of version 1.8.0: ratings, findings, the plan for 1.8.1 to 2.0 |
 | [`transparency_audit.md`](transparency_audit.md) | The transparency audit of version 1.11.1 (Phase 0, no code changed): what the tool hides, hard-codes and forces, how far real numbers can be traced, the state of 14 requirements, a proposed plan and the decisions needed. Nine appendices in [`transparency_audit/`](transparency_audit/configuration-and-defaults.md) hold the row-level catalogue |
+| [`changes.md`](changes.md) | Every change of the transparency work that moves something an engineer can see in a result: before and after, why, who agreed; and how the numbers are kept |
 | [`../compliance/README.md`](../compliance/README.md) | The ECSS/ESCC self-assessment: matrix, gaps, deviations, sign-off, open actions, risks. No claim of compliance. |
 | [`usability/`](usability/README.md) | The usability test kit |
 | [`../../docs/DOCS_AUDIT.md`](../../docs/DOCS_AUDIT.md) | The audit of these documents |

@@ -92,7 +92,7 @@ In the app, open the **Harness** tab (Ctrl+2; **Drawings** on the rail) and pick
 
 Beside **Why** are the tabs **Edit wire**, **Connectors** and **Accessories**, which change the harness: [edit a wire](edit-a-wire.md), [build a harness by hand](build-a-harness-by-hand.md), [enter the build data](enter-the-build-data.md).
 
-There is no command line version of the **Why** pane. The same reasons are stored in `generated/generation.json` in the project, under `provenance`.
+On the command line, `harness-design-studio explain DIR WIRE` prints how the numbers of one wire were made: the current its gauge may carry after derating and its voltage drop, each with the equation, the inputs with their units and sources, the steps and the assumptions it rests on (add `--json` for data); see [wire sizing](../models/wire-sizing.md). The reasons that the **Why** pane shows are also stored in `generated/generation.json` in the project, under `provenance`.
 
 ## How links become harnesses
 

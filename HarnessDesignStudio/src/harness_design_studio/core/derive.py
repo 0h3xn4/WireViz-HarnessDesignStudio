@@ -1,0 +1,360 @@
+"""How a number of the design was made: the equation, the inputs with their units and where each
+came from, the intermediate results, the assumptions it rests on and what it is checked against.
+
+This is the explanation behind the Why lines and the findings (D-191, step 1). It computes nothing
+of its own that a result depends on: every value is produced by the same functions that the
+generator and the design rules call (`sizing.wire_current_limit`, `sizing.voltage_drop_v`,
+`lengths.wire_length`), so a derivation cannot disagree with the number it explains. The steps are
+for the reader and are formatted, never fed back.
+
+Two derivations exist so far, both for a wire: the derated current limit and the voltage drop.
+Length, mass, the bill of materials, readiness and the limits of the other rules follow.
+"""
+
+from dataclasses import dataclass, field
+from typing import Any
+
+from harness_design_studio.core.assumptions import describe
+from harness_design_studio.core.drc.base import cfg, number
+from harness_design_studio.core.generate.lengths import wire_length
+from harness_design_studio.core.generate.sizing import (
+    ampacity_table,
+    bundle_k,
+    derated_limit,
+    exceeds,
+    voltage_drop_v,
+    wire_current_limit,
+)
+from harness_design_studio.core.model import Harness, Project, Wire
+from harness_design_studio.core.units import AWG_MAX, AWG_MIN, awg_to_area_mm2, format_awg
+from harness_design_studio.core.wires import find_wire
+
+
+@dataclass(frozen=True)
+class Input:
+    name: str
+    value: float | int | str | None
+    unit: str
+    source: str  # where it comes from: a key of config/*.json, a field of the design, the program
+
+
+@dataclass(frozen=True)
+class Step:
+    label: str
+    expression: str  # the numbers put into the equation, as text
+    value: float
+    unit: str
+
+
+@dataclass(frozen=True)
+class Check:
+    """What the result is compared with: the actual value, the limit, the margin and the verdict."""
+
+    actual: float
+    limit: float
+    unit: str
+    passes: bool
+    margin: float  # limit minus actual for an upper limit (positive: room left)
+    text: str
+
+
+@dataclass(frozen=True)
+class Derivation:
+    id: str  # the kind of derivation: "wire-current-limit", "wire-voltage-drop"
+    subject: str  # what it is about: "Wire W001-001"
+    quantity: str
+    value: float | None  # None while an input is missing
+    unit: str
+    equation: str
+    inputs: tuple[Input, ...] = ()
+    steps: tuple[Step, ...] = ()
+    check: Check | None = None
+    assumptions: tuple[str, ...] = ()  # IDs of `core.assumptions`
+    reference: str = ""
+    missing: tuple[str, ...] = field(default_factory=tuple)  # what is not set yet, by name
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "subject": self.subject,
+            "quantity": self.quantity,
+            "value": self.value,
+            "unit": self.unit,
+            "equation": self.equation,
+            "inputs": [
+                {"name": i.name, "value": i.value, "unit": i.unit, "source": i.source}
+                for i in self.inputs
+            ],
+            "steps": [
+                {"label": s.label, "expression": s.expression, "value": s.value, "unit": s.unit}
+                for s in self.steps
+            ],
+            "check": None
+            if self.check is None
+            else {
+                "actual": self.check.actual,
+                "limit": self.check.limit,
+                "unit": self.check.unit,
+                "passes": self.check.passes,
+                "margin": self.check.margin,
+                "text": self.check.text,
+            },
+            "assumptions": [
+                {"id": a.id, "title": a.title, "text": a.text, "kind": a.kind, "where": a.where}
+                for a in describe(self.assumptions)
+            ],
+            "reference": self.reference,
+            "missing": list(self.missing),
+        }
+
+
+def _g(x: float) -> str:
+    return f"{x:g}"
+
+
+def _unit(u: str) -> str:
+    return f" {u}" if u else ""
+
+
+def render(d: Derivation) -> str:
+    """The derivation as text for a person: the number first, then how it was made."""
+    out: list[str] = []
+    head = d.quantity if d.value is None else f"{d.quantity}: {_g(d.value)}{_unit(d.unit)}"
+    out.append(f"{d.subject}. {head}")
+    out.append(f"  Equation: {d.equation}")
+    if d.missing:
+        out.append("  Not decided yet, because these are not set: " + "; ".join(d.missing))
+    if d.inputs:
+        out.append("  Inputs:")
+        for i in d.inputs:
+            value = (
+                "not set"
+                if i.value is None
+                else f"{i.value if isinstance(i.value, str) else _g(i.value)}{_unit(i.unit)}"
+            )
+            out.append(f"    {i.name} = {value}   [{i.source}]")
+    if d.steps:
+        out.append("  Steps:")
+        out.extend(f"    {s.label}: {s.expression} = {_g(s.value)}{_unit(s.unit)}" for s in d.steps)
+    if d.check is not None:
+        out.append(f"  Check: {d.check.text}")
+    if d.assumptions:
+        out.append("  Rests on:")
+        for a in describe(d.assumptions):
+            out.append(f"    {a.id} ({a.kind}) {a.title}. {a.text} [{a.where}]")
+    if d.reference:
+        out.append(f"  Reference: {d.reference}")
+    return "\n".join(out)
+
+
+def _bundle(
+    derating: dict[str, object], wires_in_harness: int | None, harness_id: str
+) -> tuple[float | None, Input | None, str, str | None]:
+    """The bundle factor as `wire_current_limit` takes it: from the table when one is set, else
+    the single factor. Returns (K, input, reference text, what is missing)."""
+    from harness_design_studio.core.standard_profiles import BUNDLE_K
+
+    single = number(derating.get("bundle_derating"))
+    by_count = derating.get("bundle_factor_by_count")
+    if isinstance(by_count, dict) and by_count and wires_in_harness is not None:
+        k = bundle_k(by_count, wires_in_harness)
+        if k is None:
+            return (
+                None,
+                None,
+                "",
+                f"derating.bundle_factor_by_count (no entry for {wires_in_harness} wires)",
+            )
+        standard = by_count == BUNDLE_K
+        source = (
+            f"config/derating.json: bundle_factor_by_count, next listed count at or above "
+            f"{wires_in_harness} wires, harness {harness_id} (A-BUNDLE-ALL)"
+        )
+        ref = (
+            "Bundle factor K: ECSS-Q-ST-30-11C, Table 6-41 (the table of the project equals the "
+            "standard's). "
+            if standard
+            else "Bundle factor K: the table of the project (config/derating.json), which is not "
+            "the standard's table. "
+        )
+        return k, Input("Bundle factor K", k, "", source), ref, None
+    if single is None:
+        return None, None, "", "derating.bundle_derating"
+    return (
+        single,
+        Input(
+            "Bundle factor K",
+            single,
+            "",
+            "config/derating.json: bundle_derating (one factor for every bundle)",
+        ),
+        "Bundle factor K: the one factor of the project. ",
+        None,
+    )
+
+
+def wire_current_limit_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
+    """The current the wire's gauge may carry after derating, and what the wire carries."""
+    derating = cfg(project, "derating")
+    table = ampacity_table(derating.get("ampacity_a_by_awg"))
+    temp = number(derating.get("temperature_derating"))
+    wires = len(h.wires)
+    k, k_input, k_ref, k_missing = _bundle(derating, wires, h.id)
+    missing: list[str] = []
+    if table is None:
+        missing.append("derating.ampacity_a_by_awg")
+    elif w.gauge_awg is None:
+        missing.append(f"the gauge of wire {w.id}")
+    elif w.gauge_awg not in table:
+        missing.append(f"derating.ampacity_a_by_awg has no entry for AWG {w.gauge_awg}")
+    if k_missing:
+        missing.append(k_missing)
+    if temp is None:
+        missing.append("derating.temperature_derating")
+    subject = f"Wire {w.id}"
+    equation = "limit = base ampacity of the gauge × bundle factor K × temperature factor"
+    assumptions = ("A-AMPACITY-AWG", "A-BUNDLE-ALL", "A-TEMP-FACTOR")
+    limit = (
+        wire_current_limit(derating, w.gauge_awg, wires)
+        if not missing and w.gauge_awg is not None
+        else None
+    )
+    if (
+        limit is None
+        or table is None
+        or k is None
+        or k_input is None
+        or temp is None
+        or w.gauge_awg is None
+    ):
+        return Derivation(
+            "wire-current-limit", subject, "Derated current limit", None, "A", equation,
+            assumptions=assumptions, missing=tuple(missing),
+        )  # fmt: skip
+    awg = w.gauge_awg
+    base = table[awg]
+    factor = k * temp
+    inputs = [
+        Input(
+            f"Base ampacity of {format_awg(awg) if AWG_MIN <= awg <= AWG_MAX else f'AWG {awg}'}",
+            base, "A", f'config/derating.json: ampacity_a_by_awg["{awg}"]',
+        ),
+        k_input,
+        Input("Temperature factor", temp, "", "config/derating.json: temperature_derating"),
+    ]  # fmt: skip
+    steps = [
+        Step("Combined factor", f"K × temperature = {_g(k)} × {_g(temp)}", factor, ""),
+        Step(
+            "Derated limit",
+            f"base × combined factor = {_g(base)} × {_g(factor)}",
+            derated_limit(base, k, temp),
+            "A",
+        ),
+    ]
+    check = None
+    i = project.interfaces.get(w.interface_id or "")
+    if i is not None and i.max_current_a is not None:
+        inputs.append(
+            Input("Current carried", i.max_current_a, "A", f"interface {i.id}: Max current")
+        )
+        ok = not exceeds(i.max_current_a, limit)
+        check = Check(
+            i.max_current_a, limit, "A", ok, limit - i.max_current_a,
+            f"the wire carries {_g(i.max_current_a)} A and the limit is {_g(limit)} A: "
+            + (f"within the limit, {_g(limit - i.max_current_a)} A to spare" if ok else f"over the limit by {_g(i.max_current_a - limit)} A"),
+        )  # fmt: skip
+    return Derivation(
+        "wire-current-limit", subject, "Derated current limit", limit, "A", equation,
+        tuple(inputs), tuple(steps), check, assumptions,
+        k_ref + "Base ampacity table and temperature factor: the project's own values "
+        "(config/derating.json); the project records no source for them.",
+    )  # fmt: skip
+
+
+def wire_voltage_drop_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
+    """The voltage drop over the wire at the current of its interface, against the limit."""
+    derating, generation = cfg(project, "derating"), cfg(project, "generation")
+    limit = number(derating.get("max_voltage_drop_v"))
+    rho = number(generation.get("conductor_resistivity_ohm_m"))
+    i = project.interfaces.get(w.interface_id or "")
+    itype = project.interface_types.get(i.type_id) if i else None
+    length = wire_length(h, w)
+    subject = f"Wire {w.id}"
+    equation = "ΔV = I × ρ × L / A × n"
+    assumptions = ("A-DC-SOLID", "A-ROUND-TRIP")
+    missing: list[str] = []
+    if i is None or i.max_current_a is None:
+        missing.append("the current of the interface (set Max current on the interface)")
+    if rho is None:
+        missing.append("generation.conductor_resistivity_ohm_m")
+    if limit is None:
+        missing.append("derating.max_voltage_drop_v")
+    if not length:
+        missing.append("the length of the wire (enter routing segment lengths)")
+    if w.gauge_awg is None:
+        missing.append(f"the gauge of wire {w.id}")
+    elif not AWG_MIN <= w.gauge_awg <= AWG_MAX:
+        missing.append(f"a gauge of {AWG_MIN} to {AWG_MAX} (the wire has AWG {w.gauge_awg})")
+    current = i.max_current_a if i is not None else None
+    if (
+        missing
+        or i is None
+        or current is None
+        or itype is None
+        or rho is None
+        or not length
+        or w.gauge_awg is None
+    ):
+        return Derivation(
+            "wire-voltage-drop", subject, "Voltage drop", None, "V", equation,
+            assumptions=assumptions, missing=tuple(missing),
+        )  # fmt: skip
+    n = 2 if itype.category in ("power", "ground") else 1
+    awg = w.gauge_awg
+    area = awg_to_area_mm2(awg)
+    drop = voltage_drop_v(current, rho, length, awg, n)
+    own = w.length_m is not None
+    inputs = [
+        Input("Current I", current, "A", f"interface {i.id}: Max current"),
+        Input("Resistivity ρ", rho, "Ω·m", "config/generation.json: conductor_resistivity_ohm_m"),
+        Input(
+            "Length L", length, "m",
+            f"the length of wire {w.id} itself" if own else f"the routing segments of harness {h.id} between its connectors",
+        ),
+        Input("Gauge", awg, "AWG", f"wire {w.id}"),
+        Input(
+            "Conductors counted n", n, "",
+            f"category '{itype.category}' of interface type {itype.id}: 2 for power and ground, 1 otherwise (A-ROUND-TRIP)",
+        ),
+    ]  # fmt: skip
+    resistance = rho * length / (area * 1e-6) * n
+    steps = [
+        Step("Cross-section A", f"π/4 × d², d = 0.127 mm × 92^((36 − {awg})/39)", area, "mm²"),
+        Step("Resistance of the conductors counted", f"ρ × L / A × n = {_g(rho)} × {_g(length)} / {_g(area * 1e-6)} × {n}", resistance, "Ω"),
+        Step("Voltage drop", f"I × resistance = {_g(current)} × {_g(resistance)}", current * resistance, "V"),
+    ]  # fmt: skip
+    check = None
+    if limit is not None:
+        ok = not exceeds(drop, limit)
+        check = Check(
+            drop, limit, "V", ok, limit - drop,
+            f"the drop is {_g(drop)} V and the limit is {_g(limit)} V: "
+            + (f"within the limit, {_g(limit - drop)} V to spare" if ok else f"over the limit by {_g(drop - limit)} V"),
+        )  # fmt: skip
+    return Derivation(
+        "wire-voltage-drop", subject, "Voltage drop", drop, "V", equation,
+        tuple(inputs), tuple(steps), check, assumptions,
+        "Resistance of a solid round conductor; the cross-section follows the AWG definition "
+        "(core/units.py). The resistivity and the limit are the project's own values "
+        "(config/generation.json, config/derating.json); the project records no source for them.",
+    )  # fmt: skip
+
+
+def explain_wire(project: Project, wire_id: str) -> list[Derivation]:
+    """Every derivation that exists for the wire, in the order a reader asks: how much current may
+    it carry, then how much voltage does it drop."""
+    h, w = find_wire(project, wire_id)
+    return [
+        wire_current_limit_derivation(project, h, w),
+        wire_voltage_drop_derivation(project, h, w),
+    ]
