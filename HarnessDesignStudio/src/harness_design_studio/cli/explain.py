@@ -14,17 +14,21 @@ COMMANDS = ("explain",)
 def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     p = sub.add_parser(
         "explain",
-        help="explain how the numbers of a wire or a harness were made: equation, inputs with units and sources, steps",
+        help="explain how the numbers of a wire, a harness or a part were made: equation, inputs with units and sources, steps",
         description="Show how the numbers of one wire or one harness were made. For a wire: its length, "
         "the current its gauge may carry after derating, the voltage drop over it and its share of "
-        "the mass. For a harness: its mass. For each: the equation, the inputs with "
+        "the mass. For a harness: its mass. For a part: why the bill of materials has its quantity. For each: the equation, the inputs with "
         "their units and where each comes from (a key of config/*.json, a field of the design or "
         "the program), the intermediate results, what the result is checked against, and the "
         "assumptions built into the program that it rests on. The numbers are the ones `generate` "
         "and `drc` use. Nothing is changed or written. `--json` prints the same as data.",
     )
     p.add_argument("project", type=Path, help="project folder")
-    p.add_argument("object", metavar="OBJECT", help="a wire (W001-001) or a harness (W001)")
+    p.add_argument(
+        "object",
+        metavar="OBJECT",
+        help="a wire (W001-001), a harness (W001) or a part (EX-WIRE-SINGLE)",
+    )
     p.add_argument("--json", action="store_true", help="print the derivations as JSON")
 
 

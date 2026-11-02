@@ -14,6 +14,7 @@ used both ways has one line per unit (`ea` first, then `m`); the key of a line i
 
 from collections import defaultdict
 from collections.abc import Collection, Iterator
+from dataclasses import dataclass
 from decimal import Decimal
 
 from harness_design_studio.core.generate.lengths import clear_length_cache, wire_length
@@ -281,6 +282,55 @@ def pins_in_use(h: Harness) -> set[tuple[str, str]]:
     return used
 
 
+@dataclass(frozen=True)
+class BomContribution:
+    """One thing that adds to a line of the BOM: what, where it is, how much, in which unit.
+    The BOM is the sum of these (`bom`), and the explanation of a line lists them (`core.derive`),
+    so the two cannot disagree."""
+
+    part_id: str
+    unit: str  # "ea" or "m"
+    amount: float  # a count for "ea", metres for "m"; 0 for a wire whose length is unknown
+    harness_id: str
+    kind: str  # "connector", "contact", "wire" or "accessory"
+    source: str  # the ID of the connector, pin (connector.pin), wire or accessory
+    unknown: bool = False  # a wire with no length: it adds nothing to the metres
+
+
+def bom_contributions(project: Project, harnesses: list[Harness]) -> list[BomContribution]:
+    """What the BOM counts, in the order it counts it: connector parts and contact parts (one per
+    pin in use) in `ea`; wire parts in metres (the wire's length over the conductors of its part);
+    accessory parts in `ea`, or in metres when they have a length."""
+    found: list[BomContribution] = []
+    for h in harnesses:
+        in_use = pins_in_use(h)
+        for c in h.connectors:
+            found.append(BomContribution(c.part_id, "ea", 1, h.id, "connector", c.id))
+            for p in c.pins:
+                if p.contact_part and (c.id, p.id) in in_use:
+                    found.append(
+                        BomContribution(p.contact_part, "ea", 1, h.id, "contact", f"{c.id}.{p.id}")
+                    )
+        for w in h.wires:
+            pid = w.part_id or "(no part)"
+            length = wire_length(h, w)
+            if length is None:
+                found.append(BomContribution(pid, "m", 0.0, h.id, "wire", w.id, unknown=True))
+            else:
+                part = project.parts.get(pid)
+                share = length / (part.conductors if part else 1)
+                found.append(BomContribution(pid, "m", share, h.id, "wire", w.id))
+        for a in h.accessories:
+            if not a.part_id:
+                continue
+            if a.length_mm is None:
+                found.append(BomContribution(a.part_id, "ea", a.quantity, h.id, "accessory", a.id))
+            else:
+                metres = a.length_mm * a.quantity / 1000
+                found.append(BomContribution(a.part_id, "m", metres, h.id, "accessory", a.id))
+    return found
+
+
 def bom(project: Project, harnesses: list[Harness]) -> Table:
     """One line per part and unit: connector parts, contact parts (one per pin in use) and accessory
     parts without a length count `ea`; wire parts and accessory parts with a length add up metres."""
@@ -290,35 +340,18 @@ def bom(project: Project, harnesses: list[Harness]) -> Table:
     wire_parts: set[str] = set()
     unknown: dict[str, int] = defaultdict(int)
     used: dict[str, set[str]] = defaultdict(set)
-    for h in harnesses:
-        in_use = pins_in_use(h)
-        for c in h.connectors:
-            counts[c.part_id] += 1
-            used[c.part_id].add(h.id)
-            for p in c.pins:
-                if p.contact_part and (c.id, p.id) in in_use:
-                    counts[p.contact_part] += 1
-                    used[p.contact_part].add(h.id)
-        for w in h.wires:
-            pid = w.part_id or "(no part)"
-            used[pid].add(h.id)
-            wire_parts.add(pid)
-            length = wire_length(h, w)
-            if length is None:
-                unknown[pid] += 1
-            else:
-                part = project.parts.get(pid)
-                metres[pid] += length / (part.conductors if part else 1)
-        for a in h.accessories:
-            if not a.part_id:
-                continue
-            used[a.part_id].add(h.id)
-            if a.length_mm is None:
-                counts[a.part_id] += a.quantity
-            else:
-                metres[a.part_id] += a.length_mm * a.quantity / 1000
-                metre_parts.add(a.part_id)
-    metre_parts |= wire_parts
+    for c in bom_contributions(project, harnesses):
+        used[c.part_id].add(c.harness_id)
+        if c.unit == "ea":
+            counts[c.part_id] += int(c.amount)
+            continue
+        metre_parts.add(c.part_id)
+        if c.kind == "wire":
+            wire_parts.add(c.part_id)
+        if c.unknown:
+            unknown[c.part_id] += 1
+        else:
+            metres[c.part_id] += c.amount
     rows = [BOM_HEADER]
     for pid, unit in sorted({*((p, "ea") for p in counts), *((p, "m") for p in metre_parts)}):
         part = project.parts.get(pid)

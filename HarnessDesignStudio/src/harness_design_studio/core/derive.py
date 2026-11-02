@@ -7,9 +7,9 @@ generator and the design rules call (`sizing.wire_current_limit`, `sizing.voltag
 `lengths.wire_length`), so a derivation cannot disagree with the number it explains. The steps are
 for the reader and are formatted, never fed back.
 
-Four derivations exist so far: for a wire, its length, the derated current limit, the voltage drop
-and its share of the mass; for a harness, its mass. The bill of materials, readiness and the limits
-of the other rules follow.
+Five derivations exist so far: for a wire, its length, the derated current limit, the voltage drop
+and its share of the mass; for a harness, its mass; for a part, its line of the bill of materials.
+Readiness and the limits of the other rules follow.
 """
 
 import math
@@ -30,6 +30,7 @@ from harness_design_studio.core.generate.sizing import (
     wire_current_limit,
 )
 from harness_design_studio.core.model import Harness, Project, Wire
+from harness_design_studio.core.outputs.tables import BomContribution, bom_contributions
 from harness_design_studio.core.units import AWG_MAX, AWG_MIN, awg_to_area_mm2, format_awg
 from harness_design_studio.core.wires import find_wire
 
@@ -579,6 +580,99 @@ def harness_mass_derivation(project: Project, h: Harness) -> Derivation:
     )  # fmt: skip
 
 
+_KINDS = {
+    "connector": "connectors",
+    "contact": "contacts",
+    "wire": "wires",
+    "accessory": "accessories",
+}
+
+
+def part_bom_derivation(project: Project, part_id: str, unit: str) -> Derivation:
+    """Why the bill of materials has the quantity it has for a part, in `ea` or in `m`: every
+    harness and every kind of thing that adds to it, counted by the function that writes the BOM."""
+    harnesses = [project.harnesses[i] for i in sorted(project.harnesses)]
+    mine = [
+        c for c in bom_contributions(project, harnesses) if c.part_id == part_id and c.unit == unit
+    ]
+    part = project.parts.get(part_id)
+    subject = f"Part {part_id}"
+    is_m = unit == "m"
+    equation = (
+        "quantity = sum of the lengths of its wires / conductors of the part + the lengths of its accessories"
+        if is_m
+        else "quantity = connectors + contacts (one for each pin with a wire) + accessories, by quantity"
+    )
+    assumptions = (
+        ("A-BOM-NO-ALLOWANCE", "A-BOM-CONTACTS")
+        if "contact" in {c.kind for c in mine}
+        else ("A-BOM-NO-ALLOWANCE",)
+    )
+    missing: list[str] = []
+    if part is None:
+        missing.append(
+            f"part {part_id} is not in the parts list: its category, mass and approval are unknown"
+        )
+    unknown = [c for c in mine if c.unknown]
+    if unknown:
+        shown = ", ".join(c.source for c in unknown[:6]) + (", ..." if len(unknown) > 6 else "")
+        missing.append(
+            f"{len(unknown)} wire(s) of this part have no length and add nothing: {shown}"
+        )
+    value = 0.0
+    for c in mine:
+        if not c.unknown:
+            value += c.amount
+    inputs: list[Input] = []
+    if part is not None:
+        inputs.append(Input("Category", part.category, "", f"parts library: {part_id}"))
+        inputs.append(Input("Approval", part.approval, "", f"parts library: {part_id}"))
+        if part.category == "wire" or is_m:
+            inputs.append(
+                Input(
+                    "Conductors of the part",
+                    part.conductors,
+                    "",
+                    f"parts library: {part_id}: conductors",
+                )
+            )
+    steps: list[Step] = []
+    groups: dict[tuple[str, str], list[BomContribution]] = {}
+    for c in mine:
+        groups.setdefault((c.harness_id, c.kind), []).append(c)
+    for (hid, kind), items in groups.items():
+        total = 0.0
+        for c in items:
+            if not c.unknown:
+                total += c.amount
+        if kind == "wire":
+            known = [c for c in items if not c.unknown]
+            conductors = part.conductors if part is not None else 1
+            expression = f"{len(known)} wire(s), their lengths summed, / {conductors}"
+        else:
+            expression = f"{len(items)} {_KINDS[kind]}" + (
+                " (by their quantity)" if kind == "accessory" and not is_m else ""
+            )
+        steps.append(Step(f"Harness {hid}: {_KINDS[kind]}", expression, total, unit))
+    steps.append(Step("Quantity in the bill of materials", "sum of the lines above", value, unit))
+    return Derivation(
+        "part-bom", subject, f"BOM quantity ({unit})", value, unit, equation,
+        tuple(inputs), tuple(steps), None, assumptions,
+        "The quantity is the one the file system/bom.csv has for this part and unit; the lengths of "
+        "the wires are explained on the wire length page.",
+        tuple(missing),
+    )  # fmt: skip
+
+
+def explain_part(project: Project, part_id: str) -> list[Derivation]:
+    """The lines of the bill of materials for a part: one for each unit it is counted in."""
+    harnesses = [project.harnesses[i] for i in sorted(project.harnesses)]
+    units = sorted({c.unit for c in bom_contributions(project, harnesses) if c.part_id == part_id})
+    if not units:
+        raise EditError(f"'{part_id}' is not a wire, a harness or a part used in a harness.")
+    return [part_bom_derivation(project, part_id, u) for u in units]
+
+
 def explain_harness(project: Project, harness_id: str) -> list[Derivation]:
     """Every derivation that exists for the harness."""
     h = project.harnesses.get(harness_id)
@@ -588,10 +682,12 @@ def explain_harness(project: Project, harness_id: str) -> list[Derivation]:
 
 
 def explain_object(project: Project, object_id: str) -> list[Derivation]:
-    """A wire or a harness, by its ID."""
+    """A harness, a wire or a part used in a harness, by its ID (in that order)."""
     if object_id in project.harnesses:
         return explain_harness(project, object_id)
-    return explain_wire(project, object_id)
+    if any(w.id == object_id for h in project.harnesses.values() for w in h.wires):
+        return explain_wire(project, object_id)
+    return explain_part(project, object_id)
 
 
 def explain_wire(project: Project, wire_id: str) -> list[Derivation]:
