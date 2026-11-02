@@ -1464,9 +1464,7 @@ WHY_PLACEHOLDER_NOTE = (
 WHY_RULE_NAME = "Rule {}"
 WHY_EXPLAIN_SHOW = "Show the calculation"
 WHY_EXPLAIN_HIDE = "Hide the calculation"
-WHY_EXPLAIN_TIP = (
-    "How the numbers of this wire were made: equation, inputs with units and sources, steps"
-)
+WHY_EXPLAIN_TIP = "How the numbers of this wire or harness were made: equation, inputs with units and sources, steps"
 WHY_EXPLAIN_INTRO = (
     "The same numbers that Generate and the checks use. Select the text to copy it; "
     "`harness-design-studio explain` prints it in a terminal."
