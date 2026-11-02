@@ -156,7 +156,7 @@ harness-design-studio verify my-design --outputs
 
 ### harness-design-studio explain
 
-Show how the numbers of one wire were made: the current its gauge may carry after derating and the voltage drop over it. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. Nothing is changed or written. `--json` prints the same as data.
+Show how the numbers of one wire were made: its length, the current its gauge may carry after derating and the voltage drop over it. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. Nothing is changed or written. `--json` prints the same as data.
 
 `harness-design-studio explain project wire [options]`
 

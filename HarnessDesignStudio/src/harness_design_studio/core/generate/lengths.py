@@ -34,18 +34,27 @@ def _find_path(
     return None
 
 
-def path_length(h: Harness, start: str, end: str) -> float | None:
-    """Sum of segment lengths along the path in the harness tree; None if any is unknown.
+def path_trail(h: Harness, start: str, end: str) -> list[tuple[str, float | None]] | None:
+    """The segments (ID, length) along the one path in the harness tree from start to end, in
+    order; None if there is no path or the segments form a loop that the path can take either way.
 
-    The one path rule of the tool (builder, tables, rules): the path must be unique. If the
-    segments form a loop that the path can take either way, there is no single length and the
-    answer is None; the design rule `segment-loop` reports the loop."""
+    The one path rule of the tool (builder, tables, rules, derivations): the path must be unique,
+    otherwise there is no single length and the design rule `segment-loop` reports the loop."""
     graph = _adjacency(h)
     trail = _find_path(graph, start, end)
     if trail is None:
         return None
     if any(_find_path(graph, start, end, sid) is not None for sid, _ in trail):
         return None  # a second route exists: not a tree path
+    return trail
+
+
+def path_length(h: Harness, start: str, end: str) -> float | None:
+    """Sum of segment lengths along the path in the harness tree; None if any is unknown
+    (or there is no unique path: see `path_trail`)."""
+    trail = path_trail(h, start, end)
+    if trail is None:
+        return None
     lengths = [length for _, length in trail]
     return (
         None if any(x is None for x in lengths) else float(sum(x for x in lengths if x is not None))

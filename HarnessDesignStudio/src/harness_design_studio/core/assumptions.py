@@ -68,6 +68,26 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "setting",
             "config/derating.json: ampacity_a_by_awg",
         ),
+        Assumption(
+            "A-SERVICE-LOOP",
+            "A generated wire is longer than its path by two service loops",
+            "A wire that generation measures from the routing segments is given the length of its "
+            "path plus 2 × the service loop of the configuration: one loop at each end. When the "
+            "service loop is not set, nothing is added and generation says so. The same extra "
+            "length is added to every wire whatever its gauge, part or end.",
+            "setting",
+            "config/generation.json: service_loop_m; core/generate/engine.py",
+        ),
+        Assumption(
+            "A-PATH-UNIQUE",
+            "The length of a wire is the one path through the segments",
+            "A wire runs along the path of routing segments between its two connectors. The path "
+            "must be unique: if the segments form a loop, there is no single length, the length "
+            "stays undecided and the design rule segment-loop reports the loop. Bend radii, "
+            "tolerances and the part of a connector inside its backshell are not added.",
+            "built in",
+            "core/generate/lengths.py (path_trail)",
+        ),
     )
 }
 

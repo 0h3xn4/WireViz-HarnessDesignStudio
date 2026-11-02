@@ -21,6 +21,7 @@ from harness_design_studio.core.derive import Derivation, explain_wire, render
 from harness_design_studio.core.drc import run as run_drc
 from harness_design_studio.core.drc.base import cfg
 from harness_design_studio.core.generate.engine import generate_project
+from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.generate.sizing import (
     derated_limit,
     voltage_drop_v,
@@ -70,7 +71,7 @@ def test_the_derived_numbers_are_the_numbers_of_sizing_and_the_rules(
         derating = cfg(project, "derating")
         for h in project.harnesses.values():
             for w in h.wires:
-                current, drop = explain_wire(project, w.id)
+                _length, current, drop = explain_wire(project, w.id)
                 assert current.id == "wire-current-limit" and drop.id == "wire-voltage-drop"
                 expected = wire_current_limit(derating, w.gauge_awg, len(h.wires))
                 assert current.value == expected, (name, w.id)
@@ -102,7 +103,7 @@ def test_the_verdict_of_a_derivation_is_the_verdict_of_the_rule(
         failing = {(f.rule, f.object_id) for f in run_drc(project) if f.severity == "error"}
         for h in project.harnesses.values():
             for w in h.wires:
-                current, drop = explain_wire(project, w.id)
+                _length, current, drop = explain_wire(project, w.id)
                 if current.check is not None:
                     assert (not current.check.passes) == (("current-over-wire", w.id) in failing), (
                         name,
@@ -124,16 +125,16 @@ def test_the_verdict_of_a_derivation_is_the_verdict_of_the_rule(
 def test_a_table_of_ones_own_is_named_as_such_in_the_reference(
     projects: dict[str, Project],
 ) -> None:
-    own = explain_wire(projects["flatsat-own-bundle-table"], "W001-001")[0]
+    own = explain_wire(projects["flatsat-own-bundle-table"], "W001-001")[1]
     assert "not the standard's table" in own.reference and "Table 6-41" not in own.reference
-    ecss = explain_wire(projects["flatsat-ecss"], "W001-001")[0]
+    ecss = explain_wire(projects["flatsat-ecss"], "W001-001")[1]
     assert "Table 6-41" in ecss.reference and "equals the standard's" in ecss.reference
 
 
 def test_what_is_not_set_is_named_and_no_number_is_made_up(projects: dict[str, Project]) -> None:
     first = projects["first-steps"]
     wire = first.harnesses["W001"].wires[0].id
-    current, drop = explain_wire(first, wire)
+    length, current, drop = explain_wire(first, wire)
     assert current.value is None and current.missing
     assert any("derating." in m or "gauge" in m for m in current.missing)
     assert drop.value is None and drop.missing
@@ -154,11 +155,69 @@ def test_explain_prints_the_numbers_the_tool_stored(
     templates.create_project(tmp_path / "flat", "flatsat")
     assert main(["explain", str(tmp_path / "flat"), "W001-001"]) == 0
     out = capsys.readouterr().out
-    assert "Derated current limit: 1.08 A" in out and "Voltage drop: 0.458359 V" in out
+    assert (
+        "Length: 3.45 m" in out
+        and "Derated current limit: 1.08 A" in out
+        and "Voltage drop: 0.458359 V" in out
+    )
     assert "config/derating.json: ampacity_a_by_awg" in out and "A-ROUND-TRIP" in out
     assert main(["explain", str(tmp_path / "flat"), "W001-001", "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
-    assert [d["id"] for d in data] == ["wire-current-limit", "wire-voltage-drop"]
-    assert data[1]["value"] == 0.458359 or math.isclose(data[1]["value"], 0.458359, rel_tol=1e-6)
+    assert [d["id"] for d in data] == ["wire-length", "wire-current-limit", "wire-voltage-drop"]
+    assert math.isclose(data[2]["value"], 0.458359, rel_tol=1e-6) and data[0]["value"] == 3.45
     assert main(["explain", str(tmp_path / "flat"), "NO-SUCH-WIRE"]) == 2
     assert "does not exist" in capsys.readouterr().err
+
+
+def test_the_derived_length_is_the_length_the_tool_uses(projects: dict[str, Project]) -> None:
+    seen = {"generated": 0, "entered": 0}
+    for name, project in projects.items():
+        for h in project.harnesses.values():
+            for w in h.wires:
+                length = explain_wire(project, w.id)[0]
+                assert length.id == "wire-length"
+                assert length.value == wire_length(h, w), (name, w.id)
+                text = render(length)
+                if length.value is None:
+                    assert length.missing and "Not decided yet" in text
+                elif "generated: the path" in text:
+                    seen["generated"] += 1
+                    seg, extra, total = (s.value for s in length.steps[:3])
+                    assert math.isclose(seg + extra, total) and total == length.value
+                    # every segment of the path is shown with its length
+                    segs = [i.value for i in length.inputs if i.name.startswith("Segment")]
+                    assert math.isclose(float(sum(x for x in segs if isinstance(x, float))), seg)
+                elif "entered by hand and locked" in text:
+                    seen["entered"] += 1
+    assert seen["generated"] > 100 and seen["entered"] >= 1
+
+
+def test_a_length_typed_by_hand_is_said_to_be_typed(projects: dict[str, Project]) -> None:
+    project = projects["flatsat-override"]
+    typed = [
+        w for h in project.harnesses.values() for w in h.wires if w.locked and w.length_m == 1.0
+    ]
+    assert typed
+    length = explain_wire(project, typed[0].id)[0]
+    assert length.inputs[0].name == "Length stored on the wire"
+    assert "entered by hand and locked" in render(length)
+
+
+def test_a_missing_segment_length_is_named(projects: dict[str, Project]) -> None:
+    from harness_design_studio.core.model import evolve
+
+    project = projects["flatsat"]
+    h = project.harnesses["W001"]
+    w = h.wires[0]
+    cut = evolve(
+        h,
+        wires=[evolve(w, length_m=None)] + list(h.wires[1:]),
+        segments=[evolve(s, length_m=None) for s in h.segments],
+    )
+    project.harnesses["W001"] = cut
+    try:
+        length = explain_wire(project, w.id)[0]
+        assert length.value is None
+        assert any("routing segment" in m for m in length.missing)
+    finally:
+        project.harnesses["W001"] = h
