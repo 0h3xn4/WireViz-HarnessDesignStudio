@@ -11,6 +11,7 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ### Added
 
+- **`explain`: how the numbers of a wire were made (transparency work, step 1, D-191).** `harness-design-studio explain DIR WIRE` prints the current the wire's gauge may carry after derating and its voltage drop, each with the equation, the inputs with their units and where each comes from (a key of `config/*.json`, a field of the design, or the program), the intermediate results, what the result is checked against (actual, limit, margin) and the assumptions built into the program that it rests on; `--json` prints the same as data. A value that is not set is named, never made up. The numbers are produced by the functions the generator and the design rules call, so a derivation cannot disagree with the number it explains (`tests/test_derivations.py` compares them wire by wire in seven scenarios, to the last digit). New: `core/derive.py`, `core/assumptions.py`, `docs/models/` (the first page: wire sizing, with a worked example). Nothing that is written changes.
 - **The numbers are kept on purpose (for developers).** `tools/numbers_snapshot.py` and `tests/fixtures/numbers/snapshot.json` hold, for eleven scenarios, the gauge, length, part, colour and lock of every wire, every finding with its text and the SHA-256 of every written file; `tests/test_numbers_snapshot.py` fails and names the wire, finding or file that moved. `docs/changes.md` records every change that moves a result, with before and after.
 
 ## 1.11.1 (2026-11-01; not a statement of compliance)

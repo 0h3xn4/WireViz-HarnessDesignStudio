@@ -21,6 +21,7 @@ The examples show the form of each command with example names. They do not all w
 
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
+- Explain: [`explain`](#harness-design-studio-explain)
 - Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export)
 - Team use with Git: [`merge-fix`](#harness-design-studio-merge-fix)
 - Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data)
@@ -149,6 +150,27 @@ Examples:
 ```
 harness-design-studio verify my-design
 harness-design-studio verify my-design --outputs
+```
+
+## Explain
+
+### harness-design-studio explain
+
+Show how the numbers of one wire were made: the current its gauge may carry after derating and the voltage drop over it. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. Nothing is changed or written. `--json` prints the same as data.
+
+`harness-design-studio explain project wire [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `wire` | the wire, for example W001-001 |
+| `--json` | print the derivations as JSON |
+
+Examples:
+
+```
+harness-design-studio explain wheel-link W001-001
+harness-design-studio explain wheel-link W001-001 --json
 ```
 
 ## Generate and export
