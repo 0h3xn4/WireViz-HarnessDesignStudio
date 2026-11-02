@@ -57,7 +57,7 @@ These are choices built into the program. They are listed so that nobody has to 
 
 ## A worked example
 
-`harness-design-studio explain DIR W001-001` on the `flatsat` example (a 0.8 A power wire, `IF-010`, in harness `W001`) prints:
+In the program, select the wire and open **Show the calculation** in the **Why** tab; it shows the same text. `harness-design-studio explain DIR W001-001` on the `flatsat` example (a 0.8 A power wire, `IF-010`, in harness `W001`) prints:
 
 - **Derated current limit: 1.08 A.** The base ampacity of AWG 24 (0.205 mm²) is 2 A; the bundle factor K is 0.6 and the temperature factor 0.9, so the combined factor is 0.6 × 0.9 = 0.54 and the limit is 2 × 0.54 = 1.08 A. The wire carries 0.8 A: within the limit, 0.28 A to spare.
 - **Voltage drop: 0.458359 V.** I = 0.8 A, ρ = 1.7e-08 Ω·m, L = 3.45 m (the length of the wire), AWG 24, so A = 0.20473 mm², and n = 2 because the interface type is in the category power. The resistance of the conductors counted is 1.7e-08 × 3.45 / 2.0473e-07 × 2 = 0.572949 Ω, and the drop is 0.8 × 0.572949 = 0.458359 V. The limit is 1 V: within the limit, 0.541641 V to spare.

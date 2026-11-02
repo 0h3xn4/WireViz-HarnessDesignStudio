@@ -8,12 +8,19 @@ The reasons are the ones generation recorded (`core.why`, built on `core.generat
 panel adds nothing of its own. Below them it says what is still *pending* for the object and
 which placeholder configuration the result rests on, with the same chips as everywhere else.
 The first lines show at once and "Show all" opens the rest.
+
+For a wire, "Show the calculation" opens below them how its numbers were made (`core.derive`, the
+same text as `harness-design-studio explain`): the equation, each input with its unit and where it
+comes from, the steps, what it is checked against and the assumptions built into the program that
+it rests on. It is closed until asked for, so the panel stays short.
 """
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget
 
 from harness_design_studio.core import why
+from harness_design_studio.core.derive import Derivation, explain_wire, render
+from harness_design_studio.core.edit import EditError
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import EditorController
 from harness_design_studio.gui.panels import clear_layout, heading, muted, scroll_body
@@ -36,10 +43,13 @@ class WhyPanel(QScrollArea):
         self.lay = scroll_body(self)
         self._target: tuple[str, str] | None = None
         self._expanded = False
+        self._explain_open = False
         self._signature: object = None
         self._dirty = True
         self.rows: list[QLabel] = []  # the reason labels now shown
         self.show_all_button: QPushButton | None = None
+        self.explain_button: QPushButton | None = None
+        self.explain_texts: list[QLabel] = []  # the derivations now shown, one label each
         ctl.selectionChanged.connect(self._follow_selection)
         ctl.changed.connect(lambda _d: self._invalidate())
         ctl.stateChanged.connect(self._invalidate)
@@ -58,6 +68,7 @@ class WhyPanel(QScrollArea):
         target = (kind, object_id)
         if target != self._target:
             self._expanded = False
+            self._explain_open = False
         self._target = target
         self.refresh()
 
@@ -80,6 +91,7 @@ class WhyPanel(QScrollArea):
         target = (s.kind, s.id) if s is not None and s.kind in why.KINDS else None
         if target != self._target:
             self._expanded = False
+            self._explain_open = False
         self._target = target
         self.refresh()
 
@@ -106,12 +118,24 @@ class WhyPanel(QScrollArea):
             why.placeholders_used(project, kind, oid),
         )
 
+    def _derivations(self) -> list[Derivation]:
+        """How the numbers of the selected wire were made; none for anything else."""
+        if self._target is None or self._target[0] != "wire":
+            return []
+        try:
+            return explain_wire(self.ctl.project, self._target[1])
+        except EditError:  # the wire is gone (a regeneration or an undo): nothing to explain
+            return []
+
     def refresh(self) -> None:
         self._dirty = False
         reasons, pending, placeholders = self._content()
+        derivations = self._derivations()
         signature = (
             self._target,
             self._expanded,
+            self._explain_open,
+            tuple(render(d) for d in derivations) if self._explain_open else len(derivations),
             tuple(r.line for r in reasons),
             tuple(pending),
             tuple(placeholders),
@@ -122,6 +146,8 @@ class WhyPanel(QScrollArea):
         clear_layout(self.lay)
         self.rows = []
         self.show_all_button = None
+        self.explain_button = None
+        self.explain_texts = []
         if self._target is None:
             self.lay.addWidget(heading(strings.WHY_NAME))
             self.lay.addWidget(muted(strings.WHY_EMPTY))
@@ -151,6 +177,8 @@ class WhyPanel(QScrollArea):
             )
             self.show_all_button.clicked.connect(self._toggle)
             self.lay.addWidget(self.show_all_button)
+        if derivations:
+            self._add_explain(derivations)
         if pending:
             self.lay.addWidget(self._chipped("pending", strings.WHY_PENDING, pending))
         if placeholders:
@@ -162,6 +190,38 @@ class WhyPanel(QScrollArea):
                 )
             )
         self.lay.addStretch(1)
+
+    def _add_explain(self, derivations: list[Derivation]) -> None:
+        name = strings.WHY_EXPLAIN_HIDE if self._explain_open else strings.WHY_EXPLAIN_SHOW
+        self.explain_button = QPushButton(name)
+        self.explain_button.setObjectName("why-explain")
+        self.explain_button.setToolTip(strings.WHY_EXPLAIN_TIP)
+        self.explain_button.setAccessibleName(name)
+        self.explain_button.clicked.connect(self._toggle_explain)
+        self.lay.addWidget(self.explain_button)
+        if not self._explain_open:
+            return
+        self.lay.addWidget(muted(strings.WHY_EXPLAIN_INTRO))
+        for d in derivations:
+            box = QFrame()
+            box.setProperty("card", True)
+            box.setProperty("severity", "info")
+            lay = QVBoxLayout(box)
+            text = QLabel(render(d))
+            text.setWordWrap(True)
+            text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            text.setObjectName("why-derivation")
+            text.setAccessibleName(f"{d.quantity}, {d.subject}")
+            mark_mono(text)
+            lay.addWidget(text)
+            self.lay.addWidget(box)
+            self.explain_texts.append(text)
+
+    def _toggle_explain(self) -> None:
+        self._explain_open = not self._explain_open
+        self.refresh()
+        if self.explain_button is not None:
+            self.explain_button.setFocus()
 
     def _toggle(self) -> None:
         self._expanded = not self._expanded
