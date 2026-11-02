@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.11.0 (2026-10-30: a twisted pair counted once in the bill of materials and the mass, a waiver tied to the finding it was made for, a note in the Problems panel when a waiver no longer fits; tag `v1.11.0` on commit `91c2216`, release workflow run 41092284035; not signed off by the owner); 1.10.0 (2026-10-29: the outer conductor of a coax bonded at both ends, signal and interface on every cable pin, a requirement column in the wire list and the traceability matrix, no abort at exit during an autosave; tag `v1.10.0` on commit `6f87980`, release workflow run 40920309052; not signed off by the owner); 1.9.0 (2026-10-28: the Systems engineer path, a connection list as output, `merge-fix`, faster edits in big projects; it needs Python 3.14 only for an install from source; tag `v1.9.0` on commit `ae8a8f9`, release workflow run 40718549384; not signed off by the owner); 1.8.1 (2026-10-28: fixes from the audit of 1.8.0: links, "not checked", the library, the keyboard, the command line, the documents; tag `v1.8.1` on commit `6b7d70b`, release workflow run 40681169961; not signed off by the owner); 1.8.0 (2026-10-26: connections pin by pin, editing connectors and wires, a shared library, two roles instead of the simple workspace; tag `v1.8.0` on commit `1f7431e`) came before it. The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.11.1 (2026-11-01: documents only, the manual, the reference pages and the F1 guide brought up to date; tag `v1.11.1` on commit `d42f0be`, release workflow run 41352596034; not signed off by the owner); 1.11.0 (2026-10-30: a twisted pair counted once in the bill of materials and the mass, a waiver tied to the finding it was made for, a note in the Problems panel when a waiver no longer fits; tag `v1.11.0` on commit `91c2216`, release workflow run 41092284035; not signed off by the owner); 1.10.0 (2026-10-29: the outer conductor of a coax bonded at both ends, signal and interface on every cable pin, a requirement column in the wire list and the traceability matrix, no abort at exit during an autosave; tag `v1.10.0` on commit `6f87980`, release workflow run 40920309052; not signed off by the owner); 1.9.0 (2026-10-28: the Systems engineer path, a connection list as output, `merge-fix`, faster edits in big projects; it needs Python 3.14 only for an install from source; tag `v1.9.0` on commit `ae8a8f9`, release workflow run 40718549384; not signed off by the owner); 1.8.1 (2026-10-28: fixes from the audit of 1.8.0: links, "not checked", the library, the keyboard, the command line, the documents; tag `v1.8.1` on commit `6b7d70b`, release workflow run 40681169961; not signed off by the owner); 1.8.0 (2026-10-26: connections pin by pin, editing connectors and wires, a shared library, two roles instead of the simple workspace; tag `v1.8.0` on commit `1f7431e`) came before it. The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
 
 ## Contents
 
@@ -43,7 +43,7 @@ You also need about 500 MB of free disk space for the program (`df -h ~` shows i
 
 You need one file, either `harness-design-studio_<version>_amd64.deb` (way A), `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B), `harness-design-studio-<version>-windows-x86_64-setup.exe` or `harness-design-studio-<version>-windows-x86_64.zip` (way D). Ask your tool administrator, or take it from one of these places:
 
-- the **Releases** page of the project's repository (look for the newest version number). Version 1.11.0 (tag `v1.11.0`, published 2026-10-30) has these files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
+- the **Releases** page of the project's repository (look for the newest version number). Version 1.11.1 (tag `v1.11.1`, published 2026-11-01) has these files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
 
   | File | For | Way |
   | --- | --- | --- |
@@ -53,21 +53,21 @@ You need one file, either `harness-design-studio_<version>_amd64.deb` (way A), `
   | `harness-design-studio-1.11.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
   | `SHA256SUMS` | the SHA-256 checksum of each package | |
 
-  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 to 1.11.0 and two macOS disk images that are not maintained any more (D-168); 1.6.0, 1.7.0, 1.8.0, 1.8.1, 1.9.0 and 1.10.0 have the same four packages and `SHA256SUMS` as 1.11.0. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
+  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 to 1.11.1 and two macOS disk images that are not maintained any more (D-168); 1.6.0, 1.7.0, 1.8.0, 1.8.1, 1.9.0, 1.10.0 and 1.11.0 have the same four packages and `SHA256SUMS` as 1.11.1. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
 - the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact `harness-design-studio-ubuntu-24.04` of the CI run holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file); the run of the workflow `harness-design-studio packages (Windows)` on a branch `pkg/...` keeps the Windows packages as the artifact `harness-design-studio-windows-x86_64`. Such a build is made again on another machine and is not the file of a release.
 
 You can also build it yourself (way C, last section). That route needs no release files at all.
 
 Copy the file to the machine. It never needs to reach the network.
 
-**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file: the `SHA256SUMS` file on the release page (one file for all the packages of a release from 1.2.0) and `compliance/evidence/release_<version>_SHA256SUMS` in the repository (every release from 0.1.0 to 1.11.0). For 1.11.0 they are:
+**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file: the `SHA256SUMS` file on the release page (one file for all the packages of a release from 1.2.0) and `compliance/evidence/release_<version>_SHA256SUMS` in the repository (every release from 0.1.0 to 1.11.1). For 1.11.1 they are:
 
 | File | SHA-256 |
 | --- | --- |
-| `harness-design-studio_1.11.0_amd64.deb` | `bb198ab681fe2a6feec06ff68d0ce3ea3a84525ff9c8bf5fcdf61ab335cd3c06` |
-| `harness-design-studio-1.11.0-linux-x86_64.tar.gz` | `8743f5de8a7e23431b1007fe07bf46be171d1d2c3e33e809d2703de683f7e0eb` |
-| `harness-design-studio-1.11.0-windows-x86_64-setup.exe` | `6fb5380729d3b7d09d7d5156015a0079135164383b113f12f7df0e639ffb8674` |
-| `harness-design-studio-1.11.0-windows-x86_64.zip` | `fd50c17a0594721b4e4bd63d5adde02bc7227be38351ce48864ad2398dc9b14b` |
+| `harness-design-studio_1.11.1_amd64.deb` | `4fbb15f8c765bcafe55af89d3051bf8424995481a3329b4b3c759444f126dccc` |
+| `harness-design-studio-1.11.1-linux-x86_64.tar.gz` | `e11992b9dfb198cb7afc7a78423ec0c33dae7b35e2c037eaa5404e0d1e169520` |
+| `harness-design-studio-1.11.1-windows-x86_64-setup.exe` | `3629c087fbe515163f8a0cf44f00c41244d7e6e25e54a44108da03700b8deca2` |
+| `harness-design-studio-1.11.1-windows-x86_64.zip` | `0498fea4100c5079a783cd8281302c011c52b59594de4124d3544abe0e077430` |
 
 On Linux, put the package you downloaded and `SHA256SUMS` in one folder and run:
 
