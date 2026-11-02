@@ -18,6 +18,7 @@ from typing import Any
 
 from harness_design_studio.core.assumptions import describe
 from harness_design_studio.core.drc.base import cfg, number
+from harness_design_studio.core.drc.rules import contact_rating, contact_rating_key
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.generate.lengths import path_trail, wire_length
 from harness_design_studio.core.generate.mass import harness_mass, wire_mass_g
@@ -664,6 +665,66 @@ def part_bom_derivation(project: Project, part_id: str, unit: str) -> Derivation
     )  # fmt: skip
 
 
+def contact_current_derivation(
+    project: Project, interface_id: str, connector_id: str
+) -> Derivation:
+    """The current an interface carries at a connector, against what the contacts of that
+    connector's part allow after derating: the check of the rule `current-over-contact`."""
+    subject = f"Interface {interface_id} at connector {connector_id}"
+    equation = "limit = contact rating of the connector part × contact current factor"
+    assumptions = ("A-CONTACT-SHARED",)
+    i = project.interfaces.get(interface_id)
+    conn = project.connectors.get(connector_id)
+    factor = number(cfg(project, "derating").get("contact_current_factor"))
+    key = contact_rating_key(project)
+    rating = contact_rating(project, conn) if conn is not None else None
+    missing: list[str] = []
+    if i is None or i.max_current_a is None:
+        missing.append("the current of the interface (set Max current on the interface)")
+    if conn is None:
+        missing.append(f"connector {connector_id}")
+    elif rating is None:
+        missing.append(
+            f"the rating '{key}' of the connector part {conn.part_id} (a rating of the part in the library)"
+        )
+    if factor is None:
+        missing.append("derating.contact_current_factor")
+    if (
+        missing
+        or i is None
+        or conn is None
+        or i.max_current_a is None
+        or rating is None
+        or factor is None
+    ):
+        return Derivation(
+            "contact-current", subject, "Contact current limit", None, "A", equation,
+            assumptions=assumptions, missing=tuple(missing),
+        )  # fmt: skip
+    limit = rating * factor
+    ok = not exceeds(i.max_current_a, limit)
+    inputs = (
+        Input("Current of the interface", i.max_current_a, "A", f"interface {i.id}: Max current"),
+        Input(
+            f"Contact rating '{key}'", rating, "A",
+            f"connector part {conn.part_id}: ratings.{key} (the key is config/derating.json: contact_rating_key)",
+        ),
+        Input("Contact current factor", factor, "", "config/derating.json: contact_current_factor"),
+    )  # fmt: skip
+    steps = (Step("Limit after derating", f"{_g(rating)} × {_g(factor)}", limit, "A"),)
+    check = Check(
+        i.max_current_a, limit, "A", ok, limit - i.max_current_a,
+        f"the interface carries {_g(i.max_current_a)} A and the contacts allow {_g(limit)} A: "
+        + (f"within the limit, {_g(limit - i.max_current_a)} A to spare" if ok else f"over the limit by {_g(i.max_current_a - limit)} A"),
+    )  # fmt: skip
+    return Derivation(
+        "contact-current", subject, "Contact current limit", limit, "A", equation,
+        inputs, steps, check, assumptions,
+        "The rating is a value of the parts library of the project and the factor is the project's "
+        "own (config/derating.json); the project records no source for either.",
+    )  # fmt: skip
+
+
 def explain_part(project: Project, part_id: str) -> list[Derivation]:
     """The lines of the bill of materials for a part: one for each unit it is counted in."""
     harnesses = [project.harnesses[i] for i in sorted(project.harnesses)]
@@ -682,11 +743,15 @@ def explain_harness(project: Project, harness_id: str) -> list[Derivation]:
 
 
 def explain_object(project: Project, object_id: str) -> list[Derivation]:
-    """A harness, a wire or a part used in a harness, by its ID (in that order)."""
+    """A harness, a wire, a part used in a harness, or the contacts of an interface at a connector
+    (INTERFACE.CONNECTOR, the object of a `current-over-contact` finding), by its ID."""
     if object_id in project.harnesses:
         return explain_harness(project, object_id)
     if any(w.id == object_id for h in project.harnesses.values() for w in h.wires):
         return explain_wire(project, object_id)
+    left, _, right = object_id.partition(".")
+    if right and left in project.interfaces and right in project.connectors:
+        return [contact_current_derivation(project, left, right)]
     return explain_part(project, object_id)
 
 
