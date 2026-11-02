@@ -43,6 +43,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`IMPORTS.md`](IMPORTS.md) | Importing interfaces, parts, lengths, engineering values, device pinouts and the build data |
 | [`KICAD.md`](KICAD.md) | Taking device connector pinouts from a KiCad netlist |
 | [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits, and the build workbook |
+| [`models/`](models/README.md) | The models of the tool for engineers: the equation, the inputs and their sources, the assumptions built in, a worked example. Wire sizing first |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed, release by release |
 | [`STATUS.md`](STATUS.md) | The status of the tool and its release history (latest published release, tags, commits), moved from the README |

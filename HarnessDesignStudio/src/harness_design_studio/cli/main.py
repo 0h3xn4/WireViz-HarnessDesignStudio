@@ -13,7 +13,7 @@ from pathlib import Path
 from typing import Any
 
 from harness_design_studio import __version__
-from harness_design_studio.cli import blocked_text, changes, data, merge, start
+from harness_design_studio.cli import blocked_text, changes, data, explain, merge, start
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError, TransactionError
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, load_project, non_canonical_files
@@ -66,6 +66,7 @@ def build_parser() -> argparse.ArgumentParser:
             )
     start.register(sub)
     merge.register(sub)
+    explain.register(sub)
     changes.register(sub)
     data.register(sub)
     return parser
@@ -357,7 +358,7 @@ NOTHING_DONE = {
     "import-parts": "imported", "import-lengths": "imported", "import-netlist": "imported",
     "import-pinout": "imported", "export-pinout": "exported",
     "export-devices": "exported", "import-devices": "imported", "import-build-data": "imported",
-    "export-subsystem": "exported", "import-subsystem": "imported",
+    "export-subsystem": "exported", "import-subsystem": "imported", "explain": "explained",
 }  # fmt: skip
 
 MUTATING = {
@@ -431,6 +432,8 @@ def _dispatch(args: argparse.Namespace) -> int:
                     file=sys.stderr,
                 )
                 return 2
+    if args.command in explain.COMMANDS:
+        return explain.run(args)
     if args.command == "migrate":
         migrated = migrate_project(args.project)
         print("Already up to date." if migrated is None else MIGRATED)
