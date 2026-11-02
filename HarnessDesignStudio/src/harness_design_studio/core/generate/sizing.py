@@ -59,6 +59,16 @@ def ampacity_table(raw: object) -> dict[int, float] | None:
     return out
 
 
+def _bundle_source(raw: object) -> str:
+    """Where the table of bundle factors comes from, for the note on a wire: the standard only when
+    the table is the one of the ECSS profile (D-191; before, "Table 6-41" was named for any table)."""
+    from harness_design_studio.core.standard_profiles import BUNDLE_K
+
+    if isinstance(raw, dict) and raw == BUNDLE_K:
+        return "Table 6-41"
+    return "table of config/derating.json, bundle_factor_by_count"
+
+
 def bundle_k(raw: object, count: int) -> float | None:
     """K of ECSS-Q-ST-30-11C Table 6-41 for `count` wires: the next listed count, never a better
     factor than the table gives; None if there is no table or the bundle is larger than it lists."""
@@ -123,7 +133,9 @@ def size_wire(
         if bundle is None:
             s.pending.append(f"derating.bundle_factor_by_count (no entry for {bundle_wires} wires)")
         else:
-            s.notes.append(f"bundle factor K {bundle:g} for {bundle_wires} wires (Table 6-41)")
+            s.notes.append(
+                f"bundle factor K {bundle:g} for {bundle_wires} wires ({_bundle_source(by_count)})"
+            )
     if table is None:
         s.pending.append("derating.ampacity_a_by_awg")
     if bundle is None:

@@ -4,6 +4,15 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Fixed
+
+- **`validate` checks the values of `config/*.json` like `generate`, `drc` and `config` do (transparency work, D-191).** With `bundle_derating` set to 1.5, `validate` printed `0 error(s)` and exited 0 while `generate` stopped with `config_invalid`. It now prints the same `config_invalid` error and exits 1. A project whose values are valid gets the same output as before. `docs/CONFIG.md` already said the commands use the same checks. `tests/test_validate_config.py`.
+- **The note on a sized wire cites "Table 6-41" only for the table of the ECSS profile.** Before, any table of bundle factors was cited as the standard's. For a table of one's own the note names `config/derating.json, bundle_factor_by_count`. No number changes; the note is stored in the generation record, so a project with a table of its own gets a new model hash (`docs/changes.md`). `tests/test_bundle_citation.py`.
+
+### Added
+
+- **The numbers are kept on purpose (for developers).** `tools/numbers_snapshot.py` and `tests/fixtures/numbers/snapshot.json` hold, for eleven scenarios, the gauge, length, part, colour and lock of every wire, every finding with its text and the SHA-256 of every written file; `tests/test_numbers_snapshot.py` fails and names the wire, finding or file that moved. `docs/changes.md` records every change that moves a result, with before and after.
+
 ## 1.11.1 (2026-11-01; not a statement of compliance)
 
 ### Changed

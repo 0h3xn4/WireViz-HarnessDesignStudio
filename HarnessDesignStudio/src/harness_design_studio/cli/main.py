@@ -111,9 +111,13 @@ def _validate(path: Path, *, merge_check: bool) -> int:
 
         extra.extend(release_integrity(result.project))
     if not result.project.recovered:
+        from harness_design_studio.core import configcheck
         from harness_design_studio.core.verify import link_issues
 
         extra.extend(link_issues(result.project))  # a harness made from a link must match it
+        # a value of config/*.json that is set but cannot be used: the same check as `generate`, `drc`
+        # and `config` (D-191); before, `validate` said "0 error(s)" for a value they refuse
+        extra.extend(configcheck.validate(result.project))
     return _print_report(result, extra)
 
 
