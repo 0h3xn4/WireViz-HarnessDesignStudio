@@ -190,3 +190,52 @@ def test_the_panel_has_a_name_and_rows_have_accessible_text(ctl, theme, qtbot) -
     panel.show_object("wire", a_wire(ctl))
     assert panel.accessibleName() == "Why"
     assert all(r.accessibleName() for r in panel.rows)
+
+
+# ---- the calculation of a wire (D-191, step 1b) ---------------------------------------------
+
+
+def test_a_wire_offers_its_calculation_closed_until_asked(ctl, theme, qtbot) -> None:
+    panel = make(ctl, theme, qtbot)
+    panel.show_object("wire", a_wire(ctl))
+    assert panel.explain_button is not None
+    assert panel.explain_button.text() == "Show the calculation"
+    assert panel.explain_texts == []  # progressive disclosure: nothing more on screen yet
+
+
+def test_the_calculation_shown_is_the_text_of_the_explain_command(ctl, theme, qtbot) -> None:
+    from harness_design_studio.core.derive import explain_wire, render
+
+    wid = a_wire(ctl)
+    panel = make(ctl, theme, qtbot)
+    panel.show_object("wire", wid)
+    assert panel.explain_button is not None
+    panel.explain_button.click()
+    QApplication.processEvents()
+    assert [t.text() for t in panel.explain_texts] == [
+        render(d) for d in explain_wire(ctl.project, wid)
+    ]
+    shown = "\n".join(t.text() for t in panel.explain_texts)
+    for must in ("Equation:", "Inputs:", "Rests on:", "A-ROUND-TRIP", "[config/derating.json"):
+        assert must in shown
+    assert panel.explain_button.text() == "Hide the calculation"
+    panel.explain_button.click()
+    assert panel.explain_texts == []
+
+
+def test_the_calculation_closes_when_another_object_is_chosen(ctl, theme, qtbot) -> None:
+    panel = make(ctl, theme, qtbot)
+    panel.show_object("wire", a_wire(ctl))
+    assert panel.explain_button is not None
+    panel.explain_button.click()
+    assert panel.explain_texts
+    panel.show_object("harness", "W001")
+    assert panel.explain_button is None and panel.explain_texts == []
+    panel.show_object("wire", a_wire(ctl))
+    assert panel.explain_texts == []
+
+
+def test_nothing_to_explain_for_a_wire_that_no_longer_exists(ctl, theme, qtbot) -> None:
+    panel = make(ctl, theme, qtbot)
+    panel.show_object("wire", "W999-999")
+    assert panel.explain_button is None
