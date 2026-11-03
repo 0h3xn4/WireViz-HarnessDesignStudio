@@ -908,3 +908,71 @@ def test_looking_up_a_rule_that_does_not_exist_is_harmless(host) -> None:
     assert panel.model.row_of("no-such-rule") is None
     assert panel.select_rule("no-such-rule") is False
     assert panel.table.proxy.mapFromSource(QModelIndex()).isValid() is False
+
+
+# ---- the calculation behind a finding (D-191, step 1d) -------------------------------------
+
+
+@pytest.fixture
+def tight(qtbot, tmp_path):
+    """The flatsat with a low ampacity for AWG 22 and 24, so that wires carry too much."""
+    import json
+
+    folder = _flatsat(tmp_path)
+    path = folder / "config" / "derating.json"
+    doc = json.loads(path.read_text(encoding="utf-8"))
+    doc["values"]["ampacity_a_by_awg"].update({"22": 0.4, "24": 0.3})
+    path.write_text(json.dumps(doc), encoding="utf-8")
+    ctl = EditorController(drc_delay_ms=30)
+    ctl.open_path(folder)
+    ctl.run_drc_now()
+    panel = ChecksPanel(ctl, ThemeManager())
+    qtbot.addWidget(panel)
+    panel.resize(1100, 760)
+    panel.show()
+    QApplication.processEvents()
+    yield ctl, panel
+    ctl.wait_drc()
+
+
+def test_a_failing_current_finding_opens_its_calculation(tight) -> None:
+    from harness_design_studio.core.derive import explain_finding, render
+
+    ctl, panel = tight
+    assert panel.select_rule("current-over-wire")
+    result = result_of(panel, "current-over-wire")
+    assert result.status == "fail" and result.object_ids
+    details = panel.details
+    assert details.explain_btn.isVisibleTo(details) and details.explain_btn.isEnabled()
+    wire = details.current_object()
+    assert wire in result.object_ids
+    details.explain_btn.click()
+    QApplication.processEvents()
+    dialog = panel.explain_dialog
+    assert dialog.isVisible()
+    expected = "\n\n".join(
+        render(d) for d in explain_finding(ctl.project, "current-over-wire", wire)
+    )
+    assert dialog.text.toPlainText() == expected
+    assert "Derated current limit" in expected and "over the limit" in expected
+    dialog.close()
+
+
+def test_the_explain_button_is_only_there_for_a_rule_with_a_calculation(tight) -> None:
+    ctl, panel = tight
+    panel.select_rule("current-over-wire")
+    assert panel.details.explain_btn.isVisibleTo(panel.details)
+    assert panel.select_rule("part-unapproved")
+    assert not panel.details.explain_btn.isVisibleTo(panel.details)
+
+
+def test_what_has_no_calculation_gives_nothing_and_not_an_error(tight) -> None:
+    from harness_design_studio.core.derive import explain_finding
+
+    ctl, _panel = tight
+    assert explain_finding(ctl.project, "part-unapproved", "EX-WIRE-SINGLE") == []
+    assert explain_finding(ctl.project, "current-over-wire", "NO-SUCH-WIRE") == []
+    assert explain_finding(ctl.project, "current-over-contact", "NO-DOT") == []
+    assert [d.id for d in explain_finding(ctl.project, "voltage-drop", "W001-001")] == [
+        "wire-voltage-drop"
+    ]
