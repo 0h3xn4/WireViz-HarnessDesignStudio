@@ -359,7 +359,8 @@ def test_names_and_tooltips(qtbot, tmp_path) -> None:
     assert combo.accessibleName() == "Role" and combo.toolTip()
     assert [combo.itemText(i) for i in range(combo.count())] == [
         "Systems engineer",
-        "Electrical / AIT engineer",
+        "Electrical engineer",
+        "AIT engineer",
     ]
     assert combo.objectName() == "settings-role"
     for button in (w.next_page.library, w.next_page.everything):
