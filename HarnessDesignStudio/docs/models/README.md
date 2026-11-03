@@ -6,6 +6,7 @@ This folder explains, for engineers, every calculation the tool makes: the equat
 
 - [How to use these pages](#how-to-use-these-pages)
 - [The models](#the-models)
+- [Every derivation as files](#every-derivation-as-files)
 - [The assumptions built into the program](#the-assumptions-built-into-the-program)
 
 ## How to use these pages
@@ -23,6 +24,15 @@ Every page follows the same order: what the tool decides, the equation, the inpu
 | [Wire sizing](wire-sizing.md) | The gauge of a wire: the current it may carry after derating, and its voltage drop | `harness-design-studio explain DIR WIRE` |
 
 Still to come, in the order of the plan: the limits of the other design rules (the contact current is done), pin allocation and segmentation, the test limits and "Ready to build".
+
+## Every derivation as files
+
+`harness-design-studio explain DIR --all --out FOLDER` writes how every number of the project was made, so that a result can be checked from a file, put into a spreadsheet or read by a script:
+
+- **`derivations.json`**: `format` (1), `tool_version`, the project name and the list of derivations, each with its `id` (the kind: `wire-length`, `wire-current-limit`, `wire-voltage-drop`, `wire-mass`, `harness-mass`, `part-bom`, `contact-current`), `subject`, `quantity`, `value`, `unit`, `equation`, the `inputs` (name, value, unit, source), the `steps`, the `check` (actual, limit, unit, passes, margin, text), the `assumptions` (each with its ID, kind and where it lives in the program) and what is `missing`. This is the same record that `explain --json` prints for one object.
+- **`derivations.csv`**: one row for each derivation with the columns *Kind, Subject, Quantity, Value, Unit, Equation, Actual, Limit, Margin, Verdict, Assumptions, Missing*. Filter *Verdict* on `fail` to see every limit that is exceeded, and *Missing* to see what the project has not set.
+
+There is no time, user name or path in the files: the same design gives the same bytes, so two engineers can compare their files, and a change of the files means a change of the design, the configuration, the library or the tool. A value that is not set has an empty *Value* and says in *Missing* what to set. The files are written only to the folder you name; no project file is changed.
 
 ## The assumptions built into the program
 

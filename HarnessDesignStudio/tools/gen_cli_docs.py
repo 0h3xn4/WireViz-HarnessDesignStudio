@@ -44,6 +44,7 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio explain wheel-link W001-001",
         "harness-design-studio explain wheel-link W001",
         "harness-design-studio explain wheel-link EX-WIRE-SINGLE",
+        "harness-design-studio explain wheel-link --all --out wheel-link-derivations",
         "harness-design-studio explain wheel-link IF-001.GPSU1-J01",
         "harness-design-studio explain wheel-link W001-001 --json",
     ],
