@@ -14,6 +14,7 @@ from typing import Any
 
 from harness_design_studio import __version__
 from harness_design_studio.cli import (
+    asbuilt_cmd,
     blocked_text,
     changes,
     data,
@@ -99,6 +100,7 @@ def build_parser() -> argparse.ArgumentParser:
     settings_cmd.register(sub)
     changes.register(sub)
     data.register(sub)
+    asbuilt_cmd.register(sub)
     return parser
 
 
@@ -407,6 +409,8 @@ NOTHING_DONE = {
     "journal": "listed", "override": "changed", "deviation": "recorded",
     "export-data": "exported",
     "imports": "listed",
+    "workflow": "listed", "asbuilt": "reported", "import-asbuilt": "imported",
+    "export-asbuilt": "exported",
 }  # fmt: skip
 
 MUTATING = {
@@ -423,6 +427,7 @@ def _project_lock(args: argparse.Namespace) -> Iterator[None]:
     writes = (
         args.command in MUTATING
         or (args.command in journal_cmd.COMMANDS and journal_cmd.mutates(args))
+        or (args.command in asbuilt_cmd.COMMANDS and asbuilt_cmd.mutates(args))
         or (
             args.command == "config"
             and (
@@ -496,6 +501,8 @@ def _dispatch(args: argparse.Namespace) -> int:
         return data.run(args)
     if args.command in changes.COMMANDS:
         return changes.run(args)
+    if args.command in asbuilt_cmd.COMMANDS:
+        return asbuilt_cmd.run(args)
     rep = Report(args.json)
     if args.command == "migrate":
         migrated = migrate_project(args.project)

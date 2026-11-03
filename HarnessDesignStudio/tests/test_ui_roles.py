@@ -99,7 +99,8 @@ def test_choosing_electrical_stores_the_role_and_shows_everything(qtbot, tmp_pat
     w = show(qtbot, make(qtbot, tmp_path, first_run=True), Asked("electrical"))
     assert w.role == "electrical" and w.settings.value("ui/role") == "electrical"
     assert w.act_role_electrical.isChecked() and w.area() == "model"
-    assert all(b.isVisibleTo(w.rail) for b in w.rail.buttons.values())
+    assert all(w.rail.buttons[k].isVisibleTo(w.rail) for k in areas.listed_areas("electrical"))
+    assert not w.rail.buttons["asbuilt"].isVisibleTo(w.rail)  # the AIT engineer's page
     assert w.problem_notices_on()
 
 
@@ -225,17 +226,20 @@ def test_switching_in_both_directions_keeps_each_roles_layout(qtbot, tmp_path) -
 def test_the_two_actions_are_exclusive_and_the_menu_has_them(qtbot, tmp_path) -> None:
     w = show(qtbot, make(qtbot, tmp_path, ui__role="electrical"))
     acts = w.menu_role.actions()
-    assert [a.objectName() for a in acts] == ["act-role-systems", "act-role-electrical"]
+    assert [a.objectName() for a in acts] == [
+        "act-role-systems", "act-role-electrical", "act-role-ait",
+    ]  # fmt: skip
     assert all(a.isCheckable() for a in acts)
     assert w.menu_role.title() == "Role"
     view = next(a.menu() for a in w.menuBar().actions() if a.text().replace("&", "") == "View")
     assert w.menu_role.menuAction() in view.actions()
-    assert [a.isChecked() for a in acts] == [False, True]
+    assert [a.isChecked() for a in acts] == [False, True, False]
     acts[0].trigger()
-    assert [a.isChecked() for a in acts] == [True, False]
+    assert [a.isChecked() for a in acts] == [True, False, False]
     assert {
         w.act_role_systems.shortcut().toString(),
         w.act_role_electrical.shortcut().toString(),
+        w.act_role_ait.shortcut().toString(),
     } == {""}
 
 
@@ -322,7 +326,7 @@ def test_the_systems_role_keeps_what_m2_and_m4_added(qtbot, tmp_path) -> None:
 
 def test_the_electrical_role_lists_every_area_and_opens_the_diagram(qtbot, tmp_path) -> None:
     w = show(qtbot, make(qtbot, tmp_path, ui__role="electrical"))
-    assert all(b.isVisibleTo(w.rail) for b in w.rail.buttons.values())
+    assert all(w.rail.buttons[k].isVisibleTo(w.rail) for k in areas.listed_areas("electrical"))
     assert w.area() == "model"
     w.rail.buttons["next"].click()  # the Next step page is reachable, though not first
     assert w.area() == "next"
@@ -347,7 +351,8 @@ def test_names_and_tooltips(qtbot, tmp_path) -> None:
     w = show(qtbot, make(qtbot, tmp_path, ui__role="systems"))
     for act, text in (
         (w.act_role_systems, "Systems engineer"),
-        (w.act_role_electrical, "Electrical / AIT engineer"),
+        (w.act_role_electrical, "Electrical engineer"),
+        (w.act_role_ait, "AIT engineer"),
     ):
         assert act.text() == text and act.toolTip() and act.toolTip() != text
     combo = w.settings_page.role_combo

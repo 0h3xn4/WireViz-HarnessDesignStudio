@@ -17,7 +17,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
-from harness_design_studio.core import settings
+from harness_design_studio.core import asbuilt, settings
 from harness_design_studio.core.deviations import deviation_lines, override_lines, override_text
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Connector, Harness, Project, Wire
@@ -33,6 +33,21 @@ FILE_SUFFIX = "_build.xlsx"
 SHEETS = (
     "Start here", "Cut list", "Connectors", "Parts", "Accessories", "Labels", "Tests", "About"
 )  # fmt: skip
+ASBUILT_SHEET = "As-built"  # between Tests and About, only for a harness that has as-built records
+
+
+def sheet_names(project: Project, h: Harness) -> list[str]:
+    """The sheets of the workbook of `h`: `SHEETS`, with *As-built* before *About* when the project
+    holds as-built records of this harness (S9); every other harness has the sheets it always had."""
+    names = list(SHEETS)
+    if has_asbuilt(project, h):
+        names.insert(names.index("About"), ASBUILT_SHEET)
+    return names
+
+
+def has_asbuilt(project: Project, h: Harness) -> bool:
+    return any(r.harness_id == h.id for r in project.asbuilt.values())
+
 
 CUT_HEADER = [
     "Cut (x)", "Wire", "Colour", "AWG", "Part", "Length (m)", "Strip A (mm)", "Strip B (mm)", "From",
@@ -710,6 +725,24 @@ def _tests_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
     _finish(ws, lay, stamp, body, tab="C0392B", freeze="B2")
 
 
+def _asbuilt_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
+    """What the technicians recorded for this harness and how it compares with the design and the
+    test limits (`core.asbuilt`): every line, the same rows as `system/asbuilt_report.csv`. The
+    sheet says nothing about a pass; a value out of its limit is red, a missing one amber."""
+    ws = wb.create_sheet(ASBUILT_SHEET)
+    lay = _Layout({})
+    rows = asbuilt.report_rows(project, h.id)
+    body: list[list[Any]] = [_header(ws, lay, rows[0])]
+    shade = {asbuilt.OUT: _RED, asbuilt.MISSING: _AMBER, asbuilt.WITHIN: _GREEN, asbuilt.STALE: _AMBER}  # fmt: skip
+    for r in rows[1:]:
+        fill = shade.get(r[4])
+        body.append([_cell(ws, v, fill=fill if n == 4 else None, bold=n == 2) for n, v in enumerate(r)])  # fmt: skip
+        for n, v in enumerate(r, start=1):
+            lay.see(n, v, cap=60.0)
+    ws.auto_filter.ref = f"A1:{_letter(len(rows[0]))}{len(rows)}"
+    _finish(ws, lay, stamp, body, tab="7F8C8D", freeze="A2")
+
+
 def _about_sheet(wb: Any, stamp: Stamp) -> None:
     """The same two rows as the other workbooks, so the verifier reads the stamp the same way."""
     ws = wb.create_sheet("About")
@@ -730,6 +763,8 @@ def build_workbook(project: Project, h: Harness, stamp: Stamp) -> bytes:
     _accessories_sheet(wb, project, h, stamp)
     _labels_sheet(wb, project, h, stamp)
     _tests_sheet(wb, project, h, stamp)
+    if has_asbuilt(project, h):
+        _asbuilt_sheet(wb, project, h, stamp)
     _about_sheet(wb, stamp)
     raw = io.BytesIO()
     wb.save(raw)
@@ -755,5 +790,6 @@ def cut_rows(project: Project, h: Harness) -> Table:
 
 
 __all__ = [
-    "FILE_SUFFIX", "SHEETS", "Check", "build_workbook", "cut_rows", "readiness", "ready_text",
+    "ASBUILT_SHEET", "FILE_SUFFIX", "SHEETS", "Check", "build_workbook", "cut_rows", "has_asbuilt",
+    "readiness", "ready_text", "sheet_names",
 ]  # fmt: skip

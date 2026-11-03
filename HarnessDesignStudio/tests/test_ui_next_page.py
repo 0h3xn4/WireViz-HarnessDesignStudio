@@ -223,9 +223,11 @@ def test_the_settings_page_and_the_menu_are_two_views_of_one_setting(qtbot, tmp_
     assert combo.currentData() == "electrical"
     # the two actions are in the submenu View > Role
     first = w.menu_role.actions()
-    assert [a.objectName() for a in first] == ["act-role-systems", "act-role-electrical"]
+    assert [a.objectName() for a in first] == [
+        "act-role-systems", "act-role-electrical", "act-role-ait",
+    ]  # fmt: skip
     assert all(a.isCheckable() and a.toolTip() for a in first)
-    assert [a.text() for a in first] == ["Systems engineer", "Electrical / AIT engineer"]
+    assert [a.text() for a in first] == ["Systems engineer", "Electrical engineer", "AIT engineer"]
 
 
 def test_a_hand_edited_value_falls_back(qtbot, tmp_path):

@@ -5,6 +5,7 @@ from typing import Annotated, Any
 
 from pydantic import Field
 
+from .asbuilt import AsBuiltRecord
 from .base import Entity, Name, Text
 from .config import ConfigFile, default_configs
 from .generation import GenerationRecord
@@ -54,6 +55,9 @@ class Project:
     changelog: dict[str, ChangeEntry] = field(default_factory=dict)
     # what each import read, dropped and converted (imports/records.json); not in the model hash
     import_records: dict[str, ImportRecord] = field(default_factory=dict)
+    # what was built and measured (asbuilt/records.json, S9): optional like the journal and the
+    # import records, so a project that has none has no such file; not in the model hash
+    asbuilt: dict[str, AsBuiltRecord] = field(default_factory=dict)
     config: dict[str, ConfigFile] = field(default_factory=default_configs)
     generation: GenerationRecord | None = None
     # The change journal (S4): None for a project that has none; the project has one if and only if

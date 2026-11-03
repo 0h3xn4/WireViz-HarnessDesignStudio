@@ -63,9 +63,9 @@ The tool shows some problem signs without being asked: the **Problems (n)** butt
 
 ![The View menu with Show problem notices ticked](../img/problem-notices-setting.png)
 
-- **Each role keeps its own choice.** The notices are on in the Electrical / AIT engineer role and off as a Systems engineer until you say otherwise.
+- **Each role keeps its own choice.** The notices are on in the Electrical engineer role and off as a Systems engineer until you say otherwise.
 - **Turning them off hides nothing you ask for.** The **Check** button (F5) and its result, the **Checks** area, the **Problems** panel (**View > Problems panel**, Ctrl+Shift+M), the **Next step** page and the error texts in windows stay. So do the banners that say why something cannot be done: read-only, locked, damaged files and the sample project.
-- **Turn them on again** with the same menu entry. The picture above is the View menu of the Electrical / AIT engineer role (made from the real window; the Systems engineer role has one more entry at the top, **Show side panels**).
+- **Turn them on again** with the same menu entry. The picture above is the View menu of the Electrical engineer role (made from the real window; the Systems engineer role has one more entry at the top, **Show side panels**).
 
 ## 3. On the command line
 

@@ -46,7 +46,11 @@ THEMES = (
     ("dark", strings.SETTINGS_THEME_DARK),
 )
 MODES = (("guided", strings.GUIDED), ("expert", strings.EXPERT))
-ROLES = (("systems", strings.ROLE_SYSTEMS), ("electrical", strings.ROLE_ELECTRICAL))
+ROLES = (
+    ("systems", strings.ROLE_SYSTEMS),
+    ("electrical", strings.ROLE_ELECTRICAL),
+    ("ait", strings.ROLE_AIT),
+)
 SECTIONS = (
     ("appearance", strings.SETTINGS_SECTION_APPEARANCE),
     ("editing", strings.SETTINGS_SECTION_EDITING),

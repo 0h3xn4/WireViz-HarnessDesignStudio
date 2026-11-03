@@ -6,10 +6,15 @@
 
 One big card (the step, one sentence, the one primary button), the six steps below it, each with an
 icon and a word for its state (never colour alone), and a small link-style button that switches the
-role to Electrical / AIT engineer, and one that opens the library (both for the Systems engineer
-role, whose rail has neither Home nor the detail areas). It only shows and calls back: `actions`
-maps the key of a `Next` (and `new_harness`, `show_everything`, `library`) to a flow of the window.
-The logic is in `gui/next_step.py`.
+role to Electrical engineer, and one that opens the library (both for the Systems engineer
+role, whose rail has neither Home nor the detail areas). Below the steps a disclosure, closed until
+it is opened, *What this step uses and makes* (S9): the project files and outputs the step uses and
+makes, what can be looked at, and the state of all the steps of the workflow, from `core/workflow.py`
+(the window gives `set_workflow_provider` the function that works the report out, and it is called
+only while the disclosure is open). A quiet line says how many engineering values are still to set,
+with a button, in every role (the status bar's own link is off for the Systems engineer role). It only
+shows and calls back: `actions` maps the key of a `Next` (and `new_harness`, `show_everything`,
+`library`, `values`, `asbuilt`) to a flow of the window. The logic is in `gui/next_step.py`.
 """
 
 from collections.abc import Callable, Mapping
@@ -21,14 +26,16 @@ from PySide6.QtWidgets import (
     QLabel,
     QPushButton,
     QScrollArea,
+    QToolButton,
     QVBoxLayout,
     QWidget,
 )
 
+from harness_design_studio.core import workflow as core_workflow
 from harness_design_studio.gui import icons, strings
 from harness_design_studio.gui.next_step import Next, StepLine
 from harness_design_studio.gui.pages import _card, _page
-from harness_design_studio.gui.roles import SYSTEMS
+from harness_design_studio.gui.roles import AIT, SYSTEMS
 from harness_design_studio.gui.theme import ThemeManager
 
 ICON_PX = 16
@@ -201,6 +208,63 @@ class NextStepPage(QScrollArea):
             self.rows.append(r)
         column.addWidget(steps_card)
 
+        # a quiet line, only while engineering values are still to set; the status bar's link to
+        # them is off for the Systems engineer role, so the page that role starts on carries it
+        self.pending = QFrame()
+        self.pending.setObjectName("next-pending-values")
+        self.pending.setAccessibleName(strings.NEXT_PENDING_NAME)
+        prow = QHBoxLayout(self.pending)
+        prow.setContentsMargins(0, 0, 0, 0)
+        self.pending_text = QLabel()
+        self.pending_text.setObjectName("next-pending-text")
+        self.pending_text.setProperty("muted", True)
+        self.pending_text.setWordWrap(True)
+        self.pending_button = QPushButton(strings.NEXT_PENDING_BUTTON)
+        self.pending_button.setObjectName("next-pending-button")
+        self.pending_button.setProperty("ghost", True)
+        self.pending_button.setToolTip(strings.NEXT_PENDING_TIP)
+        self.pending_button.setAccessibleName(strings.NEXT_PENDING_BUTTON.rstrip("…"))
+        self.pending_button.clicked.connect(lambda _c=False: self._call("values"))
+        prow.addWidget(self.pending_text, 1)
+        prow.addWidget(self.pending_button)
+        self.pending.hide()
+        column.addWidget(self.pending)
+
+        # what this step uses and makes: closed until opened, worked out only while open (S9)
+        self._provider: Callable[[], core_workflow.WorkflowReport] | None = None
+        self._wf_step = ""
+        self.wf_toggle = QToolButton()
+        self.wf_toggle.setObjectName("next-wf-toggle")
+        self.wf_toggle.setText(strings.NEXT_WF_TOGGLE)
+        self.wf_toggle.setCheckable(True)
+        self.wf_toggle.setChecked(False)
+        self.wf_toggle.setArrowType(Qt.ArrowType.RightArrow)
+        self.wf_toggle.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextBesideIcon)
+        self.wf_toggle.setAccessibleName(strings.NEXT_WF_TOGGLE)
+        self.wf_toggle.toggled.connect(self._wf_toggled)
+        self.wf_body = QFrame()
+        self.wf_body.setObjectName("next-wf-body")
+        self.wf_body.setProperty("card", True)
+        self.wf_body.setAccessibleName(strings.NEXT_WF_NAME)
+        wlay = QVBoxLayout(self.wf_body)
+        wlay.setContentsMargins(theme.space(16), theme.space(12), theme.space(16), theme.space(12))
+        wlay.setSpacing(theme.space(8))
+        self.wf_labels: dict[str, QLabel] = {}
+        for key in ("step", "uses", "makes", "look", "all"):
+            label = QLabel()
+            label.setObjectName(f"next-wf-{key}")
+            label.setWordWrap(True)
+            if key in ("uses", "makes", "look", "all"):
+                label.setProperty("muted", True)
+            if key == "step":
+                label.setProperty("heading", True)
+            label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+            self.wf_labels[key] = label
+            wlay.addWidget(label)
+        self.wf_body.hide()
+        column.addWidget(self.wf_toggle, 0, Qt.AlignmentFlag.AlignLeft)
+        column.addWidget(self.wf_body)
+
         # a quiet line, only while a file that was imported has changed since (D-193)
         self.imports_note = QLabel()
         self.imports_note.setObjectName("next-imports-changed")
@@ -230,6 +294,15 @@ class NextStepPage(QScrollArea):
         links.addWidget(self.everything)
         links.addStretch(1)
         column.addWidget(self.links, 0, Qt.AlignmentFlag.AlignLeft)
+        # the way to the as-built records for the AIT role
+        self.asbuilt = QPushButton(strings.NEXT_ASBUILT)
+        self.asbuilt.setObjectName("next-asbuilt")
+        self.asbuilt.setProperty("ghost", True)
+        self.asbuilt.setAccessibleName(strings.NEXT_ASBUILT.rstrip("…"))
+        self.asbuilt.setToolTip(strings.NEXT_ASBUILT_TIP)
+        self.asbuilt.clicked.connect(lambda _c=False: self._call("asbuilt"))
+        self.asbuilt.hide()
+        column.addWidget(self.asbuilt, 0, Qt.AlignmentFlag.AlignLeft)
         column.addStretch(1)
         self.show_next_placeholder()
 
@@ -279,8 +352,56 @@ class NextStepPage(QScrollArea):
         self.imports_note.setVisible(bool(text))
 
     def set_role(self, role: str) -> None:
-        """The two links are for the Systems engineer role."""
+        """The library and Show everything links are for the Systems engineer role, the as-built
+        button for the AIT role."""
         self.links.setVisible(role == SYSTEMS)
+        self.asbuilt.setVisible(role == AIT)
+
+    def show_pending_values(self, count: int) -> None:
+        """The line about engineering values still to set (0 hides it)."""
+        self.pending.setVisible(count > 0)
+        if count > 0:
+            self.pending_text.setText(strings.NEXT_PENDING_VALUES[0 if count == 1 else 1].format(count))  # fmt: skip
+
+    # ---- what this step uses and makes ----------------------------------------------------------
+    def set_workflow_provider(self, provider: Callable[[], core_workflow.WorkflowReport]) -> None:
+        """The function that works the workflow report out (called only while the disclosure is
+        open)."""
+        self._provider = provider
+
+    def workflow_open(self) -> bool:
+        return self.wf_toggle.isChecked()
+
+    def _wf_toggled(self, on: bool) -> None:
+        self.wf_toggle.setArrowType(Qt.ArrowType.DownArrow if on else Qt.ArrowType.RightArrow)
+        self.wf_body.setVisible(on)
+        if on:
+            self.refresh_workflow()
+
+    def refresh_workflow(self) -> None:
+        """Fill the disclosure from the report (nothing is worked out while it is closed)."""
+        if not self.wf_toggle.isChecked() or self._provider is None:
+            return
+        report = self._provider()
+        current = core_workflow.NEXT_KEY_STEP.get(self._key, "")
+        pairs = {d.key: (d, s) for d, s in report.steps}
+        focus = pairs.get(current) or next(iter(pairs.values()), None)
+        if focus is not None:
+            d, _s = focus
+            self.wf_labels["step"].setText(strings.NEXT_WF_STEP.format(d.title))
+            self.wf_labels["uses"].setText(strings.NEXT_WF_USES.format("; ".join(i.name for i in d.consumes)))  # fmt: skip
+            self.wf_labels["makes"].setText(strings.NEXT_WF_MAKES.format("; ".join(i.name for i in d.produces)))  # fmt: skip
+            look = "; ".join(f"{i.what} ({i.how})" for i in d.inspect)
+            self.wf_labels["look"].setText(strings.NEXT_WF_LOOK.format(look) if look else "")
+            self.wf_labels["look"].setVisible(bool(look))
+        lines = [strings.NEXT_WF_ALL]
+        for d, s in report.steps:
+            line = strings.NEXT_WF_LINE.format(d.title, strings.NEXT_WF_STATES[s.state], s.detail)
+            if s.blocked_by:
+                titles = ", ".join(core_workflow.step(k).title for k in s.blocked_by)
+                line += " " + strings.NEXT_WF_BLOCKED_BY.format(titles)
+            lines.append(line)
+        self.wf_labels["all"].setText("\n".join(lines))
 
     def shown(self) -> Next | None:
         return self._shown

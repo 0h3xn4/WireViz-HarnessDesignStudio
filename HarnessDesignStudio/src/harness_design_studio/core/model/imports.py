@@ -29,10 +29,11 @@ ImportKind = Literal[
     "ampacity",
     "devices",
     "subsystem",
+    "asbuilt",
 ]
 IMPORT_KINDS: tuple[str, ...] = (
     "parts", "interfaces", "lengths", "strip-lengths", "pin-contacts", "accessories",
-    "part-tools", "pinout", "netlist", "ampacity", "devices", "subsystem",
+    "part-tools", "pinout", "netlist", "ampacity", "devices", "subsystem", "asbuilt",
 )  # fmt: skip
 KIND_WORDS: dict[str, str] = {
     "parts": "approved parts",
@@ -47,6 +48,7 @@ KIND_WORDS: dict[str, str] = {
     "ampacity": "ampacity table",
     "devices": "device library",
     "subsystem": "subsystem library",
+    "asbuilt": "as-built records",
 }
 MAX_LISTED = 200  # rows listed in one record; the counts are always the whole number
 Sha256 = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{64}$")]

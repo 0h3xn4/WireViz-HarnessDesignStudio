@@ -59,7 +59,9 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio import __version__
 from harness_design_studio.core import (
+    asbuilt,
     checks,
+    configcheck,
     device_library,
     drc,
     edit,
@@ -67,6 +69,7 @@ from harness_design_studio.core import (
     part_approval,
 )
 from harness_design_studio.core import links as core_links
+from harness_design_studio.core import workflow as core_workflow
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError
@@ -98,6 +101,7 @@ from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, 
 from harness_design_studio.core.vcs.roles import default_name, distinct_roles_on
 from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import areas, recent, strings
+from harness_design_studio.gui.asbuilt_page import AsBuiltPage
 from harness_design_studio.gui.assumptions_dialog import AssumptionsDialog
 from harness_design_studio.gui.canvas import DiagramView, ZoomIndicator
 from harness_design_studio.gui.checks_panel import ChecksPanel, PendingValuesLink
@@ -162,7 +166,9 @@ from harness_design_studio.gui.release_text import plain_blocker
 from harness_design_studio.gui.releases_panel import ReleasesPanel
 from harness_design_studio.gui.role_dialog import RoleDialog
 from harness_design_studio.gui.roles import (
+    AIT,
     ELECTRICAL,
+    STARTS_ON_NEXT,
     SYSTEMS,
     clean_role,
     default_role,
@@ -740,6 +746,16 @@ class MainWindow(QMainWindow):
                 "done": lambda: self._next_go("lists"),
                 "show_everything": lambda: self.show_everything(),
                 "library": lambda: self.open_library_flow(),
+                "values": lambda: self.values_flow(),
+                "asbuilt": lambda: self.set_area("asbuilt"),
+            },
+        )
+        self.next_page.set_workflow_provider(self._workflow_report)
+        self.asbuilt_page = AsBuiltPage(
+            self.theme,
+            actions={
+                "import": lambda: self.asbuilt_import_flow(),
+                "export": lambda: self.asbuilt_export_flow(),
             },
         )
         self.settings_page = SettingsPage(
@@ -763,12 +779,14 @@ class MainWindow(QMainWindow):
         shrinkable(self.home_page)  # a page never sets the minimum size of the window
         shrinkable(self.next_page)
         shrinkable(self.settings_page)
+        shrinkable(self.asbuilt_page)
         self.area_stack = QStackedWidget()
         self.area_stack.setObjectName("area-stack")
         self.area_stack.addWidget(self.main_tabs)
         self.area_stack.addWidget(self.home_page)
         self.area_stack.addWidget(self.next_page)
         self.area_stack.addWidget(self.settings_page)
+        self.area_stack.addWidget(self.asbuilt_page)
         outer.addWidget(self.area_stack, 1)
         self.main_tabs.currentChanged.connect(lambda _i: self._tab_changed())
         self.setCentralWidget(shell)
@@ -1687,7 +1705,7 @@ class MainWindow(QMainWindow):
         )
         self.act_select_tool = a(strings.TOOL_SELECT, self.ctl.end_connect, name="act-select")
         self.act_add_zone = a(strings.A_ADD_ZONE, self.add_zone_flow, name="act-add-zone")
-        # the two roles (D-176): exclusive, checkable; View > Role and Settings are views of them
+        # the three roles (D-176, S9): exclusive, checkable; View > Role and Settings are views of them
         self.act_role_systems = a(
             strings.ROLE_SYSTEMS,
             lambda: self.set_role(SYSTEMS),
@@ -1700,11 +1718,16 @@ class MainWindow(QMainWindow):
             checkable=True,
             name="act-role-electrical",
         )
+        self.act_role_ait = a(
+            strings.ROLE_AIT, lambda: self.set_role(AIT), checkable=True, name="act-role-ait"
+        )
         self.act_role_systems.setToolTip(strings.ROLE_SYSTEMS_TIP)
         self.act_role_electrical.setToolTip(strings.ROLE_ELECTRICAL_TIP)
+        self.act_role_ait.setToolTip(strings.ROLE_AIT_TIP)
         rgroup = QActionGroup(self)
         rgroup.addAction(self.act_role_systems)
         rgroup.addAction(self.act_role_electrical)
+        rgroup.addAction(self.act_role_ait)
         self.act_role_electrical.setChecked(True)
         self.act_guided = a(
             strings.GUIDED, lambda: self.ctl.set_mode("guided"), checkable=True, name="act-guided"
@@ -1858,6 +1881,12 @@ class MainWindow(QMainWindow):
             strings.GO_HOME, lambda: self.set_area("home"), "Ctrl+7", name="act-go-home"
         )
         self.act_go_settings = a(strings.GO_SETTINGS, lambda: self.set_area("settings"), "Ctrl+,", name="act-go-settings")  # fmt: skip
+        # the as-built records (S9): the page, and the two files that go with it
+        self.act_go_asbuilt = a(strings.GO_ASBUILT, lambda: self.set_area("asbuilt"), name="act-go-asbuilt")  # fmt: skip
+        self.act_import_asbuilt = a(strings.A_IMPORT_ASBUILT, self.asbuilt_import_flow, name="act-import-asbuilt")  # fmt: skip
+        self.act_import_asbuilt.setToolTip(strings.A_IMPORT_ASBUILT_TIP)
+        self.act_export_asbuilt = a(strings.A_EXPORT_ASBUILT, self.asbuilt_export_flow, name="act-export-asbuilt")  # fmt: skip
+        self.act_export_asbuilt.setToolTip(strings.A_EXPORT_ASBUILT_TIP)
         for k, (name, label) in enumerate(
             zip(
                 MAIN_TABS,
@@ -2024,7 +2053,9 @@ class MainWindow(QMainWindow):
         self.menu_import.addAction(self.act_import)
         for act in self.import_actions.values():
             self.menu_import.addAction(act)
+        self.menu_import.addAction(self.act_import_asbuilt)
         f.addAction(self.act_export)
+        f.addAction(self.act_export_asbuilt)
         f.addSeparator()
         f.addAction(self.act_library)
         f.addAction(self.act_library_folder)
@@ -2082,6 +2113,7 @@ class MainWindow(QMainWindow):
         self.menu_role.setObjectName("menu-role")
         self.menu_role.addAction(self.act_role_systems)
         self.menu_role.addAction(self.act_role_electrical)
+        self.menu_role.addAction(self.act_role_ait)
         v.addSeparator()
         v.addAction(self.act_problem_notices)
         v.addSeparator()
@@ -2137,6 +2169,7 @@ class MainWindow(QMainWindow):
         g.addAction(self.act_go_home)
         for act in self.go_actions.values():
             g.addAction(act)
+        g.addAction(self.act_go_asbuilt)
         g.addAction(self.act_go_settings)
         g.addAction(self.act_go_interfaces)
         g.addAction(self.act_go_units)
@@ -3491,7 +3524,8 @@ class MainWindow(QMainWindow):
         self.role = value
         systems = value == SYSTEMS
         self.act_role_systems.setChecked(systems)
-        self.act_role_electrical.setChecked(not systems)
+        self.act_role_electrical.setChecked(value == ELECTRICAL)
+        self.act_role_ait.setChecked(value == AIT)
         self.next_page.set_role(value)
         self.rail.set_hidden(areas.hidden_in(value))
         for w in (self.redundant_btn, self.delete_btn, self.zoom_out_btn, self.zoom_in_btn):
@@ -3572,7 +3606,7 @@ class MainWindow(QMainWindow):
         value = dlg.choice or ELECTRICAL
         self._role_to_ask = False
         self.set_role(value, save_left=False)
-        if value == SYSTEMS:
+        if value in STARTS_ON_NEXT:
             self._show_area("next")
         return value
 
@@ -3675,9 +3709,9 @@ class MainWindow(QMainWindow):
         self.set_area(areas.DEFAULT)
 
     def _open_for_role(self) -> None:
-        """A project was opened: the Systems engineer role starts on the next step (the other one
-        stays where it is)."""
-        if self.role == SYSTEMS:
+        """A project was opened: the Systems engineer and the AIT roles start on the next step (the
+        Electrical engineer stays where it is)."""
+        if self.role in STARTS_ON_NEXT:
             self._show_area("next")
 
     def _next_problem_facts(self) -> dict[str, Any]:
@@ -3758,6 +3792,69 @@ class MainWindow(QMainWindow):
     def _update_next(self, status: ShellStatus) -> None:
         self.next_page.show_next(next_step(self._next_inputs(status)))
         self.next_page.show_import_note(self._imports_changed_text())
+        self.next_page.show_pending_values(len(configcheck.missing(self.ctl.project)))
+        self.next_page.refresh_workflow()  # (only works anything out while it is open)
+
+    def _workflow_report(self) -> core_workflow.WorkflowReport:
+        """The workflow for the disclosure of the Next step page: the rule check as the editor has
+        it (the rules are not run again), the outputs folder of the project."""
+        c = self.ctl
+        results = c.drc_rule_results() if c.drc_current else []
+        failing = [r for r in results if r.status == "fail"]
+        errors = sum(1 for r in failing if r.severity == "error")
+        check = core_workflow.Check(c.drc_current, errors, len(failing) - errors)
+        folder = c.root / "outputs" if c.root is not None else None
+        return core_workflow.workflow_report(c.project, folder, check=check)
+
+    # ---- the as-built records (S9) --------------------------------------------------------------
+    def _update_asbuilt(self) -> None:
+        """Show the report of the open project on the As-built page."""
+        self.asbuilt_page.show_report(asbuilt.asbuilt_report(self.ctl.project))
+
+    def asbuilt_import_flow(self) -> None:
+        """Read a filled-in as-built sheet and keep its records (one undo step); a row the design
+        cannot take is named and nothing is changed."""
+        from harness_design_studio.core.imports import ImportError_
+
+        c = self.ctl
+        if c.read_only:
+            self.toasts.show_message(strings.ASB_READ_ONLY, None)
+            return
+        path = self.ask_open_path(strings.ASB_IMPORT_TITLE, strings.ASB_FILE_FILTER)
+        if not path:
+            return
+        try:
+            imp = asbuilt.read_import(c.project, Path(path), c.root)
+        except (ImportError_, HarnessError, OSError) as exc:
+            self._error(strings.ASB_UNREADABLE.format(exc))
+            return
+        refused = [r for r in imp.plan.rows if not r.ok]
+        if refused:
+            self.toasts.show_message(strings.ASB_REFUSED.format(len(refused), f"row {refused[0].row_number}: {refused[0].message}"), None, 12000)  # fmt: skip
+            return
+        if not imp.ops:
+            self.toasts.show_message(strings.ASB_UP_TO_DATE, None)
+            return
+        counts = imp.plan.counts()
+        c.run("Import as-built records", imp.ops, message=strings.ASB_IMPORTED.format(counts["added"] + counts["changed"], counts["added"], counts["changed"]))  # fmt: skip
+        self._update_asbuilt()
+
+    def asbuilt_export_flow(self) -> None:
+        """Save the sheet a technician fills in (CSV or Excel)."""
+        path = self.ask_save_path(
+            strings.ASB_EXPORT_TITLE, "asbuilt.csv", strings.ASB_EXPORT_FILTER
+        )
+        if not path:
+            return
+        target = Path(path)
+        if target.suffix.lower() not in (".csv", ".xlsx"):
+            target = target.with_suffix(".csv")
+        try:
+            target.write_bytes(asbuilt.template_bytes(self.ctl.project, target.suffix))
+        except (OSError, HarnessError) as exc:
+            self._error(self._explain(exc, target.parent))
+            return
+        self.toasts.show_message(strings.ASB_EXPORTED.format(target.name), None)
 
     def _imports_changed_text(self) -> str:
         """One line naming the imported files that have changed since they were imported ("" while
@@ -3816,8 +3913,14 @@ class MainWindow(QMainWindow):
         self._switching_area = True
         self.rail.select(key)
         if not a.tabs:
-            pages = {"home": self.home_page, "next": self.next_page}
+            pages = {
+                "home": self.home_page,
+                "next": self.next_page,
+                "asbuilt": self.asbuilt_page,
+            }
             self.area_stack.setCurrentWidget(pages.get(key, self.settings_page))
+            if key == "asbuilt":
+                self._update_asbuilt()
         else:
             tabs = self.main_tabs
             tabs.set_filter(None)  # (every tab shows while one is chosen)

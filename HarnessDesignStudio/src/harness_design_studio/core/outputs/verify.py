@@ -758,6 +758,24 @@ def _provenance(r: VerifyReport, project: Project, files: dict[str, bytes]) -> N
         )
 
 
+def _asbuilt_files(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
+    """The as-built report (S9): written only for a project that has as-built records, and then
+    the table is the report of `core.asbuilt` and the text names no pass."""
+    names = ("system/asbuilt_report.md", "system/asbuilt_report.csv")
+    if not project.asbuilt:
+        if any(n in files for n in names):
+            r.error("out_asbuilt", "The as-built report is written only for a project that has as-built records.", "asbuilt_report")  # fmt: skip
+        return
+    from harness_design_studio.core import asbuilt
+
+    for n in names:
+        if n not in files:
+            r.error("out_missing", f"{n} was not generated.", "asbuilt_report")
+    table = _table(files, names[1])
+    if table is not None and table != asbuilt.report_rows(project):
+        r.error("out_asbuilt", "system/asbuilt_report.csv differs from the as-built records of the project.", "asbuilt_report")  # fmt: skip
+
+
 def _values_hash(values: dict[str, object]) -> str:
     text = json.dumps(values, sort_keys=True, separators=(",", ":"), default=str)
     return hashlib.sha256(text.encode()).hexdigest()[:16]
@@ -773,6 +791,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
             r.error("out_missing", f"system/{name} was not generated.", name)
         elif there and not project.links:
             r.error("out_connections", f"system/{name} is written only for a project that has connections.", name)  # fmt: skip
+    _asbuilt_files(r, project, files)
     wires = [w for h in project.harnesses.values() for w in h.wires]
     _provenance(r, project, files)
     ml = _table(files, "system/mass_length.csv")
@@ -1621,9 +1640,14 @@ def _build_workbook(r: VerifyReport, project: Project, h: Harness, files: dict[s
         return
     what = f"The build workbook of {h.id}"
     sheets = _xlsx_values(data)
-    if list(sheets) != _BUILD_SHEETS:
-        r.error("out_build", f"{what} does not have the sheets {', '.join(_BUILD_SHEETS)}.", h.id)
+    wanted = list(_BUILD_SHEETS)
+    if any(rec.harness_id == h.id for rec in project.asbuilt.values()):
+        wanted.insert(wanted.index("About"), "As-built")  # S9: only for a harness with records
+    if list(sheets) != wanted:
+        r.error("out_build", f"{what} does not have the sheets {', '.join(wanted)}.", h.id)
         return
+    if "As-built" in sheets:
+        _build_asbuilt(r, project, h, what, sheets["As-built"])
     _build_cut(r, h, what, sheets["Cut list"])
     _build_connectors(r, project, h, what, sheets["Connectors"])
     parts = sheets["Parts"]
@@ -1647,6 +1671,19 @@ def _build_workbook(r: VerifyReport, project: Project, h: Harness, files: dict[s
     else:
         r.error("out_build", f"{what} (Tests) has the wrong column headings.", h.id)
     _build_start(r, project, h, what, sheets["Start here"])
+
+
+def _build_asbuilt(
+    r: VerifyReport, project: Project, h: Harness, what: str, rows: list[list[str]]
+) -> None:
+    """The *As-built* sheet is the as-built report of the harness (`core.asbuilt`, the code the
+    report file and the command use): the same rows."""
+    from harness_design_studio.core import asbuilt
+
+    want = asbuilt.report_rows(project, h.id)
+    got = [[c.removeprefix("'") if c[:2] in ("'=", "'+", "'-", "'@") else c for c in row] for row in rows]  # fmt: skip
+    if got != want:
+        r.error("out_build", f"{what} (As-built) does not show the as-built records of the project.", h.id)  # fmt: skip
 
 
 def _build_cut(r: VerifyReport, h: Harness, what: str, rows: list[list[str]]) -> None:

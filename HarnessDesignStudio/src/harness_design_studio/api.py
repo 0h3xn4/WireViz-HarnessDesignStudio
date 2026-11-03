@@ -41,7 +41,8 @@ import os
 from collections.abc import Iterator
 from pathlib import Path
 
-from harness_design_studio.core import change_ops, configcheck, journal, records
+from harness_design_studio.core import asbuilt, change_ops, configcheck, journal, records, workflow
+from harness_design_studio.core.asbuilt import AsBuiltImportResult, AsBuiltReport
 from harness_design_studio.core.checks import Finding, find
 from harness_design_studio.core.commands import History
 from harness_design_studio.core.derive import Derivation, explain_object
@@ -90,9 +91,12 @@ from harness_design_studio.core.templates import TemplateError
 from harness_design_studio.core.templates import create_project as _create_project
 from harness_design_studio.core.validation import validate_folder
 from harness_design_studio.core.wires import find_wire
+from harness_design_studio.core.workflow import WorkflowReport
 
 __all__ = [
     "API_VERSION",
+    "AsBuiltImportResult",
+    "AsBuiltReport",
     "CheckResult",
     "ConfigReport",
     "ConfigValue",
@@ -129,6 +133,7 @@ __all__ = [
     "TransactionError",
     "ValidationResult",
     "VerifyResult",
+    "WorkflowReport",
     "accept_deviation",
     "clear_override",
     "create_project",
@@ -138,10 +143,13 @@ __all__ = [
     "export",
     "export_data",
     "generate",
+    "get_asbuilt",
     "get_config",
     "get_journal",
     "get_overrides",
     "get_settings",
+    "get_workflow",
+    "import_asbuilt",
     "list_deviations",
     "list_rules",
     "list_templates",
@@ -154,6 +162,7 @@ __all__ = [
     "start_journal",
     "validate",
     "verify",
+    "write_asbuilt_sheet",
     "write_derivations",
 ]
 
@@ -644,3 +653,64 @@ def remove_deviation(
         finding = change_ops.remove_deviation(project, finding_id)
         _save_project(project, path)
     return DeviationReport("remove", finding.id, ())
+
+
+# ---- workflow and as-built records (S9) ---------------------------------------------------------
+
+
+def get_workflow(source: ProjectSource, *, outputs: PathLike | None = None) -> WorkflowReport:
+    """The steps of the tool, what each uses and makes, the intermediates you can look at, and
+    where the project stands in each step (the command `workflow`). `outputs` is the folder the
+    outputs were written to (default: `outputs` in the project folder, when `source` is a folder).
+    Changes nothing."""
+    project = _project(source)
+    folder: Path | None = Path(outputs) if outputs is not None else None
+    if folder is None and not isinstance(source, Project):
+        folder = Path(source) / "outputs"
+    return workflow.workflow_report(project, folder)
+
+
+def get_asbuilt(source: ProjectSource) -> AsBuiltReport:
+    """What was recorded about the build and how it compares with the design and the project's
+    test limits: what is missing, what is out of its limit, what differs from the design (the
+    command `asbuilt`). It never says that anything passed. A project with no record gives a
+    report with `records` 0."""
+    return asbuilt.asbuilt_report(_project(source))
+
+
+def write_asbuilt_sheet(
+    source: ProjectSource, file: PathLike, *, harness: str | None = None
+) -> Path:
+    """Write the sheet a technician fills in (the command `export-asbuilt`): `.csv` or `.xlsx`,
+    one row for each thing to record with the designed values filled in. Returns the file."""
+    project = _project(source)
+    path = Path(file)
+    path.write_bytes(asbuilt.template_bytes(project, path.suffix, harness))
+    return path
+
+
+def import_asbuilt(
+    folder: PathLike, file: PathLike, *, dry_run: bool = False, author: str | None = None
+) -> AsBuiltImportResult:
+    """Read the filled-in as-built sheet at `file` and keep its records in the project (the command
+    `import-asbuilt`; `dry_run` changes nothing). A row about something the design does not have is
+    refused with its reason, and then nothing is changed (`changed` false, `counts["refused"]`).
+    A file that is not an as-built sheet raises `ImportError_`'s base, `HarnessError`. The import is
+    recorded in `imports/records.json`; a project that keeps a journal enters the records in it with
+    `author`. Takes the project lock unless `dry_run`."""
+    path = Path(folder)
+    with contextlib.ExitStack() as stack:
+        if not dry_run:
+            stack.enter_context(_locked(path))
+        stack.enter_context(_as(author))
+        project = _load(path)
+        _writable(project)
+        imp = asbuilt.read_import(project, Path(file), path)
+        changed = False
+        if not dry_run and imp.ops and imp.plan.bad_count == 0:
+            History(project).execute("Import as-built records", imp.ops)
+            _save_project(project, path)
+            changed = True
+    return asbuilt.AsBuiltImportResult(
+        dry_run, changed, imp.plan.counts(), tuple(imp.plan.rows), tuple(imp.report.lines())
+    )

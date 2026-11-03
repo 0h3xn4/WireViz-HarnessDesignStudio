@@ -293,7 +293,13 @@ def explain_test(project: Project, object_id: str) -> list[Derivation]:
         if row[1] == "continuity"
         else ["test_isolation_min_mohm", "test_isolation_voltage_v"]
     )
-    return [sheet_limit_derivation(project, h, k, row) for k in keys]
+    found = [sheet_limit_derivation(project, h, k, row) for k in keys]
+    if project.asbuilt:  # what was measured in this test (S9)
+        from harness_design_studio.core import derive_asbuilt
+
+        result = derive_asbuilt.result_derivation(project, h, right)
+        found += [] if result is None else [result]
+    return found
 
 
 # ---- labels, colours, shields -------------------------------------------------------------------
@@ -597,6 +603,10 @@ def harness_derivations(project: Project, h: Harness) -> list[Derivation]:
     out += [
         connector_label_derivation(project, h, c) for c in sorted(h.connectors, key=lambda x: x.id)
     ]
+    if project.asbuilt:  # the as-built results (S9): only a project that has records has them
+        from harness_design_studio.core import derive_asbuilt
+
+        out += derive_asbuilt.harness_derivations(project, h)
     return out
 
 
@@ -606,6 +616,10 @@ def wire_derivations(project: Project, h: Harness, w: Wire) -> list[Derivation]:
     group = next((s for s in h.shields if w.id in s.wire_ids), None)
     if group is not None:
         out.append(shield_group_derivation(project, h, group))
+    if project.asbuilt:  # the length that was cut (S9)
+        from harness_design_studio.core import derive_asbuilt
+
+        out += derive_asbuilt.wire_derivations(project, h, w)
     return out
 
 

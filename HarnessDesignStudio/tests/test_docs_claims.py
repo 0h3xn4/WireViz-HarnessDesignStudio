@@ -126,7 +126,7 @@ def test_the_readme_says_which_role_opens_on_the_next_step_page() -> None:
         ln for ln in readme.splitlines() if ln.lstrip().startswith("5. **Open it in the app**")
     )
     assert "A Systems engineer lands on the **Next step** page" in step
-    assert "an Electrical / AIT engineer lands on the diagram" in step
+    assert "an Electrical engineer lands on the diagram" in step
 
 
 def _tour(readme: str) -> str:

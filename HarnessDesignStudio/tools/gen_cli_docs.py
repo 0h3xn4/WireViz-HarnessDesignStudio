@@ -14,7 +14,7 @@ TARGET = Path(__file__).resolve().parents[1] / "docs" / "CLI.md"
 GROUPS = (
     ("Start", ("new", "templates", "schema")),
     ("Check", ("validate", "check", "drc", "verify")),
-    ("Explain", ("explain", "settings")),
+    ("Explain", ("explain", "settings", "workflow")),
     ("Overrides and change history", ("override", "deviation", "journal")),
     ("Generate and export", ("generate", "export", "export-data")),
     ("Team use with Git", ("merge-fix",)),
@@ -34,6 +34,7 @@ GROUPS = (
         ),
     ),
     ("Write data out", ("export-pinout", "export-devices", "export-subsystem")),
+    ("Record what was built", ("export-asbuilt", "import-asbuilt", "asbuilt")),
     ("Review, release and change", ("review", "release", "revise", "diff", "log", "compare")),
     ("Maintenance", ("migrate",)),
 )
@@ -52,6 +53,26 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio explain wheel-link IF-001.GPSU1-J01",
         "harness-design-studio explain wheel-link W001-001 --json",
         "harness-design-studio explain wheel-link --all --out wheel-link-derivations --json",
+    ],
+    "workflow": [
+        "harness-design-studio workflow wheel-link",
+        "harness-design-studio workflow wheel-link --json",
+        "harness-design-studio workflow wheel-link --outputs wheel-link-outputs",
+    ],
+    "export-asbuilt": [
+        "harness-design-studio export-asbuilt flatsat-build asbuilt-sheet.csv",
+        "harness-design-studio export-asbuilt flatsat-build asbuilt-sheet.xlsx --harness W001",
+        "harness-design-studio export-asbuilt flatsat-build asbuilt-sheet.csv --json",
+    ],
+    "import-asbuilt": [
+        "harness-design-studio import-asbuilt flatsat-build bench.csv --dry-run",
+        "harness-design-studio import-asbuilt flatsat-build bench.csv",
+        "harness-design-studio import-asbuilt flatsat-build bench.csv --dry-run --json",
+    ],
+    "asbuilt": [
+        "harness-design-studio asbuilt flatsat-build",
+        "harness-design-studio asbuilt flatsat-build --complete",
+        "harness-design-studio asbuilt flatsat-build --json",
     ],
     "templates": [
         "harness-design-studio templates my-templates",

@@ -1,6 +1,8 @@
 {
  "all": [
   "API_VERSION",
+  "AsBuiltImportResult",
+  "AsBuiltReport",
   "CheckResult",
   "ConfigReport",
   "ConfigValue",
@@ -37,6 +39,7 @@
   "TransactionError",
   "ValidationResult",
   "VerifyResult",
+  "WorkflowReport",
   "accept_deviation",
   "clear_override",
   "create_project",
@@ -46,10 +49,13 @@
   "export",
   "export_data",
   "generate",
+  "get_asbuilt",
   "get_config",
   "get_journal",
   "get_overrides",
   "get_settings",
+  "get_workflow",
+  "import_asbuilt",
   "list_deviations",
   "list_rules",
   "list_templates",
@@ -62,6 +68,7 @@
   "start_journal",
   "validate",
   "verify",
+  "write_asbuilt_sheet",
   "write_derivations"
  ],
  "api_version": 1,
@@ -138,10 +145,13 @@
   "export": "(folder: 'PathLike', out: 'PathLike | None' = None, *, drawings: 'bool' = False, run_record: 'bool' = False, operator: 'str | None' = None) -> 'ExportResult'",
   "export_data": "(source: 'ProjectSource', out: 'PathLike', *, run_record: 'bool' = False, operator: 'str | None' = None) -> 'DataFiles'",
   "generate": "(folder: 'PathLike', *, run_record: 'bool' = False, operator: 'str | None' = None) -> 'GenerateResult'",
+  "get_asbuilt": "(source: 'ProjectSource') -> 'AsBuiltReport'",
   "get_config": "(source: 'ProjectSource') -> 'ConfigReport'",
   "get_journal": "(source: 'ProjectSource', *, object_id: 'str | None' = None, since: 'int' = 0) -> 'JournalReport'",
   "get_overrides": "(source: 'ProjectSource', wire_id: 'str') -> 'OverrideResult'",
   "get_settings": "(source: 'ProjectSource') -> 'list[SettingRecord]'",
+  "get_workflow": "(source: 'ProjectSource', *, outputs: 'PathLike | None' = None) -> 'WorkflowReport'",
+  "import_asbuilt": "(folder: 'PathLike', file: 'PathLike', *, dry_run: 'bool' = False, author: 'str | None' = None) -> 'AsBuiltImportResult'",
   "list_deviations": "(source: 'ProjectSource') -> 'list[DeviationRecord]'",
   "list_rules": "() -> 'list[RuleInfo]'",
   "list_templates": "() -> 'list[TemplateInfo]'",
@@ -154,9 +164,33 @@
   "start_journal": "(folder: 'PathLike', *, author: 'str | None' = None) -> 'bool'",
   "validate": "(folder: 'PathLike', *, merge_check: 'bool' = False) -> 'ValidationResult'",
   "verify": "(folder: 'PathLike', *, outputs: 'bool' = False) -> 'VerifyResult'",
+  "write_asbuilt_sheet": "(source: 'ProjectSource', file: 'PathLike', *, harness: 'str | None' = None) -> 'Path'",
   "write_derivations": "(source: 'ProjectSource', out: 'PathLike') -> 'DerivationFiles'"
  },
  "types": {
+  "AsBuiltImportResult": {
+   "fields": {
+    "changed": "bool",
+    "counts": "dict[str, int]",
+    "dry_run": "bool",
+    "echo": "tuple[str, ...]",
+    "rows": "tuple[AsBuiltRow, ...]"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "AsBuiltReport": {
+   "fields": {
+    "harnesses": "tuple[HarnessStatus, ...]",
+    "lines": "tuple[Line, ...]",
+    "records": "int"
+   },
+   "methods": {
+    "count": "(self, status: 'str') -> 'int'",
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
   "CheckResult": {
    "fields": {
     "findings": "tuple[FindingRecord, ...]",
@@ -398,6 +432,7 @@
   },
   "Project": {
    "fields": {
+    "asbuilt": "dict[str, AsBuiltRecord]",
     "baselines": "dict[str, Baseline]",
     "changelog": "dict[str, ChangeEntry]",
     "config": "dict[str, ConfigFile]",
@@ -492,6 +527,14 @@
     "ok": "bool",
     "stale": "bool",
     "wires_checked": "int"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "WorkflowReport": {
+   "fields": {
+    "steps": "tuple[tuple[StepDef, StepStatus], ...]"
    },
    "methods": {
     "to_dict": "(self) -> 'dict[str, Any]'"
