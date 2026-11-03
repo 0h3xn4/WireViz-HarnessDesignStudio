@@ -1028,6 +1028,13 @@ CHECKS_OBJ_SEVERITY = "Severity"
 CHECKS_OBJ_WAIVER = "Waiver"
 CHECKS_WAIVER_CHANGED = "Waiver no longer fits"
 CHECKS_SHOW_TIP = "Show the selected object on the diagram (Enter)"
+CHECKS_EXPLAIN = "Explain"
+CHECKS_EXPLAIN_TIP = (
+    "How the limit of this finding was calculated: equation, inputs with units and sources, steps"
+)
+EXPLAIN_DIALOG_TITLE = "How this was calculated: {}"
+EXPLAIN_DIALOG_NAME = "The calculation"
+EXPLAIN_NOTHING = "There is no calculation for this finding."
 CHECKS_WHOLE_DESIGN = "(whole design)"
 CHECKS_DETAILS = "Rule details"
 CHECKS_SEGMENT_TIP = "show only these rules"
