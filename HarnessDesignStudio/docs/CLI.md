@@ -19,6 +19,7 @@ The examples show the form of each command with example names. They do not all w
 
 ## Contents
 
+- [JSON output](#json-output): `--json` on every command that has a result in data form
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
 - Explain: [`explain`](#harness-design-studio-explain)
@@ -28,6 +29,44 @@ The examples show the form of each command with example names. They do not all w
 - Write data out: [`export-pinout`](#harness-design-studio-export-pinout), [`export-devices`](#harness-design-studio-export-devices), [`export-subsystem`](#harness-design-studio-export-subsystem)
 - Review, release and change: [`review`](#harness-design-studio-review), [`release`](#harness-design-studio-release), [`revise`](#harness-design-studio-revise), [`diff`](#harness-design-studio-diff), [`log`](#harness-design-studio-log), [`compare`](#harness-design-studio-compare)
 - Maintenance: [`migrate`](#harness-design-studio-migrate)
+
+## JSON output
+
+Every command that has a result in data form takes `--json`. The usual text lines are then not printed; one JSON document is, and the exit code is the one the command has without the option (the table above). It has no time, no user name and no absolute path, its lists are in a fixed order (by ID, as the text shows them) and the same design gives the same bytes, so it can be compared and kept in Git. `ok` comes first and is true when the exit code is 0. A command that cannot run at all (a project that cannot be read, a wrong option) writes its message to the standard error as before and prints nothing to the standard output; a command that ran and was refused (`generate` with errors, `export` that failed its check, `release` that is blocked) still prints its document, with `ok` false and the reasons in it. The same documents are what the Python interface gives ([`user-manual/script-the-tool.md`](user-manual/script-the-tool.md)).
+
+`explain OBJECT --json` prints a list of derivations (as it did before); `explain --all --out FOLDER --json` prints the document below. `export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. `config` prints every engineering value with its unit, its use, whether it is set and where it came from, and the values it refused, in the order of the hand-over list.
+
+| Command | Keys of the document |
+| --- | --- |
+| `new` | `ok`, `name`, `template`, `devices`, `interfaces` |
+| `new --list` | `ok`, `templates` |
+| `templates`, `schema` | `ok`, `count`, `files` |
+| `validate`, `check` | `ok`, `devices`, `interfaces`, `connectors`, `harnesses`, `errors`, `warnings`, `issues` |
+| `drc` | `ok`, `model_hash`, `rules_run`, `open_errors`, `open_warnings`, `open_notes`, `waived`, `placeholder_config`, `findings` |
+| `verify` | `ok`, `interfaces_checked`, `wires_checked`, `stale`, `issues` |
+| `explain --all` | `ok`, `count`, `without_value`, `files` |
+| `generate` | `ok`, `saved`, `added`, `changed`, `unchanged`, `removed`, `frozen`, `kept_locks`, `findings`, `interfaces_checked`, `wires_checked`, `verify_issues` |
+| `export` | `ok`, `written`, `blocked`, `model_hash`, `drawings_removed`, `file_count`, `files`, `issues` |
+| `merge-fix` | `ok`, `result`, `conflicts`, `problem`, `generate`, `check` |
+| `config` | `ok`, `set_count`, `total`, `values`, `problems`, `placeholder_files`, `waiting_for_decision`, `counterpart_pairs`, `release_distinct_roles`, `changes` |
+| `library` | `ok`, `name`, `version`, `source`, `date`, `changed` |
+| `import-parts` | `ok`, `dry_run`, `changed`, `ready`, `problems`, `rows`, `library` |
+| `import-lengths` | `ok`, `dry_run`, `changed`, `ready`, `problems`, `hint`, `rows` |
+| `import-build-data` | `ok`, `dry_run`, `changed`, `kind`, `counts`, `rows` |
+| `import-netlist` | `ok`, `dry_run`, `changed`, `rows`, `warnings`, `unmatched_signals` |
+| `import-pinout` | `ok`, `dry_run`, `changed`, `connectors`, `pins`, `rows`, `warnings`, `unmatched_signals` |
+| `import-devices` | `ok`, `dry_run`, `changed`, `rows`, `notes` |
+| `import-devices --list` | `ok`, `devices` |
+| `import-subsystem` | `ok`, `dry_run`, `changed`, `name`, `connections`, `rows`, `notes` |
+| `import-subsystem --show` | `ok`, `name`, `description`, `devices`, `connectors`, `connections`, `device_list` |
+| `export-pinout` | `ok`, `device`, `pin_rows`, `columns`, `rows`, `written` |
+| `export-devices` | `ok`, `devices`, `connectors`, `notes` |
+| `export-subsystem` | `ok`, `name`, `devices`, `connectors`, `connections` |
+| `review`, `release`, `revise` | `ok`, `action`, `by`, `blockers`, `outputs` |
+| `diff` | `ok`, `harness`, `from`, `to`, `added`, `removed`, `changed`, `changes` |
+| `compare` | `ok`, `added`, `removed`, `changed`, `changes`, `not_compared` |
+| `log` | `ok`, `harness`, `entries` |
+| `migrate` | `ok`, `migrated` |
 
 ## Start
 
@@ -43,11 +82,13 @@ Create a project folder from one of the bundled examples. `harness-design-studio
 | `--template TEMPLATE` | which example to start from (default blank) |
 | `--name NAME` | project name (default: the example's name) |
 | `--list` | list the examples and exit |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio new --list
+harness-design-studio new --list --json
 harness-design-studio new my-design --name "My first design"
 harness-design-studio new wheel-link --template first-steps
 ```
@@ -56,32 +97,36 @@ harness-design-studio new wheel-link --template first-steps
 
 Copy the bundled templates for the imports, CI scripts and the review checklist. The folder must not exist yet or be empty.
 
-`harness-design-studio templates folder`
+`harness-design-studio templates folder [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `folder` | where to put the templates |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio templates my-templates
+harness-design-studio templates my-templates --json
 ```
 
 ### harness-design-studio schema
 
 Write one JSON Schema per kind of project file, made from the program's own model, and a settings fragment that maps the files to them. For people who edit project files by hand. Nothing is downloaded. The folder must not exist yet or be empty.
 
-`harness-design-studio schema folder`
+`harness-design-studio schema folder [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `folder` | where to put the schemas (for example my-design/schemas) |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio schema my-design/schemas
+harness-design-studio schema my-design/schemas --json
 ```
 
 ## Check
@@ -90,48 +135,54 @@ harness-design-studio schema my-design/schemas
 
 check a project folder for errors and inconsistencies
 
-`harness-design-studio validate project`
+`harness-design-studio validate project [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio validate my-design
+harness-design-studio validate my-design --json
 ```
 
 ### harness-design-studio check
 
 validate, plus detect problems left behind by Git merges
 
-`harness-design-studio check project`
+`harness-design-studio check project [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio check my-design
+harness-design-studio check my-design --json
 ```
 
 ### harness-design-studio drc
 
 run the design rule check and print the report (waived findings included)
 
-`harness-design-studio drc project`
+`harness-design-studio drc project [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio drc my-design > drc-report.md
+harness-design-studio drc my-design --json > drc-findings.json
 ```
 
 ### harness-design-studio verify
@@ -143,6 +194,7 @@ independently verify the generated harnesses against the interfaces
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 | `--outputs` | also check <project>/outputs against the design |
 
 Examples:
@@ -150,13 +202,14 @@ Examples:
 ```
 harness-design-studio verify my-design
 harness-design-studio verify my-design --outputs
+harness-design-studio verify my-design --json
 ```
 
 ## Explain
 
 ### harness-design-studio explain
 
-Show how the numbers of one wire or one harness were made. For a wire: its length, the current its gauge may carry after derating, the voltage drop over it and its share of the mass. For a harness: its mass. For a part: why the bill of materials has its quantity. For INTERFACE.CONNECTOR (the object of a current-over-contact finding): the limit of the contacts. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. `--json` prints the same as data. With `--all --out FOLDER` it writes every derivation of the project to FOLDER as `derivations.json` and `derivations.csv`: no time, user or path is in them, so the same design gives the same files. Without `--out` nothing is written.
+Show how the numbers of one wire or one harness were made. For a wire: its length, the current its gauge may carry after derating, the voltage drop over it and its share of the mass. For a harness: its mass. For a part: why the bill of materials has its quantity. For INTERFACE.CONNECTOR (the object of a current-over-contact finding): the limit of the contacts. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. `--json` prints the same as data (a list). With `--all --out FOLDER` it writes every derivation of the project to FOLDER as `derivations.json` and `derivations.csv`: no time, user or path is in them, so the same design gives the same files; with `--json` as well it prints how many it wrote instead of the line of text. Without `--out` nothing is written.
 
 `harness-design-studio explain project [OBJECT] [options]`
 
@@ -177,6 +230,7 @@ harness-design-studio explain wheel-link EX-WIRE-SINGLE
 harness-design-studio explain wheel-link --all --out wheel-link-derivations
 harness-design-studio explain wheel-link IF-001.GPSU1-J01
 harness-design-studio explain wheel-link W001-001 --json
+harness-design-studio explain wheel-link --all --out wheel-link-derivations --json
 ```
 
 ## Generate and export
@@ -185,16 +239,18 @@ harness-design-studio explain wheel-link W001-001 --json
 
 generate harnesses from the interfaces and save the project
 
-`harness-design-studio generate project`
+`harness-design-studio generate project [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio generate my-design
+harness-design-studio generate my-design --json
 ```
 
 ### harness-design-studio export
@@ -206,13 +262,16 @@ write the build workbook of every harness, the tables and exports to <project>/o
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 | `--drawings` | also write the PDF and SVG drawings of the harnesses (off by default: the build workbook is the main output) |
+| `--out OUT` | the folder to write the outputs to (default: <project>/outputs) |
 
 Examples:
 
 ```
 harness-design-studio export my-design
 harness-design-studio export my-design --drawings
+harness-design-studio export my-design --out my-outputs --json
 ```
 
 ## Team use with Git
@@ -221,16 +280,18 @@ harness-design-studio export my-design --drawings
 
 After a Git merge in which two people each pressed Generate, `generated/generation.json` conflicts. This command keeps this branch's version of that one file, then runs `generate` (which writes the record again for the merged design) and `check`. It refuses, and changes nothing, when any other file of the project is in conflict, and it writes nothing itself apart from that record and what `generate` writes. Commit the result afterwards.
 
-`harness-design-studio merge-fix project`
+`harness-design-studio merge-fix project [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio merge-fix my-design
+harness-design-studio merge-fix my-design --json
 ```
 
 ## Bring in data
@@ -248,11 +309,13 @@ Hand-over checklist for the engineering values (derating, grounding, test limits
 | `--counterparts WORDS` | the words that are the two ends of one line, for the link review and the pairing, for example 'TX=RX, MOSI=MISO' (sets naming.signal_counterparts); 'default' goes back to the table the tool ships with, 'none' pairs equal names only |
 | `--distinct-roles DISTINCT_ROLES` | on: a release needs an author, a checker and a person who releases that are three different people, a date that is not earlier than the project's change log and not more than a day ahead, and takes a missing name from Git (sets naming.release_distinct_roles); off: the setting is taken out again (the default) (one of off, on) |
 | `--apply-profile NAME` | fill the unset values from a standard profile (ecss-q-st-30-11c, ecss-e-st-20-07c); values you already set are kept; the files stay placeholders until you review them |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio config my-design
+harness-design-studio config my-design --json
 harness-design-studio config my-design --ampacity-csv ampacity.csv
 harness-design-studio config my-design --apply-profile ecss-q-st-30-11c
 harness-design-studio config my-design --counterparts "TX=RX, MOSI=MISO, OUT=IN"
@@ -271,11 +334,13 @@ Without options: print the library's name, version, source and date. With option
 | `--library-version LIBRARY_VERSION` | version of the parts data |
 | `--library-source LIBRARY_SOURCE` | where the data comes from (default for import-parts: the file name and its SHA-256) |
 | `--library-date YYYY-MM-DD` | date of the data |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio library my-design
+harness-design-studio library my-design --json
 harness-design-studio library my-design --library-version 4 --library-source "ESCC part data, supplier file" --library-date 2026-09-30
 ```
 
@@ -298,11 +363,13 @@ Import parts with their approval status. Say what the approval values in your li
 | `--library-version LIBRARY_VERSION` | version of the parts data |
 | `--library-source LIBRARY_SOURCE` | where the data comes from (default for import-parts: the file name and its SHA-256) |
 | `--library-date YYYY-MM-DD` | date of the data |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio import-parts my-design parts.csv --approved Approved --pending Review --rejected Rejected --dry-run
+harness-design-studio import-parts my-design parts.csv --approved Approved --dry-run --json
 harness-design-studio import-parts my-design connectors.xlsx --approved Yes --category connector
 ```
 
@@ -318,11 +385,13 @@ Import segment lengths, for example exported from the mechanical CAD. The column
 | `file` | the file to read |
 | `--unit UNIT` | unit of the length column (default mm) (one of cm, m, mm) |
 | `--dry-run` | show what would be done and change nothing |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio import-lengths my-design lengths.csv --unit mm --dry-run
+harness-design-studio import-lengths my-design lengths.csv --dry-run --json
 ```
 
 ### harness-design-studio import-netlist
@@ -343,11 +412,13 @@ Create or update the box connectors of one device from a KiCad netlist (the .net
 | `--signal-map NAME=SIGNAL|FILE` | translate a KiCad net name to an interface signal name (repeatable), or a CSV (net name, signal) or JSON object file of such pairs (repeatable) |
 | `--pin-function` | use the pin names of the symbol instead of the net names as signals |
 | `--dry-run` | show what would be done and change nothing |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio import-netlist my-design wheel.net --device RW1 --prefix J --connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run
+harness-design-studio import-netlist my-design wheel.net --device RW1 --dry-run --json
 ```
 
 ### harness-design-studio import-pinout
@@ -370,11 +441,13 @@ Create or update the box connectors of one device from a table: one row per pin 
 | `--column FIELD=HEADING` | use this column for a field when the headings are not recognised, for example pin=Contact (repeat) (repeatable) |
 | `--replace` | drop the pins of an existing connector that the table does not name (default: keep them) |
 | `--dry-run` | show the preview only |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio import-pinout my-design gyro-pinout.csv --device GYRO1 --default-part MY-HD-9-F --dry-run
+harness-design-studio import-pinout my-design gyro-pinout.csv --device GYRO1 --default-part MY-HD-9-F --dry-run --json
 harness-design-studio import-pinout my-design icd.xlsx --device CAM1 --new-device "Camera" --part J1=MY-HD-9-F --part J2=MY-HD-15-M
 ```
 
@@ -391,11 +464,13 @@ Add the devices of a device library file with their connectors, pinouts, parts a
 | `--device, --unit DEVICE` | a device of the file to add (repeat; default: all; --unit is the older name) (repeatable) |
 | `--list` | list the devices of the file and stop |
 | `--dry-run` | show the preview only |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio import-devices my-design device-library.json --list
+harness-design-studio import-devices my-design device-library.json --dry-run --json
 harness-design-studio import-devices my-design device-library.json --device GYRO1 --dry-run
 ```
 
@@ -411,12 +486,14 @@ Add the devices of a subsystem library file with their connectors and pinouts, a
 | `file` | the file to read |
 | `--show` | show what the file holds and stop |
 | `--dry-run` | show the preview only |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio import-subsystem my-design wheel-drive.json --show
 harness-design-studio import-subsystem my-design wheel-drive.json --dry-run
+harness-design-studio import-subsystem my-design wheel-drive.json --dry-run --json
 ```
 
 ### harness-design-studio import-build-data
@@ -430,11 +507,13 @@ Import the build data of a technician from a table. The kind is told by the colu
 | `project` | the project folder |
 | `file` | the file to read |
 | `--dry-run` | show the preview only |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio import-build-data my-design strip-lengths.csv --dry-run
+harness-design-studio import-build-data my-design strip-lengths.csv --dry-run --json
 harness-design-studio import-build-data my-design pin-contacts.csv
 harness-design-studio import-build-data my-design accessories.csv
 ```
@@ -452,12 +531,14 @@ Write the rows of system/box_pinouts.csv that belong to one device (connector, p
 | `project` | the project folder |
 | `--device, --unit DEVICE` | the device to write, for example GYRO1 (--unit is the older name) |
 | `--output, -o OUTPUT` | the file to write (default: CSV on the screen) |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio export-pinout my-design --device GYRO1
 harness-design-studio export-pinout my-design --device GYRO1 -o gyro-pinout.xlsx
+harness-design-studio export-pinout my-design --device GYRO1 --json
 ```
 
 ### harness-design-studio export-devices
@@ -472,12 +553,14 @@ Write one or more devices, their box connectors with every pin (signal, function
 | `file` | the device library file to write or add to |
 | `--device, --unit DEVICE` | a device to save, for example GYRO1 (repeat for more; --unit is the older name) (repeatable) |
 | `--replace` | replace a device of the same ID in the file that differs (without it that is refused) |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio export-devices my-design device-library.json --device GYRO1
 harness-design-studio export-devices my-design device-library.json --device OBC1 --device PCU1
+harness-design-studio export-devices my-design device-library.json --device OBC1 --json
 ```
 
 ### harness-design-studio export-subsystem
@@ -495,11 +578,13 @@ Write devices with their connectors and pinouts, and the connections between the
 | `--description DESCRIPTION` | what the subsystem is (optional) (default ) |
 | `--notes NOTES` | notes for whoever adds it (optional) (default ) |
 | `--replace` | replace the file when it exists |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio export-subsystem my-design wheel-drive.json --device OBC1 --device RW1 --name "Wheel drive"
+harness-design-studio export-subsystem my-design wheel-drive.json --device OBC1 --name "Wheel drive" --json
 ```
 
 ## Review, release and change
@@ -514,6 +599,7 @@ submit a draft harness for review
 | --- | --- |
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 | `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
 
@@ -521,6 +607,7 @@ Examples:
 
 ```
 harness-design-studio review my-design W001 --by "A. Engineer"
+harness-design-studio review my-design W001 --by "A. Engineer" --json
 ```
 
 ### harness-design-studio release
@@ -533,6 +620,7 @@ release a harness: baseline, change log entry and lock (blocked while checks fai
 | --- | --- |
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 | `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
 | `--comment COMMENT` | what changed or why (at least 10 characters) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
@@ -544,6 +632,7 @@ Examples:
 
 ```
 harness-design-studio release my-design W001 --by "A. Engineer" --comment "First release" --checker "B. Checker"
+harness-design-studio release my-design W001 --by "A. Engineer" --comment "First release" --json
 ```
 
 ### harness-design-studio revise
@@ -556,6 +645,7 @@ start a new revision of a released harness
 | --- | --- |
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 | `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
 | `--comment COMMENT` | what changed or why (at least 10 characters) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
@@ -564,6 +654,7 @@ Examples:
 
 ```
 harness-design-studio revise my-design W001 --by "A. Engineer" --comment "Connector change"
+harness-design-studio revise my-design W001 --by "A. Engineer" --comment "Connector change" --json
 ```
 
 ### harness-design-studio diff
@@ -576,6 +667,7 @@ show what changed in a harness since a baseline (or between two baselines)
 | --- | --- |
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 | `--from REV_FROM` | baseline revision to compare from (default: latest) |
 | `--to REV_TO` | baseline revision to compare to (default: the working design) |
 
@@ -584,17 +676,19 @@ Examples:
 ```
 harness-design-studio diff my-design W001
 harness-design-studio diff my-design W001 --from A
+harness-design-studio diff my-design W001 --json
 ```
 
 ### harness-design-studio log
 
 print the change log
 
-`harness-design-studio log project [harness]`
+`harness-design-studio log project [harness] [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 | `harness` | limit to one harness |
 
 Examples:
@@ -602,23 +696,26 @@ Examples:
 ```
 harness-design-studio log my-design
 harness-design-studio log my-design W001
+harness-design-studio log my-design --json
 ```
 
 ### harness-design-studio compare
 
 Compare two project folders object by object.
 
-`harness-design-studio compare old new`
+`harness-design-studio compare old new [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `old` | the project folder to compare from |
 | `new` | the project folder to compare with |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio compare old-checkout new-checkout
+harness-design-studio compare old-checkout new-checkout --json
 ```
 
 ## Maintenance
@@ -627,14 +724,16 @@ harness-design-studio compare old-checkout new-checkout
 
 upgrade an old-format project in place (originals are kept)
 
-`harness-design-studio migrate project`
+`harness-design-studio migrate project [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
 
 ```
 harness-design-studio migrate my-design
+harness-design-studio migrate my-design --json
 ```

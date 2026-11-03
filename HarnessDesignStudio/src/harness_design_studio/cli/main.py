@@ -14,16 +14,15 @@ from typing import Any
 
 from harness_design_studio import __version__
 from harness_design_studio.cli import blocked_text, changes, data, explain, merge, start
+from harness_design_studio.cli.jsonout import Report, add_json_flag
+from harness_design_studio.core import records
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError, TransactionError
 from harness_design_studio.core.io.fs import ProjectLock
-from harness_design_studio.core.io.loader import LoadResult, load_project, non_canonical_files
+from harness_design_studio.core.io.loader import LoadResult, load_project
 from harness_design_studio.core.io.saver import migrate_project
 from harness_design_studio.core.issues import Issue, errors
+from harness_design_studio.core.validation import validate_folder
 
-NOT_CANONICAL = (
-    "File differs from the tool's own formatting (hand-edited or merged). "
-    "It will be rewritten on the next save."
-)
 PROG = "harness-design-studio"  # `harness` is kept as a short alias of the same command
 MIGRATED = "Migrated; the original files are kept in a .migration-backup-* folder."
 
@@ -51,6 +50,7 @@ def build_parser() -> argparse.ArgumentParser:
     ):
         p = sub.add_parser(name, help=text, description=text)
         p.add_argument("project", type=Path, help="project folder")
+        add_json_flag(p)
         if name == "verify":
             p.add_argument(
                 "--outputs",
@@ -63,6 +63,12 @@ def build_parser() -> argparse.ArgumentParser:
                 action="store_true",
                 help="also write the PDF and SVG drawings of the harnesses (off by default: "
                 "the build workbook is the main output)",
+            )
+            p.add_argument(
+                "--out",
+                type=Path,
+                default=None,
+                help="the folder to write the outputs to (default: <project>/outputs)",
             )
     start.register(sub)
     merge.register(sub)
@@ -87,69 +93,50 @@ def _print_report(result: LoadResult, extra: list[Issue]) -> int:
     return 1 if n_err else 0
 
 
-def _validate(path: Path, *, merge_check: bool) -> int:
-    result = load_project(path)
-    extra: list[Issue] = []
-    if merge_check:
-        if result.project.read_only:
-            extra.append(
-                Issue(
-                    "info", "skipped_canonical_check", "Format check skipped (read-only project)."
-                )
-            )
-        elif not result.project.recovered:
-            extra.extend(
-                Issue(
-                    "warning",
-                    "not_canonical",
-                    NOT_CANONICAL,
-                    rel,
-                )
-                for rel in non_canonical_files(path, result.project)
-            )
-    if merge_check and not result.project.recovered:
-        from harness_design_studio.core.vcs.consistency import release_integrity
-
-        extra.extend(release_integrity(result.project))
-    if not result.project.recovered:
-        from harness_design_studio.core import configcheck
-        from harness_design_studio.core.verify import link_issues
-
-        extra.extend(link_issues(result.project))  # a harness made from a link must match it
-        # a value of config/*.json that is set but cannot be used: the same check as `generate`, `drc`
-        # and `config` (D-191); before, `validate` said "0 error(s)" for a value they refuse
-        extra.extend(configcheck.validate(result.project))
+def _validate(path: Path, *, merge_check: bool, rep: Report | None = None) -> int:
+    result, extra = validate_folder(path, merge_check=merge_check)
+    if rep is not None and rep.as_json:
+        outcome = records.validation_result(result, extra)
+        rep.put(**outcome.to_dict())
+        return 0 if outcome.ok else 1
     return _print_report(result, extra)
 
 
-def _generate(path: Path) -> int:
+def _generate(path: Path, rep: Report | None = None) -> int:
     from harness_design_studio.core.generate.engine import generate_project
     from harness_design_studio.core.io.saver import save_project
     from harness_design_studio.core.verify import verify_project
 
+    rep = rep or Report()
     project = load_project(path).project
     if project.read_only:
         print("error: this project is read-only (saved by a newer tool version).", file=sys.stderr)
         return 2
     plan = generate_project(project)
     for f in plan.report.findings:
-        print(f"{f.severity}: [{f.code}] {f.message}")
-    print(plan.report.summary())
+        rep.say(f"{f.severity}: [{f.code}] {f.message}")
+    rep.say(plan.report.summary())
     report = verify_project(project)
-    print(report.summary())
+    rep.say(report.summary())
     if plan.report.errors or not report.ok:
         print("Not saved: fix the errors above first.", file=sys.stderr)
+        if rep.as_json:
+            rep.put(**records.generate_result(plan, report, saved=False).to_dict())
         return 1
     save_project(project, path)
+    if rep.as_json:
+        rep.put(**records.generate_result(plan, report, saved=True).to_dict())
     if project.links and not project.interfaces:  # connections are exported as they are
-        print(
+        rep.say(
             f"{len(project.links)} connection(s) and no interface: Generate wires interfaces "
             "only. `export` writes the connection list without a harness."
         )
     return 0
 
 
-def _export(path: Path, *, drawings: bool = False) -> int:
+def _export(
+    path: Path, *, drawings: bool = False, out: Path | None = None, rep: Report | None = None
+) -> int:
     from harness_design_studio.core.outputs.build import (
         DEFAULT_FOLDER,
         build_outputs,
@@ -158,49 +145,67 @@ def _export(path: Path, *, drawings: bool = False) -> int:
     )
     from harness_design_studio.core.outputs.verify import verify_outputs
 
+    rep = rep or Report()
     project = load_project(path).project
     if not project.harnesses and not project.links:  # connections alone are enough (W2)
         print(
             "error: there are no harnesses to export; run `harness-design-studio generate` first.",
             file=sys.stderr,
         )
+        if rep.as_json:
+            rep.put(**records.export_refused("nothing_to_export").to_dict())
         return 1
     result = build_outputs(project, drawings=drawings)
     report = verify_outputs(project, result.files)
     for issue in report.issues:
-        print(f"{issue.severity}: [{issue.code}] {issue.message}")
+        rep.say(f"{issue.severity}: [{issue.code}] {issue.message}")
     if not report.ok:
         print("Not written: the outputs failed their independent check.", file=sys.stderr)
+        if rep.as_json:
+            refused = records.export_refused(
+                "outputs_failed_check", result.stamp.short, report.issues
+            )
+            rep.put(**refused.to_dict())
         return 1
-    target = path / DEFAULT_FOLDER
+    target = out if out is not None else path / DEFAULT_FOLDER
     had_drawings = drawings_exported(target)
     write_outputs(project, target, result)
-    print(f"{len(result.files)} files written to {target} (model {result.stamp.short}).")
+    rep.say(f"{len(result.files)} files written to {target} (model {result.stamp.short}).")
     if had_drawings and not drawings:
-        print(
+        rep.say(
             "The PDF drawings of the earlier export were removed; "
             "add --drawings to write them again."
         )
+    if rep.as_json:
+        written = records.export_result(
+            result, report.issues, drawings_removed=had_drawings and not drawings
+        )
+        rep.put(**written.to_dict())
     return 0
 
 
-def _drc(path: Path) -> int:
+def _drc(path: Path, rep: Report | None = None) -> int:
     from harness_design_studio.core.checks import find
     from harness_design_studio.core.drc import run
     from harness_design_studio.core.drc.report import render_markdown
 
+    rep = rep or Report()
     project = load_project(path).project
     findings = sorted(
         [*find(project), *run(project)],
         key=lambda f: ({"error": 0, "warning": 1, "info": 2}[f.severity], f.id),
     )
-    print(render_markdown(project, findings), end="")
+    if rep.as_json:
+        rep.put(**records.check_result(project, findings).to_dict())
+    else:
+        print(render_markdown(project, findings), end="")
     return 1 if any(f.severity == "error" and f.waiver is None for f in findings) else 0
 
 
-def _verify(path: Path, outputs: bool = False) -> int:
+def _verify(path: Path, outputs: bool = False, rep: Report | None = None) -> int:
     from harness_design_studio.core.verify import verify_project
 
+    rep = rep or Report()
     project = load_project(path).project
     report = verify_project(project)
     if outputs:
@@ -217,6 +222,9 @@ def _verify(path: Path, outputs: bool = False) -> int:
         out = verify_outputs(project, read_folder(folder))
         report.issues += out.issues
         report.stale = report.stale or out.stale
+    if rep.as_json:
+        rep.put(**records.verify_result(report).to_dict())
+        return 0 if report.ok else 1
     for issue in report.issues:
         print(f"{issue.severity}: [{issue.code}] {issue.message}")
     print(report.summary())
@@ -434,23 +442,25 @@ def _dispatch(args: argparse.Namespace) -> int:
                 return 2
     if args.command in explain.COMMANDS:
         return explain.run(args)
-    if args.command == "migrate":
-        migrated = migrate_project(args.project)
-        print("Already up to date." if migrated is None else MIGRATED)
-        return 0
-    if args.command == "generate":
-        return _generate(args.project)
     if args.command in data.COMMANDS:
         return data.run(args)
     if args.command in changes.COMMANDS:
         return changes.run(args)
+    rep = Report(args.json)
+    if args.command == "migrate":
+        migrated = migrate_project(args.project)
+        rep.say("Already up to date." if migrated is None else MIGRATED)
+        rep.put(migrated=migrated is not None)
+        return rep.finish(0)
+    if args.command == "generate":
+        return rep.finish(_generate(args.project, rep))
     if args.command == "export":
-        return _export(args.project, drawings=args.drawings)
+        return rep.finish(_export(args.project, drawings=args.drawings, out=args.out, rep=rep))
     if args.command == "drc":
-        return _drc(args.project)
+        return rep.finish(_drc(args.project, rep))
     if args.command == "verify":
-        return _verify(args.project, args.outputs)
-    return _validate(args.project, merge_check=args.command == "check")
+        return rep.finish(_verify(args.project, args.outputs, rep))
+    return rep.finish(_validate(args.project, merge_check=args.command == "check", rep=rep))
 
 
 if __name__ == "__main__":

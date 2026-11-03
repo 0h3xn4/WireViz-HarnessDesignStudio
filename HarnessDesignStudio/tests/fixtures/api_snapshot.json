@@ -1,0 +1,370 @@
+{
+ "all": [
+  "API_VERSION",
+  "CheckResult",
+  "ConfigReport",
+  "ConfigValue",
+  "ConfigValueError",
+  "Derivation",
+  "DerivationFiles",
+  "EditError",
+  "ExportResult",
+  "ExportedFile",
+  "FindingRecord",
+  "GenerateResult",
+  "HarnessError",
+  "IssueRecord",
+  "LoadError",
+  "NoOutputsError",
+  "PathLike",
+  "Project",
+  "ProjectDamagedError",
+  "ProjectLockedError",
+  "ProjectSource",
+  "ReadOnlyProjectError",
+  "RuleInfo",
+  "SaveError",
+  "TemplateError",
+  "TemplateInfo",
+  "TransactionError",
+  "ValidationResult",
+  "VerifyResult",
+  "create_project",
+  "explain",
+  "explain_all",
+  "explain_finding",
+  "export",
+  "generate",
+  "get_config",
+  "list_rules",
+  "list_templates",
+  "load_project",
+  "run_checks",
+  "save_project",
+  "set_config",
+  "validate",
+  "verify",
+  "write_derivations"
+ ],
+ "api_version": 1,
+ "constants": {
+  "API_VERSION": "1",
+  "PathLike": "str | os.PathLike[str]",
+  "ProjectSource": "harness_design_studio.core.model.project.Project | str | os.PathLike[str]"
+ },
+ "errors": {
+  "ConfigValueError": [
+   "EditError",
+   "HarnessError",
+   "Exception",
+   "BaseException"
+  ],
+  "EditError": [
+   "HarnessError",
+   "Exception",
+   "BaseException"
+  ],
+  "HarnessError": [
+   "Exception",
+   "BaseException"
+  ],
+  "LoadError": [
+   "HarnessError",
+   "Exception",
+   "BaseException"
+  ],
+  "NoOutputsError": [
+   "HarnessError",
+   "Exception",
+   "BaseException"
+  ],
+  "ProjectDamagedError": [
+   "LoadError",
+   "HarnessError",
+   "Exception",
+   "BaseException"
+  ],
+  "ProjectLockedError": [
+   "HarnessError",
+   "Exception",
+   "BaseException"
+  ],
+  "ReadOnlyProjectError": [
+   "HarnessError",
+   "Exception",
+   "BaseException"
+  ],
+  "SaveError": [
+   "HarnessError",
+   "Exception",
+   "BaseException"
+  ],
+  "TemplateError": [
+   "HarnessError",
+   "Exception",
+   "BaseException"
+  ],
+  "TransactionError": [
+   "HarnessError",
+   "Exception",
+   "BaseException"
+  ]
+ },
+ "functions": {
+  "create_project": "(folder: 'PathLike', template: 'str' = 'blank', name: 'str | None' = None) -> 'Project'",
+  "explain": "(source: 'ProjectSource', object_id: 'str') -> 'list[Derivation]'",
+  "explain_all": "(source: 'ProjectSource') -> 'list[Derivation]'",
+  "explain_finding": "(source: 'ProjectSource', finding_id: 'str') -> 'list[Derivation]'",
+  "export": "(folder: 'PathLike', out: 'PathLike | None' = None, *, drawings: 'bool' = False) -> 'ExportResult'",
+  "generate": "(folder: 'PathLike') -> 'GenerateResult'",
+  "get_config": "(source: 'ProjectSource') -> 'ConfigReport'",
+  "list_rules": "() -> 'list[RuleInfo]'",
+  "list_templates": "() -> 'list[TemplateInfo]'",
+  "load_project": "(folder: 'PathLike') -> 'Project'",
+  "run_checks": "(source: 'ProjectSource') -> 'CheckResult'",
+  "save_project": "(project: 'Project', folder: 'PathLike') -> 'None'",
+  "set_config": "(folder: 'PathLike', file: 'str', key: 'str', value: 'object', *, placeholder: 'bool | None' = None) -> 'ConfigValue'",
+  "validate": "(folder: 'PathLike', *, merge_check: 'bool' = False) -> 'ValidationResult'",
+  "verify": "(folder: 'PathLike', *, outputs: 'bool' = False) -> 'VerifyResult'",
+  "write_derivations": "(source: 'ProjectSource', out: 'PathLike') -> 'DerivationFiles'"
+ },
+ "types": {
+  "CheckResult": {
+   "fields": {
+    "findings": "tuple[FindingRecord, ...]",
+    "model_hash": "str",
+    "ok": "bool",
+    "open_errors": "int",
+    "open_notes": "int",
+    "open_warnings": "int",
+    "placeholder_config": "tuple[str, ...]",
+    "rules_run": "int",
+    "waived": "int"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "ConfigReport": {
+   "fields": {
+    "counterpart_pairs": "int | None",
+    "ok": "bool",
+    "placeholder_files": "tuple[str, ...]",
+    "problems": "tuple[IssueRecord, ...]",
+    "release_distinct_roles": "bool",
+    "set_count": "int",
+    "total": "int",
+    "values": "tuple[ConfigValue, ...]",
+    "waiting_for_decision": "tuple[str, ...]"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'",
+    "value": "(self, file: 'str', key: 'str') -> 'ConfigValue'"
+   }
+  },
+  "ConfigValue": {
+   "fields": {
+    "choices": "tuple[str, ...]",
+    "display": "str",
+    "file": "str",
+    "key": "str",
+    "kind": "str",
+    "label": "str",
+    "locked": "str | None",
+    "missing": "bool",
+    "optional": "bool",
+    "placeholder": "bool",
+    "source": "str",
+    "unit": "str",
+    "used_by": "str",
+    "value": "Any",
+    "what": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "Derivation": {
+   "fields": {
+    "assumptions": "tuple[str, ...]",
+    "check": "Check | None",
+    "equation": "str",
+    "id": "str",
+    "inputs": "tuple[Input, ...]",
+    "missing": "tuple[str, ...]",
+    "quantity": "str",
+    "reference": "str",
+    "steps": "tuple[Step, ...]",
+    "subject": "str",
+    "unit": "str",
+    "value": "float | None"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "DerivationFiles": {
+   "fields": {
+    "count": "int",
+    "files": "tuple[Path, ...]",
+    "without_value": "int"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "ExportResult": {
+   "fields": {
+    "blocked": "str",
+    "drawings_removed": "bool",
+    "files": "tuple[ExportedFile, ...]",
+    "issues": "tuple[IssueRecord, ...]",
+    "model_hash": "str",
+    "ok": "bool",
+    "written": "bool"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "ExportedFile": {
+   "fields": {
+    "bytes": "int",
+    "path": "str",
+    "sha256": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "FindingRecord": {
+   "fields": {
+    "can_waive": "bool",
+    "id": "str",
+    "object_id": "str",
+    "rule": "str",
+    "severity": "str",
+    "sources": "tuple[str, ...]",
+    "title": "str",
+    "waived": "bool",
+    "waiver_changed": "bool",
+    "waiver_justification": "str",
+    "why": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "GenerateResult": {
+   "fields": {
+    "added": "tuple[str, ...]",
+    "changed": "tuple[str, ...]",
+    "findings": "tuple[IssueRecord, ...]",
+    "frozen": "tuple[str, ...]",
+    "interfaces_checked": "int",
+    "kept_locks": "tuple[str, ...]",
+    "ok": "bool",
+    "removed": "tuple[str, ...]",
+    "saved": "bool",
+    "unchanged": "tuple[str, ...]",
+    "verify_issues": "tuple[IssueRecord, ...]",
+    "wires_checked": "int"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "IssueRecord": {
+   "fields": {
+    "code": "str",
+    "location": "str | None",
+    "message": "str",
+    "object_id": "str | None",
+    "severity": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "Project": {
+   "fields": {
+    "baselines": "dict[str, Baseline]",
+    "changelog": "dict[str, ChangeEntry]",
+    "config": "dict[str, ConfigFile]",
+    "connectors": "dict[str, Connector]",
+    "generation": "GenerationRecord | None",
+    "harnesses": "dict[str, Harness]",
+    "interface_types": "dict[str, InterfaceType]",
+    "interfaces": "dict[str, InterfaceInstance]",
+    "library_info": "LibraryInfo",
+    "links": "dict[str, Link]",
+    "meta": "ProjectMeta",
+    "migrated_from": "int | None",
+    "parts": "dict[str, Part]",
+    "placements": "dict[str, Placement]",
+    "quarantine": "list[QuarantinedItem]",
+    "quarantine_files": "dict[str, bytes]",
+    "read_only": "bool",
+    "saved_records": "frozenset[str]",
+    "units": "dict[str, Unit]",
+    "waivers": "dict[str, Waiver]",
+    "zones": "list[str]"
+   },
+   "methods": {
+    "all_connectors": "(self) -> 'dict[str, Connector]'",
+    "placeholder_configs": "(self) -> 'list[str]'"
+   }
+  },
+  "RuleInfo": {
+   "fields": {
+    "can_waive": "bool",
+    "how": "str",
+    "id": "str",
+    "severity": "str",
+    "sources": "tuple[str, ...]",
+    "topic": "str",
+    "why": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "TemplateInfo": {
+   "fields": {
+    "name": "str",
+    "summary": "str",
+    "title": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "ValidationResult": {
+   "fields": {
+    "connectors": "int",
+    "devices": "int",
+    "errors": "int",
+    "harnesses": "int",
+    "interfaces": "int",
+    "issues": "tuple[IssueRecord, ...]",
+    "ok": "bool",
+    "warnings": "int"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "VerifyResult": {
+   "fields": {
+    "interfaces_checked": "int",
+    "issues": "tuple[IssueRecord, ...]",
+    "ok": "bool",
+    "stale": "bool",
+    "wires_checked": "int"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  }
+ }
+}

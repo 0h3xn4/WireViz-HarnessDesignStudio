@@ -4,8 +4,10 @@ import argparse
 import sys
 from datetime import date
 from pathlib import Path
+from typing import Any
 
 from harness_design_studio.cli import blocked_text
+from harness_design_studio.cli.jsonout import Report, add_json_flag
 from harness_design_studio.core.commands import History
 from harness_design_studio.core.errors import HarnessError, SaveError
 from harness_design_studio.core.io.loader import load_project
@@ -37,6 +39,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         p.add_argument("project", type=Path, help="project folder")
         if harness:
             p.add_argument("harness", help="harness ID, for example W001")
+        add_json_flag(p)
         return p
 
     def who(p: argparse.ArgumentParser, comment: bool) -> None:
@@ -99,6 +102,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     )
     c.add_argument("old", type=Path)
     c.add_argument("new", type=Path)
+    add_json_flag(c)
     log = add("log", "print the change log", harness=False)
     log.add_argument("harness", nargs="?", default=None, help="limit to one harness")
 
@@ -114,38 +118,76 @@ def _today(value: str | None) -> str:
     return date.today().isoformat() if value is None else value
 
 
-def _apply(path: Path, plan: ReleasePlan) -> int:
+def _apply(path: Path, plan: ReleasePlan, rep: Report, by: str) -> int:
     if not plan.ok:
         for b in plan.blockers:
             option = OPTIONS.get(b.about or "")
             where = f"{option}: " if option else ""
             print(f"blocked: [{b.code}] {where}{b.message}", file=sys.stderr)
+        rep.put(
+            action=plan.label,
+            by=by,
+            blockers=[
+                {"code": b.code, "message": b.message, "about": b.about} for b in plan.blockers
+            ],
+            outputs=None,
+        )
         return 2 if any(b.code == "no_harness" for b in plan.blockers) else 1
     return 0
 
 
+def _diff_doc(diff: vdiff.Diff) -> dict[str, Any]:
+    """A comparison as data: the counts, and each added, removed or changed object with the
+    fields that differ."""
+    return {
+        **diff.counts(),
+        "changes": [
+            {
+                "change": c.change,
+                "kind": c.kind,
+                "id": c.id,
+                "fields": [
+                    {"name": f.name, "before": f.before, "after": f.after} for f in c.fields
+                ],
+            }
+            for c in diff.changes
+        ],
+    }
+
+
 def run(args: argparse.Namespace) -> int:
+    rep = Report(args.json)
+    return rep.finish(_run(args, rep))
+
+
+def _run(args: argparse.Namespace, rep: Report) -> int:
     cmd = args.command
     if cmd == "compare":
         diff = vdiff.diff_projects(load_project(args.old).project, load_project(args.new).project)
-        print(
+        rep.say(
             vdiff.render_markdown(
                 "Project comparison", diff, before=str(args.old), after=str(args.new)
             ),
             end="",
         )
-        print(NOT_COMPARED)
+        rep.say(NOT_COMPARED)
+        rep.put(**_diff_doc(diff), not_compared=NOT_COMPARED)
         return 0
     project = load_project(args.project).project
     if cmd == "log":
         if args.harness is not None and args.harness not in project.harnesses:
             print(f"error: harness {args.harness} does not exist.", file=sys.stderr)
             return 2
-        for row in changelog_rows(project, args.harness):
-            print(" | ".join(row))
+        rows = changelog_rows(project, args.harness)
+        for row in rows:
+            rep.say(" | ".join(row))
+        if rep.as_json:
+            keys = ["entry", "harness", "revision", "event", "by", "date", "comment"]
+            entries = [dict(zip(keys, r, strict=True)) for r in rows[1:]]
+            rep.put(harness=args.harness, entries=entries)
         return 0
     if cmd == "diff":
-        return _diff(project, args)
+        return _diff(project, args, rep)
     if project.read_only:
         print("error: this project is read-only (saved by a newer tool version).", file=sys.stderr)
         return 2
@@ -154,7 +196,7 @@ def run(args: argparse.Namespace) -> int:
         by = default_name(project, args.project)
         if by is None:  # as when the option was required: the usual message of the parser
             _PARSERS[cmd].error("the following arguments are required: --by")
-        print(f"Name taken from Git (user.name): {by}.")
+        rep.say(f"Name taken from Git (user.name): {by}.")
     when = _today(args.date)
     folder = args.project / "outputs"
     if cmd == "review":
@@ -173,7 +215,7 @@ def run(args: argparse.Namespace) -> int:
         )
     else:
         plan = plan_new_revision(project, args.harness, by=by, comment=args.comment, when=when)
-    blocked = _apply(args.project, plan)
+    blocked = _apply(args.project, plan, rep, by)
     if blocked:
         return blocked
     try:
@@ -182,9 +224,10 @@ def run(args: argparse.Namespace) -> int:
     except HarnessError as exc:
         print(blocked_text(exc), file=sys.stderr)
         return 2 if isinstance(exc, SaveError) else 1
-    print(f"{plan.label}: done.")
+    rep.say(f"{plan.label}: done.")
+    rep.put(action=plan.label, by=by, blockers=[], outputs=None)
     if cmd == "release":
-        return _restamp(args.project)
+        return _restamp(args.project, rep)
     return 0
 
 
@@ -194,7 +237,7 @@ RESTAMP_HINT = (
 )
 
 
-def _restamp(path: Path) -> int:
+def _restamp(path: Path, rep: Report) -> int:
     """After a release the title blocks must show the new status, so write the outputs again."""
     from harness_design_studio.core.outputs.build import (
         DEFAULT_FOLDER,
@@ -220,7 +263,8 @@ def _restamp(path: Path) -> int:
         print(f"error: the outputs could not be re-stamped ({_why(exc)}).", file=sys.stderr)
         print(RESTAMP_HINT, file=sys.stderr)
         return 2
-    print(f"Outputs re-exported with the released status ({len(built.files)} files).")
+    rep.say(f"Outputs re-exported with the released status ({len(built.files)} files).")
+    rep.put(outputs=len(built.files))
     return 0
 
 
@@ -230,7 +274,7 @@ def _why(exc: Exception) -> str:
     return str(exc).rstrip(".")
 
 
-def _diff(project: object, args: argparse.Namespace) -> int:
+def _diff(project: object, args: argparse.Namespace, rep: Report) -> int:
     from harness_design_studio.core.model import Project
 
     assert isinstance(project, Project)  # noqa: S101 - narrowing for the type checker
@@ -252,16 +296,19 @@ def _diff(project: object, args: argparse.Namespace) -> int:
             print(f"error: {h.id} has no baseline for revision {args.rev_to}.", file=sys.stderr)
             return 2
         diff = vdiff.diff_snapshots(start.snapshot, end.snapshot)
-        print(
+        rep.say(
             vdiff.render_markdown(f"{h.id}: revision {start.revision} to {end.revision}", diff),
             end="",
         )
+        to = end.revision
     else:
         diff = working_diff(project, h, start)
-        print(
+        rep.say(
             vdiff.render_markdown(
                 f"{h.id}: working design against revision {start.revision}", diff
             ),
             end="",
         )
+        to = "working"
+    rep.put(harness=h.id, **{"from": start.revision, "to": to}, **_diff_doc(diff))
     return 0

@@ -325,7 +325,7 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio verify DIR [--outputs]` | independent check of the harnesses, and of `outputs/` |
 | `harness-design-studio drc DIR` | design rule report (Markdown); exit 1 on unwaived errors |
 | `harness-design-studio explain DIR OBJECT [--json]` or `explain DIR --all --out FOLDER` | how the numbers of one wire (its length, the current its gauge may carry after derating, its voltage drop, its share of the mass), one harness (its mass), one part (why the bill of materials has its quantity) or the contacts of an interface at a connector (`INTERFACE.CONNECTOR`, the object of a *Contact current* finding: their limit) were made, each with the equation, the inputs with units and sources, the steps and the assumptions it rests on; names what is not set; changes nothing; with `--all --out` it writes every derivation of the project as `derivations.json` and `derivations.csv` |
-| `harness-design-studio export DIR [--drawings]` | write and verify all outputs; the PDF and SVG drawings of the harnesses only with `--drawings` |
+| `harness-design-studio export DIR [--drawings] [--out FOLDER]` | write and verify all outputs; the PDF and SVG drawings of the harnesses only with `--drawings`; to `FOLDER` instead of `DIR/outputs` with `--out` |
 | `harness-design-studio review DIR HARNESS --by NAME` | submit a draft for review |
 | `harness-design-studio release DIR HARNESS --by NAME --comment TEXT [--checker NAME] [--accept-placeholders REASON] [--accept-unapproved-parts REASON]` | release (blocked while checks fail, or while values are placeholders or parts are not approved and no reason is given) and re-export |
 | `harness-design-studio revise DIR HARNESS --by NAME --comment TEXT` | start a new revision |
@@ -343,6 +343,10 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio import-devices DIR FILE [--device D] [--list] [--dry-run]` | add devices from a device library file; a taken ID gets the next free one, nothing in the project is replaced |
 | `harness-design-studio export-subsystem DIR FILE --device D [--device D2 ...] --name NAME [--description TEXT] [--replace]` | save devices and the connections between them as a subsystem library file (a file that exists is replaced only with `--replace`) |
 | `harness-design-studio import-subsystem DIR FILE [--show] [--dry-run]` | add a subsystem from a subsystem library file in one step: the devices (a taken ID gets the next free one) and their connections; all or nothing |
+
+Every command that has a result in data form takes `--json`: it then prints one JSON document instead of the text, with the same exit code. The document has no time, no user name and no absolute path, and the same design gives the same bytes. The keys of each document are in `docs/CLI.md`.
+
+From Python, `harness_design_studio.api` does the same as the commands (open and create a project, generate, check, explain a number, read and set engineering values, export) and returns the results as plain data; it needs no Qt. The user manual page "Script the tool" shows how, and `docs/examples/scripting/` has a batch, a trade study and a script that writes every derivation as files.
 
 A script that builds everything: `harness-design-studio check DIR`, `harness-design-studio generate DIR`, `harness-design-studio verify DIR`, `harness-design-studio drc DIR`, `harness-design-studio export DIR`. `harness-design-studio templates FOLDER` copies the templates, and `ci/build.sh` in that folder is this script.
 

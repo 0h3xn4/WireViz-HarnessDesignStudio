@@ -21,6 +21,7 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 | --- | --- |
 | `gen_cli_docs` | Writes `docs/CLI.md` (every `harness-design-studio` command with its arguments and examples) from the argument parser |
 | `gen_rule_docs` | Writes `docs/RULES.md` (every design rule: what, why, how to fix, severity) |
+| `gen_api_snapshot` | Writes `tests/fixtures/api_snapshot.json` (the names, signatures and result fields of `harness_design_studio.api`); run it only on purpose, see [`api-stability.md`](api-stability.md) |
 | `build_guide` | Builds the offline user guide: `docs/guide/USER_GUIDE.md` to the HTML that opens with **F1** |
 | `build_examples` | Rebuilds the example projects shipped with the tool (`harness-design-studio new --list`) |
 | `build_prototype` | Assembles the single-file clickable prototype from the design tokens |
