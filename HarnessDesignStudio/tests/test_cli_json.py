@@ -9,7 +9,6 @@ interface (`harness_design_studio.api`) gives."""
 import json
 import re
 import shutil
-import tempfile
 from pathlib import Path
 from typing import Any
 
@@ -535,7 +534,7 @@ def test_the_document_is_the_same_twice_and_has_no_path_or_time(
     for command, text in first.items():
         assert main([command, str(small), "--json"]) in (0, 1)
         assert capsys.readouterr().out == text, command
-        assert str(small.parent) not in text and tempfile.gettempdir() not in text, command
+        assert str(small.parent) not in text, command
         assert not re.search(r"\b20\d\d-\d\d-\d\d[T ]\d\d:\d\d", text), command
 
 

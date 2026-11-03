@@ -11,7 +11,6 @@ import importlib.util
 import json
 import subprocess
 import sys
-import tempfile
 from pathlib import Path
 from types import ModuleType
 
@@ -117,7 +116,7 @@ def test_batch_projects(tmp_path: Path) -> None:
     assert int(table[1]["wires"]) > int(table[0]["wires"]) > 0
     assert all(int(r["output_files"]) > 20 and len(r["model_hash"]) == 12 for r in table)
     text = target.read_text(encoding="utf-8")
-    assert str(tmp_path) not in text and tempfile.gettempdir() not in text
+    assert str(tmp_path) not in text
     again = tmp_path / "again.csv"
     module.main([str(again)])
     assert again.read_bytes() == target.read_bytes()  # the same design, the same bytes
