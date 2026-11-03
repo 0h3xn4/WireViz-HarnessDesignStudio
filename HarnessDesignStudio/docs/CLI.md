@@ -156,15 +156,17 @@ harness-design-studio verify my-design --outputs
 
 ### harness-design-studio explain
 
-Show how the numbers of one wire or one harness were made. For a wire: its length, the current its gauge may carry after derating, the voltage drop over it and its share of the mass. For a harness: its mass. For a part: why the bill of materials has its quantity. For INTERFACE.CONNECTOR (the object of a current-over-contact finding): the limit of the contacts. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. Nothing is changed or written. `--json` prints the same as data.
+Show how the numbers of one wire or one harness were made. For a wire: its length, the current its gauge may carry after derating, the voltage drop over it and its share of the mass. For a harness: its mass. For a part: why the bill of materials has its quantity. For INTERFACE.CONNECTOR (the object of a current-over-contact finding): the limit of the contacts. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. `--json` prints the same as data. With `--all --out FOLDER` it writes every derivation of the project to FOLDER as `derivations.json` and `derivations.csv`: no time, user or path is in them, so the same design gives the same files. Without `--out` nothing is written.
 
-`harness-design-studio explain project OBJECT [options]`
+`harness-design-studio explain project [OBJECT] [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
 | `OBJECT` | a wire (W001-001), a harness (W001), a part (EX-WIRE-SINGLE) or INTERFACE.CONNECTOR (IF-001.GPSU1-J01) |
 | `--json` | print the derivations as JSON |
+| `--all` | every derivation of the project (instead of OBJECT) |
+| `--out OUT` | with --all: the folder for derivations.json and derivations.csv |
 
 Examples:
 
@@ -172,6 +174,7 @@ Examples:
 harness-design-studio explain wheel-link W001-001
 harness-design-studio explain wheel-link W001
 harness-design-studio explain wheel-link EX-WIRE-SINGLE
+harness-design-studio explain wheel-link --all --out wheel-link-derivations
 harness-design-studio explain wheel-link IF-001.GPSU1-J01
 harness-design-studio explain wheel-link W001-001 --json
 ```

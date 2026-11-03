@@ -430,3 +430,52 @@ def test_a_finding_object_can_be_explained_and_what_is_missing_is_named(
     fc = fi.endpoints[0].connector_id or ""
     d = contact_current_derivation(first, fi.id, fc)
     assert d.value is None and any("derating.contact_current_factor" in m for m in d.missing)
+
+
+# ---- every derivation as files -------------------------------------------------------------
+
+
+def test_every_derivation_is_written_as_json_and_csv_and_the_same_design_gives_the_same_bytes(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    import csv as csv_mod
+
+    from harness_design_studio.core.derive_export import CSV_HEADER, explain_all
+    from harness_design_studio.core.io.loader import load_project
+
+    templates.create_project(tmp_path / "flat", "flatsat")
+    assert main(["explain", str(tmp_path / "flat"), "--all", "--out", str(tmp_path / "a")]) == 0
+    assert "derivations written" in capsys.readouterr().out
+    assert main(["explain", str(tmp_path / "flat"), "--all", "--out", str(tmp_path / "b")]) == 0
+    for name in ("derivations.json", "derivations.csv"):
+        assert (tmp_path / "a" / name).read_bytes() == (tmp_path / "b" / name).read_bytes()
+    project = load_project(tmp_path / "flat").project
+    found = explain_all(project)
+    doc = json.loads((tmp_path / "a" / "derivations.json").read_text(encoding="utf-8"))
+    assert doc["format"] == 1 and doc["tool_version"] and len(doc["derivations"]) == len(found)
+    assert doc["derivations"] == [d.to_dict() for d in found]
+    with (tmp_path / "a" / "derivations.csv").open(encoding="utf-8", newline="") as fh:
+        rows = list(csv_mod.reader(fh))
+    assert rows[0] == CSV_HEADER and len(rows) == len(found) + 1
+    by = {(r[0], r[1]): r for r in rows[1:]}
+    length = by[("wire-length", "Wire W001-001")]
+    assert length[3] == "3.45" and length[4] == "m"
+    limit = by[("wire-current-limit", "Wire W001-001")]
+    assert limit[6:10] == ["0.8", "1.08", "0.28", "pass"]
+    # no time, user or path in the files
+    text = (tmp_path / "a" / "derivations.json").read_text(encoding="utf-8")
+    assert str(tmp_path) not in text and "T00:" not in text
+
+
+def test_the_ways_of_calling_explain_that_make_no_sense_are_refused(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    templates.create_project(tmp_path / "flat", "flatsat")
+    flat = str(tmp_path / "flat")
+    assert main(["explain", flat]) == 2
+    assert main(["explain", flat, "W001", "--all", "--out", str(tmp_path / "o")]) == 2
+    assert main(["explain", flat, "--all"]) == 2
+    assert main(["explain", flat, "W001", "--out", str(tmp_path / "o")]) == 2
+    err = capsys.readouterr().err
+    assert "give either OBJECT or --all" in err and "--all needs --out" in err
+    assert "--out goes with --all" in err and not (tmp_path / "o").exists()
