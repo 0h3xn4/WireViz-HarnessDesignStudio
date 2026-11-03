@@ -39,7 +39,8 @@ from harness_design_studio.core.model.base import Name
 from harness_design_studio.core.model.physical import COAX_SHIELD_END
 from harness_design_studio.core.vcs.snapshot import carried_interfaces
 
-from .lengths import path_length
+from . import bundle
+from .lengths import generated_length, path_length, path_trail
 from .naming import Namer, namer_for
 from .pins import Allocation, Request, allocate
 from .segmentation import Group, orient, segment
@@ -472,6 +473,7 @@ def _allocate_pins(
             gap,
             held,
             ret_gap,
+            settings.names(ctx.project, "model", "pin_allocation_categories"),
         )
         ctx.alloc[cid] = res
         for iid, msg in res.errors:
@@ -665,6 +667,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
             "lengths: service loop is a placeholder (0 used); lengths exclude service loops",
         )
     bundle_wires = sum(len(links_of(p.interface_types[i.type_id])[0]) for i in ifaces)
+    bundle_by_wire = _planned_bundles(p, skeleton, cables, ifaces, oriented)
     for i in ifaces:
         itype = p.interface_types[i.type_id]
         links, notes = links_of(itype)
@@ -688,8 +691,8 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
                 )
                 used_wires.add(wid)
             length = path_length(skeleton, cables[src_box].id, cables[dst_box].id)
-            if length is not None and loop is not None:
-                length += settings.service_loops(p) * loop
+            if length is not None:
+                length = generated_length(p, length, loop or 0.0, itype.construction)
             wire = Wire(
                 id=wid, signal=link.label, from_connector=cables[src_box].id, from_pin=pin_src, to_connector=cables[dst_box].id,
                 to_pin=pin_dst, part_id=part_id, interface_id=i.id, length_m=length,
@@ -709,7 +712,13 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
                     "override: the wire is locked, so its gauge, part, colour and length were kept",
                 )
             else:
-                wire = _size(ctx, wire, i, itype.category, bundle_wires)
+                wire = _size(
+                    ctx,
+                    wire,
+                    i,
+                    itype.category,
+                    bundle_by_wire.get(_wire_key(i.id, link.label, src_box), bundle_wires),
+                )
             if prev_w is not None:
                 carried.add(wid)
                 if prev_w.label or prev_w.note or _has_strip(prev_w):
@@ -948,13 +957,45 @@ def _wire_part(ctx: _Ctx, construction: str, iid: str) -> str | None:
     return part
 
 
+def _planned_bundles(
+    p: Project,
+    skeleton: Harness,
+    cables: dict[str, Connector],
+    ifaces: list[InterfaceInstance],
+    oriented: dict[str, tuple[str, str]],
+) -> dict[object, int]:
+    """The bundle size of each wire the harness is about to get, by the basis of the project: the
+    same count `bundle.bundle_sizes` gives for the finished harness. Under the default basis (every
+    wire of the harness) it is empty and the plain count of planned wires is used, as always."""
+    name = bundle.basis(p)
+    if name == "all_wires":
+        return {}
+    planned: list[bundle.BundleWire] = []
+    for i in ifaces:
+        itype = p.interface_types[i.type_id]
+        bx, by = oriented[i.id]
+        for link in links_of(itype)[0]:
+            src_box, dst_box = (bx, by) if link.from_end == "X" else (by, bx)
+            trail = path_trail(skeleton, cables[src_box].id, cables[dst_box].id)
+            planned.append(
+                bundle.BundleWire(
+                    _wire_key(i.id, link.label, src_box),
+                    i.max_current_a is not None,
+                    None if trail is None else tuple(sid for sid, _ in trail),
+                )
+            )
+    return bundle.bundle_counts(name, planned)
+
+
 def _size(
     ctx: _Ctx, wire: Wire, i: InterfaceInstance, category: str, bundle_wires: int | None = None
 ) -> Wire:
     conductors = settings.drop_conductors(ctx.project, category)
+    rho, rho_missing = settings.resistivity(ctx.project)
     sizing = size_wire(
         ctx.der,
         ctx.gen,
+        resistivity=(rho, rho_missing),
         current_a=i.max_current_a,
         length_m=wire.length_m,
         path_conductors=conductors,

@@ -21,7 +21,9 @@ from harness_design_studio.core.assumptions import describe
 from harness_design_studio.core.drc.base import cfg, number
 from harness_design_studio.core.drc.rules import contact_rating, contact_rating_key
 from harness_design_studio.core.edit import EditError
-from harness_design_studio.core.generate.lengths import path_trail, wire_length
+from harness_design_studio.core.generate import bundle
+from harness_design_studio.core.generate.bundle import bundle_size
+from harness_design_studio.core.generate.lengths import generated_length, path_trail, wire_length
 from harness_design_studio.core.generate.mass import harness_mass, wire_mass_g
 from harness_design_studio.core.generate.sizing import (
     ampacity_table,
@@ -155,7 +157,10 @@ def render(d: Derivation) -> str:
 
 
 def _bundle(
-    derating: dict[str, object], wires_in_harness: int | None, harness_id: str
+    derating: dict[str, object],
+    wires_in_harness: int | None,
+    harness_id: str,
+    basis_name: str = "all_wires",
 ) -> tuple[float | None, Input | None, str, str | None]:
     """The bundle factor as `wire_current_limit` takes it: from the table when one is set, else
     the single factor. Returns (K, input, reference text, what is missing)."""
@@ -173,9 +178,14 @@ def _bundle(
                 f"derating.bundle_factor_by_count (no entry for {wires_in_harness} wires)",
             )
         standard = by_count == BUNDLE_K
+        counted = (
+            f"harness {harness_id}"
+            if basis_name == "all_wires"
+            else f"harness {harness_id}, counted as {bundle.BASIS_TEXT[basis_name]}"
+        )
         source = (
             f"config/derating.json: bundle_factor_by_count, next listed count at or above "
-            f"{wires_in_harness} wires, harness {harness_id} (A-BUNDLE-ALL)"
+            f"{wires_in_harness} wires, {counted} (A-BUNDLE-ALL)"
         )
         ref = (
             "Bundle factor K: ECSS-Q-ST-30-11C, Table 6-41 (the table of the project equals the "
@@ -205,8 +215,8 @@ def wire_current_limit_derivation(project: Project, h: Harness, w: Wire) -> Deri
     derating = cfg(project, "derating")
     table = ampacity_table(derating.get("ampacity_a_by_awg"))
     temp = number(derating.get("temperature_derating"))
-    wires = len(h.wires)
-    k, k_input, k_ref, k_missing = _bundle(derating, wires, h.id)
+    wires = bundle_size(project, h, w)
+    k, k_input, k_ref, k_missing = _bundle(derating, wires, h.id, bundle.basis(project))
     missing: list[str] = []
     if table is None:
         missing.append("derating.ampacity_a_by_awg")
@@ -280,20 +290,30 @@ def wire_current_limit_derivation(project: Project, h: Harness, w: Wire) -> Deri
 
 def wire_voltage_drop_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
     """The voltage drop over the wire at the current of its interface, against the limit."""
-    derating, generation = cfg(project, "derating"), cfg(project, "generation")
+    derating = cfg(project, "derating")
     limit = number(derating.get("max_voltage_drop_v"))
-    rho = number(generation.get("conductor_resistivity_ohm_m"))
+    rho, rho_missing = settings.resistivity(project)
+    rho_source = "config/generation.json: conductor_resistivity_ohm_m"
+    equation = "ΔV = I × ρ × L / A × n"
+    if settings.choice(project, "model", "drop_model") == "dc_at_ambient":
+        alpha = settings.number(project, "model", "resistivity_temperature_coefficient")
+        t_ref = settings.number(project, "model", "resistivity_reference_temperature_c")
+        rho_source = (
+            "config/generation.json: conductor_resistivity_ohm_m, corrected to the hottest ambient "
+            f"temperature (derating.max_ambient_temperature_c): ρ × (1 + α × (T − {_g(t_ref)} °C)), "
+            f"α = {_g(alpha)} 1/K (model.drop_model dc_at_ambient)"
+        )
+        equation = "ΔV = I × ρ(T) × L / A × n"
     i = project.interfaces.get(w.interface_id or "")
     itype = project.interface_types.get(i.type_id) if i else None
     length = wire_length(h, w)
     subject = f"Wire {w.id}"
-    equation = "ΔV = I × ρ × L / A × n"
     assumptions = ("A-DC-SOLID", "A-ROUND-TRIP")
     missing: list[str] = []
     if i is None or i.max_current_a is None:
         missing.append("the current of the interface (set Max current on the interface)")
     if rho is None:
-        missing.append("generation.conductor_resistivity_ohm_m")
+        missing.append(rho_missing or "generation.conductor_resistivity_ohm_m")
     if limit is None:
         missing.append("derating.max_voltage_drop_v")
     if not length:
@@ -323,7 +343,7 @@ def wire_voltage_drop_derivation(project: Project, h: Harness, w: Wire) -> Deriv
     own = w.length_m is not None
     inputs = [
         Input("Current I", current, "A", f"interface {i.id}: Max current"),
-        Input("Resistivity ρ", rho, "Ω·m", "config/generation.json: conductor_resistivity_ohm_m"),
+        Input("Resistivity ρ", rho, "Ω·m", rho_source),
         Input(
             "Length L", length, "m",
             f"the length of wire {w.id} itself" if own else f"the routing segments of harness {h.id} between its connectors",
@@ -364,12 +384,28 @@ def wire_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
     loop = number(generation.get("service_loop_m"))
     subject = f"Wire {w.id}"
     loops = settings.service_loops(project)
-    equation = f"L = sum of the routing segments between its connectors + {loops} × service loop"
+    interface = project.interfaces.get(w.interface_id or "")
+    itype = project.interface_types.get(interface.type_id) if interface else None
+    construction = itype.construction if itype else "single"
+    model = settings.choice(project, "model", "length_model")
+    equation = (
+        f"L = sum of the routing segments between its connectors + {loops} × service loop"
+        + (
+            " (× (1 + take-up of twisting) for a twisted construction) + cut allowance"
+            if model == "path_loops_allowance_twist"
+            else ""
+        )
+    )
     assumptions = ("A-PATH-UNIQUE", "A-SERVICE-LOOP")
     length = wire_length(h, w)
     trail = path_trail(h, w.from_connector, w.to_connector) if h.segments else None
     known = trail is not None and all(x is not None for _, x in trail)
     seg_sum = float(sum(x for _, x in trail if x is not None)) if trail and known else None
+    expected = (
+        generated_length(project, seg_sum, loop or 0.0, construction)
+        if seg_sum is not None
+        else None
+    )
     if w.length_m is None and length is None:
         missing = [
             "the length of the wire (enter routing segment lengths, or set a length on the wire)"
@@ -425,15 +461,37 @@ def wire_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
         extra = loops * (loop or 0.0)
         label = "Service loops, one at each end" if loops == 2 else f"Service loops ({loops})"
         steps.append(Step(label, f"{loops} × {_g(loop or 0.0)}", extra, "m"))
-        steps.append(Step("Generated length", f"{_g(seg_sum)} + {_g(extra)}", seg_sum + extra, "m"))
+        so_far = seg_sum + extra
+        if settings.choice(project, "model", "length_model") == "path_loops_allowance_twist":
+            if construction in settings.TWISTED_CONSTRUCTIONS:
+                takeup = settings.number(project, "model", "twist_takeup_fraction")
+                steps.append(
+                    Step(
+                        f"Take-up of twisting ({construction})",
+                        f"{_g(so_far)} × {_g(takeup)}",
+                        so_far * takeup,
+                        "m",
+                    )
+                )
+                so_far *= 1 + takeup
+            allowance = settings.number(project, "model", "cut_allowance_m")
+            steps.append(Step("Cut allowance", f"{_g(allowance)}", allowance, "m"))
+        steps.append(
+            Step(
+                "Generated length",
+                f"{_g(seg_sum)} + loops{' + take-up' if construction in settings.TWISTED_CONSTRUCTIONS else ''} + allowance",
+                so_far + allowance,
+                "m",
+            )
+            if settings.choice(project, "model", "length_model") == "path_loops_allowance_twist"
+            else Step("Generated length", f"{_g(seg_sum)} + {_g(extra)}", seg_sum + extra, "m")
+        )
     if w.length_m is None:
         basis = "the routing segments of its path (no length is stored on the wire; no service loop is added here)"
         value = length
         if seg_sum is not None:
             steps = steps[:1]
-    elif seg_sum is not None and math.isclose(
-        w.length_m, seg_sum + loops * (loop or 0.0), rel_tol=0, abs_tol=1e-9
-    ):
+    elif seg_sum is not None and math.isclose(w.length_m, expected or 0.0, rel_tol=0, abs_tol=1e-9):
         basis = "generated: the path through the segments plus two service loops"
         value = w.length_m
     else:
@@ -551,7 +609,26 @@ def harness_mass_derivation(project: Project, h: Harness) -> Derivation:
             )
         )
         wire_sum += mass
-    steps.append(Step("Total of what is known", "connectors + wires", conn_sum + wire_sum, "g"))
+    if settings.choice(project, "model", "mass_model") == "full_bom":
+        extra = report.total_g - conn_sum - wire_sum
+        steps.append(
+            Step(
+                "Contacts and accessories (model full_bom)",
+                "the mass of each contact part for a pin with a wire, and of each accessory part",
+                extra,
+                "g",
+            )
+        )
+        steps.append(
+            Step(
+                "Total of what is known",
+                "connectors + wires + contacts and accessories",
+                report.total_g,
+                "g",
+            )
+        )
+    else:
+        steps.append(Step("Total of what is known", "connectors + wires", conn_sum + wire_sum, "g"))
     margin = None
     if "generation" in project.config:
         value = project.config["generation"].values.get("mass_margin_fraction")

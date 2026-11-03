@@ -11,6 +11,7 @@ from collections.abc import Iterator
 
 from harness_design_studio.core import settings
 from harness_design_studio.core.configcheck import validate as validate_config
+from harness_design_studio.core.generate.bundle import bundle_size
 from harness_design_studio.core.generate.lengths import loop_segments, wire_length
 from harness_design_studio.core.generate.sizing import (
     ampacity_table,
@@ -347,7 +348,7 @@ def _wire_current_limit(project: Project, w: Wire, h: Harness | None = None) -> 
     """Ampacity of the wire's gauge after derating (`sizing.wire_current_limit`, the limit that
     `bundle-current` and the wire sizing use too)."""
     return wire_current_limit(
-        cfg(project, "derating"), w.gauge_awg, len(h.wires) if h is not None else None
+        cfg(project, "derating"), w.gauge_awg, bundle_size(project, h, w) if h is not None else None
     )
 
 
@@ -370,7 +371,7 @@ def _current_over_wire(project: Project) -> Iterator[Hit]:
 
 def _voltage_drop(project: Project) -> Iterator[Hit]:
     limit = number(cfg(project, "derating").get("max_voltage_drop_v"))
-    rho = number(cfg(project, "generation").get("conductor_resistivity_ohm_m"))
+    rho, _missing = settings.resistivity(project)
     if limit is None or rho is None:
         return
     for h in sorted(project.harnesses.values(), key=lambda x: x.id):
@@ -598,7 +599,7 @@ def _current_gaps(project: Project, table: dict[int, float] | None) -> Iterator[
 def _voltage_drop_gaps(project: Project) -> Iterator[Hit]:
     """Wires the voltage-drop check skipped for lack of a gauge or a length."""
     limit = number(cfg(project, "derating").get("max_voltage_drop_v"))
-    rho = number(cfg(project, "generation").get("conductor_resistivity_ohm_m"))
+    rho, _missing = settings.resistivity(project)
     if limit is None or rho is None:
         return  # the placeholder note already says that the check did not run
     no_gauge: list[str] = []
@@ -654,7 +655,7 @@ def _nothing_to_evaluate(project: Project) -> Iterator[Hit]:
             yield Hit("no-current-bundle", sentence.format("bundle current check"))
         if (
             number(d.get("max_voltage_drop_v")) is not None
-            and number(cfg(project, "generation").get("conductor_resistivity_ohm_m")) is not None
+            and settings.resistivity(project)[0] is not None
         ):
             yield Hit("no-current-drop", sentence.format("voltage drop check"))
     if has_design and not any(i.voltage_v is not None for i in project.interfaces.values()):
@@ -720,8 +721,7 @@ def _unchecked(project: Project) -> Iterator[Hit]:
                 f"Contact current was not checked for {', '.join(unrated)}: the part has no contact rating",
             )
     if has_current and (
-        number(d.get("max_voltage_drop_v")) is None
-        or number(g.get("conductor_resistivity_ohm_m")) is None
+        number(d.get("max_voltage_drop_v")) is None or settings.resistivity(project)[0] is None
     ):
         yield Hit(
             "voltage-drop",

@@ -164,16 +164,27 @@ def validate(project: Project) -> list[Issue]:
     return out
 
 
-_MODEL_RANGES: dict[str, tuple[int, int]] = {
-    "return_path_conductors": (1, 4),
-    "single_path_conductors": (1, 4),
-    "service_loops_per_wire": (0, 4),
+_MODEL_NUMBERS: dict[str, tuple[float, float, bool]] = {  # key: (lowest, highest, whole)
+    "return_path_conductors": (1, 4, True),
+    "single_path_conductors": (1, 4, True),
+    "service_loops_per_wire": (0, 4, True),
+    "cut_allowance_m": (0, 10, False),
+    "twist_takeup_fraction": (0, 0.5, False),
+    "resistivity_temperature_coefficient": (0, 0.01, False),
+    "resistivity_reference_temperature_c": (-100, 200, False),
 }
+_MODEL_CHOICES: dict[str, tuple[str, ...]] = {
+    "bundle_basis": ("all_wires", "loaded_wires", "busiest_segment"),
+    "length_model": ("path_plus_loops", "path_loops_allowance_twist"),
+    "drop_model": ("dc_solid", "dc_at_ambient"),
+    "mass_model": ("connectors_and_wires", "full_bom"),
+}
+_MODEL_NAMES = ("return_path_categories", "pin_allocation_categories", "readiness_blocking")
 
 
 def validate_model(project: Project) -> list[Issue]:
-    """The model settings (config/model.json): whole numbers in a small range, and the categories
-    as a list of names. A key that is not a model setting is reported, so a typo is not silent."""
+    """The model settings (config/model.json): numbers in their ranges, choices from their lists and
+    names as lists of text. A key that is not a model setting is reported, so a typo is not silent."""
     values = _cfg(project, "model")
     where = "config/model.json"
     out: list[Issue] = []
@@ -183,23 +194,24 @@ def validate_model(project: Project) -> list[Issue]:
             Issue("error", "config_invalid", f"{where}: {key} {why}.", where, f"model.{key}")
         )
 
-    known = set(_MODEL_RANGES) | {"return_path_categories"}
+    known = set(_MODEL_NUMBERS) | set(_MODEL_CHOICES) | set(_MODEL_NAMES)
     for key, v in values.items():
         if key not in known:
             bad(key, "is not a setting of the model (see harness-design-studio settings)")
         elif v is None:
             continue
-        elif key == "return_path_categories":
+        elif key in _MODEL_CHOICES:
+            if v not in _MODEL_CHOICES[key]:
+                bad(key, f"must be one of {', '.join(_MODEL_CHOICES[key])}")
+        elif key in _MODEL_NAMES:
             if not isinstance(v, list) or not all(isinstance(c, str) and c for c in v):
-                bad(
-                    key,
-                    'must be a list of interface category names, for example ["power", "ground"]',
-                )
+                bad(key, 'must be a list of names, for example ["power", "ground"]')
         else:
-            low, high = _MODEL_RANGES[key]
+            low, high, whole = _MODEL_NUMBERS[key]
             x = _num(v)
-            if x is None or x != int(x) or not low <= x <= high:
-                bad(key, f"must be a whole number from {low} to {high}")
+            if x is None or not low <= x <= high or (whole and x != int(x)):
+                kind = "a whole number" if whole else "a number"
+                bad(key, f"must be {kind} from {low:g} to {high:g}")
     return out
 
 

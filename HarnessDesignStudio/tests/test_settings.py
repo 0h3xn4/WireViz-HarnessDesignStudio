@@ -102,6 +102,7 @@ EXEMPT: dict[tuple[str, float], str] = {
     ("core/generate/lengths.py", 3): _SHOWN,
     ("core/generate/lengths.py", 512): "size of a cache: no result depends on it",
     ("core/generate/lengths.py", 9): "definition D-DATA-ROUNDING (9 decimals)",
+    ("core/generate/mass.py", 1000): "definition D-MM-TO-M",
     ("core/generate/sizing.py", 1e-06): "unit conversion mm2 to m2",
     ("core/generate/sizing.py", 1e-09): "definition D-LIMIT-TOLERANCE",
     ("core/generate/sizing.py", 40): _AWG,

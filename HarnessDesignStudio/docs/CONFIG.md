@@ -163,6 +163,16 @@ Optional, and absent from a new project: a project that does not have it behaves
 | `return_path_conductors` | 2 | the conductors the drop of such a wire counts: a whole number 1 to 4 |
 | `single_path_conductors` | 1 | the conductors the drop of every other wire counts: a whole number 1 to 4 |
 | `service_loops_per_wire` | 2 | the service loops added to the length of a generated wire, one at each end, each as long as `service_loop_m` (assumption A-SERVICE-LOOP): a whole number 0 to 4 |
+| `bundle_basis` | `all_wires` | how many wires the bundle factor K is looked up for: `all_wires` (every wire of the harness), `loaded_wires` (only wires with a current) or `busiest_segment` (the most wires of any segment of the wire's own path); assumption A-BUNDLE-ALL |
+| `length_model` | `path_plus_loops` | `path_plus_loops` (the path plus the service loops) or `path_loops_allowance_twist` (that plus `cut_allowance_m` and the take-up of twisting) |
+| `cut_allowance_m` | 0 | metres added to every generated wire by the length model `path_loops_allowance_twist`: 0 to 10 |
+| `twist_takeup_fraction` | 0 | the extra length of a wire of a twisted construction (`twisted_pair`, `twisted_shielded_pair`, `quad`, `twinax`) as a fraction of its length, in the length model `path_loops_allowance_twist`: 0 to 0.5 |
+| `drop_model` | `dc_solid` | `dc_solid` (the resistivity as given) or `dc_at_ambient` (the resistivity corrected to `derating.max_ambient_temperature_c`); assumption A-DC-SOLID |
+| `resistivity_temperature_coefficient` | 0.00393 | 1/K, for `dc_at_ambient`: 0 to 0.01 (the usual value for annealed copper) |
+| `resistivity_reference_temperature_c` | 20 | degC, for `dc_at_ambient`: the temperature `generation.conductor_resistivity_ohm_m` is valid at: -100 to 200 |
+| `mass_model` | `connectors_and_wires` | `connectors_and_wires` or `full_bom` (every part of the bill of materials, with the mass of contacts and accessories where the library has it); assumption A-MASS-SCOPE |
+| `pin_allocation_categories` | `["power", "ground"]` | the interface categories allocated first, in this order, and counted as the power group for the gap to the signal pins |
+| `readiness_blocking` | the first four checks of the build workbook | the names of the checks of the build workbook whose open items mean *Ready to build: no*; the others are notes |
 
 A key that is not in this table is an error that names it, so a typo is not silent. The same tables and ranges are in `core/settings.py`, from which `settings` and the explanations (`explain`) read; a test checks that every key of every file is described there and here.
 

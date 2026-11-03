@@ -45,13 +45,15 @@ ASSUMPTIONS: dict[str, Assumption] = {
         ),
         Assumption(
             "A-BUNDLE-ALL",
-            "A bundle is every wire of the harness, fully loaded",
-            "The bundle factor K is taken for the number of all wires of the harness, signal wires "
-            "and unloaded wires included, each taken as fully loaded. There is no division of a "
-            "harness into bundles, and the length term of the standard's table is not used (it is "
-            "taken as 1, the conservative case).",
-            "built in",
-            "core/drc/rules.py (_wire_current_limit), core/generate/engine.py (bundle_wires)",
+            "A bundle is every wire of the harness, fully loaded (by default)",
+            "By default the bundle factor K is taken for the number of all wires of the harness, "
+            "signal wires and unloaded wires included, each taken as fully loaded. There is no "
+            "division of a harness into bundles, and the length term of the standard's table is not "
+            "used (it is taken as 1, the conservative case). The setting model.bundle_basis selects "
+            "another count: only the wires that carry a current, or the busiest routing segment of "
+            "the wire's path (see core/generate/bundle.py).",
+            "setting",
+            "config/model.json: bundle_basis (default all_wires)",
         ),
         Assumption(
             "A-TEMP-FACTOR",
@@ -93,12 +95,14 @@ ASSUMPTIONS: dict[str, Assumption] = {
         Assumption(
             "A-MASS-SCOPE",
             "The mass of a harness is its connectors and its wires",
-            "The mass counts the mass of each connector part of the harness and the mass of each "
-            "wire. It does not count contacts, backshells, accessories (sleeving, heat shrink, "
-            "labels), splices, solder or shield terminations, and a part without a mass is named as "
-            "missing, never replaced by a guess. The margin is added to the total only.",
-            "built in",
-            "core/generate/mass.py (harness_mass)",
+            "By default the mass counts the mass of each connector part of the harness and the mass "
+            "of each wire. It does not count contacts, backshells, accessories (sleeving, heat "
+            "shrink, labels), splices, solder or shield terminations; the setting model.mass_model "
+            "full_bom adds the contact parts (one for each pin with a wire) and the accessory parts. "
+            "A part without a mass is named as missing, never replaced by a guess. The margin is "
+            "added to the total only.",
+            "setting",
+            "config/model.json: mass_model (default connectors_and_wires)",
         ),
         Assumption(
             "A-MASS-CONDUCTORS",
@@ -116,7 +120,7 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "wire of the harness is attached to it, and nothing otherwise: no spare contacts, no "
             "contacts for the pins of a connector that nobody uses.",
             "built in",
-            "core/outputs/tables.py (bom_contributions, pins_in_use)",
+            "core/outputs/tables.py (bom_contributions), core/generate/mass.py (pins_in_use)",
         ),
         Assumption(
             "A-BOM-NO-ALLOWANCE",

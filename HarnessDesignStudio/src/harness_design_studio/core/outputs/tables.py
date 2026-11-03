@@ -18,7 +18,7 @@ from dataclasses import dataclass
 from decimal import Decimal
 
 from harness_design_studio.core.generate.lengths import clear_length_cache, wire_length
-from harness_design_studio.core.generate.mass import harness_mass
+from harness_design_studio.core.generate.mass import harness_mass, pins_in_use
 from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
 
 from .stamp import Table
@@ -271,15 +271,6 @@ BOM_HEADER = [
     "Part", "Category", "Manufacturer", "Part number", "Description", "Approval",
     "Quantity", "Unit", "Wires without length", "Used in",
 ]  # fmt: skip
-
-
-def pins_in_use(h: Harness) -> set[tuple[str, str]]:
-    """The (connector, pin) pairs of the harness that have a wire attached."""
-    used: set[tuple[str, str]] = set()
-    for w in h.wires:
-        used.add((w.from_connector, w.from_pin))
-        used.add((w.to_connector, w.to_pin))
-    return used
 
 
 @dataclass(frozen=True)

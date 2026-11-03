@@ -17,7 +17,7 @@ from pathlib import Path
 from typing import Any
 
 from harness_design_studio import __version__
-from harness_design_studio.core import checks, configcheck, drc
+from harness_design_studio.core import checks, configcheck, drc, settings
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
 from harness_design_studio.core.verify import VerifyReport, link_issues
@@ -1755,7 +1755,8 @@ def _build_start(
             r.error("out_build", f"{what} (Start here) shows a wrong count for '{label}'.", h.id)
             return
     ready = next((row[1] for row in rows if row and row[0] == "Ready to build"), None)
-    blocking = sum(want[k] for k in list(want)[:4])
+    blocking_labels = settings.names(project, "model", "readiness_blocking")
+    blocking = sum(n for label, n in want.items() if label in blocking_labels)
     names = sorted(n for n, c in project.config.items() if c.placeholder)  # worked out here
     want_ready = "no" if blocking else "yes"
     if want_ready == "yes" and names:

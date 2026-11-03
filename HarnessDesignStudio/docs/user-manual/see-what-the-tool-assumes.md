@@ -49,6 +49,10 @@ The value is JSON (a number, `true`, a list, a table). It is checked against the
 
 `harness-design-studio settings wheel-link --json` prints the same as data: for every setting its ID, label, unit, value, origin, default, what it does, what uses it, its source and range, and for every assumption the IDs of its settings.
 
+## Choose how a number is made
+
+Some numbers can be made in more than one way. `model.json` holds the choice (the bundle basis, the length model, the voltage drop model, the mass model, the pin order, what blocks *Ready to build*), and the default is what the tool always did. Change it with `--set` as above, for example `settings wheel-link --set model.mass_model='"full_bom"'`. Every choice, its equation and its default are on the page [selectable models](../models/selectable-models.md); `explain` names the model in force.
+
 ## Common mistakes
 
 - **Reading *the tool's own default* as an approved value.** It is the number the tool has always used, not a number a standard asked for. Whether it is right for your programme is your decision; set the value to make it yours.

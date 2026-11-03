@@ -22,6 +22,7 @@ Every page follows the same order: what the tool decides, the equation, the inpu
 | [Bill of materials](bom.md) | Why a part has the quantity it has: connectors, contacts, wires in metres, accessories | `harness-design-studio explain DIR PART` |
 | [Mass](mass.md) | The mass of a wire and of a harness: connectors, wires by part, the share of a multi-conductor part, the margin | `harness-design-studio explain DIR WIRE_OR_HARNESS` |
 | [Wire sizing](wire-sizing.md) | The gauge of a wire: the current it may carry after derating, and its voltage drop | `harness-design-studio explain DIR WIRE` |
+| [Selectable models](selectable-models.md) | The choices in `config/model.json`: bundle basis, length, voltage drop, mass, pin order, what blocks "Ready to build" | `harness-design-studio settings DIR` |
 
 Still to come, in the order of the plan: the limits of the other design rules (the contact current is done), pin allocation and segmentation, the test limits and "Ready to build".
 
@@ -38,4 +39,4 @@ There is no time, user name or path in the files: the same design gives the same
 
 Some of what a calculation rests on is not a number you type into `config/*.json` but a choice built into the program. Each has an ID, and a derivation names the ones it uses. Today they are: A-ROUND-TRIP, A-DC-SOLID, A-BUNDLE-ALL and A-PATH-UNIQUE, A-MASS-SCOPE, A-MASS-CONDUCTORS, A-BOM-CONTACTS, A-BOM-NO-ALLOWANCE and A-CONTACT-SHARED (built in; the page [see what the tool assumes](../user-manual/see-what-the-tool-assumes.md) lists them with the settings that parameterise them), and A-TEMP-FACTOR, A-AMPACITY-AWG and A-SERVICE-LOOP (a value of the configuration, but one single number or table with no model behind it). They are described on the [wire sizing page](wire-sizing.md#the-assumptions-it-rests-on) and the [wire length page](wire-length.md#the-assumptions-it-rests-on) the [mass page](mass.md#the-assumptions-it-rests-on) the [bill of materials page](bom.md#the-assumptions-it-rests-on) and the [contact current page](contact-current.md#the-assumptions-it-rests-on). The aim of the work is that every built-in choice becomes a visible, documented setting; until then it is listed, not hidden.
 
-Next: [contact current](contact-current.md), [bill of materials](bom.md), [mass](mass.md), [wire length](wire-length.md), [wire sizing](wire-sizing.md), [changes to results](../changes.md), [the configuration](../CONFIG.md)
+Next: [selectable models](selectable-models.md), [contact current](contact-current.md), [bill of materials](bom.md), [mass](mass.md), [wire length](wire-length.md), [wire sizing](wire-sizing.md), [changes to results](../changes.md), [the configuration](../CONFIG.md)
