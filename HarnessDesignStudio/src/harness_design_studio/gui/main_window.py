@@ -1792,7 +1792,7 @@ class MainWindow(QMainWindow):
         self.act_assumptions = a(
             strings.A_ASSUMPTIONS, self.assumptions_flow, name="act-assumptions"
         )
-        self.act_history = a(strings.A_HISTORY, self.history_flow, name="act-history")
+        self.act_journal = a(strings.A_JOURNAL, self.history_flow, name="act-journal")
         self.act_sample = a(strings.A_SAMPLE, self.sample_flow, name="act-sample")
         self.act_about = a(strings.A_ABOUT, self.about_flow, name="act-about")
         self.act_issues = a(strings.A_ISSUES, self.issues_flow, name="act-issues")
@@ -2148,7 +2148,7 @@ class MainWindow(QMainWindow):
             self.act_tour,
             self.act_glossary,
             self.act_assumptions,
-            self.act_history,
+            self.act_journal,
             self.act_issues,
             self.act_about,
         ):

@@ -143,7 +143,6 @@ DEVIATE_OK = "Accept as deviation"
 STEP_DEVIATE = "Deviation {}"
 DEVIATED_TOAST = "Recorded as a deviation. The error stays visible and is marked DEVIATION."
 DEVIATION_WORD = "DEVIATION"
-WAIVED_BY = "{0} ({1})"
 NEW_INTERFACE_TITLE = "New interface"
 NEW_INTERFACE_NOTE = "Connectors are chosen for you and marked Auto until you confirm them. Devices that cannot take this type are shown disabled with the reason."
 FIELD_TYPE = "Interface type"
@@ -268,8 +267,8 @@ A_GLOSSARY = "Glossary"
 A_SAMPLE = "Open the sample project"
 A_ABOUT = "About"
 A_ASSUMPTIONS = "Assumptions..."
-A_HISTORY = "Change history..."
-HISTORY_TITLE = "Change history"
+A_JOURNAL = "Change history..."
+JOURNAL_TITLE = "Change history"
 HISTORY_FILTER = "Filter: an object, a person, a word of the reason"
 HISTORY_NOTE = (
     "{0} entries, oldest first. The journal is append-only: an entry is never changed or removed. "
@@ -2153,6 +2152,12 @@ WIRE_STATE_MIXED = "Some of the selected wires are yours, some are generated."
 WIRE_STATE_OVERRIDDEN = (
     "Overridden by you ({0}). Generate keeps {1}; the other values follow the design."
 )
+WIRE_FIELD_WORDS = {
+    "gauge_awg": "gauge",
+    "part_id": "type",
+    "colour": "colour",
+    "length_m": "length",
+}
 WIRE_STATE_OVERRIDDEN_LEGACY = (
     "Locked, no reason recorded: Generate keeps the gauge, type, colour and length."
 )

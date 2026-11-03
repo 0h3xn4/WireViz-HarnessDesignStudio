@@ -650,9 +650,10 @@ class WireEditor(QWidget):
 
     @staticmethod
     def _overridden_text(w: Wire) -> str:
+        words = strings.WIRE_FIELD_WORDS
         fields = sorted(w.overrides)
-        why = "; ".join(f"{f}: {w.overrides[f]}" for f in fields)
-        return strings.WIRE_STATE_OVERRIDDEN.format(why, ", ".join(fields))
+        why = "; ".join(f"{words.get(f, f)}: {w.overrides[f]}" for f in fields)
+        return strings.WIRE_STATE_OVERRIDDEN.format(why, ", ".join(words.get(f, f) for f in fields))
 
     def _enable(self) -> None:
         """Enable the form, or say why it is off."""

@@ -138,6 +138,7 @@ def test_strip_and_other_fields_are_applied_together_as_one_step(made):
     type_into(ed.gauge, "22")
     type_into(ed.strip_a, "6")
     type_into(ed.label, "Bus")
+    type_into(ed.reason, "the supplier changed it")
     assert ed.apply_changes()
     for wid in (a, b):
         w = find_wire(ctl.project, wid)[1]

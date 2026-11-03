@@ -202,7 +202,7 @@ def test_help_has_the_change_history_and_it_starts_a_journal(qtbot, tmp_path):
         return int(QDialog.DialogCode.Accepted)
 
     win.run_dialog = run
-    action_named(win, "act-history").trigger()
+    action_named(win, "act-journal").trigger()
     assert seen and (folder / "journal.json").is_file()
     assert load_project(folder).project.journal[0].kind == "start"
     win.ctl.release()

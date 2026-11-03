@@ -200,8 +200,8 @@ def test_hand_locked_pin_and_wire_say_so(qtbot, theme) -> None:
     assert view.pin_model.index(row, col).data(Qt.ItemDataRole.ToolTipRole) == strings.HV_LOCK_PIN
     wrow = source_row(view.wire_table, id=wire.id)
     wcol = view.wire_model.column_index("locked")
-    assert (
-        view.wire_model.index(wrow, wcol).data(Qt.ItemDataRole.ToolTipRole) == strings.HV_LOCK_WIRE
+    assert view.wire_model.index(wrow, wcol).data(Qt.ItemDataRole.ToolTipRole) == (
+        f"{strings.HV_LOCK_WIRE} {strings.HV_LOCK_NO_REASON}"  # locked before reasons were kept
     )
     state = view.wire_model.column_index("state")
     assert (

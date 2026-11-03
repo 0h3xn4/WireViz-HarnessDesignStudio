@@ -59,7 +59,7 @@ class JournalDialog(QDialog):
         self.project = project
         self._start = start_journal
         self.setObjectName("history-dialog")
-        self.setWindowTitle(strings.HISTORY_TITLE)
+        self.setWindowTitle(strings.JOURNAL_TITLE)
         self.resize(theme.px(980), theme.px(560))
         lay = QVBoxLayout(self)
         self.note = QLabel()
@@ -81,7 +81,7 @@ class JournalDialog(QDialog):
         lay.addLayout(top)
         self.table = QTableWidget(0, len(COLUMNS))
         self.table.setObjectName("history-table")
-        self.table.setAccessibleName(strings.HISTORY_TITLE)
+        self.table.setAccessibleName(strings.JOURNAL_TITLE)
         self.table.setHorizontalHeaderLabels(list(COLUMNS))
         self.table.setEditTriggers(QAbstractItemView.EditTrigger.NoEditTriggers)
         self.table.setSelectionBehavior(QAbstractItemView.SelectionBehavior.SelectRows)
