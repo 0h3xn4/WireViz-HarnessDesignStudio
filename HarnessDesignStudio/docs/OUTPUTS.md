@@ -7,7 +7,7 @@ The screen says *device*, the files say *unit*: the written files keep the word 
 ## Contents
 
 - [Build workbook](#build-workbook)
-- [As-built report](#as-built-report-systemasbuilt_reportmd-and-csv)
+- [As-built report](#as-built-report-systemasbuiltreportmd-and-csv)
 - [Connection list](#connection-list-systemconnectionscsv-and-xlsx)
 - [Stamps](#stamps)
 - [Stale detection](#stale-detection)
