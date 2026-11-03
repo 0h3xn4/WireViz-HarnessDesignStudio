@@ -219,3 +219,42 @@ def test_a_gauge_override_shows_its_cross_section_on_the_screen_only(folder):
     assert "24 AWG (0.205 mm²)" in shown
     written = (folder / "journal.json").read_text(encoding="utf-8")
     assert "mm²" not in written
+
+
+# ---- S8: extensions are design inputs the journal records, and are outside the hash ---------------
+
+
+def test_the_journal_records_the_extension_files_and_the_hash_ignores_them(folder):
+    from harness_design_studio.core.io.layout import outside_the_hash
+
+    for rel in (
+        "journal.json",
+        "imports/records.json",
+        "extensions/enabled.json",
+        "asbuilt/x.json",
+    ):
+        assert outside_the_hash(rel), rel
+    assert not outside_the_hash("config/derating.json")
+    before = layout.model_hash(load_project(folder).project)
+    ext = folder / "extensions"
+    ext.mkdir()
+    (ext / "enabled.json").write_bytes(b'{"declarative": [], "plugins": []}\n')
+    (ext / "rule.json").write_bytes(b'{"format": 1}\r\n')  # bytes as they are, CRLF included
+    project = load_project(folder).project
+    assert layout.model_hash(project) == before
+    save_project(project, folder)
+    got = [e for e in load_project(folder).project.journal if e.object.startswith("extension:")]
+    assert [(e.kind, e.object, e.field) for e in got] == [
+        ("config", "extension:enabled.json", "(added)"),
+        ("config", "extension:rule.json", "(added)"),
+    ]
+    save_project(load_project(folder).project, folder)  # nothing changed: nothing recorded
+    assert len([e for e in load_project(folder).project.journal if "extension:" in e.object]) == 2
+    (ext / "rule.json").write_bytes(b'{"format": 2}\n')
+    (ext / "enabled.json").unlink()
+    save_project(load_project(folder).project, folder)
+    last = [e for e in load_project(folder).project.journal if "extension:" in e.object][2:]
+    assert [(e.object, e.field) for e in last] == [
+        ("extension:enabled.json", "(removed)"),
+        ("extension:rule.json", "(changed)"),
+    ]

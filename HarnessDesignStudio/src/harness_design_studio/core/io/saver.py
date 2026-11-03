@@ -91,6 +91,7 @@ def save_project(
         from harness_design_studio.core import journal as journal_module
 
         rows = journal_module.rows_for_save(project, on_disk, files)
+        rows += journal_module.extension_rows(project, base)  # design inputs outside the model
         if rows:
             new_journal = journal_module.extended(project.journal, rows)
             files["journal.json"] = canonical.dumps(journal_payload(new_journal))

@@ -491,6 +491,7 @@ def test_the_author_is_the_option_then_the_environment_then_git_then_the_user(
     assert journal.author() == "login"
     monkeypatch.delenv("USER")
     monkeypatch.delenv("USERNAME", raising=False)
+    monkeypatch.delenv("LOGNAME", raising=False)  # resolve_author reads it after USER and USERNAME
     assert journal.author() == "unknown"
 
 

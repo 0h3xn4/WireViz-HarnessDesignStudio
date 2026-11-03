@@ -38,6 +38,7 @@ from harness_design_studio.core.model import (
 from harness_design_studio.core.model.journal import KINDS
 
 from .io import canonical
+from .io.layout import outside_the_hash
 
 JOURNAL_FILE = "journal.json"
 GENERATION_FILE = "generated/generation.json"
@@ -56,6 +57,7 @@ __all__ = [
     "author",
     "entries_for",
     "extended",
+    "extension_rows",
     "files_hash",
     "history",
     "now",
@@ -249,7 +251,7 @@ def files_hash(files: Mapping[str, bytes]) -> str:
     from): independent of the tool version and of the journal."""
     digest = hashlib.sha256()
     for rel, data in sorted(files.items()):
-        if rel in (JOURNAL_FILE, IMPORT_RECORDS_FILE, ASBUILT_FILE):
+        if outside_the_hash(rel):
             continue
         if rel == "project.json":
             data = _blank_tool_version(data)
@@ -513,6 +515,48 @@ def _waiver_rows(fid: str, old: dict[str, Any] | None, new: dict[str, Any] | Non
     for p in ("finding_hash", "notes"):
         if old.get(p) != new.get(p):
             rows.append(_row(kind, obj, p, old.get(p), new.get(p)))
+    return rows
+
+
+EXTENSIONS_FOLDER = "extensions"
+
+
+def _sha12(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()[:12]
+
+
+def extension_rows(project: Project, base: Path) -> list[Row]:
+    """Rows for the files of `extensions/` (`enabled.json` and the declarative `*.json` files)
+    that differ from the last state the journal knows. They are design inputs (they add tables and
+    rules) but are not saved with the project, so each is compared by the SHA-256 of its bytes on
+    disk with the one the journal recorded last. Kind `config`, object `extension:<file>`."""
+    if project.journal is None:
+        return []
+    last: dict[str, str | None] = {}
+    for e in project.journal:
+        if e.object.startswith("extension:"):
+            last[e.object.removeprefix("extension:")] = (
+                e.new.get("sha256") if isinstance(e.new, dict) else None
+            )
+    folder = base / EXTENSIONS_FOLDER
+    now_on_disk: dict[str, str] = {}
+    if folder.is_dir():
+        for p in sorted(folder.glob("*.json"), key=lambda q: q.name):
+            if p.is_file() and not p.is_symlink():
+                now_on_disk[p.name] = _sha12(p.read_bytes())
+    rows: list[Row] = []
+    for name in sorted(set(last) | set(now_on_disk)):
+        before, after = last.get(name), now_on_disk.get(name)
+        if before == after:
+            continue
+        what = "(added)" if before is None else "(removed)" if after is None else "(changed)"
+        rows.append(
+            _row(
+                "config", f"extension:{name}", what,
+                {"sha256": before} if before else None,
+                {"sha256": after} if after else {"sha256": None},
+            )
+        )  # fmt: skip
     return rows
 
 

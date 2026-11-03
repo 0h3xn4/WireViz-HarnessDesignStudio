@@ -347,7 +347,6 @@ EXT_SHOW_SOURCE = "Show the code"
 EXT_HIDE_SOURCE = "Hide the code"
 EXT_TRUST_FIELDS = ("Name", "Version", "Kinds", "File", "SHA-256", "Lines")
 EXT_TRUSTED_NOW = "The plug-in is trusted on this computer and loaded."
-EXT_REVOKED_NOW = "Trust of {name} taken back."
 A_ISSUES = "Show project problems"
 M_FILE = "&File"
 M_EDIT = "&Edit"

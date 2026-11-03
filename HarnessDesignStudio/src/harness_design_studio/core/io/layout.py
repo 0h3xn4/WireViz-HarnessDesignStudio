@@ -34,6 +34,19 @@ MANAGED_DIRS = (
 IMPORT_RECORDS_FILE = "imports/records.json"  # optional; not part of the model hash
 ASBUILT_FILE = "asbuilt/records.json"  # optional (S9); not part of the model hash
 
+# What lives in the project folder but is not the design, so that it is never in the model hash:
+# the journal and the import record (files the tool writes with the project), and the folders of the
+# extensions (S8) and the as-built records (a later step), which are not serialised at all. The one
+# list: `outside_the_hash(rel)` is what `model_hash` and `journal.files_hash` ask.
+OUTSIDE_THE_HASH_FILES = frozenset({JOURNAL_FILE, IMPORT_RECORDS_FILE})
+OUTSIDE_THE_HASH_FOLDERS = ("extensions/", "asbuilt/")
+
+
+def outside_the_hash(rel: str) -> bool:
+    """Whether the project file `rel` (a POSIX path inside the project folder) is left out of the
+    model hash."""
+    return rel in OUTSIDE_THE_HASH_FILES or rel.startswith(OUTSIDE_THE_HASH_FOLDERS)
+
 
 def journal_payload(journal: Journal | None) -> dict[str, Any]:
     return {"journal": [e.model_dump(mode="json") for e in journal or ()]}
@@ -220,13 +233,12 @@ def _harness_bytes(h: Harness) -> bytes:
 
 def model_hash(project: Project) -> str:
     """Hash of the model state, independent of which tool version last saved it. The journal (who
-    changed what and when), the import record (`imports/records.json`, where data came from) and
-    the as-built records (`asbuilt/records.json`, what was built and measured) are not the design,
-    so they are left out: the same design gives the same hash with or
-    without them."""
+    changed what and when), the import record (`imports/records.json`, where data came from), the
+    extensions and the as-built records are not the design, so they are left out
+    (`outside_the_hash`): the same design gives the same hash with or without them."""
     digest = hashlib.sha256()
     for rel, data in sorted(serialize(project, tool_version="").items()):
-        if rel in (JOURNAL_FILE, IMPORT_RECORDS_FILE, ASBUILT_FILE):
+        if outside_the_hash(rel):
             continue
         digest.update(rel.encode("utf-8") + b"\0" + data + b"\0")
     return digest.hexdigest()
