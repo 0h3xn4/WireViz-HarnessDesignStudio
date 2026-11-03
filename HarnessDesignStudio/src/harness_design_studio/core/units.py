@@ -1,6 +1,7 @@
 """SI helpers. Wire sizes are AWG with mm² alongside (SPEC hard constraint 7)."""
 
 import math
+import re
 
 AWG_MIN, AWG_MAX = 0, 40
 
@@ -19,3 +20,37 @@ def awg_to_area_mm2(awg: int) -> float:
 
 def format_awg(awg: int) -> str:
     return f"AWG {awg} ({awg_to_area_mm2(awg):.3f} mm²)"
+
+
+def format_gauge(awg: int) -> str:
+    """A gauge as a person reads it with its cross-section: `24 AWG (0.205 mm²)` (D2, D-193).
+
+    This is for the screen and for explanations. The files the tool writes for the project (the
+    drawings, the lists, the workbook, the design rule report) keep the plain gauge, so that
+    their bytes do not change; the open-data files carry the cross-section as a number."""
+    return (
+        f"{awg} AWG ({awg_to_area_mm2(awg):.3f} mm²)" if AWG_MIN <= awg <= AWG_MAX else f"{awg} AWG"
+    )
+
+
+def gauge_short(awg: int) -> str:
+    """The gauge with its cross-section in the short form of a table cell: `24 (0.205 mm²)`."""
+    return f"{awg} ({awg_to_area_mm2(awg):.3f} mm²)" if AWG_MIN <= awg <= AWG_MAX else str(awg)
+
+
+_AWG_IN_TEXT = re.compile(r"\bAWG (\d{1,2})\b(?! \()")
+_AWG_AFTER = re.compile(r"\b(\d{1,2}) AWG\b(?! \()")
+
+
+def with_area(text: str) -> str:
+    """A sentence for the screen with the cross-section added after every gauge it names, in
+    either of the two ways the tool writes one (`AWG 24` or `24 AWG`). A gauge that already has its
+    cross-section, or is outside 0 to 40, is left as it is. Never used for a file."""
+
+    def put(m: re.Match[str]) -> str:
+        n = int(m.group(1))
+        if not AWG_MIN <= n <= AWG_MAX:
+            return m.group(0)
+        return f"{m.group(0)} ({awg_to_area_mm2(n):.3f} mm²)"
+
+    return _AWG_AFTER.sub(put, _AWG_IN_TEXT.sub(put, text))

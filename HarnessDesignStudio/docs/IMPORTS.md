@@ -60,6 +60,20 @@ It prints one line per row and `N added, N changed, N unchanged, N refused.` One
 
 A subsystem library file (since 1.8.0: devices with their connectors and the connections between them) is written with `harness-design-studio export-subsystem DIR FILE --device D [--device E ...] --name NAME [--replace]` and added with `harness-design-studio import-subsystem DIR FILE [--show] [--dry-run]`, all or nothing and as one undo step. In the app: the library window (**File > Library…**). The file is described in [`FILE_FORMAT.md`](FILE_FORMAT.md#subsystem-library-file-m4-not-part-of-a-project).
 
+## Which export is read by which importer
+
+What the tool writes can be read again where the importers know the shape. The files of `export-data` ([export the data](user-manual/export-the-data.md)) have no comment line, so every reader takes them as they are.
+
+| Written by | File | Read by |
+| --- | --- | --- |
+| `export-data DIR --out FOLDER` | `segment_lengths.csv` (or `.json`): harness, segment, length in metres, the nodes of the segment | `import-lengths DIR FILE --unit m` (the first three columns, by position; only segments that have a length are listed, because a row without one stops the import) |
+| `export-data` | `parts.csv`: part, category, manufacturer, part number, description, specification, approval, pin count, mass, mass per metre, mates with, tool, conductors | `import-parts DIR FILE --approved approved --pending pending --rejected not_approved` (the `Ratings` and `Example data` columns are not read) |
+| `export-pinout DIR --device D` | CSV or XLSX of the pins of a device | `import-pinout` (the comment line and the About sheet are skipped) |
+| `export-devices`, `export-subsystem` | a library file | `import-devices`, `import-subsystem` |
+| `export-data` | the other tables (`wire_sizing`, `rule_results`, `bom`, `findings`, ...) | none: they are results, not inputs |
+
+The CSV files of `export` (the wire list, the pinouts, the bill of materials ...) start with the line `# harness-design-studio VERSION model HASH`. The readers of this version do not skip that line: take the import files from `export-data`, or delete the first line, before you read one of the outputs back.
+
 ## Where the library data come from
 
 `harness-design-studio import-parts` records the file name and its SHA-256 as the library's **source**. Say more with `--library-source`, `--library-version`, `--library-name` and `--library-date YYYY-MM-DD` (the date of the data, which you enter; the tool does not read the clock). The date is written exactly `YYYY-MM-DD`; any other field that is empty, too long or has control characters is named in the message. `harness-design-studio library DIR` shows what is recorded and `harness-design-studio library DIR --library-source "..." --library-date 2026-09-30` sets it without an import. The editor shows the same line under the part picker and every export carries it in `system/provenance.json`.

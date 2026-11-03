@@ -75,7 +75,7 @@ The exit code of `drc` is 1 when an error is open, so `harness-design-studio drc
 
 Each finding in `findings` has `id`, `rule`, `severity` (`error`, `warning` or `info`), `object_id`, `title`, `why`, `sources` (the requirement IDs of the rule), `can_waive`, `waived`, `waiver_justification` and `waiver_changed`. Each entry of `issues` (`validate`, `check`, `verify`, `generate`, `export`) has `severity`, `code`, `message`, `location` (a file of the project, relative to its folder) and `object_id`.
 
-`explain OBJECT --json` prints a list of derivations, and `settings --json` its own document (without `ok`), both as before ([section 5](#5-ask-how-a-number-was-made)); `explain --all --out FOLDER --json` prints how many it wrote.
+`explain OBJECT --json` prints a list of derivations, and `settings --json` its own document (without `ok`), both as before ([section 5](#5-ask-how-a-number-was-made)); `explain --all --out FOLDER --json` prints how many it wrote. `export-data DIR --out FOLDER --json` lists the files of the open data ([export the data](export-the-data.md)), and `export` and `generate` take `--run-record` for a record of the run outside every hash.
 
 ## 2. Write the outputs to another folder
 
@@ -125,6 +125,7 @@ The functions, by what you do:
 | write the outputs | `export(folder, out=None, drawings=False)` | `export` |
 | ask how a number was made | `explain(project_or_folder, object_id)`, `explain_all(...)`, `explain_finding(..., finding_id)` | `explain` |
 | write all the derivations | `write_derivations(project_or_folder, out)` | `explain --all --out` |
+| write every result as JSON and CSV | `export_data(project_or_folder, out, run_record=False, operator=None)` returns a `DataFiles` | `export-data` |
 | read the engineering values | `get_config(project_or_folder)` | `config` |
 | read every setting and where its value comes from | `get_settings(project_or_folder)` | `settings` |
 | set an engineering value | `set_config(folder, file, key, value)` | what the editor's *Engineering values* dialog does |

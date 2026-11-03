@@ -63,9 +63,19 @@ def shown(panel: ListsPanel, name: str) -> list[list[str]]:
     v = panel.view(name)
     m = v.model()
     head = [m.headerData(c, Qt.Orientation.Horizontal) for c in range(m.columnCount())]
-    return [head] + [
+    rows = [
         [m.index(r, c).data(Qt.ItemDataRole.DisplayRole) or "" for c in range(m.columnCount())]
         for r in range(m.rowCount())
+    ]
+    return [head] + [without_area(head, row) for row in rows]
+
+
+def without_area(head: list[str], row: list[str]) -> list[str]:
+    """A row as the table writes it: the screen shows the cross-section after a gauge (D2, "16
+    (1.309 mm²)"); the table, and the file, hold the plain gauge ("16")."""
+    return [
+        cell.split(" (", 1)[0] if name == "AWG" and cell.endswith(" mm²)") else cell
+        for name, cell in zip(head, row, strict=True)
     ]
 
 
@@ -259,8 +269,8 @@ def test_ctrl_c_copies_tab_separated_text(qtbot, theme) -> None:
     view.selectAll()
     QTest.keyClick(view, Qt.Key.Key_C, Qt.KeyboardModifier.ControlModifier)
     text = QApplication.clipboard().text()
-    rows = [line.split("\t") for line in text.split("\n")]
     want = tables.wire_list(ctl.project, ctl.project.harnesses["W002"])
+    rows = [without_area(want[0], line.split("\t")) for line in text.split("\n")]
     assert rows == want[1:]
     QTest.keyClick(
         view, Qt.Key.Key_C, Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier

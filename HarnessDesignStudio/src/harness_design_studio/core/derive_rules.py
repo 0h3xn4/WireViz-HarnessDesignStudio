@@ -52,6 +52,7 @@ from harness_design_studio.core.generate.sizing import (
     wire_current_limit,
 )
 from harness_design_studio.core.model import Harness, Project, ShieldGroup
+from harness_design_studio.core.units import AWG_MAX, AWG_MIN, format_awg
 
 RULE_IDS = EXPLAINABLE_RULES
 SHOWN = 8  # how many names a line gives before "and N more": no result depends on it
@@ -69,6 +70,13 @@ class RuleInfo:
     assumptions: tuple[str, ...] = ()
     build: Builder | None = None  # the derivation of the limit, for a rule of the form "limit"
     observe: Observer | None = None  # what the rule saw at the object, for a yes/no rule
+
+
+def _gauge_name(awg: int | None) -> str:
+    """A gauge with its cross-section, for the name of an input (D2): `AWG 24 (0.205 mm²)`."""
+    if awg is None or not AWG_MIN <= awg <= AWG_MAX:
+        return f"AWG {awg}"
+    return format_awg(awg)
 
 
 def _names(items: list[str]) -> str:
@@ -434,7 +442,7 @@ def _bundle_current(project: Project, oid: str) -> Derivation | None:
             if table is not None and w.gauge_awg in table:
                 inputs.append(
                     Input(
-                        f"Base ampacity of AWG {w.gauge_awg}",
+                        f"Base ampacity of {_gauge_name(w.gauge_awg)}",
                         table[w.gauge_awg],
                         "A",
                         f'config/derating.json: ampacity_a_by_awg["{w.gauge_awg}"]',

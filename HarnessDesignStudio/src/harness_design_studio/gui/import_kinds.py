@@ -55,6 +55,7 @@ from harness_design_studio.core.pinout_import import (
     plan_pinout_import,
     read_pinout_table,
 )
+from harness_design_studio.core.units import with_area
 from harness_design_studio.gui import strings
 
 PREVIEW_ROWS: Final = 20  # rows of the live preview on the mapping page
@@ -465,7 +466,7 @@ def _plan_values(project: Project, source: Source, options: Options) -> ImportPl
         gauge = first
         amps = row[1].strip() if len(row) > 1 else ""
         view.rows.append(
-            PlanRow(str(n), f"AWG {gauge}" if gauge else "(empty row)", "fail" if bad else "pass",
+            PlanRow(str(n), with_area(f"AWG {gauge}") if gauge else "(empty row)", "fail" if bad else "pass",
                     strings.IMP_SKIPPED if bad else strings.IMP_WILL_SET, bad or ""),
         )  # fmt: skip
         view.preview.append([str(n), gauge, amps])
