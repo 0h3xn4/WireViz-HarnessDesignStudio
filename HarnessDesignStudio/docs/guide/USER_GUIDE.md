@@ -324,7 +324,7 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio generate DIR` | generate harnesses and save (not saved if errors) |
 | `harness-design-studio verify DIR [--outputs]` | independent check of the harnesses, and of `outputs/` |
 | `harness-design-studio drc DIR` | design rule report (Markdown); exit 1 on unwaived errors |
-| `harness-design-studio explain DIR OBJECT [--json]` | how the numbers of one wire (its length, the current its gauge may carry after derating, its voltage drop, its share of the mass) or one harness (its mass) were made, each with the equation, the inputs with units and sources, the steps and the assumptions it rests on; names what is not set; changes nothing |
+| `harness-design-studio explain DIR OBJECT [--json]` | how the numbers of one wire (its length, the current its gauge may carry after derating, its voltage drop, its share of the mass), one harness (its mass) or one part (why the bill of materials has its quantity) were made, each with the equation, the inputs with units and sources, the steps and the assumptions it rests on; names what is not set; changes nothing |
 | `harness-design-studio export DIR [--drawings]` | write and verify all outputs; the PDF and SVG drawings of the harnesses only with `--drawings` |
 | `harness-design-studio review DIR HARNESS --by NAME` | submit a draft for review |
 | `harness-design-studio release DIR HARNESS --by NAME --comment TEXT [--checker NAME] [--accept-placeholders REASON] [--accept-unapproved-parts REASON]` | release (blocked while checks fail, or while values are placeholders or parts are not approved and no reason is given) and re-export |

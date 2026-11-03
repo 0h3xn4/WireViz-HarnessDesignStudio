@@ -178,7 +178,7 @@ def test_explain_prints_the_numbers_the_tool_stored(
     ]
     assert math.isclose(data[2]["value"], 0.458359, rel_tol=1e-6) and data[0]["value"] == 3.45
     assert main(["explain", str(tmp_path / "flat"), "NO-SUCH-WIRE"]) == 2
-    assert "does not exist" in capsys.readouterr().err
+    assert "is not a wire, a harness or a part" in capsys.readouterr().err
 
 
 def test_the_derived_length_is_the_length_the_tool_uses(projects: dict[str, Project]) -> None:
@@ -302,3 +302,79 @@ def test_explain_takes_a_wire_or_a_harness(
     project = templates.create_project(tmp_path / "again", "flatsat")
     assert [d.id for d in explain_object(project, "W001")] == ["harness-mass"]
     assert main(["explain", str(tmp_path / "flat"), "NOPE"]) == 2
+
+
+# ---- the bill of materials ---------------------------------------------------------------
+
+
+def _bom_rows(project: Project) -> dict[tuple[str, str], list[str]]:
+    from harness_design_studio.core.outputs.tables import bom
+
+    rows = bom(project, [project.harnesses[i] for i in sorted(project.harnesses)])
+    return {(r[0], r[7]): r for r in rows[1:]}
+
+
+def test_the_quantity_explained_is_the_quantity_of_the_bom(projects: dict[str, Project]) -> None:
+    from harness_design_studio.core.derive import explain_part
+    from harness_design_studio.core.outputs.tables import data_num
+
+    lines = 0
+    for name, project in projects.items():
+        for (pid, unit), row in _bom_rows(project).items():
+            derived = next(d for d in explain_part(project, pid) if d.unit == unit)
+            assert derived.id == "part-bom"
+            assert data_num(derived.value) == row[6], (name, pid, unit)
+            # the lines the reader sees add up to the quantity
+            parts = [s.value for s in derived.steps[:-1]]
+            assert math.isclose(sum(parts), derived.value or 0.0, rel_tol=1e-9, abs_tol=1e-9)
+            if unit == "m" and row[8] not in ("", "0"):
+                assert any("have no length" in m for m in derived.missing), (name, pid)
+            lines += 1
+    assert lines > 15
+
+
+def test_contacts_and_accessories_are_counted_as_the_bom_counts_them(
+    projects: dict[str, Project],
+) -> None:
+    from harness_design_studio.core.derive import explain_part
+    from harness_design_studio.core.model import Accessory, evolve
+
+    project = projects["flatsat"]
+    h = project.harnesses["W001"]
+    cable = h.connectors[0]
+    wired = {w.from_pin for w in h.wires if w.from_connector == cable.id} | {
+        w.to_pin for w in h.wires if w.to_connector == cable.id
+    }
+    pins = [evolve(p, contact_part="EX-CONTACT") for p in cable.pins]
+    sleeve = Accessory(id="A1", kind="sleeving", part_id="EX-SLEEVE", length_mm=200, quantity=3)
+    label = Accessory(id="A2", kind="label", part_id="EX-LABEL", quantity=4)
+    patched = evolve(
+        h,
+        connectors=[evolve(cable, pins=pins), *h.connectors[1:]],
+        accessories=[sleeve, label],
+    )
+    project.harnesses["W001"] = patched
+    try:
+        (contacts,) = explain_part(project, "EX-CONTACT")
+        assert contacts.value == len(wired) and contacts.unit == "ea"
+        assert "A-BOM-CONTACTS" in contacts.assumptions
+        (metres,) = explain_part(project, "EX-SLEEVE")
+        assert metres.unit == "m" and math.isclose(metres.value or 0.0, 0.2 * 3)
+        (each,) = explain_part(project, "EX-LABEL")
+        assert each.unit == "ea" and each.value == 4
+        for pid in ("EX-CONTACT", "EX-SLEEVE", "EX-LABEL"):
+            for unit in {d.unit for d in explain_part(project, pid)}:
+                assert (pid, unit) in _bom_rows(project)
+    finally:
+        project.harnesses["W001"] = h
+
+
+def test_explain_takes_a_part_and_says_when_it_is_not_one(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    templates.create_project(tmp_path / "flat", "flatsat")
+    assert main(["explain", str(tmp_path / "flat"), "EX-WIRE-SINGLE"]) == 0
+    out = capsys.readouterr().out
+    assert out.startswith("Part EX-WIRE-SINGLE. BOM quantity (m):") and "A-BOM-NO-ALLOWANCE" in out
+    assert main(["explain", str(tmp_path / "flat"), "NOT-A-THING"]) == 2
+    assert "is not a wire, a harness or a part" in capsys.readouterr().err

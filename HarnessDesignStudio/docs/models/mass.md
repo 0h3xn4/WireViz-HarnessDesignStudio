@@ -58,4 +58,4 @@ A mass is never made up. When a connector part has no mass, a wire part has no m
 - It does not know the real mass of a part; it uses the library.
 - The margin is one fraction of the whole total, not a margin per part.
 
-Next: [wire length](wire-length.md), [wire sizing](wire-sizing.md), [the models](README.md), [changes to results](../changes.md)
+Next: [bill of materials](bom.md), [wire length](wire-length.md), [wire sizing](wire-sizing.md), [the models](README.md), [changes to results](../changes.md)

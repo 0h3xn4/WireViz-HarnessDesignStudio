@@ -107,6 +107,26 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "built in",
             "core/generate/mass.py (wire_mass_g)",
         ),
+        Assumption(
+            "A-BOM-CONTACTS",
+            "A contact part is counted once for each pin that has a wire",
+            "A pin that names a contact part adds one of that part to the bill of materials when a "
+            "wire of the harness is attached to it, and nothing otherwise: no spare contacts, no "
+            "contacts for the pins of a connector that nobody uses.",
+            "built in",
+            "core/outputs/tables.py (bom_contributions, pins_in_use)",
+        ),
+        Assumption(
+            "A-BOM-NO-ALLOWANCE",
+            "The bill of materials counts what is drawn, with no spares or waste",
+            "A connector part is counted once per connector, a wire part in metres as the sum of the "
+            "lengths of its wires (each length already includes the service loops) divided by the "
+            "conductors of the part, and an accessory part by its quantity or its length. No spare, "
+            "overage, cut allowance or waste is added. A wire with no length adds nothing and is "
+            "counted in the column Wires without length.",
+            "built in",
+            "core/outputs/tables.py (bom_contributions)",
+        ),
     )
 }
 

@@ -43,6 +43,7 @@ EXAMPLES: dict[str, list[str]] = {
     "explain": [
         "harness-design-studio explain wheel-link W001-001",
         "harness-design-studio explain wheel-link W001",
+        "harness-design-studio explain wheel-link EX-WIRE-SINGLE",
         "harness-design-studio explain wheel-link W001-001 --json",
     ],
     "templates": ["harness-design-studio templates my-templates"],
