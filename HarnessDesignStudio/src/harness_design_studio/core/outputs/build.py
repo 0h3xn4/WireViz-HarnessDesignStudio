@@ -59,6 +59,11 @@ class OutputSet:
                 for p, b in sorted(self.files.items())
             ],
         }
+        if project.extensions is not None:  # S8: only a project that enables extensions lists them
+            from harness_design_studio.core.extensions.manager import provenance
+
+            if listed := provenance(project):
+                doc["extensions"] = listed
         return (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()
 
 
@@ -192,6 +197,12 @@ def build_outputs(
     if project.asbuilt:  # the as-built report: only a project that has records has it (S9)
         out[ASBUILT_MD] = asbuilt.report_markdown(project, stamp.line).encode()
         out[ASBUILT_CSV] = csv_bytes(asbuilt.report_rows(project), stamp)
+    if (
+        project.extensions is not None
+    ):  # S8: the tables of the project's extensions (system/extensions/)
+        from harness_design_studio.core.extensions.manager import table_files
+
+        out.update(table_files(project, stamp, csv_bytes))  # type: ignore[arg-type]
     out["system/system.xlsx"] = exports.xlsx_bytes(
         {"BOM": bom_all, "Mass and length": mass_all, "Mating matrix": mating, "Traceability": trace,
          "Box pinouts": boxes, "DRC findings": findings, "Change log": changelog_rows(project)}, stamp

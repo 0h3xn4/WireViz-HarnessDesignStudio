@@ -36,6 +36,7 @@ GROUPS = (
     ("Write data out", ("export-pinout", "export-devices", "export-subsystem")),
     ("Record what was built", ("export-asbuilt", "import-asbuilt", "asbuilt")),
     ("Review, release and change", ("review", "release", "revise", "diff", "log", "compare")),
+    ("Extend the tool", ("extensions", "trust", "import-plugin")),
     ("Maintenance", ("migrate",)),
 )
 EXAMPLES: dict[str, list[str]] = {
@@ -239,6 +240,23 @@ EXAMPLES: dict[str, list[str]] = {
     "migrate": [
         "harness-design-studio migrate my-design",
         "harness-design-studio migrate my-design --json",
+    ],
+    "extensions": [
+        "harness-design-studio extensions my-design",
+        "harness-design-studio extensions my-design --all",
+        "harness-design-studio extensions my-design --docs > extension-rules.md",
+        "harness-design-studio extensions my-design --enable minimum-wire-gauge-power.json",
+        "harness-design-studio extensions my-design --json",
+    ],
+    "trust": [
+        "harness-design-studio trust my-design",
+        "harness-design-studio trust my-design duplicate-signal-wires",
+        "harness-design-studio trust my-design duplicate-signal-wires --yes",
+        "harness-design-studio trust my-design duplicate-signal-wires --revoke",
+    ],
+    "import-plugin": [
+        "harness-design-studio import-plugin my-design my-importer data.csv --dry-run",
+        "harness-design-studio import-plugin my-design my-importer data.csv --dry-run --json",
     ],
     "merge-fix": [
         "harness-design-studio merge-fix my-design",

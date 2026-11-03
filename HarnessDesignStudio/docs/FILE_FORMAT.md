@@ -236,6 +236,10 @@ The same design gives the same bytes in every file but the run record. [`user-ma
 
 `harness-design-studio schema my-design/schemas` writes one JSON Schema per kind of file, made from the same strict models the loader uses (so they cannot drift), and `editor-settings.json` with the `json.schemas` entries that map the project's files to them for VS Code. With them an editor completes keys, shows the allowed values and underlines mistakes before the tool ever sees the file. Nothing is downloaded. The tool itself does not need the schemas.
 
+## The extensions folder (S8; not part of the project format)
+
+A project folder may hold `extensions/`: data files (`*.json`) that add rules, tables and lookup tables, `enabled.json` that lists which of them the project uses, and `plugins/*.py`. The loader and the saver do not read or write it as project data (it is not one of the managed files, it is not in the model hash, and a save leaves it as it is); the tool reads it when the project is opened and writes only `enabled.json`, on request (`extensions --enable`). The format of its two JSON files is exported by `schema` as `extension.schema.json` and `extensions-enabled.schema.json`. See [Extend the tool](user-manual/extend-the-tool.md) and [the developer page](developer/extensions.md).
+
 `library/manifest.json` holds `name`, `version`, `source` and `date` of the parts library (the last two may be `null`).
 
 Next: [`CONFIG.md`](CONFIG.md), [`OUTPUTS.md`](OUTPUTS.md).

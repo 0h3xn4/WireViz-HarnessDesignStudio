@@ -4,6 +4,7 @@ This page describes the five example projects and the 19 template files that shi
 
 ## Contents
 
+- [Extensions](extensions/README.md): a rule, a table and a Python rule to copy into a project's `extensions/` folder
 - [At a glance](#at-a-glance)
 - [Which build do you have?](#which-build-do-you-have)
 - [blank](#blank)

@@ -1,0 +1,6 @@
+{
+  "format": "harness-design-studio-extensions-enabled",
+  "format_version": 1,
+  "declarative": ["minimum-wire-gauge-power.json", "power-wire-table.json"],
+  "plugins": ["duplicate-signal-wires"]
+}

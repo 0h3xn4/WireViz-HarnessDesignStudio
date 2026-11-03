@@ -40,6 +40,7 @@ import contextlib
 import os
 from collections.abc import Iterator
 from pathlib import Path
+from typing import Any
 
 from harness_design_studio.core import asbuilt, change_ops, configcheck, journal, records, workflow
 from harness_design_studio.core.asbuilt import AsBuiltImportResult, AsBuiltReport
@@ -151,6 +152,7 @@ __all__ = [
     "get_workflow",
     "import_asbuilt",
     "list_deviations",
+    "list_extensions",
     "list_rules",
     "list_templates",
     "load_project",
@@ -312,6 +314,16 @@ def run_checks(source: ProjectSource) -> CheckResult:
     Changes nothing."""
     project = _project(source)
     return records.check_result(project, _findings(project))
+
+
+def list_extensions(source: ProjectSource) -> dict[str, Any]:
+    """The command `extensions`: what is registered for a project, built-in and extension items
+    together, with the declarative files and Python plug-ins of its `extensions/` folder and whether
+    each is enabled and trusted (the same document as `extensions --json`). Python code is not
+    loaded by asking. Changes nothing."""
+    from harness_design_studio.core.extensions.manager import listing
+
+    return listing(_project(source))
 
 
 def list_rules() -> list[RuleInfo]:

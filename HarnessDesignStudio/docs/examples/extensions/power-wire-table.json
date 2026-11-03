@@ -1,0 +1,49 @@
+{
+  "format": "harness-design-studio-extension",
+  "format_version": 1,
+  "name": "power-wire-table",
+  "version": "1.0.0",
+  "description": "A table of the power wires with their cross-section, and a rule against an ampacity table of the project's own. The ampacity numbers are made up for the documentation.",
+  "lookups": [
+    {
+      "name": "ampacity-example",
+      "description": "Current a wire may carry, by gauge, in this example.",
+      "key": "AWG gauge",
+      "unit": "A",
+      "source": "example numbers for the documentation, not from any standard",
+      "mode": "exact",
+      "values": { "20": 11.0, "22": 7.0, "24": 5.0, "26": 3.5 }
+    }
+  ],
+  "rules": [
+    {
+      "id": "own-ampacity",
+      "title": "Current against the project's own ampacity table",
+      "severity": "error",
+      "applies_to": "wire",
+      "condition": "wire.current_a <= lookup('ampacity-example', wire.gauge_awg)",
+      "unit": "A",
+      "message": "Wire {object} carries {actual} A and the table allows {limit} A for AWG {wire.gauge_awg}",
+      "why": "A wire that carries more than the table of the project allows is overloaded.",
+      "how": "Choose a thicker wire, or split the current over more wires."
+    }
+  ],
+  "tables": [
+    {
+      "name": "power-wires",
+      "title": "The power wires with their cross-section and current",
+      "applies_to": "wire",
+      "where": "wire.category == 'power'",
+      "sort": "wire.id",
+      "columns": [
+        { "header": "Wire", "value": "wire.id" },
+        { "header": "Harness", "value": "wire.harness" },
+        { "header": "Signal", "value": "wire.signal" },
+        { "header": "Gauge", "value": "wire.gauge_awg", "unit": "AWG" },
+        { "header": "Cross-section", "value": "round(wire.mm2, 3)", "unit": "mm2" },
+        { "header": "Current", "value": "wire.current_a", "unit": "A" },
+        { "header": "Table ampacity", "value": "lookup('ampacity-example', wire.gauge_awg)", "unit": "A" }
+      ]
+    }
+  ]
+}

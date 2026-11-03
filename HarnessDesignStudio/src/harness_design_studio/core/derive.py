@@ -894,6 +894,18 @@ OTHER_RULES = ("verify-mismatch", *LOGICAL_RULES)
 EXPLAINABLE_RULES = frozenset({r.id for r in RULES} | set(OTHER_RULES))
 
 
+def is_explainable(project: Project, rule_id: str) -> bool:
+    """True when `explain_finding` answers for the rule: a built-in one, or one of the project's
+    extensions (which explains itself, S8)."""
+    if rule_id in EXPLAINABLE_RULES:
+        return True
+    if project.extensions is None:
+        return False
+    from harness_design_studio.core.extensions.manager import is_extension_rule
+
+    return is_extension_rule(project, rule_id)
+
+
 def explain_finding(project: Project, rule_id: str, object_id: str) -> list[Derivation]:
     """The calculation behind one finding: the derivation of the limit the rule checked, for the
     object the finding names (a wire for `current-over-wire` and `voltage-drop`, INTERFACE.CONNECTOR
