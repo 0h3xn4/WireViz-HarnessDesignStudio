@@ -41,7 +41,7 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio.core import checks, configcheck, journal
 from harness_design_studio.core.checks import Finding
-from harness_design_studio.core.derive import EXPLAINABLE_RULES, explain_finding
+from harness_design_studio.core.derive import EXPLAINABLE_RULES, explain_finding, is_explainable
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.drc.by_rule import MissingValue, RuleResult
 from harness_design_studio.core.units import with_area
@@ -275,6 +275,9 @@ class RuleDetails(QWidget):
         self.result: RuleResult | None = None
         # who accepted a waived finding and when, from the journal ('' without one); the panel sets it
         self.by: Callable[[str], str] = lambda _finding_id: ""
+        # the panel replaces these two for a project with extensions (S8); alone, only the built-in rules
+        self.explainable: Callable[[str], bool] = lambda rule_id: rule_id in EXPLAINABLE_RULES
+        self.source_note: Callable[[str], str] = lambda rule_id: ""
         lay = QVBoxLayout(self)
         lay.setContentsMargins(theme.space(8), theme.space(8), theme.space(8), theme.space(8))
         lay.setSpacing(theme.space(8))
@@ -389,6 +392,7 @@ class RuleDetails(QWidget):
             note = strings.CHECKS_TIP_NOTES
         elif r.status == "pass" and r.placeholder_files:
             note = strings.CHECKS_PLACEHOLDER_NOTE.format(", ".join(r.placeholder_files))
+        note = (self.source_note(r.rule_id) + " " + note).strip()
         self.note.setText(note)
         self.note.setVisible(bool(note))
         self._fill_missing(r)
@@ -459,7 +463,7 @@ class RuleDetails(QWidget):
         self.objects.setAccessibleName(strings.CHECKS_OBJECTS_TABLE.format(r.topic))
         self.objects.setVisible(n > 0)
         self.show_btn.setVisible(n > 0)
-        self.explain_btn.setVisible(n > 0 and r.rule_id in EXPLAINABLE_RULES)
+        self.explain_btn.setVisible(n > 0 and self.explainable(r.rule_id))
         self.none_label.setText(
             strings.CHECKS_OBJECTS_NONE_PARTLY
             if r.status == "not_checked"
@@ -575,6 +579,8 @@ class ChecksPanel(QWidget):
         self.stack.addWidget(self.empty)
         self.details = RuleDetails(theme, settings)
         self.details.by = lambda fid: journal.who_and_when(self.ctl.project, fid)
+        self.details.explainable = lambda rule_id: is_explainable(self.ctl.project, rule_id)
+        self.details.source_note = self._source_note
         self.details.showRequested.connect(self.showRequested)
         self.details.explainRequested.connect(self.explain)
         self.details.supplyRequested.connect(lambda f, k: self.open_config(f, k))
@@ -598,6 +604,19 @@ class ChecksPanel(QWidget):
             signal.connect(self._invalidate)
         ctl.changed.connect(lambda _d: self._invalidate())
         self.refresh()
+
+    def _source_note(self, rule_id: str) -> str:
+        """A rule of an extension says where it comes from (empty for a built-in rule)."""
+        if not rule_id.startswith("x-") or self.ctl.project.extensions is None:
+            return ""
+        from harness_design_studio.core.extensions.manager import rule_source
+
+        item = rule_source(self.ctl.project, rule_id)
+        if item is None:
+            return strings.CHECKS_EXTENSION_NOTE_PROBLEM if rule_id == "x-extension-problem" else ""
+        return strings.CHECKS_EXTENSION_NOTE.format(
+            item.source, item.origin, item.version, item.sha256[:12]
+        )
 
     def explain(self, rule_id: str, object_id: str) -> None:
         """Open the calculation behind a finding in a window (what `explain` prints)."""

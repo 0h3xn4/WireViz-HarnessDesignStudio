@@ -63,6 +63,9 @@ class Project:
     quarantine_files: dict[str, bytes] = field(default_factory=dict)
     read_only: bool = False  # written by a newer tool version
     migrated_from: int | None = None
+    # what the project's extensions/ folder offers (S8): set by the loader from the folder, never
+    # stored in the project files; None for a project without that folder
+    extensions: Any = field(default=None, compare=False, repr=False)
     # release records ("baselines:<id>", "changelog:<id>") that a save has written; undo must not
     # take these away again (set by save_project, not stored in the project files)
     saved_records: frozenset[str] = field(default_factory=frozenset, compare=False, repr=False)

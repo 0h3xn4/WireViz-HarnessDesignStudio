@@ -26,6 +26,15 @@ def pytest_unconfigure(config: object) -> None:
 
 
 @pytest.fixture(autouse=True)
+def _trust_store_in_a_temp_folder(
+    monkeypatch: pytest.MonkeyPatch, tmp_path_factory: pytest.TempPathFactory
+) -> None:
+    """The list of trusted Python plug-ins is kept in the user's settings folder (S8). A test never
+    reads or writes the real one: each test gets an empty store of its own."""
+    monkeypatch.setenv("HARNESS_DESIGN_STUDIO_CONFIG_DIR", str(tmp_path_factory.mktemp("trust")))
+
+
+@pytest.fixture(autouse=True)
 def _electrical_role_for_a_new_settings_file(monkeypatch: pytest.MonkeyPatch) -> None:
     """A settings file with no values asks who the person is working as (D-176), and a window that
     is shown waits for the answer. The tests build their windows on a new file, so they get the

@@ -1,0 +1,29 @@
+{
+  "format": "harness-design-studio-extension",
+  "format_version": 1,
+  "name": "minimum-wire-gauge-power",
+  "version": "1.0.0",
+  "description": "Power wires must not be thinner than a gauge you choose. The number in this example is made up for the documentation; put the value of your own standard in its place.",
+  "parameters": {
+    "thinnest_awg": {
+      "value": 22,
+      "unit": "AWG",
+      "source": "example value for the documentation, not a requirement of any standard",
+      "description": "The thinnest wire (largest AWG number) allowed for power."
+    }
+  },
+  "rules": [
+    {
+      "id": "min-gauge-power",
+      "title": "Minimum wire gauge for power",
+      "severity": "warning",
+      "applies_to": "wire",
+      "when": "wire.category == 'power'",
+      "condition": "wire.gauge_awg <= param('thinnest_awg')",
+      "unit": "AWG",
+      "message": "Wire {object} ({wire.signal}) is AWG {actual}, thinner than the AWG {limit} allowed for power",
+      "why": "A thin wire in a power line heats up and drops more voltage than the line was planned for.",
+      "how": "Choose a gauge with a number at or below the limit (a thicker wire) for this wire."
+    }
+  ]
+}

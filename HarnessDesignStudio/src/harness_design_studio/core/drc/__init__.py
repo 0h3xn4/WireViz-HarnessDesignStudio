@@ -6,6 +6,7 @@ from harness_design_studio.core.checks import Finding, with_waiver
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.model import Project
 
+from .base import Rule
 from .rules import RULES
 
 if TYPE_CHECKING:
@@ -21,6 +22,10 @@ def apply_waivers(project: Project, findings: list[Finding]) -> list[Finding]:
 def run(project: Project) -> list[Finding]:
     """All findings (waived ones carry their waiver), sorted by severity then ID."""
     found = [f for rule in RULES for f in rule.run(project)]
+    if project.extensions is not None:  # S8: the rules and the notes of the project's extensions
+        from harness_design_studio.core.extensions.manager import run_extension_rules
+
+        found += run_extension_rules(project)
     # the independent verifier also reports mismatches between interfaces and wires
     found += _verifier_findings(project)
     return sorted(apply_waivers(project, found), key=lambda f: (_ORDER[f.severity], f.id))
@@ -132,4 +137,13 @@ def locate(project: Project, object_id: str) -> tuple[str, str] | None:
     return locate(project, head) if head != object_id else None
 
 
-__all__ = ["RULES", "apply_waivers", "fix_ops", "locate", "run", "run_by_rule"]
+def all_rules(project: Project) -> tuple[Rule, ...]:
+    """The rules that run for a project: the built-in ones, then those of its extensions."""
+    if project.extensions is None:
+        return RULES
+    from harness_design_studio.core.extensions.manager import rules_for
+
+    return (*RULES, *rules_for(project))
+
+
+__all__ = ["RULES", "all_rules", "apply_waivers", "fix_ops", "locate", "run", "run_by_rule"]

@@ -30,6 +30,8 @@ from harness_design_studio.core import (
 from harness_design_studio.core.commands import Delete, History, Op, Put, SetZones, apply_ops
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.errors import HarnessError, SaveError, TransactionError
+from harness_design_studio.core.extensions import attach as attach_extensions
+from harness_design_studio.core.extensions import refresh as refresh_extensions
 from harness_design_studio.core.generate.engine import GenerationPlan
 from harness_design_studio.core.generation_status import generation_status, input_hash
 from harness_design_studio.core.imports import ImportPlan
@@ -1320,6 +1322,8 @@ class EditorController(QObject):
         self._journal_generation += 1  # a write still waiting belongs to the project left behind
         self._journal_again = False
         self.project = project
+        if root is not None and project.extensions is None and (root / "extensions").is_dir():
+            attach_extensions(project, root)  # a project restored from the journal has none yet
         apply_ops(project, edit.ops_autoplace(project))  # positions for units saved without any
         self.history = History(project)
         self._saved_revision = 0
@@ -1616,6 +1620,16 @@ class EditorController(QObject):
         elif self._rule_cache is not None and self._rule_cache[0][0] != self._installs:
             self._rule_cache = None  # another project was opened: its rules say nothing about this
         return self._rule_cache[1] if self._rule_cache is not None else []
+
+    def reload_extensions(self) -> None:
+        """Read the project's extensions folder again (a file changed, a plug-in was trusted or
+        trust was taken back) and run the check, so the rules in force are the ones listed."""
+        if self.project.extensions is not None:
+            refresh_extensions(self.project)
+        elif self.root is not None and (self.root / "extensions").is_dir():
+            attach_extensions(self.project, self.root)
+        self.stateChanged.emit()
+        self.check_now()
 
     def check_now(self) -> None:
         """Start the design rule check without waiting for the pause after an edit."""

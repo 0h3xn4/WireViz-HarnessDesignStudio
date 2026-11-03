@@ -31,6 +31,7 @@ The examples show the form of each command with example names. They do not all w
 - Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data), [`imports`](#harness-design-studio-imports)
 - Write data out: [`export-pinout`](#harness-design-studio-export-pinout), [`export-devices`](#harness-design-studio-export-devices), [`export-subsystem`](#harness-design-studio-export-subsystem)
 - Review, release and change: [`review`](#harness-design-studio-review), [`release`](#harness-design-studio-release), [`revise`](#harness-design-studio-revise), [`diff`](#harness-design-studio-diff), [`log`](#harness-design-studio-log), [`compare`](#harness-design-studio-compare)
+- Extend the tool: [`extensions`](#harness-design-studio-extensions), [`trust`](#harness-design-studio-trust), [`import-plugin`](#harness-design-studio-import-plugin)
 - Maintenance: [`migrate`](#harness-design-studio-migrate)
 
 ## JSON output
@@ -77,6 +78,9 @@ Every command that has a result in data form takes `--json`. The usual text line
 | `journal --start` | `ok`, `started`, `file` |
 | `override` | `ok`, `wire`, `action`, `changed`, `overrides`, `derivation` |
 | `deviation` | `ok`, `action`, `finding`, `count`, `deviations` |
+| `extensions` | `ok`, `has_folder`, `enabled_declarative`, `enabled_plugins`, `files`, `plugins`, `items`, `issues` |
+| `trust` | `ok`, `action`, `name`, `version`, `sha256`, `lines`, `where`, `trusted`, `changed` |
+| `import-plugin` | `ok`, `dry_run`, `changed`, `importer`, `rows`, `notes` |
 
 ## Start
 
@@ -876,6 +880,77 @@ Examples:
 ```
 harness-design-studio compare old-checkout new-checkout
 harness-design-studio compare old-checkout new-checkout --json
+```
+
+## Extend the tool
+
+### harness-design-studio extensions
+
+Lists the extensions of a project (the folder `extensions/`): the declarative files (rules, tables and lookup tables written as data) and the Python plug-ins, each with its name, version, source, SHA-256, whether the project enables it and, for Python code, whether you trust it. Without options it lists what the extensions add; with --all it lists the built-in items too. Nothing in the folder runs unless the project enables it in `extensions/enabled.json`, and Python code is not even imported unless you have also trusted that exact code (`trust`). --enable NAME and --disable NAME change enabled.json (NAME is a file such as min-gauge.json, or the name of a plug-in). Exit 1 while something the project enables is not applied.
+
+`harness-design-studio extensions project [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `--all` | also list the built-in items |
+| `--docs` | print the rules of the extensions as a Markdown page, in the form of docs/RULES.md (why, how to fix, requirement IDs, the file or plug-in each comes from) |
+| `--enable NAME` | enable a declarative file (its file name) or a plug-in (its name) in extensions/enabled.json; repeat for several (repeatable) |
+| `--disable NAME` | take a file or a plug-in out of extensions/enabled.json; repeat for several (repeatable) |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+
+Examples:
+
+```
+harness-design-studio extensions my-design
+harness-design-studio extensions my-design --all
+harness-design-studio extensions my-design --docs > extension-rules.md
+harness-design-studio extensions my-design --enable minimum-wire-gauge-power.json
+harness-design-studio extensions my-design --json
+```
+
+### harness-design-studio trust
+
+Python code is never loaded unless the project enables it and you trusted that exact code. Without NAME this lists the plug-ins of the project and whether each is trusted. With NAME it shows what the code is (name, version, file, SHA-256, number of lines) and asks you to type the plug-in's name to confirm; --yes confirms without asking (for scripts). The trust is kept in YOUR settings folder, not in the project, so a project you clone cannot trust itself; it is tied to the hash, so a change of the code takes it away. --revoke takes trust back. A plug-in runs with your rights: it can read and write the files you can and use the network of this computer. The tool has no sandbox. Trust it only if you have read it or you trust who wrote it.
+
+`harness-design-studio trust project [NAME] [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `NAME` | the plug-in (as `extensions` lists it) |
+| `--revoke` | take back the trust of this plug-in |
+| `--yes` | confirm without asking (for scripts) |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+
+Examples:
+
+```
+harness-design-studio trust my-design
+harness-design-studio trust my-design duplicate-signal-wires
+harness-design-studio trust my-design duplicate-signal-wires --yes
+harness-design-studio trust my-design duplicate-signal-wires --revoke
+```
+
+### harness-design-studio import-plugin
+
+Run an importer registered by a plug-in of the project (see `extensions`) on a file. The importer proposes the changes; --dry-run shows them and changes nothing.
+
+`harness-design-studio import-plugin project NAME file [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `NAME` | the importer, as `extensions` lists it |
+| `file` | the file to read |
+| `--dry-run` | show the preview only |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+
+Examples:
+
+```
+harness-design-studio import-plugin my-design my-importer data.csv --dry-run
+harness-design-studio import-plugin my-design my-importer data.csv --dry-run --json
 ```
 
 ## Maintenance

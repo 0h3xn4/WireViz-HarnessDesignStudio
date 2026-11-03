@@ -134,6 +134,7 @@ from harness_design_studio.gui.dialogs import (
     WireColoursDialog,
 )
 from harness_design_studio.gui.export_dialog import ExportDialog, ExportResult
+from harness_design_studio.gui.extensions_dialog import ExtensionsDialog, ask_to_trust_enabled
 from harness_design_studio.gui.harness_view import HarnessView
 from harness_design_studio.gui.icons import icon, icon_button, style_dock_buttons, tooltip_text
 from harness_design_studio.gui.import_kinds import KINDS
@@ -1795,6 +1796,7 @@ class MainWindow(QMainWindow):
             strings.A_ASSUMPTIONS, self.assumptions_flow, name="act-assumptions"
         )
         self.act_journal = a(strings.A_JOURNAL, self.history_flow, name="act-journal")
+        self.act_extensions = a(strings.A_EXTENSIONS, self.extensions_flow, name="act-extensions")
         self.act_sample = a(strings.A_SAMPLE, self.sample_flow, name="act-sample")
         self.act_about = a(strings.A_ABOUT, self.about_flow, name="act-about")
         self.act_issues = a(strings.A_ISSUES, self.issues_flow, name="act-issues")
@@ -2151,6 +2153,7 @@ class MainWindow(QMainWindow):
             self.act_glossary,
             self.act_assumptions,
             self.act_journal,
+            self.act_extensions,
             self.act_issues,
             self.act_about,
         ):
@@ -4203,6 +4206,11 @@ class MainWindow(QMainWindow):
     def glossary_flow(self) -> None:
         self.run_dialog(GlossaryDialog(self))
 
+    def extensions_flow(self) -> None:
+        """Help > Extensions: the declarative files and Python plug-ins of the open project, and
+        the way to trust a plug-in (D-191 (5))."""
+        self.run_dialog(ExtensionsDialog(self, self.theme, self.ctl))
+
     def assumptions_flow(self) -> None:
         """Help > Assumptions: what the tool assumes for the open project (D-191)."""
         self.run_dialog(AssumptionsDialog(self, self.theme, self.ctl.project))
@@ -4389,6 +4397,9 @@ class MainWindow(QMainWindow):
                 self.ctl.discard_journal()
         if result.has_errors and not self.ctl.project.recovered:
             self.toasts.show_message(strings.PROJECT_HAS_ERRORS, None, 8000)
+        # a Python plug-in the project enables but this computer does not trust yet: name the code
+        if ask_to_trust_enabled(self, self.theme, self.ctl, self.run_dialog):
+            self.toasts.show_message(strings.EXT_TRUSTED_NOW, None, 4000)
         return True
 
     def save_flow(self) -> bool:

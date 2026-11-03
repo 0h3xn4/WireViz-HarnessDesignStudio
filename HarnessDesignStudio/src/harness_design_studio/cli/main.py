@@ -18,6 +18,7 @@ from harness_design_studio.cli import (
     changes,
     data,
     explain,
+    extensions_cmd,
     journal_cmd,
     merge,
     open_data,
@@ -99,6 +100,7 @@ def build_parser() -> argparse.ArgumentParser:
     settings_cmd.register(sub)
     changes.register(sub)
     data.register(sub)
+    extensions_cmd.register(sub)
     return parser
 
 
@@ -405,6 +407,7 @@ NOTHING_DONE = {
     "export-devices": "exported", "import-devices": "imported", "import-build-data": "imported",
     "export-subsystem": "exported", "import-subsystem": "imported", "explain": "explained", "settings": "reported or changed",
     "journal": "listed", "override": "changed", "deviation": "recorded",
+    "import-plugin": "imported",
     "export-data": "exported",
     "imports": "listed",
 }  # fmt: skip
@@ -412,7 +415,7 @@ NOTHING_DONE = {
 MUTATING = {
     "generate", "export", "migrate", "review", "release", "revise", "merge-fix",
     "import-parts", "import-lengths", "import-netlist", "import-pinout", "import-devices",
-    "import-build-data", "import-subsystem",
+    "import-build-data", "import-subsystem", "import-plugin",
 }  # fmt: skip
 
 
@@ -496,6 +499,8 @@ def _dispatch(args: argparse.Namespace) -> int:
         return data.run(args)
     if args.command in changes.COMMANDS:
         return changes.run(args)
+    if args.command in extensions_cmd.COMMANDS:
+        return extensions_cmd.run(args)
     rep = Report(args.json)
     if args.command == "migrate":
         migrated = migrate_project(args.project)

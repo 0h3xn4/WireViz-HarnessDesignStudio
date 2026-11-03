@@ -80,6 +80,12 @@ SHAPES: dict[str, tuple[str, ...]] = {
     "journal --start": ("ok", "started", "file"),
     "override": ("ok", "wire", "action", "changed", "overrides", "derivation"),
     "deviation": ("ok", "action", "finding", "count", "deviations"),
+    "extensions": (
+        "ok", "has_folder", "enabled_declarative", "enabled_plugins", "files", "plugins", "items",
+        "issues",
+    ),
+    "trust": ("ok", "action", "name", "version", "sha256", "lines", "where", "trusted", "changed"),
+    "import-plugin": ("ok", "dry_run", "changed", "importer", "rows", "notes"),
 }  # fmt: skip
 
 JSON_HELP = (

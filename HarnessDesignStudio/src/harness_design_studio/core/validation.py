@@ -51,4 +51,9 @@ def validate_folder(
         # a value of config/*.json that is set but cannot be used: the same check as `generate`,
         # `drc` and `config` (D-191); before, `validate` said "0 error(s)" for a value they refuse
         extra.extend(configcheck.validate(result.project))
+        if result.project.extensions is not None:  # S8: a broken extension is reported, never fatal
+            extra.extend(
+                Issue("warning", "extension_problem", i.render(), i.file)
+                for i in result.project.extensions.issues
+            )
     return result, extra
