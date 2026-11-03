@@ -460,7 +460,7 @@ def test_every_derivation_is_written_as_json_and_csv_and_the_same_design_gives_t
     project = load_project(tmp_path / "flat").project
     found = explain_all(project)
     doc = json.loads((tmp_path / "a" / "derivations.json").read_text(encoding="utf-8"))
-    assert doc["format"] == 2 and doc["tool_version"] and len(doc["derivations"]) == len(found)
+    assert doc["format"] == 3 and doc["tool_version"] and len(doc["derivations"]) == len(found)
     assert doc["derivations"] == [d.to_dict() for d in found]
     with (tmp_path / "a" / "derivations.csv").open(encoding="utf-8", newline="") as fh:
         rows = list(csv_mod.reader(fh))

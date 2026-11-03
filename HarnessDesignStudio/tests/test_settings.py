@@ -92,6 +92,7 @@ EXEMPT: dict[tuple[str, float], str] = {
     ("core/drc/rules.py", 3): "a position in a sort key tuple",
     ("core/drc/rules.py", 4): "a position in a sort key tuple",
     ("core/drc/rules.py", 40): _AWG,
+    ("core/derive_export.py", 3): "the format number of derivations.json (format 3, S5)",
     ("core/drc/rules.py", 6): "the length of the hash prefix that makes a finding ID",
     ("core/drc/standard_rules.py", 1000): "the largest pin count of the file format",
     ("core/generate/engine.py", 0.02): _TICK,

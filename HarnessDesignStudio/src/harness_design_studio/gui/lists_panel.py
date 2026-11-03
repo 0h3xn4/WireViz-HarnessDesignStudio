@@ -37,6 +37,7 @@ from harness_design_studio.core.generation_status import generation_status
 from harness_design_studio.core.model import Harness, Project
 from harness_design_studio.core.outputs import exports, tables
 from harness_design_studio.core.outputs.stamp import Table, csv_bytes, stamp_of
+from harness_design_studio.core.units import gauge_short
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.background import Job, JobRunner
 from harness_design_studio.gui.controller import EditorController
@@ -156,9 +157,20 @@ def table_columns(name: str, header: list[str], body: list[list[str]]) -> list[C
                 mono=h in MONO and not numeric,
                 state=state,
                 tooltip=tip,
+                fmt=_gauge_cell if h == "AWG" else None,
             )
         )
     return cols
+
+
+def _gauge_cell(value: Any) -> str:
+    """A cell of the AWG column on the screen: the gauge with its cross-section beside it (D2).
+    The table, and so the file, keep the plain gauge; copying a cell copies what is shown."""
+    text = "" if value is None else str(value)
+    try:
+        return gauge_short(int(text))
+    except ValueError:
+        return text  # "pending" or a blank
 
 
 def _tip(header: str, text: str) -> str | None:

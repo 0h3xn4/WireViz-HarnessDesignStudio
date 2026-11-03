@@ -112,6 +112,20 @@ At most 200 rows are listed in `rows_dropped` and `rows_converted`; the counts a
 
 **Has the source changed?** `harness-design-studio imports DIR` compares the SHA-256 of every source it can reach now with the recorded one: a source inside the project folder is found by its recorded path, any other by a file you name with `--source FILE` (matched by file name). The status is `unchanged`, `source changed`, `source not found` or `not checked (no path)`; `--check` ends with exit code 1 when a source has changed, so a build can stop on it, and `--json` prints the records and their status. In the app the first page of the import wizard lists the earlier imports and marks a source that changed with the words *source changed*, and the Next step page says it once in a quiet line; neither appears while the project has no record. To take the new content, import the file again.
 
+## Which export is read by which importer
+
+What the tool writes can be read again where the importers know the shape. The files of `export-data` ([export the data](user-manual/export-the-data.md)) have no comment line.
+
+| Written by | File | Read by |
+| --- | --- | --- |
+| `export-data DIR --out FOLDER` | `segment_lengths.csv` (or `.json`): harness, segment, length in metres, the nodes of the segment | `import-lengths DIR FILE --unit m` (the first three columns, by position; only segments that have a length are listed, because a row without one stops the import) |
+| `export-data` | `parts.csv`: part, category, manufacturer, part number, description, specification, approval, pin count, mass, mass per metre, mates with, tool, conductors | `import-parts DIR FILE --approved approved --pending pending --rejected not_approved` (the `Ratings` and `Example data` columns are not read) |
+| `export-pinout DIR --device D` | CSV or XLSX of the pins of a device | `import-pinout` (the comment line and the About sheet are skipped) |
+| `export-devices`, `export-subsystem` | a library file | `import-devices`, `import-subsystem` |
+| `export-data` | the other tables (`wire_sizing`, `rule_results`, `bom`, `findings`, ...) | none: they are results, not inputs |
+
+The CSV files of `export` (the wire list, the pinouts, the bill of materials ...) start with the line `# harness-design-studio VERSION model HASH`. Every importer skips that line, so an output file can be read back as it is, for example `system/bom.csv` by `import-parts` and a file of segment lengths with the line by `import-lengths`. The files of `export-data` have no such line. `provenance.json` of `export-data` lists the files the project imported (the record of each: kind, file name, SHA-256, rows read and dropped, values converted).
+
 ## Where the library data come from
 
 `harness-design-studio import-parts` records the file name and its SHA-256 as the library's **source**. Say more with `--library-source`, `--library-version`, `--library-name` and `--library-date YYYY-MM-DD` (the date of the data, which you enter; the tool does not read the clock). The date is written exactly `YYYY-MM-DD`; any other field that is empty, too long or has control characters is named in the message. `harness-design-studio library DIR` shows what is recorded and `harness-design-studio library DIR --library-source "..." --library-date 2026-09-30` sets it without an import. The editor shows the same line under the part picker and every export carries it in `system/provenance.json`.

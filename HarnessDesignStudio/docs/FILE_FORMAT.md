@@ -22,6 +22,7 @@ The screen says *device*, the files say *unit*: what the program shows as a devi
 - [Import record](#import-record-optional-schema-version-stays-1)
 - [Device library file](#device-library-file-140-not-part-of-a-project)
 - [Subsystem library file](#subsystem-library-file-m4-not-part-of-a-project)
+- [Open data files and the run record](#open-data-files-and-the-run-record-not-part-of-a-project)
 - [Editing files by hand: JSON Schemas](#editing-files-by-hand-json-schemas)
 
 ```
@@ -205,6 +206,18 @@ The connection ends are the **connector IDs of the file** (the `id` of a connect
 ```
 
 Adding a subsystem (`plan_subsystem_import`, `import-subsystem`, the library window) adds the devices (a taken ID gets the next free one: `OBC` becomes `OBC-2`, and its connectors follow), sets `Unit.subsystem` of each to the `name`, adds the connections between the new connectors (a taken connection ID gets the next free `L<n>`), puts the devices in a free place of one lane, and does all of it as one undo step. It is all or nothing and never changes an object that the project has. The file name that the tool writes is `subsystem-<name made safe>.json`; the tool never replaces a file of that name. Nothing is added to a project file that does not use the library: no field of the model changed.
+
+## Open data files and the run record (not part of a project)
+
+`harness-design-studio export-data DIR --out FOLDER` writes files that are kept outside the project and are never read back by the tool except where [`IMPORTS.md`](IMPORTS.md#which-export-is-read-by-which-importer) says so. The schema version of the project does not change. They have a format number of their own, **1**, in every JSON file, raised when a key or a column is removed or changes its meaning (adding one does not raise it).
+
+- **`NAME.json`** (one for each table: `wire_sizing`, `lengths`, `segment_lengths`, `segmentation_groups`, `segmentation_interfaces`, `pin_allocation`, `rule_results`, `findings`, `readiness`, `mass`, `mass_wires`, `bom`, `bom_contributions`, `test_limits`, `parts`, `settings`): `format`, `table`, `title`, `about`, `tool_version`, `model_hash` (64 hexadecimal digits), `columns` (a list of `key`, `name`, `unit`, `header`, `what`) and `rows` (a list of objects with the keys of the columns, one to a line). A value that is not set is `null`; a number has at most 12 significant digits; a flag is the text `yes` or an empty text.
+- **`NAME.csv`**: the same rows, UTF-8, `\n` line ends, no comment line and no byte order mark. The first line is the `header` of each column (the unit in brackets, for example `Current (A)`). A cell that is a table or a list is JSON text. Text that begins with `=`, `+`, `-` or `@` gets a leading apostrophe, as in the other CSV files.
+- **`configuration.json`**: `format`, `about` and `files`, a list of `name`, `placeholder` and `values` for each `config/*.json` of the project as the tool read it.
+- **`provenance.json`**: `format`, `tool`, `tool_version`, `project`, `model_hash`, `content_hash`, `placeholder_config`, `library`, `design` (counts), `imports` (the files the project imported, from `imports/records.json`: `id`, `kind`, `source_name`, `sha256`, `rows_read`, `rows_dropped`, `values_converted`, `unit`, `tool_version`; no path; empty when it imported nothing), `files` (the path, SHA-256 and size of every other file of the set) and `notes`.
+- **`run_record.json`** (only with `--run-record`; beside the files, in no hash): `format` (1), `time_utc` (`2026-11-03T09:15:42Z`, to the second), `operator`, `tool`, `tool_version`, `platform`, `python`, `model_hash` and `extensions` (a list of name and version; empty until the tool has plug-ins). It holds no path. `export --run-record` and `generate --run-record` write it into the `outputs` folder of the project (or the folder of `export --out`), where it is not listed in `manifest.json`.
+
+The same design gives the same bytes in every file but the run record. [`user-manual/export-the-data.md`](user-manual/export-the-data.md) says how to use them.
 
 ## Editing files by hand: JSON Schemas
 

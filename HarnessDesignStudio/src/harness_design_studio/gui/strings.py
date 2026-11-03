@@ -2110,6 +2110,7 @@ WIRE_LABEL = "Label"
 WIRE_NOTE = "Note"
 WIRE_VARIOUS = "various"
 WIRE_GAUGE_TIP = "The wire gauge, a whole number. Setting it keeps it when you generate again."
+WIRE_GAUGE_AREA = "{0} mm²"  # the cross-section of the gauge typed, beside the field
 WIRE_TYPE_TIP = "The wire part from the library. Setting it keeps it when you generate again."
 WIRE_COLOUR_TIP = "The wire colour (IEC 60757 names, or your own text). Setting it keeps it when you generate again."
 WIRE_LENGTH_TIP = "The length of the wire in metres. Setting it keeps it when you generate again."

@@ -22,7 +22,8 @@ A short example::
 Two kinds of function:
 
 * **Reading** (`run_checks`, `explain`, `explain_all`, `explain_finding`, `get_config`,
-  `write_derivations`) takes a project folder or a `Project` you loaded, and changes no project.
+  `write_derivations`, `export_data`) takes a project folder or a `Project` you loaded, and changes
+  no project (the last two write files into the folder you name, and nowhere else).
 * **Changing** (`create_project`, `generate`, `export`, `set_config`) takes a folder, takes the same
   lock as the editor and the command line, and writes what the command of the same name writes.
   Give `export` an `out` folder to write the outputs somewhere else.
@@ -57,6 +58,7 @@ from harness_design_studio.core.errors import (
     TransactionError,
 )
 from harness_design_studio.core.io.fs import ProjectLock
+from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.io.loader import load_project as _load_project
 from harness_design_studio.core.io.saver import save_project as _save_project
 from harness_design_studio.core.issues import errors
@@ -65,6 +67,7 @@ from harness_design_studio.core.records import (
     CheckResult,
     ConfigReport,
     ConfigValue,
+    DataFiles,
     DerivationFiles,
     ExportedFile,
     ExportResult,
@@ -87,6 +90,7 @@ __all__ = [
     "ConfigReport",
     "ConfigValue",
     "ConfigValueError",
+    "DataFiles",
     "Derivation",
     "DerivationFiles",
     "EditError",
@@ -117,6 +121,7 @@ __all__ = [
     "explain_all",
     "explain_finding",
     "export",
+    "export_data",
     "generate",
     "get_config",
     "get_settings",
@@ -305,11 +310,16 @@ def verify(folder: PathLike, *, outputs: bool = False) -> VerifyResult:
 # ---- generating and exporting ------------------------------------------------------------------
 
 
-def generate(folder: PathLike) -> GenerateResult:
+def generate(
+    folder: PathLike, *, run_record: bool = False, operator: str | None = None
+) -> GenerateResult:
     """The command `generate`: plan the harnesses from the interfaces, apply the plan, check it
     independently and save the project. Nothing is saved when there is an error (`ok` is false and
     `findings` and `verify_issues` say why). Released harnesses and locked pins and wires are kept.
-    Takes the project lock. Raises `ReadOnlyProjectError` for a project saved by a newer version."""
+    Takes the project lock. Raises `ReadOnlyProjectError` for a project saved by a newer version.
+    With `run_record=True` and a saved result, `run_record.json` (time, operator, tool version,
+    model hash) is written into the `outputs` folder of the project, outside every hash; `operator`
+    names who ran it (else `HARNESS_AUTHOR`, the Git name, the user of the system)."""
     from harness_design_studio.core.generate.engine import generate_project
     from harness_design_studio.core.verify import verify_project
 
@@ -322,17 +332,26 @@ def generate(folder: PathLike) -> GenerateResult:
         ok = not plan.report.errors and report.ok
         if ok:
             _save_project(project, path)
+            if run_record:
+                _write_run_record(project, path / "outputs", operator, path)
     return records.generate_result(plan, report, saved=ok)
 
 
 def export(
-    folder: PathLike, out: PathLike | None = None, *, drawings: bool = False
+    folder: PathLike,
+    out: PathLike | None = None,
+    *,
+    drawings: bool = False,
+    run_record: bool = False,
+    operator: str | None = None,
 ) -> ExportResult:
     """The command `export`: build every output file of the project, check them independently and
     write them to `out` (default: the `outputs` folder of the project). The PDF and SVG drawings of
     the harnesses are written only with `drawings=True`. Takes the project lock. Nothing is written
     (`written` is false, `blocked` says why) when there is nothing to export or the independent
-    check of the outputs fails."""
+    check of the outputs fails. With `run_record=True` a written export also gets `run_record.json`
+    next to its manifest (time, operator, tool version, model hash): it is not listed in the
+    manifest and is in no hash; `operator` is as for `generate`."""
     from harness_design_studio.core.outputs.build import (
         DEFAULT_FOLDER,
         build_outputs,
@@ -354,9 +373,49 @@ def export(
         target = Path(out) if out is not None else path / DEFAULT_FOLDER
         had_drawings = drawings_exported(target)
         write_outputs(project, target, built)
+        if run_record:
+            _write_run_record(project, target, operator, path)
     return records.export_result(
         built, report.issues, drawings_removed=had_drawings and not drawings
     )
+
+
+def _write_run_record(
+    project: Project, folder: Path, operator: str | None, project_folder: Path
+) -> None:
+    from harness_design_studio.core import run_record
+
+    run_record.write_for(project, folder, operator=operator, project_folder=project_folder)
+
+
+def export_data(
+    source: ProjectSource,
+    out: PathLike,
+    *,
+    run_record: bool = False,
+    operator: str | None = None,
+) -> DataFiles:
+    """The command `export-data`: write every intermediate and final result of the project to the
+    folder `out` as JSON and CSV (wire sizing, segmentation, pin allocation, rule results,
+    readiness, lengths, mass, bill of materials, findings, test limits, settings), with
+    `configuration.json` and `provenance.json`. A script can recompute the numbers from these files
+    alone (`docs/user-manual/export-the-data.md`). The same design gives the same bytes; no file
+    holds a time, a user name or a path. With `run_record=True`, `run_record.json` (time, operator,
+    tool version, model hash) is written beside them; it is not part of the set. Changes no
+    project. Returns the names of the files written."""
+    from harness_design_studio.core import run_record as record
+    from harness_design_studio.core.open_data import write_data
+
+    project = _project(source)
+    folder = Path(out)
+    files = write_data(project, folder)
+    named = ""
+    if run_record:
+        project_folder = None if isinstance(source, Project) else Path(source)
+        named = record.write_for(
+            project, folder, operator=operator, project_folder=project_folder
+        ).name
+    return DataFiles(tuple(sorted(files)), model_hash(project)[:12], named)
 
 
 # ---- explaining --------------------------------------------------------------------------------

@@ -404,6 +404,28 @@ class DerivationFiles:
         }
 
 
+@dataclass(frozen=True)
+class DataFiles:
+    """What `export_data` wrote: the files (by name, in order), the first 12 characters of the
+    model hash they were made from, and the name of the run record when one was asked for."""
+
+    files: tuple[str, ...]
+    model_hash: str
+    run_record: str = ""
+
+    @property
+    def count(self) -> int:
+        return len(self.files)
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "count": self.count,
+            "model_hash": self.model_hash,
+            "files": list(self.files),
+            "run_record": self.run_record,
+        }
+
+
 # ---- from the objects of the tool ------------------------------------------------------------
 
 
