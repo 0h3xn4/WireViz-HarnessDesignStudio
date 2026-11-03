@@ -140,6 +140,7 @@ from harness_design_studio.gui.import_wizard import ImportWizard
 from harness_design_studio.gui.inspector import Inspector
 from harness_design_studio.gui.interface_table import InterfaceTable
 from harness_design_studio.gui.jobs import JobStatus
+from harness_design_studio.gui.journal_dialog import JournalDialog
 from harness_design_studio.gui.library_window import SETTINGS_FOLDER as LIBRARY_FOLDER_KEY
 from harness_design_studio.gui.library_window import LibraryWindow, save_devices_asking
 from harness_design_studio.gui.link_dialog import CreateHarnessDialog, LinkDialog, harness_preview
@@ -1060,6 +1061,7 @@ class MainWindow(QMainWindow):
         self.problems = ProblemsPanel(self.ctl)
         self.problems.showRequested.connect(self.show_object)
         self.problems.waiveRequested.connect(self.waive_flow)
+        self.problems.deviateRequested.connect(self.deviate_flow)
         self.inspector = Inspector(self.ctl, self.theme, props=self.props, problems=self.problems)
         self.install_view("harness", self.harness_view)
         self.install_view("lists", self.lists_panel)
@@ -1790,6 +1792,7 @@ class MainWindow(QMainWindow):
         self.act_assumptions = a(
             strings.A_ASSUMPTIONS, self.assumptions_flow, name="act-assumptions"
         )
+        self.act_history = a(strings.A_HISTORY, self.history_flow, name="act-history")
         self.act_sample = a(strings.A_SAMPLE, self.sample_flow, name="act-sample")
         self.act_about = a(strings.A_ABOUT, self.about_flow, name="act-about")
         self.act_issues = a(strings.A_ISSUES, self.issues_flow, name="act-issues")
@@ -2145,6 +2148,7 @@ class MainWindow(QMainWindow):
             self.act_tour,
             self.act_glossary,
             self.act_assumptions,
+            self.act_history,
             self.act_issues,
             self.act_about,
         ):
@@ -4045,6 +4049,11 @@ class MainWindow(QMainWindow):
         if self.run_dialog(dlg) == QDialog.DialogCode.Accepted:
             self.ctl.waive(finding, dlg.justification())  # type: ignore[arg-type]
 
+    def deviate_flow(self, finding: object) -> None:
+        dlg = WaiverDialog(self, finding)  # type: ignore[arg-type]
+        if self.run_dialog(dlg) == QDialog.DialogCode.Accepted:
+            self.ctl.deviate(finding, dlg.justification())  # type: ignore[arg-type]
+
     def new_interface_flow(self) -> None:
         dlg = NewInterfaceDialog(self, self.ctl.project)
         if self.run_dialog(dlg) == QDialog.DialogCode.Accepted:
@@ -4177,6 +4186,25 @@ class MainWindow(QMainWindow):
         """Help > Assumptions: what the tool assumes for the open project (D-191)."""
         self.run_dialog(AssumptionsDialog(self, self.theme, self.ctl.project))
 
+    def history_flow(self) -> None:
+        """Help > Change history: the journal of the open project, read-only, with a filter."""
+        self.run_dialog(
+            JournalDialog(self, self.theme, self.ctl.project, start_journal=self._start_journal)
+        )
+
+    def _start_journal(self) -> bool:
+        """Start the journal of the open project and save it (the button of the History window)."""
+        if self.ctl.read_only:
+            return False
+        try:
+            if not self.ctl.start_journal():
+                return False
+        except (HarnessError, OSError) as exc:
+            self._error(str(exc))
+            return False
+        self.toasts.show_message(strings.JOURNAL_STARTED, None)
+        return True
+
     def about_flow(self) -> None:
         """About is a section of Settings, not a message box."""
         self.set_area("settings")
@@ -4268,7 +4296,7 @@ class MainWindow(QMainWindow):
             if request.is_blank:
                 self.ctl.new_project(folder, request.name)
             else:
-                templates.create_project(folder, request.template, request.name)
+                templates.create_project(folder, request.template, request.name, journal=True)
         except (HarnessError, OSError, ValidationError) as exc:
             self._error(self._explain(exc, folder))
             return

@@ -22,6 +22,7 @@ from harness_design_studio.core.model import (
     Harness,
     InterfaceInstance,
     InterfaceType,
+    JournalEntry,
     LibraryInfo,
     Link,
     Part,
@@ -73,6 +74,7 @@ def _kinds() -> list[tuple[str, str, type[BaseModel]]]:
         ("harness", "physical/harnesses/*.json", Harness),
         ("generation", "generated/generation.json", GenerationRecord),
         ("waivers", "waivers.json", _list_file("WaiversFile", "waivers", Waiver)),
+        ("journal", "journal.json", _list_file("JournalFile", "journal", JournalEntry)),
         ("changelog", "changelog.json", _list_file("ChangeFile", "changelog", ChangeEntry)),
         ("baseline", "baselines/*/*.json", Baseline),
     ]

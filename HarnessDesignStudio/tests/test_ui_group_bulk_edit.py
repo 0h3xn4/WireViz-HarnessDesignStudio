@@ -87,6 +87,7 @@ def test_the_window_sets_the_values_on_all_wires_in_one_undo_step(made):
         dlg.colour.setCurrentText("red")
         dlg.part.setCurrentIndex(dlg.part.findText("EX-WIRE-22"))
         dlg.length.setText("1,5")
+        dlg.reason.setText("test: the values of the program")
         assert dlg.ok.isEnabled() and "4 of 4 wires" in dlg.sentence.text()
 
     drive(ed, fill)
@@ -112,6 +113,7 @@ def test_the_selected_wires_are_offered_first_and_only_they_change(made):
         assert dlg.scope.currentData() == "selected"
         assert dlg.scope.itemText(0) == strings.BULK_SCOPE_SELECTED.format(2)
         dlg.colour.setCurrentText("green")
+        dlg.reason.setText("test: colour code")
 
     drive(ed, fill)
     assert ed.bulk_edit()
@@ -127,6 +129,7 @@ def test_the_wires_of_one_signal_and_only_the_empty_ones(made):
         dlg.scope.setCurrentIndex(i)
         assert dlg.signal.isEnabled() and dlg.signal.currentText() == "TX+/RX+"
         dlg.gauge.setText("26")
+        dlg.reason.setText("test: the program says 26")
         dlg.only_empty.setChecked(True)
         assert "2 of 2 wires" in dlg.sentence.text()
 
@@ -142,6 +145,7 @@ def test_a_wrong_value_is_said_in_the_window_and_the_button_stays_off(made):
 
     def fill(dlg):
         seen.append(dlg)
+        dlg.reason.setText("test reason")
         dlg.gauge.setText("abc")
         assert not dlg.ok.isEnabled() and "whole number" in dlg.error.text()
         dlg.gauge.setText("22")
@@ -157,9 +161,14 @@ def test_a_wrong_value_is_said_in_the_window_and_the_button_stays_off(made):
 
 def test_the_same_values_again_change_nothing(made):
     ctl, _view, ed = made
-    drive(ed, lambda d: d.colour.setCurrentText("green"))
+
+    def green(d):
+        d.colour.setCurrentText("green")
+        d.reason.setText("test reason")
+
+    drive(ed, green)
     assert ed.bulk_edit()
-    seen = drive(ed, lambda d: d.colour.setCurrentText("green"))
+    seen = drive(ed, green)
     n = len(ctl.history._undo) if hasattr(ctl.history, "_undo") else None
     assert not ed.bulk_edit()
     assert seen[0].error.text() == strings.BULK_SAME and not seen[0].ok.isEnabled()
@@ -185,6 +194,7 @@ def test_the_menu_action_has_a_shortcut_and_opens_the_window_on_the_open_harness
     def fill(dlg):
         assert isinstance(dlg, BulkWireDialog) and dlg.harness_id == "W009"
         dlg.colour.setCurrentText("blue")
+        dlg.reason.setText("test reason")
 
     shown = DialogScript(win, fill)
     act.trigger()

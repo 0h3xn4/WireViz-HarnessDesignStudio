@@ -99,22 +99,30 @@ class ConfirmDialog(QDialog):
 
 
 class WaiverDialog(QDialog):
+    """The reason for waiving a warning, or (for an error of an electrical rule) for accepting it
+    as a deviation. Either way the reason is required."""
+
     def __init__(self, parent: QWidget | None, finding: checks.Finding) -> None:
         super().__init__(parent)
-        self.setWindowTitle(strings.WAIVE_TITLE)
+        deviation = finding.severity == "error"
+        title = strings.DEVIATE_TITLE if deviation else strings.WAIVE_TITLE
+        prompt = strings.DEVIATE_PROMPT if deviation else strings.WAIVE_PROMPT
+        self.setWindowTitle(title)
         self.setObjectName("waiver-dialog")
         lay = QVBoxLayout(self)
-        lay.addWidget(QLabel(f"<h3>{strings.WAIVE_TITLE}</h3>"))
+        lay.addWidget(QLabel(f"<h3>{title}</h3>"))
         lay.addWidget(QLabel(f"<b>{finding.title}</b>"))
-        lay.addWidget(QLabel(strings.WAIVE_PROMPT))
+        lay.addWidget(QLabel(prompt))
         self.text = QPlainTextEdit()
         self.text.setObjectName("waiver-text")
-        self.text.setAccessibleName(strings.WAIVE_PROMPT)
+        self.text.setAccessibleName(prompt)
         lay.addWidget(self.text)
         self.error = QLabel("")
         self.error.setProperty("error", True)
         lay.addWidget(self.error)
-        self.ok, self.cancel, row = _buttons(self, strings.WAIVE_OK)
+        self.ok, self.cancel, row = _buttons(
+            self, strings.DEVIATE_OK if deviation else strings.WAIVE_OK
+        )
         self.ok.clicked.disconnect()
         self.ok.clicked.connect(self._try_accept)
         lay.addLayout(row)
