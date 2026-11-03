@@ -41,11 +41,13 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio.core import checks, configcheck, journal
 from harness_design_studio.core.checks import Finding
+from harness_design_studio.core.derive import EXPLAINABLE_RULES, explain_finding
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.drc.by_rule import MissingValue, RuleResult
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.config_dialog import ConfigValueDialog
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.explain_dialog import ExplainDialog
 from harness_design_studio.gui.icons import icon, icon_button
 from harness_design_studio.gui.panels import clear_layout, heading, muted
 from harness_design_studio.gui.states import STATES, StateChip
@@ -260,6 +262,7 @@ class RuleDetails(QWidget):
     """What one rule found and what it needs."""
 
     showRequested = Signal(str)  # object id
+    explainRequested = Signal(str, str)  # rule id, object id
     supplyRequested = Signal(str, str)  # config file, key
 
     def __init__(
@@ -328,6 +331,12 @@ class RuleDetails(QWidget):
         self.show_btn.setToolTip(strings.CHECKS_SHOW_TIP)
         self.show_btn.clicked.connect(self.show_current)
         row.addWidget(self.show_btn)
+        self.explain_btn = QPushButton(strings.CHECKS_EXPLAIN)
+        self.explain_btn.setObjectName("checks-explain")
+        self.explain_btn.setToolTip(strings.CHECKS_EXPLAIN_TIP)
+        self.explain_btn.setAccessibleName(strings.CHECKS_EXPLAIN)
+        self.explain_btn.clicked.connect(self.explain_current)
+        row.addWidget(self.explain_btn)
         self.none_label = muted(strings.CHECKS_OBJECTS_NONE)
         self.none_label.setObjectName("checks-objects-none")
         row.addWidget(self.none_label, 1)
@@ -449,6 +458,7 @@ class RuleDetails(QWidget):
         self.objects.setAccessibleName(strings.CHECKS_OBJECTS_TABLE.format(r.topic))
         self.objects.setVisible(n > 0)
         self.show_btn.setVisible(n > 0)
+        self.explain_btn.setVisible(n > 0 and r.rule_id in EXPLAINABLE_RULES)
         self.none_label.setText(
             strings.CHECKS_OBJECTS_NONE_PARTLY
             if r.status == "not_checked"
@@ -479,6 +489,12 @@ class RuleDetails(QWidget):
 
     def _sync_show(self) -> None:
         self.show_btn.setEnabled(bool(self.current_object()))
+        self.explain_btn.setEnabled(bool(self.current_object()))
+
+    def explain_current(self) -> None:
+        oid = self.current_object()
+        if oid and self.result is not None:
+            self.explainRequested.emit(self.result.rule_id, oid)
 
     def show_current(self) -> None:
         oid = self.current_object()
@@ -559,6 +575,7 @@ class ChecksPanel(QWidget):
         self.details = RuleDetails(theme, settings)
         self.details.by = lambda fid: journal.who_and_when(self.ctl.project, fid)
         self.details.showRequested.connect(self.showRequested)
+        self.details.explainRequested.connect(self.explain)
         self.details.supplyRequested.connect(lambda f, k: self.open_config(f, k))
         scroll = QScrollArea()
         scroll.setObjectName("checks-details-scroll")
@@ -580,6 +597,14 @@ class ChecksPanel(QWidget):
             signal.connect(self._invalidate)
         ctl.changed.connect(lambda _d: self._invalidate())
         self.refresh()
+
+    def explain(self, rule_id: str, object_id: str) -> None:
+        """Open the calculation behind a finding in a window (what `explain` prints)."""
+        found = explain_finding(self.ctl.project, rule_id, object_id)
+        if not found:
+            return
+        self.explain_dialog = ExplainDialog(self, self.theme, found)
+        self.explain_dialog.show()
 
     # ---- building ----------------------------------------------------------------------------------
     def _build_strip(self) -> QHBoxLayout:
