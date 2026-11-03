@@ -22,6 +22,7 @@ from harness_design_studio.core.model import (
     Connector,
     GenerationRecord,
     Harness,
+    ImportRecord,
     InterfaceInstance,
     InterfaceType,
     LibraryInfo,
@@ -288,6 +289,8 @@ def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None
                 project.baselines[base.id] = base
         elif rel == "waivers.json":
             b.items(rel, data, "waivers", "waiver", Waiver, project.waivers)
+        elif rel == "imports/records.json":
+            b.items(rel, data, "imports", "import record", ImportRecord, project.import_records)
         elif rel == "logical/layout.json":
             _layout(b, rel, data)
         elif rel == "logical/links.json":

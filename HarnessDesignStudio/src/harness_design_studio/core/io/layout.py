@@ -23,9 +23,11 @@ from .fs import slug
 
 MANAGED_RE = re.compile(
     r"^(project\.json|waivers\.json|logical/layout\.json|generated/generation\.json|config/[^/]+\.json|library/[^/]+\.json|logical/interface_types\.json"
-    r"|logical/links\.json|logical/(units|interfaces)/[^/]+\.json|physical/(connectors|harnesses)/[^/]+\.json|changelog\.json|baselines/[^/]+/[^/]+\.json)$"
+    r"|logical/links\.json|logical/(units|interfaces)/[^/]+\.json|physical/(connectors|harnesses)/[^/]+\.json|changelog\.json|baselines/[^/]+/[^/]+\.json"
+    r"|imports/records\.json)$"
 )
-MANAGED_DIRS = ("config", "library", "logical", "physical", "generated", "baselines")
+MANAGED_DIRS = ("config", "library", "logical", "physical", "generated", "baselines", "imports")
+IMPORT_RECORDS_FILE = "imports/records.json"  # optional; not part of the model hash
 
 
 def is_managed(rel: str) -> bool:
@@ -141,6 +143,13 @@ def serialize(project: Project, *, tool_version: str | None = None) -> dict[str,
         files["logical/links.json"] = memo.get(
             "logical/links.json", links, lambda: canonical.dumps({"links": _dump(list(links))})
         )
+    if project.import_records:  # optional: a project that never imported has no such file
+        records = list(project.import_records.values())
+        files[IMPORT_RECORDS_FILE] = memo.get(
+            IMPORT_RECORDS_FILE,
+            records,
+            lambda: canonical.dumps({"imports": _dump(list(records))}),
+        )
     if project.waivers:
         waivers = list(project.waivers.values())
         files["waivers.json"] = memo.get(
@@ -191,8 +200,12 @@ def _harness_bytes(h: Harness) -> bytes:
 
 
 def model_hash(project: Project) -> str:
-    """Hash of the model state, independent of which tool version last saved it."""
+    """Hash of the model state, independent of which tool version last saved it. The import record
+    (`imports/records.json`) says where data came from; it is not the design, so it is left out:
+    the same design gives the same hash with or without it."""
     digest = hashlib.sha256()
     for rel, data in sorted(serialize(project, tool_version="").items()):
+        if rel == IMPORT_RECORDS_FILE:
+            continue
         digest.update(rel.encode("utf-8") + b"\0" + data + b"\0")
     return digest.hexdigest()

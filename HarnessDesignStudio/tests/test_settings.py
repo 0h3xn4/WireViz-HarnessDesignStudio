@@ -102,6 +102,22 @@ EXEMPT: dict[tuple[str, float], str] = {
     ("core/generate/engine.py", 0.95): _TICK,
     ("core/generate/engine.py", 3): _SHOWN,
     ("core/generate/engine.py", 40): _AWG,
+    (
+        "core/generate/lengths.py",
+        0.001,
+    ): "definition of the unit: metres in one mm (docs/models/import-units.md)",
+    (
+        "core/generate/lengths.py",
+        0.01,
+    ): "definition of the unit: metres in one cm (docs/models/import-units.md)",
+    (
+        "core/generate/lengths.py",
+        0.0254,
+    ): "definition of the unit: metres in one inch (docs/models/import-units.md)",
+    (
+        "core/generate/lengths.py",
+        0.3048,
+    ): "definition of the unit: metres in one foot (docs/models/import-units.md)",
     ("core/generate/lengths.py", 10000.0): "definition D-IMPORT-LENGTH-BOUND",
     ("core/generate/lengths.py", 3): _SHOWN,
     ("core/generate/lengths.py", 512): "size of a cache: no result depends on it",

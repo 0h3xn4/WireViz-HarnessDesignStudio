@@ -19,6 +19,7 @@ The screen says *device*, the files say *unit*: what the program shows as a devi
 - [Build data additions](#build-data-additions-170-schema-version-stays-1)
 - [Links and pin roles](#links-and-pin-roles-m2-schema-version-stays-1)
 - [Change control additions](#change-control-additions-review-release-baselines-change-log-schema-version-stays-1)
+- [Import record](#import-record-optional-schema-version-stays-1)
 - [Device library file](#device-library-file-140-not-part-of-a-project)
 - [Subsystem library file](#subsystem-library-file-m4-not-part-of-a-project)
 - [Editing files by hand: JSON Schemas](#editing-files-by-hand-json-schemas)
@@ -40,6 +41,7 @@ generated/generation.json         the last generation record (provenance for Exp
 outputs/                          written by `harness-design-studio export` (see OUTPUTS.md); safe to delete and regenerate
 changelog.json                    the change log (append-only; entries cannot be deleted)
 baselines/<harness ID>/<baseline ID>.json   frozen snapshot made at each release
+imports/records.json              {"imports": [...]}  what each import read, dropped and converted; written only after an import; not part of the model hash
 .gitignore                        written once: *.bak, lock files, temp files, .harness-recovery/, .migration-backup-v*/
 .gitattributes                    written once by `harness-design-studio new` (not by a save): Git treats generated/generation.json as binary (no conflict markers), see merge-fix; not part of the project format
 .harness-recovery/session.json    autosave journal of an open project (not part of the project; ignore in Git)
@@ -88,7 +90,7 @@ ERROR   quarantined: A harness could not be loaded and was set aside: wires.0.ga
 The whole object that holds the value is set aside (here the harness), the message names the field and the limit but never the value, and every command except `validate` and `check` then refuses the project with exit 2 until the file is corrected ([`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)).
 
 ## Hash
-`model_hash` is the SHA-256 of all canonical files with the saving tool's version blanked. Every output file carries its first 12 characters, so a printed sheet can be traced to the exact model.
+`model_hash` is the SHA-256 of all canonical files with the saving tool's version blanked, except `imports/records.json` (the import record says where data came from; it is not the design, so a project with and without it has the same hash). Every output file carries its first 12 characters, so a printed sheet can be traced to the exact model.
 
 ## Editor additions: connector use, layout, waivers, autosave (schema version stays 1)
 All additions are optional with defaults, so projects saved before them load unchanged (tested against `tests/fixtures/m1_project`) and are upgraded on the next save.
@@ -163,6 +165,9 @@ A released harness locks, besides itself: the design fields of the interfaces it
 The editor and the data commands (`import-parts`, `config`; `library` only records the source of the data and is not affected) refuse a change to a frozen item with the reason and "start a new revision" (exit 1, also with `--dry-run`); `harness-design-studio check` reports a hand edit as `released_modified`. Allowed at any time: adding parts and interface types, editing and deleting those no released harness uses, and notes and names. To change a frozen item: `harness-design-studio revise` the harness (every released harness for configuration), make the change, release again.
 - `changelog.json`: `{"changelog": [{id (C0001...), harness_id, revision, kind (review | release | new_revision), by, when, comment}]}`.
 - `outputs/manifest.json` gained `content_hash` (see D-104).
+
+## Import record (optional; schema version stays 1)
+`imports/records.json` is `{"imports": [...]}`, one entry for each source file and kind of import (`id` is `<kind>:<file name>`), sorted by `id`. It is written by the first import that is applied and left out of a project that has none, so such a project keeps byte-identical files. An entry holds `kind`, `source_name` (the file name), `source_path` (relative to the project folder, only when the file is inside it; left out otherwise; never absolute), `sha256` (64 hexadecimal characters), `sheet`, `tool_version`, `rows_read`, `columns_read` (`column`, `field`), `columns_ignored`, `dropped_count` and `rows_dropped` (`row`, `reason`), `converted_count` and `rows_converted` (`row`, `field`, `read`, `unit`, `stored`, `item`), `unit`, `unit_given`, `notes` and `pin_types`. Optional fields are left out while empty. At most 200 rows are listed in each list; the counts are the whole number. There is no time, operator or absolute path in it, so the same import gives the same bytes. An older tool does not read the folder `imports/` and leaves the file alone; it is not part of the model hash and no output file carries it. What the fields mean and how a changed source is found: [`IMPORTS.md`](IMPORTS.md#what-an-import-records). Its JSON Schema is `import-records` in `harness-design-studio schema`.
 
 ## Device library file (1.4.0; not part of a project)
 

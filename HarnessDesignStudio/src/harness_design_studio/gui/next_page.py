@@ -201,6 +201,15 @@ class NextStepPage(QScrollArea):
             self.rows.append(r)
         column.addWidget(steps_card)
 
+        # a quiet line, only while a file that was imported has changed since (D-193)
+        self.imports_note = QLabel()
+        self.imports_note.setObjectName("next-imports-changed")
+        self.imports_note.setAccessibleName(strings.NEXT_IMPORTS_NAME)
+        self.imports_note.setProperty("muted", True)
+        self.imports_note.setWordWrap(True)
+        self.imports_note.hide()
+        column.addWidget(self.imports_note)
+
         # the library, and the way out to the Electrical / AIT engineer role (Systems engineer only)
         self.links = QWidget()
         links = QHBoxLayout(self.links)
@@ -262,6 +271,12 @@ class NextStepPage(QScrollArea):
         self.button.hide()
         self.alternative_row.hide()
         self.problem_card.hide()
+
+    def show_import_note(self, text: str) -> None:
+        """The line about imported files that changed ("" hides it)."""
+        if text != self.imports_note.text():
+            self.imports_note.setText(text)
+        self.imports_note.setVisible(bool(text))
 
     def set_role(self, role: str) -> None:
         """The two links are for the Systems engineer role."""

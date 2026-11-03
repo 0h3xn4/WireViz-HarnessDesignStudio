@@ -955,6 +955,17 @@ IMP_WILL_UPDATE = "Will update"
 IMP_WILL_SET = "Will set"
 IMP_SKIPPED = "Skipped"
 IMP_WARNING = "Warning"
+IMP_NOTE_COLUMNS_IGNORED = (
+    "Columns not read: {0}. The import has no field for them, so their values are not imported."
+)
+IMP_NOTE_UNIT_ASSUMED = "Unit: {0} in {1} (assumed)."
+IMP_APPLY_RECORD = "The file’s name, its SHA-256, the rows and columns read, and the values converted are kept in the project (imports/records.json); they are no part of the design."
+IMP_HISTORY_HEAD = "Earlier imports kept in this project"
+IMP_HISTORY_NAME = "Earlier imports"
+IMP_HISTORY_COLUMNS = {"kind": "Kind", "file": "File", "rows": "Rows", "source": "Source"}
+IMP_HISTORY_CHANGED = "source changed"
+IMP_HISTORY_MISSING = "source not found"
+IMP_HISTORY_CHANGED_TIP = "The file has changed since it was imported: its SHA-256 is not the recorded one. Import it again to take the new content."
 IMP_BLOCKED = "The import would be refused: {0}"
 IMP_EMPTY = "The file has no rows to import."
 IMP_APPLY_HEAD = "Ready to import {0}."
@@ -2498,6 +2509,8 @@ NEXT_SHOW_EVERYTHING_TIP = (
     "You can switch back in View > Role."
 )
 NEXT_LIBRARY = "Library…"
+NEXT_IMPORTS_CHANGED = ["A file you imported has changed since: {0}. File > Import lists the imports.", "{0} files you imported have changed since: {1}. File > Import lists the imports."]  # fmt: skip
+NEXT_IMPORTS_NAME = "Imported files that changed"
 NEXT_LIBRARY_TIP = (
     "Open the library window (Ctrl+Shift+O): devices and subsystems your team has saved"
 )

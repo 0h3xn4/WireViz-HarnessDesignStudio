@@ -29,6 +29,7 @@ GROUPS = (
             "import-devices",
             "import-subsystem",
             "import-build-data",
+            "imports",
         ),
     ),
     ("Write data out", ("export-pinout", "export-devices", "export-subsystem")),
@@ -108,21 +109,30 @@ EXAMPLES: dict[str, list[str]] = {
         "--rejected Rejected --dry-run",
         "harness-design-studio import-parts my-design parts.csv --approved Approved --dry-run --json",
         "harness-design-studio import-parts my-design connectors.xlsx --approved Yes --category connector",
+        "harness-design-studio import-parts my-design erp-export.csv --approved Released --mass-unit kg",
     ],
     "import-lengths": [
         "harness-design-studio import-lengths my-design lengths.csv --unit mm --dry-run",
         "harness-design-studio import-lengths my-design lengths.csv --dry-run --json",
+        "harness-design-studio import-lengths my-design lengths-in-inches.csv --unit in",
+    ],
+    "imports": [
+        "harness-design-studio imports my-design",
+        "harness-design-studio imports my-design --check",
+        "harness-design-studio imports my-design --json --source cad/lengths.csv",
     ],
     "import-build-data": [
         "harness-design-studio import-build-data my-design strip-lengths.csv --dry-run",
         "harness-design-studio import-build-data my-design strip-lengths.csv --dry-run --json",
         "harness-design-studio import-build-data my-design pin-contacts.csv",
         "harness-design-studio import-build-data my-design accessories.csv",
+        "harness-design-studio import-build-data my-design strip-lengths-in-inches.csv --unit in",
     ],
     "import-netlist": [
         "harness-design-studio import-netlist my-design wheel.net --device RW1 --prefix J "
         "--connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run",
         "harness-design-studio import-netlist my-design wheel.net --device RW1 --dry-run --json",
+        "harness-design-studio import-netlist my-design wheel.net --device RW1 --pin-direction",
     ],
     "import-pinout": [
         "harness-design-studio import-pinout my-design gyro-pinout.csv --device GYRO1 --default-part MY-HD-9-F --dry-run",
@@ -322,6 +332,26 @@ def render() -> str:
         "at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) "
         "accept `--dry-run`: they show what they would do and change nothing; "
         "`config --ampacity-csv` does not.",
+        "",
+        "What an import prints. Every import that reads a file says what it read before it lists "
+        "the rows: `Read 12 row(s) of segment lengths from lengths.csv (sha256 117043908312).`, "
+        "`Columns read: harness -> harness, segment -> segment, length -> length`, a line "
+        "`warning: the column 'Notes' is not read; its values are not imported.` for every column "
+        "that is left out, and the unit: `Unit: length in mm (assumed; --unit says another).` or "
+        "`Unit: length in in (given with --unit).`. A value that is converted is shown with the "
+        "value as written, its unit and the value stored: `Converted, row 2 (ZZ-1): 0.25 kg = 250 g`; "
+        "`import-lengths` shows it on the line of its row, `row 2: OK W001 / W001-L1: 850 mm = 0.85 m`. "
+        "A row that is dropped says why: `row 3: ERROR Harness 'W009' does not exist`. "
+        "An import that is applied (not with `--dry-run`) records the file in the project, in "
+        "`imports/records.json` (kind, file name, SHA-256, rows read, rows dropped with the reason, "
+        "values converted, columns read and left out, unit, tool version; no time and no absolute "
+        "path), and ends with `Import record: lengths:lengths.csv written to imports/records.json.`; "
+        "importing the same file again replaces its record, and an unchanged file changes nothing. "
+        "`harness-design-studio imports` lists the records and shows whether a source file has "
+        "changed since. With `--json` every import prints the same facts as the last key, `import` "
+        "(the record, with `record_written` true when this run wrote it, and the `warnings` of "
+        "`import-build-data`), and `imports --json` prints `records_file`, `count`, "
+        "`sources_changed` and the `imports` with their `status` and `current_sha256`.",
         "",
         "The examples show the form of each command with example names. They do not all work "
         "on any project: `release` is blocked until its conditions are met (placeholder "

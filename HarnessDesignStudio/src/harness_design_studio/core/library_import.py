@@ -8,6 +8,8 @@ common aliases) and the meaning of the approval column is stated by you: values 
 approved, pending or rejected. A status that is not in any of your lists is an error for that
 row; the tool never guesses whether a part is approved. A column Tool or Crimp tool is read into
 the tool of a contact part (the crimp tool or its setting, 1.7.0); other categories ignore it.
+A column headed with the name of a rating (`contact_current_a`, `rated_voltage_v` ...) is read into
+`Part.ratings` (D-193); a mass is read in grams unless the caller says another unit.
 Preview first, apply as one undo step.
 """
 
@@ -65,6 +67,8 @@ class PartRow:
     message: str
     part_id: str = ""
     action: str = ""  # "added" | "updated" | "unchanged"
+    # masses read in another unit than grams: (field, the cell as written, the value stored in g or g/m)
+    converted: tuple[tuple[str, str, float], ...] = ()
 
 
 @dataclass
@@ -92,6 +96,44 @@ def guess_mapping(header: list[str]) -> dict[str, int]:
                 out[key] = hit
                 used.add(hit)
                 break
+    return out
+
+
+MASS_UNITS_G: dict[str, float] = {"g": 1.0, "kg": 1000.0, "lb": 453.59237, "oz": 28.349523125}
+# the ratings the rules of the tool read (`Part.ratings` keys); the key of the contact current is
+# the one `config/derating.json` names (`contact_rating_key`) as well
+RATING_KEYS: tuple[str, ...] = (
+    "contact_current_a", "rated_voltage_v", "dielectric_withstand_v", "max_temp_c",
+    "mating_cycles", "shield_insulated", "conductive_finish",
+)  # fmt: skip
+_RATING_PREFIX = re.compile(r"^ratings?_")
+
+
+def _rating_name(heading: str) -> str:
+    """A column heading as the name of a rating: `Contact current (A)` -> `contact_current_a`,
+    `ratings.rated_voltage_v` -> `rated_voltage_v`."""
+    name = re.sub(r"[^a-z0-9]+", "_", heading.casefold()).strip("_")
+    return _RATING_PREFIX.sub("", name)
+
+
+def rating_keys(project: Project) -> tuple[str, ...]:
+    """The ratings a column may carry: those the rules read, and the key the derating
+    configuration names for the contact current."""
+    derating = project.config.get("derating")
+    named = derating.values.get("contact_rating_key") if derating is not None else None
+    return RATING_KEYS if not isinstance(named, str) or not named else (*RATING_KEYS, named)
+
+
+def rating_columns(project: Project, header: list[str], mapping: dict[str, int]) -> dict[str, int]:
+    """Columns headed with the name of a rating (and not already a field of `mapping`):
+    rating key -> column index."""
+    taken = set(mapping.values())
+    keys = set(rating_keys(project))
+    out: dict[str, int] = {}
+    for i, h in enumerate(header):
+        name = _rating_name(h)
+        if i not in taken and name in keys and name not in out:
+            out[name] = i
     return out
 
 
@@ -153,9 +195,11 @@ def plan_parts_import(
     pending: list[str] | None = None,
     rejected: list[str] | None = None,
     default_category: str | None = None,
+    mass_scale: float = 1.0,
 ) -> PartsPlan:
     """One result per data row. `approved`, `pending` and `rejected` say what the values of the
-    approval column mean in YOUR list."""
+    approval column mean in YOUR list. `mass_scale` is the grams in one unit of the mass columns
+    (1 for grams, see `MASS_UNITS_G`)."""
     ok_words, pend_words, rej_words = (
         _words(approved),
         _words(pending or []),
@@ -171,6 +215,7 @@ def plan_parts_import(
     seen: dict[str, Part] = {}
     first_row: dict[str, int] = {}
     by_fold = {p.casefold(): p for p in project.parts}
+    rating_cols = rating_columns(project, table[0] if table else [], mapping)
     for n, row in enumerate(table[1:], start=2):
 
         def cell(key: str, row: list[str] = row) -> str:
@@ -252,12 +297,28 @@ def plan_parts_import(
                 changes[key] = cell(key)
         if cell("tool") and category == "contact":  # only a contact part is crimped
             changes["tool"] = cell("tool")
+        converted: list[tuple[str, str, float]] = []
         for key in ("mass_g", "mass_per_m_g"):
             if cell(key):
                 value = _number(cell(key))
                 if value is None:
                     problem = problem or _number_problem(cell(key), dict(FIELDS)[key])
+                elif mass_scale != 1.0:
+                    value = round(value * mass_scale, 9)
+                    converted.append((key, cell(key), value))
                 changes[key] = value
+        new_ratings: dict[str, float] = {}
+        for name, col in rating_cols.items():
+            text = row[col].strip() if col < len(row) else ""
+            if not text:
+                continue
+            value = _number(text)
+            if value is None:
+                problem = problem or _number_problem(text, name)
+            else:
+                new_ratings[name] = value
+        if new_ratings:
+            changes["ratings"] = {**(old.ratings if old is not None else {}), **new_ratings}
         if cell("pin_count"):
             text = cell("pin_count")
             if _WHOLE.fullmatch(text) and 1 <= float(text) <= MAX_PIN_COUNT:
@@ -287,7 +348,7 @@ def plan_parts_import(
         first_row[pid] = n
         by_fold.setdefault(pid.casefold(), pid)
         action = "added" if old is None else "unchanged" if old == part else "updated"
-        plan.rows.append(PartRow(n, True, "", pid, action))
+        plan.rows.append(PartRow(n, True, "", pid, action, tuple(converted)))
     for k, prow in enumerate(plan.rows):  # a mating part must exist (now or after this import)
         cand = seen.get(prow.part_id or "") if prow.ok else None
         if cand is not None and cand.mates_with and cand.mates_with not in {*project.parts, *seen}:

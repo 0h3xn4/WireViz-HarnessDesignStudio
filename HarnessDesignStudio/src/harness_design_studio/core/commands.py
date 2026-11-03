@@ -13,6 +13,7 @@ from .model import (
     Connector,
     GenerationRecord,
     Harness,
+    ImportRecord,
     InterfaceInstance,
     InterfaceType,
     LibraryInfo,
@@ -38,6 +39,7 @@ Collection = Literal[
     "waivers",
     "baselines",
     "changelog",
+    "import_records",
 ]
 _TYPES: dict[str, type[Entity]] = {
     "units": Unit,
@@ -51,6 +53,7 @@ _TYPES: dict[str, type[Entity]] = {
     "waivers": Waiver,
     "baselines": Baseline,
     "changelog": ChangeEntry,
+    "import_records": ImportRecord,
 }
 
 

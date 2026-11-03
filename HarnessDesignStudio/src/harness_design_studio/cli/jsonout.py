@@ -46,16 +46,22 @@ SHAPES: dict[str, tuple[str, ...]] = {
         "waiting_for_decision", "counterpart_pairs", "release_distinct_roles", "changes",
     ),
     "library": ("ok", "name", "version", "source", "date", "changed"),
-    "import-parts": ("ok", "dry_run", "changed", "ready", "problems", "rows", "library"),
-    "import-lengths": ("ok", "dry_run", "changed", "ready", "problems", "hint", "rows"),
-    "import-build-data": ("ok", "dry_run", "changed", "kind", "counts", "rows"),
-    "import-netlist": ("ok", "dry_run", "changed", "rows", "warnings", "unmatched_signals"),
+    "import-parts": ("ok", "dry_run", "changed", "ready", "problems", "rows", "library", "import"),
+    "import-lengths": ("ok", "dry_run", "changed", "ready", "problems", "hint", "rows", "import"),
+    "import-build-data": ("ok", "dry_run", "changed", "kind", "counts", "rows", "import"),
+    "import-netlist": (
+        "ok", "dry_run", "changed", "rows", "warnings", "unmatched_signals", "import",
+    ),
     "import-pinout": (
         "ok", "dry_run", "changed", "connectors", "pins", "rows", "warnings", "unmatched_signals",
+        "import",
     ),
-    "import-devices": ("ok", "dry_run", "changed", "rows", "notes"),
+    "import-devices": ("ok", "dry_run", "changed", "rows", "notes", "import"),
     "import-devices --list": ("ok", "devices"),
-    "import-subsystem": ("ok", "dry_run", "changed", "name", "connections", "rows", "notes"),
+    "import-subsystem": (
+        "ok", "dry_run", "changed", "name", "connections", "rows", "notes", "import",
+    ),
+    "imports": ("ok", "records_file", "count", "sources_changed", "imports"),
     "import-subsystem --show": (
         "ok", "name", "description", "devices", "connectors", "connections", "device_list",
     ),

@@ -7,6 +7,7 @@ and returns per-row results plus the operations for the good rows, applied as on
 import csv
 import io
 import json
+import re
 import stat
 from dataclasses import dataclass, field
 from pathlib import Path
@@ -72,6 +73,25 @@ def parse_csv(text: str) -> Table:
         raise ImportError_(f"The file has more than {MAX_ROWS} rows.")
     check_width(rows)
     return rows
+
+
+# the first line of every CSV the tool writes (core/outputs/stamp.py): "# harness-design-studio
+# 1.11.1 model e01643bd29d1"
+STAMP_LINE = re.compile(r"# harness-design-studio \S+ model [0-9a-f]+\r?\n")
+
+
+def parse_csv_file(text: str) -> Table:
+    """`parse_csv` for a file as it is read from disk. A file the tool wrote itself starts with its
+    stamp line; that line is skipped and the cells that the tool marked with a leading apostrophe
+    (a text that starts with = + - or @, which a spreadsheet would run as a formula) are given back
+    as they were, so what the tool exports can be imported again (D-193). Any other file is read
+    as it is."""
+    stamp = STAMP_LINE.match(text)
+    if stamp is None:
+        return parse_csv(text)
+    from harness_design_studio.core.outputs.stamp import unescape_cell
+
+    return [[unescape_cell(c) for c in row] for row in parse_csv(text[stamp.end() :])]
 
 
 def parse_json_table(text: str) -> Table:
@@ -170,7 +190,7 @@ def read_table_sheet(
             if len(raw) > MAX_BYTES:
                 raise ImportError_("The file is too large to import (limit 8 MB).")
             text = raw.decode("utf-8-sig")
-            return (parse_json_table(text) if suffix == ".json" else parse_csv(text)), None
+            return (parse_json_table(text) if suffix == ".json" else parse_csv_file(text)), None
         except UnicodeDecodeError as exc:
             raise ImportError_(
                 "The file is not UTF-8 text. Save it as CSV UTF-8 and try again."
