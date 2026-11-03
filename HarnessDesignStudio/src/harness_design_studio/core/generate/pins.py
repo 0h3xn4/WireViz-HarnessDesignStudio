@@ -10,7 +10,13 @@ from dataclasses import dataclass, field
 
 from harness_design_studio.core.model import Connector, InterfaceType
 
-CATEGORY_RANK = {"power": 0, "ground": 1}
+DEFAULT_ORDER = ("power", "ground")  # the interface categories allocated first, in this order
+
+
+def _rank(categories: tuple[str, ...], category: str) -> int:
+    """The place of a category in the order of allocation: its index in `categories`, after which
+    every other category comes (model.pin_allocation_categories)."""
+    return categories.index(category) if category in categories else len(categories)
 
 
 @dataclass
@@ -33,6 +39,7 @@ def _allocate_fixed(
     requests: list[Request],
     previous: dict[tuple[str, str], str],
     held: dict[tuple[str, str], str],
+    categories: tuple[str, ...] = DEFAULT_ORDER,
 ) -> Allocation:
     """The pinout is fixed by the unit's design: every signal goes to the free pin of that name.
     A signal the connector has no pin for is an error; nothing is placed on unnamed pins. A locked
@@ -45,7 +52,7 @@ def _allocate_fixed(
             by_signal.setdefault(p.signal, []).append(p.id)
     used: set[str] = set(held.values())
     for req in sorted(
-        requests, key=lambda r: (CATEGORY_RANK.get(r.itype.category, 2), r.interface_id)
+        requests, key=lambda r: (_rank(categories, r.itype.category), r.interface_id)
     ):
         missing = []
         picked: list[tuple[str, str]] = []
@@ -84,9 +91,11 @@ def _allocate_fixed(
     return result
 
 
-def groups_of(itype: InterfaceType) -> list[tuple[str, list[str]]]:
+def groups_of(
+    itype: InterfaceType, categories: tuple[str, ...] = DEFAULT_ORDER
+) -> list[tuple[str, list[str]]]:
     """Signal groups that must sit together: power as one block, else pairs, else singles."""
-    if itype.category in ("power", "ground"):
+    if itype.category in categories:
         return [("power and return grouped", [s.name for s in itype.signals])]
     out: list[tuple[str, list[str]]] = []
     seen: dict[str, int] = {}
@@ -108,6 +117,7 @@ def allocate(
     gap_pins: int,
     held: dict[tuple[str, str], str] | None = None,
     return_gap: int = 0,
+    categories: tuple[str, ...] = DEFAULT_ORDER,
 ) -> Allocation:
     """Allocate pins of `connector` for `requests`. Locked pins (and their signals) are untouched.
     `held` maps (interface, signal) to a locked pin that already carries that signal: it is used
@@ -116,20 +126,18 @@ def allocate(
     result = Allocation()
     held = held or {}
     if any(p.fixed and p.signal for p in connector.pins):  # even when a released harness holds some
-        return _allocate_fixed(connector, requests, previous, held)
+        return _allocate_fixed(connector, requests, previous, held, categories)
     order = [p.id for p in connector.pins]
     index = {pid: k for k, pid in enumerate(order)}
     taken = {p.id for p in connector.pins if p.locked}
     power_end = -1  # index of the last pin used by a power group
-    ranked = sorted(
-        requests, key=lambda r: (CATEGORY_RANK.get(r.itype.category, 2), r.interface_id)
-    )
+    ranked = sorted(requests, key=lambda r: (_rank(categories, r.itype.category), r.interface_id))
     for req in ranked:
-        is_power = req.itype.category in ("power", "ground")
+        is_power = req.itype.category in categories
         min_start = 0 if is_power else (power_end + 1 + gap_pins if power_end >= 0 else 0)
         taken_before, power_end_before = set(taken), power_end
         failed = False
-        for why, signals in groups_of(req.itype):
+        for why, signals in groups_of(req.itype, categories):
             for s in [s for s in signals if (req.interface_id, s) in held]:
                 pid = held[(req.interface_id, s)]
                 if is_power and pid in index:  # a locked power pin counts for the gap as well

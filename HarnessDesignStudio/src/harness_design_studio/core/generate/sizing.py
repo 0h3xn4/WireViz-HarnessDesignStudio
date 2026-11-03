@@ -118,6 +118,7 @@ def size_wire(
     length_m: float | None,
     path_conductors: int,
     bundle_wires: int | None = None,
+    resistivity: tuple[float | None, str | None] | None = None,
 ) -> Sizing:
     """Smallest conductor whose derated ampacity and voltage drop satisfy the project rules."""
     s = Sizing()
@@ -157,11 +158,15 @@ def size_wire(
         f"ampacity: AWG {awg} carries {derated_limit(table[awg], bundle, temp):g} A derated (factor {factor:g}) for {current_a:g} A"
     )
     max_drop = _num(derating.get("max_voltage_drop_v"))
-    rho = _num(generation.get("conductor_resistivity_ohm_m"))
+    rho, rho_missing = (
+        resistivity
+        if resistivity is not None
+        else (_num(generation.get("conductor_resistivity_ohm_m")), None)
+    )
     if max_drop is None:
         s.pending.append("derating.max_voltage_drop_v")
     if rho is None:
-        s.pending.append("generation.conductor_resistivity_ohm_m")
+        s.pending.append(rho_missing or "generation.conductor_resistivity_ohm_m")
     if length_m is None:
         s.pending.append("wire length (enter routing segment lengths)")
     if max_drop is not None and rho is not None and length_m is not None:

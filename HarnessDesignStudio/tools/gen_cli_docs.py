@@ -13,7 +13,7 @@ TARGET = Path(__file__).resolve().parents[1] / "docs" / "CLI.md"
 GROUPS = (
     ("Start", ("new", "templates", "schema")),
     ("Check", ("validate", "check", "drc", "verify")),
-    ("Explain", ("explain",)),
+    ("Explain", ("explain", "settings")),
     ("Generate and export", ("generate", "export")),
     ("Team use with Git", ("merge-fix",)),
     (
@@ -47,6 +47,11 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio explain wheel-link --all --out wheel-link-derivations",
         "harness-design-studio explain wheel-link IF-001.GPSU1-J01",
         "harness-design-studio explain wheel-link W001-001 --json",
+    ],
+    "settings": [
+        "harness-design-studio settings wheel-link",
+        "harness-design-studio settings wheel-link --json",
+        "harness-design-studio settings wheel-link --set model.service_loops_per_wire=0",
     ],
     "templates": ["harness-design-studio templates my-templates"],
     "schema": ["harness-design-studio schema my-design/schemas"],

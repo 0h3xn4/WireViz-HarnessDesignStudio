@@ -1,0 +1,79 @@
+# Selectable models: choose how a number is made
+
+Until version 1.12 some of the tool's calculations were fixed in the program. Each of them is now a **choice in `config/model.json`**, and the **default is exactly what the tool did before**, so a project that does not have the file gives the same numbers, byte for byte. This page lists the choices, the equation behind each, and what to expect when you change one. A choice that moves a result is shown by `explain`, which names the model in force.
+
+## Contents
+
+- [How to choose](#how-to-choose)
+- [Bundle basis](#bundle-basis)
+- [Length model](#length-model)
+- [Voltage drop model](#voltage-drop-model)
+- [Mass model](#mass-model)
+- [Pin allocation order](#pin-allocation-order)
+- [What makes a harness not ready to build](#what-makes-a-harness-not-ready-to-build)
+- [What the choices do not do](#what-the-choices-do-not-do)
+
+## How to choose
+
+```
+harness-design-studio settings DIR                                   # see what is in force
+harness-design-studio settings DIR --set model.bundle_basis='"loaded_wires"'
+harness-design-studio generate DIR                                   # apply it to the harnesses
+```
+
+A value outside the choices or the range is refused, and nothing is changed. The reference of every key is [`docs/CONFIG.md`](../CONFIG.md#modeljson). Generate again after a change of a model that shapes a harness (bundle basis, length, drop, pin order): the checks and the explanations follow at once, the harness files at the next generation.
+
+## Bundle basis
+
+The factor K of `bundle_factor_by_count` (or `bundle_derating`) is looked up for a number of wires. `model.bundle_basis` says which wires are counted. Assumption A-BUNDLE-ALL.
+
+| Value | The count is | Use when |
+| --- | --- | --- |
+| `all_wires` (default) | every wire of the harness | the conservative reading; wires are bundled along the whole harness |
+| `loaded_wires` | only the wires that carry a current (an interface with a current, or a wire with one) | signal wires carry no meaningful heat |
+| `busiest_segment` | the most wires in any routing segment of the wire's own path | the harness branches, and a branch holds few wires |
+
+A generated harness routes every wire through the trunk, so `busiest_segment` gives the same count as `all_wires` there; it differs for a harness with branches that you drew by hand. The count is computed by one function (`core/generate/bundle.py`) that sizing, the rules `current-over-wire` and `bundle-current` and the explanation all call.
+
+## Length model
+
+| Value | Length of a generated wire |
+| --- | --- |
+| `path_plus_loops` (default) | the sum of the segments of its path + `service_loops_per_wire` × `service_loop_m` |
+| `path_loops_allowance_twist` | `(path + loops + cut_allowance_m) × (1 + twist_takeup_fraction)`, the take-up only for wires of a twisted construction |
+
+A length typed on a wire is never changed by the model. `cut_allowance_m` and `twist_takeup_fraction` default to 0: choosing the model without setting them changes nothing, so the number you add is always yours. Assumption A-SERVICE-LOOP; [wire length](wire-length.md).
+
+## Voltage drop model
+
+| Value | Resistivity used |
+| --- | --- |
+| `dc_solid` (default) | `generation.conductor_resistivity_ohm_m` as given |
+| `dc_at_ambient` | `rho × (1 + alpha × (T − T_ref))` with `T` = `derating.max_ambient_temperature_c`, `alpha` = `resistivity_temperature_coefficient` (0.00393 1/K, annealed copper) and `T_ref` = `resistivity_reference_temperature_c` (20 degC) |
+
+Both are DC drops of a solid round conductor (A-DC-SOLID); neither is an AC or skin-effect model. If `dc_at_ambient` is chosen and the ambient temperature is not set, the drop is *not checked* and the derivation says which value is missing. [Wire sizing](wire-sizing.md).
+
+## Mass model
+
+| Value | The mass counts |
+| --- | --- |
+| `connectors_and_wires` (default) | the connectors and the wires (A-MASS-SCOPE) |
+| `full_bom` | those plus a contact part for every pin that has a wire and every accessory, each by the `mass_g` (or `mass_per_m_g` × length) of its part; a part without a mass is named as missing, never guessed |
+
+[Mass](mass.md), [bill of materials](bom.md).
+
+## Pin allocation order
+
+`pin_allocation_categories` (default `power`, `ground`) lists the interface categories that are given pins first, in that order; every other category follows in its usual order. The categories listed also form the power group for `power_return_gap_pins`. Changing it moves signals to other pins, so it is a design decision, shown by `settings` and recorded with the harness.
+
+## What makes a harness not ready to build
+
+`readiness_blocking` is the list of checks of the build workbook whose open items turn *Ready to build* into **no**. The default is the first four (length, gauge, colour, part); the others (termination, strip length, contact part, approval) are notes. Add a name to make a check blocking, or remove one to make it a note. A name that is not a check of the workbook is refused. The same list decides the verdict of the release check.
+
+## What the choices do not do
+
+- They do not change the rule limits: `current-over-wire` still compares the current with the ampacity table times K times the temperature factor; only K's count changes.
+- They do not make a model right for your programme. A default is **the number the tool has always used**, not a number a standard asked for; choosing is your engineering decision.
+- They add no new design rule.
+
+Next: [wire sizing](wire-sizing.md), [wire length](wire-length.md), [mass](mass.md), [see what the tool assumes](../user-manual/see-what-the-tool-assumes.md), [the configuration](../CONFIG.md#modeljson)
