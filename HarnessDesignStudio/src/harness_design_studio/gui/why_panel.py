@@ -9,7 +9,7 @@ panel adds nothing of its own. Below them it says what is still *pending* for th
 which placeholder configuration the result rests on, with the same chips as everywhere else.
 The first lines show at once and "Show all" opens the rest.
 
-For a wire or a harness, "Show the calculation" opens below them how its numbers were made (`core.derive`, the
+For a wire, a harness, an interface, a connector or a pin, "Show the calculation" opens below them how its numbers were made (`core.derive`, the
 same text as `harness-design-studio explain`): the equation, each input with its unit and where it
 comes from, the steps, what it is checked against and the assumptions built into the program that
 it rests on. It is closed until asked for, so the panel stays short.
@@ -19,7 +19,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QScrollArea, QVBoxLayout, QWidget
 
 from harness_design_studio.core import why
-from harness_design_studio.core.derive import Derivation, explain_harness, explain_wire, render
+from harness_design_studio.core.derive import Derivation, explain_object, render
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import EditorController
@@ -118,26 +118,45 @@ class WhyPanel(QScrollArea):
             why.placeholders_used(project, kind, oid),
         )
 
-    def _derivations(self) -> list[Derivation]:
-        """How the numbers of the selected wire or harness were made; none for anything else."""
-        if self._target is None or self._target[0] not in ("wire", "harness"):
-            return []
+    def _can_explain(self) -> bool:
+        """True when the selected object is one `explain` answers for (a cheap test, so that a
+        closed panel does not work out every derivation on each refresh)."""
+        if self._target is None:
+            return False
         kind, oid = self._target
+        p = self.ctl.project
+        if kind == "wire":
+            return any(w.id == oid for h in p.harnesses.values() for w in h.wires)
+        if kind == "harness":
+            return oid in p.harnesses
+        if kind == "interface":
+            return oid in p.interfaces
+        if kind == "connector":
+            return why.find_connector(p, oid) is not None
+        if kind == "pin":
+            return why.split_pin(p, oid) is not None
+        return False
+
+    def _derivations(self) -> list[Derivation]:
+        """How the numbers of the selected object were made (`explain`): a wire, a harness, an
+        interface, a connector or a pin; none for a device."""
+        if self._target is None or not self._can_explain():
+            return []
         try:
-            explain = explain_wire if kind == "wire" else explain_harness
-            return explain(self.ctl.project, oid)
+            return explain_object(self.ctl.project, self._target[1])
         except EditError:  # the object is gone (a regeneration or an undo): nothing to explain
             return []
 
     def refresh(self) -> None:
         self._dirty = False
         reasons, pending, placeholders = self._content()
-        derivations = self._derivations()
+        derivations = self._derivations() if self._explain_open else []
+        can_explain = bool(derivations) or self._can_explain()
         signature = (
             self._target,
             self._expanded,
             self._explain_open,
-            tuple(render(d) for d in derivations) if self._explain_open else len(derivations),
+            tuple(render(d) for d in derivations) if self._explain_open else can_explain,
             tuple(r.line for r in reasons),
             tuple(pending),
             tuple(placeholders),
@@ -179,7 +198,7 @@ class WhyPanel(QScrollArea):
             )
             self.show_all_button.clicked.connect(self._toggle)
             self.lay.addWidget(self.show_all_button)
-        if derivations:
+        if can_explain:
             self._add_explain(derivations)
         if pending:
             self.lay.addWidget(self._chipped("pending", strings.WHY_PENDING, pending))

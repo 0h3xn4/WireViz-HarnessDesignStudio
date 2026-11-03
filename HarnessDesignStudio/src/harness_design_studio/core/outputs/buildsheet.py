@@ -281,12 +281,14 @@ def _attached(h: Harness) -> dict[tuple[str, str], list[Wire]]:
 
 @dataclass(frozen=True)
 class Check:
-    """One line of the *Start here* sheet: what is checked, how many are open, what to do."""
+    """One line of the *Start here* sheet: what is checked, how many are open, what to do. `items`
+    names what is open (wire IDs, or CONNECTOR.PIN for a pin): the list the count comes from."""
 
     label: str
     open: int
     blocking: bool
     todo: str
+    items: tuple[str, ...] = ()
 
     @property
     def status(self) -> str:
@@ -295,47 +297,61 @@ class Check:
         return TO_FIX if self.blocking else NOTE
 
 
-def readiness(project: Project, h: Harness) -> list[Check]:
-    """What stands between this harness and a build, worked out from the model alone."""
+# The checks, in the order of the sheet, with what to do when one is open. The first four are the
+# ones that block by default (model.readiness_blocking).
+READINESS_CHECKS: tuple[tuple[str, str], ...] = (
+    ("Wires without a length", "Import lengths (import-lengths) or set the length of the wire in the Edit wire tab."),
+    ("Wires without a gauge", "Generate again with the engineering values filled in, or set the gauge of the wire."),
+    ("Wires without a colour", "Set the colour of the signal (Edit > Wire colours) or of the wire."),
+    ("Wires without a part", "Choose the wire part in the Edit wire tab."),
+    ("Pins in use without a termination", "Say crimp or solder for the pins in the Devices tab; the build sheet shows it."),
+    ("Wires without strip lengths", "Enter the strip length at both ends in the Edit wire tab (or with import-build-data)."),
+    ("Pins in use without a contact part", "Name the contact part of each pin (Devices tab, or Connectors tab of a harness made by hand)."),
+    ("Parts that are not approved", "Approve the parts in the parts list (import-parts) when they have been reviewed."),
+)  # fmt: skip
+
+
+def open_items(project: Project, h: Harness) -> dict[str, tuple[str, ...]]:
+    """What is open under each check of `READINESS_CHECKS`: wire IDs (in the order of the harness),
+    CONNECTOR.PIN of the pins in use, part IDs (sorted). The counts of `readiness` are their lengths."""
     wires = list(h.wires)
     attached = _attached(h)
-    used_pins = sum(
-        1
-        for c in h.connectors
-        for p in c.pins
-        if attached.get((c.id, p.id)) and p.termination == "unspecified"
-    )
-    no_contact = sum(
-        1 for c in h.connectors for p in c.pins if attached.get((c.id, p.id)) and not p.contact_part
-    )
+    pins = [
+        (c, p) for c in h.connectors for p in c.pins if attached.get((c.id, p.id))
+    ]  # pins in use
     parts = {c.part_id for c in h.connectors} | {w.part_id for w in wires if w.part_id}
-    not_approved = sum(
-        1 for pid in parts if pid not in project.parts or project.parts[pid].approval != "approved"
-    )
+    return {
+        "Wires without a length": tuple(w.id for w in wires if wire_length(h, w) is None),
+        "Wires without a gauge": tuple(w.id for w in wires if w.gauge_awg is None),
+        "Wires without a colour": tuple(w.id for w in wires if not w.colour),
+        "Wires without a part": tuple(w.id for w in wires if not w.part_id),
+        "Pins in use without a termination": tuple(
+            f"{c.id}.{p.id}" for c, p in pins if p.termination == "unspecified"
+        ),
+        "Wires without strip lengths": tuple(
+            w.id for w in wires if w.strip_a_mm is None or w.strip_b_mm is None
+        ),
+        "Pins in use without a contact part": tuple(
+            f"{c.id}.{p.id}" for c, p in pins if not p.contact_part
+        ),
+        "Parts that are not approved": tuple(
+            sorted(
+                pid
+                for pid in parts
+                if pid not in project.parts or project.parts[pid].approval != "approved"
+            )
+        ),
+    }
+
+
+def readiness(project: Project, h: Harness) -> list[Check]:
+    """What stands between this harness and a build, worked out from the model alone."""
     blocking = settings.names(project, "model", "readiness_blocking")
-
-    def blocks(label: str) -> bool:
-        return label in blocking
-
+    items = open_items(project, h)
     return [
-        Check("Wires without a length", sum(1 for w in wires if wire_length(h, w) is None), blocks("Wires without a length"),
-              "Import lengths (import-lengths) or set the length of the wire in the Edit wire tab."),
-        Check("Wires without a gauge", sum(1 for w in wires if w.gauge_awg is None), blocks("Wires without a gauge"),
-              "Generate again with the engineering values filled in, or set the gauge of the wire."),
-        Check("Wires without a colour", sum(1 for w in wires if not w.colour), blocks("Wires without a colour"),
-              "Set the colour of the signal (Edit > Wire colours) or of the wire."),
-        Check("Wires without a part", sum(1 for w in wires if not w.part_id), blocks("Wires without a part"),
-              "Choose the wire part in the Edit wire tab."),
-        Check("Pins in use without a termination", used_pins, blocks("Pins in use without a termination"),
-              "Say crimp or solder for the pins in the Devices tab; the build sheet shows it."),
-        Check("Wires without strip lengths",
-              sum(1 for w in wires if w.strip_a_mm is None or w.strip_b_mm is None), blocks("Wires without strip lengths"),
-              "Enter the strip length at both ends in the Edit wire tab (or with import-build-data)."),
-        Check("Pins in use without a contact part", no_contact, blocks("Pins in use without a contact part"),
-              "Name the contact part of each pin (Devices tab, or Connectors tab of a harness made by hand)."),
-        Check("Parts that are not approved", not_approved, blocks("Parts that are not approved"),
-              "Approve the parts in the parts list (import-parts) when they have been reviewed."),
-    ]  # fmt: skip
+        Check(label, len(items[label]), label in blocking, todo, items[label])
+        for label, todo in READINESS_CHECKS
+    ]
 
 
 # ---- the sheets ------------------------------------------------------------------------------

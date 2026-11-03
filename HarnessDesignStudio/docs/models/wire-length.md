@@ -15,7 +15,7 @@ This page explains the length the tool gives a wire: the number in the wire list
 
 ## What the tool decides
 
-When **Generate** builds a harness, it lays routing segments between the connectors and gives every wire the length of the path through those segments between its two connectors, plus a service loop at each end. Everything that needs a length asks one function (`wire_length`): the wire list, the cut list, the mass, the voltage drop, the design rules and the release gate. Nothing else makes up a length.
+When **Generate** builds a harness, it lays routing segments between the connectors and gives every wire the length of the path through those segments between its two connectors, plus a service loop at each end. Everything that needs a length asks one function (`wire_length`): the wire list, the cut list, the mass, the voltage drop, the design rules and the release gate. Nothing else makes up a length. `explain DIR WIRE` shows it as the derivation of kind `wire-length`.
 
 ## The equation
 

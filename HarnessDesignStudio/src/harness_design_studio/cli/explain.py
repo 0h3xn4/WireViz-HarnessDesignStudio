@@ -16,10 +16,14 @@ COMMANDS = ("explain",)
 def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     p = sub.add_parser(
         "explain",
-        help="explain how the numbers of a wire, a harness or a part were made: equation, inputs with units and sources, steps",
-        description="Show how the numbers of one wire or one harness were made. For a wire: its length, "
+        help="explain how the numbers and decisions of a wire, harness, interface, connector, pin or part were made: equation, inputs with units and sources, steps",
+        description="Show how the numbers and decisions of one object were made. For a wire: its length, "
         "the current its gauge may carry after derating, the voltage drop over it and its share of "
-        "the mass. For a harness: its mass. For a part: why the bill of materials has its quantity. For INTERFACE.CONNECTOR (the object of a current-over-contact finding): the limit of the contacts. For each: the equation, the inputs with "
+        "the mass, then its label, its colour, its shield group and the pins at its ends. For a harness: its mass, "
+        "whether it is ready to build and each check behind that, its test limits, why its interfaces share it, its shield groups and its connectors; "
+        "HARNESS.T001 explains the limits of one test. For an interface: which harness carries it and why, its connectors, the contact current and its pins. "
+        "For a connector: why it is the connector (or the mating part) and its label; for CONNECTOR.PIN: why the signal is on that pin; for a shield group (W001-S1): why it exists and its ends. "
+        "For a part: why the bill of materials has its quantity. For INTERFACE.CONNECTOR (the object of a current-over-contact finding): the limit of the contacts. For each: the equation, the inputs with "
         "their units and where each comes from (a key of config/*.json, a field of the design or "
         "the program), the intermediate results, what the result is checked against, and the "
         "assumptions built into the program that it rests on. The numbers are the ones `generate` "
@@ -33,7 +37,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "object",
         nargs="?",
         metavar="OBJECT",
-        help="a wire (W001-001), a harness (W001), a part (EX-WIRE-SINGLE) or INTERFACE.CONNECTOR (IF-001.GPSU1-J01)",
+        help="a wire (W001-001), a harness (W001), a test (W001.T001), an interface (IF-001), a connector (GPSU1-J01), a pin (MTQ1-J01.1), a shield group (W001-S1), a part (EX-WIRE-SINGLE) or INTERFACE.CONNECTOR (IF-001.GPSU1-J01)",
     )
     p.add_argument("--json", action="store_true", help="print the derivations as JSON")
     p.add_argument(
@@ -49,7 +53,7 @@ def _write_all(project: Project, out: Path) -> int:
     out.mkdir(parents=True, exist_ok=True)
     (out / "derivations.json").write_bytes(to_json_bytes(project, found))
     (out / "derivations.csv").write_bytes(to_csv_bytes(found))
-    unset = sum(1 for d in found if d.value is None)
+    unset = sum(1 for d in found if not d.known)
     print(
         f"{len(found)} derivations written to {out / 'derivations.json'} and "
         f"{out / 'derivations.csv'} ({unset} without a value: see the column Missing)"
@@ -75,6 +79,6 @@ def run(args: argparse.Namespace) -> int:
         print(json.dumps([d.to_dict() for d in found], indent=2, ensure_ascii=False))
         return 0
     print("\n\n".join(render(d) for d in found))
-    if all(d.value is None for d in found):
+    if all(not d.known for d in found):
         print("\nNothing could be explained yet: see what is not set above.", file=sys.stderr)
     return 0
