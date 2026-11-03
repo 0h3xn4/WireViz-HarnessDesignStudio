@@ -37,6 +37,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 | keep a project in Git, check it after a merge, or run it in CI | [Use Git and CI](use-git-and-ci.md) |
 | add a rule, a table or a reader of my own without changing the tool, with a data file or a Python plug-in | [Extend the tool](extend-the-tool.md) |
 | run the tool from a script: results as JSON, the Python interface, a batch or a trade study | [Script the tool](script-the-tool.md) |
+| write every intermediate and final result as JSON and CSV, check a colleague's number from the files, or put the time and the operator of a run on record | [Export the data](export-the-data.md) |
 | fix something that does not work | [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md), then [`FAQ.md`](../FAQ.md) |
 | look up a command or an option | [`CLI.md`](../CLI.md) |
 | look up a word | [`GLOSSARY.md`](../GLOSSARY.md) |
@@ -67,7 +68,8 @@ The numbers follow the order of the work. The first page is the one the editor s
 19. [Use Git and CI](use-git-and-ci.md): Git habits, `harness-design-studio check`, a build script, a workflow.
 20. [Use the library](use-the-library.md): the library folder a team shares, the library window, devices and subsystems, a number of the same device, `export-subsystem` and `import-subsystem`. New in 1.8.0.
 21. [Script the tool](script-the-tool.md): `--json` on the commands, `export --out`, the Python interface (`harness_design_studio.api`), a batch and a trade study.
-22. [Extend the tool](extend-the-tool.md): rules, tables and lookup tables in data files, Python plug-ins, and how a plug-in is trusted; `extensions`, `trust`, `import-plugin`; Help > Extensions.
+22. [Export the data](export-the-data.md): every intermediate and final result as JSON and CSV, reading the files in a spreadsheet or a script, reproducing a number from the files alone, the run record (`--run-record`).
+23. [Extend the tool](extend-the-tool.md): rules, tables and lookup tables in data files, Python plug-ins, and how a plug-in is trusted; `extensions`, `trust`, `import-plugin`; Help > Extensions.
 
 ## How to read the pages
 

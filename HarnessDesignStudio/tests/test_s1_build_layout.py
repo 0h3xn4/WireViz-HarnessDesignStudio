@@ -483,7 +483,7 @@ def test_the_files_have_the_text_column_and_the_same_design_gives_the_same_bytes
     colour = by[("wire-colour", "Wire W001-001")]
     assert colour[-1] == "red"
     doc = json.loads(to_json_bytes(project, found))
-    assert doc["format"] == 2
+    assert doc["format"] == 3  # 3 since the area in mm² beside a gauge (S5); 2 added the text
     texts = [d for d in doc["derivations"] if "text" in d]
     assert texts and all(d["text"] for d in texts)
     plain = next(d for d in doc["derivations"] if d["id"] == "wire-length")

@@ -20,6 +20,7 @@ from harness_design_studio.cli import (
     explain,
     extensions_cmd,
     merge,
+    open_data,
     settings_cmd,
     start,
 )
@@ -30,6 +31,7 @@ from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, load_project
 from harness_design_studio.core.io.saver import migrate_project
 from harness_design_studio.core.issues import Issue, errors
+from harness_design_studio.core.units import with_area
 from harness_design_studio.core.validation import validate_folder
 
 PROG = "harness-design-studio"  # `harness` is kept as a short alias of the same command
@@ -66,6 +68,8 @@ def build_parser() -> argparse.ArgumentParser:
                 action="store_true",
                 help="also check <project>/outputs against the design",
             )
+        if name in ("generate", "export"):
+            open_data.add_run_record_options(p)
         if name == "export":
             p.add_argument(
                 "--drawings",
@@ -82,6 +86,7 @@ def build_parser() -> argparse.ArgumentParser:
     start.register(sub)
     merge.register(sub)
     explain.register(sub)
+    open_data.register(sub)
     settings_cmd.register(sub)
     changes.register(sub)
     data.register(sub)
@@ -113,9 +118,10 @@ def _validate(path: Path, *, merge_check: bool, rep: Report | None = None) -> in
     return _print_report(result, extra)
 
 
-def _generate(path: Path, rep: Report | None = None) -> int:
+def _generate(path: Path, rep: Report | None = None, args: argparse.Namespace | None = None) -> int:
     from harness_design_studio.core.generate.engine import generate_project
     from harness_design_studio.core.io.saver import save_project
+    from harness_design_studio.core.outputs.build import DEFAULT_FOLDER
     from harness_design_studio.core.verify import verify_project
 
     rep = rep or Report()
@@ -125,7 +131,7 @@ def _generate(path: Path, rep: Report | None = None) -> int:
         return 2
     plan = generate_project(project)
     for f in plan.report.findings:
-        rep.say(f"{f.severity}: [{f.code}] {f.message}")
+        rep.say(f"{f.severity}: [{f.code}] {with_area(f.message)}")  # mm² beside a gauge (D2)
     rep.say(plan.report.summary())
     report = verify_project(project)
     rep.say(report.summary())
@@ -137,6 +143,8 @@ def _generate(path: Path, rep: Report | None = None) -> int:
     save_project(project, path)
     if rep.as_json:
         rep.put(**records.generate_result(plan, report, saved=True).to_dict())
+    if args is not None:
+        open_data.write_record(project, path, path / DEFAULT_FOLDER, args, rep)
     if project.links and not project.interfaces:  # connections are exported as they are
         rep.say(
             f"{len(project.links)} connection(s) and no interface: Generate wires interfaces "
@@ -146,7 +154,12 @@ def _generate(path: Path, rep: Report | None = None) -> int:
 
 
 def _export(
-    path: Path, *, drawings: bool = False, out: Path | None = None, rep: Report | None = None
+    path: Path,
+    *,
+    drawings: bool = False,
+    out: Path | None = None,
+    rep: Report | None = None,
+    args: argparse.Namespace | None = None,
 ) -> int:
     from harness_design_studio.core.outputs.build import (
         DEFAULT_FOLDER,
@@ -182,6 +195,8 @@ def _export(
     had_drawings = drawings_exported(target)
     write_outputs(project, target, result)
     rep.say(f"{len(result.files)} files written to {target} (model {result.stamp.short}).")
+    if args is not None:
+        open_data.write_record(project, path, target, args, rep)
     if had_drawings and not drawings:
         rep.say(
             "The PDF drawings of the earlier export were removed; "
@@ -379,6 +394,7 @@ NOTHING_DONE = {
     "export-devices": "exported", "import-devices": "imported", "import-build-data": "imported",
     "export-subsystem": "exported", "import-subsystem": "imported", "explain": "explained", "settings": "reported or changed",
     "import-plugin": "imported",
+    "export-data": "exported",
     "imports": "listed",
 }  # fmt: skip
 
@@ -453,8 +469,13 @@ def _dispatch(args: argparse.Namespace) -> int:
                     file=sys.stderr,
                 )
                 return 2
+    if getattr(args, "author", None) and not getattr(args, "run_record", False):
+        print("error: --author goes with --run-record", file=sys.stderr)
+        return 2
     if args.command in explain.COMMANDS:
         return explain.run(args)
+    if args.command in open_data.COMMANDS:
+        return open_data.run(args)
     if args.command in settings_cmd.COMMANDS:
         return settings_cmd.run(args)
     if args.command in data.COMMANDS:
@@ -470,9 +491,11 @@ def _dispatch(args: argparse.Namespace) -> int:
         rep.put(migrated=migrated is not None)
         return rep.finish(0)
     if args.command == "generate":
-        return rep.finish(_generate(args.project, rep))
+        return rep.finish(_generate(args.project, rep, args))
     if args.command == "export":
-        return rep.finish(_export(args.project, drawings=args.drawings, out=args.out, rep=rep))
+        return rep.finish(
+            _export(args.project, drawings=args.drawings, out=args.out, rep=rep, args=args)
+        )
     if args.command == "drc":
         return rep.finish(_drc(args.project, rep))
     if args.command == "verify":

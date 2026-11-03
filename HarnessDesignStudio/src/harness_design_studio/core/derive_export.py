@@ -7,6 +7,9 @@ unit, the equation, the inputs with their units and sources, the steps, the chec
 margin, verdict), the assumptions and what is missing. They carry no time, user name or path, so the
 same design written twice gives the same bytes.
 
+Format 3 (S5, D2): an input that is a wire gauge (unit AWG) has the key `area_mm2`: its
+cross-section.
+
 Format 2 (S1, D-191): a derivation whose result is a text (a label, a colour, a pin, a group, the
 answer to Ready to build) has the key `text` in the JSON and a last column *Text* in the CSV; the
 kinds of derivation are listed in `core.derive_kinds`, and the limits of the design rules
@@ -33,7 +36,7 @@ from harness_design_studio.core.drc import run as run_drc
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.outputs.tables import bom_contributions, data_num
 
-FORMAT = 2
+FORMAT = 3
 CSV_HEADER = [
     "Kind", "Subject", "Quantity", "Value", "Unit", "Equation", "Actual", "Limit", "Margin",
     "Verdict", "Assumptions", "Missing", "Text",

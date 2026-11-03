@@ -174,3 +174,37 @@ def test_the_examples_in_the_extensions_command(
         ("power-wire-table", "declarative"),
         ("duplicate-signal-wires", "plugin"),
     ]
+
+
+def test_the_run_record_and_the_open_data_name_the_extensions_in_force(
+    project_dir: Path, tmp_path: Path
+) -> None:
+    """S5 meets S8: run_record.json lists every enabled data file and loaded plug-in (name, version,
+    kind, file, SHA-256); provenance.json of `export-data` does too; a project without extensions
+    has an empty list and no key, and the model hash is the same either way."""
+    from harness_design_studio.core import open_data, run_record
+    from harness_design_studio.core.io.layout import model_hash
+
+    assert main(["trust", str(project_dir), "duplicate-signal-wires", "--yes"]) == 0
+    project = load_project(project_dir).project
+    record = run_record.make(project, operator="tester")
+    names = [(e["name"], e["kind"]) for e in record["extensions"]]
+    assert names == [
+        ("minimum-wire-gauge-power", "declarative"),
+        ("power-wire-table", "declarative"),
+        ("duplicate-signal-wires", "plugin"),
+    ]
+    assert all(len(e["sha256"]) == 64 and e["version"] == "1.0.0" for e in record["extensions"])
+    assert str(project_dir) not in json.dumps(record)
+    prov = json.loads(open_data.data_files(project)[open_data.PROVENANCE])
+    assert [e["name"] for e in prov["extensions"]] == [n for n, _ in names]
+    # not enabled: nothing is listed, in either place
+    (project_dir / "extensions" / "enabled.json").write_text(
+        json.dumps({"format": "harness-design-studio-extensions-enabled", "format_version": 1})
+    )
+    plain = load_project(project_dir).project
+    assert run_record.make(plain, operator="tester")["extensions"] == []
+    assert "extensions" not in json.loads(open_data.data_files(plain)[open_data.PROVENANCE])
+    assert model_hash(plain) == model_hash(project)  # the extensions are not project data
+    shutil.rmtree(project_dir / "extensions")
+    assert model_hash(load_project(project_dir).project) == model_hash(project)

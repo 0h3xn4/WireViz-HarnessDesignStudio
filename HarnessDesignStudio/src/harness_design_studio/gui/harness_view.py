@@ -67,6 +67,7 @@ from harness_design_studio.core.outputs.canvas import Sheet
 from harness_design_studio.core.outputs.drawing import harness_sheets
 from harness_design_studio.core.outputs.stamp import Stamp
 from harness_design_studio.core.outputs.tables import shield_of
+from harness_design_studio.core.units import gauge_short, with_area
 from harness_design_studio.core.vcs.lockview import Locked, lock_reason, locked_objects
 from harness_design_studio.core.verify import verify_project
 from harness_design_studio.core.wirecolours import name_of, resolve
@@ -231,7 +232,10 @@ def wire_rows(project: Project, h: Harness, locked: Locked | None = None) -> lis
 
 
 def _gauge_text(v: Any) -> str:
-    return "" if v is None else str(v)
+    """The gauge with its cross-section beside it: `24 (0.205 mm²)` (D2); "pending" as it is."""
+    if v is None:
+        return ""
+    return gauge_short(v) if isinstance(v, int) and not isinstance(v, bool) else str(v)
 
 
 def _length_text(v: Any) -> str:
@@ -263,7 +267,7 @@ PIN_COLUMNS = [
     Column("signal", strings.HV_COL_SIGNAL, tooltip=_signal_tip, width=72),
     Column("wire", strings.HV_COL_WIRE, mono=True, width=92),
     Column("gauge", strings.HV_COL_GAUGE, unit="AWG", numeric=True, state="gauge_state",
-           fmt=_gauge_text, tooltip=_gauge_tip, width=110),
+           fmt=_gauge_text, tooltip=_gauge_tip, width=150),
     Column("colour", strings.HV_COL_COLOUR, width=124),
     Column("shield", strings.HV_COL_SHIELD, mono=True, width=60),
     Column("locked", strings.HV_COL_LOCKED, state="locked_state", tooltip="locked_why", width=88),
@@ -275,7 +279,7 @@ WIRE_COLUMNS = [
     Column("from", strings.HV_COL_FROM, mono=True, width=92),
     Column("to", strings.HV_COL_TO, mono=True, width=92),
     Column("gauge", strings.HV_COL_GAUGE, unit="AWG", numeric=True, state="gauge_state",
-           fmt=_gauge_text, tooltip=_gauge_tip, width=110),
+           fmt=_gauge_text, tooltip=_gauge_tip, width=150),
     Column("length", strings.HV_COL_LENGTH, unit="m", numeric=True, state="length_state",
            fmt=_length_text, tooltip=_length_tip, width=96),
     Column("colour", strings.HV_COL_COLOUR, width=124),
@@ -476,6 +480,7 @@ class _WhyView(QWidget):
             return
         items = []
         for line in lines:
+            line = with_area(line)  # a gauge named in a reason has its cross-section (D2)
             head, sep, rest = line.partition(": ")
             items.append(
                 f"<p><b>{html.escape(head)}</b>{html.escape(sep + rest)}</p>"

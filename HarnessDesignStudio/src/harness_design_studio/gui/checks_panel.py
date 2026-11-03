@@ -44,6 +44,7 @@ from harness_design_studio.core.checks import Finding
 from harness_design_studio.core.derive import EXPLAINABLE_RULES, explain_finding, is_explainable
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.drc.by_rule import MissingValue, RuleResult
+from harness_design_studio.core.units import with_area
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.config_dialog import ConfigValueDialog
 from harness_design_studio.gui.controller import EditorController
@@ -183,7 +184,7 @@ OBJECT_COLUMNS: Final = (
 def object_row(f: Finding) -> dict[str, Any]:
     return {
         "object": f.object_id or strings.CHECKS_WHOLE_DESIGN,
-        "message": f.title,
+        "message": with_area(f.title),  # a gauge named in a finding has its mm² on screen (D2)
         "severity": strings.CHECKS_SEVERITY.get(f.severity, f.severity),
         "waiver": f.waiver.justification
         if f.waiver is not None

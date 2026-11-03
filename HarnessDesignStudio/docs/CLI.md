@@ -25,7 +25,7 @@ The examples show the form of each command with example names. They do not all w
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
 - Explain: [`explain`](#harness-design-studio-explain), [`settings`](#harness-design-studio-settings)
-- Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export)
+- Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export), [`export-data`](#harness-design-studio-export-data)
 - Team use with Git: [`merge-fix`](#harness-design-studio-merge-fix)
 - Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data), [`imports`](#harness-design-studio-imports)
 - Write data out: [`export-pinout`](#harness-design-studio-export-pinout), [`export-devices`](#harness-design-studio-export-devices), [`export-subsystem`](#harness-design-studio-export-subsystem)
@@ -37,7 +37,7 @@ The examples show the form of each command with example names. They do not all w
 
 Every command that has a result in data form takes `--json`. The usual text lines are then not printed; one JSON document is, and the exit code is the one the command has without the option (the table above). It has no time, no user name and no absolute path, its lists are in a fixed order (by ID, as the text shows them) and the same design gives the same bytes, so it can be compared and kept in Git. `ok` comes first and is true when the exit code is 0. A command that cannot run at all (a project that cannot be read, a wrong option) writes its message to the standard error as before and prints nothing to the standard output; a command that ran and was refused (`generate` with errors, `export` that failed its check, `release` that is blocked) still prints its document, with `ok` false and the reasons in it. The same documents are what the Python interface gives ([`user-manual/script-the-tool.md`](user-manual/script-the-tool.md)).
 
-`explain OBJECT --json` prints a list of derivations and `settings --json` the document of settings, definitions and assumptions, both as they did before (neither has an `ok`); `explain --all --out FOLDER --json` prints the document below. `export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. `config` prints every engineering value with its unit, its use, whether it is set and where it came from, and the values it refused, in the order of the hand-over list.
+`explain OBJECT --json` prints a list of derivations and `settings --json` the document of settings, definitions and assumptions, both as they did before (neither has an `ok`); `explain --all --out FOLDER --json` prints the document below. `export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. `export` and `generate` take `--run-record [--author NAME]`: the record of the run (`run_record.json`) is then written into the outputs folder, outside every hash, and their document gains the key `run_record` (the name of the file); without the option no record is written and the document is as listed. `config` prints every engineering value with its unit, its use, whether it is set and where it came from, and the values it refused, in the order of the hand-over list.
 
 | Command | Keys of the document |
 | --- | --- |
@@ -49,6 +49,7 @@ Every command that has a result in data form takes `--json`. The usual text line
 | `verify` | `ok`, `interfaces_checked`, `wires_checked`, `stale`, `issues` |
 | `settings` | `settings`, `definitions`, `assumptions` |
 | `explain --all` | `ok`, `count`, `without_value`, `files` |
+| `export-data` | `ok`, `count`, `model_hash`, `files`, `run_record` |
 | `generate` | `ok`, `saved`, `added`, `changed`, `unchanged`, `removed`, `frozen`, `kept_locks`, `findings`, `interfaces_checked`, `wires_checked`, `verify_issues` |
 | `export` | `ok`, `written`, `blocked`, `model_hash`, `drawings_removed`, `file_count`, `files`, `issues` |
 | `merge-fix` | `ok`, `result`, `conflicts`, `problem`, `generate`, `check` |
@@ -273,12 +274,15 @@ generate harnesses from the interfaces and save the project
 | --- | --- |
 | `project` | project folder |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+| `--run-record` | also write run_record.json (time in UTC, operator, tool version, platform, Python version, model hash) next to the files: it is outside every hash, and written only with this option |
+| `--author NAME` | with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, then the Git user.name, then the user of the system) |
 
 Examples:
 
 ```
 harness-design-studio generate my-design
 harness-design-studio generate my-design --json
+harness-design-studio generate my-design --run-record
 ```
 
 ### harness-design-studio export
@@ -291,6 +295,8 @@ write the build workbook of every harness, the tables and exports to <project>/o
 | --- | --- |
 | `project` | project folder |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+| `--run-record` | also write run_record.json (time in UTC, operator, tool version, platform, Python version, model hash) next to the files: it is outside every hash, and written only with this option |
+| `--author NAME` | with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, then the Git user.name, then the user of the system) |
 | `--drawings` | also write the PDF and SVG drawings of the harnesses (off by default: the build workbook is the main output) |
 | `--out OUT` | the folder to write the outputs to (default: <project>/outputs) |
 
@@ -300,6 +306,29 @@ Examples:
 harness-design-studio export my-design
 harness-design-studio export my-design --drawings
 harness-design-studio export my-design --out my-outputs --json
+harness-design-studio export my-design --run-record --author "A. Engineer"
+```
+
+### harness-design-studio export-data
+
+Write the numbers behind the outputs to FOLDER as open data. For each result a JSON file (with a format number, the tool version, the model hash, the columns with their units and the rows) and a CSV file with the same rows and the unit in each heading: wire_sizing (current, gauge and its cross-section in mm², ampacity, the derating factors, the bundle size, the limit, the length, the voltage drop and its limit and margin, the part), segmentation_groups and segmentation_interfaces, pin_allocation, rule_results (actual, limit, margin, verdict), readiness, lengths (with the basis of each), mass and mass_wires, bom and bom_contributions, findings, test_limits and settings (every setting in force with its value, unit and origin); also configuration.json (the configuration files as the tool used them, with their placeholder flags) and provenance.json (tool version, model hash, the files imported, and a hash of every other file written). No file holds a time, a user name or a path, so the same design written twice gives the same bytes. With --run-record, run_record.json is written beside them (time, operator, tool version): it is not part of the set. The project is not changed. `--json` prints the list of files.
+
+`harness-design-studio export-data project [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `--out OUT` | the folder for the files (made if missing) |
+| `--run-record` | also write run_record.json (time in UTC, operator, tool version, platform, Python version, model hash) next to the files: it is outside every hash, and written only with this option |
+| `--author NAME` | with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, then the Git user.name, then the user of the system) |
+| `--json` | print the list of files as JSON |
+
+Examples:
+
+```
+harness-design-studio export-data my-design --out my-design-data
+harness-design-studio export-data my-design --out my-design-data --json
+harness-design-studio export-data my-design --out my-design-data --run-record --author "A. Engineer"
 ```
 
 ## Team use with Git

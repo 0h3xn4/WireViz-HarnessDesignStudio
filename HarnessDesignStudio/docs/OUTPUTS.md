@@ -19,6 +19,7 @@ The screen says *device*, the files say *unit*: the written files keep the word 
 - [Change control in the outputs](#change-control-in-the-outputs)
 - [EMC class on wires and labels](#emc-class-on-wires-and-labels)
 - [Provenance](#provenance)
+- [Open data and the run record](#open-data-and-the-run-record)
 - [Requirement IDs on findings](#requirement-ids-on-findings)
 
 The main output of a harness is its **build workbook** (`<ID>_build.xlsx`, new in 1.7.0, decision D-169). The PDF and SVG drawings of the harnesses are **optional**: `export` writes none of them unless you add `--drawings` (in the app: the check box **Include the PDF drawings** in the Export window, ticked at the start only when the last export of the folder had them). An `export` without `--drawings` into a folder whose last export had the drawings removes them and says so. Everything else, the system diagrams too, is always written. For the `first-steps` example `export` writes 34 files and `export --drawings` 40 (not counting `manifest.json`; with 1.6.0 and earlier the same command wrote 38). The build data (decision D-170, below) adds nothing to a project that does not use it, and one file, `accessories.csv`, to each harness that has accessories.
@@ -138,6 +139,14 @@ When at least one interface type has an EMC class, the wire list gets a last col
 ## Provenance
 
 `system/provenance.json` states which tool version and which design made the outputs: the model hash, the project name, the parts library (name, version, number of parts by approval status), every configuration file with its placeholder flag and a short hash of its values, and the counts of units, interfaces, harnesses and wires. There are no dates and no paths, so equal designs give equal bytes. The output verifier checks the placeholder flags and counts against the design. The WireViz-style YAML files are an export format only; WireViz is not used to make any output.
+
+## Open data and the run record
+
+The outputs above are what you build from. `harness-design-studio export-data DIR --out FOLDER` writes the numbers behind them as JSON and CSV (wire sizing, lengths, mass, bill of materials, rule results with actual, limit and margin, readiness, test limits, pin allocation, segmentation, findings, parts, settings, the configuration as used, and a provenance file) to a folder of your choice, so that a result can be reproduced from the files alone ([export the data](user-manual/export-the-data.md); the files are described in [`FILE_FORMAT.md`](FILE_FORMAT.md#open-data-files-and-the-run-record-not-part-of-a-project)). They are not part of `export`, are not listed in the manifest and do not change the hashes of the outputs.
+
+No written output holds a time or a name, so the same design gives the same bytes. When you want the time, the operator, the tool and Python versions and the model hash of a run on record, add `--run-record` to `export` or `generate` (or `export-data`): `run_record.json` is then written beside the files, in the `outputs` folder, outside `manifest.json` and every hash. `verify --outputs` does not call it an unlisted file. Without the option no record is written.
+
+The wire gauge is written as the plain AWG number in every output (the drawing, the lists, the workbook, the design rule report); its cross-section in mm² is shown beside it on screen and in explanations, and is a column of its own in the open data (D2, D-193).
 
 ## Requirement IDs on findings
 
