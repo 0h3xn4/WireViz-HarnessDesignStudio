@@ -199,6 +199,7 @@
     "reference": "str",
     "steps": "tuple[Step, ...]",
     "subject": "str",
+    "text": "str",
     "unit": "str",
     "value": "float | None"
    },

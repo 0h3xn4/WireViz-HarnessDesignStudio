@@ -14,7 +14,7 @@ This page explains the check of the design rule `current-over-contact`: the curr
 
 ## What the tool decides
 
-For every interface with a known current and every connector at one of its ends, the rule compares the current with the limit of the contacts of that connector. A connector of the interface whose rating is not in the library is not checked, and a project whose configuration has no `contact_current_factor` is not checked at all (the rule `unchecked-config` says so). The finding names the object `INTERFACE.CONNECTOR`, for example `IF-001.GPSU1-J01`.
+For every interface with a known current and every connector at one of its ends, the rule compares the current with the limit of the contacts of that connector. A connector of the interface whose rating is not in the library is not checked, and a project whose configuration has no `contact_current_factor` is not checked at all (the rule `unchecked-config` says so). The finding names the object `INTERFACE.CONNECTOR`, for example `IF-001.GPSU1-J01`. `explain DIR INTERFACE.CONNECTOR` shows it as the derivation of kind `contact-current`.
 
 ## The equation
 

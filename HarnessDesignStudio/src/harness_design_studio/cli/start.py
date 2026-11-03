@@ -57,7 +57,9 @@ def _run(args: argparse.Namespace, rep: Report) -> int:
         rep.say(
             f"{len(files)} files written to {args.folder}. Start with {args.folder / 'README.md'}."
         )
-        rep.put(count=len(files), files=[p.relative_to(args.folder).as_posix() for p in files])
+        rep.put(
+            count=len(files), files=sorted(p.relative_to(args.folder).as_posix() for p in files)
+        )  # one order on every platform (Windows sorts paths without regard to case)
         return 0
     if args.list:
         for t in templates.TEMPLATES:

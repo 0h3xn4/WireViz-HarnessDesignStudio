@@ -247,7 +247,9 @@ def test_explain_matches_the_derivations_and_the_files(work: Path, tmp_path: Pat
     assert every == derive_export.explain_all(project) == api.explain_all(work)
     wire = next(iter(project.harnesses.values())).wires[0].id
     mine = api.explain(project, wire)
-    assert [d.id for d in mine] == [
+    # the four numbers of the wire come first, in this order; the explanations of its label,
+    # colour and pins (transparency step S1) follow
+    assert [d.id for d in mine][:4] == [
         "wire-length", "wire-current-limit", "wire-voltage-drop", "wire-mass",
     ]  # fmt: skip
     assert all(d in every for d in mine)

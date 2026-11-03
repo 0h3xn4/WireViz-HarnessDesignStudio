@@ -15,7 +15,7 @@ This page explains how the tool decides the gauge of a wire and how it checks th
 
 ## What the tool decides
 
-For every wire that carries an interface with a known current, **Generate** chooses the smallest conductor (the highest AWG number) in the ampacity table whose derated current limit is not below the current. It then makes the conductor larger, one listed size at a time, until the voltage drop is not above the limit. If no listed gauge carries the current, or none keeps the drop under the limit, it stops with an error and says which. A wire you size by hand (gauge, part, colour or length) is kept as you set it and is not sized again; the design rules still check it.
+For every wire that carries an interface with a known current, **Generate** chooses the smallest conductor (the highest AWG number) in the ampacity table whose derated current limit is not below the current. It then makes the conductor larger, one listed size at a time, until the voltage drop is not above the limit. If no listed gauge carries the current, or none keeps the drop under the limit, it stops with an error and says which. A wire you size by hand (gauge, part, colour or length) is kept as you set it and is not sized again; the design rules still check it. `explain DIR WIRE` shows the two limits as the derivations of kind `wire-current-limit` and `wire-voltage-drop`.
 
 ## The equations
 
