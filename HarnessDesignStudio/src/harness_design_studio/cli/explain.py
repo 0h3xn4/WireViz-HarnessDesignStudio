@@ -5,8 +5,9 @@ import json
 import sys
 from pathlib import Path
 
+from harness_design_studio.api import write_derivations
+from harness_design_studio.cli.jsonout import Report
 from harness_design_studio.core.derive import explain_object, render
-from harness_design_studio.core.derive_export import explain_all, to_csv_bytes, to_json_bytes
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.model import Project
 
@@ -27,9 +28,10 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "their units and where each comes from (a key of config/*.json, a field of the design or "
         "the program), the intermediate results, what the result is checked against, and the "
         "assumptions built into the program that it rests on. The numbers are the ones `generate` "
-        "and `drc` use. `--json` prints the same as data. With `--all --out FOLDER` it writes every "
-        "derivation of the project to FOLDER as `derivations.json` and `derivations.csv`: no time, "
-        "user or path is in them, so the same design gives the same files. Without `--out` nothing "
+        "and `drc` use. `--json` prints the same as data (a list). With `--all --out FOLDER` it writes "
+        "every derivation of the project to FOLDER as `derivations.json` and `derivations.csv`: no "
+        "time, user or path is in them, so the same design gives the same files; with `--json` as "
+        "well it prints how many it wrote instead of the line of text. Without `--out` nothing "
         "is written.",
     )
     p.add_argument("project", type=Path, help="project folder")
@@ -48,16 +50,13 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     )
 
 
-def _write_all(project: Project, out: Path) -> int:
-    found = explain_all(project)
-    out.mkdir(parents=True, exist_ok=True)
-    (out / "derivations.json").write_bytes(to_json_bytes(project, found))
-    (out / "derivations.csv").write_bytes(to_csv_bytes(found))
-    unset = sum(1 for d in found if not d.known)
-    print(
-        f"{len(found)} derivations written to {out / 'derivations.json'} and "
-        f"{out / 'derivations.csv'} ({unset} without a value: see the column Missing)"
+def _write_all(project: Project, out: Path, rep: Report) -> int:
+    written = write_derivations(project, out)
+    rep.say(
+        f"{written.count} derivations written to {out / 'derivations.json'} and "
+        f"{out / 'derivations.csv'} ({written.without_value} without a value: see the column Missing)"
     )
+    rep.put(**written.to_dict())
     return 0
 
 
@@ -73,7 +72,8 @@ def run(args: argparse.Namespace) -> int:
         if args.out is None:
             print("error: --all needs --out FOLDER (the files are written there)", file=sys.stderr)
             return 2
-        return _write_all(project, args.out)
+        rep = Report(args.json)
+        return rep.finish(_write_all(project, args.out, rep))
     found = explain_object(project, args.object)
     if args.json:
         print(json.dumps([d.to_dict() for d in found], indent=2, ensure_ascii=False))

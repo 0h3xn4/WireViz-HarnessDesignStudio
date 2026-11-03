@@ -16,6 +16,7 @@ This page is the map of the documents for people who work on the code or the doc
 | [`architecture.md`](architecture.md) | A short overview for a new contributor, with links to the full [architecture](../ARCHITECTURE.md), the [decisions](../DECISIONS.md) and the [security review](../SECURITY.md) |
 | [`docs-maintenance.md`](docs-maintenance.md) | Which documents are generated, how to regenerate them, how to add a page, how to check the links |
 | [`release.md`](release.md) | How to cut a release of the tool, in plain words |
+| [`api-stability.md`](api-stability.md) | The scripting interface (`harness_design_studio.api`): what is stable, how to change it on purpose, the snapshot test |
 | [`tools.md`](tools.md) | Every script in `HarnessDesignStudio/tools/` (including the screenshot, timing and output-hash scripts of the UI overhaul) |
 | [`upstream-sync.md`](upstream-sync.md) | How to refresh the copy of the WireViz README after WireViz changes it |
 

@@ -26,7 +26,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | What it gives you |
 | --- | --- |
-| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, add redundancy and zones, generate harnesses, read and fix problems, fill in engineering values, connect two connectors pin by pin (the pinout first, since 1.8.0), edit a wire, build a harness by hand (no interface needed), enter the build data (strip lengths, contacts, crimp tools, accessories), choose your role (Systems engineer or Electrical / AIT engineer, and the Next step page), import data, define a device (and reuse it in another project), use the library (a folder your team shares with devices and subsystems, and a number of the same device, since 1.8.0), import KiCad pinouts, export the outputs, set wire colours, change IDs and the title block, release a harness, change a released harness, use Git and CI |
+| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, add redundancy and zones, generate harnesses, read and fix problems, fill in engineering values, connect two connectors pin by pin (the pinout first, since 1.8.0), edit a wire, build a harness by hand (no interface needed), enter the build data (strip lengths, contacts, crimp tools, accessories), choose your role (Systems engineer or Electrical / AIT engineer, and the Next step page), import data, define a device (and reuse it in another project), use the library (a folder your team shares with devices and subsystems, and a number of the same device, since 1.8.0), import KiCad pinouts, export the outputs, set wire colours, change IDs and the title block, release a harness, change a released harness, use Git and CI, script the tool (JSON output and the Python interface) |
 | [`HOWTO.md`](HOWTO.md) | The index of the old recipes, pointing at the user manual |
 | [`TIPS.md`](TIPS.md) | Shortcuts, power-user workflows, and exchanging data with other tools |
 | [`CHEATSHEET.md`](CHEATSHEET.md) | One page: the loop, the data imports, release, shortcuts, the folder layout, the words |
@@ -36,7 +36,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | Document | What it says |
 | --- | --- |
 | [`guide/USER_GUIDE.md`](guide/USER_GUIDE.md) | The user guide that opens with **F1** in the app: the window (rail, top bar, tabs, Home and Settings), modes, checks, export and import, menus, shortcuts |
-| [`CLI.md`](CLI.md) | Every `harness-design-studio` command and option (generated from the program) |
+| [`CLI.md`](CLI.md) | Every `harness-design-studio` command and option, and the keys of the JSON each prints with `--json` (generated from the program) |
 | [`RULES.md`](RULES.md) | Every design rule: what, why, how to fix, severity (generated) |
 | [`CONFIG.md`](CONFIG.md) | Every key of `config/*.json` |
 | [`PLACEHOLDERS.md`](PLACEHOLDERS.md) | Which engineering values are still placeholders, who owns them |
@@ -54,6 +54,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | Document | What it gives you |
 | --- | --- |
 | [`examples/README.md`](examples/README.md) | The five example projects and the template files: what each is, how to run it, what you should see |
+| [`examples/scripting/README.md`](examples/scripting/README.md) | Three Python scripts that drive the tool: a batch, a trade study, and every derivation as files |
 | [`FLATSAT_EXAMPLE.md`](FLATSAT_EXAMPLE.md) | A tour of the biggest example, a flatsat with ground equipment |
 | [`templates/README.md`](../src/harness_design_studio/resources/examples/templates/README.md) | What each file written by `harness-design-studio templates FOLDER` is for |
 
@@ -70,7 +71,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 [`../../CONTRIBUTING.md`](../../CONTRIBUTING.md), [`developer/`](developer/README.md) (setup and tests, architecture, the scripts in `tools/`, keeping the documents correct, releasing, refreshing the upstream README), [`../CLAUDE.md`](../CLAUDE.md) (commands, layout and conventions, written for the AI assistant), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`DECISIONS.md`](DECISIONS.md), [`SECURITY.md`](SECURITY.md), [`RELEASE.md`](RELEASE.md) (the checklist for releasing the tool, not a harness).
 
-Some files are **generated** and a test fails when they are stale: `RULES.md` (`python -m tools.gen_rule_docs`), `CLI.md` (`python -m tools.gen_cli_docs`), the HTML of the user guide (`python -m tools.build_guide`), and the example projects (`python -m tools.build_examples`). More in [`developer/docs-maintenance.md`](developer/docs-maintenance.md).
+Some files are **generated** and a test fails when they are stale: `RULES.md` (`python -m tools.gen_rule_docs`), `CLI.md` (`python -m tools.gen_cli_docs`), the HTML of the user guide (`python -m tools.build_guide`), the example projects (`python -m tools.build_examples`), and the snapshot of the scripting interface (`python -m tools.gen_api_snapshot`). More in [`developer/docs-maintenance.md`](developer/docs-maintenance.md).
 
 ## Project records
 

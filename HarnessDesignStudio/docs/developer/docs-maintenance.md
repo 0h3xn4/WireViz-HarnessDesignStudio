@@ -18,7 +18,8 @@ Never edit a generated file by hand. Change its source (or the program) and run 
 | File | Source | Regenerate | Test that fails if stale |
 | --- | --- | --- | --- |
 | `docs/RULES.md` | the rule registry in `core/drc/` | `python -m tools.gen_rule_docs` | `test_docs.py::test_rule_reference_is_up_to_date` |
-| `docs/CLI.md` | the `harness-design-studio` argument parser and the examples in `tools/gen_cli_docs.py` | `python -m tools.gen_cli_docs` | `test_docs.py::test_cli_reference_is_up_to_date` |
+| `docs/CLI.md` | the `harness-design-studio` argument parser, the `--json` keys in `cli/jsonout.py` (`SHAPES`) and the examples in `tools/gen_cli_docs.py` | `python -m tools.gen_cli_docs` | `test_docs.py::test_cli_reference_is_up_to_date` |
+| `tests/fixtures/api_snapshot.json` | `harness_design_studio/api.py` | `python -m tools.gen_api_snapshot` (on purpose) | `test_api_stability.py::test_the_interface_is_the_one_in_the_snapshot` |
 | `src/harness_design_studio/resources/guide/index.html` (the **F1** guide) | `docs/guide/USER_GUIDE.md` | `python -m tools.build_guide` | `test_docs.py::test_guide_html_is_up_to_date` |
 | the example projects in `src/harness_design_studio/resources/examples/projects/` | the editing functions and `tools/build_examples.py` | `python -m tools.build_examples` | `test_examples.py` |
 | `compliance/compliance_matrix.csv` | `compliance/requirements/*.csv` and `compliance/assessment/*.csv` | `python -m tools.build_compliance_matrix` | `test_compliance_matrix.py` |
