@@ -206,7 +206,8 @@ def test_the_record_format_holds_what_the_brief_lists_and_nothing_else(proj: Pat
         cli(["import-lengths", str(proj), str(proj / "data" / "lengths.csv"), "--unit", "mm"]) == 0
     )
     (rec,) = records(proj)
-    digest = hashlib.sha256(LENGTHS.encode() + b",,\n").hexdigest()
+    # the bytes on disk (Windows writes the text with CRLF), not the text in the source
+    digest = hashlib.sha256((proj / "data" / "lengths.csv").read_bytes()).hexdigest()
     assert rec == {
         "columns_read": [
             {"column": "harness", "field": "harness"},
