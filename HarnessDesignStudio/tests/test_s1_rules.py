@@ -87,6 +87,19 @@ def test_every_rule_of_the_registry_has_an_explanation() -> None:
             assert compares(rule_id).startswith("this rule is a yes/no check: it compares ")
 
 
+def test_the_registry_of_extensions_lists_the_same_rules_and_explains_extension_rules_too() -> None:
+    """S8: the registry holds the 39 rules of `drc.RULES` as built-in items, so a rule cannot be in one
+    list and not in the other; an extension's rule is explained as the built-in ones are."""
+    from harness_design_studio.core.derive import is_explainable
+    from harness_design_studio.core.extensions.builtins import install
+    from harness_design_studio.core.extensions.registry import REGISTRY
+
+    install()
+    assert [i.name for i in REGISTRY.items("rule")] == [r.id for r in RULES]
+    assert all(is_explainable(Project(), name) for name in (i.name for i in REGISTRY.items("rule")))
+    assert not is_explainable(Project(), "x-anything")  # no extension: nothing to explain
+
+
 def test_the_logical_rules_are_the_ones_of_the_rule_documentation() -> None:
     from tools.gen_rule_docs import LOGICAL
 

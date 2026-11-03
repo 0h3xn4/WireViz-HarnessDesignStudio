@@ -284,6 +284,42 @@ def run_by_rule(project: Project, findings: list[Finding] | None = None) -> list
         out.append(
             _result(project, VERIFY, "Independent verification", "error", (), by_rule, notes, [])
         )
+    if (
+        project.extensions is not None
+    ):  # S8: the rules of the project's extensions follow the built-in ones
+        out += _extension_results(project, by_rule, unowned)
+    return out
+
+
+def _extension_results(
+    project: Project, by_rule: dict[str, list[Finding]], unowned: list[str]
+) -> list[RuleResult]:
+    """One result for each extension rule, and one for the notice that something enabled was not
+    applied (only when there is such a notice). A rule that could not look at an object because a
+    value is not known is "not checked", never "pass"."""
+    from dataclasses import replace
+
+    from harness_design_studio.core.extensions.manager import PROBLEM_RULE, rule_notes, rules_for
+
+    notes = rule_notes(project)
+    out: list[RuleResult] = []
+    for r in rules_for(project):
+        res = _result(project, r.id, r.topic, r.severity, r.sources, by_rule, {}, [])
+        extra = notes.get(r.id, [])
+        if extra and res.status == "pass":
+            res = replace(
+                res,
+                status="not_checked",
+                notes=tuple(extra),
+                missing=tuple(MissingValue("data", n) for n in extra),
+            )
+        elif extra:
+            res = replace(res, notes=tuple(extra))
+        out.append(res)
+    if by_rule.get(PROBLEM_RULE):
+        out.append(
+            _result(project, PROBLEM_RULE, "Extensions not applied", "warning", (), by_rule, {}, [])
+        )
     return out
 
 

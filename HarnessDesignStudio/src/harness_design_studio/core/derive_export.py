@@ -21,12 +21,12 @@ from typing import Any
 from harness_design_studio import __version__
 from harness_design_studio.core import checks
 from harness_design_studio.core.derive import (
-    EXPLAINABLE_RULES,
     Derivation,
     contact_current_derivation,
     explain_harness_all,
     explain_part,
     explain_wire_all,
+    is_explainable,
 )
 from harness_design_studio.core.derive_rules import explain_rule
 from harness_design_studio.core.drc import run as run_drc
@@ -67,7 +67,7 @@ def explain_all(project: Project) -> list[Derivation]:
     seen: set[tuple[str, str]] = set()
     for f in findings:
         key = (f.rule, f.object_id)
-        if f.rule in _FIRST_RULES or key in seen or f.rule not in EXPLAINABLE_RULES:
+        if f.rule in _FIRST_RULES or key in seen or not is_explainable(project, f.rule):
             continue
         seen.add(key)
         found += explain_rule(project, f.rule, f.object_id, findings)

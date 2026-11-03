@@ -48,6 +48,8 @@ def render() -> str:
         "Errors cannot be waived; warnings can be waived with a reason of at least 10 characters.",
         "Rules that need numbers from your standards (see PLACEHOLDERS.md) check nothing until those are filled in, and the rule `unchecked-config` says so.",
         "",
+        "A project can add rules of its own with an extension (a data file or a Python plug-in, see [`user-manual/extend-the-tool.md`](user-manual/extend-the-tool.md)). Their IDs begin with `x-`, they are not in this table, and they are never part of the 39: `harness-design-studio extensions DIR --docs` writes the table of the rules a project enables, in this form, with the file or plug-in each comes from.",
+        "",
         "## Design rules (background check)",
         "",
         "| Rule | Severity | Topic | Why it matters | How to fix | Standard requirements |",

@@ -106,5 +106,6 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "S"]
 "src/harness_design_studio/core/settings.py" = ["E501"]  # the table of settings: one line each
 "src/harness_design_studio/core/checks.py" = ["E501"]
 "src/harness_design_studio/core/imports.py" = ["E501"]
+"src/harness_design_studio/core/extensions/*.py" = ["E501"]  # plain-language messages, the field table
 "tools/*" = ["S101", "S603", "S607", "E501"]
 "tests/*" = ["S101", "S311", "S603", "S607", "E501"]

@@ -461,14 +461,14 @@ def generate_result(plan: GenerationPlan, report: VerifyReport, saved: bool) -> 
 def check_result(project: Project, found: list[Finding]) -> CheckResult:
     """`found` is what `drc` prints: the findings of the logical layer and of the rules, errors
     first, then by ID."""
-    from harness_design_studio.core.drc.rules import RULES
+    from harness_design_studio.core.drc import all_rules
     from harness_design_studio.core.io.layout import model_hash
 
     open_ = [f for f in found if f.waiver is None]
     return CheckResult(
         ok=not any(f.severity == "error" for f in open_),
         model_hash=model_hash(project)[:12],
-        rules_run=len(RULES),
+        rules_run=len(all_rules(project)),
         open_errors=sum(f.severity == "error" for f in open_),
         open_warnings=sum(f.severity == "warning" for f in open_),
         open_notes=sum(f.severity == "info" for f in open_),

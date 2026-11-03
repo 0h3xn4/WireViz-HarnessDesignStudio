@@ -31,6 +31,8 @@ Every page follows the same order: what the tool decides, the equation, the inpu
 | [Shields](shields.md) | Which wires form a shield group and why the group has the ends it has | `harness-design-studio explain DIR GROUP` or `WIRE` |
 | [Rule limits](rule-limits.md) | The limit of every design rule, or, for a yes/no rule, what it compares | the Explain button of the Checks tab; `explain_finding` |
 
+A rule that a project adds with an extension ([Extend the tool](../user-manual/extend-the-tool.md)) has a derivation too, in the same form: a data file's rule shows its condition as the equation, the fields, parameters, settings and lookup values it read as the inputs (each with its source, which for a parameter is the file and the key), and the actual value, the limit and the margin as the check (kind `rule-limit`); a Python rule says what it compares (kind `rule-check`). Both name the file or the plug-in, its version and its hash, and say that the rule is not part of the tool. A test asks `explain` about every rule of the registry, built-in and extension.
+
 A test ties each kind of derivation the tool makes (`core/derive_kinds.py`) and each design rule (`core/derive_rules.py`) to a page of this folder, so that none is left out.
 
 ## Every derivation as files

@@ -55,4 +55,9 @@ def provenance_bytes(project: Project, stamp: Stamp) -> bytes:
             "released_harnesses": sum(h.status == "released" for h in project.harnesses.values()),
         },
     }
+    if project.extensions is not None:  # S8: the extensions in force, by name, version and hash
+        from harness_design_studio.core.extensions.manager import provenance
+
+        if listed := provenance(project):
+            doc["extensions"] = listed
     return (json.dumps(doc, indent=1, sort_keys=True) + "\n").encode()

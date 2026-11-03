@@ -837,6 +837,11 @@ def explain_rule(
     not exist, or for a limit rule whose object is gone."""
     info = INFO.get(rule_id)
     if info is None:
+        if project.extensions is not None:  # S8: a rule of an extension explains itself
+            from harness_design_studio.core.extensions.manager import explain, is_extension_rule
+
+            if is_extension_rule(project, rule_id):
+                return explain(project, rule_id, object_id, findings)
         return []
     if info.form == LIMIT:
         if info.build is None:
