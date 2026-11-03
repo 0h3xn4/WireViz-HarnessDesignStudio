@@ -7,6 +7,7 @@ This page is the working plan for the rest of the transparency work (decision D-
 - [Rules for every stage](#rules-for-every-stage)
 - [What is done](#what-is-done)
 - [The stages](#the-stages)
+- [Where the stages stand](#where-the-stages-stand)
 - [What closes each requirement](#what-closes-each-requirement)
 - [The release](#the-release)
 - [Decisions taken](#decisions-taken)
@@ -24,7 +25,7 @@ These come from the owner's brief and from D-191 and do not change.
 
 ## What is done
 
-Merged to master or in an open pull request, as of 2026-11-03: the safety net (WP0), the derivations for wire sizing, wire length, mass, the bill of materials and the contact current, the Explain view in the Why tab, `explain` with `--all --out`, `docs/models/` for those five, a first registry of assumptions with IDs (`core/assumptions.py`, 12 entries), and, not yet merged, an *Explain* button on a finding of the three rules that have a calculation; and, in S5, the open data (`export-data`), the run record (`--run-record`) and mm² beside every AWG gauge on screen and in explanations.
+All ten stages are written, tested and in a pull request or merged; the numbers of the pull requests are in [Where the stages stand](#where-the-stages-stand). What each stage delivers is in the changelog; whether each of the 14 requirements is met, with the evidence and the gaps that remain, is in [the final audit](transparency_final_audit.md). Nothing is released: the release waits for the owner's decisions listed there.
 
 ## The stages
 
@@ -43,6 +44,24 @@ Each stage names what it delivers and when it is finished. The order is by depen
 | **S9** Workflow and the two roles | What each step consumes and produces, shown; the intermediates inspectable (and the editable ones editable); as-built capture for AIT (serial, lot, measured results) and the build workbook no longer write-only; Electrical and AIT as two roles if the tests with the engineers show it (D-191 (6)). | The workflow page matches the code (a test); an as-built record is imported, kept in the project and printed; the roles are tested on every page. | S4, S5 |
 | **S10** Models documentation and final audit | `docs/models/` for every model, rule and assumption, tied to a test so that none is left out; the audit of the requirements again, with the trace test of the 16 numbers repeated and timed. | The definition of done of the brief passes: any number traced in under a minute, any assumption changed without editing code, a colleague's result reproduced from an exported file, a result explained in a review. | all |
 
+## Where the stages stand
+
+| Stage | State | Pull requests |
+| --- | --- | --- |
+| Audit (phase 0) | done | #141 |
+| Step 0 and the first derivations (safety net, wire sizing, wire length, mass, bill of materials, contact current, the Explain view, derivations as files, the Explain button of a finding) | done | #142, #143, #144, #145, #146, #148, #149, #150, #153 |
+| **S1** Explanations for everything else | done | #158 |
+| **S2** Constants and assumptions as settings, **S3** Selectable models | done | #155 |
+| **S4** Overrides and change history | done | #160 |
+| **S5** Provenance and open data (run record, mm²) | done | #159 |
+| **S6** Data links and imports | done | #156 |
+| **S7** Scripting | done | #157 |
+| **S8** Extensibility | done | #161 |
+| **S9** Workflow, as-built capture and the roles | done | #162 |
+| **S10** Models documentation and final audit | done, in the pull request of this branch (`feat/s10-final-audit`) | the pull request that carries this page |
+
+"done" means written, tested and reviewed in its pull request, not released and not accepted by the owner: the final audit says what was checked and what was not.
+
 ## What closes each requirement
 
 R1 and R12: S1. R2 and R3: S2. R4: S3. R5: S5 (and S6 for imports). R6: S9. R7 and R8: S4. R9 and R10: S5. R11: S7. R13: S8. R14: S6. Documentation and tests: every stage, completed by S10.
@@ -57,4 +76,4 @@ One release after S10, prepared and published the way 1.11.0 and 1.11.1 were: a 
 - 2026-11-03, owner: **D2** the wire cross-section in mm² is shown next to every AWG gauge, on screen and in explanations; the written files keep the plain gauge unless the owner decides otherwise. **D8** `import-lengths` prints an echo of every converted value (D-193).
 - 2026-11-02, owner: the ten decisions of the audit as recommended (D-191).
 
-Next: [the audit](transparency_audit.md), [the models](models/README.md), [changes to results](changes.md)
+Next: [the final audit](transparency_final_audit.md), [the audit](transparency_audit.md), [the models](models/README.md), [changes to results](changes.md)

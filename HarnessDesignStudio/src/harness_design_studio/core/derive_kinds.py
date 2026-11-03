@@ -41,3 +41,23 @@ KINDS: dict[str, tuple[str, str]] = {
 def page_of(kind: str) -> str:
     """The page of `docs/models/` for a kind of derivation."""
     return KINDS[kind][0]
+
+
+# the design rules that have a derivation of a kind of their own since step 1; every other rule is
+# explained by `rule-limit` or `rule-check`, on the page of the limits
+_RULE_KINDS = {
+    "current-over-wire": "wire-current-limit",
+    "voltage-drop": "wire-voltage-drop",
+    "current-over-contact": "contact-current",
+}
+
+
+def page_of_rule(rule_id: str) -> str:
+    """The page of `docs/models/` that explains the derivation `explain_finding` gives for a rule,
+    so that a screen or a script can send the reader to it. A rule of an extension is not a rule of
+    the tool and has no page here (`KeyError`)."""
+    from harness_design_studio.core.derive import EXPLAINABLE_RULES
+
+    if rule_id not in EXPLAINABLE_RULES:
+        raise KeyError(rule_id)
+    return page_of(_RULE_KINDS.get(rule_id, "rule-limit"))

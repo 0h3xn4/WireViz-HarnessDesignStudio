@@ -46,6 +46,8 @@ The tool keeps what was recorded (`asbuilt/records.json`) and, for each value, s
 
 `flatsat`, harness `W001`. The Tests sheet has `T001`, a continuity test of `W001-001` with the limit *1 ohm max*. A technician measures 0.4 ohm: `margin = 1 - 0.4 = 0.6 ohm`, *within limit*. Another test is recorded as 1.4 ohm: `margin = 1 - 1.4 = -0.4 ohm`, **out of limit**, and the report says so whatever result was written beside it. The designed length of `W001-001` is 3.45 m; a recorded cut length of 3.46 m gives `difference = 3.46 - 3.45 = 0.01 m`, listed as *differs from design (+10 mm; no tolerance applied)*.
 
+Repeat the calculation of one value with `harness-design-studio explain DIR W001.T001` (a test) or `harness-design-studio explain DIR W001-001` (a cut length), and list all of them with `harness-design-studio asbuilt DIR`.
+
 ## What happens when a value is missing
 
 If a test has no measured value, the line says *missing* and the harness is *incomplete*. If the limit is not set in the project, a measured value is *not compared*, the derivation names `generation.test_continuity_max_ohm` (or the insulation key) as missing, and nothing is made up. A harness with no record at all is *not started*: nothing is missing from it.

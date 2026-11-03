@@ -5,9 +5,11 @@ Until version 1.12 some of the tool's calculations were fixed in the program. Ea
 ## Contents
 
 - [How to choose](#how-to-choose)
+- [Every key of `model.json`](#every-key-of-modeljson)
 - [Bundle basis](#bundle-basis)
 - [Length model](#length-model)
 - [Voltage drop model](#voltage-drop-model)
+- [The return path](#the-return-path)
 - [Mass model](#mass-model)
 - [Pin allocation order](#pin-allocation-order)
 - [What makes a harness not ready to build](#what-makes-a-harness-not-ready-to-build)
@@ -23,6 +25,27 @@ harness-design-studio generate DIR                                   # apply it 
 
 A value outside the choices or the range is refused, and nothing is changed. The reference of every key is [`docs/CONFIG.md`](../CONFIG.md#modeljson). Generate again after a change of a model that shapes a harness (bundle basis, length, drop, pin order): the checks and the explanations follow at once, the harness files at the next generation.
 
+## Every key of `model.json`
+
+Every key of the file, its default (the number the tool has always used) and what it changes. The reference with the ranges is [`docs/CONFIG.md`](../CONFIG.md#modeljson); `harness-design-studio settings DIR` shows the value in force and where it comes from.
+
+| Key | Default | What it changes | Assumption |
+| --- | --- | --- | --- |
+| `bundle_basis` | `all_wires` | which wires are counted for the bundle factor K | A-BUNDLE-ALL |
+| `length_model` | `path_plus_loops` | how the length of a generated wire is made | A-SERVICE-LOOP |
+| `service_loops_per_wire` | `2` | how many service loops are added to a generated wire (one at each end) | A-SERVICE-LOOP |
+| `cut_allowance_m` | `0` | metres added to every generated wire by the model `path_loops_allowance_twist` | A-SERVICE-LOOP |
+| `twist_takeup_fraction` | `0` | the extra length of a twisted construction, as a fraction, in the model `path_loops_allowance_twist` | A-SERVICE-LOOP |
+| `drop_model` | `dc_solid` | the resistivity the voltage drop uses | A-DC-SOLID |
+| `resistivity_temperature_coefficient` | `0.00393` | 1/K, for the model `dc_at_ambient` | A-DC-SOLID |
+| `resistivity_reference_temperature_c` | `20` | degC, the temperature the resistivity is given for, for the model `dc_at_ambient` | A-DC-SOLID |
+| `return_path_categories` | power, ground | the interface categories whose wires count the way out and the way back in the drop | A-ROUND-TRIP |
+| `return_path_conductors` | `2` | the conductors counted for such a wire | A-ROUND-TRIP |
+| `single_path_conductors` | `1` | the conductors counted for every other wire | A-ROUND-TRIP |
+| `mass_model` | `connectors_and_wires` | what the mass counts | A-MASS-SCOPE |
+| `pin_allocation_categories` | power, ground | the categories given pins first, in this order | A-PIN-ORDER |
+| `readiness_blocking` | Wires without a length, Wires without a gauge, Wires without a colour, Wires without a part | the checks whose open items make *Ready to build* no | A-READY-CHECKS |
+
 ## Bundle basis
 
 The factor K of `bundle_factor_by_count` (or `bundle_derating`) is looked up for a number of wires. `model.bundle_basis` says which wires are counted. Assumption A-BUNDLE-ALL.
@@ -37,23 +60,33 @@ A generated harness routes every wire through the trunk, so `busiest_segment` gi
 
 ## Length model
 
+`model.length_model`:
+
 | Value | Length of a generated wire |
 | --- | --- |
 | `path_plus_loops` (default) | the sum of the segments of its path + `service_loops_per_wire` × `service_loop_m` |
 | `path_loops_allowance_twist` | `(path + loops + cut_allowance_m) × (1 + twist_takeup_fraction)`, the take-up only for wires of a twisted construction |
 
-A length typed on a wire is never changed by the model. `cut_allowance_m` and `twist_takeup_fraction` default to 0: choosing the model without setting them changes nothing, so the number you add is always yours. Assumption A-SERVICE-LOOP; [wire length](wire-length.md).
+A length typed on a wire is never changed by the model. `cut_allowance_m` and `twist_takeup_fraction` default to 0: choosing the model without setting them changes nothing, so the number you add is always yours. The number of loops is `service_loops_per_wire`: with 0 the `flatsat` wire `W001-001` is the path alone, 3.25 m, and with 3 it is 3.25 + 3 × 0.1 = 3.55 m (generate again after the change; `explain DIR W001-001` shows `3 × 0.1`). Which constructions are twisted is a definition, [`D-TWISTED`](definitions.md#d-twisted-which-constructions-are-twisted). Assumption A-SERVICE-LOOP; [wire length](wire-length.md).
 
 ## Voltage drop model
+
+`model.drop_model`:
 
 | Value | Resistivity used |
 | --- | --- |
 | `dc_solid` (default) | `generation.conductor_resistivity_ohm_m` as given |
 | `dc_at_ambient` | `rho × (1 + alpha × (T − T_ref))` with `T` = `derating.max_ambient_temperature_c`, `alpha` = `resistivity_temperature_coefficient` (0.00393 1/K, annealed copper) and `T_ref` = `resistivity_reference_temperature_c` (20 degC) |
 
-Both are DC drops of a solid round conductor (A-DC-SOLID); neither is an AC or skin-effect model. If `dc_at_ambient` is chosen and the ambient temperature is not set, the drop is *not checked* and the derivation says which value is missing. [Wire sizing](wire-sizing.md).
+Both are DC drops of a solid round conductor (A-DC-SOLID); neither is an AC or skin-effect model. If `dc_at_ambient` is chosen and the ambient temperature is not set, the drop is *not checked* and the derivation says which value is missing. With the ambient temperature 60 degC and the defaults, the resistivity of the `flatsat` example grows by 1 + 0.00393 × (60 − 20) = 1.1572, and the drop of `W001-001` with it: 0.458359 V × 1.1572 = 0.530413 V. [Wire sizing](wire-sizing.md).
+
+## The return path
+
+`return_path_categories` (default power, ground) lists the interface categories whose wires are counted with their return in the voltage drop: the conductors counted are `return_path_conductors` (2, the way out and the way back, taken to have the same gauge and length). Every other category counts `single_path_conductors` (1). Assumption A-ROUND-TRIP. With `return_path_conductors` set to 1, the drop of the power wire `W001-001` is half of what it was, 0.229180 V instead of 0.458359 V, and `explain DIR W001-001` shows `Conductors counted n = 1` with the key as its source. A return of another gauge or length is not modelled. [Wire sizing](wire-sizing.md).
 
 ## Mass model
+
+`model.mass_model`:
 
 | Value | The mass counts |
 | --- | --- |

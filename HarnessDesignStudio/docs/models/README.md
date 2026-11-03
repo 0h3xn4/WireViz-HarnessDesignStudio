@@ -9,6 +9,8 @@ This folder explains, for engineers, every calculation the tool makes: the equat
 - [Every derivation as files](#every-derivation-as-files)
 - [Every result as files](#every-result-as-files)
 - [The assumptions built into the program](#the-assumptions-built-into-the-program)
+- [Definitions](#definitions)
+- [Nothing is left out](#nothing-is-left-out)
 
 ## How to use these pages
 
@@ -34,6 +36,7 @@ Every page follows the same order: what the tool decides, the equation, the inpu
 | [Shields](shields.md) | Which wires form a shield group and why the group has the ends it has | `harness-design-studio explain DIR GROUP` or `WIRE` |
 | [As-built results](asbuilt.md) | How a recorded value is compared: a measured resistance with the test limit (actual, limit, margin), a cut length with the designed length; what the tool does not decide | `harness-design-studio asbuilt DIR`, `explain DIR HARNESS.T001` or `WIRE` (kind `asbuilt-result`) |
 | [Rule limits](rule-limits.md) | The limit of every design rule, or, for a yes/no rule, what it compares | the Explain button of the Checks tab; `explain_finding` |
+| [Definitions](definitions.md) | What the tool fixes because it is a definition, not a choice: the AWG formula, the tolerance at a limit, the rounding of the data files, the bound on a length, which constructions are twisted, millimetres to metres | `harness-design-studio settings DIR` (the list after the assumptions) |
 
 A rule that a project adds with an extension ([Extend the tool](../user-manual/extend-the-tool.md)) has a derivation too, in the same form: a data file's rule shows its condition as the equation, the fields, parameters, settings and lookup values it read as the inputs (each with its source, which for a parameter is the file and the key), and the actual value, the limit and the margin as the check (kind `rule-limit`); a Python rule says what it compares (kind `rule-check`). Both name the file or the plug-in, its version and its hash, and say that the rule is not part of the tool. A test asks `explain` about every rule of the registry, built-in and extension.
 
@@ -56,4 +59,12 @@ There is no time, user name or path in the files: the same design gives the same
 
 Some of what a calculation rests on is not a number you type into `config/*.json` but a choice built into the program. Each has an ID, and a derivation names the ones it uses. Today they are: A-ROUND-TRIP, A-DC-SOLID, A-BUNDLE-ALL and A-PATH-UNIQUE, A-MASS-SCOPE, A-MASS-CONDUCTORS, A-BOM-CONTACTS, A-BOM-NO-ALLOWANCE and A-CONTACT-SHARED (built in; since S1 also A-READY-CHECKS, A-READY-SCOPE, A-TEST-LIMITS, A-TEST-LIST, A-PIN-ORDER, A-PIN-FIRST-FIT, A-SEGMENT-MODE, A-ZONE, A-LABEL-FORMAT, A-COLOUR-TABLE, A-SHIELD-GROUPS, A-SHIELD-ENDS, A-CONNECTOR-CHOICE, A-SPARE-PINS, A-CONNECTOR-VOLTAGE, A-AMBIENT-ONLY, A-MATING-REQUIRED, A-RETURN-GAP and A-BUNDLE-CURRENT, each on the page of the model it belongs to; the page [see what the tool assumes](../user-manual/see-what-the-tool-assumes.md) lists them with the settings that parameterise them), and A-TEMP-FACTOR, A-AMPACITY-AWG and A-SERVICE-LOOP (a value of the configuration, but one single number or table with no model behind it). They are described on the [wire sizing page](wire-sizing.md#the-assumptions-it-rests-on) and the [wire length page](wire-length.md#the-assumptions-it-rests-on) the [mass page](mass.md#the-assumptions-it-rests-on) the [bill of materials page](bom.md#the-assumptions-it-rests-on) and the [contact current page](contact-current.md#the-assumptions-it-rests-on). The aim of the work is that every built-in choice becomes a visible, documented setting; until then it is listed, not hidden.
 
-Next: [rule limits](rule-limits.md), [readiness](readiness.md), [selectable models](selectable-models.md), [contact current](contact-current.md), [bill of materials](bom.md), [mass](mass.md), [wire length](wire-length.md), [wire sizing](wire-sizing.md), [changes to results](../changes.md), [the configuration](../CONFIG.md)
+## Definitions
+
+A few things are neither a setting nor an assumption but a definition (`D-AWG`, `D-LIMIT-TOLERANCE`, `D-DATA-ROUNDING`, `D-IMPORT-LENGTH-BOUND`, `D-TWISTED`, `D-MM-TO-M`). They are on the page [definitions](definitions.md), and `settings` lists them.
+
+## Nothing is left out
+
+A test (`tests/test_models_docs_complete.py`) ties this folder to the code: every design rule has a row in [the rule reference](../RULES.md) and an explanation that names the page of its limit; every kind of derivation has a page that names it; every assumption is described on a page and every ID a page names exists; every setting is in [the configuration reference](../CONFIG.md) and every key and choice of `model.json` is on the page of the [selectable models](selectable-models.md); every definition is on its page; and this page links every page of the folder. A new rule, kind, assumption, setting or definition without its page fails that test. The final check of the whole transparency work is [the final audit](../transparency_final_audit.md); the 16 numbers of the first audit, traced again in under a minute each, are in [the trace results](../transparency_trace_results.md).
+
+Next: [the final audit](../transparency_final_audit.md), [rule limits](rule-limits.md), [readiness](readiness.md), [selectable models](selectable-models.md), [contact current](contact-current.md), [bill of materials](bom.md), [mass](mass.md), [wire length](wire-length.md), [wire sizing](wire-sizing.md), [changes to results](../changes.md), [the configuration](../CONFIG.md)

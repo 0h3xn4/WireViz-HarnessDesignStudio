@@ -402,6 +402,8 @@ def wire_voltage_drop_derivation(project: Project, h: Harness, w: Wire) -> Deriv
             assumptions=assumptions, missing=tuple(missing),
         )  # fmt: skip
     n = settings.drop_conductors(project, itype.category)
+    returns = itype.category in settings.names(project, "model", "return_path_categories")
+    n_key = "return_path_conductors" if returns else "single_path_conductors"
     awg = w.gauge_awg
     area = awg_to_area_mm2(awg)
     drop = voltage_drop_v(current, rho, length, awg, n)
@@ -416,7 +418,8 @@ def wire_voltage_drop_derivation(project: Project, h: Harness, w: Wire) -> Deriv
         Input("Gauge", awg, "AWG", f"wire {w.id}"),
         Input(
             "Conductors counted n", n, "",
-            f"category '{itype.category}' of interface type {itype.id}: 2 for power and ground, 1 otherwise (A-ROUND-TRIP)",
+            f"category '{itype.category}' of interface type {itype.id}: config/model.json: {n_key}, "
+            f"{'the category is one of return_path_categories' if returns else 'the category is not one of return_path_categories'} (A-ROUND-TRIP)",
         ),
     ]  # fmt: skip
     resistance = rho * length / (area * 1e-6) * n
