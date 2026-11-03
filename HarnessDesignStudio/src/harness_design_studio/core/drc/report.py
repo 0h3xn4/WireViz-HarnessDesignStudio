@@ -35,14 +35,26 @@ def render_markdown(project: Project, findings: list[Finding] | None = None) -> 
     )
     open_ = [f for f in found if f.waiver is None]
     waived = [f for f in found if f.waiver is not None]
+    rules_run = len(RULES)
+    ext_lines: list[str] = []
+    if project.extensions is not None:  # S8: only a project that enables extensions says so
+        from harness_design_studio.core.extensions.manager import provenance, rules_for
+
+        rules_run += len(rules_for(project))
+        ext_lines = [
+            f"Extension in force: {r['kind']} {r['name']} {r['version']}, sha256 `{str(r['sha256'])[:12]}`."
+            for r in provenance(project)
+        ]
     lines = [
         f"# Design rule check: {' '.join(project.meta.name.split())}",
         "",
-        f"Model hash: `{model_hash(project)[:12]}`. Rules run: {len(RULES)}.",
+        f"Model hash: `{model_hash(project)[:12]}`. Rules run: {rules_run}.",
         f"Open: {sum(f.severity == 'error' for f in open_)} error(s), "
         f"{sum(f.severity == 'warning' for f in open_)} warning(s), "
         f"{sum(f.severity == 'info' for f in open_)} note(s). Waived: {len(waived)}.",
     ]
+    if ext_lines:
+        lines += ["", *ext_lines]
     placeholders = sorted(n for n, c in project.config.items() if c.placeholder)
     if placeholders:
         lines += [

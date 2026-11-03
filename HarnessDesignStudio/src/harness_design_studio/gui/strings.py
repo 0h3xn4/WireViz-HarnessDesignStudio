@@ -256,6 +256,59 @@ A_ABOUT = "About"
 A_ASSUMPTIONS = "Assumptions..."
 ASSUMPTIONS_TITLE = "What the tool assumes"
 ASSUMPTIONS_NAME = "Settings, assumptions and definitions"
+A_EXTENSIONS = "Extensions..."
+EXT_TITLE = "Extensions of this project"
+EXT_NAME = "Declarative files, Python plug-ins and registered items"
+EXT_INTRO = (
+    "Extensions add rules, tables and readers to the tool. They are listed here and nothing in the "
+    "folder runs unless this project enables it (extensions/enabled.json). Data files add rules and "
+    "tables and run no code. Python plug-ins are code: one is loaded only when the project enables it "
+    "and you have trusted that exact code on this computer."
+)
+EXT_NO_FOLDER = "This project has no extensions folder. Nothing is added to the tool."
+EXT_FILES = "Declarative files (data, no code)"
+EXT_PLUGINS = "Python plug-ins (code)"
+EXT_ITEMS = "Registered items"
+EXT_PROBLEMS = "Problems"
+EXT_SHOW_BUILTIN = "Also list the built-in items"
+EXT_FILE_COLUMNS = ("File", "Name", "Version", "SHA-256", "Enabled", "Status")
+EXT_PLUGIN_COLUMNS = (
+    "Name",
+    "Version",
+    "Kinds",
+    "File",
+    "SHA-256",
+    "Lines",
+    "Enabled",
+    "Trusted",
+    "State",
+)
+EXT_ITEM_COLUMNS = ("Kind", "Name", "Source", "Origin", "Version", "SHA-256", "Enabled", "Trusted")
+EXT_TRUST = "Trust..."
+EXT_REVOKE = "Take back trust"
+EXT_RELOAD = "Read the folder again"
+EXT_YES = "yes"
+EXT_NO = "no"
+EXT_NOT_APPLICABLE = "data"
+EXT_TRUST_TITLE = "Trust this code?"
+EXT_TRUST_NAME = "Code to trust"
+EXT_TRUST_BODY = (
+    "This project enables the Python plug-in {name}. It is code, and it has not been loaded: it "
+    "runs only if you trust it. Read what it is:"
+)
+EXT_TRUST_RISK = (
+    "A trusted plug-in runs with your rights: it can read and write the files you can and use the "
+    "network of this computer. The tool has no sandbox. Trust it only if you have read it or you "
+    "trust who wrote it. If its file changes, the trust is gone and you are asked again."
+)
+EXT_TRUST_TYPE = "Type the name of the plug-in to trust it:"
+EXT_TRUST_OK = "Trust and load"
+EXT_TRUST_LATER = "Not now"
+EXT_SHOW_SOURCE = "Show the code"
+EXT_HIDE_SOURCE = "Hide the code"
+EXT_TRUST_FIELDS = ("Name", "Version", "Kinds", "File", "SHA-256", "Lines")
+EXT_TRUSTED_NOW = "The plug-in is trusted on this computer and loaded."
+EXT_REVOKED_NOW = "Trust of {name} taken back."
 A_ISSUES = "Show project problems"
 M_FILE = "&File"
 M_EDIT = "&Edit"
@@ -1028,6 +1081,8 @@ CHECKS_MISSING_ANALYSIS = "Needs an analysis outside this tool: {}"
 CHECKS_SUPPLY = "Supply value…"
 CHECKS_SUPPLY_TIP = "Open the engineering values and type this one in"
 CHECKS_SUPPLY_NAME = "Supply value… for {}"
+CHECKS_EXTENSION_NOTE = "This rule is not part of the tool: it comes from the {} {} (version {}, sha256 {}) that this project enables."
+CHECKS_EXTENSION_NOTE_PROBLEM = "This notice comes from the extensions of this project: something it enables was not applied. See Help > Extensions."
 CHECKS_PLACEHOLDER_NOTE = "This rule passed using placeholder values from {}. Nobody has reviewed them, so treat the result as provisional."
 CHECKS_OBJECTS_HEADING = "Offending objects ({})"
 CHECKS_OBJECTS_NONE = "Nothing was found."

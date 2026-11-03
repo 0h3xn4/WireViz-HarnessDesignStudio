@@ -934,6 +934,11 @@ def provenance_bytes(project: Project, files: dict[str, bytes], mhash: str) -> b
             "The gauge is the plain AWG number; its cross-section is the column area_mm2.",
         ],
     }
+    if project.extensions is not None:  # S8: only a project that enables extensions lists them
+        from harness_design_studio.core.extensions.manager import provenance
+
+        if listed := provenance(project):
+            doc["extensions"] = listed
     return _json(doc)
 
 

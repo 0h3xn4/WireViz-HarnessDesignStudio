@@ -326,6 +326,10 @@ def load_project(root: Path | str) -> LoadResult:
     files, broken, issues = read_tree(root)
     result = load_from_files(files, broken, issues)
     _add_lines(root, result)
+    if (base / "extensions").is_dir():  # S8: nothing is reached for a project without the folder
+        from harness_design_studio.core.extensions import attach
+
+        attach(result.project, root)
     return result
 
 

@@ -97,6 +97,9 @@ def schemas() -> dict[str, dict[str, Any]]:
             f"Harness Design Studio project file {shown}. Generated from the model."
         )
         out[name] = schema
+    from harness_design_studio.core.extensions import schema as extension_schema
+
+    out.update(extension_schema.schemas())  # S8: the two files of an extensions folder
     return out
 
 
@@ -107,6 +110,16 @@ def editor_settings() -> dict[str, Any]:
         "json.schemas": [
             {"fileMatch": [f"/{pattern}"], "url": f"./schemas/{name}.schema.json"}
             for name, pattern, _ in _kinds()
+        ]
+        + [
+            {
+                "fileMatch": ["/extensions/*.json", "!/extensions/enabled.json"],
+                "url": "./schemas/extension.schema.json",
+            },
+            {
+                "fileMatch": ["/extensions/enabled.json"],
+                "url": "./schemas/extensions-enabled.schema.json",
+            },
         ]
     }
 

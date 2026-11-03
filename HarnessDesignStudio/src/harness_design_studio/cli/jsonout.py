@@ -76,6 +76,12 @@ SHAPES: dict[str, tuple[str, ...]] = {
     "compare": ("ok", "added", "removed", "changed", "changes", "not_compared"),
     "log": ("ok", "harness", "entries"),
     "migrate": ("ok", "migrated"),
+    "extensions": (
+        "ok", "has_folder", "enabled_declarative", "enabled_plugins", "files", "plugins", "items",
+        "issues",
+    ),
+    "trust": ("ok", "action", "name", "version", "sha256", "lines", "where", "trusted", "changed"),
+    "import-plugin": ("ok", "dry_run", "changed", "importer", "rows", "notes"),
 }  # fmt: skip
 
 JSON_HELP = (

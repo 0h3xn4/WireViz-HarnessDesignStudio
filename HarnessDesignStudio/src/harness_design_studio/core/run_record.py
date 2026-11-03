@@ -77,6 +77,11 @@ def make(
     the project folder (to find the Git name; it is not recorded); `extensions` is what the
     extension registry reports (name and version of each plug-in in force)."""
     when = (now or utc_now)().astimezone(UTC).replace(microsecond=0)
+    if not extensions and project.extensions is not None:
+        # S8: every enabled declarative file and loaded plug-in (name, version, kind, file, hash)
+        from harness_design_studio.core.extensions.manager import provenance
+
+        extensions = [{k: str(v) for k, v in row.items()} for row in provenance(project)]
     return {
         "format": FORMAT,
         "time_utc": when.strftime("%Y-%m-%dT%H:%M:%SZ"),
