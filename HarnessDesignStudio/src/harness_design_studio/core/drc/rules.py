@@ -9,6 +9,7 @@ import hashlib
 from collections import Counter, defaultdict
 from collections.abc import Iterator
 
+from harness_design_studio.core import settings
 from harness_design_studio.core.configcheck import validate as validate_config
 from harness_design_studio.core.generate.lengths import loop_segments, wire_length
 from harness_design_studio.core.generate.sizing import (
@@ -386,7 +387,7 @@ def _voltage_drop(project: Project) -> Iterator[Hit]:
                     w.id, f"Wire {w.id} has AWG {w.gauge_awg}, which is not a wire size (0 to 40)"
                 )
                 continue
-            n = 2 if itype.category in ("power", "ground") else 1
+            n = settings.drop_conductors(project, itype.category)
             drop = voltage_drop_v(i.max_current_a, rho, length, w.gauge_awg, n)
             if exceeds(drop, limit):
                 yield Hit(w.id, f"Wire {w.id} drops {drop:.3g} V, more than the {limit:g} V limit")

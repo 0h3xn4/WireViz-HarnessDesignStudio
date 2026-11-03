@@ -1,6 +1,6 @@
 # Configuration reference
 
-Rules live in `config/*.json` inside the project, not in code. There are seven files. Every file except `naming.json` has `"placeholder": true` until an engineer has reviewed it; set it to `false` afterwards. (`naming.json` ships with `"placeholder": false`, because name patterns are a style choice, not an engineering value.) Values shown as `null` are placeholders: results say so and the affected checks say *not checked*. Which standard to take values from is for you to decide; the tool ships none. `harness-design-studio config DIR` lists what is missing and checks what is set (ranges, table order); see IMPORTS.md. Generation runs the same check: a value that is set but invalid is reported as an error in the generation result and treated as unset (the gauge stays *pending*); the tool never uses it.
+Rules live in `config/*.json` inside the project, not in code. There are seven files, and an eighth, `model.json`, that is optional (see [`model.json`](#modeljson)). Every file except `naming.json` has `"placeholder": true` until an engineer has reviewed it; set it to `false` afterwards. (`naming.json` ships with `"placeholder": false`, because name patterns are a style choice, not an engineering value.) Values shown as `null` are placeholders: results say so and the affected checks say *not checked*. Which standard to take values from is for you to decide; the tool ships none. `harness-design-studio config DIR` lists what is missing and checks what is set (ranges, table order); see IMPORTS.md. Generation runs the same check: a value that is set but invalid is reported as an error in the generation result and treated as unset (the gauge stays *pending*); the tool never uses it.
 
 ## Contents
 
@@ -13,6 +13,7 @@ Rules live in `config/*.json` inside the project, not in code. There are seven f
 - [`emc.json`](#emcjson)
 - [`naming.json`](#namingjson), with [`signal_counterparts`](#the-words-for-the-two-ends-of-a-line-since-190) and [`release_distinct_roles`](#different-people-in-a-release-since-190)
 - [`titleblock.json`](#titleblockjson)
+- [`model.json`](#modeljson)
 - [Optional values from the supplied standards (D-131)](#optional-values-from-the-supplied-standards-d-131)
 
 ## The shape of a file
@@ -151,6 +152,19 @@ While it is `true`:
 | Key | Meaning |
 | --- | --- |
 | `fields` | which title block fields appear, in order: `project`, `harness_id`, `title`, `revision`, `date`, `author`, `checker`, `approver`, `sheet`, `status`. None is mandatory (leave `sheet` out to hide the sheet number). A name that is not in this list, a name twice, or an entry that is not text is a configuration error; the default fields are drawn until it is fixed. Empty or missing means the default: `project`, `harness_id`, `title`, `revision`, `status`, `sheet` |
+
+## `model.json`
+
+Optional, and absent from a new project: a project that does not have it behaves exactly as before. It holds the choices that were built into the program before version 1.12 and are now settings, each with **the value the program used then as its default**, so setting nothing changes nothing. The page that lists what is in force for a project is `harness-design-studio settings DIR` (see [see what the tool assumes](user-manual/see-what-the-tool-assumes.md)). The file is not an engineering value that needs review: it ships with `"placeholder": false` when you create it.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `return_path_categories` | `["power", "ground"]` | the interface categories whose wires count the current going out **and** coming back in the voltage drop (assumption A-ROUND-TRIP) |
+| `return_path_conductors` | 2 | the conductors the drop of such a wire counts: a whole number 1 to 4 |
+| `single_path_conductors` | 1 | the conductors the drop of every other wire counts: a whole number 1 to 4 |
+| `service_loops_per_wire` | 2 | the service loops added to the length of a generated wire, one at each end, each as long as `service_loop_m` (assumption A-SERVICE-LOOP): a whole number 0 to 4 |
+
+A key that is not in this table is an error that names it, so a typo is not silent. The same tables and ranges are in `core/settings.py`, from which `settings` and the explanations (`explain`) read; a test checks that every key of every file is described there and here.
 
 ## Optional values from the supplied standards (D-131)
 

@@ -97,6 +97,7 @@ from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, 
 from harness_design_studio.core.vcs.roles import default_name, distinct_roles_on
 from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import areas, recent, strings
+from harness_design_studio.gui.assumptions_dialog import AssumptionsDialog
 from harness_design_studio.gui.canvas import DiagramView, ZoomIndicator
 from harness_design_studio.gui.checks_panel import ChecksPanel, PendingValuesLink
 from harness_design_studio.gui.command_palette import CommandPalette, PaletteEntry
@@ -1786,6 +1787,9 @@ class MainWindow(QMainWindow):
             name="act-tour",
         )
         self.act_glossary = a(strings.A_GLOSSARY, self.glossary_flow, name="act-glossary")
+        self.act_assumptions = a(
+            strings.A_ASSUMPTIONS, self.assumptions_flow, name="act-assumptions"
+        )
         self.act_sample = a(strings.A_SAMPLE, self.sample_flow, name="act-sample")
         self.act_about = a(strings.A_ABOUT, self.about_flow, name="act-about")
         self.act_issues = a(strings.A_ISSUES, self.issues_flow, name="act-issues")
@@ -2140,6 +2144,7 @@ class MainWindow(QMainWindow):
             self.act_commands,
             self.act_tour,
             self.act_glossary,
+            self.act_assumptions,
             self.act_issues,
             self.act_about,
         ):
@@ -4167,6 +4172,10 @@ class MainWindow(QMainWindow):
 
     def glossary_flow(self) -> None:
         self.run_dialog(GlossaryDialog(self))
+
+    def assumptions_flow(self) -> None:
+        """Help > Assumptions: what the tool assumes for the open project (D-191)."""
+        self.run_dialog(AssumptionsDialog(self, self.theme, self.ctl.project))
 
     def about_flow(self) -> None:
         """About is a section of Settings, not a message box."""

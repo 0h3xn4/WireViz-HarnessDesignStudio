@@ -14,7 +14,7 @@ from typing import Any, cast
 from pydantic import TypeAdapter, ValidationError
 
 from harness_design_studio import __version__
-from harness_design_studio.core import configcheck
+from harness_design_studio.core import configcheck, settings
 from harness_design_studio.core.commands import Delete, Op, Put, SetGeneration
 from harness_design_studio.core.describe import part_gender
 from harness_design_studio.core.edit import clone_with
@@ -689,7 +689,7 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
                 used_wires.add(wid)
             length = path_length(skeleton, cables[src_box].id, cables[dst_box].id)
             if length is not None and loop is not None:
-                length += 2 * loop
+                length += settings.service_loops(p) * loop
             wire = Wire(
                 id=wid, signal=link.label, from_connector=cables[src_box].id, from_pin=pin_src, to_connector=cables[dst_box].id,
                 to_pin=pin_dst, part_id=part_id, interface_id=i.id, length_m=length,
@@ -951,7 +951,7 @@ def _wire_part(ctx: _Ctx, construction: str, iid: str) -> str | None:
 def _size(
     ctx: _Ctx, wire: Wire, i: InterfaceInstance, category: str, bundle_wires: int | None = None
 ) -> Wire:
-    conductors = 2 if category in ("power", "ground") else 1
+    conductors = settings.drop_conductors(ctx.project, category)
     sizing = size_wire(
         ctx.der,
         ctx.gen,

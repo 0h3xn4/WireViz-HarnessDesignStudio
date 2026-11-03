@@ -28,10 +28,11 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "A-ROUND-TRIP",
             "A power or ground wire is counted twice in the voltage drop",
             "The voltage drop of a wire of a power or ground interface is the drop of the current "
-            "going out and coming back: the conductors counted are 2 (1 for every other category). "
-            "The return is taken to have the same gauge and length as the wire itself.",
-            "built in",
-            "core/generate/engine.py (conductors), core/drc/rules.py (_voltage_drop)",
+            "going out and coming back: the conductors counted are 2 (1 for every other category; "
+            "the categories and both counts are settings of config/model.json, with these as "
+            "defaults). The return is taken to have the same gauge and length as the wire itself.",
+            "setting",
+            "config/model.json: return_path_categories, return_path_conductors, single_path_conductors",
         ),
         Assumption(
             "A-DC-SOLID",
@@ -72,11 +73,12 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "A-SERVICE-LOOP",
             "A generated wire is longer than its path by two service loops",
             "A wire that generation measures from the routing segments is given the length of its "
-            "path plus 2 × the service loop of the configuration: one loop at each end. When the "
+            "path plus 2 × the service loop of the configuration: one loop at each end (the number "
+            "of loops is the setting service_loops_per_wire of config/model.json, 2 by default). When the "
             "service loop is not set, nothing is added and generation says so. The same extra "
             "length is added to every wire whatever its gauge, part or end.",
             "setting",
-            "config/generation.json: service_loop_m; core/generate/engine.py",
+            "config/generation.json: service_loop_m; config/model.json: service_loops_per_wire",
         ),
         Assumption(
             "A-PATH-UNIQUE",

@@ -16,6 +16,7 @@ import math
 from dataclasses import dataclass, field
 from typing import Any
 
+from harness_design_studio.core import settings
 from harness_design_studio.core.assumptions import describe
 from harness_design_studio.core.drc.base import cfg, number
 from harness_design_studio.core.drc.rules import contact_rating, contact_rating_key
@@ -315,7 +316,7 @@ def wire_voltage_drop_derivation(project: Project, h: Harness, w: Wire) -> Deriv
             "wire-voltage-drop", subject, "Voltage drop", None, "V", equation,
             assumptions=assumptions, missing=tuple(missing),
         )  # fmt: skip
-    n = 2 if itype.category in ("power", "ground") else 1
+    n = settings.drop_conductors(project, itype.category)
     awg = w.gauge_awg
     area = awg_to_area_mm2(awg)
     drop = voltage_drop_v(current, rho, length, awg, n)
@@ -362,7 +363,8 @@ def wire_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
     generation = cfg(project, "generation")
     loop = number(generation.get("service_loop_m"))
     subject = f"Wire {w.id}"
-    equation = "L = sum of the routing segments between its connectors + 2 × service loop"
+    loops = settings.service_loops(project)
+    equation = f"L = sum of the routing segments between its connectors + {loops} × service loop"
     assumptions = ("A-PATH-UNIQUE", "A-SERVICE-LOOP")
     length = wire_length(h, w)
     trail = path_trail(h, w.from_connector, w.to_connector) if h.segments else None
@@ -420,8 +422,9 @@ def wire_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
                 "m",
             )
         )
-        extra = 2 * (loop or 0.0)
-        steps.append(Step("Service loops, one at each end", f"2 × {_g(loop or 0.0)}", extra, "m"))
+        extra = loops * (loop or 0.0)
+        label = "Service loops, one at each end" if loops == 2 else f"Service loops ({loops})"
+        steps.append(Step(label, f"{loops} × {_g(loop or 0.0)}", extra, "m"))
         steps.append(Step("Generated length", f"{_g(seg_sum)} + {_g(extra)}", seg_sum + extra, "m"))
     if w.length_m is None:
         basis = "the routing segments of its path (no length is stored on the wire; no service loop is added here)"
@@ -429,7 +432,7 @@ def wire_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
         if seg_sum is not None:
             steps = steps[:1]
     elif seg_sum is not None and math.isclose(
-        w.length_m, seg_sum + 2 * (loop or 0.0), rel_tol=0, abs_tol=1e-9
+        w.length_m, seg_sum + loops * (loop or 0.0), rel_tol=0, abs_tol=1e-9
     ):
         basis = "generated: the path through the segments plus two service loops"
         value = w.length_m

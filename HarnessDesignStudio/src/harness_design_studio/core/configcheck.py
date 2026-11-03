@@ -156,10 +156,50 @@ def validate(project: Project) -> list[Issue]:
                 )
         elif n.key == "ampacity_a_by_awg":
             out.extend(_validate_ampacity(n, v))
+    out.extend(validate_model(project))
     out.extend(validate_titleblock(project))
     out.extend(validate_counterparts(project))
     out.extend(validate_distinct_roles(project))
     out.extend(standard_profiles.validate(project))
+    return out
+
+
+_MODEL_RANGES: dict[str, tuple[int, int]] = {
+    "return_path_conductors": (1, 4),
+    "single_path_conductors": (1, 4),
+    "service_loops_per_wire": (0, 4),
+}
+
+
+def validate_model(project: Project) -> list[Issue]:
+    """The model settings (config/model.json): whole numbers in a small range, and the categories
+    as a list of names. A key that is not a model setting is reported, so a typo is not silent."""
+    values = _cfg(project, "model")
+    where = "config/model.json"
+    out: list[Issue] = []
+
+    def bad(key: str, why: str) -> None:
+        out.append(
+            Issue("error", "config_invalid", f"{where}: {key} {why}.", where, f"model.{key}")
+        )
+
+    known = set(_MODEL_RANGES) | {"return_path_categories"}
+    for key, v in values.items():
+        if key not in known:
+            bad(key, "is not a setting of the model (see harness-design-studio settings)")
+        elif v is None:
+            continue
+        elif key == "return_path_categories":
+            if not isinstance(v, list) or not all(isinstance(c, str) and c for c in v):
+                bad(
+                    key,
+                    'must be a list of interface category names, for example ["power", "ground"]',
+                )
+        else:
+            low, high = _MODEL_RANGES[key]
+            x = _num(v)
+            if x is None or x != int(x) or not low <= x <= high:
+                bad(key, f"must be a whole number from {low} to {high}")
     return out
 
 
