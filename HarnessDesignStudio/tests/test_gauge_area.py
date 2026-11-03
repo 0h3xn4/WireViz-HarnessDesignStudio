@@ -32,7 +32,7 @@ def test_the_helpers_write_the_gauge_with_its_area() -> None:
     assert format_gauge(24) == "24 AWG (0.205 mm²)"
     assert gauge_short(24) == "24 (0.205 mm²)"
     assert format_awg(24) == "AWG 24 (0.205 mm²)"
-    assert format_gauge(0) == "0 AWG (53.475 mm²)" and format_gauge(40) == "40 AWG (0.005 mm²)"
+    assert format_gauge(0) == "0 AWG (53.5 mm²)" and format_gauge(40) == "40 AWG (0.00501 mm²)"
     # a gauge outside 0 to 40 is not made up a cross-section
     assert format_gauge(41) == "41 AWG" and gauge_short(-1) == "-1"
 
@@ -83,7 +83,7 @@ def test_the_data_keeps_the_number_and_adds_the_area(flatsat) -> None:  # type: 
 
 def test_the_assumptions_page_names_the_gauges_of_the_ampacity_table(flatsat) -> None:  # type: ignore[no-untyped-def]
     page = settings.render(flatsat)
-    assert "ampacity_a_by_awg = AWG 16 (1.309 mm²): 10.0, AWG 18" in page
+    assert "ampacity_a_by_awg = AWG 16 (1.31 mm²): 10.0, AWG 18" in page
     row = next(r for r in settings.rows(flatsat) if r.setting.key == "ampacity_a_by_awg")
     assert isinstance(row.value, dict) and set(row.value) == {"16", "18", "20", "22", "24", "26"}
     # the value as data is the table, not the text

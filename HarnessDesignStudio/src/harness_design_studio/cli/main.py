@@ -392,6 +392,7 @@ NOTHING_DONE = {
     "export-devices": "exported", "import-devices": "imported", "import-build-data": "imported",
     "export-subsystem": "exported", "import-subsystem": "imported", "explain": "explained", "settings": "reported or changed",
     "export-data": "exported",
+    "imports": "listed",
 }  # fmt: skip
 
 MUTATING = {

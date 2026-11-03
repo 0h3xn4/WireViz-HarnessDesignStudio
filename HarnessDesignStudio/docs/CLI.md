@@ -15,6 +15,8 @@ A project with damaged files (a file that is not valid, a link, over 64 MB or un
 
 An import whose file says what the project already holds changes nothing, prints `Already up to date.` and ends with 0, so it can run again on every build. Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not.
 
+What an import prints. Every import that reads a file says what it read before it lists the rows: `Read 12 row(s) of segment lengths from lengths.csv (sha256 117043908312).`, `Columns read: harness -> harness, segment -> segment, length -> length`, a line `warning: the column 'Notes' is not read; its values are not imported.` for every column that is left out, and the unit: `Unit: length in mm (assumed; --unit says another).` or `Unit: length in in (given with --unit).`. A value that is converted is shown with the value as written, its unit and the value stored: `Converted, row 2 (ZZ-1): 0.25 kg = 250 g`; `import-lengths` shows it on the line of its row, `row 2: OK W001 / W001-L1: 850 mm = 0.85 m`. A row that is dropped says why: `row 3: ERROR Harness 'W009' does not exist`. An import that is applied (not with `--dry-run`) records the file in the project, in `imports/records.json` (kind, file name, SHA-256, rows read, rows dropped with the reason, values converted, columns read and left out, unit, tool version; no time and no absolute path), and ends with `Import record: lengths:lengths.csv written to imports/records.json.`; importing the same file again replaces its record, and an unchanged file changes nothing. `harness-design-studio imports` lists the records and shows whether a source file has changed since. With `--json` every import prints the same facts as the last key, `import` (the record, with `record_written` true when this run wrote it, and the `warnings` of `import-build-data`), and `imports --json` prints `records_file`, `count`, `sources_changed` and the `imports` with their `status` and `current_sha256`.
+
 The examples show the form of each command with example names. They do not all work on any project: `release` is blocked until its conditions are met (placeholder configuration, unapproved parts, missing gauges and lengths; see [`GETTING_STARTED.md`](GETTING_STARTED.md)), and `revise` works only on a released harness.
 
 ## Contents
@@ -25,7 +27,7 @@ The examples show the form of each command with example names. They do not all w
 - Explain: [`explain`](#harness-design-studio-explain), [`settings`](#harness-design-studio-settings)
 - Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export), [`export-data`](#harness-design-studio-export-data)
 - Team use with Git: [`merge-fix`](#harness-design-studio-merge-fix)
-- Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data)
+- Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data), [`imports`](#harness-design-studio-imports)
 - Write data out: [`export-pinout`](#harness-design-studio-export-pinout), [`export-devices`](#harness-design-studio-export-devices), [`export-subsystem`](#harness-design-studio-export-subsystem)
 - Review, release and change: [`review`](#harness-design-studio-review), [`release`](#harness-design-studio-release), [`revise`](#harness-design-studio-revise), [`diff`](#harness-design-studio-diff), [`log`](#harness-design-studio-log), [`compare`](#harness-design-studio-compare)
 - Maintenance: [`migrate`](#harness-design-studio-migrate)
@@ -52,14 +54,15 @@ Every command that has a result in data form takes `--json`. The usual text line
 | `merge-fix` | `ok`, `result`, `conflicts`, `problem`, `generate`, `check` |
 | `config` | `ok`, `set_count`, `total`, `values`, `problems`, `placeholder_files`, `waiting_for_decision`, `counterpart_pairs`, `release_distinct_roles`, `changes` |
 | `library` | `ok`, `name`, `version`, `source`, `date`, `changed` |
-| `import-parts` | `ok`, `dry_run`, `changed`, `ready`, `problems`, `rows`, `library` |
-| `import-lengths` | `ok`, `dry_run`, `changed`, `ready`, `problems`, `hint`, `rows` |
-| `import-build-data` | `ok`, `dry_run`, `changed`, `kind`, `counts`, `rows` |
-| `import-netlist` | `ok`, `dry_run`, `changed`, `rows`, `warnings`, `unmatched_signals` |
-| `import-pinout` | `ok`, `dry_run`, `changed`, `connectors`, `pins`, `rows`, `warnings`, `unmatched_signals` |
-| `import-devices` | `ok`, `dry_run`, `changed`, `rows`, `notes` |
+| `import-parts` | `ok`, `dry_run`, `changed`, `ready`, `problems`, `rows`, `library`, `import` |
+| `import-lengths` | `ok`, `dry_run`, `changed`, `ready`, `problems`, `hint`, `rows`, `import` |
+| `import-build-data` | `ok`, `dry_run`, `changed`, `kind`, `counts`, `rows`, `import` |
+| `import-netlist` | `ok`, `dry_run`, `changed`, `rows`, `warnings`, `unmatched_signals`, `import` |
+| `import-pinout` | `ok`, `dry_run`, `changed`, `connectors`, `pins`, `rows`, `warnings`, `unmatched_signals`, `import` |
+| `import-devices` | `ok`, `dry_run`, `changed`, `rows`, `notes`, `import` |
 | `import-devices --list` | `ok`, `devices` |
-| `import-subsystem` | `ok`, `dry_run`, `changed`, `name`, `connections`, `rows`, `notes` |
+| `import-subsystem` | `ok`, `dry_run`, `changed`, `name`, `connections`, `rows`, `notes`, `import` |
+| `imports` | `ok`, `records_file`, `count`, `sources_changed`, `imports` |
 | `import-subsystem --show` | `ok`, `name`, `description`, `devices`, `connectors`, `connections`, `device_list` |
 | `export-pinout` | `ok`, `device`, `pin_rows`, `columns`, `rows`, `written` |
 | `export-devices` | `ok`, `devices`, `connectors`, `notes` |
@@ -396,7 +399,7 @@ harness-design-studio library my-design --library-version 4 --library-source "ES
 
 ### harness-design-studio import-parts
 
-Import parts with their approval status. Say what the approval values in your list mean; unknown values are rejected, never guessed.
+Import parts with their approval status. Say what the approval values in your list mean; unknown values are rejected, never guessed. A column headed with the name of a rating (contact_current_a, rated_voltage_v, dielectric_withstand_v, max_temp_c, mating_cycles, shield_insulated, conductive_finish) is read into the ratings of the part. Masses are read in grams unless --mass-unit says another unit. The import says which columns it read and which it left out, and records the file (name, SHA-256, rows, columns, conversions) in imports/records.json; see `harness-design-studio imports`.
 
 `harness-design-studio import-parts project file [options]`
 
@@ -408,6 +411,7 @@ Import parts with their approval status. Say what the approval values in your li
 | `--pending PENDING` | a value that means not decided yet (repeat) (repeatable) |
 | `--rejected REJECTED` | a value that means not approved (repeat) (repeatable) |
 | `--category CATEGORY` | category for rows that have none (connector, contact, backshell, wire, sleeving, label) |
+| `--mass-unit MASS_UNIT` | unit of the mass columns (mass per metre: this unit per metre); default g, the unit the columns have always been read in (one of g, kg, lb, oz) |
 | `--dry-run` | show the preview only |
 | `--library-name LIBRARY_NAME` | name of the parts library |
 | `--library-version LIBRARY_VERSION` | version of the parts data |
@@ -421,11 +425,12 @@ Examples:
 harness-design-studio import-parts my-design parts.csv --approved Approved --pending Review --rejected Rejected --dry-run
 harness-design-studio import-parts my-design parts.csv --approved Approved --dry-run --json
 harness-design-studio import-parts my-design connectors.xlsx --approved Yes --category connector
+harness-design-studio import-parts my-design erp-export.csv --approved Released --mass-unit kg
 ```
 
 ### harness-design-studio import-lengths
 
-Import segment lengths, for example exported from the mechanical CAD. The columns are read by position (harness, segment, length), not by their headings. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).
+Import segment lengths, for example exported from the mechanical CAD. The columns are read by position (harness, segment, length), not by their headings. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5). The unit of the length column is millimetres unless --unit says another. The command echoes what it did: the unit, and for every row `row N: OK HARNESS / SEGMENT: READ UNIT = STORED m` (the value as written, the unit it was read in, the metres that were stored); a row that is dropped says why (`row N: ERROR reason`); a column that is not read is named in a warning. The file (name, SHA-256, rows, the conversions) is recorded in imports/records.json.
 
 `harness-design-studio import-lengths project file [options]`
 
@@ -433,7 +438,7 @@ Import segment lengths, for example exported from the mechanical CAD. The column
 | --- | --- |
 | `project` | the project folder |
 | `file` | the file to read |
-| `--unit UNIT` | unit of the length column (default mm) (one of cm, m, mm) |
+| `--unit UNIT` | unit of the length column (default mm, the unit it has always been read in; the echo says whether the unit was given or assumed) (one of cm, ft, in, m, mm) |
 | `--dry-run` | show what would be done and change nothing |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
@@ -442,11 +447,12 @@ Examples:
 ```
 harness-design-studio import-lengths my-design lengths.csv --unit mm --dry-run
 harness-design-studio import-lengths my-design lengths.csv --dry-run --json
+harness-design-studio import-lengths my-design lengths-in-inches.csv --unit in
 ```
 
 ### harness-design-studio import-netlist
 
-Create or update the box connectors of one device from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The user guide has a chapter on it.
+Create or update the box connectors of one device from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The import record keeps the design source of the netlist (the name of the schematic file) and the KiCad pin type of every pin, and says which parts of the components it did not import. The user guide has a chapter on it.
 
 `harness-design-studio import-netlist project netlist [options]`
 
@@ -461,6 +467,7 @@ Create or update the box connectors of one device from a KiCad netlist (the .net
 | `--part REF=PART` | library part for a new connector (default: the symbol field HarnessPart, or the existing connector's part) (repeatable) |
 | `--signal-map NAME=SIGNAL|FILE` | translate a KiCad net name to an interface signal name (repeatable), or a CSV (net name, signal) or JSON object file of such pairs (repeatable) |
 | `--pin-function` | use the pin names of the symbol instead of the net names as signals |
+| `--pin-direction` | also set the direction of a pin that has none from the KiCad pin type (input, output, bidirectional; other types set nothing) |
 | `--dry-run` | show what would be done and change nothing |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
@@ -469,6 +476,7 @@ Examples:
 ```
 harness-design-studio import-netlist my-design wheel.net --device RW1 --prefix J --connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run
 harness-design-studio import-netlist my-design wheel.net --device RW1 --dry-run --json
+harness-design-studio import-netlist my-design wheel.net --device RW1 --pin-direction
 ```
 
 ### harness-design-studio import-pinout
@@ -556,6 +564,7 @@ Import the build data of a technician from a table. The kind is told by the colu
 | --- | --- |
 | `project` | the project folder |
 | `file` | the file to read |
+| `--unit UNIT` | unit of the strip and accessory lengths (default mm, the unit they have always been read in; they are stored in millimetres) (one of cm, ft, in, m, mm) |
 | `--dry-run` | show the preview only |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
@@ -566,6 +575,28 @@ harness-design-studio import-build-data my-design strip-lengths.csv --dry-run
 harness-design-studio import-build-data my-design strip-lengths.csv --dry-run --json
 harness-design-studio import-build-data my-design pin-contacts.csv
 harness-design-studio import-build-data my-design accessories.csv
+harness-design-studio import-build-data my-design strip-lengths-in-inches.csv --unit in
+```
+
+### harness-design-studio imports
+
+List the import records of a project (imports/records.json): for every import the kind, the source file name, the number of rows read, dropped and converted, the unit, and a short SHA-256. A source that can be reached (its path inside the project folder, or a file you name with --source) is compared with the recorded SHA-256 and marked `source changed` when it differs; the other sources are marked `not checked (no path)` or `source not found`. The record holds no time and no absolute path. With --json the records and their status are printed as one JSON document. With --check the command ends with 1 when a source has changed, so a build can stop on it.
+
+`harness-design-studio imports project [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | the project folder |
+| `--source FILE` | a file to compare with the record of the same file name, for a source outside the project folder (repeatable) |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+| `--check` | end with exit code 1 when a source has changed |
+
+Examples:
+
+```
+harness-design-studio imports my-design
+harness-design-studio imports my-design --check
+harness-design-studio imports my-design --json --source cad/lengths.csv
 ```
 
 ## Write data out

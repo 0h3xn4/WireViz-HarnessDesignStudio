@@ -311,6 +311,7 @@
     "connectors": "dict[str, Connector]",
     "generation": "GenerationRecord | None",
     "harnesses": "dict[str, Harness]",
+    "import_records": "dict[str, ImportRecord]",
     "interface_types": "dict[str, InterfaceType]",
     "interfaces": "dict[str, InterfaceInstance]",
     "library_info": "LibraryInfo",

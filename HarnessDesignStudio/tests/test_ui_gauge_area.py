@@ -13,7 +13,7 @@ pytestmark = pytest.mark.gui
 from PySide6.QtCore import Qt  # noqa: E402
 
 from harness_design_studio.core.checks import Finding  # noqa: E402
-from harness_design_studio.core.units import awg_to_area_mm2, gauge_short  # noqa: E402
+from harness_design_studio.core.units import area_text, gauge_short  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
 from harness_design_studio.gui.checks_panel import object_row  # noqa: E402
 from harness_design_studio.gui.states import STATE_ROLE  # noqa: E402
@@ -71,7 +71,7 @@ def test_the_gauge_field_of_the_edit_wire_tab_shows_the_area(qtbot, theme) -> No
 
     select_rows(view, row)
     n = int(ed.gauge.text())
-    assert ed.gauge_area.text() == strings.WIRE_GAUGE_AREA.format(awg_to_area_mm2(n))
+    assert ed.gauge_area.text() == strings.WIRE_GAUGE_AREA.format(area_text(n))
     assert ed.gauge_area.text().endswith(" mm²")
     ed.gauge.setText("24")
     assert ed.gauge_area.text() == "0.205 mm²"
@@ -79,7 +79,7 @@ def test_the_gauge_field_of_the_edit_wire_tab_shows_the_area(qtbot, theme) -> No
         ed.gauge.setText(text)
         assert ed.gauge_area.text() == "", text
     ed.gauge.setText("0")
-    assert ed.gauge_area.text() == "53.475 mm²"
+    assert ed.gauge_area.text() == "53.5 mm²"
     # the value that is applied is the typed number, not the text with the area
     ed.gauge.setText("22")
     assert ed.gauge.text() == "22"

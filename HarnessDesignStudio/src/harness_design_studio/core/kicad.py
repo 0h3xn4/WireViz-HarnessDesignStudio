@@ -12,6 +12,11 @@ What is not known yet is how your KiCad names relate to the tool's, so nothing i
   of the connector that already exists; otherwise the row is an error;
 - signal names: the net name without its sheet path, translated by a mapping table you give;
   names that match no signal of any interface type are reported so you can build that table.
+
+The pin type of each pin (`input`, `power_in` ...) and the design source of the netlist are not
+lost: they go into the import record (`NetlistPlan.pin_types`, `Netlist.source`, D-193). With
+`use_pin_type_direction` the three types that name a direction (input, output, bidirectional) also
+fill the direction of a pin that has none; nothing else is guessed from a type.
 """
 
 import re
@@ -290,12 +295,19 @@ class RowResult:
     pins: int = 0
 
 
+# KiCad's pin types that name a direction seen from the symbol; the others (passive, power_in,
+# open_collector ...) say something else and are not turned into a direction
+PIN_TYPE_DIRECTION = {"input": "in", "output": "out", "bidirectional": "bidir"}
+
+
 @dataclass
 class NetlistPlan:
     rows: list[RowResult] = field(default_factory=list)
     ops: list[Op] = field(default_factory=list)
     unmatched_signals: dict[str, list[str]] = field(default_factory=dict)  # signal -> where seen
     warnings: list[str] = field(default_factory=list)
+    pin_types: dict[str, str] = field(default_factory=dict)  # "<connector>.<pin>" -> KiCad pin type
+    ignored_fields: list[str] = field(default_factory=list)  # parts of a component not imported
 
     @property
     def ok_count(self) -> int:
@@ -317,6 +329,7 @@ def plan_netlist_import(
     parts: dict[str, str] | None = None,
     signal_map: dict[str, str] | None = None,
     use_pin_function: bool = False,
+    use_pin_type_direction: bool = False,
 ) -> NetlistPlan:
     """One row per connector component. `refs` selects connectors by reference (default: every
     component whose reference starts with `prefix`). Nothing is applied here."""
@@ -410,6 +423,7 @@ def plan_netlist_import(
             )
             continue
         seen_names: dict[str, str] = {}
+        types_here: dict[str, str] = {}
         failed = False
         for number in sorted(comp.pins, key=natural_key):
             info = comp.pins[number]
@@ -425,6 +439,8 @@ def plan_netlist_import(
                 seen_names.setdefault(signal, number)
             was = next((p for p in (old.pins if old else []) if p.id == number), None)
             base = was or Pin(id=number)
+            if info.pin_type:
+                types_here[f"{cid}.{number}"] = info.pin_type
             if base.locked:  # a pin someone locked by hand is not the netlist's to change
                 pins[number] = base
                 if signal != base.signal:
@@ -432,12 +448,18 @@ def plan_netlist_import(
                         f"{cid}: pin {number} is locked (signal {base.signal or 'none'}) and was not changed; the netlist says {signal or 'no signal'}"
                     )
                 continue
+            filled: dict[str, str] = {}
+            if use_pin_type_direction and not base.direction:
+                word = PIN_TYPE_DIRECTION.get(info.pin_type)
+                if word:
+                    filled["direction"] = word
             try:
                 pins[number] = evolve(
                     base,
                     signal=signal,
                     fixed=signal is not None,
                     interface_id=None,  # generation allocates again; a pin without a signal has none
+                    **filled,
                 )
             except ValueError:  # a signal name longer than a signal name may be, for example
                 plan.rows.append(
@@ -477,6 +499,10 @@ def plan_netlist_import(
                 pins=merged,
             )
         taken[cid] = ref
+        plan.pin_types.update(types_here)
+        for what, text in (("value", comp.value), ("footprint", comp.footprint)):
+            if text and what not in plan.ignored_fields:
+                plan.ignored_fields.append(what)
         same = old is not None and conn == old  # the netlist says what the connector already holds
         if not same:
             plan.ops.append(Put("connectors", conn))

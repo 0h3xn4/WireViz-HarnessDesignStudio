@@ -563,3 +563,70 @@ def test_the_api_result_and_the_command_agree(
     # a project that cannot be read is refused as the other commands refuse it
     assert main(["export-data", str(tmp_path / "missing"), "--out", str(tmp_path / "d")]) == 2
     assert not (tmp_path / "d").exists()
+
+
+# ---- imports in the provenance, and the stamp line --------------------------------------------------
+
+
+def test_provenance_lists_the_files_the_project_imported(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    folder = tmp_path / "p"
+    api.create_project(folder, "first-steps")
+    assert api.generate(folder).ok
+    lengths = tmp_path / "segment-lengths.csv"
+    segs = [
+        (h.id, s.id) for h in load_project(folder).project.harnesses.values() for s in h.segments
+    ]
+    lengths.write_text("Harness,Segment,Length\n" + "".join(f"{h},{s},850\n" for h, s in segs), encoding="utf-8")  # fmt: skip
+    assert main(["import-lengths", str(folder), str(lengths), "--unit", "mm"]) == 0
+    capsys.readouterr()
+    project = load_project(folder).project
+    (record,) = project.import_records.values()
+    doc = json.loads(data_files(project)["provenance.json"])
+    (entry,) = doc["imports"]
+    assert entry["source_name"] == "segment-lengths.csv" and entry["kind"] == "lengths"
+    assert entry["sha256"] == record.sha256 and entry["rows_read"] == len(segs)
+    assert str(tmp_path) not in json.dumps(doc)
+
+
+def test_a_stamped_output_is_read_back_by_the_importers(
+    folders: dict[str, Path],
+    exported: dict[str, Path],
+    tmp_path: Path,
+    capsys: pytest.CaptureFixture[str],
+) -> None:
+    """The first line of an output CSV is `# harness-design-studio VERSION model HASH`; the
+    importers skip it, so the tool's own files can be read back."""
+    work = tmp_path / "flat"
+    api.create_project(work, "flatsat")
+    api.export(work)
+    bom = work / "outputs" / "system" / "bom.csv"
+    assert bom.read_text(encoding="utf-8").startswith("# harness-design-studio ")
+    args = [
+        "import-parts",
+        str(work),
+        str(bom),
+        "--approved",
+        "approved",
+        "--pending",
+        "pending (example data)",
+    ]
+    assert main([*args, "--rejected", "not_approved", "--dry-run"]) == 0
+    assert "Dry run" in capsys.readouterr().out
+    # a stamped file of segment lengths (the first line is the stamp, as in the outputs)
+    stamped = tmp_path / "lengths.csv"
+    plain = (exported["small-satellite-numbers"] / "segment_lengths.csv").read_text(
+        encoding="utf-8"
+    )
+    stamped.write_text(
+        "# harness-design-studio 1.0.0 model abcdef012345\n" + plain, encoding="utf-8"
+    )
+    copy = tmp_path / "copy"
+    api.create_project(copy, "small-satellite")
+    api.generate(copy)
+    assert (
+        main(["import-lengths", str(copy), str(stamped), "--unit", "m", "--dry-run", "--json"]) == 0
+    )
+    doc = json.loads(capsys.readouterr().out)
+    assert doc["problems"] == 0 and doc["ready"] > 0

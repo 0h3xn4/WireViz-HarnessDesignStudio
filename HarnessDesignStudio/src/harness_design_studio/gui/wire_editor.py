@@ -36,7 +36,7 @@ from harness_design_studio.core.build_data import plan_set_strip, plan_set_strip
 from harness_design_studio.core.commands import Op, Put
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.model import Harness, ShieldGroup, Wire, evolve
-from harness_design_studio.core.units import AWG_MAX, AWG_MIN, awg_to_area_mm2
+from harness_design_studio.core.units import AWG_MAX, AWG_MIN, area_text
 from harness_design_studio.core.wirecolours import COLOURS
 from harness_design_studio.core.wires import (
     find_wire,
@@ -530,7 +530,7 @@ class WireEditor(QWidget):
             self.gauge_area.setText("")
             return
         ok = AWG_MIN <= n <= AWG_MAX
-        self.gauge_area.setText(strings.WIRE_GAUGE_AREA.format(awg_to_area_mm2(n)) if ok else "")
+        self.gauge_area.setText(strings.WIRE_GAUGE_AREA.format(area_text(n)) if ok else "")
 
     # ---- the selection ---------------------------------------------------------------------
     @property

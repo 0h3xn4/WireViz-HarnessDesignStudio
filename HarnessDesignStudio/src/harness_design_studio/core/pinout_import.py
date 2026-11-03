@@ -22,7 +22,14 @@ from . import devices, edit
 from .commands import Op
 from .edit import EditError
 from .errors import HarnessError
-from .imports import MAX_BYTES, ImportError_, parse_csv, read_table_sheet
+from .imports import (
+    MAX_BYTES,
+    STAMP_LINE,
+    ImportError_,
+    parse_csv,
+    parse_csv_file,
+    read_table_sheet,
+)
 from .model import Project
 
 Table = list[list[str]]
@@ -87,6 +94,10 @@ def read_pinout_table(path: Path | str) -> tuple[Table, str | None]:
             ) from exc
         except OSError as exc:
             raise ImportError_(f"The file could not be read ({exc.strerror}).") from exc
+        if STAMP_LINE.match(
+            text
+        ):  # the tool's own file: the stamp line goes, so do the apostrophes
+            return parse_csv_file(text), None
         if text.startswith("# "):
             text = text.partition("\n")[2]
         return parse_csv(text), None

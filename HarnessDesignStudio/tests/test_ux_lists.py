@@ -72,7 +72,7 @@ def shown(panel: ListsPanel, name: str) -> list[list[str]]:
 
 def without_area(head: list[str], row: list[str]) -> list[str]:
     """A row as the table writes it: the screen shows the cross-section after a gauge (D2, "16
-    (1.309 mm²)"); the table, and the file, hold the plain gauge ("16")."""
+    (1.31 mm²)"); the table, and the file, hold the plain gauge ("16")."""
     return [
         cell.split(" (", 1)[0] if name == "AWG" and cell.endswith(" mm²)") else cell
         for name, cell in zip(head, row, strict=True)

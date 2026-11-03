@@ -18,8 +18,14 @@ def awg_to_area_mm2(awg: int) -> float:
     return math.pi / 4 * awg_to_diameter_mm(awg) ** 2
 
 
+def area_text(awg: int) -> str:
+    """The cross-section for a person: 3 significant digits (0.00501 for AWG 40, 0.205, 1.31, 21.2),
+    so the finest gauges do not read as 0.005. The data files hold the number in full."""
+    return f"{awg_to_area_mm2(awg):.3g}"
+
+
 def format_awg(awg: int) -> str:
-    return f"AWG {awg} ({awg_to_area_mm2(awg):.3f} mm²)"
+    return f"AWG {awg} ({area_text(awg)} mm²)"
 
 
 def format_gauge(awg: int) -> str:
@@ -28,14 +34,12 @@ def format_gauge(awg: int) -> str:
     This is for the screen and for explanations. The files the tool writes for the project (the
     drawings, the lists, the workbook, the design rule report) keep the plain gauge, so that
     their bytes do not change; the open-data files carry the cross-section as a number."""
-    return (
-        f"{awg} AWG ({awg_to_area_mm2(awg):.3f} mm²)" if AWG_MIN <= awg <= AWG_MAX else f"{awg} AWG"
-    )
+    return f"{awg} AWG ({area_text(awg)} mm²)" if AWG_MIN <= awg <= AWG_MAX else f"{awg} AWG"
 
 
 def gauge_short(awg: int) -> str:
     """The gauge with its cross-section in the short form of a table cell: `24 (0.205 mm²)`."""
-    return f"{awg} ({awg_to_area_mm2(awg):.3f} mm²)" if AWG_MIN <= awg <= AWG_MAX else str(awg)
+    return f"{awg} ({area_text(awg)} mm²)" if AWG_MIN <= awg <= AWG_MAX else str(awg)
 
 
 _AWG_IN_TEXT = re.compile(r"\bAWG (\d{1,2})\b(?! \()")
@@ -51,6 +55,6 @@ def with_area(text: str) -> str:
         n = int(m.group(1))
         if not AWG_MIN <= n <= AWG_MAX:
             return m.group(0)
-        return f"{m.group(0)} ({awg_to_area_mm2(n):.3f} mm²)"
+        return f"{m.group(0)} ({area_text(n)} mm²)"
 
     return _AWG_AFTER.sub(put, _AWG_IN_TEXT.sub(put, text))

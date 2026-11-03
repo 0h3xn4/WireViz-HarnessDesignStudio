@@ -893,6 +893,7 @@ def clone_with(project: Project, ops: list[Op]) -> Project:
         "waivers",
         "baselines",
         "changelog",
+        "import_records",
         "config",
     ):
         setattr(dup, name, dict(getattr(project, name)))

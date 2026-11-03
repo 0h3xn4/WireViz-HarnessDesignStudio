@@ -43,6 +43,13 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio.core.errors import HarnessError
+from harness_design_studio.core.import_record import (
+    CHANGED,
+    MISSING,
+    CachedHasher,
+    check_sources,
+)
+from harness_design_studio.core.model.imports import KIND_WORDS
 from harness_design_studio.core.model.library import PART_CATEGORIES
 from harness_design_studio.gui import icons, import_kinds, strings
 from harness_design_studio.gui.controller import EditorController
@@ -141,9 +148,46 @@ class FilePage(QWizardPage):
         self.paste.setToolTip(strings.IMP_PASTE_TEXT_TIP)
         self.paste.clicked.connect(wizard.pasteRequested)
         lay.addWidget(self.paste, 0, Qt.AlignmentFlag.AlignLeft)
+        # what was imported before (the import records of the project); nothing is shown while the
+        # project has none, and the only marker is the words "source changed" on a row
+        self.history_head = QLabel(strings.IMP_HISTORY_HEAD)
+        self.history_head.setObjectName("import-history-head")
+        self.history_head.setProperty("heading", True)
+        lay.addWidget(self.history_head)
+        hist_cols = [
+            Column("kind", strings.IMP_HISTORY_COLUMNS["kind"], width=150),
+            Column("file", strings.IMP_HISTORY_COLUMNS["file"], mono=True, width=260),
+            Column("rows", strings.IMP_HISTORY_COLUMNS["rows"], numeric=True, width=70),
+            Column("source", strings.IMP_HISTORY_COLUMNS["source"], tooltip="tip", width=170),
+        ]
+        self.history_model = DictTableModel(hist_cols, [], wizard.theme)
+        self.history = _table(self.history_model, wizard.theme, strings.IMP_HISTORY_NAME, "import-history", "import-history", self)  # fmt: skip
+        self.history.setMaximumHeight(wizard.theme.px(150))
+        lay.addWidget(self.history)
         lay.addStretch(1)
+        self.refresh_history()
         self.browse.clicked.connect(wizard.browse)
         self.path.editingFinished.connect(lambda: wizard.load_file(self.path.text().strip()))
+
+    def refresh_history(self) -> None:
+        """List the import records of the project, each with whether its source file has changed."""
+        ctl = self.wiz.ctl
+        checks = check_sources(ctl.project, ctl.root, hasher=self.wiz.hasher) if ctl.project.import_records else []  # fmt: skip
+        words = {CHANGED: strings.IMP_HISTORY_CHANGED, MISSING: strings.IMP_HISTORY_MISSING}
+        self.history_model.set_rows(
+            [
+                {
+                    "kind": KIND_WORDS.get(c.record.kind, c.record.kind),
+                    "file": c.record.source_name,
+                    "rows": c.record.rows_read,
+                    "source": words.get(c.status, ""),
+                    "tip": strings.IMP_HISTORY_CHANGED_TIP if c.status == CHANGED else "",
+                }
+                for c in checks
+            ]
+        )
+        self.history_head.setVisible(bool(checks))
+        self.history.setVisible(bool(checks))
 
     def isComplete(self) -> bool:  # noqa: N802
         return self.wiz.source is not None and not self.wiz.ctl.read_only
@@ -658,6 +702,8 @@ class ApplyPage(QWizardPage):
             lines.append(strings.IMP_APPLY_PENDING.format(len(plan.pending)))
         if plan.next_step:
             lines.append(plan.next_step)
+        if plan.record is not None:
+            lines.append(strings.IMP_APPLY_RECORD)
         self.detail.setText("\n".join(lines))
         self.notice.clear()
         self.wiz.setButtonText(QWizard.WizardButton.FinishButton, plan.label)
@@ -674,7 +720,9 @@ class _PlanThread(QThread):
     only read (the wizard is modal, so nobody edits it meanwhile); a result of an older request
     is thrown away by the wizard."""
 
-    def __init__(self, project: Any, source: Source, options: Options, generation: int) -> None:
+    def __init__(
+        self, project: Any, source: Source, options: Options, generation: int, root: Any = None
+    ) -> None:
         super().__init__()
         self.project, self.source, self.options, self.generation = (
             project,
@@ -682,6 +730,7 @@ class _PlanThread(QThread):
             options,
             generation,
         )
+        self.root = root
         self.plan: ImportPlanView | None = None
         self.error: str | None = None
 
@@ -692,7 +741,7 @@ class _PlanThread(QThread):
         previous = sys.getswitchinterval()
         sys.setswitchinterval(_SWITCH_BACKGROUND)
         try:
-            self.plan = import_kinds.plan_import(self.project, self.source, self.options)
+            self.plan = import_kinds.plan_import(self.project, self.source, self.options, self.root)
         except Exception as exc:  # never let it escape the thread
             self.error = str(exc) or type(exc).__name__
         finally:
@@ -722,6 +771,7 @@ class ImportWizard(QWizard):
     ) -> None:
         super().__init__(parent)
         self.ctl, self.theme = ctl, theme
+        self.hasher = CachedHasher()  # the earlier imports are compared with their files once
         self.pick_file: PickFile = pick_file or _pick_file
         self.kind = kind or KINDS[0].key
         self.source: Source | None = None
@@ -880,7 +930,9 @@ class ImportWizard(QWizard):
             return self.plan
         self._drop_background()
         self.plan = None
-        thread = _PlanThread(self.ctl.project, self.source, self.choices, self._plan_generation)
+        thread = _PlanThread(
+            self.ctl.project, self.source, self.choices, self._plan_generation, self.ctl.root
+        )
         thread.finished.connect(self._background_done)
         self._plan_thread = thread
         page.set_busy(strings.IMP_READING.format(self.source.rows))
@@ -936,7 +988,9 @@ class ImportWizard(QWizard):
             page.show_plan(self.plan)
             page.completeChanged.emit()
             return self.plan
-        self.plan = import_kinds.plan_import(self.ctl.project, self.source, self.choices)
+        self.plan = import_kinds.plan_import(
+            self.ctl.project, self.source, self.choices, self.ctl.root
+        )
         page.show_plan(self.plan)
         page.completeChanged.emit()
         return self.plan
@@ -957,12 +1011,15 @@ class ImportWizard(QWizard):
         message = strings.IMP_DONE.format(n, "" if n == 1 else "s", plan.next_step).strip()
         self.ctl.message.connect(heard)
         try:
-            ok = self.ctl.run(plan.label, plan.ops, message=message)
+            ok = self.ctl.run(
+                plan.label, [*plan.ops, *plan.record_ops(self.ctl.project)], message=message
+            )
         finally:
             self.ctl.message.disconnect(heard)
         if not ok:
             why = reasons[0] if reasons else ""
             self.apply_page.notice.show_notice("error", strings.IMP_FAILED.format(why))
             return False
+        self.file_page.refresh_history()
         self.imported.emit(n)
         return True

@@ -41,7 +41,7 @@ import hashlib
 import io
 import json
 from collections import defaultdict
-from dataclasses import asdict, dataclass, is_dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -880,19 +880,24 @@ def all_tables(project: Project) -> list[DataTable]:
     ]
 
 
-def _plain(obj: object) -> dict[str, Any]:
-    if hasattr(obj, "model_dump"):
-        return dict(obj.model_dump(mode="json"))
-    if is_dataclass(obj) and not isinstance(obj, type):
-        return asdict(obj)
-    return dict(vars(obj))
+def _imports(project: Project) -> list[dict[str, Any]]:
+    """The files the project imported (`Project.import_records`, kept since S6), by ID: what the
+    file was called, its SHA-256, what kind of import it was and how many rows it read, dropped and
+    converted. No path: the name of the file only."""
+    return [
+        {
+            "id": r.id, "kind": r.kind, "source_name": r.source_name, "sha256": r.sha256,
+            "rows_read": r.rows_read, "rows_dropped": r.dropped_count,
+            "values_converted": r.converted_count, "unit": r.unit, "tool_version": r.tool_version,
+        }
+        for _key, r in sorted(project.import_records.items())
+    ]  # fmt: skip
 
 
 def provenance_bytes(project: Project, files: dict[str, bytes], mhash: str) -> bytes:
     """`provenance.json`: the tool, the design, the library, the imported files and the hash of
     every other file of the set, so that a colleague can tell the files are the ones that were
     written."""
-    records = getattr(project, "import_records", None)  # kept in the project from stage S6 on
     approvals: dict[str, int] = defaultdict(int)
     for part in project.parts.values():
         approvals[part.approval] += 1
@@ -918,7 +923,7 @@ def provenance_bytes(project: Project, files: dict[str, bytes], mhash: str) -> b
             "harnesses": len(project.harnesses),
             "wires": sum(len(h.wires) for h in project.harnesses.values()),
         },
-        "imports": [_plain(r) for r in records or ()],
+        "imports": _imports(project),
         "files": [
             {"path": p, "sha256": hashlib.sha256(b).hexdigest(), "bytes": len(b)}
             for p, b in sorted(files.items())

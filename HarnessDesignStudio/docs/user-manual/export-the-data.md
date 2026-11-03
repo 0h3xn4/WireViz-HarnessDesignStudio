@@ -50,7 +50,7 @@ The folder gets a pair of files, `NAME.json` and `NAME.csv`, for each result, an
 | File | What it is |
 | --- | --- |
 | `configuration.json` | the files `config/*.json` as the tool used them, each with its placeholder flag |
-| `provenance.json` | the tool version, the model hash, the library, the files imported (when the project records them), and the SHA-256 of every other file of the folder |
+| `provenance.json` | the tool version, the model hash, the library, the files the project imported (name, SHA-256, kind, rows), and the SHA-256 of every other file of the folder |
 | `run_record.json` | only with `--run-record`: [section 5](#5-record-who-ran-it-and-when) |
 
 Every JSON file starts with `format` (1), the table name, `tool_version`, `model_hash`, then `columns` (key, name, unit, header, what the column holds) and `rows`, one row to a line. The CSV file has the same rows; its first line is the headings with the unit in each, `Current (A)`, `Cross-section (mm²)`, `Resistivity (Ω·m)`. A number is written with 12 significant digits, so a sum carries no floating point noise. A value that is not set is an empty cell (`null` in the JSON), never a zero.
