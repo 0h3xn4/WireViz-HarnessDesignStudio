@@ -69,7 +69,7 @@ def test_every_command_takes_json_and_the_reference_describes_each() -> None:
     described = {k.split()[0] for k in SHAPES}
     assert described == set(cmds), sorted(described ^ set(cmds))
     for shape, found in SHAPES.items():
-        assert found[0] == "ok" or shape == "explain --all", shape
+        assert found[0] == "ok" or shape == "settings", shape
 
 
 def test_the_json_section_of_the_reference_lists_every_shape() -> None:
@@ -537,3 +537,12 @@ def test_the_document_is_the_same_twice_and_has_no_path_or_time(
         assert capsys.readouterr().out == text, command
         assert str(small.parent) not in text and tempfile.gettempdir() not in text, command
         assert not re.search(r"\b20\d\d-\d\d-\d\d[T ]\d\d:\d\d", text), command
+
+
+def test_settings_prints_its_document_as_before(
+    small: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    assert main(["settings", str(small), "--json"]) == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert list(doc) == list(SHAPES["settings"])
+    assert doc["settings"] == [s.to_dict() for s in api.get_settings(small)]

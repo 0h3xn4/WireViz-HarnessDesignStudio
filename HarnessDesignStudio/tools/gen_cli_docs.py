@@ -14,7 +14,7 @@ TARGET = Path(__file__).resolve().parents[1] / "docs" / "CLI.md"
 GROUPS = (
     ("Start", ("new", "templates", "schema")),
     ("Check", ("validate", "check", "drc", "verify")),
-    ("Explain", ("explain",)),
+    ("Explain", ("explain", "settings")),
     ("Generate and export", ("generate", "export")),
     ("Team use with Git", ("merge-fix",)),
     (
@@ -70,6 +70,11 @@ EXAMPLES: dict[str, list[str]] = {
     "drc": [
         "harness-design-studio drc my-design > drc-report.md",
         "harness-design-studio drc my-design --json > drc-findings.json",
+    ],
+    "settings": [
+        "harness-design-studio settings wheel-link",
+        "harness-design-studio settings wheel-link --json",
+        "harness-design-studio settings wheel-link --set model.service_loops_per_wire=0",
     ],
     "verify": [
         "harness-design-studio verify my-design",
@@ -248,7 +253,8 @@ def _json_section() -> list[str]:
         "the reasons in it. The same documents are what the Python interface gives "
         "([`user-manual/script-the-tool.md`](user-manual/script-the-tool.md)).",
         "",
-        "`explain OBJECT --json` prints a list of derivations (as it did before); "
+        "`explain OBJECT --json` prints a list of derivations and `settings --json` the document of "
+        "settings, definitions and assumptions, both as they did before (neither has an `ok`); "
         "`explain --all --out FOLDER --json` prints the document below. "
         "`export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. "
         "`config` prints every engineering value with its unit, its use, whether it is set and "

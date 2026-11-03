@@ -22,7 +22,7 @@ The examples show the form of each command with example names. They do not all w
 - [JSON output](#json-output): `--json` on every command that has a result in data form
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
-- Explain: [`explain`](#harness-design-studio-explain)
+- Explain: [`explain`](#harness-design-studio-explain), [`settings`](#harness-design-studio-settings)
 - Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export)
 - Team use with Git: [`merge-fix`](#harness-design-studio-merge-fix)
 - Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data)
@@ -34,7 +34,7 @@ The examples show the form of each command with example names. They do not all w
 
 Every command that has a result in data form takes `--json`. The usual text lines are then not printed; one JSON document is, and the exit code is the one the command has without the option (the table above). It has no time, no user name and no absolute path, its lists are in a fixed order (by ID, as the text shows them) and the same design gives the same bytes, so it can be compared and kept in Git. `ok` comes first and is true when the exit code is 0. A command that cannot run at all (a project that cannot be read, a wrong option) writes its message to the standard error as before and prints nothing to the standard output; a command that ran and was refused (`generate` with errors, `export` that failed its check, `release` that is blocked) still prints its document, with `ok` false and the reasons in it. The same documents are what the Python interface gives ([`user-manual/script-the-tool.md`](user-manual/script-the-tool.md)).
 
-`explain OBJECT --json` prints a list of derivations (as it did before); `explain --all --out FOLDER --json` prints the document below. `export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. `config` prints every engineering value with its unit, its use, whether it is set and where it came from, and the values it refused, in the order of the hand-over list.
+`explain OBJECT --json` prints a list of derivations and `settings --json` the document of settings, definitions and assumptions, both as they did before (neither has an `ok`); `explain --all --out FOLDER --json` prints the document below. `export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. `config` prints every engineering value with its unit, its use, whether it is set and where it came from, and the values it refused, in the order of the hand-over list.
 
 | Command | Keys of the document |
 | --- | --- |
@@ -44,6 +44,7 @@ Every command that has a result in data form takes `--json`. The usual text line
 | `validate`, `check` | `ok`, `devices`, `interfaces`, `connectors`, `harnesses`, `errors`, `warnings`, `issues` |
 | `drc` | `ok`, `model_hash`, `rules_run`, `open_errors`, `open_warnings`, `open_notes`, `waived`, `placeholder_config`, `findings` |
 | `verify` | `ok`, `interfaces_checked`, `wires_checked`, `stale`, `issues` |
+| `settings` | `settings`, `definitions`, `assumptions` |
 | `explain --all` | `ok`, `count`, `without_value`, `files` |
 | `generate` | `ok`, `saved`, `added`, `changed`, `unchanged`, `removed`, `frozen`, `kept_locks`, `findings`, `interfaces_checked`, `wires_checked`, `verify_issues` |
 | `export` | `ok`, `written`, `blocked`, `model_hash`, `drawings_removed`, `file_count`, `files`, `issues` |
@@ -231,6 +232,26 @@ harness-design-studio explain wheel-link --all --out wheel-link-derivations
 harness-design-studio explain wheel-link IF-001.GPSU1-J01
 harness-design-studio explain wheel-link W001-001 --json
 harness-design-studio explain wheel-link --all --out wheel-link-derivations --json
+```
+
+### harness-design-studio settings
+
+The Assumptions page on the command line. For every setting: the value in force, its unit, whether it is set by the project, the tool's own default (the behaviour before the setting existed) or not set, what depends on it and where the number comes from; then the assumptions built into the tool, each with the settings that parameterise it, and the fixed definitions. `--json` prints the same as data. `--set FILE.KEY=VALUE` (VALUE is JSON, for example model.service_loops_per_wire=0) changes one value; it is refused, and nothing is changed, when the value is outside its range.
+
+`harness-design-studio settings project [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `--json` | print the settings as JSON |
+| `--set FILE.KEY=VALUE` | set one value (VALUE as JSON, for example model.service_loops_per_wire=0); repeat for several (repeatable) |
+
+Examples:
+
+```
+harness-design-studio settings wheel-link
+harness-design-studio settings wheel-link --json
+harness-design-studio settings wheel-link --set model.service_loops_per_wire=0
 ```
 
 ## Generate and export

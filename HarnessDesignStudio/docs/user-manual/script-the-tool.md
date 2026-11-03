@@ -75,7 +75,7 @@ The exit code of `drc` is 1 when an error is open, so `harness-design-studio drc
 
 Each finding in `findings` has `id`, `rule`, `severity` (`error`, `warning` or `info`), `object_id`, `title`, `why`, `sources` (the requirement IDs of the rule), `can_waive`, `waived`, `waiver_justification` and `waiver_changed`. Each entry of `issues` (`validate`, `check`, `verify`, `generate`, `export`) has `severity`, `code`, `message`, `location` (a file of the project, relative to its folder) and `object_id`.
 
-`explain OBJECT --json` prints a list of derivations, as before ([section 5](#5-ask-how-a-number-was-made)); `explain --all --out FOLDER --json` prints how many it wrote.
+`explain OBJECT --json` prints a list of derivations, and `settings --json` its own document (without `ok`), both as before ([section 5](#5-ask-how-a-number-was-made)); `explain --all --out FOLDER --json` prints how many it wrote.
 
 ## 2. Write the outputs to another folder
 
@@ -126,6 +126,7 @@ The functions, by what you do:
 | ask how a number was made | `explain(project_or_folder, object_id)`, `explain_all(...)`, `explain_finding(..., finding_id)` | `explain` |
 | write all the derivations | `write_derivations(project_or_folder, out)` | `explain --all --out` |
 | read the engineering values | `get_config(project_or_folder)` | `config` |
+| read every setting and where its value comes from | `get_settings(project_or_folder)` | `settings` |
 | set an engineering value | `set_config(folder, file, key, value)` | what the editor's *Engineering values* dialog does |
 
 A function that reads takes a folder or a `Project` you loaded; one that writes takes a folder. Results are small frozen dataclasses (`ValidationResult`, `CheckResult`, `GenerateResult`, `ExportResult` ...). Read a field (`result.open_errors`), or call `result.to_dict()` to get the dictionary that `--json` prints: a script and a shell pipeline see the same data. Nothing is printed and the program is never ended by a function; failures are exceptions ([section 8](#8-handle-errors)).
@@ -171,7 +172,7 @@ wire-voltage-drop None V
 wire-mass None g
 ```
 
-A value of `None` means an input is not set yet; `derivation.missing` says which. `derivation.to_dict()` is the plain form with every input, step and assumption. `explain_all(project)` gives every derivation of the design, and `explain_finding(project, finding_id)` the derivations of the object a finding is about (an empty list when no number is derived for it). `write_derivations(project, "out")` writes `derivations.json` and `derivations.csv`, the files `harness-design-studio explain --all --out out` writes. The models behind them are in [`docs/models/`](../models/README.md).
+A value of `None` means an input is not set yet; `derivation.missing` says which. `derivation.to_dict()` is the plain form with every input, step and assumption. `explain_all(project)` gives every derivation of the design, and `explain_finding(project, finding_id)` the calculation the editor's *Explain* shows for a finding (the wire for a current or voltage-drop finding, the contacts for a contact-current finding; an empty list for a finding of another rule). `write_derivations(project, "out")` writes `derivations.json` and `derivations.csv`, the files `harness-design-studio explain --all --out out` writes. The models behind them are in [`docs/models/`](../models/README.md).
 
 ## 6. Read and set engineering values
 

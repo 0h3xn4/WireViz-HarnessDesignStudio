@@ -306,6 +306,51 @@ class ConfigReport:
         raise KeyError(f"{file}.{key}")
 
 
+def _plain(value: Any) -> Any:
+    """Tuples as lists, so that a value is what JSON gives back."""
+    if isinstance(value, tuple | list):
+        return [_plain(v) for v in value]
+    if isinstance(value, dict):
+        return {k: _plain(v) for k, v in value.items()}
+    return value
+
+
+@dataclass(frozen=True)
+class SettingRecord:
+    """One setting the results depend on, with the value in force for a project. `origin` says where
+    the value comes from: "project" (set in a file of `config/`), "default" (the tool's own, the
+    behaviour before the setting existed) or "unset" (nothing). Same entry as `settings --json`."""
+
+    id: str  # "<file>.<key>", for example "model.service_loops_per_wire"
+    label: str
+    unit: str
+    value: Any
+    origin: str
+    placeholder: bool  # the file that holds it is still marked as not reviewed
+    default: Any
+    what: str
+    used_by: str
+    source: str
+    range: str
+    assumption: str  # the ID of the assumption this setting parameterises
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "label": self.label,
+            "unit": self.unit,
+            "value": _plain(self.value),
+            "origin": self.origin,
+            "placeholder": self.placeholder,
+            "default": _plain(self.default),
+            "what": self.what,
+            "used_by": self.used_by,
+            "source": self.source,
+            "range": self.range,
+            "assumption": self.assumption,
+        }
+
+
 @dataclass(frozen=True)
 class RuleInfo:
     """One design rule: what it checks, why it matters and how to fix a finding of it."""
@@ -500,6 +545,20 @@ def config_report(project: Project) -> ConfigReport:
         ),
         release_distinct_roles=roles.distinct_roles_on(project),
     )  # fmt: skip
+
+
+def setting_records(project: Project) -> list[SettingRecord]:
+    """Every setting with the value in force, in the order of `settings`."""
+    from harness_design_studio.core import settings
+
+    return [
+        SettingRecord(
+            r.setting.id, r.setting.label, r.setting.unit, r.value, r.origin, r.placeholder,
+            r.setting.default, r.setting.what, r.setting.used_by, r.setting.source,
+            r.setting.range, r.setting.assumption,
+        )
+        for r in settings.rows(project)
+    ]  # fmt: skip
 
 
 def rule_infos() -> list[RuleInfo]:

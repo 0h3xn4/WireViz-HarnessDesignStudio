@@ -5,7 +5,7 @@ from typing import Any
 from .base import Entity, Name
 
 CONFIG_NAMES: tuple[str, ...] = (
-    "segmentation", "segregation", "derating", "naming", "emc", "titleblock", "generation",
+    "segmentation", "segregation", "derating", "naming", "emc", "titleblock", "generation", "model",
 )  # fmt: skip
 
 

@@ -21,6 +21,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 | have the tool make connectors, pins and wires | [Generate harnesses](generate-harnesses.md) |
 | understand an error or a warning, or waive one | [Read and fix problems](read-and-fix-problems.md) |
 | enter derating factors, wire current ratings and test limits | [Fill in the engineering values](fill-in-engineering-values.md) |
+| see what the tool assumes, and where every value comes from | [See what the tool assumes](see-what-the-tool-assumes.md) |
 | change a wire, draw a wire of my own, put two wires on one pin, or twist wires | [Edit a wire](edit-a-wire.md) |
 | make a harness from nothing, with no interfaces: its connectors, pins and wires | [Build a harness by hand](build-a-harness-by-hand.md) |
 | enter the strip lengths, the contact on each pin and its crimp tool, and the sleeving, heat shrink and labels of a harness | [Enter the build data](enter-the-build-data.md) |
@@ -49,6 +50,7 @@ The numbers follow the order of the work. The first page is the one the editor s
 4. [Generate harnesses](generate-harnesses.md): preview, apply and undo; the independent check; the Harness tab and its "Why" pane; how links are grouped.
 5. [Read and fix problems](read-and-fix-problems.md): errors, warnings and notes; fixes; waivers; `harness-design-studio drc`.
 6. [Fill in the engineering values](fill-in-engineering-values.md): `harness-design-studio config`; the file shape; the gauge table; demo values; profiles.
+6a. [See what the tool assumes](see-what-the-tool-assumes.md): `harness-design-studio settings`; the settings, the assumptions, the definitions; where each value comes from.
 7. [Import data](import-data.md): the import wizard (interfaces only in the app), approved parts, segment lengths, build data (`import-build-data`).
 8. [Import KiCad pinouts](import-kicad-pinouts.md): `harness-design-studio import-netlist` and fixed pins.
 9. [Define a device](define-a-device.md): the Devices tab, pins and signals, the role and direction of a pin, `import-pinout` and `export-pinout`.

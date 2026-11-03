@@ -24,6 +24,7 @@
   "ReadOnlyProjectError",
   "RuleInfo",
   "SaveError",
+  "SettingRecord",
   "TemplateError",
   "TemplateInfo",
   "TransactionError",
@@ -36,6 +37,7 @@
   "export",
   "generate",
   "get_config",
+  "get_settings",
   "list_rules",
   "list_templates",
   "load_project",
@@ -118,6 +120,7 @@
   "export": "(folder: 'PathLike', out: 'PathLike | None' = None, *, drawings: 'bool' = False) -> 'ExportResult'",
   "generate": "(folder: 'PathLike') -> 'GenerateResult'",
   "get_config": "(source: 'ProjectSource') -> 'ConfigReport'",
+  "get_settings": "(source: 'ProjectSource') -> 'list[SettingRecord]'",
   "list_rules": "() -> 'list[RuleInfo]'",
   "list_templates": "() -> 'list[TemplateInfo]'",
   "load_project": "(folder: 'PathLike') -> 'Project'",
@@ -324,6 +327,25 @@
     "sources": "tuple[str, ...]",
     "topic": "str",
     "why": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "SettingRecord": {
+   "fields": {
+    "assumption": "str",
+    "default": "Any",
+    "id": "str",
+    "label": "str",
+    "origin": "str",
+    "placeholder": "bool",
+    "range": "str",
+    "source": "str",
+    "unit": "str",
+    "used_by": "str",
+    "value": "Any",
+    "what": "str"
    },
    "methods": {
     "to_dict": "(self) -> 'dict[str, Any]'"

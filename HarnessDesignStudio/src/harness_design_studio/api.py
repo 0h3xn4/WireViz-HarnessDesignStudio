@@ -44,6 +44,7 @@ from harness_design_studio.core import configcheck, records
 from harness_design_studio.core.checks import Finding, find
 from harness_design_studio.core.commands import History
 from harness_design_studio.core.derive import Derivation, explain_object
+from harness_design_studio.core.derive import explain_finding as _explain_finding
 from harness_design_studio.core.derive_export import explain_all as _explain_all
 from harness_design_studio.core.derive_export import to_csv_bytes, to_json_bytes
 from harness_design_studio.core.drc import run as _run_rules
@@ -71,6 +72,7 @@ from harness_design_studio.core.records import (
     GenerateResult,
     IssueRecord,
     RuleInfo,
+    SettingRecord,
     TemplateInfo,
     ValidationResult,
     VerifyResult,
@@ -104,6 +106,7 @@ __all__ = [
     "ReadOnlyProjectError",
     "RuleInfo",
     "SaveError",
+    "SettingRecord",
     "TemplateError",
     "TemplateInfo",
     "TransactionError",
@@ -116,6 +119,7 @@ __all__ = [
     "export",
     "generate",
     "get_config",
+    "get_settings",
     "list_rules",
     "list_templates",
     "load_project",
@@ -372,17 +376,16 @@ def explain_all(source: ProjectSource) -> list[Derivation]:
 
 
 def explain_finding(source: ProjectSource, finding_id: str) -> list[Derivation]:
-    """The derivations behind a finding of `run_checks`: those of the object the finding is
-    about. An empty list when the finding is about something no number is derived for (a device,
-    an interface). `EditError` when there is no finding with this ID."""
+    """The calculation behind a finding of `run_checks`, as the editor's *Explain* shows it: for a
+    finding of `current-over-wire` or `voltage-drop` the derivation of the wire, for
+    `current-over-contact` the derivation of the contact limit. An empty list for a finding of
+    another rule, which has no calculation to show. `EditError` when no finding has this ID."""
     project = _project(source)
     found = {f.id: f for f in _findings(project)}
     if finding_id not in found:
         raise EditError(f"There is no finding '{finding_id}'.")
-    try:
-        return explain_object(project, found[finding_id].object_id)
-    except EditError:
-        return []
+    finding = found[finding_id]
+    return _explain_finding(project, finding.rule, finding.object_id)
 
 
 def write_derivations(source: ProjectSource, out: PathLike) -> DerivationFiles:
@@ -406,6 +409,12 @@ def get_config(source: ProjectSource) -> ConfigReport:
     profiles with its unit, what it is used for, whether it is set, and where it came from; and
     the problems of values that are set (the command `config` without options)."""
     return records.config_report(_project(source))
+
+
+def get_settings(source: ProjectSource) -> list[SettingRecord]:
+    """Every setting the results depend on with the value in force for the project and where it
+    comes from (the command `settings`): the project's own value, the tool's default, or not set."""
+    return records.setting_records(_project(source))
 
 
 def set_config(

@@ -30,6 +30,7 @@ SHAPES: dict[str, tuple[str, ...]] = {
         "placeholder_config", "findings",
     ),
     "verify": ("ok", "interfaces_checked", "wires_checked", "stale", "issues"),
+    "settings": ("settings", "definitions", "assumptions"),  # no "ok": printed as before
     "explain --all": ("ok", "count", "without_value", "files"),  # with OBJECT: a list
     "generate": (
         "ok", "saved", "added", "changed", "unchanged", "removed", "frozen", "kept_locks",

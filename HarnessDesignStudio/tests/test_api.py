@@ -267,18 +267,26 @@ def test_explain_matches_the_derivations_and_the_files(work: Path, tmp_path: Pat
     ).read_bytes()
 
 
-def test_explain_finding(tmp_path: Path) -> None:
+def test_explain_finding_is_the_derivation_the_editor_shows(tmp_path: Path) -> None:
+    from harness_design_studio.core.derive import EXPLAINABLE_RULES
+    from harness_design_studio.core.derive import explain_finding as core_explain_finding
+
     folder = tmp_path / "p"
     api.create_project(folder, "flatsat")
-    result = api.run_checks(folder)
-    explained = {f.id: api.explain_finding(folder, f.id) for f in result.findings}
-    assert any(explained.values()), "some finding is about an object with a derivation"
+    api.set_config(folder, "derating", "max_voltage_drop_v", 0.1)  # a limit the wires break
+    api.generate(folder)
+    project = api.load_project(folder)
+    result = api.run_checks(project)
+    explained = {f.id: api.explain_finding(project, f.id) for f in result.findings}
     for finding in result.findings:
-        if explained[finding.id]:
-            assert explained[finding.id] == api.explain(folder, finding.object_id)
-        else:
-            with pytest.raises(api.EditError):
-                api.explain(folder, finding.object_id)
+        assert explained[finding.id] == core_explain_finding(
+            project, finding.rule, finding.object_id
+        )
+        if finding.rule not in EXPLAINABLE_RULES:
+            assert explained[finding.id] == []  # no calculation behind this rule
+    shown = [f for f in result.findings if f.rule in EXPLAINABLE_RULES]
+    assert shown and all(explained[f.id] for f in shown), "a finding with a calculation has one"
+    assert all(isinstance(d, api.Derivation) for f in shown for d in explained[f.id])
     with pytest.raises(api.EditError, match="There is no finding"):
         api.explain_finding(folder, "no-such.finding")
 
@@ -388,3 +396,20 @@ def test_the_core_functions_are_the_ones_called(work: Path) -> None:
     """Nothing is computed twice: the project that `load_project` returns is the loader's."""
     assert api.load_project(work) == core_load(work).project
     assert edit.clone_with(api.load_project(work), []) == api.load_project(work)
+
+
+def test_get_settings_is_the_settings_command(
+    work: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from harness_design_studio.core import settings
+
+    records = api.get_settings(work)
+    assert [r.id for r in records] == [s.id for s in settings.SETTINGS]
+    assert api.get_settings(api.load_project(work)) == records
+    assert main(["settings", str(work), "--json"]) == 0
+    doc = json.loads(capsys.readouterr().out)
+    assert [r.to_dict() for r in records] == doc["settings"]
+    assert {r.origin for r in records} <= {"project", "default", "unset"}
+    api.set_config(work, "generation", "service_loop_m", 0.3)
+    changed = {r.id: r for r in api.get_settings(work)}["generation.service_loop_m"]
+    assert (changed.value, changed.origin) == (0.3, "project")
