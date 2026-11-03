@@ -18,6 +18,7 @@ settings`, the Assumptions window of the editor) is built from it, and so are th
 from dataclasses import dataclass
 
 from harness_design_studio.core.model import Project
+from harness_design_studio.core.units import format_awg
 
 
 @dataclass(frozen=True)
@@ -254,6 +255,21 @@ def display(value: object) -> str:
     return str(value)
 
 
+def display_of(s: Setting, value: object) -> str:
+    """The value of a setting as text for a person. The table by wire gauge names each gauge with
+    its cross-section (`AWG 24 (0.205 mm²): 2`, D2); every other value is shown as `display`
+    shows it. The value itself, as `to_dict` and the files carry it, is not changed."""
+    if s.id == "derating.ampacity_a_by_awg" and isinstance(value, dict):
+        parts: list[str] = []
+        for k, v in value.items():
+            try:
+                parts.append(f"{format_awg(int(k))}: {v}")
+            except TypeError, ValueError:
+                parts.append(f"{k}: {v}")
+        return ", ".join(parts)
+    return display(value)
+
+
 def rows(project: Project) -> list[Row]:
     """Every setting with the value in force and where it comes from, in the order of the table."""
     out: list[Row] = []
@@ -261,7 +277,7 @@ def rows(project: Project) -> list[Row]:
         e = effective(project, s.file, s.key)
         cfg = project.config.get(s.file)
         placeholder = bool(cfg.placeholder) if cfg is not None and e.origin == "project" else False
-        out.append(Row(s, e.value, e.origin, placeholder, display(e.value)))
+        out.append(Row(s, e.value, e.origin, placeholder, display_of(s, e.value)))
     return out
 
 

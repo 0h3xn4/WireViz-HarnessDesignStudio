@@ -221,7 +221,10 @@ def test_wire_table_columns_units_and_right_aligned_numbers(qtbot, theme) -> Non
         align = m.index(0, col).data(Qt.ItemDataRole.TextAlignmentRole)
         assert align & int(Qt.AlignmentFlag.AlignRight)
     row = next(i for i, r in enumerate(m.rows()) if isinstance(r["gauge"], int))
-    assert m.index(row, m.column_index("gauge")).data() == str(m.rows()[row]["gauge"])
+    from harness_design_studio.core.units import gauge_short
+
+    # the gauge with its cross-section beside it (D2); the number itself sorts and is stored
+    assert m.index(row, m.column_index("gauge")).data() == gauge_short(m.rows()[row]["gauge"])
     pending = next(i for i, r in enumerate(m.rows()) if r["gauge"] == "pending")
     assert m.index(pending, m.column_index("gauge")).data(STATE_ROLE) == "pending"
     from harness_design_studio.core.generate.lengths import wire_length

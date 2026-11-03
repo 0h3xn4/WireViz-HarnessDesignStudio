@@ -26,6 +26,7 @@ from harness_design_studio.core.verify import VerifyReport, link_issues
 from .stamp import parse_csv
 
 MANIFEST = "manifest.json"
+RUN_RECORD = "run_record.json"  # core.run_record: kept next to the outputs, outside the manifest
 HARNESS_FILES = (
     "wirelist.csv",
     "pinouts.csv",
@@ -133,7 +134,7 @@ def _manifest(r: VerifyReport, files: dict[str, bytes], current: str) -> None:
             r.error("out_missing", f"{rel} is listed in the manifest but missing.", rel)
         elif hashlib.sha256(data).hexdigest() != digest or len(data) != size:
             r.error("out_modified", f"{rel} was changed after it was exported.", rel)
-    for rel in sorted(set(files) - set(listed) - {MANIFEST}):
+    for rel in sorted(set(files) - set(listed) - {MANIFEST, RUN_RECORD}):
         r.warning("out_unlisted", f"{rel} is not listed in the manifest.", rel)
 
 

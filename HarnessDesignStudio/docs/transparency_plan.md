@@ -24,7 +24,7 @@ These come from the owner's brief and from D-191 and do not change.
 
 ## What is done
 
-Merged to master or in an open pull request, as of 2026-11-03: the safety net (WP0), the derivations for wire sizing, wire length, mass, the bill of materials and the contact current, the Explain view in the Why tab, `explain` with `--all --out`, `docs/models/` for those five, a first registry of assumptions with IDs (`core/assumptions.py`, 12 entries), and, not yet merged, an *Explain* button on a finding of the three rules that have a calculation.
+Merged to master or in an open pull request, as of 2026-11-03: the safety net (WP0), the derivations for wire sizing, wire length, mass, the bill of materials and the contact current, the Explain view in the Why tab, `explain` with `--all --out`, `docs/models/` for those five, a first registry of assumptions with IDs (`core/assumptions.py`, 12 entries), and, not yet merged, an *Explain* button on a finding of the three rules that have a calculation; and, in S5, the open data (`export-data`), the run record (`--run-record`) and mm² beside every AWG gauge on screen and in explanations.
 
 ## The stages
 

@@ -59,6 +59,7 @@ __all__ = [
     "history",
     "now",
     "render",
+    "resolve_author",
     "rows_for_save",
     "set_author",
     "start",
@@ -93,25 +94,39 @@ def _clean_name(name: str | None) -> str | None:
     return text if text and all(ord(c) >= 32 and ord(c) != 127 for c in text) else None
 
 
-def author() -> str:
-    """Who is working: `--author`, else the environment variable HARNESS_AUTHOR, else the name Git
-    has for this person, else the user of the computer, else `unknown`."""
-    if _AUTHOR:
-        return _AUTHOR
-    named = _clean_name(os.environ.get("HARNESS_AUTHOR"))
-    if named:
-        return named
+def resolve_author(
+    explicit: str | None = None,
+    *,
+    environ: Mapping[str, str] | None = None,
+    folder: Path | None = None,
+) -> str:
+    """Who is working: the name given (`--author`), else the environment variable HARNESS_AUTHOR,
+    else the `user.name` Git has for `folder` (the user's own files when None), else the user of the
+    computer (`USER`, `USERNAME` or `LOGNAME`), else `unknown`. Never an empty text. This is the one
+    place the operator is resolved: the journal (`author`) and the run record
+    (`run_record.resolve_operator`) both call it."""
+    env = os.environ if environ is None else environ
+    for candidate in (explicit, env.get("HARNESS_AUTHOR")):
+        named = _clean_name(candidate)
+        if named:
+            return named
     from .vcs.gitname import configured_name
 
     with contextlib.suppress(Exception):
-        named = _clean_name(configured_name(Path.cwd()))
+        named = _clean_name(configured_name(folder))
         if named:
             return named
-    for var in ("USER", "USERNAME"):
-        named = _clean_name(os.environ.get(var))
+    for var in ("USER", "USERNAME", "LOGNAME"):
+        named = _clean_name(env.get(var))
         if named:
             return named
     return UNKNOWN_AUTHOR
+
+
+def author() -> str:
+    """Who is making this change: `--author`, else HARNESS_AUTHOR, else the name Git has for the
+    folder the tool runs in, else the user of the computer, else `unknown` (`resolve_author`)."""
+    return resolve_author(_AUTHOR, folder=Path.cwd())
 
 
 # ---- adding entries ---------------------------------------------------------------------------

@@ -5,6 +5,7 @@
   "ConfigReport",
   "ConfigValue",
   "ConfigValueError",
+  "DataFiles",
   "Derivation",
   "DerivationFiles",
   "DeviationRecord",
@@ -43,6 +44,7 @@
   "explain_all",
   "explain_finding",
   "export",
+  "export_data",
   "generate",
   "get_config",
   "get_journal",
@@ -133,8 +135,9 @@
   "explain": "(source: 'ProjectSource', object_id: 'str') -> 'list[Derivation]'",
   "explain_all": "(source: 'ProjectSource') -> 'list[Derivation]'",
   "explain_finding": "(source: 'ProjectSource', finding_id: 'str') -> 'list[Derivation]'",
-  "export": "(folder: 'PathLike', out: 'PathLike | None' = None, *, drawings: 'bool' = False) -> 'ExportResult'",
-  "generate": "(folder: 'PathLike') -> 'GenerateResult'",
+  "export": "(folder: 'PathLike', out: 'PathLike | None' = None, *, drawings: 'bool' = False, run_record: 'bool' = False, operator: 'str | None' = None) -> 'ExportResult'",
+  "export_data": "(source: 'ProjectSource', out: 'PathLike', *, run_record: 'bool' = False, operator: 'str | None' = None) -> 'DataFiles'",
+  "generate": "(folder: 'PathLike', *, run_record: 'bool' = False, operator: 'str | None' = None) -> 'GenerateResult'",
   "get_config": "(source: 'ProjectSource') -> 'ConfigReport'",
   "get_journal": "(source: 'ProjectSource', *, object_id: 'str | None' = None, since: 'int' = 0) -> 'JournalReport'",
   "get_overrides": "(source: 'ProjectSource', wire_id: 'str') -> 'OverrideResult'",
@@ -204,6 +207,16 @@
     "used_by": "str",
     "value": "Any",
     "what": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "DataFiles": {
+   "fields": {
+    "files": "tuple[str, ...]",
+    "model_hash": "str",
+    "run_record": "str"
    },
    "methods": {
     "to_dict": "(self) -> 'dict[str, Any]'"

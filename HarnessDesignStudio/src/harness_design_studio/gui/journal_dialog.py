@@ -10,6 +10,7 @@ the journal is append-only.
 """
 
 from collections.abc import Callable
+from typing import Any
 
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
@@ -27,6 +28,7 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio.core import journal
 from harness_design_studio.core.model import Project
+from harness_design_studio.core.units import gauge_short
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.theme import ThemeManager
 
@@ -41,6 +43,10 @@ COLUMNS = (
     strings.HISTORY_COL_NEW,
     strings.HISTORY_COL_REASON,
 )
+
+
+def _is_gauge(value: Any) -> bool:
+    return isinstance(value, int) and not isinstance(value, bool)
 
 
 def _cell(value: object) -> str:
@@ -110,6 +116,8 @@ class JournalDialog(QDialog):
             for c, value in enumerate(
                 (e.seq, e.when, e.author, e.kind, e.object, e.field, e.old, e.new, e.reason)
             ):
+                if c in (6, 7) and e.field == "gauge_awg" and _is_gauge(value):
+                    value = gauge_short(value)  # the cross-section beside a gauge, on screen only
                 item = QTableWidgetItem(_cell(value))
                 item.setToolTip(_cell(value))
                 self.table.setItem(r, c, item)

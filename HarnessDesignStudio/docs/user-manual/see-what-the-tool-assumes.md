@@ -36,6 +36,7 @@ The output has three parts: every setting with its value, then the assumptions b
 - **Where it comes from.** *Set by the project* (it is in a file of the project; *placeholder: not reviewed* while the file still says so), *the tool's own default* (the behaviour of the tool before the setting existed: no number changes when you leave it), or *not set*.
 - **Used by** and **Source**: what depends on it and who decides it, or the clause it comes from when a standard profile supplied it.
 - In the second part, each assumption lists the settings that parameterise it with their values, so you see at once that `A-SERVICE-LOOP` is two loops of the `service_loop_m` of your project.
+- **A wire gauge is shown with its cross-section.** Wherever the screen or an explanation names a gauge, the cross-section follows it: `24 AWG (0.205 mm²)` (three significant digits: `40 AWG (0.00501 mm²)`, `16 AWG (1.31 mm²)`), and in the table of ampacities `AWG 24 (0.205 mm²): 2.0`. The cross-section is that of a solid round conductor of the AWG diameter (the definition `D-AWG`), the one the voltage drop uses. It is for reading: the files the tool writes (the drawings, the lists, the workbook, the design rule report) keep the plain gauge, and the values you type and the files you edit are the plain number.
 
 ## 3. Change a setting
 
@@ -47,7 +48,7 @@ The value is JSON (a number, `true`, a list, a table). It is checked against the
 
 ## 4. Use the data in a spreadsheet or a script
 
-`harness-design-studio settings wheel-link --json` prints the same as data: for every setting its ID, label, unit, value, origin, default, what it does, what uses it, its source and range, and for every assumption the IDs of its settings.
+`harness-design-studio settings wheel-link --json` prints the same as data: for every setting its ID, label, unit, value, origin, default, what it does, what uses it, its source and range, and for every assumption the IDs of its settings. To keep the settings in force with a result, `harness-design-studio export-data wheel-link --out FOLDER` writes them as `settings.json` and `settings.csv` beside every table of the design, and the configuration files as the tool used them ([export the data](export-the-data.md)).
 
 ## Choose how a number is made
 
@@ -59,4 +60,4 @@ Some numbers can be made in more than one way. `model.json` holds the choice (th
 - **Expecting a setting to change a harness at once.** A setting changes what the next **Generate** makes; the explanations and the checks follow it at once.
 - **A key that is not a setting.** A typo in `model.json` is reported by name: `nonsense is not a setting of the model`.
 
-Next: [fill in the engineering values](fill-in-engineering-values.md), [the models](../models/README.md), [the configuration reference](../CONFIG.md)
+Next: [export the data](export-the-data.md), [fill in the engineering values](fill-in-engineering-values.md), [the models](../models/README.md), [the configuration reference](../CONFIG.md)

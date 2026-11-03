@@ -40,7 +40,13 @@ from harness_design_studio.core.generate.sizing import (
 )
 from harness_design_studio.core.model import Harness, Project, Wire
 from harness_design_studio.core.outputs.tables import BomContribution, bom_contributions
-from harness_design_studio.core.units import AWG_MAX, AWG_MIN, awg_to_area_mm2, format_awg
+from harness_design_studio.core.units import (
+    AWG_MAX,
+    AWG_MIN,
+    awg_to_area_mm2,
+    format_awg,
+    with_area,
+)
 from harness_design_studio.core.wires import find_wire
 
 
@@ -50,6 +56,22 @@ class Input:
     value: float | int | str | None
     unit: str
     source: str  # where it comes from: a key of config/*.json, a field of the design, the program
+
+    @property
+    def area_mm2(self) -> float | None:
+        """The cross-section when the input is a wire gauge (unit AWG), else None (D2, D-193)."""
+        v = self.value
+        if self.unit == "AWG" and isinstance(v, int) and not isinstance(v, bool):
+            return awg_to_area_mm2(v) if AWG_MIN <= v <= AWG_MAX else None
+        return None
+
+    def to_dict(self) -> dict[str, Any]:
+        out: dict[str, Any] = {
+            "name": self.name, "value": self.value, "unit": self.unit, "source": self.source,
+        }  # fmt: skip
+        if self.area_mm2 is not None:  # only a gauge has the key: the other inputs are as before
+            out["area_mm2"] = self.area_mm2
+        return out
 
 
 @dataclass(frozen=True)
@@ -103,10 +125,7 @@ class Derivation:
             "value": self.value,
             "unit": self.unit,
             "equation": self.equation,
-            "inputs": [
-                {"name": i.name, "value": i.value, "unit": i.unit, "source": i.source}
-                for i in self.inputs
-            ],
+            "inputs": [i.to_dict() for i in self.inputs],
             "steps": [_step_dict(s) for s in self.steps],
             "check": None
             if self.check is None
@@ -199,7 +218,7 @@ def render(d: Derivation) -> str:
             out.append(f"    {a.id} ({a.kind}) {a.title}. {a.text} [{a.where}]")
     if d.reference:
         out.append(f"  Reference: {d.reference}")
-    return "\n".join(out)
+    return with_area("\n".join(out))  # every gauge on the screen has its cross-section (D2)
 
 
 def _bundle(
@@ -1069,7 +1088,10 @@ def wire_override_derivation(project: Project, h: Harness, w: Wire) -> Derivatio
         "wire-override", f"Wire {w.id}", "Overridden by the engineer", None, "",
         "the value set by the engineer is used in place of the value the design gives",
         tuple(inputs), (), check, (), ref,
-        text="; ".join(f"{_OVERRIDE_TITLES[f][0]} {getattr(w, f)}" for f in sorted(w.overrides)),
+        text="; ".join(
+            f"{_OVERRIDE_TITLES[f][0]} {getattr(w, f)}{' AWG' if f == 'gauge_awg' else ''}"
+            for f in sorted(w.overrides)
+        ),
     )  # fmt: skip
 
 

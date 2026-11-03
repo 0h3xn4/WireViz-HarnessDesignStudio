@@ -32,6 +32,7 @@ SHAPES: dict[str, tuple[str, ...]] = {
     "verify": ("ok", "interfaces_checked", "wires_checked", "stale", "issues"),
     "settings": ("settings", "definitions", "assumptions"),  # no "ok": printed as before
     "explain --all": ("ok", "count", "without_value", "files"),  # with OBJECT: a list
+    "export-data": ("ok", "count", "model_hash", "files", "run_record"),
     "generate": (
         "ok", "saved", "added", "changed", "unchanged", "removed", "frozen", "kept_locks",
         "findings", "interfaces_checked", "wires_checked", "verify_issues",

@@ -14,6 +14,7 @@ from harness_design_studio.core import drc, journal, templates
 from harness_design_studio.core.io import layout
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
+from harness_design_studio.core.wires import find_wire
 
 LENGTHS = "harness,segment,length\nW001,W001-L1,850\nW002,W002-L1,900\n"
 
@@ -144,3 +145,77 @@ def test_an_import_is_a_journal_entry_and_the_record_is_not_in_the_hash(tmp_path
     assert journal.files_hash(layout.serialize(project, tool_version="")) == without
     save_project(project, dest)
     assert (dest / "imports" / "records.json").is_file()
+
+
+# ---- S5: one operator, the open data and the screen -----------------------------------------------
+
+
+def test_the_journal_and_the_run_record_resolve_the_operator_in_one_place(monkeypatch, tmp_path):
+    from harness_design_studio.core import run_record
+
+    config = tmp_path / "gitconfig"
+    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(config))
+    config.write_text('[user]\n\tname = "Git Name"\n', encoding="utf-8")
+    monkeypatch.delenv("HARNESS_AUTHOR", raising=False)
+    assert journal.resolve_author(None, environ={}) == "Git Name"
+    assert run_record.resolve_operator(None, environ={}) == "Git Name"
+    assert run_record.resolve_operator(" Given ", environ={}) == journal.resolve_author("Given")
+    config.write_text("", encoding="utf-8")
+    for env in ({"USER": "u"}, {"USERNAME": "w"}, {"LOGNAME": "l"}, {}):
+        assert run_record.resolve_operator(None, environ=env) == journal.resolve_author(
+            None, environ=env
+        )
+    journal.set_author("Via option")
+    try:
+        assert journal.author() == "Via option"
+    finally:
+        journal.set_author(None)
+
+
+def test_the_author_before_the_command_reaches_the_journal_of_a_command_with_its_own_author(
+    tmp_path,
+):
+    a, b = tmp_path / "a", tmp_path / "b"
+    api.create_project(a, "first-steps")
+    api.create_project(b, "first-steps")
+    assert main(["--author", "Eve", "generate", str(a)]) == 0
+    assert main(["generate", str(b), "--run-record", "--author", "Fay"]) == 0
+    for dest, who in ((a, "Eve"), (b, "Fay")):
+        entries = load_project(dest).project.journal
+        assert {e.author for e in entries if e.kind == "generate"} == {who}
+
+
+def test_the_open_data_says_only_whether_there_is_a_journal_and_counts_overrides(folder):
+    from harness_design_studio.core import open_data
+
+    wid = a_wire(folder)
+    project = load_project(folder).project
+    files = open_data.data_files(project)
+    assert json.loads(files["provenance.json"])["design"]["journal"] == "present"
+    assert b"Ann Engineer" not in b"".join(files.values()) and b"2026-11-03" not in b"".join(
+        files.values()
+    )
+    assert "overrides.wires" not in {r["id"] for r in json.loads(files["settings.json"])["rows"]}
+    api.set_override(folder, wid, "colour", "pink", "customer request")
+    project = load_project(folder).project
+    got = json.loads(open_data.data_files(project)["settings.json"])
+    assert [r["value"] for r in got["rows"] if r["id"] == "overrides.wires"] == [1]
+    project.journal = None
+    prov = json.loads(open_data.data_files(project)["provenance.json"])
+    assert prov["design"]["journal"] == "absent"
+
+
+def test_a_gauge_override_shows_its_cross_section_on_the_screen_only(folder):
+    from harness_design_studio.core.derive import explain_wire, render
+    from harness_design_studio.gui.harness_view import wire_hand_lock
+
+    wid = a_wire(folder)
+    api.set_override(folder, wid, "gauge_awg", 24, "supplier stock")
+    project = load_project(folder).project
+    tip, word = wire_hand_lock(find_wire(project, wid)[1])
+    assert tip is not None
+    assert "gauge_awg 24 (0.205 mm²): supplier stock" in tip and word
+    shown = render(next(d for d in explain_wire(project, wid) if d.id == "wire-override"))
+    assert "24 AWG (0.205 mm²)" in shown
+    written = (folder / "journal.json").read_text(encoding="utf-8")
+    assert "mm²" not in written

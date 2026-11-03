@@ -27,7 +27,7 @@ The voltage drop over a wire:
 
 > ΔV = I × ρ × L / A × n
 
-where I is the current of the interface in A, ρ the resistivity of the conductor in Ω·m, L the length of the wire in m, A the cross-section of the conductor in m² and n the number of conductors counted. The cross-section A is that of a solid round conductor of the AWG diameter, d = 0.127 mm × 92^((36 − AWG)/39), so A = π/4 × d².
+where I is the current of the interface in A, ρ the resistivity of the conductor in Ω·m, L the length of the wire in m, A the cross-section of the conductor in m² and n the number of conductors counted. The cross-section A is that of a solid round conductor of the AWG diameter, d = 0.127 mm × 92^((36 − AWG)/39), so A = π/4 × d². The screen and the explanations name a gauge with this cross-section, `24 AWG (0.205 mm²)`; the files the tool writes keep the plain gauge, and `export-data` has the cross-section as a column of its own (`area_mm2`; [export the data](../user-manual/export-the-data.md)).
 
 ## The inputs and where they come from
 

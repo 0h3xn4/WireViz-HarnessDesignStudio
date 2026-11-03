@@ -16,7 +16,7 @@ GROUPS = (
     ("Check", ("validate", "check", "drc", "verify")),
     ("Explain", ("explain", "settings")),
     ("Overrides and change history", ("override", "deviation", "journal")),
-    ("Generate and export", ("generate", "export")),
+    ("Generate and export", ("generate", "export", "export-data")),
     ("Team use with Git", ("merge-fix",)),
     (
         "Bring in data",
@@ -104,11 +104,18 @@ EXAMPLES: dict[str, list[str]] = {
     "generate": [
         "harness-design-studio generate my-design",
         "harness-design-studio generate my-design --json",
+        "harness-design-studio generate my-design --run-record",
     ],
     "export": [
         "harness-design-studio export my-design",
         "harness-design-studio export my-design --drawings",
         "harness-design-studio export my-design --out my-outputs --json",
+        'harness-design-studio export my-design --run-record --author "A. Engineer"',
+    ],
+    "export-data": [
+        "harness-design-studio export-data my-design --out my-design-data",
+        "harness-design-studio export-data my-design --out my-design-data --json",
+        'harness-design-studio export-data my-design --out my-design-data --run-record --author "A. Engineer"',
     ],
     "config": [
         "harness-design-studio config my-design",
@@ -286,6 +293,10 @@ def _json_section() -> list[str]:
         "settings, definitions and assumptions, both as they did before (neither has an `ok`); "
         "`explain --all --out FOLDER --json` prints the document below. "
         "`export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. "
+        "`export` and `generate` take `--run-record [--author NAME]`: the record of the run "
+        "(`run_record.json`) is then written into the outputs folder, outside every hash, and "
+        "their document gains the key `run_record` (the name of the file); without the option "
+        "no record is written and the document is as listed. "
         "`config` prints every engineering value with its unit, its use, whether it is set and "
         "where it came from, and the values it refused, in the order of the hand-over list.",
         "",

@@ -21,6 +21,7 @@ from PySide6.QtWidgets import QFrame, QLabel, QPushButton, QScrollArea, QVBoxLay
 from harness_design_studio.core import why
 from harness_design_studio.core.derive import Derivation, explain_object, render
 from harness_design_studio.core.edit import EditError
+from harness_design_studio.core.units import with_area
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import EditorController
 from harness_design_studio.gui.panels import clear_layout, heading, muted, scroll_body
@@ -261,7 +262,7 @@ class WhyPanel(QScrollArea):
         head.setObjectName("why-rule")
         mark_mono(head)
         head.setAccessibleName(strings.WHY_RULE_NAME.format(reason.rule))
-        text = QLabel(reason.text)
+        text = QLabel(with_area(reason.text))  # a gauge has its cross-section beside it (D2)
         text.setWordWrap(True)
         text.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
         text.setObjectName("why-reason")
