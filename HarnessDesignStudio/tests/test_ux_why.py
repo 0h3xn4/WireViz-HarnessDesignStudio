@@ -204,7 +204,7 @@ def test_a_wire_offers_its_calculation_closed_until_asked(ctl, theme, qtbot) -> 
 
 
 def test_the_calculation_shown_is_the_text_of_the_explain_command(ctl, theme, qtbot) -> None:
-    from harness_design_studio.core.derive import explain_wire, render
+    from harness_design_studio.core.derive import explain_object, render
 
     wid = a_wire(ctl)
     panel = make(ctl, theme, qtbot)
@@ -213,7 +213,7 @@ def test_the_calculation_shown_is_the_text_of_the_explain_command(ctl, theme, qt
     panel.explain_button.click()
     QApplication.processEvents()
     assert [t.text() for t in panel.explain_texts] == [
-        render(d) for d in explain_wire(ctl.project, wid)
+        render(d) for d in explain_object(ctl.project, wid)
     ]
     shown = "\n".join(t.text() for t in panel.explain_texts)
     for must in ("Equation:", "Inputs:", "Rests on:", "A-ROUND-TRIP", "[config/derating.json"):
@@ -231,6 +231,8 @@ def test_the_calculation_closes_when_another_object_is_chosen(ctl, theme, qtbot)
     assert panel.explain_texts
     cable = ctl.project.harnesses["W001"].connectors[0].id
     panel.show_object("connector", cable)
+    assert panel.explain_button is not None and panel.explain_texts == []  # a connector has one too
+    panel.show_object("unit", next(iter(ctl.project.units)))
     assert panel.explain_button is None and panel.explain_texts == []
     panel.show_object("wire", a_wire(ctl))
     assert panel.explain_texts == []
@@ -243,7 +245,7 @@ def test_nothing_to_explain_for_a_wire_that_no_longer_exists(ctl, theme, qtbot) 
 
 
 def test_a_harness_offers_its_mass_calculation(ctl, theme, qtbot) -> None:
-    from harness_design_studio.core.derive import explain_harness, render
+    from harness_design_studio.core.derive import explain_object, render
 
     panel = make(ctl, theme, qtbot)
     panel.show_object("harness", "W001")
@@ -251,6 +253,28 @@ def test_a_harness_offers_its_mass_calculation(ctl, theme, qtbot) -> None:
     panel.explain_button.click()
     QApplication.processEvents()
     assert [t.text() for t in panel.explain_texts] == [
-        render(d) for d in explain_harness(ctl.project, "W001")
+        render(d) for d in explain_object(ctl.project, "W001")
     ]
     assert "Mass" in panel.explain_texts[0].text()
+
+
+def test_a_pin_an_interface_and_a_connector_offer_their_calculation(ctl, theme, qtbot) -> None:
+    """S1: why this signal is on this pin, which harness carries an interface and why."""
+    from harness_design_studio.core.derive import explain_object, render
+
+    panel = make(ctl, theme, qtbot)
+    for kind, oid, must in (
+        ("pin", "MTQ1-J01.1", "PWR of IF-018 on pin 1"),
+        ("interface", "IF-001", "Why these interfaces share a harness"),
+        ("connector", "GPSU1-J01", "Choice of connector"),
+    ):
+        panel.show_object(kind, oid)
+        assert panel.explain_button is not None and panel.explain_texts == [], (kind, oid)
+        panel.explain_button.click()
+        QApplication.processEvents()
+        assert [t.text() for t in panel.explain_texts] == [
+            render(d) for d in explain_object(ctl.project, oid)
+        ]
+        assert any(must in t.text() for t in panel.explain_texts), (kind, oid)
+    panel.show_object("pin", "NO-SUCH.9")
+    assert panel.explain_button is None

@@ -170,11 +170,18 @@ def test_explain_prints_the_numbers_the_tool_stored(
     assert "config/derating.json: ampacity_a_by_awg" in out and "A-ROUND-TRIP" in out
     assert main(["explain", str(tmp_path / "flat"), "W001-001", "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
-    assert [d["id"] for d in data] == [
+    assert [d["id"] for d in data][:4] == [
         "wire-length",
         "wire-current-limit",
         "wire-voltage-drop",
         "wire-mass",
+    ]
+    assert [d["id"] for d in data][4:] == [  # then what S1 added: label, colour, shield, two pins
+        "wire-label",
+        "wire-colour",
+        "shield-group",
+        "pin-allocation",
+        "pin-allocation",
     ]
     assert math.isclose(data[2]["value"], 0.458359, rel_tol=1e-6) and data[0]["value"] == 3.45
     assert main(["explain", str(tmp_path / "flat"), "NO-SUCH-WIRE"]) == 2
@@ -300,7 +307,8 @@ def test_explain_takes_a_wire_or_a_harness(
     out = capsys.readouterr().out
     assert out.startswith("Harness W001. Mass:") and "Connector W001-P1" in out
     project = templates.create_project(tmp_path / "again", "flatsat")
-    assert [d.id for d in explain_object(project, "W001")] == ["harness-mass"]
+    assert explain_object(project, "W001")[0].id == "harness-mass"
+    assert [d.id for d in explain_harness(project, "W001")] == ["harness-mass"]
     assert main(["explain", str(tmp_path / "flat"), "NOPE"]) == 2
 
 
@@ -452,7 +460,7 @@ def test_every_derivation_is_written_as_json_and_csv_and_the_same_design_gives_t
     project = load_project(tmp_path / "flat").project
     found = explain_all(project)
     doc = json.loads((tmp_path / "a" / "derivations.json").read_text(encoding="utf-8"))
-    assert doc["format"] == 1 and doc["tool_version"] and len(doc["derivations"]) == len(found)
+    assert doc["format"] == 2 and doc["tool_version"] and len(doc["derivations"]) == len(found)
     assert doc["derivations"] == [d.to_dict() for d in found]
     with (tmp_path / "a" / "derivations.csv").open(encoding="utf-8", newline="") as fh:
         rows = list(csv_mod.reader(fh))

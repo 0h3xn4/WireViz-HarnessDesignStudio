@@ -6,6 +6,11 @@ spreadsheet or a script. The files carry what the derivations carry: the quantit
 unit, the equation, the inputs with their units and sources, the steps, the check (actual, limit,
 margin, verdict), the assumptions and what is missing. They carry no time, user name or path, so the
 same design written twice gives the same bytes.
+
+Format 2 (S1, D-191): a derivation whose result is a text (a label, a colour, a pin, a group, the
+answer to Ready to build) has the key `text` in the JSON and a last column *Text* in the CSV; the
+kinds of derivation are listed in `core.derive_kinds`, and the limits of the design rules
+(`rule-limit`, `rule-check`) follow the others for each finding of the project.
 """
 
 import csv
@@ -14,32 +19,43 @@ import json
 from typing import Any
 
 from harness_design_studio import __version__
+from harness_design_studio.core import checks
 from harness_design_studio.core.derive import (
+    EXPLAINABLE_RULES,
     Derivation,
     contact_current_derivation,
-    explain_harness,
+    explain_harness_all,
     explain_part,
-    explain_wire,
+    explain_wire_all,
 )
+from harness_design_studio.core.derive_rules import explain_rule
+from harness_design_studio.core.drc import run as run_drc
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.outputs.tables import bom_contributions, data_num
 
-FORMAT = 1
+FORMAT = 2
 CSV_HEADER = [
     "Kind", "Subject", "Quantity", "Value", "Unit", "Equation", "Actual", "Limit", "Margin",
-    "Verdict", "Assumptions", "Missing",
+    "Verdict", "Assumptions", "Missing", "Text",
 ]  # fmt: skip
 
 
+# the rules whose derivation of their own is written with the wire or the interface they are about
+_FIRST_RULES = frozenset({"current-over-wire", "voltage-drop", "current-over-contact"})
+
+
 def explain_all(project: Project) -> list[Derivation]:
-    """Every derivation of the project, in a fixed order: for each harness (by ID) its mass, then
-    its wires in order (length, current limit, voltage drop, mass); then the parts of the bill of
-    materials (by ID and unit); then the contacts of each interface at each of its connectors."""
+    """Every derivation of the project, in a fixed order: for each harness (by ID) everything that
+    explains the harness (its mass, whether it is ready to build and the checks behind that, its
+    test limits, why it is a harness of its own, its shield groups, its connectors), then its wires
+    in order (length, current limit, voltage drop, mass, label, colour, shield group, pins); then
+    the parts of the bill of materials (by ID and unit); then the contacts of each interface at
+    each of its connectors; then, for each finding, the limit or the comparison of its rule."""
     found: list[Derivation] = []
     for hid in sorted(project.harnesses):
-        found += explain_harness(project, hid)
+        found += explain_harness_all(project, hid)
         for w in project.harnesses[hid].wires:
-            found += explain_wire(project, w.id)
+            found += explain_wire_all(project, w.id)
     harnesses = [project.harnesses[i] for i in sorted(project.harnesses)]
     for pid in sorted({c.part_id for c in bom_contributions(project, harnesses)}):
         found += explain_part(project, pid)
@@ -47,6 +63,14 @@ def explain_all(project: Project) -> list[Derivation]:
         for e in i.endpoints:
             if e.connector_id and e.connector_id in project.connectors:
                 found.append(contact_current_derivation(project, i.id, e.connector_id))
+    findings = [*checks.find(project), *run_drc(project)]
+    seen: set[tuple[str, str]] = set()
+    for f in findings:
+        key = (f.rule, f.object_id)
+        if f.rule in _FIRST_RULES or key in seen or f.rule not in EXPLAINABLE_RULES:
+            continue
+        seen.add(key)
+        found += explain_rule(project, f.rule, f.object_id, findings)
     return found
 
 
@@ -75,7 +99,7 @@ def to_csv_bytes(derivations: list[Derivation]) -> bytes:
                 data_num(c.actual) if c else "", data_num(c.limit) if c else "",
                 data_num(c.margin) if c else "",
                 ("pass" if c.passes else "fail") if c else "",
-                ";".join(d.assumptions), "; ".join(d.missing),
+                ";".join(d.assumptions), "; ".join(d.missing), d.text,
             ]
         )  # fmt: skip
     return out.getvalue().encode("utf-8")

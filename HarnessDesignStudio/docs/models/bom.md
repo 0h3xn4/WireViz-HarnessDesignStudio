@@ -14,7 +14,7 @@ This page explains the quantity the tool puts in the bill of materials (`bom.csv
 
 ## What the tool decides
 
-For every part used in a harness the bill of materials has one line for each unit the part is counted in: `ea` (each) or `m` (metres). A part used both ways has two lines. The quantity is the sum of what every harness adds, and the tool writes it with one function; the explanation lists what that function counted.
+For every part used in a harness the bill of materials has one line for each unit the part is counted in: `ea` (each) or `m` (metres). A part used both ways has two lines. The quantity is the sum of what every harness adds, and the tool writes it with one function; the explanation lists what that function counted. `explain DIR PART` shows each line as a derivation of kind `part-bom`.
 
 ## The equations
 
