@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+## 1.12.0 (2026-11-03; not a statement of compliance)
+
+First part of the transparency work (D-191, steps 0 to 5a): you can ask the tool how a number was made. Minor version: new commands and a new section of the Why tab; no calculated number changes.
+
 ### Fixed
 
 - **`validate` checks the values of `config/*.json` like `generate`, `drc` and `config` do (transparency work, D-191).** With `bundle_derating` set to 1.5, `validate` printed `0 error(s)` and exited 0 while `generate` stopped with `config_invalid`. It now prints the same `config_invalid` error and exits 1. A project whose values are valid gets the same output as before. `docs/CONFIG.md` already said the commands use the same checks. `tests/test_validate_config.py`.
@@ -19,6 +23,11 @@ Versions follow semantic versioning. Every project file records the tool version
 - **The length of a wire is explained (transparency work, step 1c, D-191).** `explain` and the **Show the calculation** section of the Why tab now start with the length: the segments of the wire's path with their lengths, the service loops that generation added (2 × `service_loop_m`), and the total, or, when the length was typed on the wire or does not match its path, a plain statement of that. A length is never of unknown origin, and a missing segment length is named. Two assumptions are listed with IDs: A-PATH-UNIQUE and A-SERVICE-LOOP. New page `docs/models/wire-length.md`. The path function was split so that the derivation uses the very path the length uses (`lengths.path_trail`); no length changes (the numbers snapshot and the output hashes are identical).
 - **The Why tab shows the calculation of a wire (transparency work, step 1b, D-191).** Select a wire and press **Show the calculation**: the current its gauge may carry and its voltage drop appear below the recorded reasons, with the equation, the inputs with units and sources, the steps, the check and the assumptions built into the program. It is the text of `explain`, produced by the same code, and closed until asked for, so the tab stays short. Nothing that is written changes.
 - **The numbers are kept on purpose (for developers).** `tools/numbers_snapshot.py` and `tests/fixtures/numbers/snapshot.json` hold, for eleven scenarios, the gauge, length, part, colour and lock of every wire, every finding with its text and the SHA-256 of every written file; `tests/test_numbers_snapshot.py` fails and names the wire, finding or file that moved. `docs/changes.md` records every change that moves a result, with before and after.
+
+### Changed
+
+- **No calculated number, no design rule and no written file changes (release 1.12.0, D-191).** The design rules are still 39. The written files differ from 1.11.1 only in the tool version in the stamp and the model hash that follows from it (the one exception is the note on a sized wire in the generation record of a project with a bundle-factor table of its own, see *Fixed*). `docs/ui/OUTPUT_HASHES_BASELINE.json` is not written again (`1.10.0`, `1.11.x` and `1.12.0` have the same length; `python -m tools.output_hashes --check docs/ui/OUTPUT_HASHES_BASELINE.json` and `python -m tools.numbers_snapshot --check tests/fixtures/numbers/snapshot.json` print *identical*).
+- **Not in this release.** This is the first part of the transparency work. Still to come: a registry of the constants as settings, selectable models, overrides with a reason and a history, import records, a scripting interface, plug-ins and the capture of as-built data for the Electrical / AIT role. The explanations exist for wire sizing, wire length, mass, the bill of materials and the contact current; not yet for readiness, test limits, pin allocation and the other design rules, and a finding does not yet show actual, limit and margin itself (the explanation does).
 
 ## 1.11.1 (2026-11-01; not a statement of compliance)
 
