@@ -156,14 +156,14 @@ harness-design-studio verify my-design --outputs
 
 ### harness-design-studio explain
 
-Show how the numbers of one wire or one harness were made. For a wire: its length, the current its gauge may carry after derating, the voltage drop over it and its share of the mass. For a harness: its mass. For a part: why the bill of materials has its quantity. For INTERFACE.CONNECTOR (the object of a current-over-contact finding): the limit of the contacts. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. `--json` prints the same as data. With `--all --out FOLDER` it writes every derivation of the project to FOLDER as `derivations.json` and `derivations.csv`: no time, user or path is in them, so the same design gives the same files. Without `--out` nothing is written.
+Show how the numbers and decisions of one object were made. For a wire: its length, the current its gauge may carry after derating, the voltage drop over it and its share of the mass, then its label, its colour, its shield group and the pins at its ends. For a harness: its mass, whether it is ready to build and each check behind that, its test limits, why its interfaces share it, its shield groups and its connectors; HARNESS.T001 explains the limits of one test. For an interface: which harness carries it and why, its connectors, the contact current and its pins. For a connector: why it is the connector (or the mating part) and its label; for CONNECTOR.PIN: why the signal is on that pin; for a shield group (W001-S1): why it exists and its ends. For a part: why the bill of materials has its quantity. For INTERFACE.CONNECTOR (the object of a current-over-contact finding): the limit of the contacts. For each: the equation, the inputs with their units and where each comes from (a key of config/*.json, a field of the design or the program), the intermediate results, what the result is checked against, and the assumptions built into the program that it rests on. The numbers are the ones `generate` and `drc` use. `--json` prints the same as data. With `--all --out FOLDER` it writes every derivation of the project to FOLDER as `derivations.json` and `derivations.csv`: no time, user or path is in them, so the same design gives the same files. Without `--out` nothing is written.
 
 `harness-design-studio explain project [OBJECT] [options]`
 
 | Argument | Meaning |
 | --- | --- |
 | `project` | project folder |
-| `OBJECT` | a wire (W001-001), a harness (W001), a part (EX-WIRE-SINGLE) or INTERFACE.CONNECTOR (IF-001.GPSU1-J01) |
+| `OBJECT` | a wire (W001-001), a harness (W001), a test (W001.T001), an interface (IF-001), a connector (GPSU1-J01), a pin (MTQ1-J01.1), a shield group (W001-S1), a part (EX-WIRE-SINGLE) or INTERFACE.CONNECTOR (IF-001.GPSU1-J01) |
 | `--json` | print the derivations as JSON |
 | `--all` | every derivation of the project (instead of OBJECT) |
 | `--out OUT` | with --all: the folder for derivations.json and derivations.csv |

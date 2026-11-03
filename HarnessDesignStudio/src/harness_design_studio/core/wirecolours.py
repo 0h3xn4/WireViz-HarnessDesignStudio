@@ -51,3 +51,14 @@ def name_of(value: str | None) -> str:
     """The table's colour name for a typed colour ("RD" gives "red"), or "" when it is not one."""
     code, _hex = resolve(value)
     return next((n for n, c, _h in COLOURS if c == code), "")
+
+
+def signal_colour(table: object, signal: str | None) -> tuple[str, str] | None:
+    """The colour that the table `generation.wire_colour_by_signal` gives a wire of this signal,
+    as (the key of the table that matched, the colour). A wire between two different signal names
+    is labelled "TX+/RX+": the whole label counts first, then each name in turn. None when there is
+    no table, the wire has no signal, or no key matches: generation then leaves the colour empty."""
+    if not isinstance(table, dict) or not signal:
+        return None
+    key = next((k for k in (signal, *signal.split("/")) if k in table), None)
+    return None if key is None else (key, str(table[key]))

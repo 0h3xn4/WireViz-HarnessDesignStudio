@@ -14,7 +14,7 @@ This page explains the mass the tool gives a wire and a harness: the number in t
 
 ## What the tool decides
 
-For each harness the tool adds up the mass of its connectors and the mass of its wires, shows the total of what is known, and adds a margin. It does not weigh anything: every mass comes from the parts library of the project, and every length from the wire (see [wire length](wire-length.md)).
+For each harness the tool adds up the mass of its connectors and the mass of its wires, shows the total of what is known, and adds a margin. It does not weigh anything: every mass comes from the parts library of the project, and every length from the wire (see [wire length](wire-length.md)). `explain` shows the mass of a wire as the derivation of kind `wire-mass` and that of a harness as `harness-mass`.
 
 ## The equations
 

@@ -958,21 +958,54 @@ def test_a_failing_current_finding_opens_its_calculation(tight) -> None:
     dialog.close()
 
 
-def test_the_explain_button_is_only_there_for_a_rule_with_a_calculation(tight) -> None:
+def test_the_explain_button_is_there_for_every_rule_that_has_findings(tight) -> None:
+    """S1: a rule that is a yes/no check has an explanation too (what it compares)."""
     ctl, panel = tight
     panel.select_rule("current-over-wire")
     assert panel.details.explain_btn.isVisibleTo(panel.details)
     assert panel.select_rule("part-unapproved")
-    assert not panel.details.explain_btn.isVisibleTo(panel.details)
+    assert panel.details.explain_btn.isVisibleTo(panel.details)
+    panel.details.explain_btn.click()
+    QApplication.processEvents()
+    text = panel.explain_dialog.text.toPlainText()
+    assert "this rule is a yes/no check: it compares" in text and "approval" in text
+    panel.explain_dialog.close()
 
 
-def test_what_has_no_calculation_gives_nothing_and_not_an_error(tight) -> None:
+def test_what_cannot_be_explained_gives_nothing_and_not_an_error(tight) -> None:
     from harness_design_studio.core.derive import explain_finding
 
     ctl, _panel = tight
-    assert explain_finding(ctl.project, "part-unapproved", "EX-WIRE-SINGLE") == []
+    assert explain_finding(ctl.project, "no-such-rule", "EX-WIRE-SINGLE") == []
     assert explain_finding(ctl.project, "current-over-wire", "NO-SUCH-WIRE") == []
     assert explain_finding(ctl.project, "current-over-contact", "NO-DOT") == []
     assert [d.id for d in explain_finding(ctl.project, "voltage-drop", "W001-001")] == [
         "wire-voltage-drop"
     ]
+
+
+def test_the_explain_button_opens_an_explanation_for_every_rule_that_has_a_finding(tight) -> None:
+    """S1: no rule of the table is without an explanation, and each one with findings opens it."""
+    from harness_design_studio.core.derive import EXPLAINABLE_RULES
+
+    ctl, panel = tight
+    results = panel.results()
+    assert len(results) >= 39
+    assert {r.rule_id for r in results} <= EXPLAINABLE_RULES  # (the whole table, none left out)
+    opened = 0
+    for r in results:
+        if not r.object_ids:
+            continue
+        assert panel.select_rule(r.rule_id), r.rule_id
+        details = panel.details
+        assert details.explain_btn.isVisibleTo(details) and details.explain_btn.isEnabled(), (
+            r.rule_id
+        )
+        details.explain_btn.click()
+        QApplication.processEvents()
+        text = panel.explain_dialog.text.toPlainText()
+        assert "Equation:" in text, r.rule_id
+        assert "yes/no check" in text or "Check:" in text, r.rule_id
+        panel.explain_dialog.close()
+        opened += 1
+    assert opened >= 3
