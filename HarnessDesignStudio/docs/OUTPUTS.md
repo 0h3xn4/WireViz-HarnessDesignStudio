@@ -7,6 +7,7 @@ The screen says *device*, the files say *unit*: the written files keep the word 
 ## Contents
 
 - [Build workbook](#build-workbook)
+- [As-built report](#as-built-report-systemasbuiltreportmd-and-csv)
 - [Connection list](#connection-list-systemconnectionscsv-and-xlsx)
 - [Stamps](#stamps)
 - [Stale detection](#stale-detection)
@@ -41,6 +42,7 @@ outputs/
     bom.csv  mass_length.csv  mating_matrix.csv  traceability.csv  box_pinouts.csv
     changelog.csv  revision_report.md   change log and per-harness history with differences between revisions
     drc_findings.csv  drc_report.md
+    asbuilt_report.md  asbuilt_report.csv   what was built and measured against the design and the test limits (only when the project has as-built records, S9)
     export.json                    the whole model in one documented JSON file
     provenance.json                which tool version, library and configuration made the outputs (see Provenance)
     system.xlsx                    BOM, mass and length, matrices, box pinouts, DRC findings, change log
@@ -59,12 +61,17 @@ outputs/
 | **Parts** | The rows of the harness `bom.csv` with the approval coloured and in words (green approved, amber pending, red anything else). |
 | **Accessories** | The rows of `accessories.csv` with a column **Done (x)** in front: accessory, kind, part, target (a harness-level accessory shows `(harness)`), position, length (mm), quantity, note. With none the sheet says `No accessories entered.` |
 | **Labels** | The rows of `labels.csv` with a column **Done (x)**. |
-| **Tests** | The rows of `tests.csv`, and the empty columns **Measured**, **Result** (a list: `Pass` or `Fail`), **Initials** and **Date**. |
+| **Tests** | The rows of `tests.csv`, and the empty columns **Measured**, **Result** (a list: `Pass` or `Fail`), **Initials** and **Date**. What is typed into them is not read by the tool; the results are recorded with the as-built sheet (`export-asbuilt`, `import-asbuilt`). |
+| **As-built** | Only for a harness that has as-built records, between *Tests* and *About*: what was recorded and how it compares with the design and the test limits (the rows of `system/asbuilt_report.csv` for this harness). |
 | **About** | The stamp and the full model hash, as in the other workbooks. |
 
 The six sheets other than **Start here** and **About** keep a bold header row on screen; **Cut list**, **Parts**, **Accessories**, **Labels** and **Tests** have filters; the tick cells offer an `x` and turn green when one is entered; every sheet except **About** is set up to print on A4, landscape, with the stamp at the left of the footer, the sheet name in the middle and the page number at the right. There are no formulas. A cell that starts with `= + - @` is stored as text. The columns for results and ticks are for people: the tool never reads them back, and a build workbook in `outputs/` that was edited fails `verify --outputs` (`out_modified`, `out_build`), so work on a copy.
 
 **Build data (1.7.0, D-170).** Strip lengths, contacts, crimp tools and accessories are optional values a person enters; the tool computes nothing from them, checks nothing and sets no default, so an empty value stays empty and reads `to fill in`. How to enter them: [`user-manual/enter-the-build-data.md`](user-manual/enter-the-build-data.md). The tables show them only where they are used (see Tables), so a project that does not use them keeps byte-identical files. Use: [`user-manual/export-the-outputs.md`](user-manual/export-the-outputs.md).
+
+## As-built report (`system/asbuilt_report.md` and `.csv`)
+
+Written **only when the project has as-built records** (`asbuilt/records.json`, [record what was built](user-manual/record-what-was-built.md)); a project without them writes exactly the files it always wrote, and the output hashes are identical. `asbuilt_report.md` is the report to print: the summary of each harness (state, values needed, recorded, missing, out of limit, within limit, not compared, different from the design, stale), then the lists of what is out of its limit, missing, different from the design, stale or not compared, and the notes and non-conformances of the records. `asbuilt_report.csv` has one row for each value: *Harness, Kind, Item, Value, Status, Actual, Designed or limit, Unit, Margin, Note*. The harness that has records also gets a sheet **As-built** (the rows of the csv for that harness) before *About* in its build workbook. The report says in its first lines that it is not a sign-off and does not say that a harness passed or is compliant. The files carry the stamp (the model hash does not change with the records), and the manifest has `asbuilt_hash` while there are records, so the outputs are *out of date* when the records changed although the design did not. The records are compared as [as-built results](models/asbuilt.md) describes; `harness-design-studio asbuilt DIR` prints the same lines.
 
 ## Connection list (`system/connections.csv` and `.xlsx`)
 New in 1.9. A project that has **connections** (the links of two device connectors, pin to pin; `logical/links.json`) gets two more files in `system/`. A project without connections writes neither, and every other file of it keeps its bytes, so nothing changes for a project that does not use connections. They do not need a harness: `export` and the Export window work for a project that has connections and no harness, and the connection list is then the main document. (A project with neither a harness nor a connection still cannot be exported.)

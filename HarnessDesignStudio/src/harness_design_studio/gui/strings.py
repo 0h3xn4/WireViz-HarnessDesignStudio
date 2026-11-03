@@ -1,5 +1,8 @@
 """All user-visible UI strings live here so translation is possible later."""
 
+from harness_design_studio.core.workflow import BAR_LABELS as _BAR
+from harness_design_studio.core.workflow import PAGE_LABELS as _PAGE
+
 APP_TITLE = "Harness Design Studio"
 EMPTY_CANVAS = "Your diagram is empty.\nAdd your first device with the button below, or with Add in the project panel. Press Ctrl+K to find a command, or bring in a table with File > Import."
 CANVAS = "Block diagram canvas"
@@ -2014,9 +2017,11 @@ A_PROBLEMS = "Problems panel"
 A_PROBLEMS_TIP = "Show or hide the list of all open problems at the bottom of the window"
 
 # ---- UI overhaul M3: the workflow stepper, Home, the lock banner ------------------------------------
-STEP_GENERATE = "Generate"
-STEP_REVIEW = "Check"
-STEP_RELEASE = "Release"
+STEP_GENERATE = _BAR[
+    "generate"
+]  # the three steps of the top bar: one source with the Next step page
+STEP_REVIEW = _BAR["check"]
+STEP_RELEASE = _BAR["release"]
 STEP_GENERATE_RUNNING = "generating the harnesses"
 STEP_GENERATE_DONE = "the harness plans match the design"
 STEP_GENERATE_STALE = "the design changed after the last generation"
@@ -2553,12 +2558,12 @@ AREA_NEXT_TIP = "Next step: what to do now, in plain words, with one button"
 NEXT_TITLE = "What to do next"
 NEXT_STEPS_HEADING = "The steps"
 NEXT_STEPS_NAME = "The steps of the work and where you are"
-NEXT_STEP_ADD = "Add your devices"
-NEXT_STEP_CONNECT = "Connect them"
-NEXT_STEP_GENERATE = "Generate the harnesses"
-NEXT_STEP_CHECK = "Check the design"
-NEXT_STEP_SHEETS = "Get the build sheets"
-NEXT_STEP_RELEASE = "Review and release"
+NEXT_STEP_ADD = _PAGE["devices"]  # the six steps of the page: from core/workflow.py (S9)
+NEXT_STEP_CONNECT = _PAGE["connect"]
+NEXT_STEP_GENERATE = _PAGE["generate"]
+NEXT_STEP_CHECK = _PAGE["check"]
+NEXT_STEP_SHEETS = _PAGE["outputs"]
+NEXT_STEP_RELEASE = _PAGE["release"]
 NEXT_STATE_DONE = "done"
 NEXT_STATE_NEXT = "next"
 NEXT_STATE_TODO = "to do"
@@ -2566,7 +2571,7 @@ NEXT_STATE_BLOCKED = "not possible"
 NEXT_STEP_LINE = "{0}: {1}"
 NEXT_SHOW_EVERYTHING = "Show everything"
 NEXT_SHOW_EVERYTHING_TIP = (
-    "Switch to the role Electrical / AIT engineer, which shows every area, panel and tab. "
+    "Switch to the role Electrical engineer, which shows every area but the as-built records, with every panel and tab. "
     "You can switch back in View > Role."
 )
 NEXT_LIBRARY = "Library…"
@@ -3048,21 +3053,29 @@ COPIES_DONE = "Added {}.{}"
 
 # ---- Workshop feedback M5 (D-176): the role replaces Simple and Full ----
 ROLE_SYSTEMS = "Systems engineer"
-ROLE_ELECTRICAL = "Electrical / AIT engineer"
+ROLE_ELECTRICAL = "Electrical engineer"
+ROLE_AIT = "AIT engineer"
 ROLE_SYSTEMS_TIP = (
     "Systems engineer: devices, connections between devices, subsystems, the library and the "
     "checks. The project opens on the next step and the screen shows less"
 )
 ROLE_ELECTRICAL_TIP = (
-    "Electrical / AIT engineer: connectors, pinouts, harnesses, wires, build sheets and tests. "
-    "Every area, panel and tab is shown and the project opens on the diagram"
+    "Electrical engineer: connectors, pinouts, harnesses, wires, the engineering values and the "
+    "models. Every area but the as-built records, every panel and every tab is shown and the "
+    "project opens on the diagram"
+)
+ROLE_AIT_TIP = (
+    "AIT engineer (assembly, integration and test): build data, the build sheets, the outputs, "
+    "the as-built records and the workflow. The project opens on the next step and the editing of "
+    "the diagram is left out of the menus"
 )
 M_ROLE = "Role"
 SETTINGS_ROLE = "Role"
 SETTINGS_ROLE_HINT = (
     "Who you are working as. The Systems engineer sees less and starts on the next step; the "
-    "Electrical / AIT engineer sees every area. It only changes what is shown: nothing is "
-    "locked and nothing is stored in the project."
+    "Electrical engineer sees every area but the as-built records; the AIT engineer sees the "
+    "build data, the outputs, the as-built records and the workflow. It only changes what is "
+    "shown: nothing is locked and nothing is stored in the project."
 )
 ROLE_DIALOG_TITLE = "Who are you working as?"
 ROLE_DIALOG_TEXT = "Pick the one that fits your work. It decides what the screen shows first."
@@ -3070,9 +3083,13 @@ ROLE_DIALOG_SYSTEMS = "Systems engineer"
 ROLE_DIALOG_SYSTEMS_TEXT = (
     "I think in devices, the connections between them, subsystems and the library."
 )
-ROLE_DIALOG_ELECTRICAL = "Electrical / AIT engineer"
+ROLE_DIALOG_ELECTRICAL = "Electrical engineer"
 ROLE_DIALOG_ELECTRICAL_TEXT = (
-    "I work with connectors, pinouts, harnesses, wires, build sheets and tests."
+    "I work with connectors, pinouts, harnesses, wires, the engineering values and the models."
+)
+ROLE_DIALOG_AIT = "AIT engineer"
+ROLE_DIALOG_AIT_TEXT = (
+    "I build and test the harnesses: build data, build sheets, as-built records and the workflow."
 )
 ROLE_DIALOG_LATER = "You can change this later in View > Role."
 ROLE_DIALOG_NAME = "Choose your role"
@@ -3221,3 +3238,67 @@ INS_TAB_PROBLEMS_TIP = "{0} errors and warnings of the {1} open items. The Probl
 DV_COL_ROLE = "Role"
 DV_COL_ROLE_TIP = "What the pin is for: power, return, ground, signal, shield or spare. Automatic takes it from the signal name."
 DV_ROLE_AUTO = "{0} (auto)"
+
+
+# ---- S9: the workflow shown, the as-built records, the third role ----
+AREA_ASBUILT = "As-built"
+AREA_ASBUILT_TIP = (
+    "As-built: what was built and measured, compared with the design and the test limits"
+)
+GO_ASBUILT = "Go to As-built"
+A_IMPORT_ASBUILT = "Import as-built sheet…"
+A_IMPORT_ASBUILT_TIP = (
+    "Read a filled-in as-built sheet (CSV or Excel) and keep its records in the project"
+)
+A_EXPORT_ASBUILT = "Save the as-built sheet…"
+A_EXPORT_ASBUILT_TIP = "Write the sheet a technician fills in: the designed values are there, the as-built columns are empty"
+NEXT_WF_TOGGLE = "What this step uses and makes"
+NEXT_WF_NAME = "The workflow: what each step uses and makes"
+NEXT_WF_STEP = "This step: {0}"
+NEXT_WF_USES = "Uses: {0}"
+NEXT_WF_MAKES = "Makes: {0}"
+NEXT_WF_LOOK = "You can look at: {0}"
+NEXT_WF_ALL = "All the steps"
+NEXT_WF_LINE = "{0}: {1} {2}"
+NEXT_WF_BLOCKED_BY = "Blocked by: {0}."
+NEXT_WF_STATES = {
+    "done": "done",
+    "todo": "to do",
+    "pending": "pending",
+    "stale": "out of date",
+    "attention": "needs attention",
+    "blocked": "blocked",
+}
+NEXT_PENDING_VALUES = [
+    "1 engineering value is still to set. Until it is set, some rules cannot be checked.",
+    "{0} engineering values are still to set. Until they are set, some rules cannot be checked.",
+]  # fmt: skip
+NEXT_PENDING_NAME = "Engineering values still to set"
+NEXT_PENDING_BUTTON = "Set the values…"
+NEXT_PENDING_TIP = "Open the engineering values: derating, grounding, test limits and the rest"
+NEXT_ASBUILT = "As-built records…"
+NEXT_ASBUILT_TIP = "Open the as-built page: what was built and measured, and what is still missing"
+ASB_TITLE = "As-built records"
+ASB_INTRO = (
+    "What the technicians recorded about the build, compared with the design and the test limits "
+    "of the project. A value that is out of its limit is shown as such; the tool does not accept "
+    "it and does not say that a harness passed."
+)
+ASB_NONE = "No as-built record yet. Save the sheet, fill it in at the bench, and import it."
+ASB_SUMMARY = "{records} record(s): {missing} missing, {out} out of limit, {differs} different from the design, {stale} stale"  # fmt: skip
+ASB_IMPORT = "Import the filled-in sheet…"
+ASB_EXPORT = "Save the sheet to fill in…"
+ASB_SHOW_ALL = "Show every value"
+ASB_SHOW_ALL_TIP = "Also list the values that are as designed, within their limit or not compared"
+ASB_TABLE_NAME = "The values that need attention"
+ASB_COLUMNS = ("Harness", "Item", "Value", "Status", "Actual", "Designed or limit", "Note")
+ASB_FILE_FILTER = "As-built sheets (*.csv *.tsv *.xlsx);;All files (*)"
+ASB_IMPORT_TITLE = "Import an as-built sheet"
+ASB_EXPORT_TITLE = "Save the as-built sheet"
+ASB_EXPORT_FILTER = "CSV (*.csv);;Excel (*.xlsx)"
+ASB_IMPORTED = "{0} as-built record(s) kept ({1} added, {2} changed). The import is recorded."
+ASB_UP_TO_DATE = "The sheet holds nothing new: the records are as they were."
+ASB_REFUSED = "Nothing was changed. {0} row(s) were refused; the first: {1}"
+ASB_UNREADABLE = "The sheet could not be read: {0}"
+ASB_EXPORTED = "Sheet saved: {0}"
+ASB_READ_ONLY = "This project is read-only, so records cannot be imported."

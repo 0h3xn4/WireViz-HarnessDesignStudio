@@ -51,7 +51,7 @@ If `test_continuity_max_ohm` is not set, the derivation has no value, names `gen
 ## What the model does not do
 
 - It does not derive a limit from the wire, the length or a standard. Whether 1 ohm is the right limit for a wire is the project's decision.
-- It does not read results back: the workbook is a document to write on, and the results typed into it are not read by the tool.
+- It does not read back what is typed into the cells of the workbook: the workbook is a document to write on. The results of the tests are recorded with the as-built sheet (`export-asbuilt`, `import-asbuilt`) and compared with these limits: [as-built results](asbuilt.md).
 - It does not say that a harness has passed a test.
 
 Next: [readiness](readiness.md), [the models](README.md), [the configuration](../CONFIG.md)

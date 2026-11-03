@@ -14,6 +14,7 @@ from pydantic import BaseModel, create_model
 
 from harness_design_studio.core.model import (
     PART_CATEGORIES,
+    AsBuiltRecord,
     Baseline,
     ChangeEntry,
     ConfigFile,
@@ -81,6 +82,11 @@ def _kinds() -> list[tuple[str, str, type[BaseModel]]]:
             "import-records",
             "imports/records.json",
             _list_file("ImportRecordsFile", "imports", ImportRecord),
+        ),  # fmt: skip
+        (
+            "asbuilt",
+            "asbuilt/records.json",
+            _list_file("AsBuiltRecordsFile", "asbuilt", AsBuiltRecord),
         ),  # fmt: skip
         ("baseline", "baselines/*/*.json", Baseline),
     ]

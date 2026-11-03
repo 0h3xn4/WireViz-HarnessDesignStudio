@@ -16,6 +16,7 @@ from harness_design_studio.core.issues import Issue, errors
 from harness_design_studio.core.model import (
     CONFIG_NAMES,
     SCHEMA_VERSION,
+    AsBuiltRecord,
     Baseline,
     ChangeEntry,
     ConfigFile,
@@ -319,6 +320,8 @@ def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None
             _journal(b, rel, data)
         elif rel == "imports/records.json":
             b.items(rel, data, "imports", "import record", ImportRecord, project.import_records)
+        elif rel == "asbuilt/records.json":
+            b.items(rel, data, "asbuilt", "as-built record", AsBuiltRecord, project.asbuilt)
         elif rel == "logical/layout.json":
             _layout(b, rel, data)
         elif rel == "logical/links.json":

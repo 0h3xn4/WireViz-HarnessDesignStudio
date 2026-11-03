@@ -383,6 +383,12 @@ ICONS: Final[dict[str, tuple[str, ...]]] = {
         "M13 6h3a2 2 0 0 1 2 2v7",
         "M11 18H8a2 2 0 0 1-2-2V9",
     ),
+    # clipboard-check
+    "nav-asbuilt": (
+        "M8 2h8a1 1 0 0 1 1 1v2a1 1 0 0 1-1 1H8a1 1 0 0 1-1-1V3a1 1 0 0 1 1-1z",
+        "M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2",
+        "m9 14 2 2 4-4",
+    ),
     # circle-arrow-right
     "nav-next": (
         "M2 12a10 10 0 1 0 20 0a10 10 0 1 0 -20 0",

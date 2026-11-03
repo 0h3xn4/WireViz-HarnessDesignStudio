@@ -80,6 +80,13 @@ SHAPES: dict[str, tuple[str, ...]] = {
     "journal --start": ("ok", "started", "file"),
     "override": ("ok", "wire", "action", "changed", "overrides", "derivation"),
     "deviation": ("ok", "action", "finding", "count", "deviations"),
+    "workflow": ("ok", "steps"),
+    "asbuilt": (
+        "ok", "records", "complete", "missing", "out_of_limit", "within_limit", "not_compared",
+        "differs_from_design", "stale_records", "harnesses", "lines",
+    ),
+    "import-asbuilt": ("ok", "dry_run", "changed", "counts", "rows", "import"),
+    "export-asbuilt": ("ok", "rows", "columns", "written"),
     "extensions": (
         "ok", "has_folder", "enabled_declarative", "enabled_plugins", "files", "plugins", "items",
         "issues",

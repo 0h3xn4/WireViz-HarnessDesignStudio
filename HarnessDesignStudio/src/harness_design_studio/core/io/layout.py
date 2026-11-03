@@ -25,11 +25,14 @@ from .fs import slug
 MANAGED_RE = re.compile(
     r"^(project\.json|waivers\.json|journal\.json|logical/layout\.json|generated/generation\.json|config/[^/]+\.json|library/[^/]+\.json|logical/interface_types\.json"
     r"|logical/links\.json|logical/(units|interfaces)/[^/]+\.json|physical/(connectors|harnesses)/[^/]+\.json|changelog\.json|baselines/[^/]+/[^/]+\.json"
-    r"|imports/records\.json)$"
+    r"|imports/records\.json|asbuilt/records\.json)$"
 )
 JOURNAL_FILE = "journal.json"
-MANAGED_DIRS = ("config", "library", "logical", "physical", "generated", "baselines", "imports")
+MANAGED_DIRS = (
+    "config", "library", "logical", "physical", "generated", "baselines", "imports", "asbuilt",
+)  # fmt: skip
 IMPORT_RECORDS_FILE = "imports/records.json"  # optional; not part of the model hash
+ASBUILT_FILE = "asbuilt/records.json"  # optional (S9); not part of the model hash
 
 # What lives in the project folder but is not the design, so that it is never in the model hash:
 # the journal and the import record (files the tool writes with the project), and the folders of the
@@ -173,6 +176,11 @@ def serialize(project: Project, *, tool_version: str | None = None) -> dict[str,
             IMPORT_RECORDS_FILE,
             records,
             lambda: canonical.dumps({"imports": _dump(list(records))}),
+        )
+    if project.asbuilt:  # optional: a project that never recorded what was built has no such file
+        built = list(project.asbuilt.values())
+        files[ASBUILT_FILE] = memo.get(
+            ASBUILT_FILE, built, lambda: canonical.dumps({"asbuilt": _dump(list(built))})
         )
     if project.waivers:
         waivers = list(project.waivers.values())

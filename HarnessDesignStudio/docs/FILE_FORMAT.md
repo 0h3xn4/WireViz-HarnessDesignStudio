@@ -20,6 +20,7 @@ The screen says *device*, the files say *unit*: what the program shows as a devi
 - [Links and pin roles](#links-and-pin-roles-m2-schema-version-stays-1)
 - [Change control additions](#change-control-additions-review-release-baselines-change-log-schema-version-stays-1)
 - [Import record](#import-record-optional-schema-version-stays-1)
+- [As-built records](#as-built-records-optional-s9-schema-version-stays-1)
 - [Device library file](#device-library-file-140-not-part-of-a-project)
 - [Subsystem library file](#subsystem-library-file-m4-not-part-of-a-project)
 - [Open data files and the run record](#open-data-files-and-the-run-record-not-part-of-a-project)
@@ -44,6 +45,7 @@ outputs/                          written by `harness-design-studio export` (see
 changelog.json                    the change log (append-only; entries cannot be deleted)
 baselines/<harness ID>/<baseline ID>.json   frozen snapshot made at each release
 imports/records.json              {"imports": [...]}  what each import read, dropped and converted; written only after an import; not part of the model hash
+asbuilt/records.json              {"asbuilt": [...]}  what was built and measured (serial and lot numbers, cut lengths, test results); written only when a record exists (S9); not part of the model hash
 .gitignore                        written once: *.bak, lock files, temp files, .harness-recovery/, .migration-backup-v*/
 .gitattributes                    written once by `harness-design-studio new` (not by a save): Git treats generated/generation.json as binary (no conflict markers), see merge-fix; not part of the project format
 .harness-recovery/session.json    autosave journal of an open project (not part of the project; ignore in Git)
@@ -92,7 +94,7 @@ ERROR   quarantined: A harness could not be loaded and was set aside: wires.0.ga
 The whole object that holds the value is set aside (here the harness), the message names the field and the limit but never the value, and every command except `validate` and `check` then refuses the project with exit 2 until the file is corrected ([`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)).
 
 ## Hash
-`model_hash` is the SHA-256 of all canonical files with the saving tool's version blanked, except `imports/records.json` (the import record says where data came from; it is not the design, so a project with and without it has the same hash). Every output file carries its first 12 characters, so a printed sheet can be traced to the exact model.
+`model_hash` is the SHA-256 of all canonical files with the saving tool's version blanked, except `imports/records.json` (the import record says where data came from; it is not the design, so a project with and without it has the same hash) and `asbuilt/records.json` (what was built and measured is not the design either). Every output file carries its first 12 characters, so a printed sheet can be traced to the exact model.
 
 ## Editor additions: connector use, layout, waivers, autosave (schema version stays 1)
 All additions are optional with defaults, so projects saved before them load unchanged (tested against `tests/fixtures/m1_project`) and are upgraded on the next save.
@@ -176,6 +178,10 @@ The editor and the data commands (`import-parts`, `config`; `library` only recor
 
 ## Import record (optional; schema version stays 1)
 `imports/records.json` is `{"imports": [...]}`, one entry for each source file and kind of import (`id` is `<kind>:<file name>`), sorted by `id`. It is written by the first import that is applied and left out of a project that has none, so such a project keeps byte-identical files. An entry holds `kind`, `source_name` (the file name), `source_path` (relative to the project folder, only when the file is inside it; left out otherwise; never absolute), `sha256` (64 hexadecimal characters), `sheet`, `tool_version`, `rows_read`, `columns_read` (`column`, `field`), `columns_ignored`, `dropped_count` and `rows_dropped` (`row`, `reason`), `converted_count` and `rows_converted` (`row`, `field`, `read`, `unit`, `stored`, `item`), `unit`, `unit_given`, `notes` and `pin_types`. Optional fields are left out while empty. At most 200 rows are listed in each list; the counts are the whole number. There is no time, operator or absolute path in it, so the same import gives the same bytes. An older tool does not read the folder `imports/` and leaves the file alone; it is not part of the model hash and no output file carries it. What the fields mean and how a changed source is found: [`IMPORTS.md`](IMPORTS.md#what-an-import-records). Its JSON Schema is `import-records` in `harness-design-studio schema`.
+
+## As-built records (optional, S9; schema version stays 1)
+
+`asbuilt/records.json` is `{"asbuilt": [...]}`, one entry for each thing a technician recorded something about, sorted by `id`. It is written by the first import of an as-built sheet (`harness-design-studio import-asbuilt`) and left out of a project that has none, so such a project keeps byte-identical files, model hash and outputs. An entry holds `id` (`<kind>:<harness>:<subject>`, for example `wire:W001:W001-001`, `test:W001:T001`, `part:W001:EX-WIRE-SINGLE`), `kind` (`harness`, `part`, `wire`, `connector`, `pin`, `test`), `harness_id`, `subject` (the harness ID, the part ID, the wire ID, the connector ID, `CONNECTOR.PIN`, or the test number of the Tests sheet), and the optional fields, left out while empty: `serial_numbers` (a list), `lot` (kind `part`), `cut_length_m`, `strip_a_mm`, `strip_b_mm` (kind `wire`), `crimp_tool`, `crimp_tool_calibration_id` (kind `pin`), `built_by`, `inspected_by` (names typed by a person), `test_type` (`continuity` or `isolation`) and `tested` (the Wire column of the Tests sheet; they say which test the record is of, so a renumbered test is found), `result` (`pass` or `fail`, as the technician wrote it), `continuity_ohm`, `isolation_mohm`, `test_voltage_v`, `notes` and `nonconformance`. The units are in the names of the fields. There is **no time, no user name and no absolute path** in it: who saved it and when is the journal's, when the project keeps one. It is not part of the model hash and is not frozen by a release (a release freezes the design, not what was built); it is in the fingerprint that detects changes by other programs. An older tool does not read the folder `asbuilt/` and leaves the file alone. The outputs: the as-built report and the *As-built* sheet exist only for a project that has records ([OUTPUTS.md](OUTPUTS.md)); the manifest of the outputs then also holds `asbuilt_hash`. Its JSON Schema is `asbuilt` in `harness-design-studio schema`. How it is made and compared: [record what was built](user-manual/record-what-was-built.md), [as-built results](models/asbuilt.md).
 
 ## Device library file (1.4.0; not part of a project)
 

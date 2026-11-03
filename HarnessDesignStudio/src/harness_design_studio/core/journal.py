@@ -43,6 +43,7 @@ from .io.layout import outside_the_hash
 JOURNAL_FILE = "journal.json"
 GENERATION_FILE = "generated/generation.json"
 IMPORT_RECORDS_FILE = "imports/records.json"
+ASBUILT_FILE = "asbuilt/records.json"
 UNKNOWN_AUTHOR = "unknown"
 MAX_SHORT = 200  # a value longer than this is cut in the journal (the design file holds it whole)
 BULK = 25  # more objects than this created or removed in one save are one entry
@@ -273,6 +274,7 @@ _LISTS = {  # file name pattern -> (collection, key of the list, object prefix)
     "logical/links.json": ("link", "links"),
     "logical/interface_types.json": ("interface_type", "interface_types"),
     IMPORT_RECORDS_FILE: ("import", "imports"),
+    ASBUILT_FILE: ("asbuilt", "asbuilt"),
 }
 _FOLDERS = (  # folder -> (collection, key of the list)
     ("library/", "part", "parts"),
@@ -577,6 +579,20 @@ def _import_rows(rid: str, old: dict[str, Any] | None, new: dict[str, Any] | Non
     return [_row("import", f"import:{rid}", what, _import_summary(old), _import_summary(new))]
 
 
+def _asbuilt_rows(rid: str, old: dict[str, Any] | None, new: dict[str, Any] | None) -> list[Row]:
+    """An as-built record: one entry for each field that was set, changed or cleared, with the old
+    and the new value (a record that is created or removed is one entry). Who and when are the
+    journal's; the record itself holds neither."""
+    obj = f"asbuilt:{rid}"
+    if old is None or new is None:
+        return [_row("asbuilt", obj, "(recorded)" if old is None else "(removed)", old, new)]
+    rows: list[Row] = []
+    for k in sorted(set(old) | set(new)):
+        if k != "id" and old.get(k) != new.get(k):
+            rows.append(_row("asbuilt", obj, k, old.get(k), new.get(k)))
+    return rows
+
+
 def _config_rows(name: str, old: dict[str, Any] | None, new: dict[str, Any] | None) -> list[Row]:
     if old is None or new is None:
         what = "(created)" if old is None else "(removed)"
@@ -631,14 +647,15 @@ def rows_for_save(
         hashes = (files_hash(old), files_hash(new))
     allocation = {"connector": 0, "interface": 0}
     for coll in ("project", "library", "config", "part", "device", "interface", "interface_type",
-                 "link", "connector", "waiver", "changelog", "harness", "import"):  # fmt: skip
+                 "link", "connector", "waiver", "changelog", "harness", "import",
+                 "asbuilt"):  # fmt: skip
         a, b = before.get(coll, {}), after.get(coll, {})
         ids = sorted(i for i in set(a) | set(b) if a.get(i) != b.get(i))
         if not ids:
             continue
         made = [i for i in ids if i not in a]
         gone = [i for i in ids if i not in b]
-        if coll in ("part", "device", "interface", "connector", "link") and (
+        if coll in ("part", "device", "interface", "connector", "link", "asbuilt") and (
             len(made) > BULK or len(gone) > BULK
         ):
             if len(made) > BULK:
@@ -666,6 +683,8 @@ def rows_for_save(
                 rows.extend(_changelog_rows(i, o, n))
             elif coll == "import":
                 rows.extend(_import_rows(i, o, n))
+            elif coll == "asbuilt":
+                rows.extend(_asbuilt_rows(i, o, n))
             elif coll == "harness":
                 rows.extend(_harness_rows(i, o, n, generation=generation, hashes=hashes))
             elif coll == "part":

@@ -2,9 +2,9 @@
 
     dlg = RoleDialog(parent, theme)
     dlg.exec()
-    role = dlg.choice          # "systems", "electrical", or None when the window was closed
+    role = dlg.choice          # "systems", "electrical", "ait", or None when the window was closed
 
-Two big buttons, each with one plain sentence, and a note that the role can be changed later in
+Three big buttons, each with one plain sentence, and a note that the role can be changed later in
 View > Role. The window asks once, on a settings file with nothing stored (`MainWindow.ask_role_flow`);
 a test or CI sets `roles.FIRST_RUN_ROLE` and the window never shows this one.
 """
@@ -13,7 +13,7 @@ from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QDialog, QLabel, QPushButton, QVBoxLayout, QWidget
 
 from harness_design_studio.gui import strings
-from harness_design_studio.gui.roles import ELECTRICAL, SYSTEMS
+from harness_design_studio.gui.roles import AIT, ELECTRICAL, SYSTEMS
 from harness_design_studio.gui.theme import ThemeManager
 
 
@@ -71,14 +71,22 @@ class RoleDialog(QDialog):
             strings.ROLE_DIALOG_ELECTRICAL_TEXT,
             strings.ROLE_ELECTRICAL_TIP,
         )
+        self.ait_btn = _Choice(
+            theme,
+            "role-choice-ait",
+            strings.ROLE_DIALOG_AIT,
+            strings.ROLE_DIALOG_AIT_TEXT,
+            strings.ROLE_AIT_TIP,
+        )
         later = QLabel(strings.ROLE_DIALOG_LATER)
         later.setObjectName("role-dialog-later")
         later.setProperty("muted", True)
         later.setWordWrap(True)
-        for w in (title, text, self.systems_btn, self.electrical_btn, later):
+        for w in (title, text, self.systems_btn, self.electrical_btn, self.ait_btn, later):
             lay.addWidget(w)
         self.systems_btn.clicked.connect(lambda _c=False: self._pick(SYSTEMS))
         self.electrical_btn.clicked.connect(lambda _c=False: self._pick(ELECTRICAL))
+        self.ait_btn.clicked.connect(lambda _c=False: self._pick(AIT))
         self.systems_btn.setFocus()
 
     def _pick(self, role: str) -> None:

@@ -22,7 +22,7 @@ This page is the last stage (S10) of the transparency work (decisions D-191 and 
 | R3 Externalised configuration | partial | built (S2), in part | unit, source and range are in the registry and `settings`, not as comments in the JSON files |
 | R4 Selectable models | partial | built (S3), in part | six models; segmentation, first fit, connector choice and the labels stay one method each |
 | R5 Units everywhere | partial | built (S5, S6) | `export.json` of the model still has fields without units; the files keep the plain AWG gauge |
-| R6 Workflow visibility | partial | S9 (PR pending) | not checked here: S9 was not on master when this was written |
+| R6 Workflow visibility | partial | built (S9) | the intermediates are inspectable as files and by `explain`; only some can be edited (the settings, the overrides, the as-built records); nothing was looked at on a real display |
 | R7 Overrides | partial | built (S4) | a lock from an earlier version is kept as it was, with no reason; open decision |
 | R8 Change history | partial | built (S4) | the author is not authenticated; two Git branches can conflict in `journal.json`; open decision |
 | R9 Provenance | partial | built (S5, S6, S8) | the run record is outside every hash on purpose, so nothing in a hash says when |
@@ -32,11 +32,11 @@ This page is the last stage (S10) of the transparency work (decisions D-191 and 
 | R13 Extensibility | missing | built (S8) | no sandbox for Python plug-ins; trust is per user and computer; open decision |
 | R14 Visible data links | partial | built (S6) | a source file that moved is reported as not found, not followed |
 
-**What is true:** every requirement above has code, a document and tests behind it, and the definition of done of the brief passes as automated tests (section [The definition of done](#the-definition-of-done)): any of 16 numbers is traced with the tool's own surfaces in well under a minute; five built-in choices and a rule of an extension file are changed without editing code and the result and its explanation follow as a hand calculation says; a result is reproduced from an exported folder alone on all four examples; and each rule that compares a number with a limit explains a finding with the actual value, the limit, the margin and the source of every input. **What is not true:** that anyone has looked at the result on a screen, that the numbers are right for a programme (the examples carry placeholder values), and that S9 has been checked here.
+**What is true:** every requirement above has code, a document and tests behind it, and the definition of done of the brief passes as automated tests (section [The definition of done](#the-definition-of-done)): any of 16 numbers is traced with the tool's own surfaces in well under a minute; five built-in choices and a rule of an extension file are changed without editing code and the result and its explanation follow as a hand calculation says; a result is reproduced from an exported folder alone on all four examples; and each rule that compares a number with a limit explains a finding with the actual value, the limit, the margin and the source of every input. **What is not true:** that anyone has looked at the result on a screen, that the numbers are right for a programme (the examples carry placeholder values), and that the pages of S9 (workflow, as-built, roles) have been looked at by a person.
 
 ## The 14 requirements
 
-Pull request numbers are those of `docs/transparency_plan.md`: audit #141; step 0 #142; the first explanations #143, #144, #145 (wire length), #146 (mass), #148 (bill of materials), #149 (contact current), #150 (derivations as files), #153 (a finding opens its calculation); S1 #158; S2 and S3 #155; S4 #160; S5 #159; S6 #156; S7 #157; S8 #161; S9 (PR pending); S10 the pull request of this page.
+Pull request numbers are those of `docs/transparency_plan.md`: audit #141; step 0 #142; the first explanations #143, #144, #145 (wire length), #146 (mass), #148 (bill of materials), #149 (contact current), #150 (derivations as files), #153 (a finding opens its calculation); S1 #158; S2 and S3 #155; S4 #160; S5 #159; S6 #156; S7 #157; S8 #161; S9 #162; S10 the pull request of this page.
 
 ### R1. Explain view
 
@@ -76,9 +76,9 @@ Pull request numbers are those of `docs/transparency_plan.md`: audit #141; step 
 ### R6. Workflow visibility
 
 - **First audit:** partial. No consumes/produces per step; intermediates not inspectable or editable.
-- **Built:** S9 (PR pending): the workflow page, the as-built capture and the two roles. It was **not on master** when this page was written and is **not checked here**. What exists on master for R6 is what the first audit already named (top bar, Next step page, outputs list, stale detection, "Used in") and the intermediates that the open data now gives (`export-data`: sizing, segmentation, pin allocation, lengths, mass, BOM, readiness, test limits as files).
-- **Evidence:** none in this audit for S9; for the intermediates, `tests/test_open_data.py`.
-- **Remaining gaps:** everything S9 delivers is to be checked in its own pull request; the editable intermediates and the as-built records are S9's. The completeness tests of this stage (`test_models_docs_complete.py`) cover whatever kinds, assumptions and pages S9 adds once it is merged.
+- **Built (S9, #162):** `core/workflow.py` is the one source of the nine steps of the tool, each with what it uses and makes, its intermediates (what can be inspected and changed) and a status computed from the project with the steps that block it; it is read by `workflow DIR [--outputs] [--json]`, `api.get_workflow`, `docs/user-manual/follow-the-workflow.md` (its tables are made from the code) and a closed-by-default disclosure on the Next step page. The intermediates are also files: `export-data` (sizing, segmentation, pin allocation, lengths, mass, BOM, readiness, test limits). The as-built capture and the three roles are listed under "what it is not" below.
+- **Evidence:** `tests/test_s9_workflow.py` (the page tables equal the code; mutation tests for a step that names a file, output, table or command the tool does not have), `tests/test_ui_role_pages.py`, `tests/test_open_data.py`.
+- **Remaining gaps:** only some intermediates can be edited in the tool (settings, overrides, as-built records); the sizing candidates and the segmentation groups can be read, not changed. No screen was reviewed.
 
 ### R7. Overrides
 
@@ -148,7 +148,7 @@ The owner's brief listed what the tool was not. The status of each, in one line:
 | Import records | `imports/records.json`, `imports`, units and echoes on every import | done |
 | A scripting API | `harness_design_studio.api` and `--json` on every command | done; version 1 |
 | Plug-ins | declarative and Python extensions behind enable and trust | done; no sandbox |
-| As-built capture for Electrical and AIT | S9 | S9 (PR pending): not checked here |
+| As-built capture for Electrical and AIT | `asbuilt/records.json`, `export-asbuilt`, `import-asbuilt`, `asbuilt`, the as-built report and sheet, the As-built page; three roles (Systems, Electrical, AIT) | done (S9, #162); the tool applies no tolerance to cut and strip lengths; a release neither freezes nor gates on the records |
 | Explanations for readiness and the other rules | `explain` for readiness and its eight checks, test limits, pin allocation, segmentation, labels, colours, shields and the limit of every rule | done |
 
 ## The definition of done
@@ -180,10 +180,10 @@ Collected from the reports of the stages. Each is a choice the agents made and t
 6. **Whether the GUI Export offers the open data (S5).** Today `export-data` is the command line and the API only.
 7. **The apostrophe un-escape in stamped CSVs (S6).** The tool marks text that starts with `+`, `-`, `=` or `@` with an apostrophe so a spreadsheet does not run it; every importer now gives the text back without the apostrophe, and skips the stamp line of the tool's own files.
 8. **Extra read-summary lines on the importers (S6).** Every file import prints `Read N row(s) ...`, the columns read and a `warning:` for each column left out, before the rows; the lines printed before are printed as before.
-9. **The strictness of the Electrical and AIT role split (S9, PR pending).**
-10. **A length tolerance for as-built records (S9, PR pending).**
-11. **The release gate and as-built records (S9, PR pending).**
-12. **A length-tolerance setting (S9, PR pending).**
+9. **The strictness of the Electrical and AIT role split (S9).** Electrical shows everything except the As-built page; AIT hides the model areas and the diagram-edit menu entries. Say if the split should be stricter.
+10. **A length tolerance for as-built records (S9).** The tool lists the difference between the designed and the actual cut and strip lengths and applies no tolerance.
+11. **The release gate and as-built records (S9).** A release does not freeze the records and the gate ignores them; the outputs go stale when the records change.
+12. **The values that count as needed for an as-built record (S9).** Fixed in the code: serial, who built and inspected, a lot per part, cut length, crimp tool for crimped pins, and a result with its measured value per test. Confirm they are the right ones.
 
 Added by this audit, for the owner to decide:
 
@@ -201,7 +201,7 @@ Added by this audit, for the owner to decide:
 - **The author of the work is the author of the tests.** The tests were written by the agents that wrote the code, against hand calculations written in the tests; an independent review by a person is still to come.
 - **The timings are the tool's, not a person's.** A person reading a derivation takes longer than the tool takes to give it.
 - **The Python plug-ins are not sandboxed.** The trust prompt names the code; it does not limit it.
-- **S9 was not on master** when this page was written. Whatever it delivers is not covered by this audit (R6 and the as-built capture), except that the completeness tests of this stage will fail for a kind, an assumption or a page of S9 that has no page.
+- **The S9 pages were not looked at by a person**: the workflow disclosure, the As-built page and the three roles are checked by tests with Qt's offscreen platform only.
 
 ## How to repeat it
 

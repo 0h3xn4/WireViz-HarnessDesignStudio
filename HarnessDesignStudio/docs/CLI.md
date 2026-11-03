@@ -24,12 +24,13 @@ The examples show the form of each command with example names. They do not all w
 - [JSON output](#json-output): `--json` on every command that has a result in data form
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
-- Explain: [`explain`](#harness-design-studio-explain), [`settings`](#harness-design-studio-settings)
+- Explain: [`explain`](#harness-design-studio-explain), [`settings`](#harness-design-studio-settings), [`workflow`](#harness-design-studio-workflow)
 - Overrides and change history: [`override`](#harness-design-studio-override), [`deviation`](#harness-design-studio-deviation), [`journal`](#harness-design-studio-journal)
 - Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export), [`export-data`](#harness-design-studio-export-data)
 - Team use with Git: [`merge-fix`](#harness-design-studio-merge-fix)
 - Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data), [`imports`](#harness-design-studio-imports)
 - Write data out: [`export-pinout`](#harness-design-studio-export-pinout), [`export-devices`](#harness-design-studio-export-devices), [`export-subsystem`](#harness-design-studio-export-subsystem)
+- Record what was built: [`export-asbuilt`](#harness-design-studio-export-asbuilt), [`import-asbuilt`](#harness-design-studio-import-asbuilt), [`asbuilt`](#harness-design-studio-asbuilt)
 - Review, release and change: [`review`](#harness-design-studio-review), [`release`](#harness-design-studio-release), [`revise`](#harness-design-studio-revise), [`diff`](#harness-design-studio-diff), [`log`](#harness-design-studio-log), [`compare`](#harness-design-studio-compare)
 - Extend the tool: [`extensions`](#harness-design-studio-extensions), [`trust`](#harness-design-studio-trust), [`import-plugin`](#harness-design-studio-import-plugin)
 - Maintenance: [`migrate`](#harness-design-studio-migrate)
@@ -78,6 +79,10 @@ Every command that has a result in data form takes `--json`. The usual text line
 | `journal --start` | `ok`, `started`, `file` |
 | `override` | `ok`, `wire`, `action`, `changed`, `overrides`, `derivation` |
 | `deviation` | `ok`, `action`, `finding`, `count`, `deviations` |
+| `workflow` | `ok`, `steps` |
+| `asbuilt` | `ok`, `records`, `complete`, `missing`, `out_of_limit`, `within_limit`, `not_compared`, `differs_from_design`, `stale_records`, `harnesses`, `lines` |
+| `import-asbuilt` | `ok`, `dry_run`, `changed`, `counts`, `rows`, `import` |
+| `export-asbuilt` | `ok`, `rows`, `columns`, `written` |
 | `extensions` | `ok`, `has_folder`, `enabled_declarative`, `enabled_plugins`, `files`, `plugins`, `items`, `issues` |
 | `trust` | `ok`, `action`, `name`, `version`, `sha256`, `lines`, `where`, `trusted`, `changed` |
 | `import-plugin` | `ok`, `dry_run`, `changed`, `importer`, `rows`, `notes` |
@@ -266,6 +271,26 @@ Examples:
 harness-design-studio settings wheel-link
 harness-design-studio settings wheel-link --json
 harness-design-studio settings wheel-link --set model.service_loops_per_wire=0
+```
+
+### harness-design-studio workflow
+
+The workflow in one table: define the devices, connect them, set the engineering values, generate, check, enter the build data, write the outputs, release, record what was built. For each step: what it uses (project files, configuration, outputs), what it makes, the command and the place on screen, the intermediate results you can look at and, where the tool allows it, change (the sizing of a wire, the segmentation groups, the pin allocation, the readiness checks, the derived lengths), and where the project stands: done, to do, pending (values or build data are missing), stale (older than the design), needs attention (a check failed, an as-built value is out of its limit) or blocked (with the steps before it that are not done). The status is worked out from the project and, with --outputs, from the folder the outputs were written to; nothing is changed. The same table is the page docs/user-manual/follow-the-workflow.md.
+
+`harness-design-studio workflow project [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `--outputs FOLDER` | the folder the outputs were written to (default: <project>/outputs) |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+
+Examples:
+
+```
+harness-design-studio workflow wheel-link
+harness-design-studio workflow wheel-link --json
+harness-design-studio workflow wheel-link --outputs wheel-link-outputs
 ```
 
 ## Overrides and change history
@@ -749,6 +774,70 @@ Examples:
 ```
 harness-design-studio export-subsystem my-design wheel-drive.json --device OBC1 --device RW1 --name "Wheel drive"
 harness-design-studio export-subsystem my-design wheel-drive.json --device OBC1 --name "Wheel drive" --json
+```
+
+## Record what was built
+
+### harness-design-studio export-asbuilt
+
+Write the as-built sheet to FILE (.csv or .xlsx): for each harness (or the one named with --harness) a row for the harness, each part lot, each wire (with its designed length and strip lengths), each connector, each crimped pin in use and each test of the Tests sheet (with its limit); the as-built columns are empty, or hold what is recorded already, so the sheet can be filled in again. Fill it in and read it back with `import-asbuilt`. The project is not changed.
+
+`harness-design-studio export-asbuilt project file [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `file` | the sheet to write (.csv or .xlsx) |
+| `--harness ID` | only this harness (default: all) |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+
+Examples:
+
+```
+harness-design-studio export-asbuilt flatsat-build asbuilt-sheet.csv
+harness-design-studio export-asbuilt flatsat-build asbuilt-sheet.xlsx --harness W001
+harness-design-studio export-asbuilt flatsat-build asbuilt-sheet.csv --json
+```
+
+### harness-design-studio import-asbuilt
+
+Read a sheet written by `export-asbuilt` (or any table with the same headings) and keep what is in it in asbuilt/records.json. The columns are found by their headings; the unit of a number column is the one in its heading (m, mm, cm, in or ft for lengths; ohm or mOhm; Mohm or Gohm; V or kV) and every value that is converted, and every decimal comma that is read as a point, is listed. An empty cell never clears a recorded value. A row about a harness, wire, connector, pin or test that the design does not have is refused with the reason; if any row is refused, nothing is changed. The command echoes what it read, dropped and converted, and records the file (name, SHA-256, rows, conversions) in imports/records.json. When the project keeps a change journal, the records are entered in it with who and when; the records themselves hold neither. The records are not part of the model hash.
+
+`harness-design-studio import-asbuilt project file [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `file` | the filled-in sheet (.csv, .tsv, .json or .xlsx) |
+| `--dry-run` | show the preview only |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+
+Examples:
+
+```
+harness-design-studio import-asbuilt flatsat-build bench.csv --dry-run
+harness-design-studio import-asbuilt flatsat-build bench.csv
+harness-design-studio import-asbuilt flatsat-build bench.csv --dry-run --json
+```
+
+### harness-design-studio asbuilt
+
+Report the as-built records of a project (asbuilt/records.json): for each harness that has records, what is recorded, what is missing (serial number, who built and inspected, the lot of each part, the cut and strip lengths, the crimp tool and its calibration ID, the result and measured value of each test), each measured value against the test limits of the project (actual, limit, margin), and each cut or strip length against the designed value (no tolerance is applied: the difference is listed). A value that is out of its limit is shown as such and stays so until a person records something else; the tool does not accept it and does not say that a harness passed or is compliant. A harness with no record is 'not started'. Exit code 1 when a value is out of its limit, or, with --complete, when anything is missing. `--json` prints the report as one document. The same report is written as system/asbuilt_report.md and .csv by `export` (only for a project that has records) and is the As-built sheet of the build workbook.
+
+`harness-design-studio asbuilt project [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `--complete` | end with exit code 1 also when a value is missing |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+
+Examples:
+
+```
+harness-design-studio asbuilt flatsat-build
+harness-design-studio asbuilt flatsat-build --complete
+harness-design-studio asbuilt flatsat-build --json
 ```
 
 ## Review, release and change

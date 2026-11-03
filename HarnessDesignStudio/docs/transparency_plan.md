@@ -57,7 +57,7 @@ Each stage names what it delivers and when it is finished. The order is by depen
 | **S6** Data links and imports | done | #156 |
 | **S7** Scripting | done | #157 |
 | **S8** Extensibility | done | #161 |
-| **S9** Workflow and the two roles | done | S9 (PR pending) |
+| **S9** Workflow, as-built capture and the roles | done | #162 |
 | **S10** Models documentation and final audit | done, in the pull request of this branch (`feat/s10-final-audit`) | the pull request that carries this page |
 
 "done" means written, tested and reviewed in its pull request, not released and not accepted by the owner: the final audit says what was checked and what was not.

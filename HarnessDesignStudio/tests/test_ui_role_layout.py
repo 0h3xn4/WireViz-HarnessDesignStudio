@@ -78,8 +78,8 @@ def test_the_settings_keys_of_a_role() -> None:
 
 
 def test_the_systems_rail_leaves_out_home_and_the_detail_areas() -> None:
-    assert areas.hidden_in("systems") == ("home", "drawings", "outputs")
-    assert areas.hidden_in("electrical") == ()
+    assert areas.hidden_in("systems") == ("home", "drawings", "outputs", "asbuilt")
+    assert areas.hidden_in("electrical") == ("asbuilt",)  # (the AIT engineer's page, S9)
     assert "home" in areas.KEYS  # the area still exists: menus, keys and the palette reach it
 
 
@@ -97,7 +97,7 @@ def test_systems_shows_less(qtbot, tmp_path) -> None:
     assert select and connect and add and more
     assert not (red or dele or zout or zin or fit)
     assert not s["diagram_tools"]
-    assert s["rail"] == {k: k not in ("home", "drawings", "outputs") for k in areas.KEYS}
+    assert s["rail"] == {k: k not in areas.hidden_in("systems") for k in areas.KEYS}
     assert s["panels_button"] and s["panels_action"]
 
 
@@ -168,7 +168,7 @@ def test_electrical_is_as_the_full_workspace_was(qtbot, tmp_path) -> None:
     assert s["status_counts"] and s["status_sel"] and s["problems_btn"] and s["zoom_level"]
     assert s["tools"] == (True, True, False, True, True, True, True, True, False)
     assert s["diagram_tools"]
-    assert all(s["rail"].values())  # type: ignore[union-attr]
+    assert s["rail"] == {k: k not in areas.hidden_in("electrical") for k in areas.KEYS}
     assert not s["panels_button"] and not s["panels_action"]
     assert not w.act_show_panels.isEnabled()  # (so the palette does not list it)
     assert strings.A_SHOW_PANELS not in [e.label for e in w.palette_entries()]

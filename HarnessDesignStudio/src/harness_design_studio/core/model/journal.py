@@ -29,11 +29,12 @@ JournalKind = Literal[
     "generate",  # generation changed a harness (one entry per harness)
     "import",  # many objects arrived in one step
     "deviation",  # an error of an electrical rule was accepted and stays visible
+    "asbuilt",  # an as-built record was added, changed or removed (S9)
     "start",  # the journal was started
 ]
 KINDS: tuple[str, ...] = (
     "edit", "config", "override", "waiver", "approval", "release", "generate", "import",
-    "deviation", "start",
+    "deviation", "start", "asbuilt",
 )  # fmt: skip
 When = Annotated[
     str, StringConstraints(pattern=r"^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}Z$")

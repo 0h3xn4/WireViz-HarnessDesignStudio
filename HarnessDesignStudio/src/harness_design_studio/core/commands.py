@@ -7,6 +7,7 @@ from .errors import TransactionError
 from .integrity import IntegrityTracker, check_integrity
 from .issues import errors
 from .model import (
+    AsBuiltRecord,
     Baseline,
     ChangeEntry,
     ConfigFile,
@@ -40,6 +41,7 @@ Collection = Literal[
     "baselines",
     "changelog",
     "import_records",
+    "asbuilt",
 ]
 _TYPES: dict[str, type[Entity]] = {
     "units": Unit,
@@ -54,6 +56,7 @@ _TYPES: dict[str, type[Entity]] = {
     "baselines": Baseline,
     "changelog": ChangeEntry,
     "import_records": ImportRecord,
+    "asbuilt": AsBuiltRecord,
 }
 
 

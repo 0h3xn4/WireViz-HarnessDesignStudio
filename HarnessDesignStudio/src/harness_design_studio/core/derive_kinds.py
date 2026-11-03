@@ -29,6 +29,10 @@ KINDS: dict[str, tuple[str, str]] = {
     "connector-label": ("labels-and-colours.md", "the label of a cable connector"),
     "wire-colour": ("labels-and-colours.md", "the colour of a wire"),
     "shield-group": ("shields.md", "a shield group, its wires and its ends"),
+    "asbuilt-result": (
+        "asbuilt.md",
+        "an as-built result compared with its limit or with the designed value",
+    ),
     "rule-limit": ("rule-limits.md", "the limit a design rule compares a number with"),
     "rule-check": ("rule-limits.md", "what a yes/no design rule compares"),
 }

@@ -12,11 +12,12 @@ def test_every_main_tab_is_in_exactly_one_area() -> None:
         assert tab in areas.tabs_of(areas.area_of_tab(tab))
 
 
-def test_the_rail_lists_the_eight_areas_in_order_with_next_step_first_and_settings_last() -> None:
+def test_the_rail_lists_the_nine_areas_in_order_with_next_step_first_and_settings_last() -> None:
     assert areas.KEYS == (
-        "next", "home", "model", "checks", "drawings", "outputs", "revisions", "settings",
+        "next", "home", "model", "checks", "drawings", "outputs", "asbuilt", "revisions",
+        "settings",
     )  # fmt: skip
-    assert areas.PAGES == ("next", "home", "settings")  # the areas that are pages of their own
+    assert areas.PAGES == ("next", "home", "asbuilt", "settings")  # the areas that are pages
     assert areas.DEFAULT in areas.KEYS
 
 

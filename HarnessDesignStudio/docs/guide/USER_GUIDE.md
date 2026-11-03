@@ -53,7 +53,7 @@ harness-design-studio new --list
 harness-design-studio new wheel-link --template first-steps
 ```
 
-Then **File > Open project…** and pick the folder. You cannot break anything: it is your own copy. As a Systems engineer the editor opens it on the **Next step** page (section 5); as an Electrical / AIT engineer it stays where the window was. Press **Model** in the rail on the left to see the diagram.
+Then **File > Open project…** and pick the folder. You cannot break anything: it is your own copy. As a Systems engineer the editor opens it on the **Next step** page (section 5); as an Electrical engineer it stays where the window was. Press **Model** in the rail on the left to see the diagram.
 
 Version 1.0.0 has five examples. If `harness-design-studio new --list` shows only `blank`, `first-steps` and `small-satellite`, you have the 0.1.0 packages, which have those three; `minimal-satellite`, `flatsat` and the wire colours of section 7 came with 1.0.0.
 
@@ -73,7 +73,7 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 
 | Part | What it holds |
 | --- | --- |
-| **Navigation rail** | Down the left edge: **Next step**, **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **Revisions** and, at the bottom, **Settings**. It opens the area you choose; the button at its foot shows icons only. **Next step**, **Home** and **Settings** are pages of their own. The Systems engineer role (section 5) lists only Next step, Model, Checks, Revisions and Settings; Ctrl+7 and **Go > Go to Home** still open Home, and the keys (Ctrl+2 and Ctrl+3) and Ctrl+K still open the Harness and Lists tabs of Drawings and Outputs. |
+| **Navigation rail** | Down the left edge: **Next step**, **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **As-built** (AIT engineer), **Revisions** and, at the bottom, **Settings**. It opens the area you choose; the button at its foot shows icons only. **Next step**, **Home** and **Settings** are pages of their own. The Systems engineer role (section 5) lists only Next step, Model, Checks, Revisions and Settings; Ctrl+7 and **Go > Go to Home** still open Home, and the keys (Ctrl+2 and Ctrl+3) and Ctrl+K still open the Harness and Lists tabs of Drawings and Outputs. |
 | **Top bar** | The project name, *Saved* or *Unsaved changes*, the revision, a short model hash, where you are, **Undo** and **Redo**, **Guided** and **Expert**, **Show panels** (Systems engineer only), **Search** (Ctrl+K), the three steps **Generate** (the one blue button), **Check** and **Release…**, then **Export…** and a status chip. The tooltip of a step says what is done and what comes next. |
 | **Banner** | Appears under the top bar when something needs you: the plans or the exported files are out of date (buttons **Generate** and **Export…**), or a generate, export or check failed (**Try again**). A change that is refused because a harness is released stays on screen as a message over the diagram, with **Start new revision…**, until the next change goes through. |
 | **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6). Each area shows its own: Model has Diagram and Devices; Checks, Drawings (the Harness tab), Outputs (the Lists tab) and Revisions (the Releases tab) have one each. |
@@ -84,7 +84,7 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 
 The status chip in the top bar says one thing: *Up to date*, *Plans out of date* (the diagram changed after Generate), *Outputs out of date* (the design changed after the last export), *Outputs changed* (files in `outputs` were changed outside the tool), *Not generated*, *Made by hand* (harnesses from connections or by hand), or the running job (*Generating…*, *Exporting…*, *Checking…*). Colour is never the only sign: every state has an icon and a word, and the two states for "nothing known yet" have a pattern. **Pending** (dotted) is a value nobody has entered; **Not checked** (hatched) is a rule that could not run. Neither is a pass, and neither is empty.
 
-**Show problem notices** (View menu, and Settings > Editing) switches off, in one step, what shows problems without being asked: **Problems (n)**, the count on the Problems tab, the status chip, the chip and badges on the diagram, the pending-values link and the *out of date* banner. It is on for the Electrical / AIT engineer and off for the Systems engineer, for each role. **Check**, the Checks tab, the Problems panel and the read-only, locked, damaged-file and sample banners always stay.
+**Show problem notices** (View menu, and Settings > Editing) switches off, in one step, what shows problems without being asked: **Problems (n)**, the count on the Problems tab, the status chip, the chip and badges on the diagram, the pending-values link and the *out of date* banner. It is on for the Electrical engineer and off for the Systems engineer, for each role. **Check**, the Checks tab, the Problems panel and the read-only, locked, damaged-file and sample banners always stay.
 
 Panels you hide or move are remembered for each project; **View > Reset layout** puts them back. In a small or narrow window the tool hides panels so the diagram stays large, and says so.
 
@@ -109,7 +109,7 @@ The **Problems panel** (Ctrl+Shift+M, or **Problems (n)** in the status bar) lis
 Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every setting takes effect at once and is kept for the next start; the page follows the View menu and Ctrl+K, which change the same settings.
 
 - **Appearance**: **Theme** (*Follow the system*, *Light* or *Dark*), **Interface size** (100, 125, 150 or 200 %; it takes about a second to apply) and **Reduce motion**, which turns off the fades and slides of menus, lists and tooltips. The interface uses the bundled fonts Inter and JetBrains Mono.
-- **Editing**: **Role** (*Systems engineer* or *Electrical / AIT engineer*), **Mode** (*Guided* or *Expert*), **Snap devices to the grid**, **Show every link label** and **Show connectors on connections**.
+- **Editing**: **Role** (*Systems engineer*, *Electrical engineer* or *AIT engineer*), **Mode** (*Guided* or *Expert*), **Snap devices to the grid**, **Show every link label** and **Show connectors on connections**.
 - **Project**: **Open the engineering values…**, the window of section 6, and the **Library folder** (since 1.8.0: **Choose…**, **Clear** and **Open the library…**; the folder that your team shares, see "The library" below).
 - **Keyboard shortcuts**: every key of the window, with a box **Filter the shortcuts…**. They are fixed and cannot be changed.
 - **About**: the version, the Python, Qt and PySide6 versions, and where your settings are kept. **Help > About** opens this section.
@@ -117,7 +117,7 @@ Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every sett
 
 ### Your first project in ten steps
 
-As a Systems engineer a project opens on the **Next step** page (section 5); as an Electrical / AIT engineer it opens where it opened before. Press **Model** in the rail (or Ctrl+1) to get to the diagram, and, as a Systems engineer, **Show panels** in the top bar for the Project tab and the Inspector. The steps below work in both roles.
+As a Systems engineer a project opens on the **Next step** page (section 5); as an AIT engineer it opens there too; as an Electrical engineer it opens where it opened before. Press **Model** in the rail (or Ctrl+1) to get to the diagram, and, as a Systems engineer, **Show panels** in the top bar for the Project tab and the Inspector. The steps below work in both roles.
 
 1. Start the app. The sample project opens with a short tour; skip it or follow it. The tour leaves out a step whose panel is hidden (a small window or a high interface size), records that it was shown however you close it, and can be started again with **Help > Replay the tour**.
 2. **File > New project…** opens one window: choose an empty folder, give the project a name, and optionally pick an example (section 3; `first-steps` has three devices, start there). A problem with the folder or the name is written under the field. **File > New project from an example…** is the same window with the first example ticked.
@@ -179,13 +179,19 @@ The **library** is a folder that your team shares, on a shared drive or in a Git
 
 ## 5. Guided and Expert mode
 
-**Next step.** The first item of the rail, **Next step**, shows one page, *What to do next*: one card with one button, and the six steps of the work, each with an icon and a word (*done*, *next*, *to do*). It looks at the project and names the first step that is not done. When a check fails, a second card shows the first open problem with what to do and the buttons that apply (**Show it**, **Waive…**, **Approve …** for an unapproved part); a warning never holds the page. For the Systems engineer there are two link buttons, **Library…** and **Show everything**, which switches to the Electrical / AIT engineer role.
+**Next step.** The first item of the rail, **Next step**, shows one page, *What to do next*: one card with one button, and the six steps of the work, each with an icon and a word (*done*, *next*, *to do*). It looks at the project and names the first step that is not done. When a check fails, a second card shows the first open problem with what to do and the buttons that apply (**Show it**, **Waive…**, **Approve …** for an unapproved part); a warning never holds the page. For the Systems engineer there are two link buttons, **Library…** and **Show everything**, which switches to the Electrical engineer role.
+
+**Engineering values still to set.** A quiet line on the Next step page says how many there are, with the button **Set the values…**, in every role (the status bar's link is off for the Systems engineer).
+
+**What this step uses and makes.** Under the steps, a disclosure (closed until you open it) shows the project files and outputs the step uses and makes, what you can look at, and where the project stands in all nine steps of the work; it is the table of `docs/user-manual/follow-the-workflow.md` and the command `workflow`.
+
+**As-built records.** The AIT engineer has a button **As-built records…**, which opens the **As-built** page: the values that were recorded about the build, what is missing and what is out of its limit, with **Import the filled-in sheet…** and **Save the sheet to fill in…** (`import-asbuilt`, `export-asbuilt`, `asbuilt`; the page never says that anything passed).
 
 A project that has connections between connectors but no harness and no interface is offered **Create harness** (it shows what it will add and asks first, see section 4); a project with no device is also offered **New harness…**, to make a harness by hand.
 
-**Your role.** The editor has two roles: *Systems engineer* (devices, the connections between them, subsystems, the library, the checks) and *Electrical / AIT engineer* (connectors, pinouts, harnesses, wires, build sheets, tests). They replace the *Simple* and *Full* workspaces of version 1.7.0. The first start asks once, *Who are you working as?*; after that the role is a setting in **View > Role** and under **Settings > Editing**, and it takes effect at once.
+**Your role.** The editor has three roles: *Systems engineer* (devices, the connections between them, subsystems, the library, the checks), *Electrical engineer* (connectors, pinouts, harnesses, wires, the engineering values, the models) and *AIT engineer* (the build data, the build sheets, the outputs, the as-built records and the workflow; since S9). The *Electrical engineer* is the role that was called *Electrical / AIT engineer*. They replace the *Simple* and *Full* workspaces of version 1.7.0. The first start asks once, *Who are you working as?*; after that the role is a setting in **View > Role** and under **Settings > Editing**, and it takes effect at once.
 
-A settings file that already holds values and no role is an *Electrical / AIT engineer*, which opens a project where it opened before and shows everything. A role is a view, never a permission: it locks nothing and is not stored in the project.
+A settings file that already holds values and no role is an *Electrical engineer*, which opens a project where it opened before and shows everything. A role is a view, never a permission: it locks nothing and is not stored in the project.
 
 The Systems engineer sees less. The project tree, the inspector and the Problems panel start closed (**Show panels** in the top bar opens the tree and the inspector together), the minimap and the legend are off, the status bar keeps the save state, the running job, *Offline* and the path, and the tools above the diagram are **Select**, **Connect**, **Add device** and **More**. The rail lists **Next step**, **Model**, **Checks**, **Revisions** and **Settings**; **Home**, **Drawings** and **Outputs** are not listed (the area you are in always is).
 
@@ -352,6 +358,10 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio export-subsystem DIR FILE --device D [--device D2 ...] --name NAME [--description TEXT] [--replace]` | save devices and the connections between them as a subsystem library file (a file that exists is replaced only with `--replace`) |
 | `harness-design-studio import-subsystem DIR FILE [--show] [--dry-run]` | add a subsystem from a subsystem library file in one step: the devices (a taken ID gets the next free one) and their connections; all or nothing |
 | `harness-design-studio imports DIR [--json] [--check] [--source FILE]` | list what each import read, dropped and converted (`imports/records.json`) and whether the source file has changed since (`source changed`); `--check` ends with 1 when one has |
+| `harness-design-studio workflow DIR [--outputs FOLDER] [--json]` | the nine steps of the work, what each uses and makes, the intermediate results you can look at and change, and where the project stands in each step (done, to do, pending, out of date, needs attention, blocked) |
+| `harness-design-studio asbuilt DIR [--complete] [--json]` | what was recorded about the build (`asbuilt/records.json`): what is missing, what is out of its test limit (actual, limit, margin), what differs from the design; exit 1 when a value is out of its limit; it never says that a harness passed |
+| `harness-design-studio import-asbuilt DIR FILE [--dry-run] [--json]` | read the filled-in as-built sheet (CSV, TSV or XLSX) and keep its records; the units are those of the headings, each converted value is echoed, a refused row changes nothing |
+| `harness-design-studio export-asbuilt DIR FILE [--harness ID] [--json]` | write the sheet a technician fills in (`.csv` or `.xlsx`): the designed values are there, the as-built columns are empty |
 
 Every command that has a result in data form takes `--json`: it then prints one JSON document instead of the text, with the same exit code. The document has no time, no user name and no absolute path, and the same design gives the same bytes. The keys of each document are in `docs/CLI.md`.
 
@@ -468,8 +478,8 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Edit | Connect with an interface type… | one item for each interface type (the arrow beside the Connect button lists the same); then click two devices |
 | Edit | Selected connection | Edit the pairs…, Rename…, Create harness, Show the harness, Delete connection: for the connection picked in the Project tab or on the diagram |
 | View | Show side panels (Systems engineer only) | opens or closes the Project tab and the Inspector together (the **Show panels** button of the top bar) |
-| View | Role > Systems engineer, Electrical / AIT engineer | the role (section 5): a project opens on **Next step** and less is on screen, or it opens where it opened before and everything is there |
-| View | Show problem notices | shows or hides the Problems count, status chip, badges and *out of date* banner; on for the Electrical / AIT engineer, off for the Systems engineer |
+| View | Role > Systems engineer, Electrical engineer | the role (section 5): a project opens on **Next step** and less is on screen, or it opens where it opened before and everything is there |
+| View | Show problem notices | shows or hides the Problems count, status chip, badges and *out of date* banner; on for the Electrical engineer, off for the Systems engineer |
 | View | Guided, Expert | the two modes of section 5 |
 | View | Theme | Follow the system (the default), Light or Dark (also under **Settings > Appearance**) |
 | View | Show overview map, Show legend, Snap to grid | overlays and the grid |

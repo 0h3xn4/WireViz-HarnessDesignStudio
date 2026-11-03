@@ -7,7 +7,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from harness_design_studio.core import checks, drc
+from harness_design_studio.core import asbuilt, checks, drc
 from harness_design_studio.core.drc.report import render_markdown
 from harness_design_studio.core.errors import HarnessError, SaveError
 from harness_design_studio.core.io.fs import atomic_write_bytes, escapes_root
@@ -25,6 +25,8 @@ MANIFEST = "manifest.json"
 FORMAT = "harness-design-studio-outputs"
 FORMAT_VERSION = 1
 DEFAULT_FOLDER = "outputs"
+ASBUILT_MD = "system/asbuilt_report.md"  # written only when the project has as-built records
+ASBUILT_CSV = "system/asbuilt_report.csv"
 
 
 class OutputsCancelled(HarnessError):
@@ -36,6 +38,13 @@ class OutputSet:
     stamp: Stamp
     files: dict[str, bytes] = field(default_factory=dict)
 
+    @staticmethod
+    def _asbuilt(project: Project) -> dict[str, str]:
+        """The hash of the as-built records, only for a project that has some (so that the manifest
+        of every other project is as it was): the outputs are out of date when they change."""
+        fingerprint = asbuilt.asbuilt_fingerprint(project)
+        return {"asbuilt_hash": fingerprint} if fingerprint else {}
+
     def manifest(self, project: Project) -> bytes:
         doc = {
             "format": FORMAT,
@@ -44,6 +53,7 @@ class OutputSet:
             "model_hash": self.stamp.model_hash,
             "content_hash": content_hash(project),
             "placeholder_config": sorted(n for n, c in project.config.items() if c.placeholder),
+            **self._asbuilt(project),
             "files": [
                 {"path": p, "sha256": hashlib.sha256(b).hexdigest(), "bytes": len(b)}
                 for p, b in sorted(self.files.items())
@@ -184,6 +194,9 @@ def build_outputs(
     out["system/revision_report.md"] = revision_report(project, stamp.line).encode()
     out["system/export.json"] = exports.json_export(project, stamp)
     out["system/provenance.json"] = provenance_bytes(project, stamp)
+    if project.asbuilt:  # the as-built report: only a project that has records has it (S9)
+        out[ASBUILT_MD] = asbuilt.report_markdown(project, stamp.line).encode()
+        out[ASBUILT_CSV] = csv_bytes(asbuilt.report_rows(project), stamp)
     if (
         project.extensions is not None
     ):  # S8: the tables of the project's extensions (system/extensions/)
@@ -265,6 +278,7 @@ class _Manifest:
     model_hash: str
     content_hash: str
     files: dict[str, str]  # path -> sha256
+    asbuilt_hash: str = ""  # of the as-built records the outputs were made with ("" for none)
 
 
 def _read_manifest(root: Path) -> _Manifest | None:
@@ -274,7 +288,12 @@ def _read_manifest(root: Path) -> _Manifest | None:
     try:
         doc = json.loads(path.read_text())
         files = {str(f["path"]): str(f["sha256"]) for f in doc["files"]}
-        return _Manifest(str(doc["model_hash"]), str(doc.get("content_hash", "")), files)
+        return _Manifest(
+            str(doc["model_hash"]),
+            str(doc.get("content_hash", "")),
+            files,
+            str(doc.get("asbuilt_hash", "")),
+        )
     except ValueError, KeyError, TypeError, AttributeError, RecursionError:
         return None
 
@@ -345,6 +364,10 @@ def outputs_status(project: Project, folder: Path | str, *, deep: bool = False) 
         return OutputStatus("unreadable", "The output manifest cannot be read; export again.")
     if old.model_hash != stamp_of(project).model_hash:
         return OutputStatus("stale", "The design changed after the outputs were exported.")
+    if old.asbuilt_hash != asbuilt.asbuilt_fingerprint(project):
+        return OutputStatus(
+            "stale", "The as-built records changed after the outputs were exported."
+        )
     bad = []
     for rel, digest in sorted(old.files.items() if deep else []):
         path = root / rel
@@ -364,6 +387,8 @@ def outputs_status(project: Project, folder: Path | str, *, deep: bool = False) 
 
 
 __all__ = [
+    "ASBUILT_CSV",
+    "ASBUILT_MD",
     "SHEETS",
     "OutputSet",
     "OutputsCancelled",

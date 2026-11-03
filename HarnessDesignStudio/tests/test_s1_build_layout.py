@@ -454,6 +454,17 @@ def test_every_kind_a_project_makes_is_listed_with_its_page(tmp_path: Path) -> N
         if name == "flatsat":  # a wire with an override gives the derivation `wire-override`
             wid = next(w.id for h in project.harnesses.values() for w in h.wires if not w.manual)
             apply_ops(project, plan_override(project, wid, "colour", "pink", "customer request"))
+            # a test result and a cut length give the derivation `asbuilt-result` (S9)
+            from harness_design_studio.core import asbuilt as asb
+
+            table = asb.template_rows(project, "W001")
+            head = table[0]
+            for row in table[1:]:
+                if row[0] == "test" and row[2] == "T001":
+                    row[head.index("Continuity (ohm)")] = "0.4"
+                if row[0] == "wire" and row[2] == "W001-001":
+                    row[head.index("Cut length (m)")] = "3.4"
+            apply_ops(project, asb.plan_asbuilt_import(project, table).ops)
         produced |= {d.id for d in explain_all(project)}
     assert produced <= set(KINDS), produced - set(KINDS)
     assert set(KINDS) <= produced, set(KINDS) - produced

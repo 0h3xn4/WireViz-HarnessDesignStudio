@@ -36,7 +36,7 @@ You need the tool installed ([`docs/INSTALL.md`](docs/INSTALL.md); `sudo apt ins
    harness-design-studio export wheel-link
    ```
 
-5. **Open it in the app** (4 minutes). Start **Harness Design Studio**, choose **File > Open project…** and pick `wheel-link`. The first start asks *Who are you working as?* (**View > Role** changes it). A Systems engineer lands on the **Next step** page, which names one thing to do; an Electrical / AIT engineer lands on the diagram. Look at **Model** (the diagram), **Checks** (what passed and what is *not checked*, and why) and, as an Electrical / AIT engineer, **Drawings** (a harness, and its **Why** tab with the reason for every choice).
+5. **Open it in the app** (4 minutes). Start **Harness Design Studio**, choose **File > Open project…** and pick `wheel-link`. The first start asks *Who are you working as?* (**View > Role** changes it). A Systems engineer lands on the **Next step** page, which names one thing to do; an Electrical engineer lands on the diagram. Look at **Model** (the diagram), **Checks** (what passed and what is *not checked*, and why) and, as an Electrical engineer, **Drawings** (a harness, and its **Why** tab with the reason for every choice).
 
 That is the whole idea. The full tutorial with the output of every command is [`docs/GETTING_STARTED.md`](docs/GETTING_STARTED.md) (45 minutes); [`docs/LEARNING_PATH.md`](docs/LEARNING_PATH.md) is the route in nine steps.
 
@@ -47,6 +47,7 @@ That is the whole idea. The full tutorial with the output of every command is [`
 | do a task (draw, generate, edit a wire, import, devices, export, release, Git, CI) | [`docs/user-manual/`](docs/user-manual/README.md): one page per task |
 | look something up | [`docs/CLI.md`](docs/CLI.md), the user guide ([`docs/guide/USER_GUIDE.md`](docs/guide/USER_GUIDE.md), **F1** in the app), [`docs/CHEATSHEET.md`](docs/CHEATSHEET.md), [`docs/GLOSSARY.md`](docs/GLOSSARY.md) |
 | fix a problem | [`docs/TROUBLESHOOTING.md`](docs/TROUBLESHOOTING.md), [`docs/FAQ.md`](docs/FAQ.md) |
+| see what each step uses and makes, or record what was built and measured | [`docs/user-manual/follow-the-workflow.md`](docs/user-manual/follow-the-workflow.md), [`docs/user-manual/record-what-was-built.md`](docs/user-manual/record-what-was-built.md), [`docs/models/asbuilt.md`](docs/models/asbuilt.md) |
 | supply engineering values or review | [`docs/CONFIG.md`](docs/CONFIG.md), [`docs/PLACEHOLDERS.md`](docs/PLACEHOLDERS.md), [`docs/RULES.md`](docs/RULES.md), [`docs/OUTPUTS.md`](docs/OUTPUTS.md) |
 | see the other examples and templates | [`docs/examples/README.md`](docs/examples/README.md) (`harness-design-studio new --list`; five projects); the CSV and script templates: `harness-design-studio templates my-templates` |
 | see what changed | [`CHANGELOG.md`](CHANGELOG.md), [`docs/STATUS.md`](docs/STATUS.md) |

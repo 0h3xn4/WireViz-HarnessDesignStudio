@@ -76,7 +76,7 @@ CALCULATION_MODULES = (
     "core/generate/wiring.py", "core/drc/rules.py", "core/drc/standard_rules.py",
     "core/outputs/tables.py", "core/units.py", "core/derive.py", "core/pairing.py",
     "core/routing.py", "core/derive_export.py", "core/derive_build.py", "core/derive_layout.py",
-    "core/derive_rules.py", "core/generate/shields.py",
+    "core/derive_rules.py", "core/generate/shields.py", "core/asbuilt.py", "core/derive_asbuilt.py",
 )  # fmt: skip
 _AWG = "definition D-AWG (gauges 0 to 40, the AWG formula)"
 _TICK = "a progress fraction of the progress bar: no result depends on it"
@@ -127,6 +127,29 @@ EXEMPT: dict[tuple[str, float], str] = {
     ("core/generate/sizing.py", 1e-06): "unit conversion mm2 to m2",
     ("core/generate/sizing.py", 1e-09): "definition D-LIMIT-TOLERANCE",
     ("core/generate/sizing.py", 40): _AWG,
+    (
+        "core/asbuilt.py",
+        1e-09,
+    ): "definition D-LIMIT-TOLERANCE (two recorded numbers closer than this are the same number)",
+    (
+        "core/asbuilt.py",
+        0.001,
+    ): "definition of the unit: ohms in one milliohm (docs/user-manual/record-what-was-built.md)",
+    (
+        "core/asbuilt.py",
+        1000.0,
+    ): "definition of the unit: metres to millimetres, megohms in one gigohm",
+    (
+        "core/asbuilt.py",
+        3,
+    ): "the position of the To column of a row of the Tests sheet (rows of tables.tests)",
+    ("core/asbuilt.py", 5): "the position of the Limit column of a row of the Tests sheet",
+    ("core/asbuilt.py", 6): "the position of the Test voltage column of a row of the Tests sheet",
+    ("core/asbuilt.py", 7): "the position of the Wire column of a row of the Tests sheet",
+    ("core/asbuilt.py", 9): "definition D-DATA-ROUNDING (9 decimals)",
+    ("core/asbuilt.py", 200): "the longest name or lot a record holds (the Name type of the model)",
+    ("core/asbuilt.py", 5000): "the longest note a record holds (the Text type of the model)",
+    ("core/derive_asbuilt.py", 9): "definition D-DATA-ROUNDING (9 decimals)",
     ("core/outputs/tables.py", 1000): "definition D-MM-TO-M",
     ("core/outputs/tables.py", 8): "the position of a column in the BOM header",
     ("core/outputs/tables.py", 9): "definition D-DATA-ROUNDING",

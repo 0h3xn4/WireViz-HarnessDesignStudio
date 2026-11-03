@@ -1,3 +1,4 @@
+from .asbuilt import AsBuiltRecord
 from .base import Entity, evolve
 from .config import CONFIG_NAMES, ConfigFile, default_configs
 from .generation import GenerationRecord
@@ -25,6 +26,7 @@ __all__ = [
     "DEFAULT_ZONES",
     "PART_CATEGORIES",
     "SCHEMA_VERSION",
+    "AsBuiltRecord",
     "Baseline",
     "BranchPoint",
     "ChangeEntry",
