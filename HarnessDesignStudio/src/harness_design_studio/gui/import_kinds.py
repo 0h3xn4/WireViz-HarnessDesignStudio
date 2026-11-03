@@ -22,7 +22,16 @@ from typing import Final
 from harness_design_studio.core import configcheck, devices, edit
 from harness_design_studio.core.commands import History, Op, Put, SetConfig
 from harness_design_studio.core.errors import HarnessError, TransactionError
-from harness_design_studio.core.generate.lengths import plan_length_import
+from harness_design_studio.core.generate.lengths import LENGTH_UNITS_M, plan_length_import
+from harness_design_studio.core.import_record import ImportReport, file_sha256, record_ops
+from harness_design_studio.core.import_reports import (
+    ampacity_report,
+    interfaces_report,
+    lengths_report,
+    netlist_report,
+    parts_report,
+    pinout_report,
+)
 from harness_design_studio.core.imports import (
     FIELDS as INTERFACE_FIELDS,
 )
@@ -45,7 +54,7 @@ from harness_design_studio.core.library_import import (
     library_ops,
     plan_parts_import,
 )
-from harness_design_studio.core.model import Project
+from harness_design_studio.core.model import ImportRecord, Project
 from harness_design_studio.core.model.library import PART_CATEGORIES
 from harness_design_studio.core.pinout_import import FIELDS as PINOUT_FIELDS
 from harness_design_studio.core.pinout_import import (
@@ -58,11 +67,7 @@ from harness_design_studio.core.pinout_import import (
 from harness_design_studio.gui import strings
 
 PREVIEW_ROWS: Final = 20  # rows of the live preview on the mapping page
-LENGTH_UNITS: Final = {
-    "mm": 0.001,
-    "cm": 0.01,
-    "m": 1.0,
-}  # as `harness-design-studio import-lengths --unit`
+LENGTH_UNITS: Final = LENGTH_UNITS_M  # as `harness-design-studio import-lengths --unit`
 AMPACITY_KEY: Final = ("derating", "ampacity_a_by_awg")
 
 
@@ -127,6 +132,7 @@ class Source:
     table: Table = field(default_factory=list)
     sheet: str | None = None
     netlist: Netlist | None = None
+    sha256: str = ""  # of the file's bytes, for the import record
 
     @property
     def name(self) -> str:
@@ -152,14 +158,14 @@ def read_source(kind: str, path: Path | str) -> Source:
     p = Path(path)
     try:
         if kind == "netlist":
-            return Source(kind, p, netlist=read_netlist(p))
+            return Source(kind, p, netlist=read_netlist(p), sha256=file_sha256(p))
         if kind == "values":
-            return Source(kind, p, table=read_table(p))
+            return Source(kind, p, table=read_table(p), sha256=file_sha256(p))
         if kind == "pinout":
             table, sheet = read_pinout_table(p)
-            return Source(kind, p, table=table, sheet=sheet)
+            return Source(kind, p, table=table, sheet=sheet, sha256=file_sha256(p))
         table, sheet = read_table_sheet(p)
-        return Source(kind, p, table=table, sheet=sheet)
+        return Source(kind, p, table=table, sheet=sheet, sha256=file_sha256(p))
     except OSError as exc:
         raise ImportError_(f"The file could not be read ({exc.strerror}).") from exc
 
@@ -262,6 +268,13 @@ class ImportPlanView:
     next_step: str = ""
     total_rows: int = 0
     name: str = ""  # the name of the undo step, when it is not "Import n rows"
+    report: ImportReport | None = None  # what the import reads, drops and converts (D-193)
+    record: ImportRecord | None = None  # ... as the entity the project keeps
+
+    def record_ops(self, project: Project) -> list[Op]:
+        """The operation that stores the import record with the import (none when the project holds
+        this very record already)."""
+        return record_ops(project, self.record) if self.record is not None else []
 
     @property
     def ok_count(self) -> int:
@@ -322,13 +335,32 @@ def _blocked(project: Project, label: str, ops: list[Op]) -> str:
     return ""
 
 
-def plan_import(project: Project, source: Source, options: Options) -> ImportPlanView:
+def _notes_of(report: ImportReport) -> list[str]:
+    """What the page says about the file besides the rows: the columns that are not read, and a
+    unit the import assumed."""
+    notes = []
+    if report.columns_ignored:
+        notes.append(strings.IMP_NOTE_COLUMNS_IGNORED.format(", ".join(report.columns_ignored)))
+    if report.unit and not report.unit_given:
+        notes.append(strings.IMP_NOTE_UNIT_ASSUMED.format(report.unit_what, report.unit))
+    return notes
+
+
+def plan_import(
+    project: Project, source: Source, options: Options, root: Path | str | None = None
+) -> ImportPlanView:
     """Plan the import. Never changes the project; never raises for a problem with the data (it
-    is in the plan)."""
+    is in the plan). `root` is the project folder, to keep the path of a source inside it."""
     try:
-        plan = _PLANNERS[source.kind](project, source, options)
+        plan = _PLANNERS[source.kind](project, source, options, root)
     except (HarnessError, ValueError) as exc:  # for example two approval columns
         return ImportPlanView(source.kind, problem=plain(str(exc)))
+    if plan.report is not None:
+        plan.notes.extend(_notes_of(plan.report))
+        try:
+            plan.record = plan.report.record()
+        except ValueError:  # a record that cannot be made never stops an import
+            plan.record = None
     if plan.ops and not plan.problem and (plan.partial or plan.bad_count == 0):
         refused = _blocked(project, plan.label, plan.ops)
         if refused:
@@ -339,12 +371,23 @@ def plan_import(project: Project, source: Source, options: Options) -> ImportPla
 # ---- interfaces --------------------------------------------------------------------------------
 
 
-def _plan_interfaces(project: Project, source: Source, options: Options) -> ImportPlanView:
+def _plan_interfaces(
+    project: Project, source: Source, options: Options, root: Path | str | None = None
+) -> ImportPlanView:
     view = ImportPlanView("interfaces", partial=True, next_step=strings.IMP_NEXT_INTERFACES)
     if len(source.table) < 2:
         view.problem = strings.IMP_EMPTY
         return view
     plan = plan_interface_import(project, source.table, options.mapping)
+    view.report = interfaces_report(
+        source.path,
+        root,
+        source.table,
+        options.mapping,
+        plan,
+        sheet=source.sheet,
+        sha256=source.sha256,
+    )
     view.ops = plan.ops
     view.total_rows = len(plan.rows)
     for r in plan.rows:
@@ -364,7 +407,9 @@ def _plan_interfaces(project: Project, source: Source, options: Options) -> Impo
 # ---- approved parts ---------------------------------------------------------------------------
 
 
-def _plan_parts(project: Project, source: Source, options: Options) -> ImportPlanView:
+def _plan_parts(
+    project: Project, source: Source, options: Options, root: Path | str | None = None
+) -> ImportPlanView:
     view = ImportPlanView("parts", next_step=strings.IMP_NEXT_PARTS)
     table, mapping = source.table, options.mapping
     if len(table) < 2:
@@ -381,6 +426,10 @@ def _plan_parts(project: Project, source: Source, options: Options) -> ImportPla
         rejected=options.rejected, default_category=options.category or None,
     )  # fmt: skip
     view.total_rows = len(plan.rows)
+    view.report = parts_report(
+        source.path, root, project, table, mapping, plan,
+        mass_unit="g", unit_given=False, sheet=source.sheet, sha256=source.sha256,
+    )  # fmt: skip
     wanted = ("id", "category", "part_number", "approval")
 
     def cell(row: list[str], key: str) -> str:
@@ -409,12 +458,18 @@ def _plan_parts(project: Project, source: Source, options: Options) -> ImportPla
 # ---- segment lengths --------------------------------------------------------------------------
 
 
-def _plan_lengths(project: Project, source: Source, options: Options) -> ImportPlanView:
+def _plan_lengths(
+    project: Project, source: Source, options: Options, root: Path | str | None = None
+) -> ImportPlanView:
     view = ImportPlanView("lengths", next_step=strings.IMP_NEXT_LENGTHS)
     if len(source.table) < 2:
         view.problem = strings.IMP_EMPTY
         return view
     plan = plan_length_import(project, source.table, scale=LENGTH_UNITS[options.length_unit])
+    view.report = lengths_report(
+        source.path, root, source.table, plan,
+        unit=options.length_unit, unit_given=True, sheet=source.sheet, sha256=source.sha256,
+    )  # fmt: skip
     view.ops = plan.ops
     view.total_rows = len(plan.rows)
     for r in plan.rows:
@@ -441,8 +496,11 @@ def _plan_lengths(project: Project, source: Source, options: Options) -> ImportP
 _ROW_PROBLEM = re.compile(r"Row (\d+): (.*)")
 
 
-def _plan_values(project: Project, source: Source, options: Options) -> ImportPlanView:
+def _plan_values(
+    project: Project, source: Source, options: Options, root: Path | str | None = None
+) -> ImportPlanView:
     view = ImportPlanView("values", next_step=strings.IMP_NEXT_VALUES)
+    view.report = ampacity_report(source.path, root, source.table, sha256=source.sha256)
     file, key = AMPACITY_KEY
     if file not in project.config:
         view.problem = strings.IMP_NO_DERATING
@@ -498,7 +556,9 @@ def _plan_values(project: Project, source: Source, options: Options) -> ImportPl
 # ---- a KiCad netlist ----------------------------------------------------------------------------
 
 
-def _plan_netlist(project: Project, source: Source, options: Options) -> ImportPlanView:
+def _plan_netlist(
+    project: Project, source: Source, options: Options, root: Path | str | None = None
+) -> ImportPlanView:
     view = ImportPlanView("netlist", next_step=strings.IMP_NEXT_NETLIST)
     if not options.unit_id:
         view.problem = strings.IMP_NO_UNIT
@@ -511,6 +571,7 @@ def _plan_netlist(project: Project, source: Source, options: Options) -> ImportP
         connector_ids=options.connector_ids, parts=options.parts, signal_map=options.signal_map,
         use_pin_function=options.pin_function,
     )  # fmt: skip
+    view.report = netlist_report(source.path, root, source.netlist, plan, sha256=source.sha256)
     view.ops = plan.ops
     view.total_rows = len(plan.rows)
     for r in plan.rows:
@@ -530,7 +591,9 @@ def _plan_netlist(project: Project, source: Source, options: Options) -> ImportP
 # ---- a device's pinout ----------------------------------------------------------------------------
 
 
-def _plan_pinout(project: Project, source: Source, options: Options) -> ImportPlanView:
+def _plan_pinout(
+    project: Project, source: Source, options: Options, root: Path | str | None = None
+) -> ImportPlanView:
     view = ImportPlanView("pinout", next_step=strings.IMP_NEXT_PINOUT)
     table, mapping = source.table, options.mapping
     if len(table) < 2:
@@ -553,6 +616,7 @@ def _plan_pinout(project: Project, source: Source, options: Options) -> ImportPl
         default_part=options.default_part or None, gender=options.gender or None,
         connector=options.connector.strip() or None, replace=options.replace,
     )  # fmt: skip
+    view.report = pinout_report(source.path, root, table, mapping, plan, sheet=source.sheet, sha256=source.sha256)  # fmt: skip
     view.ops = plan.ops
     view.total_rows = len(plan.rows)
     view.name = plan.label

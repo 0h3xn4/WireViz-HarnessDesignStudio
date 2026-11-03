@@ -75,6 +75,7 @@ from harness_design_studio.core.generate.engine import (
     GenerationPlan,
     plan_generation,
 )
+from harness_design_studio.core.import_record import CHANGED, CachedHasher, check_sources
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.outputs.build import (
@@ -483,6 +484,7 @@ class MainWindow(QMainWindow):
         self._dismissed_alert: tuple[bool, bool, str] | None = None
         self._check_asked = False  # the person pressed Check: say when it has finished
         self._next_finding: checks.Finding | None = None  # the problem on the Next step card
+        self._import_hasher = CachedHasher()  # imported files are read again only when they change
         self._shown = False
         self._have_saved_state = False
         self._layout_class: tuple[bool, bool] | None = None
@@ -3751,6 +3753,25 @@ class MainWindow(QMainWindow):
 
     def _update_next(self, status: ShellStatus) -> None:
         self.next_page.show_next(next_step(self._next_inputs(status)))
+        self.next_page.show_import_note(self._imports_changed_text())
+
+    def _imports_changed_text(self) -> str:
+        """One line naming the imported files that have changed since they were imported ("" while
+        none has, or the project has no import record: the screen stays as it is)."""
+        project = self.ctl.project
+        if not project.import_records:
+            return ""
+        names = [
+            c.record.source_name
+            for c in check_sources(project, self.ctl.root, hasher=self._import_hasher)
+            if c.status == CHANGED
+        ]
+        if not names:
+            return ""
+        shown = ", ".join(names[:3]) + (f" and {len(names) - 3} more" if len(names) > 3 else "")
+        if len(names) == 1:
+            return strings.NEXT_IMPORTS_CHANGED[0].format(shown)
+        return strings.NEXT_IMPORTS_CHANGED[1].format(len(names), shown)
 
     def _next_go(self, view: str) -> None:
         self.go_to(view)

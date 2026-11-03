@@ -49,7 +49,7 @@ harness-design-studio generate wheel-link
 - **Apply strip lengths to all wires of this harness** gives every wire of the harness the two values in the fields (a field you emptied clears it) and says `Strip lengths changed on N of M wires of W001.`
 - Strip lengths do **not** lock the wire: the form says `Strip lengths do not lock the wire against Generate: they are always kept, like the note.`
 
-**From a file.** `harness-design-studio import-build-data DIR FILE` reads a table (`.csv`, `.tsv`, `.json` or `.xlsx`) and finds out what it holds from the column headings. For strip lengths the headings are `Wire`, `Strip A (mm)` and `Strip B (mm)`; `Harness` is optional while the wire ID is unique in the project. Any case works, and other columns are ignored (so you can keep a `Comment` column). The file `strip-lengths.csv`:
+**From a file.** `harness-design-studio import-build-data DIR FILE` reads a table (`.csv`, `.tsv`, `.json` or `.xlsx`) and finds out what it holds from the column headings. For strip lengths the headings are `Wire`, `Strip A (mm)` and `Strip B (mm)`; `Harness` is optional while the wire ID is unique in the project. Any case works, and other columns are not read (so you can keep a `Comment` column; the import names it in a warning). The lengths are millimetres; `--unit cm|m|in|ft` says that a file has them in another unit, and each converted value is shown and recorded. The file `strip-lengths.csv`:
 
 ```
 Wire,Strip A (mm),Strip B (mm)
