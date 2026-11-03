@@ -420,9 +420,24 @@ def _cfg(project: Project, key: str) -> object:
     return c.values.get(key) if c else None
 
 
-def _limit(project: Project, key: str, unit: str) -> str:
+# The three test limits of the test sheet: the key of config/generation.json, the unit the sheet
+# writes after the number, and what the limit is for.
+TEST_LIMITS: tuple[tuple[str, str, str], ...] = (
+    ("test_continuity_max_ohm", "ohm max", "continuity"),
+    ("test_isolation_min_mohm", "Mohm min", "isolation"),
+    ("test_isolation_voltage_v", "V", "isolation voltage"),
+)
+
+
+def limit_value(project: Project, key: str) -> float | None:
+    """The number of a test limit, or None while the key is not set (the sheet shows TBD)."""
     v = _cfg(project, key)
-    return f"{v:g} {unit}" if isinstance(v, int | float) and not isinstance(v, bool) else TBD
+    return float(v) if isinstance(v, int | float) and not isinstance(v, bool) else None
+
+
+def _limit(project: Project, key: str, unit: str) -> str:
+    v = limit_value(project, key)
+    return f"{v:g} {unit}" if v is not None else TBD
 
 
 def tests(project: Project, h: Harness) -> Table:
@@ -443,23 +458,35 @@ def tests(project: Project, h: Harness) -> Table:
     return rows
 
 
+def wire_label_texts(project: Project, w: Wire) -> tuple[str, str]:
+    """The text of the two labels of a wire (end A and end B): the wire ID, its name (the person's
+    label, else the signal), the far end and the EMC class when the project uses classes."""
+    far = f"{w.to_connector}.{w.to_pin}"
+    near = f"{w.from_connector}.{w.from_pin}"
+    emc = emc_class_of(project, w)
+    tag = f" [EMC {emc}]" if emc else ""  # personnel can see the category (20-07C 4.2.13.1 d)
+    name = wire_name(w)
+    head = f"{w.id} {name}" if name else w.id  # a signal name keeps its own spacing
+    return f"{head} to {far}{tag}", f"{head} to {near}{tag}"
+
+
+def connector_label_text(project: Project, c: Connector) -> str:
+    """The text of the label of a cable connector: its name and what it mates."""
+    name = connector_label(project, c)
+    mates = f"{c.id} mates {c.mates_with or '-'}"
+    return f"{name} ({mates})" if name else mates
+
+
 def labels(project: Project, h: Harness) -> Table:
     rows: Table = [["Label", "Kind", "Text", "Quantity"]]
     if h.label:
         rows.append([h.id, "harness", h.label, "1"])
     for c in sorted(h.connectors, key=lambda x: x.id):
-        name = connector_label(project, c)
-        mates = f"{c.id} mates {c.mates_with or '-'}"
-        rows.append([f"{c.id}", "connector", f"{name} ({mates})" if name else mates, "1"])
+        rows.append([f"{c.id}", "connector", connector_label_text(project, c), "1"])
     for w in sorted(h.wires, key=lambda x: x.id):
-        far = f"{w.to_connector}.{w.to_pin}"
-        near = f"{w.from_connector}.{w.from_pin}"
-        emc = emc_class_of(project, w)
-        tag = f" [EMC {emc}]" if emc else ""  # personnel can see the category (20-07C 4.2.13.1 d)
-        name = wire_name(w)
-        head = f"{w.id} {name}" if name else w.id  # a signal name keeps its own spacing
-        rows.append([f"{w.id}-A", "wire", f"{head} to {far}{tag}", "1"])
-        rows.append([f"{w.id}-B", "wire", f"{head} to {near}{tag}", "1"])
+        text_a, text_b = wire_label_texts(project, w)
+        rows.append([f"{w.id}-A", "wire", text_a, "1"])
+        rows.append([f"{w.id}-B", "wire", text_b, "1"])
     return rows
 
 

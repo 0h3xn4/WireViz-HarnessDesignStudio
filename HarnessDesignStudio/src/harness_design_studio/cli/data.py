@@ -1,33 +1,54 @@
 """Commands that bring outside data into a project (config, import-parts, import-lengths,
-import-build-data, import-netlist, import-pinout) and one that writes a device's pinout out (export-pinout)."""
+import-build-data, import-netlist, import-pinout), `imports` (what each import read and whether its
+source changed) and one that writes a device's pinout out (export-pinout)."""
 
 import argparse
 import sys
 from pathlib import Path
+from typing import Any
 
 from harness_design_studio.cli import blocked_text
-from harness_design_studio.core import configcheck, edit, standard_profiles
+from harness_design_studio.cli.jsonout import Report, add_json_flag
+from harness_design_studio.core import configcheck, edit, records, standard_profiles
 from harness_design_studio.core.build_data_import import plan_build_data_import
 from harness_design_studio.core.commands import History, Op, SetConfig
 from harness_design_studio.core.errors import HarnessError, TransactionError
-from harness_design_studio.core.generate.lengths import plan_length_import
+from harness_design_studio.core.generate.lengths import LENGTH_UNITS_M, plan_length_import
 from harness_design_studio.core.generation_status import generation_status
+from harness_design_studio.core.import_record import (
+    CHANGED,
+    RECORDS_FILE,
+    ImportReport,
+    check_sources,
+    record_ops,
+)
+from harness_design_studio.core.import_reports import (
+    ampacity_report,
+    build_data_report,
+    lengths_report,
+    library_file_report,
+    netlist_report,
+    parts_report,
+    pinout_report,
+)
 from harness_design_studio.core.imports import ImportError_, read_table, read_table_sheet
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
 from harness_design_studio.core.library_import import (
+    MASS_UNITS_G,
     describe_library,
     guess_mapping,
     library_ops,
     plan_parts_import,
 )
+from harness_design_studio.core.model import Project
 
 COMMANDS = (
     "config", "library", "import-parts", "import-lengths", "import-netlist", "import-pinout",
     "export-pinout", "export-devices", "import-devices", "import-build-data",
-    "export-subsystem", "import-subsystem",
+    "export-subsystem", "import-subsystem", "imports",
 )  # fmt: skip
-UNITS = {"mm": 0.001, "m": 1.0, "cm": 0.01}
+UNITS = LENGTH_UNITS_M  # metres in one unit: mm, cm, m, in, ft
 PINOUT_FORMATS = (".csv", ".tsv", ".xlsx")
 
 
@@ -75,6 +96,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         help="fill the unset values from a standard profile (ecss-q-st-30-11c, ecss-e-st-20-07c); "
         "values you already set are kept; the files stay placeholders until you review them",
     )
+    add_json_flag(c)
     lib = sub.add_parser(
         "library",
         help="show or set where the parts library comes from (name, version, source, date)",
@@ -82,10 +104,11 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     )
     lib.add_argument("project", type=Path)
     _library_options(lib)
+    add_json_flag(lib)
     pp = sub.add_parser(
         "import-parts",
         help="import an approved-parts list (CSV, TSV, JSON or XLSX; also an InvenTree export)",
-        description="Import parts with their approval status. Say what the approval values in your list mean; unknown values are rejected, never guessed.",
+        description="Import parts with their approval status. Say what the approval values in your list mean; unknown values are rejected, never guessed. A column headed with the name of a rating (contact_current_a, rated_voltage_v, dielectric_withstand_v, max_temp_c, mating_cycles, shield_insulated, conductive_finish) is read into the ratings of the part. Masses are read in grams unless --mass-unit says another unit. The import says which columns it read and which it left out, and records the file (name, SHA-256, rows, columns, conversions) in imports/records.json; see `harness-design-studio imports`.",
     )
     pp.add_argument("project", type=Path)
     pp.add_argument("file", type=Path)
@@ -106,12 +129,20 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         default=None,
         help="category for rows that have none (connector, contact, backshell, wire, sleeving, label)",
     )
+    pp.add_argument(
+        "--mass-unit",
+        choices=list(MASS_UNITS_G),
+        default=None,
+        help="unit of the mass columns (mass per metre: this unit per metre); default g, "
+        "the unit the columns have always been read in",
+    )
     pp.add_argument("--dry-run", action="store_true", help="show the preview only")
     _library_options(pp)
+    add_json_flag(pp)
     nn = sub.add_parser(
         "import-netlist",
         help="read device connector pinouts from a KiCad netlist",
-        description="Create or update the box connectors of one device from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The user guide has a chapter on it.",
+        description="Create or update the box connectors of one device from a KiCad netlist (the .net file the schematic editor exports, or kicad-cli sch export netlist; S-expression and XML both work). Pins get fixed signals; generation connects interfaces to the pin of the same name. The import record keeps the design source of the netlist (the name of the schematic file) and the KiCad pin type of every pin, and says which parts of the components it did not import. The user guide has a chapter on it.",
     )
     nn.add_argument("project", type=Path)
     nn.add_argument("netlist", type=Path)
@@ -158,7 +189,14 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         action="store_true",
         help="use the pin names of the symbol instead of the net names as signals",
     )
+    nn.add_argument(
+        "--pin-direction",
+        action="store_true",
+        help="also set the direction of a pin that has none from the KiCad pin type "
+        "(input, output, bidirectional; other types set nothing)",
+    )
     nn.add_argument("--dry-run", action="store_true")
+    add_json_flag(nn)
     pn = sub.add_parser(
         "import-pinout",
         help="import a device's pinout from a spreadsheet (CSV or XLSX)",
@@ -217,6 +255,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         help="drop the pins of an existing connector that the table does not name (default: keep them)",
     )
     pn.add_argument("--dry-run", action="store_true", help="show the preview only")
+    add_json_flag(pn)
     xp = sub.add_parser(
         "export-pinout",
         help="write one device's pinout as CSV, TSV or XLSX",
@@ -238,6 +277,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         default=None,
         help="the file to write (default: CSV on the screen)",
     )
+    add_json_flag(xp)
     xd = sub.add_parser(
         "export-devices",
         help="save devices with their connectors and pinouts to a device library file",
@@ -259,6 +299,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         action="store_true",
         help="replace a device of the same ID in the file that differs (without it that is refused)",
     )
+    add_json_flag(xd)
     idv = sub.add_parser(
         "import-devices",
         help="add devices from a device library file to the project",
@@ -277,6 +318,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     )
     idv.add_argument("--list", action="store_true", help="list the devices of the file and stop")
     idv.add_argument("--dry-run", action="store_true", help="show the preview only")
+    add_json_flag(idv)
     xs = sub.add_parser(
         "export-subsystem",
         help="save devices and the connections between them as a subsystem library file",
@@ -297,6 +339,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     xs.add_argument("--description", default="", help="what the subsystem is (optional)")
     xs.add_argument("--notes", default="", help="notes for whoever adds it (optional)")
     xs.add_argument("--replace", action="store_true", help="replace the file when it exists")
+    add_json_flag(xs)
     isub = sub.add_parser(
         "import-subsystem",
         help="add a subsystem (devices and their connections) from a subsystem library file",
@@ -306,17 +349,23 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     isub.add_argument("file", type=Path)
     isub.add_argument("--show", action="store_true", help="show what the file holds and stop")
     isub.add_argument("--dry-run", action="store_true", help="show the preview only")
+    add_json_flag(isub)
     ll = sub.add_parser(
         "import-lengths",
         help="import routing segment lengths (CSV or XLSX: harness, segment, length, in this order)",
-        description="Import segment lengths, for example exported from the mechanical CAD. The columns are read by position (harness, segment, length), not by their headings. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5).",
+        description="Import segment lengths, for example exported from the mechanical CAD. The columns are read by position (harness, segment, length), not by their headings. Numbers are written with a point (12.5) or, in a quoted cell, a decimal comma (12,5). The unit of the length column is millimetres unless --unit says another. The command echoes what it did: the unit, and for every row `row N: OK HARNESS / SEGMENT: READ UNIT = STORED m` (the value as written, the unit it was read in, the metres that were stored); a row that is dropped says why (`row N: ERROR reason`); a column that is not read is named in a warning. The file (name, SHA-256, rows, the conversions) is recorded in imports/records.json.",
     )
     ll.add_argument("project", type=Path)
     ll.add_argument("file", type=Path)
     ll.add_argument(
-        "--unit", choices=sorted(UNITS), default="mm", help="unit of the length column (default mm)"
+        "--unit",
+        choices=list(UNITS),
+        default=None,
+        help="unit of the length column (default mm, the unit it has always been read in; the "
+        "echo says whether the unit was given or assumed)",
     )
     ll.add_argument("--dry-run", action="store_true")
+    add_json_flag(ll)
     bd = sub.add_parser(
         "import-build-data",
         help="import strip lengths, pin contacts, accessories or crimp tools (CSV, TSV, JSON or XLSX; read by their headings)",
@@ -324,7 +373,33 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     )
     bd.add_argument("project", type=Path)
     bd.add_argument("file", type=Path)
+    bd.add_argument(
+        "--unit",
+        choices=list(UNITS),
+        default=None,
+        help="unit of the strip and accessory lengths (default mm, the unit they have always been "
+        "read in; they are stored in millimetres)",
+    )
     bd.add_argument("--dry-run", action="store_true", help="show the preview only")
+    add_json_flag(bd)
+    im = sub.add_parser(
+        "imports",
+        help="list what each import read, and whether its source file has changed since",
+        description="List the import records of a project (imports/records.json): for every import the kind, the source file name, the number of rows read, dropped and converted, the unit, and a short SHA-256. A source that can be reached (its path inside the project folder, or a file you name with --source) is compared with the recorded SHA-256 and marked `source changed` when it differs; the other sources are marked `not checked (no path)` or `source not found`. The record holds no time and no absolute path. With --json the records and their status are printed as one JSON document. With --check the command ends with 1 when a source has changed, so a build can stop on it.",
+    )
+    im.add_argument("project", type=Path)
+    im.add_argument(
+        "--source",
+        action="append",
+        default=[],
+        type=Path,
+        metavar="FILE",
+        help="a file to compare with the record of the same file name, for a source outside the project folder",
+    )
+    add_json_flag(im)
+    im.add_argument(
+        "--check", action="store_true", help="end with exit code 1 when a source has changed"
+    )
 
 
 def _library_options(p: argparse.ArgumentParser) -> None:
@@ -350,6 +425,14 @@ def _library_options(p: argparse.ArgumentParser) -> None:
 
 
 def run(args: argparse.Namespace) -> int:
+    rep = Report(args.json)
+    code = _run(args, rep)
+    if "import" in rep.doc:  # what the import read comes last, after the command's own keys
+        rep.doc["import"] = rep.doc.pop("import")
+    return rep.finish(code)
+
+
+def _run(args: argparse.Namespace, rep: Report) -> int:
     try:
         project = load_project(args.project).project
         if project.read_only and _changes_project(args):
@@ -358,26 +441,28 @@ def run(args: argparse.Namespace) -> int:
             )
             return 2
         if args.command == "config":
-            return _config(project, args)
+            return _config(project, args, rep)
         if args.command == "library":
-            return _library(project, args)
+            return _library(project, args, rep)
+        if args.command == "imports":
+            return _imports(project, args, rep)
         if args.command == "export-pinout":
-            return _export_pinout(project, args)
+            return _export_pinout(project, args, rep)
         if args.command == "export-devices":
-            return _export_devices(project, args)
+            return _export_devices(project, args, rep)
         if args.command == "export-subsystem":
-            return _export_subsystem(project, args)
+            return _export_subsystem(project, args, rep)
         if project.read_only:
             print(
                 "error: this project is read-only (saved by a newer tool version).", file=sys.stderr
             )
             return 2
         if args.command == "import-netlist":
-            return _netlist(project, args)
+            return _netlist(project, args, rep)
         if args.command == "import-devices":
-            return _import_devices(project, args)
+            return _import_devices(project, args, rep)
         if args.command == "import-subsystem":
-            return _import_subsystem(project, args)
+            return _import_subsystem(project, args, rep)
         if args.command == "import-pinout":
             from harness_design_studio.core.pinout_import import read_pinout_table
 
@@ -385,14 +470,14 @@ def run(args: argparse.Namespace) -> int:
         else:
             table, sheet = read_table_sheet(args.file)
         if sheet is not None:
-            print(f"Reading sheet '{sheet}' (the first visible sheet of the workbook).")
+            rep.say(f"Reading sheet '{sheet}' (the first visible sheet of the workbook).")
         if args.command == "import-parts":
-            return _parts(project, table, args)
+            return _parts(project, table, args, rep, sheet)
         if args.command == "import-pinout":
-            return _pinout(project, table, args)
+            return _pinout(project, table, args, rep, sheet)
         if args.command == "import-build-data":
-            return _build_data(project, table, args)
-        return _lengths(project, table, args)
+            return _build_data(project, table, args, rep, sheet)
+        return _lengths(project, table, args, rep, sheet)
     except TransactionError as exc:  # blocked (for example by a release), not misused
         print(blocked_text(exc), file=sys.stderr)
         return 1
@@ -418,28 +503,64 @@ def _changes_project(args: argparse.Namespace) -> bool:
     return False
 
 
-def _would_be_blocked(project, label: str, ops: list[Op]) -> bool:  # type: ignore[no-untyped-def]
+def _would_be_blocked(project, label: str, ops: list[Op], rep: Report) -> bool:  # type: ignore[no-untyped-def]
     """Dry runs ask the same question as the real run: would the change be refused (a released
     harness, a release record, an inconsistent result)? It is tried on a copy and then dropped."""
     try:
         History(edit.clone_with(project, [])).execute(label, ops)
     except TransactionError as exc:
         print(blocked_text(exc), file=sys.stderr)
-        print("Dry run: this import would be blocked. Nothing was changed.")
+        rep.say("Dry run: this import would be blocked. Nothing was changed.")
         return True
     return False
 
 
-def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _echo(report: ImportReport, rep: Report, document: bool = True, **kwargs: object) -> None:
+    """Say what the import read, which columns it left out and which unit it used."""
+    for line in report.lines(**kwargs):  # type: ignore[arg-type]
+        rep.say(line)
+    if rep.as_json and document:  # the same facts as data: the record, and whether it was written
+        rep.put(**{"import": {**report.record().model_dump(mode="json"), "record_written": False}})
+
+
+def _record(project, report: ImportReport, rep: Report) -> list[Op]:  # type: ignore[no-untyped-def]
+    """The operation that stores the import record: none when the project holds it already, and
+    none (with a note) in the unlikely case that the record cannot be made."""
+    try:
+        return record_ops(project, report.record())
+    except ValueError as exc:  # a pydantic ValidationError: never let the record stop an import
+        rep.say(f"note: the import record could not be made ({str(exc).splitlines()[0][:100]}).")
+        return []
+
+
+def _recorded(report: ImportReport, written: list[Op], rep: Report) -> None:
+    """Say that the record was written; the document of the command carries the report either way."""
+    if written:
+        rep.say(f"Import record: {report.record_id} written to {RECORDS_FILE}.")
+        if "import" in rep.doc:
+            rep.doc["import"]["record_written"] = True
+
+
+def _config(project, args: argparse.Namespace, rep: Report) -> int:  # type: ignore[no-untyped-def]
+    changes: list[str] = []
+
+    def note(text: str) -> None:
+        rep.say(text)
+        changes.append(text)
+
     if args.ampacity_csv is not None:
-        table, problems = configcheck.plan_ampacity_import(read_table_raw(args.ampacity_csv))
+        raw = read_table_raw(args.ampacity_csv)
+        table, problems = configcheck.plan_ampacity_import(raw)
+        report = ampacity_report(args.ampacity_csv, args.project, raw)
+        _echo(report, rep, document=False)  # the document of `config` has its own keys
         if problems:
             for p in problems:
                 print(f"error: {p}", file=sys.stderr)
             print("Nothing was changed.", file=sys.stderr)
             return 1
         cfg = configcheck.with_value(project.config["derating"], "ampacity_a_by_awg", table)
-        History(project).execute("Load ampacity table", [SetConfig(cfg)])
+        written = _record(project, report, rep)
+        History(project).execute("Load ampacity table", [SetConfig(cfg), *written])
         invalid = [
             i for i in configcheck.validate(project) if i.object_id == "derating.ampacity_a_by_awg"
         ]
@@ -448,9 +569,10 @@ def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untype
             print("Nothing was changed.", file=sys.stderr)
             return 1
         save_project(project, args.project)
-        print(
+        note(
             f'Loaded {len(table)} gauges into config/derating.json. Review it, then set "placeholder": false when the file is complete.'
         )
+        _recorded(report, written, rep)
     if args.counterparts is not None:
         words = configcheck.plan_set_counterparts(project, args.counterparts)
         if not words.ok:
@@ -460,7 +582,7 @@ def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untype
         History(project).execute("Set counterpart words", words.ops)
         save_project(project, args.project)
         n = len(words.value) if isinstance(words.value, list) else 0
-        print(
+        note(
             "Counterpart words: the table the tool ships with is used again."
             if words.value is None
             else f"Counterpart words: {n} pair{'s' if n != 1 else ''} set in config/naming.json."
@@ -473,7 +595,7 @@ def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untype
             return 1
         History(project).execute("Set different people in a release", roles_plan.ops)
         save_project(project, args.project)
-        print(
+        note(
             "Different people in a release: on (config/naming.json, release_distinct_roles)."
             if roles_plan.value
             else "Different people in a release: off (the setting is taken out of config/naming.json)."
@@ -491,27 +613,29 @@ def _config(project, args: argparse.Namespace) -> int:  # type: ignore[no-untype
             )
             save_project(project, args.project)
         for s in plan.applied:
-            print(f"set {s.file}.{s.key} = {s.value!r}  ({s.source}: {s.note})")
+            note(f"set {s.file}.{s.key} = {s.value!r}  ({s.source}: {s.note})")
         for s, current in plan.kept:
-            print(f"kept {s.file}.{s.key} = {current!r}; the profile says {s.value!r} ({s.source})")
+            note(f"kept {s.file}.{s.key} = {current!r}; the profile says {s.value!r} ({s.source})")
         if was_current and generation_status(project) == "stale":
-            print(
+            note(
                 "The profile changes values the generator reads, so the harness plans are now "
                 "out of date. Run `harness-design-studio generate` again, then export again."
             )
         marked = [f"config/{n}.json" for n in project.placeholder_configs()]
-        print(
+        note(
             f"Profile {args.apply_profile}: {len(plan.applied)} value(s) set, {len(plan.kept)} kept. "
             "These values come from the supplied standard and still need an engineer's review."
         )
-        print(
+        note(
             f'Files marked "placeholder": true now: {", ".join(marked)}. Set it to false in a '
             "file when its values have been reviewed."
             if marked
             else 'No configuration file is marked "placeholder": true.'
         )
     text, ok = configcheck.report(project)
-    print(text)
+    rep.say(text)
+    if rep.as_json:
+        rep.put(**records.config_report(project).to_dict(), changes=changes)
     return 0 if ok else 1
 
 
@@ -520,7 +644,13 @@ def read_table_raw(path: Path) -> list[list[str]]:
     return read_table(path)  # one reader for every file: size limit, regular files only, delimiters
 
 
-def _parts(project, table: list[list[str]], args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _parts(
+    project: Project,
+    table: list[list[str]],
+    args: argparse.Namespace,
+    rep: Report,
+    sheet: str | None = None,
+) -> int:
     if not table:
         print("error: the file is empty.", file=sys.stderr)
         return 2
@@ -536,15 +666,38 @@ def _parts(project, table: list[list[str]], args: argparse.Namespace) -> int:  #
         pending=args.pending,
         rejected=args.rejected,
         default_category=args.category,
+        mass_scale=MASS_UNITS_G[args.mass_unit or "g"],
     )
+    report = parts_report(
+        args.file, args.project, project, table, mapping, plan,
+        mass_unit=args.mass_unit or "g", unit_given=args.mass_unit is not None, sheet=sheet,
+    )  # fmt: skip
+    _echo(report, rep)
     for r in plan.rows:
-        print(
+        rep.say(
             f"row {r.row_number}: {'OK ' + r.action + ' ' + r.part_id if r.ok else 'ERROR ' + r.message}"
         )
     bad = [r for r in plan.rows if not r.ok]
-    print(f"{plan.ok_count} part(s) ready, {len(bad)} row(s) with problems.")
+    rep.say(f"{plan.ok_count} part(s) ready, {len(bad)} row(s) with problems.")
+    rep.put(
+        dry_run=args.dry_run,
+        changed=False,
+        ready=plan.ok_count,
+        problems=len(bad),
+        rows=[
+            {
+                "row": r.row_number,
+                "ok": r.ok,
+                "action": r.action,
+                "part": r.part_id,
+                "message": r.message,
+            }
+            for r in plan.rows
+        ],
+        library=describe_library(project),
+    )
     if bad:
-        print("Nothing was changed.")
+        rep.say("Nothing was changed.")
         return 1
     source = args.library_source or _file_source(args.file)
     ops = [
@@ -557,17 +710,24 @@ def _parts(project, table: list[list[str]], args: argparse.Namespace) -> int:  #
             date=args.library_date,
         ),
     ]
+    written = [] if args.dry_run else _record(project, report, rep)
     if not ops:  # every row is as the library holds it already
-        print("Already up to date.")
+        rep.say("Already up to date.")
+        if written:  # the file was not recorded yet
+            History(project).execute("Record the parts import", written)
+            save_project(project, args.project)
+            _recorded(report, written, rep)
         return 0
     if args.dry_run:
-        if _would_be_blocked(project, "Import parts", ops):
+        if _would_be_blocked(project, "Import parts", ops, rep):
             return 1
-        print("Dry run: nothing was changed.")
+        rep.say("Dry run: nothing was changed.")
         return 0
-    History(project).execute("Import parts", ops)
+    History(project).execute("Import parts", [*ops, *written])
     save_project(project, args.project)
-    print(f"Imported {plan.ok_count} part(s). {describe_library(project)}.")
+    rep.say(f"Imported {plan.ok_count} part(s). {describe_library(project)}.")
+    _recorded(report, written, rep)
+    rep.put(changed=True, library=describe_library(project))
     return 0
 
 
@@ -579,7 +739,7 @@ def _file_source(path: Path) -> str:
     return f"{path.name} (sha256 {digest})"
 
 
-def _library(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _library(project, args: argparse.Namespace, rep: Report) -> int:  # type: ignore[no-untyped-def]
     ops = library_ops(
         project,
         name=args.library_name,
@@ -590,70 +750,164 @@ def _library(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyp
     if ops:
         History(project).execute("Record the parts library source", ops)
         save_project(project, args.project)
-    print(describe_library(project) + ".")
+    rep.say(describe_library(project) + ".")
+    i = project.library_info
+    rep.put(name=i.name, version=i.version, source=i.source, date=i.date, changed=bool(ops))
     return 0
 
 
-def _lengths(project, table: list[list[str]], args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _lengths(
+    project: Project,
+    table: list[list[str]],
+    args: argparse.Namespace,
+    rep: Report,
+    sheet: str | None = None,
+) -> int:
     if len(table) < 2:
         print(
             "error: the file has no rows to import (headings and at least one row).",
             file=sys.stderr,
         )
         return 2
-    plan = plan_length_import(project, table, scale=UNITS[args.unit])
+    unit = args.unit or "mm"
+    plan = plan_length_import(project, table, scale=UNITS[unit])
+    report = lengths_report(
+        args.file,
+        args.project,
+        table,
+        plan,
+        unit=unit,
+        unit_given=args.unit is not None,
+        sheet=sheet,
+    )
+    _echo(report, rep, converted=False)  # the converted values follow on the lines of their rows
+    shown = {c.row: c for c in report.converted}
     for r in plan.rows:
-        print(f"row {r.row_number}: {'OK' if r.ok else 'ERROR ' + r.message}")
+        if r.ok and r.row_number in shown:  # the value read, its unit, the metres stored (D8)
+            c = shown[r.row_number]
+            rep.say(f"row {r.row_number}: OK {c.item}: {c.text()}")
+        else:
+            rep.say(f"row {r.row_number}: {'OK' if r.ok else 'ERROR ' + r.message}")
     bad = [r for r in plan.rows if not r.ok]
-    print(f"{len(plan.rows) - len(bad)} length(s) ready, {len(bad)} row(s) with problems.")
+    rep.say(f"{len(plan.rows) - len(bad)} length(s) ready, {len(bad)} row(s) with problems.")
     if plan.hint:
-        print(plan.hint)
+        rep.say(plan.hint)
+    rep.put(
+        dry_run=args.dry_run,
+        changed=False,
+        ready=len(plan.rows) - len(bad),
+        problems=len(bad),
+        hint=plan.hint,
+        rows=[{"row": r.row_number, "ok": r.ok, "message": r.message} for r in plan.rows],
+    )
     if bad:
-        print("Nothing was changed.")
+        rep.say("Nothing was changed.")
         return 1
     if args.dry_run:
-        if _would_be_blocked(project, "Import segment lengths", plan.ops):
+        if _would_be_blocked(project, "Import segment lengths", plan.ops, rep):
             return 1
-        print("Dry run: nothing was changed.")
+        rep.say("Dry run: nothing was changed.")
         return 0
-    History(project).execute("Import segment lengths", plan.ops)
+    written = _record(project, report, rep)
+    History(project).execute("Import segment lengths", [*plan.ops, *written])
     save_project(project, args.project)
-    print("Lengths imported. Generate harnesses again to update the wire lengths.")
+    rep.say("Lengths imported. Generate harnesses again to update the wire lengths.")
+    _recorded(report, written, rep)
+    rep.put(changed=True)
     return 0
 
 
-def _build_data(project, table: list[list[str]], args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _build_data(
+    project: Project,
+    table: list[list[str]],
+    args: argparse.Namespace,
+    rep: Report,
+    sheet: str | None = None,
+) -> int:
     if len(table) < 2:
         print(
             "error: the file has no rows to import (headings and at least one row).",
             file=sys.stderr,
         )
         return 2
-    plan = plan_build_data_import(project, table)
-    print(f"{plan.label}: {len(plan.rows)} row(s) read.")
+    unit = args.unit or "mm"
+    plan = plan_build_data_import(project, table, unit=unit)
+    report = build_data_report(
+        args.file,
+        args.project,
+        table,
+        plan,
+        unit=unit,
+        unit_given=args.unit is not None,
+        sheet=sheet,
+    )
+    _echo(report, rep)
+    for w in plan.warnings:
+        rep.say(f"warning: {w}")
+    if "import" in rep.doc:
+        rep.doc["import"]["warnings"] = list(plan.warnings)
+    rep.say(f"{plan.label}: {len(plan.rows)} row(s) read.")
     for r in plan.rows:
-        print(f"row {r.row_number}: {'OK ' + r.message if r.ok else 'ERROR ' + r.message}")
+        rep.say(f"row {r.row_number}: {'OK ' + r.message if r.ok else 'ERROR ' + r.message}")
     n = plan.counts()
-    print(
+    rep.say(
         f"{n['added']} added, {n['changed']} changed, {n['unchanged']} unchanged, "
         f"{n['refused']} refused."
     )
+    rep.put(
+        dry_run=args.dry_run,
+        changed=False,
+        kind=plan.label,
+        counts=n,
+        rows=[
+            {
+                "row": r.row_number,
+                "ok": r.ok,
+                "target": r.target,
+                "action": r.action,
+                "message": r.message,
+            }
+            for r in plan.rows
+        ],
+    )
     if n["refused"]:
-        print("Nothing was changed.")
+        rep.say("Nothing was changed.")
         return 1
+    written = [] if args.dry_run else _record(project, report, rep)
     if not plan.ops and n["unchanged"]:  # every row is as the project holds it already
-        print("Already up to date.")
+        rep.say("Already up to date.")
+        if written:  # the file was not recorded yet
+            History(project).execute("Record the build data import", written)
+            save_project(project, args.project)
+            _recorded(report, written, rep)
         return 0
     if args.dry_run:
-        if _would_be_blocked(project, plan.label, plan.ops):
+        if _would_be_blocked(project, plan.label, plan.ops, rep):
             return 1
-        print("Dry run: nothing was changed.")
+        rep.say("Dry run: nothing was changed.")
         return 0
-    History(project).execute(plan.label, plan.ops)
-    if plan.ops:
+    History(project).execute(plan.label, [*plan.ops, *written])
+    if plan.ops or written:
         save_project(project, args.project)
-    print("Build data imported. Generate keeps it; the build sheets show it.")
+    rep.say("Build data imported. Generate keeps it; the build sheets show it.")
+    _recorded(report, written, rep)
+    rep.put(changed=bool(plan.ops))
     return 0
+
+
+def _device_rows(rows: list[Any]) -> list[dict[str, Any]]:
+    """The rows of a device or subsystem import as data."""
+    return [
+        {
+            "device": r.unit_id,
+            "ok": r.ok,
+            "new_id": r.new_id,
+            "connectors": r.connectors,
+            "pins": r.pins,
+            "message": r.message,
+        }
+        for r in rows
+    ]
 
 
 def _pairs(items: list[str], what: str) -> dict[str, str]:
@@ -700,16 +954,22 @@ def _signal_map_file(path: Path) -> dict[str, str]:
     }
 
 
-def _netlist(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _netlist(project, args: argparse.Namespace, rep: Report) -> int:  # type: ignore[no-untyped-def]
     from harness_design_studio.core.kicad import plan_netlist_import, read_netlist
 
+    netlist = read_netlist(args.netlist)
     plan = plan_netlist_import(
-        project, read_netlist(args.netlist), args.unit, refs=args.ref or None, prefix=args.prefix,
+        project, netlist, args.unit, refs=args.ref or None, prefix=args.prefix,
         connector_ids=_pairs(args.connector, "--connector"), parts=_pairs(args.part, "--part"),
         signal_map=_signal_map(args.signal_map), use_pin_function=args.pin_function,
+        use_pin_type_direction=args.pin_direction,
     )  # fmt: skip
+    report = netlist_report(
+        args.netlist, args.project, netlist, plan, use_pin_type_direction=args.pin_direction
+    )
+    _echo(report, rep)
     for r in plan.rows:
-        print(
+        rep.say(
             f"{r.ref or '-'}: "
             + (
                 f"OK {r.action} {r.connector_id} ({r.pins} signal pin(s))"
@@ -718,26 +978,50 @@ def _netlist(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyp
             )
         )
     for w in plan.warnings:
-        print(f"warning: {w}")
+        rep.say(f"warning: {w}")
     if plan.unmatched_signals:
-        print(
+        rep.say(
             "Signals that match no interface type (map them with --signal-map, or ignore if they are not interfaces):"
         )
         for name in sorted(plan.unmatched_signals):
-            print(f"  {name}: {', '.join(plan.unmatched_signals[name][:4])}")
+            rep.say(f"  {name}: {', '.join(plan.unmatched_signals[name][:4])}")
+    rep.put(
+        dry_run=args.dry_run,
+        changed=False,
+        rows=[
+            {
+                "ref": r.ref,
+                "ok": r.ok,
+                "action": r.action,
+                "connector": r.connector_id,
+                "pins": r.pins,
+                "message": r.message,
+            }
+            for r in plan.rows
+        ],
+        warnings=list(plan.warnings),
+        unmatched_signals={
+            n: list(plan.unmatched_signals[n]) for n in sorted(plan.unmatched_signals)
+        },
+    )
     bad = [r for r in plan.rows if not r.ok]
     if (
         args.dry_run
         and not bad
         and plan.ops
-        and _would_be_blocked(project, "Import connector pinouts from KiCad", plan.ops)
+        and _would_be_blocked(project, "Import connector pinouts from KiCad", plan.ops, rep)
     ):
         return 1
+    written = [] if args.dry_run or bad else _record(project, report, rep)
     if not bad and not plan.ops and any(r.action == "unchanged" for r in plan.rows):
-        print("Already up to date.")
+        rep.say("Already up to date.")
+        if written:  # the file was not recorded yet
+            History(project).execute("Record the KiCad import", written)
+            save_project(project, args.project)
+            _recorded(report, written, rep)
         return 0
     if args.dry_run or bad or not plan.ops:
-        print(
+        rep.say(
             "Nothing was changed."
             if bad
             else "Dry run: nothing was changed."
@@ -745,16 +1029,29 @@ def _netlist(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyp
             else "Nothing to import."
         )
         return 1 if bad or not plan.ops else 0
-    History(project).execute("Import connector pinouts from KiCad", plan.ops)
+    History(project).execute("Import connector pinouts from KiCad", [*plan.ops, *written])
     save_project(project, args.project)
-    print(
+    rep.say(
         f"Imported {plan.ok_count} connector(s). Generate harnesses again to connect interfaces to the fixed pins."
     )
+    _recorded(report, written, rep)
+    rep.put(changed=True)
     return 0
 
 
-def _pinout(project, table: list[list[str]], args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
-    from harness_design_studio.core.pinout_import import FIELDS, guess_mapping, plan_pinout_import
+def _pinout(
+    project: Project,
+    table: list[list[str]],
+    args: argparse.Namespace,
+    rep: Report,
+    sheet: str | None = None,
+) -> int:
+    from harness_design_studio.core.pinout_import import (
+        FIELDS,
+        guess_mapping,
+        plan_pinout_import,
+        unstored_columns,
+    )
 
     mapping = guess_mapping(table[0]) if table else {}
     labels = {key for key, _ in FIELDS}
@@ -770,44 +1067,127 @@ def _pinout(project, table: list[list[str]], args: argparse.Namespace) -> int:  
         subsystem=args.subsystem, parts=_pairs(args.part, "--part"), default_part=args.default_part,
         gender=args.gender, connector=args.connector, replace=args.replace,
     )  # fmt: skip
+    report = pinout_report(args.file, args.project, table, mapping, plan, sheet=sheet)
+    _echo(report, rep, already_warned=unstored_columns(table[0] if table else [], mapping))
     for r in plan.rows:
         if not r.ok:
-            print(f"row {r.row_number}: ERROR {r.message}")
+            rep.say(f"row {r.row_number}: ERROR {r.message}")
+    listed: list[dict[str, object]] = []
     for cid in [*plan.connectors, *plan.unchanged]:
         verb = "added" if cid in plan.added else "unchanged" if cid in plan.unchanged else "updated"
         n = sum(1 for r in plan.rows if r.ok and r.connector == cid)
-        print(f"{cid}: OK {verb} ({n} pin(s))")
+        rep.say(f"{cid}: OK {verb} ({n} pin(s))")
+        listed.append({"connector": cid, "action": verb, "pins": n})
     for w in plan.warnings:
-        print(f"warning: {w}")
+        rep.say(f"warning: {w}")
     if plan.unmatched_signals:
-        print(
+        rep.say(
             "Signals that match no interface type (nothing can connect to them until a type has them):"
         )
         for name in sorted(plan.unmatched_signals):
-            print(f"  {name}: {', '.join(plan.unmatched_signals[name][:4])}")
+            rep.say(f"  {name}: {', '.join(plan.unmatched_signals[name][:4])}")
+    rep.put(
+        dry_run=args.dry_run,
+        changed=False,
+        connectors=listed,
+        pins=plan.pins,
+        rows=[
+            {
+                "row": r.row_number,
+                "ok": r.ok,
+                "connector": r.connector,
+                "pin": r.pin,
+                "message": r.message,
+            }
+            for r in plan.rows
+        ],
+        warnings=list(plan.warnings),
+        unmatched_signals={
+            n: list(plan.unmatched_signals[n]) for n in sorted(plan.unmatched_signals)
+        },
+    )
     if plan.bad_count:
-        print("Nothing was changed.")
+        rep.say("Nothing was changed.")
         return 1
+    written = [] if args.dry_run else _record(project, report, rep)
     if not plan.ops:
         if plan.unchanged:  # the file says what the project already holds
-            print("Already up to date.")
+            rep.say("Already up to date.")
+            if written:  # the file was not recorded yet
+                History(project).execute("Record the pinout import", written)
+                save_project(project, args.project)
+                _recorded(report, written, rep)
             return 0
-        print("Nothing to import.")
+        rep.say("Nothing to import.")
         return 1
     if args.dry_run:
-        if _would_be_blocked(project, plan.label, plan.ops):
+        if _would_be_blocked(project, plan.label, plan.ops, rep):
             return 1
-        print("Dry run: nothing was changed.")
+        rep.say("Dry run: nothing was changed.")
         return 0
-    History(project).execute(plan.label, plan.ops)
+    History(project).execute(plan.label, [*plan.ops, *written])
     save_project(project, args.project)
     hint = " Generate harnesses again to connect interfaces to the pins."
     # the hint is only true when the project has interfaces to connect
-    print(f"Imported {len(plan.connectors)} connector(s), {plan.pins} pin(s)." + (hint if project.interfaces else ""))  # fmt: skip
+    rep.say(f"Imported {len(plan.connectors)} connector(s), {plan.pins} pin(s)." + (hint if project.interfaces else ""))  # fmt: skip
+    _recorded(report, written, rep)
+    rep.put(changed=True)
     return 0
 
 
-def _export_devices(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _imports(project, args: argparse.Namespace, rep: Report) -> int:  # type: ignore[no-untyped-def]
+    """`imports`: the records, and whether each source file is still the one that was read."""
+    checks = check_sources(project, args.project, args.source)
+    changed = sum(c.status == CHANGED for c in checks)
+    if args.json:
+        rep.put(
+            records_file=RECORDS_FILE,
+            count=len(checks),
+            sources_changed=changed,
+            imports=[
+                {
+                    **c.record.model_dump(mode="json"),
+                    "status": c.status,
+                    "current_sha256": c.current_sha256,
+                }
+                for c in checks
+            ],
+        )
+        return 1 if args.check and changed else 0
+    if not checks:
+        rep.say("No imports are recorded in this project.")
+        return 0
+    head = ("Kind", "Source", "Read", "Dropped", "Converted", "Unit", "SHA-256", "Status")
+    rows = [
+        (
+            c.record.kind,
+            c.record.source_name,
+            str(c.record.rows_read),
+            str(c.record.dropped_count),
+            str(c.record.converted_count),
+            c.record.unit or "-",
+            c.record.sha256[:12],
+            c.word,
+        )
+        for c in checks
+    ]
+    widths = [max(len(r[i]) for r in [head, *rows]) for i in range(len(head))]
+    rep.say(f"{len(checks)} import record(s) in {RECORDS_FILE}.")
+    for r in [head, *rows]:
+        rep.say("  ".join(cell.ljust(w) for cell, w in zip(r, widths, strict=True)).rstrip())
+    for c in checks:
+        if c.status == CHANGED:
+            rep.say(
+                f"{c.record.id}: the file now has SHA-256 {str(c.current_sha256)[:12]}, "
+                f"it was {c.record.sha256[:12]} when it was imported. Import it again to take "
+                "the new content."
+            )
+    if changed:
+        rep.say(f"{changed} source(s) changed since they were imported.")
+    return 1 if args.check and changed else 0
+
+
+def _export_devices(project, args: argparse.Namespace, rep: Report) -> int:  # type: ignore[no-untyped-def]
     from harness_design_studio.core import device_library as dl
 
     if missing := _missing_folder(args.file):
@@ -830,13 +1210,14 @@ def _export_devices(project, args: argparse.Namespace) -> int:  # type: ignore[n
         return 2
     data = dl.export_devices(project, args.unit)
     n = sum(len(d["connectors"]) for d in data["devices"])
-    print(f"Saved {len(args.unit)} device(s) ({n} connector(s)) to {args.file}.")
+    rep.say(f"Saved {len(args.unit)} device(s) ({n} connector(s)) to {args.file}.")
     for note in notes:
-        print(f"Note: {note}")
+        rep.say(f"Note: {note}")
+    rep.put(devices=len(args.unit), connectors=n, notes=notes)
     return 0
 
 
-def _export_subsystem(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _export_subsystem(project, args: argparse.Namespace, rep: Report) -> int:  # type: ignore[no-untyped-def]
     from harness_design_studio.core import subsystem_library as sl
 
     if args.file.exists() and not args.replace:
@@ -851,29 +1232,45 @@ def _export_subsystem(project, args: argparse.Namespace) -> int:  # type: ignore
     data = sl.export_subsystem(project, args.unit, args.name, args.description, args.notes)
     sl.write_subsystem(args.file, data)
     n_dev, n_conn, n_links = sl.subsystem_summary(data)
-    print(
+    rep.say(
         f"Saved subsystem '{data['name']}' ({n_dev} device(s), {n_conn} connector(s), "
         f"{n_links} connection(s)) to {args.file}."
     )
+    rep.put(name=data["name"], devices=n_dev, connectors=n_conn, connections=n_links)
     return 0
 
 
-def _import_subsystem(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _import_subsystem(project, args: argparse.Namespace, rep: Report) -> int:  # type: ignore[no-untyped-def]
     from harness_design_studio.core import subsystem_library as sl
 
     data = sl.read_subsystem(args.file)
     if args.show:
         n_dev, n_conn, n_links = sl.subsystem_summary(data)
-        print(f"{data['name']}: {n_dev} device(s), {n_conn} connector(s), {n_links} connection(s)")
+        rep.say(
+            f"{data['name']}: {n_dev} device(s), {n_conn} connector(s), {n_links} connection(s)"
+        )
         if data.get("description"):
-            print(data["description"])
+            rep.say(data["description"])
         for rec in data["devices"]:
             unit = rec.get("unit", {})
-            print(f"{unit.get('id', '')}: {unit.get('name', '')}")
+            rep.say(f"{unit.get('id', '')}: {unit.get('name', '')}")
+        rep.put(
+            name=data["name"],
+            description=data.get("description", ""),
+            devices=n_dev,
+            connectors=n_conn,
+            connections=n_links,
+            device_list=[
+                {"id": r.get("unit", {}).get("id", ""), "name": r.get("unit", {}).get("name", "")}
+                for r in data["devices"]
+            ],
+        )
         return 0
     plan = sl.plan_subsystem_import(project, data)
+    report = library_file_report("subsystem", args.file, args.project, len(plan.rows), plan.notes)
+    _echo(report, rep)
     for r in plan.rows:
-        print(
+        rep.say(
             f"{r.unit_id}: "
             + (
                 f"OK as {r.new_id} ({r.connectors} connector(s), {r.pins} pin(s))"
@@ -882,34 +1279,51 @@ def _import_subsystem(project, args: argparse.Namespace) -> int:  # type: ignore
             )  # fmt: skip
         )
     for note in plan.notes:
-        print(f"note: {note}")
+        rep.say(f"note: {note}")
+    rep.put(
+        dry_run=args.dry_run,
+        changed=False,
+        name=plan.name,
+        connections=plan.connections,
+        rows=_device_rows(plan.rows),
+        notes=list(plan.notes),
+    )
     if not plan.ok:
         print(f"error: {plan.problem}", file=sys.stderr)
-        print("Nothing was changed.")
+        rep.say("Nothing was changed.")
         return 1
-    print(f"{plan.connections} connection(s) between the new devices.")
-    if args.dry_run and _would_be_blocked(project, "Add a subsystem from a library file", plan.ops):
+    rep.say(f"{plan.connections} connection(s) between the new devices.")
+    if args.dry_run and _would_be_blocked(
+        project, "Add a subsystem from a library file", plan.ops, rep
+    ):
         return 1
     if args.dry_run:
-        print("Dry run: nothing was changed.")
+        rep.say("Dry run: nothing was changed.")
         return 0
-    History(project).execute("Add a subsystem from a library file", plan.ops)
+    written = _record(project, report, rep)
+    History(project).execute("Add a subsystem from a library file", [*plan.ops, *written])
     save_project(project, args.project)
-    print(f"Added subsystem '{plan.name}': {plan.device_count} device(s), {plan.connections} connection(s).")  # fmt: skip
+    rep.say(f"Added subsystem '{plan.name}': {plan.device_count} device(s), {plan.connections} connection(s).")  # fmt: skip
+    _recorded(report, written, rep)
+    rep.put(changed=True)
     return 0
 
 
-def _import_devices(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _import_devices(project, args: argparse.Namespace, rep: Report) -> int:  # type: ignore[no-untyped-def]
     from harness_design_studio.core import device_library as dl
 
     data = dl.read_library(args.file)
     if args.list:
-        for uid, name in dl.device_names(data):
-            print(f"{uid}: {name}")
+        names = dl.device_names(data)
+        for uid, name in names:
+            rep.say(f"{uid}: {name}")
+        rep.put(devices=[{"id": uid, "name": name} for uid, name in names])
         return 0
     plan = dl.plan_device_import(project, data, args.unit or None)
+    report = library_file_report("devices", args.file, args.project, len(plan.rows), plan.notes)
+    _echo(report, rep)
     for r in plan.rows:
-        print(
+        rep.say(
             f"{r.unit_id}: "
             + (
                 f"OK as {r.new_id} ({r.connectors} connector(s), {r.pins} pin(s))"
@@ -918,12 +1332,18 @@ def _import_devices(project, args: argparse.Namespace) -> int:  # type: ignore[n
             )
         )
     for note in plan.notes:
-        print(f"note: {note}")
+        rep.say(f"note: {note}")
+    rep.put(
+        dry_run=args.dry_run,
+        changed=False,
+        rows=_device_rows(plan.rows),
+        notes=list(plan.notes),
+    )
     bad = [r for r in plan.rows if not r.ok]
-    if args.dry_run and not bad and plan.ops and _would_be_blocked(project, "Add devices from a library file", plan.ops):  # fmt: skip
+    if args.dry_run and not bad and plan.ops and _would_be_blocked(project, "Add devices from a library file", plan.ops, rep):  # fmt: skip
         return 1
     if args.dry_run or bad or not plan.ops:
-        print(
+        rep.say(
             "Nothing was changed."
             if bad
             else "Dry run: nothing was changed."
@@ -931,13 +1351,16 @@ def _import_devices(project, args: argparse.Namespace) -> int:  # type: ignore[n
             else "Nothing to import."
         )
         return 1 if bad or not plan.ops else 0
-    History(project).execute("Add devices from a library file", plan.ops)
+    written = _record(project, report, rep)
+    History(project).execute("Add devices from a library file", [*plan.ops, *written])
     save_project(project, args.project)
-    print(f"Added {plan.ok_count} device(s). Generate harnesses again to connect interfaces to them.")  # fmt: skip
+    rep.say(f"Added {plan.ok_count} device(s). Generate harnesses again to connect interfaces to them.")  # fmt: skip
+    _recorded(report, written, rep)
+    rep.put(changed=True)
     return 0
 
 
-def _export_pinout(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+def _export_pinout(project, args: argparse.Namespace, rep: Report) -> int:  # type: ignore[no-untyped-def]
     from harness_design_studio.core import devices
     from harness_design_studio.core.outputs import exports
     from harness_design_studio.core.outputs.stamp import csv_bytes, stamp_of
@@ -954,8 +1377,17 @@ def _export_pinout(project, args: argparse.Namespace) -> int:  # type: ignore[no
         )
         return 2
     stamp = stamp_of(project)
+    if rep.as_json:
+        rep.put(
+            device=args.unit,
+            pin_rows=len(table) - 1,
+            columns=list(table[0]),
+            rows=[dict(zip(table[0], row, strict=True)) for row in table[1:]],
+            written=args.output is not None,
+        )
     if args.output is None:
-        sys.stdout.write(csv_bytes(table, stamp).decode("utf-8"))
+        if not rep.as_json:
+            sys.stdout.write(csv_bytes(table, stamp).decode("utf-8"))
         return 0
     if args.output.suffix.lower() == ".xlsx":
         data = exports.xlsx_bytes({"Pinout": table}, stamp)
@@ -965,11 +1397,13 @@ def _export_pinout(project, args: argparse.Namespace) -> int:  # type: ignore[no
         data = csv_bytes(table, stamp)
     if missing := _missing_folder(args.output):
         print(missing, file=sys.stderr)
+        rep.doc.clear()  # nothing was written, so there is no result to print
         return 2
     try:
         args.output.write_bytes(data)
     except OSError as exc:
         print(f"error: the file could not be written ({exc.strerror}).", file=sys.stderr)
+        rep.doc.clear()
         return 2
-    print(f"Wrote {args.output} ({len(table) - 1} pin row(s) of {args.unit}).")
+    rep.say(f"Wrote {args.output} ({len(table) - 1} pin row(s) of {args.unit}).")
     return 0

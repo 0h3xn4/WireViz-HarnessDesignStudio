@@ -7,9 +7,13 @@ generator and the design rules call (`sizing.wire_current_limit`, `sizing.voltag
 `lengths.wire_length`), so a derivation cannot disagree with the number it explains. The steps are
 for the reader and are formatted, never fed back.
 
-Five derivations exist so far: for a wire, its length, the derated current limit, the voltage drop
-and its share of the mass; for a harness, its mass; for a part, its line of the bill of materials.
-Readiness and the limits of the other rules follow.
+The first derivations are in this module: for a wire, its length, the derated current limit, the
+voltage drop and its share of the mass; for a harness, its mass; for a part, its line of the bill of
+materials; for an interface at a connector, the contact current. The rest (S1, D-191, D-193) is in
+`derive_build` (readiness, test limits, labels, colours, shields), `derive_layout` (pin allocation,
+segmentation, the choice of a connector) and `derive_rules` (the limit or the comparison of each design
+rule); `derive_kinds` lists every kind of derivation with the page of `docs/models/` that describes it.
+They are reached through `explain_object`, `explain_harness`, `explain_wire` and `explain_finding`.
 """
 
 import math
@@ -19,7 +23,7 @@ from typing import Any
 from harness_design_studio.core import settings
 from harness_design_studio.core.assumptions import describe
 from harness_design_studio.core.drc.base import cfg, number
-from harness_design_studio.core.drc.rules import contact_rating, contact_rating_key
+from harness_design_studio.core.drc.rules import RULES, contact_rating, contact_rating_key
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.generate import bundle
 from harness_design_studio.core.generate.bundle import bundle_size
@@ -52,8 +56,9 @@ class Input:
 class Step:
     label: str
     expression: str  # the numbers put into the equation, as text
-    value: float
+    value: float  # unused (0) when the step gives a text
     unit: str
+    text: str = ""  # the result of a step that gives a name (a pin, a group, a label), not a number
 
 
 @dataclass(frozen=True)
@@ -82,9 +87,16 @@ class Derivation:
     assumptions: tuple[str, ...] = ()  # IDs of `core.assumptions`
     reference: str = ""
     missing: tuple[str, ...] = field(default_factory=tuple)  # what is not set yet, by name
+    text: str = ""  # the result when it is a text, not a number: a label, a colour, a pin, a group
+
+    @property
+    def known(self) -> bool:
+        """True when the derivation has a result: a number or a text. False while an input is
+        missing (see `missing`)."""
+        return self.value is not None or bool(self.text)
 
     def to_dict(self) -> dict[str, Any]:
-        return {
+        out: dict[str, Any] = {
             "id": self.id,
             "subject": self.subject,
             "quantity": self.quantity,
@@ -95,10 +107,7 @@ class Derivation:
                 {"name": i.name, "value": i.value, "unit": i.unit, "source": i.source}
                 for i in self.inputs
             ],
-            "steps": [
-                {"label": s.label, "expression": s.expression, "value": s.value, "unit": s.unit}
-                for s in self.steps
-            ],
+            "steps": [_step_dict(s) for s in self.steps],
             "check": None
             if self.check is None
             else {
@@ -116,10 +125,40 @@ class Derivation:
             "reference": self.reference,
             "missing": list(self.missing),
         }
+        if self.text:  # only a derivation whose result is a text has the key: the rest is as before
+            out["text"] = self.text
+        return out
 
 
 def _g(x: float) -> str:
     return f"{x:g}"
+
+
+def origin_text(project: Project, file: str, key: str) -> str:
+    """Where the value of a setting comes from, in words: the project, the tool's own default, or
+    nothing (see `settings.effective`)."""
+    return {
+        "project": "set by the project",
+        "default": "not set in the project: the tool's own default",
+        "unset": "not set",
+    }[settings.effective(project, file, key).origin]
+
+
+def text_step(label: str, expression: str, text: str, unit: str = "") -> Step:
+    """A step whose result is a text (a pin, a group, a label, a name)."""
+    return Step(label, expression, 0.0, unit, text)
+
+
+def _step_dict(s: Step) -> dict[str, Any]:
+    if s.text:  # a step with a text has the key `text` and no number; the others are as before
+        return {
+            "label": s.label,
+            "expression": s.expression,
+            "value": None,
+            "unit": s.unit,
+            "text": s.text,
+        }
+    return {"label": s.label, "expression": s.expression, "value": s.value, "unit": s.unit}
 
 
 def _unit(u: str) -> str:
@@ -129,7 +168,10 @@ def _unit(u: str) -> str:
 def render(d: Derivation) -> str:
     """The derivation as text for a person: the number first, then how it was made."""
     out: list[str] = []
-    head = d.quantity if d.value is None else f"{d.quantity}: {_g(d.value)}{_unit(d.unit)}"
+    if d.value is not None:
+        head = f"{d.quantity}: {_g(d.value)}{_unit(d.unit)}"
+    else:
+        head = f"{d.quantity}: {d.text}" if d.text else d.quantity
     out.append(f"{d.subject}. {head}")
     out.append(f"  Equation: {d.equation}")
     if d.missing:
@@ -145,7 +187,10 @@ def render(d: Derivation) -> str:
             out.append(f"    {i.name} = {value}   [{i.source}]")
     if d.steps:
         out.append("  Steps:")
-        out.extend(f"    {s.label}: {s.expression} = {_g(s.value)}{_unit(s.unit)}" for s in d.steps)
+        out.extend(
+            f"    {s.label}: {s.expression} = {s.text or _g(s.value)}{_unit(s.unit)}"
+            for s in d.steps
+        )
     if d.check is not None:
         out.append(f"  Check: {d.check.text}")
     if d.assumptions:
@@ -813,18 +858,29 @@ def explain_part(project: Project, part_id: str) -> list[Derivation]:
     harnesses = [project.harnesses[i] for i in sorted(project.harnesses)]
     units = sorted({c.unit for c in bom_contributions(project, harnesses) if c.part_id == part_id})
     if not units:
-        raise EditError(f"'{part_id}' is not a wire, a harness or a part used in a harness.")
+        raise EditError(
+            f"'{part_id}' is not a wire, a harness or a part used in a harness, nor an interface, "
+            "a connector, a pin, a shield group or a test."
+        )
     return [part_bom_derivation(project, part_id, u) for u in units]
 
 
-# The rules whose finding has a calculation behind it, and what the object of the finding is.
-EXPLAINABLE_RULES = frozenset({"current-over-wire", "voltage-drop", "current-over-contact"})
+# Every design rule has an explanation: the limit it checked and how it was derived, or, for a rule
+# that is a yes/no check, what it compares (`derive_rules`). The three rules below have a derivation
+# of their own kind (D-191, step 1); the others are `rule-limit` and `rule-check`.
+# the rules of the Problems panel that are not in the registry `drc.RULES` (`core/checks.py`), and the
+# independent verification (`drc.__init__`)
+LOGICAL_RULES = ("cross-strap", "no-connector", "unconfirmed", "isolated")
+OTHER_RULES = ("verify-mismatch", *LOGICAL_RULES)
+EXPLAINABLE_RULES = frozenset({r.id for r in RULES} | set(OTHER_RULES))
 
 
 def explain_finding(project: Project, rule_id: str, object_id: str) -> list[Derivation]:
     """The calculation behind one finding: the derivation of the limit the rule checked, for the
     object the finding names (a wire for `current-over-wire` and `voltage-drop`, INTERFACE.CONNECTOR
-    for `current-over-contact`). Another rule, or an object that is gone, gives none."""
+    for `current-over-contact`, and for the other rules what `derive_rules` says for that object).
+    A rule that is a yes/no check says so and says what it compares. An unknown rule, or an object
+    that is gone, gives none."""
     try:
         if rule_id in ("current-over-wire", "voltage-drop"):
             h, w = find_wire(project, object_id)
@@ -835,29 +891,60 @@ def explain_finding(project: Project, rule_id: str, object_id: str) -> list[Deri
             left, _, right = object_id.partition(".")
             if right:
                 return [contact_current_derivation(project, left, right)]
+            return []
     except EditError:
         return []
-    return []
+    from harness_design_studio.core import derive_rules
+
+    return derive_rules.explain_rule(project, rule_id, object_id)
 
 
 def explain_harness(project: Project, harness_id: str) -> list[Derivation]:
-    """Every derivation that exists for the harness."""
+    """The numbers of the harness: its mass. `explain_harness_all` adds what the build workbook and
+    the generator decided about it."""
     h = project.harnesses.get(harness_id)
     if h is None:
         raise EditError(f"Harness '{harness_id}' does not exist.")
     return [harness_mass_derivation(project, h)]
 
 
+def explain_harness_all(project: Project, harness_id: str) -> list[Derivation]:
+    """Every derivation that exists for the harness: its mass, whether it is ready to build and
+    each check behind that, its test limits, why it is a harness of its own (segmentation), its
+    shield groups and the choice and label of each of its connectors."""
+    from harness_design_studio.core import derive_build, derive_layout
+
+    h = project.harnesses.get(harness_id)
+    if h is None:
+        raise EditError(f"Harness '{harness_id}' does not exist.")
+    return [
+        *explain_harness(project, harness_id),
+        *derive_build.harness_derivations(project, h),
+        *derive_layout.harness_derivations(project, h),
+    ]
+
+
 def explain_object(project: Project, object_id: str) -> list[Derivation]:
-    """A harness, a wire, a part used in a harness, or the contacts of an interface at a connector
-    (INTERFACE.CONNECTOR, the object of a `current-over-contact` finding), by its ID."""
+    """A harness, a wire, an interface, a test (HARNESS.T001), a connector, a pin (CONNECTOR.PIN), a
+    part used in a harness, or the contacts of an interface at a connector (INTERFACE.CONNECTOR, the
+    object of a `current-over-contact` finding), by its ID."""
+    from harness_design_studio.core import derive_build, derive_layout
+
     if object_id in project.harnesses:
-        return explain_harness(project, object_id)
+        return explain_harness_all(project, object_id)
     if any(w.id == object_id for h in project.harnesses.values() for w in h.wires):
-        return explain_wire(project, object_id)
+        return explain_wire_all(project, object_id)
+    if object_id in project.interfaces:
+        return derive_layout.explain_interface(project, object_id)
     left, _, right = object_id.partition(".")
     if right and left in project.interfaces and right in project.connectors:
         return [contact_current_derivation(project, left, right)]
+    found = derive_build.explain_test(project, object_id)
+    if found:
+        return found
+    found = derive_layout.explain_connector_or_pin(project, object_id)
+    if found:
+        return found
     return explain_part(project, object_id)
 
 
@@ -982,13 +1069,14 @@ def wire_override_derivation(project: Project, h: Harness, w: Wire) -> Derivatio
         "wire-override", f"Wire {w.id}", "Overridden by the engineer", None, "",
         "the value set by the engineer is used in place of the value the design gives",
         tuple(inputs), (), check, (), ref,
+        text="; ".join(f"{_OVERRIDE_TITLES[f][0]} {getattr(w, f)}" for f in sorted(w.overrides)),
     )  # fmt: skip
 
 
 def explain_wire(project: Project, wire_id: str) -> list[Derivation]:
-    """Every derivation that exists for the wire, in the order a reader asks: how long is it, how
-    much current may it carry, then how much voltage does it drop. A wire with overrides starts with
-    what was set by the engineer."""
+    """The numbers of the wire, in the order a reader asks: how long is it, how much current may it
+    carry, then how much voltage does it drop, and its mass. A wire with overrides starts with what
+    was set by the engineer. `explain_wire_all` adds its label, its colour and its shield group."""
     h, w = find_wire(project, wire_id)
     override = wire_override_derivation(project, h, w)
     return [
@@ -997,4 +1085,17 @@ def explain_wire(project: Project, wire_id: str) -> list[Derivation]:
         wire_current_limit_derivation(project, h, w),
         wire_voltage_drop_derivation(project, h, w),
         wire_mass_derivation(project, h, w),
+    ]
+
+
+def explain_wire_all(project: Project, wire_id: str) -> list[Derivation]:
+    """Every derivation that exists for the wire: the four numbers of `explain_wire`, then its label,
+    its colour, its shield group and the pins its ends use."""
+    from harness_design_studio.core import derive_build, derive_layout
+
+    h, w = find_wire(project, wire_id)
+    return [
+        *explain_wire(project, wire_id),
+        *derive_build.wire_derivations(project, h, w),
+        *derive_layout.wire_derivations(project, h, w),
     ]

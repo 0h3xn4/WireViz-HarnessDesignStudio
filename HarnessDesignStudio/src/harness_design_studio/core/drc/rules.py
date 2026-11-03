@@ -139,12 +139,18 @@ def _floating_pins(project: Project) -> Iterator[Hit]:
                     )
 
 
+def wires_on_pins(h: Harness) -> dict[tuple[str, str], list[str]]:
+    """The wires attached to each (connector, pin) of the harness, in the order of the wires."""
+    on_pin: dict[tuple[str, str], list[str]] = {}
+    for w in h.wires:
+        on_pin.setdefault((w.from_connector, w.from_pin), []).append(w.id)
+        on_pin.setdefault((w.to_connector, w.to_pin), []).append(w.id)
+    return on_pin
+
+
 def _pin_shared(project: Project) -> Iterator[Hit]:
     for h in sorted(project.harnesses.values(), key=lambda x: x.id):
-        on_pin: dict[tuple[str, str], list[str]] = {}
-        for w in h.wires:
-            on_pin.setdefault((w.from_connector, w.from_pin), []).append(w.id)
-            on_pin.setdefault((w.to_connector, w.to_pin), []).append(w.id)
+        on_pin = wires_on_pins(h)
         for (cid, pid), ids in sorted(on_pin.items()):
             if len(ids) > 1:
                 yield Hit(

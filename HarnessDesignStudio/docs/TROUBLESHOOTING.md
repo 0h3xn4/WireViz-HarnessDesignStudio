@@ -486,7 +486,10 @@ harness-design-studio import-lengths imp bad-lengths.csv --dry-run
 ```
 
 ```
-row 2: OK
+Read 4 row(s) of segment lengths from bad-lengths.csv (sha256 8dc6963f4510).
+Columns read: harness -> harness, segment -> segment, length -> length
+Unit: length in mm (assumed; --unit says another).
+row 2: OK W001 / W001-L1: 850 mm = 0.85 m
 row 3: ERROR Harness 'W001' has no segment 'W001-L9'
 row 4: ERROR Harness 'W007' does not exist
 row 5: ERROR '-5' is not a length (digits with a decimal point or comma)
@@ -494,7 +497,7 @@ row 5: ERROR '-5' is not a length (digits with a decimal point or comma)
 Nothing was changed.
 ```
 
-Row numbers count the header as row 1. A row with two problems shows only the first one (row 4 has a missing harness and a length `abc`; with the harness right, `abc` is reported as `'abc' is not a length (digits with a decimal point or comma)`). Use the harness and segment IDs from your project (the drawing and `wirelist.csv` show them; segments are called `W001-L1` and so on). A length must be digits, with a decimal point or comma, no minus sign, and at most 10000 m. The default unit is millimetres; add `--unit m` or `--unit cm`. If **every** row fails on the harness name, the columns are in the wrong order:
+Row numbers count the header as row 1. A row with two problems shows only the first one (row 4 has a missing harness and a length `abc`; with the harness right, `abc` is reported as `'abc' is not a length (digits with a decimal point or comma)`). Use the harness and segment IDs from your project (the drawing and `wirelist.csv` show them; segments are called `W001-L1` and so on). A length must be digits, with a decimal point or comma, no minus sign, and at most 10000 m. The default unit is millimetres (the line `Unit: length in mm (assumed...)` and `850 mm = 0.85 m` on every accepted row show what was used); add `--unit m`, `--unit cm`, `--unit in` or `--unit ft` for a file in another unit. If **every** row fails on the harness name, the columns are in the wrong order:
 
 ```
 row 2: ERROR Harness 'W001-L1' does not exist

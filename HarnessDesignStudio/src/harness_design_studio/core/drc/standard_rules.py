@@ -416,10 +416,9 @@ def _shield_parts(project: Project) -> Iterator[Hit]:
             yield Hit(f"shield-parts.{hid}.{pid}", f"{pid} in {hid} {what}")
 
 
-def _emc_class_split(project: Project) -> Iterator[Hit]:
-    """Wires of one EMC class between the same two units belong in one bundle (20-07C 4.2.13.1 b)."""
-    if cfg(project, "emc").get("same_class_one_bundle") is not True:
-        return
+def emc_class_bundles(project: Project) -> dict[tuple[str, str, str], set[str]]:
+    """The harnesses that carry interfaces of one EMC class between the same two units: (class,
+    unit, unit) -> harness IDs. One class between two units belongs in one bundle (20-07C 4.2.13.1 b)."""
     carried: dict[tuple[str, str, str], set[str]] = {}
     for h in project.harnesses.values():
         # a harness drawn by hand may carry interfaces only through its wires
@@ -430,6 +429,14 @@ def _emc_class_split(project: Project) -> Iterator[Hit]:
                 continue
             a, b = sorted(e.unit_id for e in i.endpoints)
             carried.setdefault((t.emc_class, a, b), set()).add(h.id)
+    return carried
+
+
+def _emc_class_split(project: Project) -> Iterator[Hit]:
+    """Wires of one EMC class between the same two units belong in one bundle (20-07C 4.2.13.1 b)."""
+    if cfg(project, "emc").get("same_class_one_bundle") is not True:
+        return
+    carried = emc_class_bundles(project)
     for (cls, a, b), ids in sorted(carried.items()):
         if len(ids) > 1:
             yield Hit(

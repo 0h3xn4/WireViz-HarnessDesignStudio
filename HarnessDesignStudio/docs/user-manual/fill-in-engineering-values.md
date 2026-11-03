@@ -90,13 +90,17 @@ harness-design-studio config wheel-link --ampacity-csv amp.csv
 ```
 
 ```
+Read 2 row(s) of ampacity table from amp.csv (sha256 <hash>).
+Columns read: gauge -> gauge (AWG), amperes -> current (A)
+Unit: current in A (assumed).
 Loaded 2 gauges into config/derating.json. Review it, then set "placeholder": false when the file is complete.
+Import record: ampacity:amp.csv written to imports/records.json.
 Engineering values: 1 of 17 set.
 - MISSING config/derating.json bundle_derating: factor (above 0, at most 1) for wires in a bundle. Needed for: wire sizing, wire current check.
 ...
 ```
 
-(The numbers 3 and 5 are only an example of the format. They are not engineering data.)
+(The numbers 3 and 5 are only an example of the format. They are not engineering data.) The import record keeps the name and the SHA-256 of the file, so that `harness-design-studio imports wheel-link` shows later whether the table you loaded has been edited since ([what an import records](import-data.md#what-an-import-records)); the table does not say for which temperature, bundle or insulation the amperes are, so write that where your team keeps the source of the table.
 
 ## 3. Edit the other values
 

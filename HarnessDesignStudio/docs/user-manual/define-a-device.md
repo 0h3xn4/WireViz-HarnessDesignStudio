@@ -85,7 +85,7 @@ The **Direction** and **Class** columns come from the interface type of the pin'
 
 ## Take the pinout from a spreadsheet
 
-Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination*, *Function*, *Cable contact* (or *Contact part*: a library part of the category *contact*), *Direction* (since 1.9) and, if you have them, *Part* and *Gender*. A *Function* column is stored as the pin's function when the table also has a *Signal* (or *Net*) column; a table with only a *Function* column reads it as the signal, as before 1.4.0. *Direction* takes *in*, *out* or *bidirectional* (also *input*, *output*, *I/O*); an empty cell, *n/a* or *passive* leaves the direction unset, and any other word stops the import and names the row. Columns the project cannot store (a description, remarks, a voltage) are named in a warning and left out.
+Save the table as CSV or XLSX, one pin per row. The columns are found by their headings: *Connector*, *Pin*, *Signal*, *Mode* (or *Fixed* with yes and no), *Contact size*, *Termination*, *Function*, *Cable contact* (or *Contact part*: a library part of the category *contact*), *Direction* (since 1.9) and, if you have them, *Part* and *Gender*. A *Function* column is stored as the pin's function when the table also has a *Signal* (or *Net*) column; a table with only a *Function* column reads it as the signal, as before 1.4.0. *Direction* takes *in*, *out* or *bidirectional* (also *input*, *output*, *I/O*); an empty cell, *n/a* or *passive* leaves the direction unset, and any other word stops the import and names the row. Columns the project cannot store (a description, remarks, a voltage) are named in a warning and left out. The import says which columns it read, and records the file (name, SHA-256, rows, columns) in the project: [what an import records](import-data.md#what-an-import-records).
 
 In the app: **File > Import > Import device pinout…**, pick the file, choose the device (an existing device, or **New device…** with a name), the library part for the new connectors, and read the preview. A row with a problem is listed with its reason, and then nothing is imported. **Import** is one undo step, *Import pinout (1 connector, 6 pins)*.
 
@@ -106,6 +106,8 @@ harness-design-studio import-pinout wheel-link gyro-pinout.csv --device GYRO1 --
 ```
 
 ```
+Read 6 row(s) of device pinout from gyro-pinout.csv (sha256 4f50a1fd0fca).
+Columns read: Connector -> connector, Pin -> pin, Signal -> signal
 GYRO1-J01: OK added (6 pin(s))
 warning: Column 'Remarks' is not imported: a pin has no field for it.
 Signals that match no interface type (nothing can connect to them until a type has them):
@@ -116,6 +118,8 @@ Dry run: nothing was changed.
 Run it again without `--dry-run` to apply. `--part J1=PART` gives a part per connector, `--column pin=Contact` says which column is which when the headings are not recognised, and `--replace` drops the pins of an existing connector that the table does not name. A bad row stops the whole import. Here the same command without `--default-part` names the problem on every row of the connector, and nothing is changed:
 
 ```
+Read 6 row(s) of device pinout from gyro-pinout.csv (sha256 4f50a1fd0fca).
+Columns read: Connector -> connector, Pin -> pin, Signal -> signal
 row 2: ERROR No part for the new connector J01: give one for it (--part J01=PART) or one for all
 row 3: ERROR No part for the new connector J01: give one for it (--part J01=PART) or one for all
 row 4: ERROR No part for the new connector J01: give one for it (--part J01=PART) or one for all

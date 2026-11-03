@@ -437,7 +437,7 @@ def test_cli_journal_prints_filters_and_gives_json(folder, clock, capsys):
     only = capsys.readouterr().out
     assert only.count("\n") == 1 and "0.7" in only
     assert main(["journal", str(folder), "--object", "derating", "--json"]) == 0
-    data = json.loads(capsys.readouterr().out)
+    data = json.loads(capsys.readouterr().out)["entries"]
     assert [d["object"] for d in data] == [
         "config:derating.temperature_derating",
         "config:derating.bundle_derating",

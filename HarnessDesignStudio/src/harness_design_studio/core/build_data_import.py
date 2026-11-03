@@ -17,8 +17,13 @@ Every data row gets a result with its reason; the rows are planned with `build_d
 other on a scratch copy of the project, so a later row sees an earlier one. An empty cell leaves
 the value as it is (it never clears). Nothing is invented and nothing is written here: the ops are
 one undo step for the caller, who decides what a refused row means.
+
+The lengths (strip lengths, accessory lengths) are stored in millimetres and read as millimetres
+unless `unit` says another (`LENGTH_UNITS_M`, D-193); every value that is converted, and every
+decimal comma that is read as a decimal point, is listed in `BuildDataPlan.conversions`.
 """
 
+import re
 from collections.abc import Callable, Mapping
 from dataclasses import dataclass, field
 
@@ -26,6 +31,8 @@ from . import build_data
 from .commands import Op, Put, apply_ops
 from .edit import EditError, clone_with
 from .errors import HarnessError
+from .generate.lengths import LENGTH_UNITS_M
+from .import_record import number_text
 from .imports import ImportError_
 from .model import Harness, Project
 
@@ -97,6 +104,11 @@ class BuildDataPlan:
     kind: str
     rows: list[BuildRow] = field(default_factory=list)
     ops: list[Op] = field(default_factory=list)
+    mapping: dict[str, int] = field(default_factory=dict)  # field -> column of the file
+    warnings: list[str] = field(default_factory=list)
+    # (row, field, the cell as written, unit it was read in, the value in millimetres) for every
+    # length cell that was converted or whose decimal comma was read as a decimal point
+    conversions: list[tuple[int, str, str, str, str]] = field(default_factory=list)
 
     @property
     def bad_count(self) -> int:
@@ -144,21 +156,64 @@ def detect_kind(header: list[str]) -> tuple[str, dict[str, int]]:
     )
 
 
-def plan_build_data_import(project: Project, table: Table) -> BuildDataPlan:
+_LENGTH_FIELDS = frozenset({"strip_a_mm", "strip_b_mm", "length_mm"})
+_HEADING_UNIT = re.compile(r"\((mm|cm|m|in|ft)\)", re.IGNORECASE)
+
+
+def _length_cell(text: str, unit: str) -> tuple[str, str | None]:
+    """The text of a length cell as `build_data` reads it (millimetres), and the millimetres it
+    stands for when the cell was converted or read with a decimal comma (else None). A cell that
+    is not a number is returned as it is: the reader refuses it with its own message."""
+    plain = text.replace(",", ".")
+    try:
+        number = float(plain)
+    except ValueError:
+        return text, None
+    if unit == "mm":
+        return text, (number_text(number) if "," in text else None)
+    mm = number_text(round(number * LENGTH_UNITS_M[unit] / LENGTH_UNITS_M["mm"], 6))
+    return mm, mm
+
+
+def plan_build_data_import(project: Project, table: Table, *, unit: str = "mm") -> BuildDataPlan:
     """One result per data row of `table` (the first row is the header) and the ops of the rows
-    that are accepted. The kind comes from the headings (`detect_kind`)."""
-    kind, mapping = detect_kind(table[0] if table else [])
-    plan = BuildDataPlan(kind)
+    that are accepted. The kind comes from the headings (`detect_kind`). `unit` is the unit of the
+    length columns (a key of `LENGTH_UNITS_M`; the values are stored in millimetres)."""
+    if unit not in LENGTH_UNITS_M:
+        raise ImportError_(f"The unit '{unit}' is not one of {', '.join(LENGTH_UNITS_M)}.")
+    header = table[0] if table else []
+    kind, mapping = detect_kind(header)
+    plan = BuildDataPlan(kind, mapping=mapping)
+    for key in sorted(_LENGTH_FIELDS & set(mapping)):
+        said = _HEADING_UNIT.search(header[mapping[key]])
+        if said and said.group(1).lower() != unit:
+            plan.warnings.append(
+                f"The heading '{header[mapping[key]].strip()}' says {said.group(1).lower()} but "
+                f"the lengths are read in {unit}."
+            )
     work = clone_with(project, [])  # rows are planned one after the other on a copy
     read = _READERS[kind](project)
     all_ops: list[Op] = []
     for n, row in enumerate(table[1:], start=2):
         if not any(c.strip() for c in row):
             continue
+        seen: dict[str, tuple[str, str | None]] = {}
 
-        def cell(key: str, row: list[str] = row) -> str:
+        def cell(
+            key: str,
+            row: list[str] = row,
+            n: int = n,
+            seen: dict[str, tuple[str, str | None]] = seen,
+        ) -> str:
             i = mapping.get(key)
-            return row[i].strip() if i is not None and i < len(row) else ""
+            text = row[i].strip() if i is not None and i < len(row) else ""
+            if key in _LENGTH_FIELDS and text:
+                if key not in seen:
+                    seen[key] = _length_cell(text, unit)
+                    if seen[key][1] is not None:
+                        plan.conversions.append((n, key, text, unit, seen[key][1] or ""))
+                return seen[key][0]
+            return text
 
         try:
             target, action, message, ops = read(work, cell)

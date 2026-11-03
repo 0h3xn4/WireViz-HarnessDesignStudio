@@ -27,7 +27,7 @@ The result is `2 added, 0 changed, ...` and `2 interfaces and 6 wires checked: 0
 
     harness-design-studio import-netlist DIR FILE --device OBC [--ref J7 ...] [--prefix J]
                            [--connector J1=OBC-J01] [--part J1=PART-ID]
-                           [--signal-map NET=SIGNAL | FILE] [--pin-function] [--dry-run]
+                           [--signal-map NET=SIGNAL | FILE] [--pin-function] [--pin-direction] [--dry-run]
 
 - Which components are connectors: those whose reference starts with `--prefix` (default `J`), or the `--connector` list. A symbol field `HarnessConnector` sets the connector ID, `HarnessPart` the part.
 - Net names are cleaned (`/io/TX+` becomes `TX+`); unnamed nets (`Net-(J1-Pad9)`) and `unconnected-...` give a pin with no signal.
@@ -38,6 +38,8 @@ The result is `2 added, 0 changed, ...` and `2 interfaces and 6 wires checked: 0
 - A pin that is **locked** (`locked: true`) is not changed: it keeps its signal and the import prints a warning when the netlist says something else. A pin whose net has no name loses its signal and its interface (the next generation allocates again).
 - `--dry-run` shows the rows and changes nothing; it also says when the import would be blocked, for example by a released harness (exit 1, as the real run).
 - The result is one undoable transaction. Imported pins are marked `fixed`.
+- What KiCad says that a pin has no field for is kept in the import record (`imports/records.json`, [`IMPORTS.md`](IMPORTS.md#what-an-import-records)): the KiCad **pin type** of every imported pin (`input`, `output`, `power_in`, `passive` ...) and the **name of the schematic** (`design/source`; the file name only, never the folder). The value and the footprint of the components are named in a warning as not imported. With `--pin-direction` the types `input`, `output` and `bidirectional` also fill the direction of a pin that has none; no other type is turned into a direction.
+- The record holds the SHA-256 of the netlist, so `harness-design-studio imports DIR --check --source FILE` tells you that the netlist changed since you imported it.
 
 ## What "fixed" does
 

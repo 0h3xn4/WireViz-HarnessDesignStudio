@@ -5,7 +5,8 @@ import sys
 from pathlib import Path
 
 from harness_design_studio.cli import quoted
-from harness_design_studio.core import templates
+from harness_design_studio.cli.jsonout import Report, add_json_flag
+from harness_design_studio.core import records, templates
 
 COMMANDS = ("new", "templates", "schema")
 
@@ -28,6 +29,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         action="store_true",
         help="do not start a change journal (journal.json) for the new project",
     )
+    add_json_flag(n)
     t = sub.add_parser(
         "templates",
         help="copy the import templates (CSV files, netlist, scripts, checklist) to a folder",
@@ -35,6 +37,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "checklist. The folder must not exist yet or be empty.",
     )
     t.add_argument("folder", type=Path, help="where to put the templates")
+    add_json_flag(t)
     sc = sub.add_parser(
         "schema",
         help="write JSON Schemas of the project files (for editors that complete and check JSON)",
@@ -45,20 +48,30 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     sc.add_argument(
         "folder", type=Path, help="where to put the schemas (for example my-design/schemas)"
     )
+    add_json_flag(sc)
 
 
 def run(args: argparse.Namespace) -> int:
+    rep = Report(args.json)
+    return rep.finish(_run(args, rep))
+
+
+def _run(args: argparse.Namespace, rep: Report) -> int:
     if args.command == "schema":
-        return _schema(args.folder)
+        return _schema(args.folder, rep)
     if args.command == "templates":
         files = templates.copy_import_templates(args.folder)
-        print(
+        rep.say(
             f"{len(files)} files written to {args.folder}. Start with {args.folder / 'README.md'}."
         )
+        rep.put(
+            count=len(files), files=sorted(p.relative_to(args.folder).as_posix() for p in files)
+        )  # one order on every platform (Windows sorts paths without regard to case)
         return 0
     if args.list:
         for t in templates.TEMPLATES:
-            print(f"{t.name:18} {t.summary}")
+            rep.say(f"{t.name:18} {t.summary}")
+        rep.put(templates=[i.to_dict() for i in records.template_infos()])
         return 0
     if args.folder is None:
         print("error: give the folder for the new project (or use --list).", file=sys.stderr)
@@ -66,15 +79,21 @@ def run(args: argparse.Namespace) -> int:
     project = templates.create_project(
         args.folder, args.template, args.name, journal=not args.no_journal
     )
-    print(
+    rep.say(
         f"Project '{project.meta.name}' created in {args.folder} "
         f"({len(project.units)} devices, {len(project.interfaces)} interfaces).\n"
         f"Next: harness-design-studio validate {quoted(args.folder)}   or open it in the app (File > Open project)."
     )
+    rep.put(
+        name=project.meta.name,
+        template=args.template,
+        devices=len(project.units),
+        interfaces=len(project.interfaces),
+    )
     return 0
 
 
-def _schema(folder: Path) -> int:
+def _schema(folder: Path, rep: Report) -> int:
     from harness_design_studio.core import schemas
 
     if folder.exists() and (not folder.is_dir() or any(folder.iterdir())):
@@ -87,9 +106,11 @@ def _schema(folder: Path) -> int:
     (folder / "editor-settings.json").write_text(
         schemas.dumps(schemas.editor_settings()), encoding="utf-8"
     )
-    print(
+    rep.say(
         f'{len(docs)} schemas written to {folder}. In VS Code, copy the "json.schemas" entry of '
         f"{folder / 'editor-settings.json'} into the .vscode/settings.json of the project "
         "(the schemas folder must sit inside the project folder as schemas/)."
     )
+    names = [f"{name}.schema.json" for name in docs]
+    rep.put(count=len(docs), files=[*names, "editor-settings.json"])
     return 0

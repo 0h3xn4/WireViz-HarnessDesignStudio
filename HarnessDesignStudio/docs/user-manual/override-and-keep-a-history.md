@@ -102,7 +102,9 @@ harness-design-studio journal wheel-link --object W001-001
 harness-design-studio journal wheel-link --since 12 --json
 ```
 
-Each line reads `#12 2026-11-03T10:00:05Z Ann [override] wire:W001-001 gauge_awg: 24 -> 20 (reason: ...)`. `--object` takes `W001-001`, `wire:W001-001` or a configuration key such as `derating.bundle_derating`; `explain` of an object also prints its history when the project has a journal. In the editor, **Help > Change history…** lists the same with a filter box.
+Each line reads `#12 2026-11-03T10:00:05Z Ann [override] wire:W001-001 gauge_awg: 24 -> 20 (reason: ...)`. `--object` takes `W001-001`, `wire:W001-001` or a configuration key such as `derating.bundle_derating`; `explain` of an object also prints its history when the project has a journal. In the editor, **Help > Change history…** lists the same with a filter box. An import is an entry too (`kind` `import`, object `import:KIND:FILE`): it says which file was read, by its hash, and how many rows were read, dropped and converted; the full record is `imports/records.json`.
+
+With `--json`, `journal`, `override` and `deviation` print one document each (the keys are in [`CLI.md`](../CLI.md)), and a script gets the same data from `harness_design_studio.api` (`get_journal`, `set_override`, `clear_override`, `get_overrides`, `list_deviations`, `accept_deviation`, `remove_deviation`, `start_journal`).
 
 What is recorded: a change of any design input (devices, interfaces, connectors, links, harness fields, wire fields, library parts), a configuration value, an override (with its reason), a waiver or a deviation (with its justification), the approval of a part, a review, a release or a new revision (with the comment), and a generation. Not recorded: the positions of devices on the diagram.
 

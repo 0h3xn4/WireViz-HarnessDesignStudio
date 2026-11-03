@@ -36,10 +36,10 @@ from harness_design_studio.core.model import (
     evolve,
 )
 from harness_design_studio.core.model.base import Name
-from harness_design_studio.core.model.physical import COAX_SHIELD_END
 from harness_design_studio.core.vcs.snapshot import carried_interfaces
+from harness_design_studio.core.wirecolours import signal_colour
 
-from . import bundle
+from . import bundle, shields
 from .lengths import generated_length, path_length, path_trail
 from .naming import Namer, namer_for
 from .pins import Allocation, Request, allocate
@@ -1057,11 +1057,9 @@ def _size(
 def _finish(ctx: _Ctx, out: Wire, i: InterfaceInstance) -> Wire:
     """The colour by the signal name and the check of the contacts: what follows the gauge."""
     colours = ctx.gen.get("wire_colour_by_signal")  # the owner's own rule; absent: no colour
-    if isinstance(colours, dict) and out.colour is None and out.signal:
-        # a wire between two different signal names is labelled "TX+/RX+": the first one counts
-        key = next((k for k in (out.signal, *out.signal.split("/")) if k in colours), None)
-        if key is not None:
-            out = evolve(out, colour=str(colours[key]))
+    chosen = signal_colour(colours, out.signal) if out.colour is None else None
+    if chosen is not None:  # a wire labelled "TX+/RX+": the whole label counts, then the first name
+        out = evolve(out, colour=chosen[1])
     _check_contacts(ctx, out, i)
     return out
 
@@ -1099,11 +1097,8 @@ def _shields(
     old: Harness | None,
     reserved: frozenset[str] = frozenset(),
 ) -> list[ShieldGroup]:
-    p = ctx.project
-    ends = [ctx.gen.get("shield_end_a"), ctx.gen.get("shield_end_b")]
-    valid = {"backshell_360", "pigtail", "floating"}
-    a, b = (cast(Any, e if isinstance(e, str) and e in valid else "floating") for e in ends)
-    if ends[0] is None or ends[1] is None:
+    a, b, placeholder = shields.concept_ends(ctx.gen)
+    if placeholder:
         ctx.note(
             f"harness:{hid}",
             "shielding: shield termination is a placeholder (floating used); the grounding concept decides it",
@@ -1116,44 +1111,20 @@ def _shields(
         if members:
             while ctx.namer.shield(hid, n) in reserved:  # the IDs of the groups a person made
                 n += 1
+            end_a, end_b = shields.ends_of(kind, a, b)
             out.append(
                 ShieldGroup(
                     id=ctx.namer.shield(hid, n),
                     kind=cast(Any, kind),
                     wire_ids=sorted(w.id for w in members),
-                    end_a=COAX_SHIELD_END if kind == "coax" else a,
-                    end_b=COAX_SHIELD_END if kind == "coax" else b,
+                    end_a=end_a,
+                    end_b=end_b,
                 )
             )
             n += 1
 
-    for i in ifaces:
-        t = p.interface_types[i.type_id]
-        mine = [w for w in wires if w.interface_id == i.id]
-        if t.construction in ("single",):
-            continue
-        if t.construction == "coax":
-            for w in mine:
-                add("coax", [w])
-            continue
-        if t.construction == "quad":
-            add("quad", mine)
-            continue
-        pair_of = {
-            s.name: (s.pair or ("power" if t.category in ("power", "ground") else None))
-            for s in t.signals
-        }
-        groups: dict[str, list[Wire]] = {}
-        for w in mine:
-            src = w.signal.split("/")[0] if w.signal else ""
-            name = pair_of.get(src)
-            if name is not None:
-                groups.setdefault(f"{name}|{w.from_connector}", []).append(w)
-        kind = "shielded_pair" if t.shielding == "per_pair" else "twisted_pair"
-        for key in sorted(groups):
-            add(kind, groups[key])
-        if t.shielding == "overall":
-            add("overall_shield", mine)
+    for planned in shields.plan(ctx.project, ifaces, wires):
+        add(planned.kind, planned.wires)
     return out
 
 

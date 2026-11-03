@@ -1,6 +1,7 @@
 from .base import Entity, evolve
 from .config import CONFIG_NAMES, ConfigFile, default_configs
 from .generation import GenerationRecord
+from .imports import ImportRecord
 from .journal import Journal, JournalEntry, JournalError
 from .library import PART_CATEGORIES, LibraryInfo, Part
 from .logical import Endpoint, InterfaceInstance, InterfaceType, Link, PinPair, SignalDef, Unit
@@ -33,6 +34,7 @@ __all__ = [
     "GenerationRecord",
     "Entity",
     "Harness",
+    "ImportRecord",
     "InterfaceInstance",
     "InterfaceType",
     "Journal",

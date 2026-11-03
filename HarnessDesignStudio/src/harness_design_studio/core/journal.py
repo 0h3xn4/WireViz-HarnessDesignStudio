@@ -41,6 +41,7 @@ from .io import canonical
 
 JOURNAL_FILE = "journal.json"
 GENERATION_FILE = "generated/generation.json"
+IMPORT_RECORDS_FILE = "imports/records.json"
 UNKNOWN_AUTHOR = "unknown"
 MAX_SHORT = 200  # a value longer than this is cut in the journal (the design file holds it whole)
 BULK = 25  # more objects than this created or removed in one save are one entry
@@ -232,7 +233,7 @@ def files_hash(files: Mapping[str, bytes]) -> str:
     from): independent of the tool version and of the journal."""
     digest = hashlib.sha256()
     for rel, data in sorted(files.items()):
-        if rel == JOURNAL_FILE:
+        if rel in (JOURNAL_FILE, IMPORT_RECORDS_FILE):
             continue
         if rel == "project.json":
             data = _blank_tool_version(data)
@@ -254,6 +255,7 @@ _LISTS = {  # file name pattern -> (collection, key of the list, object prefix)
     "changelog.json": ("changelog", "changelog"),
     "logical/links.json": ("link", "links"),
     "logical/interface_types.json": ("interface_type", "interface_types"),
+    IMPORT_RECORDS_FILE: ("import", "imports"),
 }
 _FOLDERS = (  # folder -> (collection, key of the list)
     ("library/", "part", "parts"),
@@ -497,6 +499,25 @@ def _waiver_rows(fid: str, old: dict[str, Any] | None, new: dict[str, Any] | Non
     return rows
 
 
+def _import_summary(rec: dict[str, Any] | None) -> dict[str, Any] | None:
+    if rec is None:
+        return None
+    return {
+        "source": rec.get("source_name"),
+        "sha256": str(rec.get("sha256", ""))[:12],
+        "rows_read": rec.get("rows_read"),
+        "dropped": rec.get("dropped_count", 0),
+        "converted": rec.get("converted_count", 0),
+    }
+
+
+def _import_rows(rid: str, old: dict[str, Any] | None, new: dict[str, Any] | None) -> list[Row]:
+    """An import record added, replaced (the same source imported again) or removed: one entry
+    that says what was read, from which file (by its hash) and how much was dropped or converted."""
+    what = "(recorded)" if old is None else "(removed)" if new is None else "(read again)"
+    return [_row("import", f"import:{rid}", what, _import_summary(old), _import_summary(new))]
+
+
 def _config_rows(name: str, old: dict[str, Any] | None, new: dict[str, Any] | None) -> list[Row]:
     if old is None or new is None:
         what = "(created)" if old is None else "(removed)"
@@ -551,7 +572,7 @@ def rows_for_save(
         hashes = (files_hash(old), files_hash(new))
     allocation = {"connector": 0, "interface": 0}
     for coll in ("project", "library", "config", "part", "device", "interface", "interface_type",
-                 "link", "connector", "waiver", "changelog", "harness"):  # fmt: skip
+                 "link", "connector", "waiver", "changelog", "harness", "import"):  # fmt: skip
         a, b = before.get(coll, {}), after.get(coll, {})
         ids = sorted(i for i in set(a) | set(b) if a.get(i) != b.get(i))
         if not ids:
@@ -584,6 +605,8 @@ def rows_for_save(
                 rows.extend(_waiver_rows(i, o, n))
             elif coll == "changelog":
                 rows.extend(_changelog_rows(i, o, n))
+            elif coll == "import":
+                rows.extend(_import_rows(i, o, n))
             elif coll == "harness":
                 rows.extend(_harness_rows(i, o, n, generation=generation, hashes=hashes))
             elif coll == "part":

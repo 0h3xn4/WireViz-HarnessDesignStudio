@@ -28,6 +28,9 @@ harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.ne
 ```
 
 ```
+Read 2 connector(s) of KiCad netlist from wheel-connectors.net (sha256 64fa05ae778c).
+warning: the component field 'value' is not read; its values are not imported.
+note: KiCad design source: wheel.kicad_sch
 J1: OK updated RW1-J01 (2 signal pin(s))
 J2: OK updated RW1-J02 (4 signal pin(s))
 Dry run: nothing was changed.
@@ -41,6 +44,7 @@ What the options mean:
 - `--part J1=PART-ID` chooses the library part of a new connector. A KiCad field `HarnessPart` does the same.
 - `--signal-map` renames KiCad net names to the signal names of the interface type. Either pairs (`--signal-map CAN_H=CANH --signal-map CAN_L=CANL`) or a file of pairs (`--signal-map my-templates/signal-map.csv`). Names that match nothing are listed. They are never guessed.
 - `--pin-function` takes the pin names of the symbol (for example `CAN_H`) as the signals, in place of the net names.
+- `--pin-direction` also sets the direction of a pin that has none from the KiCad pin type: `input` becomes `in`, `output` becomes `out`, `bidirectional` becomes `bidir`. The other types (`passive`, `power_in`, `open_collector` ...) do not say which way a signal runs, so they set nothing. A direction that is set already is kept. Without the option no direction is set.
 
 ## 3. Read the rows, then apply
 
@@ -56,7 +60,10 @@ harness-design-studio import-netlist wheel-link my-templates/wheel-connectors.ne
 J1: OK updated RW1-J01 (2 signal pin(s))
 J2: OK updated RW1-J02 (4 signal pin(s))
 Imported 2 connector(s). Generate harnesses again to connect interfaces to the fixed pins.
+Import record: netlist:wheel-connectors.net written to imports/records.json.
 ```
+
+(The `Read`, `warning` and `note` lines of the dry run come first, before the connectors.) KiCad tells more about a pin than the project has a field for. Nothing of it is lost silently: the import record, `imports/records.json`, keeps the **pin type** KiCad gave every imported pin (`RW1-J01.1` is `passive`) and the **name of the schematic** the netlist was made from (`wheel.kicad_sch`; KiCad writes a path, only the file name is kept), and the warning names what is not imported (the value and the footprint of the components). `harness-design-studio imports wheel-link --source my-templates/wheel-connectors.net --check` tells you later whether the netlist file has changed since you imported it, so that you know when to export it from KiCad and import it again.
 
 The import is all or nothing: a netlist with a problem changes nothing.
 

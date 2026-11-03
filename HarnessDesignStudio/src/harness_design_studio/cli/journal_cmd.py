@@ -2,19 +2,17 @@
 and recorded deviations (D-191, S4)."""
 
 import argparse
-import json
 import sys
 from pathlib import Path
 
 from harness_design_studio.cli import blocked_text
-from harness_design_studio.core import checks, drc, journal, wires
-from harness_design_studio.core.commands import Delete, History
-from harness_design_studio.core.derive import explain_wire, render
+from harness_design_studio.cli.jsonout import Report, add_json_flag
+from harness_design_studio.core import change_ops, journal, records, wires
+from harness_design_studio.core.derive import render
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.errors import TransactionError
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
-from harness_design_studio.core.model import Project
 
 COMMANDS = ("journal", "override", "deviation")
 
@@ -32,12 +30,12 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "append-only, an entry cannot be changed or removed, and a damaged journal is reported by "
         "`validate`. It is not part of the model hash or of any written output. The author is the "
         "global option `--author`, else the environment variable HARNESS_AUTHOR, else the name Git "
-        "has (`user.name`), else the user of the computer. `--json` prints the entries as data; "
+        "has (`user.name`), else the user of the computer. `--json` prints the entries as one document; "
         "`--object` selects one object (W001-001, wire:W001-001, derating.bundle_derating); "
         "`--since SEQ` the entries after number SEQ.",
     )
     j.add_argument("project", type=Path, help="project folder")
-    j.add_argument("--json", action="store_true", help="print the entries as JSON")
+    add_json_flag(j)
     j.add_argument(
         "--since", type=int, default=0, metavar="SEQ", help="only entries numbered above SEQ"
     )
@@ -62,6 +60,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     o.add_argument("value", nargs="?", default=None, help="the value to set")
     o.add_argument("--reason", default=None, help="why (required with a value)")
     o.add_argument("--clear", default=None, metavar="FIELD", help="give this field back to generation")  # fmt: skip
+    add_json_flag(o)
 
     d = sub.add_parser(
         "deviation",
@@ -78,6 +77,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     d.add_argument("finding", nargs="?", default=None, help="the finding ID")
     d.add_argument("--reason", default=None, help="why the error is accepted (at least 10 characters)")  # fmt: skip
     d.add_argument("--remove", action="store_true", help="take the deviation back")
+    add_json_flag(d)
 
 
 def mutates(args: argparse.Namespace) -> bool:
@@ -90,127 +90,122 @@ def mutates(args: argparse.Namespace) -> bool:
 
 
 def run(args: argparse.Namespace) -> int:
-    return {"journal": _journal, "override": _override, "deviation": _deviation}[args.command](args)
+    rep = Report(args.json)
+    code = {"journal": _journal, "override": _override, "deviation": _deviation}[args.command](
+        args, rep
+    )
+    return rep.finish(code)
 
 
-def _journal(args: argparse.Namespace) -> int:
+def _read_only() -> int:
+    print("error: this project is read-only (saved by a newer tool version).", file=sys.stderr)
+    return 2
+
+
+def _journal(args: argparse.Namespace, rep: Report) -> int:
     project = load_project(args.project).project
     if args.start:
         if project.read_only:
-            print(
-                "error: this project is read-only (saved by a newer tool version).", file=sys.stderr
-            )
-            return 2
-        if not journal.start(project):
-            print("This project has a journal already.")
-            return 0
-        save_project(project, args.project)
-        print(f"Journal started: {args.project / 'journal.json'}. Changes are recorded when the project is saved.")  # fmt: skip
-        return 0
-    if project.journal is None:
-        if args.json:
-            print("[]")
+            return _read_only()
+        started = journal.start(project)
+        if started:
+            save_project(project, args.project)
+            rep.say(f"Journal started: {args.project / 'journal.json'}. Changes are recorded when the project is saved.")  # fmt: skip
         else:
-            print("This project has no change journal. `harness-design-studio journal DIR --start` starts one.")  # fmt: skip
+            rep.say("This project has a journal already.")
+        rep.put(started=started, file="journal.json")
         return 0
-    entries = journal.entries_for(project, args.object, args.since)
-    if args.json:
-        print(json.dumps(journal.to_dicts(entries), indent=2, ensure_ascii=False))
-    elif entries:
-        print(journal.render(entries))
+    report = records.journal_report(project, args.object, args.since)
+    rep.put(**report.to_dict())
+    if project.journal is None:
+        rep.say("This project has no change journal. `harness-design-studio journal DIR --start` starts one.")  # fmt: skip
+    elif report.entries:
+        rep.say(journal.render(journal.entries_for(project, args.object, args.since)))
     else:
-        print("No entries match.")
+        rep.say("No entries match.")
     return 0
 
 
-def _override(args: argparse.Namespace) -> int:
+def _override(args: argparse.Namespace, rep: Report) -> int:
     project = load_project(args.project).project
     if project.read_only:
-        print("error: this project is read-only (saved by a newer tool version).", file=sys.stderr)
-        return 2
+        return _read_only()
     try:
         if args.clear is not None:
-            ops = wires.plan_clear_override(project, args.wire, args.clear)
-            label = f"Give {args.clear} of {args.wire} back to generation"
+            action, changed = "clear", change_ops.clear_override(project, args.wire, args.clear)
         elif args.field is None:
-            h, w = wires.find_wire(project, args.wire)
-            if not w.locked:
-                print(f"Wire {w.id} has no override.")
-                return 0
-            return _show(project, w.id)
+            action, changed = "show", False
+            wires.find_wire(project, args.wire)
         else:
             if args.value is None:
                 print("error: give the value (override DIR WIRE FIELD VALUE --reason TEXT).", file=sys.stderr)  # fmt: skip
                 return 2
-            ops = wires.plan_override(project, args.wire, args.field, args.value, args.reason)
-            label = f"Override {args.field} of {args.wire}"
-        History(project).execute(label, ops)
+            action = "set"
+            changed = change_ops.set_override(project, args.wire, args.field, args.value, args.reason)  # fmt: skip
     except (EditError, TransactionError) as exc:
         print(blocked_text(exc), file=sys.stderr)
         return 1
-    if not ops:
-        print("Already up to date.")
-        return 0
-    save_project(project, args.project)
-    if args.clear is not None:
-        print(f"{args.clear} of {args.wire} is given back to generation: run `generate` to give it the design's value.")  # fmt: skip
-        return 0
-    return _show(project, args.wire, saved=True)
+    if changed:
+        save_project(project, args.project)
+    result = records.override_result(project, args.wire, action, changed)
+    rep.put(**result.to_dict())
+    w = wires.find_wire(project, args.wire)[1]
+    if action == "clear":
+        if changed:
+            rep.say(f"{args.clear} of {args.wire} is given back to generation: run `generate` to give it the design's value.")  # fmt: skip
+        else:
+            rep.say("Already up to date.")
+    elif action == "set" and not changed:
+        rep.say("Already up to date.")
+    elif result.derivation is not None:
+        if changed:
+            rep.say(f"Saved. Wire {args.wire} is overridden; it is kept when the harnesses are generated again.\n")  # fmt: skip
+        from harness_design_studio.core.derive import explain_wire
 
-
-def _show(project: Project, wire_id: str, *, saved: bool = False) -> int:
-    h, w = wires.find_wire(project, wire_id)
-    if saved:
-        print(f"Saved. Wire {wire_id} is overridden; it is kept when the harnesses are generated again.\n")  # fmt: skip
-    if w.locked and not w.overrides:
-        print(f"Wire {wire_id} is locked (no reason recorded): generation keeps its gauge, type, colour and length. Set a value with a reason to record why.")  # fmt: skip
-        return 0
-    found = explain_wire(project, wire_id)
-    print("\n\n".join(render(d) for d in found[:3] if d.id in ("wire-override", "wire-current-limit")))  # fmt: skip
+        rep.say("\n\n".join(render(d) for d in explain_wire(project, args.wire) if d.id in ("wire-override", "wire-current-limit")))  # fmt: skip
+    elif w.locked:
+        rep.say(f"Wire {args.wire} is locked (no reason recorded): generation keeps its gauge, type, colour and length. Set a value with a reason to record why.")  # fmt: skip
+    else:
+        rep.say(f"Wire {w.id} has no override.")
     return 0
 
 
-def _findings(project: Project) -> dict[str, checks.Finding]:
-    return {f.id: f for f in [*checks.find(project), *drc.run(project)]}
-
-
-def _deviation(args: argparse.Namespace) -> int:
+def _deviation(args: argparse.Namespace, rep: Report) -> int:
     project = load_project(args.project).project
-    found = _findings(project)
     if args.finding is None:
-        marked = sorted((f for f in found.values() if f.deviation), key=lambda f: f.id)
-        if not marked:
-            print("No deviations.")
-            return 0
-        for f in marked:
-            why = f.waiver.justification if f.waiver is not None else ""
-            by = journal.who_and_when(project, f.id)
-            print(f"DEVIATION {f.id} ({f.rule}): {f.title}\n  reason: {why}" + (f"\n  {by}" if by else ""))  # fmt: skip
+        found = records.deviation_records(project)
+        rep.put(**records.DeviationReport("list", "", found).to_dict())
+        if not found:
+            rep.say("No deviations.")
+        for d in found:
+            rep.say(f"DEVIATION {d.id} ({d.rule}): {d.title}\n  reason: {d.reason}" + (f"\n  {d.by}" if d.by else ""))  # fmt: skip
         return 0
     if project.read_only:
-        print("error: this project is read-only (saved by a newer tool version).", file=sys.stderr)
-        return 2
-    finding = found.get(args.finding)
-    if finding is None:
-        print(f"error: there is no finding '{args.finding}' (see `drc`).", file=sys.stderr)
-        return 2
+        return _read_only()
     try:
         if args.remove:
-            if not finding.deviation:
-                print(f"error: {args.finding} is not a deviation.", file=sys.stderr)
-                return 1
-            History(project).execute(f"Take back the deviation {finding.id}", [Delete("waivers", finding.id)])  # fmt: skip
-            save_project(project, args.project)
-            print(f"The deviation {finding.id} is taken back; the finding is open again.")
-            return 0
-        if args.reason is None:
-            print("error: a deviation needs a reason (--reason TEXT).", file=sys.stderr)
-            return 2
-        op = checks.deviate_op(finding, args.reason)
-        History(project).execute(f"Deviation {finding.id}", [op])
-    except (EditError, TransactionError) as exc:
+            finding = change_ops.remove_deviation(project, args.finding)
+            action = "remove"
+        else:
+            if args.reason is None:
+                print("error: a deviation needs a reason (--reason TEXT).", file=sys.stderr)
+                return 2
+            finding = change_ops.accept_deviation(project, args.finding, args.reason)
+            action = "record"
+    except EditError as exc:
+        # an unknown finding is a wrong argument (exit 2); the other refusals are exit 1
+        unknown = str(exc).startswith("there is no finding")
+        print(f"error: {exc}" if unknown or args.remove else blocked_text(exc), file=sys.stderr)
+        return 2 if unknown else 1
+    except TransactionError as exc:
         print(blocked_text(exc), file=sys.stderr)
         return 1
     save_project(project, args.project)
-    print(f"DEVIATION recorded for {finding.id}: the error stays visible and is marked as a deviation. This accepts the error; it does not meet the requirement.")  # fmt: skip
+    if action == "remove":
+        rep.say(f"The deviation {finding.id} is taken back; the finding is open again.")
+        marked: tuple[records.DeviationRecord, ...] = ()
+    else:
+        rep.say(f"DEVIATION recorded for {finding.id}: the error stays visible and is marked as a deviation. This accepts the error; it does not meet the requirement.")  # fmt: skip
+        marked = tuple(d for d in records.deviation_records(project) if d.id == finding.id)
+    rep.put(**records.DeviationReport(action, finding.id, marked).to_dict())
     return 0

@@ -20,6 +20,7 @@ from harness_design_studio.core.model import (
     Connector,
     GenerationRecord,
     Harness,
+    ImportRecord,
     InterfaceInstance,
     InterfaceType,
     JournalEntry,
@@ -76,6 +77,11 @@ def _kinds() -> list[tuple[str, str, type[BaseModel]]]:
         ("waivers", "waivers.json", _list_file("WaiversFile", "waivers", Waiver)),
         ("journal", "journal.json", _list_file("JournalFile", "journal", JournalEntry)),
         ("changelog", "changelog.json", _list_file("ChangeFile", "changelog", ChangeEntry)),
+        (
+            "import-records",
+            "imports/records.json",
+            _list_file("ImportRecordsFile", "imports", ImportRecord),
+        ),  # fmt: skip
         ("baseline", "baselines/*/*.json", Baseline),
     ]
 

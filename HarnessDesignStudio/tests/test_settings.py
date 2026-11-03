@@ -75,7 +75,8 @@ CALCULATION_MODULES = (
     "core/generate/pins.py", "core/generate/segmentation.py", "core/generate/engine.py",
     "core/generate/wiring.py", "core/drc/rules.py", "core/drc/standard_rules.py",
     "core/outputs/tables.py", "core/units.py", "core/derive.py", "core/pairing.py",
-    "core/routing.py", "core/derive_export.py",
+    "core/routing.py", "core/derive_export.py", "core/derive_build.py", "core/derive_layout.py",
+    "core/derive_rules.py", "core/generate/shields.py",
 )  # fmt: skip
 _AWG = "definition D-AWG (gauges 0 to 40, the AWG formula)"
 _TICK = "a progress fraction of the progress bar: no result depends on it"
@@ -85,6 +86,9 @@ EXEMPT: dict[tuple[str, float], str] = {
     ("core/derive.py", 1e-06): "unit conversion mm2 to m2",
     ("core/derive.py", 1e-09): "definition D-LIMIT-TOLERANCE (the tolerance of a float comparison)",
     ("core/derive.py", 6): _SHOWN,
+    ("core/derive_build.py", 8): _SHOWN,
+    ("core/derive_layout.py", 8): _SHOWN,
+    ("core/derive_rules.py", 8): _SHOWN,
     ("core/drc/rules.py", 3): "a position in a sort key tuple",
     ("core/drc/rules.py", 4): "a position in a sort key tuple",
     ("core/drc/rules.py", 40): _AWG,
@@ -98,6 +102,22 @@ EXEMPT: dict[tuple[str, float], str] = {
     ("core/generate/engine.py", 0.95): _TICK,
     ("core/generate/engine.py", 3): _SHOWN,
     ("core/generate/engine.py", 40): _AWG,
+    (
+        "core/generate/lengths.py",
+        0.001,
+    ): "definition of the unit: metres in one mm (docs/models/import-units.md)",
+    (
+        "core/generate/lengths.py",
+        0.01,
+    ): "definition of the unit: metres in one cm (docs/models/import-units.md)",
+    (
+        "core/generate/lengths.py",
+        0.0254,
+    ): "definition of the unit: metres in one inch (docs/models/import-units.md)",
+    (
+        "core/generate/lengths.py",
+        0.3048,
+    ): "definition of the unit: metres in one foot (docs/models/import-units.md)",
     ("core/generate/lengths.py", 10000.0): "definition D-IMPORT-LENGTH-BOUND",
     ("core/generate/lengths.py", 3): _SHOWN,
     ("core/generate/lengths.py", 512): "size of a cache: no result depends on it",

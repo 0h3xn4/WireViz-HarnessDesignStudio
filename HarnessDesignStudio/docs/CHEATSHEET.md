@@ -25,7 +25,7 @@ The command line has no command to draw a single device or interface by hand; de
 | the example import files, demo values and CI scripts | `harness-design-studio templates my-templates` (the folder must be new or empty) |
 | interfaces in a table | app only: **File > Import > Import interfaces…** |
 | a parts list (CSV, TSV, JSON or XLSX; also an InvenTree export) | `harness-design-studio import-parts DIR parts.csv --approved Approved` |
-| segment lengths | `harness-design-studio import-lengths DIR lengths.csv --unit mm` |
+| segment lengths | `harness-design-studio import-lengths DIR lengths.csv --unit mm` (mm, cm, m, in or ft; every row shows the metres stored) |
 | device connectors in KiCad | `harness-design-studio import-netlist DIR file.net --device RW1 --prefix J --connector J1=RW1-J01 --dry-run` |
 | a device's pins from a table | `harness-design-studio import-pinout DIR gyro.csv --device GYRO1 --new-device "Gyro unit" --default-part MY-HD-9-F --dry-run` |
 | a device's pinout as a file | `harness-design-studio export-pinout DIR --device GYRO1 -o gyro.xlsx` |
@@ -34,6 +34,7 @@ The command line has no command to draw a single device or interface by hand; de
 | a device to keep for other projects | `harness-design-studio export-devices DIR devices.json --device GYRO1` (or **Save to library…** in the Devices tab) |
 | strip lengths, pin contacts, accessories or crimp tools (new in 1.7.0) | `harness-design-studio import-build-data DIR strip-lengths.csv --dry-run` (the kind is read from the headings; templates `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv`) |
 | engineering values | edit `config/*.json`, see [`CONFIG.md`](CONFIG.md); `harness-design-studio config DIR` lists what is missing |
+| what was imported, and whether the file changed since | `harness-design-studio imports DIR --check` (the record is `imports/records.json`) |
 
 Add `--dry-run` to any import to see what it would do first. Other commands (`compare`, `schema`, `library`, `migrate`, and options such as `config --ampacity-csv`) are in [`CLI.md`](CLI.md).
 
