@@ -734,6 +734,29 @@ def explain_part(project: Project, part_id: str) -> list[Derivation]:
     return [part_bom_derivation(project, part_id, u) for u in units]
 
 
+# The rules whose finding has a calculation behind it, and what the object of the finding is.
+EXPLAINABLE_RULES = frozenset({"current-over-wire", "voltage-drop", "current-over-contact"})
+
+
+def explain_finding(project: Project, rule_id: str, object_id: str) -> list[Derivation]:
+    """The calculation behind one finding: the derivation of the limit the rule checked, for the
+    object the finding names (a wire for `current-over-wire` and `voltage-drop`, INTERFACE.CONNECTOR
+    for `current-over-contact`). Another rule, or an object that is gone, gives none."""
+    try:
+        if rule_id in ("current-over-wire", "voltage-drop"):
+            h, w = find_wire(project, object_id)
+            if rule_id == "current-over-wire":
+                return [wire_current_limit_derivation(project, h, w)]
+            return [wire_voltage_drop_derivation(project, h, w)]
+        if rule_id == "current-over-contact":
+            left, _, right = object_id.partition(".")
+            if right:
+                return [contact_current_derivation(project, left, right)]
+    except EditError:
+        return []
+    return []
+
+
 def explain_harness(project: Project, harness_id: str) -> list[Derivation]:
     """Every derivation that exists for the harness."""
     h = project.harnesses.get(harness_id)
