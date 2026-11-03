@@ -13,7 +13,7 @@ Generated from the program by `python -m tools.gen_cli_docs`; do not edit by han
 
 A project with damaged files (a file that is not valid, a link, over 64 MB or unreadable) is refused with exit 2 and the damaged file named by every command that reports on it or changes it: `drc`, `verify`, `export`, `generate`, `config`, `library`, `log`, `diff`, `compare`, `review`, `release`, `revise`, `migrate` and the imports. Only `validate` and `check` read it and list the damage (exit 1), so you can see what to repair. With Ctrl-C a command prints `interrupted` and ends with 130 (if it was saving, run `harness-design-studio validate`). A reader that closes the pipe (`harness-design-studio generate | head -1`) does not stop the command: it still finishes and saves.
 
-An import whose file says what the project already holds changes nothing, prints `Already up to date.` and ends with 0, so it can run again on every build. Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not.
+An import whose file says what the project already holds changes nothing, prints `Already up to date.` and ends with 0, so it can run again on every build. Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not. The option `--author NAME` (given before the command) names who is making the changes of a run in the change journal of a project that has one; the environment variable `HARNESS_AUTHOR` does the same, and without either the journal uses the name Git has (`user.name`), then the user of the computer.
 
 What an import prints. Every import that reads a file says what it read before it lists the rows: `Read 12 row(s) of segment lengths from lengths.csv (sha256 117043908312).`, `Columns read: harness -> harness, segment -> segment, length -> length`, a line `warning: the column 'Notes' is not read; its values are not imported.` for every column that is left out, and the unit: `Unit: length in mm (assumed; --unit says another).` or `Unit: length in in (given with --unit).`. A value that is converted is shown with the value as written, its unit and the value stored: `Converted, row 2 (ZZ-1): 0.25 kg = 250 g`; `import-lengths` shows it on the line of its row, `row 2: OK W001 / W001-L1: 850 mm = 0.85 m`. A row that is dropped says why: `row 3: ERROR Harness 'W009' does not exist`. An import that is applied (not with `--dry-run`) records the file in the project, in `imports/records.json` (kind, file name, SHA-256, rows read, rows dropped with the reason, values converted, columns read and left out, unit, tool version; no time and no absolute path), and ends with `Import record: lengths:lengths.csv written to imports/records.json.`; importing the same file again replaces its record, and an unchanged file changes nothing. `harness-design-studio imports` lists the records and shows whether a source file has changed since. With `--json` every import prints the same facts as the last key, `import` (the record, with `record_written` true when this run wrote it, and the `warnings` of `import-build-data`), and `imports --json` prints `records_file`, `count`, `sources_changed` and the `imports` with their `status` and `current_sha256`.
 
@@ -25,6 +25,7 @@ The examples show the form of each command with example names. They do not all w
 - Start: [`new`](#harness-design-studio-new), [`templates`](#harness-design-studio-templates), [`schema`](#harness-design-studio-schema)
 - Check: [`validate`](#harness-design-studio-validate), [`check`](#harness-design-studio-check), [`drc`](#harness-design-studio-drc), [`verify`](#harness-design-studio-verify)
 - Explain: [`explain`](#harness-design-studio-explain), [`settings`](#harness-design-studio-settings)
+- Overrides and change history: [`override`](#harness-design-studio-override), [`deviation`](#harness-design-studio-deviation), [`journal`](#harness-design-studio-journal)
 - Generate and export: [`generate`](#harness-design-studio-generate), [`export`](#harness-design-studio-export), [`export-data`](#harness-design-studio-export-data)
 - Team use with Git: [`merge-fix`](#harness-design-studio-merge-fix)
 - Bring in data: [`config`](#harness-design-studio-config), [`library`](#harness-design-studio-library), [`import-parts`](#harness-design-studio-import-parts), [`import-lengths`](#harness-design-studio-import-lengths), [`import-netlist`](#harness-design-studio-import-netlist), [`import-pinout`](#harness-design-studio-import-pinout), [`import-devices`](#harness-design-studio-import-devices), [`import-subsystem`](#harness-design-studio-import-subsystem), [`import-build-data`](#harness-design-studio-import-build-data), [`imports`](#harness-design-studio-imports)
@@ -73,6 +74,10 @@ Every command that has a result in data form takes `--json`. The usual text line
 | `compare` | `ok`, `added`, `removed`, `changed`, `changes`, `not_compared` |
 | `log` | `ok`, `harness`, `entries` |
 | `migrate` | `ok`, `migrated` |
+| `journal` | `ok`, `has_journal`, `count`, `entries` |
+| `journal --start` | `ok`, `started`, `file` |
+| `override` | `ok`, `wire`, `action`, `changed`, `overrides`, `derivation` |
+| `deviation` | `ok`, `action`, `finding`, `count`, `deviations` |
 | `extensions` | `ok`, `has_folder`, `enabled_declarative`, `enabled_plugins`, `files`, `plugins`, `items`, `issues` |
 | `trust` | `ok`, `action`, `name`, `version`, `sha256`, `lines`, `where`, `trusted`, `changed` |
 | `import-plugin` | `ok`, `dry_run`, `changed`, `importer`, `rows`, `notes` |
@@ -81,7 +86,7 @@ Every command that has a result in data form takes `--json`. The usual text line
 
 ### harness-design-studio new
 
-Create a project folder from one of the bundled examples. `harness-design-studio new --list` shows them. The folder must not exist yet or be empty.
+Create a project folder from one of the bundled examples. `harness-design-studio new --list` shows them. The folder must not exist yet or be empty. The new project starts a change journal (journal.json: who changed what, when and why) unless you give --no-journal.
 
 `harness-design-studio new [folder] [options]`
 
@@ -91,6 +96,7 @@ Create a project folder from one of the bundled examples. `harness-design-studio
 | `--template TEMPLATE` | which example to start from (default blank) |
 | `--name NAME` | project name (default: the example's name) |
 | `--list` | list the examples and exit |
+| `--no-journal` | do not start a change journal (journal.json) for the new project |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
@@ -260,6 +266,79 @@ Examples:
 harness-design-studio settings wheel-link
 harness-design-studio settings wheel-link --json
 harness-design-studio settings wheel-link --set model.service_loops_per_wire=0
+```
+
+## Overrides and change history
+
+### harness-design-studio override
+
+Override a value of a generated wire deliberately: `override DIR WIRE FIELD VALUE --reason TEXT` (FIELD is gauge_awg, part_id, colour or length_m). A reason is required and is refused when it is empty. The tool keeps the value when the harnesses are generated again, records the reason with the wire (who and when in the journal), flags the wire everywhere, and explains the consequences: the value the design would give, and the current limit and voltage drop of the value you set. `--clear FIELD` gives one field back to generation (the value is cleared; the next `generate` gives the wire the design's value). With no FIELD it shows the overrides of the wire. A released harness cannot be changed.
+
+`harness-design-studio override project wire [field] [value] [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `wire` | wire ID, for example W001-001 |
+| `field` | gauge_awg, part_id, colour or length_m |
+| `value` | the value to set |
+| `--reason REASON` | why (required with a value) |
+| `--clear FIELD` | give this field back to generation |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+
+Examples:
+
+```
+harness-design-studio override wheel-link W001-001 gauge_awg 20 --reason "Heater load added after CDR, see ECR-114"
+harness-design-studio override wheel-link W001-001 length_m 2.4 --reason 'Measured on the mock-up'
+harness-design-studio override wheel-link W001-001
+harness-design-studio override wheel-link W001-001 --clear gauge_awg
+```
+
+### harness-design-studio deviation
+
+A deviation accepts an error of an electrical rule (wire current, voltage drop, contact current, bundle current, working voltage, temperature margin) with a reason, keeps it visible everywhere marked as a deviation, and lets a release go on. `deviation DIR` lists them, with who and when from the journal; `deviation DIR FINDING --reason TEXT` records one (FINDING is the finding ID of `drc`, for example current-over-wire.W001-001; the reason is at least 10 characters); `--remove` takes it back. A deviation does not meet the requirement: it records that a person accepted the error.
+
+`harness-design-studio deviation project [finding] [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `finding` | the finding ID |
+| `--reason REASON` | why the error is accepted (at least 10 characters) |
+| `--remove` | take the deviation back |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+
+Examples:
+
+```
+harness-design-studio deviation wheel-link
+harness-design-studio deviation wheel-link current-over-wire.W001-001 --reason "Accepted by the PA board, NCR-17"
+harness-design-studio deviation wheel-link current-over-wire.W001-001 --remove
+```
+
+### harness-design-studio journal
+
+The change journal: an entry for every change of a design input, a configuration value, an override, a waiver or deviation, a part approval and a release, with who made it, when (UTC), the value before and after, and the reason where the model holds one. Entries are made when the project is saved, so every way of changing it is recorded; generation is one entry for each harness. The journal is the file journal.json, which a project has only if you start one (`new` starts one; `--start` starts one for an existing project): it is append-only, an entry cannot be changed or removed, and a damaged journal is reported by `validate`. It is not part of the model hash or of any written output. The author is the global option `--author`, else the environment variable HARNESS_AUTHOR, else the name Git has (`user.name`), else the user of the computer. `--json` prints the entries as one document; `--object` selects one object (W001-001, wire:W001-001, derating.bundle_derating); `--since SEQ` the entries after number SEQ.
+
+`harness-design-studio journal project [options]`
+
+| Argument | Meaning |
+| --- | --- |
+| `project` | project folder |
+| `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+| `--since SEQ` | only entries numbered above SEQ |
+| `--object ID` | only entries about this object |
+| `--start` | start a journal for a project that has none (writes journal.json) |
+
+Examples:
+
+```
+harness-design-studio journal wheel-link
+harness-design-studio journal wheel-link --start
+harness-design-studio journal wheel-link --object W001-001
+harness-design-studio journal wheel-link --since 12 --json
+harness-design-studio --author 'A. Engineer' override wheel-link W001-001 colour red --reason 'Colour code of the program'
 ```
 
 ## Generate and export

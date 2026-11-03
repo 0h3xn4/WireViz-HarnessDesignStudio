@@ -782,6 +782,16 @@ def settings_table(project: Project) -> DataTable:
         }
         for r in settings.rows(project)
     ]  # fmt: skip
+    overridden = sum(1 for _h, w in _all_wires(project) if w.overrides)
+    if overridden:  # values set by hand in place of the design's (S4); the reasons are in the wires
+        rows.append(
+            {
+                "id": "overrides.wires", "file": "", "key": "overrides",
+                "label": "Wires with a value set by hand", "value": overridden, "unit": "",
+                "origin": "project", "placeholder": _yes(False), "default": 0,
+                "used_by": "wire gauge, type, colour and length", "source": "harness files",
+            }
+        )  # fmt: skip
     return DataTable(
         "settings", "Settings in force",
         "Every setting the results depend on, with the value in force and where it comes from.",
@@ -922,6 +932,8 @@ def provenance_bytes(project: Project, files: dict[str, bytes], mhash: str) -> b
             "interfaces": len(project.interfaces),
             "harnesses": len(project.harnesses),
             "wires": sum(len(h.wires) for h in project.harnesses.values()),
+            # only whether: journal.json holds a time and a name, so it is not part of this set
+            "journal": "present" if project.journal is not None else "absent",
         },
         "imports": _imports(project),
         "files": [

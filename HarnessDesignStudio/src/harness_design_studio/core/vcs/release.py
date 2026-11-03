@@ -19,6 +19,7 @@ from pathlib import Path
 
 from harness_design_studio.core import drc
 from harness_design_studio.core.commands import Op, Put
+from harness_design_studio.core.deviations import release_note
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.generation_status import generation_status
@@ -339,8 +340,10 @@ def release_blockers(
         out.extend(role_blockers(project, h, by, checker or ""))
     out.extend(placeholder_blockers(project, accept_placeholders))
     out.extend(part_blockers(project, h, accept_unapproved_parts))
-    notes = placeholder_note(project, by, accept_placeholders) + part_note(
-        project, h, by, accept_unapproved_parts
+    notes = (
+        placeholder_note(project, by, accept_placeholders)
+        + part_note(project, h, by, accept_unapproved_parts)
+        + release_note(project, h)
     )
     out.extend(text_blockers(accept_placeholders, "reason", "The reason for releasing on placeholders", limit=MAX_COMMENT, one_line=False))  # fmt: skip
     out.extend(text_blockers(accept_unapproved_parts, "reason", "The reason for releasing with parts that are not approved", limit=MAX_COMMENT, one_line=False))  # fmt: skip
@@ -530,6 +533,7 @@ def plan_release(
         comment.strip()
         + placeholder_note(project, by, accept_placeholders)
         + part_note(project, h, by, accept_unapproved_parts)
+        + release_note(project, h)
     )
     entry = _entry(project, released, "release", by.strip(), when, full_comment)
     baseline = Baseline(

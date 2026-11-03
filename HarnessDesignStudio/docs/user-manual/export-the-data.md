@@ -45,12 +45,12 @@ The folder gets a pair of files, `NAME.json` and `NAME.csv`, for each result, an
 | `bom`, `bom_contributions` | a line of the bill of materials; every connector, contact, wire and accessory that adds to it |
 | `test_limits` | a test of the test sheet, with its limit and test voltage |
 | `parts` | a part of the library: masses, conductors, approval, ratings |
-| `settings` | a setting in force: its value, unit and origin (the project, the tool's own default, or not set) |
+| `settings` | a setting in force: its value, unit and origin (the project, the tool's own default, or not set); when a wire has an override, a row `overrides.wires` counts them |
 
 | File | What it is |
 | --- | --- |
 | `configuration.json` | the files `config/*.json` as the tool used them, each with its placeholder flag |
-| `provenance.json` | the tool version, the model hash, the library, the files the project imported (name, SHA-256, kind, rows), and the SHA-256 of every other file of the folder |
+| `provenance.json` | the tool version, the model hash, the library, the files the project imported (name, SHA-256, kind, rows), whether the project keeps a change journal (`design.journal`: `present` or `absent`; the journal itself is never in the folder, because it holds a time and a name), and the SHA-256 of every other file of the folder |
 | `run_record.json` | only with `--run-record`: [section 5](#5-record-who-ran-it-and-when) |
 
 Every JSON file starts with `format` (1), the table name, `tool_version`, `model_hash`, then `columns` (key, name, unit, header, what the column holds) and `rows`, one row to a line. The CSV file has the same rows; its first line is the headings with the unit in each, `Current (A)`, `Cross-section (mm²)`, `Resistivity (Ω·m)`. A number is written with 12 significant digits, so a sum carries no floating point noise. A value that is not set is an empty cell (`null` in the JSON), never a zero.

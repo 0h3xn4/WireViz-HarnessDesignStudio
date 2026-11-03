@@ -39,6 +39,7 @@ from harness_design_studio.core.model import Harness, ShieldGroup, Wire, evolve
 from harness_design_studio.core.units import AWG_MAX, AWG_MIN, area_text
 from harness_design_studio.core.wirecolours import COLOURS
 from harness_design_studio.core.wires import (
+    LOCKING,
     find_wire,
     group_of,
     new_wire_id,
@@ -330,6 +331,7 @@ class WireEditor(QWidget):
         self._ids: list[str] = []
         self._touched: set[str] = set()
         self._filling = False
+        self._form_on = False
         self.run_dialog: Callable[[QDialog], int] = lambda dlg: dlg.exec()  # (the window sets it)
 
         root = QVBoxLayout(self)
@@ -353,6 +355,7 @@ class WireEditor(QWidget):
         self.label = QLineEdit()
         self.note = QPlainTextEdit()
         self.note.setFixedHeight(theme.px(56))
+        self.reason = QLineEdit()
         for widget, name, text, tip in (
             (self.gauge, "wire-gauge", strings.WIRE_GAUGE, strings.WIRE_GAUGE_TIP),
             (self.part, "wire-type", strings.WIRE_TYPE, strings.WIRE_TYPE_TIP),
@@ -362,6 +365,7 @@ class WireEditor(QWidget):
             (self.strip_b, "wire-strip-b", strings.WIRE_STRIP_B, strings.WIRE_STRIP_B_TIP),
             (self.label, "wire-label", strings.WIRE_LABEL, strings.WIRE_LABEL_TIP),
             (self.note, "wire-note", strings.WIRE_NOTE, strings.WIRE_NOTE_TIP),
+            (self.reason, "wire-reason", strings.WIRE_REASON, strings.WIRE_REASON_TIP),
         ):
             widget.setObjectName(name)
             widget.setAccessibleName(text)
@@ -378,6 +382,10 @@ class WireEditor(QWidget):
                 form.addRow(text, row)
                 continue
             form.addRow(text, widget)
+        self.reason.setPlaceholderText(strings.WIRE_REASON_PLACEHOLDER)
+        self.reason.setMaxLength(500)
+        self.form = form
+        form.setRowVisible(self.reason, False)  # shown while a value of a generated wire is changed
         root.addLayout(form)
         strip_note = QLabel(strings.WIRE_STRIP_NOTE)
         strip_note.setObjectName("wire-strip-note")
@@ -506,6 +514,7 @@ class WireEditor(QWidget):
             colour_edit.setAccessibleName(strings.WIRE_COLOUR)
             colour_edit.textEdited.connect(lambda _t: self._touch(self.colour))
         self.note.textChanged.connect(lambda: self._touch(self.note))
+        self.reason.textEdited.connect(lambda _t: self._update_reason())
         for w in (self.gauge, self.length, self.strip_a, self.strip_b, self.label):
             w.returnPressed.connect(self.apply_changes)
         QShortcut(QKeySequence("Ctrl+Return"), self, self.apply_changes)
@@ -645,15 +654,29 @@ class WireEditor(QWidget):
         note = _common([w.note for w in wires])
         self.note.setPlainText(note if isinstance(note, str) else "")
         kept = {w.locked for w in wires}
+        reasoned = [w for w in wires if w.overrides]
         self.state.setText(
             (strings.WIRE_STATE_MANUAL if len(wires) == 1 else strings.WIRE_STATE_MANUAL_MANY)
             if all(w.manual for w in wires)
             else strings.WIRE_STATE_MIXED
             if len(kept) > 1
+            else self._overridden_text(wires[0])
+            if kept == {True} and len(wires) == 1 and reasoned
+            else strings.WIRE_STATE_OVERRIDDEN_LEGACY
+            if kept == {True} and any(not w.overrides for w in wires)
             else strings.WIRE_STATE_KEPT
             if kept == {True}
             else strings.WIRE_STATE_GENERATED
         )
+        self.reason.clear()
+        self.form.setRowVisible(self.reason, False)
+
+    @staticmethod
+    def _overridden_text(w: Wire) -> str:
+        words = strings.WIRE_FIELD_WORDS
+        fields = sorted(w.overrides)
+        why = "; ".join(f"{words.get(f, f)}: {w.overrides[f]}" for f in fields)
+        return strings.WIRE_STATE_OVERRIDDEN.format(why, ", ".join(words.get(f, f) for f in fields))
 
     def _enable(self) -> None:
         """Enable the form, or say why it is off."""
@@ -668,6 +691,7 @@ class WireEditor(QWidget):
                     reason = strings.WIRE_STATE_RELEASED.format(h.id, h.revision)
                     break
         on = bool(self._ids) and not reason
+        self._form_on = on
         for field in (
             self.gauge,
             self.part,
@@ -680,6 +704,7 @@ class WireEditor(QWidget):
         ):
             field.setEnabled(on)
         self.apply.setEnabled(on)
+        self._update_reason()
         self.reset.setEnabled(on)
         self.delete.setEnabled(on)
         self.group_btn.setEnabled(on)
@@ -715,6 +740,26 @@ class WireEditor(QWidget):
     def _touch(self, widget: QWidget) -> None:
         if not self._filling:
             self._touched.add(self._names[widget])
+            self._update_reason()
+
+    def reason_needed(self) -> bool:
+        """True while a gauge, type, colour or length of a generated wire is being changed: the
+        change is an override and cannot be applied without a reason."""
+        if not self._ids or not LOCKING & self._touched:
+            return False
+        try:
+            return any(not w.manual for w in self._selected())
+        except EditError:
+            return False
+
+    def _update_reason(self) -> None:
+        """Show the Reason box while it is needed, and keep Apply off until it is filled in."""
+        need = self.reason_needed()
+        self.form.setRowVisible(self.reason, need)
+        if not need:
+            self.reason.clear()
+        if self.apply.isEnabled() or need:
+            self.apply.setEnabled(self._form_on and not (need and not self.reason.text().strip()))
 
     # ---- the buttons -----------------------------------------------------------------------
     def _strip_values(self) -> dict[str, str]:
@@ -748,6 +793,9 @@ class WireEditor(QWidget):
         if not changes and not strip:
             self._say(strings.WIRE_NOTHING_CHANGED)
             return True
+        if self.reason_needed() and not self.reason.text().strip():
+            self._say(strings.WIRE_REASON_NEEDED)
+            return False
         try:
             ops = self._plan(changes, strip)
         except EditError as exc:
@@ -763,7 +811,11 @@ class WireEditor(QWidget):
         """The ops for the touched fields: the edit and the strip lengths in one `Put` per
         harness, so that they are one undo step."""
         project = self.ctl.project
-        ops = plan_wire_edit(project, self._ids, changes) if changes else []
+        ops = (
+            plan_wire_edit(project, self._ids, changes, reason=self.reason.text())
+            if changes
+            else []
+        )
         by_harness: dict[str, list[str]] = {}
         for wid in self._ids:
             by_harness.setdefault(find_wire(project, wid)[0].id, []).append(wid)

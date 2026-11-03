@@ -39,7 +39,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import checks, configcheck
+from harness_design_studio.core import checks, configcheck, journal
 from harness_design_studio.core.checks import Finding
 from harness_design_studio.core.derive import EXPLAINABLE_RULES, explain_finding, is_explainable
 from harness_design_studio.core.drc import by_rule
@@ -181,12 +181,15 @@ OBJECT_COLUMNS: Final = (
 )
 
 
-def object_row(f: Finding) -> dict[str, Any]:
+def object_row(f: Finding, by: str = "") -> dict[str, Any]:
+    """One finding of the objects table. `by` is `by NAME on DATE` from the journal, if it has one."""
+    mark = f"{strings.DEVIATION_WORD}: " if f.deviation else ""
+    who = f" ({by})" if f.waiver is not None and by else ""
     return {
         "object": f.object_id or strings.CHECKS_WHOLE_DESIGN,
         "message": with_area(f.title),  # a gauge named in a finding has its mm² on screen (D2)
         "severity": strings.CHECKS_SEVERITY.get(f.severity, f.severity),
-        "waiver": f.waiver.justification
+        "waiver": f"{mark}{f.waiver.justification}{who}"
         if f.waiver is not None
         else strings.CHECKS_WAIVER_CHANGED
         if f.waiver_changed
@@ -270,6 +273,8 @@ class RuleDetails(QWidget):
         self.theme = theme
         self.setObjectName("checks-details")
         self.result: RuleResult | None = None
+        # who accepted a waived finding and when, from the journal ('' without one); the panel sets it
+        self.by: Callable[[str], str] = lambda _finding_id: ""
         # the panel replaces these two for a project with extensions (S8); alone, only the built-in rules
         self.explainable: Callable[[str], bool] = lambda rule_id: rule_id in EXPLAINABLE_RULES
         self.source_note: Callable[[str], str] = lambda rule_id: ""
@@ -449,7 +454,7 @@ class RuleDetails(QWidget):
         return box
 
     def _fill_objects(self, r: RuleResult) -> None:
-        rows = [object_row(f) for f in r.findings]
+        rows = [object_row(f, self.by(f.id) if f.waiver else "") for f in r.findings]
         self.objects.set_rows(rows)
         n = len(rows)
         silent = r.status == "pending" and n == 0  # the rule did not run: it found nothing to list
@@ -573,6 +578,7 @@ class ChecksPanel(QWidget):
         self.stack.addWidget(self.table)
         self.stack.addWidget(self.empty)
         self.details = RuleDetails(theme, settings)
+        self.details.by = lambda fid: journal.who_and_when(self.ctl.project, fid)
         self.details.explainable = lambda rule_id: is_explainable(self.ctl.project, rule_id)
         self.details.source_note = self._source_note
         self.details.showRequested.connect(self.showRequested)

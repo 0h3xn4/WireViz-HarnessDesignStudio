@@ -34,7 +34,9 @@ ISS = ROOT / "packaging" / "windows" / "harness-design-studio.iss"
 APP_NAME = "Harness Design Studio"
 PROJECT = "wheel-link"
 WALKTHROUGH = (
-    ["new", PROJECT, "--template", "first-steps"],
+    # no journal: it holds the time and the name of whoever ran the walk-through, so two runs of
+    # the same commands would not give the same bytes
+    ["new", PROJECT, "--template", "first-steps", "--no-journal"],
     ["validate", PROJECT],
     ["generate", PROJECT],
     ["drc", PROJECT],

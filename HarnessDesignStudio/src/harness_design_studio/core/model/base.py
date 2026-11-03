@@ -97,6 +97,20 @@ Label = Annotated[
     str, StringConstraints(max_length=200), AfterValidator(_no_control_chars)
 ]  # a name that may be empty
 IsoDate = Annotated[str, AfterValidator(_iso_date)]
+
+
+def _not_blank(value: str) -> str:
+    if not value.strip():
+        raise ValueError("must say why (not empty)")
+    return value
+
+
+Reason = Annotated[
+    str,
+    StringConstraints(min_length=1, max_length=500),
+    AfterValidator(_no_control_chars),
+    AfterValidator(_not_blank),
+]  # why a person did something deliberately (an override): never empty
 Text = Annotated[str, StringConstraints(max_length=5000), AfterValidator(_no_control_chars)]
 
 # Numeric domains. A value outside them is damage or a typing slip, never a design decision, so

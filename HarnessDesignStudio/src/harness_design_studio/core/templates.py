@@ -71,8 +71,13 @@ def _root() -> Path:
     return root
 
 
-def create_project(dest: Path, template: str, name: str | None = None) -> Project:
-    """Write a new project to `dest` (a missing or empty folder) from the named example."""
+def create_project(
+    dest: Path, template: str, name: str | None = None, *, journal: bool = False
+) -> Project:
+    """Write a new project to `dest` (a missing or empty folder) from the named example. With
+    `journal` the project starts a change journal (`journal.json`); the command `new` and the
+    editor's New project ask for it, the builders of the examples and the tests do not, so that the
+    files they make do not depend on the time or on who ran them."""
     known = {t.name: t for t in TEMPLATES}
     if template not in known:
         raise TemplateError(f"Unknown template '{template}'. Choose one of: {', '.join(known)}.")
@@ -88,6 +93,11 @@ def create_project(dest: Path, template: str, name: str | None = None) -> Projec
         project.meta = evolve(project.meta, name=name.strip())
     save_project(project, dest)
     write_gitattributes(dest)  # so that two people who both press Generate can merge (merge-fix)
+    if journal:
+        from harness_design_studio.core import journal as journal_module
+
+        journal_module.start(project, "New project from the example '" + template + "'.")
+        save_project(project, dest)
     return project
 
 

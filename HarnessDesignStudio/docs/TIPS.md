@@ -107,7 +107,7 @@ harness-design-studio schema my-design/schemas
 ```
 
 ```
-15 schemas written to my-design/schemas. In VS Code, copy the "json.schemas" entry of my-design/schemas/editor-settings.json into the .vscode/settings.json of the project (the schemas folder must sit inside the project folder as schemas/).
+16 schemas written to my-design/schemas. In VS Code, copy the "json.schemas" entry of my-design/schemas/editor-settings.json into the .vscode/settings.json of the project (the schemas folder must sit inside the project folder as schemas/).
 ```
 
 The folder must not exist yet or must be empty.

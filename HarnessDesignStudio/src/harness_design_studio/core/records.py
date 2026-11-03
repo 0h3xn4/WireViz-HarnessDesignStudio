@@ -596,3 +596,163 @@ def template_infos() -> list[TemplateInfo]:
     from harness_design_studio.core.templates import TEMPLATES
 
     return [TemplateInfo(t.name, t.title, t.summary) for t in TEMPLATES]
+
+
+# ---- the change journal, overrides and deviations (S4) -------------------------------------------
+#
+# Unlike the records above, a journal record holds a time and a name: they are in the project's
+# `journal.json`, so the same project still gives the same record.
+
+
+@dataclass(frozen=True)
+class JournalRecord:
+    """One entry of the change journal (`get_journal`)."""
+
+    seq: int
+    when: str
+    author: str
+    kind: str
+    object: str
+    field: str
+    old: Any
+    new: Any
+    reason: str
+    tool_version: str
+    chain: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "seq": self.seq, "when": self.when, "author": self.author, "kind": self.kind,
+            "object": self.object, "field": self.field, "old": self.old, "new": self.new,
+            "reason": self.reason, "tool_version": self.tool_version, "chain": self.chain,
+        }  # fmt: skip
+
+
+@dataclass(frozen=True)
+class JournalReport:
+    """The journal of a project: `has_journal` is false for a project that keeps none."""
+
+    has_journal: bool
+    entries: tuple[JournalRecord, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "has_journal": self.has_journal,
+            "count": len(self.entries),
+            "entries": [e.to_dict() for e in self.entries],
+        }
+
+
+@dataclass(frozen=True)
+class OverrideRecord:
+    """A value of a wire set by hand: the field (`gauge_awg`, `part_id`, `colour`, `length_m`), the
+    value now on the wire and the reason given."""
+
+    field: str
+    value: Any
+    reason: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {"field": self.field, "value": self.value, "reason": self.reason}
+
+
+@dataclass(frozen=True)
+class OverrideResult:
+    """What `set_override`, `clear_override` and `get_overrides` report for a wire. `action` is
+    "set", "clear" or "show"; `changed` is false when nothing had to be written. `derivation` is
+    the derivation *Overridden by the engineer* (None when the wire has no override)."""
+
+    wire: str
+    action: str
+    changed: bool
+    overrides: tuple[OverrideRecord, ...]
+    derivation: Any = None  # a core.derive.Derivation
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "wire": self.wire,
+            "action": self.action,
+            "changed": self.changed,
+            "overrides": [o.to_dict() for o in self.overrides],
+            "derivation": self.derivation.to_dict() if self.derivation is not None else None,
+        }
+
+
+@dataclass(frozen=True)
+class DeviationRecord:
+    """An error of an electrical rule that a person accepted, with the reason and, when the project
+    keeps a journal, `by NAME on DATE`."""
+
+    id: str
+    rule: str
+    title: str
+    reason: str
+    by: str
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "id": self.id, "rule": self.rule, "title": self.title, "reason": self.reason,
+            "by": self.by,
+        }  # fmt: skip
+
+
+@dataclass(frozen=True)
+class DeviationReport:
+    """The deviations of a project, or the one just recorded or taken back (`action` is "list",
+    "record" or "remove"; `finding` is its finding ID or empty)."""
+
+    action: str
+    finding: str
+    deviations: tuple[DeviationRecord, ...]
+
+    def to_dict(self) -> dict[str, Any]:
+        return {
+            "action": self.action,
+            "finding": self.finding,
+            "count": len(self.deviations),
+            "deviations": [d.to_dict() for d in self.deviations],
+        }
+
+
+def journal_report(project: Project, object_id: str | None = None, since: int = 0) -> JournalReport:
+    from harness_design_studio.core import journal
+
+    entries = journal.entries_for(project, object_id, since)
+    return JournalReport(
+        project.journal is not None,
+        tuple(JournalRecord(**e.model_dump(mode="json")) for e in entries),
+    )
+
+
+def override_records(project: Project, wire_id: str) -> tuple[OverrideRecord, ...]:
+    from harness_design_studio.core.wires import find_wire
+
+    _h, w = find_wire(project, wire_id)
+    return tuple(OverrideRecord(f, getattr(w, f), w.overrides[f]) for f in sorted(w.overrides))
+
+
+def override_result(project: Project, wire_id: str, action: str, changed: bool) -> OverrideResult:
+    from harness_design_studio.core.derive import explain_wire
+
+    found = [d for d in explain_wire(project, wire_id) if d.id == "wire-override"]
+    return OverrideResult(
+        wire_id, action, changed, override_records(project, wire_id), found[0] if found else None
+    )
+
+
+def deviation_records(project: Project) -> tuple[DeviationRecord, ...]:
+    from harness_design_studio.core import checks, journal
+    from harness_design_studio.core.drc import run as run_rules
+
+    found = {f.id: f for f in [*checks.find(project), *run_rules(project)]}
+    marked = sorted((f for f in found.values() if f.deviation), key=lambda f: f.id)
+    return tuple(
+        DeviationRecord(
+            f.id,
+            f.rule,
+            f.title,
+            f.waiver.justification if f.waiver is not None else "",
+            journal.who_and_when(project, f.id),
+        )
+        for f in marked
+    )

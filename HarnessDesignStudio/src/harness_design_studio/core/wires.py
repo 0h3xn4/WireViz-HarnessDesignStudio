@@ -3,6 +3,8 @@ person draws between two pins.
 
     ops = plan_wire_edit(project, ["W001-0001", "W001-0002"], {"gauge_awg": 22, "colour": "red"})
     ops = plan_wire_reset(project, ["W001-0001"])          # give the wire back to generation
+    ops = plan_override(project, "W001-0001", "gauge_awg", 28, "reason")   # one field, one reason
+    ops = plan_clear_override(project, "W001-0001", "gauge_awg")           # give that field back
     ops = plan_add_wire(project, "W001", "W001-J1", "3", "W001-J2", "5", signal="HEATER")
     ops = plan_delete_wire(project, "W001-0099")           # only a wire that a person drew
     ops = plan_bulk_wire_edit(project, "W001", {"gauge_awg": 22})      # all wires of a harness
@@ -10,9 +12,11 @@ person draws between two pins.
 
 Wires are generated, and generation puts them back the way the design says. A person's choice
 stays when it is typed here: gauge, type, colour and length lock the wire (`Wire.locked`, which
-generation honours); the label (text for the wire labels instead of the signal name) and the note
-are always kept. A released harness cannot be edited; the plans say so in plain words before the
-transaction would refuse them. Nothing here invents a value: a field is what the person typed.
+generation honours) and, on a generated wire, are recorded as an override with the reason that must
+be given (`Wire.overrides`; S4); the label (text for the wire labels instead of the signal
+name) and the note are always kept. A released harness cannot be edited; the plans say so in
+plain words before the transaction would refuse them. Nothing here invents a value: a field is
+what the person typed.
 
 A wire drawn by a person (`Wire.manual`) joins two pins of the cable connectors of one harness. It
 has no interface, generation keeps it exactly as it is (and says so when it cannot: the connector
@@ -29,7 +33,7 @@ from .commands import Op, Put
 from .edit import EditError
 from .model import Harness, Project, ShieldGroup, Wire
 from .model.base import evolve
-from .model.physical import COAX_SHIELD_END
+from .model.physical import COAX_SHIELD_END, OVERRIDABLE
 
 EDITABLE: tuple[str, ...] = ("gauge_awg", "part_id", "colour", "length_m", "label", "note")
 ENDS: tuple[str, ...] = (
@@ -38,7 +42,14 @@ ENDS: tuple[str, ...] = (
     "to_connector",
     "to_pin",
 )  # manual wires only
-LOCKING: frozenset[str] = frozenset({"gauge_awg", "part_id", "colour", "length_m"})
+LOCKING: frozenset[str] = frozenset(OVERRIDABLE)
+# The reason recorded for a value of a wire that was locked before reasons were kept, when a person
+# overrides another field of that wire (so that what it kept stays kept, and says why it is there).
+LEGACY_REASON = "Locked before reasons were recorded (the reason is not known)."
+NEEDS_REASON = (
+    "An override needs a reason: say why you set the {fields} of {wires} in place of the value the "
+    "design gives (the reason is kept with the wire, who and when in the journal)."
+)
 _WHAT = {
     "gauge_awg": "The wire gauge (AWG)",
     "part_id": "The wire type",
@@ -46,6 +57,14 @@ _WHAT = {
     "length_m": "The length",
     "label": "The label",
     "note": "The note",
+}
+
+
+FIELD_NAMES = {
+    "gauge_awg": "gauge",
+    "part_id": "wire type",
+    "colour": "colour",
+    "length_m": "length",
 }
 
 
@@ -113,18 +132,50 @@ def _clean(project: Project, field: str, value: object) -> object:
     return value
 
 
-class Change:
-    """The new version of one wire (a callable, so `_apply` stays small)."""
+def reason_text(reason: str | None) -> str | None:
+    """The reason as it is kept (trimmed); None when none was given or it is empty."""
+    text = (reason or "").strip()
+    return text or None
 
-    def __init__(self, changes: Mapping[str, object]) -> None:
+
+class Change:
+    """The new version of one wire (a callable, so `_apply` stays small). `reason` is why a value
+    of a generated wire is set by hand; it is kept as an override of each such field."""
+
+    def __init__(self, changes: Mapping[str, object], reason: str | None = None) -> None:
         self.changes = dict(changes)
+        self.reason = reason_text(reason)
+
+    def needs_reason(self, w: Wire) -> list[str]:
+        """The fields this change sets on a generated wire to a value other than the one it has."""
+        if w.manual:
+            return []
+        return sorted(k for k, v in self.changes.items() if k in LOCKING and getattr(w, k) != v)
 
     def __call__(self, w: Wire) -> Wire:
         changes = {k: v for k, v in self.changes.items() if getattr(w, k) != v}
-        if not changes:
+        recorded = (
+            self.reason is not None
+            and not w.manual
+            and any(
+                k in LOCKING and (k in changes or w.overrides.get(k) != self.reason)
+                for k in self.changes
+            )
+        )
+        if not changes and not recorded:
             return w
-        if LOCKING & changes.keys():
+        if LOCKING & changes.keys() or recorded:
             changes["locked"] = True
+        if recorded and self.reason is not None:
+            overrides = dict(w.overrides)
+            if w.locked and not w.overrides:  # locked before: what it kept stays kept, and says so
+                for f in OVERRIDABLE:
+                    if getattr(w, f) is not None and f not in self.changes:
+                        overrides[f] = LEGACY_REASON
+            for f in OVERRIDABLE:
+                if f in self.changes:
+                    overrides[f] = self.reason
+            changes["overrides"] = overrides
         try:
             return evolve(w, **changes)
         except ValidationError as exc:
@@ -138,6 +189,19 @@ def _apply(project: Project, wire_ids: Sequence[str], make: Change) -> list[Op]:
     if not wanted:
         raise EditError("No wire is selected.")
     found = {wid: find_wire(project, wid) for wid in wanted}
+    if make.reason is None:  # setting a value of a generated wire by hand needs a reason
+        missing = {wid: make.needs_reason(w) for wid, (_h, w) in found.items()}
+        missing = {wid: fields for wid, fields in missing.items() if fields}
+        if missing:
+            fields = sorted({f for fs in missing.values() for f in fs})
+            names = ", ".join(FIELD_NAMES[f] for f in fields)
+            ids = sorted(missing)
+            where = ids[0] if len(ids) == 1 else f"{ids[0]} and {len(ids) - 1} more"
+            raise EditError(
+                NEEDS_REASON.format(
+                    fields=names, wires=f"wire {where}" if len(ids) == 1 else f"wires {where}"
+                )
+            )
     ops: list[Op] = []
     for hid in sorted({h.id for h, _w in found.values()}):
         h = project.harnesses[hid]
@@ -152,10 +216,16 @@ def _apply(project: Project, wire_ids: Sequence[str], make: Change) -> list[Op]:
 
 
 def plan_wire_edit(
-    project: Project, wire_ids: Iterable[str], changes: Mapping[str, object]
+    project: Project,
+    wire_ids: Iterable[str],
+    changes: Mapping[str, object],
+    *,
+    reason: str | None = None,
 ) -> list[Op]:
     """Ops that set `changes` ({field: value}, fields of `EDITABLE`) on each wire. Gauge, type,
-    colour and length lock the wire against generation; an empty label or colour clears it."""
+    colour and length lock the wire against generation, and on a generated wire they are an
+    override: `reason` (why you set it in place of the design's value) is required, and is kept with
+    each such field. An empty label or colour clears it."""
     unknown = sorted(set(changes) - set(EDITABLE) - set(ENDS))
     if unknown:
         raise EditError(
@@ -176,10 +246,51 @@ def plan_wire_edit(
         field: (value if field in ENDS else _clean(project, field, value))
         for field, value in changes.items()
     }
-    ops = _apply(project, ids, Change(clean))
+    ops = _apply(project, ids, Change(clean, reason))
     if ends:
         _check_ends(project, ops, ids[0])
     return ops
+
+
+def plan_override(
+    project: Project, wire_id: str, field: str, value: object, reason: str | None
+) -> list[Op]:
+    """Ops that set `field` (gauge_awg, part_id, colour or length_m) of a generated wire to `value`
+    as an override: `reason` is required and is kept with the field. Nothing for a value and
+    a reason the wire has already."""
+    if field not in OVERRIDABLE:
+        raise EditError(f"Only {', '.join(OVERRIDABLE)} can be overridden, not '{field}'.")
+    h, w = find_wire(project, wire_id)
+    if w.manual:
+        raise EditError(
+            f"Wire {wire_id} was drawn by you, so its {field} is yours already; use the edit "
+            "of the wire. An override replaces a value that generation gives."
+        )
+    if reason_text(reason) is None:
+        raise EditError(
+            f"An override needs a reason: say why wire {wire_id} gets this {FIELD_NAMES[field]} "
+            "in place of the value the design gives."
+        )
+    return plan_wire_edit(project, [wire_id], {field: value}, reason=reason)
+
+
+def plan_clear_override(project: Project, wire_id: str, field: str) -> list[Op]:
+    """Ops that give one overridden field back to generation: its override is removed and the value
+    is cleared, so the next Generate gives the wire the value the design asks for. When it was the
+    last override, the wire is unlocked."""
+    if field not in OVERRIDABLE:
+        raise EditError(f"Only {', '.join(OVERRIDABLE)} can be overridden, not '{field}'.")
+    h, w = find_wire(project, wire_id)
+    if not w.locked or (w.overrides and field not in w.overrides):
+        raise EditError(f"The {field} of wire {wire_id} is not overridden.")
+    if h.status == "released":
+        raise EditError(released_text(h))
+    kept = dict(w.overrides)
+    if not kept:  # locked before reasons were kept: what it kept stays kept, and says so
+        kept = {f: LEGACY_REASON for f in OVERRIDABLE if getattr(w, f) is not None}
+    kept.pop(field, None)
+    new = evolve(w, **{field: None}, overrides=kept, locked=bool(kept))
+    return [Put("harnesses", evolve(h, wires=[new if x.id == wire_id else x for x in h.wires]))]
 
 
 class _Reset(Change):
@@ -187,7 +298,7 @@ class _Reset(Change):
         super().__init__({})
 
     def __call__(self, w: Wire) -> Wire:
-        return evolve(w, locked=False) if w.locked else w
+        return evolve(w, locked=False, overrides={}) if w.locked or w.overrides else w
 
 
 def plan_wire_reset(project: Project, wire_ids: Iterable[str]) -> list[Op]:
@@ -689,8 +800,14 @@ def bulk_targets(
 class _FillEmpty(Change):
     """Set only the fields a wire has no value for; a wire that has them all is left alone."""
 
+    def _empty(self, w: Wire) -> dict[str, object]:
+        return {k: v for k, v in self.changes.items() if getattr(w, k) is None}
+
+    def needs_reason(self, w: Wire) -> list[str]:
+        return Change(self._empty(w)).needs_reason(w)
+
     def __call__(self, w: Wire) -> Wire:
-        return Change({k: v for k, v in self.changes.items() if getattr(w, k) is None})(w)
+        return Change(self._empty(w), self.reason)(w)
 
 
 def plan_bulk_wire_edit(
@@ -701,13 +818,15 @@ def plan_bulk_wire_edit(
     wire_ids: Iterable[str] | None = None,
     signal: str | None = None,
     only_empty: bool = False,
+    reason: str | None = None,
 ) -> list[Op]:
     """Ops that set the same gauge (`gauge_awg`), type (`part_id`), colour and length (`length_m`)
     on many wires of one harness in one `Put`: the selected `wire_ids`, else every wire with this
     `signal`, else all wires (`bulk_targets`). The values are checked like a single edit and lock
     the wires against generation exactly as it does (`Wire.locked`); `only_empty` sets a field only
     on the wires that have no value for it yet. A field left out stays; nothing changes when the
-    wires have the values already (no ops)."""
+    wires have the values already (no ops). Like a single edit it needs a `reason` for the wires it
+    sets by hand."""
     unknown = sorted(set(changes) - set(BULK_FIELDS))
     if unknown:
         raise EditError(
@@ -720,7 +839,7 @@ def plan_bulk_wire_edit(
     ids = bulk_targets(project, harness_id, wire_ids=wire_ids, signal=signal)
     if not ids:
         raise EditError(f"{harness_id} has no wires.")
-    return _apply(project, ids, (_FillEmpty if only_empty else Change)(clean))
+    return _apply(project, ids, (_FillEmpty if only_empty else Change)(clean, reason))
 
 
 def wires_changed(project: Project, ops: Sequence[Op]) -> int:

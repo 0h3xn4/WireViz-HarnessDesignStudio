@@ -16,6 +16,7 @@ import textwrap
 from dataclasses import dataclass
 
 from harness_design_studio.core import configcheck
+from harness_design_studio.core.deviations import deviation_lines, override_lines
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Connector, Harness, Project, ShieldGroup, Wire
 from harness_design_studio.core.wirecolours import resolve
@@ -282,8 +283,9 @@ def _wrapped(line: str, indent: str = "      ") -> list[str]:
     return textwrap.wrap(line, 150, subsequent_indent=indent, break_long_words=True) or [line]
 
 
-def _extras(h: Harness) -> list[str]:
-    """The lines beneath the diagram: shields, routing segments, spare pins, notes."""
+def _extras(h: Harness, project: Project | None = None) -> list[str]:
+    """The lines beneath the diagram: shields, routing segments, spare pins, notes, and (only when
+    there are any) the values set by hand in place of the design's and the accepted deviations."""
     out: list[str] = []
     if h.shields:
         out.append("Shields:")
@@ -306,6 +308,9 @@ def _extras(h: Harness) -> list[str]:
             out += _wrapped(f"Spare pins {c.id}: {', '.join(spare)}")
     if h.notes:
         out += _wrapped(f"Notes: {h.notes}")
+    marks = override_lines(h) + (deviation_lines(project, h) if project is not None else [])
+    for line in marks:
+        out += _wrapped(line)
     return out
 
 
@@ -680,7 +685,7 @@ def harness_sheets(project: Project, h: Harness, stamp: Stamp, size: str) -> lis
     if layout is not None and sketch_h > capacity / 2:  # a tall sketch would crowd the wires out
         layout, sketch_h = None, 0.0
     pages = _paginate(items, side, capacity, h.shields, first_capacity=capacity - sketch_h)
-    extras = _extras(h)
+    extras = _extras(h, project)
     sheets: list[Sheet] = []
     bottoms: list[float] = []
     for n, pg in enumerate(pages, start=1):

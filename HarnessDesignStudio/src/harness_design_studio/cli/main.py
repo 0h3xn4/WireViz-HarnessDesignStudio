@@ -19,6 +19,7 @@ from harness_design_studio.cli import (
     data,
     explain,
     extensions_cmd,
+    journal_cmd,
     merge,
     open_data,
     settings_cmd,
@@ -45,6 +46,14 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="`harness` still works as a short alias of this command.",
     )
     parser.add_argument("--version", action="store_true", help="print the tool version and exit")
+    parser.add_argument(
+        "--author",
+        dest="journal_author",  # `generate --author` (with --run-record) has its own option
+        default=None,
+        metavar="NAME",
+        help="who is making the changes of this run, for the change journal (before the command); "
+        "default: the environment variable HARNESS_AUTHOR, else the name Git has, else the user",
+    )
     sub = parser.add_subparsers(dest="command")
     for name, text in (
         ("validate", "check a project folder for errors and inconsistencies"),
@@ -84,6 +93,7 @@ def build_parser() -> argparse.ArgumentParser:
                 help="the folder to write the outputs to (default: <project>/outputs)",
             )
     start.register(sub)
+    journal_cmd.register(sub)
     merge.register(sub)
     explain.register(sub)
     open_data.register(sub)
@@ -293,6 +303,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command is None:
         parser.print_usage(sys.stderr)
         return 2
+    from harness_design_studio.core import journal as journal_module
+
+    journal_module.set_author(getattr(args, "author", None) or args.journal_author)
     real_stdout = sys.stdout
     sys.stdout = guard = _PipeGuard(real_stdout)
     try:
@@ -393,6 +406,7 @@ NOTHING_DONE = {
     "import-pinout": "imported", "export-pinout": "exported",
     "export-devices": "exported", "import-devices": "imported", "import-build-data": "imported",
     "export-subsystem": "exported", "import-subsystem": "imported", "explain": "explained", "settings": "reported or changed",
+    "journal": "listed", "override": "changed", "deviation": "recorded",
     "import-plugin": "imported",
     "export-data": "exported",
     "imports": "listed",
@@ -411,6 +425,7 @@ def _project_lock(args: argparse.Namespace) -> Iterator[None]:
     path = getattr(args, "project", None)
     writes = (
         args.command in MUTATING
+        or (args.command in journal_cmd.COMMANDS and journal_cmd.mutates(args))
         or (
             args.command == "config"
             and (
@@ -469,6 +484,8 @@ def _dispatch(args: argparse.Namespace) -> int:
                     file=sys.stderr,
                 )
                 return 2
+    if args.command in journal_cmd.COMMANDS:
+        return journal_cmd.run(args)
     if getattr(args, "author", None) and not getattr(args, "run_record", False):
         print("error: --author goes with --run-record", file=sys.stderr)
         return 2

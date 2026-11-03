@@ -681,6 +681,7 @@ def _list_timer(parent: QWidget, slot: Callable[[], None]) -> QTimer:
 class ProblemsPanel(QScrollArea):
     showRequested = Signal(str)  # object id
     waiveRequested = Signal(object)  # Finding
+    deviateRequested = Signal(object)  # Finding: an error of an electrical rule, accepted
 
     def __init__(self, ctl: EditorController) -> None:
         super().__init__()
@@ -742,7 +743,9 @@ class ProblemsPanel(QScrollArea):
             total,
             header,
             tuple((t.text, t.kind, t.target) for t in todos),
-            tuple((f.id, f.waiver.justification if f.waiver else "") for f in waived),
+            tuple(
+                (f.id, f.waiver.justification if f.waiver else "", self._by(f.id)) for f in waived
+            ),
             self.ctl.read_only,
             checking,
             self.ctl.drc_error,
@@ -778,8 +781,19 @@ class ProblemsPanel(QScrollArea):
             self.lay.addWidget(heading(strings.WAIVED))
             for f in waived:
                 if f.waiver is not None:
-                    self.lay.addWidget(muted(f"✓ {f.id}: “{f.waiver.justification}”"))
+                    mark = f"{strings.DEVIATION_WORD} " if f.deviation else ""
+                    by = self._by(f.id)
+                    who = f" ({by})" if by else ""
+                    line = muted(f"✓ {mark}{f.id}: “{f.waiver.justification}”{who}")
+                    line.setObjectName(f"waived-{f.id}")
+                    self.lay.addWidget(line)
         self.lay.addStretch(1)
+
+    def _by(self, finding_id: str) -> str:
+        """`by NAME on DATE` of a waiver or deviation, from the journal ('' when there is none)."""
+        from harness_design_studio.core import journal
+
+        return journal.who_and_when(self.ctl.project, finding_id)
 
     def _todo_clicked(self, kind: str, target: str) -> None:
         """A to-do line: an object is shown on the diagram; "warnings to fix or waive" scrolls to
@@ -925,6 +939,13 @@ class ProblemsPanel(QScrollArea):
             waive.setEnabled(not self.ctl.read_only)
             waive.clicked.connect(lambda: self.waiveRequested.emit(f))
             row.addWidget(waive)
+        if f.can_deviate and f.waiver is None:
+            deviate = QPushButton(strings.DEVIATE)
+            deviate.setObjectName("deviate")
+            deviate.setToolTip(strings.DEVIATE_TIP)
+            deviate.setEnabled(not self.ctl.read_only)
+            deviate.clicked.connect(lambda: self.deviateRequested.emit(f))
+            row.addWidget(deviate)
         row.addStretch(1)
         lay.addLayout(row)
         return card

@@ -17,7 +17,6 @@ so the record ties a time and a person to exactly those files.
 """
 
 import json
-import os
 import platform
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
@@ -25,9 +24,9 @@ from pathlib import Path
 from typing import Any
 
 from harness_design_studio import __version__
+from harness_design_studio.core import journal
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Project
-from harness_design_studio.core.vcs.gitname import configured_name
 
 FORMAT = 1
 FILE_NAME = "run_record.json"
@@ -50,18 +49,9 @@ def resolve_operator(
 ) -> str:
     """Who is running the tool: the name given (`--author`), else the environment variable
     `HARNESS_AUTHOR`, else the `user.name` Git has for the project folder, else the user of the
-    operating system (`USER` or `USERNAME`), else "unknown". Never an empty text."""
-    env = os.environ if environ is None else environ
-    for candidate in (explicit, env.get(OPERATOR_ENV)):
-        if candidate and candidate.strip():
-            return candidate.strip()
-    git = configured_name(folder)
-    if git:
-        return git
-    for name in ("USER", "USERNAME", "LOGNAME"):
-        if env.get(name, "").strip():
-            return env[name].strip()
-    return UNKNOWN
+    operating system (`USER`, `USERNAME` or `LOGNAME`), else "unknown". Never an empty text. The
+    journal of the project resolves its author the same way: this calls `journal.resolve_author`."""
+    return journal.resolve_author(explicit, environ=environ, folder=folder)
 
 
 def make(

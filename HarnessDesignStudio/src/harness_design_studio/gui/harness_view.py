@@ -61,7 +61,7 @@ from harness_design_studio.core.generate.explain import (
     explain_wire,
 )
 from harness_design_studio.core.generate.lengths import wire_length
-from harness_design_studio.core.model import Harness, Project
+from harness_design_studio.core.model import Harness, Project, Wire
 from harness_design_studio.core.outputs.build import outputs_status
 from harness_design_studio.core.outputs.canvas import Sheet
 from harness_design_studio.core.outputs.drawing import harness_sheets
@@ -140,7 +140,12 @@ def _wire_state(
 
 
 def _lock(
-    project: Project, kind: str, object_id: str, locked: Locked, by_hand: str | None
+    project: Project,
+    kind: str,
+    object_id: str,
+    locked: Locked,
+    by_hand: str | None,
+    by_hand_word: str = strings.HV_LOCKED_WORD,
 ) -> tuple[str, str]:
     """(word, tooltip) of the lock on an object: the release that locks it (named by
     `lockview.lock_reason`), else the hand-set lock, else nothing."""
@@ -148,8 +153,24 @@ def _lock(
     if why:
         return strings.HV_LOCKED_WORD, why
     if by_hand:
-        return strings.HV_LOCKED_WORD, by_hand
+        return by_hand_word, by_hand
     return "", ""
+
+
+def wire_hand_lock(w: Wire) -> tuple[str | None, str]:
+    """(tooltip, word) of the hand-set state of a wire: its overrides with their reasons, or a lock
+    from before reasons were kept, or nothing."""
+    if w.overrides:
+        # the gauge is shown with its cross-section on the screen (D2); the files keep the number
+        what = "; ".join(
+            f"{f}{' ' + gauge_short(w.gauge_awg) if f == 'gauge_awg' and w.gauge_awg else ''}: "
+            f"{w.overrides[f]}"
+            for f in sorted(w.overrides)
+        )
+        return strings.HV_OVERRIDE_TIP.format(what), strings.HV_OVERRIDDEN_WORD
+    if w.locked:
+        return strings.HV_LOCK_WIRE + " " + strings.HV_LOCK_NO_REASON, strings.HV_LOCKED_WORD
+    return None, strings.HV_LOCKED_WORD
 
 
 def pin_rows(project: Project, h: Harness, locked: Locked | None = None) -> list[dict[str, Any]]:
@@ -187,9 +208,8 @@ def pin_rows(project: Project, h: Harness, locked: Locked | None = None) -> list
                 if w is not None:
                     length = wire_length(h, w)
                     key, word, tip = _wire_state(h, w.gauge_awg, length, w.locked or w.manual)
-                    w_word, w_tip = _lock(
-                        project, "wire", w.id, locked, strings.HV_LOCK_WIRE if w.locked else None
-                    )
+                    hand, hand_word = wire_hand_lock(w)
+                    w_word, w_tip = _lock(project, "wire", w.id, locked, hand, hand_word)
                     if not row["locked"]:
                         row["locked"], row["locked_why"] = w_word, w_tip
                         row["locked_state"] = "locked" if w_word else None
@@ -211,9 +231,8 @@ def wire_rows(project: Project, h: Harness, locked: Locked | None = None) -> lis
     for w in sorted(h.wires, key=lambda x: natural_key(x.id)):
         length = wire_length(h, w)
         key, word, tip = _wire_state(h, w.gauge_awg, length, w.locked or w.manual)
-        l_word, l_tip = _lock(
-            project, "wire", w.id, locked, strings.HV_LOCK_WIRE if w.locked else None
-        )
+        hand, hand_word = wire_hand_lock(w)
+        l_word, l_tip = _lock(project, "wire", w.id, locked, hand, hand_word)
         rows.append({
             "id": w.id, "signal": w.signal or "",
             "from": f"{w.from_connector}.{w.from_pin}", "to": f"{w.to_connector}.{w.to_pin}",

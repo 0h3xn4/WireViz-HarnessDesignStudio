@@ -25,6 +25,16 @@ from harness_design_studio.core.io.loader import load_project as core_load
 from harness_design_studio.core.io.saver import save_project as core_save
 
 
+@pytest.fixture(autouse=True)
+def fixed_clock_and_author(monkeypatch: pytest.MonkeyPatch) -> None:
+    """The journal of a new project holds a time and a name: fix both, so that the command and the
+    interface can be compared byte for byte."""
+    from harness_design_studio.core import journal
+
+    monkeypatch.setattr(journal, "now", lambda: "2026-11-03T11:30:00Z")
+    monkeypatch.setenv("HARNESS_AUTHOR", "Ann Engineer")
+
+
 def tree(folder: Path) -> dict[str, str]:
     """Every file of a folder (not the lock and the `.bak` copies) with a digest of its bytes."""
     return {

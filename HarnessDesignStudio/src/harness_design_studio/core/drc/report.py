@@ -34,7 +34,8 @@ def render_markdown(project: Project, findings: list[Finding] | None = None) -> 
         )
     )
     open_ = [f for f in found if f.waiver is None]
-    waived = [f for f in found if f.waiver is not None]
+    waived = [f for f in found if f.waiver is not None and not f.deviation]
+    deviations = [f for f in found if f.deviation]
     rules_run = len(RULES)
     ext_lines: list[str] = []
     if project.extensions is not None:  # S8: only a project that enables extensions says so
@@ -51,7 +52,8 @@ def render_markdown(project: Project, findings: list[Finding] | None = None) -> 
         f"Model hash: `{model_hash(project)[:12]}`. Rules run: {rules_run}.",
         f"Open: {sum(f.severity == 'error' for f in open_)} error(s), "
         f"{sum(f.severity == 'warning' for f in open_)} warning(s), "
-        f"{sum(f.severity == 'info' for f in open_)} note(s). Waived: {len(waived)}.",
+        f"{sum(f.severity == 'info' for f in open_)} note(s). Waived: {len(waived)}."
+        + (f" Deviations: {len(deviations)}." if deviations else ""),
     ]
     if ext_lines:
         lines += ["", *ext_lines]
@@ -75,6 +77,18 @@ def render_markdown(project: Project, findings: list[Finding] | None = None) -> 
         for f in group:
             lines.append(f"- **{f.title}** (`{f.id}`)  ")
             lines.append(f"  {f.why_cited}")
+    if deviations:
+        lines += [
+            "",
+            f"## Deviations ({len(deviations)})",
+            "",
+            "These errors of electrical rules are accepted with a reason. They are not fixed and "
+            "do not meet the requirement; they stay on this list until the cause is removed.",
+            "",
+        ]
+        for f in deviations:
+            if f.waiver is not None:
+                lines.append(f"- **DEVIATION** {f.title} (`{f.id}`): “{f.waiver.justification}”")
     if waived:
         lines += ["", f"## Waived findings ({len(waived)})", ""]
         for f in waived:

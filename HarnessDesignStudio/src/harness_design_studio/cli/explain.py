@@ -79,6 +79,11 @@ def run(args: argparse.Namespace) -> int:
         print(json.dumps([d.to_dict() for d in found], indent=2, ensure_ascii=False))
         return 0
     print("\n\n".join(render(d) for d in found))
+    from harness_design_studio.core import journal
+
+    entries = journal.entries_for(project, args.object)
+    if entries:  # a project with a journal: who changed this object, when, from what to what, why
+        print(f"\nHistory of {args.object} (from the change journal):\n" + journal.render(entries))
     if all(not d.known for d in found):
         print("\nNothing could be explained yet: see what is not set above.", file=sys.stderr)
     return 0

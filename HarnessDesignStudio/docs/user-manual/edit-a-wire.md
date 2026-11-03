@@ -31,6 +31,7 @@ To make a whole harness yourself, with its own connectors, see [build a harness 
 - You have a generated project with a harness that is not released. A released harness is locked: start a new revision first ([change a released harness](change-a-released-harness.md)).
 - The tool generates the wires, and generates them again whenever you press **Generate**. A value that you type for a wire stays; the rest follows the design.
 - The tool sets **no gauge or colour of its own** on your behalf: what you type is what is kept.
+- Since stage S4, a gauge, type, colour or length you change on a **generated** wire is an **override** and needs a **reason** (a box that appears when you change one; Apply stays off until it is filled in). See [override a value and keep a history](override-and-keep-a-history.md).
 
 ## 1. Pick the wires
 
@@ -57,11 +58,11 @@ A mistake is said in words under the form (a gauge that is not a whole number, a
 
 For **Strip A (mm)** and **Strip B (mm)** a field that differs between the selected wires says *various*, and an empty field clears the value. **Apply strip lengths to all wires of this harness** gives every wire of the harness the two values in the fields and says, for example, `Strip lengths changed on 4 of 4 wires of W001.` (one undo step). The form says it too: `Strip lengths do not lock the wire against Generate: they are always kept, like the note.` Strip lengths can also be read from a table ([enter the build data](enter-the-build-data.md)).
 
-Gauge, type, colour and length lock the wire, so the **Locked** column of the wire table shows it and the line under the fields says *Your values*. A label, a note or a strip length alone does not lock the wire.
+Gauge, type, colour and length lock the wire, so the **Locked** column of the wire table shows it. On a generated wire the **Reason** box must be filled in first; the column then says *Overridden*, and the line under the fields names the values and the reason. A wire that was locked before reasons were kept says *Locked, no reason recorded*. Generate keeps the values that are overridden; the others follow the design. A label, a note or a strip length alone does not lock the wire.
 
 ## 3. Give a wire back to generation
 
-Select the wires and press **Reset to generated**. They are unlocked: the next **Generate** sets their gauge, type, colour and length from the design again (with placeholder values the gauge is *pending* again). Their label and note stay.
+Select the wires and press **Reset to generated**. They are unlocked and their overrides are forgotten: the next **Generate** sets their gauge, type, colour and length from the design again (with placeholder values the gauge is *pending* again). Their label and note stay. To give back one value only, use `override … --clear` ([override a value and keep a history](override-and-keep-a-history.md#3-give-a-value-back-to-the-design)).
 
 You cannot clear a gauge, type, colour or length on one wire; use **Reset to generated** instead.
 
@@ -69,6 +70,7 @@ You cannot clear a gauge, type, colour or length on one wire; use **Reset to gen
 
 - The **wire list** gets two columns, **Label** and **Note**, as soon as any wire in the project has one. A project without labels and notes keeps the wire list it had before.
 - The wire list gets **Strip A (mm)** and **Strip B (mm)** as soon as any wire in the project has a strip length, and the **Cut list** of the build workbook always shows them (`to fill in` while a wire has none).
+- The wire list gets a last column **Overrides** (the fields and their reasons) as soon as any wire in the project has an override; the cut list of the build workbook and the lines beneath the drawing show them for the harness that has them.
 - The **wire labels** (`labels.csv`) print the label in place of the signal name: `W001-0003 Heater supply to J2.4`.
 - The independent check (`harness-design-studio verify DIR --outputs`) compares both with the design.
 

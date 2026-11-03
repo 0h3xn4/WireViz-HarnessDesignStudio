@@ -2,6 +2,7 @@ from .base import Entity, evolve
 from .config import CONFIG_NAMES, ConfigFile, default_configs
 from .generation import GenerationRecord
 from .imports import ImportRecord
+from .journal import Journal, JournalEntry, JournalError
 from .library import PART_CATEGORIES, LibraryInfo, Part
 from .logical import Endpoint, InterfaceInstance, InterfaceType, Link, PinPair, SignalDef, Unit
 from .physical import (
@@ -36,6 +37,9 @@ __all__ = [
     "ImportRecord",
     "InterfaceInstance",
     "InterfaceType",
+    "Journal",
+    "JournalEntry",
+    "JournalError",
     "LibraryInfo",
     "Link",
     "Part",

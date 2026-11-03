@@ -76,6 +76,10 @@ SHAPES: dict[str, tuple[str, ...]] = {
     "compare": ("ok", "added", "removed", "changed", "changes", "not_compared"),
     "log": ("ok", "harness", "entries"),
     "migrate": ("ok", "migrated"),
+    "journal": ("ok", "has_journal", "count", "entries"),
+    "journal --start": ("ok", "started", "file"),
+    "override": ("ok", "wire", "action", "changed", "overrides", "derivation"),
+    "deviation": ("ok", "action", "finding", "count", "deviations"),
     "extensions": (
         "ok", "has_folder", "enabled_declarative", "enabled_plugins", "files", "plugins", "items",
         "issues",

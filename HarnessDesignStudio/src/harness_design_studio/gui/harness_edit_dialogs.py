@@ -133,6 +133,9 @@ class BulkWireDialog(QDialog):
         self.colour.setEditable(True)
         self.colour.addItems(["", *[name for name, _code, _hex in COLOURS]])
         self.length = QLineEdit()
+        self.reason = QLineEdit()
+        self.reason.setPlaceholderText(strings.WIRE_REASON_PLACEHOLDER)
+        self.reason.setMaxLength(500)
         self.only_empty = QCheckBox(strings.BULK_ONLY_EMPTY)
         for widget, name, text, tip in (
             (self.scope, "bulk-scope", strings.BULK_SCOPE, strings.BULK_SCOPE_TIP),
@@ -141,6 +144,7 @@ class BulkWireDialog(QDialog):
             (self.part, "bulk-type", strings.WIRE_TYPE, strings.WIRE_TYPE_TIP),
             (self.colour, "bulk-colour", strings.WIRE_COLOUR, strings.WIRE_COLOUR_TIP),
             (self.length, "bulk-length", strings.WIRE_LENGTH, strings.WIRE_LENGTH_TIP),
+            (self.reason, "bulk-reason", strings.WIRE_REASON, strings.WIRE_REASON_TIP),
         ):
             form.addRow(text, _field(widget, name, text, tip))
         colour_edit = self.colour.lineEdit()
@@ -164,6 +168,7 @@ class BulkWireDialog(QDialog):
         self.colour.currentTextChanged.connect(lambda _t: self._refresh())
         self.gauge.textChanged.connect(lambda _t: self._refresh())
         self.length.textChanged.connect(lambda _t: self._refresh())
+        self.reason.textChanged.connect(lambda _t: self._refresh())
         self.only_empty.toggled.connect(lambda _on: self._refresh())
         self._refresh()
 
@@ -211,6 +216,7 @@ class BulkWireDialog(QDialog):
                     changes,
                     wire_ids=ids,
                     only_empty=self.only_empty.isChecked(),
+                    reason=self.reason.text(),
                 )
                 self._count = wires_changed(self.project, self._ops)
                 if self._ops:

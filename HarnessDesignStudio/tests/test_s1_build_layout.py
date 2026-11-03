@@ -17,6 +17,7 @@ import pytest
 
 from harness_design_studio.cli.main import main
 from harness_design_studio.core import settings, templates
+from harness_design_studio.core.commands import apply_ops
 from harness_design_studio.core.derive import (
     Derivation,
     explain_object,
@@ -43,6 +44,7 @@ from harness_design_studio.core.generate.engine import generate_project
 from harness_design_studio.core.model import ConfigFile, Project, evolve
 from harness_design_studio.core.outputs import buildsheet, tables
 from harness_design_studio.core.outputs.stamp import stamp_of
+from harness_design_studio.core.wires import plan_override
 
 
 def _set(project: Project, file: str, **values: object) -> None:
@@ -449,6 +451,9 @@ def test_every_kind_a_project_makes_is_listed_with_its_page(tmp_path: Path) -> N
         if change is not None:
             change(project)
         _set(project, "derating", spare_pin_fraction=0.6)  # a rule-limit finding
+        if name == "flatsat":  # a wire with an override gives the derivation `wire-override`
+            wid = next(w.id for h in project.harnesses.values() for w in h.wires if not w.manual)
+            apply_ops(project, plan_override(project, wid, "colour", "pink", "customer request"))
         produced |= {d.id for d in explain_all(project)}
     assert produced <= set(KINDS), produced - set(KINDS)
     assert set(KINDS) <= produced, set(KINDS) - produced

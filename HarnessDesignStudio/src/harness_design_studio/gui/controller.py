@@ -23,6 +23,7 @@ from harness_design_studio.core import (
     drc,
     edit,
     first_connector,
+    journal,
     links,
     part_approval,
 )
@@ -970,6 +971,17 @@ class EditorController(QObject):
             message=strings.WAIVED_TOAST,
         )
 
+    def deviate(self, finding: checks.Finding, reason: str) -> bool:
+        """Accept an error of an electrical rule as a recorded deviation (one undo step)."""
+        try:
+            op = checks.deviate_op(finding, reason)
+        except Exception as exc:  # a reason that is too short, or a finding that cannot deviate
+            self.message.emit(_plain(exc), False)
+            return False
+        return self.run(
+            strings.STEP_DEVIATE.format(finding.id), [op], message=strings.DEVIATED_TOAST
+        )
+
     def approve_part(self, part_id: str) -> bool:
         """A person approved a part (the Next step page asked first): one undo step."""
         return self.attempt(
@@ -1341,6 +1353,7 @@ class EditorController(QObject):
         if folder.exists() and any(folder.iterdir()):
             raise HarnessError(strings.CHOOSE_EMPTY_NEW)
         project = new_project(name)
+        journal.start(project, "New project.")  # the journal of a project you make is kept
         folder.mkdir(parents=True, exist_ok=True)
         lock = ProjectLock(folder)
         lock.acquire()
@@ -1411,6 +1424,15 @@ class EditorController(QObject):
         if self.root is not None and self._lock is not None:  # only our own; not another window's
             self.stop_journal()  # a pending autosave would write the discarded changes again
             clear_journal(self.root)
+
+    def start_journal(self) -> bool:
+        """Give the open project a change journal and save it. False when it has one already."""
+        if self.root is None:
+            raise NeedSaveAs(strings.NO_FOLDER_YET)
+        if not journal.start(self.project):
+            return False
+        self.save()
+        return True
 
     def save(self) -> None:
         if self.root is None:

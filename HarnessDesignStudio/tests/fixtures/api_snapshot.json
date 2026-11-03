@@ -8,6 +8,8 @@
   "DataFiles",
   "Derivation",
   "DerivationFiles",
+  "DeviationRecord",
+  "DeviationReport",
   "EditError",
   "ExportResult",
   "ExportedFile",
@@ -15,8 +17,12 @@
   "GenerateResult",
   "HarnessError",
   "IssueRecord",
+  "JournalRecord",
+  "JournalReport",
   "LoadError",
   "NoOutputsError",
+  "OverrideRecord",
+  "OverrideResult",
   "PathLike",
   "Project",
   "ProjectDamagedError",
@@ -31,6 +37,8 @@
   "TransactionError",
   "ValidationResult",
   "VerifyResult",
+  "accept_deviation",
+  "clear_override",
   "create_project",
   "explain",
   "explain_all",
@@ -39,14 +47,20 @@
   "export_data",
   "generate",
   "get_config",
+  "get_journal",
+  "get_overrides",
   "get_settings",
+  "list_deviations",
   "list_extensions",
   "list_rules",
   "list_templates",
   "load_project",
+  "remove_deviation",
   "run_checks",
   "save_project",
   "set_config",
+  "set_override",
+  "start_journal",
   "validate",
   "verify",
   "write_derivations"
@@ -116,7 +130,9 @@
   ]
  },
  "functions": {
-  "create_project": "(folder: 'PathLike', template: 'str' = 'blank', name: 'str | None' = None) -> 'Project'",
+  "accept_deviation": "(folder: 'PathLike', finding_id: 'str', reason: 'str', *, author: 'str | None' = None) -> 'DeviationReport'",
+  "clear_override": "(folder: 'PathLike', wire_id: 'str', field: 'str', *, author: 'str | None' = None) -> 'OverrideResult'",
+  "create_project": "(folder: 'PathLike', template: 'str' = 'blank', name: 'str | None' = None, *, journal: 'bool' = True) -> 'Project'",
   "explain": "(source: 'ProjectSource', object_id: 'str') -> 'list[Derivation]'",
   "explain_all": "(source: 'ProjectSource') -> 'list[Derivation]'",
   "explain_finding": "(source: 'ProjectSource', finding_id: 'str') -> 'list[Derivation]'",
@@ -124,14 +140,20 @@
   "export_data": "(source: 'ProjectSource', out: 'PathLike', *, run_record: 'bool' = False, operator: 'str | None' = None) -> 'DataFiles'",
   "generate": "(folder: 'PathLike', *, run_record: 'bool' = False, operator: 'str | None' = None) -> 'GenerateResult'",
   "get_config": "(source: 'ProjectSource') -> 'ConfigReport'",
+  "get_journal": "(source: 'ProjectSource', *, object_id: 'str | None' = None, since: 'int' = 0) -> 'JournalReport'",
+  "get_overrides": "(source: 'ProjectSource', wire_id: 'str') -> 'OverrideResult'",
   "get_settings": "(source: 'ProjectSource') -> 'list[SettingRecord]'",
+  "list_deviations": "(source: 'ProjectSource') -> 'list[DeviationRecord]'",
   "list_extensions": "(source: 'ProjectSource') -> 'dict[str, Any]'",
   "list_rules": "() -> 'list[RuleInfo]'",
   "list_templates": "() -> 'list[TemplateInfo]'",
   "load_project": "(folder: 'PathLike') -> 'Project'",
+  "remove_deviation": "(folder: 'PathLike', finding_id: 'str', *, author: 'str | None' = None) -> 'DeviationReport'",
   "run_checks": "(source: 'ProjectSource') -> 'CheckResult'",
   "save_project": "(project: 'Project', folder: 'PathLike') -> 'None'",
   "set_config": "(folder: 'PathLike', file: 'str', key: 'str', value: 'object', *, placeholder: 'bool | None' = None) -> 'ConfigValue'",
+  "set_override": "(folder: 'PathLike', wire_id: 'str', field: 'str', value: 'object', reason: 'str', *, author: 'str | None' = None) -> 'OverrideResult'",
+  "start_journal": "(folder: 'PathLike', *, author: 'str | None' = None) -> 'bool'",
   "validate": "(folder: 'PathLike', *, merge_check: 'bool' = False) -> 'ValidationResult'",
   "verify": "(folder: 'PathLike', *, outputs: 'bool' = False) -> 'VerifyResult'",
   "write_derivations": "(source: 'ProjectSource', out: 'PathLike') -> 'DerivationFiles'"
@@ -232,6 +254,28 @@
     "to_dict": "(self) -> 'dict[str, Any]'"
    }
   },
+  "DeviationRecord": {
+   "fields": {
+    "by": "str",
+    "id": "str",
+    "reason": "str",
+    "rule": "str",
+    "title": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "DeviationReport": {
+   "fields": {
+    "action": "str",
+    "deviations": "tuple[DeviationRecord, ...]",
+    "finding": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
   "ExportResult": {
    "fields": {
     "blocked": "str",
@@ -305,6 +349,55 @@
     "to_dict": "(self) -> 'dict[str, Any]'"
    }
   },
+  "JournalRecord": {
+   "fields": {
+    "author": "str",
+    "chain": "str",
+    "field": "str",
+    "kind": "str",
+    "new": "Any",
+    "object": "str",
+    "old": "Any",
+    "reason": "str",
+    "seq": "int",
+    "tool_version": "str",
+    "when": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "JournalReport": {
+   "fields": {
+    "entries": "tuple[JournalRecord, ...]",
+    "has_journal": "bool"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "OverrideRecord": {
+   "fields": {
+    "field": "str",
+    "reason": "str",
+    "value": "Any"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
+  "OverrideResult": {
+   "fields": {
+    "action": "str",
+    "changed": "bool",
+    "derivation": "Any",
+    "overrides": "tuple[OverrideRecord, ...]",
+    "wire": "str"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
   "Project": {
    "fields": {
     "baselines": "dict[str, Baseline]",
@@ -317,6 +410,7 @@
     "import_records": "dict[str, ImportRecord]",
     "interface_types": "dict[str, InterfaceType]",
     "interfaces": "dict[str, InterfaceInstance]",
+    "journal": "Journal | None",
     "library_info": "LibraryInfo",
     "links": "dict[str, Link]",
     "meta": "ProjectMeta",

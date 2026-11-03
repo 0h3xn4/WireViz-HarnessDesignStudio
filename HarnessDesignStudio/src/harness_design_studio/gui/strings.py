@@ -130,6 +130,19 @@ WAIVE_TITLE = "Waive this warning?"
 WAIVE_PROMPT = "Justification (required, shown in reports)"
 WAIVE_OK = "Waive with justification"
 WAIVE_TOO_SHORT = "Please explain why this is acceptable (at least 10 characters)."
+DEVIATE = "Accept as deviation…"
+DEVIATE_TIP = (
+    "Accept this error with a reason. It stays on every list and output, marked DEVIATION. "
+    "It does not meet the requirement; it records that a person accepted the error."
+)
+DEVIATE_TITLE = "Accept this error as a deviation?"
+DEVIATE_PROMPT = (
+    "Reason (required; shown with the error in every report; who and when are kept in the journal)"
+)
+DEVIATE_OK = "Accept as deviation"
+STEP_DEVIATE = "Deviation {}"
+DEVIATED_TOAST = "Recorded as a deviation. The error stays visible and is marked DEVIATION."
+DEVIATION_WORD = "DEVIATION"
 NEW_INTERFACE_TITLE = "New interface"
 NEW_INTERFACE_NOTE = "Connectors are chosen for you and marked Auto until you confirm them. Devices that cannot take this type are shown disabled with the reason."
 FIELD_TYPE = "Interface type"
@@ -254,6 +267,29 @@ A_GLOSSARY = "Glossary"
 A_SAMPLE = "Open the sample project"
 A_ABOUT = "About"
 A_ASSUMPTIONS = "Assumptions..."
+A_JOURNAL = "Change history..."
+JOURNAL_TITLE = "Change history"
+HISTORY_FILTER = "Filter: an object, a person, a word of the reason"
+HISTORY_NOTE = (
+    "{0} entries, oldest first. The journal is append-only: an entry is never changed or removed. "
+    "It is not part of the design files or of any output."
+)
+HISTORY_NONE = (
+    "This project keeps no change journal. A journal records who changed what, when, from what to "
+    "what and why, every time the project is saved. A project that has none is saved as before."
+)
+HISTORY_START = "Start a journal"
+HISTORY_START_TIP = "Make journal.json for this project; it is kept from the next save on."
+HISTORY_COL_NUMBER = "#"
+HISTORY_COL_WHEN = "When (UTC)"
+HISTORY_COL_WHO = "Who"
+HISTORY_COL_KIND = "Kind"
+HISTORY_COL_OBJECT = "Object"
+HISTORY_COL_FIELD = "Field"
+HISTORY_COL_OLD = "Before"
+HISTORY_COL_NEW = "After"
+HISTORY_COL_REASON = "Reason"
+JOURNAL_STARTED = "The journal is started and saved."
 ASSUMPTIONS_TITLE = "What the tool assumes"
 ASSUMPTIONS_NAME = "Settings, assumptions and definitions"
 A_EXTENSIONS = "Extensions..."
@@ -308,7 +344,6 @@ EXT_SHOW_SOURCE = "Show the code"
 EXT_HIDE_SOURCE = "Hide the code"
 EXT_TRUST_FIELDS = ("Name", "Version", "Kinds", "File", "SHA-256", "Lines")
 EXT_TRUSTED_NOW = "The plug-in is trusted on this computer and loaded."
-EXT_REVOKED_NOW = "Trust of {name} taken back."
 A_ISSUES = "Show project problems"
 M_FILE = "&File"
 M_EDIT = "&Edit"
@@ -1345,6 +1380,12 @@ HV_LOCK_PIN = "You fixed this pin by hand; Generate keeps it where it is."
 HV_LOCK_WIRE = (
     "You set the gauge, colour, part or length of this wire by hand; Generate keeps them."
 )
+HV_LOCK_NO_REASON = "No reason is recorded for it."
+HV_OVERRIDDEN_WORD = "Overridden"
+HV_OVERRIDE_TIP = (
+    "You set this by hand in place of the value the design gives, and said why ({0}). "
+    "Generate keeps it; the checks use it."
+)
 HV_STATE_AUTO = "Auto-filled"
 HV_STATE_AUTO_TIP = "Chosen by Generate; nobody has reviewed it yet."
 HV_PENDING_GAUGE = "Gauge pending"
@@ -2181,6 +2222,25 @@ WIRE_RESET_TIP = (
 WIRE_STATE_GENERATED = "Generated: Generate sets the gauge, type, colour and length."
 WIRE_STATE_KEPT = "Your values: Generate keeps the gauge, type, colour and length."
 WIRE_STATE_MIXED = "Some of the selected wires are yours, some are generated."
+WIRE_STATE_OVERRIDDEN = (
+    "Overridden by you ({0}). Generate keeps {1}; the other values follow the design."
+)
+WIRE_FIELD_WORDS = {
+    "gauge_awg": "gauge",
+    "part_id": "type",
+    "colour": "colour",
+    "length_m": "length",
+}
+WIRE_STATE_OVERRIDDEN_LEGACY = (
+    "Locked, no reason recorded: Generate keeps the gauge, type, colour and length."
+)
+WIRE_REASON = "Reason"
+WIRE_REASON_TIP = (
+    "Why you set the gauge, type, colour or length yourself in place of the design's value. "
+    "It is kept with the wire and flagged in every list and output; who and when go into the journal."
+)
+WIRE_REASON_NEEDED = "Say why you set this value yourself (Reason), then apply."
+WIRE_REASON_PLACEHOLDER = "required: why this value, and not the design's"
 WIRE_STATE_RELEASED = "{0} is released (revision {1}). Start a new revision to change its wires."
 WIRE_STATE_READ_ONLY = "This project is read-only."
 STEP_EDIT_WIRES = "Edit wires"

@@ -42,7 +42,7 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-from harness_design_studio.core import configcheck, records
+from harness_design_studio.core import change_ops, configcheck, journal, records
 from harness_design_studio.core.checks import Finding, find
 from harness_design_studio.core.commands import History
 from harness_design_studio.core.derive import Derivation, explain_object
@@ -70,11 +70,17 @@ from harness_design_studio.core.records import (
     ConfigValue,
     DataFiles,
     DerivationFiles,
+    DeviationRecord,
+    DeviationReport,
     ExportedFile,
     ExportResult,
     FindingRecord,
     GenerateResult,
     IssueRecord,
+    JournalRecord,
+    JournalReport,
+    OverrideRecord,
+    OverrideResult,
     RuleInfo,
     SettingRecord,
     TemplateInfo,
@@ -84,6 +90,7 @@ from harness_design_studio.core.records import (
 from harness_design_studio.core.templates import TemplateError
 from harness_design_studio.core.templates import create_project as _create_project
 from harness_design_studio.core.validation import validate_folder
+from harness_design_studio.core.wires import find_wire
 
 __all__ = [
     "API_VERSION",
@@ -94,6 +101,8 @@ __all__ = [
     "DataFiles",
     "Derivation",
     "DerivationFiles",
+    "DeviationRecord",
+    "DeviationReport",
     "EditError",
     "ExportResult",
     "ExportedFile",
@@ -101,9 +110,13 @@ __all__ = [
     "GenerateResult",
     "HarnessError",
     "IssueRecord",
+    "JournalRecord",
+    "JournalReport",
     "LoadError",
     "NoOutputsError",
     "PathLike",
+    "OverrideRecord",
+    "OverrideResult",
     "Project",
     "ProjectDamagedError",
     "ProjectLockedError",
@@ -117,6 +130,8 @@ __all__ = [
     "TransactionError",
     "ValidationResult",
     "VerifyResult",
+    "accept_deviation",
+    "clear_override",
     "create_project",
     "explain",
     "explain_all",
@@ -125,14 +140,20 @@ __all__ = [
     "export_data",
     "generate",
     "get_config",
+    "get_journal",
+    "get_overrides",
     "get_settings",
+    "list_deviations",
     "list_extensions",
     "list_rules",
     "list_templates",
     "load_project",
+    "remove_deviation",
     "run_checks",
     "save_project",
     "set_config",
+    "set_override",
+    "start_journal",
     "validate",
     "verify",
     "write_derivations",
@@ -257,11 +278,14 @@ def list_templates() -> list[TemplateInfo]:
     return records.template_infos()
 
 
-def create_project(folder: PathLike, template: str = "blank", name: str | None = None) -> Project:
+def create_project(
+    folder: PathLike, template: str = "blank", name: str | None = None, *, journal: bool = True
+) -> Project:
     """Make a new project folder from an example (see `list_templates`) and return the project.
     The folder must not exist or must be empty (`TemplateError` otherwise); `name` replaces the
-    project name of the example."""
-    return _create_project(Path(folder), template, name)
+    project name of the example. Like the command `new`, it starts a change journal
+    (`journal.json`) unless `journal` is false."""
+    return _create_project(Path(folder), template, name, journal=journal)
 
 
 # ---- checking ----------------------------------------------------------------------------------
@@ -508,3 +532,127 @@ def set_config(
         History(project).execute(f"Set {file}.{key}", plan.ops)
         _save_project(project, path)
     return records.config_report(project).value(file, key)
+
+
+# ---- overrides, deviations and the change journal ----------------------------------------------
+#
+# The functions that change a project take `author=`: the name the journal records for the change
+# (default: the environment variable HARNESS_AUTHOR, else the name Git has, else the user of the
+# computer). A project that keeps no journal records nobody.
+
+
+@contextlib.contextmanager
+def _as(author: str | None) -> Iterator[None]:
+    journal.set_author(author)
+    try:
+        yield
+    finally:
+        journal.set_author(None)
+
+
+def get_journal(
+    source: ProjectSource, *, object_id: str | None = None, since: int = 0
+) -> JournalReport:
+    """The change journal of a project (the command `journal`): who changed what, when, from what
+    to what and why. `object_id` selects one object (`W001-001`, `wire:W001-001`,
+    `derating.bundle_derating`), `since` the entries numbered above it. A project that keeps no
+    journal gives `has_journal` false and no entries."""
+    return records.journal_report(_project(source), object_id, since)
+
+
+def start_journal(folder: PathLike, *, author: str | None = None) -> bool:
+    """Give a project a change journal (writes `journal.json`). False when it has one already.
+    Takes the project lock."""
+    path = Path(folder)
+    with _locked(path), _as(author):
+        project = _load(path)
+        _writable(project)
+        started = journal.start(project)
+        if started:
+            _save_project(project, path)
+    return started
+
+
+def get_overrides(source: ProjectSource, wire_id: str) -> OverrideResult:
+    """The values of a wire that were set by hand, with their reasons, and the derivation
+    *Overridden by the engineer* (the command `override DIR WIRE`). Raises `EditError` for a wire
+    that does not exist."""
+    project = _project(source)
+    find_wire(project, wire_id)
+    return records.override_result(project, wire_id, "show", False)
+
+
+def set_override(
+    folder: PathLike,
+    wire_id: str,
+    field: str,
+    value: object,
+    reason: str,
+    *,
+    author: str | None = None,
+) -> OverrideResult:
+    """Set `field` (`gauge_awg`, `part_id`, `colour` or `length_m`) of a generated wire by hand
+    and say why (the command `override DIR WIRE FIELD VALUE --reason TEXT`). The value is kept when
+    the harnesses are generated again. A missing reason, a wire drawn by hand or a field that
+    cannot be overridden raises `EditError`; a released harness raises `TransactionError`. Takes the
+    project lock."""
+    path = Path(folder)
+    with _locked(path), _as(author):
+        project = _load(path)
+        _writable(project)
+        changed = change_ops.set_override(project, wire_id, field, value, reason)
+        if changed:
+            _save_project(project, path)
+    return records.override_result(project, wire_id, "set", changed)
+
+
+def clear_override(
+    folder: PathLike, wire_id: str, field: str, *, author: str | None = None
+) -> OverrideResult:
+    """Give `field` of the wire back to generation (the command `override DIR WIRE --clear FIELD`):
+    the next `generate` gives it the design's value. Takes the project lock."""
+    path = Path(folder)
+    with _locked(path), _as(author):
+        project = _load(path)
+        _writable(project)
+        changed = change_ops.clear_override(project, wire_id, field)
+        if changed:
+            _save_project(project, path)
+    return records.override_result(project, wire_id, "clear", changed)
+
+
+def list_deviations(source: ProjectSource) -> list[DeviationRecord]:
+    """The errors of electrical rules that a person accepted as deviations (the command
+    `deviation DIR`), with the reason and, when the project keeps a journal, who and when."""
+    return list(records.deviation_records(_project(source)))
+
+
+def accept_deviation(
+    folder: PathLike, finding_id: str, reason: str, *, author: str | None = None
+) -> DeviationReport:
+    """Accept the error `finding_id` of an electrical rule as a recorded deviation, with a reason
+    of at least 10 characters (the command `deviation DIR FINDING --reason TEXT`). The error stays
+    visible and is marked DEVIATION; it does not meet the requirement. Raises `EditError` for an
+    unknown finding, a rule that takes no deviation or a short reason. Takes the project lock."""
+    path = Path(folder)
+    with _locked(path), _as(author):
+        project = _load(path)
+        _writable(project)
+        finding = change_ops.accept_deviation(project, finding_id, reason)
+        _save_project(project, path)
+    marked = tuple(d for d in records.deviation_records(project) if d.id == finding.id)
+    return DeviationReport("record", finding.id, marked)
+
+
+def remove_deviation(
+    folder: PathLike, finding_id: str, *, author: str | None = None
+) -> DeviationReport:
+    """Take a deviation back (`deviation DIR FINDING --remove`); the finding is open again. Raises
+    `EditError` when the finding is not a deviation. Takes the project lock."""
+    path = Path(folder)
+    with _locked(path), _as(author):
+        project = _load(path)
+        _writable(project)
+        finding = change_ops.remove_deviation(project, finding_id)
+        _save_project(project, path)
+    return DeviationReport("remove", finding.id, ())

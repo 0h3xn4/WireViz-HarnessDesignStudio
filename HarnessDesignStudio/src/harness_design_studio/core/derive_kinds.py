@@ -11,6 +11,10 @@ KINDS: dict[str, tuple[str, str]] = {
     "wire-length": ("wire-length.md", "the length of a wire"),
     "wire-current-limit": ("wire-sizing.md", "the current a wire's gauge may carry after derating"),
     "wire-voltage-drop": ("wire-sizing.md", "the voltage drop over a wire"),
+    "wire-override": (
+        "overrides.md",
+        "a value of a wire set by the engineer, and its consequences",
+    ),
     "wire-mass": ("mass.md", "the mass of a wire"),
     "harness-mass": ("mass.md", "the mass of a harness"),
     "part-bom": ("bom.md", "the quantity of a part in the bill of materials"),

@@ -70,6 +70,12 @@ def test_selecting_a_wire_shows_its_values(made):
     assert ed.state.text() == strings.WIRE_STATE_GENERATED
 
 
+def give_reason(ed, text="the supplier changed it"):
+    """Fill in the Reason box that a change to a generated wire's gauge, part, colour or length asks for."""
+    ed.reason.setText(text)
+    ed.reason.textEdited.emit(text)
+
+
 def test_apply_sets_the_touched_fields_locks_the_wire_and_is_one_undo_step(made):
     ctl, view, ed = made
     (wid,) = select_rows(view, 0)
@@ -79,11 +85,14 @@ def test_apply_sets_the_touched_fields_locks_the_wire_and_is_one_undo_step(made)
     ed.colour.setCurrentText("red")
     ed.colour.lineEdit().textEdited.emit("red")
     ed.note.setPlainText("check the crimp")
+    give_reason(ed)
     assert ed.apply_changes()
     w = find_wire(ctl.project, wid)[1]
     assert (w.gauge_awg, w.colour, w.note, w.locked) == (22, "red", "check the crimp", True)
     assert w.label == before.label and w.length_m == before.length_m  # untouched
-    assert ed.state.text() == strings.WIRE_STATE_KEPT
+    assert ed.state.text() == strings.WIRE_STATE_OVERRIDDEN.format(
+        "colour: the supplier changed it; gauge: the supplier changed it", "colour, gauge"
+    )
     ctl.undo()
     assert find_wire(ctl.project, wid)[1] == before
 
@@ -107,6 +116,7 @@ def test_a_wrong_value_is_said_in_words_and_nothing_changes(made):
     before = find_wire(ctl.project, wid)[1]
     ed.gauge.setText("abc")
     ed.gauge.textEdited.emit("abc")
+    give_reason(ed)
     assert not ed.apply_changes()
     assert not ed.error.isHidden() and "whole number" in ed.error.text()
     assert find_wire(ctl.project, wid)[1] == before
@@ -117,6 +127,7 @@ def test_reset_gives_the_wire_back_to_generation(made):
     (wid,) = select_rows(view, 0)
     ed.gauge.setText("20")
     ed.gauge.textEdited.emit("20")
+    give_reason(ed)
     ed.apply_changes()
     assert find_wire(ctl.project, wid)[1].locked
     assert ed.reset_wires()
