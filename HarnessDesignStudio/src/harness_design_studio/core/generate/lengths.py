@@ -4,6 +4,7 @@ import re
 from collections import deque
 from dataclasses import dataclass, field
 
+from harness_design_studio.core import settings
 from harness_design_studio.core.commands import Op, Put
 from harness_design_studio.core.imports import Table
 from harness_design_studio.core.model import Harness, Project, Segment, Wire, evolve
@@ -90,6 +91,19 @@ _PATHS_LIMIT = (
 
 def clear_length_cache() -> None:
     _PATHS.clear()
+
+
+def generated_length(project: Project, path_m: float, loop_m: float, construction: str) -> float:
+    """The length generation gives a wire: the path through the segments plus the service loops
+    (`model.service_loops_per_wire` of them, each `loop_m`). The model `path_loops_allowance_twist`
+    adds the take-up of twisting for a twisted construction (a fraction of what is there so far) and
+    then a cut allowance. The one function of generation and of the explanation: A-SERVICE-LOOP."""
+    length = path_m + settings.service_loops(project) * loop_m
+    if settings.choice(project, "model", "length_model") == "path_loops_allowance_twist":
+        if construction in settings.TWISTED_CONSTRUCTIONS:
+            length *= 1 + settings.number(project, "model", "twist_takeup_fraction")
+        length += settings.number(project, "model", "cut_allowance_m")
+    return length
 
 
 def wire_length(h: Harness, w: Wire) -> float | None:

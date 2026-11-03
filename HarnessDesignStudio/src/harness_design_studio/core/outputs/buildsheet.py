@@ -17,6 +17,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from typing import Any
 
+from harness_design_studio.core import settings
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Connector, Harness, Project, Wire
 from harness_design_studio.core.wirecolours import resolve
@@ -311,23 +312,28 @@ def readiness(project: Project, h: Harness) -> list[Check]:
     not_approved = sum(
         1 for pid in parts if pid not in project.parts or project.parts[pid].approval != "approved"
     )
+    blocking = settings.names(project, "model", "readiness_blocking")
+
+    def blocks(label: str) -> bool:
+        return label in blocking
+
     return [
-        Check("Wires without a length", sum(1 for w in wires if wire_length(h, w) is None), True,
+        Check("Wires without a length", sum(1 for w in wires if wire_length(h, w) is None), blocks("Wires without a length"),
               "Import lengths (import-lengths) or set the length of the wire in the Edit wire tab."),
-        Check("Wires without a gauge", sum(1 for w in wires if w.gauge_awg is None), True,
+        Check("Wires without a gauge", sum(1 for w in wires if w.gauge_awg is None), blocks("Wires without a gauge"),
               "Generate again with the engineering values filled in, or set the gauge of the wire."),
-        Check("Wires without a colour", sum(1 for w in wires if not w.colour), True,
+        Check("Wires without a colour", sum(1 for w in wires if not w.colour), blocks("Wires without a colour"),
               "Set the colour of the signal (Edit > Wire colours) or of the wire."),
-        Check("Wires without a part", sum(1 for w in wires if not w.part_id), True,
+        Check("Wires without a part", sum(1 for w in wires if not w.part_id), blocks("Wires without a part"),
               "Choose the wire part in the Edit wire tab."),
-        Check("Pins in use without a termination", used_pins, False,
+        Check("Pins in use without a termination", used_pins, blocks("Pins in use without a termination"),
               "Say crimp or solder for the pins in the Devices tab; the build sheet shows it."),
         Check("Wires without strip lengths",
-              sum(1 for w in wires if w.strip_a_mm is None or w.strip_b_mm is None), False,
+              sum(1 for w in wires if w.strip_a_mm is None or w.strip_b_mm is None), blocks("Wires without strip lengths"),
               "Enter the strip length at both ends in the Edit wire tab (or with import-build-data)."),
-        Check("Pins in use without a contact part", no_contact, False,
+        Check("Pins in use without a contact part", no_contact, blocks("Pins in use without a contact part"),
               "Name the contact part of each pin (Devices tab, or Connectors tab of a harness made by hand)."),
-        Check("Parts that are not approved", not_approved, False,
+        Check("Parts that are not approved", not_approved, blocks("Parts that are not approved"),
               "Approve the parts in the parts list (import-parts) when they have been reviewed."),
     ]  # fmt: skip
 

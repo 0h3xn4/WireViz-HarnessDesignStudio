@@ -28,10 +28,11 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "A-ROUND-TRIP",
             "A power or ground wire is counted twice in the voltage drop",
             "The voltage drop of a wire of a power or ground interface is the drop of the current "
-            "going out and coming back: the conductors counted are 2 (1 for every other category). "
-            "The return is taken to have the same gauge and length as the wire itself.",
-            "built in",
-            "core/generate/engine.py (conductors), core/drc/rules.py (_voltage_drop)",
+            "going out and coming back: the conductors counted are 2 (1 for every other category; "
+            "the categories and both counts are settings of config/model.json, with these as "
+            "defaults). The return is taken to have the same gauge and length as the wire itself.",
+            "setting",
+            "config/model.json: return_path_categories, return_path_conductors, single_path_conductors",
         ),
         Assumption(
             "A-DC-SOLID",
@@ -44,13 +45,15 @@ ASSUMPTIONS: dict[str, Assumption] = {
         ),
         Assumption(
             "A-BUNDLE-ALL",
-            "A bundle is every wire of the harness, fully loaded",
-            "The bundle factor K is taken for the number of all wires of the harness, signal wires "
-            "and unloaded wires included, each taken as fully loaded. There is no division of a "
-            "harness into bundles, and the length term of the standard's table is not used (it is "
-            "taken as 1, the conservative case).",
-            "built in",
-            "core/drc/rules.py (_wire_current_limit), core/generate/engine.py (bundle_wires)",
+            "A bundle is every wire of the harness, fully loaded (by default)",
+            "By default the bundle factor K is taken for the number of all wires of the harness, "
+            "signal wires and unloaded wires included, each taken as fully loaded. There is no "
+            "division of a harness into bundles, and the length term of the standard's table is not "
+            "used (it is taken as 1, the conservative case). The setting model.bundle_basis selects "
+            "another count: only the wires that carry a current, or the busiest routing segment of "
+            "the wire's path (see core/generate/bundle.py).",
+            "setting",
+            "config/model.json: bundle_basis (default all_wires)",
         ),
         Assumption(
             "A-TEMP-FACTOR",
@@ -72,11 +75,12 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "A-SERVICE-LOOP",
             "A generated wire is longer than its path by two service loops",
             "A wire that generation measures from the routing segments is given the length of its "
-            "path plus 2 × the service loop of the configuration: one loop at each end. When the "
+            "path plus 2 × the service loop of the configuration: one loop at each end (the number "
+            "of loops is the setting service_loops_per_wire of config/model.json, 2 by default). When the "
             "service loop is not set, nothing is added and generation says so. The same extra "
             "length is added to every wire whatever its gauge, part or end.",
             "setting",
-            "config/generation.json: service_loop_m; core/generate/engine.py",
+            "config/generation.json: service_loop_m; config/model.json: service_loops_per_wire",
         ),
         Assumption(
             "A-PATH-UNIQUE",
@@ -91,12 +95,14 @@ ASSUMPTIONS: dict[str, Assumption] = {
         Assumption(
             "A-MASS-SCOPE",
             "The mass of a harness is its connectors and its wires",
-            "The mass counts the mass of each connector part of the harness and the mass of each "
-            "wire. It does not count contacts, backshells, accessories (sleeving, heat shrink, "
-            "labels), splices, solder or shield terminations, and a part without a mass is named as "
-            "missing, never replaced by a guess. The margin is added to the total only.",
-            "built in",
-            "core/generate/mass.py (harness_mass)",
+            "By default the mass counts the mass of each connector part of the harness and the mass "
+            "of each wire. It does not count contacts, backshells, accessories (sleeving, heat "
+            "shrink, labels), splices, solder or shield terminations; the setting model.mass_model "
+            "full_bom adds the contact parts (one for each pin with a wire) and the accessory parts. "
+            "A part without a mass is named as missing, never replaced by a guess. The margin is "
+            "added to the total only.",
+            "setting",
+            "config/model.json: mass_model (default connectors_and_wires)",
         ),
         Assumption(
             "A-MASS-CONDUCTORS",
@@ -114,7 +120,7 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "wire of the harness is attached to it, and nothing otherwise: no spare contacts, no "
             "contacts for the pins of a connector that nobody uses.",
             "built in",
-            "core/outputs/tables.py (bom_contributions, pins_in_use)",
+            "core/outputs/tables.py (bom_contributions), core/generate/mass.py (pins_in_use)",
         ),
         Assumption(
             "A-BOM-NO-ALLOWANCE",

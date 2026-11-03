@@ -16,6 +16,7 @@ from __future__ import annotations
 
 from collections.abc import Iterator
 
+from harness_design_studio.core.generate.bundle import BASIS_TEXT, basis, bundle_size
 from harness_design_studio.core.generate.sizing import (
     ampacity_table,
     bundle_k,
@@ -342,24 +343,28 @@ def _bundle_current(project: Project) -> Iterator[Hit]:
     if table is None or not _bundle_table_set(project):
         return
     for h in sorted(project.harnesses.values(), key=lambda x: x.id):
-        k = bundle_factor(project, bundle_wire_count(h))
-        if k is None:
-            continue
         temp = number(derating.get("temperature_derating"))
         for w in h.wires:
+            n = bundle_size(project, h, w)
+            k = bundle_factor(project, n)
+            if k is None:
+                continue
             i = project.interfaces.get(w.interface_id or "")
             if i is None or i.max_current_a is None or w.gauge_awg not in table:
                 continue
-            limit = wire_current_limit(
-                derating, w.gauge_awg, bundle_wire_count(h), temperature_optional=True
-            )
+            limit = wire_current_limit(derating, w.gauge_awg, n, temperature_optional=True)
             if limit is not None and exceeds(i.max_current_a, limit):
                 factors = f"K {k:g}" + (
                     f" x temperature factor {temp:g}" if temp is not None else ""
                 )
+                where = (
+                    f"a bundle of {n} wires ({h.id})"
+                    if basis(project) == "all_wires"
+                    else f"a bundle of {n} wires ({BASIS_TEXT[basis(project)]}, {h.id})"
+                )
                 yield Hit(
                     w.id,
-                    f"Wire {w.id} (AWG {w.gauge_awg}) carries {i.max_current_a:g} A but a bundle of {bundle_wire_count(h)} wires ({h.id}) allows {limit:g} A (single wire {table[w.gauge_awg]:g} A x {factors})",
+                    f"Wire {w.id} (AWG {w.gauge_awg}) carries {i.max_current_a:g} A but {where} allows {limit:g} A (single wire {table[w.gauge_awg]:g} A x {factors})",
                 )
 
 

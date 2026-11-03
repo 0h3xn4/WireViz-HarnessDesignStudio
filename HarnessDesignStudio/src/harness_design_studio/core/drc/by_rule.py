@@ -19,7 +19,7 @@ from collections.abc import Callable
 from dataclasses import dataclass
 from typing import Literal
 
-from harness_design_studio.core import configcheck
+from harness_design_studio.core import configcheck, settings
 from harness_design_studio.core.checks import Finding
 from harness_design_studio.core.issues import Severity
 from harness_design_studio.core.model import Project
@@ -164,13 +164,20 @@ def _is(file: str, key: str, value: object) -> Callable[[Project], list[tuple[st
     return lambda p: [] if _v(p, file, key) == value else [(file, key)]
 
 
+def _drop_gate(p: Project) -> list[tuple[str, str]]:
+    gone = _unset(
+        p, ("derating", "max_voltage_drop_v"), ("generation", "conductor_resistivity_ohm_m")
+    )
+    if settings.choice(p, "model", "drop_model") == "dc_at_ambient":
+        gone += _unset(p, ("derating", "max_ambient_temperature_c"))
+    return gone
+
+
 # The values that keep a rule silent, exactly as the rule's own first lines test them.
 GATES: dict[str, Callable[[Project], list[tuple[str, str]]]] = {
     "current-over-contact": lambda p: _unset(p, ("derating", "contact_current_factor")),
     "current-over-wire": _current_wire,
-    "voltage-drop": lambda p: _unset(
-        p, ("derating", "max_voltage_drop_v"), ("generation", "conductor_resistivity_ohm_m")
-    ),
+    "voltage-drop": lambda p: _drop_gate(p),
     "spare-pins-low": lambda p: _unset(p, ("derating", "spare_pin_fraction")),
     "shield-unterminated": _shield_unterminated,
     "shield-wrong-end": lambda p: _unset(

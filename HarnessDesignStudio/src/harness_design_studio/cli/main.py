@@ -13,7 +13,15 @@ from pathlib import Path
 from typing import Any
 
 from harness_design_studio import __version__
-from harness_design_studio.cli import blocked_text, changes, data, explain, merge, start
+from harness_design_studio.cli import (
+    blocked_text,
+    changes,
+    data,
+    explain,
+    merge,
+    settings_cmd,
+    start,
+)
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError, TransactionError
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, load_project, non_canonical_files
@@ -67,6 +75,7 @@ def build_parser() -> argparse.ArgumentParser:
     start.register(sub)
     merge.register(sub)
     explain.register(sub)
+    settings_cmd.register(sub)
     changes.register(sub)
     data.register(sub)
     return parser
@@ -358,7 +367,7 @@ NOTHING_DONE = {
     "import-parts": "imported", "import-lengths": "imported", "import-netlist": "imported",
     "import-pinout": "imported", "export-pinout": "exported",
     "export-devices": "exported", "import-devices": "imported", "import-build-data": "imported",
-    "export-subsystem": "exported", "import-subsystem": "imported", "explain": "explained",
+    "export-subsystem": "exported", "import-subsystem": "imported", "explain": "explained", "settings": "reported or changed",
     "imports": "listed",
 }  # fmt: skip
 
@@ -435,6 +444,8 @@ def _dispatch(args: argparse.Namespace) -> int:
                 return 2
     if args.command in explain.COMMANDS:
         return explain.run(args)
+    if args.command in settings_cmd.COMMANDS:
+        return settings_cmd.run(args)
     if args.command == "migrate":
         migrated = migrate_project(args.project)
         print("Already up to date." if migrated is None else MIGRATED)
