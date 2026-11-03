@@ -35,6 +35,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 | freeze a harness with a name, a comment and a record | [Release a harness](release-a-harness.md) |
 | change a harness that is already released | [Change a released harness](change-a-released-harness.md) |
 | keep a project in Git, check it after a merge, or run it in CI | [Use Git and CI](use-git-and-ci.md) |
+| run the tool from a script: results as JSON, the Python interface, a batch or a trade study | [Script the tool](script-the-tool.md) |
 | fix something that does not work | [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md), then [`FAQ.md`](../FAQ.md) |
 | look up a command or an option | [`CLI.md`](../CLI.md) |
 | look up a word | [`GLOSSARY.md`](../GLOSSARY.md) |
@@ -64,6 +65,7 @@ The numbers follow the order of the work. The first page is the one the editor s
 18. [Change a released harness](change-a-released-harness.md): new revision, `diff`, `log`, `compare`.
 19. [Use Git and CI](use-git-and-ci.md): Git habits, `harness-design-studio check`, a build script, a workflow.
 20. [Use the library](use-the-library.md): the library folder a team shares, the library window, devices and subsystems, a number of the same device, `export-subsystem` and `import-subsystem`. New in 1.8.0.
+21. [Script the tool](script-the-tool.md): `--json` on the commands, `export --out`, the Python interface (`harness_design_studio.api`), a batch and a trade study.
 
 ## How to read the pages
 

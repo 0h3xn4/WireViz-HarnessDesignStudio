@@ -5,6 +5,7 @@ committed file is stale. Usage: python -m tools.gen_cli_docs"""
 import argparse
 from pathlib import Path
 
+from harness_design_studio.cli.jsonout import SHAPES
 from harness_design_studio.cli.main import PROG, build_parser
 
 TARGET = Path(__file__).resolve().parents[1] / "docs" / "CLI.md"
@@ -38,6 +39,7 @@ GROUPS = (
 EXAMPLES: dict[str, list[str]] = {
     "new": [
         "harness-design-studio new --list",
+        "harness-design-studio new --list --json",
         'harness-design-studio new my-design --name "My first design"',
         "harness-design-studio new wheel-link --template first-steps",
     ],
@@ -48,44 +50,69 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio explain wheel-link --all --out wheel-link-derivations",
         "harness-design-studio explain wheel-link IF-001.GPSU1-J01",
         "harness-design-studio explain wheel-link W001-001 --json",
+        "harness-design-studio explain wheel-link --all --out wheel-link-derivations --json",
+    ],
+    "templates": [
+        "harness-design-studio templates my-templates",
+        "harness-design-studio templates my-templates --json",
+    ],
+    "schema": [
+        "harness-design-studio schema my-design/schemas",
+        "harness-design-studio schema my-design/schemas --json",
+    ],
+    "validate": [
+        "harness-design-studio validate my-design",
+        "harness-design-studio validate my-design --json",
+    ],
+    "check": [
+        "harness-design-studio check my-design",
+        "harness-design-studio check my-design --json",
+    ],
+    "drc": [
+        "harness-design-studio drc my-design > drc-report.md",
+        "harness-design-studio drc my-design --json > drc-findings.json",
     ],
     "settings": [
         "harness-design-studio settings wheel-link",
         "harness-design-studio settings wheel-link --json",
         "harness-design-studio settings wheel-link --set model.service_loops_per_wire=0",
     ],
-    "templates": ["harness-design-studio templates my-templates"],
-    "schema": ["harness-design-studio schema my-design/schemas"],
-    "validate": ["harness-design-studio validate my-design"],
-    "check": ["harness-design-studio check my-design"],
-    "drc": ["harness-design-studio drc my-design > drc-report.md"],
     "verify": [
         "harness-design-studio verify my-design",
         "harness-design-studio verify my-design --outputs",
+        "harness-design-studio verify my-design --json",
     ],
-    "generate": ["harness-design-studio generate my-design"],
+    "generate": [
+        "harness-design-studio generate my-design",
+        "harness-design-studio generate my-design --json",
+    ],
     "export": [
         "harness-design-studio export my-design",
         "harness-design-studio export my-design --drawings",
+        "harness-design-studio export my-design --out my-outputs --json",
     ],
     "config": [
         "harness-design-studio config my-design",
+        "harness-design-studio config my-design --json",
         "harness-design-studio config my-design --ampacity-csv ampacity.csv",
         "harness-design-studio config my-design --apply-profile ecss-q-st-30-11c",
         'harness-design-studio config my-design --counterparts "TX=RX, MOSI=MISO, OUT=IN"',
     ],
     "library": [
         "harness-design-studio library my-design",
+        "harness-design-studio library my-design --json",
         'harness-design-studio library my-design --library-version 4 --library-source "ESCC part data, supplier file" --library-date 2026-09-30',
     ],
     "import-parts": [
         "harness-design-studio import-parts my-design parts.csv --approved Approved --pending Review "
         "--rejected Rejected --dry-run",
+        "harness-design-studio import-parts my-design parts.csv --approved Approved --dry-run --json",
         "harness-design-studio import-parts my-design connectors.xlsx --approved Yes --category connector",
         "harness-design-studio import-parts my-design erp-export.csv --approved Released --mass-unit kg",
     ],
     "import-lengths": [
         "harness-design-studio import-lengths my-design lengths.csv --unit mm --dry-run",
+        "harness-design-studio import-lengths my-design lengths.csv --dry-run --json",
         "harness-design-studio import-lengths my-design lengths-in-inches.csv --unit in",
     ],
     "imports": [
@@ -95,6 +122,7 @@ EXAMPLES: dict[str, list[str]] = {
     ],
     "import-build-data": [
         "harness-design-studio import-build-data my-design strip-lengths.csv --dry-run",
+        "harness-design-studio import-build-data my-design strip-lengths.csv --dry-run --json",
         "harness-design-studio import-build-data my-design pin-contacts.csv",
         "harness-design-studio import-build-data my-design accessories.csv",
         "harness-design-studio import-build-data my-design strip-lengths-in-inches.csv --unit in",
@@ -102,47 +130,73 @@ EXAMPLES: dict[str, list[str]] = {
     "import-netlist": [
         "harness-design-studio import-netlist my-design wheel.net --device RW1 --prefix J "
         "--connector J1=RW1-J01 --signal-map CAN_H=CANH --dry-run",
+        "harness-design-studio import-netlist my-design wheel.net --device RW1 --dry-run --json",
         "harness-design-studio import-netlist my-design wheel.net --device RW1 --pin-direction",
     ],
     "import-pinout": [
         "harness-design-studio import-pinout my-design gyro-pinout.csv --device GYRO1 --default-part MY-HD-9-F --dry-run",
+        "harness-design-studio import-pinout my-design gyro-pinout.csv --device GYRO1 --default-part MY-HD-9-F --dry-run --json",
         'harness-design-studio import-pinout my-design icd.xlsx --device CAM1 --new-device "Camera" --part J1=MY-HD-9-F --part J2=MY-HD-15-M',
     ],
     "export-pinout": [
         "harness-design-studio export-pinout my-design --device GYRO1",
         "harness-design-studio export-pinout my-design --device GYRO1 -o gyro-pinout.xlsx",
+        "harness-design-studio export-pinout my-design --device GYRO1 --json",
     ],
     "export-devices": [
         "harness-design-studio export-devices my-design device-library.json --device GYRO1",
         "harness-design-studio export-devices my-design device-library.json --device OBC1 --device PCU1",
+        "harness-design-studio export-devices my-design device-library.json --device OBC1 --json",
     ],
     "import-devices": [
         "harness-design-studio import-devices my-design device-library.json --list",
+        "harness-design-studio import-devices my-design device-library.json --dry-run --json",
         "harness-design-studio import-devices my-design device-library.json --device GYRO1 --dry-run",
     ],
     "export-subsystem": [
         'harness-design-studio export-subsystem my-design wheel-drive.json --device OBC1 --device RW1 --name "Wheel drive"',
+        'harness-design-studio export-subsystem my-design wheel-drive.json --device OBC1 --name "Wheel drive" --json',
     ],
     "import-subsystem": [
         "harness-design-studio import-subsystem my-design wheel-drive.json --show",
         "harness-design-studio import-subsystem my-design wheel-drive.json --dry-run",
+        "harness-design-studio import-subsystem my-design wheel-drive.json --dry-run --json",
     ],
-    "review": ['harness-design-studio review my-design W001 --by "A. Engineer"'],
+    "review": [
+        'harness-design-studio review my-design W001 --by "A. Engineer"',
+        'harness-design-studio review my-design W001 --by "A. Engineer" --json',
+    ],
     "release": [
         'harness-design-studio release my-design W001 --by "A. Engineer" --comment "First release" '
         '--checker "B. Checker"',
+        'harness-design-studio release my-design W001 --by "A. Engineer" --comment "First release" --json',
     ],
     "revise": [
-        'harness-design-studio revise my-design W001 --by "A. Engineer" --comment "Connector change"'
+        'harness-design-studio revise my-design W001 --by "A. Engineer" --comment "Connector change"',
+        'harness-design-studio revise my-design W001 --by "A. Engineer" --comment "Connector change" --json',
     ],
     "diff": [
         "harness-design-studio diff my-design W001",
         "harness-design-studio diff my-design W001 --from A",
+        "harness-design-studio diff my-design W001 --json",
     ],
-    "log": ["harness-design-studio log my-design", "harness-design-studio log my-design W001"],
-    "compare": ["harness-design-studio compare old-checkout new-checkout"],
-    "migrate": ["harness-design-studio migrate my-design"],
-    "merge-fix": ["harness-design-studio merge-fix my-design"],
+    "log": [
+        "harness-design-studio log my-design",
+        "harness-design-studio log my-design W001",
+        "harness-design-studio log my-design --json",
+    ],
+    "compare": [
+        "harness-design-studio compare old-checkout new-checkout",
+        "harness-design-studio compare old-checkout new-checkout --json",
+    ],
+    "migrate": [
+        "harness-design-studio migrate my-design",
+        "harness-design-studio migrate my-design --json",
+    ],
+    "merge-fix": [
+        "harness-design-studio merge-fix my-design",
+        "harness-design-studio merge-fix my-design --json",
+    ],
 }
 
 
@@ -186,6 +240,43 @@ def _detail(action: argparse.Action) -> str:
     ):
         notes.append(f"default {action.default}")
     return text + (f" ({'; '.join(notes)})" if notes else "")
+
+
+def _json_section() -> list[str]:
+    """The `--json` section: what every command with the option prints, made from `SHAPES`."""
+    by_shape: dict[tuple[str, ...], list[str]] = {}
+    for cmd, keys in SHAPES.items():
+        by_shape.setdefault(keys, []).append(cmd)
+    lines = [
+        "",
+        "## JSON output",
+        "",
+        "Every command that has a result in data form takes `--json`. The usual text lines are "
+        "then not printed; one JSON document is, and the exit code is the one the command has "
+        "without the option (the table above). It has no time, no user name and no absolute path, "
+        "its lists are in a fixed order (by ID, as the text shows them) and the same design gives "
+        "the same bytes, so it can be compared and kept in Git. `ok` comes first and is true when "
+        "the exit code is 0. A command that cannot run at all (a project that cannot be read, a "
+        "wrong option) writes its message to the standard error as before and prints nothing to the "
+        "standard output; a command that ran and was refused (`generate` with errors, `export` that "
+        "failed its check, `release` that is blocked) still prints its document, with `ok` false and "
+        "the reasons in it. The same documents are what the Python interface gives "
+        "([`user-manual/script-the-tool.md`](user-manual/script-the-tool.md)).",
+        "",
+        "`explain OBJECT --json` prints a list of derivations and `settings --json` the document of "
+        "settings, definitions and assumptions, both as they did before (neither has an `ok`); "
+        "`explain --all --out FOLDER --json` prints the document below. "
+        "`export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. "
+        "`config` prints every engineering value with its unit, its use, whether it is set and "
+        "where it came from, and the values it refused, in the order of the hand-over list.",
+        "",
+        "| Command | Keys of the document |",
+        "| --- | --- |",
+    ]
+    for keys, cmds in by_shape.items():
+        names = ", ".join(f"`{c}`" for c in cmds)
+        lines.append(f"| {names} | {', '.join(f'`{k}`' for k in keys)} |")
+    return lines
 
 
 def render() -> str:
@@ -239,7 +330,10 @@ def render() -> str:
         "path), and ends with `Import record: lengths:lengths.csv written to imports/records.json.`; "
         "importing the same file again replaces its record, and an unchanged file changes nothing. "
         "`harness-design-studio imports` lists the records and shows whether a source file has "
-        "changed since.",
+        "changed since. With `--json` every import prints the same facts as the last key, `import` "
+        "(the record, with `record_written` true when this run wrote it, and the `warnings` of "
+        "`import-build-data`), and `imports --json` prints `records_file`, `count`, "
+        "`sources_changed` and the `imports` with their `status` and `current_sha256`.",
         "",
         "The examples show the form of each command with example names. They do not all work "
         "on any project: `release` is blocked until its conditions are met (placeholder "
@@ -249,9 +343,11 @@ def render() -> str:
         "",
         "## Contents",
         "",
+        "- [JSON output](#json-output): `--json` on every command that has a result in data form",
     ]
     for title, cmds in GROUPS:
         lines.append(f"- {title}: " + ", ".join(f"[`{c}`](#{PROG}-{c})" for c in cmds))
+    lines += _json_section()
     for title, cmds in GROUPS:
         lines += ["", f"## {title}"]
         for cmd in cmds:

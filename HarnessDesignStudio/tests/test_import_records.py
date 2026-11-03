@@ -353,11 +353,31 @@ def test_the_json_output_is_deterministic_and_has_no_path(
     _, b = run(capsys, "imports", proj, "--json")
     assert code == 0 and a == b and str(tmp_path) not in a
     doc = json.loads(a)
-    assert doc["changed"] == 0 and doc["imports"][0]["status"] == UNCHANGED
+    assert doc["sources_changed"] == 0 and doc["count"] == 1 and doc["records_file"] == RECORDS
+    assert doc["imports"][0]["status"] == UNCHANGED
     assert doc["imports"][0]["current_sha256"] == file_sha256(f)
     f.write_text("harness,segment,length\n", encoding="utf-8")
     code, a = run(capsys, "imports", proj, "--json", "--check")
     assert code == 1 and json.loads(a)["imports"][0]["status"] == CHANGED
+
+
+def test_every_import_json_document_carries_what_the_text_reports(
+    proj: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    f = proj / "lengths.csv"
+    f.write_text(LENGTHS, encoding="utf-8")
+    code, text = run(capsys, "import-lengths", proj, str(f), "--dry-run", "--unit", "in")
+    code_j, out = run(capsys, "import-lengths", proj, str(f), "--dry-run", "--unit", "in", "--json")
+    assert code == code_j == 0
+    doc = json.loads(out)
+    assert list(doc)[-1] == "import" and str(proj) not in out
+    imp = doc["import"]
+    assert imp["unit"] == "in" and imp["unit_given"] is True and imp["record_written"] is False
+    assert imp["rows_read"] == imp["converted_count"] and imp["columns_read"]
+    assert f"Read {imp['rows_read']} row(s)" in text
+    _, out = run(capsys, "import-lengths", proj, str(f), "--json")
+    assert json.loads(out)["import"]["record_written"] is True
+    assert json.loads(out)["import"]["id"] == "lengths:lengths.csv"
 
 
 def test_no_records_is_said_and_is_fine(proj: Path, capsys: pytest.CaptureFixture[str]) -> None:
