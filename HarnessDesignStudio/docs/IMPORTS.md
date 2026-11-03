@@ -90,7 +90,7 @@ Every import that is applied keeps a record of the file it read in `imports/reco
       "sha256": "117043908312d3e7ba3fa0ca5ab598d6ba831d6a63e0990df7bcf9c5eb514648",
       "source_name": "segment-lengths.csv",
       "source_path": "data/segment-lengths.csv",
-      "tool_version": "1.11.1",
+      "tool_version": "1.12.0",
       "unit": "mm"
     }
   ]
