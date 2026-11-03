@@ -24,6 +24,9 @@ from harness_design_studio.core.model import (
     Harness,
     InterfaceInstance,
     InterfaceType,
+    Journal,
+    JournalEntry,
+    JournalError,
     LibraryInfo,
     Link,
     Part,
@@ -71,7 +74,7 @@ def read_tree(root: Path) -> tuple[dict[str, Any], dict[str, bytes], list[Issue]
     issues: list[Issue] = []
     base = long_path(root)
     candidates = [Path("project.json")]
-    for top_file in ("waivers.json", "changelog.json"):
+    for top_file in ("waivers.json", "changelog.json", "journal.json"):
         if (base / top_file).is_file():
             candidates.append(Path(top_file))
     for top in MANAGED_DIRS:
@@ -234,6 +237,29 @@ def _layout(b: _Builder, rel: str, data: Any) -> None:
     )
 
 
+def _journal(b: _Builder, rel: str, data: Any) -> None:
+    """The change journal. A journal that does not read back whole (an entry changed, removed or put
+    in, a gap in the numbers) is set aside as it is and reported: it is a record, and a record that
+    cannot be trusted must not be written over."""
+    if (
+        not isinstance(data, dict)
+        or set(data) != {"journal"}
+        or not isinstance(data["journal"], list)
+    ):
+        b.quarantine(rel, "journal", "expected an object with a single 'journal' list", data)
+        b.issues.append(Issue("error", "journal_damaged", "The change journal is damaged: it is not a list of entries.", rel))  # fmt: skip
+        return
+    try:
+        entries = [JournalEntry.model_validate(raw) for raw in data["journal"]]
+        b.p.journal = Journal(entries)
+    except ValidationError as exc:
+        b.quarantine(rel, "journal", _describe(exc), data)
+        b.issues.append(Issue("error", "journal_damaged", f"The change journal is damaged: {_describe(exc)}", rel))  # fmt: skip
+    except JournalError as exc:
+        b.quarantine(rel, "journal", str(exc), data)
+        b.issues.append(Issue("error", "journal_damaged", f"The change journal is damaged: {exc}.", rel))  # fmt: skip
+
+
 def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None:
     b = _Builder(project, issues)
     if "project.json" in files:
@@ -288,6 +314,8 @@ def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None
                 project.baselines[base.id] = base
         elif rel == "waivers.json":
             b.items(rel, data, "waivers", "waiver", Waiver, project.waivers)
+        elif rel == "journal.json":
+            _journal(b, rel, data)
         elif rel == "logical/layout.json":
             _layout(b, rel, data)
         elif rel == "logical/links.json":

@@ -63,6 +63,7 @@ def test_editing_gauge_type_colour_and_length_locks_the_wire(project):
         project,
         [w.id],
         {"gauge_awg": "22", "part_id": "EX-WIRE-22", "colour": "red", "length_m": "1,5"},
+        reason="test",
     )
     apply_ops(project, ops)
     got = find_wire(project, w.id)[1]
@@ -80,7 +81,10 @@ def test_generation_keeps_what_a_person_typed(project):
     apply_ops(
         project,
         plan_wire_edit(
-            project, [w.id], {"gauge_awg": 20, "colour": "blue", "label": "L", "note": "n"}
+            project,
+            [w.id],
+            {"gauge_awg": 20, "colour": "blue", "label": "L", "note": "n"},
+            reason="test",
         ),
     )
     regenerate(project)
@@ -105,7 +109,10 @@ def test_a_label_or_note_alone_does_not_lock_the_wire_and_survives_generation(pr
 
 def test_reset_gives_the_wire_back_to_generation_and_keeps_label_and_note(project):
     w = first_wire(project)
-    apply_ops(project, plan_wire_edit(project, [w.id], {"gauge_awg": 20, "note": "keep me"}))
+    apply_ops(
+        project,
+        plan_wire_edit(project, [w.id], {"gauge_awg": 20, "note": "keep me"}, reason="test"),
+    )
     apply_ops(project, plan_wire_reset(project, [w.id]))
     assert find_wire(project, w.id)[1].locked is False
     regenerate(project)
@@ -118,7 +125,7 @@ def test_several_wires_in_one_step_and_one_undo(project):
     ids = [w.id for h in project.harnesses.values() for w in h.wires][:3]
     before = model_hash(project)
     hist = History(project)
-    hist.execute("edit wires", plan_wire_edit(project, ids, {"colour": "green"}))
+    hist.execute("edit wires", plan_wire_edit(project, ids, {"colour": "green"}, reason="test"))
     assert {find_wire(project, i)[1].colour for i in ids} == {"green"}
     hist.undo()
     assert model_hash(project) == before
@@ -146,7 +153,7 @@ def test_a_wrong_value_says_why_and_changes_nothing(project, changes, words):
     w = first_wire(project)
     before = model_hash(project)
     with pytest.raises(EditError, match=words):
-        plan_wire_edit(project, [w.id], changes)
+        plan_wire_edit(project, [w.id], changes, reason="test")
     assert model_hash(project) == before
 
 
@@ -161,7 +168,7 @@ def test_a_released_harness_cannot_be_edited(project):
     h, w = find_wire(project, first_wire(project).id)
     apply_ops(project, [Put("harnesses", evolve(h, status="released"))])
     with pytest.raises(EditError, match="released"):
-        plan_wire_edit(project, [w.id], {"colour": "red"})
+        plan_wire_edit(project, [w.id], {"colour": "red"}, reason="test")
     with pytest.raises(EditError, match="released"):
         plan_wire_reset(project, [w.id]) if w.locked else plan_wire_edit(
             project, [w.id], {"note": "x"}

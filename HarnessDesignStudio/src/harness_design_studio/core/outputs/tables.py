@@ -17,6 +17,7 @@ from collections.abc import Collection, Iterator
 from dataclasses import dataclass
 from decimal import Decimal
 
+from harness_design_studio.core.deviations import override_text, uses_overrides
 from harness_design_studio.core.generate.lengths import clear_length_cache, wire_length
 from harness_design_studio.core.generate.mass import harness_mass, pins_in_use
 from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
@@ -113,12 +114,14 @@ def wire_list(project: Project, h: Harness) -> Table:
     req = uses_requirements(project)
     text = uses_wire_text(project)
     strip = uses_strip_lengths(project)
+    over = uses_overrides(project)
     rows: Table = [[
         "Wire", "Signal", "Interface", "From connector", "From pin", "To connector", "To pin",
         "AWG", "Part", "Colour", "Length (m)", "Shield group", "Locked",
         *(["EMC class"] if emc else []), *(["Requirement"] if req else []),
         *(["Label", "Note"] if text else []),
         *(["Strip A (mm)", "Strip B (mm)"] if strip else []),
+        *(["Overrides"] if over else []),
     ]]  # fmt: skip
     for w in sorted(h.wires, key=lambda x: x.id):
         rows.append([
@@ -129,6 +132,7 @@ def wire_list(project: Project, h: Harness) -> Table:
             *([requirement_of(project, w)] if req else []),
             *([w.label or "", w.note] if text else []),
             *([data_num(w.strip_a_mm), data_num(w.strip_b_mm)] if strip else []),
+            *([override_text(w)] if over else []),
         ])  # fmt: skip
     return rows
 

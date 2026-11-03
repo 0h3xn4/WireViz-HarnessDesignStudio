@@ -18,6 +18,7 @@ from typing import Any
 
 from harness_design_studio import __version__
 from harness_design_studio.core import checks, configcheck, drc, settings
+from harness_design_studio.core.deviations import override_text, uses_overrides
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
 from harness_design_studio.core.verify import VerifyReport, link_issues
@@ -387,9 +388,26 @@ def _margin(project: Project) -> float | None:
 def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[str, bytes]) -> None:
     base = f"harnesses/{h.id}"
     shield_of = {wid: s.id for s in h.shields for wid in s.wire_ids}
-    wl = _table(files, f"{base}/wirelist.csv")
+    wl = wl_whole = _table(files, f"{base}/wirelist.csv")
     if wl:
         by_id = {w.id: w for w in h.wires}
+        has_over = uses_overrides(project)  # a last column, only when a wire has an override
+        if (wl[0][-1:] == ["Overrides"]) != has_over:
+            r.error(
+                "out_wire_differs",
+                f"The wire list of {h.id} has the wrong columns for the overrides.",
+                h.id,
+            )
+        elif has_over:
+            for row in wl[1:]:
+                w = by_id.get(row[0])
+                if w is not None and row[-1] != override_text(w):
+                    r.error(
+                        "out_wire_differs",
+                        f"Wire {w.id} in the wire list of {h.id} differs from the design: overrides.",
+                        w.id,
+                    )
+            wl = [row[:-1] for row in wl]
         has_strip = any(
             x.strip_a_mm is not None or x.strip_b_mm is not None
             for g in project.harnesses.values()
@@ -492,7 +510,7 @@ def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[st
                 h.id,
             )
     x = files.get(f"{base}/{h.id}.xlsx")
-    if x is not None and wl and _xlsx_rows(x, "Wire list") != wl:
+    if x is not None and wl and _xlsx_rows(x, "Wire list") != wl_whole:
         r.error("out_xlsx", f"The workbook of {h.id} differs from its wire list.", h.id)
 
 
@@ -890,7 +908,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
     if fd:
         found = [*checks.find(project), *drc.run(project)]
         want_rows = [
-            [f.id, f.rule, f.severity, f.object_id or "", f.title, "yes" if f.waiver else "",
+            [f.id, f.rule, f.severity, f.object_id or "", f.title, f.waived_mark,
              f.waiver.justification if f.waiver else "", " ".join(f.sources)]
             for f in found
         ]  # fmt: skip
@@ -1631,9 +1649,16 @@ def _build_workbook(r: VerifyReport, project: Project, h: Harness, files: dict[s
 
 
 def _build_cut(r: VerifyReport, h: Harness, what: str, rows: list[list[str]]) -> None:
-    if not rows or rows[0] != _BUILD_CUT_HEADER:
+    over = any(w.overrides for w in h.wires)  # one more column, only for a harness with overrides
+    if not rows or rows[0] != [*_BUILD_CUT_HEADER, *(["Override"] if over else [])]:
         r.error("out_build", f"{what} (Cut list) has the wrong column headings.", h.id)
         return
+    if over:
+        mine = {w.id: w for w in h.wires}
+        if any(row[1] in mine and row[13] != override_text(mine[row[1]]) for row in rows[1:-1] if any(row)):  # fmt: skip
+            r.error("out_build", f"{what} (Cut list) does not show the overrides of the design.", h.id)  # fmt: skip
+            return
+        rows = [row[:13] for row in rows]
     body = [row for row in rows[1:-1] if any(row)]
     total_row = rows[-1] if len(rows) > 1 else []
     order = [w.id for w in sorted(h.wires, key=lambda w: _cut_key(h, w))]

@@ -15,12 +15,19 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "new",
         help="create a new project from an example (blank, first-steps, minimal-satellite, small-satellite, flatsat)",
         description="Create a project folder from one of the bundled examples. "
-        "`harness-design-studio new --list` shows them. The folder must not exist yet or be empty.",
+        "`harness-design-studio new --list` shows them. The folder must not exist yet or be empty. "
+        "The new project starts a change journal (journal.json: who changed what, when and why) "
+        "unless you give --no-journal.",
     )
     n.add_argument("folder", type=Path, nargs="?", help="the new project folder")
     n.add_argument("--template", default="blank", help="which example to start from")
     n.add_argument("--name", default=None, help="project name (default: the example's name)")
     n.add_argument("--list", action="store_true", help="list the examples and exit")
+    n.add_argument(
+        "--no-journal",
+        action="store_true",
+        help="do not start a change journal (journal.json) for the new project",
+    )
     t = sub.add_parser(
         "templates",
         help="copy the import templates (CSV files, netlist, scripts, checklist) to a folder",
@@ -56,7 +63,9 @@ def run(args: argparse.Namespace) -> int:
     if args.folder is None:
         print("error: give the folder for the new project (or use --list).", file=sys.stderr)
         return 2
-    project = templates.create_project(args.folder, args.template, args.name)
+    project = templates.create_project(
+        args.folder, args.template, args.name, journal=not args.no_journal
+    )
     print(
         f"Project '{project.meta.name}' created in {args.folder} "
         f"({len(project.units)} devices, {len(project.interfaces)} interfaces).\n"

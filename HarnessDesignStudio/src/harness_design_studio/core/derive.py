@@ -30,6 +30,7 @@ from harness_design_studio.core.generate.sizing import (
     bundle_k,
     derated_limit,
     exceeds,
+    size_wire,
     voltage_drop_v,
     wire_current_limit,
 )
@@ -496,7 +497,9 @@ def wire_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
         value = w.length_m
     else:
         basis = (
-            "entered by hand and locked, so generation keeps it"
+            f"overridden by the engineer (reason: {w.overrides['length_m']}), so generation keeps it"
+            if "length_m" in w.overrides
+            else "entered by hand and locked, so generation keeps it"
             if w.locked
             else "a length stored on the wire that does not equal its path plus two service loops (entered, imported, or the segments changed since)"
         )
@@ -835,11 +838,138 @@ def explain_object(project: Project, object_id: str) -> list[Derivation]:
     return explain_part(project, object_id)
 
 
+_OVERRIDE_TITLES = {
+    "gauge_awg": ("Gauge", "AWG"),
+    "part_id": ("Wire type", ""),
+    "colour": ("Colour", ""),
+    "length_m": ("Length", "m"),
+}
+
+
+def generated_alternative(
+    project: Project, h: Harness, w: Wire, field: str
+) -> tuple[float | int | str | None, str]:
+    """The value the design would give `field` of the wire if nobody had set it, and how that is
+    decided (or what is missing for it). The same functions that generation calls."""
+    interface = project.interfaces.get(w.interface_id or "")
+    itype = project.interface_types.get(interface.type_id) if interface else None
+    construction = itype.construction if itype else "single"
+    generation = cfg(project, "generation")
+    if field == "length_m":
+        loop = number(generation.get("service_loop_m"))
+        trail = path_trail(h, w.from_connector, w.to_connector) if h.segments else None
+        if trail is None or any(x is None for _, x in trail):
+            return (
+                None,
+                "not decided: the routing segments between its connectors have no complete path with lengths",
+            )
+        path = float(sum(x for _, x in trail if x is not None))
+        return (
+            generated_length(project, path, loop or 0.0, construction),
+            "the path through the routing segments plus the service loops (see the derivation of the length)",
+        )
+    if field == "part_id":
+        table = generation.get("wire_part_by_construction")
+        part = table.get(construction) if isinstance(table, dict) else None
+        if isinstance(part, str) and part in project.parts:
+            return (
+                part,
+                f"generation.wire_part_by_construction for the construction '{construction}'",
+            )
+        return (
+            None,
+            f"not decided: generation.wire_part_by_construction has no wire part for '{construction}'",
+        )
+    if field == "colour":
+        colours = generation.get("wire_colour_by_signal")
+        if isinstance(colours, dict) and w.signal:
+            key = next((k for k in (w.signal, *w.signal.split("/")) if k in colours), None)
+            if key is not None:
+                return str(colours[key]), f"generation.wire_colour_by_signal for the signal '{key}'"
+        return None, "none: the project has no colour rule for this signal"
+    # the gauge: the smallest that carries the current after derating and keeps the voltage drop
+    rho, rho_missing = settings.resistivity(project)
+    sizing = size_wire(
+        cfg(project, "derating"), generation, resistivity=(rho, rho_missing),
+        current_a=interface.max_current_a if interface else None,
+        length_m=wire_length(h, w),
+        path_conductors=settings.drop_conductors(project, itype.category) if itype else 1,
+        bundle_wires=bundle_size(project, h, w),
+    )  # fmt: skip
+    if sizing.awg is not None:
+        return sizing.awg, "wire-sizing: " + "; ".join(sizing.notes[-2:])
+    if sizing.error:
+        return None, f"no gauge: {sizing.error}"
+    if interface is not None and interface.max_current_a is None:
+        default = itype.default_gauge_awg if itype and itype.default_gauge_awg is not None else None
+        general = number(generation.get("default_gauge_awg"))
+        if default is None and general is not None and general == int(general):
+            default = int(general)
+        if default is not None:
+            return (
+                default,
+                "the default gauge of the interface type or the configuration (no current to size for)",
+            )
+    return None, "not decided yet, because these are not set: " + "; ".join(sizing.pending)
+
+
+def wire_override_derivation(project: Project, h: Harness, w: Wire) -> Derivation | None:
+    """What the engineer set in place of the design's value: the value, the reason, the value the
+    design would give, and what the set value does to the checks (actual, limit, margin). None for a
+    wire with no override recorded."""
+    if not w.overrides:
+        return None
+    inputs: list[Input] = []
+    for f in sorted(w.overrides):
+        title, unit = _OVERRIDE_TITLES[f]
+        mine = getattr(w, f)
+        inputs.append(
+            Input(
+                f"{title} set by the engineer", mine, unit,
+                f"wire {w.id}: overridden by the engineer, reason: {w.overrides[f]}",
+            )
+        )  # fmt: skip
+        alt, how = generated_alternative(project, h, w, f)
+        inputs.append(
+            Input(
+                f"{title} the design would give",
+                alt if alt is not None else "not decided",
+                unit,
+                how,
+            )
+        )
+    check = None
+    consequences: list[str] = []
+    for d in (
+        wire_current_limit_derivation(project, h, w),
+        wire_voltage_drop_derivation(project, h, w),
+    ):
+        if d.check is not None:
+            consequences.append(f"{d.quantity}: {d.check.text}")
+            if check is None or (check.passes and not d.check.passes):
+                check = d.check
+        elif d.missing:
+            consequences.append(f"{d.quantity} cannot be checked, because these are not set: {'; '.join(d.missing)}")  # fmt: skip
+    ref = (
+        "The values above are kept when the harnesses are generated again; the other values of the wire follow the design. "
+        "Who set them and when is in the journal of the project (`journal`), not in the design files. "
+        + ("Consequences of the set values: " + "; ".join(consequences) + "." if consequences else "No check could be made on the set values yet (see what is not set in the derivations below).")
+    )  # fmt: skip
+    return Derivation(
+        "wire-override", f"Wire {w.id}", "Overridden by the engineer", None, "",
+        "the value set by the engineer is used in place of the value the design gives",
+        tuple(inputs), (), check, (), ref,
+    )  # fmt: skip
+
+
 def explain_wire(project: Project, wire_id: str) -> list[Derivation]:
     """Every derivation that exists for the wire, in the order a reader asks: how long is it, how
-    much current may it carry, then how much voltage does it drop."""
+    much current may it carry, then how much voltage does it drop. A wire with overrides starts with
+    what was set by the engineer."""
     h, w = find_wire(project, wire_id)
+    override = wire_override_derivation(project, h, w)
     return [
+        *([override] if override is not None else []),
         wire_length_derivation(project, h, w),
         wire_current_limit_derivation(project, h, w),
         wire_voltage_drop_derivation(project, h, w),

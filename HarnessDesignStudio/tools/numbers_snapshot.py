@@ -30,12 +30,11 @@ from collections.abc import Callable
 from pathlib import Path
 
 from harness_design_studio.core import standard_profiles, templates
-from harness_design_studio.core.commands import apply_ops
+from harness_design_studio.core.commands import Put, apply_ops
 from harness_design_studio.core.drc import run as run_drc
 from harness_design_studio.core.generate.engine import generate_project
 from harness_design_studio.core.model import ConfigFile, Project, evolve
 from harness_design_studio.core.outputs.build import build_outputs
-from harness_design_studio.core.wires import plan_wire_edit
 from tools.output_hashes import BASE_VERSION, digest
 
 STORED = Path(__file__).resolve().parent.parent / "tests" / "fixtures" / "numbers" / "snapshot.json"
@@ -55,10 +54,19 @@ def _first_wires(project: Project, n: int) -> list[str]:
     return sorted(ids)[:n]
 
 
+def _lock(project: Project, wire_id: str, **values: object) -> None:
+    """Lock a wire with the values given and no reason recorded: the form a project had before
+    overrides carried reasons (S4). The snapshot keeps testing that form, so that it stays as it was."""
+    for h in project.harnesses.values():
+        if any(w.id == wire_id for w in h.wires):
+            wires = [evolve(w, locked=True, **values) if w.id == wire_id else w for w in h.wires]
+            apply_ops(project, [Put("harnesses", evolve(h, wires=wires))])
+
+
 def _override(project: Project) -> None:
     first, second = _first_wires(project, 2)
-    apply_ops(project, plan_wire_edit(project, [first], {"gauge_awg": 28}))
-    apply_ops(project, plan_wire_edit(project, [second], {"length_m": 1.0, "colour": "red"}))
+    _lock(project, first, gauge_awg=28)
+    _lock(project, second, length_m=1.0, colour="red")
     generate_project(project)
 
 

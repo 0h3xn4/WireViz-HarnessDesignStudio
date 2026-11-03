@@ -17,15 +17,21 @@ from harness_design_studio.core.model import (
     ProjectMeta,
 )
 from harness_design_studio.core.model.base import Entity
+from harness_design_studio.core.model.journal import Journal
 
 from . import canonical
 from .fs import slug
 
 MANAGED_RE = re.compile(
-    r"^(project\.json|waivers\.json|logical/layout\.json|generated/generation\.json|config/[^/]+\.json|library/[^/]+\.json|logical/interface_types\.json"
+    r"^(project\.json|waivers\.json|journal\.json|logical/layout\.json|generated/generation\.json|config/[^/]+\.json|library/[^/]+\.json|logical/interface_types\.json"
     r"|logical/links\.json|logical/(units|interfaces)/[^/]+\.json|physical/(connectors|harnesses)/[^/]+\.json|changelog\.json|baselines/[^/]+/[^/]+\.json)$"
 )
+JOURNAL_FILE = "journal.json"
 MANAGED_DIRS = ("config", "library", "logical", "physical", "generated", "baselines")
+
+
+def journal_payload(journal: Journal | None) -> dict[str, Any]:
+    return {"journal": [e.model_dump(mode="json") for e in journal or ()]}
 
 
 def is_managed(rel: str) -> bool:
@@ -141,6 +147,11 @@ def serialize(project: Project, *, tool_version: str | None = None) -> dict[str,
         files["logical/links.json"] = memo.get(
             "logical/links.json", links, lambda: canonical.dumps({"links": _dump(list(links))})
         )
+    if project.journal is not None:  # a project has a journal if and only if the file exists
+        kept: list[Any] = list(project.journal)
+        files[JOURNAL_FILE] = memo.get(
+            JOURNAL_FILE, kept, lambda: canonical.dumps(journal_payload(project.journal))
+        )
     if project.waivers:
         waivers = list(project.waivers.values())
         files["waivers.json"] = memo.get(
@@ -191,8 +202,11 @@ def _harness_bytes(h: Harness) -> bytes:
 
 
 def model_hash(project: Project) -> str:
-    """Hash of the model state, independent of which tool version last saved it."""
+    """Hash of the model state, independent of which tool version last saved it. The journal (who
+    changed what and when) is not part of the model: it never changes a result or a hash."""
     digest = hashlib.sha256()
     for rel, data in sorted(serialize(project, tool_version="").items()):
+        if rel == JOURNAL_FILE:
+            continue
         digest.update(rel.encode("utf-8") + b"\0" + data + b"\0")
     return digest.hexdigest()

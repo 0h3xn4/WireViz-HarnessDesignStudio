@@ -18,6 +18,7 @@ from harness_design_studio.cli import (
     changes,
     data,
     explain,
+    journal_cmd,
     merge,
     settings_cmd,
     start,
@@ -43,6 +44,13 @@ def build_parser() -> argparse.ArgumentParser:
         epilog="`harness` still works as a short alias of this command.",
     )
     parser.add_argument("--version", action="store_true", help="print the tool version and exit")
+    parser.add_argument(
+        "--author",
+        default=None,
+        metavar="NAME",
+        help="who is making the changes of this run, for the change journal (before the command); "
+        "default: the environment variable HARNESS_AUTHOR, else the name Git has, else the user",
+    )
     sub = parser.add_subparsers(dest="command")
     for name, text in (
         ("validate", "check a project folder for errors and inconsistencies"),
@@ -73,6 +81,7 @@ def build_parser() -> argparse.ArgumentParser:
                 "the build workbook is the main output)",
             )
     start.register(sub)
+    journal_cmd.register(sub)
     merge.register(sub)
     explain.register(sub)
     settings_cmd.register(sub)
@@ -268,6 +277,9 @@ def main(argv: Sequence[str] | None = None) -> int:
     if args.command is None:
         parser.print_usage(sys.stderr)
         return 2
+    from harness_design_studio.core import journal as journal_module
+
+    journal_module.set_author(args.author)
     real_stdout = sys.stdout
     sys.stdout = guard = _PipeGuard(real_stdout)
     try:
@@ -368,6 +380,7 @@ NOTHING_DONE = {
     "import-pinout": "imported", "export-pinout": "exported",
     "export-devices": "exported", "import-devices": "imported", "import-build-data": "imported",
     "export-subsystem": "exported", "import-subsystem": "imported", "explain": "explained", "settings": "reported or changed",
+    "journal": "listed", "override": "changed", "deviation": "recorded",
 }  # fmt: skip
 
 MUTATING = {
@@ -383,6 +396,7 @@ def _project_lock(args: argparse.Namespace) -> Iterator[None]:
     path = getattr(args, "project", None)
     writes = (
         args.command in MUTATING
+        or (args.command in journal_cmd.COMMANDS and journal_cmd.mutates(args))
         or (
             args.command == "config"
             and (
@@ -441,6 +455,8 @@ def _dispatch(args: argparse.Namespace) -> int:
                     file=sys.stderr,
                 )
                 return 2
+    if args.command in journal_cmd.COMMANDS:
+        return journal_cmd.run(args)
     if args.command in explain.COMMANDS:
         return explain.run(args)
     if args.command in settings_cmd.COMMANDS:

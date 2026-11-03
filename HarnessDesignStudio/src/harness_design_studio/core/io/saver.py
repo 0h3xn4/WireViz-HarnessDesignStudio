@@ -13,7 +13,7 @@ from harness_design_studio.core.model import SCHEMA_VERSION, Project, evolve
 
 from . import canonical
 from .fs import atomic_write_bytes, escapes_root, long_path, sweep_stale_temp_files
-from .layout import MANAGED_DIRS, is_managed, serialize
+from .layout import MANAGED_DIRS, is_managed, journal_payload, serialize
 from .loader import LoadResult, disk_fingerprint, load_project
 
 GITIGNORE = (
@@ -82,6 +82,17 @@ def save_project(
     result = SaveResult()
     sweep_stale_temp_files(base, MANAGED_DIRS)  # leftovers of a save that was killed
     files = serialize(project, tool_version=__version__)
+    on_disk = _bytes_on_disk(base, files) if exists else {}
+    new_journal = None
+    if project.journal is not None and exists and project.migrated_from is None:
+        # The change journal: one entry for each field that differs from what is on disk. It is
+        # written with the files it describes, and kept in memory only when they are written.
+        from harness_design_studio.core import journal as journal_module
+
+        rows = journal_module.rows_for_save(project, on_disk, files)
+        if rows:
+            new_journal = journal_module.extended(project.journal, rows)
+            files["journal.json"] = canonical.dumps(journal_payload(new_journal))
     # from here on the release record may be on disk: History.undo must not take it away again
     project.saved_records |= frozenset(f"baselines:{k}" for k in project.baselines) | frozenset(
         f"changelog:{k}" for k in project.changelog
@@ -92,14 +103,21 @@ def save_project(
     # The record of what was generated and the project file go last: if a write fails half-way,
     # the record still describes the older harnesses instead of claiming newer ones.
     last = ("generated/generation.json", "project.json")
+    # the journal goes first: if a write fails half-way, the journal may then say a little more than
+    # the files, never less
     for rel, data in sorted(
-        files.items(), key=lambda kv: (kv[0] in last, kv[0] == "project.json", kv[0])
+        files.items(),
+        key=lambda kv: (kv[0] in last, kv[0] == "project.json", kv[0] != "journal.json", kv[0]),
     ):
         path = base / rel
-        if path.is_file() and not path.is_symlink() and path.read_bytes() == data:
+        if exists and on_disk.get(rel) == data:
+            continue
+        if not exists and path.is_file() and not path.is_symlink() and path.read_bytes() == data:
             continue
         atomic_write_bytes(path, data, root=base)
         result.written.append(rel)
+    if new_journal is not None:
+        project.journal = new_journal
     if project.recovered:
         atomic_write_bytes(
             base / "quarantine.json", canonical.dumps(_quarantine_payload(project)), root=base
@@ -120,6 +138,16 @@ def save_project(
     project.meta = evolve(project.meta, tool_version=__version__, schema_version=SCHEMA_VERSION)
     project.migrated_from = None
     return result
+
+
+def _bytes_on_disk(base: Path, files: dict[str, bytes]) -> dict[str, bytes]:
+    """The bytes of every managed file that is on disk now (links are not followed)."""
+    found: dict[str, bytes] = {}
+    for rel in {*files, *_managed_on_disk(base)}:
+        path = base / rel
+        if path.is_file() and not path.is_symlink():
+            found[rel] = path.read_bytes()
+    return found
 
 
 def _migration_backup(base: Path, version: int) -> Path:
@@ -159,7 +187,7 @@ def _migration_backup(base: Path, version: int) -> Path:
 
 def _managed_on_disk(base: Path) -> list[str]:
     found = []
-    for top_file in ("project.json", "waivers.json", "changelog.json"):
+    for top_file in ("project.json", "waivers.json", "changelog.json", "journal.json"):
         if (base / top_file).is_file():
             found.append(top_file)
     for top in MANAGED_DIRS:

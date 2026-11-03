@@ -28,6 +28,20 @@ class Finding:
     waiver: Waiver | None = None  # set when the finding has been waived
     sources: tuple[str, ...] = ()  # IDs of the standard requirements the rule serves
     waiver_changed: bool = False  # a waiver exists but the finding changed since: it does not apply
+    # An error of an electrical rule that can be accepted as a recorded deviation (D-191 (3)): it
+    # stays visible everywhere, marked as a deviation, with the reason.
+    can_deviate: bool = False
+
+    @property
+    def deviation(self) -> bool:
+        """True when an error has been accepted as a deviation: closed for the release and the
+        exit codes like a waived warning, but always shown as a deviation, with its reason."""
+        return self.waiver is not None and self.severity == "error"
+
+    @property
+    def waived_mark(self) -> str:
+        """The cell of the Waived column: yes for a waived finding, deviation for an accepted error."""
+        return "" if self.waiver is None else "deviation" if self.deviation else "yes"
 
     @property
     def why_cited(self) -> str:
@@ -61,8 +75,10 @@ def with_waiver(project: Project, finding: Finding) -> Finding:
     """`finding` with its waiver set, when one exists and still fits the finding. A waiver that
     records a `finding_hash` which no longer matches does not apply (`waiver_changed` is set)."""
     waiver = project.waivers.get(finding.id)
-    if waiver is None or not finding.can_waive:
+    if waiver is None or not (finding.can_waive or finding.can_deviate):
         return finding
+    if not finding.can_waive and waiver.finding_hash is None:
+        return finding  # a deviation is made by the tool, which always records what it is for
     if waiver.finding_hash is not None and waiver.finding_hash != finding_hash(finding):
         return replace(finding, waiver_changed=True)
     return replace(finding, waiver=waiver)
@@ -190,6 +206,10 @@ def _assign_connectors(project: Project, interface_id: str) -> list[Op]:
 def waive_op(finding: Finding, justification: str) -> Op:
     if not finding.can_waive:
         raise edit.EditError("This finding cannot be waived.")
+    return _waiver(finding, justification)
+
+
+def _waiver(finding: Finding, justification: str) -> Op:
     try:
         waiver = Waiver(
             id=finding.id,
@@ -203,6 +223,18 @@ def waive_op(finding: Finding, justification: str) -> Op:
             "The reason is not acceptable: it needs at least 10 characters, no more than 2000, and no control characters."
         ) from exc
     return Put("waivers", waiver)
+
+
+def deviate_op(finding: Finding, reason: str) -> Op:
+    """Accept an error of an electrical rule as a recorded deviation: the waiver that keeps the
+    finding on every list and output, marked as a deviation (who and when are in the journal)."""
+    if not finding.can_deviate:
+        raise edit.EditError(
+            "This finding cannot be accepted as a deviation: only an error of an electrical rule "
+            "(wire current, voltage drop, contact current, bundle current, working voltage, "
+            "temperature margin) can."
+        )
+    return _waiver(finding, reason)
 
 
 def todos(project: Project) -> list[Todo]:

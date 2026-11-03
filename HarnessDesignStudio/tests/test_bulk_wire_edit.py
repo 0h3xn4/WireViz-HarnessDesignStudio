@@ -38,6 +38,7 @@ def test_all_wires_of_a_harness_get_the_values_and_are_locked(project):
         project,
         "W009",
         {"gauge_awg": "22", "colour": "red", "length_m": "1,5", "part_id": "EX-WIRE-22"},
+        reason="test",
     )
     assert len(ops) == 1
     apply_ops(project, ops)
@@ -56,47 +57,60 @@ def test_it_is_the_same_result_as_editing_each_wire(project):
     other = sat15()
     generate_project(other)
     other.parts["EX-WIRE-22"] = Part(id="EX-WIRE-22", category="wire")
-    apply_ops(project, plan_bulk_wire_edit(project, "W009", {"gauge_awg": 24, "colour": "blue"}))
     apply_ops(
-        other, plan_wire_edit(other, sorted(wires(other)), {"gauge_awg": 24, "colour": "blue"})
+        project,
+        plan_bulk_wire_edit(project, "W009", {"gauge_awg": 24, "colour": "blue"}, reason="test"),
+    )
+    apply_ops(
+        other,
+        plan_wire_edit(
+            other, sorted(wires(other)), {"gauge_awg": 24, "colour": "blue"}, reason="test"
+        ),
     )
     assert serialize(project) == serialize(other)
 
 
 def test_the_selected_wires_only(project):
     ids = sorted(wires(project))
-    ops = plan_bulk_wire_edit(project, "W009", {"colour": "green"}, wire_ids=ids[:2])
+    ops = plan_bulk_wire_edit(project, "W009", {"colour": "green"}, wire_ids=ids[:2], reason="test")
     apply_ops(project, ops)
     got = wires(project)
     assert [got[i].colour for i in ids] == ["green", "green", None, None]
     assert [got[i].locked for i in ids] == [True, True, False, False]
     with pytest.raises(EditError, match="is not a wire of W009"):
-        plan_bulk_wire_edit(project, "W009", {"colour": "green"}, wire_ids=["W001-0001"])
+        plan_bulk_wire_edit(
+            project, "W009", {"colour": "green"}, wire_ids=["W001-0001"], reason="test"
+        )
 
 
 def test_the_wires_of_one_signal(project):
     assert signals_of(project, "W009") == ["TX+/RX+", "TX-/RX-"]
     ids = bulk_targets(project, "W009", signal="TX+/RX+")
     assert len(ids) == 2
-    apply_ops(project, plan_bulk_wire_edit(project, "W009", {"gauge_awg": 26}, signal="TX+/RX+"))
+    apply_ops(
+        project,
+        plan_bulk_wire_edit(project, "W009", {"gauge_awg": 26}, signal="TX+/RX+", reason="test"),
+    )
     got = wires(project)
     assert {i: got[i].gauge_awg for i in got} == {i: (26 if i in ids else None) for i in got}
     with pytest.raises(EditError, match="no wire with the signal 'NOPE'"):
-        plan_bulk_wire_edit(project, "W009", {"gauge_awg": 26}, signal="NOPE")
+        plan_bulk_wire_edit(project, "W009", {"gauge_awg": 26}, signal="NOPE", reason="test")
 
 
 def test_only_empty_fills_the_gaps_and_leaves_what_is_there(project):
     first = sorted(wires(project))[0]
-    apply_ops(project, plan_wire_edit(project, [first], {"colour": "red"}))
+    apply_ops(project, plan_wire_edit(project, [first], {"colour": "red"}, reason="test"))
     apply_ops(
         project,
-        plan_bulk_wire_edit(project, "W009", {"colour": "blue", "gauge_awg": 22}, only_empty=True),
+        plan_bulk_wire_edit(
+            project, "W009", {"colour": "blue", "gauge_awg": 22}, only_empty=True, reason="test"
+        ),
     )
     got = wires(project)
     assert got[first].colour == "red" and got[first].gauge_awg == 22
     assert {w.colour for i, w in got.items() if i != first} == {"blue"}
     again = plan_bulk_wire_edit(
-        project, "W009", {"colour": "blue", "gauge_awg": 22}, only_empty=True
+        project, "W009", {"colour": "blue", "gauge_awg": 22}, only_empty=True, reason="test"
     )
     assert again == []  # nothing is empty any more
 
@@ -104,7 +118,7 @@ def test_only_empty_fills_the_gaps_and_leaves_what_is_there(project):
 def test_one_undo_step(project):
     before = model_hash(project)
     hist = History(project)
-    hist.execute("bulk", plan_bulk_wire_edit(project, "W009", {"colour": "green"}))
+    hist.execute("bulk", plan_bulk_wire_edit(project, "W009", {"colour": "green"}, reason="test"))
     assert {w.colour for w in wires(project).values()} == {"green"}
     hist.undo()
     assert model_hash(project) == before
@@ -113,7 +127,10 @@ def test_one_undo_step(project):
 
 
 def test_generation_keeps_the_values_and_a_second_plan_is_empty(project):
-    apply_ops(project, plan_bulk_wire_edit(project, "W009", {"gauge_awg": 22, "colour": "green"}))
+    apply_ops(
+        project,
+        plan_bulk_wire_edit(project, "W009", {"gauge_awg": 22, "colour": "green"}, reason="test"),
+    )
     apply_ops(project, plan_generation(project).ops)
     assert {(w.gauge_awg, w.colour, w.locked) for w in wires(project).values()} == {
         (22, "green", True)
@@ -122,12 +139,20 @@ def test_generation_keeps_the_values_and_a_second_plan_is_empty(project):
 
 
 def test_how_many_wires_change_is_told_before_it_happens(project):
-    ops = plan_bulk_wire_edit(project, "W009", {"colour": "green"})
+    ops = plan_bulk_wire_edit(project, "W009", {"colour": "green"}, reason="test")
     assert wires_changed(project, ops) == 4
     first = sorted(wires(project))[0]
-    apply_ops(project, plan_wire_edit(project, [first], {"colour": "green"}))
-    assert wires_changed(project, plan_bulk_wire_edit(project, "W009", {"colour": "green"})) == 3
-    assert plan_bulk_wire_edit(project, "W009", {"colour": "green"}, wire_ids=[first]) == []
+    apply_ops(project, plan_wire_edit(project, [first], {"colour": "green"}, reason="test"))
+    assert (
+        wires_changed(
+            project, plan_bulk_wire_edit(project, "W009", {"colour": "green"}, reason="test")
+        )
+        == 3
+    )
+    assert (
+        plan_bulk_wire_edit(project, "W009", {"colour": "green"}, wire_ids=[first], reason="test")
+        == []
+    )
 
 
 @pytest.mark.parametrize(
@@ -144,7 +169,7 @@ def test_how_many_wires_change_is_told_before_it_happens(project):
 def test_a_wrong_value_says_why_and_changes_nothing(project, changes, words):
     before = model_hash(project)
     with pytest.raises(EditError, match=words):
-        plan_bulk_wire_edit(project, "W009", changes)
+        plan_bulk_wire_edit(project, "W009", changes, reason="test")
     assert model_hash(project) == before
     assert BULK_FIELDS == ("gauge_awg", "part_id", "colour", "length_m")
 
@@ -152,11 +177,11 @@ def test_a_wrong_value_says_why_and_changes_nothing(project, changes, words):
 def test_a_released_harness_an_unknown_harness_and_an_empty_one_refuse(project):
     project.harnesses["W009"] = evolve(project.harnesses["W009"], status="released")
     with pytest.raises(EditError, match="released"):
-        plan_bulk_wire_edit(project, "W009", {"colour": "green"})
+        plan_bulk_wire_edit(project, "W009", {"colour": "green"}, reason="test")
     with pytest.raises(EditError, match="does not exist"):
-        plan_bulk_wire_edit(project, "W999", {"colour": "green"})
+        plan_bulk_wire_edit(project, "W999", {"colour": "green"}, reason="test")
     with pytest.raises(EditError, match="does not exist"):
         signals_of(project, "W999")
     project.harnesses["W010"] = evolve(project.harnesses["W010"], wires=[], shields=[])
     with pytest.raises(EditError, match="has no wires"):
-        plan_bulk_wire_edit(project, "W010", {"colour": "green"})
+        plan_bulk_wire_edit(project, "W010", {"colour": "green"}, reason="test")

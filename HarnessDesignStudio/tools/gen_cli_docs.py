@@ -14,6 +14,7 @@ GROUPS = (
     ("Start", ("new", "templates", "schema")),
     ("Check", ("validate", "check", "drc", "verify")),
     ("Explain", ("explain", "settings")),
+    ("Overrides and change history", ("override", "deviation", "journal")),
     ("Generate and export", ("generate", "export")),
     ("Team use with Git", ("merge-fix",)),
     (
@@ -47,6 +48,24 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio explain wheel-link --all --out wheel-link-derivations",
         "harness-design-studio explain wheel-link IF-001.GPSU1-J01",
         "harness-design-studio explain wheel-link W001-001 --json",
+    ],
+    "override": [
+        'harness-design-studio override wheel-link W001-001 gauge_awg 20 --reason "Heater load added after CDR, see ECR-114"',
+        "harness-design-studio override wheel-link W001-001 length_m 2.4 --reason 'Measured on the mock-up'",
+        "harness-design-studio override wheel-link W001-001",
+        "harness-design-studio override wheel-link W001-001 --clear gauge_awg",
+    ],
+    "deviation": [
+        "harness-design-studio deviation wheel-link",
+        'harness-design-studio deviation wheel-link current-over-wire.W001-001 --reason "Accepted by the PA board, NCR-17"',
+        "harness-design-studio deviation wheel-link current-over-wire.W001-001 --remove",
+    ],
+    "journal": [
+        "harness-design-studio journal wheel-link",
+        "harness-design-studio journal wheel-link --start",
+        "harness-design-studio journal wheel-link --object W001-001",
+        "harness-design-studio journal wheel-link --since 12 --json",
+        "harness-design-studio --author 'A. Engineer' override wheel-link W001-001 colour red --reason 'Colour code of the program'",
     ],
     "settings": [
         "harness-design-studio settings wheel-link",
@@ -212,7 +231,11 @@ def render() -> str:
         "Every command that changes a project takes the same lock as the app, so the two never write "
         "at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) "
         "accept `--dry-run`: they show what they would do and change nothing; "
-        "`config --ampacity-csv` does not.",
+        "`config --ampacity-csv` does not. "
+        "The option `--author NAME` (given before the command) names who is making the changes "
+        "of a run in the change journal of a project that has one; the environment variable "
+        "`HARNESS_AUTHOR` does the same, and without either the journal uses the name Git has "
+        "(`user.name`), then the user of the computer.",
         "",
         "The examples show the form of each command with example names. They do not all work "
         "on any project: `release` is blocked until its conditions are met (placeholder "

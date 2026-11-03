@@ -273,7 +273,7 @@ def test_every_step_is_one_undo_step_and_the_wire_editor_works_on_the_new_wires(
     hist.execute("Add connector", ops)
     hist.execute("Add wire", plan_add_wire(p, hid, a, "1", b, "1", signal="S"))
     wid = p.harnesses[hid].wires[0].id
-    hist.execute("Edit wire", plan_wire_edit(p, [wid], {"colour": "blue"}))
+    hist.execute("Edit wire", plan_wire_edit(p, [wid], {"colour": "blue"}, reason="test"))
     assert p.harnesses[hid].wires[0].colour == "blue"
     for _ in range(5):
         hist.undo()

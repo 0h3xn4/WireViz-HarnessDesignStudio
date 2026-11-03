@@ -94,7 +94,7 @@ def findings_table(project: Project) -> Table:
                 f.severity,
                 f.object_id,
                 f.title,
-                "yes" if f.waiver else "",
+                f.waived_mark,
                 f.waiver.justification if f.waiver else "",
                 " ".join(f.sources),
             ]

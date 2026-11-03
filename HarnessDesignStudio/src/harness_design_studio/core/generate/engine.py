@@ -697,7 +697,25 @@ def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | No
                 id=wid, signal=link.label, from_connector=cables[src_box].id, from_pin=pin_src, to_connector=cables[dst_box].id,
                 to_pin=pin_dst, part_id=part_id, interface_id=i.id, length_m=length,
             )  # fmt: skip
-            if prev_w is not None and prev_w.locked:
+            if prev_w is not None and prev_w.locked and prev_w.overrides:
+                # An override recorded with a reason (S4): the fields named in it are kept, the
+                # others are given the value the design asks for, sized for the kept length.
+                kept = {f: getattr(prev_w, f) for f in prev_w.overrides}
+                ctx.note(
+                    f"wire:{wid}",
+                    f"override: {', '.join(sorted(kept))} kept as set by the engineer (reason: "
+                    + "; ".join(f"{f}: {prev_w.overrides[f]}" for f in sorted(kept))
+                    + "); the other values follow the design",
+                )
+                wire = _size(
+                    ctx,
+                    evolve(wire, **kept, locked=True, overrides=prev_w.overrides),
+                    i,
+                    itype.category,
+                    bundle_by_wire.get(_wire_key(i.id, link.label, src_box), bundle_wires),
+                    keep_gauge="gauge_awg" in kept,
+                )
+            elif prev_w is not None and prev_w.locked:
                 wire = evolve(
                     prev_w,
                     from_pin=pin_src,
@@ -988,8 +1006,18 @@ def _planned_bundles(
 
 
 def _size(
-    ctx: _Ctx, wire: Wire, i: InterfaceInstance, category: str, bundle_wires: int | None = None
+    ctx: _Ctx,
+    wire: Wire,
+    i: InterfaceInstance,
+    category: str,
+    bundle_wires: int | None = None,
+    *,
+    keep_gauge: bool = False,
 ) -> Wire:
+    if (
+        keep_gauge
+    ):  # the gauge is an override of the engineer: it is checked by the rules, not chosen
+        return _finish(ctx, wire, i)
     conductors = settings.drop_conductors(ctx.project, category)
     rho, rho_missing = settings.resistivity(ctx.project)
     sizing = size_wire(
@@ -1023,6 +1051,11 @@ def _size(
                 f"gauge:{wire.id}",
                 f"wire-sizing: {i.type_id} has no current to size for, so the default gauge AWG {default} from the configuration was used",
             )
+    return _finish(ctx, out, i)
+
+
+def _finish(ctx: _Ctx, out: Wire, i: InterfaceInstance) -> Wire:
+    """The colour by the signal name and the check of the contacts: what follows the gauge."""
     colours = ctx.gen.get("wire_colour_by_signal")  # the owner's own rule; absent: no colour
     if isinstance(colours, dict) and out.colour is None and out.signal:
         # a wire between two different signal names is labelled "TX+/RX+": the first one counts

@@ -8,6 +8,7 @@ from pydantic import Field
 from .base import Entity, Name, Text
 from .config import ConfigFile, default_configs
 from .generation import GenerationRecord
+from .journal import Journal
 from .library import LibraryInfo, Part
 from .logical import InterfaceInstance, InterfaceType, Link, Unit
 from .physical import Connector, Harness
@@ -52,6 +53,9 @@ class Project:
     changelog: dict[str, ChangeEntry] = field(default_factory=dict)
     config: dict[str, ConfigFile] = field(default_factory=default_configs)
     generation: GenerationRecord | None = None
+    # The change journal (S4): None for a project that has none; the project has one if and only if
+    # it has the file journal.json. Appended to when the project is saved (`core.journal`).
+    journal: Journal | None = None
     quarantine: list[QuarantinedItem] = field(default_factory=list)
     quarantine_files: dict[str, bytes] = field(default_factory=dict)
     read_only: bool = False  # written by a newer tool version

@@ -29,10 +29,18 @@ class Rule:
     check: Callable[[Project], Iterator[Hit]]
     waivable: bool | None = None  # default: warnings can be waived, errors and info cannot
     sources: tuple[str, ...] = ()  # IDs of the standard requirements this rule serves (compliance/)
+    # An error of this rule can be accepted as a recorded deviation (D-191 (3)): the finding stays
+    # on every list and every output, marked as a deviation with its reason. Only for the
+    # electrical rules; an error of any other rule still cannot be waived.
+    deviation: bool = False
 
     @property
     def can_waive(self) -> bool:
         return self.severity == "warning" if self.waivable is None else self.waivable
+
+    @property
+    def can_deviate(self) -> bool:
+        return self.deviation and self.severity == "error"
 
     def run(self, project: Project) -> list[Finding]:
         out: list[Finding] = []
@@ -46,6 +54,7 @@ class Rule:
                 Finding(
                     fid, self.id, self.severity, h.object_id,
                     h.title, f"{self.why} To fix it: {self.how}", h.fix_label, self.can_waive, None, self.sources,
+                    can_deviate=self.can_deviate,
                 )
             )  # fmt: skip
         return out

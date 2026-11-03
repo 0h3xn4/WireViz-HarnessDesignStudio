@@ -18,6 +18,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from harness_design_studio.core import settings
+from harness_design_studio.core.deviations import deviation_lines, override_lines, override_text
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Connector, Harness, Project, Wire
 from harness_design_studio.core.wirecolours import resolve
@@ -397,6 +398,15 @@ def _start_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
         body.append([_cell(ws, "Placeholder files", fill=_BAND), _cell(ws, files)])
         lay.see(1, "Placeholder files")
         lay.see(2, files)
+    marks = override_lines(h) + deviation_lines(project, h)
+    if marks:  # only a harness with a value set by hand or an accepted error has this section
+        body.append([])
+        body.append([_cell(ws, "Overrides and deviations", bold=True, box=False, wrap=False)])
+        for line in marks:
+            kind, _, rest = line.partition(" ")
+            body.append([_cell(ws, kind.title(), fill=_BAND), _cell(ws, rest)])
+            lay.see(1, kind)
+            lay.see(2, rest)
     body.append([])
     body.append([_cell(ws, "How to use this workbook", bold=True, box=False, wrap=False)])
     for name, what in (
@@ -437,7 +447,9 @@ def _cut_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
     lay = _Layout({})
     body: list[list[Any]] = []
     shields = tables.shield_of(h)
-    body.append(_header(ws, lay, CUT_HEADER))
+    over = any(w.overrides for w in h.wires)  # a column only for a harness that has overrides
+    header = [*CUT_HEADER, *(["Override"] if over else [])]
+    body.append(_header(ws, lay, header))
     wires = sorted(h.wires, key=lambda w: _wire_sort_key(h, w))
     total = 0.0
     for w in wires:
@@ -449,7 +461,7 @@ def _cut_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
             w.part_id or TO_FILL, round(length, 9) + 0.0 if length is not None else TO_FILL,
             _strip(w.strip_a_mm), _strip(w.strip_b_mm),
             f"{w.from_connector}.{w.from_pin}", f"{w.to_connector}.{w.to_pin}", tables.wire_name(w),
-            shields.get(w.id, ""), w.note,
+            shields.get(w.id, ""), w.note, *([override_text(w)] if over else []),
         ]  # fmt: skip
         body.append([
             _cell(ws, "", centre=True), _cell(ws, w.id, bold=True), _wire_colour_cell(ws, w.colour),
@@ -460,6 +472,7 @@ def _cut_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
             _cell(ws, values[7], fill=_AMBER if w.strip_b_mm is None else None, centre=True),
             _cell(ws, values[8]), _cell(ws, values[9]), _cell(ws, values[10]),
             _cell(ws, values[11]), _cell(ws, values[12]),
+            *([_cell(ws, values[13], fill=_AMBER if w.overrides else None)] if over else []),
         ])  # fmt: skip
         for n, v in enumerate(values, start=1):
             lay.see(n, _colour_text(w.colour) if n == 3 and w.colour else str(v))
@@ -468,9 +481,9 @@ def _cut_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
         _cell(ws, "", fill=_BAND), _cell(ws, f"{len(wires)} wires", bold=True, fill=_BAND),
         *[_cell(ws, "", fill=_BAND) for _ in range(3)],
         _cell(ws, round(total, 9) + 0.0, bold=True, fill=_BAND, centre=True),
-        *[_cell(ws, "", fill=_BAND) for _ in range(7)],
+        *[_cell(ws, "", fill=_BAND) for _ in range(7 + (1 if over else 0))],
     ])  # fmt: skip
-    ws.auto_filter.ref = f"A1:{_letter(len(CUT_HEADER))}{last}"
+    ws.auto_filter.ref = f"A1:{_letter(len(header))}{last}"
     if wires:
         _tick_rules(ws, f"A2:A{last}")
     lay.widths[1] = 10.0
@@ -711,6 +724,7 @@ def cut_rows(project: Project, h: Harness) -> Table:
     """The cut list as plain rows (what the sheet shows, in its order): the independent check and
     the tests compare the workbook with this."""
     shields = tables.shield_of(h)
+    over = any(w.overrides for w in h.wires)
     rows: Table = []
     for w in sorted(h.wires, key=lambda x: _wire_sort_key(h, x)):
         length = wire_length(h, w)
@@ -719,6 +733,7 @@ def cut_rows(project: Project, h: Harness) -> Table:
             tables.data_num(length), tables.data_num(w.strip_a_mm), tables.data_num(w.strip_b_mm),
             f"{w.from_connector}.{w.from_pin}", f"{w.to_connector}.{w.to_pin}",
             tables.wire_name(w), shields.get(w.id, ""), w.note,
+            *([override_text(w)] if over else []),
         ])  # fmt: skip
     return rows
 

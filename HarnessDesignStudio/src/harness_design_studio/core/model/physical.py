@@ -2,11 +2,21 @@
 
 from typing import Annotated, ClassVar, Literal
 
-from pydantic import Field
+from pydantic import Field, model_validator
 
 from harness_design_studio.core.ids import Id, PinId
 
-from .base import Awg, Entity, IsoDate, LengthM, LengthMm, Name, SparseEntity, Text
+from .base import (
+    Awg,
+    Entity,
+    IsoDate,
+    LengthM,
+    LengthMm,
+    Name,
+    Reason,
+    SparseEntity,
+    Text,
+)
 
 Gender = Literal["male", "female", "unspecified"]
 Role = Literal["box", "cable", "inline", "feedthrough", "test"]
@@ -71,9 +81,14 @@ class Connector(SparseEntity):
     )
 
 
+# The four values of a generated wire that a person can set in place of the one generation chooses.
+# Each can carry its own reason in `Wire.overrides` (S4, D-191 (3)).
+OVERRIDABLE: tuple[str, ...] = ("gauge_awg", "part_id", "colour", "length_m")
+
+
 class Wire(SparseEntity):
     OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset(
-        {"label", "note", "manual", "strip_a_mm", "strip_b_mm"}
+        {"label", "note", "manual", "strip_a_mm", "strip_b_mm", "overrides"}
     )
 
     id: Id
@@ -93,6 +108,22 @@ class Wire(SparseEntity):
     manual: bool = False  # drawn by a person: generation keeps it as it is and never matches it
     strip_a_mm: LengthMm | None = None  # insulation stripped at the From end (a person's, 1.7.0)
     strip_b_mm: LengthMm | None = None  # insulation stripped at the To end (a person's, 1.7.0)
+    # Why a person set a value of `OVERRIDABLE` in place of the one generation chooses: field name
+    # -> the reason (never empty). Who and when are in the journal (`journal.json`), never here, so
+    # the file of a design holds no name and no time. A locked wire with no entry here is one from
+    # before the reasons were kept ("locked, no reason recorded"): it keeps its meaning.
+    overrides: dict[Name, Reason] = {}
+
+    @model_validator(mode="after")
+    def _overrides_are_recorded_overrides(self) -> Wire:
+        for key in self.overrides:
+            if key not in OVERRIDABLE:
+                raise ValueError(f"'{key}' cannot be overridden (only {', '.join(OVERRIDABLE)})")
+            if getattr(self, key) is None:
+                raise ValueError(f"the override of '{key}' needs a value on the wire")
+        if self.overrides and not self.locked:
+            raise ValueError("a wire with an override must be locked")
+        return self
 
 
 class ShieldGroup(SparseEntity):
