@@ -127,6 +127,16 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "built in",
             "core/outputs/tables.py (bom_contributions)",
         ),
+        Assumption(
+            "A-CONTACT-SHARED",
+            "The current of an interface is checked against every contact at its ends",
+            "The whole current of an interface is compared with the derated rating of the contacts "
+            "of the connector at each of its endpoints: it is not split over the pins the interface "
+            "uses, and the rating is that of the connector part, not of the contact or the wire "
+            "crimped into it. The derating factor is one number for every connector.",
+            "built in",
+            "core/drc/rules.py (_current_over_contact)",
+        ),
     )
 }
 

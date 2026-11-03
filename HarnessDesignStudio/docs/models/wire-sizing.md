@@ -70,7 +70,7 @@ The tool never guesses an engineering value. If a configuration value or an inpu
 
 ## Where else the same numbers are used
 
-The design rules `current-over-wire` and `voltage-drop` use exactly these numbers: the generator and the rules call the same functions for the derated limit and for the drop, and the same comparison, so they cannot disagree at the exact limit. The derivation calls them too and shows the same verdict as the rule. The rules `bundle-current` and the contact rules use related limits and are explained on their own pages as they are written.
+The design rules `current-over-wire` and `voltage-drop` use exactly these numbers: the generator and the rules call the same functions for the derated limit and for the drop, and the same comparison, so they cannot disagree at the exact limit. The derivation calls them too and shows the same verdict as the rule. The rule `bundle-current` uses a related limit and is explained on its own page when it is written; the check of the contacts is on the [contact current](contact-current.md) page.
 
 ## What the model does not do
 

@@ -378,3 +378,55 @@ def test_explain_takes_a_part_and_says_when_it_is_not_one(
     assert out.startswith("Part EX-WIRE-SINGLE. BOM quantity (m):") and "A-BOM-NO-ALLOWANCE" in out
     assert main(["explain", str(tmp_path / "flat"), "NOT-A-THING"]) == 2
     assert "is not a wire, a harness or a part" in capsys.readouterr().err
+
+
+# ---- the contacts of an interface ----------------------------------------------------------
+
+
+def test_the_contact_verdict_is_the_verdict_of_the_rule(projects: dict[str, Project]) -> None:
+    from harness_design_studio.core.derive import contact_current_derivation
+    from harness_design_studio.core.model import ConfigFile
+
+    project = projects["flatsat"]
+    base = project.config["derating"]
+    seen = {"pass": 0, "fail": 0}
+    try:
+        for factor in (0.5, 0.3):  # as shipped, and low enough that 5 A is too much
+            project.config["derating"] = ConfigFile(
+                name="derating",
+                placeholder=False,
+                values={**base.values, "contact_current_factor": factor},
+            )
+            failing = {f.object_id for f in run_drc(project) if f.rule == "current-over-contact"}
+            for i in project.interfaces.values():
+                for e in i.endpoints:
+                    if e.connector_id is None or i.max_current_a is None:
+                        continue
+                    d = contact_current_derivation(project, i.id, e.connector_id)
+                    if d.check is None:
+                        continue
+                    assert (not d.check.passes) == (f"{i.id}.{e.connector_id}" in failing)
+                    seen["pass" if d.check.passes else "fail"] += 1
+                    assert d.value == (d.inputs[1].value or 0) * factor  # type: ignore[operator]
+    finally:
+        project.config["derating"] = base
+    assert seen["pass"] > 0 and seen["fail"] > 0
+
+
+def test_a_finding_object_can_be_explained_and_what_is_missing_is_named(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    from harness_design_studio.core.derive import contact_current_derivation
+
+    project = templates.create_project(tmp_path / "flat", "flatsat")
+    i = sorted(project.interfaces.values(), key=lambda x: x.id)[0]
+    cid = i.endpoints[0].connector_id or ""
+    assert main(["explain", str(tmp_path / "flat"), f"{i.id}.{cid}"]) == 0
+    assert "Contact current limit:" in capsys.readouterr().out
+    gone = contact_current_derivation(project, i.id, "NO-SUCH-CONNECTOR")
+    assert gone.value is None and gone.missing
+    first = templates.create_project(tmp_path / "first", "first-steps")
+    fi = sorted(first.interfaces.values(), key=lambda x: x.id)[0]
+    fc = fi.endpoints[0].connector_id or ""
+    d = contact_current_derivation(first, fi.id, fc)
+    assert d.value is None and any("derating.contact_current_factor" in m for m in d.missing)

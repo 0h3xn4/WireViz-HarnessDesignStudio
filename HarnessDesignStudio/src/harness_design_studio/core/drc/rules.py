@@ -295,10 +295,14 @@ def _link_power_return(project: Project) -> Iterator[Hit]:
 # ---- ratings ---------------------------------------------------------------------------------------
 
 
-def _contact_rating(project: Project, conn: Connector) -> float | None:
-    key = str(cfg(project, "derating").get("contact_rating_key") or "contact_current_a")
+def contact_rating_key(project: Project) -> str:
+    """The key of `Part.ratings` that holds the current a contact of the connector part may carry."""
+    return str(cfg(project, "derating").get("contact_rating_key") or "contact_current_a")
+
+
+def contact_rating(project: Project, conn: Connector) -> float | None:
     part = project.parts.get(conn.part_id)
-    return part.ratings.get(key) if part else None
+    return part.ratings.get(contact_rating_key(project)) if part else None
 
 
 def _bundle_table_given(d: dict[str, object]) -> bool:
@@ -326,7 +330,7 @@ def _current_over_contact(project: Project) -> Iterator[Hit]:
             continue
         for e in i.endpoints:
             conn = project.connectors.get(e.connector_id or "")
-            rating = _contact_rating(project, conn) if conn else None
+            rating = contact_rating(project, conn) if conn else None
             if (
                 conn is not None
                 and rating is not None
@@ -706,7 +710,7 @@ def _unchecked(project: Project) -> Iterator[Hit]:
                 if i.max_current_a is not None
                 for e in i.endpoints
                 if (box := project.connectors.get(e.connector_id or "")) is not None
-                and _contact_rating(project, box) is None
+                and contact_rating(project, box) is None
             }
         )
         if unrated:

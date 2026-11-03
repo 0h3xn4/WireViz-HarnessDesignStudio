@@ -17,7 +17,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         help="explain how the numbers of a wire, a harness or a part were made: equation, inputs with units and sources, steps",
         description="Show how the numbers of one wire or one harness were made. For a wire: its length, "
         "the current its gauge may carry after derating, the voltage drop over it and its share of "
-        "the mass. For a harness: its mass. For a part: why the bill of materials has its quantity. For each: the equation, the inputs with "
+        "the mass. For a harness: its mass. For a part: why the bill of materials has its quantity. For INTERFACE.CONNECTOR (the object of a current-over-contact finding): the limit of the contacts. For each: the equation, the inputs with "
         "their units and where each comes from (a key of config/*.json, a field of the design or "
         "the program), the intermediate results, what the result is checked against, and the "
         "assumptions built into the program that it rests on. The numbers are the ones `generate` "
@@ -27,7 +27,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     p.add_argument(
         "object",
         metavar="OBJECT",
-        help="a wire (W001-001), a harness (W001) or a part (EX-WIRE-SINGLE)",
+        help="a wire (W001-001), a harness (W001), a part (EX-WIRE-SINGLE) or INTERFACE.CONNECTOR (IF-001.GPSU1-J01)",
     )
     p.add_argument("--json", action="store_true", help="print the derivations as JSON")
 
