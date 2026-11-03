@@ -43,7 +43,9 @@ def gauge_short(awg: int) -> str:
 
 
 _AWG_IN_TEXT = re.compile(r"\bAWG (\d{1,2})\b(?! \()")
-_AWG_AFTER = re.compile(r"\b(\d{1,2}) AWG\b(?! \()")
+# `2 AWG to spare` and `over the limit by 2 AWG` are a difference of two gauge numbers, not a
+# gauge: no cross-section follows them
+_AWG_AFTER = re.compile(r"(?<!\bby )\b(\d{1,2}) AWG\b(?! \()(?! to spare)")
 
 
 def with_area(text: str) -> str:
