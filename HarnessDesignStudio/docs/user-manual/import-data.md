@@ -10,6 +10,7 @@ This page shows how to bring data you already have into a project: a list of int
 - [Segment lengths](#segment-lengths)
 - [Build data: strip lengths, contacts, accessories](#build-data-strip-lengths-contacts-accessories)
 - [Other imports](#other-imports)
+- [What an import records](#what-an-import-records)
 - [Where the library data come from](#where-the-library-data-come-from)
 - [Common mistakes](#common-mistakes)
 
@@ -31,6 +32,7 @@ harness-design-studio templates my-templates
 - Every import shows what it would do. In the app, **File > Import** starts one wizard for six kinds of file (interfaces, approved parts, segment lengths, the ampacity table, a device pinout and a KiCad netlist): choose the file, match the columns, read every row with its reason, then import. On the command line add `--dry-run`: the rows are listed and nothing changes. Run the command again without it to apply.
 - Files can be CSV or TSV (commas, semicolons or tabs between columns; UTF-8), JSON (a list of flat records, as an export of a parts program writes it; since 1.4.0) or Excel (`.xlsx`, the first **visible** sheet, not the one that was active when the file was saved; the import says `Reading sheet 'Parts' (the first visible sheet of the workbook).`). A number with a decimal comma needs quotes (`"1,5"`) when commas separate the columns. At most 20,000 rows and 8 MB. Details: [`IMPORTS.md`](../IMPORTS.md).
 - A CSV file with a quote that is never closed (or is followed by other text in the cell) is refused with its line number, and nothing is imported: `error: Line 2: unbalanced quote. A " opens a text that is never closed, or is followed by other text. Remove the stray quote or write it twice ("") inside a quoted cell. Nothing was imported.` (exit code 2).
+- Every import says what it read before it lists the rows: the file, how many rows, which columns it used and which it left out (`warning: the column 'Notes' is not read; its values are not imported.`), and which unit it used. A value that is converted is shown as it was written and as it is stored. An import that is applied keeps a record of the file in the project: [what an import records](#what-an-import-records).
 - An import that would change something a **release froze** (a part, an interface type or a configuration value that a released harness uses) is blocked, in the preview and in the real run, with exit code 1 ([change a released harness](change-a-released-harness.md)).
 
 ## Interfaces from a table (app only)
@@ -63,6 +65,8 @@ harness-design-studio import-parts wheel-link my-templates/approved-parts.csv --
 ```
 
 ```
+Read 5 row(s) of approved parts from approved-parts.csv (sha256 b3e2067afea8).
+Columns read: part number -> part_number, manufacturer -> manufacturer, description -> description, category -> category, pin count -> pin_count, approval status -> approval
 row 2: OK updated EX-MICROD-9-F
 row 3: OK updated EX-MICROD-9-M
 row 4: OK updated EX-MICROD-15-F
@@ -80,11 +84,14 @@ harness-design-studio import-parts wheel-link my-templates/approved-parts.csv --
 
 ```
 Imported 5 part(s). Project parts library (version 0), source: approved-parts.csv (sha256 b3e2067afea8), date: not recorded.
+Import record: parts:approved-parts.csv written to imports/records.json.
 ```
 
-(That is the last line. The five `row ...: OK` lines come before it.)
+(Those are the last two lines. The `Read ...` line and the five `row ...: OK` lines come before them.)
 
 - Columns are matched by heading: part number, manufacturer, description, category, specification, approval status, pin count, mass, mass per metre, mating part, and (since 1.7.0) `Tool` or `Crimp tool`, the crimp tool of a part of the category *contact* ([enter the build data](enter-the-build-data.md#2-contacts-and-crimp-tools)) and, since 1.11, `Conductors`, how many conductors one metre of a wire part carries (2 for a twisted pair), so that the bill of materials counts the metres of the cable and not of every wire.
+- **Ratings.** A column headed with the name of a rating is read into the ratings of the part: `contact_current_a`, `rated_voltage_v`, `dielectric_withstand_v`, `max_temp_c`, `mating_cycles`, `shield_insulated`, `conductive_finish` (`Contact current (A)` counts as `contact_current_a`). The rules read these; the design rule that checks the current of a contact needs `contact_current_a` on the connector parts. An empty cell leaves a rating alone.
+- **Units.** Masses are read in grams. If your list has them in kilograms, say `--mass-unit kg` (or `lb`, `oz`): the import converts each value and shows it, for example `Converted, row 2 (ZZ-1): 0.25 kg = 250 g`. Without the option it prints `Unit: mass in g (assumed; --mass-unit says another).` when the file has a mass column.
 - Every row needs a category: a `category` column, or `--category connector` for the whole file.
 - A value that is in none of your lists is an error for that row, and then **nothing** is written:
 
@@ -138,7 +145,7 @@ W001,W001-L1,850
 W002,W002-L1,900
 ```
 
-In the app use **File > Import > Import segment lengths…**. The columns are read **by position**: harness, segment, length. Generate once first, because the segment IDs (`W001-L1`) belong to the generated harnesses. Without them every row fails: "Harness 'W001' does not exist".
+In the app use **File > Import > Import segment lengths…**. The columns are read **by position**: harness, segment, length. The unit of the length column is millimetres unless you say another; on the command line `--unit mm|cm|m|in|ft`, in the wizard the unit box. Generate once first, because the segment IDs (`W001-L1`) belong to the generated harnesses. Without them every row fails: "Harness 'W001' does not exist".
 
 ```
 harness-design-studio generate wheel-link
@@ -146,11 +153,16 @@ harness-design-studio import-lengths wheel-link my-templates/segment-lengths.csv
 ```
 
 ```
-row 2: OK
-row 3: OK
+Read 2 row(s) of segment lengths from segment-lengths.csv (sha256 117043908312).
+Columns read: harness -> harness, segment -> segment, length -> length
+Unit: length in mm (given with --unit).
+row 2: OK W001 / W001-L1: 850 mm = 0.85 m
+row 3: OK W002 / W002-L1: 900 mm = 0.9 m
 2 length(s) ready, 0 row(s) with problems.
 Dry run: nothing was changed.
 ```
+
+Read the rows: each one shows the value as the file wrote it, the unit it was read in and the metres that are stored. A file with a bare `5.0` and no `--unit` shows `5.0 mm = 0.005 m`, so a file in metres that is read as millimetres is seen at once, before anything is written.
 
 ```
 harness-design-studio import-lengths wheel-link my-templates/segment-lengths.csv --unit mm
@@ -159,10 +171,11 @@ harness-design-studio generate wheel-link
 
 ```
 Lengths imported. Generate harnesses again to update the wire lengths.
+Import record: lengths:segment-lengths.csv written to imports/records.json.
 0 added, 2 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 ```
 
-`--unit` is `mm` (the default), `cm` or `m`. A length is a plain number from 0 to 10000 m. One bad row stops the whole import:
+`--unit` is `mm` (the default), `cm`, `m`, `in` or `ft`. A length is a plain number from 0 to 10000 m. One bad row stops the whole import:
 
 ```
 row 3: ERROR 'abc' is not a length (digits with a decimal point or comma)
@@ -181,6 +194,10 @@ harness-design-studio import-build-data wheel-link my-templates/strip-lengths.cs
 ```
 
 ```
+Read 2 row(s) of strip lengths from strip-lengths.csv (sha256 4d5035702483).
+Columns read: Harness -> harness, Wire -> wire, Strip A (mm) -> strip_a_mm, Strip B (mm) -> strip_b_mm
+warning: the column 'Comment' is not read; its values are not imported.
+Unit: length in mm (assumed; --unit says another).
 Import strip lengths: 2 row(s) read.
 row 2: OK strip A 6 mm, strip B 6 mm
 row 3: OK strip A 6 mm, strip B 5 mm
@@ -188,7 +205,7 @@ row 3: OK strip A 6 mm, strip B 5 mm
 Dry run: nothing was changed.
 ```
 
-(The rows of the template are examples with example numbers; `Comment` is ignored.) There is no window for this import in the app; the values have their own fields there. Every case, with its output: [enter the build data](enter-the-build-data.md).
+(The rows of the template are examples with example numbers; `Comment` is not read, and the import says so. The lengths are millimetres; `--unit in` reads a file in inches and shows each converted value.) There is no window for this import in the app; the values have their own fields there. Every case, with its output: [enter the build data](enter-the-build-data.md).
 
 ## Other imports
 
@@ -200,6 +217,31 @@ Dry run: nothing was changed.
 | Strip lengths, contacts, accessories or crimp tools as a table | `harness-design-studio import-build-data DIR FILE` (command line only; [enter the build data](enter-the-build-data.md)) |
 | A device from another project | **Add from library…** in the Devices tab, or `harness-design-studio import-devices` ([define a device](define-a-device.md#use-a-device-in-another-project)) |
 | Values from a standard | `harness-design-studio config DIR --apply-profile NAME` ([fill in the engineering values](fill-in-engineering-values.md#values-from-a-standard-profiles)) |
+
+## What an import records
+
+An import that is applied writes down what it did, in the project, in `imports/records.json`: the kind and the name of the file, its SHA-256, how many rows were read, the columns that were read and those that were left out, the rows that were dropped with the reason, the values that were converted (as written, the unit, as stored), the unit and the version of the tool. It holds no time, no operator and no folder name beyond the path inside the project folder, so the same import always gives the same bytes. The record is not part of the design: it is not in the hash of the model and not in any output file, and a project that never imported has no such file. One undo step takes the import and its record back together. Importing the same file again replaces its record.
+
+The command shows the record, and whether the source has changed since you imported it:
+
+```
+harness-design-studio imports wheel-link
+```
+
+```
+2 import record(s) in imports/records.json.
+Kind     Source               Read  Dropped  Converted  Unit  SHA-256       Status
+lengths  segment-lengths.csv  2     0        2          mm    117043908312  not checked (no path)
+parts    approved-parts.csv   5     0        0          -     b3e2067afea8  not checked (no path)
+```
+
+`not checked (no path)` is the status of a file outside the project folder: the record keeps its name and checksum, never its folder. Say where it is now with `--source`, and the command compares the checksum of the file with the recorded one:
+
+```
+harness-design-studio imports wheel-link --check --source my-templates/segment-lengths.csv --source my-templates/approved-parts.csv
+```
+
+The status of a file that is as it was is `unchanged`. If someone has edited it since, the line says `source changed` and `--check` ends with exit code 1, so a build can stop and ask for the import to be done again. A file inside the project folder (for example `data/lengths.csv`) is found by its recorded path and needs no `--source`. In the app, **File > Import** lists the earlier imports on its first page and marks a source that changed with the words *source changed*; the Next step page says it once, in a quiet line. Both stay empty while the project has no record. Details and the format: [`IMPORTS.md`](../IMPORTS.md#what-an-import-records).
 
 ## Where the library data come from
 
@@ -227,6 +269,8 @@ The editor shows the same line under the part picker, and every export carries i
 - **"This change was blocked because it touches released items."** A released harness uses that part. Start a new revision first.
 - **Errors appear after an import.** The library or the lengths changed, so the plans are out of date. Generate and export again.
 - **Importing interfaces on the command line.** It is app only.
+- **The lengths are 1000 times too small or too large.** Look at the echo of the rows: `5.0 mm = 0.005 m` shows the unit that was used. Say `--unit` when the file is not in millimetres.
+- **A column is ignored.** The import names every column it does not read. Rename the heading to one the import knows (the lists are above), or the values are not imported.
 
 More: [`TROUBLESHOOTING.md`](../TROUBLESHOOTING.md).
 

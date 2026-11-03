@@ -359,6 +359,7 @@ NOTHING_DONE = {
     "import-pinout": "imported", "export-pinout": "exported",
     "export-devices": "exported", "import-devices": "imported", "import-build-data": "imported",
     "export-subsystem": "exported", "import-subsystem": "imported", "explain": "explained",
+    "imports": "listed",
 }  # fmt: skip
 
 MUTATING = {

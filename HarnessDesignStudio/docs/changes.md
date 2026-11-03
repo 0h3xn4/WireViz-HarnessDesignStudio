@@ -41,4 +41,28 @@ When a test fails, it names what moved: the wire, the finding or the file. Renew
 - **Why.** Found by the transparency audit (defect D4): the standard was named for a table that is not the standard's.
 - **Agreed.** Owner, 2026-11-02 (decision 4 of D-191: keep today's behaviour, make it visible). Test: `tests/test_bundle_citation.py`.
 
+### 2026-11-03: `import-lengths` echoes every converted value; every import says what it read
+
+- **Before.** `import-lengths` printed `row 2: OK` for every accepted row. A bare `5.0` in a file read as millimetres became 0.005 m, and nothing said so (defect D8 of the audit). The other imports left out the columns they had no field for without a word, and said nothing of the unit they assumed.
+- **Now.** `row 2: OK W001 / W001-L1: 5.0 mm = 0.005 m`, and before the rows `Read ...`, `Columns read: ...`, a `warning:` for every column that is not read and `Unit: length in mm (assumed; --unit says another).`. `--unit` takes `in` and `ft` as well, and `--mass-unit` and `--unit` of `import-build-data` exist; their defaults are the units the columns have always been read in.
+- **What moves.** Only text on the screen of the command line. No stored value, no number, no written file and no model hash changes; `tests/test_numbers_snapshot.py` and `tools/output_hashes` are unchanged.
+- **Why.** Owner decision D-193 (how `import-lengths` shows the converted metres): an echo of every converted value, rows dropped listed with the reason.
+- **Agreed.** The echo of the converted values in `import-lengths`: owner, D-193. The same read summary (rows read, checksum, columns read, columns not read, unit) on every other import was accepted by the project coordinator; it is not covered by D-193. Tests: `tests/test_import_records.py`.
+
+### 2026-11-03: the tool's own CSV files are read back as they were written
+
+- **Before.** The stamp line `# harness-design-studio VERSION model HASH` that starts every CSV the tool writes was read as the heading row by the lengths, build data and parts imports. `import-pinout` skipped the line but gave back the text a spreadsheet would run as a formula (`'+28V`) with its apostrophe, so a pin with the signal `+28V` came back as `'+28V`.
+- **Now.** A file that starts with that exact line is the tool's own: the line is skipped in every reader and the apostrophe is taken away again. A file that does not start with it is read exactly as before.
+- **What moves.** Only what is read from a stamped file. Nothing that was imported correctly before changes; a pin signal that had come back with an apostrophe now comes back without it.
+- **Why.** Found by the transparency audit (IO-C2-021, IO-C2-022): what the tool exports could not be imported again.
+- **Agreed.** Skipping the stamp line: step 6 of the plan (the tool's own CSV files must be readable by its importers). Taking the apostrophe away again belongs to the same readability; this is an agent decision, accepted by the project coordinator, still to be confirmed by the owner in the release notes. Test: `tests/test_import_records.py`.
+
+### 2026-11-03: the import record (new file, no result moves)
+
+- **Before.** Only the parts import remembered a file name (and a short checksum), as one text for the whole library.
+- **Now.** Every applied import writes `imports/records.json` (see `docs/FILE_FORMAT.md`).
+- **What moves.** Nothing. The file is left out of a project that has no import, the model hash does not cover it (`layout.model_hash` skips it), and no output file carries it: a project with and without it gives the same hash and the same bytes. `tests/test_import_records.py` checks the hash and the manifest of the outputs.
+- **Why.** Requirement R14 of the audit: a data link has a source, a checksum and a way to see that the source changed.
+- **Agreed.** Owner, D-193 (no time and no operator in project data, so the record has none).
+
 Next: [the changelog](../CHANGELOG.md), [the decisions](DECISIONS.md), [the developer notes on the tools](developer/tools.md)

@@ -114,6 +114,7 @@ class LengthRow:
     ok: bool
     message: str
     values: tuple[str, ...]
+    metres: float | None = None  # the length as stored, for a row that is accepted
 
 
 @dataclass
@@ -125,6 +126,9 @@ class LengthPlan:
 
 _NUMBER = re.compile(r"[0-9]+([.,][0-9]+)?|[.,][0-9]+")  # no exponents, signs or underscores
 MAX_LENGTH_M = 10_000.0
+# the units a length file may be in, as metres per unit (`import-lengths --unit`, and the strip and
+# accessory lengths of `import-build-data --unit`, which are stored in millimetres)
+LENGTH_UNITS_M: dict[str, float] = {"mm": 0.001, "cm": 0.01, "m": 1.0, "in": 0.0254, "ft": 0.3048}
 
 
 def plan_length_import(
@@ -182,7 +186,7 @@ def plan_length_import(
             given.setdefault((hid, sid), (length, n, text))
             segs = [evolve(s, length_m=length) if s.id == sid else s for s in h.segments]
             pending[hid] = evolve(h, segments=segs)
-        plan.rows.append(LengthRow(n, not error, error, vals))
+        plan.rows.append(LengthRow(n, not error, error, vals, None if error else length))
     plan.ops = [Put("harnesses", h) for h in pending.values()]
     if plan.rows and all(r.message.endswith("does not exist") for r in plan.rows):
         # the columns are read by position, so a file with another order fails on every row
@@ -201,6 +205,7 @@ def segment_lengths_known(h: Harness) -> bool:
 
 
 __all__ = [
+    "LENGTH_UNITS_M",
     "LengthPlan",
     "LengthRow",
     "Segment",

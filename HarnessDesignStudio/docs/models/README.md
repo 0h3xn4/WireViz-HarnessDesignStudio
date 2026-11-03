@@ -22,6 +22,7 @@ Every page follows the same order: what the tool decides, the equation, the inpu
 | [Bill of materials](bom.md) | Why a part has the quantity it has: connectors, contacts, wires in metres, accessories | `harness-design-studio explain DIR PART` |
 | [Mass](mass.md) | The mass of a wire and of a harness: connectors, wires by part, the share of a multi-conductor part, the margin | `harness-design-studio explain DIR WIRE_OR_HARNESS` |
 | [Wire sizing](wire-sizing.md) | The gauge of a wire: the current it may carry after derating, and its voltage drop | `harness-design-studio explain DIR WIRE` |
+| [Units on import](import-units.md) | The unit a file is read in, the factors, the rounding, and what is shown and recorded when a value is converted | the echo of `import-lengths`, `import-parts`, `import-build-data`; `harness-design-studio imports DIR` |
 
 Still to come, in the order of the plan: the limits of the other design rules (the contact current is done), pin allocation and segmentation, the test limits and "Ready to build".
 
