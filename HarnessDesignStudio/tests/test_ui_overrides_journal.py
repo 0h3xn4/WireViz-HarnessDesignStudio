@@ -1,4 +1,4 @@
-# mypy: disable-error-code="no-untyped-def,no-untyped-call"
+# mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,func-returns-value"
 """S4 in the editor: the Edit wire tab asks for a reason when a value of a generated wire is changed
 (no Apply without it), the wire table flags overrides, the Help > Change history window lists the
 journal with a filter, and an error of an electrical rule can be accepted as a deviation."""
@@ -120,7 +120,7 @@ def test_the_wire_table_flags_an_override_and_says_why(made):
     assert rows[wid]["locked_state"] == "locked"
 
 
-def test_the_bulk_window_asks_for_a_reason_too(made):
+def test_the_bulk_window_asks_for_a_reason_too(made):  # noqa: F811
     from harness_design_studio.gui.harness_edit_dialogs import BulkWireDialog
 
     ctl, _view, _ed = made
@@ -171,8 +171,10 @@ def test_the_history_window_lists_the_journal_and_filters_it(qtbot, theme, tmp_p
 
 
 def test_the_history_window_of_a_project_without_a_journal_offers_to_start_one(
-    qtbot, theme, tmp_path
-):  # noqa: F811
+    qtbot,
+    theme,  # noqa: F811
+    tmp_path,
+):
     templates.create_project(tmp_path / "p", "flatsat")
     p = load_project(tmp_path / "p").project
     started = []

@@ -1,4 +1,4 @@
-# mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
+# mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,func-returns-value"
 """S4 (D-191, R8): the change journal. It reproduces the history of a project from its first edit (who,
 when, old, new, reason), is append-only, is a file of its own that no hash and no output holds, and
 exists only in a project that asked for one."""
@@ -10,6 +10,7 @@ import time
 from pathlib import Path
 
 import pytest
+from pydantic import ValidationError
 
 from harness_design_studio.cli.main import main
 from harness_design_studio.core import checks, configcheck, drc, journal, part_approval, templates
@@ -226,7 +227,7 @@ def test_the_api_refuses_to_change_or_remove_an_earlier_entry(folder, clock):
     for name in ("amend", "remove", "replace", "insert", "pop", "clear"):
         with pytest.raises(JournalError, match="append-only"):
             getattr(j, name)()
-    with pytest.raises(Exception):  # an entry is a frozen object
+    with pytest.raises(ValidationError):  # an entry is a frozen object
         first.reason = "changed"  # type: ignore[misc]
     assert j[0] == first and len(j) == 1
 

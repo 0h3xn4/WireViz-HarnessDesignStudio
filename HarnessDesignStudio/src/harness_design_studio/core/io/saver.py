@@ -82,9 +82,10 @@ def save_project(
     result = SaveResult()
     sweep_stale_temp_files(base, MANAGED_DIRS)  # leftovers of a save that was killed
     files = serialize(project, tool_version=__version__)
-    on_disk = _bytes_on_disk(base, files) if exists else {}
     new_journal = None
+    on_disk: dict[str, bytes] | None = None  # read only for a project that keeps a journal
     if project.journal is not None and exists and project.migrated_from is None:
+        on_disk = _bytes_on_disk(base, files)
         # The change journal: one entry for each field that differs from what is on disk. It is
         # written with the files it describes, and kept in memory only when they are written.
         from harness_design_studio.core import journal as journal_module
@@ -110,9 +111,10 @@ def save_project(
         key=lambda kv: (kv[0] in last, kv[0] == "project.json", kv[0] != "journal.json", kv[0]),
     ):
         path = base / rel
-        if exists and on_disk.get(rel) == data:
-            continue
-        if not exists and path.is_file() and not path.is_symlink() and path.read_bytes() == data:
+        if on_disk is not None:
+            if on_disk.get(rel) == data:
+                continue
+        elif path.is_file() and not path.is_symlink() and path.read_bytes() == data:
             continue
         atomic_write_bytes(path, data, root=base)
         result.written.append(rel)

@@ -1,4 +1,4 @@
-# mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
+# mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,func-returns-value"
 """S4 (D-191, R7): a value of a generated wire set by hand is an override with a reason. The model, the
 edit functions and the command line refuse one without a reason; generation keeps it; `explain` says
 what the design would have given and what the set value does to the checks; a project whose wires are
@@ -16,7 +16,6 @@ from harness_design_studio.core.commands import History, Put, apply_ops
 from harness_design_studio.core.derive import explain_wire, render
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.generate.engine import generate_project, plan_generation
-from harness_design_studio.core.io.layout import serialize
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
 from harness_design_studio.core.model import Part, Wire, evolve
