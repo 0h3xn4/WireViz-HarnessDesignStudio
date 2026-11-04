@@ -453,6 +453,7 @@
     "changelog": "dict[str, ChangeEntry]",
     "config": "dict[str, ConfigFile]",
     "connectors": "dict[str, Connector]",
+    "diagram_marks": "dict[str, DiagramMark]",
     "extensions": "Any",
     "generation": "GenerationRecord | None",
     "harnesses": "dict[str, Harness]",

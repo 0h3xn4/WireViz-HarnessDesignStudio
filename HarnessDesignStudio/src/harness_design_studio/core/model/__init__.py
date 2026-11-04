@@ -18,7 +18,7 @@ from .physical import (
     Wire,
 )
 from .project import DEFAULT_ZONES, SCHEMA_VERSION, Project, ProjectMeta, QuarantinedItem
-from .review import Baseline, ChangeEntry, Placement, Snapshot, Waiver
+from .review import Baseline, ChangeEntry, DiagramMark, Placement, Snapshot, Waiver
 
 __all__ = [
     "Accessory",
@@ -32,6 +32,7 @@ __all__ = [
     "ChangeEntry",
     "ConfigFile",
     "Connector",
+    "DiagramMark",
     "Endpoint",
     "GenerationRecord",
     "Entity",

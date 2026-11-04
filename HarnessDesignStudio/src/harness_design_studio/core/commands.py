@@ -12,6 +12,7 @@ from .model import (
     ChangeEntry,
     ConfigFile,
     Connector,
+    DiagramMark,
     GenerationRecord,
     Harness,
     ImportRecord,
@@ -42,6 +43,7 @@ Collection = Literal[
     "changelog",
     "import_records",
     "asbuilt",
+    "diagram_marks",
 ]
 _TYPES: dict[str, type[Entity]] = {
     "units": Unit,
@@ -57,6 +59,7 @@ _TYPES: dict[str, type[Entity]] = {
     "changelog": ChangeEntry,
     "import_records": ImportRecord,
     "asbuilt": AsBuiltRecord,
+    "diagram_marks": DiagramMark,
 }
 
 

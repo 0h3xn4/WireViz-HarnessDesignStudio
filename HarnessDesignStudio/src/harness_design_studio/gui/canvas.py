@@ -47,7 +47,7 @@ from harness_design_studio.core import describe, edit, routing
 from harness_design_studio.core.model import Project
 from harness_design_studio.gui import canvas_badges as cbadges
 from harness_design_studio.gui import glyphs, strings
-from harness_design_studio.gui.canvas_links import ConnectionItem, derived_texts
+from harness_design_studio.gui.canvas_links import ChipDrag, ConnectionItem, derived_texts
 from harness_design_studio.gui.canvas_state import NO_INDEX, ObjectState, StateIndex, badge_text
 from harness_design_studio.gui.controller import Delta, EditorController, Selection
 from harness_design_studio.gui.icons import draw_icon, icon_button
@@ -1034,11 +1034,13 @@ COMPACT_W = METRICS.chip_compact_w  # a link label that has to squeeze between o
 COMPACT_H = METRICS.chip_compact_h
 
 
-class LinkItem(QGraphicsPathItem):
+class LinkItem(ChipDrag, QGraphicsPathItem):
     def __init__(self, scene: DiagramScene, interface_id: str) -> None:
         super().__init__()
         self.dscene = scene
         self.interface_id = interface_id
+        self.mark_ids = (f"interface:{interface_id}",)  # the label may be moved
+        self._shifts = {m: scene.mark_shift(m) for m in self.mark_ids}
         self._chip = QRectF()
         self._chip_placed = False
         self._compact = False  # the picture alone, where the full label has no clear spot
@@ -1186,13 +1188,19 @@ class LinkItem(QGraphicsPathItem):
         path = stroker.createStroke(self.path())
         chip = None if self._preview else self.dscene.chip_rect(self.interface_id)
         if chip is not None:
-            path.addRect(chip)
+            path.addRect(chip.translated(self.shift))
         if self._badge_hit is not None and not self._preview:
             path.addRect(self._badge_hit)
         return path
 
     def boundingRect(self) -> QRectF:
-        return super().boundingRect().adjusted(-120, -20, 120, 20)
+        away_x, away_y = self.away()  # (a moved label is far from the line)
+        return (
+            super().boundingRect().adjusted(-120 - away_x, -20 - away_y, 120 + away_x, 20 + away_y)
+        )
+
+    def drag_slots(self) -> list[tuple[str, QRectF, bool]]:
+        return [(self.mark_ids[0], self._chip, False)]
 
     def set_preview(self, route: list[tuple[float, float]]) -> None:
         """Straight lines through the end points while a unit is dragged (no routing, no label)."""
@@ -1223,7 +1231,7 @@ class LinkItem(QGraphicsPathItem):
         exposed = option.exposedRect.adjusted(-10, -10, 10, 10)
         if not self.path().intersects(exposed) and not self._chip.intersects(exposed):
             chip = sc.chip_rect(self.interface_id)
-            if chip is None or not chip.intersects(exposed):
+            if chip is None or not chip.translated(self.shift).intersects(exposed):
                 return  # the long box of a link is often dirty where the link itself is not
         t = ctl.project.interface_types.get(i.type_id)
         cat = style_category(t.category if t else "data")
@@ -1278,7 +1286,7 @@ class LinkItem(QGraphicsPathItem):
         th = sc.theme
         st = sc.states.of("interface", i.id)
         color = th.color(f"cat-{cat}")
-        c = self._chip_center
+        c = self._chip_center + self.shift  # (where the person put it, or the automatic place)
         font = sc.px_font(th.type("small"))
         parts = (
             [] if self._compact or not sc.label_full(i.id, self._hover) else self._label_parts(st)
@@ -1432,7 +1440,7 @@ class LinkItem(QGraphicsPathItem):
             return
         k = 1.0 / lod
         wpx, hpx = METRICS.far_marker_px
-        c = self._chip_center
+        c = self._chip_center + self.shift
         rect = QRectF(c.x() - wpx * k / 2, c.y() - hpx * k / 2, wpx * k, hpx * k)
         if not option.exposedRect.intersects(rect.adjusted(-10 * k, -10 * k, 10 * k, 10 * k)):
             return
@@ -1487,6 +1495,20 @@ class LinkItem(QGraphicsPathItem):
         self.click(event.modifiers())
         if self._badge_hit is not None and self._badge_hit.contains(event.pos()):
             self.dscene.ctl.request_problems(self.interface_id)  # the badge: show what it counts
+        else:
+            self.chip_press(event.scenePos())
+        event.accept()
+
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        away = event.screenPos() - event.buttonDownScreenPos(Qt.MouseButton.LeftButton)
+        if self.chip_move(event.scenePos(), away.manhattanLength()):
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if not self.chip_release():
+            super().mouseReleaseEvent(event)
         event.accept()
 
     def click(self, modifiers: Qt.KeyboardModifier = Qt.KeyboardModifier.NoModifier) -> None:
@@ -2349,6 +2371,9 @@ class DiagramScene(QGraphicsScene):
             self.rebuild()
             self.refresh_states()
             return
+        if delta.marks and not (delta.units or delta.interfaces or delta.links):
+            self._apply_marks(delta.marks)  # only labels moved: nothing else is redrawn
+            return
         self._state_timer.start()  # the marks follow a moment later, off the edit's path
         self._rebuild_adjacency()
         self._routes = None
@@ -2368,6 +2393,8 @@ class DiagramScene(QGraphicsScene):
                 link.refresh_chip()
         if delta.links or self.connection_items:
             self._apply_connections(delta)
+        if delta.marks:
+            self._apply_marks(delta.marks)
         self._update_extent()
         if self.filter is not None or self.ctl.selected:
             self._apply_filter()
@@ -2449,6 +2476,20 @@ class DiagramScene(QGraphicsScene):
         self._last_sel = now
         self._apply_filter()  # a selection puts its own links in focus and fades the rest
 
+    def mark_shift(self, mark_id: str) -> QPointF:
+        """How far the person moved this label from its automatic place (none: no shift)."""
+        mark = self.ctl.project.diagram_marks.get(mark_id)
+        return QPointF(mark.dx, mark.dy) if mark is not None else QPointF(0.0, 0.0)
+
+    def _apply_marks(self, marks: set[str]) -> None:
+        """Labels were moved or put back (by a drag, an undo, a redo)."""
+        for key in marks:
+            kind, _, ident = key.partition(":")
+            ident = ident.partition(":")[0]  # ("end:L1:0" is of the connection L1)
+            item = (self.link_items if kind == "interface" else self.connection_items).get(ident)
+            if item is not None:
+                item.reload_shifts()
+
     def chip_rect(self, interface_id: str) -> QRectF | None:
         """Where the label of a link was placed, or None (not placed yet, or being dragged)."""
         return self._chip_rects.get(interface_id)
@@ -2457,8 +2498,11 @@ class DiagramScene(QGraphicsScene):
         """The link whose label lies under a scene point (a label is part of its link)."""
         for cell in self._cells(QRectF(pos, pos)):
             for iid, rect in self._chips.get(cell, ()):
-                if rect.contains(pos):
-                    return self.link_items.get(iid)
+                link = self.link_items.get(iid)
+                if rect.contains(pos) and (
+                    link is None or link.shift.isNull()
+                ):  # (not a moved one)
+                    return link
         for link in self.link_items.values():  # a label drawn wider than it was reserved
             if not link._preview and link._chip.contains(pos):
                 return link
@@ -2809,6 +2853,8 @@ class DiagramView(QGraphicsView):
         self._space = False  # Space is held: a drag pans
         self._space_used = False
         self._pan_last: QPoint | None = None
+        self._chip_link: LinkItem | None = None  # the label being dragged, and where it was pressed
+        self._chip_down = QPoint()
         self._band_origin: QPointF | None = None
         self._band_origin_view = QPoint()
         self._band: QRectF | None = None
@@ -2920,24 +2966,6 @@ class DiagramView(QGraphicsView):
 
     def _layout_overlays(self) -> None:
         r = self.viewport().rect()
-        # (the hint is a child of the view, not of the viewport: scrolling would carry it along)
-        area = self.viewport().geometry()
-        if self.ctl.project.units and not self.ctl.project.interfaces:
-            self.empty.setGeometry(area.adjusted(60, 12, -60, -(area.height() - 60)))  # a top line
-        else:
-            self.empty.setGeometry(area.adjusted(60, 60, -60, -60))
-        # the button sits under the text, which is centred in the hint
-        box = self.empty.geometry()
-        flags = int(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
-        text_h = (
-            self.empty.fontMetrics()
-            .boundingRect(0, 0, box.width(), box.height(), flags, self.empty.text())
-            .height()
-        )
-        self.empty_add.adjustSize()
-        self.empty_add.move(
-            box.center().x() - self.empty_add.width() // 2, box.center().y() + text_h // 2 + 16
-        )
         self.minimap.move(
             r.right() - self.minimap.width() - 12, r.bottom() - self.minimap.height() - 12
         )
@@ -2947,6 +2975,61 @@ class DiagramView(QGraphicsView):
         self.search.adjustSize()
         self.search.move(r.right() - self.search.width() - 12, r.top() + 12)
         self.status.move(r.left() + 12, r.top() + 12)
+        self._place_hint()
+
+    def _hint_blockers(self) -> list[QRect]:
+        """What the words over the diagram must not cover, in view coordinates: the names of the
+        lanes, the device cards and the overlays."""
+        out: list[QRect] = []
+        lod = max(self.zoom_scale(), 0.05)
+        small = self.theme.type("small")
+        size = max(small, min(80, round(small / lod))) * lod  # the lane name, as ZoneItem paints it
+        for z in self.dscene.zone_items:
+            top = self.mapFromScene(z.mapToScene(QPointF(10, 4)))
+            out.append(QRect(top.x(), top.y(), int(size * 9), int(size + 8 * lod) + 4))
+        for item in self.dscene.unit_items.values():
+            out.append(self.mapFromScene(item.sceneBoundingRect()).boundingRect())
+        for w in (self.minimap, self.legend, self.search, self.status):
+            if w.isVisibleTo(self):
+                out.append(w.geometry())
+        return [q.adjusted(-6, -6, 6, 6) for q in out]
+
+    def _place_hint(self) -> None:
+        """The words over an empty diagram, and the button under them. With no device they are
+        centred; with devices they take the first band across the diagram that covers no lane
+        name, device or overlay (below the names of the lanes when there is none). (The hint is a
+        child of the view, not of the viewport: scrolling would carry it along.)"""
+        area = self.viewport().rect()
+        flags = int(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
+        fm = self.empty.fontMetrics()
+
+        def text_height(width: int) -> int:
+            return fm.boundingRect(0, 0, width, area.height(), flags, self.empty.text()).height()
+
+        if not self.ctl.project.units:
+            box = area.adjusted(60, 60, -60, -60)
+        else:
+            width = max(120, area.width() - 120)
+            height = text_height(width) + 8
+            blockers = self._hint_blockers()
+            floor = max((q.bottom() for q in blockers[: len(self.dscene.zone_items)]), default=0)
+            first = max(floor, area.top()) + 4
+            y = first
+            box = QRect(area.left() + 60, first, width, height)
+            while y + height <= area.bottom() - 8:
+                spot = QRect(area.left() + 60, y, width, height)
+                if not any(spot.intersects(q) for q in blockers):
+                    box = spot
+                    break
+                y += 12
+        self.empty.setGeometry(box.translated(self.viewport().geometry().topLeft()))
+        box = self.empty.geometry()
+        # the button sits under the text, which is centred in the hint
+        self.empty_add.adjustSize()
+        self.empty_add.move(
+            box.center().x() - self.empty_add.width() // 2,
+            box.center().y() + text_height(box.width()) // 2 + 16,
+        )
 
     def resizeEvent(self, event: object) -> None:
         super().resizeEvent(event)  # type: ignore[arg-type]
@@ -2957,6 +3040,8 @@ class DiagramView(QGraphicsView):
     def scrollContentsBy(self, dx: int, dy: int) -> None:
         super().scrollContentsBy(dx, dy)
         self.minimap.viewport().update()
+        if self.empty.isVisible():
+            self._place_hint()  # it keeps clear of the devices and lane names that moved
 
     # ---- zoom and pan ---------------------------------------------------------------------------
     def zoom_scale(self) -> float:
@@ -2976,6 +3061,8 @@ class DiagramView(QGraphicsView):
 
     def _scale_changed(self) -> None:
         self.minimap.viewport().update()
+        if self.empty.isVisible():
+            self._place_hint()
         self.zoomChanged.emit(self.zoom_scale())
 
     def zoom_by(self, factor: float, anchor: QPoint | None = None) -> None:
@@ -3079,6 +3166,8 @@ class DiagramView(QGraphicsView):
                 link = self.dscene.chip_at(at)  # a label picks its own link, whatever lies under
                 if link is not None:
                     link.click(event.modifiers())
+                    link.chip_press(at)  # (it may become a drag of the label)
+                    self._chip_link, self._chip_down = link, pos
                     event.accept()
                     return
             if item is None or isinstance(item, ZoneItem):
@@ -3118,6 +3207,12 @@ class DiagramView(QGraphicsView):
                 self.viewport().update()
             event.accept()
             return
+        link = self._chip_link
+        if link is not None and link.chip_move(
+            self.mapToScene(pos), (pos - self._chip_down).manhattanLength()
+        ):
+            event.accept()
+            return
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
@@ -3127,6 +3222,11 @@ class DiagramView(QGraphicsView):
         ):
             self._pan_last = None
             self._set_hand()
+            event.accept()
+            return
+        if self._chip_link is not None and event.button() == Qt.MouseButton.LeftButton:
+            link, self._chip_link = self._chip_link, None
+            link.chip_release()  # (a drag of a label ends here; a click was done at the press)
             event.accept()
             return
         if self._band_origin is not None and event.button() == Qt.MouseButton.LeftButton:
@@ -3185,7 +3285,7 @@ class DiagramView(QGraphicsView):
             if isinstance(focus, UnitItem):
                 pos = self.mapFromScene(focus.mapToScene(QPointF(60, 12)))
             elif isinstance(focus, LinkItem) and focus.path().elementCount():
-                pos = self.mapFromScene(focus._chip_center)
+                pos = self.mapFromScene(focus._chip_center + focus.shift)
         at = self.mapToScene(pos)
         item = self.itemAt(pos)
         kind: str | None = None
@@ -3274,12 +3374,15 @@ class DiagramView(QGraphicsView):
         elif kind == "link" and ident:
             for name in ("link_edit", "link_harness", "link_show_harness", "link_delete"):
                 self._mirror(menu, name)
+            line = self.dscene.connection_items.get(ident)
+            self._reset_label_entry(menu, line.mark_ids if line else (), connection=True)
         elif kind == "interface" and ident:
             self._entry(menu, strings.CM_OPEN_PLAN, lambda: ctl.request_open("interface", ident))
             self._state_entries(menu, "interface", ident)
             i = ctl.project.interfaces.get(ident)
             if i is not None and any(e.auto for e in i.endpoints):
                 self._entry(menu, strings.CONFIRM_AUTO, lambda: ctl.confirm_interface(ident), ro)
+            self._reset_label_entry(menu, (f"interface:{ident}",))
             menu.addSeparator()
             self._mirror(menu, "delete")
         else:
@@ -3295,6 +3398,22 @@ class DiagramView(QGraphicsView):
             for name in ("select_all", "find", "fit", "zoom100", "zoom_selection", "arrange"):
                 self._mirror(menu, name)
         return menu
+
+    def _reset_label_entry(
+        self, menu: QMenu, mark_ids: Sequence[str], *, connection: bool = False
+    ) -> None:
+        """ "Reset label position": back to where the tool puts the label (and, on a connection, its
+        boxes and bend); greyed out when everything is there."""
+        ctl = self.ctl
+        why = strings.WHY_READ_ONLY if ctl.read_only else ""
+        if not why and not any(ctl.mark_of(m) for m in mark_ids):
+            why = strings.CM_RESET_LINE_NONE if connection else strings.CM_RESET_LABEL_NONE
+        text = strings.CM_RESET_LINE if connection else strings.CM_RESET_LABEL
+
+        def reset() -> None:
+            ctl.reset_marks(list(mark_ids))
+
+        self._entry(menu, text, reset, why)
 
     def _state_entries(
         self, menu: QMenu, kind: str, ident: str, connector: str | None = None

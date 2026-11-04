@@ -18,8 +18,8 @@ the tooltip also names the way through the harness once one was made from the co
 import html
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QBrush, QPainter, QPainterPath, QPainterPathStroker
+from PySide6.QtCore import QPointF, QRectF, QSizeF, Qt
+from PySide6.QtGui import QBrush, QFontMetrics, QPainter, QPainterPath, QPainterPathStroker
 from PySide6.QtWidgets import (
     QGraphicsItem,
     QGraphicsPathItem,
@@ -46,29 +46,171 @@ HIT_WIDTH = 12.0  # how wide a click on the line still counts
 CHIP_PAD_X = 8.0
 CHIP_PAD_Y = 3.0
 END_GAP = 4.0  # between the edge of a device and the box of its connector
+CHIP_MAX_W = 240.0  # a longer label is cut with an ellipsis (the tooltip has the whole text)
+END_MAX_W = 112.0  # the same for the connector boxes at the two ends
+LABEL_GAP = 4.0  # between two boxes of one connection, and between a box and a device
+
+
+def _channel(x: float, edge: float, side: str) -> float:
+    """A vertical piece of a line at `x`, kept at least `END_GAP` out of the device edge `edge`."""
+    return max(x, edge + END_GAP) if side == "right" else min(x, edge - END_GAP)
 
 
 def connection_route(
-    a: tuple[float, float], side_a: str, b: tuple[float, float], side_b: str
+    a: tuple[float, float],
+    side_a: str,
+    b: tuple[float, float],
+    side_b: str,
+    bend: float = 0.0,
 ) -> list[tuple[float, float]]:
     """The corners of a line from point `a` (on the `side_a` edge of its device, "left" or
     "right") to point `b`. Facing edges (right of the left device, left of the right one) meet in
     the gap between the devices; any other pair of edges goes round: out of both edges by `OUT`
-    and across at the height between the two points."""
+    and across at the height between the two points. `bend` is how far the person moved the
+    vertical piece (or pieces) across; it never goes into a device."""
     (xa, ya), (xb, yb) = a, b
-    if side_a == "right" and side_b == "left" and xb > xa:
+    if (side_a, side_b) in (("right", "left"), ("left", "right")) and (xb - xa) * (
+        1 if side_a == "right" else -1
+    ) > 0:
+        lo, hi = min(xa, xb) + END_GAP, max(xa, xb) - END_GAP
         mid = (xa + xb) / 2
+        if lo < hi:
+            mid = min(max(mid + bend, lo), hi)
         return [a, (mid, ya), (mid, yb), b]
-    if side_a == "left" and side_b == "right" and xb < xa:
-        mid = (xa + xb) / 2
-        return [a, (mid, ya), (mid, yb), b]
-    out_a = xa + OUT if side_a == "right" else xa - OUT
-    out_b = xb + OUT if side_b == "right" else xb - OUT
+    out_a = _channel((xa + OUT if side_a == "right" else xa - OUT) + bend, xa, side_a)
+    out_b = _channel((xb + OUT if side_b == "right" else xb - OUT) + bend, xb, side_b)
     if side_a == side_b:  # one channel for both ends, clear of both devices
         out_a = out_b = max(out_a, out_b) if side_a == "right" else min(out_a, out_b)
         return [a, (out_a, ya), (out_a, yb), b]
     mid_y = (ya + yb) / 2
     return [a, (out_a, ya), (out_a, mid_y), (out_b, mid_y), (out_b, yb), b]
+
+
+DRAG_PX = 4.0  # how far the pointer goes (in screen pixels) before a click is a drag
+NO_SHIFT = QPointF(0.0, 0.0)
+
+
+class ChipDrag:
+    """What the things drawn on a line do when they are dragged: the label (an interface or a
+    connection), the connector box at each end of a connection, and the bend of a connection. A
+    thing follows the pointer once the pointer went `DRAG_PX`, and where it is let go it stays, as
+    an offset from its automatic place (`DiagramMark`; so it keeps following the line when devices
+    move). The item says what can be dragged (`drag_slots`: the name of each mark, where it is
+    drawn now, and whether it moves across only); a press anywhere else is the item's own business
+    (a click on the line selects it, nothing more)."""
+
+    dscene: DiagramScene
+    mark_ids: tuple[str, ...] = ()  # the marks this item may have, the main label first
+    _shifts: dict[str, QPointF]
+    _slot = ""  # the mark of the thing under the pointer since the press
+    _press: QPointF | None = None  # the scene point of that press
+    _base = NO_SHIFT  # the shift of the thing at the press
+    _dragging = False
+
+    def drag_slots(self) -> list[tuple[str, QRectF, bool]]:
+        raise NotImplementedError
+
+    def reload_shifts(self) -> None:
+        """Take the marks of the project (it was opened, or a label was moved, put back, undone)."""
+        shifts = {m: self.dscene.mark_shift(m) for m in self.mark_ids}
+        if shifts != getattr(self, "_shifts", None):
+            self._shifts = shifts
+            self.prepareGeometryChange()  # type: ignore[attr-defined]
+            self.shifts_changed()
+            self.update()  # type: ignore[attr-defined]
+
+    def shifts_changed(self) -> None:
+        """The item hook for a change of a mark (a bend moves the line)."""
+
+    def shift_of(self, mark_id: str) -> QPointF:
+        shifts: dict[str, QPointF] = getattr(self, "_shifts", {})
+        return shifts.get(mark_id, NO_SHIFT)
+
+    @property
+    def shift(self) -> QPointF:
+        """The offset of the main label."""
+        return self.shift_of(self.mark_ids[0])
+
+    def away(self) -> tuple[float, float]:
+        """How far the most moved thing is from its place: the room a bounding box must add."""
+        xs = [abs(p.x()) for p in getattr(self, "_shifts", {}).values()] or [0.0]
+        ys = [abs(p.y()) for p in getattr(self, "_shifts", {}).values()] or [0.0]
+        return max(xs), max(ys)
+
+    def chip_press(self, at: QPointF) -> None:
+        """A press at scene point `at` on one of the things may become a drag (not while Connect is
+        the tool, or in a project that cannot be changed)."""
+        ctl = self.dscene.ctl
+        self._dragging, self._press, self._slot = False, None, ""
+        if ctl.tool != "select" or ctl.read_only:
+            return
+        for mark_id, rect, _across in self.drag_slots():
+            if rect.contains(at):
+                self._slot, self._press, self._base = mark_id, at, QPointF(self.shift_of(mark_id))
+                return
+
+    def chip_move(self, at: QPointF, away: int) -> bool:
+        """Follow the pointer (now at scene point `at`, `away` screen pixels from where it was
+        pressed); returns whether this is a drag."""
+        if self._press is None:
+            return False
+        if not self._dragging:
+            if away < DRAG_PX:
+                return True  # still a click
+            self._dragging = True
+        across = next((x for m, _r, x in self.drag_slots() if m == self._slot), False)
+        delta = at - self._press
+        self._set_shift(self._slot, self._base + (QPointF(delta.x(), 0.0) if across else delta))
+        return True
+
+    def _set_shift(self, mark_id: str, shift: QPointF) -> None:
+        shifts = dict(getattr(self, "_shifts", {}))
+        if shifts.get(mark_id, NO_SHIFT) != shift:
+            shifts[mark_id] = shift
+            self._shifts = shifts
+            self.prepareGeometryChange()  # type: ignore[attr-defined]
+            self.shifts_changed()
+            self.update()  # type: ignore[attr-defined]
+
+    def chip_release(self) -> bool:
+        """Keep the thing where it was let go (one undoable step); returns whether it was a drag."""
+        dragged, slot = self._dragging, self._slot
+        self._press, self._dragging, self._slot = None, False, ""
+        if dragged:
+            shift = self.shift_of(slot)
+            self.dscene.ctl.move_mark(slot, shift.x(), shift.y())
+        return dragged
+
+
+def free_rect(
+    size: QSizeF, spots: list[QPointF], avoid: list[QRectF], steps: tuple[float, float]
+) -> QRectF:
+    """A box of `size` centred on the first of `spots` that touches none of `avoid`; the spots are
+    tried as they are and then moved by `steps` (across, down) up to three times in every
+    direction. When every try touches something, the one that touches the least."""
+    best, best_area = QRectF(), -1.0
+    shifts = [(0.0, 0.0)] + [
+        (dx * steps[0] * k, dy * steps[1] * k)
+        for k in (1, 2, 3)
+        for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0))
+    ]
+    for dx, dy in shifts:
+        for spot in spots:
+            rect = QRectF(
+                spot.x() + dx - size.width() / 2,
+                spot.y() + dy - size.height() / 2,
+                size.width(),
+                size.height(),
+            )
+            area = 0.0
+            for other in avoid:
+                hit = rect.intersected(other)
+                area += max(0.0, hit.width()) * max(0.0, hit.height())
+            if area == 0.0:
+                return rect
+            if best_area < 0 or area < best_area:
+                best, best_area = rect, area
+    return best
 
 
 def sides(lane_a: int, lane_b: int, lanes: int, default_a: str, default_b: str) -> tuple[str, str]:
@@ -83,13 +225,21 @@ def sides(lane_a: int, lane_b: int, lanes: int, default_a: str, default_b: str) 
     )
 
 
-class ConnectionItem(QGraphicsPathItem):
+class ConnectionItem(ChipDrag, QGraphicsPathItem):
     """The drawn line and label of one `Link`."""
 
     def __init__(self, scene: DiagramScene, link_id: str, unit_w: float) -> None:
         super().__init__()
         self.dscene = scene
         self.link_id = link_id
+        # the marks of this line: its label, the box at each end, and the bend of its route
+        self.mark_ids = (
+            f"link:{link_id}",
+            f"end:{link_id}:0",
+            f"end:{link_id}:1",
+            f"bend:{link_id}",
+        )
+        self._shifts = {m: scene.mark_shift(m) for m in self.mark_ids}
         self.unit_w = unit_w
         self.poly: list[tuple[float, float]] = []
         self.text = ""  # what the pairs carry, "CAN, 2 wires"
@@ -134,7 +284,8 @@ class ConnectionItem(QGraphicsPathItem):
             return
         ua, ub, ida, idb = ends
         sa, sb = sides(ua.lane(), ub.lane(), self.dscene.zone_count, ua.side(), ub.side())
-        route = connection_route(self._anchor(ua, ida, sa), sa, self._anchor(ub, idb, sb), sb)
+        bend = self.shift_of(self.mark_ids[3]).x()
+        route = connection_route(self._anchor(ua, ida, sa), sa, self._anchor(ub, idb, sb), sb, bend)
         if route == self.poly and not self.path().isEmpty():
             return
         self.poly = route
@@ -154,7 +305,28 @@ class ConnectionItem(QGraphicsPathItem):
         return spot
 
     def boundingRect(self) -> QRectF:
-        return super().boundingRect().adjusted(-160, -30, 160, 30)
+        away_x, away_y = self.away()  # (a thing that was moved is far from the line)
+        return (
+            super().boundingRect().adjusted(-160 - away_x, -30 - away_y, 160 + away_x, 30 + away_y)
+        )
+
+    def shifts_changed(self) -> None:
+        self.update_path()  # (the bend moves the line)
+
+    def drag_slots(self) -> list[tuple[str, QRectF, bool]]:
+        """What can be dragged, the label and the boxes first (they lie over the line): where each
+        is drawn now. The bend is the longest vertical piece of the line, moved across only."""
+        label, end_a, end_b, bend = self.mark_ids
+        slots = [(label, self._chip, False)]
+        slots += [(m, r, False) for m, r in zip((end_a, end_b), self._end_rects, strict=False)]
+        pieces = [
+            (abs(y1 - y0), QRectF(x0 - HIT_WIDTH / 2, min(y0, y1), HIT_WIDTH, abs(y1 - y0)))
+            for (x0, y0), (x1, y1) in zip(self.poly, self.poly[1:], strict=False)
+            if x0 == x1 and abs(y1 - y0) > 2 * HIT_WIDTH
+        ]
+        if pieces:
+            slots.append((bend, max(pieces, key=lambda p: p[0])[1], True))
+        return slots
 
     def shape(self) -> QPainterPath:
         stroker = QPainterPathStroker()
@@ -195,26 +367,50 @@ class ConnectionItem(QGraphicsPathItem):
             return  # from far away the line alone says enough
         font = sc.px_font(th.type("small"))
         painter.setFont(font)
+        fm = QFontMetrics(font)
         caption = link.name or link_caption(link)
         lines = [caption] + ([self.text] if self.text else [])
-        text_w = max(sc.text_width(font, t) for t in lines)
-        line_h = painter.fontMetrics().height()
-        w = text_w + 2 * CHIP_PAD_X
-        h = line_h * len(lines) + 2 * CHIP_PAD_Y
-        c = self._label_spot()
-        self._chip = QRectF(c.x() - w / 2, c.y() - h / 2, w, h)
+        ends = [  # (a box the person moved is where it was put)
+            (rect.translated(self.shift_of(mark)), texts)
+            for mark, (rect, texts) in zip(
+                self.mark_ids[1:3],
+                self._end_boxes(link, fm) if self.ends_shown() else [],
+                strict=False,
+            )
+        ]
+        self._end_rects = [rect for rect, _t in ends]
+        self._chip = self._chip_rect(fm, lines).translated(self.shift)  # (where it was put)
+        lines = [
+            fm.elidedText(t, Qt.TextElideMode.ElideRight, int(CHIP_MAX_W - 2 * CHIP_PAD_X))
+            for t in lines
+        ]
+        line_h = fm.height()
         painter.setBrush(QBrush(th.color("bg")))
         painter.setPen(sc.pen(token, 3 if selected else 1.5))
         painter.drawRoundedRect(self._chip, 6, 6)
-        painter.setPen(th.color("text"))
         for k, t in enumerate(lines):
             painter.setPen(th.color("text" if k == 0 else "text-muted"))
             painter.drawText(
-                QRectF(self._chip.x(), self._chip.y() + CHIP_PAD_Y + k * line_h, w, line_h),
+                QRectF(
+                    self._chip.x(),
+                    self._chip.y() + CHIP_PAD_Y + k * line_h,
+                    self._chip.width(),
+                    line_h,
+                ),
                 int(Qt.AlignmentFlag.AlignCenter),
                 t,
             )
-        self._paint_ends(painter, link, token, selected)
+        for rect, texts in ends:
+            painter.setBrush(QBrush(th.color("bg")))
+            painter.setPen(sc.pen(token, 3 if selected else 1.5))
+            painter.drawRoundedRect(rect, 4, 4)
+            for k, t in enumerate(texts):
+                painter.setPen(th.color("text" if k == 0 else "text-muted"))
+                painter.drawText(
+                    QRectF(rect.x(), rect.y() + CHIP_PAD_Y + k * line_h, rect.width(), line_h),
+                    int(Qt.AlignmentFlag.AlignCenter),
+                    t,
+                )
         if self.hasFocus():
             painter.setPen(sc.pen("focus", 3))
             painter.setBrush(Qt.BrushStyle.NoBrush)
@@ -225,42 +421,53 @@ class ConnectionItem(QGraphicsPathItem):
         connections is on."""
         return self.dscene.connection_ends or self.dscene.ctl.mode == "expert"
 
-    def _paint_ends(self, painter: QPainter, link: Link, token: str, selected: bool) -> None:
+    def _end_boxes(self, link: Link, fm: QFontMetrics) -> list[tuple[QRectF, list[str]]]:
         """A small box at each end of the line: the connector name, and how many of its pins the
-        connection pairs. Drawn beside the edge of the device the line leaves."""
-        if not self.ends_shown():
-            self._end_rects = []
-            return
-        sc = self.dscene
-        th = sc.theme
-        font = sc.px_font(th.type("small"))
-        painter.setFont(font)
-        line_h = painter.fontMetrics().height()
-        rects: list[QRectF] = []
+        connection pairs. Drawn beside the edge of the device the line leaves, cut to a width that
+        leaves room for the other box, and moved down when the two would touch."""
+        line_h = fm.height()
+        out: list[tuple[QRectF, list[str]]] = []
         for end, (x, y), toward in zip(
-            link_ends(sc.ctl.project, link),
+            link_ends(self.dscene.ctl.project, link),
             (self.poly[0], self.poly[-1]),
             (self.poly[1], self.poly[-2]),
             strict=True,
         ):
             pins = end.pins
             second = strings.LINK_END_PINS[0 if pins == 1 else 1].format(end.used, pins)
-            text_w = max(sc.text_width(font, end.name), sc.text_width(font, second))
-            w, h = text_w + 2 * CHIP_PAD_X, 2 * line_h + 2 * CHIP_PAD_Y
+            room = int(END_MAX_W - 2 * CHIP_PAD_X)
+            texts = [
+                fm.elidedText(t, Qt.TextElideMode.ElideRight, room) for t in (end.name, second)
+            ]
+            w = max(fm.horizontalAdvance(t) for t in texts) + 2 * CHIP_PAD_X
+            h = 2 * line_h + 2 * CHIP_PAD_Y
             right = toward[0] >= x  # the line leaves towards the right: the box sits to its right
             rect = QRectF(x + END_GAP if right else x - END_GAP - w, y - h / 2, w, h)
-            rects.append(rect)
-            painter.setBrush(QBrush(th.color("bg")))
-            painter.setPen(sc.pen(token, 3 if selected else 1.5))
-            painter.drawRoundedRect(rect, 4, 4)
-            for k, t in enumerate((end.name, second)):
-                painter.setPen(th.color("text" if k == 0 else "text-muted"))
-                painter.drawText(
-                    QRectF(rect.x(), rect.y() + CHIP_PAD_Y + k * line_h, w, line_h),
-                    int(Qt.AlignmentFlag.AlignCenter),
-                    t,
+            if out and rect.adjusted(-LABEL_GAP, -LABEL_GAP, LABEL_GAP, LABEL_GAP).intersects(
+                out[0][0]
+            ):
+                rect.moveTop(out[0][0].bottom() + LABEL_GAP)
+            out.append((rect, texts))
+        return out
+
+    def _chip_rect(self, fm: QFontMetrics, lines: list[str]) -> QRectF:
+        """Where the label sits: in the middle of the longest piece of the line when that is clear
+        of the end boxes and the devices, otherwise the nearest place that is."""
+        w = min(CHIP_MAX_W, max(fm.horizontalAdvance(t) for t in lines) + 2 * CHIP_PAD_X)
+        h = fm.height() * len(lines) + 2 * CHIP_PAD_Y
+        pieces = sorted(
+            zip(self.poly, self.poly[1:], strict=False),
+            key=lambda ab: -(abs(ab[1][0] - ab[0][0]) + abs(ab[1][1] - ab[0][1])),
+        )
+        spots = [QPointF((a[0] + b[0]) / 2, (a[1] + b[1]) / 2) for a, b in pieces]
+        around = QRectF(self.path().boundingRect()).adjusted(-CHIP_MAX_W, -60, CHIP_MAX_W, 60)
+        avoid = [r.adjusted(-LABEL_GAP, -LABEL_GAP, LABEL_GAP, LABEL_GAP) for r in self._end_rects]
+        for item in self.dscene.items(around):
+            if getattr(item, "unit_id", None):  # a device card
+                avoid.append(
+                    item.sceneBoundingRect().adjusted(-LABEL_GAP, -LABEL_GAP, LABEL_GAP, LABEL_GAP)
                 )
-        self._end_rects = rects
+        return free_rect(QSizeF(w, h), spots, avoid, (w / 2 + LABEL_GAP, h + LABEL_GAP))
 
     # ---- the pointer ------------------------------------------------------------------------
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
@@ -270,6 +477,20 @@ class ConnectionItem(QGraphicsPathItem):
         if event.button() == Qt.MouseButton.LeftButton:
             self.setFocus()
             self.dscene.ctl.select_link(self.link_id)
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.chip_press(event.scenePos())
+        event.accept()
+
+    def mouseMoveEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        away = event.screenPos() - event.buttonDownScreenPos(Qt.MouseButton.LeftButton)
+        if self.chip_move(event.scenePos(), away.manhattanLength()):
+            event.accept()
+        else:
+            super().mouseMoveEvent(event)
+
+    def mouseReleaseEvent(self, event: QGraphicsSceneMouseEvent) -> None:
+        if not self.chip_release():
+            super().mouseReleaseEvent(event)
         event.accept()
 
     def mouseDoubleClickEvent(self, event: QGraphicsSceneMouseEvent) -> None:

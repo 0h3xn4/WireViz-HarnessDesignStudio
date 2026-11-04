@@ -6,7 +6,7 @@ page."""
 import pytest
 
 pytest.importorskip("PySide6")
-from PySide6.QtCore import Qt  # noqa: E402
+from PySide6.QtCore import QPointF, Qt  # noqa: E402
 from PySide6.QtWidgets import QApplication, QDialog  # noqa: E402
 
 pytestmark = pytest.mark.gui
@@ -311,6 +311,9 @@ def _press():
     class Event:
         def button(self):
             return Qt.MouseButton.LeftButton
+
+        def scenePos(self):
+            return QPointF(0.0, 0.0)  # (a press is also where a label may start to be dragged)
 
         def accept(self):
             pass
