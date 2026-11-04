@@ -16,6 +16,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 | install the tool | [`INSTALL.md`](../INSTALL.md) |
 | be told what to do next, one step at a time | [Choose your role](choose-your-role.md) |
 | see the whole work in one table: what each step uses and makes, what I can look at and change, where my project stands | [Follow the workflow](follow-the-workflow.md) |
+| make a quick block diagram of a set-up, with no checks and no paperwork, and save it as a picture | [Make a block diagram in five minutes](quick-diagram.md) |
 | start a project and draw devices and links | [Draw the design](draw-the-design.md) |
 | join a connector of one device to a connector of another, pin by pin, from the names on the pins, and check the result | [Connect two connectors](connect-two-connectors.md) |
 | add a backup chain, or put devices in other lanes | [Redundancy and zones](redundancy-and-zones.md) |
@@ -50,6 +51,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 The numbers follow the order of the work. The first page is the one the editor shows when you open a project for the first time.
 
 1. [Choose your role](choose-your-role.md): Systems engineer, Electrical engineer or AIT engineer (since S9), and what each shows first; the Next step page, one thing to do at a time. The Next step page is from 1.7.0, the roles after it.
+1a. [Make a block diagram in five minutes](quick-diagram.md): Quick mode, a short layout for a quick picture: New project, Add device, Connect, Export diagram (SVG, PDF and PNG); what Quick mode hides and how to leave it.
 2. [Draw the design](draw-the-design.md): start a project; add devices; connect them; guided and expert mode; save.
 3. [Redundancy and zones](redundancy-and-zones.md): the redundant copy of a device; links between the chains; lanes.
 4. [Generate harnesses](generate-harnesses.md): preview, apply and undo; the independent check; the Harness tab and its "Why" pane; how links are grouped.

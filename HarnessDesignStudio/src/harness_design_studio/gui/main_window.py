@@ -121,6 +121,7 @@ from harness_design_studio.gui.devices_dialogs import (
     NewDeviceDialog,
     NewPartDialog,
     NewTypeDialog,
+    QuickDeviceDialog,
 )
 from harness_design_studio.gui.devices_view import DevicesView
 from harness_design_studio.gui.dialogs import (
@@ -1471,6 +1472,9 @@ class MainWindow(QMainWindow):
         if self.ctl.read_only:
             self.ctl.refuse_read_only()
             return
+        if self.quick_on():
+            self._add_device_quick()
+            return
         dlg = NewDeviceDialog(self, self.theme, self.ctl.project)
         if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
             return
@@ -1483,6 +1487,18 @@ class MainWindow(QMainWindow):
         if not self._stays_on_the_path():
             self.go_to("devices")
             self.devices_view.focus_name()
+
+    def _add_device_quick(self) -> None:
+        """Add device in Quick mode: the window asks for a name (and a kind when wanted) only, the
+        device gets a connector, and the diagram stays in front with the new device selected."""
+        dlg = QuickDeviceDialog(self, self.theme, self.ctl.project)
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
+            return
+        uid = self.ctl.add_device_quick(dlg.values()["name"], dlg.template_id())
+        if uid is None:
+            return
+        self._show_area("model", tab="diagram")
+        self.view.focus_unit(uid)
 
     def new_harness_flow(self) -> None:
         """Edit > New harness… (Ctrl+Shift+H): an empty harness made by hand, with no interface

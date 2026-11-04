@@ -1078,6 +1078,29 @@ class EditorController(QObject):
         self.select("unit", uid)
         return uid
 
+    def add_device_quick(self, name: str, template_id: str = "") -> str | None:
+        """Quick mode's Add device: a device with this name in a free slot, as one undo step. With
+        a kind (`template_id`) it has the connectors of that template; without, it has one starter
+        connector (`first_connector.default_connector_part`), so that it can be connected at once.
+        Returns its ID (None: refused; the reason is a message)."""
+        try:
+            if template_id:
+                ops, uid = edit.ops_add_unit(self.project, template_id, name=name)
+            else:
+                ops, uid, _cid = first_connector.plan_device_with_connector(
+                    self.project,
+                    first_connector.default_connector_part(self.project),
+                    name=name,
+                    unit_id=devices.suggest_device_id(self.project, name),
+                )
+        except (HarnessError, ValidationError) as exc:
+            self.message.emit(_plain(exc), False)
+            return None
+        if not self.run(strings.STEP_ADD_DEVICE.format(uid), ops):
+            return None
+        self.select("unit", uid)
+        return uid
+
     def make_copies(self, unit_id: str, count: int) -> bool:
         """Bring the number of these devices up to `count` (one undo step; `core.copies`)."""
         try:

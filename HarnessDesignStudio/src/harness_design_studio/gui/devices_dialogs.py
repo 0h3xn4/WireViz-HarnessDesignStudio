@@ -28,7 +28,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import copies, devices
+from harness_design_studio.core import copies, devices, edit
 from harness_design_studio.core.device_library import DevicePlan, device_names, plan_device_import
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.errors import HarnessError
@@ -194,6 +194,51 @@ class NewDeviceDialog(_PlannerDialog):
             if taken:
                 return f"ID {taken[0]} is already used by another device."
         return problem or None
+
+
+class QuickDeviceDialog(_PlannerDialog):
+    """Add device in Quick mode: only a name, and a kind when wanted. The ID, the subsystem and
+    the connector are made by the tool (`values()` and `template_id()`): a kind gives the device
+    the connectors of its template, no kind gives it one starter connector, so that Connect works
+    at once. Everything can be changed later in the Devices tab."""
+
+    def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
+        super().__init__(parent, theme, strings.QD_NEWDEV_TITLE, "devices-quick-device-dialog")
+        self.project = project
+        form = QFormLayout()
+        self.name = _field(
+            QLineEdit(), strings.NEWDEV_NAME, strings.NEWDEV_NAME_TIP, strings.NEWDEV_NAME_HINT
+        )
+        self.name.setObjectName("new-device-name")
+        self.kind = QComboBox()
+        self.kind.setObjectName("new-device-kind")
+        self.kind.setAccessibleName(strings.QD_NEWDEV_KIND)
+        self.kind.setToolTip(strings.QD_NEWDEV_KIND_TIP)
+        self.kind.addItem(strings.QD_NEWDEV_NONE, "")
+        for tid, tpl in edit.TEMPLATES.items():
+            self.kind.addItem(tpl.label, tid)
+        form.addRow(strings.NEWDEV_NAME, self.name)
+        form.addRow(strings.QD_NEWDEV_KIND, self.kind)
+        self.lay.addLayout(form)
+        note = QLabel(strings.QD_NEWDEV_NOTE)
+        note.setProperty("muted", True)
+        note.setWordWrap(True)
+        self.lay.addWidget(note)
+        self.name.textChanged.connect(self.revalidate)
+        self._finish(strings.QD_NEWDEV_OK)
+        self.name.setFocus()
+
+    def values(self) -> dict[str, Any]:
+        name = self.name.text().strip()
+        return {"name": name, "unit_id": devices.suggest_device_id(self.project, name)}
+
+    def template_id(self) -> str:
+        """The kind chosen ("" for none)."""
+        return str(self.kind.currentData() or "")
+
+    def check(self) -> str | None:
+        v = self.values()
+        return devices.check_new_device(self.project, v["unit_id"], v["name"]) or None
 
 
 # ---- a new connector part ------------------------------------------------------------------------

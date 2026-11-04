@@ -125,6 +125,8 @@ While it is on, the window shows less:
 
 Nothing is locked and nothing is deleted. Every hidden area and command is still in the menus (**Go**, **View**, **File**, **Design**) and in the command palette (Ctrl+K), and the keys (Ctrl+G, F5, Ctrl+E) work. Quick mode changes only what the window shows and what it asks; it never changes a project file, the model hash or a written file. Turn it off and the layout of your role is back exactly as it was.
 
+The five steps of the quickest way to a picture are on one page: [Make a block diagram in five minutes](quick-diagram.md).
+
 ## The Next step page
 
 Open it with **Next step**, the first item of the rail on the left; a Systems engineer's project opens on it. It works the same in every role. It has:
