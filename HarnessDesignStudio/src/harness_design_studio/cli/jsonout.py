@@ -31,6 +31,7 @@ SHAPES: dict[str, tuple[str, ...]] = {
     ),
     "verify": ("ok", "interfaces_checked", "wires_checked", "stale", "issues"),
     "settings": ("settings", "definitions", "assumptions"),  # no "ok": printed as before
+    "settings --annotate": ("ok", "action", "files", "unchanged", "changed"),
     "explain --all": ("ok", "count", "without_value", "files"),  # with OBJECT: a list
     "export-data": ("ok", "count", "model_hash", "files", "run_record"),
     "generate": (
@@ -44,7 +45,8 @@ SHAPES: dict[str, tuple[str, ...]] = {
     "merge-fix": ("ok", "result", "conflicts", "problem", "generate", "check"),
     "config": (
         "ok", "set_count", "total", "values", "problems", "placeholder_files",
-        "waiting_for_decision", "counterpart_pairs", "release_distinct_roles", "changes",
+        "waiting_for_decision", "counterpart_pairs", "release_distinct_roles", "comment_warnings",
+        "changes",
     ),
     "library": ("ok", "name", "version", "source", "date", "changed"),
     "import-parts": ("ok", "dry_run", "changed", "ready", "problems", "rows", "library", "import"),

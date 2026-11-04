@@ -41,6 +41,7 @@ from harness_design_studio.core.model import (
     default_configs,
 )
 from harness_design_studio.core.model.base import Entity, Name
+from harness_design_studio.core.model.config import ABOUT_KEY
 
 from . import canonical
 from .fs import escapes_root, long_path
@@ -262,6 +263,19 @@ def _journal(b: _Builder, rel: str, data: Any) -> None:
         b.issues.append(Issue("error", "journal_damaged", f"The change journal is damaged: {exc}.", rel))  # fmt: skip
 
 
+def _config_with_valid_about(rel: str, data: Any, b: _Builder) -> Any:
+    """The raw config file with a damaged `_about` taken out and reported as a warning: the
+    comments are never a reason to set the values of the file aside. Whether an entry is current is
+    not asked here (`configcheck.annotation_issues`, for `validate` and `config`)."""
+    if not isinstance(data, dict) or ABOUT_KEY not in data:
+        return data
+    about = data[ABOUT_KEY]
+    if isinstance(about, dict) and all(isinstance(v, dict) for v in about.values()):
+        return data
+    b.issues.append(Issue("warning", "config_about_ignored", f"{rel}: '_about' must be an object with one object for each key; it was ignored and is left out when the project is saved. `settings --annotate` writes it again.", rel))  # fmt: skip
+    return {k: v for k, v in data.items() if k != ABOUT_KEY}
+
+
 def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None:
     b = _Builder(project, issues)
     if "project.json" in files:
@@ -274,7 +288,7 @@ def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None
         if rel == "project.json":
             continue
         if rel.startswith("config/"):
-            cfg = b.one(rel, "configuration", ConfigFile, data)
+            cfg = b.one(rel, "configuration", ConfigFile, _config_with_valid_about(rel, data, b))
             stem = rel.removeprefix("config/").removesuffix(".json")
             if cfg is None:
                 continue

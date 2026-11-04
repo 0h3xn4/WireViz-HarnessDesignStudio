@@ -5,6 +5,7 @@ Rules live in `config/*.json` inside the project, not in code. There are seven f
 ## Contents
 
 - [The shape of a file](#the-shape-of-a-file)
+- [Comments in the files: `_about`](#comments-in-the-files-about)
 - [What is checked (ranges)](#what-is-checked-ranges)
 - [`segmentation.json`](#segmentationjson)
 - [`segregation.json`](#segregationjson)
@@ -37,6 +38,46 @@ Every file is a wrapper with three fields: `name` (the file's name without `.jso
 ```
 
 Keys that are left out stay unset (`null`). `harness-design-studio validate` accepts this file, and `harness-design-studio config DIR` counts the four keys as set. Put a key outside `values` and the file is rejected: `harness-design-studio validate` prints `ERROR quarantined: ... bundle_derating: Extra inputs are not permitted`, sets the file aside and falls back to the built-in placeholder for that file. A new project already contains all seven files with every key; edit those instead of writing one from scratch.
+
+<a id="comments-in-the-files-about"></a>
+
+## Comments in the files: `_about`
+
+JSON has no comments, so a person who opens `config/derating.json` in an editor sees `"max_voltage_drop_v": 0.5` and nothing else: not the unit, the range, where the number comes from or what uses it. The reserved top-level key **`_about`** carries that text in the file itself. It is **opt-in** and a project does not have it unless you ask for it:
+
+```
+harness-design-studio settings my-design --annotate        # write or refresh _about in every config file
+harness-design-studio settings my-design --no-annotate     # take it out again
+harness-design-studio new my-design --annotate-config      # start a new project with it
+```
+
+```json
+{
+  "_about": {
+    "max_voltage_drop_v": {
+      "default": null,
+      "label": "Largest voltage drop",
+      "range": "above 0",
+      "source": "the engineer, from the program's standard (placeholder until reviewed)",
+      "unit": "V",
+      "used_by": "wire sizing, voltage drop check",
+      "what": "The most a wire path may drop."
+    }
+  },
+  "name": "derating",
+  "placeholder": true,
+  "values": { "max_voltage_drop_v": 0.5 }
+}
+```
+
+- **What an entry holds.** One entry for every setting of the file, set in it or not (so you see the range of a key before you add it), made from the registry of the tool (`core/settings.py`, the table `settings` prints): `label`, `unit` (left out when the value has none), `range`, `source`, `what`, `used_by`, `default` (`null`: the tool has no default, the value stays undecided and what depends on it is excluded) and `assumption` (the ID of the assumption the setting parameterises, `A-...`, left out when there is none). The keys are written in alphabetical order, like every key of every file; `_about` comes first.
+- **It is a comment, not a setting.** Loading ignores it for values; `validate` and `generate` never check it as a value; `settings --set` refuses it. An entry for a key the tool does not know (a setting that was removed, or a typo) is only a warning. An `_about` that is not an object with one object per key is ignored with a warning (`config_about_ignored`) and your values are kept.
+- **It changes no result.** It is left out of the model hash, of the inputs that tell whether the harnesses are out of date, of the numbers and of every written output (the outputs, the data files and `configuration.json` are byte for byte the same with and without it; a test compares them), and a save of the project writes it back unchanged. Annotating therefore never makes an export out of date, and the change journal records no row for it.
+- **A project without it is written exactly as before.** Nothing is added to a file unless you ask; opening and saving an old project changes no file.
+- **It can go stale.** When a later version of the tool words a range or a source differently, `validate` and `config` print a warning for each file and key that differs (`config_about_stale`: *config/derating.json: _about for 'bundle_derating' differs from what the tool says now (range)*) and for a setting that has no entry yet. They never make a command fail. `settings --annotate` writes the current text again.
+- **What `--annotate` writes.** Only config files that already exist; it creates no file and changes no value, and `config/model.json` is annotated only when the project has it. It saves only when a file changes. `--json` prints the files written. The scripting interface has `annotate_config(folder, remove=False)`.
+- **Hand edits.** You may edit an entry; the next `--annotate` replaces it with the text of the tool, and until then `validate` says that it differs. `_about` is for the text of the tool; it is not a place for notes of your own.
+- **The JSON Schemas** (`harness-design-studio schema`) allow `_about`, so an editor that uses them does not underline it.
 
 ## What is checked (ranges)
 

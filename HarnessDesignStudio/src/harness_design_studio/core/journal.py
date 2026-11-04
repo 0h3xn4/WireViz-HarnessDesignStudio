@@ -38,7 +38,7 @@ from harness_design_studio.core.model import (
 from harness_design_studio.core.model.journal import KINDS
 
 from .io import canonical
-from .io.layout import outside_the_hash
+from .io.layout import bytes_for_hash, outside_the_hash
 
 JOURNAL_FILE = "journal.json"
 GENERATION_FILE = "generated/generation.json"
@@ -255,7 +255,7 @@ def files_hash(files: Mapping[str, bytes]) -> str:
             continue
         if rel == "project.json":
             data = _blank_tool_version(data)
-        digest.update(rel.encode("utf-8") + b"\0" + data + b"\0")
+        digest.update(rel.encode("utf-8") + b"\0" + bytes_for_hash(rel, data) + b"\0")
     return digest.hexdigest()
 
 
