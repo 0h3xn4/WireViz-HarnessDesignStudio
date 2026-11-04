@@ -52,4 +52,4 @@ Everything the other pages describe is still there. To make wire lists, a build 
 
 - **The rail has no Checks.** Quick mode hides it on purpose; open **Go > Go to Checks** or turn Quick mode off.
 - **Connect asks which devices.** The project has more than two devices and you pressed Ctrl+Shift+K or the menu entry without choosing two; use the **Connect** tool and click the two devices.
-- **The diagram is mostly empty space.** The picture is a landscape sheet of fixed size with the devices in lanes by zone and a legend below; a small set-up fills only its top left. Crop it in your slide program.
+- **The picture is smaller than a page.** Export diagram cuts the sheet to the devices, the lane titles, the links and the legend, plus a margin, so a small set-up gives a small picture that fills it. The normal export (`system/block_diagram.svg` and `.pdf` in the outputs folder) keeps its fixed sheet and is not changed.

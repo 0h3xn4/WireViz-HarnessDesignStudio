@@ -148,3 +148,46 @@ def test_the_png_is_drawn_from_the_same_sheet_as_the_svg_and_the_pdf():
     assert any(image.pixelColor(x, y).name() != "#ffffff" for x in range(0, 800, 7) for y in range(0, 500, 7))  # fmt: skip
     assert diagram_export.diagram_files(sheet, "stamp")[".svg"] == files[".svg"]  # (deterministic)
     assert diagram_export.diagram_sheet(new_project("E")) is None
+
+
+def test_the_exported_picture_is_cut_to_its_content(qtbot, tmp_path):
+    import re
+
+    win = make_window(tmp_path)
+    win.ctl._install(mini3(), None, None)
+    target = tmp_path / "small.svg"
+    answers(win, target)
+    win.export_diagram_flow()
+    svg = target.read_text()
+    w, h = (float(v) for v in re.search(r'viewBox="0 0 ([\d.]+) ([\d.]+)"', svg).groups())
+    assert w < 420 and h < 297  # smaller than the standard sheet
+    for x, y in re.findall(r'<text x="([-\d.]+)" y="([-\d.]+)"', svg):
+        assert 0 <= float(x) <= w and 0 <= float(y) <= h
+    for tag in re.findall(r"<(?:line|rect)[^>]*>", svg):
+        for x in re.findall(r'(?:x|x1|x2)="([-\d.]+)"', tag):
+            assert float(x) <= w + 1e-6
+        for y in re.findall(r'(?:y|y1|y2)="([-\d.]+)"', tag):
+            assert float(y) <= h + 1e-6
+    image = QImage(str(target.with_suffix(".png")))
+    assert image.width() / image.height() == pytest.approx(w / h, rel=0.01) and image.width() >= 1000  # fmt: skip
+
+
+def test_a_big_project_is_not_clipped_and_stays_about_the_size_it_was():
+    from harness_design_studio.core.model import Unit
+    from harness_design_studio.core.outputs import system
+    from harness_design_studio.core.outputs.canvas import item_bounds
+    from harness_design_studio.core.outputs.stamp import stamp_of
+    from harness_design_studio.core.samples import sat15
+
+    p = sat15()
+    for k in range(60):  # more lanes and rows than the standard sheet holds
+        uid = f"X{k}"
+        p.units[uid] = Unit(id=uid, name=f"Extra {k}", subsystem="x", zone=f"lane{k % 7}")
+    full = system.block_diagram(p, stamp_of(p))
+    assert full.width > 420  # (a sheet that grew to hold it)
+    fitted = diagram_export.diagram_sheet(p)
+    assert fitted.width <= full.width and fitted.height <= full.height
+    assert fitted.width > full.width - 40  # (about the same width)
+    for it in fitted.items[1:]:  # (the border, first, is redrawn to match)
+        x0, y0, x1, y1 = item_bounds(it)
+        assert x0 >= 0 and y0 >= 0 and x1 <= fitted.width and y1 <= fitted.height

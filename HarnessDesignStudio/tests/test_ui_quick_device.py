@@ -14,7 +14,10 @@ from PySide6.QtWidgets import QApplication, QLineEdit  # noqa: E402
 from harness_design_studio.core import edit  # noqa: E402
 from harness_design_studio.core.samples import new_project  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
-from harness_design_studio.gui.devices_dialogs import NewDeviceDialog, QuickDeviceDialog  # noqa: E402
+from harness_design_studio.gui.devices_dialogs import (  # noqa: E402
+    NewDeviceDialog,
+    QuickDeviceDialog,
+)
 from tests.gui_helpers import (  # noqa: E402
     DialogScript,
     click_unit,

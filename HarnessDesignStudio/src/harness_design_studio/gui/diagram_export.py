@@ -25,13 +25,16 @@ from harness_design_studio.core.outputs.canvas import (
     Rect,
     Sheet,
     Text,
+    fit_sheet,
     to_pdf,
     to_svg,
 )
 from harness_design_studio.core.outputs.stamp import Stamp, stamp_of
 
 SUFFIXES = (".svg", ".pdf", ".png")
-PX_PER_MM = 6.0  # about 150 dpi
+PX_PER_MM = 6.0  # about 150 dpi, at least
+MIN_LONG_SIDE_PX = 2000  # a small diagram is drawn bigger so that it is still sharp on a slide
+MARGIN_MM = 8.0  # the paper left round the content
 MAX_SIDE_PX = 9000  # a big diagram is drawn smaller rather than not at all
 _TEXT_K = 8.0  # text is set at 8 times its size and the painter scaled down (no rounding at 2 mm)
 
@@ -42,7 +45,7 @@ def diagram_sheet(project: Project, stamp: Stamp | None = None) -> Sheet | None:
     devices is drawn as boxes."""
     if not project.units:
         return None
-    return system.block_diagram(project, stamp or stamp_of(project))
+    return fit_sheet(system.block_diagram(project, stamp or stamp_of(project)), MARGIN_MM)
 
 
 def safe_stem(name: str) -> str:
@@ -70,7 +73,8 @@ def _pen(color: str, width: float, dash: tuple[float, float] | None) -> QPen:
 
 def render_png(sheet: Sheet) -> bytes:
     """The sheet painted on white paper, as PNG bytes."""
-    scale = min(PX_PER_MM, MAX_SIDE_PX / max(sheet.width, sheet.height))
+    long_side = max(sheet.width, sheet.height)
+    scale = min(max(PX_PER_MM, MIN_LONG_SIDE_PX / long_side), 12.0, MAX_SIDE_PX / long_side)
     image = QImage(
         max(1, round(sheet.width * scale)), max(1, round(sheet.height * scale)),
         QImage.Format.Format_RGB32,
@@ -130,10 +134,10 @@ def write_diagram(project: Project, target: str | Path) -> list[Path]:
     """Write the block diagram as `<stem>.svg`, `.pdf` and `.png` (`target` may carry one of the
     three endings). Returns the files written; an empty list while there is nothing to draw. A
     file that exists is replaced, with no backup copy beside it."""
-    if not project.units:
-        return []
     stamp = stamp_of(project)
-    sheet = system.block_diagram(project, stamp)
+    sheet = diagram_sheet(project, stamp)
+    if sheet is None:
+        return []
     stem = stem_of(target)
     written: list[Path] = []
     for suffix, data in diagram_files(sheet, stamp.line).items():
