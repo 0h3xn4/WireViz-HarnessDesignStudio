@@ -9,6 +9,7 @@ This page shows how to find out what the tool takes for granted when it makes a 
 - [2. Read a line](#2-read-a-line)
 - [3. Change a setting](#3-change-a-setting)
 - [4. Use the data in a spreadsheet or a script](#4-use-the-data-in-a-spreadsheet-or-a-script)
+- [5. Put the same text into the files you edit by hand (optional)](#5-put-the-same-text-into-the-files-you-edit-by-hand-optional)
 - [Common mistakes](#common-mistakes)
 
 ## Before you start
@@ -49,6 +50,16 @@ The value is JSON (a number, `true`, a list, a table). It is checked against the
 ## 4. Use the data in a spreadsheet or a script
 
 `harness-design-studio settings wheel-link --json` prints the same as data: for every setting its ID, label, unit, value, origin, default, what it does, what uses it, its source and range, and for every assumption the IDs of its settings. To keep the settings in force with a result, `harness-design-studio export-data wheel-link --out FOLDER` writes them as `settings.json` and `settings.csv` beside every table of the design, and the configuration files as the tool used them ([export the data](export-the-data.md)).
+
+## 5. Put the same text into the files you edit by hand (optional)
+
+JSON has no comments, so `config/derating.json` shows a number and not its unit, range or source. Run
+
+```
+harness-design-studio settings wheel-link --annotate
+```
+
+and every config file of the project gets a top-level key `_about` with, for each setting, the unit, the range, where the number comes from, what uses it, its default and the assumption it belongs to: the text of step 2, next to the value, in the editor of your choice. `--no-annotate` takes it out again. It is off unless you ask (`new --annotate-config` starts a project with it) and it is only a comment: it is not a setting, it does not change any number or written file, and a project with it has the same model hash as one without. `validate` and `config` warn when the text in the file is out of date; `--annotate` refreshes it. In the editor, the box of each value on the engineering values page shows the range and the source as its tooltip. Details: [`CONFIG.md`](../CONFIG.md#comments-in-the-files-about).
 
 ## Choose how a number is made
 

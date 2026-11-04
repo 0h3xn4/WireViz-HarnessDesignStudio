@@ -29,6 +29,11 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         action="store_true",
         help="do not start a change journal (journal.json) for the new project",
     )
+    n.add_argument(
+        "--annotate-config",
+        action="store_true",
+        help="write the unit, range, source and use of every setting into the config files as comments (`_about`); off by default",
+    )
     add_json_flag(n)
     t = sub.add_parser(
         "templates",
@@ -77,7 +82,11 @@ def _run(args: argparse.Namespace, rep: Report) -> int:
         print("error: give the folder for the new project (or use --list).", file=sys.stderr)
         return 2
     project = templates.create_project(
-        args.folder, args.template, args.name, journal=not args.no_journal
+        args.folder,
+        args.template,
+        args.name,
+        journal=not args.no_journal,
+        annotate_config=args.annotate_config,
     )
     rep.say(
         f"Project '{project.meta.name}' created in {args.folder} "

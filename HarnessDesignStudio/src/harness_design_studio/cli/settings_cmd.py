@@ -5,7 +5,8 @@ import json
 import sys
 from pathlib import Path
 
-from harness_design_studio.core import configcheck, settings
+from harness_design_studio.cli.jsonout import Report
+from harness_design_studio.core import annotate, configcheck, settings
 from harness_design_studio.core.commands import History, SetConfig
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
@@ -24,7 +25,11 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "the assumptions built into the tool, each with the settings that parameterise it, and the "
         "fixed definitions. `--json` prints the same as data. `--set FILE.KEY=VALUE` (VALUE is JSON, "
         "for example model.service_loops_per_wire=0) changes one value; it is refused, and nothing "
-        "is changed, when the value is outside its range.",
+        "is changed, when the value is outside its range. `--annotate` writes the unit, range, source and "
+        "use of every setting into the config files themselves, under the reserved key `_about` "
+        "(comments for a person with an editor; opt-in; never a setting; outside every hash and "
+        "every written output) and refreshes them; `--no-annotate` takes them out again. Neither "
+        "creates a file. With `--json` they print the files written.",
     )
     p.add_argument("project", type=Path, help="project folder")
     p.add_argument("--json", action="store_true", help="print the settings as JSON")
@@ -34,6 +39,16 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         default=[],
         metavar="FILE.KEY=VALUE",
         help="set one value (VALUE as JSON, for example model.service_loops_per_wire=0); repeat for several",
+    )
+    p.add_argument(
+        "--annotate",
+        action="store_true",
+        help="write (or refresh) the comments `_about` in every config file: unit, range, source and use of each setting",
+    )
+    p.add_argument(
+        "--no-annotate",
+        action="store_true",
+        help="take the comments `_about` out of every config file",
     )
 
 
@@ -65,8 +80,30 @@ def _set(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-d
     return 0
 
 
+def _annotate(project, args: argparse.Namespace) -> int:  # type: ignore[no-untyped-def]
+    rep = Report(args.json)
+    result = annotate.annotate(project, remove=args.no_annotate)
+    if result.changed:
+        save_project(project, args.project)
+    names = ", ".join(f"config/{n}.json" for n in result.files)
+    if args.no_annotate:
+        rep.say(f"Comments taken out of {names}." if result.changed else "No config file has comments.")  # fmt: skip
+    else:
+        rep.say(f"Comments written to {names}." if result.changed else "The comments of every config file are current.")  # fmt: skip
+    rep.put(**result.to_dict())
+    return rep.finish(0)
+
+
 def run(args: argparse.Namespace) -> int:
+    if args.annotate and args.no_annotate:
+        print("error: --annotate and --no-annotate cannot be combined.", file=sys.stderr)
+        return 2
+    if (args.annotate or args.no_annotate) and args.set:
+        print("error: --set cannot be combined with --annotate or --no-annotate.", file=sys.stderr)
+        return 2
     project = load_project(args.project).project
+    if args.annotate or args.no_annotate:
+        return _annotate(project, args)
     if args.set:
         code = _set(project, args)
         if code:

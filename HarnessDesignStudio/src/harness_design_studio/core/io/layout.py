@@ -5,6 +5,7 @@ One file per subsystem keeps Git merges clean; one file per harness likewise. Fi
 """
 
 import hashlib
+import json
 import re
 from collections.abc import Callable, Hashable, Sequence
 from typing import Any
@@ -17,6 +18,7 @@ from harness_design_studio.core.model import (
     ProjectMeta,
 )
 from harness_design_studio.core.model.base import Entity
+from harness_design_studio.core.model.config import ABOUT_KEY
 from harness_design_studio.core.model.journal import Journal
 
 from . import canonical
@@ -46,6 +48,23 @@ def outside_the_hash(rel: str) -> bool:
     """Whether the project file `rel` (a POSIX path inside the project folder) is left out of the
     model hash."""
     return rel in OUTSIDE_THE_HASH_FILES or rel.startswith(OUTSIDE_THE_HASH_FOLDERS)
+
+
+def bytes_for_hash(rel: str, data: bytes) -> bytes:
+    """The bytes of project file `rel` as the model hash sees them: a file of `config/` without its
+    comments (`_about`, the opt-in annotation), so that annotating a project, or refreshing the
+    annotation, changes no hash, no number and no written output. Any other file, and a config file
+    without comments, as it is."""
+    if not rel.startswith("config/") or b'"_about"' not in data:
+        return data
+    try:
+        doc = json.loads(data)
+    except ValueError:
+        return data
+    if not isinstance(doc, dict) or ABOUT_KEY not in doc:
+        return data
+    del doc[ABOUT_KEY]
+    return canonical.dumps(doc)
 
 
 def journal_payload(journal: Journal | None) -> dict[str, Any]:
@@ -235,10 +254,11 @@ def model_hash(project: Project) -> str:
     """Hash of the model state, independent of which tool version last saved it. The journal (who
     changed what and when), the import record (`imports/records.json`, where data came from), the
     extensions and the as-built records are not the design, so they are left out
-    (`outside_the_hash`): the same design gives the same hash with or without them."""
+    (`outside_the_hash`), and so are the comments of the config files (`_about`,
+    `bytes_for_hash`): the same design gives the same hash with or without them."""
     digest = hashlib.sha256()
     for rel, data in sorted(serialize(project, tool_version="").items()):
         if outside_the_hash(rel):
             continue
-        digest.update(rel.encode("utf-8") + b"\0" + data + b"\0")
+        digest.update(rel.encode("utf-8") + b"\0" + bytes_for_hash(rel, data) + b"\0")
     return digest.hexdigest()

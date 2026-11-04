@@ -6,6 +6,7 @@ import json
 from typing import Any
 
 from .model import ConfigFile, Project
+from .model.config import ABOUT_KEY
 from .vcs.roles import CONFIG_FILE as ROLES_FILE
 from .vcs.roles import CONFIG_KEY as ROLES_KEY
 
@@ -13,8 +14,10 @@ from .vcs.roles import CONFIG_KEY as ROLES_KEY
 def _config_dump(c: ConfigFile) -> dict[str, Any]:
     """One config file as generation reads it. The setting `release_distinct_roles` (who may
     release, 1.9.0) is not read by generation, so switching it on or off does not make the harness
-    plans out of date; without the key the dump is what it always was."""
+    plans out of date; without the key the dump is what it always was. The comments of the file
+    (`_about`) are not an input either."""
     d = c.model_dump(mode="json")
+    d.pop(ABOUT_KEY, None)
     if c.name == ROLES_FILE and ROLES_KEY in c.values:
         d["values"] = {k: v for k, v in d["values"].items() if k != ROLES_KEY}
     return d

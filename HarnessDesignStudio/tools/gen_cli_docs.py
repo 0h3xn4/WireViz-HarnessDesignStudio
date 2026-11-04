@@ -45,6 +45,7 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio new --list --json",
         'harness-design-studio new my-design --name "My first design"',
         "harness-design-studio new wheel-link --template first-steps",
+        "harness-design-studio new wheel-link --template first-steps --annotate-config",
     ],
     "explain": [
         "harness-design-studio explain wheel-link W001-001",
@@ -117,6 +118,8 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio settings wheel-link",
         "harness-design-studio settings wheel-link --json",
         "harness-design-studio settings wheel-link --set model.service_loops_per_wire=0",
+        "harness-design-studio settings wheel-link --annotate",
+        "harness-design-studio settings wheel-link --no-annotate --json",
     ],
     "verify": [
         "harness-design-studio verify my-design",
@@ -337,7 +340,9 @@ def _json_section() -> list[str]:
         "their document gains the key `run_record` (the name of the file); without the option "
         "no record is written and the document is as listed. "
         "`config` prints every engineering value with its unit, its use, whether it is set and "
-        "where it came from, and the values it refused, in the order of the hand-over list.",
+        "where it came from, and the values it refused, in the order of the hand-over list; "
+        "`comment_warnings` lists the comments `_about` of the config files that are out of date. "
+        "`settings --annotate` and `--no-annotate` print the document `settings --annotate`.",
         "",
         "| Command | Keys of the document |",
         "| --- | --- |",

@@ -121,6 +121,7 @@ def plan_profile(project: Project, name: str) -> ProfilePlan:
                 name=fname,
                 placeholder=True,  # values the profile set are not reviewed (D-131)
                 values={**(base.values if base else {}), **new},
+                about=base.about if base else {},
             )
         )
     return ProfilePlan(out, applied, kept, tuple(marked))
