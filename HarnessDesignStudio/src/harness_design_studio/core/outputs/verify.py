@@ -23,6 +23,7 @@ from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
 from harness_design_studio.core.verify import VerifyReport, link_issues
 
+from .export_units import missing_units
 from .stamp import parse_csv
 
 MANIFEST = "manifest.json"
@@ -886,6 +887,7 @@ def _system(r: VerifyReport, project: Project, files: dict[str, bytes]) -> None:
                 and len(doc["interfaces"]) == len(project.interfaces)
                 and ("links" in doc) == bool(project.links)
                 and sum(len(h["wires"]) for h in doc["harnesses"]) == len(wires)
+                and not missing_units(doc)  # a file from before 1.13 has no field_units: no demand
                 and {h["id"]: h for h in doc["harnesses"]}
                 == {h.id: _saved_order(h) for h in project.harnesses.values()}
                 and all(

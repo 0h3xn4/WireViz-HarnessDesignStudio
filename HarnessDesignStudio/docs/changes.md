@@ -25,6 +25,13 @@ When a test fails, it names what moved: the wire, the finding or the file. Renew
 
 ## Entries
 
+### 2026-11-04: `export.json` states the unit of every number (a written file changes on purpose)
+
+- **Before.** A number in `system/export.json` had a unit only when its name said so (`length_m`, `max_current_a`). `parts[].pin_count`, `parts[].conductors`, `harnesses[].accessories[].quantity`, the gauge `gauge_awg` and the keys of `parts[].ratings` had none; a reader of the file alone had to know them. A wire read `{"gauge_awg": 22, "length_m": 1.2, ...}` and the file said no more.
+- **Now.** The same file with one more top-level object `field_units` (sorted with the other keys), for example `"harnesses[].wires[].length_m": "m"`, `"harnesses[].wires[].gauge_awg": "AWG"`, `"parts[].mass_per_m_g": "g/m"`, `"parts[].ratings.contact_current_a": "A"`, `"parts[].pin_count": "none (count of pins)"`. A rating a project names itself gets the unit its name ends in (`_a`, `_v`, `_c`, `_g`, `_mm`, `_ohm`) and otherwise `not stated (...)`. The units are SI-style symbols; `AWG` is the wire gauge; `none (...)` says what a number without a unit is.
+- **What moves.** Only the file `system/export.json`: it gains `field_units` and nothing else changes in it (no field renamed or moved, `format_version` 1, the key `units` still holds the devices). Checked with the tool on the four examples and the eleven scenarios of the snapshot: every other written file is byte for byte as before, and the model hash is unchanged (the project is not changed). The baseline `docs/ui/OUTPUT_HASHES_BASELINE.json` (4 lines, `BASE_VERSION` stays 1.10.0 because the version string keeps its length), `tests/fixtures/numbers/snapshot.json` (11 lines) and the golden outputs (`tests/fixtures/outputs/*.json` and the readable `mini3/system/export.json`) are renewed for this reason.
+- **Why.** Requirement R5 of the transparency work (D-191): the last gap in the units of the written files.
+- **Agreed.** Not put to the owner: the change is additive and a reader of the file is not affected (D-195). The owner can ask for another name or a different form of the units.
 ### 2026-11-02: `validate` runs the check of the configuration values
 
 - **Before.** `harness-design-studio validate` did not check the values of `config/*.json`. With `bundle_derating` set to 1.5 it printed `0 error(s)` and exited 0, while `generate` stopped with `config_invalid`, `config` showed the file as INVALID and `drc` exited 1. `docs/CONFIG.md` says all of them use the same checks.
