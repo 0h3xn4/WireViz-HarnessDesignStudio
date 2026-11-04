@@ -6,6 +6,7 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ### Changed for you to know
 
+- **Export diagram… (File menu, Ctrl+K): the block diagram as SVG, PDF and PNG in one step.** It asks for a file name and writes the block diagram of the devices and their connections as `<name>.svg`, `<name>.pdf` and `<name>.png`. It needs no project folder, no harness, no check, no resolved placeholder and no Generate; a project with only devices, only interfaces or only connections works, and a project with no device says *Nothing to draw yet*. It changes nothing in the project and writes no file the full export writes (the output hashes do not change); it is there in every role.
 - **The role is now visible in the top bar.** A **Role** button shows who the window is set up for (*Role: Systems engineer*, *Electrical engineer* or *AIT engineer*) and a click lists the three roles. Until now the role could only be chosen in the window of the first start, in **View > Role** or on the Settings page, and a new user did not find it. It is the same choice as before: nothing else about roles changed, no project file and no written output is affected.
 
 ## 1.13.0 (2026-11-04; not a statement of compliance)

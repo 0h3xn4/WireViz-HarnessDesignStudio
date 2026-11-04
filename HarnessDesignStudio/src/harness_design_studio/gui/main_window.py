@@ -100,7 +100,7 @@ from harness_design_studio.core.vcs.release import (
 from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, working_diff
 from harness_design_studio.core.vcs.roles import default_name, distinct_roles_on
 from harness_design_studio.core.verify import VerifyReport
-from harness_design_studio.gui import areas, recent, strings
+from harness_design_studio.gui import areas, diagram_export, recent, strings
 from harness_design_studio.gui.asbuilt_page import AsBuiltPage
 from harness_design_studio.gui.assumptions_dialog import AssumptionsDialog
 from harness_design_studio.gui.canvas import DiagramView, ZoomIndicator
@@ -1834,6 +1834,10 @@ class MainWindow(QMainWindow):
             strings.A_CANCEL_CHECK, self.ctl.cancel_check, name="act-cancel-check"
         )
         self.act_export = a(strings.A_EXPORT, self.export_dialog_flow, "Ctrl+E", name="act-export")
+        self.act_export_diagram = a(
+            strings.A_EXPORT_DIAGRAM, self.export_diagram_flow, name="act-export-diagram"
+        )
+        self.act_export_diagram.setToolTip(strings.A_EXPORT_DIAGRAM_TIP)
         self.act_review = a(strings.A_REVIEW, partial(self.change_target, "review"), name="act-review")  # fmt: skip
         self.act_release = a(strings.A_RELEASE, partial(self.change_target, "release"), name="act-release")  # fmt: skip
         self.act_revise = a(strings.A_REVISE, partial(self.change_target, "revise"), name="act-revise")  # fmt: skip
@@ -2057,6 +2061,7 @@ class MainWindow(QMainWindow):
             self.menu_import.addAction(act)
         self.menu_import.addAction(self.act_import_asbuilt)
         f.addAction(self.act_export)
+        f.addAction(self.act_export_diagram)
         f.addAction(self.act_export_asbuilt)
         f.addSeparator()
         f.addAction(self.act_library)
@@ -4060,6 +4065,35 @@ class MainWindow(QMainWindow):
         dlg.failed.connect(self._export_failed)
         self.run_dialog(dlg)
         dlg.deleteLater()
+
+    def _show_folder(self, folder: Path) -> None:
+        self.open_url(QUrl.fromLocalFile(str(folder)))
+
+    def export_diagram_flow(self) -> None:
+        """File > Export diagram…: the block diagram as SVG, PDF and PNG in a place the person
+        chooses. It needs no project folder, harness, check or resolved value; an empty project
+        says there is nothing to draw yet."""
+        project = self.ctl.project
+        if not project.units:
+            self.toasts.show_message(strings.QD_NOTHING, None)
+            return
+        path = self.ask_save_path(
+            strings.QD_TITLE, diagram_export.suggested_name(project), strings.QD_FILTER
+        )
+        if not path:
+            return
+        try:
+            written = diagram_export.write_diagram(project, path)
+        except (HarnessError, OSError, ValueError) as exc:
+            self._error(self._explain(exc, Path(path).parent))
+            return
+        folder = written[0].parent
+        self.toasts.show_message(
+            strings.QD_DONE.format(names=", ".join(w.name for w in written), folder=folder),
+            None,
+            10000,
+            action=(strings.QD_SHOW_FOLDER, partial(self._show_folder, folder)),
+        )
 
     def _after_export(self, result: object) -> None:
         self._outputs_epoch += 1  # files were written: read the outputs state again

@@ -1306,6 +1306,11 @@ STATUS_NOT_GENERATED_TIP = "No harnesses have been generated yet"
 A_GENERATE = "Generate harnesses"
 A_CHECK = "Run checks"
 A_EXPORT = "Export…"
+A_EXPORT_DIAGRAM = "Export diagram…"
+A_EXPORT_DIAGRAM_TIP = (
+    "Save the block diagram of the devices and their connections as SVG, PDF and PNG. It needs no "
+    "project folder and no check, and writes nothing into the project."
+)
 A_RELEASE = "Release harness…"
 A_REVISE = "Start new revision…"
 A_REVIEW = "Submit harness for review…"
@@ -3309,3 +3314,11 @@ ASB_REFUSED = "Nothing was changed. {0} row(s) were refused; the first: {1}"
 ASB_UNREADABLE = "The sheet could not be read: {0}"
 ASB_EXPORTED = "Sheet saved: {0}"
 ASB_READ_ONLY = "This project is read-only, so records cannot be imported."
+
+
+# ---- Export diagram and Quick mode ----
+QD_TITLE = "Export diagram"
+QD_FILTER = "Block diagram (*.svg *.pdf *.png)"
+QD_NOTHING = "Nothing to draw yet. Add a device first, then export the diagram."
+QD_DONE = "Diagram saved as {names} in {folder}."
+QD_SHOW_FOLDER = "Show folder"
