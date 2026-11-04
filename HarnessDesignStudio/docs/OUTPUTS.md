@@ -129,9 +129,12 @@ Each wire is written as its own one-conductor cable, with `connectors`, `cables`
   "generator": {"name", "version"}, "model_hash": "<64 hex>",
   "project": {"name", "description"}, "placeholder_config": [names],
   "units": [...], "interface_types": [...], "interfaces": [...],
-  "box_connectors": [...], "harnesses": [...], "parts": [...] }
+  "box_connectors": [...], "harnesses": [...], "parts": [...],
+  "field_units": {"harnesses[].wires[].length_m": "m", ...} }
 ```
 Each list holds the model objects exactly as in the project files (sorted by ID); fields are described in `FILE_FORMAT.md`. `format_version` changes only for incompatible changes.
+
+**Units of the numbers (1.13, D-195).** `field_units` gives the unit of every numeric field of the file: the key is the path of the field (`[]` for a list, `.key` for an object key: `harnesses[].wires[].length_m`, `parts[].ratings.contact_current_a`), the value is the unit: `m`, `mm`, `A`, `V`, `ohm`, `g`, `g/m`, `degC`, `AWG` (the wire gauge, written as the plain AWG number, D2), or `none (what it is)` for a number with no unit (a count of pins, the number of conductors in one metre of a part, a flag, the format number). A rating a project names itself gets the unit its name ends in, or `not stated (...)`. The key `units` of the file holds the devices, so the new object has another name. The table is one list in the code (`core/outputs/export_units.py`), checked by a test against the fields of the model; the output check reports a number of the file that has no unit. A file written before 1.13 has no `field_units` and is still read and verified.
 
 ## Print
 Dark colours and dash patterns carry every distinction (category, nominal/redundant), so greyscale prints stay readable. Tests check contrast against white (at least 3:1) for the system diagrams. Harness drawings draw wire colours on a dark outline and write every colour as a code (REQ-OUT-03).
