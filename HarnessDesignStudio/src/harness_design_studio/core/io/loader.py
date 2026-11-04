@@ -21,6 +21,7 @@ from harness_design_studio.core.model import (
     ChangeEntry,
     ConfigFile,
     Connector,
+    DiagramMark,
     GenerationRecord,
     Harness,
     ImportRecord,
@@ -336,6 +337,8 @@ def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None
             b.items(rel, data, "imports", "import record", ImportRecord, project.import_records)
         elif rel == "asbuilt/records.json":
             b.items(rel, data, "asbuilt", "as-built record", AsBuiltRecord, project.asbuilt)
+        elif rel == "diagram/marks.json":
+            b.items(rel, data, "marks", "diagram mark", DiagramMark, project.diagram_marks)
         elif rel == "logical/layout.json":
             _layout(b, rel, data)
         elif rel == "logical/links.json":

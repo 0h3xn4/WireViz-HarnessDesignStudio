@@ -19,6 +19,7 @@ from harness_design_studio.core.model import (
     ChangeEntry,
     ConfigFile,
     Connector,
+    DiagramMark,
     GenerationRecord,
     Harness,
     ImportRecord,
@@ -87,6 +88,11 @@ def _kinds() -> list[tuple[str, str, type[BaseModel]]]:
             "asbuilt",
             "asbuilt/records.json",
             _list_file("AsBuiltRecordsFile", "asbuilt", AsBuiltRecord),
+        ),  # fmt: skip
+        (
+            "diagram-marks",
+            "diagram/marks.json",
+            _list_file("DiagramMarksFile", "marks", DiagramMark),
         ),  # fmt: skip
         ("baseline", "baselines/*/*.json", Baseline),
     ]

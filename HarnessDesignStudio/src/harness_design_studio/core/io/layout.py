@@ -27,21 +27,25 @@ from .fs import slug
 MANAGED_RE = re.compile(
     r"^(project\.json|waivers\.json|journal\.json|logical/layout\.json|generated/generation\.json|config/[^/]+\.json|library/[^/]+\.json|logical/interface_types\.json"
     r"|logical/links\.json|logical/(units|interfaces)/[^/]+\.json|physical/(connectors|harnesses)/[^/]+\.json|changelog\.json|baselines/[^/]+/[^/]+\.json"
-    r"|imports/records\.json|asbuilt/records\.json)$"
+    r"|imports/records\.json|asbuilt/records\.json|diagram/marks\.json)$"
 )
 JOURNAL_FILE = "journal.json"
 MANAGED_DIRS = (
     "config", "library", "logical", "physical", "generated", "baselines", "imports", "asbuilt",
+    "diagram",
 )  # fmt: skip
 IMPORT_RECORDS_FILE = "imports/records.json"  # optional; not part of the model hash
 ASBUILT_FILE = "asbuilt/records.json"  # optional (S9); not part of the model hash
+DIAGRAM_MARKS_FILE = (
+    "diagram/marks.json"  # optional; what was moved in the diagram; not in the hash
+)
 
 # What lives in the project folder but is not the design, so that it is never in the model hash:
 # the journal and the import record (files the tool writes with the project), and the folders of the
 # extensions (S8) and the as-built records (a later step), which are not serialised at all. The one
 # list: `outside_the_hash(rel)` is what `model_hash` and `journal.files_hash` ask.
 OUTSIDE_THE_HASH_FILES = frozenset({JOURNAL_FILE, IMPORT_RECORDS_FILE})
-OUTSIDE_THE_HASH_FOLDERS = ("extensions/", "asbuilt/")
+OUTSIDE_THE_HASH_FOLDERS = ("extensions/", "asbuilt/", "diagram/")
 
 
 def outside_the_hash(rel: str) -> bool:
@@ -200,6 +204,11 @@ def serialize(project: Project, *, tool_version: str | None = None) -> dict[str,
         built = list(project.asbuilt.values())
         files[ASBUILT_FILE] = memo.get(
             ASBUILT_FILE, built, lambda: canonical.dumps({"asbuilt": _dump(list(built))})
+        )
+    if project.diagram_marks:  # optional: nothing moved by hand, no file, the files as they were
+        marks = list(project.diagram_marks.values())
+        files[DIAGRAM_MARKS_FILE] = memo.get(
+            DIAGRAM_MARKS_FILE, marks, lambda: canonical.dumps({"marks": _dump(list(marks))})
         )
     if project.waivers:
         waivers = list(project.waivers.values())
