@@ -56,13 +56,15 @@ The override is removed and the value is cleared; the next **Generate** gives th
 
 ## 4. Where an override is shown
 
-Only a project that has an override shows any of this; a project without one is written exactly as before.
+Only a project that has an override shows any of this; a project without one is written exactly as before. The reason is written, never a name or a time: *who* and *when* are in the journal (`deviation DIR` lists them), because a written file that held them would change with the day it was made.
 
 | Place | What shows |
 | --- | --- |
 | The wire table and the Edit wire tab | The word *Overridden* in the Locked column, the reason in its tooltip and in the line under the form |
 | `wirelist.csv` and its sheet | A last column *Overrides*: the fields and their reasons |
 | The build workbook | A column *Override* on the cut list and a section *Overrides and deviations* on *Start here* |
+| `tests.csv` and the *Tests* sheet | A last column *Deviations* for a test of a wire that has an override or a deviation (`override gauge_awg: reason; deviation current-over-wire: reason`), and on the *Tests* sheet the band *Overrides and deviations* above the table |
+| The as-built report | The note of a measured test line repeats it (`design: override ...`) |
 | The drawing | Lines *OVERRIDE …* beneath the diagram |
 | `explain` and the derivation files | The derivation *Overridden by the engineer* |
 | The release record | The comment of the release says how many values were overridden and which |
@@ -80,7 +82,7 @@ harness-design-studio deviation wheel-link                      # list them, wit
 harness-design-studio deviation wheel-link current-over-wire.W001-001 --remove
 ```
 
-A deviation does **not** meet the requirement; it records that a person accepted the error. It is shown in the Problems list and the Checks panel (with who and when), in `drc` and `drc_report.md` (a section *Deviations*), in `drc_findings.csv` (*Waived* reads `deviation`), in the drawing and the *Start here* sheet of the build workbook of the harness it is about, and in the release record. If the finding changes later (the numbers in its text change), the deviation no longer applies and the error is open again.
+A deviation does **not** meet the requirement; it records that a person accepted the error. It is shown in the Problems list and the Checks panel (with who and when), in `drc` and `drc_report.md` (a section *Deviations*), in `drc_findings.csv` (*Waived* reads `deviation`), in the drawing, the *Start here* and *Tests* sheets of the build workbook of the harness it is about, in the column *Deviations* of `tests.csv` for the tests of the wires it is about (the wire itself; the wires of the interface for a finding on a connector of the interface; the wires that end on a connector for the temperature margin of its part), and in the release record. If the finding changes later (the numbers in its text change), the deviation no longer applies and the error is open again.
 
 ## 6. Keep a history
 

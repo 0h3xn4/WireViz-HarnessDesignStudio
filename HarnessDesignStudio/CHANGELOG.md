@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Added
+
+- **Overrides and deviations are shown on the tests (transparency follow-up, R7).** For a harness in which a test is about a wire with an override or a deviation, `tests.csv` has a last column `Deviations` (`override gauge_awg: reason; deviation current-over-wire: reason`) and the *Tests* sheet of the build workbook starts with the band *Overrides and deviations* (the lines of *Start here*) and has the same column; the as-built report repeats the mark on the line of a measured test. The output check reads all of it. A project without an override or a deviation writes the same bytes as before (see `docs/changes.md`).
+
 ## 1.12.0 (2026-11-04; not a statement of compliance)
 
 Version 1.12.0 is the **transparency release** (decisions D-191 to D-194): a glass box for systems, electrical and AIT engineers. Every number the tool makes can be opened and followed (`explain`, the Why tab, the Explain window), every setting and assumption a result depends on is listed with its unit, value and source, the calculation choices that were built into the program are settings you can change, an engineer's override of a generated value needs a reason and goes into a change journal, an error can be accepted as a recorded deviation, imports are recorded and say what they read and converted, every result can be exported as data and reproduced outside the tool, the whole tool can be scripted from Python, rules and tables can be added without editing the tool (Python plug-ins only after the user trusted the code), and AIT can capture what was built. The work was done in stages (the audit, step 0, then S1 to S10; `docs/transparency_plan.md`, `docs/transparency_final_audit.md`) and the entries below are those of the stages, kept as they were written.

@@ -32,7 +32,7 @@ def _record(project: Project, kind: str, hid: str, subject: str) -> AsBuiltRecor
 def result_derivation(project: Project, h: Harness, tid: str) -> Derivation | None:
     """The measured value of a test compared with its limit; None while no value was recorded."""
     rec = _record(project, "test", h.id, tid)
-    row = next((r for r in tables.tests(project, h)[1:] if r[0] == tid), None)
+    row = next((r for r in tables.tests(project, h, marks=False)[1:] if r[0] == tid), None)
     if rec is None or row is None:
         return None
     kind = row[1]
@@ -120,7 +120,7 @@ def harness_derivations(project: Project, h: Harness) -> list[Derivation]:
     """The test results of a harness that has records, in test order."""
     if not project.asbuilt:
         return []
-    found = (result_derivation(project, h, r[0]) for r in tables.tests(project, h)[1:])
+    found = (result_derivation(project, h, r[0]) for r in tables.tests(project, h, marks=False)[1:])
     return [d for d in found if d is not None]
 
 

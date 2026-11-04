@@ -23,7 +23,7 @@ length (the tool has none): the difference from the design is listed.
 
 import re
 from collections.abc import Callable, Mapping, Sequence
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 from typing import Any
 
 from pydantic import ValidationError
@@ -255,6 +255,12 @@ def _test_lines(
         within = margin >= 0
         word = "at most" if upper else "at least"
         out.append(Line(hid, "test", tid, label, WITHIN if within else OUT, measured, limit, unit, margin, f"{measured:g} {unit} measured, limit {word} {limit:g} {unit}"))  # fmt: skip
+    note = (
+        row[8] if len(row) > 8 else ""
+    )  # the `Deviations` cell: an override or a deviation of the wire
+    if note and measured is not None:
+        ln = out[-1]
+        out[-1] = replace(ln, text=f"{ln.text}; design: {note}" if ln.text else f"design: {note}")
     if kind == "isolation":
         volts = _limit(project, "test_voltage_v")
         applied = rec.test_voltage_v if rec else None

@@ -17,7 +17,12 @@ from collections.abc import Collection, Iterator
 from dataclasses import dataclass
 from decimal import Decimal
 
-from harness_design_studio.core.deviations import override_text, uses_overrides
+from harness_design_studio.core.deviations import (
+    override_text,
+    tests_cell,
+    uses_overrides,
+    wire_marks,
+)
 from harness_design_studio.core.generate.lengths import clear_length_cache, wire_length
 from harness_design_studio.core.generate.mass import harness_mass, pins_in_use
 from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
@@ -440,7 +445,11 @@ def _limit(project: Project, key: str, unit: str) -> str:
     return f"{v:g} {unit}" if v is not None else TBD
 
 
-def tests(project: Project, h: Harness) -> Table:
+def tests(project: Project, h: Harness, marks: bool = True) -> Table:
+    """The tests of a harness. A last column `Deviations` exists only when a test is about a wire
+    that has an override or a deviation (1.13): the field or rule and the reason. `marks=False`
+    leaves the column out (for a reader that needs only the positions of the first 8 columns and
+    must not run the checks again)."""
     cont = _limit(project, "test_continuity_max_ohm", "ohm max")
     iso = _limit(project, "test_isolation_min_mohm", "Mohm min")
     volts = _limit(project, "test_isolation_voltage_v", "V")
@@ -455,6 +464,13 @@ def tests(project: Project, h: Harness) -> Table:
     for s in sorted(h.shields, key=lambda x: x.id):
         n += 1
         rows.append([f"T{n:03d}", "isolation", f"shield {s.id}", "all wires", "isolated", iso, volts, ";".join(sorted(s.wire_ids))])  # fmt: skip
+    found = wire_marks(project, h) if marks else {}
+    if found:
+        cells = [tests_cell(found, row[7]) for row in rows[1:]]
+        if any(cells):
+            rows[0].append("Deviations")
+            for row, cell in zip(rows[1:], cells, strict=True):
+                row.append(cell)
     return rows
 
 

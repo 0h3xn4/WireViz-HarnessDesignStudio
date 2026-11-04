@@ -18,7 +18,12 @@ from dataclasses import dataclass
 from typing import Any
 
 from harness_design_studio.core import asbuilt, settings
-from harness_design_studio.core.deviations import deviation_lines, override_lines, override_text
+from harness_design_studio.core.deviations import (
+    deviation_lines,
+    override_lines,
+    override_text,
+    tests_band,
+)
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Connector, Harness, Project, Wire
 from harness_design_studio.core.wirecolours import resolve
@@ -693,6 +698,10 @@ def _labels_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
 
 
 def _tests_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
+    """The tests of the harness (the rows of `tests.csv`) and columns to fill in. A harness with an
+    override or a deviation gets the band *Overrides and deviations* above the table (as *Start
+    here*) and, when a test is about such a wire, a last column *Deviations*; without them the
+    sheet is as it always was."""
     from openpyxl.formatting.rule import CellIsRule
     from openpyxl.worksheet.datavalidation import DataValidation
 
@@ -700,29 +709,44 @@ def _tests_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
     lay = _Layout({})
     body: list[list[Any]] = []
     rows = tables.tests(project, h)
-    body.append(_header(ws, lay, TEST_HEADER))
+    extra = len(rows[0]) > 8  # the Deviations column
+    band = tests_band(project, h)
+    if band:  # the lines carry the words OVERRIDE and DEVIATION; they run over the empty cells
+        body.append([_cell(ws, "Overrides and deviations", bold=True, box=False, wrap=False)])
+        body.extend([_cell(ws, line, box=False, wrap=False)] for line in band)
+        body.append([])
+    top = len(body) + 1  # the row of the column headings
+    body.append(_header(ws, lay, [*TEST_HEADER, *(["Deviations"] if extra else [])]))
     for r in rows[1:]:
         body.append([
             _cell(ws, r[0], bold=True), *[_cell(ws, v) for v in r[1:8]],
             *[_cell(ws, "", centre=True) for _ in range(4)],
+            *([_cell(ws, r[8], fill=_AMBER if r[8] else None)] if extra else []),
         ])  # fmt: skip
-        for n, v in enumerate(r, start=1):
+        for n, v in enumerate(r[:8], start=1):
             lay.see(n, v)
-    last = len(rows)
-    ws.auto_filter.ref = f"A1:{_letter(len(TEST_HEADER))}{last}"
-    if last > 1:
+        if extra:
+            lay.see(13, r[8], cap=60.0)
+    last = top + len(rows) - 1
+    ws.auto_filter.ref = f"A{top}:{_letter(len(TEST_HEADER) + extra)}{last}"
+    if last > top:
         dv = DataValidation(type="list", formula1='"Pass,Fail"', allow_blank=True)
         ws.data_validations.append(dv)
-        dv.add(f"J2:J{last}")
+        dv.add(f"J{top + 1}:J{last}")
         ws.conditional_formatting.add(
-            f"J2:J{last}", CellIsRule(operator="equal", formula=['"Pass"'], fill=_S["fill"](_GREEN))
+            f"J{top + 1}:J{last}",
+            CellIsRule(operator="equal", formula=['"Pass"'], fill=_S["fill"](_GREEN)),
         )
         ws.conditional_formatting.add(
-            f"J2:J{last}", CellIsRule(operator="equal", formula=['"Fail"'], fill=_S["fill"](_RED))
+            f"J{top + 1}:J{last}",
+            CellIsRule(operator="equal", formula=['"Fail"'], fill=_S["fill"](_RED)),
         )
     for col in (9, 10, 11, 12):
         lay.widths[col] = 14.0
-    _finish(ws, lay, stamp, body, tab="C0392B", freeze="B2")
+    # With a band the headings are not in the first row: no frozen panes, but the headings repeat
+    # on every printed page.
+    _finish(ws, lay, stamp, body, tab="C0392B", header_row=top if band else 1,
+            freeze=None if band else "B2")  # fmt: skip
 
 
 def _asbuilt_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
