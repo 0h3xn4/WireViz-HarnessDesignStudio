@@ -115,6 +115,7 @@ class SettingsPage(QWidget):
         set_snap: Callable[[bool], None],
         set_labels: Callable[[bool], None],
         set_problem_notices: Callable[[bool], None],
+        set_quick: Callable[[bool], None] = lambda _on: None,
         set_connection_ends: Callable[[bool], None] = lambda _on: None,
         open_values: Callable[[], None],
         choose_library_folder: Callable[[], None] = lambda: None,
@@ -207,6 +208,10 @@ class SettingsPage(QWidget):
             "settings-problem-notices",
         )
         self.notices_box.clicked.connect(lambda on: set_problem_notices(bool(on)))
+        self.quick_box = _check(
+            strings.SETTINGS_QUICK, strings.SETTINGS_QUICK_TIP, "settings-quick"
+        )
+        self.quick_box.clicked.connect(lambda on: set_quick(bool(on)))
         self.ends_box = _check(
             strings.SETTINGS_CONNECTION_ENDS,
             strings.SETTINGS_CONNECTION_ENDS_TIP,
@@ -219,8 +224,11 @@ class SettingsPage(QWidget):
         col.addWidget(_muted(strings.SETTINGS_LABELS_TIP))
         col.addWidget(self.ends_box)
         col.addWidget(_muted(strings.SETTINGS_CONNECTION_ENDS_TIP))
+        col.addWidget(self.quick_box)
+        col.addWidget(_muted(strings.SETTINGS_QUICK_TIP))
         col.addWidget(self.notices_box)
-        col.addWidget(_muted(strings.SETTINGS_PROBLEM_NOTICES_TIP))
+        self.notices_note = _muted(strings.SETTINGS_PROBLEM_NOTICES_TIP)
+        col.addWidget(self.notices_note)
         col.addStretch(1)
 
         # ---- project
@@ -414,6 +422,7 @@ class SettingsPage(QWidget):
         labels: bool,
         problem_notices: bool = True,
         connection_ends: bool = False,
+        quick: bool = False,
     ) -> None:
         """Show what the window has now (it changes through the menus, the palette and here)."""
         for combo, value in ((self.theme_combo, theme_mode), (self.scale_combo, scale), (self.mode_combo, mode), (self.role_combo, role)):  # fmt: skip
@@ -422,8 +431,12 @@ class SettingsPage(QWidget):
                 combo.blockSignals(True)
                 combo.setCurrentIndex(i)
                 combo.blockSignals(False)
-        for box, value in ((self.motion_box, reduce_motion), (self.snap_box, snap), (self.labels_box, labels), (self.notices_box, problem_notices), (self.ends_box, connection_ends)):  # fmt: skip
+        for box, value in ((self.motion_box, reduce_motion), (self.snap_box, snap), (self.labels_box, labels), (self.notices_box, problem_notices), (self.quick_box, quick), (self.ends_box, connection_ends)):  # fmt: skip
             if box.isChecked() != value:
                 box.blockSignals(True)
                 box.setChecked(value)
                 box.blockSignals(False)
+        self.notices_box.setEnabled(not quick)  # (Quick mode forces the notices off)
+        self.notices_box.setToolTip(
+            strings.SETTINGS_QUICK_NOTICES_OFF if quick else strings.SETTINGS_PROBLEM_NOTICES_TIP
+        )

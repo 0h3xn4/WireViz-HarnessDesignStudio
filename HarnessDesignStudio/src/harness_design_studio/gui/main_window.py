@@ -456,6 +456,7 @@ class MainWindow(QMainWindow):
         # `first_run=False` says this is not a first start: no tour and no question about the role
         self._first_start = first_run is not False
         self._role_to_ask = False  # a first start with no role set by the hook: ask once
+        self._quick_left_next = False  # Quick mode was turned on from the Next step page
         # "systems" | "electrical", set from the settings in `_restore_settings`
         self.role = ELECTRICAL
         self._role_menus: dict[str, QMenu] = {}  # submenus the Systems engineer role hides
@@ -548,6 +549,7 @@ class MainWindow(QMainWindow):
         self.topbar.checkClicked.connect(self.act_check.trigger)
         self.topbar.releaseClicked.connect(self.act_release.trigger)
         self.topbar.exportClicked.connect(self.act_export.trigger)
+        self.topbar.exportDiagramClicked.connect(self.act_export_diagram.trigger)
         self.alerts.dismissed.connect(self._alert_dismissed)
         shows = getattr(self.view, "showRequested", None)  # the canvas's "Show" plumbing
         if shows is not None:
@@ -568,6 +570,8 @@ class MainWindow(QMainWindow):
         self._on_selection()
         if first_run is None:
             first_run = not self.settings.value("tour/done", False, bool)
+        if self.quick_on():
+            first_run = False  # Quick mode has no tour (Help > Take the tour still runs it)
         self.ctl.open_sample()
         self._open_for_role()
         self._update_hash()
@@ -770,6 +774,7 @@ class MainWindow(QMainWindow):
             set_labels=lambda on: self._set_checked(self.act_labels, on),
             set_connection_ends=lambda on: self._set_checked(self.act_connection_ends, on),
             set_problem_notices=lambda on: self._set_checked(self.act_problem_notices, on),
+            set_quick=lambda on: self._set_checked(self.act_quick, on),
             open_values=lambda: self.values_flow(),
             choose_library_folder=lambda: self.choose_library_folder_flow(),
             clear_library_folder=lambda: self.set_library_folder(""),
@@ -1782,6 +1787,8 @@ class MainWindow(QMainWindow):
         )
         self.act_problem_notices.setToolTip(strings.A_PROBLEM_NOTICES_TIP)
         self.act_problem_notices.setChecked(True)
+        self.act_quick = a(strings.A_QUICK, self._toggle_quick, checkable=True, name="act-quick")
+        self.act_quick.setToolTip(strings.A_QUICK_TIP)
         self.scale_actions: dict[int, QAction] = {}
         sgroup = QActionGroup(self)
         for pct in SCALES:
@@ -2122,6 +2129,7 @@ class MainWindow(QMainWindow):
         self.menu_role.addAction(self.act_role_electrical)
         self.menu_role.addAction(self.act_role_ait)
         v.addSeparator()
+        v.addAction(self.act_quick)
         v.addAction(self.act_problem_notices)
         v.addSeparator()
         v.addAction(self.act_guided)
@@ -2244,8 +2252,23 @@ class MainWindow(QMainWindow):
         role_menu.setToolTipsVisible(True)
         for act in (self.act_role_systems, self.act_role_electrical, self.act_role_ait):
             role_menu.addAction(act)
+        role_menu.addSeparator()
+        role_menu.addAction(self.act_quick)  # Quick mode: a view on top of any role
         self.role_btn.setMenu(role_menu)
         self.topbar.add_mode(self.role_btn)
+        # the indicator of Quick mode (shown only while it is on; a click leaves it)
+        self.quick_btn = QToolButton()
+        self.quick_btn.setObjectName("quick-indicator")
+        self.quick_btn.setText(strings.QUICK_INDICATOR)
+        self.quick_btn.setToolTip(strings.QUICK_INDICATOR_TIP)
+        self.quick_btn.setAccessibleName(strings.A_QUICK)
+        self.quick_btn.setCheckable(True)
+        self.quick_btn.setChecked(True)
+        self.quick_btn.setProperty("toggle", True)
+        self.quick_btn.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.quick_btn.clicked.connect(lambda _c=False: self.act_quick.trigger())
+        self.quick_btn.setVisible(False)
+        self.topbar.add_mode(self.quick_btn)
         self.mode_guided = QToolButton()
         self.mode_guided.setObjectName("mode-guided")
         self.mode_guided.setText(strings.GUIDED)
@@ -2607,7 +2630,11 @@ class MainWindow(QMainWindow):
                 strings.BANNER_RECOVERED, strings.SHOW_DETAILS, self.issues_flow
             )
         elif c.sample:
-            self.banner.show_message(strings.BANNER_SAMPLE, strings.SAVE_COPY, self._save_copy)
+            self.banner.show_message(
+                strings.BANNER_SAMPLE_QUICK if self.quick_on() else strings.BANNER_SAMPLE,
+                strings.SAVE_COPY,
+                self._save_copy,
+            )
         else:
             self.banner.hide()
 
@@ -3536,7 +3563,7 @@ class MainWindow(QMainWindow):
             return
         value = default_role(not self._settings_were_empty, self.settings.value("ui/workspace"))
         if value is None:
-            self._role_to_ask = self._first_start
+            self._role_to_ask = self._first_start and not self.quick_on()  # (no question in Quick)
             self._apply_role(ELECTRICAL)  # (not stored: the answer is)
             return
         self.settings.setValue("ui/role", value)
@@ -3553,7 +3580,6 @@ class MainWindow(QMainWindow):
         self.act_role_ait.setChecked(value == AIT)
         self.next_page.set_role(value)
         self.role_btn.setText(strings.ROLE_BUTTON.format(self._role_name(value)))
-        self.rail.set_hidden(areas.hidden_in(value))
         for w in (self.redundant_btn, self.delete_btn, self.zoom_out_btn, self.zoom_in_btn):
             w.setVisible(not systems)
         self.fit_btn.setVisible(not systems)
@@ -3567,6 +3593,7 @@ class MainWindow(QMainWindow):
         self._hide_menu_entries(value)
         self._update_crumbs()  # (Arrange and the filters of the Model tab)
         self._load_problem_notices()  # (each role has its own default and its own key)
+        self._apply_quick()  # (the rail and the top bar: Quick mode is a view on top of the role)
         self._fit_status()
 
     @staticmethod
@@ -3642,7 +3669,7 @@ class MainWindow(QMainWindow):
         self._role_to_ask = False
         self.set_role(value, save_left=False)
         if value in STARTS_ON_NEXT:
-            self._show_area("next")
+            self._show_area(self._start_area())
         return value
 
     def _first_start_flow(self) -> None:
@@ -3735,7 +3762,7 @@ class MainWindow(QMainWindow):
         if self.role != SYSTEMS:
             return False
         if self._area not in ("next", "model"):
-            self._show_area("next")
+            self._show_area(self._start_area())
         return True
 
     def show_everything(self) -> None:
@@ -3745,9 +3772,17 @@ class MainWindow(QMainWindow):
 
     def _open_for_role(self) -> None:
         """A project was opened: the Systems engineer and the AIT roles start on the next step (the
-        Electrical engineer stays where it is)."""
-        if self.role in STARTS_ON_NEXT:
+        Electrical engineer stays where it is). In Quick mode every role starts on the diagram:
+        the Next step page and the areas of due diligence are not on the rail."""
+        if self.quick_on():
+            self._show_area("model", tab="diagram")
+        elif self.role in STARTS_ON_NEXT:
             self._show_area("next")
+
+    def _start_area(self) -> str:
+        """The page the Systems engineer and AIT roles start on: Next step, or the Model in Quick
+        mode."""
+        return "model" if self.quick_on() else "next"
 
     def _next_problem_facts(self) -> dict[str, Any]:
         """What the Next step page needs of the checks: how many rules failed with an error (they
@@ -4659,6 +4694,7 @@ class MainWindow(QMainWindow):
         if scale not in self.scale_actions:
             scale = 100
         mode = str(self.settings.value("ui/mode", "guided"))
+        self.act_quick.setChecked(bool(self.settings.value("ui/quick", False, bool)))
         self._restore_role()
         snap = bool(self.settings.value("ui/snap", True, bool))
         self.act_snap.setChecked(snap)
@@ -4687,6 +4723,7 @@ class MainWindow(QMainWindow):
             self.act_connection_ends,
             self.act_reduce_motion,
             self.act_problem_notices,
+            self.act_quick,
         ):
             toggled.toggled.connect(lambda _on=False: self._sync_settings_page())
         self.act_role_systems.toggled.connect(lambda _on=False: self._sync_settings_page())
@@ -4860,8 +4897,47 @@ class MainWindow(QMainWindow):
         Problems button and its count, the count on the inspector tab, the status chip of the top
         bar, the chips and badges of the diagram, the pending-values link and the out-of-date
         banner. The Check button, the Checks area, the Problems panel and the banners that say why
-        something cannot be done never look at it."""
-        return self.act_problem_notices.isChecked()
+        something cannot be done never look at it. Quick mode forces them off (the person's own
+        choice stays stored and comes back when Quick mode is turned off)."""
+        return self.act_problem_notices.isChecked() and not self.quick_on()
+
+    def quick_on(self) -> bool:
+        """Whether Quick mode is on (View > Quick mode, the Role button's menu, Settings). It is a
+        view of the window on top of any role, stored as `ui/quick` and not per role. It changes
+        what the window shows and what Connect and Add device ask; never a project file, the model
+        hash or a written output."""
+        return self.act_quick.isChecked()
+
+    def _toggle_quick(self) -> None:
+        on = self.quick_on()
+        self.settings.setValue("ui/quick", on)
+        if on:
+            self.settings.setValue("tour/done", True)  # no tour from then on
+            if self._area == "next":  # (a page Quick mode does not list: to the diagram, and back)
+                self._quick_left_next = True
+                self._show_area("model")
+        elif self._quick_left_next:
+            self._quick_left_next = False
+            if self._area == "model":
+                self._show_area("next")
+        self._apply_quick()
+
+    def _apply_quick(self) -> None:
+        """Show Quick mode, or take it away again: the rail lists the Model, Home and Settings
+        (the open area stays listed), the top bar keeps one Export diagram button, the problem
+        notices are forced off. Called at the end of `_apply_role` and on a toggle; each part is a
+        visibility or a state, so turning it off restores the layout of the role exactly."""
+        quick = self.quick_on()
+        self.rail.set_hidden(areas.hidden_in(self.role, quick))
+        self.topbar.set_quick(quick)
+        self.quick_btn.setVisible(quick)
+        self.quick_btn.setChecked(True)
+        self.mode_guided.setVisible(not quick)
+        self.mode_expert.setVisible(not quick)
+        self.act_problem_notices.setEnabled(not quick)
+        self._apply_problem_notices()
+        self._update_banner()
+        self._sync_settings_page()
 
     def _load_problem_notices(self) -> None:
         """The value of the open role: stored under its own key, on for the Electrical / AIT
@@ -4922,6 +4998,7 @@ class MainWindow(QMainWindow):
             labels=self.act_labels.isChecked(),
             connection_ends=self.act_connection_ends.isChecked(),
             problem_notices=self.act_problem_notices.isChecked(),
+            quick=self.quick_on(),
         )
         self.settings_page.show_library_folder(self.library_folder())
 

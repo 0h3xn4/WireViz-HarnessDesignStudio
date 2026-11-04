@@ -3322,3 +3322,22 @@ QD_FILTER = "Block diagram (*.svg *.pdf *.png)"
 QD_NOTHING = "Nothing to draw yet. Add a device first, then export the diagram."
 QD_DONE = "Diagram saved as {names} in {folder}."
 QD_SHOW_FOLDER = "Show folder"
+A_QUICK = "Quick mode"
+A_QUICK_TIP = (
+    "Make a block diagram quickly: the rail, the top bar and the notices show only what drawing and "
+    "exporting a diagram need (no Checks, Revisions, Drawings, Outputs or Next step, no Generate, "
+    "Check or Release, no problem notices), and Connect joins two devices in one click. Nothing is "
+    "locked and nothing in the project or in the written files changes; every hidden thing is still "
+    "in the menus and in Ctrl+K. Turn it off here to get the layout of your role back."
+)
+SETTINGS_QUICK = "Quick mode"
+SETTINGS_QUICK_TIP = (
+    "Show only what a quick block diagram needs: a short rail, a calm top bar, no problem notices and "
+    "Connect in one click. Works with every role; turn it off for the full layout of your role."
+)
+QUICK_INDICATOR = "Quick"
+QUICK_INDICATOR_TIP = "Quick mode is on. Click to leave it and get the layout of your role back."
+TB_EXPORT_DIAGRAM = "Export diagram"
+TB_EXPORT_DIAGRAM_TIP = "Save the block diagram as SVG, PDF and PNG (File > Export diagram…)"
+BANNER_SAMPLE_QUICK = "Sample project. Save a copy to keep your changes."
+SETTINGS_QUICK_NOTICES_OFF = "Off while Quick mode is on."

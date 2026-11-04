@@ -40,12 +40,15 @@ def test_the_button_shows_the_role_in_words(qtbot, tmp_path):
 def test_the_button_lists_the_three_roles_and_switches(qtbot, tmp_path):
     w = make(qtbot, tmp_path, ui__role=roles.ELECTRICAL)
     menu = w.role_btn.menu()
-    assert [a.text().replace("&", "") for a in menu.actions()] == [
+    roles_part = menu.actions()[:3]
+    assert [a.text().replace("&", "") for a in roles_part] == [
         strings.ROLE_SYSTEMS,
         strings.ROLE_ELECTRICAL,
         strings.ROLE_AIT,
     ]
-    assert [a.isChecked() for a in menu.actions()] == [False, True, False]
+    assert menu.actions()[3].isSeparator() and menu.actions()[4] is w.act_quick  # Quick mode
+    assert len(menu.actions()) == 5
+    assert [a.isChecked() for a in roles_part] == [False, True, False]
     menu.actions()[2].trigger()  # AIT engineer
     assert w.role == roles.AIT
     assert w.role_btn.text() == strings.ROLE_BUTTON.format(strings.ROLE_AIT)
