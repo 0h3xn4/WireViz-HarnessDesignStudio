@@ -52,6 +52,25 @@ def connector_choices(project: Project) -> list[ConnectorChoice]:
     return out
 
 
+# The connector a device gets when it has none and nobody chose one (Quick mode): a small,
+# well-known one, the first of these that the library has.
+STARTER_PARTS = ("EX-DSUB-9-M", "EX-MICROD-9-M", "EX-DSUB-9-F", "EX-MICROD-9-F")
+
+
+def default_connector_part(project: Project) -> str | None:
+    """The connector part a device gets when nobody chose one: a 9-pin D-sub (else a 9-pin Micro-D),
+    else the smallest connector the library has with two pins or more, else any. None when the
+    library has no connector part with a pin count."""
+    choices = connector_choices(project)
+    ids = {c.part_id for c in choices}
+    for part_id in STARTER_PARTS:
+        if part_id in ids:
+            return part_id
+    several = [c for c in choices if c.pin_count >= 2]
+    pool = several or choices
+    return min(pool, key=lambda c: (c.pin_count, c.part_id)).part_id if pool else None
+
+
 def plan_device_with_connector(
     project: Project, part_id: str | None, **device: object
 ) -> tuple[list[Op], str, str | None]:

@@ -1213,6 +1213,11 @@ class MainWindow(QMainWindow):
         if len(self.ctl.project.units) < 2:
             self.toasts.show_message(strings.LINK_NEED_TWO, None)
             return
+        if self.quick_on():
+            ends = self._quick_ends(a_unit, b_unit)
+            if ends is not None:
+                self.quick_link_flow(*ends, a_connector=a_connector, b_connector=b_connector)
+                return
         dlg = LinkDialog(
             self,
             self.theme,
@@ -1234,6 +1239,72 @@ class MainWindow(QMainWindow):
         )
         if lid:
             self.view.focus_connection(lid)
+
+    def _quick_ends(self, a_unit: str, b_unit: str) -> tuple[str, str] | None:
+        """The two devices of a one-click connection: the ones the Connect tool gave, or, when the
+        command was run without any (Ctrl+Shift+K, the menu) and the project has exactly two
+        devices, those two. None: the person has to say which, and the window asks."""
+        if a_unit and b_unit:
+            return a_unit, b_unit
+        units = sorted(self.ctl.project.units)
+        if not a_unit and not b_unit and len(units) == 2:
+            return units[0], units[1]
+        return None
+
+    def quick_link_flow(
+        self, a_unit: str, b_unit: str, *, a_connector: str = "", b_connector: str = ""
+    ) -> str | None:
+        """Quick mode's Connect: join two devices with no window. A device without a connector gets
+        a starter one, the connectors and pairs are the best the signal names (else the pin
+        numbers) give, and it is ONE undo step. The toast says what was joined and offers Undo and
+        **Edit pairs** (the Link connectors window). A connection with no pair is a valid
+        connection. Returns the link ID, or None when it was refused (the reason is a message)."""
+        try:
+            plan = core_links.plan_quick_link(
+                self.ctl.project, a_unit, b_unit, a_connector, b_connector
+            )
+        except (HarnessError, ValidationError) as exc:
+            self._error(self._explain(exc, None))
+            return None
+        if not self.ctl.run(strings.STEP_ADD_LINK.format(plan.link_id), plan.ops):
+            return None
+        lid = plan.link_id
+        self.ctl.select_link(lid)
+        self.view.focus_connection(lid)
+        parts = [strings.QL_CONNECTED.format(a=a_unit, b=b_unit)]
+        parts.append(
+            {
+                "signals": strings.QL_PAIRS_SIGNALS,
+                "numbers": strings.QL_PAIRS_NUMBERS,
+                "none": strings.QL_PAIRS_NONE,
+            }[plan.by].format(n=plan.pairs)
+        )
+        for cid in plan.added_connectors:
+            parts.append(
+                strings.QL_ADDED_CONNECTOR.format(
+                    unit=self.ctl.project.connectors[cid].unit_id, connector=cid
+                )
+            )
+        self.toasts.show_message(
+            " ".join(parts),
+            self._undo_of_last_change(),
+            8000,
+            action=(strings.QL_EDIT_PAIRS, partial(self.edit_link_flow, lid)),
+        )
+        return lid
+
+    def _undo_of_last_change(self) -> Callable[[], None]:
+        """The Undo of a toast for the change that was just made: once anything else has happened
+        it says so and does nothing (it must never undo something that was not meant)."""
+        revision = self.ctl.history.revision
+
+        def undo_that_change() -> None:
+            if self.ctl.history.revision == revision:
+                self.ctl.undo()
+            else:
+                self.toasts.show_message(strings.UNDO_STALE, None)
+
+        return undo_that_change
 
     def _chosen_link(self, link_id: str | None) -> str | None:
         lid = link_id or self.ctl.selected_link
@@ -2541,16 +2612,7 @@ class MainWindow(QMainWindow):
 
     # ---- state reactions ---------------------------------------------------------------------
     def _on_message(self, text: str, undoable: bool) -> None:
-        revision = self.ctl.history.revision
-
-        def undo_that_change() -> None:
-            # the toast's Undo is for the change it reports; once anything else happened it must
-            # not undo something the user did not mean to undo
-            if self.ctl.history.revision == revision:
-                self.ctl.undo()
-            else:
-                self.toasts.show_message(strings.UNDO_STALE, None)
-
+        undo_that_change = self._undo_of_last_change()  # (for the change it reports only)
         if not undoable:
             if text == strings.GEN_STALE:  # a plan made for an older design: it stays until redone
                 self._job_failed(text, retry=self.generate_flow)
