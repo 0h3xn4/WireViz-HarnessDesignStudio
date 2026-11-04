@@ -12,6 +12,7 @@ from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import Harness, Project
 
 from .errors import OutputsError
+from .export_units import field_units
 from .stamp import Stamp, Table
 from .tables import data_num
 from .xlsx_env import ILLEGAL_CHARACTERS_RE, Workbook, WriteOnlyCell
@@ -81,6 +82,7 @@ def json_export(project: Project, stamp: Stamp) -> bytes:
         "format_version": JSON_VERSION,
         "generator": {"name": "harness-design-studio", "version": stamp.version},
         "model_hash": stamp.model_hash,
+        "field_units": field_units(project),  # the unit of every numeric field (1.13, D-195)
         "project": {"name": project.meta.name, "description": project.meta.description},
         "placeholder_config": sorted(n for n, c in project.config.items() if c.placeholder),
         "units": dump(project.units.values()),

@@ -2,6 +2,8 @@
 
 from typing import Any
 
+from pydantic import ConfigDict, Field, SerializerFunctionWrapHandler, model_serializer
+
 from .base import Entity, Name
 
 CONFIG_NAMES: tuple[str, ...] = (
@@ -9,10 +11,37 @@ CONFIG_NAMES: tuple[str, ...] = (
 )  # fmt: skip
 
 
+ABOUT_KEY = "_about"  # the reserved top-level key of a config file that carries the comments
+
+
 class ConfigFile(Entity):
+    """One file `config/<name>.json`. `about` is the opt-in annotation `_about` (D-191 (2), R3): for
+    each key the unit, range, source and use, as comments the file itself carries. It is never a
+    setting, it is left out of the file while empty (a project that has none is written as ever)
+    and out of the model hash, the generation inputs and every written output."""
+
+    model_config = ConfigDict(
+        validate_by_name=True, validate_by_alias=True, serialize_by_alias=True
+    )
+
     name: Name
     placeholder: bool  # True until an engineer has reviewed and filled in the values
     values: dict[str, Any]
+    about: dict[str, dict[str, Any]] = Field(
+        default_factory=dict,
+        alias=ABOUT_KEY,
+        description="Optional comments for a person: for each key its unit, range, source and "
+        "use, made by `harness-design-studio settings --annotate`. Never a setting; not part of "
+        "any hash or output.",
+    )
+
+    @model_serializer(mode="wrap")
+    def _leave_out_empty_about(self, handler: SerializerFunctionWrapHandler) -> dict[str, Any]:
+        data: dict[str, Any] = handler(self)
+        for key in (ABOUT_KEY, "about"):
+            if key in data and not data[key]:
+                del data[key]
+        return data
 
 
 def default_configs() -> dict[str, ConfigFile]:

@@ -387,6 +387,31 @@
    "unit_id": "RW1"
   }
  ],
+ "field_units": {
+  "format_version": "none (version number of this file format)",
+  "harnesses[].accessories[].length_mm": "mm",
+  "harnesses[].accessories[].quantity": "none (count of pieces)",
+  "harnesses[].segments[].length_m": "m",
+  "harnesses[].wires[].gauge_awg": "AWG",
+  "harnesses[].wires[].length_m": "m",
+  "harnesses[].wires[].strip_a_mm": "mm",
+  "harnesses[].wires[].strip_b_mm": "mm",
+  "interface_types[].default_gauge_awg": "AWG",
+  "interface_types[].impedance_ohm": "ohm",
+  "interfaces[].max_current_a": "A",
+  "interfaces[].voltage_v": "V",
+  "parts[].conductors": "none (count of conductors in one metre of the part)",
+  "parts[].mass_g": "g",
+  "parts[].mass_per_m_g": "g/m",
+  "parts[].pin_count": "none (count of pins)",
+  "parts[].ratings.conductive_finish": "none (flag: 1 = yes, 0 = no)",
+  "parts[].ratings.contact_current_a": "A",
+  "parts[].ratings.dielectric_withstand_v": "V",
+  "parts[].ratings.mating_cycles": "none (count of mating cycles)",
+  "parts[].ratings.max_temp_c": "degC",
+  "parts[].ratings.rated_voltage_v": "V",
+  "parts[].ratings.shield_insulated": "none (flag: 1 = yes, 0 = no)"
+ },
  "format": "harness-design-studio-export",
  "format_version": 1,
  "generator": {

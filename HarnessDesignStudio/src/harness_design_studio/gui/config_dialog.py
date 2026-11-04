@@ -33,7 +33,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import configcheck, edit
+from harness_design_studio.core import configcheck, edit, settings
 from harness_design_studio.core.commands import Op
 from harness_design_studio.core.configcheck import EngineeringValue
 from harness_design_studio.core.errors import TransactionError
@@ -89,6 +89,11 @@ class FieldRow(QWidget):
         self.editor.setAccessibleName(name)
         self.editor.setAccessibleDescription(f"{ev.what}. {ev.used_by}")
         tip = strings.CONFIG_NEEDED_FOR.format(what=ev.what, used_by=ev.used_by)
+        registered = settings.setting(ev.file, ev.key)  # the text `_about` carries in the file
+        if registered is not None:
+            tip = f"{tip}\n" + strings.CONFIG_TIP_RANGE_SOURCE.format(
+                range=registered.range, source=registered.source
+            )
         self.editor.setToolTip(f"{tip}\n{ev.hint}" if ev.hint else tip)
         locked = ev.locked is not None
         self.editor.setEnabled(not locked and not read_only)

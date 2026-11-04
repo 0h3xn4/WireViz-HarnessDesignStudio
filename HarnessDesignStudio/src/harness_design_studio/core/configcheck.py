@@ -11,7 +11,7 @@ import math
 import re
 from dataclasses import dataclass
 
-from harness_design_studio.core import counterparts, standard_profiles
+from harness_design_studio.core import counterparts, settings, standard_profiles
 from harness_design_studio.core.commands import Op, SetConfig
 from harness_design_studio.core.issues import Issue
 from harness_design_studio.core.model import Project
@@ -164,6 +164,29 @@ def validate(project: Project) -> list[Issue]:
     return out
 
 
+def annotation_issues(project: Project) -> list[Issue]:
+    """Warnings for the comments of the config files (`_about`, opt-in) that differ from what the
+    registry says now: one for each file and key, naming both, in a fixed order. A file without
+    comments has none. NOT part of `validate`: generation treats every issue of `validate` as an
+    error of the values, and a comment is never a value. `validate` (the command) and `config`
+    add these; `settings --annotate` fixes them."""
+    out: list[Issue] = []
+    for name in sorted(project.config):
+        where = f"config/{name}.json"
+        for key, what in settings.about_problems(name, project.config[name].about):
+            out.append(
+                Issue(
+                    "warning",
+                    "config_about_stale",
+                    f"{where}: _about for '{key}' {what}. `harness-design-studio settings "
+                    "PROJECT --annotate` writes it again.",
+                    where,
+                    f"{name}.{key}",
+                )
+            )
+    return out
+
+
 _MODEL_NUMBERS: dict[str, tuple[float, float, bool]] = {  # key: (lowest, highest, whole)
     "return_path_conductors": (1, 4, True),
     "single_path_conductors": (1, 4, True),
@@ -277,7 +300,12 @@ def plan_ampacity_import(table: Table) -> tuple[dict[str, float], list[str]]:
 
 
 def with_value(cfg: ConfigFile, key: str, value: object) -> ConfigFile:
-    return ConfigFile(name=cfg.name, placeholder=cfg.placeholder, values={**cfg.values, key: value})
+    return ConfigFile(
+        name=cfg.name,
+        placeholder=cfg.placeholder,
+        values={**cfg.values, key: value},
+        about=cfg.about,
+    )
 
 
 def report(project: Project) -> tuple[str, bool]:
@@ -300,6 +328,7 @@ def report(project: Project) -> tuple[str, bool]:
     for n in todo:
         lines.append(f"- MISSING config/{n.file}.json {n.key}: {n.what}. Needed for: {n.used_by}.")
     lines += [f"- INVALID {i.message}" for i in problems]
+    lines += [f"- STALE COMMENT {i.message}" for i in annotation_issues(project)]
     still = sorted(
         name
         for name, c in project.config.items()
@@ -427,7 +456,11 @@ def plan_set_distinct_roles(project: Project, value: object) -> ValuePlan:
     if on:
         values[roles.CONFIG_KEY] = True
     ops: list[Op] = [
-        SetConfig(ConfigFile(name=base.name, placeholder=base.placeholder, values=values))
+        SetConfig(
+            ConfigFile(
+                name=base.name, placeholder=base.placeholder, values=values, about=base.about
+            )
+        )
     ]
     try:
         check_locks(project, ops)
@@ -477,7 +510,11 @@ def plan_set_counterparts(project: Project, value: object) -> ValuePlan:
     if parsed is not None:
         values[counterparts.CONFIG_KEY] = parsed
     ops: list[Op] = [
-        SetConfig(ConfigFile(name=base.name, placeholder=base.placeholder, values=values))
+        SetConfig(
+            ConfigFile(
+                name=base.name, placeholder=base.placeholder, values=values, about=base.about
+            )
+        )
     ]
     try:
         check_locks(project, ops)
@@ -586,8 +623,8 @@ def display_value(value: object) -> str:
 def _source(file: str, key: str, value: object) -> str:
     if value is None:
         return ""
-    for name, settings in standard_profiles.PROFILES.items():
-        for s in settings:
+    for name, profile in standard_profiles.PROFILES.items():
+        for s in profile:
             if (s.file, s.key) == (file, key) and s.value == value:
                 return f"{s.source} (profile {name})"
     return "set in the project"
@@ -742,6 +779,7 @@ def plan_set_value(
         name=file,
         placeholder=base.placeholder if placeholder is None else placeholder,
         values={**base.values, key: parsed},
+        about=base.about,
     )
     ops: list[Op] = [SetConfig(new)]
     if parsed is not None:
@@ -764,5 +802,11 @@ def plan_placeholder(project: Project, file: str, placeholder: bool) -> ValuePla
     if old is None:
         return _fail(f"config/{file}.json does not exist in this project.")
     return ValuePlan(
-        [SetConfig(ConfigFile(name=file, placeholder=placeholder, values=dict(old.values)))]
+        [
+            SetConfig(
+                ConfigFile(
+                    name=file, placeholder=placeholder, values=dict(old.values), about=old.about
+                )
+            )
+        ]
     )

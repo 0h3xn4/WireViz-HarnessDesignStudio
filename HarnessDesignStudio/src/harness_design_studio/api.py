@@ -42,7 +42,16 @@ from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
-from harness_design_studio.core import asbuilt, change_ops, configcheck, journal, records, workflow
+from harness_design_studio.core import (
+    annotate,
+    asbuilt,
+    change_ops,
+    configcheck,
+    journal,
+    records,
+    workflow,
+)
+from harness_design_studio.core.annotate import AnnotationResult
 from harness_design_studio.core.asbuilt import AsBuiltImportResult, AsBuiltReport
 from harness_design_studio.core.checks import Finding, find
 from harness_design_studio.core.commands import History
@@ -96,6 +105,7 @@ from harness_design_studio.core.workflow import WorkflowReport
 
 __all__ = [
     "API_VERSION",
+    "AnnotationResult",
     "AsBuiltImportResult",
     "AsBuiltReport",
     "CheckResult",
@@ -136,6 +146,7 @@ __all__ = [
     "VerifyResult",
     "WorkflowReport",
     "accept_deviation",
+    "annotate_config",
     "clear_override",
     "create_project",
     "explain",
@@ -288,13 +299,22 @@ def list_templates() -> list[TemplateInfo]:
 
 
 def create_project(
-    folder: PathLike, template: str = "blank", name: str | None = None, *, journal: bool = True
+    folder: PathLike,
+    template: str = "blank",
+    name: str | None = None,
+    *,
+    journal: bool = True,
+    annotate_config: bool = False,
 ) -> Project:
     """Make a new project folder from an example (see `list_templates`) and return the project.
     The folder must not exist or must be empty (`TemplateError` otherwise); `name` replaces the
     project name of the example. Like the command `new`, it starts a change journal
-    (`journal.json`) unless `journal` is false."""
-    return _create_project(Path(folder), template, name, journal=journal)
+    (`journal.json`) unless `journal` is false. With `annotate_config` (like `new
+    --annotate-config`) every config file starts with its comments, `_about` (see
+    `annotate_config`)."""
+    return _create_project(
+        Path(folder), template, name, journal=journal, annotate_config=annotate_config
+    )
 
 
 # ---- checking ----------------------------------------------------------------------------------
@@ -541,6 +561,23 @@ def set_config(
         History(project).execute(f"Set {file}.{key}", plan.ops)
         _save_project(project, path)
     return records.config_report(project).value(file, key)
+
+
+def annotate_config(folder: PathLike, *, remove: bool = False) -> AnnotationResult:
+    """The command `settings DIR --annotate` (with `remove`, `--no-annotate`): write or refresh
+    the comments `_about` in every existing config file, the unit, range, source and use of each
+    setting from the registry, for a person who opens the file in an editor. Opt-in. It changes no
+    value and creates no file; the comments are outside the model hash, the numbers and every
+    written output, so nothing becomes out of date. `validate` and `get_config` warn when a comment
+    is stale. Takes the project lock; saves only when a file changes."""
+    path = Path(folder)
+    with _locked(path):
+        project = _load(path)
+        _writable(project)
+        result = annotate.annotate(project, remove=remove)
+        if result.changed:
+            _save_project(project, path)
+    return result
 
 
 # ---- overrides, deviations and the change journal ----------------------------------------------

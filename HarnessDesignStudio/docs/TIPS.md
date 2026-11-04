@@ -278,7 +278,7 @@ outputs/system/  block_diagram.pdf  block_diagram.svg  bom.csv  box_pinouts.csv 
 | CSV | `system/changelog.csv` | `Entry,Harness,Revision,Event,By,Date,Comment` |
 | XLSX | `<ID>_build.xlsx` per harness | the **build workbook**: the sheets *Start here*, *Cut list*, *Connectors*, *Parts*, *Accessories*, *Labels*, *Tests* and *About* ([export the outputs](user-manual/export-the-outputs.md#3-the-build-workbook-sheet-by-sheet)) |
 | XLSX | `<ID>.xlsx` per harness, `system/system.xlsx` | all tables as sheets (data, no layout) |
-| JSON | `system/export.json` | the whole model in one file: `box_connectors`, `format`, `format_version`, `generator`, `harnesses`, `interface_types`, `interfaces`, `model_hash`, `parts`, `placeholder_config`, `project`, `units` |
+| JSON | `system/export.json` | the whole model in one file: `box_connectors`, `field_units` (the unit of every number, since 1.13), `format`, `format_version`, `generator`, `harnesses`, `interface_types`, `interfaces`, `model_hash`, `parts`, `placeholder_config`, `project`, `units` |
 | JSON | `manifest.json`, `system/provenance.json` | the list of files with checksums; which tool version and design made them |
 | SVG and PDF | `system/block_diagram.*`, `system/harness_overview.*` | the system diagrams, always written |
 | SVG and PDF | `drawing_A3_s<n>.svg` (A3 sheets), `drawing_A3.pdf`, `drawing_A4.pdf` per harness | the harness drawings, written only with `export DIR --drawings` |
