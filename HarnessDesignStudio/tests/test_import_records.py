@@ -8,6 +8,7 @@ from pathlib import Path
 
 import pytest
 
+from harness_design_studio import __version__
 from harness_design_studio.cli.main import main as cli
 from harness_design_studio.core import templates
 from harness_design_studio.core.commands import History, Op
@@ -240,7 +241,7 @@ def test_the_record_format_holds_what_the_brief_lists_and_nothing_else(proj: Pat
         "sha256": digest,
         "source_name": "lengths.csv",
         "source_path": "data/lengths.csv",
-        "tool_version": "1.11.1",
+        "tool_version": __version__,
         "unit": "mm",
         "unit_given": True,
     }

@@ -47,10 +47,10 @@ You need one file, either `harness-design-studio_<version>_amd64.deb` (way A), `
 
   | File | For | Way |
   | --- | --- | --- |
-  | `harness-design-studio_1.11.0_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
-  | `harness-design-studio-1.11.0-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
-  | `harness-design-studio-1.11.0-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
-  | `harness-design-studio-1.11.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
+  | `harness-design-studio_1.11.1_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
+  | `harness-design-studio-1.11.1-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
+  | `harness-design-studio-1.11.1-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
+  | `harness-design-studio-1.11.1-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
   | `SHA256SUMS` | the SHA-256 checksum of each package | |
 
   Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 to 1.11.1 and two macOS disk images that are not maintained any more (D-168); 1.6.0, 1.7.0, 1.8.0, 1.8.1, 1.9.0, 1.10.0 and 1.11.0 have the same four packages and `SHA256SUMS` as 1.11.1. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
@@ -100,7 +100,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.11.1
+harness 1.12.0
 ```
 
 Remove it later with `sudo apt remove harness-design-studio`. Upgrade by installing the newer `.deb` the same way.
@@ -222,7 +222,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.11.1
+harness 1.12.0
 ```
 
 You now have the command line tool `harness-design-studio` (and its short alias `harness`) and the editor `harness-design-studio-gui`. For a script or a shared machine, the setup program also runs without windows: `harness-design-studio-<version>-windows-x86_64-setup.exe /VERYSILENT /SUPPRESSMSGBOXES /CURRENTUSER /DIR="C:\Tools\Harness Design Studio"` (add `/LOG=setup.log` to keep a log). Remove it with *Settings > Apps*, or run `unins000.exe` in the install folder (`/VERYSILENT` makes that silent too). Your projects are never inside the install folder, and uninstalling does not touch them.

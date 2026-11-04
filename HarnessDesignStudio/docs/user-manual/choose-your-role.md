@@ -35,7 +35,7 @@ The workshop of October 2026 said the tool is too crowded, that a user feels ove
 | Leaves out of the menus | the engineering entries (42, see below) and the as-built entries | the as-built entries | the editing of the diagram (30 entries) |
 | Needs nothing else | the **Connections** group of the project tree, **File > Library…** and the **Library…** button of the Next step page are there | everything else is there | the **As-built records…** button on the Next step page, **Go > Go to As-built** and **File > Import > Import as-built sheet…** are there |
 
-Neither role locks anything. A role is only what you see first; everything a role leaves out is still in the menus, on its keys and in the command palette (Ctrl+K), and the **Next step** page is reachable in both (it is the first item of the rail).
+No role locks anything. A role is only what you see first; everything a role leaves out is still in the menus, on its keys and in the command palette (Ctrl+K), and the **Next step** page is reachable in all three (it is the first item of the rail).
 
 ## Choose and change your role
 
