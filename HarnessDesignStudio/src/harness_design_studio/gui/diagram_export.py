@@ -30,13 +30,14 @@ from harness_design_studio.core.outputs.canvas import (
     to_svg,
 )
 from harness_design_studio.core.outputs.stamp import Stamp, stamp_of
+from harness_design_studio.gui.theme.tokens import LIGHT, OVERVIEW_FONT_PX
 
 SUFFIXES = (".svg", ".pdf", ".png")
 PX_PER_MM = 6.0  # about 150 dpi, at least
 MIN_LONG_SIDE_PX = 2000  # a small diagram is drawn bigger so that it is still sharp on a slide
 MARGIN_MM = 8.0  # the paper left round the content
 MAX_SIDE_PX = 9000  # a big diagram is drawn smaller rather than not at all
-_TEXT_K = 8.0  # text is set at 8 times its size and the painter scaled down (no rounding at 2 mm)
+PAPER = LIGHT["paper"]  # the sheet is white whatever the theme
 
 
 def diagram_sheet(project: Project, stamp: Stamp | None = None) -> Sheet | None:
@@ -79,7 +80,7 @@ def render_png(sheet: Sheet) -> bytes:
         max(1, round(sheet.width * scale)), max(1, round(sheet.height * scale)),
         QImage.Format.Format_RGB32,
     )  # fmt: skip
-    image.fill(QColor("#ffffff"))
+    image.fill(QColor(PAPER))
     painter = QPainter(image)
     try:
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
@@ -101,12 +102,12 @@ def render_png(sheet: Sheet) -> bytes:
                 painter.setBrush(QColor(it.fill) if it.fill else Qt.BrushStyle.NoBrush)
                 painter.drawRect(QRectF(it.x, it.y, it.w, it.h))
             elif isinstance(it, Text):
-                font = QFont(base)
-                font.setPixelSize(max(1, round(it.size * _TEXT_K)))
+                font = QFont(base)  # one size; the painter is scaled to the text size
+                font.setPixelSize(OVERVIEW_FONT_PX)
                 font.setBold(it.bold)
                 painter.save()
                 painter.translate(it.left, it.y)
-                painter.scale(1 / _TEXT_K, 1 / _TEXT_K)
+                painter.scale(it.size / OVERVIEW_FONT_PX, it.size / OVERVIEW_FONT_PX)
                 painter.setFont(font)
                 painter.setPen(QColor(it.color))
                 painter.drawText(QPointF(0, 0), it.s)
