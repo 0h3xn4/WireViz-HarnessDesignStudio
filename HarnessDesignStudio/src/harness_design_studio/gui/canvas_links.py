@@ -18,8 +18,8 @@ the tooltip also names the way through the harness once one was made from the co
 import html
 from typing import TYPE_CHECKING
 
-from PySide6.QtCore import QPointF, QRectF, Qt
-from PySide6.QtGui import QBrush, QPainter, QPainterPath, QPainterPathStroker
+from PySide6.QtCore import QPointF, QRectF, QSizeF, Qt
+from PySide6.QtGui import QBrush, QFontMetrics, QPainter, QPainterPath, QPainterPathStroker
 from PySide6.QtWidgets import (
     QGraphicsItem,
     QGraphicsPathItem,
@@ -46,6 +46,9 @@ HIT_WIDTH = 12.0  # how wide a click on the line still counts
 CHIP_PAD_X = 8.0
 CHIP_PAD_Y = 3.0
 END_GAP = 4.0  # between the edge of a device and the box of its connector
+CHIP_MAX_W = 240.0  # a longer label is cut with an ellipsis (the tooltip has the whole text)
+END_MAX_W = 112.0  # the same for the connector boxes at the two ends
+LABEL_GAP = 4.0  # between two boxes of one connection, and between a box and a device
 
 
 def connection_route(
@@ -69,6 +72,37 @@ def connection_route(
         return [a, (out_a, ya), (out_a, yb), b]
     mid_y = (ya + yb) / 2
     return [a, (out_a, ya), (out_a, mid_y), (out_b, mid_y), (out_b, yb), b]
+
+
+def free_rect(
+    size: QSizeF, spots: list[QPointF], avoid: list[QRectF], steps: tuple[float, float]
+) -> QRectF:
+    """A box of `size` centred on the first of `spots` that touches none of `avoid`; the spots are
+    tried as they are and then moved by `steps` (across, down) up to three times in every
+    direction. When every try touches something, the one that touches the least."""
+    best, best_area = QRectF(), -1.0
+    shifts = [(0.0, 0.0)] + [
+        (dx * steps[0] * k, dy * steps[1] * k)
+        for k in (1, 2, 3)
+        for dx, dy in ((0, -1), (0, 1), (-1, 0), (1, 0))
+    ]
+    for dx, dy in shifts:
+        for spot in spots:
+            rect = QRectF(
+                spot.x() + dx - size.width() / 2,
+                spot.y() + dy - size.height() / 2,
+                size.width(),
+                size.height(),
+            )
+            area = 0.0
+            for other in avoid:
+                hit = rect.intersected(other)
+                area += max(0.0, hit.width()) * max(0.0, hit.height())
+            if area == 0.0:
+                return rect
+            if best_area < 0 or area < best_area:
+                best, best_area = rect, area
+    return best
 
 
 def sides(lane_a: int, lane_b: int, lanes: int, default_a: str, default_b: str) -> tuple[str, str]:
@@ -195,26 +229,43 @@ class ConnectionItem(QGraphicsPathItem):
             return  # from far away the line alone says enough
         font = sc.px_font(th.type("small"))
         painter.setFont(font)
+        fm = QFontMetrics(font)
         caption = link.name or link_caption(link)
         lines = [caption] + ([self.text] if self.text else [])
-        text_w = max(sc.text_width(font, t) for t in lines)
-        line_h = painter.fontMetrics().height()
-        w = text_w + 2 * CHIP_PAD_X
-        h = line_h * len(lines) + 2 * CHIP_PAD_Y
-        c = self._label_spot()
-        self._chip = QRectF(c.x() - w / 2, c.y() - h / 2, w, h)
+        ends = self._end_boxes(link, fm) if self.ends_shown() else []
+        self._end_rects = [rect for rect, _t in ends]
+        self._chip = self._chip_rect(fm, lines)
+        lines = [
+            fm.elidedText(t, Qt.TextElideMode.ElideRight, int(CHIP_MAX_W - 2 * CHIP_PAD_X))
+            for t in lines
+        ]
+        line_h = fm.height()
         painter.setBrush(QBrush(th.color("bg")))
         painter.setPen(sc.pen(token, 3 if selected else 1.5))
         painter.drawRoundedRect(self._chip, 6, 6)
-        painter.setPen(th.color("text"))
         for k, t in enumerate(lines):
             painter.setPen(th.color("text" if k == 0 else "text-muted"))
             painter.drawText(
-                QRectF(self._chip.x(), self._chip.y() + CHIP_PAD_Y + k * line_h, w, line_h),
+                QRectF(
+                    self._chip.x(),
+                    self._chip.y() + CHIP_PAD_Y + k * line_h,
+                    self._chip.width(),
+                    line_h,
+                ),
                 int(Qt.AlignmentFlag.AlignCenter),
                 t,
             )
-        self._paint_ends(painter, link, token, selected)
+        for rect, texts in ends:
+            painter.setBrush(QBrush(th.color("bg")))
+            painter.setPen(sc.pen(token, 3 if selected else 1.5))
+            painter.drawRoundedRect(rect, 4, 4)
+            for k, t in enumerate(texts):
+                painter.setPen(th.color("text" if k == 0 else "text-muted"))
+                painter.drawText(
+                    QRectF(rect.x(), rect.y() + CHIP_PAD_Y + k * line_h, rect.width(), line_h),
+                    int(Qt.AlignmentFlag.AlignCenter),
+                    t,
+                )
         if self.hasFocus():
             painter.setPen(sc.pen("focus", 3))
             painter.setBrush(Qt.BrushStyle.NoBrush)
@@ -225,42 +276,53 @@ class ConnectionItem(QGraphicsPathItem):
         connections is on."""
         return self.dscene.connection_ends or self.dscene.ctl.mode == "expert"
 
-    def _paint_ends(self, painter: QPainter, link: Link, token: str, selected: bool) -> None:
+    def _end_boxes(self, link: Link, fm: QFontMetrics) -> list[tuple[QRectF, list[str]]]:
         """A small box at each end of the line: the connector name, and how many of its pins the
-        connection pairs. Drawn beside the edge of the device the line leaves."""
-        if not self.ends_shown():
-            self._end_rects = []
-            return
-        sc = self.dscene
-        th = sc.theme
-        font = sc.px_font(th.type("small"))
-        painter.setFont(font)
-        line_h = painter.fontMetrics().height()
-        rects: list[QRectF] = []
+        connection pairs. Drawn beside the edge of the device the line leaves, cut to a width that
+        leaves room for the other box, and moved down when the two would touch."""
+        line_h = fm.height()
+        out: list[tuple[QRectF, list[str]]] = []
         for end, (x, y), toward in zip(
-            link_ends(sc.ctl.project, link),
+            link_ends(self.dscene.ctl.project, link),
             (self.poly[0], self.poly[-1]),
             (self.poly[1], self.poly[-2]),
             strict=True,
         ):
             pins = end.pins
             second = strings.LINK_END_PINS[0 if pins == 1 else 1].format(end.used, pins)
-            text_w = max(sc.text_width(font, end.name), sc.text_width(font, second))
-            w, h = text_w + 2 * CHIP_PAD_X, 2 * line_h + 2 * CHIP_PAD_Y
+            room = int(END_MAX_W - 2 * CHIP_PAD_X)
+            texts = [
+                fm.elidedText(t, Qt.TextElideMode.ElideRight, room) for t in (end.name, second)
+            ]
+            w = max(fm.horizontalAdvance(t) for t in texts) + 2 * CHIP_PAD_X
+            h = 2 * line_h + 2 * CHIP_PAD_Y
             right = toward[0] >= x  # the line leaves towards the right: the box sits to its right
             rect = QRectF(x + END_GAP if right else x - END_GAP - w, y - h / 2, w, h)
-            rects.append(rect)
-            painter.setBrush(QBrush(th.color("bg")))
-            painter.setPen(sc.pen(token, 3 if selected else 1.5))
-            painter.drawRoundedRect(rect, 4, 4)
-            for k, t in enumerate((end.name, second)):
-                painter.setPen(th.color("text" if k == 0 else "text-muted"))
-                painter.drawText(
-                    QRectF(rect.x(), rect.y() + CHIP_PAD_Y + k * line_h, w, line_h),
-                    int(Qt.AlignmentFlag.AlignCenter),
-                    t,
+            if out and rect.adjusted(-LABEL_GAP, -LABEL_GAP, LABEL_GAP, LABEL_GAP).intersects(
+                out[0][0]
+            ):
+                rect.moveTop(out[0][0].bottom() + LABEL_GAP)
+            out.append((rect, texts))
+        return out
+
+    def _chip_rect(self, fm: QFontMetrics, lines: list[str]) -> QRectF:
+        """Where the label sits: in the middle of the longest piece of the line when that is clear
+        of the end boxes and the devices, otherwise the nearest place that is."""
+        w = min(CHIP_MAX_W, max(fm.horizontalAdvance(t) for t in lines) + 2 * CHIP_PAD_X)
+        h = fm.height() * len(lines) + 2 * CHIP_PAD_Y
+        pieces = sorted(
+            zip(self.poly, self.poly[1:], strict=False),
+            key=lambda ab: -(abs(ab[1][0] - ab[0][0]) + abs(ab[1][1] - ab[0][1])),
+        )
+        spots = [QPointF((a[0] + b[0]) / 2, (a[1] + b[1]) / 2) for a, b in pieces]
+        around = QRectF(self.path().boundingRect()).adjusted(-CHIP_MAX_W, -60, CHIP_MAX_W, 60)
+        avoid = [r.adjusted(-LABEL_GAP, -LABEL_GAP, LABEL_GAP, LABEL_GAP) for r in self._end_rects]
+        for item in self.dscene.items(around):
+            if getattr(item, "unit_id", None):  # a device card
+                avoid.append(
+                    item.sceneBoundingRect().adjusted(-LABEL_GAP, -LABEL_GAP, LABEL_GAP, LABEL_GAP)
                 )
-        self._end_rects = rects
+        return free_rect(QSizeF(w, h), spots, avoid, (w / 2 + LABEL_GAP, h + LABEL_GAP))
 
     # ---- the pointer ------------------------------------------------------------------------
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:

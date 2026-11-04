@@ -2920,24 +2920,6 @@ class DiagramView(QGraphicsView):
 
     def _layout_overlays(self) -> None:
         r = self.viewport().rect()
-        # (the hint is a child of the view, not of the viewport: scrolling would carry it along)
-        area = self.viewport().geometry()
-        if self.ctl.project.units and not self.ctl.project.interfaces:
-            self.empty.setGeometry(area.adjusted(60, 12, -60, -(area.height() - 60)))  # a top line
-        else:
-            self.empty.setGeometry(area.adjusted(60, 60, -60, -60))
-        # the button sits under the text, which is centred in the hint
-        box = self.empty.geometry()
-        flags = int(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
-        text_h = (
-            self.empty.fontMetrics()
-            .boundingRect(0, 0, box.width(), box.height(), flags, self.empty.text())
-            .height()
-        )
-        self.empty_add.adjustSize()
-        self.empty_add.move(
-            box.center().x() - self.empty_add.width() // 2, box.center().y() + text_h // 2 + 16
-        )
         self.minimap.move(
             r.right() - self.minimap.width() - 12, r.bottom() - self.minimap.height() - 12
         )
@@ -2947,6 +2929,61 @@ class DiagramView(QGraphicsView):
         self.search.adjustSize()
         self.search.move(r.right() - self.search.width() - 12, r.top() + 12)
         self.status.move(r.left() + 12, r.top() + 12)
+        self._place_hint()
+
+    def _hint_blockers(self) -> list[QRect]:
+        """What the words over the diagram must not cover, in view coordinates: the names of the
+        lanes, the device cards and the overlays."""
+        out: list[QRect] = []
+        lod = max(self.zoom_scale(), 0.05)
+        small = self.theme.type("small")
+        size = max(small, min(80, round(small / lod))) * lod  # the lane name, as ZoneItem paints it
+        for z in self.dscene.zone_items:
+            top = self.mapFromScene(z.mapToScene(QPointF(10, 4)))
+            out.append(QRect(top.x(), top.y(), int(size * 9), int(size + 8 * lod) + 4))
+        for item in self.dscene.unit_items.values():
+            out.append(self.mapFromScene(item.sceneBoundingRect()).boundingRect())
+        for w in (self.minimap, self.legend, self.search, self.status):
+            if w.isVisibleTo(self):
+                out.append(w.geometry())
+        return [q.adjusted(-6, -6, 6, 6) for q in out]
+
+    def _place_hint(self) -> None:
+        """The words over an empty diagram, and the button under them. With no device they are
+        centred; with devices they take the first band across the diagram that covers no lane
+        name, device or overlay (below the names of the lanes when there is none). (The hint is a
+        child of the view, not of the viewport: scrolling would carry it along.)"""
+        area = self.viewport().rect()
+        flags = int(Qt.AlignmentFlag.AlignCenter | Qt.TextFlag.TextWordWrap)
+        fm = self.empty.fontMetrics()
+
+        def text_height(width: int) -> int:
+            return fm.boundingRect(0, 0, width, area.height(), flags, self.empty.text()).height()
+
+        if not self.ctl.project.units:
+            box = area.adjusted(60, 60, -60, -60)
+        else:
+            width = max(120, area.width() - 120)
+            height = text_height(width) + 8
+            blockers = self._hint_blockers()
+            floor = max((q.bottom() for q in blockers[: len(self.dscene.zone_items)]), default=0)
+            first = max(floor, area.top()) + 4
+            y = first
+            box = QRect(area.left() + 60, first, width, height)
+            while y + height <= area.bottom() - 8:
+                spot = QRect(area.left() + 60, y, width, height)
+                if not any(spot.intersects(q) for q in blockers):
+                    box = spot
+                    break
+                y += 12
+        self.empty.setGeometry(box.translated(self.viewport().geometry().topLeft()))
+        box = self.empty.geometry()
+        # the button sits under the text, which is centred in the hint
+        self.empty_add.adjustSize()
+        self.empty_add.move(
+            box.center().x() - self.empty_add.width() // 2,
+            box.center().y() + text_height(box.width()) // 2 + 16,
+        )
 
     def resizeEvent(self, event: object) -> None:
         super().resizeEvent(event)  # type: ignore[arg-type]
@@ -2957,6 +2994,8 @@ class DiagramView(QGraphicsView):
     def scrollContentsBy(self, dx: int, dy: int) -> None:
         super().scrollContentsBy(dx, dy)
         self.minimap.viewport().update()
+        if self.empty.isVisible():
+            self._place_hint()  # it keeps clear of the devices and lane names that moved
 
     # ---- zoom and pan ---------------------------------------------------------------------------
     def zoom_scale(self) -> float:
@@ -2976,6 +3015,8 @@ class DiagramView(QGraphicsView):
 
     def _scale_changed(self) -> None:
         self.minimap.viewport().update()
+        if self.empty.isVisible():
+            self._place_hint()
         self.zoomChanged.emit(self.zoom_scale())
 
     def zoom_by(self, factor: float, anchor: QPoint | None = None) -> None:

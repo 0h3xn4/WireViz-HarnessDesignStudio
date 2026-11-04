@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Changed for you to know
+
+- **The diagram no longer draws labels on top of each other (workshop feedback).** On a connection between two connectors, the label in the middle and the connector box at each end keep clear of each other and of the devices; a label that is too long is cut with an ellipsis, and the tooltip of the line has it whole. The hint over a diagram without connections ("No links yet ...") sits below the names of the lanes and clear of the devices. A long hint of the Connect tool no longer widens the tool row and with it the smallest size of the window, so "More" stays in view down to a window width of 1000 px. Only the drawing changes: no project file, number or written output does.
+
 ## 1.13.0 (2026-11-04; not a statement of compliance)
 
 Version 1.13.0 is the **follow-up of the transparency release** (decision D-196, for D-195 and the follow-ups of D-191 and D-193). It closes three gaps that the audit of 1.12.0 left open (`docs/transparency_final_audit.md`): every number of `system/export.json` now has its unit, a config file can carry its own comments (opt-in), and a test that is about a wire with an override or a deviation says so. Nothing else is new: the calculations, the 39 design rules and the numbers are as in 1.12.0.

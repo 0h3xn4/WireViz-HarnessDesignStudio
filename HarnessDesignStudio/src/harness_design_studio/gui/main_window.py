@@ -50,6 +50,7 @@ from PySide6.QtWidgets import (
     QMessageBox,
     QProgressDialog,
     QPushButton,
+    QSizePolicy,
     QStackedWidget,
     QToolBar,
     QToolButton,
@@ -639,6 +640,9 @@ class MainWindow(QMainWindow):
         self.hint = QLabel("")
         self.hint.setObjectName("hint")
         self.hint.setWordWrap(True)
+        # the hint gives way: a long text never widens the tool row (and with it the window, which
+        # would push "More" off the edge); it wraps in the room left and the tooltip has it whole
+        self.hint.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
         self.hint.setAccessibleName(strings.HINT)
         self.redundant_btn = QPushButton(strings.REDUNDANT_COPY)
         self.redundant_btn.setObjectName("redundant-copy")
@@ -3008,7 +3012,10 @@ class MainWindow(QMainWindow):
         hint, warn = c.connect_hint_and_warning()
         self.hint.setText(hint)
         # reserve two lines so a long hint never makes the toolbar jump
-        self.hint.setMinimumHeight(self.hint.fontMetrics().lineSpacing() * 2 + 4)
+        two_lines = self.hint.fontMetrics().lineSpacing() * 2 + 4
+        self.hint.setMinimumHeight(two_lines)
+        self.hint.setMaximumHeight(two_lines)
+        self.hint.setToolTip(hint)
         self.hint.setProperty("error", warn)
         self.hint.style().unpolish(self.hint)
         self.hint.style().polish(self.hint)
