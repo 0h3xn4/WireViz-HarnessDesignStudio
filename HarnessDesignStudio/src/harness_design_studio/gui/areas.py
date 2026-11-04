@@ -49,6 +49,12 @@ HIDDEN_AREAS: Final[dict[str, tuple[str, ...]]] = {
     ELECTRICAL: ("asbuilt",),
     AIT: ("model",),
 }
+# Quick mode (a view setting on top of any role, `ui/quick`) lists three areas whatever the role: the
+# Model (the diagram and the devices), Home (the way to a new or recent project) and Settings. The
+# areas of due diligence (Next step, Checks, Drawings, Outputs, Revisions, As-built) are left out of
+# the rail like a role leaves some out: they stay in the View and Go menus and the command palette,
+# and the rail lists the one that is open.
+QUICK_LISTED: Final[tuple[str, ...]] = ("home", "model", "settings")
 
 
 # The menu entries the Systems engineer role does not list (Release 1.9, W1). The names are the
@@ -119,10 +125,12 @@ def hidden_actions_in(role: str) -> tuple[str, ...]:
     return HIDDEN_ACTIONS.get(role, ())
 
 
-def hidden_in(role: str) -> tuple[str, ...]:
-    """The areas the rail does not list for a role. They still exist: the View and Go menus,
-    their keys, the buttons of the Next step page and the command palette reach them, and the
-    rail lists the one that is open."""
+def hidden_in(role: str, quick: bool = False) -> tuple[str, ...]:
+    """The areas the rail does not list for a role (with Quick mode on: for any role, every area
+    but `QUICK_LISTED`). They still exist: the View and Go menus, their keys, the buttons of the
+    Next step page and the command palette reach them, and the rail lists the one that is open."""
+    if quick:
+        return tuple(a.key for a in AREAS if a.key not in QUICK_LISTED)
     return HIDDEN_AREAS.get(role, ())
 
 

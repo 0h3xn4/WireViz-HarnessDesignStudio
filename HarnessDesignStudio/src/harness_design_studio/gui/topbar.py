@@ -100,6 +100,7 @@ class TopBar(QWidget):
     checkClicked = Signal()
     exportClicked = Signal()
     releaseClicked = Signal()
+    exportDiagramClicked = Signal()
 
     def __init__(self, theme: ThemeManager, parent: QWidget | None = None) -> None:
         super().__init__(parent)
@@ -107,6 +108,8 @@ class TopBar(QWidget):
         self.status = ShellStatus()
         self._level = 0  # how much has been folded away to fit (see `_fit`)
         self._fitting = False
+        self._quick = False  # Quick mode: the three steps and the chip go (see `set_quick`)
+        self._notices = True
         self.setObjectName("topbar")
         self.setAccessibleName(strings.TB_ACCESSIBLE)
         lay = QHBoxLayout(self)
@@ -178,12 +181,21 @@ class TopBar(QWidget):
             self.export_btn, "export", theme, strings.TB_EXPORT_TIP, "Ctrl+E", text=strings.TB_EXPORT
         )  # fmt: skip
         self.export_btn.setAccessibleName(strings.A_EXPORT.rstrip("…"))
+        self.export_diagram_btn = QPushButton()  # Quick mode shows this where Export is
+        self.export_diagram_btn.setObjectName("topbar-export-diagram")
+        self.export_diagram_btn.setProperty("primary", True)
+        icons.icon_button(
+            self.export_diagram_btn, "export", theme, strings.TB_EXPORT_DIAGRAM_TIP,
+            text=strings.TB_EXPORT_DIAGRAM, role="on-primary",
+        )  # fmt: skip
+        self.export_diagram_btn.setAccessibleName(strings.TB_EXPORT_DIAGRAM)
+        self.export_diagram_btn.setVisible(False)
         self.chip = StateChip(theme)
         self.chip.setObjectName("topbar-chip")
         self.chip.setAccessibleName(strings.TB_CHIP_NAME)
         for w in (
             self.generate_btn, self.chevrons[0], self.check_btn, self.chevrons[1],
-            self.release_btn, self.export_btn,
+            self.release_btn, self.export_btn, self.export_diagram_btn,
         ):  # fmt: skip
             lay.addWidget(w)
         lay.addWidget(self.chip)
@@ -192,6 +204,7 @@ class TopBar(QWidget):
         self.check_btn.clicked.connect(lambda _c=False: self.checkClicked.emit())
         self.export_btn.clicked.connect(lambda _c=False: self.exportClicked.emit())
         self.release_btn.clicked.connect(lambda _c=False: self.releaseClicked.emit())
+        self.export_diagram_btn.clicked.connect(lambda _c=False: self.exportDiagramClicked.emit())
         # keyboard: Tab goes name -> Generate -> Check -> Release -> Export (the labels are not focusable)
         QWidget.setTabOrder(self.generate_btn, self.check_btn)
         QWidget.setTabOrder(self.check_btn, self.release_btn)
@@ -253,6 +266,7 @@ class TopBar(QWidget):
             self.generate_btn.style().polish(self.generate_btn)
         self.check_btn.setEnabled(not busy)
         self.export_btn.setEnabled(not busy)
+        self.export_diagram_btn.setEnabled(True)  # it reads the design as it stands
         self.release_btn.setEnabled(not busy and not s.read_only and s.harnesses > 0)
         self._show_steps(s)
         self._fit()
@@ -311,8 +325,8 @@ class TopBar(QWidget):
         else:
             self.dirty_label.setText(f"●  {strings.TB_DIRTY}" if s.dirty else strings.TB_CLEAN)
             self.dirty_label.setVisible(True)
-        self.hash_label.setVisible(level < 2)
-        self.revision_label.setVisible(level < 2 and bool(s.revision))
+        self.hash_label.setVisible(level < 2 and not self._quick)
+        self.revision_label.setVisible(level < 2 and bool(s.revision) and not self._quick)
         search = self._search
         if isinstance(search, QPushButton):
             if search.text():
@@ -322,11 +336,12 @@ class TopBar(QWidget):
             search.style().unpolish(search)
             search.style().polish(search)
         for c in self.chevrons:
-            c.setVisible(level < 3)
+            c.setVisible(level < 3 and not self._quick)
         for button, word in (
             (self.check_btn, strings.TB_CHECK),
             (self.release_btn, strings.TB_RELEASE),
             (self.export_btn, strings.TB_EXPORT),
+            (self.export_diagram_btn, strings.TB_EXPORT_DIAGRAM),
         ):  # fmt: skip
             button.setText("" if level >= 3 else word)
             button.setProperty("iconOnly", level >= 3)
@@ -354,7 +369,25 @@ class TopBar(QWidget):
     def set_notices(self, on: bool) -> None:
         """Show or hide the status chip (View > Show problem notices). The workflow buttons and
         their states stay: they are the steps the person takes, not a notice."""
-        self.chip.setVisible(on)
+        self._notices = on
+        self.chip.setVisible(on and not self._quick)
+
+    def set_quick(self, on: bool) -> None:
+        """Quick mode: the bar keeps the project name, the save marker, the edit buttons the window
+        puts in, the search and one button, **Export diagram**, in place of Export. Generate, Check,
+        Release, the chevrons between them, the hash, the revision and the status chip go; turning
+        it off puts every one back exactly as it was."""
+        if on == self._quick:
+            return
+        self._quick = on
+        for w in (self.generate_btn, self.check_btn, self.release_btn, self.export_btn):
+            w.setVisible(not on)
+        self.export_diagram_btn.setVisible(on)
+        self.chip.setVisible(self._notices and not on)
+        self._fit()
+
+    def quick(self) -> bool:
+        return self._quick
 
     def update_status(self, **changes: object) -> None:
         """Change some fields of the current status and show the result."""

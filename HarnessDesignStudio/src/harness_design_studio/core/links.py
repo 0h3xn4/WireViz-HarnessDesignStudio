@@ -29,8 +29,9 @@ from pydantic import TypeAdapter, ValidationError
 from . import counterparts
 from .commands import Delete, Op, Put, apply_ops
 from .counterparts import Counterparts
-from .devices import derive_meaning, derive_meaning_types, ops_set_pin
-from .edit import EditError, clone_with
+from .devices import derive_meaning, derive_meaning_types, ops_add_connector, ops_set_pin
+from .edit import EditError, clone_with, unit_connectors
+from .first_connector import default_connector_part
 from .ids import check_id
 from .integrity import mating_plugs
 from .issues import Severity
@@ -551,6 +552,104 @@ def plan_add_link(
     return [Put("links", link)], lid
 
 
+def best_connectors(
+    project: Project, a_unit: str, a_connector: str, b_unit: str, b_connector: str
+) -> tuple[str, str]:
+    """Which connectors to start with when a person picked devices only: the two that the signal
+    names pair best (the first of each when none pairs, or when a device has one). A connector
+    that was named stays. With a device that does not exist the ids are returned as they came."""
+    if a_unit not in project.units or b_unit not in project.units:
+        return a_connector, b_connector
+    ca = [c.id for c in unit_connectors(project, a_unit) if a_connector in ("", c.id)]
+    cb = [c.id for c in unit_connectors(project, b_unit) if b_connector in ("", c.id)]
+    best = (a_connector or (ca[0] if ca else ""), b_connector or (cb[0] if cb else ""))
+    found = 0
+    for x in ca:
+        for y in cb:
+            try:
+                n = len(propose_pairs(project, x, y).pairs)
+            except EditError:
+                continue
+            if n > found:
+                best, found = (x, y), n
+    return best
+
+
+@dataclass(frozen=True)
+class QuickLink:
+    """What `plan_quick_link` decided: the operations (one undo step), the new link and the two
+    connectors, how many pairs it has, how the pairs were found (`by`: "signals", "numbers" or
+    "none") and the connectors that were added because a device had none."""
+
+    ops: list[Op]
+    link_id: str
+    a_connector: str
+    b_connector: str
+    pairs: int
+    by: str
+    added_connectors: tuple[str, ...]
+
+
+def plan_quick_link(
+    project: Project, a_unit: str, b_unit: str, a_connector: str = "", b_connector: str = ""
+) -> QuickLink:
+    """Everything a one-click connection does, with no question: a device that has no box connector
+    gets a starter connector (`first_connector.default_connector_part`), the two connectors are the
+    pair the signal names fit best, the pairs are the proposal by signal name, else by pin number,
+    else none, and the link is added. A link with no pair is a valid connection (the devices are
+    joined; a person pairs the pins later). Returns the operations of ONE undo step or raises
+    `EditError` with the reason."""
+    from .pairing import pair_by_number
+
+    _writable(project)
+    for uid in (a_unit, b_unit):
+        if uid not in project.units:
+            raise EditError(f"Device '{uid}' does not exist.")
+    if a_unit == b_unit:
+        raise EditError(f"{a_unit} and {b_unit} are the same device. A link joins two devices.")
+    first: list[Op] = []
+    added: list[str] = []
+    base = project
+    ends = {a_unit: a_connector, b_unit: b_connector}
+    for uid in (a_unit, b_unit):
+        if ends[uid] or unit_connectors(base, uid):
+            continue
+        part = default_connector_part(base)
+        if part is None:
+            raise EditError("The library has no connector to give the device. Add a connector part first.")  # fmt: skip
+        ops, cid = ops_add_connector(base, uid, part_id=part)
+        first += ops
+        added.append(cid)
+        ends[uid] = cid
+        base = clone_with(base, ops)
+    best = best_connectors(base, a_unit, ends[a_unit], b_unit, ends[b_unit])
+    if not best[0] or not best[1]:
+        raise EditError("A device has no connector to join. Add a connector to it first.")
+    # the best pair first; when it cannot be linked (a cable plug of a harness is on it, say) the
+    # other connector pairs of the two devices, unless the person named the connectors
+    candidates = [best]
+    if not (ends[a_unit] and ends[b_unit]):
+        ca = [c.id for c in unit_connectors(base, a_unit) if ends[a_unit] in ("", c.id)]
+        cb = [c.id for c in unit_connectors(base, b_unit) if ends[b_unit] in ("", c.id)]
+        candidates += [(x, y) for x in ca for y in cb if (x, y) != best]
+    refused: EditError | None = None
+    for a_connector, b_connector in candidates:
+        try:
+            pairs = list(propose_pairs(base, a_connector, b_connector).pairs)
+            by = "signals"
+            if not pairs:
+                pairs = list(pair_by_number(base, a_connector, b_connector).pairs)
+                by = "numbers" if pairs else "none"
+            ops, lid = plan_add_link(base, a_connector, b_connector, pairs)
+        except EditError as exc:
+            refused = refused or exc
+            continue
+        break
+    else:
+        raise refused or EditError("These devices cannot be joined.")
+    return QuickLink([*first, *ops], lid, a_connector, b_connector, len(pairs), by, tuple(added))
+
+
 def plan_set_pairs(project: Project, link_id: str, pairs: Iterable[PairLike]) -> list[Op]:
     """Ops that replace the pairing of a link. Refused when the harness made from the link is
     released. (A harness already made from the link is not changed; edit its wires there.)"""
@@ -966,9 +1065,11 @@ def check_links(project: Project) -> list[LinkFinding]:
 
 __all__ = [
     "DerivedInterface",
+    "QuickLink",
     "LinkEnd",
     "LinkFinding",
     "Proposal",
+    "best_connectors",
     "check_link",
     "check_links",
     "counterparts_of",
@@ -985,6 +1086,7 @@ __all__ = [
     "plan_add_link",
     "plan_create_harness",
     "plan_delete_link",
+    "plan_quick_link",
     "plan_rename_link",
     "plan_set_pairs",
     "plan_set_roles",

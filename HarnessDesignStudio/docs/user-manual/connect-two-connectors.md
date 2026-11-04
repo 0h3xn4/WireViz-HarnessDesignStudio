@@ -18,6 +18,7 @@ This page shows how to join a connector of one device to a connector of another,
 - [6. Create the harness](#6-create-the-harness)
 - [7. Hand over the connection list](#7-hand-over-the-connection-list)
 - [Change, rename or delete a connection](#change-rename-or-delete-a-connection)
+- [Connect in one click: Quick mode](#connect-in-one-click-quick-mode)
 - [What the program never does](#what-the-program-never-does)
 - [Common mistakes](#common-mistakes)
 
@@ -153,6 +154,17 @@ The connections are an output of their own, and they need no harness. **Exportâ€
 - **Delete connection** removes the connection. A harness made from it stays, and belongs to you. Deleting a device deletes its connections.
 - A harness already made from a connection is **not** changed when you change the pairs; edit its wires in **Edit wire**.
 - A pin that a connection pairs cannot be deleted or renamed in the **Devices** tab until the connection changes.
+
+## Connect in one click: Quick mode
+
+With **Quick mode** on ([Choose your role](choose-your-role.md)) **Connect** does not open the *Link connectors* window. Pick **Connect**, click the first device and then the second (or press Ctrl+Shift+K when the project has exactly two devices) and the connection is made at once, as **one undo step**:
+
+- A device that has no connector gets a small starter connector (a 9-pin D-sub), in the same step.
+- The two connectors are the pair whose signal names fit best; with no signal names, the first free ones.
+- The pins are paired by signal name (section 2); when no signal name fits, by pin number (pin 1 to pin 1 ...); when no pin number fits either, **no pin is paired**. A connection with no pair is a valid connection: the two devices are joined on the diagram, it is exported in the connection list, and nothing about it is wrong.
+- A message says *Connected A and B* and how the pins were matched, with **Undo** and **Edit pairs**. **Edit pairs** opens the window of section 3 on that connection, to pair the pins by hand or to name them.
+
+The proposal only picks pins that no other connection uses. Nothing is invented: no wire length, gauge or colour is set. Without Quick mode the window opens as it always did.
 
 ## What the program never does
 

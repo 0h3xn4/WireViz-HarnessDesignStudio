@@ -40,6 +40,7 @@ from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.links import (
     Proposal,
+    best_connectors,
     check_link,
     effective_role,
     link_caption,
@@ -488,20 +489,7 @@ class LinkDialog(QDialog):
     ) -> tuple[str, str]:
         """Which connectors to start with when the person picked devices only: the two that the
         signal names pair best (the first of each when none pairs, or when a device has one)."""
-        if a_unit not in self.project.units or b_unit not in self.project.units:
-            return a_conn, b_conn
-        ca = [c.id for c in edit.unit_connectors(self.project, a_unit) if a_conn in ("", c.id)]
-        cb = [c.id for c in edit.unit_connectors(self.project, b_unit) if b_conn in ("", c.id)]
-        best, found = (a_conn or (ca[0] if ca else ""), b_conn or (cb[0] if cb else "")), 0
-        for x in ca:
-            for y in cb:
-                try:
-                    n = len(propose_pairs(self.project, x, y).pairs)
-                except EditError:
-                    continue
-                if n > found:
-                    best, found = (x, y), n
-        return best
+        return best_connectors(self.project, a_unit, a_conn, b_unit, b_conn)
 
     def _load_connectors(self, device: QComboBox, conn: QComboBox, wanted: str = "") -> None:
         conn.blockSignals(True)

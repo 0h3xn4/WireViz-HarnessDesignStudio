@@ -110,6 +110,54 @@ class Sheet:
             self.marks.setdefault((kind, ident), []).extend(range(start, len(self.items)))
 
 
+def item_bounds(it: Item) -> tuple[float, float, float, float]:
+    """(left, top, right, bottom) in mm of what one item draws, with half its line width."""
+    if isinstance(it, Text):
+        return it.left, it.y - it.size, it.left + text_width(it.s, it.size), it.y + it.size * 0.25
+    if isinstance(it, Rect):
+        pad = it.width / 2
+        return it.x - pad, it.y - pad, it.x + it.w + pad, it.y + it.h + pad
+    pad = it.width / 2
+    return (
+        min(it.x1, it.x2) - pad,
+        min(it.y1, it.y2) - pad,
+        max(it.x1, it.x2) + pad,
+        max(it.y1, it.y2) + pad,
+    )
+
+
+def _is_frame(it: Item, sheet: Sheet) -> bool:
+    """The border `system.py` draws first: a rectangle 2 mm inside the sheet, with no fill."""
+    return (
+        isinstance(it, Rect)
+        and it.fill is None
+        and (it.x, it.y) == (2, 2)
+        and abs(it.w - (sheet.width - 4)) < 1e-6
+        and abs(it.h - (sheet.height - 4)) < 1e-6
+    )
+
+
+def fit_sheet(sheet: Sheet, margin_mm: float = 8.0) -> Sheet:
+    """A copy of `sheet` cut down to its content: the width and the height end `margin_mm` after
+    the last thing drawn (never larger than before), and the border, if the sheet has one, is
+    redrawn to match. Nothing moves: every item keeps its place, so the picture is the same and
+    only the empty paper right and below is gone. Used where a picture is made to be looked at
+    (the editor's Export diagram), never for the files of the normal export, whose sheet sizes are
+    part of what is written."""
+    rest = [it for it in sheet.items if not _is_frame(it, sheet)]
+    if not rest:
+        return sheet
+    right = max(item_bounds(it)[2] for it in rest) + margin_mm
+    bottom = max(item_bounds(it)[3] for it in rest) + margin_mm
+    width, height = min(sheet.width, right), min(sheet.height, bottom)
+    items: list[Item] = []
+    for it in sheet.items:
+        if isinstance(it, Rect) and _is_frame(it, sheet):
+            it = Rect(it.x, it.y, width - 4, height - 4, width=it.width, color=it.color)
+        items.append(it)
+    return Sheet(width, height, items, title=sheet.title, marks=dict(sheet.marks))
+
+
 def _n(v: float) -> str:
     s = f"{v:.3f}".rstrip("0").rstrip(".")
     return "0" if s in ("", "-0") else s

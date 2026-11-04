@@ -13,6 +13,7 @@ The editor has three **roles**: Systems engineer, Electrical engineer and AIT en
 - [What each role lists](#what-each-role-lists)
 - [Choose and change your role](#choose-and-change-your-role)
 - [What the Systems engineer role shows less](#what-the-systems-engineer-role-shows-less)
+- [Quick mode: a short layout on top of any role](#quick-mode-a-short-layout-on-top-of-any-role)
 - [The Next step page](#the-next-step-page)
 - [What it says, step by step](#what-it-says-step-by-step)
 - [Where the buttons go](#where-the-buttons-go)
@@ -109,6 +110,22 @@ To show less at once, the Systems engineer role starts with these things closed 
 To see the problem notices as a Systems engineer, tick **Show problem notices** in the **View** menu (the picture is the View menu of the Electrical engineer, where it is ticked; for the Systems engineer there is one more entry at the top, **Show side panels**):
 
 ![The View menu with Show problem notices ticked, below the Role entry and above Guided and Expert](../img/problem-notices-setting.png)
+
+## Quick mode: a short layout on top of any role
+
+Quick mode is for the person who only wants to draw the devices of a set-up and their connections, for a test or a meeting, and has no use for the checks and the paperwork around them. It is **not a fourth role**: it is a switch that works with every role (**Role** button in the top bar, below the three roles, or **View > Quick mode**, or the check box on the **Settings** page next to *Show problem notices*, or Ctrl+K and *Quick mode*). It is off until you turn it on, it takes effect at once without a restart, and the tool remembers it.
+
+While it is on, the window shows less:
+
+- **The rail** lists the **Model**, **Home** and **Settings**. Next step, Checks, Drawings, Outputs, Revisions and As-built are left out (the area that is open stays listed until you leave it).
+- **The top bar** keeps the project name, the save marker, Undo and Redo, the Role button, a **Quick** marker (click it to leave Quick mode), the search and one button, **Export diagram**. Generate, Check, Release, Export, the model hash, the revision and the status chip are left out.
+- **Problem notices** are off whatever you chose in *Show problem notices* (your own choice comes back when you leave Quick mode): no Problems count, no badges on the diagram, no *out of date* banner. The banners that say why something cannot be done (read-only, released data) stay.
+- **No tour** and no first-start question about the role. A project opens on the diagram, whatever the role.
+- The banner of the sample project stays and is shorter.
+
+Nothing is locked and nothing is deleted. Every hidden area and command is still in the menus (**Go**, **View**, **File**, **Design**) and in the command palette (Ctrl+K), and the keys (Ctrl+G, F5, Ctrl+E) work. Quick mode changes only what the window shows and what it asks; it never changes a project file, the model hash or a written file. Turn it off and the layout of your role is back exactly as it was.
+
+The five steps of the quickest way to a picture are on one page: [Make a block diagram in five minutes](quick-diagram.md).
 
 ## The Next step page
 
