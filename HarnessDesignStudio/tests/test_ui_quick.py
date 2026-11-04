@@ -5,6 +5,7 @@ output; every hidden thing stays in the menus and in Ctrl+K; turning it off give
 layout of the role."""
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -36,7 +37,7 @@ def make(qtbot, tmp_path: Path, *, first_run=False, width=1440, name="ui.ini", *
     return w
 
 
-def look(w: MainWindow) -> dict[str, object]:
+def look(w: MainWindow) -> dict[str, Any]:
     """What the person sees, for comparing before and after."""
     t = w.topbar
     return {
@@ -111,7 +112,12 @@ def test_the_top_bar_is_calm_and_shows_export_diagram(qtbot, tmp_path, role) -> 
     assert not w.mode_guided.isVisibleTo(w)
     assert t.export_diagram_btn.text() == strings.TB_EXPORT_DIAGRAM
     asked: list[str] = []
-    w.ask_save_path = lambda title, name, flt: asked.append(name) or None
+
+    def ask(title: str, name: str, flt: str) -> str | None:
+        asked.append(name)
+        return None
+
+    w.ask_save_path = ask
     t.export_diagram_btn.click()
     assert len(asked) == 1  # it is Export diagram (File > Export diagram…)
     assert w.act_generate.shortcut().toString() == "Ctrl+G"  # (hidden, not removed)
@@ -216,8 +222,13 @@ def test_every_hidden_thing_is_still_reachable(qtbot, tmp_path) -> None:
 def test_no_tour_and_no_role_question_in_quick(qtbot, tmp_path, monkeypatch) -> None:
     monkeypatch.setattr(roles, "FIRST_RUN_ROLE", None)
     asked: list[object] = []
+
+    def run(dlg: object) -> int:
+        asked.append(dlg)
+        return 1
+
     w = make(qtbot, tmp_path, first_run=True, ui__quick=True)
-    w.run_dialog = lambda dlg: asked.append(dlg) or 1
+    w.run_dialog = run
     QApplication.processEvents()
     qtbot.wait(400)
     assert asked == [] and not w.tour.active and w._role_to_ask is False

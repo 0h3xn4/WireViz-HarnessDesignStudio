@@ -23,7 +23,7 @@ from tests.helpers import pinout_project  # noqa: E402
 
 
 def link_only() -> Project:
-    p = pinout_project()
+    p: Project = pinout_project()
     p.harnesses.clear()
     p.interfaces.clear()
     ops, _lid = plan_add_link(p, "OBC-J01", "RW1-J02")
