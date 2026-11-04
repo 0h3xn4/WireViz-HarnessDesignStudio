@@ -2228,6 +2228,23 @@ class MainWindow(QMainWindow):
                 Qt.FocusPolicy.StrongFocus
             )  # reachable with Tab, not only by shortcut
             self.topbar.add_edit(button)
+        # the Role button: always visible, shows the role in words, one click lists the three
+        # (View > Role and the Settings row stay; this is the same three exclusive actions)
+        self.role_btn = QToolButton()
+        self.role_btn.setObjectName("role-button")
+        self.role_btn.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
+        self.role_btn.setToolButtonStyle(Qt.ToolButtonStyle.ToolButtonTextOnly)
+        self.role_btn.setToolTip(strings.ROLE_BUTTON_TIP)
+        self.role_btn.setAccessibleName(strings.ROLE_BUTTON_NAME)
+        self.role_btn.setFocusPolicy(Qt.FocusPolicy.StrongFocus)
+        self.role_btn.setProperty("toggle", True)
+        role_menu = QMenu(self.role_btn)
+        role_menu.setObjectName("menu-role-button")
+        role_menu.setToolTipsVisible(True)
+        for act in (self.act_role_systems, self.act_role_electrical, self.act_role_ait):
+            role_menu.addAction(act)
+        self.role_btn.setMenu(role_menu)
+        self.topbar.add_mode(self.role_btn)
         self.mode_guided = QToolButton()
         self.mode_guided.setObjectName("mode-guided")
         self.mode_guided.setText(strings.GUIDED)
@@ -3537,6 +3554,7 @@ class MainWindow(QMainWindow):
         self.act_role_electrical.setChecked(value == ELECTRICAL)
         self.act_role_ait.setChecked(value == AIT)
         self.next_page.set_role(value)
+        self.role_btn.setText(strings.ROLE_BUTTON.format(self._role_name(value)))
         self.rail.set_hidden(areas.hidden_in(value))
         for w in (self.redundant_btn, self.delete_btn, self.zoom_out_btn, self.zoom_in_btn):
             w.setVisible(not systems)
@@ -3552,6 +3570,15 @@ class MainWindow(QMainWindow):
         self._update_crumbs()  # (Arrange and the filters of the Model tab)
         self._load_problem_notices()  # (each role has its own default and its own key)
         self._fit_status()
+
+    @staticmethod
+    def _role_name(value: str) -> str:
+        """The role in words, as the menu and the first-start window say it."""
+        return {
+            SYSTEMS: strings.ROLE_SYSTEMS,
+            ELECTRICAL: strings.ROLE_ELECTRICAL,
+            AIT: strings.ROLE_AIT,
+        }.get(value, strings.ROLE_ELECTRICAL)
 
     def _hide_menu_entries(self, role: str) -> None:
         """The Systems engineer role does not list the engineering entries of the menus

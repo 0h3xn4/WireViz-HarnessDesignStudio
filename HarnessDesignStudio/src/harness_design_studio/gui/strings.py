@@ -3077,6 +3077,12 @@ ROLE_AIT_TIP = (
     "the diagram is left out of the menus"
 )
 M_ROLE = "Role"
+ROLE_BUTTON = "Role: {}"  # the button of the top bar: always shows who the window is set up for
+ROLE_BUTTON_TIP = (
+    "Who you are working as. It decides what the window shows first; nothing is locked. "
+    "Click to change it (also in View > Role)."
+)
+ROLE_BUTTON_NAME = "Role"
 SETTINGS_ROLE = "Role"
 SETTINGS_ROLE_HINT = (
     "Who you are working as. The Systems engineer sees less and starts on the next step; the "
