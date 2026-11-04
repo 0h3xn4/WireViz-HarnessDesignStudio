@@ -59,6 +59,8 @@ Every `config/<name>.json` has the same shape, a wrapper with the file's name, t
 
 A key written outside `values` is rejected, the file is set aside (`quarantined`) and the built-in placeholder is used instead. [`CONFIG.md`](CONFIG.md) shows a complete file and lists the keys of all seven.
 
+**Optional comments `_about` (1.13.0).** A config file may carry one more top-level key, `_about`: an object with one object per setting (`label`, `unit`, `range`, `source`, `what`, `used_by`, `default`, `assumption`), the text of the registry of the tool for a person who reads the file in an editor (`settings --annotate` writes it, `--no-annotate` takes it out, `new --annotate-config` starts a project with it; [`CONFIG.md`](CONFIG.md#comments-in-the-files-about)). It is not a setting, it is read and written back unchanged, a file without it is written exactly as before (`schema_version` stays 1, no migration), and it is **not part of the model hash**, of the generation inputs or of any written output. The JSON Schema of `config/*.json` allows it.
+
 ## Rules
 - **Group file names are cosmetic.** Loading never depends on them; two subsystems whose names slug to the same file simply share it. Harness files must be named `<harness id>.json` (otherwise a warning).
 - **IDs** match `[A-Za-z][A-Za-z0-9_.-]{0,63}`, no trailing dot, no Windows device names (`CON`, `NUL`, `COM1`, ...). Pin names allow a leading digit and up to 16 characters. IDs must be unique ignoring case. Connector IDs are unique across the whole project (box and harness connectors share one namespace), as are wire IDs.
@@ -94,7 +96,7 @@ ERROR   quarantined: A harness could not be loaded and was set aside: wires.0.ga
 The whole object that holds the value is set aside (here the harness), the message names the field and the limit but never the value, and every command except `validate` and `check` then refuses the project with exit 2 until the file is corrected ([`TROUBLESHOOTING.md`](TROUBLESHOOTING.md)).
 
 ## Hash
-`model_hash` is the SHA-256 of all canonical files with the saving tool's version blanked, except `imports/records.json` (the import record says where data came from; it is not the design, so a project with and without it has the same hash) and `asbuilt/records.json` (what was built and measured is not the design either). Every output file carries its first 12 characters, so a printed sheet can be traced to the exact model.
+`model_hash` is the SHA-256 of all canonical files with the saving tool's version blanked (and the optional `_about` comments of the `config/*.json` files taken out), except `imports/records.json` (the import record says where data came from; it is not the design, so a project with and without it has the same hash) and `asbuilt/records.json` (what was built and measured is not the design either). Every output file carries its first 12 characters, so a printed sheet can be traced to the exact model.
 
 ## Editor additions: connector use, layout, waivers, autosave (schema version stays 1)
 All additions are optional with defaults, so projects saved before them load unchanged (tested against `tests/fixtures/m1_project`) and are upgraded on the next save.

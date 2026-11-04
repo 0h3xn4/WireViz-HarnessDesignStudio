@@ -39,7 +39,7 @@ The examples show the form of each command with example names. They do not all w
 
 Every command that has a result in data form takes `--json`. The usual text lines are then not printed; one JSON document is, and the exit code is the one the command has without the option (the table above). It has no time, no user name and no absolute path, its lists are in a fixed order (by ID, as the text shows them) and the same design gives the same bytes, so it can be compared and kept in Git. `ok` comes first and is true when the exit code is 0. A command that cannot run at all (a project that cannot be read, a wrong option) writes its message to the standard error as before and prints nothing to the standard output; a command that ran and was refused (`generate` with errors, `export` that failed its check, `release` that is blocked) still prints its document, with `ok` false and the reasons in it. The same documents are what the Python interface gives ([`user-manual/script-the-tool.md`](user-manual/script-the-tool.md)).
 
-`explain OBJECT --json` prints a list of derivations and `settings --json` the document of settings, definitions and assumptions, both as they did before (neither has an `ok`); `explain --all --out FOLDER --json` prints the document below. `export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. `export` and `generate` take `--run-record [--author NAME]`: the record of the run (`run_record.json`) is then written into the outputs folder, outside every hash, and their document gains the key `run_record` (the name of the file); without the option no record is written and the document is as listed. `config` prints every engineering value with its unit, its use, whether it is set and where it came from, and the values it refused, in the order of the hand-over list.
+`explain OBJECT --json` prints a list of derivations and `settings --json` the document of settings, definitions and assumptions, both as they did before (neither has an `ok`); `explain --all --out FOLDER --json` prints the document below. `export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. `export` and `generate` take `--run-record [--author NAME]`: the record of the run (`run_record.json`) is then written into the outputs folder, outside every hash, and their document gains the key `run_record` (the name of the file); without the option no record is written and the document is as listed. `config` prints every engineering value with its unit, its use, whether it is set and where it came from, and the values it refused, in the order of the hand-over list; `comment_warnings` lists the comments `_about` of the config files that are out of date. `settings --annotate` and `--no-annotate` print the document `settings --annotate`.
 
 | Command | Keys of the document |
 | --- | --- |
@@ -50,12 +50,13 @@ Every command that has a result in data form takes `--json`. The usual text line
 | `drc` | `ok`, `model_hash`, `rules_run`, `open_errors`, `open_warnings`, `open_notes`, `waived`, `placeholder_config`, `findings` |
 | `verify` | `ok`, `interfaces_checked`, `wires_checked`, `stale`, `issues` |
 | `settings` | `settings`, `definitions`, `assumptions` |
+| `settings --annotate` | `ok`, `action`, `files`, `unchanged`, `changed` |
 | `explain --all` | `ok`, `count`, `without_value`, `files` |
 | `export-data` | `ok`, `count`, `model_hash`, `files`, `run_record` |
 | `generate` | `ok`, `saved`, `added`, `changed`, `unchanged`, `removed`, `frozen`, `kept_locks`, `findings`, `interfaces_checked`, `wires_checked`, `verify_issues` |
 | `export` | `ok`, `written`, `blocked`, `model_hash`, `drawings_removed`, `file_count`, `files`, `issues` |
 | `merge-fix` | `ok`, `result`, `conflicts`, `problem`, `generate`, `check` |
-| `config` | `ok`, `set_count`, `total`, `values`, `problems`, `placeholder_files`, `waiting_for_decision`, `counterpart_pairs`, `release_distinct_roles`, `changes` |
+| `config` | `ok`, `set_count`, `total`, `values`, `problems`, `placeholder_files`, `waiting_for_decision`, `counterpart_pairs`, `release_distinct_roles`, `comment_warnings`, `changes` |
 | `library` | `ok`, `name`, `version`, `source`, `date`, `changed` |
 | `import-parts` | `ok`, `dry_run`, `changed`, `ready`, `problems`, `rows`, `library`, `import` |
 | `import-lengths` | `ok`, `dry_run`, `changed`, `ready`, `problems`, `hint`, `rows`, `import` |
@@ -102,6 +103,7 @@ Create a project folder from one of the bundled examples. `harness-design-studio
 | `--name NAME` | project name (default: the example's name) |
 | `--list` | list the examples and exit |
 | `--no-journal` | do not start a change journal (journal.json) for the new project |
+| `--annotate-config` | write the unit, range, source and use of every setting into the config files as comments (`_about`); off by default |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
 Examples:
@@ -111,6 +113,7 @@ harness-design-studio new --list
 harness-design-studio new --list --json
 harness-design-studio new my-design --name "My first design"
 harness-design-studio new wheel-link --template first-steps
+harness-design-studio new wheel-link --template first-steps --annotate-config
 ```
 
 ### harness-design-studio templates
@@ -255,7 +258,7 @@ harness-design-studio explain wheel-link --all --out wheel-link-derivations --js
 
 ### harness-design-studio settings
 
-The Assumptions page on the command line. For every setting: the value in force, its unit, whether it is set by the project, the tool's own default (the behaviour before the setting existed) or not set, what depends on it and where the number comes from; then the assumptions built into the tool, each with the settings that parameterise it, and the fixed definitions. `--json` prints the same as data. `--set FILE.KEY=VALUE` (VALUE is JSON, for example model.service_loops_per_wire=0) changes one value; it is refused, and nothing is changed, when the value is outside its range.
+The Assumptions page on the command line. For every setting: the value in force, its unit, whether it is set by the project, the tool's own default (the behaviour before the setting existed) or not set, what depends on it and where the number comes from; then the assumptions built into the tool, each with the settings that parameterise it, and the fixed definitions. `--json` prints the same as data. `--set FILE.KEY=VALUE` (VALUE is JSON, for example model.service_loops_per_wire=0) changes one value; it is refused, and nothing is changed, when the value is outside its range. `--annotate` writes the unit, range, source and use of every setting into the config files themselves, under the reserved key `_about` (comments for a person with an editor; opt-in; never a setting; outside every hash and every written output) and refreshes them; `--no-annotate` takes them out again. Neither creates a file. With `--json` they print the files written.
 
 `harness-design-studio settings project [options]`
 
@@ -264,6 +267,8 @@ The Assumptions page on the command line. For every setting: the value in force,
 | `project` | project folder |
 | `--json` | print the settings as JSON |
 | `--set FILE.KEY=VALUE` | set one value (VALUE as JSON, for example model.service_loops_per_wire=0); repeat for several (repeatable) |
+| `--annotate` | write (or refresh) the comments `_about` in every config file: unit, range, source and use of each setting |
+| `--no-annotate` | take the comments `_about` out of every config file |
 
 Examples:
 
@@ -271,6 +276,8 @@ Examples:
 harness-design-studio settings wheel-link
 harness-design-studio settings wheel-link --json
 harness-design-studio settings wheel-link --set model.service_loops_per_wire=0
+harness-design-studio settings wheel-link --annotate
+harness-design-studio settings wheel-link --no-annotate --json
 ```
 
 ### harness-design-studio workflow

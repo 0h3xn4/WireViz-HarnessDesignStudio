@@ -16,6 +16,7 @@ settings`, the Assumptions window of the editor) is built from it, and so are th
 """
 
 from dataclasses import dataclass
+from typing import Any
 
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.units import format_awg
@@ -149,6 +150,56 @@ _BY_ID = {s.id: s for s in SETTINGS}
 
 def setting(file: str, key: str) -> Setting | None:
     return _BY_ID.get(f"{file}.{key}")
+
+
+# ---- the comments in the files: `_about` (D-191 (2), R3) ----------------------------------------
+
+
+def _plain_default(value: object) -> object:
+    if isinstance(value, tuple | list):
+        return [_plain_default(v) for v in value]
+    return value
+
+
+def about_entry(s: Setting) -> dict[str, object]:
+    """What `_about` says about one setting: the text of the registry, field by field. A unit or an
+    assumption the setting has not is left out; `default` is null when the tool has no default
+    (the value then stays undecided and what depends on it is excluded)."""
+    entry: dict[str, object] = {"label": s.label}
+    if s.unit:
+        entry["unit"] = s.unit
+    entry["range"] = s.range
+    entry["source"] = s.source
+    entry["what"] = s.what
+    entry["used_by"] = s.used_by
+    entry["default"] = _plain_default(s.default)
+    if s.assumption:
+        entry["assumption"] = s.assumption
+    return entry
+
+
+def about_for(file: str) -> dict[str, dict[str, Any]]:
+    """The `_about` of `config/<file>.json` as the registry says it now: an entry for every setting
+    of the file, set in it or not, so that a person who wants to add a key sees its range."""
+    return {s.key: about_entry(s) for s in SETTINGS if s.file == file}
+
+
+def about_problems(file: str, about: dict[str, Any]) -> list[tuple[str, str]]:
+    """How the `_about` of a file differs from `about_for(file)`, as (key, what) pairs in a fixed
+    order; empty when it is current. A file without annotation (empty `about`) is not stale."""
+    if not about:
+        return []
+    now = about_for(file)
+    out: list[tuple[str, str]] = []
+    for key in sorted(about):
+        have = about[key]
+        if key not in now:
+            out.append((key, "is for a key the tool does not know (removed or misspelt)"))
+        elif have != now[key]:
+            fields = sorted(f for f in set(have) | set(now[key]) if have.get(f) != now[key].get(f))
+            out.append((key, f"differs from what the tool says now ({', '.join(fields)})"))
+    out.extend((key, "has no entry") for key in sorted(set(now) - set(about)))
+    return out
 
 
 def effective(project: Project, file: str, key: str) -> Effective:

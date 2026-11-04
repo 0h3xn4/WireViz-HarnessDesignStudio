@@ -994,7 +994,13 @@ def ops_set_wire_colours(project: Project, colours: dict[str, str]) -> list[Op]:
         values.pop("wire_colour_by_signal", None)
     if values == old.values:
         return []
-    return [SetConfig(ConfigFile(name="generation", placeholder=old.placeholder, values=values))]
+    return [
+        SetConfig(
+            ConfigFile(
+                name="generation", placeholder=old.placeholder, values=values, about=old.about
+            )
+        )
+    ]
 
 
 # ---- canvas editing: layout of several units, duplicate, interface delete impact ------------------

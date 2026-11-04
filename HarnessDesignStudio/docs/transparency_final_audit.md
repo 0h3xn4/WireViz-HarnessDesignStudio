@@ -19,7 +19,7 @@ This page is the last stage (S10) of the transparency work (decisions D-191 and 
 | --- | --- | --- | --- |
 | R1 Explain view | partial | built (step 0, S1) | the search that picks a gauge is not itself explained; the Explain window does not show the link to its documentation page |
 | R2 Assumptions panel | partial | built (S2) | 14 of 31 assumptions are still built in and cannot be changed without editing the program |
-| R3 Externalised configuration | partial | built (S2), in part | unit, source and range are in the registry and `settings`, not as comments in the JSON files |
+| R3 Externalised configuration | partial | built (S2); comments in the files built as opt-in (1.13.0) | the comments `_about` are off unless asked for and are refreshed by `settings --annotate`, not by every save |
 | R4 Selectable models | partial | built (S3), in part | six models; segmentation, first fit, connector choice and the labels stay one method each |
 | R5 Units everywhere | partial | built (S5, S6) | `export.json` of the model still has fields without units; the files keep the plain AWG gauge |
 | R6 Workflow visibility | partial | built (S9) | the intermediates are inspectable as files and by `explain`; only some can be edited (the settings, the overrides, the as-built records); nothing was looked at on a real display |
@@ -57,7 +57,9 @@ Pull request numbers are those of `docs/transparency_plan.md`: audit #141; step 
 - **First audit:** partial. Seven JSON files with validation and profiles; no comments, units or sources in the files; model constants in code.
 - **Built:** the constants of the model are the keys of the new optional file `config/model.json` (S2, S3; 14 keys, each with today's behaviour as its default); a project without the file is written byte for byte as before; `docs/CONFIG.md` describes every key; `configuration.json` of `export-data` carries the files as the tool used them.
 - **Evidence:** `tests/test_settings.py`, `tests/test_selectable_models.py`, `tests/test_settings.py::test_a_project_without_model_json_is_written_as_before`, `tests/test_numbers_snapshot.py` and `tests/test_output_hashes.py` (identical with the defaults).
-- **Remaining gaps:** The unit, the description, the range and the source of each value live in the registry (`core/settings.py`), in `CONFIG.md` and in `settings --json`, **not as per-key comments in the JSON files themselves**. If decision D-191 (2) meant metadata stored in the file, that is not done (see the open decisions). A file holds the values and the `placeholder` flag; a reason for a change is in the journal (R8), not in the file.
+- **Built since (1.13.0, open decision 13):** the comments in the files themselves, as an opt-in. A config file may carry the reserved top-level key `_about`: for every setting of the file its `label`, `unit`, `range`, `source`, `what`, `used_by`, `default` and `assumption`, made from the registry. `harness-design-studio settings DIR --annotate` writes or refreshes it in every existing config file (and creates nothing else), `--no-annotate` takes it out, `new --annotate-config` starts a project with it, the scripting interface has `annotate_config`. It is never a setting; it is outside the model hash, the generation inputs, the numbers and every written output (a test compares the model hash, the outputs and the open data with and without it); a project without it is written byte for byte as before; `validate` and `config` warn, naming file and key, when an entry differs from the registry. The engineering values page of the editor shows the range and the source in the tooltip of each value. See [`CONFIG.md`](CONFIG.md#comments-in-the-files-about).
+- **Evidence (comments):** `tests/test_config_about.py`.
+- **Remaining gaps:** the comments are opt-in and are written by the command, not by each save, so a file that was annotated and then meets a newer version of the tool says so with a warning until `--annotate` is run again; they are a copy of the registry (the registry stays the one source), not a place to type your own notes; JSON still has no comments, so `_about` is data that is ignored, not a comment a JSON parser skips. A file holds the values, the `placeholder` flag and, if asked, the comments; a reason for a change is in the journal (R8), not in the file.
 
 ### R4. Selectable models
 
@@ -187,7 +189,7 @@ Collected from the reports of the stages. Each is a choice the agents made and t
 
 Added by this audit, for the owner to decide:
 
-13. **Per-key metadata in the JSON files themselves (R3).** If D-191 (2) meant a comment, unit and source inside `config/*.json`, that is not built; the metadata is in the registry and in `settings`.
+13. **Per-key metadata in the JSON files themselves (R3).** Built as an opt-in in 1.13.0: the reserved key `_about` of each `config/*.json` (`settings DIR --annotate`, `--no-annotate`, `new --annotate-config`), outside every hash and output. What remains for the owner: whether it should be on by default for new projects (today `new` writes none unless `--annotate-config`), whether a save should refresh a stale one by itself (today only the command does, and `validate` warns), and whether a team wants its own notes per key (not built; `_about` is the tool's text).
 14. **Whether the choice of a gauge should be a derivation (R1).** It would add the search (the candidates tried, the limit of each, the drop of each) to `explain`.
 15. **Whether the Explain window and `explain` should print the link to the page of the model** (R1; the code has it, the screens do not show it).
 16. **Whether the three limit rules without an assumption ID should get one** (R12).

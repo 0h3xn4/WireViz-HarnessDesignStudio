@@ -438,6 +438,7 @@ def _project_lock(args: argparse.Namespace) -> Iterator[None]:
                 or getattr(args, "apply_profile", None) is not None
             )
         )
+        or (args.command == "settings" and (args.set or args.annotate or args.no_annotate))
         or (
             args.command == "library"
             and any(

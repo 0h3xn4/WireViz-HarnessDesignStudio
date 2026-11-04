@@ -72,12 +72,19 @@ def _root() -> Path:
 
 
 def create_project(
-    dest: Path, template: str, name: str | None = None, *, journal: bool = False
+    dest: Path,
+    template: str,
+    name: str | None = None,
+    *,
+    journal: bool = False,
+    annotate_config: bool = False,
 ) -> Project:
     """Write a new project to `dest` (a missing or empty folder) from the named example. With
     `journal` the project starts a change journal (`journal.json`); the command `new` and the
     editor's New project ask for it, the builders of the examples and the tests do not, so that the
-    files they make do not depend on the time or on who ran them."""
+    files they make do not depend on the time or on who ran them. With `annotate_config` every
+    config file carries its comments (`_about`: unit, range, source and use of each key; opt-in,
+    off by default; `core.annotate`)."""
     known = {t.name: t for t in TEMPLATES}
     if template not in known:
         raise TemplateError(f"Unknown template '{template}'. Choose one of: {', '.join(known)}.")
@@ -91,6 +98,10 @@ def create_project(
     project = loaded.project
     if name is not None:
         project.meta = evolve(project.meta, name=name.strip())
+    if annotate_config:
+        from harness_design_studio.core import annotate
+
+        annotate.annotate(project)
     save_project(project, dest)
     write_gitattributes(dest)  # so that two people who both press Generate can merge (merge-fix)
     if journal:

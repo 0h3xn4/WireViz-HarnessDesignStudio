@@ -284,6 +284,7 @@ class ConfigReport:
     waiting_for_decision: tuple[str, ...]  # files that wait for an owner decision, not a value
     counterpart_pairs: int | None  # None: the table the tool ships with is used
     release_distinct_roles: bool
+    comment_warnings: tuple[IssueRecord, ...] = ()  # stale `_about` comments (opt-in), a warning
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -296,6 +297,7 @@ class ConfigReport:
             "waiting_for_decision": list(self.waiting_for_decision),
             "counterpart_pairs": self.counterpart_pairs,
             "release_distinct_roles": self.release_distinct_roles,
+            "comment_warnings": [w.to_dict() for w in self.comment_warnings],
         }
 
     def value(self, file: str, key: str) -> ConfigValue:
@@ -566,6 +568,7 @@ def config_report(project: Project) -> ConfigReport:
             else None
         ),
         release_distinct_roles=roles.distinct_roles_on(project),
+        comment_warnings=issue_records(configcheck.annotation_issues(project)),
     )  # fmt: skip
 
 

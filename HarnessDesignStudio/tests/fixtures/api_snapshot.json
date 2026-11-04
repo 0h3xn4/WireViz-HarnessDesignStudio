@@ -1,6 +1,7 @@
 {
  "all": [
   "API_VERSION",
+  "AnnotationResult",
   "AsBuiltImportResult",
   "AsBuiltReport",
   "CheckResult",
@@ -41,6 +42,7 @@
   "VerifyResult",
   "WorkflowReport",
   "accept_deviation",
+  "annotate_config",
   "clear_override",
   "create_project",
   "explain",
@@ -138,8 +140,9 @@
  },
  "functions": {
   "accept_deviation": "(folder: 'PathLike', finding_id: 'str', reason: 'str', *, author: 'str | None' = None) -> 'DeviationReport'",
+  "annotate_config": "(folder: 'PathLike', *, remove: 'bool' = False) -> 'AnnotationResult'",
   "clear_override": "(folder: 'PathLike', wire_id: 'str', field: 'str', *, author: 'str | None' = None) -> 'OverrideResult'",
-  "create_project": "(folder: 'PathLike', template: 'str' = 'blank', name: 'str | None' = None, *, journal: 'bool' = True) -> 'Project'",
+  "create_project": "(folder: 'PathLike', template: 'str' = 'blank', name: 'str | None' = None, *, journal: 'bool' = True, annotate_config: 'bool' = False) -> 'Project'",
   "explain": "(source: 'ProjectSource', object_id: 'str') -> 'list[Derivation]'",
   "explain_all": "(source: 'ProjectSource') -> 'list[Derivation]'",
   "explain_finding": "(source: 'ProjectSource', finding_id: 'str') -> 'list[Derivation]'",
@@ -170,6 +173,16 @@
   "write_derivations": "(source: 'ProjectSource', out: 'PathLike') -> 'DerivationFiles'"
  },
  "types": {
+  "AnnotationResult": {
+   "fields": {
+    "action": "str",
+    "files": "tuple[str, ...]",
+    "unchanged": "tuple[str, ...]"
+   },
+   "methods": {
+    "to_dict": "(self) -> 'dict[str, Any]'"
+   }
+  },
   "AsBuiltImportResult": {
    "fields": {
     "changed": "bool",
@@ -211,6 +224,7 @@
   },
   "ConfigReport": {
    "fields": {
+    "comment_warnings": "tuple[IssueRecord, ...]",
     "counterpart_pairs": "int | None",
     "ok": "bool",
     "placeholder_files": "tuple[str, ...]",
