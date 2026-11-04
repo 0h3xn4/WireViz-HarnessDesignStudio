@@ -416,7 +416,7 @@
  "format_version": 1,
  "generator": {
   "name": "harness-design-studio",
-  "version": "1.13.0"
+  "version": "1.14.0"
  },
  "harnesses": [
   {
@@ -1285,7 +1285,7 @@
    "voltage_v": null
   }
  ],
- "model_hash": "ac0f297cf62d72f1dd7c114807138b2d322cfeb94a69e7aed5c7faf83ae80d91",
+ "model_hash": "ea5ecab03871ce72425c2fef07bdb41cf393b1ec25adaeffc3f76347512a3d05",
  "parts": [
   {
    "approval": "pending",
