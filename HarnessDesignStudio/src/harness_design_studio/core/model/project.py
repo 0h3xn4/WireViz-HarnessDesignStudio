@@ -14,7 +14,7 @@ from .journal import Journal
 from .library import LibraryInfo, Part
 from .logical import InterfaceInstance, InterfaceType, Link, Unit
 from .physical import Connector, Harness
-from .review import Baseline, ChangeEntry, Placement, Waiver
+from .review import Baseline, ChangeEntry, DiagramMark, Placement, Waiver
 
 SCHEMA_VERSION = 1
 DEFAULT_ZONES = ("panel-A", "panel-B")
@@ -58,6 +58,9 @@ class Project:
     # what was built and measured (asbuilt/records.json, S9): optional like the journal and the
     # import records, so a project that has none has no such file; not in the model hash
     asbuilt: dict[str, AsBuiltRecord] = field(default_factory=dict)
+    # what the person moved in the diagram off its automatic place (diagram/marks.json): optional,
+    # not in the model hash
+    diagram_marks: dict[str, DiagramMark] = field(default_factory=dict)
     config: dict[str, ConfigFile] = field(default_factory=default_configs)
     generation: GenerationRecord | None = None
     # The change journal (S4): None for a project that has none; the project has one if and only if

@@ -38,7 +38,7 @@ from harness_design_studio.core.imports import ImportPlan
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, disk_fingerprint, load_project
 from harness_design_studio.core.io.saver import save_project
-from harness_design_studio.core.model import Project
+from harness_design_studio.core.model import DiagramMark, Project
 from harness_design_studio.core.outputs.build import DEFAULT_FOLDER, outputs_status
 from harness_design_studio.core.recovery import (
     clear_journal,
@@ -138,6 +138,9 @@ class Delta:
     interfaces: set[str] = field(default_factory=set)
     links: set[str] = field(default_factory=set)  # connections of two connectors (core/links.py)
     followers: set[str] = field(default_factory=set)  # in `interfaces` only because a unit moved
+    marks: set[str] = field(
+        default_factory=set
+    )  # things the person moved or put back (diagram_marks)
     full: bool = False
     tables: bool = True
 
@@ -482,6 +485,17 @@ class EditorController(QObject):
         self._owners, self._ends = before or ({}, {})
         self._clear_stale_connect()
         delta = self._delta_of(ops)
+        if (
+            ops
+            and delta.marks
+            and not (delta.units or delta.interfaces or delta.links or delta.full)
+        ):
+            # only labels moved: no table, check or route has anything new to say
+            delta.tables = False
+            self.changed.emit(delta)
+            self.stateChanged.emit()
+            self._schedule_journal()
+            return
         self._prune_selection()
         if self.selected_link is not None and self.selected_link not in self.project.links:
             self.selected_link = None
@@ -526,7 +540,9 @@ class EditorController(QObject):
 
     def _note(self, d: Delta, op: Put | Delete) -> None:
         key = op.obj.id if isinstance(op, Put) else op.key  # type: ignore[attr-defined]
-        if op.collection in ("units", "placements"):
+        if op.collection == "diagram_marks":
+            d.marks.add(key)
+        elif op.collection in ("units", "placements"):
             d.units.add(key)
         elif op.collection == "interfaces":
             d.interfaces.add(key)
@@ -902,6 +918,37 @@ class EditorController(QObject):
             zone = self.project.units[unit_id].zone
             if zone != zone_before:
                 self.message.emit(strings.NOW_IN_ZONE.format(unit_id, zone), True)
+
+    def mark_of(self, mark_id: str) -> DiagramMark | None:
+        """Where the person moved this thing in the diagram (None: it is where the tool put it)."""
+        return self.project.diagram_marks.get(mark_id)
+
+    def move_mark(self, mark_id: str, dx: float, dy: float) -> bool:
+        """Remember that a label is `dx`, `dy` away from its automatic place (one undoable step; a
+        move of less than a pixel puts it back). It is diagram layout only: no model hash, no
+        written output."""
+        if abs(dx) < 1.0 and abs(dy) < 1.0:
+            return self.reset_mark(mark_id)
+        mark = DiagramMark(id=mark_id, dx=round(dx, 1), dy=round(dy, 1))
+        if self.mark_of(mark_id) == mark:
+            return True
+        return self.run(
+            strings.STEP_MOVE_LABEL.format(mark_id.partition(":")[2]), [Put("diagram_marks", mark)]
+        )
+
+    def reset_mark(self, mark_id: str) -> bool:
+        """Put a label back to its automatic place (one undoable step; nothing to do if it is)."""
+        return self.reset_marks([mark_id])
+
+    def reset_marks(self, mark_ids: Sequence[str]) -> bool:
+        """Put every one of these back to its automatic place, as one undoable step."""
+        gone = [m for m in mark_ids if self.mark_of(m) is not None]
+        if not gone:
+            return True
+        name = gone[0].partition(":")[2].partition(":")[0]
+        return self.run(
+            strings.STEP_RESET_LABEL.format(name), [Delete("diagram_marks", m) for m in gone]
+        )
 
     def redundant_copy(self, unit_id: str) -> None:
         try:

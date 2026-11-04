@@ -4,6 +4,7 @@ from typing import Annotated, Any, ClassVar, Literal
 
 from pydantic import (
     AfterValidator,
+    Field,
     SerializerFunctionWrapHandler,
     StringConstraints,
     model_serializer,
@@ -27,6 +28,18 @@ class Placement(Entity):
     id: Id
     x: float
     y: float
+
+
+class DiagramMark(Entity):
+    """Where the person moved one thing in the diagram off the place the tool gave it: `id` names
+    the thing ("link:L1" the label of a connection, "interface:IF-TM" the label of an interface),
+    `dx` and `dy` are the move from the automatic place, in scene units, so the thing keeps
+    following its line when devices move. Kept in `diagram/marks.json` (optional, like the import
+    record); it is not part of the model hash and is never written into an output file."""
+
+    id: Name
+    dx: Annotated[float, Field(ge=-100_000.0, le=100_000.0)]
+    dy: Annotated[float, Field(ge=-100_000.0, le=100_000.0)]
 
 
 FindingHash = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{12}$")]
