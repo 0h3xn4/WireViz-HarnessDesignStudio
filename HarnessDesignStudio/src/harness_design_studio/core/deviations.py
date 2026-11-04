@@ -81,6 +81,58 @@ def override_lines(h: Harness) -> list[str]:
     return out
 
 
+def _deviation_wires(h: Harness, object_id: str) -> list[str]:
+    """The wires of `h` that a finding is about: the wire itself; the wires of the interface for a
+    finding on `INTERFACE.CONNECTOR` (a contact, connector voltage); the wires that end on a cable
+    connector (the temperature margin of a connector part)."""
+    head = object_id.partition(".")[0] if "." in object_id else ""
+    return [
+        w.id
+        for w in h.wires
+        if object_id in (w.id, w.from_connector, w.to_connector)
+        or (head != "" and head == w.interface_id)
+    ]
+
+
+def wire_marks(project: Project, h: Harness) -> dict[str, str]:
+    """For each wire of the harness that has an override or a deviation: the text of the
+    `Deviations` cell of the tests of that wire (`tests.csv`, the Tests sheet), for example
+    `override gauge_awg: reason; deviation current-over-wire: reason`. Empty for a project that has
+    neither, so its tests are written as before. No name and no time (those are in the journal)."""
+    marks: dict[str, list[str]] = {}
+    for w in h.wires:
+        for field in sorted(w.overrides):
+            marks.setdefault(w.id, []).append(f"override {field}: {_cut(w.overrides[field])}")
+    for dev in active_deviations(project):
+        reason = dev.waiver.justification if dev.waiver is not None else ""
+        for wid in _deviation_wires(h, dev.object_id):
+            marks.setdefault(wid, []).append(f"deviation {dev.rule}: {_cut(reason)}")
+    return {wid: "; ".join(parts) for wid, parts in marks.items()}
+
+
+def tests_cell(marks: dict[str, str], wire_ids: str) -> str:
+    """The `Deviations` cell of one test row: `wire_ids` is the Wire cell (one ID, or the IDs of a
+    shield joined with `;`). A shield row names the wire in front of each mark."""
+    ids = [x for x in wire_ids.split(";") if x]
+    if len(ids) == 1:
+        return marks.get(ids[0], "")
+    return " | ".join(f"{x}: {marks[x]}" for x in ids if x in marks)
+
+
+def tests_band(project: Project, h: Harness) -> list[str]:
+    """The lines of the band above the tests of a harness (the Tests sheet): every override of the
+    harness and every deviation located in it or about one of its wires (empty if there is none)."""
+    from harness_design_studio.core import drc
+
+    lines = override_lines(h)
+    for f in active_deviations(project):
+        if drc.locate(project, f.object_id) == ("harness", h.id) or _deviation_wires(
+            h, f.object_id
+        ):
+            lines.append(deviation_line(f))
+    return lines
+
+
 def release_note(project: Project, h: Harness) -> str:
     """The sentence added to the comment of a release when the harness has overrides or the project
     has deviations ('' otherwise), so the release record shows them."""

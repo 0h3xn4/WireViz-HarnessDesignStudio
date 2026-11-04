@@ -73,3 +73,11 @@ When a test fails, it names what moved: the wire, the finding or the file. Renew
 - **Agreed.** Owner, D-193 (no time and no operator in project data, so the record has none).
 
 Next: [the changelog](../CHANGELOG.md), [the decisions](DECISIONS.md), [the developer notes on the tools](developer/tools.md)
+
+### 2026-11-04: overrides and deviations are marked on the tests (no result moves)
+
+- **Before.** An override or a deviation was marked on the checks, the drawing, the DRC report, the *Start here* sheet and the release comment, but not on the tests: `tests.csv` and the *Tests* sheet of the build workbook did not say that the wire under test had been set by hand or that an error of it had been accepted.
+- **Now.** For a harness in which a test is about such a wire, `tests.csv` has a last column `Deviations` and the *Tests* sheet has the band *Overrides and deviations* above the table and the same last column; the as-built report adds `design: ...` to the note of a measured test line. The cell holds the field or the rule and the reason, never a name or a time.
+- **What moves.** Nothing for an existing output: a project without an override and without a deviation writes the same bytes (`tests/test_output_hashes.py` and `tests/test_numbers_snapshot.py` are unchanged), and so does a harness of a project that has them but no test about a marked wire. No number, finding or limit changes.
+- **Why.** The final audit (R7) found that a test sheet handed to a technician did not show that the wire had been overridden or the error accepted.
+- **Agreed.** Within the transparency work (decisions D-191 (3) and D-193); the owner's review of this change is still to come. Test: `tests/test_deviation_marks.py`.

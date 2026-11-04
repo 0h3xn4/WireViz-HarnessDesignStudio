@@ -18,7 +18,13 @@ from typing import Any
 
 from harness_design_studio import __version__
 from harness_design_studio.core import checks, configcheck, drc, settings
-from harness_design_studio.core.deviations import override_text, uses_overrides
+from harness_design_studio.core.deviations import (
+    override_text,
+    tests_band,
+    tests_cell,
+    uses_overrides,
+    wire_marks,
+)
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
 from harness_design_studio.core.verify import VerifyReport, link_issues
@@ -1216,7 +1222,16 @@ def _test_rows(project: Project, h: Harness) -> list[list[Cell]]:
         rows.append(["", "isolation", f"shield {s.id}", "all wires", "isolated", iso, volts, ";".join(sorted(s.wire_ids))])  # fmt: skip
     for n, row in enumerate(rows, start=1):
         row[0] = f"T{n:03d}"
+    marks = wire_marks(project, h)  # 1.13: a last column only when a test is about such a wire
+    cells = [tests_cell(marks, str(row[7])) for row in rows]
+    if any(cells):
+        for row, cell in zip(rows, cells, strict=True):
+            row.append(cell)
     return rows
+
+
+def _test_header(rows: list[list[Cell]]) -> list[str]:
+    return [*_TEST_HEADER, *(["Deviations"] if rows and len(rows[0]) > 8 else [])]
 
 
 _LABEL_HEADER = ["Label", "Kind", "Text", "Quantity"]
@@ -1519,8 +1534,9 @@ def _harness_tables(r: VerifyReport, project: Project, h: Harness, files: dict[s
                       _accessory_rows(h), (0,), h.id)  # fmt: skip
     ts = _table(files, f"{base}/tests.csv")
     if ts:
-        _compare_rows(r, "out_tests", f"The test list of {h.id}", ts, _TEST_HEADER,
-                      _test_rows(project, h), (0,), h.id)  # fmt: skip
+        want = _test_rows(project, h)
+        _compare_rows(r, "out_tests", f"The test list of {h.id}", ts, _test_header(want),
+                      want, (0,), h.id)  # fmt: skip
     lb = _table(files, f"{base}/labels.csv")
     if lb:
         _compare_rows(r, "out_labels", f"The labels of {h.id}", lb, _LABEL_HEADER,
@@ -1664,15 +1680,37 @@ def _build_workbook(r: VerifyReport, project: Project, h: Harness, files: dict[s
             r.error("out_build", f"{what} has ticks in the Labels sheet before anything was done.", h.id)  # fmt: skip
     else:
         r.error("out_build", f"{what} (Labels) has the wrong column headings.", h.id)
-    tests = sheets["Tests"]
-    if tests and tests[0] == [*_TEST_HEADER, *_BUILD_TEST_TAIL]:
-        _compare_rows(r, "out_build", f"{what} (Tests)", [row[:8] for row in tests], _TEST_HEADER,
-                      _test_rows(project, h), (0,), h.id)  # fmt: skip
-        if any(any(row[8:]) for row in tests[1:]):
-            r.error("out_build", f"{what} has results in the Tests sheet before any test was run.", h.id)  # fmt: skip
-    else:
-        r.error("out_build", f"{what} (Tests) has the wrong column headings.", h.id)
+    _build_tests(r, project, h, what, sheets["Tests"])
     _build_start(r, project, h, what, sheets["Start here"])
+
+
+def _build_tests(
+    r: VerifyReport, project: Project, h: Harness, what: str, rows: list[list[str]]
+) -> None:
+    """The Tests sheet: the rows of `tests.csv` plus the columns to fill in. A harness with an
+    override or a deviation has a band above the headings (the title and one line each, as the
+    drawing and *Start here* show them), and a last column *Deviations* when a test is about such
+    a wire; a harness without has neither."""
+    want = _test_rows(project, h)
+    head = [
+        *_TEST_HEADER,
+        *_BUILD_TEST_TAIL,
+        *(["Deviations"] if want and len(want[0]) > 8 else []),
+    ]
+    top = next((n for n, row in enumerate(rows) if row[:1] == ["Test"]), len(rows))
+    band = [row[0] for row in rows[:top] if any(row)]
+    lines = tests_band(project, h)
+    if band != (["Overrides and deviations", *lines] if lines else []):
+        r.error("out_build", f"{what} (Tests) does not show the overrides and deviations of the design.", h.id)  # fmt: skip
+    rows = [[*row, *[""] * (len(head) - len(row))][: len(head)] for row in rows[top:]]
+    if not rows or rows[0] != head:
+        r.error("out_build", f"{what} (Tests) has the wrong column headings.", h.id)
+        return
+    shown = [[*row[:8], *row[12:]] for row in rows]
+    _compare_rows(r, "out_build", f"{what} (Tests)", shown, _test_header(want),
+                  want, (0,), h.id)  # fmt: skip
+    if any(any(row[8:12]) for row in rows[1:]):
+        r.error("out_build", f"{what} has results in the Tests sheet before any test was run.", h.id)  # fmt: skip
 
 
 def _build_asbuilt(
