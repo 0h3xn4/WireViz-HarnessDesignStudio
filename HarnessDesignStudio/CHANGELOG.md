@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Changed for you to know
+
+- **The role is now visible in the top bar.** A **Role** button shows who the window is set up for (*Role: Systems engineer*, *Electrical engineer* or *AIT engineer*) and a click lists the three roles. Until now the role could only be chosen in the window of the first start, in **View > Role** or on the Settings page, and a new user did not find it. It is the same choice as before: nothing else about roles changed, no project file and no written output is affected.
+
 ## 1.13.0 (2026-11-04; not a statement of compliance)
 
 Version 1.13.0 is the **follow-up of the transparency release** (decision D-196, for D-195 and the follow-ups of D-191 and D-193). It closes three gaps that the audit of 1.12.0 left open (`docs/transparency_final_audit.md`): every number of `system/export.json` now has its unit, a config file can carry its own comments (opt-in), and a test that is about a wire with an override or a deviation says so. Nothing else is new: the calculations, the 39 design rules and the numbers are as in 1.12.0.
