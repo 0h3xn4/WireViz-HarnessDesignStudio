@@ -1,4 +1,4 @@
-# harness-design-studio 1.15.0 model 1790f3d229bf
+# harness-design-studio 1.16.0 model bc91472b9f3a
 Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare
 W001-P1,cable,PCDU-J01,EX-MICROD-9-M,1,PWR,IF-PWR-RW1,W001-001,no
 W001-P1,cable,PCDU-J01,EX-MICROD-9-M,2,RTN,IF-PWR-RW1,W001-002,no
