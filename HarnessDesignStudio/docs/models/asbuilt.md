@@ -9,6 +9,7 @@ This page explains how the tool compares what a technician recorded with what wa
 - [The inputs and where they come from](#the-inputs-and-where-they-come-from)
 - [The assumptions it rests on](#the-assumptions-it-rests-on)
 - [A worked example](#a-worked-example)
+- [The release gate (optional)](#the-release-gate-optional)
 - [What happens when a value is missing](#what-happens-when-a-value-is-missing)
 - [What the model does not do](#what-the-model-does-not-do)
 
@@ -54,6 +55,17 @@ With a cut tolerance of 10 mm (`asbuilt_cut_tolerance_mm` set to 10) the same 3.
 
 Repeat the calculation of one value with `harness-design-studio explain DIR W001.T001` (a test) or `harness-design-studio explain DIR W001-001` (a cut length), and list all of them with `harness-design-studio asbuilt DIR`.
 
+## The release gate (optional)
+
+By default a release neither freezes the as-built records nor looks at them. A project can switch on `release_requires_asbuilt` in `config/naming.json` ([the setting](../CONFIG.md#release-needs-as-built-records-optional)). Then `harness-design-studio release DIR HARNESS` is blocked while:
+
+- **the records are incomplete** (`asbuilt_incomplete`): the harness has no record at all, or the report lists a value as *missing* or a record as *stale* (the needed values listed in [what the tool decides](#what-the-tool-decides) and in [record what was built](../user-manual/record-what-was-built.md)). The message gives how many values are missing and the first one;
+- **a length is out of tolerance** (`asbuilt_length_out`): a recorded cut length or strip length that the report shows as *out of limit* because the project set `asbuilt_cut_tolerance_mm` or `asbuilt_strip_tolerance_mm`. Without a tolerance no length is out.
+
+A measured test value that is out of its limit is in the report but is not part of this gate. To release anyway, give a reason: `--accept-asbuilt REASON` (at least 10 characters). It is written to the change log and the baseline, in the comment of the release, with what was open at that time (`[Released although the as-built records of W001 are incomplete (12 value(s) missing, 0 stale); accepted by A. Engineer: ...]`), the same way as `--accept-placeholders` and `--accept-unapproved-parts`. With the setting off, or on and nothing open, the release is what it was and its comment has no such sentence.
+
+**The records are not frozen by the release in this step.** The gate looks at them when you release; they can be recorded, imported and changed afterwards, and the baseline does not hold them. A harness that is released can therefore have records that are newer than its release. Because a release usually comes before the build, a project that switches this on is one that releases a harness after it was built, or one that accepts the gate with a reason.
+
 ## What happens when a value is missing
 
 If a test has no measured value, the line says *missing* and the harness is *incomplete*. If the limit is not set in the project, a measured value is *not compared*, the derivation names `generation.test_continuity_max_ohm` (or the insulation key) as missing, and nothing is made up. A harness with no record at all is *not started*: nothing is missing from it.
@@ -62,6 +74,7 @@ If a test has no measured value, the line says *missing* and the harness is *inc
 
 - It does not say that a harness, a wire or a test passed, and it does not sign anything off. The report says in its first lines that it is not a sign-off.
 - It applies no tolerance to a length unless the project sets one, and none to a voltage. It supplies no tolerance value.
+- It does not freeze the records when a harness is released, and the optional release gate does not look at a test value that is out of its limit.
 - It does not accept an out-of-limit value. A deviation of the *design* can be accepted with the tool's own mechanism (`deviation`), with a reason; an as-built value that is out of its limit is not a finding of a design rule, and the way to record that it was looked at is a note and a non-conformance text in the record itself, kept in the journal with who wrote it and when.
 - It does not read the numbers typed into the cells of the build workbook; the sheet to fill in is written by `export-asbuilt` and read back by `import-asbuilt`.
 

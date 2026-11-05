@@ -438,7 +438,8 @@ ASBUILT_TOLERANCE_KEYS = ("asbuilt_cut_tolerance_mm", "asbuilt_strip_tolerance_m
 
 def validate_asbuilt(project: Project) -> list[Issue]:
     """The optional as-built settings: the two tolerances of `generation.json` must be numbers of 0
-    or more. Not set (or null) is not a problem: it is today's behaviour (no tolerance)."""
+    or more, and `naming.json` `release_requires_asbuilt` must be true or false. Not set (or null)
+    is not a problem: it is today's behaviour (no tolerance, no gate)."""
     out: list[Issue] = []
     where = "config/generation.json"
     for key in ASBUILT_TOLERANCE_KEYS:
@@ -446,6 +447,10 @@ def validate_asbuilt(project: Project) -> list[Issue]:
         x = _num(raw)
         if raw is not None and (x is None or x < 0):
             out.append(Issue("error", "config_invalid", f"{where}: {key} must be a number of 0 or more.", where, f"generation.{key}"))  # fmt: skip
+    raw = _cfg(project, "naming").get("release_requires_asbuilt")
+    if raw is not None and not isinstance(raw, bool):
+        where = "config/naming.json"
+        out.append(Issue("error", "config_invalid", f"{where}: release_requires_asbuilt must be true or false.", where, "naming.release_requires_asbuilt"))  # fmt: skip
     return out
 
 

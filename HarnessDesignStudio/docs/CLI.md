@@ -888,6 +888,7 @@ release a harness: baseline, change log entry and lock (blocked while checks fai
 | `--checker CHECKER` | who checked it (title block; required in a project that requires different people) |
 | `--accept-placeholders REASON` | release although configuration files are still placeholders: the reason (at least 10 characters) is kept in the change log and the baseline |
 | `--accept-unapproved-parts REASON` | release although the harness uses parts that are not approved (or are example data): the reason (at least 10 characters) is kept in the change log and the baseline |
+| `--accept-asbuilt REASON` | release although the as-built records of the harness are incomplete or a recorded length is out of tolerance (only asked for in a project that sets release_requires_asbuilt in config/naming.json): the reason (at least 10 characters) is kept in the change log and the baseline |
 
 Examples:
 

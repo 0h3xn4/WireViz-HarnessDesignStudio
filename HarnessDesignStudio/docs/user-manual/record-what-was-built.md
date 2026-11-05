@@ -119,6 +119,10 @@ MISSING: W001 wire W001-003: cut length (m): to record
 
 `explain flatsat-build W001.T002` shows how one measured value was compared (kind `asbuilt-result`: the measured value and where it is recorded, the limit and its key, the margin and the check); [as-built results](../models/asbuilt.md) is the page of the model.
 
+## Optional: ask for the records at the release
+
+A project can make a release depend on the records: with `release_requires_asbuilt` set to `true` in `config/naming.json`, `release` is blocked while the harness has no records, while needed values are missing, or while a length is out of the tolerance of the project, unless the person releasing gives a reason with `--accept-asbuilt REASON` (kept in the change log). It is off by default, and the release does not freeze the records: see [release a harness](release-a-harness.md#optional-as-built-records-before-a-release) and [as-built results](../models/asbuilt.md#the-release-gate-optional).
+
 ## 5. The as-built report
 
 `export` writes two more files **only when the project has as-built records**: `outputs/system/asbuilt_report.md` (to print) and `outputs/system/asbuilt_report.csv` (the same lines for a spreadsheet), and the build workbook of a harness that has records has an extra sheet **As-built** before *About*. A project without records writes the files it always wrote, byte for byte (the output hashes are identical). The outputs are out of date, and the editor says so, when the records changed after they were written, although the design did not. The report says in its first lines that it is not a sign-off and does not say that a harness is compliant; it lists the summary of each harness, then the values out of their limit, missing, different from the design, stale and not compared, and the notes and non-conformances.

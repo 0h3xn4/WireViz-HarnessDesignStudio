@@ -25,7 +25,7 @@ from harness_design_studio.core.vcs.roles import CONFIG_KEY, default_name
 COMMANDS = ("review", "release", "revise", "diff", "compare", "log")
 OPTIONS = {
     "by": "--by", "comment": "--comment", "checker": "--checker", "date": "--date",
-    "reason": "--accept-placeholders / --accept-unapproved-parts",
+    "reason": "--accept-placeholders / --accept-unapproved-parts / --accept-asbuilt",
 }  # fmt: skip
 
 
@@ -80,6 +80,15 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         default=None,
         help="release although the harness uses parts that are not approved (or are example "
         "data): the reason (at least 10 characters) is kept in the change log and the baseline",
+    )
+    r.add_argument(
+        "--accept-asbuilt",
+        metavar="REASON",
+        default=None,
+        help="release although the as-built records of the harness are incomplete or a recorded "
+        "length is out of tolerance (only asked for in a project that sets release_requires_asbuilt "
+        "in config/naming.json): the reason (at least 10 characters) is kept in the change log "
+        "and the baseline",
     )
     who(add("revise", "start a new revision of a released harness"), True)
     d = add("diff", "show what changed in a harness since a baseline (or between two baselines)")
@@ -212,6 +221,7 @@ def _run(args: argparse.Namespace, rep: Report) -> int:
             outputs_folder=folder,
             accept_placeholders=args.accept_placeholders,
             accept_unapproved_parts=args.accept_unapproved_parts,
+            accept_asbuilt=args.accept_asbuilt,
         )
     else:
         plan = plan_new_revision(project, args.harness, by=by, comment=args.comment, when=when)

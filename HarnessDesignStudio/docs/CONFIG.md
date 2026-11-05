@@ -12,7 +12,7 @@ Rules live in `config/*.json` inside the project, not in code. There are seven f
 - [`derating.json`](#deratingjson)
 - [`generation.json`](#generationjson)
 - [`emc.json`](#emcjson)
-- [`naming.json`](#namingjson), with [`signal_counterparts`](#the-words-for-the-two-ends-of-a-line-since-190) and [`release_distinct_roles`](#different-people-in-a-release-since-190)
+- [`naming.json`](#namingjson), with [`signal_counterparts`](#the-words-for-the-two-ends-of-a-line-since-190), [`release_distinct_roles`](#different-people-in-a-release-since-190) and [`release_requires_asbuilt`](#release-needs-as-built-records-optional)
 - [`titleblock.json`](#titleblockjson)
 - [`model.json`](#modeljson)
 - [Optional values from the supplied standards (D-131)](#optional-values-from-the-supplied-standards-d-131)
@@ -105,6 +105,7 @@ harness-design-studio new my-design --annotate-config      # start a new project
 | `titleblock.fields` | known field names, each at most once, written as text (see below) |
 | `signal_counterparts` (naming) | a list of pairs of two different words made of letters, no word in two pairs; an empty list is allowed (see below) |
 | `release_distinct_roles` (naming) | `true` or `false` (see below) |
+| `release_requires_asbuilt` (naming) | `true` or `false` (see below) |
 
 Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limits of the project data itself (a wire gauge 0 to 40, a length 0 to 10000 m, a pin count 1 to 1000, ...) are in [`FILE_FORMAT.md`](FILE_FORMAT.md#number-ranges). While a harness is released, most of these files are frozen: see [`FILE_FORMAT.md`](FILE_FORMAT.md#what-a-release-freezes).
 
@@ -190,6 +191,16 @@ While it is `true`:
 - **The name from Git.** When `--by` is left out, the name that Git has for the person (`user.name`) is used and the command says so (`Name taken from Git (user.name): Ann Author.`); in the editor it is the name the dialog starts with when none was saved before. The `git` program is not started: the tool reads `user.name` from the Git configuration files, in this order, the last one winning: `$XDG_CONFIG_HOME/git/config` (or `~/.config/git/config`), `~/.gitconfig`, and the `config` of the repository around the project folder (`GIT_CONFIG_GLOBAL` replaces the first two, as it does for Git). `include` lines, the system file and the environment variable `GIT_AUTHOR_NAME` are not read. When Git has no name, nothing is made up and `--by` is required as before.
 
 `harness-design-studio config DIR --distinct-roles on` writes the key and `--distinct-roles off` takes it out again, so a project that switches it on and off again has its file back byte for byte; `config DIR` lists it while it is on. `naming.json` is not frozen by a release, so the setting can be switched at any time; it never changes a harness that is released already. It does not make the harness plans out of date. A value that is not `true` or `false` is an error of the check (`config/naming.json: release_distinct_roles must be true or false.`, rule `config-invalid`) and the setting stays off. The editor has no switch for it yet: in the editor the dialogs follow the file, and the file is edited with the command or by hand.
+
+### Release needs as-built records (optional)
+
+Off unless a project switches it on, and then a release works exactly as it did.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `release_requires_asbuilt` | not set (the same as `false`) | `true`: a harness is released only when its as-built records are complete and no recorded length is out of tolerance, or the person releasing gives a written reason |
+
+While it is `true`, `release` is blocked with `asbuilt_incomplete` while the harness has no as-built records or the values the sheet asks of it are not all recorded (the *needed values* of [as-built results](models/asbuilt.md): serial number, who built and inspected it, the lot of each part, every cut length, the crimp tool of every crimped pin, the result and the measured value of every test), and with `asbuilt_length_out` while a recorded cut or strip length is out of the tolerance the project sets (`asbuilt_cut_tolerance_mm`, `asbuilt_strip_tolerance_mm`, above; without a tolerance no length is ever out). A test value out of its limit is shown by the as-built report but is not part of this gate. `release DIR HARNESS --accept-asbuilt REASON` releases anyway: the reason (at least 10 characters) is added to the comment of the release in the change log and the baseline, with what was open at that time, like `--accept-placeholders`. A release does not freeze the as-built records in this step: they can be recorded and changed after it, and the gate looks at the records as they are when you release. The editor shows the blocker in its release window but has no field for the reason yet. A value that is not `true` or `false` is an error of the check (`config/naming.json: release_requires_asbuilt must be true or false.`, rule `config-invalid`) and the gate stays off. Setting it does not make the harness plans out of date; `naming.json` is not frozen by a release.
 
 ## `titleblock.json`
 | Key | Meaning |

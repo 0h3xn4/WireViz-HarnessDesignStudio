@@ -5,7 +5,9 @@ errors for the harness, harness plans current, every wire sized and measured, ou
 were exported from the current design, and engineering values that a person has reviewed (no
 configuration file marked as a placeholder) and parts that are approved (D-136). A release on
 placeholders or with parts that are not approved is possible only with a written reason, which is
-kept in the change log and the baseline (D-135). It writes a baseline (a frozen snapshot) and a change log
+kept in the change log and the baseline (D-135). A project that switches on `release_requires_asbuilt`
+(`config/naming.json`, off by default) also needs complete as-built records and no length out of
+tolerance, or a written reason of the same kind (`asbuilt_blockers`); the records are not frozen. It writes a baseline (a frozen snapshot) and a change log
 entry, and locks the harness (see `locks`). The only way to change it afterwards is a new
 revision, which keeps the old baseline.
 """
@@ -319,6 +321,128 @@ def part_note(project: Project, h: Harness, by: str, accept_unapproved: str | No
     )
 
 
+ASBUILT_GATE_KEY = "release_requires_asbuilt"  # config/naming.json, off by default
+
+
+def asbuilt_gate_on(project: Project) -> bool:
+    """Is the gate on as-built records switched on? Only the value true switches it on; a value that
+    is not true or false is an error of the configuration check, and the gate stays off."""
+    config = project.config.get("naming")
+    return config is not None and config.values.get(ASBUILT_GATE_KEY) is True
+
+
+@dataclass(frozen=True)
+class AsBuiltOpen:
+    """What stands between a harness and a release under the gate on as-built records."""
+
+    started: bool  # the harness has records at all
+    missing: int  # values the sheet asks of it that nobody recorded
+    stale: int  # records about something the design no longer has
+    first_open: str  # the first of them, in words
+    lengths_out: tuple[str, ...]  # "W001-002 cut length (m)": a length out of its tolerance
+
+    @property
+    def incomplete(self) -> bool:
+        return not self.started or self.missing > 0 or self.stale > 0
+
+
+def asbuilt_open(project: Project, hid: str) -> AsBuiltOpen:
+    """The as-built records of a harness against the 'needed values' of docs/models/asbuilt.md, from
+    the report the `asbuilt` command prints: a harness with no record is incomplete (nothing is
+    recorded), and a length is out when the project sets a tolerance and the record is beyond it."""
+    from harness_design_studio.core import asbuilt
+
+    report = asbuilt.asbuilt_report(project)
+    status = next((x for x in report.harnesses if x.harness_id == hid), None)
+    mine = [ln for ln in report.lines if ln.harness_id == hid]
+    first = next((ln for ln in mine if ln.status in (asbuilt.MISSING, asbuilt.STALE)), None)
+    out = tuple(
+        f"{ln.subject} {ln.field}" for ln in mine if ln.status == asbuilt.OUT and ln.kind == "wire"
+    )
+    return AsBuiltOpen(
+        started=status is not None and status.started,
+        missing=status.missing if status else 0,
+        stale=status.stale if status else 0,
+        first_open=f"{first.kind} {first.subject}: {first.field}" if first else "",
+        lengths_out=out,
+    )
+
+
+def asbuilt_blockers(project: Project, hid: str, accept_asbuilt: str | None) -> list[Blocker]:
+    """With the setting `release_requires_asbuilt` on: a harness whose as-built records are
+    incomplete, or have a length out of tolerance, is not released unless the person releasing gives
+    a written reason (kept in the change log, see `asbuilt_note`). Nothing without the setting."""
+    if not asbuilt_gate_on(project):
+        return []
+    state = asbuilt_open(project, hid)
+    out: list[Blocker] = []
+    accept = (
+        "or release with a written reason (command line: --accept-asbuilt REASON); the reason is "
+        "kept in the change log."
+    )
+    if state.incomplete:
+        if not state.started:
+            what = f"{hid} has no as-built records, and this project requires complete ones for a release"  # fmt: skip
+        else:
+            stale = f" and {state.stale} stale record(s)" if state.stale else ""
+            what = f"The as-built records of {hid} are incomplete: {state.missing} value(s) are missing{stale} (first: {state.first_open})"  # fmt: skip
+        out.append(
+            Blocker(
+                "asbuilt_incomplete",
+                f"{what} ({ASBUILT_GATE_KEY} in config/naming.json). Record what was built "
+                f"(`harness-design-studio export-asbuilt` writes the sheet, `import-asbuilt` reads "
+                f"it back), {accept}",
+                hid,
+            )
+        )
+    if state.lengths_out:
+        out.append(
+            Blocker(
+                "asbuilt_length_out",
+                f"{len(state.lengths_out)} as-built length(s) of {hid} are out of tolerance (first: "
+                f"{state.lengths_out[0]}). Check the length or the tolerance (asbuilt_cut_tolerance_mm, "
+                f"asbuilt_strip_tolerance_mm in config/generation.json), {accept}",
+                hid,
+            )
+        )
+    if not out or accept_asbuilt is None:
+        return out
+    if len(accept_asbuilt.strip()) < MIN_COMMENT:
+        return [
+            Blocker(
+                "asbuilt_reason_short",
+                f"The reason for releasing {hid} without complete as-built records needs at least "
+                f"{MIN_COMMENT} characters.",
+                hid,
+                "reason",
+            )
+        ]
+    return []
+
+
+def asbuilt_note(project: Project, hid: str, by: str, accept_asbuilt: str | None) -> str:
+    """The sentence added to the comment of a release made over the gate on as-built records ('' when
+    the setting is off, nothing is open, or no reason was given). It says what was open then."""
+    if accept_asbuilt is None or not asbuilt_gate_on(project):
+        return ""
+    state = asbuilt_open(project, hid)
+    parts: list[str] = []
+    if state.incomplete:
+        parts.append(
+            "incomplete (no records)"
+            if not state.started
+            else f"incomplete ({state.missing} value(s) missing, {state.stale} stale)"
+        )
+    if state.lengths_out:
+        parts.append(f"have a length out of tolerance ({_listed(list(state.lengths_out))})")
+    if not parts:
+        return ""
+    return (
+        f" [Released although the as-built records of {hid} are {' and '.join(parts)}; "
+        f"accepted by {by.strip()}: {accept_asbuilt.strip()}]"
+    )
+
+
 def release_blockers(
     project: Project,
     hid: str,
@@ -331,6 +455,7 @@ def release_blockers(
     accept_unapproved_parts: str | None = None,
     checker: str | None = None,
     check_roles: bool = True,
+    accept_asbuilt: str | None = None,
 ) -> list[Blocker]:
     out = _common(project, hid, by, comment, when)
     h = project.harnesses.get(hid)
@@ -340,13 +465,16 @@ def release_blockers(
         out.extend(role_blockers(project, h, by, checker or ""))
     out.extend(placeholder_blockers(project, accept_placeholders))
     out.extend(part_blockers(project, h, accept_unapproved_parts))
+    out.extend(asbuilt_blockers(project, hid, accept_asbuilt))
     notes = (
         placeholder_note(project, by, accept_placeholders)
         + part_note(project, h, by, accept_unapproved_parts)
+        + asbuilt_note(project, hid, by, accept_asbuilt)
         + release_note(project, h)
     )
     out.extend(text_blockers(accept_placeholders, "reason", "The reason for releasing on placeholders", limit=MAX_COMMENT, one_line=False))  # fmt: skip
     out.extend(text_blockers(accept_unapproved_parts, "reason", "The reason for releasing with parts that are not approved", limit=MAX_COMMENT, one_line=False))  # fmt: skip
+    out.extend(text_blockers(accept_asbuilt, "reason", "The reason for releasing without complete as-built records", limit=MAX_COMMENT, one_line=False))  # fmt: skip
     out.extend(text_blockers(checker, "checker", "The checker's name"))
     if len(comment.strip() + notes) > MAX_COMMENT and not any(
         b.code == "comment_long" for b in out
@@ -508,11 +636,12 @@ def plan_release(
     outputs_folder: Path | None,
     accept_placeholders: str | None = None,
     accept_unapproved_parts: str | None = None,
+    accept_asbuilt: str | None = None,
 ) -> ReleasePlan:
     blockers = release_blockers(
         project, hid, by=by, comment=comment, when=when, outputs_folder=outputs_folder,
         accept_placeholders=accept_placeholders, accept_unapproved_parts=accept_unapproved_parts,
-        checker=checker,
+        checker=checker, accept_asbuilt=accept_asbuilt,
     )  # fmt: skip
     plan = ReleasePlan(blockers=blockers, label=f"Release {hid}")
     if blockers:
@@ -533,6 +662,7 @@ def plan_release(
         comment.strip()
         + placeholder_note(project, by, accept_placeholders)
         + part_note(project, h, by, accept_unapproved_parts)
+        + asbuilt_note(project, hid, by, accept_asbuilt)
         + release_note(project, h)
     )
     entry = _entry(project, released, "release", by.strip(), when, full_comment)
