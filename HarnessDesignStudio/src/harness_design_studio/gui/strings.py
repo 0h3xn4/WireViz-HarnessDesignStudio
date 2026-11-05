@@ -3408,7 +3408,6 @@ CABLE_REFUSED_FULL = "{name} has no free pin: every pin is in a connection alrea
 CABLE_REFUSED_PLUGGED = (
     "{name} has a cable plug of a harness on it already. Pick another connector."
 )
-CABLE_TARGET = "the device"
 STEP_MOVE_LINK_END = "Move an end of connection {}"
 LINK_END_MOVED = "Connection {link} now ends on {connector}. Its pins were paired again."
 LINK_END_MOVED_NOTHING = "Connection {link} stays on {connector}."
