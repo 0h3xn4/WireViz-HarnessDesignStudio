@@ -1,7 +1,9 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """REQ-GUI-13. `diagram/marks.json`: where the person moved labels in the diagram. Optional, like
 the import record: a project without marks has no such file, its files and model hash are as they
-were, and a project with marks has the same model hash as without them."""
+were, and a project with marks has the same model hash as without them. A label that sits on a line
+is a position along it (`t`, a fraction of the length of the line); a bend or a route is an offset;
+a mark of release 1.14 and 1.15 (a free offset of a label) is still read."""
 
 import json
 
@@ -20,7 +22,7 @@ from harness_design_studio.core.schemas import schemas
 def marked():
     p = mini3()
     p.links["L1"] = Link(id="L1", a_connector="OBC-J01", b_connector="RW1-J02")
-    p.diagram_marks["link:L1"] = DiagramMark(id="link:L1", dx=12.5, dy=-30.0)
+    p.diagram_marks["link:L1"] = DiagramMark(id="link:L1", t=0.25)
     return p
 
 
@@ -45,7 +47,7 @@ def test_marks_survive_save_and_load(tmp_path) -> None:
     p = marked()
     save_project(p, tmp_path / "p")
     doc = json.loads((tmp_path / "p" / "diagram" / "marks.json").read_text())
-    assert doc == {"marks": [{"dx": 12.5, "dy": -30.0, "id": "link:L1"}]}
+    assert doc == {"marks": [{"id": "link:L1", "t": 0.25}]}
     loaded = load_project(tmp_path / "p")
     assert loaded.project.diagram_marks == p.diagram_marks
     assert not loaded.project.quarantine
@@ -91,7 +93,7 @@ def test_a_damaged_mark_is_set_aside_and_the_project_still_opens(tmp_path) -> No
 def test_a_mark_is_a_step_that_can_be_undone() -> None:
     p = mini3()
     h = History(p)
-    h.execute("move", [Put("diagram_marks", DiagramMark(id="interface:IF-TM-RW1", dx=3.0, dy=4.0))])
+    h.execute("move", [Put("diagram_marks", DiagramMark(id="interface:IF-TM-RW1", t=0.75))])
     assert "interface:IF-TM-RW1" in p.diagram_marks
     h.undo()
     assert p.diagram_marks == {}
@@ -106,12 +108,17 @@ def test_a_mark_has_a_schema_and_refuses_numbers_that_are_not_finite() -> None:
         DiagramMark(id="link:L1", dx=float("inf"), dy=0.0)
     with pytest.raises(ValueError):
         DiagramMark(id="link:L1", dx=0.0, dy=1e9)
+    for t in (-0.1, 1.5, float("nan")):
+        with pytest.raises(ValueError):
+            DiagramMark(id="link:L1", t=t)
 
 
 # ---- the marks of a thing that is gone ----------------------------------------------------------
 def with_all_marks():
     p = marked()
-    for key in ("end:L1:0", "end:L1:1", "bend:L1", "interface:IF-TM-RW1", "route:IF-TM-RW1"):
+    for key in ("end:L1:0", "end:L1:1", "interface:IF-TM-RW1"):
+        p.diagram_marks[key] = DiagramMark(id=key, t=0.4)
+    for key in ("bend:L1", "route:IF-TM-RW1"):
         p.diagram_marks[key] = DiagramMark(id=key, dx=5.0, dy=0.0)
     return p
 
@@ -154,13 +161,16 @@ def test_loading_drops_the_marks_of_a_thing_that_is_gone_without_a_word(tmp_path
     f = tmp_path / "p" / "diagram" / "marks.json"
     doc = json.loads(f.read_text())
     doc["marks"] += [
-        {"id": "link:L9", "dx": 1.0, "dy": 2.0},
+        {"id": "link:L9", "dx": 1.0, "dy": 2.0},  # (a mark of an earlier version)
+        {"id": "link:L8", "t": 0.5},
+        {"id": "end:L8:1", "t": 0.9},
+        {"id": "interface:IF-OLD", "t": 0.1},
         {"id": "route:IF-OLD", "dx": 1.0, "dy": 0.0},
     ]
     f.write_text(json.dumps(doc))
     loaded = load_project(tmp_path / "p")
-    assert "link:L9" not in loaded.project.diagram_marks
-    assert "route:IF-OLD" not in loaded.project.diagram_marks
+    for gone in ("link:L9", "link:L8", "end:L8:1", "interface:IF-OLD", "route:IF-OLD"):
+        assert gone not in loaded.project.diagram_marks
     assert len(loaded.project.diagram_marks) == 6
     assert not loaded.project.quarantine
     assert not [i for i in loaded.issues if "mark" in i.message.lower()]  # (silently)
@@ -195,4 +205,149 @@ def test_the_marks_of_a_deleted_connection_come_back_with_an_undo_and_never_touc
     assert "diagram/marks.json" not in layout.serialize(p)
     history.undo()
     assert [m.id for m in p.diagram_marks.values()] == ["link:L1"]  # (moved where it was)
-    assert p.diagram_marks["link:L1"].dx == 12.5
+    assert p.diagram_marks["link:L1"].t == 0.25
+
+
+# ---- the two forms of a mark: a place along the line, and the offset of 1.14 and 1.15 -----------
+def write_marks(folder, marks):
+    f = folder / "diagram" / "marks.json"
+    f.parent.mkdir(exist_ok=True)
+    f.write_text(json.dumps({"marks": marks}))
+    return f
+
+
+def test_a_mark_of_an_earlier_version_is_read_and_kept_as_it_is_until_the_diagram_turns_it() -> (
+    None
+):
+    old = DiagramMark.model_validate({"id": "interface:IF-TM-RW1", "dx": 12.5, "dy": -30.0})
+    assert (old.dx, old.dy, old.t) == (12.5, -30.0, None)
+    new = DiagramMark.model_validate({"id": "interface:IF-TM-RW1", "t": 0.5})
+    assert (new.dx, new.dy, new.t) == (None, None, 0.5)
+    assert old.model_dump(mode="json") == {"id": "interface:IF-TM-RW1", "dx": 12.5, "dy": -30.0}
+    assert new.model_dump(mode="json") == {"id": "interface:IF-TM-RW1", "t": 0.5}
+    # a bend and a route stay as they were written by 1.15.0, byte for byte, a zero included
+    route = DiagramMark(id="route:IF-TM-RW1", dx=-14.0, dy=0.0)
+    assert route.model_dump(mode="json") == {"id": "route:IF-TM-RW1", "dx": -14.0, "dy": 0.0}
+
+
+def test_an_old_file_loads_and_is_written_back_as_it_was(tmp_path) -> None:
+    p = marked()
+    del p.diagram_marks["link:L1"]
+    save_project(p, tmp_path / "p")
+    marks = [  # (sorted by ID, as the tool writes them)
+        {"dx": 5.0, "dy": 0.0, "id": "bend:L1"},
+        {"dx": 12.5, "dy": -30.0, "id": "link:L1"},
+    ]
+    f = write_marks(tmp_path / "p", marks)
+    loaded = load_project(tmp_path / "p")
+    assert not loaded.project.quarantine
+    assert loaded.project.diagram_marks["link:L1"].dx == 12.5
+    save_project(loaded.project, tmp_path / "p")  # (the diagram has not looked at it: as it was)
+    assert json.loads(f.read_text()) == {"marks": marks}
+
+
+def test_marks_of_both_forms_live_in_one_file_and_neither_changes_the_hash(tmp_path) -> None:
+    p = marked()
+    p.diagram_marks["end:L1:1"] = DiagramMark(id="end:L1:1", t=1.0)
+    p.diagram_marks["bend:L1"] = DiagramMark(id="bend:L1", dx=-8.0, dy=0.0)
+    p.diagram_marks["interface:IF-TM-RW1"] = DiagramMark(id="interface:IF-TM-RW1", dx=3.0, dy=4.0)
+    plain = marked()
+    plain.diagram_marks.clear()
+    assert layout.model_hash(p) == layout.model_hash(plain)
+    save_project(p, tmp_path / "p")
+    doc = json.loads((tmp_path / "p" / "diagram" / "marks.json").read_text())
+    assert [m["id"] for m in doc["marks"]] == sorted(m["id"] for m in doc["marks"])
+    assert {m["id"]: sorted(m) for m in doc["marks"]} == {
+        "bend:L1": ["dx", "dy", "id"],
+        "end:L1:1": ["id", "t"],
+        "interface:IF-TM-RW1": ["dx", "dy", "id"],
+        "link:L1": ["id", "t"],
+    }
+    assert load_project(tmp_path / "p").project.diagram_marks == p.diagram_marks
+
+
+BAD_MARKS = [
+    {"id": "link:L1", "t": 1.5},  # outside the line
+    {"id": "link:L1", "t": -0.2},
+    {"id": "link:L1", "t": "half"},
+    {"id": "link:L1", "t": None},  # no place at all
+    {"id": "link:L1"},
+    {"id": "link:L1", "dx": 3.0},  # an offset needs both
+    {"id": "link:L1", "t": 0.5, "dx": 1.0, "dy": 1.0},  # two places
+    {"id": "bend:L1", "t": 0.5},  # a bend is an offset
+    {"id": "route:IF-TM-RW1", "t": 0.5},
+    {"id": "link:L1", "t": 0.5, "colour": "red"},  # a field nobody knows
+]
+
+
+@pytest.mark.parametrize("bad", BAD_MARKS, ids=lambda m: json.dumps(m))
+def test_a_damaged_mark_of_any_kind_is_set_aside_as_today_and_the_rest_is_kept(
+    tmp_path, bad
+) -> None:
+    save_project(marked(), tmp_path / "p")
+    write_marks(tmp_path / "p", [bad, {"id": "interface:IF-TM-RW1", "t": 0.3}])
+    loaded = load_project(tmp_path / "p")
+    assert set(loaded.project.diagram_marks) == {"interface:IF-TM-RW1"}
+    assert [q.file for q in loaded.project.quarantine] == ["diagram/marks.json"]
+    assert layout.model_hash(loaded.project) == layout.model_hash(marked())  # (no design harmed)
+
+
+def test_a_mark_of_a_kind_this_tool_does_not_know_is_kept_and_never_an_orphan(tmp_path) -> None:
+    save_project(marked(), tmp_path / "p")
+    write_marks(
+        tmp_path / "p", [{"id": "later:thing", "t": 0.5}, {"id": "later:old", "dx": 1.0, "dy": 2.0}]
+    )
+    loaded = load_project(tmp_path / "p")
+    assert set(loaded.project.diagram_marks) == {"later:thing", "later:old"}
+    assert not loaded.project.quarantine
+    assert not layout.mark_is_orphan(loaded.project, "later:thing")
+
+
+def test_the_places_of_a_deleted_thing_are_not_written_and_come_back_with_the_undo(
+    tmp_path,
+) -> None:
+    p = with_all_marks()
+    history = History(p)
+    history.execute("delete", [Delete("links", "L1")])
+    save_project(p, tmp_path / "p")
+    doc = json.loads((tmp_path / "p" / "diagram" / "marks.json").read_text())
+    assert {m["id"]: m.get("t") for m in doc["marks"]} == {
+        "interface:IF-TM-RW1": 0.4,
+        "route:IF-TM-RW1": None,
+    }
+    history.undo()
+    save_project(p, tmp_path / "p")
+    doc = json.loads((tmp_path / "p" / "diagram" / "marks.json").read_text())
+    assert {m["id"]: m.get("t") for m in doc["marks"]} == {
+        "bend:L1": None,
+        "end:L1:0": 0.4,
+        "end:L1:1": 0.4,
+        "interface:IF-TM-RW1": 0.4,
+        "link:L1": 0.25,
+        "route:IF-TM-RW1": None,
+    }
+
+
+def test_the_schema_of_the_file_names_the_place_and_the_offset() -> None:
+    schema = json.dumps(schemas()["diagram-marks"])
+    assert '"t"' in schema and '"dx"' in schema and '"dy"' in schema
+
+
+def test_no_written_output_changes_with_marks_of_either_form_not_even_the_block_diagram() -> None:
+    """The block diagram that is written has the router's own places for its labels: where the
+    person put a label in the editor is not in any output."""
+    from harness_design_studio.core.outputs.build import build_outputs
+
+    plain, with_marks = marked(), marked()
+    del plain.diagram_marks["link:L1"]
+    for key, mark in {
+        "interface:IF-TM-RW1": DiagramMark(id="interface:IF-TM-RW1", t=0.9),
+        "route:IF-TM-RW1": DiagramMark(id="route:IF-TM-RW1", dx=30.0, dy=0.0),
+        "end:L1:0": DiagramMark(id="end:L1:0", dx=3.0, dy=4.0),  # (an old one)
+    }.items():
+        with_marks.diagram_marks[key] = mark
+    a = build_outputs(plain, drawings=False)
+    b = build_outputs(with_marks, drawings=False)
+    assert a.files.keys() == b.files.keys()
+    assert {name for name in a.files if a.files[name] != b.files[name]} == set()
+    assert any(name.startswith("system/block_diagram") for name in a.files)

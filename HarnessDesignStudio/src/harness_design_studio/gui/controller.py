@@ -24,6 +24,7 @@ from harness_design_studio.core import (
     edit,
     first_connector,
     journal,
+    linepos,
     links,
     part_approval,
 )
@@ -935,6 +936,29 @@ class EditorController(QObject):
         kind, _, name = mark_id.partition(":")
         step = strings.STEP_MOVE_ROUTE if kind == "route" else strings.STEP_MOVE_LABEL
         return self.run(step.format(name), [Put("diagram_marks", mark)])
+
+    def slide_mark(self, mark_id: str, t: float) -> bool:
+        """Remember that a label sits at the fraction `t` of the length of its line (one undoable
+        step; the same place again is nothing to do). Diagram layout only: no model hash, no
+        written output."""
+        mark = DiagramMark(id=mark_id, t=round(t, linepos.ROUND_TO))
+        if self.mark_of(mark_id) == mark:
+            return True
+        return self.run(
+            strings.STEP_MOVE_LABEL.format(mark_id.partition(":")[2].partition(":")[0]),
+            [Put("diagram_marks", mark)],
+        )
+
+    def adopt_positions(self, positions: Mapping[str, float]) -> None:
+        """Write the marks of an earlier version, a free offset, in the form of today (a position
+        along the line) once the diagram has worked out the nearest point of the line. Nothing the
+        person did: no undo step, no change of the project's state; the next save writes the new
+        form."""
+        for mark_id, t in positions.items():
+            if mark_id in self.project.diagram_marks:
+                self.project.diagram_marks[mark_id] = DiagramMark(
+                    id=mark_id, t=round(t, linepos.ROUND_TO)
+                )
 
     def reset_mark(self, mark_id: str) -> bool:
         """Put a label back to its automatic place (one undoable step; nothing to do if it is)."""
