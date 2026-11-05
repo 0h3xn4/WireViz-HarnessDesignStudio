@@ -489,10 +489,10 @@ def test_the_card_carries_the_picture_of_its_kind_of_unit(win) -> None:
     scene = win.view.dscene
     got = {u: scene.unit_items[u].facts().glyph for u in win.ctl.project.units}
     assert got == {u: describe.unit_glyph(win.ctl.project, u) for u in win.ctl.project.units}
-    # the picture is drawn: the header's left corner is not empty
+    # the picture is drawn, in the badge of the card (REQ-GUI-20: tests/test_ui_device_looks.py)
     img = render_unit(win, "OBC1")
-    ink = win.theme.color("text-muted")
-    assert count_colour(img, QRectF(8, 8, 18, 14), ink, tol=120) >= 6
+    ink = win.theme.color("accent.text")
+    assert count_colour(img, QRectF(6, 5, 20, 20), ink, tol=60) >= 6
 
 
 def test_the_header_counts_all_connectors_and_the_row_never_drops_groups_silently(win) -> None:

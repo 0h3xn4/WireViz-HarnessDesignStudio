@@ -46,7 +46,7 @@ from PySide6.QtWidgets import (
 from harness_design_studio.core import describe, edit, linepos, routing
 from harness_design_studio.core.model import Project, mark_is_along
 from harness_design_studio.gui import canvas_badges as cbadges
-from harness_design_studio.gui import glyphs, strings
+from harness_design_studio.gui import device_kinds, device_looks, glyphs, strings
 from harness_design_studio.gui.canvas_links import (
     HIT_WIDTH,
     LABEL_GAP,
@@ -129,6 +129,7 @@ class CardFacts:
     groups: tuple[tuple[tuple[str, int, str], int], ...]  # ((family, pins, gender), how many)
     total: int  # all its box connectors
     glyph: str  # describe.unit_glyph
+    looks: device_kinds.Looks  # what kind of equipment it is, and so how its card looks
 
 
 @dataclass
@@ -315,7 +316,11 @@ class UnitItem(QGraphicsItem):
                 fam = describe.connector_family(project, str(c.id))
                 counts[fam] = counts.get(fam, 0) + 1
             glyph = describe.unit_glyph(project, self.unit_id, self.dscene.unit_categories())
-            f = self._facts = CardFacts(key, tuple(counts.items()), len(conns), glyph)
+            u = project.units.get(self.unit_id)
+            looks = device_kinds.looks_of(
+                self.unit_id, u.name if u else "", u.subsystem if u else "", glyph
+            )
+            f = self._facts = CardFacts(key, tuple(counts.items()), len(conns), glyph, looks)
         return f
 
     def _tag_specs(self, unit: object, state: str) -> list[tuple[str, str, bool, str]]:
@@ -508,6 +513,10 @@ class UnitItem(QGraphicsItem):
         painter.setBrush(QBrush(th.color("surface-2")))
         painter.drawRoundedRect(QRectF(1, 1, W - 2, HEADER_H), 7, 7)
         painter.drawRect(QRectF(1, HEADER_H - 8, W - 2, 9))
+        facts = self.facts()
+        device_looks.paint_header(  # the band and the badge of the kind of equipment
+            painter, th, facts.looks, body, QRectF(6, 5, 20, 20)
+        )
         if st.locks:  # a released harness locks the unit: a faint tint (and the lock mark below)
             tint = QColor(th.color("released"))
             tint.setAlphaF(RELEASED_TINT)
@@ -517,9 +526,6 @@ class UnitItem(QGraphicsItem):
         small = QFont(painter.font())
         small.setPixelSize(th.type("small"))
         card = self.card_layout(unit, st, state)
-        facts = self.facts()
-        glyph_y = (HEADER_H - glyphs.LINK_GLYPH_H) / 2
-        glyphs.draw_unit_glyph(painter, 8, glyph_y, facts.glyph, th.color("text-muted"))
         painter.setFont(bold)
         painter.setPen(th.color("text"))
         painter.drawText(
@@ -663,14 +669,15 @@ class UnitItem(QGraphicsItem):
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(tint))
             painter.drawRect(QRectF(0, 0, W, h))
-        marks, marks_px, k = self._overview_marks(th, st, lod)
+        lead = device_looks.paint_overview(painter, th, self.facts().looks, W, h, lod)
+        marks, marks_px, k = self._overview_marks(th, st, lod, lead)
         strip = marks_px / max(lod, 0.01)  # (scene units)
         self._paint_overview_marks(painter, th, marks, lod, k)
         font = QFont(painter.font())
         font.setBold(True)
         # the ID stays readable: 12 screen pixels where there is room, smaller (never under 8) where
         # the marks take some of the box; it is cut with an ellipsis only below that
-        room = max(1.0, W - 16 - strip - (4 if marks else 0))
+        room = max(1.0, W - 8 - lead - strip - (4 if marks else 0))
         sc = self.dscene
         id_px = sc.text_width(sc.px_font(th.type("small")), self.unit_id) * 1.1
         px = min(float(METRICS.legible_px), max(8.0, room * lod / max(id_px, 1.0) * 12.0))
@@ -679,14 +686,14 @@ class UnitItem(QGraphicsItem):
         painter.setFont(font)
         painter.setPen(th.color("text"))
         painter.drawText(
-            QRectF(8, 0, room, h),
+            QRectF(lead, 0, room, h),
             Qt.AlignmentFlag.AlignVCenter,
             elide(painter.fontMetrics(), self.unit_id, room, middle=True),
         )
         self._paint_highlight(painter, th, QRectF(0, 0, W, h))
 
     def _overview_marks(
-        self, th: ThemeManager, st: ObjectState, lod: float
+        self, th: ThemeManager, st: ObjectState, lod: float, lead: float = 8.0
     ) -> tuple[list[tuple[str, str]], float, float]:
         """The marks an overview box has room for, their width in screen pixels and the share of
         their normal size they are drawn at (a box shorter than a badge gets a smaller one): the
@@ -705,7 +712,7 @@ class UnitItem(QGraphicsItem):
         k = min(1.0, (self.height() - 8) * lod / METRICS.badge_h)
         id_px = sc.text_width(font, self.unit_id) * 1.1
         spare = (
-            W * lod - 8 - id_px * 8 / 12
+            (W - lead + 8) * lod - 8 - id_px * 8 / 12
         )  # what is left of the box when the ID is at its smallest
         for variant in (full, [(k, "") for k, _t in full], full[:1] and [(full[0][0], "")]):
             if not variant:
@@ -922,6 +929,8 @@ class UnitItem(QGraphicsItem):
             u = self.ctl.project.units.get(self.unit_id)
             conn = self.ctl.project.connectors.get(cid) if cid else None
             full = f"{u.id}: {u.name}" if u else ""
+            if u:  # what the card's picture and colour mean, in words
+                full += "\n" + device_kinds.sentence(self.facts().looks, u.name, u.id)
             text = f"{full}\n{conn.name}" if conn else full  # (the whole text, if elided)
             locks = self.dscene.states.of("connector", cid).locks if cid else ()
             if locks:
