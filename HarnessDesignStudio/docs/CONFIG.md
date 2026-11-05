@@ -213,6 +213,7 @@ Optional, and absent from a new project: a project that does not have it behaves
 | `resistivity_reference_temperature_c` | 20 | degC, for `dc_at_ambient`: the temperature `generation.conductor_resistivity_ohm_m` is valid at: -100 to 200 |
 | `mass_model` | `connectors_and_wires` | `connectors_and_wires` or `full_bom` (every part of the bill of materials, with the mass of contacts and accessories where the library has it); assumption A-MASS-SCOPE |
 | `pin_allocation_categories` | `["power", "ground"]` | the interface categories allocated first, in this order, and counted as the power group for the gap to the signal pins |
+| `pin_fit_strategy` | `first_fit` | which free run of pins a group of signals takes on a device connector: `first_fit` (from pin 1 up), `last_fit` (from the last pin down, power at the end, the signals below it) or `spread` (a free pin between one interface and the next when there is room, else first fit); assumption A-PIN-FIRST-FIT |
 | `readiness_blocking` | the first four checks of the build workbook | the names of the checks of the build workbook whose open items mean *Ready to build: no*; the others are notes |
 
 A key that is not in this table is an error that names it, so a typo is not silent. The same tables and ranges are in `core/settings.py`, from which `settings` and the explanations (`explain`) read; a test checks that every key of every file is described there and here.

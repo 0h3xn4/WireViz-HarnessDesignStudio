@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Changed for you to know
+
+- **The pin fit strategy is a model you can choose (`model.pin_fit_strategy`, requirement R4).** `first_fit` (the default, what the tool always did: the first free run of pins from pin 1 up), `last_fit` (from the last pin down, power on the last pins and the signals below it) and `spread` (a free pin between one interface and the next when there is room, else first fit). Locked pins, fixed pinouts, the gaps between power and signals and between power and return hold in every strategy. A project without the key generates the same files byte for byte; with it, `explain DIR CONNECTOR.PIN` names the strategy in force and its rule, a change makes the harness plans out of date, and generating again re-places the pins (an earlier allocation is kept only while it was made by the same strategy). See [selectable models](docs/models/selectable-models.md#pin-fit-strategy).
+
 ## 1.14.0 (2026-11-04; not a statement of compliance)
 
 Version 1.14.0 is the **quick-diagram release** (decision D-197). Workshop and owner feedback said that the tool was too much for a systems engineer who only wants a quick block diagram, that labels on the diagram lay on top of each other, and that things should be movable. This release answers with a **Quick mode** (off by default, on top of any role) with one-click **Connect**, a new **Export diagram** command, a visible **Role** button in the top bar, a diagram whose labels and connector boxes no longer overlap, and labels you can drag to where you want them. The calculations, the 39 design rules and the numbers are as in 1.13.0.

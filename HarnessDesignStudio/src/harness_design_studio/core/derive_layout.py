@@ -142,6 +142,16 @@ def pin_allocation_derivation(project: Project, connector_id: str, pin_id: str) 
             + ("" if gap_return_raw is not None else " (not set: 0 used)"),
         ),
     ]
+    fit = pinmod.strategy(project)
+    if fit != pinmod.DEFAULT_STRATEGY:  # the default keeps its text: only another model is named
+        inputs.append(
+            Input(
+                "Pin fit strategy (the model in force)",
+                fit,
+                "",
+                f"config/model.json: pin_fit_strategy ({origin_text(project, 'model', 'pin_fit_strategy')})",
+            )
+        )
     steps: list[Step] = [
         Step(
             "Position on the connector",
@@ -186,14 +196,25 @@ def pin_allocation_derivation(project: Project, connector_id: str, pin_id: str) 
     ahead = box.pins[:index]
     free_ahead = [p.id for p in ahead if p.interface_id is None and not p.signal and not p.locked]
     taken_ahead = [p.id for p in ahead if p.interface_id is not None or p.signal]
+    if fit != pinmod.DEFAULT_STRATEGY:
+        steps.append(
+            text_step(
+                "Model in force",
+                f"{fit}: {pinmod.STRATEGY_TEXT[fit]}",
+                "a group of signals takes " + pinmod.STRATEGY_TEXT[fit],
+            )
+        )
     steps.append(
         text_step(
             "Pins ahead of it in the list",
             f"{len(taken_ahead)} carry an interface and {len(free_ahead)} are unassigned"
             + (f" ({_names(free_ahead)})" if free_ahead else ""),
-            "first fit: an unassigned pin ahead is a gap, a spare pin, or a place kept for a locked or earlier choice"
-            if free_ahead
-            else "first fit: nothing free lies ahead of it",
+            f"{fit.replace('_', ' ')}: "
+            + (
+                "an unassigned pin ahead is a gap, a spare pin, or a place kept for a locked or earlier choice"
+                if free_ahead
+                else "nothing free lies ahead of it"
+            ),
         )
     )
     lines = why.reasons(project, "pin", f"{box.id}.{pin.id}")
@@ -213,7 +234,11 @@ def pin_allocation_derivation(project: Project, connector_id: str, pin_id: str) 
         "Pin allocation",
         None,
         "",
-        "the interfaces are placed in the order of their category (power first), each group on the first free pins after the gap; locked pins stay",
+        "the interfaces are placed in the order of their category (power first), each group on the first free pins after the gap; locked pins stay"
+        if fit == pinmod.DEFAULT_STRATEGY
+        else "the interfaces are placed in the order of their category (power first), each group on "
+        + pinmod.STRATEGY_TEXT[fit]
+        + "; locked pins stay",
         tuple(inputs),
         tuple(steps),
         None,

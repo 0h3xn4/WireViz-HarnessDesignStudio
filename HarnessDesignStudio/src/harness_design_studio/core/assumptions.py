@@ -204,9 +204,11 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "harness, is never moved. A pin a person typed in without a lock stays. A connector with a "
             "fixed pinout gives each signal the free pin of that name. A previous allocation is kept "
             "while it is still valid, so a small change makes a small difference. Pin neighbours are the "
-            "neighbours in the list of pins, not a measured position.",
-            "built in",
-            "core/generate/pins.py (allocate)",
+            "neighbours in the list of pins, not a measured position. This is the default fit; the setting "
+            "model.pin_fit_strategy selects another: last_fit (the last free run, from the last pin down, "
+            "power at the end) or spread (a free pin between one interface and the next when there is room).",
+            "setting",
+            "config/model.json: pin_fit_strategy (default first_fit); core/generate/pins.py (allocate)",
         ),
         Assumption(
             "A-SEGMENT-MODE",

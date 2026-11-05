@@ -42,7 +42,8 @@ from harness_design_studio.core.wirecolours import signal_colour
 from . import bundle, shields
 from .lengths import generated_length, path_length, path_trail
 from .naming import Namer, namer_for
-from .pins import Allocation, Request, allocate
+from .pins import DEFAULT_STRATEGY, STRATEGY_TEXT, Allocation, Request, allocate, earlier_strategy
+from .pins import strategy as pin_strategy
 from .segmentation import Group, orient, segment
 from .sizing import size_wire
 from .wiring import links_of
@@ -433,6 +434,12 @@ def _allocate_pins(
     if ctx.gen.get("power_signal_gap_pins") is None:
         ctx.note("rules", "pin-allocation: power-to-signal pin gap is a placeholder (0 used)")
     ret_gap = int(_num(ctx.gen.get("power_return_gap_pins")) or 0)
+    fit = pin_strategy(p)
+    # An earlier allocation is kept while it is valid, but only if it was made by the same fit:
+    # the strategy of a non-default model is recorded below, so a change of model re-places the pins.
+    earlier = earlier_strategy(p)
+    if fit != DEFAULT_STRATEGY:
+        ctx.note("model:pin_fit_strategy", f"{fit}: {STRATEGY_TEXT[fit]}")
     for k, cid in enumerate(sorted(requests)):
         tick(0.05 + 0.15 * k / max(1, len(requests)), f"Allocating pins of {cid}")
         box = p.connectors[cid]
@@ -469,11 +476,12 @@ def _allocate_pins(
         res = allocate(
             work,
             requests[cid],
-            {k2: v for k2, v in previous.items() if k2[0] not in frozen_ifaces},
+            {k2: v for k2, v in previous.items() if k2[0] not in frozen_ifaces and earlier == fit},
             gap,
             held,
             ret_gap,
             settings.names(ctx.project, "model", "pin_allocation_categories"),
+            fit,
         )
         ctx.alloc[cid] = res
         for iid, msg in res.errors:

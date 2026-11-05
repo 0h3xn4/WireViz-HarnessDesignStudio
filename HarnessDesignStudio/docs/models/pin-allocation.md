@@ -24,7 +24,7 @@ On one device connector the interfaces are placed in this order:
 1. The categories listed in `model.pin_allocation_categories`, in the order listed (power, then ground, by default). They count as the *power group*: the signals of one interface are kept together as one block, with `power_return_gap_pins` unassigned contacts between them, and the first signal pin comes after `power_signal_gap_pins` free pins.
 2. Every other category, by interface ID inside a category.
 
-Inside that order each group of signals (a pair, a power block, a single signal) takes the **first free run of pins** in the order of the pin list, starting after the gap. A pair sits on neighbouring pins. Three things override the order:
+Inside that order each group of signals (a pair, a power block, a single signal) takes the **first free run of pins** in the order of the pin list, starting after the gap (this is the strategy `first_fit`; the setting `model.pin_fit_strategy` can choose `last_fit`, which fills from the last pin down, or `spread`, which leaves a free pin between interfaces, and `explain` names the one in force). A pair sits on neighbouring pins. Three things override the order:
 
 - a pin that is **locked** is never moved, and a pin held by a released harness stays;
 - a connector with a **fixed pinout** (the device design names every pin) gives each signal the free pin of its name;
@@ -37,6 +37,7 @@ Inside that order each group of signals (a pair, a power block, a single signal)
 | The signal and interface on the pin | The device connector (the generated assignment, or a typed one). |
 | The category of the interface | The interface type. |
 | The order of the categories | `config/model.json: pin_allocation_categories` (default `power, ground`). |
+| The pin fit strategy | `config/model.json: pin_fit_strategy` (default `first_fit`). |
 | Pins between power and signal | `config/generation.json: power_signal_gap_pins` (0 is used, as a placeholder, while it is not set). |
 | Contacts between power and return | `config/generation.json: power_return_gap_pins` (ECSS-Q-ST-30-11C requirement 0140052 is cited by ID). |
 | Locked, fixed | The pin. |
@@ -45,7 +46,7 @@ Inside that order each group of signals (a pair, a power block, a single signal)
 ## The assumptions it rests on
 
 - **A-PIN-ORDER.** The order of the categories and the gaps are settings.
-- **A-PIN-FIRST-FIT.** First fit in the order of the pin list; an earlier choice is kept; locks and fixed pinouts win. Neighbours are neighbours in the list of pins, not a measured position.
+- **A-PIN-FIRST-FIT.** First fit in the order of the pin list (the default of the setting `model.pin_fit_strategy`; `last_fit` and `spread` are the alternatives, see [selectable models](selectable-models.md#pin-fit-strategy)); an earlier choice is kept while it was made by the same strategy; locks and fixed pinouts win. Neighbours are neighbours in the list of pins, not a measured position.
 
 ## A worked example
 
