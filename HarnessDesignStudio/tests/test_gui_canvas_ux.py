@@ -1020,11 +1020,13 @@ def test_dragging_a_unit_at_100_units_is_fast(qtbot, tmp_path) -> None:
     w = make_window(tmp_path)
     qtbot.addWidget(w)
     w.ctl._install(build(), None, None)
+    QApplication.processEvents()  # a new project is fitted here, after what the test set up
     w.view.zoom_100()
     uid = sorted(w.ctl.project.units)[40]
     w.view.centerOn(w.view.dscene.unit_items[uid])
     QApplication.processEvents()
     start = unit_point(w, uid)
+    assert w.view.viewport().rect().contains(start)  # a drag of a device that is in view
     QTest.mousePress(w.view.viewport(), LEFT, pos=start)
     QApplication.processEvents()
     spent = 0.0
@@ -1038,3 +1040,63 @@ def test_dragging_a_unit_at_100_units_is_fast(qtbot, tmp_path) -> None:
     per_move = spent / 8 * 1000
     QTest.mouseRelease(w.view.viewport(), LEFT, pos=start + QPoint(0, 64))
     assert per_move < time_limit(60), per_move  # was 400 to 1,200 ms: every link was routed
+
+
+@pytest.mark.perf
+def test_dragging_a_unit_repaints_only_what_it_touches(qtbot, tmp_path, monkeypatch) -> None:
+    """REQ-GUI-22. A drag step in view repaints the parts of the diagram the device touches and
+    does not scroll the view: the pointer is far from the edge, and the scene growing and the
+    view keeping its centre (the free canvas) must not repaint every item. Counted over the
+    event loop that follows each move, as the screen is drawn, not in the handler of the move."""
+    from harness_design_studio.gui import canvas as cv
+    from tools.bench_stress import build
+
+    painted = {"links": 0, "area": 0.0}
+    link_paint, background = cv.LinkItem.paint, cv.DiagramView.drawBackground
+
+    def count_link(self, *args, **kwargs):
+        painted["links"] += 1
+        return link_paint(self, *args, **kwargs)
+
+    def count_area(self, painter, rect):
+        painted["area"] += rect.width() * rect.height() * self.zoom_scale() ** 2  # in pixels
+        return background(self, painter, rect)
+
+    # (before the items exist: a method set on the class later is not the one Qt calls)
+    monkeypatch.setattr(cv.LinkItem, "paint", count_link)
+    monkeypatch.setattr(cv.DiagramView, "drawBackground", count_area)
+    w = make_window(tmp_path)
+    qtbot.addWidget(w)
+    w.ctl._install(build(), None, None)
+    QApplication.processEvents()  # a new project is fitted here, after what the test set up
+    w.view.zoom_100()
+    uid = sorted(w.ctl.project.units)[40]
+    w.view.centerOn(w.view.dscene.unit_items[uid])
+    qtbot.wait(150)  # let the timers of a new project (states, minimap) and the first paint finish
+    vp = w.view.viewport()
+    start = unit_point(w, uid)
+    assert vp.rect().adjusted(60, 60, -60, -60).contains(start)  # far from the scrolling edge
+    seen = w.view.mapToScene(vp.rect()).boundingRect()
+    crossing = sum(
+        1 for link in w.view.dscene.link_items.values() if link.sceneBoundingRect().intersects(seen)
+    )
+    assert crossing > 100  # a diagram where many links cross the view: all of them could repaint
+    scroll = (w.view.horizontalScrollBar().value(), w.view.verticalScrollBar().value())
+    QTest.mousePress(vp, LEFT, pos=start)
+    QApplication.processEvents()
+    per_step = []
+    for k in range(1, 7):
+        painted.update(links=0, area=0.0)
+        QTest.mouseMove(vp, pos=start + QPoint(0, 20 * k))
+        QApplication.processEvents()
+        per_step.append((painted["links"], painted["area"] / (vp.width() * vp.height())))
+    qtbot.wait(100)  # longer than a tick of the edge scroll: it must not have started
+    QTest.mouseRelease(vp, LEFT, pos=start + QPoint(0, 120))
+    now = (w.view.horizontalScrollBar().value(), w.view.verticalScrollBar().value())
+    assert now == scroll  # was: the view followed the device each tick and repainted it all
+    assert sum(links for links, _ in per_step) > 0  # the steps were drawn
+    assert max(links for links, _ in per_step) <= 2 * crossing, per_step  # drawn once per step
+    areas = sorted(area for _, area in per_step)
+    # the changed part of the view, never the whole of it (the middle step: a late paint of the
+    # whole window by the platform may land in one step on a loaded machine)
+    assert areas[len(areas) // 2] <= 0.9, per_step
