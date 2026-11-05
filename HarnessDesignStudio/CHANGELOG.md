@@ -6,6 +6,7 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ### Changed for you to know
 
+- **`diagram/marks.json` no longer keeps the marks of a deleted connection or interface.** What you dragged on a connection or an interface (label, connector boxes, bend) is dropped from the file when the thing is deleted: it is left out when the project is saved and dropped, silently, when a project is opened; a project whose marks all vanish loses the file as before. While the project is open the marks wait in memory, so **Undo** of the delete gets them back. The file is still outside the model hash and every written output.
 - **Quick mode is quieter (leftovers of 1.14.0).** With Quick mode on, the status bar no longer shows the automatic *Checking the design rules* progress and the project tree no longer shows the *N pending* and *Placeholder* chips of **Configuration**; both come back when you leave Quick mode. The check itself still runs in the background, and a check you ask for (Ctrl+K, *Check*) still shows its progress. Only what the window shows changes: no project file, model hash or written output does.
 
 ## 1.14.0 (2026-11-04; not a statement of compliance)
