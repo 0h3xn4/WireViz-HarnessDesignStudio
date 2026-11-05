@@ -886,6 +886,7 @@ def test_a_cell_edit_is_under_100_ms_at_1000_pins_and_100_units(qtbot, theme) ->
     # collection takes about half a second; a collection that happens to start inside an edit
     # would time the collector, not the edit (timeit switches it off for the same reason).
     gc.collect()
+    was_on = gc.isenabled()  # off once the editor runs (gui/gc_policy.py): leave it as found
     gc.disable()
     try:
         for k in range(4):
@@ -894,7 +895,8 @@ def test_a_cell_edit_is_under_100_ms_at_1000_pins_and_100_units(qtbot, theme) ->
             view.refresh()
             worst = max(worst, time.perf_counter() - start)
     finally:
-        gc.enable()
+        if was_on:
+            gc.enable()
     assert worst < time_limit(0.1), worst
     assert pin(ctl, cid, "500").signal == "S3"
 

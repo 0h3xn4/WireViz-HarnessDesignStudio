@@ -8,7 +8,6 @@ If it cannot be started, or dies, the check runs in the calling thread as before
 
 import atexit
 import contextlib
-import gc
 import os
 import subprocess
 import sys
@@ -54,10 +53,8 @@ class DrcProcess:
                 self._kill()
                 raise OSError("the rule check process has no pipes")
             found: list[Finding] = []
-            # Building tens of thousands of result objects makes the collector run long full
-            # passes, which stop every thread; nothing here is cyclic, so it waits until we are done.
-            was_enabled = gc.isenabled()
-            gc.disable()
+            # Building tens of thousands of result objects would make the collector run long full
+            # passes; it does not run on this thread at all (`gc_policy`: the GUI thread collects).
             # A stuck helper is killed from a timer: that ends a blocked read or write at once
             expired = threading.Event()
 
@@ -96,8 +93,6 @@ class DrcProcess:
                 raise
             finally:
                 timer.cancel()
-                if was_enabled:
-                    gc.enable()
 
     def abort(self) -> None:
         """End a check that is running (or stuck) at once, without waiting for it: the helper is

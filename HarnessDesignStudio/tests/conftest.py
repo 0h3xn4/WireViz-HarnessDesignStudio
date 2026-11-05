@@ -47,6 +47,17 @@ def _electrical_role_for_a_new_settings_file(monkeypatch: pytest.MonkeyPatch) ->
 
 
 @pytest.fixture(autouse=True)
+def _collect_cycles_between_tests() -> Iterator[None]:
+    """Once the editor has started (a test built a controller) the automatic garbage collector is
+    off and a timer on the GUI thread runs it (`gui/gc_policy.py`). A test does not wait for that
+    timer, so the collection that is due runs here, on the test's own thread, after each test."""
+    yield
+    policy = sys.modules.get("harness_design_studio.gui.gc_policy")
+    if policy is not None and policy.installed():
+        policy.collect_if_due()
+
+
+@pytest.fixture(autouse=True)
 def _close_the_windows_a_test_left_open() -> Iterator[None]:
     """Delete the top-level widgets a test created and did not close (most GUI tests build a
     window and walk away). Each one kept its timers and its child widgets alive for the rest of
