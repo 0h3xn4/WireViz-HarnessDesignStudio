@@ -55,7 +55,7 @@ from harness_design_studio.core.samples import mini3, new_project
 from harness_design_studio.core.vcs import lockview
 from harness_design_studio.core.vcs.release import ReleasePlan
 
-from . import strings
+from . import gc_policy, strings
 from .canvas_state import StateIndex, build_index
 from .drc_process import abort_check, run_check
 from .release_text import plain_blocker
@@ -216,6 +216,7 @@ class EditorController(QObject):
         self, journal_delay_ms: int = JOURNAL_DELAY_MS, drc_delay_ms: int = DRC_DELAY_MS
     ) -> None:
         super().__init__()
+        gc_policy.install()  # worker threads must never run the cyclic collector (see the module)
         self.project: Project = new_project()
         self.history = History(self.project)
         self.root: Path | None = None
