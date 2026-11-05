@@ -78,13 +78,15 @@ def test_the_tree_drops_its_highlighted_row_when_the_selection_is_cleared(win) -
 # ---- F2-6 ---------------------------------------------------------------------------------------
 
 
-def test_a_unit_dragged_off_the_top_left_stays_in_the_scene(win) -> None:  # type: ignore[no-untyped-def]
+def test_a_unit_dragged_off_the_top_left_stays_where_it_was_dropped_and_in_the_scene(win) -> None:  # type: ignore[no-untyped-def]
+    """Nothing traps a device (owner feedback, REQ-GUI-22): it can go past the old edge and the
+    scene grows to hold it; what is saved is what is drawn."""
     _drag(win, "RW1", -3000, -2000)
     item = win.view.dscene.unit_items["RW1"]
-    assert item.pos().x() >= 0 and item.pos().y() >= 0
+    assert item.pos().x() < 0 and item.pos().y() < 0
     assert win.view.scene().sceneRect().contains(_rect(win, "RW1"))
     x, y = edit.position_of(win.ctl.project, "RW1")
-    assert x >= 0 and y >= 0  # what is saved is what is drawn
+    assert (x, y) == (item.pos().x(), item.pos().y())
 
 
 def test_a_unit_dropped_far_right_and_down_is_inside_the_scene_rectangle(win) -> None:  # type: ignore[no-untyped-def]
@@ -103,7 +105,8 @@ def test_a_unit_with_a_negative_saved_position_is_still_reachable(win) -> None: 
     )
 
 
-def test_nudging_a_unit_with_the_keyboard_stops_at_the_edge(win) -> None:  # type: ignore[no-untyped-def]
+def test_nudging_a_unit_with_the_keyboard_does_not_stop_at_the_old_edge(win) -> None:  # type: ignore[no-untyped-def]
+    """The clamp at zero is gone (REQ-GUI-22): a nudge past the old edge moves the device on."""
     win.ctl.move_unit("RW1", 0.0, 0.0)
     item = win.view.dscene.unit_items["RW1"]
     item.setFocus()
@@ -111,7 +114,8 @@ def test_nudging_a_unit_with_the_keyboard_stops_at_the_edge(win) -> None:  # typ
         QEvent.Type.KeyPress, Qt.Key.Key_Left, Qt.KeyboardModifier.ShiftModifier, "", False, 1
     )
     item.keyPressEvent(event)
-    assert edit.position_of(win.ctl.project, "RW1")[0] >= 0
+    assert edit.position_of(win.ctl.project, "RW1")[0] < 0
+    assert win.view.scene().sceneRect().contains(_rect(win, "RW1"))
 
 
 # ---- F2-7 ---------------------------------------------------------------------------------------
