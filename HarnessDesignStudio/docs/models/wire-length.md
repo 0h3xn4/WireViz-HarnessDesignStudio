@@ -33,7 +33,7 @@ The path is the one path through the tree of segments from the connector at one 
 
 ## The assumptions it rests on
 
-- **A-PATH-UNIQUE.** The length is the one path through the segments. If the segments form a loop there is no single length, the length stays undecided and the design rule `segment-loop` reports it. Bend radii, tolerances and the part of a connector inside its backshell are not added.
+- **A-PATH-UNIQUE.** The length is the one path through the segments. If the segments form a loop there is no single length, the length stays undecided and the design rule `segment-loop` reports it. Bend radii, tolerances and the part of a connector inside its backshell are not added. Stays built in: whether a path is unique is a property of the drawn segments and not a choice; an allowance you want is the cut allowance of the length model.
 - **A-SERVICE-LOOP.** A generated wire is longer than its path by two service loops, one at each end, the same for every wire. It is a setting of the configuration (`service_loop_m`).
 
 ## A worked example

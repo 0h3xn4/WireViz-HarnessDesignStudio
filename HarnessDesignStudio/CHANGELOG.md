@@ -4,6 +4,11 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Changed for you to know
+
+- **Two of the assumptions that were built into the program are settings now: spare contacts and an allowance on the wire in the bill of materials.** `model.bom_contact_spare_fraction` adds, for each harness and contact part, that fraction of the contacts used as spares (rounded up to a whole contact), and `model.bom_wire_allowance_fraction` adds that fraction of the metres of every wire part (assumptions `A-BOM-CONTACTS` and `A-BOM-NO-ALLOWANCE`). Both are 0 by default, so a project that sets nothing gets the quantities it always got (the hashes of the outputs and the numbers snapshot are identical); a value from 0 to 1 is accepted, anything else is refused with the name of the key. `explain` of a part lists the extra lines and the fraction. The other 12 assumptions that were built in stay built in, each with the reason on the page of its model and in `docs/transparency_final_audit.md` (*Stays built in, why*): they are statements about the method and not numbers or choices among alternatives. The count is now 34 assumptions, 21 of them settings and 13 built in, and 64 settings.
+- **The three limit rules that cited no assumption now cite one.** `pin-shared` rests on `A-PIN-ONE-WIRE` (built in), `wire-voltage` on `A-WIRE-VOLTAGE` and `emc-class-split` on `A-EMC-ONE-BUNDLE` (the settings `derating.wire_voltage_factor` and `emc.same_class_one_bundle`), so `explain` of their findings lists the assumption under *Rests on*. Owner decision 16 of the final audit. No finding, limit or margin changes.
+
 ## 1.14.0 (2026-11-04; not a statement of compliance)
 
 Version 1.14.0 is the **quick-diagram release** (decision D-197). Workshop and owner feedback said that the tool was too much for a systems engineer who only wants a quick block diagram, that labels on the diagram lay on top of each other, and that things should be movable. This release answers with a **Quick mode** (off by default, on top of any role) with one-click **Connect**, a new **Export diagram** command, a visible **Role** button in the top bar, a diagram whose labels and connector boxes no longer overlap, and labels you can drag to where you want them. The calculations, the 39 design rules and the numbers are as in 1.13.0.

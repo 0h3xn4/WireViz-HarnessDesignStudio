@@ -50,7 +50,7 @@ Generation gives a wire the colour that `generation.wire_colour_by_signal` lists
 
 ## The assumptions it rests on
 
-- **A-LABEL-FORMAT.** The form of a label is built into the tool; only the words come from the design.
+- **A-LABEL-FORMAT.** The form of a label is built into the tool; only the words come from the design. Stays built in: it is the layout of a label, a form and not a number or a list of alternatives.
 - **A-COLOUR-TABLE.** A wire gets the colour of its signal from the table and no other; the colour names and codes decide nothing.
 
 ## A worked example

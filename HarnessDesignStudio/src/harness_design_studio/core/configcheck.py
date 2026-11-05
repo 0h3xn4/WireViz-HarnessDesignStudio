@@ -195,6 +195,8 @@ _MODEL_NUMBERS: dict[str, tuple[float, float, bool]] = {  # key: (lowest, highes
     "twist_takeup_fraction": (0, 0.5, False),
     "resistivity_temperature_coefficient": (0, 0.01, False),
     "resistivity_reference_temperature_c": (-100, 200, False),
+    "bom_wire_allowance_fraction": (0, 1, False),
+    "bom_contact_spare_fraction": (0, 1, False),
 }
 _MODEL_CHOICES: dict[str, tuple[str, ...]] = {
     "bundle_basis": ("all_wires", "loaded_wires", "busiest_segment"),

@@ -47,7 +47,7 @@ The other checks are notes: the sheet shows their open items, and they do not ch
 ## The assumptions it rests on
 
 - **A-READY-CHECKS.** Which checks decide the answer is a setting (`model.readiness_blocking`).
-- **A-READY-SCOPE.** The answer looks at the eight checks of the sheet and at nothing else: not at design rule errors, the release state or sign-off of the harness, the test limits or the values of the configuration. A *yes* is not a statement that the harness passes its design checks or may be built.
+- **A-READY-SCOPE.** The answer looks at the eight checks of the sheet and at nothing else: not at design rule errors, the release state or sign-off of the harness, the test limits or the values of the configuration. A *yes* is not a statement that the harness passes its design checks or may be built. Stays built in: it states what the answer is made from (the eight checks of the sheet); which of them block is already the setting `readiness_blocking`.
 
 ## A worked example
 
