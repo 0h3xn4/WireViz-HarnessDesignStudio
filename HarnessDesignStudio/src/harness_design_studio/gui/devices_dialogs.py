@@ -73,9 +73,12 @@ class _PlannerDialog(Dialog):
     """A dialog that asks a planner whether the values can be used: `check()` returns the
     planner's sentence (or None); it is shown in an inline notice and keeps OK off.
 
-    The sentence is not shown before the person has changed something: a form that opens empty is
-    not yet wrong, and OK being off says what is needed. It shows from the first change on, and
-    stays while the problem does."""
+    A form that asks for something to be typed (`quiet_at_open`) does not show the sentence before
+    the person has changed something: it is not yet wrong, and OK being off says what is needed.
+    It shows from the first change on, and stays while the problem does. A dialog that cannot be
+    used whatever is typed (no part of the kind in the library) says why at once."""
+
+    quiet_at_open = False
 
     def __init__(self, parent: QWidget | None, theme: ThemeManager, title: str, name: str) -> None:
         super().__init__(parent)
@@ -108,7 +111,7 @@ class _PlannerDialog(Dialog):
             problem = self.check()
         except (EditError, HarnessError, ValueError) as exc:
             problem = str(exc)
-        if problem and (show or self._edited):
+        if problem and (show or self._edited or not self.quiet_at_open):
             self.notice.show_notice("error", problem)
         else:
             self.notice.clear()
@@ -123,6 +126,8 @@ class NewDeviceDialog(_PlannerDialog):
     """The name of a new device, asked before it exists. The ID follows the name until the person
     edits it; the subsystem is optional (the project's most used one is the default). The reason
     a device cannot be added shows under the fields; OK stays off until it can."""
+
+    quiet_at_open = True
 
     def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
         super().__init__(parent, theme, strings.NEWDEV_TITLE, "devices-new-device-dialog")
@@ -213,6 +218,8 @@ class QuickDeviceDialog(_PlannerDialog):
     the connectors of its template, no kind gives it one starter connector, so that Connect works
     at once. Everything can be changed later in the Devices tab."""
 
+    quiet_at_open = True
+
     def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
         super().__init__(parent, theme, strings.QD_NEWDEV_TITLE, "devices-quick-device-dialog")
         self.project = project
@@ -258,6 +265,8 @@ class QuickDeviceDialog(_PlannerDialog):
 class NewPartDialog(_PlannerDialog):
     """A connector part for the library, and, when asked, its mating half. Both are made
     `pending` and `unverified`: the tool never approves a part."""
+
+    quiet_at_open = True
 
     def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
         super().__init__(parent, theme, strings.DVD_PART_TITLE, "devices-new-part-dialog")
@@ -350,6 +359,8 @@ class NewPartDialog(_PlannerDialog):
 
 class NewTypeDialog(_PlannerDialog):
     """An interface type: ID, name, category and one line per signal. Marked `unverified`."""
+
+    quiet_at_open = True
 
     def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
         super().__init__(parent, theme, strings.DVD_TYPE_TITLE, "devices-new-type-dialog")

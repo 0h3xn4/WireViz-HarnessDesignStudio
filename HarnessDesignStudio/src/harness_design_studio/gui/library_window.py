@@ -181,6 +181,8 @@ class SaveToLibraryDialog(_PlannerDialog):
     """Save the selected devices to the library folder: as devices, or as one subsystem with a
     name. The reason a save cannot be done shows under the fields; Save stays off until it can."""
 
+    quiet_at_open = True
+
     def __init__(
         self,
         parent: QWidget | None,
