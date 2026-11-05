@@ -1,16 +1,19 @@
 # mypy: allow-untyped-calls, no-warn-unused-ignores
 """Pictures of the flatsat example in the real editor (offscreen) for docs/FLATSAT_EXAMPLE.md:
-the whole diagram, and the same diagram with one unit in focus. Usage: python -m tools.flatsat_screenshots"""
+the whole diagram, the same diagram with one unit in focus, and for docs/user-manual/telling-devices-apart.md
+a close-up of four cards (TRX1, OBC1, RW1, RW2) and the key to the looks of devices. Usage: python -m tools.flatsat_screenshots"""
 
 import sys
 import tempfile
 import time
 from pathlib import Path
 
-from PySide6.QtCore import QSettings
+from PySide6.QtCore import QRectF, QSettings, Qt
+from PySide6.QtGui import QImage, QPainter
 from PySide6.QtWidgets import QApplication
 
 from harness_design_studio.core import templates
+from harness_design_studio.gui import device_kinds, device_looks
 from harness_design_studio.gui.main_window import MainWindow
 from harness_design_studio.gui.theme import ThemeManager
 
@@ -23,6 +26,33 @@ def _wait(ms: int) -> None:
     while time.monotonic() < end:
         QApplication.processEvents()
         time.sleep(0.02)
+
+
+def kinds_picture(theme: ThemeManager) -> QImage:
+    """The key to the looks of devices: the badge of every kind with its name, six to a row, on the
+    colour of a card (the real painters, `gui/device_looks.py`)."""
+    kinds = (*device_kinds.KINDS, device_kinds.GENERIC)
+    cols, cell_w, cell_h, side, pad = 3, 250, 40, 28, 10
+    rows = -(-len(kinds) // cols)
+    image = QImage(cols * cell_w + pad, rows * cell_h + pad, QImage.Format.Format_RGB32)
+    image.fill(theme.color("bg.surface"))
+    painter = QPainter(image)
+    painter.setRenderHint(QPainter.RenderHint.Antialiasing)
+    painter.setFont(theme.font("base"))
+    for k, kind in enumerate(kinds):
+        x, y = pad + (k % cols) * cell_w, pad + (k // cols) * cell_h
+        device_looks.draw_badge(
+            painter, theme, device_kinds.Looks(kind, "", ""), QRectF(x, y, side, side),
+            ground="bg.surface",
+        )  # fmt: skip
+        painter.setPen(theme.color("text"))
+        painter.drawText(
+            QRectF(x + side + 10, y, cell_w - side - 20, side),
+            Qt.AlignmentFlag.AlignVCenter,
+            kind.label,
+        )
+    painter.end()
+    return image
 
 
 def main() -> int:
@@ -45,7 +75,17 @@ def main() -> int:
     win.ctl.select("unit", "PDU2")
     _wait(500)
     win.view.grab().save(str(OUT / "flatsat-focus.png"))
-    print("flatsat-overview.png, flatsat-focus.png")
+    win.ctl.select(None)
+    win.act_legend.setChecked(False)  # the close-up is of cards, not of the key
+    win.view.set_legend_wanted(False)
+    close = QRectF()
+    for uid in ("TRX1", "OBC1", "RW1", "RW2"):
+        close = close.united(win.view.dscene.unit_items[uid].sceneBoundingRect())
+    win.view.fitInView(close.adjusted(-60, -40, 60, 40), Qt.AspectRatioMode.KeepAspectRatio)
+    _wait(500)
+    win.view.grab().save(str(OUT / "device-looks-close.png"))
+    kinds_picture(win.theme).save(str(OUT / "device-looks-kinds.png"))
+    print("flatsat-overview.png, flatsat-focus.png, device-looks-close.png, device-looks-kinds.png")
     return 0
 
 

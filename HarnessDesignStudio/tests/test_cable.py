@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type,attr-defined"
-"""REQ-GUI-20. Tactile connecting, the part with no screen in it: the cable in hand as a state
+"""REQ-GUI-21. Tactile connecting, the part with no screen in it: the cable in hand as a state
 machine (`gui/cable.py`: press, drag distance, release, click, Esc, the loose end), snapping to a
 port, what a port accepts, the orthogonal line of the rubber band, the scroll at the edge of the
 view, and the planner that plugs an end of a connection into another connector

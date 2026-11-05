@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type,type-arg,assignment,index"
-"""REQ-GUI-21. Owner feedback: "fixing the panel size is annoying, because I can't move around
+"""REQ-GUI-22. Owner feedback: "fixing the panel size is annoying, because I can't move around
 devices as I wish, they are basically trapped." What trapped them was a clamp of every position to
 zero (the drag, Shift+arrow, Add here, align) and a scene that did not grow, and scroll, while a
 device or cable was carried past the edge. Now a device goes anywhere, past the old edge and below

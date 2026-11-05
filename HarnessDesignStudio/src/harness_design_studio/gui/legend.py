@@ -11,7 +11,7 @@ from PySide6.QtWidgets import QFrame, QSizePolicy, QToolButton, QVBoxLayout, QWi
 from harness_design_studio.core import describe
 from harness_design_studio.core.model.project import Project
 from harness_design_studio.gui import canvas_badges as badges
-from harness_design_studio.gui import glyphs, strings
+from harness_design_studio.gui import device_kinds, device_looks, glyphs, strings
 from harness_design_studio.gui.canvas_state import StateIndex
 from harness_design_studio.gui.theme import ThemeManager
 from harness_design_studio.gui.theme.tokens import CATEGORIES, style_category
@@ -31,6 +31,7 @@ class LegendBar(QWidget):
         # worked out once per `set_project`, not on every `_entries` call (D9: asking for the
         # family of each harness connector rebuilt the map of every connector each time)
         self._families: list[str] = []
+        self._kinds: list[str] = []  # the kinds of device the diagram shows, in the table's order
         self._extras_now: tuple[bool, bool, bool] = (False, False, False)
         self.setSizePolicy(QSizePolicy.Policy.Expanding, QSizePolicy.Policy.Fixed)
         self.setAccessibleName(strings.LEGEND_NAME)
@@ -50,7 +51,9 @@ class LegendBar(QWidget):
         connectors = project.all_connectors()  # once: every lookup below reads this map
         found = [describe.connector_family(project, cid, connectors) for cid in connectors]
         extras = self._extras(project, found)
+        kinds = self._device_kinds(project)
         sig = (
+            kinds,
             sorted((t.id, t.name, t.category) for t in project.interface_types.values()),
             sorted(family for family, _pins, _gender in found),
             sorted({i.type_id for i in project.interfaces.values()}),  # the kinds drawn
@@ -61,10 +64,22 @@ class LegendBar(QWidget):
             {family for family, _pins, _gender in found}, key=list(describe.FAMILY_LABEL).index
         )
         self._extras_now = extras
+        self._kinds = kinds
         if sig != self._signature:
             self._signature = sig
             self._layout(self.width())
             self.update()
+
+    @staticmethod
+    def _device_kinds(project: Project) -> list[str]:
+        """The kinds of device in the project (`gui/device_kinds.py`), in the order of the table; none
+        while every device is a plain box (then there is nothing to tell apart)."""
+        cats = describe.unit_categories(project)
+        found = {device_kinds.looks_for(project, u, cats).kind.key for u in project.units}
+        if found <= {device_kinds.GENERIC.key}:
+            return []
+        order = [k.key for k in (*device_kinds.KINDS, device_kinds.GENERIC)]
+        return sorted(found, key=order.index)
 
     @staticmethod
     def _extras(p: Project, families: Sequence[tuple[str, int, str]]) -> tuple[bool, bool, bool]:
@@ -84,6 +99,7 @@ class LegendBar(QWidget):
         p = self.project
         if p is None:
             return out
+        out += [("device", k, device_kinds.KIND[k].label) for k in self._kinds]
         order = list(CATEGORIES)
         used_types = {i.type_id for i in p.interfaces.values()}
         types = [t for t in p.interface_types.values() if t.id in used_types]
@@ -153,6 +169,9 @@ class LegendBar(QWidget):
                 tid, cat = cast(tuple[str, str], payload)
                 colour = th.color(f"cat-{style_category(cat)}")
                 glyphs.draw_link_glyph(p, x + 4, cy - 7, tid, cat, colour)
+            elif kind == "device":
+                look = device_kinds.Looks(device_kinds.KIND[str(payload)], "", "")
+                device_looks.draw_badge(p, th, look, QRectF(x + 2, cy - 10, 20, 20), ground="bg")
             elif kind == "conn":
                 icon = glyphs.CONNECTOR_W
                 glyphs.draw_connector(

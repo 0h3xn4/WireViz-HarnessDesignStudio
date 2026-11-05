@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type,type-arg,assignment,index"
-"""REQ-GUI-20. Owner feedback: connecting devices should feel tactile and free, as if picking up a
+"""REQ-GUI-21. Owner feedback: connecting devices should feel tactile and free, as if picking up a
 harness, dragging it to a port and plugging it in. In the block diagram a press on a port picks a
 cable up; it follows the pointer as a rubber band, snaps to a port, and where it is let go it
 connects (the window *Link connectors* for exactly those two connectors, or at once in Quick

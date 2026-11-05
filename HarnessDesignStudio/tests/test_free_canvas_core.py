@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type,attr-defined"
-"""REQ-GUI-21. Owner feedback: the diagram must not trap devices. A device may be put anywhere,
+"""REQ-GUI-22. Owner feedback: the diagram must not trap devices. A device may be put anywhere,
 past the edge and below zero, and stays there. The part with no screen in it: a position outside
 the lanes is stored and read back as it is (the layout file, the reopened project, the model
 hash), aligning never moves a device back to zero, and the written block diagram and the exported
