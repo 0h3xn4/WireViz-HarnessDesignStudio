@@ -43,12 +43,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import describe, edit, routing
-from harness_design_studio.core.model import Project
+from harness_design_studio.core import describe, edit, linepos, routing
+from harness_design_studio.core.model import Project, mark_is_along
 from harness_design_studio.gui import canvas_badges as cbadges
 from harness_design_studio.gui import device_kinds, device_looks, glyphs, strings
 from harness_design_studio.gui.canvas_links import (
     HIT_WIDTH,
+    LABEL_GAP,
     ChipDrag,
     ConnectionItem,
     derived_texts,
@@ -1055,9 +1056,10 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         self.interface_id = interface_id
         # the marks of this line: its label, and its vertical piece (moved across only)
         self.mark_ids = (f"interface:{interface_id}", f"route:{interface_id}")
-        self._shifts = {m: scene.mark_shift(m) for m in self.mark_ids}
+        self._shifts, self._along = self._read_marks()
         self.auto_route: list[tuple[float, float]] = []  # the route the router made (not moved)
         self._chip = QRectF()
+        self._chip_center = QPointF()  # where the tool puts the label (it is on the line, or by it)
         self._chip_placed = False
         self._compact = False  # the picture alone, where the full label has no clear spot
         self._chip_values = 0  # how many characters of numbers the registered label was sized for
@@ -1110,9 +1112,49 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
             center = path.pointAtPercent(0.5)
         self._chip_center = center
         self._chip_placed = True
-        w, h = (COMPACT_W, COMPACT_H) if self._compact else (width, METRICS.chip_h)
-        self.dscene.chip_place(name, QRectF(center.x() - w / 2, center.y() - h / 2, w, h))
+        self._register_chip()
         return True
+
+    def _label_size(self) -> tuple[float, float]:
+        """The size the label is laid out with (its text, or the picture alone when it is tight)."""
+        if self._compact:
+            return COMPACT_W, COMPACT_H
+        return self._chip_width(self._chip_values * 6.5), METRICS.chip_h
+
+    def label_center(self) -> QPointF:
+        """Where the pill is: the place the tool gave it, or, when the person put it somewhere, its
+        place on the line (a fraction of the line's length, kept inside the line)."""
+        t = self.along_of(self.mark_ids[0])
+        if t is None or len(self.poly) < 2:
+            return QPointF(self._chip_center)
+        return QPointF(*linepos.place(self.poly, t, self.margin_of(self.mark_ids[0])))
+
+    def _register_chip(self) -> None:
+        """Tell the scene where the label is now, so that labels the person has not moved keep
+        clear of it."""
+        w, h = self._label_size()
+        c = self.label_center()
+        self.dscene.chip_place(self.interface_id, QRectF(c.x() - w / 2, c.y() - h / 2, w, h))
+
+    def margin_of(self, mark_id: str) -> float:
+        return self._label_size()[0] / 2 + LABEL_GAP
+
+    def centre_of(self, mark_id: str) -> QPointF:
+        return self.label_center()
+
+    def along_changed(self) -> None:
+        if self._chip_placed:
+            self._register_chip()
+
+    def legacy_places(self) -> dict[str, float]:
+        """The place on the line of a pill that has a free offset of an earlier version: the
+        nearest point of the line to where the offset put it."""
+        legacy = self.dscene.legacy_offsets(self.mark_ids[:1])
+        if not legacy or len(self.poly) < 2 or not self._chip_placed:
+            return {}
+        off = legacy[self.mark_ids[0]]
+        c = self._chip_center
+        return {self.mark_ids[0]: linepos.from_offset(self.poly, (c.x(), c.y()), off.x(), off.y())}
 
     def _pick_spot(
         self, route: list[tuple[float, float]], width: float, height: float, name: str
@@ -1206,16 +1248,13 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         path = stroker.createStroke(self.path())
         chip = None if self._preview else self.dscene.chip_rect(self.interface_id)
         if chip is not None:
-            path.addRect(chip.translated(self.shift))
+            path.addRect(chip)  # (where the label is now, on its line)
         if self._badge_hit is not None and not self._preview:
             path.addRect(self._badge_hit)
         return path
 
     def boundingRect(self) -> QRectF:
-        away_x, away_y = self.away()  # (a moved label is far from the line)
-        return (
-            super().boundingRect().adjusted(-120 - away_x, -20 - away_y, 120 + away_x, 20 + away_y)
-        )
+        return super().boundingRect().adjusted(-120, -20, 120, 20)  # (the label sits on the line)
 
     def drag_slots(self) -> list[tuple[str, QRectF, bool]]:
         """The label, and the vertical piece of the line (moved across only, and only where it is
@@ -1242,8 +1281,6 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
     def limit_shift(self, mark_id: str, shift: QPointF) -> QPointF:
         """While the piece is dragged: it goes no further than the devices allow, and not up or
         down."""
-        if mark_id != self.mark_ids[1]:
-            return shift
         at = routing.trunk_index(self.auto_route)
         if at is None:
             return QPointF(0.0, 0.0)
@@ -1291,7 +1328,7 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         exposed = option.exposedRect.adjusted(-10, -10, 10, 10)
         if not self.path().intersects(exposed) and not self._chip.intersects(exposed):
             chip = sc.chip_rect(self.interface_id)
-            if chip is None or not chip.translated(self.shift).intersects(exposed):
+            if chip is None or not chip.intersects(exposed):
                 return  # the long box of a link is often dirty where the link itself is not
         t = ctl.project.interface_types.get(i.type_id)
         cat = style_category(t.category if t else "data")
@@ -1346,7 +1383,7 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         th = sc.theme
         st = sc.states.of("interface", i.id)
         color = th.color(f"cat-{cat}")
-        c = self._chip_center + self.shift  # (where the person put it, or the automatic place)
+        c = self.label_center()  # (where the person put it on the line, or the automatic place)
         font = sc.px_font(th.type("small"))
         parts = (
             [] if self._compact or not sc.label_full(i.id, self._hover) else self._label_parts(st)
@@ -1500,7 +1537,7 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
             return
         k = 1.0 / lod
         wpx, hpx = METRICS.far_marker_px
-        c = self._chip_center + self.shift
+        c = self.label_center()
         rect = QRectF(c.x() - wpx * k / 2, c.y() - hpx * k / 2, wpx * k, hpx * k)
         if not option.exposedRect.intersects(rect.adjusted(-10 * k, -10 * k, 10 * k, 10 * k)):
             return
@@ -1636,7 +1673,11 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
             self.setZValue(self._base_z + 0.2)  # the link under the pointer lies on top
             self.update()
 
+    def hoverMoveEvent(self, event: object) -> None:
+        self.show_cursor_at(event.scenePos())  # type: ignore[attr-defined]
+
     def hoverLeaveEvent(self, event: object) -> None:
+        self.unsetCursor()
         if self._hover:
             self._hover = False
             self.setZValue(self._base_z)
@@ -2312,6 +2353,7 @@ class DiagramScene(QGraphicsScene):
         for lid in sorted(project.links):
             self._add_connection(lid)
         self._refresh_connections()
+        self.adopt_legacy_marks()  # (labels moved by an earlier version stay on their lines)
         self._update_extent()
         if self.filter is not None or self.ctl.selected:
             self._apply_filter()
@@ -2544,9 +2586,53 @@ class DiagramScene(QGraphicsScene):
         self._apply_filter()  # a selection puts its own links in focus and fades the rest
 
     def mark_shift(self, mark_id: str) -> QPointF:
-        """How far the person moved this label from its automatic place (none: no shift)."""
+        """How far the person moved a piece of a line (a bend, a route) across (none: no shift)."""
         mark = self.ctl.project.diagram_marks.get(mark_id)
-        return QPointF(mark.dx, mark.dy) if mark is not None else QPointF(0.0, 0.0)
+        if mark is None or mark.dx is None or mark.dy is None:
+            return QPointF(0.0, 0.0)
+        return QPointF(mark.dx, mark.dy)
+
+    def mark_along(self, mark_id: str) -> float | None:
+        """Where the person put a label on its line, as a fraction of the line's length (None:
+        where the tool put it)."""
+        mark = self.ctl.project.diagram_marks.get(mark_id)
+        return mark.t if mark is not None else None
+
+    def legacy_offsets(self, mark_ids: Sequence[str]) -> dict[str, QPointF]:
+        """The labels among `mark_ids` that still have the mark of an earlier version, a free
+        offset from the automatic place (release 1.14 and 1.15), with that offset."""
+        found: dict[str, QPointF] = {}
+        for m in mark_ids:
+            mark = self.ctl.project.diagram_marks.get(m)
+            if (
+                mark is not None
+                and mark_is_along(m)
+                and mark.t is None
+                and mark.dx is not None
+                and mark.dy is not None
+            ):
+                found[m] = QPointF(mark.dx, mark.dy)
+        return found
+
+    def adopt_legacy_marks(self) -> None:
+        """Read every mark of an earlier version (a free offset of a label) as the nearest point of
+        its line, once the lines are drawn, and keep it as that place (written so on the next
+        save). The label is where the offset put it, as near as the line allows."""
+        legacy = [
+            m
+            for m in self.ctl.project.diagram_marks.values()
+            if m.t is None and mark_is_along(m.id)
+        ]
+        if not legacy:
+            return
+        items: list[ChipDrag] = [*self.link_items.values(), *self.connection_items.values()]
+        places: dict[str, float] = {}
+        for item in items:
+            places.update(item.legacy_places())
+        if places:
+            self.ctl.adopt_positions(places)
+            for item in items:
+                item.reload_marks()
 
     def _apply_marks(self, marks: set[str]) -> None:
         """Labels were moved or put back (by a drag, an undo, a redo)."""
@@ -2556,7 +2642,7 @@ class DiagramScene(QGraphicsScene):
             by_kind = self.link_items if kind in ("interface", "route") else self.connection_items
             item = by_kind.get(ident)
             if item is not None:
-                item.reload_shifts()
+                item.reload_marks()
 
     def chip_rect(self, interface_id: str) -> QRectF | None:
         """Where the label of a link was placed, or None (not placed yet, or being dragged)."""
@@ -2567,9 +2653,7 @@ class DiagramScene(QGraphicsScene):
         for cell in self._cells(QRectF(pos, pos)):
             for iid, rect in self._chips.get(cell, ()):
                 link = self.link_items.get(iid)
-                if rect.contains(pos) and (
-                    link is None or link.shift.isNull()
-                ):  # (not a moved one)
+                if rect.contains(pos):
                     return link
         for link in self.link_items.values():  # a label drawn wider than it was reserved
             if not link._preview and link._chip.contains(pos):
@@ -3353,7 +3437,7 @@ class DiagramView(QGraphicsView):
             if isinstance(focus, UnitItem):
                 pos = self.mapFromScene(focus.mapToScene(QPointF(60, 12)))
             elif isinstance(focus, LinkItem) and focus.path().elementCount():
-                pos = self.mapFromScene(focus._chip_center + focus.shift)
+                pos = self.mapFromScene(focus.label_center())
         at = self.mapToScene(pos)
         item = self.itemAt(pos)
         kind: str | None = None

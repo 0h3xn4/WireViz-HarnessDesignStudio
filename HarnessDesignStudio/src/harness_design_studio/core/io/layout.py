@@ -36,9 +36,12 @@ MANAGED_DIRS = (
 )  # fmt: skip
 IMPORT_RECORDS_FILE = "imports/records.json"  # optional; not part of the model hash
 ASBUILT_FILE = "asbuilt/records.json"  # optional (S9); not part of the model hash
-DIAGRAM_MARKS_FILE = (
-    "diagram/marks.json"  # optional; what was moved in the diagram; not in the hash
-)
+# optional; what was moved in the diagram; not in the hash. The file keeps schema version 1 and has
+# no version of its own: a label on a line (`interface:`, `link:`, `end:`) is `{"id", "t"}`, its
+# place along the line (`core.linepos`); a bend or a route (`bend:`, `route:`) is `{"id", "dx",
+# "dy"}`, an offset; a label of release 1.14 and 1.15 with `dx` and `dy` is still read, and the
+# diagram writes it as `t` once it has worked out the nearest point of the line (`DiagramMark`).
+DIAGRAM_MARKS_FILE = "diagram/marks.json"
 
 # What lives in the project folder but is not the design, so that it is never in the model hash:
 # the journal and the import record (files the tool writes with the project), and the folders of the
@@ -50,8 +53,9 @@ OUTSIDE_THE_HASH_FOLDERS = ("extensions/", "asbuilt/", "diagram/")
 
 def mark_is_orphan(project: Project, mark_id: str) -> bool:
     """Whether a diagram mark is of a thing that no longer exists: "link:L1", "end:L1:0" and
-    "bend:L1" belong to a connection, "interface:IF-1" and "route:IF-1" to an interface. A mark
-    of a kind this tool does not know is never called an orphan (it is not ours to drop)."""
+    "bend:L1" belong to a connection, "interface:IF-1" and "route:IF-1" to an interface, whatever
+    form the mark has (a place along the line, `t`, or an offset). A mark of a kind this tool does
+    not know is never called an orphan (it is not ours to drop)."""
     kind, _, rest = mark_id.partition(":")
     ident = rest.partition(":")[0]
     if kind in ("link", "end", "bend"):
