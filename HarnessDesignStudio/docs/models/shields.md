@@ -48,7 +48,7 @@ The rules that look at the ends are `shield-unterminated` (both ends floating), 
 
 ## The assumptions it rests on
 
-- **A-SHIELD-GROUPS.** A group follows the construction and the shielding of the interface type.
+- **A-SHIELD-GROUPS.** A group follows the construction and the shielding of the interface type. Stays built in: it is the rule that turns a construction into a shield group (a coax is a shield of its own, a pair is twisted), which follows the construction and cannot be a number; the grounding of the ends is a setting (A-SHIELD-ENDS).
 - **A-SHIELD-ENDS.** The ends are the grounding concept of the project, except a coax.
 
 ## A worked example

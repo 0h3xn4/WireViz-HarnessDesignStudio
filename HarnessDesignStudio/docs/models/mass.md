@@ -37,7 +37,7 @@ The project records no source for a mass unless the note of the part says so.
 ## The assumptions it rests on
 
 - **A-MASS-SCOPE.** The mass counts each connector of the harness and each wire. It does not count contacts, backshells, accessories (sleeving, heat shrink, labels), splices, solder or shield terminations. A part without a mass is named as missing and never replaced by a guess. The margin is added to the total only.
-- **A-MASS-CONDUCTORS.** A wire carries its share of a multi-conductor part: the mass per metre of a twisted pair part is divided by its 2 conductors for each of its two wires, so that the cable is counted once.
+- **A-MASS-CONDUCTORS.** A wire carries its share of a multi-conductor part: the mass per metre of a twisted pair part is divided by its 2 conductors for each of its two wires, so that the cable is counted once. Stays built in: it is what the mass per metre of a multi-conductor part means (the cable counted once), an identity of the library and not a choice.
 
 ## A worked example
 

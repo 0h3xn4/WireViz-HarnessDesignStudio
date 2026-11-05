@@ -45,7 +45,7 @@ Inside that order each group of signals (a pair, a power block, a single signal)
 ## The assumptions it rests on
 
 - **A-PIN-ORDER.** The order of the categories and the gaps are settings.
-- **A-PIN-FIRST-FIT.** First fit in the order of the pin list; an earlier choice is kept; locks and fixed pinouts win. Neighbours are neighbours in the list of pins, not a measured position.
+- **A-PIN-FIRST-FIT.** First fit in the order of the pin list; an earlier choice is kept; locks and fixed pinouts win. Neighbours are neighbours in the list of pins, not a measured position. Stays built in: first fit is the algorithm, and another algorithm is not a value; what moves the result (the order of the categories, the gaps) is already a setting (A-PIN-ORDER, A-RETURN-GAP).
 
 ## A worked example
 
@@ -57,7 +57,7 @@ A connector is chosen for an interface at a device by a person, or by the tool. 
 
 The **cable end** of a device connector is the part the library names as its mating part (`mates_with` of the device connector's part); a part with none is mated with itself, and generation says so. The gender is the opposite of the device connector's and the keying is copied. A cable connector that a person edited keeps its part, gender and keying.
 
-- **A-CONNECTOR-CHOICE.** First free connector that carries the type; the cable end is the mating part.
+- **A-CONNECTOR-CHOICE.** First free connector that carries the type; the cable end is the mating part. Stays built in: first free connector in the order of the IDs is a method, and the choice is marked as made for you until a person confirms it.
 
 ## What happens when a value is missing
 

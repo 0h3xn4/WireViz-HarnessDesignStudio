@@ -214,6 +214,8 @@ Optional, and absent from a new project: a project that does not have it behaves
 | `mass_model` | `connectors_and_wires` | `connectors_and_wires` or `full_bom` (every part of the bill of materials, with the mass of contacts and accessories where the library has it); assumption A-MASS-SCOPE |
 | `pin_allocation_categories` | `["power", "ground"]` | the interface categories allocated first, in this order, and counted as the power group for the gap to the signal pins |
 | `readiness_blocking` | the first four checks of the build workbook | the names of the checks of the build workbook whose open items mean *Ready to build: no*; the others are notes |
+| `bom_wire_allowance_fraction` | 0 | the fraction of the wire metres added to every wire part in the bill of materials (cut allowance, waste): 0 to 1; 0 adds nothing, as before; assumption A-BOM-NO-ALLOWANCE |
+| `bom_contact_spare_fraction` | 0 | the fraction of the contacts used that is added as spares, for each harness and contact part, rounded up to a whole contact: 0 to 1; 0 adds none, as before; assumption A-BOM-CONTACTS |
 
 A key that is not in this table is an error that names it, so a typo is not silent. The same tables and ranges are in `core/settings.py`, from which `settings` and the explanations (`explain`) read; a test checks that every key of every file is described there and here.
 

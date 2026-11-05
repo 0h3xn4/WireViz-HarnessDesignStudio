@@ -19,9 +19,9 @@ For every part used in a harness the bill of materials has one line for each uni
 ## The equations
 
 - Connector parts: one for each connector of a harness.
-- Contact parts: one for each pin that names a contact part **and** has a wire attached.
+- Contact parts: one for each pin that names a contact part **and** has a wire attached. With `model.bom_contact_spare_fraction` above 0 (it is 0 by default) the spares are added for each harness and contact part: the fraction of the contacts used, rounded up to a whole contact.
 - Accessory parts without a length: their quantity. With a length: `length (mm) × quantity / 1000`, in metres.
-- Wire parts, in metres: the sum of the lengths of the wires that name the part, each divided by the conductors of the part (a twisted pair part has 2, so the cable is counted once).
+- Wire parts, in metres: the sum of the lengths of the wires that name the part, each divided by the conductors of the part (a twisted pair part has 2, so the cable is counted once). With `model.bom_wire_allowance_fraction` above 0 (0 by default) that sum is multiplied by `1 + fraction`.
 
 ## The inputs and where they come from
 
@@ -30,12 +30,13 @@ For every part used in a harness the bill of materials has one line for each uni
 | The part, its category, approval and conductors | none | The parts library of the project. |
 | Which connectors, wires and accessories a harness has | none | The generated harness, and what you changed or added. |
 | The length of each wire | m | [Wire length](wire-length.md) (it includes the service loops). |
+| The allowance on the wire and the spare contacts | none | `config/model.json`: `bom_wire_allowance_fraction`, `bom_contact_spare_fraction` (0 unless set; [selectable models](selectable-models.md#allowance-and-spares-in-the-bill-of-materials)). |
 | Which pins have a wire | none | The wires of the harness. |
 
 ## The assumptions it rests on
 
-- **A-BOM-CONTACTS.** A contact part is counted once for each pin that has a wire, and not for a pin nobody uses. No spare contacts.
-- **A-BOM-NO-ALLOWANCE.** What is drawn is counted: no spares, overage, cut allowance or waste. A wire with no length adds nothing to the metres and is counted in the column *Wires without length*.
+- **A-BOM-CONTACTS** (a setting). A contact part is counted once for each pin that has a wire, and not for a pin nobody uses. By default no spare contact is added; `model.bom_contact_spare_fraction` adds that fraction of the contacts used, per harness and part, rounded up.
+- **A-BOM-NO-ALLOWANCE** (a setting). What is drawn is counted: by default no spares, overage, cut allowance or waste. `model.bom_wire_allowance_fraction` adds a fraction of the wire metres; a connector part and an accessory part never get an allowance. A wire with no length adds nothing to the metres and is counted in the column *Wires without length*.
 
 ## A worked example
 
@@ -51,7 +52,7 @@ When a wire has no length, the explanation says how many wires of the part add n
 
 ## What the model does not do
 
-- It does not add spares or waste, and it does not round up to a pack size or a reel.
+- It adds no spares or waste unless you set the two fractions above, and it does not round up to a pack size or a reel (the only rounding is the whole number of spare contacts).
 - It does not count the solder, the heat shrink of a splice, the labels' ink or anything that is not a part of the project's library.
 - It does not know prices or lead times.
 

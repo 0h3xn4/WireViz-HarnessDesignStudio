@@ -734,7 +734,9 @@ def harness_mass_derivation(project: Project, h: Harness) -> Derivation:
 _KINDS = {
     "connector": "connectors",
     "contact": "contacts",
+    "contact spare": "spare contacts",
     "wire": "wires",
+    "wire allowance": "wire allowances",
     "accessory": "accessories",
 }
 
@@ -759,6 +761,11 @@ def part_bom_derivation(project: Project, part_id: str, unit: str) -> Derivation
         if "contact" in {c.kind for c in mine}
         else ("A-BOM-NO-ALLOWANCE",)
     )
+    kinds = {c.kind for c in mine}
+    if "wire allowance" in kinds:
+        equation += " + the allowance (the fraction model.bom_wire_allowance_fraction of those wire lengths)"
+    if "contact spare" in kinds:
+        equation += " + spare contacts (the fraction model.bom_contact_spare_fraction of the contacts, rounded up for each harness)"
     missing: list[str] = []
     if part is None:
         missing.append(
@@ -787,6 +794,24 @@ def part_bom_derivation(project: Project, part_id: str, unit: str) -> Derivation
                     f"parts library: {part_id}: conductors",
                 )
             )
+    if "wire allowance" in kinds:
+        inputs.append(
+            Input(
+                "Allowance on the wire",
+                settings.number(project, "model", "bom_wire_allowance_fraction"),
+                "",
+                "config/model.json: bom_wire_allowance_fraction",
+            )
+        )
+    if "contact spare" in kinds:
+        inputs.append(
+            Input(
+                "Spare contacts",
+                settings.number(project, "model", "bom_contact_spare_fraction"),
+                "",
+                "config/model.json: bom_contact_spare_fraction",
+            )
+        )
     steps: list[Step] = []
     groups: dict[tuple[str, str], list[BomContribution]] = {}
     for c in mine:
@@ -796,10 +821,19 @@ def part_bom_derivation(project: Project, part_id: str, unit: str) -> Derivation
         for c in items:
             if not c.unknown:
                 total += c.amount
+        conductors = part.conductors if part is not None else 1
         if kind == "wire":
             known = [c for c in items if not c.unknown]
-            conductors = part.conductors if part is not None else 1
             expression = f"{len(known)} wire(s), their lengths summed, / {conductors}"
+        elif kind == "wire allowance":
+            fraction = settings.number(project, "model", "bom_wire_allowance_fraction")
+            expression = (
+                f"{len(items)} wire(s), their lengths summed, / {conductors} × {_g(fraction)}"
+            )
+        elif kind == "contact spare":
+            fraction = settings.number(project, "model", "bom_contact_spare_fraction")
+            used = len(groups.get((hid, "contact"), []))
+            expression = f"{used} contact(s) × {_g(fraction)}, rounded up"
         else:
             expression = f"{len(items)} {_KINDS[kind]}" + (
                 " (by their quantity)" if kind == "accessory" and not is_m else ""

@@ -34,7 +34,7 @@ The project records no source for the rating or the factor.
 
 ## The assumptions it rests on
 
-- **A-CONTACT-SHARED.** The whole current of an interface is compared with the derated rating of the contacts of the connector at each endpoint. It is not split over the pins the interface uses, the rating is that of the connector part (not of the contact or the wire crimped into it), and the factor is one number for every connector.
+- **A-CONTACT-SHARED.** The whole current of an interface is compared with the derated rating of the contacts of the connector at each endpoint. It is not split over the pins the interface uses, the rating is that of the connector part (not of the contact or the wire crimped into it), and the factor is one number for every connector. Stays built in: the model does not say how many contacts carry the current of an interface (the supply and the return pins belong to one interface), so a split would need an input the project does not have; the one number that is a choice, the factor, is a setting.
 
 ## A worked example
 
