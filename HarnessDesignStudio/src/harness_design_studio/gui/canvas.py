@@ -43,12 +43,15 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import describe, edit, routing
-from harness_design_studio.core.model import Project
+from harness_design_studio.core import describe, edit, linepos, routing
+from harness_design_studio.core.model import Project, mark_is_along
+from harness_design_studio.gui import cable as cb
 from harness_design_studio.gui import canvas_badges as cbadges
-from harness_design_studio.gui import glyphs, strings
+from harness_design_studio.gui import device_kinds, device_looks, glyphs, strings
+from harness_design_studio.gui.canvas_cable import RING, CableLayer
 from harness_design_studio.gui.canvas_links import (
     HIT_WIDTH,
+    LABEL_GAP,
     ChipDrag,
     ConnectionItem,
     derived_texts,
@@ -128,6 +131,7 @@ class CardFacts:
     groups: tuple[tuple[tuple[str, int, str], int], ...]  # ((family, pins, gender), how many)
     total: int  # all its box connectors
     glyph: str  # describe.unit_glyph
+    looks: device_kinds.Looks  # what kind of equipment it is, and so how its card looks
 
 
 @dataclass
@@ -273,6 +277,8 @@ class UnitItem(QGraphicsItem):
     def _compat_reason(self) -> tuple[str, str]:
         """(state, reason): state is 'from', 'ok', 'no' or '' when the connect tool is idle."""
         ctl = self.ctl
+        if self.dscene.cable.active:  # a cable is in hand: the devices that can take it
+            return self.dscene.cable.unit_state(self.unit_id), ""
         if ctl.linking:  # the Connect tool of the pinout way: any device with a connector
             if ctl.connect_from and ctl.connect_from.unit_id == self.unit_id:
                 return "from", ""
@@ -314,7 +320,11 @@ class UnitItem(QGraphicsItem):
                 fam = describe.connector_family(project, str(c.id))
                 counts[fam] = counts.get(fam, 0) + 1
             glyph = describe.unit_glyph(project, self.unit_id, self.dscene.unit_categories())
-            f = self._facts = CardFacts(key, tuple(counts.items()), len(conns), glyph)
+            u = project.units.get(self.unit_id)
+            looks = device_kinds.looks_of(
+                self.unit_id, u.name if u else "", u.subsystem if u else "", glyph
+            )
+            f = self._facts = CardFacts(key, tuple(counts.items()), len(conns), glyph, looks)
         return f
 
     def _tag_specs(self, unit: object, state: str) -> list[tuple[str, str, bool, str]]:
@@ -507,6 +517,10 @@ class UnitItem(QGraphicsItem):
         painter.setBrush(QBrush(th.color("surface-2")))
         painter.drawRoundedRect(QRectF(1, 1, W - 2, HEADER_H), 7, 7)
         painter.drawRect(QRectF(1, HEADER_H - 8, W - 2, 9))
+        facts = self.facts()
+        device_looks.paint_header(  # the band and the badge of the kind of equipment
+            painter, th, facts.looks, body, QRectF(6, 5, 20, 20)
+        )
         if st.locks:  # a released harness locks the unit: a faint tint (and the lock mark below)
             tint = QColor(th.color("released"))
             tint.setAlphaF(RELEASED_TINT)
@@ -516,9 +530,6 @@ class UnitItem(QGraphicsItem):
         small = QFont(painter.font())
         small.setPixelSize(th.type("small"))
         card = self.card_layout(unit, st, state)
-        facts = self.facts()
-        glyph_y = (HEADER_H - glyphs.LINK_GLYPH_H) / 2
-        glyphs.draw_unit_glyph(painter, 8, glyph_y, facts.glyph, th.color("text-muted"))
         painter.setFont(bold)
         painter.setPen(th.color("text"))
         painter.drawText(
@@ -553,6 +564,7 @@ class UnitItem(QGraphicsItem):
                 elide(QFontMetrics(small), unit.name, card.name_w),
             )
             self._paint_connector_row(painter, small, th, facts, card.limit)
+            self._paint_socket(painter, th)
         painter.setOpacity(base)
         if reason:
             painter.setPen(th.color("error"))
@@ -662,14 +674,15 @@ class UnitItem(QGraphicsItem):
             painter.setPen(Qt.PenStyle.NoPen)
             painter.setBrush(QBrush(tint))
             painter.drawRect(QRectF(0, 0, W, h))
-        marks, marks_px, k = self._overview_marks(th, st, lod)
+        lead = device_looks.paint_overview(painter, th, self.facts().looks, W, h, lod)
+        marks, marks_px, k = self._overview_marks(th, st, lod, lead)
         strip = marks_px / max(lod, 0.01)  # (scene units)
         self._paint_overview_marks(painter, th, marks, lod, k)
         font = QFont(painter.font())
         font.setBold(True)
         # the ID stays readable: 12 screen pixels where there is room, smaller (never under 8) where
         # the marks take some of the box; it is cut with an ellipsis only below that
-        room = max(1.0, W - 16 - strip - (4 if marks else 0))
+        room = max(1.0, W - 8 - lead - strip - (4 if marks else 0))
         sc = self.dscene
         id_px = sc.text_width(sc.px_font(th.type("small")), self.unit_id) * 1.1
         px = min(float(METRICS.legible_px), max(8.0, room * lod / max(id_px, 1.0) * 12.0))
@@ -678,14 +691,14 @@ class UnitItem(QGraphicsItem):
         painter.setFont(font)
         painter.setPen(th.color("text"))
         painter.drawText(
-            QRectF(8, 0, room, h),
+            QRectF(lead, 0, room, h),
             Qt.AlignmentFlag.AlignVCenter,
             elide(painter.fontMetrics(), self.unit_id, room, middle=True),
         )
         self._paint_highlight(painter, th, QRectF(0, 0, W, h))
 
     def _overview_marks(
-        self, th: ThemeManager, st: ObjectState, lod: float
+        self, th: ThemeManager, st: ObjectState, lod: float, lead: float = 8.0
     ) -> tuple[list[tuple[str, str]], float, float]:
         """The marks an overview box has room for, their width in screen pixels and the share of
         their normal size they are drawn at (a box shorter than a badge gets a smaller one): the
@@ -704,7 +717,7 @@ class UnitItem(QGraphicsItem):
         k = min(1.0, (self.height() - 8) * lod / METRICS.badge_h)
         id_px = sc.text_width(font, self.unit_id) * 1.1
         spare = (
-            W * lod - 8 - id_px * 8 / 12
+            (W - lead + 8) * lod - 8 - id_px * 8 / 12
         )  # what is left of the box when the ID is at its smallest
         for variant in (full, [(k, "") for k, _t in full], full[:1] and [(full[0][0], "")]):
             if not variant:
@@ -746,21 +759,28 @@ class UnitItem(QGraphicsItem):
         ctl = self.ctl
         auto = self._auto_connectors()
         painter.setFont(small)
+        layer = self.dscene.cable
+        ports = {p.connector_id: p for p in layer.ports_of(self)}
         for k, c in enumerate(self.connectors()):
             rect = self.port_rect(k, str(c.id))
             right = self.port_side(str(c.id)) == "right"
             compat = (
                 ctl.connector_compat(c.id)
-                if state in ("ok", "no", "from") and ctl.connect_type
+                if state in ("ok", "no", "from") and ctl.connect_type and not layer.active
                 else None
             )
             valid = bool(compat and compat.ok and state != "from")
+            cable_style = layer.port_style(ports[str(c.id)]) if str(c.id) in ports else ""
+            if cable_style:  # a cable is in hand (or the pointer is over the port)
+                valid = cable_style in ("ok", "snap")
             pen = QPen(th.color("border"), 2)
             if c.id in auto:
                 pen = QPen(th.color("auto-fill"), 2, Qt.PenStyle.DashLine)
             painter.setPen(pen)
             painter.setBrush(QBrush(th.color("primary") if valid else th.color("bg")))
             painter.drawRoundedRect(rect, 3, 3)
+            if cable_style:
+                self._paint_port_ring(painter, th, rect, cable_style)
             if self.dscene.states.of(
                 "connector", str(c.id)
             ).locks:  # a release locks this connector
@@ -777,7 +797,7 @@ class UnitItem(QGraphicsItem):
             )
             y = self.port_y(k)
             family, pins, gender = describe.connector_family(ctl.project, str(c.id))
-            muted = compat is not None and not valid
+            muted = (compat is not None and not valid) or cable_style in ("no", "snap-no")
             ink = th.color("text-muted") if muted else th.color("text")
             # from the edge inwards: the designator, the connector, the pin count; glyphs.port_row
             # keeps every part inside its half. What a link carries is drawn on the link.
@@ -798,6 +818,38 @@ class UnitItem(QGraphicsItem):
                 painter.drawText(
                     QRectF(row["count"][0], y - 9, glyphs.ROW_COUNT_W, 18), align, str(pins)
                 )
+
+    def _paint_port_ring(
+        self, painter: QPainter, th: ThemeManager, rect: QRectF, style: str
+    ) -> None:
+        """The ring round a port that a cable is near: the pointer over it, the end the cable
+        comes from, the port it would snap to (and refuses), a port that takes the cable."""
+        token, width = {
+            "hover": ("primary", 2.0),
+            "from": ("primary", 2.0),
+            "snap": ("focus", 3.0),
+            "snap-no": ("error", 3.0),
+            "ok": ("primary", 1.5),
+        }.get(style, ("", 0.0))
+        if not token:
+            return
+        painter.setPen(QPen(th.color(token), width))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(rect.adjusted(-RING, -RING, RING, RING), 5, 5)
+
+    def _paint_socket(self, painter: QPainter, th: ThemeManager) -> None:
+        """Guided mode: one port for the device as a whole, on the edge its connections leave from
+        (the tool picks the connector, as when two devices are clicked)."""
+        layer = self.dscene.cable
+        port = layer.ports_of(self)[0]
+        rect = layer.port_rect(port).translated(-self.pos())
+        style = layer.port_style(port)
+        valid = style in ("ok", "snap")
+        painter.setPen(QPen(th.color("border"), 2))
+        painter.setBrush(QBrush(th.color("primary") if valid else th.color("bg")))
+        painter.drawRoundedRect(rect, 3, 3)
+        if style:
+            self._paint_port_ring(painter, th, rect, style)
 
     # ---- interaction ------------------------------------------------------------------------
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
@@ -886,7 +938,9 @@ class UnitItem(QGraphicsItem):
             x, y = value.x(), value.y()
             if self.dscene.snapping():
                 x, y = round(x / GRID) * GRID, round(y / GRID) * GRID
-            return QPointF(max(0.0, x), max(0.0, y))  # a drag cannot leave the top left corner
+            return QPointF(
+                x, y
+            )  # a device can go anywhere, past the edge and below zero: the scene grows
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
             self.dscene.relink(self.unit_id)
         return super().itemChange(change, value)
@@ -921,7 +975,12 @@ class UnitItem(QGraphicsItem):
             u = self.ctl.project.units.get(self.unit_id)
             conn = self.ctl.project.connectors.get(cid) if cid else None
             full = f"{u.id}: {u.name}" if u else ""
+            if u:  # what the card's picture and colour mean, in words
+                full += "\n" + device_kinds.sentence(self.facts().looks, u.name, u.id)
             text = f"{full}\n{conn.name}" if conn else full  # (the whole text, if elided)
+            port = self._tip_port(event.pos(), cid)  # type: ignore[attr-defined]
+            if port is not None:  # a port says what it is and how many pins are free
+                text = f"{full}\n{self.dscene.cable.tip_for(port)}"
             locks = self.dscene.states.of("connector", cid).locks if cid else ()
             if locks:
                 text += "\n" + self.lock_tip(ObjectState(locks=locks))
@@ -929,6 +988,20 @@ class UnitItem(QGraphicsItem):
                 why = describe.why_lines(self.ctl.project, "connector", cid)
                 text += "\n" + "\n".join(why[:2])
             self.setToolTip(text)
+
+    def _tip_port(self, pos: QPointF, connector_id: str | None) -> cb.Port | None:
+        """The port a tooltip at `pos` is about (Select tool): the connector row in Expert mode,
+        the socket of the device in Guided mode."""
+        if self.ctl.tool != "select" or self.ctl.read_only:
+            return None
+        layer = self.dscene.cable
+        for port in layer.ports_of(self):
+            if self.ctl.mode == "expert":
+                if port.connector_id == connector_id:
+                    return port
+            elif layer.port_rect(port).translated(-self.pos()).adjusted(-6, -6, 6, 6).contains(pos):
+                return port
+        return None
 
     def activate(self, *, open_plan: bool = False) -> None:
         """Enter or Space on the unit: pick it with the Connect tool, otherwise select it (Enter
@@ -968,12 +1041,7 @@ class UnitItem(QGraphicsItem):
             if self.unit_id not in ids:
                 ids = [self.unit_id]
             items = [self.dscene.unit_items[u] for u in ids if u in self.dscene.unit_items]
-            ctl.move_units(
-                {
-                    it.unit_id: (max(0.0, it.pos().x() + dx), max(0.0, it.pos().y() + dy))
-                    for it in items
-                }
-            )
+            ctl.move_units({it.unit_id: (it.pos().x() + dx, it.pos().y() + dy) for it in items})
             event.accept()
             return
         super().keyPressEvent(event)
@@ -1046,9 +1114,10 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         self.interface_id = interface_id
         # the marks of this line: its label, and its vertical piece (moved across only)
         self.mark_ids = (f"interface:{interface_id}", f"route:{interface_id}")
-        self._shifts = {m: scene.mark_shift(m) for m in self.mark_ids}
+        self._shifts, self._along = self._read_marks()
         self.auto_route: list[tuple[float, float]] = []  # the route the router made (not moved)
         self._chip = QRectF()
+        self._chip_center = QPointF()  # where the tool puts the label (it is on the line, or by it)
         self._chip_placed = False
         self._compact = False  # the picture alone, where the full label has no clear spot
         self._chip_values = 0  # how many characters of numbers the registered label was sized for
@@ -1101,9 +1170,49 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
             center = path.pointAtPercent(0.5)
         self._chip_center = center
         self._chip_placed = True
-        w, h = (COMPACT_W, COMPACT_H) if self._compact else (width, METRICS.chip_h)
-        self.dscene.chip_place(name, QRectF(center.x() - w / 2, center.y() - h / 2, w, h))
+        self._register_chip()
         return True
+
+    def _label_size(self) -> tuple[float, float]:
+        """The size the label is laid out with (its text, or the picture alone when it is tight)."""
+        if self._compact:
+            return COMPACT_W, COMPACT_H
+        return self._chip_width(self._chip_values * 6.5), METRICS.chip_h
+
+    def label_center(self) -> QPointF:
+        """Where the pill is: the place the tool gave it, or, when the person put it somewhere, its
+        place on the line (a fraction of the line's length, kept inside the line)."""
+        t = self.along_of(self.mark_ids[0])
+        if t is None or len(self.poly) < 2:
+            return QPointF(self._chip_center)
+        return QPointF(*linepos.place(self.poly, t, self.margin_of(self.mark_ids[0])))
+
+    def _register_chip(self) -> None:
+        """Tell the scene where the label is now, so that labels the person has not moved keep
+        clear of it."""
+        w, h = self._label_size()
+        c = self.label_center()
+        self.dscene.chip_place(self.interface_id, QRectF(c.x() - w / 2, c.y() - h / 2, w, h))
+
+    def margin_of(self, mark_id: str) -> float:
+        return self._label_size()[0] / 2 + LABEL_GAP
+
+    def centre_of(self, mark_id: str) -> QPointF:
+        return self.label_center()
+
+    def along_changed(self) -> None:
+        if self._chip_placed:
+            self._register_chip()
+
+    def legacy_places(self) -> dict[str, float]:
+        """The place on the line of a pill that has a free offset of an earlier version: the
+        nearest point of the line to where the offset put it."""
+        legacy = self.dscene.legacy_offsets(self.mark_ids[:1])
+        if not legacy or len(self.poly) < 2 or not self._chip_placed:
+            return {}
+        off = legacy[self.mark_ids[0]]
+        c = self._chip_center
+        return {self.mark_ids[0]: linepos.from_offset(self.poly, (c.x(), c.y()), off.x(), off.y())}
 
     def _pick_spot(
         self, route: list[tuple[float, float]], width: float, height: float, name: str
@@ -1197,16 +1306,13 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         path = stroker.createStroke(self.path())
         chip = None if self._preview else self.dscene.chip_rect(self.interface_id)
         if chip is not None:
-            path.addRect(chip.translated(self.shift))
+            path.addRect(chip)  # (where the label is now, on its line)
         if self._badge_hit is not None and not self._preview:
             path.addRect(self._badge_hit)
         return path
 
     def boundingRect(self) -> QRectF:
-        away_x, away_y = self.away()  # (a moved label is far from the line)
-        return (
-            super().boundingRect().adjusted(-120 - away_x, -20 - away_y, 120 + away_x, 20 + away_y)
-        )
+        return super().boundingRect().adjusted(-120, -20, 120, 20)  # (the label sits on the line)
 
     def drag_slots(self) -> list[tuple[str, QRectF, bool]]:
         """The label, and the vertical piece of the line (moved across only, and only where it is
@@ -1233,8 +1339,6 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
     def limit_shift(self, mark_id: str, shift: QPointF) -> QPointF:
         """While the piece is dragged: it goes no further than the devices allow, and not up or
         down."""
-        if mark_id != self.mark_ids[1]:
-            return shift
         at = routing.trunk_index(self.auto_route)
         if at is None:
             return QPointF(0.0, 0.0)
@@ -1282,7 +1386,7 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         exposed = option.exposedRect.adjusted(-10, -10, 10, 10)
         if not self.path().intersects(exposed) and not self._chip.intersects(exposed):
             chip = sc.chip_rect(self.interface_id)
-            if chip is None or not chip.translated(self.shift).intersects(exposed):
+            if chip is None or not chip.intersects(exposed):
                 return  # the long box of a link is often dirty where the link itself is not
         t = ctl.project.interface_types.get(i.type_id)
         cat = style_category(t.category if t else "data")
@@ -1337,7 +1441,7 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         th = sc.theme
         st = sc.states.of("interface", i.id)
         color = th.color(f"cat-{cat}")
-        c = self._chip_center + self.shift  # (where the person put it, or the automatic place)
+        c = self.label_center()  # (where the person put it on the line, or the automatic place)
         font = sc.px_font(th.type("small"))
         parts = (
             [] if self._compact or not sc.label_full(i.id, self._hover) else self._label_parts(st)
@@ -1491,7 +1595,7 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
             return
         k = 1.0 / lod
         wpx, hpx = METRICS.far_marker_px
-        c = self._chip_center + self.shift
+        c = self.label_center()
         rect = QRectF(c.x() - wpx * k / 2, c.y() - hpx * k / 2, wpx * k, hpx * k)
         if not option.exposedRect.intersects(rect.adjusted(-10 * k, -10 * k, 10 * k, 10 * k)):
             return
@@ -1627,7 +1731,11 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
             self.setZValue(self._base_z + 0.2)  # the link under the pointer lies on top
             self.update()
 
+    def hoverMoveEvent(self, event: object) -> None:
+        self.show_cursor_at(event.scenePos())  # type: ignore[attr-defined]
+
     def hoverLeaveEvent(self, event: object) -> None:
+        self.unsetCursor()
         if self._hover:
             self._hover = False
             self.setZValue(self._base_z)
@@ -1727,6 +1835,7 @@ class DiagramScene(QGraphicsScene):
         self._preview_timer.setSingleShot(True)
         self._preview_timer.setInterval(METRICS.drag_preview_ms)
         self._preview_timer.timeout.connect(self._preview_tick)
+        self.cable = CableLayer(self)  # the cable in hand (picked up at a port) and the loose end
         ctl.changed.connect(self.apply)
         ctl.drcChanged.connect(self.refresh_states)
         ctl.selectionChanged.connect(self._on_selection)
@@ -2303,6 +2412,7 @@ class DiagramScene(QGraphicsScene):
         for lid in sorted(project.links):
             self._add_connection(lid)
         self._refresh_connections()
+        self.adopt_legacy_marks()  # (labels moved by an earlier version stay on their lines)
         self._update_extent()
         if self.filter is not None or self.ctl.selected:
             self._apply_filter()
@@ -2421,7 +2531,31 @@ class DiagramScene(QGraphicsScene):
         top = -math.ceil(-top / LANE_STEP) * LANE_STEP
         rect = QRectF(left, top, width - left, self.lane_height - top)
         if rect != self.sceneRect():
-            self.setSceneRect(rect)
+            self._set_extent(rect)
+
+    def _set_extent(self, rect: QRectF) -> None:
+        """Take a new scene rectangle. A scene smaller than the window is centred in it, so when
+        it grows past the window (or shrinks inside it) the view must keep showing what it
+        showed: it would otherwise jump under the pointer."""
+        keep = [(v, v.mapToScene(v.viewport().rect().center())) for v in self.views()]
+        self.setSceneRect(rect)
+        for v, centre in keep:
+            if v.mapToScene(v.viewport().rect().center()) != centre:
+                v.centerOn(centre)
+
+    def grow_to(self, rect: QRectF) -> None:
+        """Make the scene big enough to hold `rect` (it only grows here, in steps; the next edit
+        works the extent out again from the devices). A device or a cable carried past the edge
+        keeps the scroll bars and the view following it."""
+        now = self.sceneRect()
+        want = now.united(rect)
+        if want == now:
+            return
+        left = min(now.left(), math.floor(want.left() / LANE_STEP) * LANE_STEP)
+        top = min(now.top(), math.floor(want.top() / LANE_STEP) * LANE_STEP)
+        right = max(now.right(), math.ceil(want.right() / LANE_STEP) * LANE_STEP)
+        bottom = max(now.bottom(), math.ceil(want.bottom() / LANE_STEP) * LANE_STEP)
+        self._set_extent(QRectF(left, top, right - left, bottom - top))
 
     def apply(self, delta: Delta) -> None:
         self._focus_cache = None  # the model changed: the focus of the selection may have
@@ -2502,6 +2636,11 @@ class DiagramScene(QGraphicsScene):
         METRICS.drag_preview_ms); the routes are worked out when the mouse is released."""
         for line in self.connection_items.values():  # (a few straight-sided lines: cheap)
             line.update_path()
+        item = self.unit_items.get(unit_id)
+        if item is not None and self._drag_units:  # a device dragged past the edge: the scene grows
+            self.grow_to(
+                item.sceneBoundingRect().adjusted(-CAB_ROOM, -CAB_ROOM, CAB_ROOM, CAB_ROOM)
+            )
         if self._drag_units:
             self._schedule_preview()
             return
@@ -2535,9 +2674,53 @@ class DiagramScene(QGraphicsScene):
         self._apply_filter()  # a selection puts its own links in focus and fades the rest
 
     def mark_shift(self, mark_id: str) -> QPointF:
-        """How far the person moved this label from its automatic place (none: no shift)."""
+        """How far the person moved a piece of a line (a bend, a route) across (none: no shift)."""
         mark = self.ctl.project.diagram_marks.get(mark_id)
-        return QPointF(mark.dx, mark.dy) if mark is not None else QPointF(0.0, 0.0)
+        if mark is None or mark.dx is None or mark.dy is None:
+            return QPointF(0.0, 0.0)
+        return QPointF(mark.dx, mark.dy)
+
+    def mark_along(self, mark_id: str) -> float | None:
+        """Where the person put a label on its line, as a fraction of the line's length (None:
+        where the tool put it)."""
+        mark = self.ctl.project.diagram_marks.get(mark_id)
+        return mark.t if mark is not None else None
+
+    def legacy_offsets(self, mark_ids: Sequence[str]) -> dict[str, QPointF]:
+        """The labels among `mark_ids` that still have the mark of an earlier version, a free
+        offset from the automatic place (release 1.14 and 1.15), with that offset."""
+        found: dict[str, QPointF] = {}
+        for m in mark_ids:
+            mark = self.ctl.project.diagram_marks.get(m)
+            if (
+                mark is not None
+                and mark_is_along(m)
+                and mark.t is None
+                and mark.dx is not None
+                and mark.dy is not None
+            ):
+                found[m] = QPointF(mark.dx, mark.dy)
+        return found
+
+    def adopt_legacy_marks(self) -> None:
+        """Read every mark of an earlier version (a free offset of a label) as the nearest point of
+        its line, once the lines are drawn, and keep it as that place (written so on the next
+        save). The label is where the offset put it, as near as the line allows."""
+        legacy = [
+            m
+            for m in self.ctl.project.diagram_marks.values()
+            if m.t is None and mark_is_along(m.id)
+        ]
+        if not legacy:
+            return
+        items: list[ChipDrag] = [*self.link_items.values(), *self.connection_items.values()]
+        places: dict[str, float] = {}
+        for item in items:
+            places.update(item.legacy_places())
+        if places:
+            self.ctl.adopt_positions(places)
+            for item in items:
+                item.reload_marks()
 
     def _apply_marks(self, marks: set[str]) -> None:
         """Labels were moved or put back (by a drag, an undo, a redo)."""
@@ -2547,7 +2730,7 @@ class DiagramScene(QGraphicsScene):
             by_kind = self.link_items if kind in ("interface", "route") else self.connection_items
             item = by_kind.get(ident)
             if item is not None:
-                item.reload_shifts()
+                item.reload_marks()
 
     def chip_rect(self, interface_id: str) -> QRectF | None:
         """Where the label of a link was placed, or None (not placed yet, or being dragged)."""
@@ -2558,9 +2741,7 @@ class DiagramScene(QGraphicsScene):
         for cell in self._cells(QRectF(pos, pos)):
             for iid, rect in self._chips.get(cell, ()):
                 link = self.link_items.get(iid)
-                if rect.contains(pos) and (
-                    link is None or link.shift.isNull()
-                ):  # (not a moved one)
+                if rect.contains(pos):
                     return link
         for link in self.link_items.values():  # a label drawn wider than it was reserved
             if not link._preview and link._chip.contains(pos):
@@ -2573,6 +2754,7 @@ class DiagramScene(QGraphicsScene):
 
 
 LANE_STEP = 256.0  # lane height grows in steps of this many pixels
+CAB_ROOM = 120.0  # the room a dragged device keeps free around it: the scene grows to hold it
 MAP_DELAY_MS = 400  # the overview map repaints this long after the last change
 
 
@@ -2909,6 +3091,11 @@ class DiagramView(QGraphicsView):
         self.dscene.statesChanged.connect(self.legend.set_states)
         self.legend.set_states(self.dscene.states)
         self._fit_scale = 0.25
+        self.unit_drag = (
+            False  # a device is being dragged (the view scrolls when it nears the edge)
+        )
+        self.dscene.cable.attach(self)  # the cable in hand asks the view for scale, scroll, cursor
+        self.viewport().setMouseTracking(True)  # a held cable follows the pointer without a button
         self._space = False  # Space is held: a drag pans
         self._space_used = False
         self._pan_last: QPoint | None = None
@@ -3098,6 +3285,8 @@ class DiagramView(QGraphicsView):
 
     def scrollContentsBy(self, dx: int, dy: int) -> None:
         super().scrollContentsBy(dx, dy)
+        if self.dscene.cable.active:
+            self.dscene.cable.follow()  # the carried end stays under the pointer
         self.minimap.viewport().update()
         if self.empty.isVisible():
             self._place_hint()  # it keeps clear of the devices and lane names that moved
@@ -3119,6 +3308,8 @@ class DiagramView(QGraphicsView):
         self._scale_changed()
 
     def _scale_changed(self) -> None:
+        if self.dscene.cable.active:
+            self.dscene.cable.follow()  # zooming under a carried cable: its end stays at the pointer
         self.minimap.viewport().update()
         if self.empty.isVisible():
             self._place_hint()
@@ -3218,6 +3409,14 @@ class DiagramView(QGraphicsView):
             self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
             event.accept()
             return
+        mods = event.modifiers()
+        if (
+            button == Qt.MouseButton.LeftButton
+            and not mods & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
+            and self.dscene.cable.press_at(self.mapToScene(pos), pos)
+        ):
+            event.accept()  # a port, the plug of a connection or a loose end: a cable is picked up
+            return
         if button == Qt.MouseButton.LeftButton and self.ctl.tool == "select":
             item = self.itemAt(pos)
             at = self.mapToScene(pos)
@@ -3230,10 +3429,20 @@ class DiagramView(QGraphicsView):
                     event.accept()
                     return
             if item is None or isinstance(item, ZoneItem):
+                self.dscene.cable.drop_on_empty()  # a click on empty ground drops a loose end
                 self._begin_band(at, pos, event.modifiers())
                 event.accept()
                 return
         super().mousePressEvent(event)
+        grab = self.dscene.mouseGrabberItem()
+        if (
+            button == Qt.MouseButton.LeftButton
+            and isinstance(grab, UnitItem)
+            and not self.ctl.read_only
+            and self.ctl.tool == "select"
+        ):
+            self.unit_drag = True  # (the view follows a device that is dragged to its edge)
+            self.dscene.cable.drag_scroll(pos)
 
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
         pos = event.position().toPoint()
@@ -3252,6 +3461,11 @@ class DiagramView(QGraphicsView):
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         pos = event.position().toPoint()
+        if self.dscene.cable.on_move(self.mapToScene(pos), pos):
+            event.accept()  # a cable is in hand
+            return
+        if self.unit_drag:
+            self.dscene.cable.drag_scroll(pos)
         if self._pan_last is not None:
             d = pos - self._pan_last
             self._pan_last = pos
@@ -3275,6 +3489,11 @@ class DiagramView(QGraphicsView):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.unit_drag = False
+            if self.dscene.cable.on_release(self.mapToScene(event.position().toPoint())):
+                event.accept()
+                return
         if self._pan_last is not None and event.button() in (
             Qt.MouseButton.MiddleButton,
             Qt.MouseButton.LeftButton,
@@ -3294,6 +3513,10 @@ class DiagramView(QGraphicsView):
             event.accept()
             return
         super().mouseReleaseEvent(event)
+
+    def reset_cursor(self) -> None:
+        """The pointer shape the view has at rest (the open hand while Space is held)."""
+        self._set_hand()
 
     def _set_hand(self) -> None:
         if self._space:
@@ -3344,7 +3567,7 @@ class DiagramView(QGraphicsView):
             if isinstance(focus, UnitItem):
                 pos = self.mapFromScene(focus.mapToScene(QPointF(60, 12)))
             elif isinstance(focus, LinkItem) and focus.path().elementCount():
-                pos = self.mapFromScene(focus._chip_center + focus.shift)
+                pos = self.mapFromScene(focus.label_center())
         at = self.mapToScene(pos)
         item = self.itemAt(pos)
         kind: str | None = None
@@ -3572,8 +3795,8 @@ class DiagramView(QGraphicsView):
             ctl.pick(unit_id)
 
     def _add_here(self, template_id: str, at: QPointF) -> None:
-        x = max(0.0, round((at.x() - W / 2) / GRID) * GRID)
-        y = max(0.0, round(at.y() / GRID) * GRID)
+        x = round((at.x() - W / 2) / GRID) * GRID
+        y = round(at.y() / GRID) * GRID
         uid = self.ctl.add_unit(template_id, x, y)
         if uid:
             self.focus_unit(uid)
@@ -3588,6 +3811,9 @@ class DiagramView(QGraphicsView):
             event.accept()  # (Space on a focused unit selects it when it is let go, below)
             return
         if key == Qt.Key.Key_Escape:
+            if self.dscene.cable.escape():  # a cable in hand is put away, a loose end dropped
+                event.accept()
+                return
             if self.search.isVisible():
                 self.search.close_bar()
                 event.accept()
@@ -3725,6 +3951,7 @@ class DiagramView(QGraphicsView):
 
     def drawForeground(self, painter: QPainter, rect: QRectF | QRect) -> None:
         super().drawForeground(painter, rect)
+        self.dscene.cable.paint(painter)
         if self._band is None:
             return
         fill = QColor(self.theme.color("primary"))

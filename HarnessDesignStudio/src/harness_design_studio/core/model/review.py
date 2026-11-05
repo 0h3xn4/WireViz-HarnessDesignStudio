@@ -8,6 +8,7 @@ from pydantic import (
     SerializerFunctionWrapHandler,
     StringConstraints,
     model_serializer,
+    model_validator,
 )
 
 from harness_design_studio.core.ids import Id
@@ -30,16 +31,51 @@ class Placement(Entity):
     y: float
 
 
-class DiagramMark(Entity):
-    """Where the person moved one thing in the diagram off the place the tool gave it: `id` names
-    the thing ("link:L1" the label of a connection, "interface:IF-TM" the label of an interface),
-    `dx` and `dy` are the move from the automatic place, in scene units, so the thing keeps
-    following its line when devices move. Kept in `diagram/marks.json` (optional, like the import
-    record); it is not part of the model hash and is never written into an output file."""
+# The marks of things that sit ON a line (the pill of an interface, the label of a connection, the
+# connector box at an end of one): where each is, is a position along the line. Any other mark
+# ("bend", "route") is the offset of a piece of the line, and a mark of a kind this tool does not
+# know is not ours to read.
+ALONG_MARK_KINDS = frozenset({"interface", "link", "end"})
+OFFSET_MARK_KINDS = frozenset({"bend", "route"})
+
+
+def mark_is_along(mark_id: str) -> bool:
+    """Whether the mark `mark_id` ("interface:IF-1", "link:L1", "end:L1:0") is the place of a label
+    on its line (a position along it), not the offset of a piece of the line."""
+    return mark_id.partition(":")[0] in ALONG_MARK_KINDS
+
+
+class DiagramMark(SparseEntity):
+    """Where the person moved one thing in the diagram off the place the tool gave it, kept in
+    `diagram/marks.json` (optional, like the import record; not part of the model hash and never
+    written into an output file). `id` names the thing: "interface:IF-TM" (the pill of an
+    interface), "link:L1" (the label of a connection), "end:L1:0" and "end:L1:1" (the connector box
+    at its ends) sit ON their line and are a position along it, `t`, the fraction of the length of
+    the line from its first point (0 to 1), so they follow the line when devices move and never
+    leave it; "bend:L1" (the vertical piece of a connection) and "route:IF-TM" (that of an
+    interface's route) are an offset, `dx` and `dy` in scene units, of that piece from where the
+    tool put it. Release 1.14.0 and 1.15.0 also wrote an offset for the labels; it is still read
+    (the tool turns it into `t` by taking the nearest point of the line, and writes `t` from then
+    on)."""
+
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"dx", "dy", "t"})
 
     id: Name
-    dx: Annotated[float, Field(ge=-100_000.0, le=100_000.0)]
-    dy: Annotated[float, Field(ge=-100_000.0, le=100_000.0)]
+    dx: Annotated[float, Field(ge=-100_000.0, le=100_000.0)] | None = None
+    dy: Annotated[float, Field(ge=-100_000.0, le=100_000.0)] | None = None
+    t: Annotated[float, Field(ge=0.0, le=1.0)] | None = None
+
+    @model_validator(mode="after")
+    def _one_way_to_say_where(self) -> DiagramMark:
+        """`dx` and `dy` together, or `t` alone; a bend or a route has an offset only."""
+        offset = (self.dx is not None, self.dy is not None)
+        if offset not in ((True, True), (False, False)):
+            raise ValueError("dx and dy go together")
+        if (self.t is not None) == offset[0]:
+            raise ValueError("a mark has an offset (dx and dy) or a position (t), one of the two")
+        if self.t is not None and self.id.partition(":")[0] in OFFSET_MARK_KINDS:
+            raise ValueError("a position t is for a label on a line, not for a bend or a route")
+        return self
 
 
 FindingHash = Annotated[str, StringConstraints(pattern=r"^[0-9a-f]{12}$")]

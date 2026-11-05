@@ -30,7 +30,7 @@ from harness_design_studio.core import checks, describe, edit, why
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.library_import import describe_library
 from harness_design_studio.core.model import InterfaceInstance, Part
-from harness_design_studio.gui import strings
+from harness_design_studio.gui import device_kinds, device_looks, strings
 from harness_design_studio.gui.controller import LIST_DELAY_MS, Delta, EditorController
 from harness_design_studio.gui.icons import icon_button
 from harness_design_studio.gui.theme import ThemeManager, current_theme, mark_mono
@@ -447,6 +447,8 @@ class PropertiesPanel(QScrollArea):
         self.lay.addWidget(zone)
         sub = _Field(strings.FIELD_SUBSYSTEM, u.subsystem, enabled=False)
         self.lay.addWidget(sub)
+        looks = device_kinds.looks_for(p, uid, describe.unit_categories(p))
+        self.lay.addWidget(device_looks.looks_line(self.theme, looks, u.name, uid))
         if ctl.mode == "expert":
             self.lay.addWidget(heading(strings.CONNECTORS_PHYSICAL))
             self._connector_rows(uid)

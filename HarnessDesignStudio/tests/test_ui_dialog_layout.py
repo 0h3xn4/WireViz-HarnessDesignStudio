@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
-"""REQ-GUI-20. The *Add device* window of a real display: the name field lay over the note under
+"""REQ-GUI-23. The *Add device* window of a real display: the name field lay over the note under
 it and the banner over the buttons, and the banner *A device needs a name.* showed before anything
 was typed.
 

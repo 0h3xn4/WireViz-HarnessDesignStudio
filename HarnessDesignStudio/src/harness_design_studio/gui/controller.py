@@ -24,6 +24,7 @@ from harness_design_studio.core import (
     edit,
     first_connector,
     journal,
+    linepos,
     links,
     part_approval,
 )
@@ -208,6 +209,8 @@ class EditorController(QObject):
     openRequested = Signal(str, str)  # kind ("unit" | "interface"), id: show it in the plans view
     linkRequested = Signal(str, str, str, str)  # device A, connector A or "", device B, connector B
     linkSelectionChanged = Signal()  # the connection picked in the tree or on the diagram changed
+    cableHint = Signal(str)  # what to tell while a cable is in hand on the diagram ("" clears it)
+    projectSaved = Signal()  # the project was written to its folder (loose cable ends are dropped)
 
     def __init__(
         self, journal_delay_ms: int = JOURNAL_DELAY_MS, drc_delay_ms: int = DRC_DELAY_MS
@@ -936,6 +939,29 @@ class EditorController(QObject):
         step = strings.STEP_MOVE_ROUTE if kind == "route" else strings.STEP_MOVE_LABEL
         return self.run(step.format(name), [Put("diagram_marks", mark)])
 
+    def slide_mark(self, mark_id: str, t: float) -> bool:
+        """Remember that a label sits at the fraction `t` of the length of its line (one undoable
+        step; the same place again is nothing to do). Diagram layout only: no model hash, no
+        written output."""
+        mark = DiagramMark(id=mark_id, t=round(t, linepos.ROUND_TO))
+        if self.mark_of(mark_id) == mark:
+            return True
+        return self.run(
+            strings.STEP_MOVE_LABEL.format(mark_id.partition(":")[2].partition(":")[0]),
+            [Put("diagram_marks", mark)],
+        )
+
+    def adopt_positions(self, positions: Mapping[str, float]) -> None:
+        """Write the marks of an earlier version, a free offset, in the form of today (a position
+        along the line) once the diagram has worked out the nearest point of the line. Nothing the
+        person did: no undo step, no change of the project's state; the next save writes the new
+        form."""
+        for mark_id, t in positions.items():
+            if mark_id in self.project.diagram_marks:
+                self.project.diagram_marks[mark_id] = DiagramMark(
+                    id=mark_id, t=round(t, linepos.ROUND_TO)
+                )
+
     def reset_mark(self, mark_id: str) -> bool:
         """Put a label back to its automatic place (one undoable step; nothing to do if it is)."""
         return self.reset_marks([mark_id])
@@ -1543,6 +1569,7 @@ class EditorController(QObject):
         if self.root is not None:
             self.stop_journal()
             clear_journal(self.root)
+        self.projectSaved.emit()
         self.stateChanged.emit()
 
     def disk_changed(self) -> bool:
@@ -1823,6 +1850,33 @@ class EditorController(QObject):
             lambda: links.plan_delete_link(self.project, link_id),
             message=strings.LINK_DELETED.format(link_id),
         )
+
+    def move_link_end(
+        self, link_id: str, end: str, connector_id: str = "", unit_id: str = ""
+    ) -> bool:
+        """Plug one end ("a" or "b") of a connection into another connector, or into the device
+        `unit_id` (the tool then picks the connector), as one undo step: the connection keeps its
+        ID and name, its pairs are proposed again. The reason is a message when it is refused."""
+        chosen: list[str] = []
+
+        def build() -> list[Op]:
+            ops, connector = links.plan_move_link_end(
+                self.project, link_id, end, connector_id, unit_id
+            )
+            chosen.append(connector)
+            return ops
+
+        before = self.history.revision
+        if not self.attempt(strings.STEP_MOVE_LINK_END.format(link_id), build):
+            return False
+        if self.history.revision == before:  # (put back on the connector it was on: no step)
+            self.message.emit(
+                strings.LINK_END_MOVED_NOTHING.format(link=link_id, connector=chosen[0]), False
+            )
+            return True
+        self.message.emit(strings.LINK_END_MOVED.format(link=link_id, connector=chosen[0]), True)
+        self.select_link(link_id)
+        return True
 
     def create_harness_from_link(self, link_id: str) -> str | None:
         """The one button that makes a harness from a connection (one undo step). Returns the

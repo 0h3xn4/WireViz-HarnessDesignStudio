@@ -650,6 +650,67 @@ def plan_quick_link(
     return QuickLink([*first, *ops], lid, a_connector, b_connector, len(pairs), by, tuple(added))
 
 
+def plan_move_link_end(
+    project: Project, link_id: str, end: str, connector_id: str = "", unit_id: str = ""
+) -> tuple[list[Op], str]:
+    """Ops that plug one end of a link into another connector (a cable end picked up on the diagram
+    and put down on another port), and the connector that end now has. `end` is "a" or "b". Name
+    the connector, or only its device (`unit_id`): the connector is then the one of that device
+    that the signal names pair best with the other end, and the next one when that cannot be
+    linked. The link keeps its ID, name and note; its pairs are worked out again for the two
+    connectors it now joins (by signal name, else by pin number, else none: a connection with no
+    pair is valid), without counting the pins the link holds now. Refused, with the reason, when a
+    harness was made from the link, the link is locked, both ends would be on one device, or a
+    cable plug of a harness sits on the new connector."""
+    from .pairing import pair_by_number
+
+    _writable(project)
+    link = _known_link(project, link_id)
+    _unlocked(project, link_id)
+    if end not in ("a", "b"):
+        raise EditError("An end of a connection is 'a' or 'b'.")
+    if link.harness_id and link.harness_id in project.harnesses:
+        raise EditError(
+            f"A harness ({link.harness_id}) was made from link {link_id}. Delete that harness "
+            "first, or make a new connection."
+        )
+    moving, fixed = (
+        (link.a_connector, link.b_connector) if end == "a" else (link.b_connector, link.a_connector)
+    )
+    if connector_id:
+        candidates = [connector_id]
+    elif unit_id in project.units:
+        fixed_conn = project.connectors.get(fixed)
+        best = best_connectors(
+            project, unit_id, "", (fixed_conn.unit_id if fixed_conn else "") or "", fixed
+        )[0]
+        candidates = [best] if best else []
+        candidates += [c.id for c in unit_connectors(project, unit_id) if c.id != best]
+        if not candidates:
+            raise EditError(f"{unit_id} has no connector yet. Add a connector to it first.")
+    else:
+        raise EditError("Name the connector or the device to plug the end into.")
+    if candidates[0] == moving:
+        return [], moving
+    base = clone_with(
+        project, [Delete("links", link_id)]
+    )  # (its own pins are free for the new pairs)
+    refused: EditError | None = None
+    for new in candidates:
+        a_id, b_id = (new, fixed) if end == "a" else (fixed, new)
+        try:
+            pairs = list(propose_pairs(base, a_id, b_id).pairs) or list(
+                pair_by_number(base, a_id, b_id).pairs
+            )
+            plan_add_link(base, a_id, b_id, pairs, link.name, link_id=link_id)  # (the checks)
+        except EditError as exc:
+            refused = refused or exc
+            continue
+        moved = evolve(link, a_connector=a_id, b_connector=b_id, pairs=pairs)
+        return [Put("links", moved)], new
+    raise refused or EditError("This end cannot be plugged in there.")
+
+
 def plan_set_pairs(project: Project, link_id: str, pairs: Iterable[PairLike]) -> list[Op]:
     """Ops that replace the pairing of a link. Refused when the harness made from the link is
     released. (A harness already made from the link is not changed; edit its wires there.)"""

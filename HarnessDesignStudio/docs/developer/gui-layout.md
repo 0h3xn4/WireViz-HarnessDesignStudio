@@ -1,6 +1,6 @@
 # Layout of dialogs and windows: the base, the audit and the sweep
 
-This page is for people who add or change a dialog, a window or a panel. It says why windows used to lie on top of themselves on a real screen, what to derive from, and how the layout tests work and what they cannot see. Requirement: REQ-GUI-20.
+This page is for people who add or change a dialog, a window or a panel. It says why windows used to lie on top of themselves on a real screen, what to derive from, and how the layout tests work and what they cannot see. Requirement: REQ-GUI-23.
 
 ## What went wrong, and the rule that follows
 

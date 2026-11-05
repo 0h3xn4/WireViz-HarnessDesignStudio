@@ -33,7 +33,7 @@ That is the whole system at once, and it is busy by nature. Click a device and o
 
 ![The same diagram with PDU2 selected: its links stay in colour, everything else fades](img/flatsat-focus.png)
 
-(The pictures are made by `python -m tools.flatsat_screenshots` from the real editor.)
+Each device carries the picture and the colour of its kind (a battery, a wheel, a chip for the computer ...), read from its name, so the 23 can be told apart at a glance; see [telling devices apart](user-manual/telling-devices-apart.md). (The pictures are made by `python -m tools.flatsat_screenshots` from the real editor.)
 
 ## How the system is wired
 

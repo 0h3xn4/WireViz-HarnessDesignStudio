@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
-"""REQ-GUI-20. Nothing in a dialog or window of the program lies on top of anything else, is cut
+"""REQ-GUI-23. Nothing in a dialog or window of the program lies on top of anything else, is cut
 off, or is squeezed below what it needs, at the interface sizes and font sizes people use.
 
 The owner ran the program on a real display and the *Add device* window had the name field over

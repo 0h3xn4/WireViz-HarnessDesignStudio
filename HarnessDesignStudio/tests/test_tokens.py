@@ -126,3 +126,70 @@ def test_drawing_paper_and_pasteboard_stay_apart(theme: str) -> None:
     t = THEMES[theme]
     assert t["paper"].upper() == "#FFFFFF"  # the picture of a sheet stays white in both themes
     assert contrast(t["paper"], t["pasteboard"]) >= 3.0
+
+
+# ---- REQ-GUI-20: the accent colours of the device cards (gui/device_kinds.py) -------------------
+
+DEVICE = sorted(k for k in LIGHT if k.startswith("device."))
+
+
+def test_every_device_family_has_an_accent_in_both_themes() -> None:
+    from harness_design_studio.gui.device_kinds import FAMILIES
+
+    wanted = sorted(f.token for f in FAMILIES if f.token)
+    assert wanted == DEVICE and len(wanted) == 9
+    assert sorted(k for k in DARK if k.startswith("device.")) == wanted
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_device_accents_carry_the_ink_and_stand_out_from_every_surface(theme: str) -> None:
+    """A badge is the accent with the pictogram in `accent.text` on it (4.5:1) and the badge and the
+    band against the card, the header and the canvas (3:1, the rule for graphics)."""
+    t = THEMES[theme]
+    for token in DEVICE:
+        assert contrast(t["accent.text"], t[token]) >= 4.5, (theme, token)
+        for surface in SURFACES:
+            assert contrast(t[token], t[surface]) >= 3.0, (theme, token, surface)
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_device_accents_stay_apart_and_the_pictogram_and_shape_carry_the_rest(theme: str) -> None:
+    """Nine colours cannot all stay apart for every kind of colour blindness (green and rose, blue
+    and purple come close), so the bar is 20 for normal sight and 6 in the worst simulated view;
+    two families that come close there have different badge shapes, and every kind has its own
+    pictogram and its words (test_ui_device_looks.py)."""
+    t = THEMES[theme]
+    views = {c: _views(t[c]) for c in DEVICE}
+    near = []
+    for a, b in itertools.combinations(DEVICE, 2):
+        dist = [math.dist(views[a][i], views[b][i]) for i in range(4)]
+        assert dist[0] >= 20, f"{theme}: {a} and {b} look too alike (dE {dist[0]:.1f})"
+        assert min(dist) >= 6, (
+            f"{theme}: {a} and {b} (dE {min(dist):.1f} for some colour blindness)"
+        )
+        if min(dist) < 12:
+            near.append((a, b))
+    from harness_design_studio.gui.device_kinds import FAMILIES
+
+    shape = {f.token: f.shape for f in FAMILIES}
+    assert all(shape[a] != shape[b] for a, b in near), near
+
+
+@pytest.mark.parametrize("theme", THEMES)
+def test_the_id_stays_readable_on_a_box_seen_from_far_away(theme: str) -> None:
+    """The far-away box is tinted with the accent (`device_kinds.OVERVIEW_TINT`); its ID is
+    `text.primary` and must keep 4.5:1 on the tinted ground of every family."""
+    from harness_design_studio.gui.device_kinds import OVERVIEW_TINT
+
+    t = THEMES[theme]
+    for token in DEVICE:
+        ground = _blend(t["bg.surface"], t[token], OVERVIEW_TINT)
+        assert contrast(t["text.primary"], ground) >= 4.5, (theme, token)
+
+
+def _blend(base: str, over: str, share: float) -> str:
+    a = [int(base[i : i + 2], 16) for i in (1, 3, 5)]
+    b = [int(over[i : i + 2], 16) for i in (1, 3, 5)]
+    return "#" + "".join(
+        f"{round(x * (1 - share) + y * share):02X}" for x, y in zip(a, b, strict=True)
+    )
