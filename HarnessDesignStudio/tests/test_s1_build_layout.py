@@ -437,10 +437,11 @@ def test_a_shield_that_differs_from_the_concept_is_named(work: Project) -> None:
 
 def test_every_kind_a_project_makes_is_listed_with_its_page(tmp_path: Path) -> None:
     from harness_design_studio.core.derive_export import explain_all
-    from harness_design_studio.core.derive_kinds import KINDS, page_of
+    from harness_design_studio.core.derive_kinds import KINDS, ON_DEMAND, page_of
 
     models = Path(__file__).resolve().parent.parent / "docs" / "models"
     produced: set[str] = set()
+    produced_on_demand: set[str] = set()
     for name in ("flatsat", "flatsat-tight", "small-satellite", "first-steps"):
         from tools.numbers_snapshot import SCENARIOS
 
@@ -466,8 +467,14 @@ def test_every_kind_a_project_makes_is_listed_with_its_page(tmp_path: Path) -> N
                     row[head.index("Cut length (m)")] = "3.4"
             apply_ops(project, asb.plan_asbuilt_import(project, table).ops)
         produced |= {d.id for d in explain_all(project)}
+        wid = next(w.id for h in project.harnesses.values() for w in h.wires if not w.manual)
+        assert not (
+            {d.id for d in explain_all(project)} & ON_DEMAND
+        )  # derivations.json is as before
+        produced_on_demand |= {d.id for d in explain_object(project, wid)} & ON_DEMAND
     assert produced <= set(KINDS), produced - set(KINDS)
-    assert set(KINDS) <= produced, set(KINDS) - produced
+    assert set(KINDS) <= produced | produced_on_demand, set(KINDS) - produced
+    assert produced_on_demand == ON_DEMAND
     for kind, (page, what) in KINDS.items():
         text = (models / page).read_text(encoding="utf-8")
         assert f"`{kind}`" in text, (kind, page)

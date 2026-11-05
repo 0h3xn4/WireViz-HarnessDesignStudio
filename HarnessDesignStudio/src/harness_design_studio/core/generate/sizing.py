@@ -5,9 +5,44 @@ which values are missing. The tool never guesses an engineering value.
 """
 
 import math
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, replace
 
 from harness_design_studio.core.units import awg_to_area_mm2
+
+
+@dataclass(frozen=True)
+class AmpacityTry:
+    """One gauge tried against the current: the base ampacity, the limit after derating, the verdict."""
+
+    awg: int
+    base_a: float
+    limit_a: float
+    carries: bool
+
+
+@dataclass(frozen=True)
+class DropTry:
+    """One gauge tried against the voltage drop: the drop it gives and the verdict."""
+
+    awg: int
+    drop_v: float
+    within: bool
+
+
+@dataclass(frozen=True)
+class SizingTrace:
+    """The search of `size_wire`, as it ran (for the explanation of the choice, never fed back): the
+    inputs it used and every gauge it tried in order, up to the first that passed each test."""
+
+    current_a: float
+    bundle_k: float
+    temperature: float
+    ampacity: tuple[AmpacityTry, ...]
+    max_drop_v: float | None = None
+    resistivity: float | None = None
+    length_m: float | None = None
+    conductors: int = 1
+    drops: tuple[DropTry, ...] = ()
 
 
 @dataclass
@@ -16,6 +51,7 @@ class Sizing:
     notes: list[str] = field(default_factory=list)  # how the decision was made
     pending: list[str] = field(default_factory=list)  # configuration values still missing
     error: str | None = None
+    trace: SizingTrace | None = None  # the gauges tried (None while the search could not start)
 
 
 REL_TOL = 1e-9  # a value within a billionth of its limit is at the limit, not over it
@@ -147,13 +183,21 @@ def size_wire(
         return s
     factor = bundle * temp
     candidates = sorted(table, reverse=True)  # smallest conductor first (highest AWG number)
-    ok = [
-        awg for awg in candidates if not exceeds(current_a, derated_limit(table[awg], bundle, temp))
-    ]
-    if not ok:
+    tried: list[AmpacityTry] = []
+    chosen: int | None = None
+    for cand in candidates:  # the first that carries the current is the one
+        limit = derated_limit(table[cand], bundle, temp)
+        carries = not exceeds(current_a, limit)
+        tried.append(AmpacityTry(cand, table[cand], limit, carries))
+        if carries:
+            chosen = cand
+            break
+    trace = SizingTrace(current_a, bundle, temp, tuple(tried))
+    s.trace = trace
+    if chosen is None:
         s.error = f"no listed gauge carries {current_a:g} A after derating (factor {factor:g})"
         return s
-    awg = ok[0]
+    awg = chosen
     s.notes.append(
         f"ampacity: AWG {awg} carries {derated_limit(table[awg], bundle, temp):g} A derated (factor {factor:g}) for {current_a:g} A"
     )
@@ -170,15 +214,24 @@ def size_wire(
     if length_m is None:
         s.pending.append("wire length (enter routing segment lengths)")
     if max_drop is not None and rho is not None and length_m is not None:
+        drops: list[DropTry] = []
+        found = False
         for cand in sorted((a for a in table if a <= awg), reverse=True):
             drop = voltage_drop_v(current_a, rho, length_m, cand, path_conductors)
-            if not exceeds(drop, max_drop) and math.isfinite(drop):
+            within = not exceeds(drop, max_drop) and math.isfinite(drop)
+            drops.append(DropTry(cand, drop, within))
+            if within:
                 awg = cand
+                found = True
                 s.notes.append(
                     f"voltage drop: AWG {cand} gives {drop:g} V over {path_conductors} conductor(s), limit {max_drop:g} V"
                 )
                 break
-        else:
+        s.trace = replace(
+            trace, max_drop_v=max_drop, resistivity=rho, length_m=length_m,
+            conductors=path_conductors, drops=tuple(drops),
+        )  # fmt: skip
+        if not found:
             s.error = (
                 f"no listed gauge keeps the voltage drop under {max_drop:g} V over {length_m:g} m"
             )

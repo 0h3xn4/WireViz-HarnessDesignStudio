@@ -30,6 +30,7 @@ from harness_design_studio.core.generate.bundle import bundle_size
 from harness_design_studio.core.generate.lengths import generated_length, path_trail, wire_length
 from harness_design_studio.core.generate.mass import harness_mass, wire_mass_g
 from harness_design_studio.core.generate.sizing import (
+    Sizing,
     ampacity_table,
     bundle_k,
     derated_limit,
@@ -353,22 +354,31 @@ def wire_current_limit_derivation(project: Project, h: Harness, w: Wire) -> Deri
     )  # fmt: skip
 
 
+def resistivity_source(project: Project) -> str:
+    """Where the resistivity used for the voltage drop comes from, in words (the setting and, for
+    the model dc_at_ambient, the correction to the hottest ambient temperature)."""
+    if settings.choice(project, "model", "drop_model") == "dc_at_ambient":
+        alpha = settings.number(project, "model", "resistivity_temperature_coefficient")
+        t_ref = settings.number(project, "model", "resistivity_reference_temperature_c")
+        return (
+            "config/generation.json: conductor_resistivity_ohm_m, corrected to the hottest ambient "
+            f"temperature (derating.max_ambient_temperature_c): ρ × (1 + α × (T − {_g(t_ref)} °C)), "
+            f"α = {_g(alpha)} 1/K (model.drop_model dc_at_ambient)"
+        )
+    return "config/generation.json: conductor_resistivity_ohm_m"
+
+
 def wire_voltage_drop_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
     """The voltage drop over the wire at the current of its interface, against the limit."""
     derating = cfg(project, "derating")
     limit = number(derating.get("max_voltage_drop_v"))
     rho, rho_missing = settings.resistivity(project)
-    rho_source = "config/generation.json: conductor_resistivity_ohm_m"
-    equation = "ΔV = I × ρ × L / A × n"
-    if settings.choice(project, "model", "drop_model") == "dc_at_ambient":
-        alpha = settings.number(project, "model", "resistivity_temperature_coefficient")
-        t_ref = settings.number(project, "model", "resistivity_reference_temperature_c")
-        rho_source = (
-            "config/generation.json: conductor_resistivity_ohm_m, corrected to the hottest ambient "
-            f"temperature (derating.max_ambient_temperature_c): ρ × (1 + α × (T − {_g(t_ref)} °C)), "
-            f"α = {_g(alpha)} 1/K (model.drop_model dc_at_ambient)"
-        )
-        equation = "ΔV = I × ρ(T) × L / A × n"
+    rho_source = resistivity_source(project)
+    equation = (
+        "ΔV = I × ρ(T) × L / A × n"
+        if settings.choice(project, "model", "drop_model") == "dc_at_ambient"
+        else "ΔV = I × ρ × L / A × n"
+    )
     i = project.interfaces.get(w.interface_id or "")
     itype = project.interface_types.get(i.type_id) if i else None
     length = wire_length(h, w)
@@ -967,7 +977,7 @@ def explain_object(project: Project, object_id: str) -> list[Derivation]:
     if object_id in project.harnesses:
         return explain_harness_all(project, object_id)
     if any(w.id == object_id for h in project.harnesses.values() for w in h.wires):
-        return explain_wire_all(project, object_id)
+        return explain_wire_all(project, object_id, gauge=True)
     if object_id in project.interfaces:
         return derive_layout.explain_interface(project, object_id)
     left, _, right = object_id.partition(".")
@@ -988,6 +998,22 @@ _OVERRIDE_TITLES = {
     "colour": ("Colour", ""),
     "length_m": ("Length", "m"),
 }
+
+
+def replay_sizing(project: Project, h: Harness, w: Wire) -> Sizing:
+    """The search that picks the gauge of the wire, run on the design as it is now with the same
+    function and the same arguments that generation uses (`engine._size`): the one place the
+    explanation of a gauge and the value `generated_alternative` gives come from."""
+    interface = project.interfaces.get(w.interface_id or "")
+    itype = project.interface_types.get(interface.type_id) if interface else None
+    rho, rho_missing = settings.resistivity(project)
+    return size_wire(
+        cfg(project, "derating"), cfg(project, "generation"), resistivity=(rho, rho_missing),
+        current_a=interface.max_current_a if interface else None,
+        length_m=wire_length(h, w),
+        path_conductors=settings.drop_conductors(project, itype.category) if itype else 1,
+        bundle_wires=bundle_size(project, h, w),
+    )  # fmt: skip
 
 
 def generated_alternative(
@@ -1032,14 +1058,7 @@ def generated_alternative(
                 return str(colours[key]), f"generation.wire_colour_by_signal for the signal '{key}'"
         return None, "none: the project has no colour rule for this signal"
     # the gauge: the smallest that carries the current after derating and keeps the voltage drop
-    rho, rho_missing = settings.resistivity(project)
-    sizing = size_wire(
-        cfg(project, "derating"), generation, resistivity=(rho, rho_missing),
-        current_a=interface.max_current_a if interface else None,
-        length_m=wire_length(h, w),
-        path_conductors=settings.drop_conductors(project, itype.category) if itype else 1,
-        bundle_wires=bundle_size(project, h, w),
-    )  # fmt: skip
+    sizing = replay_sizing(project, h, w)
     if sizing.awg is not None:
         return sizing.awg, "wire-sizing: " + "; ".join(sizing.notes[-2:])
     if sizing.error:
@@ -1110,29 +1129,34 @@ def wire_override_derivation(project: Project, h: Harness, w: Wire) -> Derivatio
     )  # fmt: skip
 
 
-def explain_wire(project: Project, wire_id: str) -> list[Derivation]:
+def explain_wire(project: Project, wire_id: str, *, gauge: bool = False) -> list[Derivation]:
     """The numbers of the wire, in the order a reader asks: how long is it, how much current may it
     carry, then how much voltage does it drop, and its mass. A wire with overrides starts with what
-    was set by the engineer. `explain_wire_all` adds its label, its colour and its shield group."""
+    was set by the engineer. `explain_wire_all` adds its label, its colour and its shield group.
+    With `gauge` the choice of the gauge (kind `gauge`, `derive_gauge`) follows the length; it is
+    computed on demand and is not part of `explain_all`, so `derivations.json` is as it was."""
+    from harness_design_studio.core import derive_gauge
+
     h, w = find_wire(project, wire_id)
     override = wire_override_derivation(project, h, w)
     return [
         *([override] if override is not None else []),
         wire_length_derivation(project, h, w),
+        *(derive_gauge.wire_derivations(project, h, w) if gauge else []),
         wire_current_limit_derivation(project, h, w),
         wire_voltage_drop_derivation(project, h, w),
         wire_mass_derivation(project, h, w),
     ]
 
 
-def explain_wire_all(project: Project, wire_id: str) -> list[Derivation]:
+def explain_wire_all(project: Project, wire_id: str, *, gauge: bool = False) -> list[Derivation]:
     """Every derivation that exists for the wire: the four numbers of `explain_wire`, then its label,
-    its colour, its shield group and the pins its ends use."""
+    its colour, its shield group and the pins its ends use. `gauge`: see `explain_wire`."""
     from harness_design_studio.core import derive_build, derive_layout
 
     h, w = find_wire(project, wire_id)
     return [
-        *explain_wire(project, wire_id),
+        *explain_wire(project, wire_id, gauge=gauge),
         *derive_build.wire_derivations(project, h, w),
         *derive_layout.wire_derivations(project, h, w),
     ]

@@ -170,20 +170,21 @@ def test_explain_prints_the_numbers_the_tool_stored(
     assert "config/derating.json: ampacity_a_by_awg" in out and "A-ROUND-TRIP" in out
     assert main(["explain", str(tmp_path / "flat"), "W001-001", "--json"]) == 0
     data = json.loads(capsys.readouterr().out)
-    assert [d["id"] for d in data][:4] == [
+    assert [d["id"] for d in data][:5] == [
         "wire-length",
+        "gauge",
         "wire-current-limit",
         "wire-voltage-drop",
         "wire-mass",
     ]
-    assert [d["id"] for d in data][4:] == [  # then what S1 added: label, colour, shield, two pins
+    assert [d["id"] for d in data][5:] == [  # then what S1 added: label, colour, shield, two pins
         "wire-label",
         "wire-colour",
         "shield-group",
         "pin-allocation",
         "pin-allocation",
     ]
-    assert math.isclose(data[2]["value"], 0.458359, rel_tol=1e-6) and data[0]["value"] == 3.45
+    assert math.isclose(data[3]["value"], 0.458359, rel_tol=1e-6) and data[0]["value"] == 3.45
     assert main(["explain", str(tmp_path / "flat"), "NO-SUCH-WIRE"]) == 2
     assert "is not a wire, a harness or a part" in capsys.readouterr().err
 

@@ -19,7 +19,8 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "explain",
         help="explain how the numbers and decisions of a wire, harness, interface, connector, pin or part were made: equation, inputs with units and sources, steps",
         description="Show how the numbers and decisions of one object were made. For a wire: its length, "
-        "the current its gauge may carry after derating, the voltage drop over it and its share of "
+        "the choice of its gauge (the gauges tried, the limit of each after derating, its drop, the first that passes; "
+        "not part of --all), the current its gauge may carry after derating, the voltage drop over it and its share of "
         "the mass, then its label, its colour, its shield group and the pins at its ends. For a harness: its mass, "
         "whether it is ready to build and each check behind that, its test limits, why its interfaces share it, its shield groups and its connectors; "
         "HARNESS.T001 explains the limits of one test. For an interface: which harness carries it and why, its connectors, the contact current and its pins. "

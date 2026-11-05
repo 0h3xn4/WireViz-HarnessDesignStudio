@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Changed for you to know
+
+- **`explain` now shows how the gauge of a wire was chosen (audit R1, owner decision 14).** `explain DIR WIRE` has a new derivation of the kind `gauge`, after the length: the gauges the search tried, from the smallest conductor up, the current limit of each after derating, which carries the current, then the voltage drop of each from there on and the first that keeps it within the limit, the settings it used and the assumptions it rests on (A-AMPACITY-AWG, A-BUNDLE-ALL, A-TEMP-FACTOR, A-DC-SOLID, A-ROUND-TRIP). It replays the search with the function that `generate` calls (`size_wire` now also returns the gauges it tried), so it cannot disagree with the gauge chosen; a test compares them on the four packaged examples. For W004-003 of the `flatsat` example it shows AWG 26 to 18 too small for 5 A and AWG 16 carrying it with 5.4 A. A gauge set with a reason, a locked wire or a wire drawn by hand says so instead of showing a search, and a wire whose gauge no longer equals what the search gives now says that too. It is computed on demand: `explain --all` and `derivations.json` / `derivations.csv` are byte for byte what they were, and no number, no written output and no hash changes.
+
 ## 1.14.0 (2026-11-04; not a statement of compliance)
 
 Version 1.14.0 is the **quick-diagram release** (decision D-197). Workshop and owner feedback said that the tool was too much for a systems engineer who only wants a quick block diagram, that labels on the diagram lay on top of each other, and that things should be movable. This release answers with a **Quick mode** (off by default, on top of any role) with one-click **Connect**, a new **Export diagram** command, a visible **Role** button in the top bar, a diagram whose labels and connector boxes no longer overlap, and labels you can drag to where you want them. The calculations, the 39 design rules and the numbers are as in 1.13.0.

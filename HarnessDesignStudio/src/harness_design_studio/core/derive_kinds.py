@@ -9,6 +9,10 @@ derivation cannot be added without its page (S10 of the plan: none is left out).
 # kind -> (the page of docs/models/, what it explains)
 KINDS: dict[str, tuple[str, str]] = {
     "wire-length": ("wire-length.md", "the length of a wire"),
+    "gauge": (
+        "wire-sizing.md",
+        "the choice of the gauge of a wire: the gauges tried and why one was taken",
+    ),
     "wire-current-limit": ("wire-sizing.md", "the current a wire's gauge may carry after derating"),
     "wire-voltage-drop": ("wire-sizing.md", "the voltage drop over a wire"),
     "wire-override": (
@@ -36,6 +40,10 @@ KINDS: dict[str, tuple[str, str]] = {
     "rule-limit": ("rule-limits.md", "the limit a design rule compares a number with"),
     "rule-check": ("rule-limits.md", "what a yes/no design rule compares"),
 }
+
+# the kinds that `explain OBJECT` computes on demand and `explain --all` (derivations.json) does not
+# contain, so that file stays as it was
+ON_DEMAND = frozenset({"gauge"})
 
 
 def page_of(kind: str) -> str:
