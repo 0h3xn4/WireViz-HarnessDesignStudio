@@ -38,7 +38,6 @@ from PySide6.QtGui import (
 from PySide6.QtWidgets import (
     QAbstractItemView,
     QCheckBox,
-    QDialog,
     QFileDialog,
     QHBoxLayout,
     QLabel,
@@ -70,6 +69,7 @@ from harness_design_studio.core.outputs.verify import OPEN_DATA_FOLDER
 from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import export_docs, icons, strings
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.export_docs import Document
 from harness_design_studio.gui.notice import InlineNotice
 from harness_design_studio.gui.preview import SheetView
@@ -473,7 +473,7 @@ class ExportResultPanel(QWidget):
         return self.preview_stack.currentWidget() is self.sheet_view
 
 
-class ExportDialog(QDialog):
+class ExportDialog(Dialog):
     """Choose, run and read an export. See the module text for the whole picture."""
 
     exported = Signal(object)  # ExportResult, after the files are on disk

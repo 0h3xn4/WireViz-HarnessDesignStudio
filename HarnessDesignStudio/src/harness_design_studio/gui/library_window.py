@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any
 
-from PySide6.QtCore import QModelIndex, QSettings, Qt, Signal
+from PySide6.QtCore import QEvent, QModelIndex, QSettings, Qt, Signal
 from PySide6.QtGui import QAction, QCloseEvent, QKeySequence, QShowEvent
 from PySide6.QtWidgets import (
     QComboBox,
@@ -50,10 +50,12 @@ from harness_design_studio.gui import strings
 from harness_design_studio.gui.background import Job, JobRunner
 from harness_design_studio.gui.controller import EditorController
 from harness_design_studio.gui.devices_dialogs import _PlannerDialog
+from harness_design_studio.gui.dialog_base import Dialog, refit_on
 from harness_design_studio.gui.icons import icon_button
 from harness_design_studio.gui.notice import InlineNotice
 from harness_design_studio.gui.tables import Column, DictTableModel, TableView
 from harness_design_studio.gui.theme import ThemeManager, mark_mono
+from harness_design_studio.gui.wrap_label import WrapLabel
 
 SETTINGS_FOLDER = "library/folder"
 SETTINGS_GEOMETRY = "library/geometry"
@@ -85,7 +87,7 @@ def contents_of(entry: LibraryEntry) -> str:
 # ---- a device of the same ID is in the file already -------------------------------------------
 
 
-class LibraryConflictDialog(QDialog):
+class LibraryConflictDialog(Dialog):
     """ "RW1 is in the library already (in RW1.json) and differs in 2 pins": Replace, Save as RW1-2,
     or Cancel. `choice` is "replace", "new" or "cancel" (also when the window is closed)."""
 
@@ -381,15 +383,15 @@ class LibraryWindow(QWidget):
         self.list.setSelectionBehavior(TableView.SelectionBehavior.SelectRows)
         self.list.setSelectionMode(TableView.SelectionMode.SingleSelection)
         self.list.horizontalHeader().setStretchLastSection(True)
-        self.empty_title = QLabel()
+        self.empty_title = (
+            WrapLabel()
+        )  # (it lies in a splitter pane, which asks for no height for width)
         self.empty_title.setObjectName("library-empty-title")
         self.empty_title.setProperty("heading", True)
-        self.empty_title.setWordWrap(True)
         self.empty_title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        self.empty_hint = QLabel()
+        self.empty_hint = WrapLabel()
         self.empty_hint.setObjectName("library-empty-hint")
         self.empty_hint.setProperty("muted", True)
-        self.empty_hint.setWordWrap(True)
         self.empty_hint.setAlignment(Qt.AlignmentFlag.AlignCenter)
         self.empty_choose = QPushButton(strings.LIB_EMPTY_CHOOSE)
         self.empty_choose.setObjectName("library-empty-choose")
@@ -843,6 +845,11 @@ class LibraryWindow(QWidget):
         self.result_notice.show_notice("info", message, details=notes or None)
 
     # ---- the window's own place ---------------------------------------------------------------------
+    def event(self, e: QEvent) -> bool:
+        handled = super().event(e)
+        refit_on(self, e)  # as high as its wrapped text needs, like the dialogs (dialog_base)
+        return handled
+
     def showEvent(self, event: QShowEvent) -> None:  # noqa: N802
         super().showEvent(event)
         if not self._shown_once:

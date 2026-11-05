@@ -10,9 +10,10 @@ a test or CI sets `roles.FIRST_RUN_ROLE` and the window never shows this one.
 """
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog, QLabel, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QLabel, QPushButton, QVBoxLayout, QWidget
 
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.roles import AIT, ELECTRICAL, SYSTEMS
 from harness_design_studio.gui.theme import ThemeManager
 
@@ -41,7 +42,7 @@ class _Choice(QPushButton):
             lay.addWidget(label)
 
 
-class RoleDialog(QDialog):
+class RoleDialog(Dialog):
     def __init__(self, parent: QWidget | None, theme: ThemeManager) -> None:
         super().__init__(parent)
         self.choice: str | None = None

@@ -47,6 +47,7 @@ from harness_design_studio.core.vcs.lockview import ReleaseLocks, release_locks
 from harness_design_studio.core.vcs.release import ReleaseError, next_revision
 from harness_design_studio.core.wirecolours import COLOURS, name_of
 from harness_design_studio.gui import lock_tree, strings
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.theme import ThemeManager, current_theme
 
 
@@ -70,7 +71,7 @@ def _buttons(
     return ok, cancel, row
 
 
-class ConfirmDialog(QDialog):
+class ConfirmDialog(Dialog):
     """Shows exactly what an action will affect. Cancel is the default button."""
 
     def __init__(
@@ -98,7 +99,7 @@ class ConfirmDialog(QDialog):
         self.setMinimumWidth(420)
 
 
-class WaiverDialog(QDialog):
+class WaiverDialog(Dialog):
     """The reason for waiving a warning, or (for an error of an electrical rule) for accepting it
     as a deviation. Either way the reason is required."""
 
@@ -138,7 +139,7 @@ class WaiverDialog(QDialog):
         return self.text.toPlainText().strip()
 
 
-class NewInterfaceDialog(QDialog):
+class NewInterfaceDialog(Dialog):
     """Table-first creation: pick a type and two units; unusable units are shown disabled with the reason."""
 
     def __init__(self, parent: QWidget | None, project: Project) -> None:
@@ -222,7 +223,7 @@ def table_to_csv(table: Table) -> str:
     return out.getvalue()
 
 
-class WireColoursDialog(QDialog):
+class WireColoursDialog(Dialog):
     """One colour for each signal name (PWR, RTN, CANH ...): the wires of that signal are drawn
     in it. Nothing is preset: a signal with no choice stays without colour."""
 
@@ -280,7 +281,7 @@ class WireColoursDialog(QDialog):
         return {sig: str(box.currentData() or "") for sig, box in self.boxes.items()}
 
 
-class ImportDialog(QDialog):
+class ImportDialog(Dialog):
     """Import interfaces: read, map columns, preview every row, confirm. Nothing changes before OK."""
 
     def __init__(
@@ -428,7 +429,7 @@ class ImportDialog(QDialog):
         self.ok.setEnabled(n > 0)
 
 
-class GlossaryDialog(QDialog):
+class GlossaryDialog(Dialog):
     def __init__(self, parent: QWidget | None) -> None:
         super().__init__(parent)
         self.setWindowTitle(strings.GLOSSARY_TITLE)
@@ -452,7 +453,7 @@ class GlossaryDialog(QDialog):
         lay.addWidget(close, alignment=Qt.AlignmentFlag.AlignRight)
 
 
-class IssuesDialog(QDialog):
+class IssuesDialog(Dialog):
     """Lists what is wrong with a project that opened in recovery mode."""
 
     saveCopyRequested = Signal()
@@ -523,7 +524,7 @@ class Banner(QFrame):
         self.show()
 
 
-class GeneratePreviewDialog(QDialog):
+class GeneratePreviewDialog(Dialog):
     """What generation will do, shown before anything changes. Apply is one undoable step."""
 
     def __init__(self, parent: QWidget | None, plan: GenerationPlan) -> None:
@@ -554,7 +555,7 @@ class GeneratePreviewDialog(QDialog):
         self.setMinimumWidth(520)
 
 
-class ChangeDialog(QDialog):
+class ChangeDialog(Dialog):
     """Review, release and new-revision steps: who, optional checker, mandatory comment, and
     anything that blocks the step (shown as plain sentences; OK stays disabled until clear, and a
     line under the form says what is still missing).
@@ -832,7 +833,7 @@ class ChangeDialog(QDialog):
         )
 
 
-class DiffDialog(QDialog):
+class DiffDialog(Dialog):
     """What changed: added, removed and changed objects with their field changes."""
 
     markRequested = Signal(object)  # dict[str, str]
@@ -893,7 +894,7 @@ class DiffDialog(QDialog):
                 QListWidgetItem(f"      {f.name}: {f.before} → {f.after}", self.list)
 
 
-class HistoryDialog(QDialog):
+class HistoryDialog(Dialog):
     """The change log of one harness (or all)."""
 
     def __init__(self, parent: QWidget | None, title: str, rows: list[list[str]]) -> None:

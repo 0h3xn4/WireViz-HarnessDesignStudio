@@ -15,7 +15,6 @@ from typing import Any
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import (
     QAbstractItemView,
-    QDialog,
     QHBoxLayout,
     QLabel,
     QLineEdit,
@@ -30,6 +29,7 @@ from harness_design_studio.core import journal
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.units import gauge_short
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.theme import ThemeManager
 
 COLUMNS = (
@@ -53,7 +53,7 @@ def _cell(value: object) -> str:
     return journal._show(value) if value is not None else ""
 
 
-class JournalDialog(QDialog):
+class JournalDialog(Dialog):
     def __init__(
         self,
         parent: QWidget | None,

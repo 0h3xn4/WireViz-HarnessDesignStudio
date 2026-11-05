@@ -9,15 +9,16 @@ that parameterise them, and the fixed definitions. Opened from **Help > Assumpti
 """
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
 
 from harness_design_studio.core import settings
 from harness_design_studio.core.model import Project
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.theme import ThemeManager, mark_mono
 
 
-class AssumptionsDialog(QDialog):
+class AssumptionsDialog(Dialog):
     def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
         super().__init__(parent)
         self.setObjectName("assumptions-dialog")

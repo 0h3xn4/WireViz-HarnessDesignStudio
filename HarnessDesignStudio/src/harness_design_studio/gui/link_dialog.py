@@ -55,6 +55,7 @@ from harness_design_studio.core.model import Connector, Pin, Project
 from harness_design_studio.core.pairing import pair_by_number, parse_pairing
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.connector_picker import ConnectorPicker
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.notice import InlineNotice, Severity
 from harness_design_studio.gui.tables import Column, DictTableModel, TableView
 from harness_design_studio.gui.theme import ThemeManager
@@ -93,7 +94,7 @@ def _buttons(dialog: QDialog, ok_text: str) -> tuple[QPushButton, QHBoxLayout]:
     return ok, row
 
 
-class CreateHarnessDialog(QDialog):
+class CreateHarnessDialog(Dialog):
     """Says what Create harness will add and asks once. Nothing is made before OK."""
 
     def __init__(self, parent: QWidget | None, theme: ThemeManager, sentence: str) -> None:
@@ -116,7 +117,7 @@ class CreateHarnessDialog(QDialog):
         lay.addLayout(row)
 
 
-class AddConnectorDialog(QDialog):
+class AddConnectorDialog(Dialog):
     """Add a connector to a device from the connection window: the kind (family, pins, gender)
     and, when wanted, a name. Nothing is added to the project before the connection is saved."""
 
@@ -175,7 +176,7 @@ class AddConnectorDialog(QDialog):
         self.ok.setEnabled(not problem)
 
 
-class PastePairingDialog(QDialog):
+class PastePairingDialog(Dialog):
     """A pairing pasted from a table (two columns). Only the text is asked for here; the window
     turns it into a proposal and the person accepts it there."""
 
@@ -212,7 +213,7 @@ def _device_label(project: Project, uid: str) -> str:
     return f"{uid}  {u.name}" if u.name and u.name != uid else uid
 
 
-class LinkDialog(QDialog):
+class LinkDialog(Dialog):
     """Link connectors: two connectors, the pairs between their pins, the role of a pin."""
 
     add_a_connector: QPushButton

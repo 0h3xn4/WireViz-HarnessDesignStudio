@@ -45,6 +45,7 @@ from harness_design_studio.core.wires import (
     wires_changed,
 )
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.theme import ThemeManager
 
 
@@ -86,7 +87,7 @@ def _line(name: str, muted: bool = False, error: bool = False) -> QLabel:
     return label
 
 
-class BulkWireDialog(QDialog):
+class BulkWireDialog(Dialog):
     """*Edit all wires…*: the same gauge, type, colour and length on all wires of a harness, the
     selected wires or the wires of one signal."""
 
@@ -242,7 +243,7 @@ _WORDS = {
 }
 
 
-class ChangeGroupDialog(QDialog):
+class ChangeGroupDialog(Dialog):
     """*Change group…*: the kind, the wires and the shield ends of a group that you made."""
 
     def __init__(
