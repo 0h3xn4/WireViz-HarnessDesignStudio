@@ -16,8 +16,8 @@ is shorter. `Dialog` calls it, so every dialog that derives from it grows with i
             ...
 """
 
-from PySide6.QtCore import QEvent
-from PySide6.QtWidgets import QDialog, QWidget, QWizard
+from PySide6.QtCore import QEvent, QSize
+from PySide6.QtWidgets import QDialog, QScrollArea, QWidget, QWizard
 
 _REFIT = (
     QEvent.Type.Resize,
@@ -111,3 +111,20 @@ class Wizard(QWizard):
         handled = super().event(e)
         refit_on(self, e)
         return handled
+
+
+class HeightScrollArea(QScrollArea):
+    """A scroll area that scrolls in height only: it keeps the minimum width of its content.
+
+    A plain `QScrollArea` reports a tiny minimum size, so a window can be made narrower than the
+    content needs and the content is then cut off at the right edge (a horizontal scroll bar or
+    nothing at all). The tabs that sit in one keep their width, as they did before they scrolled,
+    and only give up height (the layout then scrolls instead of squeezing its rows)."""
+
+    def minimumSizeHint(self) -> QSize:
+        base = super().minimumSizeHint()
+        inner = self.widget()
+        if inner is None:
+            return base
+        bar = self.verticalScrollBar().sizeHint().width() if self.verticalScrollBar() else 0
+        return QSize(max(base.width(), inner.minimumSizeHint().width() + bar), base.height())

@@ -252,3 +252,30 @@ def test_the_audit_sees_a_window_that_is_shorter_than_its_text_needs(qtbot) -> N
     assert "window-short" in rules, rules
     app = QApplication.instance()
     assert app is not None
+
+
+def test_a_height_scroll_area_keeps_the_minimum_width_of_its_content(qapp) -> None:
+    """The Harness and Devices tabs scroll in height only (REQ-GUI-23): a plain scroll area lets
+    the window get narrower than the content, which is then cut off at the right edge (the
+    *More* button of the Harness tab on Windows at 900 x 560)."""
+    from PySide6.QtWidgets import QScrollArea
+
+    from harness_design_studio.gui.dialog_base import HeightScrollArea
+
+    inner = QWidget()
+    lay = QVBoxLayout(inner)
+    wide = QPushButton("x")
+    wide.setMinimumWidth(1000)
+    lay.addWidget(wide)
+    plain, keeps = QScrollArea(), HeightScrollArea()
+    for area in (plain, keeps):
+        area.setWidgetResizable(True)
+    plain.setWidget(inner)
+    inner2 = QWidget()
+    lay2 = QVBoxLayout(inner2)
+    wide2 = QPushButton("x")
+    wide2.setMinimumWidth(1000)
+    lay2.addWidget(wide2)
+    keeps.setWidget(inner2)
+    assert plain.minimumSizeHint().width() < 1000
+    assert keeps.minimumSizeHint().width() >= 1000
