@@ -63,7 +63,7 @@ and every config file of the project gets a top-level key `_about` with, for eac
 
 ## Choose how a number is made
 
-Some numbers can be made in more than one way. `model.json` holds the choice (the bundle basis, the length model, the voltage drop model, the mass model, the pin order, the pin fit strategy, the choice of a connector, the label format, what blocks *Ready to build*), and the default is what the tool always did. Change it with `--set` as above, for example `settings wheel-link --set model.mass_model='"full_bom"'`. Every choice, its equation and its default are on the page [selectable models](../models/selectable-models.md); `explain` names the model in force.
+Some numbers can be made in more than one way. `model.json` holds the choice (the bundle basis, the length model, the voltage drop model, the mass model, the pin order, the pin fit strategy, the choice of a connector, the label format, what blocks *Ready to build*, and the spare contacts and the allowance on the wire in the bill of materials, which are 0 until you set them), and the default is what the tool always did. Change it with `--set` as above, for example `settings wheel-link --set model.mass_model='"full_bom"'`. Every choice, its equation and its default are on the page [selectable models](../models/selectable-models.md); `explain` names the model in force.
 
 ## Common mistakes
 

@@ -162,6 +162,7 @@ EXEMPT: dict[tuple[str, float], str] = {
     ("core/routing.py", 18.0): _GEOMETRY,
     ("core/routing.py", 40): _GEOMETRY,
     ("core/routing.py", 6): _GEOMETRY,
+    ("core/routing.py", 160.0): _GEOMETRY,
     ("core/units.py", 0.127): _AWG,
     ("core/units.py", 36): _AWG,
     ("core/units.py", 39): _AWG,

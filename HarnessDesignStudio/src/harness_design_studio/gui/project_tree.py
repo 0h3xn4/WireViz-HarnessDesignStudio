@@ -223,6 +223,7 @@ class ProjectTreeModel(QAbstractItemModel):
         self._by_key: dict[tuple[str, str], _Node] = {}
         self.roots: dict[str, _Node] = {}
         self._read_only = ctl.read_only
+        self.quiet = False  # Quick mode: the "N pending" chips of Configuration are not shown
         self._locked: dict[tuple[str, str], Any] = {}
         self._lock_sig: object = None
         self._badged: set[_Node] = set()
@@ -328,9 +329,9 @@ class ProjectTreeModel(QAbstractItemModel):
         if role == CHILDREN_ROLE:
             return node.real_children
         if role == STATE_ROLE:
-            return node.state
+            return None if self.hides(node) else node.state
         if role == STATE_TEXT_ROLE:
-            return node.state_text
+            return None if self.hides(node) else node.state_text
         if role == ICON_ROLE:
             return _ROOT_ICON[node.id] if node.kind == "root" else _KIND_ICON.get(node.kind)
         if role == Qt.ItemDataRole.ToolTipRole:
@@ -403,6 +404,18 @@ class ProjectTreeModel(QAbstractItemModel):
             lines.append(node.lock)
         return "\n".join(lines)
 
+    def hides(self, node: _Node) -> bool:
+        """Whether the state chip of this row is left out now (Quick mode: the pending ones)."""
+        return self.quiet and node.state == "pending"
+
+    def set_quiet(self, quiet: bool) -> None:
+        """Quick mode shows no "N pending" chip; the states stay on the nodes, so leaving Quick
+        mode gives them back at once."""
+        if quiet != self.quiet:
+            self.quiet = quiet
+            top, bottom = self.index(0, 0), self.index(self.rowCount() - 1, 0)
+            self.dataChanged.emit(top, bottom)
+
     def _link_tip(self, link_id: str) -> str:
         p = self.ctl.project
         link = p.links[link_id]
@@ -444,7 +457,7 @@ class ProjectTreeModel(QAbstractItemModel):
             else "",
             f"{node.ident} {node.name}".strip(),
         ]
-        if node.state is not None:
+        if node.state is not None and not self.hides(node):
             parts.append(node.state_text or STATES[node.state].label)
         if any(node.counts):
             parts.append(counts_text(*node.counts))
@@ -865,6 +878,7 @@ class _TreeDelegate(QStyledItemDelegate):
     def __init__(self, theme: ThemeManager, parent: QWidget | None = None) -> None:
         super().__init__(parent)
         self.theme = theme
+        self.quiet = False  # Quick mode: no pending chip
         self._kit: _Kit | None = None
         self._kit_key: tuple[str, int, float] | None = None
         theme.changed.connect(self._forget)
@@ -925,7 +939,7 @@ class _TreeDelegate(QStyledItemDelegate):
             return
         floor = left + kit.icon + kit.min_label
         # ---- right side, drawn right to left: state chip, lock, counts (errors end up leftmost)
-        if node.state is not None:
+        if node.state is not None and not (self.quiet and node.state == "pending"):
             size = chip_size(node.state, theme, node.state_text, kit.small)
             chip = QRectF(
                 right - size.width(), mid - size.height() / 2, size.width(), size.height()
@@ -1257,10 +1271,18 @@ class ProjectTree(QWidget):
         node = self.model.find(kind, id_)
         return node.lock if node is not None else None
 
+    def set_quick(self, quick: bool) -> None:
+        """Quick mode: the rows show no "N pending" chip (they come back when it is left)."""
+        self.model.set_quiet(quick)
+        delegate = self.view.itemDelegate()
+        if isinstance(delegate, _TreeDelegate):
+            delegate.quiet = quick
+        self.view.viewport().update()
+
     def state_of(self, kind: str, id_: str) -> tuple[str, str] | None:
-        """(state key, chip text) of a row, or None when it has no chip."""
+        """(state key, chip text) of a row, or None when it has no chip (or Quick mode hides it)."""
         node = self.model.find(kind, id_)
-        if node is None or node.state is None:
+        if node is None or node.state is None or self.model.hides(node):
             return None
         return node.state, node.state_text or STATES[node.state].label
 

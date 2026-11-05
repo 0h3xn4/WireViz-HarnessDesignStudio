@@ -48,6 +48,30 @@ OUTSIDE_THE_HASH_FILES = frozenset({JOURNAL_FILE, IMPORT_RECORDS_FILE})
 OUTSIDE_THE_HASH_FOLDERS = ("extensions/", "asbuilt/", "diagram/")
 
 
+def mark_is_orphan(project: Project, mark_id: str) -> bool:
+    """Whether a diagram mark is of a thing that no longer exists: "link:L1", "end:L1:0" and
+    "bend:L1" belong to a connection, "interface:IF-1" and "route:IF-1" to an interface. A mark
+    of a kind this tool does not know is never called an orphan (it is not ours to drop)."""
+    kind, _, rest = mark_id.partition(":")
+    ident = rest.partition(":")[0]
+    if kind in ("link", "end", "bend"):
+        return ident not in project.links
+    if kind in ("interface", "route"):
+        return ident not in project.interfaces
+    return False
+
+
+def prune_orphan_marks(project: Project) -> list[str]:
+    """Drop the diagram marks of things that are gone (a deleted connection or interface), without
+    a word; returns the IDs dropped. The marks stay in memory while the project is open, so that
+    an undo of the delete finds them again: they are left out when the file is written
+    (`serialize`) and dropped when a project is loaded."""
+    gone = [m for m in project.diagram_marks if mark_is_orphan(project, m)]
+    for m in gone:
+        del project.diagram_marks[m]
+    return gone
+
+
 def outside_the_hash(rel: str) -> bool:
     """Whether the project file `rel` (a POSIX path inside the project folder) is left out of the
     model hash."""
@@ -205,8 +229,10 @@ def serialize(project: Project, *, tool_version: str | None = None) -> dict[str,
         files[ASBUILT_FILE] = memo.get(
             ASBUILT_FILE, built, lambda: canonical.dumps({"asbuilt": _dump(list(built))})
         )
-    if project.diagram_marks:  # optional: nothing moved by hand, no file, the files as they were
-        marks = list(project.diagram_marks.values())
+    # optional: nothing moved by hand, no file, the files as they were; the marks of a thing that is
+    # gone are left out (they stay in memory, so that an undo of the delete gets them back)
+    marks = [m for m in project.diagram_marks.values() if not mark_is_orphan(project, m.id)]
+    if marks:
         files[DIAGRAM_MARKS_FILE] = memo.get(
             DIAGRAM_MARKS_FILE, marks, lambda: canonical.dumps({"marks": _dump(list(marks))})
         )

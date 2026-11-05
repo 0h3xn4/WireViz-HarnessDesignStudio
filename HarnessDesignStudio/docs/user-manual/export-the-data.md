@@ -59,6 +59,8 @@ Every JSON file starts with `format` (1), the table name, `tool_version`, `model
 
 With `--json` the command prints the list of files instead of the line of text. From Python: `api.export_data(folder, out)`.
 
+**From the Export window.** The window **Export** (Ctrl+E) has the check box **Include the open data (JSON and CSV of every result)**, off until you tick it and remembered after that. With it ticked, the export also writes the same files as `export-data` into the folder `data/` of the outputs folder (`outputs/data/`), with the same bytes the command writes for the same design; the result list says *Open data: 34 files in …/outputs/data*. They are not part of the manifest, the independent check (`verify --outputs`) does not read the folder, and the other outputs are the same bytes with the box ticked or not. Unticking the box later leaves the files of the earlier export where they are (their `provenance.json` names the design they were made from); the run record (`--run-record`) is a command-line option only.
+
 ## 2. Read the files in a spreadsheet
 
 Open `wire_sizing.csv` as UTF-8 text (the headings hold `²` and `Ω`). In Excel use **Data > From Text/CSV** and choose *65001: Unicode (UTF-8)*; in LibreOffice choose *Unicode (UTF-8)* in the import dialog. Then:

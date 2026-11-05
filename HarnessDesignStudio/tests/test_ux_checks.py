@@ -951,7 +951,8 @@ def test_a_failing_current_finding_opens_its_calculation(tight) -> None:
     dialog = panel.explain_dialog
     assert dialog.isVisible()
     expected = "\n\n".join(
-        render(d) for d in explain_finding(ctl.project, "current-over-wire", wire)
+        render(d) + "\nModel page: docs/models/wire-sizing.md"  # (a quiet line under each)
+        for d in explain_finding(ctl.project, "current-over-wire", wire)
     )
     assert dialog.text.toPlainText() == expected
     assert "Derated current limit" in expected and "over the limit" in expected

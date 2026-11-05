@@ -5,8 +5,10 @@ an engineer typed into `config/*.json` but a choice built into the program: the 
 the current going out and coming back, a bundle is every wire of the harness, and so on. Those
 choices are listed here, in plain words, so that nobody has to say "the tool computed it". This is
 the seed of the registry of constants and assumptions of the transparency work (D-191): today every
-entry has `kind == "built in"` and cannot be changed without editing the program; each one that
-becomes a setting changes its kind and names its configuration key.
+entry that still has `kind == "built in"` cannot be changed without editing the program; each one
+that became a setting changed its kind and names its configuration key. What stays built in is a
+statement about the method (what is counted, in which order, by which form), not a number or a
+choice among listed alternatives; `docs/transparency_final_audit.md` says why for each.
 """
 
 from dataclasses import dataclass
@@ -115,23 +117,27 @@ ASSUMPTIONS: dict[str, Assumption] = {
         ),
         Assumption(
             "A-BOM-CONTACTS",
-            "A contact part is counted once for each pin that has a wire",
+            "A contact part is counted once for each pin that has a wire, plus the spares asked for",
             "A pin that names a contact part adds one of that part to the bill of materials when a "
-            "wire of the harness is attached to it, and nothing otherwise: no spare contacts, no "
-            "contacts for the pins of a connector that nobody uses.",
-            "built in",
-            "core/outputs/tables.py (bom_contributions), core/generate/mass.py (pins_in_use)",
+            "wire of the harness is attached to it, and nothing otherwise: no contacts for the pins "
+            "of a connector that nobody uses. By default no spare contact is added; the setting "
+            "model.bom_contact_spare_fraction adds, for each harness and contact part, that fraction "
+            "of the contacts used as spares, rounded up to a whole contact.",
+            "setting",
+            "config/model.json: bom_contact_spare_fraction (default 0); core/outputs/tables.py (bom_contributions), core/generate/mass.py (pins_in_use)",
         ),
         Assumption(
             "A-BOM-NO-ALLOWANCE",
-            "The bill of materials counts what is drawn, with no spares or waste",
+            "The bill of materials counts what is drawn, with an allowance on wire only if asked for",
             "A connector part is counted once per connector, a wire part in metres as the sum of the "
             "lengths of its wires (each length already includes the service loops) divided by the "
-            "conductors of the part, and an accessory part by its quantity or its length. No spare, "
-            "overage, cut allowance or waste is added. A wire with no length adds nothing and is "
+            "conductors of the part, and an accessory part by its quantity or its length. By default "
+            "no spare, overage, cut allowance or waste is added; the setting "
+            "model.bom_wire_allowance_fraction adds that fraction of the wire metres. A connector or "
+            "an accessory part never gets an allowance. A wire with no length adds nothing and is "
             "counted in the column Wires without length.",
-            "built in",
-            "core/outputs/tables.py (bom_contributions)",
+            "setting",
+            "config/model.json: bom_wire_allowance_fraction (default 0); core/outputs/tables.py (bom_contributions)",
         ),
         Assumption(
             "A-CONTACT-SHARED",
@@ -345,6 +351,37 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "table of bundle factors is set, and counts an unset temperature factor as 1.",
             "built in",
             "core/drc/standard_rules.py (_bundle_current)",
+        ),
+        Assumption(
+            "A-PIN-ONE-WIRE",
+            "One wire to a pin is the limit",
+            "The rule pin-shared reports every pin of a harness on which more than one wire ends: "
+            "the limit is one wire, whatever the contact or the crimp could hold. It is not a number "
+            "the project can set; a design that needs two wires in one contact waives the finding "
+            "with a reason.",
+            "built in",
+            "core/drc/rules.py (_pin_shared), core/derive_rules.py (_pin_shared)",
+        ),
+        Assumption(
+            "A-WIRE-VOLTAGE",
+            "The working voltage of a wire is compared with a share of the rated voltage of its part",
+            "The working voltage of the interface a wire belongs to is compared with the share "
+            "derating.wire_voltage_factor of the rated voltage of the wire part. The share is one "
+            "number for every wire; the rating is that of the part in the library, not of the "
+            "insulation of this wire in this harness. A wire whose part has no rated voltage is not "
+            "checked, and the voltage is the interface's one number, not a waveform.",
+            "setting",
+            "config/derating.json: wire_voltage_factor",
+        ),
+        Assumption(
+            "A-EMC-ONE-BUNDLE",
+            "Interfaces of one EMC class between two devices run in one bundle, when the rule is on",
+            "While emc.same_class_one_bundle is true, the rule emc-class-split counts the harnesses "
+            "that carry interfaces of one EMC class between the same two devices, and reports more "
+            "than one. The limit, one bundle, is the reading of ECSS-E-ST-20-07C 4.2.13.1 b built "
+            "into the rule; only switching the rule on or off is a setting.",
+            "setting",
+            "config/emc.json: same_class_one_bundle",
         ),
     )
 }

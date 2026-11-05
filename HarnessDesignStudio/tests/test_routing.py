@@ -193,3 +193,49 @@ def test_a_gap_with_many_trunks_squeezes_the_tracks_instead_of_overflowing() -> 
     routes = route_links(links, GEO)
     xs = [r[1][0] for r in routes.values()]
     assert min(xs) >= 206 and max(xs) <= 460
+
+
+# ---- a vertical piece moved by hand --------------------------------------------------------------
+UNITS = [(30.0, 60.0, 270.0, 130.0), (30.0, 300.0, 270.0, 370.0), (470.0, 170.0, 710.0, 240.0)]
+TRUNK = [(270.0, 114.0), (362.0, 114.0), (362.0, 212.5), (470.0, 212.5)]  # IF-TM-RW1 of mini3
+
+
+def test_the_movable_piece_is_the_longest_vertical_piece_with_a_bend_at_both_ends() -> None:
+    assert routing.trunk_index(TRUNK) == 1
+    two = [(0.0, 0.0), (50.0, 0.0), (50.0, 40.0), (80.0, 40.0), (80.0, 200.0), (120.0, 200.0)]
+    assert routing.trunk_index(two) == 3  # (the longer of the two)
+    assert routing.trunk_index([(0.0, 0.0), (100.0, 0.0)]) is None  # a straight line
+    assert routing.trunk_index([(0.0, 0.0), (0.0, 90.0)]) is None  # (a piece at an end point)
+    assert routing.trunk_index([]) is None
+
+
+def test_the_piece_moves_across_and_the_level_pieces_stretch_with_it() -> None:
+    moved = routing.shift_trunk(TRUNK, 20.0, UNITS)
+    assert moved == [(270.0, 114.0), (382.0, 114.0), (382.0, 212.5), (470.0, 212.5)]
+    assert routing.shift_trunk(TRUNK, 0.0, UNITS) is TRUNK
+    for a, b in zip(moved, moved[1:], strict=False):
+        assert a[0] == b[0] or a[1] == b[1]  # (every piece stays level or plumb)
+
+
+def test_the_piece_never_enters_a_device_or_leaves_the_diagram() -> None:
+    lo, hi = routing.trunk_limits(TRUNK, 1, UNITS)
+    assert lo == 270.0 + routing.TRUNK_AIR and hi == 470.0 - routing.TRUNK_AIR
+    assert routing.shift_trunk(TRUNK, -9999.0, UNITS)[1][0] == lo
+    assert routing.shift_trunk(TRUNK, 9999.0, UNITS)[1][0] == hi
+    # a device that is not beside the piece or its joins does not limit it
+    lone = [(30.0, 60.0, 270.0, 130.0), (470.0, 170.0, 710.0, 240.0), (400.0, 600.0, 600.0, 700.0)]
+    assert routing.trunk_limits(TRUNK, 1, lone) == (
+        270.0 + routing.TRUNK_AIR,
+        470.0 - routing.TRUNK_AIR,
+    )
+    # a route on a spine outside the lane stays within reach of the devices
+    spine = [(270.0, 114.0), (300.0, 114.0), (300.0, 340.0), (270.0, 340.0)]
+    far = routing.shift_trunk(spine, 5000.0, [(30.0, 60.0, 270.0, 370.0)])
+    assert far[1][0] == 270.0 + routing.TRUNK_REACH
+
+
+def test_a_piece_that_the_router_put_close_to_a_device_is_not_pushed_by_it() -> None:
+    close = [(270.0, 114.0), (273.0, 114.0), (273.0, 212.5), (470.0, 212.5)]  # 3 away from the box
+    lo, _hi = routing.trunk_limits(close, 1, UNITS)
+    assert lo == 273.0
+    assert routing.shift_trunk(close, -50.0, UNITS) is close

@@ -17,6 +17,7 @@ corner points of every link.
 """
 
 from collections import Counter
+from collections.abc import Sequence
 from dataclasses import dataclass
 
 from .model import Project
@@ -325,3 +326,65 @@ def route_links(links: list[RouteLink], geo: Geometry) -> dict[str, list[Point]]
     # a link that was given with its right end first is returned from its end A to its end B
     by_id = {link.id: link for link in links}
     return {iid: (pts if pts[0] == by_id[iid].a else pts[::-1]) for iid, pts in routes.items()}
+
+
+# ---- moving a vertical piece of a route by hand -------------------------------------------------
+
+Box = tuple[float, float, float, float]  # a unit's box: left, top, right, bottom
+TRUNK_AIR = 6.0  # a moved piece stays this far from a unit's box
+TRUNK_REACH = 160.0  # and at most this far outside the boxes of all units
+
+
+def trunk_index(route: list[Point]) -> int | None:
+    """The vertical piece of a route that the person may move: the longest one that has a bend at
+    both ends (so the pieces at the end points never count). `route[i]` to `route[i + 1]`; None
+    when the route has no such piece (a straight line, or two units at one height)."""
+    best: tuple[float, int] | None = None
+    for i in range(1, len(route) - 2):
+        (x0, y0), (x1, y1) = route[i], route[i + 1]
+        if x0 == x1 and y0 != y1 and (best is None or abs(y1 - y0) > best[0]):
+            best = (abs(y1 - y0), i)
+    return None if best is None else best[1]
+
+
+def trunk_limits(route: list[Point], index: int, boxes: Sequence[Box]) -> tuple[float, float]:
+    """How far left and how far right (the smallest and the largest x) the vertical piece
+    `route[index]` to `route[index + 1]` may go: it, and the two level pieces that join it to its
+    neighbours, may never touch the box of a unit (they stay `TRUNK_AIR` clear), and the piece
+    stays within `TRUNK_REACH` of the units as a whole. A box the piece is in already is ignored
+    (the router put it there)."""
+    x0 = route[index][0]
+    (_, ya), (_, yb) = route[index], route[index + 1]
+    probes = [(min(ya, yb), max(ya, yb)), (ya, ya), (yb, yb)]  # the piece and its two level joins
+    lo, hi = float("-inf"), float("inf")
+    if boxes:
+        lo = min(b[0] for b in boxes) - TRUNK_REACH
+        hi = max(b[2] for b in boxes) + TRUNK_REACH
+    lo, hi = min(lo, x0), max(hi, x0)
+    for left, top, right, bottom in boxes:
+        for y0, y1 in probes:
+            if not (top < y1 and bottom > y0):
+                continue  # (this box is not beside the piece or its joins)
+            if right <= x0:  # the box is to the left: stay clear of it, never pushed by it
+                lo = max(lo, min(right + TRUNK_AIR, x0))
+            elif left >= x0:
+                hi = min(hi, max(left - TRUNK_AIR, x0))
+    return lo, hi
+
+
+def shift_trunk(route: list[Point], dx: float, boxes: Sequence[Box]) -> list[Point]:
+    """The route with its movable vertical piece `dx` further across, as far as the units allow
+    (`trunk_limits`); the pieces joined to it stretch with it, so every piece stays level or
+    plumb. A route with no such piece, or `dx` = 0, comes back as it is."""
+    index = trunk_index(route)
+    if index is None or dx == 0:
+        return route
+    x0 = route[index][0]
+    lo, hi = trunk_limits(route, index, boxes)
+    x = min(max(x0 + dx, lo), hi)
+    if x == x0:
+        return route
+    out = list(route)
+    out[index] = (x, route[index][1])
+    out[index + 1] = (x, route[index + 1][1])
+    return out

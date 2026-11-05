@@ -219,6 +219,8 @@ Optional, and absent from a new project: a project that does not have it behaves
 | `label_wire_template` | not set | for `label_format` `custom`: text with the places `{harness}`, `{wire}`, `{signal}`, `{name}`, `{interface}`, `{emc}`, `{end}` (A or B), `{from}` (this end, connector and pin) and `{to}` (the far end), at most 200 characters; `{{` and `}}` are braces; a place that does not exist is an error that names it; not set: the standard text |
 | `label_connector_template` | not set | for `label_format` `custom`: text with the places `{harness}`, `{connector}`, `{name}`, `{mates}` and `{device}`; the same rules; not set: the standard text |
 | `readiness_blocking` | the first four checks of the build workbook | the names of the checks of the build workbook whose open items mean *Ready to build: no*; the others are notes |
+| `bom_wire_allowance_fraction` | 0 | the fraction of the wire metres added to every wire part in the bill of materials (cut allowance, waste): 0 to 1; 0 adds nothing, as before; assumption A-BOM-NO-ALLOWANCE |
+| `bom_contact_spare_fraction` | 0 | the fraction of the contacts used that is added as spares, for each harness and contact part, rounded up to a whole contact: 0 to 1; 0 adds none, as before; assumption A-BOM-CONTACTS |
 
 A key that is not in this table is an error that names it, so a typo is not silent. The same tables and ranges are in `core/settings.py`, from which `settings` and the explanations (`explain`) read; a test checks that every key of every file is described there and here.
 
