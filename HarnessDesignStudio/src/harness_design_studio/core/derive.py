@@ -118,6 +118,20 @@ class Derivation:
         missing (see `missing`)."""
         return self.value is not None or bool(self.text)
 
+    @property
+    def model_page(self) -> str:
+        """The page of `docs/models/` that explains this kind of derivation, as a path from the
+        project folder of the program: `docs/models/wire-sizing.md`. '' for a kind that the table
+        `derive_kinds.KINDS` does not list (never one of the tool's own)."""
+        from harness_design_studio.core.derive_kinds import KINDS
+
+        return f"docs/models/{KINDS[self.id][0]}" if self.id in KINDS else ""
+
+    def to_explain_dict(self) -> dict[str, Any]:
+        """What `explain --json` prints for a derivation: `to_dict` and the key `model_page` last.
+        The key is not in `to_dict`, so the files `derivations.json` are as they were."""
+        return {**self.to_dict(), "model_page": self.model_page}
+
     def to_dict(self) -> dict[str, Any]:
         out: dict[str, Any] = {
             "id": self.id,

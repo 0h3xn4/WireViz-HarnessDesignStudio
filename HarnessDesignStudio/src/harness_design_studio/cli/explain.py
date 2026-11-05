@@ -29,7 +29,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "their units and where each comes from (a key of config/*.json, a field of the design or "
         "the program), the intermediate results, what the result is checked against, and the "
         "assumptions built into the program that it rests on. The numbers are the ones `generate` "
-        "and `drc` use. `--json` prints the same as data (a list). With `--all --out FOLDER` it writes "
+        "and `drc` use. The last line names the page of docs/models/ that explains the model behind each kind of number shown (`Model page: docs/models/wire-sizing.md`). `--json` prints the same as data (a list; each derivation also has the key `model_page`). With `--all --out FOLDER` it writes "
         "every derivation of the project to FOLDER as `derivations.json` and `derivations.csv`: no "
         "time, user or path is in them, so the same design gives the same files; with `--json` as "
         "well it prints how many it wrote instead of the line of text. Without `--out` nothing "
@@ -77,7 +77,7 @@ def run(args: argparse.Namespace) -> int:
         return rep.finish(_write_all(project, args.out, rep))
     found = explain_object(project, args.object)
     if args.json:
-        print(json.dumps([d.to_dict() for d in found], indent=2, ensure_ascii=False))
+        print(json.dumps([d.to_explain_dict() for d in found], indent=2, ensure_ascii=False))
         return 0
     print("\n\n".join(render(d) for d in found))
     from harness_design_studio.core import journal
@@ -85,6 +85,10 @@ def run(args: argparse.Namespace) -> int:
     entries = journal.entries_for(project, args.object)
     if entries:  # a project with a journal: who changed this object, when, from what to what, why
         print(f"\nHistory of {args.object} (from the change journal):\n" + journal.render(entries))
+    pages = list(dict.fromkeys(d.model_page for d in found if d.model_page))
+    if pages:  # the last lines: where the model behind each kind of number above is explained
+        print()
+        print("\n".join(f"Model page: {page}" for page in pages))
     if all(not d.known for d in found):
         print("\nNothing could be explained yet: see what is not set above.", file=sys.stderr)
     return 0

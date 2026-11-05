@@ -228,9 +228,10 @@ def test_explain_json_has_the_shape_of_a_derivation(
     g = next(d for d in found if d["id"] == "gauge")
     assert list(g) == [
         "id", "subject", "quantity", "value", "unit", "equation", "inputs", "steps", "check",
-        "assumptions", "reference", "missing",
+        "assumptions", "reference", "missing", "model_page",
     ]  # fmt: skip
     assert g["value"] == 16 and g["unit"] == "AWG"
+    assert g["model_page"] == "docs/models/wire-sizing.md"
     assert g["check"]["limit"] == pytest.approx(5.4) and g["check"]["actual"] == 5
     assert [s["value"] for s in g["steps"] if s["label"].startswith("Try AWG")][
         :6

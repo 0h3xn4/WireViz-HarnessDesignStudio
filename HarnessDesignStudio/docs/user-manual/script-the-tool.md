@@ -75,7 +75,7 @@ The exit code of `drc` is 1 when an error is open, so `harness-design-studio drc
 
 Each finding in `findings` has `id`, `rule`, `severity` (`error`, `warning` or `info`), `object_id`, `title`, `why`, `sources` (the requirement IDs of the rule), `can_waive`, `waived`, `waiver_justification` and `waiver_changed`. Each entry of `issues` (`validate`, `check`, `verify`, `generate`, `export`) has `severity`, `code`, `message`, `location` (a file of the project, relative to its folder) and `object_id`.
 
-`explain OBJECT --json` prints a list of derivations, and `settings --json` its own document (without `ok`), both as before ([section 5](#5-ask-how-a-number-was-made)); `explain --all --out FOLDER --json` prints how many it wrote. `export-data DIR --out FOLDER --json` lists the files of the open data ([export the data](export-the-data.md)), and `export` and `generate` take `--run-record` for a record of the run outside every hash.
+`explain OBJECT --json` prints a list of derivations (each also has `model_page`, the page of `docs/models/` that explains its kind), and `settings --json` its own document (without `ok`), both as before ([section 5](#5-ask-how-a-number-was-made)); `explain --all --out FOLDER --json` prints how many it wrote. `export-data DIR --out FOLDER --json` lists the files of the open data ([export the data](export-the-data.md)), and `export` and `generate` take `--run-record` for a record of the run outside every hash.
 
 ## 2. Write the outputs to another folder
 
@@ -168,12 +168,13 @@ for derivation in explain(project, "W001-001"):
 
 ```
 wire-length 0.35 m
+gauge None AWG
 wire-current-limit None A
 wire-voltage-drop None V
 wire-mass None g
 ```
 
-A value of `None` means an input is not set yet; `derivation.missing` says which. `derivation.to_dict()` is the plain form with every input, step and assumption. `explain_all(project)` gives every derivation of the design, and `explain_finding(project, finding_id)` the calculation the editor's *Explain* shows for a finding (the wire for a current or voltage-drop finding, the contacts for a contact-current finding; an empty list for a finding of another rule). `write_derivations(project, "out")` writes `derivations.json` and `derivations.csv`, the files `harness-design-studio explain --all --out out` writes. The models behind them are in [`docs/models/`](../models/README.md).
+A value of `None` means an input is not set yet; `derivation.missing` says which. `derivation.to_dict()` is the plain form with every input, step and assumption; `derivation.model_page` is the page of the models that explains its kind (`docs/models/wire-sizing.md`), and `derivation.to_explain_dict()` is what `explain --json` prints (`to_dict` and `model_page`). `explain_all(project)` gives every derivation of the design, and `explain_finding(project, finding_id)` the calculation the editor's *Explain* shows for a finding (the wire for a current or voltage-drop finding, the contacts for a contact-current finding; an empty list for a finding of another rule). `write_derivations(project, "out")` writes `derivations.json` and `derivations.csv`, the files `harness-design-studio explain --all --out out` writes. The models behind them are in [`docs/models/`](../models/README.md).
 
 ## 6. Read and set engineering values
 

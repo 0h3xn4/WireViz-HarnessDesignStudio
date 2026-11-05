@@ -33,6 +33,11 @@ SHAPES: dict[str, tuple[str, ...]] = {
     "settings": ("settings", "definitions", "assumptions"),  # no "ok": printed as before
     "settings --annotate": ("ok", "action", "files", "unchanged", "changed"),
     "explain --all": ("ok", "count", "without_value", "files"),  # with OBJECT: a list
+    # each derivation of the list (no "ok"); one whose result is a text has `text` after `missing`
+    "explain OBJECT": (
+        "id", "subject", "quantity", "value", "unit", "equation", "inputs", "steps", "check",
+        "assumptions", "reference", "missing", "model_page",
+    ),
     "export-data": ("ok", "count", "model_hash", "files", "run_record"),
     "generate": (
         "ok", "saved", "added", "changed", "unchanged", "removed", "frozen", "kept_locks",
