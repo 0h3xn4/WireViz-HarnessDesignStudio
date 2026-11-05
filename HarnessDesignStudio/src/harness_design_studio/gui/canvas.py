@@ -45,8 +45,10 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio.core import describe, edit, routing
 from harness_design_studio.core.model import Project
+from harness_design_studio.gui import cable as cb
 from harness_design_studio.gui import canvas_badges as cbadges
 from harness_design_studio.gui import glyphs, strings
+from harness_design_studio.gui.canvas_cable import RING, CableLayer
 from harness_design_studio.gui.canvas_links import (
     HIT_WIDTH,
     ChipDrag,
@@ -273,6 +275,8 @@ class UnitItem(QGraphicsItem):
     def _compat_reason(self) -> tuple[str, str]:
         """(state, reason): state is 'from', 'ok', 'no' or '' when the connect tool is idle."""
         ctl = self.ctl
+        if self.dscene.cable.active:  # a cable is in hand: the devices that can take it
+            return self.dscene.cable.unit_state(self.unit_id), ""
         if ctl.linking:  # the Connect tool of the pinout way: any device with a connector
             if ctl.connect_from and ctl.connect_from.unit_id == self.unit_id:
                 return "from", ""
@@ -553,6 +557,7 @@ class UnitItem(QGraphicsItem):
                 elide(QFontMetrics(small), unit.name, card.name_w),
             )
             self._paint_connector_row(painter, small, th, facts, card.limit)
+            self._paint_socket(painter, th)
         painter.setOpacity(base)
         if reason:
             painter.setPen(th.color("error"))
@@ -746,21 +751,28 @@ class UnitItem(QGraphicsItem):
         ctl = self.ctl
         auto = self._auto_connectors()
         painter.setFont(small)
+        layer = self.dscene.cable
+        ports = {p.connector_id: p for p in layer.ports_of(self)}
         for k, c in enumerate(self.connectors()):
             rect = self.port_rect(k, str(c.id))
             right = self.port_side(str(c.id)) == "right"
             compat = (
                 ctl.connector_compat(c.id)
-                if state in ("ok", "no", "from") and ctl.connect_type
+                if state in ("ok", "no", "from") and ctl.connect_type and not layer.active
                 else None
             )
             valid = bool(compat and compat.ok and state != "from")
+            cable_style = layer.port_style(ports[str(c.id)]) if str(c.id) in ports else ""
+            if cable_style:  # a cable is in hand (or the pointer is over the port)
+                valid = cable_style in ("ok", "snap")
             pen = QPen(th.color("border"), 2)
             if c.id in auto:
                 pen = QPen(th.color("auto-fill"), 2, Qt.PenStyle.DashLine)
             painter.setPen(pen)
             painter.setBrush(QBrush(th.color("primary") if valid else th.color("bg")))
             painter.drawRoundedRect(rect, 3, 3)
+            if cable_style:
+                self._paint_port_ring(painter, th, rect, cable_style)
             if self.dscene.states.of(
                 "connector", str(c.id)
             ).locks:  # a release locks this connector
@@ -777,7 +789,7 @@ class UnitItem(QGraphicsItem):
             )
             y = self.port_y(k)
             family, pins, gender = describe.connector_family(ctl.project, str(c.id))
-            muted = compat is not None and not valid
+            muted = (compat is not None and not valid) or cable_style in ("no", "snap-no")
             ink = th.color("text-muted") if muted else th.color("text")
             # from the edge inwards: the designator, the connector, the pin count; glyphs.port_row
             # keeps every part inside its half. What a link carries is drawn on the link.
@@ -798,6 +810,38 @@ class UnitItem(QGraphicsItem):
                 painter.drawText(
                     QRectF(row["count"][0], y - 9, glyphs.ROW_COUNT_W, 18), align, str(pins)
                 )
+
+    def _paint_port_ring(
+        self, painter: QPainter, th: ThemeManager, rect: QRectF, style: str
+    ) -> None:
+        """The ring round a port that a cable is near: the pointer over it, the end the cable
+        comes from, the port it would snap to (and refuses), a port that takes the cable."""
+        token, width = {
+            "hover": ("primary", 2.0),
+            "from": ("primary", 2.0),
+            "snap": ("focus", 3.0),
+            "snap-no": ("error", 3.0),
+            "ok": ("primary", 1.5),
+        }.get(style, ("", 0.0))
+        if not token:
+            return
+        painter.setPen(QPen(th.color(token), width))
+        painter.setBrush(Qt.BrushStyle.NoBrush)
+        painter.drawRoundedRect(rect.adjusted(-RING, -RING, RING, RING), 5, 5)
+
+    def _paint_socket(self, painter: QPainter, th: ThemeManager) -> None:
+        """Guided mode: one port for the device as a whole, on the edge its connections leave from
+        (the tool picks the connector, as when two devices are clicked)."""
+        layer = self.dscene.cable
+        port = layer.ports_of(self)[0]
+        rect = layer.port_rect(port).translated(-self.pos())
+        style = layer.port_style(port)
+        valid = style in ("ok", "snap")
+        painter.setPen(QPen(th.color("border"), 2))
+        painter.setBrush(QBrush(th.color("primary") if valid else th.color("bg")))
+        painter.drawRoundedRect(rect, 3, 3)
+        if style:
+            self._paint_port_ring(painter, th, rect, style)
 
     # ---- interaction ------------------------------------------------------------------------
     def mousePressEvent(self, event: QGraphicsSceneMouseEvent) -> None:
@@ -886,7 +930,9 @@ class UnitItem(QGraphicsItem):
             x, y = value.x(), value.y()
             if self.dscene.snapping():
                 x, y = round(x / GRID) * GRID, round(y / GRID) * GRID
-            return QPointF(max(0.0, x), max(0.0, y))  # a drag cannot leave the top left corner
+            return QPointF(
+                x, y
+            )  # a device can go anywhere, past the edge and below zero: the scene grows
         if change == QGraphicsItem.GraphicsItemChange.ItemPositionHasChanged:
             self.dscene.relink(self.unit_id)
         return super().itemChange(change, value)
@@ -922,6 +968,9 @@ class UnitItem(QGraphicsItem):
             conn = self.ctl.project.connectors.get(cid) if cid else None
             full = f"{u.id}: {u.name}" if u else ""
             text = f"{full}\n{conn.name}" if conn else full  # (the whole text, if elided)
+            port = self._tip_port(event.pos(), cid)  # type: ignore[attr-defined]
+            if port is not None:  # a port says what it is and how many pins are free
+                text = f"{full}\n{self.dscene.cable.tip_for(port)}"
             locks = self.dscene.states.of("connector", cid).locks if cid else ()
             if locks:
                 text += "\n" + self.lock_tip(ObjectState(locks=locks))
@@ -929,6 +978,20 @@ class UnitItem(QGraphicsItem):
                 why = describe.why_lines(self.ctl.project, "connector", cid)
                 text += "\n" + "\n".join(why[:2])
             self.setToolTip(text)
+
+    def _tip_port(self, pos: QPointF, connector_id: str | None) -> cb.Port | None:
+        """The port a tooltip at `pos` is about (Select tool): the connector row in Expert mode,
+        the socket of the device in Guided mode."""
+        if self.ctl.tool != "select" or self.ctl.read_only:
+            return None
+        layer = self.dscene.cable
+        for port in layer.ports_of(self):
+            if self.ctl.mode == "expert":
+                if port.connector_id == connector_id:
+                    return port
+            elif layer.port_rect(port).translated(-self.pos()).adjusted(-6, -6, 6, 6).contains(pos):
+                return port
+        return None
 
     def activate(self, *, open_plan: bool = False) -> None:
         """Enter or Space on the unit: pick it with the Connect tool, otherwise select it (Enter
@@ -968,12 +1031,7 @@ class UnitItem(QGraphicsItem):
             if self.unit_id not in ids:
                 ids = [self.unit_id]
             items = [self.dscene.unit_items[u] for u in ids if u in self.dscene.unit_items]
-            ctl.move_units(
-                {
-                    it.unit_id: (max(0.0, it.pos().x() + dx), max(0.0, it.pos().y() + dy))
-                    for it in items
-                }
-            )
+            ctl.move_units({it.unit_id: (it.pos().x() + dx, it.pos().y() + dy) for it in items})
             event.accept()
             return
         super().keyPressEvent(event)
@@ -1727,6 +1785,7 @@ class DiagramScene(QGraphicsScene):
         self._preview_timer.setSingleShot(True)
         self._preview_timer.setInterval(METRICS.drag_preview_ms)
         self._preview_timer.timeout.connect(self._preview_tick)
+        self.cable = CableLayer(self)  # the cable in hand (picked up at a port) and the loose end
         ctl.changed.connect(self.apply)
         ctl.drcChanged.connect(self.refresh_states)
         ctl.selectionChanged.connect(self._on_selection)
@@ -2421,7 +2480,31 @@ class DiagramScene(QGraphicsScene):
         top = -math.ceil(-top / LANE_STEP) * LANE_STEP
         rect = QRectF(left, top, width - left, self.lane_height - top)
         if rect != self.sceneRect():
-            self.setSceneRect(rect)
+            self._set_extent(rect)
+
+    def _set_extent(self, rect: QRectF) -> None:
+        """Take a new scene rectangle. A scene smaller than the window is centred in it, so when
+        it grows past the window (or shrinks inside it) the view must keep showing what it
+        showed: it would otherwise jump under the pointer."""
+        keep = [(v, v.mapToScene(v.viewport().rect().center())) for v in self.views()]
+        self.setSceneRect(rect)
+        for v, centre in keep:
+            if v.mapToScene(v.viewport().rect().center()) != centre:
+                v.centerOn(centre)
+
+    def grow_to(self, rect: QRectF) -> None:
+        """Make the scene big enough to hold `rect` (it only grows here, in steps; the next edit
+        works the extent out again from the devices). A device or a cable carried past the edge
+        keeps the scroll bars and the view following it."""
+        now = self.sceneRect()
+        want = now.united(rect)
+        if want == now:
+            return
+        left = min(now.left(), math.floor(want.left() / LANE_STEP) * LANE_STEP)
+        top = min(now.top(), math.floor(want.top() / LANE_STEP) * LANE_STEP)
+        right = max(now.right(), math.ceil(want.right() / LANE_STEP) * LANE_STEP)
+        bottom = max(now.bottom(), math.ceil(want.bottom() / LANE_STEP) * LANE_STEP)
+        self._set_extent(QRectF(left, top, right - left, bottom - top))
 
     def apply(self, delta: Delta) -> None:
         self._focus_cache = None  # the model changed: the focus of the selection may have
@@ -2502,6 +2585,11 @@ class DiagramScene(QGraphicsScene):
         METRICS.drag_preview_ms); the routes are worked out when the mouse is released."""
         for line in self.connection_items.values():  # (a few straight-sided lines: cheap)
             line.update_path()
+        item = self.unit_items.get(unit_id)
+        if item is not None and self._drag_units:  # a device dragged past the edge: the scene grows
+            self.grow_to(
+                item.sceneBoundingRect().adjusted(-CAB_ROOM, -CAB_ROOM, CAB_ROOM, CAB_ROOM)
+            )
         if self._drag_units:
             self._schedule_preview()
             return
@@ -2573,6 +2661,7 @@ class DiagramScene(QGraphicsScene):
 
 
 LANE_STEP = 256.0  # lane height grows in steps of this many pixels
+CAB_ROOM = 120.0  # the room a dragged device keeps free around it: the scene grows to hold it
 MAP_DELAY_MS = 400  # the overview map repaints this long after the last change
 
 
@@ -2909,6 +2998,11 @@ class DiagramView(QGraphicsView):
         self.dscene.statesChanged.connect(self.legend.set_states)
         self.legend.set_states(self.dscene.states)
         self._fit_scale = 0.25
+        self.unit_drag = (
+            False  # a device is being dragged (the view scrolls when it nears the edge)
+        )
+        self.dscene.cable.attach(self)  # the cable in hand asks the view for scale, scroll, cursor
+        self.viewport().setMouseTracking(True)  # a held cable follows the pointer without a button
         self._space = False  # Space is held: a drag pans
         self._space_used = False
         self._pan_last: QPoint | None = None
@@ -3098,6 +3192,8 @@ class DiagramView(QGraphicsView):
 
     def scrollContentsBy(self, dx: int, dy: int) -> None:
         super().scrollContentsBy(dx, dy)
+        if self.dscene.cable.active:
+            self.dscene.cable.follow()  # the carried end stays under the pointer
         self.minimap.viewport().update()
         if self.empty.isVisible():
             self._place_hint()  # it keeps clear of the devices and lane names that moved
@@ -3119,6 +3215,8 @@ class DiagramView(QGraphicsView):
         self._scale_changed()
 
     def _scale_changed(self) -> None:
+        if self.dscene.cable.active:
+            self.dscene.cable.follow()  # zooming under a carried cable: its end stays at the pointer
         self.minimap.viewport().update()
         if self.empty.isVisible():
             self._place_hint()
@@ -3218,6 +3316,14 @@ class DiagramView(QGraphicsView):
             self.viewport().setCursor(Qt.CursorShape.ClosedHandCursor)
             event.accept()
             return
+        mods = event.modifiers()
+        if (
+            button == Qt.MouseButton.LeftButton
+            and not mods & (Qt.KeyboardModifier.ControlModifier | Qt.KeyboardModifier.ShiftModifier)
+            and self.dscene.cable.press_at(self.mapToScene(pos), pos)
+        ):
+            event.accept()  # a port, the plug of a connection or a loose end: a cable is picked up
+            return
         if button == Qt.MouseButton.LeftButton and self.ctl.tool == "select":
             item = self.itemAt(pos)
             at = self.mapToScene(pos)
@@ -3230,10 +3336,20 @@ class DiagramView(QGraphicsView):
                     event.accept()
                     return
             if item is None or isinstance(item, ZoneItem):
+                self.dscene.cable.drop_on_empty()  # a click on empty ground drops a loose end
                 self._begin_band(at, pos, event.modifiers())
                 event.accept()
                 return
         super().mousePressEvent(event)
+        grab = self.dscene.mouseGrabberItem()
+        if (
+            button == Qt.MouseButton.LeftButton
+            and isinstance(grab, UnitItem)
+            and not self.ctl.read_only
+            and self.ctl.tool == "select"
+        ):
+            self.unit_drag = True  # (the view follows a device that is dragged to its edge)
+            self.dscene.cable.drag_scroll(pos)
 
     def mouseDoubleClickEvent(self, event: QMouseEvent) -> None:
         pos = event.position().toPoint()
@@ -3252,6 +3368,11 @@ class DiagramView(QGraphicsView):
 
     def mouseMoveEvent(self, event: QMouseEvent) -> None:
         pos = event.position().toPoint()
+        if self.dscene.cable.on_move(self.mapToScene(pos), pos):
+            event.accept()  # a cable is in hand
+            return
+        if self.unit_drag:
+            self.dscene.cable.drag_scroll(pos)
         if self._pan_last is not None:
             d = pos - self._pan_last
             self._pan_last = pos
@@ -3275,6 +3396,11 @@ class DiagramView(QGraphicsView):
         super().mouseMoveEvent(event)
 
     def mouseReleaseEvent(self, event: QMouseEvent) -> None:
+        if event.button() == Qt.MouseButton.LeftButton:
+            self.unit_drag = False
+            if self.dscene.cable.on_release(self.mapToScene(event.position().toPoint())):
+                event.accept()
+                return
         if self._pan_last is not None and event.button() in (
             Qt.MouseButton.MiddleButton,
             Qt.MouseButton.LeftButton,
@@ -3294,6 +3420,10 @@ class DiagramView(QGraphicsView):
             event.accept()
             return
         super().mouseReleaseEvent(event)
+
+    def reset_cursor(self) -> None:
+        """The pointer shape the view has at rest (the open hand while Space is held)."""
+        self._set_hand()
 
     def _set_hand(self) -> None:
         if self._space:
@@ -3572,8 +3702,8 @@ class DiagramView(QGraphicsView):
             ctl.pick(unit_id)
 
     def _add_here(self, template_id: str, at: QPointF) -> None:
-        x = max(0.0, round((at.x() - W / 2) / GRID) * GRID)
-        y = max(0.0, round(at.y() / GRID) * GRID)
+        x = round((at.x() - W / 2) / GRID) * GRID
+        y = round(at.y() / GRID) * GRID
         uid = self.ctl.add_unit(template_id, x, y)
         if uid:
             self.focus_unit(uid)
@@ -3588,6 +3718,9 @@ class DiagramView(QGraphicsView):
             event.accept()  # (Space on a focused unit selects it when it is let go, below)
             return
         if key == Qt.Key.Key_Escape:
+            if self.dscene.cable.escape():  # a cable in hand is put away, a loose end dropped
+                event.accept()
+                return
             if self.search.isVisible():
                 self.search.close_bar()
                 event.accept()
@@ -3725,6 +3858,7 @@ class DiagramView(QGraphicsView):
 
     def drawForeground(self, painter: QPainter, rect: QRectF | QRect) -> None:
         super().drawForeground(painter, rect)
+        self.dscene.cable.paint(painter)
         if self._band is None:
             return
         fill = QColor(self.theme.color("primary"))

@@ -1090,7 +1090,7 @@ def ops_align(
         else:  # vmiddle
             middle = sum(b[1] + b[2] / 2 for b in boxes.values()) / len(boxes)
             ny = middle - h / 2
-        target[uid] = (_half(nx), max(0.0, _half(ny)))
+        target[uid] = (_half(nx), _half(ny))  # (a device may sit below zero: nothing is clamped)
     return _move_ops(project, target)
 
 

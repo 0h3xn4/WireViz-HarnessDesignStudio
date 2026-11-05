@@ -545,6 +545,7 @@ class MainWindow(QMainWindow):
         self.ctl.whyRequested.connect(self._show_why)
         self.props.deleteRequested.connect(self.delete_flow)
         self.ctl.connectChanged.connect(self._on_connect)
+        self.ctl.cableHint.connect(self._on_cable_hint)
         self.ctl.linkRequested.connect(self.link_flow)
         self.ctl.linkSelectionChanged.connect(self._on_link_selection)
         self.ctl.modeChanged.connect(self._on_mode)
@@ -3136,6 +3137,13 @@ class MainWindow(QMainWindow):
             act.setToolTip(why_align or act.text())
         for act in self.distribute_actions.values():
             act.setToolTip(why_spread or act.text())
+
+    def _on_cable_hint(self, text: str) -> None:
+        """What the status bar says while a cable is in hand on the diagram (nothing: it clears)."""
+        if text:
+            self.statusBar().showMessage(text)
+        else:
+            self.statusBar().clearMessage()
 
     def _on_connect(self) -> None:
         c = self.ctl
