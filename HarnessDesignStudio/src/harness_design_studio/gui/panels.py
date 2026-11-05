@@ -447,7 +447,10 @@ class PropertiesPanel(QScrollArea):
         self.lay.addWidget(zone)
         sub = _Field(strings.FIELD_SUBSYSTEM, u.subsystem, enabled=False)
         self.lay.addWidget(sub)
-        looks = device_kinds.looks_for(p, uid, describe.unit_categories(p))
+        cats = describe.unit_categories(p)
+        self.lay.addWidget(muted(strings.FIELD_KIND))
+        self.lay.addWidget(self._kind_combo(uid, device_kinds.automatic_looks(p, uid, cats)))
+        looks = device_kinds.looks_for(p, uid, cats)
         self.lay.addWidget(device_looks.looks_line(self.theme, looks, u.name, uid))
         if ctl.mode == "expert":
             self.lay.addWidget(heading(strings.CONNECTORS_PHYSICAL))
@@ -460,6 +463,24 @@ class PropertiesPanel(QScrollArea):
         btn.clicked.connect(lambda: ctl.redundant_copy(uid))
         self._editable(btn)
         self.lay.addWidget(btn)
+
+    def _kind_combo(self, uid: str, automatic: device_kinds.Looks) -> QComboBox:
+        """The Kind of a device: `Automatic: <what the tool reads from the name>` first, then the
+        kinds by name (the plain box last). One undo step for each change (`Unit.kind`)."""
+        ctl = self.ctl
+        box = QComboBox()
+        box.setObjectName("unit-kind")
+        box.setToolTip(strings.KIND_TIP)
+        box.setAccessibleName(strings.FIELD_KIND)
+        box.addItem(strings.KIND_AUTO.format(kind=automatic.kind.label), None)
+        named = sorted(device_kinds.KINDS, key=lambda k: k.label)
+        for kind in (*named, device_kinds.GENERIC):
+            label = strings.KIND_PLAIN if kind is device_kinds.GENERIC else kind.label
+            box.addItem(label, kind.key)
+        box.setCurrentIndex(max(0, box.findData(ctl.project.units[uid].kind)))
+        box.activated.connect(lambda _i: self._kept(ctl.update_unit(uid, kind=box.currentData())))
+        self._editable(box)
+        return box
 
     def _commit_unit(self, uid: str, field: _Field, key: str, value: str) -> None:
         cur = getattr(self.ctl.project.units[uid], key)

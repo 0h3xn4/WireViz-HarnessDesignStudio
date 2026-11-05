@@ -3,8 +3,8 @@
 graphically more distinguishable*. A device card looks like the kind of equipment it is: a
 pictogram in a badge whose colour and shape belong to its family, a band of that colour on the
 card's left edge, a tinted box when the diagram is seen from far away. The kind is read from the
-device's name, ID, subsystem and links with one table (`gui/device_kinds.py`); nothing is stored,
-so the project files, the model hash and every written output are as they were. Colour is never the
+device's name, ID, subsystem and links with one table (`core/device_kinds.py`), unless the kind was
+set by hand; nothing else is stored, so the project files and the model hash are as they were. Colour is never the
 only cue: the pictogram and the shape say the same, and the tooltip, the inspector and the legend
 say it in words."""
 
@@ -450,11 +450,16 @@ def test_a_project_of_plain_boxes_has_no_device_entries_in_the_legend() -> None:
 # ---- nothing written changes --------------------------------------------------------------------
 
 
-def test_the_kind_is_never_stored(tmp_path: Path) -> None:
-    """The look is read, not saved: no field of a device holds it and no file is written for it."""
+def test_a_kind_nobody_set_is_not_stored(tmp_path: Path) -> None:
+    """The look is read, not saved, unless a person set the kind by hand (`Unit.kind`, tests/
+    test_device_kind.py): no field holds the look or the family, a project that set no kind has no
+    `kind` in any file, and no file is written for the look. (Until the manual kind existed this
+    test said that no field at all held it: the only change is the one optional, sparse field.)"""
     from harness_design_studio.core.model import Unit
 
-    assert not {"kind", "looks", "family"} & set(Unit.model_fields)
+    assert not {"looks", "family"} & set(Unit.model_fields)
     templates.create_project(tmp_path / "f", "flatsat")
     project = load_project(tmp_path / "f").project
-    assert not [rel for rel in layout.serialize(project) if rel.startswith("diagram/")]
+    files = layout.serialize(project)
+    assert not [rel for rel in files if rel.startswith("diagram/")]
+    assert not [rel for rel, data in files.items() if rel.startswith("logical/units/") and b'"kind"' in data]

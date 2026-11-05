@@ -318,8 +318,9 @@ class UnitItem(QGraphicsItem):
             glyph = describe.unit_glyph(project, self.unit_id, self.dscene.unit_categories())
             u = project.units.get(self.unit_id)
             looks = device_kinds.looks_of(
-                self.unit_id, u.name if u else "", u.subsystem if u else "", glyph
-            )
+                self.unit_id, u.name if u else "", u.subsystem if u else "", glyph,
+                u.kind if u else None,
+            )  # fmt: skip
             f = self._facts = CardFacts(key, tuple(counts.items()), len(conns), glyph, looks)
         return f
 

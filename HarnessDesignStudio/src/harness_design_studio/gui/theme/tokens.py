@@ -18,6 +18,8 @@ Contrast and separation are verified in tests/test_tokens.py and tests/test_them
 
 from typing import Final
 
+from harness_design_studio.core.device_kinds import ACCENTS
+
 # ---- colours ------------------------------------------------------------------------------------
 
 _LIGHT_NEW: Final[dict[str, str]] = {
@@ -57,15 +59,10 @@ _LIGHT_NEW: Final[dict[str, str]] = {
     "cat-pyro": "#5C0000",
     "cat-discrete": "#5500FF",
     "cat-ground": "#3A0953",
-    "device.control": "#3730C9",  # the accent of a device card by family (gui/device_kinds.py): a badge
-    "device.power": "#B45309",  # fill with `accent.text` on it, so each is 4.5:1 against that text
-    "device.attitude": "#15803D",  # and 3:1 against every surface
-    "device.sensing": "#0E7490",
-    "device.comms": "#A21CAF",
-    "device.payload": "#BE123C",
-    "device.thermal": "#7C2D12",
-    "device.mechanism": "#6B7B13",
-    "device.ground": "#475569",
+    # the accent of a device card by family: the one table of core/device_kinds.py, which the
+    # written block diagram reads too (so the window and the file cannot drift); a badge fill with
+    # `accent.text` on it, 4.5:1 against that text and 3:1 against every surface
+    **{f"device.{family}": light for family, (light, _dark) in ACCENTS.items()},
 }
 
 _DARK_NEW: Final[dict[str, str]] = {
@@ -105,15 +102,7 @@ _DARK_NEW: Final[dict[str, str]] = {
     "cat-pyro": "#F07575",
     "cat-discrete": "#B89C14",
     "cat-ground": "#46A6B9",
-    "device.control": "#6E8BFF",
-    "device.power": "#F0A04B",
-    "device.attitude": "#5FD38A",
-    "device.sensing": "#4FC3D9",
-    "device.comms": "#E08CF2",
-    "device.payload": "#FF7F9A",
-    "device.thermal": "#FF6B5E",
-    "device.mechanism": "#C5D94A",
-    "device.ground": "#AAB7C8",
+    **{f"device.{family}": dark for family, (_light, dark) in ACCENTS.items()},
 }
 
 # The logo's colours (docs/img/logo.svg); the same in both themes, drawn by gui/appicon.py.

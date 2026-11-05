@@ -14,9 +14,18 @@ Construction = Literal["single", "twisted_pair", "twisted_shielded_pair", "quad"
 Shielding = Literal["none", "overall", "per_pair"]
 Direction = Literal["out", "in", "bidir", "passive"]
 Flow = Literal["unspecified", "a_to_b", "b_to_a", "bidirectional"]
+# The kind of equipment a person set on a device by hand (`Unit.kind`); the table of the kinds, with
+# the words the tool reads a kind from, is `core/device_kinds.py` (a test keeps the two lists equal).
+DeviceKind = Literal[
+    "computer", "interface_unit", "battery", "solar_array", "power_unit", "reaction_wheel",
+    "magnetorquer", "thruster", "star_tracker", "sun_sensor", "gyro", "sensor", "transceiver",
+    "antenna", "payload", "heater", "pyro", "mechanism", "ground_support", "device",
+]  # fmt: skip
 
 
-class Unit(Entity):
+class Unit(SparseEntity):
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"kind"})
+
     id: Id
     name: Name
     subsystem: Name
@@ -24,6 +33,7 @@ class Unit(Entity):
     side: Side = "none"
     mass_relevant: bool = True
     notes: Text = ""
+    kind: DeviceKind | None = None  # the kind of equipment, set by hand; None = read from the name
 
 
 class SignalDef(Entity):

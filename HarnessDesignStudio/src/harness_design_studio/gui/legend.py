@@ -72,14 +72,9 @@ class LegendBar(QWidget):
 
     @staticmethod
     def _device_kinds(project: Project) -> list[str]:
-        """The kinds of device in the project (`gui/device_kinds.py`), in the order of the table; none
-        while every device is a plain box (then there is nothing to tell apart)."""
-        cats = describe.unit_categories(project)
-        found = {device_kinds.looks_for(project, u, cats).kind.key for u in project.units}
-        if found <= {device_kinds.GENERIC.key}:
-            return []
-        order = [k.key for k in (*device_kinds.KINDS, device_kinds.GENERIC)]
-        return sorted(found, key=order.index)
+        """The kinds of device in the project (`core/device_kinds.py`), in the order of the table;
+        none while every device is a plain box (then there is nothing to tell apart)."""
+        return device_kinds.used_kinds(project)
 
     @staticmethod
     def _extras(p: Project, families: Sequence[tuple[str, int, str]]) -> tuple[bool, bool, bool]:
