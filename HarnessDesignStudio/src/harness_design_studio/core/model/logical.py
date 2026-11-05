@@ -14,8 +14,8 @@ Construction = Literal["single", "twisted_pair", "twisted_shielded_pair", "quad"
 Shielding = Literal["none", "overall", "per_pair"]
 Direction = Literal["out", "in", "bidir", "passive"]
 Flow = Literal["unspecified", "a_to_b", "b_to_a", "bidirectional"]
-# The kind of equipment a person set on a device by hand (`Unit.kind`); the table of the kinds, with
-# the words the tool reads a kind from, is `core/device_kinds.py` (a test keeps the two lists equal).
+# The kind of equipment a person set on a device by hand (`Unit.kind`); the table of the kinds,
+# with the words the tool reads a kind from, is `core/device_kinds.py` (a test keeps them equal).
 DeviceKind = Literal[
     "computer", "interface_unit", "battery", "solar_array", "power_unit", "reaction_wheel",
     "magnetorquer", "thruster", "star_tracker", "sun_sensor", "gyro", "sensor", "transceiver",

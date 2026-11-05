@@ -462,4 +462,6 @@ def test_a_kind_nobody_set_is_not_stored(tmp_path: Path) -> None:
     project = load_project(tmp_path / "f").project
     files = layout.serialize(project)
     assert not [rel for rel in files if rel.startswith("diagram/")]
-    assert not [rel for rel, data in files.items() if rel.startswith("logical/units/") and b'"kind"' in data]
+    assert not [
+        rel for rel, data in files.items() if rel.startswith("logical/units/") and b'"kind"' in data
+    ]

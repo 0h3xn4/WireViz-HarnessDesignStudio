@@ -31,7 +31,6 @@ This module is in `core` because the written block diagram (`system/block_diagra
 same looks from the model alone; the words of the screen (`sentence`) stay in `gui/device_kinds.py`.
 """
 
-
 from collections.abc import Mapping, Sequence
 from dataclasses import dataclass
 from typing import Final
@@ -335,7 +334,9 @@ def automatic_looks(
     return looks_of(u.id, u.name, u.subsystem, describe.unit_glyph(project, unit_id, categories))
 
 
-def used_kinds(project: Project, categories: Mapping[str, Sequence[str]] | None = None) -> list[str]:
+def used_kinds(
+    project: Project, categories: Mapping[str, Sequence[str]] | None = None
+) -> list[str]:
     """The kinds of device the project has, in the order of the table (`KINDS`, then the plain
     device); none while every device is a plain box, because then there is nothing to tell apart.
     The legend of the window and of the written diagram list these."""

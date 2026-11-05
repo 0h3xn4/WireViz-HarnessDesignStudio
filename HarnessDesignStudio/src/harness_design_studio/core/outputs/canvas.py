@@ -5,7 +5,10 @@ PDF), so text widths are exact (every character is 0.6 em wide) and layout never
 """
 
 import math
+from collections.abc import Callable
 from dataclasses import dataclass, field
+
+from harness_design_studio.core.pictograms import Path
 
 
 def escape(s: str) -> str:
@@ -87,7 +90,19 @@ class Curve:
     color: str = "#000000"
 
 
-Item = Line | Rect | Text | Curve
+@dataclass(frozen=True)
+class Shape:
+    """A path of straight lines and cubic curves (`core/pictograms.py`), filled, stroked or both,
+    in millimetres on the sheet: what a pictogram and a badge of the block diagram are. A stroke
+    has round ends and joins. No text, so the output checks that read texts do not see it."""
+
+    path: Path
+    fill: str | None = None
+    stroke: str | None = None
+    width: float = 0.3
+
+
+Item = Line | Rect | Text | Curve | Shape
 
 
 @dataclass
@@ -117,6 +132,11 @@ def item_bounds(it: Item) -> tuple[float, float, float, float]:
     if isinstance(it, Rect):
         pad = it.width / 2
         return it.x - pad, it.y - pad, it.x + it.w + pad, it.y + it.h + pad
+    if isinstance(it, Shape):
+        xs = [v for _op, pts in it.path for v in pts[0::2]]
+        ys = [v for _op, pts in it.path for v in pts[1::2]]
+        pad = it.width / 2 if it.stroke else 0.0
+        return min(xs) - pad, min(ys) - pad, max(xs) + pad, max(ys) + pad
     pad = it.width / 2
     return (
         min(it.x1, it.x2) - pad,
@@ -167,6 +187,22 @@ def _dash(d: tuple[float, float] | None) -> str:
     return f' stroke-dasharray="{_n(d[0])} {_n(d[1])}"' if d else ""
 
 
+def path_data(path: Path) -> str:
+    """The `d` of an SVG path: absolute commands, every number written by `_n` (three decimals at
+    most, no exponent, no locale), so the same path gives the same text on every platform."""
+    return " ".join(op if not pts else f"{op} " + " ".join(_n(v) for v in pts) for op, pts in path)
+
+
+def _svg_shape(it: Shape) -> str:
+    stroke = (
+        f' stroke="{it.stroke}" stroke-width="{_n(it.width)}" stroke-linecap="round"'
+        ' stroke-linejoin="round"'
+        if it.stroke
+        else ""
+    )
+    return f'<path d="{path_data(it.path)}" fill="{it.fill or "none"}"{stroke}/>'
+
+
 def to_svg(sheet: Sheet, metadata: str) -> bytes:
     """One sheet as a standalone SVG. `metadata` is plain text (the stamp) stored in <desc>."""
     out = [
@@ -189,6 +225,8 @@ def to_svg(sheet: Sheet, metadata: str) -> bytes:
                 f'<path d="M {_n(it.x1)} {_n(it.y1)} C {_n(xm)} {_n(it.y1)} {_n(xm)} {_n(it.y2)} '
                 f'{_n(it.x2)} {_n(it.y2)}" fill="none" stroke="{it.color}" stroke-width="{_n(it.width)}"/>'
             )
+        elif isinstance(it, Shape):
+            out.append(_svg_shape(it))
         elif isinstance(it, Rect):
             out.append(
                 f'<rect x="{_n(it.x)}" y="{_n(it.y)}" width="{_n(it.w)}" height="{_n(it.h)}" '
@@ -220,6 +258,24 @@ def _pdf_text(s: str) -> bytes:
     return raw.replace(b"\\", b"\\\\").replace(b"(", b"\\(").replace(b")", b"\\)")
 
 
+_PDF_OPS = {"M": "m", "L": "l", "C": "c", "Z": "h"}
+
+
+def _pdf_shape(it: Shape, h: float, pt: Callable[[float], str]) -> bytes:
+    colours = (f"{_rgb(it.stroke)} RG " if it.stroke else "") + (
+        f"{_rgb(it.fill)} rg " if it.fill else ""
+    )
+    line = f"{pt(it.width)} w 1 J 1 j [] 0 d " if it.stroke else ""
+    body = " ".join(
+        " ".join(pt(v) if k % 2 == 0 else pt(h - v) for k, v in enumerate(pts))
+        + (" " if pts else "")
+        + _PDF_OPS[op]
+        for op, pts in it.path
+    )
+    paint = "B" if it.fill and it.stroke else "f" if it.fill else "S"
+    return f"q {colours}{line}{body} {paint} Q".encode()
+
+
 def _page_stream(sheet: Sheet) -> bytes:
     h = sheet.height
     ops: list[bytes] = []
@@ -241,6 +297,8 @@ def _page_stream(sheet: Sheet) -> bytes:
                 f"{pt(it.x1)} {pt(h - it.y1)} m {pt(xm)} {pt(h - it.y1)} {pt(xm)} {pt(h - it.y2)} "
                 f"{pt(it.x2)} {pt(h - it.y2)} c S Q".encode()
             )
+        elif isinstance(it, Shape):
+            ops.append(_pdf_shape(it, h, pt))
         elif isinstance(it, Rect):
             fill = f"{_rgb(it.fill)} rg " if it.fill else ""
             paint = "B" if it.fill else "S"

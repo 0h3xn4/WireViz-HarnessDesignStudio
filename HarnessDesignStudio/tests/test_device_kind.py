@@ -134,7 +134,9 @@ def test_a_kind_is_saved_loaded_and_part_of_the_model_hash(tmp_path) -> None:
     assert again.units["BAT1"].kind == "heater"
     assert layout.model_hash(again) == layout.model_hash(project)
     unit_files = [
-        json.loads(d) for rel, d in layout.serialize(again).items() if rel.startswith("logical/units/")
+        json.loads(d)
+        for rel, d in layout.serialize(again).items()
+        if rel.startswith("logical/units/")
     ]
     kinds = {u["id"]: u["kind"] for f in unit_files for u in f["units"] if "kind" in u}
     assert kinds == {"BAT1": "heater"}  # only the device that has one writes it
@@ -158,12 +160,16 @@ def test_a_kind_travels_in_a_device_library_file(tmp_path) -> None:
     units = {d["unit"]["id"]: d["unit"] for d in data["devices"]}
     assert units["RW1"]["kind"] == "magnetorquer" and "kind" not in units["OBC"]
     plan = device_library.plan_device_import(mini3(), data)
-    put = {op.obj.id: op.obj for op in plan.ops if hasattr(op.obj, "kind") and hasattr(op.obj, "side")}
+    put = {
+        op.obj.id: op.obj for op in plan.ops if hasattr(op.obj, "kind") and hasattr(op.obj, "side")
+    }
     assert put["RW1-2"].kind == "magnetorquer" and put["OBC-2"].kind is None
 
 
 def test_a_kind_change_is_allowed_after_a_release() -> None:
-    assert "kind" in cosmetic_fields("unit")  # like the name and the notes: it is a look, not wiring
+    assert "kind" in cosmetic_fields(
+        "unit"
+    )  # like the name and the notes: it is a look, not wiring
 
 
 # ---- manual and inferred --------------------------------------------------------------------------

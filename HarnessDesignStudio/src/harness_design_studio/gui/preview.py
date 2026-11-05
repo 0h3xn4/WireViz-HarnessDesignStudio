@@ -38,10 +38,20 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio.core.model import Harness, Project
-from harness_design_studio.core.outputs.canvas import Curve, Line, Rect, Sheet, Text, text_width
+from harness_design_studio.core.outputs.canvas import (
+    Curve,
+    Line,
+    Rect,
+    Shape,
+    Sheet,
+    Text,
+    item_bounds,
+    text_width,
+)
 from harness_design_studio.core.outputs.drawing import harness_sheets
 from harness_design_studio.core.outputs.stamp import Stamp
 from harness_design_studio.gui import icons, strings
+from harness_design_studio.gui.device_looks import qpath, shape_pen
 from harness_design_studio.gui.theme import ThemeManager, current_theme
 
 Key = tuple[str, str]  # (kind, id) of a drawn object: "wire", "pin" ("J1/3"), "connector", "shield"
@@ -57,7 +67,10 @@ _PRIORITY = {
 _TEXT_K = 8.0  # text is set at 8 times its size and the painter scaled down: no rounding at 2.6 mm
 
 
-def _item_rect(it: Line | Curve | Rect | Text) -> QRectF:
+def _item_rect(it: Line | Curve | Rect | Text | Shape) -> QRectF:
+    if isinstance(it, Shape):
+        left, top, right, bottom = item_bounds(it)
+        return QRectF(QPointF(left, top), QPointF(right, bottom))
     if isinstance(it, Line | Curve):
         pad = it.width / 2
         return QRectF(
@@ -176,6 +189,10 @@ class _SheetItem(QGraphicsItem):
                 painter.setPen(self._pen(it.color, it.width, None, lod))
                 painter.setBrush(Qt.BrushStyle.NoBrush)
                 painter.drawPath(_curve_path(it))
+            elif isinstance(it, Shape):
+                painter.setPen(shape_pen(it.stroke, it.width))
+                painter.setBrush(QColor(it.fill) if it.fill else Qt.BrushStyle.NoBrush)
+                painter.drawPath(qpath(it.path))
             elif isinstance(it, Rect):
                 painter.setPen(self._pen(it.color, it.width, it.dash, lod))
                 painter.setBrush(QColor(it.fill) if it.fill else Qt.BrushStyle.NoBrush)
