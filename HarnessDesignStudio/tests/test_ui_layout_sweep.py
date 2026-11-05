@@ -26,7 +26,15 @@ pytestmark = pytest.mark.gui
 
 from harness_design_studio.gui.theme import ThemeManager  # noqa: E402
 from tests.layout_audit import Finding, audit  # noqa: E402
-from tests.layout_cases import LONG, Case, Ctx, cases, make_ctx, make_window, window_views  # noqa: E402
+from tests.layout_cases import (  # noqa: E402
+    LONG,
+    Case,
+    Ctx,
+    cases,
+    make_ctx,
+    make_window,
+    window_views,
+)
 
 # name: (theme, interface scale, extra pixels on the base font size). 2 pt = 3 px, 4 pt = 5 px.
 SCENARIOS: dict[str, tuple[str, float, int]] = {
