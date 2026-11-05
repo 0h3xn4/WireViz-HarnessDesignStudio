@@ -185,7 +185,10 @@ def test_cosmetic_fields_are_the_ones_check_locks_lets_through(tmp_path: Path) -
             value = "renamed"
         check_locks(p, [Put("interfaces", evolve(p.interfaces[iid], **{field: value}))])
     assert lockview.cosmetic_fields("interface") == {"name", "notes", "requirement_id"}
-    assert lockview.cosmetic_fields("unit") == {"name", "notes", "zone"}
+    # `kind` (the look a person set by hand, REQ-GUI-24) is cosmetic like the name: it joined the set
+    assert lockview.cosmetic_fields("unit") == {"name", "notes", "zone", "kind"}
+    locked_unit = p.interfaces[iid].endpoints[0].unit_id
+    check_locks(p, [Put("units", evolve(p.units[locked_unit], kind="battery"))])  # allowed
     assert lockview.cosmetic_fields("part") == {"notes"}
     assert lockview.cosmetic_fields("interface_type") == {"name", "notes"}
     box = next(c for k, c in lockview.locked_objects(p) if k == "box_connector")

@@ -294,6 +294,9 @@ def test_save_selection_as_devices_and_as_a_subsystem(qtbot, tmp_path: Path, lib
         assert (
             dlg.is_subsystem() and not dlg.ok.isEnabled()
         )  # two devices: a subsystem needs a name
+        assert dlg.notice.text() == ""  # (nothing was typed yet: the button says it is not ready)
+        dlg.name.setText("x")
+        dlg.name.setText("")  # typed and taken out again: now the reason shows
         assert strings.LIB_SAVE_NEEDS_NAME in dlg.notice.text()
         dlg.name.setText("Power and computer")
         assert dlg.ok.isEnabled()

@@ -60,12 +60,14 @@ from harness_design_studio.gui.devices_pin_table import (
     PinTable,
     plan_paste,
 )
+from harness_design_studio.gui.dialog_base import HeightScrollArea
 from harness_design_studio.gui.harness_view import REFRESH_DELAY_MS
 from harness_design_studio.gui.icons import icon_button, tooltip_text
 from harness_design_studio.gui.lists_panel import table_columns
 from harness_design_studio.gui.states import StateChip
 from harness_design_studio.gui.tables import Column, DictTableModel, Row, TableView, natural_key
 from harness_design_studio.gui.theme import ThemeManager
+from harness_design_studio.gui.wrap_label import WrapLabel
 
 _SEVERITY = {
     "error": ("fail", strings.DV_STATE_ERROR),
@@ -272,7 +274,14 @@ class DevicesView(QWidget):
         c = QVBoxLayout(self.content)
         c.setContentsMargins(0, 0, 0, 0)
         c.setSpacing(gap)
-        self.stack.addWidget(self.content)
+        # the tab needs more room than a short window (or a window with banners) gives it: it
+        # scrolls then, where the splitters would squeeze the card and the tables into each other
+        self.scroller = HeightScrollArea()
+        self.scroller.setObjectName("devices-scroll")
+        self.scroller.setWidgetResizable(True)
+        self.scroller.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroller.setWidget(self.content)
+        self.stack.addWidget(self.scroller)
         c.addLayout(self._build_header(theme))
         self._build_banner(theme)
         c.addWidget(self.banner)
@@ -556,9 +565,10 @@ class DevicesView(QWidget):
             return label
 
         def value(key: str) -> QLabel:
-            label = QLabel()
+            label = (
+                WrapLabel()
+            )  # (the card sits in a splitter pane, which asks for no height for width)
             label.setObjectName(f"devices-card-{key}")
-            label.setWordWrap(True)
             label.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
             self.card_values[key] = label
             return label
@@ -872,7 +882,7 @@ class DevicesView(QWidget):
             self.empty_add.setEnabled(not self.ctl.read_only)
             self._key = None
             return
-        self.stack.setCurrentWidget(self.content)
+        self.stack.setCurrentWidget(self.scroller)
         if self._unit not in self._units:
             self._unit = self._units[0]
             self._cid = None
@@ -1331,6 +1341,7 @@ class DevicesView(QWidget):
     def cancel_confirm(self) -> None:
         for box in self.confirm_checks:
             self.confirm_checks_box.removeWidget(box)
+            box.hide()  # deleteLater is deferred
             box.deleteLater()
         self.confirm_checks = []
         self._confirm = None

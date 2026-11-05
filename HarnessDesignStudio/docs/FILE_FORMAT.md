@@ -16,6 +16,7 @@ The screen says *device*, the files say *unit*: what the program shows as a devi
 - [Hash](#hash)
 - [Editor additions](#editor-additions-connector-use-layout-waivers-autosave-schema-version-stays-1)
 - [Generation additions](#generation-additions-pins-mating-locks-generation-record-schema-version-stays-1)
+- [Device kind](#device-kind-after-1150-schema-version-stays-1)
 - [Build data additions](#build-data-additions-170-schema-version-stays-1)
 - [Links and pin roles](#links-and-pin-roles-m2-schema-version-stays-1)
 - [Change control additions](#change-control-additions-review-release-baselines-change-log-schema-version-stays-1)
@@ -129,6 +130,10 @@ All optional with defaults; projects saved before them load unchanged.
 - `Part.mates_with`: library connector parts that mate with it.
 - `generated/generation.json`: the last generation record: `input_hash`, `generator_version`, `next_harness_number`, `placeholders_used`, and `provenance` (object key to list of "rule: reason" lines; the data behind Explain).
 - `config/generation.json`: generation settings (see PLACEHOLDERS.md).
+
+## Device kind (after 1.15.0; schema version stays 1)
+
+`Unit.kind` (in `logical/units/<subsystem>.json`): the kind of equipment a person set on a device by hand, so that its card looks like it on the screen and in the written block diagram (`docs/user-manual/telling-devices-apart.md`). It is one of `computer`, `interface_unit`, `battery`, `solar_array`, `power_unit`, `reaction_wheel`, `magnetorquer`, `thruster`, `star_tracker`, `sun_sensor`, `gyro`, `sensor`, `transceiver`, `antenna`, `payload`, `heater`, `pyro`, `mechanism`, `ground_support` or `device` (`device` forces the plain outlined box). It is **optional and sparse**: while it is not set it is left out of the file, and the tool reads the kind from the name, the ID, the subsystem and the links of the device as it did before, so a project that sets no kind keeps byte-identical files and the same model hash, and no migration is needed. A project that sets one has it **in its model hash** (it is design data a person typed, like the name), and in `system/export.json` (the `units` list, only for a device that has it) and in the files of the device library and the subsystem library (`devices[].unit`). A kind outside the list is an error: the device is set aside as unreadable when the project is opened, with a message that lists the allowed values, and an edit that sets one is refused with the same list. A released harness does not lock it (like `name`, `notes` and `zone`, it may change after a release). The JSON Schema of `logical/units/*.json` lists the values. A tool older than this change refuses a unit that has a `kind`, as it does with any key it does not know, until the key is taken out.
 
 ## Build data additions (1.7.0; schema version stays 1)
 Every field is optional and *sparse*: it is left out of the file while it is empty, so a project that does not use the build data keeps byte-identical files and the same model hash. They are a person's values: the tool sets none and computes nothing from them.

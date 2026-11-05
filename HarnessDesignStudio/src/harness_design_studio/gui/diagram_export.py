@@ -23,6 +23,7 @@ from harness_design_studio.core.outputs.canvas import (
     Curve,
     Line,
     Rect,
+    Shape,
     Sheet,
     Text,
     fit_sheet,
@@ -30,6 +31,7 @@ from harness_design_studio.core.outputs.canvas import (
     to_svg,
 )
 from harness_design_studio.core.outputs.stamp import Stamp, stamp_of
+from harness_design_studio.gui.device_looks import qpath, shape_pen
 from harness_design_studio.gui.theme.tokens import LIGHT, OVERVIEW_FONT_PX
 
 SUFFIXES = (".svg", ".pdf", ".png")
@@ -97,6 +99,10 @@ def render_png(sheet: Sheet) -> bytes:
                 xm = (it.x1 + it.x2) / 2
                 path.cubicTo(QPointF(xm, it.y1), QPointF(xm, it.y2), QPointF(it.x2, it.y2))
                 painter.drawPath(path)
+            elif isinstance(it, Shape):
+                painter.setPen(shape_pen(it.stroke, it.width))
+                painter.setBrush(QColor(it.fill) if it.fill else Qt.BrushStyle.NoBrush)
+                painter.drawPath(qpath(it.path))
             elif isinstance(it, Rect):
                 painter.setPen(_pen(it.color, it.width, it.dash))
                 painter.setBrush(QColor(it.fill) if it.fill else Qt.BrushStyle.NoBrush)

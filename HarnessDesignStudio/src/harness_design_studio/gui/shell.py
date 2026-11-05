@@ -285,6 +285,8 @@ class StackBanner(QFrame):
         self.details.setVisible(bool(details))
         for b in self.buttons:
             self._button_row.removeWidget(b)
+            b.hide()  # (deleteLater waits for the event loop: until then it would still be drawn)
+            b.setParent(None)
             b.deleteLater()
         self.buttons = []
         for label, callback in actions:

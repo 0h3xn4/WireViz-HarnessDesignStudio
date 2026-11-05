@@ -20,7 +20,6 @@ from pathlib import Path
 from PySide6.QtCore import QModelIndex, Qt
 from PySide6.QtGui import QStandardItem, QStandardItemModel
 from PySide6.QtWidgets import (
-    QDialog,
     QFileDialog,
     QFormLayout,
     QHBoxLayout,
@@ -34,6 +33,7 @@ from PySide6.QtWidgets import (
 
 from harness_design_studio.core.templates import TEMPLATES, TemplateInfo
 from harness_design_studio.gui import icons, strings
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.theme import ThemeManager, mark_mono
 
 BLANK = "blank"  # the template that is the plain "New project"
@@ -99,7 +99,7 @@ def template_title(info: TemplateInfo) -> str:
     return strings.NP_EMPTY_TITLE if info.name == BLANK else info.title
 
 
-class NewProjectDialog(QDialog):
+class NewProjectDialog(Dialog):
     """Folder, name and starting point of a new project, checked as you type."""
 
     def __init__(

@@ -11,14 +11,23 @@
 <line x1="54" y1="40.5" x2="80" y2="23.5" stroke="#8c2d04" stroke-width="0.3"/>
 <line x1="54" y1="23.5" x2="80" y2="24.786" stroke="#08519c" stroke-width="0.3"/>
 <rect x="10" y="22" width="44" height="12" fill="#ffffff" stroke="#000000" stroke-width="0.4"/>
-<text x="11.5" y="26.6" font-size="3" font-weight="bold" text-anchor="start" fill="#000000">OBC</text>
-<text x="11.5" y="31" font-size="2.4" text-anchor="start" fill="#555555">On-board computer</text>
+<path d="M 10.2 22.2 L 11.6 22.2 L 11.6 33.8 L 10.2 33.8 Z" fill="#3730c9"/>
+<path d="M 14.4 24.5 L 18.6 24.5 C 19.373 24.5 20 25.127 20 25.9 L 20 30.1 C 20 30.873 19.373 31.5 18.6 31.5 L 14.4 31.5 C 13.627 31.5 13 30.873 13 30.1 L 13 25.9 C 13 25.127 13.627 24.5 14.4 24.5 Z" fill="#3730c9"/>
+<path d="M 15.547 26.701 L 17.453 26.701 C 17.644 26.701 17.799 26.856 17.799 27.047 L 17.799 28.953 C 17.799 29.144 17.644 29.299 17.453 29.299 L 15.547 29.299 C 15.356 29.299 15.201 29.144 15.201 28.953 L 15.201 27.047 C 15.201 26.856 15.356 26.701 15.547 26.701 Z M 15.922 26.123 L 15.922 26.701 M 15.922 29.299 L 15.922 29.877 M 14.623 27.422 L 15.201 27.422 M 17.799 27.422 L 18.377 27.422 M 16.5 26.123 L 16.5 26.701 M 16.5 29.299 L 16.5 29.877 M 14.623 28 L 15.201 28 M 17.799 28 L 18.377 28 M 17.078 26.123 L 17.078 26.701 M 17.078 29.299 L 17.078 29.877 M 14.623 28.578 L 15.201 28.578 M 17.799 28.578 L 18.377 28.578" fill="none" stroke="#ffffff" stroke-width="0.433" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="21.4" y="26.6" font-size="3" font-weight="bold" text-anchor="start" fill="#000000">OBC</text>
+<text x="21.4" y="31" font-size="2.4" text-anchor="start" fill="#555555">On-board computer</text>
 <rect x="10" y="39" width="44" height="12" fill="#ffffff" stroke="#000000" stroke-width="0.4"/>
-<text x="11.5" y="43.6" font-size="3" font-weight="bold" text-anchor="start" fill="#000000">PCDU</text>
-<text x="11.5" y="48" font-size="2.4" text-anchor="start" fill="#555555">Power control and distribut~</text>
+<path d="M 10.2 39.2 L 11.6 39.2 L 11.6 50.8 L 10.2 50.8 Z" fill="#b45309"/>
+<path d="M 20 45 L 18.25 48.031 L 14.75 48.031 L 13 45 L 14.75 41.969 L 18.25 41.969 Z" fill="#b45309"/>
+<path d="M 14.623 45 L 15.634 45 M 15.634 43.556 L 15.634 46.444 M 15.634 43.556 L 17.511 43.556 M 17.511 43.181 L 18.261 43.181 L 18.261 43.932 L 17.511 43.932 Z M 15.634 45 L 17.511 45 M 17.511 44.625 L 18.261 44.625 L 18.261 45.375 L 17.511 45.375 Z M 15.634 46.444 L 17.511 46.444 M 17.511 46.068 L 18.261 46.068 L 18.261 46.819 L 17.511 46.819 Z" fill="none" stroke="#ffffff" stroke-width="0.433" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="21.4" y="43.6" font-size="3" font-weight="bold" text-anchor="start" fill="#000000">PCDU</text>
+<text x="21.4" y="48" font-size="2.4" text-anchor="start" fill="#555555">Power control and di~</text>
 <rect x="80" y="22" width="44" height="12" fill="#ffffff" stroke="#000000" stroke-width="0.4"/>
-<text x="81.5" y="26.6" font-size="3" font-weight="bold" text-anchor="start" fill="#000000">RW1</text>
-<text x="81.5" y="31" font-size="2.4" text-anchor="start" fill="#555555">Reaction wheel 1</text>
+<path d="M 80.2 22.2 L 81.6 22.2 L 81.6 33.8 L 80.2 33.8 Z" fill="#15803d"/>
+<path d="M 90 28 C 90 26.067 88.433 24.5 86.5 24.5 C 84.567 24.5 83 26.067 83 28 C 83 29.933 84.567 31.5 86.5 31.5 C 88.433 31.5 90 29.933 90 28 Z" fill="#15803d"/>
+<path d="M 88.319 28 C 88.319 26.995 87.505 26.181 86.5 26.181 C 85.495 26.181 84.681 26.995 84.681 28 C 84.681 29.005 85.495 29.819 86.5 29.819 C 87.505 29.819 88.319 29.005 88.319 28 Z M 86.904 28 C 86.904 27.777 86.723 27.596 86.5 27.596 C 86.277 27.596 86.096 27.777 86.096 28 C 86.096 28.223 86.277 28.404 86.5 28.404 C 86.723 28.404 86.904 28.223 86.904 28 Z M 86.5 28.404 L 86.5 29.819 M 86.15 27.798 L 84.925 27.09 M 86.85 27.798 L 88.075 27.09" fill="none" stroke="#ffffff" stroke-width="0.433" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="91.4" y="26.6" font-size="3" font-weight="bold" text-anchor="start" fill="#000000">RW1</text>
+<text x="91.4" y="31" font-size="2.4" text-anchor="start" fill="#555555">Reaction wheel 1</text>
 <line x1="8" y1="66" x2="20" y2="66" stroke="#8c2d04" stroke-width="0.6"/>
 <text x="23" y="67" font-size="2.6" text-anchor="start" fill="#000000">power (solid or dashed by type)</text>
 <line x1="8" y1="71" x2="20" y2="71" stroke="#08519c" stroke-width="0.6"/>
@@ -37,4 +46,13 @@
 <text x="23" y="102" font-size="2.6" text-anchor="start" fill="#000000">ground (solid or dashed by type)</text>
 <line x1="8" y1="106" x2="20" y2="106" stroke="#000000" stroke-width="0.6" stroke-dasharray="2.5 1.5"/>
 <text x="23" y="107" font-size="2.6" text-anchor="start" fill="#000000">redundant chain: short dashes</text>
+<path d="M 94 65.8 L 93 67.532 L 91 67.532 L 90 65.8 L 91 64.068 L 93 64.068 Z" fill="#b45309"/>
+<path d="M 90.927 65.8 L 91.505 65.8 M 91.505 64.975 L 91.505 66.625 M 91.505 64.975 L 92.578 64.975 M 92.578 64.76 L 93.007 64.76 L 93.007 65.189 L 92.578 65.189 Z M 91.505 65.8 L 92.578 65.8 M 92.578 65.585 L 93.007 65.585 L 93.007 66.014 L 92.578 66.014 Z M 91.505 66.625 L 92.578 66.625 M 92.578 66.41 L 93.007 66.41 L 93.007 66.84 L 92.578 66.84 Z" fill="none" stroke="#ffffff" stroke-width="0.247" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="96" y="67" font-size="2.6" text-anchor="start" fill="#000000">Power distribution</text>
+<path d="M 94 70.8 C 94 69.695 93.105 68.8 92 68.8 C 90.895 68.8 90 69.695 90 70.8 C 90 71.905 90.895 72.8 92 72.8 C 93.105 72.8 94 71.905 94 70.8 Z" fill="#15803d"/>
+<path d="M 93.04 70.8 C 93.04 70.226 92.574 69.76 92 69.76 C 91.426 69.76 90.96 70.226 90.96 70.8 C 90.96 71.374 91.426 71.84 92 71.84 C 92.574 71.84 93.04 71.374 93.04 70.8 Z M 92.231 70.8 C 92.231 70.672 92.128 70.569 92 70.569 C 91.872 70.569 91.769 70.672 91.769 70.8 C 91.769 70.928 91.872 71.031 92 71.031 C 92.128 71.031 92.231 70.928 92.231 70.8 Z M 92 71.031 L 92 71.84 M 91.8 70.684 L 91.1 70.28 M 92.2 70.684 L 92.9 70.28" fill="none" stroke="#ffffff" stroke-width="0.247" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="96" y="72" font-size="2.6" text-anchor="start" fill="#000000">Reaction wheel</text>
+<path d="M 90.8 73.8 L 93.2 73.8 C 93.642 73.8 94 74.158 94 74.6 L 94 77 C 94 77.442 93.642 77.8 93.2 77.8 L 90.8 77.8 C 90.358 77.8 90 77.442 90 77 L 90 74.6 C 90 74.158 90.358 73.8 90.8 73.8 Z" fill="#3730c9"/>
+<path d="M 91.456 75.058 L 92.544 75.058 C 92.654 75.058 92.743 75.146 92.743 75.255 L 92.743 76.344 C 92.743 76.454 92.654 76.543 92.544 76.543 L 91.456 76.543 C 91.346 76.543 91.257 76.454 91.257 76.344 L 91.257 75.255 C 91.257 75.146 91.346 75.058 91.456 75.058 Z M 91.67 74.728 L 91.67 75.058 M 91.67 76.543 L 91.67 76.873 M 90.927 75.47 L 91.257 75.47 M 92.743 75.47 L 93.073 75.47 M 92 74.728 L 92 75.058 M 92 76.543 L 92 76.873 M 90.927 75.8 L 91.257 75.8 M 92.743 75.8 L 93.073 75.8 M 92.33 74.728 L 92.33 75.058 M 92.33 76.543 L 92.33 76.873 M 90.927 76.13 L 91.257 76.13 M 92.743 76.13 L 93.073 76.13" fill="none" stroke="#ffffff" stroke-width="0.247" stroke-linecap="round" stroke-linejoin="round"/>
+<text x="96" y="77" font-size="2.6" text-anchor="start" fill="#000000">Computer</text>
 </svg>

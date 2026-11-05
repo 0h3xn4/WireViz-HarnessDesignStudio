@@ -4,10 +4,13 @@ enough to print, and every distinction also has a dash pattern, so greyscale pri
 
 from dataclasses import dataclass
 
+from harness_design_studio.core import describe
+from harness_design_studio.core import device_kinds as dk
 from harness_design_studio.core.links import derived_interfaces
 from harness_design_studio.core.model import Project
 
-from .canvas import Line, Rect, Sheet, Text, fit
+from . import looks as device_looks
+from .canvas import Line, Rect, Sheet, Text, fit, fit_size
 from .stamp import Stamp
 
 # category -> (colour, dash). Dash is None for solid. Colours have contrast >= 3:1 on white.
@@ -25,6 +28,9 @@ CATEGORY_STYLE: dict[str, tuple[str, tuple[float, float] | None]] = {
 REDUNDANT_DASH = (2.5, 1.5)
 NOMINAL_COLOR, REDUNDANT_COLOR = "#08519c", "#8c4a00"
 BOX_W, BOX_H, LANE_W, ROW_H = 44.0, 12.0, 70.0, 17.0
+ID_SIZE, ID_FLOOR, NAME_SIZE = 3.0, 1.4, 2.4  # the text of a card, mm; an ID shrinks to the floor
+CARD_PAD = 1.5  # between the text of a card and its right edge, mm
+KEY_X = 90.0  # where the key to the kinds of device starts, mm (right of the key to the lines)
 
 
 @dataclass(frozen=True)
@@ -67,7 +73,12 @@ def _diagram(
     title: str,
     edges: list[Edge],
     legend: list[tuple[str, str, tuple[float, float] | None]],
+    looks: bool = False,
 ) -> Sheet:
+    """The sheet: lanes of device cards, the lines between them, the title block and the key.
+    With `looks` (the block diagram) each card has the band, the badge and the pictogram of its
+    kind and the key lists the kinds; without it (the harness overview) the cards are as they
+    always were."""
     pos, w, h = _layout(project)
     legend_y = max((y for _x, y in pos.values()), default=20.0) + BOX_H + 16.0  # below every box
     sheet = Sheet(max(420.0, w), max(297.0, h, legend_y + 5.0 * len(legend) + 8.0), title=title)
@@ -107,11 +118,25 @@ def _diagram(
             sheet.add(Line(sx, y1, tx, y2, color=e.color, dash=e.dash))
             if e.tag:
                 sheet.add(Text((sx + tx) / 2, (y1 + y2) / 2 - 0.8, e.tag, size=2.0, color=e.color))
+    cats = describe.unit_categories(project) if looks else {}
+    card_looks = {uid: dk.looks_for(project, uid, cats) for uid in pos} if looks else {}
     for uid, (x, y) in pos.items():
         u = project.units[uid]
         sheet.add(Rect(x, y, BOX_W, BOX_H, width=0.4, fill="#ffffff"))
-        sheet.add(Text(x + 1.5, y + 4.6, fit(uid, BOX_W - 3, 3.0), size=3.0, bold=True))
-        sheet.add(Text(x + 1.5, y + 9.0, fit(u.name, BOX_W - 3, 2.4), size=2.4, color="#555555"))
+        if looks:
+            sheet.add(*device_looks.card(x, y, BOX_H, card_looks[uid]))
+            room = BOX_W - device_looks.TEXT_X - CARD_PAD  # the ID shrinks and is never cut
+            size = fit_size(uid, room, ID_SIZE, ID_FLOOR)
+            tx = x + device_looks.TEXT_X
+            sheet.add(Text(tx, y + 4.6, uid, size=size, bold=True))
+            sheet.add(
+                Text(tx, y + 9.0, fit(u.name, room, NAME_SIZE), size=NAME_SIZE, color="#555555")
+            )
+        else:
+            sheet.add(Text(x + 1.5, y + 4.6, fit(uid, BOX_W - 3, 3.0), size=3.0, bold=True))
+            sheet.add(
+                Text(x + 1.5, y + 9.0, fit(u.name, BOX_W - 3, 2.4), size=2.4, color="#555555")
+            )
     lx, ly = 8.0, legend_y
     for k, (name, color, dash) in enumerate(legend):
         sheet.add(
@@ -126,6 +151,22 @@ def _diagram(
             )
         )
         sheet.add(Text(lx + 15.0, ly + k * 5.0, name, size=2.6))
+    kinds = dk.used_kinds(project, cats) if looks else []
+    rows = max(1, len(legend))  # the key of the kinds fills columns as tall as the key of the lines
+    for k, kind_id in enumerate(kinds):
+        col, row = divmod(k, rows)
+        kx = KEY_X + col * device_looks.KEY_COLUMN
+        base = ly + row * device_looks.KEY_PITCH
+        shown = dk.Looks(dk.KIND[kind_id], "", "")
+        sheet.add(*device_looks.badge(kx, base - 3.2, device_looks.KEY_BADGE, shown))
+        sheet.add(
+            Text(
+                kx + device_looks.KEY_BADGE + 2.0,
+                base,
+                dk.KIND[kind_id].label,
+                size=device_looks.KEY_TEXT,
+            )
+        )
     return sheet
 
 
@@ -168,7 +209,9 @@ def block_diagram(project: Project, stamp: Stamp) -> Sheet:
         if c != "other"
     ]
     legend.append(("redundant chain: short dashes", "#000000", REDUNDANT_DASH))
-    return _diagram(project, stamp, f"Block diagram: {project.meta.name}", edges, legend)
+    return _diagram(
+        project, stamp, f"Block diagram: {project.meta.name}", edges, legend, looks=True
+    )
 
 
 def _harness_edges(project: Project) -> list[Edge]:

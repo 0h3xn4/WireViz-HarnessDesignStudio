@@ -14,6 +14,7 @@ from pydantic import TypeAdapter, ValidationError
 from . import connector_choice
 from .commands import Delete, Op, Put, SetConfig, SetZones
 from .describe import part_gender
+from .device_kinds import KIND_IDS
 from .errors import HarnessError
 from .ids import check_id
 from .model import (
@@ -968,11 +969,30 @@ def ops_update_interface(project: Project, interface_id: str, **changes: object)
     ]
 
 
+def parse_device_kind(value: object) -> str | None:
+    """The kind of a device from a value a person gave: None (or an empty text) means *Automatic*;
+    anything else must be one of the IDs of `device_kinds.KIND_IDS`, else an error that names them
+    all."""
+    if value is None or (isinstance(value, str) and not value.strip()):
+        return None
+    if isinstance(value, str) and value.strip() in KIND_IDS:
+        return value.strip()
+    raise EditError(
+        f"'{value}' is not a kind of device. Choose one of: {', '.join(KIND_IDS)}, "
+        "or leave the kind empty to read it from the name."
+    )
+
+
 def ops_update_unit(project: Project, unit_id: str, **changes: object) -> list[Op]:
-    allowed = {"name", "side", "notes", "mass_relevant"}
+    """Change plain fields of a device: name, side, notes, mass_relevant and `kind` (the kind of
+    equipment its card looks like, `core/device_kinds.py`; None or an empty text goes back to
+    reading it from the name)."""
+    allowed = {"name", "side", "notes", "mass_relevant", "kind"}
     bad = set(changes) - allowed
     if bad:
         raise EditError(f"These device fields cannot be changed here: {', '.join(sorted(bad))}.")
+    if "kind" in changes:
+        changes["kind"] = parse_device_kind(changes["kind"])
     return [Put("units", evolve(_known(project.units, unit_id, "Device"), **changes))]
 
 

@@ -25,6 +25,33 @@ When a test fails, it names what moved: the wire, the finding or the file. Renew
 
 ## Entries
 
+### 2026-11-05: the written block diagram shows the looks of the devices (a written file changes on purpose, for every project)
+
+- **Before.** Each card of `system/block_diagram.svg` and `.pdf` (and of the SVG, PDF and PNG of Export diagram) was a white box with the ID and the name, for example, for the device `OBC` of the `mini3` sample:
+
+  ```
+  <rect x="10" y="22" width="44" height="12" fill="#ffffff" stroke="#000000" stroke-width="0.4"/>
+  <text x="11.5" y="26.6" font-size="3" font-weight="bold" ...>OBC</text>
+  <text x="11.5" y="31" font-size="2.4" ...>On-board computer</text>
+  ```
+- **Now.** Each card has a band down the left edge in the colour of the family of the device and a badge with the picture of its kind in the shape of the family (the looks the window has, [telling devices apart](user-manual/telling-devices-apart.md)), and the text starts to the right of the badge. The same card:
+
+  ```
+  <rect x="10" y="22" width="44" height="12" fill="#ffffff" stroke="#000000" stroke-width="0.4"/>
+  <path d="M 10.2 22.2 L 11.6 22.2 L 11.6 33.8 L 10.2 33.8 Z" fill="#3730c9"/>
+  <path d="M 14.4 24.5 L 18.6 24.5 C 19.373 24.5 20 25.127 ... Z" fill="#3730c9"/>
+  <path d="M 15.547 26.701 L 17.453 26.701 ... " fill="none" stroke="#ffffff" stroke-width="0.433" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="21.4" y="26.6" font-size="3" font-weight="bold" ...>OBC</text>
+  <text x="21.4" y="31" font-size="2.4" ...>On-board computer</text>
+  ```
+
+  Below the diagram, right of the key to the lines, a key lists the kinds of device the project has, each with its picture (not while every device is a plain box). The colours are the light theme's (the file is paper). An ID is set smaller when it does not fit beside the badge (before, it was cut with `~`); a name is cut with `~` at about 21 characters (before, about 28). The page size, the lanes, the lines, their colours and dashes, the title block and the legend of the lines are unchanged. In the PDF the same shapes are path operators.
+- **What moves.** Only `system/block_diagram.svg` and `system/block_diagram.pdf` of every project, and the `manifest.json` that lists their hash and size. Checked by building the outputs of the four examples with the tool before and after and comparing every file, `manifest.json` included: the only files that differ are those three. No number, no table, no other drawing (`harness_overview` keeps its plain boxes), no model hash and no project file moves. `python -m tools.numbers_snapshot --check tests/fixtures/numbers/snapshot.json` shows only the 22 block diagram entries of the 11 scenarios as different from the old file; no wire, finding or other file moved.
+- **Renewed with the tools, not by hand.** `docs/ui/OUTPUT_HASHES_BASELINE.json` (8 lines: the SVG and the PDF of the 4 examples; `BASE_VERSION` stays 1.10.0), `tests/fixtures/numbers/snapshot.json` (22 lines), `tests/fixtures/outputs/mini3.json`, `sat15.json`, `sat15_full.json` (2 lines each) and the readable `tests/fixtures/outputs/mini3/system/block_diagram.svg`. No picture of a document embeds the written block diagram, so none was renewed.
+- **Same bytes everywhere.** The looks come from the model alone. The pictures are path data made once (`core/pictograms.py`) with every coordinate rounded to four decimals when it is made, and the files write at most three decimals with no exponent and no locale, so a sine that differs in its last binary digit on Windows does not change a byte (`tests/test_block_diagram_looks.py`).
+- **Why.** Owner decision on the device looks: *should the exported and written diagram show these looks too? yes, without breaking anything*.
+- **Agreed.** The owner (the request above). The independent check (`verify --outputs`) still passes.
+
 ### 2026-11-04: `export.json` states the unit of every number (a written file changes on purpose)
 
 - **Before.** A number in `system/export.json` had a unit only when its name said so (`length_m`, `max_current_a`). `parts[].pin_count`, `parts[].conductors`, `harnesses[].accessories[].quantity`, the gauge `gauge_awg` and the keys of `parts[].ratings` had none; a reader of the file alone had to know them. A wire read `{"gauge_awg": 22, "length_m": 1.2, ...}` and the file said no more.
