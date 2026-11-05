@@ -91,6 +91,7 @@ harness-design-studio new my-design --annotate-config      # start a new project
 | `ampacity_a_by_awg` | gauges are whole numbers 0 to 40, amperes above 0, and a thinner wire (higher AWG number) never carries more than a thicker one |
 | `spare_pin_fraction` | 0 or more, below 1 |
 | `max_voltage_drop_v`, `conductor_resistivity_ohm_m`, `test_continuity_max_ohm`, `test_isolation_min_mohm`, `test_isolation_voltage_v` | above 0 |
+| `asbuilt_cut_tolerance_mm`, `asbuilt_strip_tolerance_mm` | 0 or more (a tolerance of 0 accepts no difference); not set means no tolerance |
 | `service_loop_m`, `mass_margin_fraction`, `connector_temperature_margin_c`, `wire_temperature_margin_c` | 0 or more |
 | `power_signal_gap_pins`, `power_return_gap_pins` | a whole number, 0 or more |
 | `default_gauge_awg` | a whole number from 0 to 40 |
@@ -143,6 +144,7 @@ Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limit
 | `shield_end_a`, `shield_end_b` | grounding concept: `backshell_360`, `pigtail` or `floating` for each end (a coax is the exception: its outer conductor is bonded at both ends, so the rule `shield-wrong-end` does not compare it with the concept) |
 | `wire_colour_by_signal` | optional, absent by default: colour of the wire for each signal name, for example `{"PWR": "red", "RTN": "black"}`. Used when a wire has no colour of its own. The build workbook shows the wire in that colour with its name and IEC 60757 code (BK, RD, ...), and the harness drawing, when it is written, draws it in that colour. The tool defines no colours of its own. **Edit > Wire colours...** in the editor sets it from a list (undoable); a wire between two different signals (labelled `TX+/RX+`) takes the colour of the first |
 | `test_continuity_max_ohm`, `test_isolation_min_mohm`, `test_isolation_voltage_v` | limits printed in the test tables |
+| `asbuilt_cut_tolerance_mm`, `asbuilt_strip_tolerance_mm` | optional, absent by default (the same as not set: no tolerance, every difference listed): how far, in millimetres, a recorded cut length or strip length may differ from the designed one, too long or too short alike. With one set, the as-built report, `asbuilt` and `explain` mark a length within it as *within limit* and a larger difference as *out of limit* (actual, limit, margin, source; assumption A-ASBUILT-TOLERANCE). The tool supplies no value. Not read by generation, so setting or changing one does not make the harness plans out of date; a release does not freeze it. See [as-built results](models/asbuilt.md) |
 
 ## `emc.json`
 | Key | Meaning |

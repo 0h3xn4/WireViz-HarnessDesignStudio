@@ -340,6 +340,19 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "built in",
             "core/drc/standard_rules.py (_bundle_current)",
         ),
+        Assumption(
+            "A-ASBUILT-TOLERANCE",
+            "A built length is judged against a tolerance only when the project sets one",
+            "The cut length and the strip lengths that were recorded are compared with the designed "
+            "length. While asbuilt_cut_tolerance_mm (cut length) or asbuilt_strip_tolerance_mm (strip "
+            "lengths) is not set no tolerance is applied: every difference is listed as differing from "
+            "the design. When one is set, a difference of at most that many millimetres, too long or "
+            "too short alike, is within the tolerance and a larger difference is out of it. The "
+            "tolerance is one number for every wire: it does not follow the length, the gauge or the "
+            "part, and the tool supplies no value.",
+            "setting",
+            "config/generation.json: asbuilt_cut_tolerance_mm, asbuilt_strip_tolerance_mm",
+        ),
     )
 }
 

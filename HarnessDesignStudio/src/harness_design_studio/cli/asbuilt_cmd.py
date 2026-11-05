@@ -47,7 +47,7 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "inspected, the lot of each part, the cut and strip lengths, the crimp tool and its "
         "calibration ID, the result and measured value of each test), each measured value against "
         "the test limits of the project (actual, limit, margin), and each cut or strip length "
-        "against the designed value (no tolerance is applied: the difference is listed). A value "
+        "against the designed value (no tolerance is applied unless the project sets asbuilt_cut_tolerance_mm or asbuilt_strip_tolerance_mm: the difference is listed, or, with a tolerance, within it or out of it). A value "
         "that is out of its limit is shown as such and stays so until a person records "
         "something else; the tool does not accept it and does not say that a harness passed or is "
         "compliant. A harness with no record is 'not started'. Exit code 1 when a value is out of its "

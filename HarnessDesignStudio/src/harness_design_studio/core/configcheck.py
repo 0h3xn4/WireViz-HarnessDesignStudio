@@ -160,6 +160,7 @@ def validate(project: Project) -> list[Issue]:
     out.extend(validate_titleblock(project))
     out.extend(validate_counterparts(project))
     out.extend(validate_distinct_roles(project))
+    out.extend(validate_asbuilt(project))
     out.extend(standard_profiles.validate(project))
     return out
 
@@ -430,6 +431,22 @@ def validate_distinct_roles(project: Project) -> list[Issue]:
             f"{roles.CONFIG_FILE}.{roles.CONFIG_KEY}",
         )
     ]
+
+
+ASBUILT_TOLERANCE_KEYS = ("asbuilt_cut_tolerance_mm", "asbuilt_strip_tolerance_mm")
+
+
+def validate_asbuilt(project: Project) -> list[Issue]:
+    """The optional as-built settings: the two tolerances of `generation.json` must be numbers of 0
+    or more. Not set (or null) is not a problem: it is today's behaviour (no tolerance)."""
+    out: list[Issue] = []
+    where = "config/generation.json"
+    for key in ASBUILT_TOLERANCE_KEYS:
+        raw = _cfg(project, "generation").get(key)
+        x = _num(raw)
+        if raw is not None and (x is None or x < 0):
+            out.append(Issue("error", "config_invalid", f"{where}: {key} must be a number of 0 or more.", where, f"generation.{key}"))  # fmt: skip
+    return out
 
 
 def plan_set_distinct_roles(project: Project, value: object) -> ValuePlan:
