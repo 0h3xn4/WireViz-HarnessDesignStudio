@@ -700,8 +700,6 @@ EMPTY_NO_LINKS = (
 )
 # context menu
 CM_OPEN_PLAN = "Show in harness plans"
-CM_RESET_LABEL = "Reset label position"
-CM_RESET_LABEL_NONE = "the label is where the tool put it"
 CM_RESET_LINE = "Reset label and line positions"
 CM_RESET_LINE_NONE = "the label, the boxes and the line are where the tool put them"
 CM_CONNECT_FROM = "Connect from here with"
@@ -2703,6 +2701,7 @@ STEP_EDIT_LINK = "Change connection {}"
 STEP_RENAME_LINK = "Rename connection {}"
 STEP_MOVE_LABEL = "Move the label of {}"
 STEP_RESET_LABEL = "Put the label of {} back"
+STEP_MOVE_ROUTE = "Move the line of {}"
 STEP_DELETE_LINK = "Delete connection {}"
 STEP_LINK_HARNESS = "Create harness from connection {}"
 LINK_ADDED = "Connection {} made between {}."

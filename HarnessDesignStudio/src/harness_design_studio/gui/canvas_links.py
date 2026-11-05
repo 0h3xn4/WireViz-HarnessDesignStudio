@@ -122,6 +122,10 @@ class ChipDrag:
     def shifts_changed(self) -> None:
         """The item hook for a change of a mark (a bend moves the line)."""
 
+    def limit_shift(self, mark_id: str, shift: QPointF) -> QPointF:
+        """The item hook for a move being dragged: what the thing may be moved to (its own limits)."""
+        return shift
+
     def shift_of(self, mark_id: str) -> QPointF:
         shifts: dict[str, QPointF] = getattr(self, "_shifts", {})
         return shifts.get(mark_id, NO_SHIFT)
@@ -164,6 +168,7 @@ class ChipDrag:
         return True
 
     def _set_shift(self, mark_id: str, shift: QPointF) -> None:
+        shift = self.limit_shift(mark_id, shift)
         shifts = dict(getattr(self, "_shifts", {}))
         if shifts.get(mark_id, NO_SHIFT) != shift:
             shifts[mark_id] = shift

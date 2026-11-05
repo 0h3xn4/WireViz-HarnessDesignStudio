@@ -932,9 +932,9 @@ class EditorController(QObject):
         mark = DiagramMark(id=mark_id, dx=round(dx, 1), dy=round(dy, 1))
         if self.mark_of(mark_id) == mark:
             return True
-        return self.run(
-            strings.STEP_MOVE_LABEL.format(mark_id.partition(":")[2]), [Put("diagram_marks", mark)]
-        )
+        kind, _, name = mark_id.partition(":")
+        step = strings.STEP_MOVE_ROUTE if kind == "route" else strings.STEP_MOVE_LABEL
+        return self.run(step.format(name), [Put("diagram_marks", mark)])
 
     def reset_mark(self, mark_id: str) -> bool:
         """Put a label back to its automatic place (one undoable step; nothing to do if it is)."""

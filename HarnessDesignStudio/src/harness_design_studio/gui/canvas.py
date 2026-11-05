@@ -47,7 +47,12 @@ from harness_design_studio.core import describe, edit, routing
 from harness_design_studio.core.model import Project
 from harness_design_studio.gui import canvas_badges as cbadges
 from harness_design_studio.gui import glyphs, strings
-from harness_design_studio.gui.canvas_links import ChipDrag, ConnectionItem, derived_texts
+from harness_design_studio.gui.canvas_links import (
+    HIT_WIDTH,
+    ChipDrag,
+    ConnectionItem,
+    derived_texts,
+)
 from harness_design_studio.gui.canvas_state import NO_INDEX, ObjectState, StateIndex, badge_text
 from harness_design_studio.gui.controller import Delta, EditorController, Selection
 from harness_design_studio.gui.icons import draw_icon, icon_button
@@ -1039,8 +1044,10 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         super().__init__()
         self.dscene = scene
         self.interface_id = interface_id
-        self.mark_ids = (f"interface:{interface_id}",)  # the label may be moved
+        # the marks of this line: its label, and its vertical piece (moved across only)
+        self.mark_ids = (f"interface:{interface_id}", f"route:{interface_id}")
         self._shifts = {m: scene.mark_shift(m) for m in self.mark_ids}
+        self.auto_route: list[tuple[float, float]] = []  # the route the router made (not moved)
         self._chip = QRectF()
         self._chip_placed = False
         self._compact = False  # the picture alone, where the full label has no clear spot
@@ -1065,12 +1072,14 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         self._preview = False
         route = self.dscene.route(self.interface_id)
         if len(route) < 2:
-            self.poly = []
+            self.poly = self.auto_route = []
             if not self.path().isEmpty():
                 self.prepareGeometryChange()
                 self.setPath(QPainterPath())
             self.ends = None
             return True
+        self.auto_route = route
+        route = self._moved(route)  # (the vertical piece the person moved across)
         self.poly = route
         self.ends = QLineF(QPointF(*route[0]), QPointF(*route[-1]))
         path = rounded_path(route)
@@ -1200,7 +1209,49 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         )
 
     def drag_slots(self) -> list[tuple[str, QRectF, bool]]:
-        return [(self.mark_ids[0], self._chip, False)]
+        """The label, and the vertical piece of the line (moved across only, and only where it is
+        long enough to take hold of)."""
+        slots = [(self.mark_ids[0], self._chip, False)]
+        at = routing.trunk_index(self.poly)
+        if at is not None:
+            (x, y0), (_, y1) = self.poly[at], self.poly[at + 1]
+            if abs(y1 - y0) > 2 * HIT_WIDTH:
+                slots.append(
+                    (
+                        self.mark_ids[1],
+                        QRectF(x - HIT_WIDTH / 2, min(y0, y1), HIT_WIDTH, abs(y1 - y0)),
+                        True,
+                    )
+                )
+        return slots
+
+    def _moved(self, route: list[tuple[float, float]]) -> list[tuple[float, float]]:
+        """The route with its vertical piece moved by the person (never into a device)."""
+        dx = self.shift_of(self.mark_ids[1]).x()
+        return routing.shift_trunk(route, dx, self.dscene.unit_boxes()) if dx else route
+
+    def limit_shift(self, mark_id: str, shift: QPointF) -> QPointF:
+        """While the piece is dragged: it goes no further than the devices allow, and not up or
+        down."""
+        if mark_id != self.mark_ids[1]:
+            return shift
+        at = routing.trunk_index(self.auto_route)
+        if at is None:
+            return QPointF(0.0, 0.0)
+        x0 = self.auto_route[at][0]
+        lo, hi = routing.trunk_limits(self.auto_route, at, self.dscene.unit_boxes())
+        return QPointF(min(max(x0 + shift.x(), lo), hi) - x0, 0.0)
+
+    def moved_route_is_stale(self) -> bool:
+        """Whether the line drawn is not what the moved piece and the devices give now."""
+        return bool(self.auto_route) and self._moved(self.auto_route) != self.poly
+
+    def shifts_changed(self) -> None:
+        """The piece was moved (a drag, an undo, a redo): the line follows, and the label looks
+        for a clear spot on it again."""
+        if self.moved_route_is_stale():
+            self._chip_placed = False
+            self.update_path()
 
     def set_preview(self, route: list[tuple[float, float]]) -> None:
         """Straight lines through the end points while a unit is dragged (no routing, no label)."""
@@ -1208,7 +1259,7 @@ class LinkItem(ChipDrag, QGraphicsPathItem):
         for x, y in route[1:]:
             path.lineTo(x, y)
         self._preview = True
-        self.poly = []  # whatever the router says later differs from this: it is then redrawn
+        self.poly = self.auto_route = []  # whatever the router says later differs: it is redrawn
         self._chip_placed = False
         self.prepareGeometryChange()
         self.setPath(path)
@@ -1930,6 +1981,13 @@ class DiagramScene(QGraphicsScene):
             self._routes = self._compute_routes()
         return self._routes.get(interface_id, [])
 
+    def unit_boxes(self) -> list[routing.Box]:
+        """The box of every device (left, top, right, bottom), what a moved route keeps out of."""
+        return [
+            (it.pos().x(), it.pos().y(), it.pos().x() + W, it.pos().y() + it.height())
+            for it in self.unit_items.values()
+        ]
+
     def _geometry(self) -> routing.Geometry:
         lanes: dict[int, list[UnitItem]] = {}
         for it in self.unit_items.values():
@@ -2003,7 +2061,7 @@ class DiagramScene(QGraphicsScene):
     def _redraw_changed(self) -> None:
         moved: list[QRectF] = []
         for iid, link in self.link_items.items():
-            if link.poly != self.route(iid):
+            if link.auto_route != self.route(iid) or link.moved_route_is_stale():
                 link.update_path()
                 moved += [
                     QRectF(QPointF(*p), QPointF(*q)).normalized().adjusted(-1, -1, 1, 1)
@@ -2486,7 +2544,8 @@ class DiagramScene(QGraphicsScene):
         for key in marks:
             kind, _, ident = key.partition(":")
             ident = ident.partition(":")[0]  # ("end:L1:0" is of the connection L1)
-            item = (self.link_items if kind == "interface" else self.connection_items).get(ident)
+            by_kind = self.link_items if kind in ("interface", "route") else self.connection_items
+            item = by_kind.get(ident)
             if item is not None:
                 item.reload_shifts()
 
@@ -3375,14 +3434,15 @@ class DiagramView(QGraphicsView):
             for name in ("link_edit", "link_harness", "link_show_harness", "link_delete"):
                 self._mirror(menu, name)
             line = self.dscene.connection_items.get(ident)
-            self._reset_label_entry(menu, line.mark_ids if line else (), connection=True)
+            self._reset_label_entry(menu, line.mark_ids if line else ())
         elif kind == "interface" and ident:
             self._entry(menu, strings.CM_OPEN_PLAN, lambda: ctl.request_open("interface", ident))
             self._state_entries(menu, "interface", ident)
             i = ctl.project.interfaces.get(ident)
             if i is not None and any(e.auto for e in i.endpoints):
                 self._entry(menu, strings.CONFIRM_AUTO, lambda: ctl.confirm_interface(ident), ro)
-            self._reset_label_entry(menu, (f"interface:{ident}",))
+            drawn = self.dscene.link_items.get(ident)
+            self._reset_label_entry(menu, drawn.mark_ids if drawn else ())
             menu.addSeparator()
             self._mirror(menu, "delete")
         else:
@@ -3399,16 +3459,14 @@ class DiagramView(QGraphicsView):
                 self._mirror(menu, name)
         return menu
 
-    def _reset_label_entry(
-        self, menu: QMenu, mark_ids: Sequence[str], *, connection: bool = False
-    ) -> None:
-        """ "Reset label position": back to where the tool puts the label (and, on a connection, its
-        boxes and bend); greyed out when everything is there."""
+    def _reset_label_entry(self, menu: QMenu, mark_ids: Sequence[str]) -> None:
+        """ "Reset label and line positions": back to where the tool puts the label (and, on a
+        connection, its boxes; on a line, the piece moved across); greyed out when all is there."""
         ctl = self.ctl
         why = strings.WHY_READ_ONLY if ctl.read_only else ""
         if not why and not any(ctl.mark_of(m) for m in mark_ids):
-            why = strings.CM_RESET_LINE_NONE if connection else strings.CM_RESET_LABEL_NONE
-        text = strings.CM_RESET_LINE if connection else strings.CM_RESET_LABEL
+            why = strings.CM_RESET_LINE_NONE
+        text = strings.CM_RESET_LINE
 
         def reset() -> None:
             ctl.reset_marks(list(mark_ids))
