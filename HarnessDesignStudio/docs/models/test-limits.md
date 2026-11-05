@@ -35,7 +35,7 @@ The program ships no value (D-11): a project that has not set a key gets *TBD (p
 ## The assumptions it rests on
 
 - **A-TEST-LIMITS.** The three limits are global numbers: they do not follow the length, the gauge, the part or any standard, and the tool records no source for them.
-- **A-TEST-LIST.** Every wire and every shield group is tested the same way; there is no sampling and no test of a pair of conductors against each other.
+- **A-TEST-LIST.** Every wire and every shield group is tested the same way; there is no sampling and no test of a pair of conductors against each other. Stays built in: it states which tests exist (one for each wire, one for each shield group) and holds no number; the limits of the tests are settings (A-TEST-LIMITS).
 
 ## A worked example
 

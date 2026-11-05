@@ -25,13 +25,13 @@ The derivation (kind `rule-limit`) carries the equation, the inputs with unit an
 | --- | --- | --- | --- |
 | `spare-pins-low` | spare pins ≥ required share × pins of the connector | the device connector | `derating.spare_pin_fraction` |
 | `connector-voltage` | working voltage ≤ the lower of (share of the withstanding voltage × withstanding voltage) and (share of the rated voltage × rated voltage) | `INTERFACE.CONNECTOR` | `derating.connector_voltage_factor_withstand`, `connector_voltage_factor_rated`; ratings `dielectric_withstand_v`, `rated_voltage_v` of the part |
-| `wire-voltage` | working voltage ≤ share of the rated voltage × rated voltage | the wire | `derating.wire_voltage_factor`; rating `rated_voltage_v` of the wire part |
+| `wire-voltage` | working voltage ≤ share of the rated voltage × rated voltage | the wire | `derating.wire_voltage_factor`; rating `rated_voltage_v` of the wire part; assumption A-WIRE-VOLTAGE |
 | `temperature-margin` | hottest ambient temperature ≤ maximum temperature of the part − margin | the connector or the wire | `derating.max_ambient_temperature_c`, `connector_temperature_margin_c`, `wire_temperature_margin_c`; rating `max_temp_c` |
 | `mating-cycles` | rated mating cycles ≥ cycles the programme may use | `mating-cycles.PART` | `derating.max_mating_cycles`; rating `mating_cycles` |
 | `power-return-adjacent` | unassigned contacts between the two pins ≥ contacts required | `CONNECTOR.PIN+PIN` | `generation.power_return_gap_pins` |
 | `bundle-current` | current ≤ base ampacity × bundle factor K × temperature factor (1 when not set) | the wire | `derating.ampacity_a_by_awg`, `bundle_factor_by_count`, `temperature_derating`; `model.bundle_basis` |
-| `pin-shared` | wires on a pin ≤ 1 | the harness | none: one wire to a pin is the limit of the rule |
-| `emc-class-split` | bundles that carry one EMC class between two devices ≤ 1 | `emc-class.CLASS.UNIT.UNIT` | `emc.same_class_one_bundle`; none for the limit of one |
+| `pin-shared` | wires on a pin ≤ 1 | the harness | none: one wire to a pin is the limit of the rule; assumption A-PIN-ONE-WIRE (built in) |
+| `emc-class-split` | bundles that carry one EMC class between two devices ≤ 1 | `emc-class.CLASS.UNIT.UNIT` | `emc.same_class_one_bundle`; none for the limit of one; assumption A-EMC-ONE-BUNDLE |
 
 ## Rules that are yes/no checks
 
@@ -99,7 +99,10 @@ The table is written from the code (`python -m tools.gen_rule_limit_docs`), so a
 - **A-AMBIENT-ONLY.** One ambient temperature, no self-heating of the conductor.
 - **A-MATING-REQUIRED.** The cycles are a number the programme may use, not a count of matings.
 - **A-RETURN-GAP.** Contacts between power and return are counted in the list of pins.
-- **A-BUNDLE-CURRENT.** `bundle-current` uses the wire limit, needs the table of bundle factors, and counts an unset temperature factor as 1.
+- **A-BUNDLE-CURRENT.** `bundle-current` uses the wire limit, needs the table of bundle factors, and counts an unset temperature factor as 1. Stays built in: counting an unset temperature factor as 1 is how the rule treats a missing value, and making it a number would let a missing value look like an engineering choice.
+- **A-WIRE-VOLTAGE** (a setting). `wire-voltage` compares the working voltage of the interface with the share `derating.wire_voltage_factor` of the rated voltage of the wire part: one share for every wire, the rating of the part and not of this insulation.
+- **A-PIN-ONE-WIRE** (built in). `pin-shared` allows one wire to a pin whatever the contact could hold; it is a statement about the method and not a number, so it is not a setting. A design that needs two wires in one contact waives the finding with a reason.
+- **A-EMC-ONE-BUNDLE** (a setting). `emc-class-split` allows one bundle for one EMC class between two devices, the reading of ECSS-E-ST-20-07C 4.2.13.1 b built into the rule; only `emc.same_class_one_bundle`, which switches the rule on, is a setting.
 - The assumptions of the first three rules (A-CONTACT-SHARED, A-AMPACITY-AWG, A-BUNDLE-ALL, A-TEMP-FACTOR, A-DC-SOLID, A-ROUND-TRIP) are on the pages of [contact current](contact-current.md) and [wire sizing](wire-sizing.md); those of the yes/no rules that depend on a built-in choice are on [segmentation](segmentation.md), [pin allocation](pin-allocation.md) and [shields](shields.md).
 
 ## A worked example

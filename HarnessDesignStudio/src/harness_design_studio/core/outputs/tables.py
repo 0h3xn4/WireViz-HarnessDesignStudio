@@ -12,11 +12,13 @@ each contact part once per pin in use of the harness (unit `ea`) and each access
 sum(length_mm x quantity) / 1000 (unit `m`), together with the wire length of the same part. A part
 used both ways has one line per unit (`ea` first, then `m`); the key of a line is part and unit."""
 
+import math
 from collections import defaultdict
 from collections.abc import Collection, Iterator
 from dataclasses import dataclass
 from decimal import Decimal
 
+from harness_design_studio.core import settings
 from harness_design_studio.core.deviations import (
     override_text,
     tests_cell,
@@ -292,7 +294,9 @@ class BomContribution:
     unit: str  # "ea" or "m"
     amount: float  # a count for "ea", metres for "m"; 0 for a wire whose length is unknown
     harness_id: str
-    kind: str  # "connector", "contact", "wire" or "accessory"
+    # "connector", "contact", "wire" or "accessory"; "contact spare" and "wire allowance" only when
+    # the setting model.bom_contact_spare_fraction or model.bom_wire_allowance_fraction is above 0
+    kind: str
     source: str  # the ID of the connector, pin (connector.pin), wire or accessory
     unknown: bool = False  # a wire with no length: it adds nothing to the metres
 
@@ -300,16 +304,30 @@ class BomContribution:
 def bom_contributions(project: Project, harnesses: list[Harness]) -> list[BomContribution]:
     """What the BOM counts, in the order it counts it: connector parts and contact parts (one per
     pin in use) in `ea`; wire parts in metres (the wire's length over the conductors of its part);
-    accessory parts in `ea`, or in metres when they have a length."""
+    accessory parts in `ea`, or in metres when they have a length. The two settings of
+    `config/model.json` that are 0 by default add lines of their own: spare contacts (A-BOM-CONTACTS)
+    and an allowance on the wire metres (A-BOM-NO-ALLOWANCE)."""
     found: list[BomContribution] = []
+    spare_fraction = settings.number(project, "model", "bom_contact_spare_fraction")
+    allowance = settings.number(project, "model", "bom_wire_allowance_fraction")
     for h in harnesses:
         in_use = pins_in_use(h)
+        contacts: dict[str, int] = defaultdict(int)
         for c in h.connectors:
             found.append(BomContribution(c.part_id, "ea", 1, h.id, "connector", c.id))
             for p in c.pins:
                 if p.contact_part and (c.id, p.id) in in_use:
+                    contacts[p.contact_part] += 1
                     found.append(
                         BomContribution(p.contact_part, "ea", 1, h.id, "contact", f"{c.id}.{p.id}")
+                    )
+        if spare_fraction > 0:
+            for part_id, used in sorted(contacts.items()):
+                # rounded to 9 decimals first, so 30 x 0.1 is 3 spares and not 4 (float noise)
+                spares = math.ceil(round(used * spare_fraction, 9))
+                if spares:
+                    found.append(
+                        BomContribution(part_id, "ea", spares, h.id, "contact spare", part_id)
                     )
         for w in h.wires:
             pid = w.part_id or "(no part)"
@@ -320,6 +338,10 @@ def bom_contributions(project: Project, harnesses: list[Harness]) -> list[BomCon
                 part = project.parts.get(pid)
                 share = length / (part.conductors if part else 1)
                 found.append(BomContribution(pid, "m", share, h.id, "wire", w.id))
+                if allowance > 0:
+                    found.append(
+                        BomContribution(pid, "m", share * allowance, h.id, "wire allowance", w.id)
+                    )
         for a in h.accessories:
             if not a.part_id:
                 continue

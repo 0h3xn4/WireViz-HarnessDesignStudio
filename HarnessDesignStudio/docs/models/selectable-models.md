@@ -13,6 +13,7 @@ Until version 1.12 some of the tool's calculations were fixed in the program. Ea
 - [Mass model](#mass-model)
 - [Pin allocation order](#pin-allocation-order)
 - [What makes a harness not ready to build](#what-makes-a-harness-not-ready-to-build)
+- [Allowance and spares in the bill of materials](#allowance-and-spares-in-the-bill-of-materials)
 - [What the choices do not do](#what-the-choices-do-not-do)
 
 ## How to choose
@@ -45,6 +46,8 @@ Every key of the file, its default (the number the tool has always used) and wha
 | `mass_model` | `connectors_and_wires` | what the mass counts | A-MASS-SCOPE |
 | `pin_allocation_categories` | power, ground | the categories given pins first, in this order | A-PIN-ORDER |
 | `readiness_blocking` | Wires without a length, Wires without a gauge, Wires without a colour, Wires without a part | the checks whose open items make *Ready to build* no | A-READY-CHECKS |
+| `bom_wire_allowance_fraction` | `0` | the fraction of the wire metres added to a wire part in the bill of materials | A-BOM-NO-ALLOWANCE |
+| `bom_contact_spare_fraction` | `0` | the fraction of the contacts used added as spares, for each harness and contact part, rounded up | A-BOM-CONTACTS |
 
 ## Bundle basis
 
@@ -102,6 +105,17 @@ Both are DC drops of a solid round conductor (A-DC-SOLID); neither is an AC or s
 ## What makes a harness not ready to build
 
 `readiness_blocking` is the list of checks of the build workbook whose open items turn *Ready to build* into **no**. The default is the first four (length, gauge, colour, part); the others (termination, strip length, contact part, approval) are notes. Add a name to make a check blocking, or remove one to make it a note. A name that is not a check of the workbook is refused. The same list decides the verdict of the release check.
+
+## Allowance and spares in the bill of materials
+
+The bill of materials counts what is drawn (A-BOM-NO-ALLOWANCE, A-BOM-CONTACTS), and both numbers below are 0 until you set them, so a project without them gets the quantities it always got.
+
+| Key | Adds | Example |
+| --- | --- | --- |
+| `bom_wire_allowance_fraction` | that fraction of the wire metres of every wire part, as a line of kind *wire allowance* for each wire | in the `flatsat` example `EX-WIRE-SINGLE` is 165.2 m; with 0.1 it is 165.2 + 16.52 = 181.72 m, and `explain DIR EX-WIRE-SINGLE` shows the allowance and the fraction as an input |
+| `bom_contact_spare_fraction` | for each harness and contact part, that fraction of the contacts used, rounded up to a whole contact, as a line of kind *contact spare* | a harness that uses 9 contacts of a part, with 0.25: 9 × 0.25 = 2.25, rounded up to 3 spares for that harness; each harness is rounded on its own |
+
+The allowance applies to the metres of wire parts only: a connector part, an accessory part and a length in the drawings or the wire list never get one, and the mass, the cut lengths and the test sheet do not change (the mass model `full_bom` counts what is drawn, not what is ordered). The allowance is a fraction of the metres counted for the part (for a twisted pair part those are already divided by its conductors). A wire with no length adds neither metres nor allowance.
 
 ## What the choices do not do
 

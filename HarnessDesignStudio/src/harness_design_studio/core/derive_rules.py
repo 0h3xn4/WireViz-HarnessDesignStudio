@@ -278,7 +278,7 @@ def _wire_voltage(project: Project, oid: str) -> Derivation | None:
             return _derivation(
                 f"Wire {w.id}", "Wire working voltage limit", limit, "V",
                 "limit = share of the rated voltage × rated voltage of the wire part",
-                inputs, steps, check, (),
+                inputs, steps, check, ("A-WIRE-VOLTAGE",),
                 "The share is the project's own value; the rating is that of the parts library.", missing,
             )  # fmt: skip
     return None
@@ -516,7 +516,7 @@ def _pin_shared(project: Project, oid: str) -> Derivation | None:
         f"Harness {h.id}", "Wires allowed on one pin", 1.0, "wires",
         "wires on a pin ≤ 1; every pin of the harness is counted with the wires of the harness that end on it",
         [Input("Pins with more than one wire", len(shared), "pins", f"harness {h.id}")],
-        steps, check, (), "One wire to a pin is the limit of the rule; it is not a setting.", [],
+        steps, check, ("A-PIN-ONE-WIRE",), "One wire to a pin is the limit of the rule; it is not a setting.", [],
     )  # fmt: skip
 
 
@@ -541,8 +541,8 @@ def _emc_class_split(project: Project, oid: str) -> Derivation | None:
             Input("Rule is on", None if flag is None else str(flag), "", "config/emc.json: same_class_one_bundle" + ("" if flag is not None else " (not set)")),
             Input("Harnesses that carry it", _names(ids), "", "the design"),
         ],
-        [Step("Bundles", ", ".join(ids), len(ids), "bundles")], check, (),
-        "One bundle is the limit of the rule (ECSS-E-ST-20-07C 4.2.13.1 b); it is not a setting.", [],
+        [Step("Bundles", ", ".join(ids), len(ids), "bundles")], check, ("A-EMC-ONE-BUNDLE",),
+        "One bundle is the limit of the rule (ECSS-E-ST-20-07C 4.2.13.1 b); only switching the rule on is a setting.", [],
     )  # fmt: skip
 
 
