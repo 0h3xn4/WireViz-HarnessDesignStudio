@@ -173,6 +173,7 @@ class HomePage(QScrollArea):
         """One card per recent project (the folder must still exist to be opened)."""
         for w in self.recent_rows:
             self.recent_lay.removeWidget(w)
+            w.hide()  # deleteLater is deferred; hide now so the old card is not drawn beside the new
             w.deleteLater()
         self.recent_rows = []
         self.recent_empty.setVisible(not entries)
