@@ -76,6 +76,7 @@ from harness_design_studio.gui.accessory_editor import AccessoryEditor
 from harness_design_studio.gui.background import Job, JobRunner
 from harness_design_studio.gui.connector_editor import ConnectorEditor
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.dialog_base import HeightScrollArea
 from harness_design_studio.gui.icons import icon_button
 from harness_design_studio.gui.preview import DrawingPreview, Key
 from harness_design_studio.gui.states import StateChip
@@ -619,7 +620,7 @@ class HarnessView(QWidget):
         c.setSpacing(gap)
         # a short window (or banners above the tab) scrolls the tab instead of squeezing the
         # drawing and the tables into each other
-        self.scroller = QScrollArea()
+        self.scroller = HeightScrollArea()
         self.scroller.setObjectName("harness-scroll")
         self.scroller.setWidgetResizable(True)
         self.scroller.setFrameShape(QFrame.Shape.NoFrame)

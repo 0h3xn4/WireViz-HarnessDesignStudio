@@ -37,7 +37,6 @@ from PySide6.QtWidgets import (
     QLineEdit,
     QMenu,
     QPushButton,
-    QScrollArea,
     QSpinBox,
     QSplitter,
     QStackedWidget,
@@ -61,6 +60,7 @@ from harness_design_studio.gui.devices_pin_table import (
     PinTable,
     plan_paste,
 )
+from harness_design_studio.gui.dialog_base import HeightScrollArea
 from harness_design_studio.gui.harness_view import REFRESH_DELAY_MS
 from harness_design_studio.gui.icons import icon_button, tooltip_text
 from harness_design_studio.gui.lists_panel import table_columns
@@ -276,7 +276,7 @@ class DevicesView(QWidget):
         c.setSpacing(gap)
         # the tab needs more room than a short window (or a window with banners) gives it: it
         # scrolls then, where the splitters would squeeze the card and the tables into each other
-        self.scroller = QScrollArea()
+        self.scroller = HeightScrollArea()
         self.scroller.setObjectName("devices-scroll")
         self.scroller.setWidgetResizable(True)
         self.scroller.setFrameShape(QFrame.Shape.NoFrame)
