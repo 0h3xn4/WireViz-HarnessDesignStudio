@@ -82,6 +82,7 @@ from harness_design_studio.core.generate.engine import (
 from harness_design_studio.core.import_record import CHANGED, CachedHasher, check_sources
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Project
+from harness_design_studio.core.open_data import data_files
 from harness_design_studio.core.outputs.build import (
     OutputsCancelled,
     OutputSet,
@@ -285,7 +286,9 @@ class OutputsWorker(QThread):
         super().__init__()
         self._project = project
         self.drawings = drawings  # the PDF and SVG drawings of the harnesses (D-169)
+        self.open_data = False  # also make the open data (the files of `export-data`)
         self._cancelled = False
+        self.data: dict[str, bytes] | None = None  # the open data, by file name, when asked for
         self.result: OutputSet | None = None
         self.report: VerifyReport | None = None
         self.error: str | None = None
@@ -303,6 +306,9 @@ class OutputsWorker(QThread):
             )
             self.progressed.emit(0.95, strings.PROGRESS_VERIFY)
             self.report = verify_outputs(self._project, self.result.files)
+            if self.open_data and not self._cancelled:
+                self.progressed.emit(0.97, strings.PROGRESS_OPEN_DATA)
+                self.data = data_files(self._project)
         except OutputsCancelled:
             self.result = None
         except Exception as exc:  # shown as the reason, never as "cancelled"

@@ -34,6 +34,9 @@ from .stamp import parse_csv
 
 MANIFEST = "manifest.json"
 RUN_RECORD = "run_record.json"  # core.run_record: kept next to the outputs, outside the manifest
+OPEN_DATA_FOLDER = (
+    "data"  # the open data an export may add (JSON and CSV of every result): not listed
+)
 HARNESS_FILES = (
     "wirelist.csv",
     "pinouts.csv",
@@ -53,11 +56,14 @@ CONNECTION_FILES = ("connections.csv", "connections.xlsx")  # only for a project
 
 
 def read_folder(folder: Path | str) -> dict[str, bytes]:
+    """The files of an outputs folder by path. The folder `data/` (the open data an export may add
+    beside the outputs, with no stamp and no place in the manifest) is not read: it is no output."""
     root = Path(folder)
     return {
-        p.relative_to(root).as_posix(): p.read_bytes()
+        rel: p.read_bytes()
         for p in sorted(root.rglob("*"))
         if p.is_file() and not p.is_symlink() and not p.name.endswith(".tmp")
+        if not (rel := p.relative_to(root).as_posix()).startswith(f"{OPEN_DATA_FOLDER}/")
     }
 
 
