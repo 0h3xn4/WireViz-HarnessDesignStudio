@@ -87,6 +87,8 @@ The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Output
 | Ctrl+A, Ctrl+D, Ctrl+F | select all, duplicate, find (in the diagram) |
 | C, Esc | start the Connect tool (click two devices to link their connectors), back to Select (Esc also clears the selection) |
 | Ctrl+Shift+K | Link connectors… (join two connectors pin by pin) |
+| Drag from a port, Esc | pick up a cable at a port of a device and put it down on a port or a device (a loose end stays until you plug it in or drop it); Esc puts the cable away |
+| Middle mouse or Space, then drag | pan the diagram; Ctrl+wheel zooms |
 | Ctrl+Shift+O | Library… (the library window: devices and subsystems of your team's folder) |
 | Tab, Enter or Space | move between devices and links, select |
 | Shift+arrows | move the selected device |

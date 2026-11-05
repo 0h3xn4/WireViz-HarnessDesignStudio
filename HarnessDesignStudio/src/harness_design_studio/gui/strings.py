@@ -6,7 +6,7 @@ from harness_design_studio.core.workflow import PAGE_LABELS as _PAGE
 APP_TITLE = "Harness Design Studio"
 EMPTY_CANVAS = "Your diagram is empty.\nAdd your first device with the button below, or with Add in the project panel. Press Ctrl+K to find a command, or bring in a table with File > Import."
 CANVAS = "Block diagram canvas"
-CANVAS_HELP = "Tab and Shift+Tab move between devices and links, Enter shows the item in the harness plans, Space selects it, Ctrl+A selects everything, Shift+arrow keys move the selected devices, Ctrl+F finds, Escape clears the selection. The Interface table tab lists every interface and is the screen-reader friendly alternative."
+CANVAS_HELP = "Tab and Shift+Tab move between devices and links, Enter shows the item in the harness plans, Space selects it, Ctrl+A selects everything, Shift+arrow keys move the selected devices, Ctrl+F finds, Escape clears the selection or puts away a cable in hand. The Interface table tab lists every interface and is the screen-reader friendly alternative."
 MINIMAP = "Minimap: click to move the view"
 
 GLOSSARY: list[tuple[str, str]] = [
@@ -3381,3 +3381,29 @@ QD_NEWDEV_KIND_TIP = "A kind gives the device the connectors that kind usually h
 QD_NEWDEV_NONE = "No particular kind"
 QD_NEWDEV_NOTE = "The device gets a connector so you can connect it at once. You can change the name and the connectors later."
 QD_NEWDEV_OK = "Add"
+
+# ---- tactile connecting: a cable picked up at a port, carried and plugged in (diagram) ---------
+CABLE_PORT_TIP = "{name}, {kind}: {free} of {pins} pins free.\nDrag to pick up a cable."
+CABLE_PORT_TIP_NO_PINS = "{name}, {kind}.\nDrag to pick up a cable."
+CABLE_DEVICE_TIP = (
+    "{unit}: {n} connectors, {free} of {pins} pins free.\n"
+    "Drag to pick up a cable; the tool chooses the connectors."
+)
+CABLE_DEVICE_TIP_NONE = "{unit} has no connector yet.\nDrag to pick up a cable; the tool adds one."
+CABLE_PLUG_TIP = "Drag the ring at an end to plug that end into another port."
+CABLE_HINT_PORTS = "Drop on a port to connect, on a device to let the tool choose. Esc to cancel."
+CABLE_HINT_DEVICES = "Drop on a device to connect. Esc to cancel."
+CABLE_HINT_REPLUG = (
+    "Drop on another port to move this end of {link}. Esc leaves the connection where it was."
+)
+CABLE_HINT_LOOSE = "Loose end. Click it to pick it up, then click a port. Esc drops it."
+CABLE_HINT_HELD = "Click a port or a device to plug in. Esc drops the cable."
+CABLE_REFUSED_SAME = "Pick a port on another device than {unit}. A connection joins two devices."
+CABLE_REFUSED_FULL = "{name} has no free pin: every pin is in a connection already."
+CABLE_REFUSED_PLUGGED = (
+    "{name} has a cable plug of a harness on it already. Pick another connector."
+)
+CABLE_TARGET = "the device"
+STEP_MOVE_LINK_END = "Move an end of connection {}"
+LINK_END_MOVED = "Connection {link} now ends on {connector}. Its pins were paired again."
+LINK_END_MOVED_NOTHING = "Connection {link} stays on {connector}."

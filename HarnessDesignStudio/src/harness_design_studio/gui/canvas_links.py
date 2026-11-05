@@ -38,6 +38,7 @@ from harness_design_studio.core.links import (
     link_path,
 )
 from harness_design_studio.core.model import Link, Project, mark_is_along
+from harness_design_studio.gui import cable as cb
 from harness_design_studio.gui import strings
 
 if TYPE_CHECKING:
@@ -492,8 +493,20 @@ class ConnectionItem(ChipDrag, QGraphicsPathItem):
             token, width = "text-muted", 2.5
         painter.setRenderHint(QPainter.RenderHint.Antialiasing)
         painter.setBrush(Qt.BrushStyle.NoBrush)
-        painter.setPen(sc.pen(token, width, Qt.PenStyle.DashDotLine))
+        ghost = sc.cable.moving(self.link_id)  # an end is in hand: the old line waits as a ghost
+        if ghost:
+            token, width = "text-muted", 1.5
+        painter.setPen(
+            sc.pen(token, width, Qt.PenStyle.DotLine if ghost else Qt.PenStyle.DashDotLine)
+        )
         painter.drawPath(self.path())
+        if not ghost:  # the two plugged-in ends: the rings a press picks an end up by
+            painter.setPen(sc.pen(token, 2))
+            painter.setBrush(QBrush(th.color("bg")))
+            for first in (True, False):
+                x, y = cb.plug_spot(self.poly, first)
+                painter.drawEllipse(QPointF(x, y), cb.PLUG_DOT, cb.PLUG_DOT)
+            painter.setBrush(Qt.BrushStyle.NoBrush)
         lod = option.levelOfDetailFromTransform(painter.worldTransform())
         if lod < 0.35 and not selected and not self._hover:
             self._end_rects = []
@@ -735,7 +748,8 @@ class ConnectionItem(ChipDrag, QGraphicsPathItem):
             for k, v in rows
         )
         head = f"<b>{html.escape(link.name or link.id)}</b> ({html.escape(link.id)})"
-        return f"{head}<table>{body}</table><i>{html.escape(strings.LINK_TIP_OPEN)}</i>"
+        hint = f"{strings.LINK_TIP_OPEN} {strings.CABLE_PLUG_TIP}"
+        return f"{head}<table>{body}</table><i>{html.escape(hint)}</i>"
 
     def hoverEnterEvent(self, event: object) -> None:
         self.setToolTip(self.tooltip_html())

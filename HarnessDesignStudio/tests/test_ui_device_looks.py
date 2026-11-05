@@ -310,7 +310,9 @@ def test_a_card_has_a_band_in_the_accent_of_its_family_and_a_badge(win) -> None:
         accent = win.theme.color(lk.token)
         img = render(win, uid)
         h = win.view.dscene.unit_items[uid].height()
-        assert near(img, 30 + 2, 40 + h / 2, accent), uid  # the band, half way down
+        assert near(img, 30 + 2, 40 + h / 4, accent), (
+            uid
+        )  # the band, a quarter down (a port may sit half way)
         assert near(img, 30 + 2, 40 + h - 8, accent), uid  # ... down to the foot
         ink = win.theme.color("accent.text")
         n = sum(
