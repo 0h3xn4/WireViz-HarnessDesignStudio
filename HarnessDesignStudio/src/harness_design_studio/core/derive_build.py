@@ -15,7 +15,7 @@ and `tables.connector_label_text` for the labels, `wirecolours.signal_colour` fo
     shield-group         a shield group: why it exists and why it has these ends
 """
 
-from harness_design_studio.core import settings
+from harness_design_studio.core import label_format, settings
 from harness_design_studio.core.derive import (
     Check,
     Derivation,
@@ -305,10 +305,74 @@ def explain_test(project: Project, object_id: str) -> list[Derivation]:
 # ---- labels, colours, shields -------------------------------------------------------------------
 
 
+def _format_input(project: Project, fmt: str) -> Input:
+    return Input(
+        "Label format (the model in force)",
+        fmt,
+        "",
+        f"config/model.json: label_format ({origin_text(project, 'model', 'label_format')})",
+    )
+
+
+def _label_how(project: Project, kind: str, fmt: str) -> tuple[str, str]:
+    """(the step expression, the equation) of a label by the format in force. A wire expression
+    has the place {far} for the end the far side is."""
+    custom = label_format.template_of(project, kind) if fmt == "custom" else None
+    if fmt == "custom" and custom is not None:
+        key = label_format.TEMPLATE_KEYS[kind]
+        return (
+            f"the template of model.{key}: {custom}",
+            f"the template of model.{key} filled in: " + custom,
+        )
+    if fmt == "custom":
+        key = label_format.TEMPLATE_KEYS[kind]
+        return (
+            f"model.{key} is not set: the standard text",
+            f"the standard text (model.{key} is not set)",
+        )
+    if kind == "wire":
+        return {
+            "standard": (
+                "ID, name, 'to', the far end {far}, [EMC class]",
+                "wire ID + name + ' to ' + far end + ' [EMC class]'",
+            ),
+            "compact": ("ID, 'to', the far end {far}", "wire ID + ' to ' + far end"),
+            "descriptive": (
+                "ID, name, (interface ID and name), 'to', the far end {far}, [EMC class]",
+                "wire ID + name + ' (' + interface + ')' + ' to ' + far end + ' [EMC class]'",
+            ),
+        }[fmt]
+    return {
+        "standard": (
+            "name (ID mates DEVICE-CONNECTOR), or just 'ID mates DEVICE-CONNECTOR'",
+            "connector label + ' (' + ID + ' mates ' + device connector + ')'",
+        ),
+        "compact": ("'ID mates DEVICE-CONNECTOR'", "ID + ' mates ' + device connector"),
+        "descriptive": (
+            "name (ID mates DEVICE-CONNECTOR of DEVICE), or just 'ID mates DEVICE-CONNECTOR of DEVICE'",
+            "connector label + ' (' + ID + ' mates ' + device connector + ' of ' + device + ')'",
+        ),
+    }[fmt]
+
+
+def _unique_step(project: Project, h: Harness) -> Step:
+    """Whether the label texts of the harness differ from one another (they must)."""
+    dup = tables.label_duplicates(project, h)
+    return text_step(
+        "Labels of the harness read differently",
+        "every label text of the harness compared with the others",
+        "yes"
+        if not dup
+        else "no: " + "; ".join(f"{', '.join(ids)} read '{text}'" for text, ids in dup),
+        "",
+    )
+
+
 def wire_label_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
     """The two labels printed for a wire and what each part of the text is."""
-    wire_texts = tables.wire_label_texts(project, w)
+    wire_texts = tables.wire_label_texts(project, w, h)
     a, b = wire_texts
+    fmt = label_format.format_of(project)
     emc = tables.emc_class_of(project, w)
     name = tables.wire_name(w)
     name_from = (
@@ -344,33 +408,47 @@ def wire_label_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
             else "the interface type has no EMC class: no tag is printed",
         ),
     ]
+    how = _label_how(project, "wire", fmt)
+    if (
+        fmt != label_format.DEFAULT_FORMAT
+    ):  # the default keeps its text: only another model is named
+        inputs.append(_format_input(project, fmt))
     steps = [
         text_step(
             "Label A (printed at end A)",
-            "ID, name, 'to', the far end B, [EMC class]",
+            how[0].replace("{far}", "B"),
             f"{w.id}-A: {a}",
             "",
         ),
         text_step(
             "Label B (printed at end B)",
-            "ID, name, 'to', the far end A, [EMC class]",
+            how[0].replace("{far}", "A"),
             f"{w.id}-B: {b}",
             "",
         ),
     ]
+    if fmt != label_format.DEFAULT_FORMAT:
+        steps.append(_unique_step(project, h))
     return Derivation(
         "wire-label",
         f"Wire {w.id}",
         "Wire labels",
         None,
         "",
-        "label = wire ID + name (the wire's label, else its signal) + ' to ' + far end + ' [EMC class]' when the interface type has a class",
+        "label = wire ID + name (the wire's label, else its signal) + ' to ' + far end + ' [EMC class]' when the interface type has a class"
+        if fmt == label_format.DEFAULT_FORMAT
+        else "label = " + how[1],
         tuple(inputs),
         tuple(steps),
         None,
         ("A-LABEL-FORMAT",),
         "The same function writes the Labels table and the Labels sheet of the build workbook "
-        "(tables.wire_label_texts); the form is built into the tool.",
+        "(tables.wire_label_texts); "
+        + (
+            "the form is built into the tool."
+            if fmt == label_format.DEFAULT_FORMAT
+            else "the form is the format model.label_format names."
+        ),
         text=f'{w.id}-A "{wire_texts[0]}"; {w.id}-B "{wire_texts[1]}"',
     )
 
@@ -378,8 +456,10 @@ def wire_label_derivation(project: Project, h: Harness, w: Wire) -> Derivation:
 def connector_label_derivation(project: Project, h: Harness, c: Connector) -> Derivation:
     """The label printed for a cable connector."""
     box = project.connectors.get(c.mates_with or "")
-    text = tables.connector_label_text(project, c)
+    text = tables.connector_label_text(project, c, h)
     name = tables.connector_label(project, c)
+    fmt = label_format.format_of(project)
+    how = _label_how(project, "connector", fmt)
     from_where = (
         f"the label of connector {c.id}"
         if c.label
@@ -397,22 +477,32 @@ def connector_label_derivation(project: Project, h: Harness, c: Connector) -> De
         ),
         Input("Mates", c.mates_with or "-", "", f"connector {c.id}"),
     ]
+    if (
+        fmt != label_format.DEFAULT_FORMAT
+    ):  # the default keeps its text: only another model is named
+        inputs.append(_format_input(project, fmt))
     steps = [
         text_step("Name", from_where, name or "(none)", ""),
         text_step(
             "Label text",
-            "name (ID mates DEVICE-CONNECTOR), or just 'ID mates DEVICE-CONNECTOR'",
+            "name (ID mates DEVICE-CONNECTOR), or just 'ID mates DEVICE-CONNECTOR'"
+            if fmt == label_format.DEFAULT_FORMAT
+            else how[0],
             text,
             "",
         ),
     ]
+    if fmt != label_format.DEFAULT_FORMAT:
+        steps.append(_unique_step(project, h))
     return Derivation(
         "connector-label",
         f"Connector {c.id}",
         "Connector label",
         None,
         "",
-        "label = connector label, else the device connector's label, then '(ID mates DEVICE-CONNECTOR)'",
+        "label = connector label, else the device connector's label, then '(ID mates DEVICE-CONNECTOR)'"
+        if fmt == label_format.DEFAULT_FORMAT
+        else "label = " + how[1],
         tuple(inputs),
         tuple(steps),
         None,

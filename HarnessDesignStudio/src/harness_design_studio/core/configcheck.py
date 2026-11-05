@@ -11,7 +11,7 @@ import math
 import re
 from dataclasses import dataclass
 
-from harness_design_studio.core import counterparts, settings, standard_profiles
+from harness_design_studio.core import counterparts, label_format, settings, standard_profiles
 from harness_design_studio.core.commands import Op, SetConfig
 from harness_design_studio.core.issues import Issue
 from harness_design_studio.core.model import Project
@@ -160,6 +160,7 @@ def validate(project: Project) -> list[Issue]:
     out.extend(validate_titleblock(project))
     out.extend(validate_counterparts(project))
     out.extend(validate_distinct_roles(project))
+    out.extend(validate_asbuilt(project))
     out.extend(standard_profiles.validate(project))
     return out
 
@@ -203,6 +204,13 @@ _MODEL_CHOICES: dict[str, tuple[str, ...]] = {
     "length_model": ("path_plus_loops", "path_loops_allowance_twist"),
     "drop_model": ("dc_solid", "dc_at_ambient"),
     "mass_model": ("connectors_and_wires", "full_bom"),
+    "pin_fit_strategy": ("first_fit", "last_fit", "spread"),
+    "connector_choice": ("first_free", "fewest_spare_pins", "most_spare_pins"),
+    "label_format": ("standard", "compact", "descriptive", "custom"),
+}
+_MODEL_TEMPLATES = {  # key: the fields its text may use (core/label_format.py)
+    "label_wire_template": label_format.WIRE_FIELDS,
+    "label_connector_template": label_format.CONNECTOR_FIELDS,
 }
 _MODEL_NAMES = ("return_path_categories", "pin_allocation_categories", "readiness_blocking")
 
@@ -219,7 +227,7 @@ def validate_model(project: Project) -> list[Issue]:
             Issue("error", "config_invalid", f"{where}: {key} {why}.", where, f"model.{key}")
         )
 
-    known = set(_MODEL_NUMBERS) | set(_MODEL_CHOICES) | set(_MODEL_NAMES)
+    known = set(_MODEL_NUMBERS) | set(_MODEL_CHOICES) | set(_MODEL_NAMES) | set(_MODEL_TEMPLATES)
     for key, v in values.items():
         if key not in known:
             bad(key, "is not a setting of the model (see harness-design-studio settings)")
@@ -228,6 +236,11 @@ def validate_model(project: Project) -> list[Issue]:
         elif key in _MODEL_CHOICES:
             if v not in _MODEL_CHOICES[key]:
                 bad(key, f"must be one of {', '.join(_MODEL_CHOICES[key])}")
+        elif key in _MODEL_TEMPLATES:
+            if not isinstance(v, str):
+                bad(key, 'must be text, for example "{wire} to {to}"')
+            elif v.strip() and (why := label_format.check_template(v, _MODEL_TEMPLATES[key])):
+                bad(key, why)
         elif key in _MODEL_NAMES:
             if not isinstance(v, list) or not all(isinstance(c, str) and c for c in v):
                 bad(key, 'must be a list of names, for example ["power", "ground"]')
@@ -432,6 +445,27 @@ def validate_distinct_roles(project: Project) -> list[Issue]:
             f"{roles.CONFIG_FILE}.{roles.CONFIG_KEY}",
         )
     ]
+
+
+ASBUILT_TOLERANCE_KEYS = ("asbuilt_cut_tolerance_mm", "asbuilt_strip_tolerance_mm")
+
+
+def validate_asbuilt(project: Project) -> list[Issue]:
+    """The optional as-built settings: the two tolerances of `generation.json` must be numbers of 0
+    or more, and `naming.json` `release_requires_asbuilt` must be true or false. Not set (or null)
+    is not a problem: it is today's behaviour (no tolerance, no gate)."""
+    out: list[Issue] = []
+    where = "config/generation.json"
+    for key in ASBUILT_TOLERANCE_KEYS:
+        raw = _cfg(project, "generation").get(key)
+        x = _num(raw)
+        if raw is not None and (x is None or x < 0):
+            out.append(Issue("error", "config_invalid", f"{where}: {key} must be a number of 0 or more.", where, f"generation.{key}"))  # fmt: skip
+    raw = _cfg(project, "naming").get("release_requires_asbuilt")
+    if raw is not None and not isinstance(raw, bool):
+        where = "config/naming.json"
+        out.append(Issue("error", "config_invalid", f"{where}: release_requires_asbuilt must be true or false.", where, "naming.release_requires_asbuilt"))  # fmt: skip
+    return out
 
 
 def plan_set_distinct_roles(project: Project, value: object) -> ValuePlan:

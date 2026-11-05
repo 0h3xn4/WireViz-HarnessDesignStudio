@@ -68,7 +68,7 @@ def test_every_command_takes_json_and_the_reference_describes_each() -> None:
     described = {k.split()[0] for k in SHAPES}
     assert described == set(cmds), sorted(described ^ set(cmds))
     for shape, found in SHAPES.items():
-        assert found[0] == "ok" or shape == "settings", shape
+        assert found[0] == "ok" or shape in ("settings", "explain OBJECT"), shape
 
 
 def test_the_json_section_of_the_reference_lists_every_shape() -> None:

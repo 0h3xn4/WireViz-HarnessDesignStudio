@@ -257,12 +257,14 @@ def test_explain_matches_the_derivations_and_the_files(work: Path, tmp_path: Pat
     assert every == derive_export.explain_all(project) == api.explain_all(work)
     wire = next(iter(project.harnesses.values())).wires[0].id
     mine = api.explain(project, wire)
-    # the four numbers of the wire come first, in this order; the explanations of its label,
-    # colour and pins (transparency step S1) follow
-    assert [d.id for d in mine][:4] == [
-        "wire-length", "wire-current-limit", "wire-voltage-drop", "wire-mass",
+    # the four numbers of the wire come first, in this order, with the choice of its gauge after
+    # the length; the explanations of its label, colour and pins (transparency step S1) follow
+    assert [d.id for d in mine][:5] == [
+        "wire-length", "gauge", "wire-current-limit", "wire-voltage-drop", "wire-mass",
     ]  # fmt: skip
-    assert all(d in every for d in mine)
+    # the choice of the gauge is computed on demand: it is not in `explain_all` or its files
+    assert all(d in every for d in mine if d.id != "gauge")
+    assert not [d for d in every if d.id == "gauge"]
     assert json.dumps([d.to_dict() for d in mine])  # the plain form
     with pytest.raises(api.EditError):
         api.explain(project, "NOT-AN-OBJECT")

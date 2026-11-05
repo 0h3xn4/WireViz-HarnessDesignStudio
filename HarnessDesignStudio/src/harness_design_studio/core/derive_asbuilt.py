@@ -9,13 +9,17 @@ with the report:
                     continuity resistance must not exceed its limit, an insulation resistance must
                     not be lower than its limit
     a cut length    the length that was cut, the length of the design (the one `wire-length`
-                    explains) and the difference; the tool applies no tolerance
+                    explains) and the difference; the tool applies no tolerance unless the project
+                    sets one (`asbuilt_cut_tolerance_mm`), and then the check is the distance from
+                    the design against the tolerance, like a measured value against its limit
+    a strip length  the same, only when the project sets `asbuilt_strip_tolerance_mm` (without a
+                    tolerance a strip length has no derivation, as before)
 
 Neither says that a harness passed; the check says whether the value is within the limit of the
 project, and the result stays what the person recorded.
 """
 
-from harness_design_studio.core.asbuilt import LIMIT_KEYS, TOLERANCE
+from harness_design_studio.core.asbuilt import LIMIT_KEYS, TOLERANCE, LengthCheck, length_check
 from harness_design_studio.core.derive import Check, Derivation, Input, Step, _g
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.model import AsBuiltRecord, Harness, Project, Wire
@@ -81,6 +85,22 @@ def result_derivation(project: Project, h: Harness, tid: str) -> Derivation | No
     )  # fmt: skip
 
 
+def _tolerance_parts(
+    c: LengthCheck, actual: float, designed: float, unit: str, what: str
+) -> tuple[Input, Step, Step, Check]:
+    """The tolerance as an input, the two steps and the check of a length that has a tolerance."""
+    tolerance = Input("Tolerance", c.tolerance_mm, "mm", f"config/generation.json: {c.key} (A-ASBUILT-TOLERANCE)")  # fmt: skip
+    distance = Step("Distance from the designed value", f"|{_g(c.difference)}| {unit} in mm", c.distance_mm, "mm")  # fmt: skip
+    margin = Step("Margin", f"tolerance - distance = {_g(c.tolerance_mm)} - {_g(c.distance_mm)}", c.room_mm, "mm")  # fmt: skip
+    verdict = "within the tolerance" if c.within else "OUT OF TOLERANCE"
+    check = Check(
+        c.distance_mm, c.tolerance_mm, "mm", c.within, c.room_mm,
+        f"{_g(actual)} {unit} {what}, {_g(designed)} {unit} is designed: {_g(c.distance_mm)} mm "
+        f"from the design, the tolerance is {_g(c.tolerance_mm)} mm: {verdict}",
+    )  # fmt: skip
+    return tolerance, distance, margin, check
+
+
 def cut_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation | None:
     """The length that was cut against the length of the design; None while none was recorded."""
     rec = _record(project, "wire", h.id, w.id)
@@ -98,6 +118,8 @@ def cut_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation |
         ),  # fmt: skip
     ]
     steps: list[Step] = []
+    check: Check | None = None
+    assumptions: tuple[str, ...] = ()
     missing: tuple[str, ...] = ()
     value: float | None = None
     if designed is None:
@@ -105,14 +127,55 @@ def cut_length_derivation(project: Project, h: Harness, w: Wire) -> Derivation |
     else:
         value = round(rec.cut_length_m - designed, 9)
         steps.append(Step("Difference", f"{_g(rec.cut_length_m)} - {_g(designed)}", value, "m"))
-    note = (
-        "As designed."
-        if value is not None and abs(value) < TOLERANCE
-        else "The tool applies no tolerance to a length: any difference is listed."  # fmt: skip
-    )
+        c = length_check(project, "cut length", "m", rec.cut_length_m, designed)
+        if c is not None:  # the project set a tolerance: the length is judged like a test value
+            tolerance, distance, margin, check = _tolerance_parts(c, rec.cut_length_m, designed, "m", "was cut")  # fmt: skip
+            inputs.append(tolerance)
+            steps += [distance, margin]
+            assumptions = ("A-ASBUILT-TOLERANCE",)
+    if check is not None:
+        note = (
+            "The tolerance is the project's own value (config/generation.json); the tool supplies "
+            "none. Neither this check nor the report says that the harness passed."
+        )
+    else:
+        note = (
+            "As designed."
+            if value is not None and abs(value) < TOLERANCE
+            else "The tool applies no tolerance to a length: any difference is listed."  # fmt: skip
+        )
     return Derivation(
         "asbuilt-result", f"Wire {w.id}", "Cut length minus designed length", value, "m",
-        "difference = cut length - designed length", tuple(inputs), tuple(steps), None, (), note, missing,
+        "difference = cut length - designed length", tuple(inputs), tuple(steps), check,
+        assumptions, note, missing,
+    )  # fmt: skip
+
+
+def strip_length_derivation(project: Project, h: Harness, w: Wire, end: str) -> Derivation | None:
+    """A strip length against the designed strip length, only when the project set a tolerance for
+    strip lengths (`asbuilt_strip_tolerance_mm`): None otherwise, or while one is not recorded or
+    the design has none, so a project without the setting has the derivations it always had."""
+    rec = _record(project, "wire", h.id, w.id)
+    actual = (rec.strip_a_mm if end == "A" else rec.strip_b_mm) if rec is not None else None
+    designed = w.strip_a_mm if end == "A" else w.strip_b_mm
+    if actual is None or designed is None:
+        return None
+    c = length_check(project, f"strip {end}", "mm", actual, designed)
+    if c is None:
+        return None
+    tolerance, distance, margin, check = _tolerance_parts(c, actual, designed, "mm", "was stripped")  # fmt: skip
+    inputs = (
+        Input(f"Strip length {end}", actual, "mm", f"{SOURCE}: wire {w.id} of harness {h.id}"),
+        Input(f"Designed strip length {end}", designed, "mm", f"wire {w.id}: strip_{end.lower()}_mm"),  # fmt: skip
+        tolerance,
+    )  # fmt: skip
+    difference = Step("Difference", f"{_g(actual)} - {_g(designed)}", c.difference, "mm")
+    return Derivation(
+        "asbuilt-result", f"Wire {w.id} strip {end}", f"Strip length {end} minus designed strip length",
+        c.difference, "mm", "difference = strip length - designed strip length", inputs,
+        (difference, distance, margin), check, ("A-ASBUILT-TOLERANCE",),
+        "The tolerance is the project's own value (config/generation.json); the tool supplies none. "
+        "Neither this check nor the report says that the harness passed.",
     )  # fmt: skip
 
 
@@ -127,5 +190,9 @@ def harness_derivations(project: Project, h: Harness) -> list[Derivation]:
 def wire_derivations(project: Project, h: Harness, w: Wire) -> list[Derivation]:
     if not project.asbuilt:
         return []
-    d = cut_length_derivation(project, h, w)
-    return [] if d is None else [d]
+    found = [
+        cut_length_derivation(project, h, w),
+        strip_length_derivation(project, h, w, "A"),
+        strip_length_derivation(project, h, w, "B"),
+    ]
+    return [d for d in found if d is not None]

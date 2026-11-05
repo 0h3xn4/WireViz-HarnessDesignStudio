@@ -12,7 +12,7 @@ Rules live in `config/*.json` inside the project, not in code. There are seven f
 - [`derating.json`](#deratingjson)
 - [`generation.json`](#generationjson)
 - [`emc.json`](#emcjson)
-- [`naming.json`](#namingjson), with [`signal_counterparts`](#the-words-for-the-two-ends-of-a-line-since-190) and [`release_distinct_roles`](#different-people-in-a-release-since-190)
+- [`naming.json`](#namingjson), with [`signal_counterparts`](#the-words-for-the-two-ends-of-a-line-since-190), [`release_distinct_roles`](#different-people-in-a-release-since-190) and [`release_requires_asbuilt`](#release-needs-as-built-records-optional)
 - [`titleblock.json`](#titleblockjson)
 - [`model.json`](#modeljson)
 - [Optional values from the supplied standards (D-131)](#optional-values-from-the-supplied-standards-d-131)
@@ -91,6 +91,7 @@ harness-design-studio new my-design --annotate-config      # start a new project
 | `ampacity_a_by_awg` | gauges are whole numbers 0 to 40, amperes above 0, and a thinner wire (higher AWG number) never carries more than a thicker one |
 | `spare_pin_fraction` | 0 or more, below 1 |
 | `max_voltage_drop_v`, `conductor_resistivity_ohm_m`, `test_continuity_max_ohm`, `test_isolation_min_mohm`, `test_isolation_voltage_v` | above 0 |
+| `asbuilt_cut_tolerance_mm`, `asbuilt_strip_tolerance_mm` | 0 or more (a tolerance of 0 accepts no difference); not set means no tolerance |
 | `service_loop_m`, `mass_margin_fraction`, `connector_temperature_margin_c`, `wire_temperature_margin_c` | 0 or more |
 | `power_signal_gap_pins`, `power_return_gap_pins` | a whole number, 0 or more |
 | `default_gauge_awg` | a whole number from 0 to 40 |
@@ -104,6 +105,7 @@ harness-design-studio new my-design --annotate-config      # start a new project
 | `titleblock.fields` | known field names, each at most once, written as text (see below) |
 | `signal_counterparts` (naming) | a list of pairs of two different words made of letters, no word in two pairs; an empty list is allowed (see below) |
 | `release_distinct_roles` (naming) | `true` or `false` (see below) |
+| `release_requires_asbuilt` (naming) | `true` or `false` (see below) |
 
 Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limits of the project data itself (a wire gauge 0 to 40, a length 0 to 10000 m, a pin count 1 to 1000, ...) are in [`FILE_FORMAT.md`](FILE_FORMAT.md#number-ranges). While a harness is released, most of these files are frozen: see [`FILE_FORMAT.md`](FILE_FORMAT.md#what-a-release-freezes).
 
@@ -143,6 +145,7 @@ Numbers are written as numbers, not as text (`"0.5"` is not accepted). The limit
 | `shield_end_a`, `shield_end_b` | grounding concept: `backshell_360`, `pigtail` or `floating` for each end (a coax is the exception: its outer conductor is bonded at both ends, so the rule `shield-wrong-end` does not compare it with the concept) |
 | `wire_colour_by_signal` | optional, absent by default: colour of the wire for each signal name, for example `{"PWR": "red", "RTN": "black"}`. Used when a wire has no colour of its own. The build workbook shows the wire in that colour with its name and IEC 60757 code (BK, RD, ...), and the harness drawing, when it is written, draws it in that colour. The tool defines no colours of its own. **Edit > Wire colours...** in the editor sets it from a list (undoable); a wire between two different signals (labelled `TX+/RX+`) takes the colour of the first |
 | `test_continuity_max_ohm`, `test_isolation_min_mohm`, `test_isolation_voltage_v` | limits printed in the test tables |
+| `asbuilt_cut_tolerance_mm`, `asbuilt_strip_tolerance_mm` | optional, absent by default (the same as not set: no tolerance, every difference listed): how far, in millimetres, a recorded cut length or strip length may differ from the designed one, too long or too short alike. With one set, the as-built report, `asbuilt` and `explain` mark a length within it as *within limit* and a larger difference as *out of limit* (actual, limit, margin, source; assumption A-ASBUILT-TOLERANCE). The tool supplies no value. Not read by generation, so setting or changing one does not make the harness plans out of date; a release does not freeze it. See [as-built results](models/asbuilt.md) |
 
 ## `emc.json`
 | Key | Meaning |
@@ -189,6 +192,16 @@ While it is `true`:
 
 `harness-design-studio config DIR --distinct-roles on` writes the key and `--distinct-roles off` takes it out again, so a project that switches it on and off again has its file back byte for byte; `config DIR` lists it while it is on. `naming.json` is not frozen by a release, so the setting can be switched at any time; it never changes a harness that is released already. It does not make the harness plans out of date. A value that is not `true` or `false` is an error of the check (`config/naming.json: release_distinct_roles must be true or false.`, rule `config-invalid`) and the setting stays off. The editor has no switch for it yet: in the editor the dialogs follow the file, and the file is edited with the command or by hand.
 
+### Release needs as-built records (optional)
+
+Off unless a project switches it on, and then a release works exactly as it did.
+
+| Key | Default | Meaning |
+| --- | --- | --- |
+| `release_requires_asbuilt` | not set (the same as `false`) | `true`: a harness is released only when its as-built records are complete and no recorded length is out of tolerance, or the person releasing gives a written reason |
+
+While it is `true`, `release` is blocked with `asbuilt_incomplete` while the harness has no as-built records or the values the sheet asks of it are not all recorded (the *needed values* of [as-built results](models/asbuilt.md): serial number, who built and inspected it, the lot of each part, every cut length, the crimp tool of every crimped pin, the result and the measured value of every test), and with `asbuilt_length_out` while a recorded cut or strip length is out of the tolerance the project sets (`asbuilt_cut_tolerance_mm`, `asbuilt_strip_tolerance_mm`, above; without a tolerance no length is ever out). A test value out of its limit is shown by the as-built report but is not part of this gate. `release DIR HARNESS --accept-asbuilt REASON` releases anyway: the reason (at least 10 characters) is added to the comment of the release in the change log and the baseline, with what was open at that time, like `--accept-placeholders`. A release does not freeze the as-built records in this step: they can be recorded and changed after it, and the gate looks at the records as they are when you release. The editor shows the blocker in its release window but has no field for the reason yet. A value that is not `true` or `false` is an error of the check (`config/naming.json: release_requires_asbuilt must be true or false.`, rule `config-invalid`) and the gate stays off. Setting it does not make the harness plans out of date; `naming.json` is not frozen by a release.
+
 ## `titleblock.json`
 | Key | Meaning |
 | --- | --- |
@@ -213,6 +226,11 @@ Optional, and absent from a new project: a project that does not have it behaves
 | `resistivity_reference_temperature_c` | 20 | degC, for `dc_at_ambient`: the temperature `generation.conductor_resistivity_ohm_m` is valid at: -100 to 200 |
 | `mass_model` | `connectors_and_wires` | `connectors_and_wires` or `full_bom` (every part of the bill of materials, with the mass of contacts and accessories where the library has it); assumption A-MASS-SCOPE |
 | `pin_allocation_categories` | `["power", "ground"]` | the interface categories allocated first, in this order, and counted as the power group for the gap to the signal pins |
+| `pin_fit_strategy` | `first_fit` | which free run of pins a group of signals takes on a device connector: `first_fit` (from pin 1 up), `last_fit` (from the last pin down, power at the end, the signals below it) or `spread` (a free pin between one interface and the next when there is room, else first fit); assumption A-PIN-FIRST-FIT |
+| `connector_choice` | `first_free` | which connector the tool takes for an interface when nobody picked one: `first_free` (the first free connector of the device that carries the type, in ID order), `fewest_spare_pins` (best fit: of the free connectors that carry the type and have enough pins, the one with the fewest pins left over) or `most_spare_pins` (the one with the most left over); assumption A-CONNECTOR-CHOICE |
+| `label_format` | `standard` | the text on the labels of wires and cable connectors: `standard` (ID, name, far end, EMC class), `compact` (ID and far end; a connector `ID mates DEVICE-CONNECTOR`), `descriptive` (with the interface of the wire and the device of a connector) or `custom` (the two templates below); assumption A-LABEL-FORMAT |
+| `label_wire_template` | not set | for `label_format` `custom`: text with the places `{harness}`, `{wire}`, `{signal}`, `{name}`, `{interface}`, `{emc}`, `{end}` (A or B), `{from}` (this end, connector and pin) and `{to}` (the far end), at most 200 characters; `{{` and `}}` are braces; a place that does not exist is an error that names it; not set: the standard text |
+| `label_connector_template` | not set | for `label_format` `custom`: text with the places `{harness}`, `{connector}`, `{name}`, `{mates}` and `{device}`; the same rules; not set: the standard text |
 | `readiness_blocking` | the first four checks of the build workbook | the names of the checks of the build workbook whose open items mean *Ready to build: no*; the others are notes |
 | `bom_wire_allowance_fraction` | 0 | the fraction of the wire metres added to every wire part in the bill of materials (cut allowance, waste): 0 to 1; 0 adds nothing, as before; assumption A-BOM-NO-ALLOWANCE |
 | `bom_contact_spare_fraction` | 0 | the fraction of the contacts used that is added as spares, for each harness and contact part, rounded up to a whole contact: 0 to 1; 0 adds none, as before; assumption A-BOM-CONTACTS |

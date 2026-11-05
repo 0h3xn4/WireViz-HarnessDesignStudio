@@ -141,5 +141,5 @@ def test_the_command_and_the_python_interface_give_the_same_derivation(tmp_path:
     folders = trace_numbers.make_projects(tmp_path)
     folder = folders[trace_numbers.FLATSAT]
     printed = json.loads(command("explain", str(folder), "W001-001", "--json"))
-    assert printed == [d.to_dict() for d in api.explain(folder, "W001-001")]
+    assert printed == [d.to_explain_dict() for d in api.explain(folder, "W001-001")]
     assert {d["id"] for d in printed} >= {"wire-length", "wire-current-limit", "wire-voltage-drop"}

@@ -11,6 +11,7 @@ This page shows how to review and release a harness, which freezes it: it, the l
 - [2. Submit for review (optional)](#2-submit-for-review-optional)
 - [3. Release](#3-release)
 - [Optional: three different people](#optional-three-different-people)
+- [Optional: as-built records before a release](#optional-as-built-records-before-a-release)
 - [4. After the release](#4-after-the-release)
 - [Common mistakes](#common-mistakes)
 
@@ -35,6 +36,7 @@ A release is blocked until all of these hold. The tool lists what is missing, in
 | `outputs_linked`: the `outputs` folder (or a folder in it) is a link, or cannot be written | Replace the link with a real folder, make the folder writable, and export again. The release is blocked up front because the released status could not be written into the outputs. |
 | `placeholder_config`: a config file is still marked `"placeholder": true` | An engineer reviews the values and sets `"placeholder": false` in each file. Or release with a written reason (below). |
 | `parts_unapproved`: the harness uses a part that is not approved, or is example data | Import your approved parts list ([import data](import-data.md#approved-parts-list)). Or release with a written reason (below). |
+| `asbuilt_incomplete` / `asbuilt_length_out`: only in a project that switches on `release_requires_asbuilt` (off by default): the as-built records of the harness are incomplete, or a recorded length is out of tolerance | Record what was built ([record what was built](record-what-was-built.md)). Or release with a written reason, `--accept-asbuilt REASON` (below). The release does not freeze the records. See [the setting](../CONFIG.md#release-needs-as-built-records-optional). |
 
 Try it. You see the two reasons that remain after the demo values and the lengths are in:
 
@@ -109,6 +111,10 @@ From then on, in that project:
 - If you leave `--by` out, the name that Git has for you (`git config user.name`) is used, and the command says so. In the window, **Your name** starts with it when you have not saved a name there before. The tool reads the name from the Git files; it does not start Git, and when Git has no name it makes none up: `--by` is required as before.
 
 `--distinct-roles off` takes the setting out again, and the file `config/naming.json` is then exactly what it was. The names are only text: the tool cannot tell that `A. Engineer` and `a.engineer@example.org` are one person, so agree in the team on how to write a name. More: [`CONFIG.md`](../CONFIG.md#different-people-in-a-release-since-190).
+
+## Optional: as-built records before a release
+
+By default a release does not look at the as-built records. A project that wants a release only after the build was recorded switches on `release_requires_asbuilt` in `config/naming.json` ([the setting](../CONFIG.md#release-needs-as-built-records-optional)). From then on `release` is blocked with `asbuilt_incomplete` while the harness has no records or values are missing, and with `asbuilt_length_out` while a recorded length is out of the tolerance the project sets. `--accept-asbuilt REASON` (at least 10 characters) releases anyway; the reason, with what was open, is kept in the change log and the baseline like the reasons for placeholders and parts. The editor shows the blocker but has no field for the reason yet. The records are **not frozen** by the release. [As-built results](../models/asbuilt.md#the-release-gate-optional) says exactly what is looked at.
 
 ## 4. After the release
 

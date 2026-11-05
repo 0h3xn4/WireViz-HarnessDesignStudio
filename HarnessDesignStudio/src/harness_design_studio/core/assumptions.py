@@ -210,9 +210,11 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "harness, is never moved. A pin a person typed in without a lock stays. A connector with a "
             "fixed pinout gives each signal the free pin of that name. A previous allocation is kept "
             "while it is still valid, so a small change makes a small difference. Pin neighbours are the "
-            "neighbours in the list of pins, not a measured position.",
-            "built in",
-            "core/generate/pins.py (allocate)",
+            "neighbours in the list of pins, not a measured position. This is the default fit; the setting "
+            "model.pin_fit_strategy selects another: last_fit (the last free run, from the last pin down, "
+            "power at the end) or spread (a free pin between one interface and the next when there is room).",
+            "setting",
+            "config/model.json: pin_fit_strategy (default first_fit); core/generate/pins.py (allocate)",
         ),
         Assumption(
             "A-SEGMENT-MODE",
@@ -238,14 +240,17 @@ ASSUMPTIONS: dict[str, Assumption] = {
         ),
         Assumption(
             "A-LABEL-FORMAT",
-            "A label has a fixed form",
+            "A label has the form of the label format in force (the standard one by default)",
             "A wire has two labels, A and B. Each reads: the wire ID, then the name (the label a person "
             "gave the wire, else its signal), then 'to' and the far end (connector and pin), then the EMC "
             "class in brackets when the interface type has one. A cable connector label reads its own "
             "label, else the label of the device connector it plugs into, then 'ID mates DEVICE-CONNECTOR'. "
-            "The form is built into the tool; only the words come from the design.",
-            "built in",
-            "core/outputs/tables.py (wire_label_texts, connector_label_text)",
+            "This is the format standard. The setting model.label_format selects compact (ID and far end "
+            "only), descriptive (with the interface and the device) or custom (the templates "
+            "model.label_wire_template and model.label_connector_template); the words always come from "
+            "the design.",
+            "setting",
+            "config/model.json: label_format, label_wire_template, label_connector_template; core/label_format.py, core/outputs/tables.py (wire_label_texts, connector_label_text)",
         ),
         Assumption(
             "A-COLOUR-TABLE",
@@ -284,11 +289,12 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "A connector is the first free one that carries the type; the cable end is the mating part",
             "When the tool chooses the connector of an interface at a device, it takes the first free "
             "connector of that device (in ID order) that carries the interface type, and marks it as "
-            "chosen for you until a person confirms it. The cable end of a device connector is the part "
+            "chosen for you until a person confirms it. The setting model.connector_choice selects "
+            "another order of the same candidates: fewest_spare_pins (best fit) or most_spare_pins. The cable end of a device connector is the part "
             "the library names as its mating part; a part with none is mated with itself, and "
             "generation says so. Gender is the opposite of the device connector's, and keying is copied.",
-            "built in",
-            "core/checks.py (_assign_connectors), core/edit.py (free_connectors), core/generate/engine.py (_build_harness)",
+            "setting",
+            "config/model.json: connector_choice (default first_free); core/edit.py (choose_connector), core/generate/engine.py (_build_harness)",
         ),
         Assumption(
             "A-SPARE-PINS",
@@ -345,6 +351,19 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "table of bundle factors is set, and counts an unset temperature factor as 1.",
             "built in",
             "core/drc/standard_rules.py (_bundle_current)",
+        ),
+        Assumption(
+            "A-ASBUILT-TOLERANCE",
+            "A built length is judged against a tolerance only when the project sets one",
+            "The cut length and the strip lengths that were recorded are compared with the designed "
+            "length. While asbuilt_cut_tolerance_mm (cut length) or asbuilt_strip_tolerance_mm (strip "
+            "lengths) is not set no tolerance is applied: every difference is listed as differing from "
+            "the design. When one is set, a difference of at most that many millimetres, too long or "
+            "too short alike, is within the tolerance and a larger difference is out of it. The "
+            "tolerance is one number for every wire: it does not follow the length, the gauge or the "
+            "part, and the tool supplies no value.",
+            "setting",
+            "config/generation.json: asbuilt_cut_tolerance_mm, asbuilt_strip_tolerance_mm",
         ),
         Assumption(
             "A-PIN-ONE-WIRE",

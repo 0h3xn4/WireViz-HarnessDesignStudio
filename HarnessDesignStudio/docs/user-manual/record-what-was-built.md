@@ -113,10 +113,15 @@ MISSING: W001 wire W001-003: cut length (m): to record
 - **Missing**: what the sheet asks of a harness that has records and nobody recorded: its serial number and the names of who built and inspected it, the lot of each wire part and connector part, the cut length of every wire (and the strip lengths of the wires that have them in the design), the crimp tool and its calibration ID for every crimped pin in use, and the result and the measured value of every test. A harness with **no** record is *not started*: nothing is missing from it.
 - **Out of limit**: the measured value is on the wrong side of the limit of the project (a continuity resistance above its limit, an insulation resistance below its limit), or the person who tested wrote `fail`. The report gives the actual value, the limit and the margin. A result `pass` written beside a value that is out of its limit does not change that: the line says so.
 - **Within limit**, **not compared** (the limit is not set in the project: the tool does not make one up).
-- **Differs from design**: a cut length, a strip length or a test voltage that is not the designed value, with the difference. **The tool applies no tolerance**; whether 10 mm too long is acceptable is for a person.
+- **Differs from design**: a cut length, a strip length or a test voltage that is not the designed value, with the difference. **By default the tool applies no tolerance**; whether 10 mm too long is acceptable is for a person.
+- **A tolerance of the project (optional).** If the project sets `asbuilt_cut_tolerance_mm` and `asbuilt_strip_tolerance_mm` in `config/generation.json` (millimetres, not set by default; [the settings](../CONFIG.md)), a cut length or a strip length that differs from the design by no more than that is **within limit**, and one that differs by more is **out of limit**, with the margin, as for a measured value: `OUT OF LIMIT: W001 wire W001-002: cut length (m): 3.5 m was built, 3.45 m is designed (+50 mm); tolerance +/-10 mm (config/generation.json: asbuilt_cut_tolerance_mm, A-ASBUILT-TOLERANCE): OUT OF TOLERANCE by 40 mm`. The tolerance is the same for every wire and the tool supplies no value.
 - **Stale record**: the record is about something the design no longer has.
 
 `explain flatsat-build W001.T002` shows how one measured value was compared (kind `asbuilt-result`: the measured value and where it is recorded, the limit and its key, the margin and the check); [as-built results](../models/asbuilt.md) is the page of the model.
+
+## Optional: ask for the records at the release
+
+A project can make a release depend on the records: with `release_requires_asbuilt` set to `true` in `config/naming.json`, `release` is blocked while the harness has no records, while needed values are missing, or while a length is out of the tolerance of the project, unless the person releasing gives a reason with `--accept-asbuilt REASON` (kept in the change log). It is off by default, and the release does not freeze the records: see [release a harness](release-a-harness.md#optional-as-built-records-before-a-release) and [as-built results](../models/asbuilt.md#the-release-gate-optional).
 
 ## 5. The as-built report
 

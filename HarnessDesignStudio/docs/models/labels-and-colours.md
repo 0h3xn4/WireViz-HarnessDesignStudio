@@ -16,7 +16,7 @@ This page explains the text printed on the labels of a wire and of a cable conne
 
 ## What the tool decides
 
-The *Labels* table and the *Labels* sheet of the build workbook list the labels to print. The text is made by one function for each kind of label, and `explain` calls the same function: kind `wire-label` (the two labels of a wire), `connector-label` (a cable connector) and `wire-colour`.
+The *Labels* table and the *Labels* sheet of the build workbook list the labels to print. The text is made by one function for each kind of label (`tables.wire_label_texts`, `tables.connector_label_text`) in the form the label format names (`model.label_format`: `standard`, the form described below, `compact`, `descriptive` or `custom` with your own templates, see [selectable models](selectable-models.md#label-format)), and `explain` calls the same function: kind `wire-label` (the two labels of a wire), `connector-label` (a cable connector) and `wire-colour`.
 
 ## The label of a wire
 
@@ -47,10 +47,11 @@ Generation gives a wire the colour that `generation.wire_colour_by_signal` lists
 | Colour table | `config/generation.json: wire_colour_by_signal` |
 | Colour of the wire | The wire. |
 | Pattern of the wire IDs | `config/naming.json: wire` |
+| Label format and templates | `config/model.json: label_format`, `label_wire_template`, `label_connector_template` (default `standard`) |
 
 ## The assumptions it rests on
 
-- **A-LABEL-FORMAT.** The form of a label is built into the tool; only the words come from the design. Stays built in: it is the layout of a label, a form and not a number or a list of alternatives.
+- **A-LABEL-FORMAT.** The form of a label is the format in force (`model.label_format`, `standard` by default); only the words come from the design. The form described on this page is `standard`.
 - **A-COLOUR-TABLE.** A wire gets the colour of its signal from the table and no other; the colour names and codes decide nothing.
 
 ## A worked example

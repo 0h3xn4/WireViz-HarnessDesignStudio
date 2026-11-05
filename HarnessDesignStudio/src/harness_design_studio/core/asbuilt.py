@@ -17,8 +17,10 @@ is missing from it): its serial number and the names of who built and who inspec
 each wire part and connector part it uses; the cut length of every wire (and its strip lengths where
 the design has them); the crimp tool and its calibration ID for every pin in use that is crimped;
 the result and the measured value of every test of the Tests sheet. The limits are the project's
-test limits (`config/generation.json`), the ones the Tests sheet prints; no tolerance is applied to a
-length (the tool has none): the difference from the design is listed.
+test limits (`config/generation.json`), the ones the Tests sheet prints. A length is compared with
+the designed length: the difference is listed, and no tolerance is applied unless the project sets
+one (`asbuilt_cut_tolerance_mm`, `asbuilt_strip_tolerance_mm`, assumption A-ASBUILT-TOLERANCE); with
+one set, a difference within it is **within limit** and a larger one is **out of limit**, like a test.
 """
 
 import re
@@ -62,6 +64,44 @@ LIMIT_KEYS = {
     "isolation_mohm": ("test_isolation_min_mohm", "Mohm"),
     "test_voltage_v": ("test_isolation_voltage_v", "V"),
 }
+
+
+# the tolerance of a length: the name of the value -> the key of config/generation.json (millimetres)
+TOLERANCE_KEYS = {
+    "cut length": "asbuilt_cut_tolerance_mm",
+    "strip A": "asbuilt_strip_tolerance_mm",
+    "strip B": "asbuilt_strip_tolerance_mm",
+}
+
+
+@dataclass(frozen=True)
+class LengthCheck:
+    """A recorded length against the designed one and the tolerance of the project (A-ASBUILT-TOLERANCE).
+    The one calculation the report and the explanation share."""
+
+    key: str  # the key of config/generation.json
+    tolerance_mm: float
+    difference: float  # recorded minus designed, in the unit of the value
+    distance_mm: float  # how far from the design, either way
+    room_mm: float  # tolerance minus distance: positive, room left; negative, exceeded by
+    within: bool
+    scale: float  # millimetres in one unit of the value
+
+
+def length_check(
+    project: Project, field_name: str, unit: str, actual: float, designed: float
+) -> LengthCheck | None:
+    """None while the project sets no tolerance for this length (no tolerance is applied). A
+    distance equal to the tolerance is within it."""
+    key = TOLERANCE_KEYS[field_name]
+    tolerance = tables.limit_value(project, key)
+    if tolerance is None or tolerance < 0:
+        return None
+    scale = 1000.0 if unit == "m" else 1.0
+    diff = round(actual - designed, 9)
+    distance = round(abs(diff) * scale, 9)
+    room = round(tolerance - distance, 9)
+    return LengthCheck(key, tolerance, diff, distance, room, room >= 0, scale)
 
 
 @dataclass(frozen=True)
@@ -203,9 +243,12 @@ def _limit(project: Project, field_name: str) -> float | None:
 def _value_line(
     h: str, kind: str, subject: str, field_name: str, unit: str, actual: float | None,
     designed: float | None, *, needed: bool = True, scale: float = 1.0,
+    check: LengthCheck | None = None,
 ) -> Line | None:  # fmt: skip
     """A value that is compared with a designed value: missing, as designed, or differs (with the
-    difference). `scale` is the factor from the unit to the one that the difference is shown in."""
+    difference). `scale` is the factor from the unit to the one that the difference is shown in.
+    With a `check` (the project set a tolerance for this length) a difference is within the tolerance
+    or out of it, like a test result against its limit."""
     label = f"{field_name} ({unit})"
     if actual is None:
         return Line(h, kind, subject, label, MISSING, None, designed, unit) if needed else None
@@ -215,9 +258,19 @@ def _value_line(
     if abs(diff) < TOLERANCE:
         return Line(h, kind, subject, label, AS_DESIGNED, actual, designed, unit, 0.0)
     shown = f"{diff * scale:+g} mm" if scale != 1.0 else f"{diff:+g} {unit}"
+    built = f"{actual:g} {unit} was built, {designed:g} {unit} is designed ({shown})"
+    if check is not None:
+        room = round(check.room_mm / check.scale, 9)  # in the unit of the value
+        verdict = (
+            "within the tolerance" if check.within else f"OUT OF TOLERANCE by {-check.room_mm:g} mm"
+        )
+        return Line(
+            h, kind, subject, label, WITHIN if check.within else OUT, actual, designed, unit, room,
+            f"{built}; tolerance +/-{check.tolerance_mm:g} mm (config/generation.json: {check.key}, A-ASBUILT-TOLERANCE): {verdict}",
+        )  # fmt: skip
     return Line(
         h, kind, subject, label, DIFFERS, actual, designed, unit, diff,
-        f"{actual:g} {unit} was built, {designed:g} {unit} is designed ({shown}); no tolerance applied",
+        f"{built}; no tolerance applied",
     )  # fmt: skip
 
 
@@ -291,38 +344,25 @@ def harness_lines(project: Project, h: Harness) -> list[Line]:
     for w in sorted(h.wires, key=lambda x: x.id):
         wr = _get(project, "wire", hid, w.id)
         length = wire_length(h, w)
+        cut = wr.cut_length_m if wr else None
+        strip_a = wr.strip_a_mm if wr else None
+        strip_b = wr.strip_b_mm if wr else None
         for line in (
             _value_line(
-                hid,
-                "wire",
-                w.id,
-                "cut length",
-                "m",
-                wr.cut_length_m if wr else None,
-                length,
-                scale=1000.0,
-            ),  # fmt: skip
+                hid, "wire", w.id, "cut length", "m", cut, length, scale=1000.0,
+                check=None if cut is None or length is None else length_check(project, "cut length", "m", cut, length),
+            ),
             _value_line(
-                hid,
-                "wire",
-                w.id,
-                "strip A",
-                "mm",
-                wr.strip_a_mm if wr else None,
-                w.strip_a_mm,
+                hid, "wire", w.id, "strip A", "mm", strip_a, w.strip_a_mm,
                 needed=w.strip_a_mm is not None,
-            ),  # fmt: skip
+                check=None if strip_a is None or w.strip_a_mm is None else length_check(project, "strip A", "mm", strip_a, w.strip_a_mm),
+            ),
             _value_line(
-                hid,
-                "wire",
-                w.id,
-                "strip B",
-                "mm",
-                wr.strip_b_mm if wr else None,
-                w.strip_b_mm,
+                hid, "wire", w.id, "strip B", "mm", strip_b, w.strip_b_mm,
                 needed=w.strip_b_mm is not None,
-            ),  # fmt: skip
-        ):
+                check=None if strip_b is None or w.strip_b_mm is None else length_check(project, "strip B", "mm", strip_b, w.strip_b_mm),
+            ),
+        ):  # fmt: skip
             if line is not None:
                 lines.append(line)
     for pin in _crimped_pins(h):

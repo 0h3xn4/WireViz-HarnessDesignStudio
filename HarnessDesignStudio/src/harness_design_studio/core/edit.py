@@ -6,11 +6,12 @@ edit is a transaction that is rolled back if it would leave the project inconsis
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Collection, Mapping
 from dataclasses import dataclass
 
 from pydantic import TypeAdapter, ValidationError
 
+from . import connector_choice
 from .commands import Delete, Op, Put, SetConfig, SetZones
 from .describe import part_gender
 from .errors import HarnessError
@@ -383,6 +384,19 @@ def free_connectors(project: Project, unit_id: str, type_id: str) -> list[Connec
     ]
 
 
+def choose_connector(
+    project: Project, unit_id: str, type_id: str, avoid: Collection[str] = ()
+) -> Connector | None:
+    """The connector the tool chooses for an interface of this type at a device: the first of the
+    free connectors that carry the type in the order of the model `model.connector_choice`
+    (`connector_choice.ranked`), leaving out the connectors in `avoid`. None when there is none."""
+    free = [c for c in free_connectors(project, unit_id, type_id) if c.id not in avoid]
+    ranked = connector_choice.ranked(
+        connector_choice.method(project), free, project.interface_types.get(type_id)
+    )
+    return ranked[0] if ranked else None
+
+
 def _type_name(project: Project, type_id: str) -> str:
     t = project.interface_types.get(type_id)
     return t.name if t else type_id
@@ -700,14 +714,10 @@ def ops_add_interface(
             )
             if not compat.ok:
                 raise EditError(compat.why)
-            free = [
-                c
-                for c in free_connectors(project, unit_id, type_id)
-                if c.id not in (avoid_connectors or set())
-            ]
-            if not free:
+            pick = choose_connector(project, unit_id, type_id, avoid_connectors or ())
+            if pick is None:
                 raise EditError(f"{unit_id} has no free {_type_name(project, type_id)} connector.")
-            chosen.append((unit_id, free[0].id, True))
+            chosen.append((unit_id, pick.id, True))
         else:
             compat = connector_compat(
                 project, type_id, conn_id, from_unit if unit_id == to_unit else None
@@ -862,10 +872,10 @@ def ops_complete_chain(project: Project, interface_id: str) -> tuple[list[Op], s
         scratch = clone_with(project, ops)
     conn = _twin_connector(end, tid)
     if conn is None or not connector_compat(scratch, i.type_id, conn).ok:
-        free = free_connectors(scratch, tid, i.type_id)
-        if not free:
+        pick = choose_connector(scratch, tid, i.type_id)
+        if pick is None:
             raise EditError(f"{tid} has no free {_type_name(project, i.type_id)} connector.")
-        conn = free[0].id
+        conn = pick.id
     eps = [
         Endpoint(unit_id=tid, connector_id=conn, auto=end.auto) if e is end else e
         for e in i.endpoints

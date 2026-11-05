@@ -331,8 +331,11 @@ def _json_section() -> list[str]:
         "the reasons in it. The same documents are what the Python interface gives "
         "([`user-manual/script-the-tool.md`](user-manual/script-the-tool.md)).",
         "",
-        "`explain OBJECT --json` prints a list of derivations and `settings --json` the document of "
-        "settings, definitions and assumptions, both as they did before (neither has an `ok`); "
+        "`explain OBJECT --json` prints a list of derivations (each with the keys of the row "
+        "`explain OBJECT` below; `model_page` is the page of `docs/models/` that explains the kind "
+        "of derivation, and a derivation whose result is a text also has `text` after `missing`) "
+        "and `settings --json` the document of "
+        "settings, definitions and assumptions, both without an `ok`; "
         "`explain --all --out FOLDER --json` prints the document below. "
         "`export --out FOLDER` writes the outputs to FOLDER instead of `<project>/outputs`. "
         "`export` and `generate` take `--run-record [--author NAME]`: the record of the run "

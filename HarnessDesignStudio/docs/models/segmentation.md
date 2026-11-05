@@ -18,7 +18,7 @@ Generation puts every interface that has two devices, two connectors and a type 
 
 ## The rule
 
-The key depends on `segmentation.mode`:
+The key depends on `segmentation.mode` (the method is chosen with this key and the `segregation` keys; the table of every key that selects it is on [selectable models](selectable-models.md#segmentation)):
 
 | Mode | Interfaces share a harness when they have the same |
 | --- | --- |
