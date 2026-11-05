@@ -19,6 +19,7 @@ This manual has one page for each job you do with Harness Design Studio, written
 | make a quick block diagram of a set-up, with no checks and no paperwork, and save it as a picture | [Make a block diagram in five minutes](quick-diagram.md) |
 | start a project and draw devices and links | [Draw the design](draw-the-design.md) |
 | join a connector of one device to a connector of another, pin by pin, from the names on the pins, and check the result | [Connect two connectors](connect-two-connectors.md) |
+| understand the pictures and colours of the devices on the diagram, and what makes a device look like a battery or a wheel | [Telling devices apart](telling-devices-apart.md) |
 | add a backup chain, or put devices in other lanes | [Redundancy and zones](redundancy-and-zones.md) |
 | have the tool make connectors, pins and wires | [Generate harnesses](generate-harnesses.md) |
 | understand an error or a warning, or waive one | [Read and fix problems](read-and-fix-problems.md) |
@@ -53,6 +54,7 @@ The numbers follow the order of the work. The first page is the one the editor s
 1. [Choose your role](choose-your-role.md): Systems engineer, Electrical engineer or AIT engineer (since S9), and what each shows first; the Next step page, one thing to do at a time. The Next step page is from 1.7.0, the roles after it.
 1a. [Make a block diagram in five minutes](quick-diagram.md): Quick mode, a short layout for a quick picture: New project, Add device, Connect, Export diagram (SVG, PDF and PNG); what Quick mode hides and how to leave it.
 2. [Draw the design](draw-the-design.md): start a project; add devices; connect them; guided and expert mode; save.
+2a. [Telling devices apart](telling-devices-apart.md): the picture, colour and shape of each kind of device on the diagram, how the tool reads the kind from the name, where the words are (tooltip, Inspector, legend); nothing is stored or written. Not in a release yet.
 3. [Redundancy and zones](redundancy-and-zones.md): the redundant copy of a device; links between the chains; lanes.
 4. [Generate harnesses](generate-harnesses.md): preview, apply and undo; the independent check; the Harness tab and its "Why" pane; how links are grouped.
 5. [Read and fix problems](read-and-fix-problems.md): errors, warnings and notes; fixes; waivers; `harness-design-studio drc`.
