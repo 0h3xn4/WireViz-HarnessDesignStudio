@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Changed for you to know
+
+- **Quick mode is quieter (leftovers of 1.14.0).** With Quick mode on, the status bar no longer shows the automatic *Checking the design rules* progress and the project tree no longer shows the *N pending* and *Placeholder* chips of **Configuration**; both come back when you leave Quick mode. The check itself still runs in the background, and a check you ask for (Ctrl+K, *Check*) still shows its progress. Only what the window shows changes: no project file, model hash or written output does.
+
 ## 1.14.0 (2026-11-04; not a statement of compliance)
 
 Version 1.14.0 is the **quick-diagram release** (decision D-197). Workshop and owner feedback said that the tool was too much for a systems engineer who only wants a quick block diagram, that labels on the diagram lay on top of each other, and that things should be movable. This release answers with a **Quick mode** (off by default, on top of any role) with one-click **Connect**, a new **Export diagram** command, a visible **Role** button in the top bar, a diagram whose labels and connector boxes no longer overlap, and labels you can drag to where you want them. The calculations, the 39 design rules and the numbers are as in 1.13.0.

@@ -3389,7 +3389,9 @@ class MainWindow(QMainWindow):
             }.get(self.busy, self.busy)
             worker = self._active_worker
             self.jobs.start(text, cancel=worker.cancel if worker is not None else None)
-        elif self.ctl.drc_busy():
+        elif self.ctl.drc_busy() and (self._check_asked or not self.quick_on()):
+            # (Quick mode: the automatic check runs in the background without a word; a check the
+            # person asked for still shows its progress)
             self.jobs.start(strings.JOB_CHECKING, cancel=self.ctl.cancel_check)
         else:
             self.jobs.finish()
@@ -5020,6 +5022,8 @@ class MainWindow(QMainWindow):
         self.mode_guided.setVisible(not quick)
         self.mode_expert.setVisible(not quick)
         self.act_problem_notices.setEnabled(not quick)
+        self.project_tree.set_quick(quick)  # (no "N pending" chips)
+        self._update_jobs()  # (and no automatic "Checking the design rules" progress)
         self._apply_problem_notices()
         self._update_banner()
         self._sync_settings_page()
