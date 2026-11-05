@@ -42,7 +42,8 @@ from harness_design_studio.core.wirecolours import signal_colour
 from . import bundle, shields
 from .lengths import generated_length, path_length, path_trail
 from .naming import Namer, namer_for
-from .pins import Allocation, Request, allocate
+from .pins import DEFAULT_STRATEGY, STRATEGY_TEXT, Allocation, Request, allocate, earlier_strategy
+from .pins import strategy as pin_strategy
 from .segmentation import Group, orient, segment
 from .sizing import size_wire
 from .wiring import links_of
@@ -292,6 +293,7 @@ def plan_generation(
             new_harnesses[h.id] = h
 
     _warn_shared_connectors(ctx, new_harnesses, frozen)
+    _warn_equal_labels(ctx, new_harnesses)
 
     # report: frozen, removed, added/changed/unchanged
     for g in seg.groups:
@@ -433,6 +435,12 @@ def _allocate_pins(
     if ctx.gen.get("power_signal_gap_pins") is None:
         ctx.note("rules", "pin-allocation: power-to-signal pin gap is a placeholder (0 used)")
     ret_gap = int(_num(ctx.gen.get("power_return_gap_pins")) or 0)
+    fit = pin_strategy(p)
+    # An earlier allocation is kept while it is valid, but only if it was made by the same fit:
+    # the strategy of a non-default model is recorded below, so a change of model re-places the pins.
+    earlier = earlier_strategy(p)
+    if fit != DEFAULT_STRATEGY:
+        ctx.note("model:pin_fit_strategy", f"{fit}: {STRATEGY_TEXT[fit]}")
     for k, cid in enumerate(sorted(requests)):
         tick(0.05 + 0.15 * k / max(1, len(requests)), f"Allocating pins of {cid}")
         box = p.connectors[cid]
@@ -469,11 +477,12 @@ def _allocate_pins(
         res = allocate(
             work,
             requests[cid],
-            {k2: v for k2, v in previous.items() if k2[0] not in frozen_ifaces},
+            {k2: v for k2, v in previous.items() if k2[0] not in frozen_ifaces and earlier == fit},
             gap,
             held,
             ret_gap,
             settings.names(ctx.project, "model", "pin_allocation_categories"),
+            fit,
         )
         ctx.alloc[cid] = res
         for iid, msg in res.errors:
@@ -545,6 +554,27 @@ def _connector_ops(ctx: _Ctx, frozen_ifaces: set[str]) -> list[Op]:
 def _pin_of(ctx: _Ctx, connector_id: str, interface_id: str, signal: str) -> str | None:
     res = ctx.alloc.get(connector_id)
     return res.pins.get((interface_id, signal)) if res else None
+
+
+def _warn_equal_labels(ctx: _Ctx, harnesses: dict[str, Harness]) -> None:
+    """Two labels of a harness that read the same cannot be told apart on the wire: with the format
+    `custom` a template may leave the wire ID out. Warn for each such text (A-LABEL-FORMAT)."""
+    from harness_design_studio.core import label_format
+    from harness_design_studio.core.outputs.tables import label_duplicates
+
+    fmt = label_format.format_of(ctx.project)
+    if fmt != "custom":  # the other formats hold the ID of the wire or of the connector
+        return
+    for h in sorted(harnesses.values(), key=lambda x: x.id):
+        for text, ids in label_duplicates(ctx.project, h):
+            ctx.finding(
+                "warning",
+                "label_not_unique",
+                f"{h.id}: the labels {', '.join(ids)} all read '{text}' with the label format "
+                f"{fmt}; change model.label_wire_template or model.label_connector_template so that "
+                "each label of a harness reads differently.",
+                h.id,
+            )
 
 
 def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | None:

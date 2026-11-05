@@ -12,7 +12,12 @@ Until version 1.12 some of the tool's calculations were fixed in the program. Ea
 - [The return path](#the-return-path)
 - [Mass model](#mass-model)
 - [Pin allocation order](#pin-allocation-order)
+- [Pin fit strategy](#pin-fit-strategy)
+- [Connector choice](#connector-choice)
+- [Segmentation](#segmentation)
+- [Label format](#label-format)
 - [What makes a harness not ready to build](#what-makes-a-harness-not-ready-to-build)
+- [Allowance and spares in the bill of materials](#allowance-and-spares-in-the-bill-of-materials)
 - [What the choices do not do](#what-the-choices-do-not-do)
 
 ## How to choose
@@ -44,7 +49,14 @@ Every key of the file, its default (the number the tool has always used) and wha
 | `single_path_conductors` | `1` | the conductors counted for every other wire | A-ROUND-TRIP |
 | `mass_model` | `connectors_and_wires` | what the mass counts | A-MASS-SCOPE |
 | `pin_allocation_categories` | power, ground | the categories given pins first, in this order | A-PIN-ORDER |
+| `pin_fit_strategy` | `first_fit` | which free run of pins a group of signals takes | A-PIN-FIRST-FIT |
+| `connector_choice` | `first_free` | which free connector the tool takes for an interface | A-CONNECTOR-CHOICE |
+| `label_format` | `standard` | the text of the labels of wires and cable connectors | A-LABEL-FORMAT |
+| `label_wire_template` | not set | the template of a wire label, for the format `custom` | A-LABEL-FORMAT |
+| `label_connector_template` | not set | the template of a cable connector label, for the format `custom` | A-LABEL-FORMAT |
 | `readiness_blocking` | Wires without a length, Wires without a gauge, Wires without a colour, Wires without a part | the checks whose open items make *Ready to build* no | A-READY-CHECKS |
+| `bom_wire_allowance_fraction` | `0` | the fraction of the wire metres added to a wire part in the bill of materials | A-BOM-NO-ALLOWANCE |
+| `bom_contact_spare_fraction` | `0` | the fraction of the contacts used added as spares, for each harness and contact part, rounded up | A-BOM-CONTACTS |
 
 ## Bundle basis
 
@@ -99,9 +111,76 @@ Both are DC drops of a solid round conductor (A-DC-SOLID); neither is an AC or s
 
 `pin_allocation_categories` (default `power`, `ground`) lists the interface categories that are given pins first, in that order; every other category follows in its usual order. The categories listed also form the power group for `power_return_gap_pins`. Changing it moves signals to other pins, so it is a design decision, shown by `settings` and recorded with the harness.
 
+## Pin fit strategy
+
+`model.pin_fit_strategy` says which free run of pins a group of signals (a pair, a power block, a single signal) takes. The order of the categories (above) and the gaps `power_signal_gap_pins` and `power_return_gap_pins` stay as they are. Assumption A-PIN-FIRST-FIT.
+
+| Value | A group takes | Use when |
+| --- | --- | --- |
+| `first_fit` (default) | the first free run of neighbouring pins from pin 1 up; the signals follow the power block after the gap | the usual reading; the connector fills from the first pin |
+| `last_fit` | the last free run from the last pin down; power sits on the last pins and the signals below it, the gap between them; inside a group the pins still rise with the signal order | the free pins should stay at the start of the connector, for example for later additions at the front |
+| `spread` | the first free run that has a free pin on each side of it, apart from the other pins of its own interface; when an interface does not fit that way it is placed by `first_fit` | a pin that is not used between two interfaces helps a bad contact, a probe or a later change |
+
+A pin that is **locked** is never moved and never offered, a pin held by a released harness stays, a pair sits on neighbouring pins (a warning says when it cannot), and the `power_return_gap_pins` between the supply and return pin are kept by every strategy. On a connector with a **fixed pinout** the signal goes to the free pin of its name; `last_fit` takes the last such pin when a name occurs more than once, `spread` has nothing to spread. No pin ever carries two signals, and the result is the same every time.
+
+Worked by hand on a connector of 12 pins with no gaps and three interfaces, a power interface (`PWR`, `RTN`) and two RS-422 interfaces `IF-A` and `IF-B` (the pairs `TX+ TX-` and `RX+ RX-`): `first_fit` gives power 1-2, `IF-A` 3-6, `IF-B` 7-10; `last_fit` gives power 11-12, `IF-A` 9-10 and 7-8, `IF-B` 5-6 and 3-4; `spread` gives power 1-2, a free pin 3, `IF-A` 4-7, a free pin 8, `IF-B` 9-12. A change of the strategy re-places the pins at the next generation (an earlier allocation is kept only while it was made by the same strategy), and `explain DIR CONNECTOR.PIN` names the strategy in force and its rule; for the default it keeps its text.
+
+## Connector choice
+
+When an interface is made without naming the connector at a device (the editor's Connect, an import, *Choose connectors automatically*), the tool chooses one and marks it *chosen by the tool, not confirmed*. `model.connector_choice` says which. The candidates are always the same: the connectors of the device that carry the interface type and that no interface ends on yet; a connector that is used, does not carry the type, or belongs to another device is never chosen. A connector a person picked is never changed. Assumption A-CONNECTOR-CHOICE.
+
+| Value | The connector chosen | Use when |
+| --- | --- | --- |
+| `first_free` (default) | the first candidate in ID order | the devices have one connector per interface type |
+| `fewest_spare_pins` | the candidate with the fewest pins left over once the interface is on it (best fit): pins available minus signals of the type, among the candidates with enough pins; ties by ID. Candidates with too few pins follow in ID order | a device has connectors of several sizes and the large ones should be kept for large interfaces |
+| `most_spare_pins` | the candidate with the most pins left over; ties by ID | the small connectors should be kept for later, or room is wanted for added signals |
+
+The pins *available* are the pins that are not locked and have no signal typed in by a person (a pin that carries a generated assignment counts, because generation rewrites it); on a connector with a fixed pinout they are the named, unlocked pins, and the interface fits when every signal of the type has a named pin. A hand count: an OBC with free connectors of 3, 9, 15, 4 and 15 pins and an interface of 4 signals has 3 pins too few on the first, then 5, 11, 0 and 11 pins left over; `first_free` takes the 3-pin connector (as it always did, and the pin allocation then reports too few pins), `fewest_spare_pins` the 4-pin connector, `most_spare_pins` the first of the two 15-pin connectors. `explain DIR CONNECTOR` shows the model in force and the candidates in its order with the numbers it chose from; for the default it keeps its text. Changing the model does not move a connector that is already chosen.
+
+## Segmentation
+
+How interfaces share a harness was already a choice before this page: `segmentation.mode` selects the method, and two flags and a list of `segregation.json` keep chains, pyro lines and categories apart. It is not a `model.` key, so it is not in the table of `model.json` above; it is in the same place for `settings` and `explain` (the harness page names the mode and the key), and in [segmentation](segmentation.md). Which key selects what:
+
+| Key | Value | Interfaces share a harness when they have the same |
+| --- | --- | --- |
+| `segmentation.mode` | `per_connector_pair` (default) | pair of device connectors, and chain |
+| `segmentation.mode` | `per_unit_pair` | pair of devices, chain and class |
+| `segmentation.mode` | `per_zone_pair` | pair of zones, chain and class |
+| `segregation.forbid_nominal_with_redundant` | `true` (default) / `false` | the nominal and the redundant chain never share a harness (`true`) or may (`false`) |
+| `segregation.forbid_pyro_with_other` | `true` (default) / `false` | a pyro line gets a harness of its own, in the two coarser modes |
+| `segregation.category_pairs_to_separate` | pairs of categories | the listed pairs of interface categories get harnesses of their own, in the two coarser modes |
+
+Two more methods were considered and not made. *One harness for everything* has no meaning for a harness, which has two ends: the interfaces between three devices would need the connectors of one device at both ends. *One harness for each interface* is what `per_connector_pair` already gives wherever each connector carries one interface, which the editor insists on (*One interface per connector*) and which holds in all four examples; where two interfaces do end on one pair of connectors (a project from an import), they must share the harness, because a connector takes one plug and a second harness could not mate it. The three modes above are the methods the design supports.
+
+## Label format
+
+`model.label_format` says what is printed on the labels of the *Labels* table and sheet. Assumption A-LABEL-FORMAT. The colour of a wire is not part of it: the colour table `generation.wire_colour_by_signal` is a setting of its own (assumption A-COLOUR-TABLE) and stays one.
+
+| Value | A wire label (end A of `W001-001` of the flatsat) | A connector label |
+| --- | --- | --- |
+| `standard` (default) | `W001-001 PWR to W001-P11.1` (`[EMC x]` added when the interface type has a class) | `W001-P1 mates MTQ1-J01`, with the name in front when there is one |
+| `compact` | `W001-001 to W001-P11.1` | `W001-P1 mates MTQ1-J01` (no name) |
+| `descriptive` | `W001-001 PWR (IF-010 Power for wheel 1) to W001-P11.1` (the interface of the wire) | `W001-P1 mates MTQ1-J01 of MTQ1` (the device) |
+| `custom` | the template `model.label_wire_template`, filled in for each end | the template `model.label_connector_template` |
+
+A template is text with places in braces: for a wire `{harness}`, `{wire}`, `{signal}`, `{name}`, `{interface}`, `{emc}`, `{end}` (A or B), `{from}` (connector and pin at the end the label is printed at) and `{to}` (the far end); for a connector `{harness}`, `{connector}`, `{name}`, `{mates}` and `{device}`. `{{` and `}}` are braces in the text. A place that does not exist is refused when you set it (`settings --set` names it and changes nothing), and so are a single brace, a format specification or a lookup such as `{wire.id}` or `{0}`: the tool only replaces the names listed, and runs nothing. A template that is not set gives the standard text of its kind. With `{harness}/{wire} {end}: {from} > {to} ({signal})`, label A of `W001-001` reads `W001/W001-001 A: W001-P2.1 > W001-P11.1 (PWR)`.
+
+The label texts of one harness must read differently from one another. `standard`, `compact` and `descriptive` hold the ID of the wire or of the connector, so they do; a `custom` template may leave it out, and then generation warns (`label_not_unique`) naming the harness and the labels that read the same. `explain DIR WIRE` and `explain DIR CONNECTOR` name the format, give its rule and the text of each label, and say whether the labels of the harness read differently.
+
 ## What makes a harness not ready to build
 
 `readiness_blocking` is the list of checks of the build workbook whose open items turn *Ready to build* into **no**. The default is the first four (length, gauge, colour, part); the others (termination, strip length, contact part, approval) are notes. Add a name to make a check blocking, or remove one to make it a note. A name that is not a check of the workbook is refused. The same list decides the verdict of the release check.
+
+## Allowance and spares in the bill of materials
+
+The bill of materials counts what is drawn (A-BOM-NO-ALLOWANCE, A-BOM-CONTACTS), and both numbers below are 0 until you set them, so a project without them gets the quantities it always got.
+
+| Key | Adds | Example |
+| --- | --- | --- |
+| `bom_wire_allowance_fraction` | that fraction of the wire metres of every wire part, as a line of kind *wire allowance* for each wire | in the `flatsat` example `EX-WIRE-SINGLE` is 165.2 m; with 0.1 it is 165.2 + 16.52 = 181.72 m, and `explain DIR EX-WIRE-SINGLE` shows the allowance and the fraction as an input |
+| `bom_contact_spare_fraction` | for each harness and contact part, that fraction of the contacts used, rounded up to a whole contact, as a line of kind *contact spare* | a harness that uses 9 contacts of a part, with 0.25: 9 × 0.25 = 2.25, rounded up to 3 spares for that harness; each harness is rounded on its own |
+
+The allowance applies to the metres of wire parts only: a connector part, an accessory part and a length in the drawings or the wire list never get one, and the mass, the cut lengths and the test sheet do not change (the mass model `full_bom` counts what is drawn, not what is ordered). The allowance is a fraction of the metres counted for the part (for a twisted pair part those are already divided by its conductors). A wire with no length adds neither metres nor allowance.
 
 ## What the choices do not do
 

@@ -18,7 +18,7 @@ Generation puts every interface that has two devices, two connectors and a type 
 
 ## The rule
 
-The key depends on `segmentation.mode`:
+The key depends on `segmentation.mode` (the method is chosen with this key and the `segregation` keys; the table of every key that selects it is on [selectable models](selectable-models.md#segmentation)):
 
 | Mode | Interfaces share a harness when they have the same |
 | --- | --- |
@@ -42,7 +42,7 @@ The key depends on `segmentation.mode`:
 ## The assumptions it rests on
 
 - **A-SEGMENT-MODE.** The mode decides which interfaces share a harness; the segregation settings keep chains, pyro lines and listed categories apart.
-- **A-ZONE.** The zone of a device is a field of the device. Dragging a device box into another zone in the block diagram rewrites that field (the editor says so in a message), and the grouping per zone pair changes with it.
+- **A-ZONE.** The zone of a device is a field of the device. Dragging a device box into another zone in the block diagram rewrites that field (the editor says so in a message), and the grouping per zone pair changes with it. Stays built in: it states where the zone is kept (a field of the device); how the zones group the harnesses is the setting `segmentation.mode`.
 
 ## A worked example
 

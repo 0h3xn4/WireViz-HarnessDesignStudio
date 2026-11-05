@@ -11,7 +11,7 @@ import math
 import re
 from dataclasses import dataclass
 
-from harness_design_studio.core import counterparts, settings, standard_profiles
+from harness_design_studio.core import counterparts, label_format, settings, standard_profiles
 from harness_design_studio.core.commands import Op, SetConfig
 from harness_design_studio.core.issues import Issue
 from harness_design_studio.core.model import Project
@@ -196,12 +196,21 @@ _MODEL_NUMBERS: dict[str, tuple[float, float, bool]] = {  # key: (lowest, highes
     "twist_takeup_fraction": (0, 0.5, False),
     "resistivity_temperature_coefficient": (0, 0.01, False),
     "resistivity_reference_temperature_c": (-100, 200, False),
+    "bom_wire_allowance_fraction": (0, 1, False),
+    "bom_contact_spare_fraction": (0, 1, False),
 }
 _MODEL_CHOICES: dict[str, tuple[str, ...]] = {
     "bundle_basis": ("all_wires", "loaded_wires", "busiest_segment"),
     "length_model": ("path_plus_loops", "path_loops_allowance_twist"),
     "drop_model": ("dc_solid", "dc_at_ambient"),
     "mass_model": ("connectors_and_wires", "full_bom"),
+    "pin_fit_strategy": ("first_fit", "last_fit", "spread"),
+    "connector_choice": ("first_free", "fewest_spare_pins", "most_spare_pins"),
+    "label_format": ("standard", "compact", "descriptive", "custom"),
+}
+_MODEL_TEMPLATES = {  # key: the fields its text may use (core/label_format.py)
+    "label_wire_template": label_format.WIRE_FIELDS,
+    "label_connector_template": label_format.CONNECTOR_FIELDS,
 }
 _MODEL_NAMES = ("return_path_categories", "pin_allocation_categories", "readiness_blocking")
 
@@ -218,7 +227,7 @@ def validate_model(project: Project) -> list[Issue]:
             Issue("error", "config_invalid", f"{where}: {key} {why}.", where, f"model.{key}")
         )
 
-    known = set(_MODEL_NUMBERS) | set(_MODEL_CHOICES) | set(_MODEL_NAMES)
+    known = set(_MODEL_NUMBERS) | set(_MODEL_CHOICES) | set(_MODEL_NAMES) | set(_MODEL_TEMPLATES)
     for key, v in values.items():
         if key not in known:
             bad(key, "is not a setting of the model (see harness-design-studio settings)")
@@ -227,6 +236,11 @@ def validate_model(project: Project) -> list[Issue]:
         elif key in _MODEL_CHOICES:
             if v not in _MODEL_CHOICES[key]:
                 bad(key, f"must be one of {', '.join(_MODEL_CHOICES[key])}")
+        elif key in _MODEL_TEMPLATES:
+            if not isinstance(v, str):
+                bad(key, 'must be text, for example "{wire} to {to}"')
+            elif v.strip() and (why := label_format.check_template(v, _MODEL_TEMPLATES[key])):
+                bad(key, why)
         elif key in _MODEL_NAMES:
             if not isinstance(v, list) or not all(isinstance(c, str) and c for c in v):
                 bad(key, 'must be a list of names, for example ["power", "ground"]')

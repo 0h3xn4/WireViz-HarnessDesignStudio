@@ -35,6 +35,7 @@ from PySide6.QtWidgets import (
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.io.fs import atomic_write_bytes
 from harness_design_studio.core.outputs.build import MANIFEST
+from harness_design_studio.core.outputs.verify import OPEN_DATA_FOLDER
 from harness_design_studio.gui import export_docs, icons, strings
 from harness_design_studio.gui.controller import EditorController
 from harness_design_studio.gui.empty_state import attach_empty_state
@@ -105,6 +106,8 @@ def state_of(f: FileFacts) -> tuple[str, str]:
         return "info", strings.OUT_STATE_MANIFEST
     if f.sha256 == "":
         return "fail", strings.OUT_STATE_MISSING
+    if f.listed == "" and f.rel.startswith(f"{OPEN_DATA_FOLDER}/"):
+        return "info", strings.OUT_STATE_OPEN_DATA  # (written beside the outputs on purpose)
     if f.listed == "":
         return "warning", strings.OUT_STATE_UNLISTED
     if f.sha256 != f.listed:

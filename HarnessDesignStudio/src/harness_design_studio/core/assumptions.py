@@ -5,8 +5,10 @@ an engineer typed into `config/*.json` but a choice built into the program: the 
 the current going out and coming back, a bundle is every wire of the harness, and so on. Those
 choices are listed here, in plain words, so that nobody has to say "the tool computed it". This is
 the seed of the registry of constants and assumptions of the transparency work (D-191): today every
-entry has `kind == "built in"` and cannot be changed without editing the program; each one that
-becomes a setting changes its kind and names its configuration key.
+entry that still has `kind == "built in"` cannot be changed without editing the program; each one
+that became a setting changed its kind and names its configuration key. What stays built in is a
+statement about the method (what is counted, in which order, by which form), not a number or a
+choice among listed alternatives; `docs/transparency_final_audit.md` says why for each.
 """
 
 from dataclasses import dataclass
@@ -115,23 +117,27 @@ ASSUMPTIONS: dict[str, Assumption] = {
         ),
         Assumption(
             "A-BOM-CONTACTS",
-            "A contact part is counted once for each pin that has a wire",
+            "A contact part is counted once for each pin that has a wire, plus the spares asked for",
             "A pin that names a contact part adds one of that part to the bill of materials when a "
-            "wire of the harness is attached to it, and nothing otherwise: no spare contacts, no "
-            "contacts for the pins of a connector that nobody uses.",
-            "built in",
-            "core/outputs/tables.py (bom_contributions), core/generate/mass.py (pins_in_use)",
+            "wire of the harness is attached to it, and nothing otherwise: no contacts for the pins "
+            "of a connector that nobody uses. By default no spare contact is added; the setting "
+            "model.bom_contact_spare_fraction adds, for each harness and contact part, that fraction "
+            "of the contacts used as spares, rounded up to a whole contact.",
+            "setting",
+            "config/model.json: bom_contact_spare_fraction (default 0); core/outputs/tables.py (bom_contributions), core/generate/mass.py (pins_in_use)",
         ),
         Assumption(
             "A-BOM-NO-ALLOWANCE",
-            "The bill of materials counts what is drawn, with no spares or waste",
+            "The bill of materials counts what is drawn, with an allowance on wire only if asked for",
             "A connector part is counted once per connector, a wire part in metres as the sum of the "
             "lengths of its wires (each length already includes the service loops) divided by the "
-            "conductors of the part, and an accessory part by its quantity or its length. No spare, "
-            "overage, cut allowance or waste is added. A wire with no length adds nothing and is "
+            "conductors of the part, and an accessory part by its quantity or its length. By default "
+            "no spare, overage, cut allowance or waste is added; the setting "
+            "model.bom_wire_allowance_fraction adds that fraction of the wire metres. A connector or "
+            "an accessory part never gets an allowance. A wire with no length adds nothing and is "
             "counted in the column Wires without length.",
-            "built in",
-            "core/outputs/tables.py (bom_contributions)",
+            "setting",
+            "config/model.json: bom_wire_allowance_fraction (default 0); core/outputs/tables.py (bom_contributions)",
         ),
         Assumption(
             "A-CONTACT-SHARED",
@@ -204,9 +210,11 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "harness, is never moved. A pin a person typed in without a lock stays. A connector with a "
             "fixed pinout gives each signal the free pin of that name. A previous allocation is kept "
             "while it is still valid, so a small change makes a small difference. Pin neighbours are the "
-            "neighbours in the list of pins, not a measured position.",
-            "built in",
-            "core/generate/pins.py (allocate)",
+            "neighbours in the list of pins, not a measured position. This is the default fit; the setting "
+            "model.pin_fit_strategy selects another: last_fit (the last free run, from the last pin down, "
+            "power at the end) or spread (a free pin between one interface and the next when there is room).",
+            "setting",
+            "config/model.json: pin_fit_strategy (default first_fit); core/generate/pins.py (allocate)",
         ),
         Assumption(
             "A-SEGMENT-MODE",
@@ -232,14 +240,17 @@ ASSUMPTIONS: dict[str, Assumption] = {
         ),
         Assumption(
             "A-LABEL-FORMAT",
-            "A label has a fixed form",
+            "A label has the form of the label format in force (the standard one by default)",
             "A wire has two labels, A and B. Each reads: the wire ID, then the name (the label a person "
             "gave the wire, else its signal), then 'to' and the far end (connector and pin), then the EMC "
             "class in brackets when the interface type has one. A cable connector label reads its own "
             "label, else the label of the device connector it plugs into, then 'ID mates DEVICE-CONNECTOR'. "
-            "The form is built into the tool; only the words come from the design.",
-            "built in",
-            "core/outputs/tables.py (wire_label_texts, connector_label_text)",
+            "This is the format standard. The setting model.label_format selects compact (ID and far end "
+            "only), descriptive (with the interface and the device) or custom (the templates "
+            "model.label_wire_template and model.label_connector_template); the words always come from "
+            "the design.",
+            "setting",
+            "config/model.json: label_format, label_wire_template, label_connector_template; core/label_format.py, core/outputs/tables.py (wire_label_texts, connector_label_text)",
         ),
         Assumption(
             "A-COLOUR-TABLE",
@@ -278,11 +289,12 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "A connector is the first free one that carries the type; the cable end is the mating part",
             "When the tool chooses the connector of an interface at a device, it takes the first free "
             "connector of that device (in ID order) that carries the interface type, and marks it as "
-            "chosen for you until a person confirms it. The cable end of a device connector is the part "
+            "chosen for you until a person confirms it. The setting model.connector_choice selects "
+            "another order of the same candidates: fewest_spare_pins (best fit) or most_spare_pins. The cable end of a device connector is the part "
             "the library names as its mating part; a part with none is mated with itself, and "
             "generation says so. Gender is the opposite of the device connector's, and keying is copied.",
-            "built in",
-            "core/checks.py (_assign_connectors), core/edit.py (free_connectors), core/generate/engine.py (_build_harness)",
+            "setting",
+            "config/model.json: connector_choice (default first_free); core/edit.py (choose_connector), core/generate/engine.py (_build_harness)",
         ),
         Assumption(
             "A-SPARE-PINS",
@@ -352,6 +364,37 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "part, and the tool supplies no value.",
             "setting",
             "config/generation.json: asbuilt_cut_tolerance_mm, asbuilt_strip_tolerance_mm",
+        ),
+        Assumption(
+            "A-PIN-ONE-WIRE",
+            "One wire to a pin is the limit",
+            "The rule pin-shared reports every pin of a harness on which more than one wire ends: "
+            "the limit is one wire, whatever the contact or the crimp could hold. It is not a number "
+            "the project can set; a design that needs two wires in one contact waives the finding "
+            "with a reason.",
+            "built in",
+            "core/drc/rules.py (_pin_shared), core/derive_rules.py (_pin_shared)",
+        ),
+        Assumption(
+            "A-WIRE-VOLTAGE",
+            "The working voltage of a wire is compared with a share of the rated voltage of its part",
+            "The working voltage of the interface a wire belongs to is compared with the share "
+            "derating.wire_voltage_factor of the rated voltage of the wire part. The share is one "
+            "number for every wire; the rating is that of the part in the library, not of the "
+            "insulation of this wire in this harness. A wire whose part has no rated voltage is not "
+            "checked, and the voltage is the interface's one number, not a waveform.",
+            "setting",
+            "config/derating.json: wire_voltage_factor",
+        ),
+        Assumption(
+            "A-EMC-ONE-BUNDLE",
+            "Interfaces of one EMC class between two devices run in one bundle, when the rule is on",
+            "While emc.same_class_one_bundle is true, the rule emc-class-split counts the harnesses "
+            "that carry interfaces of one EMC class between the same two devices, and reports more "
+            "than one. The limit, one bundle, is the reading of ECSS-E-ST-20-07C 4.2.13.1 b built "
+            "into the rule; only switching the rule on or off is a setting.",
+            "setting",
+            "config/emc.json: same_class_one_bundle",
         ),
     )
 }

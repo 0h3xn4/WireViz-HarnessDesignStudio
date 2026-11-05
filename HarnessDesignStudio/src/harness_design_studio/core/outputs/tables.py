@@ -12,11 +12,13 @@ each contact part once per pin in use of the harness (unit `ea`) and each access
 sum(length_mm x quantity) / 1000 (unit `m`), together with the wire length of the same part. A part
 used both ways has one line per unit (`ea` first, then `m`); the key of a line is part and unit."""
 
+import math
 from collections import defaultdict
 from collections.abc import Collection, Iterator
 from dataclasses import dataclass
 from decimal import Decimal
 
+from harness_design_studio.core import label_format, settings
 from harness_design_studio.core.deviations import (
     override_text,
     tests_cell,
@@ -292,7 +294,9 @@ class BomContribution:
     unit: str  # "ea" or "m"
     amount: float  # a count for "ea", metres for "m"; 0 for a wire whose length is unknown
     harness_id: str
-    kind: str  # "connector", "contact", "wire" or "accessory"
+    # "connector", "contact", "wire" or "accessory"; "contact spare" and "wire allowance" only when
+    # the setting model.bom_contact_spare_fraction or model.bom_wire_allowance_fraction is above 0
+    kind: str
     source: str  # the ID of the connector, pin (connector.pin), wire or accessory
     unknown: bool = False  # a wire with no length: it adds nothing to the metres
 
@@ -300,16 +304,30 @@ class BomContribution:
 def bom_contributions(project: Project, harnesses: list[Harness]) -> list[BomContribution]:
     """What the BOM counts, in the order it counts it: connector parts and contact parts (one per
     pin in use) in `ea`; wire parts in metres (the wire's length over the conductors of its part);
-    accessory parts in `ea`, or in metres when they have a length."""
+    accessory parts in `ea`, or in metres when they have a length. The two settings of
+    `config/model.json` that are 0 by default add lines of their own: spare contacts (A-BOM-CONTACTS)
+    and an allowance on the wire metres (A-BOM-NO-ALLOWANCE)."""
     found: list[BomContribution] = []
+    spare_fraction = settings.number(project, "model", "bom_contact_spare_fraction")
+    allowance = settings.number(project, "model", "bom_wire_allowance_fraction")
     for h in harnesses:
         in_use = pins_in_use(h)
+        contacts: dict[str, int] = defaultdict(int)
         for c in h.connectors:
             found.append(BomContribution(c.part_id, "ea", 1, h.id, "connector", c.id))
             for p in c.pins:
                 if p.contact_part and (c.id, p.id) in in_use:
+                    contacts[p.contact_part] += 1
                     found.append(
                         BomContribution(p.contact_part, "ea", 1, h.id, "contact", f"{c.id}.{p.id}")
+                    )
+        if spare_fraction > 0:
+            for part_id, used in sorted(contacts.items()):
+                # rounded to 9 decimals first, so 30 x 0.1 is 3 spares and not 4 (float noise)
+                spares = math.ceil(round(used * spare_fraction, 9))
+                if spares:
+                    found.append(
+                        BomContribution(part_id, "ea", spares, h.id, "contact spare", part_id)
                     )
         for w in h.wires:
             pid = w.part_id or "(no part)"
@@ -320,6 +338,10 @@ def bom_contributions(project: Project, harnesses: list[Harness]) -> list[BomCon
                 part = project.parts.get(pid)
                 share = length / (part.conductors if part else 1)
                 found.append(BomContribution(pid, "m", share, h.id, "wire", w.id))
+                if allowance > 0:
+                    found.append(
+                        BomContribution(pid, "m", share * allowance, h.id, "wire allowance", w.id)
+                    )
         for a in h.accessories:
             if not a.part_id:
                 continue
@@ -474,23 +496,71 @@ def tests(project: Project, h: Harness, marks: bool = True) -> Table:
     return rows
 
 
-def wire_label_texts(project: Project, w: Wire) -> tuple[str, str]:
-    """The text of the two labels of a wire (end A and end B): the wire ID, its name (the person's
-    label, else the signal), the far end and the EMC class when the project uses classes."""
+def _harness_of(project: Project, w: Wire) -> Harness | None:
+    return next((h for h in project.harnesses.values() if w in h.wires), None)
+
+
+def wire_label_texts(project: Project, w: Wire, h: Harness | None = None) -> tuple[str, str]:
+    """The text of the two labels of a wire (end A and end B), by the label format in force
+    (`model.label_format`, core/label_format.py). The standard text: the wire ID, its name (the
+    person's label, else the signal), the far end and the EMC class when the project uses classes."""
     far = f"{w.to_connector}.{w.to_pin}"
     near = f"{w.from_connector}.{w.from_pin}"
     emc = emc_class_of(project, w)
     tag = f" [EMC {emc}]" if emc else ""  # personnel can see the category (20-07C 4.2.13.1 d)
     name = wire_name(w)
     head = f"{w.id} {name}" if name else w.id  # a signal name keeps its own spacing
+    fmt = label_format.format_of(project)
+    if fmt == "compact":
+        return f"{w.id} to {far}", f"{w.id} to {near}"
+    if fmt == "descriptive":
+        i = project.interfaces.get(w.interface_id or "")
+        head = f"{head} ({i.id} {i.name})" if i is not None else head
+    if fmt == "custom" and (tpl := label_format.template_of(project, "wire")) is not None:
+        owner = h or _harness_of(project, w)
+        values = {
+            "harness": owner.id if owner else "", "wire": w.id, "signal": w.signal or "",
+            "name": name, "interface": w.interface_id or "", "emc": emc,
+        }  # fmt: skip
+        return (
+            label_format.fill(tpl, {**values, "end": "A", "from": near, "to": far}),
+            label_format.fill(tpl, {**values, "end": "B", "from": far, "to": near}),
+        )
     return f"{head} to {far}{tag}", f"{head} to {near}{tag}"
 
 
-def connector_label_text(project: Project, c: Connector) -> str:
-    """The text of the label of a cable connector: its name and what it mates."""
+def connector_label_text(project: Project, c: Connector, h: Harness | None = None) -> str:
+    """The text of the label of a cable connector by the label format in force: its name and what
+    it mates."""
     name = connector_label(project, c)
     mates = f"{c.id} mates {c.mates_with or '-'}"
+    fmt = label_format.format_of(project)
+    if fmt == "compact":
+        return mates
+    box = project.connectors.get(c.mates_with or "")
+    if fmt == "descriptive" and box is not None and box.unit_id:
+        mates = f"{mates} of {box.unit_id}"
+    if fmt == "custom" and (tpl := label_format.template_of(project, "connector")) is not None:
+        owner = h or next((x for x in project.harnesses.values() if c in x.connectors), None)
+        return label_format.fill(
+            tpl,
+            {
+                "harness": owner.id if owner else "", "connector": c.id, "name": name,
+                "mates": c.mates_with or "-", "device": (box.unit_id or "") if box else "",
+            },
+        )  # fmt: skip
     return f"{name} ({mates})" if name else mates
+
+
+def label_duplicates(project: Project, h: Harness) -> list[tuple[str, list[str]]]:
+    """The label texts that two or more labels of the harness share: (text, the label IDs). The
+    labels of one harness must read differently from one another, whatever the format; the standard
+    and the compact text hold the wire ID, a custom template may leave it out."""
+    seen: dict[str, list[str]] = {}
+    for row in labels(project, h)[1:]:
+        if row[1] != "harness":
+            seen.setdefault(row[2], []).append(row[0])
+    return [(text, ids) for text, ids in seen.items() if len(ids) > 1]
 
 
 def labels(project: Project, h: Harness) -> Table:
@@ -498,9 +568,9 @@ def labels(project: Project, h: Harness) -> Table:
     if h.label:
         rows.append([h.id, "harness", h.label, "1"])
     for c in sorted(h.connectors, key=lambda x: x.id):
-        rows.append([f"{c.id}", "connector", connector_label_text(project, c), "1"])
+        rows.append([f"{c.id}", "connector", connector_label_text(project, c, h), "1"])
     for w in sorted(h.wires, key=lambda x: x.id):
-        text_a, text_b = wire_label_texts(project, w)
+        text_a, text_b = wire_label_texts(project, w, h)
         rows.append([f"{w.id}-A", "wire", text_a, "1"])
         rows.append([f"{w.id}-B", "wire", text_b, "1"])
     return rows

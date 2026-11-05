@@ -56,6 +56,7 @@ from harness_design_studio.core import edit, recovery
 from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.io.fs import atomic_write_bytes
 from harness_design_studio.core.model import Project
+from harness_design_studio.core.open_data import write_files
 from harness_design_studio.core.outputs import drawing, system
 from harness_design_studio.core.outputs.build import (
     MANIFEST,
@@ -65,6 +66,7 @@ from harness_design_studio.core.outputs.build import (
 )
 from harness_design_studio.core.outputs.canvas import Sheet
 from harness_design_studio.core.outputs.stamp import Stamp
+from harness_design_studio.core.outputs.verify import OPEN_DATA_FOLDER
 from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import export_docs, icons, strings
 from harness_design_studio.gui.controller import EditorController
@@ -156,6 +158,7 @@ class ExportResult:
     stamp: str  # the short model hash the outputs were made from
     project: Project  # the private copy the outputs were built from (for the drawing previews)
     built: OutputSet
+    data: tuple[str, ...] = ()  # the open data files written (names inside `data/`), when asked for
 
     @property
     def count(self) -> int:
@@ -215,10 +218,16 @@ class ExportResultPanel(QWidget):
         self.summary.setObjectName("export-summary")
         self.summary.setWordWrap(True)
         self.summary.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.data_line = QLabel()  # the open data, when this export wrote it
+        self.data_line.setObjectName("export-data-line")
+        self.data_line.setWordWrap(True)
+        self.data_line.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        self.data_line.setVisible(False)
         self.showing = QLabel()
         self.showing.setObjectName("export-showing")
         self.showing.setProperty("muted", True)
         lay.addWidget(self.summary)
+        lay.addWidget(self.data_line)
         lay.addWidget(self.showing)
         cols = [
             Column("rel", strings.EXP_COLUMNS["path"], mono=True, tooltip="full_path", width=320),
@@ -314,6 +323,7 @@ class ExportResultPanel(QWidget):
         if result is None:
             self.model.set_rows([])
             self.summary.setText("")
+            self.data_line.setVisible(False)
             self.showing.setText("")
             self._selection_changed()
             return
@@ -321,6 +331,10 @@ class ExportResultPanel(QWidget):
         self.summary.setText(
             strings.EXP_RESULT_HEAD.format(result.count, result.folder, result.stamp)
         )
+        self.data_line.setText(
+            strings.EXP_DATA_LINE.format(len(result.data), result.folder / OPEN_DATA_FOLDER)
+        )
+        self.data_line.setVisible(bool(result.data))
         self._apply_filter()
 
     def _row(self, result: ExportResult, f: ExportedFile) -> dict[str, Any]:
@@ -566,6 +580,13 @@ class ExportDialog(QDialog):
         folder = self.output_folder()
         self.drawings.setChecked(folder is not None and drawings_exported(folder))
         ll.addWidget(self.drawings)
+        self.open_data = QCheckBox(strings.EXP_OPEN_DATA)  # off until the person ticks it
+        self.open_data.setObjectName("export-open-data")
+        self.open_data.setAccessibleName(strings.EXP_OPEN_DATA_NAME)
+        self.open_data.setToolTip(strings.EXP_OPEN_DATA_TIP)
+        if settings is not None:  # (remembered between exports, like the other choices)
+            self.open_data.setChecked(str(settings.value("export/open_data", "false")) == "true")
+        ll.addWidget(self.open_data)
         split.addWidget(left)
 
         self.pages = QStackedWidget()
@@ -644,6 +665,7 @@ class ExportDialog(QDialog):
         self.copy_btn.clicked.connect(lambda: self.copy_selection())
         self.open_after.toggled.connect(self._remember_open_after)
         self.drawings.toggled.connect(self._drawings_toggled)
+        self.open_data.toggled.connect(self._remember_open_data)
         self.refresh()
 
     # ---- the folder and what blocks an export -------------------------------------------------
@@ -752,6 +774,10 @@ class ExportDialog(QDialog):
         if self.settings is not None:
             self.settings.setValue("export/open_after", "true" if on else "false")
 
+    def _remember_open_data(self, on: bool) -> None:
+        if self.settings is not None:
+            self.settings.setValue("export/open_data", "true" if on else "false")
+
     @property
     def running(self) -> bool:
         return self.worker is not None
@@ -770,6 +796,7 @@ class ExportDialog(QDialog):
         self.copy_btn.setEnabled(self.export_result is not None and not busy)
         self.open_after.setEnabled(not busy)
         self.drawings.setEnabled(not busy)
+        self.open_data.setEnabled(not busy)
 
     # ---- the tree -----------------------------------------------------------------------------
 
@@ -939,6 +966,7 @@ class ExportDialog(QDialog):
         self._project = edit.clone_with(self.ctl.project, [])
         worker = self.worker_factory(self._project)
         worker.drawings = self.drawings.isChecked()
+        worker.open_data = self.open_data.isChecked()
         self.worker = worker
         worker.progressed.connect(self._on_progress)
         worker.finished.connect(self._worker_done)
@@ -1018,13 +1046,27 @@ class ExportDialog(QDialog):
         except (HarnessError, OSError) as exc:
             self._fail(strings.EXP_WRITE_FAILED.format(self._explain(exc, folder)))
             return
+        data: dict[str, bytes] = {}
+        data_error = ""
+        made: dict[str, bytes] | None = getattr(worker, "data", None)
+        if made:  # the open data, written beside the outputs (not in the manifest)
+            try:
+                data = write_files(made, folder / OPEN_DATA_FOLDER)
+            except (HarnessError, OSError) as exc:
+                data_error = self._explain(exc, folder)
         project = self._project or self.ctl.project
-        result = ExportResult(folder, self._listing(folder, built), built.stamp.short, project, built)  # fmt: skip
+        result = ExportResult(
+            folder, self._listing(folder, built), built.stamp.short, project, built,
+            tuple(sorted(data)),
+        )  # fmt: skip
         self.export_result = result
         self._build_tree(result.files)
         self.result_panel.set_result(result)
         self._selection_changed()
         self.notice.clear()
+        if data_error:  # the outputs are on disk; only the open data is missing
+            self.notice.setProperty("kind", "warning")
+            self.notice.show_notice("warning", strings.EXP_DATA_FAILED.format(data_error))
         state = self.ctl.outputs_state()
         self.last.setText(_LAST.get(state, strings.EXP_LAST_NONE))
         self.stale_chip.setVisible(state == "stale")

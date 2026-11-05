@@ -388,11 +388,9 @@ def test_d_a_finding_of_each_limit_rule_is_explained_with_no_unknowns(
         rule_id,
         text,
     )
-    # what it rests on: an assumption of the registry, or, for a rule that has none built in, the
-    # reference line that says where the limit comes from (pin-shared, wire-voltage, emc-class-split)
-    assert d.assumptions or d.reference, rule_id
-    assert ("Rests on:" in text) if d.assumptions else (f"Reference: {d.reference}" in text), (
-        rule_id
-    )
+    # what it rests on: an assumption of the registry, for every rule that compares a number with a
+    # limit (pin-shared, wire-voltage and emc-class-split have one since owner decision 16)
+    assert d.assumptions, rule_id
+    assert "Rests on:" in text, rule_id
     data = d.to_dict()
-    assert data["check"]["margin"] == c.margin and (data["assumptions"] or d.reference), rule_id
+    assert data["check"]["margin"] == c.margin and data["assumptions"], rule_id

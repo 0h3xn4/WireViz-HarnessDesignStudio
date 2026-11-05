@@ -598,6 +598,7 @@ NO_FREE_CONNECTOR = "No free {} connector"
 NO_TYPE = "No type"
 AND_MORE = "… and {} more"
 PROGRESS_VERIFY = "Independent check"
+PROGRESS_OPEN_DATA = "Open data"
 FOLDER_UNUSABLE = "the folder cannot be used"
 TABLE_FILES = "Tables (*.csv *.tsv *.json *.xlsx)"
 
@@ -700,8 +701,6 @@ EMPTY_NO_LINKS = (
 )
 # context menu
 CM_OPEN_PLAN = "Show in harness plans"
-CM_RESET_LABEL = "Reset label position"
-CM_RESET_LABEL_NONE = "the label is where the tool put it"
 CM_RESET_LINE = "Reset label and line positions"
 CM_RESET_LINE_NONE = "the label, the boxes and the line are where the tool put them"
 CM_CONNECT_FROM = "Connect from here with"
@@ -1143,6 +1142,7 @@ CHECKS_EXPLAIN_TIP = (
 EXPLAIN_DIALOG_TITLE = "How this was calculated: {}"
 EXPLAIN_DIALOG_NAME = "The calculation"
 EXPLAIN_NOTHING = "There is no calculation for this finding."
+EXPLAIN_MODEL_PAGE = "Model page: docs/models/{}"
 CHECKS_WHOLE_DESIGN = "(whole design)"
 CHECKS_DETAILS = "Rule details"
 CHECKS_SEGMENT_TIP = "show only these rules"
@@ -2127,12 +2127,14 @@ OUT_STATE_CHANGED = "Changed since export"
 OUT_STATE_MISSING = "Missing"
 OUT_STATE_UNLISTED = "Not in the export"
 OUT_STATE_MANIFEST = "Manifest"
+OUT_STATE_OPEN_DATA = "Open data"
 OUT_REASON = {
     OUT_STATE_MATCHES: "The file on disk has the SHA-256 the export recorded.",
     OUT_STATE_CHANGED: "The file on disk is not the one the export wrote (its SHA-256 differs from the manifest).",
     OUT_STATE_MISSING: "The manifest lists this file but it is not in the folder.",
     OUT_STATE_UNLISTED: "The folder holds this file but the manifest does not list it.",
     OUT_STATE_MANIFEST: "The list of files, with their SHA-256, that the export wrote beside them.",
+    OUT_STATE_OPEN_DATA: "A JSON or CSV file of the open data of an export; it is written beside the outputs and is not listed in the manifest.",
 }
 OUT_COPY = "Copy to folder…"
 OUT_COPY_TIP = "Copy the selected files, as they are on disk, to an empty folder"
@@ -2420,6 +2422,17 @@ EXP_DRAWINGS_TIP = (
     "an earlier export wrote to the folder."
 )
 EXP_DRAWINGS_NAME = "Include the PDF drawings in the export"
+EXP_OPEN_DATA = "Include the open data (JSON and CSV of every result)"
+EXP_OPEN_DATA_NAME = "Include the open data in the export"
+EXP_OPEN_DATA_TIP = (
+    "Also write the numbers behind the outputs as JSON and CSV files (the same files as the "
+    "export-data command) into the folder data/ of the outputs folder. They are not part of the "
+    "manifest. Without this box the export writes what it always wrote; the data files of an "
+    "earlier export stay where they are (provenance.json in them names the design they were "
+    "made from)."
+)
+EXP_DATA_LINE = "Open data: {0} files in {1}."
+EXP_DATA_FAILED = "The outputs were written, but the open data could not be written. {0}"
 
 # ---- D-170: the build data (strip lengths, cable contact, accessories, crimp tool) ------------------
 WIRE_STRIP_A = "Strip A (mm)"
@@ -2703,6 +2716,7 @@ STEP_EDIT_LINK = "Change connection {}"
 STEP_RENAME_LINK = "Rename connection {}"
 STEP_MOVE_LABEL = "Move the label of {}"
 STEP_RESET_LABEL = "Put the label of {} back"
+STEP_MOVE_ROUTE = "Move the line of {}"
 STEP_DELETE_LINK = "Delete connection {}"
 STEP_LINK_HARNESS = "Create harness from connection {}"
 LINK_ADDED = "Connection {} made between {}."

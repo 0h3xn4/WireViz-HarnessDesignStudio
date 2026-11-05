@@ -12,7 +12,8 @@ The first lines show at once and "Show all" opens the rest.
 For a wire, a harness, an interface, a connector or a pin, "Show the calculation" opens below them how its numbers were made (`core.derive`, the
 same text as `harness-design-studio explain`): the equation, each input with its unit and where it
 comes from, the steps, what it is checked against and the assumptions built into the program that
-it rests on. It is closed until asked for, so the panel stays short.
+it rests on. It is closed until asked for, so the panel stays short. Under each derivation a quiet line names
+the page of the documentation for its model ("Model page: docs/models/wire-sizing.md"; text only).
 """
 
 from PySide6.QtCore import Qt
@@ -24,6 +25,7 @@ from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.units import with_area
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.explain_dialog import model_page_line
 from harness_design_studio.gui.panels import clear_layout, heading, muted, scroll_body
 from harness_design_studio.gui.states import StateChip
 from harness_design_studio.gui.theme import ThemeManager, mark_mono
@@ -236,6 +238,12 @@ class WhyPanel(QScrollArea):
             text.setAccessibleName(f"{d.quantity}, {d.subject}")
             mark_mono(text)
             lay.addWidget(text)
+            if page := model_page_line(d):  # a quiet line: where the model is described
+                note = muted(page)
+                note.setObjectName("why-model-page")
+                note.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+                mark_mono(note)
+                lay.addWidget(note)
             self.lay.addWidget(box)
             self.explain_texts.append(text)
 

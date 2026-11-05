@@ -12,12 +12,18 @@ generation recorded (the Why tab: `core.why`). The derivations are:
     connector-choice     why a connector is the connector of an interface, or the mating part of one
 """
 
-from harness_design_studio.core import settings, why
+from harness_design_studio.core import connector_choice, edit, settings, why
 from harness_design_studio.core.derive import Derivation, Input, Step, origin_text, text_step
 from harness_design_studio.core.edit import carries, unit_connectors
 from harness_design_studio.core.generate import pins as pinmod
 from harness_design_studio.core.generate import segmentation
-from harness_design_studio.core.model import Connector, Harness, Project, Wire
+from harness_design_studio.core.model import (
+    Connector,
+    Harness,
+    InterfaceInstance,
+    Project,
+    Wire,
+)
 
 SHOWN = 8  # how many names a line gives before "and N more": no result depends on it
 
@@ -142,6 +148,16 @@ def pin_allocation_derivation(project: Project, connector_id: str, pin_id: str) 
             + ("" if gap_return_raw is not None else " (not set: 0 used)"),
         ),
     ]
+    fit = pinmod.strategy(project)
+    if fit != pinmod.DEFAULT_STRATEGY:  # the default keeps its text: only another model is named
+        inputs.append(
+            Input(
+                "Pin fit strategy (the model in force)",
+                fit,
+                "",
+                f"config/model.json: pin_fit_strategy ({origin_text(project, 'model', 'pin_fit_strategy')})",
+            )
+        )
     steps: list[Step] = [
         Step(
             "Position on the connector",
@@ -186,14 +202,25 @@ def pin_allocation_derivation(project: Project, connector_id: str, pin_id: str) 
     ahead = box.pins[:index]
     free_ahead = [p.id for p in ahead if p.interface_id is None and not p.signal and not p.locked]
     taken_ahead = [p.id for p in ahead if p.interface_id is not None or p.signal]
+    if fit != pinmod.DEFAULT_STRATEGY:
+        steps.append(
+            text_step(
+                "Model in force",
+                f"{fit}: {pinmod.STRATEGY_TEXT[fit]}",
+                "a group of signals takes " + pinmod.STRATEGY_TEXT[fit],
+            )
+        )
     steps.append(
         text_step(
             "Pins ahead of it in the list",
             f"{len(taken_ahead)} carry an interface and {len(free_ahead)} are unassigned"
             + (f" ({_names(free_ahead)})" if free_ahead else ""),
-            "first fit: an unassigned pin ahead is a gap, a spare pin, or a place kept for a locked or earlier choice"
-            if free_ahead
-            else "first fit: nothing free lies ahead of it",
+            f"{fit.replace('_', ' ')}: "
+            + (
+                "an unassigned pin ahead is a gap, a spare pin, or a place kept for a locked or earlier choice"
+                if free_ahead
+                else "nothing free lies ahead of it"
+            ),
         )
     )
     lines = why.reasons(project, "pin", f"{box.id}.{pin.id}")
@@ -213,7 +240,11 @@ def pin_allocation_derivation(project: Project, connector_id: str, pin_id: str) 
         "Pin allocation",
         None,
         "",
-        "the interfaces are placed in the order of their category (power first), each group on the first free pins after the gap; locked pins stay",
+        "the interfaces are placed in the order of their category (power first), each group on the first free pins after the gap; locked pins stay"
+        if fit == pinmod.DEFAULT_STRATEGY
+        else "the interfaces are placed in the order of their category (power first), each group on "
+        + pinmod.STRATEGY_TEXT[fit]
+        + "; locked pins stay",
         tuple(inputs),
         tuple(steps),
         None,
@@ -463,6 +494,18 @@ def _box_choice(project: Project, box: Connector) -> Derivation:
         Input("Carries", ", ".join(box.carries) or "any type", "", f"connector {box.id}: Carries"),
     ]
     steps: list[Step] = []
+    method = connector_choice.method(project)
+    if (
+        method != connector_choice.DEFAULT_METHOD
+    ):  # the default keeps its text: only another model is named
+        inputs.append(
+            Input(
+                "Connector choice (the model in force)",
+                method,
+                "",
+                f"config/model.json: connector_choice ({origin_text(project, 'model', 'connector_choice')})",
+            )
+        )
     for i, e in ends:
         siblings = [c.id for c in unit_connectors(project, e.unit_id) if carries(c, i.type_id)]
         inputs.append(
@@ -474,6 +517,8 @@ def _box_choice(project: Project, box: Connector) -> Derivation:
                 f"interface {i.id}: the connector at {e.unit_id}",
             )
         )
+        if method != connector_choice.DEFAULT_METHOD:
+            steps.append(_ranking_step(project, method, i, e.unit_id, box.id, bool(e.auto)))
         steps.append(
             text_step(
                 f"Connectors of {e.unit_id} that carry {i.type_id}",
@@ -495,7 +540,10 @@ def _box_choice(project: Project, box: Connector) -> Derivation:
         "Choice of connector",
         None,
         "",
-        "connector = the one a person picks for the interface at the device, else the first free connector of the device that carries the type",
+        "connector = the one a person picks for the interface at the device, else the first free connector of the device that carries the type"
+        if method == connector_choice.DEFAULT_METHOD
+        else "connector = the one a person picks for the interface at the device, else "
+        + connector_choice.METHOD_TEXT[method],
         tuple(inputs),
         tuple(steps),
         None,
@@ -503,6 +551,37 @@ def _box_choice(project: Project, box: Connector) -> Derivation:
         "A connector the tool chose is marked until a person confirms it (the finding 'unconfirmed'). "
         "The part of a device connector is a choice of the device design or the library, not of this tool.",
         text=text,
+    )
+
+
+def _ranking_step(
+    project: Project, method: str, i: InterfaceInstance, unit_id: str, chosen_id: str, auto: bool
+) -> Step:
+    """The connectors of the device that carry the type in the order of the model in force, each
+    with the pins it has, the pins an interface may take, the pins the interface needs and what is
+    left over (the numbers the choice is made from)."""
+    itype = project.interface_types.get(i.type_id)
+    candidates = [c for c in unit_connectors(project, unit_id) if carries(c, i.type_id)]
+    parts = []
+    for c in connector_choice.ranked(method, candidates, itype):
+        f = connector_choice.fit_of(c, itype)
+        user = edit.interface_using(project, c.id)
+        state = (
+            "this interface"
+            if user is not None and user.id == i.id
+            else f"in use by {user.id}"
+            if user is not None
+            else "free"
+        )
+        fits = f"{f.spare} spare" if f.fits else f"too few pins ({f.available} for {f.needed})"
+        parts.append(
+            f"{c.id}: {f.pins} pins, {f.available} available, {f.needed} needed, {fits}, {state}"
+        )
+    return text_step(
+        f"Connectors of {unit_id} in the order of {method}",
+        "; ".join(parts) or "none carries the type",
+        f"{connector_choice.METHOD_TEXT[method]}; the tool takes the first one that is free"
+        + ("" if auto else " (a person picked " + chosen_id + ", so the model did not decide)"),
     )
 
 

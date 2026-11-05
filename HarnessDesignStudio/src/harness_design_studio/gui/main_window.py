@@ -82,6 +82,7 @@ from harness_design_studio.core.generate.engine import (
 from harness_design_studio.core.import_record import CHANGED, CachedHasher, check_sources
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Project
+from harness_design_studio.core.open_data import data_files
 from harness_design_studio.core.outputs.build import (
     OutputsCancelled,
     OutputSet,
@@ -285,7 +286,9 @@ class OutputsWorker(QThread):
         super().__init__()
         self._project = project
         self.drawings = drawings  # the PDF and SVG drawings of the harnesses (D-169)
+        self.open_data = False  # also make the open data (the files of `export-data`)
         self._cancelled = False
+        self.data: dict[str, bytes] | None = None  # the open data, by file name, when asked for
         self.result: OutputSet | None = None
         self.report: VerifyReport | None = None
         self.error: str | None = None
@@ -303,6 +306,9 @@ class OutputsWorker(QThread):
             )
             self.progressed.emit(0.95, strings.PROGRESS_VERIFY)
             self.report = verify_outputs(self._project, self.result.files)
+            if self.open_data and not self._cancelled:
+                self.progressed.emit(0.97, strings.PROGRESS_OPEN_DATA)
+                self.data = data_files(self._project)
         except OutputsCancelled:
             self.result = None
         except Exception as exc:  # shown as the reason, never as "cancelled"
@@ -3389,7 +3395,9 @@ class MainWindow(QMainWindow):
             }.get(self.busy, self.busy)
             worker = self._active_worker
             self.jobs.start(text, cancel=worker.cancel if worker is not None else None)
-        elif self.ctl.drc_busy():
+        elif self.ctl.drc_busy() and (self._check_asked or not self.quick_on()):
+            # (Quick mode: the automatic check runs in the background without a word; a check the
+            # person asked for still shows its progress)
             self.jobs.start(strings.JOB_CHECKING, cancel=self.ctl.cancel_check)
         else:
             self.jobs.finish()
@@ -5020,6 +5028,8 @@ class MainWindow(QMainWindow):
         self.mode_guided.setVisible(not quick)
         self.mode_expert.setVisible(not quick)
         self.act_problem_notices.setEnabled(not quick)
+        self.project_tree.set_quick(quick)  # (no "N pending" chips)
+        self._update_jobs()  # (and no automatic "Checking the design rules" progress)
         self._apply_problem_notices()
         self._update_banner()
         self._sync_settings_page()
