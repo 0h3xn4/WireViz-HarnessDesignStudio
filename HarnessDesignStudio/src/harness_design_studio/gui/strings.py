@@ -1142,6 +1142,7 @@ CHECKS_EXPLAIN_TIP = (
 EXPLAIN_DIALOG_TITLE = "How this was calculated: {}"
 EXPLAIN_DIALOG_NAME = "The calculation"
 EXPLAIN_NOTHING = "There is no calculation for this finding."
+EXPLAIN_MODEL_PAGE = "Model page: docs/models/{}"
 CHECKS_WHOLE_DESIGN = "(whole design)"
 CHECKS_DETAILS = "Rule details"
 CHECKS_SEGMENT_TIP = "show only these rules"
