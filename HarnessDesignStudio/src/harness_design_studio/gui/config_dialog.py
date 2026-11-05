@@ -19,7 +19,6 @@ from PySide6.QtGui import QKeySequence, QShortcut
 from PySide6.QtWidgets import (
     QCheckBox,
     QComboBox,
-    QDialog,
     QDialogButtonBox,
     QFormLayout,
     QFrame,
@@ -40,6 +39,7 @@ from harness_design_studio.core.errors import TransactionError
 from harness_design_studio.core.vcs.locks import check_locks
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.panels import muted
 from harness_design_studio.gui.states import StateChip
 from harness_design_studio.gui.theme import ThemeManager
@@ -173,7 +173,7 @@ class _Group:
     exists: bool
 
 
-class ConfigValueDialog(QDialog):
+class ConfigValueDialog(Dialog):
     """The engineering values of the project as a form. See the module text."""
 
     applied = Signal(int)  # how many changes were applied

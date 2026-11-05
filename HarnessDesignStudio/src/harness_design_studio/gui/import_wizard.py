@@ -53,6 +53,7 @@ from harness_design_studio.core.model.imports import KIND_WORDS
 from harness_design_studio.core.model.library import PART_CATEGORIES
 from harness_design_studio.gui import icons, import_kinds, strings
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.dialog_base import Wizard
 from harness_design_studio.gui.import_kinds import (
     KIND_BY_KEY,
     KINDS,
@@ -748,7 +749,7 @@ class _PlanThread(QThread):
             sys.setswitchinterval(previous)
 
 
-class ImportWizard(QWizard):
+class ImportWizard(Wizard):
     """Import interfaces, approved parts, segment lengths, engineering values, a device pinout or a
     KiCad netlist.
 

@@ -9,6 +9,7 @@ This page shows how to join a connector of one device to a connector of another,
 - [When to connect connectors](#when-to-connect-connectors)
 - [Before you start](#before-you-start)
 - [1. Link the connectors](#1-link-the-connectors)
+- [Pick up a cable and plug it in](#pick-up-a-cable-and-plug-it-in)
 - [2. How the pairs are proposed](#2-how-the-pairs-are-proposed)
 - [3. Look at the pairs and change them](#3-look-at-the-pairs-and-change-them)
 - [Add a connector, pair by pin number and paste a pairing](#pair-by-pin-number-and-paste-a-pairing)
@@ -43,6 +44,7 @@ Use any of these. They open the same window.
 - **Edit > Link connectors…** (Ctrl+Shift+K).
 - The **Connect** button above the diagram, or the key **C**: click the first device, then the second. (The arrow next to the button is the older way, by interface type.)
 - Right-click the **Connections** group of the project tree and choose **Link connectors…**, or right-click a device on the diagram and choose **Link connectors from here…**.
+- Or pick up a cable on the diagram and plug it in, as described next ([Pick up a cable and plug it in](#pick-up-a-cable-and-plug-it-in)). The window then opens already filled in with the two connectors you chose.
 
 The window **Link connectors** opens:
 
@@ -52,6 +54,27 @@ The window **Link connectors** opens:
 2. The table **Pairs of pins** shows what the program proposes: the pin, its signal and its role on the first connector, beside the pin, signal and role on the second.
 3. **Name** is optional. Without a name the connection is called after its two connectors, `OBC-J01 - RW1-J02`.
 4. Press **Link connectors**. The connection is made as one undo step (Ctrl+Z takes it back) and the diagram shows it.
+
+## Pick up a cable and plug it in
+
+On the diagram you can connect two devices the way you would with a real harness: take a cable at one device and put it down at the other. It works in every role, in Guided and in Expert mode and in Quick mode, with the Select tool (not while the Connect tool is on), in a project that can be changed, and from about half the size of the diagram on (further out the devices are drawn as plain boxes with no ports).
+
+**Ports.** In **Expert** mode every connector of a device card has a small square on the edge of the card, its **port**. In **Guided** mode (and in Quick mode, which usually uses it) the card has one port for the device as a whole, on the edge the connections leave from, and the tool picks the connectors, as it does when you click two devices. Move the pointer over a port: it lights up, the pointer turns into an open hand, and the tooltip says the connector, its kind and how many of its pins are free. A small ring at each end of a connection line is its plug.
+
+**Take a cable.** Press on a port and drag. A cable follows the pointer as a line in right angles with a small plug at its end, like the lines of the connections. While you carry it, the devices and ports that can take it light up and the others fade; the device the cable comes from is marked *From*. The status bar says what to do (*Drop on a port to connect, on a device to let the tool choose. Esc to cancel.*). When the plug comes within a few pixels of a port it snaps to it. If the cable is near the edge of the window, the window scrolls, so a device far away or off the screen can be reached in one move.
+
+**Put it down.**
+
+- **On a port:** the two connectors are connected. In Quick mode at once (the message *Connected A and B* has **Undo** and **Edit pairs**); without Quick mode the window **Link connectors** opens with exactly those two connectors filled in, as described above.
+- **On a device, not on a port:** the tool picks the connector of that device that the signal names fit best (the same choice as for two clicked devices) and goes on as above.
+- **On empty ground:** the cable stays as a **loose end**, drawn dashed with a plug, still fixed to the port it came from. Press on it and drag it to a port, or click it (it then follows the pointer until you click a port or a device). A click on empty ground, or **Esc**, drops it. A loose end is only on the screen: it is not saved with the project, it is not in the model hash and it is in no file; saving the project drops it without a message.
+- **On a port that cannot take it** (a connector of the same device, a connector with no free pin, a connector with the cable plug of a harness on it) a message says why and nothing is changed.
+
+**Move one end of a connection.** Press on the plug of an end of a connection line, at its port, and drag: the connection keeps its place in the project, drawn as a faint ghost, until you put the end down on another port or device. Then the connection (same ID, same name) goes to the new connector as **one undo step**, and its pins are paired again for the two connectors it now joins, by signal name, else by pin number, else none (use **Edit pairs** to change them). Put down on empty ground the end becomes a loose end that still remembers its connection; **Esc** leaves the connection exactly where it was. A connection that a harness was made from cannot be moved (delete that harness first), and neither can a locked one: a message says why.
+
+Pressing on a port that already has a connection and dragging from the **inner** half of its square starts a new cable; the plug on the line, just outside the card, picks up the connection's end.
+
+Dragging the body of a card still moves the device, dragging a label or the line of a connection still moves that, and a drag on empty ground still draws the selection rectangle. A click (no drag) on a port only selects its device. **Esc** puts away a cable in hand or a loose end. For a way without the mouse, use the Connect tool (**C**) or **Edit > Link connectors…** (Ctrl+Shift+K).
 
 ## 2. How the pairs are proposed
 
@@ -157,7 +180,7 @@ The connections are an output of their own, and they need no harness. **Export�
 
 ## Connect in one click: Quick mode
 
-With **Quick mode** on ([Choose your role](choose-your-role.md)) **Connect** does not open the *Link connectors* window. Pick **Connect**, click the first device and then the second (or press Ctrl+Shift+K when the project has exactly two devices) and the connection is made at once, as **one undo step**:
+With **Quick mode** on ([Choose your role](choose-your-role.md)) **Connect** does not open the *Link connectors* window. Pick **Connect**, click the first device and then the second (or press Ctrl+Shift+K when the project has exactly two devices), or press on a port and drag a cable to a port or a device ([Pick up a cable and plug it in](#pick-up-a-cable-and-plug-it-in)), and the connection is made at once, as **one undo step**:
 
 - A device that has no connector gets a small starter connector (a 9-pin D-sub), in the same step.
 - The two connectors are the pair whose signal names fit best; with no signal names, the first free ones.

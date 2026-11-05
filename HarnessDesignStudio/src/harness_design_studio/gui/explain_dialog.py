@@ -10,11 +10,12 @@ only: nothing is opened and nothing goes to a network.
 """
 
 from PySide6.QtCore import Qt
-from PySide6.QtWidgets import QDialog, QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
+from PySide6.QtWidgets import QPlainTextEdit, QPushButton, QVBoxLayout, QWidget
 
 from harness_design_studio.core.derive import Derivation, render
 from harness_design_studio.core.derive_kinds import KINDS
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.theme import ThemeManager, mark_mono
 
 
@@ -31,7 +32,7 @@ def render_with_page(d: Derivation) -> str:
     return f"{render(d)}\n{page}" if page else render(d)
 
 
-class ExplainDialog(QDialog):
+class ExplainDialog(Dialog):
     def __init__(
         self, parent: QWidget | None, theme: ThemeManager, derivations: list[Derivation]
     ) -> None:

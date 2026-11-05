@@ -36,6 +36,7 @@ from harness_design_studio.core.model import Project
 from harness_design_studio.core.model.logical import Category
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.connector_picker import ConnectorPicker
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.notice import InlineNotice
 from harness_design_studio.gui.tables import Column, DictTableModel, TableView
 from harness_design_studio.gui.theme import ThemeManager
@@ -68,9 +69,16 @@ def _field(edit: QLineEdit, name: str, tip: str, placeholder: str = "") -> QLine
     return edit
 
 
-class _PlannerDialog(QDialog):
+class _PlannerDialog(Dialog):
     """A dialog that asks a planner whether the values can be used: `check()` returns the
-    planner's sentence (or None); it is shown in an inline notice and keeps OK off."""
+    planner's sentence (or None); it is shown in an inline notice and keeps OK off.
+
+    A form that asks for something to be typed (`quiet_at_open`) does not show the sentence before
+    the person has changed something: it is not yet wrong, and OK being off says what is needed.
+    It shows from the first change on, and stays while the problem does. A dialog that cannot be
+    used whatever is typed (no part of the kind in the library) says why at once."""
+
+    quiet_at_open = False
 
     def __init__(self, parent: QWidget | None, theme: ThemeManager, title: str, name: str) -> None:
         super().__init__(parent)
@@ -81,23 +89,29 @@ class _PlannerDialog(QDialog):
         self.lay = QVBoxLayout(self)
         self.notice = InlineNotice(theme)
         self.ok: QPushButton | None = None
+        self._edited = False  # the person changed a value: from then on the reason is shown
 
     def _finish(self, ok_text: str) -> None:
         self.lay.addWidget(self.notice)
         self.ok, row = _buttons(self, ok_text)
         self.lay.addLayout(row)
         self.notice.hide()
-        self.revalidate()
+        self._validate(show=False)
 
     def check(self) -> str | None:  # pragma: no cover - overridden
         return None
 
     def revalidate(self, *_: object) -> None:
+        """A value changed: check again, and show the reason from now on."""
+        self._edited = True
+        self._validate(show=True)
+
+    def _validate(self, *, show: bool) -> None:
         try:
             problem = self.check()
         except (EditError, HarnessError, ValueError) as exc:
             problem = str(exc)
-        if problem:
+        if problem and (show or self._edited or not self.quiet_at_open):
             self.notice.show_notice("error", problem)
         else:
             self.notice.clear()
@@ -112,6 +126,8 @@ class NewDeviceDialog(_PlannerDialog):
     """The name of a new device, asked before it exists. The ID follows the name until the person
     edits it; the subsystem is optional (the project's most used one is the default). The reason
     a device cannot be added shows under the fields; OK stays off until it can."""
+
+    quiet_at_open = True
 
     def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
         super().__init__(parent, theme, strings.NEWDEV_TITLE, "devices-new-device-dialog")
@@ -202,6 +218,8 @@ class QuickDeviceDialog(_PlannerDialog):
     the connectors of its template, no kind gives it one starter connector, so that Connect works
     at once. Everything can be changed later in the Devices tab."""
 
+    quiet_at_open = True
+
     def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
         super().__init__(parent, theme, strings.QD_NEWDEV_TITLE, "devices-quick-device-dialog")
         self.project = project
@@ -247,6 +265,8 @@ class QuickDeviceDialog(_PlannerDialog):
 class NewPartDialog(_PlannerDialog):
     """A connector part for the library, and, when asked, its mating half. Both are made
     `pending` and `unverified`: the tool never approves a part."""
+
+    quiet_at_open = True
 
     def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
         super().__init__(parent, theme, strings.DVD_PART_TITLE, "devices-new-part-dialog")
@@ -339,6 +359,8 @@ class NewPartDialog(_PlannerDialog):
 
 class NewTypeDialog(_PlannerDialog):
     """An interface type: ID, name, category and one line per signal. Marked `unverified`."""
+
+    quiet_at_open = True
 
     def __init__(self, parent: QWidget | None, theme: ThemeManager, project: Project) -> None:
         super().__init__(parent, theme, strings.DVD_TYPE_TITLE, "devices-new-type-dialog")

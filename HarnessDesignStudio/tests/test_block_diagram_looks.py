@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,attr-defined"
-"""REQ-GUI-22 (the looks in the written and exported block diagram). Owner decision after the
+"""REQ-GUI-25 (the looks in the written and exported block diagram). Owner decision after the
 device looks: *should the exported and written diagram show these looks too? yes, without
 breaking anything*. The block diagram (`system/block_diagram.svg` and `.pdf` of every export, and
 Export diagram's SVG, PDF and PNG) draws each device card with a band in the colour of its family

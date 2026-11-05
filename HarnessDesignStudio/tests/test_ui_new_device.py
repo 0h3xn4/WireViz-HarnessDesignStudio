@@ -43,6 +43,11 @@ def test_the_dialog_asks_for_a_name_first(qtbot) -> None:
     for w in (dlg.name, dlg.device_id, dlg.subsystem):
         assert w.accessibleName() and w.toolTip()
     assert dlg.ok.text() == "Add device" and not dlg.ok.isEnabled()
+    # an empty form is not yet wrong: the button being off says what is needed, no banner yet
+    assert not dlg.notice.isVisibleTo(dlg) and dlg.notice.text() == ""
+    type_into(dlg.name, "x")
+    assert not dlg.notice.isVisibleTo(dlg)
+    dlg.name.clear()  # the person emptied it: now the reason shows
     assert dlg.notice.isVisibleTo(dlg) and "needs a name" in dlg.notice.text()
 
 

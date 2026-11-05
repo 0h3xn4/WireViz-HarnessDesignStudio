@@ -1,5 +1,5 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg"
-"""REQ-GUI-21 (the kind of a device, set by hand). Owner decision after the device looks: *do you
+"""REQ-GUI-24 (the kind of a device, set by hand). Owner decision after the device looks: *do you
 want to set a device's kind by hand? yes*. A device (the model's `Unit`) has an optional field
 `kind`, one of the IDs of `core/device_kinds.py`, written only when it is set. Without it the kind
 is read from the name, the ID, the subsystem and the links as before; the ID `device` forces the

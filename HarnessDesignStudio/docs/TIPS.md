@@ -50,7 +50,8 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Delete | Delete the selection (it first shows what else goes with it); in the diagram, the Interface table and the Project tree |
 | C | Start the Connect tool; then click the two devices: the window Link connectors joins two connectors pin by pin |
 | Ctrl+Shift+K | Link connectors… (the same window, without clicking the devices first) |
-| Esc | Back to the Select tool; also clears the selection and ends the focus on a device or link |
+| Drag from a port | Pick up a cable at a port (a connector in Expert mode, the device in Guided and Quick mode) and put it down on a port or a device; on empty ground it stays as a loose end (click it or drag it to plug it in); the plug at the end of a connection's line picks up that end to plug it in elsewhere |
+| Esc | Puts away a cable in hand or a loose end; else back to the Select tool; also clears the selection and ends the focus on a device or link |
 | Ctrl+= and Ctrl+- | Zoom in and out |
 | F | Fit the whole diagram in the window (diagram has the focus) |
 | Shift+F | Zoom to the selection (diagram has the focus) |

@@ -617,7 +617,14 @@ class HarnessView(QWidget):
         c = QVBoxLayout(self.content)
         c.setContentsMargins(0, 0, 0, 0)
         c.setSpacing(gap)
-        self.stack.addWidget(self.content)
+        # a short window (or banners above the tab) scrolls the tab instead of squeezing the
+        # drawing and the tables into each other
+        self.scroller = QScrollArea()
+        self.scroller.setObjectName("harness-scroll")
+        self.scroller.setWidgetResizable(True)
+        self.scroller.setFrameShape(QFrame.Shape.NoFrame)
+        self.scroller.setWidget(self.content)
+        self.stack.addWidget(self.scroller)
         c.addLayout(self._build_header(theme))
         # the drawing has the width and most of the height; the tables and the reasons sit under it
         self.splitter = QSplitter(Qt.Orientation.Vertical)
@@ -948,7 +955,7 @@ class HarnessView(QWidget):
         self._dirty = False
         p = self.ctl.project
         ids = sorted(p.harnesses)
-        self.stack.setCurrentWidget(self.content if ids else self.empty)
+        self.stack.setCurrentWidget(self.scroller if ids else self.empty)
         if not ids:
             self._hid = None
             self._combo_ids = []

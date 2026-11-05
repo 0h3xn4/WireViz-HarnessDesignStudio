@@ -33,6 +33,7 @@ from PySide6.QtWidgets import (
 from harness_design_studio.core.extensions import manager, plugins, trust
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import EditorController
+from harness_design_studio.gui.dialog_base import Dialog
 from harness_design_studio.gui.theme import ThemeManager, mark_mono
 
 MAX_SOURCE_SHOWN = 200_000  # characters of a plug-in's code shown in the question
@@ -49,7 +50,7 @@ def source_text(root: str, info: plugins.PluginInfo) -> str:
     return text[:MAX_SOURCE_SHOWN] + ("\n(...)" if len(text) > MAX_SOURCE_SHOWN else "")
 
 
-class TrustDialog(QDialog):
+class TrustDialog(Dialog):
     """Names the code and asks for its name to be typed. Accepted means: trust it."""
 
     def __init__(
@@ -153,7 +154,7 @@ def _yes(flag: object) -> str:
     )
 
 
-class ExtensionsDialog(QDialog):
+class ExtensionsDialog(Dialog):
     """Help > Extensions: what the project's extensions are, and the way to trust a plug-in."""
 
     def __init__(self, parent: QWidget | None, theme: ThemeManager, ctl: EditorController) -> None:

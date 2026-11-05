@@ -18,6 +18,7 @@ This page is the map of the documents for people who work on the code or the doc
 | [`release.md`](release.md) | How to cut a release of the tool, in plain words |
 | [`api-stability.md`](api-stability.md) | The scripting interface (`harness_design_studio.api`): what is stable, how to change it on purpose, the snapshot test |
 | [`extensions.md`](extensions.md) | The registry, the format of the extension files, the expression language, the fields, the plug-in API, the trust store and what this is not (no sandbox) |
+| [`gui-layout.md`](gui-layout.md) | Dialogs and windows: the base class that keeps a window as high as its text needs, the layout audit and the sweep over every dialog, and what they cannot see |
 | [`tools.md`](tools.md) | Every script in `HarnessDesignStudio/tools/` (including the screenshot, timing and output-hash scripts of the UI overhaul) |
 | [`upstream-sync.md`](upstream-sync.md) | How to refresh the copy of the WireViz README after WireViz changes it |
 
