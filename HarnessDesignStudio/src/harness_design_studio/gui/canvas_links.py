@@ -16,11 +16,13 @@ the tooltip also names the way through the harness once one was made from the co
 """
 
 import html
+from collections.abc import Mapping
 from typing import TYPE_CHECKING
 
 from PySide6.QtCore import QPointF, QRectF, QSizeF, Qt
 from PySide6.QtGui import QBrush, QFontMetrics, QPainter, QPainterPath, QPainterPathStroker
 from PySide6.QtWidgets import (
+    QApplication,
     QGraphicsItem,
     QGraphicsPathItem,
     QGraphicsSceneMouseEvent,
@@ -28,14 +30,14 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import routing
+from harness_design_studio.core import linepos, routing
 from harness_design_studio.core.links import (
     derived_interfaces,
     link_caption,
     link_ends,
     link_path,
 )
-from harness_design_studio.core.model import Link, Project
+from harness_design_studio.core.model import Link, Project, mark_is_along
 from harness_design_studio.gui import strings
 
 if TYPE_CHECKING:
@@ -49,6 +51,8 @@ END_GAP = 4.0  # between the edge of a device and the box of its connector
 CHIP_MAX_W = 240.0  # a longer label is cut with an ellipsis (the tooltip has the whole text)
 END_MAX_W = 112.0  # the same for the connector boxes at the two ends
 LABEL_GAP = 4.0  # between two boxes of one connection, and between a box and a device
+REACH_X = 2 * CHIP_MAX_W + 3 * LABEL_GAP  # how far from its line the tool may have to put a label:
+REACH_Y = 160.0  # three steps of (half a box and a gap) across, of (a box and a gap) down
 
 
 def _channel(x: float, edge: float, side: str) -> float:
@@ -87,40 +91,78 @@ def connection_route(
 
 
 DRAG_PX = 4.0  # how far the pointer goes (in screen pixels) before a click is a drag
+HOME_PX = 1.0  # a label let go this close to where it was taken is where it was
 NO_SHIFT = QPointF(0.0, 0.0)
+SLIDE_CURSORS = {  # the cursor over a label that slides along a line, by how the line runs there
+    linepos.HORIZONTAL: Qt.CursorShape.SizeHorCursor,
+    linepos.VERTICAL: Qt.CursorShape.SizeVerCursor,
+}
 
 
 class ChipDrag:
     """What the things drawn on a line do when they are dragged: the label (an interface or a
-    connection), the connector box at each end of a connection, and the bend of a connection. A
-    thing follows the pointer once the pointer went `DRAG_PX`, and where it is let go it stays, as
-    an offset from its automatic place (`DiagramMark`; so it keeps following the line when devices
-    move). The item says what can be dragged (`drag_slots`: the name of each mark, where it is
-    drawn now, and whether it moves across only); a press anywhere else is the item's own business
-    (a click on the line selects it, nothing more)."""
+    connection), the connector box at each end of a connection, and the bend of a connection.
+
+    A label sits ON its line and slides along it: while it is dragged it is at the point of the
+    line nearest to the pointer, however far the pointer is from the line (`core.linepos`), and
+    where it is let go it stays, as a fraction `t` of the length of the line (`DiagramMark`), so it
+    keeps its relative place when devices move and the line changes. The bend and the vertical
+    piece of a route are offsets across, as before. A thing follows the pointer once the pointer
+    went `DRAG_PX`. The item says what can be dragged (`drag_slots`: the name of each mark, where it
+    is drawn now, and whether it moves across only); a press anywhere else is the item's own
+    business (a click on the line selects it, nothing more)."""
 
     dscene: DiagramScene
+    poly: list[tuple[float, float]]  # the corner points of the line as drawn
     mark_ids: tuple[str, ...] = ()  # the marks this item may have, the main label first
-    _shifts: dict[str, QPointF]
+    _shifts: dict[str, QPointF]  # the offsets (bend, route) by mark
+    _along: dict[str, float]  # the places of the labels on the line (t) by mark
     _slot = ""  # the mark of the thing under the pointer since the press
     _press: QPointF | None = None  # the scene point of that press
     _base = NO_SHIFT  # the shift of the thing at the press
+    _grab = 0.0  # how far along the line the label's centre is from the point taken hold of
+    _home = NO_SHIFT  # where the centre of the label was at the press
     _dragging = False
+    _cursor_shape: Qt.CursorShape | None = None  # the override cursor while a label is dragged
 
     def drag_slots(self) -> list[tuple[str, QRectF, bool]]:
         raise NotImplementedError
 
-    def reload_shifts(self) -> None:
+    def margin_of(self, mark_id: str) -> float:
+        """How far from either end of the line the centre of the label `mark_id` stays: half its
+        width and a little air, so that it does not touch the device the line leaves."""
+        raise NotImplementedError
+
+    def centre_of(self, mark_id: str) -> QPointF:
+        """Where the centre of the label `mark_id` is drawn (or will be, at the next paint)."""
+        raise NotImplementedError
+
+    def _read_marks(self) -> tuple[dict[str, QPointF], dict[str, float]]:
+        """What the project says now: the offsets of the pieces of the line and the places of the
+        labels on it (a mark of an earlier version, a free offset of a label, is not read here:
+        the diagram turns it into a place first, `adopt_legacy_marks`)."""
+        sc = self.dscene
+        shifts = {m: sc.mark_shift(m) for m in self.mark_ids if not mark_is_along(m)}
+        along = {m: t for m in self.mark_ids if (t := sc.mark_along(m)) is not None}
+        return shifts, along
+
+    def reload_marks(self) -> None:
         """Take the marks of the project (it was opened, or a label was moved, put back, undone)."""
-        shifts = {m: self.dscene.mark_shift(m) for m in self.mark_ids}
-        if shifts != getattr(self, "_shifts", None):
-            self._shifts = shifts
+        shifts, along = self._read_marks()
+        if shifts != getattr(self, "_shifts", None) or along != getattr(self, "_along", None):
+            piece_moved = shifts != getattr(self, "_shifts", None)
+            self._shifts, self._along = shifts, along
             self.prepareGeometryChange()  # type: ignore[attr-defined]
-            self.shifts_changed()
+            if piece_moved:
+                self.shifts_changed()
+            self.along_changed()
             self.update()  # type: ignore[attr-defined]
 
     def shifts_changed(self) -> None:
-        """The item hook for a change of a mark (a bend moves the line)."""
+        """The item hook for a change of an offset (a bend moves the line)."""
+
+    def along_changed(self) -> None:
+        """The item hook for a label that moved along its line."""
 
     def limit_shift(self, mark_id: str, shift: QPointF) -> QPointF:
         """The item hook for a move being dragged: what the thing may be moved to (its own limits)."""
@@ -130,16 +172,56 @@ class ChipDrag:
         shifts: dict[str, QPointF] = getattr(self, "_shifts", {})
         return shifts.get(mark_id, NO_SHIFT)
 
-    @property
-    def shift(self) -> QPointF:
-        """The offset of the main label."""
-        return self.shift_of(self.mark_ids[0])
+    def along_of(self, mark_id: str) -> float | None:
+        """Where the person put the label `mark_id` on its line (None: where the tool put it)."""
+        along: dict[str, float] = getattr(self, "_along", {})
+        return along.get(mark_id)
 
-    def away(self) -> tuple[float, float]:
-        """How far the most moved thing is from its place: the room a bounding box must add."""
-        xs = [abs(p.x()) for p in getattr(self, "_shifts", {}).values()] or [0.0]
-        ys = [abs(p.y()) for p in getattr(self, "_shifts", {}).values()] or [0.0]
-        return max(xs), max(ys)
+    def on_line(self, mark_id: str, automatic: QRectF) -> QRectF:
+        """The box of a label: `automatic`, the place the tool gave it, or, when the person put it
+        somewhere, the same box centred on its place on the line (kept inside the line)."""
+        t = self.along_of(mark_id)
+        if t is None or len(self.poly) < 2:
+            return automatic
+        box = QRectF(automatic)
+        box.moveCenter(QPointF(*linepos.place(self.poly, t, self.margin_of(mark_id))))
+        return box
+
+    def legacy_places(self) -> dict[str, float]:
+        """The place on the line of every label that has a mark of an earlier version (a free
+        offset from its automatic place): the nearest point of the line (`linepos.from_offset`),
+        for `DiagramScene.adopt_legacy_marks`. Nothing when the line is not drawn yet."""
+        return {}
+
+    def hover_cursor(self, at: QPointF) -> Qt.CursorShape | None:
+        """The cursor over a thing that can be dragged at scene point `at`: a label slides along
+        its line (horizontal or vertical arrows where the line runs so, else the move cursor); a
+        bend moves across. None elsewhere, and while nothing can be dragged."""
+        ctl = self.dscene.ctl
+        if ctl.tool != "select" or ctl.read_only:
+            return None
+        for mark_id, rect, across in self.drag_slots():
+            if not rect.contains(at):
+                continue
+            if across:
+                return Qt.CursorShape.SizeHorCursor
+            return self._slide_cursor(mark_id, rect.center())
+        return None
+
+    def _slide_cursor(self, mark_id: str, centre: QPointF) -> Qt.CursorShape:
+        t = self.along_of(mark_id)
+        if t is None:
+            t = linepos.project(self.poly, (centre.x(), centre.y()))[0]
+        way = linepos.direction_at(self.poly, t, self.margin_of(mark_id))
+        return SLIDE_CURSORS.get(way, Qt.CursorShape.SizeAllCursor)
+
+    def show_cursor_at(self, at: QPointF) -> None:
+        """Set the item's cursor for the pointer at scene point `at` (the hover of the item)."""
+        shape = self.hover_cursor(at)
+        if shape is None:
+            self.unsetCursor()  # type: ignore[attr-defined]
+        else:
+            self.setCursor(shape)  # type: ignore[attr-defined]
 
     def chip_press(self, at: QPointF) -> None:
         """A press at scene point `at` on one of the things may become a drag (not while Connect is
@@ -149,9 +231,18 @@ class ChipDrag:
         if ctl.tool != "select" or ctl.read_only:
             return
         for mark_id, rect, _across in self.drag_slots():
-            if rect.contains(at):
-                self._slot, self._press, self._base = mark_id, at, QPointF(self.shift_of(mark_id))
-                return
+            if not rect.contains(at):
+                continue
+            if mark_is_along(mark_id):
+                if len(self.poly) < 2:
+                    return  # no line, so nothing to slide along
+                centre = self.centre_of(mark_id)
+                self._home = QPointF(centre)
+                self._grab = linepos.grab_offset(
+                    self.poly, (at.x(), at.y()), (centre.x(), centre.y())
+                )
+            self._slot, self._press, self._base = mark_id, at, QPointF(self.shift_of(mark_id))
+            return
 
     def chip_move(self, at: QPointF, away: int) -> bool:
         """Follow the pointer (now at scene point `at`, `away` screen pixels from where it was
@@ -162,10 +253,24 @@ class ChipDrag:
             if away < DRAG_PX:
                 return True  # still a click
             self._dragging = True
+        if mark_is_along(self._slot):
+            t = linepos.slide(self.poly, (at.x(), at.y()), self._grab, self.margin_of(self._slot))
+            self._set_along(self._slot, t)
+            self._show_drag_cursor()
+            return True
         across = next((x for m, _r, x in self.drag_slots() if m == self._slot), False)
         delta = at - self._press
         self._set_shift(self._slot, self._base + (QPointF(delta.x(), 0.0) if across else delta))
         return True
+
+    def _set_along(self, mark_id: str, t: float) -> None:
+        along = dict(getattr(self, "_along", {}))
+        if along.get(mark_id) != t:
+            along[mark_id] = t
+            self._along = along
+            self.prepareGeometryChange()  # type: ignore[attr-defined]
+            self.along_changed()
+            self.update()  # type: ignore[attr-defined]
 
     def _set_shift(self, mark_id: str, shift: QPointF) -> None:
         shift = self.limit_shift(mark_id, shift)
@@ -177,14 +282,37 @@ class ChipDrag:
             self.shifts_changed()
             self.update()  # type: ignore[attr-defined]
 
+    def _show_drag_cursor(self) -> None:
+        """While a label is dragged the pointer is often off the item: the cursor is the
+        application's, and says which way the label slides."""
+        shape = self._slide_cursor(self._slot, self.centre_of(self._slot))
+        if self._cursor_shape is None:
+            QApplication.setOverrideCursor(shape)
+        elif shape != self._cursor_shape:
+            QApplication.changeOverrideCursor(shape)
+        self._cursor_shape = shape
+
     def chip_release(self) -> bool:
         """Keep the thing where it was let go (one undoable step); returns whether it was a drag."""
         dragged, slot = self._dragging, self._slot
         self._press, self._dragging, self._slot = None, False, ""
-        if dragged:
-            shift = self.shift_of(slot)
-            self.dscene.ctl.move_mark(slot, shift.x(), shift.y())
-        return dragged
+        if self._cursor_shape is not None:
+            QApplication.restoreOverrideCursor()
+            self._cursor_shape = None
+        if not dragged:
+            return False
+        ctl = self.dscene.ctl
+        if mark_is_along(slot):
+            t = self.along_of(slot)
+            gone = self.centre_of(slot) - self._home
+            if t is not None and gone.manhattanLength() >= HOME_PX:
+                ctl.slide_mark(slot, t)
+            else:
+                self.reload_marks()  # (let go where it was taken: nothing was moved)
+            return True
+        shift = self.shift_of(slot)
+        ctl.move_mark(slot, shift.x(), shift.y())
+        return True
 
 
 def free_rect(
@@ -244,7 +372,8 @@ class ConnectionItem(ChipDrag, QGraphicsPathItem):
             f"end:{link_id}:1",
             f"bend:{link_id}",
         )
-        self._shifts = {m: scene.mark_shift(m) for m in self.mark_ids}
+        self._shifts, self._along = self._read_marks()
+        self._auto: dict[str, QRectF] = {}  # the box of each label where the tool puts it
         self.unit_w = unit_w
         self.poly: list[tuple[float, float]] = []
         self.text = ""  # what the pairs carry, "CAN, 2 wires"
@@ -310,10 +439,9 @@ class ConnectionItem(ChipDrag, QGraphicsPathItem):
         return spot
 
     def boundingRect(self) -> QRectF:
-        away_x, away_y = self.away()  # (a thing that was moved is far from the line)
-        return (
-            super().boundingRect().adjusted(-160 - away_x, -30 - away_y, 160 + away_x, 30 + away_y)
-        )
+        """The line and the room its labels may take: on the line once the person has put them
+        there, and where the tool finds room (up to three steps off the line) until then."""
+        return super().boundingRect().adjusted(-REACH_X, -REACH_Y, REACH_X, REACH_Y)
 
     def shifts_changed(self) -> None:
         self.update_path()  # (the bend moves the line)
@@ -373,18 +501,7 @@ class ConnectionItem(ChipDrag, QGraphicsPathItem):
         font = sc.px_font(th.type("small"))
         painter.setFont(font)
         fm = QFontMetrics(font)
-        caption = link.name or link_caption(link)
-        lines = [caption] + ([self.text] if self.text else [])
-        ends = [  # (a box the person moved is where it was put)
-            (rect.translated(self.shift_of(mark)), texts)
-            for mark, (rect, texts) in zip(
-                self.mark_ids[1:3],
-                self._end_boxes(link, fm) if self.ends_shown() else [],
-                strict=False,
-            )
-        ]
-        self._end_rects = [rect for rect, _t in ends]
-        self._chip = self._chip_rect(fm, lines).translated(self.shift)  # (where it was put)
+        lines, self._chip, ends = self._boxes(link, fm)
         lines = [
             fm.elidedText(t, Qt.TextElideMode.ElideRight, int(CHIP_MAX_W - 2 * CHIP_PAD_X))
             for t in lines
@@ -420,6 +537,73 @@ class ConnectionItem(ChipDrag, QGraphicsPathItem):
             painter.setPen(sc.pen("focus", 3))
             painter.setBrush(Qt.BrushStyle.NoBrush)
             painter.drawRoundedRect(self._chip.adjusted(-3, -3, 3, 3), 8, 8)
+
+    def _metrics(self) -> QFontMetrics:
+        sc = self.dscene
+        return QFontMetrics(sc.px_font(sc.theme.type("small")))
+
+    def _boxes(
+        self, link: Link, fm: QFontMetrics, offsets: Mapping[str, QPointF] | None = None
+    ) -> tuple[list[str], QRectF, list[tuple[QRectF, list[str]]]]:
+        """Where the label and the two connector boxes go: the lines of the label, its box, and
+        each connector box with its texts. A box is where the tool puts it (`_auto` keeps that
+        place), and, when the person put it somewhere, centred on its place on the line. `offsets`
+        (the free offsets of an earlier version) moves the boxes by them instead, to turn them
+        into a place on the line."""
+        shown = self.ends_shown()
+        caption = link.name or link_caption(link)
+        lines = [caption] + ([self.text] if self.text else [])
+        ends: list[tuple[QRectF, list[str]]] = []
+        for mark, (rect, texts) in zip(
+            self.mark_ids[1:3],
+            self._end_boxes(link, fm) if shown or offsets is not None else [],
+            strict=False,
+        ):
+            self._auto[mark] = rect
+            ends.append((self._placed(mark, rect, offsets), texts))
+        self._end_rects = [rect for rect, _t in ends] if shown else []
+        chip = self._chip_rect(fm, lines)
+        self._auto[self.mark_ids[0]] = chip
+        return lines, self._placed(self.mark_ids[0], chip, offsets), ends
+
+    def _placed(
+        self, mark_id: str, automatic: QRectF, offsets: Mapping[str, QPointF] | None
+    ) -> QRectF:
+        if offsets is not None:
+            return automatic.translated(offsets.get(mark_id, NO_SHIFT))
+        return self.on_line(mark_id, automatic)
+
+    def _auto_box(self, mark_id: str) -> QRectF:
+        """The box of a label where the tool puts it (worked out now when it was never drawn)."""
+        if mark_id not in self._auto:
+            link = self.dscene.ctl.project.links.get(self.link_id)
+            if link is not None and self.poly:
+                self._boxes(link, self._metrics())
+        return self._auto.get(mark_id, QRectF())
+
+    def margin_of(self, mark_id: str) -> float:
+        gap = END_GAP if mark_id in self.mark_ids[1:3] else LABEL_GAP
+        return self._auto_box(mark_id).width() / 2 + gap
+
+    def centre_of(self, mark_id: str) -> QPointF:
+        return self.on_line(mark_id, self._auto_box(mark_id)).center()
+
+    def legacy_places(self) -> dict[str, float]:
+        """The place on the line of the label and the connector boxes that have a free offset of
+        an earlier version: the nearest point of the line to where the offset put each."""
+        legacy = self.dscene.legacy_offsets(self.mark_ids)
+        link = self.dscene.ctl.project.links.get(self.link_id)
+        if not legacy or link is None or len(self.poly) < 2:
+            return {}
+        self._boxes(link, self._metrics(), legacy)
+        out: dict[str, float] = {}
+        for mark, off in legacy.items():
+            box = self._auto.get(mark)
+            if box is not None:
+                out[mark] = linepos.from_offset(
+                    self.poly, (box.center().x(), box.center().y()), off.x(), off.y()
+                )
+        return out
 
     def ends_shown(self) -> bool:
         """The connector boxes are drawn in the Expert mode and when View > Show connectors on
@@ -558,8 +742,12 @@ class ConnectionItem(ChipDrag, QGraphicsPathItem):
         self._hover = True
         self.update()
 
+    def hoverMoveEvent(self, event: object) -> None:
+        self.show_cursor_at(event.scenePos())  # type: ignore[attr-defined]
+
     def hoverLeaveEvent(self, event: object) -> None:
         self._hover = False
+        self.unsetCursor()
         self.update()
 
 
