@@ -1,6 +1,6 @@
 # Telling devices apart
 
-This page is about what a device looks like on the block diagram. Every device card has a picture of the kind of equipment it is (a battery, a reaction wheel, a computer ...), a colour for the family of that kind and a shape for the badge the picture sits in. You do not set any of it: the tool reads it from the name of the device. Nothing is stored in the project, and no written file changes (the block diagram that `export` writes, the exported picture of **Export diagram**, every output file and the model hash are as they were).
+This page is about what a device looks like on the block diagram. Every device card has a picture of the kind of equipment it is (a battery, a reaction wheel, a computer ...), a colour for the family of that kind and a shape for the badge the picture sits in. By default you do not set any of it: the tool reads it from the name of the device, and you can set the **Kind** by hand when it reads it wrong. The same looks are drawn in the block diagram that `export` writes and in the pictures of **Export diagram**. A project that sets no kind has the same files and the same model hash as before.
 
 ## Contents
 
@@ -8,6 +8,8 @@ This page is about what a device looks like on the block diagram. Every device c
 - [What you see](#what-you-see)
 - [The key to the pictures](#the-key-to-the-pictures)
 - [How the tool decides what a device is](#how-the-tool-decides-what-a-device-is)
+- [Setting the kind by hand](#setting-the-kind-by-hand)
+- [In the written block diagram and the exported picture](#in-the-written-block-diagram-and-the-exported-picture)
 - [Where the words are](#where-the-words-are)
 - [What it does not do](#what-it-does-not-do)
 - [Common mistakes](#common-mistakes)
@@ -49,7 +51,7 @@ The colours are different in the light and the dark theme (lighter in the dark o
 
 ## How the tool decides what a device is
 
-The model has no device kind and a project file gains none, so the tool reads it, every time the diagram is drawn, from what the device already says. It tries these clues in order and stops at the first that fits:
+Unless a kind was set by hand (next section), the tool reads it, every time the diagram is drawn, from what the device already says. It tries these clues in order and stops at the first that fits:
 
 1. **The words of the name**: `Reaction wheel 1`, `S-band transceiver`, `Solar array simulator`. A word must be the whole word (or the word with digits after it, `OBC1`, or an ending such as `wheels`): `simulator` is not read as `imu`.
 2. **The letters of the ID** before the first digit: `BAT1` is a battery, `PCDU1` and `PDU2` power distribution, `RW1` a reaction wheel, `ST1` a star tracker, `SS1` a sun sensor, `OBC1-R` a computer. Used when the name says nothing, so a device you renamed to `Unit 7` keeps its look.
@@ -57,9 +59,28 @@ The model has no device kind and a project file gains none, so the tool reads it
 4. **The kinds of link it carries**, the clue the card's small picture already used: a spark line, RF, mostly power, data. Used only when nothing else says what the device is.
 5. Otherwise it is a plain **Device**.
 
-Inside each step the more specific kind comes first: a star tracker before a sensor, a battery before power distribution, and ground support before power, so that a `Ground power supply` is ground support. The devices that **Edit > Add device** makes (a name such as `Battery 1`, the ID `BAT1`) always get the right look. The table is `KINDS` in `gui/device_kinds.py`, one list in one place.
+Inside each step the more specific kind comes first: a star tracker before a sensor, a battery before power distribution, and ground support before power, so that a `Ground power supply` is ground support. The devices that **Edit > Add device** makes (a name such as `Battery 1`, the ID `BAT1`) always get the right look. The table is `KINDS` in `core/device_kinds.py`, one list in one place (the window and the written files read the same one).
 
-To change what a device looks like, **rename it** in the Inspector (or the **Device list** tab): the picture and the colour follow at once, and **Undo** takes it back like any other edit. There is no field for the kind: setting it by hand would need a new field in the project file, and that is left to a later decision.
+To change what a device looks like you can **rename it** in the Inspector (or the **Device list** tab): the picture and the colour follow at once, and **Undo** takes it back like any other edit. Or you can set the kind by hand.
+
+## Setting the kind by hand
+
+Select a device and open the **Kind** list in the Inspector (under **Subsystem**). Its first entry is **Automatic**, with what the tool would pick, for example *Automatic: Battery*; below it are the 19 kinds by name and, last, **Device (plain box)**, which gives the plain outlined box with no colour. Choosing an entry changes the card, the tooltip, the legend and the written diagram at once, is one step of **Undo**, and *Looks like: Battery (set by hand)* says that it was set by hand. Choosing **Automatic** again goes back to reading the name.
+
+- The kind is stored in the project, on the device (`logical/units/<subsystem>.json`, the field `kind`, one of `computer`, `interface_unit`, `battery`, `solar_array`, `power_unit`, `reaction_wheel`, `magnetorquer`, `thruster`, `star_tracker`, `sun_sensor`, `gyro`, `sensor`, `transceiver`, `antenna`, `payload`, `heater`, `pyro`, `mechanism`, `ground_support` or `device`). It is written **only when it is set**: a project that sets no kind keeps byte-identical files and the same model hash, and a project that sets one has it in its model hash, as it has the name of a device. The file format number stays 1 and no migration is needed. A tool older than this one refuses a device that has a `kind` and sets it aside as unreadable, as it does with any field it does not know, until the kind is cleared.
+- A kind the tool does not know is an error when the project is opened and when an edit is made: the message lists the allowed IDs.
+- A released harness does not lock it: like the name and the notes, the kind is a look and not wiring, so it can change after a release.
+- It travels with the device in a device library file and a subsystem file (`export-devices`, `import-devices`, `import-subsystem`), and `system/export.json` lists it for a device that has one.
+- There is no command-line command that edits one device, so the command line has no `--kind`; set it in the editor, or in the device's file.
+
+## In the written block diagram and the exported picture
+
+The block diagram that `harness-design-studio export` writes (`system/block_diagram.svg` and `.pdf`) and the pictures of **Export diagram** (SVG, PDF and PNG) draw every card like the window does: a **band** in the colour of the family down the left edge, and a **badge** with the picture of the kind in the shape of the family, then the ID and the name. The file is paper, so the colours are the **light theme's** whatever theme the window has. Below the diagram, beside the key to the lines, a **key to the kinds** lists the kinds the project has, each with its picture (none while every device is a plain box).
+
+- The looks come from the model alone: the name, the ID, the subsystem, the links and the kind set by hand. They do not depend on the window, its theme, its zoom or its marks, and the same design gives the same bytes every time and on every system.
+- The ID is never cut: when it does not fit beside the badge it is set smaller. A long **name** is cut short with `~` at about 21 characters, as it always was at the end of the card, only the room is a little less.
+- The **harness overview** (`system/harness_overview.svg`) keeps its plain boxes. The tables, the drawings of the harnesses and every number are not changed.
+- This changed `system/block_diagram.svg` and `.pdf` of every project; [what changed](../changes.md#release-1150-and-the-device-looks) shows a before and after.
 
 ## Where the words are
 
@@ -71,14 +92,14 @@ The sentence also says where the look came from: *from the name …*, *from the 
 
 ## What it does not do
 
-- It does not change the written block diagram (`system/block_diagram.svg`), the PDF and PNG of **Export diagram**, any output file, any project file or the model hash. The looks are drawn on the screen only.
+- It changes no number and no table: only the written block diagram (`system/block_diagram.svg` and `.pdf`) and the pictures of **Export diagram** differ from earlier releases; the harness overview, the drawings, every table and the model hash of a project that sets no kind are as they were.
 - It does not look at a part number or the library: only the name, the ID, the subsystem and the links of the device.
 - It does not mean anything for the checks: two devices with the same look are not related, and a wrong look is not an error. Rename the device.
 
 ## Common mistakes
 
 - **"Why is my device a battery?"** Its ID starts with `BAT`, or its name has a word of the battery kind. The tooltip says which: *from the ID BAT7*.
-- **"My device is a plain box."** Nothing in its name, ID, subsystem or links is in the table. Rename it with the kind in the name (`Gyro 2`).
+- **"My device is a plain box."** Nothing in its name, ID, subsystem or links is in the table. Rename it with the kind in the name (`Gyro 2`), or set its **Kind**.
 - **Two devices have the same colour.** They are in the same family (a reaction wheel and a magnetorquer are both attitude actuators); the picture and the name tell them apart.
 
 Next: [draw the design](draw-the-design.md), [redundancy and zones](redundancy-and-zones.md)
