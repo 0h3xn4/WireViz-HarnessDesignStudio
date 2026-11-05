@@ -293,6 +293,7 @@ def plan_generation(
             new_harnesses[h.id] = h
 
     _warn_shared_connectors(ctx, new_harnesses, frozen)
+    _warn_equal_labels(ctx, new_harnesses)
 
     # report: frozen, removed, added/changed/unchanged
     for g in seg.groups:
@@ -553,6 +554,27 @@ def _connector_ops(ctx: _Ctx, frozen_ifaces: set[str]) -> list[Op]:
 def _pin_of(ctx: _Ctx, connector_id: str, interface_id: str, signal: str) -> str | None:
     res = ctx.alloc.get(connector_id)
     return res.pins.get((interface_id, signal)) if res else None
+
+
+def _warn_equal_labels(ctx: _Ctx, harnesses: dict[str, Harness]) -> None:
+    """Two labels of a harness that read the same cannot be told apart on the wire: with the format
+    `custom` a template may leave the wire ID out. Warn for each such text (A-LABEL-FORMAT)."""
+    from harness_design_studio.core import label_format
+    from harness_design_studio.core.outputs.tables import label_duplicates
+
+    fmt = label_format.format_of(ctx.project)
+    if fmt != "custom":  # the other formats hold the ID of the wire or of the connector
+        return
+    for h in sorted(harnesses.values(), key=lambda x: x.id):
+        for text, ids in label_duplicates(ctx.project, h):
+            ctx.finding(
+                "warning",
+                "label_not_unique",
+                f"{h.id}: the labels {', '.join(ids)} all read '{text}' with the label format "
+                f"{fmt}; change model.label_wire_template or model.label_connector_template so that "
+                "each label of a harness reads differently.",
+                h.id,
+            )
 
 
 def _build_harness(ctx: _Ctx, group: Group, old: Harness | None) -> Harness | None:

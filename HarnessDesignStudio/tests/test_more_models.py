@@ -10,15 +10,21 @@ from pathlib import Path
 import pytest
 
 from harness_design_studio import api
-from harness_design_studio.core import configcheck, connector_choice, settings
+from harness_design_studio.cli.main import main
+from harness_design_studio.core import configcheck, connector_choice, label_format, settings
 from harness_design_studio.core.derive import Derivation, render
 from harness_design_studio.core.generate import pins as pinmod
+from harness_design_studio.core.generate import segmentation
+from harness_design_studio.core.generate.engine import generate_project
 from harness_design_studio.core.generate.pins import Request, allocate
 from harness_design_studio.core.generation_status import generation_status
 from harness_design_studio.core.model import ConfigFile, Project
+from harness_design_studio.core.outputs import tables
 from harness_design_studio.core.samples import mini3
 from tests.test_generate_parts import _connector
 from tools.trace_numbers import command
+
+ROOT = Path(__file__).resolve().parent.parent
 
 # ---- helpers -------------------------------------------------------------------------------------
 
@@ -351,3 +357,154 @@ def test_connector_choice_change_with_settings_and_the_explanation_follows(tmp_p
     assert after.index("OBC-J06: 4 pins") < after.index("OBC-J04: 9 pins")
     assert "OBC-J03: 3 pins, 3 available, 4 needed, too few pins (3 for 4), free" in after
     assert "the fewest pins left over" in after
+
+
+# ---- 4. the format of the labels -----------------------------------------------------------------
+
+WIRE = "W001-001"  # PWR of IF-010 "Power for wheel 1", from W001-P2.1 to W001-P11.1 in the flatsat
+
+
+def _labels(folder: Path) -> dict[str, str]:
+    project = api.load_project(folder)
+    return {r[0]: r[2] for h in project.harnesses.values() for r in tables.labels(project, h)[1:]}
+
+
+def test_label_format_standard_is_the_text_the_tool_always_printed(work: Path) -> None:
+    project = api.load_project(work)
+    assert label_format.format_of(project) == "standard"
+    labels = _labels(work)
+    assert labels[f"{WIRE}-A"] == "W001-001 PWR to W001-P11.1"
+    assert labels[f"{WIRE}-B"] == "W001-001 PWR to W001-P2.1"
+    assert labels["W001-P1"] == "W001-P1 mates MTQ1-J01"
+    text = render(derivation(work, WIRE, "wire-label"))
+    assert "Label format" not in text  # the default keeps its text
+
+
+def test_label_format_compact_is_the_id_and_the_far_end(work: Path) -> None:
+    set_value(work, 'model.label_format="compact"')
+    labels = _labels(work)
+    assert labels[f"{WIRE}-A"] == "W001-001 to W001-P11.1"  # no name, no EMC class
+    assert labels[f"{WIRE}-B"] == "W001-001 to W001-P2.1"
+    assert labels["W001-P1"] == "W001-P1 mates MTQ1-J01"
+
+
+def test_label_format_descriptive_adds_the_interface_and_the_device(work: Path) -> None:
+    set_value(work, 'model.label_format="descriptive"')
+    labels = _labels(work)
+    assert labels[f"{WIRE}-A"] == "W001-001 PWR (IF-010 Power for wheel 1) to W001-P11.1"
+    assert labels[f"{WIRE}-B"] == "W001-001 PWR (IF-010 Power for wheel 1) to W001-P2.1"
+    assert labels["W001-P1"] == "W001-P1 mates MTQ1-J01 of MTQ1"
+
+
+def test_label_format_custom_fills_the_templates_in(work: Path) -> None:
+    set_value(work, 'model.label_format="custom"')
+    assert _labels(work)[f"{WIRE}-A"] == "W001-001 PWR to W001-P11.1"  # no template: standard
+    set_value(work, 'model.label_wire_template="{harness}/{wire} {end}: {from} > {to} ({signal})"')
+    set_value(work, 'model.label_connector_template="{connector} -> {mates} [{device}] {{{name}}}"')
+    labels = _labels(work)
+    assert labels[f"{WIRE}-A"] == "W001/W001-001 A: W001-P2.1 > W001-P11.1 (PWR)"
+    assert labels[f"{WIRE}-B"] == "W001/W001-001 B: W001-P11.1 > W001-P2.1 (PWR)"
+    assert labels["W001-P1"] == "W001-P1 -> MTQ1-J01 [MTQ1] {}"  # {{ and }} are braces; no name
+
+
+def test_label_format_template_with_an_unknown_field_is_refused_and_names_it(
+    work: Path, capsys: pytest.CaptureFixture[str]
+) -> None:
+    before = (work / "config" / "model.json").exists()
+    code = main(["settings", str(work), "--set", 'model.label_wire_template="{wire} {colour}"'])
+    err = capsys.readouterr().err
+    assert (
+        code == 1 and "{colour}" in err and "does not exist" in err and "Nothing was changed" in err
+    )
+    assert (work / "config" / "model.json").exists() == before  # nothing written
+    for text in ("{wire", "wire}", "{wire!r}", "{wire.id}", "{wire:>10}", "{0}", "{}"):
+        assert label_format.check_template(text, label_format.WIRE_FIELDS), text
+    for text in ("{wire}", "{{wire}}", "{wire} to {to}", "no field at all"):
+        assert label_format.check_template(text, label_format.WIRE_FIELDS) is None, text
+    assert label_format.check_template("x" * 201, label_format.WIRE_FIELDS)
+    # no code runs: a field is a name from the list, and the text is only ever replaced
+    assert label_format.fill("{wire}{{{to}}}", {"wire": "W1", "to": "J1.2"}) == "W1{J1.2}"
+
+
+def test_label_format_unknown_name_is_not_used_and_is_reported(work: Path) -> None:
+    project = api.load_project(work)
+    with_model(project, label_format="fancy")
+    assert label_format.format_of(project) == "standard"
+    assert any("label_format must be one of" in i.message for i in configcheck.validate(project))
+    with_model(project, label_format="custom", label_wire_template=5)
+    assert any(
+        "label_wire_template must be text" in i.message for i in configcheck.validate(project)
+    )
+
+
+def test_label_format_equal_labels_are_warned_about_at_generation(work: Path) -> None:
+    set_value(work, 'model.label_format="custom"')
+    set_value(work, 'model.label_wire_template="{signal} {end}"')  # leaves the wire ID out
+    plan = generate_project(api.load_project(work))
+    warnings = [f for f in plan.report.findings if f.code == "label_not_unique"]
+    assert warnings and all(f.severity == "warning" for f in warnings)
+    assert any("PWR A" in f.message and "W001-001-A" in f.message for f in warnings)
+    set_value(work, 'model.label_wire_template="{wire} {signal} {end}"')
+    again = generate_project(api.load_project(work))
+    assert not [f for f in again.report.findings if f.code == "label_not_unique"]
+
+
+def test_label_format_change_with_settings_regenerate_and_the_explanation_follows(
+    work: Path,
+) -> None:
+    before = render(derivation(work, WIRE, "wire-label"))
+    set_value(work, 'model.label_format="compact"')
+    assert generation_status(api.load_project(work)) == "stale"  # it is an input of generation
+    assert api.generate(work).ok
+    assert _labels(work)[f"{WIRE}-A"] == "W001-001 to W001-P11.1"
+    after = render(derivation(work, WIRE, "wire-label"))
+    assert "Label format (the model in force) = compact" in after
+    assert "W001-001-A: W001-001 to W001-P11.1" in after
+    assert "wire ID + ' to ' + far end" in after
+    assert "compared with the others = yes" in after  # the labels of the harness differ
+    connector = render(derivation(work, "W001-P1", "connector-label"))
+    assert "Label format (the model in force) = compact" in connector
+    set_value(work, 'model.label_format="standard"')
+    assert api.generate(work).ok
+    assert render(derivation(work, WIRE, "wire-label")) == before
+
+
+def test_label_format_the_colour_table_stays_its_own_setting() -> None:
+    s = settings.setting("generation", "wire_colour_by_signal")
+    assert s is not None and s.assumption == "A-COLOUR-TABLE"
+    assert not any(k.startswith("colour") for k in label_format.TEMPLATE_KEYS.values())
+
+
+# ---- 3. segmentation: already selectable, through `segmentation.mode` ---------------------------
+
+
+def test_segmentation_the_method_is_chosen_by_a_key_and_the_page_lists_every_one() -> None:
+    s = settings.setting("segmentation", "mode")
+    assert s is not None and s.default == "per_connector_pair" and s.assumption == "A-SEGMENT-MODE"
+    assert s.choices == segmentation.MODES
+    page = (ROOT / "docs" / "models" / "selectable-models.md").read_text(encoding="utf-8")
+    for mode in segmentation.MODES:
+        assert f"| `segmentation.mode` | `{mode}`" in page, mode
+    for key in (
+        "forbid_nominal_with_redundant",
+        "forbid_pyro_with_other",
+        "category_pairs_to_separate",
+    ):
+        assert f"`segregation.{key}`" in page, key
+    assert settings.setting("model", "segmentation_method") is None  # no second selector
+
+
+@pytest.mark.parametrize("mode", segmentation.MODES)
+def test_segmentation_explain_names_the_method_in_force_and_the_key(work: Path, mode: str) -> None:
+    set_value(work, f'segmentation.mode="{mode}"')
+    assert api.generate(work).ok
+    project = api.load_project(work)
+    groups = segmentation.segment(project).groups
+    assert groups and all(g.mode == mode for g in groups)
+    harness = sorted(project.harnesses)[0]
+    d = derivation(work, harness, "segmentation")
+    shown = next(i for i in d.inputs if i.name == "Segmentation mode")
+    assert shown.value == mode and "config/segmentation.json: mode" in shown.source
+    # hand check of the key: its prefix says the method (cp, up or zp) and the harness holds a group
+    prefix = {"per_connector_pair": "cp|", "per_unit_pair": "up|", "per_zone_pair": "zp|"}[mode]
+    assert project.harnesses[harness].group_key.startswith(prefix)

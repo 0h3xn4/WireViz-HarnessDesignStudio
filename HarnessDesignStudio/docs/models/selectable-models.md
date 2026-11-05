@@ -14,6 +14,8 @@ Until version 1.12 some of the tool's calculations were fixed in the program. Ea
 - [Pin allocation order](#pin-allocation-order)
 - [Pin fit strategy](#pin-fit-strategy)
 - [Connector choice](#connector-choice)
+- [Segmentation](#segmentation)
+- [Label format](#label-format)
 - [What makes a harness not ready to build](#what-makes-a-harness-not-ready-to-build)
 - [What the choices do not do](#what-the-choices-do-not-do)
 
@@ -48,6 +50,9 @@ Every key of the file, its default (the number the tool has always used) and wha
 | `pin_allocation_categories` | power, ground | the categories given pins first, in this order | A-PIN-ORDER |
 | `pin_fit_strategy` | `first_fit` | which free run of pins a group of signals takes | A-PIN-FIRST-FIT |
 | `connector_choice` | `first_free` | which free connector the tool takes for an interface | A-CONNECTOR-CHOICE |
+| `label_format` | `standard` | the text of the labels of wires and cable connectors | A-LABEL-FORMAT |
+| `label_wire_template` | not set | the template of a wire label, for the format `custom` | A-LABEL-FORMAT |
+| `label_connector_template` | not set | the template of a cable connector label, for the format `custom` | A-LABEL-FORMAT |
 | `readiness_blocking` | Wires without a length, Wires without a gauge, Wires without a colour, Wires without a part | the checks whose open items make *Ready to build* no | A-READY-CHECKS |
 
 ## Bundle basis
@@ -128,6 +133,36 @@ When an interface is made without naming the connector at a device (the editor's
 | `most_spare_pins` | the candidate with the most pins left over; ties by ID | the small connectors should be kept for later, or room is wanted for added signals |
 
 The pins *available* are the pins that are not locked and have no signal typed in by a person (a pin that carries a generated assignment counts, because generation rewrites it); on a connector with a fixed pinout they are the named, unlocked pins, and the interface fits when every signal of the type has a named pin. A hand count: an OBC with free connectors of 3, 9, 15, 4 and 15 pins and an interface of 4 signals has 3 pins too few on the first, then 5, 11, 0 and 11 pins left over; `first_free` takes the 3-pin connector (as it always did, and the pin allocation then reports too few pins), `fewest_spare_pins` the 4-pin connector, `most_spare_pins` the first of the two 15-pin connectors. `explain DIR CONNECTOR` shows the model in force and the candidates in its order with the numbers it chose from; for the default it keeps its text. Changing the model does not move a connector that is already chosen.
+
+## Segmentation
+
+How interfaces share a harness was already a choice before this page: `segmentation.mode` selects the method, and two flags and a list of `segregation.json` keep chains, pyro lines and categories apart. It is not a `model.` key, so it is not in the table of `model.json` above; it is in the same place for `settings` and `explain` (the harness page names the mode and the key), and in [segmentation](segmentation.md). Which key selects what:
+
+| Key | Value | Interfaces share a harness when they have the same |
+| --- | --- | --- |
+| `segmentation.mode` | `per_connector_pair` (default) | pair of device connectors, and chain |
+| `segmentation.mode` | `per_unit_pair` | pair of devices, chain and class |
+| `segmentation.mode` | `per_zone_pair` | pair of zones, chain and class |
+| `segregation.forbid_nominal_with_redundant` | `true` (default) / `false` | the nominal and the redundant chain never share a harness (`true`) or may (`false`) |
+| `segregation.forbid_pyro_with_other` | `true` (default) / `false` | a pyro line gets a harness of its own, in the two coarser modes |
+| `segregation.category_pairs_to_separate` | pairs of categories | the listed pairs of interface categories get harnesses of their own, in the two coarser modes |
+
+Two more methods were considered and not made. *One harness for everything* has no meaning for a harness, which has two ends: the interfaces between three devices would need the connectors of one device at both ends. *One harness for each interface* is what `per_connector_pair` already gives wherever each connector carries one interface, which the editor insists on (*One interface per connector*) and which holds in all four examples; where two interfaces do end on one pair of connectors (a project from an import), they must share the harness, because a connector takes one plug and a second harness could not mate it. The three modes above are the methods the design supports.
+
+## Label format
+
+`model.label_format` says what is printed on the labels of the *Labels* table and sheet. Assumption A-LABEL-FORMAT. The colour of a wire is not part of it: the colour table `generation.wire_colour_by_signal` is a setting of its own (assumption A-COLOUR-TABLE) and stays one.
+
+| Value | A wire label (end A of `W001-001` of the flatsat) | A connector label |
+| --- | --- | --- |
+| `standard` (default) | `W001-001 PWR to W001-P11.1` (`[EMC x]` added when the interface type has a class) | `W001-P1 mates MTQ1-J01`, with the name in front when there is one |
+| `compact` | `W001-001 to W001-P11.1` | `W001-P1 mates MTQ1-J01` (no name) |
+| `descriptive` | `W001-001 PWR (IF-010 Power for wheel 1) to W001-P11.1` (the interface of the wire) | `W001-P1 mates MTQ1-J01 of MTQ1` (the device) |
+| `custom` | the template `model.label_wire_template`, filled in for each end | the template `model.label_connector_template` |
+
+A template is text with places in braces: for a wire `{harness}`, `{wire}`, `{signal}`, `{name}`, `{interface}`, `{emc}`, `{end}` (A or B), `{from}` (connector and pin at the end the label is printed at) and `{to}` (the far end); for a connector `{harness}`, `{connector}`, `{name}`, `{mates}` and `{device}`. `{{` and `}}` are braces in the text. A place that does not exist is refused when you set it (`settings --set` names it and changes nothing), and so are a single brace, a format specification or a lookup such as `{wire.id}` or `{0}`: the tool only replaces the names listed, and runs nothing. A template that is not set gives the standard text of its kind. With `{harness}/{wire} {end}: {from} > {to} ({signal})`, label A of `W001-001` reads `W001/W001-001 A: W001-P2.1 > W001-P11.1 (PWR)`.
+
+The label texts of one harness must read differently from one another. `standard`, `compact` and `descriptive` hold the ID of the wire or of the connector, so they do; a `custom` template may leave it out, and then generation warns (`label_not_unique`) naming the harness and the labels that read the same. `explain DIR WIRE` and `explain DIR CONNECTOR` name the format, give its rule and the text of each label, and say whether the labels of the harness read differently.
 
 ## What makes a harness not ready to build
 

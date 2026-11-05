@@ -234,14 +234,17 @@ ASSUMPTIONS: dict[str, Assumption] = {
         ),
         Assumption(
             "A-LABEL-FORMAT",
-            "A label has a fixed form",
+            "A label has the form of the label format in force (the standard one by default)",
             "A wire has two labels, A and B. Each reads: the wire ID, then the name (the label a person "
             "gave the wire, else its signal), then 'to' and the far end (connector and pin), then the EMC "
             "class in brackets when the interface type has one. A cable connector label reads its own "
             "label, else the label of the device connector it plugs into, then 'ID mates DEVICE-CONNECTOR'. "
-            "The form is built into the tool; only the words come from the design.",
-            "built in",
-            "core/outputs/tables.py (wire_label_texts, connector_label_text)",
+            "This is the format standard. The setting model.label_format selects compact (ID and far end "
+            "only), descriptive (with the interface and the device) or custom (the templates "
+            "model.label_wire_template and model.label_connector_template); the words always come from "
+            "the design.",
+            "setting",
+            "config/model.json: label_format, label_wire_template, label_connector_template; core/label_format.py, core/outputs/tables.py (wire_label_texts, connector_label_text)",
         ),
         Assumption(
             "A-COLOUR-TABLE",
