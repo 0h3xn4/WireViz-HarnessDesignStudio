@@ -1,4 +1,4 @@
-# mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
+# mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type,no-any-return"
 """REQ-GUI-21, the window side: the Kind of a device in the inspector (`Automatic: <what the name
 says>` first, then the kinds), one undo step for each change, the card, the tooltip and the legend
 following it, and the words *set by hand*."""

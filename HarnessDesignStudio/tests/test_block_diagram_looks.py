@@ -230,7 +230,12 @@ def test_no_coordinate_sits_on_a_rounding_edge(monkeypatch) -> None:
     middle of two four-decimal steps could round either way on two platforms; none is. (A number
     that is already on the four-decimal grid is written the same everywhere: it is one double.)"""
     raw: list[float] = []
-    monkeypatch.setattr(pictograms, "_r", lambda v: raw.append(v) or round(v, pictograms.DECIMALS))
+
+    def record(v: float) -> float:
+        raw.append(v)
+        return round(v, pictograms.DECIMALS)
+
+    monkeypatch.setattr(pictograms, "_r", record)
     pictograms._build()
     for shape in pictograms.SHAPES:
         pictograms.shape_path(shape, 0.0, 0.0, looks.BADGE, looks.BADGE)

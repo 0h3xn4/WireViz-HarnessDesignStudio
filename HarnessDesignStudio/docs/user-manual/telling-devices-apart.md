@@ -80,7 +80,7 @@ The block diagram that `harness-design-studio export` writes (`system/block_diag
 - The looks come from the model alone: the name, the ID, the subsystem, the links and the kind set by hand. They do not depend on the window, its theme, its zoom or its marks, and the same design gives the same bytes every time and on every system.
 - The ID is never cut: when it does not fit beside the badge it is set smaller. A long **name** is cut short with `~` at about 21 characters, as it always was at the end of the card, only the room is a little less.
 - The **harness overview** (`system/harness_overview.svg`) keeps its plain boxes. The tables, the drawings of the harnesses and every number are not changed.
-- This changed `system/block_diagram.svg` and `.pdf` of every project; [what changed](../changes.md#release-1150-and-the-device-looks) shows a before and after.
+- This changed `system/block_diagram.svg` and `.pdf` of every project; [what changed](../changes.md#2026-11-05-the-written-block-diagram-shows-the-looks-of-the-devices-a-written-file-changes-on-purpose-for-every-project) shows a before and after.
 
 ## Where the words are
 

@@ -153,17 +153,17 @@ def _diagram(
         sheet.add(Text(lx + 15.0, ly + k * 5.0, name, size=2.6))
     kinds = dk.used_kinds(project, cats) if looks else []
     rows = max(1, len(legend))  # the key of the kinds fills columns as tall as the key of the lines
-    for k, key in enumerate(kinds):
+    for k, kind_id in enumerate(kinds):
         col, row = divmod(k, rows)
         kx = KEY_X + col * device_looks.KEY_COLUMN
         base = ly + row * device_looks.KEY_PITCH
-        shown = dk.Looks(dk.KIND[key], "", "")
+        shown = dk.Looks(dk.KIND[kind_id], "", "")
         sheet.add(*device_looks.badge(kx, base - 3.2, device_looks.KEY_BADGE, shown))
         sheet.add(
             Text(
                 kx + device_looks.KEY_BADGE + 2.0,
                 base,
-                dk.KIND[key].label,
+                dk.KIND[kind_id].label,
                 size=device_looks.KEY_TEXT,
             )
         )
