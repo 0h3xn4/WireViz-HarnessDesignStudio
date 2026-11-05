@@ -10,7 +10,7 @@ from pathlib import Path
 import pytest
 
 from harness_design_studio import api
-from harness_design_studio.core import configcheck, settings
+from harness_design_studio.core import configcheck, connector_choice, settings
 from harness_design_studio.core.derive import Derivation, render
 from harness_design_studio.core.generate import pins as pinmod
 from harness_design_studio.core.generate.pins import Request, allocate
@@ -218,3 +218,136 @@ def test_pin_fit_every_strategy_places_every_signal_of_the_flatsat(
     placed = sum(1 for b in project.connectors.values() for x in b.pins if x.interface_id)
     assert placed == 2 * wanted  # every signal sits on a pin at each of its two ends
     assert json.loads(command("settings", str(work), "--json"))["settings"]
+
+
+# ---- 2. the choice of a connector ----------------------------------------------------------------
+
+
+def _obc_project() -> Project:
+    """mini3 with five more connectors at the OBC that carry RS-422 (or CAN). Free and carrying
+    RS-422 (4 signals): J03 (3 pins), J04 (9), J05 (15), J06 (4), J07 (15). J01 is used, J02 carries
+    power only, J08 carries CAN only."""
+    from harness_design_studio.core.model import Connector, Pin, Unit, evolve
+
+    p = mini3()
+
+    def box(cid: str, pins: int, carries: list[str], locked: tuple[str, ...] = ()) -> Connector:
+        return Connector(
+            id=cid, name=cid.rsplit("-", 1)[1], role="box",
+            part_id="EX-MICROD-15-F" if pins > 9 else "EX-MICROD-9-F", unit_id="OBC", gender="female", carries=carries,
+            pins=[
+                Pin(id=str(k), locked=str(k) in locked, signal="X" if str(k) in locked else None)
+                for k in range(1, pins + 1)
+            ],
+        )  # fmt: skip
+
+    p.units["EXT"] = Unit(id="EXT", name="Extra unit", subsystem="avionics", side="nominal")
+    for k in range(1, 7):  # the other end: room for six RS-422 interfaces
+        c = box(f"EXT-J0{k}", 9, ["rs422"])
+        p.connectors[c.id] = evolve(c, unit_id="EXT")
+    for c in (
+        box("OBC-J04", 9, ["rs422"]),
+        box("OBC-J05", 15, ["rs422"]),
+        box("OBC-J06", 4, ["rs422"]),
+        box("OBC-J07", 15, ["rs422"]),
+        box("OBC-J08", 4, ["can"]),
+    ):
+        p.connectors[c.id] = c
+    return p
+
+
+def _chosen(p: Project) -> str:
+    from harness_design_studio.core import edit
+
+    ops, iid = edit.ops_add_interface(p, "rs422", "OBC", "EXT")
+    from harness_design_studio.core.commands import apply_ops
+
+    apply_ops(p, ops)
+    return p.interfaces[iid].endpoints[0].connector_id or ""
+
+
+def test_connector_choice_first_free_is_the_first_free_one_that_carries_the_type() -> None:
+    p = _obc_project()
+    assert connector_choice.method(p) == "first_free"
+    # hand calculation: J01 is used, J02 does not carry rs422, so the first free one is J03
+    # (the choice does not look at the pins: J03 has 3 pins for 4 signals, as it always did)
+    assert _chosen(p) == "OBC-J03"
+
+
+def test_connector_choice_fewest_spare_pins_is_the_best_fit() -> None:
+    p = _obc_project()
+    with_model(p, connector_choice="fewest_spare_pins")
+    # 4 signals: J06 has 4 pins (0 spare), J04 9 (5), J05 and J07 15 (11); J03 has 3 and does not fit
+    assert _chosen(p) == "OBC-J06"
+    # J06 is used now: the next best fit is J04 (5 spare), then J05 (11 spare, before J07 by ID)
+    assert _chosen(p) == "OBC-J04"
+    assert _chosen(p) == "OBC-J05"
+    assert _chosen(p) == "OBC-J07"
+    assert _chosen(p) == "OBC-J03"  # only the one that does not fit is left: first free order
+
+
+def test_connector_choice_most_spare_pins_keeps_the_small_connectors() -> None:
+    p = _obc_project()
+    with_model(p, connector_choice="most_spare_pins")
+    # J05 and J07 tie with 11 spare pins: the ID decides; then J04 (5), J06 (0), J03 does not fit
+    assert [_chosen(p) for _ in range(5)] == [
+        "OBC-J05", "OBC-J07", "OBC-J04", "OBC-J06", "OBC-J03",
+    ]  # fmt: skip
+
+
+def test_connector_choice_counts_only_the_pins_an_interface_can_take() -> None:
+    from harness_design_studio.core.model import evolve
+
+    p = _obc_project()
+    with_model(p, connector_choice="fewest_spare_pins")
+    j06 = p.connectors["OBC-J06"]  # a person locked one of its 4 pins: 3 available for 4 signals
+    p.connectors["OBC-J06"] = evolve(
+        j06, pins=[evolve(j06.pins[0], locked=True, signal="X"), *j06.pins[1:]]
+    )
+    assert connector_choice.available_pins(p.connectors["OBC-J06"]) == 3
+    assert _chosen(p) == "OBC-J04"  # J06 no longer fits; J04 is the best fit left
+
+
+def test_connector_choice_never_takes_a_used_or_incompatible_connector() -> None:
+    for name in connector_choice.METHODS:
+        p = _obc_project()
+        with_model(p, connector_choice=name)
+        picked = [_chosen(p) for _ in range(5)]
+        assert len(set(picked)) == 5
+        assert not {"OBC-J01", "OBC-J02", "OBC-J08"} & set(picked)  # used, power only, CAN only
+
+
+def test_connector_choice_is_checked_and_makes_plans_stale(work: Path) -> None:
+    s = settings.setting("model", "connector_choice")
+    assert s is not None and s.default == "first_free" and s.assumption == "A-CONNECTOR-CHOICE"
+    project = api.load_project(work)
+    with_model(project, connector_choice="biggest")
+    assert connector_choice.method(project) == "first_free"
+    assert any(
+        "connector_choice must be one of first_free, fewest_spare_pins, most_spare_pins"
+        in i.message
+        for i in configcheck.validate(project)
+    )
+    set_value(work, 'model.connector_choice="most_spare_pins"')
+    assert generation_status(api.load_project(work)) == "stale"
+
+
+def test_connector_choice_change_with_settings_and_the_explanation_follows(tmp_path: Path) -> None:
+    from harness_design_studio.core.derive_layout import connector_choice_derivation
+
+    folder = tmp_path / "obc"
+    api.save_project(_obc_project(), folder)
+    p = api.load_project(folder)
+    first = _chosen(p)
+    before = render(connector_choice_derivation(p, first))
+    assert first == "OBC-J03" and "Connector choice" not in before  # the default keeps its text
+    set_value(folder, 'model.connector_choice="fewest_spare_pins"')
+    p = api.load_project(folder)
+    assert _chosen(p) == "OBC-J06"
+    after = render(connector_choice_derivation(p, "OBC-J06"))
+    assert "Connector choice (the model in force) = fewest_spare_pins" in after
+    # the numbers the choice is made from, in the order of the model
+    assert "OBC-J06: 4 pins, 4 available, 4 needed, 0 spare, this interface" in after
+    assert after.index("OBC-J06: 4 pins") < after.index("OBC-J04: 9 pins")
+    assert "OBC-J03: 3 pins, 3 available, 4 needed, too few pins (3 for 4), free" in after
+    assert "the fewest pins left over" in after

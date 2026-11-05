@@ -12,12 +12,18 @@ generation recorded (the Why tab: `core.why`). The derivations are:
     connector-choice     why a connector is the connector of an interface, or the mating part of one
 """
 
-from harness_design_studio.core import settings, why
+from harness_design_studio.core import connector_choice, edit, settings, why
 from harness_design_studio.core.derive import Derivation, Input, Step, origin_text, text_step
 from harness_design_studio.core.edit import carries, unit_connectors
 from harness_design_studio.core.generate import pins as pinmod
 from harness_design_studio.core.generate import segmentation
-from harness_design_studio.core.model import Connector, Harness, Project, Wire
+from harness_design_studio.core.model import (
+    Connector,
+    Harness,
+    InterfaceInstance,
+    Project,
+    Wire,
+)
 
 SHOWN = 8  # how many names a line gives before "and N more": no result depends on it
 
@@ -488,6 +494,18 @@ def _box_choice(project: Project, box: Connector) -> Derivation:
         Input("Carries", ", ".join(box.carries) or "any type", "", f"connector {box.id}: Carries"),
     ]
     steps: list[Step] = []
+    method = connector_choice.method(project)
+    if (
+        method != connector_choice.DEFAULT_METHOD
+    ):  # the default keeps its text: only another model is named
+        inputs.append(
+            Input(
+                "Connector choice (the model in force)",
+                method,
+                "",
+                f"config/model.json: connector_choice ({origin_text(project, 'model', 'connector_choice')})",
+            )
+        )
     for i, e in ends:
         siblings = [c.id for c in unit_connectors(project, e.unit_id) if carries(c, i.type_id)]
         inputs.append(
@@ -499,6 +517,8 @@ def _box_choice(project: Project, box: Connector) -> Derivation:
                 f"interface {i.id}: the connector at {e.unit_id}",
             )
         )
+        if method != connector_choice.DEFAULT_METHOD:
+            steps.append(_ranking_step(project, method, i, e.unit_id, box.id, bool(e.auto)))
         steps.append(
             text_step(
                 f"Connectors of {e.unit_id} that carry {i.type_id}",
@@ -520,7 +540,10 @@ def _box_choice(project: Project, box: Connector) -> Derivation:
         "Choice of connector",
         None,
         "",
-        "connector = the one a person picks for the interface at the device, else the first free connector of the device that carries the type",
+        "connector = the one a person picks for the interface at the device, else the first free connector of the device that carries the type"
+        if method == connector_choice.DEFAULT_METHOD
+        else "connector = the one a person picks for the interface at the device, else "
+        + connector_choice.METHOD_TEXT[method],
         tuple(inputs),
         tuple(steps),
         None,
@@ -528,6 +551,37 @@ def _box_choice(project: Project, box: Connector) -> Derivation:
         "A connector the tool chose is marked until a person confirms it (the finding 'unconfirmed'). "
         "The part of a device connector is a choice of the device design or the library, not of this tool.",
         text=text,
+    )
+
+
+def _ranking_step(
+    project: Project, method: str, i: InterfaceInstance, unit_id: str, chosen_id: str, auto: bool
+) -> Step:
+    """The connectors of the device that carry the type in the order of the model in force, each
+    with the pins it has, the pins an interface may take, the pins the interface needs and what is
+    left over (the numbers the choice is made from)."""
+    itype = project.interface_types.get(i.type_id)
+    candidates = [c for c in unit_connectors(project, unit_id) if carries(c, i.type_id)]
+    parts = []
+    for c in connector_choice.ranked(method, candidates, itype):
+        f = connector_choice.fit_of(c, itype)
+        user = edit.interface_using(project, c.id)
+        state = (
+            "this interface"
+            if user is not None and user.id == i.id
+            else f"in use by {user.id}"
+            if user is not None
+            else "free"
+        )
+        fits = f"{f.spare} spare" if f.fits else f"too few pins ({f.available} for {f.needed})"
+        parts.append(
+            f"{c.id}: {f.pins} pins, {f.available} available, {f.needed} needed, {fits}, {state}"
+        )
+    return text_step(
+        f"Connectors of {unit_id} in the order of {method}",
+        "; ".join(parts) or "none carries the type",
+        f"{connector_choice.METHOD_TEXT[method]}; the tool takes the first one that is free"
+        + ("" if auto else " (a person picked " + chosen_id + ", so the model did not decide)"),
     )
 
 

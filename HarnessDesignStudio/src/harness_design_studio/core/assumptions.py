@@ -280,11 +280,12 @@ ASSUMPTIONS: dict[str, Assumption] = {
             "A connector is the first free one that carries the type; the cable end is the mating part",
             "When the tool chooses the connector of an interface at a device, it takes the first free "
             "connector of that device (in ID order) that carries the interface type, and marks it as "
-            "chosen for you until a person confirms it. The cable end of a device connector is the part "
+            "chosen for you until a person confirms it. The setting model.connector_choice selects "
+            "another order of the same candidates: fewest_spare_pins (best fit) or most_spare_pins. The cable end of a device connector is the part "
             "the library names as its mating part; a part with none is mated with itself, and "
             "generation says so. Gender is the opposite of the device connector's, and keying is copied.",
-            "built in",
-            "core/checks.py (_assign_connectors), core/edit.py (free_connectors), core/generate/engine.py (_build_harness)",
+            "setting",
+            "config/model.json: connector_choice (default first_free); core/edit.py (choose_connector), core/generate/engine.py (_build_harness)",
         ),
         Assumption(
             "A-SPARE-PINS",

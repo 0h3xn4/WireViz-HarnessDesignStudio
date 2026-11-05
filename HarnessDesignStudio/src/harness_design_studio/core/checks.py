@@ -191,13 +191,11 @@ def _assign_connectors(project: Project, interface_id: str) -> list[Op]:
     taken: set[str] = set()
     for e in i.endpoints:
         if e.connector_id is None:
-            free = [
-                c for c in edit.free_connectors(project, e.unit_id, i.type_id) if c.id not in taken
-            ]
-            if not free:
+            pick = edit.choose_connector(project, e.unit_id, i.type_id, taken)
+            if pick is None:
                 raise edit.EditError(f"{e.unit_id} has no free connector for {i.type_id}.")
-            taken.add(free[0].id)
-            eps.append(evolve(e, connector_id=free[0].id, auto=True))
+            taken.add(pick.id)
+            eps.append(evolve(e, connector_id=pick.id, auto=True))
         else:
             eps.append(e)
     return [Put("interfaces", evolve(i, endpoints=eps))]

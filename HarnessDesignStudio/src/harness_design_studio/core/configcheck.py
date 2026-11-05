@@ -202,6 +202,7 @@ _MODEL_CHOICES: dict[str, tuple[str, ...]] = {
     "drop_model": ("dc_solid", "dc_at_ambient"),
     "mass_model": ("connectors_and_wires", "full_bom"),
     "pin_fit_strategy": ("first_fit", "last_fit", "spread"),
+    "connector_choice": ("first_free", "fewest_spare_pins", "most_spare_pins"),
 }
 _MODEL_NAMES = ("return_path_categories", "pin_allocation_categories", "readiness_blocking")
 

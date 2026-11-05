@@ -13,6 +13,7 @@ Until version 1.12 some of the tool's calculations were fixed in the program. Ea
 - [Mass model](#mass-model)
 - [Pin allocation order](#pin-allocation-order)
 - [Pin fit strategy](#pin-fit-strategy)
+- [Connector choice](#connector-choice)
 - [What makes a harness not ready to build](#what-makes-a-harness-not-ready-to-build)
 - [What the choices do not do](#what-the-choices-do-not-do)
 
@@ -46,6 +47,7 @@ Every key of the file, its default (the number the tool has always used) and wha
 | `mass_model` | `connectors_and_wires` | what the mass counts | A-MASS-SCOPE |
 | `pin_allocation_categories` | power, ground | the categories given pins first, in this order | A-PIN-ORDER |
 | `pin_fit_strategy` | `first_fit` | which free run of pins a group of signals takes | A-PIN-FIRST-FIT |
+| `connector_choice` | `first_free` | which free connector the tool takes for an interface | A-CONNECTOR-CHOICE |
 | `readiness_blocking` | Wires without a length, Wires without a gauge, Wires without a colour, Wires without a part | the checks whose open items make *Ready to build* no | A-READY-CHECKS |
 
 ## Bundle basis
@@ -114,6 +116,18 @@ Both are DC drops of a solid round conductor (A-DC-SOLID); neither is an AC or s
 A pin that is **locked** is never moved and never offered, a pin held by a released harness stays, a pair sits on neighbouring pins (a warning says when it cannot), and the `power_return_gap_pins` between the supply and return pin are kept by every strategy. On a connector with a **fixed pinout** the signal goes to the free pin of its name; `last_fit` takes the last such pin when a name occurs more than once, `spread` has nothing to spread. No pin ever carries two signals, and the result is the same every time.
 
 Worked by hand on a connector of 12 pins with no gaps and three interfaces, a power interface (`PWR`, `RTN`) and two RS-422 interfaces `IF-A` and `IF-B` (the pairs `TX+ TX-` and `RX+ RX-`): `first_fit` gives power 1-2, `IF-A` 3-6, `IF-B` 7-10; `last_fit` gives power 11-12, `IF-A` 9-10 and 7-8, `IF-B` 5-6 and 3-4; `spread` gives power 1-2, a free pin 3, `IF-A` 4-7, a free pin 8, `IF-B` 9-12. A change of the strategy re-places the pins at the next generation (an earlier allocation is kept only while it was made by the same strategy), and `explain DIR CONNECTOR.PIN` names the strategy in force and its rule; for the default it keeps its text.
+
+## Connector choice
+
+When an interface is made without naming the connector at a device (the editor's Connect, an import, *Choose connectors automatically*), the tool chooses one and marks it *chosen by the tool, not confirmed*. `model.connector_choice` says which. The candidates are always the same: the connectors of the device that carry the interface type and that no interface ends on yet; a connector that is used, does not carry the type, or belongs to another device is never chosen. A connector a person picked is never changed. Assumption A-CONNECTOR-CHOICE.
+
+| Value | The connector chosen | Use when |
+| --- | --- | --- |
+| `first_free` (default) | the first candidate in ID order | the devices have one connector per interface type |
+| `fewest_spare_pins` | the candidate with the fewest pins left over once the interface is on it (best fit): pins available minus signals of the type, among the candidates with enough pins; ties by ID. Candidates with too few pins follow in ID order | a device has connectors of several sizes and the large ones should be kept for large interfaces |
+| `most_spare_pins` | the candidate with the most pins left over; ties by ID | the small connectors should be kept for later, or room is wanted for added signals |
+
+The pins *available* are the pins that are not locked and have no signal typed in by a person (a pin that carries a generated assignment counts, because generation rewrites it); on a connector with a fixed pinout they are the named, unlocked pins, and the interface fits when every signal of the type has a named pin. A hand count: an OBC with free connectors of 3, 9, 15, 4 and 15 pins and an interface of 4 signals has 3 pins too few on the first, then 5, 11, 0 and 11 pins left over; `first_free` takes the 3-pin connector (as it always did, and the pin allocation then reports too few pins), `fewest_spare_pins` the 4-pin connector, `most_spare_pins` the first of the two 15-pin connectors. `explain DIR CONNECTOR` shows the model in force and the candidates in its order with the numbers it chose from; for the default it keeps its text. Changing the model does not move a connector that is already chosen.
 
 ## What makes a harness not ready to build
 

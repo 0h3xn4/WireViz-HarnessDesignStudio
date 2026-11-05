@@ -54,11 +54,11 @@ Inside that order each group of signals (a pair, a power block, a single signal)
 
 ## The choice of a connector
 
-A connector is chosen for an interface at a device by a person, or by the tool. When the tool chooses, it takes the **first free connector** of the device (in ID order) that carries the interface type, and the choice is marked *chosen by the tool, not confirmed* until a person confirms it (the finding `unconfirmed`). `explain DIR CONNECTOR` shows which connectors of the device carry the type and which was taken (kind `connector-choice`).
+A connector is chosen for an interface at a device by a person, or by the tool. When the tool chooses, it takes the **first free connector** of the device (in ID order) that carries the interface type (the default; `model.connector_choice` can choose `fewest_spare_pins`, the best fit, or `most_spare_pins`, see [selectable models](selectable-models.md#connector-choice), and `explain` shows the one in force), and the choice is marked *chosen by the tool, not confirmed* until a person confirms it (the finding `unconfirmed`). `explain DIR CONNECTOR` shows which connectors of the device carry the type and which was taken (kind `connector-choice`).
 
 The **cable end** of a device connector is the part the library names as its mating part (`mates_with` of the device connector's part); a part with none is mated with itself, and generation says so. The gender is the opposite of the device connector's and the keying is copied. A cable connector that a person edited keeps its part, gender and keying.
 
-- **A-CONNECTOR-CHOICE.** First free connector that carries the type; the cable end is the mating part.
+- **A-CONNECTOR-CHOICE.** First free connector that carries the type (the default of the setting `model.connector_choice`; the alternatives are best fit and most spare pins); the cable end is the mating part.
 
 ## What happens when a value is missing
 
