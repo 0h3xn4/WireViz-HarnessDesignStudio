@@ -46,7 +46,7 @@ from harness_design_studio.core.model.config import ABOUT_KEY
 
 from . import canonical
 from .fs import escapes_root, long_path
-from .layout import MANAGED_DIRS, is_managed, serialize
+from .layout import MANAGED_DIRS, is_managed, prune_orphan_marks, serialize
 from .migrate import migrate_raw, schema_version_of
 
 
@@ -403,6 +403,7 @@ def load_from_files(
     else:
         files_for_build = files
     _build(files_for_build, project, issues)
+    prune_orphan_marks(project)  # (the marks of a deleted connection or interface: silently)
     # a file that was skipped unread is damage, not absence: saving must not replace it
     for issue in issues:
         if issue.code in UNREAD_CODES and issue.location:

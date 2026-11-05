@@ -19,6 +19,7 @@ from harness_design_studio.core.io.layout import model_hash  # noqa: E402
 from harness_design_studio.core.samples import mini3  # noqa: E402
 from harness_design_studio.gui import areas, roles, strings  # noqa: E402
 from harness_design_studio.gui.main_window import MainWindow  # noqa: E402
+from harness_design_studio.gui.states import STATE_ROLE  # noqa: E402
 from harness_design_studio.gui.theme import ThemeManager  # noqa: E402
 from harness_design_studio.gui.topbar import ShellStatus, TopBar  # noqa: E402
 
@@ -146,6 +147,49 @@ def test_problem_notices_are_forced_off_and_come_back(qtbot, tmp_path) -> None:
     w.act_quick.trigger()
     assert w.problem_notices_on() and w.act_problem_notices.isEnabled()
     assert w.topbar.chip.isVisibleTo(w.topbar) and w.view.dscene.problem_notices
+
+
+def test_the_automatic_check_progress_is_not_shown_in_quick_and_comes_back(
+    qtbot, tmp_path, monkeypatch
+) -> None:
+    w = make(qtbot, tmp_path, ui__role=roles.ELECTRICAL)
+    monkeypatch.setattr(w.ctl, "drc_busy", lambda: True)
+    w._update_jobs()
+    assert w.jobs.is_running() and strings.JOB_CHECKING in w.jobs.text()  # (without Quick mode)
+    w.act_quick.trigger()
+    assert not w.jobs.is_running()  # (turning Quick mode on hides it at once)
+    w._on_check_state()  # (the check goes on in the background and says nothing)
+    assert not w.jobs.is_running() and not w.jobs.cancel_btn.isVisibleTo(w)
+    w._check_asked = True  # (a check the person asked for, Ctrl+K > Check, still shows)
+    w._update_jobs()
+    assert w.jobs.is_running() and strings.JOB_CHECKING in w.jobs.text()
+    w._check_asked = False
+    w._update_jobs()
+    assert not w.jobs.is_running()
+    w.act_quick.trigger()
+    assert w.jobs.is_running() and strings.JOB_CHECKING in w.jobs.text()  # (back when left)
+
+
+def test_the_pending_chips_of_the_tree_are_not_shown_in_quick_and_come_back(
+    qtbot, tmp_path
+) -> None:
+    w = make(qtbot, tmp_path, ui__role=roles.ELECTRICAL)
+    tree = w.project_tree
+    before = tree.state_of("root", "config")
+    assert before is not None and before[0] == "pending" and before[1].endswith("pending")
+    names = [n for n in w.ctl.project.config if tree.state_of("config", n)]
+    assert names
+    w.act_quick.trigger()
+    assert tree.state_of("root", "config") is None
+    assert all(tree.state_of("config", n) is None for n in names)
+    root = tree.model.roots["config"]
+    assert tree.model.data(tree.model.index_of(root), STATE_ROLE) is None
+    assert tree.view.itemDelegate().quiet and tree.model.quiet
+    assert "pending" not in tree.model.accessible_text(tree.model.find("config", names[0]))
+    w.act_quick.trigger()
+    assert tree.state_of("root", "config") == before
+    assert all(tree.state_of("config", n) for n in names)
+    assert not tree.view.itemDelegate().quiet and not tree.model.quiet
 
 
 def test_the_stale_plan_banner_is_not_shown_in_quick_and_comes_back(qtbot, tmp_path) -> None:

@@ -972,7 +972,12 @@ def write_data(project: Project, folder: Path | str) -> dict[str, bytes]:
     """Write the open data into `folder` (made when missing) and return the files by name. Files
     of an earlier export are replaced; nothing else in the folder is touched. Nothing is written
     behind a link."""
-    files = data_files(project)
+    return write_files(data_files(project), folder)
+
+
+def write_files(files: dict[str, bytes], folder: Path | str) -> dict[str, bytes]:
+    """Write files made by `data_files` into `folder` (see `write_data`); the editor makes them off
+    its main thread and writes them here."""
     root = Path(folder)
     if root.is_symlink():
         raise SaveError("The data folder is a link, so nothing was written.")
