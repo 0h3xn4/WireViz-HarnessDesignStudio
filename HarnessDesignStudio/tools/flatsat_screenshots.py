@@ -76,6 +76,10 @@ def main() -> int:
     _wait(500)
     win.view.grab().save(str(OUT / "flatsat-focus.png"))
     win.ctl.select(None)
+    waited = 0
+    while win.toasts.isVisible() and waited < 8000:  # "Properties are hidden ..." goes after 5 s
+        _wait(100)
+        waited += 100
     win.act_legend.setChecked(False)  # the close-up is of cards, not of the key
     win.view.set_legend_wanted(False)
     close = QRectF()
