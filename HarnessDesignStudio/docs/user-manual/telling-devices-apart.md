@@ -30,7 +30,7 @@ This page is about what a device looks like on the block diagram. Every device c
 
 ## The key to the pictures
 
-The legend in the corner of the diagram (**View > Show legend**) lists the kinds of device the project has, with the picture, before the kinds of link and connector. This is the whole set:
+The legend in the corner of the diagram (**View > Show legend**; the Systems engineer and AIT engineer menus do not list it, Ctrl+K finds it) lists the kinds of device the project has, with the picture, before the kinds of link and connector. This is the whole set:
 
 ![The pictures of all kinds of device with their names](../img/device-looks-kinds.png)
 

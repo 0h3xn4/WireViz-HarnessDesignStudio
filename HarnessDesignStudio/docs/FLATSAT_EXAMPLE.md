@@ -10,7 +10,7 @@ harness-design-studio new flatsat-bench --template flatsat
 
 **This example is not in the 0.1.0 packages** (see [`CHANGELOG.md`](../CHANGELOG.md)). `harness-design-studio new --list` shows five examples on 1.0.0 and three on 0.1.0; on a 0.1.0 package the command above fails with `error: Unknown template 'flatsat'`.
 
-Open it in the app (**File > Open project...**, or **Try the flatsat example** on the **Home** page, which opens a copy in your Documents folder; as a Systems engineer the rail has no Home, so use **Go > Go to Home**, Ctrl+7, or **View > Role > Electrical / AIT engineer**) or read on first. Everything in this page is what the project really contains; a test checks the numbers.
+Open it in the app (**File > Open project...**, or **Try the flatsat example** on the **Home** page, which opens a copy in your Documents folder; as a Systems engineer the rail has no Home, so use **Go > Go to Home**, Ctrl+7, or **View > Role > Electrical engineer**) or read on first. Everything in this page is what the project really contains; a test checks the numbers.
 
 > **Not engineering data.** The devices, parts, currents, lengths and the derating, ampacity and mass numbers are invented for learning. The configuration files stay marked as placeholders and the parts are the tool's example parts (`EX-...`), so the results say so, and a release of this project would need written reasons (`docs/RELEASE.md`). Do not copy the numbers into a real design.
 

@@ -2,7 +2,7 @@
 
 This page shows how to join a connector of one device to a connector of another, pin by pin, starting from the names you gave the pins. The program proposes which pins go together, you look at the pairs and change them, and the program reviews the result and makes a harness only when you ask it to.
 
-> **New in 1.8.0.** This is milestone M2 of the workshop feedback (decision D-173). Connecting by interface type, as before, is still there ([draw the design](draw-the-design.md), step 3). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
+> **New in 1.8.0.** This is milestone M2 of the workshop feedback (decision D-173); picking up a cable at a port is from 1.16.0. Connecting by interface type, as before, is still there ([draw the design](draw-the-design.md), step 3). The steps in the app are described from the program's code and its tests; the program was not watched on a screen while this page was written.
 
 ## Contents
 
@@ -57,11 +57,11 @@ The window **Link connectors** opens:
 
 ## Pick up a cable and plug it in
 
-On the diagram you can connect two devices the way you would with a real harness: take a cable at one device and put it down at the other. It works in every role, in Guided and in Expert mode and in Quick mode, with the Select tool (not while the Connect tool is on), in a project that can be changed, and from about half the size of the diagram on (further out the devices are drawn as plain boxes with no ports).
+On the diagram you can connect two devices the way you would with a real harness: take a cable at one device and put it down at the other. It works in every role, in Guided and in Expert mode and in Quick mode, with the Select tool (not while the Connect tool is on), in a project that can be changed, and from a zoom of about 45 % on (further out the devices are drawn as plain boxes with no ports: zoom in, or press **F**).
 
-**Ports.** In **Expert** mode every connector of a device card has a small square on the edge of the card, its **port**. In **Guided** mode (and in Quick mode, which usually uses it) the card has one port for the device as a whole, on the edge the connections leave from, and the tool picks the connectors, as it does when you click two devices. Move the pointer over a port: it lights up, the pointer turns into an open hand, and the tooltip says the connector, its kind and how many of its pins are free. A small ring at each end of a connection line is its plug.
+**Ports.** In **Expert** mode every connector of a device card has a small square on the edge of the card, its **port**. In **Guided** mode (and in Quick mode, which usually uses it) the card has one port for the device as a whole, on the edge the connections leave from, and the tool picks the connectors, as it does when you click two devices. Move the pointer over a port: it lights up, the pointer turns into an open hand, and the tooltip says the connector, its kind and how many of its pins are free (in Guided mode: the device, how many connectors it has and how many pins are free in all of them). A small ring at each end of a connection line is its plug.
 
-**Take a cable.** Press on a port and drag. A cable follows the pointer as a line in right angles with a small plug at its end, like the lines of the connections. While you carry it, the devices and ports that can take it light up and the others fade; the device the cable comes from is marked *From*. The status bar says what to do (*Drop on a port to connect, on a device to let the tool choose. Esc to cancel.*). When the plug comes within a few pixels of a port it snaps to it. If the cable is near the edge of the window, the window scrolls, so a device far away or off the screen can be reached in one move.
+**Take a cable.** Press on a port and drag. A cable follows the pointer as a line in right angles with a small plug at its end, like the lines of the connections. While you carry it, the devices and ports that can take it light up and the others fade; the device the cable comes from is marked *From*. The status bar says what to do (*Drop on a port to connect, on a device to let the tool choose. Esc to cancel.*; in Guided mode, where a device has one port, *Drop on a device to connect. Esc to cancel.*). When the plug comes within a few pixels of a port it snaps to it. If the cable is near the edge of the window, the window scrolls, so a device far away or off the screen can be reached in one move.
 
 **Put it down.**
 

@@ -52,11 +52,11 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 
 ## 12. Export outputs
 
-[Export the outputs](user-manual/export-the-outputs.md): the build workbook of each harness (the file to build from) and the lists; add `--drawings` for the PDF drawings (new in 1.7.0).
+[Export the outputs](user-manual/export-the-outputs.md): the build workbook of each harness (the file to build from) and the lists; add `--drawings` for the PDF drawings (new in 1.7.0). Only the block diagram, as SVG, PDF and PNG for a slide: **File > Export diagram…** (new in 1.14.0). Every result as JSON and CSV: `export-data`, or the box **Include the open data** in the Export window ([Export the data](user-manual/export-the-data.md)).
 
 ## 13. Review and release a harness
 
-[Release a harness](user-manual/release-a-harness.md). A release is blocked until the configuration files are reviewed and the parts approved, unless you give a written reason (`--accept-placeholders REASON`, `--accept-unapproved-parts REASON`).
+[Release a harness](user-manual/release-a-harness.md). A release is blocked until the configuration files are reviewed and the parts approved, unless you give a written reason (`--accept-placeholders REASON`, `--accept-unapproved-parts REASON`; and `--accept-asbuilt REASON` in a project that asks for as-built records before a release).
 
 ## 14. Change a released harness
 
@@ -82,7 +82,10 @@ Moved to [`INSTALL.md`](INSTALL.md): the `.deb`, the `.tar.gz`, a source install
 - [Redundancy and zones](user-manual/redundancy-and-zones.md).
 - [Enter the build data](user-manual/enter-the-build-data.md): strip lengths, contacts, crimp tools and accessories, in the app and from a file (new in 1.7.0).
 - [Use the library](user-manual/use-the-library.md): a folder your team shares with devices and subsystems, and a number of the same device (new in 1.8.0).
-- [Choose your role](user-manual/choose-your-role.md): Systems engineer or Electrical / AIT engineer, and the Next step page (the Next step page is from 1.7.0, the roles from 1.8.0).
+- [Choose your role](user-manual/choose-your-role.md): Systems engineer, Electrical engineer or AIT engineer, the **Role** button, **Quick mode** and the Next step page (the Next step page is from 1.7.0, the roles from 1.8.0, the third role from 1.12.0, Quick mode from 1.14.0).
+- [Make a block diagram in five minutes](user-manual/quick-diagram.md): Quick mode, a picture of a set-up as SVG, PDF and PNG with no checks and no paperwork (new in 1.14.0).
+- [Telling devices apart](user-manual/telling-devices-apart.md): the picture, colour and shape of each kind of device, and the **Kind** you can set by hand (new in 1.16.0).
+- [See what the tool assumes](user-manual/see-what-the-tool-assumes.md), [Override a value and keep a history](user-manual/override-and-keep-a-history.md), [Record what was built](user-manual/record-what-was-built.md), [Export the data](user-manual/export-the-data.md) and [Follow the workflow](user-manual/follow-the-workflow.md): the transparency work of 1.12.0.
 
 Keyboard: **Ctrl+K** command palette, **Ctrl+Z** and **Ctrl+Y** undo and redo, **Ctrl+S** save, **Ctrl+=** and **Ctrl+-** zoom, **F** fit, **Ctrl+0** 100 %, **Ctrl+G** generate, **Ctrl+E** export, **Ctrl+Shift+N** add a device, **Ctrl+Shift+H** new harness, **F1** the user guide. The full list is in the [user guide](guide/USER_GUIDE.md) and, in the app, under **Settings > Keyboard shortcuts**.
 

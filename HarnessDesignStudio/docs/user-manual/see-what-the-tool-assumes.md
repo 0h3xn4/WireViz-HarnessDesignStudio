@@ -24,7 +24,7 @@ This page shows how to find out what the tool takes for granted when it makes a 
 harness-design-studio settings wheel-link
 ```
 
-The output has three parts: every setting with its value, then the assumptions built into the tool, then the fixed definitions. In the editor, **Help > Assumptions…** opens the same text in a window.
+The output has three parts: every setting with its value, then the assumptions built into the tool, then the fixed definitions. In the editor, **Help > Assumptions…** opens the same text in a window (read-only, selectable, with a **Close** button).
 
 ## 2. Read a line
 
@@ -64,6 +64,18 @@ and every config file of the project gets a top-level key `_about` with, for eac
 ## Choose how a number is made
 
 Some numbers can be made in more than one way. `model.json` holds the choice (the bundle basis, the length model, the voltage drop model, the mass model, the pin order, the pin fit strategy, the choice of a connector, the label format, what blocks *Ready to build*, and the spare contacts and the allowance on the wire in the bill of materials, which are 0 until you set them), and the default is what the tool always did. Change it with `--set` as above, for example `settings wheel-link --set model.mass_model='"full_bom"'`. Every choice, its equation and its default are on the page [selectable models](../models/selectable-models.md); `explain` names the model in force.
+
+The choices added in 1.15.0, all in `config/model.json` and all as the tool always did until you set them:
+
+| Setting | Values (the default first) | What it changes |
+| --- | --- | --- |
+| `model.pin_fit_strategy` | `first_fit`, `last_fit`, `spread` | which free pins an interface takes on a connector (`explain DIR CONNECTOR.PIN` names it) |
+| `model.connector_choice` | `first_free`, `fewest_spare_pins`, `most_spare_pins` | which connector the tool picks for an interface at a device (`explain DIR CONNECTOR` lists the candidates) |
+| `model.label_format` | `standard`, `compact`, `descriptive`, `custom` (with `model.label_wire_template` and `model.label_connector_template`) | the text of the labels |
+| `model.bom_contact_spare_fraction` | 0 | spare contacts the bill of materials adds (a fraction of the contacts used, from 0 to 1) |
+| `model.bom_wire_allowance_fraction` | 0 | an allowance on the metres of every wire part in the bill of materials (from 0 to 1) |
+
+The editor shows them in **Help > Assumptions…** (read-only) and has no switch for them: change one with `settings DIR --set` as above, then **Generate** again. The tolerances of the as-built lengths (`asbuilt_cut_tolerance_mm`, `asbuilt_strip_tolerance_mm`, in `config/generation.json`) and the release gate (`release_requires_asbuilt`, in `config/naming.json`) are listed there too; see [record what was built](record-what-was-built.md).
 
 ## Common mistakes
 
