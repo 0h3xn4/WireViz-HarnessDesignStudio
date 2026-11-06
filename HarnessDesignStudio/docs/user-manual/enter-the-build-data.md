@@ -42,7 +42,7 @@ harness-design-studio generate wheel-link
 
 ## 1. Strip lengths
 
-**In the app** (GUI, not run): choose **Drawings** on the rail (a Systems engineer's rail does not list it: use **Go > Go to Harness**), select a wire (or several) and open the **Edit wire** tab. It has two fields, **Strip A (mm)** for the From end and **Strip B (mm)** for the To end.
+**In the app** (GUI, not run): choose **Drawings** on the rail (a Systems engineer's rail does not list it: press Ctrl+2, or Ctrl+K and type *Go to Harness*), select a wire (or several) and open the **Edit wire** tab. It has two fields, **Strip A (mm)** for the From end and **Strip B (mm)** for the To end.
 
 - For several wires a field that differs between them is empty and says *various*; an empty field clears the value. A decimal comma is accepted.
 - **Apply** sets them together with any other field you touched, as one undo step.

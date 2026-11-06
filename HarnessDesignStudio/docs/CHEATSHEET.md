@@ -52,7 +52,20 @@ harness-design-studio diff    DIR W001                                          
 harness-design-studio log     DIR                                                   # the change log
 ```
 
-The comment must have at least 10 characters. A release is blocked while checks fail, while a configuration file is a placeholder, or while the harness uses parts that are not approved. You can release anyway with `--accept-placeholders REASON` and `--accept-unapproved-parts REASON`; the reason is kept in the change log. In a project that has `harness-design-studio config DIR --distinct-roles on`, a release also needs `--checker NAME`, and the author, the checker and the person who releases must be three different people.
+The comment must have at least 10 characters. A release is blocked while checks fail, while a configuration file is a placeholder, or while the harness uses parts that are not approved. You can release anyway with `--accept-placeholders REASON` and `--accept-unapproved-parts REASON`; the reason is kept in the change log. A project that sets `release_requires_asbuilt` also blocks a release until the as-built records are complete (`--accept-asbuilt REASON` releases anyway). In a project that has `harness-design-studio config DIR --distinct-roles on`, a release also needs `--checker NAME`, and the author, the checker and the person who releases must be three different people.
+
+## Understand a number, keep a record (since 1.12.0)
+
+```
+harness-design-studio explain DIR W001-001               # how the length, gauge, current limit, voltage drop and mass of a wire were made, and the Model page behind each
+harness-design-studio settings DIR                       # every setting and assumption a result depends on, and where each value comes from
+harness-design-studio export-data DIR --out data         # every intermediate and final result as JSON and CSV (also a box in the Export window)
+harness-design-studio override DIR W001-001 gauge_awg 20 --reason "why, 10+ characters"   # your value instead of the generated one, with a reason
+harness-design-studio journal DIR                        # who changed what, when and why
+harness-design-studio export-asbuilt DIR sheet.csv       # the sheet a technician fills in; read it back with import-asbuilt, then asbuilt
+```
+
+In the app: the **Why** tab (**Show the calculation**), **Help > Assumptions…**, **Help > Change history…** and the **As-built** page. Details: [`user-manual/follow-the-workflow.md`](user-manual/follow-the-workflow.md).
 
 ## Exit codes
 
@@ -60,7 +73,7 @@ The comment must have at least 10 characters. A release is blocked while checks 
 
 ## In the app
 
-The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip, which **View > Show problem notices** can hide), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M). That is the window of the **Electrical / AIT engineer** role. A **Systems engineer** (the other role; the first start asks which you are) has a leaner window: it opens on the **Next step** page (one thing to do, one button), the tree, the Inspector and the Problems panel are closed, and the rail lists only Next step, Model, Checks, Revisions and Settings. **View > Role** switches at once; **Show everything** on the Next step page gives the Electrical / AIT engineer window, **Show panels** (top bar) opens the tree and the Inspector. **View > Show problem notices** (also in **Settings > Editing**) shows or hides the Problems count, the status chip, the badges and the *out of date* banner; it is on for the Electrical / AIT engineer and off for the Systems engineer. **Settings** holds the role, the theme, the interface size, Reduce motion, the list of all keys, About and the licences.
+The window: a rail on the left (Next step, Home, Model, Checks, Drawings, Outputs, Revisions, Settings), a top bar (the steps **Generate**, **Check**, **Release…**, then **Export…** and a status chip, which **View > Show problem notices** can hide), the tabs of the area you are in (Diagram and Devices under Model), the project tree on the left, the Inspector, Why and Problems on the right, and a Problems panel at the bottom (Ctrl+Shift+M). That is the window of the **Electrical engineer** role (the **AIT engineer** role lists the as-built records and leaves out the editing of the diagram). A **Systems engineer** (the first start asks which you are) has a leaner window: it opens on the **Next step** page (one thing to do, one button), the tree, the Inspector and the Problems panel are closed, and the rail lists only Next step, Model, Checks, Revisions and Settings. The **Role** button in the top bar (or **View > Role**) switches at once; **Show everything** on the Next step page gives the Electrical engineer window, **Show panels** (top bar) opens the tree and the Inspector. **View > Show problem notices** (also in **Settings > Editing**) shows or hides the Problems count, the status chip, the badges and the *out of date* banner; it is on for the Electrical engineer and the AIT engineer and off for the Systems engineer. **Quick mode** (in the **Role** button's menu) is a short layout for a quick block diagram on top of any role: [make a block diagram in five minutes](user-manual/quick-diagram.md); **File > Export diagram…** saves the block diagram as SVG, PDF and PNG. **Settings** holds the role, the theme, the interface size, Reduce motion, the list of all keys, About and the licences.
 
 | Keys | Action |
 | --- | --- |

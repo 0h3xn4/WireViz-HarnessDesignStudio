@@ -2,7 +2,7 @@
 
 This guide is for systems engineers who have never used the tool. It works offline. Press **F1** in the app to open it.
 
-New here? Read sections 1 to 4 (about fifteen minutes). Section 3 gives you a ready-made practice project to play with.
+New here? Read sections 1 to 4 (about fifteen minutes). Section 3 gives you a ready-made practice project to play with. If all you want is a quick block diagram of a set-up as a picture, with no checks and no paperwork, use **Quick mode** (section 5, *Quick mode*).
 
 ## 1. What the tool does
 
@@ -74,7 +74,7 @@ The window has these parts. Everything is also reachable with the keyboard (sect
 | Part | What it holds |
 | --- | --- |
 | **Navigation rail** | Down the left edge: **Next step**, **Home**, **Model**, **Checks**, **Drawings**, **Outputs**, **As-built** (AIT engineer), **Revisions** and, at the bottom, **Settings**. It opens the area you choose; the button at its foot shows icons only. **Next step**, **Home** and **Settings** are pages of their own. The Systems engineer role (section 5) lists only Next step, Model, Checks, Revisions and Settings; Ctrl+7 and **Go > Go to Home** still open Home, and the keys (Ctrl+2 and Ctrl+3) and Ctrl+K still open the Harness and Lists tabs of Drawings and Outputs. |
-| **Top bar** | The project name, *Saved* or *Unsaved changes*, the revision, a short model hash, where you are, **Undo** and **Redo**, **Guided** and **Expert**, **Show panels** (Systems engineer only), **Search** (Ctrl+K), the three steps **Generate** (the one blue button), **Check** and **Release…**, then **Export…** and a status chip. The tooltip of a step says what is done and what comes next. |
+| **Top bar** | The project name, *Saved* or *Unsaved changes*, the revision, a short model hash, where you are, **Undo** and **Redo**, the **Role** button (*Role: Systems engineer*: who the window is set up for; click it to change the role or to turn **Quick mode** on), **Guided** and **Expert**, **Show panels** (Systems engineer only), **Search** (Ctrl+K), the three steps **Generate** (the one blue button), **Check** and **Release…**, then **Export…** and a status chip. The tooltip of a step says what is done and what comes next. With Quick mode on, the bar keeps only the project name, **Undo** and **Redo**, the **Role** button, a **Quick** marker, **Search** and **Export diagram**. |
 | **Banner** | Appears under the top bar when something needs you: the plans or the exported files are out of date (buttons **Generate** and **Export…**), or a generate, export or check failed (**Try again**). A change that is refused because a harness is released stays on screen as a message over the diagram, with **Start new revision…**, until the next change goes through. |
 | **Tabs** | **Diagram**, **Harness**, **Lists**, **Checks**, **Releases**, **Devices** (Ctrl+1 to Ctrl+6). Each area shows its own: Model has Diagram and Devices; Checks, Drawings (the Harness tab), Outputs (the Lists tab) and Revisions (the Releases tab) have one each. |
 | **Left panel** | Closed for the Systems engineer until you press **Show panels**. The **Project** tab: a tree of devices, interfaces, harnesses, parts, interface types, configuration files and imports, with a filter and an **Add** button. The **Device list** tab (Ctrl+Shift+J) and the **Interfaces** tab (Ctrl+Shift+T): every device and every interface as a table that works like a spreadsheet (see below). |
@@ -109,7 +109,7 @@ The **Problems panel** (Ctrl+Shift+M, or **Problems (n)** in the status bar) lis
 Press **Settings** on the rail (Ctrl+,). The page lists six sections. Every setting takes effect at once and is kept for the next start; the page follows the View menu and Ctrl+K, which change the same settings.
 
 - **Appearance**: **Theme** (*Follow the system*, *Light* or *Dark*), **Interface size** (100, 125, 150 or 200 %; it takes about a second to apply) and **Reduce motion**, which turns off the fades and slides of menus, lists and tooltips. The interface uses the bundled fonts Inter and JetBrains Mono.
-- **Editing**: **Role** (*Systems engineer*, *Electrical engineer* or *AIT engineer*), **Mode** (*Guided* or *Expert*), **Snap devices to the grid**, **Show every link label** and **Show connectors on connections**.
+- **Editing**: **Role** (*Systems engineer*, *Electrical engineer* or *AIT engineer*), **Mode** (*Guided* or *Expert*), **Snap devices to the grid**, **Show every link label**, **Show connectors on connections**, **Quick mode** and **Show problem notices**.
 - **Project**: **Open the engineering values…**, the window of section 6, and the **Library folder** (since 1.8.0: **Choose…**, **Clear** and **Open the library…**; the folder that your team shares, see "The library" below).
 - **Keyboard shortcuts**: every key of the window, with a box **Filter the shortcuts…**. They are fixed and cannot be changed.
 - **About**: the version, the Python, Qt and PySide6 versions, and where your settings are kept. **Help > About** opens this section.
@@ -197,6 +197,16 @@ The Systems engineer sees less. The project tree, the inspector and the Problems
 
 The Systems engineer's menus leave out the entries for wires, harnesses, zones, alignment, the interface-first way (with the import of interfaces), the imports of segment lengths, the ampacity table and KiCad netlists, the diagram's drawing options, revisions of a harness, the engineering values, and the Go entries for the Harness, Lists, Interface table and Device list. Nothing is removed: each item keeps its shortcut, and Ctrl+K finds it. Each role keeps its own layout. The problem notices are off for the Systems engineer.
 
+**Quick mode** (since 1.14.0) is not a fourth role but a short layout on top of any role, for a quick block diagram of a set-up with no checks and no paperwork. Turn it on in the **Role** button's menu (below the three roles), in **View > Quick mode**, on the **Settings** page or with Ctrl+K. The rail then lists only **Model**, **Home** and **Settings**; the top bar keeps the project name, **Undo** and **Redo**, the **Role** button, a **Quick** marker (click it to leave Quick mode), **Search** and one button, **Export diagram**; problem notices are off and there is no tour. Nothing is locked, no project file changes, and every hidden thing is still in the menus and in Ctrl+K. The five steps:
+
+1. **File > New project…**, choose an empty folder and type a name.
+2. Press **Add a device** (the empty diagram, or **Edit > Add device > Device…**, Ctrl+Shift+N) and type a name; a kind is optional. The tool makes the ID, a free place and a connector. Add a second device the same way.
+3. **Connect** the two: press on a port of one device and drag the cable to the other, or press **C** and click both. The two are joined at once, as one undo step, with the message *Connected A and B* and the buttons **Undo** and **Edit pairs**.
+4. Press **Export diagram** (**File > Export diagram…**) and choose a file name: the tool writes `<name>.svg`, `<name>.pdf` and `<name>.png`. It needs no project folder, no Generate and no check.
+5. To go back to the full layout of your role, click the **Quick** marker.
+
+The same steps, with what Quick mode hides, are on the manual page `docs/user-manual/quick-diagram.md`.
+
 The role is not the mode. Guided and Expert change only how much the diagram shows:
 
 - **Guided** (default): you work with devices and interfaces. The tool chooses connectors and pins and marks its choices as *auto-filled* until you confirm them.
@@ -212,6 +222,7 @@ A system with many devices has many links. The editor makes them readable in the
 - **Devices look like what they are.** A device carries the picture of its kind in a badge at the left of its header (a cell for a battery, a wheel, a chip for a computer, a star for a star tracker, a dish for an antenna, a plug for ground support ...), a band of the colour of its family down its left edge, and a badge shape (square, circle, hexagon or octagon) for the family; zoomed out, a box has the same band and badge and a faint tint, so a diagram of 23 devices can be told apart at a glance. The tool reads the kind from the name of the device, then its ID (`BAT1`), its subsystem and the links it carries; a device it cannot place stays a plain outlined box. The tooltip and the Inspector say it in words (*Looks like: Battery (from the name Battery)*), and the legend lists the kinds in the diagram; to change a look, rename the device or set its **Kind** by hand in the Inspector (*Automatic: Battery* is the first entry; the kind is stored on the device only when you set it). The block diagram that `export` writes and the pictures of **Export diagram** draw the same looks, in the light colours, with a key to the kinds (`docs/user-manual/telling-devices-apart.md`).
 - **Connectors are drawn as they look**: a flange with screw holes and the shell in front of it: a tapered D for a D-sub, a rounded block for a Micro-D, a round shell, an RJ45 plug, a coax ring. The size and the dots follow the pin count, which is also written as a number. **Gender is black or white**: a male connector (pins) is drawn solid, a female connector (sockets) as an outline, and a connector whose gender is not set with a dashed outline; the legend says so. The harness drawings and the mating matrix state the gender of every cable connector in words. In Expert mode a dashed line splits the device into a left side and a darker right side (ports sit on the edge of their side), and every port reads from its edge inwards: the designator (J01), the connector picture and the pin count. In Guided mode a device shows its connectors as small pictures. What a link carries is drawn on the link.
 - **Numbers appear when they exist.** A power link shows e.g. `28 V · 5 A` beside its picture, but only what somebody entered; nothing is filled in. In a diagram of more than 30 links the numbers show for the selected, focused or hovered link; *View > Show all link labels* shows them everywhere. Hover a link to read its name, type, values and ends in words.
+- **Labels slide along their line** (since 1.16.0). The pill of an interface, the label of a connection and the connector box at each end of a connection can be dragged when they hide something; each one follows the pointer along its own line, round the corners too, and stops short of the devices at the ends. It keeps its place when you move the devices; **Undo** puts it back, and **Reset label and line positions** in the right-click menu returns the label and the line to the places the tool chose. The places are kept in `diagram/marks.json`, which is not the design: it changes no hash and no written file. The vertical piece of a connection line, and of an interface line, can be dragged sideways.
 - **Click a device or a link.** Only its links stay in full colour; everything else fades. Click the empty background or press Escape to see everything again. This is the quickest way to answer "what is connected to this?".
 - **Show** (the list at the right end of the Model tab bar, *All interfaces* by default; **More > Show only** for the Systems engineer) fades everything except one signal class, one connector or one bundle. It can be combined with a selection.
 - **Links run in lines.** Each link leaves on the edge that faces the device at its other end, goes sideways into the gutter between lanes, runs up or down in its own track, and enters the other device sideways. Links between the same two lanes run side by side, ordered so that they cross as little as possible.
@@ -230,6 +241,7 @@ Zoomed far out, a device shows its ID and each kind of link its own dash pattern
 ### Moving around and selecting
 
 - **Click** selects one item. **Shift+click** or **Ctrl+click** adds or removes, a **drag on the background** draws a rectangle, **Ctrl+A** selects all. With several devices selected the Inspector shows what they have in common; **Delete**, **Duplicate** (Ctrl+D), **Align** and **Space evenly** (Edit menu) act on all of them as one undo step.
+- **Drag a device anywhere** (since 1.16.0): past the edge of the diagram, above the first lane or to the left of it. The diagram grows to hold it, the scroll bars follow, and the view scrolls by itself when a device or a cable nears the edge of the window. Nothing snaps back, and nothing keeps one device from lying over another; a move is one undo step.
 - **Ctrl+wheel** zooms at the pointer, the wheel scrolls, **Shift+wheel** scrolls sideways, the **middle button** or **Space** with a drag pans. **F** fits everything, **Shift+F** zooms to the selection, **Ctrl+0** shows 100 %. The zoom level is at the right of the status bar.
 - **Ctrl+F** finds a device or link by ID, name, connector or type and marks every match; Enter goes to the next. **Double-click** a link or device (or press Enter on it) opens it in the **Harness** tab; a connection line opens the window to edit its pairs.
 - **Right-click** shows a menu with the same actions as the menus; an entry that cannot be used stays in the menu, greyed out, with the reason.
@@ -286,7 +298,9 @@ In the pinouts, a cable pin with no signal of its own shows the *Signal* and *In
 
 A wire part can say how many conductors one metre of it carries (`conductors`, 2 for a twisted pair; the *Conductors* column of the parts import). The BOM and the mass then count the metres of the cable, not of every wire (since 1.11.0). The tool does not guess it: set it on your pair parts.
 
-**Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window; a project that has harnesses or connections but no folder yet first asks where to save it, with a folder chooser. The window shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings** and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied.
+**Export…** (top bar, File menu or Design menu, Ctrl+E) opens the **Export outputs** window; a project that has harnesses or connections but no folder yet first asks where to save it, with a folder chooser. The window shows the output folder, a tree of harnesses and documents, the check box **Include the PDF drawings**, the check box **Include the open data (JSON and CSV of every result)** (the files of `export-data`, written into `outputs/data/`; off until you tick it) and, once the export has run, the list of files written with **Open**, **Reveal in folder**, a picture of the selected drawing and **Copy selection to folder…**. The export always writes the complete set; the ticks in the tree choose what the list shows and what is copied.
+
+**File > Export diagram…** writes only the block diagram of the devices and their connections, as `<name>.svg`, `<name>.pdf` and `<name>.png` in a place you choose. It needs no project folder, no harness and no check, and writes nothing into the project (since 1.14.0). The picture shows the looks of the devices (since 1.16.0).
 
 The harness drawings are written only while **Include the PDF drawings** is ticked; it starts ticked when the last export into the folder had them. A problem found by the independent check, or a write error, stays in a notice in the window and nothing is written. The project must be saved to a folder first.
 
@@ -342,7 +356,7 @@ All commands take the project folder. Exit code 0 means success, 1 means the pro
 | `harness-design-studio export DIR [--drawings] [--out FOLDER] [--run-record]` | write and verify all outputs; the PDF and SVG drawings of the harnesses only with `--drawings`; to `FOLDER` instead of `DIR/outputs` with `--out` |
 | `harness-design-studio export-data DIR --out FOLDER [--run-record]` | write every intermediate and final result (wire sizing with the cross-section in mm², rule results, lengths, mass, bill of materials, findings, settings and more) as JSON and CSV, so that a number can be checked from the files alone; with `--run-record` also `run_record.json` (time, operator, versions), outside every hash |
 | `harness-design-studio review DIR HARNESS --by NAME` | submit a draft for review |
-| `harness-design-studio release DIR HARNESS --by NAME --comment TEXT [--checker NAME] [--accept-placeholders REASON] [--accept-unapproved-parts REASON]` | release (blocked while checks fail, or while values are placeholders or parts are not approved and no reason is given) and re-export |
+| `harness-design-studio release DIR HARNESS --by NAME --comment TEXT [--checker NAME] [--accept-placeholders REASON] [--accept-unapproved-parts REASON] [--accept-asbuilt REASON]` | release (blocked while checks fail, or while values are placeholders or parts are not approved and no reason is given; in a project that sets `release_requires_asbuilt`, also while the as-built records are incomplete or a recorded length is out of its tolerance) and re-export |
 | `harness-design-studio revise DIR HARNESS --by NAME --comment TEXT` | start a new revision |
 | `harness-design-studio diff DIR HARNESS [--from REV] [--to REV]` | what changed since a baseline |
 | `harness-design-studio compare OLD NEW` | compare two project folders (for example two Git checkouts); the last line names what is not compared |
@@ -444,7 +458,8 @@ The build data (last row) has no window: it is read with the command line (secti
 | Ctrl+wheel | zoom at the pointer; the wheel alone scrolls (Shift+wheel sideways); middle button or Space and drag pan |
 | Ctrl+A, Ctrl+D, Ctrl+F | select everything, duplicate the selected devices, find in the diagram (in the diagram) |
 | Ctrl+Shift+L | arrange the diagram |
-| C, Esc | start the Connect tool, back to Select (Esc also clears the selection) |
+| C, Esc | start the Connect tool, back to Select (Esc also clears the selection; it also puts away a cable in hand or a loose end) |
+| Drag from a port | pick up a cable at a port of a device and put it down on a port or a device; a cable let go on empty ground stays as a loose end that is not saved (since 1.16.0) |
 | Tab, Enter or Space | move between devices and links; Space selects, Enter also shows the item in the Harness tab (on a connection line, Enter opens the window to edit its pairs) |
 | Shift+click, Ctrl+click, drag on the background | add to the selection, take out of it, rubber band (the Project tree takes Shift and Ctrl too: Shift+arrows select several devices or interfaces without the mouse) |
 | Shift+arrows | move the selected devices |
@@ -466,6 +481,8 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | File | Save (Ctrl+S), Save as… (Ctrl+Shift+S) | saves the project; save as writes a copy to a new folder |
 | File | Import | Import interfaces… (Ctrl+Shift+I), Import approved parts…, Import segment lengths…, Import engineering values: ampacity table…, Import device pinout…, Import KiCad netlist…: the import wizard (section 12) |
 | File | Export… (Ctrl+E) | the Export outputs window (section 8) |
+| File | Export diagram… | the block diagram as SVG, PDF and PNG, no project folder needed (section 8) |
+| File | Import > Import as-built sheet…, Save the as-built sheet… | the filled-in sheet of what was built, and the sheet to fill in (listed in the AIT engineer's menus; Ctrl+K finds them in every role) |
 | File | Library… (Ctrl+Shift+O), Library folder… | the library window and the choice of the library folder (section 4, "The library") |
 | File | Quit (Ctrl+Q) | closes the app |
 | Edit | Undo, Redo | steps back and forward through your changes |
@@ -479,7 +496,8 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Edit | Connect with an interface type… | one item for each interface type (the arrow beside the Connect button lists the same); then click two devices |
 | Edit | Selected connection | Edit the pairs…, Rename…, Create harness, Show the harness, Delete connection: for the connection picked in the Project tab or on the diagram |
 | View | Show side panels (Systems engineer only) | opens or closes the Project tab and the Inspector together (the **Show panels** button of the top bar) |
-| View | Role > Systems engineer, Electrical engineer | the role (section 5): a project opens on **Next step** and less is on screen, or it opens where it opened before and everything is there |
+| View | Role > Systems engineer, Electrical engineer, AIT engineer | the role (section 5): a project opens on **Next step** and less is on screen, or it opens where it opened before and everything is there |
+| View | Quick mode | the short layout for a quick block diagram (section 5); also in the **Role** button's menu |
 | View | Show problem notices | shows or hides the Problems count, status chip, badges and *out of date* banner; on for the Electrical engineer, off for the Systems engineer |
 | View | Guided, Expert | the two modes of section 5 |
 | View | Theme | Follow the system (the default), Light or Dark (also under **Settings > Appearance**) |
@@ -501,12 +519,15 @@ Every command is in a menu. The keys above are shown next to the items, and the 
 | Design | Engineering values… | the window where you type the values the rules wait for (section 6) |
 | Go | Go to Diagram, Harness, Lists, Checks, Releases, Devices (Ctrl+1 to Ctrl+6) | shows that tab |
 | Go | Go to Home (Ctrl+7), Go to Settings (Ctrl+,) | opens that page |
+| Go | Go to As-built | opens the As-built page (listed in the AIT engineer's menu; Ctrl+K finds it in every role) |
 | Go | Go to Interface table (Ctrl+Shift+T), Go to Device list (Ctrl+Shift+J) | opens the Interfaces or Device list tab of the left panel with the keyboard in the table |
 | Go | Next panel, Previous panel (F6, Shift+F6) | moves the keyboard focus between the panels |
 | Help | User guide (F1) | opens this guide |
 | Help | Search and commands (Ctrl+K) | the command palette |
 | Help | Replay the tour | shows the short first-run tour again |
 | Help | Glossary | the list of words the tool uses |
+| Help | Assumptions… | what the tool assumes for this project: every setting with its value and where it comes from, the assumptions built into the tool and the fixed definitions (read-only; the text of `harness-design-studio settings`) |
+| Help | Extensions… | what the extensions of the project add (rules, tables and Python plug-ins) and where you trust a Python plug-in |
 | Help | Change history | the change journal of the project: who changed what, when and why, with a filter; **Start a journal** for a project that has none |
 | Help | Show project problems | lists what could not be loaded, for a project with problems |
 | Help | About | opens **Settings > About**: the version, the Python, Qt and PySide6 versions and where your settings are kept |
