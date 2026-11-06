@@ -19,6 +19,9 @@ Never edit a generated file by hand. Change its source (or the program) and run 
 | --- | --- | --- | --- |
 | `docs/RULES.md` | the rule registry in `core/drc/` | `python -m tools.gen_rule_docs` | `test_docs.py::test_rule_reference_is_up_to_date` |
 | `docs/CLI.md` | the `harness-design-studio` argument parser, the `--json` keys in `cli/jsonout.py` (`SHAPES`) and the examples in `tools/gen_cli_docs.py` | `python -m tools.gen_cli_docs` | `test_docs.py::test_cli_reference_is_up_to_date` |
+| the table of `docs/models/rule-limits.md` (between the `rule-table` markers) | `INFO` in `core/derive_rules.py` and the rule registry | `python -m tools.gen_rule_limit_docs` | `test_s1_rules.py::test_the_table_of_the_page_is_the_table_of_the_code` |
+| the two tables of `docs/user-manual/follow-the-workflow.md` (between the markers) | `core/workflow.py` | `python -m tools.gen_workflow_doc` | `test_s9_workflow.py::test_the_tables_of_the_page_are_the_tables_of_the_code` |
+| `docs/transparency_trace_results.md` | the trace of 16 real numbers with `explain` and `export-data` | `python -m tools.trace_numbers --update` (`--check` exits 1 when the file is stale) | `test_trace_16_numbers.py::test_the_committed_page_is_what_the_tool_writes` |
 | `tests/fixtures/api_snapshot.json` | `harness_design_studio/api.py` | `python -m tools.gen_api_snapshot` (on purpose) | `test_api_stability.py::test_the_interface_is_the_one_in_the_snapshot` |
 | `src/harness_design_studio/resources/guide/index.html` (the **F1** guide) | `docs/guide/USER_GUIDE.md` | `python -m tools.build_guide` | `test_docs.py::test_guide_html_is_up_to_date` |
 | the example projects in `src/harness_design_studio/resources/examples/projects/` | the editing functions and `tools/build_examples.py` | `python -m tools.build_examples` | `test_examples.py` |

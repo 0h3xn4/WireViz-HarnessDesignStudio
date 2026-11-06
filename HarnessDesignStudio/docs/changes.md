@@ -52,6 +52,14 @@ When a test fails, it names what moved: the wire, the finding or the file. Renew
 - **Why.** Owner decision on the device looks: *should the exported and written diagram show these looks too? yes, without breaking anything*.
 - **Agreed.** The owner (the request above). The independent check (`verify --outputs`) still passes.
 
+### 2026-11-05: a label in `diagram/marks.json` is stored as a place along its line (no result moves)
+
+- **Before.** A label that a person dragged (the pill of an interface, the label of a connection, the connector box at an end) was stored as a free offset from its automatic place: `{"id": "interface:IF-1", "dx": 12.0, "dy": -6.0}` (releases 1.14.0 and 1.15.0).
+- **Now.** It is stored as its place along the line it belongs to, a fraction of the length of the line: `{"id": "interface:IF-1", "t": 0.35}`. The bend of a connection and the vertical piece of a route stay offsets (`dx`, `dy`). A mark of the old form is still read; the editor turns it into `t` when the diagram is drawn and writes that at the next save. A tool older than 1.16.0 sets a mark with `t` aside as unreadable (the project still opens).
+- **What moves.** Only the text of `diagram/marks.json`, and only in a project whose labels were dragged. The file is not part of the model hash, the baselines, the journal or any written output, so no number, no written file and no model hash changes (`tests/test_diagram_marks.py`, `tests/test_linepos.py`).
+- **Why.** Owner feedback on 1.14.0: a label must stay on its line and keep its place when devices move.
+- **Agreed.** The owner (the feedback above), within decision D-199.
+
 ### 2026-11-04: `export.json` states the unit of every number (a written file changes on purpose)
 
 - **Before.** A number in `system/export.json` had a unit only when its name said so (`length_m`, `max_current_a`). `parts[].pin_count`, `parts[].conductors`, `harnesses[].accessories[].quantity`, the gauge `gauge_awg` and the keys of `parts[].ratings` had none; a reader of the file alone had to know them. A wire read `{"gauge_awg": 22, "length_m": 1.2, ...}` and the file said no more.
@@ -99,8 +107,6 @@ When a test fails, it names what moved: the wire, the finding or the file. Renew
 - **Why.** Requirement R14 of the audit: a data link has a source, a checksum and a way to see that the source changed.
 - **Agreed.** Owner, D-193 (no time and no operator in project data, so the record has none).
 
-Next: [the changelog](../CHANGELOG.md), [the decisions](DECISIONS.md), [the developer notes on the tools](developer/tools.md)
-
 ### 2026-11-04: overrides and deviations are marked on the tests (no result moves)
 
 - **Before.** An override or a deviation was marked on the checks, the drawing, the DRC report, the *Start here* sheet and the release comment, but not on the tests: `tests.csv` and the *Tests* sheet of the build workbook did not say that the wire under test had been set by hand or that an error of it had been accepted.
@@ -108,3 +114,5 @@ Next: [the changelog](../CHANGELOG.md), [the decisions](DECISIONS.md), [the deve
 - **What moves.** Nothing for an existing output: a project without an override and without a deviation writes the same bytes (`tests/test_output_hashes.py` and `tests/test_numbers_snapshot.py` are unchanged), and so does a harness of a project that has them but no test about a marked wire. No number, finding or limit changes.
 - **Why.** The final audit (R7) found that a test sheet handed to a technician did not show that the wire had been overridden or the error accepted.
 - **Agreed.** Within the transparency work (decisions D-191 (3) and D-193); the owner's review of this change is still to come. Test: `tests/test_deviation_marks.py`.
+
+Next: [the changelog](../CHANGELOG.md), [the decisions](DECISIONS.md), [the developer notes on the tools](developer/tools.md)
