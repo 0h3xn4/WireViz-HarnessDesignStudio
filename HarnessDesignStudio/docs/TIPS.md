@@ -67,7 +67,7 @@ These are the shortcuts the app defines (read from the program's source, `gui/ma
 | Ctrl+C in a table | Copy the selected cells as tab-separated text (Ctrl+Shift+C adds the header row) |
 | Enter or F2, Esc, Ctrl+V in a table | Edit the selected cell, keep the old text, paste a block of cells copied from a spreadsheet (one undo step) |
 
-Everything else is in the menus: **View > Arrange diagram** tidies the devices (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** (also **Settings > Appearance**) follows the system or is Light or Dark, **View > Reduce motion** turns off the fades and slides, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data. **View > Role** (Systems engineer or Electrical engineer, since 1.8.0) chooses how much of the window is on screen; **View > Show side panels** (Systems engineer only) opens or closes the project tree and the Inspector. Everything the Systems engineer role hides is still in a menu and in the command palette.
+Everything else is in the menus: **View > Arrange diagram** tidies the devices (they stay in their lanes; Undo restores the old positions), **View > Interface size** offers 100, 125, 150 and 200 % (the first size follows your screen), **View > Theme** (also **Settings > Appearance**) follows the system or is Light or Dark, **View > Reduce motion** turns off the fades and slides, and **Show overview map**, **Show legend**, **Snap to grid** and **Show all link labels** switch those on and off. Switching between **Guided** and **Expert** mode never changes data. **View > Role** (Systems engineer, Electrical engineer or AIT engineer; the **Role** button of the top bar does the same) chooses how much of the window is on screen; **View > Quick mode** shows only what a quick block diagram needs, and **File > Export diagram…** saves that diagram as SVG, PDF and PNG; **View > Show side panels** (Systems engineer only) opens or closes the project tree and the Inspector. Everything the Systems engineer role hides is still in a menu and in the command palette.
 
 ## The command palette (Ctrl+K)
 
@@ -108,7 +108,7 @@ harness-design-studio schema my-design/schemas
 ```
 
 ```
-16 schemas written to my-design/schemas. In VS Code, copy the "json.schemas" entry of my-design/schemas/editor-settings.json into the .vscode/settings.json of the project (the schemas folder must sit inside the project folder as schemas/).
+21 schemas written to my-design/schemas. In VS Code, copy the "json.schemas" entry of my-design/schemas/editor-settings.json into the .vscode/settings.json of the project (the schemas folder must sit inside the project folder as schemas/).
 ```
 
 The folder must not exist yet or must be empty.
@@ -244,6 +244,7 @@ What does exist is **files**. The tool reads a few file formats in and writes se
 | One device's connectors and pins | CSV or XLSX | One pin per row. The columns are found by heading: *Connector*, *Pin*, *Signal*, *Mode*, *Contact size*, *Termination*, *Function*, *Cable contact*, *Direction* (`in`, `out` or `bidirectional`; since 1.9.0) and, if you have them, *Part* and *Gender*. | `harness-design-studio import-pinout DIR FILE --device DEVICE ...`, or **File > Import > Import device pinout…** ([define a device](user-manual/define-a-device.md#take-the-pinout-from-a-spreadsheet)) |
 | Strip lengths, pin contacts, accessories, crimp tools (new in 1.7.0) | CSV, TSV, JSON or XLSX | The kind is found from the headings (any case, other columns ignored): `Wire`, `Strip A (mm)`, `Strip B (mm)` (and `Harness`); or `Harness`, `Connector`, `Pin`, `Contact` (and `Tool`); or `Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity`, `Note` (and `ID`); or `Part`, `Tool`. | `harness-design-studio import-build-data DIR FILE` ([enter the build data](user-manual/enter-the-build-data.md)). Starting files: `strip-lengths.csv`, `pin-contacts.csv`, `accessories.csv` |
 | Current by wire gauge | CSV | `gauge,amperes` (header optional) | `harness-design-studio config DIR --ampacity-csv FILE` |
+| What was built and measured (as-built records) | CSV, TSV, JSON or XLSX | the sheet that `export-asbuilt` writes, with the as-built columns filled in | `harness-design-studio import-asbuilt DIR FILE`, or the As-built page ([`IMPORTS.md`](IMPORTS.md#as-built-records-s9)) |
 | Other engineering values | the JSON files in `config/` | see [`CONFIG.md`](CONFIG.md) | edit by hand, check with `harness-design-studio config DIR` |
 
 A device can come from a pinout table (`import-pinout --new-device NAME`) or from a device library file (`import-devices`, `import-subsystem`); otherwise you add devices in the app. The details of every column are in [`IMPORTS.md`](IMPORTS.md).
