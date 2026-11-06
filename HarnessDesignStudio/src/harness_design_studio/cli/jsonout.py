@@ -82,7 +82,14 @@ SHAPES: dict[str, tuple[str, ...]] = {
     "diff": ("ok", "harness", "from", "to", "added", "removed", "changed", "changes"),
     "compare": ("ok", "added", "removed", "changed", "changes", "not_compared"),
     "log": ("ok", "harness", "entries"),
-    "migrate": ("ok", "migrated"),
+    "migrate": (
+        "ok", "migrated", "from_version", "to_version", "backup", "record", "self_check",
+    ),
+    "migrate --dry-run": (
+        "ok", "dry_run", "up_to_date", "from_version", "to_version", "files", "counts_before",
+        "counts_after", "model_hash_before", "model_hash_after", "hash_equal", "exports_equal",
+        "baselines_intact", "journal_entry", "lost", "notes",
+    ),
     "journal": ("ok", "has_journal", "count", "entries"),
     "journal --start": ("ok", "started", "file"),
     "override": ("ok", "wire", "action", "changed", "overrides", "derivation"),

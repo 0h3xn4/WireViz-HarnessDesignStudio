@@ -363,8 +363,10 @@ def _build(files: dict[str, Any], project: Project, issues: list[Issue]) -> None
                 issues.append(Issue("warning", "file_name_mismatch", f"Harness '{h.id}' is stored in a file with a different name; it will be renamed on the next save.", rel, h.id))  # fmt: skip
 
 
-def load_project(root: Path | str) -> LoadResult:
-    """Open a project folder, migrating old formats in memory and recovering what it can."""
+def load_project(root: Path | str, *, migrate: bool = True) -> LoadResult:
+    """Open a project folder, migrating old formats in memory and recovering what it can.
+    `migrate=False` reads the files as they are, without the steps that bring an older format up to
+    date: the migration safety net (`core.io.upgrade`) uses it to see a project as it was saved."""
     root = Path(root)
     base = long_path(root)
     if not base.is_dir():
@@ -372,7 +374,7 @@ def load_project(root: Path | str) -> LoadResult:
     if not (base / "project.json").is_file():
         raise LoadError(f"'{root}' is not a harness project folder (no project.json).")
     files, broken, issues = read_tree(root)
-    result = load_from_files(files, broken, issues)
+    result = load_from_files(files, broken, issues, migrate=migrate)
     _add_lines(root, result)
     if (base / "extensions").is_dir():  # S8: nothing is reached for a project without the folder
         from harness_design_studio.core.extensions import attach
@@ -385,8 +387,12 @@ def load_from_files(
     files: dict[str, Any],
     broken: dict[str, bytes] | None = None,
     issues: list[Issue] | None = None,
+    *,
+    migrate: bool = True,
 ) -> LoadResult:
-    """Build a project from already-parsed files (also used to restore an autosave journal)."""
+    """Build a project from already-parsed files (also used to restore an autosave journal).
+    `migrate=False` leaves a file tree of an older format as it is (no step is run, nothing is said
+    about it): `core.io.upgrade` compares that reading with the upgraded one."""
     issues = list(issues or [])
     project = Project()
     for rel, data in (broken or {}).items():
@@ -396,7 +402,7 @@ def load_from_files(
         project.read_only = True
         issues.append(Issue("warning", "newer_version", f"This project was saved by a newer version of the tool (format {version}; this tool understands up to {SCHEMA_VERSION}). It is opened read-only.", "project.json"))  # fmt: skip
         files_for_build = files
-    elif version < SCHEMA_VERSION:
+    elif version < SCHEMA_VERSION and migrate:
         files_for_build = migrate_raw(files, version)
         project.migrated_from = version
         issues.append(Issue("info", "migrated", f"The project was in format {version} and was upgraded in memory to {SCHEMA_VERSION}. Nothing is changed on disk until you save.", "project.json"))  # fmt: skip

@@ -241,6 +241,8 @@ EXAMPLES: dict[str, list[str]] = {
         "harness-design-studio compare old-checkout new-checkout --json",
     ],
     "migrate": [
+        "harness-design-studio migrate my-design --dry-run",
+        "harness-design-studio migrate my-design --dry-run --json",
         "harness-design-studio migrate my-design",
         "harness-design-studio migrate my-design --json",
     ],
