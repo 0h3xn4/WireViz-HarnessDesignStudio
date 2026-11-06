@@ -36,7 +36,7 @@ The project records no source for a mass unless the note of the part says so.
 
 ## The assumptions it rests on
 
-- **A-MASS-SCOPE.** The mass counts each connector of the harness and each wire. It does not count contacts, backshells, accessories (sleeving, heat shrink, labels), splices, solder or shield terminations. A part without a mass is named as missing and never replaced by a guess. The margin is added to the total only.
+- **A-MASS-SCOPE.** By default the mass counts each connector of the harness and each wire. It does not count contacts, backshells, accessories (sleeving, heat shrink, labels), splices, solder or shield terminations. The setting `model.mass_model` `full_bom` also counts a contact part for every pin that has a wire and every accessory, each by the mass of its part ([selectable models](selectable-models.md#mass-model)); a part without a mass is named as missing then too. A part without a mass is named as missing and never replaced by a guess. The margin is added to the total only.
 - **A-MASS-CONDUCTORS.** A wire carries its share of a multi-conductor part: the mass per metre of a twisted pair part is divided by its 2 conductors for each of its two wires, so that the cable is counted once. Stays built in: it is what the mass per metre of a multi-conductor part means (the cable counted once), an identity of the library and not a choice.
 
 ## A worked example
@@ -54,7 +54,7 @@ A mass is never made up. When a connector part has no mass, a wire part has no m
 
 ## What the model does not do
 
-- It does not count what the audit lists as left out (see the assumption A-MASS-SCOPE): a harness with sleeving and backshells weighs more than this number.
+- It does not count what the assumption A-MASS-SCOPE lists as left out (contacts and accessories only with the mass model `full_bom`; backshells, splices, solder and shield terminations never): a harness with sleeving and backshells weighs more than this number.
 - It does not know the real mass of a part; it uses the library.
 - The margin is one fraction of the whole total, not a margin per part.
 

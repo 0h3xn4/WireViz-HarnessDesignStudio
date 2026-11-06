@@ -16,7 +16,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | For | What it gives you |
 | --- | --- | --- |
-| [`INSTALL.md`](INSTALL.md) | everyone | Install on Ubuntu or Windows, check it works, uninstall, build from source |
+| [`INSTALL.md`](INSTALL.md) | everyone | Install on Ubuntu (`.deb`, `.tar.gz`) or Windows (setup program, portable `.zip`), check the checksum and that it works, uninstall, build from source |
 | [`GETTING_STARTED.md`](GETTING_STARTED.md) | newcomers | A guided tour with real output: example project, generate, read problems, export, fill in values, release |
 | [`LEARNING_PATH.md`](LEARNING_PATH.md) | newcomers | The whole route in nine steps, with the example or template for each and how you know you are done |
 | [`CONCEPTS.md`](CONCEPTS.md) | newcomers | The words and the mental model, in ten minutes |
@@ -26,7 +26,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 | Document | What it gives you |
 | --- | --- |
-| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, add redundancy and zones, generate harnesses, read and fix problems, fill in engineering values, connect two connectors pin by pin (the pinout first, since 1.8.0), edit a wire, build a harness by hand (no interface needed), enter the build data (strip lengths, contacts, crimp tools, accessories), choose your role (Systems engineer or Electrical engineer, and the Next step page), import data, define a device (and reuse it in another project), use the library (a folder your team shares with devices and subsystems, and a number of the same device, since 1.8.0), import KiCad pinouts, export the outputs, set wire colours, change IDs and the title block, release a harness, change a released harness, use Git and CI, script the tool (JSON output and the Python interface) |
+| [`user-manual/`](user-manual/README.md) | One page per task: draw the design, add redundancy and zones, generate harnesses, read and fix problems, fill in engineering values, connect two connectors pin by pin (the pinout first, since 1.8.0), edit a wire, build a harness by hand (no interface needed), enter the build data (strip lengths, contacts, crimp tools, accessories), choose your role (Systems engineer, Electrical engineer or AIT engineer, and the Next step page), make a block diagram in five minutes (Quick mode and Export diagram), tell devices apart (the picture of each kind), follow the workflow, import data, define a device (and reuse it in another project), use the library (a folder your team shares with devices and subsystems, and a number of the same device, since 1.8.0), import KiCad pinouts, export the outputs, set wire colours, change IDs and the title block, release a harness, change a released harness, use Git and CI, script the tool (JSON output and the Python interface), see what the tool assumes and override a value with a reason, extend the tool, record what was built (as-built records) and export the open data |
 | [`HOWTO.md`](HOWTO.md) | The index of the old recipes, pointing at the user manual |
 | [`TIPS.md`](TIPS.md) | Shortcuts, power-user workflows, and exchanging data with other tools |
 | [`CHEATSHEET.md`](CHEATSHEET.md) | One page: the loop, the data imports, release, shortcuts, the folder layout, the words |
@@ -43,7 +43,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | [`IMPORTS.md`](IMPORTS.md) | Importing interfaces, parts, lengths, engineering values, device pinouts and the build data |
 | [`KICAD.md`](KICAD.md) | Taking device connector pinouts from a KiCad netlist |
 | [`OUTPUTS.md`](OUTPUTS.md) | Every output file and its limits, and the build workbook |
-| [`models/`](models/README.md) | The models of the tool for engineers: the equation, the inputs and their sources, the assumptions built in, a worked example, and the definitions the tool fixes. Wire sizing first |
+| [`models/`](models/README.md) | The models of the tool for engineers: the equation, the inputs and their sources, the assumptions built in, a worked example, the definitions the tool fixes, the methods you can choose ([`selectable-models.md`](models/selectable-models.md)) and the as-built records. Wire sizing first |
 | [`FILE_FORMAT.md`](FILE_FORMAT.md) | The project folder format |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | What changed, release by release |
 | [`STATUS.md`](STATUS.md) | The status of the tool and its release history (latest published release, tags, commits), moved from the README |

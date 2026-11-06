@@ -58,8 +58,8 @@ def main() -> int:
     win.tour.stop()
     shot("02-guided-main")
     action("menu-add-sensor").trigger()  # Edit > Add unit (was the Palette's button)
-    action("menu-connect-can").trigger()  # Edit > Connect with; the Connect tool's arrow lists them
-    win.ctl.pick("OBC")
+    action("menu-connect-power_primary").trigger()  # Edit > Connect with
+    win.ctl.pick("PCDU")  # first device picked: the devices that can take the type light up
     shot("03-connect-compatible-highlight")
     win.ctl.end_connect()
     win.ctl.set_mode("expert")

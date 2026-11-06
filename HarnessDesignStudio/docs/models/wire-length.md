@@ -21,6 +21,8 @@ When **Generate** builds a harness, it lays routing segments between the connect
 
 `L = sum of the routing segments between its connectors + 2 × service loop`
 
+This is the default, the length model `path_plus_loops`. The number of loops (2) and the model are settings of `config/model.json` (`service_loops_per_wire`, `length_model`: the model `path_loops_allowance_twist` adds a cut allowance and the take-up of twisting); see [selectable models](selectable-models.md#length-model). With the defaults a project gives the lengths of this page.
+
 The path is the one path through the tree of segments from the connector at one end of the wire to the connector at the other.
 
 ## The inputs and where they come from
@@ -34,7 +36,7 @@ The path is the one path through the tree of segments from the connector at one 
 ## The assumptions it rests on
 
 - **A-PATH-UNIQUE.** The length is the one path through the segments. If the segments form a loop there is no single length, the length stays undecided and the design rule `segment-loop` reports it. Bend radii, tolerances and the part of a connector inside its backshell are not added. Stays built in: whether a path is unique is a property of the drawn segments and not a choice; an allowance you want is the cut allowance of the length model.
-- **A-SERVICE-LOOP.** A generated wire is longer than its path by two service loops, one at each end, the same for every wire. It is a setting of the configuration (`service_loop_m`).
+- **A-SERVICE-LOOP.** A generated wire is longer than its path by two service loops, one at each end, the same for every wire. The length of a loop is the setting `service_loop_m` and the number of loops the setting `service_loops_per_wire` (2 by default).
 
 ## A worked example
 
@@ -60,8 +62,8 @@ A length is never made up. The derivation names what is missing: that the harnes
 
 ## What the model does not do
 
-- It does not add a bend radius, a tolerance, a cut allowance, the length inside a connector or backshell, or a strip length. Strip lengths are typed, per end, on the wire.
+- It does not add a bend radius, a tolerance, the length inside a connector or backshell, or a strip length; a cut allowance and the take-up of twisting only with the length model `path_loops_allowance_twist` (both 0 by default). Strip lengths are typed, per end, on the wire.
 - It does not measure the harness: the segment lengths are yours, or from your CAD export.
-- It does not give a service loop per wire or per end: one value, doubled.
+- It does not give a service loop per wire or per end: one value for every wire, counted `service_loops_per_wire` times (twice by default).
 
 Next: [mass](mass.md), [wire sizing](wire-sizing.md), [the models](README.md), [changes to results](../changes.md)
