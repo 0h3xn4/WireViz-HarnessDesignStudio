@@ -99,6 +99,10 @@ def test_a_project_without_a_kind_has_the_model_hash_it_had_before(tmp_path) -> 
     assert layout.model_hash(sat15()) == HASH_SAT15
     templates.create_project(tmp_path / "f", "flatsat")
     project = load_project(tmp_path / "f").project
+    # the record of the generation names the tool that generated it, and that is in the hash: give
+    # it the version the pinned hash was made with, so that a new release does not move this test
+    assert project.generation is not None
+    project.generation = evolve(project.generation, generator_version="1.15.0")
     assert layout.model_hash(project) == HASH_FLATSAT
     assert all(u.kind is None for u in project.units.values())
 
