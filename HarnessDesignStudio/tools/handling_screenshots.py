@@ -250,13 +250,15 @@ def _explain_pictures(out: Path) -> None:
 
 def _written_diagram_pictures(out: Path) -> None:
     """The block diagram that `export` writes (`system/block_diagram.svg`) for the flatsat example, with the looks of the devices, as a picture."""
-    from harness_design_studio.core.generate.engine import generate_project
-    from harness_design_studio.core.outputs import export_project
+    from harness_design_studio.core.outputs.build import write_outputs
 
-    tmp = Path(tempfile.mkdtemp())
-    templates.create_project(tmp / "flatsat", "flatsat")
-    del generate_project, export_project  # (placeholder; replaced by the real calls below)
-    raise NotImplementedError
+    with tempfile.TemporaryDirectory() as tmp:
+        project = templates.create_project(Path(tmp) / "flatsat", "flatsat")
+        written = Path(tmp) / "outputs"
+        write_outputs(project, written)
+        _rasterise(
+            written / "system" / "block_diagram.svg", out / "written-block-diagram.png", 1600
+        )
 
 
 def _rasterise(svg: Path, png: Path, width: int, *, crop: bool = False) -> None:
