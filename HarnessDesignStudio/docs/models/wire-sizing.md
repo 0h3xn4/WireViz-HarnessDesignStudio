@@ -36,23 +36,23 @@ where I is the current of the interface in A, ρ the resistivity of the conducto
 | --- | --- | --- |
 | Base ampacity of the gauge | A | `config/derating.json`: `ampacity_a_by_awg`. One table by AWG. |
 | Bundle factor K | 1 | `config/derating.json`: `bundle_derating` (one factor), or `bundle_factor_by_count` (a table by number of wires; it replaces the single factor). When the table equals the one of the ECSS profile it is Table 6-41 of ECSS-Q-ST-30-11C. |
-| Number of wires in the bundle | wires | Every wire of the harness. See assumption A-BUNDLE-ALL. |
+| Number of wires in the bundle | wires | By default every wire of the harness; `config/model.json`: `bundle_basis` chooses only the loaded wires or the busiest segment ([selectable models](selectable-models.md#bundle-basis)). See assumption A-BUNDLE-ALL. |
 | Temperature factor | 1 | `config/derating.json`: `temperature_derating`. One number. |
 | Current I | A | The interface of the wire: Max current. |
-| Resistivity ρ | Ω·m | `config/generation.json`: `conductor_resistivity_ohm_m`. |
+| Resistivity ρ | Ω·m | `config/generation.json`: `conductor_resistivity_ohm_m` (with `model.drop_model` `dc_at_ambient` it is first corrected to the hottest ambient temperature, [selectable models](selectable-models.md#voltage-drop-model)). |
 | Length L | m | The length of the wire itself if it has one, otherwise the sum of the routing segments of its harness between its two connectors. |
-| Conductors counted n | 1 | 2 for an interface of the category power or ground, 1 for every other. See assumption A-ROUND-TRIP. |
+| Conductors counted n | 1 | By default 2 for an interface of the category power or ground, 1 for every other: `config/model.json`: `return_path_categories`, `return_path_conductors` and `single_path_conductors`. See assumption A-ROUND-TRIP. |
 | Voltage drop limit | V | `config/derating.json`: `max_voltage_drop_v`. |
 
 The project records no source (standard, clause or test report) for the ampacity table, the temperature factor, the resistivity or the drop limit: they are the values you entered. `harness-design-studio config --apply-profile ecss-q-st-30-11c` fills in the standard's values where a setting is empty.
 
 ## The assumptions it rests on
 
-These are choices built into the program. They are listed so that nobody has to say "the tool computed it". Today they cannot be changed without editing the program, except the two that are a value of the configuration.
+These are choices built into the program. They are listed so that nobody has to say "the tool computed it". Four of them are settings (the ampacity table and the temperature factor are values of `config/derating.json`; the bundle basis and the return path are keys of `config/model.json`, see [selectable models](selectable-models.md)) and the defaults described below are what the tool did before they were settings; `settings DIR` shows which is in force.
 
-- **A-ROUND-TRIP.** The voltage drop of a wire of a power or ground interface counts the current going out and coming back: n is 2, and the return is taken to have the same gauge and length as the wire itself. For every other category n is 1. A return of another gauge would give a different drop that this model does not see.
-- **A-DC-SOLID.** The drop is a DC drop in a solid round conductor. There is no temperature rise of the conductor, no contact resistance, no stranding factor and no AC effect. ρ is the value of the configuration. Stays built in: the settings of the model choose the resistivity, not the method; stranding, contact resistance or an AC effect would be a different equation and not a number to type.
-- **A-BUNDLE-ALL.** The bundle factor is taken for the number of all wires of the harness, signal wires and unloaded wires included, each taken as fully loaded. A harness is not divided into bundles, and the length term of the standard's table is taken as 1, the conservative case. A harness of 50 wires therefore gets a much lower limit for every wire than a bundle of 5 power wires would.
+- **A-ROUND-TRIP.** The voltage drop of a wire of a power or ground interface counts the current going out and coming back: by default n is 2, and the return is taken to have the same gauge and length as the wire itself. For every other category n is 1. The categories and both counts are settings of `config/model.json` (`return_path_categories`, `return_path_conductors`, `single_path_conductors`). A return of another gauge would give a different drop that this model does not see.
+- **A-DC-SOLID.** The drop is a DC drop in a solid round conductor. There is no temperature rise of the conductor, no contact resistance, no stranding factor and no AC effect. ρ is the value of the configuration. Stays built in: the settings of the model choose the resistivity (`model.drop_model`: as given, or corrected to the hottest ambient temperature), not the method; stranding, contact resistance or an AC effect would be a different equation and not a number to type.
+- **A-BUNDLE-ALL.** By default the bundle factor is taken for the number of all wires of the harness, signal wires and unloaded wires included, each taken as fully loaded (the setting `model.bundle_basis` can count only the loaded wires or the busiest segment). A harness is not divided into bundles, and the length term of the standard's table is taken as 1, the conservative case. A harness of 50 wires therefore gets a much lower limit for every wire than a bundle of 5 power wires would.
 - **A-TEMP-FACTOR.** The temperature factor is the single number of the configuration. It is not computed from an ambient temperature, a wire's temperature rating or the insulation.
 - **A-AMPACITY-AWG.** The base ampacity depends on the AWG only. It does not depend on the wire part, the insulation, the stranding or the environment.
 
@@ -63,7 +63,7 @@ In the program, select the wire and open **Show the calculation** in the **Why**
 - **Derated current limit: 1.08 A.** The base ampacity of AWG 24 (0.205 mm²) is 2 A; the bundle factor K is 0.6 and the temperature factor 0.9, so the combined factor is 0.6 × 0.9 = 0.54 and the limit is 2 × 0.54 = 1.08 A. The wire carries 0.8 A: within the limit, 0.28 A to spare.
 - **Voltage drop: 0.458359 V.** I = 0.8 A, ρ = 1.7e-08 Ω·m, L = 3.45 m (the length of the wire), AWG 24, so A = 0.20473 mm², and n = 2 because the interface type is in the category power. The resistance of the conductors counted is 1.7e-08 × 3.45 / 2.0473e-07 × 2 = 0.572949 Ω, and the drop is 0.8 × 0.572949 = 0.458359 V. The limit is 1 V: within the limit, 0.541641 V to spare.
 
-`--json` prints the same as data, for a spreadsheet or a script. The command changes and writes nothing.
+`--json` prints the same as data, for a spreadsheet or a script. The text ends with a line `Model page: docs/models/wire-sizing.md` for each kind of number it showed (in `--json` each derivation has the key `model_page`). The command changes and writes nothing.
 
 ## The choice of the gauge
 
@@ -96,7 +96,7 @@ The design rules `current-over-wire` and `voltage-drop` use exactly these number
 - It tries the gauges of the ampacity table only, from the smallest conductor up, and takes the first that passes: it does not weigh mass or cost against a larger gauge.
 - It does not check the gauge against the contact that crimps it (a crimp range) or the strip length.
 - It does not compute a temperature from the current, and it does not consider the length of a bundle.
-- It does not offer another method (a different drop model, a bundle defined by the loaded wires). These are planned as selectable models, with today's behaviour as the default.
+- It offers other methods only where [selectable models](selectable-models.md) lists one: a drop with the resistivity corrected to the ambient temperature, a bundle counted by the loaded wires or the busiest segment. Anything else (stranding, an AC drop, a bundle defined another way) is not there.
 
 Next: [the models](README.md), [the design rules](../RULES.md), [the configuration](../CONFIG.md)
 
