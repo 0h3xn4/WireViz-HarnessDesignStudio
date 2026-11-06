@@ -4,11 +4,11 @@ This repository has two changelogs, one for each tool, and this page says where 
 
 | Tool | Changelog | Latest version |
 | --- | --- | --- |
-| **Harness Design Studio** (`HarnessDesignStudio/`) | [`HarnessDesignStudio/CHANGELOG.md`](HarnessDesignStudio/CHANGELOG.md) | `1.4.0`, 2026-10-20. The section *1.4.0* lists the AIT feedback work; earlier sections (1.3.0, 1.2.0, 1.1.0, 1.0.0, 0.1.0) are below it. |
+| **Harness Design Studio** (`HarnessDesignStudio/`) | [`HarnessDesignStudio/CHANGELOG.md`](HarnessDesignStudio/CHANGELOG.md) | The newest version is the top section (the heading *Unreleased* above it holds changes made after the last release); every version since 0.1.0 has a section, with its date. The status and the list of published releases are in [`HarnessDesignStudio/docs/STATUS.md`](HarnessDesignStudio/docs/STATUS.md). |
 | **WireViz** (`src/wireviz`, upstream) | [`docs/CHANGELOG.md`](docs/CHANGELOG.md) | `0.4.1`. It is WireViz's own file, unchanged. |
 
 The two version numbers are unrelated. `harness-design-studio --version` prints the version of Harness Design Studio; `wireviz --version` prints WireViz's.
 
-`harness-design-studio --version` prints `harness 1.4.0` for this version. The older 0.1.0 packages list three examples with `harness-design-studio new --list`; version 1.0.0 and later list five.
+`harness-design-studio --version` prints the version of the tool that you have, for example `harness 1.16.0`. The older 0.1.0 packages list three examples with `harness-design-studio new --list`; version 1.0.0 and later list five.
 
 Next: [documentation index](docs/README.md).

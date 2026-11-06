@@ -23,7 +23,7 @@ This page lists every guide in the repository, grouped by what you want to do, w
 | --- | --- |
 | [Repository README](../README.md) | What the tool is, a quick start of eight commands, and the way to every other page |
 | [Tool README](../HarnessDesignStudio/README.md) | The same for the `HarnessDesignStudio/` folder, with the status of the tool |
-| [Install](../HarnessDesignStudio/docs/INSTALL.md) | Check your system, install the `.deb`, the `.tar.gz` or run from source, check that it works |
+| [Install](../HarnessDesignStudio/docs/INSTALL.md) | Check your system, install the `.deb`, the `.tar.gz`, the Windows setup program or portable `.zip`, or run from source, check that it works |
 | [Getting started](../HarnessDesignStudio/docs/GETTING_STARTED.md) | A guided tour in 45 minutes with the real output of every command: example project, generate, read problems, export, fill in values, release |
 | [Learning path](../HarnessDesignStudio/docs/LEARNING_PATH.md) | The whole route in nine steps, each with an example and a "done when" |
 | [Concepts](../HarnessDesignStudio/docs/CONCEPTS.md) | The words and the mental model, in ten minutes |
@@ -33,7 +33,7 @@ This page lists every guide in the repository, grouped by what you want to do, w
 
 | Page | What it gives you |
 | --- | --- |
-| [User manual](../HarnessDesignStudio/docs/user-manual/README.md) | One page per task: draw the design, generate harnesses, read and fix problems, fill in engineering values, edit a wire, import data, define a device, import KiCad pinouts, export outputs, set wire colours, release a harness, use Git and CI, script the tool |
+| [User manual](../HarnessDesignStudio/docs/user-manual/README.md) | One page per task: a quick block diagram, draw the design, tell devices apart, generate harnesses, read and fix problems, fill in engineering values, see what the tool assumes, edit a wire, import data, define a device, import KiCad pinouts, export outputs, record what was built, set wire colours, release a harness, use Git and CI, script the tool |
 | [How-to index](../HarnessDesignStudio/docs/HOWTO.md) | The old list of recipes, now pointing at the user manual |
 | [User guide](../HarnessDesignStudio/docs/guide/USER_GUIDE.md) | The guide that opens with **F1** in the app: screen, modes, menus, shortcuts |
 | [Tips](../HarnessDesignStudio/docs/TIPS.md) | Shortcuts, power-user workflows, and what can and cannot be exchanged with other tools |
@@ -45,9 +45,10 @@ This page lists every guide in the repository, grouped by what you want to do, w
 | --- | --- |
 | [Command line](../HarnessDesignStudio/docs/CLI.md) | Every `harness` command and option (generated from the program) |
 | [Design rules](../HarnessDesignStudio/docs/RULES.md) | Every rule: what, why, how to fix, severity (generated) |
+| [Models](../HarnessDesignStudio/docs/models/README.md) | The equation, inputs, assumptions and a worked example behind each number, and the methods you can choose |
 | [Configuration](../HarnessDesignStudio/docs/CONFIG.md) | Every key of `config/*.json` |
 | [Placeholders](../HarnessDesignStudio/docs/PLACEHOLDERS.md) | Which engineering values are still placeholders and who owns them |
-| [Imports](../HarnessDesignStudio/docs/IMPORTS.md) | Importing interfaces, parts, lengths and engineering values |
+| [Imports](../HarnessDesignStudio/docs/IMPORTS.md) | Importing interfaces, parts, lengths, engineering values, device pinouts, build data and as-built sheets |
 | [KiCad](../HarnessDesignStudio/docs/KICAD.md) | Taking unit connector pinouts from a KiCad netlist |
 | [Outputs](../HarnessDesignStudio/docs/OUTPUTS.md) | Every output file and its limits |
 | [File format](../HarnessDesignStudio/docs/FILE_FORMAT.md) | The project folder format |
