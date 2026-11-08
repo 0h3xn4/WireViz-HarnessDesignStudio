@@ -62,6 +62,8 @@ def mark_is_orphan(project: Project, mark_id: str) -> bool:
         return ident not in project.links
     if kind in ("interface", "route"):
         return ident not in project.interfaces
+    if kind == "pos":  # SPIKE M4: where a loose end hangs; it goes with the connector
+        return not any(c.id == ident for h in project.harnesses.values() for c in h.connectors)
     return False
 
 

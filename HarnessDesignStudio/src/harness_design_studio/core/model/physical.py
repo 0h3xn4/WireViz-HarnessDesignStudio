@@ -19,7 +19,13 @@ from .base import (
 )
 
 Gender = Literal["male", "female", "unspecified"]
-Role = Literal["box", "cable", "inline", "feedthrough", "test"]
+Role = Literal["box", "cable", "inline", "feedthrough", "test", "loose"]
+# SPIKE M4: "loose" is the end of a cable that is not on a connector yet (D-200): an ordinary
+# connector of the harness with pins that wires attach to, no `mates_with`, and the library part
+# `TBD-CONNECTOR` until a person decides.
+Origin = Literal["interfaces", "link", "drawn"]
+LOOSE_ROLE: Role = "loose"
+TBD_PART_ID = "TBD-CONNECTOR"  # the library part of a loose end until a person chooses one
 Termination = Literal["crimp", "solder", "unspecified"]
 HarnessStatus = Literal["draft", "in_review", "released"]
 ShieldKind = Literal["twisted_pair", "shielded_pair", "overall_shield", "quad", "coax"]
@@ -174,7 +180,7 @@ class Accessory(Entity):
 
 
 class Harness(SparseEntity):
-    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label", "accessories"})
+    OMIT_WHEN_DEFAULT: ClassVar[frozenset[str]] = frozenset({"label", "accessories", "origin"})
 
     id: Id
     name: Name
@@ -196,3 +202,6 @@ class Harness(SparseEntity):
     notes: Text = ""
     label: Name | None = None  # text for the harness label instead of its name (a person's, 1.4.0)
     accessories: list[Accessory] = []  # sleeving, heat shrink, labels, backshells (1.7.0)
+    # SPIKE M4: where the harness came from; left out of the file while it is "interfaces" (a
+    # harness made by Generate). Not read by Generate; see docs/ait/SPIKE_M4_LOOSE_END.md.
+    origin: Origin = "interfaces"

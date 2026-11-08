@@ -22,6 +22,7 @@ from harness_design_studio.core.generate.sizing import (
 )
 from harness_design_studio.core.integrity import check_integrity
 from harness_design_studio.core.model import Connector, Harness, InterfaceInstance, Project, Wire
+from harness_design_studio.core.model.physical import TBD_PART_ID
 from harness_design_studio.core.vcs.consistency import release_integrity
 from harness_design_studio.core.verify import direction_judged, passthrough_signals
 
@@ -228,7 +229,15 @@ def _unapproved_parts(project: Project) -> Iterator[Hit]:
                 used[w.part_id].add(w.id)
     for pid in sorted(used):
         part = project.parts.get(pid)
-        if part is None:
+        if (
+            pid == TBD_PART_ID and part is not None
+        ):  # SPIKE M4: nothing to approve, a choice to make
+            yield Hit(
+                pid,
+                f"{len(used[pid])} cable end(s) have no connector chosen yet (loose end): plug "
+                "them into a device or give them a connector part",
+            )
+        elif part is None:
             yield Hit(pid, f"Part {pid} is used but is not in the parts list")
         elif part.approval != "approved":
             state = "rejected" if part.approval == "not_approved" else "not approved yet"

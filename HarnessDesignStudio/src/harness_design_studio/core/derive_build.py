@@ -44,6 +44,7 @@ CHECK_MEANING = {
     "Wires without strip lengths": "a wire is open when the strip length at either end is empty",
     "Pins in use without a contact part": "a pin with a wire on it is open when it names no contact part",
     "Parts that are not approved": "a part used by a connector or wire of the harness is open when it is not in the parts list or its approval is not 'approved'",
+    "Ends not decided": "a connector of the harness is open when it is a loose end: no device to plug into and no connector part chosen (only listed while the harness has one; it always blocks)",
 }
 
 

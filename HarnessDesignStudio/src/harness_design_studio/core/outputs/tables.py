@@ -191,7 +191,8 @@ def _pin_rows(
         wires = attached.get((c.id, p.id), [])
         sig, itf = (carried or {}).get((c.id, p.id), ("", ""))
         rows.append([
-            c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or sig,
+            c.id, c.role, c.mates_with or OPEN_END_WORD * (c.role == "loose"),
+            c.part_id + LOOSE_PART_SUFFIX * (c.role == "loose"), p.id, p.signal or sig,
             p.interface_id or itf,
             ";".join(sorted(wires)), "no" if wires or p.interface_id or p.signal else "yes",
             *([p.function or ""] if fn else []), *([p.termination] if term else []),
@@ -284,6 +285,13 @@ BOM_HEADER = [
 ]  # fmt: skip
 
 
+# SPIKE M4: the words of a loose end in the written tables (D-200 wording proposal)
+OPEN_END_WORD = "open end"
+LOOSE_PART_SUFFIX = " (loose end)"
+OPEN_END_PART = "(open end)"  # the BOM line that counts the ends nobody has decided
+OPEN_END_DESCRIPTION = "Connector not chosen yet (loose end)"
+
+
 @dataclass(frozen=True)
 class BomContribution:
     """One thing that adds to a line of the BOM: what, where it is, how much, in which unit.
@@ -314,7 +322,16 @@ def bom_contributions(project: Project, harnesses: list[Harness]) -> list[BomCon
         in_use = pins_in_use(h)
         contacts: dict[str, int] = defaultdict(int)
         for c in h.connectors:
-            found.append(BomContribution(c.part_id, "ea", 1, h.id, "connector", c.id))
+            found.append(
+                BomContribution(
+                    OPEN_END_PART if c.role == "loose" else c.part_id,
+                    "ea",
+                    1,
+                    h.id,
+                    "connector",
+                    c.id,
+                )
+            )
             for p in c.pins:
                 if p.contact_part and (c.id, p.id) in in_use:
                     contacts[p.contact_part] += 1
@@ -378,6 +395,10 @@ def bom(project: Project, harnesses: list[Harness]) -> Table:
     for pid, unit in sorted({*((p, "ea") for p in counts), *((p, "m") for p in metre_parts)}):
         part = project.parts.get(pid)
         is_m = unit == "m"
+        if pid == OPEN_END_PART:  # SPIKE M4: no part to buy yet; the count is the ends to decide
+            rows.append([pid, "connector", "", "", OPEN_END_DESCRIPTION, "to fill in",
+                         str(counts[pid]), unit, "", ";".join(sorted(used[pid]))])  # fmt: skip
+            continue
         rows.append([
             pid, part.category if part else "unknown", (part.manufacturer or "") if part else "",
             (part.part_number or "") if part else "", (part.description or "") if part else "",
@@ -533,7 +554,9 @@ def connector_label_text(project: Project, c: Connector, h: Harness | None = Non
     """The text of the label of a cable connector by the label format in force: its name and what
     it mates."""
     name = connector_label(project, c)
-    mates = f"{c.id} mates {c.mates_with or '-'}"
+    mates = (
+        f"{c.id} {OPEN_END_WORD}" if c.role == "loose" else f"{c.id} mates {c.mates_with or '-'}"
+    )
     fmt = label_format.format_of(project)
     if fmt == "compact":
         return mates

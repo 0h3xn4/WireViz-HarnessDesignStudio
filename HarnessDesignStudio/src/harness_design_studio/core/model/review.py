@@ -36,7 +36,9 @@ class Placement(Entity):
 # ("bend", "route") is the offset of a piece of the line, and a mark of a kind this tool does not
 # know is not ours to read.
 ALONG_MARK_KINDS = frozenset({"interface", "link", "end"})
-OFFSET_MARK_KINDS = frozenset({"bend", "route"})
+OFFSET_MARK_KINDS = frozenset(
+    {"bend", "route", "pos"}
+)  # SPIKE M4: "pos:<connector id>" is the offset of a loose end
 
 
 def mark_is_along(mark_id: str) -> bool:

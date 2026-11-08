@@ -97,6 +97,12 @@ def _check_connector(project: Project, c: Connector, owner: str) -> list[Issue]:
             out.append(_err("cable_connector_has_unit", f"Connector '{c.id}' is not a box connector but names a device.", c.id))  # fmt: skip
         if owner == "project":
             out.append(_err("cable_connector_outside_harness", f"Connector '{c.id}' is a cable/in-line connector and must belong to a harness.", c.id))  # fmt: skip
+    if c.role == "loose":  # SPIKE M4: an open end is valid, but it plugs into nothing
+        if c.mates_with is not None:
+            out.append(_err("loose_end_mated", f"Connector '{c.id}' is a loose end but says it mates with '{c.mates_with}'. A loose end plugs into nothing; plug it in (role cable) or clear the mate.", c.id))  # fmt: skip
+        owner_h = project.harnesses.get(owner)
+        if owner_h is not None and owner_h.generated:
+            out.append(_err("loose_end_in_generated_harness", f"Connector '{c.id}' is a loose end in harness '{owner}', which Generate makes: Generate would replace it. Loose ends belong in a harness you made.", c.id))  # fmt: skip
     if c.mates_with is not None and c.mates_with not in project.connectors:
         owner_h = project.harnesses.get(owner)
         out.append(
@@ -149,6 +155,8 @@ def _check_harness(project: Project, h: Harness, all_wires: Counter[str]) -> lis
         out.append(
             _err("duplicate_id", f"Harness '{h.id}' lists the same connector ID twice.", h.id)
         )
+    if h.generated and h.origin != "interfaces":  # SPIKE M4: the two fields must tell one story
+        out.append(_err("origin_mismatch", f"Harness '{h.id}' is made by Generate but its origin is '{h.origin}'. Generate only makes harnesses that come from interfaces.", h.id))  # fmt: skip
     wire_ids = {w.id for w in h.wires}
     for w in h.wires:
         if all_wires[w.id] > 1:

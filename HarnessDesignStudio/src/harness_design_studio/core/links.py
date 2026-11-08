@@ -326,6 +326,14 @@ def propose_pairs(project: Project, a_connector_id: str, b_connector_id: str) ->
     the pins (taken in reading order), so it is the same every time. The pins are looked up by
     name, so the work grows with the number of pins, not with its square."""
     a, b = _two_devices(project, a_connector_id, b_connector_id)
+    return propose_pairs_between(project, a, b)
+
+
+def propose_pairs_between(project: Project, a: Connector, b: Connector) -> Proposal:
+    """`propose_pairs` for two connectors the caller has already chosen. SPIKE M4: the pairing logic
+    does not need the two ends to be device connectors, only pins with signal names, so a loose end
+    of a cable (a connector of a harness) can be paired with a port the same way. A pin that a link
+    pairs, or that an interface wires, is still not offered (looked up by connector ID)."""
     index = _signal_index(project)
     table = counterparts_of(project)
     notes: list[str] = []

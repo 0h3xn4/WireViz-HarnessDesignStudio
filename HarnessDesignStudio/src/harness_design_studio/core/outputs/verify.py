@@ -1087,8 +1087,10 @@ def _pin_rows(
         for p in c.pins:
             wires = sorted(attached.get((c.id, p.id), []))
             sig, itf = (carried or {}).get((c.id, p.id), ("", ""))
+            loose = c.role == "loose"  # SPIKE M4: written as "open end" and "<part> (loose end)"
             rows.append([
-                c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or sig,
+                c.id, c.role, c.mates_with or ("open end" if loose else ""),
+                c.part_id + (" (loose end)" if loose else ""), p.id, p.signal or sig,
                 p.interface_id or itf, ";".join(wires),
                 "no" if wires or p.interface_id or p.signal else "yes",
                 *([p.function or ""] if function else []),
@@ -1145,8 +1147,9 @@ def _bom_rows(project: Project, harnesses: list[Harness]) -> list[list[Cell]]:
         for w in h.wires:
             pins_used |= {(w.from_connector, w.from_pin), (w.to_connector, w.to_pin)}
         for c in h.connectors:
-            counts[c.part_id] += 1
-            used[c.part_id].add(h.id)
+            key = "(open end)" if c.role == "loose" else c.part_id  # SPIKE M4: one line for them
+            counts[key] += 1
+            used[key].add(h.id)
             for p in c.pins:
                 if p.contact_part and (c.id, p.id) in pins_used:
                     counts[p.contact_part] += 1
@@ -1173,6 +1176,10 @@ def _bom_rows(project: Project, harnesses: list[Harness]) -> list[list[Cell]]:
     rows: list[list[Cell]] = []
     for pid, unit in lines:
         part = project.parts.get(pid)
+        if pid == "(open end)":
+            rows.append([pid, "connector", "", "", "Connector not chosen yet (loose end)",
+                         "to fill in", str(counts[pid]), unit, "", ";".join(sorted(used[pid]))])  # fmt: skip
+            continue
         approval = (
             "missing from parts list"
             if part is None
@@ -1254,7 +1261,7 @@ def _label_rows(project: Project, h: Harness) -> list[list[Cell]]:
     for c in h.connectors:
         box = project.connectors.get(c.mates_with or "")
         name = c.label or ((box.label or "") if box is not None else "")
-        mates = f"{c.id} mates {c.mates_with or '-'}"
+        mates = f"{c.id} open end" if c.role == "loose" else f"{c.id} mates {c.mates_with or '-'}"
         rows.append([c.id, "connector", f"{name} ({mates})" if name else mates, "1"])
     for w in h.wires:
         wname = w.label or w.signal
@@ -1650,6 +1657,12 @@ def _build_expected_checks(project: Project, h: Harness) -> dict[str, int]:
             for pid in parts
             if pid not in project.parts or project.parts[pid].approval != "approved"
         ),
+        # SPIKE M4: the ninth check exists only for a harness with a loose end, and always blocks
+        **(
+            {"Ends not decided": sum(1 for c in h.connectors if c.role == "loose")}
+            if any(c.role == "loose" for c in h.connectors)
+            else {}
+        ),
     }
 
 
@@ -1865,7 +1878,9 @@ def _build_start(
             return
     ready = next((row[1] for row in rows if row and row[0] == "Ready to build"), None)
     blocking_labels = settings.names(project, "model", "readiness_blocking")
-    blocking = sum(n for label, n in want.items() if label in blocking_labels)
+    blocking = sum(
+        n for label, n in want.items() if label in blocking_labels or label == "Ends not decided"
+    )
     names = sorted(n for n, c in project.config.items() if c.placeholder)  # worked out here
     want_ready = "no" if blocking else "yes"
     if want_ready == "yes" and names:

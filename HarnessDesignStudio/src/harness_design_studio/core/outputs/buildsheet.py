@@ -365,14 +365,27 @@ def open_items(project: Project, h: Harness) -> dict[str, tuple[str, ...]]:
     }
 
 
+# SPIKE M4: a ninth check, there only while the harness has a loose end, and always blocking: a
+# cable with an end nobody has decided is not ready to build, whatever else is complete. The harness
+# without a loose end has the eight checks and the same sheet, byte for byte, as before.
+LOOSE_CHECK = (
+    "Ends not decided",
+    "Plug the open end into a device, or give it its connector part (Connectors tab).",
+)
+
+
 def readiness(project: Project, h: Harness) -> list[Check]:
     """What stands between this harness and a build, worked out from the model alone."""
     blocking = settings.names(project, "model", "readiness_blocking")
     items = open_items(project, h)
-    return [
+    out = [
         Check(label, len(items[label]), label in blocking, todo, items[label])
         for label, todo in READINESS_CHECKS
     ]
+    loose = tuple(sorted(c.id for c in h.connectors if c.role == "loose"))
+    if loose:
+        out.append(Check(LOOSE_CHECK[0], len(loose), True, LOOSE_CHECK[1], loose))
+    return out
 
 
 # ---- the sheets ------------------------------------------------------------------------------

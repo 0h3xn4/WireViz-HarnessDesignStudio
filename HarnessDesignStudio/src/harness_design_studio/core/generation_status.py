@@ -54,7 +54,9 @@ def input_hash(project: Project) -> str:
         "units": dump(project.units.values()),
         "interfaces": dump(project.interfaces.values()),
         "interface_types": dump(project.interface_types.values()),
-        "parts": dump(project.parts.values()),
+        # SPIKE M4: the library part of a loose end is added by the first cable a person drags out
+        # of a port; Generate never reads it, so it must not make the plans look out of date
+        "parts": dump(x for x in project.parts.values() if x.id != "TBD-CONNECTOR"),
         "zones": list(project.zones),
         "config": {n: _config_dump(c) for n, c in sorted(project.config.items())},
         "box_connectors": boxes,
