@@ -76,7 +76,8 @@ Every command that has a result in data form takes `--json`. The usual text line
 | `diff` | `ok`, `harness`, `from`, `to`, `added`, `removed`, `changed`, `changes` |
 | `compare` | `ok`, `added`, `removed`, `changed`, `changes`, `not_compared` |
 | `log` | `ok`, `harness`, `entries` |
-| `migrate` | `ok`, `migrated` |
+| `migrate` | `ok`, `migrated`, `from_version`, `to_version`, `backup`, `record`, `self_check` |
+| `migrate --dry-run` | `ok`, `dry_run`, `up_to_date`, `from_version`, `to_version`, `files`, `counts_before`, `counts_after`, `model_hash_before`, `model_hash_after`, `hash_equal`, `exports_equal`, `baselines_intact`, `journal_entry`, `lost`, `notes` |
 | `journal` | `ok`, `has_journal`, `count`, `entries` |
 | `journal --start` | `ok`, `started`, `file` |
 | `override` | `ok`, `wire`, `action`, `changed`, `overrides`, `derivation` |
@@ -1055,7 +1056,7 @@ harness-design-studio import-plugin my-design my-importer data.csv --dry-run --j
 
 ### harness-design-studio migrate
 
-upgrade an old-format project in place (originals are kept)
+upgrade an old-format project in place (originals are kept, the upgrade is recorded and checks itself; --dry-run only shows what it would do)
 
 `harness-design-studio migrate project [options]`
 
@@ -1063,10 +1064,13 @@ upgrade an old-format project in place (originals are kept)
 | --- | --- |
 | `project` | project folder |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
+| `--dry-run` | load the project, upgrade it in memory and write nothing: print the files that would change, the objects by kind before and after, the model hash before and after and anything that could not be carried over; exit 0 only if nothing would be lost |
 
 Examples:
 
 ```
+harness-design-studio migrate my-design --dry-run
+harness-design-studio migrate my-design --dry-run --json
 harness-design-studio migrate my-design
 harness-design-studio migrate my-design --json
 ```

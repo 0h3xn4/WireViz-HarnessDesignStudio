@@ -46,12 +46,10 @@ def noop_step(files: dict[str, Any]) -> dict[str, Any]:
 
 
 def lossy_step(files: dict[str, Any]) -> dict[str, Any]:
-    """A step that loses a device (and so would lose data): the dry run must refuse it."""
+    """A step that loses a placement (and so would lose data without breaking the project): the
+    dry run must refuse it."""
     out = noop_step(files)
-    for rel, data in sorted(out.items()):
-        if rel.startswith("logical/units/") and data.get("units"):
-            data["units"].pop()
-            break
+    out["logical/layout.json"]["placements"].pop()
     return out
 
 
@@ -73,8 +71,10 @@ def install_fake_format(
 
 
 @pytest.fixture
-def fake_v2(monkeypatch: pytest.MonkeyPatch) -> None:
-    install_fake_format(monkeypatch)
+def fake_v2(monkeypatch: pytest.MonkeyPatch) -> Callable[[], None]:
+    """Call it to make this tool write format 2 with the fake step. Call it after the project has
+    been built: a save made while the fake is on writes format 2."""
+    return lambda: install_fake_format(monkeypatch)
 
 
 # ---- the projects ----------------------------------------------------------------------------------
