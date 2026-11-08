@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.15.0 (2026-11-05; tag `v1.15.0` on commit `252c147`, release workflow run 42028042883; not signed off by the owner). The versions before it, what each added and how each was published are in [`STATUS.md`](STATUS.md) and the [changelog](../CHANGELOG.md). The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.16.0 (2026-11-06; tag `v1.16.0` on commit `fc012e9`, release workflow run 42212590043; not signed off by the owner). The versions before it, what each added and how each was published are in [`STATUS.md`](STATUS.md) and the [changelog](../CHANGELOG.md). The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
 
 ## Contents
 
@@ -43,31 +43,31 @@ You also need about 500 MB of free disk space for the program (`df -h ~` shows i
 
 You need one file, either `harness-design-studio_<version>_amd64.deb` (way A), `harness-design-studio-<version>-linux-<arch>.tar.gz` (way B), `harness-design-studio-<version>-windows-x86_64-setup.exe` or `harness-design-studio-<version>-windows-x86_64.zip` (way D). Ask your tool administrator, or take it from one of these places:
 
-- the **Releases** page of the project's repository (look for the newest version number). Version 1.15.0 (tag `v1.15.0`, published 2026-11-05) has these files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
+- the **Releases** page of the project's repository (look for the newest version number). Version 1.16.0 (tag `v1.16.0`, published 2026-11-06) has these files attached; the release workflow (`.github/workflows/release.yml`) attaches them when a tag `vX.Y.Z` is pushed:
 
   | File | For | Way |
   | --- | --- | --- |
-  | `harness-design-studio_1.15.0_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
-  | `harness-design-studio-1.15.0-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
-  | `harness-design-studio-1.15.0-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
-  | `harness-design-studio-1.15.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
+  | `harness-design-studio_1.16.0_amd64.deb` | Ubuntu 24.04 and newer, 64-bit | A |
+  | `harness-design-studio-1.16.0-linux-x86_64.tar.gz` | Linux, without administrator rights | B |
+  | `harness-design-studio-1.16.0-windows-x86_64-setup.exe` | Windows 10 and 11, 64-bit, the setup program | D |
+  | `harness-design-studio-1.16.0-windows-x86_64.zip` | Windows 10 and 11, 64-bit, portable | D |
   | `SHA256SUMS` | the SHA-256 checksum of each package | |
 
-  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 to 1.15.0 and two macOS disk images that are not maintained any more (D-168); every release from 1.6.0 to 1.14.0 has the same four packages and `SHA256SUMS` as 1.15.0. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
+  Versions 1.0.0 and 1.1.0 have only the `.deb`, the `.tar.gz` and a `SHA256SUMS` file; 1.2.0 to 1.5.0 have the same packages as 1.6.0 to 1.16.0 and two macOS disk images that are not maintained any more (D-168); every release from 1.6.0 to 1.15.0 has the same four packages and `SHA256SUMS` as 1.16.0. The release record (`compliance/SIGNOFF.md`, the *Publication* sections) says how each version was published. If the page of the version you want lists no package, use one of the other places or way C;
 - the build artifacts of a CI run (Actions, then the run, then *Artifacts*): the artifact `harness-design-studio-ubuntu-24.04` of the CI run holds the `.deb`, the `.tar.gz` and the software bill of materials and licence report (no checksum file); the run of the workflow `harness-design-studio packages (Windows)` on a branch `pkg/...` keeps the Windows packages as the artifact `harness-design-studio-windows-x86_64`. Such a build is made again on another machine and is not the file of a release.
 
 You can also build it yourself (way C, last section). That route needs no release files at all.
 
 Copy the file to the machine. It never needs to reach the network.
 
-**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file: the `SHA256SUMS` file on the release page (one file for all the packages of a release from 1.2.0) and `compliance/evidence/release_<version>_SHA256SUMS` in the repository (every release from 0.1.0 to 1.15.0). For 1.15.0 they are:
+**Check the file** if it came over a network or on a stick. The release lists a SHA-256 checksum for each file: the `SHA256SUMS` file on the release page (one file for all the packages of a release from 1.2.0) and `compliance/evidence/release_<version>_SHA256SUMS` in the repository (every release from 0.1.0 to 1.16.0). For 1.16.0 they are:
 
 | File | SHA-256 |
 | --- | --- |
-| `harness-design-studio_1.15.0_amd64.deb` | `d430652dd9377445ba3288b2674d7e32b9c8f7ea82a36417e2e460a70f26ba16` |
-| `harness-design-studio-1.15.0-linux-x86_64.tar.gz` | `00eaba47025ee96a9cce7f0ecfe0a2cf4784ce2b236d689661daf920cd427009` |
-| `harness-design-studio-1.15.0-windows-x86_64-setup.exe` | `e137cd29a84d9c0cb95c14eaf925b0d91f189f819640dc956c8e357000a095cb` |
-| `harness-design-studio-1.15.0-windows-x86_64.zip` | `dec14aad66c30001d2a4a9d2e49f8929a64699bedb115dc1db42cb00137d6c50` |
+| `harness-design-studio_1.16.0_amd64.deb` | `5891ba0fc60a92405b87aed6610a1e79d5bcf04d56c3ef1389a40adc9e5fce1c` |
+| `harness-design-studio-1.16.0-linux-x86_64.tar.gz` | `5a3952253616757dad7e26446fd9b0788feede33c04a91e05482ea467afcf79b` |
+| `harness-design-studio-1.16.0-windows-x86_64-setup.exe` | `cebcea44beaf664e5bd7cbe27df15f29fc0f35fb19ca0e684d5f6281c6b17d7b` |
+| `harness-design-studio-1.16.0-windows-x86_64.zip` | `c1cd4f0e6bbaba422079b2e545388bb11b8ec8fcc8189b4a24a02be1db5b461c` |
 
 On Linux, put the package you downloaded and `SHA256SUMS` in one folder and run:
 
