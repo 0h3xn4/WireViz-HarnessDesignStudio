@@ -497,6 +497,10 @@ def test_an_interrupt_while_the_files_are_written_puts_every_file_back_and_goes_
 
 
 def test_a_read_only_folder_is_refused_before_a_file_is_changed(tmp_path: Path, fake_v2) -> None:
+    if os.name == "nt":
+        pytest.skip(
+            "a folder's read-only bit does not stop writes on Windows (the patched write failure below covers the path)"
+        )
     if os.geteuid() == 0:
         pytest.skip("root writes to a read-only folder")
     root = build("mini3", tmp_path / "p")
