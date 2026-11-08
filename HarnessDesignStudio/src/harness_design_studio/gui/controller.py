@@ -39,6 +39,7 @@ from harness_design_studio.core.imports import ImportPlan
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, disk_fingerprint, load_project
 from harness_design_studio.core.io.saver import save_project
+from harness_design_studio.core.io.upgrade import UpgradeResult, upgrade_project
 from harness_design_studio.core.model import DiagramMark, Project
 from harness_design_studio.core.outputs.build import DEFAULT_FOLDER, outputs_status
 from harness_design_studio.core.recovery import (
@@ -233,6 +234,7 @@ class EditorController(QObject):
         self._saved_revision = 0
         self._kept_fingerprint: str | None = None  # "Keep my version": the disk state we ignore
         self.open_note: str | None = None  # why the last open_path was not a normal open
+        self.upgraded: UpgradeResult | None = None  # what the last open_path upgraded, if it did
         self.journal_error_shown = False
         self._journal_worker: JournalWorker | None = None
         self._journal_again = False  # a change came while a write ran: write once more
@@ -1461,10 +1463,16 @@ class EditorController(QObject):
             raise
         self._install(project, folder, lock)
 
-    def open_path(self, folder: Path, *, read_only: bool = False) -> LoadResult:
+    def open_path(
+        self, folder: Path, *, read_only: bool = False, upgrade: bool = False
+    ) -> LoadResult:
+        """Open a project folder. A project in an older file format is never upgraded without being
+        asked (plan 2.3): `upgrade=True` is the answer *Upgrade* (backup, record, check, undo on
+        any difference: `core.io.upgrade`); otherwise it is open read-only."""
         folder = Path(folder)
         lock: ProjectLock | None = None
         self.open_note = None
+        self.upgraded = None
         if not (folder / "project.json").is_file():
             load_project(folder)  # says in plain words why this is not a project; nothing is left
         if not read_only:  # behind: a lock file would be written into a folder that is no project
@@ -1475,11 +1483,16 @@ class EditorController(QObject):
                 lock, read_only = None, True
                 self.open_note = strings.OPEN_NO_LOCK.format(exc)
         try:
+            if upgrade and not read_only:
+                self.upgraded = upgrade_project(folder)
             result = load_project(folder)
         except Exception:
             if lock:
                 lock.release()
             raise
+        if result.project.migrated_from is not None and not read_only:
+            read_only = True  # an older format is only read until the person agrees to upgrade
+            self.open_note = strings.OPEN_OLD_FORMAT.format(old=result.project.migrated_from)
         if read_only:
             result.project.read_only = True
         self._install(result.project, folder, lock)

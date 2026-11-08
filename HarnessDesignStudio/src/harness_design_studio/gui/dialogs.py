@@ -99,6 +99,55 @@ class ConfirmDialog(Dialog):
         self.setMinimumWidth(420)
 
 
+class UpgradeDialog(Dialog):
+    """Asked once when a project in an older file format is opened (plan 2.3): upgrade it, open it
+    read-only, or do not open it. Cancel is the default; `choice` is "upgrade", "read_only" or
+    "cancel"."""
+
+    def __init__(self, parent: QWidget | None, old: int, new: int) -> None:
+        super().__init__(parent)
+        self.old, self.new = old, new
+        self.choice = "cancel"
+        self.setWindowTitle(strings.UPGRADE_TITLE)
+        self.setObjectName("upgrade-dialog")
+        lay = QVBoxLayout(self)
+        lay.addWidget(QLabel(f"<h3>{strings.UPGRADE_TITLE}</h3>"))
+        self.body = QLabel(strings.UPGRADE_BODY.format(old=old, backup=f".migration-backup-v{old}"))
+        self.body.setWordWrap(True)
+        lay.addWidget(self.body)
+        self.detail = QLabel(strings.UPGRADE_DETAIL)
+        self.detail.setWordWrap(True)
+        lay.addWidget(self.detail)
+        row = QHBoxLayout()
+        row.addStretch(1)
+        self.cancel = QPushButton(strings.CANCEL)
+        self.cancel.setObjectName("dlg-cancel")
+        self.read_only = QPushButton(strings.OPEN_READ_ONLY)
+        self.read_only.setObjectName("dlg-read-only")
+        self.upgrade = QPushButton(strings.UPGRADE)
+        self.upgrade.setObjectName("dlg-ok")
+        self.upgrade.setProperty("primary", True)
+        for button, choice in (
+            (self.cancel, "cancel"),
+            (self.read_only, "read_only"),
+            (self.upgrade, "upgrade"),
+        ):
+            button.setAutoDefault(button is self.cancel)
+            button.clicked.connect(lambda _=False, c=choice: self._pick(c))
+            row.addWidget(button)
+        self.cancel.setDefault(True)  # the safe choice is the default
+        lay.addLayout(row)
+        self.cancel.setFocus()
+        self.setMinimumWidth(420)
+
+    def _pick(self, choice: str) -> None:
+        self.choice = choice
+        if choice == "cancel":
+            self.reject()
+        else:
+            self.accept()
+
+
 class WaiverDialog(Dialog):
     """The reason for waiving a warning, or (for an error of an electrical rule) for accepting it
     as a deviation. Either way the reason is required."""

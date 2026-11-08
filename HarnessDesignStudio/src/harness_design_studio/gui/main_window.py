@@ -81,6 +81,8 @@ from harness_design_studio.core.generate.engine import (
 )
 from harness_design_studio.core.import_record import CHANGED, CachedHasher, check_sources
 from harness_design_studio.core.io.layout import model_hash
+from harness_design_studio.core.io.migrate import current_version
+from harness_design_studio.core.io.upgrade import UpgradeError, format_of
 from harness_design_studio.core.model import Project
 from harness_design_studio.core.open_data import data_files
 from harness_design_studio.core.outputs.build import (
@@ -137,6 +139,7 @@ from harness_design_studio.gui.dialogs import (
     ImportDialog,
     IssuesDialog,
     NewInterfaceDialog,
+    UpgradeDialog,
     WaiverDialog,
     WireColoursDialog,
 )
@@ -476,6 +479,8 @@ class MainWindow(QMainWindow):
         self.ask_folder: Callable[[str], str | None] = self._ask_folder
         self.ask_text: Callable[[str, str, str], str | None] = self._ask_text
         self.ask_choice: Callable[[str, str, list[str]], int] = self._ask_choice
+        # an older project format: "upgrade", "read_only" or "cancel" (asked once, on opening)
+        self.ask_upgrade: Callable[[int, int], str] = self._ask_upgrade
         self.ask_file: Callable[[], str | None] = _no_file
         self.open_url: Callable[[QUrl], bool] = QDesktopServices.openUrl
         self.compute_plan: Callable[[], GenerationPlan | None] = self._compute_plan
@@ -4571,6 +4576,11 @@ class MainWindow(QMainWindow):
         clicked = box.clickedButton()
         return created.index(clicked) if clicked in created else len(buttons) - 1
 
+    def _ask_upgrade(self, old: int, new: int) -> str:
+        dlg = UpgradeDialog(self, old, new)
+        self.run_dialog(dlg)
+        return dlg.choice
+
     def _confirm_discard(self) -> bool:
         if not self.ctl.dirty:
             return True
@@ -4656,11 +4666,21 @@ class MainWindow(QMainWindow):
         if self._is_open_here(folder):
             self.toasts.show_message(strings.ALREADY_OPEN, None)
             return True
+        older = format_of(folder)
+        upgrade_now = open_old_read_only = False
+        if older is not None and older < current_version():
+            answer = self.ask_upgrade(older, current_version())
+            if answer == "cancel":
+                return False
+            upgrade_now, open_old_read_only = answer == "upgrade", answer == "read_only"
         self._save_project_layout()  # the project that is open now keeps its panels
         try:
-            result = self.ctl.open_path(folder)
+            result = self.ctl.open_path(folder, read_only=open_old_read_only, upgrade=upgrade_now)
         except OSError as exc:
             self._error(self._explain(exc, folder))
+            return False
+        except UpgradeError as exc:
+            self._error(strings.UPGRADE_FAILED.format(exc))
             return False
         except ProjectLockedError:
             choice = self.ask_choice(
@@ -4682,6 +4702,15 @@ class MainWindow(QMainWindow):
         self.settings.setValue("project/last", str(folder))
         if self.ctl.open_note:
             self.toasts.show_message(self.ctl.open_note, None, 10000)
+        if self.ctl.upgraded is not None:
+            done = self.ctl.upgraded
+            self.toasts.show_message(
+                strings.UPGRADED.format(
+                    old=done.from_version, new=done.to_version, backup=done.backup
+                ),
+                None,
+                10000,
+            )
         if self.ctl.journal_available():
             choice = self.ask_choice(
                 strings.RESTORE_TITLE,
