@@ -29,6 +29,11 @@ def _v0_to_v1(files: RawFiles) -> RawFiles:
 MIGRATIONS: dict[int, Callable[[RawFiles], RawFiles]] = {0: _v0_to_v1}
 
 
+def current_version() -> int:
+    """The format this tool writes."""
+    return SCHEMA_VERSION
+
+
 def schema_version_of(files: RawFiles) -> int:
     meta = files.get("project.json")
     if isinstance(meta, dict):
@@ -40,7 +45,7 @@ def schema_version_of(files: RawFiles) -> int:
 
 def migrate_raw(files: RawFiles, from_version: int) -> RawFiles:
     version = from_version
-    while version < SCHEMA_VERSION:
+    while version < current_version():
         files = MIGRATIONS[version](files)
         version += 1
     return files

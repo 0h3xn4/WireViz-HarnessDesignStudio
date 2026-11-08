@@ -38,7 +38,7 @@ from harness_design_studio.core.model import (
 from harness_design_studio.core.model.journal import KINDS
 
 from .io import canonical
-from .io.layout import bytes_for_hash, outside_the_hash
+from .io.layout import bytes_for_hash, outside_the_hash, schema_one
 
 JOURNAL_FILE = "journal.json"
 GENERATION_FILE = "generated/generation.json"
@@ -171,6 +171,23 @@ def extended(journal: Journal, rows: Iterable[Row]) -> Journal:
     )
 
 
+def migration_rows(from_version: int, to_version: int) -> list[Row]:
+    """The one entry a migration of the project adds (plan 2.3): "migrated from format N". It is an
+    `edit` of the object `project` and not a kind of its own, because a journal that holds a kind
+    this tool's earlier versions do not know is read by them as damaged; nothing about the entry
+    needs a new file format."""
+    return [
+        _row(
+            "edit",
+            "project",
+            "format",
+            from_version,
+            to_version,
+            f"migrated from format {from_version}",
+        )
+    ]
+
+
 def start(project: Project, reason: str = "") -> bool:
     """Give the project a journal (it records its start). False when it has one already."""
     if project.journal is not None:
@@ -255,7 +272,9 @@ def files_hash(files: Mapping[str, bytes]) -> str:
             continue
         if rel == "project.json":
             data = _blank_tool_version(data)
-        digest.update(rel.encode("utf-8") + b"\0" + bytes_for_hash(rel, data) + b"\0")
+        digest.update(
+            rel.encode("utf-8") + b"\0" + schema_one(rel, bytes_for_hash(rel, data)) + b"\0"
+        )
     return digest.hexdigest()
 
 

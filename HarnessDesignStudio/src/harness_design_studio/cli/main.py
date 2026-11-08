@@ -29,15 +29,20 @@ from harness_design_studio.cli import (
 from harness_design_studio.cli.jsonout import Report, add_json_flag
 from harness_design_studio.core import records
 from harness_design_studio.core.errors import HarnessError, ProjectLockedError, TransactionError
+from harness_design_studio.core.io import upgrade
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, load_project
-from harness_design_studio.core.io.saver import migrate_project
+from harness_design_studio.core.io.migrate import current_version
 from harness_design_studio.core.issues import Issue, errors
 from harness_design_studio.core.units import with_area
 from harness_design_studio.core.validation import validate_folder
 
 PROG = "harness-design-studio"  # `harness` is kept as a short alias of the same command
 MIGRATED = "Migrated; the original files are kept in a .migration-backup-* folder."
+MIGRATED_CHECKED = (
+    "Checked after the write: same model hash, same findings, baselines untouched, "
+    "identical export."
+)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -59,7 +64,11 @@ def build_parser() -> argparse.ArgumentParser:
     for name, text in (
         ("validate", "check a project folder for errors and inconsistencies"),
         ("check", "validate, plus detect problems left behind by Git merges"),
-        ("migrate", "upgrade an old-format project in place (originals are kept)"),
+        (
+            "migrate",
+            "upgrade an old-format project in place (originals are kept, the upgrade is "
+            "recorded and checks itself; --dry-run only shows what it would do)",
+        ),
         ("generate", "generate harnesses from the interfaces and save the project"),
         ("drc", "run the design rule check and print the report (waived findings included)"),
         (
@@ -77,6 +86,15 @@ def build_parser() -> argparse.ArgumentParser:
                 "--outputs",
                 action="store_true",
                 help="also check <project>/outputs against the design",
+            )
+        if name == "migrate":
+            p.add_argument(
+                "--dry-run",
+                action="store_true",
+                help="load the project, upgrade it in memory and write nothing: print the files "
+                "that would change, the objects by kind before and after, the model hash before "
+                "and after and anything that could not be carried over; exit 0 only if nothing "
+                "would be lost",
             )
         if name in ("generate", "export"):
             open_data.add_run_record_options(p)
@@ -128,6 +146,44 @@ def _validate(path: Path, *, merge_check: bool, rep: Report | None = None) -> in
         rep.put(**outcome.to_dict())
         return 0 if outcome.ok else 1
     return _print_report(result, extra)
+
+
+def _migrate(path: Path, rep: Report, *, dry_run: bool) -> int:
+    """`migrate`: the dry run (`--dry-run`, writes nothing) or the upgrade with its record and its
+    check after the write (`core.io.upgrade`)."""
+    if dry_run:
+        plan = upgrade.plan_upgrade(path)
+        if plan is None:
+            version = current_version()
+            rep.say("Already up to date.")
+            rep.put(
+                dry_run=True, up_to_date=True, **upgrade.UpgradePlan(version, version).to_dict()
+            )
+            return rep.finish(0)
+        for line in upgrade.render_plan(plan):
+            rep.say(line)
+        rep.put(dry_run=True, up_to_date=False, **plan.to_dict())
+        return rep.finish(0 if plan.ok else 1)
+    try:
+        done = upgrade.upgrade_project(path)
+    except upgrade.UpgradeError as exc:  # refused, or written, found wrong and put back
+        print(f"error: {exc}", file=sys.stderr)
+        for reason in exc.reasons:
+            print(f"  {reason}", file=sys.stderr)
+        return 1
+    rep.say("Already up to date." if done is None else MIGRATED)
+    if done is not None:
+        rep.say(f"Format {done.from_version} to {done.to_version}. Record: {done.record}.")
+        rep.say(MIGRATED_CHECKED)
+    rep.put(
+        migrated=done is not None,
+        from_version=done.from_version if done else None,
+        to_version=done.to_version if done else None,
+        backup=done.backup if done else None,
+        record=done.record if done else None,
+        self_check=done.self_check if done else None,
+    )
+    return rep.finish(0)
 
 
 def _generate(path: Path, rep: Report | None = None, args: argparse.Namespace | None = None) -> int:
@@ -511,10 +567,7 @@ def _dispatch(args: argparse.Namespace) -> int:
         return extensions_cmd.run(args)
     rep = Report(args.json)
     if args.command == "migrate":
-        migrated = migrate_project(args.project)
-        rep.say("Already up to date." if migrated is None else MIGRATED)
-        rep.put(migrated=migrated is not None)
-        return rep.finish(0)
+        return _migrate(args.project, rep, dry_run=args.dry_run)
     if args.command == "generate":
         return rep.finish(_generate(args.project, rep, args))
     if args.command == "export":

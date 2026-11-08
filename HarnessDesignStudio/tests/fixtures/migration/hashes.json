@@ -1,0 +1,68 @@
+{
+ "asbuilt": {
+  "content_hash": "711ed53d9066e2467002086d8fad7a87808a947de309eb7c8ab73d499cafdc60",
+  "model_hash": "711ed53d9066e2467002086d8fad7a87808a947de309eb7c8ab73d499cafdc60"
+ },
+ "custom_device": {
+  "content_hash": "0a646cfc4cd5177255ac7f85f999f6d4c297a04f6b68edbfedef8d7c9941c3a0",
+  "model_hash": "0a646cfc4cd5177255ac7f85f999f6d4c297a04f6b68edbfedef8d7c9941c3a0"
+ },
+ "diagram-marks": {
+  "content_hash": "96af3561a17d17ef46e574fccb94aa841453bf779ed9c826aa56db8c496bbde8",
+  "model_hash": "96af3561a17d17ef46e574fccb94aa841453bf779ed9c826aa56db8c496bbde8"
+ },
+ "example-first-steps": {
+  "content_hash": "2880e89b5cc512f6c01b1b50891dfda26103f05bc59ea228a6f6db7362079d66",
+  "model_hash": "2880e89b5cc512f6c01b1b50891dfda26103f05bc59ea228a6f6db7362079d66"
+ },
+ "example-flatsat": {
+  "content_hash": "711ed53d9066e2467002086d8fad7a87808a947de309eb7c8ab73d499cafdc60",
+  "model_hash": "711ed53d9066e2467002086d8fad7a87808a947de309eb7c8ab73d499cafdc60"
+ },
+ "example-minimal-satellite": {
+  "content_hash": "7da2a83a3e164914c08041d3e0f1c39501d18f72f8a81b4e69f7ab2bf8994197",
+  "model_hash": "7da2a83a3e164914c08041d3e0f1c39501d18f72f8a81b4e69f7ab2bf8994197"
+ },
+ "example-small-satellite": {
+  "content_hash": "19b3fd71970e1695c7338ab6e829eafc62a5b9b9225b4f261ed21a3fa0b80e38",
+  "model_hash": "19b3fd71970e1695c7338ab6e829eafc62a5b9b9225b4f261ed21a3fa0b80e38"
+ },
+ "fixture-mini3": {
+  "content_hash": "96af3561a17d17ef46e574fccb94aa841453bf779ed9c826aa56db8c496bbde8",
+  "model_hash": "96af3561a17d17ef46e574fccb94aa841453bf779ed9c826aa56db8c496bbde8"
+ },
+ "fixture-sat15": {
+  "content_hash": "4841a3ae7f2c3a10f6e4ba111d0331268ba30d455d04b06232ef36de18b54848",
+  "model_hash": "4841a3ae7f2c3a10f6e4ba111d0331268ba30d455d04b06232ef36de18b54848"
+ },
+ "journal-and-overrides": {
+  "content_hash": "e00235bef4cf2f0e024fd95805484721a158d1d200f55f3c585566202b2daea7",
+  "model_hash": "e00235bef4cf2f0e024fd95805484721a158d1d200f55f3c585566202b2daea7"
+ },
+ "links": {
+  "content_hash": "338cbd580de462c8b7deaea96881c4bc0b2abcc716f23666ddfcf11884c8f83d",
+  "model_hash": "338cbd580de462c8b7deaea96881c4bc0b2abcc716f23666ddfcf11884c8f83d"
+ },
+ "m1_project": {
+  "content_hash": "052bf062a0056a9cbc24ecba167a4c7654bcfe36c0354953a148988f67799a02",
+  "model_hash": "052bf062a0056a9cbc24ecba167a4c7654bcfe36c0354953a148988f67799a02"
+ },
+ "mini3": {
+  "content_hash": "96af3561a17d17ef46e574fccb94aa841453bf779ed9c826aa56db8c496bbde8",
+  "model_hash": "96af3561a17d17ef46e574fccb94aa841453bf779ed9c826aa56db8c496bbde8"
+ },
+ "released": {
+  "baseline:W001.A": "dfc69f9434d604a6ce9a7731a74cd19ce2480eba32d1d159c80c59251ae00f4b",
+  "baseline:W003.A": "dfc69f9434d604a6ce9a7731a74cd19ce2480eba32d1d159c80c59251ae00f4b",
+  "content_hash": "37728f97b42bd4a9ebc90c8c448f1f7639a7daa7cafd3265d157d461c8fd78ee",
+  "model_hash": "81d17c5f7a3d58d5e05d0670e90018e473bf6bda4c9f6231d6de97a70a45dcfa"
+ },
+ "sat15": {
+  "content_hash": "abb178f717365cb52205240d39494f47cb3d737d48228a9e930a12ccc0a49fe0",
+  "model_hash": "abb178f717365cb52205240d39494f47cb3d737d48228a9e930a12ccc0a49fe0"
+ },
+ "sat15_full": {
+  "content_hash": "dfc69f9434d604a6ce9a7731a74cd19ce2480eba32d1d159c80c59251ae00f4b",
+  "model_hash": "dfc69f9434d604a6ce9a7731a74cd19ce2480eba32d1d159c80c59251ae00f4b"
+ }
+}

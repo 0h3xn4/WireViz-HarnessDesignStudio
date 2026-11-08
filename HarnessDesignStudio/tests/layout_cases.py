@@ -198,6 +198,11 @@ def _cases() -> list[Case]:
         "ConfirmDialog",
     )
     add(
+        "Upgrade an older project format",
+        lambda c: dialogs.UpgradeDialog(None, 1, 2),
+        "UpgradeDialog",
+    )
+    add(
         "Waive a warning", lambda c: dialogs.WaiverDialog(None, _finding("warning")), "WaiverDialog"
     )
     add(

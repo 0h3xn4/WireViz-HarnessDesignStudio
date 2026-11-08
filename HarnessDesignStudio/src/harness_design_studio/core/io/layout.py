@@ -99,6 +99,30 @@ def bytes_for_hash(rel: str, data: bytes) -> bytes:
     return canonical.dumps(doc)
 
 
+HASH_SCHEMA_VERSION = 1
+"""The format number every project is hashed as (D-200, plan 2.2). The hash is of the design,
+not of the format it is stored in: a project that is upgraded from format N to N+1 keeps its model
+hash, the 12 characters on every written file and the `content_hash` of every released baseline.
+So the `schema_version` of `project.json` is read as this number when hashing, the way
+`tool_version` is read as empty. It is the number of the first format and it never changes."""
+
+
+def schema_one(rel: str, data: bytes) -> bytes:
+    """The bytes of project file `rel` with `schema_version` of `project.json` read as
+    `HASH_SCHEMA_VERSION`. Any other file, and a `project.json` that already says 1 (or nothing, or
+    cannot be read), as it is: so every hash made before this rule stays what it was."""
+    if rel != "project.json" or b'"schema_version"' not in data:
+        return data
+    try:
+        doc = json.loads(data)
+    except ValueError:
+        return data
+    if not isinstance(doc, dict) or doc.get("schema_version") in (None, HASH_SCHEMA_VERSION):
+        return data
+    doc["schema_version"] = HASH_SCHEMA_VERSION
+    return canonical.dumps(doc)
+
+
 def journal_payload(journal: Journal | None) -> dict[str, Any]:
     return {"journal": [e.model_dump(mode="json") for e in journal or ()]}
 
@@ -294,10 +318,14 @@ def model_hash(project: Project) -> str:
     changed what and when), the import record (`imports/records.json`, where data came from), the
     extensions and the as-built records are not the design, so they are left out
     (`outside_the_hash`), and so are the comments of the config files (`_about`,
-    `bytes_for_hash`): the same design gives the same hash with or without them."""
+    `bytes_for_hash`): the same design gives the same hash with or without them. The format number
+    of `project.json` is read as 1 (`schema_one`): the same design gives the same hash in every
+    format, so an upgrade changes no hash, no stamp and no baseline."""
     digest = hashlib.sha256()
     for rel, data in sorted(serialize(project, tool_version="").items()):
         if outside_the_hash(rel):
             continue
-        digest.update(rel.encode("utf-8") + b"\0" + bytes_for_hash(rel, data) + b"\0")
+        digest.update(
+            rel.encode("utf-8") + b"\0" + schema_one(rel, bytes_for_hash(rel, data)) + b"\0"
+        )
     return digest.hexdigest()
