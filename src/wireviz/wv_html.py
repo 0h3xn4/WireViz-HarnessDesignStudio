@@ -1,6 +1,6 @@
 import re
-from collections.abc import Callable
 from pathlib import Path
+from collections.abc import Callable
 
 from wireviz import APP_NAME, APP_URL, __version__, wv_colors
 from wireviz.DataClasses import Metadata, Options
@@ -107,10 +107,10 @@ def generate_html_output(
             elif isinstance(contents, dict):  # useful for authors, revisions
                 for index, (category, entry) in enumerate(contents.items()):
                     if isinstance(entry, dict):
-                        replacements[f"<!-- %{item}_{index + 1}% -->"] = str(category)
+                        replacements[f"<!-- %{item}_{index+1}% -->"] = str(category)
                         for entry_key, entry_value in entry.items():
                             replacements[
-                                f"<!-- %{item}_{index + 1}_{entry_key}% -->"
+                                f"<!-- %{item}_{index+1}_{entry_key}% -->"
                             ] = html_line_breaks(str(entry_value))
                     elif isinstance(entry, (str, int, float)):
                         pass  # TODO?: replacements[f"<!-- %{item}_{category}% -->"] = html_line_breaks(str(entry))

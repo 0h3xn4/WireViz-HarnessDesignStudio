@@ -95,7 +95,7 @@ def wireviz(file, format, prepend, output_dir, output_name, version):
             raise Exception(f"Unknown output format: {code}")
     output_formats = tuple(sorted(set(output_formats)))
     output_formats_str = (
-        f"[{'|'.join(output_formats)}]"
+        f'[{"|".join(output_formats)}]'
         if len(output_formats) > 1
         else output_formats[0]
     )

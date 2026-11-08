@@ -181,7 +181,8 @@ def smart_file_resolve(filename: str, possible_paths: (str, list[str])) -> Path:
             resolved_path = (possible_path / filename).resolve()
             if resolved_path.exists():
                 return resolved_path
-        raise Exception(
-            f"{filename} was not found in any of the following locations: \n"
-            + "\n".join([str(x) for x in possible_paths])
-        )
+        else:
+            raise Exception(
+                f"{filename} was not found in any of the following locations: \n"
+                + "\n".join([str(x) for x in possible_paths])
+            )

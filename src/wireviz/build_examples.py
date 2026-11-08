@@ -59,7 +59,7 @@ def build_generated(groupkeys):
             include_readme = "md" in groups[key][readme]
             include_source = "yml" in groups[key][readme]
             with open_file_write(path / readme) as out:
-                out.write(f"# {groups[key]['title']}\n\n")
+                out.write(f'# {groups[key]["title"]}\n\n')
         # collect and iterate input YAML files
         for yaml_file in collect_filenames("Building", key, input_extensions):
             print(f'  "{yaml_file}"')

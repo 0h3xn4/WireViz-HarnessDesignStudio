@@ -5,7 +5,6 @@ from pathlib import Path
 from typing import Any
 
 from graphviz import Graph
-
 from wireviz import APP_NAME, APP_URL, __version__, wv_colors
 from wireviz.DataClasses import (
     Cable,
@@ -225,9 +224,7 @@ class Harness:
 
                     pinhtml.append("   <tr>")
                     if connector.ports_left:
-                        pinhtml.append(
-                            f'    <td port="p{pinindex + 1}l">{pinname}</td>'
-                        )
+                        pinhtml.append(f'    <td port="p{pinindex+1}l">{pinname}</td>')
                     if pinlabel:
                         pinhtml.append(f"    <td>{pinlabel}</td>")
                     if connector.pincolors:
@@ -244,9 +241,7 @@ class Harness:
                             pinhtml.append('    <td colspan="2"></td>')
 
                     if connector.ports_right:
-                        pinhtml.append(
-                            f'    <td port="p{pinindex + 1}r">{pinname}</td>'
-                        )
+                        pinhtml.append(f'    <td port="p{pinindex+1}r">{pinname}</td>')
                     pinhtml.append("   </tr>")
 
                 pinhtml.append("  </table>")
@@ -301,10 +296,10 @@ class Harness:
                 # Only convert units we actually know about, i.e. currently
                 # mm2 and awg --- other units _are_ technically allowed,
                 # and passed through as-is.
-                if cable.gauge_unit == "mm\u00b2":
+                if cable.gauge_unit == "mm\u00B2":
                     awg_fmt = f" ({awg_equiv(cable.gauge)} AWG)"
                 elif cable.gauge_unit.upper() == "AWG":
-                    awg_fmt = f" ({mm2_equiv(cable.gauge)} mm\u00b2)"
+                    awg_fmt = f" ({mm2_equiv(cable.gauge)} mm\u00B2)"
 
             # fmt: off
             rows = [[f'{html_bgcolor(cable.bgcolor_title)}{remove_links(cable.name)}'
@@ -343,7 +338,7 @@ class Harness:
             ):
                 wirehtml.append("   <tr>")
                 wirehtml.append(f"    <td><!-- {i}_in --></td>")
-                wirehtml.append("    <td>")
+                wirehtml.append(f"    <td>")
 
                 wireinfo = []
                 if cable.show_wirenumbers:
@@ -355,15 +350,15 @@ class Harness:
                     wireinfo.append(colorstr)
                 if cable.wirelabels:
                     wireinfo.append(wirelabel if wirelabel is not None else "")
-                wirehtml.append(f"     {':'.join(wireinfo)}")
+                wirehtml.append(f'     {":".join(wireinfo)}')
 
-                wirehtml.append("    </td>")
+                wirehtml.append(f"    </td>")
                 wirehtml.append(f"    <td><!-- {i}_out --></td>")
                 wirehtml.append("   </tr>")
 
                 # fmt: off
                 bgcolors = ['#000000'] + get_color_hex(connection_color, pad=pad) + ['#000000']
-                wirehtml.append("   <tr>")
+                wirehtml.append(f"   <tr>")
                 wirehtml.append(f'    <td colspan="3" border="0" cellspacing="0" cellpadding="0" port="w{i}" height="{(2 * len(bgcolors))}">')
                 wirehtml.append('     <table cellspacing="0" cellborder="0" border="0">')
                 for j, bgcolor in enumerate(bgcolors[::-1]):  # Reverse to match the curved wires when more than 2 colors
@@ -431,7 +426,7 @@ class Harness:
                     )
                 else:
                     # shield is shown as a thin black wire
-                    attributes = 'height="2" bgcolor="#000000" border="0"'
+                    attributes = f'height="2" bgcolor="#000000" border="0"'
                 # fmt: off
                 wirehtml.append(f'   <tr><td colspan="3" cellpadding="0" {attributes} port="ws"></td></tr>')
                 # fmt: on
@@ -471,7 +466,7 @@ class Harness:
                     from_connector = self.connectors[connection.from_name]
                     from_pin_index = from_connector.pins.index(connection.from_pin)
                     from_port_str = (
-                        f":p{from_pin_index + 1}r"
+                        f":p{from_pin_index+1}r"
                         if from_connector.style != "simple"
                         else ""
                     )
@@ -498,9 +493,7 @@ class Harness:
                     to_connector = self.connectors[connection.to_name]
                     to_pin_index = to_connector.pins.index(connection.to_pin)
                     to_port_str = (
-                        f":p{to_pin_index + 1}l"
-                        if to_connector.style != "simple"
-                        else ""
+                        f":p{to_pin_index+1}l" if to_connector.style != "simple" else ""
                     )
                     code_right_1 = f"{cable.name}:w{connection.via_port}:e"
                     code_right_2 = f"{connection.to_name}{to_port_str}:w"
@@ -551,12 +544,12 @@ class Harness:
             to_connector = self.connectors[mate.to_name]
             if isinstance(mate, MatePin) and from_connector.style != "simple":
                 from_pin_index = from_connector.pins.index(mate.from_pin)
-                from_port_str = f":p{from_pin_index + 1}r"
+                from_port_str = f":p{from_pin_index+1}r"
             else:  # MateComponent or style == 'simple'
                 from_port_str = ""
             if isinstance(mate, MatePin) and to_connector.style != "simple":
                 to_pin_index = to_connector.pins.index(mate.to_pin)
-                to_port_str = f":p{to_pin_index + 1}l"
+                to_port_str = f":p{to_pin_index+1}l"
             else:  # MateComponent or style == 'simple'
                 to_port_str = ""
             code_from = f"{mate.from_name}{from_port_str}:e"
@@ -586,7 +579,7 @@ class Harness:
                 if isinstance(entry, str):
                     # Find a possibly quoted keyword after leading TAB(s) and followed by [ ].
                     match = re.match(
-                        r'^\t*(")?((?(1)[^"]|[^ "])+)(?(1)") \[.*\]$', entry, re.DOTALL
+                        r'^\t*(")?((?(1)[^"]|[^ "])+)(?(1)") \[.*\]$', entry, re.S
                     )
                     keyword = match and match[2]
                     if keyword in self.tweak.override.keys():

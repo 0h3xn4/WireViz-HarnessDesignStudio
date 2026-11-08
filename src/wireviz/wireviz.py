@@ -284,7 +284,7 @@ def parse(
 
                 if designator in harness.connectors:  # existing connector instance
                     check_type(designator, template, "connector")
-                elif template in template_connectors:
+                elif template in template_connectors.keys():
                     # generate new connector instance from template
                     check_type(designator, template, "connector")
                     harness.add_connector(
@@ -293,7 +293,7 @@ def parse(
 
                 elif designator in harness.cables:  # existing cable instance
                     check_type(designator, template, "cable/arrow")
-                elif template in template_cables:
+                elif template in template_cables.keys():
                     # generate new cable instance from template
                     check_type(designator, template, "cable/arrow")
                     harness.add_cable(name=designator, **template_cables[template])
