@@ -565,6 +565,7 @@ def test_a_difference_found_after_the_write_puts_everything_back(tmp_path: Path,
     assert err.value.rolled_back and "NOT" not in str(err.value)
     assert managed(root) == files  # the project is as it was, baselines and all
     assert any("model hash" in r for r in err.value.reasons)
+    assert err.value.backup is not None
     record = json.loads((root / err.value.backup / "MIGRATION.json").read_text())
     assert record["status"] == "rolled_back"
     assert upgrade.upgrade_project(root) is not None  # and the next attempt works

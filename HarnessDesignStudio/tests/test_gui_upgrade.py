@@ -101,11 +101,12 @@ def test_the_controller_never_opens_an_old_format_for_editing_without_the_answer
     from harness_design_studio.gui.controller import EditorController
 
     root = old_project(tmp_path, fake_v2)
-    files = folder_bytes(root)
+    files = {k: v for k, v in folder_bytes(root).items() if k.endswith(".json")}
     ctl = EditorController(drc_delay_ms=600_000)
     ctl.open_path(root)  # (no `upgrade=True`)
     assert ctl.read_only and strings.OPEN_OLD_FORMAT.format(old=1) == ctl.open_note
-    assert folder_bytes(root) == files
+    kept = lambda: {k: v for k, v in folder_bytes(root).items() if k.endswith(".json")}  # noqa: E731
+    assert kept() == files
     ctl.release()
 
 

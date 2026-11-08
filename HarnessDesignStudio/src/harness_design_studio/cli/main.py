@@ -32,6 +32,7 @@ from harness_design_studio.core.errors import HarnessError, ProjectLockedError, 
 from harness_design_studio.core.io import upgrade
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.loader import LoadResult, load_project
+from harness_design_studio.core.io.migrate import current_version
 from harness_design_studio.core.issues import Issue, errors
 from harness_design_studio.core.units import with_area
 from harness_design_studio.core.validation import validate_folder
@@ -153,7 +154,7 @@ def _migrate(path: Path, rep: Report, *, dry_run: bool) -> int:
     if dry_run:
         plan = upgrade.plan_upgrade(path)
         if plan is None:
-            version = upgrade.migrate.current_version()
+            version = current_version()
             rep.say("Already up to date.")
             rep.put(
                 dry_run=True, up_to_date=True, **upgrade.UpgradePlan(version, version).to_dict()
