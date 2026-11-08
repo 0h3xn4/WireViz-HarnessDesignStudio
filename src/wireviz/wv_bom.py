@@ -245,7 +245,7 @@ def bom_list(bom: list[BOMEntry]) -> list[list[str]]:
 
 def component_table_entry(
     type: str,
-    qty: int | float,
+    qty: float,
     unit: str | None = None,
     bgcolor: Color | None = None,
     pn: str | None = None,
@@ -274,13 +274,11 @@ def component_table_entry(
   </tr></table>"""
 
 
-def pn_info_string(
-    header: str, name: str | None, number: str | None
-) -> str | None:
+def pn_info_string(header: str, name: str | None, number: str | None) -> str | None:
     """Return the company name and/or the part number in one single string or None otherwise."""
     number = str(number).strip() if number is not None else ""
     if name or number:
-        return f'{name if name else header}{": " + number if number else ""}'
+        return f"{name if name else header}{': ' + number if number else ''}"
     else:
         return None
 

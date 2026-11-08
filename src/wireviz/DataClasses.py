@@ -24,8 +24,12 @@ ImageScale = PlainText  # = Literal['false', 'true', 'width', 'height', 'both']
 Pin = int | PlainText  # Pin identifier
 PinIndex = int  # Zero-based pin index
 Wire = int | PlainText  # Wire number or Literal['s'] for shield
-NoneOrMorePins = Pin | tuple[Pin, ...] | None  # None, one, or a tuple of pin identifiers
-NoneOrMorePinIndices = PinIndex | tuple[PinIndex, ...] | None  # None, one, or a tuple of zero-based pin indices
+NoneOrMorePins = (
+    Pin | tuple[Pin, ...] | None
+)  # None, one, or a tuple of pin identifiers
+NoneOrMorePinIndices = (
+    PinIndex | tuple[PinIndex, ...] | None
+)  # None, one, or a tuple of zero-based pin indices
 OneOrMoreWires = Wire | tuple[Wire, ...]  # One or a tuple of wires
 
 # Metadata can contain whatever is needed by the HTML generation/template.
@@ -285,11 +289,11 @@ class Cable:
             if u.upper() == "AWG":
                 self.gauge_unit = u.upper()
             else:
-                self.gauge_unit = u.replace("mm2", "mm\u00B2")
+                self.gauge_unit = u.replace("mm2", "mm\u00b2")
 
         elif self.gauge is not None:  # gauge specified, assume mm2
             if self.gauge_unit is None:
-                self.gauge_unit = "mm\u00B2"
+                self.gauge_unit = "mm\u00b2"
         else:
             pass  # gauge not specified
 

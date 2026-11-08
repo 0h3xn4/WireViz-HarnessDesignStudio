@@ -73,7 +73,7 @@ def html_image(image):
      <td{html}</td>
     </tr></table>
    """
-    return f"""<tdX{' sides="TLR"' if image.caption else ''}{html_bgcolor_attr(image.bgcolor)}{html}"""
+    return f"""<tdX{' sides="TLR"' if image.caption else ""}{html_bgcolor_attr(image.bgcolor)}{html}"""
 
 
 def html_caption(image):
