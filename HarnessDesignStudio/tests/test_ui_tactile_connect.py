@@ -8,6 +8,8 @@ draft of the window: never saved, never in the model hash). The end of a connect
 up and plugged in elsewhere. Esc puts everything away. Devices, labels and the rubber band keep
 working as before."""
 
+import os
+
 import pytest
 
 pytest.importorskip("PySide6")
@@ -95,6 +97,11 @@ class World:
     def move(self, scene_point: QPointF) -> None:
         QTest.mouseMove(self.view.viewport(), pos=self.at(scene_point))
         QApplication.processEvents()
+        if os.environ.get("HARNESS_REAL_PLATFORM"):
+            # on a real platform a move with no button down is the cursor being set on the
+            # screen (`QCursor::setPos`), and the window gets its event from the display a moment
+            # later, not in the same call as offscreen (REQ-GUI-26)
+            QTest.qWait(40)
 
     def release(self, scene_point: QPointF) -> None:
         QTest.mouseRelease(self.view.viewport(), LEFT, pos=self.at(scene_point))
