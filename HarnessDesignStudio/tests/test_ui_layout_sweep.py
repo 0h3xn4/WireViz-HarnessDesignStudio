@@ -174,6 +174,22 @@ def window_rules() -> set[str] | None:
     return None if os.environ.get("HARNESS_LAYOUT_STRICT") else WINDOW_RULES
 
 
+def sizes_the_screen_gives(scale: float) -> tuple[tuple[int, int], ...]:
+    """The window sizes of `WINDOW_SIZES` (scaled) that fit the screen. Offscreen and under a
+    virtual X display without a window manager a window gets the size it asks for; on Windows it
+    is cut down to the screen, and a window made smaller than the sweep says is not the window the
+    sweep describes (the hosted runner's screen is 1024 x 768 until the lane raises it,
+    REQ-GUI-26). So on a real platform only the sizes that fit are looked at."""
+    if not os.environ.get("HARNESS_REAL_PLATFORM"):
+        return WINDOW_SIZES
+    screen = app().primaryScreen().availableGeometry()
+    return tuple(
+        (w, h)
+        for w, h in WINDOW_SIZES
+        if round(w * scale) <= screen.width() and round(h * scale) <= screen.height()
+    )
+
+
 def sweep_window(scenario: str, tmp_path, role: str, quick: bool) -> list[str]:
     name, scale, extra = SCENARIOS[scenario]
     ctx = make_ctx(themed(name, scale, extra), tmp_path)
@@ -186,7 +202,7 @@ def sweep_window(scenario: str, tmp_path, role: str, quick: bool) -> list[str]:
         )
     out: list[str] = []
     try:
-        for width, height in WINDOW_SIZES:
+        for width, height in sizes_the_screen_gives(scale):
             # a window at 150 % is as big in pixels as the same window at 100 % is at 1.5 times
             # the pixels (a person who chose a larger interface has a larger screen)
             win.resize(round(width * scale), round(height * scale))
@@ -241,5 +257,7 @@ def look_at_view(win, label, bring_up, scenario, width, height, role, quick, ban
 def test_the_main_window_holds_in_every_area(
     scenario: str, role: str, quick: bool, tmp_path
 ) -> None:
+    if not sizes_the_screen_gives(SCENARIOS[scenario][1]):
+        pytest.skip("the screen of this machine is smaller than the smallest window of the sweep")
     found = sweep_window(scenario, tmp_path, role, quick)
     assert not found, "\n" + "\n".join(found)

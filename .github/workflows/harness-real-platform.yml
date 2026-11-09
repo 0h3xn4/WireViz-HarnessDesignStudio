@@ -1,0 +1,95 @@
+name: harness-design-studio real platform
+
+# The layout tests on Qt's real platforms (REQ-GUI-26), next to the offscreen run of the other
+# workflows: Linux with a virtual X display (xvfb, the `xcb` platform) and Windows (the `windows`
+# platform). They run the layout audit and the sweep over every dialog and window (REQ-GUI-23) at
+# several interface and font sizes, the scripted four-action path with its click budget
+# (REQ-GUI-27) and the mouse tests of connecting two devices. This finds a class of problems
+# (overlap, clipping, a wrong minimum size); it is not a person looking at a real monitor.
+#
+# NOT A REQUIRED CHECK. The jobs have names of their own so that branch protection can name them
+# later; until the lead says so nothing waits for them, and they run in parallel with the other
+# workflows (harness-ci.yml, harness-platforms.yml), which stay as they are.
+on:
+  push:
+    branches: [master]
+    paths:
+      - "HarnessDesignStudio/src/**"
+      - "HarnessDesignStudio/tests/**"
+      - "HarnessDesignStudio/pyproject.toml"
+      - ".github/workflows/harness-real-platform.yml"
+  pull_request:
+    paths:
+      - "HarnessDesignStudio/src/**"
+      - "HarnessDesignStudio/tests/**"
+      - "HarnessDesignStudio/pyproject.toml"
+      - ".github/workflows/harness-real-platform.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: harness-real-platform-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+defaults:
+  run:
+    working-directory: HarnessDesignStudio
+
+jobs:
+  linux-xcb:
+    name: real platform / Linux xcb under xvfb (scale ${{ matrix.scale }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    strategy:
+      fail-fast: false
+      matrix:
+        # (the virtual screen is 3840 x 2160: the sweep's windows at 150 % and 200 % are larger than
+        # a full HD screen, and a real desktop gives a window no more than its screen)
+        # QT_SCALE_FACTOR is the screen scaling of a desktop (125 % is common on a laptop): the
+        # device pixel ratio is fractional, which the offscreen platform never produces. The
+        # program's own interface sizes (100 to 200 %) and the font sizes are in the tests.
+        scale: ["1", "1.25"]
+    env:
+      QT_QPA_PLATFORM: xcb
+      HARNESS_REAL_PLATFORM: xcb
+      QT_SCALE_FACTOR: ${{ matrix.scale }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - name: Qt system libraries and the virtual display
+        run: sudo apt-get update && sudo apt-get install -y libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0 xvfb
+      - run: python -m pip install -e ".[gui,dev]"
+      - name: What Qt gets from this machine
+        run: xvfb-run -a -s "-screen 0 3840x2160x24" python -m tests.real_platform_report
+      - name: Layout tests on the real platform
+        run: >
+          xvfb-run -a -s "-screen 0 3840x2160x24"
+          python -m pytest -n auto --dist worksteal -m "not perf" -q -rfE --tb=short -p no:cacheprovider --no-cov --timeout=300
+          tests/test_ui_layout_sweep.py tests/test_ui_dialog_layout.py tests/test_ui_four_actions.py
+          tests/test_ui_tactile_connect.py tests/test_real_platform_lane.py
+
+  windows:
+    name: real platform / Windows windows
+    runs-on: windows-latest
+    timeout-minutes: 25
+    env:
+      QT_QPA_PLATFORM: windows
+      HARNESS_REAL_PLATFORM: windows
+      PYTHONUTF8: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.14"
+      - run: python -m pip install -e ".[gui,dev]"
+      - name: What Qt gets from this machine (the runner's screen is 1024 x 768 until raised)
+        run: python -m tests.real_platform_report --screen 3840x2160
+      - name: Layout tests on the real platform
+        run: >
+          python -m pytest -n auto --dist worksteal -m "not perf" -q -rfE --tb=short -p no:cacheprovider --no-cov --timeout=300
+          tests/test_ui_layout_sweep.py tests/test_ui_dialog_layout.py tests/test_ui_four_actions.py
+          tests/test_ui_tactile_connect.py tests/test_real_platform_lane.py
