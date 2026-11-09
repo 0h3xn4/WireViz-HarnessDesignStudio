@@ -81,7 +81,7 @@ I cannot see or change these. I will not change settings without your OK. Status
 - [ ] Private vulnerability reporting (not visible; `SECURITY.md` in Phase 2 depends on it).
 - [ ] Dependabot security alerts (security updates are disabled today).
 - [ ] Code scanning (CodeQL) default setup or the workflow I add (not visible).
-- [ ] **Dependency graph** (Settings, Code security): switch it on. The dependency review job of `harness-legal.yml` cannot run without it (it stops with "not supported on this repository"); it is set to not fail the run until then. Remove `continue-on-error` from that job afterwards.
+- [ ] **Dependency graph** (Settings, Code security): switch it on. The dependency review job of `harness-legal.yml` cannot run without it (it stops with "not supported on this repository"); the job is skipped until you also add the repository variable `DEPENDENCY_GRAPH` with the value `true` (Settings > Secrets and variables > Actions > Variables).
 - [ ] Disable the inherited upstream WireViz workflow `main.yml` if not needed (see B3).
 - [ ] Remove the four stale workflow registrations in the Actions tab (platform probe, probe mac perf, win lock probe, release dry run) if you do not need their history (not visible in files).
 - [ ] Check which repository secrets exist (`WINDOWS_CERT_PFX_BASE64`, `WINDOWS_CERT_PASSWORD`, any macOS secrets). Remove those that are not used.
