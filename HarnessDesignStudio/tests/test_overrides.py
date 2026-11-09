@@ -417,7 +417,7 @@ def test_the_outputs_show_overrides_only_when_a_project_has_them(flatsat, tmp_pa
     apply_ops(p, plan_override(p, h.wires[0].id, "colour", "pink", "colour code"))
     marked = build_outputs(p, drawings=False)
     wl = marked.files[f"harnesses/{h.id}/wirelist.csv"].decode()
-    assert wl.splitlines()[1].endswith(",Overrides")
+    assert wl.splitlines()[2].endswith(",Overrides")
     assert "colour: colour code" in wl
     other = next(x for x in p.harnesses.values() if x.id != h.id)
     assert b"colour code" not in marked.files[f"harnesses/{other.id}/wirelist.csv"]

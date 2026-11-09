@@ -102,7 +102,11 @@ def test_the_report_is_text_to_print_and_says_it_is_not_a_signoff(sets, with_rec
     assert "differs from design" not in out  # that is its own section
     assert "| W001 | wire W001-001 | cut length (m) | 3.46 | 3.45 | 0.01 |" in text
     assert "passed the test" not in text and "is compliant" not in text.replace("does not say that a harness is compliant", "")  # fmt: skip
-    assert text == asbuilt.report_markdown(with_records, sets[1].stamp.line)  # the same text twice
+    from harness_design_studio.core.outputs.stamp import with_notice
+
+    assert text == with_notice(
+        asbuilt.report_markdown(with_records, sets[1].stamp.line), sets[1].stamp
+    )  # the same text twice
 
 
 def test_the_csv_has_one_row_for_each_value_with_the_margin(sets, with_records) -> None:

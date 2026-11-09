@@ -106,7 +106,7 @@ Every written file also carries a short notice: the tool, its version and *Provi
 | --- | --- |
 | `.csv` and `.yaml` | the second comment line, under the stamp line (readers skip every line that starts with `#`) |
 | `.md` reports | a note line under the stamp comment, before the title |
-| `.xlsx` workbooks | the row *Notice* of the sheet **About** (after the two stamp rows), the description of the file, the print footer and, in the build workbook, a line under its title |
+| `.xlsx` workbooks | the row *Notice* of the sheet **About** (after the two stamp rows), the description of the file, the print footer and, in the build workbook, the status line under its title (no row is added) |
 | `.svg` and `.pdf` drawings | a line at the bottom of the title block of a harness sheet, or on the line of the stamp of a system sheet, and in the description of the file |
 | `.json` and the open data | the file `README.txt` of the folder (these formats cannot hold a comment) |
 

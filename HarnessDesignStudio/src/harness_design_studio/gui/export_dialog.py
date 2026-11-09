@@ -368,7 +368,9 @@ class ExportResultPanel(QWidget):
         shown = [
             r
             for r, f in zip(self._rows, result.files, strict=True)
-            if self._filter is None or f.rel in self._filter or f.rel == export_docs.MANIFEST
+            if self._filter is None
+            or f.rel in self._filter
+            or f.rel in (export_docs.MANIFEST, export_docs.NOTICE_FILE)
         ]
         kept = [f.rel for f in self.selected_files()]  # the selected file stays selected
         self.model.set_rows(shown)

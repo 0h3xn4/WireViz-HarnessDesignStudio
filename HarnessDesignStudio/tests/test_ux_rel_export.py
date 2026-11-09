@@ -3,7 +3,7 @@
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SC-12 / SH-27: the export dialog. One dialog: output folder, harness x document tree, progress with
 Cancel, the list of files written with Reveal / Open / a drawing picture, inline notices instead of
-pop-ups. Driven offscreen on the flatsat example (121 files with the drawings)."""
+pop-ups. Driven offscreen on the flatsat example (122 files with the drawings)."""
 
 from pathlib import Path
 from types import SimpleNamespace
@@ -122,7 +122,7 @@ def select(dlg: ExportDialog, rel: str) -> None:
 
 def test_every_written_file_is_a_known_document_and_every_document_type_occurs(done) -> None:
     files = done.res.files
-    assert done.res.count == 121 and len(files) > 100
+    assert done.res.count == 122 and len(files) > 100
     for f in files:
         assert f.doc.key in export_docs.DOCS, f.rel  # never the file name fallback
     for hid in done.ctl.project.harnesses:
@@ -301,7 +301,7 @@ def test_the_export_writes_the_full_set_and_lists_every_file(done) -> None:
     assert isinstance(res, ExportResult) and res.folder == folder
     assert len(done.exported) == 1 and done.exported[0][0] is res
     panel = done.dlg.result_panel
-    assert panel.model.rowCount() == 121 and panel.table.proxy.rowCount() == 121
+    assert panel.model.rowCount() == 122 and panel.table.proxy.rowCount() == 122
     on_disk = sorted(p.relative_to(folder).as_posix() for p in folder.rglob("*") if p.is_file())
     assert on_disk == sorted(f.rel for f in res.files)
     for f in res.files:
@@ -310,7 +310,7 @@ def test_the_export_writes_the_full_set_and_lists_every_file(done) -> None:
     assert done.ctl.outputs_state() == "current"
     assert done.dlg.pages.currentWidget() is panel
     assert done.dlg.export_btn.text() == strings.EXP_AGAIN
-    assert "121 files written" in panel.summary.text() and res.stamp in panel.summary.text()
+    assert "122 files written" in panel.summary.text() and res.stamp in panel.summary.text()
     # columns: path, document, harness, size (a number, shown in kB)
     first = dict_rows(panel.model)[0]
     assert set(first) >= {"rel", "doc", "scope", "size"}
@@ -369,7 +369,7 @@ def test_a_drawing_shows_a_picture_and_a_table_does_not(clean) -> None:
 
 def test_the_ticks_choose_what_the_result_list_shows(clean) -> None:
     dlg, panel = clean.dlg, clean.dlg.result_panel
-    assert panel.model.rowCount() == 121 and not panel.showing.isVisible()
+    assert panel.model.rowCount() == 122 and not panel.showing.isVisible()
     dlg.set_checked("W002", None, False)
     shown = {r["rel"] for r in dict_rows(panel.model)}
     assert not any(rel.startswith("harnesses/W002/") for rel in shown)
@@ -384,10 +384,13 @@ def test_the_ticks_choose_what_the_result_list_shows(clean) -> None:
     dlg.set_checked("system", "sys_bom", False)
     assert "system/bom.csv" not in {r["rel"] for r in dict_rows(panel.model)}
     dlg.none_btn.click()
-    assert {r["rel"] for r in dict_rows(panel.model)} == {"manifest.json"}
+    assert {r["rel"] for r in dict_rows(panel.model)} == {
+        "manifest.json",
+        "README.txt",
+    }  # the two files that are always listed
     assert dlg.selected_paths() == set()
     dlg.all_btn.click()
-    assert panel.model.rowCount() == 121 and len(dlg.selected_paths()) == 120
+    assert panel.model.rowCount() == 122 and len(dlg.selected_paths()) == 120
 
 
 def test_copy_selection_copies_the_ticked_files_byte_for_byte_without_the_manifest(clean, tmp_path) -> None:  # fmt: skip

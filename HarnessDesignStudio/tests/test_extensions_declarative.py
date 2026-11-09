@@ -343,7 +343,7 @@ def test_a_table_has_its_columns_rows_and_order(project: Project, tmp_path: Path
     assert "system/extensions/power.csv" in outputs.files
     text = outputs.files["system/extensions/power.csv"].decode()
     assert (
-        text.splitlines()[1] == "Wire,Length (m),AWG,mm2,Fixed"
+        text.splitlines()[2] == "Wire,Length (m),AWG,mm2,Fixed"
         and "W001-002,3.45,24,0.205,no" in text
     )
 

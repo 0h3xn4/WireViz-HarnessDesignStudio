@@ -113,7 +113,7 @@ def test_every_guarded_cell_reads_back_as_written() -> None:
 @pytest.mark.parametrize("ch", ["=", "+", "-", "@", "\t", "\r"])
 def test_each_formula_character_is_guarded_in_the_file(ch: str) -> None:
     raw = csv_bytes([["h"], [f"{ch}cmd"]], STAMP).decode()
-    cells = [row[0] for row in __import__("csv").reader(io.StringIO(raw.split("\n", 1)[1]))]
+    cells = [row[0] for row in __import__("csv").reader(io.StringIO(raw.split("\n", 2)[2]))]
     assert cells[1] == f"'{ch}cmd"
 
 

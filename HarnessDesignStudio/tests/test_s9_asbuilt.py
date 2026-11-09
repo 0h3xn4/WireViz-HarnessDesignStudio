@@ -577,7 +577,7 @@ def test_the_csv_sheet_is_the_same_bytes_twice_and_has_the_stamp_line(folder: Pa
     one = asbuilt.template_bytes(project, ".csv", "W001")
     assert one == asbuilt.template_bytes(project, ".csv", "W001")
     assert one.decode().startswith("# harness-design-studio ")
-    rows = list(csv.reader(io.StringIO(one.decode().split("\n", 1)[1])))
+    rows = list(csv.reader(io.StringIO(one.decode().split("\n", 2)[2])))
     assert rows[0] == asbuilt.TEMPLATE_HEADER
     with pytest.raises(ImportError_):
         asbuilt.template_bytes(project, ".txt")

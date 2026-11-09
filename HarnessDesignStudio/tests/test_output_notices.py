@@ -9,7 +9,7 @@ Verify before use." Where each format carries it:
 - .csv and .yaml: a second comment line under the stamp line;
 - .md reports: a note line under the stamp comment;
 - .xlsx: the row "Notice" of the sheet About, the description of the file and (the build
-  workbook) the print footer and a line under its title;
+  workbook) the print footer and the status line under its title (no row is added);
 - .svg and .pdf drawings: a line of the title block or under the title of a system sheet, and the
   description of the file;
 - .json and the open data (formats that cannot hold a comment): the file README.txt of the folder.
@@ -96,7 +96,7 @@ def test_the_build_workbook_shows_the_notice_under_its_title_and_in_the_print_fo
     rel = next(r for r in files if r.endswith("_build.xlsx"))
     wb = load_workbook(io.BytesIO(files[rel]))
     texts = [str(c) for ws in wb for row in ws.iter_rows(values_only=True) for c in row if c]
-    assert NOTICE in texts
+    assert any(NOTICE in t and "status " in t for t in texts)  # beside the status of the harness
     assert any(NOTICE in (ws.oddFooter.left.text or "") for ws in wb if ws.title != "About")
 
 

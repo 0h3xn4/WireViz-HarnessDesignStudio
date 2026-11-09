@@ -231,7 +231,8 @@ def test_a_tsv_is_written_with_tabs_and_read_back(
     out = tmp_path / "x.tsv"
     assert cli_main(["export-pinout", str(p), "--unit", "GYRO1", "-o", str(out)]) == 0
     lines = out.read_text(encoding="utf-8").splitlines()
-    assert lines[0].startswith("# ") and "\t" in lines[1] and "," not in lines[1]
+    assert lines[0].startswith("# ") and lines[1].startswith("# ")  # stamp and notice
+    assert "\t" in lines[2] and "," not in lines[2]
     q = run(device(), tmp_path, "q")
     capsys.readouterr()
     argv = ["import-pinout", str(q), str(out), "--unit", "GYRO1", "--default-part", "MY-HD-6-F"]

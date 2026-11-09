@@ -89,13 +89,13 @@ def test_generation_copies_the_function_to_the_cable_pin(project):
 
 def test_the_pinout_tables_get_a_function_column_only_when_used(project, unchanged_files):
     files = dict(unchanged_files)
-    head = files["system/box_pinouts.csv"].decode().splitlines()[1]  # [0] is the provenance line
+    head = files["system/box_pinouts.csv"].decode().splitlines()[2]  # [0] stamp, [1] notice
     assert not head.endswith("Function")
     cid, pid = a_box_pin(project)
     apply_ops(project, devices.ops_set_pin(project, cid, pid, function="Status, ok"))
     files = dict(build_outputs(project).files)
     lines = files["system/box_pinouts.csv"].decode().splitlines()
-    assert lines[1].endswith(",Function")
+    assert lines[2].endswith(",Function")
     assert any(f"{cid}," in line and line.endswith('"Status, ok"') for line in lines)
     assert verify_outputs(project, files).ok
 
@@ -216,7 +216,7 @@ def test_the_pinout_tables_say_crimp_or_solder_only_when_a_pin_does(project, unc
     apply_ops(project, plan_generation(project).ops)
     files = dict(build_outputs(project).files)
     box = files["system/box_pinouts.csv"].decode().splitlines()
-    assert box[1].endswith("Termination")
+    assert box[2].endswith("Termination")
     row = next(line for line in box if line.startswith(f"{cid},") and f",{pid}," in line)
     assert row.endswith(",solder")
     cable_rows = [
@@ -235,5 +235,5 @@ def test_the_function_and_the_termination_columns_come_in_that_order(project):
     apply_ops(
         project, devices.ops_set_pin(project, cid, pid, function="Status", termination="crimp")
     )
-    head = dict(build_outputs(project).files)["system/box_pinouts.csv"].decode().splitlines()[1]
+    head = dict(build_outputs(project).files)["system/box_pinouts.csv"].decode().splitlines()[2]
     assert head.endswith(",Spare,Function,Termination")

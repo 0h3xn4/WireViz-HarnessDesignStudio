@@ -411,10 +411,9 @@ def _start_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
     title = f"{h.id}  {h.label or h.name}"
     body.append([_cell(ws, title, bold=True, size=16, box=False, wrap=False)])
     body.append([
-        _cell(ws, f"Revision {h.revision}   ·   status {h.status}   ·   {stamp.line}", box=False, wrap=False,
-              colour=_GREY_TEXT)
+        _cell(ws, f"Revision {h.revision}   ·   status {h.status}   ·   {stamp.line}   ·   {stamp.notice}",
+              box=False, wrap=False, colour=_GREY_TEXT)
     ])  # fmt: skip
-    body.append([_cell(ws, stamp.notice, box=False, wrap=False, colour=_GREY_TEXT)])
     body.append([])
     checks = readiness(project, h)
     blocking = sum(1 for c in checks if c.status == TO_FIX)
