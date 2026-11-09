@@ -1,0 +1,24 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+metadata:
+  title: "W012 Unplugged cable D"
+connectors:
+  "W012-P1":
+    pincount: 9
+    pinlabels: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    type: "EX-MICROD-9-M"
+  "W012-P2":
+    pincount: 31
+    pinlabels: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
+    type: "TBD-CONNECTOR (loose end)"
+cables:
+  "W012-001":
+    wirecount: 1
+  "W012-002":
+    wirecount: 1
+connections:
+  - - "W012-P1": ["1"]
+    - "W012-001": [1]
+    - "W012-P2": ["1"]
+  - - "W012-P1": ["2"]
+    - "W012-002": [1]
+    - "W012-P2": ["2"]

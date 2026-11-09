@@ -1,0 +1,34 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+metadata:
+  title: "W009 Loose cable A"
+connectors:
+  "W009-P1":
+    pincount: 9
+    pinlabels: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    type: "EX-MICROD-9-M"
+  "W009-P2":
+    pincount: 4
+    pinlabels: ["1", "2", "3", "4"]
+    type: "TBD-CONNECTOR (loose end)"
+cables:
+  "W009-001":
+    wirecount: 1
+  "W009-002":
+    wirecount: 1
+  "W009-003":
+    wirecount: 1
+  "W009-004":
+    wirecount: 1
+connections:
+  - - "W009-P1": ["1"]
+    - "W009-001": [1]
+    - "W009-P2": ["1"]
+  - - "W009-P1": ["2"]
+    - "W009-002": [1]
+    - "W009-P2": ["2"]
+  - - "W009-P1": ["3"]
+    - "W009-003": [1]
+    - "W009-P2": ["3"]
+  - - "W009-P1": ["4"]
+    - "W009-004": [1]
+    - "W009-P2": ["4"]

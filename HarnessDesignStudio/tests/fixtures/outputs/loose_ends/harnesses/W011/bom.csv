@@ -1,0 +1,5 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+Part,Category,Manufacturer,Part number,Description,Approval,Quantity,Unit,Wires without length,Used in
+(no part),unknown,,,,missing from parts list,1.4,m,0,W011
+(open end),connector,,,Connector not chosen yet (loose end),to fill in,2,ea,,W011
+EX-SLEEVE,sleeving,,,Braided sleeving (example),pending (example data),0.08,m,,W011

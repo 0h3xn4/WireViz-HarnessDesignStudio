@@ -1,0 +1,15 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare
+W009-P1,cable,PCDU1-J10,EX-MICROD-9-M,1,PWR,,W009-001,no
+W009-P1,cable,PCDU1-J10,EX-MICROD-9-M,2,RTN,,W009-002,no
+W009-P1,cable,PCDU1-J10,EX-MICROD-9-M,3,TX+,,W009-003,no
+W009-P1,cable,PCDU1-J10,EX-MICROD-9-M,4,TX-,,W009-004,no
+W009-P1,cable,PCDU1-J10,EX-MICROD-9-M,5,,,,yes
+W009-P1,cable,PCDU1-J10,EX-MICROD-9-M,6,,,,yes
+W009-P1,cable,PCDU1-J10,EX-MICROD-9-M,7,,,,yes
+W009-P1,cable,PCDU1-J10,EX-MICROD-9-M,8,,,,yes
+W009-P1,cable,PCDU1-J10,EX-MICROD-9-M,9,,,,yes
+W009-P2,loose,open end,TBD-CONNECTOR (loose end),1,PWR,,W009-001,no
+W009-P2,loose,open end,TBD-CONNECTOR (loose end),2,RTN,,W009-002,no
+W009-P2,loose,open end,TBD-CONNECTOR (loose end),3,TX+,,W009-003,no
+W009-P2,loose,open end,TBD-CONNECTOR (loose end),4,TX-,,W009-004,no

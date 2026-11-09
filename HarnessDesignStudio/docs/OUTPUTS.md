@@ -22,6 +22,7 @@ The screen says *device*, the files say *unit*: the written files keep the word 
 - [Provenance](#provenance)
 - [Open data and the run record](#open-data-and-the-run-record)
 - [Requirement IDs on findings](#requirement-ids-on-findings)
+- [A loose cable end](#a-loose-cable-end)
 
 The main output of a harness is its **build workbook** (`<ID>_build.xlsx`, new in 1.7.0, decision D-169). The PDF and SVG drawings of the harnesses are **optional**: `export` writes none of them unless you add `--drawings` (in the app: the check box **Include the PDF drawings** in the Export window, ticked at the start only when the last export of the folder had them). An `export` without `--drawings` into a folder whose last export had the drawings removes them and says so. Everything else, the system diagrams too, is always written. For the `first-steps` example `export` writes 34 files and `export --drawings` 40 (not counting `manifest.json`; with 1.6.0 and earlier the same command wrote 38). The build data (decision D-170, below) adds nothing to a project that does not use it, and one file, `accessories.csv`, to each harness that has accessories.
 
@@ -165,3 +166,23 @@ The wire gauge is written as the plain AWG number in every output (the drawing, 
 `system/drc_findings.csv` ends with a column `Requirement`: the IDs of the standard requirements the rule serves (empty when the rule serves none). The Problems panel shows the same IDs under the explanation of a finding, and the design rule report prints them after it. The IDs are those of `compliance/requirements` in the tool's repository (`docs/RULES.md` lists them per rule).
 
 Next: [export the outputs (user manual)](user-manual/export-the-outputs.md), [`FILE_FORMAT.md`](FILE_FORMAT.md).
+
+## A loose cable end
+
+A **loose end** is the end of a cable that is not on a connector yet (role `loose`, placeholder part `TBD-CONNECTOR`; [build a harness by hand](user-manual/build-a-harness-by-hand.md#a-cable-with-a-loose-end-not-in-the-editor-yet), decision D-201). The written files name it as an open end, and only in a harness that has one: a project without a loose end writes the same bytes as before (`tools.output_hashes --check` and `tools.numbers_snapshot --check` print *identical*).
+
+| File | What a loose end looks like |
+| --- | --- |
+| `pinouts.csv` (and the Pinouts sheet) | Role `loose`, Mates with `open end`, Part `TBD-CONNECTOR (loose end)` |
+| `labels.csv` (and the Labels sheet) | `W009-P2 open end` (with a name: `NAME (W009-P2 open end)`); in a custom template `{mates}` is `open end`. A wire label still names the pin, `W009-001 PWR to W009-P2.1` |
+| `bom.csv`, `system/bom.csv` (and the Parts sheet) | no line for `TBD-CONNECTOR`; one line `(open end)`, category `connector`, description *Connector not chosen yet (loose end)*, approval *to fill in* (amber in the workbook), quantity the number of ends, unit `ea` |
+| `mass_length.csv`, `system/mass_length.csv` | the end is never counted, whatever mass the placeholder part has; *Missing data* says `mass of open end W009-P2 (no connector chosen yet)` and *Complete* is `no` |
+| `tests.csv` (and the Tests sheet) | a pin of the end reads `W009-P2.1 (open end)`; a continuity test with an open end, and an isolation test from one, expects `test when the end is decided` (never `continuous`); the limit is the one that will apply |
+| drawing (SVG, PDF) | the connector table has a dashed outline, its part line reads `TBD-CONNECTOR (loose end), 4-pin` and its mate line `open end` (no gender) |
+| build workbook, Connectors sheet | the head of the end reads `W009-P2 · TBD-CONNECTOR (loose end) · open end, to fill in`; *Start here* has the ninth check *Ends not decided* |
+| `wireviz.yaml` | `type: "TBD-CONNECTOR (loose end)"` |
+| as-built sheet (`export-asbuilt`) and report | no lot is asked for `TBD-CONNECTOR`; the row of the end says `open end: no connector chosen yet`; its tests are those of the Tests sheet |
+| `system/export.json`, the open data | data as stored: role `loose`, part `TBD-CONNECTOR`, no `mates_with` (the open-data pin and BOM tables follow the CSV tables above) |
+| `revision_report.md`, `diff`, `compare` | the object is named *Loose end* instead of *Cable connector* (after the change; a plug reads *Cable connector* again) |
+
+`explain` of a loose end says *Open end: no device connector and no part chosen yet* and its label `W009-P2 open end`; `explain TBD-CONNECTOR` explains the BOM line `(open end)`. The independent verifier words every row of this table again on its own and refuses a file that names an open end as an ordinary connector. The golden set of a project with loose ends is `tests/fixtures/outputs/loose_ends.json` and the text files in `tests/fixtures/outputs/loose_ends/` (`python -m tools.gen_output_goldens`).

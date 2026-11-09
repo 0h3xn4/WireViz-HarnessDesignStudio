@@ -75,7 +75,7 @@ PARTS_HEADER = ["Part", "Category", "Manufacturer", "Part number", "Description"
                 "Quantity", "Unit", "Wires without length", "Used in"]  # fmt: skip
 CHECK_HEADER = ["Check", "Open", "Status", "What to do"]
 
-TO_FILL = "to fill in"
+TO_FILL = tables.TO_FILL  # "to fill in"
 TO_FIX = "TO FIX"
 NOTE = "NOTE"
 OK = "OK"
@@ -605,10 +605,13 @@ def _connector_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> Non
     row, since_break, ticks = 1, 0, []
     for c in sorted(h.connectors, key=lambda x: x.id):
         label = tables.connector_label(project, c)
-        head = [
-            c.id, c.part_id, c.gender if c.gender != "unspecified" else "gender not set",
-            f"mates with {c.mates_with}" if c.mates_with else "not plugged into a unit",
-        ]  # fmt: skip
+        if tables.is_open_end(c):  # a loose end has no gender or mate yet: it is an end to decide
+            head = [c.id, tables.part_text(c), f"{tables.OPEN_END}, {TO_FILL}"]
+        else:
+            head = [
+                c.id, c.part_id, c.gender if c.gender != "unspecified" else "gender not set",
+                f"mates with {c.mates_with}" if c.mates_with else "not plugged into a unit",
+            ]  # fmt: skip
         if label:
             head.append(f"label: {label}")
         block = len(c.pins) + 2
@@ -646,7 +649,7 @@ def _parts_sheet(wb: Any, project: Project, h: Harness, stamp: Stamp) -> None:
         approval = r[5]
         fill = (
             _GREEN if approval.startswith("approved")
-            else _AMBER if approval.startswith("pending") else _RED
+            else _AMBER if approval.startswith("pending") or approval == TO_FILL else _RED
         )  # fmt: skip
         qty: object = r[6]
         with contextlib.suppress(ValueError):

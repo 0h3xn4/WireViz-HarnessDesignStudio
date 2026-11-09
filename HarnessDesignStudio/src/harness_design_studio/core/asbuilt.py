@@ -21,6 +21,10 @@ test limits (`config/generation.json`), the ones the Tests sheet prints. A lengt
 the designed length: the difference is listed, and no tolerance is applied unless the project sets
 one (`asbuilt_cut_tolerance_mm`, `asbuilt_strip_tolerance_mm`, assumption A-ASBUILT-TOLERANCE); with
 one set, a difference within it is **within limit** and a larger one is **out of limit**, like a test.
+
+A loose cable end (role `loose`, D-201) has no part yet: no lot is asked for its placeholder part
+`TBD-CONNECTOR`, and its row of the sheet says `open end: no connector chosen yet` instead of the
+part; its tests are the ones of the Tests sheet, which say `(open end)`.
 """
 
 import re
@@ -217,8 +221,15 @@ def _crimped_pins(h: Harness) -> list[str]:
 
 
 def _parts_of(h: Harness) -> list[str]:
-    ids = {w.part_id for w in h.wires if w.part_id} | {c.part_id for c in h.connectors if c.part_id}
+    """The parts whose lot is recorded: the wire parts and the connector parts (a loose end's
+    placeholder part is not a part that was built in)."""
+    ids = {w.part_id for w in h.wires if w.part_id} | {
+        c.part_id for c in h.connectors if c.part_id and not tables.is_open_end(c)
+    }
     return sorted(ids)
+
+
+OPEN_END_ROW = "open end: no connector chosen yet"  # the description of a loose end's row
 
 
 def _tests(project: Project, h: Harness) -> dict[str, list[str]]:
@@ -560,7 +571,8 @@ def template_rows(project: Project, harness_id: str | None = None) -> Table:
             designed = [tables.data_num(wire_length(h, w)), tables.data_num(w.strip_a_mm), tables.data_num(w.strip_b_mm), ""]  # fmt: skip
             rows.append(_row("wire", hid, w.id, f"{w.from_connector}.{w.from_pin} to {w.to_connector}.{w.to_pin}", designed, _get(project, "wire", hid, w.id)))  # fmt: skip
         for c in sorted(h.connectors, key=lambda x: x.id):
-            rows.append(_row("connector", hid, c.id, c.part_id, ["", "", "", ""], _get(project, "connector", hid, c.id)))  # fmt: skip
+            desc = OPEN_END_ROW if tables.is_open_end(c) else c.part_id
+            rows.append(_row("connector", hid, c.id, desc, ["", "", "", ""], _get(project, "connector", hid, c.id)))  # fmt: skip
         for pin in _crimped_pins(h):
             rows.append(_row("pin", hid, pin, "crimped pin in use", ["", "", "", ""], _get(project, "pin", hid, pin)))  # fmt: skip
         for tid, t in _tests(project, h).items():
