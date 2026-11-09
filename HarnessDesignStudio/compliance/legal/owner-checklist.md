@@ -117,3 +117,19 @@ Run these and note the date and result in `owner-checklist.md` or `legal-audit.m
 - [ ] Imprint: only if your country requires it. Placeholders I will leave for you: name, postal address, contact. I will not invent them.
 - [ ] Contact route on the website: a GitHub profile link or an issue, not a personal e-mail, unless you decide otherwise.
 - [ ] Final report: mark every item here `done` or `declined` before the definition of done is met.
+
+## F. Added after Phase 2 (things I did on "continue as per your recommendation", and what they leave for you)
+
+Each item says what was done and what only you can do or decide. Mark `[x]` when done.
+
+- [ ] **F1. The first signed release.** The release workflow now signs with Sigstore and attaches the SBOMs, the inventory, the notices and the source of the LGPL and GPL components. **I could not run it**, so the first release made with it is its first test. Decide when to make one (the release pages say "signed" from 1.17.1 on, `tools/release_notes.py`, `SIGNED_FROM`). Then ask me to check one file with the commands of `docs/INSTALL.md`. I recommend a release candidate tag first (for example `v1.17.1-rc1`): the workflow marks it as a pre-release.
+- [ ] **F2. The releases 1.0.0 to 1.17.0** are not edited (B1). My recommendation, option (b): the first release with the legal fixes says in its notes that the older ones are superseded. I did not touch any release page or asset. The v1.0.0 page still says "clean-room".
+- [ ] **F3. `main.yml`** (the inherited WireViz workflow) is kept, with pinned actions and `permissions: contents: read`. Disable it in the Actions tab if you do not need it (C).
+- [ ] **F4. Commit sign-off (DCO).** `tools/check_commits.py` requires a `Signed-off-by` line and a GitHub noreply author address on every commit of a pull request, **except** that a pull request opened by you (the repository owner) needs no sign-off line (the commits of the AI assistant are yours to merge). Say if you want the sign-off for those too: then I add `git commit -s` with your noreply identity.
+- [ ] **F5. App privacy statement.** It says nothing is sent and no personal data is collected. It does not yet say that the run record and the journal can hold your name (Git `user.name` or the operating-system user) and that the project lock file holds the host name. Decide (B6): keep and say so in the statement, or stop recording the system user and the host name.
+- [ ] **F6. Windows packages.** The Microsoft runtime DLLs and the Mesa `opengl32sw.dll` are listed in the notices with a licence label, but their redistribution terms were not read at the source. Decide whether to keep them, and ask a lawyer (Q-11).
+- [ ] **F7. Ubuntu libraries in the Linux packages.** 79 libraries of Ubuntu are in the `.deb` and `.tar.gz`. About 43 of them come only from an optional GTK theme plug-in and from `libQt6Network`, which the app does not use. Removing them reduces the source and notice duty and the size. I did not remove anything, because it changes what the packages hold (a decision, and it needs a package test on a clean machine).
+- [ ] **F8. Qt-internal third-party code.** The notices point to the Qt list ("Third-Party Licenses Used in Qt") and do not copy each text. A lawyer should say whether that is enough (Q-11).
+- [ ] **F9. `docs/DOCS_AUDIT.md`** (a file under the root `docs/`) still uses the word "clean-room" and names the other "Studio" products. I did not touch `docs/` (brief rule 3). Tell me if I may change it.
+- [ ] **F10. Private vulnerability reporting** must be switched on (C) for `.github/SECURITY.md` to work.
+- [ ] **F11. Review the screenshots** (B4) before the website uses them. I viewed 2 of 383.

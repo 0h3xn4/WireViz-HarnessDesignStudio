@@ -7,8 +7,8 @@
 
 [![latest release](https://img.shields.io/github/v/release/0h3xn4/WireViz-harnessdesignstudio?label=release&color=4a1fb8)](https://github.com/0h3xn4/WireViz-harnessdesignstudio/releases/latest)
 [![harness-design-studio CI](https://github.com/0h3xn4/WireViz-harnessdesignstudio/actions/workflows/harness-ci.yml/badge.svg?branch=master)](https://github.com/0h3xn4/WireViz-harnessdesignstudio/actions/workflows/harness-ci.yml)
-[![Ubuntu 24.04 or newer](https://img.shields.io/badge/Ubuntu-24.04%2B-E95420?logo=ubuntu&logoColor=white)](HarnessDesignStudio/docs/INSTALL.md)
-[![Windows 10 and 11](https://img.shields.io/badge/Windows-10%20and%2011-0078D4?logo=windows&logoColor=white)](HarnessDesignStudio/docs/INSTALL.md#d-windows-from-120)
+
+Runs on Ubuntu 24.04 or newer and on Windows 10 and 11 ([`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md)).
 
 An offline desktop tool for designing the electrical harnesses of a spacecraft: you draw the devices and the connections between them, and the tool works out the connectors, pins and wires, checks them, and writes a build workbook and lists for every harness.
 
