@@ -15,7 +15,7 @@ This page shows how to make a harness from nothing: no interface, no Generate. Y
 - [Change a connector and its pins](#change-a-connector-and-its-pins)
 - [5. Draw the wires](#5-draw-the-wires)
 - [6. Check, list and release](#6-check-list-and-release)
-- [A cable with a loose end (not in the editor yet)](#a-cable-with-a-loose-end-not-in-the-editor-yet)
+- [A cable with a loose end](#a-cable-with-a-loose-end)
 - [What Generate does with it](#what-generate-does-with-it)
 - [Common mistakes](#common-mistakes)
 
@@ -89,11 +89,25 @@ Draw wires as in [edit a wire](edit-a-wire.md), section 4: **New wire** in the *
 - **Outputs** writes the build workbook, wire list, pinouts, bill of materials, labels and tests for it, like any harness (and the drawings, if you ask for them: [export the outputs](export-the-outputs.md#5-the-pdf-drawings-optional)). `harness-design-studio verify DIR --outputs` compares them with the design. A wire part that is a twisted pair has `conductors` 2 (the starter part `EX-WIRE-TWISTED-SHIELDED` does): the bill of materials and the mass then count the metres of the cable, the sum of the lengths of its wires divided by 2, and not the metres of every wire (since 1.11). Give your own pair parts a *Conductors* column in the parts import ([import data](import-data.md)).
 - **Review**, **Release** and **Revise** work as for a harness from Generate ([release a harness](release-a-harness.md)).
 
-## A cable with a loose end (not in the editor yet)
+## A cable with a loose end
 
-A cable can end in a **loose end**: the other end of a cable drawn from a port, with no connector chosen and not plugged into anything. It is a connector of the harness like the others, with the role *loose* and the placeholder part `TBD-CONNECTOR` (which the part lists do not offer), and its pins and wires are the ones you drew. **The editor cannot draw one yet** (that comes with a later release of the programme towards 2.0); the core can, and a project may already hold one. What the tool does with it today:
+A cable can end in a **loose end**: the other end of a cable drawn from a port, with no connector chosen and not plugged into anything. It is a connector of the harness like the others, with the role *loose* and the placeholder part `TBD-CONNECTOR` (which the part lists do not offer), and its pins and wires are the ones you drew: one wire from each pin of the port that has a signal (else every pin), the loose pins carrying the same signal names.
 
-- **Plugging it** into a port pairs its pins with the pins of the port by signal name (TX to RX included), else by pin number; where the names disagree the plug is refused with the pins named, so that nothing is paired wrongly without a word. **Unplugging** a connector makes it a loose end again (its pins and wires stay, its part goes back to `TBD-CONNECTOR`); a harness made from a connection keeps both ends plugged in and refuses. **Giving it a connector part** in the **Connectors** tab decides it: it becomes an ordinary cable connector that plugs into nothing.
+**Make one.** On the diagram, press on a port and drag the cable onto empty ground ([connect two connectors](connect-two-connectors.md#pick-up-a-cable-and-plug-it-in)). Without the mouse: select the device, then **Edit > Cable ends > Leave a loose end…** and choose the port, or right-click a connector of a device in Expert mode and choose **Leave a loose end from J01**. Each is one undo step and makes a new harness (*Cable 1*, *Cable 2* ...) whose **Origin** in the inspector is *Drawn by hand*.
+
+**Where you see it.**
+
+- **On the diagram** the end hangs on a line out of its port, as a plug with a dashed outline and the words *open end*; the tooltip says *Open end of W001 (Cable 1): no connector chosen yet*. It follows its device. Drag it to move it (only its place on the diagram changes, not the design); right-click it for **Put the end back where the tool puts it**.
+- **In the project tree** it is listed under its harness, with the chip *Open end*. A click picks it.
+- **In the inspector** (a click on the end) you see its harness, the harness's origin, its pins, *Connector part: TBD-CONNECTOR (loose end), Not chosen yet* and *Plugged into: Nothing: open end*, and the fields to **Rename** it, **Use this part**, **Plug into…** and **Unplug**. A harness shows its **Origin** too: *Interfaces (made by Generate)*, *Connection L1* or *Drawn by hand*.
+
+**Decide it.**
+
+- **Plug it in:** drag the end onto a port (or onto a device: the tool takes the connector whose pin names fit), or press **Plug into…** in the inspector or **Edit > Cable ends > Plug loose end into…** and choose the port. Its pins are paired with the pins of the port by signal name (TX to RX included), else by pin number; where the names disagree the plug is refused with the pins named, so that nothing is paired wrongly without a word. The cable is then drawn as a line between the two ports.
+- **Give it a connector part:** choose the part in the inspector and press **Use this part**, or choose it in the **Connectors** tab of the **Harness** tab. It becomes an ordinary cable connector that plugs into nothing.
+- **Unplug** a connector of a harness you drew (the inspector's **Unplug**, **Edit > Cable ends > Unplug a cable end…**, or the right-click menu of the connector of the device it sits on) and it is a loose end again: its pins and wires stay, its part goes back to `TBD-CONNECTOR`. A harness made from a connection keeps both ends plugged in and refuses, with the reason (the menu entry is greyed out and says why). A cable with no end plugged in anywhere is not drawn on the diagram; it stays in the project tree.
+
+Every one of these is one undo step. What the rest of the tool does with a loose end:
 - **Checks:** the design rule *Approved parts* says *N cable end(s) have no connector chosen yet (loose end)*; that is a choice to make, not a part to approve.
 - **Build workbook:** a harness with a loose end gets a ninth check, *Ends not decided*, and *Ready to build* is *no* until the end is decided, whatever else is complete.
 - **Release:** blocked with `loose_end_unresolved`, see [release a harness](release-a-harness.md#optional-a-cable-with-a-loose-end).
