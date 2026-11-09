@@ -47,7 +47,7 @@ harness-design-studio --version
 ```
 
 ```
-harness 1.16.0
+harness 1.17.0
 ```
 
 Start the editor with `harness-design-studio-gui`.
@@ -60,13 +60,13 @@ The prototype tests drive a Chromium browser. `playwright` is installed by `dev`
 pytest
 ```
 
-The whole suite has 6,135 tests in 312 files (`pytest --collect-only -q`, counted on 2026-11-05 for version 1.16.0). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
+The whole suite has 6,230 tests in 316 files (`pytest --collect-only -q`, counted on 2026-11-09 for version 1.17.0). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
 
 The markers (declared in `pyproject.toml`, and `--strict-markers` is on, so an unknown one is an error):
 
-| Marker | Tests (1.16.0) | Meaning |
+| Marker | Tests (1.17.0) | Meaning |
 | --- | --- | --- |
-| `gui` | 1,868 | Needs Qt (run with `QT_QPA_PLATFORM=offscreen`, which `conftest.py` sets). `pytest -m gui` runs only these. |
+| `gui` | 1,886 | Needs Qt (run with `QT_QPA_PLATFORM=offscreen`, which `conftest.py` sets). `pytest -m gui` runs only these. |
 | `ux` | 33 | Drives the clickable prototype in a Chromium browser (playwright). |
 | `perf` | 56 | Asserts a wall-clock limit. CI runs these alone, after the parallel run. A new timing test must carry it, or `tests/test_parallel_safety.py` fails. |
 | `slow` | 42 | Needs about 10 s or more on its own (measured on a loaded machine). Pull requests leave these out (`-m "not perf and not slow"`); the run on `master`, the Windows run on `master` and `python -m tools.release_check` run them. Mark a test that takes this long with `@pytest.mark.slow`; a test that is quick on its own does not need it. |
@@ -103,12 +103,12 @@ mypy
 ```
 
 ```
-856 files already formatted
+866 files already formatted
 All checks passed!
-Success: no issues found in 628 source files
+Success: no issues found in 636 source files
 ```
 
-(Run on 2026-11-05 for version 1.16.0; the file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `HarnessDesignStudio/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
+(Run on 2026-11-09 for version 1.17.0; the file counts change as files are added.) `ruff format .` rewrites files into the standard layout; run it before you commit. With the pinned ruff (0.16.10) it also formats the code in fenced `python` blocks inside Markdown files under `HarnessDesignStudio/`. A block that is not in ruff's layout fails `ruff format --check .` in CI, so run `ruff format .` after you edit a page that holds Python code. `mypy` runs in strict mode over `src`, `tests` and `tools`. Settings are in `pyproject.toml`: line length 100, rules `E F W I B UP SIM S`.
 
 ## 4. The tests that read the documents
 
@@ -183,6 +183,7 @@ A golden file is a stored, reviewed result that a test compares with a fresh one
 | The `sat15` project (generated) | `tests/fixtures/projects/sat15` | the command in [`agent/core.md`](agent/core.md) ("Generation layout"); delete the folder first |
 | The `sat15` design rule report | `tests/fixtures/drc/sat15.md` | `python -m harness_design_studio.cli.main drc tests/fixtures/projects/sat15 > tests/fixtures/drc/sat15.md` |
 | The example projects | `src/harness_design_studio/resources/examples/projects/` | `python -m tools.build_examples` |
+| The hashes of the projects of the migration safety net (those that are generated carry the tool version, so a release moves them) | `tests/fixtures/migration/hashes.json` | `python -m tests.migration_support --write-goldens`, then check that the changed projects are the generated ones |
 
 ## 6. What CI runs
 
