@@ -4,6 +4,7 @@ import shutil
 import sys
 import tempfile
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 
@@ -32,6 +33,18 @@ def _trust_store_in_a_temp_folder(
     """The list of trusted Python plug-ins is kept in the user's settings folder (S8). A test never
     reads or writes the real one: each test gets an empty store of its own."""
     monkeypatch.setenv("HARNESS_DESIGN_STUDIO_CONFIG_DIR", str(tmp_path_factory.mktemp("trust")))
+
+
+@pytest.fixture(autouse=True)
+def _no_plugin_switch_of_this_computer(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Python plug-ins can be switched off on a computer: by an environment variable
+    or a machine-wide policy file. A test does not see the switch of the computer it runs on; the
+    tests of the switch set it themselves."""
+    from harness_design_studio.core.extensions import policy
+
+    monkeypatch.delenv(policy.ENV_NO_PLUGINS, raising=False)
+    nowhere = Path(_CONFIG_HOME) / "no-policy-here" / "policy.json"  # never created
+    monkeypatch.setattr(policy, "policy_path", lambda: nowhere)
 
 
 @pytest.fixture(autouse=True)

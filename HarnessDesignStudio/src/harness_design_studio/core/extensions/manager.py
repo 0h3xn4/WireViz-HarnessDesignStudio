@@ -25,7 +25,7 @@ from harness_design_studio.core.derive import Derivation, Input
 from harness_design_studio.core.drc.base import Hit, Rule
 from harness_design_studio.core.model import Project
 
-from . import builtins, trust
+from . import builtins, policy, trust
 from . import plugins as plugins_mod
 from .declarative import DeclRule, ExtFile, ExtIssue, build_table, read_file
 from .fields import BUILTIN_FIELDS, FieldDef
@@ -736,8 +736,10 @@ def loaded(project: Project | None = None) -> list[tuple[str, str, str, str]]:
 def listing(project: Project) -> dict[str, Any]:
     """Everything registered for a project and where it stands, as plain data in a fixed order:
     the built-in items and the extension items of the project together (`items`), the declarative
-    files (`files`), the Python plug-ins (`plugins`) and the problems met (`issues`). No time and no
-    absolute path."""
+    files (`files`), the Python plug-ins (`plugins`) and the problems met (`issues`), and why Python
+    plug-ins are switched off on this computer (`python_plugins_blocked`, "" when they are not; the
+    one text that can name a path: that of the machine-wide policy file). No time and no project
+    path."""
     builtins.install()
     ext: ProjectExtensions | None = project.extensions
     rt = runtime(project)
@@ -788,6 +790,8 @@ def listing(project: Project) -> dict[str, Any]:
                 )
     return {
         "has_folder": ext is not None,
+        # why Python plug-ins are switched off on this computer ("" when they are not; policy.py)
+        "python_plugins_blocked": policy.plugins_blocked(),
         "enabled_declarative": list(ext.enabled_files) if ext else [],
         "enabled_plugins": list(ext.enabled_plugins) if ext else [],
         "files": [

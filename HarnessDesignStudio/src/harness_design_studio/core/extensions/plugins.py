@@ -13,7 +13,10 @@ holds, checked here and nowhere else:
 1. the project lists its name in `extensions/enabled.json`;
 2. the user trusted that exact code (name and hash) in the trust store of the user's settings
    folder (`trust.py`); and
-3. its declaration is valid and names the API version this tool has.
+3. its declaration is valid and names the API version this tool has; and
+4. Python plug-ins are not switched off on this computer (`policy.py`: the machine-wide policy file
+   or the environment variable `HARNESS_DESIGN_STUDIO_NO_PLUGINS`). This is asked here and again in
+   `load`, the one place that imports a plug-in.
 
 Anything else is listed with the reason it was not loaded. The file that is hashed is the file that
 runs: the loader below is handed the bytes that were hashed, so a change between the check and the
@@ -35,7 +38,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from types import ModuleType
 
-from . import trust
+from . import policy, trust
 from .pluginapi import PluginApi
 from .registry import PLUGIN_API_VERSION, PLUGIN_KINDS, Item, Registry, RegistryError
 
@@ -52,6 +55,7 @@ DISABLED = "disabled"  # the project does not enable it
 UNTRUSTED = "untrusted"  # enabled, but the user has not trusted this code
 FAILED = "failed"  # enabled and trusted, but it could not be loaded
 INVALID = "invalid"  # no usable declaration: it cannot be trusted or loaded
+BLOCKED = "blocked"  # Python plug-ins are switched off on this computer (policy.py)
 
 
 @dataclass(frozen=True)
@@ -372,8 +376,11 @@ def info_for(c: Candidate, enabled: set[str]) -> PluginInfo:
     """The state of a candidate: loaded states are filled in by `load`."""
     is_enabled = c.name in enabled
     trusted = bool(c.sha256) and trust.is_trusted(c.name, c.sha256)
+    blocked = policy.plugins_blocked()
     if not c.usable:
         state, message = INVALID, c.problem
+    elif blocked:
+        state, message = BLOCKED, blocked
     elif not is_enabled:
         state, message = DISABLED, "the project does not enable it"
     elif not trusted:
@@ -473,7 +480,12 @@ def _import_installed(c: Candidate, search_path: list[str] | None) -> ModuleType
 
 def load(c: Candidate, root: Path | None, search_path: list[str] | None = None) -> Loaded:
     """Import a plug-in that passed the gate and let it register. Never raises: the result says what
-    went wrong. The caller must have checked enabled and trusted."""
+    went wrong. The caller must have checked enabled and trusted. While Python plug-ins are switched
+    off on this computer nothing is imported, and nothing loaded earlier in this process is handed
+    out."""
+    blocked = policy.plugins_blocked()
+    if blocked:
+        return Loaded(c.name, c.sha256, [], blocked)
     key = (c.name, c.sha256)
     if key in _LOADED:
         return _LOADED[key]
