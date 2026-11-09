@@ -836,6 +836,11 @@ def step_rows(ran: list[Ran]) -> list[dict[str, Any]]:
              "seconds": round(r.seconds, 1)} for r in ran]  # fmt: skip
 
 
+def _one_name(value: str) -> str:
+    """A file with a random name (Qt's and openpyxl's temporary files, a pipe's number) as a pattern."""
+    return re.sub(r"(openpyxl\.|/#|pipe:\[|UNIX-STREAM:\[)[^/]*$", r"\1*", value)
+
+
 def markdown(doc: dict[str, Any]) -> str:
     t = doc.get("traced") or {}
     lines = [
@@ -886,7 +891,7 @@ def markdown(doc: dict[str, Any]) -> str:
             f"- Network configuration files read: {', '.join(t['network_config_read']) or 'none'}",
             f"- Network-capable files in the package: {', '.join(r['file'] for r in t['package_network_capable_files']) or 'none'}",
             "- Canary found in (allowed places, each with its reason in the JSON report): "
-            + (", ".join(sorted({r["value"] for r in t["canary_places"]})) or "nowhere"),
+            + (", ".join(sorted({_one_name(r["value"]) for r in t["canary_places"]})) or "nowhere"),
         ]  # fmt: skip
     gui = doc.get("gui") or {}
     if gui:
