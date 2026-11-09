@@ -185,6 +185,10 @@ def _cases() -> list[Case]:
         "PastePairingDialog",
     )
 
+    # ---- gui/cable_end_dialog.py (M4c: the keyboard way to a loose cable end)
+    add("Plug a loose end in", _cable_end_dialog, "CableEndDialog")
+    add("Plug a loose end in (nothing to choose)", partial(_cable_end_dialog, empty=True))
+
     # ---- gui/dialogs.py
     add(
         "Confirm (delete)",
@@ -342,6 +346,25 @@ def _generate_preview(c: Ctx) -> QWidget:
     return dialogs.GeneratePreviewDialog(None, plan)
 
 
+def _cable_end_dialog(c: Ctx, empty: bool = False) -> QWidget:
+    from harness_design_studio.gui import strings
+    from harness_design_studio.gui.cable_end_dialog import CableEndDialog
+
+    ends = [(f"{VERY_LONG_ID}-P{k} ({LONG}) of W00{k}", f"W00{k}-P2") for k in range(1, 4)]
+    ports = [
+        (f"{uid} {LONG} ({VERY_LONG_ID}-J01)", f"{uid}-J01") for uid in list(c.project.units)[:6]
+    ]
+    return CableEndDialog(
+        None,
+        c.theme,
+        strings.LE_PLUG_TITLE,
+        strings.LE_PLUG_INTRO,
+        strings.LE_PLUG_OK,
+        ends=[] if empty else ends,
+        ports=ports,
+    )
+
+
 def _release_dialog(c: Ctx) -> QWidget:
     from harness_design_studio.gui import dialogs
 
@@ -353,6 +376,7 @@ def _release_dialog(c: Ctx) -> QWidget:
         ask_checker=True,
         placeholders=["gauge of W001-0001", "length of W001-0002"],
         unapproved_parts=["EX-MICROD-9-F", "EX-RJ45-F"],
+        loose_ends=[f"{VERY_LONG_ID}-P{k}" for k in range(1, 8)],
         rule_note="Rule: " + LONG * 2,
     )
 

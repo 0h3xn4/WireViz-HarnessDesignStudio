@@ -17,11 +17,11 @@ from pydantic import ValidationError
 from PySide6.QtCore import QCoreApplication, QElapsedTimer, QObject, QThread, QTimer, Signal
 
 from harness_design_studio.core import (
+    cable_ends,
     checks,
     copies,
     devices,
     drc,
-    cable_ends,
     edit,
     first_connector,
     journal,
@@ -141,7 +141,9 @@ class Delta:
     units: set[str] = field(default_factory=set)
     interfaces: set[str] = field(default_factory=set)
     links: set[str] = field(default_factory=set)  # connections of two connectors (core/links.py)
-    harnesses: set[str] = field(default_factory=set)  # harnesses that changed (cables drawn by hand)
+    harnesses: set[str] = field(
+        default_factory=set
+    )  # harnesses that changed (cables drawn by hand)
     followers: set[str] = field(default_factory=set)  # in `interfaces` only because a unit moved
     marks: set[str] = field(
         default_factory=set
@@ -499,7 +501,9 @@ class EditorController(QObject):
         if (
             ops
             and delta.marks
-            and not (delta.units or delta.interfaces or delta.links or delta.harnesses or delta.full)
+            and not (
+                delta.units or delta.interfaces or delta.links or delta.harnesses or delta.full
+            )
         ):
             # only labels moved: no table, check or route has anything new to say
             delta.tables = False
@@ -511,9 +515,11 @@ class EditorController(QObject):
         if self.selected_link is not None and self.selected_link not in self.project.links:
             self.selected_link = None
             self.linkSelectionChanged.emit()
-        if self.selected_end is not None and (
-            delta.full or delta.harnesses
-        ) and cable_ends.connector_of(self.project, self.selected_end) is None:
+        if (
+            self.selected_end is not None
+            and (delta.full or delta.harnesses)
+            and cable_ends.connector_of(self.project, self.selected_end) is None
+        ):
             self.selected_end = None
             self.endSelectionChanged.emit()
         self.changed.emit(delta)
@@ -1926,7 +1932,6 @@ class EditorController(QObject):
         if not self.run(strings.STEP_LINK_HARNESS.format(link_id), ops, message=text):
             return None
         return hid
-
 
     # ---- cables drawn by hand: loose ends (M4c of the programme towards 2.0, D-201) -----------
 

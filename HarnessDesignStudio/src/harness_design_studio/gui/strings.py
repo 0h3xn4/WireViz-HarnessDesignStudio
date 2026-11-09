@@ -3450,3 +3450,101 @@ ORIGIN_WORDS = {
     "link": "made from a connection",
     "drawn": "drawn by hand",
 }
+LOOSE_CARD_WHY = (
+    "A cable end with no connector chosen yet cannot be built or released. Plug it into a device, "
+    "or choose its connector part in the inspector or in the Connectors tab of the Harness tab."
+)
+# the inspector: the origin of a harness and the end of a cable drawn by hand
+INS_FACT_ORIGIN = "Origin"
+INS_ORIGIN = {
+    "interfaces": "Interfaces (made by Generate)",
+    "drawn": "Drawn by hand",
+}
+INS_ORIGIN_LINK = "Connection {link}"
+INS_ORIGIN_TIP = (
+    "Where the harness came from: Generate made it from the interfaces, it was made from a "
+    "connection, or a person drew it. Generate never changes a harness it did not make."
+)
+INS_FACT_LOOSE = "Loose ends"
+INS_FACT_LOOSE_TIP = "Cable ends with no connector chosen yet. The harness cannot be released until they are decided, or with a written reason."
+INS_FACT_HARNESS = "Harness"
+INS_FACT_PART = "Connector part"
+INS_FACT_PLUGGED = "Plugged into"
+INS_END_KIND = "Cable end"
+INS_END_TBD = "TBD-CONNECTOR (loose end)"
+INS_END_TBD_TIP = "No connector chosen yet. Plug the end into a device, or choose its part below."
+INS_END_NOT_CHOSEN = "Not chosen yet"
+INS_END_OPEN = "Nothing: open end"
+INS_END_FREE = "Nothing: a free-standing connector"
+INS_END_EDIT = "This cable end"
+INS_END_NAME = "Name of the cable end"
+INS_END_NAME_TIP = "The name of this cable end in the harness (W009-P2 keeps its ID)."
+INS_END_RENAME = "Rename"
+INS_END_RENAME_TIP = "Give the cable end this name (one undo step)."
+INS_END_PART = "Connector part of the cable end"
+INS_END_PART_TIP = (
+    "The connector part this end gets. Choosing it decides the end: it is no longer loose."
+)
+INS_END_USE_PART = "Use this part"
+INS_END_USE_PART_TIP = (
+    "Give the loose end this connector part (one undo step). It stays plugged into nothing."
+)
+INS_END_NO_PARTS = "The library has no connector part yet. Add one in the Devices tab."
+A_PLUG_LOOSE = "Plug into…"
+A_PLUG_LOOSE_TIP = "Plug the loose end into a connector of a device. Its pins are paired by signal name, else by number."
+A_UNPLUG = "Unplug"
+A_UNPLUG_TIP = (
+    "Take the cable end off its device: it is a loose end again, its pins and wires stay."
+)
+# the project tree
+TREE_LOOSE_KIND = "Loose cable end"
+TREE_LOOSE_NAME = "{name} · no connector yet"
+TREE_LOOSE_STATE = "Open end"
+TREE_TIP_LOOSE = "{end}: a loose end of {harness}, no connector chosen yet. Click to show it."
+# the release window
+LOOSE_WARNING = (
+    "This harness has loose cable ends ({}): no connector chosen, not plugged into a device. "
+    "Releasing it anyway needs a written reason, which is kept in the change log."
+)
+LOOSE_REASON = "Reason for releasing with a loose end (at least 10 characters)"
+LOOSE_REASON_TIP = (
+    "Kept in the change log and the baseline (command line: --accept-loose-ends REASON)."
+)
+HINT_LOOSE_REASON = "write why the loose ends are accepted"
+# Edit > Cable ends, and the window that asks which end and which port
+M_CABLE_ENDS = "Cable ends"
+A_LEAVE_LOOSE = "Leave a loose end…"
+A_LEAVE_LOOSE_TIP = "Draw a cable from a port whose other end stays loose (as dragging a cable onto empty ground does)."
+A_PLUG_LOOSE_MENU = "Plug loose end into…"
+A_UNPLUG_MENU = "Unplug a cable end…"
+LE_END = "Cable end"
+LE_END_TIP = "The end of a cable drawn by hand."
+LE_PORT = "Port"
+LE_PORT_TIP = "A connector of a device with no cable on it yet."
+LE_NO_ENDS = (
+    "There is no cable end to choose. Drag a cable from a port onto empty ground to make one."
+)
+LE_NO_PORTS = "No connector of a device is free: each has a cable on it, or no pins."
+LE_PORT_ROW = "{unit} {name} ({id})"
+LE_END_ROW = "{end} ({name}) of {harness}"
+LE_PLUGGED_ROW = "{end} on {port} ({harness})"
+LE_LEAVE_TITLE = "Leave a loose end"
+LE_LEAVE_INTRO = (
+    "A new harness gets a cable from this port. One end plugs into the port, the other stays "
+    "loose until you plug it in or choose its connector."
+)
+LE_LEAVE_OK = "Draw the cable"
+LE_PLUG_TITLE = "Plug a loose end in"
+LE_PLUG_TITLE_ONE = "Plug {end} in"
+LE_PLUG_INTRO = "The pins of the end are paired with the pins of the port by signal name, else by pin number. A pin that would meet another name is refused, with the pins named."
+LE_PLUG_OK = "Plug in"
+LE_UNPLUG_TITLE = "Unplug a cable end"
+LE_UNPLUG_INTRO = "The end becomes loose again: its pins and wires stay, its connector part goes back to not chosen. A harness made from a connection keeps both ends plugged in."
+LE_UNPLUG_OK = "Unplug"
+# the diagram's right-click menus
+CM_LEAVE_LOOSE = "Leave a loose end from {name}"
+CM_PLUGGED_ALREADY = "a cable is plugged in here already"
+CM_UNPLUG = "Unplug {end}"
+CM_END_PART = "Choose its connector part…"
+CM_END_RESET = "Put the end back where the tool puts it"
+CM_END_HARNESS = "Show harness {harness}"

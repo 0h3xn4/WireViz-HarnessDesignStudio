@@ -24,7 +24,6 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from harness_design_studio.core import links as core_links  # noqa: E402
 from harness_design_studio.core.io import layout  # noqa: E402
-from harness_design_studio.core.io.saver import save_project  # noqa: E402
 from harness_design_studio.gui import cable as cb  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
 from harness_design_studio.gui.link_dialog import LinkDialog  # noqa: E402

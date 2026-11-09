@@ -109,8 +109,14 @@ def drawn_ends(project: Project) -> list[CableEnd]:
                 continue
             out.append(
                 CableEnd(
-                    hid, c.id, c.name, True, anchor.id, anchor.unit_id or "",
-                    index=index, pins=len(c.pins),
+                    hid,
+                    c.id,
+                    c.name,
+                    True,
+                    anchor.id,
+                    anchor.unit_id or "",
+                    index=index,
+                    pins=len(c.pins),
                 )
             )
             index += 1
@@ -119,8 +125,15 @@ def drawn_ends(project: Project) -> list[CableEnd]:
         for c, box in plugged[1:]:
             out.append(
                 CableEnd(
-                    hid, c.id, c.name, False, anchor.id, anchor.unit_id or "",
-                    box.id, box.unit_id or "", pins=len(c.pins),
+                    hid,
+                    c.id,
+                    c.name,
+                    False,
+                    anchor.id,
+                    anchor.unit_id or "",
+                    box.id,
+                    box.unit_id or "",
+                    pins=len(c.pins),
                 )
             )
     return out

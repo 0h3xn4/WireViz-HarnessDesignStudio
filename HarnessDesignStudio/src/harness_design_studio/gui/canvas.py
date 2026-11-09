@@ -2504,7 +2504,9 @@ class DiagramScene(QGraphicsScene):
         end `core.cable_ends.drawn_ends` names (few; a project without one costs a look at its
         harnesses)."""
         project = self.ctl.project
-        ends = {e.connector_id: e for e in cable_ends.drawn_ends(project)} if project.harnesses else {}
+        ends = (
+            {e.connector_id: e for e in cable_ends.drawn_ends(project)} if project.harnesses else {}
+        )
         for cid in [c for c in self.end_items if c not in ends]:
             self.removeItem(self.end_items.pop(cid))
         for cid, end in ends.items():
@@ -3629,11 +3631,19 @@ class DiagramView(QGraphicsView):
         elif isinstance(item, ConnectionItem):
             kind, ident = "link", item.link_id
             self.ctl.select_link(ident)
+        elif isinstance(item, CableEndItem):
+            kind, ident = "cable_end", item.connector_id
+            self.ctl.select_end(ident)
         else:
             link = item if isinstance(item, LinkItem) else self.dscene.chip_at(at)
             if link is not None:
                 kind, ident = "interface", link.interface_id
-        if kind and ident and kind != "link" and not self.ctl.is_selected(kind, ident):
+        if (
+            kind
+            and ident
+            and kind not in ("link", "cable_end")
+            and not self.ctl.is_selected(kind, ident)
+        ):
             self.ctl.select(kind, ident)  # the menu is about what was clicked
         menu = self.build_context_menu(kind, ident, at, connector=connector)
         self.last_menu = menu
@@ -3661,7 +3671,7 @@ class DiagramView(QGraphicsView):
         return entry
 
     def _entry(
-        self, menu: QMenu, text: str, slot: Callable[[], None], why_not: str = ""
+        self, menu: QMenu, text: str, slot: Callable[[], object], why_not: str = ""
     ) -> QAction:
         entry = QAction(f"{text} — {why_not}" if why_not else text, menu)
         entry.setEnabled(not why_not)
@@ -3684,6 +3694,8 @@ class DiagramView(QGraphicsView):
         if kind == "unit" and ident:
             self._entry(menu, strings.CM_OPEN_PLAN, lambda: ctl.request_open("unit", ident))
             self._state_entries(menu, "unit", ident, connector)
+            if connector:
+                self._cable_entries(menu, connector)
             menu.addSeparator()
             self._mirror(menu, "duplicate")
             self._mirror(menu, "redundant")
@@ -3703,6 +3715,8 @@ class DiagramView(QGraphicsView):
             self._align_menus(menu)
             menu.addSeparator()
             self._mirror(menu, "delete")
+        elif kind == "cable_end" and ident:
+            self._end_entries(menu, ident)
         elif kind == "link" and ident:
             for name in ("link_edit", "link_harness", "link_show_harness", "link_delete"):
                 self._mirror(menu, name)
@@ -3731,6 +3745,69 @@ class DiagramView(QGraphicsView):
             for name in ("select_all", "find", "fit", "zoom100", "zoom_selection", "arrange"):
                 self._mirror(menu, name)
         return menu
+
+    def _cable_entries(self, menu: QMenu, connector_id: str) -> None:
+        """On a connector of a device (Expert mode): leave a loose end from it, and unplug the cable
+        plugs that sit on it (greyed out, with the reason, where that is refused: a harness made
+        from a connection or by Generate)."""
+        ctl = self.ctl
+        project = ctl.project
+        box = project.connectors.get(connector_id)
+        if box is None:
+            return
+        menu.addSeparator()
+        ro = strings.WHY_READ_ONLY if ctl.read_only else ""
+        plugs = [
+            c.id
+            for h in sorted(project.harnesses.values(), key=lambda x: x.id)
+            for c in h.connectors
+            if c.mates_with == connector_id
+        ]
+        self._entry(
+            menu,
+            strings.CM_LEAVE_LOOSE.format(name=box.name),
+            partial(self._leave_from, connector_id),
+            ro or (strings.CM_PLUGGED_ALREADY if plugs else ""),
+        )
+        for cid in plugs:
+            self._entry(
+                menu,
+                strings.CM_UNPLUG.format(end=cid),
+                partial(ctl.unplug, cid),
+                ro or ctl.why_not_unplug(cid),
+            )
+
+    def _leave_from(self, connector_id: str) -> None:
+        if self.ctl.leave_loose_end(connector_id) is not None and self.ctl.selected_end:
+            self.focus_end(self.ctl.selected_end)
+
+    def _end_entries(self, menu: QMenu, end_id: str) -> None:
+        """On the end of a cable drawn by hand: plug it in, unplug it, put it back where the
+        diagram puts it, choose its part (the inspector), show its harness."""
+        ctl = self.ctl
+        item = self.dscene.end_items.get(end_id)
+        loose = item is not None and item.end.loose
+        if loose:
+            self._mirror(menu, "plug_loose")
+            self._entry(menu, strings.CM_END_PART, partial(ctl.select_end, end_id))
+            why = strings.WHY_READ_ONLY if ctl.read_only else ""
+            if not why and ctl.mark_of(cable_ends.pos_mark(end_id)) is None:
+                why = strings.CM_RESET_LINE_NONE
+            self._entry(
+                menu,
+                strings.CM_END_RESET,
+                partial(ctl.reset_mark, cable_ends.pos_mark(end_id)),
+                why,
+            )
+        else:
+            self._mirror(menu, "unplug")
+        if item is not None:
+            hid = item.end.harness_id
+            self._entry(
+                menu,
+                strings.CM_END_HARNESS.format(harness=hid),
+                partial(ctl.request_open, "harness", hid),
+            )
 
     def _reset_label_entry(self, menu: QMenu, mark_ids: Sequence[str]) -> None:
         """ "Reset label and line positions": back to where the tool puts the label (and, on a
@@ -3972,6 +4049,12 @@ class DiagramView(QGraphicsView):
         if item is not None:
             self.center_on_object("link", link_id)
             item.setFocus()
+
+    def focus_end(self, connector_id: str) -> None:
+        """Show the end of a cable drawn by hand in the middle of the view."""
+        item = self.dscene.end_items.get(connector_id)
+        if item is not None:
+            self.centerOn(QPointF(*item.spot))
 
     def focus_link(self, interface_id: str) -> None:
         item = self.dscene.link_items.get(interface_id)

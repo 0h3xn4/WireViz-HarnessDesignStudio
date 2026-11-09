@@ -30,8 +30,8 @@ from PySide6.QtGui import QBrush, QPainter, QPainterPath, QPen
 
 from harness_design_studio.core import cable_ends, describe
 from harness_design_studio.gui import cable as cb
-from harness_design_studio.gui.canvas_ends import CableEndItem
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.canvas_ends import CableEndItem
 from harness_design_studio.gui.theme import ThemeManager
 
 if TYPE_CHECKING:
@@ -199,7 +199,7 @@ class CableLayer:
         """The saved loose end whose plug is under the point (the nearest, by ID on a tie)."""
         best: CableEndItem | None = None
         best_d = 0.0
-        for cid, item in sorted(self.scene.end_items.items()):
+        for _cid, item in sorted(self.scene.end_items.items()):
             if not item.end.loose or not self._near(at, item.spot, cb.PLUG_PX + 6.0, scale):
                 continue
             d = (at.x() - item.spot[0]) ** 2 + (at.y() - item.spot[1]) ** 2
@@ -250,9 +250,7 @@ class CableLayer:
             return False
         if c.state == cb.HOLD:  # a click puts the held cable down
             landing, reason, unchanged = self._decide(at)
-            self._finish(
-                c.put_down(_xy(at), landing, refused=reason, unchanged=unchanged), _xy(at)
-            )
+            self._finish(c.put_down(_xy(at), landing, refused=reason, unchanged=unchanged), _xy(at))
             return True
         spot = self.start_spot(at)
         if spot is None:

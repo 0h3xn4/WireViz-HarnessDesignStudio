@@ -26,6 +26,7 @@ from PySide6.QtWidgets import (
 )
 
 from harness_design_studio.core.checks import Finding
+from harness_design_studio.core.model.physical import TBD_PART_ID
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import EditorController
 from harness_design_studio.gui.tables import Column, DictTableModel, TableView
@@ -53,6 +54,15 @@ COLUMNS: Final = (
 )
 
 
+def finding_why(f: Finding) -> str:
+    """Why a finding matters, as the lists, the cards and the Next step page say it. The design
+    rule *Approved parts* counts the loose cable ends under their stand-in part (D-201): for them
+    the sentence about approving a part would mislead, so they get their own (M4c)."""
+    if f.rule == "part-unapproved" and f.object_id == TBD_PART_ID:
+        return strings.LOOSE_CARD_WHY
+    return f.why
+
+
 def problem_row(f: Finding) -> dict[str, Any]:
     word = strings.CHECKS_SEVERITY.get(f.severity, f.severity)
     order = _ORDER.get(f.severity, 3)
@@ -62,7 +72,7 @@ def problem_row(f: Finding) -> dict[str, Any]:
         "rule": f.rule,
         "object": f.object_id or strings.CHECKS_WHOLE_DESIGN,
         "message": f.title,
-        "why": f.why,
+        "why": finding_why(f),
         "object_id": f.object_id,
         "level": f.severity,
     }

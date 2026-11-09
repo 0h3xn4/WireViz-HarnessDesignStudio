@@ -481,8 +481,9 @@ def plan_plug_loose_end(
     no partner keeps its number and its wires, and the plan refuses when that number is taken by
     another pin.
 
-    `pairs` (loose pin, port pin) default to `propose_plug`: by signal name, else by pin number. The
-    plan refuses, with the reason, to plug by number where the two pins carry different names, and
+    `pairs` (loose pin, port pin) default to `propose_plug`: by signal name, else by pin number; a
+    pin the proposal leaves over meets the free port pin of its own number when their names do not
+    differ (so an end unplugged and plugged in again keeps its spare pins). The plan refuses, with the reason, to plug by number where the two pins carry different names, and
     to plug when no pin can be paired; pair the pins yourself (`pairs`) to override that."""
     _writable(project)
     h, loose, box = _loose_and_port(project, harness_id, loose_id, box_id)
@@ -512,6 +513,19 @@ def plan_plug_loose_end(
         if lp in mapping or bp in mapping.values():
             raise EditError("A pin can be in one pair only.")
         mapping[lp] = bp
+    if pairs is None:
+        # a pin left over by the proposal meets the port pin of the same number when that one is
+        # free and the two names do not differ (an end that was plugged in and unplugged again
+        # has every pin of the port, the spare ones too: M4c)
+        claimed = set(mapping.values())
+        for pin in loose.pins:
+            port_pin = box_pins.get(pin.id)
+            if pin.id in mapping or port_pin is None or pin.id in claimed:
+                continue
+            if pin.signal and port_pin.signal and pin.signal != port_pin.signal:
+                continue
+            mapping[pin.id] = pin.id
+            claimed.add(pin.id)
     new_pins: list[Pin] = []
     for port_pin in box.pins:  # every position of the port, as plan_add_connector does
         src = next((lp for lp, b in mapping.items() if b == port_pin.id), None)
