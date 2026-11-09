@@ -32,6 +32,8 @@ from tools.build_installer import (
     ROOT,
     build_programs,
     check_package,
+    report_stripped,
+    strip_network_capable,
 )
 
 PK = ROOT / "packaging" / "windows"
@@ -161,6 +163,7 @@ def assemble(app: Path) -> int:
     # The same program under its short name: a PyInstaller exe finds its libraries (_internal) next
     # to itself whatever it is called.
     shutil.copy2(app / "cli" / f"{CLI_NAME}.exe", app / "cli" / f"{ALIAS}.exe")
+    report_stripped(strip_network_capable((app / "_internal", app / "cli" / "_internal")))
     if check_package((app / "_internal", app / "cli" / "_internal"), app):
         return 1
     from tools.collect_licences import collect

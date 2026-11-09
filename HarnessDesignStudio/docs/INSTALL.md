@@ -77,7 +77,7 @@ sha256sum -c SHA256SUMS --ignore-missing
 
 It prints `<file>: OK` for the file you have (`--ignore-missing` skips the packages you did not download). To compare by hand, run `sha256sum <file>` and read the value against the table. On Windows: `Get-FileHash <file> -Algorithm SHA256` in PowerShell.
 
-If a value differs, do not install the file. The packages are not signed (this is a recorded deviation, `compliance/DEVIATIONS.md` T-19), so the checksum is the only check you have. A package built by CI is built again on another machine, so its checksum can differ from the recorded one. For such a package compute the checksum yourself (`sha256sum`) on the machine that built it and compare it with the file you received; the recorded list applies to the packages named in it.
+If a value differs, do not install the file. To check that the program you installed never uses the network and keeps your design data in the project, see [`VERIFY_OFFLINE.md`](VERIFY_OFFLINE.md) (30 minutes, Linux and Windows). The packages are not signed (this is a recorded deviation, `compliance/DEVIATIONS.md` T-19), so the checksum is the only check you have. A package built by CI is built again on another machine, so its checksum can differ from the recorded one. For such a package compute the checksum yourself (`sha256sum`) on the machine that built it and compare it with the file you received; the recorded list applies to the packages named in it.
 
 ## A. The `.deb` package (recommended)
 
