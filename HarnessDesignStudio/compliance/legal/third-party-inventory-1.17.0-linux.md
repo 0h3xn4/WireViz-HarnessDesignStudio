@@ -27,7 +27,7 @@ Made from the built package (`python -m tools.third_party inventory`), not from 
 | libblkid1 | 2.39.3-9ubuntu6.6 | LGPL-2.1-or-later | system | dpkg -S libblkid.so.1; /usr/share/doc/libblkid1/copyright | 1 |
 | libbrotli1 | 1.1.0-2ubuntu0.1 | MIT | system | dpkg -S libbrotlicommon.so.1; /usr/share/doc/libbrotli1/copyright | 2 |
 | libbsd0 | 0.12.1-1build1.1 | BSD-3-Clause AND ISC | system | dpkg -S libbsd.so.0; /usr/share/doc/libbsd0/copyright | 1 |
-| libbz2-1.0 | 1.0.8-5.1ubuntu0.1 | bzip2-1.0.6 | system | dpkg -S libbz2.so.1.0; /usr/share/doc/libbz2-1.0/copyright | 1 |
+| libbz2-1.0 | 1.0.8-5.1ubuntu0.1 | bzip2-1.0.6 | system | dpkg -S libbz2.so.1.0; /usr/share/doc/libbz2-1.0/copyright | 2 |
 | libcairo-gobject2 | 1.18.0-3build1 | LGPL-2.1-only OR MPL-1.1 | system | dpkg -S libcairo-gobject.so.2; /usr/share/doc/libcairo-gobject2/copyright | 1 |
 | libcairo2 | 1.18.0-3build1 | LGPL-2.1-only OR MPL-1.1 | system | dpkg -S libcairo.so.2; /usr/share/doc/libcairo2/copyright | 1 |
 | libcap2 | 1:2.66-5ubuntu2.4 | BSD-3-Clause OR GPL-2.0-only | system | dpkg -S libcap.so.2; /usr/share/doc/libcap2/copyright | 1 |
@@ -36,7 +36,7 @@ Made from the built package (`python -m tools.third_party inventory`), not from 
 | libdbus-1-3 | 1.14.10-4ubuntu4.1 | AFL-2.1 OR GPL-2.0-or-later | system | dpkg -S libdbus-1.so.3; /usr/share/doc/libdbus-1-3/copyright | 1 |
 | libepoxy0 | 1.5.10-1build1 | MIT | system | dpkg -S libepoxy.so.0; /usr/share/doc/libepoxy0/copyright | 1 |
 | libexpat1 | 2.6.1-2ubuntu0.6 | MIT | system | dpkg -S libexpat.so.1; /usr/share/doc/libexpat1/copyright | 1 |
-| libffi8 | 3.4.6-1build1 | MIT | system | dpkg -S libffi.so.8; /usr/share/doc/libffi8/copyright | 1 |
+| libffi8 | 3.4.6-1build1 | MIT | system | dpkg -S libffi.so.8; /usr/share/doc/libffi8/copyright | 2 |
 | libfontconfig1 | 2.15.0-1.1ubuntu2 | HPND-sell-variant | system | dpkg -S libfontconfig.so.1; /usr/share/doc/libfontconfig1/copyright | 1 |
 | libfreetype6 | 2.13.2+dfsg-1ubuntu0.2 | FTL OR GPL-2.0-or-later | system | dpkg -S libfreetype.so.6; /usr/share/doc/libfreetype6/copyright | 1 |
 | libfribidi0 | 1.0.13-3build1 | LGPL-2.1-or-later | system | dpkg -S libfribidi.so.0; /usr/share/doc/libfribidi0/copyright | 1 |
@@ -55,7 +55,7 @@ Made from the built package (`python -m tools.third_party inventory`), not from 
 | libkrb5-3 | 1.20.1-6ubuntu2.10 | MIT | system | dpkg -S libkrb5.so.3; /usr/share/doc/libkrb5-3/copyright | 1 |
 | libkrb5support0 | 1.20.1-6ubuntu2.10 | MIT | system | dpkg -S libkrb5support.so.0; /usr/share/doc/libkrb5support0/copyright | 1 |
 | liblz4-1 | 1.9.4-1build1.1 | BSD-2-Clause | system | dpkg -S liblz4.so.1; /usr/share/doc/liblz4-1/copyright | 1 |
-| liblzma5 | 5.6.1+really5.4.5-1ubuntu0.4 | public domain | system | dpkg -S liblzma.so.5; /usr/share/doc/liblzma5/copyright | 1 |
+| liblzma5 | 5.6.1+really5.4.5-1ubuntu0.4 | public domain | system | dpkg -S liblzma.so.5; /usr/share/doc/liblzma5/copyright | 2 |
 | libmd0 | 1.1.0-2build1.1 | BSD-3-Clause AND ISC AND public domain | system | dpkg -S libmd.so.0; /usr/share/doc/libmd0/copyright | 1 |
 | libmount1 | 2.39.3-9ubuntu6.6 | LGPL-2.1-or-later | system | dpkg -S libmount.so.1; /usr/share/doc/libmount1/copyright | 1 |
 | libpango-1.0-0 | 1.52.1+ds-1build1 | LGPL-2.0-or-later AND LGPL-2.1-or-later | system | dpkg -S libpango-1.0.so.0; /usr/share/doc/libpango-1.0-0/copyright | 1 |
@@ -65,9 +65,11 @@ Made from the built package (`python -m tools.third_party inventory`), not from 
 | libpixman-1-0 | 0.42.2-1build1 | MIT | system | dpkg -S libpixman-1.so.0; /usr/share/doc/libpixman-1-0/copyright | 1 |
 | libpng16-16t64 | 1.6.43-5ubuntu0.7 | libpng-2.0 | system | dpkg -S libpng16.so.16; /usr/share/doc/libpng16-16t64/copyright | 1 |
 | libselinux1 | 3.5-2ubuntu2.1 | public domain | system | dpkg -S libselinux.so.1; /usr/share/doc/libselinux1/copyright | 1 |
+| libssl3t64 | 3.0.13-0ubuntu3.16 | Apache-2.0 | system | dpkg -S libcrypto.so.3; /usr/share/doc/libssl3t64/copyright | 4 |
 | libstdc++6 | 14.2.0-4ubuntu2~24.04.1 | GPL-3.0-or-later WITH GCC-exception-3.1 | system | dpkg -S libstdc++.so.6; /usr/share/doc/libstdc++6/copyright | 1 |
 | libsystemd0 | 255.4-1ubuntu8.18 | LGPL-2.1-or-later | system | dpkg -S libsystemd.so.0; /usr/share/doc/libsystemd0/copyright | 1 |
 | libthai0 | 0.1.29-2build1 | LGPL-2.1-or-later | system | dpkg -S libthai.so.0; /usr/share/doc/libthai0/copyright | 1 |
+| libuuid1 | 2.39.3-9ubuntu6.6 | BSD-3-Clause | system | dpkg -S libuuid.so.1; /usr/share/doc/libuuid1/copyright | 2 |
 | libx11-6 | 2:1.8.7-1ubuntu0.1 | MIT | system | dpkg -S libX11.so.6; /usr/share/doc/libx11-6/copyright | 1 |
 | libx11-xcb1 | 2:1.8.7-1ubuntu0.1 | MIT | system | dpkg -S libX11-xcb.so.1; /usr/share/doc/libx11-xcb1/copyright | 1 |
 | libxau6 | 1:1.0.9-1build6 | MIT | system | dpkg -S libXau.so.6; /usr/share/doc/libxau6/copyright | 1 |
@@ -97,5 +99,5 @@ Made from the built package (`python -m tools.third_party inventory`), not from 
 | libxkbcommon0 | 1.6.0-1build1 | MIT | system | dpkg -S libxkbcommon.so.0; /usr/share/doc/libxkbcommon0/copyright | 1 |
 | libxrandr2 | 2:1.5.2-2build1 | MIT | system | dpkg -S libXrandr.so.2; /usr/share/doc/libxrandr2/copyright | 1 |
 | libxrender1 | 1:0.9.10-1.1build1 | MIT | system | dpkg -S libXrender.so.1; /usr/share/doc/libxrender1/copyright | 1 |
-| libzstd1 | 1.5.5+dfsg2-2build1.1 | BSD-3-Clause OR GPL-2.0-only | system | dpkg -S libzstd.so.1; /usr/share/doc/libzstd1/copyright | 1 |
-| zlib1g | 1:1.3.dfsg-3.1ubuntu2.3 | Zlib | system | dpkg -S libz.so.1; /usr/share/doc/zlib1g/copyright | 1 |
+| libzstd1 | 1.5.5+dfsg2-2build1.1 | BSD-3-Clause OR GPL-2.0-only | system | dpkg -S libzstd.so.1; /usr/share/doc/libzstd1/copyright | 2 |
+| zlib1g | 1:1.3.dfsg-3.1ubuntu2.3 | Zlib | system | dpkg -S libz.so.1; /usr/share/doc/zlib1g/copyright | 2 |

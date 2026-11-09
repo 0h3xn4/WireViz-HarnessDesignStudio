@@ -317,7 +317,8 @@
   },
   {
    "files": [
-    "_internal/libbz2.so.1.0"
+    "_internal/libbz2.so.1.0",
+    "cli/_internal/libbz2.so.1.0"
    ],
    "kind": "system",
    "licence": "bzip2-1.0.6",
@@ -407,7 +408,8 @@
   },
   {
    "files": [
-    "_internal/libffi.so.8"
+    "_internal/libffi.so.8",
+    "cli/_internal/libffi.so.8"
    ],
    "kind": "system",
    "licence": "MIT",
@@ -603,7 +605,8 @@
   },
   {
    "files": [
-    "_internal/liblzma.so.5"
+    "_internal/liblzma.so.5",
+    "cli/_internal/liblzma.so.5"
    ],
    "kind": "system",
    "licence": "public domain",
@@ -703,6 +706,19 @@
   },
   {
    "files": [
+    "_internal/libcrypto.so.3",
+    "_internal/libssl.so.3",
+    "cli/_internal/libcrypto.so.3",
+    "cli/_internal/libssl.so.3"
+   ],
+   "kind": "system",
+   "licence": "Apache-2.0",
+   "name": "libssl3t64",
+   "origin": "dpkg -S libcrypto.so.3; /usr/share/doc/libssl3t64/copyright",
+   "version": "3.0.13-0ubuntu3.16"
+  },
+  {
+   "files": [
     "_internal/libstdc++.so.6"
    ],
    "kind": "system",
@@ -730,6 +746,17 @@
    "name": "libthai0",
    "origin": "dpkg -S libthai.so.0; /usr/share/doc/libthai0/copyright",
    "version": "0.1.29-2build1"
+  },
+  {
+   "files": [
+    "_internal/libuuid.so.1",
+    "cli/_internal/libuuid.so.1"
+   ],
+   "kind": "system",
+   "licence": "BSD-3-Clause",
+   "name": "libuuid1",
+   "origin": "dpkg -S libuuid.so.1; /usr/share/doc/libuuid1/copyright",
+   "version": "2.39.3-9ubuntu6.6"
   },
   {
    "files": [
@@ -1023,7 +1050,8 @@
   },
   {
    "files": [
-    "_internal/libzstd.so.1"
+    "_internal/libzstd.so.1",
+    "cli/_internal/libzstd.so.1"
    ],
    "kind": "system",
    "licence": "BSD-3-Clause OR GPL-2.0-only",
@@ -1033,7 +1061,8 @@
   },
   {
    "files": [
-    "_internal/libz.so.1"
+    "_internal/libz.so.1",
+    "cli/_internal/libz.so.1"
    ],
    "kind": "system",
    "licence": "Zlib",
