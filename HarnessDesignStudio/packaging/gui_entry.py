@@ -303,6 +303,18 @@ def audit_run(argv: list[str]) -> int:
         if m.split(".")[0] in ("socket", "_socket", "ssl", "_ssl", "http", "urllib", "asyncio")
         or m.endswith(("QtNetwork", "QtWebEngineCore"))
     )
+    # who brought Python's socket module in, if anything did: the modules that hold it by name, and
+    # the modules that were loaded just before it (sys.modules keeps the order of loading)
+    names = list(sys.modules)
+    sock = sys.modules.get("socket")
+    socket_importers = sorted(
+        n
+        for n, m in list(sys.modules.items())
+        if sock is not None and getattr(m, "socket", None) is sock
+    )
+    loaded_before_socket = (
+        names[max(0, names.index("socket") - 8) : names.index("socket")] if sock else []
+    )
     win.ctl.release()
     win.close()
     _shared.close()
@@ -314,6 +326,8 @@ def audit_run(argv: list[str]) -> int:
         "settings_file": settings.fileName(),
         "libraries_mapped": libraries,
         "python_network_modules": network_modules,
+        "socket_imported_by": socket_importers,
+        "loaded_before_socket": loaded_before_socket,
         "idle_seconds": idle_s,
     }
     report.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n", encoding="utf-8")

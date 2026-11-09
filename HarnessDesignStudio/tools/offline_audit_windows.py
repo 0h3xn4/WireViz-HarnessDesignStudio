@@ -227,7 +227,8 @@ def main_windows(args: argparse.Namespace) -> int:
             )
         for url in gui.get("urls_opened", []):
             judge("url", url.replace("\\", "/"), entries,
-                  {"package": folder.as_posix(), "src": (ROOT / "src").as_posix()},
+                  # a file URL of a Windows path has a third slash: file:///C:/...
+                  {"package": "/" + folder.as_posix(), "src": "/" + (ROOT / "src").as_posix()},
                   findings, ok_rows, "the editor asked the system to open it")  # fmt: skip
         for row in package_contents(program.folder):
             judge("package_file", row["file"], entries, places, findings, ok_rows, row["what"])

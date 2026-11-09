@@ -899,7 +899,8 @@ def markdown(doc: dict[str, Any]) -> str:
                   f"- Steps: {', '.join(f'{k}: {v}' for k, v in gui.get('steps', {}).items())}",
                   f"- URLs it asked the system to open: {', '.join(gui.get('urls_opened', [])) or 'none'}",
                   f"- Settings file: `{gui.get('settings_file', '?')}`",
-                  f"- Python network modules imported: {', '.join(gui.get('python_network_modules', [])) or 'none'}"]  # fmt: skip
+                  f"- Python network modules imported: {', '.join(gui.get('python_network_modules', [])) or 'none'}"
+                  + (f" (socket held by: {', '.join(gui.get('socket_imported_by', [])) or '?'}; loaded just before it: {', '.join(gui.get('loaded_before_socket', []))})" if gui.get("python_network_modules") else "")]  # fmt: skip
     lines += ["", "## Findings (not on the allow-list)", ""]
     lines += [f"- {f['kind']}: `{f['value']}` {f.get('detail', '')}" for f in doc["findings"]] or [
         "None."
