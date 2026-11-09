@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Build a .deb from dist/harness-design-studio (run tools.build_installer first).
 Reproducible: fixed file times (SOURCE_DATE_EPOCH or the last commit), root ownership, xz.
 Usage: python -m tools.build_deb"""
@@ -24,10 +26,12 @@ COPYRIGHT = """Format: https://www.debian.org/doc/packaging-manuals/copyright-fo
 Upstream-Name: harness-design-studio
 
 Files: *
-Copyright: the repository owner (GitHub account 0h3xn4)
-License: LicenseRef-Proprietary
- Not chosen yet by the owner (decision D-02, deliberately left open for 1.0.0).
- No licence is granted by this file.
+Copyright: 2026 0h3xn4
+License: GPL-3
+ Harness Design Studio is licensed under the GNU General Public Licence, version 3 only
+ (SPDX: GPL-3.0-only). The full text is in /usr/share/doc/harness-design-studio/LICENSES/harness-design-studio/LICENSE
+ and in /usr/share/common-licenses/GPL-3 on Debian and Ubuntu. NOTICE in the same folder says who
+ made what. Provided as is, without warranty of any kind: see sections 15 and 16 of the GPL-3.0.
 
 Files: opt/harness-design-studio/_internal/* opt/harness-design-studio/cli/_internal/*
 Copyright: the authors of the bundled libraries

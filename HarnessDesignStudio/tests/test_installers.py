@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M7: Ubuntu packaging (D-110): install and uninstall scripts, desktop entry, icon and the .deb."""
 
 import os
@@ -454,7 +456,7 @@ def test_the_deb_ships_licences_and_not_the_tarball_scripts(tmp_path: Path) -> N
 
 
 @pytest.mark.skipif(shutil.which("dpkg-deb") is None, reason="dpkg-deb not installed")
-def test_the_deb_copyright_names_the_owner_and_grants_no_licence(tmp_path: Path) -> None:
+def test_the_deb_copyright_names_the_owner_and_the_licence(tmp_path: Path) -> None:
     from tools.build_deb import build
 
     deb = build(fake_package(tmp_path / "src"), tmp_path / "out")
@@ -462,9 +464,9 @@ def test_the_deb_copyright_names_the_owner_and_grants_no_licence(tmp_path: Path)
     text = (
         tmp_path / "x" / "usr" / "share" / "doc" / "harness-design-studio" / "copyright"
     ).read_text()
-    assert "Copyright: the repository owner (GitHub account 0h3xn4)" in text
-    assert "Not chosen yet by the owner (decision D-02" in text
-    assert "No licence is granted by this file." in text
+    assert "Copyright: 2026 0h3xn4" in text
+    assert "GNU General Public Licence, version 3 only" in text and "GPL-3.0-only" in text
+    assert "No licence is granted" not in text and "LicenseRef-Proprietary" not in text  # D-203
     assert "to be filled in" not in text and "decided by the project owner" not in text
     # machine-readable format: a header paragraph, then paragraphs of Files / Copyright / License
     paragraphs = [p for p in text.strip().split("\n\n") if p.strip()]
@@ -472,7 +474,7 @@ def test_the_deb_copyright_names_the_owner_and_grants_no_licence(tmp_path: Path)
     for para in paragraphs[1:]:
         fields = [ln.split(":", 1)[0] for ln in para.splitlines() if not ln.startswith(" ")]
         assert fields == ["Files", "Copyright", "License"], para
-    assert "License: LicenseRef-Proprietary" in text
+    assert "License: GPL-3\n" in text
 
 
 def test_the_licence_collector_finds_the_runtime_packages_and_the_lgpl_text(tmp_path: Path) -> None:

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Main window: top bar, banners, main tabs, project panel with the interface table, inspector, status bar."""
 
 import contextlib
@@ -582,6 +584,8 @@ class MainWindow(QMainWindow):
         self._on_state()
         self._on_connect()
         self._on_selection()
+        if self._first_start and not self.settings.value("legal/notice_done", False, bool):
+            self._show_legal_notice()
         if first_run is None:
             first_run = not self.settings.value("tour/done", False, bool)
         if self.quick_on():
@@ -3024,7 +3028,20 @@ class MainWindow(QMainWindow):
             actions.append((strings.LOCK_BANNER_ACTION, lambda: self.change_flow("revise", first)))
         self.alerts.show_banner("locked", "info", text, actions=actions, dismissible=False)
 
+    def _show_legal_notice(self) -> None:
+        """The notice of the first start (the project status, the disclaimer and the intended use):
+        a banner that does not block anything. Closing it is remembered on this computer only."""
+        self.alerts.show_banner(
+            "legal",
+            "info",
+            strings.LEGAL_NOTICE_TEXT,
+            details=strings.LEGAL_NOTICE_DETAILS,
+            actions=[(strings.LEGAL_NOTICE_ABOUT, self.about_flow)],
+        )
+
     def _alert_dismissed(self, key: str) -> None:
+        if key == "legal":
+            self.settings.setValue("legal/notice_done", True)
         if key == "stale":
             status = self.shell_status()
             self._dismissed_alert = (

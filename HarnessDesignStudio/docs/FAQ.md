@@ -74,7 +74,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **Where do I put the project in Git?** The project folder is the repository (or a folder in it). Everything in it is plain JSON in a fixed format, so diffs show real changes only. `.gitignore` is written for you. See [`HOWTO.md`](HOWTO.md) section 15.
 
-**What do I commit, and what not?** Commit the whole project folder. `outputs/` can be committed (reviewers like to see it) or ignored; it is always safe to delete and regenerate.
+**What do I commit, and what not?** Commit the whole project folder. `outputs/` can be committed (reviewers like to see it) or ignored; it can always be deleted and made again.
 
 **How do I know a printed sheet or drawing matches the design?** Every output carries the tool version and a *model hash* (12 characters); the build workbook has it in the footer of every printed sheet. `harness-design-studio verify DIR --outputs` checks the files against the design.
 

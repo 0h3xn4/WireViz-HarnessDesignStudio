@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Collect the licence texts of the shipped runtime packages into a LICENSES folder.
 
 Qt for Python (PySide6, shiboken6) is LGPL-3.0: its licence text, and the GPL-3 text it refers to,
@@ -15,6 +17,7 @@ from pathlib import Path
 
 from packaging.requirements import Requirement
 
+from harness_design_studio.core import legal_texts
 from harness_design_studio.gui.licences import LUCIDE_LICENCES as LUCIDE_LICENCES
 
 COMMON = Path("/usr/share/common-licenses")  # Debian and Ubuntu base-files
@@ -77,7 +80,13 @@ def collect(dest: Path) -> list[str]:
             target = dest / key / Path(f.as_posix()).name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(Path(str(dist.locate_file(f))), target)
-    fonts = Path(__file__).resolve().parents[1] / "src/harness_design_studio/resources/fonts"
+    # Harness Design Studio itself (GPL-3.0-only, decision D-203): its licence and its notice
+    project = Path(__file__).resolve().parents[1]
+    (dest / "harness-design-studio").mkdir(parents=True, exist_ok=True)
+    for name in ("LICENSE", "NOTICE"):
+        shutil.copyfile(project / name, dest / "harness-design-studio" / name)
+    rows.insert(0, "Harness Design Studio: GPL-3.0-only (harness-design-studio/LICENSE, NOTICE)")
+    fonts = project / "src/harness_design_studio/resources/fonts"
     for key, label, text in (
         ("inter", "Inter 4.1 (font)", "OFL-1.1-Inter.txt"),
         ("jetbrains-mono", "JetBrains Mono 2.304 (font)", "OFL-1.1-JetBrains-Mono.txt"),
@@ -108,6 +117,10 @@ def collect(dest: Path) -> list[str]:
     (dest / "README.txt").write_text(
         "Licences of the components shipped with Harness Design Studio\n"
         "====================================================\n\n"
+        + legal_texts.LICENCE
+        + "\n"
+        + legal_texts.DISCLAIMER
+        + "\n\n"
         + "\n".join(rows)
         + "\n\nQt for Python (PySide6, shiboken6) is used under the GNU Lesser General Public "
         "License version 3 (LGPL-3.txt, which refers to GPL-3.txt). It is a separate library in "

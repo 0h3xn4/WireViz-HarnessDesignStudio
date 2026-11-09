@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """UI overhaul M9: the Settings area. Sections for appearance, editing, the project, keyboard shortcuts,
 About and Licences; every setting applies at once, is kept for the next start, and the page follows
@@ -196,13 +198,14 @@ def test_about_is_a_section_not_a_message_box(win) -> None:
 def test_licences_lists_every_component_with_its_text(win) -> None:
     page = win.settings_page
     page.show_section("licences")
-    assert page.licence_model.rowCount() == len(licences.entries()) == 4
+    assert page.licence_model.rowCount() == len(licences.entries()) == 5
     for i, c in enumerate(licences.entries()):
         page.licence_table.selectRow(i)
         QApplication.processEvents()
         text = page.licence_text.toPlainText()
         assert text.strip(), c.key
         assert text == licences.text_of(c.key)
+    assert "GNU GENERAL PUBLIC LICENSE" in licences.text_of("program").upper()  # D-203
     assert "SIL OPEN FONT LICENSE" in licences.text_of("inter").upper()
     assert "SIL OPEN FONT LICENSE" in licences.text_of("jetbrains").upper()
     assert "ISC" in licences.text_of("lucide") and "MIT" in licences.text_of("lucide")

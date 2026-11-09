@@ -22,7 +22,7 @@ If you are not sure which one you are changing, look at the folder. Almost all w
 
 ## The one hard rule
 
-**Never copy, paste or import code from `src/wireviz` into `HarnessDesignStudio/`.** WireViz is released under the GPL-3.0; Harness Design Studio was written from scratch (a "clean-room" codebase) so that it does not inherit that licence. This is decision D-01 in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md). The same goes for ideas copied line by line from WireViz's code. WireViz is only an export target: the tool can write WireViz-style YAML.
+**Never copy, paste or import code from `src/wireviz` into `HarnessDesignStudio/`.** WireViz is released under the GPL-3.0; Harness Design Studio does not copy or import WireViz code, and it must stay so. This is decision D-01 in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md). The same goes for ideas copied line by line from WireViz's code. WireViz is only an export target: the tool can write WireViz-style YAML.
 
 ## Set up and test
 
@@ -43,7 +43,7 @@ The Qt libraries, the coverage gate, golden files and what CI runs are explained
 1. Open an issue first if the change is more than a small fix, so that it can be discussed before you spend time on it. WireViz's guide asks for the same.
 2. Work on a branch, not on `master`. Branch names in this repository describe the kind of change, for example `fix/…`, `docs/…`, `feature/…`.
 3. Write the test first, and give every bug fix a test that fails without the fix. Tests, lint and types must pass; CI runs them on every pull request.
-4. Follow the conventions in [`HarnessDesignStudio/CLAUDE.md`](HarnessDesignStudio/CLAUDE.md). It is written for the AI assistant that builds most of the tool, but it is also the shortest accurate list of the conventions: `core` never imports `gui` or the network; every model change goes through the command layer; output is deterministic; engineering values are never invented.
+4. Follow the conventions in [`HarnessDesignStudio/CLAUDE.md`](HarnessDesignStudio/CLAUDE.md). It is written for the AI assistant that builds most of the tool, but it is also the shortest list of the conventions: `core` never imports `gui` or the network; every model change goes through the command layer; output is deterministic; engineering values are never invented.
 5. Record every new dependency (name, version, licence) in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md).
 6. Write commit messages as one sentence that says what changed and why it matters. The history of this repository is the model.
 7. Open a pull request into `master`. Say what changed, how you tested it, and what you left out. Do not merge your own pull request if you can ask the owner.

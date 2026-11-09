@@ -33,6 +33,8 @@ Check the program
       (exit code 0, and "selftest ok" in result.txt; the editor has no console window)
 
 Licences of the components are in the LICENSES folder (README.txt there lists them). Qt for Python
-(PySide6) is used under the LGPL-3. The licence of Harness Design Studio itself has not been
-chosen yet (decision D-02): no licence is granted by this file.
+(PySide6) is used under the LGPL-3.
+Harness Design Studio is licensed under the GNU General Public Licence, version 3 only (GPL-3.0-only). The full text is in the file LICENSE.
+Provided as is, without warranty of any kind. Check all results before you rely on them. See sections 15 and 16 of the GPL-3.0.
+Free, non-commercial personal project. No support, no service levels, and no commitment to maintenance or updates.
 The user guide opens with F1 inside the editor.

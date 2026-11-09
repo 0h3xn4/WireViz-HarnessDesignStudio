@@ -137,7 +137,7 @@ In the app the work goes in three steps, shown in the top bar: **Generate**, **C
 
 **Export…** writes a folder `outputs/` into the project: per harness a **build workbook** (an Excel file to build the harness from: what is ready, the cut list with the strip lengths, one block per connector with the contact and crimp tool of each pin, parts, accessories, labels and a test sheet to fill in), wire list, pinouts, BOM, mass and length, test tables, labels, a WireViz-style YAML file and an Excel workbook of the data tables; for the system a block diagram (each device with the picture and colour of its kind), harness overview, BOM, matrices, the design rule report, the change log and one JSON of the whole model; a project that has connections also gets a connection list (`connections.csv` and `connections.xlsx`). A wire part that says it carries two conductors (a twisted pair) is counted once, as the metres of the cable, in the BOM and the mass. Every file carries the tool version and a **model hash**, a fingerprint of the design, so a printed sheet can be traced to the exact design it came from.
 
-The PDF and SVG drawings of the harnesses are optional and written only when you ask for them (`--drawings`, or the check box **Include the PDF drawings**); the build workbook is the main output (new in 1.7.0). The numbers behind the outputs can be written as JSON and CSV too (`export-data`, or the check box **Include the open data** of the Export window). Outputs are checked independently before they are written. `outputs/` is always safe to delete and regenerate.
+The PDF and SVG drawings of the harnesses are optional and written only when you ask for them (`--drawings`, or the check box **Include the PDF drawings**); the build workbook is the main output (new in 1.7.0). The numbers behind the outputs can be written as JSON and CSV too (`export-data`, or the check box **Include the open data** of the Export window). Outputs are checked independently before they are written. `outputs/` can always be deleted and regenerated.
 
 ## What is on disk
 
@@ -153,7 +153,7 @@ my-project/
   generated/              the record of the last generation (the reasons for the Why tab)
   baselines/  changelog.json   written at release; never edit by hand
   waivers.json            the warnings you waived (written when you waive one)
-  outputs/                everything exported (safe to delete)
+  outputs/                everything exported (can be deleted)
 ```
 
 Files are written in a fixed format, so two people editing different parts of a design get a clean merge of those files. The exception is `generated/generation.json`: when both people ran Generate it always conflicts. A new project has a `.gitattributes` that keeps Git from writing markers into it, and `harness-design-studio merge-fix` keeps one side, runs `generate` and `check` ([how](user-manual/use-git-and-ci.md#when-generatedgenerationjson-conflicts)). Details: [`FILE_FORMAT.md`](FILE_FORMAT.md).

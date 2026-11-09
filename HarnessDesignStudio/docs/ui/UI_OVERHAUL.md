@@ -6,7 +6,7 @@
 
 ## Role and goal
 
-You are a senior UI engineer working in the Harness Design Studio repository (`harnessdesignstudio`, or the `harness/` directory of `WireViz-harnessdesignstudio` if it has not moved yet; in that case touch nothing outside `harness/`). The tool is a clean-room codebase with no WireViz code; keep it that way.
+You are a senior UI engineer working in the Harness Design Studio repository (`harnessdesignstudio`, or the `harness/` directory of `WireViz-harnessdesignstudio` if it has not moved yet; in that case touch nothing outside `harness/`). The tool does not copy or import WireViz code; keep it that way.
 
 Before planning, read `README.md`, `CLAUDE.md`, everything in the docs folder (in particular `INSTALL.md`, `GETTING_STARTED.md`, `FLATSAT_EXAMPLE.md`, `DECISIONS.md` and any SPEC or ARCHITECTURE file), `FEEDBACK.md` and any AIT evaluation issues if present, and the entire GUI code. Usability findings from the AIT engineers take priority in your plan.
 

@@ -123,7 +123,7 @@ Numbers in the tables and in the YAML keep all their digits (the shortest text t
 - `mating_matrix.csv`, `traceability.csv`: box connector to cable connector; interface to harness and wires. While any interface has a requirement ID (`requirement_id`), `traceability.csv` gets a `Requirement` column after `Routed` (before `Kind` in a project with connections; a connection row leaves it empty) and the wire list gets a `Requirement` column after `EMC class` (the requirement ID of the wire's interface; empty for a wire without one) (1.10). A project with no requirement ID keeps both tables as they were.
 
 ## WireViz YAML
-Each wire is written as its own one-conductor cable, with `connectors`, `cables` and `connections` in the structure WireViz reads. It is written from the model by this tool and has not been validated against the WireViz program (outside this clean-room project). Treat it as a convenience export.
+Each wire is written as its own one-conductor cable, with `connectors`, `cables` and `connections` in the structure WireViz reads. It is written from the model by this tool and has not been validated against the WireViz program (outside this project). Treat it as a convenience export.
 
 ## JSON export (`system/export.json`)
 ```

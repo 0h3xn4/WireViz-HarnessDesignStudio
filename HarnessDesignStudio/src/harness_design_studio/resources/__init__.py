@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Bundled resources (the offline user guide, example projects and templates, fonts)."""
 
 import sys
@@ -39,5 +41,18 @@ def fonts_path() -> Path | None:
     for root in roots:
         candidate = root / "fonts"
         if candidate.is_dir() and any(candidate.glob("*.ttf")):
+            return candidate
+    return None
+
+
+def licences_path() -> Path | None:
+    """The folder with the licence text of this program (GPL-3.0-only), also when frozen."""
+    roots = [Path(__file__).parent]
+    frozen = getattr(sys, "_MEIPASS", None)
+    if frozen:
+        roots.insert(0, Path(frozen) / "harness_design_studio" / "resources")
+    for root in roots:
+        candidate = root / "licences"
+        if (candidate / "GPL-3.0-only.txt").is_file():
             return candidate
     return None

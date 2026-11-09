@@ -1,5 +1,7 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 [build-system]
-requires = ["setuptools==84.0.0"]
+requires = ["setuptools==84.2.1"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -11,7 +13,8 @@ classifiers = [
   "Programming Language :: Python :: 3",
   "Programming Language :: Python :: 3.14",
 ]
-license = "LicenseRef-Proprietary"
+license = "GPL-3.0-only"
+license-files = ["LICENSE", "NOTICE"]
 dependencies = ["pydantic==2.13.5", "openpyxl==3.1.5", "defusedxml==0.7.1"]
 
 [project.optional-dependencies]
@@ -34,7 +37,7 @@ harness-gui = "harness_design_studio.gui.app:main"  # short alias, kept so exist
 where = ["src"]
 
 [tool.setuptools.package-data]
-"harness_design_studio.resources" = ["guide/*.html", "examples/**/*", "examples/**/.gitignore", "examples/**/.gitattributes", "fonts/*"]  # ** skips dotfiles
+"harness_design_studio.resources" = ["guide/*.html", "examples/**/*", "examples/**/.gitignore", "examples/**/.gitattributes", "fonts/*", "licences/*"]  # ** skips dotfiles
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
@@ -89,6 +92,7 @@ select = ["E", "F", "W", "I", "B", "UP", "SIM", "S"]
 "src/harness_design_studio/core/integrity.py" = ["E501"]  # long plain-language messages
 "src/harness_design_studio/core/io/loader.py" = ["E501"]
 "src/harness_design_studio/core/starter.py" = ["E501"]  # data tables
+"src/harness_design_studio/core/legal_texts.py" = ["E501"]  # generated: one line per text
 "src/harness_design_studio/core/samples.py" = ["E501"]
 "src/harness_design_studio/core/edit.py" = ["E501"]
 "src/harness_design_studio/core/devices.py" = ["E501"]  # plain-language messages

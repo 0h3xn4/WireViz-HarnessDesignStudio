@@ -67,7 +67,7 @@ The full, current layout of `core/` is in [`../ARCHITECTURE.md`](../ARCHITECTURE
 
 These come from [`../../CLAUDE.md`](../../CLAUDE.md) and the decisions in [`../DECISIONS.md`](../DECISIONS.md). Each is checked by a test or by review.
 
-1. **Clean-room.** Never copy or import code from `../src/wireviz` at the repository root. It is GPL-3.0 and a separate program (decision D-01). WireViz is only an export target: the tool writes WireViz-style YAML.
+1. **No WireViz code.** Never copy or import code from `../src/wireviz` at the repository root. It is GPL-3.0 and a separate program (decision D-01). WireViz is only an export target: the tool writes WireViz-style YAML.
 2. **Offline.** `core` must not import `gui`, `cli` or any network module. The tool never uses the network. A test blocks sockets and scans the imports.
 3. **One way to change the model.** All changes go through commands and transactions (`evolve()` and `History.execute`). The GUI never changes the model directly.
 4. **Deterministic.** Sort by stable IDs. No timestamps in generated data. Canonical JSON. The same design gives the same bytes. Do not put dates or history wording into provenance.

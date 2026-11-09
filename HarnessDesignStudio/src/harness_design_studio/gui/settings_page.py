@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Settings area: appearance, editing, the project's values, keyboard shortcuts, About, Licences.
 
     page = SettingsPage(theme, set_role=..., set_theme=..., set_scale=..., set_reduce_motion=..., set_mode=...,
@@ -324,6 +326,12 @@ class SettingsPage(QWidget):
         self.file_label.setVisible(bool(settings_file))
         col.addWidget(self.file_label)
         col.addWidget(_muted(strings.ABOUT_LICENCE_PROJECT))
+        self.legal_labels: list[QLabel] = []
+        for text in strings.ABOUT_LEGAL:  # the legal texts, word for word (decision D-208)
+            label = _muted(text)
+            label.setObjectName("settings-legal")
+            self.legal_labels.append(label)
+            col.addWidget(label)
         col.addStretch(1)
 
         # ---- licences

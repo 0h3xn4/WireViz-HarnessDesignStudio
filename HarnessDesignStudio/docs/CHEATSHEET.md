@@ -119,7 +119,7 @@ my-design/
   logical/            units (the devices), interfaces (what you draw), interface_types.json and, when you have joined connectors, links.json
   physical/           connectors and harnesses (what the tool generates)
   generated/          how the last generation was made (for explanations)
-  outputs/            build workbooks and lists (safe to delete and regenerate)
+  outputs/            build workbooks and lists (can be deleted and regenerated)
   changelog.json      release history
   baselines/          the frozen copy of each released harness (written at release)
 ```

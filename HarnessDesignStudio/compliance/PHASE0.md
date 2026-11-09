@@ -49,7 +49,7 @@ With compensating provisions, category I functions give **B** and category II fu
 
 ## Premise correction
 
-The brief assumed the tool builds on WireViz and Graphviz. It does not: it is a clean-room tool (`CLAUDE.md`), and WireViz YAML is only an *export* format. Graphviz is not used. WireViz itself is not touched. The reuse file should therefore cover the real dependencies (PySide6/Qt, pydantic, openpyxl, defusedxml, PyInstaller and the others listed by `python -m tools.gen_sbom`) and treat WireViz only as an export target.
+The brief assumed the tool builds on WireViz and Graphviz. It does not: it does not copy or import WireViz code (`CLAUDE.md`), and WireViz YAML is only an *export* format. Graphviz is not used. WireViz itself is not touched. The reuse file should therefore cover the real dependencies (PySide6/Qt, pydantic, openpyxl, defusedxml, PyInstaller and the others listed by `python -m tools.gen_sbom`) and treat WireViz only as an export target.
 
 ## Baseline tests
 

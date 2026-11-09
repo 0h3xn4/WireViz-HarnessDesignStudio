@@ -273,7 +273,7 @@ The three build data files (16 to 18) are new in 1.7.0; their rows are examples 
 
 ## WireViz examples in this repository
 
-This repository is a fork of WireViz, a separate program for drawing cable and wiring harness documentation from a text file. Harness Design Studio sits inside it as a separate, clean-room codebase. The WireViz example gallery and the WireViz tutorial that are also in this repository belong to **WireViz, not to Harness Design Studio**: they use WireViz's own YAML files and commands, not the commands on this page.
+This repository is a fork of WireViz, a separate program for drawing cable and wiring harness documentation from a text file. Harness Design Studio sits inside it as a separate codebase. Harness Design Studio does not copy or import WireViz code. The WireViz example gallery and the WireViz tutorial that are also in this repository belong to **WireViz, not to Harness Design Studio**: they use WireViz's own YAML files and commands, not the commands on this page.
 
 - [WireViz example gallery](../../../examples/readme.md)
 - [WireViz tutorial](../../../tutorial/readme.md)

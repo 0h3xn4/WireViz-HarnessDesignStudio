@@ -230,7 +230,7 @@ An accessory is something that goes on a harness besides its wires and connector
 - **Delete accessory** removes the selected row. **New accessory** clears the form and the selection.
 - Each is one undo step. For a released harness the tab is off and says so.
 
-**From a file.** The headings are `Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity` and `Note`, and optionally `ID`. `Target` is a connector or a wire of the harness; **empty means the harness itself**. A row without an `ID` is numbered `ACC-001`, `ACC-002`, ... . With an `ID` the file is safe to import again: the row finds its accessory instead of adding one. The file `accessories.csv`:
+**From a file.** The headings are `Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity` and `Note`, and optionally `ID`. `Target` is a connector or a wire of the harness; **empty means the harness itself**. A row without an `ID` is numbered `ACC-001`, `ACC-002`, ... . With an `ID` the file can be imported again: the row finds its accessory instead of adding one. The file `accessories.csv`:
 
 ```
 ID,Harness,Kind,Part,Target,Position,Length (mm),Quantity,Note

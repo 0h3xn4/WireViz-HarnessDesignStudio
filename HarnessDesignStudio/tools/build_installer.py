@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Build a self-contained, offline package with PyInstaller (one-folder) and archive it.
 
 Build on Ubuntu 24.04 (the Linux platform, D-127). Output: dist/harness-design-studio-<version>-linux-<arch>.tar.gz
@@ -235,6 +237,8 @@ def main() -> int:
     from tools.collect_licences import collect
 
     collect(app / "LICENSES")
+    for name in ("LICENSE", "NOTICE"):  # the licence and the notice of the program itself (D-203)
+        shutil.copy2(ROOT / name, app / name)
     for item in (
         ROOT / "packaging" / "ubuntu"
     ).iterdir():  # install scripts, desktop file, icon, readme

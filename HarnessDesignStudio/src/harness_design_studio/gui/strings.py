@@ -1,5 +1,8 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """All user-visible UI strings live here so translation is possible later."""
 
+from harness_design_studio.core import legal_texts
 from harness_design_studio.core.workflow import BAR_LABELS as _BAR
 from harness_design_studio.core.workflow import PAGE_LABELS as _PAGE
 
@@ -2209,14 +2212,36 @@ SHORTCUTS_EXTRA = (
 )
 ABOUT_TITLE = "Harness Design Studio"
 ABOUT_VERSION = "Version {0}"
-ABOUT_OFFLINE = "Offline spacecraft harness design tool. No data ever leaves this computer."
+ABOUT_OFFLINE = "Offline spacecraft harness design tool."
 ABOUT_RUNTIME = "Python {0}, Qt {1}, PySide6 {2}"
 ABOUT_SETTINGS_FILE = "Your settings are kept in {0}"
 ABOUT_LICENCE_PROJECT = (
-    "Licence of this program: placeholder, not yet chosen (docs/DECISIONS.md, D-02)."
+    legal_texts.LICENCE + " Choose Harness Design Studio under Licences to read it."
 )
+# The legal texts of the About page, one label each, word for word (decision D-208).
+ABOUT_LEGAL = (
+    legal_texts.DISCLAIMER,
+    legal_texts.INTENDED_USE,
+    legal_texts.PROJECT_STATUS,
+    legal_texts.NOT_REVIEWED,
+    legal_texts.AI_AUTHORSHIP,
+    legal_texts.COPYRIGHT_SCOPE,
+    legal_texts.NON_AFFILIATION,
+    legal_texts.TRADEMARKS,
+    legal_texts.PRIVACY_APP,
+)
+# The notice of the first start: a banner that does not block anything and is closed once.
+LEGAL_NOTICE_TEXT = legal_texts.PROJECT_STATUS
+LEGAL_NOTICE_DETAILS = (
+    legal_texts.DISCLAIMER,
+    legal_texts.INTENDED_USE,
+    legal_texts.NOT_REVIEWED,
+    legal_texts.PRIVACY_APP,
+)
+LEGAL_NOTICE_ABOUT = "Licence and about"
 LICENCES_TEXT = (
-    "The fonts and icons that are part of the interface, and the library the windows are made with."
+    "This program, the fonts and icons that are part of the interface, and the library the windows "
+    "are made with."
 )
 LICENCES_TABLE_NAME = "Licences of the interface components"
 LICENCES_TEXT_NAME = "Licence text"

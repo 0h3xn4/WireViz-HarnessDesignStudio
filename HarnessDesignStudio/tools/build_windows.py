@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Build the Windows packages (D-149): a portable .zip and the Inno Setup installer. Run on Windows.
 
 Output in dist/:
@@ -166,6 +168,8 @@ def assemble(app: Path) -> int:
     from tools.collect_licences import collect
 
     collect(app / "LICENSES")
+    for name in ("LICENSE", "NOTICE"):  # the licence and the notice of the program itself (D-203)
+        shutil.copy2(ROOT / name, app / name)
     shutil.copy2(PK / "README-windows.txt", app / "README-windows.txt")
     return 0
 

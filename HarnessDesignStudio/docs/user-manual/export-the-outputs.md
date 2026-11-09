@@ -20,7 +20,7 @@ This page shows how to write the build workbook and the lists of a design (wire 
 ## Before you start
 
 - You have a generated project ([generate harnesses](generate-harnesses.md)), or a project with connections ([connect two connectors](connect-two-connectors.md)). Export needs at least one harness or one connection. A project with connections and no harness exports the connection list ([section 2](#2-what-you-get)); the files of a harness come after **Create harness** or Generate.
-- Everything in `outputs/` is made from the design alone. Nothing in it is typed by hand and nothing needs editing. Change the design, export again. The `outputs` folder is always safe to delete and make again.
+- Everything in `outputs/` is made from the design alone. Nothing in it is typed by hand and nothing needs editing. Change the design, export again. The `outputs` folder can always be deleted and made again.
 - Placeholder values show in the outputs: gauges say `pending` and test limits say `TBD (placeholder)` until the values exist ([fill in the engineering values](fill-in-engineering-values.md)). In the build workbook a missing value says `to fill in`.
 
 ## 1. Export
