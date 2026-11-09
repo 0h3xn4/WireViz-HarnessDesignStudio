@@ -814,7 +814,7 @@ def build_workbook(project: Project, h: Harness, stamp: Stamp) -> bytes:
 
 
 def cut_rows(project: Project, h: Harness) -> Table:
-    """The cut list as plain rows (what the sheet shows, in its order): the independent check and
+    """The cut list as plain rows (what the sheet shows, in its order): the self-check and
     the tests compare the workbook with this."""
     shields = tables.shield_of(h)
     over = any(w.overrides for w in h.wires)

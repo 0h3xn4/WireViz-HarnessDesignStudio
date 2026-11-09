@@ -152,7 +152,7 @@ part-unapproved.EX-MICROD-15-F - Part EX-MICROD-15-F is not approved yet but is 
 ...
 ```
 
-`ok` is false when an error is open, the same condition that gives `drc` exit code 1. A waived finding is in the list, with `waived` true and its reason in `waiver_justification`. `result.placeholder_config` names the configuration files that are still placeholders: a result that depends on them is not a statement about the design (read [Fill in the engineering values](fill-in-engineering-values.md)). `validate` reports problems of the files, and `verify` the independent check of the harnesses against the interfaces.
+`ok` is false when an error is open, the same condition that gives `drc` exit code 1. A waived finding is in the list, with `waived` true and its reason in `waiver_justification`. `result.placeholder_config` names the configuration files that are still placeholders: a result that depends on them is not a statement about the design (read [Fill in the engineering values](fill-in-engineering-values.md)). `validate` reports problems of the files, and `verify` the self-check of the harnesses against the interfaces.
 
 ## 5. Ask how a number was made
 
@@ -226,7 +226,7 @@ else:
 True 34 files
 ```
 
-`export(folder, out=None, drawings=False)` returns the files with their size and SHA-256. It writes the PDF and SVG drawings only with `drawings=True`. When there is nothing to export (`blocked` is `nothing_to_export`) or the outputs fail their independent check (`outputs_failed_check`), nothing is written and `issues` says why.
+`export(folder, out=None, drawings=False)` returns the files with their size and SHA-256. It writes the PDF and SVG drawings only with `drawings=True`. When there is nothing to export (`blocked` is `nothing_to_export`) or the outputs fail their self-check (`outputs_failed_check`), nothing is written and `issues` says why.
 
 ## 8. Handle errors
 

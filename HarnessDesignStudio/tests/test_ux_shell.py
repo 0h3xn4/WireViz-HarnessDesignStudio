@@ -472,9 +472,9 @@ def test_a_failed_generation_is_a_banner_until_the_next_success(flat) -> None:
 
 
 def test_a_failed_export_check_is_a_banner(flat, tmp_path) -> None:
-    flat._export_failed("the independent check found 2 problems")
+    flat._export_failed("the self-check found 2 problems")
     banner = flat.alerts.banner("job")
-    assert banner is not None and "independent check" in banner.text()
+    assert banner is not None and "self-check" in banner.text()
     banner.dismiss.click()  # or the person dismisses it
     assert not flat.alerts.is_showing("job")
 

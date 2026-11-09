@@ -24,6 +24,7 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
+from harness_design_studio.core import legal_texts
 from tools.release_check import unreleased_text
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -32,11 +33,20 @@ CAVEAT = (
     "The packages are not signed, the configuration values are placeholders and the parts are "
     "example parts: this release is not a statement of compliance with any standard."
 )
+LEGAL_SECTION = (
+    "## Status, licence and limits\n\n"
+    + f"{legal_texts.DISCLAIMER}\n\n"
+    + f"{legal_texts.INTENDED_USE}\n\n"
+    + f"{legal_texts.PROJECT_STATUS} {legal_texts.NOT_REVIEWED}\n\n"
+    + f"{legal_texts.AI_AUTHORSHIP} {legal_texts.COPYRIGHT_SCOPE}\n\n"
+    + f"{legal_texts.LICENCE}\n\n"
+    + f"{legal_texts.NON_AFFILIATION} {legal_texts.TRADEMARKS}"
+)
 INTRO = (
     "**Harness Design Studio** is an offline tool for designing the electrical harnesses of a "
     "spacecraft. You describe the devices and the interfaces between them; the tool generates the "
     "harnesses, checks them against design rules and writes the drawings, wire lists and test "
-    "tables. It never uses the network, and the same design always gives byte-identical files."
+    "tables. It makes no network connection, and the same design gives byte-identical files for the same version of the tool."
 )
 
 
@@ -206,8 +216,7 @@ def notes(version: str, changelog: str, sums: str, highlights: str | None = None
         parts.append(
             "## Install\n\n"
             + "\n\n".join(f"- {step}" for step in steps)
-            + "\n\nNothing needs the network after installing, and the tool never opens a "
-            "network connection. Full instructions, including what to do when something fails: "
+            + "\n\nNothing needs the network after installing. Full instructions, including what to do when something fails: "
             f"[`INSTALL.md`]({REPO_URL}/blob/v{version}/HarnessDesignStudio/docs/INSTALL.md)."
         )
 
@@ -228,10 +237,12 @@ def notes(version: str, changelog: str, sums: str, highlights: str | None = None
         + " and compare the result with the table. The packages are not signed, so this "
         "check is the only proof that a download is intact."
     )
+    parts.append(LEGAL_SECTION)
     parts.append(
         "## Good to know\n\n"
-        "- The tool ships no derating or EMC values and no approved parts list; each project "
-        "supplies them. Until then results say *pending* or *not checked*.\n"
+        "- By default the tool ships no derating or EMC values and no approved parts list; each "
+        "project supplies them (the optional standard profiles write ECSS table values that stay "
+        "placeholders until you review them). Until then results say *pending* or *not checked*.\n"
         "- The results are an aid to a designer's work, not a certificate; check them before "
         "you rely on them.\n"
         f"- Documents: [user manual]({REPO_URL}/blob/v{version}/HarnessDesignStudio/docs/"

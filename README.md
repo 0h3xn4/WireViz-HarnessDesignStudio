@@ -46,7 +46,7 @@ An offline desktop tool for designing the electrical harnesses of a spacecraft: 
 
 A **harness** is the bundle of wires and connectors that joins the boxes (the *devices*) of a spacecraft. Designing it by hand means choosing connectors, giving every signal a pin and a wire, and drawing it all again whenever something changes. In Harness Design Studio you describe the devices and the *interfaces* (power, data, radio) between them. The tool generates the harnesses, gives a reason for each choice, checks them against design rules, and writes a build workbook for every harness (an Excel file to build it from), wire lists and test tables. It keeps a record of every release.
 
-It works offline and produces byte-identical files for the same design, so the files are friendly to Git. It never invents engineering values: until you supply them, results say *pending* or *not checked*. It is a separate program from WireViz (a different codebase), and it can write each harness as WireViz-style YAML.
+It works offline and produces byte-identical files for the same design, so the files are friendly to Git. By default it supplies no engineering values: until you supply them (or apply an optional standard profile and review it), results say *pending* or *not checked*. It is a separate program from WireViz (a different codebase), and it can write each harness as WireViz-style YAML.
 
 ## Quick start
 

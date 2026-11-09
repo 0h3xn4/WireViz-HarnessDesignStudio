@@ -113,7 +113,7 @@ harness-design-studio generate wheel-link
 
 Two harnesses were made, one for each pair of connectors the interfaces use: `W001` carries the RS-422 link (four wires), `W002` carries power (two wires). Run it a second time and nothing changes: generation is repeatable.
 
-Run the independent check, which shares no code with the generator:
+Run the self-check, which shares no code with the generator:
 
 ```
 harness-design-studio verify wheel-link
@@ -174,7 +174,7 @@ harness-design-studio export wheel-link
 34 files written to wheel-link/outputs (model <hash>).
 ```
 
-The files are checked independently before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.
+The files are checked a second time by a separate routine before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.
 
 | File (main files only) | What it is |
 | --- | --- |

@@ -446,7 +446,7 @@ def test_the_run_record_is_next_to_the_outputs_and_in_no_hash(
     manifest = json.loads(b["manifest.json"])
     assert "run_record.json" not in {f["path"] for f in manifest["files"]}
     assert b"run_record" not in b["manifest.json"]
-    # and the independent check of the outputs does not call it an unlisted file
+    # and the self-check of the outputs does not call it an unlisted file
     assert api.verify(asked, outputs=True).issues == api.verify(plain, outputs=True).issues
     assert str(tmp_path) not in (asked / "outputs" / "run_record.json").read_text(encoding="utf-8")
 

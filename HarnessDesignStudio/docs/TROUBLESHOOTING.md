@@ -305,7 +305,7 @@ error: [wire_sizing] W002-002: no listed gauge carries 8 A after derating (facto
 Not saved: fix the errors above first.
 ```
 
-Exit code 1. **Why:** the current is more than the connector contact (or the largest wire in your ampacity table) can carry after derating. The line `44 interfaces and 103 wires checked: 0 error(s)` is the same independent check that `harness-design-studio verify` prints; the errors that stopped the save are the `error:` lines above it. Nothing was written. **Fix:** lower the current, or choose a connector or wire that can carry it. If you think the derating values are wrong, ask the engineer who owns them (`harness-design-studio config DIR` lists them); do not lower them just to make the error go away. Run `harness-design-studio generate` again.
+Exit code 1. **Why:** the current is more than the connector contact (or the largest wire in your ampacity table) can carry after derating. The line `44 interfaces and 103 wires checked: 0 error(s)` is the same self-check that `harness-design-studio verify` prints; the errors that stopped the save are the `error:` lines above it. Nothing was written. **Fix:** lower the current, or choose a connector or wire that can carry it. If you think the derating values are wrong, ask the engineer who owns them (`harness-design-studio config DIR` lists them); do not lower them just to make the error go away. Run `harness-design-studio generate` again.
 
 ### A wire gauge says `pending`
 

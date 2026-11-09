@@ -38,6 +38,22 @@ PLACES: dict[Path, tuple[str, ...]] = {
     REPO / "README.md": EVERYWHERE,
     ROOT / "README.md": EVERYWHERE,
     ROOT / "NOTICE": tuple(n for n in EVERYWHERE if n != "PRIVACY_APP"),
+    REPO / "CONTRIBUTING.md": ("PROJECT_STATUS",),
+    REPO / ".github" / "SUPPORT.md": ("PROJECT_STATUS", "DISCLAIMER"),
+    REPO / ".github" / "SECURITY.md": ("PROJECT_STATUS", "DISCLAIMER"),
+    REPO / ".github" / "pull_request_template.md": ("PROJECT_STATUS",),
+    REPO / ".github" / "ISSUE_TEMPLATE" / "problem_report.md": ("PROJECT_STATUS",),
+    ROOT / "packaging" / "windows" / "README-windows.txt": (
+        "LICENCE",
+        "DISCLAIMER",
+        "PROJECT_STATUS",
+    ),
+    ROOT / "packaging" / "ubuntu" / "README.txt": (
+        "PRIVACY_APP",
+        "LICENCE",
+        "DISCLAIMER",
+        "PROJECT_STATUS",
+    ),
 }
 # Folders left out of the drift guard: the audit quotes texts on purpose, the rest is not ours.
 SKIP_PARTS = {".venv", "__pycache__", "dist", "build", "src/harness_design_studio.egg-info"}

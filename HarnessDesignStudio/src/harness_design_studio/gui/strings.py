@@ -247,8 +247,8 @@ GEN_STATUS = {
     "current": "Up to date with the diagram.",
     "stale": "Out of date: the diagram changed since the last generation. Press Generate harnesses.",
 }
-PLANS_VERIFY_OK = "Independent check: {0}"
-PLANS_VERIFY_BAD = "Independent check found problems: {0}"
+PLANS_VERIFY_OK = "Self-check: {0}"
+PLANS_VERIFY_BAD = "Self-check found problems: {0}"
 WIRE_COLUMNS = ["Wire", "Signal", "From", "To", "AWG", "Length (m)", "Colour", "Locked"]
 EXPLAIN = "Why is it like this?"
 ALL_SAVED = "All changes saved"
@@ -421,7 +421,7 @@ DRC_FAILED_WHY = "The design rules could not be checked, so the design is not co
 NOTHING_TO_SHOW = "This item has no place on the diagram (it is a setting or a part)."
 
 EXPORT = "Export outputs"
-EXPORT_TIP = "Write drawings, wire lists, BOM, tests, labels and exports to the project's outputs folder; they are checked independently first"
+EXPORT_TIP = "Write drawings, wire lists, BOM, tests, labels and exports to the project's outputs folder; they are checked a second time by a separate routine first"
 EXPORT_SAVE_FIRST = "Save the project to a folder first; outputs are written next to it."
 EXPORT_NO_HARNESSES = "There are no harnesses yet. Generate harnesses first."
 EXPORT_READ_ONLY = (
@@ -431,9 +431,7 @@ EXPORT_DAMAGED = "Parts of this project could not be loaded, so nothing was expo
 EXPORT_RUNNING = "Exporting outputs…"
 EXPORT_CANCELLED = "Export cancelled. Nothing was written."
 EXPORT_DONE = "{0} files written to the outputs folder (design {1})."
-EXPORT_FAILED = (
-    "The outputs failed their independent check, so nothing was written ({0} problem(s))."
-)
+EXPORT_FAILED = "The outputs failed their self-check, so nothing was written ({0} problem(s))."
 OUT_STATUS = {
     "none": "Outputs: not exported yet.",
     "current": "Outputs: up to date with the design.",
@@ -620,7 +618,7 @@ TAG_REDUNDANT = "REDUNDANT"
 NO_FREE_CONNECTOR = "No free {} connector"
 NO_TYPE = "No type"
 AND_MORE = "… and {} more"
-PROGRESS_VERIFY = "Independent check"
+PROGRESS_VERIFY = "Self-check"
 PROGRESS_OPEN_DATA = "Open data"
 FOLDER_UNUSABLE = "the folder cannot be used"
 TABLE_FILES = "Tables (*.csv *.tsv *.json *.xlsx)"
@@ -875,7 +873,7 @@ EXP_FOLDER_UNSAVED = "(none yet: the project has no folder)"
 EXP_FOLDER_TIP = "The outputs always go to the outputs folder of the project; the full path is shown so you can copy it."
 EXP_FULL_NOTE = (
     "Every export writes the complete set, so the outputs folder always matches the design and "
-    "the independent check can verify it. The PDF and SVG drawings of the harnesses are written "
+    "the self-check can verify it. The PDF and SVG drawings of the harnesses are written "
     "only when “Include the PDF drawings” is ticked. The tick marks choose what the result list "
     "shows and what “Copy selection to folder…” copies."
 )
@@ -902,9 +900,7 @@ EXP_CLOSE_TIP = "Close this window (Esc)"
 EXP_RUNNING = "Exporting…"
 EXP_PROGRESS_NAME = "Export progress"
 EXP_CANCEL_TIP = "Stop the export; nothing is written (Esc)"
-EXP_CHECK_FAILED = (
-    "The independent check found {0} problem(s) in the outputs, so nothing was written:"
-)
+EXP_CHECK_FAILED = "The self-check found {0} problem(s) in the outputs, so nothing was written:"
 EXP_WRITE_FAILED = "The outputs could not be written. {0}"
 EXP_BANNER_DISMISS_TIP = "Hide this message"
 EXP_RESULT_HEAD = "{0} files written to {1}. Design {2}."
@@ -1178,7 +1174,7 @@ PENDING_LINK_TIP = "Show the design rules that were not checked because a value 
 PENDING_LINK_NAME = "Pending values"
 # engineering value dialog
 CONFIG_TITLE = "Engineering values"
-CONFIG_INTRO = "These values come from your programme's standard. The tool never supplies a number itself; a value you type here is stored in the project's config files."
+CONFIG_INTRO = "These values come from your programme's standard. By default the tool supplies no number itself; the optional standard profiles fill values from a standard, and they stay placeholders until you review them. A value you type here is stored in the project's config files."
 CONFIG_ONLY_MISSING = "Only values that are still missing"
 CONFIG_FILE_GROUP = "config/{}.json"
 CONFIG_PLACEHOLDER_TOGGLE = "Values in this file are placeholders (not reviewed)"
@@ -1449,12 +1445,10 @@ HV_OUT_UNSAVED = "Not saved"
 HV_OUT_MODIFIED = "Outputs changed"
 HV_OUT_UNREADABLE = "Outputs unreadable"
 HV_CHECKING = "Checking…"
-HV_CHECKING_TIP = (
-    "The independent check and the outputs state are being worked out in the background."
-)
-HV_VERIFY_OK = "Independent check passed"
-HV_VERIFY_OK_RULES = "Independent check passed; {0} design checks failed"
-HV_VERIFY_BAD = "Independent check found {} problem(s)"
+HV_CHECKING_TIP = "The self-check and the outputs state are being worked out in the background."
+HV_VERIFY_OK = "Self-check passed"
+HV_VERIFY_OK_RULES = "Self-check passed; {0} design checks failed"
+HV_VERIFY_BAD = "Self-check found {} problem(s)"
 HV_VERIFY_FAILED = "Could not check: {}"
 HV_VERIFIED_IN = "Checked in {} ms in the background; this view refreshed in {} ms."
 HV_REGENERATE = "Regenerate"

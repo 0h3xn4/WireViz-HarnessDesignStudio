@@ -17,6 +17,11 @@ ROOT = Path(__file__).resolve().parents[1]
 PK = ROOT / "packaging" / "ubuntu"
 
 
+def _action_name(line: str) -> str:
+    """`actions/checkout` from a `uses: actions/checkout@<sha>  # v4.4.0` line (pinned, D-203 work)."""
+    return line.split("uses:")[1].split("#")[0].strip().split("@")[0]
+
+
 def fake_package(tmp: Path) -> Path:
     """A package folder as build_installer makes it, with stub programs instead of PyInstaller output."""
     pkg = tmp / "harness-design-studio"
@@ -644,12 +649,12 @@ def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
     assert release.index("download-artifact") < release.index("tools.gen_scf")
     assert text.count("python -m tools.gen_scf") == 1
     # only actions that the other workflows already use (the final job downloads what the others built)
-    used = {ln.split("uses:")[1].strip() for ln in text.splitlines() if "uses:" in ln}
+    used = {_action_name(ln) for ln in text.splitlines() if "uses:" in ln}
     assert used <= {
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/upload-artifact@v4",
-        "actions/download-artifact@v4",
+        "actions/checkout",
+        "actions/setup-python",
+        "actions/upload-artifact",
+        "actions/download-artifact",
     }
     # the system libraries are the ones the CI job that installs the packages uses
     ci = (RELEASE_WORKFLOW.parent / "harness-ci.yml").read_text(encoding="utf-8")
@@ -696,8 +701,8 @@ def test_the_package_workflow_builds_and_tests_but_never_publishes() -> None:
         "tools.smoke_package windows-zip",
     ):
         assert command in text, command
-    used = {ln.split("uses:")[1].strip() for ln in text.splitlines() if "uses:" in ln}
-    assert used <= {"actions/checkout@v4", "actions/setup-python@v5", "actions/upload-artifact@v4"}
+    used = {_action_name(ln) for ln in text.splitlines() if "uses:" in ln}
+    assert used <= {"actions/checkout", "actions/setup-python", "actions/upload-artifact"}
 
 
 def test_the_release_check_refuses_a_tag_that_does_not_fit() -> None:

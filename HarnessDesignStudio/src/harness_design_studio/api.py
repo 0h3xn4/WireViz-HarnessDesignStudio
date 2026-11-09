@@ -354,7 +354,7 @@ def list_rules() -> list[RuleInfo]:
 
 
 def verify(folder: PathLike, *, outputs: bool = False) -> VerifyResult:
-    """The command `verify`: the independent check of the harnesses against the interfaces. With
+    """The command `verify`: the self-check of the harnesses against the interfaces. With
     `outputs=True` also the `outputs` folder of the project against the design; `NoOutputsError`
     when there is none. Changes nothing."""
     from harness_design_studio.core.outputs.build import DEFAULT_FOLDER

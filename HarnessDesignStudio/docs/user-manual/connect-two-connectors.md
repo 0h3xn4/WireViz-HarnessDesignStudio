@@ -168,7 +168,7 @@ The connections are an output of their own, and they need no harness. **Exportâ€
 - **One row for each pair of pins.** Connection, name, then for each end the device, connector, pin, signal and role; then the interface type the pair belongs to (*CAN*; *RS-422 or Ethernet* when two fit equally; empty when none does), the harness made from the connection and its note.
 - **The workbook** `connections.xlsx` has the same rows as a sheet ready to print or send, a **Summary** with one line for each connection (*Pairs*, *Carries* such as *CAN, 2 wires*) and the stamp of the design it was made from.
 - **The same connections** are drawn with their IDs in `system/block_diagram` and listed in `system/traceability.csv` (with the wires of the harness once there is one).
-- The files are checked independently before they are written, like the others, and they are written only for a project that has connections: a project without any keeps the files it had. Columns and rules: [`OUTPUTS.md`](../OUTPUTS.md#connection-list-systemconnectionscsv-and-xlsx).
+- The files are checked a second time by a separate routine before they are written, like the others, and they are written only for a project that has connections: a project without any keeps the files it had. Columns and rules: [`OUTPUTS.md`](../OUTPUTS.md#connection-list-systemconnectionscsv-and-xlsx).
 
 ## Change, rename or delete a connection
 

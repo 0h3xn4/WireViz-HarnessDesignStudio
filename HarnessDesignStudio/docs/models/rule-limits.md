@@ -84,7 +84,7 @@ The table is written from the code (`python -m tools.gen_rule_limit_docs`), so a
 | `config-invalid` | yes/no check | each value in config/*.json with the range it must lie in (the checks of configcheck) | `rule-check` |
 | `released-modified` | yes/no check | each released harness with the baseline it was released as (its content hash) | `rule-check` |
 | `unchecked-config` | yes/no check | the values and ratings each rule needs with what the project has set; it lists what could not be checked | `rule-check` |
-| `verify-mismatch` | yes/no check | the wires and tables with what the interfaces require, worked out again by the independent check (core/verify) | `rule-check` |
+| `verify-mismatch` | yes/no check | the wires and tables with what the interfaces require, worked out again by the self-check (core/verify) | `rule-check` |
 | `cross-strap` | yes/no check | the side (nominal or redundant) of the two devices of an interface | `rule-check` |
 | `no-connector` | yes/no check | each end of an interface with a chosen connector | `rule-check` |
 | `unconfirmed` | yes/no check | the connector of each end of an interface with 'chosen by a person' (a tool choice is not confirmed) | `rule-check` |

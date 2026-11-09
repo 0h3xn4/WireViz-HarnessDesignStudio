@@ -57,10 +57,11 @@ DOCS = (
     "CHEATSHEET",
     "TIPS",
     "SECURITY",
-    "SUPPORT",
 )
 MARKDOWN = [REPO / "README.md", ROOT / "README.md", ROOT / "CHANGELOG.md", REPO / "CONTRIBUTING.md"]
-MARKDOWN += [ROOT / "NOTICE", ROOT / "SUPPORT.md", ROOT / "SECURITY.md"]
+MARKDOWN += [ROOT / "NOTICE", REPO / ".github" / "SUPPORT.md", REPO / ".github" / "SECURITY.md"]
+MARKDOWN += [REPO / ".github" / "pull_request_template.md"]
+MARKDOWN += sorted((REPO / ".github" / "ISSUE_TEMPLATE").glob("*.md"))
 MARKDOWN += [ROOT / "docs" / f"{n}.md" for n in DOCS]
 MARKDOWN += sorted((ROOT / "docs" / "user-manual").glob("*.md"))
 MARKDOWN += sorted((ROOT / "docs" / "releases").glob("*.md"))

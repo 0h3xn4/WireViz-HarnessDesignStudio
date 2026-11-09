@@ -12,7 +12,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --system) mode=system ;;
     --prefix) [ $# -ge 2 ] || { echo "--prefix needs a folder" >&2; exit 2; }; shift; prefix="$1"; prefix_set=1 ;;
-    -h|--help) sed -n '2,3p' "$0"; exit 0 ;;
+    -h|--help) sed -n '4,5p' "$0"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
   shift

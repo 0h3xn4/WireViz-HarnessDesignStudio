@@ -44,7 +44,7 @@ The full, current layout of `core/` is in [`../ARCHITECTURE.md`](../ARCHITECTURE
 | `core/edit.py` | Pure functions that build those lists of operations for the diagram. |
 | `core/io/` | Load, save (atomic writes), migrate. A damaged file is set aside and the rest of the project still loads. |
 | `core/generate/` | Segmentation, wiring, pin allocation, sizing, lengths, mass, naming, explanations, the engine. |
-| `core/verify.py` | The independent check of a generation. |
+| `core/verify.py` | The self-check of a generation. |
 | `core/drc/` | The design rules and their report. |
 | `core/outputs/` | The writers and the independent output verifier. `buildsheet.py` writes the build workbook of a harness (1.7.0, D-169); the harness drawings are written only on request. |
 | `core/vcs/` | Release, revisions, baselines, diff, change log, and `gitinfo` (the last commit of the repository, read without running Git). |

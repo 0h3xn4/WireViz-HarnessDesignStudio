@@ -12,14 +12,14 @@ the progress with Cancel and then the list of files written (path, document, har
 Reveal in folder, Open and a picture of the selected drawing.
 
 The export ALWAYS writes the full set of the harnesses (`core.outputs.build.write_outputs` deletes
-the files that are not in the new set and the independent check expects every harness, see
+the files that are not in the new set and the self-check expects every harness, see
 `tests/test_outputs_subset.py`). The one choice is the check box "Include the PDF drawings" (decision
 D-169: the build workbook is the main output, the PDF and SVG drawings are optional): it is ticked
 at the start when the folder's last export had drawings (`drawings_exported`), else not, and the
 tree shows the drawing documents only while it is ticked. The tick marks in the tree choose only
 what the result list shows and what "Copy selection to folder..." copies; all are ticked at the start.
 
-The build and its independent check run in `OutputsWorker` (the window's own worker) off the UI
+The build and its self-check run in `OutputsWorker` (the window's own worker) off the UI
 thread; the files are written on the UI thread exactly as `MainWindow.export_flow` does. A failed
 check or a write error is an inline notice that stays (never a pop-up); nothing is written then.
 """

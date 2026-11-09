@@ -274,7 +274,7 @@ def _restamp(path: Path, rep: Report) -> int:
         built = build_outputs(project, drawings=drawings_exported(path / DEFAULT_FOLDER))
         if not verify_outputs(project, built.files).ok:
             print(
-                "error: the re-exported outputs failed their independent check; nothing was written.",
+                "error: the re-exported outputs failed their self-check; nothing was written.",
                 file=sys.stderr,
             )
             print(RESTAMP_HINT, file=sys.stderr)

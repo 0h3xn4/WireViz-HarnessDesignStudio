@@ -4,7 +4,7 @@
 """REQ-GUI-18, REQ-GUI-19. Release 1.9 W1, the smaller items: the tour of the Systems engineer role, release
 blockers without command-line words, Generate as the primary button only when there is something
 to generate, "Made by hand" in the status bar, the problem counts that agree, the chip of the
-independent check that never says "passed" next to a failed rule, and the pin role column."""
+self-check that never says "passed" next to a failed rule, and the pin role column."""
 
 import time
 from pathlib import Path
@@ -193,7 +193,7 @@ def test_the_problems_tab_of_the_inspector_explains_its_smaller_number(qtbot, tm
         assert tip == ""
 
 
-# ---- the chip of the independent check ---------------------------------------------------------
+# ---- the chip of the self-check ---------------------------------------------------------
 
 
 def wait_chip(view) -> None:
@@ -207,9 +207,9 @@ def test_the_chip_never_says_passed_next_to_a_failed_rule(qtbot, tmp_path: Path)
     win.set_area("drawings")
     wait_chip(win.harness_view)
     view = win.harness_view
-    # no check has run: the independent check alone passed, and the chip does not claim more
+    # no check has run: the self-check alone passed, and the chip does not claim more
     assert view.verify_chip.state() == "pass" and view.verify_chip.text() == strings.HV_VERIFY_OK
-    assert strings.HV_VERIFY_OK == "Independent check passed"
+    assert strings.HV_VERIFY_OK == "Self-check passed"
     settle(win)  # the design rules run: some fail
     failed = view._failed_rules()
     assert failed > 0

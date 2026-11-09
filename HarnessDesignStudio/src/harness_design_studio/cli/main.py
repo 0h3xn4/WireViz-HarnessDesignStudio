@@ -254,7 +254,7 @@ def _export(
     for issue in report.issues:
         rep.say(f"{issue.severity}: [{issue.code}] {issue.message}")
     if not report.ok:
-        print("Not written: the outputs failed their independent check.", file=sys.stderr)
+        print("Not written: the outputs failed their self-check.", file=sys.stderr)
         if rep.as_json:
             refused = records.export_refused(
                 "outputs_failed_check", result.stamp.short, report.issues

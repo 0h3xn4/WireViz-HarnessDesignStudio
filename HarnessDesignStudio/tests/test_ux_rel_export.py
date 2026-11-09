@@ -306,7 +306,7 @@ def test_the_export_writes_the_full_set_and_lists_every_file(done) -> None:
     assert on_disk == sorted(f.rel for f in res.files)
     for f in res.files:
         assert f.path.is_file() and f.path.stat().st_size == f.size
-    # the independent check passed and the folder is current
+    # the self-check passed and the folder is current
     assert done.ctl.outputs_state() == "current"
     assert done.dlg.pages.currentWidget() is panel
     assert done.dlg.export_btn.text() == strings.EXP_AGAIN

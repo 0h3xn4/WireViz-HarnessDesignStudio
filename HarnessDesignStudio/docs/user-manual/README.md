@@ -56,7 +56,7 @@ The numbers follow the order of the work. The first page is the one the editor s
 2. [Draw the design](draw-the-design.md): start a project; add devices; connect them; move devices anywhere, slide labels along their lines; guided and expert mode; save.
 2a. [Telling devices apart](telling-devices-apart.md): the picture, colour and shape of each kind of device on the diagram, how the tool reads the kind from the name, how to set the kind by hand (the **Kind** list of the Inspector), where the words are (tooltip, Inspector, legend) and that the written block diagram and **Export diagram** draw the same looks. Since 1.16.0.
 3. [Redundancy and zones](redundancy-and-zones.md): the redundant copy of a device; links between the chains; lanes.
-4. [Generate harnesses](generate-harnesses.md): preview, apply and undo; the independent check; the Harness tab and its "Why" pane; how links are grouped.
+4. [Generate harnesses](generate-harnesses.md): preview, apply and undo; the self-check; the Harness tab and its "Why" pane; how links are grouped.
 5. [Read and fix problems](read-and-fix-problems.md): errors, warnings and notes; fixes; waivers; `harness-design-studio drc`.
 6. [Fill in the engineering values](fill-in-engineering-values.md): `harness-design-studio config`; the file shape; the gauge table; demo values; profiles.
 6a. [See what the tool assumes](see-what-the-tool-assumes.md): `harness-design-studio settings`; the settings, the assumptions, the definitions; where each value comes from.

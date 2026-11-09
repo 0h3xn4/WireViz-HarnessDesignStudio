@@ -72,7 +72,7 @@ You cannot clear a gauge, type, colour or length on one wire; use **Reset to gen
 - The wire list gets **Strip A (mm)** and **Strip B (mm)** as soon as any wire in the project has a strip length, and the **Cut list** of the build workbook always shows them (`to fill in` while a wire has none).
 - The wire list gets a last column **Overrides** (the fields and their reasons) as soon as any wire in the project has an override; the cut list of the build workbook and the lines beneath the drawing show them for the harness that has them.
 - The **wire labels** (`labels.csv`) print the label in place of the signal name: `W001-0003 Heater supply to J2.4`.
-- The independent check (`harness-design-studio verify DIR --outputs`) compares both with the design.
+- The self-check (`harness-design-studio verify DIR --outputs`) compares both with the design.
 
 ## 4. Draw a wire yourself
 
@@ -93,7 +93,7 @@ The pins of a **generated** wire follow its interface and the pin assignment of 
 
 ## 5. Several wires on one pin
 
-You may put two wires on one pin: draw the second wire to a pin that already has one. The design rule **Several wires on one pin** (`pin-shared`, a warning) names every such pin, so nobody finds it by surprise; waive it with a reason if the design needs it. The pinout table lists all the wires of a pin, and the independent check (`harness-design-studio verify`) says *pin_shared* as a warning when a wire you drew is one of them. Two **generated** wires on one pin are still an error (*pin_reused*): that is a fault in the generation.
+You may put two wires on one pin: draw the second wire to a pin that already has one. The design rule **Several wires on one pin** (`pin-shared`, a warning) names every such pin, so nobody finds it by surprise; waive it with a reason if the design needs it. The pinout table lists all the wires of a pin, and the self-check (`harness-design-studio verify`) says *pin_shared* as a warning when a wire you drew is one of them. Two **generated** wires on one pin are still an error (*pin_reused*): that is a fault in the generation.
 
 ## 6. Twist or shield wires together
 

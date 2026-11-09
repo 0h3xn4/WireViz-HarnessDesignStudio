@@ -309,7 +309,7 @@ For `W001` of the practice project, whose four wires have strip lengths and whos
 | Wires without strip lengths | 2 | `NOTE` | Enter the strip length at both ends in the Edit wire tab (or with import-build-data). |
 | Pins in use without a contact part | 4 | `NOTE` | Name the contact part of each pin (Devices tab, or Connectors tab of a harness made by hand). |
 
-The independent check reads the new columns, the sheet and the file cell by cell. A file that was changed after the export is reported as before (`out_modified`); a wrong `accessories.csv`, or one for a harness without accessories, is `out_accessories`.
+The self-check reads the new columns, the sheet and the file cell by cell. A file that was changed after the export is reported as before (`out_modified`); a wrong `accessories.csv`, or one for a harness without accessories, is `out_accessories`.
 
 ## What Generate does with it
 

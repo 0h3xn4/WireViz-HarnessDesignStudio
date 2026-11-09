@@ -108,7 +108,7 @@ class ValidationResult:
 @dataclass(frozen=True)
 class GenerateResult:
     """What `generate` did. `ok` is false, and nothing was saved, when generation or the
-    independent check found an error. The lists hold harness IDs (`kept_locks`: `connector.pin`)."""
+    self-check found an error. The lists hold harness IDs (`kept_locks`: `connector.pin`)."""
 
     ok: bool
     saved: bool
@@ -171,7 +171,7 @@ class CheckResult:
 
 @dataclass(frozen=True)
 class VerifyResult:
-    """The independent check of the harnesses against the interfaces (and, with `outputs=True`,
+    """The self-check of the harnesses against the interfaces (and, with `outputs=True`,
     of the outputs folder against the design). `stale` is true when the plans or the outputs are
     older than the design."""
 
