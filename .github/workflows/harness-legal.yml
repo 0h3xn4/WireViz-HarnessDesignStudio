@@ -78,9 +78,13 @@ jobs:
         run: pip-audit --progress-spinner off
 
   dependency-review:
+    # Needs the repository setting "Dependency graph" (Settings > Code security). While it is off
+    # the action stops with "not supported on this repository", so the job may not fail the run
+    # (owner-checklist.md C). Remove `continue-on-error` once the setting is on.
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-24.04
     timeout-minutes: 10
+    continue-on-error: true
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:

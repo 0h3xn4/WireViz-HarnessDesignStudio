@@ -81,6 +81,7 @@ I cannot see or change these. I will not change settings without your OK. Status
 - [ ] Private vulnerability reporting (not visible; `SECURITY.md` in Phase 2 depends on it).
 - [ ] Dependabot security alerts (security updates are disabled today).
 - [ ] Code scanning (CodeQL) default setup or the workflow I add (not visible).
+- [ ] **Dependency graph** (Settings, Code security): switch it on. The dependency review job of `harness-legal.yml` cannot run without it (it stops with "not supported on this repository"); it is set to not fail the run until then. Remove `continue-on-error` from that job afterwards.
 - [ ] Disable the inherited upstream WireViz workflow `main.yml` if not needed (see B3).
 - [ ] Remove the four stale workflow registrations in the Actions tab (platform probe, probe mac perf, win lock probe, release dry run) if you do not need their history (not visible in files).
 - [ ] Check which repository secrets exist (`WINDOWS_CERT_PFX_BASE64`, `WINDOWS_CERT_PASSWORD`, any macOS secrets). Remove those that are not used.
@@ -133,3 +134,4 @@ Each item says what was done and what only you can do or decide. Mark `[x]` when
 - [ ] **F9. `docs/DOCS_AUDIT.md`** (a file under the root `docs/`) still uses the word "clean-room" and names the other "Studio" products. I did not touch `docs/` (brief rule 3). Tell me if I may change it.
 - [ ] **F10. Private vulnerability reporting** must be switched on (C) for `.github/SECURITY.md` to work.
 - [ ] **F11. Review the screenshots** (B4) before the website uses them. I viewed 2 of 383.
+- [ ] **F12. CodeQL, first run.** The new CodeQL workflow found 101 alerts (20 errors, 54 warnings, 27 notes) on the first pull request, because every file counted as changed (the licence headers). The three in new code were fixed. I could not list the others (the alert list is not readable from here). Read them in the repository's Security tab, Code scanning, and tell me which to fix. Most are probably in older code and in tests.
