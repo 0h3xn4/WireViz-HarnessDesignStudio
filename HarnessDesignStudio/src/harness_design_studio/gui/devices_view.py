@@ -1081,7 +1081,7 @@ class DevicesView(QWidget):
         """The part pickers: connector parts of the library; the first entry of the add row is
         New part."""
         parts = sorted(
-            (p for p in self.ctl.project.parts.values() if p.category == "connector"),
+            devices.connector_parts_to_choose(self.ctl.project),
             key=lambda p: natural_key(p.id),
         )
         labels = [

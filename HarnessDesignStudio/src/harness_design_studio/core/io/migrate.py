@@ -26,7 +26,25 @@ def _v0_to_v1(files: RawFiles) -> RawFiles:
     return out
 
 
-MIGRATIONS: dict[int, Callable[[RawFiles], RawFiles]] = {0: _v0_to_v1}
+def _v1_to_v2(files: RawFiles) -> RawFiles:
+    """v1 to v2 (M4, D-201): the number only. Format 2 is the format that may hold a loose cable end
+    (a connector with the role `loose`), and a tool that writes it says so, so that a version 1.x
+    tool opens the project read-only instead of setting a harness aside piece by piece. Nothing in
+    a format 1 project has to change for that: a loose end is new content, and the origin of a
+    harness (`interfaces`, `link` or `drawn`) is worked out from `generated` and the connection that
+    names it, never stored (`core.origin`), so no harness file, no hash and no output moves. The
+    step is registered now and runs once `SCHEMA_VERSION` is 2 (decided separately); the migration
+    safety net (`core.io.upgrade`) proves it changes no hash, finding or output."""
+    out = copy.deepcopy(files)
+    meta = out.get("project.json")
+    if isinstance(meta, dict):
+        meta["schema_version"] = 2
+    return out
+
+
+# `MIGRATIONS[n]` takes a project from format n to n + 1. The last entry may be one ahead of the
+# format this tool writes (`SCHEMA_VERSION`): it is ready, and it only runs once the number moves.
+MIGRATIONS: dict[int, Callable[[RawFiles], RawFiles]] = {0: _v0_to_v1, 1: _v1_to_v2}
 
 
 def current_version() -> int:

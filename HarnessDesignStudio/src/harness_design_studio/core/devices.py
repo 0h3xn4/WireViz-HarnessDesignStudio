@@ -42,7 +42,7 @@ from .model import (
 )
 from .model.base import MAX_PIN_COUNT, Name
 from .model.logical import Category, Construction, Direction, Shielding, Side
-from .model.physical import Gender, PinDirection, PinRole, Termination
+from .model.physical import TBD_PART_ID, Gender, PinDirection, PinRole, Termination
 from .outputs.stamp import Table
 from .outputs.tables import box_pinouts
 from .vcs.lockview import LockRef, field_lock_reason, lock_reason, locked_objects
@@ -104,11 +104,23 @@ def _box(project: Project, connector_id: str) -> Connector:
     return c
 
 
-def _connector_part(project: Project, part_id: str) -> Part:
+def connector_part(project: Project, part_id: str) -> Part:
+    """The connector part a person chose, or `EditError`. The part of a loose cable end
+    (`TBD-CONNECTOR`) stands for a choice not made: it is not one to choose."""
     part = project.parts.get(part_id)
     if part is None or part.category != "connector":
         raise EditError(f"'{part_id}' is not a connector part in the library.")
+    if part_id == TBD_PART_ID:
+        raise EditError(
+            f"{part_id} stands for a connector that is not chosen yet. Choose a real connector part."
+        )
     return part
+
+
+def connector_parts_to_choose(project: Project) -> list[Part]:
+    """The connector parts a picker offers: every connector part of the library except
+    `TBD-CONNECTOR`, the stand-in of a loose cable end."""
+    return [p for p in project.parts.values() if p.category == "connector" and p.id != TBD_PART_ID]
 
 
 def _text(value: object, what: str) -> str | None:
@@ -366,7 +378,7 @@ def ops_add_connector(
     _writable(project)
     if unit_id not in project.units:
         raise EditError(f"Device '{unit_id}' does not exist.")
-    part = _connector_part(project, part_id)
+    part = connector_part(project, part_id)
     cid, default_name = next_connector_name(project, unit_id)
     cname = _check_connector_name(project, unit_id, name, None) if name else default_name
     if pin_ids is None:
@@ -462,7 +474,7 @@ class PartChange:
 def plan_change_part(project: Project, connector_id: str, part_id: str) -> PartChange:
     """Preview of `ops_change_part`: pins to add or remove and the gender the part says."""
     c = _box(project, connector_id)
-    part = _connector_part(project, part_id)
+    part = connector_part(project, part_id)
     count = part.pin_count
     pins = list(c.pins)
     add: list[str] = []
@@ -1752,7 +1764,7 @@ def ops_add_part(
     if gender is not None and gender not in ("male", "female"):
         raise EditError("A part is male or female.")
     if mates_with is not None:
-        _connector_part(project, mates_with)
+        connector_part(project, mates_with)
     part = Part(
         id=pid,
         category="connector",
@@ -1844,7 +1856,7 @@ def ops_update_part(project: Project, part_id: str, **changes: object) -> list[O
             new[key] = _pin_count(value)
         elif key == "mates_with":
             if value is not None:
-                _connector_part(project, str(value))
+                connector_part(project, str(value))
             new[key] = value
         elif key == "notes":
             if not isinstance(value, str):
@@ -1991,6 +2003,8 @@ def ops_update_interface_type(project: Project, type_id: str, **changes: object)
 
 __all__ = [
     "CONNECTOR_FIELDS",
+    "connector_part",
+    "connector_parts_to_choose",
     "PIN_DIRECTIONS",
     "PIN_FIELDS",
     "PIN_MODES",

@@ -33,10 +33,10 @@ class Placement(Entity):
 
 # The marks of things that sit ON a line (the pill of an interface, the label of a connection, the
 # connector box at an end of one): where each is, is a position along the line. Any other mark
-# ("bend", "route") is the offset of a piece of the line, and a mark of a kind this tool does not
-# know is not ours to read.
+# ("bend", "route", "pos") is an offset, of a piece of the line or of a loose cable end, and a mark
+# of a kind this tool does not know is not ours to read.
 ALONG_MARK_KINDS = frozenset({"interface", "link", "end"})
-OFFSET_MARK_KINDS = frozenset({"bend", "route"})
+OFFSET_MARK_KINDS = frozenset({"bend", "route", "pos"})
 
 
 def mark_is_along(mark_id: str) -> bool:
@@ -54,7 +54,10 @@ class DiagramMark(SparseEntity):
     the line from its first point (0 to 1), so they follow the line when devices move and never
     leave it; "bend:L1" (the vertical piece of a connection) and "route:IF-TM" (that of an
     interface's route) are an offset, `dx` and `dy` in scene units, of that piece from where the
-    tool put it. Release 1.14.0 and 1.15.0 also wrote an offset for the labels; it is still read
+    tool put it; "pos:W009-P2" (M4) is the offset of a loose cable end, the connector `W009-P2`,
+    from where the tool puts it (out of the port its cable plugs into), so that it follows its
+    device and, like every mark, is outside the model hash. Release 1.14.0 and 1.15.0 also wrote an
+    offset for the labels; it is still read
     (the tool turns it into `t` by taking the nearest point of the line, and writes `t` from then
     on)."""
 
@@ -74,7 +77,9 @@ class DiagramMark(SparseEntity):
         if (self.t is not None) == offset[0]:
             raise ValueError("a mark has an offset (dx and dy) or a position (t), one of the two")
         if self.t is not None and self.id.partition(":")[0] in OFFSET_MARK_KINDS:
-            raise ValueError("a position t is for a label on a line, not for a bend or a route")
+            raise ValueError(
+                "a position t is for a label on a line, not for a bend, a route or a loose end"
+            )
         return self
 
 

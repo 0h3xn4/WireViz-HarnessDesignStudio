@@ -38,7 +38,7 @@ from harness_design_studio.core.connector_edit import (
     plan_reset_connector,
     suggested_gender,
 )
-from harness_design_studio.core.devices import contact_part_choices
+from harness_design_studio.core.devices import connector_parts_to_choose, contact_part_choices
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.manual_harness import plan_add_connector, plan_delete_connector
 from harness_design_studio.core.model import Connector, Harness
@@ -287,9 +287,7 @@ class ConnectorEditor(QWidget):
             self.connector.currentText(),
         )
         self.part.clear()
-        for part in sorted(
-            (x for x in p.parts.values() if x.category == "connector"), key=lambda x: x.id
-        ):
+        for part in sorted(connector_parts_to_choose(p), key=lambda x: x.id):
             self.part.addItem(part.id, part.id)
         self.part.setCurrentIndex(max(0, self.part.findData(keep[0])))
         used = {c.mates_with for c in (h.connectors if h else []) if c.mates_with}
@@ -396,7 +394,7 @@ class ConnectorEditor(QWidget):
         h, c = self._selected()
         self.edit_part.clear()
         for part in sorted(
-            (x for x in self.ctl.project.parts.values() if x.category == "connector"),
+            connector_parts_to_choose(self.ctl.project),
             key=lambda x: x.id,
         ):
             self.edit_part.addItem(part.id, part.id)

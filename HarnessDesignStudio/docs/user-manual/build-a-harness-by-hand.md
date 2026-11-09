@@ -15,6 +15,7 @@ This page shows how to make a harness from nothing: no interface, no Generate. Y
 - [Change a connector and its pins](#change-a-connector-and-its-pins)
 - [5. Draw the wires](#5-draw-the-wires)
 - [6. Check, list and release](#6-check-list-and-release)
+- [A cable with a loose end (not in the editor yet)](#a-cable-with-a-loose-end-not-in-the-editor-yet)
 - [What Generate does with it](#what-generate-does-with-it)
 - [Common mistakes](#common-mistakes)
 
@@ -87,6 +88,16 @@ Draw wires as in [edit a wire](edit-a-wire.md), section 4: **New wire** in the *
 - **Strip lengths and accessories** are entered as for any harness: the strip lengths in the **Edit wire** tab, the sleeving, heat shrink, labels and backshells in the **Accessories** tab ([enter the build data](enter-the-build-data.md)). `harness-design-studio import-build-data` can read the contacts of this harness from a table.
 - **Outputs** writes the build workbook, wire list, pinouts, bill of materials, labels and tests for it, like any harness (and the drawings, if you ask for them: [export the outputs](export-the-outputs.md#5-the-pdf-drawings-optional)). `harness-design-studio verify DIR --outputs` compares them with the design. A wire part that is a twisted pair has `conductors` 2 (the starter part `EX-WIRE-TWISTED-SHIELDED` does): the bill of materials and the mass then count the metres of the cable, the sum of the lengths of its wires divided by 2, and not the metres of every wire (since 1.11). Give your own pair parts a *Conductors* column in the parts import ([import data](import-data.md)).
 - **Review**, **Release** and **Revise** work as for a harness from Generate ([release a harness](release-a-harness.md)).
+
+## A cable with a loose end (not in the editor yet)
+
+A cable can end in a **loose end**: the other end of a cable drawn from a port, with no connector chosen and not plugged into anything. It is a connector of the harness like the others, with the role *loose* and the placeholder part `TBD-CONNECTOR` (which the part lists do not offer), and its pins and wires are the ones you drew. **The editor cannot draw one yet** (that comes with a later release of the programme towards 2.0); the core can, and a project may already hold one. What the tool does with it today:
+
+- **Plugging it** into a port pairs its pins with the pins of the port by signal name (TX to RX included), else by pin number; where the names disagree the plug is refused with the pins named, so that nothing is paired wrongly without a word. **Unplugging** a connector makes it a loose end again (its pins and wires stay, its part goes back to `TBD-CONNECTOR`); a harness made from a connection keeps both ends plugged in and refuses. **Giving it a connector part** in the **Connectors** tab decides it: it becomes an ordinary cable connector that plugs into nothing.
+- **Checks:** the design rule *Approved parts* says *N cable end(s) have no connector chosen yet (loose end)*; that is a choice to make, not a part to approve.
+- **Build workbook:** a harness with a loose end gets a ninth check, *Ends not decided*, and *Ready to build* is *no* until the end is decided, whatever else is complete.
+- **Release:** blocked with `loose_end_unresolved`, see [release a harness](release-a-harness.md#optional-a-cable-with-a-loose-end).
+- **Not done yet:** the pinout tables, the labels, the bill of materials, the drawing and the build sheet still list the end as an ordinary connector with the part `TBD-CONNECTOR`.
 
 ## What Generate does with it
 

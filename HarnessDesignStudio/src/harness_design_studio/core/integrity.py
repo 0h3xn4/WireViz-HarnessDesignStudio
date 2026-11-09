@@ -97,6 +97,12 @@ def _check_connector(project: Project, c: Connector, owner: str) -> list[Issue]:
             out.append(_err("cable_connector_has_unit", f"Connector '{c.id}' is not a box connector but names a device.", c.id))  # fmt: skip
         if owner == "project":
             out.append(_err("cable_connector_outside_harness", f"Connector '{c.id}' is a cable/in-line connector and must belong to a harness.", c.id))  # fmt: skip
+    if c.role == "loose":  # an open end is a valid working state, but it plugs into nothing
+        if c.mates_with is not None:
+            out.append(_err("loose_end_mated", f"Connector '{c.id}' is a loose end but says it mates with '{c.mates_with}'. A loose end plugs into nothing; plug it in (role cable) or clear the mate.", c.id))  # fmt: skip
+        owner_h = project.harnesses.get(owner)
+        if owner_h is not None and owner_h.generated:
+            out.append(_err("loose_end_in_generated_harness", f"Connector '{c.id}' is a loose end in harness '{owner}', which Generate makes: Generate would replace it. Loose ends belong in a harness you made.", c.id))  # fmt: skip
     if c.mates_with is not None and c.mates_with not in project.connectors:
         owner_h = project.harnesses.get(owner)
         out.append(
@@ -309,6 +315,8 @@ def _check_links(project: Project) -> list[Issue]:
             out.append(_err("unknown_harness", f"Link '{link.id}' says it made harness '{link.harness_id}', which does not exist. Clear the harness of the link.", link.id))  # fmt: skip
         elif link.harness_id:
             h = project.harnesses[link.harness_id]
+            if h.generated:  # the origin of a harness is worked out from these two facts (D-201)
+                out.append(_err("origin_mismatch", f"Link '{link.id}' says it made harness '{h.id}', but Generate makes {h.id} from interfaces. A harness comes from one place only (interfaces, a connection or a person's drawing). Clear the harness of the link.", link.id))  # fmt: skip
             if link.harness_id in claimed:
                 out.append(_warn("link_harness_shared", f"Links '{claimed[link.harness_id]}' and '{link.id}' both say they made harness '{link.harness_id}'. A harness is made from one link; delete one of the links.", link.id))  # fmt: skip
             claimed.setdefault(link.harness_id, link.id)

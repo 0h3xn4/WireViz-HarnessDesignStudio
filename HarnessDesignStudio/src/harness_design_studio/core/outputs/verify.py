@@ -27,6 +27,7 @@ from harness_design_studio.core.deviations import (
 )
 from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
+from harness_design_studio.core.model.physical import LOOSE_ROLE, TBD_PART_ID
 from harness_design_studio.core.verify import VerifyReport, link_issues
 
 from .export_units import missing_units
@@ -1628,6 +1629,8 @@ def _build_expected_checks(project: Project, h: Harness) -> dict[str, int]:
         used.add((w.from_connector, w.from_pin))
         used.add((w.to_connector, w.to_pin))
     parts = {c.part_id for c in h.connectors} | {w.part_id for w in h.wires if w.part_id}
+    parts.discard(TBD_PART_ID)  # a loose end is judged by "Ends not decided", not as a part
+    loose = sum(1 for c in h.connectors if c.role == LOOSE_ROLE)
     return {
         "Wires without a length": sum(1 for w in h.wires if _length_of(h, w) is None),
         "Wires without a gauge": sum(1 for w in h.wires if w.gauge_awg is None),
@@ -1650,7 +1653,11 @@ def _build_expected_checks(project: Project, h: Harness) -> dict[str, int]:
             for pid in parts
             if pid not in project.parts or project.parts[pid].approval != "approved"
         ),
+        **({_LOOSE_CHECK: loose} if loose else {}),  # the ninth check: only for a harness with one
     }
+
+
+_LOOSE_CHECK = "Ends not decided"  # always blocks, whatever `model.readiness_blocking` says
 
 
 def _build_workbook(r: VerifyReport, project: Project, h: Harness, files: dict[str, bytes]) -> None:
@@ -1858,6 +1865,9 @@ def _build_start(
 ) -> None:
     table = {row[0]: row for row in rows if len(row) >= 3 and row[2] in ("OK", "TO FIX", "NOTE")}
     want = _build_expected_checks(project, h)
+    if _LOOSE_CHECK in table and _LOOSE_CHECK not in want:
+        r.error("out_build", f"{what} (Start here) shows a check for a loose end the harness does not have.", h.id)  # fmt: skip
+        return
     for label, open_n in want.items():
         row = table.get(label)
         if row is None or row[1] != str(open_n) or (row[2] == "OK") != (open_n == 0):
@@ -1865,7 +1875,7 @@ def _build_start(
             return
     ready = next((row[1] for row in rows if row and row[0] == "Ready to build"), None)
     blocking_labels = settings.names(project, "model", "readiness_blocking")
-    blocking = sum(n for label, n in want.items() if label in blocking_labels)
+    blocking = sum(n for label, n in want.items() if label in blocking_labels or label == _LOOSE_CHECK)  # fmt: skip
     names = sorted(n for n, c in project.config.items() if c.placeholder)  # worked out here
     want_ready = "no" if blocking else "yes"
     if want_ready == "yes" and names:

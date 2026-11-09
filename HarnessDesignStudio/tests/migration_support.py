@@ -70,6 +70,13 @@ def install_fake_format(
     monkeypatch.setattr(migrate, "MIGRATIONS", steps)
 
 
+def install_real_format_2(monkeypatch: pytest.MonkeyPatch) -> None:
+    """Make this tool write format 2 with the REAL step 1 to 2 of `core/io/migrate.py` (M4, D-201),
+    not a fake one: only the format number is patched, to what the lead will set in the end."""
+    for module in (migrate, loader, saver):
+        monkeypatch.setattr(module, "SCHEMA_VERSION", FAKE_VERSION)
+
+
 @pytest.fixture
 def fake_v2(monkeypatch: pytest.MonkeyPatch) -> Callable[[], None]:
     """Call it to make this tool write format 2 with the fake step. Call it after the project has

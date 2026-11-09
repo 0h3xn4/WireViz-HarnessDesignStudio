@@ -13,7 +13,10 @@ V0 = FIXTURES / "v0_project"
 
 
 def test_every_old_version_has_a_migration_and_fixture() -> None:
-    assert sorted(MIGRATIONS) == list(range(SCHEMA_VERSION))
+    # every format before the current one has its step; one more step may be registered ahead of the
+    # number (M4: v1 to v2 is ready and runs once SCHEMA_VERSION moves, tests/test_loose_end_migration.py)
+    assert sorted(MIGRATIONS)[:SCHEMA_VERSION] == list(range(SCHEMA_VERSION))
+    assert sorted(MIGRATIONS) in (list(range(SCHEMA_VERSION)), list(range(SCHEMA_VERSION + 1)))
     assert V0.is_dir()
 
 

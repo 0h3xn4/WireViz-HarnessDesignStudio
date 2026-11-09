@@ -19,7 +19,15 @@ from .base import (
 )
 
 Gender = Literal["male", "female", "unspecified"]
-Role = Literal["box", "cable", "inline", "feedthrough", "test"]
+Role = Literal["box", "cable", "inline", "feedthrough", "test", "loose"]
+# "loose" is the end of a cable that is not on a connector yet (M4, D-200, D-201): an ordinary
+# connector of the harness with pins that wires attach to, no `mates_with`, and the library part
+# `TBD-CONNECTOR` until a person decides.
+LOOSE_ROLE: Role = "loose"
+TBD_PART_ID = "TBD-CONNECTOR"  # the library part of a loose end until a person chooses one
+# Where a harness came from. It is worked out from what the files already say (`generated`, and the
+# connection that names the harness), never stored: `links.harness_origin` (D-201).
+Origin = Literal["interfaces", "link", "drawn"]
 Termination = Literal["crimp", "solder", "unspecified"]
 HarnessStatus = Literal["draft", "in_review", "released"]
 ShieldKind = Literal["twisted_pair", "shielded_pair", "overall_shield", "quad", "coax"]
