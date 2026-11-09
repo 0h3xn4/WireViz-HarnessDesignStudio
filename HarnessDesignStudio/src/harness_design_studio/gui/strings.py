@@ -3418,3 +3418,35 @@ CABLE_REFUSED_PLUGGED = (
 STEP_MOVE_LINK_END = "Move an end of connection {}"
 LINK_END_MOVED = "Connection {link} now ends on {connector}. Its pins were paired again."
 LINK_END_MOVED_NOTHING = "Connection {link} stays on {connector}."
+
+# ---- M4c: loose cable ends in the editor (a cable drawn by hand; D-201) ------------------------
+STEP_LEAVE_LOOSE = "Draw a cable from {} with a loose end"
+STEP_PLUG_LOOSE = "Plug the loose end {} in"
+STEP_UNPLUG = "Unplug {}"
+STEP_RESOLVE_LOOSE = "Choose the connector part of {}"
+STEP_MOVE_LOOSE = "Move the loose end {}"
+LOOSE_MADE = "{harness}: a cable from {port} with a loose end, {end}. Drag the end onto a port to plug it in."
+LOOSE_GONE = "{end} is not a cable end of a harness any more."
+LOOSE_NO_PORT = "{unit} has no connector a new cable can go into. Add one in the Devices tab."
+LOOSE_PLUGGED = "{end} is plugged into {port}. Its pins were paired with the port's."
+LOOSE_UNPLUGGED = "{end} is a loose end again; its pins and wires stay."
+LOOSE_UNPLUGGED_LISTED = (
+    "{end} is a loose end again; its pins and wires stay. No end of {harness} is plugged in now, "
+    "so it is listed in the project tree, not drawn."
+)
+LOOSE_RESOLVED = "{end} has the connector part {part} now; the end is decided."
+LOOSE_TIP = (
+    "Open end of {harness} ({name}): no connector chosen yet.\n"
+    "{end}, {pins} pins, on the cable from {port}.\n"
+    "Drag it onto a port to plug it in, or elsewhere to move it."
+)
+LOOSE_CAPTION = "{name} · open end"
+DRAWN_CABLE_TIP = "Cable {harness} ({name}), {origin}: from {a} to {b}."
+CABLE_HINT_SAVED = (
+    "Drop on a port to plug {end} in, or on empty ground to move it. Esc leaves it where it was."
+)
+ORIGIN_WORDS = {
+    "interfaces": "made by Generate from the interfaces",
+    "link": "made from a connection",
+    "drawn": "drawn by hand",
+}
