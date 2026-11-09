@@ -102,7 +102,7 @@ SHAPES: dict[str, tuple[str, ...]] = {
     "import-asbuilt": ("ok", "dry_run", "changed", "counts", "rows", "import"),
     "export-asbuilt": ("ok", "rows", "columns", "written"),
     "extensions": (
-        "ok", "has_folder", "enabled_declarative", "enabled_plugins", "files", "plugins", "items",
+        "ok", "has_folder", "python_plugins_blocked", "enabled_declarative", "enabled_plugins", "files", "plugins", "items",
         "issues",
     ),
     "trust": ("ok", "action", "name", "version", "sha256", "lines", "where", "trusted", "changed"),

@@ -37,7 +37,7 @@ def _trust_store_in_a_temp_folder(
 
 @pytest.fixture(autouse=True)
 def _no_plugin_switch_of_this_computer(monkeypatch: pytest.MonkeyPatch) -> None:
-    """Python plug-ins can be switched off on a computer (REQ-OFFLINE-05): by an environment variable
+    """Python plug-ins can be switched off on a computer: by an environment variable
     or a machine-wide policy file. A test does not see the switch of the computer it runs on; the
     tests of the switch set it themselves."""
     from harness_design_studio.core.extensions import policy

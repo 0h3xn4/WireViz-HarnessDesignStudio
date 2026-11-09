@@ -67,7 +67,7 @@ def _policy_says_off(path: Path) -> str:
     if value == ALLOWED:
         return ""
     if value == OFF:
-        return f"the policy file {path} says \"{POLICY_KEY}\": \"{OFF}\""
+        return f'the policy file {path} says "{POLICY_KEY}": "{OFF}"'
     return f'the policy file {path} does not say "{POLICY_KEY}": "{ALLOWED}"'
 
 

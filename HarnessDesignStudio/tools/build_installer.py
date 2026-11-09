@@ -148,9 +148,11 @@ def elf_needed(path: Path) -> list[str]:
         return []
     if data[:4] != b"\x7fELF" or data[4] != 2 or data[5] != 1:
         return []
-    shoff, = struct.unpack_from("<Q", data, 0x28)
+    (shoff,) = struct.unpack_from("<Q", data, 0x28)
     shentsize, shnum = struct.unpack_from("<HH", data, 0x3A)
-    sections = [struct.unpack_from("<IIQQQQIIQQ", data, shoff + i * shentsize) for i in range(shnum)]
+    sections = [
+        struct.unpack_from("<IIQQQQIIQQ", data, shoff + i * shentsize) for i in range(shnum)
+    ]
     out: list[str] = []
     for sec in sections:
         if sec[1] != 6:  # SHT_DYNAMIC
@@ -186,7 +188,9 @@ def strip_network_capable(folders: Iterable[Path]) -> list[tuple[str, int]]:
         if n in names
     )
     if needs:
-        raise SystemExit("error: a file of the package needs a library that was removed: " + "; ".join(needs))
+        raise SystemExit(
+            "error: a file of the package needs a library that was removed: " + "; ".join(needs)
+        )
     return removed
 
 

@@ -134,7 +134,7 @@ def unpack(package: Path, into: Path) -> Program:
         import zipfile
 
         with zipfile.ZipFile(package) as zf:
-            zf.extractall(into)
+            zf.extractall(into)  # noqa: S202 - zipfile drops absolute paths and ".." itself
         folder = into
     elif package.suffix == ".deb":
         subprocess.run(["dpkg-deb", "-x", str(package), str(into)], check=True)  # noqa: S607
@@ -220,7 +220,9 @@ def find_isolation(wanted: str) -> tuple[str, list[str], list[dict[str, Any]], d
             tried.append({"method": name, "ok": False, "why": str(exc)})
             continue
         if done.returncode != 0:
-            tried.append({"method": name, "ok": False, "why": (done.stderr or done.stdout).strip()[-400:]})
+            tried.append(
+                {"method": name, "ok": False, "why": (done.stderr or done.stdout).strip()[-400:]}
+            )
             continue
         probe = json.loads(done.stdout.strip().splitlines()[-1])
         isolated = (
@@ -254,26 +256,60 @@ def workflow(idle: float) -> list[Step]:
         Step("version", "cli", ["--version"]),
         Step("new project from an example", "cli", ["new", p, "--template", TEMPLATE]),
         Step("validate", "cli", ["validate", p], (0, 1), before="canaries"),
-        Step("import a CSV of parts", "cli",
-             ["import-parts", p, "parts.csv", "--approved", "Approved"], before="csv"),  # fmt: skip
+        Step(
+            "import a CSV of parts",
+            "cli",
+            ["import-parts", p, "parts.csv", "--approved", "Approved"],
+            before="csv",
+        ),  # fmt: skip
         Step("generate", "cli", ["generate", p]),
         Step("check", "cli", ["check", p], (0, 1)),
         Step("drc", "cli", ["drc", p], (0, 1)),
         Step("export with drawings", "cli", ["export", p, "--drawings"]),
         Step("export-data", "cli", ["export-data", p, "--out", "audit-data"]),
         Step("verify the outputs", "cli", ["verify", p, "--outputs"]),
-        Step("release with the --accept flags", "cli",
-             ["release", p, "W001", "--by", "A. Engineer", "--checker", "B. Checker",
-              "--comment", "Offline audit release", "--accept-placeholders", accept,
-              "--accept-unapproved-parts", accept, "--accept-asbuilt", accept,
-              "--accept-loose-ends", accept]),  # fmt: skip
+        Step(
+            "release with the --accept flags",
+            "cli",
+            [
+                "release",
+                p,
+                "W001",
+                "--by",
+                "A. Engineer",
+                "--checker",
+                "B. Checker",
+                "--comment",
+                "Offline audit release",
+                "--accept-placeholders",
+                accept,
+                "--accept-unapproved-parts",
+                accept,
+                "--accept-asbuilt",
+                accept,
+                "--accept-loose-ends",
+                accept,
+            ],
+        ),  # fmt: skip
         Step("log", "cli", ["log", p]),
-        Step("deliberate error: a folder that does not exist", "cli",
-             ["validate", "no-such-project"], (1, 2)),  # fmt: skip
-        Step("deliberate error: a damaged CSV", "cli",
-             ["import-lengths", p, "damaged.csv"], (1, 2), before="damaged"),  # fmt: skip
-        Step("editor: open, F1, rule check, error, idle, quit", "gui",
-             ["--audit-run", p, "gui-report.json", str(idle)]),  # fmt: skip
+        Step(
+            "deliberate error: a folder that does not exist",
+            "cli",
+            ["validate", "no-such-project"],
+            (1, 2),
+        ),  # fmt: skip
+        Step(
+            "deliberate error: a damaged CSV",
+            "cli",
+            ["import-lengths", p, "damaged.csv"],
+            (1, 2),
+            before="damaged",
+        ),  # fmt: skip
+        Step(
+            "editor: open, F1, rule check, error, idle, quit",
+            "gui",
+            ["--audit-run", p, "gui-report.json", str(idle)],
+        ),  # fmt: skip
     ]
 
 
@@ -401,7 +437,11 @@ def run_workflow(
         base = program.cli if step.program == "cli" else program.gui
         cmd = [*base, *step.args]
         # the virtual display is the audit's, not the program's: it is started outside the trace
-        xvfb = ["xvfb-run", "-a", "-s", "-nolisten tcp"] if step.program == "gui" and gui_platform == "xcb" else []
+        xvfb = (
+            ["xvfb-run", "-a", "-s", "-nolisten tcp"]
+            if step.program == "gui" and gui_platform == "xcb"
+            else []
+        )
         tracing = bool(prefix) and prefix[0] == "strace"
         trace = logs / f"{label}-{n:02d}.strace" if tracing else None
         if trace is not None:
@@ -419,7 +459,9 @@ def run_workflow(
                 ).returncode  # fmt: skip
             except subprocess.TimeoutExpired:
                 code = -999
-        ran.append(Ran(step.name, cmd, code, step.expect, time.monotonic() - start, out, err, trace))
+        ran.append(
+            Ran(step.name, cmd, code, step.expect, time.monotonic() - start, out, err, trace)
+        )
         print(f"  [{label}] {step.name}: exit {code}{'' if code in step.expect else '  <-- unexpected'}",
               flush=True)  # fmt: skip
     return ran
@@ -473,7 +515,9 @@ class TraceFacts:
     connections: list[dict[str, str]] = field(default_factory=list)
     listening: list[dict[str, str]] = field(default_factory=list)
     children: list[dict[str, Any]] = field(default_factory=list)
-    written: dict[str, str] = field(default_factory=dict)  # path -> how (open for writing, mkdir...)
+    written: dict[str, str] = field(
+        default_factory=dict
+    )  # path -> how (open for writing, mkdir...)
     libraries: set[str] = field(default_factory=set)  # mapped as code (mmap with PROT_EXEC)
     opened_libraries: set[str] = field(default_factory=set)  # opened, perhaps only to be read
     config_read: set[str] = field(default_factory=set)
@@ -500,14 +544,13 @@ def read_trace(path: Path, cwd: Path) -> TraceFacts:
         elif name in ("connect", "sendto", "sendmsg", "bind"):
             fam = re.search(r"sa_family=(AF_\w+)", args)
             if fam:
-                target = (
-                    re.search(r'sun_path=(@?"[^"]*"|@[^,}]*)', args)
-                    or re.search(r'inet6?_(?:addr|pton)\([^)]*"([^"]+)"', args)
+                peer = re.search(r'sun_path=(@?"[^"]*"|@[^,}]*)', args) or re.search(
+                    r'inet6?_(?:addr|pton)\([^)]*"([^"]+)"', args
                 )
                 port = re.search(r"sin6?_port=htons\((\d+)\)", args)
                 row = {
                     "call": name, "family": fam.group(1),
-                    "target": (target.group(1) if target else "?") + (f":{port.group(1)}" if port else ""),
+                    "target": (peer.group(1) if peer else "?") + (f":{port.group(1)}" if port else ""),
                     "result": result + m.group(5).strip()[:60], "pid": str(pid),
                 }  # fmt: skip
                 (facts.listening if name == "bind" else facts.connections).append(row)
@@ -524,7 +567,9 @@ def read_trace(path: Path, cwd: Path) -> TraceFacts:
             })  # fmt: skip
         elif name in ("openat", "open", "creat", "openat2"):
             strings = _strings(args)
-            target = result_path if ok and result_path else (_unescape(strings[0]) if strings else "")
+            target = (
+                result_path if ok and result_path else (_unescape(strings[0]) if strings else "")
+            )
             if not target:
                 continue
             if not target.startswith("/"):
@@ -545,7 +590,9 @@ def read_trace(path: Path, cwd: Path) -> TraceFacts:
             dirfds = re.findall(r"(?:^|, )(-?\d+|AT_FDCWD)<([^>]*)>", args)
             strings = [_unescape(s) for s in _strings(args)]
             base = dirfds[0][1] if dirfds else str(cwd)
-            for s in strings[-1:] if name.startswith(("rename", "link", "symlink")) else strings[:1]:
+            for s in (
+                strings[-1:] if name.startswith(("rename", "link", "symlink")) else strings[:1]
+            ):
                 target = s if s.startswith("/") else os.path.normpath(os.path.join(base, s))
                 facts.written.setdefault(target, name)
         if name in WRITE_LIKE:
@@ -560,10 +607,12 @@ def read_trace(path: Path, cwd: Path) -> TraceFacts:
 
 def load_allow_list(path: Path) -> list[dict[str, Any]]:
     doc = json.loads(path.read_text(encoding="utf-8"))
-    entries = doc["allow"]
+    entries: list[dict[str, Any]] = doc["allow"]
     for e in entries:
         if not e.get("reason", "").strip() or e.get("kind") not in KINDS:
-            raise SystemExit(f"error: allow-list entry without a reason or with an unknown kind: {e}")
+            raise SystemExit(
+                f"error: allow-list entry without a reason or with an unknown kind: {e}"
+            )
     return entries
 
 
@@ -586,7 +635,7 @@ def allowed(
         for key, real in places.items():
             pattern = pattern.replace("{" + key + "}", real)
         if fnmatch.fnmatchcase(value, pattern):
-            return e["reason"]
+            return str(e["reason"])
     return ""
 
 
@@ -614,12 +663,14 @@ def which_tokens(text: str, tokens: dict[str, str]) -> list[str]:
 
 def canary_hits(data: bytes, base: str) -> int:
     low = data.lower()
-    return sum(low.count(form) for form in (base.lower().encode(), base.lower().encode("utf-16-le")))
+    return sum(
+        low.count(form) for form in (base.lower().encode(), base.lower().encode("utf-16-le"))
+    )
 
 
 def scan_files(root: Path, base: str, skip: tuple[Path, ...] = ()) -> list[str]:
     """Files below `root` (not below a `skip` folder) that hold the canary."""
-    hits = []
+    hits: list[str] = []
     if not root.exists():
         return hits
     for p in sorted(root.rglob("*")):
@@ -668,7 +719,7 @@ def evaluate(
     libraries: set[str] = set()
     opened: set[str] = set()
     config_read: set[str] = set()
-    canary: list[dict[str, str]] = []
+    canary: list[dict[str, Any]] = []
     base = tokens["base"]
     for r in traced:
         if r.trace is None or not r.trace.is_file():
@@ -682,15 +733,25 @@ def evaluate(
         # (PyInstaller's bootloader) then starts itself once more in the same process
         first = facts.children[0] if facts.children else None
         for i, c in enumerate(facts.children):
-            again = first is not None and i > 0 and c["pid"] == first["pid"] and c["program"] == first["program"]
-            children.append({**c, "step": r.name, "started_by_audit": i == 0, "same_process_again": again})
+            again = (
+                first is not None
+                and i > 0
+                and c["pid"] == first["pid"]
+                and c["program"] == first["program"]
+            )
+            children.append(
+                {**c, "step": r.name, "started_by_audit": i == 0, "same_process_again": again}
+            )
         for path, how in facts.written.items():
             written.setdefault(path, how)
         libraries |= facts.libraries
         opened |= facts.opened_libraries
         config_read |= facts.config_read
         for target, data in facts.writes:
-            if canary_hits(_unescape(data).encode("utf-8", "replace"), base) or base.lower() in data.lower():
+            if (
+                canary_hits(_unescape(data).encode("utf-8", "replace"), base)
+                or base.lower() in data.lower()
+            ):
                 canary.append({"where": f"a write to {target}", "step": r.name, "target": target,
                                "fields": which_tokens(data, tokens)})  # fmt: skip
     for fam, count in sorted(families.items()):
@@ -720,14 +781,14 @@ def evaluate(
         judge("package_file", row["file"], entries, places, findings, ok_rows, row["what"])
     # the canaries: in every write of the processes, the files they left, their output, the traces
     expected_places = (work / "audit-project", work / "audit-data")
-    for row in canary:
-        t = row["target"]
+    for hit in canary:
+        t = hit["target"]
         if t.startswith(str(logs) + "/"):  # the output of the command, which the audit keeps
-            stream = "stdout" if t.endswith(".stdout") else "stderr"
-            t = f"{stream} of {next((r.name for r in traced if str(r.stdout) == t or str(r.stderr) == t), '?')}"
+            which = "stdout" if t.endswith(".stdout") else "stderr"
+            t = f"{which} of {next((r.name for r in traced if str(r.stdout) == t or str(r.stderr) == t), '?')}"
         inside = any(t.startswith(str(p) + "/") for p in expected_places)
         judge("canary", t if not inside else "{project-or-data}", entries, places, findings, ok_rows,
-              f"{row['where']} in step '{row['step']}' ({', '.join(row['fields'])})", row["fields"])  # fmt: skip
+              f"{hit['where']} in step '{hit['step']}' ({', '.join(hit['fields'])})", hit["fields"])  # fmt: skip
     left = scan_files(work, base, skip=(*expected_places, logs))
     for p in left:
         if p.endswith(("parts.csv",)) and Path(p).parent == work:
@@ -756,7 +817,9 @@ def evaluate(
         "libraries_mapped": sorted(libraries),
         "network_capable_libraries_mapped": net_libs,
         # opened without being mapped as code: Qt reads the metadata of every plug-in of a folder
-        "network_capable_files_only_read": sorted(p for p in opened - libraries if network_capable(p)),
+        "network_capable_files_only_read": sorted(
+            p for p in opened - libraries if network_capable(p)
+        ),
         "network_config_read": sorted(config_read),
         "package_network_capable_files": package_contents(program.folder),
         "canary_places": [r for r in ok_rows if r["kind"] == "canary"],
@@ -794,10 +857,18 @@ def markdown(doc: dict[str, Any]) -> str:
         "| Run | Steps | All as expected |",
         "| --- | --- | --- |",
     ]  # fmt: skip
-    for key, title in (("isolated", "(a) no network"), ("traced", "(b) watched (Linux: strace with the normal network; Windows: firewall and audit events)")):
+    for key, title in (
+        ("isolated", "(a) no network"),
+        (
+            "traced",
+            "(b) watched (Linux: strace with the normal network; Windows: firewall and audit events)",
+        ),
+    ):
         if doc.get(key):
             steps = doc[key]["steps"]
-            lines.append(f"| {title} | {len(steps)} | {'yes' if all(s['ok'] for s in steps) else 'NO'} |")
+            lines.append(
+                f"| {title} | {len(steps)} | {'yes' if all(s['ok'] for s in steps) else 'NO'} |"
+            )
     if t:
         lines += [
             "",
@@ -825,7 +896,9 @@ def markdown(doc: dict[str, Any]) -> str:
                   f"- Settings file: `{gui.get('settings_file', '?')}`",
                   f"- Python network modules imported: {', '.join(gui.get('python_network_modules', [])) or 'none'}"]  # fmt: skip
     lines += ["", "## Findings (not on the allow-list)", ""]
-    lines += [f"- {f['kind']}: `{f['value']}` {f.get('detail', '')}" for f in doc["findings"]] or ["None."]
+    lines += [f"- {f['kind']}: `{f['value']}` {f.get('detail', '')}" for f in doc["findings"]] or [
+        "None."
+    ]
     lines += ["", "## Not claimed", "",
               "Testing shows the absence of network use only on the paths this workflow runs. The "
               "kernel, the desktop and the browser that opens the guide are outside the claim. A "
@@ -838,7 +911,9 @@ def markdown(doc: dict[str, Any]) -> str:
 def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
     what = parser.add_mutually_exclusive_group(required=True)
-    what.add_argument("--package", type=Path, help="a .tar.gz or .deb of the program, or its folder")
+    what.add_argument(
+        "--package", type=Path, help="a .tar.gz or .deb of the program, or its folder"
+    )
     what.add_argument("--source", action="store_true", help="the source install of this checkout")
     parser.add_argument("--out", type=Path, default=Path("offline-audit"))
     parser.add_argument("--idle", type=float, default=20.0)
@@ -859,7 +934,9 @@ def main(argv: list[str] | None = None) -> int:
         print("error: strace is not installed (sudo apt-get install strace)", file=sys.stderr)
         return 2
     if args.gui_platform == "xcb" and shutil.which("xvfb-run") is None:
-        print("error: --gui-platform xcb needs xvfb-run (sudo apt-get install xvfb)", file=sys.stderr)
+        print(
+            "error: --gui-platform xcb needs xvfb-run (sudo apt-get install xvfb)", file=sys.stderr
+        )
         return 2
     entries = load_allow_list(args.allow_list)
     out: Path = args.out.resolve()
@@ -909,7 +986,10 @@ def main(argv: list[str] | None = None) -> int:
             work = scratch / "traced"
             ran = run_workflow(program, work, logs, strace, tokens, args.idle, args.gui_platform,
                                "traced")  # fmt: skip
-            doc["traced"] = {"steps": step_rows(ran), **evaluate(program, ran, work, logs, tokens, entries)}
+            doc["traced"] = {
+                "steps": step_rows(ran),
+                **evaluate(program, ran, work, logs, tokens, entries),
+            }
             failed += [f"(b) {r.name}" for r in ran if not r.ok]
             gui_report = work / "gui-report.json"
             if gui_report.is_file():
@@ -930,7 +1010,9 @@ def main(argv: list[str] | None = None) -> int:
         (out / "offline-audit.json").write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n",
                                                 encoding="utf-8")  # fmt: skip
         # the summary names the work folder WORK, so that it reads the same on every machine
-        (out / "offline-audit.md").write_text(markdown(doc).replace(str(scratch), "WORK"), encoding="utf-8")
+        (out / "offline-audit.md").write_text(
+            markdown(doc).replace(str(scratch), "WORK"), encoding="utf-8"
+        )
         print((out / "offline-audit.md").read_text(encoding="utf-8"))
         return 0 if doc["result"] == "pass" else 1
     finally:

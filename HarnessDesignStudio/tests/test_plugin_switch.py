@@ -78,7 +78,8 @@ def trust_demo(folder: Path) -> None:
 
 def demo_state(folder: Path) -> plugins.PluginInfo:
     ext = load_project(folder).project.extensions
-    return next(p for p in ext.plugins if p.name == "demo")
+    info: plugins.PluginInfo = next(p for p in ext.plugins if p.name == "demo")
+    return info
 
 
 def use_policy(monkeypatch: pytest.MonkeyPatch, path: Path) -> None:

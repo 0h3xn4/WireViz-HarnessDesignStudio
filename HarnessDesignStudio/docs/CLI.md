@@ -86,7 +86,7 @@ Every command that has a result in data form takes `--json`. The usual text line
 | `asbuilt` | `ok`, `records`, `complete`, `missing`, `out_of_limit`, `within_limit`, `not_compared`, `differs_from_design`, `stale_records`, `harnesses`, `lines` |
 | `import-asbuilt` | `ok`, `dry_run`, `changed`, `counts`, `rows`, `import` |
 | `export-asbuilt` | `ok`, `rows`, `columns`, `written` |
-| `extensions` | `ok`, `has_folder`, `enabled_declarative`, `enabled_plugins`, `files`, `plugins`, `items`, `issues` |
+| `extensions` | `ok`, `has_folder`, `python_plugins_blocked`, `enabled_declarative`, `enabled_plugins`, `files`, `plugins`, `items`, `issues` |
 | `trust` | `ok`, `action`, `name`, `version`, `sha256`, `lines`, `where`, `trusted`, `changed` |
 | `import-plugin` | `ok`, `dry_run`, `changed`, `importer`, `rows`, `notes` |
 
@@ -986,7 +986,7 @@ harness-design-studio compare old-checkout new-checkout --json
 
 ### harness-design-studio extensions
 
-Lists the extensions of a project (the folder `extensions/`): the declarative files (rules, tables and lookup tables written as data) and the Python plug-ins, each with its name, version, source, SHA-256, whether the project enables it and, for Python code, whether you trust it. Without options it lists what the extensions add; with --all it lists the built-in items too. Nothing in the folder runs unless the project enables it in `extensions/enabled.json`, and Python code is not even imported unless you have also trusted that exact code (`trust`). --enable NAME and --disable NAME change enabled.json (NAME is a file such as min-gauge.json, or the name of a plug-in). Exit 1 while something the project enables is not applied.
+Lists the extensions of a project (the folder `extensions/`): the declarative files (rules, tables and lookup tables written as data) and the Python plug-ins, each with its name, version, source, SHA-256, whether the project enables it and, for Python code, whether you trust it. Without options it lists what the extensions add; with --all it lists the built-in items too. Nothing in the folder runs unless the project enables it in `extensions/enabled.json`, and Python code is not even imported unless you have also trusted that exact code (`trust`), and never while Python plug-ins are switched off on this computer (the environment variable HARNESS_DESIGN_STUDIO_NO_PLUGINS or the machine-wide policy file, docs/SECURITY.md). --enable NAME and --disable NAME change enabled.json (NAME is a file such as min-gauge.json, or the name of a plug-in). Exit 1 while something the project enables is not applied.
 
 `harness-design-studio extensions project [options]`
 

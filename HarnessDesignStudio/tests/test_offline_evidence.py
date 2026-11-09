@@ -74,7 +74,9 @@ def trace(tmp_path: Path) -> Path:
 
 def test_the_trace_reader_puts_unfinished_calls_together(trace: Path) -> None:
     lines = [text for _pid, text in joined_lines(trace)]
-    assert any(t.startswith("socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_IP) = 7") for t in lines)
+    assert any(
+        t.startswith("socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_IP) = 7") for t in lines
+    )
 
 
 def test_the_trace_reader_finds_sockets_connections_children_files_and_libraries(
@@ -220,7 +222,11 @@ def test_the_build_removes_them_and_refuses_a_package_that_still_has_one(tmp_pat
 
 def test_a_file_that_stays_never_needs_a_removed_library(tmp_path: Path) -> None:
     gui = next(
-        (Path(p) for p in sys.path if (Path(p) / "PySide6" / "Qt" / "lib" / "libQt6Gui.so.6").is_file()),
+        (
+            Path(p)
+            for p in sys.path
+            if (Path(p) / "PySide6" / "Qt" / "lib" / "libQt6Gui.so.6").is_file()
+        ),
         None,
     )
     if gui is None:
@@ -243,19 +249,29 @@ def test_a_file_that_stays_never_needs_a_removed_library(tmp_path: Path) -> None
 
 
 def test_python_modules_that_could_reach_the_network_are_left_out_of_the_package() -> None:
-    for module in ("ssl", "_ssl", "multiprocessing", "PySide6.QtNetwork", "PySide6.QtWebEngineCore"):
+    for module in (
+        "ssl",
+        "_ssl",
+        "multiprocessing",
+        "PySide6.QtNetwork",
+        "PySide6.QtWebEngineCore",
+    ):
         assert module in build_installer.EXCLUDES, module
     # and nothing of the program imports them, so leaving them out cannot break it
     for path in SRC.rglob("*.py"):
         text = path.read_text(encoding="utf-8")
-        assert not re.search(r"^\s*(import|from)\s+(multiprocessing|ssl|concurrent)\b", text, re.M), path
+        assert not re.search(
+            r"^\s*(import|from)\s+(multiprocessing|ssl|concurrent)\b", text, re.M
+        ), path
 
 
 def test_the_guide_loads_nothing_from_elsewhere() -> None:
     """F1 hands the guide to the system's browser; it must not make the browser fetch anything."""
     for page in (SRC / "resources" / "guide").rglob("*.htm*"):
         html = page.read_text(encoding="utf-8")
-        assert not re.search(r"""(src|href|action)\s*=\s*["']?\s*(https?:|//|ftp:)""", html, re.I), page
+        assert not re.search(
+            r"""(src|href|action)\s*=\s*["']?\s*(https?:|//|ftp:)""", html, re.I
+        ), page
         assert not re.search(r"url\(\s*['\"]?\s*(https?:|//)", html, re.I), page
         assert not re.search(r"@import\s+['\"]?(https?:|//)", html, re.I), page
 
@@ -309,3 +325,18 @@ def test_the_offline_audit_of_the_source_install_passes(tmp_path: Path) -> None:
     assert not traced["connections"] and not traced["listening"]
     assert set(traced["socket_families"]) <= {"AF_UNIX"}
     assert (out / "offline-audit.md").read_text(encoding="utf-8").count("Result: PASS") == 1
+
+
+def test_the_windows_audit_watches_connections_and_programs_started() -> None:
+    """REQ-OFFLINE-06: the Windows counterpart (run in CI on windows-latest) asks Windows for the
+    events of every connection its filtering platform allowed or blocked and of every program
+    started; it can be imported on any platform, so that this file is checked everywhere."""
+    from tools import offline_audit_windows as win
+
+    assert {5152, 5156, 5157, 5158, 5159} <= set(win.WFP_EVENTS)
+    assert set(win.AUDIT_GUIDS) == {
+        "Filtering Platform Connection", "Filtering Platform Packet Drop", "Process Creation",
+    }  # fmt: skip
+    entries = load_allow_list(ALLOW_LIST)
+    assert allowed(entries, "child", r"\??\C:\Windows\system32\conhost.exe 0xffffffff -ForceV1", {})
+    assert not allowed(entries, "child", r"C:\Windows\System32\curl.exe https://x", {})

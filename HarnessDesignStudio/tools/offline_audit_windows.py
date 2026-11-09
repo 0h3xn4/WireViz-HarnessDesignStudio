@@ -82,8 +82,12 @@ def audit_policy_on() -> tuple[list[str], list[str]]:
     failed: list[str] = []
     for name, guid in AUDIT_GUIDS.items():
         before = _run(["auditpol", "/get", f"/subcategory:{guid}", "/r"])
-        was = before.stdout.strip().splitlines()[-1].split(",")[-2] if before.returncode == 0 else ""
-        done = _run(["auditpol", "/set", f"/subcategory:{guid}", "/success:enable", "/failure:enable"])
+        was = (
+            before.stdout.strip().splitlines()[-1].split(",")[-2] if before.returncode == 0 else ""
+        )
+        done = _run(
+            ["auditpol", "/set", f"/subcategory:{guid}", "/success:enable", "/failure:enable"]
+        )
         if done.returncode != 0:
             failed.append(f"{name}: {(done.stdout + done.stderr).strip()[:200]}")
             continue
@@ -103,7 +107,7 @@ def events(start: float, ids: tuple[int, ...]) -> list[dict[str, str]]:
     script = (
         f"$s=[datetime]'{when}'; Get-WinEvent -FilterHashtable @{{LogName='Security'; "
         f"Id={','.join(map(str, ids))}; StartTime=$s}} -ErrorAction SilentlyContinue | "
-        "ForEach-Object { $_.ToXml() + \"`n<!--end-->\" }"
+        'ForEach-Object { $_.ToXml() + "`n<!--end-->" }'
     )
     done = _ps(script)
     rows: list[dict[str, str]] = []
@@ -167,7 +171,7 @@ def main_windows(args: argparse.Namespace) -> int:
             "tried": [{"method": "auditpol", "ok": not policy_failed, "why": "; ".join(policy_failed)}],
             "probe": {},
         }  # fmt: skip
-        print(f"firewall: {count} rules; auditing: {'on' if not policy_failed else policy_failed}")
+        print(f"firewall: {count} rules; auditing: {policy_failed or 'on'}")
         start = time.time()
         work = scratch / "traced"
         ran = run_workflow(program, work, logs, [], tokens, args.idle, "offscreen", "windows")
@@ -202,9 +206,25 @@ def main_windows(args: argparse.Namespace) -> int:
         dlls = gui.get("libraries_mapped", [])
         for dll in dlls:
             if network_capable(Path(dll).name):
-                judge("library", dll, entries, places, findings, ok_rows, network_capable(Path(dll).name))
+                judge(
+                    "library",
+                    dll,
+                    entries,
+                    places,
+                    findings,
+                    ok_rows,
+                    network_capable(Path(dll).name),
+                )
         for module in gui.get("python_network_modules", []):
-            judge("python_module", module, entries, places, findings, ok_rows, "imported by the editor")
+            judge(
+                "python_module",
+                module,
+                entries,
+                places,
+                findings,
+                ok_rows,
+                "imported by the editor",
+            )
         for url in gui.get("urls_opened", []):
             judge("url", url.replace("\\", "/"), entries,
                   {"package": folder.as_posix(), "src": (ROOT / "src").as_posix()},
@@ -218,7 +238,9 @@ def main_windows(args: argparse.Namespace) -> int:
                 found = which_tokens(Path(hit).read_bytes().decode("utf-8", "replace"), tokens)
                 value = hit
                 if settings is not None and Path(hit).parent == settings.parent:
-                    value = "{home}/.config/HarnessDesigner/" + Path(hit).name  # the same rule as Linux
+                    value = (
+                        "{home}/.config/HarnessDesigner/" + Path(hit).name
+                    )  # the same rule as Linux
                 judge("canary", value, entries, {"home": "{home}"}, findings, ok_rows,
                       f"a file left behind holds the canary ({', '.join(found)})", found)  # fmt: skip
         for r in ran:
@@ -227,7 +249,9 @@ def main_windows(args: argparse.Namespace) -> int:
                     found = which_tokens(stream.read_bytes().decode("utf-8", "replace"), tokens)
                     judge("canary", f"{stream.suffix.lstrip('.')} of {r.name}", entries, {},
                           findings, ok_rows, f"printed by the command ({', '.join(found)})", found)  # fmt: skip
-        failed = [f"{r.name}" for r in ran if not r.ok] + (["the editor wrote no report"] if not gui else [])
+        failed = [f"{r.name}" for r in ran if not r.ok] + (
+            ["the editor wrote no report"] if not gui else []
+        )
         if policy_failed:
             failed.append("the audit policy could not be switched on: " + "; ".join(policy_failed))
         doc.update(
@@ -247,7 +271,9 @@ def main_windows(args: argparse.Namespace) -> int:
         )  # fmt: skip
         (out / "offline-audit.json").write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n",
                                                 encoding="utf-8")  # fmt: skip
-        (out / "offline-audit.md").write_text(markdown(doc).replace(str(scratch), "WORK"), encoding="utf-8")
+        (out / "offline-audit.md").write_text(
+            markdown(doc).replace(str(scratch), "WORK"), encoding="utf-8"
+        )
         print((out / "offline-audit.md").read_text(encoding="utf-8"))
         return 0 if doc["result"] == "pass" else 1
     finally:
