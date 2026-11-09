@@ -170,6 +170,17 @@ def assemble(app: Path) -> int:
     collect(app / "LICENSES")
     for name in ("LICENSE", "NOTICE"):  # the licence and the notice of the program itself (D-203)
         shutil.copy2(ROOT / name, app / name)
+    from tools import third_party
+
+    parts = third_party.inventory(app, "windows")  # from the package itself (D-211)
+    if bad := third_party.problems(parts):
+        print(
+            "error: a component has no known licence or one that is not allowed:", *bad, sep="\n- "
+        )
+        return 1
+    (app / "THIRD_PARTY_NOTICES.txt").write_text(
+        third_party.to_notices(parts, __version__, "windows"), encoding="utf-8"
+    )
     shutil.copy2(PK / "README-windows.txt", app / "README-windows.txt")
     return 0
 

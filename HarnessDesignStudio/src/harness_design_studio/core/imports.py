@@ -14,7 +14,7 @@ import stat
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import edit
+from . import edit, legal_texts
 from .commands import Op
 from .errors import HarnessError
 from .ids import ID_RE
@@ -79,7 +79,10 @@ def parse_csv(text: str) -> Table:
 
 # the first line of every CSV the tool writes (core/outputs/stamp.py): "# harness-design-studio
 # 1.11.1 model e01643bd29d1"
-STAMP_LINE = re.compile(r"# harness-design-studio \S+ model [0-9a-f]+\r?\n")
+STAMP_LINE = re.compile(
+    r"# harness-design-studio \S+ model [0-9a-f]+\r?\n"
+    rf"(?:# harness-design-studio \S+\. {re.escape(legal_texts.OUTPUT_NOTICE.split('. ', 1)[1])}\r?\n)?"
+)
 
 
 def parse_csv_file(text: str) -> Table:

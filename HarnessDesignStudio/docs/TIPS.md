@@ -132,7 +132,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
-34 files written to cib/outputs (model <hash>).
+35 files written to cib/outputs (model <hash>).
 2 interfaces and 6 wires checked: 0 error(s)
 build ok: cib/outputs
 ```
@@ -251,7 +251,7 @@ A device can come from a pinout table (`import-pinout --new-device NAME`) or fro
 
 ### What the tool writes
 
-`harness-design-studio export DIR` writes everything into `DIR/outputs/`. For the `first-steps` example it writes 34 files (40 with `--drawings`, see below); these are the names (per harness, `W001` and `W002` here):
+`harness-design-studio export DIR` writes everything into `DIR/outputs/`. For the `first-steps` example it writes 35 files (41 with `--drawings`, see below); these are the names (per harness, `W001` and `W002` here):
 
 ```
 outputs/manifest.json

@@ -966,8 +966,25 @@ def data_files(project: Project) -> dict[str, bytes]:
         files[f"{t.name}.json"] = table_json(t, project, mhash)
         files[f"{t.name}.csv"] = table_csv(t)
     files[CONFIGURATION] = configuration_bytes(project)
+    files["README.txt"] = _readme().encode("utf-8")  # JSON and CSV here have no comment line
     files[PROVENANCE] = provenance_bytes(project, files, mhash)
     return files
+
+
+def _readme() -> str:
+    """The notice for the open data: its files cannot hold a comment (D-208)."""
+    from harness_design_studio import __version__
+    from harness_design_studio.core import legal_texts
+
+    return (
+        "Harness Design Studio: the open data of a design\n"
+        "================================================\n\n"
+        f"{legal_texts.output_notice('harness-design-studio', __version__)}\n\n"
+        f"{legal_texts.DISCLAIMER}\n\n{legal_texts.INTENDED_USE}\n\n"
+        "These JSON and CSV files hold the numbers behind the outputs. They have no comment "
+        "line, so this file is where the notice is. Pending and placeholder values stay marked "
+        "in them (pending, PLACEHOLDER, not checked).\n"
+    )
 
 
 def write_data(project: Project, folder: Path | str) -> dict[str, bytes]:

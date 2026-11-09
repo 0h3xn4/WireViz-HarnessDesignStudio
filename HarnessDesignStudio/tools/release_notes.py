@@ -29,10 +29,30 @@ from tools.release_check import unreleased_text
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO_URL = "https://github.com/0h3xn4/WireViz-HarnessDesignStudio"
-CAVEAT = (
+SIGNED_FROM = (1, 17, 1)  # the first release made by the workflow that signs (decision D-211)
+CAVEAT_UNSIGNED = (
     "The packages are not signed, the configuration values are placeholders and the parts are "
     "example parts: this release is not a statement of compliance with any standard."
 )
+CAVEAT_SIGNED = (
+    "The packages are signed with Sigstore (see *Check your download*), the configuration values "
+    "are placeholders and the parts are example parts: this release is not a statement of "
+    "compliance with any standard."
+)
+COSIGN_VERIFY = (
+    "cosign verify-blob --bundle <file>.sigstore.json "
+    "--certificate-identity-regexp '(?i)^https://github.com/0h3xn4/WireViz-HarnessDesignStudio/"
+    "\\.github/workflows/release\\.yml@refs/tags/v' "
+    "--certificate-oidc-issuer https://token.actions.githubusercontent.com <file>"
+)
+
+
+def is_signed(version: str) -> bool:
+    """Releases from `SIGNED_FROM` on are signed and attested; earlier ones are not."""
+    parts = re.match(r"(\d+)\.(\d+)\.(\d+)", version)
+    return parts is not None and tuple(int(p) for p in parts.groups()) >= SIGNED_FROM
+
+
 LEGAL_SECTION = (
     "## Status, licence and limits\n\n"
     + f"{legal_texts.DISCLAIMER}\n\n"
@@ -99,8 +119,8 @@ PACKAGES: tuple[Package, ...] = (
             "**Windows:** run `harness-design-studio-{v}-windows-x86_64-setup.exe`. It installs "
             "for your user (no administrator rights) and adds a Start menu entry and the "
             "commands `harness-design-studio` and `harness-design-studio-gui`. The package is "
-            'not signed, so Windows SmartScreen shows "Windows protected your PC": choose '
-            "**More info**, then **Run anyway**.",
+            'has no Windows code-signing certificate, so Windows SmartScreen shows "Windows '
+            'protected your PC": choose **More info**, then **Run anyway**.',
         ),
     ),
     Package(
@@ -192,7 +212,8 @@ def notes(version: str, changelog: str, sums: str, highlights: str | None = None
     found = _found(version, names)
     body = section(changelog, version) or ""
     lead = (highlights or "").strip() or _first_paragraph(body)
-    parts = [INTRO, f"> {CAVEAT}"]
+    signed = is_signed(version)
+    parts = [INTRO, f"> {CAVEAT_SIGNED if signed else CAVEAT_UNSIGNED}"]
 
     if found:
         table = ["| For | Download | How to install |", "| --- | --- | --- |"]
@@ -234,8 +255,18 @@ def notes(version: str, changelog: str, sums: str, highlights: str | None = None
         f"{sums_table}\n\n"
         "Put the file you downloaded and `SHA256SUMS` in one folder, then run "
         + ", ".join(commands)
-        + " and compare the result with the table. The packages are not signed, so this "
-        "check is the only proof that a download is intact."
+        + " and compare the result with the table. "
+        + (
+            "Every file is also signed with Sigstore (the `.sigstore.json` file beside it) and has "
+            "a build provenance attestation. Check the signature with "
+            f"`{COSIGN_VERIFY}` (install cosign first) and the attestation with "
+            "`gh attestation verify <file> --repo 0h3xn4/WireViz-HarnessDesignStudio`. The "
+            "same commands, per platform, are in "
+            f"[`INSTALL.md`]({REPO_URL}/blob/v{version}/HarnessDesignStudio/docs/INSTALL.md)."
+            if signed
+            else "The packages are not signed, so this check is the only proof that a download "
+            "is intact."
+        )
     )
     parts.append(LEGAL_SECTION)
     parts.append(

@@ -42,7 +42,7 @@ You need the tool installed ([`docs/INSTALL.md`](docs/INSTALL.md); `sudo apt ins
    harness-design-studio drc wheel-link
    ```
 
-4. **Write the outputs** (1 minute). You should see `34 files written to wheel-link/outputs`: the build workbook of each harness (`harnesses/W001/W001_build.xlsx`), wire lists, pinouts, the bill of materials, test tables and the report of step 3. The PDF drawings only with `--drawings`.
+4. **Write the outputs** (1 minute). You should see `35 files written to wheel-link/outputs`: the build workbook of each harness (`harnesses/W001/W001_build.xlsx`), wire lists, pinouts, the bill of materials, test tables and the report of step 3. The PDF drawings only with `--drawings`.
 
    ```
    harness-design-studio export wheel-link

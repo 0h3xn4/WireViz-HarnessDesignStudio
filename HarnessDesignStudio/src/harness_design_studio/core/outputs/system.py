@@ -86,7 +86,8 @@ def _diagram(
     sheet = Sheet(max(420.0, w), max(297.0, h, legend_y + 5.0 * len(legend) + 8.0), title=title)
     sheet.add(Rect(2, 2, sheet.width - 4, sheet.height - 4, width=0.5))
     sheet.add(Text(8, 10, fit(title, sheet.width - 16, 4.2), size=4.2, bold=True))
-    sheet.add(Text(8, 16, fit(stamp.line, sheet.width - 16, 2.6), size=2.6, color="#555555"))
+    line = f"{stamp.line}   {stamp.notice}"  # on one line: the zone names start right below it
+    sheet.add(Text(8, 16, line, size=fit_size(line, sheet.width - 16, 2.6, 1.2), color="#555555"))
     for z in sorted(
         {project.units[u].zone or "(no zone)" for u in pos},
         key=lambda z: min(pos[u][0] for u in pos if (project.units[u].zone or "(no zone)") == z),

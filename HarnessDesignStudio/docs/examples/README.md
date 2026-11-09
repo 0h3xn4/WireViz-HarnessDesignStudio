@@ -124,7 +124,7 @@ harness-design-studio export my-first-steps
 ```
 
 ```
-34 files written to my-first-steps/outputs (model <hash>).
+35 files written to my-first-steps/outputs (model <hash>).
 ```
 
 All ten warnings say that an example part is used and nobody has approved it. The notes say which checks did not run because their numbers are missing, and which choices nobody has confirmed yet. That is the tool being honest, not a failure. **Next:** the walk-through in [`GETTING_STARTED.md`](../GETTING_STARTED.md) (about 45 minutes) or the nine steps of [`LEARNING_PATH.md`](../LEARNING_PATH.md). The tutorial quotes a different hash because it creates the project with `--name "Wheel link"`.
@@ -156,7 +156,7 @@ Model hash: `<hash>`. Rules run: 39.
 Open: 0 error(s), 15 warning(s), 17 note(s). Waived: 0.
 ```
 
-`harness-design-studio validate` first reports `7 devices, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `115 files written to my-minimal-satellite/outputs (model <hash>).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the devices and interfaces of your own on paper first.
+`harness-design-studio validate` first reports `7 devices, 11 interfaces, 37 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` then writes `116 files written to my-minimal-satellite/outputs (model <hash>).` **Next:** open it in the app, look at the diagram, and compare it with your own spacecraft. The template `design-worksheet.md` (also new in 1.0.0) helps you plan the devices and interfaces of your own on paper first.
 
 ## small-satellite
 
@@ -185,7 +185,7 @@ Model hash: `<hash>`. Rules run: 39.
 Open: 0 error(s), 20 warning(s), 28 note(s). Waived: 0.
 ```
 
-`harness-design-studio validate` first reports `14 devices, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `232 files written to my-small-satellite/outputs (model <hash>).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a device and use **Create redundant copy** on it, or read the Problems tab.
+`harness-design-studio validate` first reports `14 devices, 24 interfaces, 75 connectors, 0 harnesses: 0 error(s), 0 warning(s).` and `harness-design-studio export` writes `233 files written to my-small-satellite/outputs (model <hash>).` With the default grouping it makes 24 harnesses; [`TIPS.md`](../TIPS.md#choose-how-interfaces-are-grouped-into-harnesses) shows what the other two grouping modes give (23 and 5). **Next:** in the app, select a device and use **Create redundant copy** on it, or read the Problems tab.
 
 ## flatsat
 
@@ -217,7 +217,7 @@ Model hash: `<hash>`. Rules run: 39.
 Open: 0 error(s), 28 warning(s), 47 note(s). Waived: 0.
 ```
 
-`harness-design-studio export my-flatsat` writes `88 files written to my-flatsat/outputs (model <hash>).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 devices, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.25 kg with margin in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
+`harness-design-studio export my-flatsat` writes `89 files written to my-flatsat/outputs (model <hash>).` The figures in [`FLATSAT_EXAMPLE.md`](../FLATSAT_EXAMPLE.md) (23 devices, 44 interfaces, 8 harnesses, 103 wires, and per harness 18, 26, 2, 22, 7, 16, 8 and 4 wires; 329.6 m of wire and 2.25 kg with margin in `outputs/system/mass_length.csv`) agree with the files this run produced. `generate` reports `8 unchanged` because nothing needs to be made. **Next:** open it in the app and click `PDU2`: only its links stay in colour.
 
 ## Does every example run?
 
@@ -226,10 +226,10 @@ Every example was run through `new`, `validate`, `generate` (where it is not alr
 | Example | `validate` | `generate` | `drc` | `export` | `verify --outputs` |
 | --- | --- | --- | --- | --- | --- |
 | `blank` | 0 errors | 0 harnesses | 0, 0, 0 | refused, nothing to export | refused, no outputs |
-| `first-steps` | 0 errors | 2 added, 6 wires | 0 errors, 10 warnings, 8 notes | 34 files | 0 errors |
-| `minimal-satellite` | 0 errors | 11 added, 24 wires | 0 errors, 15 warnings, 17 notes | 115 files | 0 errors |
-| `small-satellite` | 0 errors | 24 added, 54 wires | 0 errors, 20 warnings, 28 notes | 232 files | 0 errors |
-| `flatsat` | 0 errors | 8 unchanged, 103 wires | 0 errors, 28 warnings, 47 notes | 88 files | 0 errors |
+| `first-steps` | 0 errors | 2 added, 6 wires | 0 errors, 10 warnings, 8 notes | 35 files | 0 errors |
+| `minimal-satellite` | 0 errors | 11 added, 24 wires | 0 errors, 15 warnings, 17 notes | 116 files | 0 errors |
+| `small-satellite` | 0 errors | 24 added, 54 wires | 0 errors, 20 warnings, 28 notes | 233 files | 0 errors |
+| `flatsat` | 0 errors | 8 unchanged, 103 wires | 0 errors, 28 warnings, 47 notes | 89 files | 0 errors |
 
 The file counts are those of `export` without `--drawings` (a build workbook for every harness, no harness drawings). This is new in 1.7.0: with 1.6.0 and earlier, `export` wrote the drawings and no build workbook, and the counts were 38, 137, 280 and 112. With `export --drawings` the counts are 40, 148, 304 and 120 (the old count plus one build workbook for each harness: 2, 11, 24 and 8). `verify --outputs` ends with 0 errors in both cases.
 

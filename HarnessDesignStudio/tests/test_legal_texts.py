@@ -38,6 +38,7 @@ PLACES: dict[Path, tuple[str, ...]] = {
     REPO / "README.md": EVERYWHERE,
     ROOT / "README.md": EVERYWHERE,
     ROOT / "NOTICE": tuple(n for n in EVERYWHERE if n != "PRIVACY_APP"),
+    ROOT / "THIRD_PARTY_NOTICES.txt": ("LICENCE",),
     REPO / "CONTRIBUTING.md": ("PROJECT_STATUS",),
     REPO / ".github" / "SUPPORT.md": ("PROJECT_STATUS", "DISCLAIMER"),
     REPO / ".github" / "SECURITY.md": ("PROJECT_STATUS", "DISCLAIMER"),
@@ -123,3 +124,37 @@ def test_no_copy_of_a_text_was_edited_by_hand() -> None:
             if start in body and _flat(getattr(legal_texts, name)) not in body:
                 problems.append(f"{path.relative_to(REPO).as_posix()}: {name}")
     assert not problems, problems
+
+
+# ---- the release notes ----------------------------------------------------------------------------
+
+
+def _notes(version: str) -> str:
+    from tools import release_notes as rn
+
+    changelog = (ROOT / "CHANGELOG.md").read_text(encoding="utf-8")
+    sums = f"{'a' * 64}  harness-design-studio_{version}_amd64.deb\n"
+    return rn.notes(version, changelog, sums, "Highlights.")
+
+
+def test_every_release_page_carries_the_legal_texts_word_for_word() -> None:
+    body = _flat(_notes("1.17.0"))
+    for name in (
+        "DISCLAIMER",
+        "INTENDED_USE",
+        "PROJECT_STATUS",
+        "NOT_REVIEWED",
+        "AI_AUTHORSHIP",
+        "COPYRIGHT_SCOPE",
+        "LICENCE",
+        "NON_AFFILIATION",
+        "TRADEMARKS",
+    ):
+        assert _flat(getattr(legal_texts, name)) in body, name
+
+
+def test_the_release_page_says_unsigned_before_the_signing_workflow_and_signed_after() -> None:
+    old, new = _notes("1.17.0"), _notes("1.17.1")
+    assert "The packages are not signed" in old and "cosign verify-blob" not in old
+    assert "The packages are signed with Sigstore" in new and "cosign verify-blob" in new
+    assert "gh attestation verify" in new and "not signed" not in new

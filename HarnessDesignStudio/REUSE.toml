@@ -55,3 +55,10 @@ path = ["compliance/requirements/ECSS-*.csv", "compliance/requirements/ESCC-*.cs
 precedence = "override"
 SPDX-FileCopyrightText = "ESA and the ECSS and ESCC authors (text of the requirements); 2026 0h3xn4 (the table)"
 SPDX-License-Identifier = "LicenseRef-ECSS-reproduced"
+
+# The notices of the third-party components: their texts are the texts of their authors.
+[[annotations]]
+path = ["THIRD_PARTY_NOTICES.txt"]
+precedence = "override"
+SPDX-FileCopyrightText = "The authors of the components named in the file; compiled 2026 by 0h3xn4"
+SPDX-License-Identifier = "LicenseRef-third-party-notices"

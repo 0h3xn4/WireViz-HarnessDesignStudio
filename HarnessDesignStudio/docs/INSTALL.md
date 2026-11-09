@@ -1,6 +1,6 @@
 # Install
 
-The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is 1.16.0 (2026-11-06; tag `v1.16.0` on commit `fc012e9`, release workflow run 42212590043; not signed off by the owner). The versions before it, what each added and how each was published are in [`STATUS.md`](STATUS.md) and the [changelog](../CHANGELOG.md). The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
+The tool runs on **Ubuntu 24.04 or newer** (64-bit, x86) and, from version 1.2.0, also on **Windows 10 and 11** (64-bit). It needs no network, no administrator account for the per-user install, and no other software to be installed first (Python and Qt are inside the package). Version 1.1.0 and older are packaged for Ubuntu only; the Windows section below describes the packages from 1.2.0. The newest published release is on the [releases page](https://github.com/0h3xn4/WireViz-HarnessDesignStudio/releases/latest) (not signed off by the owner). Releases up to 1.17.0 are not signed; the releases after 1.17.0 are signed and attested (see [Check the signature](#check-the-signature)). The versions before it, what each added and how each was published are in [`STATUS.md`](STATUS.md) and the [changelog](../CHANGELOG.md). The releases 1.2.0 to 1.5.0 also carry macOS disk images; macOS is not supported any more (decision D-168) and 1.6.0 and later have none. The file names are listed under [Get the package](#get-the-package). None of the packages is signed.
 
 ## Contents
 
@@ -77,7 +77,38 @@ sha256sum -c SHA256SUMS --ignore-missing
 
 It prints `<file>: OK` for the file you have (`--ignore-missing` skips the packages you did not download). To compare by hand, run `sha256sum <file>` and read the value against the table. On Windows: `Get-FileHash <file> -Algorithm SHA256` in PowerShell.
 
-If a value differs, do not install the file. The packages are not signed (this is a recorded deviation, `compliance/DEVIATIONS.md` T-19), so the checksum is the only check you have. A package built by CI is built again on another machine, so its checksum can differ from the recorded one. For such a package compute the checksum yourself (`sha256sum`) on the machine that built it and compare it with the file you received; the recorded list applies to the packages named in it.
+If a value differs, do not install the file. The releases up to 1.17.0 are not signed (a recorded deviation, `compliance/DEVIATIONS.md` T-19), so for them the checksum is the only check you have. The releases after 1.17.0 are signed: check the signature as well (next section). A package built by CI is built again on another machine, so its checksum can differ from the recorded one. For such a package compute the checksum yourself (`sha256sum`) on the machine that built it and compare it with the file you received; the recorded list applies to the packages named in it.
+
+### Check the signature
+
+The releases after 1.17.0 are signed with [Sigstore](https://www.sigstore.dev/) without a key: the release workflow signs every package, `SHA256SUMS` and the SBOMs with the identity that GitHub gives to the workflow run, and it adds a build provenance attestation. For each file the release page has a `.sigstore.json` bundle. Nothing here costs money and no private key exists. A valid signature shows that the file was made by the release workflow of this repository for a version tag, not who wrote the code. Releases up to 1.17.0 have no signature.
+
+Install [cosign](https://docs.sigstore.dev/cosign/system_config/installation/) (and, for the attestation, the [GitHub command line tool](https://cli.github.com/)). Then, in the folder with the file and its bundle:
+
+Linux:
+
+```
+cosign verify-blob \
+  --bundle harness-design-studio_<version>_amd64.deb.sigstore.json \
+  --certificate-identity-regexp '(?i)^https://github.com/0h3xn4/WireViz-HarnessDesignStudio/\.github/workflows/release\.yml@refs/tags/v' \
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+  harness-design-studio_<version>_amd64.deb
+gh attestation verify harness-design-studio_<version>_amd64.deb --repo 0h3xn4/WireViz-HarnessDesignStudio
+```
+
+Windows (PowerShell; the same two checks, with the file name of the setup program or the zip):
+
+```
+cosign verify-blob --bundle harness-design-studio-<version>-windows-x86_64-setup.exe.sigstore.json `
+  --certificate-identity-regexp '(?i)^https://github.com/0h3xn4/WireViz-HarnessDesignStudio/\.github/workflows/release\.yml@refs/tags/v' `
+  --certificate-oidc-issuer https://token.actions.githubusercontent.com `
+  harness-design-studio-<version>-windows-x86_64-setup.exe
+gh attestation verify harness-design-studio-<version>-windows-x86_64-setup.exe --repo 0h3xn4/WireViz-HarnessDesignStudio
+```
+
+`cosign` prints `Verified OK` when the signature is valid. If it fails, or `gh` reports no attestation, do not install the file. The same commands check `SHA256SUMS` (a signed list of the checksums) and the SBOM files.
+
+The release page also has the SBOM of each package format (`sbom-<version>-linux.cdx.json`, `sbom-<version>-windows.cdx.json`), the inventory of the third-party components (`third-party-inventory-<version>-<format>.md`), the notices (`THIRD_PARTY_NOTICES-<format>.txt`, also inside every package) and the source of the LGPL and GPL components (Qt for Python, Qt and the libraries of Ubuntu that the Linux packages carry).
 
 ## A. The `.deb` package (recommended)
 
@@ -213,7 +244,7 @@ There are two files; take either:
 - `harness-design-studio-<version>-windows-x86_64-setup.exe`: the **setup program** (recommended). It installs for your user only.
 - `harness-design-studio-<version>-windows-x86_64.zip`: the **portable** folder. Nothing is installed.
 
-**The first start of an unsigned program.** The packages are not signed (see [`SECURITY.md`](SECURITY.md)), so Windows SmartScreen shows a blue window, *Windows protected your PC*, the first time you run the setup program or the editor. This is expected. Compare the checksum first (above), then choose **More info** and **Run anyway**. If a browser marked the download, you can also right-click the file, choose **Properties** and tick **Unblock** at the bottom. For the `.zip`, unblock it *before* you extract it; otherwise every program in it asks once. Antivirus programs may scan the new files for a minute on the first start.
+**The first start of a program with no Windows code-signing certificate.** The Windows packages have none (the Sigstore signature described under *Check the signature* is not one that Windows knows; see [`SECURITY.md`](SECURITY.md)), so Windows SmartScreen shows a blue window, *Windows protected your PC*, the first time you run the setup program or the editor. This is expected. Compare the checksum first (above), then choose **More info** and **Run anyway**. If a browser marked the download, you can also right-click the file, choose **Properties** and tick **Unblock** at the bottom. For the `.zip`, unblock it *before* you extract it; otherwise every program in it asks once. Antivirus programs may scan the new files for a minute on the first start.
 
 **Setup program.** Double-click it and follow the pages (the first page is the read-me). It installs into `%LOCALAPPDATA%\Programs\Harness Design Studio` (you can choose another folder), adds **Harness Design Studio** to the Start menu, puts the install folder and its `cli` folder on your user `PATH`, and registers itself under *Settings > Apps > Installed apps* where you can uninstall it. It never asks for administrator rights. Open a **new** terminal afterwards (an open one does not see the changed `PATH`):
 
@@ -250,7 +281,7 @@ Then start **Harness Design Studio** from the Start menu and continue with [Your
 
 | You see | Do this |
 | --- | --- |
-| *Windows protected your PC* | Expected for an unsigned program: **More info**, then **Run anyway** (see above). |
+| *Windows protected your PC* | Expected: the Windows packages have no Windows code-signing certificate. **More info**, then **Run anyway** (see above). |
 | `harness-design-studio` is not recognized | The terminal was open during the install. Open a new one, or use the full path `%LOCALAPPDATA%\Programs\Harness Design Studio\cli\harness-design-studio.exe`. |
 | The editor does not appear, or a black or empty window shows | Update the graphics driver, then run the self-test above to see whether the program itself is intact. |
 | Your company blocks programs in `%LOCALAPPDATA%` | Ask for an exception for the install folder, or run the portable `.zip` from a folder that is allowed. |

@@ -171,7 +171,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-34 files written to wheel-link/outputs (model <hash>).
+35 files written to wheel-link/outputs (model <hash>).
 ```
 
 The files are checked a second time by a separate routine before they are written; if that check fails, nothing is written. Look in `wheel-link/outputs/`. The table shows the main files; the folder also holds `manifest.json` and more files under `system/` (for example `bom.csv`, `drc_findings.csv`, `provenance.json`, `system.xlsx`). [`OUTPUTS.md`](OUTPUTS.md) lists all of them.
@@ -197,7 +197,7 @@ harness-design-studio export wheel-link --drawings
 ```
 
 ```
-40 files written to wheel-link/outputs (model <hash>).
+41 files written to wheel-link/outputs (model <hash>).
 ```
 
 The six new files are `harnesses/W001/drawing_A3.pdf`, `drawing_A4.pdf`, `drawing_A3_s1.svg` and the same three for `W002`. A later `export` without `--drawings` removes them again and says so. The harness drawing (it needs `export --drawings`), with a title block and the model hash at the bottom (the picture is the `W001` sheet of the first export of this tutorial; the version and the model hash at the bottom of your own drawing are those of your tool and your project, so they can differ from the picture):
@@ -357,7 +357,7 @@ harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "Firs
 
 ```
 Release W002 revision A: done.
-Outputs re-exported with the released status (34 files).
+Outputs re-exported with the released status (35 files).
 ```
 
 `W002` is now **released (locked)**: it, the interfaces it carries and the pins it uses cannot be edited, nor can the parts, interface types and configuration values it uses (a later `harness-design-studio import-parts` or `harness-design-studio config --apply-profile` that would change them ends with `This change was blocked because it touches released items`), a baseline and a change log entry are stored, and the build workbook (and the drawing, if the last export had drawings) says *released*. The release writes the outputs again with the same set of files as the last export, so the drawings are written again only if that export had them. To change it you start a revision with `harness-design-studio revise wheel-link W002 --by NAME --comment "..."`; `harness-design-studio log wheel-link` prints the history, including the reasons for releasing on placeholders and with unapproved parts. In the app the same steps are **Release…** (also a step in the top bar) and **New revision…** in the **Releases** tab (or the **Harness** tab), and **Change log…** in the **More** menu of the **Harness** tab; the release window lists what the release locks and asks for the reason when placeholders remain.

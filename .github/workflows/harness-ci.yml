@@ -107,6 +107,10 @@ jobs:
       - run: python -m tools.check_reproducible
       - run: python -m tools.build_installer
       - run: python -m tools.build_deb
+      - name: The inventory of the package matches the committed one, and the licences are allowed
+        run: |
+          version=$(python -c "import harness_design_studio as h; print(h.__version__)")
+          python -m tools.third_party check dist/harness-design-studio --format linux --committed "compliance/legal/third-party-inventory-${version}-linux.json"
       - name: Frozen app self-test
         run: dist/harness-design-studio/harness-design-studio-gui --selftest
       - run: python -m tools.gen_sbom

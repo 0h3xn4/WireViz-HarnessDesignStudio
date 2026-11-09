@@ -619,7 +619,7 @@ harness-design-studio export demo
 ```
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the block diagram and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the harness overview and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
-34 files written to demo/outputs (model <hash>).
+35 files written to demo/outputs (model <hash>).
 ```
 
 (Made with 1.11.0 from `first-steps`, after renaming two devices to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`; the harness drawings are written only with `export --drawings`, so that line appears only then.)
@@ -654,7 +654,7 @@ Not an error. `to fill in` (on an amber cell) marks a value the design does not 
 
 ### Which file is what?
 
-See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example without build data writes `34 files written to demo-first-steps/outputs (model <hash>).` (40 with `--drawings`.)
+See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example without build data writes `35 files written to demo-first-steps/outputs (model <hash>).` (40 with `--drawings`.)
 
 ## Releasing
 
@@ -694,7 +694,7 @@ A release that rests on placeholders or example parts teaches the flow and nothi
 
 ```
 Release W003 revision A: done.
-Outputs re-exported with the released status (88 files).
+Outputs re-exported with the released status (89 files).
 ```
 
 Other release messages:

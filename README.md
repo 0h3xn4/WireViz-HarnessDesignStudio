@@ -59,7 +59,7 @@ sha256sum -c SHA256SUMS --ignore-missing
 sudo apt install ./harness-design-studio_1.16.0_amd64.deb
 ```
 
-That installs the `harness-design-studio` command line tool (`harness` works as a short alias) and the `harness-design-studio-gui` app; the packages are not signed, so the checksum check is the only proof that the download is intact. The release page also has a `.tar.gz` with an `install.sh` that needs no administrator rights.
+That installs the `harness-design-studio` command line tool (`harness` works as a short alias) and the `harness-design-studio-gui` app; check the download before you install it: the checksum (`sha256sum -c SHA256SUMS --ignore-missing`) and, for the releases after 1.17.0, the Sigstore signature (the commands are in [`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md#check-the-signature); releases up to 1.17.0 are not signed). The release page also has a `.tar.gz` with an `install.sh` that needs no administrator rights.
 
 **From the source code.** These commands install the command line tool in a private Python environment and make a practice project:
 
@@ -74,7 +74,7 @@ harness-design-studio generate wheel-link
 harness-design-studio export wheel-link
 ```
 
-(`harness` still works as a short name for `harness-design-studio`.) You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 devices, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `34 files written to wheel-link/outputs (model <hash>).` The build workbook of each harness (`harnesses/W001/W001_build.xlsx`) and the lists are in `wheel-link/outputs/`. The PDF drawings are written only with `harness-design-studio export wheel-link --drawings` (the build workbook and this option are new in 1.7.0). To see the diagram, run `harness-design-studio-gui` (or `harness-gui`) and open the project with **File > Open project…**. The first start asks *Who are you working as?*; a Systems engineer lands on the *Next step* page, an Electrical engineer on the diagram, and the diagram is always in the *Model* area.
+(`harness` still works as a short name for `harness-design-studio`.) You should see `Project 'First steps: reaction wheel link' created in wheel-link (3 devices, 2 interfaces).`, then `2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept`, then `35 files written to wheel-link/outputs (model <hash>).` The build workbook of each harness (`harnesses/W001/W001_build.xlsx`) and the lists are in `wheel-link/outputs/`. The PDF drawings are written only with `harness-design-studio export wheel-link --drawings` (the build workbook and this option are new in 1.7.0). To see the diagram, run `harness-design-studio-gui` (or `harness-gui`) and open the project with **File > Open project…**. The first start asks *Who are you working as?*; a Systems engineer lands on the *Next step* page, an Electrical engineer on the diagram, and the diagram is always in the *Model* area.
 
 [`INSTALL.md`](HarnessDesignStudio/docs/INSTALL.md) has all the ways to install (package, tarball, source) and explains what to do if something fails. The full walk-through with the output of every command is [`GETTING_STARTED.md`](HarnessDesignStudio/docs/GETTING_STARTED.md).
 

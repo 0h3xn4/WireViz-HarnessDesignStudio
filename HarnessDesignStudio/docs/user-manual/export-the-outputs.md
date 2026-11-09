@@ -36,7 +36,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-34 files written to wheel-link/outputs (model <hash>).
+35 files written to wheel-link/outputs (model <hash>).
 ```
 
 With `--drawings` the PDF drawings are written too ([section 5](#5-the-pdf-drawings-optional)).
@@ -160,7 +160,7 @@ harness-design-studio export wheel-link --drawings
 ```
 
 ```
-40 files written to wheel-link/outputs (model <hash>).
+41 files written to wheel-link/outputs (model <hash>).
 ```
 
 An export without `--drawings` into a folder that holds the drawings of an earlier export removes them and says so: `The PDF drawings of the earlier export were removed; add --drawings to write them again.`

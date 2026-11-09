@@ -233,7 +233,7 @@ def test_every_table_is_there_with_units_in_the_headers(
     folder = exported["flatsat"]
     assert {p.name for p in folder.iterdir()} == {
         *(f"{n}.json" for n in names), *(f"{n}.csv" for n in names),
-        "configuration.json", "provenance.json",
+        "configuration.json", "provenance.json", "README.txt",  # the notice (D-208)
     }  # fmt: skip
     head = (folder / "wire_sizing.csv").read_text(encoding="utf-8").splitlines()[0]
     for expected in ("Current (A)", "Gauge (AWG)", "Cross-section (mm²)", "Length (m)", "Voltage drop (V)", "Resistivity (Ω·m)"):  # fmt: skip
@@ -458,7 +458,7 @@ def test_export_data_with_a_run_record(
     assert main(["export-data", str(folders["first-steps"]), "--out", str(out), "--run-record", "--author", "Ada", "--json"]) == 0  # fmt: skip
     doc = json.loads(capsys.readouterr().out)
     assert list(doc) == ["ok", "count", "model_hash", "files", "run_record"]
-    assert doc["run_record"] == "run_record.json" and doc["count"] == len(doc["files"]) == 34
+    assert doc["run_record"] == "run_record.json" and doc["count"] == len(doc["files"]) == 35
     assert (out / "run_record.json").is_file() and "run_record.json" not in doc["files"]
     assert json.loads((out / "run_record.json").read_text(encoding="utf-8"))["operator"] == "Ada"
     # the data files do not change with it
@@ -554,7 +554,7 @@ def test_the_api_result_and_the_command_agree(
     folders: dict[str, Path], tmp_path: Path, capsys: pytest.CaptureFixture[str]
 ) -> None:
     result = api.export_data(folders["flatsat"], tmp_path / "a")
-    assert result.count == len(result.files) == 34 and result.run_record == ""
+    assert result.count == len(result.files) == 35 and result.run_record == ""
     assert list(result.files) == sorted(result.files)
     assert (
         main(["export-data", str(folders["flatsat"]), "--out", str(tmp_path / "b"), "--json"]) == 0

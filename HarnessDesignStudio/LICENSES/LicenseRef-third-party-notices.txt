@@ -1,0 +1,6 @@
+THIRD_PARTY_NOTICES.txt reproduces the copyright notices and licence texts of components of other
+authors that Harness Design Studio carries. Each notice and each text applies to the component it
+names, under the terms of that text. It is a list made by a tool from the built packages
+(tools/third_party.py); it grants no licence of its own and it does not change the licence of any
+component. The GNU General Public Licence, version 3 only, applies to Harness Design Studio itself
+(LICENSE).

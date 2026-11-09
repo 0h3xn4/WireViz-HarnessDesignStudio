@@ -5,9 +5,14 @@ name: harness-design-studio release
 # page are replaced. The build jobs only read the repository and hand their packages on as
 # artifacts; one final job, `release`, writes the checksums of all of them and publishes.
 #
-# Signing is optional and happens only when these repository secrets exist (docs/RELEASE.md):
+# Every release is signed without a key (Sigstore, through the GitHub OIDC identity of this
+# workflow, `cosign sign-blob`) and gets build provenance attestations; the checksums, the SBOM,
+# the inventory of the third-party components and the source of the LGPL and GPL components are
+# attached (decision D-211, docs/INSTALL.md says how to check them). A Windows code-signing
+# certificate is optional and used only when these repository secrets exist (docs/RELEASE.md):
 #   Windows: WINDOWS_CERT_PFX_BASE64 (the .pfx certificate, base64), WINDOWS_CERT_PASSWORD
-# Without them the packages are built unsigned.
+# Without them the Windows packages carry no Authenticode signature (the Sigstore signature is
+# still made).
 on:
   push:
     tags: ["v*"]
@@ -90,6 +95,30 @@ jobs:
           fi
           wait "$pid"
           test -f /usr/share/doc/harness-design-studio/copyright
+          for f in LICENSE NOTICE THIRD_PARTY_NOTICES.txt; do test -f "/opt/harness-design-studio/$f"; done
+      - name: The licence, the notice and the notices are in the tarball
+        run: |
+          tar -tzf dist/harness-design-studio-*-linux-x86_64.tar.gz | grep -E '(^|/)(LICENSE|NOTICE|THIRD_PARTY_NOTICES\.txt)$'
+          test "$(tar -tzf dist/harness-design-studio-*-linux-x86_64.tar.gz | grep -c -E '/(LICENSE|NOTICE|THIRD_PARTY_NOTICES\.txt)$')" -ge 3
+      - name: The inventory of the package matches the committed one, and the licences are allowed
+        run: python -m tools.third_party check dist/harness-design-studio --format linux --committed "compliance/legal/third-party-inventory-${TAG#v}-linux.json"
+      - name: Inventory, SBOM and notices of the package
+        run: python -m tools.third_party inventory dist/harness-design-studio --format linux --version "${TAG#v}" --out dist/legal
+      - name: Source of the LGPL and GPL components (Qt for Python, Qt and the Ubuntu libraries)
+        run: |
+          sudo sed -i 's/^Types: deb$/Types: deb deb-src/' /etc/apt/sources.list.d/ubuntu.sources
+          sudo apt-get update
+          python -m tools.fetch_sources "dist/legal/third-party-inventory-${TAG#v}-linux.json" --out dist/sources
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: legal-linux
+          if-no-files-found: error
+          path: HarnessDesignStudio/dist/legal
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: sources-linux
+          if-no-files-found: error
+          path: HarnessDesignStudio/dist/sources
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: packages-linux
@@ -142,6 +171,15 @@ jobs:
           $sig = Get-AuthenticodeSignature "dist/harness-design-studio-$($env:TAG.Substring(1))-windows-x86_64-setup.exe"
           $sig | Format-List
           if ($sig.Status -ne 'Valid') { throw "the setup program's signature is $($sig.Status)" }
+      - name: The inventory of the package matches the committed one, and the licences are allowed
+        run: python -m tools.third_party check "dist/harness-design-studio-$($env:TAG.Substring(1))-windows-x86_64.zip" --format windows --committed "compliance/legal/third-party-inventory-$($env:TAG.Substring(1))-windows.json"
+      - name: Inventory, SBOM and notices of the package
+        run: python -m tools.third_party inventory "dist/harness-design-studio-$($env:TAG.Substring(1))-windows-x86_64.zip" --format windows --version $env:TAG.Substring(1) --out dist/legal
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
+        with:
+          name: legal-windows
+          if-no-files-found: error
+          path: HarnessDesignStudio/dist/legal
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: packages-windows
@@ -160,6 +198,8 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write  # create the release and attach the files; nothing else in this workflow may
+      id-token: write  # keyless signing: the OIDC token of this workflow run, no key and no secret
+      attestations: write  # the build provenance attestations
     env:
       TAG: ${{ inputs.tag || github.ref_name }}
       GH_TOKEN: ${{ github.token }}
@@ -179,6 +219,15 @@ jobs:
           pattern: packages-*
           merge-multiple: true
           path: HarnessDesignStudio/dist
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          pattern: legal-*
+          merge-multiple: true
+          path: HarnessDesignStudio/dist/legal
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
+        with:
+          name: sources-linux
+          path: HarnessDesignStudio/dist/sources
       - name: The packages of every platform are there
         run: |
           ls -l dist
@@ -191,6 +240,24 @@ jobs:
           cd .. && python -m tools.release_notes complete dist/SHA256SUMS
       - name: Release notes
         run: python -m tools.release_notes notes "$TAG" dist/SHA256SUMS "$RUNNER_TEMP/notes.md"
+      - name: The SBOMs beside the packages
+        run: cp dist/legal/sbom-*.cdx.json dist/
+      - uses: sigstore/cosign-installer@756fe2d284c7292c4e9b62c8a28f1e5629c59532  # v4.1.3
+      - name: Sign every package, the checksums and the SBOMs (keyless, Sigstore)
+        run: |
+          cd dist
+          for f in *.deb *.tar.gz *-setup.exe *.zip SHA256SUMS sbom-*.cdx.json; do
+            cosign sign-blob --yes --bundle "$f.sigstore.json" "$f"
+          done
+          ls -l *.sigstore.json
+      - uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-path: |
+            HarnessDesignStudio/dist/*.deb
+            HarnessDesignStudio/dist/*.tar.gz
+            HarnessDesignStudio/dist/*-setup.exe
+            HarnessDesignStudio/dist/*.zip
+            HarnessDesignStudio/dist/SHA256SUMS
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: harness-design-studio-${{ env.TAG }}
@@ -202,10 +269,14 @@ jobs:
             HarnessDesignStudio/dist/*.zip
             HarnessDesignStudio/dist/SHA256SUMS
             HarnessDesignStudio/dist/scf.json
+            HarnessDesignStudio/dist/*.sigstore.json
+            HarnessDesignStudio/dist/sbom-*.cdx.json
+            HarnessDesignStudio/dist/legal
+            HarnessDesignStudio/dist/sources
       - name: Publish the release page
         run: |
           title="Harness Design Studio ${TAG#v}"
-          files=(dist/*.tar.gz dist/*.deb dist/*-setup.exe dist/*.zip dist/SHA256SUMS)
+          files=(dist/*.tar.gz dist/*.deb dist/*-setup.exe dist/*.zip dist/SHA256SUMS dist/*.sigstore.json dist/sbom-*.cdx.json dist/legal/third-party-inventory-* dist/legal/THIRD_PARTY_NOTICES-*.txt dist/sources/*)
           flags=()
           case "$TAG" in *rc*) flags+=(--prerelease) ;; esac
           if gh release view "$TAG" >/dev/null 2>&1; then

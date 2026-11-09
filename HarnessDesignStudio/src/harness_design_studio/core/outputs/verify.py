@@ -166,7 +166,8 @@ def _stamp(r: VerifyReport, rel: str, data: bytes, short: str) -> None:
     elif rel.endswith(".svg"):
         ok = (
             re.search(
-                rb"<desc>harness-design-studio [^<]* model " + short.encode() + rb"</desc>", data
+                rb"<desc>harness-design-studio [^<]* model " + short.encode() + rb"[^<]*</desc>",
+                data,
             )
             is not None
         )

@@ -26,7 +26,7 @@ harness-design-studio export-data wheel-link --out wheel-link-data
 ```
 
 ```
-34 data files written to wheel-link-data (model <hash>).
+35 data files written to wheel-link-data (model <hash>).
 ```
 
 The folder gets a pair of files, `NAME.json` and `NAME.csv`, for each result, and three files of their own:

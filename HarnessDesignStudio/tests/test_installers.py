@@ -655,7 +655,10 @@ def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
         "actions/setup-python",
         "actions/upload-artifact",
         "actions/download-artifact",
+        "sigstore/cosign-installer",  # keyless signing of every file (D-211)
+        "actions/attest-build-provenance",  # the build provenance attestations
     }
+    assert "cosign sign-blob" in text and "attest-build-provenance" in text
     # the system libraries are the ones the CI job that installs the packages uses
     ci = (RELEASE_WORKFLOW.parent / "harness-ci.yml").read_text(encoding="utf-8")
     libs = (

@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """REQ-OFFLINE-01: the application never touches the network (static and runtime checks)."""
 
+import ast
 import os
 import subprocess
 import sys
@@ -10,11 +11,14 @@ from pathlib import Path
 
 from tests.static_scan import DYNAMIC, imported_names
 
-SRC = Path(__file__).resolve().parents[1] / "src" / "harness_design_studio"
+ROOT = Path(__file__).resolve().parents[1]
+SRC = ROOT / "src" / "harness_design_studio"
+PACKAGING = ROOT / "packaging"  # the entry points of the packaged programs
 
 BANNED_MODULES = {
     "socket", "ssl", "http", "urllib", "urllib3", "requests", "httpx", "aiohttp",
     "ftplib", "smtplib", "telnetlib", "xmlrpc", "websocket", "websockets", "asyncio",
+    "webbrowser", "imaplib", "poplib", "nntplib", "socketserver",
 }  # fmt: skip
 BANNED_QT = {"QtNetwork", "QtWebEngineCore", "QtWebEngineWidgets", "QtWebChannel", "QtWebSockets"}
 
@@ -103,3 +107,40 @@ def test_runtime_sockets_blocked_cli_and_gui(tmp_path: Path) -> None:
         env={**os.environ, "QT_QPA_PLATFORM": "offscreen", "PYTHONPATH": str(SRC.parent)},
     )  # fmt: skip
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_no_network_imports_in_the_packaging_entry_points() -> None:
+    """The packaged programs start from `packaging/gui_entry.py` and `cli_entry.py` (D-205)."""
+    entries = sorted(PACKAGING.glob("*.py"))
+    assert {p.name for p in entries} >= {"gui_entry.py", "cli_entry.py"}
+    offenders = [
+        f"{p.name}: {name}"
+        for p in entries
+        for name in imported_names(p, PACKAGING)
+        if _banned(name)
+    ]
+    assert not offenders, offenders
+
+
+def test_the_app_builds_no_web_address_and_installs_no_crash_or_update_hook() -> None:
+    """A URL made of a literal that starts with http, a crash hook that could upload, or a call
+    that opens a web page would be a network path the import scan cannot see (D-205)."""
+    found: list[str] = []
+    for path in [*SRC.rglob("*.py"), *PACKAGING.glob("*.py")]:
+        for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):
+            if (
+                isinstance(node, ast.Call)
+                and getattr(node.func, "id", getattr(node.func, "attr", "")) == "QUrl"
+                and node.args
+                and isinstance(node.args[0], ast.Constant)
+                and str(node.args[0].value).startswith(("http", "ftp", "//"))
+            ):
+                found.append(f"{path.name}:{node.lineno}: QUrl of a web address")
+            if isinstance(node, ast.Assign):
+                for target in node.targets:
+                    if isinstance(target, ast.Attribute) and target.attr in (
+                        "excepthook",
+                        "unraisablehook",
+                    ):
+                        found.append(f"{path.name}:{node.lineno}: sets {target.attr}")
+    assert not found, found

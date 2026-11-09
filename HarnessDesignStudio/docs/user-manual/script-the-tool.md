@@ -86,7 +86,7 @@ harness-design-studio export wheel-link --out build/wheel-link-outputs
 ```
 
 ```
-34 files written to build/wheel-link-outputs (model <hash>).
+35 files written to build/wheel-link-outputs (model <hash>).
 ```
 
 The files are byte for byte the ones the plain `export` writes. The folder is made if it does not exist. With `--json` the document lists every file with its path below the folder, its size and its SHA-256, in path order, so two builds can be compared without opening a file. Other commands that write files have a place to put them already: `explain --all --out FOLDER`, `export-pinout -o FILE`, `export-devices FILE`, `export-subsystem FILE`, `templates FOLDER`, `schema FOLDER` and `new FOLDER`.
