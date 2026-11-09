@@ -248,6 +248,10 @@ def test_the_audit_sees_a_window_that_is_shorter_than_its_text_needs(qtbot) -> N
     shown(qtbot, dlg)
     dlg.resize(1, 1)  # a plain dialog may be made as small as its layout's minimum
     settle()
+    if dlg.height() >= dlg.layout().totalMinimumSize().height() + 20:
+        # (Windows keeps a window above its own smallest tracking size and may give it the
+        # screen's height: the window is not short, so there is nothing for the audit to find)
+        pytest.skip("this platform does not give a window as small as its layout's minimum")
     rules = {f.rule for f in audit(dlg)}
     assert "window-short" in rules, rules
     app = QApplication.instance()

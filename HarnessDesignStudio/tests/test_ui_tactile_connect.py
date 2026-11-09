@@ -8,12 +8,15 @@ draft of the window: never saved, never in the model hash). The end of a connect
 up and plugged in elsewhere. Esc puts everything away. Devices, labels and the rubber band keep
 working as before."""
 
+import os
+
 import pytest
 
 pytest.importorskip("PySide6")
 pytestmark = pytest.mark.gui
 
-from PySide6.QtCore import QPoint, QPointF, Qt  # noqa: E402
+from PySide6.QtCore import QEvent, QPoint, QPointF, Qt  # noqa: E402
+from PySide6.QtGui import QMouseEvent  # noqa: E402
 from PySide6.QtTest import QTest  # noqa: E402
 from PySide6.QtWidgets import QApplication  # noqa: E402
 
@@ -93,8 +96,30 @@ class World:
         QApplication.processEvents()
 
     def move(self, scene_point: QPointF) -> None:
-        QTest.mouseMove(self.view.viewport(), pos=self.at(scene_point))
+        pos = self.at(scene_point)
+        QTest.mouseMove(self.view.viewport(), pos=pos)
         QApplication.processEvents()
+        if os.environ.get("HARNESS_REAL_PLATFORM"):
+            # On a real platform `QTest.mouseMove` sets the cursor on the screen (`QCursor::setPos`)
+            # and the window gets its move from the display a moment later: after a short wait on
+            # xcb, not at all on the hosted Windows runner (REQ-GUI-26). With no button down the
+            # move is then sent to the viewport as the display would have sent it. (With a button
+            # down QTest sends the move itself.)
+            QTest.qWait(40)
+            if QApplication.mouseButtons() == Qt.MouseButton.NoButton:
+                viewport = self.view.viewport()
+                QApplication.sendEvent(
+                    viewport,
+                    QMouseEvent(
+                        QEvent.Type.MouseMove,
+                        QPointF(pos),
+                        QPointF(viewport.mapToGlobal(pos)),
+                        Qt.MouseButton.NoButton,
+                        Qt.MouseButton.NoButton,
+                        Qt.KeyboardModifier.NoModifier,
+                    ),
+                )
+                QApplication.processEvents()
 
     def release(self, scene_point: QPointF) -> None:
         QTest.mouseRelease(self.view.viewport(), LEFT, pos=self.at(scene_point))
@@ -418,8 +443,9 @@ def test_a_cable_let_go_on_empty_ground_stays_as_a_dashed_loose_end_with_a_plug(
     assert w.status() == strings.CABLE_HINT_LOOSE
     img = w.view.grab().toImage()
     spot = w.at(QPointF(*d.end))
+    ratio = img.devicePixelRatio()  # (a screen scaled to 125 %: the image has more pixels than px)
     ink = {
-        img.pixelColor(spot.x() + dx, spot.y() + dy).name()
+        img.pixelColor(round((spot.x() + dx) * ratio), round((spot.y() + dy) * ratio)).name()
         for dx in range(-8, 3)
         for dy in range(-5, 6)
     }
