@@ -1,8 +1,9 @@
 """Project tree (SH-6, SC-20): the left panel that lists everything in the project.
 
-Roots: Units, Interfaces, Harnesses (with a release-state badge), Parts, Interface types,
-Configuration (with the placeholder flag and the number of values still pending) and Imports (the
-entry points for interface tables, parts, lengths, engineering values and KiCad netlists). Every
+Roots: Units, Interfaces, Harnesses (with a release-state badge; a harness with a loose cable end
+lists each end below it with the chip *Open end*, M4c), Parts, Interface types, Configuration (with
+the placeholder flag and the number of values still pending) and Imports (the entry points for
+interface tables, parts, lengths, engineering values and KiCad netlists). Every
 object shows how many errors, warnings and "not checked" notes belong to it, and a lock when a
 released harness holds it (the tooltip says why).
 
@@ -69,6 +70,7 @@ from harness_design_studio.core import configcheck, describe, drc
 from harness_design_studio.core.drc.by_rule import UNCHECKED
 from harness_design_studio.core.links import derived_interfaces, link_caption
 from harness_design_studio.core.model import Project
+from harness_design_studio.core.model.physical import LOOSE_ROLE
 from harness_design_studio.core.vcs.lockview import lock_reason, locked_objects
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.controller import LIST_DELAY_MS, Delta, EditorController
@@ -122,7 +124,9 @@ _KIND_ICON: Final = {
     "interface_type": "interface-type",
     "config": "config",
     "import": "import",
+    "loose_end": "link",
 }
+LOOSE_KIND: Final = "loose_end"  # a row under a harness: one of its loose cable ends (M4c)
 _EXPANDED_BY_DEFAULT: Final = ("units", "links", "interfaces", "harnesses", "config")
 BULK = 40  # more changes than this (and most of a root) are applied as one block
 
@@ -370,6 +374,8 @@ class ProjectTreeModel(QAbstractItemModel):
                     strings.STATE_LABELS[describe.harness_state(h)].lower(),
                 )
             )
+        elif node.kind == LOOSE_KIND and node.parent is not None:
+            lines.append(strings.TREE_TIP_LOOSE.format(end=node.id, harness=node.parent.id))
         elif node.kind == "part" and node.id in p.parts:
             part = p.parts[node.id]
             lines.append(
@@ -451,6 +457,10 @@ class ProjectTreeModel(QAbstractItemModel):
             return f"{node.name}, {node.real_children}" if node.id != "imports" else node.name
         if node.kind == "empty":
             return node.name
+        if node.kind == LOOSE_KIND:
+            return ". ".join(
+                [strings.TREE_LOOSE_KIND, f"{node.ident} {node.name}", node.state_text or ""]
+            )
         parts = [
             strings.TREE_ROOTS[_root_of(node.kind)].rstrip("s")
             if node.kind not in ("import",)
@@ -575,6 +585,8 @@ class ProjectTreeModel(QAbstractItemModel):
         self._renumber(root, pos)
         self._by_key[(node.kind, key)] = node
         self.endInsertRows()
+        if node.kind == "harness":
+            self._sync_loose(node)
 
     def _drop_placeholder(self, root: _Node) -> None:
         node = root.placeholder
@@ -596,6 +608,8 @@ class ProjectTreeModel(QAbstractItemModel):
         self._renumber(root, node.row)
         self._by_key.pop((node.kind, node.id), None)
         self._badged.discard(node)
+        for child in node.children:  # (the loose ends of a harness go with it)
+            self._by_key.pop((child.kind, child.id), None)
         self.endRemoveRows()
 
     def _update(self, node: _Node, obj: Any) -> None:
@@ -604,6 +618,43 @@ class ProjectTreeModel(QAbstractItemModel):
         idx = self.index_of(node)
         if before != (node.ident, node.name, node.state, node.state_text):
             self.dataChanged.emit(idx, idx)
+        if node.kind == "harness":
+            self._sync_loose(node)
+
+    def _sync_loose(self, hnode: _Node) -> None:
+        """The rows under a harness: one for each of its loose cable ends, by ID (few; replaced
+        together when they differ)."""
+        h = hnode.obj
+        wanted = sorted(
+            (c for c in getattr(h, "connectors", ()) if c.role == LOOSE_ROLE), key=lambda c: c.id
+        )
+        have = [(n.id, n.obj) for n in hnode.children]
+        if have == [(c.id, c) for c in wanted]:
+            return
+        idx = self.index_of(hnode)
+        if hnode.children:
+            self.beginRemoveRows(idx, 0, len(hnode.children) - 1)
+            for n in hnode.children:
+                self._by_key.pop((n.kind, n.id), None)
+            hnode.children, hnode.sorts = [], []
+            self.endRemoveRows()
+        if not wanted:
+            return
+        nodes = []
+        for k, c in enumerate(wanted):
+            n = _Node(LOOSE_KIND, c.id, hnode)
+            n.obj, n.row, n.ident = c, k, c.id
+            n.name = strings.TREE_LOOSE_NAME.format(name=c.name)
+            n.state, n.state_text = "pending", strings.TREE_LOOSE_STATE
+            n.sort = natural_key(c.id)
+            n.search = f"{n.ident} {n.name} {n.state_text}".lower()
+            nodes.append(n)
+        self.beginInsertRows(idx, 0, len(nodes) - 1)
+        hnode.children = nodes
+        hnode.sorts = [n.sort for n in nodes]
+        for n in nodes:
+            self._by_key[(n.kind, n.id)] = n
+        self.endInsertRows()
 
     def _replace_all(self, root: _Node, source: Mapping[str, Any]) -> None:
         """Swap every row of a root for the objects of `source` in one block."""
@@ -613,6 +664,8 @@ class ProjectTreeModel(QAbstractItemModel):
             for n in old:
                 self._by_key.pop((n.kind, n.id), None)
                 self._badged.discard(n)
+                for child in n.children:
+                    self._by_key.pop((child.kind, child.id), None)
             root.children, root.sorts, root.placeholder = [], [], None
             self.endRemoveRows()
         nodes = []
@@ -630,6 +683,9 @@ class ProjectTreeModel(QAbstractItemModel):
             for n in nodes:
                 self._by_key[(n.kind, n.id)] = n
             self.endInsertRows()
+            for n in nodes:
+                if n.kind == "harness":
+                    self._sync_loose(n)
         self._ensure_placeholder(root)
 
     def sync_keys(self, root_key: str, keys: Iterable[str]) -> None:
@@ -838,6 +894,8 @@ class ProjectTreeModel(QAbstractItemModel):
 
 
 def _root_of(kind: str) -> str:
+    if kind == LOOSE_KIND:
+        return "harnesses"
     for root, child in _CHILD_KIND.items():
         if child == kind:
             return root
@@ -1220,6 +1278,8 @@ class ProjectTree(QWidget):
         ctl.changed.connect(self._on_changed)
         ctl.selectionChanged.connect(self._sync_selection)
         ctl.linkSelectionChanged.connect(self._sync_selection)
+        ctl.endSelectionChanged.connect(self._sync_selection)
+        self.model.rowsInserted.connect(self._open_loose)
         ctl.stateChanged.connect(self.model.refresh_read_only)
         ctl.stateChanged.connect(self._read_only_changed)
         ctl.drcChanged.connect(self._schedule_counts)
@@ -1362,7 +1422,16 @@ class ProjectTree(QWidget):
             return
         s = self.ctl.selection
         chosen = [(c.kind, c.id) for c in self.ctl.selected]
-        if s is None and self.ctl.selected_link is not None:
+        if (
+            s is None
+            and self.ctl.selected_end is not None
+            and self.has(LOOSE_KIND, self.ctl.selected_end)
+        ):
+            self._syncing = True
+            self.view.clearSelection()
+            self._syncing = False
+            self.select(LOOSE_KIND, self.ctl.selected_end)
+        elif s is None and self.ctl.selected_link is not None:
             self._syncing = True
             self.view.clearSelection()
             self._syncing = False
@@ -1443,7 +1512,16 @@ class ProjectTree(QWidget):
     def _node_at(self, index: QModelIndex) -> Any:
         return self.model.node(self._source_index(index))
 
+    def _open_loose(self, parent: QModelIndex, _first: int, _last: int) -> None:
+        """A harness that gets loose ends shows them (its row opens)."""
+        if self.model.node(parent).kind == "harness":
+            self.view.expand(self._view_index(parent))
+
     def _select_node(self, node: Any) -> None:
+        if node.kind == LOOSE_KIND:  # a loose end: picked on the diagram, shown in the inspector
+            self.ctl.select_end(node.id)
+            self.selectionRequested.emit("cable_end", node.id)
+            return
         if node.kind not in OBJECT_KINDS:
             return
         if node.kind in CANVAS_KINDS:

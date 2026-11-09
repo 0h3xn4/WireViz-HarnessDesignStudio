@@ -4,9 +4,17 @@
 on the scene (where the ports are, what lies under the pointer), draws the cable in the view's
 foreground and does what the decision says: it asks for a connection through the same signal the
 Connect tool uses (`EditorController.linkRequested`: the window *Link connectors*, or at once in
-Quick mode), moves the end of a connection (`EditorController.move_link_end`, one undo step) or
-leaves a loose end. A loose end is only a drawing of this window: it is not in the project, not in
-the model hash and not in any file, and saving the project drops it.
+Quick mode), moves the end of a connection (`EditorController.move_link_end`, one undo step), or
+leaves a **saved loose end** (M4c, D-201): a cable let go on empty ground becomes a harness drawn
+by hand with one end plugged into the port and the other end loose where it was let go
+(`EditorController.leave_loose_end`, one undo step; `gui/canvas_ends.py` draws it). A saved loose
+end is picked up again by its plug: dropped on a port it plugs in
+(`EditorController.plug_loose_end`), dropped on empty ground it moves (the mark `pos:`, outside the
+model hash), a click selects it. Esc puts away what is in hand and changes nothing.
+
+Only the end of a *connection* let go on empty ground stays a draft of this window (a connection
+always joins two connectors): it is not in the project, the model hash or any file, and saving
+the project, a click on empty ground or Esc drop it.
 
 The press, move and release come from `DiagramView`, which asks `press_at` first: a press that is
 not on a port, on the plug of a connection or on a loose end is not ours and the diagram goes on
@@ -20,9 +28,10 @@ from typing import TYPE_CHECKING
 from PySide6.QtCore import QPoint, QPointF, QRectF, Qt, QTimer
 from PySide6.QtGui import QBrush, QPainter, QPainterPath, QPen
 
-from harness_design_studio.core import describe
+from harness_design_studio.core import cable_ends, describe
 from harness_design_studio.gui import cable as cb
 from harness_design_studio.gui import strings
+from harness_design_studio.gui.canvas_ends import CableEndItem
 from harness_design_studio.gui.theme import ThemeManager
 
 if TYPE_CHECKING:
@@ -167,13 +176,17 @@ class CableLayer:
 
     # ---- what a start spot is ----------------------------------------------------------------
     def start_spot(self, at: QPointF) -> tuple[str, object] | None:
-        """What a press at scene point `at` would pick up: ("draft", Draft), ("plug", (link ID,
-        end, the port of the other end)) or ("port", Port); None for anything else. The loose end
-        comes first, then the plug of a connection, then a port."""
+        """What a press at scene point `at` would pick up: ("draft", Draft), ("saved", the item of
+        a saved loose end), ("plug", (link ID, end, the port of the other end)) or ("port",
+        Port); None for anything else. The loose ends come first, then the plug of a connection,
+        then a port."""
         scale = self.scale()
         d = self.cable.draft
         if d is not None and self._near(at, d.end, cb.PLUG_PX + 4.0, scale):
             return ("draft", d)
+        saved = self._saved_at(at, scale)
+        if saved is not None:
+            return ("saved", saved)
         plug = self._plug_at(at, scale)
         if plug is not None:
             return ("plug", plug)
@@ -181,6 +194,18 @@ class CableLayer:
             if self._grab_zone(p).contains(at):
                 return ("port", p)
         return None
+
+    def _saved_at(self, at: QPointF, scale: float) -> CableEndItem | None:
+        """The saved loose end whose plug is under the point (the nearest, by ID on a tie)."""
+        best: CableEndItem | None = None
+        best_d = 0.0
+        for _cid, item in sorted(self.scene.end_items.items()):
+            if not item.end.loose or not self._near(at, item.spot, cb.PLUG_PX + 6.0, scale):
+                continue
+            d = (at.x() - item.spot[0]) ** 2 + (at.y() - item.spot[1]) ** 2
+            if best is None or d < best_d:
+                best, best_d = item, d
+        return best
 
     @staticmethod
     def _near(at: QPointF, spot: Spot, radius_px: float, scale: float) -> bool:
@@ -225,7 +250,7 @@ class CableLayer:
             return False
         if c.state == cb.HOLD:  # a click puts the held cable down
             landing, reason, unchanged = self._decide(at)
-            self._finish(c.put_down(_xy(at), landing, refused=reason, unchanged=unchanged))
+            self._finish(c.put_down(_xy(at), landing, refused=reason, unchanged=unchanged), _xy(at))
             return True
         spot = self.start_spot(at)
         if spot is None:
@@ -236,6 +261,10 @@ class CableLayer:
             self.occ = cb.Occupancy.of(project, ignoring=what.replaces)
             self._old = self._old_of(what.replaces, what.replaces_end)
             c.grab_draft(_xy(at))
+        elif kind == "saved" and isinstance(what, CableEndItem):
+            self.occ = cb.Occupancy.of(project)
+            self._old = ("", "")
+            c.press(what.anchor(), _xy(at), start=cb.SAVED, end_id=what.connector_id)
         elif kind == "plug" and isinstance(what, tuple):
             lid, end, anchor = what
             self.occ = cb.Occupancy.of(project, ignoring=lid)
@@ -312,7 +341,7 @@ class CableLayer:
         if c.state not in (cb.PRESSED, cb.CARRY):
             return False
         landing, reason, unchanged = self._decide(at)
-        self._finish(c.release(_xy(at), landing, refused=reason, unchanged=unchanged))
+        self._finish(c.release(_xy(at), landing, refused=reason, unchanged=unchanged), _xy(at))
         return True
 
     def follow(self) -> None:
@@ -381,6 +410,9 @@ class CableLayer:
             self.forget()
             return
         c, project = self.cable, self.ctl.project
+        if c.start == cb.SAVED and c.end_id not in self.scene.end_items:  # (undone meanwhile)
+            self.forget()
+            return
         anchor = c.anchor if c.busy else (c.draft.anchor if c.draft else None)
         if anchor is None:
             return
@@ -394,7 +426,7 @@ class CableLayer:
             c.draft = replace(d, replaces="", replaces_end="")
 
     # ---- results -----------------------------------------------------------------------------
-    def _finish(self, out: cb.Outcome) -> None:
+    def _finish(self, out: cb.Outcome, at: Spot = (0.0, 0.0)) -> None:
         self._after(say=False)
         ctl = self.ctl
         if out.kind == "click":
@@ -402,6 +434,23 @@ class CableLayer:
                 ctl.select("unit", out.anchor.unit_id)
             elif out.start == cb.REPLUG:
                 ctl.select_link(out.replaces)
+            elif out.start == cb.SAVED:
+                ctl.select_end(out.end_id)
+        elif out.kind == "loose" and not out.replaces and out.anchor is not None:
+            self.cable.drop_draft()  # the cable is saved instead: a harness with a loose end
+            self._leave(out.anchor, at)
+        elif out.kind == "place":
+            item = self.scene.end_items.get(out.end_id)
+            if item is not None:
+                hx, hy = item.home()
+                ctl.move_loose_end(out.end_id, at[0] - hx, at[1] - hy)
+        elif out.kind == "plug":
+            t = out.target
+            ctl.plug_loose_end(
+                out.end_id,
+                connector_id=t.connector_id if t is not None else "",
+                unit_id=t.unit_id if t is not None else out.target_unit,
+            )
         elif out.kind == "connect" and out.anchor is not None:
             a, b = out.anchor, out.target
             b_unit, b_conn = (b.unit_id, b.connector_id) if b is not None else (out.target_unit, "")
@@ -417,6 +466,24 @@ class CableLayer:
         elif out.kind == "refused":
             ctl.message.emit(self._refusal_text(out), False)
         self._say_hint()
+
+    def _leave(self, anchor: cb.Port, at: Spot) -> None:
+        """A new cable let go on empty ground: a harness drawn by hand from the port, its far end
+        loose where the cable was let go (one undo step). In Guided and Quick mode the port is the
+        device's, and the cable goes into its first connector that has no cable on it."""
+        project = self.ctl.project
+        box = anchor.connector_id or cable_ends.free_port(project, anchor.unit_id) or ""
+        if not box:
+            self.ctl.message.emit(strings.LOOSE_NO_PORT.format(unit=anchor.unit_id), False)
+            return
+        plugs = self.occ.plugs if self.occ is not None else cb.Occupancy.of(project).plugs
+        if box in plugs:
+            conn = project.connectors.get(box)
+            name = conn.name if conn is not None else box
+            self.ctl.message.emit(strings.CABLE_REFUSED_PLUGGED.format(name=name), False)
+            return
+        home = cb.loose_spot(self.port_now(cb.Port(anchor.unit_id, box)), 0)
+        self.ctl.leave_loose_end(box, (at[0] - home[0], at[1] - home[1]))
 
     def _refusal_text(self, out: cb.Outcome) -> str:
         project = self.ctl.project
@@ -447,7 +514,9 @@ class CableLayer:
 
     def _say_hint(self) -> None:
         c, ctl = self.cable, self.ctl
-        if c.active and c.replaces:
+        if c.active and c.start == cb.SAVED:
+            text = strings.CABLE_HINT_SAVED.format(end=c.end_id)
+        elif c.active and c.replaces:
             text = strings.CABLE_HINT_REPLUG.format(link=c.replaces)
         elif c.state == cb.HOLD:
             text = strings.CABLE_HINT_HELD

@@ -11,7 +11,11 @@ harness (state chip, the sentence from `lockview.lock_reason`, a "Start new revi
 the fields a release forbids changed, disabled with the reason as their tooltip (the cosmetic ones
 stay editable); a **Used in** table (`core.usedby`); and, for a part, interface type, harness or
 configuration file, a table of its properties with a status chip per engineering value (not set,
-unreviewed placeholder, locked). The **Why** tab is a `WhyPanel`. The **Problems** tab hosts the
+unreviewed placeholder, locked). The end of a cable drawn by hand (kind `cable_end`, a cable
+connector of a harness: M4c) shows its harness, the harness's origin, whether it is plugged in or
+an open end, and the fields to name it, give it a connector part, plug it in or unplug it; a
+harness shows its origin (interfaces, a connection, or drawn by hand). The **Why** tab is a
+`WhyPanel`. The **Problems** tab hosts the
 `ProblemsPanel` that is handed in; this module does not touch it.
 """
 
@@ -35,10 +39,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import configcheck, describe
+from harness_design_studio.core import cable_ends, configcheck, describe
 from harness_design_studio.core.build_data import plan_set_part_tool
+from harness_design_studio.core.devices import connector_parts_to_choose
 from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.model import Project
+from harness_design_studio.core.model.physical import LOOSE_ROLE
+from harness_design_studio.core.origin import harness_link, harness_origin
 from harness_design_studio.core.usedby import KINDS as USED_KINDS
 from harness_design_studio.core.usedby import Use, used_by
 from harness_design_studio.core.vcs.lockview import (
@@ -57,7 +64,7 @@ from harness_design_studio.gui.theme import ThemeManager
 from harness_design_studio.gui.why_panel import WhyPanel
 
 TABS = ("inspector", "why", "problems")
-FACT_KINDS = ("harness", "part", "interface_type", "config")  # shown as a table, not a form
+FACT_KINDS = ("harness", "part", "interface_type", "config", "cable_end")  # a table, not a form
 MAX_TABLE_ROWS = 4
 
 
@@ -178,18 +185,33 @@ def _fact(
     return {"name": name, "value": value, "status": status, "state": state, "tip": tip}
 
 
+def origin_text(p: Project, harness_id: str) -> str:
+    """The origin of a harness in words: made by Generate, from the connection L1, or drawn."""
+    origin = harness_origin(p, harness_id)
+    if origin == "link":
+        return strings.INS_ORIGIN_LINK.format(link=harness_link(p, harness_id))
+    return strings.INS_ORIGIN[origin]
+
+
 def _harness_facts(p: Project, oid: str) -> list[dict[str, Any]]:
     h = p.harnesses[oid]
     L = strings.INS_FACT_LABELS
     state = describe.harness_state(h)
+    loose = sum(1 for c in h.connectors if c.role == LOOSE_ROLE)
     rows = [
         _fact(L["name"], h.name),
+        _fact(strings.INS_FACT_ORIGIN, origin_text(p, oid), tip=strings.INS_ORIGIN_TIP),
         _fact(L["revision"], h.revision),
         _fact(L["state"], "", strings.STATE_LABELS[state], state),
         _fact(L["interfaces"], str(len(h.interfaces))),
         _fact(L["connectors"], str(len(h.connectors))),
         _fact(L["wires"], str(len(h.wires))),
     ]
+    if loose:
+        rows.append(
+            _fact(strings.INS_FACT_LOOSE, str(loose), strings.INS_END_NOT_CHOSEN, "pending",
+                  strings.INS_FACT_LOOSE_TIP)
+        )  # fmt: skip
     if h.released_on:
         rows.append(_fact(L["released_on"], h.released_on))
     if h.approver:
@@ -280,11 +302,38 @@ def _config_facts(p: Project, oid: str) -> list[dict[str, Any]]:
     return rows
 
 
+def _cable_end_facts(p: Project, oid: str) -> list[dict[str, Any]]:
+    found = cable_ends.connector_of(p, oid)
+    if found is None:
+        return []
+    h, c = found
+    L = strings.INS_FACT_LABELS
+    rows = [
+        _fact(L["name"], c.name),
+        _fact(strings.INS_FACT_HARNESS, f"{h.id} · {h.name}"),
+        _fact(strings.INS_FACT_ORIGIN, origin_text(p, h.id), tip=strings.INS_ORIGIN_TIP),
+        _fact(L["pins"], str(len(c.pins))),
+    ]
+    if c.role == LOOSE_ROLE:
+        rows.append(
+            _fact(strings.INS_FACT_PART, strings.INS_END_TBD, strings.INS_END_NOT_CHOSEN,
+                  "pending", strings.INS_END_TBD_TIP)
+        )  # fmt: skip
+        rows.append(_fact(strings.INS_FACT_PLUGGED, strings.INS_END_OPEN))
+    else:
+        box = p.connectors.get(c.mates_with or "")
+        where = f"{box.unit_id} {box.name} ({box.id})" if box is not None else strings.INS_END_FREE
+        rows.append(_fact(strings.INS_FACT_PART, c.part_id))
+        rows.append(_fact(strings.INS_FACT_PLUGGED, where))
+    return rows
+
+
 _FACTS: dict[str, Callable[[Project, str], list[dict[str, Any]]]] = {
     "harness": _harness_facts,
     "part": _part_facts,
     "interface_type": _type_facts,
     "config": _config_facts,
+    "cable_end": _cable_end_facts,
 }
 
 
@@ -296,6 +345,8 @@ def facts_for(project: Project, kind: str, object_id: str) -> list[dict[str, Any
         "interface_type": project.interface_types,
         "config": project.config,
     }
+    if kind == "cable_end":
+        return _cable_end_facts(project, object_id)
     if kind not in exists or object_id not in exists[kind]:
         return []
     return _FACTS[kind](project, object_id)
@@ -346,6 +397,7 @@ class Inspector(QWidget):
 
     reviseRequested = Signal(str)
     showRequested = Signal(str, str)
+    plugRequested = Signal(str)  # a cable end: "Plug into…" was pressed (the window asks where)
 
     def __init__(
         self,
@@ -430,6 +482,10 @@ class Inspector(QWidget):
         self.tool_edit.returnPressed.connect(self.apply_tool)
         self.tool_set.clicked.connect(self.apply_tool)
         facts_lay.addWidget(self.tool_box)
+        self.end_box = CableEndBox(ctl, theme)
+        self.end_box.plugRequested.connect(self.plugRequested)
+        self.end_box.setVisible(False)
+        facts_lay.addWidget(self.end_box)
         self.stack.addWidget(facts_page)
         page_lay.addWidget(self.stack, 1)
         self.used_box = QWidget()
@@ -470,6 +526,7 @@ class Inspector(QWidget):
         self._later.timeout.connect(self._refresh_lists)
         self.props.rebuilt.connect(self._apply_locks)
         ctl.selectionChanged.connect(self._selection_changed)
+        ctl.endSelectionChanged.connect(self._end_selected)
         ctl.changed.connect(lambda _d: self._changed())
         ctl.stateChanged.connect(self.refresh)
         ctl.drcChanged.connect(self.refresh_badges)
@@ -509,6 +566,11 @@ class Inspector(QWidget):
         if kind in ("unit", "interface"):
             self._target = None
             self.ctl.select(kind, object_id)
+            self.refresh()
+        elif kind == "cable_end":
+            self._target = (kind, object_id)
+            if self.ctl.selected_end != object_id:
+                self.ctl.select_end(object_id)
             self.refresh()
         elif kind in FACT_KINDS:
             self._target = (kind, object_id)
@@ -565,6 +627,8 @@ class Inspector(QWidget):
 
     @staticmethod
     def _exists(project: Project, kind: str, oid: str) -> bool:
+        if kind == "cable_end":
+            return cable_ends.connector_of(project, oid) is not None
         tables: dict[str, Mapping[str, Any]] = {
             "unit": project.units,
             "interface": project.interfaces,
@@ -577,6 +641,16 @@ class Inspector(QWidget):
 
     def _selection_changed(self) -> None:
         self._target = None
+        self.refresh()
+
+    def _end_selected(self) -> None:
+        """The end of a cable drawn by hand was picked on the diagram or in the tree (or put
+        down): the inspector shows it."""
+        cid = self.ctl.selected_end
+        if cid is not None:
+            self._target = ("cable_end", cid)
+        elif self._target is not None and self._target[0] == "cable_end":
+            self._target = None
         self.refresh()
 
     def _changed(self) -> None:
@@ -610,17 +684,20 @@ class Inspector(QWidget):
         self._fit_tables()
 
     def _show_facts(self, kind: str, oid: str) -> None:
-        self.facts_title.setText(strings.INS_FACT_KIND[kind].upper() + " " + oid)
-        self.facts_table.setAccessibleName(
-            strings.INS_FACTS_NAME.format(strings.INS_FACT_KIND[kind], oid)
-        )
+        word = strings.INS_FACT_KIND.get(kind) or strings.INS_END_KIND
+        self.facts_title.setText(word.upper() + " " + oid)
+        self.facts_table.setAccessibleName(strings.INS_FACTS_NAME.format(word, oid))
         self.facts_table.set_rows(facts_for(self.ctl.project, kind, oid))
         self.stack.setCurrentIndex(1)
         self._show_tool(kind, oid, reload=True)
         self._fit_tables()
 
     def _show_tool(self, kind: str, oid: str, *, reload: bool) -> None:
-        """The crimp tool field: only for a part of category contact; off for a read-only project."""
+        """The crimp tool field: only for a part of category contact; off for a read-only project.
+        The fields of a cable end: only for a cable end."""
+        self.end_box.setVisible(kind == "cable_end")
+        if kind == "cable_end":
+            self.end_box.show_end(oid, reload=reload)
         part = self.ctl.project.parts.get(oid) if kind == "part" else None
         show = part is not None and part.category == "contact"
         self.tool_box.setVisible(show)
@@ -744,6 +821,144 @@ class Inspector(QWidget):
 
     def sizeHint(self) -> QSize:  # noqa: N802
         return QSize(self.theme.px(320), self.theme.px(640))
+
+
+class CableEndBox(QWidget):
+    """The fields of the end of a cable drawn by hand: its name, the connector part that decides a
+    loose end, and the buttons that plug it into a port (the window asks which) or unplug it. A
+    field that cannot be used says why in its tooltip (a released harness, a harness made by
+    Generate or from a connection, a read-only project); a refusal shows under the fields."""
+
+    plugRequested = Signal(str)
+
+    def __init__(self, ctl: EditorController, theme: ThemeManager) -> None:
+        super().__init__()
+        self.ctl = ctl
+        self.setObjectName("cable-end-box")
+        self.end_id = ""
+        lay = QVBoxLayout(self)
+        lay.setContentsMargins(theme.space(8), 0, theme.space(8), 0)
+        lay.setSpacing(theme.space(4))
+        title = QLabel(strings.INS_END_EDIT)
+        title.setProperty("heading", True)
+        lay.addWidget(title)
+        self.name = QLineEdit()
+        self.name.setObjectName("cable-end-name")
+        self.name.setAccessibleName(strings.INS_END_NAME)
+        self.name.setToolTip(strings.INS_END_NAME_TIP)
+        self.rename = QPushButton(strings.INS_END_RENAME)
+        self.rename.setObjectName("cable-end-rename")
+        self.rename.setAccessibleName(strings.INS_END_RENAME)
+        self.rename.setToolTip(strings.INS_END_RENAME_TIP)
+        row = QHBoxLayout()
+        row.addWidget(self.name, 1)
+        row.addWidget(self.rename)
+        lay.addLayout(row)
+        self.part = QComboBox()
+        self.part.setObjectName("cable-end-part")
+        self.part.setAccessibleName(strings.INS_END_PART)
+        self.part.setToolTip(strings.INS_END_PART_TIP)
+        self.use_part = QPushButton(strings.INS_END_USE_PART)
+        self.use_part.setObjectName("cable-end-use-part")
+        self.use_part.setAccessibleName(strings.INS_END_USE_PART)
+        self.use_part.setToolTip(strings.INS_END_USE_PART_TIP)
+        prow = QHBoxLayout()
+        prow.addWidget(self.part, 1)
+        prow.addWidget(self.use_part)
+        lay.addLayout(prow)
+        self.plug = QPushButton(strings.A_PLUG_LOOSE)
+        self.plug.setObjectName("cable-end-plug")
+        self.plug.setAccessibleName(strings.A_PLUG_LOOSE)
+        self.plug.setToolTip(strings.A_PLUG_LOOSE_TIP)
+        self.unplug = QPushButton(strings.A_UNPLUG)
+        self.unplug.setObjectName("cable-end-unplug")
+        self.unplug.setAccessibleName(strings.A_UNPLUG)
+        self.unplug.setToolTip(strings.A_UNPLUG_TIP)
+        brow = QHBoxLayout()
+        brow.addWidget(self.plug)
+        brow.addWidget(self.unplug)
+        brow.addStretch(1)
+        lay.addLayout(brow)
+        self.error = QLabel()
+        self.error.setObjectName("cable-end-error")
+        self.error.setWordWrap(True)
+        self.error.setProperty("error", True)
+        self.error.setVisible(False)
+        lay.addWidget(self.error)
+        self.rename.clicked.connect(self.apply_name)
+        self.name.returnPressed.connect(self.apply_name)
+        self.use_part.clicked.connect(self.apply_part)
+        self.plug.clicked.connect(lambda: self.plugRequested.emit(self.end_id))
+        self.unplug.clicked.connect(self.apply_unplug)
+
+    def _why_not(self) -> str:
+        """Why the end cannot be changed here ("" when it can)."""
+        p = self.ctl.project
+        found = cable_ends.connector_of(p, self.end_id)
+        if found is None:
+            return ""
+        h, _c = found
+        if self.ctl.read_only:
+            return strings.WHY_READ_ONLY
+        if h.status == "released":
+            return strings.CE_RELEASED.format(h.id)
+        if h.generated:
+            return strings.CE_GENERATED.format(h.id)
+        return ""
+
+    def show_end(self, end_id: str, *, reload: bool = True) -> None:
+        """Fill the fields for this cable end."""
+        changed = end_id != self.end_id
+        self.end_id = end_id
+        found = cable_ends.connector_of(self.ctl.project, end_id)
+        if found is None:
+            return
+        _h, c = found
+        loose = c.role == LOOSE_ROLE
+        if (reload or changed) and not self.name.hasFocus():
+            self.name.setText(c.name)
+        keep = self.part.currentData()
+        self.part.clear()
+        for part in sorted(connector_parts_to_choose(self.ctl.project), key=lambda x: x.id):
+            self.part.addItem(part.id, part.id)
+        self.part.setCurrentIndex(max(0, self.part.findData(keep)))
+        if changed:
+            self.error.setVisible(False)
+        why = self._why_not()
+        for w in (self.name, self.rename):
+            w.setEnabled(not why)
+        has_parts = self.part.count() > 0
+        self.part.setEnabled(not why and loose and has_parts)
+        self.use_part.setEnabled(not why and loose and has_parts)
+        self.plug.setEnabled(not why and loose)
+        unplug_why = why or (self.ctl.why_not_unplug(end_id) if not loose else "")
+        self.unplug.setEnabled(not loose and not unplug_why)
+        self.unplug.setToolTip(unplug_why or strings.A_UNPLUG_TIP)
+        self.plug.setToolTip(why or strings.A_PLUG_LOOSE_TIP)
+        part_why = why or ("" if has_parts else strings.INS_END_NO_PARTS)
+        self.use_part.setToolTip(part_why or strings.INS_END_USE_PART_TIP)
+        self.name.setToolTip(why or strings.INS_END_NAME_TIP)
+
+    def _say(self, text: str) -> None:
+        self.error.setText(text)
+        self.error.setVisible(bool(text))
+
+    def apply_name(self) -> bool:
+        if not self.rename.isEnabled():
+            return False
+        self._say("")
+        return self.ctl.rename_cable_end(self.end_id, self.name.text())
+
+    def apply_part(self) -> bool:
+        part = self.part.currentData()
+        if not self.use_part.isEnabled() or not part:
+            return False
+        return self.ctl.resolve_loose_end(self.end_id, str(part))
+
+    def apply_unplug(self) -> bool:
+        if not self.unplug.isEnabled():
+            return False
+        return self.ctl.unplug(self.end_id)
 
 
 def _alive(widget: QWidget, root: QWidget) -> bool:

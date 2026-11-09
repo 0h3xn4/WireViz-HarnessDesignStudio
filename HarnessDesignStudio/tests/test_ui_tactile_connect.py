@@ -3,10 +3,12 @@
 harness, dragging it to a port and plugging it in. In the block diagram a press on a port picks a
 cable up; it follows the pointer as a rubber band, snaps to a port, and where it is let go it
 connects (the window *Link connectors* for exactly those two connectors, or at once in Quick
-mode), connects to the best connector of a device it is dropped on, or stays as a loose end (a
-draft of the window: never saved, never in the model hash). The end of a connection can be picked
-up and plugged in elsewhere. Esc puts everything away. Devices, labels and the rubber band keep
-working as before."""
+mode), connects to the best connector of a device it is dropped on, or stays as a loose end
+(since M4c, REQ-GUI-28: a saved harness drawn by hand whose far end is loose; until then it was a
+draft of the window that was never saved). The end of a connection can be picked up and plugged in
+elsewhere (let go on empty ground, that end is a draft of the window: a connection always joins
+two connectors). Esc puts everything away. Devices, labels and the rubber band keep working as
+before."""
 
 import os
 
@@ -22,7 +24,6 @@ from PySide6.QtWidgets import QApplication  # noqa: E402
 
 from harness_design_studio.core import links as core_links  # noqa: E402
 from harness_design_studio.core.io import layout  # noqa: E402
-from harness_design_studio.core.io.saver import save_project  # noqa: E402
 from harness_design_studio.gui import cable as cb  # noqa: E402
 from harness_design_studio.gui import strings  # noqa: E402
 from harness_design_studio.gui.link_dialog import LinkDialog  # noqa: E402
@@ -423,137 +424,197 @@ def test_esc_without_a_cable_still_does_what_it_did(qtbot, tmp_path) -> None:
     assert w.win.ctl.selection is None
 
 
-# ---- the loose end ----------------------------------------------------------------------------------
+# ---- the loose end (since M4c a saved one: a harness drawn by hand, D-201) ------------------------
+# Until M4c a cable let go on empty ground was a draft of the window, never saved. Now it is a
+# harness drawn by hand with one end plugged into the port and the other end loose, in one undo
+# step; the draft stays only for the end of a connection let go on empty ground (further down).
 
 
 def make_loose(w: World, at: QPointF | None = None, connector: str = "OBC-J01") -> cb.Port:
     at = at or QPointF(420, 120)
     a = w.port("OBC", connector)
     w.drag(w.grab_spot(a), at)
+    w.settle()
     return a
 
 
-def test_a_cable_let_go_on_empty_ground_stays_as_a_dashed_loose_end_with_a_plug(
+def loose_items(w: World) -> list:
+    return [i for i in w.scene.end_items.values() if i.end.loose]
+
+
+def test_a_cable_let_go_on_empty_ground_is_saved_as_a_harness_with_a_loose_end_in_one_step(
     qtbot, world
 ) -> None:
+    from harness_design_studio.core.origin import harness_origin
+
     w = world
     h, steps = layout.model_hash(w.project), w.steps()
-    a = make_loose(w, connector="OBC-J01")
-    d = w.layer.cable.draft
-    assert d is not None and d.anchor.unit_id == "OBC"
-    assert d.end == pytest.approx((420.0, 120.0), abs=1.0)
-    assert w.project.links == {} and w.steps() == steps and layout.model_hash(w.project) == h
-    assert w.status() == strings.CABLE_HINT_LOOSE
+    make_loose(w, connector="OBC-J01")
+    assert w.layer.cable.draft is None and w.layer.cable.state == cb.IDLE
+    assert w.project.links == {} and w.steps() == steps + 1
+    assert layout.model_hash(w.project) != h  # the cable is part of the design
+    (hid,) = w.project.harnesses
+    harness = w.project.harnesses[hid]
+    assert harness_origin(w.project, hid) == "drawn" and not harness.generated
+    roles = sorted(c.role for c in harness.connectors)
+    assert roles == ["cable", "loose"]
+    near = next(c for c in harness.connectors if c.role == "cable")
+    assert near.mates_with == "OBC-J01"  # Guided picks the device's first free connector too
+    (item,) = loose_items(w)
+    assert item.spot == pytest.approx((420.0, 120.0), abs=1.0)  # where it was let go
+    assert w.win.ctl.selected_end == item.connector_id
     img = w.view.grab().toImage()
-    spot = w.at(QPointF(*d.end))
+    spot = w.at(QPointF(*item.spot))
     ratio = img.devicePixelRatio()  # (a screen scaled to 125 %: the image has more pixels than px)
     ink = {
         img.pixelColor(round((spot.x() + dx) * ratio), round((spot.y() + dy) * ratio)).name()
-        for dx in range(-8, 3)
-        for dy in range(-5, 6)
+        for dx in range(-8, 9)
+        for dy in range(-6, 7)
     }
-    assert len(ink) > 1  # something is drawn at the loose end (the plug)
-    assert a.unit_id == "OBC"
+    assert len(ink) > 1  # something is drawn at the loose end (the open plug)
+    w.win.ctl.undo()
+    assert w.project.harnesses == {} and w.scene.end_items == {} and w.steps() == steps
+    w.win.ctl.redo()
+    assert len(loose_items(w)) == 1
 
 
-def test_a_loose_end_is_not_in_the_project_the_hash_or_any_file(qtbot, tmp_path) -> None:
+def test_the_loose_end_is_saved_and_its_place_is_outside_the_model_hash(qtbot, tmp_path) -> None:
     w = expert(tmp_path)
     make_loose(w)
-    folder = tmp_path / "proj"
-    folder.mkdir()
-    h0 = layout.model_hash(w.project)
-    save_project(w.project, folder)
-    files = [p for p in folder.rglob("*") if p.is_file()]
-    text = "".join(p.read_text(errors="ignore") for p in files)
-    assert "loose" not in text.lower() and "draft" not in text.lower()
-    assert not any("cable" in p.name or "draft" in p.name for p in files)
-    assert layout.model_hash(w.project) == h0
-
-
-def test_saving_the_project_drops_a_loose_end_silently(qtbot, tmp_path) -> None:
-    w = expert(tmp_path)
-    make_loose(w)
-    assert w.layer.cable.draft is not None
+    (item,) = loose_items(w)
     folder = tmp_path / "proj"
     w.win.ctl.save_as(folder)
-    assert w.layer.cable.draft is None and w.status() == ""
-    assert w.win.toasts.messages == [] or all("loose" not in m for m in w.win.toasts.messages)
+    text = "".join(
+        p.read_text(errors="ignore") for p in (folder / "physical" / "harnesses").glob("*.json")
+    )
+    assert '"loose"' in text and "TBD-CONNECTOR" in text
+    marks = (folder / "diagram" / "marks.json").read_text()
+    assert f"pos:{item.connector_id}" in marks
+    h0 = layout.model_hash(w.project)
+    n = w.steps()
+    w.drag(QPointF(*item.spot), QPointF(460, 520))  # moved: only the mark changes
+    assert item.spot == pytest.approx((460.0, 520.0), abs=1.0)
+    assert layout.model_hash(w.project) == h0 and w.steps() == n + 1
+    w.win.ctl.undo()
+    w.settle()
+    assert item.spot == pytest.approx((420.0, 120.0), abs=1.0)
 
 
-def test_a_loose_end_is_picked_up_by_a_drag_and_plugged_into_a_port(qtbot, tmp_path) -> None:
+def test_saving_keeps_a_loose_end_and_a_reload_draws_it_where_it_was(qtbot, tmp_path) -> None:
+    w = expert(tmp_path)
+    make_loose(w, QPointF(430, 140))
+    (item,) = loose_items(w)
+    folder = tmp_path / "proj"
+    w.win.ctl.save_as(folder)
+    w.settle()
+    assert len(loose_items(w)) == 1 and w.status() == ""  # (saving no longer drops it)
+    import shutil
+
+    copy = tmp_path / "copy"  # (the first window keeps its lock on the folder)
+    shutil.copytree(folder, copy, ignore=shutil.ignore_patterns(".harness.lock"))
+    w2 = World(tmp_path / "second", quick=False, mode="expert")
+    w2.win.ctl.open_path(copy)
+    w2.win.ctl.set_mode("expert")
+    w2.settle()
+    (again,) = loose_items(w2)
+    assert again.connector_id == item.connector_id
+    assert again.spot == pytest.approx(item.spot, abs=1.0)
+
+
+def test_a_loose_end_dragged_onto_a_port_plugs_in_in_one_undo_step(qtbot, tmp_path) -> None:
     w = expert(tmp_path, quick=True)
     make_loose(w, QPointF(420, 120))
+    (item,) = loose_items(w)
+    cid, n = item.connector_id, w.steps()
     b = w.port("RW1", "RW1-J02")
-    w.drag(QPointF(420, 120), w.drop_spot(b))
-    (link,) = w.project.links.values()
-    assert (link.a_connector, link.b_connector) == ("OBC-J01", "RW1-J02")
-    assert w.layer.cable.draft is None and w.steps() == 1
+    w.drag(QPointF(*item.spot), w.drop_spot(b))
+    (h,) = w.project.harnesses.values()
+    plugged = next(c for c in h.connectors if c.id == cid)
+    assert (plugged.role, plugged.mates_with) == ("cable", "RW1-J02")
+    assert w.project.links == {} and w.steps() == n + 1  # a cable, not a connection
+    assert loose_items(w) == [] and not w.scene.end_items[cid].end.loose  # drawn to the port now
+    w.win.ctl.undo()
+    w.settle()
+    assert [i.connector_id for i in loose_items(w)] == [cid]
+    w.win.ctl.redo()
+    assert loose_items(w) == []
 
 
-def test_a_click_on_the_loose_end_picks_it_up_and_the_next_click_on_a_port_plugs_it_in(
+def test_in_guided_mode_a_loose_end_dropped_on_a_device_plugs_into_the_connector_that_fits(
     qtbot, tmp_path
 ) -> None:
-    w = expert(tmp_path, quick=True)
+    w = World(tmp_path, quick=True, mode="guided")
     make_loose(w, QPointF(420, 120))
-    w.click(QPointF(420, 120))
-    assert w.layer.cable.state == cb.HOLD and w.status() == strings.CABLE_HINT_HELD
-    w.move(QPointF(500, 200))
-    assert w.layer.cable.shown()[1][0] == pytest.approx(
-        500.0, abs=1.0
-    )  # it follows with no button down
-    b = w.port("RW1", "RW1-J01")
-    w.click(w.drop_spot(b))
-    (link,) = w.project.links.values()
-    assert (link.a_connector, link.b_connector) == ("OBC-J01", "RW1-J01")
-    assert w.layer.cable.state == cb.IDLE and w.steps() == 1
+    (item,) = loose_items(w)
+    w.drag(QPointF(*item.spot), QPointF(520 + 100, 190 + 40))
+    (h,) = w.project.harnesses.values()
+    plugged = next(c for c in h.connectors if c.id == item.connector_id)
+    assert plugged.mates_with == "RW1-J02"  # its pins carry the names of RW1-J02's (TX to RX)
 
 
-def test_a_held_loose_end_clicked_on_empty_ground_stays_loose_there(qtbot, tmp_path) -> None:
+def test_a_click_on_a_loose_end_selects_it_and_a_drag_on_empty_ground_moves_it(
+    qtbot, tmp_path
+) -> None:
     w = expert(tmp_path)
     make_loose(w, QPointF(420, 120))
-    w.click(QPointF(420, 120))
+    (item,) = loose_items(w)
+    w.win.ctl.select("unit", "RW1")
+    w.click(QPointF(*item.spot))
+    assert w.win.ctl.selected_end == item.connector_id and w.layer.cable.state == cb.IDLE
+    assert w.win.ctl.selection is None
+    w.press(QPointF(*item.spot))
+    w.move(QPointF(400, 300))
+    assert w.status() == strings.CABLE_HINT_SAVED.format(end=item.connector_id)
     w.move(QPointF(380, 520))
-    w.click(QPointF(380, 520))
-    assert (
-        w.layer.cable.draft.end == pytest.approx((380.0, 520.0), abs=1.0)
-        and w.layer.cable.state == cb.IDLE
-    )
+    w.release(QPointF(380, 520))
+    assert item.spot == pytest.approx((380.0, 520.0), abs=1.0)
 
 
-def test_a_click_on_empty_ground_and_esc_drop_the_loose_end(qtbot, tmp_path) -> None:
+def test_esc_while_a_loose_end_is_in_hand_leaves_it_where_it_was(qtbot, tmp_path) -> None:
     w = expert(tmp_path)
-    make_loose(w)
-    w.click(QPointF(700, 520))  # empty ground
-    assert w.layer.cable.draft is None and w.status() == ""
-    make_loose(w)
+    make_loose(w, QPointF(420, 120))
+    (item,) = loose_items(w)
+    n, h = w.steps(), layout.model_hash(w.project)
+    w.press(QPointF(*item.spot))
+    w.move(QPointF(500, 200))
+    w.move(w.drop_spot(w.port("RW1", "RW1-J02")))
     w.esc()
-    assert w.layer.cable.draft is None and w.status() == "" and w.project.links == {}
+    w.release(w.drop_spot(w.port("RW1", "RW1-J02")))
+    assert w.steps() == n and layout.model_hash(w.project) == h and item.end.loose
+    assert item.spot == pytest.approx((420.0, 120.0), abs=1.0)
 
 
 def test_a_loose_end_follows_its_device_when_the_device_moves(qtbot, tmp_path) -> None:
     w = expert(tmp_path)
     make_loose(w, QPointF(420, 120))
+    (item,) = loose_items(w)
+    before = item.spot
     w.win.ctl.move_unit("OBC", 60, 140)
     w.settle()
-    anchor = w.layer.port_now(w.layer.cable.draft.anchor)
+    anchor = item.anchor()
     assert anchor.y == w.port("OBC", "OBC-J01").y and anchor.y > 116
+    assert item.spot == pytest.approx((before[0], before[1] + 70.0), abs=1.0)  # the offset holds
 
 
-def test_a_loose_end_goes_when_its_device_is_deleted_or_a_project_is_opened(
+def test_a_cable_from_a_port_with_a_cable_plug_on_it_is_refused_with_the_reason(
     qtbot, tmp_path
 ) -> None:
-    from harness_design_studio.core import edit
-
     w = expert(tmp_path)
     make_loose(w)
-    w.win.ctl.run("Delete", edit.ops_delete_unit(w.project, "OBC"))
-    assert w.layer.cable.draft is None
-    w2 = expert(tmp_path / "second")
-    make_loose(w2)
+    n = w.steps()
+    w.drag(w.grab_spot(w.port("OBC", "OBC-J01")), QPointF(430, 400))
+    assert w.steps() == n and len(w.project.harnesses) == 1
+    assert w.win.toasts.messages[-1] == strings.CABLE_REFUSED_PLUGGED.format(name="J01")
+
+
+def test_opening_another_project_drops_the_drawn_ends(qtbot, tmp_path) -> None:
+    w = expert(tmp_path)
+    make_loose(w)
+    assert w.scene.end_items
     p = pinout_project()
     p.harnesses.clear()
-    w2.win.ctl._install(p, None, None)
-    assert w2.layer.cable.draft is None
+    w.win.ctl._install(p, None, None)
+    assert w.scene.end_items == {} and w.win.ctl.selected_end is None
 
 
 # ---- refusals ------------------------------------------------------------------------------------------
@@ -682,6 +743,51 @@ def test_the_loose_end_of_a_picked_up_connection_plugs_in_later_and_moves_the_co
     assert w.steps() == n + 1 and w.layer.cable.draft is None
 
 
+def test_a_click_on_the_draft_end_of_a_connection_holds_it_and_a_click_on_a_port_plugs_it_in(
+    qtbot, tmp_path
+) -> None:
+    w, lid = linked(tmp_path)
+    n = w.steps()
+    w.drag(w.plug(lid, end="b"), QPointF(430, 380))
+    w.click(QPointF(430, 380))
+    assert w.layer.cable.state == cb.HOLD
+    assert w.status() == strings.CABLE_HINT_REPLUG.format(link=lid)
+    w.move(QPointF(500, 400))
+    assert w.layer.cable.shown()[1][0] == pytest.approx(500.0, abs=1.0)  # it follows, no button
+    w.click(w.drop_spot(w.port("PCDU", "PCDU-J01")))
+    assert w.project.links[lid].b_connector == "PCDU-J01" and w.steps() == n + 1
+    assert w.layer.cable.state == cb.IDLE and w.layer.cable.draft is None
+
+
+def test_a_held_draft_end_put_on_empty_ground_stays_there_and_a_click_there_or_esc_drops_it(
+    qtbot, tmp_path
+) -> None:
+    w, lid = linked(tmp_path)
+    w.drag(w.plug(lid, end="b"), QPointF(430, 380))
+    w.click(QPointF(430, 380))
+    w.move(QPointF(380, 520))
+    w.click(QPointF(380, 520))
+    d = w.layer.cable.draft
+    assert d is not None and d.end == pytest.approx((380.0, 520.0), abs=1.0)
+    w.click(QPointF(700, 520))  # empty ground
+    assert w.layer.cable.draft is None and w.status() == ""
+    w.drag(w.plug(lid, end="b"), QPointF(430, 380))
+    w.esc()
+    assert w.layer.cable.draft is None and w.project.links[lid].b_connector == "RW1-J02"
+    assert w.project.harnesses == {}  # the end of a connection never makes a harness
+
+
+def test_saving_drops_the_draft_end_of_a_connection_silently(qtbot, tmp_path) -> None:
+    w, lid = linked(tmp_path)
+    w.drag(w.plug(lid, end="b"), QPointF(430, 380))
+    assert w.layer.cable.draft is not None
+    folder = tmp_path / "proj"
+    w.win.ctl.save_as(folder)
+    assert w.layer.cable.draft is None and w.status() == ""
+    text = "".join(p.read_text(errors="ignore") for p in folder.rglob("*") if p.is_file())
+    assert "draft" not in text.lower()
+
+
 def test_an_end_put_back_on_its_own_port_changes_nothing(qtbot, tmp_path) -> None:
     w, lid = linked(tmp_path)
     n = w.steps()
@@ -784,8 +890,8 @@ def test_the_scene_grows_ahead_of_a_carried_cable_and_shrinks_back_when_it_is_pu
 
 
 def test_a_cable_far_from_the_diagram_is_still_drawn_and_picked_up_again(qtbot, tmp_path) -> None:
-    w = expert(tmp_path)
-    make_loose(w, QPointF(420, 120))
+    w, lid = linked(tmp_path)
+    w.drag(w.plug(lid, end="b"), QPointF(420, 120))  # the draft end of a connection
     w.win.ctl.move_unit("RW1", 6000.0, -900.0)
     w.settle()
     b = w.port("RW1", "RW1-J02")
