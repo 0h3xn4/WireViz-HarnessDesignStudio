@@ -39,7 +39,8 @@ def test_a_loose_end_hangs_on_the_port_of_its_cable_and_a_plugged_end_runs_to_it
     apply_ops(p, plan_plug_loose_end(p, r.harness_id, r.loose_id, "RW1-J02"))
     (end,) = cable_ends.drawn_ends(p)
     assert (end.loose, end.target, end.target_unit) == (False, "RW1-J02", "RW1")
-    assert cable_ends.harness_of(p, r.loose_id).id == r.harness_id
+    owner = cable_ends.harness_of(p, r.loose_id)
+    assert owner is not None and owner.id == r.harness_id
     apply_ops(p, plan_unplug(p, r.harness_id, r.near_id))  # its anchor goes: the end follows
     (end,) = cable_ends.drawn_ends(p)
     assert end.anchor == "RW1-J02" and end.loose and end.connector_id == r.near_id

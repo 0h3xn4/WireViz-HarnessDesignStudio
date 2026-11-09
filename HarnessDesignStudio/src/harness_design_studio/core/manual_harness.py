@@ -483,8 +483,9 @@ def plan_plug_loose_end(
 
     `pairs` (loose pin, port pin) default to `propose_plug`: by signal name, else by pin number; a
     pin the proposal leaves over meets the free port pin of its own number when their names do not
-    differ (so an end unplugged and plugged in again keeps its spare pins). The plan refuses, with the reason, to plug by number where the two pins carry different names, and
-    to plug when no pin can be paired; pair the pins yourself (`pairs`) to override that."""
+    differ (so an end unplugged and plugged in again keeps its spare pins). The plan refuses,
+    with the reason, to plug by number where the two pins carry different names, and to plug when
+    no pin can be paired; pair the pins yourself (`pairs`) to override that."""
     _writable(project)
     h, loose, box = _loose_and_port(project, harness_id, loose_id, box_id)
     if pairs is None:

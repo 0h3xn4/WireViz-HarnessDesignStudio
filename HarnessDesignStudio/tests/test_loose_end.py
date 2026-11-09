@@ -258,9 +258,7 @@ def test_a_left_over_pin_is_not_put_on_a_port_pin_of_another_name():
     ops, cid = plan_add_loose_end(p, hid, pin_ids=["1", "5"], signals={"1": "TX+", "5": "CLK"})
     apply_ops(p, ops)
     rw = p.connectors["RW1-J02"]
-    p.connectors["RW1-J02"] = evolve(
-        rw, pins=[*rw.pins[:4], evolve(rw.pins[4], signal="SYNC")]
-    )
+    p.connectors["RW1-J02"] = evolve(rw, pins=[*rw.pins[:4], evolve(rw.pins[4], signal="SYNC")])
     with pytest.raises(EditError, match="Pin 5"):
         plan_plug_loose_end(p, hid, cid, "RW1-J02")
 

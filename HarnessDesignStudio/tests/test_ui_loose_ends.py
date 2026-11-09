@@ -147,7 +147,7 @@ def test_a_harness_made_from_a_connection_refuses_to_unplug_and_the_menu_says_wh
     hid = w.win.ctl.create_harness_from_link(lid)
     plug = next(c.id for c in w.project.harnesses[hid].connectors if c.mates_with == "RW1-J02")
     why = w.win.ctl.why_not_unplug(plug)
-    assert lid in why and "made from the connection" in why
+    assert lid is not None and lid in why and "made from the connection" in why
     menu = w.view.build_context_menu("unit", "RW1", QPointF(600, 220), connector="RW1-J02")
     entry = next(a for a in menu.actions() if a.text().startswith(f"Unplug {plug}"))
     assert not entry.isEnabled() and entry.toolTip() == why
@@ -171,7 +171,9 @@ def test_the_right_click_menu_of_a_connector_leaves_a_loose_end_and_that_of_the_
     menu = w.view.build_context_menu("cable_end", item.connector_id, QPointF(*item.spot))
     texts = [a.text() for a in menu.actions()]
     assert any(t.startswith(strings.A_PLUG_LOOSE_MENU) for t in texts)
-    assert any(t.startswith(strings.CM_END_HARNESS.format(harness=item.end.harness_id)) for t in texts)
+    assert any(
+        t.startswith(strings.CM_END_HARNESS.format(harness=item.end.harness_id)) for t in texts
+    )
     reset = next(a for a in menu.actions() if a.text().startswith(strings.CM_END_RESET))
     assert not reset.isEnabled()  # it hangs where the tool puts it
 
@@ -196,7 +198,9 @@ def test_the_keyboard_way_leaves_plugs_and_unplugs_a_loose_end_from_the_menu(
         return fn
 
     DialogScript(w.win, choose("OBC-J01"))
-    assert w.win.act_leave_loose.isEnabled() and w.win.menu_cable_ends.title() == strings.M_CABLE_ENDS
+    assert (
+        w.win.act_leave_loose.isEnabled() and w.win.menu_cable_ends.title() == strings.M_CABLE_ENDS
+    )
     w.win.act_leave_loose.trigger()
     ports = [seen[0].port_box.itemData(k) for k in range(seen[0].port_box.count())]
     assert ports and all(p.startswith("OBC-") for p in ports)  # the selected device's ports
