@@ -1,7 +1,12 @@
 """Output verifier v2: re-reads the finished artefacts (CSV, SVG, PDF, YAML, JSON, XLSX, manifest)
 and compares them with the model. It does not import the table or drawing builders; it parses
 the bytes and derives what they must contain straight from the project, so a bug in a builder
-cannot hide itself."""
+cannot hide itself.
+
+The words of a loose cable end (role `loose`, D-201) are stated here a second time (`_OPEN_*`),
+never imported from the builders: the part `TBD-CONNECTOR (loose end)`, the mate `open end`, the
+label `ID open end`, the BOM line `(open end)`, the tests `(open end)`, the mass never counted,
+the drawing's `part/` and `end/` texts and the head of the end in the build workbook."""
 
 import csv
 import hashlib
@@ -32,6 +37,22 @@ from harness_design_studio.core.verify import VerifyReport, link_issues
 
 from .export_units import missing_units
 from .stamp import parse_csv
+
+# A loose cable end, worded independently of tables.py, drawing.py and buildsheet.py (D-201).
+_OPEN_END = "open end"
+_OPEN_PART_TAG = " (loose end)"
+_OPEN_BOM_PART = "(open end)"
+_OPEN_BOM_TEXT = "Connector not chosen yet (loose end)"
+_OPEN_TEST = "test when the end is decided"
+
+
+def _open(c: Connector) -> bool:
+    return c.role == LOOSE_ROLE
+
+
+def _open_ends(h: Harness) -> set[str]:
+    return {c.id for c in h.connectors if c.role == LOOSE_ROLE}
+
 
 MANIFEST = "manifest.json"
 RUN_RECORD = "run_record.json"  # core.run_record: kept next to the outputs, outside the manifest
@@ -379,7 +400,7 @@ def _mass(project: Project, h: Harness) -> tuple[float, bool]:
     """Mass of the parts whose mass is known, and whether every mass and length was known."""
     total, complete = 0.0, True
     for c in h.connectors:
-        part = project.parts.get(c.part_id)
+        part = None if _open(c) else project.parts.get(c.part_id)  # an open end is never counted
         if part is None or part.mass_g is None:
             complete = False
         else:
@@ -491,11 +512,12 @@ def _harness_cells(r: VerifyReport, project: Project, h: Harness, files: dict[st
     ts = _table(files, f"{base}/tests.csv")
     if ts:
         by_id = {w.id: w for w in h.wires}
+        ends = _open_ends(h)
         for row in ts[1:]:
             w = by_id.get(row[7]) if row[1] == "continuity" else None
             if w is not None and (
-                row[2] != f"{w.from_connector}.{w.from_pin}"
-                or row[3] != f"{w.to_connector}.{w.to_pin}"
+                row[2] != _test_end(ends, w.from_connector, w.from_pin)
+                or row[3] != _test_end(ends, w.to_connector, w.to_pin)
             ):
                 r.error(
                     "out_tests",
@@ -600,6 +622,7 @@ def _drawings(r: VerifyReport, project: Project, h: Harness, files: dict[str, by
                     )
                     break
     _drawing_pins(r, project, h, svgs, files)
+    _drawn_open_ends(r, h, svgs, files)
     for size in ("A3", "A4"):
         pdf = files.get(f"{base}/drawing_{size}.pdf")
         if pdf is not None:
@@ -672,6 +695,36 @@ def _drawing_pins(
         r.error("out_drawing", f"The drawing of {h.id} is wrong: {text}.", h.id)
     if len(bad) > 3:
         r.error("out_drawing", f"The drawing of {h.id} has {len(bad) - 3} more wrong pins.", h.id)
+
+
+def _drawn_open_ends(r: VerifyReport, h: Harness, svgs: list[str], files: dict[str, bytes]) -> None:
+    """A loose end with wires is drawn as an open end: its part line reads `PART (loose end),
+    N-pin` (cut with `~` when it is too long) and its mate line `open end`, both labelled with
+    `data-ref` (`part/ID`, `end/ID`); no other connector carries those labels."""
+    ends = {c.id: c for c in h.connectors if _open(c)}
+    wired = {w.from_connector for w in h.wires} | {w.to_connector for w in h.wires}
+    seen: set[str] = set()
+    bad: list[str] = []
+    for k in svgs:
+        for ref, text in _svg_items(files[k]):
+            kind, _s, cid = ref.partition("/")
+            if kind not in ("part", "end"):
+                continue
+            c = ends.get(cid)
+            if c is None:
+                bad.append(f"{cid} is drawn as an open end but is not a loose end")
+                continue
+            want = _OPEN_END if kind == "end" else f"{c.part_id}{_OPEN_PART_TAG}, {len(c.pins)}-pin"
+            cut = text.endswith("~") and len(text) < len(want) and want.startswith(text[:-1])
+            if text != want and not cut:
+                bad.append(
+                    f"the {'mate' if kind == 'end' else 'part'} of {cid} is drawn as '{text}'"
+                )
+            if kind == "end":
+                seen.add(cid)
+    bad += [f"the loose end {cid} is not drawn as an open end" for cid in sorted(set(ends) & wired - seen)]  # fmt: skip
+    for text in dict.fromkeys(bad[:3]):
+        r.error("out_drawing", f"The drawing of {h.id} is wrong: {text}.", h.id)
 
 
 def _pdf_texts(data: bytes) -> list[bytes]:
@@ -1088,8 +1141,10 @@ def _pin_rows(
         for p in c.pins:
             wires = sorted(attached.get((c.id, p.id), []))
             sig, itf = (carried or {}).get((c.id, p.id), ("", ""))
+            loose = _open(c)
             rows.append([
-                c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or sig,
+                c.id, c.role, _OPEN_END if loose else (c.mates_with or ""),
+                c.part_id + _OPEN_PART_TAG if loose else c.part_id, p.id, p.signal or sig,
                 p.interface_id or itf, ";".join(wires),
                 "no" if wires or p.interface_id or p.signal else "yes",
                 *([p.function or ""] if function else []),
@@ -1146,8 +1201,9 @@ def _bom_rows(project: Project, harnesses: list[Harness]) -> list[list[Cell]]:
         for w in h.wires:
             pins_used |= {(w.from_connector, w.from_pin), (w.to_connector, w.to_pin)}
         for c in h.connectors:
-            counts[c.part_id] += 1
-            used[c.part_id].add(h.id)
+            pid = _OPEN_BOM_PART if _open(c) else c.part_id  # the ends, not the placeholder part
+            counts[pid] += 1
+            used[pid].add(h.id)
             for p in c.pins:
                 if p.contact_part and (c.id, p.id) in pins_used:
                     counts[p.contact_part] += 1
@@ -1173,6 +1229,9 @@ def _bom_rows(project: Project, harnesses: list[Harness]) -> list[list[Cell]]:
     lines = sorted({*((p, "ea") for p in counts), *((p, "m") for p in wire_parts | acc_parts)})
     rows: list[list[Cell]] = []
     for pid, unit in lines:
+        if pid == _OPEN_BOM_PART and unit == "ea":
+            rows.append([pid, "connector", "", "", _OPEN_BOM_TEXT, _TO_FILL, str(counts[pid]), unit, "", ";".join(sorted(used[pid]))])  # fmt: skip
+            continue
         part = project.parts.get(pid)
         approval = (
             "missing from parts list"
@@ -1220,11 +1279,15 @@ def _test_rows(project: Project, h: Harness) -> list[list[Cell]]:
     iso = _limit(project, "test_isolation_min_mohm", "Mohm min")
     volts = _limit(project, "test_isolation_voltage_v", "V")
     wires = sorted(h.wires, key=lambda x: x.id)
+    ends = _open_ends(h)
     rows: list[list[Cell]] = []
     for w in wires:
-        rows.append(["", "continuity", f"{w.from_connector}.{w.from_pin}", f"{w.to_connector}.{w.to_pin}", "continuous", cont, "", w.id])  # fmt: skip
+        a, b = _test_end(ends, w.from_connector, w.from_pin), _test_end(ends, w.to_connector, w.to_pin)  # fmt: skip
+        open_wire = w.from_connector in ends or w.to_connector in ends
+        rows.append(["", "continuity", a, b, _OPEN_TEST if open_wire else "continuous", cont, "", w.id])  # fmt: skip
     for w in wires:
-        rows.append(["", "isolation", f"{w.from_connector}.{w.from_pin}", "all other wires and shields", "isolated", iso, volts, w.id])  # fmt: skip
+        a = _test_end(ends, w.from_connector, w.from_pin)
+        rows.append(["", "isolation", a, "all other wires and shields", _OPEN_TEST if w.from_connector in ends else "isolated", iso, volts, w.id])  # fmt: skip
     for s in sorted(h.shields, key=lambda x: x.id):
         rows.append(["", "isolation", f"shield {s.id}", "all wires", "isolated", iso, volts, ";".join(sorted(s.wire_ids))])  # fmt: skip
     for n, row in enumerate(rows, start=1):
@@ -1235,6 +1298,11 @@ def _test_rows(project: Project, h: Harness) -> list[list[Cell]]:
         for row, cell in zip(rows, cells, strict=True):
             row.append(cell)
     return rows
+
+
+def _test_end(ends: set[str], cid: str, pin: str) -> str:
+    """A pin as the test list names it; a pin of a loose end says so."""
+    return f"{cid}.{pin} ({_OPEN_END})" if cid in ends else f"{cid}.{pin}"
 
 
 def _test_header(rows: list[list[Cell]]) -> list[str]:
@@ -1255,7 +1323,7 @@ def _label_rows(project: Project, h: Harness) -> list[list[Cell]]:
     for c in h.connectors:
         box = project.connectors.get(c.mates_with or "")
         name = c.label or ((box.label or "") if box is not None else "")
-        mates = f"{c.id} mates {c.mates_with or '-'}"
+        mates = f"{c.id} {_OPEN_END}" if _open(c) else f"{c.id} mates {c.mates_with or '-'}"
         rows.append([c.id, "connector", f"{name} ({mates})" if name else mates, "1"])
     for w in h.wires:
         wname = w.label or w.signal
@@ -1271,6 +1339,9 @@ def _missing_mass_data(project: Project, h: Harness) -> str:
     """The text of the "Missing data" column: what is needed to complete the mass."""
     missing: set[str] = set()
     for c in h.connectors:
+        if _open(c):  # no connector chosen: no mass, whatever the placeholder part says
+            missing.add(f"mass of open end {c.id} (no connector chosen yet)")
+            continue
         part = project.parts.get(c.part_id)
         if part is None or part.mass_g is None:
             missing.add(f"mass of connector part {c.part_id}")
@@ -1816,6 +1887,12 @@ def _build_connectors(
     if set(blocks) != {c.id for c in h.connectors}:
         r.error("out_build", f"{what} (Connectors) has different connectors than the design.", h.id)
         return
+    heads = {row[0].split("   ·   ")[0]: row[0].split("   ·   ")[1:] for row in rows[1:] if row and "   ·   " in row[0] and not any(row[1:])}  # fmt: skip
+    for c in h.connectors:
+        # a loose end: its part, then "open end, to fill in"; any other head never says open end
+        want_open = [c.part_id + _OPEN_PART_TAG, f"{_OPEN_END}, {_TO_FILL}"]
+        if (heads[c.id][:2] == want_open) != _open(c):
+            r.error("out_build", f"{what} (Connectors) shows {c.id} wrongly as a loose end or not.", c.id)  # fmt: skip
     for c in h.connectors:
         pins = blocks[c.id]
         if [row[0] for row in pins] != [p.id for p in c.pins]:
@@ -1920,7 +1997,7 @@ def _yaml_values(r: VerifyReport, h: Harness, text: str) -> None:
             wrong.append(f"pin count of {c.id}")
         if got.get("pinlabels") != "[" + ", ".join(q(p.id) for p in c.pins) + "]":
             wrong.append(f"pin names of {c.id}")
-        if got.get("type") != q(c.part_id):
+        if got.get("type") != q(c.part_id + _OPEN_PART_TAG if _open(c) else c.part_id):
             wrong.append(f"part of {c.id}")
     for w in h.wires:
         got = blocks["cables"].get(w.id, {})

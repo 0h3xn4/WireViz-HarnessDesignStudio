@@ -1,9 +1,14 @@
-"""Mass of a harness from library data. Missing data is reported, never replaced by a guess."""
+"""Mass of a harness from library data. Missing data is reported, never replaced by a guess.
+
+A loose cable end (role `loose`, D-201) has no connector yet: its mass is never counted (not even
+a mass a person gave the placeholder part `TBD-CONNECTOR`), and it is reported as missing data,
+`mass of open end W009-P2 (no connector chosen yet)`, so the harness is not complete."""
 
 from dataclasses import dataclass, field
 
 from harness_design_studio.core import settings
-from harness_design_studio.core.model import Harness, Project
+from harness_design_studio.core.model import Connector, Harness, Project
+from harness_design_studio.core.model.physical import LOOSE_ROLE
 
 from .lengths import wire_length
 
@@ -65,9 +70,17 @@ def _add_bom_parts(project: Project, h: Harness, r: MassReport) -> None:
             r.total_g += part.mass_per_m_g * (a.length_mm * a.quantity / 1000)
 
 
+def open_end_missing(c: Connector) -> str:
+    """The missing-data text of a loose end: no connector is chosen, so there is no mass to count."""
+    return f"mass of open end {c.id} (no connector chosen yet)"
+
+
 def harness_mass(project: Project, h: Harness) -> MassReport:
     r = MassReport()
     for c in h.connectors:
+        if c.role == LOOSE_ROLE:
+            r.missing.append(open_end_missing(c))
+            continue
         part = project.parts.get(c.part_id)
         if part is None or part.mass_g is None:
             r.missing.append(f"mass of connector part {c.part_id}")

@@ -1,0 +1,10 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+Test,Type,From,To,Expected,Limit,Test voltage,Wire
+T001,continuity,W009-P1.1,W009-P2.1 (open end),test when the end is decided,1 ohm max,,W009-001
+T002,continuity,W009-P1.2,W009-P2.2 (open end),test when the end is decided,1 ohm max,,W009-002
+T003,continuity,W009-P1.3,W009-P2.3 (open end),test when the end is decided,1 ohm max,,W009-003
+T004,continuity,W009-P1.4,W009-P2.4 (open end),test when the end is decided,1 ohm max,,W009-004
+T005,isolation,W009-P1.1,all other wires and shields,isolated,100 Mohm min,500 V,W009-001
+T006,isolation,W009-P1.2,all other wires and shields,isolated,100 Mohm min,500 V,W009-002
+T007,isolation,W009-P1.3,all other wires and shields,isolated,100 Mohm min,500 V,W009-003
+T008,isolation,W009-P1.4,all other wires and shields,isolated,100 Mohm min,500 V,W009-004
