@@ -507,12 +507,37 @@ def to_json(parts: list[Component], version: str, fmt: str) -> str:
     )
 
 
+MARKDOWN_INTRO = (
+    "Made from the built package (`python -m tools.third_party inventory`), not from the metadata of a "
+    "build environment. Not legal advice; a licence marked `unknown` or `LicenseRef-` needs a "
+    "person's decision."
+)
+NOTICES_ABOUT = (
+    " This file lists the components of other authors that this package contains: name, version, "
+    "licence, copyright notice and the licence text. The notices were made from the built package "
+    "(tools/third_party.py)."
+)
+SOURCE_OFFER = (
+    "SOURCE CODE. For every component under the GNU General Public Licence or the GNU Lesser General Public "
+    "Licence (Qt for Python and Qt, and the libraries of the operating system listed below) the corresponding "
+    "source code is offered: source archives are attached to the release page of this version, and the "
+    "package sources of the libraries named `Debian package` are in the Ubuntu 24.04 archive "
+    "(https://archive.ubuntu.com/ubuntu/pool/) under the version given here. This offer is valid for at least "
+    "three years after the release. The libraries are separate files in this package; you may replace them "
+    "with another build of the same version (for Qt for Python: replace the files under the PySide6 folder)."
+)
+QT_NOTE = (
+    'Qt contains code of other projects, listed in the Qt documentation under "Third-Party Licenses Used in Qt" '
+    "for Qt 6 (https://doc.qt.io/qt-6/licenses-used-in-qt.html); the Qt libraries of this package are the "
+    "unchanged libraries of the PySide6-Essentials wheel."
+)
+
+
 def to_markdown(parts: list[Component], version: str, fmt: str) -> str:
     out = [
         f"# Third-party inventory {version} ({fmt})",
         "",
-        "Made from the built package (`python -m tools.third_party inventory`), not from the metadata of a build "
-        "environment. Not legal advice; a licence marked `unknown` or `LicenseRef-` needs a person's decision.",
+        MARKDOWN_INTRO,
         "",
         "| Component | Version | Licence | Kind | Source of the information | Files |",
         "| --- | --- | --- | --- | --- | --- |",
@@ -577,22 +602,11 @@ def to_notices(
         f"THIRD-PARTY NOTICES: Harness Design Studio {version} ({fmt} package)",
         "=" * 72,
         "",
-        legal_texts.LICENCE
-        + " This file lists the components of other authors that this package contains: name, "
-        "version, licence, copyright notice and the licence text. The notices were made from the built package "
-        "(tools/third_party.py).",
+        legal_texts.LICENCE + NOTICES_ABOUT,
         "",
-        "SOURCE CODE. For every component under the GNU General Public Licence or the GNU Lesser General Public "
-        "Licence (Qt for Python and Qt, and the libraries of the operating system listed below) the corresponding "
-        "source code is offered: source archives are attached to the release page of this version, and the "
-        "package sources of the libraries named `Debian package` are in the Ubuntu 24.04 archive "
-        "(https://archive.ubuntu.com/ubuntu/pool/) under the version given here. This offer is valid for at least "
-        "three years after the release. The libraries are separate files in this package; you may replace them "
-        "with another build of the same version (for Qt for Python: replace the files under the PySide6 folder).",
+        SOURCE_OFFER,
         "",
-        'Qt contains code of other projects, listed in the Qt documentation under "Third-Party Licenses Used in Qt" '
-        "for Qt 6 (https://doc.qt.io/qt-6/licenses-used-in-qt.html); the Qt libraries of this package are the "
-        "unchanged libraries of the PySide6-Essentials wheel.",
+        QT_NOTE,
         "",
     ]
     out += _blocks(parts)
