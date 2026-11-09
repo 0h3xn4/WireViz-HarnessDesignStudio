@@ -60,7 +60,7 @@ The prototype tests drive a Chromium browser. `playwright` is installed by `dev`
 pytest
 ```
 
-The whole suite has 6,230 tests in 316 files (`pytest --collect-only -q`, counted on 2026-11-09 for version 1.17.0). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
+The whole suite has 6,281 tests in 320 files (`pytest --collect-only -q`, counted on 2026-11-09 on `master` at commit `0cc13bb`, which is after version 1.17.0 and adds the four test files of the loose cable end; the count of version 1.17.0 itself was 6,230 tests in 316 files). A full run with coverage was not repeated for this page, so there is no run time or coverage figure here: CI took about 30 minutes for version 1.1.0 (`CHANGELOG.md`) and the workflow's comment says about 25 minutes on a 4-core machine; a single process takes much longer. Qt runs offscreen by itself, because `tests/conftest.py` sets `QT_QPA_PLATFORM=offscreen`.
 
 The markers (declared in `pyproject.toml`, and `--strict-markers` is on, so an unknown one is an error):
 
