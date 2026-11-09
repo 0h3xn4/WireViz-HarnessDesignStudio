@@ -103,23 +103,26 @@ class World:
             # On a real platform `QTest.mouseMove` sets the cursor on the screen (`QCursor::setPos`)
             # and the window gets its move from the display a moment later: after a short wait on
             # xcb, not at all on the hosted Windows runner (REQ-GUI-26). With no button down the
-            # move is then sent to the viewport as the display would have sent it. (With a button
-            # down QTest sends the move itself.)
+            # move is then sent to the viewport as the display would have sent it. With a button
+            # down QTest sends the move itself, but the display's own move can still arrive after
+            # it without the button (seen on the Windows runner: the hover then puts back the
+            # arrow under a cable in hand), so the move is sent once more, last, with the buttons
+            # that are down: what the window sees last is the pointer as the hand holds it.
             QTest.qWait(40)
-            if QApplication.mouseButtons() == Qt.MouseButton.NoButton:
-                viewport = self.view.viewport()
-                QApplication.sendEvent(
-                    viewport,
-                    QMouseEvent(
-                        QEvent.Type.MouseMove,
-                        QPointF(pos),
-                        QPointF(viewport.mapToGlobal(pos)),
-                        Qt.MouseButton.NoButton,
-                        Qt.MouseButton.NoButton,
-                        Qt.KeyboardModifier.NoModifier,
-                    ),
-                )
-                QApplication.processEvents()
+            buttons = QApplication.mouseButtons()
+            viewport = self.view.viewport()
+            QApplication.sendEvent(
+                viewport,
+                QMouseEvent(
+                    QEvent.Type.MouseMove,
+                    QPointF(pos),
+                    QPointF(viewport.mapToGlobal(pos)),
+                    Qt.MouseButton.NoButton,
+                    buttons,
+                    Qt.KeyboardModifier.NoModifier,
+                ),
+            )
+            QApplication.processEvents()
 
     def release(self, scene_point: QPointF) -> None:
         QTest.mouseRelease(self.view.viewport(), LEFT, pos=self.at(scene_point))
