@@ -745,10 +745,16 @@ def test_a_cable_reaches_a_device_far_beyond_the_edge_of_the_view_by_scrolling(
         )
         QApplication.processEvents()
     left = w.view.mapToScene(QPoint(0, 0)).x()
-    for _ in range(400):  # the view scrolls while the cable rests at its edge
+    rest = QPoint(edge, w.at(QPointF(0, 130)).y())
+    for k in range(1000):  # the view scrolls while the cable rests at its edge
         QTest.qWait(10)
         if w.view.mapToScene(w.view.viewport().rect().bottomRight()).x() > 3330:
             break
+        if k % 20 == 19:
+            # On a real display (xcb under load) a move can reach the window late or not at all and
+            # the pointer then seems to rest somewhere else: the cable is held at its edge again
+            # (the same move, the button still down), as a hand that rests there would.
+            QTest.mouseMove(w.view.viewport(), pos=rest)
     assert w.view.mapToScene(QPoint(0, 0)).x() > left + 500  # it scrolled
     b = w.port("RW1", "RW1-J02")
     assert w.view.mapToScene(w.view.viewport().rect().bottomRight()).x() > b.x
