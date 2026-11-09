@@ -17,6 +17,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 | Document | For | What it gives you |
 | --- | --- | --- |
 | [`INSTALL.md`](INSTALL.md) | everyone | Install on Ubuntu (`.deb`, `.tar.gz`) or Windows (setup program, portable `.zip`), check the checksum and that it works, uninstall, build from source |
+| [`VERIFY_OFFLINE.md`](VERIFY_OFFLINE.md) | everyone, IT departments | Verify it yourself in 30 minutes: run a downloaded package without network and under `strace` or Windows' audit, list its network code, look for your design data outside the project, switch Python plug-ins off; what is and is not claimed |
 | [`GETTING_STARTED.md`](GETTING_STARTED.md) | newcomers | A guided tour with real output: example project, generate, read problems, export, fill in values, release |
 | [`LEARNING_PATH.md`](LEARNING_PATH.md) | newcomers | The whole route in nine steps, with the example or template for each and how you know you are done |
 | [`CONCEPTS.md`](CONCEPTS.md) | newcomers | The words and the mental model, in ten minutes |
@@ -69,7 +70,7 @@ This page lists the documents of the tool, grouped by what you want to do. The i
 
 ## For developers
 
-[`../../CONTRIBUTING.md`](../../CONTRIBUTING.md), [`developer/`](developer/README.md) (setup and tests, architecture, the scripts in `tools/`, keeping the documents correct, releasing, refreshing the upstream README), [`../CLAUDE.md`](../CLAUDE.md) (commands, layout and conventions, written for the AI assistant), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`DECISIONS.md`](DECISIONS.md), [`SECURITY.md`](SECURITY.md), [`RELEASE.md`](RELEASE.md) (the checklist for releasing the tool, not a harness).
+[`../../CONTRIBUTING.md`](../../CONTRIBUTING.md), [`developer/`](developer/README.md) (setup and tests, architecture, the scripts in `tools/`, keeping the documents correct, releasing, refreshing the upstream README), [`../CLAUDE.md`](../CLAUDE.md) (commands, layout and conventions, written for the AI assistant), [`ARCHITECTURE.md`](ARCHITECTURE.md), [`DECISIONS.md`](DECISIONS.md), [`SECURITY.md`](SECURITY.md) (and [`VERIFY_OFFLINE.md`](VERIFY_OFFLINE.md)), [`RELEASE.md`](RELEASE.md) (the checklist for releasing the tool, not a harness).
 
 Some files are **generated** and a test fails when they are stale: `RULES.md` (`python -m tools.gen_rule_docs`), `CLI.md` (`python -m tools.gen_cli_docs`), the HTML of the user guide (`python -m tools.build_guide`), the example projects (`python -m tools.build_examples`), and the snapshot of the scripting interface (`python -m tools.gen_api_snapshot`). More in [`developer/docs-maintenance.md`](developer/docs-maintenance.md).
 

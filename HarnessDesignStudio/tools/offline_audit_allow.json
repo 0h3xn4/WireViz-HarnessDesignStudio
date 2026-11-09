@@ -1,0 +1,42 @@
+{
+ "format": "harness-design-studio-offline-audit-allow",
+ "about": "What the offline audit (tools/offline_audit.py, REQ-OFFLINE-02) accepts, each entry with the reason it was accepted. Anything the audit sees that no entry matches is a finding and fails it. Patterns are shell-style (fnmatch, * matches across folders); {project}, {data}, {home}, {tmp}, {runtime}, {work}, {package}, {gui}, {python} stand for the folders and programs of the run. A new entry needs a review: say in the pull request what was seen and why it is not network use or a leak of design data.",
+ "allow": [
+  {"kind": "socket_family", "pattern": "AF_UNIX", "reason": "Local sockets between programs of this computer (the X display and the desktop bus, when the editor runs on a real display). They cannot leave the computer; each connect target is judged on its own below."},
+  {"kind": "connection", "pattern": "AF_UNIX @\"/tmp/.X11-unix/X*\"", "reason": "The X display server of this computer (the editor on --gui-platform xcb)."},
+  {"kind": "connection", "pattern": "AF_UNIX \"/tmp/.X11-unix/X*\"", "reason": "The X display server of this computer (the editor on --gui-platform xcb)."},
+
+  {"kind": "child", "pattern": "{gui} --drc-worker", "reason": "The design rule check helper (D-128, gui/drc_process.py): the editor starts this same program with fixed arguments; the project goes to it through a pipe."},
+  {"kind": "child", "pattern": "(same process again) {package}/*", "reason": "The packaged program's starter (PyInstaller's bootloader) starts the same program once more in the same process, to set the folder its libraries are loaded from. No new program is run."},
+  {"kind": "child", "pattern": "*/dbus-launch --autolaunch * --binary-syntax --close-stderr", "reason": "Only on an X display without a desktop session (no DBUS_SESSION_BUS_ADDRESS, as on --gui-platform xcb under xvfb-run): libdbus, which Qt uses for the desktop bus (accessibility, input methods, themes), tries to start the session's own bus with the system's dbus-launch. A local program and a local bus; in a desktop session the bus is already there and nothing is started."},
+  {"kind": "child", "pattern": "{python} -P -m harness_design_studio.core.drc.worker", "reason": "The same helper when the audit runs the source install (--source)."},
+
+  {"kind": "child", "pattern": "*conhost.exe*", "reason": "Windows: the console host that Windows itself starts for every console program (the command line tool)."},
+
+  {"kind": "package_file", "pattern": "*_socket.*", "reason": "Python's own socket module (in builds of Python that have it as a file). The standard library must be able to import it; nothing of the program does (tests/test_offline.py), and the audit shows no socket of a network family."},
+  {"kind": "package_file", "pattern": "*libcrypto*", "reason": "OpenSSL's crypto library, in builds of Python whose hashlib takes SHA-256 from it. It has no TLS (OpenSSL's TLS library and Python's TLS module are removed from the package, REQ-OFFLINE-04)."},
+  {"kind": "library", "pattern": "*libcrypto*", "reason": "OpenSSL's crypto library, loaded by Python's hashlib for SHA-256 in builds of Python that link it (the hashes of the project files and outputs). No socket of a network family is opened (see the trace)."},
+
+  {"kind": "written", "pattern": "{project}", "reason": "The project folder of the workflow."},
+  {"kind": "written", "pattern": "{project}/*", "reason": "The project's own files, its backups (.bak), its lock and the temporary files of its atomic saves, and its outputs folder."},
+  {"kind": "written", "pattern": "{data}", "reason": "The folder that export-data was asked to write."},
+  {"kind": "written", "pattern": "{data}/*", "reason": "The files of export-data and the temporary files of their atomic writes."},
+  {"kind": "written", "pattern": "{work}/gui-report.json", "reason": "The report of the editor's audit run, which the audit asked for (packaging/gui_entry.py --audit-run)."},
+  {"kind": "written", "pattern": "{home}/.config", "reason": "The user's settings folder (made at a first start)."},
+  {"kind": "written", "pattern": "{home}/.config/HarnessDesigner", "reason": "The folder of the editor's settings file (Qt's per-user INI file)."},
+  {"kind": "written", "pattern": "{home}/.config/HarnessDesigner/*", "reason": "The editor's settings file HarnessDesigner.ini and the temporary and lock files Qt writes it with: mode, theme, scale, window layout, the recent-projects list."},
+  {"kind": "written", "pattern": "{tmp}/openpyxl.*", "reason": "openpyxl, the spreadsheet library, writes each worksheet of a build workbook (.xlsx) to a temporary file of the system's temporary folder (TMPDIR, else /tmp) and deletes it when the workbook is written. The audit checks that none is left behind."},
+  {"kind": "written", "pattern": "{tmp}/????????", "reason": "Python's tempfile module, the first time it needs the temporary folder, checks that it can write there: it writes the four letters 'blat' to a file with a random 8-character name and deletes it at once."},
+  {"kind": "written", "pattern": "/dev/null*", "reason": "The null device: what is written there is thrown away by the system."},
+
+  {"kind": "url", "pattern": "file://{package}/_internal/harness_design_studio/resources/guide/index.html", "reason": "F1: the user guide, a local file inside the package. It loads nothing from elsewhere (tests/test_offline_evidence.py checks it has no remote link, script or style); the browser that shows it is outside the claim."},
+  {"kind": "url", "pattern": "file://{src}/harness_design_studio/resources/guide/index.html", "reason": "The same guide when the audit runs the source install (--source)."},
+
+  {"kind": "canary", "pattern": "{project-or-data}", "reason": "The project, its backups and its outputs: where design data belongs."},
+  {"kind": "canary", "pattern": "pipe:*", "reason": "The pipe to the design rule check helper, which is this same program (see the child entry); the data does not reach a file or a socket."},
+  {"kind": "canary", "pattern": "{home}/.config/HarnessDesigner/*", "fields": ["project name"], "reason": "FINDING ACCEPTED FOR NOW (owner to decide): the editor's recent-projects list on its Home page keeps, for each project opened, the folder, the project NAME and the numbers of devices, interfaces and harnesses in the user's own settings file. Only the project name was found there (no device, interface or part data). It stays on this computer; it is described in docs/SECURITY.md and docs/VERIFY_OFFLINE.md."},
+  {"kind": "canary", "pattern": "{tmp}/openpyxl.*", "reason": "ACCEPTED, NOTED IN docs/SECURITY.md: while a build workbook (.xlsx) is written, its worksheets (part numbers, names) are in temporary files of the system's temporary folder for that moment, made by openpyxl and deleted at once. They stay on this computer; a folder of your choice can be set with TMPDIR."},
+  {"kind": "canary", "pattern": "UNIX-STREAM:*", "fields": ["project name"], "reason": "The window title (it holds the project name) sent to the display server of this computer over a local socket (only with a real display, --gui-platform xcb)."},
+  {"kind": "canary", "pattern": "stdout of *", "reason": "A command shows the person what it read or found (the imported part, the project name in a report); this is the terminal, which the program writes to no file."}
+ ]
+}
