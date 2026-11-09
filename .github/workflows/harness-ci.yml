@@ -30,7 +30,7 @@ jobs:
     outputs:
       code: ${{ steps.diff.outputs.code }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
         with:
           fetch-depth: 0
       - id: diff
@@ -54,8 +54,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.14"
       - name: Qt system libraries
@@ -83,8 +83,8 @@ jobs:
       HARNESS_TIME_FACTOR: "3"  # shared runners are slower than a workstation; limits in tests scale by this
       HARNESS_REQUIRE_BROWSER: "1"  # the clickable prototype tests must run, not skip
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
         with:
           python-version: "3.14"
       - name: Qt system libraries
@@ -112,7 +112,7 @@ jobs:
       - run: python -m tools.gen_sbom
       - name: Both packages exist
         run: ls dist/*.deb dist/*.tar.gz  # the upload below only fails when none of its files exist
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: harness-design-studio-${{ matrix.os }}
           if-no-files-found: error
@@ -130,10 +130,10 @@ jobs:
       run:
         working-directory: ${{ github.workspace }}  # the checkout below holds only the container scripts, not the source tree
     steps:
-      - uses: actions/checkout@v4  # first: it cleans the workspace, so it must come before the download
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0  # first: it cleans the workspace, so it must come before the download
         with:
           sparse-checkout: HarnessDesignStudio/packaging/ubuntu/container
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093  # v4.3.0
         with:
           name: harness-design-studio-ubuntu-24.04
           path: pkg
