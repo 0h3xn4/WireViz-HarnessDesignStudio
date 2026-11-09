@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Run the release checklist (docs/RELEASE.md) and write dist/release-docs/release-report.md.
 Ubuntu only. Usage: python -m tools.release_check [--quick]   (--quick skips the long steps)"""
 

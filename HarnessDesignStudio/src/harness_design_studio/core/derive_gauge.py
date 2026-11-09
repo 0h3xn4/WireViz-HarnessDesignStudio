@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """How the gauge of a wire was chosen: the derivation kind `gauge` (audit R1, owner decision 14).
 
 The other derivations of a wire explain a number the gauge leads to (the derated limit, the voltage

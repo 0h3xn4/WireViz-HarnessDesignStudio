@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """REQ-LIB-05, REQ-EDIT-03. M4 of the workshop feedback: the subsystem library file, the library
 folder and the number of devices. No Qt: export, read, plan, never overwrite, one undo step, the

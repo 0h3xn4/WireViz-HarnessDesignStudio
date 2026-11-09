@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Save a project folder. Writes only changed files, atomically, keeping a `.bak` of each."""
 
 import os

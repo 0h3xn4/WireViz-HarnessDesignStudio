@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-OUT-07 (decision D-184): a cable pin shows the signal and the interface of the wires that
 end on it (a pin of its own keeps what it has), and the wire list and the traceability matrix get a
 `Requirement` column while any interface has a requirement ID. A project without requirement IDs

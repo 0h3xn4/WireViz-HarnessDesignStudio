@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The registry: one list of everything the tool can run, built-in and extension together.
 
 Rules, derived fields, models, output tables, lookup tables and importers are *items* of one kind

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The settings of the tool: every value a result depends on that an engineer can choose (D-191, S2).
 
 A **setting** is a key of a file `config/<file>.json` with a name, a unit, a description, a range and

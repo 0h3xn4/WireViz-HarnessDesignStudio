@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Logical layer: what must be connected, independent of pins and wires."""
 
 from typing import ClassVar, Literal

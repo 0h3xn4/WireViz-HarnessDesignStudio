@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # Build environment for release packages: Ubuntu 24.04 with Python 3.14 (not in the 24.04 archive: installed
 # with uv from the python-build-standalone builds).
 # The release check runs the whole test suite with HARNESS_REQUIRE_BROWSER=1 and fails on skipped

@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # Install the package on a CLEAN Ubuntu without network and run its self-test.
 # Usage (on a machine with Docker, after building the .deb):
 #   packaging/ubuntu/container/clean-machine-test.sh 24.04 dist/harness-design-studio_<version>_amd64.deb

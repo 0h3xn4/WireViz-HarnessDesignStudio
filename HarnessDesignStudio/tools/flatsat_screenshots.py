@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: allow-untyped-calls, no-warn-unused-ignores
 """Pictures of the flatsat example in the real editor (offscreen) for docs/FLATSAT_EXAMPLE.md:
 the whole diagram, the same diagram with one unit in focus, and for docs/user-manual/telling-devices-apart.md

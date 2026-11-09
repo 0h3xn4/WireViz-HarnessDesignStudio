@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """File-system safety: atomic writes, safe names, long Windows paths, single-instance lock."""
 
 import errno

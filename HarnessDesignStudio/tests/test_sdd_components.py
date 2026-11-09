@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-TRACE-02: component table and requirement-to-component trace of the SDD
 (ECSS-E-ST-40C 5.5.2, Annex F section 6)."""
 

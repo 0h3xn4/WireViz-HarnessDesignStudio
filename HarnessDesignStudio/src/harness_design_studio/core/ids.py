@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Identifier rules. IDs become file names and appear on drawings, so they are conservative."""
 
 import re

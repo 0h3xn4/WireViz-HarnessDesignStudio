@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Trade study: change one engineering value over a range and see what it does to the design.
 
 The script copies the flatsat example to a temporary folder, sets the bundle derating factor of

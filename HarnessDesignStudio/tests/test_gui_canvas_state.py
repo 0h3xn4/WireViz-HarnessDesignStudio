@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """The canvas says what is wrong, pending, unchecked, auto-filled and locked (UX audit CV-6, CV-7,
 CV-8, CV-10, CV-19, CV-21, CV-22, CV-23): badges on every unit card and link label, the lock and

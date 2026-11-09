@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-UX-04: the interface uses the bundled Inter and JetBrains Mono fonts; nothing is fetched."""
 
 from __future__ import annotations

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Preparation for the data the owner will provide later (D-11 values, D-12 parts list, D-13 lengths)."""
 
 from pathlib import Path

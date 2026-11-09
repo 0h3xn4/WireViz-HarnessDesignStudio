@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The design rules. One function per rule, registered in `RULES` (order = report order).
 
 Rules that need engineering numbers (derating, grounding concept, EMC classes, spare pins) check

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The limit of every design rule, or, for a rule that has none, what it compares (D-191, S1).
 
 `explain_finding(project, rule_id, object_id)` (in `core.derive`) answers for every rule of the

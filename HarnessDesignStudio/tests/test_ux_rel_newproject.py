@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SH-18: one New project dialog (folder, name, what to start from) with the problems said next to the
 field, instead of a chain of three pop-ups."""

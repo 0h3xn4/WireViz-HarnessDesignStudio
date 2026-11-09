@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Plain-language captions for the diagram: what a link carries and what a connector is.
 
 Pure functions of the project (no Qt). They only repeat what the project data says: a voltage or

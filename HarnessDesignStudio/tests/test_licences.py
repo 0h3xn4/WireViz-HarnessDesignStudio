@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-LIC-01: licence allow-list logic (the report itself is built by tools/licence_report.py)."""
 
 import pytest

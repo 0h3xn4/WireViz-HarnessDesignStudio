@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Harness drawing, in the manner of a wiring diagram: the connectors as tables on the left and
 the right (name, part, gender, pins, and for every used pin its signal), the wires between them as
 curves in their wire colour, and between the connectors a cable block that lists the wires (ID,

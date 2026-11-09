@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """UI overhaul M2: the shell. The navigation rail and the areas, the one-row top bar, the job
 indicator and the offline marker in the status bar, the Problems panel, the layout kept per project."""

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """CSV, TSV, JSON and XLSX tables, and the import of interfaces. Plans first: nothing changes until the user confirms.
 
 `plan_interface_import` validates every row against the project (and against the rows before it)

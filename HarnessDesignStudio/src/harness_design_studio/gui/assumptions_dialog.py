@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Assumptions window (D-191, S2): what the tool assumes for this project.
 
     AssumptionsDialog(parent, theme, project).exec()

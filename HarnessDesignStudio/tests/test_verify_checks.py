@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Each check of the independent verifier fires on its own mutation, and the verifier
 and the design rule check never raise on a damaged project (a missing check cannot go unnoticed)."""
 

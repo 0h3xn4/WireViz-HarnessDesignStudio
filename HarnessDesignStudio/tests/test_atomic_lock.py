@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-ATOMIC-01 / REQ-LOCK-01: crash-safe writes, clear disk errors, single-instance lock."""
 
 import errno

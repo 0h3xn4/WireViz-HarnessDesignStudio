@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A word-wrapped label that tells its container how high it needs to be at its width.
 
 A `QLabel` with word wrap knows its height only for a given width (`heightForWidth`). Box layouts

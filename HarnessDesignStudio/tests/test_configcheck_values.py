@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """SC-3: the engineering values as a list of fields, and a way to set one through the existing
 config ops, validated by the same validators. No new file format."""
 

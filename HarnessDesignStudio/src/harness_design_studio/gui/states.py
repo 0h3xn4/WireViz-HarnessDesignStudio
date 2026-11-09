@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """State chips: pass, fail, pending, not checked, locked, released, stale ... as icon + word + pattern.
 
 Colour is never the only cue. Every state has its own icon and its own word; *pending* (a dotted

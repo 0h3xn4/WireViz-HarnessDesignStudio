@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Mass of a harness from library data. Missing data is reported, never replaced by a guess."""
 
 from dataclasses import dataclass, field

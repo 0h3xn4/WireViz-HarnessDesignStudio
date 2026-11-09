@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Draw the application icon as files for the Windows package (D-149).
 
 The icon is the logo that `gui/appicon.py` paints in code (the packaged program has no Qt SVG

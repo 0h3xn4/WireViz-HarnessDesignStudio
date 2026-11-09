@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The window that shows how a number was calculated (D-191): the text of `harness-design-studio explain`.
 
     ExplainDialog(parent, theme, derivations).exec()

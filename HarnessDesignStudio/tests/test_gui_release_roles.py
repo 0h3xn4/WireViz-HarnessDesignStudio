@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-CC-08, F-07 (1.9.0): the release dialogs with the project setting `release_distinct_roles`
 on: a note says three different people are required, the name that Git has is the default, the
 checker is asked for as required, and OK says in words which two names are the same. With the

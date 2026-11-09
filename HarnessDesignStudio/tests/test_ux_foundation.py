@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """UX foundation: theme (palette, system/light/dark, scales, fonts), icon set, state chips and the
 shared table code (model, proxy, TSV copy, saved widths). Offscreen, driven by tests/ux_host.py."""

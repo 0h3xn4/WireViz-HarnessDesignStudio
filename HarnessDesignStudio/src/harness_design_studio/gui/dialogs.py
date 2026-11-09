@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Dialogs. Each is a plain QDialog; the main window decides how to run them (so tests can drive them)."""
 
 import csv

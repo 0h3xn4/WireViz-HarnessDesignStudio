@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The import report of each kind of import, made from the plan the importer made.
 
 One function per importer (see `import_record`) turns its plan into what was read, dropped and

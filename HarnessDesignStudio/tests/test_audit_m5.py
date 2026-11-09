@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Regression tests for the medium command-line, import, KiCad and change-control findings of the
 October audit (E-6 to E-17, K-3, K-4, K-12, K-14, C-8 message)."""
 

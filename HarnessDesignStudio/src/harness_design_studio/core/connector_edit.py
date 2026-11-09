@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Editing a cable connector of a harness: its part, gender, keying and name, and its pins.
 
     ops = plan_edit_connector(project, "W001", "W001-P1", part_id="EX-DSUB-9-F", gender="female")

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M6 (GUI): review, release, new revision, changes (with marks on the diagram) and change log."""
 
 import pytest

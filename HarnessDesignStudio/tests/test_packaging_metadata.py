@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """E-F9: the package says which Python versions it supports, and the dev extra holds what CI uses."""
 
 import tomllib

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Open data: every intermediate and final result of a design as JSON and CSV (D-191, S5).
 
 `export-data` writes, for one project, the numbers behind the outputs in a form a script or a

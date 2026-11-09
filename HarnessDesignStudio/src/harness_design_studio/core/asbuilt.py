@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """As-built capture: what was built and measured, compared with what was designed (S9, R6).
 
     report = asbuilt_report(project)            # complete, missing, out of limit, differs from design

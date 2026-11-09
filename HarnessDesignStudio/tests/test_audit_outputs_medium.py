@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Regression tests for the medium output findings of the October audit: D-3 (long pin IDs),
 D-4 (reversible CSV guard), D-5/K-1 (title block fields), D-6 (PDF characters), D-7 (shield end),
 D-8 (insertion order), D-10 (cell checks of the output verifier), D-13 (workbook errors), D-15,

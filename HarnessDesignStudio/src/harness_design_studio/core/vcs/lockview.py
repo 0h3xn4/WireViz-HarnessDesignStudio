@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """What a release locks, in a form a view can show: which objects are locked and by which
 harness revision, the sentence that explains it, which fields stay editable, and what releasing
 a harness will lock. It only reads; the rules themselves stay in `locks.check_locks`, whose

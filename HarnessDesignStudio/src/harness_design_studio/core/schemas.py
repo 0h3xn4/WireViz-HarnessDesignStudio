@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """JSON Schemas of the project files, made from the model itself.
 
 For people who edit project files by hand in an editor that understands JSON Schema (completion,

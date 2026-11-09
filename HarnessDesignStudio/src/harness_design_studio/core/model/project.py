@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """In-memory project: the single mutable container. Change it only through `commands`."""
 
 from dataclasses import dataclass, field

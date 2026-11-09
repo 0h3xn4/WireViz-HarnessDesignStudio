@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """S5: open data. Every result as JSON and CSV, reproducible from the files alone, byte for byte.
 
 What is checked: a small script that reads only the exported files (`docs/examples/open-data/

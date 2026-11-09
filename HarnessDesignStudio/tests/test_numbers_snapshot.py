@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The numbers the tool gives are kept on purpose (D-191, step 0 of the transparency work): the gauge,
 length, part, colour and lock of every wire, every finding with its text, and the SHA-256 of every
 written file, for the packaged examples and for the situations an engineer meets them in (a hand

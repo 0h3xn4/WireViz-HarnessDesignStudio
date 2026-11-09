@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A-6 / D-9 / B-18 / K-19: impossible numbers are refused by the model, and a damaged project
 file holding one is set aside on load (reported, never rendered as a 'complete' result)."""
 

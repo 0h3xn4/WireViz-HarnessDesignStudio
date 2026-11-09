@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Pictograms for the diagram: what a link carries and what a connector looks like.
 
 Meaning must be readable at a glance, so it is drawn, not spelled: every kind of link has its own

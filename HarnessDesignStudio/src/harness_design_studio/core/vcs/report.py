@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Change log table and the revision report (history plus differences between baselines)."""
 
 from harness_design_studio.core.model import Baseline, Harness, Project

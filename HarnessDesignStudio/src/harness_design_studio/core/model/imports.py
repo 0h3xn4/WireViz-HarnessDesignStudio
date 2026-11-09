@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The import record: what each import read, dropped and converted (transparency work, D-193).
 
 One record per source file and kind, kept in `imports/records.json`. The file is optional: a

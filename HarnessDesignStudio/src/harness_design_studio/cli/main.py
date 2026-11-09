@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """`harness` command line entry point.
 
 Exit codes: 0 ok (warnings allowed), 1 the project has errors or the step is blocked, 2 usage error

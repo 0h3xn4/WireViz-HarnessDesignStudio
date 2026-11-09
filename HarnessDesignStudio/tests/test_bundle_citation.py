@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The note on a wire sizing names "Table 6-41" only when the table of bundle factors is the one of the
 ECSS profile; a table of one's own is named as what it is (D-191; before, the standard was cited for
 any table). The factor and the gauge do not change."""

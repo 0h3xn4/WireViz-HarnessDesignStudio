@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """The diagram canvas as a workspace (UX audit CV-1 to CV-29): selection of several items, align,
 duplicate, navigation, search, context menu, legend, grid, delete questions, read-only messages,

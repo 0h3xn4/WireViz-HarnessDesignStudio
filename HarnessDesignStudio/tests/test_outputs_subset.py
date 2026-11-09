@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """SC-12 investigation: `build_outputs(harness_ids=...)` is for tests and tools, not for a partial
 export into the outputs folder. These tests record why, so nobody builds an export dialog on
 `write_outputs` with a subset without first changing the verifier and the manifest rules.

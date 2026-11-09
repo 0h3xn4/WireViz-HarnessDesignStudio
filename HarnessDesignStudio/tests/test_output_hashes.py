@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A change that must not touch the written files leaves every file the tool writes alone (UI overhaul M6,
 renewed for release 1.10, D-182): the SHA-256 of each output file of each packaged example equals the one
 in `docs/ui/OUTPUT_HASHES_BASELINE.json`, apart from the version stamp the files carry

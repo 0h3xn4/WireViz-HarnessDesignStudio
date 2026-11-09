@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Connectors tab of the Harness tab: add a cable connector to a harness that you made, edit a
 connector (part, gender, keying, name), set the signal, role, function, termination, contact size and
 contact (a part of category contact) of its pins, add, rename and delete pins, give all pins of a

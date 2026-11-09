@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-OUT-09, release 1.9 W2. A project with connections and no harness exports: the export window
 opens, plans the connection list in its tree, writes it, and nothing says "generate first". The

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,func-returns-value"
 """S4 (D-191 (3)): an error of an electrical rule can be accepted as a recorded deviation. The finding
 stays on every list and output, marked DEVIATION, with its reason; who and when are in the journal. An

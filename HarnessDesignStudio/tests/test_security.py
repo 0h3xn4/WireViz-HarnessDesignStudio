@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M9 security review, as tests (docs/SECURITY.md): hostile files and names must neither escape
 the project folder, nor run as code, nor crash the tool."""
 

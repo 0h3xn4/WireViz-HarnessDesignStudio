@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Two more ways to propose the pairs of a connection (Release 1.9, W1): by pin number and from a
 pasted table. Like `links.propose_pairs` they only PROPOSE: they return a `Proposal` that the
 window shows, and a person accepts (the owner's rule: the tool proposes, a person confirms). They

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Export: one dialog for choosing, running and reading the result of an export of the outputs.
 
     dlg = ExportDialog(ctl, theme, parent, settings=settings)

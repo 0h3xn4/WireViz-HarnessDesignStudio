@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-OUT-01, audit B-08. The build workbook used to make a font, a fill and an alignment object
 for every cell (28,693 fonts for the flatsat) and the library found each again in its tables, which
 was 70 % of an export. A cell style is now made once per combination and workbook and copied. The

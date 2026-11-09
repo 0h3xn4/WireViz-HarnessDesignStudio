@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Which document is which: the output file names of `core.outputs.build.build_outputs` as document
 types a person recognises ("Wire list", "Drawing sheets (SVG)", "Block diagram"), grouped by harness
 and "System". The export dialog shows this as the harness x document tree, and the result list

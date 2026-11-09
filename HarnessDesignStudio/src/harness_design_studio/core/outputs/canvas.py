@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A tiny deterministic drawing model rendered to SVG and PDF (vector, no dependencies).
 
 Units are millimetres, origin top-left, y down. All text uses one monospaced font (Courier in

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """SH-24 (core): `checks.fix_all_plan` turns every one-click fix of the open findings into the
 operations of ONE transaction, worked out one after the other on a copy of the project."""
 

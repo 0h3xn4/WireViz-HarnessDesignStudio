@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Locks on released items. A released harness, the interfaces it carries, the box pins it uses,
 the parts and interface types it uses and the configuration its checks read cannot be changed or
 deleted; the only way forward is a new revision (vcs.release)."""

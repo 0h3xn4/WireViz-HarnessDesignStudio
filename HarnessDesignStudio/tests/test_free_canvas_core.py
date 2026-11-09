@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type,attr-defined"
 """REQ-GUI-22. Owner feedback: the diagram must not trap devices. A device may be put anywhere,
 past the edge and below zero, and stays there. The part with no screen in it: a position outside

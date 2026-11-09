@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Write tests/fixtures/api_snapshot.json: the names in `harness_design_studio.api.__all__`, the
 signature of every function, the fields of every result type and the base classes of every
 exception. A test (`tests/test_api_stability.py`) fails when the interface differs from the file, so

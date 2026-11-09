@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Shared table code: one model, one proxy, one view setup, TSV copy and saved column widths.
 
 Every list of rows in the program is a `QTableView` over a `QAbstractTableModel`, never a

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Python plug-ins: finding them, saying what they are, and loading the ones that may be loaded.
 
 Two places are searched, and nothing is executed to search them:

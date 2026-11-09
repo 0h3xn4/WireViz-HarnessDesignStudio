@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """`workflow`, `asbuilt`, `import-asbuilt` and `export-asbuilt`: the steps of the tool and what each
 uses and makes, and what the technicians recorded about the build (S9, R6)."""
 

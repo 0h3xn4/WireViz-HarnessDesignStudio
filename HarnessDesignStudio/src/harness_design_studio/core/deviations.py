@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Recorded deviations and overrides, as lines for the places that must show them (S4, D-191 (3)).
 
 A **deviation** is an error of an electrical rule that a person has accepted with a reason: it is a

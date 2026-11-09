@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """What the diagram says about each object: problems, values still to enter, not checked, auto-filled
 connectors and release locks, as an index id -> `ObjectState`.
 

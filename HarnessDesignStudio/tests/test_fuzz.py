@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M9: robustness. Corrupt, hostile or random input must never crash the tool: loaders either
 accept data (and then every later stage copes with it) or set it aside with a clear message.
 `HARNESS_FUZZ_EXAMPLES=5000 pytest tests/test_fuzz.py` runs the long version (tools/fuzz.py)."""

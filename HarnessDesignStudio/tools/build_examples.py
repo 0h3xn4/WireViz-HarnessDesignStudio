@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Rebuild the example projects shipped with the tool (`harness-design-studio new --list`).
 
 The projects are made with the tool's own editing functions, so they are valid by construction and

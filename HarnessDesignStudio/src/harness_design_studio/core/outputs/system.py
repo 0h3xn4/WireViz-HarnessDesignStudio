@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """System-level diagrams: the block diagram (interfaces by category) and the harness overview
 (harnesses coloured by nominal/redundant). Zone lanes, deterministic placement. Colours are dark
 enough to print, and every distinction also has a dash pattern, so greyscale prints stay readable."""

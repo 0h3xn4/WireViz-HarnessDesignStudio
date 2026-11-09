@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SC-12 / SH-27: the export dialog. One dialog: output folder, harness x document tree, progress with
 Cancel, the list of files written with Reveal / Open / a drawing picture, inline notices instead of

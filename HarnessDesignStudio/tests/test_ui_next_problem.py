@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-GUI-17. Release 1.9 W1: the Next step page after the first harness. It shows the first
 problem and what to do, offers Waive and Approve where they apply, and a warning never holds it."""

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """What `validate` and `check` look at: the files of a project folder, read the way the editor reads
 them, plus the checks that need the whole project. One function, shared by the command line and the
 scripting interface (`harness_design_studio.api`), so that they cannot disagree."""

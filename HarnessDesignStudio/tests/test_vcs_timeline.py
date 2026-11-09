@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """SC-16 / SC-2 data: the change log as rows, and a diff as rows grouped by kind, with values a
 person can read (no raw None, no Python reprs)."""
 

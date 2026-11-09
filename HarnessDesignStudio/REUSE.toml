@@ -1,0 +1,57 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
+#
+# REUSE licence and copyright statements for the files that cannot carry a comment header, or that
+# must stay byte for byte as they are (data, documents, pictures, written-output fixtures, the files
+# the program copies into a user's project). Source code (.py, .sh, .js, .html, .iss, .toml) carries
+# its own SPDX header, so `reuse lint` fails for a new source file that has none (decision D-203).
+# Check: `reuse --root HarnessDesignStudio lint` (CI job `reuse`). Upstream WireViz (src/wireviz and
+# the other folders at the top of the repository) is outside this folder and outside this check.
+version = 1
+
+# The tool's own data, documents and pictures: GPL-3.0-only (the later entries below win).
+[[annotations]]
+path = [
+  "**/*.md", "**/*.csv", "**/*.json", "**/*.png", "**/*.svg", "**/*.txt", "**/*.yaml", "**/*.yml",
+  "**/*.net", "**/*.xml", "**/.gitignore", "**/.gitattributes", "**/gitattributes", "**/*.in",
+  "**/py.typed", "**/*SHA256SUMS", "**/*.html", "**/*.sh", "**/*.py", "NOTICE",
+]
+precedence = "closest"
+SPDX-FileCopyrightText = "2026 0h3xn4"
+SPDX-License-Identifier = "GPL-3.0-only"
+
+# Files the program copies into a user's project, and the example projects: not changed, so the
+# written files stay byte for byte the same (their text is the owner's, GPL-3.0-only).
+[[annotations]]
+path = ["src/harness_design_studio/resources/examples/**"]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 0h3xn4"
+SPDX-License-Identifier = "GPL-3.0-only"
+
+# Fonts bundled with the program: SIL Open Font Licence 1.1, copyright of their authors.
+[[annotations]]
+path = ["src/harness_design_studio/resources/fonts/Inter-*.ttf", "src/harness_design_studio/resources/fonts/OFL-1.1-Inter.txt"]
+precedence = "override"
+SPDX-FileCopyrightText = "2016 The Inter Project Authors (https://github.com/rsms/inter)"
+SPDX-License-Identifier = "OFL-1.1"
+
+[[annotations]]
+path = ["src/harness_design_studio/resources/fonts/JetBrainsMono-*.ttf", "src/harness_design_studio/resources/fonts/OFL-1.1-JetBrains-Mono.txt"]
+precedence = "override"
+SPDX-FileCopyrightText = "2020 The JetBrains Mono Project Authors (https://github.com/JetBrains/JetBrainsMono)"
+SPDX-License-Identifier = "OFL-1.1"
+
+# The licence texts of the Free Software Foundation, kept verbatim.
+[[annotations]]
+path = ["packaging/licences/GPL-3", "packaging/licences/LGPL-3", "LICENSE", "src/harness_design_studio/resources/licences/GPL-3.0-only.txt"]
+precedence = "override"
+SPDX-FileCopyrightText = "2007 Free Software Foundation, Inc. <https://fsf.org/>"
+SPDX-License-Identifier = "LicenseRef-FSF-licence-text"
+
+# Requirement text of ECSS and ESCC standards, reproduced in the compliance records. The terms of
+# reuse are not verified (compliance/legal/lawyer-questions.md Q-6, owner-checklist.md B4).
+[[annotations]]
+path = ["compliance/requirements/ECSS-*.csv", "compliance/requirements/ESCC-*.csv", "compliance/compliance_matrix.csv"]
+precedence = "override"
+SPDX-FileCopyrightText = "ESA and the ECSS and ESCC authors (text of the requirements); 2026 0h3xn4 (the table)"
+SPDX-License-Identifier = "LicenseRef-ECSS-reproduced"

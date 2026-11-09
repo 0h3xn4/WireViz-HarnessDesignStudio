@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """1.8.1 (audit C-15): names in rich-text labels are escaped, so a device called `A<B and C>D`
 is shown as typed in the delete question and the connector rows."""

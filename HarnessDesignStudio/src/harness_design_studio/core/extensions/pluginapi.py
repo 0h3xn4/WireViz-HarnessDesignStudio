@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The registration API a Python plug-in is given (`docs/developer/extensions.md`).
 
 A plug-in is a module (a single file in `<project>/extensions/plugins/`, or an installed package

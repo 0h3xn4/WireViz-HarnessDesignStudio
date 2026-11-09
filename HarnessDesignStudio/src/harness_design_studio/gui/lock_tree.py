@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """What a release locks and what a new revision makes editable, as a tree a dialog or panel can show.
 
 The facts come from `core.vcs.lockview` (`release_locks`, `locked_objects`, `cosmetic_fields`); this

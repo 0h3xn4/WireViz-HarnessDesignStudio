@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A subsystem library file: a set of devices with the connections between them, kept outside any
 project, so that a subsystem that was designed once (a star tracker pair, a power chain) is added to
 the next project in one step (workshop feedback M4, D-175).

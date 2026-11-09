@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """How a device card looks like the equipment it is: a pictogram in a coloured badge and a band on
 the left edge (the kinds and their families are in `gui/device_kinds.py`).
 

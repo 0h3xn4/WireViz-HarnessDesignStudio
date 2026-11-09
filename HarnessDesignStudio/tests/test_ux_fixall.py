@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SH-24: "Fix all (n)" in the Checks tab applies every one-click fix as ONE undo step, says how many
 it will fix, and is disabled with its reason when there is nothing to fix, the project is read-only

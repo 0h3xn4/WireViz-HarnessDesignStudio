@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Regression tests for the third round of editor findings of the October audit (offscreen Qt):
 project flows, import dialog, toasts, filters, disk changes, jobs, recovery journal, accessibility."""
 

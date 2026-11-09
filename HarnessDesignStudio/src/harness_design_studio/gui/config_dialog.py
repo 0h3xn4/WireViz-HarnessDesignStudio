@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Engineering values as a form: supply the value a rule is waiting for.
 
     dialog = ConfigValueDialog(ctl, theme, file="derating", key="spare_pin_fraction")

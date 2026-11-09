@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """SC-5, SC-9, SC-10: what the harness view needs from the core, without Qt. The drawing sheets
 say which items draw which wire, pin and connector (in memory only, so no output byte changes), and
 `explain` can answer for a connector and a pin as well as for a wire."""

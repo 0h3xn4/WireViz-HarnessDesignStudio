@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Layout (where things sit in the diagram) and review records (waivers)."""
 
 from typing import Annotated, Any, ClassVar, Literal

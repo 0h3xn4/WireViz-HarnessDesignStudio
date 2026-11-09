@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type,attr-defined"
 """REQ-GUI-21. Tactile connecting, the part with no screen in it: the cable in hand as a state
 machine (`gui/cable.py`: press, drag distance, release, click, Esc, the loose end), snapping to a

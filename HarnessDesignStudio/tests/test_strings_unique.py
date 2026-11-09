@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """gui/strings.py: no name is assigned twice (the second silently wins) and no constant is dead.
 
 E-F2 of the 1.8.0 audit: ``WAIVED`` and ``STEP_GENERATE`` were each defined twice, so the Problems

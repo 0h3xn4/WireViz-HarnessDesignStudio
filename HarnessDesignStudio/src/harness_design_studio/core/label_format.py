@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The text printed on the labels of a wire and of a cable connector: the named formats and the
 templates (S3b, assumption A-LABEL-FORMAT).
 

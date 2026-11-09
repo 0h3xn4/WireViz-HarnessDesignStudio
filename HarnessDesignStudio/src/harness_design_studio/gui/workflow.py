@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The workflow the top bar shows: Generate, then Review (the design rule check), then Release.
 
 No Qt here, so every combination is tested without a display. `workflow(inputs)` returns the three

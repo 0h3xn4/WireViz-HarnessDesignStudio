@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Hashes used by change control.
 
 `content_hash` is the model hash with release bookkeeping removed (status, who and when, the

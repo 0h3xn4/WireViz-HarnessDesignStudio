@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Assemble the single-file clickable prototype from the design tokens (offline, no CDN).
 
 Usage: python -m tools.build_prototype  ->  prototype/index.html

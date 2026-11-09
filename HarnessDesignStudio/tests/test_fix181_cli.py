@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """1.8.1 trust fixes of the command line (audit C-4, C-5, C-9, C-10, C-11, C-12, F-16): redirected
 output is UTF-8, an import that changes nothing exits 0, the lengths import refuses conflicting or
 impossible rows, a wrong folder is left empty, a .tsv is tab separated, and the small

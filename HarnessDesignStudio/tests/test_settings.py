@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """D-191, S2: the registry of settings is complete, no model constant hides in the code, and a
 setting changes the result and its explanation (the defaults reproduce today's numbers: the numbers
 snapshot says so)."""

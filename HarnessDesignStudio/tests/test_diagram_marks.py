@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """REQ-GUI-13. `diagram/marks.json`: where the person moved labels in the diagram. Optional, like
 the import record: a project without marks has no such file, its files and model hash are as they

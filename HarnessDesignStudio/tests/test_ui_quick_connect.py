@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """Quick mode's Connect: two devices are joined with no window, as one undo step, and the toast
 says what was joined and offers Undo and Edit pairs. Without Quick mode the Link connectors

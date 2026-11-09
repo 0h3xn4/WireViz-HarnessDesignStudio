@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Batch: generate, check and export several projects and write one summary table.
 
 Run it with no arguments to try it on two of the bundled examples (made in a temporary folder), or

@@ -1,3 +1,7 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-FileCopyrightText: 2022 Lucide Contributors
+# SPDX-FileCopyrightText: 2013-2022 Cole Bemis (Feather)
+# SPDX-License-Identifier: GPL-3.0-only AND ISC AND MIT
 """Icon set: vector icons painted with QPainter, from Lucide geometry (ISC licence, see below).
 
 The packaged program leaves out QtSvg, so no SVG file is loaded at run time: each icon is a few

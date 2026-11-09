@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """REQ-OUT-08, REQ-GUI-10. The Export window can also write the open data (the files of the
 `export-data` command) beside the outputs. The check box is off until the person ticks it and is

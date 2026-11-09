@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The change log and differences as rows a view can show: the timeline of reviews, releases and
 new revisions, a comparison of two revisions (or a revision and the working design), and its
 changes grouped by kind of object, with values written so that a person can read them. It only

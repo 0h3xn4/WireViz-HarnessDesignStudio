@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """PyInstaller entry point. `--selftest` exercises the real editor offscreen and exits (used by CI).
 
 The self-test opens the sample, adds a unit, connects two units, saves to a temp folder, reloads it

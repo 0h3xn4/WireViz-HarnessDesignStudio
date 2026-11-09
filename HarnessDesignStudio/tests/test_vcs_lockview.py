@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """SH-4 / SC-6 / SC-14: which objects a release locks, why, and which fields stay editable.
 The sentences are the ones `check_locks` refuses with, so the inspector and the toast agree."""
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,func-returns-value"
 """S4 (D-191, R7): a value of a generated wire set by hand is an override with a reason. The model, the
 edit functions and the command line refuse one without a reason; generation keeps it; `explain` says

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-GUI-20. Owner feedback: *it would help if you could make different devices visually/
 graphically more distinguishable*. A device card looks like the kind of equipment it is: a

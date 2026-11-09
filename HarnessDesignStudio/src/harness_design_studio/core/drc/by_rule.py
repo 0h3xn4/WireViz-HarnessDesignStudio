@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """One result per design rule, for the Checks view: pass, fail, not checked or pending.
 
 This only groups what the rules already found (`drc.run` and its `unchecked-config` notes) and

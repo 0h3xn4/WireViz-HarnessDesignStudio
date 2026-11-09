@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Build, write and check the output set. `build_outputs` is pure: the same model gives the same
 bytes. `outputs_status` compares a folder with the current model (stale detection)."""
 

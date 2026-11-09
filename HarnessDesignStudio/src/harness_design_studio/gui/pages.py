@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Home area, a page of its own (Settings is in `settings_page.py`).
 
     home = HomePage(theme, new=..., open_=..., example=..., sample=...)

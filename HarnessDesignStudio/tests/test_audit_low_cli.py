@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Low findings of the audit in change control, the command line and the importers (E-15, E-17,
 K-11, K-17)."""
 

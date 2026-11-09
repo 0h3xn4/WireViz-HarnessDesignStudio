@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-STD-06: the family-group mapping worksheet cites only requirements that exist and covers
 every part class of the library (ECSS-Q-ST-30-11C 6.11, 6.12, 6.32; action A-16)."""
 

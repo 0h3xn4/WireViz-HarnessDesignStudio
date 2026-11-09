@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,union-attr,attr-defined"
 """S8: Help > Extensions, the question that names the code before it is loaded, and what the Checks
 panel says about a rule that comes from an extension. Offscreen."""

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The change journal of a project: who changed what, when, from what to what and why (S4, D-191,
 requirement R8).
 

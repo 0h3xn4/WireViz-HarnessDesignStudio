@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """S8: the commands `extensions`, `trust` and `import-plugin`, the schema of the extension files,
 and the scripting interface (`list_extensions`)."""
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-PERF-01: the editor stays responsive at stress size (200 units, 2,000 interfaces, 20,000 wires).
 
 Bounds are generous (about 3x the targets) so loaded CI machines do not flake; the real numbers

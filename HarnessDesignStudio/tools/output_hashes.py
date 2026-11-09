@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """SHA-256 of every file the tool writes (a workbook by its members) for each packaged example, to show that a change of the user
 interface (or of anything else that must not touch the written files) left them alone.
 

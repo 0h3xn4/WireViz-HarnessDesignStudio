@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The two assumptions of the bill of materials that became settings (A-BOM-CONTACTS and
 A-BOM-NO-ALLOWANCE): the default of each is today's behaviour (nothing is added), a changed value
 changes the quantity as a hand calculation says, and the explanation lists the extra lines."""

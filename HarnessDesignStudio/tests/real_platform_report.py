@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """What the real-platform lane runs on: a printed report of the Qt platform, the screen, the
 desktop session and the fonts (`python -m tests.real_platform_report`).
 

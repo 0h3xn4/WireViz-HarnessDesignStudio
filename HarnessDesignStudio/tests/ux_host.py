@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A tiny host for the UX foundation (theme, icons, state chips, shared tables): a window with an icon
 gallery, one chip per state and a wire table. Tests drive it offscreen; `grab()` makes the pictures
 in docs/ux/build/ux-found."""

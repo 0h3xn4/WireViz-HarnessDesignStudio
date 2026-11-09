@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-CLI-01: `harness-design-studio validate` and `harness-design-studio check`."""
 
 from pathlib import Path

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Exports: WireViz-style YAML per harness, a documented JSON file for the whole project, and
 XLSX workbooks. All deterministic (no dates, sorted keys and rows)."""
 

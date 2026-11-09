@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-IMPORT-01: CSV/XLSX import plans with per-row results; nothing changes until confirmed."""
 
 from pathlib import Path

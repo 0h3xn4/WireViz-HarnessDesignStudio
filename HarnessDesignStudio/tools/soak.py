@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Soak test: thousands of random editing steps through `History`, checking invariants all the
 way. Usage: python -m tools.soak [steps] [seed]   (pytest runs a short version)
 

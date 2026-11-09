@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Why panel (SC-8, CV-23): the reasons behind the selected object, as a list of "rule: sentence".
 
     panel = WhyPanel(ctl, theme)      # follows ctl.selection (unit or link)

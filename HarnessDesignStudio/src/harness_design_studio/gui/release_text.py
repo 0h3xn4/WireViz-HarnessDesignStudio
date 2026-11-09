@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The words of a release blocker for a person at the screen (Release 1.9, W1).
 
 `core.vcs.release` words its blockers for both the screen and the command line, so some of them

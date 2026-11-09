@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-UX-02: the clickable prototype really supports the main journeys (run in headless Chromium).
 
 Skipped when Playwright or a Chromium binary is not available (unless HARNESS_REQUIRE_BROWSER is

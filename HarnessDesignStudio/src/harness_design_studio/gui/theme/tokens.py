@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Design tokens: the single source of every GUI colour, type size, gap, radius and duration.
 
 No Qt imports on purpose: the QSS (`qss.py`), the palette (`palette.py`) and every painter read

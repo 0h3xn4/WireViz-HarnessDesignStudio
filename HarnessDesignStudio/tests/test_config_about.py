@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Comments in the config files: the reserved key `_about` (D-191 (2), R3, open decision 13).
 
 A person who opens `config/derating.json` in an editor sees, next to each value, its unit, range,

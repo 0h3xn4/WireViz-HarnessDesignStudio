@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Check a release tag and write the notes of the GitHub release page (used by .github/workflows/release.yml).
 
 Usage: python -m tools.release_notes check TAG

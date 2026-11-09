@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Create the material for the usability tasks T1 to T8 in a folder (docs/usability/README.md).
 Usage: python -m tools.usability_setup DIR"""
 

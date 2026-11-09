@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Why a signal has this pin, why a wire is in this harness, and why a connector is this connector
 (D-191, S1).
 

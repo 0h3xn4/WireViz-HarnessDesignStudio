@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The theme package: tokens, palette, style sheet, widget style, fonts and the manager.
 
 `gui/theme/tokens.py` is the one source of colours, type sizes, gaps and durations. Import the

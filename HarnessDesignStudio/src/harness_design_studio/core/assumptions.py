@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The model assumptions the tool makes without being asked, each with an ID that a derivation can cite.
 
 A derivation (`core/derive.py`) says how a number was made. Some of what it rests on is not a value

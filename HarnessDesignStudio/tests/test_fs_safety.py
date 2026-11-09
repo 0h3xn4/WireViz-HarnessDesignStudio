@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A-7 to A-11: stale locks (reboot, reused process number), saves never read through links,
 migration backups, file modes under a umask, and temp files left by a killed save."""
 

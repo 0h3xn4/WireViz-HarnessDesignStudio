@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-MIGRATE-03. No silent upgrade in the editor (plan 2.3, point 5): a project in an older file
 format is not upgraded, not even in memory for editing, until the person says so. The question is

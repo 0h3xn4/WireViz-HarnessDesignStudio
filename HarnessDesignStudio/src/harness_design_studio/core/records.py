@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The results of the tool as plain data: small frozen dataclasses with `to_dict()`.
 
 This is the one place where a result of `generate`, `drc`, `verify`, `export`, `validate` or

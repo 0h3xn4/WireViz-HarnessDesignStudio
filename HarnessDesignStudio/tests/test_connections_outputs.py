@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type"
 """Release 1.9, W2 (REQ-OUT-09): the connection list (ICD style) as an output. `connections.csv`
 and `connections.xlsx` are written for a project that has links, and only then; the links are in

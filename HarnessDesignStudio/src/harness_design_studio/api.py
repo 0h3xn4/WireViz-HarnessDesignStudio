@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The scripting interface of Harness Design Studio: what the tool does, as Python functions.
 
 Everything the command line and the editor do for an engineer can be done from a script. This

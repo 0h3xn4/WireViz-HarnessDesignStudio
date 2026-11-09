@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The review, pairing and planners of links exactly as release 1.8.1 had them (a verbatim copy of
 `core/links.py` at 6b7d70b with the imports made absolute). The tests of release 1.9 (W3) compare
 the current `core/links.py` with it on generated projects: with no pin direction set and the

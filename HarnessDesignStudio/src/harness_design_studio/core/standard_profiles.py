@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Optional value profiles taken from the supplied standards (D-131).
 
 The tool ships no standard values by default. A project may switch a profile on; the profile fills

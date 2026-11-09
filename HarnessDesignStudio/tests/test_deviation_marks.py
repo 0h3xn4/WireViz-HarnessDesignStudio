@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,attr-defined"
 """Transparency follow-up (D-191 (3), D-193; R7, R12): an override or a deviation shows on the tests
 of the wire it is about: a band *Overrides and deviations* above the Tests sheet of the build

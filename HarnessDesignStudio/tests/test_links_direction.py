@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """REQ-DRC-05. Release 1.9 (W3): the direction a person set on a pin (`Pin.direction`) decides the
 review of a link and the pairing proposal before the interface types and before any name does.

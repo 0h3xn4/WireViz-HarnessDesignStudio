@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """D-191, S10: no model, rule or assumption of the tool is left without a page.
 
 `docs/models/` explains every calculation. This test ties it to the code, so that adding something to

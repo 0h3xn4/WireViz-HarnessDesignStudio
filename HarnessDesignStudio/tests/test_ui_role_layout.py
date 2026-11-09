@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,has-type"
 """1.7.0 S2 (D-171) and M5 (D-176): the Systems engineer role shows less until the person asks, the
 Electrical / AIT engineer role is the old Full workspace."""

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Interface table: every interface of the design as a sortable, filterable table whose cells
 edit in place (name, redundancy, maximum current, requirement ID).
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Accessories tab of the Harness tab: the sleeving, heat shrink, labels and backshells of the
 selected harness, one table and a form to add, change and delete one.
 

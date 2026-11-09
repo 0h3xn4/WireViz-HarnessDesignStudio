@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M7 accessibility audit (automated part): every interactive widget has an accessible name,
 the whole app is reachable from the keyboard, text meets the minimum size, and the canvas, which
 Qt does not expose item by item, announces what it holds and where the accessible alternative is."""

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,attr-defined"
 """S9 (R6): what is written about the as-built records. The report and the *As-built* sheet exist only
 for a project that has records; every other written file of a project without records is byte for

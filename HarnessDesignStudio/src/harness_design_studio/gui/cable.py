@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Tactile connecting on the diagram: the cable in hand, as a state machine with no Qt in it.
 
 A person picks up a cable at a port of a device, carries it over the diagram and puts it down on a

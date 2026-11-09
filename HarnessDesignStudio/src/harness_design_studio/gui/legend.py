@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The key to the diagram: every kind of link and connector the project uses, drawn. It is an
 overlay in a corner of the canvas that can be switched off (View > Show legend) or folded."""
 

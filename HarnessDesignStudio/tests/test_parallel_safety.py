@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The suite runs in parallel in CI (`pytest -n auto -m "not perf"`, then `pytest -m perf` alone).
 
 Two things keep that sound: every test that asserts a wall-clock limit carries the `perf` marker

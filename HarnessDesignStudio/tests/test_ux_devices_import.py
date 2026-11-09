@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,union-attr,attr-defined"
 """CD-J2: the import wizard's page for a device pinout: the columns matched from the headings, the
 device chosen (an existing unit, or a new one), the part per connector, the rows with their exact

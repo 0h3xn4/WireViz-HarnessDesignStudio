@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """1.8.1 (audit B-04, F-03): a rule that is ready to run but found nothing to look at says
 "not checked", never "pass". Projects that have the data, and projects whose values are still
 placeholders, are unchanged."""

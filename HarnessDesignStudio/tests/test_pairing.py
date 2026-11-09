@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-GUI-16. Release 1.9 W1: the first connector of a device, pairing by pin number and a pasted
 pairing. The planners propose; they change nothing."""
 

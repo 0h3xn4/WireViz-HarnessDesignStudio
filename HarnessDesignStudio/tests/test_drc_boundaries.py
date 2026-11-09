@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Boundaries of the design rules and of wire sizing (audit C-16, I-3, B-3, C-15).
 
 For every limit: a value exactly at the limit passes, a hair above it fails. The numbers are test

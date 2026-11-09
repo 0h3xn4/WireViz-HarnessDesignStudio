@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A number of the same device (workshop feedback M4, point 20, D-175).
 
 Redundancy is said by a NUMBER: "2 of these devices", not by choosing a nominal chain and a

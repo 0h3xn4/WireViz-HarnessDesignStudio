@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Release 1.9 (F-05): two people each press Generate. The `.gitattributes` of a new project, the
 reader of the Git index and `merge-fix`. The merges are real ones, made with the `git` program
 (skipped when it is not installed); the tool itself never starts `git` (D-164)."""

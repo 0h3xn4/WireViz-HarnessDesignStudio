@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg"
 """S4 meets S6 and S7: `override`, `journal` and `deviation` print one JSON document, the scripting
 interface does the same things with the same data, and an import is an entry of the journal while

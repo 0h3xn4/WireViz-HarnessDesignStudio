@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Read unit connector pinouts from a KiCad netlist (S-expression or XML) and apply them to a unit (D-123).
 
 KiCad is where each unit's electronics, and so each connector's pinout, are designed. A netlist

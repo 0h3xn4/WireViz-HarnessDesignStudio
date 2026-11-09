@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,attr-defined"
 """S9 (R6): as-built capture. The sheet a technician fills in and its round trip, the comparison
 with the test limits and the design with numbers worked out by hand, what is missing, the import

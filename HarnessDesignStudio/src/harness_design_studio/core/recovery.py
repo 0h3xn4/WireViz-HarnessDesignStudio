@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Autosave journal: the latest state of an open project, kept inside the project folder.
 
 After a crash or power loss the journal holds everything up to the last committed change. It lives

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Every kind of derivation, with the page of `docs/models/` that describes it (D-191, S1).
 
 A derivation has a `kind` (its `id`). This table is the list of kinds the tool can produce and the

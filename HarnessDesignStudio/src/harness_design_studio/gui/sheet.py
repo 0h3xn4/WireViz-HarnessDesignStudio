@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Spreadsheet behaviour for the tables of the model: paste from Excel, bulk edit, Enter to edit and
 a menu that shows and hides columns.
 

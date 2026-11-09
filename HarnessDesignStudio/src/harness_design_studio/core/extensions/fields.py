@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The documented fields an expression may read (the *derived models* of S8).
 
 A field belongs to a scope (the kind of object a rule or a table runs over) and is worked out by a

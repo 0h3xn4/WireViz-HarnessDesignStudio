@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Software configuration file and integrity values of a delivery.
 
 ECSS-Q-ST-80C 6.2.4.3, 6.2.4.4, 6.2.4.8 to 6.2.4.11 (gap G-07). Writes, into dist/release-docs:

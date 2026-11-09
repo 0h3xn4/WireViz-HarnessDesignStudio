@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """S8: the documents of the extensions say what the code does (the lists in them come from the code)."""
 
 import re

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Editing operations for the block diagram. Pure functions: they build lists of `Op`s.
 
 Nothing here mutates a project. The GUI runs the returned ops through `History.execute`, so every

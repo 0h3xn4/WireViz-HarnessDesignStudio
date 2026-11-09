@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The first connector of a new device (Release 1.9, W1): which connector parts the library offers
 as a family, a pin count and a gender, and one plan that adds a device with that connector.
 

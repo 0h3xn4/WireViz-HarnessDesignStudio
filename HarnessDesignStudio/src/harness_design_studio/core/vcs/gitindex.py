@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Which files are in a Git merge conflict: the paths with a stage above 0 in the index.
 
 Like `gitinfo`, this reads the repository's own file (`.git/index`, versions 2, 3 and 4) and never

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,attr-defined"
 """A release gate on the as-built records (owner decision 11), opt-in. The setting
 `release_requires_asbuilt` of `config/naming.json` is off by default and then a release is what it

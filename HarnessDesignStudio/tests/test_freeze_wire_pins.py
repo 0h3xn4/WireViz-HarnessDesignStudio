@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-CC-09, REQ-CC-02, A-2 (audit 1.8.0, 1.9.0): the box pins that the wires of a released harness reach are
 frozen with the release, also for a harness made from a link or by hand (it has no interface to
 say which pins it uses). The edit that would change one is refused with the harness named; the

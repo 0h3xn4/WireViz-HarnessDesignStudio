@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Component table and requirement-to-component trace for the SDD (ECSS-E-ST-40C 5.5.2, Annex F 6).
 
 A component is a module of the package under src/. The table lists its layer, its purpose (first

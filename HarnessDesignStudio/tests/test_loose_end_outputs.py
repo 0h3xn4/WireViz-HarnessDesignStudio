@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type,attr-defined,index,union-attr"
 """REQ-OUT-10: what the written outputs and the independent verifier do with a loose cable end
 (M4a of the 2.0 programme, D-201). The build workbook of a harness that has one gets a ninth check,

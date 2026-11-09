@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A device library file: devices with their connectors and pinouts, kept outside any project, so
 that a device that was defined once (down to each pin and its function) is reused in the next
 project (D-165).

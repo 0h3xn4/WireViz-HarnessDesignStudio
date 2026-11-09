@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """`export-data`: every intermediate and final result as JSON and CSV (D-191, S5), and the
 `--run-record` option of `generate` and `export`."""
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The connection list of a project (ICD style): which pin of which connector of which device is
 joined to which pin of which other device, from the links a person made (M2 of the workshop
 feedback; release 1.9, W2).

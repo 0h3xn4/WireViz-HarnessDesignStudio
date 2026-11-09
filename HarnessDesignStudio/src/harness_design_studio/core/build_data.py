@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The build data a technician needs: strip lengths, contacts, accessories and crimp tools.
 
     ops = plan_set_strip(project, "W001", ["W001-0001"], strip_a_mm=6, strip_b_mm=None)

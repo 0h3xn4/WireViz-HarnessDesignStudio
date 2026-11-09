@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The pictograms of the device kinds and the outlines of the badges, as plain path data (no Qt).
 
 Each pictogram is drawn in a box of 16 x 16 units as a list of path commands, `("M", (x, y))`,

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,attr-defined"
 """REQ-GUI-25 (the looks in the written and exported block diagram). Owner decision after the
 device looks: *should the exported and written diagram show these looks too? yes, without

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """Release 1.10, D-182: the outer conductor of a coax is bonded at both ends whatever the grounding
 concept of the project says about other shields; the other kinds of group follow the concept."""

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Regenerate the golden output digests (and the readable mini3 text outputs) on purpose.
 Usage: python -m tools.gen_output_goldens   (then review the diff)"""
 

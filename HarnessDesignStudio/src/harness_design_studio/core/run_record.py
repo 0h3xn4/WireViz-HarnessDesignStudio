@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The run record: who ran the tool, when, with what, kept outside the hashes (D-191 (1), S5).
 
 The files the tool writes carry no time and no user name, so that the same design gives the same

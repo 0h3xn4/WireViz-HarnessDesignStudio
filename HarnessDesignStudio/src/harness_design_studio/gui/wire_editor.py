@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Edit wire form of the Harness tab: gauge, type, colour, length, label and note of the
 selected wires, and a button that gives them back to generation.
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,attr-defined,arg-type,call-arg,assignment,misc,type-arg"
 """REQ-IO-02, audit A-8. `History.execute` used to run the whole integrity check twice per edit. It
 now asks an `IntegrityTracker`, which looks again only at what differs from the state it saw last.

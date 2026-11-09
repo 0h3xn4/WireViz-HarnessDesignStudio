@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """UI overhaul M2: the areas (no Qt): every main tab belongs to exactly one area."""
 
 from harness_design_studio.gui import areas

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-MET-01: Metrics tool (ECSS-Q-ST-80C 7.1.5)."""
 
 from __future__ import annotations

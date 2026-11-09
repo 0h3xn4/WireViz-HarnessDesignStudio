@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """A dense diagram stays readable: units never overlap, a link leaves on the edge that faces its
 other end, the links on one edge are ordered by the height of their other ends, and a selection

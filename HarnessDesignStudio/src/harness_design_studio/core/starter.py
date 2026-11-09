@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Starter library and interface types. EXAMPLE data only: no numbers, nothing is qualified.
 
 Baseline (D-130): RS-422, RS-485 and CAN for communication; Micro-D 9, 15, 21, 25 and 31 pin for

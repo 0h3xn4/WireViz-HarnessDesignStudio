@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """REQ-DRC-05, REQ-IO-02. Release 1.9 (W3): the words that are the two ends of one line (TX and RX,
 MOSI and MISO ...) are a setting of the project, `config/naming.json` `signal_counterparts`. While

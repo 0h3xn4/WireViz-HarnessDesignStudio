@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SC-8 / CV-23: the Why panel (`gui/why_panel.py`). Offscreen, on a bare controller."""
 

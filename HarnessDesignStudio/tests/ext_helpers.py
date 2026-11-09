@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Helpers for the tests of the extensions (S8): a generated project, a folder of extension files."""
 
 import json

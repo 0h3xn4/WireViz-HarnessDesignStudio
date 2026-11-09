@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """What the diagram shows about a link and a connector comes from the project data, never from
 a guess: values appear only when entered, and the connector family is read from the part."""

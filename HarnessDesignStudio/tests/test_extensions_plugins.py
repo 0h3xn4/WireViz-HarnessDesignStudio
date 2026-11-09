@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """S8: Python plug-ins are opt-in per project and trusted per exact code.
 
 What is checked: a plug-in whose module has a side effect at import time is not executed unless the

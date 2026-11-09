@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-STD-03, REQ-STD-04, REQ-STD-05: REQ-STD-03: rules from the supplied standards. Boundaries, quiet cases and "not checked" messages.
 
 Numbers are test inputs, not engineering data.

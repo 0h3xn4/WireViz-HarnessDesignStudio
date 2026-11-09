@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Every dialog and window of the program, built the way the program builds it, for the layout
 sweep (`tests/test_ui_layout_sweep.py`).
 

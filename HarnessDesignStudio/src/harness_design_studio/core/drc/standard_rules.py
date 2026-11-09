@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Rules that apply requirements of the supplied standards (D-131).
 
 Each rule stays silent until its values exist (a standard profile, or the engineer's own numbers)

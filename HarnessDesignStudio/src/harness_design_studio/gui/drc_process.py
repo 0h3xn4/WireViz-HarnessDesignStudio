@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Runs the design rule check in a separate, long-lived process.
 
 A Python thread shares the interpreter lock with the editor, so a big check made the interface

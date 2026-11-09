@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """S9 (R6): the roles are tested on every page. A table, per role, of the pages the rail lists and the
 entries the menus list; nothing is hidden in every role; everything a role leaves out is still reached

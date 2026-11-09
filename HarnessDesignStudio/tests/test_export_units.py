@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """R5 units everywhere (release 1.13, D-195): every numeric field of `system/export.json` states its
 unit in the object `field_units`, written from one table (`core/outputs/export_units.py`). The table
 is held against the fields of the model (a field added without an entry fails) and against the

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Lists: the wire list, pinouts, BOM, mass and length, test tables and labels of a harness, and the
 system BOM, as sortable, filterable tables.
 

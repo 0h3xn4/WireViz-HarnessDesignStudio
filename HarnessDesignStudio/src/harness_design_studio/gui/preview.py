@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Drawing preview: paints the same sheet description that becomes the SVG and PDF, so what you
 see here is what is exported (title block stamped "preview" because no export has happened).
 

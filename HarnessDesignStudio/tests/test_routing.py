@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The drawing rules of the diagram that do not need Qt (core/routing.py)."""
 
 from itertools import combinations

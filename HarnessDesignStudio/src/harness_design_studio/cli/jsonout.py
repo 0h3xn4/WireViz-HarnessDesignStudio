@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """`--json`: the result of a command as one JSON document on the standard output.
 
 A command that has a result in data form takes `--json`. With it the usual text lines are not

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """S8: the examples in `docs/examples/extensions/` are the ones the manual explains, and they work:
 a declarative rule and a Python rule are added to a project without editing the tool."""
 

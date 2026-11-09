@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type,attr-defined,index,union-attr"
 """REQ-MIGRATE-04: the real step from format 1 to format 2 is wired and empty (M4a of the 2.0
 programme, D-201). Format 2 is the format that may hold a loose cable end. The step writes the

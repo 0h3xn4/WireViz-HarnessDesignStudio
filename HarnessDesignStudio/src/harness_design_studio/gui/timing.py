@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Optional timing log of the interface: set `HARNESS_UI_TIMING=1` and every timed step writes one
 line with its duration to the standard error stream (for example `[ui-timing] theme apply 64 ms`).
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """REQ-IO-02, REQ-DRC-05. Release 1.9 (W3): a pin can say which way its signal runs (`Pin.direction`:
 in, out, bidirectional; empty = not set). It is sparse (left out of the files while empty), a

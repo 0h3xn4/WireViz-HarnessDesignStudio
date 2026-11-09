@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-GUI-13. Workshop feedback: "very confusing overlappings" on the diagram. The boxes of one
 connection (the label and the connector box at each end) do not cover each other or a device, a

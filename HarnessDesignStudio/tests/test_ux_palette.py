@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SH-11: Ctrl+K opens the command palette as a non-modal overlay centred over the window: a search
 box and a list, arrow keys and Enter, Esc closes, a move of the focus or a click elsewhere closes it;

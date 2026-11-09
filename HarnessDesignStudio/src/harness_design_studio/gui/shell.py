@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Building blocks of the app shell: tabs with slots for views that arrive later, empty states,
 persistent banners, and the words of a refusal.
 

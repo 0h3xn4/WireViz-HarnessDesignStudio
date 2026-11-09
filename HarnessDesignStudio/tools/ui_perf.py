@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: allow-untyped-calls, no-warn-unused-ignores
 """Start-up, tab switching, theme switch, UI scale and selection timings of the editor on the flatsat
 example (offscreen). The baseline before the UI overhaul is in docs/ui/PERF_BASELINE.md.

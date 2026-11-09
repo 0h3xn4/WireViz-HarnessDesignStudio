@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Helpers for driving the Qt editor in tests (offscreen)."""
 
 from pathlib import Path

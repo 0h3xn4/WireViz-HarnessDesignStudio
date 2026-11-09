@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Regression tests for the low output findings of the October audit: D-14 (write_outputs with a
 damaged manifest, empty folders left behind, links met by the checks) and D-17 (routing
 preconditions)."""

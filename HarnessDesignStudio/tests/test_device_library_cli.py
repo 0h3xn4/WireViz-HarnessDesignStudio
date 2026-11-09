@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """1.4.0 M5: `export-devices` and `import-devices` (the same planner as the Devices tab)."""
 
 from pathlib import Path

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The change journal: who changed what, when, from what to what and why (S4, D-191, R8).
 
 The journal is a file of its own (`journal.json`) and exists only in a project that has chosen

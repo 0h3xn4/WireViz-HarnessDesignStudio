@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """One dialog for a new project: folder, name and what to start from, with the problems said next
 to the field. It replaces the chain "choose folder", "type the name" and (for an example) "choose
 the example" of three separate pop-ups.

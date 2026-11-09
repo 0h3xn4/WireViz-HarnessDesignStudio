@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """What kind of equipment a device is, so that its card can look like it (no Qt in this module).
 
 The kind is **read** from what the device says about itself, with the table below and nothing

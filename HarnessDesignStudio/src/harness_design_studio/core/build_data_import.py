@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Import the build data from a table (CSV, TSV, JSON or XLSX read by `imports.read_table_sheet`).
 
     plan = plan_build_data_import(project, table)      # table[0] is the header row

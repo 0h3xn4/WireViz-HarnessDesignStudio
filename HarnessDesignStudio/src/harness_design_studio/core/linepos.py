@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Where a label sits on a line: a position along a polyline, in pure geometry (no Qt).
 
 The pill of an interface, the label of a connection and the connector box at each end of a

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """How the build workbook decides, and how its labels, colours and shields are made (D-191, S1).
 
 Every function here calls the code that writes the sheet or generates the object, so an explanation

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The choice of a gauge as a derivation (audit R1, owner decision 14): `explain DIR WIRE` shows the
 gauges the search tried, the current limit of each after derating, the drop of each, which is the first
 that passes and what it rests on. It replays the search with the function generation calls, so the gauge

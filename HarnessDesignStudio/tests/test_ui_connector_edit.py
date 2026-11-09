@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """REQ-HARN-02. Workshop feedback M3: the Connectors tab edits a connector (part, gender, keying, name)
 and its pins (signal, role, function, add, rename, delete), on a harness made by hand and, as an edit

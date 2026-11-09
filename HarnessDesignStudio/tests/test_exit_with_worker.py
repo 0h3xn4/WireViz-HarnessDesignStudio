@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The program may end while the autosave journal is still being written in the background.
 Qt aborts the whole process ("QThread: Destroyed while thread is still running") when a running
 thread is destroyed, so a script, a test or a crash path that never closes the window used to end

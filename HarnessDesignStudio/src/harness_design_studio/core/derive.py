@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """How a number of the design was made: the equation, the inputs with their units and where each
 came from, the intermediate results, the assumptions it rests on and what it is checked against.
 

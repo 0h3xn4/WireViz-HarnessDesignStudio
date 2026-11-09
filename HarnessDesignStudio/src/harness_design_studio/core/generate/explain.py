@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Explain data: the recorded reasons behind generated objects (no guessing, only what was logged)."""
 
 from harness_design_studio.core.model import Harness, Project, Wire

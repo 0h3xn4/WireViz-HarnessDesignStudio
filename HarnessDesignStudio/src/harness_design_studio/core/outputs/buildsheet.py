@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The build workbook of one harness: a spreadsheet to build the harness from (decision D-169).
 
 Where the other tables are data, this file is a document: a first sheet that says what is ready and

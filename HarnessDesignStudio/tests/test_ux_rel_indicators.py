@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """Check boxes, radio buttons and the tick boxes of trees are visible on both themes: an unticked box has
 a border that stands out from the background (3:1), a ticked one is not only a colour (it holds a

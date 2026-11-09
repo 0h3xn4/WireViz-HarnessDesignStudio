@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SH-8 / CV-7 / SC-8: the inspector (`gui/inspector.py`): lock banner, locked fields, Used in,
 properties of harnesses, parts, types and configuration, the Why and Problems tabs."""

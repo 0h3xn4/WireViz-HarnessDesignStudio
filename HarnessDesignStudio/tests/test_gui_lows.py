@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Regression tests for the low editor findings of the October audit that were still open after the
 medium round (F2-10 numbers and chain text, F1-27 strings kept in one place)."""
 

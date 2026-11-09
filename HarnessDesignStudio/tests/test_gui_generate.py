@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """J5/J6 (M3): generate harnesses from the editor: preview, one undo step, status, Explain."""
 
 import pytest

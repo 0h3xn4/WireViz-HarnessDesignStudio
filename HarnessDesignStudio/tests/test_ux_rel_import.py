@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SC-17: the import wizard (file, columns + preview, conflicts and placeholders, apply) for interfaces,
 approved parts, segment lengths, engineering values and a KiCad netlist, on the flatsat example.

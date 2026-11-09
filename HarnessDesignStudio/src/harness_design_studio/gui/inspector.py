@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Inspector (SH-8, SC-8, CV-7, CV-9, CV-23): the right dock, with the tabs Inspector, Why and Problems.
 
     inspector = Inspector(ctl, theme, problems=problems_panel)

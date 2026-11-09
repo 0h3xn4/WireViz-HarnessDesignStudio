@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """CV-6 / CV-7 / CV-8: the index of what the diagram says about each object (problems, pending
 values, not checked, auto-filled connectors, release locks). Pure data: no window."""

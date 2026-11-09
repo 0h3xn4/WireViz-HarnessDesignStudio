@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # Install Harness Design Studio for the current user (no administrator rights), or system-wide with --system.
 # Usage: ./install.sh [--prefix DIR] [--system]
 set -eu

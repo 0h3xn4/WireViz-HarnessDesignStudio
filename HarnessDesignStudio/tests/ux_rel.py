@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Shared set-up for the release / export / import view tests: the flatsat example as a real project
 folder behind an `EditorController`, and a project with released harnesses."""
 

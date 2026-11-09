@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-UX-01: design tokens meet WCAG 2.2 AA and stay distinguishable for colour-blind users."""
 
 import itertools

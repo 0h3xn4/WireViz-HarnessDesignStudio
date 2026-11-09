@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Logical-layer findings shown in the Problems panel and the to-do list.
 
 M4 adds the full design rule check; these are the rules the block-diagram editor needs now.

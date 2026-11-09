@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """S8: declarative extensions (rules, tables and lookup tables written as data).
 
 What is checked: a rule fires and does not fire against hand values with the exact actual value,

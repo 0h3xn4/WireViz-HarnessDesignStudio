@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,type-arg,no-any-return"
 """REQ-LIB-06. 1.8.1 (audit D4, D18): "Save to library" asks before it replaces a different device
 of the same ID (Replace / Save as a new ID / Cancel) in the library window and in the Devices tab;

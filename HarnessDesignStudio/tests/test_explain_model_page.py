@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """`explain` prints the link to the model page (owner decision 15): the code knows the page of
 `docs/models/` of each kind of derivation (`core/derive_kinds.py`), and now the output says it. The
 text ends with `Model page: docs/models/<page>.md`; `explain --json` has the key `model_page` on each

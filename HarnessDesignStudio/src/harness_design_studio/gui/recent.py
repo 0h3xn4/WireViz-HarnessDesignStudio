@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Recent projects: the list Home shows, kept in the program's settings (never in a project).
 
     entries = recent.load(settings)

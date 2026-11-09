@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SC-11, SC-13, SC-22: the lists panel (wire list, pinouts, BOM, mass and length, test tables,
 labels, system BOM) and the generate plan table, on the flatsat example, offscreen."""

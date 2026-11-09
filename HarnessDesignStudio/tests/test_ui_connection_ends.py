@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-GUI-13. Workshop feedback M3: connectors at the ends of the connections in the Diagram (Expert
 mode, or View > Show connectors on connections, remembered), the harness path in the tooltip and

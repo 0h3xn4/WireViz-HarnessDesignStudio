@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,attr-defined"
 """As-built length tolerance (owner decision 10). The two optional settings `asbuilt_cut_tolerance_mm`
 and `asbuilt_strip_tolerance_mm` of `config/generation.json` default to not set, which is what the

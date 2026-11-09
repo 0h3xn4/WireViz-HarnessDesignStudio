@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The compliance matrix is rebuilt from the requirement lists and the assessments."""
 
 from __future__ import annotations

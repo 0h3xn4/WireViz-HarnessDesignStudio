@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Every kind of link has its own picture, and a link's label keeps clear of the other links."""
 
 import pytest

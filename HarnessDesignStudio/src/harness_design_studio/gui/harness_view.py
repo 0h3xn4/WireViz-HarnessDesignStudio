@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Harness view: one harness with its connectors and pins, its wires, its drawing and the reasons
 behind it, as four views of one selection.
 

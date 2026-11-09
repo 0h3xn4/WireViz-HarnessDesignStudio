@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Licence report for installed runtime dependencies, failing on anything outside the allow-list.
 
 Usage: python -m tools.licence_report OUT.md [PYTHON]  (PYTHON = interpreter of the shipped env)

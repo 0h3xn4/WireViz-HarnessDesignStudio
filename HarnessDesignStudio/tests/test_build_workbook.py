@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-OUT-06 (decision D-169): the build workbook of a harness. A document to build from: a first
 sheet that says what is ready and what is missing, a cut list in cut order, one block per connector,
 the parts, labels and a test sheet with columns to fill in. Every check of the independent verifier

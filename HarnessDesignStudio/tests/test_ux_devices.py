@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """CD-B3 (read-only Devices tab) of the custom device editor: the sixth main tab, the header, the
 connector list and card, the pin table with its derived columns, the notes, the pinout as exported

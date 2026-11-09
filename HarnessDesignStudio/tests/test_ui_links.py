@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-GUI-11, REQ-GUI-12. Workshop feedback M2b: connections, the pinout first. The Link connectors window, the
 Connect tool, the project tree, the diagram, Create harness, Check my connections and the Next step

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """D-191, S10: the trace test of 16 real numbers, repeated with the tool's own surfaces and timed.
 
 The audit traced 16 numbers of the examples to their inputs by reading code, files and documents

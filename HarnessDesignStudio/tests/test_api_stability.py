@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """R11: the scripting interface is stable, and it has no Qt in it.
 
 `tests/fixtures/api_snapshot.json` holds the names of `harness_design_studio.api.__all__`, the

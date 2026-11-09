@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """REQ-GUI-10. The Explain window and the Why tab name the page of the documentation that describes
 the model behind a derivation: a quiet line "Model page: docs/models/wire-sizing.md", as text (nothing

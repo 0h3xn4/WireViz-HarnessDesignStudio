@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M5: output generation (drawings, tables, exports), the manifest and stale detection, and the
 independent output verifier (every check has a mutation test that proves it can fail)."""
 

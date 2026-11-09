@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """The harness drawing keeps to its sheet: nothing runs into the title block, every wire is drawn
 once, the routing sketch does not crowd the wires out, nested shields keep their sleeves, and a

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-EDIT-01: edits that the diagram canvas makes on several units at once (headless):
 align, distribute, duplicate, move together, delete together and the impact of deleting a link."""
 

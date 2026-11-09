@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Problems list: every open finding of the project in one list, at the bottom of the window.
 
     panel = ProblemsList(ctl, theme)

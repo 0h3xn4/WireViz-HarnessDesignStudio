@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The as-built record: what was really built and measured (transparency work, S9, requirement R6).
 
 One record for each thing a technician writes something down about: a harness, a part lot, a wire,

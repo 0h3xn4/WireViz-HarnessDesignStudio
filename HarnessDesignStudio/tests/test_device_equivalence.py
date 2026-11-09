@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """CD-X4: a device made with the editor's plans is the device a person writes by hand. The two
 projects are saved and compared byte for byte, and with the committed fixture
 `tests/fixtures/projects/custom_device` (device written without the editor, then generated); a

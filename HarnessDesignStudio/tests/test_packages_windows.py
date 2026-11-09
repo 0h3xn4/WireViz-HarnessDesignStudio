@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-PKG-02, D-149, D-168: the Windows package. The scripts run on that system (the workflow
 `harness-packages.yml` builds and tests the real files); here the parts that do not need it."""
 

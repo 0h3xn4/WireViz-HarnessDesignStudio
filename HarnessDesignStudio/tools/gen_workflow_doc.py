@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Write the two tables of docs/user-manual/follow-the-workflow.md from core/workflow.py, so the page
 cannot disagree with the code. A test fails when the page holds other text between the markers.
 Usage: python -m tools.gen_workflow_doc"""

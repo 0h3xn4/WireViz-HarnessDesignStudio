@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Generate docs/RULES.md (every design rule: what, why, how to fix, severity, whether it can be
 waived) from the rule registry. A test fails if the committed file is stale.
 Usage: python -m tools.gen_rule_docs"""

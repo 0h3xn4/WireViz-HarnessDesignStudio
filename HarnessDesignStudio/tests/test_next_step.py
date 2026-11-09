@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,arg-type,operator,var-annotated"
 """1.7.0 S1 (D-171): the one next step of the Next step page, over every combination of facts.
 No Qt, no display."""

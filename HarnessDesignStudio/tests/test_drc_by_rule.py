@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """SC-1: a result for every design rule (pass / fail / not checked / pending), built from the same
 findings the check already produces. No rule logic is involved."""
 

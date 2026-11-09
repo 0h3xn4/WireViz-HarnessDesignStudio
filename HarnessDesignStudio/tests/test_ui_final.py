@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """UI overhaul, final milestone: what the brief's "Verification" and "Accessibility" sections ask for,
 over every area of the window in both themes: opens without Qt warnings about style sheets, every

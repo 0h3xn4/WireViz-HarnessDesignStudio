@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A layout audit for any widget: does everything that is shown have room, and nothing on top of
 anything else?
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The words that are the two ends of one line: a transmit word meets a receive word (1.9.0).
 
 A signal name is split into words (`UART_TX` is UART, TX; `SPW_DOUT+` is SPW, DOUT, +; `TX_P` is TX,

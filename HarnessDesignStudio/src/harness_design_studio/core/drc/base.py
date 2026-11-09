@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """DRC building blocks: a rule states what is wrong, why it matters and how to fix it; its check
 yields `Hit`s (one per offending object). Findings reuse `checks.Finding` so the Problems panel,
 waivers and to-do list treat logical and design rule findings the same way."""

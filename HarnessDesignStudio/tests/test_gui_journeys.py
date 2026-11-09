@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-GUI-01: the Qt editor supports the ten journeys of docs/UX.md (offscreen, driven like a user)."""
 
 import pytest
