@@ -111,8 +111,13 @@ def test_every_entry_of_the_allow_list_has_a_reason_and_a_known_kind() -> None:
         assert family not in patterns
     # the one library it may load is OpenSSL's crypto library (hashlib's SHA-256), never TLS
     assert [e["pattern"] for e in entries if e["kind"] in ("library", "package_file")] == [
-        "*_socket.*", "*libcrypto*", "*libcrypto*",
+        "*_socket.*", "*libcrypto*", "*_socket.pyd", "*libcrypto*",
     ]  # fmt: skip
+    # Python's socket module may be loaded on Windows only (platform.node() for the lock file)
+    assert all(
+        e.get("platform") == "win32" for e in entries
+        if e["kind"] == "python_module" or e["pattern"] == "*_socket.pyd"
+    )  # fmt: skip
 
 
 def test_what_the_allow_list_does_not_name_is_a_finding() -> None:
@@ -325,6 +330,17 @@ def test_the_offline_audit_of_the_source_install_passes(tmp_path: Path) -> None:
     assert not traced["connections"] and not traced["listening"]
     assert set(traced["socket_families"]) <= {"AF_UNIX"}
     assert (out / "offline-audit.md").read_text(encoding="utf-8").count("Result: PASS") == 1
+
+
+def test_an_entry_for_one_operating_system_applies_there_only(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    entries = load_allow_list(ALLOW_LIST)
+    monkeypatch.setattr(sys, "platform", "linux")
+    assert not allowed(entries, "python_module", "socket", {})
+    monkeypatch.setattr(sys, "platform", "win32")
+    assert allowed(entries, "python_module", "socket", {})
+    assert not allowed(entries, "python_module", "ssl", {})
 
 
 def test_the_windows_audit_watches_connections_and_programs_started() -> None:

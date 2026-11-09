@@ -625,12 +625,15 @@ def allowed(
     fields: list[str] | None = None,
 ) -> str:  # fmt: skip
     """The reason of the first entry of `kind` whose pattern matches `value` ("" when none does).
-    An entry with `fields` (canaries) accepts only a hit of those fields."""
+    An entry with `fields` (canaries) accepts only a hit of those fields; one with `platform` applies
+    on that operating system only (`sys.platform`)."""
     for e in entries:
         if e["kind"] != kind:
             continue
         if fields is not None and "fields" in e and not set(fields) <= set(e["fields"]):
             continue
+        if "platform" in e and e["platform"] != sys.platform:
+            continue  # an entry for one operating system only
         pattern = e["pattern"]
         for key, real in places.items():
             pattern = pattern.replace("{" + key + "}", real)
