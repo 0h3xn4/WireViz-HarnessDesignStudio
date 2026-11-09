@@ -10,7 +10,15 @@ the pinout tables get `Contact` as their last column when any pin has a contact 
 each contact part once per pin in use of the harness (unit `ea`) and each accessory part by its
 `quantity` (unit `ea`); an accessory with a length counts metres instead,
 sum(length_mm x quantity) / 1000 (unit `m`), together with the wire length of the same part. A part
-used both ways has one line per unit (`ea` first, then `m`); the key of a line is part and unit."""
+used both ways has one line per unit (`ea` first, then `m`); the key of a line is part and unit.
+
+A loose cable end (role `loose`, M4 of the 2.0 programme, D-201) is named as what it is, and only
+where a harness has one, so every other table keeps its bytes: its part reads
+`TBD-CONNECTOR (loose end)`, what it mates with `open end`, its label `W009-P2 open end`; the BOM
+counts the ends on one line `(open end)` with the approval `to fill in` instead of a line for the
+placeholder part; a test that names a pin of it says `(open end)` and expects nothing yet (`test
+when the end is decided`); the mass never counts it (`generate/mass.py`). The independent verifier
+(`verify.py`) words all of it again on its own."""
 
 import math
 from collections import defaultdict
@@ -28,11 +36,19 @@ from harness_design_studio.core.deviations import (
 from harness_design_studio.core.generate.lengths import clear_length_cache, wire_length
 from harness_design_studio.core.generate.mass import harness_mass, pins_in_use
 from harness_design_studio.core.model import Connector, Harness, Link, Pin, Project, Wire
+from harness_design_studio.core.model.physical import LOOSE_ROLE
 
 from .stamp import Table
 
 PENDING = "pending"
 TBD = "TBD (placeholder)"
+TO_FILL = "to fill in"  # the words of a value a person still has to give (the build workbook's too)
+# A loose cable end (D-201 decision 2): what the tables say instead of a part and a mate.
+OPEN_END = "open end"
+LOOSE_PART_TAG = " (loose end)"  # after the placeholder part: `TBD-CONNECTOR (loose end)`
+OPEN_END_PART = "(open end)"  # the BOM line that counts the ends, like `(no part)` for wires
+OPEN_END_DESCRIPTION = "Connector not chosen yet (loose end)"
+OPEN_END_TEST = "test when the end is decided"  # the Expected cell of a test at an open end
 
 
 def num(v: float | None) -> str:
@@ -96,6 +112,21 @@ def uses_strip_lengths(project: Project) -> bool:
         for h in project.harnesses.values()
         for w in h.wires
     )
+
+
+def is_open_end(c: Connector) -> bool:
+    """True for a loose cable end: a connector of a harness that is not on a connector yet."""
+    return c.role == LOOSE_ROLE
+
+
+def part_text(c: Connector) -> str:
+    """The part of a connector as the tables write it: `TBD-CONNECTOR (loose end)` for a loose end."""
+    return c.part_id + LOOSE_PART_TAG if is_open_end(c) else c.part_id
+
+
+def mates_text(c: Connector) -> str:
+    """What a connector mates with as the tables write it: `open end` for a loose end."""
+    return OPEN_END if is_open_end(c) else (c.mates_with or "")
 
 
 def connector_label(project: Project, c: Connector) -> str:
@@ -191,7 +222,7 @@ def _pin_rows(
         wires = attached.get((c.id, p.id), [])
         sig, itf = (carried or {}).get((c.id, p.id), ("", ""))
         rows.append([
-            c.id, c.role, c.mates_with or "", c.part_id, p.id, p.signal or sig,
+            c.id, c.role, mates_text(c), part_text(c), p.id, p.signal or sig,
             p.interface_id or itf,
             ";".join(sorted(wires)), "no" if wires or p.interface_id or p.signal else "yes",
             *([p.function or ""] if fn else []), *([p.termination] if term else []),
@@ -314,7 +345,9 @@ def bom_contributions(project: Project, harnesses: list[Harness]) -> list[BomCon
         in_use = pins_in_use(h)
         contacts: dict[str, int] = defaultdict(int)
         for c in h.connectors:
-            found.append(BomContribution(c.part_id, "ea", 1, h.id, "connector", c.id))
+            # a loose end is counted as an end on the line `(open end)`, not as the placeholder part
+            pid = OPEN_END_PART if is_open_end(c) else c.part_id
+            found.append(BomContribution(pid, "ea", 1, h.id, "connector", c.id))
             for p in c.pins:
                 if p.contact_part and (c.id, p.id) in in_use:
                     contacts[p.contact_part] += 1
@@ -378,6 +411,12 @@ def bom(project: Project, harnesses: list[Harness]) -> Table:
     for pid, unit in sorted({*((p, "ea") for p in counts), *((p, "m") for p in metre_parts)}):
         part = project.parts.get(pid)
         is_m = unit == "m"
+        if pid == OPEN_END_PART and not is_m:  # the loose ends: no part to approve, one to choose
+            rows.append([
+                pid, "connector", "", "", OPEN_END_DESCRIPTION, TO_FILL, str(counts[pid]), unit,
+                "", ";".join(sorted(used[pid])),
+            ])  # fmt: skip
+            continue
         rows.append([
             pid, part.category if part else "unknown", (part.manufacturer or "") if part else "",
             (part.part_number or "") if part else "", (part.description or "") if part else "",
@@ -476,13 +515,20 @@ def tests(project: Project, h: Harness, marks: bool = True) -> Table:
     iso = _limit(project, "test_isolation_min_mohm", "Mohm min")
     volts = _limit(project, "test_isolation_voltage_v", "V")
     rows: Table = [["Test", "Type", "From", "To", "Expected", "Limit", "Test voltage", "Wire"]]
+    loose = {c.id for c in h.connectors if is_open_end(c)}  # a test there waits for the end
+
+    def end(cid: str, pin: str) -> str:
+        return f"{cid}.{pin}" + (f" ({OPEN_END})" if cid in loose else "")
+
     n = 0
     for w in sorted(h.wires, key=lambda x: x.id):
         n += 1
-        rows.append([f"T{n:03d}", "continuity", f"{w.from_connector}.{w.from_pin}", f"{w.to_connector}.{w.to_pin}", "continuous", cont, "", w.id])  # fmt: skip
+        expect = OPEN_END_TEST if {w.from_connector, w.to_connector} & loose else "continuous"
+        rows.append([f"T{n:03d}", "continuity", end(w.from_connector, w.from_pin), end(w.to_connector, w.to_pin), expect, cont, "", w.id])  # fmt: skip
     for w in sorted(h.wires, key=lambda x: x.id):
         n += 1
-        rows.append([f"T{n:03d}", "isolation", f"{w.from_connector}.{w.from_pin}", "all other wires and shields", "isolated", iso, volts, w.id])  # fmt: skip
+        expect = OPEN_END_TEST if w.from_connector in loose else "isolated"
+        rows.append([f"T{n:03d}", "isolation", end(w.from_connector, w.from_pin), "all other wires and shields", expect, iso, volts, w.id])  # fmt: skip
     for s in sorted(h.shields, key=lambda x: x.id):
         n += 1
         rows.append([f"T{n:03d}", "isolation", f"shield {s.id}", "all wires", "isolated", iso, volts, ";".join(sorted(s.wire_ids))])  # fmt: skip
@@ -531,9 +577,10 @@ def wire_label_texts(project: Project, w: Wire, h: Harness | None = None) -> tup
 
 def connector_label_text(project: Project, c: Connector, h: Harness | None = None) -> str:
     """The text of the label of a cable connector by the label format in force: its name and what
-    it mates."""
+    it mates (a loose end: `W009-P2 open end`, and `{mates}` of a template is `open end`)."""
     name = connector_label(project, c)
-    mates = f"{c.id} mates {c.mates_with or '-'}"
+    loose = is_open_end(c)
+    mates = f"{c.id} {OPEN_END}" if loose else f"{c.id} mates {c.mates_with or '-'}"
     fmt = label_format.format_of(project)
     if fmt == "compact":
         return mates
@@ -546,7 +593,8 @@ def connector_label_text(project: Project, c: Connector, h: Harness | None = Non
             tpl,
             {
                 "harness": owner.id if owner else "", "connector": c.id, "name": name,
-                "mates": c.mates_with or "-", "device": (box.unit_id or "") if box else "",
+                "mates": OPEN_END if loose else (c.mates_with or "-"),
+                "device": (box.unit_id or "") if box else "",
             },
         )  # fmt: skip
     return f"{name} ({mates})" if name else mates

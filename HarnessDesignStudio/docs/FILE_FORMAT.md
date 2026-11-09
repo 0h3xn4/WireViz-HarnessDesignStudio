@@ -197,6 +197,8 @@ The wires of the harness name the loose end and its pins in `from_connector` / `
 
 **Its place on the diagram** is the mark `pos:<connector id>` in `diagram/marks.json`, `{"id": "pos:W009-P2", "dx": 120.0, "dy": -40.0}`: the offset of the end from where the tool puts it, so that it follows its device. Like every mark it is outside the model hash, so dragging an end never makes an output stale; the mark is dropped with the connector.
 
+**In the written files** the end is named as an open end (part `TBD-CONNECTOR (loose end)`, mate `open end`, one BOM line `(open end)`; [Outputs](OUTPUTS.md#a-loose-cable-end)); `system/export.json` keeps the stored values.
+
 **Format 2.** This tool still writes format 1 and has no screen for a loose end yet; the plans exist in the core (`manual_harness`). A loose end is new content, so **format 2 will carry it**: the step `core/io/migrate.py` `_v1_to_v2` is written and tested with the migration safety net and changes nothing but the number (the origin is derived, a loose end is new), and the number moves in a later release. A version 1.16 tool that reads a project with a loose end sets the whole harness aside as unreadable (an unknown role); once the number is 2 an older tool opens the project read-only instead.
 
 ## Change control additions: review, release, baselines, change log (schema version stays 1)

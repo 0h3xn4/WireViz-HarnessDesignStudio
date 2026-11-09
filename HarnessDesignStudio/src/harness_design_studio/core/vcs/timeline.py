@@ -8,7 +8,7 @@ from typing import Any
 
 from harness_design_studio.core.model import Project
 
-from .diff import SCREEN_KIND_NAMES, Diff, ObjectChange, _show, diff_snapshots
+from .diff import SCREEN_KIND_NAMES, Diff, ObjectChange, _show, diff_snapshots, kind_name
 from .release import ReleaseError
 from .report import EVENTS, baselines_of, one_line, working_diff
 
@@ -124,7 +124,7 @@ class DiffRow:
 
 
 def _rows(c: ObjectChange) -> list[DiffRow]:
-    name = SCREEN_KIND_NAMES.get(c.kind, c.kind)
+    name = kind_name(c, SCREEN_KIND_NAMES)  # a loose end reads "Loose end" (D-201)
     if not c.fields:
         return [DiffRow(c.change, c.kind, name, c.id, "", "", "", "")]
     return [

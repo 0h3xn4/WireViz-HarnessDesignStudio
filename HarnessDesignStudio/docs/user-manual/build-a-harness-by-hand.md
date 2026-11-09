@@ -97,7 +97,7 @@ A cable can end in a **loose end**: the other end of a cable drawn from a port, 
 - **Checks:** the design rule *Approved parts* says *N cable end(s) have no connector chosen yet (loose end)*; that is a choice to make, not a part to approve.
 - **Build workbook:** a harness with a loose end gets a ninth check, *Ends not decided*, and *Ready to build* is *no* until the end is decided, whatever else is complete.
 - **Release:** blocked with `loose_end_unresolved`, see [release a harness](release-a-harness.md#optional-a-cable-with-a-loose-end).
-- **Not done yet:** the pinout tables, the labels, the bill of materials, the drawing and the build sheet still list the end as an ordinary connector with the part `TBD-CONNECTOR`.
+- **Written files:** they name the end as an **open end**: the part reads `TBD-CONNECTOR (loose end)` and what it mates with `open end` (pinout table, drawing, build workbook), the label `W009-P2 open end`, the bill of materials has one line `(open end)` with the approval *to fill in* and the number of ends instead of a line for `TBD-CONNECTOR`, the mass never counts the end and lists it as missing, the tests at the end say `(open end)` and *test when the end is decided*, the drawing draws the end dashed, and the Connectors sheet of the build workbook says *open end, to fill in*. The whole list is in [Outputs](../OUTPUTS.md#a-loose-cable-end).
 
 ## What Generate does with it
 

@@ -50,7 +50,7 @@ TRACE = """\
 100  mkdir("p/outputs", 0777)               = 0
 100  renameat2(AT_FDCWD</work>, "p/.a.tmp", AT_FDCWD</work>, "p/a.json", 0) = 0
 100  socket(AF_UNIX, SOCK_STREAM|SOCK_CLOEXEC, 0) = 6<UNIX-STREAM:[1234]>
-100  connect(6<UNIX-STREAM:[1234]>, {sa_family=AF_UNIX, sun_path=@"/tmp/.X11-unix/X99"}, 21) = 0
+100  connect(6<UNIX-STREAM:[1234]>, {sa_family=AF_UNIX, sun_path=@"/run/display/X99"}, 21) = 0
 100  write(6<UNIX-STREAM:[1234->1235]>, "title Bench CNRYABCDEF123456PRJ", 31) = 31
 100  socket(AF_INET, SOCK_DGRAM|SOCK_CLOEXEC, IPPROTO_IP <unfinished ...>
 101  clone3({flags=CLONE_VM, exit_signal=0, stack=0x7f, stack_size=0x7ff}, 88) = 102
@@ -85,7 +85,7 @@ def test_the_trace_reader_finds_sockets_connections_children_files_and_libraries
     facts = read_trace(trace, Path("/work"))
     assert facts.families == {"AF_UNIX": 1, "AF_INET": 1}
     targets = {(c["family"], c["target"]) for c in facts.connections}
-    assert targets == {("AF_UNIX", '@"/tmp/.X11-unix/X99"'), ("AF_INET", "192.0.2.53:53")}
+    assert targets == {("AF_UNIX", '@"/run/display/X99"'), ("AF_INET", "192.0.2.53:53")}
     programs = [(c["program"], c["argv"][1:], c["ok"]) for c in facts.children]
     assert programs == [
         ("/opt/app/harness-design-studio-gui", ["--audit-run", "p"], True),

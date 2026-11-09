@@ -1,0 +1,13 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+Part,Category,Manufacturer,Part number,Description,Approval,Quantity,Unit,Wires without length,Used in
+(no part),unknown,,,,missing from parts list,1.4,m,8,W009;W010;W011;W012
+(open end),connector,,,Connector not chosen yet (loose end),to fill in,5,ea,,W009;W011;W012;W013
+EX-MICROD-15-M,connector,,,"Micro-D 15-pin, male (example, baseline power and data)",pending (example data),7,ea,,W002;W004;W007
+EX-MICROD-21-M,connector,,,"Micro-D 21-pin, male (example, baseline power and data)",pending (example data),5,ea,,W002;W008
+EX-MICROD-31-M,connector,,,"Micro-D 31-pin, male (example, baseline power and data)",pending (example data),22,ea,,W002;W004;W006;W007;W008;W010
+EX-MICROD-9-M,connector,,,"Micro-D 9-pin, male (example, baseline power and data)",pending (example data),51,ea,,W001;W002;W003;W004;W005;W006;W009;W010;W012;W013
+EX-RJ45-M,connector,,,"Ethernet RJ45 8P8C, male plug (example, alternative for high data rates)",pending (example data),6,ea,,W005;W006;W007
+EX-SLEEVE,sleeving,,,Braided sleeving (example),pending (example data),0.08,m,,W011
+EX-SMA-M,connector,,,"SMA coax, male (example, baseline RF)",pending (example data),2,ea,,W005
+EX-WIRE-SINGLE,wire,,,Single-conductor wire (example),pending (example data),166.2,m,0,W001;W002;W003;W004;W005;W006;W013
+EX-WIRE-TWISTED-SHIELDED,wire,,,Twisted shielded pair (example),pending (example data),82.2,m,0,W002;W004;W005;W006;W007;W008

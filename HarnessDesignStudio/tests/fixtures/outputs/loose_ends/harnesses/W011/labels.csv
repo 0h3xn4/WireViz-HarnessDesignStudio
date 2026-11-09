@@ -1,0 +1,10 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+Label,Kind,Text,Quantity
+W011-P1,connector,W011-P1 open end,1
+W011-P2,connector,W011-P2 open end,1
+W011-001-A,wire,W011-001 SIG+ to W011-P2.1,1
+W011-001-B,wire,W011-001 SIG+ to W011-P1.1,1
+W011-002-A,wire,W011-002 SIG- to W011-P2.2,1
+W011-002-B,wire,W011-002 SIG- to W011-P1.2,1
+W011-003-A,wire,W011-003 to W011-P2.3,1
+W011-003-B,wire,W011-003 to W011-P1.3,1
