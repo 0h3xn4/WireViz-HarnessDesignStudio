@@ -26,6 +26,7 @@ from harness_design_studio.core.model import (
     Project,
     Wire,
 )
+from harness_design_studio.core.model.physical import LOOSE_ROLE
 
 SHOWN = 8  # how many names a line gives before "and N more": no result depends on it
 
@@ -587,7 +588,40 @@ def _ranking_step(
     )
 
 
+OPEN_END_CHOICE = "Open end: no device connector and no part chosen yet"
+
+
+def _loose_choice(h: Harness, c: Connector) -> Derivation:
+    """A loose cable end (D-201): nothing was chosen, so the explanation says what is open and how
+    to close it, instead of a mate of None."""
+    return Derivation(
+        "connector-choice",
+        f"Connector {c.id} in {h.id}",
+        "Choice of connector",
+        None,
+        "",
+        "a loose end has no connector yet: plugging it into a device connector, or giving it a "
+        "connector part, decides it",
+        (
+            Input("Role", c.role, "", f"connector {c.id}"),
+            Input(
+                "Part", f"{c.part_id} (loose end)", "", f"connector {c.id}: the placeholder part"
+            ),
+            Input("Mates with", "open end", "", f"connector {c.id}"),
+        ),
+        (),
+        None,
+        ("A-CONNECTOR-CHOICE",),
+        "The build workbook counts it under 'Ends not decided' and the release is blocked until it "
+        "is decided (loose_end_unresolved).",
+        (f"the device connector or the connector part of {c.id}",),
+        text=OPEN_END_CHOICE,
+    )
+
+
 def _cable_choice(project: Project, h: Harness, c: Connector) -> Derivation:
+    if c.role == LOOSE_ROLE:
+        return _loose_choice(h, c)
     box = project.connectors.get(c.mates_with or "")
     box_part = project.parts.get(box.part_id) if box is not None else None
     declared = box_part.mates_with if box_part is not None else None

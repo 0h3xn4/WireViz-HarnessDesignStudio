@@ -1,0 +1,17 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+# harness-design-studio 1.17.0. Provided as is, without warranty. Verify before use.
+Harness,Wires,Connectors,Wire length known (m),Wires without length,Mass of wires and cable connectors (g),Margin (g),Mass with margin (g),Complete,Missing data
+W001,18,18,60.1,0,456.4,45.64,502.04,yes,
+W002,26,22,86.7,0,465,46.5,511.5,yes,
+W003,2,2,1.4,0,29.6,2.96,32.56,yes,
+W004,22,20,73.9,0,468.6,46.86,515.46,yes,
+W005,7,6,23.9,0,140,14,154,yes,
+W006,16,14,57.2,0,361.2,36.12,397.32,yes,
+W007,8,4,23.6,0,95.2,9.52,104.72,yes,
+W008,4,2,2.8,0,29.6,2.96,32.56,yes,
+W009,4,2,0,4,12,1.2,13.2,no,mass of open end W009-P2 (no connector chosen yet); mass per metre of wire part (none)
+W010,2,2,0,2,24,2.4,26.4,no,mass per metre of wire part (none)
+W011,3,2,1.4,0,0,0,0,no,mass of open end W011-P1 (no connector chosen yet); mass of open end W011-P2 (no connector chosen yet); mass per metre of wire part (none)
+W012,2,2,0,2,12,1.2,13.2,no,mass of open end W012-P2 (no connector chosen yet); mass per metre of wire part (none)
+W013,2,2,1,0,16,1.6,17.6,no,mass of open end W013-P2 (no connector chosen yet)
+TOTAL,116,98,332,8,2109.6,210.96,2320.56,no,totals count only what is known

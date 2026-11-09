@@ -1,0 +1,43 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+# harness-design-studio 1.17.0. Provided as is, without warranty. Verify before use.
+Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare
+W012-P1,cable,PCDU1-J09,EX-MICROD-9-M,1,PWR,,W012-001,no
+W012-P1,cable,PCDU1-J09,EX-MICROD-9-M,2,RTN,,W012-002,no
+W012-P1,cable,PCDU1-J09,EX-MICROD-9-M,3,,,,yes
+W012-P1,cable,PCDU1-J09,EX-MICROD-9-M,4,,,,yes
+W012-P1,cable,PCDU1-J09,EX-MICROD-9-M,5,,,,yes
+W012-P1,cable,PCDU1-J09,EX-MICROD-9-M,6,,,,yes
+W012-P1,cable,PCDU1-J09,EX-MICROD-9-M,7,,,,yes
+W012-P1,cable,PCDU1-J09,EX-MICROD-9-M,8,,,,yes
+W012-P1,cable,PCDU1-J09,EX-MICROD-9-M,9,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),1,PWR,,W012-001,no
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),2,RTN,,W012-002,no
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),3,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),4,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),5,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),6,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),7,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),8,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),9,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),10,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),11,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),12,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),13,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),14,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),15,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),16,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),17,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),18,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),19,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),20,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),21,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),22,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),23,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),24,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),25,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),26,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),27,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),28,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),29,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),30,,,,yes
+W012-P2,loose,open end,TBD-CONNECTOR (loose end),31,,,,yes

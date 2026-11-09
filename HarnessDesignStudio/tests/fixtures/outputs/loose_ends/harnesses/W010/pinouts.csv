@@ -1,0 +1,43 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+# harness-design-studio 1.17.0. Provided as is, without warranty. Verify before use.
+Connector,Role,Mates with,Part,Pin,Signal,Interface,Wires,Spare
+W010-P1,cable,GPSU1-J02,EX-MICROD-9-M,1,1PPS+,,W010-001,no
+W010-P1,cable,GPSU1-J02,EX-MICROD-9-M,2,1PPS-,,W010-002,no
+W010-P1,cable,GPSU1-J02,EX-MICROD-9-M,3,,,,yes
+W010-P1,cable,GPSU1-J02,EX-MICROD-9-M,4,,,,yes
+W010-P1,cable,GPSU1-J02,EX-MICROD-9-M,5,,,,yes
+W010-P1,cable,GPSU1-J02,EX-MICROD-9-M,6,,,,yes
+W010-P1,cable,GPSU1-J02,EX-MICROD-9-M,7,,,,yes
+W010-P1,cable,GPSU1-J02,EX-MICROD-9-M,8,,,,yes
+W010-P1,cable,GPSU1-J02,EX-MICROD-9-M,9,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,1,1PPS+,,W010-001,no
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,2,1PPS-,,W010-002,no
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,3,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,4,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,5,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,6,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,7,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,8,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,9,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,10,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,11,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,12,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,13,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,14,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,15,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,16,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,17,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,18,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,19,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,20,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,21,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,22,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,23,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,24,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,25,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,26,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,27,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,28,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,29,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,30,,,,yes
+W010-P2,cable,RIU1-J11,EX-MICROD-31-M,31,,,,yes

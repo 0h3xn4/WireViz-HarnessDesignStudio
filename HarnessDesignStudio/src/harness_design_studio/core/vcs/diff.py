@@ -6,6 +6,11 @@ whole project) and lists added, removed and changed objects exactly, with field-
 Objects are flattened to (kind, id) -> fields. Nested collections become objects of their own
 (a harness's wires, cable connectors and their pins, shields, segments ...), so a single changed
 pin shows up as that pin, not as "the connector changed".
+
+A cable connector that is a loose end (role `loose`, D-201) keeps its kind `cable_connector` (so a
+plug or an unplug is one changed object, not a removal and an addition), but the readable reports
+name it *Loose end* (`kind_name`); which word is taken from the object after the change (before
+it, for a removed one).
 """
 
 from dataclasses import dataclass, field
@@ -35,6 +40,7 @@ class ObjectChange:
     id: str
     change: str  # "added" | "removed" | "changed"
     fields: tuple[FieldChange, ...] = ()
+    loose: bool = False  # a cable connector that is (after the change) a loose end
 
 
 @dataclass
@@ -147,14 +153,18 @@ def flatten_project(p: Project) -> Flat:
     return flat
 
 
+def _loose(kind: str, data: dict[str, Any]) -> bool:
+    return kind == "cable_connector" and data.get("role") == "loose"
+
+
 def diff_flat(before: Flat, after: Flat) -> Diff:
     out = Diff()
     for key in sorted(set(before) | set(after)):
         kind, id_ = key
         if key not in before:
-            out.changes.append(ObjectChange(kind, id_, "added"))
+            out.changes.append(ObjectChange(kind, id_, "added", loose=_loose(kind, after[key])))
         elif key not in after:
-            out.changes.append(ObjectChange(kind, id_, "removed"))
+            out.changes.append(ObjectChange(kind, id_, "removed", loose=_loose(kind, before[key])))
         else:
             a, b = before[key], after[key]
             names = sorted(set(a) | set(b))
@@ -164,7 +174,7 @@ def diff_flat(before: Flat, after: Flat) -> Diff:
                 if _norm(a.get(n)) != _norm(b.get(n))
             )
             if changed:
-                out.changes.append(ObjectChange(kind, id_, "changed", changed))
+                out.changes.append(ObjectChange(kind, id_, "changed", changed, _loose(kind, b)))
     return out
 
 
@@ -197,6 +207,12 @@ KIND_NAMES = {
 # What the screen calls the kinds: a "unit" of the files is a "device" (the reports written to disk
 # keep `KIND_NAMES`, so a wording change never changes a generated file).
 SCREEN_KIND_NAMES = {**KIND_NAMES, "unit": "Device"}
+LOOSE_END_NAME = "Loose end"  # what the reports call a cable connector that is a loose end
+
+
+def kind_name(c: ObjectChange, names: dict[str, str] = KIND_NAMES) -> str:
+    """The kind of a changed object in words: *Loose end* for a loose cable end, else `names`."""
+    return LOOSE_END_NAME if c.loose else names.get(c.kind, c.kind)
 
 
 def _show(v: Any) -> str:
@@ -221,7 +237,7 @@ def render_markdown(title: str, diff: Diff, *, before: str = "before", after: st
             continue
         lines += ["", f"## {heading} ({len(group)})", ""]
         for c in group:
-            lines.append(f"- {KIND_NAMES.get(c.kind, c.kind)} `{c.id}`")
+            lines.append(f"- {kind_name(c)} `{c.id}`")
             for f in c.fields:
                 lines.append(f"  - {f.name}: {_show(f.before)} -> {_show(f.after)}")
     return "\n".join([*lines, ""])

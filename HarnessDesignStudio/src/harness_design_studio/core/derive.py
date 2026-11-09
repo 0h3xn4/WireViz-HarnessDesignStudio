@@ -30,7 +30,7 @@ from harness_design_studio.core.edit import EditError
 from harness_design_studio.core.generate import bundle
 from harness_design_studio.core.generate.bundle import bundle_size
 from harness_design_studio.core.generate.lengths import generated_length, path_trail, wire_length
-from harness_design_studio.core.generate.mass import harness_mass, wire_mass_g
+from harness_design_studio.core.generate.mass import harness_mass, open_end_missing, wire_mass_g
 from harness_design_studio.core.generate.sizing import (
     Sizing,
     ampacity_table,
@@ -42,7 +42,12 @@ from harness_design_studio.core.generate.sizing import (
     wire_current_limit,
 )
 from harness_design_studio.core.model import Harness, Project, Wire
-from harness_design_studio.core.outputs.tables import BomContribution, bom_contributions
+from harness_design_studio.core.model.physical import LOOSE_ROLE, TBD_PART_ID
+from harness_design_studio.core.outputs.tables import (
+    OPEN_END_PART,
+    BomContribution,
+    bom_contributions,
+)
 from harness_design_studio.core.units import (
     AWG_MAX,
     AWG_MIN,
@@ -659,6 +664,9 @@ def harness_mass_derivation(project: Project, h: Harness) -> Derivation:
     steps: list[Step] = []
     conn_sum = 0.0
     for c in h.connectors:
+        if c.role == LOOSE_ROLE:  # an open end: no connector chosen, no mass counted (D-201)
+            inputs.append(Input(f"Connector {c.id}", None, "g", open_end_missing(c)))
+            continue
         part = project.parts.get(c.part_id)
         inputs.append(
             Input(
@@ -793,7 +801,10 @@ def part_bom_derivation(project: Project, part_id: str, unit: str) -> Derivation
     if "contact spare" in kinds:
         equation += " + spare contacts (the fraction model.bom_contact_spare_fraction of the contacts, rounded up for each harness)"
     missing: list[str] = []
-    if part is None:
+    if part_id == OPEN_END_PART:  # the loose ends (D-201): a part to choose, not one to look up
+        ends = ", ".join(c.source for c in mine[:6]) + (", ..." if len(mine) > 6 else "")
+        missing.append(f"no connector part is chosen yet for the open end(s) {ends}")
+    elif part is None:
         missing.append(
             f"part {part_id} is not in the parts list: its category, mass and approval are unknown"
         )
@@ -938,6 +949,8 @@ def contact_current_derivation(
 def explain_part(project: Project, part_id: str) -> list[Derivation]:
     """The lines of the bill of materials for a part: one for each unit it is counted in."""
     harnesses = [project.harnesses[i] for i in sorted(project.harnesses)]
+    if part_id == TBD_PART_ID:  # the placeholder part of a loose end: its BOM line is the ends
+        part_id = OPEN_END_PART
     units = sorted({c.unit for c in bom_contributions(project, harnesses) if c.part_id == part_id})
     if not units:
         raise EditError(

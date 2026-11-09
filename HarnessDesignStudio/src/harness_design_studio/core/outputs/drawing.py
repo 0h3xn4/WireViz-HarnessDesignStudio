@@ -12,6 +12,11 @@ codes are the IEC 60757 designators; they are only used to draw, never to decide
 
 Pagination: when the connectors do not fit one sheet the wires flow onto the next; every sheet
 repeats the connectors it needs and marks a continued cable block.
+
+A loose cable end (role `loose`, D-201) is drawn as an open end: its table has a dashed outline,
+its part line reads `TBD-CONNECTOR (loose end), 4-pin` (no gender: none is chosen) and its mate
+line `open end`. Those two texts carry a `data-ref` (`part/` and `end/` with the connector ID) so
+the independent check finds them; a connector that is not loose is drawn exactly as before.
 """
 
 import textwrap
@@ -25,7 +30,7 @@ from harness_design_studio.core.wirecolours import resolve
 
 from .canvas import CHAR_EM, SHEETS, Curve, Line, Rect, Sheet, Text, fit, fit_size
 from .stamp import Stamp
-from .tables import PENDING, num
+from .tables import OPEN_END, PENDING, is_open_end, num, part_text
 
 MARGIN = 8.0
 TB_H = 42.0  # title block height
@@ -480,10 +485,16 @@ def _draw_page(
         x = left_x if col == 0 else right_x
         height = HEAD_H + len(rows[cid]) * ROW
         conn_start = len(sh.items)
-        sh.add(Rect(x, top[cid], CONN_W, height, width=0.35, fill="#ffffff"))
-        sh.add(Rect(x, top[cid], CONN_W, HEAD_H, width=0.35, fill="#e6e6e6"))
-        mate = f"mates {c.mates_with}" if c is not None and c.mates_with else ""
-        part = f"{c.part_id}, {_gender_words(c)}, {len(c.pins)}-pin" if c is not None else ""
+        loose = c is not None and is_open_end(c)
+        dash = (1.2, 0.8) if loose else None  # an open end: nothing plugs it in yet
+        sh.add(Rect(x, top[cid], CONN_W, height, width=0.35, fill="#ffffff", dash=dash))
+        sh.add(Rect(x, top[cid], CONN_W, HEAD_H, width=0.35, fill="#e6e6e6", dash=dash))
+        if c is not None and loose:
+            part, mate = f"{part_text(c)}, {len(c.pins)}-pin", OPEN_END
+        else:
+            mate = f"mates {c.mates_with}" if c is not None and c.mates_with else ""
+            part = f"{c.part_id}, {_gender_words(c)}, {len(c.pins)}-pin" if c is not None else ""
+        refs = (f"part/{cid}", f"end/{cid}") if loose else ("", "")
         for k, (text, size, bold) in enumerate(
             ((cid, 2.8, True), (part, HEAD_SIZE, False), (mate, HEAD_SIZE, False))
         ):
@@ -498,6 +509,7 @@ def _draw_page(
                     bold=bold,
                     anchor="middle",
                     color=GREY if k else "#000000",
+                    ref=refs[k - 1] if k else "",
                 )
             )
         longest = max((len(p) for p in rows[cid]), default=0)

@@ -1,0 +1,6 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+# harness-design-studio 1.17.0. Provided as is, without warranty. Verify before use.
+Part,Category,Manufacturer,Part number,Description,Approval,Quantity,Unit,Wires without length,Used in
+(no part),unknown,,,,missing from parts list,0,m,2,W010
+EX-MICROD-31-M,connector,,,"Micro-D 31-pin, male (example, baseline power and data)",pending (example data),1,ea,,W010
+EX-MICROD-9-M,connector,,,"Micro-D 9-pin, male (example, baseline power and data)",pending (example data),1,ea,,W010

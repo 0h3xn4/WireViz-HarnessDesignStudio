@@ -16,7 +16,7 @@ from harness_design_studio.core.model import Harness, Project
 from .errors import OutputsError
 from .export_units import field_units
 from .stamp import Stamp, Table
-from .tables import data_num
+from .tables import data_num, part_text
 from .xlsx_env import ILLEGAL_CHARACTERS_RE, Workbook, WriteOnlyCell
 
 JSON_FORMAT = "harness-design-studio-export"
@@ -29,7 +29,8 @@ def _q(s: str) -> str:
 
 def wireviz_yaml(project: Project, h: Harness, stamp: Stamp) -> bytes:
     """Best-effort WireViz input: each wire is its own one-conductor cable. Not validated here
-    against the WireViz program (see docs/OUTPUTS.md)."""
+    against the WireViz program (see docs/OUTPUTS.md). A loose end's type reads
+    `TBD-CONNECTOR (loose end)` (D-201), as in the pinout table."""
     out = [
         f"# {stamp.line}",
         f"# {stamp.notice}",
@@ -42,7 +43,7 @@ def wireviz_yaml(project: Project, h: Harness, stamp: Stamp) -> bytes:
         out.append(f"    pincount: {len(c.pins)}")
         out.append(f"    pinlabels: [{', '.join(_q(p.id) for p in c.pins)}]")
         if c.part_id:
-            out.append(f"    type: {_q(c.part_id)}")
+            out.append(f"    type: {_q(part_text(c))}")
     out.append("cables:")
     wires = sorted(h.wires, key=lambda x: x.id)
     for w in wires:

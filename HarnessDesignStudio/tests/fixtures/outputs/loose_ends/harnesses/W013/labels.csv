@@ -1,0 +1,9 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+# harness-design-studio 1.17.0. Provided as is, without warranty. Verify before use.
+Label,Kind,Text,Quantity
+W013-P1,connector,W013-P1 mates GPSU1-J02,1
+W013-P2,connector,W013-P2 open end,1
+W013-001-A,wire,W013-001 1PPS+ to W013-P2.1,1
+W013-001-B,wire,W013-001 1PPS+ to W013-P1.1,1
+W013-002-A,wire,W013-002 1PPS- to W013-P2.2,1
+W013-002-B,wire,W013-002 1PPS- to W013-P1.2,1

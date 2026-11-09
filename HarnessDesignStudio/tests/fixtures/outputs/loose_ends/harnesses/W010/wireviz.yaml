@@ -1,0 +1,25 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+# harness-design-studio 1.17.0. Provided as is, without warranty. Verify before use.
+metadata:
+  title: "W010 Plugged cable B"
+connectors:
+  "W010-P1":
+    pincount: 9
+    pinlabels: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    type: "EX-MICROD-9-M"
+  "W010-P2":
+    pincount: 31
+    pinlabels: ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17", "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31"]
+    type: "EX-MICROD-31-M"
+cables:
+  "W010-001":
+    wirecount: 1
+  "W010-002":
+    wirecount: 1
+connections:
+  - - "W010-P1": ["1"]
+    - "W010-001": [1]
+    - "W010-P2": ["1"]
+  - - "W010-P1": ["2"]
+    - "W010-002": [1]
+    - "W010-P2": ["2"]

@@ -129,5 +129,38 @@ def build_loose(dest: Path, *, plug_b: bool = True) -> Path:
     return dest
 
 
+def generated_loose(dest: Path) -> Path:
+    """`build_loose`, then Generate run and the project saved: the state the written outputs and the
+    golden set `tests/fixtures/outputs/loose_ends*` are made from (M4b)."""
+    from harness_design_studio.core.generate.engine import generate_project
+
+    build_loose(dest)
+    p = load_project(dest).project
+    generate_project(p)
+    save_project(p, dest)
+    return dest
+
+
+# The harnesses of the project that a person drew (W009 to W013, A to E above): the golden set keeps
+# their text outputs to read, beside the digest of every file.
+LOOSE_HARNESSES = ("W009", "W010", "W011", "W012", "W013")
+
+
+def golden_text_files(files: dict[str, bytes]) -> dict[str, bytes]:
+    """The written files of the golden set that are kept as text to review: the CSV, SVG and YAML
+    files of the drawn harnesses and the system BOM and mass table."""
+    keep = {"system/bom.csv", "system/mass_length.csv"}
+    return {
+        rel: data
+        for rel, data in sorted(files.items())
+        if rel in keep
+        or (
+            rel.split("/")[1:2]
+            and rel.split("/")[1] in LOOSE_HARNESSES
+            and rel.endswith((".csv", ".svg", ".yaml"))
+        )
+    }
+
+
 if __name__ == "__main__":  # pragma: no cover
     build_loose(Path(sys.argv[1]))

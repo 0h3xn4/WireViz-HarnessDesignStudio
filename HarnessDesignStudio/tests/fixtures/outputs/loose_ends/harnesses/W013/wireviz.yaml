@@ -1,0 +1,31 @@
+# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+# harness-design-studio 1.17.0. Provided as is, without warranty. Verify before use.
+metadata:
+  title: "W013 Complete cable E"
+connectors:
+  "W013-P1":
+    pincount: 9
+    pinlabels: ["1", "2", "3", "4", "5", "6", "7", "8", "9"]
+    type: "EX-MICROD-9-M"
+  "W013-P2":
+    pincount: 2
+    pinlabels: ["1", "2"]
+    type: "TBD-CONNECTOR (loose end)"
+cables:
+  "W013-001":
+    wirecount: 1
+    gauge: "24 AWG"
+    colors: ["red"]
+    length: 0.5
+  "W013-002":
+    wirecount: 1
+    gauge: "24 AWG"
+    colors: ["red"]
+    length: 0.5
+connections:
+  - - "W013-P1": ["1"]
+    - "W013-001": [1]
+    - "W013-P2": ["1"]
+  - - "W013-P1": ["2"]
+    - "W013-002": [1]
+    - "W013-P2": ["2"]

@@ -488,7 +488,12 @@ def connector_label_derivation(project: Project, h: Harness, c: Connector) -> De
             "",
             f"connector {c.mates_with or '-'}: Label",
         ),
-        Input("Mates", c.mates_with or "-", "", f"connector {c.id}"),
+        Input(
+            "Mates",
+            tables.OPEN_END if tables.is_open_end(c) else (c.mates_with or "-"),
+            "",
+            f"connector {c.id}",
+        ),
     ]
     if (
         fmt != label_format.DEFAULT_FORMAT
@@ -498,7 +503,9 @@ def connector_label_derivation(project: Project, h: Harness, c: Connector) -> De
         text_step("Name", from_where, name or "(none)", ""),
         text_step(
             "Label text",
-            "name (ID mates DEVICE-CONNECTOR), or just 'ID mates DEVICE-CONNECTOR'"
+            "a loose end: name (ID open end), or just 'ID open end'"
+            if fmt == label_format.DEFAULT_FORMAT and tables.is_open_end(c)
+            else "name (ID mates DEVICE-CONNECTOR), or just 'ID mates DEVICE-CONNECTOR'"
             if fmt == label_format.DEFAULT_FORMAT
             else how[0],
             text,
