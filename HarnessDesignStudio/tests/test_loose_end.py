@@ -339,7 +339,8 @@ def test_integrity_says_nothing_of_a_valid_loose_end_and_errors_on_a_malformed_o
 
 def test_a_connection_cannot_say_it_made_a_harness_that_generate_makes():
     """The origin of a harness is worked out from `generated` and the connection that names it, so
-    a harness that is both is the one combination with two answers: an error."""
+    a harness that is both is the one combination with two answers: a warning (not an error, so that
+    a project that already has such a link is not blocked; generated wins)."""
     from harness_design_studio.core.links import plan_add_link, plan_create_harness
 
     p = labelled()
@@ -349,10 +350,11 @@ def test_a_connection_cannot_say_it_made_a_harness_that_generate_makes():
     apply_ops(p, ops)
     assert errors(p) == []
     apply_ops(p, [Put("harnesses", evolve(p.harnesses[hid], generated=True))])
+    assert errors(p) == []  # (a warning: such a link is not blocked)
     found = [i for i in check_integrity(p) if i.code == "origin_mismatch"]
-    assert [i.severity for i in found] == ["error"]
+    assert [i.severity for i in found] == ["warning"]
     assert "Generate makes" in found[0].message and link_id in found[0].message
-    assert harness_origin(p, hid) == "interfaces"  # generated wins, and the error says so
+    assert harness_origin(p, hid) == "interfaces"  # generated wins, and the warning says so
 
 
 def test_the_incremental_integrity_tracker_agrees_on_loose_end_errors():

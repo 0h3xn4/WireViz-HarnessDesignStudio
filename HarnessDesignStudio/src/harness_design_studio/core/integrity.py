@@ -316,7 +316,7 @@ def _check_links(project: Project) -> list[Issue]:
         elif link.harness_id:
             h = project.harnesses[link.harness_id]
             if h.generated:  # the origin of a harness is worked out from these two facts (D-201)
-                out.append(_err("origin_mismatch", f"Link '{link.id}' says it made harness '{h.id}', but Generate makes {h.id} from interfaces. A harness comes from one place only (interfaces, a connection or a person's drawing). Clear the harness of the link.", link.id))  # fmt: skip
+                out.append(_warn("origin_mismatch", f"Link '{link.id}' says it made harness '{h.id}', but Generate makes {h.id} from interfaces. A harness comes from one place only (interfaces, a connection or a person's drawing). Clear the harness of the link.", link.id))  # fmt: skip
             if link.harness_id in claimed:
                 out.append(_warn("link_harness_shared", f"Links '{claimed[link.harness_id]}' and '{link.id}' both say they made harness '{link.harness_id}'. A harness is made from one link; delete one of the links.", link.id))  # fmt: skip
             claimed.setdefault(link.harness_id, link.id)
