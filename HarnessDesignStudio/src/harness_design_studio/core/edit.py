@@ -30,6 +30,7 @@ from .model import (
 )
 from .model.base import Name
 from .model.config import ConfigFile
+from .model.physical import TBD_PART_ID
 
 LANE_WIDTH = 470.0
 LANE_X0 = 10.0
@@ -941,7 +942,7 @@ def ops_set_endpoint_connector(
 def ops_set_connector_part(project: Project, connector_id: str, part_id: str) -> list[Op]:
     c = _known(project.connectors, connector_id, "Connector")
     part = project.parts.get(part_id)
-    if part is None or part.category != "connector":
+    if part is None or part.category != "connector" or part_id == TBD_PART_ID:
         raise EditError(f"'{part_id}' is not a connector part in the library.")
     if part.pin_count is not None and len(c.pins) > part.pin_count:
         raise EditError(

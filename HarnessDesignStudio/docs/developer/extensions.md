@@ -112,7 +112,7 @@ A rule or a table that applies to an object can read the fields of that object a
 | `wire.locked` |  | flag | True when a person set the gauge, colour, part and length and generation keeps them. |
 | `connector.id` |  | text | The connector's ID. |
 | `connector.name` |  | text | The connector's name. |
-| `connector.role` |  | text | box, cable, inline, feedthrough or test. |
+| `connector.role` |  | text | box, cable, inline, feedthrough, test or loose (a cable end with no connector chosen yet). |
 | `connector.part` |  | text | The library part. |
 | `connector.gender` |  | text | male, female or unspecified. |
 | `connector.unit` |  | text | The device a box connector belongs to. |

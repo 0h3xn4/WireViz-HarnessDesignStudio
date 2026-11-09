@@ -169,7 +169,7 @@ def _build() -> list[FieldDef]:
         f("wire", "locked", "", "flag", "True when a person set the gauge, colour, part and length and generation keeps them.", lambda c: c.wire.locked if c.wire else None),
         f("connector", "id", "", "text", "The connector's ID.", lambda c: c.connector.id if c.connector else None),
         f("connector", "name", "", "text", "The connector's name.", lambda c: c.connector.name if c.connector else None),
-        f("connector", "role", "", "text", "box, cable, inline, feedthrough or test.", lambda c: c.connector.role if c.connector else None),
+        f("connector", "role", "", "text", "box, cable, inline, feedthrough, test or loose (a cable end with no connector chosen yet).", lambda c: c.connector.role if c.connector else None),
         f("connector", "part", "", "text", "The library part.", lambda c: c.connector.part_id if c.connector else None),
         f("connector", "gender", "", "text", "male, female or unspecified.", lambda c: c.connector.gender if c.connector else None),
         f("connector", "unit", "", "text", "The device a box connector belongs to.", lambda c: _opt(c.connector.unit_id) if c.connector else None),

@@ -43,7 +43,10 @@ CHECK_MEANING = {
     "Pins in use without a termination": "a pin with a wire on it is open when its termination is still 'unspecified' (crimp or solder not said)",
     "Wires without strip lengths": "a wire is open when the strip length at either end is empty",
     "Pins in use without a contact part": "a pin with a wire on it is open when it names no contact part",
-    "Parts that are not approved": "a part used by a connector or wire of the harness is open when it is not in the parts list or its approval is not 'approved'",
+    "Parts that are not approved": "a part used by a connector or wire of the harness is open when it is not in the parts list or its approval is not 'approved' (the stand-in part TBD-CONNECTOR of a loose end is not counted here, the check below is)",
+    buildsheet.LOOSE_CHECK[
+        0
+    ]: "a connector of the harness is open when it is a loose end: no device to plug into and no connector part chosen (this check is only listed while the harness has one, and it always blocks)",
 }
 
 
@@ -61,6 +64,9 @@ def readiness_derivation(project: Project, h: Harness) -> Derivation:
     """The answer to *Ready to build* of the build workbook, and the checks it comes from."""
     checks = buildsheet.readiness(project, h)
     blocking_names = settings.names(project, "model", "readiness_blocking")
+    has_loose = any(c.label == buildsheet.LOOSE_CHECK[0] for c in checks)
+    if has_loose:  # the ninth check blocks whatever the setting says
+        blocking_names = (*blocking_names, f"{buildsheet.LOOSE_CHECK[0]} (always)")
     open_blocking = [c for c in checks if c.status == buildsheet.TO_FIX]
     answer = "yes" if not open_blocking else "no"
     shown = buildsheet.ready_text(answer, project.placeholder_configs())
@@ -122,7 +128,7 @@ def readiness_derivation(project: Project, h: Harness) -> Derivation:
         check,
         ("A-READY-CHECKS", "A-READY-SCOPE"),
         "The same function writes the Start here sheet of "
-        f"{h.id}{buildsheet.FILE_SUFFIX}; the eight checks and what to do about each are on that sheet. "
+        f"{h.id}{buildsheet.FILE_SUFFIX}; the {'nine' if has_loose else 'eight'} checks and what to do about each are on that sheet. "
         "The answer is not a statement that the harness passes its design checks or may be built.",
         text=shown,
     )
@@ -130,6 +136,7 @@ def readiness_derivation(project: Project, h: Harness) -> Derivation:
 
 def readiness_check_derivation(project: Project, h: Harness, c: buildsheet.Check) -> Derivation:
     """One check of the Start here sheet: its predicate, its count, the open wires or pins."""
+    always = c.label == buildsheet.LOOSE_CHECK[0]  # the one check that does not depend on a setting
     inputs = [
         Input(
             "Open items",
@@ -141,14 +148,18 @@ def readiness_check_derivation(project: Project, h: Harness, c: buildsheet.Check
             "Blocks Ready to build",
             "yes" if c.blocking else "no",
             "",
-            f"config/model.json: readiness_blocking ({origin_text(project, 'model', 'readiness_blocking')})",
+            "this check always blocks, whatever the setting says"
+            if always
+            else f"config/model.json: readiness_blocking ({origin_text(project, 'model', 'readiness_blocking')})",
         ),
     ]
     steps = [
         Step("What is counted", CHECK_MEANING[c.label], c.open, "open"),
         text_step(
             "Effect on Ready to build",
-            "this check is in model.readiness_blocking: an open item makes the answer no"
+            "this check always blocks (a loose end is a cable end nobody has decided): an open item makes the answer no"
+            if always
+            else "this check is in model.readiness_blocking: an open item makes the answer no"
             if c.blocking
             else "this check is not in model.readiness_blocking: it is a note, an open item does not change the answer",
             "blocks" if c.blocking else "note",

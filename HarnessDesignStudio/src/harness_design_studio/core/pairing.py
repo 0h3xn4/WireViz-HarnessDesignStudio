@@ -73,6 +73,18 @@ def pair_by_number(
 ) -> Proposal:
     """Pin 1 to pin 1, pin 2 to pin 2 ... (the same pin ID on both connectors, case ignored)."""
     a, b = _two_devices(project, a_connector_id, b_connector_id)
+    return pair_by_number_between(project, a, b, skip_a=skip_a, skip_b=skip_b)
+
+
+def pair_by_number_between(
+    project: Project,
+    a: Connector,
+    b: Connector,
+    *,
+    skip_a: Collection[str] = (),
+    skip_b: Collection[str] = (),
+) -> Proposal:
+    """`pair_by_number` for two connectors already chosen (a loose end and a port)."""
     notes: list[str] = []
     fa = _free(project, a, skip_a, notes)
     fb = _free(project, b, skip_b, notes)

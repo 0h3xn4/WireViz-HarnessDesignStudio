@@ -26,6 +26,7 @@ from harness_design_studio.core.errors import HarnessError
 from harness_design_studio.core.generate.lengths import wire_length
 from harness_design_studio.core.generation_status import generation_status
 from harness_design_studio.core.model import Baseline, ChangeEntry, Harness, Project, evolve
+from harness_design_studio.core.model.physical import TBD_PART_ID
 from harness_design_studio.core.model.review import ChangeKind
 from harness_design_studio.core.verify import verify_project
 
@@ -269,6 +270,7 @@ def unapproved_parts(project: Project, h: Harness) -> list[str]:
     """Parts the harness uses that no one has approved: missing from the parts list, not
     approved, or example data nobody has verified."""
     used = {c.part_id for c in h.connectors} | {w.part_id for w in h.wires if w.part_id}
+    used.discard(TBD_PART_ID)  # a loose end is judged by `loose_end_blockers`, not as a part
     out = []
     for pid in sorted(used):
         part = project.parts.get(pid)
@@ -318,6 +320,53 @@ def part_note(project: Project, h: Harness, by: str, accept_unapproved: str | No
     return (
         f" [Released with parts that are not approved ({_listed(ids)}); "
         f"accepted by {by.strip()}: {accept_unapproved.strip()}]"
+    )
+
+
+def loose_ends_of(h: Harness) -> list[str]:
+    """IDs of the connectors of the harness that are still loose ends (D-200 (e), D-201)."""
+    return sorted(c.id for c in h.connectors if c.role == "loose")
+
+
+def loose_end_blockers(h: Harness, accept_loose_ends: str | None) -> list[Blocker]:
+    """A harness with a loose end that nobody has decided cannot be released, unless the person
+    releasing gives a written reason (kept in the change log). The reason is its own: the waiver for
+    parts that are not approved does not cover an end that is not there yet."""
+    ids = loose_ends_of(h)
+    if not ids:
+        return []
+    if accept_loose_ends is None:
+        return [
+            Blocker(
+                "loose_end_unresolved",
+                f"{len(ids)} end(s) of {h.id} are loose (no connector chosen, not plugged into a "
+                f"device): {_listed(ids)}. Plug them into a device, give them a connector part, or "
+                "release with a written reason (command line: --accept-loose-ends REASON); the "
+                "reason is kept in the change log.",
+                h.id,
+            )
+        ]
+    if len(accept_loose_ends.strip()) < MIN_COMMENT:
+        return [
+            Blocker(
+                "loose_end_reason_short",
+                f"The reason for releasing with a loose end needs at least {MIN_COMMENT} "
+                "characters.",
+                h.id,
+                "reason",
+            )
+        ]
+    return []
+
+
+def loose_end_note(h: Harness, by: str, accept_loose_ends: str | None) -> str:
+    """The sentence added to the comment of a release made with a loose end ('' otherwise)."""
+    ids = loose_ends_of(h)
+    if not ids or accept_loose_ends is None:
+        return ""
+    return (
+        f" [Released with a loose end ({_listed(ids)}); "
+        f"accepted by {by.strip()}: {accept_loose_ends.strip()}]"
     )
 
 
@@ -456,6 +505,7 @@ def release_blockers(
     checker: str | None = None,
     check_roles: bool = True,
     accept_asbuilt: str | None = None,
+    accept_loose_ends: str | None = None,
 ) -> list[Blocker]:
     out = _common(project, hid, by, comment, when)
     h = project.harnesses.get(hid)
@@ -465,16 +515,19 @@ def release_blockers(
         out.extend(role_blockers(project, h, by, checker or ""))
     out.extend(placeholder_blockers(project, accept_placeholders))
     out.extend(part_blockers(project, h, accept_unapproved_parts))
+    out.extend(loose_end_blockers(h, accept_loose_ends))
     out.extend(asbuilt_blockers(project, hid, accept_asbuilt))
     notes = (
         placeholder_note(project, by, accept_placeholders)
         + part_note(project, h, by, accept_unapproved_parts)
+        + loose_end_note(h, by, accept_loose_ends)
         + asbuilt_note(project, hid, by, accept_asbuilt)
         + release_note(project, h)
     )
     out.extend(text_blockers(accept_placeholders, "reason", "The reason for releasing on placeholders", limit=MAX_COMMENT, one_line=False))  # fmt: skip
     out.extend(text_blockers(accept_unapproved_parts, "reason", "The reason for releasing with parts that are not approved", limit=MAX_COMMENT, one_line=False))  # fmt: skip
     out.extend(text_blockers(accept_asbuilt, "reason", "The reason for releasing without complete as-built records", limit=MAX_COMMENT, one_line=False))  # fmt: skip
+    out.extend(text_blockers(accept_loose_ends, "reason", "The reason for releasing with a loose end", limit=MAX_COMMENT, one_line=False))  # fmt: skip
     out.extend(text_blockers(checker, "checker", "The checker's name"))
     if len(comment.strip() + notes) > MAX_COMMENT and not any(
         b.code == "comment_long" for b in out
@@ -637,11 +690,12 @@ def plan_release(
     accept_placeholders: str | None = None,
     accept_unapproved_parts: str | None = None,
     accept_asbuilt: str | None = None,
+    accept_loose_ends: str | None = None,
 ) -> ReleasePlan:
     blockers = release_blockers(
         project, hid, by=by, comment=comment, when=when, outputs_folder=outputs_folder,
         accept_placeholders=accept_placeholders, accept_unapproved_parts=accept_unapproved_parts,
-        checker=checker, accept_asbuilt=accept_asbuilt,
+        checker=checker, accept_asbuilt=accept_asbuilt, accept_loose_ends=accept_loose_ends,
     )  # fmt: skip
     plan = ReleasePlan(blockers=blockers, label=f"Release {hid}")
     if blockers:
@@ -662,6 +716,7 @@ def plan_release(
         comment.strip()
         + placeholder_note(project, by, accept_placeholders)
         + part_note(project, h, by, accept_unapproved_parts)
+        + loose_end_note(h, by, accept_loose_ends)
         + asbuilt_note(project, hid, by, accept_asbuilt)
         + release_note(project, h)
     )

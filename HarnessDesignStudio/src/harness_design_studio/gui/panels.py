@@ -26,7 +26,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import checks, describe, edit, why
+from harness_design_studio.core import checks, describe, devices, edit, why
 from harness_design_studio.core.drc import by_rule
 from harness_design_studio.core.library_import import describe_library
 from harness_design_studio.core.model import InterfaceInstance, Part
@@ -501,7 +501,7 @@ class PropertiesPanel(QScrollArea):
             for e in i.endpoints:
                 if e.auto and e.connector_id:
                     auto_by_conn[e.connector_id] = i.id
-        parts = sorted(pid for pid, part in p.parts.items() if part.category == "connector")
+        parts = sorted(part.id for part in devices.connector_parts_to_choose(p))
         for c in edit.unit_connectors(p, uid):
             card = QFrame()
             card.setProperty("card", True)

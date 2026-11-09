@@ -29,12 +29,12 @@ from typing import get_args
 
 from .commands import Op, Put
 from .describe import part_gender
-from .devices import check_contact_part, check_pin
+from .devices import check_contact_part, check_pin, connector_part
 from .edit import EditError
 from .manual_harness import _text, _writable
 from .model import Connector, Harness, Pin, Project, evolve
 from .model.base import MAX_PIN_COUNT
-from .model.physical import Gender, PinRole, Termination
+from .model.physical import LOOSE_ROLE, Gender, PinRole, Termination
 from .wires import released_text
 
 GENDERS: tuple[str, ...] = get_args(Gender)
@@ -111,9 +111,7 @@ def plan_edit_connector(
     clean: dict[str, object] = {}
     for key, value in changes.items():
         if key == "part_id":
-            part = project.parts.get(str(value))
-            if part is None or part.category != "connector":
-                raise EditError(f"'{value}' is not a connector part in the library.")
+            part = connector_part(project, str(value))
             clean[key] = part.id
         elif key == "gender":
             if value not in GENDERS:
@@ -135,6 +133,12 @@ def plan_edit_connector(
     clean = {k: v for k, v in clean.items() if getattr(c, k) != v}
     if not clean:
         return []
+    if c.role == LOOSE_ROLE and "part_id" in clean:
+        # choosing the part of a loose end decides it (D-201): it is a cable connector now, and
+        # has the gender the part says unless the person said another
+        clean["role"] = "cable"
+        if "gender" not in changes:
+            clean["gender"] = part_gender(project.parts.get(str(clean["part_id"])))
     if h.generated:
         clean["locked"] = True
     return _put(h, evolve(c, **clean))

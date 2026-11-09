@@ -25,7 +25,7 @@ from harness_design_studio.core.vcs.roles import CONFIG_KEY, default_name
 COMMANDS = ("review", "release", "revise", "diff", "compare", "log")
 OPTIONS = {
     "by": "--by", "comment": "--comment", "checker": "--checker", "date": "--date",
-    "reason": "--accept-placeholders / --accept-unapproved-parts / --accept-asbuilt",
+    "reason": "--accept-placeholders / --accept-unapproved-parts / --accept-loose-ends / --accept-asbuilt",
 }  # fmt: skip
 
 
@@ -89,6 +89,14 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "length is out of tolerance (only asked for in a project that sets release_requires_asbuilt "
         "in config/naming.json): the reason (at least 10 characters) is kept in the change log "
         "and the baseline",
+    )
+    r.add_argument(
+        "--accept-loose-ends",
+        metavar="REASON",
+        default=None,
+        help="release although the harness has a loose end (a cable end with no connector chosen "
+        "and not plugged into a device): the reason (at least 10 characters) is kept in the "
+        "change log and the baseline",
     )
     who(add("revise", "start a new revision of a released harness"), True)
     d = add("diff", "show what changed in a harness since a baseline (or between two baselines)")
@@ -222,6 +230,7 @@ def _run(args: argparse.Namespace, rep: Report) -> int:
             accept_placeholders=args.accept_placeholders,
             accept_unapproved_parts=args.accept_unapproved_parts,
             accept_asbuilt=args.accept_asbuilt,
+            accept_loose_ends=args.accept_loose_ends,
         )
     else:
         plan = plan_new_revision(project, args.harness, by=by, comment=args.comment, when=when)

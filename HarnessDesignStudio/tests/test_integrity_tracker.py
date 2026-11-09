@@ -53,9 +53,17 @@ def keys_of(issues) -> Counter:
     return Counter(i.key() for i in errors(issues))
 
 
+# Errors that 1.8.1 did not have (loose cable ends, M4a, D-201): the
+# reference cannot know them, so the current whole check supplies them and the tracker is compared
+# with that. Every other error is compared with the verbatim 1.8.1 check.
+SINCE_181 = frozenset({"loose_end_mated", "loose_end_in_generated_harness"})
+
+
 def whole_check_old(p: Project) -> Counter:
     old._CACHE.clear()
-    return keys_of(old.check_integrity(p))
+    integrity._CACHE.clear()
+    newer = Counter({k: n for k, n in keys_of(check_integrity(p)).items() if k[1] in SINCE_181})
+    return keys_of(old.check_integrity(p)) + newer
 
 
 def whole_check_new(p: Project) -> Counter:

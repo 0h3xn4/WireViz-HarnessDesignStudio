@@ -38,8 +38,9 @@ IMPORT_RECORDS_FILE = "imports/records.json"  # optional; not part of the model 
 ASBUILT_FILE = "asbuilt/records.json"  # optional (S9); not part of the model hash
 # optional; what was moved in the diagram; not in the hash. The file keeps schema version 1 and has
 # no version of its own: a label on a line (`interface:`, `link:`, `end:`) is `{"id", "t"}`, its
-# place along the line (`core.linepos`); a bend or a route (`bend:`, `route:`) is `{"id", "dx",
-# "dy"}`, an offset; a label of release 1.14 and 1.15 with `dx` and `dy` is still read, and the
+# place along the line (`core.linepos`); a bend or a route (`bend:`, `route:`) and the place of a
+# loose cable end (`pos:<connector id>`, M4) is `{"id", "dx", "dy"}`, an offset; a label of release
+# 1.14 and 1.15 with `dx` and `dy` is still read, and the
 # diagram writes it as `t` once it has worked out the nearest point of the line (`DiagramMark`).
 DIAGRAM_MARKS_FILE = "diagram/marks.json"
 
@@ -53,7 +54,8 @@ OUTSIDE_THE_HASH_FOLDERS = ("extensions/", "asbuilt/", "diagram/")
 
 def mark_is_orphan(project: Project, mark_id: str) -> bool:
     """Whether a diagram mark is of a thing that no longer exists: "link:L1", "end:L1:0" and
-    "bend:L1" belong to a connection, "interface:IF-1" and "route:IF-1" to an interface, whatever
+    "bend:L1" belong to a connection, "interface:IF-1" and "route:IF-1" to an interface,
+    "pos:W009-P2" to a connector of a harness (a loose end), whatever
     form the mark has (a place along the line, `t`, or an offset). A mark of a kind this tool does
     not know is never called an orphan (it is not ours to drop)."""
     kind, _, rest = mark_id.partition(":")
@@ -62,6 +64,8 @@ def mark_is_orphan(project: Project, mark_id: str) -> bool:
         return ident not in project.links
     if kind in ("interface", "route"):
         return ident not in project.interfaces
+    if kind == "pos":  # where a loose end hangs; the mark goes with its connector
+        return not any(c.id == ident for h in project.harnesses.values() for c in h.connectors)
     return False
 
 
