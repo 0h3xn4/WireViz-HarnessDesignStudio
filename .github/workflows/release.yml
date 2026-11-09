@@ -93,6 +93,8 @@ jobs:
       - name: Offline audit of the built .tar.gz (REQ-OFFLINE-02, D-203; the report is attached to the release)
         # Not a gate yet: a finding is shown in the report (Result: FAIL) and as a warning here, and
         # the release goes on. A tag made before the audit existed has no tools/offline_audit.py.
+        # continue-on-error: a failure of this step itself (apt, a timeout) never stops a release.
+        continue-on-error: true
         timeout-minutes: 20
         run: |
           if [ ! -f tools/offline_audit.py ]; then echo "this tag has no offline audit"; exit 0; fi
