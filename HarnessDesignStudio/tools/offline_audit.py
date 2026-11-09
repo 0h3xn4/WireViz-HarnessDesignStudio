@@ -49,6 +49,7 @@ import hashlib
 import json
 import os
 import platform
+import posixpath
 import re
 import secrets
 import shutil
@@ -574,8 +575,9 @@ def read_trace(path: Path, cwd: Path) -> TraceFacts:
                 continue
             if not target.startswith("/"):
                 dirfd = FD_PATH.match(args)
-                base = dirfd.group(2) if dirfd and dirfd.group(2) else str(cwd)
-                target = os.path.normpath(os.path.join(base, target))
+                base = dirfd.group(2) if dirfd and dirfd.group(2) else cwd.as_posix()
+                # a trace is always of Linux: its paths join the POSIX way, also when read on Windows
+                target = posixpath.normpath(posixpath.join(base, target))
             writing = name == "creat" or any(f in args for f in WRITE_FLAGS)
             if ok and writing:
                 facts.written.setdefault(target, "opened for writing")
@@ -589,11 +591,11 @@ def read_trace(path: Path, cwd: Path) -> TraceFacts:
                 continue
             dirfds = re.findall(r"(?:^|, )(-?\d+|AT_FDCWD)<([^>]*)>", args)
             strings = [_unescape(s) for s in _strings(args)]
-            base = dirfds[0][1] if dirfds else str(cwd)
+            base = dirfds[0][1] if dirfds else cwd.as_posix()
             for s in (
                 strings[-1:] if name.startswith(("rename", "link", "symlink")) else strings[:1]
             ):
-                target = s if s.startswith("/") else os.path.normpath(os.path.join(base, s))
+                target = s if s.startswith("/") else posixpath.normpath(posixpath.join(base, s))
                 facts.written.setdefault(target, name)
         if name in WRITE_LIKE:
             fd = FD_PATH.match(args)

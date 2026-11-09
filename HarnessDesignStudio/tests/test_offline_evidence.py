@@ -306,7 +306,10 @@ def test_the_editor_audit_run_opens_the_project_and_asks_for_the_local_guide_onl
     assert all(doc["steps"].values()), doc["steps"]
     assert [u for u in doc["urls_opened"] if not u.startswith("file://")] == []
     assert any(u.endswith("resources/guide/index.html") for u in doc["urls_opened"])
-    assert doc["python_network_modules"] == []
+    # On Windows platform.node() (the lock file's computer name) imports socket; it is allow-listed
+    # for win32 only (tools/offline_audit_allow.json). Elsewhere no network module is imported.
+    allowed = {"socket", "_socket"} if sys.platform == "win32" else set()
+    assert set(doc["python_network_modules"]) <= allowed, doc.get("socket_imported_by")
 
 
 @pytest.mark.slow
