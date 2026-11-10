@@ -5,7 +5,6 @@
 import errno
 import json
 import os
-import platform
 import sys
 from pathlib import Path
 
@@ -111,8 +110,13 @@ def test_long_path_noop_on_posix(tmp_path: Path) -> None:
         assert long_path(tmp_path) == tmp_path
 
 
-def _write_lock(path: Path, pid: int, host: str) -> None:
-    (path / ".harness.lock").write_text(f'{{"pid": {pid}, "host": "{host}", "since": 0}}')
+def _write_lock(path: Path, pid: int, install: str) -> None:
+    (path / ".harness.lock").write_text(f'{{"pid": {pid}, "install": "{install}", "since": 0}}')
+
+
+def _ours() -> str:
+    """The id of this installation (the lock file names no computer, D-220)."""
+    return fs.install_id()
 
 
 def test_lock_blocks_second_instance(tmp_path: Path) -> None:
@@ -130,10 +134,10 @@ def test_lock_held_by_other_host_blocks(tmp_path: Path) -> None:
 
 
 def test_stale_lock_is_taken_over(tmp_path: Path) -> None:
-    _write_lock(tmp_path, 999999999, platform.node())
+    _write_lock(tmp_path, 999999999, _ours())
     with ProjectLock(tmp_path):
         info = json.loads((tmp_path / ".harness.lock").read_text())
-        assert info["pid"] == os.getpid() and info["host"] == platform.node()  # the new owner
+        assert info["pid"] == os.getpid() and info["install"] == _ours()  # the new owner
     assert not (tmp_path / ".harness.lock").exists()  # released like any lock
 
 
@@ -141,12 +145,12 @@ def test_corrupt_lock_is_stale(tmp_path: Path) -> None:
     (tmp_path / ".harness.lock").write_text("garbage")
     with ProjectLock(tmp_path):
         info = json.loads((tmp_path / ".harness.lock").read_text())
-        assert info["pid"] == os.getpid() and info["host"] == platform.node()
+        assert info["pid"] == os.getpid() and info["install"] == _ours()
     assert not (tmp_path / ".harness.lock").exists()
 
 
 def test_live_local_lock_blocks(tmp_path: Path) -> None:
-    _write_lock(tmp_path, 1, platform.node())
+    _write_lock(tmp_path, 1, _ours())
     if sys.platform != "win32":  # pid 1 exists on POSIX hosts
         with pytest.raises(ProjectLockedError):
             ProjectLock(tmp_path).acquire()
@@ -157,7 +161,7 @@ def test_own_pid_lock_still_blocks(tmp_path: Path) -> None:
     if sys.platform == "win32":
         held.acquire()  # a file written by hand has no handle behind it, so hold a real one
     else:
-        _write_lock(tmp_path, os.getpid(), platform.node())
+        _write_lock(tmp_path, os.getpid(), _ours())
     try:
         with pytest.raises(ProjectLockedError):
             ProjectLock(tmp_path).acquire()

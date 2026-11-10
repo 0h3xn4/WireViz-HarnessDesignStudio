@@ -385,7 +385,7 @@ def test_the_run_record_has_what_it_should_and_no_path(
     assert path.read_bytes() == run_record.to_bytes(record)
 
 
-def test_the_operator_comes_from_the_name_the_environment_git_or_the_system(
+def test_the_operator_is_the_given_name_or_the_environment_never_git_or_the_system(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     config = tmp_path / "gitconfig"
@@ -394,11 +394,12 @@ def test_the_operator_comes_from_the_name_the_environment_git_or_the_system(
     assert run_record.resolve_operator("  Given  ", environ=env) == "Given"
     assert run_record.resolve_operator(None, environ=env) == "From Env"
     config.write_text('[user]\n\tname = "Git Name"\n', encoding="utf-8")
-    assert run_record.resolve_operator(None, environ={"USER": "sysuser"}) == "Git Name"
+    assert run_record.resolve_operator(None, environ={"USER": "sysuser"}) == "unknown"  # no Git
     assert run_record.resolve_operator("", environ=env) == "From Env"
     config.write_text("", encoding="utf-8")
-    assert run_record.resolve_operator(None, environ={"USER": "sysuser"}) == "sysuser"
-    assert run_record.resolve_operator(None, environ={"USERNAME": "winuser"}) == "winuser"
+    assert run_record.resolve_operator(None, environ={"USER": "sysuser"}) == "unknown"  # D-220
+    assert run_record.resolve_operator(None, environ={"USERNAME": "winuser"}) == "unknown"
+    assert run_record.resolve_operator(None, environ={"LOGNAME": "lname"}) == "unknown"
     assert run_record.resolve_operator(None, environ={}) == "unknown"
     assert run_record.resolve_operator("   ", environ={}) == "unknown"
 

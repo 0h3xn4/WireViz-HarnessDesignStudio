@@ -13,7 +13,7 @@ Generated from the program by `python -m tools.gen_cli_docs`; do not edit by han
 
 A project with damaged files (a file that is not valid, a link, over 64 MB or unreadable) is refused with exit 2 and the damaged file named by every command that reports on it or changes it: `drc`, `verify`, `export`, `generate`, `config`, `library`, `log`, `diff`, `compare`, `review`, `release`, `revise`, `migrate` and the imports. Only `validate` and `check` read it and list the damage (exit 1), so you can see what to repair. With Ctrl-C a command prints `interrupted` and ends with 130 (if it was saving, run `harness-design-studio validate`). A reader that closes the pipe (`harness-design-studio generate | head -1`) does not stop the command: it still finishes and saves.
 
-An import whose file says what the project already holds changes nothing, prints `Already up to date.` and ends with 0, so it can run again on every build. Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not. The option `--author NAME` (given before the command) names who is making the changes of a run in the change journal of a project that has one; the environment variable `HARNESS_AUTHOR` does the same, and without either the journal uses the name Git has (`user.name`), then the user of the computer.
+An import whose file says what the project already holds changes nothing, prints `Already up to date.` and ends with 0, so it can run again on every build. Every command that changes a project takes the same lock as the app, so the two never write at once. The commands that import data (`import-parts`, `import-lengths`, `import-build-data`, `import-netlist`, `import-pinout`, `import-devices`) accept `--dry-run`: they show what they would do and change nothing; `config --ampacity-csv` does not. The option `--author NAME` (given before the command) names who is making the changes of a run in the change journal of a project that has one; the environment variable `HARNESS_AUTHOR` does the same, and without either the journal records `unknown`: no name is looked up (not Git's `user.name`, not the user of the computer).
 
 What an import prints. Every import that reads a file says what it read before it lists the rows: `Read 12 row(s) of segment lengths from lengths.csv (sha256 117043908312).`, `Columns read: harness -> harness, segment -> segment, length -> length`, a line `warning: the column 'Notes' is not read; its values are not imported.` for every column that is left out, and the unit: `Unit: length in mm (assumed; --unit says another).` or `Unit: length in in (given with --unit).`. A value that is converted is shown with the value as written, its unit and the value stored: `Converted, row 2 (ZZ-1): 0.25 kg = 250 g`; `import-lengths` shows it on the line of its row, `row 2: OK W001 / W001-L1: 850 mm = 0.85 m`. A row that is dropped says why: `row 3: ERROR Harness 'W009' does not exist`. An import that is applied (not with `--dry-run`) records the file in the project, in `imports/records.json` (kind, file name, SHA-256, rows read, rows dropped with the reason, values converted, columns read and left out, unit, tool version; no time and no absolute path), and ends with `Import record: lengths:lengths.csv written to imports/records.json.`; importing the same file again replaces its record, and an unchanged file changes nothing. `harness-design-studio imports` lists the records and shows whether a source file has changed since. With `--json` every import prints the same facts as the last key, `import` (the record, with `record_written` true when this run wrote it, and the `warnings` of `import-build-data`), and `imports --json` prints `records_file`, `count`, `sources_changed` and the `imports` with their `status` and `current_sha256`.
 
@@ -353,7 +353,7 @@ harness-design-studio deviation wheel-link current-over-wire.W001-001 --remove
 
 ### harness-design-studio journal
 
-The change journal: an entry for every change of a design input, a configuration value, an override, a waiver or deviation, a part approval and a release, with who made it, when (UTC), the value before and after, and the reason where the model holds one. Entries are made when the project is saved, so every way of changing it is recorded; generation is one entry for each harness. The journal is the file journal.json, which a project has only if you start one (`new` starts one; `--start` starts one for an existing project): it is append-only, an entry cannot be changed or removed, and a damaged journal is reported by `validate`. It is not part of the model hash or of any written output. The author is the global option `--author`, else the environment variable HARNESS_AUTHOR, else the name Git has (`user.name`), else the user of the computer. `--json` prints the entries as one document; `--object` selects one object (W001-001, wire:W001-001, derating.bundle_derating); `--since SEQ` the entries after number SEQ.
+The change journal: an entry for every change of a design input, a configuration value, an override, a waiver or deviation, a part approval and a release, with who made it, when (UTC), the value before and after, and the reason where the model holds one. Entries are made when the project is saved, so every way of changing it is recorded; generation is one entry for each harness. The journal is the file journal.json, which a project has only if you start one (`new` starts one; `--start` starts one for an existing project): it is append-only, an entry cannot be changed or removed, and a damaged journal is reported by `validate`. It is not part of the model hash or of any written output. The author is the global option `--author`, else the environment variable HARNESS_AUTHOR, else `unknown` (no name is looked up). `--json` prints the entries as one document; `--object` selects one object (W001-001, wire:W001-001, derating.bundle_derating); `--since SEQ` the entries after number SEQ.
 
 `harness-design-studio journal project [options]`
 
@@ -388,7 +388,7 @@ generate harnesses from the interfaces and save the project
 | `project` | project folder |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 | `--run-record` | also write run_record.json (time in UTC, operator, tool version, platform, Python version, model hash) next to the files: it is outside every hash, and written only with this option |
-| `--author NAME` | with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, then the Git user.name, then the user of the system) |
+| `--author NAME` | with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, else unknown; no name is looked up) |
 
 Examples:
 
@@ -409,7 +409,7 @@ write the build workbook of every harness, the tables and exports to <project>/o
 | `project` | project folder |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 | `--run-record` | also write run_record.json (time in UTC, operator, tool version, platform, Python version, model hash) next to the files: it is outside every hash, and written only with this option |
-| `--author NAME` | with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, then the Git user.name, then the user of the system) |
+| `--author NAME` | with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, else unknown; no name is looked up) |
 | `--drawings` | also write the PDF and SVG drawings of the harnesses (off by default: the build workbook is the main output) |
 | `--out OUT` | the folder to write the outputs to (default: <project>/outputs) |
 
@@ -433,7 +433,7 @@ Write the numbers behind the outputs to FOLDER as open data. For each result a J
 | `project` | project folder |
 | `--out OUT` | the folder for the files (made if missing) |
 | `--run-record` | also write run_record.json (time in UTC, operator, tool version, platform, Python version, model hash) next to the files: it is outside every hash, and written only with this option |
-| `--author NAME` | with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, then the Git user.name, then the user of the system) |
+| `--author NAME` | with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, else unknown; no name is looked up) |
 | `--json` | print the list of files as JSON |
 
 Examples:
@@ -477,7 +477,7 @@ Hand-over checklist for the engineering values (derating, grounding, test limits
 | `project` | the project folder |
 | `--ampacity-csv AMPACITY_CSV` | CSV with a gauge column and an amperes column; sets derating.ampacity_a_by_awg |
 | `--counterparts WORDS` | the words that are the two ends of one line, for the link review and the pairing, for example 'TX=RX, MOSI=MISO' (sets naming.signal_counterparts); 'default' goes back to the table the tool ships with, 'none' pairs equal names only |
-| `--distinct-roles DISTINCT_ROLES` | on: a release needs an author, a checker and a person who releases that are three different people, a date that is not earlier than the project's change log and not more than a day ahead, and takes a missing name from Git (sets naming.release_distinct_roles); off: the setting is taken out again (the default) (one of off, on) |
+| `--distinct-roles DISTINCT_ROLES` | on: a release needs an author, a checker and a person who releases that are three different people, a date that is not earlier than the project's change log and not more than a day ahead; every name is typed (sets naming.release_distinct_roles); off: the setting is taken out again (the default) (one of off, on) |
 | `--apply-profile NAME` | fill the unset values from a standard profile (ecss-q-st-30-11c, ecss-e-st-20-07c); values you already set are kept; the files stay placeholders until you review them |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
 
@@ -862,7 +862,7 @@ submit a draft harness for review
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
-| `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
+| `--by BY` | your name, as you type it (recorded in the change log; required: no name is taken from Git or from the computer) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
 
 Examples:
@@ -883,7 +883,7 @@ release a harness: baseline, change log entry and lock (blocked while checks fai
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
-| `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
+| `--by BY` | your name, as you type it (recorded in the change log; required: no name is taken from Git or from the computer) |
 | `--comment COMMENT` | what changed or why (at least 10 characters) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
 | `--checker CHECKER` | who checked it (title block; required in a project that requires different people) |
@@ -910,7 +910,7 @@ start a new revision of a released harness
 | `project` | project folder |
 | `harness` | harness ID, for example W001 |
 | `--json` | print the result as one JSON document instead of text (same exit code; no time, user name or absolute path in it) |
-| `--by BY` | your name (recorded in the change log; required, except in a project that requires different people (release_distinct_roles): there the name from Git, `user.name`, is used when you leave it out and Git has one) |
+| `--by BY` | your name, as you type it (recorded in the change log; required: no name is taken from Git or from the computer) |
 | `--comment COMMENT` | what changed or why (at least 10 characters) |
 | `--date DATE` | YYYY-MM-DD (default: today) |
 

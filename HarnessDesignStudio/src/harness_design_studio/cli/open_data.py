@@ -18,8 +18,8 @@ RUN_RECORD_HELP = (
     "model hash) next to the files: it is outside every hash, and written only with this option"
 )
 AUTHOR_HELP = (
-    "with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, then the "
-    "Git user.name, then the user of the system)"
+    "with --run-record: who ran it (default: the environment variable HARNESS_AUTHOR, else "
+    "unknown; no name is looked up)"
 )
 
 
@@ -57,16 +57,12 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
     p.add_argument("--json", action="store_true", help="print the list of files as JSON")
 
 
-def write_record(
-    project: Project, project_folder: Path, target: Path, args: argparse.Namespace, rep: Report
-) -> None:
+def write_record(project: Project, target: Path, args: argparse.Namespace, rep: Report) -> None:
     """With `--run-record`, write the record of this run into `target` and say so (and, with
     `--json`, name the file in the document under `run_record`)."""
     if not args.run_record:
         return
-    path = run_record.write_for(
-        project, target, operator=args.author, project_folder=project_folder
-    )
+    path = run_record.write_for(project, target, operator=args.author)
     rep.say(f"The record of this run (time, operator, versions) is {path}.")
     rep.put(run_record=path.name)
 

@@ -16,7 +16,7 @@ from harness_design_studio.core import configcheck
 from harness_design_studio.core.commands import History, Put
 from harness_design_studio.core.io.saver import save_project
 from harness_design_studio.core.model import Harness, Project, evolve
-from harness_design_studio.core.vcs import gitname, release, roles
+from harness_design_studio.core.vcs import release, roles
 from harness_design_studio.core.vcs.release import (
     plan_new_revision,
     plan_release,
@@ -31,7 +31,7 @@ TODAY = date(2026, 3, 10)
 
 @pytest.fixture(autouse=True)
 def _no_git_name(tmp_path: Path, monkeypatch: pytest.MonkeyPatch) -> None:
-    """No Git name of the machine leaks in; a test that wants one writes the file."""
+    """No Git name of the machine is in the way; a test that wants one writes the file."""
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(tmp_path / "no-such-gitconfig"))
     monkeypatch.setattr(release, "_today", lambda: TODAY)
 
@@ -107,20 +107,34 @@ def test_the_date_of_the_same_harness_may_not_go_back_with_or_without_the_settin
         assert "date_before_last" in codes(p, hid, exported(p, tmp_path / str(on)), when=WHEN)
 
 
-def test_off_a_missing_name_is_not_taken_from_git(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
+@pytest.mark.parametrize("on", [False, True])
+def test_a_missing_name_is_never_taken_from_git(
+    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, on: bool
 ) -> None:
+    """D-220: with the setting off or on, a name that is not typed is not looked up in Git."""
     cfg = tmp_path / "gitconfig"
     cfg.write_text("[user]\n\tname = Ada Lovelace\n")
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(cfg))
+    monkeypatch.setenv("GIT_AUTHOR_NAME", "Ada Lovelace")
+    monkeypatch.setenv("GIT_COMMITTER_NAME", "Ada Lovelace")
     p = full()
-    assert roles.default_name(p, tmp_path) is None
+    hid = releasable(p)
+    if on:
+        switch(p)
     folder = tmp_path / "proj"
     save_project(p, folder)
-    with pytest.raises(SystemExit) as exc:
-        cli_main(["release", str(folder), releasable(p), "--comment", "a long enough comment"])
-    assert exc.value.code == 2
-    assert "the following arguments are required: --by" in capsys.readouterr().err
+    for command in (
+        ["release", str(folder), hid, "--comment", "a long enough comment"],
+        ["review", str(folder), hid, "--date", WHEN],
+        ["revise", str(folder), hid, "--comment", "a long enough comment"],
+    ):
+        with pytest.raises(SystemExit) as exc:
+            cli_main(command)
+        assert exc.value.code == 2
+        err = capsys.readouterr().err
+        assert "the following arguments are required: --by (type your name" in err
+    assert cli_main(["log", str(folder)]) == 0
+    assert "Ada Lovelace" not in capsys.readouterr().out
 
 
 # ---- the setting itself --------------------------------------------------------------------------
@@ -312,90 +326,6 @@ def test_off_a_date_ahead_is_accepted() -> None:
     assert plan_submit_review(p, releasable(p), by="Ann", when="2099-01-01").ok
 
 
-# ---- the name from Git ---------------------------------------------------------------------------
-
-
-def write(path: Path, text: str) -> Path:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(text, encoding="utf-8")
-    return path
-
-
-def test_the_name_is_read_from_the_user_file(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv(
-        "GIT_CONFIG_GLOBAL",
-        str(write(tmp_path / "g", "[user]\n\tname = Ada Lovelace\n\temail = a@b\n")),
-    )
-    assert gitname.configured_name(tmp_path) == "Ada Lovelace"
-
-
-@pytest.mark.parametrize(
-    ("text", "expected"),
-    [
-        ('[user]\nname = "Ada Lovelace" # who\n', "Ada Lovelace"),
-        ("[USER]\n  NAME=Ada\n", "Ada"),
-        ("[core]\nname = Wrong\n[user]\nemail = a@b\n", None),
-        ('[user "work"]\nname = Wrong\n', None),
-        ("[user]\nname =\n", None),
-        ("[user]\nname = Ada\nname = Bob\n", "Bob"),
-        ("[user] name = Ada\n", "Ada"),
-        ('[user]\nname = "A \\"quoted\\" name"\n', 'A "quoted" name'),
-        ('[user]\nname = "unterminated\n', None),
-        ("# nothing\n", None),
-        ("\x00\x01binary", None),
-    ],
-)
-def test_reading_the_user_name_from_a_config_file(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch, text: str, expected: str | None
-) -> None:
-    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(write(tmp_path / "g", text)))
-    assert gitname.configured_name(tmp_path) == expected
-
-
-def test_the_repository_overrides_the_user_and_nothing_is_made_up(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(write(tmp_path / "g", "[user]\nname = Global\n")))
-    repo = tmp_path / "repo"
-    (repo / ".git").mkdir(parents=True)
-    sub = repo / "project"
-    sub.mkdir()
-    assert gitname.configured_name(sub) == "Global"
-    write(repo / ".git" / "config", "[core]\nbare = false\n[user]\nname = Local\n")
-    assert gitname.configured_name(sub) == "Local"
-    monkeypatch.setenv("GIT_CONFIG_GLOBAL", "/dev/null")
-    (repo / ".git" / "config").unlink()
-    assert gitname.configured_name(sub) is None  # no name anywhere: none is invented
-    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(tmp_path / "missing"))
-    assert gitname.configured_name(sub) is None
-
-
-def test_a_huge_or_unreadable_file_gives_no_name(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    big = write(
-        tmp_path / "big", "# " + "x" * (gitname.MAX_CONFIG + 10) + "\n[user]\nname = Late\n"
-    )
-    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(big))
-    assert gitname.configured_name(tmp_path) is None
-    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(tmp_path))  # a folder
-    assert gitname.configured_name(tmp_path) is None
-
-
-def test_the_git_name_is_the_default_only_with_the_setting_on(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(write(tmp_path / "g", "[user]\nname = Ada\n")))
-    p = full()
-    assert roles.default_name(p, tmp_path) is None
-    switch(p)
-    assert roles.default_name(p, tmp_path) == "Ada"
-    monkeypatch.setenv("GIT_CONFIG_GLOBAL", "/dev/null")
-    assert roles.default_name(p, tmp_path) is None
-
-
 # ---- the command line ----------------------------------------------------------------------------
 
 
@@ -436,30 +366,6 @@ def test_the_command_line_refuses_one_person_and_a_bad_date(
     assert "--date" in capsys.readouterr().err or True
     assert cli_main(["review", str(folder), hid, "--by", "Ann", "--date", "2099-01-01"]) == 1
     assert "[date_in_future] --date:" in capsys.readouterr().err
-
-
-def test_the_command_line_takes_the_name_from_git_when_the_setting_is_on(
-    tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch
-) -> None:
-    p = full()
-    hid = releasable(p)
-    folder = tmp_path / "p"
-    save_project(p, folder)
-    cli_main(["config", str(folder), "--distinct-roles", "on"])
-    capsys.readouterr()
-    monkeypatch.setenv(
-        "GIT_CONFIG_GLOBAL", str(write(tmp_path / "g", "[user]\nname = Ann Author\n"))
-    )
-    assert cli_main(["review", str(folder), hid, "--date", WHEN]) == 0
-    assert "Name taken from Git (user.name): Ann Author." in capsys.readouterr().out
-    assert cli_main(["log", str(folder), hid]) == 0
-    assert "Ann Author" in capsys.readouterr().out
-    monkeypatch.setenv(
-        "GIT_CONFIG_GLOBAL", "/dev/null"
-    )  # Git has no name: as before, the option is required
-    with pytest.raises(SystemExit) as exc:
-        cli_main(["revise", str(folder), hid, "--comment", "a long enough comment"])
-    assert exc.value.code == 2
 
 
 def test_switching_the_setting_does_not_make_the_harness_plans_out_of_date() -> None:

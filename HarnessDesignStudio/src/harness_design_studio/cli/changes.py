@@ -22,7 +22,6 @@ from harness_design_studio.core.vcs.release import (
     plan_submit_review,
 )
 from harness_design_studio.core.vcs.report import baselines_of, changelog_rows, working_diff
-from harness_design_studio.core.vcs.roles import CONFIG_KEY, default_name
 
 COMMANDS = ("review", "release", "revise", "diff", "compare", "log")
 OPTIONS = {
@@ -48,9 +47,8 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         p.add_argument(
             "--by",
             default=None,
-            help="your name (recorded in the change log; required, except in a project that "
-            f"requires different people ({CONFIG_KEY}): there the name from Git, "
-            "`user.name`, is used when you leave it out and Git has one)",
+            help="your name, as you type it (recorded in the change log; required: no name is "
+            "taken from Git or from the computer)",
         )
         if comment:
             p.add_argument(
@@ -211,11 +209,11 @@ def _run(args: argparse.Namespace, rep: Report) -> int:
         print("error: this project is read-only (saved by a newer tool version).", file=sys.stderr)
         return 2
     by = args.by
-    if by is None:
-        by = default_name(project, args.project)
-        if by is None:  # as when the option was required: the usual message of the parser
-            _PARSERS[cmd].error("the following arguments are required: --by")
-        rep.say(f"Name taken from Git (user.name): {by}.")
+    if by is None:  # no name is looked up (D-220): the person types it
+        _PARSERS[cmd].error(
+            "the following arguments are required: --by (type your name; no name is taken from "
+            "Git or from the computer)"
+        )
     when = _today(args.date)
     folder = args.project / "outputs"
     if cmd == "review":

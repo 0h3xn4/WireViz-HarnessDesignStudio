@@ -113,13 +113,10 @@ def test_every_entry_of_the_allow_list_has_a_reason_and_a_known_kind() -> None:
         assert family not in patterns
     # the one library it may load is OpenSSL's crypto library (hashlib's SHA-256), never TLS
     assert [e["pattern"] for e in entries if e["kind"] in ("library", "package_file")] == [
-        "*_socket.*", "*libcrypto*", "*_socket.pyd", "*libcrypto*",
+        "*_socket.*", "*libcrypto*", "*libcrypto*",
     ]  # fmt: skip
-    # Python's socket module may be loaded on Windows only (platform.node() for the lock file)
-    assert all(
-        e.get("platform") == "win32" for e in entries
-        if e["kind"] == "python_module" or e["pattern"] == "*_socket.pyd"
-    )  # fmt: skip
+    # no network module may be imported, on any system: the lock file names no computer (D-220)
+    assert not [e for e in entries if e["kind"] == "python_module"]
 
 
 def test_what_the_allow_list_does_not_name_is_a_finding() -> None:
@@ -308,10 +305,9 @@ def test_the_editor_audit_run_opens_the_project_and_asks_for_the_local_guide_onl
     assert all(doc["steps"].values()), doc["steps"]
     assert [u for u in doc["urls_opened"] if not u.startswith("file://")] == []
     assert any(u.endswith("resources/guide/index.html") for u in doc["urls_opened"])
-    # On Windows platform.node() (the lock file's computer name) imports socket; it is allow-listed
-    # for win32 only (tools/offline_audit_allow.json). Elsewhere no network module is imported.
-    allowed = {"socket", "_socket"} if sys.platform == "win32" else set()
-    assert set(doc["python_network_modules"]) <= allowed, doc.get("socket_imported_by")
+    # No network module is imported, on any system. (Until D-220 the lock file held the computer's
+    # name, and on Windows Python's platform module imported socket to read it.)
+    assert doc["python_network_modules"] == [], doc.get("socket_imported_by")
 
 
 @pytest.mark.slow

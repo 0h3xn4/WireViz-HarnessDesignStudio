@@ -397,8 +397,8 @@ def render() -> str:
         "`config --ampacity-csv` does not. "
         "The option `--author NAME` (given before the command) names who is making the changes "
         "of a run in the change journal of a project that has one; the environment variable "
-        "`HARNESS_AUTHOR` does the same, and without either the journal uses the name Git has "
-        "(`user.name`), then the user of the computer.",
+        "`HARNESS_AUTHOR` does the same, and without either the journal records `unknown`: no "
+        "name is looked up (not Git's `user.name`, not the user of the computer).",
         "",
         "What an import prints. Every import that reads a file says what it read before it lists "
         "the rows: `Read 12 row(s) of segment lengths from lengths.csv (sha256 117043908312).`, "

@@ -20,6 +20,7 @@ so the record ties a time and a person to exactly those files.
 
 import json
 import platform
+import sys
 from collections.abc import Callable, Sequence
 from datetime import UTC, datetime
 from pathlib import Path
@@ -43,17 +44,27 @@ def utc_now() -> datetime:
     return datetime.now(UTC).replace(microsecond=0)
 
 
+def platform_text() -> str:
+    """The operating system and its version, as `platform.platform()` says it. On Windows that
+    function asks for the computer's name first (Python's `uname()` calls `socket.gethostname()`),
+    so there the text is made from `platform.win32_ver()`, which does not: the program imports no
+    network module and reads no computer name (D-220)."""
+    if sys.platform != "win32":
+        return platform.platform()
+    release, version, csd, _ptype = platform.win32_ver()
+    return "-".join(x for x in ("Windows", release, version, csd) if x)
+
+
 def resolve_operator(
     explicit: str | None = None,
     *,
     environ: dict[str, str] | None = None,
-    folder: Path | None = None,
 ) -> str:
     """Who is running the tool: the name given (`--author`), else the environment variable
-    `HARNESS_AUTHOR`, else the `user.name` Git has for the project folder, else the user of the
-    operating system (`USER`, `USERNAME` or `LOGNAME`), else "unknown". Never an empty text. The
-    journal of the project resolves its author the same way: this calls `journal.resolve_author`."""
-    return journal.resolve_author(explicit, environ=environ, folder=folder)
+    `HARNESS_AUTHOR`, else "unknown". No name is looked up (not the user of the operating system,
+    not Git's `user.name`; D-220). Never an empty text. The journal of the project resolves its
+    author the same way: this calls `journal.resolve_author`."""
+    return journal.resolve_author(explicit, environ=environ)
 
 
 def make(
@@ -61,13 +72,11 @@ def make(
     *,
     operator: str | None = None,
     now: Clock | None = None,
-    folder: Path | None = None,
     extensions: Sequence[dict[str, str]] = (),
     environ: dict[str, str] | None = None,
 ) -> dict[str, Any]:
-    """The run record of this run as data. `now` and `operator` are given by a test; `folder` is
-    the project folder (to find the Git name; it is not recorded); `extensions` is what the
-    extension registry reports (name and version of each plug-in in force)."""
+    """The run record of this run as data. `now` and `operator` are given by a test; `extensions`
+    is what the extension registry reports (name and version of each plug-in in force)."""
     when = (now or utc_now)().astimezone(UTC).replace(microsecond=0)
     if not extensions and project.extensions is not None:
         # S8: every enabled declarative file and loaded plug-in (name, version, kind, file, hash)
@@ -77,10 +86,10 @@ def make(
     return {
         "format": FORMAT,
         "time_utc": when.strftime("%Y-%m-%dT%H:%M:%SZ"),
-        "operator": resolve_operator(operator, environ=environ, folder=folder),
+        "operator": resolve_operator(operator, environ=environ),
         "tool": "harness-design-studio",
         "tool_version": __version__,
-        "platform": platform.platform(),
+        "platform": platform_text(),
         "python": platform.python_version(),
         "model_hash": model_hash(project),
         "extensions": [dict(e) for e in extensions],
@@ -105,7 +114,6 @@ def write_for(
     *,
     operator: str | None = None,
     now: Clock | None = None,
-    project_folder: Path | None = None,
     extensions: Sequence[dict[str, str]] = (),
     environ: dict[str, str] | None = None,
 ) -> Path:
@@ -116,7 +124,6 @@ def write_for(
             project,
             operator=operator,
             now=now,
-            folder=project_folder,
             extensions=extensions,
             environ=environ,
         ),

@@ -108,7 +108,7 @@ From then on, in that project:
 
 - The **author** is the person who submitted the harness for review (step 2 is no longer optional), the **checker** is named in `--checker` (**Checked by** in the window, which now says *required*), and the person who releases is a third person. Two of them with the same name are refused in words, for example `blocked: [same_person] --by: The checker and the person who releases it must be different people, but both are 'B. Checker'.` In the window the button stays off and the line under the form says which two are the same. Capital letters and extra spaces do not make a different person.
 - A review, release or new revision may not be dated earlier than the latest entry of the change log or the latest baseline of **any** harness of the project, and not more than one day after today. The messages say which date to use.
-- If you leave `--by` out, the name that Git has for you (`git config user.name`) is used, and the command says so. In the window, **Your name** starts with it when you have not saved a name there before. The tool reads the name from the Git files; it does not start Git, and when Git has no name it makes none up: `--by` is required as before.
+- `--by` is required: type your name. The tool takes no name from Git or from the computer (decision D-220). In the window, **Your name** starts empty, or with the name you typed there last time.
 
 `--distinct-roles off` takes the setting out again, and the file `config/naming.json` is then exactly what it was. The names are only text: the tool cannot tell that `A. Engineer` and `a.engineer@example.org` are one person, so agree in the team on how to write a name. More: [`CONFIG.md`](../CONFIG.md#different-people-in-a-release-since-190).
 

@@ -31,8 +31,8 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "if you start one (`new` starts one; `--start` starts one for an existing project): it is "
         "append-only, an entry cannot be changed or removed, and a damaged journal is reported by "
         "`validate`. It is not part of the model hash or of any written output. The author is the "
-        "global option `--author`, else the environment variable HARNESS_AUTHOR, else the name Git "
-        "has (`user.name`), else the user of the computer. `--json` prints the entries as one document; "
+        "global option `--author`, else the environment variable HARNESS_AUTHOR, else `unknown` "
+        "(no name is looked up). `--json` prints the entries as one document; "
         "`--object` selects one object (W001-001, wire:W001-001, derating.bundle_derating); "
         "`--since SEQ` the entries after number SEQ.",
     )

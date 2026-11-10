@@ -386,7 +386,7 @@ def generate(
     Takes the project lock. Raises `ReadOnlyProjectError` for a project saved by a newer version.
     With `run_record=True` and a saved result, `run_record.json` (time, operator, tool version,
     model hash) is written into the `outputs` folder of the project, outside every hash; `operator`
-    names who ran it (else `HARNESS_AUTHOR`, the Git name, the user of the system)."""
+    names who ran it (else `HARNESS_AUTHOR`, the Git name, `unknown`)."""
     from harness_design_studio.core.generate.engine import generate_project
     from harness_design_studio.core.verify import verify_project
 
@@ -400,7 +400,7 @@ def generate(
         if ok:
             _save_project(project, path)
             if run_record:
-                _write_run_record(project, path / "outputs", operator, path)
+                _write_run_record(project, path / "outputs", operator)
     return records.generate_result(plan, report, saved=ok)
 
 
@@ -441,18 +441,16 @@ def export(
         had_drawings = drawings_exported(target)
         write_outputs(project, target, built)
         if run_record:
-            _write_run_record(project, target, operator, path)
+            _write_run_record(project, target, operator)
     return records.export_result(
         built, report.issues, drawings_removed=had_drawings and not drawings
     )
 
 
-def _write_run_record(
-    project: Project, folder: Path, operator: str | None, project_folder: Path
-) -> None:
+def _write_run_record(project: Project, folder: Path, operator: str | None) -> None:
     from harness_design_studio.core import run_record
 
-    run_record.write_for(project, folder, operator=operator, project_folder=project_folder)
+    run_record.write_for(project, folder, operator=operator)
 
 
 def export_data(
@@ -478,10 +476,7 @@ def export_data(
     files = write_data(project, folder)
     named = ""
     if run_record:
-        project_folder = None if isinstance(source, Project) else Path(source)
-        named = record.write_for(
-            project, folder, operator=operator, project_folder=project_folder
-        ).name
+        named = record.write_for(project, folder, operator=operator).name
     return DataFiles(tuple(sorted(files)), model_hash(project)[:12], named)
 
 
@@ -585,8 +580,8 @@ def annotate_config(folder: PathLike, *, remove: bool = False) -> AnnotationResu
 # ---- overrides, deviations and the change journal ----------------------------------------------
 #
 # The functions that change a project take `author=`: the name the journal records for the change
-# (default: the environment variable HARNESS_AUTHOR, else the name Git has, else the user of the
-# computer). A project that keeps no journal records nobody.
+# (default: the environment variable HARNESS_AUTHOR, else `unknown`; no name is looked up). A
+# project that keeps no journal records nobody.
 
 
 @contextlib.contextmanager
