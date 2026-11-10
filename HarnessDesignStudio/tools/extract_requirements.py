@@ -12,7 +12,7 @@ proposals, listed with `basis` and reviewed in compliance/gap_analysis.md; per-r
 corrections are in compliance/requirements/overrides.csv and are merged here.
 
 The lists it writes hold the text of the requirements, which is ESA's: they stay on the computer
-that has the standards and are ignored by Git (the owner's decision of 2026-11-10, D-219). Only
+that has the standards and are ignored by Git (the owner's decision of 2026-11-10, D-221). Only
 overrides.csv, our own classification, is in the repository.
 """
 

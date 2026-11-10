@@ -479,7 +479,7 @@ def test_the_author_is_the_option_then_the_environment_never_git_or_the_system_u
     monkeypatch.delenv("HARNESS_AUTHOR", raising=False)
     monkeypatch.setenv("USER", "login")
     journal.set_author(None)
-    assert journal.author() == "unknown"  # the Git name is not read (D-220)
+    assert journal.author() == "unknown"  # the Git name is not read (D-222)
     monkeypatch.setenv("HARNESS_AUTHOR", "From Env")
     assert journal.author() == "From Env"
     journal.set_author("From Option")
@@ -490,7 +490,7 @@ def test_the_author_is_the_option_then_the_environment_never_git_or_the_system_u
     monkeypatch.delenv("HARNESS_AUTHOR")
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", os.devnull)
     monkeypatch.chdir(tmp_path)
-    assert journal.author() == "unknown"  # the login name "login" is not read (D-220)
+    assert journal.author() == "unknown"  # the login name "login" is not read (D-222)
     monkeypatch.setenv("USERNAME", "winlogin")
     monkeypatch.setenv("LOGNAME", "logname")
     assert journal.author() == "unknown"

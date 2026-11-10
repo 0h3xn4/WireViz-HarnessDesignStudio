@@ -94,7 +94,7 @@ A project has a change journal if and only if it has the file `journal.json`.
 
 Entries are made when the project is **saved**, by comparing the files that changed with what was on disk, so every way of changing a project is recorded: the editor, the command line and a script. Generation is one entry for each harness it changed (wires added, changed and removed, and the model hash before and after), not one for each field.
 
-The author is, in this order: the global option `--author NAME` (before the command), the environment variable `HARNESS_AUTHOR`, `unknown`. The tool looks up no name: not the one Git has (`git config user.name`), not the user name of the computer (decision D-220).
+The author is, in this order: the global option `--author NAME` (before the command), the environment variable `HARNESS_AUTHOR`, `unknown`. The tool looks up no name: not the one Git has (`git config user.name`), not the user name of the computer (decision D-222).
 
 ## 7. Read the history
 

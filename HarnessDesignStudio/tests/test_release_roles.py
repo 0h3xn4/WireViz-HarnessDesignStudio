@@ -111,7 +111,7 @@ def test_the_date_of_the_same_harness_may_not_go_back_with_or_without_the_settin
 def test_a_missing_name_is_never_taken_from_git(
     tmp_path: Path, capsys: pytest.CaptureFixture[str], monkeypatch: pytest.MonkeyPatch, on: bool
 ) -> None:
-    """D-220: with the setting off or on, a name that is not typed is not looked up in Git."""
+    """D-222: with the setting off or on, a name that is not typed is not looked up in Git."""
     cfg = tmp_path / "gitconfig"
     cfg.write_text("[user]\n\tname = Ada Lovelace\n")
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(cfg))

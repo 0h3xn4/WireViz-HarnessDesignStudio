@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """The compliance assessment (ours) is complete and consistent, and the matrix tool builds a matrix
 from it. The requirement lists and the matrix hold ESA's text: they are not in the repository
-(the owner's decision of 2026-11-10, D-219), so the tool is run here on invented lists."""
+(the owner's decision of 2026-11-10, D-221), so the tool is run here on invented lists."""
 
 from __future__ import annotations
 
@@ -137,7 +137,7 @@ def test_files_named_as_evidence_exist() -> None:
 
 
 def test_the_text_of_the_standards_is_not_in_the_repository_and_stays_out() -> None:
-    """D-219: the lists and the matrix are gone and Git ignores them when they are made locally."""
+    """D-221: the lists and the matrix are gone and Git ignores them when they are made locally."""
     for name in (*m.PROCESS, *m.DESIGN):
         assert not (m.REQUIREMENTS / f"{name}.csv").exists() or _ignored(
             m.REQUIREMENTS / f"{name}.csv"

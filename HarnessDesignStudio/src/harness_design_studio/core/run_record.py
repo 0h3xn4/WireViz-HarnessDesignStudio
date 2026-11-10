@@ -48,7 +48,7 @@ def platform_text() -> str:
     """The operating system and its version, as `platform.platform()` says it. On Windows that
     function asks for the computer's name first (Python's `uname()` calls `socket.gethostname()`),
     so there the text is made from `platform.win32_ver()`, which does not: the program imports no
-    network module and reads no computer name (D-220)."""
+    network module and reads no computer name (D-222)."""
     if sys.platform != "win32":
         return platform.platform()
     release, version, csd, _ptype = platform.win32_ver()
@@ -62,7 +62,7 @@ def resolve_operator(
 ) -> str:
     """Who is running the tool: the name given (`--author`), else the environment variable
     `HARNESS_AUTHOR`, else "unknown". No name is looked up (not the user of the operating system,
-    not Git's `user.name`; D-220). Never an empty text. The journal of the project resolves its
+    not Git's `user.name`; D-222). Never an empty text. The journal of the project resolves its
     author the same way: this calls `journal.resolve_author`."""
     return journal.resolve_author(explicit, environ=environ)
 

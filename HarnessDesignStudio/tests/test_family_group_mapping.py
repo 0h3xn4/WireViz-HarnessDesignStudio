@@ -20,7 +20,7 @@ def _rows() -> list[dict[str, str]]:
 
 def test_cited_requirements_are_assessed() -> None:
     """Only requirements of ECSS-Q-ST-30-11C that the design assessment has a row for (the
-    requirement lists hold ESA's text and are not in the repository, D-219)."""
+    requirement lists hold ESA's text and are not in the repository, D-221)."""
     with (ROOT / "compliance" / "assessment" / "design_assessment.csv").open(
         newline="", encoding="utf-8"
     ) as f:

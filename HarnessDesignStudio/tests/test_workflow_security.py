@@ -4,7 +4,7 @@
 permissions it needs, and nothing publishes without a tag.
 
 The inherited WireViz workflow `main.yml` is upstream's file, kept byte for byte as at the fork base
-(decision D-218, tests/test_upstream_unchanged.py), so the pinning and permission rules do not
+(decision D-220, tests/test_upstream_unchanged.py), so the pinning and permission rules do not
 apply to it: it has unpinned actions and no `permissions` (owner-checklist.md B3 and C: disable it
 in the Actions tab if it is not needed). It is still checked for secrets on pull requests."""
 
@@ -76,7 +76,7 @@ def test_only_the_jobs_that_need_more_say_so() -> None:
 
 
 def test_codeql_leaves_out_only_the_upstream_wireviz_files() -> None:
-    """D-218: the CodeQL configuration ignores the restored upstream files and nothing else."""
+    """D-220: the CodeQL configuration ignores the restored upstream files and nothing else."""
     import fnmatch
 
     legal = (ROOT.parent / ".github" / "workflows" / "harness-legal.yml").read_text("utf-8")

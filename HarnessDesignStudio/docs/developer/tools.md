@@ -78,8 +78,8 @@ A test fails when one of these outputs is stale. The table of outputs and tests 
 
 | Script | What it does |
 | --- | --- |
-| `extract_requirements` | Extracts the requirements of the five standards into `compliance/requirements/*.csv` (needs the standards' PDFs, which are not in the repository, and `pdftotext`; the lists stay local and are ignored by Git, D-219) |
-| `build_compliance_matrix` | Builds `compliance/compliance_matrix.csv` from the requirement lists and the assessments (local only, D-219) |
+| `extract_requirements` | Extracts the requirements of the five standards into `compliance/requirements/*.csv` (needs the standards' PDFs, which are not in the repository, and `pdftotext`; the lists stay local and are ignored by Git, D-221) |
+| `build_compliance_matrix` | Builds `compliance/compliance_matrix.csv` from the requirement lists and the assessments (local only, D-221) |
 | `trace` | Builds `compliance/traceability.csv`: tool requirement to source, verifying files and the tests that name it |
 | `gen_sdd_components` | Builds `compliance/sdd_components.csv`: the components of the design and the requirements they serve (every module needs a docstring) |
 | `metrics` | Basic software metrics (`compliance/metrics.json`) |

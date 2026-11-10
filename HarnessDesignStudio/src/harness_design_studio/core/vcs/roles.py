@@ -12,7 +12,7 @@ release a harness. The project switches it on with `release_distinct_roles` in
   change log or the latest baseline of the whole project, and not more than one day after today
   (one day because the clocks of two places differ); the rule that a date may not be earlier than
   the last entry of the same harness holds with or without the setting;
-- every name is typed by a person; none is taken from Git or from the computer (decision D-220).
+- every name is typed by a person; none is taken from Git or from the computer (decision D-222).
 
 `naming.json` is not frozen by a release (`snapshot.FROZEN_CONFIG_FILES`), so the setting can be
 switched on at any time. It never changes a harness that is released already. No Qt, no model change.

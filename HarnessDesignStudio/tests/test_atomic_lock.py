@@ -115,7 +115,7 @@ def _write_lock(path: Path, pid: int, install: str) -> None:
 
 
 def _ours() -> str:
-    """The id of this installation (the lock file names no computer, D-220)."""
+    """The id of this installation (the lock file names no computer, D-222)."""
     return fs.install_id()
 
 

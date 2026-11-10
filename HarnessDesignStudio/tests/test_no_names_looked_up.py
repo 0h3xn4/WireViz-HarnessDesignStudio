@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""D-220 (owner's answer B6, 2026-11-10): the files the tool writes hold a person's name only when
+"""D-222 (owner's answer B6, 2026-11-10): the files the tool writes hold a person's name only when
 the person typed it. No user name of the operating system, no Git `user.name` and no computer name
 is looked up: not in the run record, the change journal, the change log of a release, the release
 record or the project lock file."""
@@ -127,7 +127,7 @@ def test_a_damaged_id_file_is_replaced(tmp_path: Path) -> None:
 
 
 def test_a_lock_file_of_an_older_version_is_respected(tmp_path: Path) -> None:
-    """Versions before D-220 wrote the computer's name under "host" and no install id. Such a
+    """Versions before D-222 wrote the computer's name under "host" and no install id. Such a
     file cannot be checked from here: the project counts as open elsewhere (the way out is to
     delete the lock file), and the name in it is not repeated."""
     from harness_design_studio.core.errors import ProjectLockedError

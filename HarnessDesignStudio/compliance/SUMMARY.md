@@ -43,7 +43,7 @@ This section was added after the audit; the sections below describe the audit an
 
 ## Matrix after phase 4 (`compliance_matrix.csv`)
 
-The matrix and the requirement lists quote the standards and are no longer in the repository (2026-11-10, decision D-219); the counts below were taken from them and are kept. The assessment behind them is in `assessment/`.
+The matrix and the requirement lists quote the standards and are no longer in the repository (2026-11-10, decision D-221); the counts below were taken from them and are kept. The assessment behind them is in `assessment/`.
 
 Kind A (software), statuses are *partial* (something exists), *human*, *gap*, *na*:
 
@@ -82,4 +82,4 @@ Everything is opt-in or silent by default. Projects that do not use the new sett
 4. Standards referred to by the supplied ones were not supplied, so many "shall apply" clauses are marked *human* (T-09).
 
 ## Files
-`PHASE0.md`, `gap_analysis.md`, `compliance_matrix.csv`, `traceability.csv`, `sdd_components.csv`, `family_group_mapping.csv`, `FAMILY_GROUP_MAPPING.md`, `ORGANISATION.md`, `RISK_REGISTER.md`, `metrics.json`, `DEVIATIONS.md`, `OPEN_ACTIONS.md`, `docs/` (drafts; five approved), `requirements/` (only `overrides.csv` since D-219), `assessment/`, `evidence/`, `templates/`.
+`PHASE0.md`, `gap_analysis.md`, `compliance_matrix.csv`, `traceability.csv`, `sdd_components.csv`, `family_group_mapping.csv`, `FAMILY_GROUP_MAPPING.md`, `ORGANISATION.md`, `RISK_REGISTER.md`, `metrics.json`, `DEVIATIONS.md`, `OPEN_ACTIONS.md`, `docs/` (drafts; five approved), `requirements/` (only `overrides.csv` since D-221), `assessment/`, `evidence/`, `templates/`.

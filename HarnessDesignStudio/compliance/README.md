@@ -39,7 +39,7 @@ This folder holds the project's self-assessment against the ECSS and ESCC standa
 
 | File | What it is |
 | --- | --- |
-| `compliance_matrix.csv` | Every requirement of the five standards, with its assessment and the evidence. **Not in the repository since 2026-11-10** (decision D-219): it quotes the text of the standards. The assessment it is made from is in [`assessment/`](assessment/), which is ours; a person who has the standards makes the requirement lists and the matrix locally with `python -m tools.extract_requirements FOLDER` and `python -m tools.build_compliance_matrix` (Git ignores them). The text stays in the Git history of the repository. |
+| `compliance_matrix.csv` | Every requirement of the five standards, with its assessment and the evidence. **Not in the repository since 2026-11-10** (decision D-221): it quotes the text of the standards. The assessment it is made from is in [`assessment/`](assessment/), which is ours; a person who has the standards makes the requirement lists and the matrix locally with `python -m tools.extract_requirements FOLDER` and `python -m tools.build_compliance_matrix` (Git ignores them). The text stays in the Git history of the repository. |
 | [`traceability.csv`](traceability.csv) | Each requirement of the tool, the code that serves it, and the tests that name it |
 | [`sdd_components.csv`](sdd_components.csv) | The components of the software design and the requirements they serve |
 | [`family_group_mapping.csv`](family_group_mapping.csv) | The data behind `FAMILY_GROUP_MAPPING.md` |

@@ -209,7 +209,7 @@ def _run(args: argparse.Namespace, rep: Report) -> int:
         print("error: this project is read-only (saved by a newer tool version).", file=sys.stderr)
         return 2
     by = args.by
-    if by is None:  # no name is looked up (D-220): the person types it
+    if by is None:  # no name is looked up (D-222): the person types it
         _PARSERS[cmd].error(
             "the following arguments are required: --by (type your name; no name is taken from "
             "Git or from the computer)"

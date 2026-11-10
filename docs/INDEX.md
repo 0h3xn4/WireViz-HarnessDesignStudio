@@ -3,7 +3,7 @@
 This page lists every guide in the repository, grouped by what you want to do, with one line on each. This repository holds two tools: **Harness Design Studio** (documented in `HarnessDesignStudio/`) and its upstream, **WireViz** (documented in `docs/`, `tutorial/` and `examples/`).
 
 - Not sure where to start? Read the [repository README](../README.md), then [Install](../HarnessDesignStudio/docs/INSTALL.md) and [Getting started](../HarnessDesignStudio/docs/GETTING_STARTED.md).
-- [`README.md`](README.md) in this folder is the WireViz README, exactly as upstream WireViz has it at the fork base (commit `e4fe099f`). This index was its replacement until 2026-11-10, when the owner had every changed upstream file restored (decision D-218); the index moved here. The same README is embedded in the [repository README](../README.md#original-wireviz-readme), and a copy is in [`upstream/README.upstream.md`](upstream/README.upstream.md).
+- [`README.md`](README.md) in this folder is the WireViz README, exactly as upstream WireViz has it at the fork base (commit `e4fe099f`). This index was its replacement until 2026-11-10, when the owner had every changed upstream file restored (decision D-220); the index moved here. The same README is embedded in the [repository README](../README.md#original-wireviz-readme), and a copy is in [`upstream/README.upstream.md`](upstream/README.upstream.md).
 
 ## Contents
 

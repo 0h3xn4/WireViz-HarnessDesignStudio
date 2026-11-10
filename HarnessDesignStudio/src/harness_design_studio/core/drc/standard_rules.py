@@ -12,7 +12,7 @@ never looks like a pass. Part ratings are keys of `Part.ratings`:
   shield_insulated, conductive_finish       1 for yes (wire shield sheath, connector finish)
 
 Requirement IDs are those of compliance/assessment/design_assessment.csv; each rule names the ones it
-serves (the requirement lists, which hold the text of the standards, are not in the repository, D-219).
+serves (the requirement lists, which hold the text of the standards, are not in the repository, D-221).
 """
 
 from __future__ import annotations

@@ -19,7 +19,7 @@ ROOT = Path(__file__).resolve().parent.parent
 
 def test_every_setting_cites_an_assessed_requirement() -> None:
     """Every value of a profile cites a requirement that the design assessment has a row for
-    (the requirement lists hold ESA's text and are not in the repository, D-219)."""
+    (the requirement lists hold ESA's text and are not in the repository, D-221)."""
     path = ROOT / "compliance" / "assessment" / "design_assessment.csv"
     with path.open(newline="", encoding="utf-8") as fh:
         known = {r["ID"] for r in csv.DictReader(fh)}

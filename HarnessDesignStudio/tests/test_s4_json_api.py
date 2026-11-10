@@ -159,7 +159,7 @@ def test_the_journal_and_the_run_record_resolve_the_operator_in_one_place(monkey
     monkeypatch.setenv("GIT_CONFIG_GLOBAL", str(config))
     config.write_text('[user]\n\tname = "Git Name"\n', encoding="utf-8")
     monkeypatch.delenv("HARNESS_AUTHOR", raising=False)
-    assert journal.resolve_author(None, environ={}) == "unknown"  # Git is not asked (D-220)
+    assert journal.resolve_author(None, environ={}) == "unknown"  # Git is not asked (D-222)
     assert run_record.resolve_operator(None, environ={}) == "unknown"
     assert run_record.resolve_operator(" Given ", environ={}) == journal.resolve_author("Given")
     config.write_text("", encoding="utf-8")

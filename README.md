@@ -138,7 +138,7 @@ Every guide is listed, with one line each, in the [documentation index](docs/IND
 
 | | WireViz (upstream) | This repository |
 | --- | --- | --- |
-| Program | The `wireviz` Python package in `src/wireviz`, with its `docs/`, `examples/` and `tutorial/` | Taken from WireViz 0.4.1 (commit `e4fe099`) and unchanged: every upstream file is byte for byte as at that commit. Some had been changed after the fork; the owner had them restored on 2026-11-10 (decision D-218). See [`HarnessDesignStudio/NOTICE`](HarnessDesignStudio/NOTICE). |
+| Program | The `wireviz` Python package in `src/wireviz`, with its `docs/`, `examples/` and `tutorial/` | Taken from WireViz 0.4.1 (commit `e4fe099`) and unchanged: every upstream file is byte for byte as at that commit. Some had been changed after the fork; the owner had them restored on 2026-11-10 (decision D-220). See [`HarnessDesignStudio/NOTICE`](HarnessDesignStudio/NOTICE). |
 | Second tool | — | **Harness Design Studio** in [`HarnessDesignStudio/`](HarnessDesignStudio/README.md): a separate codebase. Harness Design Studio does not copy or import WireViz code (decision D-01). |
 | Where each one's documents are | `docs/`, `tutorial/`, `examples/` | The tool's documents are in [`HarnessDesignStudio/docs/`](HarnessDesignStudio/docs/README.md) and `HarnessDesignStudio/compliance/`. [`docs/INDEX.md`](docs/INDEX.md) is the index of both. |
 | README | [`docs/README.md`](docs/README.md) (unchanged) | This file, with the original WireViz README embedded below (its text is the upstream text, with headings one level lower and some links changed); an identical copy of the upstream file is at [`docs/upstream/README.upstream.md`](docs/upstream/README.upstream.md). |
@@ -167,7 +167,7 @@ The pre-release audit ([`AUDIT.md`](AUDIT.md), area H) read the WireViz code in 
 - **`parse()` keeps state between calls (H-8).** `image_paths` is a mutable default that fills up, a dict given as input is changed (a second parse of it fails), and a `Path` or `str` for `image_paths` is rejected. Pass a fresh list of `Path` objects and a fresh dict each time.
 - **Cable wire numbers are not checked (H-9).** Wire `0` silently takes the colour of the last wire, a wire number above the wire count fails late with an `IndexError` that names no cable, `s` on a cable without a shield is accepted, and the same wire may be used twice. Check the numbers yourself.
 
-Smaller upstream findings (H-10 to H-23: unescaped text in HTML and SVG output, `--prepend` losing sections that share a name, templates searched next to the output, the AWG/mm2 table, a non-UTF-8 locale, and others) are listed in [`AUDIT.md`](AUDIT.md). The packaging finding H-18 (`setup.py` reads its description without naming an encoding, so it fails under a non-UTF-8 locale) is upstream's again: a fix made in this fork was undone when the upstream files were restored (D-218).
+Smaller upstream findings (H-10 to H-23: unescaped text in HTML and SVG output, `--prepend` losing sections that share a name, templates searched next to the output, the AWG/mm2 table, a non-UTF-8 locale, and others) are listed in [`AUDIT.md`](AUDIT.md). The packaging finding H-18 (`setup.py` reads its description without naming an encoding, so it fails under a non-UTF-8 locale) is upstream's again: a fix made in this fork was undone when the upstream files were restored (D-220).
 
 ---
 

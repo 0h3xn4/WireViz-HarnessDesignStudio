@@ -26,7 +26,7 @@ else:
 
 LOCK_NAME = ".harness.lock"
 # The lock file names the installation that holds it by a random id, never by the computer's
-# name (decision D-220). The id is made once and kept in the user's settings folder.
+# name (decision D-222). The id is made once and kept in the user's settings folder.
 ID_FILE = "install-id"
 _ID_FORM = re.compile(r"^[0-9a-f]{32}$")
 _ids: dict[str, str] = {}  # settings folder -> id (also when it could not be stored there)
@@ -324,7 +324,7 @@ def _lock_guard(fd: int) -> None:
 class ProjectLock:
     """Detects the same project open twice. The lock file holds only the process number, a random
     id of the installation (`install_id`), the start time and, on Linux, the boot id and the
-    process start time: no user name and no computer name (D-220)."""
+    process start time: no user name and no computer name (D-222)."""
 
     def __init__(self, root: Path) -> None:
         self.path = long_path(root) / LOCK_NAME
@@ -464,7 +464,7 @@ class ProjectLock:
         ours = _boot_id()
         same_boot = isinstance(boot, str) and ours is not None and boot == ours
         # A lock without our id (another computer, another user account, or a version before
-        # D-220, which wrote the computer's name instead) cannot be checked from here
+        # D-222, which wrote the computer's name instead) cannot be checked from here
         if install != install_id() and not same_boot:
             return (
                 "This project is already open on another computer or in another user account, or "

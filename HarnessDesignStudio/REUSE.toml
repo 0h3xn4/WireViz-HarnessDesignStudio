@@ -7,9 +7,9 @@
 # its own SPDX header, so `reuse lint` fails for a new source file that has none (decision D-205).
 # Check: `reuse --root HarnessDesignStudio lint` (CI job `reuse`). Upstream WireViz (src/wireviz and
 # the other folders at the top of the repository) is outside this folder and outside this check: its
-# files are kept byte for byte as at the fork base e4fe099f (decision D-218), so they get no SPDX
+# files are kept byte for byte as at the fork base e4fe099f (decision D-220), so they get no SPDX
 # header; tests/test_upstream_unchanged.py checks them. The requirement text of the ECSS and ESCC
-# standards is no longer in the repository (decision D-219).
+# standards is no longer in the repository (decision D-221).
 version = 1
 
 # The tool's own data, documents and pictures: GPL-3.0-only (the later entries below win).

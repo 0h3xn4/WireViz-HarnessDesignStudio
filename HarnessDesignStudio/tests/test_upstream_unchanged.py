@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""D-218 (the owner's answer B3, 2026-11-10): every file of upstream WireViz in this repository is
+"""D-220 (the owner's answer B3, 2026-11-10): every file of upstream WireViz in this repository is
 byte for byte as at the fork base `e4fe099f`, so "unchanged" in the README and the NOTICE is true.
 The Git blob id of each file is in tests/fixtures/upstream_e4fe099f.json; a sync with upstream
 (docs/developer/upstream-sync.md) updates that file in the same change."""

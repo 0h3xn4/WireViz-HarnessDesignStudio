@@ -397,7 +397,7 @@ def test_the_operator_is_the_given_name_or_the_environment_never_git_or_the_syst
     assert run_record.resolve_operator(None, environ={"USER": "sysuser"}) == "unknown"  # no Git
     assert run_record.resolve_operator("", environ=env) == "From Env"
     config.write_text("", encoding="utf-8")
-    assert run_record.resolve_operator(None, environ={"USER": "sysuser"}) == "unknown"  # D-220
+    assert run_record.resolve_operator(None, environ={"USER": "sysuser"}) == "unknown"  # D-222
     assert run_record.resolve_operator(None, environ={"USERNAME": "winuser"}) == "unknown"
     assert run_record.resolve_operator(None, environ={"LOGNAME": "lname"}) == "unknown"
     assert run_record.resolve_operator(None, environ={}) == "unknown"

@@ -115,7 +115,7 @@ def test_every_entry_of_the_allow_list_has_a_reason_and_a_known_kind() -> None:
     assert [e["pattern"] for e in entries if e["kind"] in ("library", "package_file")] == [
         "*_socket.*", "*libcrypto*", "*libcrypto*",
     ]  # fmt: skip
-    # no network module may be imported, on any system: the lock file names no computer (D-220)
+    # no network module may be imported, on any system: the lock file names no computer (D-222)
     assert not [e for e in entries if e["kind"] == "python_module"]
 
 
@@ -305,7 +305,7 @@ def test_the_editor_audit_run_opens_the_project_and_asks_for_the_local_guide_onl
     assert all(doc["steps"].values()), doc["steps"]
     assert [u for u in doc["urls_opened"] if not u.startswith("file://")] == []
     assert any(u.endswith("resources/guide/index.html") for u in doc["urls_opened"])
-    # No network module is imported, on any system. (Until D-220 the lock file held the computer's
+    # No network module is imported, on any system. (Until D-222 the lock file held the computer's
     # name, and on Windows Python's platform module imported socket to read it.)
     assert doc["python_network_modules"] == [], doc.get("socket_imported_by")
 
@@ -344,7 +344,7 @@ def test_an_entry_for_one_operating_system_applies_there_only(
     monkeypatch.setattr(sys, "platform", "win32")
     assert allowed(only_windows, "python_module", "example", {})
     assert not allowed(only_windows, "python_module", "ssl", {})
-    # the real list allows no network module on any system (D-220: the lock file names no computer)
+    # the real list allows no network module on any system (D-222: the lock file names no computer)
     entries = load_allow_list(ALLOW_LIST)
     for system in ("linux", "win32"):
         monkeypatch.setattr(sys, "platform", system)

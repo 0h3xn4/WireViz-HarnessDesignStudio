@@ -3488,7 +3488,7 @@ class MainWindow(QMainWindow):
 
     def _user_name(self) -> str:
         """The name to put in the dialog: the one the person typed last time, else empty, so the
-        person types one. No name is taken from Git or from the computer (decision D-220)."""
+        person types one. No name is taken from Git or from the computer (decision D-222)."""
         return str(self.settings.value("ui/user", "") or "")
 
     def change_flow(self, action: str, hid: str) -> None:

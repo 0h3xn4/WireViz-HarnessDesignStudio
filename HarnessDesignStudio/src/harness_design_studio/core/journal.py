@@ -106,7 +106,7 @@ def resolve_author(
     """Who is working: the name given (`--author`), else the environment variable HARNESS_AUTHOR
     (a name the person sets), else `unknown`. Never an empty text. Nothing is looked up: not the
     user name of the operating system, not the `user.name` of Git, not the computer's name
-    (decision D-220: a file holds a person's name only when the person gave it). This is the one
+    (decision D-222: a file holds a person's name only when the person gave it). This is the one
     place the operator is resolved: the journal (`author`) and the run record
     (`run_record.resolve_operator`) both call it."""
     env = os.environ if environ is None else environ

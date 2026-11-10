@@ -8,7 +8,7 @@ rules for ECSS-E-ST-40C and ECSS-Q-ST-80C), assessment/process_overrides.csv (si
 assessment/design_assessment.csv (one row per harness-relevant design requirement).
 
 The requirement lists and the matrix hold the text of the requirements, which is ESA's. They are
-not in the repository (the owner's decision of 2026-11-10, D-219) and are ignored by Git: a person
+not in the repository (the owner's decision of 2026-11-10, D-221) and are ignored by Git: a person
 who has the standards makes them locally with `python -m tools.extract_requirements FOLDER`, then
 this tool. Only the assessments, which are ours, are in the repository; the tests check them
 directly and run this tool on invented requirement lists.
@@ -25,7 +25,7 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent / "compliance"
-REQUIREMENTS = ROOT / "requirements"  # made locally, not in the repository (D-219)
+REQUIREMENTS = ROOT / "requirements"  # made locally, not in the repository (D-221)
 PROCESS = ("ECSS-E-ST-40C", "ECSS-Q-ST-80C")
 DESIGN = ("ECSS-Q-ST-30-11C", "ECSS-E-ST-20-07C", "ESCC-3901")
 HEADER = [

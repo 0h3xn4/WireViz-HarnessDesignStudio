@@ -23,7 +23,7 @@ Statement of independence and date:
 3. `docs/SPEC.md` and `docs/REQUIREMENTS.md`: what the owner asked for.
 4. `compliance/traceability.csv` and `compliance/sdd_components.csv`: requirement to test, requirement to component.
 5. `compliance/docs/SVerP.md`, `SVR.md`, `SValP_SVS.md`, `SUITP.md`: how verification and validation were planned, and what the developer reports.
-6. `compliance/gap_analysis.md` and `compliance/compliance_matrix.csv` (made locally from the standards with the two tools named in `compliance/README.md`; not in the repository, D-219): the assessment against ECSS-E-ST-40C, ECSS-Q-ST-80C, ECSS-Q-ST-30-11C, ECSS-E-ST-20-07C and ESCC 3901. The requirement texts are abbreviated; the standard is authoritative.
+6. `compliance/gap_analysis.md` and `compliance/compliance_matrix.csv` (made locally from the standards with the two tools named in `compliance/README.md`; not in the repository, D-221): the assessment against ECSS-E-ST-40C, ECSS-Q-ST-80C, ECSS-Q-ST-30-11C, ECSS-E-ST-20-07C and ESCC 3901. The requirement texts are abbreviated; the standard is authoritative.
 7. `compliance/evidence/` and `compliance/metrics.json`: test results, release report, coverage.
 8. `docs/RELEASE.md` and `docs/SECURITY.md`.
 

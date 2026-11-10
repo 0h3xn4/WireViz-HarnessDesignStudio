@@ -721,7 +721,7 @@ def test_regression_lookalike_rule_copes_with_mixed_keying() -> None:
 def test_cited_requirements_are_assessed() -> None:
     """REQ-STD-01: a rule can only cite a requirement that the design assessment
     (compliance/assessment/design_assessment.csv) has a row for. The requirement lists themselves
-    hold ESA's text and are not in the repository (D-219)."""
+    hold ESA's text and are not in the repository (D-221)."""
     import csv
     from pathlib import Path
 

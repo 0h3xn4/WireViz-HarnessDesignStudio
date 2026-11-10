@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """REQ-CC-08, F-07 (1.9.0): the release dialogs with the project setting `release_distinct_roles`
 on: a note says three different people are required, the name is typed (none is taken from Git
-or from the computer, D-220), the checker is asked for as required, and OK says in words which two names are the same. With the
+or from the computer, D-222), the checker is asked for as required, and OK says in words which two names are the same. With the
 setting off the dialogs are as they were."""
 
 import pytest
@@ -119,7 +119,7 @@ def test_on_a_harness_with_no_author_cannot_be_released_from_the_dialog(win) -> 
 def test_no_name_is_taken_from_git_or_the_computer_only_a_typed_one(  # type: ignore[no-untyped-def]
     win, tmp_path, monkeypatch
 ) -> None:
-    """D-220: with the setting off or on, the name field starts empty; a name the person typed
+    """D-222: with the setting off or on, the name field starts empty; a name the person typed
     before is offered again."""
     cfg = tmp_path / "gitconfig"
     cfg.write_text("[user]\n\tname = Ann Author\n", encoding="utf-8")
