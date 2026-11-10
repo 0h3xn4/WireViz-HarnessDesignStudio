@@ -1,6 +1,6 @@
 # Final report: legal protection, phases 1 and 2
 
-Date: 2026-11-10. Written by an AI (Claude, through Claude Code) for the project owner. This is not legal advice. The website (phases 3 and 4) is not part of this report: it waits for your OK on the design plan.
+Date: 2026-11-10. Written by an AI (Claude, through Claude Code) for the project owner. This is not legal advice. There is no website: the owner discarded the website plan (phases 3 and 4) on 2026-11-10, after the design study and a first build. Nothing of it is in the repository, and nothing was published (D-217).
 
 ## 1. What changed
 
@@ -46,7 +46,7 @@ Not changed, by the rules of the brief: no release, tag, release asset or histor
 
 The full list, with a reason for each, is in [`owner-checklist.md`](owner-checklist.md). The ones that matter most:
 
-1. **Country** (A1). It decides the privacy notice and whether an imprint is needed. It blocks the website text.
+1. **Country** (A1). It decides the privacy notice and whether an imprint is needed.
 2. **The meaning of D-186 and the claims of others** (A2 to A6): who "used internally" meant, employer or client claims, the workshop people, the other "Studio" projects. The GPL grant depends on your answer.
 3. **Tag `v1.15.0`** was made by another person (A4).
 4. **The 20 existing releases** (B1). My recommendation: one new release with every fix, and a "superseded" note in its text. I did not touch any release.
@@ -81,4 +81,4 @@ Recorded in D-216 so that you can undo each one: the choices are in section F of
 
 ## 8. Next step
 
-Phase 3, the website. I will write the design study of the app (colours, fonts, icons, the licence of every asset), the plan of the page and the text, and stop for your OK before I write any site code (checkpoint 3a). Nothing is deployed before your OK.
+None from me. The website plan is discarded (D-217): no site folder, no Pages workflow, no site tests. The Pages items in section C of the checklist need no action. If you want a site later, the brief's phase 3 is the start; the legal texts, the privacy statement of the app and the screenshot tool `tools/gui_screenshots.py` already exist.
