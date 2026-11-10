@@ -64,13 +64,13 @@ That is the whole idea. The full tutorial with the output of every command is [`
 | see the other examples and templates | [`docs/examples/README.md`](docs/examples/README.md) (`harness-design-studio new --list`; five projects); the CSV and script templates: `harness-design-studio templates my-templates` |
 | see what changed | [`CHANGELOG.md`](CHANGELOG.md), [`docs/STATUS.md`](docs/STATUS.md) |
 
-A project is a folder of small JSON files; put it in Git ([`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md)). Every document is listed in [`docs/README.md`](docs/README.md) and [`../docs/README.md`](../docs/README.md).
+A project is a folder of small JSON files; put it in Git ([`docs/FILE_FORMAT.md`](docs/FILE_FORMAT.md)). Every document is listed in [`docs/README.md`](docs/README.md) and [`../docs/INDEX.md`](../docs/INDEX.md).
 
 ## Names and privacy
 
 Harness Design Studio does not copy or import WireViz code. It lives in a fork of [WireViz](https://github.com/wireviz/WireViz) ([`../README.md`](../README.md#original-wireviz-readme)). Harness Design Studio is a personal project. It is not affiliated with or endorsed by the WireViz project, Anthropic or any other company or project named here. All product names and trademarks belong to their owners and are used only to describe compatibility or facts.
 
-The app collects no personal data and sends nothing over the network. All files stay on your computer.
+The app collects no personal data and sends nothing over the network. All files stay on your computer. A name is written into a file only when you type it (as the author of a change, a run or a release); the app looks up no user name and no computer name.
 
 ## For developers
 
