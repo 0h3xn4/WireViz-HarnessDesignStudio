@@ -1,0 +1,10 @@
+# CodeQL configuration of the codeql job of harness-legal.yml. It changes only which files are
+# analysed: the upstream WireViz Python files, which are kept byte for byte as at the fork base
+# e4fe099f (decision D-218, the owner's decision of 2026-11-10 to leave them out of CodeQL). Their
+# findings are upstream's, and Harness Design Studio does not import them
+# (tests/test_wireviz_independence.py). tests/test_workflow_security.py checks that only upstream
+# paths are listed here.
+name: harness-design-studio CodeQL
+paths-ignore:
+  - src/wireviz/**
+  - setup.py

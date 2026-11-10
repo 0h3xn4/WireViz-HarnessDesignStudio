@@ -73,3 +73,24 @@ def test_only_the_jobs_that_need_more_say_so() -> None:
     for item in wide:
         name, _, what = item.partition(": ")
         assert what in allowed.get(name, set()) or name == "release.yml", item
+
+
+def test_codeql_leaves_out_only_the_upstream_wireviz_files() -> None:
+    """D-218: the CodeQL configuration ignores the restored upstream files and nothing else."""
+    import fnmatch
+
+    legal = (ROOT.parent / ".github" / "workflows" / "harness-legal.yml").read_text("utf-8")
+    assert "config-file: ./.github/codeql/codeql-config.yml" in legal
+    config = (ROOT.parent / ".github" / "codeql" / "codeql-config.yml").read_text("utf-8")
+    assert "queries" not in config and "paths:" not in config.replace("paths-ignore:", "")
+    ignored = re.findall(r"^\s+-\s+(\S+)\s*$", config.split("paths-ignore:", 1)[1], re.M)
+    assert ignored == ["src/wireviz/**", "setup.py"]
+    python = sorted(
+        p.relative_to(ROOT.parent).as_posix()
+        for p in ROOT.parent.rglob("*.py")
+        if "HarnessDesignStudio" not in p.parts
+        and not any(part.startswith(".") for part in p.relative_to(ROOT.parent).parts)
+    )
+    hit = [f for f in python if any(fnmatch.fnmatch(f, g) for g in ignored)]
+    assert hit and set(hit) <= UPSTREAM, set(hit) - UPSTREAM
+    assert {f for f in UPSTREAM if f.endswith(".py")} <= set(hit)
