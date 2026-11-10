@@ -28,7 +28,7 @@ from harness_design_studio.core import legal_texts
 from tools.release_check import unreleased_text
 
 ROOT = Path(__file__).resolve().parents[1]
-REPO_URL = "https://github.com/0h3xn4/WireViz-HarnessDesignStudio"
+REPO_URL = "https://github.com/0h3xn4/wireviz_harness-design-studio"
 SIGNED_FROM = (1, 17, 1)  # the first release made by the workflow that signs (decision D-213)
 CAVEAT_UNSIGNED = (
     "The packages are not signed, the configuration values are placeholders and the parts are "
@@ -41,7 +41,7 @@ CAVEAT_SIGNED = (
 )
 COSIGN_VERIFY = (
     "cosign verify-blob --bundle <file>.sigstore.json "
-    "--certificate-identity-regexp '(?i)^https://github.com/0h3xn4/WireViz-HarnessDesignStudio/"
+    "--certificate-identity-regexp '(?i)^https://github.com/0h3xn4/wireviz_harness-design-studio/"
     "\\.github/workflows/release\\.yml@refs/tags/v' "
     "--certificate-oidc-issuer https://token.actions.githubusercontent.com <file>"
 )
@@ -260,7 +260,7 @@ def notes(version: str, changelog: str, sums: str, highlights: str | None = None
             "Every file is also signed with Sigstore (the `.sigstore.json` file beside it) and has "
             "a build provenance attestation. Check the signature with "
             f"`{COSIGN_VERIFY}` (install cosign first) and the attestation with "
-            "`gh attestation verify <file> --repo 0h3xn4/WireViz-HarnessDesignStudio`. The "
+            "`gh attestation verify <file> --repo 0h3xn4/wireviz_harness-design-studio`. The "
             "same commands, per platform, are in "
             f"[`INSTALL.md`]({REPO_URL}/blob/v{version}/HarnessDesignStudio/docs/INSTALL.md)."
             if signed
