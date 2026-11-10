@@ -184,7 +184,7 @@ Next: [export the outputs (user manual)](user-manual/export-the-outputs.md), [`F
 
 ## A loose cable end
 
-A **loose end** is the end of a cable that is not on a connector yet (role `loose`, placeholder part `TBD-CONNECTOR`; [build a harness by hand](user-manual/build-a-harness-by-hand.md#a-cable-with-a-loose-end-not-in-the-editor-yet), decision D-201). The written files name it as an open end, and only in a harness that has one: a project without a loose end writes the same bytes as before (`tools.output_hashes --check` and `tools.numbers_snapshot --check` print *identical*).
+A **loose end** is the end of a cable that is not on a connector yet (role `loose`, placeholder part `TBD-CONNECTOR`; [build a harness by hand](user-manual/build-a-harness-by-hand.md#a-cable-with-a-loose-end), decision D-201). The written files name it as an open end, and only in a harness that has one: a project without a loose end writes the same bytes as before (`tools.output_hashes --check` and `tools.numbers_snapshot --check` print *identical*).
 
 | File | What a loose end looks like |
 | --- | --- |

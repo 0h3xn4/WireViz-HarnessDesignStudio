@@ -7,6 +7,15 @@ and checks the result, so a broken package fails loudly instead of showing an em
 
 The Windows editor has no console, so it prints nothing: the exit code (0 = ok) is the result, and
 `--selftest --selftest-out FILE` also writes the message ("selftest ok" or what failed) to FILE.
+
+`--audit-run PROJECT REPORT [SECONDS]` is the editor's part of the offline audit
+(`tools/offline_audit.py`, REQ-OFFLINE-02): it starts the editor as a person would (the real
+settings file, a first start when there is none), opens PROJECT, presses F1 for the guide with the
+system's URL opener replaced by a recorder (no browser is started), runs the design rule check in
+its helper process, opens a folder that does not exist (a deliberate error), stays idle for SECONDS
+(default 20) and quits; REPORT gets what it saw as JSON (the URLs the editor asked to open, the
+shared libraries mapped into this process, the network modules of Python that were imported).
+It changes nothing that the editor does: it only drives it.
 """
 
 import os
@@ -223,7 +232,141 @@ def _generate_and_export(ctl: object, tmp: Path) -> bool:
     return verify_outputs(project, read_folder(tmp / "outputs")).ok
 
 
+def audit_run(argv: list[str]) -> int:
+    """The editor's part of the offline audit (see the module text). Exit 0 when every step ran."""
+    import json
+
+    from PySide6.QtCore import QObject, QTimer, QUrl, Slot
+    from PySide6.QtGui import QDesktopServices
+    from PySide6.QtWidgets import QApplication
+
+    from harness_design_studio.gui.app import make_settings
+    from harness_design_studio.gui.drc_process import _shared, run_check
+
+    project, report = Path(argv[2]), Path(argv[3])
+    idle_s = float(argv[4]) if len(argv) > 4 else 20.0
+    opened: list[str] = []
+    dismissed: list[str] = []
+    steps: dict[str, bool] = {}
+
+    class Recorder(QObject):
+        """Stands in for the system's URL opener: records, starts nothing."""
+
+        @Slot(QUrl)
+        def record(self, url: QUrl) -> None:
+            opened.append(url.toString())
+
+    recorder = Recorder()
+    for scheme in ("file", "http", "https", "ftp", "mailto"):
+        QDesktopServices.setUrlHandler(scheme, recorder, "record")
+    settings = make_settings()
+    win = create_window(settings)  # first start when the settings file is new, as for a person
+    win.open_url = lambda url: bool(opened.append(url.toString())) or True  # type: ignore[method-assign]
+    app = QApplication.instance()
+
+    def dismiss() -> None:
+        """A question (the role at first start, a message) is answered with its default: no one
+        is there to click."""
+        modal = QApplication.activeModalWidget()
+        if modal is not None:
+            dismissed.append(modal.windowTitle() or type(modal).__name__)
+            modal.close()
+
+    closer = QTimer()
+    closer.timeout.connect(dismiss)
+    closer.start(200)
+    win.show()
+    QApplication.processEvents()
+    steps["open the project"] = bool(win.open_project(project))
+    QApplication.processEvents()
+    win.act_guide.trigger()  # F1: the guide, handed to the system's opener (here the recorder)
+    guide = [u for u in opened if u.endswith("index.html")]
+    steps["F1 asks to open the local guide only"] = bool(guide) and all(
+        u.startswith("file://") for u in opened
+    )
+    found = run_check(win.ctl.project)
+    steps["rule check in the helper process"] = _shared.alive and isinstance(found, list)
+    steps["a folder that does not exist is refused"] = not win.open_project(
+        project.parent / "no-such-project-folder"
+    )
+    QTimer.singleShot(int(idle_s * 1000), app.quit)  # type: ignore[union-attr]
+    app.exec()  # type: ignore[union-attr]
+    maps = Path("/proc/self/maps")
+    libraries = (
+        sorted({line.split()[-1] for line in maps.read_text().splitlines() if ".so" in line})
+        if maps.is_file()
+        else []
+    )
+    if sys.platform == "win32":
+        libraries = _windows_modules()
+    network_modules = sorted(
+        m
+        for m in sys.modules
+        if m.split(".")[0] in ("socket", "_socket", "ssl", "_ssl", "http", "urllib", "asyncio")
+        or m.endswith(("QtNetwork", "QtWebEngineCore"))
+    )
+    # who brought Python's socket module in, if anything did: the modules that hold it by name, and
+    # the modules that were loaded just before it (sys.modules keeps the order of loading)
+    names = list(sys.modules)
+    sock = sys.modules.get("socket")
+    socket_importers = sorted(
+        n
+        for n, m in list(sys.modules.items())
+        if sock is not None and getattr(m, "socket", None) is sock
+    )
+    loaded_before_socket = (
+        names[max(0, names.index("socket") - 8) : names.index("socket")] if sock else []
+    )
+    win.ctl.release()
+    win.close()
+    _shared.close()
+    settings.sync()
+    doc = {
+        "steps": steps,
+        "urls_opened": opened,
+        "dialogs_dismissed": dismissed,
+        "settings_file": settings.fileName(),
+        "libraries_mapped": libraries,
+        "python_network_modules": network_modules,
+        "socket_imported_by": socket_importers,
+        "loaded_before_socket": loaded_before_socket,
+        "idle_seconds": idle_s,
+    }
+    report.write_text(json.dumps(doc, indent=1, sort_keys=True) + "\n", encoding="utf-8")
+    return 0 if all(steps.values()) else 1
+
+
+def _windows_modules() -> list[str]:
+    """The DLLs loaded into this process (Windows), by the system's own list."""
+    import ctypes
+    from ctypes import wintypes
+
+    psapi = ctypes.WinDLL("psapi")  # type: ignore[attr-defined]
+    kernel = ctypes.WinDLL("kernel32")  # type: ignore[attr-defined]
+    kernel.GetCurrentProcess.restype = wintypes.HANDLE
+    psapi.EnumProcessModules.argtypes = [
+        wintypes.HANDLE, ctypes.POINTER(wintypes.HMODULE), wintypes.DWORD,
+        ctypes.POINTER(wintypes.DWORD),
+    ]  # fmt: skip
+    psapi.GetModuleFileNameExW.argtypes = [
+        wintypes.HANDLE, wintypes.HMODULE, wintypes.LPWSTR, wintypes.DWORD,
+    ]  # fmt: skip
+    handle = kernel.GetCurrentProcess()
+    modules = (wintypes.HMODULE * 4096)()
+    needed = wintypes.DWORD()
+    if not psapi.EnumProcessModules(handle, modules, ctypes.sizeof(modules), ctypes.byref(needed)):
+        return []
+    names = []
+    buf = ctypes.create_unicode_buffer(1024)
+    for i in range(needed.value // ctypes.sizeof(wintypes.HMODULE)):
+        if psapi.GetModuleFileNameExW(handle, modules[i], buf, 1024):
+            names.append(buf.value)
+    return sorted(names)
+
+
 if __name__ == "__main__":
+    if _asked("--audit-run", sys.argv) and len(sys.argv) in (4, 5):
+        raise SystemExit(audit_run(sys.argv))
     if _asked("--selftest", sys.argv):
         raise SystemExit(selftest(_selftest_out(sys.argv)))
     raise SystemExit(main())

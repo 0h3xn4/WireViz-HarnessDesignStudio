@@ -10,7 +10,7 @@ from typing import Any
 
 from harness_design_studio.cli.jsonout import Report, add_json_flag
 from harness_design_studio.core.commands import History
-from harness_design_studio.core.extensions import manager, plugins, trust
+from harness_design_studio.core.extensions import manager, plugins, policy, trust
 from harness_design_studio.core.io.loader import load_project
 from harness_design_studio.core.io.saver import save_project
 
@@ -32,7 +32,9 @@ def register(sub: argparse._SubParsersAction[argparse.ArgumentParser]) -> None:
         "you trust it. Without options it lists what the extensions add; with --all it lists the "
         "built-in items too. Nothing in the folder runs unless the project enables it in "
         "`extensions/enabled.json`, and Python code is not even imported unless you have also trusted "
-        "that exact code (`trust`). --enable NAME and --disable NAME change enabled.json (NAME is a "
+        "that exact code (`trust`), and never while Python plug-ins are switched off on this computer (the "
+        "environment variable HARNESS_DESIGN_STUDIO_NO_PLUGINS or the machine-wide policy file, "
+        "docs/SECURITY.md). --enable NAME and --disable NAME change enabled.json (NAME is a "
         "file such as min-gauge.json, or the name of a plug-in). Exit 1 while something the project "
         "enables is not applied.",
     )
@@ -143,6 +145,8 @@ def _extensions(args: argparse.Namespace) -> int:
     if rep.as_json:
         rep.put(**doc)
         return rep.finish(1 if problems else 0)
+    if doc["python_plugins_blocked"]:
+        rep.say(doc["python_plugins_blocked"])
     if not doc["has_folder"]:
         rep.say("This project has no extensions folder. Nothing is added to the tool.")
         built = len(doc["items"])
@@ -223,6 +227,9 @@ def _trust(args: argparse.Namespace) -> int:
     root: Path = args.project
     ext = manager.discover(root)
     candidates = plugins.project_candidates(root) + plugins.installed_candidates()
+    blocked = policy.plugins_blocked()
+    if blocked:
+        rep.say(blocked)
     if args.name is None:
         infos = ext.plugins if ext else ()
         for p in infos:
@@ -262,6 +269,13 @@ def _trust(args: argparse.Namespace) -> int:
         return rep.finish(0)
     if not found.usable:
         print(f"error: {found.name} cannot be trusted: {found.problem}.", file=sys.stderr)
+        return 2
+    if blocked:
+        print(
+            f"error: {found.name} was not trusted: Python plug-ins are switched off on this "
+            "computer, so trusting one would have no effect. Taking trust back (--revoke) still works.",
+            file=sys.stderr,
+        )
         return 2
     already = trust.is_trusted(found.name, found.sha256)
     for line in ("This is the code you are asked to trust:", *_describe(found), "", SANDBOX_NOTE):
@@ -327,8 +341,10 @@ def _import_plugin(args: argparse.Namespace) -> int:
     rt = manager.runtime(project)
     importer = rt.importers.get(args.importer) if rt is not None else None
     if importer is None:
+        blocked = policy.plugins_blocked()
         print(
-            f"error: no importer named '{args.importer}' from an enabled and trusted plug-in (see `extensions`).",
+            f"error: no importer named '{args.importer}' from an enabled and trusted plug-in (see `extensions`)."
+            + (f" {blocked}" if blocked else ""),
             file=sys.stderr,
         )
         return 2

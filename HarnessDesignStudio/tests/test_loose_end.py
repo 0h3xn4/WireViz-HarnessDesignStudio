@@ -234,6 +234,37 @@ def test_unplugging_gives_back_a_loose_end_and_keeps_pins_and_wires():
         plan_unplug(p, r.harness_id, r.loose_id)
 
 
+def test_an_unplugged_end_plugs_in_again_with_its_spare_pins_on_the_same_numbers():
+    """M4c: after a plug and an unplug the end has every pin of the port, the spare one too (pin 5
+    has no name on either side); the plug pairs the named pins by name again and puts the spare
+    pin on the port pin of its own number instead of refusing it."""
+    p = labelled()
+    r = plan_cable_from_port(p, "OBC-J01")
+    apply_ops(p, r.ops)
+    apply_ops(p, plan_plug_loose_end(p, r.harness_id, r.loose_id, "RW1-J02"))
+    apply_ops(p, plan_unplug(p, r.harness_id, r.loose_id))
+    before = p.harnesses[r.harness_id].wires
+    apply_ops(p, plan_plug_loose_end(p, r.harness_id, r.loose_id, "RW1-J02"))
+    h = p.harnesses[r.harness_id]
+    end = next(c for c in h.connectors if c.id == r.loose_id)
+    assert (end.role, end.mates_with) == ("cable", "RW1-J02")
+    assert sorted(x.id for x in end.pins) == ["1", "2", "3", "4", "5"]
+    assert h.wires == before  # every pin met its own number again: the wires did not move
+    assert errors(p) == []
+
+
+def test_a_left_over_pin_is_not_put_on_a_port_pin_of_another_name():
+    p = labelled()
+    ops, hid = plan_new_harness(p, "Odd")
+    apply_ops(p, ops)
+    ops, cid = plan_add_loose_end(p, hid, pin_ids=["1", "5"], signals={"1": "TX+", "5": "CLK"})
+    apply_ops(p, ops)
+    rw = p.connectors["RW1-J02"]
+    p.connectors["RW1-J02"] = evolve(rw, pins=[*rw.pins[:4], evolve(rw.pins[4], signal="SYNC")])
+    with pytest.raises(EditError, match="Pin 5"):
+        plan_plug_loose_end(p, hid, cid, "RW1-J02")
+
+
 def test_the_near_end_of_a_cable_can_be_unplugged_too():
     p = labelled()
     r = plan_cable_from_port(p, "OBC-J01")

@@ -171,6 +171,11 @@ class ExtensionsDialog(Dialog):
         intro.setWordWrap(True)
         intro.setObjectName("extensions-intro")
         lay.addWidget(intro)
+        # shown while Python plug-ins are switched off on this computer (core.extensions.policy)
+        self.plugins_off = QLabel()
+        self.plugins_off.setWordWrap(True)
+        self.plugins_off.setObjectName("extensions-plugins-off")
+        lay.addWidget(self.plugins_off)
         self.empty = QLabel(strings.EXT_NO_FOLDER)
         self.empty.setObjectName("extensions-empty")
         lay.addWidget(self.empty)
@@ -221,6 +226,9 @@ class ExtensionsDialog(Dialog):
     def fill(self) -> None:
         doc = manager.listing(self.ctl.project)
         has = bool(doc["has_folder"])
+        self.blocked = str(doc["python_plugins_blocked"])
+        self.plugins_off.setText(self.blocked)
+        self.plugins_off.setVisible(bool(self.blocked))
         self.empty.setVisible(not has)
         for w in (
             self.files_label, self.files, self.plugins_label, self.plugins, self.problems_label,
@@ -297,7 +305,7 @@ class ExtensionsDialog(Dialog):
 
     def _buttons(self) -> None:
         info = self.selected_plugin()
-        usable = info is not None and info.state != plugins.INVALID
+        usable = info is not None and info.state not in (plugins.INVALID, plugins.BLOCKED)
         self.trust_btn.setEnabled(bool(usable and info is not None and not info.trusted))
         self.revoke_btn.setEnabled(bool(info is not None and info.trusted))
 

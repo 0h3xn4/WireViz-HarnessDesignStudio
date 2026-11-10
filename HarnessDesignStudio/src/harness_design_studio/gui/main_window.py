@@ -63,6 +63,7 @@ from PySide6.QtWidgets import (
 from harness_design_studio import __version__
 from harness_design_studio.core import (
     asbuilt,
+    cable_ends,
     checks,
     configcheck,
     device_library,
@@ -86,6 +87,7 @@ from harness_design_studio.core.io.layout import model_hash
 from harness_design_studio.core.io.migrate import current_version
 from harness_design_studio.core.io.upgrade import UpgradeError, format_of
 from harness_design_studio.core.model import Project
+from harness_design_studio.core.model.physical import LOOSE_ROLE, TBD_PART_ID
 from harness_design_studio.core.open_data import data_files
 from harness_design_studio.core.outputs.build import (
     OutputsCancelled,
@@ -96,6 +98,7 @@ from harness_design_studio.core.outputs.build import (
 )
 from harness_design_studio.core.outputs.verify import verify_outputs
 from harness_design_studio.core.vcs.release import (
+    loose_ends_of,
     plan_new_revision,
     plan_release,
     plan_submit_review,
@@ -109,6 +112,7 @@ from harness_design_studio.core.verify import VerifyReport
 from harness_design_studio.gui import areas, diagram_export, recent, strings
 from harness_design_studio.gui.asbuilt_page import AsBuiltPage
 from harness_design_studio.gui.assumptions_dialog import AssumptionsDialog
+from harness_design_studio.gui.cable_end_dialog import CableEndDialog
 from harness_design_studio.gui.canvas import DiagramView, ZoomIndicator
 from harness_design_studio.gui.checks_panel import ChecksPanel, PendingValuesLink
 from harness_design_studio.gui.command_palette import CommandPalette, PaletteEntry
@@ -168,7 +172,7 @@ from harness_design_studio.gui.next_page import NextStepPage
 from harness_design_studio.gui.next_step import NextInputs, NextProblem, next_step, todo_sentence
 from harness_design_studio.gui.pages import HomePage
 from harness_design_studio.gui.panels import ProblemsPanel, PropertiesPanel, category_icon
-from harness_design_studio.gui.problems_panel import ProblemsList
+from harness_design_studio.gui.problems_panel import ProblemsList, finding_why
 from harness_design_studio.gui.project_tree import ProjectTree
 from harness_design_studio.gui.rail import NavRail
 from harness_design_studio.gui.release_text import plain_blocker
@@ -1110,6 +1114,7 @@ class MainWindow(QMainWindow):
         self.problems.waiveRequested.connect(self.waive_flow)
         self.problems.deviateRequested.connect(self.deviate_flow)
         self.inspector = Inspector(self.ctl, self.theme, props=self.props, problems=self.problems)
+        self.inspector.plugRequested.connect(self.plug_loose_flow)
         self.install_view("harness", self.harness_view)
         self.install_view("lists", self.lists_panel)
         self.devices_view = DevicesView(self.ctl, self.theme, self.settings)
@@ -1813,6 +1818,17 @@ class MainWindow(QMainWindow):
         self.act_link_delete = a(
             strings.A_LINK_DELETE, self.delete_link_flow, name="act-link-delete"
         )
+        # the ends of cables drawn by hand, without the mouse (M4c): Edit > Cable ends
+        self.act_leave_loose = a(
+            strings.A_LEAVE_LOOSE, self.leave_loose_flow, name="act-leave-loose"
+        )
+        self.act_leave_loose.setToolTip(strings.A_LEAVE_LOOSE_TIP)
+        self.act_plug_loose = a(
+            strings.A_PLUG_LOOSE_MENU, self.plug_loose_flow, name="act-plug-loose"
+        )
+        self.act_plug_loose.setToolTip(strings.A_PLUG_LOOSE_TIP)
+        self.act_unplug = a(strings.A_UNPLUG_MENU, self.unplug_flow, name="act-unplug")
+        self.act_unplug.setToolTip(strings.A_UNPLUG_TIP)
         self.act_check_connections = a(
             strings.A_CHECK_CONNECTIONS, self.check_connections_flow, name="act-check-connections"
         )
@@ -2099,6 +2115,9 @@ class MainWindow(QMainWindow):
             "link_harness": self.act_link_harness,
             "link_show_harness": self.act_link_show_harness,
             "link_delete": self.act_link_delete,
+            "leave_loose": self.act_leave_loose,
+            "plug_loose": self.act_plug_loose,
+            "unplug": self.act_unplug,
             "distribute_h": self.distribute_actions["horizontal"],
             "distribute_v": self.distribute_actions["vertical"],
             **{f"align_{m}": act for m, act in self.align_actions.items()},
@@ -2225,6 +2244,11 @@ class MainWindow(QMainWindow):
             self.act_link_delete,
         ):
             self.menu_connection.addAction(act)
+        self.menu_cable_ends = e.addMenu(strings.M_CABLE_ENDS)
+        self.menu_cable_ends.setObjectName("menu-cable-ends")
+        self.menu_cable_ends.setToolTipsVisible(True)
+        for act in (self.act_leave_loose, self.act_plug_loose, self.act_unplug):
+            self.menu_cable_ends.addAction(act)
         self._rebuild_connect_menu()
         self.tool_connect.setMenu(self.menu_connect)
         v = mb.addMenu(strings.M_VIEW)
@@ -3319,6 +3343,9 @@ class MainWindow(QMainWindow):
         if kind == "link":  # a connection of two connectors: its pairs
             self.edit_link_flow(ident)
             return
+        if kind == "harness":  # (the end of a cable drawn by hand: Show its harness)
+            self._go_to_harness(ident)
+            return
         found = self._harness_for(kind, ident)
         if found is None:
             self.toasts.show_message(
@@ -3510,6 +3537,7 @@ class MainWindow(QMainWindow):
             blockers = release_blockers(
                 project, hid, by="x", comment="x" * 10, when=today, outputs_folder=folder,
                 accept_placeholders="x" * 10, accept_unapproved_parts="x" * 10,
+                accept_loose_ends="x" * 10,
                 check_roles=False,  # the names are asked for in the dialog, which checks them
             )  # fmt: skip
             harness = project.harnesses[hid]
@@ -3522,6 +3550,7 @@ class MainWindow(QMainWindow):
                 blockers=[plain_blocker(b.message) for b in blockers],
                 placeholders=project.placeholder_configs(),
                 unapproved_parts=unapproved_parts(project, project.harnesses[hid]),
+                loose_ends=loose_ends_of(project.harnesses[hid]),
                 roles_check=(
                     (
                         lambda by, checker: [
@@ -3555,6 +3584,7 @@ class MainWindow(QMainWindow):
                 outputs_folder=folder,
                 accept_placeholders=dlg.accepted_placeholders(),
                 accept_unapproved_parts=dlg.accepted_unapproved_parts(),
+                accept_loose_ends=dlg.accepted_loose_ends(),
             )
             msg = strings.RELEASE_DONE.format(hid)
         else:
@@ -3929,7 +3959,7 @@ class MainWindow(QMainWindow):
             if f.rule == "part-unapproved" and not part_approval.approval_blocker(c.project, f.object_id):  # fmt: skip
                 approve = f.object_id
             facts["problem"] = NextProblem(
-                f.id, f.rule, f.severity, f.title, todo_sentence(f.why, f.fix_label), f.can_waive,
+                f.id, f.rule, f.severity, f.title, todo_sentence(finding_why(f), f.fix_label), f.can_waive,
                 approve, max(0, sum(x.count for x in failing) - 1),
             )  # fmt: skip
             break
@@ -4429,6 +4459,8 @@ class MainWindow(QMainWindow):
             self.ctl.apply_import(dlg.plan)
 
     def show_object(self, object_id: str) -> None:
+        if self._show_cable_end(object_id):
+            return
         if object_id in self.ctl.project.links:  # a connection: on the diagram, picked
             self.main_tabs.show_slot("diagram")
             self.ctl.select_link(object_id)
@@ -4455,6 +4487,125 @@ class MainWindow(QMainWindow):
             self.view.focus_unit(target)
         else:
             self.view.focus_link(target)
+
+    def _show_cable_end(self, object_id: str) -> bool:
+        """A finding about a cable end drawn by hand (or the stand-in part of the loose ends, whose
+        finding counts them): the end on the diagram, picked, or in the inspector when the diagram
+        does not draw it. True when it went there."""
+        p = self.ctl.project
+        if object_id == TBD_PART_ID:
+            loose = cable_ends.all_loose_ends(p)
+            if not loose:
+                return False
+            object_id = loose[0][1].id
+        found = cable_ends.connector_of(p, object_id)
+        if found is None or (
+            found[1].role != LOOSE_ROLE and object_id not in self.view.dscene.end_items
+        ):
+            return False
+        self.ctl.select_end(object_id)
+        self.inspector.show_object("cable_end", object_id, tab="inspector")
+        self._need_inspector()
+        if object_id in self.view.dscene.end_items:
+            self.main_tabs.show_slot("diagram")
+            self.view.focus_end(object_id)
+        return True
+
+    # ---- loose cable ends without the mouse (M4c): Edit > Cable ends -----------------------------
+    def _port_choices(self, unit_id: str = "") -> list[tuple[str, str]]:
+        """The device connectors a cable end can go into (pins, no cable plug on them yet), of one
+        device or of all, by ID."""
+        from harness_design_studio.core.integrity import mating_plugs
+
+        p = self.ctl.project
+        plugs = mating_plugs(p.harnesses.values())
+        out = []
+        for c in sorted(p.connectors.values(), key=lambda x: x.id):
+            if c.role != "box" or not c.unit_id or not c.pins or c.id in plugs:
+                continue
+            if unit_id and c.unit_id != unit_id:
+                continue
+            out.append((strings.LE_PORT_ROW.format(unit=c.unit_id, name=c.name, id=c.id), c.id))
+        return out
+
+    def leave_loose_flow(self) -> None:
+        """Edit > Cable ends > Leave a loose end…: a cable from a port whose far end stays loose
+        (the port of the device that is selected, or any), as one undo step."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        s = self.ctl.selection
+        unit = s.id if s is not None and s.kind == "unit" else ""
+        ports = (self._port_choices(unit) if unit else []) or self._port_choices()
+        dlg = CableEndDialog(
+            self, self.theme, strings.LE_LEAVE_TITLE, strings.LE_LEAVE_INTRO, strings.LE_LEAVE_OK,
+            ports=ports,
+        )  # fmt: skip
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted or not dlg.port():
+            return
+        if self.ctl.leave_loose_end(dlg.port()) is not None:
+            self.main_tabs.show_slot("diagram")
+            if self.ctl.selected_end is not None:
+                self.view.focus_end(self.ctl.selected_end)
+
+    def plug_loose_flow(self, end_id: str = "") -> None:
+        """Edit > Cable ends > Plug loose end into… (and the inspector's button): the loose end
+        that is picked, or one chosen, into a port chosen; one undo step."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        p = self.ctl.project
+        loose = cable_ends.all_loose_ends(p)
+        ids = {c.id for _h, c in loose}
+        end = end_id if end_id in ids else (self.ctl.selected_end or "")
+        end = end if end in ids else ""
+        rows = [
+            (strings.LE_END_ROW.format(end=c.id, name=c.name, harness=hid), c.id)
+            for hid, c in loose
+        ]
+        title = strings.LE_PLUG_TITLE_ONE.format(end=end) if end else strings.LE_PLUG_TITLE
+        dlg = CableEndDialog(
+            self, self.theme, title, strings.LE_PLUG_INTRO, strings.LE_PLUG_OK,
+            ends=None if end else rows, ports=self._port_choices(),
+        )  # fmt: skip
+        if self.run_dialog(dlg) != QDialog.DialogCode.Accepted:
+            return
+        chosen = end or dlg.end()
+        if chosen and dlg.port():
+            self.ctl.plug_loose_end(chosen, connector_id=dlg.port())
+
+    def unplug_flow(self, end_id: str = "") -> None:
+        """Edit > Cable ends > Unplug a cable end…: the plugged end that is picked, or one chosen,
+        becomes a loose end again (its pins and wires stay); one undo step. A harness made from a
+        connection or by Generate refuses, with the reason."""
+        if self.ctl.read_only:
+            self.ctl.refuse_read_only()
+            return
+        p = self.ctl.project
+        rows = []
+        for hid in sorted(p.harnesses):
+            h = p.harnesses[hid]
+            if h.generated:
+                continue
+            for c in sorted(h.connectors, key=lambda x: x.id):
+                if c.mates_with:
+                    rows.append(
+                        (
+                            strings.LE_PLUGGED_ROW.format(end=c.id, port=c.mates_with, harness=hid),
+                            c.id,
+                        )
+                    )
+        ids = {r[1] for r in rows}
+        end = end_id or (self.ctl.selected_end or "")
+        if end in ids:
+            self.ctl.unplug(end)
+            return
+        dlg = CableEndDialog(
+            self, self.theme, strings.LE_UNPLUG_TITLE, strings.LE_UNPLUG_INTRO, strings.LE_UNPLUG_OK,
+            ends=rows,
+        )  # fmt: skip
+        if self.run_dialog(dlg) == QDialog.DialogCode.Accepted and dlg.end():
+            self.ctl.unplug(dlg.end())
 
     def _show_other_object(self, object_id: str) -> bool:
         """The things a finding can name that are not on the diagram or in a harness: a part (in

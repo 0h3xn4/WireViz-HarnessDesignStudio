@@ -15,6 +15,7 @@ install folder stays; the programs inside it are named like the commands of a pi
 import gzip
 import os
 import platform
+import re
 import shutil
 import subprocess
 import sys
@@ -36,7 +37,23 @@ EXCLUDES = ["PySide6.QtNetwork", "PySide6.QtWebEngineCore", "PySide6.QtWebEngine
             "rich", "pygments", "markdown_it", "mdurl", "chardet", "toml",
             # pydantic.v1.mypy (and PySide6's project tools) import tomli, which pip-audit pulls into
             # the build environment; the program reads no TOML
-            "tomli"]  # fmt: skip
+            "tomli",
+            # Python's TLS module: nothing imports it (REQ-OFFLINE-04); with it goes OpenSSL's libssl
+            "ssl", "_ssl",
+            # nothing imports multiprocessing, but in the package PyInstaller's start-up hook for it
+            # imported it at every start, and with it Python's socket module (REQ-OFFLINE-04)
+            "multiprocessing"]  # fmt: skip
+# Network-capable native files that the build tools collect but the program never loads (REQ-OFFLINE-04,
+# D-203): they are deleted from the package after PyInstaller, and `check_package` refuses a package
+# that still has one. Name -> why it can use the network.
+NETWORK_STRIP: dict[str, str] = {
+    r"^(lib)?qvnc\.(so|dll)$": "Qt platform plug-in that serves the window as a VNC server (TCP)",
+    r"^(lib)?qtuiotouchplugin\.(so|dll)$": "Qt input plug-in that listens for TUIO touch events (UDP)",
+    r"^(lib)?Qt6Network(\.so(\.\d+)*|\.dll)$": "Qt's network library (needed only by the two plug-ins above)",
+    r"^lib(gssapi_krb5|krb5|k5crypto|krb5support)\.so(\.\d+)*$": "Kerberos network login (needed only by Qt's network library)",
+    r"^libssl(-3(-x64)?\.dll|\.so(\.\d+)*)$": "OpenSSL's TLS library (needed only by Python's TLS module)",
+    r"^_ssl(\.[\w-]+)?\.(so|pyd)$": "Python's TLS module",
+}
 FORBIDDEN = {"mypy", "hypothesis", "pytest", "_pytest", "lxml", "setuptools", "pip", "ruff"}
 # The only third-party code that may be in the package: the declared runtime dependencies (and what
 # they need), PySide6 with shiboken6, and the app. Everything else must be the standard library.
@@ -105,6 +122,78 @@ def undeclared_in_build(app: Path, bases: Iterable[Path] | None = None) -> list[
         if base.is_dir():
             found.update(undeclared_files(base))
     return sorted(found)
+
+
+def network_strip_reason(name: str) -> str:
+    """Why a file of this name must not be in the package ("" when it may)."""
+    return next((why for pattern, why in NETWORK_STRIP.items() if re.match(pattern, name)), "")
+
+
+def network_capable_files(folders: Iterable[Path]) -> list[Path]:
+    """The files and links below `folders` that NETWORK_STRIP names."""
+    return sorted(
+        p
+        for folder in folders
+        if folder.is_dir()
+        for p in folder.rglob("*")
+        if (p.is_file() or p.is_symlink()) and network_strip_reason(p.name)
+    )
+
+
+def elf_needed(path: Path) -> list[str]:
+    """The DT_NEEDED names of a 64-bit little-endian ELF file ([] for anything else)."""
+    import struct
+
+    try:
+        data = path.read_bytes()
+    except OSError:
+        return []
+    if data[:4] != b"\x7fELF" or data[4] != 2 or data[5] != 1:
+        return []
+    (shoff,) = struct.unpack_from("<Q", data, 0x28)
+    shentsize, shnum = struct.unpack_from("<HH", data, 0x3A)
+    sections = [
+        struct.unpack_from("<IIQQQQIIQQ", data, shoff + i * shentsize) for i in range(shnum)
+    ]
+    out: list[str] = []
+    for sec in sections:
+        if sec[1] != 6:  # SHT_DYNAMIC
+            continue
+        strtab = sections[sec[6]]  # sh_link: the string table of the dynamic section
+        for off in range(sec[4], sec[4] + sec[5], 16):
+            tag, val = struct.unpack_from("<qQ", data, off)
+            if tag == 0:
+                break
+            if tag == 1:  # DT_NEEDED
+                start = strtab[4] + val
+                out.append(data[start : data.index(b"\0", start)].decode())
+    return out
+
+
+def strip_network_capable(folders: Iterable[Path]) -> list[tuple[str, int]]:
+    """Delete what NETWORK_STRIP names from the package folders; (path, bytes) of each one deleted.
+    Fails when a file that stays needs a deleted library (Linux: its DT_NEEDED list)."""
+    folders = [f for f in folders if f.is_dir()]
+    removed: list[tuple[str, int]] = []
+    names: set[str] = set()
+    for path in network_capable_files(folders):
+        size = 0 if path.is_symlink() else path.stat().st_size
+        names.add(path.name)
+        path.unlink()
+        removed.append((path.as_posix(), size))
+    needs = sorted(
+        f"{p.name} needs {n}"
+        for folder in folders
+        for p in folder.rglob("*.so*")
+        if p.is_file() and not p.is_symlink()
+        for n in elf_needed(p)
+        if n in names
+    )
+    if needs:
+        raise SystemExit(
+            "error: a file of the package needs a library that was removed: " + "; ".join(needs)
+        )
+    return removed
 
 
 def make_tarball(root_dir: Path, base_dir: str, target: Path, stamp: int) -> Path:
@@ -197,6 +286,14 @@ def check_package(bases: Iterable[Path], app: Path | None = None) -> int:
     """Refuse a package that holds development tools or code that is not a declared dependency
     (its licence would not be shipped). `bases` are the folders that hold the libraries."""
     bases = list(bases)
+    network = network_capable_files(bases)
+    if network:
+        print(
+            "error: network-capable files the program does not use are in the package (REQ-OFFLINE-04): "
+            + ", ".join(f"{p.name} ({network_strip_reason(p.name)})" for p in network),
+            file=sys.stderr,
+        )
+        return 1
     leaked = sorted(
         p.name for base in bases if base.is_dir()
         for p in base.iterdir() if p.name.split(".")[0] in FORBIDDEN
@@ -225,6 +322,12 @@ def check_package(bases: Iterable[Path], app: Path | None = None) -> int:
     return 0
 
 
+def report_stripped(removed: list[tuple[str, int]]) -> None:
+    for path, size in removed:
+        print(f"removed (network-capable, not used): {path} ({size} bytes)")
+    print(f"removed {len(removed)} network-capable files, {sum(s for _p, s in removed)} bytes")
+
+
 def main() -> int:
     if build_programs():
         return 1
@@ -232,6 +335,7 @@ def main() -> int:
     shutil.rmtree(app, ignore_errors=True)
     shutil.copytree(ROOT / "build" / f"dist-{GUI_NAME}" / GUI_NAME, app, symlinks=True)
     shutil.copytree(ROOT / "build" / f"dist-{CLI_NAME}" / CLI_NAME, app / "cli")
+    report_stripped(strip_network_capable((app / "_internal", app / "cli" / "_internal")))
     if check_package((app / "_internal", app / "cli" / "_internal"), app):
         return 1
     from tools.collect_licences import collect

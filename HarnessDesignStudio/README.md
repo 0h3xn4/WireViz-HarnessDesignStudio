@@ -1,6 +1,6 @@
 # Harness Design Studio
 
-An offline desktop tool for the electrical harnesses of a spacecraft, made for systems engineers and for electrical / AIT engineers. You describe the **devices** (computer, power unit, reaction wheel ...) and the **interfaces** between them; the tool generates the harnesses (connectors, pins, wires, with a reason for each choice), checks them, and writes a build workbook, wire lists and test tables. The same design always gives byte-identical files, so Git diffs show real changes only. It never uses the network.
+An offline desktop tool for the electrical harnesses of a spacecraft, made for systems engineers and for electrical / AIT engineers. You describe the **devices** (computer, power unit, reaction wheel ...) and the **interfaces** between them; the tool generates the harnesses (connectors, pins, wires, with a reason for each choice), checks them, and writes a build workbook, wire lists and test tables. The same design always gives byte-identical files, so Git diffs show real changes only. It never uses the network; [`docs/VERIFY_OFFLINE.md`](docs/VERIFY_OFFLINE.md) shows how to check that yourself in 30 minutes, without trusting us.
 
 ## Status, licence and limits
 

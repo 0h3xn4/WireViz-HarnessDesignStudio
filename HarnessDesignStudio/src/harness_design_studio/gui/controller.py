@@ -19,6 +19,7 @@ from pydantic import ValidationError
 from PySide6.QtCore import QCoreApplication, QElapsedTimer, QObject, QThread, QTimer, Signal
 
 from harness_design_studio.core import (
+    cable_ends,
     checks,
     copies,
     devices,
@@ -28,6 +29,7 @@ from harness_design_studio.core import (
     journal,
     linepos,
     links,
+    manual_harness,
     part_approval,
 )
 from harness_design_studio.core.commands import Delete, History, Op, Put, SetZones, apply_ops
@@ -141,6 +143,9 @@ class Delta:
     units: set[str] = field(default_factory=set)
     interfaces: set[str] = field(default_factory=set)
     links: set[str] = field(default_factory=set)  # connections of two connectors (core/links.py)
+    harnesses: set[str] = field(
+        default_factory=set
+    )  # harnesses that changed (cables drawn by hand)
     followers: set[str] = field(default_factory=set)  # in `interfaces` only because a unit moved
     marks: set[str] = field(
         default_factory=set
@@ -213,7 +218,8 @@ class EditorController(QObject):
     linkRequested = Signal(str, str, str, str)  # device A, connector A or "", device B, connector B
     linkSelectionChanged = Signal()  # the connection picked in the tree or on the diagram changed
     cableHint = Signal(str)  # what to tell while a cable is in hand on the diagram ("" clears it)
-    projectSaved = Signal()  # the project was written to its folder (loose cable ends are dropped)
+    projectSaved = Signal()  # the project was written to its folder (a draft end is dropped)
+    endSelectionChanged = Signal()  # the end of a cable drawn by hand that is picked changed (M4c)
 
     def __init__(
         self, journal_delay_ms: int = JOURNAL_DELAY_MS, drc_delay_ms: int = DRC_DELAY_MS
@@ -231,6 +237,7 @@ class EditorController(QObject):
         self.connect_type: str | None = None
         self.connect_from: ConnectFrom | None = None
         self.selected_link: str | None = None  # the connection (a core.links.Link) picked
+        self.selected_end: str | None = None  # the end of a cable drawn by hand that is picked
         self._lock: ProjectLock | None = None
         self._fingerprint: str | None = None
         self._saved_revision = 0
@@ -496,7 +503,9 @@ class EditorController(QObject):
         if (
             ops
             and delta.marks
-            and not (delta.units or delta.interfaces or delta.links or delta.full)
+            and not (
+                delta.units or delta.interfaces or delta.links or delta.harnesses or delta.full
+            )
         ):
             # only labels moved: no table, check or route has anything new to say
             delta.tables = False
@@ -508,6 +517,13 @@ class EditorController(QObject):
         if self.selected_link is not None and self.selected_link not in self.project.links:
             self.selected_link = None
             self.linkSelectionChanged.emit()
+        if (
+            self.selected_end is not None
+            and (delta.full or delta.harnesses)
+            and cable_ends.connector_of(self.project, self.selected_end) is None
+        ):
+            self.selected_end = None
+            self.endSelectionChanged.emit()
         self.changed.emit(delta)
         self.stateChanged.emit()
         self._schedule_journal()
@@ -563,6 +579,8 @@ class EditorController(QObject):
                 d.units.update(e.unit_id for e in op.obj.endpoints)  # type: ignore[attr-defined]
         elif op.collection == "links":
             d.links.add(key)
+        elif op.collection == "harnesses":
+            d.harnesses.add(key)
         elif op.collection == "connectors":
             unit = op.obj.unit_id if isinstance(op, Put) else self._owners.get(key)  # type: ignore[attr-defined]
             if unit:
@@ -650,6 +668,9 @@ class EditorController(QObject):
             if items and self.selected_link is not None:  # one thing is picked at a time
                 self.selected_link = None
                 self.linkSelectionChanged.emit()
+            if items and self.selected_end is not None:
+                self.selected_end = None
+                self.endSelectionChanged.emit()
             self.selectionChanged.emit()
 
     def request_open(self, kind: str, id_: str) -> None:
@@ -941,7 +962,10 @@ class EditorController(QObject):
         if self.mark_of(mark_id) == mark:
             return True
         kind, _, name = mark_id.partition(":")
-        step = strings.STEP_MOVE_ROUTE if kind == "route" else strings.STEP_MOVE_LABEL
+        step = {
+            "route": strings.STEP_MOVE_ROUTE,
+            cable_ends.POS_KIND: strings.STEP_MOVE_LOOSE,
+        }.get(kind, strings.STEP_MOVE_LABEL)
         return self.run(step.format(name), [Put("diagram_marks", mark)])
 
     def slide_mark(self, mark_id: str, t: float) -> bool:
@@ -1434,6 +1458,9 @@ class EditorController(QObject):
         self._fingerprint = disk_fingerprint(root) if root is not None else None
         self._kept_fingerprint = None
         self.selection = None
+        if self.selected_end is not None:
+            self.selected_end = None
+            self.endSelectionChanged.emit()
         self.end_connect()
         self.journal_error_shown = False
         self.diff_marks = {}
@@ -1802,6 +1829,7 @@ class EditorController(QObject):
             link_id = None
         if link_id is not None:
             self._set_selection((), None)
+            self.select_end(None)
         if link_id != self.selected_link:
             self.selected_link = link_id
             self.linkSelectionChanged.emit()
@@ -1906,6 +1934,144 @@ class EditorController(QObject):
         if not self.run(strings.STEP_LINK_HARNESS.format(link_id), ops, message=text):
             return None
         return hid
+
+    # ---- cables drawn by hand: loose ends (M4c of the programme towards 2.0, D-201) -----------
+
+    def select_end(self, connector_id: str | None) -> None:
+        """Pick the end of a cable drawn by hand (a cable connector of a harness; the diagram, the
+        tree and the inspector show it); None puts it down. Picking a device, an interface or a
+        connection puts it down, and the other way round."""
+        if connector_id is not None and cable_ends.connector_of(self.project, connector_id) is None:
+            connector_id = None
+        if connector_id is not None:
+            self._set_selection((), None)
+            if self.selected_link is not None:
+                self.selected_link = None
+                self.linkSelectionChanged.emit()
+        if connector_id != self.selected_end:
+            self.selected_end = connector_id
+            self.endSelectionChanged.emit()
+
+    def leave_loose_end(
+        self, box_connector_id: str, offset: tuple[float, float] | None = None
+    ) -> str | None:
+        """A cable from the port `box_connector_id` whose other end stays loose: a new harness
+        drawn by hand (`manual_harness.plan_cable_from_port`) and, when the end was let go away
+        from where the diagram puts it, its place (`offset`, the mark `pos:`, outside the model
+        hash), as one undo step. Returns the ID of the loose end, or None when it was refused
+        (the reason is a message)."""
+        try:
+            made = manual_harness.plan_cable_from_port(self.project, box_connector_id)
+        except (HarnessError, ValidationError) as exc:
+            self.message.emit(_plain(exc), False)
+            return None
+        ops = list(made.ops)
+        if offset is not None and (abs(offset[0]) >= 1.0 or abs(offset[1]) >= 1.0):
+            mark = DiagramMark(
+                id=cable_ends.pos_mark(made.loose_id),
+                dx=round(offset[0], 1),
+                dy=round(offset[1], 1),
+            )
+            ops.append(Put("diagram_marks", mark))
+        text = strings.LOOSE_MADE.format(
+            harness=made.harness_id, end=made.loose_id, port=box_connector_id
+        )
+        if not self.run(strings.STEP_LEAVE_LOOSE.format(box_connector_id), ops, message=text):
+            return None
+        self.select_end(made.loose_id)
+        return made.loose_id
+
+    def plug_loose_end(self, loose_id: str, connector_id: str = "", unit_id: str = "") -> bool:
+        """Plug a loose end into the connector `connector_id` of a device, or into the device
+        `unit_id` (the connector whose pins pair, `cable_ends.plug_port`), as one undo step: its
+        pins are paired by signal name, else by number (`manual_harness.plan_plug_loose_end`), and
+        its place on the diagram is forgotten. The reason is a message when it is refused."""
+        found = cable_ends.connector_of(self.project, loose_id)
+        if found is None:
+            self.message.emit(strings.LOOSE_GONE.format(end=loose_id), False)
+            return False
+        hid = found[0].id
+        chosen: list[str] = []
+
+        def build() -> list[Op]:
+            box = connector_id or cable_ends.plug_port(self.project, hid, loose_id, unit_id)
+            chosen.append(box)
+            ops = manual_harness.plan_plug_loose_end(self.project, hid, loose_id, box)
+            mark = cable_ends.pos_mark(loose_id)
+            if mark in self.project.diagram_marks:
+                ops.append(Delete("diagram_marks", mark))
+            return ops
+
+        if not self.attempt(strings.STEP_PLUG_LOOSE.format(loose_id), build):
+            return False
+        self.message.emit(strings.LOOSE_PLUGGED.format(end=loose_id, port=chosen[0]), True)
+        self.select_end(loose_id)
+        return True
+
+    def unplug(self, connector_id: str) -> bool:
+        """Turn a plugged cable connector of a harness made by hand back into a loose end (its pins
+        and wires stay, its part goes back to TBD-CONNECTOR; `manual_harness.plan_unplug`), as
+        one undo step. A harness made from a connection or by Generate refuses, with the reason."""
+        found = cable_ends.connector_of(self.project, connector_id)
+        if found is None:
+            self.message.emit(strings.LOOSE_GONE.format(end=connector_id), False)
+            return False
+        hid = found[0].id
+        if not self.attempt(
+            strings.STEP_UNPLUG.format(connector_id),
+            lambda: manual_harness.plan_unplug(self.project, hid, connector_id),
+        ):
+            return False
+        h = self.project.harnesses[hid]
+        drawn = any(e.connector_id == connector_id for e in cable_ends.drawn_ends(self.project))
+        text = strings.LOOSE_UNPLUGGED if drawn else strings.LOOSE_UNPLUGGED_LISTED
+        self.message.emit(text.format(end=connector_id, harness=h.id), True)
+        self.select_end(connector_id)
+        return True
+
+    def why_not_unplug(self, connector_id: str) -> str:
+        """Why the cable connector cannot be unplugged now ("" when it can)."""
+        found = cable_ends.connector_of(self.project, connector_id)
+        if found is None:
+            return strings.LOOSE_GONE.format(end=connector_id)
+        try:
+            manual_harness.plan_unplug(self.project, found[0].id, connector_id)
+        except (HarnessError, ValidationError) as exc:
+            return _plain(exc)
+        return ""
+
+    def move_loose_end(self, loose_id: str, dx: float, dy: float) -> bool:
+        """Remember where a loose end hangs: `dx`, `dy` away from where the diagram puts it (one
+        undo step; diagram layout only, no model hash, no written output)."""
+        return self.move_mark(cable_ends.pos_mark(loose_id), dx, dy)
+
+    def resolve_loose_end(self, loose_id: str, part_id: str) -> bool:
+        """Give a loose end its connector part: the end is decided (role `cable`), plugged into
+        nothing (`manual_harness.plan_resolve_loose_end`), as one undo step."""
+        found = cable_ends.connector_of(self.project, loose_id)
+        if found is None:
+            self.message.emit(strings.LOOSE_GONE.format(end=loose_id), False)
+            return False
+        hid = found[0].id
+        return self.attempt(
+            strings.STEP_RESOLVE_LOOSE.format(loose_id),
+            lambda: manual_harness.plan_resolve_loose_end(self.project, hid, loose_id, part_id),
+            message=strings.LOOSE_RESOLVED.format(end=loose_id, part=part_id),
+        )
+
+    def rename_cable_end(self, connector_id: str, name: str) -> bool:
+        """Give a cable connector of a harness made by hand a name (one undo step)."""
+        from harness_design_studio.core.connector_edit import plan_edit_connector
+
+        found = cable_ends.connector_of(self.project, connector_id)
+        if found is None:
+            self.message.emit(strings.LOOSE_GONE.format(end=connector_id), False)
+            return False
+        hid = found[0].id
+        return self.attempt(
+            strings.STEP_EDIT_CONNECTOR.format(connector_id),
+            lambda: plan_edit_connector(self.project, hid, connector_id, name=name),
+        )
 
 
 def reason_of(exc: BaseException) -> str:

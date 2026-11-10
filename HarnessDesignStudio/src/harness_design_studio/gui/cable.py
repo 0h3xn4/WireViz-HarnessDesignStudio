@@ -4,8 +4,11 @@
 
 A person picks up a cable at a port of a device, carries it over the diagram and puts it down on a
 port of another device (or on the device itself, or on empty ground, where it stays as a loose
-end until it is plugged in or dropped). The same hand picks up the end of a connection that is
-plugged in already and plugs it in somewhere else. This module holds what is decided without a
+end: since M4c a saved one, a harness drawn by hand, see `gui/canvas_cable.py`). The same hand
+picks up the end of a connection that is plugged in already and plugs it in somewhere else (let
+go on empty ground, that end waits as a draft of the window until it is plugged in or dropped:
+a connection always joins two connectors), and picks up a saved loose end (`SAVED`) to move it or
+to plug it into a port. This module holds what is decided without a
 screen: where a port is, which port the cable snaps to, whether a port can take it, the orthogonal
 line of the rubber band, how fast the view scrolls when the cable nears its edge, and the states
 a press, a drag, a click and Esc lead through.
@@ -17,8 +20,10 @@ a press, a drag, a click and Esc lead through.
     # out.kind == "connect": the window that makes the connection does the rest
 
 Nothing here changes a project. The scene (`gui/canvas_cable.py`) asks it what to do, draws what it
-answers and carries out the outcome through the same operations as the Connect tool; a loose end
-is a draft of the window only and is never saved, hashed or written.
+answers and carries out the outcome through the controller: a new connection as the Connect tool
+makes it, a moved end of a connection, a cable with a saved loose end
+(`core.manual_harness.plan_cable_from_port`), a loose end plugged in or moved. The draft of a
+picked-up end of a connection is of the window only and is never saved, hashed or written.
 """
 
 from collections.abc import Sequence
@@ -38,11 +43,13 @@ OUT = 36.0  # how far the rubber band leaves a port before it turns (scene units
 END_GAP = 4.0  # between a device edge and the vertical piece of a line (scene units)
 PLUG_DOT = 5.0  # the radius of the dot that marks a plugged-in end (scene units)
 PLUG_OFFSET = 8.0  # how far out of its port the plug of a connection sits (scene units)
+LOOSE_OUT = 150.0  # how far out of its port a saved loose end hangs until moved (scene units)
+LOOSE_STEP = 34.0  # how far apart the loose ends of one port hang (scene units)
 
 # the states
 IDLE, PRESSED, CARRY, HOLD = "idle", "pressed", "carry", "hold"
 # what a press began on
-NEW, REPLUG, DRAFT = "new", "replug", "draft"
+NEW, REPLUG, DRAFT, SAVED = "new", "replug", "draft", "saved"
 # why a port refuses the cable (the window words them)
 SAME_DEVICE, FULL, PLUGGED, READ_ONLY = "same_device", "full", "plugged", "read_only"
 
@@ -82,7 +89,8 @@ class Landing:
 class Draft:
     """A loose end: the cable stays plugged in at `anchor` and ends in the air at `end`. UI only.
     `replaces` names the connection whose end was picked up (it stays in the project until the
-    cable is plugged in elsewhere) and `replaces_end` which end ("a" or "b") that was."""
+    cable is plugged in elsewhere) and `replaces_end` which end ("a" or "b") that was. A draft of
+    a new cable (no `replaces`) is saved at once as a loose end by the scene (M4c)."""
 
     anchor: Port
     end: tuple[float, float]
@@ -97,7 +105,9 @@ class Outcome:
     "connect" a new connection from `anchor` to `target`; "replug" the end `end` of connection
     `replaces` moves to `target`; "loose" the cable end stays in the air (the draft); "refused"
     `reason` says why the target cannot take it; "cancel" the cable was put away; "dropped" the
-    draft was thrown away."""
+    draft was thrown away; for a saved loose end (`start` SAVED, `end_id` its connector) "place"
+    it is put down on empty ground (moved) and "plug" it goes into `target` (or the device
+    `target_unit`)."""
 
     kind: str = "none"
     anchor: Port | None = None
@@ -107,6 +117,7 @@ class Outcome:
     end: str = ""
     reason: str = ""
     start: str = ""
+    end_id: str = ""  # the saved loose end in hand (start SAVED)
 
 
 # ---- what a port can take -----------------------------------------------------------------------
@@ -218,6 +229,14 @@ def plug_direction(path: Sequence[tuple[float, float]]) -> tuple[float, float]:
     return (dx / length, dy / length) if length else (1.0, 0.0)
 
 
+def loose_spot(anchor: Port, index: int = 0) -> tuple[float, float]:
+    """Where a saved loose end hangs before anyone moved it: `LOOSE_OUT` out of the port of its
+    cable, on the side the port faces, and the `index`-th of one port `LOOSE_STEP` lower. The mark
+    `pos:<connector id>` holds the offset from here (so the end follows its device)."""
+    sign = 1.0 if anchor.side == "right" else -1.0
+    return (anchor.x + sign * LOOSE_OUT, anchor.y + index * LOOSE_STEP)
+
+
 def edge_scroll(
     width: float,
     height: float,
@@ -259,6 +278,7 @@ class Cable:
         self.anchor: Port | None = None  # the end that stays plugged in
         self.replaces = ""
         self.replaces_end = ""
+        self.end_id = ""  # the saved loose end in hand (start SAVED)
         self.pos = (0.0, 0.0)  # the cable end, scene coordinates
         self._down = (0.0, 0.0)  # where the press was (scene)
         self._moved_px = 0.0
@@ -284,12 +304,15 @@ class Cable:
         start: str = NEW,
         replaces: str = "",
         end: str = "",
+        end_id: str = "",
     ) -> None:
-        """The button went down on a start spot. `anchor` is the end that stays where it is."""
+        """The button went down on a start spot. `anchor` is the end that stays where it is;
+        `end_id` is the saved loose end picked up (start SAVED)."""
         self.state, self.start, self.anchor = PRESSED, start, anchor
         if start != DRAFT:
             self.draft = None  # one loose cable at a time
         self.replaces, self.replaces_end = replaces, end
+        self.end_id = end_id
         self.pos = self._down = at
         self._moved_px = 0.0
         self.target, self.card = None, ""
@@ -332,6 +355,10 @@ class Cable:
             if start == DRAFT:
                 self.state, self.pos = HOLD, at  # the loose end is picked up and follows
                 return Outcome("click", anchor, start=start)
+            if start == SAVED:  # a click on a saved loose end selects it
+                end_id = self.end_id
+                self._reset()
+                return Outcome("click", anchor, start=start, end_id=end_id)
             self._reset()
             return Outcome("click", anchor, replaces=replaces, end=end, start=start)
         if was not in (CARRY, HOLD) or anchor is None:
@@ -360,6 +387,17 @@ class Cable:
             return Outcome("none")
         target = landing.port if landing.kind == "port" else None
         target_unit = landing.unit_id if landing.kind == "card" else ""
+        if self.start == SAVED:
+            end_id = self.end_id
+            self._reset()
+            if landing.kind == "none":
+                return Outcome("place", anchor, start=SAVED, end_id=end_id)
+            if refused:
+                return Outcome(
+                    "refused", anchor, target, target_unit, reason=refused, start=SAVED,
+                    end_id=end_id,
+                )  # fmt: skip
+            return Outcome("plug", anchor, target, target_unit, start=SAVED, end_id=end_id)
         if landing.kind == "none":
             self.draft = Draft(anchor, at, replaces, end)
             self._reset()
@@ -402,6 +440,7 @@ class Cable:
         self.state, self.start = IDLE, ""
         self.target, self.card = None, ""
         self.replaces = self.replaces_end = ""
+        self.end_id = ""
         self.anchor = None
         if not keep_draft:
             self.draft = None

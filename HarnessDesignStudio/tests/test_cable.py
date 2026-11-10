@@ -38,6 +38,44 @@ def linked():
 # ---- the gesture --------------------------------------------------------------------------------
 
 
+def test_a_click_on_a_saved_loose_end_selects_it_and_nothing_stays_in_hand() -> None:
+    c = cb.Cable()
+    c.press(A, (420, 120), start=cb.SAVED, end_id="W001-P2")
+    out = c.release((421, 120), cb.Landing())
+    assert (out.kind, out.start, out.end_id) == ("click", cb.SAVED, "W001-P2")
+    assert c.state == cb.IDLE and c.draft is None and c.end_id == ""
+
+
+def test_a_saved_loose_end_dropped_on_empty_ground_is_placed_there_and_on_a_port_plugs_in() -> None:
+    c = cb.Cable()
+    c.press(A, (420, 120), start=cb.SAVED, end_id="W001-P2")
+    c.move((480, 300))
+    assert c.active and c.shown() == (A, (480, 300))
+    out = c.release((480, 300), cb.Landing())
+    assert (out.kind, out.end_id) == ("place", "W001-P2") and c.draft is None
+    c.press(A, (480, 300), start=cb.SAVED, end_id="W001-P2")
+    c.move((470, 254))
+    out = c.release((470, 254), B_PORT)
+    assert (out.kind, out.end_id, out.target) == ("plug", "W001-P2", B)
+    assert c.state == cb.IDLE and c.draft is None
+
+
+def test_a_saved_loose_end_refused_by_a_port_or_put_away_with_esc_changes_nothing() -> None:
+    c = cb.Cable()
+    c.press(A, (420, 120), start=cb.SAVED, end_id="W001-P2")
+    c.move((480, 300))
+    out = c.release((470, 254), B_PORT, refused=cb.FULL)
+    assert (out.kind, out.reason, out.end_id) == ("refused", cb.FULL, "W001-P2")
+    c.press(A, (420, 120), start=cb.SAVED, end_id="W001-P2")
+    c.move((480, 300))
+    assert c.cancel().kind == "cancel" and c.state == cb.IDLE and c.draft is None
+
+
+def test_a_saved_loose_end_hangs_out_of_its_port_on_the_side_the_port_faces() -> None:
+    assert cb.loose_spot(A) == (A.x + cb.LOOSE_OUT, A.y)
+    assert cb.loose_spot(B, 2) == (B.x - cb.LOOSE_OUT, B.y + 2 * cb.LOOSE_STEP)
+
+
 def test_a_press_is_a_click_until_the_pointer_goes_the_drag_distance() -> None:
     c = cb.Cable()
     c.press(A, (270, 116))
@@ -82,7 +120,9 @@ def test_releasing_on_a_card_connects_to_the_device_and_the_tool_picks_the_conne
     assert (out.kind, out.target, out.target_unit) == ("connect", None, "RW1")
 
 
-def test_releasing_on_empty_ground_leaves_a_loose_end_that_is_only_a_draft() -> None:
+def test_releasing_on_empty_ground_says_loose_and_keeps_a_draft_the_scene_then_saves() -> None:
+    """The state machine leaves the draft; since M4c the scene saves a new cable's draft at once
+    as a harness with a loose end (`gui/canvas_cable.py`, `tests/test_ui_tactile_connect.py`)."""
     c = cb.Cable()
     c.press(A, (270, 116))
     c.move((400, 200))

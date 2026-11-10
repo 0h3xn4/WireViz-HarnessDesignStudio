@@ -45,12 +45,13 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from harness_design_studio.core import describe, edit, linepos, routing
+from harness_design_studio.core import cable_ends, describe, edit, linepos, routing
 from harness_design_studio.core.model import Project, mark_is_along
 from harness_design_studio.gui import cable as cb
 from harness_design_studio.gui import canvas_badges as cbadges
 from harness_design_studio.gui import device_kinds, device_looks, glyphs, strings
 from harness_design_studio.gui.canvas_cable import RING, CableLayer
+from harness_design_studio.gui.canvas_ends import CableEndItem
 from harness_design_studio.gui.canvas_links import (
     HIT_WIDTH,
     LABEL_GAP,
@@ -1806,6 +1807,7 @@ class DiagramScene(QGraphicsScene):
         self.unit_items: dict[str, UnitItem] = {}
         self.link_items: dict[str, LinkItem] = {}
         self.connection_items: dict[str, ConnectionItem] = {}  # core.links.Link lines
+        self.end_items: dict[str, CableEndItem] = {}  # ends of cables drawn by hand (M4c)
         self._chips: dict[tuple[int, int], list[tuple[str, QRectF]]] = {}
         self._chip_rects: dict[str, QRectF] = {}
         self._segments: dict[tuple[int, int], list[tuple[str, QRectF]]] = {}  # route pieces
@@ -1845,6 +1847,7 @@ class DiagramScene(QGraphicsScene):
         ctl.marksChanged.connect(self.refresh_all)
         ctl.connectChanged.connect(self._repaint_units)
         ctl.linkSelectionChanged.connect(self._repaint_connections)
+        ctl.endSelectionChanged.connect(self._repaint_ends)
         ctl.modeChanged.connect(self.refresh_all)
         theme.changed.connect(self._theme_changed)
         self.rebuild()
@@ -2395,6 +2398,7 @@ class DiagramScene(QGraphicsScene):
         self.unit_items.clear()
         self.link_items.clear()
         self.connection_items.clear()
+        self.end_items.clear()
         self._chips.clear()
         self._chip_rects.clear()
         self._slots.clear()
@@ -2415,6 +2419,7 @@ class DiagramScene(QGraphicsScene):
         for lid in sorted(project.links):
             self._add_connection(lid)
         self._refresh_connections()
+        self.sync_ends()
         self.adopt_legacy_marks()  # (labels moved by an earlier version stay on their lines)
         self._update_extent()
         if self.filter is not None or self.ctl.selected:
@@ -2495,6 +2500,34 @@ class DiagramScene(QGraphicsScene):
         for item in self.connection_items.values():
             item.update()
 
+    # ---- the ends of cables drawn by hand (M4c) ------------------------------------------------
+    def sync_ends(self) -> None:
+        """Bring the items of the cables drawn by hand in line with the project: an item for each
+        end `core.cable_ends.drawn_ends` names (few; a project without one costs a look at its
+        harnesses)."""
+        project = self.ctl.project
+        ends = (
+            {e.connector_id: e for e in cable_ends.drawn_ends(project)} if project.harnesses else {}
+        )
+        for cid in [c for c in self.end_items if c not in ends]:
+            self.removeItem(self.end_items.pop(cid))
+        for cid, end in ends.items():
+            item = self.end_items.get(cid)
+            if item is None:
+                item = CableEndItem(self, end)
+                self.addItem(item)
+                self.end_items[cid] = item
+            else:
+                item.set_end(end)
+
+    def _follow_ends(self) -> None:
+        for item in self.end_items.values():
+            item.update_path()
+
+    def _repaint_ends(self) -> None:
+        for item in self.end_items.values():
+            item.update()
+
     def _sync_zones(self) -> None:
         zones = edit.effective_zones(self.ctl.project)
         n = len(zones)
@@ -2520,6 +2553,10 @@ class DiagramScene(QGraphicsScene):
             bottom = max(bottom, pos.y() + it.height() + 60)
             left, top = min(left, pos.x() - 40), min(top, pos.y() - 40)
             right = max(right, pos.x() + W + 40)
+        for end in self.end_items.values():  # a loose end can hang beyond the devices
+            r = end.sceneBoundingRect()
+            bottom, right = max(bottom, r.bottom()), max(right, r.right())
+            left, top = min(left, r.left()), min(top, r.top())
         # in steps, so adding or undoing one unit rarely resizes the scene (which repaints it all)
         height = max(700.0, math.ceil((bottom + 40) / LANE_STEP) * LANE_STEP)
         if height != self.lane_height:
@@ -2566,7 +2603,7 @@ class DiagramScene(QGraphicsScene):
             self.rebuild()
             self.refresh_states()
             return
-        if delta.marks and not (delta.units or delta.interfaces or delta.links):
+        if delta.marks and not (delta.units or delta.interfaces or delta.links or delta.harnesses):
             self._apply_marks(delta.marks)  # only labels moved: nothing else is redrawn
             return
         self._state_timer.start()  # the marks follow a moment later, off the edit's path
@@ -2588,6 +2625,8 @@ class DiagramScene(QGraphicsScene):
                 link.refresh_chip()
         if delta.links or self.connection_items:
             self._apply_connections(delta)
+        if delta.harnesses or delta.links or (delta.units and self.end_items):
+            self.sync_ends()
         if delta.marks:
             self._apply_marks(delta.marks)
         self._update_extent()
@@ -2639,6 +2678,7 @@ class DiagramScene(QGraphicsScene):
         METRICS.drag_preview_ms); the routes are worked out when the mouse is released."""
         for line in self.connection_items.values():  # (a few straight-sided lines: cheap)
             line.update_path()
+        self._follow_ends()
         item = self.unit_items.get(unit_id)
         if item is not None and self._drag_units:  # a device dragged past the edge: the scene grows
             self.grow_to(
@@ -2659,6 +2699,8 @@ class DiagramScene(QGraphicsScene):
         for link in self.link_items.values():
             link.update_path()
         self._refresh_connections()
+        self.sync_ends()
+        self._follow_ends()
         self._update_extent()  # (expert units are taller)
         self.update()
 
@@ -2729,6 +2771,11 @@ class DiagramScene(QGraphicsScene):
         """Labels were moved or put back (by a drag, an undo, a redo)."""
         for key in marks:
             kind, _, ident = key.partition(":")
+            if kind == cable_ends.POS_KIND:  # where a loose end hangs
+                end = self.end_items.get(ident)
+                if end is not None:
+                    end.update_path()
+                continue
             ident = ident.partition(":")[0]  # ("end:L1:0" is of the connection L1)
             by_kind = self.link_items if kind in ("interface", "route") else self.connection_items
             item = by_kind.get(ident)
@@ -3370,7 +3417,11 @@ class DiagramView(QGraphicsView):
     def content_rect(self) -> QRectF:
         """Bounding box of units and links (not the tall lane backgrounds)."""
         rect = QRectF()
-        for it in (*self.dscene.unit_items.values(), *self.dscene.link_items.values()):
+        for it in (
+            *self.dscene.unit_items.values(),
+            *self.dscene.link_items.values(),
+            *self.dscene.end_items.values(),
+        ):
             rect = rect.united(it.sceneBoundingRect())
         return rect
 
@@ -3582,11 +3633,19 @@ class DiagramView(QGraphicsView):
         elif isinstance(item, ConnectionItem):
             kind, ident = "link", item.link_id
             self.ctl.select_link(ident)
+        elif isinstance(item, CableEndItem):
+            kind, ident = "cable_end", item.connector_id
+            self.ctl.select_end(ident)
         else:
             link = item if isinstance(item, LinkItem) else self.dscene.chip_at(at)
             if link is not None:
                 kind, ident = "interface", link.interface_id
-        if kind and ident and kind != "link" and not self.ctl.is_selected(kind, ident):
+        if (
+            kind
+            and ident
+            and kind not in ("link", "cable_end")
+            and not self.ctl.is_selected(kind, ident)
+        ):
             self.ctl.select(kind, ident)  # the menu is about what was clicked
         menu = self.build_context_menu(kind, ident, at, connector=connector)
         self.last_menu = menu
@@ -3614,7 +3673,7 @@ class DiagramView(QGraphicsView):
         return entry
 
     def _entry(
-        self, menu: QMenu, text: str, slot: Callable[[], None], why_not: str = ""
+        self, menu: QMenu, text: str, slot: Callable[[], object], why_not: str = ""
     ) -> QAction:
         entry = QAction(f"{text} — {why_not}" if why_not else text, menu)
         entry.setEnabled(not why_not)
@@ -3637,6 +3696,8 @@ class DiagramView(QGraphicsView):
         if kind == "unit" and ident:
             self._entry(menu, strings.CM_OPEN_PLAN, lambda: ctl.request_open("unit", ident))
             self._state_entries(menu, "unit", ident, connector)
+            if connector:
+                self._cable_entries(menu, connector)
             menu.addSeparator()
             self._mirror(menu, "duplicate")
             self._mirror(menu, "redundant")
@@ -3656,6 +3717,8 @@ class DiagramView(QGraphicsView):
             self._align_menus(menu)
             menu.addSeparator()
             self._mirror(menu, "delete")
+        elif kind == "cable_end" and ident:
+            self._end_entries(menu, ident)
         elif kind == "link" and ident:
             for name in ("link_edit", "link_harness", "link_show_harness", "link_delete"):
                 self._mirror(menu, name)
@@ -3684,6 +3747,69 @@ class DiagramView(QGraphicsView):
             for name in ("select_all", "find", "fit", "zoom100", "zoom_selection", "arrange"):
                 self._mirror(menu, name)
         return menu
+
+    def _cable_entries(self, menu: QMenu, connector_id: str) -> None:
+        """On a connector of a device (Expert mode): leave a loose end from it, and unplug the cable
+        plugs that sit on it (greyed out, with the reason, where that is refused: a harness made
+        from a connection or by Generate)."""
+        ctl = self.ctl
+        project = ctl.project
+        box = project.connectors.get(connector_id)
+        if box is None:
+            return
+        menu.addSeparator()
+        ro = strings.WHY_READ_ONLY if ctl.read_only else ""
+        plugs = [
+            c.id
+            for h in sorted(project.harnesses.values(), key=lambda x: x.id)
+            for c in h.connectors
+            if c.mates_with == connector_id
+        ]
+        self._entry(
+            menu,
+            strings.CM_LEAVE_LOOSE.format(name=box.name),
+            partial(self._leave_from, connector_id),
+            ro or (strings.CM_PLUGGED_ALREADY if plugs else ""),
+        )
+        for cid in plugs:
+            self._entry(
+                menu,
+                strings.CM_UNPLUG.format(end=cid),
+                partial(ctl.unplug, cid),
+                ro or ctl.why_not_unplug(cid),
+            )
+
+    def _leave_from(self, connector_id: str) -> None:
+        if self.ctl.leave_loose_end(connector_id) is not None and self.ctl.selected_end:
+            self.focus_end(self.ctl.selected_end)
+
+    def _end_entries(self, menu: QMenu, end_id: str) -> None:
+        """On the end of a cable drawn by hand: plug it in, unplug it, put it back where the
+        diagram puts it, choose its part (the inspector), show its harness."""
+        ctl = self.ctl
+        item = self.dscene.end_items.get(end_id)
+        loose = item is not None and item.end.loose
+        if loose:
+            self._mirror(menu, "plug_loose")
+            self._entry(menu, strings.CM_END_PART, partial(ctl.select_end, end_id))
+            why = strings.WHY_READ_ONLY if ctl.read_only else ""
+            if not why and ctl.mark_of(cable_ends.pos_mark(end_id)) is None:
+                why = strings.CM_RESET_LINE_NONE
+            self._entry(
+                menu,
+                strings.CM_END_RESET,
+                partial(ctl.reset_mark, cable_ends.pos_mark(end_id)),
+                why,
+            )
+        else:
+            self._mirror(menu, "unplug")
+        if item is not None:
+            hid = item.end.harness_id
+            self._entry(
+                menu,
+                strings.CM_END_HARNESS.format(harness=hid),
+                partial(ctl.request_open, "harness", hid),
+            )
 
     def _reset_label_entry(self, menu: QMenu, mark_ids: Sequence[str]) -> None:
         """ "Reset label and line positions": back to where the tool puts the label (and, on a
@@ -3925,6 +4051,12 @@ class DiagramView(QGraphicsView):
         if item is not None:
             self.center_on_object("link", link_id)
             item.setFocus()
+
+    def focus_end(self, connector_id: str) -> None:
+        """Show the end of a cable drawn by hand in the middle of the view."""
+        item = self.dscene.end_items.get(connector_id)
+        if item is not None:
+            self.centerOn(QPointF(*item.spot))
 
     def focus_link(self, interface_id: str) -> None:
         item = self.dscene.link_items.get(interface_id)

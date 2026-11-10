@@ -627,6 +627,7 @@ class ChangeDialog(Dialog):
         ok_text: str = strings.OK,
         placeholders: list[str] | None = None,
         unapproved_parts: list[str] | None = None,
+        loose_ends: list[str] | None = None,
         locks: ReleaseLocks | None = None,
         explain: str | None = None,
         unlocks: lock_tree.RevisionUnlocks | None = None,
@@ -641,6 +642,7 @@ class ChangeDialog(Dialog):
         self._comment_needed = ask_comment
         self._placeholders = placeholders or []
         self._unapproved = unapproved_parts or []
+        self._loose = loose_ends or []
         self._ok_text = ok_text
         theme = current_theme()
         lay = QVBoxLayout(self)
@@ -731,6 +733,20 @@ class ChangeDialog(Dialog):
             lay.addWidget(pwarn)
             lay.addWidget(QLabel(strings.UNAPPROVED_PARTS_REASON))
             lay.addWidget(self.parts_reason)
+        # a harness with a loose cable end (D-201): released only with a written reason
+        self.loose_reason = QLineEdit()
+        self.loose_reason.setObjectName("change-loose-reason")
+        self.loose_reason.setAccessibleName(strings.LOOSE_REASON)
+        self.loose_reason.setToolTip(strings.LOOSE_REASON_TIP)
+        if self._loose:
+            shown = ", ".join(self._loose[:5])
+            more = f" and {len(self._loose) - 5} more" if len(self._loose) > 5 else ""
+            lwarn = QLabel(strings.LOOSE_WARNING.format(shown + more))
+            lwarn.setWordWrap(True)
+            lwarn.setObjectName("change-loose-warning")
+            lay.addWidget(lwarn)
+            lay.addWidget(QLabel(strings.LOOSE_REASON))
+            lay.addWidget(self.loose_reason)
         # why the OK button is disabled, in words (a disabled button alone says nothing)
         self.hint = QLabel()
         self.hint.setObjectName("change-hint")
@@ -744,6 +760,7 @@ class ChangeDialog(Dialog):
         self.comment.textChanged.connect(self._validate)
         self.placeholder_reason.textChanged.connect(self._validate)
         self.parts_reason.textChanged.connect(self._validate)
+        self.loose_reason.textChanged.connect(self._validate)
         self.setMinimumWidth(theme.px(520))
         self._validate()
 
@@ -763,6 +780,7 @@ class ChangeDialog(Dialog):
         unapproved_parts: list[str] | None = None,
         roles_check: Callable[[str, str], list[str]] | None = None,
         by_tip: str = "",
+        loose_ends: list[str] | None = None,
     ) -> ChangeDialog:
         """The release dialog: asks the questions and lists everything the release will lock.
         `roles_check(by, checker)` is given when the project requires different people: it returns
@@ -776,6 +794,7 @@ class ChangeDialog(Dialog):
             ok_text=strings.RELEASE_CONFIRM,
             placeholders=placeholders,
             unapproved_parts=unapproved_parts,
+            loose_ends=loose_ends,
             locks=release_locks(project, harness_id),
             rule_note=strings.ROLES_RELEASE_NOTE if roles_check is not None else "",
             roles_check=roles_check,
@@ -856,6 +875,8 @@ class ChangeDialog(Dialog):
             todo.append(strings.HINT_PLACEHOLDER_REASON)
         if self._unapproved and len(self.parts_reason.text().strip()) < strings.COMMENT_MIN:
             todo.append(strings.HINT_PARTS_REASON)
+        if self._loose and len(self.loose_reason.text().strip()) < strings.COMMENT_MIN:
+            todo.append(strings.HINT_LOOSE_REASON)
         if self._roles_check is not None:
             by, checker = self.by.text().strip(), self.checker.text().strip()
             todo.extend(t.rstrip(".") for t in self._roles_check(by, checker))
@@ -871,6 +892,10 @@ class ChangeDialog(Dialog):
     def accepted_unapproved_parts(self) -> str | None:
         """The written reason for releasing with parts that are not approved (None if none)."""
         return self.parts_reason.text().strip() or None if self._unapproved else None
+
+    def accepted_loose_ends(self) -> str | None:
+        """The written reason for releasing with a loose cable end (None when there is none)."""
+        return self.loose_reason.text().strip() or None if self._loose else None
 
     def accepted_placeholders(self) -> str | None:
         """The written reason for releasing on placeholder values (None when there are none)."""

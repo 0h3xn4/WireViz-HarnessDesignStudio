@@ -119,6 +119,24 @@ jobs:
           name: sources-linux
           if-no-files-found: error
           path: HarnessDesignStudio/dist/sources
+      - name: Offline audit of the built .tar.gz (REQ-OFFLINE-02, D-203; the report is attached to the release)
+        # Not a gate yet: a finding is shown in the report (Result: FAIL) and as a warning here, and
+        # the release goes on. A tag made before the audit existed has no tools/offline_audit.py.
+        # continue-on-error: a failure of this step itself (apt, a timeout) never stops a release.
+        continue-on-error: true
+        timeout-minutes: 20
+        run: |
+          if [ ! -f tools/offline_audit.py ]; then echo "this tag has no offline audit"; exit 0; fi
+          sudo apt-get install -y strace
+          version="${TAG#v}"
+          if ! python -m tools.offline_audit --package "dist/harness-design-studio-${version}-linux-x86_64.tar.gz" --out "$RUNNER_TEMP/offline-audit"; then
+            echo "::warning::the offline audit of the Linux package reports a finding or could not run; see offline-audit-${version}.md"
+          fi
+          if [ -f "$RUNNER_TEMP/offline-audit/offline-audit.json" ]; then
+            cp "$RUNNER_TEMP/offline-audit/offline-audit.md" "dist/offline-audit-${version}.md"
+            cp "$RUNNER_TEMP/offline-audit/offline-audit.json" "dist/offline-audit-${version}.json"
+            cat "dist/offline-audit-${version}.md" >> "$GITHUB_STEP_SUMMARY"
+          fi
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4.6.2
         with:
           name: packages-linux
@@ -126,6 +144,7 @@ jobs:
           path: |
             HarnessDesignStudio/dist/*.deb
             HarnessDesignStudio/dist/*.tar.gz
+            HarnessDesignStudio/dist/offline-audit-*
 
   windows:
     if: ${{ !inputs.notes_only }}
@@ -273,10 +292,13 @@ jobs:
             HarnessDesignStudio/dist/sbom-*.cdx.json
             HarnessDesignStudio/dist/legal
             HarnessDesignStudio/dist/sources
+            HarnessDesignStudio/dist/offline-audit-*
       - name: Publish the release page
         run: |
           title="Harness Design Studio ${TAG#v}"
           files=(dist/*.tar.gz dist/*.deb dist/*-setup.exe dist/*.zip dist/SHA256SUMS dist/*.sigstore.json dist/sbom-*.cdx.json dist/legal/third-party-inventory-* dist/legal/THIRD_PARTY_NOTICES-*.txt dist/sources/*)
+          # the report of the offline audit of the Linux package, when the tag has the audit (D-203)
+          for f in dist/offline-audit-*.md dist/offline-audit-*.json; do [ -f "$f" ] && files+=("$f"); done
           flags=()
           case "$TAG" in *rc*) flags+=(--prerelease) ;; esac
           if gh release view "$TAG" >/dev/null 2>&1; then

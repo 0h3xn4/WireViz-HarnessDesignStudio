@@ -35,6 +35,7 @@ from harness_design_studio.core.model import InterfaceInstance, Part
 from harness_design_studio.gui import device_kinds, device_looks, strings
 from harness_design_studio.gui.controller import LIST_DELAY_MS, Delta, EditorController
 from harness_design_studio.gui.icons import icon_button
+from harness_design_studio.gui.problems_panel import finding_why
 from harness_design_studio.gui.theme import ThemeManager, current_theme, mark_mono
 from harness_design_studio.gui.theme.tokens import CATEGORIES, style_category
 
@@ -933,7 +934,7 @@ class ProblemsPanel(QScrollArea):
         title.setWordWrap(True)
         title.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.MinimumExpanding)
         lay.addWidget(title)
-        lay.addWidget(muted(f.why))
+        lay.addWidget(muted(finding_why(f)))
         if f.waiver_changed:  # waived once, but the problem says something else now
             old = self.ctl.project.waivers.get(f.id)
             changed = muted(strings.WAIVER_CHANGED.format(reason=old.justification if old else ""))

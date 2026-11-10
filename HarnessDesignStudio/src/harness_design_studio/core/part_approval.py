@@ -15,6 +15,7 @@ a person marked *not approved* is never turned around here (that is a decision f
 from .commands import Op, Put
 from .edit import EditError
 from .model import Project, evolve
+from .model.physical import TBD_PART_ID
 from .vcs.lockview import field_lock_reason
 
 
@@ -25,6 +26,11 @@ def approval_blocker(project: Project, part_id: str) -> str:
     part = project.parts.get(part_id)
     if part is None:
         return f"Part '{part_id}' is not in the parts list."
+    if part_id == TBD_PART_ID:  # the stand-in of a loose end (D-201): a choice, not an approval
+        return (
+            f"{TBD_PART_ID} stands for a connector nobody has chosen yet (a loose end). Plug the "
+            "end into a device, or choose its connector part; it is not approved."
+        )
     if part.approval == "approved" and not part.unverified:
         return f"Part {part_id} is approved already."
     if part.approval == "not_approved":
