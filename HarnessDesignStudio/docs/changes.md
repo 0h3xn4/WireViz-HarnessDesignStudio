@@ -25,6 +25,13 @@ When a test fails, it names what moved: the wire, the finding or the file. Renew
 
 ## Entries
 
+### 2026-11-10: version 1.17.1rc1, a longer version string (the stored hashes are written again; nothing else changes)
+
+- **Before.** The stored hashes (`docs/ui/OUTPUT_HASHES_BASELINE.json`, `tests/fixtures/numbers/snapshot.json`, `tests/fixtures/migration/hashes.json`) were made with a six-character version (`BASE_VERSION` 1.10.0), and the comparison replaced the stamp of 1.17.0 with it.
+- **Now.** The release candidate `1.17.1rc1` has nine characters. The comparison cannot replace a stamp of another length (a PDF stores byte offsets), so the three files were written again with `1.17.1rc1`, and `BASE_VERSION` is `1.17.1rc1`.
+- **Why.** The first release made by the signing workflow is a release candidate (the owner, 2026-11-10, D-218 and D-219).
+- **What moved.** Only the version stamp and the hashes that include it (the model hash, and the SHA-256 of each written file). The diff of the three files holds no other change: no number, no finding, no text.
+
 ### 2026-11-05: the written block diagram shows the looks of the devices (a written file changes on purpose, for every project)
 
 - **Before.** Each card of `system/block_diagram.svg` and `.pdf` (and of the SVG, PDF and PNG of Export diagram) was a white box with the ID and the name, for example, for the device `OBC` of the `mini3` sample:
