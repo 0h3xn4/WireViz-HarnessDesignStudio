@@ -336,12 +336,20 @@ def test_the_offline_audit_of_the_source_install_passes(tmp_path: Path) -> None:
 def test_an_entry_for_one_operating_system_applies_there_only(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    entries = load_allow_list(ALLOW_LIST)
+    only_windows = [
+        {"kind": "python_module", "pattern": "example", "platform": "win32", "reason": "x" * 30}
+    ]
     monkeypatch.setattr(sys, "platform", "linux")
-    assert not allowed(entries, "python_module", "socket", {})
+    assert not allowed(only_windows, "python_module", "example", {})
     monkeypatch.setattr(sys, "platform", "win32")
-    assert allowed(entries, "python_module", "socket", {})
-    assert not allowed(entries, "python_module", "ssl", {})
+    assert allowed(only_windows, "python_module", "example", {})
+    assert not allowed(only_windows, "python_module", "ssl", {})
+    # the real list allows no network module on any system (D-220: the lock file names no computer)
+    entries = load_allow_list(ALLOW_LIST)
+    for system in ("linux", "win32"):
+        monkeypatch.setattr(sys, "platform", system)
+        assert not allowed(entries, "python_module", "socket", {})
+        assert not allowed(entries, "python_module", "_socket", {})
 
 
 def test_the_windows_audit_watches_connections_and_programs_started() -> None:
