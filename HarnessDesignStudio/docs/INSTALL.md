@@ -90,20 +90,20 @@ Linux:
 ```
 cosign verify-blob \
   --bundle harness-design-studio_<version>_amd64.deb.sigstore.json \
-  --certificate-identity-regexp '(?i)^https://github.com/0h3xn4/WireViz-HarnessDesignStudio/\.github/workflows/release\.yml@refs/tags/v' \
+  --certificate-identity-regexp '(?i)^https://github.com/0h3xn4/wireviz_harness-design-studio/\.github/workflows/release\.yml@refs/tags/v' \
   --certificate-oidc-issuer https://token.actions.githubusercontent.com \
   harness-design-studio_<version>_amd64.deb
-gh attestation verify harness-design-studio_<version>_amd64.deb --repo 0h3xn4/WireViz-HarnessDesignStudio
+gh attestation verify harness-design-studio_<version>_amd64.deb --repo 0h3xn4/wireviz_harness-design-studio
 ```
 
 Windows (PowerShell; the same two checks, with the file name of the setup program or the zip):
 
 ```
 cosign verify-blob --bundle harness-design-studio-<version>-windows-x86_64-setup.exe.sigstore.json `
-  --certificate-identity-regexp '(?i)^https://github.com/0h3xn4/WireViz-HarnessDesignStudio/\.github/workflows/release\.yml@refs/tags/v' `
+  --certificate-identity-regexp '(?i)^https://github.com/0h3xn4/wireviz_harness-design-studio/\.github/workflows/release\.yml@refs/tags/v' `
   --certificate-oidc-issuer https://token.actions.githubusercontent.com `
   harness-design-studio-<version>-windows-x86_64-setup.exe
-gh attestation verify harness-design-studio-<version>-windows-x86_64-setup.exe --repo 0h3xn4/WireViz-HarnessDesignStudio
+gh attestation verify harness-design-studio-<version>-windows-x86_64-setup.exe --repo 0h3xn4/wireviz_harness-design-studio
 ```
 
 `cosign` prints `Verified OK` when the signature is valid. If it fails, or `gh` reports no attestation, do not install the file. The same commands check `SHA256SUMS` (a signed list of the checksums) and the SBOM files.
