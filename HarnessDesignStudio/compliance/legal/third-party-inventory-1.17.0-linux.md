@@ -18,7 +18,7 @@ Made from the built package (`python -m tools.third_party inventory`), not from 
 | shiboken6 | 6.11.2 | LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only | python | LICENSES/README.txt of the package (written at build time) | 0 |
 | typing-inspection | 0.4.5 | MIT | python | LICENSES/README.txt of the package (written at build time) | 1 |
 | typing_extensions | 4.16.0 | PSF-2.0 | python | LICENSES/README.txt of the package (written at build time) | 1 |
-| Qt (Core, DBus, EglFSDeviceIntegration, EglFsKmsSupport, Gui, Network, OpenGL, Svg, WaylandClient, Widgets, WlShellIntegration, XcbQpa) | 6.11.2 | LGPL-3.0-only (chosen; Qt for Python and Qt are also offered under GPL-2.0-only, GPL-3.0-only and a commercial licence) | qt | library file names; version of PySide6 | 69 |
+| Qt (Core, DBus, EglFSDeviceIntegration, EglFsKmsSupport, Gui, OpenGL, Svg, WaylandClient, Widgets, WlShellIntegration, XcbQpa) | 6.11.2 | LGPL-3.0-only (chosen; Qt for Python and Qt are also offered under GPL-2.0-only, GPL-3.0-only and a commercial licence) | qt | library file names; version of PySide6 | 65 |
 | CPython runtime | 3.14.10 | PSF-2.0 | runtime | library file name; version string inside it | 2 |
 | ICU (libicudata, libicui18n, libicuuc) | 73 | ICU AND Unicode-DFS-2016 | system | libicu*.so.N beside Qt in the PySide6 wheel; the licence from the ICU project | 3 |
 | libatk-bridge2.0-0t64 | 2.52.0-1build1 | LGPL-2.0-or-later | system | dpkg -S libatk-bridge-2.0.so.0; /usr/share/doc/libatk-bridge2.0-0t64/copyright | 1 |
@@ -46,14 +46,10 @@ Made from the built package (`python -m tools.third_party inventory`), not from 
 | libglib2.0-0t64 | 2.80.0-6ubuntu3.10 | LGPL-2.1-or-later | system | dpkg -S libgio-2.0.so.0; /usr/share/doc/libglib2.0-0t64/copyright | 5 |
 | libgpg-error0 | 1.47-3build2.1 | LGPL-2.1-or-later | system | dpkg -S libgpg-error.so.0; /usr/share/doc/libgpg-error0/copyright | 1 |
 | libgraphite2-3 | 1.3.14-2ubuntu0.24.04.1 | LGPL-2.1-or-later OR MPL-1.1 OR GPL-2.0-or-later | system | dpkg -S libgraphite2.so.3; /usr/share/doc/libgraphite2-3/copyright | 1 |
-| libgssapi-krb5-2 | 1.20.1-6ubuntu2.10 | MIT | system | dpkg -S libgssapi_krb5.so.2; /usr/share/doc/libgssapi-krb5-2/copyright | 1 |
 | libgtk-3-0t64 | 3.24.41-4ubuntu1.3 | LGPL-2.0-or-later AND LGPL-2.1-or-later AND MIT | system | dpkg -S libgdk-3.so.0; /usr/share/doc/libgtk-3-0t64/copyright | 2 |
 | libharfbuzz0b | 8.3.0-2build2 | MIT | system | dpkg -S libharfbuzz.so.0; /usr/share/doc/libharfbuzz0b/copyright | 1 |
 | libjpeg-turbo8 | 2.1.5-2ubuntu2 | IJG AND BSD-3-Clause AND Zlib | system | dpkg -S libjpeg.so.8; /usr/share/doc/libjpeg-turbo8/copyright | 1 |
-| libk5crypto3 | 1.20.1-6ubuntu2.10 | MIT | system | dpkg -S libk5crypto.so.3; /usr/share/doc/libk5crypto3/copyright | 1 |
 | libkeyutils1 | 1.6.3-3build1 | LGPL-2.0-or-later | system | dpkg -S libkeyutils.so.1; /usr/share/doc/libkeyutils1/copyright | 1 |
-| libkrb5-3 | 1.20.1-6ubuntu2.10 | MIT | system | dpkg -S libkrb5.so.3; /usr/share/doc/libkrb5-3/copyright | 1 |
-| libkrb5support0 | 1.20.1-6ubuntu2.10 | MIT | system | dpkg -S libkrb5support.so.0; /usr/share/doc/libkrb5support0/copyright | 1 |
 | liblz4-1 | 1.9.4-1build1.1 | BSD-2-Clause | system | dpkg -S liblz4.so.1; /usr/share/doc/liblz4-1/copyright | 1 |
 | liblzma5 | 5.6.1+really5.4.5-1ubuntu0.4 | public domain | system | dpkg -S liblzma.so.5; /usr/share/doc/liblzma5/copyright | 2 |
 | libmd0 | 1.1.0-2build1.1 | BSD-3-Clause AND ISC AND public domain | system | dpkg -S libmd.so.0; /usr/share/doc/libmd0/copyright | 1 |
@@ -65,7 +61,7 @@ Made from the built package (`python -m tools.third_party inventory`), not from 
 | libpixman-1-0 | 0.42.2-1build1 | MIT | system | dpkg -S libpixman-1.so.0; /usr/share/doc/libpixman-1-0/copyright | 1 |
 | libpng16-16t64 | 1.6.43-5ubuntu0.7 | libpng-2.0 | system | dpkg -S libpng16.so.16; /usr/share/doc/libpng16-16t64/copyright | 1 |
 | libselinux1 | 3.5-2ubuntu2.1 | public domain | system | dpkg -S libselinux.so.1; /usr/share/doc/libselinux1/copyright | 1 |
-| libssl3t64 | 3.0.13-0ubuntu3.16 | Apache-2.0 | system | dpkg -S libcrypto.so.3; /usr/share/doc/libssl3t64/copyright | 4 |
+| libssl3t64 | 3.0.13-0ubuntu3.16 | Apache-2.0 | system | dpkg -S libcrypto.so.3; /usr/share/doc/libssl3t64/copyright | 2 |
 | libstdc++6 | 14.2.0-4ubuntu2~24.04.1 | GPL-3.0-or-later WITH GCC-exception-3.1 | system | dpkg -S libstdc++.so.6; /usr/share/doc/libstdc++6/copyright | 1 |
 | libsystemd0 | 255.4-1ubuntu8.18 | LGPL-2.1-or-later | system | dpkg -S libsystemd.so.0; /usr/share/doc/libsystemd0/copyright | 1 |
 | libthai0 | 0.1.29-2build1 | LGPL-2.1-or-later | system | dpkg -S libthai.so.0; /usr/share/doc/libthai0/copyright | 1 |

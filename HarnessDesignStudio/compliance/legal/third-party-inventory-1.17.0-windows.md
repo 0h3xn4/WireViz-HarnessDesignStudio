@@ -18,10 +18,10 @@ Made from the built package (`python -m tools.third_party inventory`), not from 
 | shiboken6 | 6.11.2 | LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only | python | LICENSES/README.txt of the package (written at build time) | 1 |
 | typing-inspection | 0.4.5 | MIT | python | LICENSES/README.txt of the package (written at build time) | 1 |
 | typing_extensions | 4.16.0 | PSF-2.0 | python | LICENSES/README.txt of the package (written at build time) | 1 |
-| Qt (Core, Gui, Network, Svg, Widgets) | 6.11.2 | LGPL-3.0-only (chosen; Qt for Python and Qt are also offered under GPL-2.0-only, GPL-3.0-only and a commercial licence) | qt | library file names; version of PySide6 | 21 |
+| Qt (Core, Gui, Svg, Widgets) | 6.11.2 | LGPL-3.0-only (chosen; Qt for Python and Qt are also offered under GPL-2.0-only, GPL-3.0-only and a commercial licence) | qt | library file names; version of PySide6 | 19 |
 | CPython runtime | unknown | PSF-2.0 | runtime | library file name; version string inside it | 3 |
 | libffi | unknown | MIT | windows-runtime | file name pattern (tools/third_party.py) | 2 |
 | Mesa 3D (software OpenGL) with LLVM | unknown | MIT AND Apache-2.0 WITH LLVM-exception | windows-runtime | file name pattern (tools/third_party.py) | 1 |
 | Microsoft Universal C Runtime | unknown | LicenseRef-Microsoft-Redistributable (UCRT) | windows-runtime | file name pattern (tools/third_party.py) | 86 |
 | Microsoft Visual C++ Runtime | unknown | LicenseRef-Microsoft-Redistributable (VC runtime) | windows-runtime | file name pattern (tools/third_party.py) | 12 |
-| OpenSSL | 3.5.9 | Apache-2.0 | windows-runtime | file name pattern (tools/third_party.py) | 4 |
+| OpenSSL | 3.5.9 | Apache-2.0 | windows-runtime | file name pattern (tools/third_party.py) | 2 |

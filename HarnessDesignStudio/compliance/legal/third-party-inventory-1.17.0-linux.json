@@ -160,7 +160,6 @@
     "_internal/PySide6/Qt/lib/libQt6EglFSDeviceIntegration.so.6",
     "_internal/PySide6/Qt/lib/libQt6EglFsKmsSupport.so.6",
     "_internal/PySide6/Qt/lib/libQt6Gui.so.6",
-    "_internal/PySide6/Qt/lib/libQt6Network.so.6",
     "_internal/PySide6/Qt/lib/libQt6OpenGL.so.6",
     "_internal/PySide6/Qt/lib/libQt6Svg.so.6",
     "_internal/PySide6/Qt/lib/libQt6WaylandClient.so.6",
@@ -174,7 +173,6 @@
     "_internal/PySide6/Qt/plugins/generic/libqevdevmouseplugin.so",
     "_internal/PySide6/Qt/plugins/generic/libqevdevtabletplugin.so",
     "_internal/PySide6/Qt/plugins/generic/libqevdevtouchplugin.so",
-    "_internal/PySide6/Qt/plugins/generic/libqtuiotouchplugin.so",
     "_internal/PySide6/Qt/plugins/iconengines/libqsvgicon.so",
     "_internal/PySide6/Qt/plugins/imageformats/libqgif.so",
     "_internal/PySide6/Qt/plugins/imageformats/libqicns.so",
@@ -193,7 +191,6 @@
     "_internal/PySide6/Qt/plugins/platforms/libqminimalegl.so",
     "_internal/PySide6/Qt/plugins/platforms/libqoffscreen.so",
     "_internal/PySide6/Qt/plugins/platforms/libqvkkhrdisplay.so",
-    "_internal/PySide6/Qt/plugins/platforms/libqvnc.so",
     "_internal/PySide6/Qt/plugins/platforms/libqwayland.so",
     "_internal/PySide6/Qt/plugins/platforms/libqxcb.so",
     "_internal/PySide6/Qt/plugins/platformthemes/libqgtk3.so",
@@ -217,7 +214,6 @@
     "_internal/libQt6EglFSDeviceIntegration.so.6",
     "_internal/libQt6EglFsKmsSupport.so.6",
     "_internal/libQt6Gui.so.6",
-    "_internal/libQt6Network.so.6",
     "_internal/libQt6OpenGL.so.6",
     "_internal/libQt6Svg.so.6",
     "_internal/libQt6WaylandClient.so.6",
@@ -227,7 +223,7 @@
    ],
    "kind": "qt",
    "licence": "LGPL-3.0-only (chosen; Qt for Python and Qt are also offered under GPL-2.0-only, GPL-3.0-only and a commercial licence)",
-   "name": "Qt (Core, DBus, EglFSDeviceIntegration, EglFsKmsSupport, Gui, Network, OpenGL, Svg, WaylandClient, Widgets, WlShellIntegration, XcbQpa)",
+   "name": "Qt (Core, DBus, EglFSDeviceIntegration, EglFsKmsSupport, Gui, OpenGL, Svg, WaylandClient, Widgets, WlShellIntegration, XcbQpa)",
    "origin": "library file names; version of PySide6",
    "version": "6.11.2"
   },
@@ -514,16 +510,6 @@
   },
   {
    "files": [
-    "_internal/libgssapi_krb5.so.2"
-   ],
-   "kind": "system",
-   "licence": "MIT",
-   "name": "libgssapi-krb5-2",
-   "origin": "dpkg -S libgssapi_krb5.so.2; /usr/share/doc/libgssapi-krb5-2/copyright",
-   "version": "1.20.1-6ubuntu2.10"
-  },
-  {
-   "files": [
     "_internal/libgdk-3.so.0",
     "_internal/libgtk-3.so.0"
    ],
@@ -555,16 +541,6 @@
   },
   {
    "files": [
-    "_internal/libk5crypto.so.3"
-   ],
-   "kind": "system",
-   "licence": "MIT",
-   "name": "libk5crypto3",
-   "origin": "dpkg -S libk5crypto.so.3; /usr/share/doc/libk5crypto3/copyright",
-   "version": "1.20.1-6ubuntu2.10"
-  },
-  {
-   "files": [
     "_internal/libkeyutils.so.1"
    ],
    "kind": "system",
@@ -572,26 +548,6 @@
    "name": "libkeyutils1",
    "origin": "dpkg -S libkeyutils.so.1; /usr/share/doc/libkeyutils1/copyright",
    "version": "1.6.3-3build1"
-  },
-  {
-   "files": [
-    "_internal/libkrb5.so.3"
-   ],
-   "kind": "system",
-   "licence": "MIT",
-   "name": "libkrb5-3",
-   "origin": "dpkg -S libkrb5.so.3; /usr/share/doc/libkrb5-3/copyright",
-   "version": "1.20.1-6ubuntu2.10"
-  },
-  {
-   "files": [
-    "_internal/libkrb5support.so.0"
-   ],
-   "kind": "system",
-   "licence": "MIT",
-   "name": "libkrb5support0",
-   "origin": "dpkg -S libkrb5support.so.0; /usr/share/doc/libkrb5support0/copyright",
-   "version": "1.20.1-6ubuntu2.10"
   },
   {
    "files": [
@@ -707,9 +663,7 @@
   {
    "files": [
     "_internal/libcrypto.so.3",
-    "_internal/libssl.so.3",
-    "cli/_internal/libcrypto.so.3",
-    "cli/_internal/libssl.so.3"
+    "cli/_internal/libcrypto.so.3"
    ],
    "kind": "system",
    "licence": "Apache-2.0",
