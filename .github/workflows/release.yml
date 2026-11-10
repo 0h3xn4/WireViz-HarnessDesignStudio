@@ -8,7 +8,7 @@ name: harness-design-studio release
 # Every release is signed without a key (Sigstore, through the GitHub OIDC identity of this
 # workflow, `cosign sign-blob`) and gets build provenance attestations; the checksums, the SBOM,
 # the inventory of the third-party components and the source of the LGPL and GPL components are
-# attached (decision D-211, docs/INSTALL.md says how to check them). A Windows code-signing
+# attached (decision D-213, docs/INSTALL.md says how to check them). A Windows code-signing
 # certificate is optional and used only when these repository secrets exist (docs/RELEASE.md):
 #   Windows: WINDOWS_CERT_PFX_BASE64 (the .pfx certificate, base64), WINDOWS_CERT_PASSWORD
 # Without them the Windows packages carry no Authenticode signature (the Sigstore signature is

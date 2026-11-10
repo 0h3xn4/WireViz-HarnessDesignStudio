@@ -2,7 +2,7 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """REQ-LIC-01: licence allow-list logic (the report itself is built by tools/licence_report.py).
 
-The policy follows the licence of the tool, GPL-3.0-only (D-203): permissive, LGPL, MPL-2.0 and
+The policy follows the licence of the tool, GPL-3.0-only (D-205): permissive, LGPL, MPL-2.0 and
 GPL-3.0 are allowed; GPL-2.0-only, AGPL, unknown and mixed texts are rejected."""
 
 import pytest

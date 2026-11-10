@@ -1,6 +1,6 @@
 # Release compliance record: version X.Y.Z
 
-Copy this file to `release-record-X.Y.Z.md` in this folder for every release and fill it in before the release page is published (decision D-208; `docs/RELEASE.md`, the release checklist). Keep the record: it is the evidence of what was checked. A record is a statement of what was done. It is not a statement that the release complies with anything.
+Copy this file to `release-record-X.Y.Z.md` in this folder for every release and fill it in before the release page is published (decision D-210; `docs/RELEASE.md`, the release checklist). Keep the record: it is the evidence of what was checked. A record is a statement of what was done. It is not a statement that the release complies with anything.
 
 Not legal advice. Facts only: write "not done" and the reason where a line was not done.
 

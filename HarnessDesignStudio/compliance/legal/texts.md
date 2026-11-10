@@ -5,7 +5,7 @@ SPDX-License-Identifier: GPL-3.0-only
 
 # Legal texts: the one source
 
-Date: 2026-11-09. Decision D-205 (brief rule 6, "one text, used everywhere").
+Date: 2026-11-09. Decision D-207 (brief rule 6, "one text, used everywhere").
 
 Every legal text of Harness Design Studio is written here, once. Every other place copies it word for word: the READMEs, the app (About dialog and first-run notice), the generated outputs, the release notes and the website. A test (`tests/test_legal_texts.py`) fails when a copy differs from this file or when a place that must carry a text does not.
 

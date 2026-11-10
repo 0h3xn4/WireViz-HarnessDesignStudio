@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""D-211: the inventory of the third-party components of a built package (tools/third_party.py).
+"""D-213: the inventory of the third-party components of a built package (tools/third_party.py).
 
 The tests build a small fake package folder, so they need no PyInstaller and no Debian system; the
 real packages are checked in CI (`python -m tools.third_party check`).

@@ -110,7 +110,7 @@ def test_runtime_sockets_blocked_cli_and_gui(tmp_path: Path) -> None:
 
 
 def test_no_network_imports_in_the_packaging_entry_points() -> None:
-    """The packaged programs start from `packaging/gui_entry.py` and `cli_entry.py` (D-205)."""
+    """The packaged programs start from `packaging/gui_entry.py` and `cli_entry.py` (D-207)."""
     entries = sorted(PACKAGING.glob("*.py"))
     assert {p.name for p in entries} >= {"gui_entry.py", "cli_entry.py"}
     offenders = [
@@ -124,7 +124,7 @@ def test_no_network_imports_in_the_packaging_entry_points() -> None:
 
 def test_the_app_builds_no_web_address_and_installs_no_crash_or_update_hook() -> None:
     """A URL made of a literal that starts with http, a crash hook that could upload, or a call
-    that opens a web page would be a network path the import scan cannot see (D-205)."""
+    that opens a web page would be a network path the import scan cannot see (D-207)."""
     found: list[str] = []
     for path in [*SRC.rglob("*.py"), *PACKAGING.glob("*.py")]:
         for node in ast.walk(ast.parse(path.read_text(encoding="utf-8"))):

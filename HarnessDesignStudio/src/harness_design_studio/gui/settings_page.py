@@ -327,7 +327,7 @@ class SettingsPage(QWidget):
         col.addWidget(self.file_label)
         col.addWidget(_muted(strings.ABOUT_LICENCE_PROJECT))
         self.legal_labels: list[QLabel] = []
-        for text in strings.ABOUT_LEGAL:  # the legal texts, word for word (decision D-208)
+        for text in strings.ABOUT_LEGAL:  # the legal texts, word for word (decision D-210)
             label = _muted(text)
             label.setObjectName("settings-legal")
             self.legal_labels.append(label)

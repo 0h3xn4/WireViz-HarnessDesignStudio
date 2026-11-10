@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""D-203, D-208: the app shows the licence and the legal texts, and says so once at the first start.
+"""D-205, D-210: the app shows the licence and the legal texts, and says so once at the first start.
 
 The About page holds every text word for word and the full licence text (GPL-3.0 section 5(d));
 the notice of the first start is a banner that blocks nothing, is closed once and is remembered on

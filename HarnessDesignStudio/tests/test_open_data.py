@@ -233,7 +233,7 @@ def test_every_table_is_there_with_units_in_the_headers(
     folder = exported["flatsat"]
     assert {p.name for p in folder.iterdir()} == {
         *(f"{n}.json" for n in names), *(f"{n}.csv" for n in names),
-        "configuration.json", "provenance.json", "README.txt",  # the notice (D-208)
+        "configuration.json", "provenance.json", "README.txt",  # the notice (D-210)
     }  # fmt: skip
     head = (folder / "wire_sizing.csv").read_text(encoding="utf-8").splitlines()[0]
     for expected in ("Current (A)", "Gauge (AWG)", "Cross-section (mm²)", "Length (m)", "Voltage drop (V)", "Resistivity (Ω·m)"):  # fmt: skip

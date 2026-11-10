@@ -3,7 +3,7 @@ name: Create Examples
 on: [push, pull_request, workflow_dispatch]
 
 permissions:
-  contents: read  # the job only reads the repository and uploads an artifact (added in D-203 work; the file is inherited from WireViz)
+  contents: read  # the job only reads the repository and uploads an artifact (added in D-205 work; the file is inherited from WireViz)
 
 jobs:
   build:

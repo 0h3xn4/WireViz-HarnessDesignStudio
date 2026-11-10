@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""D-208: every legal text is written once (compliance/legal/texts.md) and copied word for word.
+"""D-210: every legal text is written once (compliance/legal/texts.md) and copied word for word.
 
 The tests fail when the generated module is stale, when a place that must carry a text does not,
 and when a copy that was edited by hand no longer matches the source (a drift guard that looks for

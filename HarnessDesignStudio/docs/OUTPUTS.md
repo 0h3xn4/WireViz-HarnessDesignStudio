@@ -101,7 +101,7 @@ Every file carries `harness-design-studio <version> model <first 12 hex of the m
 
 ## The notice
 
-Every written file also carries a short notice: the tool, its version and *Provided as is, without warranty. Verify before use.* (the one text of `compliance/legal/texts.md`, decision D-208). It is in these places:
+Every written file also carries a short notice: the tool, its version and *Provided as is, without warranty. Verify before use.* (the one text of `compliance/legal/texts.md`, decision D-210). It is in these places:
 
 | Format | Where the notice is |
 | --- | --- |

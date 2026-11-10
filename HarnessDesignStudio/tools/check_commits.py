@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""Check the commits of a pull request: the author address and the DCO sign-off (decision D-206).
+"""Check the commits of a pull request: the author address and the DCO sign-off (decision D-208).
 
 Rules, for every commit in BASE..HEAD that is not a merge:
 - the author address is a GitHub noreply address (`ID+name@users.noreply.github.com` or

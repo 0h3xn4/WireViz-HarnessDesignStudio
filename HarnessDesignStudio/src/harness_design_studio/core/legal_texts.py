@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""The legal texts, word for word (decision D-208).
+"""The legal texts, word for word (decision D-210).
 
 GENERATED from compliance/legal/texts.md by `python -m tools.gen_legal_texts`; do not edit.
 A test fails if this file is stale or if a place that must carry a text does not."""

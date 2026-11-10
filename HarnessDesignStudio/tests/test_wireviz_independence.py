@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""D-209: Harness Design Studio does not copy or import WireViz code.
+"""D-211: Harness Design Studio does not copy or import WireViz code.
 
 The part that a test can show is the import: no Python file of this folder imports `wireviz`, and
 the package does not list it as a dependency. (That nothing was copied was checked once by token

@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""D-206: the commit check (author address and DCO sign-off) that CI runs on a pull request."""
+"""D-208: the commit check (author address and DCO sign-off) that CI runs on a pull request."""
 
 import subprocess
 from pathlib import Path

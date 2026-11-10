@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""The third-party components of a built package: inventory, SBOM and notices (decision D-211).
+"""The third-party components of a built package: inventory, SBOM and notices (decision D-213).
 
 The inventory is made from the package folder itself, not from the metadata of a build environment:
 every Python distribution (its `.dist-info`), the Python runtime, Qt and its modules, the libraries

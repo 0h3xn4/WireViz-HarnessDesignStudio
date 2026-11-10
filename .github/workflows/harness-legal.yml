@@ -1,6 +1,6 @@
 name: harness-design-studio legal checks
 
-# The checks that keep the legal state of the tool true (decisions D-203 to D-210): every file has a
+# The checks that keep the legal state of the tool true (decisions D-205 to D-212): every file has a
 # licence statement (REUSE), every commit has an allowed author address and a sign-off (DCO), the
 # pinned dependencies have no known vulnerability (pip-audit), a pull request adds no dependency
 # with a known vulnerability (dependency review) and the code is scanned (CodeQL). The promise

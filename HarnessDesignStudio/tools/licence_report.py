@@ -12,9 +12,9 @@ import sys
 from pathlib import Path
 
 # Whole words only ("Miscellaneous" must not pass as MIT, "limited use" must not pass as ISC).
-# The tool is GPL-3.0-only (decision D-203), so a dependency may be permissive, LGPL, MPL-2.0 or
+# The tool is GPL-3.0-only (decision D-205), so a dependency may be permissive, LGPL, MPL-2.0 or
 # GPL-3.0 (alone or "or later"). GPL-2.0-only, AGPL, a custom mix and anything unknown is rejected:
-# a person must look at it (the policy before D-203 was "permissive or LGPL only")
+# a person must look at it (the policy before D-205 was "permissive or LGPL only")
 ALLOWED_WORDS = ("mit", "bsd", "apache", "isc", "python software foundation", "psf", "python-2.0",
                  "lgpl", "lesser general public", "unlicense", "zlib", "0bsd", "cc0",
                  "public domain", "hpnd", "ijg", "libpng", "ftl", "bzip2", "hpnd-sell-variant", "icu", "unicode-dfs-2016", "ofl-1.1",

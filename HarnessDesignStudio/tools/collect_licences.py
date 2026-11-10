@@ -80,7 +80,7 @@ def collect(dest: Path) -> list[str]:
             target = dest / key / Path(f.as_posix()).name
             target.parent.mkdir(parents=True, exist_ok=True)
             shutil.copyfile(Path(str(dist.locate_file(f))), target)
-    # Harness Design Studio itself (GPL-3.0-only, decision D-203): its licence and its notice
+    # Harness Design Studio itself (GPL-3.0-only, decision D-205): its licence and its notice
     project = Path(__file__).resolve().parents[1]
     (dest / "harness-design-studio").mkdir(parents=True, exist_ok=True)
     for name in ("LICENSE", "NOTICE"):

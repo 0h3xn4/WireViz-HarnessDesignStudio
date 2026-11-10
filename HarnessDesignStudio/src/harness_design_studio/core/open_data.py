@@ -972,7 +972,7 @@ def data_files(project: Project) -> dict[str, bytes]:
 
 
 def _readme() -> str:
-    """The notice for the open data: its files cannot hold a comment (D-208)."""
+    """The notice for the open data: its files cannot hold a comment (D-210)."""
     from harness_design_studio import __version__
     from harness_design_studio.core import legal_texts
 

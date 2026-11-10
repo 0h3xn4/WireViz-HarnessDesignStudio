@@ -71,7 +71,7 @@ CONNECTION_DOCS: Final[tuple[DocType, ...]] = (
     DocType("sys_connections_xlsx", "Connection list workbook", "XLSX"),
 )
 MANIFEST_DOC: Final = DocType("manifest", "Manifest", "JSON")
-NOTICE_FILE: Final = "README.txt"  # the notice of the folder (D-212)
+NOTICE_FILE: Final = "README.txt"  # the notice of the folder (D-214)
 NOTICE_DOC: Final = DocType("notice", "Notice", "Text")
 DOCS: Final[dict[str, DocType]] = {
     d.key: d

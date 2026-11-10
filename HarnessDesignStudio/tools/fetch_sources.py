@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""Fetch the corresponding source of the LGPL and GPL components of a release (decision D-211).
+"""Fetch the corresponding source of the LGPL and GPL components of a release (decision D-213).
 
     python -m tools.fetch_sources INVENTORY.json --out DIR
 

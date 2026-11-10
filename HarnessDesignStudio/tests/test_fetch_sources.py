@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""D-211: the corresponding source of the LGPL and GPL components (tools/fetch_sources.py).
+"""D-213: the corresponding source of the LGPL and GPL components (tools/fetch_sources.py).
 
 The network and `apt-get` are replaced here; the release workflow runs the real fetch.
 """

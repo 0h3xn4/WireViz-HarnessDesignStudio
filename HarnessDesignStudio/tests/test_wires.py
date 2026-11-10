@@ -207,7 +207,7 @@ def _files(p):
 
 def _csv(files, hid, name):
     lines = files[f"harnesses/{hid}/{name}"].decode().splitlines()
-    return [lines[0], *lines[2:]]  # without the notice line under the stamp (D-212)
+    return [lines[0], *lines[2:]]  # without the notice line under the stamp (D-214)
 
 
 def test_label_and_note_columns_exist_only_when_a_wire_has_one(project):

@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""D-208 (brief 2.4): every written document carries the notice, in every format, and the pending
+"""D-210 (brief 2.4): every written document carries the notice, in every format, and the pending
 and placeholder values stay marked.
 
 The notice is `texts.md` OUTPUT_NOTICE: the tool, its version, "Provided as is, without warranty.

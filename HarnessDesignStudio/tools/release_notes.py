@@ -29,7 +29,7 @@ from tools.release_check import unreleased_text
 
 ROOT = Path(__file__).resolve().parents[1]
 REPO_URL = "https://github.com/0h3xn4/WireViz-HarnessDesignStudio"
-SIGNED_FROM = (1, 17, 1)  # the first release made by the workflow that signs (decision D-211)
+SIGNED_FROM = (1, 17, 1)  # the first release made by the workflow that signs (decision D-213)
 CAVEAT_UNSIGNED = (
     "The packages are not signed, the configuration values are placeholders and the parts are "
     "example parts: this release is not a statement of compliance with any standard."

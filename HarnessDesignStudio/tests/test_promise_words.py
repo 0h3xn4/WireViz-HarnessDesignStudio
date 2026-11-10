@@ -1,6 +1,6 @@
 # SPDX-FileCopyrightText: 2026 0h3xn4
 # SPDX-License-Identifier: GPL-3.0-only
-"""D-208 (rule 7 of the legal brief): no promise wording about the tool or its results.
+"""D-210 (rule 7 of the legal brief): no promise wording about the tool or its results.
 
 The words "guarantee", "ensure", "certified", "compliant", "validated", "qualified", "safe",
 "error-free", "accurate", "flight-proven" and "approved" must not be used to say something about

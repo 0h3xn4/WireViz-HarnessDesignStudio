@@ -27,7 +27,7 @@ The tool runs offline on an engineer's workstation, reads project folders (which
 | Design data in logs or messages | Validation messages name fields, not values (export-controlled data); the tool writes no log of design content. |
 
 ## Signatures: Sigstore from the release after 1.17.0, no Windows certificate
-The releases after 1.17.0 are signed with Sigstore, without a key, by the release workflow, and have build provenance attestations (decision D-211; how to check: [`INSTALL.md`](INSTALL.md), *Check the signature*). That shows which workflow of which repository made a file. It is not a code-signing certificate that Windows knows. The releases up to 1.17.0 have no signature at all.
+The releases after 1.17.0 are signed with Sigstore, without a key, by the release workflow, and have build provenance attestations (decision D-213; how to check: [`INSTALL.md`](INSTALL.md), *Check the signature*). That shows which workflow of which repository made a file. It is not a code-signing certificate that Windows knows. The releases up to 1.17.0 have no signature at all.
 
 A Windows code signature tells the operating system who built a program and that it was not changed afterwards. The Windows packages have none, so:
 

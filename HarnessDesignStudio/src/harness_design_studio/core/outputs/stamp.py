@@ -33,7 +33,7 @@ class Stamp:
 
     @property
     def notice(self) -> str:
-        """The short notice every generated document carries (decision D-208): the tool, its
+        """The short notice every generated document carries (decision D-210): the tool, its
         version and "Provided as is, without warranty. Verify before use."."""
         return legal_texts.output_notice("harness-design-studio", self.version)
 
@@ -54,7 +54,7 @@ def with_notice(markdown: str, stamp: Stamp) -> str:
 
 def readme_text(stamp: Stamp) -> str:
     """`README.txt` of an outputs folder: the notice and where each kind of file carries it. The
-    JSON files cannot hold a comment, so for them this file is where the notice is (D-208)."""
+    JSON files cannot hold a comment, so for them this file is where the notice is (D-210)."""
     return (
         "Harness Design Studio: the written files of this folder\n"
         "======================================================\n\n"

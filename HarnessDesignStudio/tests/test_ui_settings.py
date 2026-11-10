@@ -205,7 +205,7 @@ def test_licences_lists_every_component_with_its_text(win) -> None:
         text = page.licence_text.toPlainText()
         assert text.strip(), c.key
         assert text == licences.text_of(c.key)
-    assert "GNU GENERAL PUBLIC LICENSE" in licences.text_of("program").upper()  # D-203
+    assert "GNU GENERAL PUBLIC LICENSE" in licences.text_of("program").upper()  # D-205
     assert "SIL OPEN FONT LICENSE" in licences.text_of("inter").upper()
     assert "SIL OPEN FONT LICENSE" in licences.text_of("jetbrains").upper()
     assert "ISC" in licences.text_of("lucide") and "MIT" in licences.text_of("lucide")

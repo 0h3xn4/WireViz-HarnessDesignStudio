@@ -136,7 +136,7 @@ def _tour(readme: str) -> str:
 
 
 def test_the_readme_is_short_and_its_first_screen_is_not_release_history() -> None:
-    """F-13: a short page (about 60 lines plus the legal block, D-208), the status and the release
+    """F-13: a short page (about 60 lines plus the legal block, D-210), the status and the release
     history live in docs/STATUS.md."""
     readme = _text(ROOT / "README.md")
     assert len(readme.splitlines()) <= 90

@@ -18,7 +18,7 @@ PK = ROOT / "packaging" / "ubuntu"
 
 
 def _action_name(line: str) -> str:
-    """`actions/checkout` from a `uses: actions/checkout@<sha>  # v4.4.0` line (pinned, D-203 work)."""
+    """`actions/checkout` from a `uses: actions/checkout@<sha>  # v4.4.0` line (pinned, D-205 work)."""
     return line.split("uses:")[1].split("#")[0].strip().split("@")[0]
 
 
@@ -471,7 +471,7 @@ def test_the_deb_copyright_names_the_owner_and_the_licence(tmp_path: Path) -> No
     ).read_text()
     assert "Copyright: 2026 0h3xn4" in text
     assert "GNU General Public Licence, version 3 only" in text and "GPL-3.0-only" in text
-    assert "No licence is granted" not in text and "LicenseRef-Proprietary" not in text  # D-203
+    assert "No licence is granted" not in text and "LicenseRef-Proprietary" not in text  # D-205
     assert "to be filled in" not in text and "decided by the project owner" not in text
     # machine-readable format: a header paragraph, then paragraphs of Files / Copyright / License
     paragraphs = [p for p in text.strip().split("\n\n") if p.strip()]
@@ -655,7 +655,7 @@ def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
         "actions/setup-python",
         "actions/upload-artifact",
         "actions/download-artifact",
-        "sigstore/cosign-installer",  # keyless signing of every file (D-211)
+        "sigstore/cosign-installer",  # keyless signing of every file (D-213)
         "actions/attest-build-provenance",  # the build provenance attestations
     }
     assert "cosign sign-blob" in text and "attest-build-provenance" in text

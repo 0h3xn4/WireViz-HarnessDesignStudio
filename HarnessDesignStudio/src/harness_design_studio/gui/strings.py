@@ -2212,7 +2212,7 @@ ABOUT_SETTINGS_FILE = "Your settings are kept in {0}"
 ABOUT_LICENCE_PROJECT = (
     legal_texts.LICENCE + " Choose Harness Design Studio under Licences to read it."
 )
-# The legal texts of the About page, one label each, word for word (decision D-208).
+# The legal texts of the About page, one label each, word for word (decision D-210).
 ABOUT_LEGAL = (
     legal_texts.DISCLAIMER,
     legal_texts.INTENDED_USE,

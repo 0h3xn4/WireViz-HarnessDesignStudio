@@ -29,14 +29,14 @@ If you are not sure which one you are changing, look at the folder. Almost all w
 
 ## Licence and sign-off
 
-Every contribution to `HarnessDesignStudio/` is accepted **only under GPL-3.0-only**, the licence of that folder ([`HarnessDesignStudio/LICENSE`](HarnessDesignStudio/LICENSE), decision D-203), and **only with a Developer Certificate of Origin sign-off** (decision D-206).
+Every contribution to `HarnessDesignStudio/` is accepted **only under GPL-3.0-only**, the licence of that folder ([`HarnessDesignStudio/LICENSE`](HarnessDesignStudio/LICENSE), decision D-205), and **only with a Developer Certificate of Origin sign-off** (decision D-208).
 
 - **Sign off every commit.** Use `git commit -s`. It adds a line `Signed-off-by: Your Name <your-address>`, with which you certify the [Developer Certificate of Origin](https://developercertificate.org/): the work is yours to give, or you have the right to give it, under the licence of this project. CI checks the line.
 - **Use a GitHub noreply address** as the author address of your commits (GitHub, Settings, Emails, "Keep my email addresses private"; then `git config user.email "ID+name@users.noreply.github.com"`). CI fails a pull request whose commits have another author address, so that no private address enters a public history.
 - **AI-generated contributions.** If an AI assistant wrote parts of your change, say so in the pull request: which tool, what you asked it, and that you read and tested the result. You sign off for what you submit, whoever or whatever wrote it. A contribution with no statement of how it was made is not accepted.
 - **No third-party code without its licence.** Code, text, data, pictures or fonts from another source must come with their licence, and that licence must allow distribution under GPL-3.0-only. Name the source and the licence in the pull request and record a new dependency or asset as described below.
 - **Source files carry a header.** A new `.py`, `.sh`, `.js`, `.html` or `.iss` file starts with the two SPDX lines shown in [`HarnessDesignStudio/CLAUDE.md`](HarnessDesignStudio/CLAUDE.md). Other files are covered by [`HarnessDesignStudio/REUSE.toml`](HarnessDesignStudio/REUSE.toml). CI runs `reuse lint`.
-- **Keep the project free and non-commercial** (decision D-204): no prices, donations, sponsor links, paid-support offers or advertisements, and no collection of personal data (decision D-205).
+- **Keep the project free and non-commercial** (decision D-206): no prices, donations, sponsor links, paid-support offers or advertisements, and no collection of personal data (decision D-207).
 - **Legal texts** are written once in [`HarnessDesignStudio/compliance/legal/texts.md`](HarnessDesignStudio/compliance/legal/texts.md). Do not change a copy of a text on its own.
 
 ## Set up and test
