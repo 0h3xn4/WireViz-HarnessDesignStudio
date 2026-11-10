@@ -3567,3 +3567,21 @@ CM_UNPLUG = "Unplug {end}"
 CM_END_PART = "Choose its connector part…"
 CM_END_RESET = "Put the end back where the tool puts it"
 CM_END_HARNESS = "Show harness {harness}"
+# ---- the landing page: the program starts on Home, nothing opened; Clear list (D-223) -----------
+HOME_LANDING = (
+    "Nothing is open. Start a new project, open a project folder or an example, or continue "
+    "with one of your recent projects."
+)
+HOME_CLEAR = "Clear list"
+HOME_CLEAR_NAME = "Clear the list of recent projects"
+HOME_CLEAR_TIP = (
+    "Empty the list of recent projects. The project folders stay as they are; only the names "
+    "and folders kept in the program's settings are removed."
+)
+HOME_CLEAR_TITLE = "Clear the list of recent projects?"
+HOME_CLEAR_BODY = (
+    "The list of recent projects on Home is emptied: the names and folders it keeps in the "
+    "program's settings are removed. No project folder is changed or deleted."
+)
+HOME_CLEAR_OK = "Clear list"
+HOME_CLEARED = "The list of recent projects is empty."

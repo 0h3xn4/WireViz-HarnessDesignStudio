@@ -206,6 +206,7 @@ from harness_design_studio.resources import guide_path
 
 ARRANGE_IN_WORKER = 60  # a diagram with more units is arranged off the UI thread
 STATE_VERSION = 3  # of the saved dock layout (`saveState`); change it when the docks change
+LEGACY_LAST_PROJECT = "project/last"  # a settings key of 1.17 and before, removed at start (D-223)
 WIDE_PX = 1222  # in UI-scale-free px: the right dock needs this much window width (the rail's 72 included)
 MEDIUM_PX = 872  # ... and the left dock this much
 # the left dock opens this wide on the Interfaces tab (if the window allows)
@@ -524,6 +525,10 @@ class MainWindow(QMainWindow):
         self.examples_folder: Callable[[], Path] = self._examples_folder  # (tests replace it)
         self.library_window: LibraryWindow | None = None  # made when first opened
         self._recent_shown: list[recent.RecentEntry] | None = None
+        # the landing page of the program's start (`show_landing`): Home with no panels, top bar or
+        # status bar around it; the docks' visibility to give back when it is left
+        self._landing = False
+        self._landing_docks: dict[QDockWidget, bool] = {}
         self._active_worker: PlanWorker | OutputsWorker | ArrangeWorker | None = None
         self._last_check = ""
 
@@ -600,7 +605,7 @@ class MainWindow(QMainWindow):
         if self._role_to_ask:
             pass  # the question comes first, when the window shows (`showEvent`); the tour after it
         elif first_run:
-            QTimer.singleShot(200, self.tour.start)
+            QTimer.singleShot(200, self._start_tour)
         self._tour_wanted = bool(first_run)
 
     # ---- construction ------------------------------------------------------------------------
@@ -757,6 +762,7 @@ class MainWindow(QMainWindow):
             open_recent=lambda path: self.open_recent_flow(path),
             forget_recent=lambda path: self.forget_recent(path),
             open_example=lambda name: self.open_example_flow(name),
+            clear_recent=self.clear_recent_flow,
         )
         self.next_page = NextStepPage(
             self.theme,
@@ -2178,6 +2184,11 @@ class MainWindow(QMainWindow):
         self.open_url(QUrl.fromLocalFile(str(path)))
 
     def _start_tour(self) -> None:
+        """The tour walks through the sample project: from the landing page it goes to where the
+        role starts work (the diagram, or the Next step page) first."""
+        if self._landing and shiboken6.isValid(self):
+            self._leave_landing()
+            self._show_area(self._start_area() if self.role in STARTS_ON_NEXT else areas.DEFAULT)
         self.tour.start()
 
     def _build_menus_and_toolbar(self) -> None:
@@ -2745,7 +2756,9 @@ class MainWindow(QMainWindow):
 
     def _update_banner(self) -> None:
         c = self.ctl
-        if c.read_only:
+        if self._landing:  # nothing of the person's is open: the sample's notice waits
+            self.banner.hide()
+        elif c.read_only:
             self.banner.show_message(strings.BANNER_READ_ONLY, strings.SAVE_COPY, self._save_copy)
         elif c.project.recovered:
             self.banner.show_message(
@@ -2935,6 +2948,64 @@ class MainWindow(QMainWindow):
         recent.forget(self.settings, path)
         self._update_home()
 
+    def clear_recent_flow(self) -> bool:
+        """Home's *Clear list*: asked first, then the list of recent projects is emptied (the names
+        and folders kept in the settings). No project folder is touched; the project that is open
+        stays open and comes back on the list the next time it is opened or saved."""
+        choice = self.ask_choice(
+            strings.HOME_CLEAR_TITLE,
+            strings.HOME_CLEAR_BODY,
+            [strings.HOME_CLEAR_OK, strings.CANCEL],
+        )
+        if choice != 0:
+            return False
+        recent.clear(self.settings)
+        self._recent_shown = []
+        self.home_page.set_recent([], exists=lambda _path: False)
+        self.toasts.show_message(strings.HOME_CLEARED, None, 2500)
+        return True
+
+    # ---- the landing page: the start of the program -------------------------------------------
+    def landing(self) -> bool:
+        """True while the window shows the landing page of the program's start."""
+        return self._landing
+
+    def show_landing(self) -> None:
+        """The start of the program (`app.main`): Home as a landing page. No project of the
+        person's is opened (the last one is not opened again): Home shows New project, Open
+        project, the examples and the recent projects, and nothing of a project around it (the
+        panels, the top bar, the status bar and the sample's notice wait). The window keeps the
+        built-in sample in memory, as before, for the tour and for a person who goes to the Model
+        without opening anything. Opening or making a project, the tour, a change of role, an edit
+        or going to another area ends the landing page and puts all of it back as it was."""
+        if self._landing:
+            return
+        self._landing = True
+        self._landing_docks = {
+            d: d.isVisibleTo(self) for d in (self.dock_left, self.dock_right, self.dock_problems)
+        }
+        for dock in self._landing_docks:
+            dock.hide()
+        self.top_toolbar.hide()
+        self.statusBar().hide()
+        self.home_page.set_landing(True)
+        self._update_banner()
+        self._show_area("home")
+
+    def _leave_landing(self) -> None:
+        """The landing page ends: the panels, bars and notices come back as they were."""
+        if not self._landing:
+            return
+        self._landing = False
+        self.top_toolbar.show()
+        self.statusBar().show()
+        for dock, shown in self._landing_docks.items():
+            dock.setVisible(shown)
+        self._landing_docks = {}
+        self.home_page.set_landing(False)
+        self._update_banner()
+        self._sync_panels_action()
+
     def _remember_current(self) -> None:
         c = self.ctl
         root = c.root
@@ -3091,6 +3162,8 @@ class MainWindow(QMainWindow):
         self.alerts.clear("job")
 
     def _on_changed(self, delta: Delta) -> None:
+        if self._landing:  # an edit (a menu or a key on the landing page): show what changed
+            self._leave_landing()
         if self.filter_combo.currentData():  # connectors and harnesses come and go (generate, undo)
             before = self.filter_value.currentData()
             self._refresh_filter_values()
@@ -3800,6 +3873,7 @@ class MainWindow(QMainWindow):
         stays; the next project that is opened shows the first page of the role."""
         value = clean_role(value, self.role)
         if value != self.role:
+            self._leave_landing()  # (the layout of the role brings its panels and bars)
             if save_left:
                 self._save_settings()  # the layout of the role being left
             self.settings.setValue("ui/role", value)
@@ -3832,7 +3906,7 @@ class MainWindow(QMainWindow):
         if self._role_to_ask:
             self.ask_role_flow()
         if self._tour_wanted:
-            QTimer.singleShot(200, self.tour.start)
+            QTimer.singleShot(200, self._start_tour)
 
     def _wkey(self, key: str) -> str:
         """A settings key of the layout, for the role that is open: the Electrical / AIT engineer
@@ -3925,12 +3999,16 @@ class MainWindow(QMainWindow):
 
     def _open_for_role(self) -> None:
         """A project was opened: the Systems engineer and the AIT roles start on the next step (the
-        Electrical engineer stays where it is). In Quick mode every role starts on the diagram:
-        the Next step page and the areas of due diligence are not on the rail."""
+        Electrical engineer stays where it is, unless that is Home: a project opened from Home
+        opens on the diagram). In Quick mode every role starts on the diagram: the Next step page
+        and the areas of due diligence are not on the rail. The landing page ends here."""
+        self._leave_landing()
         if self.quick_on():
             self._show_area("model", tab="diagram")
         elif self.role in STARTS_ON_NEXT:
             self._show_area("next")
+        elif self._area == "home":
+            self._show_area(areas.DEFAULT)
 
     def _start_area(self) -> str:
         """The page the Systems engineer and AIT roles start on: Next step, or the Model in Quick
@@ -4131,6 +4209,8 @@ class MainWindow(QMainWindow):
         self._show_area(key)
 
     def _show_area(self, key: str, *, tab: str | None = None) -> None:
+        if key != "home":
+            self._leave_landing()  # (going anywhere else is going to work)
         a = areas.area(key)
         self._area = key
         self._switching_area = True
@@ -4811,7 +4891,6 @@ class MainWindow(QMainWindow):
             return
         self._open_for_role()
         self._last_issues = []
-        self.settings.setValue("project/last", str(folder))
 
     def open_flow(self) -> None:
         folder = self.ask_folder(strings.OPEN_FOLDER)
@@ -4865,9 +4944,9 @@ class MainWindow(QMainWindow):
             self._error(str(exc))
             return False
         self._last_issues = result.issues
+        self._leave_landing()  # before the project's own layout is put back
         self._restore_project_layout()
         self._open_for_role()
-        self.settings.setValue("project/last", str(folder))
         if self.ctl.open_note:
             self.toasts.show_message(self.ctl.open_note, None, 10000)
         if self.ctl.upgraded is not None:
@@ -4919,7 +4998,6 @@ class MainWindow(QMainWindow):
         except (HarnessError, OSError, ValueError) as exc:
             self._error(self._explain(exc, folder))
             return False
-        self.settings.setValue("project/last", folder)
         self.toasts.show_message(strings.SAVED, None, 2500)
         return True
 
@@ -4979,6 +5057,10 @@ class MainWindow(QMainWindow):
 
     # ---- settings, theme, scale -----------------------------------------------------------------
     def _restore_settings(self) -> None:
+        # `project/last`, the folder of the project open when the program was closed (1.17 and
+        # before; it was opened again at the next start), is read by nothing now: removed (D-223)
+        if self.settings.contains(LEGACY_LAST_PROJECT):
+            self.settings.remove(LEGACY_LAST_PROJECT)
         saved_theme = str(self.settings.value("ui/theme", "system"))
         mode_name = saved_theme if saved_theme in MODES else "system"  # default: the OS scheme
         saved_scale = self.settings.value("ui/scale")
@@ -5054,8 +5136,11 @@ class MainWindow(QMainWindow):
         return want
 
     def _save_settings(self) -> None:
+        """The window's own settings: its size and place, the panels of the role and of the open
+        project. Never which project was open (the program starts on Home, D-223)."""
         self.settings.setValue("ui/geometry", self.saveGeometry())
-        self.settings.setValue(self._wkey("ui/state"), self.saveState(STATE_VERSION))
+        if not self._landing:  # (on the landing page the panels are put away: keep what is stored)
+            self.settings.setValue(self._wkey("ui/state"), self.saveState(STATE_VERSION))
         self._save_project_layout()
 
     def _layout_group(self) -> str | None:
@@ -5361,19 +5446,29 @@ class MainWindow(QMainWindow):
         scale = self.theme.scale
         wide, medium = self._layout_class = self._layout_class_now()
         if self.role == SYSTEMS:  # (it closes what no longer fits, never opens a panel)
-            wide = wide and self.dock_right.isVisibleTo(self)
-            medium = medium and self.dock_left.isVisibleTo(self)
-        was = (self.dock_left.isVisibleTo(self), self.dock_right.isVisibleTo(self))
-        self.dock_right.setVisible(wide)
-        self.dock_left.setVisible(medium)
-        now = (self.dock_left.isVisibleTo(self), self.dock_right.isVisibleTo(self))
-        if was != now and (was[0] and not now[0] or was[1] and not now[1]):
-            self.toasts.show_message(strings.PANELS_HIDDEN, None)  # never hide panels silently
+            wide = wide and self._dock_shown(self.dock_right)
+            medium = medium and self._dock_shown(self.dock_left)
+        if self._landing:  # the landing page has no panels: they come back like this
+            self._landing_docks[self.dock_right] = wide
+            self._landing_docks[self.dock_left] = medium
+        else:
+            was = (self.dock_left.isVisibleTo(self), self.dock_right.isVisibleTo(self))
+            self.dock_right.setVisible(wide)
+            self.dock_left.setVisible(medium)
+            now = (self.dock_left.isVisibleTo(self), self.dock_right.isVisibleTo(self))
+            if was != now and (was[0] and not now[0] or was[1] and not now[1]):
+                self.toasts.show_message(strings.PANELS_HIDDEN, None)  # never hide them silently
         self.interface_table.scale_factor = scale
         self.unit_table.scale_factor = scale
         self.dock_left.setMinimumWidth(self.theme.px(280))
         self.dock_right.setMinimumWidth(self.theme.px(260))
         self.resizeDocks([self.dock_left], [self.theme.px(280)], Qt.Orientation.Horizontal)
+
+    def _dock_shown(self, dock: QDockWidget) -> bool:
+        """Whether a panel is open, or (on the landing page) is open again when the page ends."""
+        if self._landing:
+            return self._landing_docks.get(dock, False)
+        return dock.isVisibleTo(self)
 
     def showEvent(self, event: QShowEvent) -> None:
         super().showEvent(event)

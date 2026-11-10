@@ -545,6 +545,9 @@ def window_views(win) -> list[tuple[str, Callable[[], None]]]:  # type: ignore[n
 
     for key, _title in SECTIONS:
         view(f"settings/{key}", partial(settings_section, key))
+    # Home as the landing page of the program's start (D-223): no panels or bars around it, the
+    # recent list with Clear list (last: the next view's area ends the landing page)
+    view("landing", win.show_landing)
     return views
 
 

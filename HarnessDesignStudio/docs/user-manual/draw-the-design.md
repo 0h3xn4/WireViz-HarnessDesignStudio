@@ -34,7 +34,7 @@ You can start in the app or on the command line. The result is the same: a folde
 2. Choose an **empty folder**, then type a project name.
 3. To open a project you made earlier: **File > Open project…** (Ctrl+O), or press **Open** beside it in the **Recent projects** of the **Home** page (Ctrl+7; as a Systems engineer Home is not in the rail, but Ctrl+7 and **Go > Go to Home** open it).
 
-**Home** has the same starts as buttons (**New project…**, **Open project…**, **New from an example…**, **Open the sample project**), and **Try the flatsat example** opens a copy of that example in your Documents folder.
+**Home** has the same starts as buttons (**New project…**, **Open project…**, **New from an example…**, **Open the sample project**), and **Try the flatsat example** opens a copy of that example in your Documents folder. The program **starts on Home** with nothing open (it does not open the project you had open when you closed it); the **Recent projects** are listed newest first, so continuing is one click on **Open**. **Clear list** empties that list after a question; your project folders stay as they are.
 
 **On the command line**
 

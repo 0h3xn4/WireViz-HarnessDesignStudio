@@ -13,7 +13,7 @@ This page is for a colleague who wants to check, without trusting the people who
 
 ## What is claimed, and what is not
 
-**Claimed:** the program opens no network connection, listens on no port, looks up no host name and starts no program but its own design rule check helper (itself, with `--drc-worker`). Design data is written only into the project folder, its outputs and its backups, with three exceptions that stay on your computer and are named here: the editor's **recent-projects list** in its settings file keeps the folder, the **project name** and the numbers of devices, interfaces and harnesses of each project opened; while a build workbook (`.xlsx`) is written, its worksheets are in **temporary files** of the system's temporary folder for that moment (made by the spreadsheet library openpyxl, deleted at once); and the window title (the project name) goes to your display server.
+**Claimed:** the program opens no network connection, listens on no port, looks up no host name and starts no program but its own design rule check helper (itself, with `--drc-worker`). Design data is written only into the project folder, its outputs and its backups, with three exceptions that stay on your computer and are named here: the editor's **recent-projects list** in its settings file keeps the folder, the **project name** and the numbers of devices, interfaces and harnesses of each project opened (**Clear list** on the Home page removes them); while a build workbook (`.xlsx`) is written, its worksheets are in **temporary files** of the system's temporary folder for that moment (made by the spreadsheet library openpyxl, deleted at once); and the window title (the project name) goes to your display server.
 
 **Not claimed:**
 
