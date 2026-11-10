@@ -1,6 +1,6 @@
 # Final report: legal protection, phases 1 and 2
 
-Date: 2026-11-10. Written by an AI (Claude, through Claude Code) for the project owner. This is not legal advice. The website (phases 3 and 4) is not part of this report: it waits for your OK on the design plan.
+Date: 2026-11-10. Written by an AI (Claude, through Claude Code) for the project owner. This is not legal advice. There is no website: the owner discarded the website plan (phases 3 and 4) on 2026-11-10, after the design study and a first build. Nothing of it is in the repository, and nothing was published (D-217).
 
 ## 1. What changed
 
@@ -16,7 +16,7 @@ All changes are in one pull request, merged into `master` on 2026-11-10 after yo
 | Notices in written files | Every file the tool writes carries the notice. This changes the files once, on purpose; the reference outputs and the output baseline were written again (D-214). "Independent check" is now "self-check" (D-215). |
 | Third parties | Inventory, SBOM and notices are made from the built package, for Linux and Windows, and are inside every package. CI compares the package with the committed inventory and checks the licences against an allow-list. A tool fetches the source of the LGPL and GPL parts (Qt for Python, Qt, Ubuntu libraries). |
 | Supply chain | All actions are pinned to commits. Workflows have the least permissions. New workflow `harness-legal.yml` (REUSE, commit check, pip-audit, dependency review, CodeQL). The release workflow signs with Sigstore (no key) and adds build attestations. `SECURITY.md`, `SUPPORT.md`, issue templates. |
-| Records | The audit, the risk register (33 risks), this checklist of owner items, 13 questions for a lawyer, two annexes and a release record template, all in `compliance/legal/`. |
+| Records | The audit, the risk register (33 risks), this checklist of owner items, 14 questions for a lawyer, two annexes and a release record template, all in `compliance/legal/`. |
 
 Not changed, by the rules of the brief: no release, tag, release asset or history; no repository setting; nothing in `src/wireviz`, `docs/`, `examples/` or `tutorial/`.
 
@@ -42,19 +42,17 @@ Not changed, by the rules of the brief: no release, tag, release asset or histor
 - **Registers.** I could not reach trademark registers (D2).
 - **Real screens.** No person looked at the new first-start notice on a real display; the tests run offscreen and on the real-platform lanes.
 
-## 4. Decisions still needed from you
+## 4. Decisions
 
-The full list, with a reason for each, is in [`owner-checklist.md`](owner-checklist.md). The ones that matter most:
+**Answered by the owner on 2026-11-10** (recorded as D-218): the country is **Germany** (A1); no one else has a claim on the tool and D-186 is read in the legally safest way, private use by the owner alone (A2, A3); tag `v1.15.0` was made by the owner (A4); the 20 existing releases follow **option (b)**, a new release with a superseded note, and no old release is edited (B1); the history is **accepted as it is, no rewrite**, and future commits use the noreply address (B2); Dependency graph and private vulnerability reporting are to be switched on, by the owner, because no tool of the assistant changes a setting (C); the first signed release is a **release candidate** (F1).
 
-1. **Country** (A1). It decides the privacy notice and whether an imprint is needed. It blocks the website text.
-2. **The meaning of D-186 and the claims of others** (A2 to A6): who "used internally" meant, employer or client claims, the workshop people, the other "Studio" projects. The GPL grant depends on your answer.
-3. **Tag `v1.15.0`** was made by another person (A4).
-4. **The 20 existing releases** (B1). My recommendation: one new release with every fix, and a "superseded" note in its text. I did not touch any release.
-5. **History** (B2): a mailbox address on 98 commits. A rewrite breaks 20 release tags and links; I do not start without your OK.
-6. **Upstream files** changed against your decision (B3), **data that may not be public** (B4), **names and trademarks** (B5), **what the app records about people** (B6, F5), **export control** (B7), **a lawyer** (B8).
-7. **The first signed release** (F1). I recommend a release candidate tag first.
+**Still needed from you** (the full list, with a reason for each, is in [`owner-checklist.md`](owner-checklist.md), F15):
 
-## 5. Settings you must change (I do not change them)
+1. **Settings** (section 5): Dependency graph, the variable `DEPENDENCY_GRAPH`, private vulnerability reporting, and the noreply address on your computers (B2).
+2. **Workshop people, other Studio projects, example data** (A5 to A7).
+3. **Upstream files** changed against your decision (B3), **data that may not be public** (B4), **names and trademarks** (B5), **what the app records about people** (B6, F5), **export control** (B7), **a lawyer** (B8). For a lawyer, Q-14 now holds the German-law questions.
+
+## 5. Settings you must change (I cannot change them)
 
 From section C of the checklist: turn on the Dependency graph and set the repository variable `DEPENDENCY_GRAPH`, so that dependency review runs; turn on private vulnerability reporting (for `SECURITY.md`); check the Actions settings (F3, disable `main.yml` if you do not need it); branch protection and the required checks; GitHub Pages only when you approve the website.
 
@@ -70,7 +68,7 @@ The risks that stay high until you act:
 - Names and trademarks (LR-19, LR-24).
 - Export control and product-liability rules for a tool used in spacecraft work (LR-12, LR-13). I make no judgement on either.
 
-Questions for a lawyer are in [`lawyer-questions.md`](lawyer-questions.md), Q-1 to Q-13. Start with Q-1 (copyright in AI-written code), Q-4 and Q-7 (liability and the intended-use text), Q-5 (country and website), Q-11 (third-party text and runtime DLLs).
+Questions for a lawyer are in [`lawyer-questions.md`](lawyer-questions.md), Q-1 to Q-14. Start with Q-1 (copyright in AI-written code), Q-4 and Q-7 (liability and the intended-use text), Q-5 (country and website), Q-11 (third-party text and runtime DLLs).
 
 ## 7. What I did after the owner's instruction "continue as per your recommendation"
 
@@ -81,4 +79,4 @@ Recorded in D-216 so that you can undo each one: the choices are in section F of
 
 ## 8. Next step
 
-Phase 3, the website. I will write the design study of the app (colours, fonts, icons, the licence of every asset), the plan of the page and the text, and stop for your OK before I write any site code (checkpoint 3a). Nothing is deployed before your OK.
+None from me. The website plan is discarded (D-217): no site folder, no Pages workflow, no site tests. The Pages items in section C of the checklist need no action. If you want a site later, the brief's phase 3 is the start; the legal texts, the privacy statement of the app and the screenshot tool `tools/gui_screenshots.py` already exist.
