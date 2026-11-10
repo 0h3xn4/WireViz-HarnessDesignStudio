@@ -7,6 +7,7 @@ import re
 import shutil
 import subprocess
 import sys
+import tomllib
 import xml.etree.ElementTree as ET  # noqa: S405
 from pathlib import Path
 from typing import Any
@@ -1007,3 +1008,17 @@ def test_install_does_not_replace_a_gui_link_that_is_not_ours(tmp_path: Path) ->
     (bindir / "harness-design-studio-gui").symlink_to(other)
     r = run_script(pkg / "install.sh", tmp_path, "--prefix", str(tmp_path / "opt"))
     assert r.returncode == 1 and "not touching" in r.stderr and not (tmp_path / "opt").exists()
+
+
+def test_the_release_check_runs_before_the_package_is_installed() -> None:
+    """The release workflow runs `tools.release_notes check` before `pip install` (1.17.1rc1: it
+    stopped with "No module named 'harness_design_studio'"). `-S` leaves out site-packages, so an
+    installed copy of the package cannot hide the problem; the environment drops PYTHONPATH."""
+    pyproject = tomllib.loads((ROOT / "pyproject.toml").read_text(encoding="utf-8"))
+    version = pyproject["project"]["version"]
+    env = {k: v for k, v in os.environ.items() if k != "PYTHONPATH"}
+    done = subprocess.run(  # noqa: S603
+        [sys.executable, "-S", "-m", "tools.release_notes", "check", f"v{version}"],
+        cwd=ROOT, env=env, capture_output=True, text=True, timeout=120, check=False,
+    )  # fmt: skip
+    assert "ModuleNotFoundError" not in done.stderr, done.stderr[-2000:]
