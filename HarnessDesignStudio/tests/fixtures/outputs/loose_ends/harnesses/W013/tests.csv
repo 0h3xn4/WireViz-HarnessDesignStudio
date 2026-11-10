@@ -1,5 +1,5 @@
-# harness-design-studio 1.17.0 model 7f1c5a8c9ea8
-# harness-design-studio 1.17.0. Provided as is, without warranty. Verify before use.
+# harness-design-studio 1.17.1rc1 model 054deb7d4d0e
+# harness-design-studio 1.17.1rc1. Provided as is, without warranty. Verify before use.
 Test,Type,From,To,Expected,Limit,Test voltage,Wire
 T001,continuity,W013-P1.1,W013-P2.1 (open end),test when the end is decided,1 ohm max,,W013-001
 T002,continuity,W013-P1.2,W013-P2.2 (open end),test when the end is decided,1 ohm max,,W013-002
