@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The As-built area, a page of its own: what was built and measured, and what is still missing (S9).
 
     page = AsBuiltPage(theme, actions={"import": ..., "export": ...})

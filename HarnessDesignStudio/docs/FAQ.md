@@ -44,7 +44,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **What happens when I generate again?** IDs, locked wires and locked pins are kept, so are the wires you drew or edited in the **Edit wire** tab, your wire, connector and harness labels, strip lengths, accessories (while the connector or wire they sit on is kept), the cable contact of a device's pin, the groups you made and the cable connectors you edited; released harnesses are never touched, and a report says what was added, changed and removed (and, as *locked_data_lost*, anything it could not keep because its interface is gone). Generating twice gives the same result.
 
-**Can two wires go to one pin?** Yes, since 1.4.0: draw the wire in the **Edit wire** tab. The design rule *Several wires on one pin* (`pin-shared`, a warning) names each such pin so a reviewer sees it, and the independent check says *pin_shared* (a warning) instead of failing when a wire you drew is one of them ([edit a wire](user-manual/edit-a-wire.md)).
+**Can two wires go to one pin?** Yes, since 1.4.0: draw the wire in the **Edit wire** tab. The design rule *Several wires on one pin* (`pin-shared`, a warning) names each such pin so a reviewer sees it, and the self-check says *pin_shared* (a warning) instead of failing when a wire you drew is one of them ([edit a wire](user-manual/edit-a-wire.md)).
 
 **What is the direction of a pin?** An optional word (`in`, `out` or `bidirectional`; empty means not set) that says which way the signal runs at the pin (new in 1.9.0). Where it is set it decides before any name does: **Check my connections** reports output against output and input against input from the two directions, and the pairing proposal pairs two equal `TX` names when the pins say `out` and `in`. The Devices tab shows it, `import-pinout` reads a *Direction* column, and the pinout tables get a *Direction* column only while some pin has one ([connect two connectors](user-manual/connect-two-connectors.md)).
 
@@ -74,7 +74,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 
 **Where do I put the project in Git?** The project folder is the repository (or a folder in it). Everything in it is plain JSON in a fixed format, so diffs show real changes only. `.gitignore` is written for you. See [`HOWTO.md`](HOWTO.md) section 15.
 
-**What do I commit, and what not?** Commit the whole project folder. `outputs/` can be committed (reviewers like to see it) or ignored; it is always safe to delete and regenerate.
+**What do I commit, and what not?** Commit the whole project folder. `outputs/` can be committed (reviewers like to see it) or ignored; it can always be deleted and made again.
 
 **How do I know a printed sheet or drawing matches the design?** Every output carries the tool version and a *model hash* (12 characters); the build workbook has it in the footer of every printed sheet. `harness-design-studio verify DIR --outputs` checks the files against the design.
 
@@ -117,7 +117,7 @@ Short answers. If yours is not here, check the **Problems** tab or the Problems 
 | A wire gauge says *pending* | A value is missing. `harness-design-studio config DIR` says which; a gauge also needs the interface's **Max current** and the segment lengths. |
 | `harness-design-studio release` says *blocked* | Each reason is printed in words. Typically a gauge or length is missing, an error is open, or the configuration files are still placeholders (review them and set `"placeholder": false`, or give a reason with `--accept-placeholders`), or a part is not approved (approve it in the parts list, or give a reason with `--accept-unapproved-parts`). |
 | *Outputs out of date* (status chip or banner) | The design changed since the last export. Export again. (The chip and the banner are problem notices: **View > Show problem notices** hides them; the Systems engineer role starts with them off.) |
-| *Windows protected your PC* when you start the setup program or the editor | The Windows packages are not signed. Compare the checksum first ([`INSTALL.md`](INSTALL.md)), then choose **More info** and **Run anyway**. |
+| *Windows protected your PC* when you start the setup program or the editor | The Windows packages have no Windows code-signing certificate. Compare the checksum first ([`INSTALL.md`](INSTALL.md)), then choose **More info** and **Run anyway**. |
 | **Export…** opens a folder chooser first, or seems to do nothing | The project has no folder yet (the sample, or a project never saved), so it asks where to save it first; cancelling the chooser stops there. [Troubleshooting](TROUBLESHOOTING.md#in-the-app-export-opens-a-folder-chooser-or-does-nothing). |
 | *Blocked because it touches released items* | The harness is released, and so are the parts, interface types and configuration values it uses. An edit, `harness-design-studio import-parts` or `harness-design-studio config` that would change them is refused. Start a new revision (`harness-design-studio revise`), make the change, release again. |
 | `import-netlist` says a file is not a netlist | It must be KiCad's `.net` (S-expression) or XML export, not a `.kicad_sch`. |

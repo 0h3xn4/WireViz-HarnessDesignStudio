@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """R11: `--json` on every command that has a result in data form.
 
 What is checked: every command takes the option and has its document described (`SHAPES`, which

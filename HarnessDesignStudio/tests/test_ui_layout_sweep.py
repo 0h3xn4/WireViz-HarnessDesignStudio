@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-GUI-23. Nothing in a dialog or window of the program lies on top of anything else, is cut
 off, or is squeezed below what it needs, at the interface sizes and font sizes people use.

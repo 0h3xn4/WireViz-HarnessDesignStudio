@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Summarise usability sessions: success, time, wrong clicks, SUS, and the priority bugs.
 Usage: python -m tools.usability_summary results.csv sus.csv   (formats: docs/usability/)"""
 

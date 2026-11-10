@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Different people in a release, an optional setting of the project (1.9.0, audit F-07).
 
 Off by default and then nothing here changes anything: one name can still author, check and

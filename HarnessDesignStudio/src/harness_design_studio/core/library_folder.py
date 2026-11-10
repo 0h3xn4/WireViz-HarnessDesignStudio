@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The library folder: a folder that anyone points the tool at (a shared drive, a Git checkout)
 and that holds device library files and subsystem library files (workshop feedback M4, D-175).
 

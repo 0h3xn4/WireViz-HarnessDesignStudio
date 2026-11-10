@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-CC-08, F-07 (audit 1.8.0, 1.9.0): the optional setting `release_distinct_roles` of
 `config/naming.json`. Off, a release behaves as it always did and no file changes; on, the author,
 the checker and the person who releases are three different people, a date may not go back or

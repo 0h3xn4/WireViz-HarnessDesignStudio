@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,attr-defined"
 """S9 (R6): the workflow page matches the code. One source, `core/workflow.py`: the page's tables are
 made from it and a test fails when they differ; every step names only files, configuration files,

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Canonical JSON: the same data always yields the same bytes (sorted keys, fixed layout)."""
 
 import json

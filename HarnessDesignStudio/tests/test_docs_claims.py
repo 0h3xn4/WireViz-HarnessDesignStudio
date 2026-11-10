@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """1.8.1: documentary claims the 1.8.0 audit found false or stale stay corrected (F-14, F-05, F-13)."""
 
 import re
@@ -134,14 +136,15 @@ def _tour(readme: str) -> str:
 
 
 def test_the_readme_is_short_and_its_first_screen_is_not_release_history() -> None:
-    """F-13: about 60 lines, the status and the release history live in docs/STATUS.md."""
+    """F-13: a short page (about 60 lines plus the legal block, D-210), the status and the release
+    history live in docs/STATUS.md."""
     readme = _text(ROOT / "README.md")
-    assert len(readme.splitlines()) <= 70
+    assert len(readme.splitlines()) <= 90
     first_screen = "\n".join(readme.splitlines()[:30])
     assert "## The 10-minute tour" in first_screen
     for history in ("published on", "Version `1.", "tag `v1.", "on commit `"):
         assert history not in readme, history
-    assert "docs/STATUS.md" in readme and "Honest limits" in first_screen
+    assert "docs/STATUS.md" in readme and "Status, licence and limits" in first_screen
     status = _text(DOCS / "STATUS.md")
     # what the README said is there, word for word
     assert "Version `1.8.0` (decisions D-172 to D-176;" in status

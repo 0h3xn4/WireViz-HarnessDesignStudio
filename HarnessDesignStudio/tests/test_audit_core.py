@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Regression tests for the core findings of the October audit: release record and undo (A-2),
 damaged files (A-1), lone surrogates (A-3), stored units and box connectors of a baseline (E-4)
 and the lock rules (I-2)."""

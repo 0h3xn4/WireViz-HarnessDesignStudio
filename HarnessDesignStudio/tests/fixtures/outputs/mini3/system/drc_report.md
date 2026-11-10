@@ -1,4 +1,6 @@
 <!-- harness-design-studio 1.17.0 model 105247e3113c -->
+> harness-design-studio 1.17.0. Provided as is, without warranty. Verify before use.
+
 # Design rule check: mini3 (example data)
 
 Model hash: `105247e3113c`. Rules run: 39.

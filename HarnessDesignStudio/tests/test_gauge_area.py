@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """D2 (D-193): the cross-section in mm² beside every AWG gauge a person reads, and in no file.
 
 The core helpers, the explanations, the Assumptions page and the command line text. The editor's

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Design rule check (DRC): `run(project)` returns every finding with waivers applied."""
 
 from typing import TYPE_CHECKING

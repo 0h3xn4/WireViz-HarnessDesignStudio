@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # Run inside the 24.04 build image with the source mounted at /src: installs the pinned
 # dependencies, runs the whole release checklist and leaves the packages in dist/.
 set -eu

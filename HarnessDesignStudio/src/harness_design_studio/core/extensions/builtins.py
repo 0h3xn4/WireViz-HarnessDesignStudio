@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The built-in items, registered through the same call an extension uses.
 
 `install()` fills `registry.REGISTRY` once: the design rules of `drc.RULES`, the fields of `fields.py`,

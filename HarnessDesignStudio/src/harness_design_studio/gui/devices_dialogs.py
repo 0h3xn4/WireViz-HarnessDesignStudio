@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Small dialogs of the Devices tab: a new connector part (with its mating half), a new interface
 type, signals from an interface type on selected pins, and an interface on selected pins.
 

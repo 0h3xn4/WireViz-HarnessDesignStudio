@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-EDIT-02: units saved without positions get deterministic, non-overlapping ones."""
 
 from harness_design_studio.core import edit

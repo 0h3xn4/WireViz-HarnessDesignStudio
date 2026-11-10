@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The trust store: which Python code the person using this computer has agreed to run.
 
 Python code of a plug-in is never imported unless the project enables it **and** the exact code is

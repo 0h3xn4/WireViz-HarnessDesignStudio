@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """CD-X5: the pinout import planner (core/pinout_import.py): good rows, bad pin names, duplicate
 pins, an unknown part, gender words, a released harness that blocks the import, CSV and XLSX,
 what stays pending. Headless."""

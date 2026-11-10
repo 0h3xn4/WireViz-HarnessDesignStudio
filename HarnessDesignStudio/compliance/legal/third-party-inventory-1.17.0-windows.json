@@ -1,0 +1,349 @@
+{
+ "components": [
+  {
+   "files": [
+    "harness-design-studio-gui.exe"
+   ],
+   "kind": "bootloader",
+   "licence": "GPL-2.0-or-later WITH Bootloader-exception",
+   "name": "PyInstaller bootloader and runtime hooks",
+   "origin": "the packages are built with PyInstaller (tools/build_installer.py)",
+   "version": "6.22.3"
+  },
+  {
+   "files": [
+    "LICENSES/inter/OFL-1.1-Inter.txt",
+    "_internal/harness_design_studio/resources/fonts/Inter-Medium.ttf",
+    "_internal/harness_design_studio/resources/fonts/Inter-Regular.ttf",
+    "_internal/harness_design_studio/resources/fonts/Inter-SemiBold.ttf",
+    "_internal/harness_design_studio/resources/fonts/OFL-1.1-Inter.txt",
+    "cli/_internal/harness_design_studio/resources/fonts/Inter-Medium.ttf",
+    "cli/_internal/harness_design_studio/resources/fonts/Inter-Regular.ttf",
+    "cli/_internal/harness_design_studio/resources/fonts/Inter-SemiBold.ttf",
+    "cli/_internal/harness_design_studio/resources/fonts/OFL-1.1-Inter.txt"
+   ],
+   "kind": "font",
+   "licence": "OFL-1.1",
+   "name": "Inter (font)",
+   "origin": "file names; versions from decision D-150",
+   "version": "4.1"
+  },
+  {
+   "files": [
+    "LICENSES/jetbrains-mono/OFL-1.1-JetBrains-Mono.txt",
+    "_internal/harness_design_studio/resources/fonts/JetBrainsMono-Medium.ttf",
+    "_internal/harness_design_studio/resources/fonts/JetBrainsMono-Regular.ttf",
+    "_internal/harness_design_studio/resources/fonts/OFL-1.1-JetBrains-Mono.txt",
+    "cli/_internal/harness_design_studio/resources/fonts/JetBrainsMono-Medium.ttf",
+    "cli/_internal/harness_design_studio/resources/fonts/JetBrainsMono-Regular.ttf",
+    "cli/_internal/harness_design_studio/resources/fonts/OFL-1.1-JetBrains-Mono.txt"
+   ],
+   "kind": "font",
+   "licence": "OFL-1.1",
+   "name": "JetBrains Mono (font)",
+   "origin": "file names; versions from decision D-150",
+   "version": "2.304"
+  },
+  {
+   "files": [],
+   "kind": "icon",
+   "licence": "ISC AND MIT",
+   "name": "Lucide and Feather icon outlines (gui/icons.py)",
+   "origin": "gui/icons.py",
+   "version": "lucide-static 1.56.0"
+  },
+  {
+   "files": [
+    "LICENSES/annotated-types/LICENSE"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "annotated-types",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "0.8.0"
+  },
+  {
+   "files": [
+    "LICENSES/defusedxml/LICENSE"
+   ],
+   "kind": "python",
+   "licence": "PSFL",
+   "name": "defusedxml",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "0.7.1"
+  },
+  {
+   "files": [
+    "LICENSES/et-xmlfile/AUTHORS.txt",
+    "LICENSES/et-xmlfile/LICENCE.python",
+    "LICENSES/et-xmlfile/LICENCE.rst"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "et_xmlfile",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "2.0.0"
+  },
+  {
+   "files": [
+    "LICENSES/openpyxl/LICENCE.rst"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "openpyxl",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "3.1.5"
+  },
+  {
+   "files": [
+    "_internal/pydantic-2.13.5.dist-info",
+    "cli/_internal/pydantic-2.13.5.dist-info"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "pydantic",
+   "origin": "dist-info METADATA",
+   "version": "2.13.5"
+  },
+  {
+   "files": [
+    "LICENSES/pydantic-core/LICENSE"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "pydantic_core",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "2.46.5"
+  },
+  {
+   "files": [
+    "LICENSES/pyside6-essentials/LicenseRef-Qt-Commercial.txt"
+   ],
+   "kind": "python",
+   "licence": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+   "name": "PySide6_Essentials",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "6.11.2"
+  },
+  {
+   "files": [
+    "LICENSES/shiboken6/LicenseRef-Qt-Commercial.txt"
+   ],
+   "kind": "python",
+   "licence": "LGPL-3.0-only OR GPL-2.0-only OR GPL-3.0-only",
+   "name": "shiboken6",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "6.11.2"
+  },
+  {
+   "files": [
+    "LICENSES/typing-inspection/LICENSE"
+   ],
+   "kind": "python",
+   "licence": "MIT",
+   "name": "typing-inspection",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "0.4.5"
+  },
+  {
+   "files": [
+    "LICENSES/typing-extensions/LICENSE"
+   ],
+   "kind": "python",
+   "licence": "PSF-2.0",
+   "name": "typing_extensions",
+   "origin": "LICENSES/README.txt of the package (written at build time)",
+   "version": "4.16.0"
+  },
+  {
+   "files": [
+    "_internal/PySide6/Qt6Core.dll",
+    "_internal/PySide6/Qt6Gui.dll",
+    "_internal/PySide6/Qt6Svg.dll",
+    "_internal/PySide6/Qt6Widgets.dll",
+    "_internal/PySide6/plugins/iconengines/qsvgicon.dll",
+    "_internal/PySide6/plugins/imageformats/qgif.dll",
+    "_internal/PySide6/plugins/imageformats/qicns.dll",
+    "_internal/PySide6/plugins/imageformats/qico.dll",
+    "_internal/PySide6/plugins/imageformats/qjpeg.dll",
+    "_internal/PySide6/plugins/imageformats/qsvg.dll",
+    "_internal/PySide6/plugins/imageformats/qtga.dll",
+    "_internal/PySide6/plugins/imageformats/qtiff.dll",
+    "_internal/PySide6/plugins/imageformats/qwbmp.dll",
+    "_internal/PySide6/plugins/imageformats/qwebp.dll",
+    "_internal/PySide6/plugins/platforms/qdirect2d.dll",
+    "_internal/PySide6/plugins/platforms/qminimal.dll",
+    "_internal/PySide6/plugins/platforms/qoffscreen.dll",
+    "_internal/PySide6/plugins/platforms/qwindows.dll",
+    "_internal/PySide6/plugins/styles/qmodernwindowsstyle.dll"
+   ],
+   "kind": "qt",
+   "licence": "LGPL-3.0-only (chosen; Qt for Python and Qt are also offered under GPL-2.0-only, GPL-3.0-only and a commercial licence)",
+   "name": "Qt (Core, Gui, Svg, Widgets)",
+   "origin": "library file names; version of PySide6",
+   "version": "6.11.2"
+  },
+  {
+   "files": [
+    "_internal/python3.dll",
+    "_internal/python314.dll",
+    "cli/_internal/python314.dll"
+   ],
+   "kind": "runtime",
+   "licence": "PSF-2.0",
+   "name": "CPython runtime",
+   "origin": "library file name; version string inside it",
+   "version": "unknown"
+  },
+  {
+   "files": [
+    "_internal/libffi-8.dll",
+    "cli/_internal/libffi-8.dll"
+   ],
+   "kind": "windows-runtime",
+   "licence": "MIT",
+   "name": "libffi",
+   "origin": "file name pattern (tools/third_party.py)",
+   "version": "unknown"
+  },
+  {
+   "files": [
+    "_internal/PySide6/opengl32sw.dll"
+   ],
+   "kind": "windows-runtime",
+   "licence": "MIT AND Apache-2.0 WITH LLVM-exception",
+   "name": "Mesa 3D (software OpenGL) with LLVM",
+   "origin": "file name pattern (tools/third_party.py)",
+   "version": "unknown"
+  },
+  {
+   "files": [
+    "_internal/api-ms-win-core-console-l1-1-0.dll",
+    "_internal/api-ms-win-core-datetime-l1-1-0.dll",
+    "_internal/api-ms-win-core-debug-l1-1-0.dll",
+    "_internal/api-ms-win-core-errorhandling-l1-1-0.dll",
+    "_internal/api-ms-win-core-fibers-l1-1-0.dll",
+    "_internal/api-ms-win-core-fibers-l1-1-1.dll",
+    "_internal/api-ms-win-core-file-l1-1-0.dll",
+    "_internal/api-ms-win-core-file-l1-2-0.dll",
+    "_internal/api-ms-win-core-file-l2-1-0.dll",
+    "_internal/api-ms-win-core-handle-l1-1-0.dll",
+    "_internal/api-ms-win-core-heap-l1-1-0.dll",
+    "_internal/api-ms-win-core-interlocked-l1-1-0.dll",
+    "_internal/api-ms-win-core-kernel32-legacy-l1-1-1.dll",
+    "_internal/api-ms-win-core-libraryloader-l1-1-0.dll",
+    "_internal/api-ms-win-core-localization-l1-2-0.dll",
+    "_internal/api-ms-win-core-memory-l1-1-0.dll",
+    "_internal/api-ms-win-core-namedpipe-l1-1-0.dll",
+    "_internal/api-ms-win-core-processenvironment-l1-1-0.dll",
+    "_internal/api-ms-win-core-processthreads-l1-1-0.dll",
+    "_internal/api-ms-win-core-processthreads-l1-1-1.dll",
+    "_internal/api-ms-win-core-profile-l1-1-0.dll",
+    "_internal/api-ms-win-core-rtlsupport-l1-1-0.dll",
+    "_internal/api-ms-win-core-string-l1-1-0.dll",
+    "_internal/api-ms-win-core-synch-l1-1-0.dll",
+    "_internal/api-ms-win-core-synch-l1-2-0.dll",
+    "_internal/api-ms-win-core-sysinfo-l1-1-0.dll",
+    "_internal/api-ms-win-core-sysinfo-l1-2-0.dll",
+    "_internal/api-ms-win-core-timezone-l1-1-0.dll",
+    "_internal/api-ms-win-core-util-l1-1-0.dll",
+    "_internal/api-ms-win-crt-conio-l1-1-0.dll",
+    "_internal/api-ms-win-crt-convert-l1-1-0.dll",
+    "_internal/api-ms-win-crt-environment-l1-1-0.dll",
+    "_internal/api-ms-win-crt-filesystem-l1-1-0.dll",
+    "_internal/api-ms-win-crt-heap-l1-1-0.dll",
+    "_internal/api-ms-win-crt-locale-l1-1-0.dll",
+    "_internal/api-ms-win-crt-math-l1-1-0.dll",
+    "_internal/api-ms-win-crt-process-l1-1-0.dll",
+    "_internal/api-ms-win-crt-runtime-l1-1-0.dll",
+    "_internal/api-ms-win-crt-stdio-l1-1-0.dll",
+    "_internal/api-ms-win-crt-string-l1-1-0.dll",
+    "_internal/api-ms-win-crt-time-l1-1-0.dll",
+    "_internal/api-ms-win-crt-utility-l1-1-0.dll",
+    "_internal/ucrtbase.dll",
+    "cli/_internal/api-ms-win-core-console-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-datetime-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-debug-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-errorhandling-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-fibers-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-fibers-l1-1-1.dll",
+    "cli/_internal/api-ms-win-core-file-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-file-l1-2-0.dll",
+    "cli/_internal/api-ms-win-core-file-l2-1-0.dll",
+    "cli/_internal/api-ms-win-core-handle-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-heap-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-interlocked-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-kernel32-legacy-l1-1-1.dll",
+    "cli/_internal/api-ms-win-core-libraryloader-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-localization-l1-2-0.dll",
+    "cli/_internal/api-ms-win-core-memory-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-namedpipe-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-processenvironment-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-processthreads-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-processthreads-l1-1-1.dll",
+    "cli/_internal/api-ms-win-core-profile-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-rtlsupport-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-string-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-synch-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-synch-l1-2-0.dll",
+    "cli/_internal/api-ms-win-core-sysinfo-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-sysinfo-l1-2-0.dll",
+    "cli/_internal/api-ms-win-core-timezone-l1-1-0.dll",
+    "cli/_internal/api-ms-win-core-util-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-conio-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-convert-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-environment-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-filesystem-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-heap-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-locale-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-math-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-process-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-runtime-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-stdio-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-string-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-time-l1-1-0.dll",
+    "cli/_internal/api-ms-win-crt-utility-l1-1-0.dll",
+    "cli/_internal/ucrtbase.dll"
+   ],
+   "kind": "windows-runtime",
+   "licence": "LicenseRef-Microsoft-Redistributable (UCRT)",
+   "name": "Microsoft Universal C Runtime",
+   "origin": "file name pattern (tools/third_party.py)",
+   "version": "unknown"
+  },
+  {
+   "files": [
+    "_internal/PySide6/MSVCP140.dll",
+    "_internal/PySide6/MSVCP140_1.dll",
+    "_internal/PySide6/MSVCP140_2.dll",
+    "_internal/PySide6/VCRUNTIME140.dll",
+    "_internal/PySide6/VCRUNTIME140_1.dll",
+    "_internal/VCRUNTIME140.dll",
+    "_internal/VCRUNTIME140_1.dll",
+    "_internal/shiboken6/MSVCP140.dll",
+    "_internal/shiboken6/VCRUNTIME140.dll",
+    "_internal/shiboken6/VCRUNTIME140_1.dll",
+    "cli/_internal/VCRUNTIME140.dll",
+    "cli/_internal/VCRUNTIME140_1.dll"
+   ],
+   "kind": "windows-runtime",
+   "licence": "LicenseRef-Microsoft-Redistributable (VC runtime)",
+   "name": "Microsoft Visual C++ Runtime",
+   "origin": "file name pattern (tools/third_party.py)",
+   "version": "unknown"
+  },
+  {
+   "files": [
+    "_internal/libcrypto-3.dll",
+    "cli/_internal/libcrypto-3.dll"
+   ],
+   "kind": "windows-runtime",
+   "licence": "Apache-2.0",
+   "name": "OpenSSL",
+   "origin": "file name pattern (tools/third_party.py)",
+   "version": "3.5.9"
+  }
+ ],
+ "format": "windows",
+ "tool_version": "1.17.0"
+}

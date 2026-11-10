@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Generation: logical interfaces in, physical harnesses out, as a plan that can be previewed.
 
 `plan_generation` never changes the project. It returns the operations (one transaction), a

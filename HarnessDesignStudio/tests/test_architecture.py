@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-ARCH-01: the headless core must not depend on GUI or CLI code."""
 
 from pathlib import Path

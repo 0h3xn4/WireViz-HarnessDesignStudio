@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """REQ-LIB-05. 1.8.1 trust fixes of the library (audit A-4, A-5, A-6, A-7, A-26): the contact
 parts travel with a device, a renamed device can be saved and added again, one malformed file

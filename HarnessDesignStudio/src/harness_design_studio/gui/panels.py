@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Dock panels: the properties form and the problems list (with its to-do lines), and the helpers other panels use."""
 
 import html

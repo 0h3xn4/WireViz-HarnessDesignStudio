@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Download every pinned wheel into a local folder for offline installs (run on a connected host).
 
 Install later without network:  pip install --no-index --find-links wheelhouse harness-design-studio[gui]
@@ -21,7 +23,7 @@ def main(dest: str = "wheelhouse", extras: str = "gui,dev") -> int:
         "download",
         "--dest",
         dest,
-        "setuptools==84.0.0",
+        "setuptools==84.2.1",
     ]  # this setuptools builds wheels itself: the separate, unpinned `wheel` package is not needed
     return subprocess.run(backend, check=False).returncode
 

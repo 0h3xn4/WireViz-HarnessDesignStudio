@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The library window: a window of its own, beside the editor, with the devices and subsystems of the
 library folder (workshop feedback M4, D-175).
 

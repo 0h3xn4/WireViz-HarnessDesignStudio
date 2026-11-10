@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The units of the numeric fields of `system/export.json` (release 1.13, D-195, requirement R5).
 
 `export.json` holds the model as saved, and a saved field states its unit in its name (`length_m`,

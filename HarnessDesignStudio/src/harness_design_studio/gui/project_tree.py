@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Project tree (SH-6, SC-20): the left panel that lists everything in the project.
 
 Roots: Units, Interfaces, Harnesses (with a release-state badge; a harness with a loose cable end

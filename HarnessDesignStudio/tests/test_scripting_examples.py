@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """R11: the scripting examples run, and they use only the interface they teach.
 
 `docs/examples/scripting/` holds three scripts. Each is run here (in this process, and one as a

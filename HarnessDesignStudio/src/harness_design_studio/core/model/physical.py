@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Physical layer: connectors, pins, wires, shields and harnesses."""
 
 from typing import Annotated, ClassVar, Literal

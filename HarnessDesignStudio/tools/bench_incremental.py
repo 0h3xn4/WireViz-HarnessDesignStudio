@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: allow-untyped-calls
 """Time what one edit costs on a project of 200 devices, and what the autosave journal and the
 export cost. Usage: python -m tools.bench_incremental [--repeat N] [--section NAME ...]

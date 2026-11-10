@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: allow-untyped-calls
 """Time editor interactions on a stress-size project (offscreen). Usage: python -m tools.bench_gui"""
 

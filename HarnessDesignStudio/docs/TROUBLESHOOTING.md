@@ -305,7 +305,7 @@ error: [wire_sizing] W002-002: no listed gauge carries 8 A after derating (facto
 Not saved: fix the errors above first.
 ```
 
-Exit code 1. **Why:** the current is more than the connector contact (or the largest wire in your ampacity table) can carry after derating. The line `44 interfaces and 103 wires checked: 0 error(s)` is the same independent check that `harness-design-studio verify` prints; the errors that stopped the save are the `error:` lines above it. Nothing was written. **Fix:** lower the current, or choose a connector or wire that can carry it. If you think the derating values are wrong, ask the engineer who owns them (`harness-design-studio config DIR` lists them); do not lower them just to make the error go away. Run `harness-design-studio generate` again.
+Exit code 1. **Why:** the current is more than the connector contact (or the largest wire in your ampacity table) can carry after derating. The line `44 interfaces and 103 wires checked: 0 error(s)` is the same self-check that `harness-design-studio verify` prints; the errors that stopped the save are the `error:` lines above it. Nothing was written. **Fix:** lower the current, or choose a connector or wire that can carry it. If you think the derating values are wrong, ask the engineer who owns them (`harness-design-studio config DIR` lists them); do not lower them just to make the error go away. Run `harness-design-studio generate` again.
 
 ### A wire gauge says `pending`
 
@@ -467,7 +467,7 @@ error: [out_modified] system/bom.csv was changed after it was exported.
 
 If you filled in the build workbook in `outputs/` (ticks, measured values), `verify --outputs` also prints `error: [out_build] The build workbook of W001 (Cut list) does not match the design for W001-001.` (the sheet and the wire it names depend on what you typed). Work on a copy of the workbook instead.
 
-Exit code 1. **Fix:** never edit files in `outputs/`; they are made from the design and are safe to delete. Run `harness-design-studio generate DIR`, then `harness-design-studio export DIR`, then `harness-design-studio verify DIR --outputs`.
+Exit code 1. **Fix:** never edit files in `outputs/`; they are made from the design and can be deleted. Run `harness-design-studio generate DIR`, then `harness-design-studio export DIR`, then `harness-design-studio verify DIR --outputs`.
 
 ## Importing
 
@@ -619,7 +619,7 @@ harness-design-studio export demo
 ```
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the block diagram and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
 warning: [out_pdf_chars] These characters cannot be shown in the PDF of the harness overview and appear as '?' there: Δ (U+0394), Ω (U+03A9). The SVG drawings show them correctly.
-34 files written to demo/outputs (model <hash>).
+35 files written to demo/outputs (model <hash>).
 ```
 
 (Made with 1.11.0 from `first-steps`, after renaming two devices to "Computer Δ 1" and "Wheel Ω 1" in `logical/units/`. The model hash depends on the project and the tool version; yours differs. A name that appears on a harness drawing gives a line for that harness, for example `... in the PDF drawings of W001 ...`; the harness drawings are written only with `export --drawings`, so that line appears only then.)
@@ -654,7 +654,7 @@ Not an error. `to fill in` (on an amber cell) marks a value the design does not 
 
 ### Which file is what?
 
-See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example without build data writes `34 files written to demo-first-steps/outputs (model <hash>).` (40 with `--drawings`.)
+See [`OUTPUTS.md`](OUTPUTS.md) for the list of files. A project of the `first-steps` example without build data writes `35 files written to demo-first-steps/outputs (model <hash>).` (40 with `--drawings`.)
 
 ## Releasing
 
@@ -694,7 +694,7 @@ A release that rests on placeholders or example parts teaches the flow and nothi
 
 ```
 Release W003 revision A: done.
-Outputs re-exported with the released status (88 files).
+Outputs re-exported with the released status (89 files).
 ```
 
 Other release messages:
@@ -792,10 +792,10 @@ The files are plain text (JSON), so a project folder can be copied, zipped, e-ma
 | What | Where |
 | --- | --- |
 | Your design | the project folder you named |
-| Build workbooks, wire lists, BOM, exports (and the drawings, with `--drawings`) | `<project>/outputs/` (made by `harness-design-studio export`; safe to delete and make again) |
+| Build workbooks, wire lists, BOM, exports (and the drawings, with `--drawings`) | `<project>/outputs/` (made by `harness-design-studio export`; can be deleted and made again) |
 | Autosave of the app | `<project>/.harness-recovery/` (offered for restore after a crash; ignored by Git) |
 | App settings (theme, scale, last project) | `~/.config/HarnessDesigner/HarnessDesigner.ini` (no design data) |
-| Lock file while a project is open | `<project>/.harness.lock` (removed when closed); beside it an empty `.harness.lock.takeover` stays (no data, ignored by Git, safe to delete when the project is closed) |
+| Lock file while a project is open | `<project>/.harness.lock` (removed when closed); beside it an empty `.harness.lock.takeover` stays (no data, ignored by Git, can be deleted when the project is closed) |
 | Copies of the import templates | the folder you gave to `harness-design-studio templates` |
 
 **To start over:**
@@ -807,7 +807,7 @@ The files are plain text (JSON), so a project folder can be copied, zipped, e-ma
   harness-design-studio new demo --template first-steps
   ```
 
-- *Make the generated harnesses and outputs fresh:* `harness-design-studio generate demo` is safe to repeat (generating twice gives the same result); `rm -r demo/outputs` and `harness-design-studio export demo` rebuild the outputs.
+- *Make the generated harnesses and outputs fresh:* `harness-design-studio generate demo` can be repeated (generating twice gives the same result); `rm -r demo/outputs` and `harness-design-studio export demo` rebuild the outputs.
 - *Put one configuration file back to its starting state:* copy it from a fresh project (`harness-design-studio new fresh --template blank`, then copy `fresh/config/derating.json` over yours).
 - *Reset the app's look and scale:* delete `~/.config/HarnessDesigner/HarnessDesigner.ini` (on Ubuntu; **Settings > About** names the file).
 - *Undo a mistake in the app:* **Ctrl+Z**. A released harness is locked; start a new revision with `harness-design-studio revise` instead of editing it.

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-OUT-07 (decision D-187): a waiver records a short hash of the finding it was made for. While
 the finding says the same, the waiver applies; when the statement changes, the finding is open again
 and the DRC report says so. A waiver without the hash (made before, or by hand) applies as before,

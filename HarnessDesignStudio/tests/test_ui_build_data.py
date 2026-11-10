@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,union-attr,arg-type,var-annotated"
 """1.7.0 M2 (D-170): the build data in the editor: strip lengths in the Edit wire tab, the Cable
 contact column of the Devices tab, the Contact of a pin in the Connectors tab, the Accessories tab,

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The format of a declarative extension file: one description that both checks a file and writes
 its JSON Schema (`harness-design-studio schema DIR` exports it as `extension.schema.json`), so the
 schema an editor shows and the check the tool makes cannot disagree.

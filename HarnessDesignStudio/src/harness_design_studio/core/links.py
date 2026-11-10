@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Links: the pinout is the truth (M2 of the workshop feedback, `docs/ait/WORKSHOP_FEEDBACK_PLAN.md`).
 
 A link joins a connector of one device to a connector of another, pin to pin. The tool proposes

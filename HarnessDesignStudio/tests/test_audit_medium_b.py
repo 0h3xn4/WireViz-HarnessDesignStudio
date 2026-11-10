@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Generation and editing findings of the October audit, medium round (B-5 to B-15, B-20, B-22)."""
 
 from typing import Any

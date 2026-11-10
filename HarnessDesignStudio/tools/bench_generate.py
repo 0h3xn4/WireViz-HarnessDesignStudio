@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Time generation on the stress project (2,000 interfaces; target < 10 s).
 Usage: python -m tools.bench_generate"""
 

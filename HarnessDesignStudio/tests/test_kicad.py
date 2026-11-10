@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """KiCad netlist import and fixed pinouts (D-123)."""
 
 from pathlib import Path

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """1.4.0 M5: a device library file: devices with their pinouts reused across projects (D-165)."""
 

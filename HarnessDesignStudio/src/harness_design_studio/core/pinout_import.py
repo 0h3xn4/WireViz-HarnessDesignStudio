@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Import a device's pinout from a spreadsheet (CSV or XLSX) as a plan: nothing changes until the
 person confirms. One row of the sheet is one pin: the connector it belongs to, its name or number,
 the signal on it, whether the device fixes it, a contact size, a termination, a function (free text;

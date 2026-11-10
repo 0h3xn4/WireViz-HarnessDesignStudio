@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Smoke tests of a finished Windows package (D-149, D-168), used by the workflows.
 
 They look at the file that would be given to a user, not at the build folder:

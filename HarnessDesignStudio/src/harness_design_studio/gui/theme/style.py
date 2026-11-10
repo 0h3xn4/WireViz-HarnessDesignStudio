@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The widget style: Fusion, with check boxes and radio buttons drawn from the palette.
 
 The platform styles draw these with the window colour darkened, which leaves an unticked box invisible

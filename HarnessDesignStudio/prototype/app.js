@@ -1,3 +1,5 @@
+// SPDX-FileCopyrightText: 2026 0h3xn4
+// SPDX-License-Identifier: GPL-3.0-only
 'use strict';
 // ---- data ------------------------------------------------------------------------------------
 const TYPES={
@@ -161,7 +163,7 @@ function runGen(next){
  if(!d.open)d.showModal();let p=0;$('#cancelgen').onclick=()=>{clearInterval(genTimer);d.close();toast('Cancelled. Nothing was changed.');};
  genTimer=setInterval(()=>{p+=25;$('#pb').style.width=p+'%';$('#pt').textContent=['Segmenting','Allocating pins','Checking independently','Done'][Math.min(3,p/25-1)];
   if(p>=100){clearInterval(genTimer);d.close();commit('Generate harnesses',()=>{const locked=D.gen?D.gen.locked:{},released=D.gen?D.gen.released:{};D.gen={harnesses:next,hash:hash(),locked,released};});UI.tab='harness';UI.hsel=next[0]?next[0].id:null;render();
-   toast('Done. Independent check passed: every signal appears exactly once.');}},350);}
+   toast('Done. Self-check passed: every signal appears exactly once.');}},350);}
 function buildHarnesses(){
  return D.ifaces.map((i,n)=>{const T=TYPES[i.type],ua=unit(i.a.u),ub=unit(i.b.u),id='W'+String(n+1).padStart(3,'0');
   const wires=T.sig.map((s,k)=>({id:id+'-'+String(k+1).padStart(3,'0'),sig:s,from:id+'-P1',fpin:String(k+1),to:id+'-P2',tpin:String(k+1)}));
@@ -214,7 +216,7 @@ function fillCmd(){const q=$('#cmdin').value.toLowerCase();cmdList=commands().fi
 function runCmd(i){const c=cmdList[i];if(c){$('#cmdk').close();c[1]();}}
 
 // ---- tour ------------------------------------------------------------------------------------
-const STEPS=[['#left','Start here: add units from the palette. Each is a box in your system, like a computer or a wheel.'],['#canvaswrap','This is your block diagram. Drag units to move them. Units on the left lane are in panel A, on the right lane in panel B.'],['#types','To connect two units, pick an interface type, then click the two units. Only valid choices light up.'],['#bottom','Problems and a to-do list appear here and update as you work. Click any line to jump to the item.'],['#generate','When you are ready, generate the harness plans. An independent check runs automatically.']];
+const STEPS=[['#left','Start here: add units from the palette. Each is a box in your system, like a computer or a wheel.'],['#canvaswrap','This is your block diagram. Drag units to move them. Units on the left lane are in panel A, on the right lane in panel B.'],['#types','To connect two units, pick an interface type, then click the two units. Only valid choices light up.'],['#bottom','Problems and a to-do list appear here and update as you work. Click any line to jump to the item.'],['#generate','When you are ready, generate the harness plans. An self-check runs automatically.']];
 function tour(i){const t=$('#tour');document.querySelectorAll('.tourhl').forEach(e=>e.classList.remove('tourhl'));if(i>=STEPS.length||i<0){t.style.display='none';return;}
  const el=$(STEPS[i][0]);el.classList.add('tourhl');const r=el.getBoundingClientRect();
  t.innerHTML=`<b>Step ${i+1} of ${STEPS.length}</b><p>${esc(STEPS[i][1])}</p><div class="row"><button id="ts">Skip tour</button><span><button id="tb" ${i?'':'disabled'}>Back</button> <button id="tn" class="primary">${i===STEPS.length-1?'Finish':'Next'}</button></span></div>`;
@@ -322,7 +324,7 @@ function drawBottom(){
 function drawHarness(B){
  if(!D.gen){B.innerHTML='<p><b>No harness plans yet.</b></p><p class="muted">Connect your units, then click <b>Generate harnesses</b>. You will see a preview of what will be created before anything is made.</p>';return;}
  const stale=D.gen.hash!==hash(),H=D.gen.harnesses,h=H.find(x=>x.id===UI.hsel)||H[0];
- B.innerHTML=`<div style="display:flex;gap:16px;align-items:flex-start"><div style="min-width:300px"><div>${stale?'<span class="badge stale">Outdated: the diagram changed</span>':'<span class="badge ok">✓ Independent check passed</span>'} <span class="muted mono">model ${D.gen.hash}</span></div><table><tr><th>ID</th><th>Harness</th><th>Chain</th><th>Status</th></tr>${H.map(x=>`<tr data-h="${x.id}" class="${x.id===h.id?'sel':''}" tabindex="0"><td>${x.id}</td><td>${esc(x.name)}</td><td>${x.side==='redundant'?'╌╌':'━━'} ${x.side}</td><td>${D.gen.released[x.id]?'<span class="badge released">🔒 released</span>':'<span class="badge info">draft</span>'}</td></tr>`).join('')}</table></div>
+ B.innerHTML=`<div style="display:flex;gap:16px;align-items:flex-start"><div style="min-width:300px"><div>${stale?'<span class="badge stale">Outdated: the diagram changed</span>':'<span class="badge ok">✓ Self-check passed</span>'} <span class="muted mono">model ${D.gen.hash}</span></div><table><tr><th>ID</th><th>Harness</th><th>Chain</th><th>Status</th></tr>${H.map(x=>`<tr data-h="${x.id}" class="${x.id===h.id?'sel':''}" tabindex="0"><td>${x.id}</td><td>${esc(x.name)}</td><td>${x.side==='redundant'?'╌╌':'━━'} ${x.side}</td><td>${D.gen.released[x.id]?'<span class="badge released">🔒 released</span>':'<span class="badge info">draft</span>'}</td></tr>`).join('')}</table></div>
  <div style="flex:1"><b>${h.id}: ${esc(h.name)}</b> <button data-explain-h="1">Why does this harness exist?</button> <button id="rel" ${stale||D.gen.released[h.id]?'disabled':''} ${stale?'title="Outdated plans cannot be released"':''}>${D.gen.released[h.id]?'Released':'Release…'}</button>
  <table><tr><th>Wire</th><th>Signal</th><th>From</th><th>To</th><th>Gauge</th><th>Lock pin</th><th></th></tr>${h.wires.map(w=>`<tr><td class="mono">${w.id}</td><td>${esc(w.sig)}</td><td class="mono">${w.from} pin ${w.fpin} <span class="badge auto">Auto</span></td><td class="mono">${w.to} pin ${w.tpin}</td><td><span class="muted" title="Derating rules are still placeholders; an engineer must fill them in">AWG — (rules pending)</span></td><td><input type="checkbox" data-lock="${w.id}" ${D.gen.locked[w.id]?'checked':''} aria-label="Lock pin of ${w.id}" ${D.gen.released[h.id]?'disabled':''}> ${D.gen.locked[w.id]?'🔒':''}</td><td><button class="ghost" data-why="${w.id}">Why this pin?</button></td></tr>`).join('')}</table></div></div>`;
  B.querySelectorAll('[data-h]').forEach(r=>r.onclick=()=>{UI.hsel=r.dataset.h;render();});

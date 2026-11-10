@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-UX-02: the clickable prototype really supports the main journeys (run in headless Chromium).
 
 Skipped when Playwright or a Chromium binary is not available (unless HARNESS_REQUIRE_BROWSER is
@@ -239,7 +241,7 @@ def test_j10_generate_verify_stale_release(page: Page) -> None:
     page.click("#generate")
     assert "2 harness plans" in page.inner_text("#dlg")
     page.click("#yes")
-    page.wait_for_selector("text=Independent check passed", timeout=5000)
+    page.wait_for_selector("text=Self-check passed", timeout=5000)
     assert state(page, "D.gen.harnesses.length") == 2
     assert page.is_enabled("#rel")
     page.click('[data-add="payload"]')  # the model changes: plans become outdated
@@ -259,7 +261,7 @@ def test_j10_generate_verify_stale_release(page: Page) -> None:
 def test_regeneration_report_keeps_locked_pins(page: Page) -> None:
     page.click("#generate")
     page.click("#yes")
-    page.wait_for_selector("text=Independent check passed")
+    page.wait_for_selector("text=Self-check passed")
     page.check('[data-lock="W001-001"]')
     page.click("#generate")
     assert "keep 1 pin lock" in page.inner_text("#dlg")

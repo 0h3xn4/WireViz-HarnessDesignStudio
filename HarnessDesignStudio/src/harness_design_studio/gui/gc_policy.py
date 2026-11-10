@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Cyclic garbage is collected on the GUI thread, and only there.
 
 Python's collector runs on whichever thread happens to allocate the object that crosses its

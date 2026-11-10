@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Build the Windows packages (D-149): a portable .zip and the Inno Setup installer. Run on Windows.
 
 Output in dist/:
@@ -169,6 +171,19 @@ def assemble(app: Path) -> int:
     from tools.collect_licences import collect
 
     collect(app / "LICENSES")
+    for name in ("LICENSE", "NOTICE"):  # the licence and the notice of the program itself (D-205)
+        shutil.copy2(ROOT / name, app / name)
+    from tools import third_party
+
+    parts = third_party.inventory(app, "windows")  # from the package itself (D-213)
+    if bad := third_party.problems(parts):
+        print(
+            "error: a component has no known licence or one that is not allowed:", *bad, sep="\n- "
+        )
+        return 1
+    (app / "THIRD_PARTY_NOTICES.txt").write_text(
+        third_party.to_notices(parts, __version__, "windows"), encoding="utf-8"
+    )
     shutil.copy2(PK / "README-windows.txt", app / "README-windows.txt")
     return 0
 

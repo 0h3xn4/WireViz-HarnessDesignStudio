@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Why the editor did not start on Linux, said in one sentence a person can act on.
 
 The packages carry their own Python, Qt and most of what Qt needs. What they cannot carry is the

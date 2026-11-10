@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The application style sheet, generated from the tokens.
 
 It holds no colour: every colour is a palette role (`palette(base)`, see palette.py), so the same

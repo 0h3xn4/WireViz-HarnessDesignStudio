@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SH-1, SH-2, SH-9 to SH-14, SH-18, SH-24, SH-26 (ux/shell): the app shell. A top bar with the status
 chip, persistent banners, the status bar, saved layout, the command palette, shortcuts, F6, main tabs
@@ -470,9 +472,9 @@ def test_a_failed_generation_is_a_banner_until_the_next_success(flat) -> None:
 
 
 def test_a_failed_export_check_is_a_banner(flat, tmp_path) -> None:
-    flat._export_failed("the independent check found 2 problems")
+    flat._export_failed("the self-check found 2 problems")
     banner = flat.alerts.banner("job")
-    assert banner is not None and "independent check" in banner.text()
+    assert banner is not None and "self-check" in banner.text()
     banner.dismiss.click()  # or the person dismisses it
     assert not flat.alerts.is_showing("job")
 

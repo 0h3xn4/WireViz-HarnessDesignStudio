@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """UI overhaul M3: the workflow steps (Generate, Check, Release) over every combination of facts."""
 
 import itertools

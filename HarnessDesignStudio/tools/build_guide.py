@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Build the offline user guide: docs/guide/USER_GUIDE.md -> src/harness_design_studio/resources/guide/index.html.
 A small Markdown converter (headings, paragraphs, lists, tables, code, bold, italics, links), so
 no extra dependency is needed. A test fails if the committed HTML is stale.

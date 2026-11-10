@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,has-type,union-attr"
 """Quick mode: a view setting (`ui/quick`) on top of any role for a person who only wants a block
 diagram quickly. It changes what the window shows, never a project file, the model hash or a written

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """1.8.1 trust fixes of the command line (audit C-4, C-5, C-9, C-10, C-11, C-12, F-16): redirected
 output is UTF-8, an import that changes nothing exits 0, the lengths import refuses conflicting or
 impossible rows, a wrong folder is left empty, a .tsv is tab separated, and the small
@@ -229,7 +231,8 @@ def test_a_tsv_is_written_with_tabs_and_read_back(
     out = tmp_path / "x.tsv"
     assert cli_main(["export-pinout", str(p), "--unit", "GYRO1", "-o", str(out)]) == 0
     lines = out.read_text(encoding="utf-8").splitlines()
-    assert lines[0].startswith("# ") and "\t" in lines[1] and "," not in lines[1]
+    assert lines[0].startswith("# ") and lines[1].startswith("# ")  # stamp and notice
+    assert "\t" in lines[2] and "," not in lines[2]
     q = run(device(), tmp_path, "q")
     capsys.readouterr()
     argv = ["import-pinout", str(q), str(out), "--unit", "GYRO1", "--default-part", "MY-HD-6-F"]

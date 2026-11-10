@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """REQ-WIRE-07. Workshop feedback M3: change the kind, the wires and the shield ends of a group that a
 person made (twisted pair, shielded pair, quad, coax, overall shield); a group of the interface type is

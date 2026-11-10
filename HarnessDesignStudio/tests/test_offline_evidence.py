@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The offline and security evidence kit (D-203).
 
 REQ-OFFLINE-02: the offline audit (`tools/offline_audit.py`) reads an strace log correctly (socket

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The editable pin table of the Devices tab: a `TableView` over a model whose cells can be edited,
 with the keyboard of a spreadsheet and inline validation.
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Basic software metrics (ECSS-Q-ST-80C 6.2.5.3, 7.1.4, 7.1.5, 7.1.6; gap G-05).
 
 Size (source lines without blanks and comments), number of functions, McCabe-style complexity

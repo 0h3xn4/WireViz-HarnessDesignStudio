@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """EditorController: the only object that changes the project. The GUI asks, it executes.
 
 Every edit goes through `History.execute`, so it is a transaction (rolled back if it would leave the

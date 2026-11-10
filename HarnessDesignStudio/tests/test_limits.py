@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Exact limits and rarely exercised behaviours (audit area I): a value on the limit passes, one
 step over fails; each test is tied to a behaviour that no other test pinned."""
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """Transparency work, step 6 (D-193): the import wizard keeps the import record with the import, the
 list of earlier imports on its first page marks a source that changed, the Next step page says so in

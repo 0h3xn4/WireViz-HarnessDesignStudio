@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr"
 """REQ-GUI-08. Workshop feedback M1: a new device asks for its name (and ID and subsystem) before it exists."""
 

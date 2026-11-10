@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Unit table: every unit of the design as a spreadsheet (name, chain and notes edit in place,
 paste from Excel fills cells, several selected rows take one edit together).
 

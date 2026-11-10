@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """D6 and D17 of the 1.8.0 audit: words that still told a person who works from connections to
 "Press Generate" (the interface-first way), a "Not generated" chip for harnesses that are made

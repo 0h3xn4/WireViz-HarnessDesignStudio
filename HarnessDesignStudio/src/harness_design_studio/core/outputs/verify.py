@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Output verifier v2: re-reads the finished artefacts (CSV, SVG, PDF, YAML, JSON, XLSX, manifest)
 and compares them with the model. It does not import the table or drawing builders; it parses
 the bytes and derives what they must contain straight from the project, so a bug in a builder
@@ -185,7 +187,8 @@ def _stamp(r: VerifyReport, rel: str, data: bytes, short: str) -> None:
     elif rel.endswith(".svg"):
         ok = (
             re.search(
-                rb"<desc>harness-design-studio [^<]* model " + short.encode() + rb"</desc>", data
+                rb"<desc>harness-design-studio [^<]* model " + short.encode() + rb"[^<]*</desc>",
+                data,
             )
             is not None
         )

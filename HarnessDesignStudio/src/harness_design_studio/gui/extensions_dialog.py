@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Extensions of the open project (D-191 (5), S8): the page under **Help > Extensions** and the
 question that names the code before a Python plug-in is loaded.
 

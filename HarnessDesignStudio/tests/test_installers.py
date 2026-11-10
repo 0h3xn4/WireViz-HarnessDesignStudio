@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M7: Ubuntu packaging (D-110): install and uninstall scripts, desktop entry, icon and the .deb."""
 
 import os
@@ -13,6 +15,11 @@ import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
 PK = ROOT / "packaging" / "ubuntu"
+
+
+def _action_name(line: str) -> str:
+    """`actions/checkout` from a `uses: actions/checkout@<sha>  # v4.4.0` line (pinned, D-205 work)."""
+    return line.split("uses:")[1].split("#")[0].strip().split("@")[0]
 
 
 def fake_package(tmp: Path) -> Path:
@@ -454,7 +461,7 @@ def test_the_deb_ships_licences_and_not_the_tarball_scripts(tmp_path: Path) -> N
 
 
 @pytest.mark.skipif(shutil.which("dpkg-deb") is None, reason="dpkg-deb not installed")
-def test_the_deb_copyright_names_the_owner_and_grants_no_licence(tmp_path: Path) -> None:
+def test_the_deb_copyright_names_the_owner_and_the_licence(tmp_path: Path) -> None:
     from tools.build_deb import build
 
     deb = build(fake_package(tmp_path / "src"), tmp_path / "out")
@@ -462,9 +469,9 @@ def test_the_deb_copyright_names_the_owner_and_grants_no_licence(tmp_path: Path)
     text = (
         tmp_path / "x" / "usr" / "share" / "doc" / "harness-design-studio" / "copyright"
     ).read_text()
-    assert "Copyright: the repository owner (GitHub account 0h3xn4)" in text
-    assert "Not chosen yet by the owner (decision D-02" in text
-    assert "No licence is granted by this file." in text
+    assert "Copyright: 2026 0h3xn4" in text
+    assert "GNU General Public Licence, version 3 only" in text and "GPL-3.0-only" in text
+    assert "No licence is granted" not in text and "LicenseRef-Proprietary" not in text  # D-205
     assert "to be filled in" not in text and "decided by the project owner" not in text
     # machine-readable format: a header paragraph, then paragraphs of Files / Copyright / License
     paragraphs = [p for p in text.strip().split("\n\n") if p.strip()]
@@ -472,7 +479,7 @@ def test_the_deb_copyright_names_the_owner_and_grants_no_licence(tmp_path: Path)
     for para in paragraphs[1:]:
         fields = [ln.split(":", 1)[0] for ln in para.splitlines() if not ln.startswith(" ")]
         assert fields == ["Files", "Copyright", "License"], para
-    assert "License: LicenseRef-Proprietary" in text
+    assert "License: GPL-3\n" in text
 
 
 def test_the_licence_collector_finds_the_runtime_packages_and_the_lgpl_text(tmp_path: Path) -> None:
@@ -642,13 +649,16 @@ def test_the_release_workflow_builds_and_publishes_on_a_tag() -> None:
     assert release.index("download-artifact") < release.index("tools.gen_scf")
     assert text.count("python -m tools.gen_scf") == 1
     # only actions that the other workflows already use (the final job downloads what the others built)
-    used = {ln.split("uses:")[1].strip() for ln in text.splitlines() if "uses:" in ln}
+    used = {_action_name(ln) for ln in text.splitlines() if "uses:" in ln}
     assert used <= {
-        "actions/checkout@v4",
-        "actions/setup-python@v5",
-        "actions/upload-artifact@v4",
-        "actions/download-artifact@v4",
+        "actions/checkout",
+        "actions/setup-python",
+        "actions/upload-artifact",
+        "actions/download-artifact",
+        "sigstore/cosign-installer",  # keyless signing of every file (D-213)
+        "actions/attest-build-provenance",  # the build provenance attestations
     }
+    assert "cosign sign-blob" in text and "attest-build-provenance" in text
     # the system libraries are the ones the CI job that installs the packages uses
     ci = (RELEASE_WORKFLOW.parent / "harness-ci.yml").read_text(encoding="utf-8")
     libs = (
@@ -694,8 +704,8 @@ def test_the_package_workflow_builds_and_tests_but_never_publishes() -> None:
         "tools.smoke_package windows-zip",
     ):
         assert command in text, command
-    used = {ln.split("uses:")[1].strip() for ln in text.splitlines() if "uses:" in ln}
-    assert used <= {"actions/checkout@v4", "actions/setup-python@v5", "actions/upload-artifact@v4"}
+    used = {_action_name(ln) for ln in text.splitlines() if "uses:" in ln}
+    assert used <= {"actions/checkout", "actions/setup-python", "actions/upload-artifact"}
 
 
 def test_the_release_check_refuses_a_tag_that_does_not_fit() -> None:

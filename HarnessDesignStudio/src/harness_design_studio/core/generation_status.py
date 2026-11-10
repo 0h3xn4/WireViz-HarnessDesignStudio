@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Has the design changed since the harnesses were generated? A hash comparison, no generation
 logic, so the verifier and the release checks can use it without importing the generator."""
 

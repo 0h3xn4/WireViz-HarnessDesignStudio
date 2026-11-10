@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The command palette (Ctrl+K): a non-modal overlay with a search box and a list of every enabled
 action of the window, each with its shortcut, plus adding units, connecting and going to an object.
 

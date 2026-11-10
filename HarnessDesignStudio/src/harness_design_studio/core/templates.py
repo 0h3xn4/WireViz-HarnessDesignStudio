@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Starting points shipped with the tool: example projects and import templates.
 
 `create_project` makes a new project folder from an example (so a beginner can start from

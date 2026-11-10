@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """An inline message inside a dialog or view: icon, words, details and an optional action button.
 
 It replaces the pop-up for anything that is not a question: a failed check, a project that has no

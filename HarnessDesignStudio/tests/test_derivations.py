@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A derivation says how a number was made, and it cannot disagree with that number (D-191, step 1).
 
 For every wire of the packaged examples and of the situations of `tools.numbers_snapshot` (a hand

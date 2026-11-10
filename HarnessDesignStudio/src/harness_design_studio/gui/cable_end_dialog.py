@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The keyboard way to a loose cable end (M4c): one small window that asks which end and which port.
 
     dlg = CableEndDialog(parent, theme, strings.LE_LEAVE_TITLE, strings.LE_LEAVE_INTRO,

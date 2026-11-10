@@ -1,3 +1,5 @@
+; SPDX-FileCopyrightText: 2026 0h3xn4
+; SPDX-License-Identifier: GPL-3.0-only
 ; Inno Setup script of the Windows installer (docs/RELEASE.md, D-149).
 ; Built by tools/build_windows.py, which passes the values below with /D:
 ;   AppVersion     the version of the tool (1.2.0)

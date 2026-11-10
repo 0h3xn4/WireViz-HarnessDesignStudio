@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The integrity check reuses results for unchanged objects; it must never hide a new problem."""
 
 from harness_design_studio.core.commands import Delete, Put, apply_ops

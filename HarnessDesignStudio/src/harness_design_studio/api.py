@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The scripting interface of Harness Design Studio: what the tool does, as Python functions.
 
 Everything the command line and the editor do for an engineer can be done from a script. This
@@ -352,7 +354,7 @@ def list_rules() -> list[RuleInfo]:
 
 
 def verify(folder: PathLike, *, outputs: bool = False) -> VerifyResult:
-    """The command `verify`: the independent check of the harnesses against the interfaces. With
+    """The command `verify`: the self-check of the harnesses against the interfaces. With
     `outputs=True` also the `outputs` folder of the project against the design; `NoOutputsError`
     when there is none. Changes nothing."""
     from harness_design_studio.core.outputs.build import DEFAULT_FOLDER

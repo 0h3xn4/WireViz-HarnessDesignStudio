@@ -1,0 +1,7 @@
+The text of the GNU General Public Licence and of the GNU Lesser General Public Licence is copyright
+the Free Software Foundation, Inc. <https://fsf.org/>.
+
+Everyone is permitted to copy and distribute verbatim copies of this licence document, but changing
+it is not allowed.
+
+(This is the note in the licence texts themselves. The files that carry it are kept word for word.)

@@ -1,4 +1,5 @@
 # harness-design-studio 1.17.0 model 7f1c5a8c9ea8
+# harness-design-studio 1.17.0. Provided as is, without warranty. Verify before use.
 Harness,Wires,Connectors,Wire length known (m),Wires without length,Mass of wires and cable connectors (g),Margin (g),Mass with margin (g),Complete,Missing data
 W013,2,2,1,0,16,1.6,17.6,no,mass of open end W013-P2 (no connector chosen yet)
 TOTAL,2,2,1,0,16,1.6,17.6,no,totals count only what is known

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr"
 """REQ-LIB-06, REQ-EDIT-03. M4 of the workshop feedback: the library window (not modal, the list, the
 preview, add to the project in one undo step, save the selection), the library folder setting, the

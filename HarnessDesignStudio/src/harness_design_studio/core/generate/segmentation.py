@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Segmentation: which interfaces share a harness. Rules come from the `segmentation` and
 `segregation` configuration (DECISIONS D-10: default one harness per pair of unit connectors)."""
 

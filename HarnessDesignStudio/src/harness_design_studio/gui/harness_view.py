@@ -1,15 +1,17 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Harness view: one harness with its connectors and pins, its wires, its drawing and the reasons
 behind it, as four views of one selection.
 
     HarnessView(ctl, theme, settings=None)
 
 * Header: harness selector, name, release state, interfaces, the hash Generate last read, the
-  state of the design (up to date / out of date), of the outputs and of the independent check, and
+  state of the design (up to date / out of date), of the outputs and of the self-check, and
   the actions Regenerate, Export, Open in review, Release and Revise.
 * Connector / pin table, wire table, drawing preview (zoom, pan, sheets) and a Why pane in
   splitters. Hover and selection are linked all the ways round: pick a wire in the drawing and its
   rows light up in both tables, pick a pin row and the drawing marks the pin and its wire.
-* Nothing in it changes the design. The independent check, the outputs state and the drawing sheets
+* Nothing in it changes the design. The self-check, the outputs state and the drawing sheets
   are worked out in a background thread and cached by the editor's state token, so `refresh()` stays
   fast on the UI thread; until they arrive the header says "Checking…".
 """
@@ -389,7 +391,7 @@ class _LinkedModel(DictTableModel):
 @dataclass
 class Status:
     """What is worked out off the UI thread: is the design generated, are the outputs current,
-    does the independent check pass."""
+    does the self-check pass."""
 
     generation: str  # none | current | stale
     outputs: str  # none | current | stale | modified | unreadable | unsaved
@@ -550,7 +552,7 @@ class HarnessView(QWidget):
         self.ctl, self.theme, self.settings = ctl, theme, settings
         self.setObjectName("harness-view")
         self.last_refresh_ms = 0.0  # the last refresh, on the UI thread
-        self.status_ms = 0.0  # the last independent check and outputs state, in the background
+        self.status_ms = 0.0  # the last self-check and outputs state, in the background
         self._dirty = True
         self._syncing = False
         self._hid: str | None = None
@@ -1306,7 +1308,7 @@ class HarnessView(QWidget):
         return sum(r.status == "fail" for r in self.ctl.drc_rule_results())
 
     def _rules_changed(self) -> None:
-        """A check finished: the chip of the independent check may need its words changed."""
+        """A check finished: the chip of the self-check may need its words changed."""
         if self._status is not None and self.verify_chip.state() != "pending":
             self._show_status(self._status[1])
 

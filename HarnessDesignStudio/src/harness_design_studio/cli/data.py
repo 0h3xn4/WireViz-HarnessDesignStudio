@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Commands that bring outside data into a project (config, import-parts, import-lengths,
 import-build-data, import-netlist, import-pinout), `imports` (what each import read and whether its
 source changed) and one that writes a device's pinout out (export-pinout)."""

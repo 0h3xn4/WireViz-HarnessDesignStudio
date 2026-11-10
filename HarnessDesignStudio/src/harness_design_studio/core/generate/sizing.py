@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Wire sizing from current, length and derating. Every number comes from configuration.
 
 If a needed value is a placeholder (null), the gauge stays undecided and the result lists exactly

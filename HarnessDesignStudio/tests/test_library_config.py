@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-LIB-01 / REQ-CFG-01: starter library and configuration never invent engineering numbers."""
 
 from harness_design_studio.core.model import PART_CATEGORIES

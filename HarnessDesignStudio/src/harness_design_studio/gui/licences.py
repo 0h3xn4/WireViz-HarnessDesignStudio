@@ -1,4 +1,6 @@
-"""The licences of what the program draws with: fonts and icons, as the About page shows them.
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
+"""The licences of the program and of what it draws with (fonts and icons), as the About page shows them.
 
     entries()          the components with their licence and what they are used for
     text_of(key)       the licence text of one (fonts from the bundled OFL files, icons from here)
@@ -12,7 +14,7 @@ from pathlib import Path
 
 from harness_design_studio.gui import strings
 from harness_design_studio.gui.theme.tokens import FONT_MONO, FONT_UI
-from harness_design_studio.resources import fonts_path
+from harness_design_studio.resources import fonts_path, licences_path
 
 LUCIDE_LICENCES = """Lucide (https://lucide.dev), ISC licence
 
@@ -59,6 +61,12 @@ class Component:
 
 
 COMPONENTS = (
+    Component(
+        "program",
+        "Harness Design Studio",
+        "GNU GPL 3.0 only",
+        "This program (the full text of the licence; no warranty, sections 15 and 16)",
+    ),
     Component("inter", FONT_UI, "SIL Open Font License 1.1", "Interface text", "OFL-1.1-Inter.txt"),
     Component(
         "jetbrains",
@@ -86,6 +94,12 @@ def text_of(key: str) -> str:
     c = next((c for c in COMPONENTS if c.key == key), None)
     if c is None:
         return ""
+    if key == "program":
+        folder = licences_path()
+        path = folder / "GPL-3.0-only.txt" if folder else None
+        if isinstance(path, Path) and path.is_file():
+            return path.read_text(encoding="utf-8")
+        return strings.LICENCE_MISSING.format(c.name)
     if key == "lucide":
         return LUCIDE_LICENCES
     if key == "qt":

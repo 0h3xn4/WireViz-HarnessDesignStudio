@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Every derivation of a project as data: one JSON file and one CSV file (D-191, step 5a).
 
 `explain` shows how one number was made. This writes how every number was made, for a person who

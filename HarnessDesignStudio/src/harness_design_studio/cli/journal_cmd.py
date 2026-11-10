@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """`journal`, `override` and `deviation`: the change journal, deliberate overrides of generated values
 and recorded deviations (D-191, S4)."""
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Write the table of docs/models/rule-limits.md (every design rule: whether it compares a number with
 a limit or is a yes/no check, and what it compares) from `core.derive_rules.INFO`, so the page cannot
 leave a rule out or drift from the code. A test fails if the committed table is stale.

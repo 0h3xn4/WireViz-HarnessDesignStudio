@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """UI overhaul M5: the Problems panel and the Checks tab. A click goes to every kind of object a
 finding can name, an out-of-date result says so at once, and a row opens its details."""

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Check and fill in the engineering configuration (D-11).
 
 The real derating, ampacity and EMC values will come from the program's standard later. This

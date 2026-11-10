@@ -149,7 +149,7 @@ The notes also name what could not be checked on a wire or a harness instead of 
 - **A design rule check that fails is shown as failed.** If the background check cannot run, the status line says "Design rule check failed: ..." and the Problems panel adds an error finding. It never says "all 39 rules checked" then. A check that does not answer within three minutes is stopped and run again inside the editor.
 - **Each problem has its own ID.** If one object has several problems (the two ends of a dangling wire, several problems of one connector), each finding has its own ID, so a waiver covers one problem only. A waiver made in an earlier version for a *model-inconsistent* warning no longer matches and shows as stale; waive the finding again.
 - **Routing segments must form a tree.** The error `segment-loop` means two routes join twice, so a wire's route (and its length) is not unique. Remove or merge a segment ([`RULES.md`](../RULES.md)).
-- **A wire from a pin to itself** is an error that `harness-design-studio validate` reports (`wire_to_itself`); the independent check calls it `wire_same_pin`.
+- **A wire from a pin to itself** is an error that `harness-design-studio validate` reports (`wire_to_itself`); the self-check calls it `wire_same_pin`.
 
 ## Common mistakes
 

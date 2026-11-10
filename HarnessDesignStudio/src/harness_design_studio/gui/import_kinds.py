@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """What the import wizard can import, and how each kind is planned. No Qt in here.
 
 Every kind reads a file and asks the planner the command line asks (`harness-design-studio import-parts`,

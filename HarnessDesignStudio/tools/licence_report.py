@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Licence report for installed runtime dependencies, failing on anything outside the allow-list.
 
 Usage: python -m tools.licence_report OUT.md [PYTHON]  (PYTHON = interpreter of the shipped env)
@@ -10,10 +12,19 @@ import sys
 from pathlib import Path
 
 # Whole words only ("Miscellaneous" must not pass as MIT, "limited use" must not pass as ISC).
-# MPL is not listed: the policy is permissive or LGPL only.
+# The tool is GPL-3.0-only (decision D-205), so a dependency may be permissive, LGPL, MPL-2.0 or
+# GPL-3.0 (alone or "or later"). GPL-2.0-only, AGPL, a custom mix and anything unknown is rejected:
+# a person must look at it (the policy before D-205 was "permissive or LGPL only")
 ALLOWED_WORDS = ("mit", "bsd", "apache", "isc", "python software foundation", "psf", "python-2.0",
                  "lgpl", "lesser general public", "unlicense", "zlib", "0bsd", "cc0",
-                 "public domain", "hpnd")  # fmt: skip
+                 "public domain", "hpnd", "ijg", "libpng", "ftl", "bzip2", "hpnd-sell-variant", "icu", "unicode-dfs-2016", "ofl-1.1",
+                 "sil open font license", "bsd-3-clause", "psfl")  # fmt: skip
+# GPL-3.0 alone or "or later", and MPL-2.0 (whose section 3.3 allows GPL-3.0): whole text only
+GPL3_COMPATIBLE = re.compile(
+    r"gpl-3\.0(-only|-or-later|\+)?|gnu general public license v3( or later)?( \(gplv3\+?\))?"
+    r"|gpl-[23]\.0-or-later( with gcc-exception-3\.1)?|gpl-3\.0-only with gcc-exception-3\.1"
+    r"|mpl-2\.0|mozilla public license 2\.0( \(mpl 2\.0\))?"
+)
 REJECTED_RE = re.compile(r"(?<![a-z])(a?gpl)|general public license", re.IGNORECASE)
 OWN = {"harness-design-studio"}
 DEV_ONLY = OWN | {
@@ -37,6 +48,8 @@ def classify(licence: str) -> str:
         return (
             "allowed" if all(classify(p) == "allowed" for p in text.split(" and ")) else "rejected"
         )
+    if GPL3_COMPATIBLE.fullmatch(text):
+        return "allowed"
     if "lgpl" in text or "lesser general public" in text:
         # the LGPL part is fine, but a plain GPL named next to it ("GPL-3.0 with LGPL exception") is not
         plain = re.sub(r"lgpl[\w.+-]*|lesser general public licen[sc]e", " ", text)

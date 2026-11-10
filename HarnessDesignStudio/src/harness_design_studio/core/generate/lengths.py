@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Wire lengths from routing segments, and CSV import of segment lengths (from CAD exports)."""
 
 import re

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Overrides and deviations as operations on a loaded project (S4, D-191).
 
 The command line (`override`, `deviation`) and the scripting interface (`api.set_override` and

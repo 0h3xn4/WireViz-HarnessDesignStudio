@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """CLAUDE.md is loaded into every session, so it stays short; the area notes live in
 docs/developer/agent/ and CLAUDE.md links each of them (decision D-182)."""
 

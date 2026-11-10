@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """`extensions`, `trust` and `import-plugin`: what a project's extensions are, which Python code may
 run, and the readers that plug-ins add (D-191 (5), S8)."""
 

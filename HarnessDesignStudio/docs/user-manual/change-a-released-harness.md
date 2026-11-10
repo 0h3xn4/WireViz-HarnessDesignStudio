@@ -89,9 +89,9 @@ harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "Seco
 ```
 
 ```
-34 files written to wheel-link/outputs (model <hash>).
+35 files written to wheel-link/outputs (model <hash>).
 Release W002 revision B: done.
-Outputs re-exported with the released status (34 files).
+Outputs re-exported with the released status (35 files).
 ```
 
 Now both revisions have a baseline, and you can compare them:

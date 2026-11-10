@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Extract the requirements of the five compliance standards into compliance/requirements/*.csv.
 
 Usage: python -m tools.extract_requirements STANDARDS_FOLDER

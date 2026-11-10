@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-LOC-01: messages about damaged project files say where (file, line, column) and never quote content."""
 
 from __future__ import annotations

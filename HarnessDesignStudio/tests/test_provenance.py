@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-PROV-01: every set of outputs says which tool, design and settings made it."""
 
 from __future__ import annotations

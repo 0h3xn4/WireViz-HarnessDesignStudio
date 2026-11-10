@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M4 (GUI): design rule findings appear in the Problems panel in the background, can be waived,
 fixed in one click and shown on the diagram; edits never wait for the check."""
 

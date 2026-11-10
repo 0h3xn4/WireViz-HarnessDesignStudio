@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: allow-untyped-calls, no-warn-unused-ignores, disable-error-code=misc
 """Pictures of the diagram handling of 1.14 to 1.16 and of the windows that came with it, in the real
 editor (offscreen, light theme) for the manual: the cable in hand, the plug snapped on a port, a

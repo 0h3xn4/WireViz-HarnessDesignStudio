@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Rule configuration. Standards numbers are never hard-coded; defaults are placeholders."""
 
 from typing import Any

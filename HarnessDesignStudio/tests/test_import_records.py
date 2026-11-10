@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Transparency work, step 6 (D-191, D-193): the import record, the echo of what an import read,
 dropped and converted, explicit units, the source-changed check, and the tool's own CSV files read
 back by its importers."""

@@ -91,7 +91,7 @@ Type several words and every word must match, in any order (`go rw1` finds *Go t
 
 ## Keep a project in Git
 
-A project is a folder of small, plain JSON files in a fixed format (sorted keys, two-space indent, lists sorted by ID), so a Git diff shows real changes only. Commit the whole folder. `harness-design-studio new` writes a `.gitignore` that already leaves out lock files, backups and the app's autosave, and a `.gitattributes` that keeps Git from writing conflict markers into `generated/generation.json`; if two people both pressed Generate, `harness-design-studio merge-fix DIR` resolves that one conflict. `outputs/` can be committed or ignored; it is always safe to delete and make again. The format is in [`FILE_FORMAT.md`](FILE_FORMAT.md).
+A project is a folder of small, plain JSON files in a fixed format (sorted keys, two-space indent, lists sorted by ID), so a Git diff shows real changes only. Commit the whole folder. `harness-design-studio new` writes a `.gitignore` that already leaves out lock files, backups and the app's autosave, and a `.gitattributes` that keeps Git from writing conflict markers into `generated/generation.json`; if two people both pressed Generate, `harness-design-studio merge-fix DIR` resolves that one conflict. `outputs/` can be committed or ignored; it can always be deleted and made again. The format is in [`FILE_FORMAT.md`](FILE_FORMAT.md).
 
 After a merge or a pull, run:
 
@@ -132,7 +132,7 @@ INFO    placeholder_config: Placeholder rule configuration still in use: deratin
 2 added, 0 changed, 0 unchanged, 0 removed, 0 frozen (released); 0 locked pin(s) kept
 2 interfaces and 6 wires checked: 0 error(s)
 2 interfaces and 6 wires checked: 0 error(s)
-34 files written to cib/outputs (model <hash>).
+35 files written to cib/outputs (model <hash>).
 2 interfaces and 6 wires checked: 0 error(s)
 build ok: cib/outputs
 ```
@@ -251,7 +251,7 @@ A device can come from a pinout table (`import-pinout --new-device NAME`) or fro
 
 ### What the tool writes
 
-`harness-design-studio export DIR` writes everything into `DIR/outputs/`. For the `first-steps` example it writes 34 files (40 with `--drawings`, see below); these are the names (per harness, `W001` and `W002` here):
+`harness-design-studio export DIR` writes everything into `DIR/outputs/`. For the `first-steps` example it writes 35 files (41 with `--drawings`, see below); these are the names (per harness, `W001` and `W002` here):
 
 ```
 outputs/manifest.json

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Check the shipped dependencies for known vulnerabilities (ECSS-E-ST-40C 5.9.4; action A-08).
 
 Reads the runtime SBOM written by `tools.gen_sbom` (dist/release-docs/sbom.cdx.json), turns its

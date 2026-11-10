@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-GUI-08. Workshop feedback M1: the helpers behind the new-device dialog, the meaning of RTN, the list of
 damaged files. No Qt."""
 

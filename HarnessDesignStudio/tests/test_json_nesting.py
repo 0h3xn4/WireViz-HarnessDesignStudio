@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Deeply nested JSON is refused with the same answer on every Python version (3.14 reads it)."""
 
 import pytest

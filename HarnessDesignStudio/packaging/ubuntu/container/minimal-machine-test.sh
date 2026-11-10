@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # Run the Linux tarball on the SMALLEST machine it is meant for: a bare Ubuntu with no Python and only
 # the three libraries the package cannot carry (libgl1, libegl1, libxcb1), plus a virtual screen.
 # It must start there, and with a library missing it must say so in words (D-167).

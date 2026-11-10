@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-GUI-13. The place of a label on its line, in pure geometry (`core/linepos.py`): a fraction `t`
 of the length of the polyline, the nearest point of the line to the pointer, the clamp at the ends
 and for a line that got shorter, and the reading of a free offset of an earlier version."""

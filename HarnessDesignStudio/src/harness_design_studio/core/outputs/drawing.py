@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Harness drawing, in the manner of a wiring diagram: the connectors as tables on the left and
 the right (name, part, gender, pins, and for every used pin its signal), the wires between them as
 curves in their wire colour, and between the connectors a cable block that lists the wires (ID,
@@ -677,8 +679,12 @@ def _title_block(
     sheet.add(Line(x0 + cw, y0, x0 + cw, y0 + TB_H - 6.0, width=0.2))
     sheet.add(Line(x0, y0 + TB_H - 6.0, x0 + TB_W, y0 + TB_H - 6.0, width=0.2))
     sheet.add(
-        Text(x0 + 1.0, y0 + TB_H - 2.0, fit(stamp.line, TB_W - 2.0, 2.4), size=2.4, color=GREY)
+        Text(x0 + 1.0, y0 + TB_H - 3.7, fit(stamp.line, TB_W - 2.0, 2.2), size=2.2, color=GREY)
     )
+    notice_size = fit_size(
+        stamp.notice, TB_W - 2.0, 2.2, 1.2
+    )  # shrunk, never cut: the whole notice
+    sheet.add(Text(x0 + 1.0, y0 + TB_H - 1.1, stamp.notice, size=notice_size, color=GREY))
 
 
 def harness_sheets(project: Project, h: Harness, stamp: Stamp, size: str) -> list[Sheet]:

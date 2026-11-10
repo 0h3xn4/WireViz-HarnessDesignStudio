@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Who made the last change: the last commit of the Git repository a project folder lives in.
 
 The tool never starts the `git` program (D-164): it reads the repository's own files, read-only —

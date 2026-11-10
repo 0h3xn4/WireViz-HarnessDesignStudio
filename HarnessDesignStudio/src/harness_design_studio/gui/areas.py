@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The areas of the window: what the navigation rail lists and which views each one holds.
 
 No Qt here, so the mapping is tested without a display. An area is a place the person goes to

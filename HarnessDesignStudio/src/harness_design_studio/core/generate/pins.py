@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Pin allocation for one box connector. Rules (each placement records why it was chosen):
 
 1. Pins the user locked are never moved.

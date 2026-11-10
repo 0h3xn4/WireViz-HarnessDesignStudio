@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Transactions with undo/redo. All model changes are lists of operations applied atomically."""
 
 from dataclasses import dataclass, field

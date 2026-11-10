@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Custom devices down to each pin: the plans the Devices view and the pinout import call.
 
 A device is a unit with its box connectors and their pins. Everything here writes fields the model

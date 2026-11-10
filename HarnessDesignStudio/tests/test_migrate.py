@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-MIGRATE-01: lossless migration from every previous format, original kept."""
 
 from pathlib import Path

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: allow-untyped-calls, no-warn-unused-ignores, disable-error-code=misc
 """Pictures of the editor for the user manual: the Edit wire tab, the Devices tab (1.4.0), the
 Connectors tab (1.5.0) and, since 1.7.0, the Next step page, the two roles (the Systems engineer and

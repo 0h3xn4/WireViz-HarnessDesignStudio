@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """UI overhaul M5 at stress size (200 units, 2,000 interfaces, about 82,000 findings): an edit that
 follows a rule check stays quick, and taking in a check result is a short step on the GUI thread

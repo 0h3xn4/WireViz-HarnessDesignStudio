@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Provenance of a set of outputs: which tool, which design and which settings made them.
 
 So that drawings and lists can be reproduced and audited (UX/UI guidelines "Provenance on every

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """E-F5 of the 1.8.0 audit: the keyboard and mouse path of a connection line on the diagram
 (`gui/canvas_links.py`) had no test. Tab reaches the line, Enter opens the Link connectors window,

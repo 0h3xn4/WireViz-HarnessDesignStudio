@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """Canvas state (CV-8, CV-10, CV-19, CV-23): what a link still needs, its summary for the tooltip,
 the picture a unit's card carries and the sentences that say why the tool chose a connector.

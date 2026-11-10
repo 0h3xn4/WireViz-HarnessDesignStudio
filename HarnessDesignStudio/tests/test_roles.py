@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M5 (D-176), S9: the three roles, pure logic (no Qt). REQ-GUI-14, REQ-GUI-15."""
 
 import pytest

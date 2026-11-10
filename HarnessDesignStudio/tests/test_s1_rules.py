@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """D-191, S1: every design rule has an explanation, and the limit it shows is the limit the rule used.
 
 The rules of the registry that compare a number with a limit give a derivation with the equation,

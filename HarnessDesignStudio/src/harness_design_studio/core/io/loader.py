@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Load a project folder. Never raises on bad content: problems become issues and quarantine."""
 
 import hashlib

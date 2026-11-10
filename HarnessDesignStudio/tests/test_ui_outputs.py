@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 # ruff: noqa: F811  (the fixtures are those of test_ux_rel_panel, imported by name)
 """UI overhaul M8: the Outputs area lists every exported file with its SHA-256 (worked out from the

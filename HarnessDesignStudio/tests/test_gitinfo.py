@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Who made the last change: the commit reader that never starts `git` (D-164). The tests build
 real repositories with the `git` program (skipped when it is not installed) and compare."""
 

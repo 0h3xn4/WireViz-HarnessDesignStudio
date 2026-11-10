@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Independent output verifier. A separate code path from `generate/`: it shares no logic with it.
 
 It reads the project as data (exactly what is saved), re-derives from the logical layer alone what

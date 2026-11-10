@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type,attr-defined,index"
 """What the tests of the migration safety net (M1, plan 2.3) share: a fake format 2 that exists in
 the test and nowhere else, and the projects it is run over.

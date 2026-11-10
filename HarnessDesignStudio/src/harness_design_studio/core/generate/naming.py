@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Naming schemes from the `naming` configuration. Invalid templates fall back to the defaults."""
 
 import re

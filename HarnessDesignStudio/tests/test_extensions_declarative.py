@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """S8: declarative extensions (rules, tables and lookup tables written as data).
 
 What is checked: a rule fires and does not fire against hand values with the exact actual value,
@@ -341,7 +343,7 @@ def test_a_table_has_its_columns_rows_and_order(project: Project, tmp_path: Path
     assert "system/extensions/power.csv" in outputs.files
     text = outputs.files["system/extensions/power.csv"].decode()
     assert (
-        text.splitlines()[1] == "Wire,Length (m),AWG,mm2,Fixed"
+        text.splitlines()[2] == "Wire,Length (m),AWG,mm2,Fixed"
         and "W001-002,3.45,24,0.205,no" in text
     )
 

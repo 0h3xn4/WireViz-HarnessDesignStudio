@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 from .asbuilt import AsBuiltRecord
 from .base import Entity, evolve
 from .config import CONFIG_NAMES, ConfigFile, default_configs

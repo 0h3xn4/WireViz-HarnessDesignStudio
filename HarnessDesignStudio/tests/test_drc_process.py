@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The design rule check runs in a helper process so that it cannot hold up the editor."""
 
 import os

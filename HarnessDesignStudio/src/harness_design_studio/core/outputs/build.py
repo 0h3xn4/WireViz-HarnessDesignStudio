@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Build, write and check the output set. `build_outputs` is pure: the same model gives the same
 bytes. `outputs_status` compares a folder with the current model (stale detection)."""
 
@@ -19,7 +21,7 @@ from . import buildsheet, connections, drawing, exports, system, tables
 from .canvas import SHEETS, Sheet, to_pdf, to_svg
 from .errors import OutputsError
 from .provenance import provenance_bytes
-from .stamp import Stamp, Table, csv_bytes, stamp_of
+from .stamp import Stamp, Table, csv_bytes, readme_text, stamp_of, with_notice
 
 MANIFEST = "manifest.json"
 FORMAT = "harness-design-studio-outputs"
@@ -73,15 +75,15 @@ def _drawing_files(
     base = f"harnesses/{h.id}"
     for size in sizes:
         sheets = drawing.harness_sheets(project, h, stamp, size)
-        out[f"{base}/drawing_{size}.pdf"] = to_pdf(sheets, f"{h.id} {h.name}", stamp.line)
+        out[f"{base}/drawing_{size}.pdf"] = to_pdf(sheets, f"{h.id} {h.name}", stamp.meta)
         if size == "A3":
             for n, sh in enumerate(sheets, start=1):
-                out[f"{base}/drawing_A3_s{n}.svg"] = to_svg(sh, stamp.line)
+                out[f"{base}/drawing_A3_s{n}.svg"] = to_svg(sh, stamp.meta)
 
 
 def _sheet_files(sheet: Sheet, base: str, stamp: Stamp, out: dict[str, bytes]) -> None:
-    out[f"{base}.svg"] = to_svg(sheet, stamp.line)
-    out[f"{base}.pdf"] = to_pdf([sheet], sheet.title, stamp.line)
+    out[f"{base}.svg"] = to_svg(sheet, stamp.meta)
+    out[f"{base}.pdf"] = to_pdf([sheet], sheet.title, stamp.meta)
 
 
 def findings_table(project: Project) -> Table:
@@ -189,13 +191,18 @@ def build_outputs(
         out[connections.CONNECTIONS_XLSX] = connections.connections_workbook(project, stamp)
     findings = findings_table(project)
     out["system/drc_findings.csv"] = csv_bytes(findings, stamp)
-    out["system/drc_report.md"] = (f"<!-- {stamp.line} -->\n" + render_markdown(project)).encode()
+    out["system/drc_report.md"] = with_notice(
+        f"<!-- {stamp.line} -->\n" + render_markdown(project), stamp
+    ).encode()
     out["system/changelog.csv"] = csv_bytes(changelog_rows(project), stamp)
-    out["system/revision_report.md"] = revision_report(project, stamp.line).encode()
+    out["system/revision_report.md"] = with_notice(
+        revision_report(project, stamp.line), stamp
+    ).encode()
+    out["README.txt"] = readme_text(stamp).encode()  # the notice for the files that cannot hold one
     out["system/export.json"] = exports.json_export(project, stamp)
     out["system/provenance.json"] = provenance_bytes(project, stamp)
     if project.asbuilt:  # the as-built report: only a project that has records has it (S9)
-        out[ASBUILT_MD] = asbuilt.report_markdown(project, stamp.line).encode()
+        out[ASBUILT_MD] = with_notice(asbuilt.report_markdown(project, stamp.line), stamp).encode()
         out[ASBUILT_CSV] = csv_bytes(asbuilt.report_rows(project), stamp)
     if (
         project.extensions is not None

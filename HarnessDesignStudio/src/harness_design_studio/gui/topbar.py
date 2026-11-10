@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The top bar: which project, which design, what state it is in, and the three things to do next.
 
     bar = TopBar(theme)

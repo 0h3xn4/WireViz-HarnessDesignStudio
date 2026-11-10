@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-GUI-12, REQ-IO-02. M2a: change control sees links. A link is a diffable object; the link of a harness that is
 released is locked with it, is kept in its baseline and is checked against it."""
 

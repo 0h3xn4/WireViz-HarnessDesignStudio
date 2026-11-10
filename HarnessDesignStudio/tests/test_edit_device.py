@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """CD-X1, CD-X2, CD-X3, CD-X6: the headless plans of the device editor (core/devices.py): connectors,
 pins, pasted rows, interface types on pins, the inline checks, the state of a device and the lock
 that closes the hole of the audit (CD-G15) in the planners. No Qt."""

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SC-5, SC-7, SC-8, SC-9, SC-10, SC-22, SC-24: the harness view (header, connector / pin table,
 wire table, drawing preview, Why pane) on the flatsat example, offscreen, with tests/ux_host-style

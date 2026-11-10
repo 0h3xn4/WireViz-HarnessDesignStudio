@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Which signal of one end connects to which signal of the other end.
 
 Both ends carry the same interface type, each from its own point of view: an `out` signal of one

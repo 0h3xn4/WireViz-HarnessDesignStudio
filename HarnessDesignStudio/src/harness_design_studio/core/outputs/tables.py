@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Tables derived from the model: wire list, pinouts, BOM, mass and length, tests, labels,
 matrices. Each function returns `Table` (header row first). No design numbers are invented:
 unknown values are written as "pending", "unknown" or "TBD (placeholder)".

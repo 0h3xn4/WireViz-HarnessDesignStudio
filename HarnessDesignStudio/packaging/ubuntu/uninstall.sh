@@ -1,4 +1,6 @@
 #!/bin/sh
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # Remove what install.sh installed. Usage: ./uninstall.sh [--prefix DIR] [--system]
 set -eu
 mode=user
@@ -8,7 +10,7 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --system) mode=system ;;
     --prefix) [ $# -ge 2 ] || { echo "--prefix needs a folder" >&2; exit 2; }; shift; prefix="$1"; prefix_set=1 ;;
-    -h|--help) sed -n '2p' "$0"; exit 0 ;;
+    -h|--help) sed -n '4p' "$0"; exit 0 ;;
     *) echo "unknown option: $1" >&2; exit 2 ;;
   esac
   shift

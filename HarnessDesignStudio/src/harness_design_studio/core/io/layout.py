@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Mapping between the in-memory project and its folder of small JSON files.
 
 One file per subsystem keeps Git merges clean; one file per harness likewise. File names only

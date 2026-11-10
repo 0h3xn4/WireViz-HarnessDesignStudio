@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: allow-untyped-calls, no-warn-unused-ignores
 """Render screenshots of the real Qt editor (offscreen) into docs/ux/qt for the docs and the UX review.
 Files 01 to 13 show the built-in sample; 14 and up show the views and dialogs of the editor on the

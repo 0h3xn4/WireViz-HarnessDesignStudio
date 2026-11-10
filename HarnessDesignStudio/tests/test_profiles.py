@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-STD-02: standard value profiles are opt-in, cite their source and never overwrite a person's value."""
 
 from __future__ import annotations

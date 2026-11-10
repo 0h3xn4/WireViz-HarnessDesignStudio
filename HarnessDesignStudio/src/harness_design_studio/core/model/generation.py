@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Record of the last generation: what it was computed from and why each choice was made."""
 
 from typing import Annotated

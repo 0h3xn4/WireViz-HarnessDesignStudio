@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """REQ-WIRE-07, REQ-WIRE-08. Workshop feedback M3: the Edit wire tab changes a group that you made
 (Change group…) and sets gauge, type, colour and length on many wires in one step (Edit all wires…,

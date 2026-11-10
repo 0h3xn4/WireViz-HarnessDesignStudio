@@ -20,7 +20,7 @@ This page shows how to write the build workbook and the lists of a design (wire 
 ## Before you start
 
 - You have a generated project ([generate harnesses](generate-harnesses.md)), or a project with connections ([connect two connectors](connect-two-connectors.md)). Export needs at least one harness or one connection. A project with connections and no harness exports the connection list ([section 2](#2-what-you-get)); the files of a harness come after **Create harness** or Generate.
-- Everything in `outputs/` is made from the design alone. Nothing in it is typed by hand and nothing needs editing. Change the design, export again. The `outputs` folder is always safe to delete and make again.
+- Everything in `outputs/` is made from the design alone. Nothing in it is typed by hand and nothing needs editing. Change the design, export again. The `outputs` folder can always be deleted and made again.
 - Placeholder values show in the outputs: gauges say `pending` and test limits say `TBD (placeholder)` until the values exist ([fill in the engineering values](fill-in-engineering-values.md)). In the build workbook a missing value says `to fill in`.
 
 ## 1. Export
@@ -36,12 +36,12 @@ harness-design-studio export wheel-link
 ```
 
 ```
-34 files written to wheel-link/outputs (model <hash>).
+35 files written to wheel-link/outputs (model <hash>).
 ```
 
 With `--drawings` the PDF drawings are written too ([section 5](#5-the-pdf-drawings-optional)).
 
-The files are checked independently before they are written. If that check fails, nothing is written and the window shows a notice, "The independent check found n problem(s) in the outputs, so nothing was written", with the first problems, until the next export succeeds. The check compares every cell of the pinouts, BOM, test tables, labels, mass table, mating matrix, traceability, box pinouts and design rule findings with the design, the values in the YAML files, the pins and signals in the drawings, the texts of the PDFs, the sheets of the Excel workbooks (the build workbook cell by cell) and the provenance values. A workbook that cannot be built (for example because the temporary folder is full) gives a message that says why. Export is refused, in the app and on the command line, for a project that is read-only or has damaged files ("This project is read-only, so nothing was exported. Save a copy to a new folder first."); an export or generation that was started before you edited the project is dropped ("The project was edited while this ran, so the result was dropped. Please try again.").
+The files are checked a second time by a separate routine before they are written. If that check fails, nothing is written and the window shows a notice, "The self-check found n problem(s) in the outputs, so nothing was written", with the first problems, until the next export succeeds. The check compares every cell of the pinouts, BOM, test tables, labels, mass table, mating matrix, traceability, box pinouts and design rule findings with the design, the values in the YAML files, the pins and signals in the drawings, the texts of the PDFs, the sheets of the Excel workbooks (the build workbook cell by cell) and the provenance values. A workbook that cannot be built (for example because the temporary folder is full) gives a message that says why. Export is refused, in the app and on the command line, for a project that is read-only or has damaged files ("This project is read-only, so nothing was exported. Save a copy to a new folder first."); an export or generation that was started before you edited the project is dropped ("The project was edited while this ran, so the result was dropped. Please try again.").
 
 **Only the block diagram (picture for a slide, a test plan or an e-mail).** **File > Export diagram…** (also in the command palette, Ctrl+K) asks for a file name and writes the block diagram of the devices and their connections as three files next to each other: `<name>.svg`, `<name>.pdf` and `<name>.png`. It needs no project folder, no harness, no check and no resolved placeholder, writes nothing into the project and changes nothing in it; a project with no device says *Nothing to draw yet*. The drawing is the one the full export writes as `system/block_diagram.svg` and `.pdf`, with the sheet cut down to the devices, links and legend plus a margin (the full export keeps its fixed sheet); the PNG is painted from it. It is there in every role.
 
@@ -160,7 +160,7 @@ harness-design-studio export wheel-link --drawings
 ```
 
 ```
-40 files written to wheel-link/outputs (model <hash>).
+41 files written to wheel-link/outputs (model <hash>).
 ```
 
 An export without `--drawings` into a folder that holds the drawings of an earlier export removes them and says so: `The PDF drawings of the earlier export were removed; add --drawings to write them again.`
@@ -173,7 +173,7 @@ The window above is for the practice project (a generated `first-steps` project 
 
 **After a release** the outputs are written again with the same set as the export before it: with the drawings if that export had them, without if it had not ([release a harness](release-a-harness.md)).
 
-The independent check accepts a set with the drawings of every harness and a set with none.
+The self-check accepts a set with the drawings of every harness and a set with none.
 
 ## 6. Read a file
 

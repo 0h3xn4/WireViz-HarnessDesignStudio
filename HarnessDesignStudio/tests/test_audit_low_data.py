@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Low findings of the audit in the data layer and the rules (A-13 to A-17, C-22, C-23)."""
 
 from __future__ import annotations

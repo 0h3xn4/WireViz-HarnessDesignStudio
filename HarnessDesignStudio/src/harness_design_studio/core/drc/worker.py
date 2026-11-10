@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Child process that runs the design rule check, so the editor's interpreter stays free.
 
 Protocol on stdin/stdout (binary, both directions): an 8-byte big-endian length, then a pickle.

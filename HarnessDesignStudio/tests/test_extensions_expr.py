@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """S8: the expression language of declarative extensions is small, safe and exact.
 
 What is checked: the parser accepts the documented grammar and refuses everything else, with the

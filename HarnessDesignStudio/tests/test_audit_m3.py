@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Audit round 2 (medium findings C-4, C-8..C-12, C-17..C-23, K-5, D-11, B-13): rules, verifier,
 profiles and configuration checks."""
 

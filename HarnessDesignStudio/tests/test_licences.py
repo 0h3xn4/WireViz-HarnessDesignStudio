@@ -1,4 +1,9 @@
-"""REQ-LIC-01: licence allow-list logic (the report itself is built by tools/licence_report.py)."""
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
+"""REQ-LIC-01: licence allow-list logic (the report itself is built by tools/licence_report.py).
+
+The policy follows the licence of the tool, GPL-3.0-only (D-205): permissive, LGPL, MPL-2.0 and
+GPL-3.0 are allowed; GPL-2.0-only, AGPL, unknown and mixed texts are rejected."""
 
 import pytest
 
@@ -8,7 +13,9 @@ from tools.licence_report import classify
 @pytest.mark.parametrize(
     "lic", ["MIT License", "BSD License", "Apache Software License", "ISC License (ISCL)",
             "GNU Lesser General Public License v3 (LGPLv3)", "LGPL-3.0-only", "MIT AND Python-2.0",
-            "GNU Lesser General Public License v2 or later (LGPLv2+)"],
+            "GNU Lesser General Public License v2 or later (LGPLv2+)",
+            "GNU General Public License v3 (GPLv3)", "GPL-3.0-only", "GPL-3.0-or-later",
+            "Mozilla Public License 2.0 (MPL 2.0)", "MPL-2.0"],
 )  # fmt: skip
 def test_allowed(lic: str) -> None:
     assert classify(lic) == "allowed"
@@ -17,8 +24,8 @@ def test_allowed(lic: str) -> None:
 @pytest.mark.parametrize(
     "lic",
     [
-        "GNU General Public License v3 (GPLv3)",
-        "GPL-3.0-only",
+        "GPL-2.0-only",
+        "GNU General Public License v2 (GPLv2)",
         "AGPL-3.0",
         "UNKNOWN",
         "",
@@ -31,7 +38,7 @@ def test_rejected(lic: str) -> None:
 
 
 @pytest.mark.parametrize(
-    "lic", ["Miscellaneous", "Proprietary - limited use", "Mozilla Public License 2.0 (MPL 2.0)"]
+    "lic", ["Miscellaneous", "Proprietary - limited use", "Mozilla Public License 1.1"]
 )
 def test_substrings_do_not_pass_as_allowed_licences(lic: str) -> None:
     assert classify(lic) == "rejected"

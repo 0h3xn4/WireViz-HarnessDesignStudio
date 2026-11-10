@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-CC-06 (placeholder gate, D-135) and M6: review, release, baselines, locks on released items, new revisions, the diff engine,
 the change log and its outputs."""
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """An example plug-in: a rule that no two wires of a harness carry the same signal between the
 same two connectors. A declarative rule cannot do this, because it looks at one object at a time;
 Python can compare the wires of a harness with each other.

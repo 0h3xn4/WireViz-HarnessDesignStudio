@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """DRC report: open findings, waived findings with their justifications, and what was not
 checked. Plain Markdown, deterministic (no dates; the model hash identifies the state)."""
 

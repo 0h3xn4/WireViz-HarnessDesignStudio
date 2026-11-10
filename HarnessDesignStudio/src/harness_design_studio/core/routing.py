@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Rules for drawing the links of the diagram that do not depend on Qt, so that they can be tested.
 
 A dense diagram is readable when links are routed like a wiring diagram, not drawn as curves:

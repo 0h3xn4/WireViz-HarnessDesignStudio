@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """The docks inside the real window: the tree on the left, the inspector on the right with the
 properties and problems panels. They must pass the accessible-name audit and stay in step."""

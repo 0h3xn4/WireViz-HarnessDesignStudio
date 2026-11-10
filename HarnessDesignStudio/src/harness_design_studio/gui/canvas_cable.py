@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The cable in hand on the diagram: ports, the rubber band, the loose end and the pointer.
 
 `gui/cable.py` decides (state machine, snapping, what a port accepts); this module looks things up

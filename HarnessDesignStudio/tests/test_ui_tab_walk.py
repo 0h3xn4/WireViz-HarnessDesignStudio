@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """D3 of the 1.8.0 audit: Tab leaves a table. Qt's table view keeps Tab for "next cell" and never lets
 go, so a keyboard user with a row selected could not reach the buttons below the Link connectors

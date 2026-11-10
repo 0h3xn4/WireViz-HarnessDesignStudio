@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The navigation rail: one button per area, icon above label, down the left edge of the window.
 
     rail = NavRail(theme)

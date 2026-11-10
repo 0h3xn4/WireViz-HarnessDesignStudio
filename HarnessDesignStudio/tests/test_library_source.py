@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-LIB-02: the parts library records where its data come from (source and date)."""
 
 from __future__ import annotations

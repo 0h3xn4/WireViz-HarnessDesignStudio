@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Connections on the diagram: a line between the two devices of a `core.links.Link`.
 
 A connection joins a connector of one device to a connector of another, pin by pin. It is drawn

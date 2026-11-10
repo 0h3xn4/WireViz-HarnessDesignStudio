@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-GUI-16. Release 1.9 W1: the first connector in Add device, Add a connector inside the
 connection window, Pair by pin number and Paste a pairing (the person accepts every proposal)."""

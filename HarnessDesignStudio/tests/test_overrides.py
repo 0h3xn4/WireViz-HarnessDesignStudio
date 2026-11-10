@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,func-returns-value"
 """S4 (D-191, R7): a value of a generated wire set by hand is an override with a reason. The model, the
 edit functions and the command line refuse one without a reason; generation keeps it; `explain` says
@@ -415,7 +417,7 @@ def test_the_outputs_show_overrides_only_when_a_project_has_them(flatsat, tmp_pa
     apply_ops(p, plan_override(p, h.wires[0].id, "colour", "pink", "colour code"))
     marked = build_outputs(p, drawings=False)
     wl = marked.files[f"harnesses/{h.id}/wirelist.csv"].decode()
-    assert wl.splitlines()[1].endswith(",Overrides")
+    assert wl.splitlines()[2].endswith(",Overrides")
     assert "colour: colour code" in wl
     other = next(x for x in p.harnesses.values() if x.id != h.id)
     assert b"colour code" not in marked.files[f"harnesses/{other.id}/wirelist.csv"]

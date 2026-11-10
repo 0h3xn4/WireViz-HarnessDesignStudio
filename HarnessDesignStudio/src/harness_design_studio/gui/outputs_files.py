@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Outputs area's list of documents: every file of the outputs folder with its document type, format,
 size, time written and SHA-256, and whether it still equals what the export wrote.
 

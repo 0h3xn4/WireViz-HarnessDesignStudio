@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SC-14 / SC-15: the release dialog lists what it will lock, the revise dialog explains what becomes
 editable, and OK says in words what it still needs. Driven offscreen on the flatsat example."""

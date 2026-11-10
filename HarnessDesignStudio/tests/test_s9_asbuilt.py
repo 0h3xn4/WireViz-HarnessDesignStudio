@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,attr-defined"
 """S9 (R6): as-built capture. The sheet a technician fills in and its round trip, the comparison
 with the test limits and the design with numbers worked out by hand, what is missing, the import
@@ -575,7 +577,7 @@ def test_the_csv_sheet_is_the_same_bytes_twice_and_has_the_stamp_line(folder: Pa
     one = asbuilt.template_bytes(project, ".csv", "W001")
     assert one == asbuilt.template_bytes(project, ".csv", "W001")
     assert one.decode().startswith("# harness-design-studio ")
-    rows = list(csv.reader(io.StringIO(one.decode().split("\n", 1)[1])))
+    rows = list(csv.reader(io.StringIO(one.decode().split("\n", 2)[2])))
     assert rows[0] == asbuilt.TEMPLATE_HEADER
     with pytest.raises(ImportError_):
         asbuilt.template_bytes(project, ".txt")

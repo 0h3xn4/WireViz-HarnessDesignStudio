@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Import an approved-parts list (CSV, TSV, JSON or XLSX) into the project's parts library (D-12).
 An export of a parts program such as InvenTree is such a list: its IPN column is read as the part ID,
 its Name or Description as the description, its MPN as the part number (D-165); the file is read

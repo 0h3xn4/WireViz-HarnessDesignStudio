@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """CSV, TSV, JSON and XLSX tables, and the import of interfaces. Plans first: nothing changes until the user confirms.
 
 `plan_interface_import` validates every row against the project (and against the rows before it)
@@ -12,7 +14,7 @@ import stat
 from dataclasses import dataclass, field
 from pathlib import Path
 
-from . import edit
+from . import edit, legal_texts
 from .commands import Op
 from .errors import HarnessError
 from .ids import ID_RE
@@ -77,7 +79,10 @@ def parse_csv(text: str) -> Table:
 
 # the first line of every CSV the tool writes (core/outputs/stamp.py): "# harness-design-studio
 # 1.11.1 model e01643bd29d1"
-STAMP_LINE = re.compile(r"# harness-design-studio \S+ model [0-9a-f]+\r?\n")
+STAMP_LINE = re.compile(
+    r"# harness-design-studio \S+ model [0-9a-f]+\r?\n"
+    rf"(?:# harness-design-studio \S+\. {re.escape(legal_texts.OUTPUT_NOTICE.split('. ', 1)[1])}\r?\n)?"
+)
 
 
 def parse_csv_file(text: str) -> Table:

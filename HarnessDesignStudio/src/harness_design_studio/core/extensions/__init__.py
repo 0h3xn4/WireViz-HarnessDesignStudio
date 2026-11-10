@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Extensibility (D-191 (5), S8): a registry of rules, derived fields, models, output tables and
 importers, with declarative extensions (rules, tables and lookup tables written as data files) first
 and Python plug-ins second. Both are opt-in per project, and Python code runs only after the person

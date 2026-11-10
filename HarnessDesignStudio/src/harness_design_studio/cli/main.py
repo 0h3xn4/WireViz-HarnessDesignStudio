@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """`harness` command line entry point.
 
 Exit codes: 0 ok (warnings allowed), 1 the project has errors or the step is blocked, 2 usage error
@@ -252,7 +254,7 @@ def _export(
     for issue in report.issues:
         rep.say(f"{issue.severity}: [{issue.code}] {issue.message}")
     if not report.ok:
-        print("Not written: the outputs failed their independent check.", file=sys.stderr)
+        print("Not written: the outputs failed their self-check.", file=sys.stderr)
         if rep.as_json:
             refused = records.export_refused(
                 "outputs_failed_check", result.stamp.short, report.issues

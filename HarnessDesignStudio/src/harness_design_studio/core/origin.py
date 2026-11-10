@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Where a harness came from: `interfaces`, `link` or `drawn` (M4, D-200 (3), D-201).
 
     harness_origin(project, "W001")      # "interfaces": Generate made it from the interfaces

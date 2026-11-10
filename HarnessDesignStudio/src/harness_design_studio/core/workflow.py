@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The workflow of the tool, in one place: what each step consumes and produces (S9, R6).
 
     steps = STEPS                                   # the nine steps, what each uses and makes

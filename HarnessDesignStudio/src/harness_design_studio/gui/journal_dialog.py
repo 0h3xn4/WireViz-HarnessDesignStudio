@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The History window (S4, D-191): the change journal of the open project, read-only.
 
     JournalDialog(parent, theme, project, start_journal=...).exec()

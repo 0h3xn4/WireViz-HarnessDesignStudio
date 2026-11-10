@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Generation must not crash, hang or invent values on bad input (October audit B-1, B-2, B-4, I-1)."""
 
 from collections.abc import Iterator

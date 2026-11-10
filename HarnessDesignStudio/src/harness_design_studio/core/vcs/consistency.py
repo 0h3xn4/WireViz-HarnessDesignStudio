@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Consistency of released harnesses with their baselines (used by the rules and `harness-design-studio check`)."""
 
 from harness_design_studio.core.issues import Issue

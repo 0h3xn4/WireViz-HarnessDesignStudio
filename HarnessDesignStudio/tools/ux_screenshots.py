@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Render screenshots of the prototype's key screens into docs/ux/screens (needs Playwright)."""
 
 import glob
@@ -52,7 +54,7 @@ def main() -> int:
         page.click("#generate")
         shot(page, "08-generate-preview")
         page.click("#yes")
-        page.wait_for_selector("text=Independent check passed")
+        page.wait_for_selector("text=Self-check passed")
         shot(page, "09-harness-plans")
         page.click('.unit[data-u="RW1"] rect.u-rect')
         page.click("#delete")

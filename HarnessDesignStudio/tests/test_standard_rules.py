@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-STD-03, REQ-STD-04, REQ-STD-05: REQ-STD-03: rules from the supplied standards. Boundaries, quiet cases and "not checked" messages.
 
 Numbers are test inputs, not engineering data.
@@ -224,12 +226,12 @@ def test_emc_class_is_in_the_wire_list_and_the_labels_only_when_classes_exist() 
     p = t.base()
     plain = build_outputs(p).files
     head = next(v for k, v in plain.items() if k.endswith("/wirelist.csv")).decode().splitlines()
-    assert "EMC class" not in head[1]  # byte-identical wire lists for projects without classes
+    assert "EMC class" not in head[2]  # byte-identical wire lists for projects without classes
     for tid in list(p.interface_types):
         apply_ops(p, [Put("interface_types", evolve(p.interface_types[tid], emc_class="A"))])
     files = build_outputs(p).files
     wl = next(v for k, v in files.items() if k.endswith("/wirelist.csv")).decode().splitlines()
-    assert wl[1].endswith("EMC class") and wl[2].endswith(",A")
+    assert wl[2].endswith("EMC class") and wl[3].endswith(",A")
     labels = next(v for k, v in files.items() if k.endswith("/labels.csv")).decode()
     assert "[EMC A]" in labels
 
@@ -245,7 +247,7 @@ def test_the_output_verifier_catches_a_wrong_emc_class() -> None:
     assert verify_outputs(p, files).ok
     key = next(k for k in files if k.endswith("/wirelist.csv"))
     lines = files[key].decode().splitlines()
-    lines[2] = lines[2][:-1] + "B"
+    lines[3] = lines[3][:-1] + "B"
     files[key] = ("\n".join(lines) + "\n").encode()
     codes = [i.code for i in verify_outputs(p, files).issues]
     assert "out_wire_differs" in codes

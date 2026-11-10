@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The limit of every design rule, or, for a rule that has none, what it compares (D-191, S1).
 
 `explain_finding(project, rule_id, object_id)` (in `core.derive`) answers for every rule of the
@@ -746,7 +748,7 @@ INFO: dict[str, RuleInfo] = {
     "config-invalid": RuleInfo(YES_NO, "each value in config/*.json with the range it must lie in (the checks of configcheck)"),
     "released-modified": RuleInfo(YES_NO, "each released harness with the baseline it was released as (its content hash)"),
     "unchecked-config": RuleInfo(YES_NO, "the values and ratings each rule needs with what the project has set; it lists what could not be checked"),
-    "verify-mismatch": RuleInfo(YES_NO, "the wires and tables with what the interfaces require, worked out again by the independent check (core/verify)"),
+    "verify-mismatch": RuleInfo(YES_NO, "the wires and tables with what the interfaces require, worked out again by the self-check (core/verify)"),
     "cross-strap": RuleInfo(YES_NO, "the side (nominal or redundant) of the two devices of an interface", observe=_see_ends),
     "no-connector": RuleInfo(YES_NO, "each end of an interface with a chosen connector", ("A-CONNECTOR-CHOICE",), observe=_see_ends),
     "unconfirmed": RuleInfo(YES_NO, "the connector of each end of an interface with 'chosen by a person' (a tool choice is not confirmed)", ("A-CONNECTOR-CHOICE",), observe=_see_ends),

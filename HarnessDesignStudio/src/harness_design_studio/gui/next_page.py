@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Next step area, a page of its own: what to do now, in plain words, with one button.
 
     page = NextStepPage(theme, actions={"add_device": window.add_device_flow, ...,

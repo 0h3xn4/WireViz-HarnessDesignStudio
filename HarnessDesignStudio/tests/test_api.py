@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """R11: the scripting interface does what the commands do, and says so in plain data.
 
 Each function is compared with the command it stands for: the same files on disk, the same

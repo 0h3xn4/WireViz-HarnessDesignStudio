@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Which document is which: the output file names of `core.outputs.build.build_outputs` as document
 types a person recognises ("Wire list", "Drawing sheets (SVG)", "Block diagram"), grouped by harness
 and "System". The export dialog shows this as the harness x document tree, and the result list
@@ -69,9 +71,18 @@ CONNECTION_DOCS: Final[tuple[DocType, ...]] = (
     DocType("sys_connections_xlsx", "Connection list workbook", "XLSX"),
 )
 MANIFEST_DOC: Final = DocType("manifest", "Manifest", "JSON")
+NOTICE_FILE: Final = "README.txt"  # the notice of the folder (D-214)
+NOTICE_DOC: Final = DocType("notice", "Notice", "Text")
 DOCS: Final[dict[str, DocType]] = {
     d.key: d
-    for d in (*HARNESS_DOCS, *OPTIONAL_HARNESS_DOCS, *SYSTEM_DOCS, *CONNECTION_DOCS, MANIFEST_DOC)
+    for d in (
+        *HARNESS_DOCS,
+        *OPTIONAL_HARNESS_DOCS,
+        *SYSTEM_DOCS,
+        *CONNECTION_DOCS,
+        MANIFEST_DOC,
+        NOTICE_DOC,
+    )
 }
 
 _HARNESS_FILES: Final = {
@@ -125,6 +136,8 @@ def classify(rel: str) -> Document:
     """The document a file of the output set is."""
     if rel == MANIFEST:
         return Document(rel, "", MANIFEST_DOC.key, MANIFEST_DOC.label, MANIFEST_DOC.kind)
+    if rel == NOTICE_FILE:
+        return Document(rel, "", NOTICE_DOC.key, NOTICE_DOC.label, NOTICE_DOC.kind)
     parts = rel.split("/")
     name = parts[-1]
     if len(parts) == 3 and parts[0] == "harnesses":

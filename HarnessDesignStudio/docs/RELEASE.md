@@ -42,7 +42,7 @@ The release workflow builds four files: the `.deb` and the `.tar.gz` (Linux, as 
 - The **program checks**: `--version` of the command line tool (and of its `harness` alias) prints `harness <version>`; the first-steps walk-through (`new`, `validate`, `generate`, `drc`, `export`, `verify --outputs`) runs through the command line tool of the package and every file it writes is **byte-identical** to the files of the same commands run from the source install on the same machine; and the editor's `--selftest` (offscreen: edit, save, reload, generate, export, the rule check helper process, the bundled examples and fonts) reports `selftest ok`. The Windows editor has no console, so the self-test reports through its exit code and the file named by `--selftest-out`.
 - **No network:** on Windows the programs are blocked from outgoing connections by firewall rules (`netsh advfirewall`) while they run, so a program that needed the network would fail. On Linux the offline guarantee rests on the test that the tool never opens a connection (`tests/test_offline.py`) and on the fact that nothing in the build adds a network module (the allow-list check).
 
-**Signing (optional).** The packages are unsigned until the owner supplies certificates. Add these repository secrets (Settings > Secrets and variables > Actions); `release.yml` signs only when they exist, and every signing step is skipped, with the packages built unsigned, when they do not:
+**Signing, every release (decision D-213).** The `release` job of `release.yml` signs every package, `SHA256SUMS` and the SBOMs without a key (Sigstore, `cosign sign-blob --bundle`, with the OIDC identity of the workflow run; no secret, no cost) and adds build provenance attestations (`actions/attest-build-provenance`). The job needs `id-token: write` and `attestations: write` for that, and the release page gets the `.sigstore.json` bundles. How a user checks them: `docs/INSTALL.md`, *Check the signature*. This is not a Windows code-signing certificate: Windows SmartScreen still warns. That certificate is optional and costs money (the owner decides, D-19). To add it, put these repository secrets in place (Settings > Secrets and variables > Actions); `release.yml` signs the `.exe` files only when they exist, and that step is skipped, with the packages built without it, when they do not:
 
 | Secret | Holds | Used for |
 | --- | --- | --- |
@@ -54,3 +54,18 @@ Windows: the build signs the `.exe` files before they go into the `.zip` and the
 **Facts to know.** The Windows setup program needs no administrator rights and writes only to the user's folders and `HKCU`. The portable `.zip` has the program files at its top (no folder around them), so Explorer's *Extract All* makes a folder named like the file. The binaries come from the PyInstaller and Python on the runner. The Windows programs are tested on GitHub's runners only; nobody has tried them on a physical Windows machine yet, and the release page says what is signed.
 
 Check the documentation too: `docs/GETTING_STARTED.md` must still work word for word on the release candidate (the tests run its commands on the example project, but read it once as a newcomer would). Do not release while any step fails. A release candidate with open decisions is labelled `rc` and says so in its changelog.
+
+## The release checklist for the legal state (decision D-213)
+
+Follow it for every release, in addition to the steps above. Fill `compliance/legal/release-record-template.md` as `compliance/legal/release-record-X.Y.Z.md` while you go, and review `compliance/legal/risk-register.md`.
+
+- [ ] Full test suite, the no-network test (`tests/test_offline.py`) and, once the website exists, the site tests pass.
+- [ ] `pip-audit` is clean, or every finding is decided and recorded (workflow `harness-legal.yml`).
+- [ ] The SBOM and the third-party inventory are made again from the built packages (`python -m tools.third_party inventory PACKAGE --format linux|windows --version X.Y.Z --out compliance/legal`, with `--also-windows ZIP` for the Linux run to write the combined `THIRD_PARTY_NOTICES.txt`), committed, and `python -m tools.third_party check` passes against them (CI runs it on every build; a new component needs a licence decision first).
+- [ ] `THIRD_PARTY_NOTICES.txt`, `LICENSE` and `NOTICE` are inside every package (the build puts them there; the workflow lists the tarball and the installed `.deb`).
+- [ ] The source of the LGPL and GPL components is attached to the release (`python -m tools.fetch_sources`, run by the workflow).
+- [ ] Every artifact is signed, the provenance is attested and `SHA256SUMS` is attached; check one file with the commands of `docs/INSTALL.md` after the release.
+- [ ] The release notes contain the disclaimer and the project status (`tools/release_notes.py` writes them from `compliance/legal/texts.md`).
+- [ ] The website version and date are updated in its one place (once the website exists).
+- [ ] The release compliance record is filled and stored in `compliance/legal/`.
+- [ ] The risk register is reviewed.

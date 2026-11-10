@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """REQ-GUI-11, REQ-DRC-05. 1.8.1 trust fixes for links: one-directional signals are not a direction
 conflict (B-03), counterparts are found by words and transmit to transmit is never paired

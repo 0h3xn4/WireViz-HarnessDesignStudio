@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """D-191, S10: the definition of done of the transparency work, as acceptance tests.
 
 The audit (`docs/transparency_audit.md`, section 7) tested four things and found that three failed or

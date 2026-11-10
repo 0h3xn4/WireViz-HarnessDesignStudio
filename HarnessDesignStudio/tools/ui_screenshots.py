@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: allow-untyped-calls, no-warn-unused-ignores, disable-error-code=misc
 """Screenshot harness of the whole editor for the UI overhaul (docs/ui/UI_OVERHAUL.md).
 

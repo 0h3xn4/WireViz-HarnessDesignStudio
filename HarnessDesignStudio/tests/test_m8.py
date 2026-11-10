@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M8: routing sketch in drawings, drawing preview, outline panel, arrange and UI-scale diagram."""
 
 import pytest

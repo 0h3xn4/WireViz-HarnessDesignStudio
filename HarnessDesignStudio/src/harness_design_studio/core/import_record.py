@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """What an import records, and whether its source file has changed since.
 
 Transparency work, step 6 (D-191, D-193; requirements R14 and R5 of the audit).

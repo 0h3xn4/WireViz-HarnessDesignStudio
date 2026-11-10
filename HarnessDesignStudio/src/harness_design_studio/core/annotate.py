@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Comments in the config files: `settings --annotate` and `--no-annotate` (D-191 (2), R3).
 
 A person who opens `config/derating.json` in an editor can see, next to each value, its unit, its

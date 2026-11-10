@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A parts-program export (InvenTree) as the parts library import reads it, offline (D-165)."""
 
 import json

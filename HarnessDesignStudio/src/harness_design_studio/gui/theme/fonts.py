@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Bundled fonts: Inter for the interface and JetBrains Mono for IDs, numbers and code (both SIL OFL).
 
 They are loaded from the program itself with `QFontDatabase`; nothing is fetched and no system font

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-GUI-13. Workshop feedback: a label on a line (the pill of an interface, the label of a
 connection, the connector box at its ends) can be dragged, because it sometimes hides what the

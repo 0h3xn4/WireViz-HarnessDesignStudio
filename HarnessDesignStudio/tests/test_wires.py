@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """1.4.0 M1: editing one wire (gauge, type, colour, length, label, note) and what generation keeps."""
 
@@ -204,7 +206,8 @@ def _files(p):
 
 
 def _csv(files, hid, name):
-    return files[f"harnesses/{hid}/{name}"].decode().splitlines()
+    lines = files[f"harnesses/{hid}/{name}"].decode().splitlines()
+    return [lines[0], *lines[2:]]  # without the notice line under the stamp (D-214)
 
 
 def test_label_and_note_columns_exist_only_when_a_wire_has_one(project):

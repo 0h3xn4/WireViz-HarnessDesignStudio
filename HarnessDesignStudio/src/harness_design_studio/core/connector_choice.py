@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Which connector of a device carries an interface when the tool chooses (S3b, assumption
 A-CONNECTOR-CHOICE).
 

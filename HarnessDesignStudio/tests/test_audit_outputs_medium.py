@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Regression tests for the medium output findings of the October audit: D-3 (long pin IDs),
 D-4 (reversible CSV guard), D-5/K-1 (title block fields), D-6 (PDF characters), D-7 (shield end),
 D-8 (insertion order), D-10 (cell checks of the output verifier), D-13 (workbook errors), D-15,
@@ -111,7 +113,7 @@ def test_every_guarded_cell_reads_back_as_written() -> None:
 @pytest.mark.parametrize("ch", ["=", "+", "-", "@", "\t", "\r"])
 def test_each_formula_character_is_guarded_in_the_file(ch: str) -> None:
     raw = csv_bytes([["h"], [f"{ch}cmd"]], STAMP).decode()
-    cells = [row[0] for row in __import__("csv").reader(io.StringIO(raw.split("\n", 1)[1]))]
+    cells = [row[0] for row in __import__("csv").reader(io.StringIO(raw.split("\n", 2)[2]))]
     assert cells[1] == f"'{ch}cmd"
 
 

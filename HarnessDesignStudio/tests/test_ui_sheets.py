@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """UI overhaul M4: the model tables as spreadsheets: paste from Excel, bulk edit, Enter to edit,
 Esc to cancel, the column menu, one undo step for a paste."""

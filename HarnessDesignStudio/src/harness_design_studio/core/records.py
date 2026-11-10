@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The results of the tool as plain data: small frozen dataclasses with `to_dict()`.
 
 This is the one place where a result of `generate`, `drc`, `verify`, `export`, `validate` or
@@ -106,7 +108,7 @@ class ValidationResult:
 @dataclass(frozen=True)
 class GenerateResult:
     """What `generate` did. `ok` is false, and nothing was saved, when generation or the
-    independent check found an error. The lists hold harness IDs (`kept_locks`: `connector.pin`)."""
+    self-check found an error. The lists hold harness IDs (`kept_locks`: `connector.pin`)."""
 
     ok: bool
     saved: bool
@@ -169,7 +171,7 @@ class CheckResult:
 
 @dataclass(frozen=True)
 class VerifyResult:
-    """The independent check of the harnesses against the interfaces (and, with `outputs=True`,
+    """The self-check of the harnesses against the interfaces (and, with `outputs=True`,
     of the outputs folder against the design). `stale` is true when the plans or the outputs are
     older than the design."""
 

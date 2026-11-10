@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A time limit for a test that must not hang: SIGALRM where there is one, a timer elsewhere."""
 
 import _thread

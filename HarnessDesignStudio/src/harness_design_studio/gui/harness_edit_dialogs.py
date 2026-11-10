@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Two small windows of the Edit wire tab (workshop feedback M3, D-174): *Edit all wires…* and
 *Change group…*.
 

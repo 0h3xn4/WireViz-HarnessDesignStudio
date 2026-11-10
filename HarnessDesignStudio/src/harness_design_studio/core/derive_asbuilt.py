@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """How an as-built result is compared (S9, D-191): the derivation kind `asbuilt-result`.
 
 A derivation exists only for a thing that has an as-built record with a value, so a project with no

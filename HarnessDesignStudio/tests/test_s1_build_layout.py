@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """D-191, S1: readiness, test limits, pin allocation, segmentation, labels, colours, shields and the choice
 of a connector are explained by the code that makes them.
 

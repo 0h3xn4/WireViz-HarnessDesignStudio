@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Regression tests for the editor findings of the October audit: design rule check failures,
 read-only sessions, settings, export guards, generation errors (offscreen Qt)."""
 

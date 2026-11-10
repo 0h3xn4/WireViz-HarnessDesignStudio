@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Reference projects. `mini3` is the minimal 3-unit example used by tests and the first-run sample."""
 
 from .model import (

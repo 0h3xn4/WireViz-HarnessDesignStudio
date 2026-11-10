@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Build compliance/compliance_matrix.csv from the requirement lists and the assessments.
 
 Inputs (all under compliance/): requirements/*.csv, assessment/process_rules.csv (clause-level

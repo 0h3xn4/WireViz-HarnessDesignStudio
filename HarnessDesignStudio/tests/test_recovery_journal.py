@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-JOURNAL-01: autosave journal inside the project folder; layout/waiver persistence."""
 
 import json

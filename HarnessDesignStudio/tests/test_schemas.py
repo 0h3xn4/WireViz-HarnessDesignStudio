@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-SCHEMA-01: JSON Schemas of the project files come from the model, work offline and match real files."""
 
 from __future__ import annotations

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-OUT-07 (decision D-170): the build data in the outputs: strip lengths, contact parts, tools and
 accessories show in the tables only where they are used, always in the build workbook, and the
 independent verifier checks each of them (one mutation test per check). A project that uses none

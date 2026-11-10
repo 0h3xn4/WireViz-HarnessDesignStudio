@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Declarative extensions: rules, tables and lookup tables written as data (D-191 (5), S8).
 
 `read_file` turns the bytes of one `extensions/*.json` file into an `ExtFile`: it checks the shape

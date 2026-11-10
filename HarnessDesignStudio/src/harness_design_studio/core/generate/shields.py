@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Which wires of a harness form a shield group, and with what ends (decision of D-191, S1).
 
 The generator and the explanation (`core.derive_build`) call the same two functions, so the group

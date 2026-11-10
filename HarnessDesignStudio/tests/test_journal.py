@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg,func-returns-value"
 """S4 (D-191, R8): the change journal. It reproduces the history of a project from its first edit (who,
 when, old, new, reason), is append-only, is a file of its own that no hash and no output holds, and

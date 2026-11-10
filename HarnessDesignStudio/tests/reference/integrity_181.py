@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: ignore-errors
 # ruff: noqa
 """The integrity check exactly as release 1.8.1 and the first round of 1.9 had it (a verbatim copy of

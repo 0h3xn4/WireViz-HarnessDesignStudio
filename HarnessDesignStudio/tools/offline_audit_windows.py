@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Windows counterpart of the offline audit (REQ-OFFLINE-06), called by `tools/offline_audit.py`.
 
 Windows has no strace and no network namespace. What this does instead, as an administrator (the CI

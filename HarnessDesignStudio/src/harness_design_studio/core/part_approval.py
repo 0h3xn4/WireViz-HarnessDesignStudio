@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Approving a part from the Next step page (Release 1.9, W1).
 
 The program never approves a part by itself (`devices.ops_add_part` makes every part `pending` and

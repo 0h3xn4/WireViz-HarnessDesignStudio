@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,union-attr,arg-type,index,type-arg"
 """REQ-GUI-24 (the kind of a device, set by hand). Owner decision after the device looks: *do you
 want to set a device's kind by hand? yes*. A device (the model's `Unit`) has an optional field

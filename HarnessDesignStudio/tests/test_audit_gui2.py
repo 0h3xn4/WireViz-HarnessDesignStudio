@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Regression tests for the canvas, legend, tour and panel findings of the October audit (F2-*)."""
 
 import pytest

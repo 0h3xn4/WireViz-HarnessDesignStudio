@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """An empty state for a table: a short title, one line on what to do and, if given, one action.
 
 The overlay is a child of the view's viewport, so it needs no layout change and no extra widget in

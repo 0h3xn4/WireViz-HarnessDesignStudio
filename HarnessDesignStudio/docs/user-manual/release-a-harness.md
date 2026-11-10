@@ -78,7 +78,7 @@ harness-design-studio release wheel-link W002 --by "A. Engineer" --comment "Firs
 
 ```
 Release W002 revision A: done.
-Outputs re-exported with the released status (34 files).
+Outputs re-exported with the released status (35 files).
 ```
 
 The number of files is that of the export before the release: the release writes the outputs again with the same set, so the PDF drawings are written again only if that export had them ([export the outputs](export-the-outputs.md#5-the-pdf-drawings-optional)). `--checker` is optional and goes in the title block. Each reason needs at least 10 characters. A name, checker, comment or reason with control characters or too much text (a name is one line of at most 200 characters; a comment together with the reasons at most 2,000) is a blocker that names the option, for example `blocked: [by_invalid] --by: The name must not contain control characters or line breaks.` Line breaks in a comment are allowed and are shown as spaces in the change log and the revision report. `--date ""` is an error; leave `--date` out for today. A date earlier than the last change-log entry of the same harness is refused (`blocked: [date_before_last] --date: ...`), so a release cannot be dated before its own review.

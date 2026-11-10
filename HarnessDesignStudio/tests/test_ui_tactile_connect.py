@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type,type-arg,assignment,index"
 """REQ-GUI-21. Owner feedback: connecting devices should feel tactile and free, as if picking up a
 harness, dragging it to a port and plugging it in. In the block diagram a press on a port picks a

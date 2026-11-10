@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The base of the program's dialogs: a window that is never shorter than its content needs.
 
 A layout that holds word-wrapped text (a note under a form, a message in an inline notice) needs a

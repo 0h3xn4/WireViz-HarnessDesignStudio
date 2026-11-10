@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """E-5 / I-2: a release freezes the parts, interface types and configuration that the released
 harness uses (and records them in the baseline); old baselines without these records still load
 and are not reported."""

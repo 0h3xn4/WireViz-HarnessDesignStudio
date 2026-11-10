@@ -17,7 +17,9 @@ Needs these system libraries (already present on a normal Ubuntu desktop):
   libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
   Install with: sudo apt install libegl1 libgl1 libxkbcommon0 libxkbcommon-x11-0 libfontconfig1 libdbus-1-3 libxcb-cursor0 libxcb-icccm4 libxcb-image0 libxcb-keysyms1 libxcb-randr0 libxcb-render-util0 libxcb-shape0 libxcb-xinerama0
 
-The tool never uses the network. The user guide opens with F1 inside the app.
+The app collects no personal data and sends nothing over the network. All files stay on your computer. The user guide opens with F1 inside the app.
+Licence: Harness Design Studio is licensed under the GNU General Public Licence, version 3 only (GPL-3.0-only). The full text is in the file LICENSE.
+Provided as is, without warranty of any kind. Check all results before you rely on them. See sections 15 and 16 of the GPL-3.0. Free, non-commercial personal project. No support, no service levels, and no commitment to maintenance or updates.
 Programs: harness-design-studio-gui (the editor), harness-design-studio (the command line tool; the short
 name harness works too, it is the same program).
 Check the package: ./harness-design-studio-gui --selftest

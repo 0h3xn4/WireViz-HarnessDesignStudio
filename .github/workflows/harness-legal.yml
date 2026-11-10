@@ -1,0 +1,115 @@
+name: harness-design-studio legal checks
+
+# The checks that keep the legal state of the tool true (decisions D-205 to D-212): every file has a
+# licence statement (REUSE), every commit has an allowed author address and a sign-off (DCO), the
+# pinned dependencies have no known vulnerability (pip-audit), a pull request adds no dependency
+# with a known vulnerability (dependency review) and the code is scanned (CodeQL). The promise
+# words, the legal texts and the licence allow-list are checked by the test suite (harness-ci.yml).
+
+on:
+  push:
+    branches: [master]
+  pull_request:
+  schedule:
+    - cron: "17 4 * * 1"  # a weekly look at the vulnerability databases
+
+permissions:
+  contents: read  # every job reads the repository; the two that need more say so below
+
+concurrency:
+  group: harness-legal-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  reuse:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.14"
+      - run: python -m pip install reuse==6.3.0
+      - name: Every file of HarnessDesignStudio/ has a licence and a copyright statement
+        run: reuse --root HarnessDesignStudio lint
+
+  commits:
+    # The author address and the DCO sign-off of the commits of a pull request (tools/check_commits.py)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.14"
+      - name: Check the commits
+        env:
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha }}
+          OWNER_PR: ${{ github.event.pull_request.user.login == github.repository_owner }}
+        run: |
+          flag=""
+          if [ "$OWNER_PR" = "true" ]; then flag="--owner-pr"; fi
+          cd HarnessDesignStudio && python -m tools.check_commits "$BASE" "$HEAD" $flag
+
+  pip-audit:
+    # The pinned dependency set and the build tool, against the Python Packaging Advisory Database
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065  # v5.6.0
+        with:
+          python-version: "3.14"
+      - name: Install the pinned set and the audit tool
+        working-directory: HarnessDesignStudio
+        run: |
+          python -m pip install pip-audit==2.10.1 setuptools==84.2.1
+          python -m pip install ".[gui]"
+      - name: Audit
+        run: pip-audit --progress-spinner off
+
+  dependency-review:
+    # Needs the repository setting "Dependency graph" (Settings > Code security). While it is off
+    # the action stops with "not supported on this repository". So the job runs only when the
+    # repository variable DEPENDENCY_GRAPH is "true": set it (Settings > Secrets and variables >
+    # Actions > Variables) after you switch the setting on (owner-checklist.md C).
+    if: github.event_name == 'pull_request' && vars.DEPENDENCY_GRAPH == 'true'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: actions/dependency-review-action@2031cfc080254a8a887f58cffee85186f0e49e48  # v4.9.0
+        with:
+          fail-on-severity: moderate
+          comment-summary-in-pr: never
+
+  codeql:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    permissions:
+      contents: read
+      actions: read
+      security-events: write  # the one job that uploads results to code scanning
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262  # v4.4.0
+        with:
+          persist-credentials: false
+      - uses: github/codeql-action/init@9418214df1f2c4b8128c770156c409013b07d6b9  # v3.39.3
+        with:
+          languages: python
+          build-mode: none
+          queries: security-and-quality
+      - uses: github/codeql-action/analyze@9418214df1f2c4b8128c770156c409013b07d6b9  # v3.39.3
+        with:
+          category: "/language:python"

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """Quick mode, Add device: only a name (a kind when wanted), a connector from the start so that
 Connect always works, the diagram stays in front. The five-step journey of the manual page

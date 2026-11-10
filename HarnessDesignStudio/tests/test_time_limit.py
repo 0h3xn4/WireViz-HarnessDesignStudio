@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """E-F1: the default time factor is 2, CI's explicit factor wins, and a slow run names its numbers."""
 
 import pytest

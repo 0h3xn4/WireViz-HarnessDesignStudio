@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The kinds of device on the screen: the words of the inspector and the tooltip.
 
 The table of the kinds, the families, the order in which a kind is read from a device and the

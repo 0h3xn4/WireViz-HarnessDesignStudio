@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Devices view: one unit with its connectors and pins, edited in place, the pinout as it will be
 exported, and the notes the pin checks give. Plugged into the window as the sixth main tab
 (`install_view("devices", ...)`, Ctrl+6).

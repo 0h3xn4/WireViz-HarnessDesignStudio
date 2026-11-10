@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-NUM-01: Numerical accuracy of the sizing arithmetic (ECSS-Q-ST-80C 7.1.7, gap G-13).
 
 The AWG size is defined by two exact points, 36 AWG = 0.005 in and 4/0 = 0.46 in,

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Editing wires: gauge, type, colour, length, label and note of a generated wire, and wires that a
 person draws between two pins.
 

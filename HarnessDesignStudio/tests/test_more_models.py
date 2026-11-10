@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """D-191, S3b: four more methods that can be chosen (requirement R4): the pin fit strategy, the
 choice of a connector, the segmentation method and the format of the labels. The default of each is
 what the tool did before; each alternative is checked against a hand calculation on a small project,

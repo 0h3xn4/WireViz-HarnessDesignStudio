@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Build an expensive starting state once per module and hand every test its own copy.
 
 A generated and exported project, a released baseline: producing them takes seconds, and many tests

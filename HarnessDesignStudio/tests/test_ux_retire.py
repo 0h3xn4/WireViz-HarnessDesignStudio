@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """SH-6, SH-7, SC-21: the five bottom tabs (Problems, To-do, Interface table, Harness plans, Outline),
 the bottom dock and the Palette tab are gone, and every function they had is in its new place:

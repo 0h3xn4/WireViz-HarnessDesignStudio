@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Theme manager: the current theme (system, light, dark), the UI scale, fonts and units.
 
 Every colour, font size and gap in the program comes from here: `theme.color(token)`,

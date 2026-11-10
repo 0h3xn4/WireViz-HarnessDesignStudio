@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Review, release and new-revision workflow.
 
 A release needs a comment, a name, and a design that passes the gate: no verifier or rule

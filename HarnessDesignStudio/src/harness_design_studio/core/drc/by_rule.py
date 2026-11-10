@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """One result per design rule, for the Checks view: pass, fail, not checked or pending.
 
 This only groups what the rules already found (`drc.run` and its `unchecked-config` notes) and
@@ -261,7 +263,7 @@ def _missing_config(project: Project, file: str, key: str) -> MissingValue:
 
 def run_by_rule(project: Project, findings: list[Finding] | None = None) -> list[RuleResult]:
     """A result for each rule of `RULES`, in report order; a row for `verify-mismatch` follows
-    only when the independent check found something. `findings` is the list `drc.run` gave (or
+    only when the self-check found something. `findings` is the list `drc.run` gave (or
     the worker process sent back); without it the check runs here."""
     found = findings if findings is not None else _run(project)
     by_rule: dict[str, list[Finding]] = defaultdict(list)

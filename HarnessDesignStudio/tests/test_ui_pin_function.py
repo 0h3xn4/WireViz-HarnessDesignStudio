@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,union-attr,arg-type,var-annotated"
 # ruff: noqa: F811  (the fixtures are those of test_ux_devices_edit, imported by name)
 """1.4.0 M3: the Function column of the Devices tab pin table edits in place and in one undo step."""

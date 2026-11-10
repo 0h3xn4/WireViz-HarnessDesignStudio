@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-TRACE-01: Requirement traceability (ECSS-E-ST-40C 5.8.3; ECSS-Q-ST-80C 6.2.6.12)."""
 
 from __future__ import annotations

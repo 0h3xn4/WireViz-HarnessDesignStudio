@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Pick a connector as a family, a number of pins and a gender (Release 1.9, W1).
 
 One small widget for the two places that add a first connector without the Devices tab: the dialog

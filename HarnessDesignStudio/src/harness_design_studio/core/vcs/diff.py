@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Diff engine: compares two snapshots (a baseline, the working design for one harness, or a
 whole project) and lists added, removed and changed objects exactly, with field-level changes.
 

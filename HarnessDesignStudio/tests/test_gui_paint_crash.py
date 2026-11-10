@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Editing then painting must never crash the editor (a stale item rectangle in the scene index
 once ended the whole program with a segmentation fault). Each scenario runs in its own process,
 so a crash shows up as a failing test instead of ending the test run."""

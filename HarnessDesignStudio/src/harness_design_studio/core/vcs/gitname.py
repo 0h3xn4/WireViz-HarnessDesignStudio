@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The name a person has told Git (`git config user.name`), read without starting Git (1.9.0).
 
 A release asks who you are. When the project asks for different people in a release

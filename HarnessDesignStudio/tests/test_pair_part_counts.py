@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-OUT-07 (decision D-188): a wire part can say how many conductors one metre of it carries
 (`conductors`, 2 for a twisted pair). Every wire that names the part is one conductor of it, so the
 BOM and the mass count the sum of the wire lengths divided by that number: the metres of the cable.

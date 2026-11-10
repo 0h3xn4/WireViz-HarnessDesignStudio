@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The expression language of declarative extensions (D-191 (5), S8).
 
 A small language that can only read documented values and do arithmetic with them. It is parsed by

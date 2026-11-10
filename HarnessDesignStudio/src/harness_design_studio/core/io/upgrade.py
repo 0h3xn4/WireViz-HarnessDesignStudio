@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The migration safety net (plan 2.3, D-200): an upgrade of a project to a newer file format that
 can be looked at first, is recorded, checks itself and undoes itself.
 

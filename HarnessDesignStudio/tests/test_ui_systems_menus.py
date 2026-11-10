@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-GUI-18. Release 1.9 W1: the Systems engineer role does not list the engineering entries of
 the menus; they stay in the command palette (Ctrl+K) and keep their shortcuts."""

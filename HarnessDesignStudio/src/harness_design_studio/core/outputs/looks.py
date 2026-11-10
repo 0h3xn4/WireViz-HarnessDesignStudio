@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The looks of a device in the written block diagram: a band down the left edge of the card in
 the colour of its family, and a badge with the kind's pictogram in the shape of the family, the
 same looks the window gives a card (`gui/device_looks.py`).

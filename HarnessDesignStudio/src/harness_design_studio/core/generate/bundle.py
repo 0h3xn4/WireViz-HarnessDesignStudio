@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """How many wires make the bundle of a wire: the number the bundle factor K is looked up for (S3).
 
 The model of the tool until D-191 was **every wire of the harness** (`all_wires`): the bundle is the

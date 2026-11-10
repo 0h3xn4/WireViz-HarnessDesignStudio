@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """What a project's `extensions/` folder is and does: finding it, checking it, and running it.
 
 `discover(root)` is called by the loader when a project is opened (nothing happens for a project

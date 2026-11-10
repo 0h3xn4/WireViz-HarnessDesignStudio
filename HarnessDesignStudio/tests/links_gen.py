@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Projects with links for the tests of release 1.9 (W3): a seeded generator for the property tests
 and a big one for the scaling test. Example names only; no engineering data."""
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Work that must not run on the UI thread, cached by the editor's state token.
 
 `JobRunner(ctl)` runs one function per `(kind, key)` at a time in a `QThread` and hands the finished

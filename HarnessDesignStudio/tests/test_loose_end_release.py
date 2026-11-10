@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type,attr-defined,index,union-attr"
 """REQ-CC-10: a harness with a loose cable end cannot be released (M4a of the 2.0 programme, D-200
 (e), D-201). The blocker `loose_end_unresolved` can be waived with a reason of its own

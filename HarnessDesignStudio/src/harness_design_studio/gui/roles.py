@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The three roles of the editor (decision D-176, workshop milestone M5; S9 added AIT). No Qt here.
 
 A role is a view of the tool, never a permission and never stored in a project:

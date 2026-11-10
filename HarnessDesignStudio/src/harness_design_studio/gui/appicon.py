@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The application icon (the logo of docs/img/logo.svg), painted in code.
 
 It is drawn with QPainter rather than loaded from the SVG because the packaged program ships

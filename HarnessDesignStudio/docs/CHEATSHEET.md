@@ -11,7 +11,7 @@ harness-design-studio check my-design                       # validate, plus lef
 harness-design-studio drc my-design                         # the full design rule check, as a report
 harness-design-studio export my-design                      # build workbook per harness, wire lists, pinouts, BOM, test tables
 harness-design-studio export my-design --drawings           # the same, and the PDF drawings of the harnesses
-harness-design-studio verify my-design --outputs            # an independent check of the exported files
+harness-design-studio verify my-design --outputs            # an self-check of the exported files
 ```
 
 The build workbook, `outputs/harnesses/<ID>/<ID>_build.xlsx`, is the file to build a harness from; the PDF drawings are written only with `--drawings` (new in 1.7.0). Run the loop again after every change. Generating twice without a change changes nothing (the second run prints "0 added").
@@ -119,7 +119,7 @@ my-design/
   logical/            units (the devices), interfaces (what you draw), interface_types.json and, when you have joined connectors, links.json
   physical/           connectors and harnesses (what the tool generates)
   generated/          how the last generation was made (for explanations)
-  outputs/            build workbooks and lists (safe to delete and regenerate)
+  outputs/            build workbooks and lists (can be deleted and regenerated)
   changelog.json      release history
   baselines/          the frozen copy of each released harness (written at release)
 ```

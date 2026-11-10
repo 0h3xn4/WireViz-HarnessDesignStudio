@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """D-191, S3: the models the tool can choose between. The default of each is what the tool did
 before; every alternative is checked against a hand calculation, and the explanation says which
 model was used."""

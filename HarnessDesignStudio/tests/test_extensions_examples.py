@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """S8: the examples in `docs/examples/extensions/` are the ones the manual explains, and they work:
 a declarative rule and a Python rule are added to a project without editing the tool."""
 
@@ -111,12 +113,12 @@ def test_the_declarative_table_and_the_own_ampacity_rule(project_dir: Path) -> N
     text = files["system/extensions/power-wires.csv"].decode()
     lines = text.splitlines()
     assert (
-        lines[1]
+        lines[2]
         == "Wire,Harness,Signal,Gauge (AWG),Cross-section (mm2),Current (A),Table ampacity (A)"
     )
     assert "W001-001,W001,PWR,24,0.205,0.8,5" in lines
     assert "W001-009,W001,PWR,26,0.129,0.3,3.5" in lines
-    assert all(row.split(",")[0] for row in lines[2:])
+    assert all(row.split(",")[0] for row in lines[3:])
     # the flatsat's currents stay within the example's table: the rule is silent, and not "not checked"
     assert not [f for f in drc.run(project) if f.rule == "x-own-ampacity"]
     from harness_design_studio.core.drc import by_rule

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,union-attr"
 """REQ-OFFLINE-05: Python plug-ins can be switched off on a computer, by an environment variable or
 by a machine-wide policy file that an IT department controls (D-203).

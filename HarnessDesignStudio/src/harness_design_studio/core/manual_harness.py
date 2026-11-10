@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A harness that a person builds from nothing: a new harness, its cable connectors and their pins.
 
     ops, hid = plan_new_harness(project, "Heater harness")

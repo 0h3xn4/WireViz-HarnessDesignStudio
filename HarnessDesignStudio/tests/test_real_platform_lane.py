@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type"
 """REQ-GUI-26. The layout tests do not rely on Qt's offscreen platform alone: a second workflow,
 `harness-real-platform.yml`, runs them on Qt's real `xcb` platform under a virtual X display

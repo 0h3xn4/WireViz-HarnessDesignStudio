@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Build the wheel twice with a fixed SOURCE_DATE_EPOCH and require identical hashes."""
 
 import hashlib

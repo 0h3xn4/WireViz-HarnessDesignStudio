@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The table of a generation preview: what Generate will do to each harness.
 
     GeneratePlanTable(theme, settings=None)

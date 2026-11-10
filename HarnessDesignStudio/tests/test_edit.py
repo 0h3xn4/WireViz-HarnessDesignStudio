@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-EDIT-01: block-diagram edit operations (headless): positive and negative cases."""
 
 import pytest

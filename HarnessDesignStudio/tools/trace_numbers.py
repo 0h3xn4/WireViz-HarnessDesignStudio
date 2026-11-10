@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The trace test of 16 real numbers, repeated (D-191, S10).
 
 The audit (`docs/transparency_audit.md`, section 8) traced 16 numbers of the `flatsat` and

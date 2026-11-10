@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Where an object is used: the interfaces, harnesses, wires and units that depend on a unit, an
 interface, a library part or an interface type.
 

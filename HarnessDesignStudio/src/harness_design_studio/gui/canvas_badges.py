@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Small drawn parts of the diagram's state marks: the compact badge (icon + count), the lock badge,
 the tag chips, the auto-filled chip, the flight/ground mapping of zone names and the corner chip that
 says whether the harnesses and outputs are up to date.

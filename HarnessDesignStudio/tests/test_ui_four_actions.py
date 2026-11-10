@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,attr-defined,union-attr,arg-type,assignment"
 """REQ-GUI-27. A systems engineer gets from nothing to a block diagram on disk in four actions:
 New project, Add device (twice), Connect, Export diagram. This test plays that person and counts

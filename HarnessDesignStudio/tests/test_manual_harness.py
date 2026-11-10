@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return"
 """A harness built from nothing: a new harness, its cable connectors, pins and wires, with no
 interface behind it. Generate leaves it alone; checks, outputs, review and release work as for any

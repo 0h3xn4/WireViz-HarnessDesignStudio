@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Wire colours: the IEC 60757 names and codes, and how to read a colour typed by a person.
 
 The table is used to draw and to offer a choice; it decides nothing about a design. A colour that

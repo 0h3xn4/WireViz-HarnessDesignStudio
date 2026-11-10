@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """A JSON reader that remembers on which line each key and each list item is.
 
 The standard library's reader tells where a file is broken but not where a value is, and a

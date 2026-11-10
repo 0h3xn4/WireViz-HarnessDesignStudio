@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Time load/save/integrity/transaction on a stress-size project (SPEC: 200 units, 2,000
 interfaces, 150 harnesses, 20,000 wires). Usage: python -m tools.bench_stress"""
 

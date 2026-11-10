@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """`merge-fix`: after a Git merge, when two people each pressed Generate."""
 
 import argparse

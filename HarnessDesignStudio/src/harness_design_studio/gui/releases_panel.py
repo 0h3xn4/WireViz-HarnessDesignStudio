@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Releases tab: the timeline of reviews, releases and new revisions of every harness, the
 differences between two revisions (or a revision and the working design), and the per-harness
 change-control actions.

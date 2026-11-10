@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """REQ-UX-03: the committed prototype is exactly what the build script produces from the tokens."""
 
 import re

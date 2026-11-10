@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """M7: the user guide, rule reference and configuration reference stay true to the program."""
 
 import re

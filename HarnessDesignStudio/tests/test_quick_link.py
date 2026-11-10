@@ -1,8 +1,10 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,no-any-return,arg-type"
 """Quick mode's one-click connection, the pure part: which connectors to join (`best_connectors`,
 moved out of the Link connectors window), the starter connector of a device that has none, the
 pairs (signal names, else pin numbers, else none) and one undo step. A link with no pair is a valid
-connection: the outputs are written and the independent check passes. No Qt."""
+connection: the outputs are written and the self-check passes. No Qt."""
 
 import pytest
 

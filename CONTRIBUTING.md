@@ -2,10 +2,13 @@
 
 This page tells you how to propose a change to this repository, which part of it to change, and the one rule you must not break.
 
+> Free, non-commercial personal project. No support, no service levels, and no commitment to maintenance or updates. A pull request may be answered late, changed or declined at the owner's discretion.
+
 ## Contents
 
 - [Two codebases in one repository](#two-codebases-in-one-repository)
 - [The one hard rule](#the-one-hard-rule)
+- [Licence and sign-off](#licence-and-sign-off)
 - [Set up and test](#set-up-and-test)
 - [Propose a change](#propose-a-change)
 - [Report a problem](#report-a-problem)
@@ -22,7 +25,19 @@ If you are not sure which one you are changing, look at the folder. Almost all w
 
 ## The one hard rule
 
-**Never copy, paste or import code from `src/wireviz` into `HarnessDesignStudio/`.** WireViz is released under the GPL-3.0; Harness Design Studio was written from scratch (a "clean-room" codebase) so that it does not inherit that licence. This is decision D-01 in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md). The same goes for ideas copied line by line from WireViz's code. WireViz is only an export target: the tool can write WireViz-style YAML.
+**Never copy, paste or import code from `src/wireviz` into `HarnessDesignStudio/`.** WireViz is released under the GPL-3.0; Harness Design Studio does not copy or import WireViz code, and it must stay so. This is decision D-01 in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md). The same goes for ideas copied line by line from WireViz's code. WireViz is only an export target: the tool can write WireViz-style YAML.
+
+## Licence and sign-off
+
+Every contribution to `HarnessDesignStudio/` is accepted **only under GPL-3.0-only**, the licence of that folder ([`HarnessDesignStudio/LICENSE`](HarnessDesignStudio/LICENSE), decision D-205), and **only with a Developer Certificate of Origin sign-off** (decision D-208).
+
+- **Sign off every commit.** Use `git commit -s`. It adds a line `Signed-off-by: Your Name <your-address>`, with which you certify the [Developer Certificate of Origin](https://developercertificate.org/): the work is yours to give, or you have the right to give it, under the licence of this project. CI checks the line.
+- **Use a GitHub noreply address** as the author address of your commits (GitHub, Settings, Emails, "Keep my email addresses private"; then `git config user.email "ID+name@users.noreply.github.com"`). CI fails a pull request whose commits have another author address, so that no private address enters a public history.
+- **AI-generated contributions.** If an AI assistant wrote parts of your change, say so in the pull request: which tool, what you asked it, and that you read and tested the result. You sign off for what you submit, whoever or whatever wrote it. A contribution with no statement of how it was made is not accepted.
+- **No third-party code without its licence.** Code, text, data, pictures or fonts from another source must come with their licence, and that licence must allow distribution under GPL-3.0-only. Name the source and the licence in the pull request and record a new dependency or asset as described below.
+- **Source files carry a header.** A new `.py`, `.sh`, `.js`, `.html` or `.iss` file starts with the two SPDX lines shown in [`HarnessDesignStudio/CLAUDE.md`](HarnessDesignStudio/CLAUDE.md). Other files are covered by [`HarnessDesignStudio/REUSE.toml`](HarnessDesignStudio/REUSE.toml). CI runs `reuse lint`.
+- **Keep the project free and non-commercial** (decision D-206): no prices, donations, sponsor links, paid-support offers or advertisements, and no collection of personal data (decision D-207).
+- **Legal texts** are written once in [`HarnessDesignStudio/compliance/legal/texts.md`](HarnessDesignStudio/compliance/legal/texts.md). Do not change a copy of a text on its own.
 
 ## Set up and test
 
@@ -34,6 +49,7 @@ python3.14 -m venv .venv && . .venv/bin/activate
 pip install -e ".[gui,dev]"
 pytest -n auto -m "not perf" && pytest -m perf   # in parallel, then the timing tests alone (plain `pytest` also works, only slower)
 ruff format . && ruff check . && mypy
+reuse --root . lint   # every file has a licence and a copyright statement (pip install reuse)
 ```
 
 The Qt libraries, the coverage gate, golden files and what CI runs are explained in [`HarnessDesignStudio/docs/developer/setup-and-tests.md`](HarnessDesignStudio/docs/developer/setup-and-tests.md). The layers and the rules that keep them apart are in [`HarnessDesignStudio/docs/developer/architecture.md`](HarnessDesignStudio/docs/developer/architecture.md).
@@ -43,16 +59,16 @@ The Qt libraries, the coverage gate, golden files and what CI runs are explained
 1. Open an issue first if the change is more than a small fix, so that it can be discussed before you spend time on it. WireViz's guide asks for the same.
 2. Work on a branch, not on `master`. Branch names in this repository describe the kind of change, for example `fix/…`, `docs/…`, `feature/…`.
 3. Write the test first, and give every bug fix a test that fails without the fix. Tests, lint and types must pass; CI runs them on every pull request.
-4. Follow the conventions in [`HarnessDesignStudio/CLAUDE.md`](HarnessDesignStudio/CLAUDE.md). It is written for the AI assistant that builds most of the tool, but it is also the shortest accurate list of the conventions: `core` never imports `gui` or the network; every model change goes through the command layer; output is deterministic; engineering values are never invented.
+4. Follow the conventions in [`HarnessDesignStudio/CLAUDE.md`](HarnessDesignStudio/CLAUDE.md). It is written for the AI assistant that builds most of the tool, but it is also the shortest list of the conventions: `core` never imports `gui` or the network; every model change goes through the command layer; output is deterministic; engineering values are never invented.
 5. Record every new dependency (name, version, licence) in [`HarnessDesignStudio/docs/DECISIONS.md`](HarnessDesignStudio/docs/DECISIONS.md).
-6. Write commit messages as one sentence that says what changed and why it matters. The history of this repository is the model.
+6. Write commit messages as one sentence that says what changed and why it matters, and sign them off (`git commit -s`, see above). The history of this repository is the model.
 7. Open a pull request into `master`. Say what changed, how you tested it, and what you left out. Do not merge your own pull request if you can ask the owner.
 
 The owner of the repository decides what is merged. Releases are the owner's decision too ([`HarnessDesignStudio/docs/developer/release.md`](HarnessDesignStudio/docs/developer/release.md)).
 
 ## Report a problem
 
-Open an issue on GitHub. The project treats every problem with the tool, a document or a test as a *software problem report*; the template and the way it is handled are in [`HarnessDesignStudio/compliance/docs/PROBLEM_REPORTING.md`](HarnessDesignStudio/compliance/docs/PROBLEM_REPORTING.md) and [`HarnessDesignStudio/compliance/templates/problem_report.md`](HarnessDesignStudio/compliance/templates/problem_report.md). Say which version you used (`harness-design-studio --version`; a checkout of `master` prints the version of the last release, so also say whether you ran a release package or a checkout), what you did, what you expected and what happened.
+Open an issue on GitHub (see [`.github/SUPPORT.md`](.github/SUPPORT.md) for what to expect; a vulnerability goes to [`.github/SECURITY.md`](.github/SECURITY.md) instead). The project treats every problem with the tool, a document or a test as a *software problem report*; the template and the way it is handled are in [`HarnessDesignStudio/compliance/docs/PROBLEM_REPORTING.md`](HarnessDesignStudio/compliance/docs/PROBLEM_REPORTING.md) and [`HarnessDesignStudio/compliance/templates/problem_report.md`](HarnessDesignStudio/compliance/templates/problem_report.md). Say which version you used (`harness-design-studio --version`; a checkout of `master` prints the version of the last release, so also say whether you ran a release package or a checkout), what you did, what you expected and what happened.
 
 ## Change the documents
 

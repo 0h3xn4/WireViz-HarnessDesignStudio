@@ -230,7 +230,7 @@ An accessory is something that goes on a harness besides its wires and connector
 - **Delete accessory** removes the selected row. **New accessory** clears the form and the selection.
 - Each is one undo step. For a released harness the tab is off and says so.
 
-**From a file.** The headings are `Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity` and `Note`, and optionally `ID`. `Target` is a connector or a wire of the harness; **empty means the harness itself**. A row without an `ID` is numbered `ACC-001`, `ACC-002`, ... . With an `ID` the file is safe to import again: the row finds its accessory instead of adding one. The file `accessories.csv`:
+**From a file.** The headings are `Harness`, `Kind`, `Part`, `Target`, `Position`, `Length (mm)`, `Quantity` and `Note`, and optionally `ID`. `Target` is a connector or a wire of the harness; **empty means the harness itself**. A row without an `ID` is numbered `ACC-001`, `ACC-002`, ... . With an `ID` the file can be imported again: the row finds its accessory instead of adding one. The file `accessories.csv`:
 
 ```
 ID,Harness,Kind,Part,Target,Position,Length (mm),Quantity,Note
@@ -268,7 +268,7 @@ harness-design-studio export wheel-link
 ```
 
 ```
-35 files written to wheel-link/outputs (model <hash>).
+36 files written to wheel-link/outputs (model <hash>).
 ```
 
 (The model hash depends on the project and the tool version; yours differs.)
@@ -309,7 +309,7 @@ For `W001` of the practice project, whose four wires have strip lengths and whos
 | Wires without strip lengths | 2 | `NOTE` | Enter the strip length at both ends in the Edit wire tab (or with import-build-data). |
 | Pins in use without a contact part | 4 | `NOTE` | Name the contact part of each pin (Devices tab, or Connectors tab of a harness made by hand). |
 
-The independent check reads the new columns, the sheet and the file cell by cell. A file that was changed after the export is reported as before (`out_modified`); a wrong `accessories.csv`, or one for a harness without accessories, is `out_accessories`.
+The self-check reads the new columns, the sheet and the file cell by cell. A file that was changed after the export is reported as before (`out_modified`); a wrong `accessories.csv`, or one for a harness without accessories, is `out_accessories`.
 
 ## What Generate does with it
 

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """Referential integrity of a project. Runs on every load, save and transaction."""
 
 from collections import Counter

@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The one next step the Next step page shows (decisions D-171 stage S1 and D-176).
 
 No Qt here, so every combination is tested without a display. `next_step(facts)` takes the facts

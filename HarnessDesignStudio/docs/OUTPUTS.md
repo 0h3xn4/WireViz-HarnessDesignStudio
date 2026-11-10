@@ -98,6 +98,21 @@ The same connections are in two more files: the block diagram draws a line for e
 ## Stamps
 Every file carries `harness-design-studio <version> model <first 12 hex of the model hash>`: CSV and YAML as a first comment line (`# ...`), SVG in `<desc>`, PDF in the Subject, Markdown as the first line, XLSX on the About sheet (the build workbook also in the footer of every printed sheet and on **Start here**), JSON as `model_hash`. CSV readers must skip lines that start with `# `. Cells that start with `= + - @`, a tab or a carriage return and are not plain numbers are written with a leading `'` so spreadsheet programs do not run them as formulas (`+5V` is written `'+5V`, `-12` stays `-12`). The guard can be undone exactly: a cell that already starts with `'` followed by such a character gets one more `'`, and a reader removes exactly one. The XLSX files hold the text as it is (no `'`), stored as text, and are written without lxml (`OPENPYXL_LXML` is forced off before openpyxl is imported), so they are identical with or without lxml installed.
 
+
+## The notice
+
+Every written file also carries a short notice: the tool, its version and *Provided as is, without warranty. Verify before use.* (the one text of `compliance/legal/texts.md`, decision D-210). It is in these places:
+
+| Format | Where the notice is |
+| --- | --- |
+| `.csv` and `.yaml` | the second comment line, under the stamp line (readers skip every line that starts with `#`) |
+| `.md` reports | a note line under the stamp comment, before the title |
+| `.xlsx` workbooks | the row *Notice* of the sheet **About** (after the two stamp rows), the description of the file, the print footer and, in the build workbook, the status line under its title (no row is added) |
+| `.svg` and `.pdf` drawings | a line at the bottom of the title block of a harness sheet, or on the line of the stamp of a system sheet, and in the description of the file |
+| `.json` and the open data | the file `README.txt` of the folder (these formats cannot hold a comment) |
+
+`README.txt` in the outputs folder also repeats the disclaimer and the intended use. Pending and placeholder values stay marked as before: `pending`, `(example data)`, `PLACEHOLDER`, `Complete: no`, *not checked*. The file with the connection structure for WireViz (`wireviz.yaml`) holds no electrical value, so a value that is pending is left out and never filled in. A test per format (`tests/test_output_notices.py`) keeps this true. The notice was added after release 1.17.0: the written files of 1.17.0 and earlier do not have it, and the self-check does not require it of them.
+
 ## Stale detection
 `manifest.json` stores the model hash. The editor compares it with the current model (quick check) and shows "up to date", "out of date" or "not exported". `harness-design-studio verify DIR --outputs` also hashes every file (detects edited or missing files) and re-checks content against the design.
 
@@ -124,7 +139,7 @@ Numbers in the tables and in the YAML keep all their digits (the shortest text t
 - `mating_matrix.csv`, `traceability.csv`: box connector to cable connector; interface to harness and wires. While any interface has a requirement ID (`requirement_id`), `traceability.csv` gets a `Requirement` column after `Routed` (before `Kind` in a project with connections; a connection row leaves it empty) and the wire list gets a `Requirement` column after `EMC class` (the requirement ID of the wire's interface; empty for a wire without one) (1.10). A project with no requirement ID keeps both tables as they were.
 
 ## WireViz YAML
-Each wire is written as its own one-conductor cable, with `connectors`, `cables` and `connections` in the structure WireViz reads. It is written from the model by this tool and has not been validated against the WireViz program (outside this clean-room project). Treat it as a convenience export.
+Each wire is written as its own one-conductor cable, with `connectors`, `cables` and `connections` in the structure WireViz reads. It is written from the model by this tool and has not been validated against the WireViz program (outside this project). Treat it as a convenience export.
 
 ## JSON export (`system/export.json`)
 ```

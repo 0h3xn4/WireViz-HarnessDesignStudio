@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """`validate` runs the same check of the values in `config/*.json` as `generate`, `drc` and `config`
 (D-191). Before, a project whose `bundle_derating` was 1.5 passed `validate` with "0 error(s)" while
 `generate` stopped with `config_invalid` (found by the transparency audit; `docs/CONFIG.md` says they

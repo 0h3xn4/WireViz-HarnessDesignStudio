@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call"
 """UI overhaul M3: the workflow steps in the top bar, the lock banner on released data, Home with
 recent projects and examples, and the empty state of a table."""

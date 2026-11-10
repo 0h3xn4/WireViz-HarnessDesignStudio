@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """What a baseline stores: one harness and the design objects it depends on."""
 
 from typing import Any

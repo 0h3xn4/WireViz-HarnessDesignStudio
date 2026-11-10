@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The Link connectors window, and the question before a harness is made from a connection.
 
 A connection joins a connector of one device to a connector of another, pin by pin (M2 of the
