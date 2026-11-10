@@ -17,10 +17,11 @@ This page shows how to bring this repository's copy of the WireViz README up to 
 
 ## What is kept where
 
-This repository is a fork of [wireviz/WireViz](https://github.com/wireviz/WireViz). The upstream project has no README at its root; its README is `docs/README.md`. Here that text is kept in two places, and it is never reworded.
+This repository is a fork of [wireviz/WireViz](https://github.com/wireviz/WireViz). The upstream project has no README at its root; its README is `docs/README.md`. Here that text is kept in three places, and it is never reworded.
 
 | Where | What it is |
 | --- | --- |
+| `docs/README.md` | Upstream's own file, unchanged, like every other upstream file (`src/wireviz`, `setup.py`, `.gitignore`, `.github/workflows/main.yml`, decision D-218). A sync that merges upstream updates it with the rest; `tests/test_upstream_unchanged.py` holds the Git object of each upstream file at the fork base and must be updated in the same change. The documentation index of this repository is `docs/INDEX.md`. |
 | `docs/upstream/README.upstream.md` | A **byte-identical** copy of upstream `docs/README.md`. Currently from commit `e4fe099` (2025-01-16, WireViz 0.4.1). Its relative links do not resolve in this folder, on purpose, so that it can be compared with upstream with `diff`. |
 | `README.md` (repository root), between `<!-- BEGIN UPSTREAM README -->` and `<!-- END UPSTREAM README -->` | The same text with two changes: every heading is one level lower (`# WireViz` becomes `## WireViz`), and the relative links are rewritten for the new place (13 links: `../examples/...`, `../tutorial/readme.md`, `../LICENSE`, `syntax.md`, `CONTRIBUTING.md`, `buildscript.md`, `CHANGELOG.md`). Text inside code fences is left alone. |
 | `README.md`, the sentence just above the begin marker | A note that says which upstream commit the text is taken from ("taken from `docs/README.md` at commit ..."). |

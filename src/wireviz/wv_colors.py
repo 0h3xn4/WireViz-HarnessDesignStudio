@@ -1,3 +1,7 @@
+# -*- coding: utf-8 -*-
+
+from typing import Dict, List
+
 COLOR_CODES = {
     # fmt: off
     "DIN": [
@@ -115,7 +119,7 @@ color_default = "#ffffff"
 _hex_digits = set("0123456789abcdefABCDEF")
 
 
-# The legal values of the type aliases below are given in comments and not enforced
+# Literal type aliases below are commented to avoid requiring python 3.8
 Color = str  # Two-letter color name = Literal[_color_hex.keys()]
 Colors = str  # One or more two-letter color names (Color) concatenated into one string
 ColorMode = (
@@ -124,7 +128,7 @@ ColorMode = (
 ColorScheme = str  # Color scheme name = Literal[COLOR_CODES.keys()]
 
 
-def get_color_hex(input: Colors, pad: bool = False) -> list[str]:
+def get_color_hex(input: Colors, pad: bool = False) -> List[str]:
     """Return list of hex colors from either a string of color names or :-separated hex colors."""
     if input is None or input == "":
         return [color_default]
@@ -157,7 +161,7 @@ def get_color_hex(input: Colors, pad: bool = False) -> list[str]:
     return output
 
 
-def get_color_translation(translate: dict[Color, str], input: Colors) -> list[str]:
+def get_color_translation(translate: Dict[Color, str], input: Colors) -> List[str]:
     """Return list of colors translations from either a string of color names or :-separated hex colors."""
 
     def from_hex(hex_input: str) -> str:

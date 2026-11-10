@@ -1,5 +1,8 @@
+# -*- coding: utf-8 -*-
+
 import re
 from pathlib import Path
+from typing import Dict, List
 
 awg_equiv_table = {
     "0.09": "28",
@@ -82,7 +85,7 @@ def int2tuple(inp):
 
 def flatten2d(inp):
     return [
-        [str(item) if not isinstance(item, list) else ", ".join(item) for item in row]
+        [str(item) if not isinstance(item, List) else ", ".join(item) for item in row]
         for row in inp
     ]
 
@@ -112,7 +115,7 @@ def clean_whitespace(inp):
 def open_file_read(filename):
     """Open utf-8 encoded text file for reading - remember closing it when finished"""
     # TODO: Intelligently determine encoding
-    return open(filename, encoding="UTF-8")
+    return open(filename, "r", encoding="UTF-8")
 
 
 def open_file_write(filename):
@@ -164,8 +167,8 @@ def aspect_ratio(image_src):
     return 1  # Assume 1:1 when unable to read actual image size
 
 
-def smart_file_resolve(filename: str, possible_paths: (str, list[str])) -> Path:
-    if not isinstance(possible_paths, list):
+def smart_file_resolve(filename: str, possible_paths: (str, List[str])) -> Path:
+    if not isinstance(possible_paths, List):
         possible_paths = [possible_paths]
     filename = Path(filename)
     if filename.is_absolute():
