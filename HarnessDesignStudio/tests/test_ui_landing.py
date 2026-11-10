@@ -58,7 +58,8 @@ def start(qtbot, monkeypatch: pytest.MonkeyPatch, settings: QSettings) -> MainWi
     monkeypatch.setattr(app_module, "make_settings", lambda: settings)
     monkeypatch.setattr(app_module, "create_window", recorded)
     monkeypatch.setattr(QApplication, "exec", lambda self: 0)
-    assert app_module.main() == 0
+    code = app_module.main()
+    assert code == 0
     (win,) = made
     qtbot.addWidget(win)
     QApplication.processEvents()
@@ -190,7 +191,8 @@ def test_the_recent_projects_are_newest_first(qtbot, monkeypatch, tmp_path) -> N
     folders = [project(tmp_path, name) for name in ("first", "second", "third")]
     win = start(qtbot, monkeypatch, settings_at(tmp_path))
     for f in folders:
-        assert win.open_project(f)
+        opened = win.open_project(f)
+        assert opened
     win.open_project(folders[0])  # opened again: first again, not twice
     win.set_area("home")
     QApplication.processEvents()
@@ -208,9 +210,11 @@ def test_closing_releases_the_project_and_writes_no_last_project(
     folder = project(tmp_path, "closing")
     settings = settings_at(tmp_path)
     win = start(qtbot, monkeypatch, settings)
-    assert win.open_project(folder)
+    opened = win.open_project(folder)
+    assert opened
     assert (folder / LOCK_NAME).exists()  # held while it is open
-    assert win.close()
+    closed = win.close()
+    assert closed
     assert not (folder / LOCK_NAME).exists()  # released on close
     settings.sync()
     assert not settings.contains(LEGACY_LAST_PROJECT)
@@ -225,12 +229,14 @@ def test_closing_on_the_landing_page_keeps_the_stored_panels(qtbot, monkeypatch,
     settings = settings_at(tmp_path)
     first = start(qtbot, monkeypatch, settings)
     first.set_area("model")  # leave the landing page, then close: the layout is stored
-    assert first.close()
+    closed = first.close()
+    assert closed
     settings.sync()
     stored = settings.value("ui/state")
     second = start(qtbot, monkeypatch, settings)
     assert on_landing(second)
-    assert second.close()  # closed on the landing page, where the panels were put away
+    closed = second.close()  # closed on the landing page, where the panels were put away
+    assert closed
     settings.sync()
     assert settings.value("ui/state") == stored
     third = start(qtbot, monkeypatch, settings)
