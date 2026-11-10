@@ -24,10 +24,15 @@ import tomllib
 from dataclasses import dataclass
 from pathlib import Path
 
-from harness_design_studio.core import legal_texts
-from tools.release_check import unreleased_text
-
 ROOT = Path(__file__).resolve().parents[1]
+# The release workflow runs `check` and `notes` before (or without) installing the package, so the
+# legal texts are imported from the source folder (they need the standard library only).
+if str(ROOT / "src") not in sys.path:
+    sys.path.insert(0, str(ROOT / "src"))
+
+from harness_design_studio.core import legal_texts  # noqa: E402
+from tools.release_check import unreleased_text  # noqa: E402
+
 REPO_URL = "https://github.com/0h3xn4/wireviz_harness-design-studio"
 SIGNED_FROM = (1, 17, 1)  # the first release made by the workflow that signs (decision D-213)
 CAVEAT_UNSIGNED = (
