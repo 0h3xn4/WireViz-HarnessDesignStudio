@@ -21,4 +21,4 @@ Software: Harness Design Studio. See `SPAP.md` and `../../docs/SPEC.md`.
 - **5.3 Standards and techniques:** `STANDARDS.md`.
 - **5.4 Development and test environment:** `STANDARDS.md` and `../../CLAUDE.md` (commands); tests run offscreen; the GUI is tested with pytest-qt.
 - **5.5 Documentation plan:** 5.5.1 documents are Markdown in the repository; 5.5.2 and 5.5.3 listed in `README.md` of this folder and `../../docs/README.md`; 5.5.4 documentation standards: plain language, every command in the guide is run by a test (`tests/test_docs.py`).
-- **5.6 Tailoring traceability:** applicability at category C in `../requirements/ECSS-E-ST-40C.csv` (column cat_C) and the assessment in `../compliance_matrix.csv`. Deviations: `../DEVIATIONS.md`.
+- **5.6 Tailoring traceability:** applicability at category C in `../requirements/ECSS-E-ST-40C.csv` (column cat_C) and the assessment in `../compliance_matrix.csv`, both made locally from the standard (not in the repository, D-219); the judgements are in `../assessment/`. Deviations: `../DEVIATIONS.md`.

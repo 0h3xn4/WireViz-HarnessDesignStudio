@@ -718,17 +718,17 @@ def test_regression_lookalike_rule_copes_with_mixed_keying() -> None:
     assert all(h.object_id for h in hits)  # it answers, with findings that point at an object
 
 
-def test_cited_requirements_exist_in_the_extracted_lists() -> None:
-    """REQ-STD-01: a rule can only cite a requirement that is in compliance/requirements."""
+def test_cited_requirements_are_assessed() -> None:
+    """REQ-STD-01: a rule can only cite a requirement that the design assessment
+    (compliance/assessment/design_assessment.csv) has a row for. The requirement lists themselves
+    hold ESA's text and are not in the repository (D-219)."""
     import csv
     from pathlib import Path
 
-    folder = Path(__file__).resolve().parent.parent / "compliance" / "requirements"
-    known: set[str] = set()
-    for f in folder.glob("*.csv"):
-        if f.name != "overrides.csv":
-            with f.open(newline="", encoding="utf-8") as fh:
-                known |= {row["ID"] for row in csv.DictReader(fh)}
+    path = Path(__file__).resolve().parent.parent / "compliance" / "assessment"
+    with (path / "design_assessment.csv").open(newline="", encoding="utf-8") as fh:
+        known = {row["ID"] for row in csv.DictReader(fh)}
+    assert known
     for rule in RULES:
         for source in rule.sources:
             assert source in known, f"{rule.id} cites unknown {source}"

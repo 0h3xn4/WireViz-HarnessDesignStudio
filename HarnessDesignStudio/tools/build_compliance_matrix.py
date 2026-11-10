@@ -2,9 +2,16 @@
 # SPDX-License-Identifier: GPL-3.0-only
 """Build compliance/compliance_matrix.csv from the requirement lists and the assessments.
 
-Inputs (all under compliance/): requirements/*.csv, assessment/process_rules.csv (clause-level
+Inputs (all under compliance/): requirements/<standard>.csv (the requirement lists, made by
+`tools.extract_requirements` from the standards' PDFs), assessment/process_rules.csv (clause-level
 rules for ECSS-E-ST-40C and ECSS-Q-ST-80C), assessment/process_overrides.csv (single requirements),
 assessment/design_assessment.csv (one row per harness-relevant design requirement).
+
+The requirement lists and the matrix hold the text of the requirements, which is ESA's. They are
+not in the repository (the owner's decision of 2026-11-10, D-219) and are ignored by Git: a person
+who has the standards makes them locally with `python -m tools.extract_requirements FOLDER`, then
+this tool. Only the assessments, which are ours, are in the repository; the tests check them
+directly and run this tool on invented requirement lists.
 
 Statuses never say "compliant". Process rows: evidence-candidate, partial, gap, human, na.
 The matrix only records the assessment; Phase 3 evidence decides.
@@ -18,6 +25,7 @@ from collections import Counter
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent / "compliance"
+REQUIREMENTS = ROOT / "requirements"  # made locally, not in the repository (D-219)
 PROCESS = ("ECSS-E-ST-40C", "ECSS-Q-ST-80C")
 DESIGN = ("ECSS-Q-ST-30-11C", "ECSS-E-ST-20-07C", "ESCC-3901")
 HEADER = [
@@ -45,7 +53,7 @@ def process_rows(std: str) -> list[list[str]]:
     rules.sort(key=lambda x: -len(x["prefix"]))
     over = {x["ID"]: x for x in read(ROOT / "assessment" / "process_overrides.csv")}
     rows: list[list[str]] = []
-    for r in read(ROOT / "requirements" / f"{std}.csv"):
+    for r in read(REQUIREMENTS / f"{std}.csv"):
         if r["deleted"] == "Y":
             continue
         cat = r["cat_C"]
@@ -85,7 +93,7 @@ def process_rows(std: str) -> list[list[str]]:
 def design_rows(std: str) -> list[list[str]]:
     assess = {x["ID"]: x for x in read(ROOT / "assessment" / "design_assessment.csv")}
     rows: list[list[str]] = []
-    for r in read(ROOT / "requirements" / f"{std}.csv"):
+    for r in read(REQUIREMENTS / f"{std}.csv"):
         if r["deleted"] == "Y" or r["harness_relevant"] != "Y":
             continue
         a = assess.get(r["ID"])
@@ -109,6 +117,15 @@ def build() -> list[list[str]]:
 
 
 def main() -> int:
+    missing = [s for s in (*PROCESS, *DESIGN) if not (REQUIREMENTS / f"{s}.csv").is_file()]
+    if missing:
+        print(
+            "The requirement lists are not here (" + ", ".join(missing) + "). They are not in the "
+            "repository; make them from the standards with `python -m tools.extract_requirements "
+            "FOLDER` first.",
+            file=sys.stderr,
+        )
+        return 2
     rows = build()
     with (ROOT / "compliance_matrix.csv").open("w", newline="", encoding="utf-8") as f:
         w = csv.writer(f)

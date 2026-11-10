@@ -2,9 +2,9 @@
 
 Branch `compliance/ecss-esccc-audit`. Criticality category **C** (approved by the owner). Status: **waiting for owner approval of the remediation plan** (section 6) and three decisions (section 7).
 
-> **Phase 2 to 4 update (October 2026):** the plan below was approved and carried out. The state afterwards is in `SUMMARY.md`, `compliance_matrix.csv` (columns `status_after_phase2`, `evidence_after_phase2`), `DEVIATIONS.md` and `OPEN_ACTIONS.md`. This file is the Phase 1 baseline and is not rewritten.
+> **Phase 2 to 4 update (October 2026):** the plan below was approved and carried out. The state afterwards is in `SUMMARY.md`, `assessment/*.csv` (columns `after_status`, `after_evidence`, `after`; the matrix `compliance_matrix.csv` built from them is no longer in the repository, D-219), `DEVIATIONS.md` and `OPEN_ACTIONS.md`. This file is the Phase 1 baseline and is not rewritten.
 
-Files: `compliance_matrix.csv` (one row per applicable requirement, rebuilt by `python -m tools.build_compliance_matrix`), `requirements/*.csv` (extracted requirements), `assessment/*.csv` (the judgements behind the matrix, each with a rationale), this file.
+Files: `compliance_matrix.csv` (one row per applicable requirement, rebuilt by `python -m tools.build_compliance_matrix`), `requirements/*.csv` (extracted requirements), `assessment/*.csv` (the judgements behind the matrix, each with a rationale), this file. The matrix and the requirement lists quote the standards and are not in the repository since 2026-11-10 (decision D-219); they are made locally from the standards.
 
 Nothing here says the tool *complies*. The status words are an assessment of what exists today; Phase 3 collects evidence, and a person decides compliance.
 

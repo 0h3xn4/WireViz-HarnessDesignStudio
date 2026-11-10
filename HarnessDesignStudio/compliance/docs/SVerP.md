@@ -19,7 +19,7 @@ Problems found are logged as SPRs (`PROBLEM_REPORTING.md`); changes follow `CMP.
 
 ## 6. Verification activities
 - **6.1 General:** the activities and their evidence are listed in `SVR.md`.
-- **6.2 Process verification:** by `../compliance_matrix.csv` and the review of plans.
+- **6.2 Process verification:** by the assessment in `../assessment/` (and the matrix made from it locally, D-219) and the review of plans.
 - **6.3 Quality requirements verification (ECSS-Q-ST-80C 7.1):**
   - 6.3.1 Activities: tests, static analysis, metrics, coverage.
   - 6.3.2 Inputs: source, requirements (`../../docs/REQUIREMENTS.md`).

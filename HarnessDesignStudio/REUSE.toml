@@ -6,7 +6,10 @@
 # the program copies into a user's project). Source code (.py, .sh, .js, .html, .iss, .toml) carries
 # its own SPDX header, so `reuse lint` fails for a new source file that has none (decision D-205).
 # Check: `reuse --root HarnessDesignStudio lint` (CI job `reuse`). Upstream WireViz (src/wireviz and
-# the other folders at the top of the repository) is outside this folder and outside this check.
+# the other folders at the top of the repository) is outside this folder and outside this check: its
+# files are kept byte for byte as at the fork base e4fe099f (decision D-218), so they get no SPDX
+# header; tests/test_upstream_unchanged.py checks them. The requirement text of the ECSS and ESCC
+# standards is no longer in the repository (decision D-219).
 version = 1
 
 # The tool's own data, documents and pictures: GPL-3.0-only (the later entries below win).
@@ -47,14 +50,6 @@ path = ["packaging/licences/GPL-3", "packaging/licences/LGPL-3", "LICENSE", "src
 precedence = "override"
 SPDX-FileCopyrightText = "2007 Free Software Foundation, Inc. <https://fsf.org/>"
 SPDX-License-Identifier = "LicenseRef-FSF-licence-text"
-
-# Requirement text of ECSS and ESCC standards, reproduced in the compliance records. The terms of
-# reuse are not verified (compliance/legal/lawyer-questions.md Q-6, owner-checklist.md B4).
-[[annotations]]
-path = ["compliance/requirements/ECSS-*.csv", "compliance/requirements/ESCC-*.csv", "compliance/compliance_matrix.csv"]
-precedence = "override"
-SPDX-FileCopyrightText = "ESA and the ECSS and ESCC authors (text of the requirements); 2026 0h3xn4 (the table)"
-SPDX-License-Identifier = "LicenseRef-ECSS-reproduced"
 
 # The notices of the third-party components: their texts are the texts of their authors.
 [[annotations]]

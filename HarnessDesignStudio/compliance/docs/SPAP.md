@@ -6,7 +6,7 @@ DRD: ECSS-Q-ST-80C Annex B. Software: Harness Design Studio `0.1.0` (the plan ha
 Purpose: define how product assurance is done for the harness design tool. Applicable: ECSS-Q-ST-80C Rev.2 with ECSS-E-ST-40C Rev.1, tailored for category C (Table D-2 and Table R-1, evaluated in `../requirements/`).
 
 ## 2. Applicable and reference documents
-`../gap_analysis.md`, `../compliance_matrix.csv`, `CRITICALITY.md`, `STANDARDS.md`, `CMP.md`, `PROBLEM_REPORTING.md`, `SDP.md`, `SVerP.md`, `SValP_SVS.md`, `../../docs/SPEC.md`. Not supplied and therefore not claimed: ECSS-Q-ST-10, -10-09, -20, -30, -40, ECSS-M-ST-40, ECSS-Q-ST-60-15.
+`../gap_analysis.md`, `../assessment/` (the matrix built from it is not in the repository, D-219), `CRITICALITY.md`, `STANDARDS.md`, `CMP.md`, `PROBLEM_REPORTING.md`, `SDP.md`, `SVerP.md`, `SValP_SVS.md`, `../../docs/SPEC.md`. Not supplied and therefore not claimed: ECSS-Q-ST-10, -10-09, -20, -30, -40, ECSS-M-ST-40, ECSS-Q-ST-60-15.
 
 ## 3. Terms
 As in ECSS-S-ST-00-01 where used; "owner" is the person who is customer and supplier.
@@ -40,4 +40,4 @@ An offline desktop tool in which a user draws a spacecraft system (units and int
 Product quality requirements: `SRS.md` section 5.10. Assurance: tests (`../../tests/`), independent output verifier (`core/verify.py`, `core/outputs/verify.py`), static analysis (ruff, mypy strict), reproducible builds.
 
 ## 8. Compliance matrix to software product assurance
-`../compliance_matrix.csv` (rows of kind A for ECSS-Q-ST-80C). Statuses: partial, gap, human, na. No row says compliant; compliance is a decision of the owner after the reviews in `../OPEN_ACTIONS.md`.
+`../assessment/process_rules.csv` and `../assessment/process_overrides.csv` (the rows of kind A for ECSS-Q-ST-80C of the matrix, which is made locally, D-219). Statuses: partial, gap, human, na. No row says compliant; compliance is a decision of the owner after the reviews in `../OPEN_ACTIONS.md`.

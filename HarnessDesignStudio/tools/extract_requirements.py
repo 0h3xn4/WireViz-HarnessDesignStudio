@@ -10,6 +10,10 @@ applicability tables (ECSS-E-ST-40C Table R-1, ECSS-Q-ST-80C Table D-2) are read
 nothing is cited from memory. Columns that are a judgement (type, harness relevance, automation) are
 proposals, listed with `basis` and reviewed in compliance/gap_analysis.md; per-requirement
 corrections are in compliance/requirements/overrides.csv and are merged here.
+
+The lists it writes hold the text of the requirements, which is ESA's: they stay on the computer
+that has the standards and are ignored by Git (the owner's decision of 2026-11-10, D-219). Only
+overrides.csv, our own classification, is in the repository.
 """
 
 import csv
@@ -40,7 +44,7 @@ HEADING = re.compile(
 # top-level headings such as "6.12 Connectors RF" use a single space and no indent
 HEADING_TOP = re.compile(r"^((?:\d+\.\d+))\s([A-Z]\S.*?)\s*$")
 FOOTER = re.compile(
-    r"^\s*(ECSS-[A-Z]-ST-[0-9A-Za-z-]+C Rev\.\d+|\d{1,2} \w+ \d{4}|\d{1,3})\s*$|^\s*\f"
+    r"^(?:\s*(ECSS-[A-Z]-ST-[0-9A-Za-z-]+C Rev\.\d+|\d{1,2} \w+ \d{4}|\d{1,3})\s*$|\s*\f)"
 )
 LETTER = re.compile(r"^\s*([a-z])\.\s+(.*)")
 NONNORMATIVE = re.compile(r"^\s*(NOTE|EXAMPLE)s?\b")

@@ -1,8 +1,0 @@
-Requirement text of ECSS and ESCC standards, reproduced in compliance/requirements/ and in
-compliance/compliance_matrix.csv.
-
-The text of the requirements is copyright of the European Space Agency (ESA) and the authors of the
-standards. It is reproduced here to trace the self-assessment of the tool. The terms under which it
-may be reproduced and redistributed have NOT been verified. The GPL-3.0-only licence of this
-project does not cover this text. Whether it may stay in the public repository is an open decision
-of the owner (compliance/legal/owner-checklist.md, B4, and lawyer-questions.md, Q-6).
