@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The cables a person drew on the diagram: saved loose ends and plugged ends (M4c, D-201).
 
 `core.cable_ends.drawn_ends` says which ends there are; this module draws each one as an item of

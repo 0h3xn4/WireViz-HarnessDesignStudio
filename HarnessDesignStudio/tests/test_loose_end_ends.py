@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 # mypy: disable-error-code="no-untyped-def,no-untyped-call,arg-type,attr-defined,index"
 """REQ-GUI-28: which ends of the cables drawn by hand the diagram draws, and which connector a drop
 on a device means (`core/cable_ends.py`, M4c). No Qt."""

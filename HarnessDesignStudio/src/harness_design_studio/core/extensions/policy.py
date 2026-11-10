@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The switch that turns Python plug-ins off on a computer (REQ-OFFLINE-05, D-203).
 
 A trusted Python plug-in runs with the rights of the person who trusted it and could use the network

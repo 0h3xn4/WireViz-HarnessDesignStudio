@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The offline audit: run the built program through a whole workflow and watch what it does (REQ-OFFLINE-02).
 
 Linux. It takes the package a user downloads (the `.tar.gz` or the `.deb` of a release, or an

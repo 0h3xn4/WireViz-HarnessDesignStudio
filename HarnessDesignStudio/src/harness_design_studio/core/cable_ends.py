@@ -1,3 +1,5 @@
+# SPDX-FileCopyrightText: 2026 0h3xn4
+# SPDX-License-Identifier: GPL-3.0-only
 """The ends of the cables a person drew, as the diagram shows them (M4c of the programme, D-201).
 
     ends = drawn_ends(project)           # every end the block diagram draws, by harness and ID
