@@ -13,6 +13,7 @@ from pathlib import Path
 import pytest
 
 from harness_design_studio.cli.main import main as cli_main
+from harness_design_studio.core.errors import ProjectLockedError
 from harness_design_studio.core.io import fs
 from harness_design_studio.core.io.fs import ProjectLock
 from harness_design_studio.core.io.saver import save_project
@@ -130,8 +131,6 @@ def test_a_lock_file_of_an_older_version_is_respected(tmp_path: Path) -> None:
     """Versions before D-222 wrote the computer's name under "host" and no install id. Such a
     file cannot be checked from here: the project counts as open elsewhere (the way out is to
     delete the lock file), and the name in it is not repeated."""
-    from harness_design_studio.core.errors import ProjectLockedError
-
     (tmp_path / fs.LOCK_NAME).write_text(
         json.dumps({"pid": 1, "host": platform.node() or "a-computer", "since": 0}),
         encoding="utf-8",
@@ -143,3 +142,71 @@ def test_a_lock_file_of_an_older_version_is_respected(tmp_path: Path) -> None:
     host = _host()
     assert host is None or f"'{host}'" not in text
     assert (tmp_path / fs.LOCK_NAME).exists()
+
+
+def _no_settings_folder() -> Path:
+    raise RuntimeError("Could not determine home directory.")
+
+
+def test_a_lock_is_taken_when_no_settings_folder_can_be_found(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """A program started with an empty environment has no home folder (Path.home() raises on
+    Windows): the lock still works, with an id for this process alone that stays the same."""
+    from harness_design_studio.core.extensions import trust
+
+    monkeypatch.setattr(trust, "settings_dir", _no_settings_folder)
+    first = fs.install_id()
+    assert re.fullmatch(r"[0-9a-f]{32}", first) and fs.install_id() == first
+    with ProjectLock(tmp_path):
+        lock = json.loads((tmp_path / fs.LOCK_NAME).read_text(encoding="utf-8"))
+        assert lock["install"] == first
+        with pytest.raises(ProjectLockedError):  # the same process: still refused
+            ProjectLock(tmp_path).acquire()
+    assert not (tmp_path / fs.LOCK_NAME).exists()
+
+
+def test_a_lock_is_taken_when_the_settings_folder_cannot_be_written(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    blocked = tmp_path / "a-file-not-a-folder"
+    blocked.write_text("x", encoding="utf-8")
+    monkeypatch.setenv("HARNESS_DESIGN_STUDIO_CONFIG_DIR", str(blocked / "settings"))
+    fs.install_id.__globals__["_ids"].clear()
+    first = fs.install_id()
+    assert re.fullmatch(r"[0-9a-f]{32}", first) and fs.install_id() == first
+    assert not (blocked / "settings").exists()
+    project = tmp_path / "p"
+    project.mkdir()
+    with ProjectLock(project):
+        lock = json.loads((project / fs.LOCK_NAME).read_text(encoding="utf-8"))
+        assert lock["install"] == first
+    assert not (project / fs.LOCK_NAME).exists()
+
+
+def test_a_program_with_an_empty_environment_can_take_a_lock(tmp_path: Path) -> None:
+    """The case of the Windows runner, made on any system: no HOME, no APPDATA, no settings
+    folder override, and Path.home() raising."""
+    import subprocess
+    import sys
+
+    script = (
+        "import pathlib, sys\n"
+        "def no_home(cls):\n"
+        "    raise RuntimeError('Could not determine home directory.')\n"
+        "pathlib.Path.home = classmethod(no_home)\n"
+        "from harness_design_studio.core.io.fs import ProjectLock\n"
+        "with ProjectLock(pathlib.Path(sys.argv[1])):\n"
+        "    pass\n"
+        "print('ok')\n"
+    )
+    root = Path(__file__).resolve().parents[1]
+    done = subprocess.run(  # noqa: S603 (our own interpreter and a fixed script)
+        [sys.executable, "-c", script, str(tmp_path)],
+        capture_output=True,
+        text=True,
+        timeout=120,
+        env={"PYTHONPATH": str(root / "src"), "PATH": "/usr/bin:/bin"},
+        check=False,
+    )
+    assert done.returncode == 0 and done.stdout.strip() == "ok", done.stderr[-2000:]

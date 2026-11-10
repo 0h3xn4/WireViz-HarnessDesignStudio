@@ -30,6 +30,7 @@ LOCK_NAME = ".harness.lock"
 ID_FILE = "install-id"
 _ID_FORM = re.compile(r"^[0-9a-f]{32}$")
 _ids: dict[str, str] = {}  # settings folder -> id (also when it could not be stored there)
+_PROCESS_ID = secrets.token_hex(16)  # used when no settings folder can be found: this process only
 # Older versions wrote the computer's name under "host" and read it back. A file of this version
 # says this instead: an older version sees "another computer" and leaves the lock alone.
 HOST_NOT_RECORDED = "not recorded"
@@ -204,12 +205,17 @@ def _fsync_dir(directory: Path) -> None:
 def install_id() -> str:
     """The random id (32 hex digits) that stands for this installation in project lock files:
     made once with `secrets` and kept in the file `install-id` of the user's settings folder. It
-    says nothing about the person or the computer. When the folder cannot be written, an id for
-    this process is used (a lock this process leaves behind after a crash then reads as one of
-    another computer, with the usual way out: delete the lock file)."""
+    says nothing about the person or the computer. When the settings folder cannot be found (no
+    home folder known, as for a program started with an empty environment) or cannot be written,
+    a random id for this process alone is used and not saved: a lock this process leaves behind
+    after a crash then reads as one of another computer, with the usual way out (delete the lock
+    file). Taking a lock never fails for want of a settings folder."""
     from harness_design_studio.core.extensions.trust import settings_dir
 
-    folder = settings_dir()
+    try:
+        folder = settings_dir()
+    except RuntimeError, OSError, KeyError, ValueError:
+        return _PROCESS_ID
     if (known := _ids.get(str(folder))) is not None:
         return known
     path = folder / ID_FILE
@@ -232,8 +238,8 @@ def install_id() -> str:
                     os.replace(tmp, path)  # a file system without hard links
             finally:
                 tmp.unlink(missing_ok=True)
-        except OSError:
-            pass  # not stored: this process keeps its own id
+        except OSError, ValueError:
+            value = _PROCESS_ID  # not stored: this process keeps an id of its own
     _ids[str(folder)] = value
     return value
 
