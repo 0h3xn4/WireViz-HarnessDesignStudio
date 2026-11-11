@@ -4,6 +4,10 @@ Versions follow semantic versioning. Every project file records the tool version
 
 ## Unreleased
 
+### Added
+
+- **A workflow makes the release tag** (`.github/workflows/harness-tag.yml`, decision D-227). Started by hand with a version and the full SHA of a commit, it checks that the commit is on `master`, that the tag is new, that the version and the changelog of the commit fit the tag (`tools.release_notes check`) and that the Linux and the Windows tests passed on the commit; then it makes the annotated tag, pushes it and starts the release workflow on the tag. The signatures of a release made this way name the same workflow identity as before (`release.yml@refs/tags/vX.Y.Z`). A tag pushed by a person still works as before.
+
 ### Fixed
 
 - **Text in the editor is no longer cut off when there is room for it, and a narrow panel no longer cuts it.** The end-to-end test of 1.17.1 found three faults at the default window size of 1360 x 860 with a wide left panel. The project name in the top bar was cut (*Wheel…k E2E*) after a project was opened from Home, although the bar had room for it; it now shows whole. The cards of the Problems tab in the right panel were wider than the panel: titles and text stopped in the middle of a word, a sideways scroll bar showed and the tab row was scrolled so the first tab read *ector*. A long setting name in a card now breaks at its dots and underscores, the to-do lines and the button rows of a card wrap, and the three tabs fit the panel. A message over the diagram could be wider than the diagram, so its *Undo* and close buttons were cut off; a message now fits the diagram and follows it when a side panel is made wider. The hint of the Connect tool (*Click the first device for Primary power.*) was cut in a slot of two lines; the row now grows when the hint needs a third line. Only the screen changes; no written file does. `tests/test_ui_narrow_panels.py`.
