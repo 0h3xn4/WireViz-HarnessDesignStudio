@@ -8,9 +8,10 @@ A top-level window can be made as small as its layout's *minimum size*. That min
 
 **Rule: derive every dialog from `gui.dialog_base.Dialog` (a wizard from `Wizard`).** The base keeps the window's minimum height equal to what the layout needs at the window's width (and grows the window when it is shorter), keeps the minimum width at least what the layout needs even when the dialog set its own `setMinimumWidth`, and follows the page of a wizard. A window that is a plain `QWidget` (the library window) calls `dialog_base.refit_on(self, event)` from its `event()`. A test (`tests/test_ui_dialog_layout.py`) fails when a dialog or wizard of the `gui` package does not derive from the base.
 
-Two more rules that come from the same cause:
+Three more rules that come from the same cause:
 
 - A word-wrapped label inside a splitter, a stacked widget or a scroll area (containers that do not ask for height for width) is a `gui.wrap_label.WrapLabel`, whose minimum height follows its width. Inside a box layout a plain `QLabel` with `setWordWrap(True)` is enough.
+- In a panel that can be made narrow (the right panel, a message over the diagram), nothing may set a width larger than the panel: a word-wrapped label is at least as wide as its longest word, so a long name goes through `gui.wrap_label.breakable` (soft breaks after its dots and underscores); a button with a long text is a `WrapButton`, and a row of buttons is a `FlowRow`, which goes on in a second line. A message of `ToastHost` takes the width the diagram has, less its buttons.
 - A form that asks for something to be typed (`_PlannerDialog.quiet_at_open`) does not show why its button is off before the person has changed anything: it is not wrong yet, and the disabled button says what is needed. The reason shows from the first change on. A dialog that cannot be used whatever is typed says why at once.
 
 Never raise a minimum size to hide a layout that is too small for its content, and never give a dialog a fixed height; the base makes both unnecessary.

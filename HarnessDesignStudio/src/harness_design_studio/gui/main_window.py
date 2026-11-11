@@ -18,6 +18,7 @@ from PySide6.QtCore import (
     QByteArray,
     QEvent,
     QEventLoop,
+    QObject,
     QSettings,
     QSize,
     QStandardPaths,
@@ -38,6 +39,7 @@ from PySide6.QtGui import (
     QShowEvent,
 )
 from PySide6.QtWidgets import (
+    QAbstractScrollArea,
     QApplication,
     QComboBox,
     QDialog,
@@ -326,14 +328,35 @@ class OutputsWorker(QThread):
             self.error = reason_of(exc)
 
 
+class HintLabel(QLabel):
+    """The line of the tool row that says what to click while connecting. Its text wraps, and the
+    row grows when the text needs more than the two lines it keeps free. With no room to read it
+    in (a window too narrow for the tool row), it asks for no more height: the tooltip has it."""
+
+    READABLE_CHARS = 10  # narrower than about ten letters, nothing of the hint can be read
+
+    def __init__(self) -> None:
+        super().__init__("")
+        self.setWordWrap(True)
+
+    def heightForWidth(self, width: int) -> int:  # noqa: N802
+        if width < self.fontMetrics().averageCharWidth() * self.READABLE_CHARS:
+            return self.minimumHeight()
+        return max(self.minimumHeight(), super().heightForWidth(width))
+
+
 class ToastHost(QWidget):
     """Short messages over the diagram; an optional Undo button; they never block.
 
     At most two are shown (the oldest goes first), a repeated message is not shown twice, a new
     message with an Undo button replaces the older one that had one, and every message has a
-    close button."""
+    close button. A message is never wider than the area it lies over (its text wraps instead), so
+    its buttons stay in view when a side panel makes the diagram narrow."""
 
     MAX_VISIBLE = 2
+    MARGIN = 8  # px between a message and the edge of the area
+    MAX_TEXT = 720  # px: the widest a message's text gets
+    MIN_TEXT = 80  # px: the narrowest (an area narrower than its buttons cannot be helped)
 
     def __init__(self, parent: QWidget) -> None:
         super().__init__(parent)
@@ -343,7 +366,34 @@ class ToastHost(QWidget):
         self.messages: list[str] = []
         self._frames: list[tuple[QFrame, str, bool]] = []  # frame, text, has an Undo button
         self._persistent: list[QFrame] = []  # shown until closed or until `clear_persistent`
+        # the area changes its width with the side panels (a scroll area's viewport has its new
+        # width only after the area's own resize event, so that is the one to follow)
+        self._area = parent.viewport() if isinstance(parent, QAbstractScrollArea) else parent
+        self._area.installEventFilter(self)
         self.hide()
+
+    def eventFilter(self, watched: QObject, event: QEvent) -> bool:  # noqa: N802
+        if watched is self._area and event.type() == QEvent.Type.Resize:
+            self.reposition()
+        return False
+
+    def _room(self) -> int:
+        """The width a message may take: the area (without its scroll bar) less the margins."""
+        return self._area.width() - 2 * self.MARGIN
+
+    def _fit(self, frame: QFrame) -> None:
+        """Give the text of a message the width that leaves its buttons inside the area."""
+        label = frame.findChild(QLabel, "toast-text")
+        row = frame.layout()
+        if label is None or row is None:
+            return
+        frame.ensurePolished()
+        row.invalidate()  # (a size hint cached before the last fit would count the old width)
+        buttons = frame.sizeHint().width() - label.minimumWidth()  # margins, gaps and buttons
+        width = max(self.MIN_TEXT, min(self.MAX_TEXT, self._room() - buttons))
+        label.setFixedWidth(width)
+        label.setMinimumHeight(label.heightForWidth(width))  # never cut a long message off
+        row.activate()
 
     def record(self, text: str) -> None:
         """Note a message that is shown somewhere else (a banner): it joins `messages`, which is
@@ -378,11 +428,9 @@ class ToastHost(QWidget):
         frame.setProperty("card", True)
         row = QHBoxLayout(frame)
         label = QLabel(text)
+        label.setObjectName("toast-text")
         label.setWordWrap(True)
-        host = self.parentWidget()
-        width = max(240, min(720, (host.width() if host else 500) - 120))
-        label.setFixedWidth(width)
-        label.setMinimumHeight(label.heightForWidth(width))  # never cut a long message off
+        label.setFixedWidth(self.MAX_TEXT)  # `_fit` narrows it once the buttons are in
         row.addWidget(label, 1)
         if undo is not None:
             b = QPushButton(strings.UNDO)
@@ -413,6 +461,7 @@ class ToastHost(QWidget):
         close.setToolTip(strings.TOAST_CLOSE)
         close.clicked.connect(lambda: self._remove(frame))
         row.addWidget(close)
+        self._fit(frame)
         self.lay.addWidget(frame)
         frame.show()  # a widget added to a visible parent is otherwise shown only later
         self._frames.append((frame, text, undo is not None))
@@ -454,8 +503,14 @@ class ToastHost(QWidget):
     def reposition(self) -> None:
         p = self.parentWidget()
         if p is not None:
+            for frame, _t, _u in self._frames:
+                with contextlib.suppress(RuntimeError):  # (a frame deleted with its window)
+                    self._fit(frame)
+            self.lay.invalidate()
+            self.lay.activate()
             self.adjustSize()
-            self.move(max(8, (p.width() - self.width()) // 2), 8)
+            room = self._room() + 2 * self.MARGIN
+            self.move(max(self.MARGIN, (room - self.width()) // 2), self.MARGIN)
 
 
 class MainWindow(QMainWindow):
@@ -667,9 +722,8 @@ class MainWindow(QMainWindow):
         self.tool_more.setPopupMode(QToolButton.ToolButtonPopupMode.InstantPopup)
         self.tool_more.setVisible(False)
         self._told_properties = False
-        self.hint = QLabel("")
+        self.hint = HintLabel()
         self.hint.setObjectName("hint")
-        self.hint.setWordWrap(True)
         # the hint gives way: a long text never widens the tool row (and with it the window, which
         # would push "More" off the edge); it wraps in the room left and the tooltip has it whole
         self.hint.setSizePolicy(QSizePolicy.Policy.Ignored, QSizePolicy.Policy.Preferred)
@@ -3271,10 +3325,10 @@ class MainWindow(QMainWindow):
         self._sync_connect_menu()
         hint, warn = c.connect_hint_and_warning()
         self.hint.setText(hint)
-        # reserve two lines so a long hint never makes the toolbar jump
+        # reserve two lines so a short hint never makes the toolbar jump; a longer one that needs
+        # more lines in a narrow window makes the row taller instead of being cut off
         two_lines = self.hint.fontMetrics().lineSpacing() * 2 + 4
         self.hint.setMinimumHeight(two_lines)
-        self.hint.setMaximumHeight(two_lines)
         self.hint.setToolTip(hint)
         self.hint.setProperty("error", warn)
         self.hint.style().unpolish(self.hint)

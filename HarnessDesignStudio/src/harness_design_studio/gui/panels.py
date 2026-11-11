@@ -38,6 +38,7 @@ from harness_design_studio.gui.icons import icon_button
 from harness_design_studio.gui.problems_panel import finding_why
 from harness_design_studio.gui.theme import ThemeManager, current_theme, mark_mono
 from harness_design_studio.gui.theme.tokens import CATEGORIES, style_category
+from harness_design_studio.gui.wrap_label import FlowRow, WrapButton, breakable
 
 
 def category_icon(cat: str, theme: ThemeManager, size: int = 20, pressed: bool = False) -> QIcon:
@@ -788,7 +789,7 @@ class ProblemsPanel(QScrollArea):
             todo_heading.setObjectName("todo-heading")
             self.lay.addWidget(todo_heading)
             for k, t in enumerate(todos):
-                b = QPushButton(f"☐ {t.text}")
+                b = WrapButton(f"☐ {t.text}", current_theme())  # wraps in a narrow panel
                 b.setObjectName(f"todo-{k}")
                 b.setProperty("align", "left")  # the theme's rule left-aligns the text
                 b.clicked.connect(lambda _=False, x=t: self._todo_clicked(x.kind, x.target))
@@ -810,7 +811,7 @@ class ProblemsPanel(QScrollArea):
                     mark = f"{strings.DEVIATION_WORD} " if f.deviation else ""
                     by = self._by(f.id)
                     who = f" ({by})" if by else ""
-                    line = muted(f"✓ {mark}{f.id}: “{f.waiver.justification}”{who}")
+                    line = muted(breakable(f"✓ {mark}{f.id}: “{f.waiver.justification}”{who}"))
                     line.setObjectName(f"waived-{f.id}")
                     self.lay.addWidget(line)
         self.lay.addStretch(1)
@@ -909,11 +910,11 @@ class ProblemsPanel(QScrollArea):
                 "info": strings.SEV_INFO,
             }[first.severity]
             head = first.object_id.split(".")[0]
-            title.setText(f"<b>{sev} {strings.GROUPED_PROBLEMS.format(head, count)}</b>")
+            title.setText(f"<b>{sev} {breakable(strings.GROUPED_PROBLEMS.format(head, count))}</b>")
         lay = card.layout()
         if isinstance(lay, QVBoxLayout):
             listing = muted(
-                "\n".join(f"• {f.title}" for f in fs[:GROUP_LIST])
+                "\n".join(f"• {breakable(f.title)}" for f in fs[:GROUP_LIST])
                 + ("\n" + strings.AND_MORE.format(count - GROUP_LIST) if count > GROUP_LIST else "")
             )
             lay.insertWidget(1, listing)
@@ -930,11 +931,11 @@ class ProblemsPanel(QScrollArea):
             "error": strings.SEV_ERROR,
             "info": strings.SEV_INFO,
         }[f.severity]
-        title = QLabel(f"<b>{sev} {f.title}</b>")
+        title = QLabel(f"<b>{sev} {breakable(f.title)}</b>")  # a long name breaks at its dots
         title.setWordWrap(True)
         title.setSizePolicy(QSizePolicy.Policy.Preferred, QSizePolicy.Policy.MinimumExpanding)
         lay.addWidget(title)
-        lay.addWidget(muted(finding_why(f)))
+        lay.addWidget(muted(breakable(finding_why(f))))
         if f.waiver_changed:  # waived once, but the problem says something else now
             old = self.ctl.project.waivers.get(f.id)
             changed = muted(strings.WAIVER_CHANGED.format(reason=old.justification if old else ""))
@@ -948,7 +949,7 @@ class ProblemsPanel(QScrollArea):
             ref.setWordWrap(True)
             mark_mono(ref)
             lay.addWidget(ref)
-        row = QHBoxLayout()
+        row = FlowRow()  # the buttons go on in a second line in a narrow panel
         show = QPushButton(strings.SHOW)
         icon_button(show, "search", current_theme(), strings.SHOW_ON_DIAGRAM, text=strings.SHOW)
         show.clicked.connect(lambda: self.showRequested.emit(f.object_id))
@@ -972,6 +973,5 @@ class ProblemsPanel(QScrollArea):
             deviate.setEnabled(not self.ctl.read_only)
             deviate.clicked.connect(lambda: self.deviateRequested.emit(f))
             row.addWidget(deviate)
-        row.addStretch(1)
         lay.addLayout(row)
         return card

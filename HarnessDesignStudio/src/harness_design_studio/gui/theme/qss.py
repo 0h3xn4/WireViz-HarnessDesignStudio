@@ -82,6 +82,7 @@ QPushButton[step="running"] {{ border-bottom: {px(3)} solid {c("status.standby")
 QPushButton[step="blocked"] {{ color: {c("text.muted")}; }}
 QPushButton[align="left"] {{ text-align: left; }}
 QPushButton[choice="true"] {{ min-height: {px(72)}; max-height: {px(160)}; text-align: left; padding: 0; }}  /* the big buttons of the role question */
+QPushButton[wrap="true"] {{ max-height: {px(160)}; padding: 0; }}  /* a button whose text wraps (`WrapButton`) */
 QToolButton:checked, QPushButton:checked {{ background: {c("accent")}; color: {c("accent.text")}; border-color: {c("accent")}; }}
 QToolButton[toggle="true"]:checked, QPushButton[toggle="true"]:checked {{ background: {c("bg.selected")}; color: {c("text.primary")}; border: 1px solid {c("accent")}; font-weight: 600; }}
 QPushButton:focus, QToolButton:focus, QLineEdit:focus, QComboBox:focus, QTextEdit:focus, QPlainTextEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus {{ border: {ring} solid {c("focus")}; }}
@@ -93,6 +94,7 @@ QLineEdit[invalid="true"] {{ border: {ring} solid {c("status.critical")}; }}
 QComboBox QAbstractItemView {{ background: {c("bg.raised")}; border: 1px solid {c("border.strong")}; selection-background-color: {c("bg.selected")}; selection-color: {c("text.primary")}; }}
 QTabWidget::pane {{ background: {c("bg.surface")}; border: 1px solid {c("border.subtle")}; border-radius: {r_panel}; top: -1px; }}
 QTabBar::tab {{ background: transparent; color: {c("text.secondary")}; padding: {s8} {s16}; border: none; border-bottom: {ring} solid transparent; }}
+QTabWidget#inspector-tabs > QTabBar::tab {{ padding: {s8} {px(12)}; }}  /* three tabs in a narrow panel */
 QTabBar::tab:hover:!selected {{ background: {c("bg.hover")}; color: {c("text.primary")}; }}
 QTabBar::tab:selected {{ color: {c("text.primary")}; font-weight: 600; border-bottom: {ring} solid {c("accent")}; }}
 QTabBar::tab:focus {{ border-bottom: {ring} solid {c("focus")}; }}

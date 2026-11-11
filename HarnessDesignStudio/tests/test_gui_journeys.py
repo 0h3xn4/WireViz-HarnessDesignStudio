@@ -172,7 +172,7 @@ def test_j3_guided_connect_prevents_invalid_and_marks_auto(win) -> None:  # type
     assert len(ctl.project.interfaces) == n + 1
     iid = ctl.selection.id  # type: ignore[union-attr]
     assert all(e.auto for e in ctl.project.interfaces[iid].endpoints)
-    assert "Auto" in " ".join(lbl.text() for lbl in win.props.findChildren(type(win.hint)))
+    assert "Auto" in " ".join(lbl.text() for lbl in win.props.findChildren(QLabel))
     button(win, "if-confirm").click()
     assert not any(e.auto for e in ctl.project.interfaces[iid].endpoints)
 
@@ -349,9 +349,7 @@ def test_j5_redundant_copy_cross_strap_fix_and_waiver(win) -> None:  # type: ign
     assert win.inspector.tabs.tabText(2) == "Problems (2)"  # the count on the Problems tab
     show_problems(win)
     cards = [
-        w
-        for w in win.problems.findChildren(type(win.hint))
-        if "connects the nominal chain" in w.text()
+        w for w in win.problems.findChildren(QLabel) if "connects the nominal chain" in w.text()
     ]
     assert len(cards) == 2
     waive_texts: list[str] = []
@@ -370,7 +368,7 @@ def test_j5_redundant_copy_cross_strap_fix_and_waiver(win) -> None:  # type: ign
     assert win.problems.counts() == (0, 0)
     assert "PCDU-R" in ctl.project.units or "OBC-R" in ctl.project.units
     assert "Cross-strap is intentional" in " ".join(
-        lbl.text() for lbl in win.problems.findChildren(type(win.hint))
+        lbl.text() for lbl in win.problems.findChildren(QLabel)
     )
 
 

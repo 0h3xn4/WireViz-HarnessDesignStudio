@@ -398,6 +398,7 @@ class ElidedLabel(QLabel):
         self._full = text
         self.setToolTip(tip if tip is not None else text)
         self.setAccessibleDescription(text)
+        self.updateGeometry()  # the size hint is the text's width: the layout must ask again
         self.update()
 
     def full_text(self) -> str:
