@@ -134,7 +134,7 @@ Nothing was changed. Three causes:
 
    ```
    INFO    placeholder_config: Placeholder rule configuration still in use: derating, emc, generation, segmentation, segregation, titleblock. An engineer must review these before results are trusted.
-   WARNING newer_version: This project was saved by a newer version of the tool (format 99; this tool understands up to 1). It is opened read-only. [project.json]
+   WARNING newer_version: This project was saved by a newer version of the tool (format 99; this tool understands up to 2). It is opened read-only. [project.json]
    3 devices, 2 interfaces, 9 connectors, 0 harnesses: 0 error(s), 1 warning(s).
    ```
 
@@ -149,6 +149,16 @@ Nothing was changed. Three causes:
    The exit code is 2. `harness-design-studio migrate newer` gives the same error. **Fix:** install the newer tool (see [`INSTALL.md`](INSTALL.md)); `harness-design-studio validate` can still read the project with this one. Do not edit `project.json` by hand to make the warning go away.
 2. **It is open in another window.** See the next entry.
 3. **The folder cannot be locked for editing here** (read-only media, a folder you may not write to). The editor opens it read-only and says so in a note ("This project was opened read-only because it cannot be locked for editing here: ..."). Copy the project to a folder you can write to, or **Save As**. A journal restore and a reload after a change on disk keep a read-only window read-only, and **Discard** or **Save As** from it never deletes the autosave journal of another window.
+
+### "This project is in format 1, older than this tool writes (format 2), so nothing was saved"
+
+A command that saves (`generate`, an import, `override`, `release` and the others) was run on a project saved by version 1.17.1 or older. Since format 2 (decision D-226) such a command does not upgrade the project on the way; it prints, for example:
+
+```
+error: This project is in format 1, older than this tool writes (format 2), so nothing was saved. Upgrade it first: `harness-design-studio migrate DIR` (`--dry-run` shows what changes), or open it in the editor and choose Upgrade.
+```
+
+The exit code is 2 and no file is changed. **Fix:** look first with `harness-design-studio migrate DIR --dry-run`, then run `harness-design-studio migrate DIR`; it keeps the original files in `.migration-backup-v1/` and checks itself ([Use Git and CI](user-manual/use-git-and-ci.md#other-helpers)). The upgrade changes the number in `project.json` and nothing else: the model hash and every written file stay the same. After it, a 1.x tool opens the project read-only. `validate`, `check`, `drc` and `export` read a format 1 project without upgrading it.
 
 ### "Project already open" / "This project is already open in another instance of the tool"
 

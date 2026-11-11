@@ -1,0 +1,457 @@
+{
+  "interface_types": [
+    {
+      "category": "analog",
+      "construction": "twisted_shielded_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "analog",
+      "impedance_ohm": null,
+      "name": "Analog signal",
+      "notes": "",
+      "shielding": "overall",
+      "signals": [
+        {
+          "direction": "out",
+          "name": "SIG+",
+          "pair": "SIG"
+        },
+        {
+          "direction": "out",
+          "name": "SIG-",
+          "pair": "SIG"
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "data",
+      "construction": "twisted_shielded_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "can",
+      "impedance_ohm": null,
+      "name": "CAN",
+      "notes": "",
+      "shielding": "overall",
+      "signals": [
+        {
+          "direction": "bidir",
+          "name": "CANH",
+          "pair": "BUS"
+        },
+        {
+          "direction": "bidir",
+          "name": "CANL",
+          "pair": "BUS"
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "discrete",
+      "construction": "single",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "discrete",
+      "impedance_ohm": null,
+      "name": "Discrete / bilevel",
+      "notes": "",
+      "shielding": "none",
+      "signals": [
+        {
+          "direction": "out",
+          "name": "SIG",
+          "pair": null
+        },
+        {
+          "direction": "passive",
+          "name": "RTN",
+          "pair": null
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "data",
+      "construction": "twisted_shielded_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "ethernet",
+      "impedance_ohm": null,
+      "name": "Ethernet",
+      "notes": "",
+      "shielding": "per_pair",
+      "signals": [
+        {
+          "direction": "out",
+          "name": "TX+",
+          "pair": "TX"
+        },
+        {
+          "direction": "out",
+          "name": "TX-",
+          "pair": "TX"
+        },
+        {
+          "direction": "in",
+          "name": "RX+",
+          "pair": "RX"
+        },
+        {
+          "direction": "in",
+          "name": "RX-",
+          "pair": "RX"
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "ground",
+      "construction": "single",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "ground",
+      "impedance_ohm": null,
+      "name": "Ground / chassis",
+      "notes": "",
+      "shielding": "none",
+      "signals": [
+        {
+          "direction": "passive",
+          "name": "GND",
+          "pair": null
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "power",
+      "construction": "twisted_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "heater",
+      "impedance_ohm": null,
+      "name": "Heater",
+      "notes": "",
+      "shielding": "none",
+      "signals": [
+        {
+          "direction": "passive",
+          "name": "HTR+",
+          "pair": "H"
+        },
+        {
+          "direction": "passive",
+          "name": "HTR-",
+          "pair": "H"
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "data",
+      "construction": "single",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "i2c",
+      "impedance_ohm": null,
+      "name": "I2C",
+      "notes": "",
+      "shielding": "none",
+      "signals": [
+        {
+          "direction": "bidir",
+          "name": "SDA",
+          "pair": null
+        },
+        {
+          "direction": "out",
+          "name": "SCL",
+          "pair": null
+        },
+        {
+          "direction": "passive",
+          "name": "GND",
+          "pair": null
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "data",
+      "construction": "twisted_shielded_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "lvds",
+      "impedance_ohm": null,
+      "name": "LVDS",
+      "notes": "",
+      "shielding": "per_pair",
+      "signals": [
+        {
+          "direction": "out",
+          "name": "D+",
+          "pair": "D"
+        },
+        {
+          "direction": "out",
+          "name": "D-",
+          "pair": "D"
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "data",
+      "construction": "twisted_shielded_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "mil1553b",
+      "impedance_ohm": null,
+      "name": "MIL-STD-1553B",
+      "notes": "",
+      "shielding": "overall",
+      "signals": [
+        {
+          "direction": "bidir",
+          "name": "BUS+",
+          "pair": "BUS"
+        },
+        {
+          "direction": "bidir",
+          "name": "BUS-",
+          "pair": "BUS"
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "power",
+      "construction": "twisted_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "power_primary",
+      "impedance_ohm": null,
+      "name": "Primary power",
+      "notes": "",
+      "shielding": "none",
+      "signals": [
+        {
+          "direction": "passive",
+          "name": "PWR",
+          "pair": null
+        },
+        {
+          "direction": "passive",
+          "name": "RTN",
+          "pair": null
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "power",
+      "construction": "twisted_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "power_secondary",
+      "impedance_ohm": null,
+      "name": "Secondary power",
+      "notes": "",
+      "shielding": "none",
+      "signals": [
+        {
+          "direction": "passive",
+          "name": "PWR",
+          "pair": null
+        },
+        {
+          "direction": "passive",
+          "name": "RTN",
+          "pair": null
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "pyro",
+      "construction": "twisted_shielded_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "pyro",
+      "impedance_ohm": null,
+      "name": "Pyro initiator",
+      "notes": "",
+      "shielding": "overall",
+      "signals": [
+        {
+          "direction": "out",
+          "name": "FIRE+",
+          "pair": "FIRE"
+        },
+        {
+          "direction": "out",
+          "name": "FIRE-",
+          "pair": "FIRE"
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "rf",
+      "construction": "coax",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "rf_coax",
+      "impedance_ohm": null,
+      "name": "RF coax",
+      "notes": "",
+      "shielding": "none",
+      "signals": [
+        {
+          "direction": "bidir",
+          "name": "RF",
+          "pair": null
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "data",
+      "construction": "twisted_shielded_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "rs422",
+      "impedance_ohm": null,
+      "name": "RS-422",
+      "notes": "",
+      "shielding": "per_pair",
+      "signals": [
+        {
+          "direction": "out",
+          "name": "TX+",
+          "pair": "TX"
+        },
+        {
+          "direction": "out",
+          "name": "TX-",
+          "pair": "TX"
+        },
+        {
+          "direction": "in",
+          "name": "RX+",
+          "pair": "RX"
+        },
+        {
+          "direction": "in",
+          "name": "RX-",
+          "pair": "RX"
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "data",
+      "construction": "twisted_shielded_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "rs485",
+      "impedance_ohm": null,
+      "name": "RS-485",
+      "notes": "",
+      "shielding": "overall",
+      "signals": [
+        {
+          "direction": "bidir",
+          "name": "A",
+          "pair": "BUS"
+        },
+        {
+          "direction": "bidir",
+          "name": "B",
+          "pair": "BUS"
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "data",
+      "construction": "twisted_shielded_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "spacewire",
+      "impedance_ohm": null,
+      "name": "SpaceWire",
+      "notes": "",
+      "shielding": "per_pair",
+      "signals": [
+        {
+          "direction": "in",
+          "name": "DIN+",
+          "pair": "DIN"
+        },
+        {
+          "direction": "in",
+          "name": "DIN-",
+          "pair": "DIN"
+        },
+        {
+          "direction": "in",
+          "name": "SIN+",
+          "pair": "SIN"
+        },
+        {
+          "direction": "in",
+          "name": "SIN-",
+          "pair": "SIN"
+        },
+        {
+          "direction": "out",
+          "name": "DOUT+",
+          "pair": "DOUT"
+        },
+        {
+          "direction": "out",
+          "name": "DOUT-",
+          "pair": "DOUT"
+        },
+        {
+          "direction": "out",
+          "name": "SOUT+",
+          "pair": "SOUT"
+        },
+        {
+          "direction": "out",
+          "name": "SOUT-",
+          "pair": "SOUT"
+        }
+      ],
+      "unverified": true
+    },
+    {
+      "category": "thermal",
+      "construction": "twisted_pair",
+      "default_gauge_awg": null,
+      "emc_class": null,
+      "id": "thermistor",
+      "impedance_ohm": null,
+      "name": "Thermistor",
+      "notes": "",
+      "shielding": "none",
+      "signals": [
+        {
+          "direction": "passive",
+          "name": "T+",
+          "pair": "T"
+        },
+        {
+          "direction": "passive",
+          "name": "T-",
+          "pair": "T"
+        }
+      ],
+      "unverified": true
+    }
+  ]
+}

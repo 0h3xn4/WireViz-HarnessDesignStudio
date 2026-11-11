@@ -1,0 +1,18 @@
+{
+  "name": "titleblock",
+  "placeholder": true,
+  "values": {
+    "fields": [
+      "project",
+      "harness_id",
+      "title",
+      "revision",
+      "date",
+      "author",
+      "checker",
+      "approver",
+      "sheet",
+      "status"
+    ]
+  }
+}

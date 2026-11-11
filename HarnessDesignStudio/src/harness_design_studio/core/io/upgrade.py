@@ -705,7 +705,9 @@ def upgrade_project(
     _write_record(backup, _record(plan, "started", before, None, gitignore_existed, None))
     written: list[str] = []
     try:
-        saved = save_project(plan.project, root, expected_fingerprint=plan.fingerprint)
+        saved = save_project(
+            plan.project, root, expected_fingerprint=plan.fingerprint, upgrade=True
+        )
         written = saved.written
         if on_written is not None:
             on_written()

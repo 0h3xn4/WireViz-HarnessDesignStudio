@@ -1,0 +1,20 @@
+{
+  "parts": [
+    {
+      "approval": "pending",
+      "category": "sleeving",
+      "description": "Braided sleeving (example)",
+      "id": "EX-SLEEVE",
+      "manufacturer": null,
+      "mass_g": null,
+      "mass_per_m_g": null,
+      "mates_with": null,
+      "notes": "",
+      "part_number": null,
+      "pin_count": null,
+      "ratings": {},
+      "specification": null,
+      "unverified": true
+    }
+  ]
+}

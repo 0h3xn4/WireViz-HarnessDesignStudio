@@ -1,0 +1,109 @@
+{
+  "connectors": [
+    {
+      "carries": [
+        "power_primary"
+      ],
+      "gender": "male",
+      "id": "RW1-J01",
+      "keying": null,
+      "mates_with": null,
+      "name": "J01",
+      "notes": "",
+      "part_id": "EX-MICROD-9-M",
+      "pins": [
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "1",
+          "interface_id": "IF-PWR-RW1",
+          "locked": false,
+          "signal": "PWR",
+          "termination": "unspecified"
+        },
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "2",
+          "interface_id": "IF-PWR-RW1",
+          "locked": false,
+          "signal": "RTN",
+          "termination": "unspecified"
+        },
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "3",
+          "interface_id": null,
+          "locked": false,
+          "signal": null,
+          "termination": "unspecified"
+        }
+      ],
+      "role": "box",
+      "unit_id": "RW1"
+    },
+    {
+      "carries": [
+        "rs422",
+        "can"
+      ],
+      "gender": "male",
+      "id": "RW1-J02",
+      "keying": null,
+      "mates_with": null,
+      "name": "J02",
+      "notes": "",
+      "part_id": "EX-MICROD-15-M",
+      "pins": [
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "1",
+          "interface_id": null,
+          "locked": false,
+          "signal": null,
+          "termination": "unspecified"
+        },
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "2",
+          "interface_id": null,
+          "locked": false,
+          "signal": null,
+          "termination": "unspecified"
+        },
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "3",
+          "interface_id": null,
+          "locked": false,
+          "signal": null,
+          "termination": "unspecified"
+        },
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "4",
+          "interface_id": null,
+          "locked": false,
+          "signal": null,
+          "termination": "unspecified"
+        },
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "5",
+          "interface_id": null,
+          "locked": false,
+          "signal": null,
+          "termination": "unspecified"
+        }
+      ],
+      "role": "box",
+      "unit_id": "RW1"
+    }
+  ]
+}

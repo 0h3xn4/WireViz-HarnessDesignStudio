@@ -1,0 +1,132 @@
+{
+  "approver": null,
+  "author": null,
+  "branch_points": [],
+  "checker": null,
+  "connectors": [
+    {
+      "carries": [],
+      "gender": "male",
+      "id": "W001-P1",
+      "keying": null,
+      "mates_with": "PCDU-J01",
+      "name": "P1",
+      "notes": "",
+      "part_id": "EX-MICROD-9-M",
+      "pins": [
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "1",
+          "interface_id": null,
+          "locked": false,
+          "signal": "PWR",
+          "termination": "unspecified"
+        },
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "2",
+          "interface_id": null,
+          "locked": false,
+          "signal": "RTN",
+          "termination": "unspecified"
+        },
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "3",
+          "interface_id": null,
+          "locked": false,
+          "signal": null,
+          "termination": "unspecified"
+        }
+      ],
+      "role": "cable",
+      "unit_id": null
+    },
+    {
+      "carries": [],
+      "gender": "female",
+      "id": "W001-P2",
+      "keying": null,
+      "mates_with": "RW1-J01",
+      "name": "P2",
+      "notes": "",
+      "part_id": "EX-MICROD-9-F",
+      "pins": [
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "1",
+          "interface_id": null,
+          "locked": false,
+          "signal": "PWR",
+          "termination": "unspecified"
+        },
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "2",
+          "interface_id": null,
+          "locked": false,
+          "signal": "RTN",
+          "termination": "unspecified"
+        },
+        {
+          "contact_size": null,
+          "fixed": false,
+          "id": "3",
+          "interface_id": null,
+          "locked": false,
+          "signal": null,
+          "termination": "unspecified"
+        }
+      ],
+      "role": "cable",
+      "unit_id": null
+    }
+  ],
+  "generated": false,
+  "group_key": "",
+  "id": "W001",
+  "interfaces": [],
+  "name": "PCDU to RW1 power",
+  "notes": "",
+  "released_on": null,
+  "revision": "A",
+  "segments": [],
+  "shields": [],
+  "splices": [],
+  "status": "draft",
+  "wires": [
+    {
+      "colour": null,
+      "from_connector": "W001-P1",
+      "from_pin": "1",
+      "gauge_awg": null,
+      "id": "W001-001",
+      "interface_id": "IF-PWR-RW1",
+      "length_m": null,
+      "locked": false,
+      "part_id": null,
+      "signal": "PWR",
+      "to_connector": "W001-P2",
+      "to_pin": "1"
+    },
+    {
+      "colour": null,
+      "from_connector": "W001-P1",
+      "from_pin": "2",
+      "gauge_awg": null,
+      "id": "W001-002",
+      "interface_id": "IF-PWR-RW1",
+      "length_m": null,
+      "locked": false,
+      "part_id": null,
+      "signal": "RTN",
+      "to_connector": "W001-P2",
+      "to_pin": "2"
+    }
+  ]
+}

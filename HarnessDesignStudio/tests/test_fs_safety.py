@@ -136,7 +136,7 @@ def test_the_migration_backup_does_not_copy_linked_files(tmp_path: Path) -> None
     loaded = load_project(root)
     units.unlink()
     units.symlink_to(secret)
-    save_project(loaded.project, root)
+    save_project(loaded.project, root, upgrade=True)  # (the save of an upgrade, D-226)
     backup = root / ".migration-backup-v0"
     assert backup.is_dir() and not (backup / "logical" / "units" / "avionics.json").exists()
     for f in root.rglob("*"):

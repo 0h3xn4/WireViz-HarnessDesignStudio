@@ -1,0 +1,13 @@
+{
+  "units": [
+    {
+      "id": "PCDU",
+      "mass_relevant": true,
+      "name": "Power control and distribution unit",
+      "notes": "",
+      "side": "nominal",
+      "subsystem": "power",
+      "zone": "panel-A"
+    }
+  ]
+}
