@@ -30,6 +30,8 @@ import json
 import re
 import subprocess
 import sys
+import time
+import urllib.error
 import urllib.request
 from collections.abc import Mapping
 from pathlib import Path
@@ -78,11 +80,31 @@ def qt_version(inventory: Mapping[str, Any]) -> str:
     raise SystemExit("the inventory names no Qt version")
 
 
+RETRY_WAITS = (10.0, 30.0, 90.0)  # seconds between the tries of one download
+
+
 def _get(url: str) -> bytes:
+    """The body of `url` (https only). A network error or a server error (5xx) is tried again
+    after each wait of RETRY_WAITS; a client error (4xx, for example 404) is not, because it
+    does not go away by waiting (the release run of 1.17.1rc2 lost the network to Launchpad for
+    a moment: "Network is unreachable")."""
     if not url.startswith("https://"):
         raise SystemExit(f"only https is used: {url}")
-    with urllib.request.urlopen(url, timeout=600) as response:  # noqa: S310 - https only, checked above
-        return bytes(response.read())
+    for wait in (*RETRY_WAITS, None):
+        try:
+            with urllib.request.urlopen(url, timeout=600) as response:  # noqa: S310 - https only, checked above
+                return bytes(response.read())
+        except urllib.error.HTTPError as err:
+            if err.code < 500 or wait is None:
+                raise
+            reason = f"HTTP {err.code}"
+        except (urllib.error.URLError, TimeoutError, ConnectionError) as err:
+            if wait is None:
+                raise
+            reason = str(getattr(err, "reason", err))
+        print(f"{url}: {reason}; trying again in {wait:.0f} s", file=sys.stderr)
+        time.sleep(wait)
+    raise AssertionError("not reached")
 
 
 def fetch_qt(version: str, out: Path) -> list[Path]:
